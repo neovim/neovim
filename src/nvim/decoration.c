@@ -69,7 +69,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
     }
     (void)extmark_set(buf, (uint64_t)src_id, 0,
                       (int)lnum-1, hl_start, (int)lnum-1+end_off, hl_end,
-                      decor, kExtmarkNoUndo);
+                      decor, true, false, kExtmarkNoUndo);
   }
 }
 
