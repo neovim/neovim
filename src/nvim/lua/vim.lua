@@ -562,19 +562,21 @@ function vim._expand_pat(pat, env)
 
   local parts, search_index = vim._expand_pat_get_parts(last_part)
 
-  local match_pat = '^' .. string.sub(last_part, search_index, #last_part)
-  local prefix_match_pat = string.sub(pat, 1, #pat - #match_pat + 1) or ''
+  local match_part = string.sub(last_part, search_index, #last_part)
+  local prefix_match_pat = string.sub(pat, 1, #pat - #match_part) or ''
 
   local final_env = env
+
   for _, part in ipairs(parts) do
     if type(final_env) ~= 'table' then
       return {}, 0
     end
+    local key
 
     -- Normally, we just have a string
     -- Just attempt to get the string directly from the environment
     if type(part) == "string" then
-      final_env = rawget(final_env, part)
+      key = part
     else
       -- However, sometimes you want to use a variable, and complete on it
       --    With this, you have the power.
@@ -593,23 +595,42 @@ function vim._expand_pat(pat, env)
         return {}, 0
       end
 
-      final_env = rawget(final_env, result)
+      key = result
     end
+    local field = rawget(final_env, key)
+    if field == nil then
+      local mt = getmetatable(final_env)
+      if mt and type(mt.__index) == "table" then
+        field = rawget(mt.__index, key)
+      end
+    end
+    final_env = field
 
     if not final_env then
       return {}, 0
     end
   end
 
-  local result = vim.tbl_map(function(v)
-    return v
-  end, vim.tbl_filter(function(name)
-    return string.find(name, match_pat) ~= nil
-  end, vim.tbl_keys(final_env)))
+  local keys = {}
+  local function insert_keys(obj)
+    for k,_ in pairs(obj) do
+      if type(k) == "string" and string.sub(k,1,string.len(match_part)) == match_part then
+        table.insert(keys,k)
+      end
+    end
+  end
 
-  table.sort(result)
+  if type(final_env) == "table" then
+    insert_keys(final_env)
+  end
+  local mt = getmetatable(final_env)
+  if mt and type(mt.__index) == "table" then
+    insert_keys(mt.__index)
+  end
 
-  return result, #prefix_match_pat
+  table.sort(keys)
+
+  return keys, #prefix_match_pat
 end
 
 vim._expand_pat_get_parts = function(lua_string)
