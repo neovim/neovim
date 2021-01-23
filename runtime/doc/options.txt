@@ -5536,6 +5536,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   "auto"   	only when there is a sign to display
 	   "auto:[1-9]" resize to accommodate multiple signs up to the
 	                given number (maximum 9), e.g. "auto:4"
+	   "auto:[1-8]-[2-9]"
+	                resize to accommodate multiple signs up to the
+			given maximum number (maximum 9) while keeping
+			at least the given minimum (maximum 8) fixed
+			space. The minimum number should always be less
+			than the maximum number, e.g. "auto:2-5"
 	   "no"	    	never
 	   "yes"    	always
 	   "yes:[1-9]"  always, with fixed space for signs up to the given

@@ -2913,7 +2913,7 @@ ambw_end:
 #endif
   } else if (varp == &curwin->w_p_scl) {
     // 'signcolumn'
-    if (check_opt_strings(*varp, p_scl_values, false) != OK) {
+    if (check_signcolumn(*varp) != OK) {
       errmsg = e_invarg;
     }
     // When changing the 'signcolumn' to or from 'number', recompute the
@@ -3230,6 +3230,34 @@ ambw_end:
 static int int_cmp(const void *a, const void *b)
 {
   return *(const int *)a - *(const int *)b;
+}
+
+/// Handle setting 'signcolumn' for value 'val'
+///
+/// @return OK when the value is valid, FAIL otherwise
+int check_signcolumn(char_u *val)
+{
+  // check for basic match
+  if (check_opt_strings(val, p_scl_values, false) == OK) {
+    return OK;
+  }
+
+  // check for 'auto:<NUMBER>-<NUMBER>'
+  if (STRLEN(val) == 8
+      && !STRNCMP(val, "auto:", 5)
+      && ascii_isdigit(val[5])
+      && val[6] == '-'
+      && ascii_isdigit(val[7])
+      ) {
+    int min = val[5] - '0';
+    int max = val[7] - '0';
+    if (min < 1 || max < 2 || min > 8 || max > 9 || min >= max) {
+      return FAIL;
+    }
+    return OK;
+  }
+
+  return FAIL;
 }
 
 /// Handle setting 'colorcolumn' or 'textwidth' in window "wp".
@@ -7095,7 +7123,7 @@ int csh_like_shell(void)
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)
 {
-  int maximum = 1, needed_signcols;
+  int minimum = 0, maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
 
   // Note: It checks "no" or "number" in 'signcolumn' option
@@ -7119,9 +7147,14 @@ int win_signcol_count(win_T *wp)
   if (!strncmp(scl, "auto:", 5)) {
     // Variable depending on a configuration
     maximum = scl[5] - '0';
+    // auto:<NUM>-<NUM>
+    if (strlen(scl) == 8 && *(scl + 6) == '-') {
+      minimum = maximum;
+      maximum = scl[7] - '0';
+    }
   }
 
-  return MIN(maximum, needed_signcols);
+  return MAX(minimum, MIN(maximum, needed_signcols));
 }
 
 /// Get window or buffer local options
