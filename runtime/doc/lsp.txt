@@ -679,6 +679,14 @@ get_active_clients()                            *vim.lsp.get_active_clients()*
                 Return: ~
                     Table of |vim.lsp.client| objects
 
+                                          *vim.lsp.get_buffers_by_client_id()*
+get_buffers_by_client_id({client_id})
+                Parameters: ~
+                    {client_id}  client id
+
+                Return: ~
+                    list of buffer ids
+
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
                 Gets a client by id, or nil if the id is invalid. The returned
                 client may not yet be fully initialized.
@@ -1754,7 +1762,7 @@ make_workspace_params({added}, {removed})
                 Create the workspace params
 
                 Parameters: ~
-                    {added}
+                    {added}    
                     {removed}
 
                                         *vim.lsp.util.open_floating_preview()*
