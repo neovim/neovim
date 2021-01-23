@@ -2164,6 +2164,15 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                                 mark will only be used for the current redraw
                                 cycle, and not be permantently stored in the
                                 buffer.
+                              • right_gravity : boolean that indicates the
+                                direction the extmark will be shifted in when
+                                new text is inserted (true for right, false
+                                for left). defaults to true.
+                              • end_right_gravity : boolean that indicates the
+                                direction the extmark end position (if it
+                                exists) will be shifted in when new text is
+                                inserted (true for right, false for left).
+                                Defaults to false.
 
                 Return: ~
                     Id of the created/updated extmark
