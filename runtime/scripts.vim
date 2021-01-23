@@ -186,6 +186,10 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'instantfpc\>'
     set ft=pascal
 
+    " Fennel
+  elseif s:name =~# 'fennel\>'
+    set ft=fennel
+
   endif
   unlet s:name
 
