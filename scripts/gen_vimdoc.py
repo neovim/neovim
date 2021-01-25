@@ -113,12 +113,14 @@ CONFIG = {
         'section_order': [
             'vim.lua',
             'shared.lua',
+            'keymap.lua',
             'uri.lua',
         ],
         'files': ' '.join([
             os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
             os.path.join(base_dir, 'runtime/lua/vim/uri.lua'),
+            os.path.join(base_dir, 'runtime/lua/vim/keymap.lua'),
         ]),
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
@@ -132,6 +134,7 @@ CONFIG = {
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
             'uri': 'vim',
+            'keymap': 'vim.keymap',
         },
         'append_only': [
             'shared.lua',

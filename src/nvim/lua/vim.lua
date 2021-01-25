@@ -284,6 +284,9 @@ local function __index(t, key)
   elseif key == 'F' then
     t.F = require('vim.F')
     return t.F
+  elseif key == 'keymap' then
+    t.keymap = require('vim.keymap')
+    return t.keymap
   end
 end
 
@@ -533,5 +536,6 @@ function vim._log_keystroke(char)
       table.concat(failed_messages, "\n")))
   end
 end
+
 
 return module
