@@ -303,11 +303,11 @@ function LanguageTree:_get_injections()
         local offset_range = data and data.offset
 
         -- Lang should override any other language tag
-        if name == "language" then
+        if name == "injection.language" or name == "language" then
           lang = query.get_node_text(node, self._source)
-        elseif name == "combined" then
+        elseif name == "injection.combined" or name == "combined" then
           combined = true
-        elseif name == "content" then
+        elseif name == "injection.content" or name == "content" then
           injection_node = offset_range or node
         -- Ignore any tags that start with "_"
         -- Allows for other tags to be used in matches
