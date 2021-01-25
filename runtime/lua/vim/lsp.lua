@@ -891,9 +891,7 @@ end
 function lsp._text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
-  local text = once(function()
-    return table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
-  end)
+  local text = once(buf_get_full_text)
   for_each_buffer_client(bufnr, function(client, _client_id)
     if client.resolved_capabilities.text_document_save then
       local included_text
