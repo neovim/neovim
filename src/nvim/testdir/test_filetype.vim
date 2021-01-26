@@ -159,6 +159,7 @@ let s:filename_checks = {
     \ 'elinks': ['elinks.conf'],
     \ 'elm': ['file.elm'],
     \ 'elmfilt': ['filter-rules'],
+    \ 'epuppet': ['file.epp'],
     \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws'],
     \ 'eruby': ['file.erb', 'file.rhtml'],
     \ 'esmtprc': ['anyesmtprc'],
@@ -171,6 +172,7 @@ let s:filename_checks = {
     \ 'factor': ['file.factor'],
     \ 'falcon': ['file.fal'],
     \ 'fan': ['file.fan', 'file.fwt'],
+    \ 'fennel': ['file.fnl'],
     \ 'fetchmail': ['.fetchmailrc'],
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
     \ 'focexec': ['file.fex', 'file.focexec'],
@@ -374,6 +376,7 @@ let s:filename_checks = {
     \ 'quake': ['anybaseq2/file.cfg', 'anyid1/file.cfg', 'quake3/file.cfg'],
     \ 'radiance': ['file.rad', 'file.mat'],
     \ 'ratpoison': ['.ratpoisonrc', 'ratpoisonrc'],
+    \ 'rbs': ['file.rbs'],
     \ 'rc': ['file.rc', 'file.rch'],
     \ 'rcs': ['file,v'],
     \ 'readline': ['.inputrc', 'inputrc'],
@@ -390,7 +393,7 @@ let s:filename_checks = {
     \ 'rpl': ['file.rpl'],
     \ 'rst': ['file.rst'],
     \ 'rtf': ['file.rtf'],
-    \ 'ruby': ['.irbrc', 'irbrc', 'file.rb', 'file.rbw', 'file.gemspec', 'file.ru', 'Gemfile', 'file.builder', 'file.rxml', 'file.rjs', 'file.rant', 'file.rake'],
+    \ 'ruby': ['.irbrc', 'irbrc', 'file.rb', 'file.rbw', 'file.gemspec', 'file.ru', 'Gemfile', 'file.builder', 'file.rxml', 'file.rjs', 'file.rant', 'file.rake', 'rakefile', 'Rakefile', 'rantfile', 'Rantfile', 'rakefile-file', 'Rakefile-file', 'Puppetfile'],
     \ 'rust': ['file.rs'],
     \ 'samba': ['smb.conf'],
     \ 'sas': ['file.sas'],
@@ -622,6 +625,7 @@ let s:script_checks = {
       \         ['// -*- C++ -*-']],
       \ 'yaml': [['%YAML 1.2']],
       \ 'pascal': [['#!/path/instantfpc']],
+      \ 'fennel': [['#!/path/fennel']],
       \ }
 
 " Various forms of "env" optional arguments.
