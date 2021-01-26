@@ -1265,12 +1265,14 @@ validate({opt})                                               *vim.validate()*
 
                   vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
                      => NOP (success)
-
-                  vim.validate{arg1={1, 'table'}}
-                     => error('arg1: expected table, got number')
-
-                  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-                     => error('arg1: expected even number, got 3')
+<
+>
+    vim.validate{arg1={1, 'table'}}
+       => error('arg1: expected table, got number')
+<
+>
+    vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+       => error('arg1: expected even number, got 3')
 <
 
                 Parameters: ~
@@ -1295,6 +1297,160 @@ validate({opt})                                               *vim.validate()*
                                 returned value.
                               • msg: (optional) error string if validation
                                 fails
+
+
+==============================================================================
+Lua module: keymap                                                *lua-keymap*
+
+cmap({opts})                                               *vim.keymap.cmap()*
+                Helper function for ':cmap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+cnoremap({opts})                                       *vim.keymap.cnoremap()*
+                Helper function for ':cnoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+imap({opts})                                               *vim.keymap.imap()*
+                Helper function for ':imap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+inoremap({opts})                                       *vim.keymap.inoremap()*
+                Helper function for ':inoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+lmap({opts})                                               *vim.keymap.lmap()*
+                Helper function for ':lmap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+lnoremap({opts})                                       *vim.keymap.lnoremap()*
+                Helper function for ':lnoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+map({opts})                                                 *vim.keymap.map()*
+                Helper function for ':map'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+nmap({opts})                                               *vim.keymap.nmap()*
+                Helper function for ':nmap'.
+>
+
+    vim.keymap.nmap { 'lhs', function() print("real lua function") end, silent = true }
+<
+
+                Parameters: ~
+                    {opts}  (table): A table with keys:
+                            • [1] = left hand side: Must be a string
+                            • [2] = right hand side: Can be a string OR a lua
+                              function to execute
+                            • Other keys can be arguments to |:map|, such as
+                              "silent". See |nvim_set_keymap()|
+
+nnoremap({opts})                                       *vim.keymap.nnoremap()*
+                Helper function for ':nnoremap' >
+
+                   vim.keymap.nmap { 'lhs', function() print("real lua function") end, silent = true }
+<
+
+                Parameters: ~
+                    {opts}  (table): A table with keys:
+                            • [1] = left hand side: Must be a string
+                            • [2] = right hand side: Can be a string OR a lua
+                              function to execute
+                            • Other keys can be arguments to |:map|, such as
+                              "silent". See |nvim_set_keymap()|
+
+noremap({opts})                                         *vim.keymap.noremap()*
+                Helper function for ':noremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+omap({opts})                                               *vim.keymap.omap()*
+                Helper function for ':omap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+onoremap({opts})                                       *vim.keymap.onoremap()*
+                Helper function for ':onoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+smap({opts})                                               *vim.keymap.smap()*
+>
+
+                   vim.keymap.nmap { 'lhs', function() print("real lua function") end, silent = true }
+
+                < Helper function for ':smap'.
+
+                Parameters: ~
+                    {opts}  (table): A table with keys:
+                            • [1] = left hand side: Must be a string
+                            • [2] = right hand side: Can be a string OR a lua
+                              function to execute
+                            • Other keys can be arguments to |:map|, such as
+                              "silent". See |nvim_set_keymap()| ]] Helper
+                              function for ':smap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+snoremap({opts})                                       *vim.keymap.snoremap()*
+                Helper function for ':snoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+tmap({opts})                                               *vim.keymap.tmap()*
+                Helper function for ':tmap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+tnoremap({opts})                                       *vim.keymap.tnoremap()*
+                Helper function for ':tnoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+vmap({opts})                                               *vim.keymap.vmap()*
+                Helper function for ':vmap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+vnoremap({opts})                                       *vim.keymap.vnoremap()*
+                Helper function for ':vnoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+xmap({opts})                                               *vim.keymap.xmap()*
+                Helper function for ':xmap'.
+
+                See also: ~
+                    |vim.keymap.nmap|
+
+xnoremap({opts})                                       *vim.keymap.xnoremap()*
+                Helper function for ':xnoremap'
+
+                See also: ~
+                    |vim.keymap.nmap|
 
 
 ==============================================================================

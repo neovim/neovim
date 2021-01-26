@@ -1468,3 +1468,17 @@ describe('lua: require("mod") from packages', function()
     matches("unexpected symbol", syntax_error_msg)
   end)
 end)
+
+describe('vim.keymap', function()
+  it('can make a mapping', function()
+    eq(0, exec_lua [[
+      GlobalCount = 0
+      vim.keymap.nnoremap { 'asdf', function() GlobalCount = GlobalCount + 1 end }
+      return GlobalCount
+    ]])
+
+    feed("asdf")
+
+    eq(1, exec_lua[[return GlobalCount ]])
+  end)
+end)
