@@ -158,17 +158,33 @@ function vim.tbl_map(func, t)
   return rettab
 end
 
---- Filter a table using a predicate function
+--- Filter a list-like (vector) table using a predicate function
 ---
---@param func function or callable table
---@param t table
-function vim.tbl_filter(func, t)
+--@param func function or callable table, with signature func(value)
+--@param t list-like table
+function vim.list_filter(func, t)
   vim.validate{func={func,'c'},t={t,'t'}}
 
   local rettab = {}
   for _, entry in pairs(t) do
     if func(entry) then
       table.insert(rettab, entry)
+    end
+  end
+  return rettab
+end
+
+--- Filter a table using a predicate function
+---
+--@param func function or callable table, with signature func(value, key)
+--@param t table
+function vim.tbl_filter(func, t)
+  vim.validate{func={func,'c'},t={t,'t'}}
+
+  local rettab = {}
+  for key, entry in pairs(t) do
+    if func(entry, key) then
+      rettab[key] = entry
     end
   end
   return rettab

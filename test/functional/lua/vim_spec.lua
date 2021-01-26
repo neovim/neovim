@@ -426,15 +426,36 @@ describe('lua stdlib', function()
     ]]))
   end)
 
-  it('vim.tbl_filter', function()
+  it('vim.list_filter', function()
     eq({}, exec_lua([[
-      return vim.tbl_filter(function(v) return (v % 2) == 0 end, {})
+      return vim.list_filter(function(v) return (v % 2) == 0 end, {})
     ]]))
     eq({2}, exec_lua([[
-      return vim.tbl_filter(function(v) return (v % 2) == 0 end, {1, 2, 3})
+      return vim.list_filter(function(v) return (v % 2) == 0 end, {1, 2, 3})
     ]]))
     eq({{i=2}}, exec_lua([[
-      return vim.tbl_filter(function(v) return (v.i % 2) == 0 end, {{i=1}, {i=2}, {i=3}})
+      return vim.list_filter(function(v) return (v.i % 2) == 0 end, {{i=1}, {i=2}, {i=3}})
+    ]]))
+  end)
+
+  it('vim.tbl_filter', function()
+    eq({}, exec_lua([[
+      return vim.tbl_filter(function(v, _) return (v % 2) == 0 end, {})
+    ]]))
+    eq({2}, exec_lua([[
+      return vim.tbl_filter(function(v, _) return (v % 2) == 0 end, {1, 2, 3})
+    ]]))
+    eq({{i=2}}, exec_lua([[
+      return vim.tbl_filter(function(v, _) return (v.i % 2) == 0 end, {{i=1}, {i=2}, {i=3}})
+    ]]))
+    eq({}, exec_lua([[
+      return vim.tbl_filter(function(_, k) return (k % 2) == 0 end, {})
+    ]]))
+    eq({2}, exec_lua([[
+      return vim.tbl_filter(function(_, k) return (k % 2) == 0 end, {1, 2, 3})
+    ]]))
+    eq({{i=2}}, exec_lua([[
+      return vim.tbl_filter(function(_, k) return (k % 2) == 0 end, {{i=1}, {i=2}, {i=3}})
     ]]))
   end)
 

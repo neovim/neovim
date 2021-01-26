@@ -1055,6 +1055,14 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 See also: ~
                     |vim.tbl_extend()|
 
+list_filter({func}, {t})                                   *vim.list_filter()*
+                Filter a list-like (vector) table using a predicate function
+
+                Parameters: ~
+                    {func}  function or callable table, with signature
+                            func(value)
+                    {t}     list-like table
+
 pesc({s})                                                         *vim.pesc()*
                 Escapes magic chars in a Lua pattern.
 
@@ -1164,7 +1172,8 @@ tbl_filter({func}, {t})                                     *vim.tbl_filter()*
                 Filter a table using a predicate function
 
                 Parameters: ~
-                    {func}  function or callable table
+                    {func}  function or callable table, with signature
+                            func(value, key)
                     {t}     table
 
 tbl_flatten({t})                                           *vim.tbl_flatten()*
