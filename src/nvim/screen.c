@@ -1997,6 +1997,26 @@ static int win_line(
             providers);
 }
 
+// TODO rename to WinRow ?
+typedef struct {
+int statesToDraw;  // bitfield
+// int statesToDraw;  // bitfield
+int c1;
+int c2; // Use "c2" as filler character.
+hlf_T hl; //
+// LineState // Fill
+} WinLineStruct;
+
+// LineState
+// win_row()
+
+/// Goal is to remove win_draw_end / win_fill_end
+///
+/// Clear lines near the end of the window and mark the unused lines with "c1".
+/// Use "c2" as filler character.
+/// When "draw_margin" is true, then draw the sign/fold/number columns.
+// static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
+//                          int endrow, hlf_T hl)
 static int win_line2(
     win_T *wp, linenr_T lnum, int startrow, int endrow,
     bool nochange, bool number_only, foldinfo_T foldinfo,
@@ -2961,7 +2981,6 @@ static int win_line2(
         // when we reach the end of the folded text, revert back to original
         // text
         draw_state = WL_LINE;
-      }
       }
     }
 
