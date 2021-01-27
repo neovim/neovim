@@ -3041,9 +3041,10 @@ const char * set_one_cmd_context(
     p = arg + 1;
     arg = (const char *)skip_cmd_arg((char_u *)arg, false);
 
-    /* Still touching the command after '+'? */
-    if (*arg == NUL)
+    // Still touching the command after '+'?
+    if (*arg == NUL) {
       return p;
+    }
 
     // Skip space(s) after +command to get to the real argument.
     arg = (const char *)skipwhite((const char_u *)arg);
@@ -3680,6 +3681,10 @@ const char * set_one_cmd_context(
     xp->xp_pattern = (char_u *)arg;
     break;
 
+  case CMD_lua:
+    xp->xp_context = EXPAND_LUA;
+    break;
+
   default:
     break;
   }
@@ -3968,7 +3973,7 @@ static linenr_T get_address(exarg_T *eap,
       break;
 
     default:
-      if (ascii_isdigit(*cmd)) {  // absolute line number
+      if (ascii_isdigit(*cmd)) {                // absolute line number
         lnum = getdigits_long(&cmd, false, 0);
       }
     }
@@ -5187,6 +5192,7 @@ static const char *command_complete[] =
 #ifdef HAVE_WORKING_LIBINTL
   [EXPAND_LOCALES] = "locale",
 #endif
+  [EXPAND_LUA] = "lua",
   [EXPAND_MAPCLEAR] = "mapclear",
   [EXPAND_MAPPINGS] = "mapping",
   [EXPAND_MENUS] = "menu",
@@ -5400,8 +5406,8 @@ static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def,
     size_t vallen = 0;
     size_t attrlen = len;
 
-    /* Look for the attribute name - which is the part before any '=' */
-    for (i = 0; i < (int)len; ++i) {
+    // Look for the attribute name - which is the part before any '='
+    for (i = 0; i < (int)len; i++) {
       if (attr[i] == '=') {
         val = &attr[i + 1];
         vallen = len - i - 1;
@@ -7503,8 +7509,9 @@ static void ex_read(exarg_T *eap)
     }
 
     if (*eap->arg == NUL) {
-      if (check_fname() == FAIL)        /* check for no file name */
+      if (check_fname() == FAIL) {       // check for no file name
         return;
+      }
       i = readfile(curbuf->b_ffname, curbuf->b_fname,
           eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0);
     } else {
