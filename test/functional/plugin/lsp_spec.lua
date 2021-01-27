@@ -193,6 +193,11 @@ describe('LSP', function()
   end)
 
   describe('basic_init test', function()
+     after_each(function()
+      stop()
+      exec_lua("lsp._vim_exit_handler()")
+    end)
+
     it('should run correctly', function()
       local expected_callbacks = {
         {NIL, "test", {}, 1};
@@ -305,10 +310,7 @@ describe('LSP', function()
     end)
     it('workspace/configuration returns NIL per section if client was started without config.settings', function()
       fake_lsp_server_setup('workspace/configuration no settings')
-      eq({
-        NIL,
-        NIL,
-      }, exec_lua [[
+      eq({ NIL, NIL, }, exec_lua [[
         local params = {
           items = {
             {section = 'foo'},

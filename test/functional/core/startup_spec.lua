@@ -361,6 +361,7 @@ describe('sysinit', function()
 
     mkdir(xdgdir)
     mkdir(xdgdir .. pathsep .. 'nvim')
+    mkdir(xhome .. pathsep .. 'cache' .. pathsep .. 'nvim')
     write_file(table.concat({xdgdir, 'nvim', 'sysinit.vim'}, pathsep), [[
       let g:loaded = get(g:, "loaded", 0) + 1
       let g:xdg = 1
