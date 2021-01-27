@@ -39,6 +39,16 @@ assert(vim)
 vim.inspect = package.loaded['vim.inspect']
 assert(vim.inspect)
 
+vim.log = {
+  levels = {
+    TRACE = 0;
+    DEBUG = 1;
+    INFO  = 2;
+    WARN  = 3;
+    ERROR = 4;
+  }
+}
+
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
@@ -477,6 +487,23 @@ function vim.defer_fn(fn, timeout)
 
   return timer
 end
+
+
+--- Notification provider
+--- without a runtime, writes to :Messages
+--  see :help nvim_notify
+--@param msg Content of the notification to show to the user
+--@param log_level Optional log level
+--@param opts Dictionary with optional options (timeout, etc)
+function vim.notify(msg, log_level, _opts)
+
+  if log_level == vim.log.levels.ERROR then
+    vim.api.nvim_err_writeln(msg)
+  else
+    vim.api.nvim_echo(msg)
+  end
+end
+
 
 local on_keystroke_callbacks = {}
 
