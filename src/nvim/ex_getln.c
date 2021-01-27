@@ -5114,7 +5114,6 @@ ExpandFromContext (
     return ExpandPackAddDir(pat, num_file, file);
   }
   if (xp->xp_context == EXPAND_LUA) {
-    ILOG("PAT %s", pat);
     return nlua_expand_pat(xp, pat, num_file, file);
   }
 

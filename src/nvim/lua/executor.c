@@ -1307,7 +1307,13 @@ int nlua_expand_pat(expand_T *xp,
   lua_getfield(lstate, -1, "_expand_pat");
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
-  // [ vim, vim._log_keystroke, buf ]
+  // ex expansion prepends a ^, but don't worry, it is not a regex
+  if (pat[0] != '^') {
+    return FAIL;
+  }
+  pat++;
+
+  // [ vim, vim._expand_pat, buf ]
   lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
 
   if (lua_pcall(lstate, 1, 2, 0) != 0) {

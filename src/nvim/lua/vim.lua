@@ -542,8 +542,6 @@ end
 function vim._expand_pat(pat, env)
   env = env or _G
 
-  pat = string.sub(pat, 2, #pat)
-
   if pat == '' then
     local result = vim.tbl_keys(env)
     table.sort(result)
@@ -631,6 +629,21 @@ function vim._expand_pat(pat, env)
   table.sort(keys)
 
   return keys, #prefix_match_pat
+end
+
+-- Ideally we should just call complete() inside omnifunc, though there are
+-- some bugs, so fake the two-step dance for now.
+do local matches
+  function vim.lua_omnifunc(find_start, find_pos)
+    if find_start == 1 then
+      local line = vim.api.nvim_get_current_line()
+      local prefix, pos = string.sub(line, 1, vim.api.nvim_win_get_cursor(0)[2])
+      matches, pos = vim._expand_pat(prefix)
+      return (#matches > 0 and pos) or -1
+    else
+      return matches
+    end
+  end
 end
 
 vim._expand_pat_get_parts = function(lua_string)
