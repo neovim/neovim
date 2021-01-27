@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
-local funcs = helpers.funcs
 local exec_lua = helpers.exec_lua
 
 local get_completions = function(input, env)

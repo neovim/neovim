@@ -1292,7 +1292,10 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "_ts_parse_query");
 }
 
-int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***results)
+int nlua_expand_pat(expand_T *xp,
+                    char_u *pat,
+                    int *num_results,
+                    char_u ***results)
 {
   lua_State *const lstate = nlua_enter();
   int ret = OK;
