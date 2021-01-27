@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2020-01-23
+" Latest Revision:      2020-11-21
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -14,7 +14,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 function! s:ContainedGroup()
-	" needs 7.4.2008 for execute() function
+  " needs 7.4.2008 for execute() function
   let result='TOP'
     " vim-pandoc syntax defines the @langname cluster for embedded syntax languages
     " However, if no syntax is defined yet, `syn list @zsh` will return
@@ -40,16 +40,6 @@ syn iskeyword @,48-57,_,192-255,#,-
 if get(g:, 'zsh_fold_enable', 0)
     setlocal foldmethod=syntax
 endif
-
-syn keyword zshTodo             contained TODO FIXME XXX NOTE
-
-syn region  zshComment          oneline start='\%(^\|\s\+\)#' end='$'
-                                \ contains=zshTodo,@Spell fold
-
-syn region  zshComment          start='^\s*#' end='^\%(\s*#\)\@!'
-                                \ contains=zshTodo,@Spell fold
-
-syn match   zshPreProc          '^\%1l#\%(!\|compdef\|autoload\).*$'
 
 syn match   zshPOSIXQuoted      '\\[xX][0-9a-fA-F]\{1,2}'
 syn match   zshPOSIXQuoted      '\\[0-7]\{1,3}'
@@ -188,11 +178,13 @@ syn match   zshOption /
       \ \%(\%(\<no_\?\)\?casematch\>\)\|\%(\%(no_\?\)\?case_match\>\)\|
       \ \%(\%(\<no_\?\)\?cbases\>\)\|\%(\%(no_\?\)\?c_bases\>\)\|
       \ \%(\%(\<no_\?\)\?cdablevars\>\)\|\%(\%(no_\?\)\?cdable_vars\>\)\|\%(\%(no_\?\)\?cd_able_vars\>\)\|
+      \ \%(\%(\<no_\?\)\?cdsilent\>\)\|\%(\%(no_\?\)\?cd_silent\>\)\|\%(\%(no_\?\)\?cd_silent\>\)\|
       \ \%(\%(\<no_\?\)\?chasedots\>\)\|\%(\%(no_\?\)\?chase_dots\>\)\|
       \ \%(\%(\<no_\?\)\?chaselinks\>\)\|\%(\%(no_\?\)\?chase_links\>\)\|
       \ \%(\%(\<no_\?\)\?checkjobs\>\)\|\%(\%(no_\?\)\?check_jobs\>\)\|
       \ \%(\%(\<no_\?\)\?checkrunningjobs\>\)\|\%(\%(no_\?\)\?check_running_jobs\>\)\|
       \ \%(\%(\<no_\?\)\?clobber\>\)\|
+      \ \%(\%(\<no_\?\)\?clobberempty\>\)\|\%(\%(no_\?\)\?clobber_empty\>\)\|
       \ \%(\%(\<no_\?\)\?combiningchars\>\)\|\%(\%(no_\?\)\?combining_chars\>\)\|
       \ \%(\%(\<no_\?\)\?completealiases\>\)\|\%(\%(no_\?\)\?complete_aliases\>\)\|
       \ \%(\%(\<no_\?\)\?completeinword\>\)\|\%(\%(no_\?\)\?complete_in_word\>\)\|
@@ -333,6 +325,7 @@ syn match   zshOption /
       \ \%(\%(\<no_\?\)\?shnullcmd\>\)\|\%(\%(no_\?\)\?sh_nullcmd\>\)\|
       \ \%(\%(\<no_\?\)\?shoptionletters\>\)\|\%(\%(no_\?\)\?sh_option_letters\>\)\|
       \ \%(\%(\<no_\?\)\?shortloops\>\)\|\%(\%(no_\?\)\?short_loops\>\)\|
+      \ \%(\%(\<no_\?\)\?shortrepeat\>\)\|\%(\%(no_\?\)\?short_repeat\>\)\|
       \ \%(\%(\<no_\?\)\?shwordsplit\>\)\|\%(\%(no_\?\)\?sh_word_split\>\)\|
       \ \%(\%(\<no_\?\)\?singlecommand\>\)\|\%(\%(no_\?\)\?single_command\>\)\|
       \ \%(\%(\<no_\?\)\?singlelinezle\>\)\|\%(\%(no_\?\)\?single_line_zle\>\)\|
@@ -351,6 +344,8 @@ syn match   zshOption /
       \ \%(\%(\<no_\?\)\?xtrace\>\)\|
       \ \%(\%(\<no_\?\)\?zle\>\)/ nextgroup=zshOption,zshComment skipwhite contained
 
+syn case match
+
 syn keyword zshTypes            float integer local typeset declare private readonly
 
 " XXX: this may be too much
@@ -368,7 +363,7 @@ exe 'syn region  zshSubst       matchgroup=zshSubstDelim transparent start=/\$(/
 syn region  zshParentheses      transparent start='(' skip='\\)' end=')' fold
 syn region  zshGlob             start='(#' end=')'
 syn region  zshMathSubst        matchgroup=zshSubstDelim transparent
-                                \ start='\$((' skip='\\)' end='))'
+                                \ start='\%(\$\?\)[<=>]\@<!((' skip='\\)' end='))'
                                 \ contains=zshParentheses,@zshSubst,zshNumber,
                                 \ @zshDerefs,zshString keepend fold
 " The ms=s+1 prevents matching zshBrackets several times on opening brackets
@@ -384,6 +379,16 @@ exe 'syn region  zshOldSubst    matchgroup=zshSubstDelim start=/`/ skip=/\\[\\`]
 syn sync    minlines=50 maxlines=90
 syn sync    match zshHereDocSync    grouphere   NONE '<<-\=\s*\%(\\\=\S\+\|\(["']\)\S\+\1\)'
 syn sync    match zshHereDocEndSync groupthere  NONE '^\s*EO\a\+\>'
+
+syn keyword zshTodo             contained TODO FIXME XXX NOTE
+
+syn region  zshComment          oneline start='\%(^\|\s\+\)#' end='$'
+                                \ contains=zshTodo,@Spell fold
+
+syn region  zshComment          start='^\s*#' end='^\%(\s*#\)\@!'
+                                \ contains=zshTodo,@Spell fold
+
+syn match   zshPreProc          '^\%1l#\%(!\|compdef\|autoload\).*$'
 
 hi def link zshTodo             Todo
 hi def link zshComment          Comment
