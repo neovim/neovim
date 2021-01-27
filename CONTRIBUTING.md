@@ -36,6 +36,7 @@ Developer guidelines
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
+- [Improve documentation][wiki-contribute-help]
 
 Pull requests (PRs)
 ---------------------
@@ -235,3 +236,4 @@ as context, use the `-W` argument as well.
 [Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
+[wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
