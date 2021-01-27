@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2018-07-13
+" Latest Revision:      2020-01-23
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -13,11 +13,30 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-if v:version > 704 || (v:version == 704 && has("patch1142"))
-    syn iskeyword @,48-57,_,192-255,#,-
-else
-    setlocal iskeyword+=-
-endif
+function! s:ContainedGroup()
+	" needs 7.4.2008 for execute() function
+  let result='TOP'
+    " vim-pandoc syntax defines the @langname cluster for embedded syntax languages
+    " However, if no syntax is defined yet, `syn list @zsh` will return
+    " "No syntax items defined", so make sure the result is actually a valid syn cluster
+    for cluster in ['markdownHighlightzsh', 'zsh']
+      try
+      " markdown syntax defines embedded clusters as @markdownhighlight<lang>,
+      " pandoc just uses @<lang>, so check both for both clusters
+        let a=split(execute('syn list @'. cluster), "\n")
+        if len(a) == 2 && a[0] =~# '^---' && a[1] =~? cluster
+          return  '@'. cluster
+        endif
+      catch /E392/
+        " ignore
+      endtry
+    endfor
+    return result
+endfunction
+
+let s:contained=s:ContainedGroup()
+
+syn iskeyword @,48-57,_,192-255,#,-
 if get(g:, 'zsh_fold_enable', 0)
     setlocal foldmethod=syntax
 endif
@@ -32,13 +51,16 @@ syn region  zshComment          start='^\s*#' end='^\%(\s*#\)\@!'
 
 syn match   zshPreProc          '^\%1l#\%(!\|compdef\|autoload\).*$'
 
+syn match   zshPOSIXQuoted      '\\[xX][0-9a-fA-F]\{1,2}'
+syn match   zshPOSIXQuoted      '\\[0-7]\{1,3}'
+syn match   zshPOSIXQuoted      '\\u[0-9a-fA-F]\{1,4}'
+syn match   zshPOSIXQuoted      '\\U[1-9a-fA-F]\{1,8}'
 syn match   zshQuoted           '\\.'
 syn region  zshString           matchgroup=zshStringDelimiter start=+"+ end=+"+
                                 \ contains=zshQuoted,@zshDerefs,@zshSubst fold
 syn region  zshString           matchgroup=zshStringDelimiter start=+'+ end=+'+ fold
-" XXX: This should probably be more precise, but Zsh seems a bit confused about it itself
 syn region  zshPOSIXString      matchgroup=zshStringDelimiter start=+\$'+
-                                \ end=+'+ contains=zshQuoted
+                                \ skip=+\\[\\']+ end=+'+ contains=zshPOSIXQuoted,zshQuoted
 syn match   zshJobSpec          '%\(\d\+\|?\=\w\+\|[%+-]\)'
 
 syn keyword zshPrecommand       noglob nocorrect exec command builtin - time
@@ -342,22 +364,22 @@ syn match   zshNumber           '[+-]\=\d\+\.\d\+\>'
 
 " TODO: $[...] is the same as $((...)), so add that as well.
 syn cluster zshSubst            contains=zshSubst,zshOldSubst,zshMathSubst
-syn region  zshSubst            matchgroup=zshSubstDelim transparent
-                                \ start='\$(' skip='\\)' end=')' contains=TOP fold
+exe 'syn region  zshSubst       matchgroup=zshSubstDelim transparent start=/\$(/ skip=/\\)/ end=/)/ contains='.s:contained. '  fold'
 syn region  zshParentheses      transparent start='(' skip='\\)' end=')' fold
 syn region  zshGlob             start='(#' end=')'
 syn region  zshMathSubst        matchgroup=zshSubstDelim transparent
                                 \ start='\$((' skip='\\)' end='))'
                                 \ contains=zshParentheses,@zshSubst,zshNumber,
                                 \ @zshDerefs,zshString keepend fold
-syn region  zshBrackets         contained transparent start='{' skip='\\}'
+" The ms=s+1 prevents matching zshBrackets several times on opening brackets
+" (see https://github.com/chrisbra/vim-zsh/issues/21#issuecomment-576330348)
+syn region  zshBrackets         contained transparent start='{'ms=s+1 skip='\\}'
                                 \ end='}' fold
-syn region  zshBrackets         transparent start='{' skip='\\}'
-                                \ end='}' contains=TOP fold
+exe 'syn region  zshBrackets    transparent start=/{/ms=s+1 skip=/\\}/ end=/}/ contains='.s:contained. ' fold'
+
 syn region  zshSubst            matchgroup=zshSubstDelim start='\${' skip='\\}'
                                 \ end='}' contains=@zshSubst,zshBrackets,zshQuoted,zshString fold
-syn region  zshOldSubst         matchgroup=zshSubstDelim start=+`+ skip=+\\`+
-                                \ end=+`+ contains=TOP,zshOldSubst fold
+exe 'syn region  zshOldSubst    matchgroup=zshSubstDelim start=/`/ skip=/\\[\\`]/ end=/`/ contains='.s:contained. ',zshOldSubst fold'
 
 syn sync    minlines=50 maxlines=90
 syn sync    match zshHereDocSync    grouphere   NONE '<<-\=\s*\%(\\\=\S\+\|\(["']\)\S\+\1\)'
@@ -367,6 +389,7 @@ hi def link zshTodo             Todo
 hi def link zshComment          Comment
 hi def link zshPreProc          PreProc
 hi def link zshQuoted           SpecialChar
+hi def link zshPOSIXQuoted      SpecialChar
 hi def link zshString           String
 hi def link zshStringDelimiter  zshString
 hi def link zshPOSIXString      zshString
