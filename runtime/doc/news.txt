@@ -189,6 +189,8 @@ The following new APIs or features were added.
   disabled by default and can be enabled by setting the
   `workspace.didChangeWatchedFiles.dynamicRegistration=true` capability.
 
+• Added an omnifunc implementation for lua, |vim.lua_omnifunc()|
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changes*
 
