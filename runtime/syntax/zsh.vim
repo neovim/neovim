@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2018-05-12
+" Latest Revision:      2018-07-13
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -112,7 +112,7 @@ syn keyword zshCommands         alias autoload bg bindkey break bye cap cd
                                 \ enable eval exec exit export false fc fg
                                 \ functions getcap getln getopts hash history
                                 \ jobs kill let limit log logout popd print
-                                \ printf pushd pushln pwd r read readonly
+                                \ printf pushd pushln pwd r read
                                 \ rehash return sched set setcap shift
                                 \ source stat suspend test times trap true
                                 \ ttyctl type ulimit umask unalias unfunction
@@ -125,7 +125,7 @@ syn keyword zshCommands         alias autoload bg bindkey break bye cap cd
 " Create a list of option names from zsh source dir:
 "     #!/bin/zsh
 "    topdir=/path/to/zsh-xxx
-"    grep '^pindex([A-Za-z_]*)$' $topdir/Src/Doc/Zsh/optionsyo |
+"    grep '^pindex([A-Za-z_]*)$' $topdir/Doc/Zsh/options.yo |
 "    while read opt
 "    do
 "        echo ${${(L)opt#pindex\(}%\)}
@@ -136,6 +136,7 @@ syn case ignore
 syn match   zshOptStart /^\s*\%(\%(\%(un\)\?setopt\)\|set\s+[-+]o\)/ nextgroup=zshOption skipwhite
 syn match   zshOption /
       \ \%(\%(\<no_\?\)\?aliases\>\)\|
+      \ \%(\%(\<no_\?\)\?aliasfuncdef\>\)\|\%(\%(no_\?\)\?alias_func_def\>\)\|
       \ \%(\%(\<no_\?\)\?allexport\>\)\|\%(\%(no_\?\)\?all_export\>\)\|
       \ \%(\%(\<no_\?\)\?alwayslastprompt\>\)\|\%(\%(no_\?\)\?always_last_prompt\>\)\|\%(\%(no_\?\)\?always_lastprompt\>\)\|
       \ \%(\%(\<no_\?\)\?alwaystoend\>\)\|\%(\%(no_\?\)\?always_to_end\>\)\|
@@ -168,6 +169,7 @@ syn match   zshOption /
       \ \%(\%(\<no_\?\)\?chasedots\>\)\|\%(\%(no_\?\)\?chase_dots\>\)\|
       \ \%(\%(\<no_\?\)\?chaselinks\>\)\|\%(\%(no_\?\)\?chase_links\>\)\|
       \ \%(\%(\<no_\?\)\?checkjobs\>\)\|\%(\%(no_\?\)\?check_jobs\>\)\|
+      \ \%(\%(\<no_\?\)\?checkrunningjobs\>\)\|\%(\%(no_\?\)\?check_running_jobs\>\)\|
       \ \%(\%(\<no_\?\)\?clobber\>\)\|
       \ \%(\%(\<no_\?\)\?combiningchars\>\)\|\%(\%(no_\?\)\?combining_chars\>\)\|
       \ \%(\%(\<no_\?\)\?completealiases\>\)\|\%(\%(no_\?\)\?complete_aliases\>\)\|
@@ -188,7 +190,7 @@ syn match   zshOption /
       \ \%(\%(\<no_\?\)\?equals\>\)\|
       \ \%(\%(\<no_\?\)\?errexit\>\)\|\%(\%(no_\?\)\?err_exit\>\)\|
       \ \%(\%(\<no_\?\)\?errreturn\>\)\|\%(\%(no_\?\)\?err_return\>\)\|
-      \ \%(\%(\<no_\?\)\?evallineno_\?\)\|\%(\%(no_\?\)\?eval_lineno_\?\)\|
+      \ \%(\%(\<no_\?\)\?evallineno\>\)\|\%(\%(no_\?\)\?eval_lineno\>\)\|
       \ \%(\%(\<no_\?\)\?exec\>\)\|
       \ \%(\%(\<no_\?\)\?extendedglob\>\)\|\%(\%(no_\?\)\?extended_glob\>\)\|
       \ \%(\%(\<no_\?\)\?extendedhistory\>\)\|\%(\%(no_\?\)\?extended_history\>\)\|
@@ -322,6 +324,7 @@ syn match   zshOption /
       \ \%(\%(\<no_\?\)\?unset\>\)\|
       \ \%(\%(\<no_\?\)\?verbose\>\)\|
       \ \%(\%(\<no_\?\)\?vi\>\)\|
+      \ \%(\%(\<no_\?\)\?warnnestedvar\>\)\|\%(\%(no_\?\)\?warn_nested_var\>\)\|
       \ \%(\%(\<no_\?\)\?warncreateglobal\>\)\|\%(\%(no_\?\)\?warn_create_global\>\)\|
       \ \%(\%(\<no_\?\)\?xtrace\>\)\|
       \ \%(\%(\<no_\?\)\?zle\>\)/ nextgroup=zshOption,zshComment skipwhite contained
