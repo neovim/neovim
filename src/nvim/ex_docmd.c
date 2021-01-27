@@ -317,7 +317,9 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   int count = 0;                        /* line number count */
   int did_inc = FALSE;                  /* incremented RedrawingDisabled */
   int retval = OK;
-  cstack_T cstack;                      // conditional stack
+  cstack_T cstack = {                   // conditional stack
+    .cs_idx = -1,
+  };
   garray_T lines_ga;                    // keep lines for ":while"/":for"
   int current_line = 0;                 // active line in lines_ga
   char_u   *fname = NULL;               // function or script name
@@ -360,11 +362,6 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   call_depth++;
   start_batch_changes();
 
-  cstack.cs_idx = -1;
-  cstack.cs_looplevel = 0;
-  cstack.cs_trylevel = 0;
-  cstack.cs_emsg_silent_list = NULL;
-  cstack.cs_lflags = 0;
   ga_init(&lines_ga, (int)sizeof(wcmd_T), 10);
 
   real_cookie = getline_cookie(fgetline, cookie);
