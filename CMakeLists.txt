@@ -208,15 +208,9 @@ main(void)
 
 if(NOT HAS_ACCEPTABLE_FORTIFY)
   message(STATUS "Unsupported _FORTIFY_SOURCE found, forcing _FORTIFY_SOURCE=1")
-  # Extract possible prefix to _FORTIFY_SOURCE (e.g. -Wp,-D_FORTIFY_SOURCE).
-  STRING(REGEX MATCH "[^\ ]+-D_FORTIFY_SOURCE" _FORTIFY_SOURCE_PREFIX "${CMAKE_C_FLAGS}")
-  STRING(REPLACE "-D_FORTIFY_SOURCE" "" _FORTIFY_SOURCE_PREFIX "${_FORTIFY_SOURCE_PREFIX}" )
-  if(NOT _FORTIFY_SOURCE_PREFIX STREQUAL "")
-    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}")
-  endif()
-  # -U in add_definitions doesn't end up in the correct spot, so we add it to
-  # the flags variable instead.
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
+  # Replace all existing (possibly prefixed) occurrences of _FORTIFY_SOURCE in flags
+  # Also add an explicit -U and -D in case the macro wasn't defined on the command line
+  string(REGEX REPLACE "-D_FORTIFY_SOURCE=[^ ]*" "-D_FORTIFY_SOURCE=1" CMAKE_C_FLAGS "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 ${CMAKE_C_FLAGS}")
 endif()
 
 # Remove --sort-common from linker flags, as this seems to cause bugs (see #2641, #3374).
