@@ -1948,8 +1948,7 @@ nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
                     {ns_id}   Namespace id from |nvim_create_namespace()|
                     {id}      Extmark id
                     {opts}    Optional parameters. Keys:
-                              • limit: Maximum number of marks to return
-                              • details Whether to include the details dict
+                              • details: Whether to include the details dict
 
                 Return: ~
                     (row, col) tuple or empty list () if extmark id was absent
