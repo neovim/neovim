@@ -513,8 +513,8 @@ func Test_window_colon_command()
 endfunc
 
 func Test_access_freed_mem()
-  " This was accessing freed memory
-  au * 0 vs xxx
+  " This was accessing freed memory (but with what events?)
+  au BufEnter,BufLeave,WinEnter,WinLeave 0 vs xxx
   arg 0
   argadd
   all
