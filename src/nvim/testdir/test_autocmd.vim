@@ -1279,26 +1279,9 @@ func Test_TextYankPost()
   bwipe!
 endfunc
 
-func Test_nocatch_wipe_all_buffers()
-  " Real nasty autocommand: wipe all buffers on any event.
-  au * * bwipe *
-  call assert_fails('next x', 'E93')
-  bwipe
-  au!
-endfunc
-
-func Test_nocatch_wipe_dummy_buffer()
-  " Nasty autocommand: wipe buffer on any event.
-  au * x bwipe
-  call assert_fails('lv½ /x', 'E480')
-  au!
-endfunc
-
-func Test_wipe_cbuffer()
-  sv x
-  au * * bw
-  lb
-  au!
+func Test_autocommand_all_events()
+  call assert_fails('au * * bwipe', 'E1155:')
+  call assert_fails('au * x bwipe', 'E1155:')
 endfunc
 
 " Test TextChangedI and TextChangedP

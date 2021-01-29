@@ -1009,6 +1009,8 @@ EXTERN char_u e_floatonly[] INIT(=N_(
 EXTERN char_u e_floatexchange[] INIT(=N_(
     "E5602: Cannot exchange or rotate float"));
 
+EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_(
+    "E1155: Cannot define autocommands for ALL events"));
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

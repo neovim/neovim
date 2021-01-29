@@ -22,6 +22,17 @@ func Test_E963()
   call assert_equal(v_o, v:oldfiles)
 endfunc
 
+func Test_for_invalid()
+  call assert_fails("for x in 99", 'E714:')
+  call assert_fails("for x in 'asdf'", 'E714:')
+  call assert_fails("for x in {'a': 9}", 'E714:')
+
+  if 0
+    /1/5/2/s/\n
+  endif
+  redraw
+endfunc
+
 func Test_mkdir_p()
   call mkdir('Xmkdir/nested', 'p')
   call assert_true(isdirectory('Xmkdir/nested'))

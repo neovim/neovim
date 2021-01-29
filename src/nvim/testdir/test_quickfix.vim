@@ -3540,7 +3540,7 @@ func Test_lbuffer_crash()
   sv Xtest
   augroup QF_Test
     au!
-    au * * bw
+    au QuickFixCmdPre,QuickFixCmdPost,BufEnter,BufLeave * bw
   augroup END
   lbuffer
   augroup QF_Test
@@ -3552,7 +3552,7 @@ endfunc
 func Test_lexpr_crash()
   augroup QF_Test
     au!
-    au * * call setloclist(0, [], 'f')
+    au QuickFixCmdPre,QuickFixCmdPost,BufEnter,BufLeave * call setloclist(0, [], 'f')
   augroup END
   lexpr ""
   augroup QF_Test
@@ -3587,7 +3587,7 @@ func Test_lvimgrep_crash()
   sv Xtest
   augroup QF_Test
     au!
-    au * * call setloclist(0, [], 'f')
+    au QuickFixCmdPre,QuickFixCmdPost,BufEnter,BufLeave * call setloclist(0, [], 'f')
   augroup END
   lvimgrep quickfix test_quickfix.vim
   augroup QF_Test
@@ -3889,7 +3889,7 @@ func Test_lbuffer_with_bwipe()
   new
   new
   augroup nasty
-    au * * bwipe
+    au QuickFixCmdPre,QuickFixCmdPost,BufEnter,BufLeave * bwipe
   augroup END
   lbuffer
   augroup nasty
@@ -3902,9 +3902,9 @@ endfunc
 func Xexpr_acmd_freelist(cchar)
   call s:setup_commands(a:cchar)
 
-  " This was using freed memory.
+  " This was using freed memory (but with what events?)
   augroup nasty
-    au * * call g:Xsetlist([], 'f')
+    au QuickFixCmdPre,QuickFixCmdPost,BufEnter,BufLeave * call g:Xsetlist([], 'f')
   augroup END
   Xexpr "x"
   augroup nasty
