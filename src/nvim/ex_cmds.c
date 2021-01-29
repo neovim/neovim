@@ -3126,6 +3126,9 @@ static bool sub_joining_lines(exarg_T *eap, char_u *pat, char_u *sub,
                               || *cmd == 'l'
                               || *cmd == 'p'
                               || *cmd == '#')))) {
+    if (eap->skip) {
+      return true;
+    }
     curwin->w_cursor.lnum = eap->line1;
     if (*cmd == 'l') {
       eap->flags = EXFLAG_LIST;
