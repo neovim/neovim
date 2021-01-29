@@ -313,6 +313,11 @@ static void insert_enter(InsertState *s)
     set_vim_var_string(VV_CHAR, NULL, -1);
     ins_apply_autocmds(EVENT_INSERTENTER);
 
+    // Check for changed highlighting, e.g. for ModeMsg.
+    if (need_highlight_changed) {
+      highlight_changed();
+    }
+
     // Make sure the cursor didn't move.  Do call check_cursor_col() in
     // case the text was modified.  Since Insert mode was not started yet
     // a call to check_cursor_col() may move the cursor, especially with
