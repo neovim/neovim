@@ -39,7 +39,8 @@ endfunc
 
 func GetCompilerNames()
   return glob('$VIMRUNTIME/compiler/*.vim', 0, 1)
-        \ ->map({k, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')})
+        \ ->map({i, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')})
+        \ ->sort()
 endfunc
 
 func Test_compiler_without_arg()
