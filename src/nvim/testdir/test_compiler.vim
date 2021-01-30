@@ -38,9 +38,10 @@ func Test_compiler()
 endfunc
 
 func GetCompilerNames()
-  return glob('$VIMRUNTIME/compiler/*.vim', 0, 1)
-        \ ->map({i, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')})
-        \ ->sort()
+  " return glob('$VIMRUNTIME/compiler/*.vim', 0, 1)
+  "      \ ->map({i, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')})
+  "      \ ->sort()
+  return sort(map(glob('$VIMRUNTIME/compiler/*.vim', 0, 1), {i, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')}))
 endfunc
 
 func Test_compiler_without_arg()
@@ -53,7 +54,8 @@ func Test_compiler_without_arg()
 endfunc
 
 func Test_compiler_completion()
-  let clist = GetCompilerNames()->join(' ')
+  " let clist = GetCompilerNames()->join(' ')
+  let clist = join(GetCompilerNames(), ' ')
   call feedkeys(":compiler \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"compiler ' .. clist .. '$', @:)
 
