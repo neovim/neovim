@@ -28,16 +28,16 @@ tasks:
     mkdir neovim/.deps
     cd neovim/.deps
     cmake -G Ninja ../third-party/
-    cmake --build . --config Debug
+    cmake --build . --config RelWithDebInfo
 - build: |
     mkdir neovim/build
     cd neovim/build
     cmake -G Ninja $CMAKE_EXTRA_FLAGS ..
-    cmake --build . --config Debug
+    cmake --build . --config RelWithDebInfo
     ./bin/nvim --version
 - functionaltest: |
     cd neovim/build
-    cmake --build . --config Debug --target functionaltest
+    cmake --build . --config RelWithDebInfo --target functionaltest
 - oldtest: |
     cd neovim
     gmake oldtest
