@@ -12,6 +12,7 @@ compile_commands.json
 /.deps/
 /tmp/
 /.clangd/
+/.cache/clangd/
 
 .DS_Store
 *.mo
