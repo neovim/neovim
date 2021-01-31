@@ -2521,7 +2521,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
       break;
     }
     case VAR_UNKNOWN: {
-      assert(false);
+      abort();
     }
   }
 #undef CHANGE_LOCK
@@ -2693,7 +2693,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
     }
   }
 
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2746,7 +2746,7 @@ bool tv_check_str_or_nr(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2791,7 +2791,7 @@ bool tv_check_num(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2836,7 +2836,7 @@ bool tv_check_str(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 

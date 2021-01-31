@@ -3307,7 +3307,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       break;
     case kCdScopeInvalid:     // We should never get here
-      assert(false);
+      abort();
   }
 
   if (from) {
@@ -4360,7 +4360,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     case kCdScopeInvalid:
       // We should never get here
-      assert(false);
+      abort();
   }
 }
 

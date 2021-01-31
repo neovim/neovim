@@ -6383,7 +6383,7 @@ int hist_type2char(int type)
       return '>';
     }
     default: {
-      assert(false);
+      abort();
     }
   }
   return NUL;

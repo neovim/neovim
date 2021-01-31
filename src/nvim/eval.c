@@ -365,7 +365,7 @@ void eval_init(void)
     eval_msgpack_type_lists[i] = type_list;
     if (tv_dict_add(msgpack_types_dict, di) == FAIL) {
       // There must not be duplicate items in this dictionary by definition.
-      assert(false);
+      abort();
     }
   }
   msgpack_types_dict->dv_lock = VAR_FIXED;

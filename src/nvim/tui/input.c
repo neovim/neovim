@@ -297,7 +297,7 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
       len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
       break;
     case TERMKEY_MOUSE_UNKNOWN:
-      assert(false);
+      abort();
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);

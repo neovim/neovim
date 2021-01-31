@@ -1595,7 +1595,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, bool changed_window)
     }
     case kCdScopeInvalid: {
       // Should never happen.
-      assert(false);
+      abort();
     }
   }
 

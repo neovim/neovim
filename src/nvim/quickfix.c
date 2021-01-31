@@ -5648,7 +5648,7 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
           == FAIL)) {
     // tv_dict_add* fail only if key already exist, but this is a newly
     // allocated dictionary which is thus guaranteed to have no existing keys.
-    assert(false);
+    abort();
   }
 
   return OK;

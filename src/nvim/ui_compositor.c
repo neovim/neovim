@@ -157,7 +157,7 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
 #ifndef NDEBUG
     for (size_t i = 0; i < kv_size(layers); i++) {
       if (kv_A(layers, i) == grid) {
-        assert(false);
+        abort();
       }
     }
 #endif

@@ -97,7 +97,7 @@ void os_microdelay(uint64_t us, bool ignoreinput)
 
     const int rv = uv_cond_timedwait(&delay_cond, &delay_mutex, ns_delta);
     if (0 != rv && UV_ETIMEDOUT != rv) {
-      assert(false);
+      abort();
       break;
     }  // Else: Timeout proceeded normally.
 

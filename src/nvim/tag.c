@@ -1461,7 +1461,7 @@ find_tags(
       p_ic = ignorecase_opt(pat, true, true);
       break;
     default:
-      assert(false);
+      abort();
   }
 
   help_save = curbuf->b_help;
