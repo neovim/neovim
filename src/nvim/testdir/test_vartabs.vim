@@ -5,11 +5,11 @@ if !has("vartabs")
 endif
 
 source view_util.vim
-function! s:compare_lines(expect, actual)
+func s:compare_lines(expect, actual)
   call assert_equal(join(a:expect, "\n"), join(a:actual, "\n"))
-endfunction
+endfunc
 
-func! Test_vartabs()
+func Test_vartabs()
   new
   %d
 
@@ -261,7 +261,7 @@ func! Test_vartabs_breakindent()
   bwipeout!
 endfunc
 
-func! Test_vartabs_linebreak()
+func Test_vartabs_linebreak()
   if winwidth(0) < 40
     return
   endif
@@ -295,4 +295,15 @@ func! Test_vartabs_linebreak()
   bw!
   bw!
   set nolist listchars&vim
+endfunc
+
+func Test_vartabs_failures()
+  call assert_fails('set vts=8,')
+  call assert_fails('set vsts=8,')
+  call assert_fails('set vts=8,,8')
+  call assert_fails('set vsts=8,,8')
+  call assert_fails('set vts=8,,8,')
+  call assert_fails('set vsts=8,,8,')
+  call assert_fails('set vts=,8')
+  call assert_fails('set vsts=,8')
 endfunc

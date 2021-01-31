@@ -7083,14 +7083,15 @@ bool tabstop_set(char_u *var, long **array)
   int t;
   char_u *cp;
 
-  if ((!var[0] || (var[0] == '0' && !var[1]))) {
+  if (var[0] == NUL || (var[0] == '0' && var[1] == NUL)) {
     *array = NULL;
     return true;
   }
 
-  for (cp = var; *cp; cp++) {
-    if (cp == var || *(cp - 1) == ',') {
+  for (cp = var; *cp != NUL; cp++) {
+    if (cp == var || cp[-1] == ',') {
       char_u *end;
+
       if (strtol((char *)cp, (char **)&end, 10) <= 0) {
         if (cp != end) {
           EMSG(_(e_positive));
@@ -7104,7 +7105,7 @@ bool tabstop_set(char_u *var, long **array)
     if (ascii_isdigit(*cp)) {
       continue;
     }
-    if (*cp == ',' && cp > var && *(cp - 1) != ',') {
+    if (cp[0] == ',' && cp > var && cp[-1] != ',' && cp[1] != NUL) {
       valcount++;
       continue;
     }
@@ -7116,12 +7117,12 @@ bool tabstop_set(char_u *var, long **array)
   (*array)[0] = valcount;
 
   t = 1;
-  for (cp = var; *cp;) {
+  for (cp = var; *cp != NUL;) {
     (*array)[t++] = atoi((char *)cp);
-    while (*cp && *cp != ',') {
+    while (*cp  != NUL && *cp != ',') {
       cp++;
     }
-    if (*cp) {
+    if (*cp != NUL) {
       cp++;
     }
   }
