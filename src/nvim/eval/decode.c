@@ -147,7 +147,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       tv_clear(&key.val);
       if (tv_dict_add(last_container.container.vval.v_dict, obj_di)
           == FAIL) {
-        assert(false);
+        abort();
       }
       obj_di->di_tv = obj.val;
     } else {
@@ -480,7 +480,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
           break;
         }
         default: {
-          assert(false);
+          abort();
         }
       }
     } else {

@@ -52,6 +52,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   uv_connect_t *out_req = NULL;
   wchar_t *cmd_line = NULL;
   wchar_t *cwd = NULL;
+  wchar_t *env = NULL;
   const char *emsg = NULL;
 
   assert(proc->err.closed);
@@ -124,13 +125,22 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto cleanup;
   }
 
+  if (proc->env != NULL) {
+    status = build_env_block(proc->env, &env);
+  }
+
+  if (status != 0) {
+    emsg = "build_env_block failed";
+    goto cleanup;
+  }
+
   if (ptyproc->type == kConpty) {
     if (!os_conpty_spawn(conpty_object,
                          &process_handle,
                          NULL,
                          cmd_line,
                          cwd,
-                         NULL)) {
+                         env)) {
       emsg = "os_conpty_spawn failed";
       status = (int)GetLastError();
       goto cleanup;
@@ -141,7 +151,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
         NULL,  // Optional application name
         cmd_line,
         cwd,
-        NULL,  // Optional environment variables
+        env,
         &err);
     if (spawncfg == NULL) {
       emsg = "winpty_spawn_config_new failed";
@@ -213,6 +223,7 @@ cleanup:
   xfree(in_req);
   xfree(out_req);
   xfree(cmd_line);
+  xfree(env);
   xfree(cwd);
   return status;
 }
@@ -453,4 +464,67 @@ int translate_winpty_error(int winpty_errno)
     case WINPTY_ERROR_AGENT_CREATION_FAILED:        return UV_EAI_FAIL;
     default:                                        return UV_UNKNOWN;
   }
+}
+
+typedef struct EnvNode {
+  wchar_t *str;
+  size_t len;
+  QUEUE node;
+} EnvNode;
+
+/// Build the environment block to pass to CreateProcessW.
+///
+/// @param[in]  denv  Dict of environment name/value pairs
+/// @param[out]  env  Allocated environment block
+///
+/// @returns zero on success or error code of MultiByteToWideChar function.
+static int build_env_block(dict_T *denv, wchar_t **env_block)
+{
+  const size_t denv_size = (size_t)tv_dict_len(denv);
+  size_t env_block_len = 0;
+  int rc;
+  char **env = tv_dict_to_env(denv);
+
+  QUEUE *q;
+  QUEUE env_q;
+  QUEUE_INIT(&env_q);
+  // Convert env vars to wchar_t and calculate how big the final env block
+  // needs to be
+  for (size_t i = 0; i < denv_size; i++) {
+    EnvNode *env_node = xmalloc(sizeof(*env_node));
+    rc = utf8_to_utf16(env[i], -1, &env_node->str);
+    if (rc != 0) {
+      goto cleanup;
+    }
+    env_node->len = wcslen(env_node->str) + 1;
+    env_block_len += env_node->len;
+    QUEUE_INSERT_TAIL(&env_q, &env_node->node);
+  }
+
+  // Additional '\0' after the final entry
+  env_block_len++;
+
+  *env_block = xmalloc(sizeof(**env_block) * env_block_len);
+  wchar_t *pos = *env_block;
+
+  QUEUE_FOREACH(q, &env_q) {
+    EnvNode *env_node = QUEUE_DATA(q, EnvNode, node);
+    memcpy(pos, env_node->str, env_node->len * sizeof(*pos));
+    pos += env_node->len;
+  }
+
+  *pos = L'\0';
+
+cleanup:
+  q = QUEUE_HEAD(&env_q);
+  while (q != &env_q) {
+    QUEUE *next = q->next;
+    EnvNode *env_node = QUEUE_DATA(q, EnvNode, node);
+    XFREE_CLEAR(env_node->str);
+    QUEUE_REMOVE(q);
+    xfree(env_node);
+    q = next;
+  }
+
+  return rc;
 }

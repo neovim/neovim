@@ -20,6 +20,10 @@
 # include <pty.h>
 #endif
 
+#ifdef __APPLE__
+# include <crt_externs.h>
+#endif
+
 #include <uv.h>
 
 #include "nvim/lib/klist.h"
@@ -154,27 +158,13 @@ void pty_process_teardown(Loop *loop)
 static void init_child(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
+#if defined(HAVE__NSGETENVIRON)
+#define environ (*_NSGetEnviron())
+#else
+  extern char **environ;
+#endif
   // New session/process-group. #6530
   setsid();
-
-  os_unsetenv("COLUMNS");
-  os_unsetenv("LINES");
-  os_unsetenv("TERMCAP");
-  os_unsetenv("COLORFGBG");
-  // setting COLORTERM to "truecolor" if termguicolors is set and 256
-  // otherwise, but only if it was set in the parent terminal at all
-  if (os_env_exists("COLORTERM")) {
-    const char *colorterm = os_getenv("COLORTERM");
-    if (colorterm != NULL) {
-      if (p_tgc) {
-        os_setenv("COLORTERM", "truecolor", 1);
-      } else {
-        os_setenv("COLORTERM", "256", 1);
-      }
-    } else {
-      os_unsetenv("COLORTERM");
-    }
-  }
 
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
@@ -190,9 +180,14 @@ static void init_child(PtyProcess *ptyproc)
   }
 
   char *prog = ptyproc->process.argv[0];
-  os_setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
-  execvp(prog, ptyproc->process.argv);
+
+  assert(proc->env);
+  tv_dict_add_str(proc->env, S_LEN("TERM"),
+                  ptyproc->term_name ? ptyproc->term_name : "ansi");
+  environ = tv_dict_to_env(proc->env);
+  execvp(prog, proc->argv);
   ELOG("execvp failed: %s: %s", strerror(errno), prog);
+
   _exit(122);  // 122 is EXEC_FAILED in the Vim source.
 }
 

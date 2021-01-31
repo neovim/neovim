@@ -3270,7 +3270,7 @@ void maketitle(void)
         case 6: buf_p = strappend(buf_p, " -"); break;
         case 5:
         case 7: buf_p = strappend(buf_p, " -+"); break;
-        default: assert(false);
+        default: abort();
       }
 
       if (curbuf->b_fname != NULL) {

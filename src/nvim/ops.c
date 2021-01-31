@@ -2623,7 +2623,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     }
     // NOTREACHED
     case kMTUnknown:
-        assert(false);
+        abort();
     }
   }
 
@@ -6092,7 +6092,7 @@ static void set_clipboard(int name, yankreg_T *reg)
       break;
     }
     case kMTUnknown: {
-      assert(false);
+      abort();
     }
   }
 

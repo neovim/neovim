@@ -7591,7 +7591,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
     curwin->w_localdir = (char_u *)xstrdup(cwd);
     break;
   case kCdScopeInvalid:
-    assert(false);
+    abort();
   }
 
   shorten_fnames(true);

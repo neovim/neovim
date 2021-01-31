@@ -31,9 +31,9 @@ describe('jobs', function()
     nvim('set_var', 'channel', channel)
     source([[
     function! Normalize(data) abort
-      " Windows: remove ^M
+      " Windows: remove ^M and term escape sequences
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(v:val, "\r", "", "g")')
+        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict
@@ -63,6 +63,7 @@ describe('jobs', function()
 
   it('append environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     if iswin() then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
@@ -75,8 +76,24 @@ describe('jobs', function()
     })
   end)
 
+  it('append environment with pty #env', function()
+    nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
+    nvim('command', "let g:job_opts.pty = v:true")
+    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
+    if iswin() then
+      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+    else
+      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+    end
+    expect_msg_seq({
+      {'notification', 'stdout', {0, {'hello world abc', ''}}},
+    })
+  end)
+
   it('replace environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     nvim('command', "let g:job_opts.clear_env = 1")
 

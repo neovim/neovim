@@ -1523,6 +1523,33 @@ varnumber_T tv_dict_get_number(const dict_T *const d, const char *const key)
   return tv_get_number(&di->di_tv);
 }
 
+/// Converts a dict to an environment
+///
+///
+char **tv_dict_to_env(dict_T *denv)
+{
+  size_t env_size = (size_t)tv_dict_len(denv);
+
+  size_t i = 0;
+  char **env = NULL;
+
+  // + 1 for NULL
+  env = xmalloc((env_size + 1) * sizeof(*env));
+
+  TV_DICT_ITER(denv, var, {
+    const char *str = tv_get_string(&var->di_tv);
+    assert(str);
+    size_t len = STRLEN(var->di_key) + strlen(str) + strlen("=") + 1;
+    env[i] = xmalloc(len);
+    snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
+    i++;
+  });
+
+  // must be null terminated
+  env[env_size] = NULL;
+  return env;
+}
+
 /// Get a string item from a dictionary
 ///
 /// @param[in]  d  Dictionary to get item from.
@@ -2494,7 +2521,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
       break;
     }
     case VAR_UNKNOWN: {
-      assert(false);
+      abort();
     }
   }
 #undef CHANGE_LOCK
@@ -2666,7 +2693,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
     }
   }
 
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2719,7 +2746,7 @@ bool tv_check_str_or_nr(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2764,7 +2791,7 @@ bool tv_check_num(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2809,7 +2836,7 @@ bool tv_check_str(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 
