@@ -2650,6 +2650,13 @@ func Test_vimgrep()
   call XvimgrepTests('l')
 endfunc
 
+func Test_vimgrep_wildcards_expanded_once()
+  new X[id-01] file.txt
+  call setline(1, 'some text to search for')
+  vimgrep text %
+  bwipe!
+endfunc
+
 " Test for incsearch highlighting of the :vimgrep pattern
 " This test used to cause "E315: ml_get: invalid lnum" errors.
 func Test_vimgrep_incsearch()
