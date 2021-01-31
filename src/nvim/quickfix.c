@@ -5264,7 +5264,7 @@ void ex_vimgrep(exarg_T *eap)
     qf_new_list(qi, title);
   }
 
-  // parse the list of arguments
+  // Parse the list of arguments, wildcards have already been expanded.
   if (get_arglist_exp(p, &fcount, &fnames, true) == FAIL) {
     goto theend;
   }

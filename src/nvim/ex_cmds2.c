@@ -1639,10 +1639,10 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 
   if (wig) {
     i = expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
-                         fcountp, fnamesp, EW_FILE|EW_NOTFOUND);
+                         fcountp, fnamesp, EW_FILE|EW_NOTFOUND|EW_NOTWILD);
   } else {
     i = gen_expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
-                             fcountp, fnamesp, EW_FILE|EW_NOTFOUND);
+                             fcountp, fnamesp, EW_FILE|EW_NOTFOUND|EW_NOTWILD);
   }
 
   ga_clear(&ga);
