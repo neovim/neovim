@@ -8189,6 +8189,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
                 && (*(get_cursor_pos_ptr() - 1) == TAB
                     || (*(get_cursor_pos_ptr() - 1) == ' '
                         && (!*inserted_space_p || arrow_used)))))) {
+      int ts;
       colnr_T vcol;
       colnr_T want_vcol;
       colnr_T start_vcol;
@@ -8203,7 +8204,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       getvcol(curwin, &curwin->w_cursor, NULL, NULL, &want_vcol);
       inc_cursor();
       if (p_sta && in_indent) {
-        want_vcol = (want_vcol / curbuf->b_p_sw) * curbuf->b_p_sw;
+        ts = (int)get_sw_value(curbuf);
+        want_vcol = (want_vcol / ts) * ts;
       } else {
         want_vcol = tabstop_start(want_vcol,
                                   get_sts_value(),
@@ -8700,7 +8702,7 @@ static bool ins_tab(void)
   AppendToRedobuff("\t");
 
   if (p_sta && ind) {  // insert tab in indent, use 'shiftwidth'
-    temp = (int)curbuf->b_p_sw;
+    temp = (int)get_sw_value(curbuf);
     temp -= get_nolist_virtcol() % temp;
   } else if (tabstop_count(curbuf->b_p_vsts_array) > 0
              || curbuf->b_p_sts != 0) {

@@ -76,6 +76,15 @@ func Test_softtabstop()
   exe "normal A\<BS>x\<Esc>"
   call assert_equal("x   x", getline(1))
 
-  set sts=0 sw=0 backspace&
+  call setline(1, 'x')
+  set sts=-1 sw=0 smarttab
+  exe "normal I\<Tab>\<Esc>"
+  call assert_equal("\tx", getline(1))
+
+  call setline(1, 'x')
+  exe "normal I\<Tab>\<BS>\<Esc>"
+  call assert_equal("x", getline(1))
+
+  set sts=0 sw=0 backspace& nosmarttab
   bwipe!
 endfunc
