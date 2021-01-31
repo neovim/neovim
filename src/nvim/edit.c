@@ -8206,7 +8206,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         want_vcol = (want_vcol / curbuf->b_p_sw) * curbuf->b_p_sw;
       } else {
         want_vcol = tabstop_start(want_vcol,
-                                  curbuf->b_p_sts,
+                                  get_sts_value(),
                                   curbuf->b_p_vsts_array);
       }
 
@@ -8703,10 +8703,10 @@ static bool ins_tab(void)
     temp = (int)curbuf->b_p_sw;
     temp -= get_nolist_virtcol() % temp;
   } else if (tabstop_count(curbuf->b_p_vsts_array) > 0
-             || curbuf->b_p_sts > 0) {
+             || curbuf->b_p_sts != 0) {
     // use 'softtabstop' when set
     temp = tabstop_padding(get_nolist_virtcol(),
-                           curbuf->b_p_sts,
+                           get_sts_value(),
                            curbuf->b_p_vsts_array);
   } else {
     // otherwise use 'tabstop'

@@ -1,3 +1,4 @@
+" Various tests for inserting a Tab.
 
 " Tests for "r<Tab>" with 'smarttab' and 'expandtab' set/not set.
 " Also test that dv_ works correctly
@@ -42,4 +43,39 @@ func Test_smarttab()
   call assert_equal('  with whitespace', getline('.'))
   enew!
   set expandtab& smartindent& copyindent& ts& sw& sts&
+endfunc
+
+func Test_softtabstop()
+  new
+  set sts=0 sw=0
+  exe "normal ix\<Tab>x\<Esc>"
+  call assert_equal("x\tx", getline(1))
+
+  call setline(1, '')
+  set sts=4
+  exe "normal ix\<Tab>x\<Esc>"
+  call assert_equal("x   x", getline(1))
+
+  call setline(1, '')
+  set sts=-1 sw=4
+  exe "normal ix\<Tab>x\<Esc>"
+  call assert_equal("x   x", getline(1))
+
+  call setline(1, 'x       ')
+  set sts=0 sw=0 backspace=start
+  exe "normal A\<BS>x\<Esc>"
+  call assert_equal("x      x", getline(1))
+
+  call setline(1, 'x       ')
+  set sts=4
+  exe "normal A\<BS>x\<Esc>"
+  call assert_equal("x   x", getline(1))
+
+  call setline(1, 'x       ')
+  set sts=-1 sw=4
+  exe "normal A\<BS>x\<Esc>"
+  call assert_equal("x   x", getline(1))
+
+  set sts=0 sw=0 backspace&
+  bwipe!
 endfunc
