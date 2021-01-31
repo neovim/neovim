@@ -262,21 +262,37 @@ func! Test_vartabs_breakindent()
 endfunc
 
 func! Test_vartabs_linebreak()
-  if winwidth(0) < 80
+  if winwidth(0) < 40
     return
   endif
   new
-  70vnew
+  40vnew
   %d
-  setl linebreak vartabstop=10,15,20,40
+  setl linebreak vartabstop=10,20,30,40
   call setline(1, "\tx\tx\tx\tx")
 
-  let lines = ScreenLines([1, 2], winwidth(0))
-  let expect = ['          x              x                   x                        ',
-        \       '               x                                                      ']
+  let expect = ['          x                             ',
+        \       'x                   x                   ',
+        \       'x                                       ']
+  let lines = ScreenLines([1, 3], winwidth(0))
+  call s:compare_lines(expect, lines)
+  setl list listchars=tab:>-
+  let expect = ['>---------x>------------------          ',
+        \       'x>------------------x>------------------',
+        \       'x                                       ']
+  let lines = ScreenLines([1, 3], winwidth(0))
+  call s:compare_lines(expect, lines)
+  setl linebreak vartabstop=40
+  let expect = ['>---------------------------------------',
+        \       'x>--------------------------------------',
+        \       'x>--------------------------------------',
+        \       'x>--------------------------------------',
+        \       'x                                       ']
+  let lines = ScreenLines([1, 5], winwidth(0))
   call s:compare_lines(expect, lines)
 
   " cleanup
   bw!
   bw!
+  set nolist listchars&vim
 endfunc

@@ -3543,6 +3543,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
+              if (*p == NUL) {
+                tab_len = i;
+                break;
+              }
               int lcs = wp->w_p_lcs_chars.tab2;
 
               // if tab3 is given, need to change the char

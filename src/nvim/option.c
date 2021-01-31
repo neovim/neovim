@@ -7215,7 +7215,7 @@ colnr_T tabstop_start(colnr_T col, long ts, long *vts)
 // to another.
 void tabstop_fromto(colnr_T start_col,
                     colnr_T end_col,
-                    long ts,
+                    long ts_arg,
                     long *vts,
                     int *ntabs,
                     int *nspcs)
@@ -7225,10 +7225,13 @@ void tabstop_fromto(colnr_T start_col,
   int padding = 0;
   int tabcount;
   int t;
+  long ts = ts_arg == 0 ? curbuf->b_p_ts : ts_arg;
 
   if (vts == NULL || vts[0] == 0) {
     int tabs = 0;
-    int initspc = (int)ts - (start_col % (int)ts);
+    int initspc = 0;
+
+    initspc = (int)ts - (start_col % (int)ts);
     if (spaces >= initspc) {
       spaces -= initspc;
       tabs++;

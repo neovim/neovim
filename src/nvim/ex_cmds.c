@@ -853,7 +853,6 @@ void ex_retab(exarg_T *eap)
     if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
       set_string_option_direct("vts", -1, new_ts_str,
                                OPT_FREE | OPT_LOCAL, 0);
-      xfree(new_ts_str);
       curbuf->b_p_vts_array = new_vts_array;
       xfree(old_vts_ary);
     } else {
@@ -862,6 +861,7 @@ void ex_retab(exarg_T *eap)
       curbuf->b_p_ts = tabstop_first(new_vts_array);
       xfree(new_vts_array);
     }
+    xfree(new_ts_str);
   }
   coladvance(curwin->w_curswant);
 
