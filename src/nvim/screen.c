@@ -3441,8 +3441,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
           if (c == TAB && n_extra + col > grid->Columns) {
-            n_extra = (int)wp->w_buffer->b_p_ts
-                      - vcol % (int)wp->w_buffer->b_p_ts - 1;
+            n_extra = tabstop_padding(vcol, wp->w_buffer->b_p_ts,
+                                      wp->w_buffer->b_p_vts_array) - 1;
           }
           c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
           c_final = NUL;

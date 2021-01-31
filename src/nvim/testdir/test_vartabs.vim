@@ -4,6 +4,11 @@ if !has("vartabs")
   finish
 endif
 
+source view_util.vim
+function! s:compare_lines(expect, actual)
+  call assert_equal(join(a:expect, "\n"), join(a:actual, "\n"))
+endfunction
+
 func! Test_vartabs()
   new
   %d
@@ -254,4 +259,24 @@ func! Test_vartabs_breakindent()
   bwipeout!
 
   bwipeout!
+endfunc
+
+func! Test_vartabs_linebreak()
+  if winwidth(0) < 80
+    return
+  endif
+  new
+  70vnew
+  %d
+  setl linebreak vartabstop=10,15,20,40
+  call setline(1, "\tx\tx\tx\tx")
+
+  let lines = ScreenLines([1, 2], winwidth(0))
+  let expect = ['          x              x                   x                        ',
+        \       '               x                                                      ']
+  call s:compare_lines(expect, lines)
+
+  " cleanup
+  bw!
+  bw!
 endfunc
