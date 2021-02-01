@@ -1,6 +1,6 @@
-local tbl = {}
+local utils = {}
 
-function tbl.apply_defaults(original, defaults)
+function utils.tbl_apply_defaults(original, defaults)
   if original == nil then
     original = {}
   end
@@ -16,4 +16,4 @@ function tbl.apply_defaults(original, defaults)
   return original
 end
 
-return tbl
+return utils

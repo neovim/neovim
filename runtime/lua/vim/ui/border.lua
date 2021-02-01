@@ -1,4 +1,4 @@
-local tbl = require('vim.ui.ui_table')
+local utils = require('vim.ui._utils')
 
 local Border = {}
 
@@ -87,7 +87,7 @@ function Border:new(content_bufnr, content_win_id, content_win_options, border_w
   assert(type(content_win_id) == 'number', "Must supply a valid win_id. It's possible you forgot to call with ':'")
 
   -- TODO: Probably can use just deep_extend, now that it's available
-  border_win_options = tbl.apply_defaults(border_win_options, {
+  border_win_options = utils.tbl_apply_defaults(border_win_options, {
     border_thickness = Border._default_thickness,
 
     -- Border options, could be passed as a list?

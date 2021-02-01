@@ -1,5 +1,5 @@
 local Border = require('vim.ui.border')
-local tbl = require('vim.ui.ui_table')
+local utils = require('vim.ui._utils')
 
 _AssociatedBufs = {}
 
@@ -22,7 +22,7 @@ win_float.default_options = {
 }
 
 function win_float.default_opts(options)
-  options = tbl.apply_defaults(options, win_float.default_options)
+  options = utils.tbl_apply_defaults(options, win_float.default_options)
 
   local width = math.floor(vim.o.columns * options.percentage)
   local height = math.floor(vim.o.lines * options.percentage)
@@ -43,7 +43,7 @@ function win_float.default_opts(options)
 end
 
 function win_float.centered(options)
-  options = tbl.apply_defaults(options, win_float.default_options)
+  options = utils.tbl_apply_defaults(options, win_float.default_options)
 
   local win_opts = win_float.default_opts(options)
 
@@ -67,7 +67,7 @@ function win_float.centered(options)
 end
 
 function win_float.centered_with_top_win(top_text, options)
-  options = tbl.apply_defaults(options, win_float.default_options)
+  options = utils.tbl_apply_defaults(options, win_float.default_options)
 
   table.insert(top_text, 1, string.rep("=", 80))
   table.insert(top_text, string.rep("=", 80))
@@ -138,7 +138,7 @@ end
 --                  If number, then center the window taking up this percentage of the screen.
 --                  If table, first index should be start, second_index should be end
 function win_float.percentage_range_window(col_range, row_range, options)
-  options = tbl.apply_defaults(options, win_float.default_options)
+  options = utils.tbl_apply_defaults(options, win_float.default_options)
 
   local win_opts = win_float.default_opts(options)
   win_opts.relative = "editor"
