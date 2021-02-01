@@ -1,7 +1,7 @@
 local Border = require('vim.ui.border')
 local utils = require('vim.ui._utils')
 
-_AssociatedBufs = {}
+_NvimUI_AssociatedBufs = {}
 
 
 local clear_buf_on_leave = function(bufnr)
@@ -113,7 +113,7 @@ function win_float.centered_with_top_win(top_text, options)
   local primary_border = Border:new(primary_bufnr, primary_win_id, primary_win_opts, {})
   local minor_border = Border:new(minor_bufnr, minor_win_id, minor_win_opts, {})
 
-  _AssociatedBufs[primary_bufnr] = {
+  _NvimUI_AssociatedBufs[primary_bufnr] = {
     primary_win_id, minor_win_id, primary_border.win_id, minor_border.win_id
   }
 
@@ -184,7 +184,7 @@ function win_float.percentage_range_window(col_range, row_range, options)
 
   local border = Border:new(bufnr, win_id, win_opts, {})
 
-  _AssociatedBufs[bufnr] = { win_id, border.win_id, }
+  _NvimUI_AssociatedBufs[bufnr] = { win_id, border.win_id, }
 
   clear_buf_on_leave(bufnr)
 
@@ -198,17 +198,17 @@ function win_float.percentage_range_window(col_range, row_range, options)
 end
 
 function win_float.clear(bufnr)
-  if _AssociatedBufs[bufnr] == nil then
+  if _NvimUI_AssociatedBufs[bufnr] == nil then
     return
   end
 
-  for _, win_id in ipairs(_AssociatedBufs[bufnr]) do
+  for _, win_id in ipairs(_NvimUI_AssociatedBufs[bufnr]) do
     if vim.api.nvim_win_is_valid(win_id) then
       vim.fn.nvim_win_close(win_id, true)
     end
   end
 
-  _AssociatedBufs[bufnr] = nil
+  _NvimUI_AssociatedBufs[bufnr] = nil
 end
 
 return win_float
