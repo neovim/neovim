@@ -1956,10 +1956,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   }
   buf->b_p_vsts_array = NULL;
   clear_string_option(&buf->b_p_vts);
-  if (buf->b_p_vts_array) {
-    xfree(buf->b_p_vts_array);
-  }
-  buf->b_p_vts_array = NULL;
+  XFREE_CLEAR(buf->b_p_vts_array);
   clear_string_option(&buf->b_p_keymap);
   keymap_ga_clear(&buf->b_kmap_ga);
   ga_clear(&buf->b_kmap_ga);

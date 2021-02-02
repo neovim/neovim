@@ -3139,9 +3139,7 @@ ambw_end:
       if (errmsg == NULL) {
         long *oldarray = curbuf->b_p_vsts_array;
         if (tabstop_set(*varp, &(curbuf->b_p_vsts_array))) {
-          if (oldarray) {
-            xfree(oldarray);
-          }
+          xfree(oldarray);
         } else {
           errmsg = e_invarg;
         }
