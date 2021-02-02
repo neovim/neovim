@@ -73,7 +73,8 @@ static garray_T ga_users = GA_EMPTY_INIT_VALUE;
  * If "include_space" is set, include trailing whitespace while calculating the
  * length.
  */
-int get_leader_len(char_u *line, char_u **flags, int backward, int include_space)
+int get_leader_len(char_u *line, char_u **flags,
+                   bool backward, bool include_space)
 {
   int i, j;
   int result;
@@ -277,7 +278,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
         // whitespace.  Otherwise we would think we are inside a
         // comment if the middle part appears somewhere in the middle
         // of the line.  E.g. for C the "*" appears often.
-        for (j = 0; ascii_iswhite(line[j]) && j <= i; j++) {
+        for (j = 0; j <= i && ascii_iswhite(line[j]); j++) {
         }
         if (j < i) {
           continue;
@@ -982,7 +983,7 @@ void preserve_exit(void)
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-      mch_errmsg((uint8_t *)"Vim: preserving files...\n");
+      mch_errmsg("Vim: preserving files...\r\n");
       ui_flush();
       ml_sync_all(false, false, true);  // preserve all swap files
       break;
@@ -991,7 +992,7 @@ void preserve_exit(void)
 
   ml_close_all(false);              // close all memfiles, without deleting
 
-  mch_errmsg("Vim: Finished.\n");
+  mch_errmsg("Vim: Finished.\r\n");
 
   getout(1);
 }
@@ -1023,6 +1024,15 @@ void line_breakcheck(void)
 void fast_breakcheck(void)
 {
   if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
+    breakcheck_count = 0;
+    os_breakcheck();
+  }
+}
+
+// Like line_breakcheck() but check 100 times less often.
+void veryfast_breakcheck(void)
+{
+  if (++breakcheck_count >= BREAKCHECK_SKIP * 100) {
     breakcheck_count = 0;
     os_breakcheck();
   }
@@ -1081,8 +1091,9 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
 {
   char_u *buffer = NULL;
 
-  if (check_restricted() || check_secure())
+  if (check_secure()) {
     return NULL;
+  }
 
   // get a name for the temp file
   char_u *tempname = vim_tempname();
@@ -1160,4 +1171,27 @@ void FreeWild(int count, char_u **files)
 int goto_im(void)
 {
   return p_im && stuff_empty() && typebuf_typed();
+}
+
+/// Put the timestamp of an undo header in "buf[buflen]" in a nice format.
+void add_time(char_u *buf, size_t buflen, time_t tt)
+{
+  struct tm curtime;
+
+  if (time(NULL) - tt >= 100) {
+    os_localtime_r(&tt, &curtime);
+    if (time(NULL) - tt < (60L * 60L * 12L)) {
+      // within 12 hours
+      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
+    } else {
+      // longer ago
+      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
+    }
+  } else {
+    int64_t seconds = time(NULL) - tt;
+    vim_snprintf((char *)buf, buflen,
+                 NGETTEXT("%" PRId64 " second ago",
+                          "%" PRId64 " seconds ago", (uint32_t)seconds),
+                 seconds);
+  }
 }

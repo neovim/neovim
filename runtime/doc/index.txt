@@ -10,7 +10,7 @@ short description.  The lists are sorted on ASCII value.
 Tip: When looking for certain functionality, use a search command.  E.g.,
 to look for deleting something, use: "/delete".
 
-For an overview of options see help.txt |option-list|.
+For an overview of options see |option-list|.
 For an overview of built-in functions see |functions|.
 For a list of Vim variables see |vim-variable|.
 For a complete listing of all help items see |help-tags|.
@@ -222,6 +222,8 @@ tag		char	      note action in Normal mode	~
 |CTRL-]|	CTRL-]		   :ta to ident under cursor
 |CTRL-^|	CTRL-^		   edit Nth alternate file (equivalent to
 				   ":e #N")
+|CTRL-<Tab>|	CTRL-<Tab>	   same as `g<Tab>` : go to last accessed tab
+				   page
 		CTRL-_		   not used
 
 |<Space>|	<Space>		1  same as "l"
@@ -570,6 +572,8 @@ tag		command		   action in Normal mode	~
 				   following the file name.
 |CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tab page
 |CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tab page
+|CTRL-W_g<Tab>|	CTRL-W g <Tab>	   same as `g<Tab>` : go to last accessed tab
+				   page
 |CTRL-W_h|	CTRL-W h	   go to Nth left window (stop at first window)
 |CTRL-W_i|	CTRL-W i	   split window and jump to declaration of
 				   identifier under the cursor
@@ -788,6 +792,7 @@ tag		char	      note action in Normal mode	~
 |g<LeftMouse>|	g<LeftMouse>	   same as <C-LeftMouse>
 		g<MiddleMouse>	   same as <C-MiddleMouse>
 |g<RightMouse>|	g<RightMouse>	   same as <C-RightMouse>
+|g<Tab>|	g<Tab>		   go to last accessed tab page
 |g<Up>|		g<Up>		1  same as "gk"
 
 ==============================================================================
@@ -1168,9 +1173,11 @@ tag		command		action ~
 |:caddbuffer|	:cad[dbuffer]	add errors from buffer
 |:caddexpr|	:cadde[xpr]	add errors from expr
 |:caddfile|	:caddf[ile]	add error message to current quickfix list
+|:cafter|	:caf[ter]	go to error after current cursor
 |:call|		:cal[l]		call a function
 |:catch|	:cat[ch]	part of a :try command
-|:cbelow|	:cbe[low]	go to error below current line
+|:cbefore|	:cbef[ore]	go to error before current cursor
+|:cbelow|	:cbel[ow]	go to error below current line
 |:cbottom|	:cbo[ttom]	scroll to the bottom of the quickfix window
 |:cbuffer|	:cb[uffer]	parse error messages and jump to first error
 |:cc|		:cc		go to specific error
@@ -1331,10 +1338,12 @@ tag		command		action ~
 |:laddexpr|	:lad[dexpr]	add locations from expr
 |:laddbuffer|	:laddb[uffer]	add locations from buffer
 |:laddfile|	:laddf[ile]	add locations to current location list
+|:lafter|	:laf[ter]	go to location after current cursor
 |:last|		:la[st]		go to the last file in the argument list
 |:language|	:lan[guage]	set the language (locale)
 |:later|	:lat[er]	go to newer change, redo
-|:lbelow|	:lbe[low]	go to location below current line
+|:lbefore|	:lbef[ore]	go to location before current cursor
+|:lbelow|	:lbel[ow]	go to location below current line
 |:lbottom|	:lbo[ttom]	scroll to the bottom of the location window
 |:lbuffer|	:lb[uffer]	parse locations and jump to first location
 |:lcd|		:lc[d]		change directory locally
@@ -1436,6 +1445,9 @@ tag		command		action ~
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
+|:perl|		:perl		execute perl command
+|:perldo|	:perldo		execute perl command for each line
+|:perfile|	:perlfile	execute perl script file
 |:print|	:p[rint]	print lines
 |:profdel|	:profd[el]	stop profiling a function or script
 |:profile|	:prof[ile]	profiling functions and scripts
@@ -1531,6 +1543,8 @@ tag		command		action ~
 |:sign|		:sig[n]		manipulate signs
 |:silent|	:sil[ent]	run a command silently
 |:sleep|	:sl[eep]	do nothing for a few seconds
+|:sleep!|	:sl[eep]!	do nothing for a few seconds, without the
+				cursor visible
 |:slast|	:sla[st]	split window and go to last file in the
 				argument list
 |:smagic|	:sm[agic]	:substitute with 'magic'

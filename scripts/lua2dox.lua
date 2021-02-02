@@ -17,61 +17,28 @@
 --   Free Software Foundation, Inc.,                                       --
 --   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             --
 ----------------------------------------------------------------------------]]
---[[!
-\file
-\brief a hack lua2dox converter
-]]
 
 --[[!
-\mainpage
+Lua-to-Doxygen converter
 
-Introduction
-------------
-
-A hack lua2dox converter
-Version 0.2
-
-This lets us make Doxygen output some documentation to let
-us develop this code.
-
-It is partially cribbed from the functionality of lua2dox
-(http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm).
-Found on CPAN when looking for something else; kinda handy.
-
-Improved from lua2dox to make the doxygen output more friendly.
-Also it runs faster in lua rather than Perl.
-
-Because this Perl based system is called "lua2dox"., I have decided to add ".lua" to the name
-to keep the two separate.
+Partially from lua2dox
+http://search.cpan.org/~alec/Doxygen-Lua-0.02/lib/Doxygen/Lua.pm
 
 Running
 -------
 
-<ol>
-<li>  Ensure doxygen is installed on your system and that you are familiar with its use.
-Best is to try to make and document some simple C/C++/PHP to see what it produces.
-You can experiment with the enclosed example code.
+This file "lua2dox.lua" gets called by "lua2dox_filter" (bash).
 
-<li> Run "doxygen -g" to create a default Doxyfile.
+Doxygen must be on your system. You can experiment like so:
 
-Then alter it to let it recognise lua. Add the two following lines:
-
-\code{.bash}
-FILE_PATTERNS   = *.lua
-
-FILTER_PATTERNS = *.lua=lua2dox_filter
-\endcode
-
-
-Either add them to the end or find the appropriate entry in Doxyfile.
-
-There are other lines that you might like to alter, but see further documentation for details.
-
-<li> When Doxyfile is edited run "doxygen"
+- Run "doxygen -g" to create a default Doxyfile.
+- Then alter it to let it recognise lua. Add the two following lines:
+    FILE_PATTERNS   = *.lua
+    FILTER_PATTERNS = *.lua=lua2dox_filter
+- Then run "doxygen".
 
 The core function reads the input file (filename or stdin) and outputs some pseudo C-ish language.
 It only has to be good enough for doxygen to see it as legal.
-Therefore our lua interpreter is fairly limited, but "good enough".
 
 One limitation is that each line is treated separately (except for long comments).
 The implication is that class and function declarations must be on the same line.
@@ -81,40 +48,8 @@ so it will probably not document accurately if we do do this.
 
 However I have put in a hack that will insert the "missing" close paren.
 The effect is that you will get the function documented, but not with the parameter list you might expect.
-</ol>
-
-Installation
-------------
-
-Here for linux or unix-like, for any other OS you need to refer to other documentation.
-
-This file is "lua2dox.lua". It gets called by "lua2dox_filter"(bash).
-Somewhere in your path (e.g. "~/bin" or "/usr/local/bin") put a link to "lua2dox_filter".
-
-Documentation
--------------
-
-Read the external documentation that should be part of this package.
-For example look for the "README" and some .PDFs.
-
 ]]
 
--- we won't use our library code, so this becomes more portable
-
--- require 'elijah_fix_require'
--- require 'elijah_class'
--- 
---! \brief ``declare'' as class
---! 
---! use as:
---! \code{.lua}
---! TWibble = class()
---! function TWibble.init(this,Str)
---! 	this.str = Str
---! 	-- more stuff here
---! end
---! \endcode
---! 
 function class(BaseClass, ClassInitialiser)
   local newClass = {}    -- a new class newClass
   if not ClassInitialiser and type(BaseClass) == 'function' then
@@ -138,7 +73,7 @@ function class(BaseClass, ClassInitialiser)
     local newInstance = {}
     setmetatable(newInstance,newClass)
     --if init then
-    --	init(newInstance,...)
+    --  init(newInstance,...)
     if class_tbl.init then
       class_tbl.init(newInstance,...)
     else 
@@ -164,8 +99,6 @@ function class(BaseClass, ClassInitialiser)
   setmetatable(newClass, classMetatable)
   return newClass
 end
-
--- require 'elijah_clock'
 
 --! \class TCore_Clock
 --! \brief a clock
@@ -201,9 +134,6 @@ function TCore_Clock.getTimeStamp(this,T0)
 end
 
 
---require 'elijah_io'
-
---! \class TCore_IO
 --! \brief io to console
 --! 
 --! pseudo class (no methods, just to keep documentation tidy)
@@ -224,8 +154,6 @@ function TCore_IO_writeln(Str)
   io.write("\n")
 end
 
-
---require 'elijah_string'
 
 --! \brief trims a string
 function string_trim(Str)
@@ -257,8 +185,6 @@ function string_split(Str, Pattern)
 end
 
 
---require 'elijah_commandline'
-
 --! \class TCore_Commandline
 --! \brief reads/parses commandline
 TCore_Commandline = class()
@@ -279,9 +205,6 @@ function TCore_Commandline.getRaw(this,Key,Default)
   return val
 end
 
-
---require 'elijah_debug'
-
 -------------------------------
 --! \brief file buffer
 --! 
@@ -291,7 +214,7 @@ TStream_Read = class()
 --! \brief get contents of file
 --! 
 --! \param Filename name of file to read (or nil == stdin)
-function 	TStream_Read.getContents(this,Filename)
+function    TStream_Read.getContents(this,Filename)
   -- get lines from file
   local filecontents
   if Filename then
@@ -442,7 +365,7 @@ end
 --! \brief check comment for fn
 local function checkComment4fn(Fn_magic,MagicLines)
   local fn_magic = Fn_magic
-  --	TCore_IO_writeln('// checkComment4fn "' .. MagicLines .. '"')
+  --    TCore_IO_writeln('// checkComment4fn "' .. MagicLines .. '"')
 
   local magicLines = string_split(MagicLines,'\n')
 
@@ -452,7 +375,7 @@ local function checkComment4fn(Fn_magic,MagicLines)
     macro,tail = getMagicDirective(line)
     if macro == 'fn' then
       fn_magic = tail
-      --	TCore_IO_writeln('// found fn "' .. fn_magic .. '"')
+      --    TCore_IO_writeln('// found fn "' .. fn_magic .. '"')
     else
       --TCore_IO_writeln('// not found fn "' .. line .. '"')
     end
@@ -478,15 +401,23 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
     outStream:writelnTail('// #######################')
     outStream:writelnTail()
 
-    local state = ''
+    local state, offset = '', 0
     while not (err or inStream:eof()) do
       line = string_trim(inStream:getLine())
-      -- 			TCore_Debug_show_var('inStream',inStream)
-      -- 			TCore_Debug_show_var('line',line )
-      if string.sub(line,1,2)=='--' then -- it's a comment
-        if string.sub(line,3,3)=='@' then -- it's a magic comment
+      --            TCore_Debug_show_var('inStream',inStream)
+      --            TCore_Debug_show_var('line',line )
+      if string.sub(line,1,2) == '--' then -- it's a comment
+        -- Allow people to write style similar to EmmyLua (since they are basically the same)
+        -- instead of silently skipping things that start with ---
+        if string.sub(line, 3, 3) == '@' then -- it's a magic comment
+          offset = 0
+        elseif string.sub(line, 1, 4) == '---@' then -- it's a magic comment
+          offset = 1
+        end
+
+        if string.sub(line, 3, 3) == '@' or string.sub(line, 1, 4) == '---@' then -- it's a magic comment
           state = 'in_magic_comment'
-          local magic = string.sub(line,4)
+          local magic = string.sub(line, 4 + offset)
           outStream:writeln('/// @' .. magic)
           fn_magic = checkComment4fn(fn_magic,magic)
         elseif string.sub(line,3,3)=='-' then -- it's a nonmagic doc comment
@@ -527,7 +458,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           outStream:writeln('// zz:"' .. line .. '"')
           fn_magic = nil
         end
-      elseif string.find(line,'^function') or string.find(line,'^local%s+function') then
+      elseif string.find(line, '^function') or string.find(line, '^local%s+function') then
         state = 'in_function'  -- it's a function
         local pos_fn = string.find(line,'function')
         -- function
@@ -567,6 +498,13 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           this:warning(inStream:getLineNo(),'something weird here')
         end
         fn_magic = nil -- mustn't indavertently use it again
+
+      -- TODO: If we can make this learn how to generate these, that would be helpful.
+      -- elseif string.find(line, "^M%['.*'%] = function") then
+      --   state = 'in_function'  -- it's a function
+      --   outStream:writeln("function textDocument/publishDiagnostics(...){}")
+
+      --   fn_magic = nil -- mustn't indavertently use it again
       else
         state = ''  -- unknown
         if #line>0 then  -- we don't know what this line means, so just comment it out

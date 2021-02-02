@@ -27,6 +27,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/func_attr.h"
+#include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -41,6 +42,7 @@
 #include "nvim/option.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/ex_session.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
@@ -454,6 +456,9 @@ void flush_buffers(flush_buffers_T flush_typeahead)
   typebuf.tb_silent = 0;
   cmd_silent = false;
   typebuf.tb_no_abbr_cnt = 0;
+  if (++typebuf.tb_change_cnt == 0) {
+    typebuf.tb_change_cnt = 1;
+  }
 }
 
 /*
@@ -558,9 +563,7 @@ void AppendToRedobuffLit(const char_u *str, int len)
 
     // Handle a special or multibyte character.
     // Composing chars separately are handled separately.
-    const int c = (has_mbyte
-                   ? mb_cptr2char_adv((const char_u **)&s)
-                   : (uint8_t)(*s++));
+    const int c = mb_cptr2char_adv((const char_u **)&s);
     if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^'))) {
       add_char_buff(&redobuff, Ctrl_V);
     }
@@ -679,15 +682,16 @@ static int read_redo(bool init, bool old_redo)
   if ((c = *p) == NUL) {
     return c;
   }
-  /* Reverse the conversion done by add_char_buff() */
-  /* For a multi-byte character get all the bytes and return the
-   * converted character. */
-  if (has_mbyte && (c != K_SPECIAL || p[1] == KS_SPECIAL))
+  // Reverse the conversion done by add_char_buff() */
+  // For a multi-byte character get all the bytes and return the
+  // converted character.
+  if (c != K_SPECIAL || p[1] == KS_SPECIAL) {
     n = MB_BYTE2LEN_CHECK(c);
-  else
+  } else {
     n = 1;
-  for (i = 0;; ++i) {
-    if (c == K_SPECIAL) {     /* special key or escaped K_SPECIAL */
+  }
+  for (i = 0;; i++) {
+    if (c == K_SPECIAL) {  // special key or escaped K_SPECIAL
       c = TO_SPECIAL(p[1], p[2]);
       p += 2;
     }
@@ -1095,26 +1099,40 @@ void del_typebuf(int len, int offset)
  * Write typed characters to script file.
  * If recording is on put the character in the recordbuffer.
  */
-static void gotchars(char_u *chars, size_t len)
+static void gotchars(const char_u *chars, size_t len)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *s = chars;
-  int c;
+  const char_u *s = chars;
+  static char_u buf[4] = { 0 };
+  static size_t buflen = 0;
+  size_t todo = len;
 
-  // remember how many chars were last recorded
-  if (reg_recording != 0) {
-    last_recorded_len += len;
-  }
+  while (todo--) {
+    buf[buflen++] = *s++;
 
-  while (len--) {
+    // When receiving a special key sequence, store it until we have all
+    // the bytes and we can decide what to do with it.
+    if (buflen == 1 && buf[0] == K_SPECIAL) {
+      continue;
+    }
+    if (buflen == 2) {
+      continue;
+    }
+
     // Handle one byte at a time; no translation to be done.
-    c = *s++;
-    updatescript(c);
+    for (size_t i = 0; i < buflen; i++) {
+      updatescript(buf[i]);
+    }
 
     if (reg_recording != 0) {
-      char buf[2] = { (char)c, NUL };
-      add_buff(&recordbuff, buf, 1L);
+      buf[buflen] = NUL;
+      add_buff(&recordbuff, (char *)buf, (ptrdiff_t)buflen);
+      // remember how many chars were last recorded
+      last_recorded_len += buflen;
     }
+    buflen = 0;
   }
+
   may_sync_undo();
 
   /* output "debug mode" message next time in debug mode */
@@ -1201,7 +1219,7 @@ void save_typeahead(tasave_T *tp)
 {
   tp->save_typebuf = typebuf;
   alloc_typebuf();
-  tp->typebuf_valid = TRUE;
+  tp->typebuf_valid = true;
   tp->old_char = old_char;
   tp->old_mod_mask = old_mod_mask;
   old_char = -1;
@@ -1509,6 +1527,17 @@ int vgetc(void)
         c = utf_ptr2char(buf);
       }
 
+      // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
+      // something with a meta- or alt- modifier that was not mapped, interpret
+      // <M-x> as <Esc>x rather than as an unbound meta keypress. #8213
+      if (!no_mapping && KeyTyped
+          && (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META)) {
+        mod_mask = 0;
+        stuffcharReadbuff(c);
+        u_sync(false);
+        c = ESC;
+      }
+
       break;
     }
   }
@@ -1518,7 +1547,10 @@ int vgetc(void)
    * collection in the first next vgetc().  It's disabled after that to
    * avoid internally used Lists and Dicts to be freed.
    */
-  may_garbage_collect = FALSE;
+  may_garbage_collect = false;
+
+  // Exec lua callbacks for on_keystroke
+  nlua_execute_log_keystroke(c);
 
   return c;
 }
@@ -1562,7 +1594,7 @@ int vpeekc(void)
 {
   if (old_char != -1)
     return old_char;
-  return vgetorpeek(FALSE);
+  return vgetorpeek(false);
 }
 
 /*
@@ -1615,20 +1647,20 @@ vungetc ( /* unget one character (can only be done once!) */
 ///    Also stores the result of mappings.
 ///    Also used for the ":normal" command.
 /// 3. from the user
-///    This may do a blocking wait if "advance" is TRUE.
+///    This may do a blocking wait if "advance" is true.
 ///
-/// if "advance" is TRUE (vgetc()):
+/// if "advance" is true (vgetc()):
 ///    Really get the character.
 ///    KeyTyped is set to TRUE in the case the user typed the key.
 ///    KeyStuffed is TRUE if the character comes from the stuff buffer.
-/// if "advance" is FALSE (vpeekc()):
+/// if "advance" is false (vpeekc()):
 ///    Just look whether there is a character available.
 ///    Return NUL if not.
 ///
 /// When `no_mapping` (global) is zero, checks for mappings in the current mode.
 /// Only returns one byte (of a multi-byte character).
 /// K_SPECIAL and CSI may be escaped, need to get two more bytes then.
-static int vgetorpeek(int advance)
+static int vgetorpeek(bool advance)
 {
   int c, c1;
   int keylen;
@@ -1721,7 +1753,7 @@ static int vgetorpeek(int advance)
           // flush all input
           c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L);
           // If inchar() returns TRUE (script file was active) or we
-          // are inside a mapping, get out of insert mode.
+          // are inside a mapping, get out of Insert mode.
           // Otherwise we behave like having gotten a CTRL-C.
           // As a result typing CTRL-C in insert mode will
           // really insert a CTRL-C.
@@ -2022,14 +2054,19 @@ static int vgetorpeek(int advance)
              */
             if (mp->m_expr) {
               int save_vgetc_busy = vgetc_busy;
+              const bool save_may_garbage_collect = may_garbage_collect;
 
               vgetc_busy = 0;
+              may_garbage_collect = false;
+
               save_m_keys = vim_strsave(mp->m_keys);
               save_m_str = vim_strsave(mp->m_str);
               s = eval_map_expr(save_m_str, NUL);
               vgetc_busy = save_vgetc_busy;
-            } else
+              may_garbage_collect = save_may_garbage_collect;
+            } else {
               s = mp->m_str;
+            }
 
             /*
              * Insert the 'to' part in the typebuf.tb_buf.
@@ -2123,14 +2160,11 @@ static int vgetorpeek(int advance)
                 col = vcol = curwin->w_wcol = 0;
                 ptr = get_cursor_line_ptr();
                 while (col < curwin->w_cursor.col) {
-                  if (!ascii_iswhite(ptr[col]))
+                  if (!ascii_iswhite(ptr[col])) {
                     curwin->w_wcol = vcol;
-                  vcol += lbr_chartabsize(ptr, ptr + col,
-                      (colnr_T)vcol);
-                  if (has_mbyte)
-                    col += (*mb_ptr2len)(ptr + col);
-                  else
-                    ++col;
+                  }
+                  vcol += lbr_chartabsize(ptr, ptr + col, (colnr_T)vcol);
+                  col += utfc_ptr2len(ptr + col);
                 }
                 curwin->w_wrow = curwin->w_cline_row
                                  + curwin->w_wcol / curwin->w_width_inner;
@@ -2324,7 +2358,7 @@ static int vgetorpeek(int advance)
       }             /* for (;;) */
     }           /* if (!character from stuffbuf) */
 
-    /* if advance is FALSE don't loop on NULs */
+    // if advance is false don't loop on NULs
   } while (c < 0 || (advance && c == NUL));
 
   /*
@@ -2480,12 +2514,11 @@ int inchar(
   return fix_input_buffer(buf, len);
 }
 
-/*
- * Fix typed characters for use by vgetc() and check_termcode().
- * buf[] must have room to triple the number of bytes!
- * Returns the new length.
- */
+// Fix typed characters for use by vgetc() and check_termcode().
+// "buf[]" must have room to triple the number of bytes!
+// Returns the new length.
 int fix_input_buffer(char_u *buf, int len)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!using_script()) {
     // Should not escape K_SPECIAL/CSI reading input from the user because vim
@@ -2776,33 +2809,23 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
       // Otherwise we won't be able to find the start of it in a
       // vi-compatible way.
       //
-      if (has_mbyte) {
-        int first, last;
-        int same = -1;
+      int same = -1;
 
-        first = vim_iswordp(lhs);
-        last = first;
-        p = lhs + (*mb_ptr2len)(lhs);
-        n = 1;
-        while (p < lhs + len) {
-          n++;                                  // nr of (multi-byte) chars
-          last = vim_iswordp(p);                // type of last char
-          if (same == -1 && last != first) {
-            same = n - 1;                       // count of same char type
-          }
-          p += (*mb_ptr2len)(p);
+      const int first = vim_iswordp(lhs);
+      int last = first;
+      p = lhs + utfc_ptr2len(lhs);
+      n = 1;
+      while (p < lhs + len) {
+        n++;                                  // nr of (multi-byte) chars
+        last = vim_iswordp(p);                // type of last char
+        if (same == -1 && last != first) {
+          same = n - 1;                       // count of same char type
         }
-        if (last && n > 2 && same >= 0 && same < n - 1) {
-          retval = 1;
-          goto theend;
-        }
-      } else if (vim_iswordc(lhs[len - 1])) {  // ends in keyword char
-        for (n = 0; n < len - 2; n++) {
-          if (vim_iswordc(lhs[n]) != vim_iswordc(lhs[len - 2])) {
-            retval = 1;
-            goto theend;
-          }
-        }  // for
+        p += (*mb_ptr2len)(p);
+      }
+      if (last && n > 2 && same >= 0 && same < n - 1) {
+        retval = 1;
+        goto theend;
       }
       // An abbreviation cannot contain white space.
       for (n = 0; n < len; n++) {
@@ -3347,7 +3370,7 @@ showmap (
     msg_putchar(' ');
 
   // Display the LHS.  Get length of what we write.
-  len = (size_t)msg_outtrans_special(mp->m_keys, true);
+  len = (size_t)msg_outtrans_special(mp->m_keys, true, 0);
   do {
     msg_putchar(' ');                   /* padd with blanks */
     ++len;
@@ -3375,7 +3398,7 @@ showmap (
     // as typeahead.
     char_u *s = vim_strsave(mp->m_str);
     vim_unescape_csi(s);
-    msg_outtrans_special(s, FALSE);
+    msg_outtrans_special(s, false, 0);
     xfree(s);
   }
   if (p_verbose > 0) {
@@ -3663,25 +3686,23 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
   return count == 0 ? FAIL : OK;
 }
 
-/*
- * Check for an abbreviation.
- * Cursor is at ptr[col].
- * When inserting, mincol is where insert started.
- * For the command line, mincol is what is to be skipped over.
- * "c" is the character typed before check_abbr was called.  It may have
- * ABBR_OFF added to avoid prepending a CTRL-V to it.
- *
- * Historic vi practice: The last character of an abbreviation must be an id
- * character ([a-zA-Z0-9_]). The characters in front of it must be all id
- * characters or all non-id characters. This allows for abbr. "#i" to
- * "#include".
- *
- * Vim addition: Allow for abbreviations that end in a non-keyword character.
- * Then there must be white space before the abbr.
- *
- * return TRUE if there is an abbreviation, FALSE if not
- */
-int check_abbr(int c, char_u *ptr, int col, int mincol)
+// Check for an abbreviation.
+// Cursor is at ptr[col].
+// When inserting, mincol is where insert started.
+// For the command line, mincol is what is to be skipped over.
+// "c" is the character typed before check_abbr was called.  It may have
+// ABBR_OFF added to avoid prepending a CTRL-V to it.
+//
+// Historic vi practice: The last character of an abbreviation must be an id
+// character ([a-zA-Z0-9_]). The characters in front of it must be all id
+// characters or all non-id characters. This allows for abbr. "#i" to
+// "#include".
+//
+// Vim addition: Allow for abbreviations that end in a non-keyword character.
+// Then there must be white space before the abbr.
+//
+// Return true if there is an abbreviation, false if not.
+bool check_abbr(int c, char_u *ptr, int col, int mincol)
 {
   int len;
   int scol;                     /* starting column of the abbr. */
@@ -3690,36 +3711,36 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
   char_u tb[MB_MAXBYTES + 4];
   mapblock_T  *mp;
   mapblock_T  *mp2;
-  int clen = 0;                 /* length in characters */
-  int is_id = TRUE;
-  int vim_abbr;
+  int clen = 0;                 // length in characters
+  bool is_id = true;
 
-  if (typebuf.tb_no_abbr_cnt)   /* abbrev. are not recursive */
-    return FALSE;
+  if (typebuf.tb_no_abbr_cnt) {  // abbrev. are not recursive
+    return false;
+  }
 
-  /* no remapping implies no abbreviation, except for CTRL-] */
-  if ((KeyNoremap & (RM_NONE|RM_SCRIPT)) != 0 && c != Ctrl_RSB)
-    return FALSE;
+  // no remapping implies no abbreviation, except for CTRL-]
+  if ((KeyNoremap & (RM_NONE|RM_SCRIPT)) != 0 && c != Ctrl_RSB) {
+    return false;
+  }
 
-  /*
-   * Check for word before the cursor: If it ends in a keyword char all
-   * chars before it must be keyword chars or non-keyword chars, but not
-   * white space. If it ends in a non-keyword char we accept any characters
-   * before it except white space.
-   */
-  if (col == 0)                                 /* cannot be an abbr. */
-    return FALSE;
+  // Check for word before the cursor: If it ends in a keyword char all
+  // chars before it must be keyword chars or non-keyword chars, but not
+  // white space. If it ends in a non-keyword char we accept any characters
+  // before it except white space.
+  if (col == 0) {  // cannot be an abbr.
+    return false;
+  }
 
-  if (has_mbyte) {
-    char_u *p;
-
-    p = mb_prevptr(ptr, ptr + col);
-    if (!vim_iswordp(p))
-      vim_abbr = TRUE;                          /* Vim added abbr. */
-    else {
-      vim_abbr = FALSE;                         /* vi compatible abbr. */
-      if (p > ptr)
+  {
+    bool vim_abbr;
+    char_u *p = mb_prevptr(ptr, ptr + col);
+    if (!vim_iswordp(p)) {
+      vim_abbr = true;    // Vim added abbr.
+    } else {
+      vim_abbr = false;   // vi compatible abbr.
+      if (p > ptr) {
         is_id = vim_iswordp(mb_prevptr(ptr, p));
+      }
     }
     clen = 1;
     while (p > ptr + mincol) {
@@ -3731,17 +3752,6 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       ++clen;
     }
     scol = (int)(p - ptr);
-  } else {
-    if (!vim_iswordc(ptr[col - 1]))
-      vim_abbr = TRUE;                          /* Vim added abbr. */
-    else {
-      vim_abbr = FALSE;                         /* vi compatible abbr. */
-      if (col > 1)
-        is_id = vim_iswordc(ptr[col - 2]);
-    }
-    for (scol = col - 1; scol > 0 && !ascii_isspace(ptr[scol - 1])
-         && (vim_abbr || is_id == vim_iswordc(ptr[scol - 1])); --scol)
-      ;
   }
 
   if (scol < mincol)
@@ -3829,14 +3839,14 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
 
       tb[0] = Ctrl_H;
       tb[1] = NUL;
-      if (has_mbyte)
-        len = clen;             /* Delete characters instead of bytes */
-      while (len-- > 0)                 /* delete the from string */
-        (void)ins_typebuf(tb, 1, 0, TRUE, mp->m_silent);
-      return TRUE;
+      len = clen;  // Delete characters instead of bytes
+      while (len-- > 0) {  // delete the from string
+        (void)ins_typebuf(tb, 1, 0, true, mp->m_silent);
+      }
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -4167,7 +4177,6 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
 {
   char_u      *str = strstart;
   int c;
-  int modifiers;
 
   // :map xx <Nop>
   if (*str == NUL && what == 1) {
@@ -4194,7 +4203,7 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
      * when they are read back.
      */
     if (c == K_SPECIAL && what != 2) {
-      modifiers = 0x0;
+      int modifiers = 0;
       if (str[1] == KS_MODIFIER) {
         modifiers = str[2];
         str += 3;
@@ -4467,9 +4476,7 @@ char_u * getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       aborted = true;
     } else if (IS_SPECIAL(c1)) {
       if (c1 == K_SNR) {
-        ga_append(&line_ga, (char)K_SPECIAL);
-        ga_append(&line_ga, (char)KS_EXTRA);
-        ga_append(&line_ga, (char)KE_SNR);
+        ga_concat(&line_ga, (char_u *)"<SNR>");
       } else {
         EMSG2(e_cmdmap_key, get_special_key_name(c1, cmod));
         aborted = true;

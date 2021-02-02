@@ -1,12 +1,10 @@
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
 
-[Wiki](https://github.com/neovim/neovim/wiki) |
 [Documentation](https://neovim.io/doc) |
-[Chat/Discussion](https://gitter.im/neovim/neovim) |
+[Chat](https://gitter.im/neovim/neovim) |
 [Twitter](https://twitter.com/Neovim)
 
-[![Travis build status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/urdqjrik5u521fac/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
+[![GitHub CI](https://github.com/neovim/neovim/workflows/CI/badge.svg)](https://github.com/neovim/neovim/actions?query=workflow%3A%22CI%22)
 [![Codecov coverage](https://img.shields.io/codecov/c/github/neovim/neovim.svg)](https://codecov.io/gh/neovim/neovim)
 [![Coverity Scan analysis](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 [![Clang analysis](https://neovim.io/doc/reports/clang/badge.svg)](https://neovim.io/doc/reports/clang)
@@ -48,7 +46,7 @@ Install from package
 Pre-built packages for Windows, macOS, and Linux are found on the
 [Releases](https://github.com/neovim/neovim/releases/) page.
 
-[Managed packages] are in Homebrew, [Debian], [Ubuntu], [Fedora], [Arch Linux],
+[Managed packages] are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux],
 [Gentoo], and more!
 
 Install from source
@@ -114,17 +112,9 @@ Project layout
 License
 -------
 
-Neovim is licensed under the terms of the Apache 2.0 license, except for
-parts that were contributed under the Vim license.
-
-- Contributions committed before [b17d96][license-commit] remain under the Vim
-  license.
-
-- Contributions committed after [b17d96][license-commit] are licensed under
-  Apache 2.0 unless those contributions were copied from Vim (identified in
-  the commit logs by the `vim-patch` token).
-
-See `LICENSE` for details.
+Neovim contributions since [b17d96][license-commit] are licensed under the
+Apache 2.0 license, except for contributions copied from Vim (identified by the
+`vim-patch` token). See LICENSE for details.
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
     encouraged to make a donation for needy children in Uganda.  Please see the
@@ -147,5 +137,6 @@ See `LICENSE` for details.
 [Fedora]: https://apps.fedoraproject.org/packages/neovim
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
+[Homebrew]: https://formulae.brew.sh/formula/neovim
 
 <!-- vim: set tw=80: -->

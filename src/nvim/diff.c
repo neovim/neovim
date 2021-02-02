@@ -643,13 +643,13 @@ void diff_redraw(bool dofold)
     if (!wp->w_p_diff) {
       continue;
     }
-    redraw_win_later(wp, SOME_VALID);
+    redraw_later(wp, SOME_VALID);
     if (dofold && foldmethodIsDiff(wp)) {
       foldUpdateAll(wp);
     }
 
-    /* A change may have made filler lines invalid, need to take care
-     * of that for other windows. */
+    // A change may have made filler lines invalid, need to take care
+    // of that for other windows.
     int n = diff_check(wp, wp->w_topline);
 
     if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
@@ -719,15 +719,12 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     for (s = ml_get_buf(buf, lnum, false); *s != NUL; ) {
       if (diff_flags & DIFF_ICASE) {
-        int c;
-
-        // xdiff doesn't support ignoring case, fold-case the text.
-        int     orig_len;
         char_u  cbuf[MB_MAXBYTES + 1];
 
-        c = PTR2CHAR(s);
+        // xdiff doesn't support ignoring case, fold-case the text.
+        int c = PTR2CHAR(s);
         c = utf_fold(c);
-        orig_len = utfc_ptr2len(s);
+        const int orig_len = utfc_ptr2len(s);
         if (utf_char2bytes(c, cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
           memmove(ptr + len, s, orig_len);
@@ -808,7 +805,7 @@ static void diff_try_update(diffio_T    *dio,
     for (idx_new = idx_orig; idx_new < DB_COUNT; idx_new++) {
       buf = curtab->tp_diffbuf[idx_new];
       if (buf_valid(buf)) {
-        buf_check_timestamp(buf, false);
+        buf_check_timestamp(buf);
       }
     }
   }
@@ -1228,8 +1225,7 @@ void ex_diffpatch(exarg_T *eap)
     EMSG(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
-      newname = vim_strnsave(curbuf->b_fname,
-                             (int)(STRLEN(curbuf->b_fname) + 4));
+      newname = vim_strnsave(curbuf->b_fname, STRLEN(curbuf->b_fname) + 4);
       STRCAT(newname, ".new");
     }
 
@@ -1385,11 +1381,18 @@ void diff_win_options(win_T *wp, int addbuf)
   curbuf = curwin->w_buffer;
 
   if (!wp->w_p_diff) {
-    wp->w_p_fdc_save = wp->w_p_fdc;
     wp->w_p_fen_save = wp->w_p_fen;
     wp->w_p_fdl_save = wp->w_p_fdl;
+
+    if (wp->w_p_diff_saved) {
+      free_string_option(wp->w_p_fdc_save);
+    }
+    wp->w_p_fdc_save = vim_strsave(wp->w_p_fdc);
   }
-  wp->w_p_fdc = diff_foldcolumn;
+  xfree(wp->w_p_fdc);
+  wp->w_p_fdc = (char_u *)xstrdup("2");
+  assert(diff_foldcolumn >= 0 && diff_foldcolumn <= 9);
+  snprintf((char *)wp->w_p_fdc, STRLEN(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
   wp->w_p_fen = true;
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
@@ -1408,7 +1411,7 @@ void diff_win_options(win_T *wp, int addbuf)
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
   }
-  redraw_win_later(wp, NOT_VALID);
+  redraw_later(wp, NOT_VALID);
 }
 
 /// Set options not to show diffs.  For the current window or all windows.
@@ -1443,9 +1446,9 @@ void ex_diffoff(exarg_T *eap)
         wp->w_p_fdm = vim_strsave(*wp->w_p_fdm_save
                                   ? wp->w_p_fdm_save
                                   : (char_u *)"manual");
-        if (wp->w_p_fdc == diff_foldcolumn) {
-          wp->w_p_fdc = wp->w_p_fdc_save;
-        }
+        free_string_option(wp->w_p_fdc);
+        wp->w_p_fdc = vim_strsave(wp->w_p_fdc_save);
+
         if (wp->w_p_fdl == 0) {
           wp->w_p_fdl = wp->w_p_fdl_save;
         }
@@ -2432,6 +2435,10 @@ void nv_diffgetput(bool put, size_t count)
   exarg_T ea;
   char buf[30];
 
+  if (bt_prompt(curbuf)) {
+    vim_beep(BO_OPER);
+    return;
+  }
   if (count == 0) {
     ea.arg = (char_u *)"";
   } else {
@@ -2711,7 +2718,7 @@ void ex_diffgetput(exarg_T *eap)
 
       // Adjust marks.  This will change the following entries!
       if (added != 0) {
-        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added, false,
+        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added,
                     kExtmarkUndo);
         if (curwin->w_cursor.lnum >= lnum) {
           // Adjust the cursor position if it's in/after the changed

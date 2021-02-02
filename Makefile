@@ -58,10 +58,14 @@ endif
 
 BUILD_CMD = $(BUILD_TOOL)
 
-ifneq ($(VERBOSE),)
-  # Only need to handle Ninja here.  Make will inherit the VERBOSE variable.
-  ifeq ($(BUILD_TYPE),Ninja)
+# Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j and -n flags.
+ifeq ($(BUILD_TYPE),Ninja)
+  ifneq ($(VERBOSE),)
     BUILD_CMD += -v
+  endif
+  BUILD_CMD += $(shell printf '%s' '$(MAKEFLAGS)' | grep -o -- '-j[0-9]\+')
+  ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
+    BUILD_CMD += -n
   endif
 endif
 

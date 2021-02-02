@@ -55,6 +55,7 @@ static inline ListReaderState encode_init_lrstate(const list_T *const list)
 }
 
 /// Array mapping values from SpecialVarValue enum to names
+extern const char *const encode_bool_var_names[];
 extern const char *const encode_special_var_names[];
 
 /// First codepoint in high surrogates block

@@ -3,7 +3,7 @@ local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
   ok, feed, insert, eval = helpers.clear, helpers.nvim, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
   helpers.neq, helpers.ok, helpers.feed, helpers.insert, helpers.eval
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
 local request = helpers.request
@@ -55,8 +55,8 @@ describe('API/win', function()
     end)
 
     it('validates args', function()
-      eq('Invalid buffer id', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
-      eq('Invalid window id', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
+      eq('Invalid buffer id: 23', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
+      eq('Invalid window id: 23', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
   end)
 
@@ -73,7 +73,7 @@ describe('API/win', function()
 
     it('does not leak memory when using invalid window ID with invalid pos',
     function()
-      eq('Invalid window id', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
+      eq('Invalid window id: 1', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
     end)
 
     it('updates the screen, and also when the window is unfocused', function()
@@ -82,7 +82,7 @@ describe('API/win', function()
       insert("epilogue")
       local win = curwin()
       feed('gg')
-      wait() -- let nvim process the 'gg' command
+      poke_eventloop() -- let nvim process the 'gg' command
 
       -- cursor position is at beginning
       eq({1, 0}, window('get_cursor', win))
@@ -128,7 +128,7 @@ describe('API/win', function()
       insert("second line")
 
       feed('gg')
-      wait() -- let nvim process the 'gg' command
+      poke_eventloop() -- let nvim process the 'gg' command
 
       -- cursor position is at beginning
       local win = curwin()
@@ -139,7 +139,7 @@ describe('API/win', function()
 
       -- move down a line
       feed('j')
-      wait() -- let nvim process the 'j' command
+      poke_eventloop() -- let nvim process the 'j' command
 
       -- cursor is still in column 5
       eq({2, 5}, window('get_cursor', win))

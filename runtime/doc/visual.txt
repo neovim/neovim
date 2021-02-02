@@ -159,7 +159,10 @@ If you want to highlight exactly the same area as the last time, you can use
 
 							*v_<Esc>*
 <Esc>			In Visual mode: Stop Visual mode.
-
+						*v_META* *v_ALT*
+		ALT (|META|) acts like <Esc> if the chord is not mapped.
+		For example <A-x> acts like <Esc>x if <A-x> does not have a
+		visual-mode mapping.
 							*v_CTRL-C*
 CTRL-C			In Visual mode: Stop Visual mode.  When insert mode is
 			pending (the mode message shows

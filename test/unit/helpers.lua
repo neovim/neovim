@@ -13,7 +13,7 @@ local syscall = nil
 local check_cores = global_helpers.check_cores
 local dedent = global_helpers.dedent
 local neq = global_helpers.neq
-local map = global_helpers.map
+local map = global_helpers.tbl_map
 local eq = global_helpers.eq
 local trim = global_helpers.trim
 
@@ -96,8 +96,8 @@ local init = only_separate(function()
     c.func(unpack(c.args))
   end
   libnvim.time_init()
-  libnvim.early_init()
   libnvim.event_init()
+  libnvim.early_init(nil)
   if child_calls_mod then
     for _, c in ipairs(child_calls_mod) do
       c.func(unpack(c.args))

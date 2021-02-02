@@ -173,13 +173,15 @@ static void insert_sign(
     const char_u *group,    // sign group; NULL for global group
     int prio,               // sign priority
     linenr_T lnum,          // line number which gets the mark
-    int typenr              // typenr of sign we are adding
+    int typenr,             // typenr of sign we are adding
+    bool has_text_or_icon   // sign has text or icon
 )
 {
   signlist_T *newsign = xmalloc(sizeof(signlist_T));
   newsign->id = id;
   newsign->lnum = lnum;
   newsign->typenr = typenr;
+  newsign->has_text_or_icon = has_text_or_icon;
   if (group != NULL) {
     newsign->group = sign_group_ref(group);
   } else {
@@ -198,7 +200,7 @@ static void insert_sign(
     // column for signs.
     if (buf->b_signlist == NULL) {
       redraw_buf_later(buf, NOT_VALID);
-      changed_cline_bef_curs();
+      changed_line_abv_curs();
     }
 
     // first sign in signlist
@@ -210,13 +212,14 @@ static void insert_sign(
 
 /// Insert a new sign sorted by line number and sign priority.
 static void insert_sign_by_lnum_prio(
-    buf_T *buf,           // buffer to store sign in
-    signlist_T *prev,     // previous sign entry
-    int id,               // sign ID
-    const char_u *group,  // sign group; NULL for global group
-    int prio,             // sign priority
-    linenr_T lnum,        // line number which gets the mark
-    int typenr            // typenr of sign we are adding
+    buf_T *buf,            // buffer to store sign in
+    signlist_T *prev,      // previous sign entry
+    int id,                // sign ID
+    const char_u *group,   // sign group; NULL for global group
+    int prio,              // sign priority
+    linenr_T lnum,         // line number which gets the mark
+    int typenr,            // typenr of sign we are adding
+    bool has_text_or_icon  // sign has text or icon
 )
 {
   signlist_T  *sign;
@@ -234,7 +237,7 @@ static void insert_sign_by_lnum_prio(
     sign = prev->next;
   }
 
-  insert_sign(buf, prev, sign, id, group, prio, lnum, typenr);
+  insert_sign(buf, prev, sign, id, group, prio, lnum, typenr, has_text_or_icon);
 }
 
 /// Get the name of a sign by its typenr.
@@ -265,14 +268,90 @@ dict_T * sign_get_info(signlist_T *sign)
   return d;
 }
 
+// Sort the signs placed on the same line as "sign" by priority.  Invoked after
+// changing the priority of an already placed sign.  Assumes the signs in the
+// buffer are sorted by line number and priority.
+static void sign_sort_by_prio_on_line(buf_T *buf, signlist_T *sign)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // If there is only one sign in the buffer or only one sign on the line or
+  // the sign is already sorted by priority, then return.
+  if ((sign->prev == NULL
+       || sign->prev->lnum != sign->lnum
+       || sign->prev->priority > sign->priority)
+      && (sign->next == NULL
+          || sign->next->lnum != sign->lnum
+          || sign->next->priority < sign->priority)) {
+    return;
+  }
+
+  // One or more signs on the same line as 'sign'
+  // Find a sign after which 'sign' should be inserted
+
+  // First search backward for a sign with higher priority on the same line
+  signlist_T *p = sign;
+  while (p->prev != NULL
+         && p->prev->lnum == sign->lnum
+         && p->prev->priority <= sign->priority) {
+    p = p->prev;
+  }
+  if (p == sign) {
+    // Sign not found. Search forward for a sign with priority just before
+    // 'sign'.
+    p = sign->next;
+    while (p->next != NULL
+           && p->next->lnum == sign->lnum
+           && p->next->priority > sign->priority) {
+      p = p->next;
+    }
+  }
+
+  // Remove 'sign' from the list
+  if (buf->b_signlist == sign) {
+    buf->b_signlist = sign->next;
+  }
+  if (sign->prev != NULL) {
+    sign->prev->next = sign->next;
+  }
+  if (sign->next != NULL) {
+    sign->next->prev = sign->prev;
+  }
+  sign->prev = NULL;
+  sign->next = NULL;
+
+  // Re-insert 'sign' at the right place
+  if (p->priority <= sign->priority) {
+    // 'sign' has a higher priority and should be inserted before 'p'
+    sign->prev = p->prev;
+    sign->next = p;
+    p->prev = sign;
+    if (sign->prev != NULL) {
+      sign->prev->next = sign;
+    }
+    if (buf->b_signlist == p) {
+      buf->b_signlist = sign;
+    }
+  } else {
+    // 'sign' has a lower priority and should be inserted after 'p'
+    sign->prev = p;
+    sign->next = p->next;
+    p->next = sign;
+    if (sign->next != NULL) {
+      sign->next->prev = sign;
+    }
+  }
+}
+
+
 /// Add the sign into the signlist. Find the right spot to do it though.
 void buf_addsign(
-    buf_T *buf,     // buffer to store sign in
-    int id,         // sign ID
+    buf_T *buf,               // buffer to store sign in
+    int id,                   // sign ID
     const char_u *groupname,  // sign group
-    int prio,       // sign priority
-    linenr_T lnum,  // line number which gets the mark
-    int typenr      // typenr of sign we are adding
+    int prio,                 // sign priority
+    linenr_T lnum,            // line number which gets the mark
+    int typenr,               // typenr of sign we are adding
+    bool has_text_or_icon     // sign has text or icon
 )
 {
   signlist_T *sign;    // a sign in the signlist
@@ -284,15 +363,33 @@ void buf_addsign(
         && sign_in_group(sign, groupname)) {
       // Update an existing sign
       sign->typenr = typenr;
+      sign->priority = prio;
+      sign_sort_by_prio_on_line(buf, sign);
       return;
     } else if (lnum < sign->lnum) {
-      insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
+      insert_sign_by_lnum_prio(
+          buf,
+          prev,
+          id,
+          groupname,
+          prio,
+          lnum,
+          typenr,
+          has_text_or_icon);
       return;
     }
     prev = sign;
   }
 
-  insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
+  insert_sign_by_lnum_prio(
+      buf,
+      prev,
+      id,
+      groupname,
+      prio,
+      lnum,
+      typenr,
+      has_text_or_icon);
 }
 
 // For an existing, placed sign "markId" change the type to "typenr".
@@ -418,11 +515,11 @@ linenr_T buf_delsign(
     }
   }
 
-  // When deleted the last sign needs to redraw the windows to remove the
-  // sign column.
+  // When deleting the last sign the cursor position may change, because the
+  // sign columns no longer shows.  And the 'signcolumn' may be hidden.
   if (buf->b_signlist == NULL) {
     redraw_buf_later(buf, NOT_VALID);
-    changed_cline_bef_curs();
+    changed_line_abv_curs();
   }
 
   return lnum;
@@ -495,7 +592,7 @@ void buf_delete_signs(buf_T *buf, char_u *group)
     // When deleting the last sign need to redraw the windows to remove the
     // sign column. Not when curwin is NULL (this means we're exiting).
     if (buf->b_signlist != NULL && curwin != NULL) {
-      changed_cline_bef_curs();
+      changed_line_abv_curs();
     }
 
     lastp = &buf->b_signlist;
@@ -709,10 +806,14 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
     }
     cells += utf_ptr2cells(s);
   }
-  // Currently must be one or two display cells
-  if (s != endp || cells < 1 || cells > 2) {
+  // Currently must be empty, one or two display cells
+  if (s != endp || cells > 2) {
     EMSG2(_("E239: Invalid sign text: %s"), text);
     return FAIL;
+  }
+  if (cells < 1) {
+    sp->sn_text = NULL;
+    return OK;
   }
 
   xfree(sp->sn_text);
@@ -754,6 +855,14 @@ int sign_define_by_name(
     } else {
       sp_prev->sn_next = sp;
     }
+  } else {
+    // Signs may already exist, a redraw is needed in windows with a
+    // non-empty sign list.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer->b_signlist != NULL) {
+        redraw_buf_later(wp->w_buffer, NOT_VALID);
+      }
+    }
   }
 
   // set values for a defined sign.
@@ -794,6 +903,17 @@ int sign_undefine_by_name(const char_u *name)
   sign_undefine(sp, sp_prev);
 
   return OK;
+}
+
+static void may_force_numberwidth_recompute(buf_T *buf, int unplace)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp)
+    if (wp->w_buffer == buf
+        && (wp->w_p_nu || wp->w_p_rnu)
+        && (unplace || wp->w_nrwidth_width < 2)
+        && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
+      wp->w_nrwidth_line_count = 0;
+    }
 }
 
 /// List the signs matching 'name'
@@ -843,13 +963,25 @@ int sign_place(
   if (lnum > 0) {
     // ":sign place {id} line={lnum} name={name} file={fname}":
     // place a sign
-    buf_addsign(buf, *sign_id, sign_group, prio, lnum, sp->sn_typenr);
+    bool has_text_or_icon = sp->sn_text != NULL || sp->sn_icon != NULL;
+    buf_addsign(
+        buf,
+        *sign_id,
+        sign_group,
+        prio,
+        lnum,
+        sp->sn_typenr,
+        has_text_or_icon);
   } else {
     // ":sign place {id} file={fname}": change sign type
     lnum = buf_change_sign_type(buf, *sign_id, sign_group, sp->sn_typenr);
   }
   if (lnum > 0) {
     redraw_buf_line_later(buf, lnum);
+
+    // When displaying signs in the 'number' column, if the width of the
+    // number column is less than 2, then force recomputing the width.
+    may_force_numberwidth_recompute(buf, false);
   } else {
     EMSG2(_("E885: Not possible to change sign %s"), sign_name);
     return FAIL;
@@ -877,6 +1009,13 @@ int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T atlnum)
       return FAIL;
     }
     redraw_buf_line_later(buf, lnum);
+  }
+
+  // When all the signs in a buffer are removed, force recomputing the
+  // number column width (if enabled) in all the windows displaying the
+  // buffer if 'signcolumn' is set to 'number' in that window.
+  if (buf->b_signlist == NULL) {
+    may_force_numberwidth_recompute(buf, true);
   }
 
   return OK;
@@ -1531,9 +1670,43 @@ static enum
     EXP_SUBCMD,   // expand :sign sub-commands
     EXP_DEFINE,   // expand :sign define {name} args
     EXP_PLACE,    // expand :sign place {id} args
+    EXP_LIST,     // expand :sign place args
     EXP_UNPLACE,  // expand :sign unplace"
-    EXP_SIGN_NAMES  // expand with name of placed signs
+    EXP_SIGN_NAMES,   // expand with name of placed signs
+    EXP_SIGN_GROUPS,  // expand with name of placed sign groups
 } expand_what;
+
+// Return the n'th sign name (used for command line completion)
+static char_u *get_nth_sign_name(int idx)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // Complete with name of signs already defined
+  int current_idx = 0;
+  for (sign_T *sp = first_sign; sp != NULL; sp = sp->sn_next) {
+    if (current_idx++ == idx) {
+      return sp->sn_name;
+    }
+  }
+  return NULL;
+}
+
+// Return the n'th sign group name (used for command line completion)
+static char_u *get_nth_sign_group_name(int idx)
+{
+  // Complete with name of sign groups already defined
+  int current_idx = 0;
+  int todo = (int)sg_table.ht_used;
+  for (hashitem_T *hi = sg_table.ht_array; todo > 0; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      todo--;
+      if (current_idx++ == idx) {
+        signgroup_T *const group = HI2SG(hi);
+        return group->sg_name;
+      }
+    }
+  }
+  return NULL;
+}
 
 /// Function given to ExpandGeneric() to obtain the sign command
 /// expansion.
@@ -1552,20 +1725,18 @@ char_u * get_sign_name(expand_T *xp, int idx)
                               "buffer=", NULL };
         return (char_u *)place_arg[idx];
       }
+    case EXP_LIST: {
+      char *list_arg[] = { "group=", "file=", "buffer=", NULL };
+      return (char_u *)list_arg[idx];
+    }
     case EXP_UNPLACE: {
         char *unplace_arg[] = { "group=", "file=", "buffer=", NULL };
         return (char_u *)unplace_arg[idx];
       }
-    case EXP_SIGN_NAMES: {
-        // Complete with name of signs already defined
-        int current_idx = 0;
-        for (sign_T *sp = first_sign; sp != NULL; sp = sp->sn_next) {
-          if (current_idx++ == idx) {
-            return sp->sn_name;
-          }
-        }
-      }
-      return NULL;
+    case EXP_SIGN_NAMES:
+      return get_nth_sign_name(idx);
+    case EXP_SIGN_GROUPS:
+      return get_nth_sign_group_name(idx);
     default:
       return NULL;
   }
@@ -1574,7 +1745,6 @@ char_u * get_sign_name(expand_T *xp, int idx)
 /// Handle command line completion for :sign command.
 void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 {
-  char_u  *p;
   char_u  *end_subcmd;
   char_u  *last;
   int    cmd_idx;
@@ -1598,26 +1768,6 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   //                |
   //                begin_subcmd_args
   begin_subcmd_args = skipwhite(end_subcmd);
-  p = skiptowhite(begin_subcmd_args);
-  if (*p == NUL) {
-    //
-    // Expand first argument of subcmd when possible.
-    // For ":jump {id}" and ":unplace {id}", we could
-    // possibly expand the ids of all signs already placed.
-    //
-    xp->xp_pattern = begin_subcmd_args;
-    switch (cmd_idx) {
-      case SIGNCMD_LIST:
-      case SIGNCMD_UNDEFINE:
-        // :sign list <CTRL-D>
-        // :sign undefine <CTRL-D>
-        expand_what = EXP_SIGN_NAMES;
-        break;
-      default:
-        xp->xp_context = EXPAND_NOTHING;
-    }
-    return;
-  }
 
   // Expand last argument of subcmd.
   //
@@ -1626,6 +1776,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   //              p
 
   // Loop until reaching last argument.
+  char_u *p = begin_subcmd_args;
   do {
     p = skipwhite(p);
     last = p;
@@ -1645,7 +1796,20 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
         expand_what = EXP_DEFINE;
         break;
       case SIGNCMD_PLACE:
-        expand_what = EXP_PLACE;
+        // List placed signs
+        if (ascii_isdigit(*begin_subcmd_args)) {
+          //   :sign place {id} {args}...
+          expand_what = EXP_PLACE;
+        } else {
+          //   :sign place {args}...
+          expand_what = EXP_LIST;
+        }
+        break;
+      case SIGNCMD_LIST:
+      case SIGNCMD_UNDEFINE:
+        // :sign list <CTRL-D>
+        // :sign undefine <CTRL-D>
+        expand_what = EXP_SIGN_NAMES;
         break;
       case SIGNCMD_JUMP:
       case SIGNCMD_UNPLACE:
@@ -1659,19 +1823,33 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     xp->xp_pattern = p + 1;
     switch (cmd_idx) {
       case SIGNCMD_DEFINE:
-        if (STRNCMP(last, "texthl", p - last) == 0
-            || STRNCMP(last, "linehl", p - last) == 0
-            || STRNCMP(last, "numhl", p - last) == 0) {
+        if (STRNCMP(last, "texthl", 6) == 0
+            || STRNCMP(last, "linehl", 6) == 0
+            || STRNCMP(last, "numhl", 5) == 0) {
           xp->xp_context = EXPAND_HIGHLIGHT;
-        } else if (STRNCMP(last, "icon", p - last) == 0) {
+        } else if (STRNCMP(last, "icon", 4) == 0) {
           xp->xp_context = EXPAND_FILES;
         } else {
           xp->xp_context = EXPAND_NOTHING;
         }
         break;
       case SIGNCMD_PLACE:
-        if (STRNCMP(last, "name", p - last) == 0) {
+        if (STRNCMP(last, "name", 4) == 0) {
           expand_what = EXP_SIGN_NAMES;
+        } else if (STRNCMP(last, "group", 5) == 0) {
+          expand_what = EXP_SIGN_GROUPS;
+        } else if (STRNCMP(last, "file", 4) == 0) {
+          xp->xp_context = EXPAND_BUFFERS;
+        } else {
+          xp->xp_context = EXPAND_NOTHING;
+        }
+        break;
+      case SIGNCMD_UNPLACE:
+      case SIGNCMD_JUMP:
+        if (STRNCMP(last, "group", 5) == 0) {
+          expand_what = EXP_SIGN_GROUPS;
+        } else if (STRNCMP(last, "file", 4) == 0) {
+          xp->xp_context = EXPAND_BUFFERS;
         } else {
           xp->xp_context = EXPAND_NOTHING;
         }

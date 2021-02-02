@@ -2,6 +2,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, funcs, meths, nvim_feed, eq =
   helpers.command, helpers.funcs, helpers.meths, helpers.feed, helpers.eq
+local eval = helpers.eval
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
@@ -235,6 +236,15 @@ describe('ShaDa support code', function()
     nvim_command('silent! /pat/')
     nvim_command('au BufNew * echo')
     nvim_command('wshada')
+  end)
+
+  it('does not crash when number of history save to zero (#11497)', function()
+    nvim_command('set shada=\'10')
+    nvim_feed(':" Test\n')
+    nvim_command('wshada')
+    nvim_command('set shada=\'10,:0')
+    nvim_command('wshada')
+    eq(2, eval('1+1')) -- check nvim still running
   end)
 
 end)

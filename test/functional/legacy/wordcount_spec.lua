@@ -4,7 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, command = helpers.clear, helpers.command
 local eq, eval = helpers.eq, helpers.eval
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('wordcount', function()
   before_each(clear)
@@ -14,7 +14,7 @@ describe('wordcount', function()
 
     insert([=[
       RESULT test:]=])
-    wait()
+    poke_eventloop()
 
     command('new')
     source([=[
@@ -127,7 +127,7 @@ describe('wordcount', function()
     -- -- Start visual mode quickly and select complete buffer.
     command('0')
     feed('V2jy<cr>')
-    wait()
+    poke_eventloop()
     command('set stl= ls=1')
     command('let log=DoRecordWin([3,99,0])')
     command('let log[1]=g:visual_stat')
@@ -144,7 +144,7 @@ describe('wordcount', function()
     -- Start visual mode quickly and select complete buffer.
     command('0')
     feed('v$y<cr>')
-    wait()
+    poke_eventloop()
     command('set stl= ls=1')
     command('let log=DoRecordWin([3,99,0])')
     command('let log[1]=g:visual_stat')
@@ -161,7 +161,7 @@ describe('wordcount', function()
     -- Start visual mode quickly and select complete buffer.
     command('2')
     feed('0v$y<cr>')
-    wait()
+    poke_eventloop()
     command('set stl= ls=1')
     command('let log=DoRecordWin([3,99,0])')
     command('let log[1]=g:visual_stat')

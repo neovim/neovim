@@ -2622,10 +2622,6 @@ msgstr "E143: Autokommandon tog oväntat bort ny buffert %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: ickenumeriskt argument till :z"
 
-#: ../ex_cmds.c:3398
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Skalkommandon inte tillåtna i rvim"
-
 #: ../ex_cmds.c:3492
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Reguljära uttryck kan inte vara åtskilda av bokstäver"
@@ -5738,10 +5734,6 @@ msgstr "-y\t\t\tLätt läge (som \"evim\", lägeslös)"
 #: ../main.c:2185
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tSkrivskyddat läge (som \"view\")"
-
-#: ../main.c:2186
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tBegränsat läge (som \"rvim\")"
 
 #: ../main.c:2187
 msgid "-m\t\t\tModifications (writing files) not allowed"

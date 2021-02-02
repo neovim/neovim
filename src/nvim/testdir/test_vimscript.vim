@@ -5,11 +5,11 @@
 " Test environment							    {{{1
 "-------------------------------------------------------------------------------
 
-com!               XpathINIT  let g:Xpath = ''
+com!		   XpathINIT  let g:Xpath = ''
 com! -nargs=1 -bar Xpath      let g:Xpath = g:Xpath . <args>
 
 " Append a message to the "messages" file
-func! Xout(text)
+func Xout(text)
     split messages
     $put =a:text
     wq
@@ -50,7 +50,7 @@ function! MakeScript(funcname, ...)
     write
     bwipeout
     return script
-endfunction
+endfunc
 
 " ExecAsScript - Source a temporary script made from a function.	    {{{2
 "
@@ -301,9 +301,9 @@ XpathINIT
 "
 let calls = ""
 com! -nargs=1 CALL
-    	\ if !exists("calls") && !exists("outer") |
-    	\ let g:calls = g:calls . <args> |
-    	\ endif
+	    \ if !exists("calls") && !exists("outer") |
+	    \ let g:calls = g:calls . <args> |
+	    \ endif
 
 let i = 0
 while i < 3
@@ -357,7 +357,7 @@ endif
 if exists("*F1")
     call F1("F1")
     if exists("*G1")
-        call G1("G1")
+       call G1("G1")
     endif
 endif
 
@@ -367,13 +367,13 @@ endif
 if exists("*F2")
     call F2(2, "F2")
     if exists("*G21")
-        call G21("G21")
+       call G21("G21")
     endif
     if exists("*G22")
-        call G22("G22")
+       call G22("G22")
     endif
     if exists("*G23")
-        call G23("G23")
+       call G23("G23")
     endif
 endif
 
@@ -383,13 +383,13 @@ endif
 if exists("*F3")
     call F3(3, "F3")
     if exists("*G31")
-        call G31("G31")
+       call G31("G31")
     endif
     if exists("*G32")
-        call G32("G32")
+       call G32("G32")
     endif
     if exists("*G33")
-        call G33("G33")
+       call G33("G33")
     endif
 endif
 
@@ -640,7 +640,7 @@ function! MSG(enr, emsg)
 	endif
     endif
     return match
-endfunction
+endfunc
 
 if 1 || strlen("\"") | Xpath 'a'
     Xpath 'b'
@@ -919,9 +919,203 @@ func Test_if_bar_fail()
     call assert_equal('acdfh-acfh', g:test15_result)
 endfunc
 
+"-------------------------------------------------------------------------------
+" Test 16:  Double :else or :elseif after :else				    {{{1
+"
+"	    Multiple :elses or an :elseif after an :else are forbidden.
+"-------------------------------------------------------------------------------
+
+func T16_F() abort
+  if 0
+    Xpath 'a'
+  else
+    Xpath 'b'
+  else		" aborts function
+    Xpath 'c'
+  endif
+  Xpath 'd'
+endfunc
+
+func T16_G() abort
+  if 0
+    Xpath 'a'
+  else
+    Xpath 'b'
+  elseif 1		" aborts function
+    Xpath 'c'
+  else
+    Xpath 'd'
+  endif
+  Xpath 'e'
+endfunc
+
+func T16_H() abort
+  if 0
+    Xpath 'a'
+  elseif 0
+    Xpath 'b'
+  else
+    Xpath 'c'
+  else		" aborts function
+    Xpath 'd'
+  endif
+  Xpath 'e'
+endfunc
+
+func T16_I() abort
+  if 0
+    Xpath 'a'
+  elseif 0
+    Xpath 'b'
+  else
+    Xpath 'c'
+  elseif 1		" aborts function
+    Xpath 'd'
+  else
+    Xpath 'e'
+  endif
+  Xpath 'f'
+endfunc
+
+func Test_Multi_Else()
+  XpathINIT
+  try
+    call T16_F()
+  catch /E583:/
+    Xpath 'e'
+  endtry
+  call assert_equal('be', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_G()
+  catch /E584:/
+    Xpath 'f'
+  endtry
+  call assert_equal('bf', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_H()
+  catch /E583:/
+    Xpath 'f'
+  endtry
+  call assert_equal('cf', g:Xpath)
+
+  XpathINIT
+  try
+    call T16_I()
+  catch /E584:/
+    Xpath 'g'
+  endtry
+  call assert_equal('cg', g:Xpath)
+endfunc
 
 "-------------------------------------------------------------------------------
-" Test 16:  Recognizing {} in variable name.			    {{{1
+" Test 17:  Nesting of unmatched :if or :endif inside a :while		    {{{1
+"
+"	    The :while/:endwhile takes precedence in nesting over an unclosed
+"	    :if or an unopened :endif.
+"-------------------------------------------------------------------------------
+
+" While loops inside a function are continued on error.
+func T17_F()
+  let loops = 3
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if (loops == 1)
+      Xpath 'b' . loops
+      continue
+    elseif (loops == 0)
+      Xpath 'c' . loops
+      break
+    elseif 1
+      Xpath 'd' . loops
+    " endif missing!
+  endwhile	" :endwhile after :if 1
+  Xpath 'e'
+endfunc
+
+func T17_G()
+  let loops = 2
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if 0
+      Xpath 'b' . loops
+    " endif missing
+  endwhile	" :endwhile after :if 0
+endfunc
+
+func T17_H()
+  let loops = 2
+  while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    " if missing!
+    endif	" :endif without :if in while
+    Xpath 'b' . loops
+  endwhile
+endfunc
+
+" Error continuation outside a function is at the outermost :endwhile or :endif.
+XpathINIT
+let v:errmsg = ''
+let loops = 2
+while loops > 0
+    let loops -= 1
+    Xpath 'a' . loops
+    if 0
+	Xpath 'b' . loops
+    " endif missing! Following :endwhile fails.
+endwhile | Xpath 'c'
+Xpath 'd'
+call assert_match('E171:', v:errmsg)
+call assert_equal('a1d', g:Xpath)
+
+func Test_unmatched_if_in_while()
+  XpathINIT
+  call assert_fails('call T17_F()', 'E171:')
+  call assert_equal('a2d2a1b1a0c0e', g:Xpath)
+
+  XpathINIT
+  call assert_fails('call T17_G()', 'E171:')
+  call assert_equal('a1a0', g:Xpath)
+
+  XpathINIT
+  call assert_fails('call T17_H()', 'E580:')
+  call assert_equal('a1b1a0b0', g:Xpath)
+endfunc
+
+"-------------------------------------------------------------------------------
+"-------------------------------------------------------------------------------
+"-------------------------------------------------------------------------------
+" Test 87   using (expr) ? funcref : funcref				    {{{1
+"
+"	    Vim needs to correctly parse the funcref and even when it does
+"	    not execute the funcref, it needs to consume the trailing ()
+"-------------------------------------------------------------------------------
+
+func Add2(x1, x2)
+  return a:x1 + a:x2
+endfu
+
+func GetStr()
+  return "abcdefghijklmnopqrstuvwxyp"
+endfu
+
+func Test_funcref_with_condexpr()
+  call assert_equal(5, function('Add2')(2,3))
+
+  call assert_equal(3, 1 ? function('Add2')(1,2) : function('Add2')(2,3))
+  call assert_equal(5, 0 ? function('Add2')(1,2) : function('Add2')(2,3))
+  " Make sure, GetStr() still works.
+  call assert_equal('abcdefghijk', GetStr()[0:10])
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 90:  Recognizing {} in variable name.			    {{{1
 "-------------------------------------------------------------------------------
 
 func Test_curlies()
@@ -1068,10 +1262,6 @@ endfunc
 "-------------------------------------------------------------------------------
 
 func Test_num64()
-    if !has('num64')
-	return
-    endif
-
     call assert_notequal( 4294967296, 0)
     call assert_notequal(-4294967296, 0)
     call assert_equal( 4294967296,  0xFFFFffff + 1)
@@ -1103,70 +1293,70 @@ endfunction
 func Test_script_lines()
     " :append
     try
-        call DefineFunction('T_Append', [
-                    \ 'append',
-                    \ 'py <<EOS',
-                    \ '.',
-                    \ ])
+	call DefineFunction('T_Append', [
+		    \ 'append',
+		    \ 'py <<EOS',
+		    \ '.',
+		    \ ])
     catch
-        call assert_report("Can't define function")
+	call assert_report("Can't define function")
     endtry
     try
-        call DefineFunction('T_Append', [
-                    \ 'append',
-                    \ 'abc',
-                    \ ])
-        call assert_report("Shouldn't be able to define function")
+	call DefineFunction('T_Append', [
+		    \ 'append',
+		    \ 'abc',
+		    \ ])
+	call assert_report("Shouldn't be able to define function")
     catch
-        call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E126: Missing :endfunction')
     endtry
 
     " :change
     try
-        call DefineFunction('T_Change', [
-                    \ 'change',
-                    \ 'py <<EOS',
-                    \ '.',
-                    \ ])
+	call DefineFunction('T_Change', [
+		    \ 'change',
+		    \ 'py <<EOS',
+		    \ '.',
+		    \ ])
     catch
-        call assert_report("Can't define function")
+	call assert_report("Can't define function")
     endtry
     try
-        call DefineFunction('T_Change', [
-                    \ 'change',
-                    \ 'abc',
-                    \ ])
-        call assert_report("Shouldn't be able to define function")
+	call DefineFunction('T_Change', [
+		    \ 'change',
+		    \ 'abc',
+		    \ ])
+	call assert_report("Shouldn't be able to define function")
     catch
-        call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E126: Missing :endfunction')
     endtry
 
     " :insert
     try
-        call DefineFunction('T_Insert', [
-                    \ 'insert',
-                    \ 'py <<EOS',
-                    \ '.',
-                    \ ])
+	call DefineFunction('T_Insert', [
+		    \ 'insert',
+		    \ 'py <<EOS',
+		    \ '.',
+		    \ ])
     catch
-        call assert_report("Can't define function")
+	call assert_report("Can't define function")
     endtry
     try
-        call DefineFunction('T_Insert', [
-                    \ 'insert',
-                    \ 'abc',
-                    \ ])
-        call assert_report("Shouldn't be able to define function")
+	call DefineFunction('T_Insert', [
+		    \ 'insert',
+		    \ 'abc',
+		    \ ])
+	call assert_report("Shouldn't be able to define function")
     catch
-        call assert_exception('Vim(function):E126: Missing :endfunction')
+	call assert_exception('Vim(function):E126: Missing :endfunction')
     endtry
 endfunc
 
 "-------------------------------------------------------------------------------
 " Test 96:  line continuation						    {{{1
 "
-"           Undefined behavior was detected by ubsan with line continuation
-"           after an empty line.
+"	    Undefined behavior was detected by ubsan with line continuation
+"	    after an empty line.
 "-------------------------------------------------------------------------------
 func Test_script_emty_line_continuation()
 
@@ -1313,27 +1503,15 @@ func Test_compound_assignment_operators()
     " Test special cases: division or modulus with 0.
     let x = 1
     let x /= 0
-    if has('num64')
-        call assert_equal(0x7FFFFFFFFFFFFFFF, x)
-    else
-        call assert_equal(0x7fffffff, x)
-    endif
+    call assert_equal(0x7FFFFFFFFFFFFFFF, x)
 
     let x = -1
     let x /= 0
-    if has('num64')
-        call assert_equal(-0x7FFFFFFFFFFFFFFF, x)
-    else
-        call assert_equal(-0x7fffffff, x)
-    endif
+    call assert_equal(-0x7FFFFFFFFFFFFFFF, x)
 
     let x = 0
     let x /= 0
-    if has('num64')
-        call assert_equal(-0x7FFFFFFFFFFFFFFF - 1, x)
-    else
-        call assert_equal(-0x7FFFFFFF - 1, x)
-    endif
+    call assert_equal(-0x7FFFFFFFFFFFFFFF - 1, x)
 
     let x = 1
     let x %= 0
@@ -1409,6 +1587,31 @@ func Test_compound_assignment_operators()
     let @/ = ''
 endfunc
 
+func Test_unlet_env()
+    let $TESTVAR = 'yes'
+    call assert_equal('yes', $TESTVAR)
+    call assert_fails('lockvar $TESTVAR', 'E940')
+    call assert_fails('unlockvar $TESTVAR', 'E940')
+    call assert_equal('yes', $TESTVAR)
+    if 0
+        unlet $TESTVAR
+    endif
+    call assert_equal('yes', $TESTVAR)
+    unlet $TESTVAR
+    call assert_equal('', $TESTVAR)
+endfunc
+
+func Test_funccall_garbage_collect()
+    func Func(x, ...)
+        call add(a:x, a:000)
+    endfunc
+    call Func([], [])
+    " Must not crash cause by invalid freeing
+    call test_garbagecollect_now()
+    call assert_true(v:true)
+    delfunc Func
+endfunc
+
 func Test_function_defined_line()
     if has('gui_running')
         " Can't catch the output of gvim.
@@ -1481,5 +1684,5 @@ endfunc
 
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
-" vim: ts=8 sw=4 tw=80 fdm=marker
+" vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
 "-------------------------------------------------------------------------------

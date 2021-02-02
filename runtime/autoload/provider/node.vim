@@ -48,14 +48,15 @@ function! provider#node#can_inspect() abort
 endfunction
 
 function! provider#node#Detect() abort
+  let minver = [6, 0]
   if exists('g:node_host_prog')
-    return expand(g:node_host_prog)
+    return [expand(g:node_host_prog), '']
   endif
   if !executable('node')
-    return ''
+    return ['', 'node not found (or not executable)']
   endif
-  if !s:is_minimum_version(v:null, 6, 0)
-    return ''
+  if !s:is_minimum_version(v:null, minver[0], minver[1])
+    return ['', printf('node version %s.%s not found', minver[0], minver[1])]
   endif
 
   let npm_opts = {}
@@ -75,7 +76,7 @@ function! provider#node#Detect() abort
     if has('unix')
       let yarn_default_path = $HOME . '/.config/yarn/global/' . yarn_opts.entry_point
       if filereadable(yarn_default_path)
-        return yarn_default_path
+        return [yarn_default_path, '']
       endif
     endif
     let yarn_opts.job_id = jobstart('yarn global dir', yarn_opts)
@@ -85,18 +86,18 @@ function! provider#node#Detect() abort
   if !empty(npm_opts)
     let result = jobwait([npm_opts.job_id])
     if result[0] == 0 && npm_opts.result != ''
-      return npm_opts.result
+      return [npm_opts.result, '']
     endif
   endif
 
   if !empty(yarn_opts)
     let result = jobwait([yarn_opts.job_id])
     if result[0] == 0 && yarn_opts.result != ''
-      return yarn_opts.result
+      return [yarn_opts.result, '']
     endif
   endif
 
-  return ''
+  return ['', 'failed to detect node']
 endfunction
 
 function! provider#node#Prog() abort
@@ -142,7 +143,7 @@ endfunction
 
 
 let s:err = ''
-let s:prog = provider#node#Detect()
+let [s:prog, s:_] = provider#node#Detect()
 let g:loaded_node_provider = empty(s:prog) ? 1 : 2
 
 if g:loaded_node_provider != 2

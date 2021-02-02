@@ -31,7 +31,7 @@ describe(":drop", function()
       {0:~                                  }|
       {0:~                                  }|
       {1:tmp1.vim                           }|
-      "tmp1.vim" [New File]              |
+      "tmp1.vim" [New]                   |
     ]])
   end)
 
@@ -70,7 +70,7 @@ describe(":drop", function()
       {0:~                   }{2:│}{0:~             }|
       {0:~                   }{2:│}{0:~             }|
       {2:tmp2 [+]             tmp1          }|
-      "tmp3" [New File]                  |
+      "tmp3" [New]                       |
     ]])
   end)
 

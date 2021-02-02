@@ -68,7 +68,7 @@ elseif(MSVC)
     "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1}"
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     # Make sure we use the same generator, otherwise we may
-    # accidentaly end up using different MSVC runtimes
+    # accidentally end up using different MSVC runtimes
     -DCMAKE_GENERATOR=${CMAKE_GENERATOR})
 endif()
 

@@ -124,7 +124,7 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 :[N]sp[lit] [++opt] [+cmd] [file]			*:sp* *:split*
 		Split current window in two.  The result is two viewports on
 		the same file.
-		
+
 		Make the new window N high (default is to use half the height
 		of the current window).  Reduces the current window height to
 		create room (and others, if the 'equalalways' option is set,
@@ -1021,6 +1021,9 @@ list of buffers. |unlisted-buffer|
 			x	buffers with a read error
 			%	current buffer
 			#	alternate buffer
+			R	terminal buffers with a running job
+			F	terminal buffers with a finished job
+			t	show time last used and sort buffers
 		Combining flags means they are "and"ed together, e.g.:
 			h+	hidden buffers which are modified
 			a+	active buffers which are modified

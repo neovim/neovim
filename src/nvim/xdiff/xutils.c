@@ -168,7 +168,7 @@ static int ends_with_optional_cr(const char *l, long s, long i)
 		s--;
 	if (s == i)
 		return 1;
-	/* do not ignore CR at the end of an incomplete line */
+	// do not ignore CR at the end of an incomplete line
 	if (complete && s == i + 1 && l[i] == '\r')
 		return 1;
 	return 0;
@@ -208,7 +208,7 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 	} else if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
 		while (i1 < s1 && i2 < s2) {
 			if (XDL_ISSPACE(l1[i1]) && XDL_ISSPACE(l2[i2])) {
-				/* Skip matching spaces and try again */
+				// Skip matching spaces and try again
 				while (i1 < s1 && XDL_ISSPACE(l1[i1]))
 					i1++;
 				while (i2 < s2 && XDL_ISSPACE(l2[i2]))
@@ -224,7 +224,7 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 			i2++;
 		}
 	} else if (flags & XDF_IGNORE_CR_AT_EOL) {
-		/* Find the first difference and see how the line ends */
+		// Find the first difference and see how the line ends
 		while (i1 < s1 && i2 < s2 && l1[i1] == l2[i2]) {
 			i1++;
 			i2++;
@@ -261,7 +261,7 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
 		if (cr_at_eol_only) {
-			/* do not ignore CR at the end of an incomplete line */
+			// do not ignore CR at the end of an incomplete line
 			if (*ptr == '\r' &&
 			    (ptr + 1 < top && ptr[1] == '\n'))
 				continue;
@@ -274,7 +274,7 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 				ptr++;
 			at_eol = (top <= ptr + 1 || ptr[1] == '\n');
 			if (flags & XDF_IGNORE_WHITESPACE)
-				; /* already handled */
+				; // already handled
 			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
 				 && !at_eol) {
 				ha += (ha << 5);

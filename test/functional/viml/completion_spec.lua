@@ -3,10 +3,11 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
+local funcs = helpers.funcs
 local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 local meths = helpers.meths
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 
 describe('completion', function()
   local screen
@@ -26,6 +27,7 @@ describe('completion', function()
       [7] = {foreground = Screen.colors.White, background = Screen.colors.Red},
       [8] = {reverse = true},
       [9] = {bold = true, reverse = true},
+      [10] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow},
     })
   end)
 
@@ -737,8 +739,8 @@ describe('completion', function()
     -- Does not indent when "ind" is typed.
     feed("in<C-X><C-N>")
     -- Completion list is generated incorrectly if we send everything at once
-    -- via nvim_input().  So wait() before sending <BS>. #8480
-    wait()
+    -- via nvim_input().  So poke_eventloop() before sending <BS>. #8480
+    poke_eventloop()
     feed("<BS>d")
 
     screen:expect([[
@@ -778,7 +780,7 @@ describe('completion', function()
     ]])
     -- Works for unindenting too.
     feed("ounin<C-X><C-N>")
-    helpers.wait()
+    helpers.poke_eventloop()
     feed("<BS>d")
     screen:expect([[
       inc uninc indent unindent                                   |
@@ -895,8 +897,47 @@ describe('completion', function()
     ]])
   end)
 
-  describe('from the commandline window', function()
+  describe('lua completion', function()
+    it('expands when there is only one match', function()
+      feed(':lua CURRENT_TESTING_VAR = 1<CR>')
+      feed(':lua CURRENT_TESTING_<TAB>')
+      screen:expect{grid=[[
+                                                                    |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        :lua CURRENT_TESTING_VAR^                                    |
+      ]]}
+    end)
 
+    it('expands when there is only one match', function()
+      feed(':lua CURRENT_TESTING_FOO = 1<CR>')
+      feed(':lua CURRENT_TESTING_BAR = 1<CR>')
+      feed(':lua CURRENT_TESTING_<TAB>')
+      screen:expect{ grid = [[
+                                                                    |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {10:CURRENT_TESTING_BAR}{9:  CURRENT_TESTING_FOO                    }|
+        :lua CURRENT_TESTING_BAR^                                    |
+      ]], unchanged = true }
+    end)
+
+    it('provides completion from `getcompletion()`', function()
+      eq({'vim'}, funcs.getcompletion('vi', 'lua'))
+      eq({'api'}, funcs.getcompletion('vim.ap', 'lua'))
+      eq({'tbl_filter'}, funcs.getcompletion('vim.tbl_fil', 'lua'))
+      eq({'vim'}, funcs.getcompletion('print(vi', 'lua'))
+    end)
+  end)
+
+  describe('from the commandline window', function()
     it('is cleared after CTRL-C', function ()
       feed('q:')
       feed('ifoo faa fee f')
@@ -1000,65 +1041,65 @@ describe('completion', function()
 
     command('let g:foo = []')
     feed('o')
-    wait()
+    poke_eventloop()
     feed('<esc>')
     eq({'I'}, eval('g:foo'))
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     eq({'I', 'I'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     eq({'I', 'I', 'P'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     eq({'I', 'I', 'P', 'P'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     eq({'I', 'I', 'P', 'P', 'P'}, eval('g:foo'))
     feed('<esc>')
 
     command('let g:foo = []')
     feed('S')
-    wait()
+    poke_eventloop()
     feed('f')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
-    wait()
+    poke_eventloop()
     feed('<C-N>')
     eq({'I', 'I', 'P', 'P', 'P', 'P'}, eval('g:foo'))
     feed('<esc>')

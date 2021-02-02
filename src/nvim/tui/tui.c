@@ -31,7 +31,11 @@
 #include "nvim/event/signal.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/signal.h"
 #include "nvim/os/tty.h"
+#ifdef WIN32
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui_bridge.h"
@@ -104,6 +108,7 @@ typedef struct {
   bool cork, overflow;
   bool cursor_color_changed;
   bool is_starting;
+  FILE *screenshot;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
   kvec_t(HlAttrs) attrs;
@@ -163,6 +168,7 @@ UI *tui_start(void)
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
+  ui->screenshot = tui_screenshot;
   ui->option_set= tui_option_set;
   ui->raw_line = tui_raw_line;
 
@@ -265,7 +271,7 @@ static void terminfo_start(UI *ui)
                                : (konsole ? 1 : 0);
 
   patch_terminfo_bugs(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
-  augment_terminfo(data, term, colorterm, vtev, konsolev, iterm_env, nsterm);
+  augment_terminfo(data, term, vtev, konsolev, iterm_env, nsterm);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
   data->can_set_lr_margin =
@@ -310,7 +316,13 @@ static void terminfo_start(UI *ui)
 #ifdef WIN32
     uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
 #else
-    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+    int retry_count = 10;
+    // A signal may cause uv_tty_set_mode() to fail (e.g., SIGCONT). Retry a
+    // few times. #12322
+    while (uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO) == UV_EINTR
+           && retry_count > 0) {
+      retry_count--;
+    }
 #endif
   } else {
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
@@ -408,6 +420,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   data->bridge = bridge;
   data->loop = &tui_loop;
   data->is_starting = true;
+  data->screenshot = NULL;
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
   signal_watcher_init(data->loop, &data->cont_handle, data);
@@ -1009,8 +1022,22 @@ static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
   if (!data->mouse_enabled) {
+#ifdef WIN32
+    // Windows versions with vtp(ENABLE_VIRTUAL_TERMINAL_PROCESSING) and
+    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse traking of
+    // libuv. For this reason, vtp (vterm) state of libuv is temporarily
+    // disabled because the control sequence needs to be processed by libuv
+    // instead of Windows vtp.
+    // ref. https://docs.microsoft.com/en-us/windows/console/setconsolemode
+    flush_buf(ui);
+    os_set_vtp(false);
+#endif
     unibi_out_ext(ui, data->unibi_ext.enable_mouse);
     data->mouse_enabled = true;
+#ifdef WIN32
+    flush_buf(ui);
+    os_set_vtp(true);
+#endif
   }
 }
 
@@ -1018,8 +1045,22 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   if (data->mouse_enabled) {
+#ifdef WIN32
+    // Windows versions with vtp(ENABLE_VIRTUAL_TERMINAL_PROCESSING) and
+    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse traking of
+    // libuv. For this reason, vtp (vterm) state of libuv is temporarily
+    // disabled because the control sequence needs to be processed by libuv
+    // instead of Windows vtp.
+    // ref. https://docs.microsoft.com/en-us/windows/console/setconsolemode
+    flush_buf(ui);
+    os_set_vtp(false);
+#endif
     unibi_out_ext(ui, data->unibi_ext.disable_mouse);
     data->mouse_enabled = false;
+#ifdef WIN32
+    flush_buf(ui);
+    os_set_vtp(true);
+#endif
   }
 }
 
@@ -1048,6 +1089,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     }
   } else if (c.id == 0) {
     // No cursor color for this mode; reset to default.
+    data->want_invisible = false;
     unibi_out_ext(ui, data->unibi_ext.reset_cursor_color);
   }
 
@@ -1066,6 +1108,15 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
 {
   TUIData *data = ui->data;
+#ifdef UNIX
+  // If stdin is not a TTY, the LHS of pipe may change the state of the TTY
+  // after calling uv_tty_set_mode. So, set the mode of the TTY again here.
+  // #13073
+  if (data->is_starting && data->input.in_fd == STDERR_FILENO) {
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_NORMAL);
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+  }
+#endif
   tui_set_mode(ui, (ModeShape)mode_idx);
   data->is_starting = false;  // mode entered, no longer starting
   data->showing_mode = (ModeShape)mode_idx;
@@ -1073,9 +1124,8 @@ static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
 
 static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
                             Integer startcol, Integer endcol,
-                            Integer rows, Integer cols)
+                            Integer rows, Integer cols FUNC_ATTR_UNUSED)
 {
-  (void)cols;  // unused
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   int top = (int)startrow, bot = (int)endrow-1;
@@ -1100,6 +1150,7 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
       set_scroll_region(ui, top, bot, left, right);
     }
     cursor_goto(ui, top, left);
+    update_attrs(ui, 0);
 
     if (rows > 0) {
       if (rows == 1) {
@@ -1239,7 +1290,9 @@ static void suspend_event(void **argv)
   tui_terminal_stop(ui);
   data->cont_received = false;
   stream_set_blocking(input_global_fd(), true);   // normalize stream (#2598)
+  signal_stop();
   kill(0, SIGTSTP);
+  signal_start();
   while (!data->cont_received) {
     // poll the event loop until SIGCONT is received
     loop_poll_events(data->loop, -1);
@@ -1283,6 +1336,31 @@ static void tui_set_icon(UI *ui, String icon)
 {
 }
 
+static void tui_screenshot(UI *ui, String path)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  flush_buf(ui);
+  grid->row = 0;
+  grid->col = 0;
+
+  FILE *f = fopen(path.data, "w");
+  data->screenshot = f;
+  fprintf(f, "%d,%d\n", grid->height, grid->width);
+  unibi_out(ui, unibi_clear_screen);
+  for (int i = 0; i < grid->height; i++) {
+    cursor_goto(ui, i, 0);
+    for (int j = 0; j < grid->width; j++) {
+      print_cell(ui, &grid->cells[i][j]);
+    }
+  }
+  flush_buf(ui);
+  data->screenshot = NULL;
+
+  fclose(f);
+}
+
+
 static void tui_option_set(UI *ui, String name, Object value)
 {
   TUIData *data = ui->data;
@@ -1291,6 +1369,12 @@ static void tui_option_set(UI *ui, String name, Object value)
 
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
+  }
+  if (strequal(name.data, "ttimeout")) {
+    data->input.ttimeout = value.data.boolean;
+  }
+  if (strequal(name.data, "ttimeoutlen")) {
+    data->input.ttimeoutlen = (long)value.data.integer;
   }
 }
 
@@ -1631,6 +1715,11 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
+    // Fix an issue where smglr is inherited by TERM=screen.xterm.
+    if (unibi_get_str(ut, unibi_set_lr_margin)) {
+      ILOG("Disabling smglr with TERM=screen.xterm for screen.");
+      unibi_set_str(ut, unibi_set_lr_margin, NULL);
+    }
   } else if (tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
@@ -1806,7 +1895,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 /// This adds stuff that is not in standard terminfo as extended unibilium
 /// capabilities.
 static void augment_terminfo(TUIData *data, const char *term,
-                             const char *colorterm, long vte_version,
+                             long vte_version,
                              long konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = data->ut;
@@ -1897,7 +1986,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
-  } else if ((xterm || rxvt || alacritty)
+  } else if ((xterm || rxvt || tmux || alacritty)
              && (vte_version == 0 || vte_version >= 3900)) {
     // Supported in urxvt, newer VTE.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
@@ -1962,7 +2051,23 @@ static void flush_buf(UI *ui)
   uv_buf_t *bufp = &bufs[0];
   TUIData *data = ui->data;
 
-  if (data->bufpos <= 0 && data->busy == data->is_invisible) {
+  // The content of the output for each condition is shown in the following
+  // table. Therefore, if data->bufpos == 0 and N/A or invis + norm, there is
+  // no need to output it.
+  //
+  //                         | is_invisible | !is_invisible
+  // ------+-----------------+--------------+---------------
+  // busy  | want_invisible  |     N/A      |    invis
+  //       | !want_invisible |     N/A      |    invis
+  // ------+-----------------+--------------+---------------
+  // !busy | want_invisible  |     N/A      |    invis
+  //       | !want_invisible |     norm     | invis + norm
+  // ------+-----------------+--------------+---------------
+  //
+  if (data->bufpos <= 0
+      && ((data->is_invisible && data->busy)
+          || (data->is_invisible && !data->busy && data->want_invisible)
+          || (!data->is_invisible && !data->busy && !data->want_invisible))) {
     return;
   }
 
@@ -1989,13 +2094,19 @@ static void flush_buf(UI *ui)
       bufp->base = data->norm;
       bufp->len = UV_BUF_LEN(data->normlen);
       bufp++;
+      data->is_invisible = false;
     }
-    data->is_invisible = false;
   }
 
-  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
-           bufs, (unsigned)(bufp - bufs), NULL);
-  uv_run(&data->write_loop, UV_RUN_DEFAULT);
+  if (data->screenshot) {
+    for (size_t i = 0; i < (size_t)(bufp - bufs); i++) {
+      fwrite(bufs[i].base, bufs[i].len, 1, data->screenshot);
+    }
+  } else {
+    uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
+             bufs, (unsigned)(bufp - bufs), NULL);
+    uv_run(&data->write_loop, UV_RUN_DEFAULT);
+  }
   data->bufpos = 0;
   data->overflow = false;
 }

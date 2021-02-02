@@ -8,7 +8,7 @@ If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
 - [Merge a Vim patch].
-- Try a [complexity:low] issue.
+- Try a [good first issue](../../labels/good%20first%20issue) or [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
 
@@ -36,6 +36,7 @@ Developer guidelines
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
+- [Improve documentation][wiki-contribute-help]
 
 Pull requests (PRs)
 ---------------------
@@ -65,10 +66,11 @@ Pull requests (PRs)
 Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
 For Comment) and `[RDY]` (Ready).
 
-- `[RFC]` is assumed by default, i.e. you are requesting a review.
-- Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
-  is still in flux.
-- Add `[RDY]` if you are _done_ and only waiting on merge.
+1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
+   noise to merge commit messages).
+2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
+   is still in flux.
+3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
 
 ### Commit messages
 
@@ -109,7 +111,7 @@ and [AppVeyor].
       # To get a full backtrace:
       #   1. Rebuild with debug info.
       rm -rf nvim.core build
-      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
+      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
       #   2. Run the failing test to generate a new core file.
       TEST_FILE=test/functional/foo.lua gmake functionaltest
       lldb build/bin/nvim -c nvim.core
@@ -234,3 +236,4 @@ as context, use the `-W` argument as well.
 [Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
+[wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp

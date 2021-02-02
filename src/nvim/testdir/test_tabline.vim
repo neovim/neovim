@@ -64,3 +64,28 @@ func Test_redrawtabline()
   let &showtabline = showtabline_save
   au! Bufadd
 endfunc
+
+function EmptyTabname()
+  return ""
+endfunction
+
+function MakeTabLine() abort
+  let titles = map(range(1, tabpagenr('$')), '"%( %" . v:val . "T%{EmptyTabname()}%T %)"')
+  let sep = 'あ'
+  let tabpages = join(titles, sep)
+  return tabpages .. sep .. '%=%999X X'
+endfunction
+
+func Test_tabline_empty_group()
+  " this was reading invalid memory
+  set tabline=%!MakeTabLine()
+  tabnew
+  redraw!
+
+  tabclose
+  set tabline=
+endfunc
+
+
+
+" vim: shiftwidth=2 sts=2 expandtab

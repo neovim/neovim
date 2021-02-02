@@ -54,6 +54,7 @@ let s:filename_checks = {
     \ 'acedb': ['file.wrm'],
     \ 'ada': ['file.adb', 'file.ads', 'file.ada', 'file.gpr'],
     \ 'ahdl': ['file.tdf'],
+    \ 'aidl': ['file.aidl'],
     \ 'alsaconf': ['.asoundrc', '/usr/share/alsa/alsa.conf', '/etc/asound.conf'],
     \ 'aml': ['file.aml'],
     \ 'ampl': ['file.run'],
@@ -72,17 +73,21 @@ let s:filename_checks = {
     \ 'autoit': ['file.au3'],
     \ 'automake': ['GNUmakefile.am'],
     \ 'ave': ['file.ave'],
-    \ 'awk': ['file.awk'],
+    \ 'awk': ['file.awk', 'file.gawk'],
     \ 'b': ['file.mch', 'file.ref', 'file.imp'],
+    \ 'bzl': ['file.bazel', 'file.bzl', 'WORKSPACE'],
     \ 'bc': ['file.bc'],
     \ 'bdf': ['file.bdf'],
     \ 'bib': ['file.bib'],
     \ 'bindzone': ['named.root'],
     \ 'blank': ['file.bl'],
+    \ 'bsdl': ['file.bsd', 'file.bsdl'],
     \ 'bst': ['file.bst'],
     \ 'bzr': ['bzr_log.any'],
     \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c'],
     \ 'cabal': ['file.cabal'],
+    \ 'cabalconfig': ['cabal.config'],
+    \ 'cabalproject': ['cabal.project', 'cabal.project.local'],
     \ 'calendar': ['calendar'],
     \ 'catalog': ['catalog', 'sgml.catalogfile'],
     \ 'cdl': ['file.cdl'],
@@ -106,7 +111,7 @@ let s:filename_checks = {
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master'],
     \ 'config': ['configure.in', 'configure.ac', 'Pipfile'],
-    \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi'],
+    \ 'context': ['tex/context/any/file.tex', 'file.mkii', 'file.mkiv', 'file.mkvi', 'file.mkxl', 'file.mklx'],
     \ 'cpp': ['file.cxx', 'file.c++', 'file.hh', 'file.hxx', 'file.hpp', 'file.ipp', 'file.moc', 'file.tcc', 'file.inl', 'file.tlh'],
     \ 'crm': ['file.crm'],
     \ 'cs': ['file.cs'],
@@ -125,12 +130,13 @@ let s:filename_checks = {
     \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
+    \ 'debchangelog': ['changelog.Debian', 'changelog.dch', 'NEWS.Debian', 'NEWS.dch', '/debian/changelog'],
     \ 'debcontrol': ['/debian/control'],
     \ 'debsources': ['/etc/apt/sources.list', '/etc/apt/sources.list.d/file.list'],
     \ 'def': ['file.def'],
     \ 'denyhosts': ['denyhosts.conf'],
     \ 'desc': ['file.desc'],
-    \ 'desktop': ['file.desktop', '.directory'],
+    \ 'desktop': ['file.desktop', '.directory', 'file.directory'],
     \ 'dictconf': ['dict.conf', '.dictrc'],
     \ 'dictdconf': ['dictd.conf'],
     \ 'diff': ['file.diff', 'file.rej'],
@@ -138,19 +144,22 @@ let s:filename_checks = {
     \ 'dnsmasq': ['/etc/dnsmasq.conf'],
     \ 'dockerfile': ['Dockerfile', 'file.Dockerfile'],
     \ 'dosbatch': ['file.bat', 'file.sys'],
-    \ 'dosini': ['.editorconfig', '/etc/yum.conf', 'file.ini'],
-    \ 'dot': ['file.dot'],
+    \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5'],
+    \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe'],
     \ 'dsl': ['file.dsl'],
     \ 'dtd': ['file.dtd'],
     \ 'dts': ['file.dts', 'file.dtsi'],
+    \ 'dune': ['jbuild', 'dune', 'dune-project', 'dune-workspace'],
     \ 'dylan': ['file.dylan'],
     \ 'dylanintr': ['file.intr'],
     \ 'dylanlid': ['file.lid'],
     \ 'ecd': ['file.ecd'],
     \ 'edif': ['file.edf', 'file.edif', 'file.edo'],
-    \ 'elinks': ['/etc/elinks.conf', '/.elinks/elinks.conf'],
+    \ 'elinks': ['elinks.conf'],
+    \ 'elm': ['file.elm'],
     \ 'elmfilt': ['filter-rules'],
+    \ 'epuppet': ['file.epp'],
     \ 'erlang': ['file.erl', 'file.hrl', 'file.yaws'],
     \ 'eruby': ['file.erb', 'file.rhtml'],
     \ 'esmtprc': ['anyesmtprc'],
@@ -163,6 +172,7 @@ let s:filename_checks = {
     \ 'factor': ['file.factor'],
     \ 'falcon': ['file.fal'],
     \ 'fan': ['file.fan', 'file.fwt'],
+    \ 'fennel': ['file.fnl'],
     \ 'fetchmail': ['.fetchmailrc'],
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
     \ 'focexec': ['file.fex', 'file.focexec'],
@@ -174,6 +184,7 @@ let s:filename_checks = {
     \ 'gdb': ['.gdbinit'],
     \ 'gdmo': ['file.mo', 'file.gdmo'],
     \ 'gedcom': ['file.ged', 'lltxxxxx.txt'],
+    \ 'gift': ['file.gift'],
     \ 'gitcommit': ['COMMIT_EDITMSG', 'MERGE_MSG', 'TAG_EDITMSG'],
     \ 'gitconfig': ['file.git/config', '.gitconfig', '.gitmodules', 'file.git/modules//config', '/.config/git/config', '/etc/gitconfig'],
     \ 'gitolite': ['gitolite.conf'],
@@ -193,8 +204,8 @@ let s:filename_checks = {
     \ 'gsp': ['file.gsp'],
     \ 'gtkrc': ['.gtkrc', 'gtkrc'],
     \ 'haml': ['file.haml'],
-    \ 'hamster': ['file.hsc', 'file.hsm'],
-    \ 'haskell': ['file.hs', 'file.hs-boot'],
+    \ 'hamster': ['file.hsm'],
+    \ 'haskell': ['file.hs', 'file.hsc', 'file.hs-boot'],
     \ 'haste': ['file.ht'],
     \ 'hastepreproc': ['file.htpp'],
     \ 'hb': ['file.hb'],
@@ -234,6 +245,7 @@ let s:filename_checks = {
     \ 'kconfig': ['Kconfig', 'Kconfig.debug'],
     \ 'kivy': ['file.kv'],
     \ 'kix': ['file.kix'],
+    \ 'kotlin': ['file.kt', 'file.ktm', 'file.kts'],
     \ 'kscript': ['file.ks'],
     \ 'kwt': ['file.k'],
     \ 'lace': ['file.ace', 'file.ACE'],
@@ -249,7 +261,7 @@ let s:filename_checks = {
     \ 'lilo': ['lilo.conf'],
     \ 'limits': ['/etc/limits', '/etc/anylimits.conf', '/etc/anylimits.d/file.conf'],
     \ 'liquid': ['file.liquid'],
-    \ 'lisp': ['sbclrc', '.sbclrc'],
+    \ 'lisp': ['file.lsp', 'file.lisp', 'file.el', 'file.cl', '.emacs', '.sawfishrc', 'sbclrc', '.sbclrc'],
     \ 'lite': ['file.lite', 'file.lt'],
     \ 'litestep': ['/LiteStep/any/file.rc'],
     \ 'loginaccess': ['/etc/login.access'],
@@ -313,19 +325,22 @@ let s:filename_checks = {
     \ 'nroff': ['file.tr', 'file.nr', 'file.roff', 'file.tmac', 'file.mom'],
     \ 'nsis': ['file.nsi', 'file.nsh'],
     \ 'obj': ['file.obj'],
-    \ 'ocaml': ['file.ml', 'file.mli', 'file.mll', 'file.mly', '.ocamlinit'],
+    \ 'ocaml': ['file.ml', 'file.mli', 'file.mll', 'file.mly', '.ocamlinit', 'file.mlt', 'file.mlp', 'file.mlip', 'file.mli.cppo', 'file.ml.cppo'],
     \ 'occam': ['file.occ'],
     \ 'omnimark': ['file.xom', 'file.xin'],
+    \ 'opam': ['opam', 'file.opam', 'file.opam.template'],
     \ 'openroad': ['file.or'],
     \ 'ora': ['file.ora'],
     \ 'pamconf': ['/etc/pam.conf'],
+    \ 'pamenv': ['/etc/security/pam_env.conf', '/home/user/.pam_environment'],
     \ 'papp': ['file.papp', 'file.pxml', 'file.pxsl'],
-    \ 'pascal': ['file.pas', 'file.dpr'],
+    \ 'pascal': ['file.pas', 'file.dpr', 'file.lpr'],
     \ 'passwd': ['any/etc/passwd', 'any/etc/passwd-', 'any/etc/passwd.edit', 'any/etc/shadow', 'any/etc/shadow-', 'any/etc/shadow.edit', 'any/var/backups/passwd.bak', 'any/var/backups/shadow.bak'],
+    \ 'pbtxt': ['file.pbtxt'],
     \ 'pccts': ['file.g'],
     \ 'pdf': ['file.pdf'],
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc'],
-    \ 'perl6': ['file.p6', 'file.pm6', 'file.pl6'],
+    \ 'perl6': ['file.p6', 'file.pm6', 'file.pl6', 'file.raku', 'file.rakumod'],
     \ 'pf': ['pf.conf'],
     \ 'pfmain': ['main.cf'],
     \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp'],
@@ -355,11 +370,13 @@ let s:filename_checks = {
     \ 'proto': ['file.proto'],
     \ 'protocols': ['/etc/protocols'],
     \ 'psf': ['file.psf'],
+    \ 'puppet': ['file.pp'],
     \ 'pyrex': ['file.pyx', 'file.pxd'],
-    \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', 'file.ptl', 'file.pyi'],
+    \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', 'file.ptl', 'file.pyi', 'SConstruct'],
     \ 'quake': ['anybaseq2/file.cfg', 'anyid1/file.cfg', 'quake3/file.cfg'],
     \ 'radiance': ['file.rad', 'file.mat'],
     \ 'ratpoison': ['.ratpoisonrc', 'ratpoisonrc'],
+    \ 'rbs': ['file.rbs'],
     \ 'rc': ['file.rc', 'file.rch'],
     \ 'rcs': ['file,v'],
     \ 'readline': ['.inputrc', 'inputrc'],
@@ -376,7 +393,7 @@ let s:filename_checks = {
     \ 'rpl': ['file.rpl'],
     \ 'rst': ['file.rst'],
     \ 'rtf': ['file.rtf'],
-    \ 'ruby': ['.irbrc', 'irbrc', 'file.rb', 'file.rbw', 'file.gemspec', 'file.ru', 'Gemfile', 'file.builder', 'file.rxml', 'file.rjs', 'file.rant', 'file.rake'],
+    \ 'ruby': ['.irbrc', 'irbrc', 'file.rb', 'file.rbw', 'file.gemspec', 'file.ru', 'Gemfile', 'file.builder', 'file.rxml', 'file.rjs', 'file.rant', 'file.rake', 'rakefile', 'Rakefile', 'rantfile', 'Rantfile', 'rakefile-file', 'Rakefile-file', 'Puppetfile'],
     \ 'rust': ['file.rs'],
     \ 'samba': ['smb.conf'],
     \ 'sas': ['file.sas'],
@@ -387,6 +404,7 @@ let s:filename_checks = {
     \ 'scheme': ['file.scm', 'file.ss', 'file.rkt'],
     \ 'scilab': ['file.sci', 'file.sce'],
     \ 'screen': ['.screenrc', 'screenrc'],
+    \ 'sexplib': ['file.sexp'],
     \ 'scss': ['file.scss'],
     \ 'sd': ['file.sd'],
     \ 'sdc': ['file.sdc'],
@@ -414,6 +432,7 @@ let s:filename_checks = {
     \ 'smith': ['file.smt', 'file.smith'],
     \ 'sml': ['file.sml'],
     \ 'snobol4': ['file.sno', 'file.spt'],
+    \ 'sparql': ['file.rq', 'file.sparql'],
     \ 'spec': ['file.spec'],
     \ 'spice': ['file.sp', 'file.spice'],
     \ 'spup': ['file.speedup', 'file.spdata', 'file.spd'],
@@ -423,16 +442,19 @@ let s:filename_checks = {
     \ 'sqr': ['file.sqr', 'file.sqi'],
     \ 'squid': ['squid.conf'],
     \ 'srec': ['file.s19', 'file.s28', 'file.s37', 'file.mot', 'file.srec'],
-    \ 'sshconfig': ['ssh_config', '/.ssh/config'],
-    \ 'sshdconfig': ['sshd_config'],
+    \ 'sshconfig': ['ssh_config', '/.ssh/config', '/etc/ssh/ssh_config.d/file.conf', 'any/etc/ssh/ssh_config.d/file.conf'],
+    \ 'sshdconfig': ['sshd_config', '/etc/ssh/sshd_config.d/file.conf', 'any/etc/ssh/sshd_config.d/file.conf'],
     \ 'st': ['file.st'],
     \ 'stata': ['file.ado', 'file.do', 'file.imata', 'file.mata'],
     \ 'stp': ['file.stp'],
     \ 'sudoers': ['any/etc/sudoers', 'sudoers.tmp'],
     \ 'svg': ['file.svg'],
     \ 'svn': ['svn-commitfile.tmp'],
+    \ 'swift': ['file.swift'],
+    \ 'swiftgyb': ['file.swift.gyb'],
+    \ 'sil': ['file.sil'],
     \ 'sysctl': ['/etc/sysctl.conf', '/etc/sysctl.d/file.conf'],
-    \ 'systemd': ['any/systemd/file.automount', 'any/systemd/file.mount', 'any/systemd/file.path', 'any/systemd/file.service', 'any/systemd/file.socket', 'any/systemd/file.swap', 'any/systemd/file.target', 'any/systemd/file.timer', '/etc/systemd/system/some.d/file.conf', '/etc/systemd/system/some.d/.#file'],
+    \ 'systemd': ['any/systemd/file.automount', 'any/systemd/file.dnssd', 'any/systemd/file.link', 'any/systemd/file.mount', 'any/systemd/file.netdev', 'any/systemd/file.network', 'any/systemd/file.nspawn', 'any/systemd/file.path', 'any/systemd/file.service', 'any/systemd/file.slice', 'any/systemd/file.socket', 'any/systemd/file.swap', 'any/systemd/file.target', 'any/systemd/file.timer', '/etc/systemd/some.conf.d/file.conf', '/etc/systemd/system/some.d/file.conf', '/etc/systemd/system/some.d/.#file', '/etc/systemd/system/.#otherfile', '/home/user/.config/systemd/user/some.d/mine.conf', '/home/user/.config/systemd/user/some.d/.#file', '/home/user/.config/systemd/user/.#otherfile'],
     \ 'systemverilog': ['file.sv', 'file.svh'],
     \ 'tags': ['tags'],
     \ 'tak': ['file.tak'],
@@ -446,10 +468,11 @@ let s:filename_checks = {
     \ 'texmf': ['texmf.cnf'],
     \ 'text': ['file.text', 'README'],
     \ 'tf': ['file.tf', '.tfrc', 'tfrc'],
-    \ 'tidy': ['.tidyrc', 'tidyrc'],
+    \ 'tidy': ['.tidyrc', 'tidyrc', 'tidy.conf'],
     \ 'tilde': ['file.t.html'],
     \ 'tli': ['file.tli'],
     \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf'],
+    \ 'toml': ['file.toml'],
     \ 'tpp': ['file.tpp'],
     \ 'treetop': ['file.treetop'],
     \ 'trustees': ['trustees.conf'],
@@ -458,11 +481,11 @@ let s:filename_checks = {
     \ 'tssgm': ['file.tssgm'],
     \ 'tssop': ['file.tssop'],
     \ 'twig': ['file.twig'],
-    \ 'typescript': ['file.ts'],
     \ 'typescriptreact': ['file.tsx'],
     \ 'uc': ['file.uc'],
     \ 'udevconf': ['/etc/udev/udev.conf'],
     \ 'udevperm': ['/etc/udev/permissions.d/file.permissions'],
+    \ 'udevrules': ['/etc/udev/rules.d/file.rules', '/usr/lib/udev/rules.d/file.rules', '/lib/udev/rules.d/file.rules'],
     \ 'uil': ['file.uit', 'file.uil'],
     \ 'updatedb': ['/etc/updatedb.conf'],
     \ 'upstart': ['/usr/share/upstart/file.conf', '/usr/share/upstart/file.override', '/etc/init/file.conf', '/etc/init/file.override', '/.init/file.conf', '/.init/file.override', '/.config/upstart/file.conf', '/.config/upstart/file.override'],
@@ -476,7 +499,7 @@ let s:filename_checks = {
     \ 'verilog': ['file.v'],
     \ 'verilogams': ['file.va', 'file.vams'],
     \ 'vgrindefs': ['vgrindefs'],
-    \ 'vhdl': ['file.hdl', 'file.vhd', 'file.vhdl', 'file.vbe', 'file.vst', 'file.vhdl_123'],
+    \ 'vhdl': ['file.hdl', 'file.vhd', 'file.vhdl', 'file.vbe', 'file.vst', 'file.vhdl_123', 'file.vho'],
     \ 'vim': ['file.vim', 'file.vba', '.exrc', '_exrc'],
     \ 'viminfo': ['.viminfo', '_viminfo'],
     \ 'vmasm': ['file.mar'],
@@ -517,9 +540,11 @@ let s:filename_checks = {
 
 let s:filename_case_checks = {
     \ 'modula2': ['file.DEF', 'file.MOD'],
+    \ 'bzl': ['file.BUILD', 'BUILD'],
     \ }
 
 func CheckItems(checks)
+  set noswapfile
   for [ft, names] in items(a:checks)
     for i in range(0, len(names) - 1)
       new
@@ -536,6 +561,7 @@ func CheckItems(checks)
       bwipe!
     endfor
   endfor
+  set swapfile&
 endfunc
 
 func Test_filetype_detection()
@@ -588,7 +614,8 @@ let s:script_checks = {
       \ 'bc': [['#!/path/bc']],
       \ 'sed': [['#!/path/sed']],
       \ 'ocaml': [['#!/path/ocaml']],
-      \ 'awk': [['#!/path/awk']],
+      \ 'awk': [['#!/path/awk'],
+      \         ['#!/path/gawk']],
       \ 'wml': [['#!/path/wml']],
       \ 'scheme': [['#!/path/scheme']],
       \ 'cfengine': [['#!/path/cfengine']],
@@ -596,11 +623,24 @@ let s:script_checks = {
       \ 'haskell': [['#!/path/haskell']],
       \ 'cpp': [['// Standard iostream objects -*- C++ -*-'],
       \         ['// -*- C++ -*-']],
+      \ 'yaml': [['%YAML 1.2']],
+      \ 'pascal': [['#!/path/instantfpc']],
+      \ 'fennel': [['#!/path/fennel']],
       \ }
 
-func Test_script_detection()
+" Various forms of "env" optional arguments.
+let s:script_env_checks = {
+      \ 'perl': [['#!/usr/bin/env VAR=val perl']],
+      \ 'scala': [['#!/usr/bin/env VAR=val VVAR=vval scala']],
+      \ 'awk': [['#!/usr/bin/env VAR=val -i awk']],
+      \ 'scheme': [['#!/usr/bin/env VAR=val --ignore-environment scheme']],
+      \ 'python': [['#!/usr/bin/env VAR=val -S python -w -T']],
+      \ 'wml': [['#!/usr/bin/env VAR=val --split-string wml']],
+      \ }
+
+func Run_script_detection(test_dict)
   filetype on
-  for [ft, files] in items(s:script_checks)
+  for [ft, files] in items(a:test_dict)
     for file in files
       call writefile(file, 'Xtest')
       split Xtest
@@ -612,7 +652,94 @@ func Test_script_detection()
   filetype off
 endfunc
 
+func Test_script_detection()
+  call Run_script_detection(s:script_checks)
+  call Run_script_detection(s:script_env_checks)
+endfunc
+
 func Test_setfiletype_completion()
   call feedkeys(":setfiletype java\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"setfiletype java javacc javascript javascriptreact', @:)
 endfunc
+
+func Test_hook_file()
+  filetype on
+
+  call writefile(['[Trigger]', 'this is pacman config'], 'Xfile.hook')
+  split Xfile.hook
+  call assert_equal('dosini', &filetype)
+  bwipe!
+
+  call writefile(['not pacman'], 'Xfile.hook')
+  split Xfile.hook
+  call assert_notequal('dosini', &filetype)
+  bwipe!
+
+  call delete('Xfile.hook')
+  filetype off
+endfunc
+
+func Test_ts_file()
+  filetype on
+
+  call writefile(['<?xml version="1.0" encoding="utf-8"?>'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('xml', &filetype)
+  bwipe!
+
+  call writefile(['// looks like Typescript'], 'Xfile.ts')
+  split Xfile.ts
+  call assert_equal('typescript', &filetype)
+  bwipe!
+
+  call delete('Xfile.hook')
+  filetype off
+endfunc
+
+func Test_ttl_file()
+  filetype on
+
+  call writefile(['@base <http://example.org/> .'], 'Xfile.ttl')
+  split Xfile.ttl
+  call assert_equal('turtle', &filetype)
+  bwipe!
+
+  call writefile(['looks like Tera Term Language'], 'Xfile.ttl')
+  split Xfile.ttl
+  call assert_equal('teraterm', &filetype)
+  bwipe!
+
+  call delete('Xfile.ttl')
+  filetype off
+endfunc
+
+func Test_pp_file()
+  filetype on
+
+  call writefile(['looks like puppet'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('puppet', &filetype)
+  bwipe!
+
+  let g:filetype_pp = 'pascal'
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
+  bwipe!
+
+  " Test dist#ft#FTpp()
+  call writefile(['{ pascal comment'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
+  bwipe!
+
+  call writefile(['procedure pascal'], 'Xfile.pp')
+  split Xfile.pp
+  call assert_equal('pascal', &filetype)
+  bwipe!
+
+  call delete('Xfile.pp')
+  filetype off
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

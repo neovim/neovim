@@ -16,7 +16,6 @@
 #include "nvim/iconv.h"
 #include "nvim/version.h"
 #include "nvim/charset.h"
-#include "nvim/macros.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -101,7 +100,7 @@ static const int included_patches[] = {
   1820,
   1819,
   1818,
-  // 1817,
+  1817,
   1816,
   1815,
   1814,
@@ -129,13 +128,13 @@ static const int included_patches[] = {
   1792,
   1791,
   1790,
-  // 1789,
+  1789,
   1788,
   1787,
-  // 1786,
+  1786,
   1785,
   1784,
-  // 1783,
+  1783,
   1782,
   1781,
   1780,
@@ -144,12 +143,12 @@ static const int included_patches[] = {
   1777,
   1776,
   1775,
-  // 1774,
+  1774,
   1773,
   1772,
   1771,
   1770,
-  // 1769,
+  1769,
   1768,
   1767,
   1766,
@@ -171,9 +170,9 @@ static const int included_patches[] = {
   1750,
   1749,
   1748,
-  // 1747,
+  1747,
   1746,
-  // 1745,
+  1745,
   // 1744,
   // 1743,
   1742,
@@ -206,7 +205,7 @@ static const int included_patches[] = {
   1715,
   1714,
   1713,
-  // 1712,
+  1712,
   1711,
   1710,
   1709,
@@ -250,7 +249,7 @@ static const int included_patches[] = {
   1671,
   1670,
   1669,
-  // 1668,
+  1668,
   1667,
   1666,
   1665,
@@ -258,7 +257,7 @@ static const int included_patches[] = {
   1663,
   1662,
   1661,
-  // 1660,
+  1660,
   1659,
   1658,
   1657,
@@ -267,7 +266,7 @@ static const int included_patches[] = {
   1654,
   1653,
   1652,
-  // 1651,
+  1651,
   1650,
   1649,
   1648,
@@ -301,7 +300,7 @@ static const int included_patches[] = {
   1620,
   1619,
   1618,
-  // 1617,
+  1617,
   // 1616,
   1615,
   1614,
@@ -325,13 +324,13 @@ static const int included_patches[] = {
   1596,
   1595,
   1594,
-  // 1593,
+  1593,
   // 1592,
-  // 1591,
+  1591,
   1590,
-  // 1589,
+  1589,
   // 1588,
-  // 1587,
+  1587,
   1586,
   1585,
   1584,
@@ -364,7 +363,7 @@ static const int included_patches[] = {
   1557,
   1556,
   1555,
-  // 1554,
+  1554,
   1553,
   1552,
   1551,
@@ -374,31 +373,31 @@ static const int included_patches[] = {
   1547,
   1546,
   1545,
-  // 1544,
-  // 1543,
+  1544,
+  1543,
   1542,
   1541,
-  // 1540,
+  1540,
   1539,
-  // 1538,
+  1538,
   1537,
   1536,
   1535,
   1534,
   1533,
   1532,
-  // 1531,
+  1531,
   1530,
   1529,
   1528,
   1527,
   1526,
-  // 1525,
+  1525,
   1524,
   1523,
-  // 1522,
+  1522,
   1521,
-  // 1520,
+  1520,
   1519,
   1518,
   1517,
@@ -423,11 +422,11 @@ static const int included_patches[] = {
   1498,
   1497,
   1496,
-  // 1495,
+  1495,
   1494,
   1493,
   1492,
-  // 1491,
+  1491,
   1490,
   1489,
   1488,
@@ -463,8 +462,8 @@ static const int included_patches[] = {
   1458,
   1457,
   1456,
-  // 1455,
-  // 1454,
+  1455,
+  1454,
   1453,
   1452,
   1451,
@@ -496,7 +495,7 @@ static const int included_patches[] = {
   1425,
   1424,
   1423,
-  // 1422,
+  1422,
   1421,
   1420,
   1419,
@@ -530,7 +529,7 @@ static const int included_patches[] = {
   1391,
   1390,
   1389,
-  // 1388,
+  1388,
   1387,
   1386,
   1385,
@@ -543,11 +542,11 @@ static const int included_patches[] = {
   1378,
   1377,
   1376,
-  // 1375,
+  1375,
   1374,
   1373,
   1372,
-  // 1371,
+  1371,
   1370,
   1369,
   1368,
@@ -560,11 +559,11 @@ static const int included_patches[] = {
   1361,
   1360,
   1359,
-  // 1358,
+  1358,
   1357,
-  // 1356,
-  // 1355,
-  // 1354,
+  1356,
+  1355,
+  1354,
   1353,
   1352,
   1351,
@@ -573,7 +572,7 @@ static const int included_patches[] = {
   1348,
   1347,
   1346,
-  // 1345,
+  1345,
   1344,
   1343,
   1342,
@@ -584,7 +583,7 @@ static const int included_patches[] = {
   1337,
   1336,
   // 1335,
-  // 1334,
+  1334,
   1333,
   1332,
   1331,
@@ -626,12 +625,12 @@ static const int included_patches[] = {
   1295,
   1294,
   1293,
-  // 1292,
+  1292,
   1291,
   1290,
   1289,
   1288,
-  // 1287,
+  1287,
   1286,
   1285,
   1284,
@@ -776,10 +775,10 @@ static const int included_patches[] = {
   1145,
   1144,
   1143,
-  // 1142,
+  1142,
   1141,
   1140,
-  // 1139,
+  1139,
   1138,
   1137,
   1136,
@@ -789,13 +788,13 @@ static const int included_patches[] = {
   1132,
   1131,
   1130,
-  // 1129,
+  1129,
   1128,
-  // 1127,
+  1127,
   1126,
-  // 1125,
+  1125,
   1124,
-  // 1123,
+  1123,
   1122,
   1121,
   1120,
@@ -1016,7 +1015,7 @@ static const int included_patches[] = {
   905,
   904,
   903,
-  // 902,
+  902,
   901,
   900,
   899,
@@ -1970,10 +1969,20 @@ bool has_nvim_version(const char *const version_str)
 ///
 /// @return true if patch `n` has been included.
 bool has_vim_patch(int n)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (int i = 0; included_patches[i] != 0; i++) {
-    if (included_patches[i] == n) {
+  // Perform a binary search.
+  int l = 0;
+  int h = (int)(ARRAY_SIZE(included_patches)) - 1;
+  while (l < h) {
+    const int m = (l + h) / 2;
+    if (included_patches[m] == n) {
       return true;
+    }
+    if (included_patches[m] < n) {
+      h = m;
+    } else {
+      l = m + 1;
     }
   }
   return false;
@@ -2119,13 +2128,13 @@ void list_in_columns(char_u **items, int size, int current)
 
 void list_lua_version(void)
 {
-  typval_T luaver_tv;
-  typval_T arg = { .v_type = VAR_UNKNOWN };  // No args.
-  char *luaver_expr = "((jit and jit.version) and jit.version or _VERSION)";
-  executor_eval_lua(cstr_as_string(luaver_expr), &arg, &luaver_tv);
-  assert(luaver_tv.v_type == VAR_STRING);
-  MSG(luaver_tv.vval.v_string);
-  xfree(luaver_tv.vval.v_string);
+  char *code = "return ((jit and jit.version) and jit.version or _VERSION)";
+  Error err = ERROR_INIT;
+  Object ret = nlua_exec(cstr_as_string(code), (Array)ARRAY_DICT_INIT, &err);
+  assert(!ERROR_SET(&err));
+  assert(ret.type == kObjectTypeString);
+  MSG(ret.data.string.data);
+  api_free_object(ret);
 }
 
 void list_version(void)
@@ -2291,14 +2300,11 @@ static void do_intro_line(long row, char_u *mesg, int attr)
   for (p = mesg; *p != NUL; p += l) {
     clen = 0;
 
-    for (l = 0; p[l] != NUL
-         && (l == 0 || (p[l] != '<' && p[l - 1] != '>')); ++l) {
-      if (has_mbyte) {
-        clen += ptr2cells(p + l);
-        l += (*mb_ptr2len)(p + l) - 1;
-      } else {
-        clen += byte2cells(p[l]);
-      }
+    for (l = 0;
+         p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
+         l++) {
+      clen += ptr2cells(p + l);
+      l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
     grid_puts_len(&default_grid, p, l, (int)row, (int)col,

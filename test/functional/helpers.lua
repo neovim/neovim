@@ -15,13 +15,14 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local filter = global_helpers.filter
+local filter = global_helpers.tbl_filter
 local is_os = global_helpers.is_os
-local map = global_helpers.map
+local map = global_helpers.tbl_map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
 local write_file = global_helpers.write_file
+local fail = global_helpers.fail
 
 local module = {
   NIL = mpack.NIL,
@@ -441,6 +442,7 @@ function module.new_argv(...)
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
         'GCOV_ERROR_FILE',
+        'XDG_DATA_DIRS',
         'TMPDIR',
       }) do
         if not env_tbl[k] then
@@ -504,9 +506,13 @@ function module.source(code)
   return fname
 end
 
+function module.has_powershell()
+  return module.eval('executable("'..(iswin() and 'powershell' or 'pwsh')..'")') == 1
+end
+
 function module.set_shell_powershell()
   local shell = iswin() and 'powershell' or 'pwsh'
-  assert(module.eval('executable("'..shell..'")'))
+  assert(module.has_powershell())
   local cmd = 'Remove-Item -Force '..table.concat(iswin()
     and {'alias:cat', 'alias:echo', 'alias:sleep'}
     or  {'alias:echo'}, ',')..';'
@@ -549,14 +555,19 @@ function module.curbuf(method, ...)
   return module.buffer(method, 0, ...)
 end
 
-function module.wait()
-  -- Execute 'nvim_eval' (a deferred function) to block
-  -- until all pending input is processed.
+function module.poke_eventloop()
+  -- Execute 'nvim_eval' (a deferred function) to
+  -- force at least one main_loop iteration
   session:request('nvim_eval', '1')
 end
 
+function module.buf_lines(bufnr)
+  return module.exec_lua("return vim.api.nvim_buf_get_lines((...), 0, -1, false)", bufnr)
+end
+
+--@see buf_lines()
 function module.curbuf_contents()
-  module.wait()  -- Before inspecting the buffer, process all input.
+  module.poke_eventloop()  -- Before inspecting the buffer, do whatever.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
 end
 
@@ -583,9 +594,40 @@ function module.expect_any(contents)
   return ok(nil ~= string.find(module.curbuf_contents(), contents, 1, true))
 end
 
+function module.expect_events(expected, received, kind)
+  local inspect = require'vim.inspect'
+  if not pcall(eq, expected, received) then
+    local msg = 'unexpected '..kind..' received.\n\n'
+
+    msg = msg .. 'received events:\n'
+    for _, e in ipairs(received) do
+      msg = msg .. '  ' .. inspect(e) .. ';\n'
+    end
+    msg = msg .. '\nexpected events:\n'
+    for _, e in ipairs(expected) do
+      msg = msg .. '  ' .. inspect(e) .. ';\n'
+    end
+    fail(msg)
+  end
+  return received
+end
+
 -- Checks that the Nvim session did not terminate.
 function module.assert_alive()
   assert(2 == module.eval('1+1'), 'crash? request failed')
+end
+
+-- Asserts that buffer is loaded and visible in the current tabpage.
+function module.assert_visible(bufnr, visible)
+  assert(type(visible) == 'boolean')
+  eq(visible, module.bufmeths.is_loaded(bufnr))
+  if visible then
+    assert(-1 ~= module.funcs.bufwinnr(bufnr),
+      'expected buffer to be visible in current tabpage: '..tostring(bufnr))
+  else
+    assert(-1 == module.funcs.bufwinnr(bufnr),
+      'expected buffer NOT visible in current tabpage: '..tostring(bufnr))
+  end
 end
 
 local function do_rmdir(path)
@@ -683,6 +725,19 @@ function module.pending_win32(pending_fn)
   end
 end
 
+function module.pending_c_parser(pending_fn)
+  local status, msg = unpack(module.exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
+  if not status then
+    if module.isCI() then
+      error("treesitter C parser not found, required on CI: " .. msg)
+    else
+      pending_fn 'no C parser, skipping'
+      return true
+    end
+  end
+  return false
+end
+
 -- Calls pending() and returns `true` if the system is too slow to
 -- run fragile or expensive tests. Else returns `false`.
 function module.skip_fragile(pending_fn, cond)
@@ -709,6 +764,14 @@ module.tabmeths = module.create_callindex(module.tabpage)
 module.curbufmeths = module.create_callindex(module.curbuf)
 module.curwinmeths = module.create_callindex(module.curwin)
 module.curtabmeths = module.create_callindex(module.curtab)
+
+function module.exec(code)
+  return module.meths.exec(code, false)
+end
+
+function module.exec_capture(code)
+  return module.meths.exec(code, true)
+end
 
 function module.exec_lua(code, ...)
   return module.meths.exec_lua(code, {...})
@@ -746,15 +809,15 @@ function module.new_pipename()
 end
 
 function module.missing_provider(provider)
-  if provider == 'ruby' or provider == 'node' then
-    local prog = module.funcs['provider#' .. provider .. '#Detect']()
-    return prog == '' and (provider .. ' not detected') or false
+  if provider == 'ruby' or provider == 'node' or provider == 'perl' then
+    local e = module.funcs['provider#'..provider..'#Detect']()[2]
+    return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
-    local errors = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
-    return errors ~= '' and errors or false
+    local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
+    return e ~= '' and e or false
   else
-    assert(false, 'Unknown provider: ' .. provider)
+    assert(false, 'Unknown provider: '..provider)
   end
 end
 
@@ -772,7 +835,7 @@ function module.alter_slashes(obj)
     end
     return ret
   else
-    assert(false, 'Could only alter slashes for tables of strings and strings')
+    assert(false, 'expected string or table of strings, got '..type(obj))
   end
 end
 

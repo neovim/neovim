@@ -4,7 +4,7 @@
 #include <time.h>  // for time_t
 
 #include "nvim/pos.h"
-#include "nvim/mark_extended_defs.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
 
 typedef struct u_header u_header_T;

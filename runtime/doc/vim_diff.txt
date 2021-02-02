@@ -13,7 +13,7 @@ the differences.
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Configuration					    *nvim-configuration*
+1. Configuration					    *nvim-config*
 
 - Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for configuration.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
@@ -38,7 +38,7 @@ the differences.
 - 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline,msgsep"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
-- 'fillchars' defaults (in effect) to "vert:│,fold:·"
+- 'fillchars' defaults (in effect) to "vert:│,fold:·,sep:│"
 - 'formatoptions' defaults to "tcqj"
 - 'fsync' is disabled
 - 'history' defaults to 10000 (the maximum)
@@ -50,7 +50,7 @@ the differences.
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'nrformats' defaults to "bin,hex"
 - 'ruler' is enabled
-- 'sessionoptions' excludes "options"
+- 'sessionoptions' includes "unix,slash", excludes "options"
 - 'shortmess' includes "F", excludes "S"
 - 'showcmd' is enabled
 - 'sidescroll' defaults to 1
@@ -60,13 +60,14 @@ the differences.
 - 'tags' defaults to "./tags;,tags"
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
+- 'viewoptions' includes "unix,slash"
 - 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
 - 'viminfo' includes "!"
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
 
-- The |man.vim| plugin is enabled, to provide the |:Man| command.
-- The |matchit| plugin is enabled. To disable it in your config: >
+- |man.vim| plugin is enabled, so |:Man| is available by default.
+- |matchit| plugin is enabled. To disable it in your config: >
     :let loaded_matchit = 1
 
 ==============================================================================
@@ -112,9 +113,12 @@ Working intuitively and consistently is a major goal of Nvim.
 Usability details have been improved where the benefit outweighs any
 backwards-compatibility cost. Some examples:
 
-- |K| in help documents can be used like |CTRL-]|.
 - Directories for 'directory' and 'undodir' are auto-created.
 - Terminal features such as 'guicursor' are enabled where possible.
+
+Some features are built in that otherwise required external plugins:
+
+- Highlighting the yanked region, see |lua-highlight|.
 
 ARCHITECTURE ~
 
@@ -142,23 +146,20 @@ Command-line highlighting:
 Commands:
   |:autocmd| accepts the `++once` flag
   |:checkhealth|
-  |:cquit| can use [count] to set the exit code
   |:drop| is always available
   |:Man| is available by default, with many improvements such as completion
   |:sign-define| accepts a `numhl` argument, to highlight the line number
-  |:tchdir| tab-local |current-directory|
 
 Events:
-  |DirChanged|
   |Signal|
   |TabNewEntered|
   |TermClose|
   |TermOpen|
-  |TextYankPost|
   |UIEnter|
   |UILeave|
   |VimResume|
   |VimSuspend|
+  |WinClosed|
 
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
@@ -175,48 +176,43 @@ Highlight groups:
   |hl-NormalNC| highlights non-current windows
   |hl-MsgArea| highlights messages/cmdline area
   |hl-MsgSeparator| highlights separator for scrolled messages
-  |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
   |hl-Whitespace| highlights 'listchars' whitespace
 
-Input:
+Input/Mappings:
   ALT (|META|) chords always work (even in the |TUI|). Map |<M-| with any key:
   <M-1>, <M-BS>, <M-Del>, <M-Ins>, <M-/>, <M-\>, <M-Space>, <M-Enter>, etc.
   Case-sensitive: <M-a> and <M-A> are two different keycodes.
 
-  ALT in insert-mode behaves like <Esc> if not mapped. |i_ALT|
-
-Mappings:
-  |<Cmd>| pseudokey
+  ALT behaves like <Esc> if not mapped. |i_ALT| |v_ALT| |c_ALT|
 
 Normal commands:
-  "Outline": Type |gO| in |:Man| and |:help| pages to see a document outline.
+  |gO| shows a filetype-defined "outline" of the current buffer.
 
 Options:
-  'cpoptions' flags: |cpo-_|
-  'display' flag `msgsep` to minimize scrolling when showing messages
-  'guicursor' works in the terminal
-  'fillchars' local to window. flags: `msgsep` (see 'display' above) and `eob`
-              for |hl-EndOfBuffer| marker
-  'inccommand' shows interactive results for |:substitute|-like commands
-  'listchars' local to window
-  'pumblend' pseudo-transparent popupmenu
+  'cpoptions'   flags: |cpo-_|
+  'display'     flags: "msgsep" minimizes scrolling when showing messages
+  'guicursor'   works in the terminal
+  'fillchars'   flags: "msgsep" (see 'display'), "eob" for |hl-EndOfBuffer|
+                marker, "foldopen", "foldsep", "foldclose"
+  'foldcolumn'  supports up to 9 dynamic/fixed columns
+  'inccommand'  shows interactive results for |:substitute|-like commands
+  'listchars'   local to window
+  'pumblend'    pseudo-transparent popupmenu
   'scrollback'
-  'signcolumn' supports up to 9 dynamic/fixed columns
-  'statusline' supports unlimited alignment sections
-  'tabline' %@Func@foo%X can call any function on mouse-click
-  'wildoptions' `pum` flag to use popupmenu for wildmode completion
-  'winblend' pseudo-transparency in floating windows |api-floatwin|
+  'signcolumn'  supports up to 9 dynamic/fixed columns
+  'statusline'  supports unlimited alignment sections
+  'tabline'     %@Func@foo%X can call any function on mouse-click
+  'wildoptions' "pum" flag to use popupmenu for wildmode completion
+  'winblend'    pseudo-transparency in floating windows |api-floatwin|
   'winhighlight' window-local highlights
 
 Signs:
   Signs are removed if the associated line is deleted.
 
 Variables:
-  |v:event|
-  |v:exiting|
   |v:progpath| is always absolute ("full")
   |v:windowid| is always available (for use by external UIs)
 
@@ -269,11 +265,6 @@ are always available and may be used simultaneously. See |provider-python|.
 
 |json_encode()| behaviour slightly changed: now |msgpack-special-dict| values 
 are accepted, but |v:none| is not.
-
-*v:none* variable is absent.  In Vim it represents “no value” in “js” strings 
-like "[,]" parsed as "[v:none]" by |js_decode()|.
-
-*js_encode()* and *js_decode()* functions are also absent.
 
 Viminfo text files were replaced with binary (messagepack) ShaDa files.
 Additional differences:
@@ -336,16 +327,12 @@ Macro/|recording| behavior
 Motion:
   The |jumplist| avoids useless/phantom jumps.
 
-  When the new option |jumpoptions| includes 'stack', the jumplist behaves
-  like the tagstack or history in a web browser--jumping from the middle of
-  the jumplist discards the locations after the jumped-from position
-  (|jumplist-stack|).
-
 Normal commands:
   |Q| is the same as |gQ|
 
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
+  |jumpoptions| "stack" behavior
 
 Shell:
   Shell output (|:!|, |:make|, …) is always routed through the UI, so it
@@ -409,7 +396,6 @@ Some legacy Vim features are not implemented:
 
 - |if_lua|: Nvim Lua API is not compatible with Vim's "if_lua"
 - *if_mzscheme*
-- *if_perl*
 - |if_py|: *python-bindeval* *python-Function* are not supported
 - *if_tcl*
 
@@ -427,8 +413,8 @@ Aliases:
   gvimdiff  (GUI)
   rgview    (GUI)
   rgvim     (GUI)
-  rview     (alias for "nvim -RZ")
-  rvim      (alias for "nvim -Z")
+  rview
+  rvim
   view      (alias for "nvim -R")
   vimdiff   (alias for "nvim -d" |diff-mode|)
 
@@ -446,6 +432,14 @@ Compile-time features:
   EBCDIC
   Emacs tags support
   X11 integration (see |x11-selection|)
+
+Eval:
+  *js_encode()*
+  *js_decode()*
+  *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.
+
+Events:
+  *SigUSR1* Use |Signal| to detect `SIGUSR1` signal instead.
 
 Highlight groups:
   *hl-StatusLineTerm* *hl-StatusLineTermNC* are unnecessary because Nvim
@@ -469,6 +463,7 @@ Options:
   'encoding' ("utf-8" is always used)
   'esckeys'
   'guioptions' "t" flag was removed
+  *'guifontset'* *'gfs'* (Use 'guifont' instead.)
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
   'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'imactivatefunc'* *'imaf'*
@@ -498,13 +493,13 @@ Startup:
   --literal (file args are always literal; to expand wildcards on Windows, use
     |:n| e.g. `nvim +"n *"`)
   Easy mode: eview, evim, nvim -y
+  Restricted mode: rview, rvim, nvim -Z
   Vi mode: nvim -v
 
 Test functions:
   test_alloc_fail()
   test_autochdir()
   test_disable_char_avail()
-  test_garbagecollect_now()
   test_null_channel()
   test_null_dict()
   test_null_job()

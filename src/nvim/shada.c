@@ -177,7 +177,7 @@ typedef enum {
 
 /// Possible results when reading ShaDa file
 typedef enum {
-  kSDReadStatusSuccess,    ///< Reading was successfull.
+  kSDReadStatusSuccess,    ///< Reading was successful.
   kSDReadStatusFinished,   ///< Nothing more to read.
   kSDReadStatusReadError,  ///< Failed to read from file.
   kSDReadStatusNotShaDa,   ///< Input is most likely not a ShaDa file.
@@ -186,11 +186,11 @@ typedef enum {
 
 /// Possible results of shada_write function.
 typedef enum {
-  kSDWriteSuccessfull,   ///< Writing was successfull.
-  kSDWriteReadNotShada,  ///< Writing was successfull, but when reading it
+  kSDWriteSuccessfull,   ///< Writing was successful.
+  kSDWriteReadNotShada,  ///< Writing was successful, but when reading it
                          ///< attempted to read file that did not look like
                          ///< a ShaDa file.
-  kSDWriteFailed,        ///< Writing was not successfull (e.g. because there
+  kSDWriteFailed,        ///< Writing was not successful (e.g. because there
                          ///< was no space left on device).
   kSDWriteIgnError,      ///< Writing resulted in a error which can be ignored
                          ///< (e.g. when trying to dump a function reference or
@@ -765,7 +765,7 @@ static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader,
             (uint64_t) offset);
       return kSDReadStatusNotShaDa;
     }
-    assert(false);
+    abort();
   }
   return kSDReadStatusSuccess;
 }
@@ -1224,7 +1224,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
       case kSDReadStatusFinished: {
         // Should be handled by the while condition.
-        assert(false);
+        abort();
       }
       case kSDReadStatusNotShaDa:
       case kSDReadStatusReadError: {
@@ -1236,7 +1236,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     }
     switch (cur_entry.type) {
       case kSDItemMissing: {
-        assert(false);
+        abort();
       }
       case kSDItemUnknown: {
         break;
@@ -1628,7 +1628,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
   ((size_t) (!CHECK_DEFAULT(entry, attr)))
   switch (entry.type) {
     case kSDItemMissing: {
-      assert(false);
+      abort();
     }
     case kSDItemUnknown: {
       if (spacker->callback(spacker->data, entry.data.unknown_item.contents,
@@ -1850,7 +1850,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
             break;
           }
           default: {
-            assert(false);
+            abort();
           }
         }
       }
@@ -2147,7 +2147,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDReadStatusFinished: {
         // Should be handled by the while condition.
-        assert(false);
+        abort();
       }
       case kSDReadStatusNotShaDa: {
         ret = kSDWriteReadNotShada;
@@ -2184,7 +2184,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDItemHeader:
       case kSDItemBufferList: {
-        assert(false);
+        abort();
       }
       case kSDItemUnknown: {
         ret = shada_pack_entry(packer, entry, 0);
@@ -2207,8 +2207,12 @@ static inline ShaDaWriteResult shada_read_when_writing(
           shada_free_shada_entry(&entry);
           break;
         }
-        hms_insert(&wms->hms[entry.data.history_item.histtype], entry, true,
-                   true);
+        if (wms->hms[entry.data.history_item.histtype].hmll.size != 0) {
+          hms_insert(&wms->hms[entry.data.history_item.histtype], entry, true,
+                     true);
+        } else {
+          shada_free_shada_entry(&entry);
+        }
         break;
       }
       case kSDItemRegister: {
@@ -2676,6 +2680,36 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (name == NULL) {
         break;
       }
+      switch (vartv.v_type) {
+        case VAR_FUNC:
+        case VAR_PARTIAL:
+          tv_clear(&vartv);
+          continue;
+        case VAR_DICT:
+          {
+            dict_T *di = vartv.vval.v_dict;
+            int copyID = get_copyID();
+            if (!set_ref_in_ht(&di->dv_hashtab, copyID, NULL)
+                && copyID == di->dv_copyID) {
+              tv_clear(&vartv);
+              continue;
+            }
+            break;
+          }
+        case VAR_LIST:
+          {
+            list_T *l = vartv.vval.v_list;
+            int copyID = get_copyID();
+            if (!set_ref_in_list(l, copyID, NULL)
+                && copyID == l->lv_copyID) {
+              tv_clear(&vartv);
+              continue;
+            }
+            break;
+          }
+        default:
+          break;
+      }
       typval_T tgttv;
       tv_copy(&vartv, &tgttv);
       ShaDaWriteResult spe_ret;
@@ -3005,7 +3039,7 @@ shada_write_exit:
 ///                      location is used.
 /// @param[in]  nomerge  If true then old file is ignored.
 ///
-/// @return OK if writing was successfull, FAIL otherwise.
+/// @return OK if writing was successful, FAIL otherwise.
 int shada_write_file(const char *const file, bool nomerge)
 {
   if (shada_disabled()) {
@@ -3341,7 +3375,7 @@ static ShaDaReadResult fread_len(ShaDaReadDef *const sd_reader,
 /// @param[in]   sd_reader  Structure containing file reader definition.
 /// @param[out]  result     Location where result is saved.
 ///
-/// @return kSDReadStatusSuccess if reading was successfull,
+/// @return kSDReadStatusSuccess if reading was successful,
 ///         kSDReadStatusNotShaDa if there were not enough bytes to read or
 ///         kSDReadStatusReadError if reading failed for whatever reason.
 static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
@@ -4010,7 +4044,7 @@ shada_read_next_item_start:
     }
     case kSDItemMissing:
     case kSDItemUnknown: {
-      assert(false);
+      abort();
     }
   }
   entry->type = (ShadaEntryType) type_u64;
@@ -4114,7 +4148,7 @@ static inline size_t shada_init_jumps(
     }
     const char *const fname = (char *) (fm.fmark.fnum == 0
                                         ? (fm.fname == NULL ? NULL : fm.fname)
-                                        : buf->b_ffname);
+                                        : buf ? buf->b_ffname : NULL);
     if (fname == NULL) {
       continue;
     }

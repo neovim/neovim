@@ -69,7 +69,7 @@ See `:messages` above.
 LIST OF MESSAGES
 			*E222* *E228* *E232* *E256* *E293* *E298* *E304* *E317*
 			*E318* *E356* *E438* *E439* *E440* *E316* *E320* *E322*
-			*E323* *E341* *E473* *E570* *E685* *E950*  >
+			*E323* *E341* *E473* *E570* *E685* *E292*  >
   Add to read buffer
   makemap: Illegal mode
   Cannot create BalloonEval with both message and callback
@@ -359,7 +359,7 @@ the other way around.  It should be used like this: {foo,bar}.  This matches
   ml_get: invalid lnum: {number}
 
 This is an internal Vim error.  Please try to find out how it can be
-reproduced, and submit a bug report |bugreport.vim|.
+reproduced, and submit a |bug-report|.
 
 							*E173*  >
   {number} more files to edit
@@ -671,21 +671,20 @@ being disabled.  Remove the 'C' flag from the 'cpoptions' option to enable it.
 							*E471*  >
   Argument required
 
-This happens when an Ex command with mandatory argument(s) was executed, but
-no argument has been specified.
+Ex command was executed without a mandatory argument(s).
 
 							*E474* *E475* *E983*  >
   Invalid argument
   Invalid argument: {arg}
   Duplicate argument: {arg}
 
-Ex command or function has been executed, but an invalid argument was
-specified.  Or a non-executable command was given to |system()|.
+Ex command or function was given an invalid argument. Or |jobstart()| or
+|system()| was given a non-executable command.
 
 							*E488*  >
   Trailing characters
 
-An argument has been added to an Ex command that does not permit one.
+An argument was given to an Ex command that does not permit one.
 
 							*E477* *E478*  >
   No ! allowed

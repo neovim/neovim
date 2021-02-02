@@ -5,12 +5,14 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#include "nvim/version.h"
 #include "nvim/misc1.h"
 #include "nvim/getchar.h"
 #include "nvim/garray.h"
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/handle.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/vim.h"
@@ -19,19 +21,23 @@
 #include "nvim/message.h"
 #include "nvim/memline.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/regexp.h"
 #include "nvim/macros.h"
 #include "nvim/screen.h"
 #include "nvim/cursor.h"
 #include "nvim/undo.h"
 #include "nvim/ascii.h"
 #include "nvim/change.h"
+#include "nvim/eval/userfunc.h"
+#include "nvim/event/time.h"
+#include "nvim/event/loop.h"
 
 #ifdef WIN32
 #include "nvim/os/os.h"
 #endif
 
-#include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
+#include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
 
 #include "luv/luv.h"
@@ -48,6 +54,15 @@ typedef struct {
 # include "lua/executor.c.generated.h"
 #endif
 
+#define PUSH_ALL_TYPVALS(lstate, args, argcount, special) \
+  for (int i = 0; i < argcount; i++) { \
+    if (args[i].v_type == VAR_UNKNOWN) { \
+      lua_pushnil(lstate); \
+    } else { \
+      nlua_push_typval(lstate, &args[i], special); \
+    } \
+  }
+
 /// Convert lua error into a Vim error message
 ///
 /// @param  lstate  Lua interpreter state.
@@ -62,6 +77,17 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   emsgf_multiline(msg, (int)len, str);
 
   lua_pop(lstate, 1);
+}
+
+/// Return version of current neovim build
+///
+/// @param  lstate  Lua interpreter state.
+static int nlua_nvim_version(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  Dictionary version = version_dict();
+  nlua_push_Dictionary(lstate, version, true);
+  api_free_dictionary(version);
+  return 1;
 }
 
 /// Compare two strings, ignoring case
@@ -244,6 +270,130 @@ static int nlua_schedule(lua_State *const lstate)
   return 0;
 }
 
+static struct luaL_Reg regex_meta[] = {
+  { "__gc", regex_gc },
+  { "__tostring", regex_tostring },
+  { "match_str", regex_match_str },
+  { "match_line", regex_match_line },
+  { NULL, NULL }
+};
+
+// Dummy timer callback. Used by f_wait().
+static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
+{
+}
+
+// Dummy timer close callback. Used by f_wait().
+static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
+{
+  xfree(tw);
+}
+
+static bool nlua_wait_condition(lua_State *lstate, int *status,
+                                bool *callback_result)
+{
+  lua_pushvalue(lstate, 2);
+  *status = lua_pcall(lstate, 0, 1, 0);
+  if (*status) {
+    return true;  // break on error, but keep error on stack
+  }
+  *callback_result = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+  return *callback_result;  // break if true
+}
+
+/// "vim.wait(timeout, condition[, interval])" function
+static int nlua_wait(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  intptr_t timeout = luaL_checkinteger(lstate, 1);
+  if (timeout < 0) {
+    return luaL_error(lstate, "timeout must be > 0");
+  }
+
+  int lua_top = lua_gettop(lstate);
+
+  // Check if condition can be called.
+  bool is_function = false;
+  if (lua_top >= 2 && !lua_isnil(lstate, 2)) {
+    is_function = (lua_type(lstate, 2) == LUA_TFUNCTION);
+
+    // Check if condition is callable table
+    if (!is_function && luaL_getmetafield(lstate, 2, "__call") != 0) {
+      is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
+      lua_pop(lstate, 1);
+    }
+
+    if (!is_function) {
+      lua_pushliteral(
+          lstate,
+          "vim.wait: if passed, condition must be a function");
+      return lua_error(lstate);
+    }
+  }
+
+  intptr_t interval = 200;
+  if (lua_top >= 3 && !lua_isnil(lstate, 3)) {
+    interval = luaL_checkinteger(lstate, 3);
+    if (interval < 0) {
+      return luaL_error(lstate, "interval must be > 0");
+    }
+  }
+
+  bool fast_only = false;
+  if (lua_top >= 4) {
+    fast_only =  lua_toboolean(lstate, 4);
+  }
+
+  MultiQueue *loop_events = fast_only || in_fast_callback > 0
+    ? main_loop.fast_events : main_loop.events;
+
+  TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
+
+  // Start dummy timer.
+  time_watcher_init(&main_loop, tw, NULL);
+  tw->events = loop_events;
+  tw->blockable = true;
+  time_watcher_start(
+      tw,
+      dummy_timer_due_cb,
+      (uint64_t)interval,
+      (uint64_t)interval);
+
+  int pcall_status = 0;
+  bool callback_result = false;
+
+  LOOP_PROCESS_EVENTS_UNTIL(
+      &main_loop,
+      loop_events,
+      (int)timeout,
+      is_function ? nlua_wait_condition(
+          lstate,
+          &pcall_status,
+          &callback_result) : false || got_int);
+
+  // Stop dummy timer
+  time_watcher_stop(tw);
+  time_watcher_close(tw, dummy_timer_close_cb);
+
+  if (pcall_status) {
+    return lua_error(lstate);
+  } else if (callback_result) {
+    lua_pushboolean(lstate, 1);
+    lua_pushnil(lstate);
+  } else if (got_int) {
+    got_int = false;
+    vgetc();
+    lua_pushboolean(lstate, 0);
+    lua_pushinteger(lstate, -2);
+  } else {
+    lua_pushboolean(lstate, 0);
+    lua_pushinteger(lstate, -1);
+  }
+
+  return 2;
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -282,6 +432,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // str_byteindex
   lua_pushcfunction(lstate, &nlua_str_byteindex);
   lua_setfield(lstate, -2, "str_byteindex");
+  // neovim version
+  lua_pushcfunction(lstate, &nlua_nvim_version);
+  lua_setfield(lstate, -2, "version");
   // schedule
   lua_pushcfunction(lstate, &nlua_schedule);
   lua_setfield(lstate, -2, "schedule");
@@ -291,6 +444,14 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // call
   lua_pushcfunction(lstate, &nlua_call);
   lua_setfield(lstate, -2, "call");
+  // regex
+  lua_pushcfunction(lstate, &nlua_regex);
+  lua_setfield(lstate, -2, "regex");
+  luaL_newmetatable(lstate, "nvim_regex");
+  luaL_register(lstate, NULL, regex_meta);
+  lua_pushvalue(lstate, -1);  // [meta, meta]
+  lua_setfield(lstate, -2, "__index");  // [meta]
+  lua_pop(lstate, 1);  // don't use metatable now
 
   // rpcrequest
   lua_pushcfunction(lstate, &nlua_rpcrequest);
@@ -299,6 +460,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // rpcnotify
   lua_pushcfunction(lstate, &nlua_rpcnotify);
   lua_setfield(lstate, -2, "rpcnotify");
+
+  // wait
+  lua_pushcfunction(lstate, &nlua_wait);
+  lua_setfield(lstate, -2, "wait");
 
   // vim.loop
   luv_set_loop(lstate, &main_loop.uv);
@@ -324,6 +489,13 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   nlua_nil_ref = nlua_ref(lstate, -1);
   lua_setfield(lstate, -2, "NIL");
 
+  // vim._empty_dict_mt
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
+  lua_setfield(lstate, -2, "__tostring");
+  nlua_empty_dict_ref = nlua_ref(lstate, -1);
+  lua_setfield(lstate, -2, "_empty_dict_mt");
+
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
@@ -331,11 +503,27 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   {
     const char *code = (char *)&shared_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@shared.lua")
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/shared.lua")
         || lua_pcall(lstate, 0, 0, 0)) {
       nlua_error(lstate, _("E5106: Error while creating shared module: %.*s"));
       return 1;
     }
+  }
+
+  {
+    lua_getglobal(lstate, "package");  // [package]
+    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
+
+    const char *code = (char *)&inspect_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/inspect.lua")
+        || lua_pcall(lstate, 0, 1, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s"));
+      return 1;
+    }
+    // [package, loaded, inspect]
+
+    lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
+    lua_pop(lstate, 2);  // []
   }
 
   {
@@ -391,14 +579,6 @@ static lua_State *nlua_enter(void)
   if (last_p_rtp != (const void *)p_rtp) {
     // stack: (empty)
     lua_getglobal(lstate, "vim");
-    // stack: vim
-    lua_getfield(lstate, -1, "_update_package_paths");
-    // stack: vim, vim._update_package_paths
-    if (lua_pcall(lstate, 0, 0, 0)) {
-      // stack: vim, error
-      nlua_error(lstate, _("E5117: Error while updating package paths: %.*s"));
-      // stack: vim
-    }
     // stack: vim
     lua_pop(lstate, 1);
     // stack: (empty)
@@ -521,7 +701,7 @@ int nlua_debug(lua_State *lstate)
   for (;;) {
     lua_settop(lstate, 0);
     typval_T input;
-    get_user_input(input_args, &input, false);
+    get_user_input(input_args, &input, false, false);
     msg_putchar('\n');  // Avoid outputting on input line.
     if (input.v_type != VAR_STRING
         || input.vval.v_string == NULL
@@ -573,24 +753,25 @@ int nlua_call(lua_State *lstate)
   }
 
   TRY_WRAP({
-  // TODO(bfredl): this should be simplified in error handling refactor
-  force_abort = false;
-  suppress_errthrow = false;
-  current_exception = NULL;
-  did_emsg = false;
+    // TODO(bfredl): this should be simplified in error handling refactor
+    force_abort = false;
+    suppress_errthrow = false;
+    current_exception = NULL;
+    did_emsg = false;
 
-  try_start();
-  typval_T rettv;
-  int dummy;
-  // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
-  // (TRY_WRAP) to capture abort-causing non-exception errors.
-  (void)call_func(name, (int)name_len, &rettv, nargs,
-                  vim_args, NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                  &dummy, true, NULL, NULL);
-  if (!try_end(&err)) {
-    nlua_push_typval(lstate, &rettv, false);
-  }
-  tv_clear(&rettv);
+    try_start();
+    typval_T rettv;
+    int dummy;
+    // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
+    // (TRY_WRAP) to capture abort-causing non-exception errors.
+    (void)call_func(name, (int)name_len, &rettv, nargs,
+                    vim_args, NULL,
+                    curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                    &dummy, true, NULL, NULL);
+    if (!try_end(&err)) {
+      nlua_push_typval(lstate, &rettv, false);
+    }
+    tv_clear(&rettv);
   });
 
 free_vim_args:
@@ -665,6 +846,12 @@ static int nlua_nil_tostring(lua_State *lstate)
   return 1;
 }
 
+static int nlua_empty_dict_tostring(lua_State *lstate)
+{
+  lua_pushstring(lstate, "vim.empty_dict()");
+  return 1;
+}
+
 
 #ifdef WIN32
 /// os.getenv: override os.getenv to maintain coherency. #9681
@@ -694,17 +881,41 @@ void nlua_unref(lua_State *lstate, LuaRef ref)
   }
 }
 
-void executor_free_luaref(LuaRef ref)
+void api_free_luaref(LuaRef ref)
 {
   lua_State *const lstate = nlua_enter();
   nlua_unref(lstate, ref);
 }
 
-/// push a value referenced in the regirstry
+/// push a value referenced in the registry
 void nlua_pushref(lua_State *lstate, LuaRef ref)
 {
   lua_rawgeti(lstate, LUA_REGISTRYINDEX, ref);
 }
+
+/// Gets a new reference to an object stored at original_ref
+///
+/// NOTE: It does not copy the value, it creates a new ref to the lua object.
+///       Leaves the stack unchanged.
+LuaRef nlua_newref(lua_State *lstate, LuaRef original_ref)
+{
+  nlua_pushref(lstate, original_ref);
+  LuaRef new_ref = nlua_ref(lstate, -1);
+  lua_pop(lstate, 1);
+
+  return new_ref;
+}
+
+LuaRef api_new_luaref(LuaRef original_ref)
+{
+  if (original_ref == LUA_NOREF) {
+    return LUA_NOREF;
+  }
+
+  lua_State *const lstate = nlua_enter();
+  return nlua_newref(lstate, original_ref);
+}
+
 
 /// Evaluate lua string
 ///
@@ -715,8 +926,8 @@ void nlua_pushref(lua_State *lstate, LuaRef ref)
 /// @param[out]  ret_tv  Location where result will be saved.
 ///
 /// @return Result of the execution.
-void executor_eval_lua(const String str, typval_T *const arg,
-                       typval_T *const ret_tv)
+void nlua_typval_eval(const String str, typval_T *const arg,
+                      typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
 #define EVALHEADER "local _A=select(1,...) return ("
@@ -731,15 +942,15 @@ void executor_eval_lua(const String str, typval_T *const arg,
   memcpy(lcmd + sizeof(EVALHEADER) - 1, str.data, str.size);
   lcmd[lcmd_len - 1] = ')';
 #undef EVALHEADER
-  typval_exec_lua(lcmd, lcmd_len, "luaeval()", arg, 1, true, ret_tv);
+  nlua_typval_exec(lcmd, lcmd_len, "luaeval()", arg, 1, true, ret_tv);
 
   if (lcmd != (char *)IObuff) {
     xfree(lcmd);
   }
 }
 
-void executor_call_lua(const char *str, size_t len, typval_T *const args,
-                       int argcount, typval_T *ret_tv)
+void nlua_typval_call(const char *str, size_t len, typval_T *const args,
+                      int argcount, typval_T *ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
 #define CALLHEADER "return "
@@ -758,20 +969,22 @@ void executor_call_lua(const char *str, size_t len, typval_T *const args,
 #undef CALLHEADER
 #undef CALLSUFFIX
 
-  typval_exec_lua(lcmd, lcmd_len, "v:lua", args, argcount, false, ret_tv);
+  nlua_typval_exec(lcmd, lcmd_len, "v:lua", args, argcount, false, ret_tv);
 
   if (lcmd != (char *)IObuff) {
     xfree(lcmd);
   }
 }
 
-static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
-                            typval_T *const args, int argcount, bool special,
-                            typval_T *ret_tv)
+static void nlua_typval_exec(const char *lcmd, size_t lcmd_len,
+                             const char *name, typval_T *const args,
+                             int argcount, bool special, typval_T *ret_tv)
 {
-  if (check_restricted() || check_secure()) {
-    ret_tv->v_type = VAR_NUMBER;
-    ret_tv->vval.v_number = 0;
+  if (check_secure()) {
+    if (ret_tv) {
+      ret_tv->v_type = VAR_NUMBER;
+      ret_tv->vval.v_number = 0;
+    }
     return;
   }
 
@@ -781,13 +994,8 @@ static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
     return;
   }
 
-  for (int i = 0; i < argcount; i++) {
-    if (args[i].v_type == VAR_UNKNOWN) {
-      lua_pushnil(lstate);
-    } else {
-      nlua_push_typval(lstate, &args[i], special);
-    }
-  }
+  PUSH_ALL_TYPVALS(lstate, args, argcount, special);
+
   if (lua_pcall(lstate, argcount, ret_tv ? 1 : 0, 0)) {
     nlua_error(lstate, _("E5108: Error executing lua %.*s"));
     return;
@@ -798,16 +1006,61 @@ static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
   }
 }
 
+/// Call a LuaCallable given some typvals
+///
+/// Used to call any lua callable passed from Lua into VimL
+///
+/// @param[in]  lstate Lua State
+/// @param[in]  lua_cb Lua Callable
+/// @param[in]  argcount Count of typval arguments
+/// @param[in]  argvars Typval Arguments
+/// @param[out] rettv The return value from the called function.
+int typval_exec_lua_callable(
+    lua_State *lstate,
+    LuaCallable lua_cb,
+    int argcount,
+    typval_T *argvars,
+    typval_T *rettv
+)
+{
+  int offset = 0;
+  LuaRef cb = lua_cb.func_ref;
+
+  if (cb == LUA_NOREF) {
+    // This shouldn't happen.
+    luaL_error(lstate, "Invalid function passed to VimL");
+    return ERROR_OTHER;
+  }
+
+  nlua_pushref(lstate, cb);
+
+  if (lua_cb.table_ref != LUA_NOREF) {
+    offset += 1;
+    nlua_pushref(lstate, lua_cb.table_ref);
+  }
+
+  PUSH_ALL_TYPVALS(lstate, argvars, argcount, false);
+
+  if (lua_pcall(lstate, argcount + offset, 1, 0)) {
+    nlua_print(lstate);
+    return ERROR_OTHER;
+  }
+
+  nlua_pop_typval(lstate, rettv);
+
+  return ERROR_NONE;
+}
+
 /// Execute Lua string
 ///
-/// Used for nvim_exec_lua().
+/// Used for nvim_exec_lua() and internally to execute a lua string.
 ///
 /// @param[in]  str  String to execute.
 /// @param[in]  args array of ... args
 /// @param[out]  err  Location where error will be saved.
 ///
 /// @return Return value of the execution.
-Object executor_exec_lua_api(const String str, const Array args, Error *err)
+Object nlua_exec(const String str, const Array args, Error *err)
 {
   lua_State *const lstate = nlua_enter();
 
@@ -834,17 +1087,30 @@ Object executor_exec_lua_api(const String str, const Array args, Error *err)
   return nlua_pop_Object(lstate, false, err);
 }
 
-Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
-                            bool retval, Error *err)
+/// call a LuaRef as a function (or table with __call metamethod)
+///
+/// @param ref     the reference to call (not consumed)
+/// @param name    if non-NULL, sent to callback as first arg
+///                if NULL, only args are used
+/// @param retval  if true, convert return value to Object
+///                if false, discard return value
+/// @param err     Error details, if any (if NULL, errors are echoed)
+/// @return        Return value of function, if retval was set. Otherwise NIL.
+Object nlua_call_ref(LuaRef ref, const char *name, Array args,
+                     bool retval, Error *err)
 {
   lua_State *const lstate = nlua_enter();
   nlua_pushref(lstate, ref);
-  lua_pushstring(lstate, name);
+  int nargs = (int)args.size;
+  if (name != NULL) {
+    lua_pushstring(lstate, name);
+    nargs++;
+  }
   for (size_t i = 0; i < args.size; i++) {
     nlua_push_Object(lstate, args.items[i], false);
   }
 
-  if (lua_pcall(lstate, (int)args.size+1, retval ? 1 : 0, 0)) {
+  if (lua_pcall(lstate, nargs, retval ? 1 : 0, 0)) {
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;
@@ -889,7 +1155,7 @@ void ex_lua(exarg_T *const eap)
     xfree(code);
     return;
   }
-  typval_exec_lua(code, len, ":lua", NULL, 0, false, NULL);
+  nlua_typval_exec(code, len, ":lua", NULL, 0, false, NULL);
 
   xfree(code);
 }
@@ -980,38 +1246,44 @@ void ex_luado(exarg_T *const eap)
 void ex_luafile(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
+  nlua_exec_file((const char *)eap->arg);
+}
+
+/// execute lua code from a file.
+///
+/// @param  path  path of the file
+///
+/// @return  true if everything ok, false if there was an error (echoed)
+bool nlua_exec_file(const char *path)
+  FUNC_ATTR_NONNULL_ALL
+{
   lua_State *const lstate = nlua_enter();
 
-  if (luaL_loadfile(lstate, (const char *)eap->arg)) {
+  if (luaL_loadfile(lstate, path)) {
     nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
-    return;
+    return false;
   }
 
   if (lua_pcall(lstate, 0, 0, 0)) {
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
-    return;
-  }
-}
-
-static int create_tslua_parser(lua_State *L)
-{
-  if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
-    return luaL_error(L, "string expected");
+    return false;
   }
 
-  const char *lang_name = lua_tostring(L, 1);
-  return tslua_push_parser(L, lang_name);
+  return true;
 }
 
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   tslua_init(lstate);
 
-  lua_pushcfunction(lstate, create_tslua_parser);
+  lua_pushcfunction(lstate, tslua_push_parser);
   lua_setfield(lstate, -2, "_create_ts_parser");
 
-  lua_pushcfunction(lstate, tslua_register_lang);
+  lua_pushcfunction(lstate, tslua_add_language);
   lua_setfield(lstate, -2, "_ts_add_language");
+
+  lua_pushcfunction(lstate, tslua_has_language);
+  lua_setfield(lstate, -2, "_ts_has_language");
 
   lua_pushcfunction(lstate, tslua_inspect_lang);
   lua_setfield(lstate, -2, "_ts_inspect_language");
@@ -1019,3 +1291,361 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, ts_lua_parse_query);
   lua_setfield(lstate, -2, "_ts_parse_query");
 }
+
+int nlua_expand_pat(expand_T *xp,
+                    char_u *pat,
+                    int *num_results,
+                    char_u ***results)
+{
+  lua_State *const lstate = nlua_enter();
+  int ret = OK;
+
+  // [ vim ]
+  lua_getglobal(lstate, "vim");
+
+  // [ vim, vim._expand_pat ]
+  lua_getfield(lstate, -1, "_expand_pat");
+  luaL_checktype(lstate, -1, LUA_TFUNCTION);
+
+  // [ vim, vim._log_keystroke, buf ]
+  lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
+
+  if (lua_pcall(lstate, 1, 2, 0) != 0) {
+    nlua_error(
+        lstate,
+        _("Error executing vim._expand_pat: %.*s"));
+    return FAIL;
+  }
+
+  Error err = ERROR_INIT;
+
+  *num_results = 0;
+  *results = NULL;
+
+  int prefix_len = (int)nlua_pop_Integer(lstate, &err);
+  if (ERROR_SET(&err)) {
+    ret = FAIL;
+    goto cleanup;
+  }
+
+  Array completions = nlua_pop_Array(lstate, &err);
+  if (ERROR_SET(&err)) {
+    ret = FAIL;
+    goto cleanup_array;
+  }
+
+  garray_T result_array;
+  ga_init(&result_array, (int)sizeof(char *), 80);
+  for (size_t i = 0; i < completions.size; i++) {
+    Object v = completions.items[i];
+
+    if (v.type != kObjectTypeString) {
+      ret = FAIL;
+      goto cleanup_array;
+    }
+
+    GA_APPEND(
+        char_u *,
+        &result_array,
+        vim_strsave((char_u *)v.data.string.data));
+  }
+
+  xp->xp_pattern += prefix_len;
+  *results = result_array.ga_data;
+  *num_results = result_array.ga_len;
+
+cleanup_array:
+  api_free_array(completions);
+
+cleanup:
+
+  if (ret == FAIL) {
+    ga_clear(&result_array);
+  }
+
+  return ret;
+}
+
+static int nlua_regex(lua_State *lstate)
+{
+  Error err = ERROR_INIT;
+  const char *text = luaL_checkstring(lstate, 1);
+  regprog_T *prog = NULL;
+
+  TRY_WRAP({
+    try_start();
+    prog = vim_regcomp((char_u *)text, RE_AUTO | RE_MAGIC | RE_STRICT);
+    try_end(&err);
+  });
+
+  if (ERROR_SET(&err)) {
+    return luaL_error(lstate, "couldn't parse regex: %s", err.msg);
+  }
+  assert(prog);
+
+  regprog_T **p = lua_newuserdata(lstate, sizeof(regprog_T *));
+  *p = prog;
+
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim_regex");  // [udata, meta]
+  lua_setmetatable(lstate, -2);  // [udata]
+  return 1;
+}
+
+static regprog_T **regex_check(lua_State *L)
+{
+  return luaL_checkudata(L, 1, "nvim_regex");
+}
+
+
+static int regex_gc(lua_State *lstate)
+{
+  regprog_T **prog = regex_check(lstate);
+  vim_regfree(*prog);
+  return 0;
+}
+
+static int regex_tostring(lua_State *lstate)
+{
+  lua_pushstring(lstate, "<regex>");
+  return 1;
+}
+
+static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
+{
+  regmatch_T rm;
+  rm.regprog = *prog;
+  rm.rm_ic = false;
+  bool match = vim_regexec(&rm, str, 0);
+  *prog = rm.regprog;
+
+  if (match) {
+    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0]-str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0]-str));
+    return 2;
+  }
+  return 0;
+}
+
+static int regex_match_str(lua_State *lstate)
+{
+  regprog_T **prog = regex_check(lstate);
+  const char *str = luaL_checkstring(lstate, 2);
+  int nret = regex_match(lstate, prog, (char_u *)str);
+
+  if (!*prog) {
+    return luaL_error(lstate, "regex: internal error");
+  }
+
+  return nret;
+}
+
+static int regex_match_line(lua_State *lstate)
+{
+  regprog_T **prog = regex_check(lstate);
+
+  int narg = lua_gettop(lstate);
+  if (narg < 3) {
+    return luaL_error(lstate, "not enough args");
+  }
+
+  long bufnr = luaL_checkinteger(lstate, 2);
+  long rownr = luaL_checkinteger(lstate, 3);
+  long start = 0, end = -1;
+  if (narg >= 4) {
+    start = luaL_checkinteger(lstate, 4);
+  }
+  if (narg >= 5) {
+    end = luaL_checkinteger(lstate, 5);
+    if (end < 0) {
+      return luaL_error(lstate, "invalid end");
+    }
+  }
+
+  buf_T *buf = bufnr ? handle_get_buffer((int)bufnr) : curbuf;
+  if (!buf || buf->b_ml.ml_mfp == NULL) {
+    return luaL_error(lstate, "invalid buffer");
+  }
+
+  if (rownr >= buf->b_ml.ml_line_count) {
+    return luaL_error(lstate, "invalid row");
+  }
+
+  char_u *line = ml_get_buf(buf, rownr+1, false);
+  size_t len = STRLEN(line);
+
+  if (start < 0 || (size_t)start > len) {
+    return luaL_error(lstate, "invalid start");
+  }
+
+  char_u save = NUL;
+  if (end >= 0) {
+    if ((size_t)end > len || end < start) {
+      return luaL_error(lstate, "invalid end");
+    }
+    save = line[end];
+    line[end] = NUL;
+  }
+
+  int nret = regex_match(lstate, prog, line+start);
+
+  if (end >= 0) {
+    line[end] = save;
+  }
+
+  if (!*prog) {
+    return luaL_error(lstate, "regex: internal error");
+  }
+
+  return nret;
+}
+
+int nlua_CFunction_func_call(
+    int argcount,
+    typval_T *argvars,
+    typval_T *rettv,
+    void *state)
+{
+    lua_State *const lstate = nlua_enter();
+    LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
+
+    return typval_exec_lua_callable(
+        lstate,
+        funcstate->lua_callable,
+        argcount,
+        argvars,
+        rettv);
+}
+/// Required functions for lua c functions as VimL callbacks
+void nlua_CFunction_func_free(void *state)
+{
+    lua_State *const lstate = nlua_enter();
+    LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
+
+    nlua_unref(lstate, funcstate->lua_callable.func_ref);
+    nlua_unref(lstate, funcstate->lua_callable.table_ref);
+    xfree(funcstate);
+}
+
+bool nlua_is_table_from_lua(typval_T *const arg)
+{
+  if (arg->v_type != VAR_DICT && arg->v_type != VAR_LIST) {
+    return false;
+  }
+
+  if (arg->v_type == VAR_DICT) {
+    return arg->vval.v_dict->lua_table_ref > 0
+      && arg->vval.v_dict->lua_table_ref != LUA_NOREF;
+  } else if (arg->v_type == VAR_LIST) {
+    return arg->vval.v_list->lua_table_ref > 0
+      && arg->vval.v_list->lua_table_ref != LUA_NOREF;
+  }
+
+  return false;
+}
+
+char_u *nlua_register_table_as_callable(typval_T *const arg)
+{
+  if (!nlua_is_table_from_lua(arg)) {
+    return NULL;
+  }
+
+  LuaRef table_ref;
+  if (arg->v_type == VAR_DICT) {
+    table_ref = arg->vval.v_dict->lua_table_ref;
+  } else if (arg->v_type == VAR_LIST) {
+    table_ref = arg->vval.v_list->lua_table_ref;
+  } else {
+    return NULL;
+  }
+
+  lua_State *const lstate = nlua_enter();
+
+#ifndef NDEBUG
+  int top = lua_gettop(lstate);
+#endif
+
+  nlua_pushref(lstate, table_ref);
+  if (!lua_getmetatable(lstate, -1)) {
+    return NULL;
+  }
+
+  lua_getfield(lstate, -1, "__call");
+  if (!lua_isfunction(lstate, -1)) {
+    return NULL;
+  }
+
+  LuaRef new_table_ref = nlua_newref(lstate, table_ref);
+
+  LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
+  state->lua_callable.func_ref = nlua_ref(lstate, -1);
+  state->lua_callable.table_ref = new_table_ref;
+
+  char_u *name = register_cfunc(
+      &nlua_CFunction_func_call,
+      &nlua_CFunction_func_free,
+      state);
+
+
+  lua_pop(lstate, 3);
+  assert(top == lua_gettop(lstate));
+
+  return name;
+}
+
+/// Helper function to free a list_T
+void nlua_free_typval_list(list_T *const l)
+{
+  if (l->lua_table_ref != LUA_NOREF && l->lua_table_ref > 0) {
+    lua_State *const lstate = nlua_enter();
+    nlua_unref(lstate, l->lua_table_ref);
+    l->lua_table_ref = LUA_NOREF;
+  }
+}
+
+
+/// Helper function to free a dict_T
+void nlua_free_typval_dict(dict_T *const d)
+{
+  if (d->lua_table_ref != LUA_NOREF && d->lua_table_ref > 0) {
+    lua_State *const lstate = nlua_enter();
+    nlua_unref(lstate, d->lua_table_ref);
+    d->lua_table_ref = LUA_NOREF;
+  }
+}
+
+void nlua_execute_log_keystroke(int c)
+{
+  char_u buf[NUMBUFLEN];
+  size_t buf_len = special_to_buf(c, mod_mask, false, buf);
+
+  lua_State *const lstate = nlua_enter();
+
+#ifndef NDEBUG
+  int top = lua_gettop(lstate);
+#endif
+
+  // [ vim ]
+  lua_getglobal(lstate, "vim");
+
+  // [ vim, vim._log_keystroke ]
+  lua_getfield(lstate, -1, "_log_keystroke");
+  luaL_checktype(lstate, -1, LUA_TFUNCTION);
+
+  // [ vim, vim._log_keystroke, buf ]
+  lua_pushlstring(lstate, (const char *)buf, buf_len);
+
+  if (lua_pcall(lstate, 1, 0, 0)) {
+    nlua_error(
+        lstate,
+        _("Error executing vim.log_keystroke lua callback: %.*s"));
+  }
+
+  // [ vim ]
+  lua_pop(lstate, 1);
+
+#ifndef NDEBUG
+  // [ ]
+  assert(top == lua_gettop(lstate));
+#endif
+}
+

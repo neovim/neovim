@@ -1,6 +1,8 @@
 " Test for :match, :2match, :3match, clearmatches(), getmatches(), matchadd(),
 " matchaddpos(), matcharg(), matchdelete(), and setmatches().
 
+source screendump.vim
+
 function Test_match()
   highlight MyGroup1 term=bold ctermbg=red guibg=red
   highlight MyGroup2 term=italic ctermbg=green guibg=green
@@ -147,6 +149,21 @@ function Test_match()
   highlight MyGroup3 NONE
 endfunc
 
+func Test_match_error()
+  call assert_fails('match Error', 'E475:')
+  call assert_fails('match Error /', 'E475:')
+  call assert_fails('4match Error /x/', 'E476:')
+  call assert_fails('match Error /x/ x', 'E488:')
+endfunc
+
+func Test_matchadd_error()
+  call assert_fails("call matchadd('GroupDoesNotExist', 'X')", 'E28:')
+  call assert_fails("call matchadd('Search', '\\(')", 'E475:')
+  call assert_fails("call matchadd('Search', 'XXX', 1, 123, 1)", 'E715:')
+  call assert_fails("call matchadd('Error', 'XXX', 1, 3)", 'E798:')
+  call assert_fails("call matchadd('Error', 'XXX', 1, 0)", 'E799:')
+endfunc
+
 func Test_matchaddpos()
   syntax on
   set hlsearch
@@ -215,6 +232,19 @@ func Test_matchaddpos_otherwin()
   call assert_equal(screenattr(1,2), screenattr(2,2))
   call assert_notequal(screenattr(1,2), screenattr(1,4))
 
+  let savematches = getmatches(winid)
+  let expect = [
+        \ {'group': 'Search', 'pattern': '4', 'priority': 10, 'id': 4},
+        \ {'group': 'Error', 'id': 5, 'priority': 10, 'pos1': [1, 2, 1], 'pos2': [2, 2, 1]},
+        \]
+  call assert_equal(expect, savematches)
+
+  call clearmatches(winid)
+  call assert_equal([], getmatches(winid))
+
+  call setmatches(savematches, winid)
+  call assert_equal(expect, savematches)
+
   wincmd w
   bwipe!
   call clearmatches()
@@ -247,5 +277,72 @@ func Test_matchaddpos_using_negative_priority()
   nohl
   set hlsearch&
 endfunc
+
+func Test_matchaddpos_error()
+  call assert_fails("call matchaddpos('Error', 1)", 'E686:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 1)", 'E798:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 2)", 'E798:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 0)", 'E799:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 123, 1)", 'E715:')
+  call assert_fails("call matchaddpos('Error', [1], 1, 5, {'window':12345})", 'E957:')
+  " Why doesn't the following error have an error code E...?
+  call assert_fails("call matchaddpos('Error', [{}])", 'E5031:')
+endfunc
+
+func OtherWindowCommon()
+  let lines =<< trim END
+    call setline(1, 'Hello Vim world')
+    let mid = matchadd('Error', 'world', 1)
+    let winid = win_getid()
+    new
+  END
+  call writefile(lines, 'XscriptMatchCommon')
+  let buf = RunVimInTerminal('-S XscriptMatchCommon', #{rows: 12})
+  call term_wait(buf)
+  return buf
+endfunc
+
+func Test_matchdelete_other_window()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  let buf = OtherWindowCommon()
+  call term_sendkeys(buf, ":call matchdelete(mid, winid)\<CR>")
+  call VerifyScreenDump(buf, 'Test_matchdelete_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptMatchCommon')
+endfunc
+
+func Test_matchdelete_error()
+  call assert_fails("call matchdelete(0)", 'E802:')
+  call assert_fails("call matchdelete(1, -1)", 'E957:')
+endfunc
+
+func Test_matchclear_other_window()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  let buf = OtherWindowCommon()
+  call term_sendkeys(buf, ":call clearmatches(winid)\<CR>")
+  call VerifyScreenDump(buf, 'Test_matchclear_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptMatchCommon')
+endfunc
+
+func Test_matchadd_other_window()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  let buf = OtherWindowCommon()
+  call term_sendkeys(buf, ":call matchadd('Search', 'Hello', 1, -1, #{window: winid})\<CR>")
+  call term_sendkeys(buf, ":\<CR>")
+  call VerifyScreenDump(buf, 'Test_matchadd_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptMatchCommon')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

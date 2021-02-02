@@ -1,177 +1,99 @@
 local a = vim.api
+local query = require'vim.treesitter.query'
+local language = require'vim.treesitter.language'
+local LanguageTree = require'vim.treesitter.languagetree'
 
 -- TODO(bfredl): currently we retain parsers for the lifetime of the buffer.
 -- Consider use weak references to release parser if all plugins are done with
 -- it.
 local parsers = {}
 
-local Parser = {}
-Parser.__index = Parser
-
-function Parser:parse()
-  if self.valid then
-    return self.tree
-  end
-  local changes
-  self.tree, changes = self._parser:parse_buf(self.bufnr)
-  self.valid = true
-  for _, cb in ipairs(self.change_cbs) do
-    cb(changes)
-  end
-  return self.tree, changes
-end
-
-function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_size)
-  local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
-  local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
-  local old_stop_byte = start_byte + old_byte_size
-  self._parser:edit(start_byte,old_stop_byte,stop_byte,
-                    start_row,0,old_stop_row,0,stop_row,0)
-  self.valid = false
-end
-
-local M = {
-  add_language=vim._ts_add_language,
-  inspect_language=vim._ts_inspect_language,
-  parse_query = vim._ts_parse_query,
-}
+local M = vim.tbl_extend("error", query, language)
 
 setmetatable(M, {
   __index = function (t, k)
       if k == "TSHighlighter" then
-        t[k] = require'vim.tshighlighter'
+        a.nvim_err_writeln("vim.TSHighlighter is deprecated, please use vim.treesitter.highlighter")
+        t[k] = require'vim.treesitter.highlighter'
+        return t[k]
+      elseif k == "highlighter" then
+        t[k] = require'vim.treesitter.highlighter'
         return t[k]
       end
    end
  })
 
-function M.create_parser(bufnr, ft, id)
+--- Creates a new parser.
+--
+-- It is not recommended to use this, use vim.treesitter.get_parser() instead.
+--
+-- @param bufnr The buffer the parser will be tied to
+-- @param lang The language of the parser
+-- @param opts Options to pass to the language tree
+function M._create_parser(bufnr, lang, opts)
+  language.require_language(lang)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  local self = setmetatable({bufnr=bufnr, lang=ft, valid=false}, Parser)
-  self._parser = vim._create_ts_parser(ft)
-  self.change_cbs = {}
-  self:parse()
-    -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
-    -- using it.
-  local function lines_cb(_, ...)
-    return self:_on_lines(...)
+
+  vim.fn.bufload(bufnr)
+
+  local self = LanguageTree.new(bufnr, lang, opts)
+
+  local function bytes_cb(_, ...)
+    self:_on_bytes(...)
   end
-  local detach_cb = nil
-  if id ~= nil then
-    detach_cb = function()
-      if parsers[id] == self then
-        parsers[id] = nil
-      end
+
+  local function detach_cb()
+    if parsers[bufnr] == self then
+      parsers[bufnr] = nil
     end
   end
-  a.nvim_buf_attach(self.bufnr, false, {on_lines=lines_cb, on_detach=detach_cb})
+
+  a.nvim_buf_attach(self:source(), false, {on_bytes=bytes_cb, on_detach=detach_cb, preview=true})
+
+  self:parse()
+
   return self
 end
 
-function M.get_parser(bufnr, ft, cb)
+--- Gets the parser for this bufnr / ft combination.
+--
+-- If needed this will create the parser.
+-- Unconditionnally attach the provided callback
+--
+-- @param bufnr The buffer the parser should be tied to
+-- @param ft The filetype of this parser
+-- @param opts Options object to pass to the parser
+--
+-- @returns The parser
+function M.get_parser(bufnr, lang, opts)
+  opts = opts or {}
+
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  if ft == nil then
-    ft = a.nvim_buf_get_option(bufnr, "filetype")
+  if lang == nil then
+    lang = a.nvim_buf_get_option(bufnr, "filetype")
   end
-  local id = tostring(bufnr)..'_'..ft
 
-  if parsers[id] == nil then
-    parsers[id] = M.create_parser(bufnr, ft, id)
+  if parsers[bufnr] == nil then
+    parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
-  if cb ~= nil then
-    table.insert(parsers[id].change_cbs, cb)
-  end
-  return parsers[id]
+
+  parsers[bufnr]:register_cbs(opts.buf_attach_cbs)
+
+  return parsers[bufnr]
 end
 
--- query: pattern matching on trees
--- predicate matching is implemented in lua
-local Query = {}
-Query.__index = Query
+function M.get_string_parser(str, lang, opts)
+  vim.validate {
+    str = { str, 'string' },
+    lang = { lang, 'string' }
+  }
+  language.require_language(lang)
 
-function M.parse_query(lang, query)
-  local self = setmetatable({}, Query)
-  self.query = vim._ts_parse_query(lang, query)
-  self.info = self.query:inspect()
-  self.captures = self.info.captures
-  return self
-end
-
-local function get_node_text(node, bufnr)
-  local start_row, start_col, end_row, end_col = node:range()
-  if start_row ~= end_row then
-    return nil
-  end
-  local line = a.nvim_buf_get_lines(bufnr, start_row, start_row+1, true)[1]
-  return string.sub(line, start_col+1, end_col)
-end
-
-local function match_preds(match, preds, bufnr)
-  for _, pred in pairs(preds) do
-    if pred[1] == "eq?" then
-      local node = match[pred[2]]
-      local node_text = get_node_text(node, bufnr)
-
-      local str
-      if type(pred[3]) == "string" then
-        -- (eq? @aa "foo")
-        str = pred[3]
-      else
-        -- (eq? @aa @bb)
-        str = get_node_text(match[pred[3]], bufnr)
-      end
-
-      if node_text ~= str or str == nil then
-        return false
-      end
-    else
-      return false
-    end
-  end
-  return true
-end
-
-function Query:iter_captures(node, bufnr, start, stop)
-  if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
-  end
-  local raw_iter = node:_rawquery(self.query,true,start,stop)
-  local function iter()
-    local capture, captured_node, match = raw_iter()
-    if match ~= nil then
-      local preds = self.info.patterns[match.pattern]
-      local active = match_preds(match, preds, bufnr)
-      match.active = active
-      if not active then
-        return iter() -- tail call: try next match
-      end
-    end
-    return capture, captured_node
-  end
-  return iter
-end
-
-function Query:iter_matches(node, bufnr, start, stop)
-  if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
-  end
-  local raw_iter = node:_rawquery(self.query,false,start,stop)
-  local function iter()
-    local pattern, match = raw_iter()
-    if match ~= nil then
-      local preds = self.info.patterns[pattern]
-      local active = (not preds) or match_preds(match, preds, bufnr)
-      if not active then
-        return iter() -- tail call: try next match
-      end
-    end
-    return pattern, match
-  end
-  return iter
+  return LanguageTree.new(str, lang, opts)
 end
 
 return M

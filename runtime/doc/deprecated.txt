@@ -28,6 +28,7 @@ Environment Variables ~
 			$NVIM_LISTEN_ADDRESS is ignored.
 
 Events ~
+*BufCreate*		Use |BufAdd| instead.
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
 *FileEncoding*		Never fired; equivalent to |EncodingChanged|.
 *GUIEnter*		Never fired; use |UIEnter| instead.
@@ -76,7 +77,9 @@ Options ~
 *'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.
 *'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
 *'langnoremap'*		Deprecated alias to 'nolangremap'.
+'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
 *'vi'*
+'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
 *'viminfo'*		Deprecated alias to 'shada' option.
 *'viminfofile'*		Deprecated alias to 'shadafile' option.
 

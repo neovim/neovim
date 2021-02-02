@@ -20,6 +20,20 @@
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
 
+// Structure used to save the current state.  Used when executing Normal mode
+// commands while in any other mode.
+typedef struct {
+  int save_msg_scroll;
+  int save_restart_edit;
+  int save_msg_didout;
+  int save_State;
+  int save_insertmode;
+  bool save_finish_op;
+  long save_opcount;
+  int save_reg_executing;
+  tasave_T tabuf;
+} save_state_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.h.generated.h"
 #endif

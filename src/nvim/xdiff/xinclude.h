@@ -20,13 +20,13 @@
  *
  */
 
-/* defines HAVE_ATTRIBUTE_UNUSED */
+// defines HAVE_ATTRIBUTE_UNUSED
 #ifdef HAVE_CONFIG_H
 # include "../auto/config.h"
 #endif
 
-/* Mark unused function arguments with UNUSED, so that gcc -Wunused-parameter
- * can be used to check for mistakes. */
+// Mark unused function arguments with UNUSED, so that gcc -Wunused-parameter
+// can be used to check for mistakes.
 #ifdef HAVE_ATTRIBUTE_UNUSED
 # define UNUSED __attribute__((unused))
 #else
@@ -58,4 +58,4 @@
 #include "xemit.h"
 
 
-#endif /* #if !defined(XINCLUDE_H) */
+#endif // #if !defined(XINCLUDE_H)

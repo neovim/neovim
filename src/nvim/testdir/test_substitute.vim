@@ -1,6 +1,6 @@
 " Tests for multi-line regexps with ":s".
 
-function! Test_multiline_subst()
+func Test_multiline_subst()
   enew!
   call append(0, ["1 aa",
 	      \ "bb",
@@ -38,9 +38,9 @@ function! Test_multiline_subst()
   call assert_equal('7x7f', getline(12))
   call assert_equal('xxxxx', getline(13))
   enew!
-endfunction
+endfunc
 
-function! Test_substitute_variants()
+func Test_substitute_variants()
   " Validate that all the 2-/3-letter variants which embed the flags into the
   " command name actually work.
   enew!
@@ -248,9 +248,9 @@ func Test_sub_cmd_4()
 
   " List entry format: [input, cmd, output]
   let tests = [ ['aAa', "s/A/\\=substitute(submatch(0), '.', '\\', '')/",
-	      \ 			['a\a']],
+	      \				['a\a']],
 	      \ ['bBb', "s/B/\\=substitute(submatch(0), '.', '\\', '')/",
-	      \   			['b\b']],
+	      \				['b\b']],
 	      \ ['cCc', "s/C/\\=substitute(submatch(0), '.', '\<C-V>\<C-M>', '')/",
 	      \				["c\<C-V>", 'c']],
 	      \ ['dDd', "s/D/\\=substitute(submatch(0), '.', '\\\<C-V>\<C-M>', '')/",
@@ -611,6 +611,25 @@ func Test_sub_replace_10()
    call assert_equal('aaa', substitute('123', '.\ze', 'a', 'g'))
    call assert_equal('aa2a3a', substitute('123', '1\|\ze', 'a', 'g'))
    call assert_equal('1aaa', substitute('123', '1\zs\|[23]', 'a', 'g'))
+endfunc
+
+func SubReplacer(text, submatches)
+  return a:text .. a:submatches[0] .. a:text
+endfunc
+func SubReplacer20(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, submatches)
+  return a:t3 .. a:submatches[0] .. a:t11
+endfunc
+
+func Test_substitute_partial()
+  call assert_equal('1foo2foo3', substitute('123', '2', function('SubReplacer', ['foo']), 'g'))
+
+  " 19 arguments plus one is just OK
+  let Replacer = function('SubReplacer20', repeat(['foo'], 19))
+  call assert_equal('1foo2foo3', substitute('123', '2', Replacer, 'g'))
+
+  " 20 arguments plus one is too many
+  let Replacer = function('SubReplacer20', repeat(['foo'], 20))
+  call assert_fails("call substitute('123', '2', Replacer, 'g')", 'E118')
 endfunc
 
 func Test_sub_cmd_9()

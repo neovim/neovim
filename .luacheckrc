@@ -1,5 +1,10 @@
 -- vim: ft=lua tw=80
 
+stds.nvim = {
+  read_globals = { "jit" }
+}
+std = "lua51+nvim"
+
 -- Ignore W211 (unused variable) with preload files.
 files["**/preload.lua"] = {ignore = { "211" }}
 -- Allow vim module to modify itself, but only here.

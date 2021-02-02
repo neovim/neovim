@@ -1,6 +1,7 @@
 " Test for folding
 
 source view_util.vim
+source screendump.vim
 
 func PrepIndent(arg)
   return [a:arg] + repeat(["\t".a:arg], 5)
@@ -794,3 +795,66 @@ func Test_fold_delete_first_line()
   bwipe!
   set foldmethod&
 endfunc
+
+" this was crashing
+func Test_move_no_folds()
+  new
+  fold
+  setlocal fdm=expr
+  normal zj
+  bwipe!
+endfunc
+
+" this was crashing
+func Test_fold_create_delete_create()
+  new
+  fold
+  fold
+  normal zd
+  fold
+  bwipe!
+endfunc
+
+" this was crashing
+func Test_fold_create_delete()
+  new
+  norm zFzFzdzj
+  bwipe!
+endfunc
+
+func Test_fold_relative_move()
+  enew!
+  set fdm=indent sw=2 wrap tw=80
+
+  let content = [ '  foo', '  bar', '  baz',
+              \   repeat('x', &columns + 1),
+              \   '  foo', '  bar', '  baz'
+              \ ]
+  call append(0, content)
+
+  normal zM
+
+  call cursor(3, 1)
+  call assert_true(foldclosed(line('.')))
+  normal gj
+  call assert_equal(2, winline())
+
+  call cursor(2, 1)
+  call assert_true(foldclosed(line('.')))
+  normal 2gj
+  call assert_equal(3, winline())
+
+  call cursor(5, 1)
+  call assert_true(foldclosed(line('.')))
+  normal gk
+  call assert_equal(3, winline())
+
+  call cursor(6, 1)
+  call assert_true(foldclosed(line('.')))
+  normal 2gk
+  call assert_equal(2, winline())
+
+  set fdm& sw& wrap& tw&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

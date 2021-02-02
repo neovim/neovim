@@ -969,9 +969,6 @@ msgstr "E143: Aŭtokomandoj neatendite forviŝis novan bufron %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: nenumera argumento de :z"
 
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Ŝelkomandoj nepermeseblaj en rvim"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Ne eblas limigi regulesprimon per literoj"
 
@@ -2991,9 +2988,6 @@ msgstr "-y\t\t\tFacila reĝimo (kiel \"evim\", senreĝima)"
 
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tNurlegebla reĝimo (kiel \"view\")"
-
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tLimigita reĝimo (kiel \"rvim\")"
 
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tŜanĝoj (skribo al dosieroj) nepermeseblaj"

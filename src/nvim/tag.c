@@ -1182,7 +1182,7 @@ static int find_tagfunc_tags(
   if (result == FAIL) {
     return FAIL;
   }
-  if (rettv.v_type == VAR_SPECIAL && rettv.vval.v_number == VV_NULL) {
+  if (rettv.v_type == VAR_SPECIAL && rettv.vval.v_special == kSpecialVarNull) {
     tv_clear(&rettv);
     return NOTDONE;
   }
@@ -1461,7 +1461,7 @@ find_tags(
       p_ic = ignorecase_opt(pat, true, true);
       break;
     default:
-      assert(false);
+      abort();
   }
 
   help_save = curbuf->b_help;
@@ -2540,7 +2540,9 @@ parse_match(
       }
       p += 2;  // skip ";\""
       if (*p++ == TAB) {
-        while (ASCII_ISALPHA(*p)) {
+        // Accept ASCII alphabetic kind characters and any multi-byte
+        // character.
+        while (ASCII_ISALPHA(*p) || utfc_ptr2len(p) > 1) {
           if (STRNCMP(p, "kind:", 5) == 0) {
             tagp->tagkind = p + 5;
           } else if (STRNCMP(p, "user_data:", 10) == 0) {
@@ -2559,19 +2561,22 @@ parse_match(
           }
           if (pt == NULL)
             break;
-          p = pt + 1;
+          p = pt;
+          MB_PTR_ADV(p);
         }
       }
     }
     if (tagp->tagkind != NULL) {
       for (p = tagp->tagkind;
-           *p && *p != '\t' && *p != '\r' && *p != '\n'; ++p)
-        ;
+           *p && *p != '\t' && *p != '\r' && *p != '\n';
+           MB_PTR_ADV(p)) {
+      }
       tagp->tagkind_end = p;
     }
     if (tagp->user_data != NULL) {
       for (p = tagp->user_data;
-           *p && *p != '\t' && *p != '\r' && *p != '\n'; p++) {
+           *p && *p != '\t' && *p != '\r' && *p != '\n';
+           MB_PTR_ADV(p)) {
       }
       tagp->user_data_end = p;
     }
@@ -2898,7 +2903,7 @@ static int jumpto_tag(
         && curwin != curwin_save && win_valid(curwin_save)) {
       /* Return cursor to where we were */
       validate_cursor();
-      redraw_later(VALID);
+      redraw_later(curwin, VALID);
       win_enter(curwin_save, true);
     }
 
@@ -3158,9 +3163,11 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
 
       is_static = test_for_static(&tp);
 
-      /* Skip pseudo-tag lines. */
-      if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0)
+      // Skip pseudo-tag lines.
+      if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0) {
+        xfree(matches[i]);
         continue;
+      }
 
       dict = tv_dict_alloc();
       tv_list_append_dict(list, dict);
@@ -3179,7 +3186,8 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
 
       if (tp.command_end != NULL) {
         for (char_u *p = tp.command_end + 3;
-             *p != NUL && *p != '\n' && *p != '\r'; p++) {
+             *p != NUL && *p != '\n' && *p != '\r';
+             MB_PTR_ADV(p)) {
           if (p == tp.tagkind
               || (p + 5 == tp.tagkind && STRNCMP(p, "kind:", 5) == 0)) {
             // skip "kind:<kind>" and "<kind>"
@@ -3378,11 +3386,15 @@ static void tagstack_set_curidx(win_T *wp, int curidx)
 }
 
 // Set the tag stack entries of the specified window.
-// 'action' is set to either 'a' for append or 'r' for replace.
-int set_tagstack(win_T *wp, dict_T *d, int action)
+// 'action' is set to one of:
+//    'a' for append
+//    'r' for replace
+//    't' for truncate
+int set_tagstack(win_T *wp, const dict_T *d, int action)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   dictitem_T *di;
-  list_T *l;
+  list_T *l = NULL;
 
   // not allowed to alter the tag stack entries from inside tagfunc
   if (tfu_in_use) {
@@ -3395,16 +3407,30 @@ int set_tagstack(win_T *wp, dict_T *d, int action)
       return FAIL;
     }
     l = di->di_tv.vval.v_list;
-
-    if (action == 'r') {
-      tagstack_clear(wp);
-    }
-
-    tagstack_push_items(wp, l);
   }
 
   if ((di = tv_dict_find(d, "curidx", -1)) != NULL) {
     tagstack_set_curidx(wp, (int)tv_get_number(&di->di_tv) - 1);
+  }
+  if (action == 't') {  // truncate the stack
+    taggy_T *const tagstack = wp->w_tagstack;
+    const int tagstackidx = wp->w_tagstackidx;
+    int tagstacklen = wp->w_tagstacklen;
+    // delete all the tag stack entries above the current entry
+    while (tagstackidx < tagstacklen) {
+      tagstack_clear_entry(&tagstack[--tagstacklen]);
+    }
+    wp->w_tagstacklen = tagstacklen;
+  }
+
+  if (l != NULL) {
+    if (action == 'r') {  // replace the stack
+      tagstack_clear(wp);
+    }
+
+    tagstack_push_items(wp, l);
+    // set the current index after the last entry
+    wp->w_tagstackidx = wp->w_tagstacklen;
   }
 
   return OK;

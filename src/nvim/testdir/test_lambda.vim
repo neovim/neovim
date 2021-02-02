@@ -181,7 +181,7 @@ function! Test_lambda_scope()
   let l:D = s:NewCounter2()
 
   call assert_equal(1, l:C())
-  call assert_fails(':call l:D()', 'E15:') " E121: then E15:
+  call assert_fails(':call l:D()', 'E121:')
   call assert_equal(2, l:C())
 endfunction
 

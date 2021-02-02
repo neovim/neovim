@@ -11,11 +11,14 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
+#ifdef WIN32
+# include "nvim/os/pty_conpty_win.h"
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/path.h"
 #include "nvim/ascii.h"
 
 static bool did_stdio = false;
-PMap(uint64_t) *channels = NULL;
 
 /// next free id for a job or rpc channel
 /// 1 is reserved for stdio channel
@@ -298,9 +301,11 @@ static void close_cb(Stream *stream, void *data)
 /// @returns [allocated] channel
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
-                           bool pty, bool rpc, bool detach, const char *cwd,
+                           bool pty, bool rpc, bool overlapped, bool detach,
+                           const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
-                           char *term_name, char **env, varnumber_T *status_out)
+                           char *term_name, dict_T *env,
+                           varnumber_T *status_out)
 {
   assert(cwd == NULL || os_isdir_executable(cwd));
 
@@ -339,6 +344,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   proc->detach = detach;
   proc->cwd = cwd;
   proc->env = env;
+  proc->overlapped = overlapped;
 
   char *cmd = xstrdup(proc->argv[0]);
   bool has_out, has_err;
@@ -353,7 +359,9 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   if (status) {
     EMSG3(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
-    os_free_fullenv(proc->env);
+    if (proc->env) {
+      tv_dict_free(proc->env);
+    }
     if (proc->type == kProcessTypePty) {
       xfree(chan->stream.pty.term_name);
     }
@@ -362,8 +370,9 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     return NULL;
   }
   xfree(cmd);
-  os_free_fullenv(proc->env);
-
+  if (proc->env) {
+    tv_dict_free(proc->env);
+  }
 
   wstream_init(&proc->in, 0);
   if (has_out) {
@@ -469,8 +478,20 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
 
   Channel *channel = channel_alloc(kChannelStreamStdio);
 
-  rstream_init_fd(&main_loop, &channel->stream.stdio.in, 0, 0);
-  wstream_init_fd(&main_loop, &channel->stream.stdio.out, 1, 0);
+  int stdin_dup_fd = STDIN_FILENO;
+  int stdout_dup_fd = STDOUT_FILENO;
+#ifdef WIN32
+  // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
+  // stdin and stdout with CONIN$ and CONOUT$, respectively.
+  if (embedded_mode && os_has_conpty_working()) {
+    stdin_dup_fd = os_dup(STDIN_FILENO);
+    os_replace_stdin_to_conin();
+    stdout_dup_fd = os_dup(STDOUT_FILENO);
+    os_replace_stdout_and_stderr_to_conout();
+  }
+#endif
+  rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);
+  wstream_init_fd(&main_loop, &channel->stream.stdio.out, stdout_dup_fd, 0);
 
   if (rpc) {
     rpc_start(channel);

@@ -22,7 +22,7 @@ if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
   echo 'Setting Python versions via pyenv'
 
   # Prefer Python 2 over 3 (more conservative).
-  pyenv global 2.7.15:3.7
+  pyenv global 2.7:3.8
 
   echo 'Updated Python info:'
   (
@@ -44,7 +44,6 @@ fi
 
 source ~/.nvm/nvm.sh
 nvm install 10
-nvm use 10
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"

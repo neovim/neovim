@@ -266,10 +266,8 @@ void os_copy_fullenv(char **env, size_t env_size)
   extern char         **environ;
 # endif
 
-  size_t i = 0;
-  while (environ[i] != NULL && i < env_size) {
+  for (size_t i = 0; i < env_size && environ[i] != NULL; i++) {
     env[i] = xstrdup(environ[i]);
-    i++;
   }
 #endif
 }
@@ -396,13 +394,21 @@ void os_get_hostname(char *hostname, size_t size)
 }
 
 /// To get the "real" home directory:
-///   - get value of $HOME
+///   1. get value of $HOME
+///   2. if $HOME is not set, try the following
+/// For Windows:
+///   1. assemble homedir using HOMEDRIVE and HOMEPATH
+///   2. try os_homedir()
+///   3. resolve a direct reference to another system variable
+///   4. guess C drive
 /// For Unix:
-///   - go to that directory
-///   - do os_dirname() to get the real name of that directory.
-/// This also works with mounts and links.
-/// Don't do this for Windows, it will change the "current dir" for a drive.
+///   1. try os_homedir()
+///   2. go to that directory
+///     This also works with mounts and links.
+///     Don't do this for Windows, it will change the "current dir" for a drive.
+///   3. fall back to current working directory as a last resort
 static char *homedir = NULL;
+static char *os_homedir(void);
 
 void init_homedir(void)
 {
@@ -432,7 +438,7 @@ void init_homedir(void)
     }
   }
   if (var == NULL) {
-    var = os_getenv("USERPROFILE");
+    var = os_homedir();
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -442,6 +448,7 @@ void init_homedir(void)
     const char *p = strchr(var + 1, '%');
     if (p != NULL) {
       vim_snprintf(os_buf, (size_t)(p - var), "%s", var + 1);
+      var = NULL;
       const char *exp = os_getenv(os_buf);
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
@@ -460,8 +467,12 @@ void init_homedir(void)
   }
 #endif
 
-  if (var != NULL) {
 #ifdef UNIX
+  if (var == NULL) {
+    var = os_homedir();
+  }
+
+  if (var != NULL) {
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
@@ -472,9 +483,35 @@ void init_homedir(void)
         EMSG(_(e_prev_dir));
       }
     }
+  }
+
+  // Fall back to current working directory if home is not found
+  if ((var == NULL || *var == NUL)
+      && os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK) {
+    var = os_buf;
+  }
 #endif
+  if (var != NULL) {
     homedir = xstrdup(var);
   }
+}
+
+static char homedir_buf[MAXPATHL];
+
+static char *os_homedir(void)
+{
+  homedir_buf[0] = NUL;
+  size_t homedir_size = MAXPATHL;
+  uv_mutex_lock(&mutex);
+  // http://docs.libuv.org/en/v1.x/misc.html#c.uv_os_homedir
+  int ret_value = uv_os_homedir(homedir_buf, &homedir_size);
+  uv_mutex_unlock(&mutex);
+  if (ret_value == 0 && homedir_size < MAXPATHL) {
+    return homedir_buf;
+  }
+  ELOG("uv_os_homedir() failed %d: %s", ret_value, os_strerror(ret_value));
+  homedir_buf[0] = NUL;
+  return NULL;
 }
 
 #if defined(EXITFREE)
@@ -849,6 +886,20 @@ const void *vim_env_iter_rev(const char delim,
   }
 }
 
+
+/// @param[out] exe_name should be at least MAXPATHL in size
+void vim_get_prefix_from_exepath(char *exe_name)
+{
+  // TODO(bfredl): param could have been written as "char exe_name[MAXPATHL]"
+  // but c_grammar.lua does not recognize it (yet).
+  xstrlcpy(exe_name, (char *)get_vim_var_str(VV_PROGPATH),
+           MAXPATHL * sizeof(*exe_name));
+  char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
+  *path_end = '\0';  // remove the trailing "nvim.exe"
+  path_end = (char *)path_tail((char_u *)exe_name);
+  *path_end = '\0';  // remove the trailing "bin/"
+}
+
 /// Vim getenv() wrapper with special handling of $HOME, $VIM, $VIMRUNTIME,
 /// allowing the user to override the Nvim runtime directory at runtime.
 /// Result must be freed by the caller.
@@ -904,12 +955,7 @@ char *vim_getenv(const char *name)
     char exe_name[MAXPATHL];
     // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
-      xstrlcpy(exe_name, (char *)get_vim_var_str(VV_PROGPATH),
-               sizeof(exe_name));
-      char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
-      *path_end = '\0';  // remove the trailing "nvim.exe"
-      path_end = (char *)path_tail((char_u *)exe_name);
-      *path_end = '\0';  // remove the trailing "bin/"
+      vim_get_prefix_from_exepath(exe_name);
       if (append_path(
           exe_name,
           "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
@@ -1169,7 +1215,9 @@ bool os_setenv_append_path(const char *fname)
       temp[0] = NUL;
     } else {
       xstrlcpy(temp, path, newlen);
-      xstrlcat(temp, ENV_SEPSTR, newlen);
+      if (ENV_SEPCHAR != path[pathlen - 1]) {
+        xstrlcat(temp, ENV_SEPSTR, newlen);
+      }
     }
     xstrlcat(temp, os_buf, newlen);
     os_setenv("PATH", temp, 1);

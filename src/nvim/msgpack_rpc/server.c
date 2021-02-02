@@ -151,7 +151,7 @@ int server_start(const char *endpoint)
 
   result = socket_watcher_start(watcher, MAX_CONNECTIONS, connection_cb);
   if (result < 0) {
-    WLOG("Failed to start server: %s", uv_strerror(result));
+    WLOG("Failed to start server: %s: %s", uv_strerror(result), watcher->addr);
     socket_watcher_close(watcher, free_server);
     return result;
   }

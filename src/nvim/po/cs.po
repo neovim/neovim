@@ -1249,10 +1249,6 @@ msgstr "E143: Automatické pøíkazy neoèekávanì smazaly nový buffer %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: neèíselný argument pro :z"
 
-#: ../ex_cmds.c:3404
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: rvim nepovoluje pou¾ití pøíkazù shellu"
-
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Regulární výrazy nesmí být oddìleny písmeny"
@@ -3550,10 +3546,6 @@ msgstr "-v\t\t\tSnadný re¾im (stejné jako \"evim\", ¾ádné módy )"
 #: ../main.c:2207
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tRe¾im pouze_pro_ètení (jako \"view\")"
-
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tOmezený re¾im (stejné jako \"rvim\")"
 
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"

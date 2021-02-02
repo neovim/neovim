@@ -233,7 +233,7 @@ Terminal *terminal_open(TerminalOptions opts)
     snprintf(var, sizeof(var), "terminal_color_%d", i);
     char *name = get_config_string(var);
     if (name) {
-      color_val = name_to_color((uint8_t *)name);
+      color_val = name_to_color(name);
       xfree(name);
 
       if (color_val != -1) {
@@ -343,12 +343,16 @@ void terminal_enter(void)
   RedrawingDisabled = false;
 
   // Disable these options in terminal-mode. They are nonsense because cursor is
-  // placed at end of buffer to "follow" output.
+  // placed at end of buffer to "follow" output. #11072
   win_T *save_curwin = curwin;
   int save_w_p_cul = curwin->w_p_cul;
   int save_w_p_cuc = curwin->w_p_cuc;
+  long save_w_p_so = curwin->w_p_so;
+  long save_w_p_siso = curwin->w_p_siso;
   curwin->w_p_cul = false;
   curwin->w_p_cuc = false;
+  curwin->w_p_so = 0;
+  curwin->w_p_siso = 0;
 
   adjust_topline(s->term, buf, 0);  // scroll to end
   // erase the unfocused cursor
@@ -370,6 +374,8 @@ void terminal_enter(void)
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
     curwin->w_p_cuc = save_w_p_cuc;
+    curwin->w_p_so = save_w_p_so;
+    curwin->w_p_siso = save_w_p_siso;
   }
 
   // draw the unfocused cursor
@@ -483,7 +489,17 @@ static int terminal_execute(VimState *state, int key)
       terminal_send_key(s->term, key);
   }
 
-  return curbuf->handle == s->term->buf_handle;
+  if (curbuf->terminal == NULL) {
+    return 0;
+  }
+  if (s->term != curbuf->terminal) {
+    invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
+    invalidate_terminal(curbuf->terminal,
+                        curbuf->terminal->cursor.row,
+                        curbuf->terminal->cursor.row + 1);
+    s->term = curbuf->terminal;
+  }
+  return 1;
 }
 
 void terminal_destroy(Terminal *term)
@@ -591,6 +607,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     return;
   }
 
+  width = MIN(TERM_ATTRS_MAX, width);
   for (int col = 0; col < width; col++) {
     VTermScreenCell cell;
     bool color_valid = fetch_cell(term, row, col, &cell);
@@ -648,6 +665,11 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 Buffer terminal_buf(const Terminal *term)
 {
   return term->buf_handle;
+}
+
+bool terminal_running(const Terminal *term)
+{
+  return !term->closed;
 }
 
 // }}}
@@ -992,8 +1014,9 @@ static void mouse_action(Terminal *term, int button, int row, int col,
 static bool send_mouse_event(Terminal *term, int c)
 {
   int row = mouse_row, col = mouse_col, grid = mouse_grid;
+  int offset;
   win_T *mouse_win = mouse_find_win(&grid, &row, &col);
-  if (mouse_win == NULL) {
+  if (mouse_win == NULL || (offset = win_col_off(mouse_win)) > col) {
     goto end;
   }
 
@@ -1015,7 +1038,7 @@ static bool send_mouse_event(Terminal *term, int c)
       default: return false;
     }
 
-    mouse_action(term, button, row, col, drag, 0);
+    mouse_action(term, button, row, col - offset, drag, 0);
     size_t len = vterm_output_read(term->vt, term->textbuf,
                                    sizeof(term->textbuf));
     terminal_send(term, term->textbuf, (size_t)len);
@@ -1037,7 +1060,7 @@ static bool send_mouse_event(Terminal *term, int c)
     curwin->w_redr_status = true;
     curwin = save_curwin;
     curbuf = curwin->w_buffer;
-    redraw_win_later(mouse_win, NOT_VALID);
+    redraw_later(mouse_win, NOT_VALID);
     invalidate_terminal(term, -1, -1);
     // Only need to exit focus if the scrolled window is the terminal window
     return mouse_win == curwin;

@@ -8,9 +8,12 @@
 # undef Boolean
 #endif
 
+#include "auto/config.h"
+
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
+
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
 
@@ -43,14 +46,20 @@ void lang_init(void)
       }
     }
 
+    char buf[50] = { 0 };
+    bool set_lang;
     if (lang_region) {
-      os_setenv("LANG", lang_region, true);
+      set_lang = true;
+      xstrlcpy(buf, lang_region, sizeof(buf));
     } else {
-      char buf[20] = { 0 };
-      if (CFStringGetCString(cf_lang_region, buf, 20,
-                             kCFStringEncodingUTF8)) {
-        os_setenv("LANG", buf, true);
+      set_lang = CFStringGetCString(cf_lang_region, buf, 40,
+                                    kCFStringEncodingUTF8);
+    }
+    if (set_lang) {
+      if (strcasestr(buf, "utf-8") == NULL) {
+        xstrlcat(buf, ".UTF-8", sizeof(buf));
       }
+      os_setenv("LANG", buf, true);
     }
     CFRelease(cf_lang_region);
 # ifdef HAVE_LOCALE_H

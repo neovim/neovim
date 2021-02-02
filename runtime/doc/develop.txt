@@ -103,8 +103,10 @@ Examples:
 The provider framework invokes VimL from C.  It is composed of two functions
 in eval.c:
 
-- eval_call_provider(name, method, arguments): calls provider#{name}#Call
-  with the method and arguments.
+- eval_call_provider(name, method, arguments, discard): calls
+  provider#{name}#Call with the method and arguments. If discard is true, any
+  value returned by the provider will be discarded and and empty value be
+  returned.
 - eval_has_provider(name): Checks the `g:loaded_{name}_provider` variable
   which must be set to 2 by the provider script to indicate that it is
   "enabled and working". Called by |has()| to check if features are available.

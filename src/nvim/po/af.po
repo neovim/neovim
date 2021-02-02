@@ -1348,10 +1348,6 @@ msgstr "E143: Outobevele het nuwe buffer %s onverwags geskrap"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: nie-numeriese parameter vir :z"
 
-#, fuzzy
-#~ msgid "E145: Shell commands not allowed in restricted mode"
-#~ msgstr "E145: Dop bevele nie toegelaat in rvim"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Patrone kan nie deur letters afgebaken word nie"
 
@@ -3293,10 +3289,6 @@ msgstr "-o[N]\t\tMaak N vensters oop (verstek: een vir elke lêer)"
 
 #~ msgid "  -V[N][file]           Verbose [level][file]\n"
 #~ msgstr ""
-
-#, fuzzy
-#~ msgid "  -Z                    Restricted mode\n"
-#~ msgstr "                              vir twee modusse   "
 
 #~ msgid "  --api-info            Write msgpack-encoded API metadata to stdout\n"
 #~ msgstr ""
@@ -7476,9 +7468,6 @@ msgstr "E446: Geen lêernaam onder loper"
 
 #~ msgid "-b\t\t\tBinary mode"
 #~ msgstr "-b\t\t\tBinêre modus"
-
-#~ msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-#~ msgstr "-Z\t\t\tBeperkte modus (soos \"rvim\")"
 
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tLeesalleen modus (soos \"view\")"

@@ -133,9 +133,6 @@ typedef enum {
 # include "viml/parser/expressions.c.generated.h"
 #endif
 
-/// Character used as a separator in autoload function/variable names.
-#define AUTOLOAD_CHAR '#'
-
 /// Scale number by a given factor
 ///
 /// Used to apply exponent to a number. Idea taken from uClibc.
@@ -1434,7 +1431,7 @@ static inline void east_set_error(const ParserState *const pstate,
   const ParserLine pline = pstate->reader.lines.items[start.line];
   ret_ast_err->msg = msg;
   ret_ast_err->arg_len = (int)(pline.size - start.col);
-  ret_ast_err->arg = pline.data + start.col;
+  ret_ast_err->arg = pline.data ? pline.data + start.col : NULL;
 }
 
 /// Set error from the given token and given message
@@ -2081,7 +2078,7 @@ viml_pexpr_parse_process_token:
       case kExprLexMissing:
       case kExprLexSpacing:
       case kExprLexEOC: {
-        assert(false);
+        abort();
       }
       case kExprLexInvalid: {
         ERROR_FROM_TOKEN(cur_token);
@@ -3031,7 +3028,7 @@ viml_pexpr_parse_end:
           // Until trailing "}" it is impossible to distinguish curly braces
           // identifier and dictionary, so it must not appear in the stack like
           // this.
-          assert(false);
+          abort();
         }
         case kExprNodeInteger:
         case kExprNodeFloat:
@@ -3045,7 +3042,7 @@ viml_pexpr_parse_end:
           // These are plain values and not containers, for them it should only
           // be possible to show up in the topmost stack element, but it was
           // unconditionally popped at the start.
-          assert(false);
+          abort();
         }
         case kExprNodeComma:
         case kExprNodeColon:

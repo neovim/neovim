@@ -119,6 +119,7 @@ struct slang_S {
   bool sl_add;                  // true if it's a .add file.
 
   char_u      *sl_fbyts;        // case-folded word bytes
+  long        sl_fbyts_len;     // length of sl_fbyts
   idx_T       *sl_fidxs;        // case-folded word indexes
   char_u      *sl_kbyts;        // keep-case word bytes
   idx_T       *sl_kidxs;        // keep-case word indexes
@@ -161,7 +162,7 @@ struct slang_S {
   bool sl_collapse;             // SAL collapse_result
   bool sl_rem_accents;          // SAL remove_accents
   bool sl_sofo;                 // SOFOFROM and SOFOTO instead of SAL items:
-                                // "sl_sal_first" maps chars, when has_mbyte
+                                // "sl_sal_first" maps chars
                                 // "sl_sal" is a list of wide char lists.
   garray_T sl_repsal;           // list of fromto_T entries from REPSAL lines
   int16_t sl_repsal_first[256];    // sl_rep_first for REPSAL lines
@@ -261,20 +262,15 @@ typedef struct trystate_S {
 // Use our own character-case definitions, because the current locale may
 // differ from what the .spl file uses.
 // These must not be called with negative number!
-#include <wchar.h>        // for towupper() and towlower()
 // Multi-byte implementation.  For Unicode we can call utf_*(), but don't do
 // that for ASCII, because we don't want to use 'casemap' here.  Otherwise use
 // the "w" library function for characters above 255.
-#define SPELL_TOFOLD(c) (enc_utf8 && (c) >= 128 ? utf_fold(c) \
-                         : (c) < \
-                         256 ? (int)spelltab.st_fold[c] : (int)towlower(c))
+#define SPELL_TOFOLD(c) ((c) >= 128 ? utf_fold(c) : (int)spelltab.st_fold[c])
 
-#define SPELL_TOUPPER(c) (enc_utf8 && (c) >= 128 ? mb_toupper(c) \
-                          : (c) < \
-                          256 ? (int)spelltab.st_upper[c] : (int)towupper(c))
+#define SPELL_TOUPPER(c) ((c) >= 128 ? mb_toupper(c) \
+                          : (int)spelltab.st_upper[c])
 
-#define SPELL_ISUPPER(c) (enc_utf8 && (c) >= 128 ? mb_isupper(c) \
-                          : (c) < 256 ? spelltab.st_isu[c] : iswupper(c))
+#define SPELL_ISUPPER(c) ((c) >= 128 ? mb_isupper(c) : spelltab.st_isu[c])
 
 // First language that is loaded, start of the linked list of loaded
 // languages.

@@ -186,9 +186,35 @@ func Test_strftime()
 
   call assert_fails('call strftime([])', 'E730:')
   call assert_fails('call strftime("%Y", [])', 'E745:')
+
+  " Check that the time changes after we change the timezone
+  " Save previous timezone value, if any
+  if exists('$TZ')
+    let tz = $TZ
+  endif
+
+  " Force EST and then UTC, save the current hour (24-hour clock) for each
+  let $TZ = 'EST' | let est = strftime('%H')
+  let $TZ = 'UTC' | let utc = strftime('%H')
+
+  " Those hours should be two bytes long, and should not be the same; if they
+  " are, a tzset(3) call may have failed somewhere
+  call assert_equal(strlen(est), 2)
+  call assert_equal(strlen(utc), 2)
+  " TODO: this fails on MS-Windows
+  if has('unix')
+    call assert_notequal(est, utc)
+  endif
+
+  " If we cached a timezone value, put it back, otherwise clear it
+  if exists('tz')
+    let $TZ = tz
+  else
+    unlet $TZ
+  endif
 endfunc
 
-func Test_resolve()
+func Test_resolve_unix()
   if !has('unix')
     return
   endif
@@ -232,6 +258,8 @@ func Test_resolve()
   call assert_equal('Xlink2', resolve('Xlink1'))
   call assert_equal('./Xlink2', resolve('./Xlink1'))
   call delete('Xlink1')
+
+  call assert_equal('/', resolve('/'))
 endfunc
 
 func Test_simplify()
@@ -308,6 +336,10 @@ func Test_strpart()
 
   call assert_equal('lép', strpart('éléphant', 2, 4))
   call assert_equal('léphant', strpart('éléphant', 2))
+
+  call assert_equal('é', strpart('éléphant', 0, 1, 1))
+  call assert_equal('ép', strpart('éléphant', 3, 2, v:true))
+  call assert_equal('ó', strpart('cómposed', 1, 1, 1))
 endfunc
 
 func Test_tolower()
@@ -639,6 +671,16 @@ func Test_getbufvar()
   call assert_equal(1, getbufvar(bufnr('%'), '&bin'))
   call assert_equal('iso-8859-2', getbufvar(bufnr('%'), '&fenc'))
   close
+
+  " Get the b: dict.
+  let b:testvar = 'one'
+  new
+  let b:testvar = 'two'
+  let thebuf = bufnr()
+  wincmd w
+  call assert_equal('two', getbufvar(thebuf, 'testvar'))
+  call assert_equal('two', getbufvar(thebuf, '').testvar)
+  bwipe!
 
   set fileformats&
 endfunc
@@ -1043,6 +1085,12 @@ func Test_trim()
   call assert_equal("", trim("", ""))
   call assert_equal("a", trim("a", ""))
   call assert_equal("", trim("", "a"))
+  call assert_equal("vim", trim("  vim  ", " ", 0))
+  call assert_equal("vim  ", trim("  vim  ", " ", 1))
+  call assert_equal("  vim", trim("  vim  ", " ", 2))
+  call assert_fails('call trim("  vim  ", " ", [])', 'E745:')
+  call assert_fails('call trim("  vim  ", " ", -1)', 'E475:')
+  call assert_fails('call trim("  vim  ", " ", 3)', 'E475:')
 
   let chars = join(map(range(1, 0x20) + [0xa0], {n -> nr2char(n)}), '')
   call assert_equal("x", trim(chars . "x" . chars))
@@ -1181,6 +1229,24 @@ func Test_reg_executing_and_recording()
   unlet s:reg_stat
 endfunc
 
+func Test_getchar()
+  call feedkeys('a', '')
+  call assert_equal(char2nr('a'), getchar())
+
+  " call test_setmouse(1, 3)
+  " let v:mouse_win = 9
+  " let v:mouse_winid = 9
+  " let v:mouse_lnum = 9
+  " let v:mouse_col = 9
+  " call feedkeys("\<S-LeftMouse>", '')
+  call nvim_input_mouse('left', 'press', 'S', 0, 0, 2)
+  call assert_equal("\<S-LeftMouse>", getchar())
+  call assert_equal(1, v:mouse_win)
+  call assert_equal(win_getid(1), v:mouse_winid)
+  call assert_equal(1, v:mouse_lnum)
+  call assert_equal(3, v:mouse_col)
+endfunc
+
 func Test_libcall_libcallnr()
   if !has('libcall')
     return
@@ -1271,3 +1337,52 @@ func Test_bufadd_bufload()
   bwipe otherName
   call assert_equal(0, bufexists('someName'))
 endfunc
+
+func Test_readdir()
+  call mkdir('Xdir')
+  call writefile([], 'Xdir/foo.txt')
+  call writefile([], 'Xdir/bar.txt')
+  call mkdir('Xdir/dir')
+
+  " All results
+  let files = readdir('Xdir')
+  call assert_equal(['bar.txt', 'dir', 'foo.txt'], sort(files))
+
+  " Only results containing "f"
+  let files = readdir('Xdir', { x -> stridx(x, 'f') !=- 1 })
+  call assert_equal(['foo.txt'], sort(files))
+
+  " Only .txt files
+  let files = readdir('Xdir', { x -> x =~ '.txt$' })
+  call assert_equal(['bar.txt', 'foo.txt'], sort(files))
+
+  " Only .txt files with string
+  let files = readdir('Xdir', 'v:val =~ ".txt$"')
+  call assert_equal(['bar.txt', 'foo.txt'], sort(files))
+
+  " Limit to 1 result.
+  let l = []
+  let files = readdir('Xdir', {x -> len(add(l, x)) == 2 ? -1 : 1})
+  call assert_equal(1, len(files))
+
+  call delete('Xdir', 'rf')
+endfunc
+
+" Test for the eval() function
+func Test_eval()
+  call assert_fails("call eval('5 a')", 'E488:')
+endfunc
+
+" Test for the nr2char() function
+func Test_nr2char()
+  " set encoding=latin1
+  call assert_equal('@', nr2char(64))
+  set encoding=utf8
+  call assert_equal('a', nr2char(97, 1))
+  call assert_equal('a', nr2char(97, 0))
+
+  call assert_equal("\x80\xfc\b\xf4\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x100000) .. '>"'))
+  call assert_equal("\x80\xfc\b\xfd\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x40000000) .. '>"'))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

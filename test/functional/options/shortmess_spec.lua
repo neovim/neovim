@@ -25,7 +25,7 @@ describe("'shortmess'", function()
         ~                                         |
         ~                                         |
         ~                                         |
-        "foo" [New File]                          |
+        "foo" [New]                               |
       ]])
       eq(1, eval('bufnr("%")'))
 
@@ -50,7 +50,7 @@ describe("'shortmess'", function()
         ~                                         |
         ~                                         |
         ~                                         |
-        "foo" [New File]                          |
+        "foo" [New]                               |
       ]])
       eq(1, eval('bufnr("%")'))
       feed(':edit bar<CR>')
@@ -59,7 +59,7 @@ describe("'shortmess'", function()
         ~                                         |
         ~                                         |
         ~                                         |
-        "bar" [New File]                          |
+        "bar" [New]                               |
       ]])
       eq(2, eval('bufnr("%")'))
       feed(':bprevious<CR>')
@@ -68,7 +68,7 @@ describe("'shortmess'", function()
         ~                                         |
         ~                                         |
         ~                                         |
-        "foo" [New file] --No lines in buffer--   |
+        "foo" [New] --No lines in buffer--        |
       ]])
       eq(1, eval('bufnr("%")'))
 

@@ -527,8 +527,7 @@ FOLDCOLUMN						*fold-foldcolumn*
 
 'foldcolumn' is a number, which sets the width for a column on the side of the
 window to indicate folds.  When it is zero, there is no foldcolumn.  A normal
-value is 4 or 5.  The minimal useful value is 2, although 1 still provides
-some information.  The maximum is 12.
+value is auto:9. The maximum is 9.
 
 An open fold is indicated with a column that has a '-' at the top and '|'
 characters below it.  This column stops where the open fold stops.  When folds

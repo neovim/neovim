@@ -10,6 +10,7 @@ filetype indent on
 syn on
 set nowrapscan
 set report=9999
+set modeline
 
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()

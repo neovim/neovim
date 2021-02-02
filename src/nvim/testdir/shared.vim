@@ -1,9 +1,11 @@
 " Functions shared by several tests.
 
 " Only load this script once.
-if exists('*WaitFor')
+if exists('*PythonProg')
   finish
 endif
+
+source view_util.vim
 
 " {Nvim}
 " Filepath captured from output may be truncated, like this:
@@ -54,6 +56,9 @@ endfunc
 
 " Run "cmd".  Returns the job if using a job.
 func RunCommand(cmd)
+  " Running an external command can occasionally be slow or fail.
+  let g:test_is_flaky = 1
+
   let job = 0
   if has('job')
     let job = job_start(a:cmd, {"stoponexit": "hup"})
@@ -238,7 +243,7 @@ func s:feedkeys(timer)
   call feedkeys('x', 'nt')
 endfunc
 
-" Get $VIMPROG to run Vim executable.
+" Get $VIMPROG to run the Vim executable.
 " The Makefile writes it as the first line in the "vimcmd" file.
 " Nvim: uses $NVIM_TEST_ARG0.
 func GetVimProg()
@@ -269,11 +274,11 @@ func GetVimCommand(...)
     let cmd = cmd . ' -u ' . name
   endif
   let cmd .= ' --headless -i NONE'
-  let cmd = substitute(cmd, 'VIMRUNTIME=.*VIMRUNTIME;', '', '')
+  let cmd = substitute(cmd, 'VIMRUNTIME=\S\+', '', '')
 
   " If using valgrind, make sure every run uses a different log file.
   if cmd =~ 'valgrind.*--log-file='
-    let cmd = substitute(cmd, '--log-file=\(^\s*\)', '--log-file=\1.' . g:valgrind_cnt, '')
+    let cmd = substitute(cmd, '--log-file=\(\S*\)', '--log-file=\1.' . g:valgrind_cnt, '')
     let g:valgrind_cnt += 1
   endif
 
@@ -286,10 +291,20 @@ func GetVimCommandClean()
   let cmd = substitute(cmd, '-u NONE', '--clean', '')
   let cmd = substitute(cmd, '--headless', '', '')
 
+  " Force using utf-8, Vim may pick up something else from the environment.
+  " let cmd ..= ' --cmd "set enc=utf8" '
+
   " Optionally run Vim under valgrind
   " let cmd = 'valgrind --tool=memcheck --leak-check=yes --num-callers=25 --log-file=valgrind ' . cmd
 
   return cmd
+endfunc
+
+" Get the command to run Vim, with --clean, and force to run in terminal so it
+" won't start a new GUI.
+func GetVimCommandCleanTerm()
+  " Add -v to have gvim run in the terminal (if possible)
+  return GetVimCommandClean() .. ' -v '
 endfunc
 
 " Run Vim, using the "vimcmd" file and "-u NORC".
@@ -328,17 +343,16 @@ func RunVimPiped(before, after, arguments, pipecmd)
   return 1
 endfunc
 
-" Get line "lnum" as displayed on the screen.
-" Trailing white space is trimmed.
-func! Screenline(lnum)
-  let chars = []
-  for c in range(1, winwidth(0))
-    call add(chars, nr2char(screenchar(a:lnum, c)))
-  endfor
-  let line = join(chars, '')
-  return matchstr(line, '^.\{-}\ze\s*$')
+" Get all messages but drop the maintainer entry.
+func GetMessages()
+  redir => result
+  redraw | messages
+  redir END
+  let msg_list = split(result, "\n")
+  " if msg_list->len() > 0 && msg_list[0] =~ 'Messages maintainer:'
+  "   return msg_list[1:]
+  " endif
+  return msg_list
 endfunc
 
-func CanRunGui()
-  return has('gui') && ($DISPLAY != "" || has('gui_running'))
-endfunc
+" vim: shiftwidth=2 sts=2 expandtab

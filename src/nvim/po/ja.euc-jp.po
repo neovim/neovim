@@ -987,9 +987,6 @@ msgstr "E143: autocommandが予期せず新しいバッファ %s を削除しました"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: 数ではない引数が :z に渡されました"
 
-msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: rvimではシェルコマンドを使えません"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: 正規表現は文字で区切ることができません"
 
@@ -3026,9 +3023,6 @@ msgstr "-y\t\t\tイージーモード (\"evim\" と同じ、モード無)"
 
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\t読込専用モード (\"view\" と同じ)"
-
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\t制限モード (\"rvim\" と同じ)"
 
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\t変更 (ファイル保存時) をできないようにする"

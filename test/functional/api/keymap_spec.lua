@@ -21,6 +21,7 @@ describe('nvim_get_keymap', function()
   local foo_bar_string = 'nnoremap foo bar'
   local foo_bar_map_table = {
     lhs='foo',
+    script=0,
     silent=0,
     rhs='bar',
     expr=0,
@@ -245,6 +246,7 @@ describe('nvim_get_keymap', function()
 
   it('works correctly despite various &cpo settings', function()
     local cpo_table = {
+      script=0,
       silent=0,
       expr=0,
       sid=0,
@@ -302,6 +304,7 @@ describe('nvim_get_keymap', function()
       lhs='|   |',
       rhs='|    |',
       mode='n',
+      script=0,
       silent=0,
       expr=0,
       sid=0,
@@ -343,6 +346,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     to_return.noremap = not opts.noremap and 0 or 1
     to_return.lhs = lhs
     to_return.rhs = rhs
+    to_return.script = 0
     to_return.silent = not opts.silent and 0 or 1
     to_return.nowait = not opts.nowait and 0 or 1
     to_return.expr = not opts.expr and 0 or 1
@@ -747,7 +751,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   end
 
   it('rejects negative bufnr values', function()
-    eq('Wrong type for argument 1, expecting Buffer',
+    eq('Wrong type for argument 1 when calling nvim_buf_set_keymap, expecting Buffer',
       pcall_err(bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {}))
   end)
 
@@ -804,5 +808,10 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     switch_to_buf(first)
     command('normal lhs')
     eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+  end)
+
+  it("does not crash when setting keymap in a non-existing buffer #13541", function()
+    pcall_err(bufmeths.set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
+    helpers.assert_alive()
   end)
 end)

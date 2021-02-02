@@ -8,6 +8,9 @@ local vim = vim or {}
 
 --- Returns a deep copy of the given object. Non-table objects are copied as
 --- in a typical Lua assignment, whereas table objects are copied recursively.
+--- Functions are naively copied, so functions in the copied table point to the
+--- same functions as those in the input table. Userdata and threads are not
+--- copied and will throw an error.
 ---
 --@param orig Table to copy
 --@returns New table of copied keys and (nested) values.
@@ -20,6 +23,11 @@ vim.deepcopy = (function()
   local deepcopy_funcs = {
     table = function(orig)
       local copy = {}
+
+      if vim._empty_dict_mt ~= nil and getmetatable(orig) == vim._empty_dict_mt then
+        copy = vim.empty_dict()
+      end
+
       for k, v in pairs(orig) do
         copy[vim.deepcopy(k)] = vim.deepcopy(v)
       end
@@ -29,10 +37,16 @@ vim.deepcopy = (function()
     string = _id,
     ['nil'] = _id,
     boolean = _id,
+    ['function'] = _id,
   }
 
   return function(orig)
-    return deepcopy_funcs[type(orig)](orig)
+    local f = deepcopy_funcs[type(orig)]
+    if f then
+      return f(orig)
+    else
+      error("Cannot deepcopy object of type "..type(orig))
+    end
   end
 end)()
 
@@ -65,7 +79,7 @@ function vim.gsplit(s, sep, plain)
   end
 
   return function()
-    if done then
+    if done or (s == '' and sep == '') then
       return
     end
     if sep == '' then
@@ -82,7 +96,7 @@ end
 ---
 --- Examples:
 --- <pre>
----  split(":aa::b:", ":")     --> {'','aa','','bb',''}
+---  split(":aa::b:", ":")     --> {'','aa','','b',''}
 ---  split("axaby", "ab?")     --> {'','x','y'}
 ---  split(x*yz*o, "*", true)  --> {'x','yz','o'}
 --- </pre>
@@ -130,6 +144,36 @@ function vim.tbl_values(t)
   return values
 end
 
+--- Apply a function to all values of a table.
+---
+--@param func function or callable table
+--@param t table
+function vim.tbl_map(func, t)
+  vim.validate{func={func,'c'},t={t,'t'}}
+
+  local rettab = {}
+  for k, v in pairs(t) do
+    rettab[k] = func(v)
+  end
+  return rettab
+end
+
+--- Filter a table using a predicate function
+---
+--@param func function or callable table
+--@param t table
+function vim.tbl_filter(func, t)
+  vim.validate{func={func,'c'},t={t,'t'}}
+
+  local rettab = {}
+  for _, entry in pairs(t) do
+    if func(entry) then
+      table.insert(rettab, entry)
+    end
+  end
+  return rettab
+end
+
 --- Checks if a list-like (vector) table contains `value`.
 ---
 --@param t Table to check
@@ -146,14 +190,48 @@ function vim.tbl_contains(t, value)
   return false
 end
 
--- Returns true if the table is empty, and contains no indexed or keyed values.
---
---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
---
+--- Checks if a table is empty.
+---
+--@see https://github.com/premake/premake-core/blob/master/src/base/table.lua
+---
 --@param t Table to check
 function vim.tbl_isempty(t)
   assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
   return next(t) == nil
+end
+
+local function tbl_extend(behavior, deep_extend, ...)
+  if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
+    error('invalid "behavior": '..tostring(behavior))
+  end
+
+  if select('#', ...) < 2 then
+    error('wrong number of arguments (given '..tostring(1 + select('#', ...))..', expected at least 3)')
+  end
+
+  local ret = {}
+  if vim._empty_dict_mt ~= nil and getmetatable(select(1, ...)) == vim._empty_dict_mt then
+    ret = vim.empty_dict()
+  end
+
+  for i = 1, select('#', ...) do
+    local tbl = select(i, ...)
+    vim.validate{["after the second argument"] = {tbl,'t'}}
+    if tbl then
+      for k, v in pairs(tbl) do
+        if type(v) == 'table' and deep_extend and not vim.tbl_islist(v) then
+          ret[k] = tbl_extend(behavior, true, ret[k] or vim.empty_dict(), v)
+        elseif behavior ~= 'force' and ret[k] ~= nil then
+          if behavior == 'error' then
+            error('key found in more than one map: '..k)
+          end  -- Else behavior is "keep".
+        else
+          ret[k] = v
+        end
+      end
+    end
+  end
+  return ret
 end
 
 --- Merges two or more map-like tables.
@@ -166,25 +244,20 @@ end
 ---      - "force": use value from the rightmost map
 --@param ... Two or more map-like tables.
 function vim.tbl_extend(behavior, ...)
-  if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
-    error('invalid "behavior": '..tostring(behavior))
-  end
-  local ret = {}
-  for i = 1, select('#', ...) do
-    local tbl = select(i, ...)
-    if tbl then
-      for k, v in pairs(tbl) do
-        if behavior ~= 'force' and ret[k] ~= nil then
-          if behavior == 'error' then
-            error('key found in more than one map: '..k)
-          end  -- Else behavior is "keep".
-        else
-          ret[k] = v
-        end
-      end
-    end
-  end
-  return ret
+  return tbl_extend(behavior, false, ...)
+end
+
+--- Merges recursively two or more map-like tables.
+---
+--@see |tbl_extend()|
+---
+--@param behavior Decides what to do if a key is found in more than one map:
+---      - "error": raise an error
+---      - "keep":  use value from the leftmost map
+---      - "force": use value from the rightmost map
+--@param ... Two or more map-like tables.
+function vim.tbl_deep_extend(behavior, ...)
+  return tbl_extend(behavior, true, ...)
 end
 
 --- Deep compare values for equality
@@ -274,10 +347,14 @@ function vim.tbl_flatten(t)
   return result
 end
 
--- Determine whether a Lua table can be treated as an array.
+--- Tests if a Lua table can be treated as an array.
 ---
---@params Table
---@returns true: A non-empty array, false: A non-empty table, nil: An empty table
+--- Empty table `{}` is assumed to be an array, unless it was created by
+--- |vim.empty_dict()| or returned as a dict-like |API| or Vimscript result,
+--- for example from |rpcrequest()| or |vim.fn|.
+---
+--@param t Table
+--@returns `true` if array-like table, else `false`.
 function vim.tbl_islist(t)
   if type(t) ~= 'table' then
     return false
@@ -296,8 +373,31 @@ function vim.tbl_islist(t)
   if count > 0 then
     return true
   else
-    return nil
+    -- TODO(bfredl): in the future, we will always be inside nvim
+    -- then this check can be deleted.
+    if vim._empty_dict_mt == nil then
+      return nil
+    end
+    return getmetatable(t) ~= vim._empty_dict_mt
   end
+end
+
+--- Counts the number of non-nil values in table `t`.
+---
+--- <pre>
+--- vim.tbl_count({ a=1, b=2 }) => 2
+--- vim.tbl_count({ 1, 2 }) => 2
+--- </pre>
+---
+--@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
+--@param t Table
+--@returns Number that is the number of the value in table
+function vim.tbl_count(t)
+  vim.validate{t={t,'t'}}
+
+  local count = 0
+  for _ in pairs(t) do count = count + 1 end
+  return count
 end
 
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
@@ -310,7 +410,7 @@ function vim.trim(s)
   return s:match('^%s*(.*%S)') or ''
 end
 
---- Escapes magic chars in a Lua pattern string.
+--- Escapes magic chars in a Lua pattern.
 ---
 --@see https://github.com/rxi/lume
 --@param s  String to escape
@@ -320,21 +420,21 @@ function vim.pesc(s)
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
 end
 
---- Test if `prefix` is a prefix of `s` for strings.
---
--- @param s String to check
--- @param prefix Potential prefix
--- @return boolean True if prefix is a prefix of s
+--- Tests if `s` starts with `prefix`.
+---
+--@param s (string) a string
+--@param prefix (string) a prefix
+--@return (boolean) true if `prefix` is a prefix of s
 function vim.startswith(s, prefix)
   vim.validate { s = {s, 's'}; prefix = {prefix, 's'}; }
   return s:sub(1, #prefix) == prefix
 end
 
---- Test if `suffix` is a suffix of `s` for strings.
---
--- @param s String to check
--- @param suffix Potential suffix
--- @return boolean True if suffix is a suffix of s
+--- Tests if `s` ends with `suffix`.
+---
+--@param s (string) a string
+--@param suffix (string) a suffix
+--@return (boolean) true if `suffix` is a suffix of s
 function vim.endswith(s, suffix)
   vim.validate { s = {s, 's'}; suffix = {suffix, 's'}; }
   return #suffix == 0 or s:sub(-#suffix) == suffix
@@ -377,48 +477,77 @@ end
 ---          2. (arg_value, fn, msg)
 ---             - arg_value: argument value
 ---             - fn: any function accepting one argument, returns true if and
----               only if the argument is valid
+---               only if the argument is valid. Can optionally return an additional
+---               informative error message as the second returned value.
 ---             - msg: (optional) error string if validation fails
 function vim.validate(opt) end  -- luacheck: no unused
-vim.validate = (function()
+
+do
   local type_names = {
-    t='table', s='string', n='number', b='boolean', f='function', c='callable',
-    ['table']='table', ['string']='string', ['number']='number',
-    ['boolean']='boolean', ['function']='function', ['callable']='callable',
-    ['nil']='nil', ['thread']='thread', ['userdata']='userdata',
+    ['table']    = 'table',    t = 'table',
+    ['string']   = 'string',   s = 'string',
+    ['number']   = 'number',   n = 'number',
+    ['boolean']  = 'boolean',  b = 'boolean',
+    ['function'] = 'function', f = 'function',
+    ['callable'] = 'callable', c = 'callable',
+    ['nil']      = 'nil',
+    ['thread']   = 'thread',
+    ['userdata'] = 'userdata',
   }
-  local function _type_name(t)
-    local tname = type_names[t]
-    if tname == nil then
-      error(string.format('invalid type name: %s', tostring(t)))
-    end
-    return tname
-  end
+
   local function _is_type(val, t)
-    return t == 'callable' and vim.is_callable(val) or type(val) == t
+    return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
-  return function(opt)
-    assert(type(opt) == 'table', string.format('opt: expected table, got %s', type(opt)))
+  local function is_valid(opt)
+    if type(opt) ~= 'table' then
+      return false, string.format('opt: expected table, got %s', type(opt))
+    end
+
     for param_name, spec in pairs(opt) do
-      assert(type(spec) == 'table', string.format('%s: expected table, got %s', param_name, type(spec)))
+      if type(spec) ~= 'table' then
+        return false, string.format('opt[%s]: expected table, got %s', param_name, type(spec))
+      end
 
       local val = spec[1]   -- Argument value.
       local t = spec[2]     -- Type name, or callable.
       local optional = (true == spec[3])
 
-      if not vim.is_callable(t) then  -- Check type name.
-        if (not optional or val ~= nil) and not _is_type(val, _type_name(t)) then
-          error(string.format("%s: expected %s, got %s", param_name, _type_name(t), type(val)))
+      if type(t) == 'string' then
+        local t_name = type_names[t]
+        if not t_name then
+          return false, string.format('invalid type name: %s', t)
         end
-      elseif not t(val) then  -- Check user-provided validation function.
-        error(string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val))
+
+        if (not optional or val ~= nil) and not _is_type(val, t_name) then
+          return false, string.format("%s: expected %s, got %s", param_name, t_name, type(val))
+        end
+      elseif vim.is_callable(t) then
+        -- Check user-provided validation function.
+        local valid, optional_message = t(val)
+        if not valid then
+          local error_message = string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val)
+          if optional_message ~= nil then
+            error_message = error_message .. string.format(". Info: %s", optional_message)
+          end
+
+          return false, error_message
+        end
+      else
+        return false, string.format("invalid type name: %s", tostring(t))
       end
     end
-    return true
-  end
-end)()
 
+    return true, nil
+  end
+
+  function vim.validate(opt)
+    local ok, err_msg = is_valid(opt)
+    if not ok then
+      error(debug.traceback(err_msg, 2), 2)
+    end
+  end
+end
 --- Returns true if object `f` can be called as a function.
 ---
 --@param f Any object

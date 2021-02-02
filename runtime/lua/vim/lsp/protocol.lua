@@ -1,20 +1,18 @@
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
+local if_nil = vim.F.if_nil
+
 local protocol = {}
 
-local function ifnil(a, b)
-  if a == nil then return b end
-  return a
-end
-
-
 --[=[
--- Useful for interfacing with:
--- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
+--@private
+--- Useful for interfacing with:
+--- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
 function transform_schema_comments()
   nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]
   nvim.command [[silent! '<,'>s/^\(\s*\) \* \=\(.*\)/\1--\2/]]
 end
+--@private
 function transform_schema_to_table()
   transform_schema_comments()
   nvim.command [[silent! '<,'>s/: \S\+//]]
@@ -34,6 +32,13 @@ local constants = {
     Information = 3;
     -- Reports a hint.
     Hint = 4;
+  };
+
+  DiagnosticTag = {
+    -- Unused or unnecessary code
+    Unnecessary = 1;
+    -- Deprecated or obsolete code
+    Deprecated = 2;
   };
 
   MessageType = {
@@ -294,8 +299,9 @@ local constants = {
 }
 
 for k, v in pairs(constants) do
-  vim.tbl_add_reverse_lookup(v)
-  protocol[k] = v
+  local tbl = vim.deepcopy(v)
+  vim.tbl_add_reverse_lookup(tbl)
+  protocol[k] = tbl
 end
 
 --[=[
@@ -522,6 +528,13 @@ export interface TextDocumentClientCapabilities {
   publishDiagnostics?: {
     --Whether the clients accepts diagnostics with related information.
     relatedInformation?: boolean;
+    --Client supports the tag property to provide meta data about a diagnostic.
+	  --Clients supporting tags have to handle unknown tags gracefully.
+    --Since 3.15.0
+    tagSupport?: {
+      --The tags supported by this client
+      valueSet: DiagnosticTag[];
+    };
   };
   --Capabilities specific to `textDocument/foldingRange` requests.
   --
@@ -603,6 +616,8 @@ export interface WorkspaceClientCapabilities {
 }
 --]=]
 
+--- Gets a new ClientCapabilities object describing the LSP client
+--- capabilities.
 function protocol.make_client_capabilities()
   return {
     textDocument = {
@@ -618,12 +633,27 @@ function protocol.make_client_capabilities()
         -- Send textDocument/didSave after saving (BufWritePost)
         didSave = true;
       };
+      codeAction = {
+        dynamicRegistration = false;
+
+        codeActionLiteralSupport = {
+          codeActionKind = {
+            valueSet = (function()
+              local res = vim.tbl_values(protocol.CodeActionKind)
+              table.sort(res)
+              return res
+            end)();
+          };
+        };
+      };
       completion = {
         dynamicRegistration = false;
         completionItem = {
-
-          -- TODO(tjdevries): Is it possible to implement this in plain lua?
+          -- Until we can actually expand snippet, move cursor and allow for true snippet experience,
+          -- this should be disabled out of the box.
+          -- However, users can turn this back on if they have a snippet plugin.
           snippetSupport = false;
+
           commitCharactersSupport = false;
           preselectSupport = false;
           deprecatedSupport = false;
@@ -632,7 +662,7 @@ function protocol.make_client_capabilities()
         completionItemKind = {
           valueSet = (function()
             local res = {}
-            for k in pairs(protocol.CompletionItemKind) do
+            for k in ipairs(protocol.CompletionItemKind) do
               if type(k) == 'number' then table.insert(res, k) end
             end
             return res
@@ -641,6 +671,18 @@ function protocol.make_client_capabilities()
 
         -- TODO(tjdevries): Implement this
         contextSupport = false;
+      };
+      declaration = {
+        linkSupport = true;
+      };
+      definition = {
+        linkSupport = true;
+      };
+      implementation = {
+        linkSupport = true;
+      };
+      typeDefinition = {
+        linkSupport = true;
       };
       hover = {
         dynamicRegistration = false;
@@ -661,22 +703,68 @@ function protocol.make_client_capabilities()
       documentHighlight = {
         dynamicRegistration = false
       };
-      -- documentSymbol = {
-      --   dynamicRegistration = false;
-      --   symbolKind = {
-      --     valueSet = (function()
-      --       local res = {}
-      --       for k in pairs(protocol.SymbolKind) do
-      --         if type(k) == 'string' then table.insert(res, k) end
-      --       end
-      --       return res
-      --     end)();
-      --   };
-      --   hierarchicalDocumentSymbolSupport = false;
-      -- };
+      documentSymbol = {
+        dynamicRegistration = false;
+        symbolKind = {
+          valueSet = (function()
+            local res = {}
+            for k in ipairs(protocol.SymbolKind) do
+              if type(k) == 'number' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+        hierarchicalDocumentSymbolSupport = true;
+      };
+      rename = {
+        dynamicRegistration = false;
+        prepareSupport = true;
+      };
+      publishDiagnostics = {
+        relatedInformation = true;
+        tagSupport = {
+          valueSet = (function()
+            local res = {}
+            for k in ipairs(protocol.DiagnosticTag) do
+              if type(k) == 'number' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+      };
     };
-    workspace = nil;
+    workspace = {
+      symbol = {
+        dynamicRegistration = false;
+        symbolKind = {
+          valueSet = (function()
+            local res = {}
+            for k in ipairs(protocol.SymbolKind) do
+              if type(k) == 'number' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+        hierarchicalWorkspaceSymbolSupport = true;
+      };
+      workspaceFolders = true;
+      applyEdit = true;
+    };
+    callHierarchy = {
+      dynamicRegistration = false;
+    };
     experimental = nil;
+    window = {
+      workDoneProgress = true;
+      showMessage = {
+        messageActionItem = {
+          additionalPropertiesSupport = false;
+        };
+      };
+      showDocument = {
+        support = false;
+      };
+    };
   }
 end
 
@@ -821,6 +909,8 @@ interface ServerCapabilities {
   experimental?: any;
 }
 --]]
+
+--- Creates a normalized object describing LSP server capabilities.
 function protocol.resolve_capabilities(server_capabilities)
   local general_properties = {}
   local text_document_sync_properties
@@ -853,17 +943,19 @@ function protocol.resolve_capabilities(server_capabilities)
       }
     elseif type(textDocumentSync) == 'table' then
       text_document_sync_properties = {
-        text_document_open_close = ifnil(textDocumentSync.openClose, false);
-        text_document_did_change = ifnil(textDocumentSync.change, TextDocumentSyncKind.None);
-        text_document_will_save = ifnil(textDocumentSync.willSave, false);
-        text_document_will_save_wait_until = ifnil(textDocumentSync.willSaveWaitUntil, false);
-        text_document_save = ifnil(textDocumentSync.save, false);
-        text_document_save_include_text = ifnil(textDocumentSync.save and textDocumentSync.save.includeText, false);
+        text_document_open_close = if_nil(textDocumentSync.openClose, false);
+        text_document_did_change = if_nil(textDocumentSync.change, TextDocumentSyncKind.None);
+        text_document_will_save = if_nil(textDocumentSync.willSave, false);
+        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false);
+        text_document_save = if_nil(textDocumentSync.save, false);
+        text_document_save_include_text = if_nil(type(textDocumentSync.save) == 'table'
+                                                and textDocumentSync.save.includeText, false);
       }
     else
       return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
     end
   end
+  general_properties.completion = server_capabilities.completionProvider ~= nil
   general_properties.hover = server_capabilities.hoverProvider or false
   general_properties.goto_definition = server_capabilities.definitionProvider or false
   general_properties.find_references = server_capabilities.referencesProvider or false
@@ -872,16 +964,46 @@ function protocol.resolve_capabilities(server_capabilities)
   general_properties.workspace_symbol = server_capabilities.workspaceSymbolProvider or false
   general_properties.document_formatting = server_capabilities.documentFormattingProvider or false
   general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider or false
+  general_properties.call_hierarchy = server_capabilities.callHierarchyProvider or false
+  general_properties.execute_command = server_capabilities.executeCommandProvider ~= nil
+
+  if server_capabilities.renameProvider == nil then
+    general_properties.rename = false
+  elseif type(server_capabilities.renameProvider) == 'boolean' then
+    general_properties.rename = server_capabilities.renameProvider
+  else
+    general_properties.rename = true
+  end
 
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
-  elseif type(server_capabilities.codeActionProvider) == 'boolean' then
+  elseif type(server_capabilities.codeActionProvider) == 'boolean'
+    or type(server_capabilities.codeActionProvider) == 'table' then
     general_properties.code_action = server_capabilities.codeActionProvider
-  elseif type(server_capabilities.codeActionProvider) == 'table' then
-    -- TODO(ashkan) support CodeActionKind
-    general_properties.code_action = false
   else
     error("The server sent invalid codeActionProvider")
+  end
+
+  if server_capabilities.declarationProvider == nil then
+    general_properties.declaration = false
+  elseif type(server_capabilities.declarationProvider) == 'boolean' then
+    general_properties.declaration = server_capabilities.declarationProvider
+  elseif type(server_capabilities.declarationProvider) == 'table' then
+    -- TODO: support more detailed declarationProvider options.
+    general_properties.declaration = false
+  else
+    error("The server sent invalid declarationProvider")
+  end
+
+  if server_capabilities.typeDefinitionProvider == nil then
+    general_properties.type_definition = false
+  elseif type(server_capabilities.typeDefinitionProvider) == 'boolean' then
+    general_properties.type_definition = server_capabilities.typeDefinitionProvider
+  elseif type(server_capabilities.typeDefinitionProvider) == 'table' then
+    -- TODO: support more detailed typeDefinitionProvider options.
+    general_properties.type_definition = false
+  else
+    error("The server sent invalid typeDefinitionProvider")
   end
 
   if server_capabilities.implementationProvider == nil then
@@ -893,6 +1015,28 @@ function protocol.resolve_capabilities(server_capabilities)
     general_properties.implementation = false
   else
     error("The server sent invalid implementationProvider")
+  end
+
+  local workspace = server_capabilities.workspace
+  local workspace_properties = {}
+  if workspace == nil or workspace.workspaceFolders == nil then
+    -- Defaults if omitted.
+    workspace_properties = {
+      workspace_folder_properties =  {
+        supported = false;
+        changeNotifications=false;
+      }
+    }
+  elseif type(workspace.workspaceFolders) == 'table' then
+    workspace_properties = {
+      workspace_folder_properties = {
+        supported = if_nil(workspace.workspaceFolders.supported, false);
+        changeNotifications = if_nil(workspace.workspaceFolders.changeNotifications, false);
+
+      }
+    }
+  else
+    error("The server sent invalid workspace")
   end
 
   local signature_help_properties
@@ -914,6 +1058,7 @@ function protocol.resolve_capabilities(server_capabilities)
   return vim.tbl_extend("error"
       , text_document_sync_properties
       , signature_help_properties
+      , workspace_properties
       , general_properties
       )
 end

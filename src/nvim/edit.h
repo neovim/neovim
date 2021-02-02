@@ -10,8 +10,7 @@
 #define CPT_MENU        1   // "menu"
 #define CPT_KIND        2   // "kind"
 #define CPT_INFO        3   // "info"
-#define CPT_USER_DATA   4   // "user data"
-#define CPT_COUNT       5   // Number of entries
+#define CPT_COUNT       4   // Number of entries
 
 // values for cp_flags
 typedef enum {

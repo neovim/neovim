@@ -61,6 +61,9 @@ static bool pending_mode_info_update = false;
 static bool pending_mode_update = false;
 static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
 
+static bool has_mouse = false;
+static int pending_has_mouse = -1;
+
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname)
 #else
@@ -220,19 +223,35 @@ void ui_refresh(void)
   ui_mode_info_set();
   pending_mode_update = true;
   ui_cursor_shape();
+  pending_has_mouse = -1;
 }
 
 int ui_pum_get_height(void)
 {
   int pum_height = 0;
   for (size_t i = 1; i < ui_count; i++) {
-    int ui_pum_height = uis[i]->pum_height;
+    int ui_pum_height = uis[i]->pum_nlines;
     if (ui_pum_height) {
       pum_height =
         pum_height != 0 ? MIN(pum_height, ui_pum_height) : ui_pum_height;
     }
   }
   return pum_height;
+}
+
+bool ui_pum_get_pos(double *pwidth, double *pheight, double *prow, double *pcol)
+{
+  for (size_t i = 1; i < ui_count; i++) {
+    if (!uis[i]->pum_pos) {
+      continue;
+    }
+    *pwidth = uis[i]->pum_width;
+    *pheight = uis[i]->pum_height;
+    *prow = uis[i]->pum_row;
+    *pcol = uis[i]->pum_col;
+    return true;
+  }
+  return false;
 }
 
 static void ui_refresh_event(void **argv)
@@ -424,7 +443,7 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   cmdline_ui_flush();
-  win_ui_flush_positions();
+  win_ui_flush();
   msg_ext_ui_flush();
   msg_scroll_flush();
 
@@ -444,10 +463,69 @@ void ui_flush(void)
     ui_call_mode_change(cstr_as_string(full_name), ui_mode_idx);
     pending_mode_update = false;
   }
+  if (pending_has_mouse != has_mouse) {
+    (has_mouse ? ui_call_mouse_on : ui_call_mouse_off)();
+    pending_has_mouse = has_mouse;
+  }
   ui_call_flush();
 }
 
+
+/// Check if 'mouse' is active for the current mode
+///
+/// TODO(bfredl): precompute the State -> active mapping when 'mouse' changes,
+/// then this can be checked directly in ui_flush()
+void ui_check_mouse(void)
+{
+  has_mouse = false;
+  // Be quick when mouse is off.
+  if (*p_mouse == NUL) {
+    return;
+  }
+
+  int checkfor = MOUSE_NORMAL;  // assume normal mode
+  if (VIsual_active) {
+    checkfor = MOUSE_VISUAL;
+  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE) {
+    checkfor = MOUSE_RETURN;
+  } else if (State & INSERT) {
+    checkfor = MOUSE_INSERT;
+  } else if (State & CMDLINE) {
+    checkfor = MOUSE_COMMAND;
+  } else if (State == CONFIRM || State == EXTERNCMD) {
+    checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
+  }
+
+  // mouse should be active if at least one of the following is true:
+  // - "c" is in 'mouse', or
+  // - 'a' is in 'mouse' and "c" is in MOUSE_A, or
+  // - the current buffer is a help file and 'h' is in 'mouse' and we are in a
+  //   normal editing mode (not at hit-return message).
+  for (char_u *p = p_mouse; *p; p++) {
+    switch (*p) {
+      case 'a':
+        if (vim_strchr((char_u *)MOUSE_A, checkfor) != NULL) {
+          has_mouse = true;
+          return;
+        }
+        break;
+      case MOUSE_HELP:
+        if (checkfor != MOUSE_RETURN && curbuf->b_help) {
+          has_mouse = true;
+          return;
+        }
+        break;
+      default:
+        if (checkfor == *p) {
+          has_mouse = true;
+          return;
+        }
+    }
+  }
+}
+
 /// Check if current mode has changed.
+///
 /// May update the shape of the cursor.
 void ui_cursor_shape(void)
 {
@@ -505,7 +583,7 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
   }
 
   if (wp->w_floating) {
-    if (width != wp->w_width && height != wp->w_height) {
+    if (width != wp->w_width || height != wp->w_height) {
       wp->w_float_config.width = width;
       wp->w_float_config.height = height;
       win_config_float(wp, wp->w_float_config);

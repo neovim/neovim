@@ -604,7 +604,7 @@ describe("'listchars' highlight", function()
     ]])
   end)
 
-  it("'cursorline' and with 'listchar' option: space, eol, tab, and trail", function()
+  it("'cursorline' and with 'listchars' option", function()
     screen:set_default_attr_ids({
       [1] = {background=Screen.colors.Grey90},
       [2] = {
@@ -858,6 +858,57 @@ describe('CursorLine highlight', function()
       {1:}} {7: }                                               |
       {5: ^ }{7: }{5:                                               }|
                                                         |
+    ]])
+  end)
+
+  it("overridden by NonText in 'showbreak' characters", function()
+    local screen = Screen.new(20,5)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Yellow, background = Screen.colors.Blue};
+      [2] = {foreground = Screen.colors.Black, background = Screen.colors.White};
+      [3] = {foreground = Screen.colors.Yellow, background = Screen.colors.White};
+      [4] = {foreground = Screen.colors.Yellow};
+    })
+    screen:attach()
+
+    feed_command('set wrap cursorline')
+    feed_command('set showbreak=>>>')
+    feed_command('highlight clear NonText')
+    feed_command('highlight clear CursorLine')
+    feed_command('highlight NonText guifg=Yellow guibg=Blue gui=NONE')
+    feed_command('highlight CursorLine guifg=Black guibg=White gui=NONE')
+
+    feed('30iø<esc>o<esc>30ia<esc>')
+    screen:expect([[
+      øøøøøøøøøøøøøøøøøøøø|
+      {1:>>>}øøøøøøøøøø       |
+      {2:aaaaaaaaaaaaaaaaaaaa}|
+      {1:>>>}{2:aaaaaaaaa^a       }|
+                          |
+    ]])
+    feed('k')
+    screen:expect([[
+      {2:øøøøøøøøøøøøøøøøøøøø}|
+      {1:>>>}{2:øøøøøøøøø^ø       }|
+      aaaaaaaaaaaaaaaaaaaa|
+      {1:>>>}aaaaaaaaaa       |
+                          |
+    ]])
+    feed_command('highlight NonText guibg=NONE')
+    screen:expect([[
+      {2:øøøøøøøøøøøøøøøøøøøø}|
+      {3:>>>}{2:øøøøøøøøø^ø       }|
+      aaaaaaaaaaaaaaaaaaaa|
+      {4:>>>}aaaaaaaaaa       |
+                          |
+    ]])
+    feed_command('set nocursorline')
+    screen:expect([[
+      øøøøøøøøøøøøøøøøøøøø|
+      {4:>>>}øøøøøøøøø^ø       |
+      aaaaaaaaaaaaaaaaaaaa|
+      {4:>>>}aaaaaaaaaa       |
+      :set nocursorline   |
     ]])
   end)
 
@@ -1186,6 +1237,7 @@ describe("'winhighlight' highlight", function()
       [25] = {bold = true, foreground = Screen.colors.Green1},
       [26] = {background = Screen.colors.Red},
       [27] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Green1},
+      [28] = {bold = true, foreground = Screen.colors.Brown},
     })
     command("hi Background1 guibg=DarkBlue")
     command("hi Background2 guibg=DarkGreen")
@@ -1597,5 +1649,46 @@ describe("'winhighlight' highlight", function()
       {3:[No Name] [+]       }|
       {21:-- }{22:match 1 of 3}     |
     ]])
+  end)
+
+  it('can override CursorLine and CursorLineNr', function()
+    -- CursorLine used to be parsed as CursorLineNr, because strncmp
+    command('set cursorline number')
+    command('split')
+    command('set winhl=CursorLine:Background1')
+    screen:expect{grid=[[
+      {28:  1 }{1:^                }|
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      {28:  1 }{18:                }|
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+
+    command('set winhl=CursorLineNr:Background2,CursorLine:Background1')
+    screen:expect{grid=[[
+      {5:  1 }{1:^                }|
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      {28:  1 }{18:                }|
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+
+    feed('<c-w>w')
+    screen:expect{grid=[[
+      {5:  1 }{1:                }|
+      {0:~                   }|
+      {0:~                   }|
+      {4:[No Name]           }|
+      {28:  1 }{18:^                }|
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+    ]]}
   end)
 end)

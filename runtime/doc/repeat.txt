@@ -180,7 +180,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Read Ex commands from {file} in each directory given
 			by 'runtimepath' and/or 'packpath'.  There is no error
 			for non-existing files.
-			
+
 			Example: >
 				:runtime syntax/c.vim
 
@@ -254,7 +254,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 						*:packl* *:packloadall*
 :packl[oadall][!]	Load all packages in the "start" directory under each
 			entry in 'packpath'.
-			
+
 			First all the directories found are added to
 			'runtimepath', then the plugins found in the
 			directories are sourced.  This allows for a plugin to

@@ -11,7 +11,7 @@ local os_kill = helpers.os_kill
 local retry = helpers.retry
 local meths = helpers.meths
 local NIL = helpers.NIL
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
@@ -31,9 +31,9 @@ describe('jobs', function()
     nvim('set_var', 'channel', channel)
     source([[
     function! Normalize(data) abort
-      " Windows: remove ^M
+      " Windows: remove ^M and term escape sequences
       return type([]) == type(a:data)
-        \ ? map(a:data, 'substitute(v:val, "\r", "", "g")')
+        \ ? map(a:data, 'substitute(substitute(v:val, "\r", "", "g"), "\x1b\\%(\\]\\d\\+;.\\{-}\x07\\|\\[.\\{-}[\x40-\x7E]\\)", "", "g")')
         \ : a:data
     endfunction
     function! OnEvent(id, data, event) dict
@@ -63,6 +63,7 @@ describe('jobs', function()
 
   it('append environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     if iswin() then
       nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
@@ -75,8 +76,24 @@ describe('jobs', function()
     })
   end)
 
+  it('append environment with pty #env', function()
+    nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
+    nvim('command', "let g:job_opts.pty = v:true")
+    nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
+    if iswin() then
+      nvim('command', [[call jobstart('echo %TOTO% %VAR%', g:job_opts)]])
+    else
+      nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
+    end
+    expect_msg_seq({
+      {'notification', 'stdout', {0, {'hello world abc', ''}}},
+    })
+  end)
+
   it('replace environment #env', function()
     nvim('command', "let $VAR = 'abc'")
+    nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
     nvim('command', "let g:job_opts.clear_env = 1")
 
@@ -93,6 +110,7 @@ describe('jobs', function()
         {'notification', 'stdout', {0, {'hello world %VAR%', ''}}}
       })
     else
+      nvim('command', "set shell=/bin/sh")
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
       expect_msg_seq({
         {'notification', 'stdout', {0, {'hello world', ''}}}
@@ -306,16 +324,16 @@ describe('jobs', function()
     end))
   end)
 
-  it('disallows jobsend/stop on a non-existent job', function()
+  it('disallows jobsend on a non-existent job', function()
     eq(false, pcall(eval, "jobsend(-1, 'lol')"))
-    eq(false, pcall(eval, "jobstop(-1)"))
+    eq(0, eval('jobstop(-1)'))
   end)
 
-  it('disallows jobstop twice on the same job', function()
+  it('jobstop twice on the stopped or exited job return 0', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
-    eq(true, pcall(eval, "jobstop(j)"))
-    eq(false, pcall(eval, "jobstop(j)"))
+    eq(1, eval("jobstop(j)"))
+    eq(0, eval("jobstop(j)"))
   end)
 
   it('will not leak memory if we leave a job running', function()
@@ -427,7 +445,7 @@ describe('jobs', function()
       \ }
       let job = jobstart(['cat', '-'], g:callbacks)
     ]])
-    wait()
+    poke_eventloop()
     source([[
       function! g:JobHandler(job_id, data, event)
       endfunction
@@ -917,6 +935,13 @@ describe('jobs', function()
         eq(NIL, meths.get_proc(child_pid))
       end
     end)
+  end)
+
+  it('jobstop on same id before stopped', function()
+    nvim('command', 'let j = jobstart(["cat", "-"], g:job_opts)')
+    neq(0, eval('j'))
+
+    eq({1, 0}, eval('[jobstop(j), jobstop(j)]'))
   end)
 
   describe('running tty-test program', function()

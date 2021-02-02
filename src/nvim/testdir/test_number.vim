@@ -2,23 +2,23 @@
 
 source view_util.vim
 
-func! s:screen_lines(start, end) abort
+func s:screen_lines(start, end) abort
   return ScreenLines([a:start, a:end], 8)
 endfunc
 
-func! s:compare_lines(expect, actual)
+func s:compare_lines(expect, actual)
   call assert_equal(a:expect, a:actual)
 endfunc
 
-func! s:test_windows(h, w) abort
+func s:test_windows(h, w) abort
   call NewWindow(a:h, a:w)
 endfunc
 
-func! s:close_windows() abort
+func s:close_windows() abort
   call CloseWindow()
 endfunc
 
-func! s:validate_cursor() abort
+func s:validate_cursor() abort
   " update skipcol.
   " wincol():
   "   f_wincol
@@ -251,4 +251,15 @@ func Test_numberwidth_adjusted()
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()
+endfunc
+
+" This was causing a memcheck error
+func Test_relativenumber_uninitialised()
+  new
+  set rnu
+  call setline(1, ["a", "b"])
+  redraw
+  call feedkeys("j", 'xt')
+  redraw
+  bwipe!
 endfunc

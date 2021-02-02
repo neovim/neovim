@@ -184,3 +184,46 @@ func Test_finddir_error()
   call assert_fails('call finddir("x", "**x")', 'E343:')
   call assert_fails('call finddir("x", repeat("x", 5000))', 'E854:')
 endfunc
+
+" Test for the :find, :sfind and :tabfind commands
+func Test_find_cmd()
+  new
+  let save_path = &path
+  let save_dir = getcwd()
+  set path=.,./**/*
+  call CreateFiles()
+  cd Xdir1
+  " Test for :find
+  find foo
+  call assert_equal('foo', expand('%:.'))
+  2find foo
+  call assert_equal('Xdir2/foo', expand('%:.'))
+  call assert_fails('3find foo', 'E347:')
+  " Test for :sfind
+  enew
+  sfind barfoo
+  call assert_equal('Xdir2/Xdir3/barfoo', expand('%:.'))
+  call assert_equal(3, winnr('$'))
+  close
+  call assert_fails('sfind baz', 'E345:')
+  call assert_equal(2, winnr('$'))
+  " Test for :tabfind
+  enew
+  tabfind foobar
+  call assert_equal('Xdir2/foobar', expand('%:.'))
+  call assert_equal(2, tabpagenr('$'))
+  tabclose
+  call assert_fails('tabfind baz', 'E345:')
+  call assert_equal(1, tabpagenr('$'))
+  " call chdir(save_dir)
+  exe 'cd ' . save_dir
+  call CleanFiles()
+  let &path = save_path
+  close
+
+  call assert_fails('find', 'E471:')
+  call assert_fails('sfind', 'E471:')
+  call assert_fails('tabfind', 'E471:')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

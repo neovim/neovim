@@ -38,6 +38,9 @@ endif()
 if (LibIntl_LIBRARY)
   list(APPEND CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}")
 endif()
+if (MSVC)
+  list(APPEND CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARY})
+endif()
 check_c_source_compiles("
 #include <libintl.h>
 
@@ -48,6 +51,9 @@ int main(int argc, char** argv) {
   bind_textdomain_codeset(\"foo\", \"bar\");
   textdomain(\"foo\");
 }" HAVE_WORKING_LIBINTL)
+if (MSVC)
+  list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARY})
+endif()
 if (LibIntl_INCLUDE_DIR)
   list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${LibIntl_INCLUDE_DIR}")
 endif()

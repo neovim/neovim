@@ -2,6 +2,9 @@
 
 local log = {}
 
+-- FIXME: DOC
+-- Should be exposed in the vim docs.
+--
 -- Log level dictionary with reverse lookup as well.
 --
 -- Can be used to lookup the number from the name or the name from the number.
@@ -13,30 +16,34 @@ log.levels = {
   INFO  = 2;
   WARN  = 3;
   ERROR = 4;
-  -- FATAL = 4;
 }
 
 -- Default log level is warn.
 local current_log_level = log.levels.WARN
-local log_date_format = "%FT%H:%M:%SZ%z"
+local log_date_format = "%FT%H:%M:%S%z"
 
 do
   local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
+  --@private
   local function path_join(...)
     return table.concat(vim.tbl_flatten{...}, path_sep)
   end
-  local logfilename = path_join(vim.fn.stdpath('data'), 'vim-lsp.log')
+  local logfilename = path_join(vim.fn.stdpath('cache'), 'lsp.log')
 
-  --- Return the log filename.
+  --- Returns the log filename.
+  --@returns (string) log filename
   function log.get_filename()
     return logfilename
   end
 
-  vim.fn.mkdir(vim.fn.stdpath('data'), "p")
+  vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
   local logfile = assert(io.open(logfilename, "a+"))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
+    -- FIXME: DOC
+    -- Should be exposed in the vim docs.
+    --
     -- Set the lowercase name as the main use function.
     -- If called without arguments, it will check whether the log level is
     -- greater than or equal to this one. When called with arguments, it will
@@ -75,6 +82,8 @@ end
 -- interfere with iterating the levels
 vim.tbl_add_reverse_lookup(log.levels)
 
+--- Sets the current log level.
+--@param level (string or number) One of `vim.lsp.log.levels`
 function log.set_level(level)
   if type(level) == 'string' then
     current_log_level = assert(log.levels[level:upper()], string.format("Invalid log level: %q", level))
@@ -85,8 +94,9 @@ function log.set_level(level)
   end
 end
 
--- Return whether the level is sufficient for logging.
--- @param level number log level
+--- Checks whether the level is sufficient for logging.
+--@param level number log level
+--@returns (bool) true if would log, false if not
 function log.should_log(level)
   return level >= current_log_level
 end

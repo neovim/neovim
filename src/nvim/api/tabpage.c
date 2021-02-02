@@ -97,48 +97,6 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
   dict_set_var(tab->tp_vars, name, NIL, true, false, err);
 }
 
-/// Sets a tab-scoped (t:) variable
-///
-/// @deprecated
-///
-/// @param tabpage  Tabpage handle, or 0 for current tabpage
-/// @param name     Variable name
-/// @param value    Variable value
-/// @param[out] err Error details, if any
-/// @return Old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
-Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
-{
-  tabpage_T *tab = find_tab_by_handle(tabpage, err);
-
-  if (!tab) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(tab->tp_vars, name, value, false, true, err);
-}
-
-/// Removes a tab-scoped (t:) variable
-///
-/// @deprecated
-///
-/// @param tabpage  Tabpage handle, or 0 for current tabpage
-/// @param name     Variable name
-/// @param[out] err Error details, if any
-/// @return Old value
-Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
-{
-  tabpage_T *tab = find_tab_by_handle(tabpage, err);
-
-  if (!tab) {
-    return (Object) OBJECT_INIT;
-  }
-
-  return dict_set_var(tab->tp_vars, name, NIL, true, true, err);
-}
-
 /// Gets the current window in a tabpage
 ///
 /// @param tabpage  Tabpage handle, or 0 for current tabpage

@@ -1515,10 +1515,6 @@ msgstr "E143: Autocommand poisti uuden puskurin odotuksen vastaisesti %s"
 msgid "E144: non-numeric argument to :z"
 msgstr "E144: :z:n argumentti ei ole numero"
 
-#, fuzzy
-#~ msgid "E145: Shell commands not allowed in restricted mode"
-#~ msgstr "E145: Kuoren komennot eivät toimi rvimissä"
-
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Säännöllistä ilmausta ei voi rajata kirjaimilla"
 
@@ -3250,10 +3246,6 @@ msgstr ""
 
 #, fuzzy
 #~ msgid "  -R                    Read-only mode\n"
-#~ msgstr "                              kahta tilaa varten "
-
-#, fuzzy
-#~ msgid "  -Z                    Restricted mode\n"
 #~ msgstr "                              kahta tilaa varten "
 
 #, fuzzy
@@ -6964,9 +6956,6 @@ msgstr "Lista tai luku tarvitaan"
 
 #~ msgid "-b\t\t\tBinary mode"
 #~ msgstr "-b\t\t\tBinääritila"
-
-#~ msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-#~ msgstr "-Z\t\t\tRajoitettu tila (kuten rvimillä)"
 
 #~ msgid "-R\t\t\tReadonly mode (like \"view\")"
 #~ msgstr "-R\t\t\tKirjoitussuojattu tila (kuten view'lla)"

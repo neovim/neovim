@@ -55,8 +55,8 @@ struct histindex {
 	struct record {
 		unsigned int ptr, cnt;
 		struct record *next;
-	} **records, /* an occurrence */
-	  **line_map; /* map of line to record chain */
+	} **records, // an occurrence
+	  **line_map; // map of line to record chain
 	chastore_t rcha;
 	unsigned int *next_ptrs;
 	unsigned int table_bits,
@@ -128,7 +128,7 @@ static int scanA(struct histindex *index, int line1, int count1)
 				 */
 				NEXT_PTR(index, ptr) = rec->ptr;
 				rec->ptr = ptr;
-				/* cap rec->cnt at MAX_CNT */
+				// cap rec->cnt at MAX_CNT
 				rec->cnt = XDL_MIN(MAX_CNT, rec->cnt + 1);
 				LINE_MAP(index, ptr) = rec;
 				goto continue_scan;
@@ -154,7 +154,7 @@ static int scanA(struct histindex *index, int line1, int count1)
 		LINE_MAP(index, ptr) = rec;
 
 continue_scan:
-		; /* no op */
+		; // no op
 	}
 
 	return 0;
@@ -266,7 +266,7 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 
 	index.records = NULL;
 	index.line_map = NULL;
-	/* in case of early xdl_cha_free() */
+	// in case of early xdl_cha_free()
 	index.rcha.head = NULL;
 
 	index.table_bits = xdl_hashbits(count1);
@@ -288,7 +288,7 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 		goto cleanup;
 	memset(index.next_ptrs, 0, sz);
 
-	/* lines / 4 + 1 comes from xprepare.c:xdl_prepare_ctx() */
+	// lines / 4 + 1 comes from xprepare.c:xdl_prepare_ctx()
 	if (xdl_cha_init(&index.rcha, sizeof(struct record), count1 / 4 + 1) < 0)
 		goto cleanup;
 

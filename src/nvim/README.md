@@ -23,18 +23,22 @@ Logs
 
 Low-level log messages sink to `$NVIM_LOG_FILE`.
 
-Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
-alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`.
-
 UI events are logged at DEBUG level (`DEBUG_LOG_LEVEL`).
 
     rm -rf build/
     make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
 
+Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
+alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`. Requires
+`-no-pie` ([ref](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=860394#15)):
+
+    rm -rf build/
+    make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0 -DCMAKE_C_FLAGS=-no-pie"
+
 Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
 filter the log, e.g. at DEBUG level you might want to exclude UI messages:
 
-    tail -F ~/.local/share/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
+    tail -F ~/.cache/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
 
 Build with ASAN
 ---------------

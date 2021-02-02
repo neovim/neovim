@@ -15,6 +15,8 @@
 #include "nvim/lua/executor.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/charset.h"
+#include "nvim/syntax.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -24,7 +26,8 @@
 #include "nvim/eval/typval.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
-#include "nvim/mark_extended.h"
+#include "nvim/extmark.h"
+#include "nvim/decoration.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
@@ -631,7 +634,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   buf_T *rv = handle_get_buffer(buffer);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid buffer id");
+    api_set_error(err, kErrorTypeValidation, "Invalid buffer id: %d", buffer);
   }
 
   return rv;
@@ -646,7 +649,7 @@ win_T *find_window_by_handle(Window window, Error *err)
   win_T *rv = handle_get_window(window);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid window id");
+    api_set_error(err, kErrorTypeValidation, "Invalid window id: %d", window);
   }
 
   return rv;
@@ -661,7 +664,7 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   tabpage_T *rv = handle_get_tabpage(tabpage);
 
   if (!rv) {
-    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id");
+    api_set_error(err, kErrorTypeValidation, "Invalid tabpage id: %d", tabpage);
   }
 
   return rv;
@@ -816,6 +819,10 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
     buffer = 0;
   }
   buf_T *target_buf = find_buffer_by_handle(buffer, err);
+
+  if (!target_buf) {
+    return;
+  }
 
   MapArguments parsed_args;
   memset(&parsed_args, 0, sizeof(parsed_args));
@@ -1075,8 +1082,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeBoolean:
-      tv->v_type = VAR_SPECIAL;
-      tv->vval.v_special = obj.data.boolean? kSpecialVarTrue: kSpecialVarFalse;
+      tv->v_type = VAR_BOOL;
+      tv->vval.v_bool = obj.data.boolean? kBoolVarTrue: kBoolVarFalse;
       break;
 
     case kObjectTypeBuffer:
@@ -1198,7 +1205,7 @@ void api_free_object(Object value)
       break;
 
     case kObjectTypeLuaRef:
-      executor_free_luaref(value.data.luaref);
+      api_free_luaref(value.data.luaref);
       break;
 
     default:
@@ -1365,6 +1372,9 @@ Dictionary copy_dictionary(Dictionary dict)
 Object copy_object(Object obj)
 {
   switch (obj.type) {
+    case kObjectTypeBuffer:
+    case kObjectTypeTabpage:
+    case kObjectTypeWindow:
     case kObjectTypeNil:
     case kObjectTypeBoolean:
     case kObjectTypeInteger:
@@ -1508,61 +1518,6 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
   return mappings;
 }
 
-// Returns an extmark given an id or a positional index
-// If throw == true then an error will be raised if nothing
-// was found
-// Returns NULL if something went wrong
-Extmark *extmark_from_id_or_pos(Buffer buffer, Integer ns, Object id,
-                                Error *err, bool throw)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return NULL;
-  }
-
-  Extmark *extmark = NULL;
-  if (id.type == kObjectTypeArray) {
-    if (id.data.array.size != 2) {
-      api_set_error(err, kErrorTypeValidation,
-                    _("Position must have 2 elements"));
-      return NULL;
-    }
-    linenr_T row = (linenr_T)id.data.array.items[0].data.integer;
-    colnr_T col = (colnr_T)id.data.array.items[1].data.integer;
-    if (row < 1 || col < 1) {
-      if (throw) {
-      api_set_error(err, kErrorTypeValidation, _("Row and column MUST be > 0"));
-      }
-      return NULL;
-    }
-    extmark = extmark_from_pos(buf, (uint64_t)ns, row, col);
-  } else if (id.type != kObjectTypeInteger) {
-    if (throw) {
-      api_set_error(err, kErrorTypeValidation,
-                    _("Mark id must be an int or [row, col]"));
-    }
-    return NULL;
-  } else if (id.data.integer < 0) {
-    if (throw) {
-      api_set_error(err, kErrorTypeValidation, _("Mark id must be positive"));
-    }
-    return NULL;
-  } else {
-    extmark = extmark_from_id(buf,
-                              (uint64_t)ns,
-                              (uint64_t)id.data.integer);
-  }
-
-  if (!extmark) {
-    if (throw) {
-      api_set_error(err, kErrorTypeValidation, _("Mark doesn't exist"));
-    }
-    return NULL;
-  }
-  return extmark;
-}
-
 // Is the Namespace in use?
 bool ns_initialized(uint64_t ns)
 {
@@ -1581,32 +1536,32 @@ bool ns_initialized(uint64_t ns)
 /// @param[out] colnr extmark column
 ///
 /// @return true if the extmark was found, else false
-bool extmark_get_index_from_obj(buf_T *buf, Integer ns, Object obj, linenr_T
-                                *lnum, colnr_T *colnr, Error *err)
+bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
+                                *row, colnr_T *col, Error *err)
 {
   // Check if it is mark id
   if (obj.type == kObjectTypeInteger) {
     Integer id = obj.data.integer;
     if (id == 0) {
-        *lnum = 1;
-        *colnr = 1;
+        *row = 0;
+        *col = 0;
         return true;
     } else if (id == -1) {
-        *lnum = MAXLNUM;
-        *colnr = MAXCOL;
+        *row = MAXLNUM;
+        *col = MAXCOL;
         return true;
     } else if (id < 0) {
-      api_set_error(err, kErrorTypeValidation, _("Mark id must be positive"));
+      api_set_error(err, kErrorTypeValidation, "Mark id must be positive");
       return false;
     }
 
-    Extmark *extmark = extmark_from_id(buf, (uint64_t)ns, (uint64_t)id);
-    if (extmark) {
-      *lnum = extmark->line->lnum;
-      *colnr = extmark->col;
+    ExtmarkInfo extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
+    if (extmark.row >= 0) {
+      *row = extmark.row;
+      *col = extmark.col;
       return true;
     } else {
-      api_set_error(err, kErrorTypeValidation, _("No mark with requested id"));
+      api_set_error(err, kErrorTypeValidation, "No mark with requested id");
       return false;
     }
 
@@ -1617,17 +1572,151 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns, Object obj, linenr_T
         || pos.items[0].type != kObjectTypeInteger
         || pos.items[1].type != kObjectTypeInteger) {
       api_set_error(err, kErrorTypeValidation,
-                    _("Position must have 2 integer elements"));
+                    "Position must have 2 integer elements");
       return false;
     }
-    Integer line = pos.items[0].data.integer;
-    Integer col = pos.items[1].data.integer;
-    *lnum = (linenr_T)(line >= 0 ? line + 1 : MAXLNUM);
-    *colnr = (colnr_T)(col >= 0 ? col + 1 : MAXCOL);
+    Integer pos_row = pos.items[0].data.integer;
+    Integer pos_col = pos.items[1].data.integer;
+    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
     return true;
   } else {
     api_set_error(err, kErrorTypeValidation,
-                  _("Position must be a mark id Integer or position Array"));
+                  "Position must be a mark id Integer or position Array");
     return false;
   }
+}
+
+VirtText parse_virt_text(Array chunks, Error *err)
+{
+  VirtText virt_text = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = chunk.items[0].data.string;
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+
+    int hl_id = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+      }
+    }
+    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  }
+
+  return virt_text;
+
+free_exit:
+  clear_virttext(&virt_text);
+  return virt_text;
+}
+
+/// Force obj to bool.
+/// If it fails, returns false and sets err
+/// @param obj          The object to coerce to a boolean
+/// @param what         The name of the object, used for error message
+/// @param nil_value    What to return if the type is nil.
+/// @param err          Set if there was an error in converting to a bool
+bool api_object_to_bool(Object obj, const char *what,
+                        bool nil_value, Error *err)
+{
+  if (obj.type == kObjectTypeBoolean) {
+    return obj.data.boolean;
+  } else if (obj.type == kObjectTypeInteger) {
+    return obj.data.integer;  // C semantics: non-zero int is true
+  } else if (obj.type == kObjectTypeNil) {
+    return nil_value;  // caller decides what NIL (missing retval in lua) means
+  } else {
+    api_set_error(err, kErrorTypeValidation, "%s is not an boolean", what);
+    return false;
+  }
+}
+
+HlMessage parse_hl_msg(Array chunks, Error *err)
+{
+  HlMessage hl_msg = KV_INITIAL_VALUE;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString
+        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = copy_string(chunk.items[0].data.string);
+
+    int attr = 0;
+    if (chunk.size == 2) {
+      String hl = chunk.items[1].data.string;
+      if (hl.size > 0) {
+        int hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+        attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
+      }
+    }
+    kv_push(hl_msg, ((HlMessageChunk){ .text = str, .attr = attr }));
+  }
+
+  return hl_msg;
+
+free_exit:
+  clear_hl_msg(&hl_msg);
+  return hl_msg;
+}
+
+const char *describe_ns(NS ns_id)
+{
+  String name;
+  handle_T id;
+  map_foreach(namespace_ids, name, id, {
+    if ((NS)id == ns_id && name.size) {
+      return name.data;
+    }
+  })
+  return "(UNKNOWN PLUGIN)";
+}
+
+DecorProvider *get_provider(NS ns_id, bool force)
+{
+  ssize_t i;
+  for (i = 0; i < (ssize_t)kv_size(decor_providers); i++) {
+    DecorProvider *item = &kv_A(decor_providers, i);
+    if (item->ns_id == ns_id) {
+      return item;
+    } else if (item->ns_id > ns_id) {
+      break;
+    }
+  }
+
+  if (!force) {
+    return NULL;
+  }
+
+  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
+    // allocates if needed:
+    (void)kv_a(decor_providers, (size_t)j+1);
+    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
+  }
+  DecorProvider *item = &kv_a(decor_providers, (size_t)i);
+  *item = DECORATION_PROVIDER_INIT(ns_id);
+
+  return item;
 }

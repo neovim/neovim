@@ -16,6 +16,7 @@
 #define CURSOR_MOVED           0x100
 #define MOUSE_FOLD_CLOSE       0x200   // clicked on '-' in fold column
 #define MOUSE_FOLD_OPEN        0x400   // clicked on '+' in fold column
+#define MOUSE_WINBAR           0x800   // in window toolbar
 
 // flags for jump_to_mouse()
 #define MOUSE_FOCUS            0x01    // need to stay in this window

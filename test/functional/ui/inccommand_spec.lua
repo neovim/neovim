@@ -14,10 +14,11 @@ local neq = helpers.neq
 local ok = helpers.ok
 local retry = helpers.retry
 local source = helpers.source
-local wait = helpers.wait
+local poke_eventloop = helpers.poke_eventloop
 local nvim = helpers.nvim
 local sleep = helpers.sleep
 local nvim_dir = helpers.nvim_dir
+local assert_alive = helpers.assert_alive
 
 local default_text = [[
   Inc substitution on
@@ -84,6 +85,7 @@ local function common_setup(screen, inccommand, text)
       [14] = {foreground = Screen.colors.White, background = Screen.colors.Red},
       [15] = {bold=true, foreground=Screen.colors.Blue},
       [16] = {background=Screen.colors.Grey90},  -- cursorline
+      [17] = {foreground = Screen.colors.Blue1},
       vis  = {background=Screen.colors.LightGrey}
     })
   end
@@ -112,7 +114,7 @@ describe(":substitute, inccommand=split interactivity", function()
 
   it("no preview if invoked by a script", function()
     source('%s/tw/MO/g')
-    wait()
+    poke_eventloop()
     eq(1, eval("bufnr('$')"))
     -- sanity check: assert the buffer state
     expect(default_text:gsub("tw", "MO"))
@@ -121,10 +123,10 @@ describe(":substitute, inccommand=split interactivity", function()
   it("no preview if invoked by feedkeys()", function()
     -- in a script...
     source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
-    wait()
+    poke_eventloop()
     -- or interactively...
     feed([[:call feedkeys(":%s/tw/MO/g\<CR>")<CR>]])
-    wait()
+    poke_eventloop()
     eq(1, eval("bufnr('$')"))
     -- sanity check: assert the buffer state
     expect(default_text:gsub("tw", "MO"))
@@ -160,7 +162,7 @@ describe(":substitute, 'inccommand' preserves", function()
       insert(default_text)
       feed_command("set inccommand=" .. case)
 
-      local delims = { '/', '#', ';', '%', ',', '@', '!', ''}
+      local delims = { '/', '#', ';', '%', ',', '@', '!' }
       for _,delim in pairs(delims) do
         feed_command("%s"..delim.."lines"..delim.."LINES"..delim.."g")
         expect([[
@@ -192,7 +194,7 @@ describe(":substitute, 'inccommand' preserves", function()
 
       -- Start typing an incomplete :substitute command.
       feed([[:%s/e/YYYY/g]])
-      wait()
+      poke_eventloop()
       -- Cancel the :substitute.
       feed([[<C-\><C-N>]])
 
@@ -228,7 +230,7 @@ describe(":substitute, 'inccommand' preserves", function()
 
       -- Start typing an incomplete :substitute command.
       feed([[:%s/e/YYYY/g]])
-      wait()
+      poke_eventloop()
       -- Cancel the :substitute.
       feed([[<C-\><C-N>]])
 
@@ -249,7 +251,7 @@ describe(":substitute, 'inccommand' preserves", function()
         some text 1
         some text 2]])
       feed(":%s/e/XXX/")
-      wait()
+      poke_eventloop()
 
       eq(expected_tick, eval("b:changedtick"))
     end)
@@ -1126,15 +1128,15 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw/Xo/g")
     -- Delete and re-type the g a few times.
     feed("<BS>")
-    wait()
+    poke_eventloop()
     feed("g")
-    wait()
+    poke_eventloop()
     feed("<BS>")
-    wait()
+    poke_eventloop()
     feed("g")
-    wait()
+    poke_eventloop()
     feed("<CR>")
-    wait()
+    poke_eventloop()
     feed(":vs tmp<enter>")
     eq(3, helpers.call('bufnr', '$'))
   end)
@@ -1169,7 +1171,7 @@ describe(":substitute, inccommand=split", function()
     feed_command("silent edit! test/functional/fixtures/bigfile_oneline.txt")
     -- Start :substitute with a slow pattern.
     feed([[:%s/B.*N/x]])
-    wait()
+    poke_eventloop()
 
     -- Assert that 'inccommand' is DISABLED in cmdline mode.
     eq("", eval("&inccommand"))
@@ -1358,7 +1360,7 @@ describe("inccommand=nosplit", function()
     feed("<Esc>")
     command("set icm=nosplit")
     feed(":%s/tw/OKOK")
-    wait()
+    poke_eventloop()
     screen:expect([[
       Inc substitution on |
       {12:OKOK}o lines         |
@@ -2291,6 +2293,76 @@ describe(":substitute", function()
     ]])
   end)
 
+  it("inccommand=split, contraction of two subsequent NL chars", function()
+    -- luacheck: push ignore 611
+    local text = [[
+      AAA AA
+      
+      BBB BB
+      
+      CCC CC
+      
+]]
+    -- luacheck: pop
+
+    -- This used to crash, but more than 20 highlight entries are required
+    -- to reproduce it (so that the marktree has multiple nodes)
+    common_setup(screen, "split", string.rep(text,10))
+    feed(":%s/\\n\\n/<c-v><c-m>/g")
+    screen:expect{grid=[[
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+                                    |
+      {11:[No Name] [+]                 }|
+      | 1| AAA AA                   |
+      | 2|{12: }BBB BB                   |
+      | 3|{12: }CCC CC                   |
+      | 4|{12: }AAA AA                   |
+      | 5|{12: }BBB BB                   |
+      | 6|{12: }CCC CC                   |
+      | 7|{12: }AAA AA                   |
+      {10:[Preview]                     }|
+      :%s/\n\n/{17:^M}/g^                 |
+    ]]}
+    assert_alive()
+  end)
+
+  it("inccommand=nosplit, contraction of two subsequent NL chars", function()
+    -- luacheck: push ignore 611
+    local text = [[
+      AAA AA
+      
+      BBB BB
+      
+      CCC CC
+      
+]]
+    -- luacheck: pop
+
+    common_setup(screen, "nosplit", string.rep(text,10))
+    feed(":%s/\\n\\n/<c-v><c-m>/g")
+    screen:expect{grid=[[
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+      AAA AA                        |
+      BBB BB                        |
+      CCC CC                        |
+                                    |
+      :%s/\n\n/{17:^M}/g^                 |
+    ]]}
+    assert_alive()
+  end)
+
   it("inccommand=split, multibyte text", function()
     common_setup(screen, "split", multibyte_text)
     feed(":%s/£.*ѫ/X¥¥")
@@ -2520,7 +2592,7 @@ describe(":substitute", function()
 
     feed("<C-c>")
     feed('gg')
-    wait()
+    poke_eventloop()
     feed([[:%s/\(some\)\@<lt>!thing/one/]])
     screen:expect([[
       something                     |
@@ -2541,7 +2613,7 @@ describe(":substitute", function()
     ]])
 
     feed([[<C-c>]])
-    wait()
+    poke_eventloop()
     feed([[:%s/some\(thing\)\@=/every/]])
     screen:expect([[
       {12:every}thing                    |
@@ -2562,7 +2634,7 @@ describe(":substitute", function()
     ]])
 
     feed([[<C-c>]])
-    wait()
+    poke_eventloop()
     feed([[:%s/some\(thing\)\@!/every/]])
     screen:expect([[
       something                     |
@@ -2646,7 +2718,7 @@ it(':substitute with inccommand during :terminal activity', function()
     feed('gg')
     feed(':%s/foo/ZZZ')
     sleep(20)  -- Allow some terminal activity.
-    helpers.wait()
+    helpers.poke_eventloop()
     screen:expect_unchanged()
   end)
 end)
@@ -2676,6 +2748,26 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
     {10:[Preview]                     }|
     :%s/foo/ZZZ^                   |
   ]])
+end)
+
+it(":substitute doesn't crash with inccommand, if undo is empty #12932", function()
+  local screen = Screen.new(10,5)
+  clear()
+  command('set undolevels=-1')
+  common_setup(screen, 'split', 'test')
+  feed(':%s/test')
+  sleep(100)
+  feed('/')
+  sleep(100)
+  feed('f')
+  screen:expect([[
+  {12:f}           |
+  {15:~           }|
+  {15:~           }|
+  {15:~           }|
+  :%s/test/f^  |
+  ]])
+  assert_alive()
 end)
 
 it('long :%s/ with inccommand does not collapse cmdline', function()
