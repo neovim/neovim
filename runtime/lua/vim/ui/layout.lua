@@ -1,4 +1,3 @@
-local float = require('vim.ui.float')
 local utils = require('vim.ui._utils')
 
 -- TODO(smolck): Just for testing, don't intend to keep this
@@ -11,7 +10,6 @@ local function make_win(text, options)
     height   = 5,
     style    = 'minimal'
   })
-  -- local win_opts = float.default_opts(options)
   local win_opts = options
 
   local bufnr = vim.fn.nvim_create_buf(false, true)
