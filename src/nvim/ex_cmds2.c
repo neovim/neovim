@@ -2673,13 +2673,14 @@ static int source_using_linegetter(void *cookie,
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
-  void *save_funccalp = save_funccal();
+  funccal_entry_T entry;
+  save_funccal(&entry);
   int retval = do_cmdline(NULL, fgetline, cookie,
                           DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
   sourcing_lnum = save_sourcing_lnum;
   sourcing_name = save_sourcing_name;
   current_sctx = save_current_sctx;
-  restore_funccal(save_funccalp);
+  restore_funccal();
   return retval;
 }
 
