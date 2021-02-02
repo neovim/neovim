@@ -330,12 +330,10 @@ func Test_set_ttytype()
     set ttytype=xterm
     call assert_equal('xterm', &ttytype)
     call assert_equal(&ttytype, &term)
-    " "set ttytype=" gives E522 instead of E529
-    " in travis on some builds. Why?  Catch both for now
     try
       set ttytype=
       call assert_report('set ttytype= did not fail')
-    catch /E529\|E522/
+    catch /E529/
     endtry
 
     " Some systems accept any terminal name and return dumb settings,
