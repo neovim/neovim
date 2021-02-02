@@ -1023,7 +1023,10 @@ function M.open_floating_preview(contents, filetype, opts)
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
   api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
-  M.close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden", "BufLeave"}, floating_winnr)
+  -- Autocommands may fire too early, so we set them on the next tick
+  -- (see https://github.com/neovim/neovim/issues/12923)
+  local close_preview_autocmd = vim.schedule_wrap(M.close_preview_autocmd)
+  close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden", "BufLeave"}, floating_winnr)
   return floating_bufnr, floating_winnr
 end
 
