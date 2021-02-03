@@ -5387,7 +5387,8 @@ spell_add_word (
                    len, word, NameBuff);
             }
           }
-          if (fseek(fd, fpos_next, SEEK_SET) <= 0) {
+          if (fseek(fd, fpos_next, SEEK_SET) != 0) {
+            PERROR(_("Seek error in spellfile"));
             break;
           }
         }
