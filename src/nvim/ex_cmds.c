@@ -2416,7 +2416,10 @@ int do_ecmd(
                      (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,
                      false);
 
-        the_curwin->w_closing = false;
+        // Autocommands may have closed the window.
+        if (win_valid(the_curwin)) {
+          the_curwin->w_closing = false;
+        }
         buf->b_locked--;
 
         // autocmds may abort script processing
