@@ -1939,4 +1939,15 @@ func Test_autocmd_window()
   %bw!
 endfunc
 
+func Test_autocmd_closes_window()
+  au BufNew,BufWinLeave * e %e
+  file yyy
+  au BufNew,BufWinLeave * ball
+  call assert_fails('n xxx', 'E143:')
+
+  bwipe %
+  au! BufNew
+  au! BufWinLeave
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
