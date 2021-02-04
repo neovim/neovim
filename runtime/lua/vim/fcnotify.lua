@@ -24,7 +24,7 @@ end
 -- option.
 local function check_notifications()
   for _, watcher in pairs(WatcherList) do
-    if watcher.pending_notifs == true and valid_buf(watcher.bufnr) then
+    if watcher.pending_notifs and valid_buf(watcher.bufnr) then
       vim.api.nvim_command(string.format('checktime %d', watcher.bufnr))
       watcher.pending_notifs = false
     end
@@ -32,9 +32,10 @@ local function check_notifications()
 end
 
 local function fs_event_start(bufnr)
-  WatcherList[bufnr].handle = uv.new_fs_event()
-  WatcherList[bufnr].handle:start(WatcherList[bufnr].fpath, {}, vim.schedule_wrap(function(...)
-    WatcherList[bufnr]:on_change(...)
+  local watcher = WatcherList[bufnr]
+  watcher.handle = uv.new_fs_event()
+  watcher.handle:start(watcher.fpath, {}, vim.schedule_wrap(function(...)
+    watcher:on_change(...)
   end))
 end
 
@@ -71,7 +72,7 @@ local function set_mechanism(option_type, bufnr)
     end
   end
   Watcher.stop_notifications()
-  if Watcher.start_notifications ~= nil then
+  if Watcher.start_notifications then
     Watcher.start_notifications()
   end
 end
@@ -84,7 +85,7 @@ function Watcher:new(bufnr)
   vim.validate{bufnr = {bufnr, 'number', false}}
   -- get full path name for the file
   local fname = vim.api.nvim_buf_get_name(bufnr)
-  local fpath = vim.api.nvim_call_function('fnamemodify', {fname, ':p'})
+  local fpath = vim.fn.fnamemodify(fname, ':p')
   local w = {bufnr = bufnr, fname = fname, fpath = fpath,
        handle = nil, pending_notifs = false}
   w._start_handle = nil
