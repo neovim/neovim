@@ -3316,11 +3316,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   int save_b_changed = curbuf->b_changed;
   bool preview = (State & CMDPREVIEW);
 
-  // inccommand tests fail without this check
-  if (!preview) {
-    // Required for Undo to work for extmarks.
-    u_save_cursor();
-  }
+  bool did_save = false;
 
   if (!global_busy) {
     sub_nsubs = 0;
@@ -3997,6 +3993,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           int matchcols = end.col - ((end.lnum == start.lnum)
                                      ? start.col : 0);
           int subcols = new_endcol - ((lnum == lnum_start) ? start_col : 0);
+          if (!did_save) {
+            // Required for Undo to work for extmarks.
+            u_save_cursor();
+            did_save = true;
+          }
           extmark_splice(curbuf, lnum_start-1, start_col,
                          end.lnum-start.lnum, matchcols, replaced_bytes,
                          lnum-lnum_start, subcols, sublen-1, kExtmarkUndo);

@@ -504,11 +504,13 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed ':%s/bcd/'
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 0, 0, 0, 3, 3 };
       }
 
       feed 'a'
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 3, 3 };
       }
     end)
 
