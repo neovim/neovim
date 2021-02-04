@@ -1158,6 +1158,24 @@ local loclist_type_map = {
   [DiagnosticSeverity.Hint] = 'I',
 }
 
+
+--- Clear diagnotics and diagnostic cache
+---
+--- Handles saving diagnostics from multiple clients in the same buffer.
+---@param client_id number
+---@param buffer_client_map table map of buffers to active clients
+function M.reset(client_id, buffer_client_map)
+  buffer_client_map = vim.deepcopy(buffer_client_map)
+  vim.schedule(function()
+    for bufnr, client_ids in pairs(buffer_client_map) do
+      if client_ids[client_id] then
+        clear_diagnostic_cache(bufnr, client_id)
+        M.clear(bufnr, client_id)
+      end
+    end
+  end)
+end
+
 --- Sets the location list
 ---@param opts table|nil Configuration table. Keys:
 ---         - {open_loclist}: (boolean, default true)

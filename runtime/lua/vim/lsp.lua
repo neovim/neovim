@@ -548,19 +548,13 @@ function lsp.start_client(config)
   function dispatch.on_exit(code, signal)
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
-    local active_buffers = {}
-    for bufnr, client_ids in pairs(all_buffer_active_clients) do
-      if client_ids[client_id] then
-        table.insert(active_buffers, bufnr)
-      end
+
+    lsp.diagnostic.reset(client_id, all_buffer_active_clients)
+    all_client_active_buffers[client_id] = nil
+    for _, client_ids in pairs(all_buffer_active_clients) do
       client_ids[client_id] = nil
     end
-    -- Buffer level cleanup
-    vim.schedule(function()
-      for _, bufnr in ipairs(active_buffers) do
-        lsp.diagnostic.clear(bufnr)
-      end
-    end)
+
     if config.on_exit then
       pcall(config.on_exit, code, signal, client_id)
     end
@@ -751,6 +745,13 @@ function lsp.start_client(config)
   ---
   --@param force (bool, optional)
   function client.stop(force)
+
+    lsp.diagnostic.reset(client_id, all_buffer_active_clients)
+    all_client_active_buffers[client_id] = nil
+    for _, client_ids in pairs(all_buffer_active_clients) do
+      client_ids[client_id] = nil
+    end
+
     local handle = rpc.handle
     if handle:is_closing() then
       return
@@ -1016,23 +1017,12 @@ end
 function lsp.stop_client(client_id, force)
   local ids = type(client_id) == 'table' and client_id or {client_id}
   for _, id in ipairs(ids) do
-    local resolved_client_id
     if type(id) == 'table' and id.stop ~= nil then
       id.stop(force)
-      resolved_client_id = id.id
     elseif active_clients[id] then
       active_clients[id].stop(force)
-      resolved_client_id = id
     elseif uninitialized_clients[id] then
       uninitialized_clients[id].stop(true)
-      resolved_client_id = id
-    end
-    if resolved_client_id then
-      local client_buffers = lsp.get_buffers_by_client_id(resolved_client_id)
-      for idx = 1, #client_buffers do
-        lsp.diagnostic.clear(client_buffers[idx], resolved_client_id)
-      end
-      all_client_active_buffers[resolved_client_id] = nil
     end
   end
 end
