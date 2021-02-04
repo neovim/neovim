@@ -715,6 +715,11 @@ describe('lua stdlib', function()
     eq({false, 'Vim:E714: List required'}, exec_lua([[return {pcall(vim.fn.add, "aa", "bb")}]]))
   end)
 
+  it('vim.fn should error when calling API function', function()
+      eq({false, 'vim.lua:259: Tried to call API function with vim.fn: use vim.api.nvim_get_current_line instead'},
+          exec_lua([[return {pcall(vim.fn.nvim_get_current_line)}]]))
+  end)
+
   it('vim.rpcrequest and vim.rpcnotify', function()
     exec_lua([[
       chan = vim.fn.jobstart({'cat'}, {rpc=true})
