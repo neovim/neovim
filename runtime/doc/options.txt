@@ -6290,7 +6290,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Requires an ISO-8613-3 compatible terminal.
 
 						*'termpastefilter'* *'tpf'*
-'termpastefilter' 'tpf'	string	(default: "")
+'termpastefilter' 'tpf'	string	(default: "BS,HT,ESC,DEL")
 			global
 	A comma separated list of options for specifying control characters
 	to be removed from the text pasted into the terminal window. The

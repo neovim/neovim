@@ -2826,7 +2826,7 @@ return {
       deny_duplicates=true,
       vim=true,
       varname='p_tpf',
-      defaults={if_true={vi="", vim=""}}
+      defaults={if_true={vi="", vim="BS,HT,ESC,DEL"}}
     },
     {
       full_name='terse',
