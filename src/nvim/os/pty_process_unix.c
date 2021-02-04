@@ -182,8 +182,6 @@ static void init_child(PtyProcess *ptyproc)
   char *prog = ptyproc->process.argv[0];
 
   assert(proc->env);
-  tv_dict_add_str(proc->env, S_LEN("TERM"),
-                  ptyproc->term_name ? ptyproc->term_name : "ansi");
   environ = tv_dict_to_env(proc->env);
   execvp(prog, proc->argv);
   ELOG("execvp failed: %s: %s", strerror(errno), prog);

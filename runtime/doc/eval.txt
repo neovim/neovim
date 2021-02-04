@@ -5607,7 +5607,6 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 			      before invoking `on_stderr`. |channel-buffered|
 		  stdout_buffered: (boolean) Collect data until EOF (stream
 			      closed) before invoking `on_stdout`. |channel-buffered|
-		  TERM:	      (string) Sets the `pty` $TERM environment variable.
 		  width:      (number) Width of the `pty` terminal.
 
 		{opts} is passed as |self| dictionary to the callback; the

@@ -4912,7 +4912,8 @@ static const char *required_env_vars[] = {
 
 static dict_T *create_environment(const dictitem_T *job_env,
                                   const bool clear_env,
-                                  const bool pty)
+                                  const bool pty,
+                                  const char * const pty_term_name)
 {
   dict_T * env = tv_dict_alloc();
 
@@ -4944,6 +4945,18 @@ static dict_T *create_environment(const dictitem_T *job_env,
       }
 #endif
     }
+  }
+
+  // For a pty, we need a sane $TERM set.  We can't rely on nvim's environment,
+  // because the child process is going to be communicating with nvim, not the
+  // parent terminal.  Set a sane default, but let the user override it in the
+  // job's environment if they want.
+  if (pty) {
+    dictitem_T *dv = tv_dict_find(env, S_LEN("TERM"));
+    if (dv) {
+      tv_dict_item_remove(env, dv);
+    }
+    tv_dict_add_str(env, S_LEN("TERM"), pty_term_name);
   }
 
   if (job_env) {
@@ -5055,20 +5068,25 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  env = create_environment(job_env, clear_env, pty);
-
   uint16_t width = 0, height = 0;
   char *term_name = NULL;
 
   if (pty) {
     width = (uint16_t)tv_dict_get_number(job_opts, "width");
     height = (uint16_t)tv_dict_get_number(job_opts, "height");
-    term_name = tv_dict_get_string(job_opts, "TERM", true);
+    // Legacy method, before env option existed, to specify $TERM.  No longer
+    // documented, but still usable to avoid breaking scripts.
+    term_name = tv_dict_get_string(job_opts, "TERM", false);
+    if (!term_name) {
+      term_name = "ansi";
+    }
   }
+
+  env = create_environment(job_env, clear_env, pty, term_name);
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
                                     rpc, overlapped, detach, cwd, width, height,
-                                    term_name, env, &rettv->vval.v_number);
+                                    env, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -7511,7 +7529,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
                                     false, true, false, false, NULL, 0, 0,
-                                    NULL, NULL, &rettv->vval.v_number);
+                                    NULL, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -10618,7 +10636,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  env = create_environment(job_env, clear_env, pty);
+  env = create_environment(job_env, clear_env, pty, "xterm-256color");
 
   const bool rpc = false;
   const bool overlapped = false;
@@ -10627,8 +10645,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
                                     pty, rpc, overlapped, detach, cwd,
                                     term_width, curwin->w_height_inner,
-                                    xstrdup("xterm-256color"), env,
-                                    &rettv->vval.v_number);
+                                    env, &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
     return;
   }
