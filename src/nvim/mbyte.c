@@ -458,6 +458,57 @@ static bool intable(const struct interval *table, size_t n_items, int c)
   return false;
 }
 
+cw_interval_T *cw_table = NULL;
+size_t cw_table_size = 0;
+
+/*
+ * Return 1 or 2 when "c" is in the cellwidth table.
+ * Return 0 if not.
+ */
+static int cw_value(int c)
+{
+  int mid, bot, top;
+
+  if (cw_table == NULL) {
+    return 0;
+  }
+
+  // first quick check for Latin1 etc. characters
+  if (c < cw_table[0].first) {
+    return 0;
+  }
+
+  // binary search in table
+  bot = 0;
+  top = (int)cw_table_size - 1;
+  while (top >= bot) {
+    mid = (bot + top) / 2;
+    if (cw_table[mid].last < c) {
+      bot = mid + 1;
+    } else if (cw_table[mid].first > c) {
+      top = mid - 1;
+    } else {
+      return cw_table[mid].width;
+    }
+  }
+  return 0;
+}
+
+void clear_cw_table(void)
+{
+  xfree(cw_table);
+  cw_table = NULL;
+  cw_table_size = 0;
+  return;
+}
+
+void set_cw_table(cw_interval_T *table, int len)
+{
+  xfree(cw_table);
+  cw_table = table;
+  cw_table_size = len;
+}
+
 /// For UTF-8 character "c" return 2 for a double-width character, 1 for others.
 /// Returns 4 or 6 for an unprintable character.
 /// Is only correct for characters >= 0x80.
@@ -469,12 +520,16 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 int utf_char2cells(int c)
 {
   if (c >= 0x100) {
+    int n = cw_value(c);
+    if (n != 0) {
+      return n;
+    }
 #ifdef USE_WCHAR_FUNCTIONS
     //
     // Assume the library function wcwidth() works better than our own
     // stuff.  It should return 1 for ambiguous width chars!
     //
-    int n = wcwidth(c);
+    n = wcwidth(c);
 
     if (n < 0) {
       return 6;                 // unprintable, displays <xxxx>
@@ -490,7 +545,7 @@ int utf_char2cells(int c)
       return 2;
     }
 #endif
-    if (p_emoji && intable(emoji_width, ARRAY_SIZE(emoji_width), c)) {
+    if (p_emoji && intable(emoji_wide, ARRAY_SIZE(emoji_wide), c)) {
       return 2;
     }
   } else if (c >= 0x80 && !vim_isprintc(c)) {

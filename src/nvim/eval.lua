@@ -293,6 +293,7 @@ return {
     serverstop={args=1},
     setbufline={args=3},
     setbufvar={args=3},
+    setcellwidths={args=1},
     setcharsearch={args=1},
     setcmdpos={args=1},
     setenv={args=2},

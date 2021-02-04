@@ -2371,6 +2371,7 @@ setbufline( {expr}, {lnum}, {line})
 				Number	set line {lnum} to {line} in buffer
 					{expr}
 setbufvar({expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
+setcellwidths({list})		none	set character cell width overrides
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
 setenv({name}, {val})		none	set environment variable
@@ -7486,6 +7487,29 @@ setbufvar({expr}, {varname}, {val})			*setbufvar()*
 			:call setbufvar(1, "&mod", 1)
 			:call setbufvar("todo", "myvar", "foobar")
 <		This function is not available in the |sandbox|.
+
+
+setcellwidths({list})					*setcellwidths()*
+		Specify overrides for cell widths of character ranges.  This
+		tells Vim how wide characters are, counted in screen cells.
+		This overrides 'ambiwidth'.  Example: >
+		   setcellwidths([[0xad, 0xad, 1],
+		   		\ [0x2194, 0x2199, 2]]
+
+<					*E1109* *E1110* *E1111* *E1112* *E1113*
+		The {list} argument is a list of lists with each three
+		numbers. These three numbers are [low, high, width].  "low"
+		and "high" can be the same, in which case this refers to one
+		character. Otherwise it is the range of characters from "low"
+		to "high" (inclusive).  "width" is either 1 or 2, indicating
+		the character width in screen cells.
+		An error is given if the argument is invalid, also when a
+		range overlaps with another.
+		Only characters with value 0x100 and higher can be used.
+
+		To clear the overrides pass an empty list: >
+		   setcellwidths([]);
+
 
 setcharsearch({dict})					*setcharsearch()*
 		Set the current character search information to {dict},
