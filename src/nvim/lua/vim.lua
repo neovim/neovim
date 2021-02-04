@@ -256,14 +256,13 @@ vim.fn = setmetatable({}, {
     local _fn
     if vim.api[key] ~= nil then
       _fn = function(...)
-        error(string.format("Tried to call API function with vim.fn: use vim.api.%s() instead", key))
+        error(string.format("Tried to call API function with vim.fn: use vim.api.%s instead", key))
       end
     else
       _fn = function(...)
         return vim.call(key, ...)
       end
     end
-
     t[key] = _fn
     return _fn
   end
