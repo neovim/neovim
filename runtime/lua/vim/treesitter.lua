@@ -8,6 +8,8 @@ local LanguageTree = require'vim.treesitter.languagetree'
 -- it.
 local parsers = {}
 
+local options = {}
+
 local M = vim.tbl_extend("error", query, language)
 
 setmetatable(M, {
@@ -94,6 +96,40 @@ function M.get_string_parser(str, lang, opts)
   language.require_language(lang)
 
   return LanguageTree.new(str, lang, opts)
+end
+
+local function setup_highlight_for_buf(bufnr)
+    -- Setup treesitter highlighting for new buffer
+    local ft = a.nvim_buf_get_option(bufnr, "ft")
+    if not pcall(language.require_language, ft) then return end
+
+    local tree = M.get_parser(bufnr, ft)
+    M.highlighter.new(tree)
+end
+
+function M.parse_option()
+  local buf = a.nvim_get_current_buf()
+  local opt = vim.split(vim.o.treesitter, ',', true)
+  options = {}
+
+  -- TODO(vigoux): remove everything
+
+  for _, part in ipairs(opt) do
+    if part == "hl" then
+      options.hl = true
+      setup_highlight_for_buf(buf)
+    end
+  end
+end
+
+function M.print_opts()
+  print(vim.inspect(options))
+end
+
+function M.au_dispatch(buf)
+  if options.hl then
+    setup_highlight_for_buf(buf)
+  end
 end
 
 return M

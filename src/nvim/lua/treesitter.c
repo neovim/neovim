@@ -1146,6 +1146,7 @@ static const char *query_err_string(TSQueryError err) {
     case TSQueryErrorNodeType: return "invalid node type";
     case TSQueryErrorField: return "invalid field";
     case TSQueryErrorCapture: return "invalid capture";
+    case TSQueryErrorStructure: return "invalid structure";
     default: return "error";
   }
 }
