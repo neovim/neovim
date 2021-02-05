@@ -91,7 +91,6 @@ if (-not $NoTests) {
   C:\hostedtoolcache\windows\Python\2.7.18\x64\python.exe -m pip install pynvim ; exitIfFailed
   C:\hostedtoolcache\windows\Python\3.5.4\x64\python.exe -m pip install pynvim ; exitIfFailed
   # Disambiguate python3
-  move C:\hostedtoolcache\windows\Python\3.5.4\x64\python.exe C:\hostedtoolcache\windows\Python\3.5.4\x64\python3.exe
   $env:PATH = "C:\hostedtoolcache\windows\Python\3.5.4\x64;C:\hostedtoolcache\windows\Python\2.7.18\x64;$env:PATH"
   # Sanity check
   python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
