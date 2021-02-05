@@ -20,12 +20,13 @@ local origlines = {"original line 1",
                    "original line 6",
                    "    indented line"}
 
-local function attach_buffer(evname)
-  exec_lua([[
+before_each(function ()
+  clear()
+  exec_lua [[
     local evname = ...
     local events = {}
 
-    function test_register(bufnr, id, changedtick, utf_sizes, preview)
+    function test_register(bufnr, evname, id, changedtick, utf_sizes, preview)
       local function callback(...)
         table.insert(events, {id, ...})
         if test_unreg == id then
@@ -44,41 +45,30 @@ local function attach_buffer(evname)
       events = {}
       return ret_events
     end
-  ]], evname)
-end
+  ]]
+end)
 
 describe('lua buffer event callbacks: on_lines', function()
-  before_each(function()
-    clear()
-    attach_buffer('on_lines')
-  end)
-
-
-  -- verifying the sizes with nvim_buf_get_offset is nice (checks we cannot
-  -- assert the wrong thing), but masks errors with unflushed lines (as
-  -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
-  -- test both ways.
-  local function check(verify,utf_sizes)
+  local function setup_eventcheck(verify, utf_sizes, lines)
     local lastsize
-    meths.buf_set_lines(0, 0, -1, true, origlines)
+    meths.buf_set_lines(0, 0, -1, true, lines)
     if verify then
       lastsize = meths.buf_get_offset(0, meths.buf_line_count(0))
     end
-    exec_lua("return test_register(...)", 0, "test1",false,utf_sizes)
-    local tick = meths.buf_get_changedtick(0)
-
+    exec_lua("return test_register(...)", 0, "on_lines", "test1",false,utf_sizes)
     local verify_name = "test1"
+
     local function check_events(expected)
       local events = exec_lua("return get_events(...)" )
       if utf_sizes then
         -- this test case uses ASCII only, so sizes should be the same.
         -- Unicode is tested below.
         for _, event in ipairs(expected) do
-          event[9] = event[8]
-          event[10] = event[8]
+          event[9] = event[9] or event[8]
+          event[10] = event[10] or event[9]
         end
       end
-      eq(expected, events)
+      expect_events(expected, events, "line updates")
       if verify then
         for _, event in ipairs(events) do
           if event[1] == verify_name and event[2] == "lines" then
@@ -92,25 +82,38 @@ describe('lua buffer event callbacks: on_lines', function()
         end
       end
     end
+    return check_events, function(new) verify_name = new end
+  end
 
+
+  -- verifying the sizes with nvim_buf_get_offset is nice (checks we cannot
+  -- assert the wrong thing), but masks errors with unflushed lines (as
+  -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
+  -- test both ways.
+  local function check(verify,utf_sizes)
+    local check_events, verify_name = setup_eventcheck(verify, utf_sizes, origlines)
+
+    local tick = meths.buf_get_changedtick(0)
     command('set autoindent')
     command('normal! GyyggP')
     tick = tick + 1
-    check_events({{ "test1", "lines", 1, tick, 0, 0, 1, 0}})
+    check_events {{ "test1", "lines", 1, tick, 0, 0, 1, 0}}
 
     meths.buf_set_lines(0, 3, 5, true, {"changed line"})
     tick = tick + 1
-    check_events({{ "test1", "lines", 1, tick, 3, 5, 4, 32 }})
+    check_events {{ "test1", "lines", 1, tick, 3, 5, 4, 32 }}
 
-    exec_lua("return test_register(...)", 0, "test2", true, utf_sizes)
+    exec_lua("return test_register(...)", 0, "on_lines", "test2", true, utf_sizes)
     tick = tick + 1
     command('undo')
 
     -- plugins can opt in to receive changedtick events, or choose
     -- to only receive actual changes.
-    check_events({{ "test1", "lines", 1, tick, 3, 4, 5, 13 },
-        { "test2", "lines", 1, tick, 3, 4, 5, 13 },
-        { "test2", "changedtick", 1, tick+1 } })
+    check_events {
+      { "test1", "lines", 1, tick, 3, 4, 5, 13 };
+      { "test2", "lines", 1, tick, 3, 4, 5, 13 };
+      { "test2", "changedtick", 1, tick+1 };
+    }
     tick = tick + 1
 
     -- simulate next callback returning true
@@ -121,38 +124,40 @@ describe('lua buffer event callbacks: on_lines', function()
 
     -- plugins can opt in to receive changedtick events, or choose
     -- to only receive actual changes.
-    check_events({{ "test1", "lines", 1, tick, 6, 7, 9, 16 },
-        { "test2", "lines", 1, tick, 6, 7, 9, 16 }})
+    check_events {
+      { "test1", "lines", 1, tick, 6, 7, 9, 16 };
+      { "test2", "lines", 1, tick, 6, 7, 9, 16 };
+    }
 
-    verify_name = "test2"
+    verify_name "test2"
 
     meths.buf_set_lines(0, 1, 1, true, {"added"})
     tick = tick + 1
-    check_events({{ "test2", "lines", 1, tick, 1, 1, 2, 0 }})
+    check_events {{ "test2", "lines", 1, tick, 1, 1, 2, 0 }}
 
     feed('wix')
     tick = tick + 1
-    check_events({{ "test2", "lines", 1, tick, 4, 5, 5, 16 }})
+    check_events {{ "test2", "lines", 1, tick, 4, 5, 5, 16 }}
 
     -- check hot path for multiple insert
     feed('yz')
     tick = tick + 1
-    check_events({{ "test2", "lines", 1, tick, 4, 5, 5, 17 }})
+    check_events {{ "test2", "lines", 1, tick, 4, 5, 5, 17 }}
 
     feed('<bs>')
     tick = tick + 1
-    check_events({{ "test2", "lines", 1, tick, 4, 5, 5, 19 }})
+    check_events {{ "test2", "lines", 1, tick, 4, 5, 5, 19 }}
 
     feed('<esc>Go')
     tick = tick + 1
-    check_events({{ "test2", "lines", 1, tick, 11, 11, 12, 0 }})
+    check_events {{ "test2", "lines", 1, tick, 11, 11, 12, 0 }}
 
     feed('x')
     tick = tick + 1
-    check_events({{ "test2", "lines", 1, tick, 11, 12, 12, 5 }})
+    check_events {{ "test2", "lines", 1, tick, 11, 12, 12, 5 }}
 
     command('bwipe!')
-    check_events({{ "test2", "detach", 1 }})
+    check_events {{ "test2", "detach", 1 }}
    end
 
   it('works', function()
@@ -167,50 +172,62 @@ describe('lua buffer event callbacks: on_lines', function()
     check(false,true)
   end)
 
-  it('works with utf_sizes and unicode text', function()
+  local function check_unicode(verify)
     local unicode_text = {"ascii text",
                           "latin text åäö",
                           "BMP text ɧ αλφά",
                           "BMP text 汉语 ↥↧",
                           "SMP 🤦 🦄🦃",
                           "combining å بِيَّة"}
-    meths.buf_set_lines(0, 0, -1, true, unicode_text)
-    feed('gg')
-    exec_lua("return test_register(...)", 0, "test1", false, true)
+    local check_events, verify_name = setup_eventcheck(verify, true, unicode_text)
+
     local tick = meths.buf_get_changedtick(0)
 
-    feed('dd')
+    feed('ggdd')
     tick = tick + 1
-    eq({{ "test1", "lines", 1, tick, 0, 1, 0, 11, 11, 11 }}, exec_lua("return get_events(...)" ))
+    check_events {{ "test1", "lines", 1, tick, 0, 1, 0, 11, 11, 11 }}
 
     feed('A<bs>')
     tick = tick + 1
-    eq({{ "test1", "lines", 1, tick, 0, 1, 1, 18, 15, 15 }}, exec_lua("return get_events(...)" ))
+    check_events {{ "test1", "lines", 1, tick, 0, 1, 1, 18, 15, 15 }}
 
     feed('<esc>jylp')
     tick = tick + 1
-    eq({{ "test1", "lines", 1, tick, 1, 2, 2, 21, 16, 16 }}, exec_lua("return get_events(...)" ))
+    check_events {{ "test1", "lines", 1, tick, 1, 2, 2, 21, 16, 16 }}
 
     feed('+eea<cr>')
     tick = tick + 1
-    eq({{ "test1", "lines", 1, tick, 2, 3, 4, 23, 15, 15 }}, exec_lua("return get_events(...)" ))
+    check_events {{ "test1", "lines", 1, tick, 2, 3, 4, 23, 15, 15 }}
 
     feed('<esc>jdw')
     tick = tick + 1
     -- non-BMP chars count as 2 UTF-2 codeunits
-    eq({{ "test1", "lines", 1, tick, 4, 5, 5, 18, 9, 12 }}, exec_lua("return get_events(...)" ))
+    check_events {{ "test1", "lines", 1, tick, 4, 5, 5, 18, 9, 12 }}
 
     feed('+rx')
     tick = tick + 1
     -- count the individual codepoints of a composed character.
-    eq({{ "test1", "lines", 1, tick, 5, 6, 6, 27, 20, 20 }}, exec_lua("return get_events(...)" ))
+    check_events {{ "test1", "lines", 1, tick, 5, 6, 6, 27, 20, 20 }}
 
     feed('kJ')
     tick = tick + 1
+    -- verification fails with multiple line updates, sorry about that
+    verify_name ""
     -- NB: this is inefficient (but not really wrong).
-    eq({{ "test1", "lines", 1,   tick, 4, 5, 5, 14, 5, 8 },
-        { "test1", "lines", 1, tick+1, 5, 6, 5, 27, 20, 20 }}, exec_lua("return get_events(...)" ))
+    check_events {
+      { "test1", "lines", 1,   tick, 4, 5, 5, 14, 5, 8 };
+      { "test1", "lines", 1, tick+1, 5, 6, 5, 27, 20, 20 };
+    }
+  end
+
+  it('works with utf_sizes and unicode text', function()
+    check_unicode(false)
   end)
+
+  it('works with utf_sizes and unicode text with verify', function()
+    check_unicode(true)
+  end)
+
 
   it('has valid cursor position while shifting', function()
     meths.buf_set_lines(0, 0, -1, true, {'line1'})
@@ -272,11 +289,6 @@ describe('lua buffer event callbacks: on_lines', function()
 end)
 
 describe('lua: nvim_buf_attach on_bytes', function()
-  before_each(function()
-    clear()
-    attach_buffer('on_bytes')
-  end)
-
   -- verifying the sizes with nvim_buf_get_offset is nice (checks we cannot
   -- assert the wrong thing), but masks errors with unflushed lines (as
   -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
@@ -291,7 +303,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local len = meths.buf_get_offset(0, meths.buf_line_count(0))
       eq(len == -1 and 1 or len, string.len(shadowbytes))
     end
-    exec_lua("return test_register(...)", 0, "test1", false, false, true)
+    exec_lua("return test_register(...)", 0, "on_bytes", "test1", false, false, true)
     meths.buf_get_changedtick(0)
 
     local verify_name = "test1"
@@ -504,11 +516,13 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed ':%s/bcd/'
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 0, 0, 0, 3, 3 };
       }
 
       feed 'a'
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 3, 3 };
       }
     end)
 
