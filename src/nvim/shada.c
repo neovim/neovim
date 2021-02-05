@@ -1222,10 +1222,6 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       case kSDReadStatusSuccess: {
         break;
       }
-      case kSDReadStatusFinished: {
-        // Should be handled by the while condition.
-        abort();
-      }
       case kSDReadStatusNotShaDa:
       case kSDReadStatusReadError: {
         goto shada_read_main_cycle_end;
@@ -1233,11 +1229,12 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       case kSDReadStatusMalformed: {
         continue;
       }
-    }
-    switch (cur_entry.type) {
-      case kSDItemMissing: {
+      case kSDReadStatusFinished: {
+        // Should be handled by the while condition.
         abort();
       }
+    }
+    switch (cur_entry.type) {
       case kSDItemUnknown: {
         break;
       }
@@ -1466,6 +1463,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         xfree(cur_entry.data.filemark.fname);
         break;
       }
+      case kSDItemMissing: {
+        abort();
+      }
     }
   }
 shada_read_main_cycle_end:
@@ -1627,9 +1627,6 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
 #define ONE_IF_NOT_DEFAULT(entry, attr) \
   ((size_t) (!CHECK_DEFAULT(entry, attr)))
   switch (entry.type) {
-    case kSDItemMissing: {
-      abort();
-    }
     case kSDItemUnknown: {
       if (spacker->callback(spacker->data, entry.data.unknown_item.contents,
                             (unsigned) entry.data.unknown_item.size) == -1) {
@@ -1855,6 +1852,9 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
         }
       }
       break;
+    }
+    case kSDItemMissing: {
+      abort();
     }
   }
 #undef CHECK_DEFAULT
@@ -2145,10 +2145,6 @@ static inline ShaDaWriteResult shada_read_when_writing(
       case kSDReadStatusSuccess: {
         break;
       }
-      case kSDReadStatusFinished: {
-        // Should be handled by the while condition.
-        abort();
-      }
       case kSDReadStatusNotShaDa: {
         ret = kSDWriteReadNotShada;
         FALLTHROUGH;
@@ -2158,6 +2154,10 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDReadStatusMalformed: {
         continue;
+      }
+      case kSDReadStatusFinished: {
+        // Should be handled by the while condition.
+        abort();
       }
     }
 #define COMPARE_WITH_ENTRY(wms_entry_, entry) \
@@ -2181,10 +2181,6 @@ static inline ShaDaWriteResult shada_read_when_writing(
     switch (entry.type) {
       case kSDItemMissing: {
         break;
-      }
-      case kSDItemHeader:
-      case kSDItemBufferList: {
-        abort();
       }
       case kSDItemUnknown: {
         ret = shada_pack_entry(packer, entry, 0);
@@ -2352,6 +2348,10 @@ static inline ShaDaWriteResult shada_read_when_writing(
 #undef DUMMY_IDX_ADJ
 #undef AFTERFREE_DUMMY
         break;
+      }
+      case kSDItemHeader:
+      case kSDItemBufferList: {
+        abort();
       }
     }
   }
