@@ -621,6 +621,19 @@ EXTERN int p_sta;               // 'smarttab'
 EXTERN int p_sb;                // 'splitbelow'
 EXTERN long p_tpm;              // 'tabpagemax'
 EXTERN char_u   *p_tal;         // 'tabline'
+EXTERN char_u   *p_tpf;         // 'termpastefilter'
+EXTERN unsigned int tpf_flags;  ///< flags from 'termpastefilter'
+#ifdef IN_OPTION_C
+static char *(p_tpf_values[]) =
+  { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
+#endif
+# define TPF_BS                 0x001
+# define TPF_HT                 0x002
+# define TPF_FF                 0x004
+# define TPF_ESC                0x008
+# define TPF_DEL                0x010
+# define TPF_C0                 0x020
+# define TPF_C1                 0x040
 EXTERN char_u   *p_sps;         // 'spellsuggest'
 EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'

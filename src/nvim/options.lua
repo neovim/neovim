@@ -2821,6 +2821,14 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='termpastefilter', abbreviation='tpf',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      vim=true,
+      varname='p_tpf',
+      defaults={if_true={vi="", vim="BS,HT,ESC,DEL"}}
+    },
+    {
       full_name='terse',
       short_desc=N_("hides notification of search wrap"),
       type='bool', scope={'global'},

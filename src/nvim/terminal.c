@@ -535,8 +535,44 @@ void terminal_send(Terminal *term, char *data, size_t size)
   term->opts.write_cb(data, size, term->opts.data);
 }
 
+static bool is_filter_char(int c)
+{
+  unsigned int flag = 0;
+  switch (c) {
+    case 0x08:
+      flag = TPF_BS;
+      break;
+    case 0x09:
+      flag = TPF_HT;
+      break;
+    case 0x0A:
+    case 0x0D:
+      break;
+    case 0x0C:
+      flag = TPF_FF;
+      break;
+    case 0x1b:
+      flag = TPF_ESC;
+      break;
+    case 0x7F:
+      flag = TPF_DEL;
+      break;
+    default:
+      if (c < ' ') {
+        flag = TPF_C0;
+      } else if (c >= 0x80 && c <= 0x9F) {
+        flag = TPF_C1;
+      }
+  }
+  return !!(tpf_flags & flag);
+}
+
 void terminal_paste(long count, char_u **y_array, size_t y_size)
 {
+  vterm_keyboard_start_paste(curbuf->terminal->vt);
+  terminal_flush_output(curbuf->terminal);
+  size_t buff_len = STRLEN(y_array[0]);
+  char_u *buff = xmalloc(buff_len);
   for (int i = 0; i < count; i++) {  // -V756
     // feed the lines to the terminal
     for (size_t j = 0; j < y_size; j++) {
@@ -544,9 +580,28 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
         // terminate the previous line
         terminal_send(curbuf->terminal, "\n", 1);
       }
-      terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
+      size_t len = STRLEN(y_array[j]);
+      if (len > buff_len) {
+        buff = xrealloc(buff, len);
+        buff_len = len;
+      }
+      char_u *dst = buff;
+      char_u *src = y_array[j];
+      while (*src != '\0') {
+        len = (size_t)utf_ptr2len(src);
+        int c = utf_ptr2char(src);
+        if (!is_filter_char(c)) {
+          memcpy(dst, src, len);
+          dst += len;
+        }
+        src += len;
+      }
+      terminal_send(curbuf->terminal, (char *)buff, (size_t)(dst - buff));
     }
   }
+  xfree(buff);
+  vterm_keyboard_end_paste(curbuf->terminal->vt);
+  terminal_flush_output(curbuf->terminal);
 }
 
 void terminal_flush_output(Terminal *term)

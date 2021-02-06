@@ -6289,6 +6289,29 @@ A jump table for the options with a short description can be found at |Q_op|.
 	attributes instead of "cterm" attributes. |highlight-guifg|
 	Requires an ISO-8613-3 compatible terminal.
 
+						*'termpastefilter'* *'tpf'*
+'termpastefilter' 'tpf'	string	(default: "BS,HT,ESC,DEL")
+			global
+	A comma separated list of options for specifying control characters
+	to be removed from the text pasted into the terminal window. The
+	supported values are:
+
+	   BS	    Backspace
+
+	   HT	    TAB
+
+	   FF	    Form feed
+
+	   ESC	    Escape
+
+	   DEL	    DEL
+
+	   C0	    Other control characters, excluding Line feed and
+		    Carriage return < ' '
+
+	   C1	    Control characters 0x80...0x9F
+
+
 						*'terse'* *'noterse'*
 'terse'			boolean	(default off)
 			global

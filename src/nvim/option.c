@@ -1942,6 +1942,7 @@ static void didset_options(void)
   (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
   (void)opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true);
   (void)opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
+  (void)opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   (void)opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
   (void)opt_strings_flags(p_jop, p_jop_values, &jop_flags, true);
@@ -3075,6 +3076,10 @@ ambw_end:
     }
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
+      errmsg = e_invarg;
+    }
+  } else if (varp == &p_tpf) {
+    if (opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true) != OK) {
       errmsg = e_invarg;
     }
   } else {
