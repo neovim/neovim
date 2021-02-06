@@ -2121,9 +2121,10 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
             return NULL;
           }
         }
-        lp->ll_range = TRUE;
-      } else
-        lp->ll_range = FALSE;
+        lp->ll_range = true;
+      } else {
+        lp->ll_range = false;
+      }
 
       if (*p != ']') {
         if (!quiet) {
@@ -2240,12 +2241,10 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
         return NULL;
       }
 
-      /*
-       * May need to find the item or absolute index for the second
-       * index of a range.
-       * When no index given: "lp->ll_empty2" is TRUE.
-       * Otherwise "lp->ll_n2" is set to the second index.
-       */
+      // May need to find the item or absolute index for the second
+      // index of a range.
+      // When no index given: "lp->ll_empty2" is true.
+      // Otherwise "lp->ll_n2" is set to the second index.
       if (lp->ll_range && !lp->ll_empty2) {
         lp->ll_n2 = (long)tv_get_number(&var2);  // Is number or string.
         tv_clear(&var2);

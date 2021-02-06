@@ -56,8 +56,8 @@ typedef struct lval_S {
     ///< isn't NULL it's the Dict to which to add the item.
     listitem_T *ll_li;  ///< The list item or NULL.
     list_T *ll_list;    ///< The list or NULL.
-    int ll_range;       ///< TRUE when a [i:j] range was used.
-    int ll_empty2;      ///< Second index is empty: [i:].
+    bool ll_range;      ///< true when a [i:j] range was used.
+    bool ll_empty2;     ///< Second index is empty: [i:].
     long ll_n1;         ///< First index for list.
     long ll_n2;         ///< Second index for list range.
     dict_T *ll_dict;    ///< The Dictionary or NULL.
