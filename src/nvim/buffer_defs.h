@@ -296,13 +296,11 @@ typedef struct arglist {
   int id;                       ///< id of this arglist
 } alist_T;
 
-/*
- * For each argument remember the file name as it was given, and the buffer
- * number that contains the expanded file name (required for when ":cd" is
- * used.
- *
- * TODO: move aentry_T to another header
- */
+// For each argument remember the file name as it was given, and the buffer
+// number that contains the expanded file name (required for when ":cd" is
+// used).
+//
+// TODO(Felipe): move aentry_T to another header
 typedef struct argentry {
   char_u      *ae_fname;        // file name as specified
   int ae_fnum;                  // buffer number with expanded file name
@@ -1036,10 +1034,10 @@ struct matchitem {
   int id;                   ///< match ID
   int priority;             ///< match priority
   char_u *pattern;          ///< pattern to highlight
-  int hlg_id;               ///< highlight group ID
   regmmatch_T match;        ///< regexp program for pattern
   posmatch_T pos;           ///< position matches
   match_T hl;               ///< struct for doing the actual highlighting
+  int hlg_id;               ///< highlight group ID
   int conceal_char;         ///< cchar for Conceal highlighting
 };
 

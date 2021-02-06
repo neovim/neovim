@@ -57,9 +57,9 @@ typedef struct lval_S {
     listitem_T *ll_li;  ///< The list item or NULL.
     list_T *ll_list;    ///< The list or NULL.
     int ll_range;       ///< TRUE when a [i:j] range was used.
+    int ll_empty2;      ///< Second index is empty: [i:].
     long ll_n1;         ///< First index for list.
     long ll_n2;         ///< Second index for list range.
-    int ll_empty2;      ///< Second index is empty: [i:].
     dict_T *ll_dict;    ///< The Dictionary or NULL.
     dictitem_T *ll_di;  ///< The dictitem or NULL.
     char_u *ll_newkey;  ///< New key for Dict in allocated memory or NULL.
