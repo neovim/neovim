@@ -131,3 +131,11 @@ func Test_confirm_cmd_cancel()
         \ term_getline(buf, 20))}, 1000)
   call StopVimInTerminal(buf)
 endfunc
+
+" Test for the :winsize command
+func Test_winsize_cmd()
+  call assert_fails('winsize 1', 'E465:')
+  call assert_fails('winsize 1 x', 'E465:')
+  call assert_fails('win_getid(1)', 'E475: Invalid argument: _getid(1)')
+  " Actually changing the window size would be flaky.
+endfunc

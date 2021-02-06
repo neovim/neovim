@@ -7756,6 +7756,11 @@ static void do_exmap(exarg_T *eap, int isabbrev)
 static void ex_winsize(exarg_T *eap)
 {
   char_u *arg = eap->arg;
+
+  if (!ascii_isdigit(*arg)) {
+    EMSG2(_(e_invarg2), arg);
+    return;
+  }
   int w = getdigits_int(&arg, false, 10);
   arg = skipwhite(arg);
   char_u *p = arg;
