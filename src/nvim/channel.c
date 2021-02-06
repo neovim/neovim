@@ -292,7 +292,6 @@ static void close_cb(Stream *stream, void *data)
 ///                  directory if `cwd` is NULL
 /// @param[in]  pty_width  Width of the pty, ignored if `pty` is false
 /// @param[in]  pty_height  Height of the pty, ignored if `pty` is false
-/// @param[in]  term_name  `$TERM` for the pty
 /// @param[in]  env  Nvim's configured environment is used if this is NULL,
 ///                  otherwise defines all environment variables
 /// @param[out]  status_out  0 for invalid arguments, > 0 for the channel id,
@@ -304,8 +303,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            bool pty, bool rpc, bool overlapped, bool detach,
                            const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
-                           char *term_name, dict_T *env,
-                           varnumber_T *status_out)
+                           dict_T *env, varnumber_T *status_out)
 {
   assert(cwd == NULL || os_isdir_executable(cwd));
 
@@ -318,7 +316,9 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     if (detach) {
       EMSG2(_(e_invarg2), "terminal/pty job cannot be detached");
       shell_free_argv(argv);
-      xfree(term_name);
+      if (env) {
+        tv_dict_free(env);
+      }
       channel_destroy_early(chan);
       *status_out = 0;
       return NULL;
@@ -329,9 +329,6 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     }
     if (pty_height > 0) {
       chan->stream.pty.height = pty_height;
-    }
-    if (term_name) {
-      chan->stream.pty.term_name = term_name;
     }
   } else {
     chan->stream.uv = libuv_process_init(&main_loop, chan);
@@ -361,9 +358,6 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     xfree(cmd);
     if (proc->env) {
       tv_dict_free(proc->env);
-    }
-    if (proc->type == kProcessTypePty) {
-      xfree(chan->stream.pty.term_name);
     }
     channel_destroy_early(chan);
     *status_out = proc->status;
