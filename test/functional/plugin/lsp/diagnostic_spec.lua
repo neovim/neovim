@@ -208,6 +208,69 @@ describe('vim.lsp.diagnostic', function()
         ]]))
       end)
 
+      describe('reset', function()
+        it('diagnostic count is 0 and displayed diagnostics are 0 after call', function()
+          -- 1 Error (1)
+          -- 1 Warning (2)
+          -- 1 Warning (2) + 1 Warning (1)
+          -- 2 highlights and 2 underlines (since error)
+          -- 1 highlight + 1 underline
+          local all_highlights = {1, 1, 2, 4, 2}
+          eq(all_highlights, exec_lua [[
+            local server_1_diags = {
+              make_error("Error 1", 1, 1, 1, 5),
+              make_warning("Warning on Server 1", 2, 1, 2, 5),
+            }
+            local server_2_diags = {
+              make_warning("Warning 1", 2, 1, 2, 5),
+            }
+
+            vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_1_diags }, 1)
+            vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_2_diags }, 2)
+            return {
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", 2),
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", nil),
+              count_of_extmarks_for_client(diagnostic_bufnr, 1),
+              count_of_extmarks_for_client(diagnostic_bufnr, 2),
+            }
+          ]])
+
+          -- Reset diagnostics from server 1
+          exec_lua([[ vim.lsp.diagnostic.reset(1, { [ diagnostic_bufnr ] = { [ 1 ] = true ; [ 2 ] = true } } )]])
+
+          -- Make sure we have the right diagnostic count
+          eq({0, 1, 1, 0, 2} , exec_lua [[
+            local diagnostic_count = {}
+            vim.wait(100, function () diagnostic_count = {
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", 2),
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", nil),
+              count_of_extmarks_for_client(diagnostic_bufnr, 1),
+              count_of_extmarks_for_client(diagnostic_bufnr, 2),
+            } end )
+            return diagnostic_count
+          ]])
+
+          -- Reset diagnostics from server 2
+          exec_lua([[ vim.lsp.diagnostic.reset(2, { [ diagnostic_bufnr ] = { [ 1 ] = true ; [ 2 ] = true } } )]])
+
+          -- Make sure we have the right diagnostic count
+          eq({0, 0, 0, 0, 0}, exec_lua [[
+            local diagnostic_count = {}
+            vim.wait(100, function () diagnostic_count = {
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", 2),
+              vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", nil),
+              count_of_extmarks_for_client(diagnostic_bufnr, 1),
+              count_of_extmarks_for_client(diagnostic_bufnr, 2),
+            } end )
+            return diagnostic_count
+          ]])
+
+          end)
+        end)
+
       describe('get_next_diagnostic_pos', function()
         it('can find the next pos with only one client', function()
           eq({1, 1}, exec_lua [[
