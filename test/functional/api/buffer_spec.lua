@@ -513,6 +513,28 @@ describe('api/buf', function()
 	  eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id2, {}))
 	  eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id3, {}))
     end)
+
+    it("correctly marks changed region for redraw #13890", function()
+      local screen = Screen.new(20, 5)
+      screen:attach()
+
+      insert([[
+      AAA
+      BBB
+      ]])
+
+      curbufmeths.set_text(0, 0, 1, 3, {'XXX', 'YYY'})
+
+      screen:expect([[
+  XXX                 |
+  YYY                 |
+  ^                    |
+  ~                   |
+                      |
+
+      ]])
+
+    end)
   end)
 
   describe('nvim_buf_get_offset', function()

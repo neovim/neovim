@@ -722,7 +722,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer,
                  kExtmarkUndo);
 
 
-  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row, (long)extra, true);
+  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row + 1,
+                (long)extra, true);
 
   // adjust cursor like an extmark ( i e it was inside last_part_len)
   if (curwin->w_cursor.lnum == end_row && curwin->w_cursor.col > end_col) {
