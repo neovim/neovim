@@ -523,9 +523,9 @@ var_redir_start(
   tv.v_type = VAR_STRING;
   tv.vval.v_string = (char_u *)"";
   if (append) {
-    set_var_lval(redir_lval, redir_endp, &tv, true, false, (char_u *)".");
+    set_var_lval(redir_lval, redir_endp, &tv, true, false, ".");
   } else {
-    set_var_lval(redir_lval, redir_endp, &tv, true, false, (char_u *)"=");
+    set_var_lval(redir_lval, redir_endp, &tv, true, false, "=");
   }
   clear_lval(redir_lval);
   err = did_emsg;
@@ -585,7 +585,7 @@ void var_redir_stop(void)
       redir_endp = (char_u *)get_lval(redir_varname, NULL, redir_lval,
                                       false, false, 0, FNE_CHECK_START);
       if (redir_endp != NULL && redir_lval->ll_name != NULL) {
-        set_var_lval(redir_lval, redir_endp, &tv, false, false, (char_u *)".");
+        set_var_lval(redir_lval, redir_endp, &tv, false, false, ".");
       }
       clear_lval(redir_lval);
     }
@@ -1925,7 +1925,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
       if (endchars != NULL && vim_strchr(endchars, *skipwhite(p)) == NULL) {
         EMSG(_(e_letunexp));
       } else {
-        set_var_lval(&lv, p, tv, copy, is_const, op);
+        set_var_lval(&lv, p, tv, copy, is_const, (const char *)op);
         arg_end = p;
       }
     }
@@ -2299,7 +2299,7 @@ void clear_lval(lval_T *lp)
  * "%" for "%=", "." for ".=" or "=" for "=".
  */
 static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
-                         int copy, const bool is_const, const char_u *op)
+                         int copy, const bool is_const, const char *op)
 {
   int cc;
   listitem_T  *ri;
@@ -2326,7 +2326,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
                                TV_CSTRING)
                  && !tv_check_lock(di->di_tv.v_lock, (const char *)lp->ll_name,
                                    TV_CSTRING)))
-            && eexe_mod_op(&tv, rettv, (const char *)op) == OK) {
+            && eexe_mod_op(&tv, rettv, op) == OK) {
           set_var(lp->ll_name, lp->ll_name_len, &tv, false);
         }
         tv_clear(&tv);
@@ -2369,8 +2369,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
      */
     for (ri = tv_list_first(rettv->vval.v_list); ri != NULL; ) {
       if (op != NULL && *op != '=') {
-        eexe_mod_op(TV_LIST_ITEM_TV(lp->ll_li), TV_LIST_ITEM_TV(ri),
-                    (const char *)op);
+        eexe_mod_op(TV_LIST_ITEM_TV(lp->ll_li), TV_LIST_ITEM_TV(ri), op);
       } else {
         tv_clear(TV_LIST_ITEM_TV(lp->ll_li));
         tv_copy(TV_LIST_ITEM_TV(ri), TV_LIST_ITEM_TV(lp->ll_li));
@@ -2428,7 +2427,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       }
 
       if (op != NULL && *op != '=') {
-        eexe_mod_op(lp->ll_tv, rettv, (const char *)op);
+        eexe_mod_op(lp->ll_tv, rettv, op);
         goto notify;
       } else {
         tv_clear(lp->ll_tv);
