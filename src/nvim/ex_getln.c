@@ -886,7 +886,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     need_wait_return = false;
   }
 
-  set_string_option_direct((char_u *)"icm", -1, s->save_p_icm, OPT_FREE,
+  set_string_option_direct("icm", -1, s->save_p_icm, OPT_FREE,
                            SID_NONE);
   State = s->save_State;
   setmouse();

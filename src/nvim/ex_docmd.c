@@ -2179,7 +2179,7 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
           // Set 'eventignore' to "all". Restore the
           // existing option value later.
           cmdmod.save_ei = vim_strsave(p_ei);
-          set_string_option_direct((char_u *)"ei", -1,
+          set_string_option_direct("ei", -1,
                                    (char_u *)"all", OPT_FREE, SID_NONE);
         }
         continue;
@@ -2291,9 +2291,8 @@ static void undo_cmdmod(const exarg_T *eap, int save_msg_scroll)
   }
 
   if (cmdmod.save_ei != NULL) {
-    /* Restore 'eventignore' to the value before ":noautocmd". */
-    set_string_option_direct((char_u *)"ei", -1, cmdmod.save_ei,
-        OPT_FREE, SID_NONE);
+    // Restore 'eventignore' to the value before ":noautocmd".
+    set_string_option_direct("ei", -1, cmdmod.save_ei, OPT_FREE, SID_NONE);
     free_string_option(cmdmod.save_ei);
   }
 
@@ -3519,7 +3518,7 @@ const char * set_one_cmd_context(
       // EX_XFILE: file names are handled above.
       if (!(ea.argt & EX_XFILE)) {
         if (context == EXPAND_MENUS) {
-          return (const char *)set_context_in_menu_cmd(xp, (char_u *)cmd,
+          return (const char *)set_context_in_menu_cmd(xp, cmd,
                                                        (char_u *)arg, forceit);
         } else if (context == EXPAND_COMMANDS) {
           return arg;
@@ -3599,7 +3598,7 @@ const char * set_one_cmd_context(
   case CMD_tmenu:                             case CMD_tunmenu:
   case CMD_popup:                             case CMD_emenu:
     return (const char *)set_context_in_menu_cmd(
-        xp, (char_u *)cmd, (char_u *)arg, forceit);
+        xp, cmd, (char_u *)arg, forceit);
 
   case CMD_colorscheme:
     xp->xp_context = EXPAND_COLORS;

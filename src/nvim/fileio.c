@@ -1644,8 +1644,7 @@ failed:
     save_file_ff(curbuf);
     // If editing a new file: set 'fenc' for the current buffer.
     // Also for ":read ++edit file".
-    set_string_option_direct((char_u *)"fenc", -1, fenc,
-        OPT_FREE | OPT_LOCAL, 0);
+    set_string_option_direct("fenc", -1, fenc, OPT_FREE | OPT_LOCAL, 0);
   }
   if (fenc_alloced)
     xfree(fenc);
@@ -2002,7 +2001,7 @@ void set_forced_fenc(exarg_T *eap)
 {
   if (eap->force_enc != 0) {
     char_u *fenc = enc_canonize(eap->cmd + eap->force_enc);
-    set_string_option_direct((char_u *)"fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
+    set_string_option_direct("fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
     xfree(fenc);
   }
 }

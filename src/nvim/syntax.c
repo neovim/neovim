@@ -3419,7 +3419,7 @@ static void syn_cmd_on(exarg_T *eap, int syncing)
  */
 static void syn_cmd_enable(exarg_T *eap, int syncing)
 {
-  set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"enable");
+  set_internal_string_var("syntax_cmd", (char_u *)"enable");
   syn_cmd_onoff(eap, "syntax");
   do_unlet(S_LEN("g:syntax_cmd"), true);
 }
@@ -3432,7 +3432,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
 {
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
-    set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"reset");
+    set_internal_string_var("syntax_cmd", (char_u *)"reset");
     do_cmdline_cmd("runtime! syntax/syncolor.vim");
     do_unlet(S_LEN("g:syntax_cmd"), true);
   }
@@ -5614,14 +5614,14 @@ void ex_ownsyntax(exarg_T *eap)
   // Move value of b:current_syntax to w:current_syntax.
   new_value = get_var_value("b:current_syntax");
   if (new_value != NULL) {
-    set_internal_string_var((char_u *)"w:current_syntax", new_value);
+    set_internal_string_var("w:current_syntax", new_value);
   }
 
   // Restore value of b:current_syntax.
   if (old_value == NULL) {
     do_unlet(S_LEN("b:current_syntax"), true);
   } else {
-    set_internal_string_var((char_u *)"b:current_syntax", old_value);
+    set_internal_string_var("b:current_syntax", old_value);
     xfree(old_value);
   }
 }
