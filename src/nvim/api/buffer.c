@@ -119,6 +119,10 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///             - on_detach: Lua callback invoked on detach. Args:
 ///               - the string "detach"
 ///               - buffer handle
+///             - on_reload: Lua callback invoked on reload. The entire buffer
+///                          content should be considered changed. Args:
+///               - the string "detach"
+///               - buffer handle
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
 ///               region, as args to `on_lines`.
 ///             - preview: also attach to command preview (i.e. 'inccommand')
@@ -141,50 +145,57 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 
   bool is_lua = (channel_id == LUA_INTERNAL_CALL);
   BufUpdateCallbacks cb = BUF_UPDATE_CALLBACKS_INIT;
+  struct {
+    const char *name;
+    LuaRef *dest;
+  } cbs[] = {
+    { "on_lines", &cb.on_lines },
+    { "on_bytes", &cb.on_bytes },
+    { "on_changedtick", &cb.on_changedtick },
+    { "on_detach", &cb.on_detach },
+    { "on_reload", &cb.on_reload },
+    { NULL, NULL },
+  };
+
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
-    if (is_lua && strequal("on_lines", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
+    bool key_used = false;
+    if (is_lua) {
+      for (size_t j = 0; cbs[j].name; j++) {
+        if (strequal(cbs[j].name, k.data)) {
+          if (v->type != kObjectTypeLuaRef) {
+            api_set_error(err, kErrorTypeValidation,
+                          "%s is not a function", cbs[j].name);
+            goto error;
+          }
+          *(cbs[j].dest) = v->data.luaref;
+          v->data.luaref = LUA_NOREF;
+          key_used = true;
+          break;
+        }
       }
-      cb.on_lines = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_bytes", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
+
+      if (key_used) {
+        continue;
+      } else if (strequal("utf_sizes", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
+          goto error;
+        }
+        cb.utf_sizes = v->data.boolean;
+        key_used = true;
+      } else if (strequal("preview", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "preview must be boolean");
+          goto error;
+        }
+        cb.preview = v->data.boolean;
+        key_used = true;
       }
-      cb.on_bytes = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_changedtick", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      cb.on_changedtick = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_detach", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      cb.on_detach = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("utf_sizes", k.data)) {
-      if (v->type != kObjectTypeBoolean) {
-        api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
-        goto error;
-      }
-      cb.utf_sizes = v->data.boolean;
-    } else if (is_lua && strequal("preview", k.data)) {
-      if (v->type != kObjectTypeBoolean) {
-        api_set_error(err, kErrorTypeValidation, "preview must be boolean");
-        goto error;
-      }
-      cb.preview = v->data.boolean;
-    } else {
+    }
+
+    if (!key_used) {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
     }

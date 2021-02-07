@@ -5076,7 +5076,8 @@ void buf_reload(buf_T *buf, int orig_mode)
         // Mark all undo states as changed.
         u_unchanged(curbuf);
       }
-      buf_updates_unregister_all(curbuf);
+      buf_updates_unload(curbuf, true);
+      curbuf->b_mod_set = true;
     }
   }
   xfree(ea.cmd);

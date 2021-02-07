@@ -596,7 +596,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 
   // Disable buffer-updates for the current buffer.
   // No need to check `unload_buf`: in that case the function returned above.
-  buf_updates_unregister_all(buf);
+  buf_updates_unload(buf, false);
 
   /*
    * Remove the buffer from the list.
@@ -821,7 +821,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
 
-  buf_updates_unregister_all(buf);
+  buf_updates_unload(buf, false);
 }
 
 /*

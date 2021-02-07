@@ -46,11 +46,16 @@ function LanguageTree.new(source, lang, opts)
 end
 
 -- Invalidates this parser and all its children
-function LanguageTree:invalidate()
+function LanguageTree:invalidate(reload)
   self._valid = false
 
+  -- buffer was reloaded, reparse all trees
+  if reload then
+    self._trees = {}
+  end
+
   for _, child in ipairs(self._children) do
-    child:invalidate()
+    child:invalidate(reload)
   end
 end
 
@@ -398,8 +403,13 @@ function LanguageTree:_on_bytes(bufnr, changed_tick,
       new_row, new_col, new_byte)
 end
 
+function LanguageTree:_on_reload()
+  self:invalidate(true)
+end
+
+
 function LanguageTree:_on_detach(...)
-  self:invalidate()
+  self:invalidate(true)
   self:_do_callback('detach', ...)
 end
 
