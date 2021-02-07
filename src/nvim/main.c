@@ -1404,9 +1404,9 @@ static void load_plugins(void)
 static void handle_quickfix(mparm_T *paramp)
 {
   if (paramp->edit_type == EDIT_QF) {
-    if (paramp->use_ef != NULL)
-      set_string_option_direct((char_u *)"ef", -1,
-          paramp->use_ef, OPT_FREE, SID_CARG);
+    if (paramp->use_ef != NULL) {
+      set_string_option_direct("ef", -1, paramp->use_ef, OPT_FREE, SID_CARG);
+    }
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, true, IObuff, p_menc) < 0) {
       msg_putchar('\n');

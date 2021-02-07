@@ -3236,7 +3236,7 @@ void maketitle(void)
                          0, maxlen, NULL, NULL);
         title_str = (char_u *)buf;
         if (called_emsg) {
-          set_string_option_direct((char_u *)"titlestring", -1, (char_u *)"",
+          set_string_option_direct("titlestring", -1, (char_u *)"",
                                    OPT_FREE, SID_ERROR);
         }
         called_emsg |= save_called_emsg;
@@ -3346,7 +3346,7 @@ void maketitle(void)
                          p_iconstring, use_sandbox,
                          0, 0, NULL, NULL);
         if (called_emsg) {
-          set_string_option_direct((char_u *)"iconstring", -1,
+          set_string_option_direct("iconstring", -1,
                                    (char_u *)"", OPT_FREE, SID_ERROR);
         }
         called_emsg |= save_called_emsg;

@@ -5092,9 +5092,9 @@ static void redraw_custom_statusline(win_T *wp)
     // When there is an error disable the statusline, otherwise the
     // display is messed up with errors and a redraw triggers the problem
     // again and again.
-    set_string_option_direct((char_u *)"statusline", -1,
-        (char_u *)"", OPT_FREE | (*wp->w_p_stl != NUL
-                                  ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
+    set_string_option_direct("statusline", -1, (char_u *)"",
+                             OPT_FREE | (*wp->w_p_stl != NUL
+                                         ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
   }
   did_emsg |= saved_did_emsg;
   entered = false;
@@ -5175,7 +5175,7 @@ get_keymap_str (
 static void
 win_redr_custom (
     win_T *wp,
-    int draw_ruler                 /* TRUE or FALSE */
+    bool draw_ruler
 )
 {
   static int entered = FALSE;
@@ -6852,7 +6852,7 @@ void draw_tabline(void)
     did_emsg = false;
     win_redr_custom(NULL, false);
     if (did_emsg) {
-      set_string_option_direct((char_u *)"tabline", -1,
+      set_string_option_direct("tabline", -1,
                                (char_u *)"", OPT_FREE, SID_ERROR);
     }
     did_emsg |= saved_did_emsg;
@@ -7114,11 +7114,12 @@ static void win_redr_ruler(win_T *wp, int always)
   if (*p_ruf) {
     int save_called_emsg = called_emsg;
 
-    called_emsg = FALSE;
-    win_redr_custom(wp, TRUE);
-    if (called_emsg)
-      set_string_option_direct((char_u *)"rulerformat", -1,
-          (char_u *)"", OPT_FREE, SID_ERROR);
+    called_emsg = false;
+    win_redr_custom(wp, true);
+    if (called_emsg) {
+      set_string_option_direct("rulerformat", -1, (char_u *)"",
+                               OPT_FREE, SID_ERROR);
+    }
     called_emsg |= save_called_emsg;
     return;
   }

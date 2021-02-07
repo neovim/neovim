@@ -544,7 +544,7 @@ char_u *au_event_disable(char *what)
   } else {
     STRCAT(new_ei, what);
   }
-  set_string_option_direct((char_u *)"ei", -1, new_ei, OPT_FREE, SID_NONE);
+  set_string_option_direct("ei", -1, new_ei, OPT_FREE, SID_NONE);
   xfree(new_ei);
 
   return save_ei;
@@ -553,7 +553,7 @@ char_u *au_event_disable(char *what)
 void au_event_restore(char_u *old_ei)
 {
   if (old_ei != NULL) {
-    set_string_option_direct((char_u *)"ei", -1, old_ei, OPT_FREE, SID_NONE);
+    set_string_option_direct("ei", -1, old_ei, OPT_FREE, SID_NONE);
     xfree(old_ei);
   }
 }

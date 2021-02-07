@@ -2120,9 +2120,9 @@ static int shada_idx = -1;
 // "set_sid".
 void
 set_string_option_direct(
-    char_u *name,
+    const char *name,
     int opt_idx,
-    char_u *val,
+    const char_u *val,
     int opt_flags,                  // OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
     int set_sid
 )
@@ -2133,7 +2133,7 @@ set_string_option_direct(
   int idx = opt_idx;
 
   if (idx == -1) {  // Use name.
-    idx = findoption((const char *)name);
+    idx = findoption(name);
     if (idx < 0) {  // Not found (should not happen).
       internal_error("set_string_option_direct()");
       IEMSG2(_("For option %s"), name);
@@ -3791,7 +3791,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
     if (p_terse && p == NULL) {
       STRCPY(IObuff, p_shm);
       STRCAT(IObuff, "s");
-      set_string_option_direct((char_u *)"shm", -1, IObuff, OPT_FREE, 0);
+      set_string_option_direct("shm", -1, IObuff, OPT_FREE, 0);
     } else if (!p_terse && p != NULL) {  // remove 's' from p_shm
       STRMOVE(p, p + 1);
     }
@@ -4597,6 +4597,7 @@ bool set_tty_option(const char *name, char *value)
 ///
 /// @return Option index or -1 if option was not found.
 static int findoption(const char *const arg)
+  FUNC_ATTR_NONNULL_ALL
 {
   return findoption_len(arg, strlen(arg));
 }
@@ -7054,7 +7055,7 @@ void set_fileformat(int eol_style, int opt_flags)
 
   // p is NULL if "eol_style" is EOL_UNKNOWN.
   if (p != NULL) {
-    set_string_option_direct((char_u *)"ff",
+    set_string_option_direct("ff",
                              -1,
                              (char_u *)p,
                              OPT_FREE | opt_flags,
