@@ -461,6 +461,15 @@ end
 ---
 --@return selection string containing the last visual selection
 function vim.get_visual_selection()
+	local visual_modes = {
+		v = true,
+		V = true,
+		-- [t'<C-v>'] = true, -- Visual block does not seem to be supported by vim.region
+	}
+
+	-- Return if not in visual mode
+	if visual_modes[vim.api.nvim_get_mode().mode] == nil then return end
+
 	local bufnr = 0
 
 	local pos1 = vim.fn.getpos("'<")
@@ -469,6 +478,7 @@ function vim.get_visual_selection()
 	local start = { pos1[2] - 1, pos1[3] - 1 + pos1[4] }
 	local finish = { pos2[2] - 1, pos2[3] - 1 + pos2[4] }
 
+	-- Return if start or finish are invalid
 	if start[2] < 0 or finish[1] < start[1] then return end
 
 	local region =
@@ -481,10 +491,26 @@ function vim.get_visual_selection()
 		)
 	local lines =
 		vim.api.nvim_buf_get_lines(bufnr, start[1], finish[1] + 1, false)
-	lines[1] = lines[1]:sub(region[start[1]][1] + 1, region[start[1]][2])
+
+	-- Compute the number of chars to get from the first line,
+	-- because vim.region returns -1 as the ending col if the
+	-- end of the line is included in the selection
+	local line1_end
+	if region[start[1]][2] - region[start[1]][1] < 0 then
+		line1_end = #lines[1] - region[start[1]][1]
+	else
+		line1_end = region[start[1]][2] - region[start[1]][1]
+	end
+
+	lines[1] = vim.fn.strpart(lines[1], region[start[1]][1], line1_end, true)
 	if start[1] ~= finish[1] then
 		lines[#lines] =
-			lines[#lines]:sub(region[finish[1]][1] + 1, region[finish[1]][2])
+			vim.fn.strpart(
+				lines[#lines],
+				region[finish[1]][1],
+				region[finish[1]][2] - region[finish[1]][1],
+				true
+			)
 	end
 	return table.concat(lines)
 end
