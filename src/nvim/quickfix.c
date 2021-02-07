@@ -3665,7 +3665,7 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
 static void qf_set_title_var(qf_list_T *qfl)
 {
   if (qfl->qf_title != NULL) {
-    set_internal_string_var((char_u *)"w:quickfix_title", qfl->qf_title);
+    set_internal_string_var("w:quickfix_title", qfl->qf_title);
   }
 }
 

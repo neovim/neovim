@@ -2375,13 +2375,13 @@ void ex_compiler(exarg_T *eap)
     // Set "b:current_compiler" from "current_compiler".
     p = get_var_value("g:current_compiler");
     if (p != NULL) {
-      set_internal_string_var((char_u *)"b:current_compiler", p);
+      set_internal_string_var("b:current_compiler", p);
     }
 
     // Restore "current_compiler" for ":compiler {name}".
     if (!eap->forceit) {
       if (old_cur_comp != NULL) {
-        set_internal_string_var((char_u *)"g:current_compiler",
+        set_internal_string_var("g:current_compiler",
                                 old_cur_comp);
         xfree(old_cur_comp);
       } else {

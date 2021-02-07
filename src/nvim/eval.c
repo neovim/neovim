@@ -455,14 +455,15 @@ void eval_clear(void)
  * Set an internal variable to a string value. Creates the variable if it does
  * not already exist.
  */
-void set_internal_string_var(char_u *name, char_u *value)
+void set_internal_string_var(const char *name, char_u *value)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  const typval_T tv = {
+  typval_T tv = {
     .v_type = VAR_STRING,
     .vval.v_string = value,
   };
 
-  set_var((const char *)name, STRLEN(name), (typval_T *)&tv, true);
+  set_var(name, strlen(name), &tv, true);
 }
 
 static lval_T   *redir_lval = NULL;
