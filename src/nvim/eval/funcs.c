@@ -2149,7 +2149,7 @@ static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, kListLenMayKnow);
   int modes = MENU_ALL_MODES;
   if (argvars[1].v_type == VAR_STRING) {
-    const char_u *const strmodes = (char_u *)tv_get_string(&argvars[1]);
+    const char *const strmodes = tv_get_string(&argvars[1]);
     modes = get_menu_cmd_modes(strmodes, false, NULL, NULL);
   }
   menu_get((char_u *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
@@ -3170,7 +3170,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (xpc.xp_context == EXPAND_MENUS) {
-    set_context_in_menu_cmd(&xpc, (char_u *)"menu", xpc.xp_pattern, false);
+    set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 

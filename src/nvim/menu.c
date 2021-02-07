@@ -81,7 +81,7 @@ ex_menu(exarg_T *eap)
                                   // kFalse for "menu disable
   vimmenu_T menuarg;
 
-  modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
+  modes = get_menu_cmd_modes((char *)eap->cmd, eap->forceit, &noremap, &unmenu);
   arg = eap->arg;
 
   for (;; ) {
@@ -912,7 +912,9 @@ static int expand_emenu;                /* TRUE for ":emenu" command */
 /*
  * Work out what to complete when doing command line completion of menu names.
  */
-char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forceit)
+char_u *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char_u *arg,
+                                bool forceit)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u      *after_dot;
   char_u      *p;
@@ -1178,7 +1180,7 @@ static bool menu_namecmp(const char_u *const name, const char_u *const mname)
 ///                     to whether the command is an "unmenu" command.
 int
 get_menu_cmd_modes(
-    const char_u * cmd,
+    const char *cmd,
     bool forceit,
     int *noremap,
     int *unmenu
