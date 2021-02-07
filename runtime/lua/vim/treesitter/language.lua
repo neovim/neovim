@@ -2,12 +2,12 @@ local a = vim.api
 
 local M = {}
 
---- Asserts that the provided language is installed, and optionnaly provide a path for the parser
+--- Asserts that the provided language is installed, and optionally provide a path for the parser
 --
 -- Parsers are searched in the `parser` runtime directory.
 --
 -- @param lang The language the parser should parse
--- @param path Optionnal path the parser is located at
+-- @param path Optional path the parser is located at
 -- @param silent Don't throw an error if language not found
 function M.require_language(lang, path, silent)
   if vim._ts_has_language(lang) then

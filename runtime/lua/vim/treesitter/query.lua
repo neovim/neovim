@@ -111,7 +111,7 @@ end
 
 --- Gets the text corresponding to a given node
 -- @param node the node
--- @param bufnr the buffer from which the node in extracted.
+-- @param bufnr the buffer from which the node is extracted.
 function M.get_node_text(node, source)
   local start_row, start_col, start_byte = node:start()
   local end_row, end_col, end_byte = node:end_()
@@ -215,10 +215,10 @@ predicate_handlers["vim-match?"] = predicate_handlers["match?"]
 local directive_handlers = {
   ["set!"] = function(_, _, _, pred, metadata)
     if #pred == 4 then
-      -- (set! @capture "key" "value")
+      -- (#set! @capture "key" "value")
       metadata[pred[2]][pred[3]] = pred[4]
     else
-      -- (set! "key" "value")
+      -- (#set! "key" "value")
       metadata[pred[2]] = pred[3]
     end
   end,
@@ -245,7 +245,7 @@ local directive_handlers = {
   end
 }
 
---- Adds a new predicates to be used in queries
+--- Adds a new predicate to be used in queries
 --
 -- @param name the name of the predicate, without leading #
 -- @param handler the handler function to be used
@@ -355,10 +355,10 @@ end
 
 --- Iterates of the captures of self on a given range.
 --
--- @param node The node under witch the search will occur
+-- @param node The node under which the search will occur
 -- @param buffer The source buffer to search
 -- @param start The starting line of the search
--- @param stop The stoping line of the search (end-exclusive)
+-- @param stop The stopping line of the search (end-exclusive)
 --
 -- @returns The matching capture id
 -- @returns The captured node
@@ -388,12 +388,12 @@ function Query:iter_captures(node, source, start, stop)
   return iter
 end
 
---- Iterates of the matches of self on a given range.
+--- Iterates the matches of self on a given range.
 --
--- @param node The node under witch the search will occur
+-- @param node The node under which the search will occur
 -- @param buffer The source buffer to search
 -- @param start The starting line of the search
--- @param stop The stoping line of the search (end-exclusive)
+-- @param stop The stopping line of the search (end-exclusive)
 --
 -- @returns The matching pattern id
 -- @returns The matching match
