@@ -188,8 +188,8 @@ struct exarg {
 
 // used for completion on the command line
 struct expand {
-  int xp_context;               // type of expansion
   char_u *xp_pattern;           // start of item to expand
+  int xp_context;               // type of expansion
   size_t xp_pattern_len;        // bytes in xp_pattern before cursor
   char_u *xp_arg;               // completion function
   sctx_T xp_script_ctx;         // SCTX for completion function
@@ -199,9 +199,9 @@ struct expand {
                                 // characters need to be escaped
 #endif
   int xp_numfiles;              // number of files found by file name completion
+  int xp_col;                   // cursor position in line
   char_u **xp_files;            // list of files
   char_u *xp_line;              // text being completed
-  int xp_col;                   // cursor position in line
 };
 
 // values for xp_backslash

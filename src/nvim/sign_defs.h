@@ -24,11 +24,11 @@ typedef struct signlist signlist_T;
 struct signlist
 {
     int id;                 // unique identifier for each placed sign
-    linenr_T lnum;          // line number which has this sign
     int typenr;             // typenr of sign
-    bool has_text_or_icon;  // has text or icon
-    signgroup_T *group;     // sign group
     int priority;           // priority for highlighting
+    bool has_text_or_icon;  // has text or icon
+    linenr_T lnum;          // line number which has this sign
+    signgroup_T *group;     // sign group
     signlist_T *next;       // next signlist entry
     signlist_T *prev;       // previous entry -- for easy reordering
 };
