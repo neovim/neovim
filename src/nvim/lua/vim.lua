@@ -457,6 +457,38 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   return region
 end
 
+--- Get the current/last visual selection as a string
+---
+--@return selection string containing the last visual selection
+function vim.get_visual_selection()
+	local bufnr = 0
+
+	local pos1 = vim.fn.getpos("'<")
+	local pos2 = vim.fn.getpos("'>")
+
+	local start = { pos1[2] - 1, pos1[3] - 1 + pos1[4] }
+	local finish = { pos2[2] - 1, pos2[3] - 1 + pos2[4] }
+
+	if start[2] < 0 or finish[1] < start[1] then return end
+
+	local region =
+		vim.region(
+			bufnr,
+			start,
+			finish,
+			vim.fn.visualmode(),
+			(vim.o.selection ~= 'exclusive')
+		)
+	local lines =
+		vim.api.nvim_buf_get_lines(bufnr, start[1], finish[1] + 1, false)
+	lines[1] = lines[1]:sub(region[start[1]][1] + 1, region[start[1]][2])
+	if start[1] ~= finish[1] then
+		lines[#lines] =
+			lines[#lines]:sub(region[finish[1]][1] + 1, region[finish[1]][2])
+	end
+	return table.concat(lines)
+end
+
 --- Defers calling `fn` until `timeout` ms passes.
 ---
 --- Use to do a one-shot timer that calls `fn`
