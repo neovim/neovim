@@ -6,14 +6,14 @@ local LanguageTree = {}
 LanguageTree.__index = LanguageTree
 
 -- Represents a single treesitter parser for a language.
--- The language can contain child languages with in it's range,
+-- The language can contain child languages with in its range,
 -- hence the tree.
 --
 -- @param source Can be a bufnr or a string of text to parse
 -- @param lang The language this tree represents
 -- @param opts Options table
--- @param opts.queries A table of language to injection query strings
---                     This is useful for overridding the built in runtime file
+-- @param opts.queries A table of language to injection query strings.
+--                     This is useful for overriding the built-in runtime file
 --                     searching for the injection language query per language.
 function LanguageTree.new(source, lang, opts)
   language.require_language(lang)
@@ -21,8 +21,8 @@ function LanguageTree.new(source, lang, opts)
 
   local custom_queries = opts.queries or {}
   local self = setmetatable({
-    _source=source,
-    _lang=lang,
+    _source = source,
+    _lang = lang,
     _children = {},
     _regions = {},
     _trees = {},
@@ -44,7 +44,7 @@ function LanguageTree.new(source, lang, opts)
   return self
 end
 
--- Invalidates this parser and all it's children
+-- Invalidates this parser and all its children
 function LanguageTree:invalidate()
   self._valid = false
 
@@ -97,7 +97,7 @@ function LanguageTree:parse()
   self._trees = {}
 
   -- If there are no ranges, set to an empty list
-  -- so the included ranges in the parser ar cleared.
+  -- so the included ranges in the parser are cleared.
   if self._regions and #self._regions > 0 then
     for i, ranges in ipairs(self._regions) do
       local old_tree = old_trees[i]
@@ -214,7 +214,7 @@ function LanguageTree:remove_child(lang)
   end
 end
 
--- Destroys this language tree and all it's children.
+-- Destroys this language tree and all its children.
 -- Any cleanup logic should be performed here.
 -- Note, this DOES NOT remove this tree from a parent.
 -- `remove_child` must be called on the parent to remove it.
@@ -241,7 +241,7 @@ end
 --
 -- Note, this call invalidates the tree and requires it to be parsed again.
 --
--- @param regions A list of regions this tree should manange and parse.
+-- @param regions A list of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(regions)
   -- Transform the tables from 4 element long to 6 element long (with byte offset)
   for _, region in ipairs(regions) do
@@ -400,11 +400,11 @@ end
 --- Registers callbacks for the parser
 -- @param cbs An `nvim_buf_attach`-like table argument with the following keys :
 --  `on_bytes` : see `nvim_buf_attach`, but this will be called _after_ the parsers callback.
---  `on_changedtree` : a callback that will be called everytime the tree has syntactical changes.
+--  `on_changedtree` : a callback that will be called every time the tree has syntactical changes.
 --      it will only be passed one argument, that is a table of the ranges (as node ranges) that
 --      changed.
 --  `on_child_added` : emitted when a child is added to the tree.
---  `on_child_removed` : emitted when a child is remvoed from the tree.
+--  `on_child_removed` : emitted when a child is removed from the tree.
 function LanguageTree:register_cbs(cbs)
   if not cbs then return end
 
