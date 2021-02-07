@@ -4531,7 +4531,7 @@ bool is_tty_option(const char *name)
 #define TCO_BUFFER_SIZE 8
 /// @param name TUI-related option
 /// @param[out,allocated] value option string value
-bool get_tty_option(char *name, char **value)
+bool get_tty_option(const char *name, char **value)
 {
   if (strequal(name, "t_Co")) {
     if (value) {
@@ -4611,17 +4611,17 @@ static int findoption(const char *const arg)
 ///           hidden String option: -2.
 ///                 unknown option: -3.
 int get_option_value(
-    char_u *name,
+    const char *name,
     long *numval,
     char_u **stringval,            ///< NULL when only checking existence
     int opt_flags
 )
 {
-  if (get_tty_option((char *)name, (char **)stringval)) {
+  if (get_tty_option(name, (char **)stringval)) {
     return 0;
   }
 
-  int opt_idx = findoption((const char *)name);
+  int opt_idx = findoption(name);
   if (opt_idx < 0) {  // Unknown option.
     return -3;
   }

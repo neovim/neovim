@@ -1848,7 +1848,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
         s = tv_get_string_chk(tv);  // != NULL if number or string.
       }
       if (s != NULL && op != NULL && *op != '=') {
-        opt_type = get_option_value(arg, &numval, (char_u **)&stringval,
+        opt_type = get_option_value((char *)arg, &numval, (char_u **)&stringval,
                                     opt_flags);
         if ((opt_type == 1 && *op == '.')
             || (opt_type == 0 && *op != '.')) {
@@ -4537,7 +4537,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv,
 
   c = *option_end;
   *option_end = NUL;
-  opt_type = get_option_value((char_u *)(*arg), &numval,
+  opt_type = get_option_value(*arg, &numval,
                               rettv == NULL ? NULL : &stringval, opt_flags);
 
   if (opt_type == -3) {                 // invalid name
