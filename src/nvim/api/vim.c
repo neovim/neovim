@@ -545,6 +545,26 @@ Object nvim_exec_lua(String code, Array args, Error *err)
   return nlua_exec(code, args, err);
 }
 
+/// Notify the user with a message
+///
+/// Relays the call to vim.notify . By default forwards your message in the
+/// echo area but can be overriden to trigger desktop notifications.
+///
+/// @param msg        Message to display to the user
+/// @param log_level  The log level
+/// @param opts       Reserved for future use.
+/// @param[out] err   Error details, if any
+Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  FIXED_TEMP_ARRAY(args, 3);
+  args.items[0] = STRING_OBJ(msg);
+  args.items[1] = INTEGER_OBJ(log_level);
+  args.items[2] = DICTIONARY_OBJ(opts);
+
+  return nlua_exec(STATIC_CSTR_AS_STRING("return vim.notify(...)"), args, err);
+}
+
 /// Calls a VimL function.
 ///
 /// @param fn Function name

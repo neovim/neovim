@@ -475,6 +475,15 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_notify', function()
+    it('can be overriden', function()
+      command("lua vim.notify = function(...) return 42 end")
+      eq(42, meths.exec_lua("return vim.notify('Hello world')", {}))
+      nvim("notify", "hello world", 4, {})
+    end)
+  end)
+
+
   describe('nvim_input', function()
     it("VimL error: does NOT fail, updates v:errmsg", function()
       local status, _ = pcall(nvim, "input", ":call bogus_fn()<CR>")
