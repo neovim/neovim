@@ -507,6 +507,20 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     end)
 
+    it("linewise paste", function()
+      local check_events = setup_eventcheck(verify, origlines)
+
+      feed'yyp'
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 16, 0, 0, 0, 1, 0, 16 };
+      }
+
+      feed'Gyyp'
+      check_events {
+        { "test1", "bytes", 1, 4, 8, 0, 130, 0, 0, 0, 1, 0, 18 };
+      }
+    end)
+
     it('inccomand=nosplit and substitute', function()
       if verify then pending("Verification can't be done when previewing") end
 

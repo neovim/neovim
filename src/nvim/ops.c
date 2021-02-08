@@ -3422,15 +3422,11 @@ error:
         if (dir == FORWARD)
           curbuf->b_op_start.lnum++;
       }
-      // Skip mark_adjust when adding lines after the last one, there
-      // can't be marks there.
-      if (curbuf->b_op_start.lnum + (y_type == kMTCharWise) - 1 + nr_lines
-          < curbuf->b_ml.ml_line_count) {
-        ExtmarkOp kind = (y_type == kMTLineWise && !(flags & PUT_LINE_SPLIT))
-                         ? kExtmarkUndo : kExtmarkNOOP;
-        mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
-                    (linenr_T)MAXLNUM, nr_lines, 0L, kind);
-      }
+
+      ExtmarkOp kind = (y_type == kMTLineWise && !(flags & PUT_LINE_SPLIT))
+                       ? kExtmarkUndo : kExtmarkNOOP;
+      mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
+                  (linenr_T)MAXLNUM, nr_lines, 0L, kind);
 
       // note changed text for displaying and folding
       if (y_type == kMTCharWise) {
