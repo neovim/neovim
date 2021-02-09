@@ -491,6 +491,7 @@ end
 ---
 --@return selection string containing the current visual selection
 function vim.get_visual_selection()
+  local bufnr = 0
   local visual_modes = {
     v = true,
     V = true,
@@ -537,8 +538,7 @@ function vim.get_visual_selection()
       vim.fn.strpart(
         lines[#lines],
         region[finish[1]][1],
-        region[finish[1]][2] - region[finish[1]][1],
-        false
+        region[finish[1]][2] - region[finish[1]][1]
       )
   end
   return table.concat(lines)
