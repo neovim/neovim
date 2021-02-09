@@ -112,6 +112,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/undo.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
@@ -2889,8 +2890,14 @@ void spell_suggest(int count)
     msg_col = 0;
     // Ask for choice.
     selected = prompt_for_number(&mouse_used);
-    if (mouse_used)
+
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_clear();
+    }
+
+    if (mouse_used) {
       selected -= lines_left;
+    }
     lines_left = Rows;                  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()
     msg_scroll = msg_scroll_save;
