@@ -930,10 +930,20 @@ func Test_Executable()
     " get "cat" path and remove the leading /
     let catcmd = exepath('cat')[1:]
     new
+    " check that the relative path works in /
     lcd /
     call assert_equal(1, executable(catcmd))
-    call assert_equal('/' .. catcmd, exepath(catcmd))
+    " let result = catcmd->exepath()
+    let result = exepath(catcmd)
+    " when using chroot looking for sbin/cat can return bin/cat, that is OK
+    if catcmd =~ '\<sbin\>' && result =~ '\<bin\>'
+      call assert_equal('/' .. substitute(catcmd, '\<sbin\>', 'bin', ''), result)
+    else
+      call assert_equal('/' .. catcmd, result)
+    endif
     bwipe
+  else
+    throw 'Skipped: does not work on this platform'
   endif
 endfunc
 
