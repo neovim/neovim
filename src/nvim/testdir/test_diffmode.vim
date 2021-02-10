@@ -964,6 +964,21 @@ func Test_diff_closeoff()
   enew!
 endfunc
 
+func Test_diff_followwrap()
+  new
+  set diffopt+=followwrap
+  set wrap
+  diffthis
+  call assert_equal(1, &wrap)
+  diffoff
+  set nowrap
+  diffthis
+  call assert_equal(0, &wrap)
+  diffoff
+  set diffopt&
+  bwipe!
+endfunc
+
 func Test_diff_rnu()
   CheckScreendump
 
