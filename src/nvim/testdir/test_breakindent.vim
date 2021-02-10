@@ -352,7 +352,7 @@ func Test_breakindent19_sbr_nextpage()
   call s:compare_lines(expect, lines)
   " Scroll down one screen line
   setl scrolloff=5
-  norm! 5gj
+  norm! 6gj
   redraw!
   let lines = s:screen_lines(1, 20)
   let expect = [
