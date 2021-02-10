@@ -29,6 +29,7 @@ describe('ui/ext_messages', function()
       [6] = {bold = true, reverse = true},
       [7] = {background = Screen.colors.Yellow},
       [8] = {foreground = Screen.colors.Red},
+      [9] = {special = Screen.colors.Red, undercurl = true},
     })
   end)
   after_each(function()
@@ -795,6 +796,45 @@ describe('ui/ext_messages', function()
       pos = 9,
     }}}
   end)
+
+  it('hides prompt_for_number messages', function()
+    command('set spell')
+    feed('ihelllo<esc>')
+
+    feed('z=')
+    screen:expect{grid=[[
+      {9:helllo}                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:^~                        }|
+    ]], messages={
+      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Helli"\nType number and <Enter> or click with mouse (empty cancels): ' } }, kind = ""}
+    }}
+
+    feed('1')
+    screen:expect{grid=[[
+      {9:helllo}                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:^~                        }|
+    ]], messages={
+      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Helli"\nType number and <Enter> or click with mouse (empty cancels): ' } }, kind = ""},
+      { content = { { "1" } }, kind = "" }
+    }}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^Hello                    |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]]}
+
+  end)
+
 end)
 
 describe('ui/builtin messages', function()
