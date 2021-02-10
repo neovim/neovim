@@ -44,13 +44,18 @@ function M._create_parser(bufnr, lang, opts)
     self:_on_bytes(...)
   end
 
-  local function detach_cb()
+  local function detach_cb(_, ...)
     if parsers[bufnr] == self then
       parsers[bufnr] = nil
     end
+    self:_on_detach(...)
   end
 
-  a.nvim_buf_attach(self:source(), false, {on_bytes=bytes_cb, on_detach=detach_cb, preview=true})
+  local function reload_cb(_, ...)
+    self:_on_reload(...)
+  end
+
+  a.nvim_buf_attach(self:source(), false, {on_bytes=bytes_cb, on_detach=detach_cb, on_reload=reload_cb, preview=true})
 
   self:parse()
 

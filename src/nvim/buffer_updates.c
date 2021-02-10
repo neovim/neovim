@@ -135,7 +135,7 @@ void buf_updates_unregister(buf_T *buf, uint64_t channelid)
   }
 }
 
-void buf_updates_unregister_all(buf_T *buf)
+void buf_updates_unload(buf_T *buf, bool can_reload)
 {
   size_t size = kv_size(buf->update_channels);
   if (size) {
@@ -146,9 +146,20 @@ void buf_updates_unregister_all(buf_T *buf)
     kv_init(buf->update_channels);
   }
 
+  size_t j = 0;
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
-    if (cb.on_detach != LUA_NOREF) {
+    LuaRef thecb = LUA_NOREF;
+
+    bool keep = false;
+    if (can_reload && cb.on_reload != LUA_NOREF) {
+      keep = true;
+      thecb = cb.on_reload;
+    } else if (cb.on_detach != LUA_NOREF) {
+      thecb = cb.on_detach;
+    }
+
+    if (thecb != LUA_NOREF) {
       Array args = ARRAY_DICT_INIT;
       Object items[1];
       args.size = 1;
@@ -158,14 +169,23 @@ void buf_updates_unregister_all(buf_T *buf)
       args.items[0] = BUFFER_OBJ(buf->handle);
 
       textlock++;
-      nlua_call_ref(cb.on_detach, "detach", args, false, NULL);
+      nlua_call_ref(thecb, keep ? "reload" : "detach", args, false, NULL);
       textlock--;
     }
-    free_update_callbacks(cb);
+
+    if (keep) {
+      kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
+    } else {
+      free_update_callbacks(cb);
+    }
   }
-  kv_destroy(buf->update_callbacks);
-  kv_init(buf->update_callbacks);
+  kv_size(buf->update_callbacks) = j;
+  if (kv_size(buf->update_callbacks) == 0) {
+    kv_destroy(buf->update_callbacks);
+    kv_init(buf->update_callbacks);
+  }
 }
+
 
 void buf_updates_send_changes(buf_T *buf,
                               linenr_T firstline,

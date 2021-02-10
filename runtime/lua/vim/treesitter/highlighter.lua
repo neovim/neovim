@@ -113,8 +113,9 @@ function TSHighlighter.new(tree, opts)
   opts = opts or {}
   self.tree = tree
   tree:register_cbs {
-    on_changedtree = function(...) self:on_changedtree(...) end,
-    on_bytes = function(...) self:on_bytes(...) end
+    on_changedtree = function(...) self:on_changedtree(...) end;
+    on_bytes = function(...) self:on_bytes(...) end;
+    on_detach = function(...) self:on_detach(...) end;
   }
 
   self.bufnr = tree:source()
@@ -174,6 +175,10 @@ end
 
 function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
   a.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
+end
+
+function TSHighlighter:on_detach()
+  self:destroy()
 end
 
 function TSHighlighter:on_changedtree(changes)

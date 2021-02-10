@@ -1,5 +1,6 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
 
 local command = helpers.command
 local meths = helpers.meths
@@ -9,8 +10,9 @@ local eq = helpers.eq
 local fail = helpers.fail
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local deepcopy = helpers.deepcopy
 local expect_events = helpers.expect_events
+local write_file = helpers.write_file
+local dedent = helpers.dedent
 
 local origlines = {"original line 1",
                    "original line 2",
@@ -33,7 +35,7 @@ before_each(function ()
           return true
         end
       end
-      local opts = {[evname]=callback, on_detach=callback, utf_sizes=utf_sizes, preview=preview}
+      local opts = {[evname]=callback, on_detach=callback, on_reload=callback, utf_sizes=utf_sizes, preview=preview}
       if changedtick then
         opts.on_changedtick = callback
       end
@@ -294,9 +296,12 @@ describe('lua: nvim_buf_attach on_bytes', function()
   -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
   -- test both ways.
   local function setup_eventcheck(verify, start_txt)
-    meths.buf_set_lines(0, 0, -1, true, start_txt)
-    local shadow = deepcopy(start_txt)
-    local shadowbytes = table.concat(shadow, '\n') .. '\n'
+    if start_txt then
+      meths.buf_set_lines(0, 0, -1, true, start_txt)
+    else
+      start_txt = meths.buf_get_lines(0, 0, -1, true)
+    end
+    local shadowbytes = table.concat(start_txt, '\n') .. '\n'
     -- TODO: while we are brewing the real strong coffe,
     -- verify should check buf_get_offset after every check_events
     if verify then
@@ -330,6 +335,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
           local unknown = string.rep('\255', new_byte)
           local after = string.sub(shadowbytes, start_byte + old_byte + 1)
           shadowbytes = before .. unknown .. after
+        elseif event[1] == verify_name and event[2] == "reload" then
+          shadowbytes = table.concat(meths.buf_get_lines(0, 0, -1, true), '\n') .. '\n'
         end
       end
 
@@ -522,8 +529,6 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it('inccomand=nosplit and substitute', function()
-      if verify then pending("Verification can't be done when previewing") end
-
       local check_events = setup_eventcheck(verify, {"abcde"})
       meths.set_option('inccommand', 'nosplit')
 
@@ -602,6 +607,38 @@ describe('lua: nvim_buf_attach on_bytes', function()
       eq({ "original line 2", "original line 3", "original line 4",
            "original line 5", "original line 6" },
          meths.buf_get_lines(0, 0, -1, true))
+    end)
+
+    it('checktime autoread', function()
+      write_file("Xtest-reload", dedent [[
+        old line 1
+        old line 2]])
+      lfs.touch("Xtest-reload", os.time() - 10)
+      command "e Xtest-reload"
+      command "set autoread"
+
+      local check_events = setup_eventcheck(verify, nil)
+
+      write_file("Xtest-reload", dedent [[
+        new line 1
+        new line 2
+        new line 3]])
+
+      command "checktime"
+      check_events {
+        { "test1", "reload", 1 };
+      }
+
+      feed 'ggJ'
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 10, 10, 1, 0, 1, 0, 1, 1 };
+      }
+
+      eq({'new line 1 new line 2', 'new line 3'}, meths.buf_get_lines(0, 0, -1, true))
+    end)
+
+    teardown(function()
+      os.remove "Xtest-reload"
     end)
   end
 

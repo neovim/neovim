@@ -35,6 +35,7 @@ function LanguageTree.new(source, lang, opts)
     _callbacks = {
       changedtree = {},
       bytes = {},
+      detach = {},
       child_added = {},
       child_removed = {}
     },
@@ -45,11 +46,16 @@ function LanguageTree.new(source, lang, opts)
 end
 
 -- Invalidates this parser and all its children
-function LanguageTree:invalidate()
+function LanguageTree:invalidate(reload)
   self._valid = false
 
+  -- buffer was reloaded, reparse all trees
+  if reload then
+    self._trees = {}
+  end
+
   for _, child in ipairs(self._children) do
-    child:invalidate()
+    child:invalidate(reload)
   end
 end
 
@@ -397,6 +403,16 @@ function LanguageTree:_on_bytes(bufnr, changed_tick,
       new_row, new_col, new_byte)
 end
 
+function LanguageTree:_on_reload()
+  self:invalidate(true)
+end
+
+
+function LanguageTree:_on_detach(...)
+  self:invalidate(true)
+  self:_do_callback('detach', ...)
+end
+
 --- Registers callbacks for the parser
 -- @param cbs An `nvim_buf_attach`-like table argument with the following keys :
 --  `on_bytes` : see `nvim_buf_attach`, but this will be called _after_ the parsers callback.
@@ -414,6 +430,10 @@ function LanguageTree:register_cbs(cbs)
 
   if cbs.on_bytes then
     table.insert(self._callbacks.bytes, cbs.on_bytes)
+  end
+
+  if cbs.on_detach then
+    table.insert(self._callbacks.detach, cbs.on_detach)
   end
 
   if cbs.on_child_added then
