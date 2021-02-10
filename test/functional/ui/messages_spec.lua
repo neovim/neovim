@@ -1656,3 +1656,51 @@ aliquip ex ea commodo consequat.]])
     ]]}
   end)
 end)
+
+describe('ui/ext_messages on small windows', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(20, 2)
+    screen:attach({rgb=true, ext_linegrid=true, ext_messages=true})
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [3] = {bold = true},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [5] = {foreground = Screen.colors.Blue1},
+      [6] = {bold = true, reverse = true},
+      [7] = {background = Screen.colors.Yellow},
+      [8] = {foreground = Screen.colors.Red},
+    })
+  end)
+  after_each(function()
+    os.remove('Xtest')
+  end)
+
+  it('ext_messages doesnt trigger unnecessary grid_scrolls', function()
+    command('set laststatus=0')
+    command('set scrolloff=1')
+    feed('i1                  a')
+    feed('2                  b')
+    feed('3                  c<Esc>')
+    feed('gg^gj')
+    screen:expect{grid=[[
+      1                  a|
+      ^2                  b|
+    ]]}
+
+    feed('l')
+    screen:expect{grid=[[
+      1                  a|
+      2^                  b|
+    ]]}
+
+    feed('l')
+    screen:expect{grid=[[
+      1                  a|
+      2 ^                 b|
+    ]]}
+  end)
+end)

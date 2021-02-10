@@ -892,7 +892,7 @@ void curs_columns(
       extra += 2;
     }
 
-    if (extra == 3 || plines < so * 2) {
+    if (extra == 3 || plines <= so * 2) {
       // not enough room for 'scrolloff', put cursor in the middle
       n = wp->w_virtcol / width;
       if (n > wp->w_height_inner / 2) {
