@@ -6441,7 +6441,7 @@ static int open_cmdwin(void)
   cmdwin_level = ccline.level;
 
   // Create empty command-line buffer.
-  buf_open_scratch(0, "[Command Line]");
+  buf_open_scratch(0, _("[Command Line]"));
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
   set_option_value("bh", 0L, "wipe", OPT_LOCAL);
   curwin->w_p_rl = cmdmsg_rl;

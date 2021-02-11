@@ -1657,9 +1657,11 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 ///         AL_DEL: remove files in 'str' from the argument list.
 /// @param after
 ///         0 means before first one
+/// @param will_edit  will edit added argument
 ///
 /// @return FAIL for failure, OK otherwise.
-static int do_arglist(char_u *str, int what, int after)
+static int do_arglist(char_u *str, int what, int after, bool will_edit)
+  FUNC_ATTR_NONNULL_ALL
 {
   garray_T new_ga;
   int exp_count;
@@ -1733,10 +1735,11 @@ static int do_arglist(char_u *str, int what, int after)
     }
 
     if (what == AL_ADD) {
-      (void)alist_add_list(exp_count, exp_files, after);
+      alist_add_list(exp_count, exp_files, after, will_edit);
       xfree(exp_files);
-    } else {  // what == AL_SET
-      alist_set(ALIST(curwin), exp_count, exp_files, false, NULL, 0);
+    } else {
+      assert(what == AL_SET);
+      alist_set(ALIST(curwin), exp_count, exp_files, will_edit, NULL, 0);
     }
   }
 
@@ -1956,7 +1959,7 @@ void ex_next(exarg_T *eap)
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD)) {
     if (*eap->arg != NUL) {                 // redefine file list
-      if (do_arglist(eap->arg, AL_SET, 0) == FAIL) {
+      if (do_arglist(eap->arg, AL_SET, 0, true) == FAIL) {
         return;
       }
       i = 0;
@@ -1974,7 +1977,7 @@ void ex_argedit(exarg_T *eap)
   // Whether curbuf will be reused, curbuf->b_ffname will be set.
   bool curbuf_is_reusable = curbuf_reusable();
 
-  if (do_arglist(eap->arg, AL_ADD, i) == FAIL) {
+  if (do_arglist(eap->arg, AL_ADD, i, true) == FAIL) {
     return;
   }
   maketitle();
@@ -1994,7 +1997,8 @@ void ex_argedit(exarg_T *eap)
 void ex_argadd(exarg_T *eap)
 {
   do_arglist(eap->arg, AL_ADD,
-             eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1);
+             eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1,
+             false);
   maketitle();
 }
 
@@ -2041,7 +2045,7 @@ void ex_argdelete(exarg_T *eap)
       }
     }
   } else {
-    do_arglist(eap->arg, AL_DEL, 0);
+    do_arglist(eap->arg, AL_DEL, 0, false);
   }
   maketitle();
 }
@@ -2292,9 +2296,9 @@ void ex_listdo(exarg_T *eap)
 /// Files[] itself is not taken over.
 ///
 /// @param after: where to add: 0 = before first one
-///
-/// @return index of first added argument
-static int alist_add_list(int count, char_u **files, int after)
+/// @param will_edit  will edit adding argument
+static void alist_add_list(int count, char_u **files, int after, bool will_edit)
+  FUNC_ATTR_NONNULL_ALL
 {
   int old_argcount = ARGCOUNT;
   ga_grow(&ALIST(curwin)->al_ga, count);
@@ -2310,15 +2314,15 @@ static int alist_add_list(int count, char_u **files, int after)
               (size_t)(ARGCOUNT - after) * sizeof(aentry_T));
     }
     for (int i = 0; i < count; i++) {
+      const int flags = BLN_LISTED | (will_edit ? BLN_CURBUF : 0);
       ARGLIST[after + i].ae_fname = files[i];
-      ARGLIST[after + i].ae_fnum = buflist_add(files[i],
-                                               BLN_LISTED | BLN_CURBUF);
+      ARGLIST[after + i].ae_fnum = buflist_add(files[i], flags);
     }
     ALIST(curwin)->al_ga.ga_len += count;
     if (old_argcount > 0 && curwin->w_arg_idx >= after) {
       curwin->w_arg_idx += count;
     }
-    return after;
+    return;
   }
 }
 
@@ -3766,7 +3770,7 @@ void ex_drop(exarg_T   *eap)
   // and mostly only one file is dropped.
   // This also ignores wildcards, since it is very unlikely the user is
   // editing a file name with a wildcard character.
-  do_arglist(eap->arg, AL_SET, 0);
+  do_arglist(eap->arg, AL_SET, 0, false);
 
   // Expanding wildcards may result in an empty argument list.  E.g. when
   // editing "foo.pyc" and ".pyc" is in 'wildignore'.  Assume that we

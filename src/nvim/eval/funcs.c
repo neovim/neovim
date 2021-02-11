@@ -1629,27 +1629,26 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (u_save(first - 1, last + 1) == FAIL) {
     rettv->vval.v_number = 1;  // FAIL
-    return;
-  }
+  } else {
+    for (linenr_T lnum = first; lnum <= last; lnum++) {
+      ml_delete(first, true);
+    }
 
-  for (linenr_T lnum = first; lnum <= last; lnum++) {
-    ml_delete(first, true);
-  }
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_buffer == buf) {
-      if (wp->w_cursor.lnum > last) {
-        wp->w_cursor.lnum -= count;
-      } else if (wp->w_cursor.lnum> first) {
-        wp->w_cursor.lnum = first;
-      }
-      if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
-        wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf) {
+        if (wp->w_cursor.lnum > last) {
+          wp->w_cursor.lnum -= count;
+        } else if (wp->w_cursor.lnum> first) {
+          wp->w_cursor.lnum = first;
+        }
+        if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
+          wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+        }
       }
     }
+    check_cursor_col();
+    deleted_lines_mark(first, count);
   }
-  check_cursor_col();
-  deleted_lines_mark(first, count);
 
   if (!is_curbuf) {
     curbuf = curbuf_save;

@@ -1971,6 +1971,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		foldcolumn:{n}	Set the 'foldcolumn' option to {n} when
 				starting diff mode.  Without this 2 is used.
 
+		followwrap	Follow the 'wrap' option and leave as it is.
+
 		internal	Use the internal diff library.  This is
 				ignored when 'diffexpr' is set.  *E960*
 				When running out of memory when writing a

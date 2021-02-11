@@ -888,11 +888,11 @@ void curs_columns(
     } else {
       n = plines;
     }
-    if ((colnr_T)n >= wp->w_height_inner + wp->w_skipcol / width) {
+    if ((colnr_T)n >= wp->w_height_inner + wp->w_skipcol / width - so) {
       extra += 2;
     }
 
-    if (extra == 3 || plines < so * 2) {
+    if (extra == 3 || plines <= so * 2) {
       // not enough room for 'scrolloff', put cursor in the middle
       n = wp->w_virtcol / width;
       if (n > wp->w_height_inner / 2) {

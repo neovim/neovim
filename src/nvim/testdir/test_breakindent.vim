@@ -353,13 +353,18 @@ func Test_breakindent19_sbr_nextpage()
   " Scroll down one screen line
   setl scrolloff=5
   norm! 5gj
-  redraw!
   let lines = s:screen_lines(1, 20)
   let expect = [
-	\ "> aaaaaaaaaaaaaaaaaa",
+	\ "aaaaaaaaaaaaaaaaaaaa",
 	\ "> aaaaaaaaaaaaaaaaaa",
 	\ "> aaaaaaaaaaaaaaaaaa",
 	\ ]
+  call s:compare_lines(expect, lines)
+  redraw!
+  " moving the cursor doesn't change the text offset
+  norm! l
+  redraw!
+  let lines = s:screen_lines(1, 20)
   call s:compare_lines(expect, lines)
 
   setl breakindent briopt=min:18 sbr=>
