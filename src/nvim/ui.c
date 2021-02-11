@@ -375,7 +375,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
 {
   assert(0 <= row && row < grid->Rows);
   LineFlags flags = wrap ? kLineFlagWrap : 0;
-  if (startcol == -1) {
+  if (startcol < 0) {
     startcol = 0;
     flags |= kLineFlagInvalid;
   }
