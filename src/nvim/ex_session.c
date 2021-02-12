@@ -384,6 +384,18 @@ static int put_view(
     xfree(fname_esc);
   }
 
+  if (wp->w_alt_fnum) {
+    buf_T *const alt = buflist_findnr(wp->w_alt_fnum);
+
+    // Set the alternate file.
+    if ((flagp == &ssop_flags) && alt != NULL && alt->b_fname != NULL
+        && *alt->b_fname != NUL
+        && (fputs("balt ", fd) < 0
+            || ses_fname(fd, alt, flagp, true) == FAIL)) {
+      return FAIL;
+    }
+  }
+
   //
   // Local mappings and abbreviations.
   //
@@ -438,9 +450,9 @@ static int put_view(
                 "let s:l = %" PRId64 " - ((%" PRId64
                 " * winheight(0) + %" PRId64 ") / %" PRId64 ")\n"
                 "if s:l < 1 | let s:l = 1 | endif\n"
-                "exe s:l\n"
+                "keepjumps exe s:l\n"
                 "normal! zt\n"
-                "%" PRId64 "\n",
+                "keepjumps %" PRId64 "\n",
                 (int64_t)wp->w_cursor.lnum,
                 (int64_t)(wp->w_cursor.lnum - wp->w_topline),
                 (int64_t)(wp->w_height_inner / 2),

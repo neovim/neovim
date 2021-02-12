@@ -1039,6 +1039,11 @@ list of buffers. |unlisted-buffer|
 		line when the buffer is first entered.  Note that other
 		commands after the + will be ignored.
 
+						 *:balt*
+:balt [+lnum] {fname}
+		Like `:badd` and also set the alternate file for the current
+		window to {fname}.
+
 :[N]bd[elete][!]			*:bd* *:bdel* *:bdelete* *E516*
 :bd[elete][!] [N]
 		Unload buffer [N] (default: current buffer) and delete it from

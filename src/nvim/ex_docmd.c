@@ -7271,9 +7271,7 @@ static void ex_find(exarg_T *eap)
   }
 }
 
-/*
- * ":edit", ":badd", ":visual".
- */
+/// ":edit", ":badd", ":balt", ":visual".
 static void ex_edit(exarg_T *eap)
 {
   do_exedit(eap, NULL);
@@ -7347,7 +7345,9 @@ do_exedit(
     else if (eap->cmdidx == CMD_enew)
       readonlymode = FALSE;         /* 'readonly' doesn't make sense in an
                                        empty buffer */
-    setpcmark();
+    if (eap->cmdidx != CMD_balt && eap->cmdidx != CMD_badd) {
+      setpcmark();
+    }
     if (do_ecmd(0, (eap->cmdidx == CMD_enew ? NULL : eap->arg),
                 NULL, eap, eap->do_ecmd_lnum,
                 (buf_hide(curbuf) ? ECMD_HIDE : 0)
@@ -7355,6 +7355,7 @@ do_exedit(
                 // After a split we can use an existing buffer.
                 + (old_curwin != NULL ? ECMD_OLDBUF : 0)
                 + (eap->cmdidx == CMD_badd ? ECMD_ADDBUF : 0)
+                + (eap->cmdidx == CMD_balt ? ECMD_ALTBUF : 0)
                 , old_curwin == NULL ? curwin : NULL) == FAIL) {
       // Editing the file failed.  If the window was split, close it.
       if (old_curwin != NULL) {
@@ -8725,7 +8726,7 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
  * Evaluate cmdline variables.
  *
  * change '%'	    to curbuf->b_ffname
- *	  '#'	    to curwin->w_altfile
+ *	  '#'	    to curwin->w_alt_fnum
  *	  '<cword>' to word under the cursor
  *	  '<cWORD>' to WORD under the cursor
  *	  '<cexpr>' to C-expression under the cursor

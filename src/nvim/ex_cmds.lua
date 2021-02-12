@@ -176,6 +176,12 @@ module.cmds = {
     func='ex_edit',
   },
   {
+    command='balt',
+    flags=bit.bor(NEEDARG, FILE1, CMDARG, TRLBAR, CMDWIN),
+    addr_type='ADDR_NONE',
+    func='ex_edit',
+  },
+  {
     command='bdelete',
     flags=bit.bor(BANG, RANGE, BUFNAME, COUNT, EXTRA, TRLBAR),
     addr_type='ADDR_BUFFERS',
