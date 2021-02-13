@@ -7168,7 +7168,7 @@ int tabstop_at(colnr_T col, long ts, long *vts)
   int t;
   int tab_size = 0;
 
-  if (vts == 0 || vts[0] == 0) {
+  if (vts == NULL || vts[0] == 0) {
     return (int)ts;
   }
 
@@ -7195,7 +7195,7 @@ colnr_T tabstop_start(colnr_T col, long ts, long *vts)
   int t;
   int excess;
 
-  if (vts == 0 || vts[0] == 0) {
+  if (vts == NULL || vts[0] == 0) {
     return (col / (int)ts) * (int)ts;
   }
 
@@ -7226,7 +7226,7 @@ void tabstop_fromto(colnr_T start_col,
   int tabcount;
   int t;
 
-  if (vts == 0 || vts[0] == 0) {
+  if (vts == NULL || vts[0] == 0) {
     int tabs = 0;
     int initspc = (int)ts - (start_col % (int)ts);
     if (spaces >= initspc) {
