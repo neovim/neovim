@@ -33,6 +33,9 @@ enum bln_values {
   BLN_DUMMY  = 4,   // Allocating dummy buffer
   BLN_NEW    = 8,   // create a new buffer
   BLN_NOOPT  = 16,  // Don't copy options to existing buffer
+  // BLN_DUMMY_OK = 32,  // also find an existing dummy buffer
+  // BLN_REUSE = 64,   // may re-use number from buf_reuse
+  BLN_NOCURWIN = 128,  // buffer is not associated with curwin
 };
 
 // Values for action argument for do_buffer()

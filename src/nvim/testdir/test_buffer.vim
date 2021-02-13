@@ -15,7 +15,7 @@ func Test_badd_options()
   new SomeNewBuffer
   setlocal numberwidth=3
   wincmd p
-  badd SomeNewBuffer
+  badd +1 SomeNewBuffer
   new SomeNewBuffer
   call assert_equal(3, &numberwidth)
   close

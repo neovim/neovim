@@ -2333,8 +2333,10 @@ int do_ecmd(
           if (tlnum <= 0)
             tlnum = 1L;
         }
+        // Add BLN_NOCURWIN to avoid a new wininfo items are associated
+        // with the current window.
         const buf_T *const newbuf
-            = buflist_new(ffname, sfname, tlnum, BLN_LISTED);
+            = buflist_new(ffname, sfname, tlnum, BLN_LISTED | BLN_NOCURWIN);
         if (newbuf != NULL && (flags & ECMD_ALTBUF)) {
           curwin->w_alt_fnum = newbuf->b_fnum;
         }
