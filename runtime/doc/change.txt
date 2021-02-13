@@ -445,6 +445,9 @@ SHIFTING LINES LEFT OR RIGHT				*shift-left-right*
 							*<*
 <{motion}		Shift {motion} lines one 'shiftwidth' leftwards.
 
+			If the 'shiftwidth' option is set to zero, the amount
+			of indent is calculated at the first non-blank
+			character in the line.
 							*<<*
 <<			Shift [count] lines one 'shiftwidth' leftwards.
 
@@ -455,6 +458,9 @@ SHIFTING LINES LEFT OR RIGHT				*shift-left-right*
 							*>*
  >{motion}		Shift {motion} lines one 'shiftwidth' rightwards.
 
+			If the 'shiftwidth' option is set to zero, the amount
+			of indent is calculated at the first non-blank
+			character in the line.
 							*>>*
  >>			Shift [count] lines one 'shiftwidth' rightwards.
 

@@ -297,6 +297,71 @@ func Test_vartabs_linebreak()
   set nolist listchars&vim
 endfunc
 
+func Test_vartabs_shiftwidth()
+  "return
+  if winwidth(0) < 40
+    return
+  endif
+  new
+  40vnew
+  %d
+"  setl varsofttabstop=10,20,30,40
+  setl shiftwidth=0 vartabstop=10,20,30,40
+  call setline(1, "x")
+
+  " Check without any change.
+  let expect = ['x                                       ']
+  let lines = ScreenLines(1, winwidth(0))
+  call s:compare_lines(expect, lines)
+  " Test 1:
+  " shiftwidth depends on the indent, first check with cursor at the end of the
+  " line (which is the same as the start of the line, since there is only one
+  " character).
+  norm! $>>
+  let expect1 = ['          x                             ']
+  let lines = ScreenLines(1, winwidth(0))
+  call s:compare_lines(expect1, lines)
+  call assert_equal(10, shiftwidth())
+  call assert_equal(10, shiftwidth(1))
+  call assert_equal(20, shiftwidth(virtcol('.')))
+  norm! $>>
+  let expect2 = ['                              x         ', '~                                       ']
+  let lines = ScreenLines([1, 2], winwidth(0))
+  call s:compare_lines(expect2, lines)
+  call assert_equal(20, shiftwidth(virtcol('.')-2))
+  call assert_equal(30, shiftwidth(virtcol('.')))
+  norm! $>>
+  let expect3 = ['                                        ', '                    x                   ', '~                                       ']
+  let lines = ScreenLines([1, 3], winwidth(0))
+  call s:compare_lines(expect3, lines)
+  call assert_equal(30, shiftwidth(virtcol('.')-2))
+  call assert_equal(40, shiftwidth(virtcol('.')))
+  norm! $>>
+  let expect4 = ['                                        ', '                                        ', '                    x                   ']
+  let lines = ScreenLines([1, 3], winwidth(0))
+  call assert_equal(40, shiftwidth(virtcol('.')))
+  call s:compare_lines(expect4, lines)
+
+  " Test 2: Put the cursor at the first column, result should be the same
+  call setline(1, "x")
+  norm! 0>>
+  let lines = ScreenLines(1, winwidth(0))
+  call s:compare_lines(expect1, lines)
+  norm! 0>>
+  let lines = ScreenLines([1, 2], winwidth(0))
+  call s:compare_lines(expect2, lines)
+  norm! 0>>
+  let lines = ScreenLines([1, 3], winwidth(0))
+  call s:compare_lines(expect3, lines)
+  norm! 0>>
+  let lines = ScreenLines([1, 3], winwidth(0))
+  call s:compare_lines(expect4, lines)
+
+  " cleanup
+  bw!
+  bw!
+endfunc
+
 func Test_vartabs_failures()
   call assert_fails('set vts=8,')
   call assert_fails('set vsts=8,')

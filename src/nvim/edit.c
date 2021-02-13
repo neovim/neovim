@@ -9156,10 +9156,16 @@ static void ins_try_si(int c)
  * Get the value that w_virtcol would have when 'list' is off.
  * Unless 'cpo' contains the 'L' flag.
  */
-static colnr_T get_nolist_virtcol(void)
+colnr_T get_nolist_virtcol(void)
 {
-  if (curwin->w_p_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL)
+  // check validity of cursor in current buffer
+  if (curwin->w_buffer == NULL || curwin->w_buffer->b_ml.ml_mfp == NULL
+      || curwin->w_cursor.lnum > curwin->w_buffer->b_ml.ml_line_count) {
+    return 0;
+  }
+  if (curwin->w_p_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL) {
     return getvcol_nolist(&curwin->w_cursor);
+  }
   validate_virtcol();
   return curwin->w_virtcol;
 }

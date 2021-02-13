@@ -7342,9 +7342,37 @@ int tabstop_first(long *ts)
 /// 'tabstop' value when 'shiftwidth' is zero.
 int get_sw_value(buf_T *buf)
 {
-  long result = buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
+  long result = get_sw_value_col(buf, 0);
   assert(result >= 0 && result <= INT_MAX);
   return (int)result;
+}
+
+// Idem, using the first non-black in the current line.
+long get_sw_value_indent(buf_T *buf)
+{
+  pos_T pos = curwin->w_cursor;
+
+  pos.col = (colnr_T)getwhitecols_curline();
+  return get_sw_value_pos(buf, &pos);
+}
+
+// Idem, using "pos".
+long get_sw_value_pos(buf_T *buf, pos_T *pos)
+{
+  pos_T save_cursor = curwin->w_cursor;
+  long sw_value;
+
+  curwin->w_cursor = *pos;
+  sw_value = get_sw_value_col(buf, get_nolist_virtcol());
+  curwin->w_cursor = save_cursor;
+  return sw_value;
+}
+
+// Idem, using virtual column "col".
+long get_sw_value_col(buf_T *buf, colnr_T col)
+{
+  return buf->b_p_sw ? buf->b_p_sw
+                     : tabstop_at(col, buf->b_p_ts, buf->b_p_vts_array);
 }
 
 /// Return the effective softtabstop value for the current buffer,
