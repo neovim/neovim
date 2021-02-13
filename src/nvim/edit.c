@@ -597,7 +597,10 @@ static int insert_check(VimState *state)
     s->mincol = curwin->w_wcol;
     validate_cursor_col();
 
-    if (curwin->w_wcol < s->mincol - curbuf->b_p_ts
+    if (
+        curwin->w_wcol < s->mincol - tabstop_at(get_nolist_virtcol(),
+                                                curbuf->b_p_ts,
+                                                curbuf->b_p_vts_array)
         && curwin->w_wrow == curwin->w_winrow
         + curwin->w_height_inner - 1 - get_scrolloff_value(curwin)
         && (curwin->w_cursor.lnum != curwin->w_topline
@@ -8178,24 +8181,19 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
     /*
      * Handle deleting one 'shiftwidth' or 'softtabstop'.
      */
-    if (       mode == BACKSPACE_CHAR
-               && ((p_sta && in_indent)
-                   || (get_sts_value() != 0
-                       && curwin->w_cursor.col > 0
-                       && (*(get_cursor_pos_ptr() - 1) == TAB
-                           || (*(get_cursor_pos_ptr() - 1) == ' '
-                               && (!*inserted_space_p
-                                   || arrow_used)))))) {
-      int ts;
+    if (mode == BACKSPACE_CHAR
+        && ((p_sta && in_indent)
+            || ((get_sts_value() != 0
+                 || tabstop_count(curbuf->b_p_vsts_array))
+                && curwin->w_cursor.col > 0
+                && (*(get_cursor_pos_ptr() - 1) == TAB
+                    || (*(get_cursor_pos_ptr() - 1) == ' '
+                        && (!*inserted_space_p || arrow_used)))))) {
       colnr_T vcol;
       colnr_T want_vcol;
       colnr_T start_vcol;
 
-      *inserted_space_p = FALSE;
-      if (p_sta && in_indent)
-        ts = get_sw_value(curbuf);
-      else
-        ts = get_sts_value();
+      *inserted_space_p = false;
       // Compute the virtual column where we want to be.  Since
       // 'showbreak' may get in the way, need to get the last column of
       // the previous character.
@@ -8204,7 +8202,13 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       dec_cursor();
       getvcol(curwin, &curwin->w_cursor, NULL, NULL, &want_vcol);
       inc_cursor();
-      want_vcol = (want_vcol / ts) * ts;
+      if (p_sta && in_indent) {
+        want_vcol = (want_vcol / curbuf->b_p_sw) * curbuf->b_p_sw;
+      } else {
+        want_vcol = tabstop_start(want_vcol,
+                                  curbuf->b_p_sts,
+                                  curbuf->b_p_vsts_array);
+      }
 
       // delete characters until we are at or before want_vcol
       while (vcol > want_vcol
@@ -8669,10 +8673,19 @@ static bool ins_tab(void)
     can_cindent = false;
   }
 
-  // When nothing special, insert TAB like a normal character
+  // When nothing special, insert TAB like a normal character.
   if (!curbuf->b_p_et
-      && !(p_sta && ind && curbuf->b_p_ts != get_sw_value(curbuf))
-      && get_sts_value() == 0) {
+      && !(
+          p_sta
+          && ind
+          // These five lines mean 'tabstop' != 'shiftwidth'
+          && ((tabstop_count(curbuf->b_p_vts_array) > 1)
+              || (tabstop_count(curbuf->b_p_vts_array) == 1
+                  && tabstop_first(curbuf->b_p_vts_array)
+                  != get_sw_value(curbuf))
+              || (tabstop_count(curbuf->b_p_vts_array) == 0
+                  && curbuf->b_p_ts != get_sw_value(curbuf))))
+      && tabstop_count(curbuf->b_p_vsts_array) == 0 && get_sts_value() == 0) {
     return true;
   }
 
@@ -8686,15 +8699,21 @@ static bool ins_tab(void)
   can_si_back = false;
   AppendToRedobuff("\t");
 
-  if (p_sta && ind) {  // insert tab in indent, use "shiftwidth"
-    temp = get_sw_value(curbuf);
-  } else if (curbuf->b_p_sts != 0) {  // use "softtabstop" when set
-    temp = get_sts_value();
-  } else {  // otherwise use "tabstop"
-    temp = (int)curbuf->b_p_ts;
+  if (p_sta && ind) {  // insert tab in indent, use 'shiftwidth'
+    temp = (int)curbuf->b_p_sw;
+    temp -= get_nolist_virtcol() % temp;
+  } else if (tabstop_count(curbuf->b_p_vsts_array) > 0
+             || curbuf->b_p_sts > 0) {
+    // use 'softtabstop' when set
+    temp = tabstop_padding(get_nolist_virtcol(),
+                           curbuf->b_p_sts,
+                           curbuf->b_p_vsts_array);
+  } else {
+    // otherwise use 'tabstop'
+    temp = tabstop_padding(get_nolist_virtcol(),
+                           curbuf->b_p_ts,
+                           curbuf->b_p_vts_array);
   }
-
-  temp -= get_nolist_virtcol() % temp;
 
   /*
    * Insert the first space with ins_char().	It will delete one char in
@@ -8716,7 +8735,9 @@ static bool ins_tab(void)
   /*
    * When 'expandtab' not set: Replace spaces by TABs where possible.
    */
-  if (!curbuf->b_p_et && (get_sts_value() || (p_sta && ind))) {
+  if (!curbuf->b_p_et && (tabstop_count(curbuf->b_p_vsts_array) > 0
+                          || get_sts_value() > 0
+                          || (p_sta && ind))) {
     char_u          *ptr;
     char_u          *saved_line = NULL;         // init for GCC
     pos_T pos;

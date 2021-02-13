@@ -1758,7 +1758,9 @@ void msg_prt_line(char_u *s, int list)
       c = *s++;
       if (c == TAB && (!list || curwin->w_p_lcs_chars.tab1)) {
         // tab amount depends on current column
-        n_extra = curbuf->b_p_ts - col % curbuf->b_p_ts - 1;
+        n_extra = tabstop_padding(col,
+                                  curbuf->b_p_ts,
+                                  curbuf->b_p_vts_array) - 1;
         if (!list) {
           c = ' ';
           c_extra = ' ';

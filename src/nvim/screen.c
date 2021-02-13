@@ -3508,8 +3508,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             vcol_adjusted = vcol - MB_CHARLEN(p_sbr);
           }
           // tab amount depends on current column
-          tab_len = (int)wp->w_buffer->b_p_ts
-                    - vcol_adjusted % (int)wp->w_buffer->b_p_ts - 1;
+          tab_len = tabstop_padding(vcol_adjusted,
+                                    wp->w_buffer->b_p_ts,
+                                    wp->w_buffer->b_p_vts_array) - 1;
 
           if (!wp->w_p_lbr || !wp->w_p_list) {
             n_extra = tab_len;

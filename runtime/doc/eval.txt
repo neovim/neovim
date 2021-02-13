@@ -7915,6 +7915,11 @@ shiftwidth()						*shiftwidth()*
 			endif
 <		And then use s:sw() instead of &sw.
 
+		When there is one argument {col} this is used as column number
+		for which to return the 'shiftwidth' value. This matters for the
+		'vartabstop' feature. If no {col} argument is given, column 1
+		will be assumed.
+
 sign_define({name} [, {dict}])				*sign_define()*
 		Define a new sign named {name} or modify the attributes of an
 		existing sign.  This is similar to the |:sign-define| command.
