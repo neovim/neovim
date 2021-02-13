@@ -51,7 +51,7 @@ function! man#open_page(count, mods, ...) abort
 
   let [l:buf, l:save_tfu] = [bufnr(), &tagfunc]
   try
-    set tagfunc=man#goto_tag
+    setlocal tagfunc=man#goto_tag
     let l:target = l:name . '(' . l:sect . ')'
     if a:mods !~# 'tab' && s:find_man()
       execute 'silent keepalt tag' l:target
