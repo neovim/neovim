@@ -2324,7 +2324,9 @@ int do_ecmd(
       buf = buflist_findnr(fnum);
     } else {
       if (flags & (ECMD_ADDBUF | ECMD_ALTBUF)) {
-        linenr_T tlnum = 1L;
+        // Default the line number to zero to avoid that a wininfo item
+        // is added for the current window.
+        linenr_T tlnum = 0;
 
         if (command != NULL) {
           tlnum = atol((char *)command);
