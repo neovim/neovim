@@ -2424,6 +2424,23 @@ nvim_win_get_width({window})                            *nvim_win_get_width()*
                 Return: ~
                     Width as a count of columns
 
+nvim_win_get_buftext_offset({window})           *nvim_win_get_buftext_offset()*
+                Gets the window-space start offset of the buffer text
+
+                Returns the window-space offset at which the text from the
+                buffer start in the given window. This takes into account the
+                number / relative-number columns’ widths as long as the sign
+                columns’ widths.
+
+                The behavior is the same should you be using 'wrap' or
+                'nowrap'.
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
+
+                Return: ~
+                    Offset as a count of columns
+
 nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                 Checks if a window is valid
 

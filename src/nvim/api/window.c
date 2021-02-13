@@ -236,6 +236,34 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   try_end(err);
 }
 
+/// Gets the window-space start offset of the buffer text
+///
+/// @param window   Window handle, or 0 for current window
+/// @param[out] err Error details, if any
+/// @return Offset as a count of columns
+Integer nvim_win_get_buftext_offset(Window window, Error *err)
+  FUNC_API_SINCE(8)
+{
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return 0;
+  }
+
+  Integer left_side_width = win->w_nrwidth;
+
+  // if w_nrwidth is non-zero, add 1 for the extra space
+  if (left_side_width > 0) {
+    left_side_width++;
+  }
+
+  left_side_width += win_signcol_count(win) * win_signcol_width(win);
+
+  // we add 1 to get the offset of the beginning of the buffer text in
+  // the window
+  return left_side_width + 1;
+}
+
 /// Gets a window-scoped (w:) variable
 ///
 /// @param window   Window handle, or 0 for current window
