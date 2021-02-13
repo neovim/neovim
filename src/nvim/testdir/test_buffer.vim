@@ -13,11 +13,11 @@ endfunc
 
 func Test_badd_options()
   new SomeNewBuffer
-  setlocal cole=3
+  setlocal numberwidth=3
   wincmd p
   badd SomeNewBuffer
   new SomeNewBuffer
-  call assert_equal(3, &cole)
+  call assert_equal(3, &numberwidth)
   close
   close
   bwipe! SomeNewBuffer
