@@ -2309,6 +2309,10 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   *num_file = 0;                    // return values in case of FAIL
   *file = NULL;
 
+  if ((options & BUF_DIFF_FILTER) && !curwin->w_p_diff) {
+    return FAIL;
+  }
+
   // Make a copy of "pat" and change "^" to "\(^\|[\/]\)".
   if (*pat == '^') {
     patc = xmalloc(STRLEN(pat) + 11);
@@ -2348,9 +2352,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
         if (options & BUF_DIFF_FILTER) {
           // Skip buffers not suitable for
           // :diffget or :diffput completion.
-          if (buf == curbuf
-              || !diff_mode_buf(curbuf)
-              || !diff_mode_buf(buf)) {
+          if (buf == curbuf || !diff_mode_buf(buf)) {
             continue;
           }
         }
