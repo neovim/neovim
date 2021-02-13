@@ -4454,6 +4454,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		command		Ex command (and arguments)
 		compiler	compilers
 		cscope		|:cscope| suboptions
+		diff_buffer     |:diffget| and |:diffput| completion
 		dir		directory names
 		environment	environment variable names
 		event		autocommand events

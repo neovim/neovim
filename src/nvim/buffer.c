@@ -2345,6 +2345,15 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
         if (!buf->b_p_bl) {             // skip unlisted buffers
           continue;
         }
+        if (options & BUF_DIFF_FILTER) {
+          // Skip buffers not suitable for
+          // :diffget or :diffput completion.
+          if (buf == curbuf
+              || !diff_mode_buf(curbuf)
+              || !diff_mode_buf(buf)) {
+            continue;
+          }
+        }
         p = buflist_match(&regmatch, buf, p_wic);
         if (p != NULL) {
           if (round == 1) {

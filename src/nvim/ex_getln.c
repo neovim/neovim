@@ -5084,9 +5084,13 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_BUFFERS)
     return ExpandBufnames(pat, num_file, file, options);
+  if (xp->xp_context == EXPAND_DIFF_BUFFERS) {
+    return ExpandBufnames(pat, num_file, file, options | BUF_DIFF_FILTER);
+  }
   if (xp->xp_context == EXPAND_TAGS
-      || xp->xp_context == EXPAND_TAGS_LISTFILES)
+      || xp->xp_context == EXPAND_TAGS_LISTFILES) {
     return expand_tags(xp->xp_context == EXPAND_TAGS, pat, num_file, file);
+  }
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = { "colors", NULL };
     return ExpandRTDir(pat, DIP_START + DIP_OPT, num_file, file, directories);

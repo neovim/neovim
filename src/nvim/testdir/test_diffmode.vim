@@ -242,6 +242,46 @@ func Test_diffput_two()
   bwipe! b
 endfunc
 
+func Test_diffget_diffput_completion()
+  new Xdiff1 | diffthis
+  new Xdiff2 | diffthis
+  new Xdiff3 | diffthis
+  new Xdiff4
+
+  " :diffput and :diffget completes names of buffers which
+  " are in diff mode and which are different then current buffer.
+  b Xdiff1
+  call feedkeys(":diffput \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffput Xdiff2 Xdiff3', @:)
+  call feedkeys(":diffget \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffget Xdiff2 Xdiff3', @:)
+  call assert_equal(['Xdiff2', 'Xdiff3'], getcompletion('', 'diff_buffer'))
+
+  b Xdiff2
+  call feedkeys(":diffput \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffput Xdiff1 Xdiff3', @:)
+  call feedkeys(":diffget \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffget Xdiff1 Xdiff3', @:)
+  call assert_equal(['Xdiff1', 'Xdiff3'], getcompletion('', 'diff_buffer'))
+
+  b Xdiff3
+  call feedkeys(":diffput \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffput Xdiff1 Xdiff2', @:)
+  call feedkeys(":diffget \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffget Xdiff1 Xdiff2', @:)
+  call assert_equal(['Xdiff1', 'Xdiff2'], getcompletion('', 'diff_buffer'))
+
+  " No completion when in Xdiff4, it's not in diff mode.
+  b Xdiff4
+  call feedkeys(":diffput \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffput ', @:)
+  call feedkeys(":diffget \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"diffget ', @:)
+  call assert_equal([], getcompletion('', 'diff_buffer'))
+
+  %bwipe
+endfunc
+
 func Test_dp_do_buffer()
   e! one
   let bn1=bufnr('%')
