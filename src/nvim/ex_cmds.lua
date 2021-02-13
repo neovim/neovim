@@ -640,6 +640,12 @@ module.cmds = {
     func='ex_copen',
   },
   {
+    command='cload',
+    flags=bit.bor(TRLBAR),
+    addr_type='ADDR_NONE',
+    func='ex_cload',
+  },
+  {
     command='cprevious',
     flags=bit.bor(RANGE, COUNT, TRLBAR, BANG),
     addr_type='ADDR_UNSIGNED',
@@ -1576,6 +1582,12 @@ module.cmds = {
     flags=bit.bor(RANGE, COUNT, TRLBAR),
     addr_type='ADDR_OTHER',
     func='ex_copen',
+  },
+  {
+    command='lload',
+    flags=bit.bor(TRLBAR),
+    addr_type='ADDR_NONE',
+    func='ex_cload',
   },
   {
     command='lprevious',

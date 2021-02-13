@@ -3722,6 +3722,64 @@ void ex_copen(exarg_T *eap)
   update_topline(curwin);             // scroll to show the line
 }
 
+/// ":cload": load a buffer that shows the list of errors.
+/// ":lload": load a buffer that shows the location list.
+void ex_cload(exarg_T *eap)
+{
+  qf_info_T   *qi;
+  qf_list_T   *qfl;
+  int lnum;
+
+  if ((qi = qf_cmd_get_stack(eap, true)) == NULL) {
+    return;
+  }
+
+  incr_quickfix_busy();
+  reset_VIsual_and_resel();  // stop Visual mode
+
+  RESET_BINDING(curwin);
+  const buf_T *const qf_buf = qf_find_buf(qi);
+  if (qf_buf != NULL) {
+    // Use the existing quickfix buffer
+    if (do_ecmd(qf_buf->b_fnum, NULL, NULL, NULL, ECMD_ONE,
+                ECMD_HIDE + ECMD_OLDBUF, curwin) == FAIL) {
+      ILOG("here");
+      decr_quickfix_busy();
+      return;
+    }
+  } else {
+    // Create a new quickfix buffer
+    if (do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, curwin) == FAIL) {
+      ILOG("there");
+      decr_quickfix_busy();
+      return;
+    }
+  }
+
+  // Set the options for the quickfix buffer/window (if not already done)
+  // Do this even if the quickfix buffer was already present, as an autocmd
+  // might have previously deleted (:bdelete) the quickfix buffer.
+  if (!bt_quickfix(curbuf)) {
+    qf_set_cwindow_options();
+  }
+
+  qfl = qf_get_curlist(qi);
+  qf_set_title_var(qfl);
+  // Save the current index here, as updating the quickfix buffer may free
+  // the quickfix list
+  lnum = qfl->qf_index;
+
+  // Fill the buffer with the quickfix list.
+  qf_fill_buffer(qfl, curbuf, NULL);
+
+  decr_quickfix_busy();
+
+  curwin->w_cursor.lnum = lnum;
+  curwin->w_cursor.col = 0;
+  check_cursor();
+  update_topline(curwin);             // scroll to show the line
+}
+
 // Move the cursor in the quickfix window to "lnum".
 static void qf_win_goto(win_T *win, linenr_T lnum)
 {
