@@ -3048,6 +3048,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             && (wp->w_p_list && lcs_eol_one == -1)) {
           search_attr = 0;
         }
+
+        // Do not allow a conceal over EOL otherwise EOL will be missed
+        // and bad things happen.
+        if (*ptr == NUL) {
+          has_match_conc = 0;
+        }
       }
 
       if (diff_hlf != (hlf_T)0) {
