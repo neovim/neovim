@@ -31,6 +31,8 @@ func Test_messages()
   finally
     let &more = oldmore
   endtry
+
+  call assert_fails('message 1', 'E474:')
 endfunc
 
  " Patch 7.4.1696 defined the "clearmode()" command for clearing the mode

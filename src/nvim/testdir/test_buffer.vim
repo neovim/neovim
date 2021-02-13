@@ -1,5 +1,16 @@
 " Tests for Vim buffer
 
+func Test_buffer_error()
+  new foo1
+  new foo2
+
+  call assert_fails('buffer foo', 'E93:')
+  call assert_fails('buffer bar', 'E94:')
+  call assert_fails('buffer 0', 'E939:')
+
+  %bwipe
+endfunc
+
 func Test_badd_options()
   new SomeNewBuffer
   setlocal cole=3
