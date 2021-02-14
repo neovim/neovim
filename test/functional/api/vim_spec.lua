@@ -115,6 +115,29 @@ describe('API', function()
       nvim('exec','autocmd BufAdd * :let x1 = "Hello"', false)
       nvim('command', 'new foo')
       eq('Hello', request('nvim_eval', 'g:x1'))
+
+      -- Script scope (s:)
+      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          func! s:avast_ye_hades(s) abort
+            return a:s.' '.s:pirate
+          endf
+          echo <sid>avast_ye_hades('ahoy!')
+        ]], true))
+
+      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          func! Avast_ye_hades(s) abort
+            return a:s.' '.s:pirate
+          endf
+          echo nvim_exec('echo Avast_ye_hades(''ahoy!'')', 1)
+        ]], true))
+
+      eq('Vim(call):E5555: API call: Vim(echo):E121: Undefined variable: s:pirate',
+        pcall_err(request, 'nvim_exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          call nvim_exec('echo s:pirate', 1)
+        ]], false))
     end)
 
     it('non-ASCII input', function()
