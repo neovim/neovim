@@ -6282,14 +6282,14 @@ int parse_compl_arg(const char_u *value, int vallen, int *complp,
   return OK;
 }
 
-int cmdcomplete_str_to_type(char_u *complete_str)
+int cmdcomplete_str_to_type(const char *complete_str)
 {
     for (int i = 0; i < (int)(ARRAY_SIZE(command_complete)); i++) {
       char *cmd_compl = get_command_complete(i);
       if (cmd_compl == NULL) {
         continue;
       }
-      if (STRCMP(complete_str, command_complete[i]) == 0) {
+      if (strcmp(complete_str, command_complete[i]) == 0) {
         return i;
       }
     }
