@@ -90,7 +90,7 @@ g CTRL-G		Prints the current position of the cursor in five
 :buffers
 :files
 :ls			List all the currently known file names.  See
-			'windows.txt' |:files| |:buffers| |:ls|.
+			|windows.txt| |:files| |:buffers| |:ls|.
 
 Vim will remember the full path name of a file name that you enter.  In most
 cases when the file name is displayed only the name you typed is shown, but
@@ -1190,7 +1190,7 @@ The syntax is best shown via some examples: >
 <		Open the browser in the C:/bar directory, with the current
 		buffer filename as default, and save the buffer under the
 		filename chosen.
-Also see the |'browsedir'| option.
+Also see the 'browsedir' option.
 For versions of Vim where browsing is not supported, the command is executed
 unmodified.
 
