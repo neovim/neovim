@@ -580,6 +580,10 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
     uep->ue_array = NULL;
   uep->ue_next = curbuf->b_u_newhead->uh_entry;
   curbuf->b_u_newhead->uh_entry = uep;
+  if (reload) {
+    // buffer was reloaded, notify text change subscribers
+    curbuf->b_u_newhead->uh_flags |= UH_RELOAD;
+  }
   curbuf->b_u_synced = false;
   undo_undoes = false;
 
@@ -2157,8 +2161,9 @@ static void u_undoredo(int undo, bool do_buf_event)
   u_check(FALSE);
 #endif
   old_flags = curhead->uh_flags;
-  new_flags = (curbuf->b_changed ? UH_CHANGED : 0) +
-              ((curbuf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0);
+  new_flags = (curbuf->b_changed ? UH_CHANGED : 0)
+              | ((curbuf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0)
+              | (old_flags & UH_RELOAD);
   setpcmark();
 
   /*
@@ -2298,6 +2303,11 @@ static void u_undoredo(int undo, bool do_buf_event)
       undo_info = kv_A(curhead->uh_extmark, i);
       extmark_apply_undo(undo_info, undo);
     }
+  }
+  if (curhead->uh_flags & UH_RELOAD) {
+    // TODO(bfredl): this is a bit crude. When 'undoreload' is used we
+    // should have all info to send a buffer-reloaing on_lines/on_bytes event
+    buf_updates_unload(curbuf, true);
   }
   // finish Adjusting extmarks
 

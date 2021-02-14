@@ -635,6 +635,27 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
 
       eq({'new line 1 new line 2', 'new line 3'}, meths.buf_get_lines(0, 0, -1, true))
+
+      -- check we can undo and redo a reload event.
+      feed 'u'
+      check_events {
+        { "test1", "bytes", 1, 8, 0, 10, 10, 0, 1, 1, 1, 0, 1 };
+      }
+
+      feed 'u'
+      check_events {
+        { "test1", "reload", 1 };
+      }
+
+      feed '<c-r>'
+      check_events {
+        { "test1", "reload", 1 };
+      }
+
+      feed '<c-r>'
+      check_events {
+        { "test1", "bytes", 1, 14, 0, 10, 10, 1, 0, 1, 0, 1, 1 };
+      }
     end)
 
     teardown(function()
