@@ -654,7 +654,9 @@ func s:InstallCommands()
   command Winbar call s:InstallWinbar()
 
   " TODO: can the K mapping be restored?
-  nnoremap K :Evaluate<CR>
+  if !exists('g:termdebug_map_K') || g:termdebug_map_K
+    nnoremap K :Evaluate<CR>
+  endif
 
   let &cpo = save_cpo
 endfunc
@@ -691,7 +693,9 @@ func s:DeleteCommands()
   delcommand Source
   delcommand Winbar
 
-  nunmap K
+  if !exists('g:termdebug_map_K') || g:termdebug_map_K
+    nunmap K
+  endif
 
   exe 'sign unplace ' . s:pc_id
   for [id, entries] in items(s:breakpoints)
