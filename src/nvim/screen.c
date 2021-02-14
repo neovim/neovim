@@ -2082,7 +2082,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int line_attr_lowprio = 0;            // low-priority attribute for the line
   matchitem_T *cur;                     // points to the match list
   match_T     *shl;                     // points to search_hl or a match
-  int shl_flag;                         // flag to indicate whether search_hl
+  bool shl_flag;                        // flag to indicate whether search_hl
                                         // has been processed or not
   bool prevcol_hl_flag;                 // flag to indicate whether prevcol
                                         // equals startcol of search_hl or one
@@ -2950,16 +2950,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
          */
         v = (long)(ptr - line);
         cur = wp->w_match_head;
-        shl_flag = FALSE;
-        while (cur != NULL || shl_flag == FALSE) {
-          if (shl_flag == FALSE
-              && ((cur != NULL
-                   && cur->priority > SEARCH_HL_PRIORITY)
-                  || cur == NULL)) {
+        shl_flag = false;
+        while (cur != NULL || !shl_flag) {
+          if (!shl_flag
+              && (cur == NULL || cur->priority > SEARCH_HL_PRIORITY)) {
             shl = &search_hl;
-            shl_flag = TRUE;
-          } else
+            shl_flag = true;
+          } else {
             shl = &cur->hl;
+          }
           if (cur != NULL) {
             cur->pos.cur = 0;
           }
@@ -2984,7 +2983,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                 has_match_conc = v == (long)shl->startcol ? 2 : 1;
                 match_conc = cur->conceal_char;
               } else {
-                has_match_conc = match_conc = 0;
+                has_match_conc = 0;
               }
             } else if (v == (long)shl->endcol) {
               shl->attr_cur = 0;
@@ -3026,16 +3025,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         search_attr_from_match = false;
         search_attr = search_hl.attr_cur;
         cur = wp->w_match_head;
-        shl_flag = FALSE;
-        while (cur != NULL || shl_flag == FALSE) {
-          if (shl_flag == FALSE
-              && ((cur != NULL
-                   && cur->priority > SEARCH_HL_PRIORITY)
-                  || cur == NULL)) {
+        shl_flag = false;
+        while (cur != NULL || !shl_flag) {
+          if (!shl_flag
+              && (cur == NULL || cur->priority > SEARCH_HL_PRIORITY)) {
             shl = &search_hl;
-            shl_flag = TRUE;
-          } else
+            shl_flag = true;
+          } else {
             shl = &cur->hl;
+          }
           if (shl->attr_cur != 0) {
             search_attr = shl->attr_cur;
             search_attr_from_match = shl != &search_hl;
@@ -3047,6 +3045,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         if (*ptr == NUL
             && (wp->w_p_list && lcs_eol_one == -1)) {
           search_attr = 0;
+        }
+
+        // Do not allow a conceal over EOL otherwise EOL will be missed
+        // and bad things happen.
+        if (*ptr == NUL) {
+          has_match_conc = 0;
         }
       }
 
@@ -3672,12 +3676,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
         char_attr = conceal_attr;
         if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
-            && (syn_get_sub_char() != NUL || match_conc
+            && (syn_get_sub_char() != NUL
+                || (has_match_conc && match_conc)
                 || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
           // First time at this concealed item: display one
           // character.
-          if (match_conc) {
+          if (has_match_conc && match_conc) {
             c = match_conc;
           } else if (syn_get_sub_char() != NUL) {
             c = syn_get_sub_char();
@@ -3837,16 +3842,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // 'search_hl' and the match list.
           char_attr = search_hl.attr;
           cur = wp->w_match_head;
-          shl_flag = FALSE;
-          while (cur != NULL || shl_flag == FALSE) {
-            if (shl_flag == FALSE
-                && ((cur != NULL
-                     && cur->priority > SEARCH_HL_PRIORITY)
-                    || cur == NULL)) {
+          shl_flag = false;
+          while (cur != NULL || !shl_flag) {
+            if (!shl_flag
+                && (cur == NULL || cur->priority > SEARCH_HL_PRIORITY)) {
               shl = &search_hl;
-              shl_flag = TRUE;
-            } else
+              shl_flag = true;
+            } else {
               shl = &cur->hl;
+            }
             if ((ptr - line) - 1 == (long)shl->startcol
                 && (shl == &search_hl || !shl->is_addpos)) {
               char_attr = shl->attr;

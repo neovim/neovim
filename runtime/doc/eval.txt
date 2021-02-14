@@ -4449,11 +4449,12 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		augroup		autocmd groups
 		buffer		buffer names
 		behave		:behave suboptions
-		cmdline		|cmdline-completion|
+		cmdline		|cmdline-completion| result
 		color		color schemes
 		command		Ex command (and arguments)
 		compiler	compilers
 		cscope		|:cscope| suboptions
+		diff_buffer     |:diffget| and |:diffput| completion
 		dir		directory names
 		environment	environment variable names
 		event		autocommand events
@@ -4481,14 +4482,19 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		user		user names
 		var		user variables
 
-		If {pat} is an empty string then all matches are returned.
-		Otherwise only items matching {pat} are returned. See
-		|wildcards| for the use of special characters in {pat}.
+		If {pat} is an empty string, then all the matches are
+		returned.  Otherwise only items matching {pat} are returned.
+		See |wildcards| for the use of special characters in {pat}.
 
 		If the optional {filtered} flag is set to 1, then 'wildignore'
 		is applied to filter the results.  Otherwise all the matches
 		are returned. The 'wildignorecase' option always applies.
 
+		If {type} is "cmdline", then the |cmdline-completion| result is
+		returned.  For example, to complete the possible values after
+		a ":call" command: >
+			echo getcompletion('call ', 'cmdline')
+<
 		If there are no matches, an empty list is returned.  An
 		invalid value for {type} produces an error.
 

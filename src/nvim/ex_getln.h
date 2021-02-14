@@ -32,6 +32,7 @@
 #define WILD_IGNORE_COMPLETESLASH   0x400
 #define WILD_NOERROR            0x800  // sets EW_NOERROR
 #define WILD_BUFLASTUSED        0x1000
+#define BUF_DIFF_FILTER         0x2000
 
 /// Present history tables
 typedef enum {

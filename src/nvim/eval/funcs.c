@@ -3134,6 +3134,12 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int           options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
           | WILD_NO_BEEP;
 
+  if (argvars[1].v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2), "type must be a string");
+    return;
+  }
+  const char *const type = tv_get_string(&argvars[1]);
+
   if (argvars[2].v_type != VAR_UNKNOWN) {
     filtered = (bool)tv_get_number_chk(&argvars[2], NULL);
   }
@@ -3147,12 +3153,12 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     options |= WILD_KEEP_ALL;
   }
 
-  if (argvars[0].v_type != VAR_STRING || argvars[1].v_type != VAR_STRING) {
+  if (argvars[0].v_type != VAR_STRING) {
     EMSG(_(e_invarg));
     return;
   }
 
-  if (strcmp(tv_get_string(&argvars[1]), "cmdline") == 0) {
+  if (strcmp(type, "cmdline") == 0) {
     set_one_cmd_context(&xpc, tv_get_string(&argvars[0]));
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
     goto theend;
@@ -3161,10 +3167,9 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   ExpandInit(&xpc);
   xpc.xp_pattern = (char_u *)tv_get_string(&argvars[0]);
   xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
-  xpc.xp_context = cmdcomplete_str_to_type(
-      (char_u *)tv_get_string(&argvars[1]));
+  xpc.xp_context = cmdcomplete_str_to_type(type);
   if (xpc.xp_context == EXPAND_NOTHING) {
-    EMSG2(_(e_invarg2), argvars[1].vval.v_string);
+    EMSG2(_(e_invarg2), type);
     return;
   }
 

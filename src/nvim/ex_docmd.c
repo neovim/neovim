@@ -3512,6 +3512,13 @@ const char * set_one_cmd_context(
     xp->xp_context = EXPAND_BUFFERS;
     xp->xp_pattern = (char_u *)arg;
     break;
+  case CMD_diffget:
+  case CMD_diffput:
+    // If current buffer is in diff mode, complete buffer names
+    // which are in diff mode, and different than current buffer.
+    xp->xp_context = EXPAND_DIFF_BUFFERS;
+    xp->xp_pattern = (char_u *)arg;
+    break;
   case CMD_USER:
   case CMD_USER_BUF:
     if (context != EXPAND_NOTHING) {
@@ -5174,6 +5181,7 @@ static const char *command_complete[] =
   [EXPAND_CSCOPE] = "cscope",
   [EXPAND_USER_DEFINED] = "custom",
   [EXPAND_USER_LIST] = "customlist",
+  [EXPAND_DIFF_BUFFERS] = "diff_buffer",
   [EXPAND_DIRECTORIES] = "dir",
   [EXPAND_ENV_VARS] = "environment",
   [EXPAND_EVENTS] = "event",
@@ -6274,14 +6282,14 @@ int parse_compl_arg(const char_u *value, int vallen, int *complp,
   return OK;
 }
 
-int cmdcomplete_str_to_type(char_u *complete_str)
+int cmdcomplete_str_to_type(const char *complete_str)
 {
     for (int i = 0; i < (int)(ARRAY_SIZE(command_complete)); i++) {
       char *cmd_compl = get_command_complete(i);
       if (cmd_compl == NULL) {
         continue;
       }
-      if (STRCMP(complete_str, command_complete[i]) == 0) {
+      if (strcmp(complete_str, command_complete[i]) == 0) {
         return i;
       }
     }

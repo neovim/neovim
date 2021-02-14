@@ -2324,15 +2324,19 @@ int do_ecmd(
       buf = buflist_findnr(fnum);
     } else {
       if (flags & (ECMD_ADDBUF | ECMD_ALTBUF)) {
-        linenr_T tlnum = 1L;
+        // Default the line number to zero to avoid that a wininfo item
+        // is added for the current window.
+        linenr_T tlnum = 0;
 
         if (command != NULL) {
           tlnum = atol((char *)command);
           if (tlnum <= 0)
             tlnum = 1L;
         }
+        // Add BLN_NOCURWIN to avoid a new wininfo items are associated
+        // with the current window.
         const buf_T *const newbuf
-            = buflist_new(ffname, sfname, tlnum, BLN_LISTED);
+            = buflist_new(ffname, sfname, tlnum, BLN_LISTED | BLN_NOCURWIN);
         if (newbuf != NULL && (flags & ECMD_ALTBUF)) {
           curwin->w_alt_fnum = newbuf->b_fnum;
         }

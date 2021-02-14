@@ -399,7 +399,11 @@ function Test_printf_errors()
   call assert_fails('echo printf("%d", [])', 'E745:')
   call assert_fails('echo printf("%d", 1, 2)', 'E767:')
   call assert_fails('echo printf("%*d", 1)', 'E766:')
-  call assert_fails('echo printf("%d", 1.2)', 'E805:')
+  call assert_fails('echo printf("%s")', 'E766:')
+  if has('float')
+    call assert_fails('echo printf("%d", 1.2)', 'E805:')
+    call assert_fails('echo printf("%f")')
+  endif
 endfunc
 
 function Test_max_min_errors()

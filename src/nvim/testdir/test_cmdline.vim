@@ -442,6 +442,7 @@ func Test_getcompletion()
   set tags&
 
   call assert_fails('call getcompletion("", "burp")', 'E475:')
+  call assert_fails('call getcompletion("abc", [])', 'E475:')
 endfunc
 
 func Test_shellcmd_completion()
