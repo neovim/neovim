@@ -2744,9 +2744,8 @@ your browsing preferences.  (see also: |netrw-settings|)
   *g:netrw_home*		The home directory for where bookmarks and
 				history are saved (as .netrwbook and
 				.netrwhist).
-				Netrw uses |expand()|on the string.
-				 default: the first directory on the
-				         |'runtimepath'|
+				Netrw uses |expand()| on the string.
+				 default: stdpath('data') (see |stdpath()|)
 
   *g:netrw_keepdir*		=1 (default) keep current directory immune from
 				   the browsing directory.
