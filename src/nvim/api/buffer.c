@@ -1606,7 +1606,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
 
   Decoration *decor = NULL;
   
-  if (kv_size(virt_text) || decor->priority != DECOR_PRIORITY_BASE) {
+  if (kv_size(virt_text) || priority != DECOR_PRIORITY_BASE) {
     decor = xcalloc(1, sizeof(*decor));
     decor->hl_id = hl_id;
     decor->virt_text = virt_text;
