@@ -3414,7 +3414,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         }
 
         if (has_decor && v > 0) {
-          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1,
+          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1, off,
                                               &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
@@ -3742,15 +3742,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         is_concealing = FALSE;
       }
 
-<<<<<<< HEAD
       if (n_skip > 0 && did_decrement_ptr) {
         // not showing the '>', put pointer back to avoid getting stuck
         ptr++;
       }
     }  // end of printing from buffer content
-=======
-    }
->>>>>>> eb1f6f074 (anticonceal)
 
 
     /* In the cursor line and we may be concealing characters: correct
@@ -4051,6 +4047,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           col += n;
         }
       }
+
+      draw_virt_text(buf, &col);
       grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       row++;
@@ -4343,6 +4341,21 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   xfree(p_extra_free);
   xfree(err_text);
   return row;
+}
+
+void draw_virt_text(buf_T *buf, int *end_col)
+{
+  DecorState *state = &decor_state;
+  for (size_t i = 0; i < kv_size(state->active); i++) {
+    HlRange item = kv_A(state->active, i);
+    if (item.start_row == state->row && item.virt_text
+        && item.virt_text_style == kVTInline
+        && item.virt_col >= 0) {
+        linebuf_char[item.virt_col][0] = 'q';
+        linebuf_attr[item.virt_col] = HL_ATTR(HLF_MSG);
+        item.virt_col = -1;
+    }
+  }
 }
 
 /// Determine if dedicated window grid should be used or the default_grid
