@@ -239,12 +239,16 @@ the "h" flag in 'guioptions' is set, the cursor moves to the longest visible
 line if the cursor line is about to be scrolled off the screen (similarly to
 how the horizontal scrollbar works).
 
-You can modify the default behavior by mapping the keys.  For example, to make
-the scroll wheel move one line or half a page in Normal mode: >
-   :map <ScrollWheelUp> <C-Y>
-   :map <S-ScrollWheelUp> <C-U>
-   :map <ScrollWheelDown> <C-E>
-   :map <S-ScrollWheelDown> <C-D>
-You can also use Alt and Ctrl modifiers.
+You can control the number of lines / columns to scroll by using the
+'mousescroll' option. You can also modify the default behavior by mapping
+the keys. For example, to scroll a page at a time in normal mode: >
+   :map <ScrollWheelUp> <C-B>
+   :map <ScrollWheelDown> <C-F>
+Scroll keys can also be combined with modifiers such as Shift, Ctrl, and Alt.
+
+When scrolling with a mouse, the window currently under the cursor is
+scrolled. This allows you to scroll inactive windows. Note that when scroll
+keys are remapped to keyboard keys, the active window is affected regardless
+of the current cursor position.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

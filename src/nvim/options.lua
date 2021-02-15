@@ -1806,6 +1806,13 @@ return {
       defaults={if_true={vi="extend"}}
     },
     {
+      full_name='mousescroll',
+      type='string', list='comma', scope={'global'},
+      vi_def=true,
+      varname='p_mousescroll',
+      defaults={if_true={vi="ver:3,hor:6"}}
+    },
+    {
       full_name='mouseshape', abbreviation='mouses',
       short_desc=N_("shape of the mouse pointer in different modes"),
       type='string', list='onecomma', scope={'global'},

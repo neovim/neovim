@@ -8386,11 +8386,11 @@ static void ins_mousescroll(int dir)
       || curwin != old_curwin
       ) {
     if (dir == MSCR_DOWN || dir == MSCR_UP) {
-      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))
-        scroll_redraw(dir,
-            (long)(curwin->w_botline - curwin->w_topline));
-      else
-        scroll_redraw(dir, 3L);
+      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
+        scroll_redraw(dir, (long)(curwin->w_botline - curwin->w_topline));
+      } else {
+        scroll_redraw(dir, p_mousescroll_vert);
+      }
     } else {
         mouse_scroll_horiz(dir);
     }

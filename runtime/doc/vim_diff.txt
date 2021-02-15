@@ -200,6 +200,7 @@ Options:
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
   'listchars'   local to window
+  'mousescroll' amount to scroll by when scrolling with a mouse
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns
