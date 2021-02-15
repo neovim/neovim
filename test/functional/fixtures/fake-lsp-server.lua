@@ -70,11 +70,11 @@ local function expect_notification(method, params, ...)
       ..., "expect_notification", "message")
 end
 
-local function expect_request(method, callback, ...)
+local function expect_request(method, handler, ...)
   local req = read_message()
   assert_eq(method, req.method,
       ..., "expect_request", "method")
-  local err, result = callback(req.params)
+  local err, result = handler(req.params)
   respond(req.id, err, result)
 end
 
