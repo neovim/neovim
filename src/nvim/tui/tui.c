@@ -684,8 +684,8 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  UCell *cell = grid->cells[row] + col;
-  while (next) {
+  UCell *cell = ugrid_get_cell(grid, row, col);
+  while (next && cell) {
     next--;
     if (attrs_differ(ui, cell->attr,
                      data->print_attr_id, ui->rgb)) {
@@ -1238,22 +1238,26 @@ static void tui_flush(UI *ui)
     assert(r.bot <= grid->height && r.right <= grid->width);
 
     for (int row = r.top; row < r.bot; row++) {
-      int clear_attr = grid->cells[row][r.right-1].attr;
-      int clear_col;
-      for (clear_col = r.right; clear_col > 0; clear_col--) {
-        UCell *cell = &grid->cells[row][clear_col-1];
-        if (!(cell->data[0] == ' ' && cell->data[1] == NUL
-              && cell->attr == clear_attr)) {
-          break;
+      UCell *tmp_cell = ugrid_get_cell(grid, row, r.right - 1);
+      if (tmp_cell) {
+        int clear_attr = tmp_cell->attr;
+        int clear_col;
+        for (clear_col = r.right; clear_col > 0; clear_col--) {
+          tmp_cell = ugrid_get_cell(grid, row, clear_col - 1);
+          if (!tmp_cell || !(tmp_cell->data[0] == ' '
+                             && tmp_cell->data[1] == NUL
+                             && tmp_cell->attr == clear_attr)) {
+            break;
+          }
         }
-      }
 
-      UGRID_FOREACH_CELL(grid, row, r.left, clear_col, {
-        cursor_goto(ui, row, curcol);
-        print_cell(ui, cell);
-      });
-      if (clear_col < r.right) {
-        clear_region(ui, row, row+1, clear_col, r.right, clear_attr);
+        UGRID_FOREACH_CELL(grid, row, r.left, clear_col, {
+          cursor_goto(ui, row, curcol);
+          print_cell(ui, cell);
+        });
+        if (clear_col < r.right) {
+          clear_region(ui, row, row+1, clear_col, r.right, clear_attr);
+        }
       }
     }
   }
@@ -1351,7 +1355,10 @@ static void tui_screenshot(UI *ui, String path)
   for (int i = 0; i < grid->height; i++) {
     cursor_goto(ui, i, 0);
     for (int j = 0; j < grid->width; j++) {
-      print_cell(ui, &grid->cells[i][j]);
+      UCell *cell = ugrid_get_cell(grid, i, j);
+      if (cell) {
+        print_cell(ui, cell);
+      }
     }
   }
   flush_buf(ui);
@@ -1386,9 +1393,12 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   for (Integer c = startcol; c < endcol; c++) {
-    memcpy(grid->cells[linerow][c].data, chunk[c-startcol], sizeof(schar_T));
-    assert((size_t)attrs[c-startcol] < kv_size(data->attrs));
-    grid->cells[linerow][c].attr = attrs[c-startcol];
+    UCell *cell = ugrid_get_cell(grid, (int)linerow, (int)c);
+    if (cell) {
+      memcpy(cell->data, chunk[c-startcol], sizeof(schar_T));
+      assert((size_t)attrs[c-startcol] < kv_size(data->attrs));
+      cell->attr = attrs[c-startcol];
+    }
   }
   UGRID_FOREACH_CELL(grid, (int)linerow, (int)startcol, (int)endcol, {
     cursor_goto(ui, (int)linerow, curcol);
@@ -1408,10 +1418,16 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
     // width and the line continuation is within the grid.
 
     if (endcol != grid->width) {
-      // Print the last char of the row, if we haven't already done so.
-      int size = grid->cells[linerow][grid->width - 1].data[0] == NUL ? 2 : 1;
-      cursor_goto(ui, (int)linerow, grid->width - size);
-      print_cell(ui, &grid->cells[linerow][grid->width - size]);
+      UCell *cell = ugrid_get_cell(grid, (int)linerow, grid->width - 1);
+      if (cell) {
+        // Print the last char of the row, if we haven't already done so.
+        int size = cell->data[0] == NUL ? 2 : 1;
+        cursor_goto(ui, (int)linerow, grid->width - size);
+        cell = ugrid_get_cell(grid, (int)linerow, grid->width - size);
+        if (cell) {
+          print_cell(ui, cell);
+        }
+      }
     }
 
     // Wrap the cursor over to the next line. The next line will be
