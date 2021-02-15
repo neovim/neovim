@@ -16,10 +16,7 @@ local validate = vim.validate
 local lsp = {
   protocol = protocol;
 
-  -- TODO(tjdevries): Add in the warning that `callbacks` is no longer supported.
-  -- util.warn_once("vim.lsp.callbacks is deprecated. Use vim.lsp.handlers instead.")
   handlers = default_handlers;
-  callbacks = default_handlers;
 
   buf = require'vim.lsp.buf';
   diagnostic = require'vim.lsp.diagnostic';
@@ -219,8 +216,6 @@ local function validate_client_config(config)
   }
   validate {
     root_dir        = { config.root_dir, is_dir, "directory" };
-    -- TODO(remove-callbacks)
-    callbacks       = { config.callbacks, "t", true };
     handlers        = { config.handlers, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
@@ -234,13 +229,6 @@ local function validate_client_config(config)
     offset_encoding = { config.offset_encoding, "s", true };
     flags           = { config.flags, "t", true };
   }
-
-  -- TODO(remove-callbacks)
-  if config.handlers and config.callbacks then
-    error(debug.traceback(
-      "Unable to configure LSP with both 'config.handlers' and 'config.callbacks'. Use 'config.handlers' exclusively."
-    ))
-  end
 
   local cmd, cmd_args = lsp._cmd_parts(config.cmd)
   local offset_encoding = valid_encodings.UTF16
@@ -473,8 +461,7 @@ function lsp.start_client(config)
 
   local client_id = next_client_id()
 
-  -- TODO(remove-callbacks)
-  local handlers = config.handlers or config.callbacks or {}
+  local handlers = config.handlers or {}
   local name = config.name or tostring(client_id)
   local log_prefix = string.format("LSP[%s]", name)
 
@@ -573,8 +560,6 @@ function lsp.start_client(config)
     offset_encoding = offset_encoding;
     config = config;
 
-    -- TODO(remove-callbacks)
-    callbacks = handlers;
     handlers = handlers;
     -- for $/progress report
     messages = { name = name, messages = {}, progress = {}, status = {} }

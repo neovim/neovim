@@ -41,7 +41,7 @@ local function fake_lsp_server_setup(test_name, timeout_ms)
         "-c", string.format("lua TIMEOUT = %d", timeout),
         "-c", "luafile "..fixture_filename,
       };
-      callbacks = setmetatable({}, {
+      handlers = setmetatable({}, {
         __index = function(t, method)
           return function(...)
             return vim.rpcrequest(1, 'callback', ...)
