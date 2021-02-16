@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 07
+*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 10
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -3512,7 +3512,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 			- Click "Add..."
 			- Set External Editor (adjust path as needed, include
 			  the quotes and !.! at the end):
-			    "c:\Program Files\Vim\vim70\gvim.exe" !.!
+			    "c:\Program Files\Vim\vim881\gvim.exe" !.!
 			- Check that the filetype in the box below is
 			  {asterisk}.{asterisk} (all files), or whatever types
 			  you want (cec: change {asterisk} to * ; I had to
@@ -3762,8 +3762,8 @@ by obtaining a copy of the latest (often developmental) netrw at:
 
 The <netrw.vim> script is typically installed on systems as something like:
 >
-	/usr/local/share/vim/vim7x/plugin/netrwPlugin.vim
-	/usr/local/share/vim/vim7x/autoload/netrw.vim
+	/usr/local/share/vim/vim8x/plugin/netrwPlugin.vim
+	/usr/local/share/vim/vim8x/autoload/netrw.vim
 		(see output of :echo &rtp)
 <
 which is loaded automatically at startup (assuming :set nocp).  If you
