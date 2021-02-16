@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 8.2.  Last change: 2020 Jan 14
+*pi_netrw.txt*  For Vim version 8.2.  Last change: 2020 Aug 15
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -3054,7 +3054,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				(see |netrw-c-tab|).
 
   *g:netrw_xstrlen*		Controls how netrw computes string lengths,
-				including multi-byte characters' string
+				including multibyte characters' string
 				length. (thanks to N Weibull, T Mechelynck)
 				=0: uses Vim's built-in strlen()
 				=1: number of codepoints (Latin a + combining
