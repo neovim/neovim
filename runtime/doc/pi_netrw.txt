@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 10
+*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 14
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -1184,7 +1184,7 @@ One may easily "bookmark" the currently browsed directory by using >
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's
-|'runtimepath'|; entries are kept in sorted order.
+'runtimepath'; entries are kept in sorted order.
 
 If there are marked files and/or directories, mb will add them to the bookmark
 list.
@@ -3512,7 +3512,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 			- Click "Add..."
 			- Set External Editor (adjust path as needed, include
 			  the quotes and !.! at the end):
-			    "c:\Program Files\Vim\vim881\gvim.exe" !.!
+			    "c:\Program Files\Vim\vim81\gvim.exe" !.!
 			- Check that the filetype in the box below is
 			  {asterisk}.{asterisk} (all files), or whatever types
 			  you want (cec: change {asterisk} to * ; I had to
