@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Jul 17
+*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 07
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -1184,7 +1184,7 @@ One may easily "bookmark" the currently browsed directory by using >
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's
-'runtimepath'; entries are kept in sorted order.
+|'runtimepath'|; entries are kept in sorted order.
 
 If there are marked files and/or directories, mb will add them to the bookmark
 list.
@@ -3842,6 +3842,8 @@ netrw:
 ==============================================================================
 12. History						*netrw-history* {{{1
 
+	v166:	Nov 06, 2019	* Removed a space from a nmap for "-"
+				* Numerous debugging statement changes
 	v163:	Dec 05, 2017	* (Cristi Balan) reported that a setting ('sel')
 				  was left changed
 				* (Holger Mitschke) reported a problem with
@@ -3852,6 +3854,8 @@ netrw:
 				* (Holger Mitschke) amended this help file
 				  with additional |g:netrw_special_syntax|
 				  items
+				* Prioritized wget over curl for
+				  g:netrw_http_cmd
 	v162:	Sep 19, 2016	* (haya14busa) pointed out two syntax errors
 				  with a patch; these are now fixed.
 		Oct 26, 2016	* I started using mate-terminal and found that
@@ -4285,4 +4289,4 @@ netrw:
 
 ==============================================================================
 Modelines: {{{1
- vim:tw=78:ts=8:noet:ft=help:norl:fdm=marker
+ vim:tw=78:ts=8:ft=help:norl:fdm=marker

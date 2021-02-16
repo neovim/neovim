@@ -1,7 +1,7 @@
 " Language   : Netrw Listing Syntax
 " Maintainer : Charles E. Campbell
-" Last change: Oct 31, 2016
-" Version    : 20	NOT RELEASED
+" Last change: Nov 07, 2019
+" Version    : 20
 " ---------------------------------------------------------------------
 if exists("b:current_syntax")
  finish
