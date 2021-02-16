@@ -244,6 +244,14 @@ describe('lua buffer event callbacks: on_lines', function()
     eq(1, meths.get_var('listener_cursor_line'))
   end)
 
+  it('has valid cursor position while deleting lines', function()
+    meths.buf_set_lines(0, 0, -1, true, { "line_1", "line_2", "line_3", "line_4"})
+    meths.win_set_cursor(0, {2, 0})
+    eq(2, meths.win_get_cursor(0)[1])
+    meths.buf_set_lines(0, 0, -1, true, { "line_1", "line_2", "line_3"})
+    eq(2, meths.win_get_cursor(0)[1])
+  end)
+
   it('does not SEGFAULT when calling win_findbuf in on_detach', function()
 
     exec_lua[[

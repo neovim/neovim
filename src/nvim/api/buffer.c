@@ -1930,7 +1930,6 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
       curwin->w_cursor.lnum += extra;
       check_cursor_col();
     } else if (extra < 0) {
-      curwin->w_cursor.lnum = lo;
       check_cursor();
     } else {
       check_cursor_col();
