@@ -1,7 +1,7 @@
 " netrw.vim: Handles file transfer and remote directory listing across
 "            AUTOLOAD SECTION
-" Date:		Nov 06, 2019
-" Version:	166
+" Date:		Nov 29, 2019
+" Version:	167
 " Maintainer:	Charles E Campbell <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -13,6 +13,10 @@
 "               expressed or implied. By using this plugin, you agree that
 "               in no event will the copyright holder be liable for any damages
 "               resulting from the use of this software.
+"
+" Note: the code here was started in 1999 under a much earlier version of vim.  The directory browsing
+"       code was written using vim v6, which did not have Lists (Lists were first offered with vim-v7).
+"
 "redraw!|call DechoSep()|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
 "
 "  But be doers of the Word, and not only hearers, deluding your own selves {{{1
@@ -39,7 +43,7 @@ if exists("s:needspatches")
  endfor
 endif
 
-let g:loaded_netrw = "v166"
+let g:loaded_netrw = "v167"
 if !exists("s:NOTE")
  let s:NOTE    = 0
  let s:WARNING = 1
@@ -1500,7 +1504,8 @@ fun! netrw#Obtain(islocal,fname,...)
     " -i       : turns off interactive prompting from ftp
     " -n  unix : DON'T use <.netrc>, even though it exists
     " -n  win32: quit being obnoxious about password
-    NetrwKeepj norm! 1Gdd
+    "  Note: using "_dd to delete to the black hole register; avoids messing up @@
+    NetrwKeepj norm! 1G"_dd
     call s:NetrwExe(s:netrw_silentxfer."%!".s:netrw_ftp_cmd." ".g:netrw_ftp_options)
     " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
     if getline(1) !~ "^$"
@@ -2159,7 +2164,7 @@ fun! netrw#NetRead(mode,...)
     " -i       : turns off interactive prompting from ftp
     " -n  unix : DON'T use <.netrc>, even though it exists
     " -n  win32: quit being obnoxious about password
-    NetrwKeepj norm! 1Gdd
+    NetrwKeepj norm! 1G"_dd
     call s:NetrwExe(s:netrw_silentxfer."%!".s:netrw_ftp_cmd." ".g:netrw_ftp_options)
     " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
     if getline(1) !~ "^$"
@@ -2259,7 +2264,7 @@ fun! netrw#NetRead(mode,...)
      NetrwKeepj put ='quit'
 
      " perform cadaver operation:
-     NetrwKeepj norm! 1Gdd
+     NetrwKeepj norm! 1G"_dd
      call s:NetrwExe(s:netrw_silentxfer."%!".g:netrw_dav_cmd)
      keepj bd!
     endif
@@ -2575,7 +2580,7 @@ fun! netrw#NetWrite(...) range
     " -i       : turns off interactive prompting from ftp
     " -n  unix : DON'T use <.netrc>, even though it exists
     " -n  win32: quit being obnoxious about password
-    NetrwKeepj norm! 1Gdd
+    NetrwKeepj norm! 1G"_dd
     call s:NetrwExe(s:netrw_silentxfer."%!".s:netrw_ftp_cmd." ".g:netrw_ftp_options)
     " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
     if getline(1) !~ "^$"
@@ -2641,7 +2646,7 @@ fun! netrw#NetWrite(...) range
     NetrwKeepj put ='put '.tmpfile.' '.netrw_fname
 
     " perform cadaver operation:
-    NetrwKeepj norm! 1Gdd
+    NetrwKeepj norm! 1G"_dd
     call s:NetrwExe(s:netrw_silentxfer."%!".g:netrw_dav_cmd)
 
     " remove enew buffer (quietly)
@@ -4323,7 +4328,7 @@ fun! s:NetrwGetWord()
    let curline= getline('.')
 
    if curline =~# '"\s*Sorted by\s'
-    NetrwKeepj norm! s
+    NetrwKeepj norm! "_s
     let s:netrw_skipbrowse= 1
     echo 'Pressing "s" also works'
 
@@ -5163,13 +5168,26 @@ endfun
 "              0=local, 1=remote
 fun! netrw#BrowseX(fname,remote)
   let use_ctrlo= 1
-"  call Dfunc("netrw#BrowseX(fname<".a:fname."> remote=".a:remote.")")
+"  call Dfunc("netrw#BrowseX(fname<".a:fname."> remote=".a:remote.")  implements x and gx maps")
 
-  " if its really just a local directory, then do a "gf" instead
-  if (a:remote == 0 && isdirectory(a:fname)) || (a:remote == 1 && a:fname =~ '/$' && a:fname !~ '^https\=:')
+  if a:remote == 0 && isdirectory(a:fname)
+   " if its really just a local directory, then do a "gf" instead
+"   call Decho("remote≡0 and a:fname<".a:fname."> ".(isdirectory(a:fname)? "is a directory" : "is not a directory"),'~'.expand("<slnum>"))
+"   call Decho("..appears to be a local directory; using gf instead",'~'.expand("<slnum>"))
    norm! gf
-"   call Dret("(netrw#BrowseX) did gf instead")
+"   call Dret("netrw#BrowseX")
+   return
+  elseif a:remote == 1 && a:fname !~ '^https\=:' && a:fname =~ '/$'
+   " remote directory, not a webpage access, looks like an attempt to do a directory listing
+"   call Decho("remote≡1 and a:fname<".a:fname.">",'~'.expand("<slnum>"))
+"   call Decho("..and fname ".((a:fname =~ '^https\=:')? 'matches' : 'does not match').'^https\=:','~'.expand("<slnum>"))
+"   call Decho("..and fname ".((a:fname =~ '/$')?        'matches' : 'does not match').' /$','~'.expand("<slnum>"))
+"   call Decho("..appears to be a remote directory listing request; using gf instead",'~'.expand("<slnum>"))
+   norm! gf
+"   call Dret("netrw#BrowseX")
+   return
   endif
+"  call Decho("not a local file nor a webpage request",'~'.expand("<slnum>"))
 
   let ykeep      = @@
   let screenposn = winsaveview()
@@ -5423,11 +5441,11 @@ endfun
 " netrw#BrowseXVis: used by gx in visual mode to select a file for browsing {{{2
 fun! netrw#BrowseXVis()
 "  call Dfunc("netrw#BrowseXVis()")
-  let atkeep = @@
-  norm! gvy
-"  call Decho("@@<".@@.">",'~'.expand("<slnum>"))
-  call netrw#BrowseX(@@,netrw#CheckIfRemote(@@))
-  let @@     = atkeep
+  let akeep = @a
+  norm! gv"ay
+  let gxfile= @a
+  let @a    = akeep
+  call netrw#BrowseX(gxfile,netrw#CheckIfRemote(gxfile))
 "  call Dret("netrw#BrowseXVis")
 endfun
 
@@ -6052,8 +6070,8 @@ fun! s:NetrwSLeftrelease(islocal)
 endfun
 
 " ---------------------------------------------------------------------
-" s:NetrwListHide: uses [range]g~...~d to delete files that match comma {{{2
-" separated patterns given in g:netrw_list_hide
+" s:NetrwListHide: uses [range]g~...~d to delete files that match       {{{2
+"                  comma-separated patterns given in g:netrw_list_hide
 fun! s:NetrwListHide()
 "  call Dfunc("s:NetrwListHide() g:netrw_hide=".g:netrw_hide." g:netrw_list_hide<".g:netrw_list_hide.">")
 "  call Decho("initial: ".string(getline(w:netrw_bannercnt,'$')))
@@ -6066,8 +6084,8 @@ fun! s:NetrwListHide()
   " Use the first character left as a separator character.
 "  call Decho("find a character not in the hide string to use as a separator")
   let listhide= g:netrw_list_hide
-  let sep     = strpart(substitute('/~@#$%^&*{};:,<.>?|1234567890','['.escape(listhide,'-]^\').']','','ge'),1,1)
-"  call Decho("sep=".sep,'~'.expand("<slnum>"))
+  let sep     = strpart(substitute('~@#$%^&*{};:,<.>?|1234567890','['.escape(listhide,'-]^\').']','','ge'),1,1)
+"  call Decho("sep=".sep,"  (sep not in hide string)'~'.expand("<slnum>"))
 
   while listhide != ""
    if listhide =~ ','
@@ -6077,10 +6095,19 @@ fun! s:NetrwListHide()
     let hide     = listhide
     let listhide = ""
    endif
-"   call Decho("hide<".hide."> listhide<".listhide.'>','~'.expand("<slnum>"))
+"   call Decho("..extracted from listhide: hide<".hide."> g:netrw_sort_by<".g:netrw_sort_by.'>','~'.expand("<slnum>"))
+   if g:netrw_sort_by =~ '^[ts]'
+    if hide =~ '^\^'
+"     call Decho("..modify hide to handle a \"^...\" pattern",'~'.expand("<slnum>"))
+     let hide= substitute(hide,'^\^','^\(\\d\\+/\)','')
+    elseif hide =~ '^\\(\^'
+     let hide= substitute(hide,'^\\(\^','\\(^\\(\\d\\+/\\)','')
+    endif
+"    call Decho("..hide<".hide."> listhide<".listhide.'>','~'.expand("<slnum>"))
+   endif
 
    " Prune the list by hiding any files which match
-"   call Decho("prune the list by hiding any files which ",((g:netrw_hide == 1)? "" : "don't")." match hide<".hide.">")
+"   call Decho("..prune the list by hiding any files which ",((g:netrw_hide == 1)? "" : "don't")." match hide<".hide.">")
    if g:netrw_hide == 1
 "    call Decho("..hiding<".hide.">",'~'.expand("<slnum>"))
     exe 'sil! NetrwKeepj '.w:netrw_bannercnt.',$g'.sep.hide.sep.'d'
@@ -6625,9 +6652,9 @@ fun! s:NetrwMarkFiles(islocal,...)
   while i <= a:0
    if a:islocal
     if v:version > 704 || (v:version == 704 && has("patch656"))
-     let mffiles= glob(fnameescape(a:{i}),0,1,1)
+     let mffiles= glob(a:{i},0,1,1)
     else
-     let mffiles= glob(fnameescape(a:{i}),0,1)
+     let mffiles= glob(a:{i},0,1)
     endif
    else
     let mffiles= [a:{i}]
@@ -8679,7 +8706,7 @@ fun! s:NetrwUpload(fname,tgt,...)
      " -i       : turns off interactive prompting from ftp
      " -n  unix : DON'T use <.netrc>, even though it exists
      " -n  win32: quit being obnoxious about password
-     NetrwKeepj norm! 1Gdd
+     NetrwKeepj norm! 1G"_dd
      call s:NetrwExe(s:netrw_silentxfer."%!".s:netrw_ftp_cmd." ".g:netrw_ftp_options)
      " If the result of the ftp operation isn't blank, show an error message (tnx to Doug Claar)
      sil NetrwKeepj g/Local directory now/d
@@ -9517,12 +9544,14 @@ fun! s:NetrwWideListing()
    " fpl: filenames per line
    " fpc: filenames per column
    setl ma noro
+   let keepa= @a
 "   call Decho("setl ma noro",'~'.expand("<slnum>"))
    let b:netrw_cpf= 0
    if line("$") >= w:netrw_bannercnt
     exe 'sil NetrwKeepj '.w:netrw_bannercnt.',$g/^./if virtcol("$") > b:netrw_cpf|let b:netrw_cpf= virtcol("$")|endif'
     NetrwKeepj call histdel("/",-1)
    else
+    let @a= keepa
 "    call Dret("NetrwWideListing")
     return
    endif
@@ -9549,9 +9578,9 @@ fun! s:NetrwWideListing()
     let newcolqty= newcolend - newcolstart
     exe newcolstart
     if newcolqty == 0
-     exe "sil! NetrwKeepj norm! 0\<c-v>$hx".w:netrw_bannercnt."G$p"
+     exe "sil! NetrwKeepj norm! 0\<c-v>$h\"ax".w:netrw_bannercnt."G$\"ap"
     else
-     exe "sil! NetrwKeepj norm! 0\<c-v>".newcolqty.'j$hx'.w:netrw_bannercnt.'G$p'
+     exe "sil! NetrwKeepj norm! 0\<c-v>".newcolqty.'j$h\"ax'.w:netrw_bannercnt.'G$\"ap'
     endif
     exe "sil! NetrwKeepj ".newcolstart.','.newcolend.'d _'
     exe 'sil! NetrwKeepj '.w:netrw_bannercnt
@@ -9562,6 +9591,7 @@ fun! s:NetrwWideListing()
    exe 'nno <buffer> <silent> b	:call search(''^.\\|\s\s\zs\S'',''bW'')'."\<cr>"
 "   call Decho("NetrwWideListing) setl noma nomod ro",'~'.expand("<slnum>"))
    exe "setl ".g:netrw_bufsettings
+    let @a= keepa
 "   call Decho("ro=".&l:ro." ma=".&l:ma." mod=".&l:mod." wrap=".&l:wrap." (filename<".expand("%")."> win#".winnr()." ft<".&ft.">)",'~'.expand("<slnum>"))
 "   call Dret("NetrwWideListing")
    return
@@ -9759,6 +9789,7 @@ fun! s:PerformListing(islocal)
        exe 'sil NetrwKeepj '.w:netrw_bannercnt.',$sort!'.' '.g:netrw_sort_options
       endif
      endif
+
      " remove priority pattern prefix
 "     call Decho("remove priority pattern prefix",'~'.expand("<slnum>"))
      exe 'sil! NetrwKeepj '.w:netrw_bannercnt.',$s/^\d\{3}'.g:netrw_sepchr.'//e'
@@ -9797,6 +9828,7 @@ fun! s:PerformListing(islocal)
 "       call Decho('exe sil NetrwKeepj '.w:netrw_bannercnt.',$sort!','~'.expand("<slnum>"))
        exe 'sil! NetrwKeepj '.w:netrw_bannercnt.',$sort!'.' '.g:netrw_sort_options
       endif
+"     call Decho("remove leading digits/ (sorting) information from listing",'~'.expand("<slnum>"))
      exe 'sil! NetrwKeepj '.w:netrw_bannercnt.',$s/^\d\{-}\///e'
      NetrwKeepj call histdel("/",-1)
      endif
@@ -9859,6 +9891,7 @@ fun! s:PerformListing(islocal)
 "   call Decho("exe setl ts=".(g:netrw_maxfilenamelen+1),'~'.expand("<slnum>"))
    exe "setl ts=".(g:netrw_maxfilenamelen+1)
   endif
+"  call Decho("PerformListing buffer:",'~'.expand("<slnum>"))
 "  call DechoBuf(bufnr("%"))
 
   if exists("s:treecurpos")
@@ -10894,10 +10927,11 @@ fun! s:LocalListing()
 
    if     g:netrw_sort_by =~# "^t"
     " sort by time (handles time up to 1 quintillion seconds, US)
+    " Decorate listing by prepending a timestamp/  .  Sorting will then be done based on time.
 "    call Decho("getftime(".filename.")=".getftime(filename),'~'.expand("<slnum>"))
     let t  = getftime(filename)
     let ft = strpart("000000000000000000",1,18-strlen(t)).t
-"    call Decho("exe NetrwKeepj put ='".ft.'/'.filename."'",'~'.expand("<slnum>"))
+"    call Decho("exe NetrwKeepj put ='".ft.'/'.pfile."'",'~'.expand("<slnum>"))
     let ftpfile= ft.'/'.pfile
     sil! NetrwKeepj put=ftpfile
 

@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 14
+*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 30
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -1184,7 +1184,7 @@ One may easily "bookmark" the currently browsed directory by using >
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's
-'runtimepath'; entries are kept in sorted order.
+|'runtimepath'|; entries are kept in sorted order.
 
 If there are marked files and/or directories, mb will add them to the bookmark
 list.
@@ -3842,6 +3842,16 @@ netrw:
 ==============================================================================
 12. History						*netrw-history* {{{1
 
+	v167:	Nov 29, 2019	* netrw does a save&restore on @* and @+.
+				  That causes problems with the clipboard.
+				  Now restores occurs only if @* or @+ have
+				  been changed.
+				* netrw will change @* or @+ less often.
+				  Never if I happen to have caught all the
+				  operations that modify the unnamed
+				  register (which also writes @*).
+				* Modified hiding behavior so that "s"
+				  will not ignore hiding.
 	v166:	Nov 06, 2019	* Removed a space from a nmap for "-"
 				* Numerous debugging statement changes
 	v163:	Dec 05, 2017	* (Cristi Balan) reported that a setting ('sel')
