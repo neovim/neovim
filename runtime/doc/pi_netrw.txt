@@ -1,9 +1,9 @@
-*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Dec 10
+*pi_netrw.txt*  For Vim version 8.2.  Last change: 2020 Jan 07
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
 	    ------------------------------------------------
-Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
+Author:  Charles E. Campbell  <NcampObell@SdrPchip.AorgM-NOSPAM>
 	  (remove NOSPAM from Campbell's email first)
 
 Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
@@ -1184,7 +1184,7 @@ One may easily "bookmark" the currently browsed directory by using >
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's
-'runtimepath'; entries are kept in sorted order.
+runtimepath; entries are kept in sorted order.
 
 If there are marked files and/or directories, mb will add them to the bookmark
 list.
@@ -1565,8 +1565,8 @@ So, for example: >
 	file.rcs,v  ->  NFH_rcsCOMMAv()
 <
 If more such translations are necessary, please send me email: >
-		NdrOchip at ScampbellPfamily.AbizM - NOSPAM
-with a request.
+		NcampObell@SdrPchip.AorgM-NOSPAM
+with a request.  (remove the embedded NOSPAM first)
 
 Associated setting variable: |g:netrw_browsex_viewer|
 
@@ -3229,7 +3229,8 @@ If there are marked files:  (see |netrw-mf|)
 	R   [query: reply with s/^\(.*\)\.c$/\1.cpp/]
 <
     This example will mark all *.c files and then rename them to *.cpp
-    files.
+    files.  Netrw will protect you from overwriting local files without
+    confirmation, but not remote ones.
 
     The ctrl-X character has special meaning for renaming files: >
 
@@ -3512,7 +3513,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 			- Click "Add..."
 			- Set External Editor (adjust path as needed, include
 			  the quotes and !.! at the end):
-			    "c:\Program Files\Vim\vim81\gvim.exe" !.!
+			    "c:\Program Files\Vim\vim70\gvim.exe" !.!
 			- Check that the filetype in the box below is
 			  {asterisk}.{asterisk} (all files), or whatever types
 			  you want (cec: change {asterisk} to * ; I had to
@@ -3762,8 +3763,8 @@ by obtaining a copy of the latest (often developmental) netrw at:
 
 The <netrw.vim> script is typically installed on systems as something like:
 >
-	/usr/local/share/vim/vim8x/plugin/netrwPlugin.vim
-	/usr/local/share/vim/vim8x/autoload/netrw.vim
+	/usr/local/share/vim/vim7x/plugin/netrwPlugin.vim
+	/usr/local/share/vim/vim7x/autoload/netrw.vim
 		(see output of :echo &rtp)
 <
 which is loaded automatically at startup (assuming :set nocp).  If you
@@ -3836,11 +3837,17 @@ netrw:
 
 	   Please send that information to <netrw.vim>'s maintainer along
 	   with the o/s you're using and the vim version that you're using
-	   (see |:version|) >
-		NdrOchip at ScampbellPfamily.AbizM - NOSPAM
+	   (see |:version|)  (remove the embedded NOSPAM first) >
+		NcampObell@SdrPchip.AorgM-NOSPAM
 <
 ==============================================================================
 12. History						*netrw-history* {{{1
+
+	v169:	Dec 20, 2019	* (reported by amkarthik) that netrw's x
+				  (|netrw-x|) would throw an error when
+				  attempting to open a local directory.
+	v168:	Dec 12, 2019	* scp timeout error message not reported,
+				  hopefully now fixed (Shane Xb Qian)
 
 	v167:	Nov 29, 2019	* netrw does a save&restore on @* and @+.
 				  That causes problems with the clipboard.
@@ -4279,7 +4286,7 @@ netrw:
 	Vim editor	by Bram Moolenaar (Thanks, Bram!)
 	dav		support by C Campbell
 	fetch		support by Bram Moolenaar and C Campbell
-	ftp		support by C Campbell <NdrOchip@ScampbellPfamily.AbizM>
+	ftp		support by C Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 	http		support by Bram Moolenaar <bram@moolenaar.net>
 	rcp
 	rsync		support by C Campbell (suggested by Erik Warendorph)

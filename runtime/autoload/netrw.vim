@@ -1,8 +1,8 @@
 " netrw.vim: Handles file transfer and remote directory listing across
 "            AUTOLOAD SECTION
-" Date:		Nov 29, 2019
-" Version:	167
-" Maintainer:	Charles E Campbell <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
+" Date:		Jan 07, 2020
+" Version:	168
+" Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
@@ -43,7 +43,7 @@ if exists("s:needspatches")
  endfor
 endif
 
-let g:loaded_netrw = "v167"
+let g:loaded_netrw = "v168"
 if !exists("s:NOTE")
  let s:NOTE    = 0
  let s:WARNING = 1
@@ -68,7 +68,7 @@ setl cpo&vim
 "   Usage: netrw#ErrorMsg(s:NOTE | s:WARNING | s:ERROR,"some message",error-number)
 "          netrw#ErrorMsg(s:NOTE | s:WARNING | s:ERROR,["message1","message2",...],error-number)
 "          (this function can optionally take a list of messages)
-"  Mar 21, 2017 : max errnum currently is 105
+"  Dec 2, 2019 : max errnum currently is 106
 fun! netrw#ErrorMsg(level,msg,errnum)
 "  call Dfunc("netrw#ErrorMsg(level=".a:level." msg<".a:msg."> errnum=".a:errnum.") g:netrw_use_errorwindow=".g:netrw_use_errorwindow)
 
@@ -447,23 +447,9 @@ if !exists("g:netrw_localmovecmd")
   let g:netrw_localmovecmd= ""
  endif
 endif
-if v:version < 704 || (v:version == 704 && !has("patch1107"))
- " 1109 provides for delete(tmpdir,"d") which is what will be used
- if exists("g:netrw_local_rmdir")
-  let g:netrw_localrmdir= g:netrw_local_rmdir
-  call netrw#ErrorMsg(s:NOTE,"g:netrw_local_rmdir is deprecated in favor of g:netrw_localrmdir",86)
- endif
- if has("win32") || has("win95") || has("win64") || has("win16")
-   if g:netrw_cygwin
-    call s:NetrwInit("g:netrw_localrmdir","rmdir")
-   else
-    let g:netrw_localrmdir   = expand("$COMSPEC")
-    let g:netrw_localrmdiropt= " /c rmdir"
-   endif
- else
-  call s:NetrwInit("g:netrw_localrmdir","rmdir")
- endif
-endif
+" following serves as an example for how to insert a version&patch specific test
+"if v:version < 704 || (v:version == 704 && !has("patch1107"))
+"endif
 call s:NetrwInit("g:netrw_liststyle"  , s:THINLIST)
 " sanity checks
 if g:netrw_liststyle < 0 || g:netrw_liststyle >= s:MAXLIST
@@ -5173,8 +5159,8 @@ fun! netrw#BrowseX(fname,remote)
   if a:remote == 0 && isdirectory(a:fname)
    " if its really just a local directory, then do a "gf" instead
 "   call Decho("remote≡0 and a:fname<".a:fname."> ".(isdirectory(a:fname)? "is a directory" : "is not a directory"),'~'.expand("<slnum>"))
-"   call Decho("..appears to be a local directory; using gf instead",'~'.expand("<slnum>"))
-   norm! gf
+"   call Decho("..appears to be a local directory; using e ".a:fname." instead",'~'.expand("<slnum>"))
+   exe "e ".a:fname
 "   call Dret("netrw#BrowseX")
    return
   elseif a:remote == 1 && a:fname !~ '^https\=:' && a:fname =~ '/$'
@@ -7119,17 +7105,8 @@ fun! s:NetrwMarkFileCopy(islocal,...)
 "      call Dret("s:NetrwMarkFileCopy : lcd failure")
       return
      endif
-     if v:version < 704 || (v:version == 704 && !has("patch1107"))
-      call s:NetrwExe("sil !".g:netrw_localrmdir.g:netrw_localrmdiropt." ".s:ShellEscape(tmpdir,1))
-      if v:shell_error != 0
-       call netrw#ErrorMsg(s:WARNING,"consider setting g:netrw_localrmdir<".g:netrw_localrmdir."> to something that works",80)
-" "      call Dret("s:NetrwMarkFileCopy : failed: sil !".g:netrw_localrmdir." ".s:ShellEscape(tmpdir,1) )
-       return
-      endif
-     else
-      if delete(tmpdir,"d")
-       call netrw#ErrorMsg(s:ERROR,"unable to delete directory <".tmpdir.">!",103)
-      endif
+     if delete(tmpdir,"d")
+      call netrw#ErrorMsg(s:ERROR,"unable to delete directory <".tmpdir.">!",103)
      endif
     else
      if s:NetrwLcd(curdir)
@@ -9548,6 +9525,7 @@ fun! s:NetrwWideListing()
 "   call Decho("setl ma noro",'~'.expand("<slnum>"))
    let b:netrw_cpf= 0
    if line("$") >= w:netrw_bannercnt
+    " determine the maximum filename size; use that to set cpf
     exe 'sil NetrwKeepj '.w:netrw_bannercnt.',$g/^./if virtcol("$") > b:netrw_cpf|let b:netrw_cpf= virtcol("$")|endif'
     NetrwKeepj call histdel("/",-1)
    else
@@ -9555,6 +9533,7 @@ fun! s:NetrwWideListing()
 "    call Dret("NetrwWideListing")
     return
    endif
+   " allow for two spaces to separate columns
    let b:netrw_cpf= b:netrw_cpf + 2
 "   call Decho("b:netrw_cpf=max_filename_length+2=".b:netrw_cpf,'~'.expand("<slnum>"))
 
@@ -9577,10 +9556,11 @@ fun! s:NetrwWideListing()
     if newcolend > line("$") | let newcolend= line("$") | endif
     let newcolqty= newcolend - newcolstart
     exe newcolstart
+    " COMBAK: both of the visual-mode using lines below are problematic vis-a-vis @*
     if newcolqty == 0
      exe "sil! NetrwKeepj norm! 0\<c-v>$h\"ax".w:netrw_bannercnt."G$\"ap"
     else
-     exe "sil! NetrwKeepj norm! 0\<c-v>".newcolqty.'j$h\"ax'.w:netrw_bannercnt.'G$\"ap'
+     exe "sil! NetrwKeepj norm! 0\<c-v>".newcolqty.'j$h"ax'.w:netrw_bannercnt.'G$"ap'
     endif
     exe "sil! NetrwKeepj ".newcolstart.','.newcolend.'d _'
     exe 'sil! NetrwKeepj '.w:netrw_bannercnt
@@ -10999,9 +10979,10 @@ fun! s:NetrwLocalRename(path) range
 "  call Dfunc("NetrwLocalRename(path<".a:path.">)")
 
   " preparation for removing multiple files/directories
-  let ykeep    = @@
-  let ctr      = a:firstline
-  let svpos    = winsaveview()
+  let ykeep     = @@
+  let ctr       = a:firstline
+  let svpos     = winsaveview()
+  let all       = 0
 "  call Decho("saving posn to svpos<".string(svpos).">",'~'.expand("<slnum>"))
 
   " rename files given by the markfilelist
@@ -11029,6 +11010,23 @@ fun! s:NetrwLocalRename(path) range
       let newname = substitute(oldname,subfrom,subto,'')
      endif
     endif
+    if !all && filereadable(newname)
+     call inputsave()
+      let response= input("File<".newname."> already exists; do you want to overwrite it? (y/all/n) ")
+     call inputrestore()
+     if response == "all"
+      let all= 1
+     elseif response != "y" && response != "yes"
+      " refresh the directory
+"      call Decho("refresh the directory listing",'~'.expand("<slnum>"))
+      NetrwKeepj call s:NetrwRefresh(1,s:NetrwBrowseChgDir(1,'./'))
+"      call Decho("restoring posn to svpos<".string(svpos).">",'~'.expand("<slnum>"))
+      NetrwKeepj call winrestview(svpos)
+      let @@= ykeep
+"      call Dret("NetrwLocalRename")
+      return
+     endif
+    endif
     call rename(oldname,newname)
    endfor
    call s:NetrwUnmarkList(bufnr("%"),b:netrw_curdir)
@@ -11052,14 +11050,14 @@ fun! s:NetrwLocalRename(path) range
 
     NetrwKeepj norm! 0
     let oldname= s:ComposePath(a:path,curword)
-"   call Decho("oldname<".oldname.">",'~'.expand("<slnum>"))
+"    call Decho("oldname<".oldname.">",'~'.expand("<slnum>"))
 
     call inputsave()
     let newname= input("Moving ".oldname." to : ",substitute(oldname,'/*$','','e'))
     call inputrestore()
 
     call rename(oldname,newname)
-"   call Decho("renaming <".oldname."> to <".newname.">",'~'.expand("<slnum>"))
+"    call Decho("renaming <".oldname."> to <".newname.">",'~'.expand("<slnum>"))
 
     let ctr= ctr + 1
    endwhile
@@ -11846,6 +11844,9 @@ fun! s:NetrwExe(cmd)
   else
 "   call Decho("exe ".a:cmd,'~'.expand("<slnum>"))
    exe a:cmd
+  endif
+  if v:shell_error
+   call netrw#ErrorMsg(s:WARNING,"shell signalled an error",106)
   endif
 "  call Dret("s:NetrwExe : v:shell_error=".v:shell_error)
 endfun

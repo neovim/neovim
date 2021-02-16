@@ -1,6 +1,6 @@
 " netrwSettings.vim: makes netrw settings simpler
 " Date:		Nov 09, 2016
-" Maintainer:	Charles E Campbell <drchipNOSPAM at campbellfamily dot biz>
+" Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Version:	16
 " Copyright:    Copyright (C) 1999-2007 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
