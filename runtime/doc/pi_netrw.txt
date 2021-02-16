@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Nov 30
+*pi_netrw.txt*  For Vim version 8.1.  Last change: 2019 Dec 09
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -1184,7 +1184,7 @@ One may easily "bookmark" the currently browsed directory by using >
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's
-|'runtimepath'|; entries are kept in sorted order.
+runtimepath'; entries are kept in sorted order.
 
 If there are marked files and/or directories, mb will add them to the bookmark
 list.
