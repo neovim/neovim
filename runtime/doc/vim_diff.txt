@@ -144,7 +144,6 @@ Command-line highlighting:
   removed in the future).
 
 Commands:
-  |:autocmd| accepts the `++once` flag
   |:checkhealth|
   |:drop| is always available
   |:Man| is available by default, with many improvements such as completion
@@ -157,8 +156,6 @@ Events:
   |TermOpen|
   |UIEnter|
   |UILeave|
-  |VimResume|
-  |VimSuspend|
   |WinClosed|
 
 Functions:
@@ -195,11 +192,10 @@ Options:
   'cpoptions'   flags: |cpo-_|
   'display'     flags: "msgsep" minimizes scrolling when showing messages
   'guicursor'   works in the terminal
-  'fillchars'   flags: "msgsep" (see 'display'), "eob" for |hl-EndOfBuffer|
-                marker, "foldopen", "foldsep", "foldclose"
+  'fillchars'   flags: "msgsep" (see 'display'), "foldopen", "foldsep",
+                "foldclose"
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
-  'listchars'   local to window
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns
