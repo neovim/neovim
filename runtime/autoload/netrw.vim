@@ -5781,22 +5781,7 @@ fun! s:NetrwHome()
   if exists("g:netrw_home")
    let home= expand(g:netrw_home)
   else
-   " go to vim plugin home
-   for home in split(&rtp,',') + ['']
-    if isdirectory(s:NetrwFile(home)) && filewritable(s:NetrwFile(home)) | break | endif
-     let basehome= substitute(home,'[/\\]\.vim$','','')
-     if isdirectory(s:NetrwFile(basehome)) && filewritable(s:NetrwFile(basehome))
-     let home= basehome."/.vim"
-     break
-    endif
-   endfor
-   if home == ""
-    " just pick the first directory
-    let home= substitute(&rtp,',.*$','','')
-   endif
-   if (has("win32") || has("win95") || has("win64") || has("win16"))
-    let home= substitute(home,'/','\\','g')
-   endif
+   let home = stdpath('data')
   endif
   " insure that the home directory exists
   if g:netrw_dirhistmax > 0 && !isdirectory(s:NetrwFile(home))
