@@ -27,15 +27,20 @@
           });
 
           # a development binary to help debug issues
-          neovim-debug = (neovim.override {
-            stdenv = if pkgs.stdenv.isLinux then pkgs.llvmPackages_latest.stdenv else pkgs.stdenv;
+          neovim-debug = let
+            stdenv = pkgs.stdenvAdapters.keepDebugInfo (if pkgs.stdenv.isLinux then pkgs.llvmPackages_latest.stdenv else pkgs.stdenv);
+          in
+            pkgs.enableDebugging ((neovim.override {
             lua = pkgs.enableDebugging pkgs.luajit;
+            inherit stdenv;
           }).overrideAttrs (oa: {
             cmakeBuildType = "Debug";
             cmakeFlags = oa.cmakeFlags ++ [
               "-DMIN_LOG_LEVEL=0"
             ];
-          });
+
+            disallowedReferences = [];
+          }));
 
           # for neovim developers, very slow
           # brings development tools as well
