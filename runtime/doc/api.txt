@@ -1148,6 +1148,18 @@ nvim_load_context({dict})                                *nvim_load_context()*
                 Parameters: ~
                     {dict}  |Context| map.
 
+nvim_notify({msg}, {log_level}, {opts})                        *nvim_notify()*
+                Notify the user with a message
+
+                Relays the call to vim.notify . By default forwards your
+                message in the echo area but can be overriden to trigger
+                desktop notifications.
+
+                Parameters: ~
+                    {msg}        Message to display to the user
+                    {log_level}  The log level
+                    {opts}       Reserved for future use.
+
 nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 Open a new window.
 
@@ -1800,6 +1812,25 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                                      • deleted_codeunits (if `utf_sizes` is
                                        true)
 
+                                   • on_bytes: lua callback invoked on change.
+                                     This callback receives more granular
+                                     information about the change compared to
+                                     on_lines. Return`true`to detach. Args:
+                                     • the string "bytes"
+                                     • buffer handle
+                                     • b:changedtick
+                                     • start row of the changed text
+                                       (zero-indexed)
+                                     • start column of the changed text
+                                     • byte offset of the changed text (from
+                                       the start of the buffer)
+                                     • old end row of the changed text
+                                     • old end column of the changed text
+                                     • old end byte length of the changed text
+                                     • new end row of the changed text
+                                     • new end column of the changed text
+                                     • new end byte length of the changed text
+
                                    • on_changedtick: Lua callback invoked on
                                      changedtick increment without text
                                      change. Args:
@@ -1809,6 +1840,12 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
 
                                    • on_detach: Lua callback invoked on
                                      detach. Args:
+                                     • the string "detach"
+                                     • buffer handle
+
+                                   • on_reload: Lua callback invoked on
+                                     reload. The entire buffer content should
+                                     be considered changed. Args:
                                      • the string "detach"
                                      • buffer handle
 

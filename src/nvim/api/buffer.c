@@ -111,6 +111,24 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - byte count of previous contents
 ///               - deleted_codepoints (if `utf_sizes` is true)
 ///               - deleted_codeunits (if `utf_sizes` is true)
+///             - on_bytes: lua callback invoked on change.
+///               This callback receives more granular information about the
+///               change compared to on_lines.
+///               Return `true` to detach.
+///               Args:
+///               - the string "bytes"
+///               - buffer handle
+///               - b:changedtick
+///               - start row of the changed text (zero-indexed)
+///               - start column of the changed text
+///               - byte offset of the changed text (from the start of
+///                   the buffer)
+///               - old end row of the changed text
+///               - old end column of the changed text
+///               - old end byte length of the changed text
+///               - new end row of the changed text
+///               - new end column of the changed text
+///               - new end byte length of the changed text
 ///             - on_changedtick: Lua callback invoked on changedtick
 ///               increment without text change. Args:
 ///               - the string "changedtick"
