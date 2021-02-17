@@ -79,6 +79,7 @@ let s:filename_checks = {
     \ 'bc': ['file.bc'],
     \ 'bdf': ['file.bdf'],
     \ 'bib': ['file.bib'],
+    \ 'beancount': ['file.beancount'],
     \ 'bindzone': ['named.root'],
     \ 'blank': ['file.bl'],
     \ 'bsdl': ['file.bsd', 'file.bsdl'],
