@@ -1491,6 +1491,9 @@ au BufNewFile,BufRead *.sdl,*.pr		setf sdl
 " sed
 au BufNewFile,BufRead *.sed			setf sed
 
+" svelte
+au BufNewFile,BufRead *.svelte			setf svelte
+
 " Sieve (RFC 3028, 5228)
 au BufNewFile,BufRead *.siv,*.sieve		setf sieve
 
