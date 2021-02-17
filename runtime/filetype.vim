@@ -212,6 +212,9 @@ au BufNewFile,BufRead *.bc			setf bc
 " BDF font
 au BufNewFile,BufRead *.bdf			setf bdf
 
+" Beancount
+au BufNewFile,BufRead *.beancount		setf beancount
+
 " BibTeX bibliography database file
 au BufNewFile,BufRead *.bib			setf bib
 
