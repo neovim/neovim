@@ -556,6 +556,9 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 2. To minimize RPC overhead (roundtrips) of a sequence of many
                    requests.
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
                 Parameters: ~
                     {calls}  an array of calls, where each call is described
                              by an array with two elements: the request name,
@@ -735,6 +738,9 @@ nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 Only statements are executed. To evaluate an expression,
                 prefix it with `return` : return my_function(...)
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
                 Parameters: ~
                     {code}  Lua code to execute
                     {args}  Arguments to the code
@@ -787,6 +793,7 @@ nvim_get_api_info()                                      *nvim_get_api_info()*
 
                 Attributes: ~
                     {fast}
+                    {remote_only}: not exposed in Vim script/eval.
 
 nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
                 Get information about a channel.
@@ -1472,6 +1479,9 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
                     "Something is better than nothing". You don't need to
                     include all the fields.
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
                 Parameters: ~
                     {name}        Short name for the connected client
                     {version}     Dictionary describing the version, with
@@ -1593,6 +1603,9 @@ nvim_set_decoration_provider({ns_id}, {opts})
                 `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite
                 dubious for the moment.
 
+                Attributes: ~
+                    {lua_only}: not exposed in Vim script/remote.
+
                 Parameters: ~
                     {ns_id}  Namespace id from |nvim_create_namespace()|
                     {opts}   Callbacks invoked during redraw:
@@ -1700,11 +1713,17 @@ nvim_strwidth({text})                                        *nvim_strwidth()*
 nvim_subscribe({event})                                     *nvim_subscribe()*
                 Subscribes to event broadcasts.
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
                 Parameters: ~
                     {event}  Event type string
 
 nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
                 Unsubscribes to event broadcasts.
+
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
 
                 Parameters: ~
                     {event}  Event type string
@@ -1732,6 +1751,9 @@ to check whether a buffer is loaded.
                                                     *nvim__buf_redraw_range()*
 nvim__buf_redraw_range({buffer}, {first}, {last})
                 TODO: Documentation
+
+                Attributes: ~
+                    {lua_only}: not exposed in Vim script/remote.
 
 nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
@@ -1877,6 +1899,9 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                 This is useful e.g. to call vimL functions that only work with
                 the current buffer/window currently, like |termopen()|.
 
+                Attributes: ~
+                    {lua_only}: not exposed in Vim script/remote.
+
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {fun}     Function to call inside the buffer (currently
@@ -1945,6 +1970,9 @@ nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
                 Deactivates buffer-update events on the channel.
+
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -2621,6 +2649,9 @@ nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
                     A requests 80x40 but client B requests 200x100, the global
                     screen has size 80x40.
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
                 Parameters: ~
                     {width}    Requested screen columns
                     {height}   Requested screen rows
@@ -2630,6 +2661,9 @@ nvim_ui_detach()                                            *nvim_ui_detach()*
                 Deactivates UI events on the channel.
 
                 Removes the client from the list of UIs. |nvim_list_uis()|
+
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
 
                                                     *nvim_ui_pum_set_bounds()*
 nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
@@ -2644,6 +2678,9 @@ nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
                 nor be anchored to exact grid corners, so one can set
                 floating-point numbers to the popup menu geometry.
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
                 Parameters: ~
                     {width}   Popupmenu width.
                     {height}  Popupmenu height.
@@ -2654,14 +2691,23 @@ nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
                 Tells Nvim the number of elements displaying in the popumenu,
                 to decide <PageUp> and <PageDown> movement.
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
                 Parameters: ~
                     {height}  Popupmenu height, must be greater than zero.
 
 nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
                 TODO: Documentation
 
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
+
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
                 TODO: Documentation
+
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
 
                                                    *nvim_ui_try_resize_grid()*
 nvim_ui_try_resize_grid({grid}, {width}, {height})
@@ -2670,6 +2716,9 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
                 limits.
 
                 On invalid grid handle, fails with error.
+
+                Attributes: ~
+                    {remote_only}: not exposed in Vim script/eval.
 
                 Parameters: ~
                     {grid}    The handle of the grid to be changed.

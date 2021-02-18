@@ -186,6 +186,8 @@ param_exclude = (
 # Annotations are displayed as line items after API function descriptions.
 annotation_map = {
     'FUNC_API_FAST': '{fast}',
+    'FUNC_API_REMOTE_ONLY': '{remote_only}: not exposed in Vim script/eval.',
+    'FUNC_API_LUA_ONLY': '{lua_only}: not exposed in Vim script/remote.',
     'FUNC_API_CHECK_TEXTLOCK': 'not allowed when |textlock| is active',
 }
 
