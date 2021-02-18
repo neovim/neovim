@@ -44,6 +44,8 @@ augroup tar
   au BufReadCmd   *.tar.lzma	call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.xz		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.txz			call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.zst		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tzs			call tar#Browse(expand("<amatch>"))
 augroup END
 com! -nargs=? -complete=file Vimuntar call tar#Vimuntar(<q-args>)
 
