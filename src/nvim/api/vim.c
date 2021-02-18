@@ -1827,6 +1827,8 @@ Dictionary nvim_get_commands(Dictionary opts, Error *err)
 /// Returns a 2-tuple (Array), where item 0 is the current channel id and item
 /// 1 is the |api-metadata| map (Dictionary).
 ///
+/// Use |api_info()| in Vim script/eval.
+///
 /// @returns 2-tuple [{channel-id}, {api-metadata}]
 Array nvim_get_api_info(uint64_t channel_id)
   FUNC_API_SINCE(1) FUNC_API_FAST FUNC_API_REMOTE_ONLY

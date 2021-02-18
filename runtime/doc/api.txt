@@ -788,6 +788,8 @@ nvim_get_api_info()                                      *nvim_get_api_info()*
                 Returns a 2-tuple (Array), where item 0 is the current channel
                 id and item 1 is the |api-metadata| map (Dictionary).
 
+                Use |api_info()| in Vim script/eval.
+
                 Return: ~
                     2-tuple [{channel-id}, {api-metadata}]
 
