@@ -2521,8 +2521,8 @@ module.cmds = {
   },
   {
     command='source',
-    flags=bit.bor(BANG, FILE1, TRLBAR, SBOXOK, CMDWIN),
-    addr_type='ADDR_NONE',
+    flags=bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN),
+    addr_type='ADDR_LINES',
     func='ex_source',
   },
   {
