@@ -652,7 +652,7 @@ end
 
 --- Jumps to a location.
 ---
---@param location (`Location`|`LocationLink`)
+---@param location Location|LocationLink: A Location or Location Link
 --@returns `true` if the jump succeeded
 function M.jump_to_location(location)
   -- location may be Location or LocationLink

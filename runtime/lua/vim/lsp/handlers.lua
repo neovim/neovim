@@ -266,13 +266,28 @@ M['textDocument/hover'] = function(_, method, result)
   end)
 end
 
---@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
---@param _ (not used)
---@param method (string) LSP method name
---@param result (table) result of LSP method; a location or a list of locations.
+---     - textDocument/declaration
+---     - textDocument/definition
+---     - textDocument/typeDefinition
+----    - textDocument/implementation
+---@param method string: LSP method name
+---@param result table: result of LSP method; a location or a list of locations.
 ---(`textDocument/definition` can return `Location` or `Location[]`
-local function location_handler(_, method, result)
+---@param config table: Configuration table.
+---     - show_qflist:  (default = true)
+---         - Opens the qflist and focuses if there is more than one location.
+---     - location_callback: (default = vim.lsp.util.jump_to_location
+---         - A function that takes a Location and handles any associated navigation.
+---         - By default, this sets the current buffer and cursor to the location.
+function M.location(_, method, result, _, _, config)
+  config = vim.lsp._with_extend(
+    string.format('vim.lsp.handlers.%s', method), {
+      show_qflist = true,
+      location_callback = util.jump_to_location,
+    }, config
+  )
+
   if result == nil or vim.tbl_isempty(result) then
     local _ = log.info() and log.info(method, 'No location found')
     return nil
@@ -282,26 +297,29 @@ local function location_handler(_, method, result)
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
 
   if vim.tbl_islist(result) then
-    util.jump_to_location(result[1])
+    config.location_callback(result[1])
 
     if #result > 1 then
       util.set_qflist(util.locations_to_items(result))
-      api.nvim_command("copen")
-      api.nvim_command("wincmd p")
+
+      if config.show_qflist then
+        api.nvim_command("copen")
+        api.nvim_command("wincmd p")
+      end
     end
   else
-    util.jump_to_location(result)
+    config.location_callback(result)
   end
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration
-M['textDocument/declaration'] = location_handler
+M['textDocument/declaration'] = M.location
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
-M['textDocument/definition'] = location_handler
+M['textDocument/definition'] = M.location
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_typeDefinition
-M['textDocument/typeDefinition'] = location_handler
+M['textDocument/typeDefinition'] = M.location
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation
-M['textDocument/implementation'] = location_handler
+M['textDocument/implementation'] = M.location
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 M['textDocument/signatureHelp'] = function(_, method, result)
