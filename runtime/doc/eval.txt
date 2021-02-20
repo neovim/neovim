@@ -2074,6 +2074,8 @@ changenr()			Number	current change number
 chanclose({id}[, {stream}])	Number	Closes a channel or one of its streams
 chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
+charidx({string}, {idx} [, {countcc}])
+				Number  char index of byte {idx} in {string}
 cindent({lnum})		Number	C indent for line {lnum}
 clearmatches([{win}])		none	clear all matches
 col({expr})			Number	column nr of cursor or mark
@@ -3023,6 +3025,29 @@ char2nr({expr} [, {utf8}])					*char2nr()*
 		{utf8} is ignored, it exists only for backwards-compatibility.
 		A combining character is a separate character.
 		|nr2char()| does the opposite.
+
+							*charidx()*
+charidx({string}, {idx} [, {countcc}])
+		Return the character index of the byte at {idx} in {string}.
+		The index of the first character is zero.
+		If there are no multibyte characters the returned value is
+		equal to {idx}.
+		When {countcc} is omitted or zero, then composing characters
+		are not counted separately, their byte length is added to the
+		preceding base character.
+		When {countcc} is set to 1, then composing characters are
+		counted as separate characters.
+		Returns -1 if the arguments are invalid or if {idx} is greater
+		than the index of the last byte in {string}.  An error is
+		given if the first argument is not a string, the second
+		argument is not a number or when the third argument is present
+		and is not zero or one.
+		See |byteidx()| and |byteidxcomp()| for getting the byte index
+		from the character index.
+		Examples: >
+			echo charidx('áb́ć', 3)		returns 1
+			echo charidx('áb́ć', 6, 1)	returns 4
+			echo charidx('áb́ć', 16)		returns -1
 
 cindent({lnum})						*cindent()*
 		Get the amount of indent for line {lnum} according the C

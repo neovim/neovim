@@ -940,6 +940,52 @@ static void f_char2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       (const char_u *)tv_get_string(&argvars[0]));
 }
 
+// "charidx()" function
+static void f_charidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = -1;
+
+  if (argvars[0].v_type != VAR_STRING
+      || argvars[1].v_type != VAR_NUMBER
+      || (argvars[2].v_type != VAR_UNKNOWN
+          && argvars[2].v_type != VAR_NUMBER)) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  const char *str = tv_get_string_chk(&argvars[0]);
+  varnumber_T idx = tv_get_number_chk(&argvars[1], NULL);
+  if (str == NULL || idx < 0) {
+    return;
+  }
+  int countcc = 0;
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    countcc = (int)tv_get_number(&argvars[2]);
+  }
+  if (countcc < 0 || countcc > 1) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  int (*ptr2len)(const char_u *);
+  if (countcc) {
+    ptr2len = utf_ptr2len;
+  } else {
+    ptr2len = utfc_ptr2len;
+  }
+
+  const char *p;
+  int len;
+  for (p = str, len = 0; p <= str + idx; len++) {
+    if (*p == NUL) {
+      return;
+    }
+    p += ptr2len((const char_u *)p);
+  }
+
+  rettv->vval.v_number = len > 0 ? len - 1 : 0;
+}
+
 /*
  * "cindent(lnum)" function
  */
