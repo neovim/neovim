@@ -211,7 +211,7 @@ function M.apply_text_edits(text_edits, bufnr)
   local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
   local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
   local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) <= finish_line + 1
-  if set_eol and #lines[#lines] ~= 0 then
+  if set_eol and (#lines == 0 or #lines[#lines] ~= 0) then
     table.insert(lines, '')
   end
 

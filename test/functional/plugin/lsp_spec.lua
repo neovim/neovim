@@ -1032,6 +1032,20 @@ describe('LSP', function()
         'å ä ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
+    it('applies text edits at the end of the document', function()
+      local edits = {
+        make_edit(5, 0, 5, 0, "foobar");
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        'First line of text';
+        'Second line of text';
+        'Third line of text';
+        'Fourth line of text';
+        'å å ɧ 汉语 ↥ 🤦 🦄';
+        'foobar';
+      }, buf_lines(1))
+    end)
 
     describe('with LSP end line after what Vim considers to be the end line', function()
       it('applies edits when the last linebreak is considered a new line', function()
