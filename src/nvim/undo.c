@@ -594,13 +594,20 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
 }
 
 
-# define UF_START_MAGIC     "Vim\237UnDo\345"  /* magic at start of undofile */
+// magic at start of undofile
+# define UF_START_MAGIC     "Vim\237UnDo\345"
 # define UF_START_MAGIC_LEN     9
-# define UF_HEADER_MAGIC        0x5fd0  /* magic at start of header */
-# define UF_HEADER_END_MAGIC    0xe7aa  /* magic after last header */
-# define UF_ENTRY_MAGIC         0xf518  /* magic at start of entry */
-# define UF_ENTRY_END_MAGIC     0x3581  /* magic after last entry */
-# define UF_VERSION             2       /* 2-byte undofile version number */
+// magic at start of header
+# define UF_HEADER_MAGIC        0x5fd0
+// magic after last header
+# define UF_HEADER_END_MAGIC    0xe7aa
+// magic at start of entry
+# define UF_ENTRY_MAGIC         0xf518
+// magic after last entry
+# define UF_ENTRY_END_MAGIC     0x3581
+
+// 2-byte undofile version number
+# define UF_VERSION             3
 
 /* extra fields for header */
 # define UF_LAST_SAVE_NR        1
@@ -847,6 +854,15 @@ static bool serialize_uhp(bufinfo_T *bi, u_header_T *uhp)
     }
   }
   undo_write_bytes(bi, (uintmax_t)UF_ENTRY_END_MAGIC, 2);
+
+  // Write all extmark undo objects
+  for (size_t i = 0; i < kv_size(uhp->uh_extmark); i++) {
+    if (!serialize_extmark(bi, kv_A(uhp->uh_extmark, i))) {
+      return false;
+    }
+  }
+  undo_write_bytes(bi, (uintmax_t)UF_ENTRY_END_MAGIC, 2);
+
   return true;
 }
 
@@ -928,7 +944,93 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
     return NULL;
   }
 
+  // Unserialize all extmark undo information
+  ExtmarkUndoObject *extup;
+  kv_init(uhp->uh_extmark);
+
+  while ((c = undo_read_2c(bi)) == UF_ENTRY_MAGIC) {
+    bool error = false;
+    extup = unserialize_extmark(bi, &error, file_name);
+    if (error) {
+      kv_destroy(uhp->uh_extmark);
+      xfree(extup);
+      return NULL;
+    }
+    kv_push(uhp->uh_extmark, *extup);
+    xfree(extup);
+  }
+  if (c != UF_ENTRY_END_MAGIC) {
+    corruption_error("entry end", file_name);
+    u_free_uhp(uhp);
+    return NULL;
+  }
+
   return uhp;
+}
+
+static bool serialize_extmark(bufinfo_T *bi, ExtmarkUndoObject extup)
+{
+  if (extup.type == kExtmarkSplice) {
+    undo_write_bytes(bi, (uintmax_t)UF_ENTRY_MAGIC, 2);
+    undo_write_bytes(bi, (uintmax_t)extup.type, 4);
+    if (!undo_write(bi, (uint8_t *)&(extup.data.splice),
+                    sizeof(ExtmarkSplice))) {
+        return false;
+    }
+  } else if (extup.type == kExtmarkMove) {
+    undo_write_bytes(bi, (uintmax_t)UF_ENTRY_MAGIC, 2);
+    undo_write_bytes(bi, (uintmax_t)extup.type, 4);
+    if (!undo_write(bi, (uint8_t *)&(extup.data.move), sizeof(ExtmarkMove))) {
+      return false;
+    }
+  }
+  // Note: We do not serialize ExtmarkSavePos information, since
+  // buffer marktrees are not retained when closing/reopening a file
+  return true;
+}
+
+static ExtmarkUndoObject *unserialize_extmark(bufinfo_T *bi, bool *error,
+                                              const char *filename)
+{
+  UndoObjectType type;
+  uint8_t *buf = NULL;
+  size_t n_elems;
+
+  ExtmarkUndoObject *extup = xmalloc(sizeof(ExtmarkUndoObject));
+
+  type = (UndoObjectType)undo_read_4c(bi);
+  extup->type = type;
+  if (type == kExtmarkSplice) {
+    n_elems = (size_t)sizeof(ExtmarkSplice) / sizeof(uint8_t);
+    buf = xcalloc(sizeof(uint8_t), n_elems);
+    if (!undo_read(bi, buf, n_elems)) {
+      goto error;
+    }
+    extup->data.splice = *(ExtmarkSplice *)buf;
+  } else if (type == kExtmarkMove) {
+    n_elems = (size_t)sizeof(ExtmarkMove) / sizeof(uint8_t);
+    buf = xcalloc(sizeof(uint8_t), n_elems);
+    if (!undo_read(bi, buf, n_elems)) {
+      goto error;
+    }
+    extup->data.move = *(ExtmarkMove *)buf;
+  } else {
+      goto error;
+  }
+
+  if (buf) {
+    xfree(buf);
+  }
+
+  return extup;
+
+error:
+  xfree(extup);
+  if (buf) {
+    xfree(buf);
+  }
+  *error = true;
+  return NULL;
 }
 
 /// Serializes "uep".
