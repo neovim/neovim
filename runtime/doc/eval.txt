@@ -1541,7 +1541,10 @@ v:dying		Normally zero.  When a deadly signal is caught it's set to
 		VimLeave autocommands will not be executed.
 
 					*v:exiting* *exiting-variable*
-v:exiting	Exit code, or |v:null| if not exiting. |VimLeave|
+v:exiting	Exit code, or |v:null| before invoking the |VimLeavePre|
+		and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
+		Example: >
+			:au VimLeave * echo "Exit value is " .. v:exiting
 
 					*v:echospace* *echospace-variable*
 v:echospace	Number of screen cells that can be used for an `:echo` message

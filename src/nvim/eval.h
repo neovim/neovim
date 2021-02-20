@@ -105,7 +105,6 @@ typedef enum {
     VV_DYING,
     VV_EXCEPTION,
     VV_THROWPOINT,
-    VV_STDERR,
     VV_REG,
     VV_CMDBANG,
     VV_INSERTMODE,
@@ -140,13 +139,9 @@ typedef enum {
     VV_OPTION_OLD,
     VV_OPTION_TYPE,
     VV_ERRORS,
-    VV_MSGPACK_TYPES,
-    VV_EVENT,
     VV_FALSE,
     VV_TRUE,
     VV_NULL,
-    VV__NULL_LIST,  // List with NULL value. For test purposes only.
-    VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
     VV_VIM_DID_ENTER,
     VV_TESTING,
     VV_TYPE_NUMBER,
@@ -156,10 +151,16 @@ typedef enum {
     VV_TYPE_DICT,
     VV_TYPE_FLOAT,
     VV_TYPE_BOOL,
+    VV_EVENT,
     VV_ECHOSPACE,
-    VV_EXITING,
-    VV_LUA,
     VV_ARGV,
+    VV_EXITING,
+    // Neovim
+    VV_STDERR,
+    VV_MSGPACK_TYPES,
+    VV__NULL_LIST,  // List with NULL value. For test purposes only.
+    VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+    VV_LUA,
 } VimVarIndex;
 
 /// All recognized msgpack types
