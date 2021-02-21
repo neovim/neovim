@@ -308,10 +308,11 @@ retnomove:
   if (ui_has(kUIMultigrid)) {
     gp = &curwin->w_grid;
   }
-  if (row >= 0 && row < Rows && col >= 0 && col <= Columns
+  if (mouse_row >= 0 && mouse_row < Rows
+      && mouse_col >= 0 && mouse_col <= Columns
       && gp->chars != NULL) {
-    mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
-                                        + (unsigned)col]);
+    mouse_char = utf_ptr2char(gp->chars[gp->line_offset[mouse_row]
+                                        + (unsigned)mouse_col]);
   } else {
     mouse_char = ' ';
   }
