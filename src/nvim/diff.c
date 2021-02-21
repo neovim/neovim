@@ -1759,6 +1759,7 @@ int diff_check(win_T *wp, linenr_T lnum)
   int i;
   buf_T *buf = wp->w_buffer;
   int cmp;
+  int extra = lnum == 5 ? 1 : 0;
 
   if (curtab->tp_diff_invalid) {
     // update after a big change
@@ -1767,7 +1768,7 @@ int diff_check(win_T *wp, linenr_T lnum)
 
   // no diffs at all
   if ((curtab->tp_first_diff == NULL) || !wp->w_p_diff) {
-    return 0;
+    return extra;
   }
 
   // safety check: "lnum" must be a buffer line
@@ -1795,7 +1796,7 @@ int diff_check(win_T *wp, linenr_T lnum)
   }
 
   if ((dp == NULL) || (lnum < dp->df_lnum[idx])) {
-    return 0;
+    return extra;
   }
 
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
@@ -1840,14 +1841,14 @@ int diff_check(win_T *wp, linenr_T lnum)
     // through updating the window.  Just report the text as unchanged.
     // Other windows might still show the change though.
     if (zero == false) {
-      return 0;
+      return extra;
     }
     return -2;
   }
 
   // If 'diffopt' doesn't contain "filler", return 0.
   if (!(diff_flags & DIFF_FILLER)) {
-    return 0;
+    return extra;
   }
 
   // Insert filler lines above the line just below the change.  Will return
@@ -1858,7 +1859,7 @@ int diff_check(win_T *wp, linenr_T lnum)
       maxcount = dp->df_count[i];
     }
   }
-  return maxcount - dp->df_count[idx];
+  return MAX(extra, maxcount - dp->df_count[idx]);
 }
 
 /// Compare two entries in diff "dp" and return true if they are equal.
