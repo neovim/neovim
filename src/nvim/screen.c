@@ -1293,7 +1293,7 @@ static void win_update(win_T *wp, Providers *providers)
   srow = 0;
   lnum = wp->w_topline;  // first line shown in window
 
-  decor_redraw_reset(buf, &decor_state);
+  decor_redraw_reset(wp, &decor_state);
 
   Providers line_providers;
   kvi_init(line_providers);
@@ -2159,8 +2159,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       }
     }
 
-    has_decor = decor_redraw_line(wp->w_buffer, lnum-1,
-                                  &decor_state);
+    has_decor = decor_redraw_line(wp, lnum-1, &decor_state);
 
     for (size_t k = 0; k < kv_size(*providers); k++) {
       DecorProvider *p = kv_A(*providers, k);
@@ -3397,8 +3396,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         }
 
         if (has_decor && v > 0) {
-          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1,
-                                              &decor_state);
+          int extmark_attr = decor_redraw_col(wp, (colnr_T)v-1, &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
               char_attr = hl_combine_attr(char_attr, extmark_attr);
@@ -3901,7 +3899,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                              .hl_id = hl_err }));
         do_virttext = true;
       } else if (has_decor) {
-        VirtText *vp = decor_redraw_virt_text(wp->w_buffer, &decor_state);
+        VirtText *vp = decor_redraw_virt_text(wp, &decor_state);
         if (vp) {
           virt_text = *vp;
           do_virttext = true;

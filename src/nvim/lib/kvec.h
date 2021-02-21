@@ -199,6 +199,19 @@ static inline void *_memcpy_free(void *const restrict dest,
 #define kvi_push(v, x) \
     (*kvi_pushp(v) = (x))
 
+/// Copy a vector to a preallocated vector
+///
+/// @param[out] v1 destination
+/// @param[in] v2 source (can be either vector or preallocated vector)
+#define kvi_copy(v1, v0) \
+    do { \
+      if ((v1).capacity < (v0).size) { \
+        kvi_resize(v1, (v0).size); \
+      } \
+      (v1).size = (v0).size; \
+      memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
+    } while (0)
+
 /// Free array of elements of a vector with preallocated array if needed
 ///
 /// @param[out]  v  Vector to free.

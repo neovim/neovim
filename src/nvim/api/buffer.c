@@ -1474,7 +1474,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   uint64_t id = 0;
   int line2 = -1, hl_id = 0;
   DecorPriority priority = DECOR_PRIORITY_BASE;
-  colnr_T col2 = 0;
+  colnr_T col2 = -1;
   VirtText virt_text = KV_INITIAL_VALUE;
   bool right_gravity = true;
   bool end_right_gravity = false;
@@ -1610,7 +1610,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   }
 
   // TODO(bfredl): synergize these two branches even more
-  if (ephemeral && decor_state.buf == buf) {
+  if (ephemeral && decor_state.win && decor_state.win->w_buffer == buf) {
     int attr_id = hl_id > 0 ? syn_id2attr(hl_id) : 0;
     VirtText *vt_allocated = NULL;
     if (kv_size(virt_text)) {
@@ -1671,6 +1671,66 @@ Boolean nvim_buf_del_extmark(Buffer buffer,
 
   return extmark_del(buf, (uint64_t)ns_id, (uint64_t)id);
 }
+
+Array nvim__buf_intersect(Buffer buffer, Integer row, Integer col, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  Array retval = ARRAY_DICT_INIT;
+  if (!buf) {
+    return retval;
+  }
+  MarkTreeIter itr[1];
+
+  if (!marktree_itr_get_intersect(buf->b_marktree, (int)row, (int)col, itr)) {
+    return retval;
+  }
+  while (true) {
+    uint64_t id = marktree_itr_step_intersect(buf->b_marktree, itr);
+    if (!id) {
+      break;
+    }
+
+    ExtmarkItem *item = extmark_get_item(buf, id, false);
+    Array a = ARRAY_DICT_INIT;
+    ADD(a, INTEGER_OBJ((Integer)item->mark_id));
+    if (item->decor) {
+      ADD(a, INTEGER_OBJ(item->decor->hl_id));
+    }
+    ADD(retval, ARRAY_OBJ(a));
+  }
+  return retval;
+}
+
+
+String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return NULL_STRING;
+  }
+
+  return mt_inspect_rec(buf->b_marktree, keys);
+
+}
+
+Boolean nvim__buf_assert_extmarks(Buffer buffer, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return false;
+  }
+
+#ifdef NDEBUG
+  return false;
+#else
+  marktree_check(buf->b_marktree);
+  return true;
+#endif
+}
+
 
 /// Adds a highlight to buffer.
 ///
