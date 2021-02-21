@@ -249,17 +249,17 @@ end
 --
 -- @param regions A list of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(regions)
-  -- Transform the tables from 4 element long to 6 element long (with byte offset)
-  for _, region in ipairs(regions) do
-    for i, range in ipairs(region) do
-      if type(range) == "table" and #range == 4 then
-        -- TODO(vigoux): I don't think string parsers are useful for now
-        if type(self._source) == "number" then
+  -- TODO(vigoux): I don't think string parsers are useful for now
+  if type(self._source) == "number" then
+    -- Transform the tables from 4 element long to 6 element long (with byte offset)
+    for _, region in ipairs(regions) do
+      for i, range in ipairs(region) do
+        if type(range) == "table" and #range == 4 then
           local start_row, start_col, end_row, end_col = unpack(range)
           -- Easy case, this is a buffer parser
           -- TODO(vigoux): proper byte computation here, and account for EOL ?
-          local start_byte = a.nvim_buf_get_offset(self.bufnr, start_row) + start_col
-          local end_byte = a.nvim_buf_get_offset(self.bufnr, end_row) + end_col
+          local start_byte = a.nvim_buf_get_offset(self._source, start_row) + start_col
+          local end_byte = a.nvim_buf_get_offset(self._source, end_row) + end_col
 
           region[i] = { start_row, start_col, start_byte, end_row, end_col, end_byte }
         end
