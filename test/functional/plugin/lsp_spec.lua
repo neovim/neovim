@@ -41,10 +41,10 @@ local function fake_lsp_server_setup(test_name, timeout_ms)
         "-c", string.format("lua TIMEOUT = %d", timeout),
         "-c", "luafile "..fixture_filename,
       };
-      callbacks = setmetatable({}, {
+      handlers = setmetatable({}, {
         __index = function(t, method)
           return function(...)
-            return vim.rpcrequest(1, 'callback', ...)
+            return vim.rpcrequest(1, 'handler', ...)
           end
         end;
       });
@@ -89,7 +89,7 @@ local function test_rpc_server(config)
       end
       return NIL
     end
-    if method == 'callback' then
+    if method == 'handler' then
       if config.on_callback then
         config.on_callback(unpack(args))
       end
@@ -205,7 +205,7 @@ describe('LSP', function()
       }
       test_rpc_server {
         test_name = "basic_init";
-        on_init = function(client, _init_result)
+        on_init = function(client, _)
           -- client is a dummy object which will queue up commands to be run
           -- once the server initializes. It can't accept lua callbacks or
           -- other types that may be unserializable for now.
@@ -386,7 +386,7 @@ describe('LSP', function()
             exec_lua([=[
               BUFFER = vim.api.nvim_get_current_buf()
               lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
-              vim.lsp.callbacks['textDocument/typeDefinition'] = function(err, method)
+              vim.lsp.handlers['textDocument/typeDefinition'] = function(err, method)
                 vim.lsp._last_lsp_callback = { err = err; method = method }
               end
               vim.lsp._unsupported_method = function(method)
@@ -425,7 +425,7 @@ describe('LSP', function()
         test_name = "capabilities_for_client_supports_method";
         on_setup = function()
             exec_lua([=[
-              vim.lsp.callbacks['textDocument/typeDefinition'] = function(err, method)
+              vim.lsp.handlers['textDocument/typeDefinition'] = function(err, method)
                 vim.lsp._last_lsp_callback = { err = err; method = method }
               end
               vim.lsp._unsupported_method = function(method)
@@ -897,8 +897,8 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+        on_handler = function(err, method, params, client_id)
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected handler")
         end;
       }
     end)
@@ -1779,8 +1779,8 @@ describe('LSP', function()
             uri = "file:///src/main.rs"
           }
         } }
-        local callback = require'vim.lsp.handlers'['callHierarchy/outgoingCalls']
-        callback(nil, nil, rust_analyzer_response)
+        local handler = require'vim.lsp.handlers'['callHierarchy/outgoingCalls']
+        handler(nil, nil, rust_analyzer_response)
         return vim.fn.getqflist()
       ]=])
 
@@ -1851,8 +1851,8 @@ describe('LSP', function()
           } }
         } }
 
-        local callback = require'vim.lsp.handlers'['callHierarchy/incomingCalls']
-        callback(nil, nil, rust_analyzer_response)
+        local handler = require'vim.lsp.handlers'['callHierarchy/incomingCalls']
+        handler(nil, nil, rust_analyzer_response)
         return vim.fn.getqflist()
       ]=])
 

@@ -18,14 +18,6 @@ end
 
 local M = {}
 
--- TODO(remove-callbacks)
-M.diagnostics_by_buf = setmetatable({}, {
-  __index = function(_, bufnr)
-    warn_once("diagnostics_by_buf is deprecated. Use 'vim.lsp.diagnostic.get'")
-    return vim.lsp.diagnostic.get(bufnr)
-  end
-})
-
 --@private
 local function split_lines(value)
   return split(value, '\n', true)
@@ -1025,78 +1017,6 @@ function M.open_floating_preview(contents, filetype, opts)
   api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
   M.close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden", "BufLeave"}, floating_winnr)
   return floating_bufnr, floating_winnr
-end
-
--- TODO(remove-callbacks)
-do
-  --@deprecated
-  function M.get_severity_highlight_name(severity)
-    warn_once("vim.lsp.util.get_severity_highlight_name is deprecated.")
-    return vim.lsp.diagnostic._get_severity_highlight_name(severity)
-  end
-
-  --@deprecated
-  function M.buf_clear_diagnostics(bufnr, client_id)
-    warn_once("buf_clear_diagnostics is deprecated. Use vim.lsp.diagnostic.clear")
-    return vim.lsp.diagnostic.clear(bufnr, client_id)
-  end
-
-  --@deprecated
-  function M.get_line_diagnostics()
-    warn_once("get_line_diagnostics is deprecated. Use vim.lsp.diagnostic.get_line_diagnostics")
-
-    local bufnr = api.nvim_get_current_buf()
-    local line_nr = api.nvim_win_get_cursor(0)[1] - 1
-
-    return vim.lsp.diagnostic.get_line_diagnostics(bufnr, line_nr)
-  end
-
-  --@deprecated
-  function M.show_line_diagnostics()
-    warn_once("show_line_diagnostics is deprecated. Use vim.lsp.diagnostic.show_line_diagnostics")
-
-    local bufnr = api.nvim_get_current_buf()
-    local line_nr = api.nvim_win_get_cursor(0)[1] - 1
-
-    return vim.lsp.diagnostic.show_line_diagnostics(bufnr, line_nr)
-  end
-
-  --@deprecated
-  function M.buf_diagnostics_save_positions(bufnr, diagnostics, client_id)
-    warn_once("buf_diagnostics_save_positions is deprecated. Use vim.lsp.diagnostic.save")
-    return vim.lsp.diagnostic.save(diagnostics, bufnr, client_id)
-  end
-
-  --@deprecated
-  function M.buf_diagnostics_get_positions(bufnr, client_id)
-    warn_once("buf_diagnostics_get_positions is deprecated. Use vim.lsp.diagnostic.get")
-    return vim.lsp.diagnostic.get(bufnr, client_id)
-  end
-
-  --@deprecated
-  function M.buf_diagnostics_underline(bufnr, diagnostics, client_id)
-    warn_once("buf_diagnostics_underline is deprecated. Use 'vim.lsp.diagnostic.set_underline'")
-    return vim.lsp.diagnostic.set_underline(diagnostics, bufnr, client_id)
-  end
-
-  --@deprecated
-  function M.buf_diagnostics_virtual_text(bufnr, diagnostics, client_id)
-    warn_once("buf_diagnostics_virtual_text is deprecated. Use 'vim.lsp.diagnostic.set_virtual_text'")
-    return vim.lsp.diagnostic.set_virtual_text(diagnostics, bufnr, client_id)
-  end
-
-  --@deprecated
-  function M.buf_diagnostics_signs(bufnr, diagnostics, client_id)
-    warn_once("buf_diagnostics_signs is deprecated. Use 'vim.lsp.diagnostic.set_signs'")
-    return vim.lsp.diagnostic.set_signs(diagnostics, bufnr, client_id)
-  end
-
-  --@deprecated
-  function M.buf_diagnostics_count(kind, client_id)
-    warn_once("buf_diagnostics_count is deprecated. Use 'vim.lsp.diagnostic.get_count'")
-    return vim.lsp.diagnostic.get_count(vim.api.nvim_get_current_buf(), client_id, kind)
-  end
-
 end
 
 do --[[ References ]]
