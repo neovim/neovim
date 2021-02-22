@@ -13,7 +13,7 @@ local M = {}
 --- Writes to error buffer.
 --@param ... (table of strings) Will be concatenated before being written
 local function err_message(...)
-  api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+  vim.notify(table.concat(vim.tbl_flatten{...}), vim.log.levels.ERROR)
   api.nvim_command("redraw")
 end
 
@@ -409,7 +409,7 @@ for k, fn in pairs(M) do
     })
 
     if err then
-      error(tostring(err))
+      return err_message(tostring(err))
     end
 
     return fn(err, method, params, client_id, bufnr, config)
