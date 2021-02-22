@@ -18,10 +18,16 @@ typedef kvec_t(VirtTextChunk) VirtText;
 typedef uint16_t DecorPriority;
 #define DECOR_PRIORITY_BASE 0x1000
 
+typedef enum {
+  kVTEndOfLine,
+  kVTOverlay,
+} VirtTextPos;
+
 struct Decoration
 {
   int hl_id;  // highlight group
   VirtText virt_text;
+  VirtTextPos virt_text_pos;
   // TODO(bfredl): style, signs, etc
   DecorPriority priority;
   bool shared;  // shared decoration, don't free
@@ -35,7 +41,9 @@ typedef struct {
   int attr_id;
   DecorPriority priority;
   VirtText *virt_text;
+  VirtTextPos virt_text_pos;
   bool virt_text_owned;
+  int virt_col;
 } HlRange;
 
 typedef struct {

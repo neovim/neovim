@@ -143,7 +143,7 @@ long tab_page_click_defs_size = 0;
 // for line_putchar. Contains the state that needs to be remembered from
 // putting one character to the next.
 typedef struct {
-  const char_u *p;
+  const char *p;
   int prev_c;  // previous Arabic character
   int prev_c1;  // first composing char for prev_c
 } LineState;
@@ -1857,7 +1857,7 @@ static int compute_foldcolumn(win_T *wp, int col)
 /// Handles composing chars and arabic shaping state.
 static int line_putchar(LineState *s, schar_T *dest, int maxcells, bool rl)
 {
-  const char_u *p = s->p;
+  const char_u *p = (char_u *)s->p;
   int cells = utf_ptr2cells(p);
   int c_len = utfc_ptr2len(p);
   int u8c, u8cc[MAX_MCO];
@@ -2870,6 +2870,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           && vcol >= (long)wp->w_virtcol)
          || (number_only && draw_state > WL_NR))
         && filler_todo <= 0) {
+      draw_virt_text(buf, &col, grid->Columns);
       grid_put_linebuf(grid, row, 0, col, -grid->Columns, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       // Pretend we have finished updating the window.  Except when
@@ -3397,7 +3398,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         }
 
         if (has_decor && v > 0) {
-          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1,
+          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1, off,
                                               &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
@@ -3919,7 +3920,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         int i;
 
         size_t virt_pos = 0;
-        LineState s = LINE_STATE((char_u *)"");
+        LineState s = LINE_STATE("");
         int virt_attr = 0;
 
         // Make sure alignment is the same regardless
@@ -3963,7 +3964,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           if (do_virttext && !delay_virttext) {
             if (*s.p == NUL) {
               if (virt_pos < virt_text.size) {
-                s.p = (char_u *)kv_A(virt_text, virt_pos).text;
+                s.p = kv_A(virt_text, virt_pos).text;
                 int hl_id = kv_A(virt_text, virt_pos).hl_id;
                 virt_attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
                 virt_pos++;
@@ -4029,6 +4030,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           col += n;
         }
       }
+
+      draw_virt_text(buf, &col, grid->Columns);
       grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       row++;
@@ -4247,7 +4250,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         && (grid->Columns == Columns  // Window spans the width of the screen,
             || ui_has(kUIMultigrid))  // or has dedicated grid.
         && !wp->w_p_rl;              // Not right-to-left.
-      grid_put_linebuf(grid, row, 0, col - boguscols, grid->Columns, wp->w_p_rl,
+
+      int draw_col = col - boguscols;
+      draw_virt_text(buf, &draw_col, grid->Columns);
+      grid_put_linebuf(grid, row, 0, draw_col, grid->Columns, wp->w_p_rl,
                        wp, wp->w_hl_attr_normal, wrap);
       if (wrap) {
         ScreenGrid *current_grid = grid;
@@ -4321,6 +4327,43 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   xfree(p_extra_free);
   xfree(err_text);
   return row;
+}
+
+void draw_virt_text(buf_T *buf, int *end_col, int max_col)
+{
+  DecorState *state = &decor_state;
+  for (size_t i = 0; i < kv_size(state->active); i++) {
+    HlRange *item = &kv_A(state->active, i);
+    if (item->start_row == state->row && item->virt_text
+        && item->virt_text_pos == kVTOverlay
+        && item->virt_col >= 0) {
+        VirtText vt = *item->virt_text;
+        LineState s = LINE_STATE("");
+        int virt_attr = 0;
+        int col = item->virt_col;
+        size_t virt_pos = 0;
+        item->virt_col = -2;  // deactivate
+
+        while (col < max_col) {
+          if (!*s.p) {
+            if (virt_pos == kv_size(vt)) {
+              break;
+            }
+            s.p = kv_A(vt, virt_pos).text;
+            int hl_id = kv_A(vt, virt_pos).hl_id;
+            virt_attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
+            virt_pos++;
+            continue;
+          }
+          int cells = line_putchar(&s, &linebuf_char[col], 2, false);
+          linebuf_attr[col++] = virt_attr;
+          if (cells > 1) {
+            linebuf_attr[col++] = virt_attr;
+          }
+        }
+        *end_col = MAX(*end_col, col);
+    }
+  }
 }
 
 /// Determine if dedicated window grid should be used or the default_grid

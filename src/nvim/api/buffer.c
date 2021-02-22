@@ -1425,6 +1425,11 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
 ///               - virt_text : virtual text to link to this mark.
+///               - virt_text_pos : positioning of virtual text. Possible
+///                                 values:
+///                 - "eol": right after eol character (default)
+///                 - "overlay": display over the specified column, without
+///                              shifting the underlying text.
 ///               - ephemeral : for use with |nvim_set_decoration_provider|
 ///                   callbacks. The mark will only be used for the current
 ///                   redraw cycle, and not be permantently stored in the
@@ -1474,8 +1479,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   uint64_t id = 0;
   int line2 = -1, hl_id = 0;
   DecorPriority priority = DECOR_PRIORITY_BASE;
-  colnr_T col2 = 0;
+  colnr_T col2 = -1;
   VirtText virt_text = KV_INITIAL_VALUE;
+  VirtTextPos virt_text_pos = kVTEndOfLine;
   bool right_gravity = true;
   bool end_right_gravity = false;
   bool end_gravity_set = false;
@@ -1544,6 +1550,22 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       if (ERROR_SET(err)) {
         goto error;
       }
+    } else if (strequal("virt_text_pos", k.data)) {
+      if (v->type != kObjectTypeString) {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_pos is not a String");
+        goto error;
+      }
+      String str = v->data.string;
+      if (strequal("eol", str.data)) {
+        virt_text_pos = kVTEndOfLine;
+      } else if (strequal("overlay", str.data)) {
+        virt_text_pos = kVTOverlay;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_pos: invalid value");
+        goto error;
+      }
     } else if (strequal("ephemeral", k.data)) {
       ephemeral = api_object_to_bool(*v, "ephemeral", false, err);
       if (ERROR_SET(err)) {
@@ -1585,7 +1607,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
 
   // Only error out if they try to set end_right_gravity without
   // setting end_col or end_line
-  if (line2 == -1 && col2 == 0 && end_gravity_set) {
+  if (line2 == -1 && col2 == -1 && end_gravity_set) {
     api_set_error(err, kErrorTypeValidation,
                   "cannot set end_right_gravity "
                   "without setting end_line or end_col");
@@ -1609,29 +1631,27 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     col2 = 0;
   }
 
+  Decoration *decor = NULL, tmp = { 0 };
+
+  if (kv_size(virt_text) || priority != DECOR_PRIORITY_BASE) {
+    // TODO(bfredl): this is a bit sketchy. eventually we should
+    // have predefined decorations for both marks/ephemerals
+    decor = ephemeral ? &tmp : xcalloc(1, sizeof(*decor));
+    decor->hl_id = hl_id;
+    decor->virt_text = virt_text;
+    decor->priority = priority;
+    decor->virt_text_pos = virt_text_pos;
+  } else if (hl_id) {
+    decor = decor_hl(hl_id);
+  }
+
   // TODO(bfredl): synergize these two branches even more
   if (ephemeral && decor_state.buf == buf) {
-    int attr_id = hl_id > 0 ? syn_id2attr(hl_id) : 0;
-    VirtText *vt_allocated = NULL;
-    if (kv_size(virt_text)) {
-      vt_allocated = xmalloc(sizeof *vt_allocated);
-      *vt_allocated = virt_text;
-    }
-    decor_add_ephemeral(attr_id, (int)line, (colnr_T)col,
-                        (int)line2, (colnr_T)col2, priority, vt_allocated);
+    decor_add_ephemeral((int)line, (int)col, line2, col2, decor, 0);
   } else {
     if (ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
       goto error;
-    }
-    Decoration *decor = NULL;
-    if (kv_size(virt_text)) {
-      decor = xcalloc(1, sizeof(*decor));
-      decor->hl_id = hl_id;
-      decor->virt_text = virt_text;
-    } else if (hl_id) {
-      decor = decor_hl(hl_id);
-      decor->priority = priority;
     }
 
     id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,

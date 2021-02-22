@@ -302,3 +302,98 @@ describe('decorations providers', function()
     ]]}
   end)
 end)
+
+describe('extmark decorations', function()
+  local screen
+  before_each( function()
+    clear()
+    screen = Screen.new(50, 15)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {bold=true, foreground=Screen.colors.Blue};
+      [2] = {foreground = Screen.colors.Brown};
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen};
+      [4] = {background = Screen.colors.Red1, foreground = Screen.colors.Gray100};
+    }
+  end)
+
+  it('can have virtual text of overlay style', function()
+    insert [[
+for _,item in ipairs(items) do
+    local text, hl_id_cell, count = unpack(item)
+    if hl_id_cell ~= nil then
+        hl_id = hl_id_cell
+    end
+    for _ = 1, (count or 1) do
+        local cell = line[colpos]
+        cell.text = text
+        cell.hl_id = hl_id
+        colpos = colpos+1
+    end
+end]]
+  feed 'gg'
+
+  local ns = meths.create_namespace 'test'
+  for i = 1,9 do
+    meths.buf_set_extmark(0, ns, i, 0, { virt_text={{'|', 'LineNr'}}, virt_text_pos='overlay'})
+    if i == 3 or (i >= 6 and i <= 9) then
+      meths.buf_set_extmark(0, ns, i, 4, { virt_text={{'|', 'NonText'}}, virt_text_pos='overlay'})
+    end
+  end
+  meths.buf_set_extmark(0, ns, 9, 10, { virt_text={{'foo'}, {'bar', 'MoreMsg'}, {'!!', 'ErrorMsg'}}, virt_text_pos='overlay'})
+
+  -- can "float" beyond end of line
+  meths.buf_set_extmark(0, ns, 5, 28, { virt_text={{'loopy', 'ErrorMsg'}}, virt_text_pos='overlay'})
+  -- bound check: right edge of window
+  meths.buf_set_extmark(0, ns, 2, 26, { virt_text={{'bork bork bork ' }, {'bork bork bork', 'ErrorMsg'}}, virt_text_pos='overlay'})
+
+  screen:expect{grid=[[
+    ^for _,item in ipairs(items) do                    |
+    {2:|}   local text, hl_id_cell, count = unpack(item)  |
+    {2:|}   if hl_id_cell ~= nil tbork bork bork {4:bork bork}|
+    {2:|}   {1:|}   hl_id = hl_id_cell                        |
+    {2:|}   end                                           |
+    {2:|}   for _ = 1, (count or 1) {4:loopy}                 |
+    {2:|}   {1:|}   local cell = line[colpos]                 |
+    {2:|}   {1:|}   cell.text = text                          |
+    {2:|}   {1:|}   cell.hl_id = hl_id                        |
+    {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpos+1                         |
+        end                                           |
+    end                                               |
+    {1:~                                                 }|
+    {1:~                                                 }|
+                                                      |
+  ]]}
+
+
+  -- handles broken lines
+  screen:try_resize(22, 25)
+  screen:expect{grid=[[
+    ^for _,item in ipairs(i|
+    tems) do              |
+    {2:|}   local text, hl_id_|
+    cell, count = unpack(i|
+    tem)                  |
+    {2:|}   if hl_id_cell ~= n|
+    il tbork bork bork {4:bor}|
+    {2:|}   {1:|}   hl_id = hl_id_|
+    cell                  |
+    {2:|}   end               |
+    {2:|}   for _ = 1, (count |
+    or 1) {4:loopy}           |
+    {2:|}   {1:|}   local cell = l|
+    ine[colpos]           |
+    {2:|}   {1:|}   cell.text = te|
+    xt                    |
+    {2:|}   {1:|}   cell.hl_id = h|
+    l_id                  |
+    {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpo|
+    s+1                   |
+        end               |
+    end                   |
+    {1:~                     }|
+    {1:~                     }|
+                          |
+  ]]}
+  end)
+end)
