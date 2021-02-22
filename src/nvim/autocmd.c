@@ -1192,10 +1192,10 @@ void aucmd_restbuf(aco_save_T *aco)
 
     win_remove(curwin, NULL);
     handle_unregister_window(curwin);
-    if (curwin->w_grid.chars != NULL) {
-      ui_comp_remove_grid(&curwin->w_grid);
-      ui_call_win_hide(curwin->w_grid.handle);
-      grid_free(&curwin->w_grid);
+    if (curwin->w_grid_alloc.chars != NULL) {
+      ui_comp_remove_grid(&curwin->w_grid_alloc);
+      ui_call_win_hide(curwin->w_grid_alloc.handle);
+      grid_free(&curwin->w_grid_alloc);
     }
 
     aucmd_win_used = false;

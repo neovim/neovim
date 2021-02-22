@@ -470,7 +470,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
     *gridp = DEFAULT_GRID_HANDLE;
   } else if (*gridp > 1) {
     win_T *wp = get_win_by_grid_handle(*gridp);
-    if (wp && wp->w_grid.chars
+    if (wp && wp->w_grid_alloc.chars
         && !(wp->w_floating && !wp->w_float_config.focusable)) {
       *rowp = MIN(*rowp, wp->w_grid.Rows-1);
       *colp = MIN(*colp, wp->w_grid.Columns-1);
@@ -479,7 +479,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   } else if (*gridp == 0) {
     ScreenGrid *grid = ui_comp_mouse_focus(*rowp, *colp);
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (&wp->w_grid != grid) {
+      if (&wp->w_grid_alloc != grid) {
         continue;
       }
       *gridp = grid->handle;
@@ -729,7 +729,7 @@ int mouse_check_fold(void)
   if (wp && mouse_row >= 0 && mouse_row < Rows
       && mouse_col >= 0 && mouse_col <= Columns) {
     int multigrid = ui_has(kUIMultigrid);
-    ScreenGrid *gp = multigrid ? &wp->w_grid : &default_grid;
+    ScreenGrid *gp = multigrid ? &wp->w_grid_alloc : &default_grid;
     int fdc = win_fdccol_count(wp);
     int row = multigrid && mouse_grid == 0 ? click_row : mouse_row;
     int col = multigrid && mouse_grid == 0 ? click_col : mouse_col;

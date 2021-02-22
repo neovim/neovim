@@ -2831,8 +2831,8 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     g = &pum_grid;
   } else if (grid > 1) {
     win_T *wp = get_win_by_grid_handle((handle_T)grid);
-    if (wp != NULL && wp->w_grid.chars != NULL) {
-      g = &wp->w_grid;
+    if (wp != NULL && wp->w_grid_alloc.chars != NULL) {
+      g = &wp->w_grid_alloc;
     } else {
       api_set_error(err, kErrorTypeValidation,
                     "No grid with the given handle");

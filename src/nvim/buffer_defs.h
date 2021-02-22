@@ -1409,6 +1409,7 @@ struct window_S {
   int w_tagstacklen;                    // number of tags on stack
 
   ScreenGrid w_grid;                    // the grid specific to the window
+  ScreenGrid w_grid_alloc;              // the grid specific to the window
   bool w_pos_changed;                   // true if window position changed
   bool w_floating;                       ///< whether the window is floating
   FloatConfig w_float_config;
