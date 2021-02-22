@@ -341,6 +341,17 @@ void update_window_hl(win_T *wp, bool invalid)
     }
     wp->w_hl_attrs[hlf] = attr;
   }
+
+  if (wp->w_floating && wp->w_float_config.border) {
+    for (int i = 0; i < 8; i++) {
+      int attr = wp->w_hl_attrs[HLF_BORDER];
+      if (wp->w_float_config.border_hl_ids[i]) {
+        attr = hl_get_ui_attr(HLF_BORDER, wp->w_float_config.border_hl_ids[i],
+                              false);
+      }
+      wp->w_float_config.border_attr[i] = attr;
+    }
+  }
 }
 
 /// Gets HL_UNDERLINE highlight.

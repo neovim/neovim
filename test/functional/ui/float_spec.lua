@@ -14,7 +14,7 @@ local funcs = helpers.funcs
 local run = helpers.run
 local pcall_err = helpers.pcall_err
 
-describe('floatwin', function()
+describe('float window', function()
   before_each(function()
     clear()
   end)
@@ -131,7 +131,7 @@ describe('floatwin', function()
     local screen
     before_each(function()
       screen = Screen.new(40,7)
-      screen:attach({ext_multigrid=multigrid})
+      screen:attach {ext_multigrid=multigrid}
       screen:set_default_attr_ids(attrs)
     end)
 
@@ -592,6 +592,185 @@ describe('floatwin', function()
           {0:~         }{15:                    }{0:          }|
                                                   |
         ]])
+      end
+    end)
+
+    it('can have border', function()
+      local buf = meths.create_buf(false, false)
+      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+                                             ' BORDAA  '})
+      local win = meths.open_win(buf, false, {relative='editor', width=9, height=2, row=2, col=5, border="double"})
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {5:╔═════════╗}|
+          {5:║}{1: halloj! }{5:║}|
+          {5:║}{1: BORDAA  }{5:║}|
+          {5:╚═════════╝}|
+        ]], float_pos={
+          [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:╔═════════╗}{0:                        }|
+          {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
+          {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
+          {0:~    }{5:╚═════════╝}{0:                        }|
+                                                  |
+        ]]}
+      end
+
+      meths.win_set_config(win, {border="single"})
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {5:┌─────────┐}|
+          {5:│}{1: halloj! }{5:│}|
+          {5:│}{1: BORDAA  }{5:│}|
+          {5:└─────────┘}|
+        ]], float_pos={
+          [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:┌─────────┐}{0:                        }|
+          {0:~    }{5:│}{1: halloj! }{5:│}{0:                        }|
+          {0:~    }{5:│}{1: BORDAA  }{5:│}{0:                        }|
+          {0:~    }{5:└─────────┘}{0:                        }|
+                                                  |
+        ]]}
+      end
+
+      -- support: ascii char, UTF-8 char, composed char, highlight per char
+      meths.win_set_config(win, {border={"x", {"å", "ErrorMsg"}, {"\\"}, {"n̈̊", "Search"}}})
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {5:xååååååååå\}|
+          {5:n̈̊}{1: halloj! }{5:n̈̊}|
+          {5:n̈̊}{1: BORDAA  }{5:n̈̊}|
+          {5:\åååååååååx}|
+        ]], float_pos={
+          [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:x}{7:ååååååååå}{5:\}{0:                        }|
+          {0:~    }{17:n̈̊}{1: halloj! }{17:n̈̊}{0:                        }|
+          {0:~    }{17:n̈̊}{1: BORDAA  }{17:n̈̊}{0:                        }|
+          {0:~    }{5:\}{7:ååååååååå}{5:x}{0:                        }|
+                                                  |
+        ]]}
+      end
+
+      meths.win_set_config(win, {border="none"})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {1: halloj! }|
+          {1: BORDAA  }|
+        ]], float_pos={
+          [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{1: halloj! }{0:                          }|
+          {0:~    }{1: BORDAA  }{0:                          }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+        ]]}
       end
     end)
 

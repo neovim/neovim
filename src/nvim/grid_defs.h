@@ -7,7 +7,7 @@
 
 #include "nvim/types.h"
 
-#define MAX_MCO  6  // maximum value for 'maxcombine'
+#define MAX_MCO  6  // fixed value for 'maxcombine'
 
 // The characters and attributes drawn on grids.
 typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];

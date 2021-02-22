@@ -141,6 +141,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
 
       pum_anchor_grid = (int)curwin->w_grid.target->handle;
       if (!ui_has(kUIMultigrid)) {
+        pum_anchor_grid = (int)default_grid.handle;
         pum_win_row += curwin->w_winrow;
         cursor_col += curwin->w_wincol;
       }

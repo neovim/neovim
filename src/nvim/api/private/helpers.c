@@ -1645,6 +1645,20 @@ bool api_object_to_bool(Object obj, const char *what,
   }
 }
 
+int object_to_hl_id(Object obj, const char *what, Error *err)
+{
+  if (obj.type == kObjectTypeString) {
+    String str = obj.data.string;
+    return str.size ? syn_check_group((char_u *)str.data, (int)str.size) : 0;
+  } else if (obj.type == kObjectTypeInteger) {
+    return (int)obj.data.integer;
+  } else {
+    api_set_error(err, kErrorTypeValidation,
+                  "%s is not a valid highlight", what);
+    return 0;
+  }
+}
+
 HlMessage parse_hl_msg(Array chunks, Error *err)
 {
   HlMessage hl_msg = KV_INITIAL_VALUE;
@@ -1766,6 +1780,91 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   out->lnum = bufpos.items[0].data.integer;
   out->col = (colnr_T)bufpos.items[1].data.integer;
   return true;
+}
+
+static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
+{
+  struct {
+    const char *name;
+    schar_T chars[8];
+  } defaults[] = {
+    { "double", { "╔", "═", "╗", "║", "╝", "═", "╚", "║" } },
+    { "single", { "┌", "─", "┐", "│", "┘", "─", "└", "│" } },
+    { NULL, { { NUL } } },
+  };
+
+  schar_T *chars = fconfig->border_chars;
+  int *hl_ids = fconfig->border_hl_ids;
+
+  fconfig->border = true;
+
+  if (style.type == kObjectTypeArray) {
+    Array arr = style.data.array;
+    size_t size = arr.size;
+    if (!size || size > 8 || (size & (size-1))) {
+      api_set_error(err, kErrorTypeValidation,
+                    "invalid number of border chars");
+      return;
+    }
+    for (size_t i = 0; i < size; i++) {
+      Object iytem = arr.items[i];
+      String string = NULL_STRING;
+      int hl_id = 0;
+      if (iytem.type == kObjectTypeArray) {
+        Array iarr = iytem.data.array;
+        if (!iarr.size || iarr.size > 2) {
+          api_set_error(err, kErrorTypeValidation, "invalid border char");
+          return;
+        }
+        if (iarr.items[0].type != kObjectTypeString) {
+          api_set_error(err, kErrorTypeValidation, "invalid border char");
+          return;
+        }
+        string = iarr.items[0].data.string;
+        if (iarr.size == 2) {
+          hl_id = object_to_hl_id(iarr.items[1], "border char highlight", err);
+          if (ERROR_SET(err)) {
+            return;
+          }
+        }
+
+      } else if (iytem.type == kObjectTypeString) {
+        string = iytem.data.string;
+      } else {
+        api_set_error(err, kErrorTypeValidation, "invalid border char");
+        return;
+      }
+      if (!string.size
+          || mb_string2cells_len((char_u *)string.data, string.size) != 1) {
+        api_set_error(err, kErrorTypeValidation,
+                      "border chars must be one cell");
+      }
+      size_t len = MIN(string.size, sizeof(*chars)-1);
+      memcpy(chars[i], string.data, len);
+      chars[i][len] = NUL;
+      hl_ids[i] = hl_id;
+    }
+    while (size < 8) {
+      memcpy(chars+size, chars, sizeof(*chars) * size);
+      memcpy(hl_ids+size, hl_ids, sizeof(*hl_ids) * size);
+      size <<= 1;
+    }
+  } else if (style.type == kObjectTypeString) {
+    String str = style.data.string;
+    if (str.size == 0 || strequal(str.data, "none")) {
+      fconfig->border = false;
+      return;
+    }
+    for (size_t i = 0; defaults[i].name; i++) {
+      if (strequal(str.data, defaults[i].name)) {
+        memcpy(chars, defaults[i].chars, sizeof(defaults[i].chars));
+        memset(hl_ids, 0, 8 * sizeof(*hl_ids));
+        return;
+      }
+    }
+    api_set_error(err, kErrorTypeValidation,
+                  "invalid border style \"%s\"", str.data);
+  }
 }
 
 bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
@@ -1890,7 +1989,7 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
         return false;
       }
     } else if (!strcmp(key, "border")) {
-      fconfig->border = api_object_to_bool(val, "border", false, err);
+      parse_border_style(val, fconfig, err);
       if (ERROR_SET(err)) {
         return false;
       }

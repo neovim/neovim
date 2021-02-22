@@ -472,8 +472,8 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
     win_T *wp = get_win_by_grid_handle(*gridp);
     if (wp && wp->w_grid_alloc.chars
         && !(wp->w_floating && !wp->w_float_config.focusable)) {
-      *rowp = MIN(*rowp, wp->w_grid.Rows-1);
-      *colp = MIN(*colp, wp->w_grid.Columns-1);
+      *rowp = MIN(*rowp-wp->w_grid.row_offset, wp->w_grid.Rows-1);
+      *colp = MIN(*colp-wp->w_grid.col_offset, wp->w_grid.Columns-1);
       return wp;
     }
   } else if (*gridp == 0) {
@@ -483,8 +483,8 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
         continue;
       }
       *gridp = grid->handle;
-      *rowp -= grid->comp_row;
-      *colp -= grid->comp_col;
+      *rowp -= grid->comp_row+wp->w_grid.row_offset;
+      *colp -= grid->comp_col+wp->w_grid.col_offset;
       return wp;
     }
 

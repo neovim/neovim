@@ -605,6 +605,7 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
   wp->w_vsep_width = 0;
 
   win_config_float(wp, fconfig);
+  win_set_inner_size(wp);
   wp->w_pos_changed = true;
   redraw_later(wp, VALID);
   return wp;
@@ -667,6 +668,8 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 
   bool change_external = fconfig.external != wp->w_float_config.external;
+  bool change_border = fconfig.border != wp->w_float_config.border;
+
   wp->w_float_config = fconfig;
 
   if (!ui_has(kUIMultigrid)) {
@@ -676,10 +679,17 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
 
   win_set_inner_size(wp);
   must_redraw = MAX(must_redraw, VALID);
+
   wp->w_pos_changed = true;
-  if (change_external) {
+  if (change_external || change_border) {
     wp->w_hl_needs_update = true;
     redraw_later(wp, NOT_VALID);
+  }
+
+  // changing border style while keeping border only requires redrawing border
+  if (fconfig.border) {
+    wp->w_redr_border = true;
+    redraw_later(wp, VALID);
   }
 }
 
@@ -743,8 +753,8 @@ void ui_ext_win_position(win_T *wp)
     }
     if (ui_has(kUIMultigrid)) {
       String anchor = cstr_to_string(float_anchor_str[c.anchor]);
-      ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor, grid->handle,
-                            row, col, c.focusable);
+      ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
+                            grid->handle, row, col, c.focusable);
     } else {
       // TODO(bfredl): ideally, compositor should work like any multigrid UI
       // and use standard win_pos events.
@@ -759,8 +769,8 @@ void ui_ext_win_position(win_T *wp)
       wp->w_wincol = comp_col;
       bool valid = (wp->w_redr_type == 0);
       bool on_top = (curwin == wp) || !curwin->w_floating;
-      ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col, wp->w_height,
-                       wp->w_width, valid, on_top);
+      ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
+                       wp->w_height_outer, wp->w_width_outer, valid, on_top);
       ui_check_cursor_grid(wp->w_grid_alloc.handle);
       wp->w_grid_alloc.focusable = wp->w_float_config.focusable;
       if (!valid) {
@@ -3515,9 +3525,11 @@ void win_init_size(void)
 {
   firstwin->w_height = ROWS_AVAIL;
   firstwin->w_height_inner = firstwin->w_height;
+  firstwin->w_height_outer = firstwin->w_height;
   topframe->fr_height = ROWS_AVAIL;
   firstwin->w_width = Columns;
   firstwin->w_width_inner = firstwin->w_width;
+  firstwin->w_width_outer = firstwin->w_width;
   topframe->fr_width = Columns;
 }
 
@@ -5714,6 +5726,10 @@ void win_set_inner_size(win_T *wp)
   if (wp->w_buffer->terminal) {
     terminal_check_size(wp->w_buffer->terminal);
   }
+
+  wp->w_border_adj = wp->w_floating && wp->w_float_config.border ? 1 : 0;
+  wp->w_height_outer = wp->w_height_inner + 2 * wp->w_border_adj;
+  wp->w_width_outer = wp->w_width_inner + 2 * wp->w_border_adj;
 }
 
 /// Set the width of a window.
