@@ -9779,14 +9779,48 @@ change their contents.  Thus you can pass a |List| to a function and have the
 function add an item to it.  If you want to make sure the function cannot
 change a |List| or |Dictionary| use |:lockvar|.
 
-When not using "...", the number of arguments in a function call must be equal
-to the number of named arguments.  When using "...", the number of arguments
-may be larger.
-
 It is also possible to define a function without any arguments.  You must
 still supply the () then.
 
 It is allowed to define another function inside a function body.
+
+						*optional-function-argument*
+You can provide default values for positional named arguments.  This makes
+them optional for function calls.  When a positional argument is not
+specified at a call, the default expression is used to initialize it.
+This only works for functions declared with |function|, not for lambda
+expressions |expr-lambda|.
+
+Example: >
+  function Something(key, value = 10)
+     echo a:key .. ": " .. a:value
+  endfunction
+  call Something('empty')	"empty: 10"
+  call Something('key', 20)	"key: 20"
+
+The argument default expressions are evaluated at the time of the function
+call, not definition.  Thus it is possible to use an expression which is
+invalid the moment the function is defined.  The expressions are also only
+evaluated when arguments are not specified during a call.
+
+								*E989*
+Optional arguments with default expressions must occur after any mandatory
+arguments.  You can use "..." after all optional named arguments.
+
+It is possible for later argument defaults to refer to prior arguments,
+but not the other way around.  They must be prefixed with "a:", as with all
+arguments.
+
+Example that works: >
+  :function Okay(mandatory, optional = a:mandatory)
+  :endfunction
+Example that does NOT work: >
+  :function NoGood(first = a:second, second = 10)
+  :endfunction
+<
+When not using "...", the number of arguments in a function call must be equal
+to the number of mandatory named arguments.  When using "...", the number of
+arguments may be larger.
 
 							*local-variables*
 Inside a function local variables can be used.  These will disappear when the

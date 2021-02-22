@@ -95,6 +95,59 @@ func Test_user_func()
   enew!
 endfunc
 
+func Log(val, base = 10)
+  return log(a:val) / log(a:base)
+endfunc
+
+func Args(mandatory, optional = v:null, ...)
+  return deepcopy(a:)
+endfunc
+
+func Args2(a = 1, b = 2, c = 3)
+  return deepcopy(a:)
+endfunc
+
+func MakeBadFunc()
+  func s:fcn(a, b=1, c)
+  endfunc
+endfunc
+
+func Test_default_arg()
+  call assert_equal(1.0, Log(10))
+  call assert_equal(log(10), Log(10, exp(1)))
+  call assert_fails("call Log(1,2,3)", 'E118')
+
+  let res = Args(1)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, v:null)
+  call assert_equal(res['0'], 0)
+
+  let res = Args(1,2)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, 2)
+  call assert_equal(res['0'], 0)
+
+  let res = Args(1,2,3)
+  call assert_equal(res.mandatory, 1)
+  call assert_equal(res.optional, 2)
+  call assert_equal(res['0'], 1)
+
+  call assert_fails("call MakeBadFunc()", 'E989')
+  call assert_fails("fu F(a=1 ,) | endf", 'E475')
+
+  " Since neovim does not have v:none, the ability to use the default
+  " argument with the intermediate argument set to v:none has been omitted.
+  " Therefore, this test is not performed.
+  " let d = Args2(7, v:none, 9)
+  " call assert_equal([7, 2, 9], [d.a, d.b, d.c])
+
+  call assert_equal("\n"
+	\ .. "   function Args2(a = 1, b = 2, c = 3)\n"
+	\ .. "1    return deepcopy(a:)\n"
+	\ .. "   endfunction",
+	\ execute('func Args2'))
+endfunc
+
 func Test_failed_call_in_try()
   try | call UnknownFunc() | catch | endtry
 endfunc
