@@ -557,8 +557,8 @@ HandleState ut_handle_background_color(TermInput *input)
 
 static void handle_raw_buffer(TermInput *input, bool force)
 {
-  HandleState is_paste;
-  HandleState is_bc;
+  HandleState is_paste = kNotApplicable;
+  HandleState is_bc = kNotApplicable;
 
   do {
     if (!force
