@@ -898,7 +898,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   }
 
   // Init a: variables, unless none found (in lambda).
-  // Set a:0 to "argcount".
+  // Set a:0 to "argcount" less number of named arguments, if >= 0.
   // Set a:000 to a list with room for the "..." arguments.
   init_var_dict(&fc->l_avars, &fc->l_avars_var, VAR_SCOPE);
   if ((fp->uf_flags & FC_NOARGS) == 0) {
