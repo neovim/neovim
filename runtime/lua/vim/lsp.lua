@@ -803,47 +803,33 @@ end
 --@param range table table containing start_row, start_column, new_end_row, and new_end_column from on_bytes callback
 --@returns string text from buffer
 local function buf_range_to_text(bufnr, range)
+  -- Any deletion operation should send { text = "" }
   if range.new_end_byte_length < range.old_end_byte_length then
     return ""
   end
 
-  local end_row
-  if range.new_end_row == 0 or range.new_end_column < range.start_column then
-    end_row = range.start_row + range.new_end_row + 1
-  else
-    end_row = range.start_row + range.new_end_row
-  end
-
+  local end_row = range.start_row + range.new_end_row + 1
   local lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, end_row , false)
   lines[#lines] =  lines[#lines] ..'\n'
 
   vim.notify(vim.inspect({ lines = lines; }))
-  if range.new_end_column ~= 0 or range.start_column ~= 0 then
-    if #lines > 1 then
-        lines[1] = lines[1]:sub(range.start_column + 1)
-        lines[#lines] = lines[#lines]:sub(1, range.new_end_column)
-        vim.notify(vim.inspect({
-              msg = "Clipping multiline",
-              start = range.start_column + 1,
-              start_line = lines[1],
-              eline = range.new_end_column + range.start_column,
-              end_line = lines[#lines]}))
-    else
-        lines[1] = lines[1]:sub(range.start_column + 1, range.new_end_column + range.start_column)
-        vim.notify(vim.inspect({
-              msg = "Clipping singleline",
-              start = range.start_column + 1,
-              start_line = lines[1],
-              eline = range.new_end_column + range.start_column,
-              end_line = lines[#lines]}))
-    end
+  if #lines > 1 then
+      lines[1] = lines[1]:sub(range.start_column + 1)
+      lines[#lines] = lines[#lines]:sub(1, range.new_end_column)
+      vim.notify(vim.inspect({
+            msg = "Clipping multiline",
+            start = range.start_column + 1,
+            start_line = lines[1],
+            eline = range.new_end_column + range.start_column,
+            end_line = lines[#lines]}))
   else
-        vim.notify(vim.inspect({
-              msg = "no clipping",
-              lines = lines,
-              start_column = range.start_column,
-              new_end_column = range.new_end_column,
-              }))
+      lines[1] = lines[1]:sub(range.start_column + 1, range.new_end_column + range.start_column)
+      vim.notify(vim.inspect({
+            msg = "Clipping singleline",
+            start = range.start_column + 1,
+            start_line = lines[1],
+            eline = range.new_end_column + range.start_column,
+            end_line = lines[#lines]}))
   end
 
   return table.concat(lines, '\n')
