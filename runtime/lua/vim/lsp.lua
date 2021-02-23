@@ -808,8 +808,10 @@ local function buf_range_to_text(bufnr, range)
     return ""
   end
 
-  local end_row = range.start_row + range.new_end_row + 1
-  local lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, end_row , false)
+  local lines = vim.api.nvim_buf_get_lines(
+    bufnr, range.start_row, range.start_row + range.new_end_row + 1 , false
+  )
+
   lines[#lines] =  lines[#lines] ..'\n'
 
   vim.notify(vim.inspect({ lines = lines; }))
