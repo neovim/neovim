@@ -814,24 +814,11 @@ local function buf_range_to_text(bufnr, range)
 
   lines[#lines] =  lines[#lines] ..'\n'
 
-  vim.notify(vim.inspect({ lines = lines; }))
   if #lines > 1 then
       lines[1] = lines[1]:sub(range.start_column + 1)
       lines[#lines] = lines[#lines]:sub(1, range.new_end_column)
-      vim.notify(vim.inspect({
-            msg = "Clipping multiline",
-            start = range.start_column + 1,
-            start_line = lines[1],
-            eline = range.new_end_column + range.start_column,
-            end_line = lines[#lines]}))
   else
       lines[1] = lines[1]:sub(range.start_column + 1, range.new_end_column + range.start_column)
-      vim.notify(vim.inspect({
-            msg = "Clipping singleline",
-            start = range.start_column + 1,
-            start_line = lines[1],
-            eline = range.new_end_column + range.start_column,
-            end_line = lines[#lines]}))
   end
 
   return table.concat(lines, '\n')
@@ -874,17 +861,6 @@ do
     end
 
     local incremental_changes = once(function(_client)
-      vim.notify(vim.inspect({
-          start_row=start_row;
-          start_column=start_column;
-          byte_offset=byte_offset;
-          old_end_row=old_end_row;
-          old_end_column=old_end_column;
-          old_end_byte_length=old_end_byte_length;
-          new_end_row=new_end_row;
-          new_end_column=new_end_column;
-          new_end_byte_length=new_end_byte_length;
-       }))
       local text = buf_range_to_text(bufnr, {
                       start_row = start_row,
                       start_column = start_column,
@@ -894,20 +870,32 @@ do
                       old_end_byte_length = old_end_byte_length,
                       })
 
-      local end_column
+      local range_end_column
+      local range_start_column
       if old_end_column > new_end_column then
-        end_column = start_column + old_end_column - new_end_column
+        range_start_column = start_column + new_end_column
+        range_end_column = start_column + old_end_column - new_end_column
       else
-        end_column = start_column + old_end_column
+        range_start_column = start_column
+        range_end_column = start_column + old_end_column
       end
 
       vim.notify(vim.inspect({
           text=text;
           range = {
-            start = { line = start_row, character = start_column  };
-            ["end"] = { line = start_row + old_end_row, character = end_column};
+            start = { line = start_row, character = range_start_column  };
+            ["end"] = { line = start_row + old_end_row, character = range_end_column};
           };
           lines = vim.api.nvim_buf_get_lines(bufnr, start_row, start_row + new_end_row + 1, false);
+          start_row=start_row;
+          start_column=start_column;
+          byte_offset=byte_offset;
+          old_end_row=old_end_row;
+          old_end_column=old_end_column;
+          old_end_byte_length=old_end_byte_length;
+          new_end_row=new_end_row;
+          new_end_column=new_end_column;
+          new_end_byte_length=new_end_byte_length;
         }))
 
       return {
