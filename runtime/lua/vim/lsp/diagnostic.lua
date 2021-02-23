@@ -1225,7 +1225,7 @@ function M.set_loclist(opts)
 
   util.set_loclist(items)
   if open_loclist then
-    vim.cmd [[lopen]]
+    vim.cmd [[lwindow]]
   end
 end
 -- }}}
