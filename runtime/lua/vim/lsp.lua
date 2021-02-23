@@ -806,19 +806,22 @@ local function buf_range_to_text(bufnr, range)
   if range.new_end_byte_length < range.old_end_byte_length then
     return ""
   end
-  local lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, range.start_row + range.new_end_row + 1, false)
-  for idx = 1, #lines do
-    lines[idx] = lines[idx] .. "\n"
-  end
-  if #lines > 1 then
-    lines[1] = lines[1]:sub(range.start_column + 1)
-    lines[#lines] = lines[#lines]:sub(1, range.new_end_column + range.start_column)
+  local lines
+  if range.new_end_row == 0 then
+    lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, range.start_row + range.new_end_row + 1, false)
   else
-    if range.new_end_column ~= 0 or range.start_column ~=0 then
-      lines[1] = lines[1]:sub(range.start_column + 1, range.new_end_column + range.start_column)
+    lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, range.start_row + range.new_end_row, false)
+  end
+  lines[#lines] =  lines[#lines] ..'\n'
+  if range.new_end_column ~= 0 and range.start_column ~=0 then
+    if #lines > 1 then
+        lines[1] = lines[1]:sub(range.start_column + 1)
+        lines[#lines] = lines[#lines]:sub(1, range.new_end_column + range.start_column)
+    else
+        lines[1] = lines[1]:sub(range.start_column + 1, range.new_end_column + range.start_column)
     end
   end
-  return table.concat(lines)
+  return table.concat(lines, '\n')
 end
 
 --@private
