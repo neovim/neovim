@@ -870,38 +870,17 @@ do
                       old_end_byte_length = old_end_byte_length,
                       })
 
-      local range_end_column
       local range_start_column
       if old_end_column > new_end_column then
         range_start_column = start_column + new_end_column
-        range_end_column = start_column + old_end_column - new_end_column
       else
         range_start_column = start_column
-        range_end_column = start_column + old_end_column
       end
-
-      vim.notify(vim.inspect({
-          text=text;
-          range = {
-            start = { line = start_row, character = range_start_column  };
-            ["end"] = { line = start_row + old_end_row, character = range_end_column};
-          };
-          lines = vim.api.nvim_buf_get_lines(bufnr, start_row, start_row + new_end_row + 1, false);
-          start_row=start_row;
-          start_column=start_column;
-          byte_offset=byte_offset;
-          old_end_row=old_end_row;
-          old_end_column=old_end_column;
-          old_end_byte_length=old_end_byte_length;
-          new_end_row=new_end_row;
-          new_end_column=new_end_column;
-          new_end_byte_length=new_end_byte_length;
-        }))
 
       return {
         range = {
           start = { line = start_row, character = range_start_column  };
-          ["end"] = { line = start_row + old_end_row, character = range_end_column };
+          ["end"] = { line = start_row + old_end_row, character = start_column + old_end_column };
         };
         text = text;
       };
