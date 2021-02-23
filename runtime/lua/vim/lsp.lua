@@ -806,14 +806,18 @@ local function buf_range_to_text(bufnr, range)
   if range.new_end_byte_length < range.old_end_byte_length then
     return ""
   end
-  local lines
+
+  local end_row
   if range.new_end_row == 0 then
-    lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, range.start_row + range.new_end_row + 1, false)
+    end_row = range.start_row + range.new_end_row + 1
   else
-    lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, range.start_row + range.new_end_row, false)
+    end_row = range.start_row + range.new_end_row
   end
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, range.start_row, end_row , false)
   lines[#lines] =  lines[#lines] ..'\n'
-  if range.new_end_column ~= 0 and range.start_column ~=0 then
+
+  if range.new_end_column ~= 0 and range.start_column ~= 0 then
     if #lines > 1 then
         lines[1] = lines[1]:sub(range.start_column + 1)
         lines[#lines] = lines[#lines]:sub(1, range.new_end_column + range.start_column)
@@ -821,6 +825,7 @@ local function buf_range_to_text(bufnr, range)
         lines[1] = lines[1]:sub(range.start_column + 1, range.new_end_column + range.start_column)
     end
   end
+
   return table.concat(lines, '\n')
 end
 
