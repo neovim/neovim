@@ -900,8 +900,8 @@ do
 
       return {
         range = {
-          start = { line = start_row, character = start_column  };
-          ["end"] = { line = start_row + old_end_row, character = end_column };
+          start = { line = start_row, character = range_start_column  };
+          ["end"] = { line = start_row + old_end_row, character = range_end_column };
         };
         text = text;
       };
