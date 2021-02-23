@@ -2404,7 +2404,7 @@ do_mouse (
 
   start_visual.lnum = 0;
 
-  /* Check for clicking in the tab page line. */
+  // Check for clicking in the tab page line.
   if (mouse_grid <= 1 && mouse_row == 0 && firstwin->w_winrow > 0) {
     if (is_drag) {
       if (in_tab_line) {
