@@ -8,6 +8,7 @@ local exec_lua = helpers.exec_lua
 local exec = helpers.exec
 local expect_events = helpers.expect_events
 local meths = helpers.meths
+local command = helpers.command
 
 describe('decorations providers', function()
   local screen
@@ -314,11 +315,30 @@ describe('extmark decorations', function()
       [2] = {foreground = Screen.colors.Brown};
       [3] = {bold = true, foreground = Screen.colors.SeaGreen};
       [4] = {background = Screen.colors.Red1, foreground = Screen.colors.Gray100};
+      [5] = {foreground = Screen.colors.Brown, bold = true};
+      [6] = {foreground = Screen.colors.DarkCyan};
+      [7] = {foreground = Screen.colors.Grey0, background = tonumber('0xff4c4c')};
+      [8] = {foreground = tonumber('0x180606'), background = tonumber('0xff4c4c')};
+      [9] = {foreground = tonumber('0xe40c0c'), background = tonumber('0xff4c4c'), bold = true};
+      [10] = {foreground = tonumber('0xb20000'), background = tonumber('0xff4c4c')};
+      [11] = {blend = 30, background = Screen.colors.Red1};
+      [12] = {foreground = Screen.colors.Brown, blend = 30, background = Screen.colors.Red1, bold = true};
+      [13] = {foreground = Screen.colors.Fuchsia};
+      [14] = {background = Screen.colors.Red1, foreground = Screen.colors.Black};
+      [15] = {background = Screen.colors.Red1, foreground = tonumber('0xb20000')};
+      [16] = {blend = 30, background = Screen.colors.Red1, foreground = Screen.colors.Magenta1};
+      [17] = {bold = true, foreground = Screen.colors.Brown, background = Screen.colors.LightGrey};
+      [18] = {background = Screen.colors.LightGrey};
+      [19] = {foreground = Screen.colors.Cyan4, background = Screen.colors.LightGrey};
+      [20] = {foreground = tonumber('0x180606'), background = tonumber('0xf13f3f')};
+      [21] = {foreground = Screen.colors.Gray0, background = tonumber('0xf13f3f')};
+      [22] = {foreground = tonumber('0xb20000'), background = tonumber('0xf13f3f')};
+      [23] = {foreground = Screen.colors.Magenta1, background = Screen.colors.LightGrey};
+      [24] = {bold = true};
     }
   end)
 
-  it('can have virtual text of overlay style', function()
-    insert [[
+  local example_text = [[
 for _,item in ipairs(items) do
     local text, hl_id_cell, count = unpack(item)
     if hl_id_cell ~= nil then
@@ -331,69 +351,164 @@ for _,item in ipairs(items) do
         colpos = colpos+1
     end
 end]]
-  feed 'gg'
 
-  local ns = meths.create_namespace 'test'
-  for i = 1,9 do
-    meths.buf_set_extmark(0, ns, i, 0, { virt_text={{'|', 'LineNr'}}, virt_text_pos='overlay'})
-    if i == 3 or (i >= 6 and i <= 9) then
-      meths.buf_set_extmark(0, ns, i, 4, { virt_text={{'|', 'NonText'}}, virt_text_pos='overlay'})
+  it('can have virtual text of overlay position', function()
+    insert(example_text)
+    feed 'gg'
+
+    local ns = meths.create_namespace 'test'
+    for i = 1,9 do
+      meths.buf_set_extmark(0, ns, i, 0, { virt_text={{'|', 'LineNr'}}, virt_text_pos='overlay'})
+      if i == 3 or (i >= 6 and i <= 9) then
+        meths.buf_set_extmark(0, ns, i, 4, { virt_text={{'|', 'NonText'}}, virt_text_pos='overlay'})
+      end
     end
-  end
-  meths.buf_set_extmark(0, ns, 9, 10, { virt_text={{'foo'}, {'bar', 'MoreMsg'}, {'!!', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    meths.buf_set_extmark(0, ns, 9, 10, { virt_text={{'foo'}, {'bar', 'MoreMsg'}, {'!!', 'ErrorMsg'}}, virt_text_pos='overlay'})
 
-  -- can "float" beyond end of line
-  meths.buf_set_extmark(0, ns, 5, 28, { virt_text={{'loopy', 'ErrorMsg'}}, virt_text_pos='overlay'})
-  -- bound check: right edge of window
-  meths.buf_set_extmark(0, ns, 2, 26, { virt_text={{'bork bork bork ' }, {'bork bork bork', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    -- can "float" beyond end of line
+    meths.buf_set_extmark(0, ns, 5, 28, { virt_text={{'loopy', 'ErrorMsg'}}, virt_text_pos='overlay'})
+    -- bound check: right edge of window
+    meths.buf_set_extmark(0, ns, 2, 26, { virt_text={{'bork bork bork ' }, {'bork bork bork', 'ErrorMsg'}}, virt_text_pos='overlay'})
 
-  screen:expect{grid=[[
-    ^for _,item in ipairs(items) do                    |
-    {2:|}   local text, hl_id_cell, count = unpack(item)  |
-    {2:|}   if hl_id_cell ~= nil tbork bork bork {4:bork bork}|
-    {2:|}   {1:|}   hl_id = hl_id_cell                        |
-    {2:|}   end                                           |
-    {2:|}   for _ = 1, (count or 1) {4:loopy}                 |
-    {2:|}   {1:|}   local cell = line[colpos]                 |
-    {2:|}   {1:|}   cell.text = text                          |
-    {2:|}   {1:|}   cell.hl_id = hl_id                        |
-    {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpos+1                         |
-        end                                           |
-    end                                               |
-    {1:~                                                 }|
-    {1:~                                                 }|
-                                                      |
-  ]]}
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do                    |
+      {2:|}   local text, hl_id_cell, count = unpack(item)  |
+      {2:|}   if hl_id_cell ~= nil tbork bork bork {4:bork bork}|
+      {2:|}   {1:|}   hl_id = hl_id_cell                        |
+      {2:|}   end                                           |
+      {2:|}   for _ = 1, (count or 1) {4:loopy}                 |
+      {2:|}   {1:|}   local cell = line[colpos]                 |
+      {2:|}   {1:|}   cell.text = text                          |
+      {2:|}   {1:|}   cell.hl_id = hl_id                        |
+      {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpos+1                         |
+          end                                           |
+      end                                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
 
 
-  -- handles broken lines
-  screen:try_resize(22, 25)
-  screen:expect{grid=[[
-    ^for _,item in ipairs(i|
-    tems) do              |
-    {2:|}   local text, hl_id_|
-    cell, count = unpack(i|
-    tem)                  |
-    {2:|}   if hl_id_cell ~= n|
-    il tbork bork bork {4:bor}|
-    {2:|}   {1:|}   hl_id = hl_id_|
-    cell                  |
-    {2:|}   end               |
-    {2:|}   for _ = 1, (count |
-    or 1) {4:loopy}           |
-    {2:|}   {1:|}   local cell = l|
-    ine[colpos]           |
-    {2:|}   {1:|}   cell.text = te|
-    xt                    |
-    {2:|}   {1:|}   cell.hl_id = h|
-    l_id                  |
-    {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpo|
-    s+1                   |
-        end               |
-    end                   |
-    {1:~                     }|
-    {1:~                     }|
-                          |
-  ]]}
+    -- handles broken lines
+    screen:try_resize(22, 25)
+    screen:expect{grid=[[
+      ^for _,item in ipairs(i|
+      tems) do              |
+      {2:|}   local text, hl_id_|
+      cell, count = unpack(i|
+      tem)                  |
+      {2:|}   if hl_id_cell ~= n|
+      il tbork bork bork {4:bor}|
+      {2:|}   {1:|}   hl_id = hl_id_|
+      cell                  |
+      {2:|}   end               |
+      {2:|}   for _ = 1, (count |
+      or 1) {4:loopy}           |
+      {2:|}   {1:|}   local cell = l|
+      ine[colpos]           |
+      {2:|}   {1:|}   cell.text = te|
+      xt                    |
+      {2:|}   {1:|}   cell.hl_id = h|
+      l_id                  |
+      {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpo|
+      s+1                   |
+          end               |
+      end                   |
+      {1:~                     }|
+      {1:~                     }|
+                            |
+    ]]}
+  end)
+
+  it('can have virtual text of overlay position and styling', function()
+    insert(example_text)
+    feed 'gg'
+    local ns = meths.create_namespace 'test'
+
+    command 'set ft=lua'
+    command 'syntax on'
+
+    screen:expect{grid=[[
+      {5:^for} _,item {5:in} {6:ipairs}(items) {5:do}                    |
+          {5:local} text, hl_id_cell, count = unpack(item)  |
+          {5:if} hl_id_cell ~= {13:nil} {5:then}                     |
+              hl_id = hl_id_cell                        |
+          {5:end}                                           |
+          {5:for} _ = {13:1}, (count {5:or} {13:1}) {5:do}                    |
+              {5:local} cell = line[colpos]                 |
+              cell.text = text                          |
+              cell.hl_id = hl_id                        |
+              colpos = colpos+{13:1}                         |
+          {5:end}                                           |
+      {5:end}                                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    command 'hi Blendy guibg=Red blend=30'
+    meths.buf_set_extmark(0, ns, 1, 5, { virt_text={{'blendy text - here', 'Blendy'}}, virt_text_pos='overlay', hl_mode='blend'})
+    meths.buf_set_extmark(0, ns, 2, 5, { virt_text={{'combining color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='combine'})
+    meths.buf_set_extmark(0, ns, 3, 5, { virt_text={{'replacing color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='replace'})
+
+    meths.buf_set_extmark(0, ns, 4, 5, { virt_text={{'blendy text - here', 'Blendy'}}, virt_text_pos='overlay', hl_mode='blend', virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 5, 5, { virt_text={{'combining color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='combine', virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 6, 5, { virt_text={{'replacing color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='replace', virt_text_hide=true})
+
+    screen:expect{grid=[[
+      {5:^for} _,item {5:in} {6:ipairs}(items) {5:do}                    |
+          {5:l}{8:blen}{7:dy}{10:e}{7:text}{10:h}{7:-}{10:_}{7:here}ell, count = unpack(item)  |
+          {5:i}{12:c}{11:ombining color} {13:nil} {5:then}                     |
+           {11:replacing color}d_cell                        |
+          {5:e}{8:bl}{14:endy}{15:i}{14:text}{15:o}{14:-}{15:o}{14:h}{7:ere}                           |
+          {5:f}{12:co}{11:mbini}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
+           {11:replacing color} line[colpos]                 |
+              cell.text = text                          |
+              cell.hl_id = hl_id                        |
+              colpos = colpos+{13:1}                         |
+          {5:end}                                           |
+      {5:end}                                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed 'V5G'
+    screen:expect{grid=[[
+      {17:for}{18: _,item }{17:in}{18: }{19:ipairs}{18:(items) }{17:do}                    |
+      {18:    }{17:l}{20:blen}{21:dy}{22:e}{21:text}{22:h}{21:-}{22:_}{21:here}{18:ell, count = unpack(item)}  |
+      {18:    }{17:i}{12:c}{11:ombining color}{18: }{23:nil}{18: }{17:then}                     |
+      {18:     }{11:replacing color}{18:d_cell}                        |
+      {18:    }{5:^e}{17:nd}                                           |
+          {5:f}{12:co}{11:mbini}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
+           {11:replacing color} line[colpos]                 |
+              cell.text = text                          |
+              cell.hl_id = hl_id                        |
+              colpos = colpos+{13:1}                         |
+          {5:end}                                           |
+      {5:end}                                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {24:-- VISUAL LINE --}                                 |
+    ]]}
+
+    feed 'jj'
+    screen:expect{grid=[[
+      {17:for}{18: _,item }{17:in}{18: }{19:ipairs}{18:(items) }{17:do}                    |
+      {18:    }{17:l}{20:blen}{21:dy}{22:e}{21:text}{22:h}{21:-}{22:_}{21:here}{18:ell, count = unpack(item)}  |
+      {18:    }{17:i}{12:c}{11:ombining color}{18: }{23:nil}{18: }{17:then}                     |
+      {18:     }{11:replacing color}{18:d_cell}                        |
+      {18:    }{17:end}                                           |
+      {18:    }{17:for}{18: _ = }{23:1}{18:, (count }{17:or}{18: }{23:1}{18:) }{17:do}                    |
+      {18:    }^ {18:   }{17:local}{18: cell = line[colpos]}                 |
+              cell.text = text                          |
+              cell.hl_id = hl_id                        |
+              colpos = colpos+{13:1}                         |
+          {5:end}                                           |
+      {5:end}                                               |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {24:-- VISUAL LINE --}                                 |
+    ]]}
   end)
 end)

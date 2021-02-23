@@ -2096,6 +2096,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
   char_u buf_fold[FOLD_TEXT_LEN + 1];   // Hold value returned by get_foldtext
 
+  bool area_active = false;
+
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
 # define WL_CMDLINE     WL_START + 1    /* cmdline window column */
@@ -2850,6 +2852,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       if (draw_state == WL_LINE - 1 && n_extra == 0) {
         sign_idx = 0;
         draw_state = WL_LINE;
+
+        if (has_decor && row == startrow + filler_lines) {
+          // hide virt_text on text hidden by 'nowrap'
+          decor_redraw_col(wp->w_buffer, vcol, off, true, &decor_state);
+        }
+
         if (saved_n_extra) {
           /* Continue item from end of wrapped line. */
           n_extra = saved_n_extra;
@@ -2934,10 +2942,14 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               && vcol_prev < vcol               // not at margin
               && vcol < tocol)) {
         area_attr = attr;                       // start highlighting
+        if (area_highlighting) {
+          area_active = true;
+        }
       } else if (area_attr != 0 && (vcol == tocol
                                     || (noinvcur
                                         && (colnr_T)vcol == wp->w_virtcol))) {
         area_attr = 0;                          // stop highlighting
+        area_active = false;
      }
 
       if (!n_extra) {
@@ -3397,9 +3409,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
+        if (wp->w_buffer->terminal) {
+          char_attr = hl_combine_attr(term_attrs[vcol], char_attr);
+        }
+
         if (has_decor && v > 0) {
+          bool selected = (area_active || (area_highlighting && noinvcur
+                                           && (colnr_T)vcol == wp->w_virtcol));
           int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1, off,
-                                              &decor_state);
+                                              selected, &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
               char_attr = hl_combine_attr(char_attr, extmark_attr);
@@ -3407,10 +3425,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               char_attr = hl_combine_attr(extmark_attr, char_attr);
             }
           }
-        }
-
-        if (wp->w_buffer->terminal) {
-          char_attr = hl_combine_attr(term_attrs[vcol], char_attr);
         }
 
         // Found last space before word: check for line break.
@@ -4355,10 +4369,22 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
             virt_pos++;
             continue;
           }
-          int cells = line_putchar(&s, &linebuf_char[col], 2, false);
-          linebuf_attr[col++] = virt_attr;
+          int attr;
+          bool through = false;
+          if (item->hl_mode == kHlModeCombine) {
+            attr = hl_combine_attr(linebuf_attr[col], virt_attr);
+          } else if (item->hl_mode == kHlModeBlend) {
+            through = (*s.p == ' ');
+            attr = hl_blend_attrs(linebuf_attr[col], virt_attr, &through);
+          } else {
+            attr = virt_attr;
+          }
+          schar_T dummy[2];
+          int cells = line_putchar(&s, through ? dummy : &linebuf_char[col],
+                                   max_col-col, false);
+          linebuf_attr[col++] = attr;
           if (cells > 1) {
-            linebuf_attr[col++] = virt_attr;
+            linebuf_attr[col++] = attr;
           }
         }
         *end_col = MAX(*end_col, col);
