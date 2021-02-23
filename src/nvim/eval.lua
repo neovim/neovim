@@ -63,6 +63,7 @@ return {
     chanclose={args={1, 2}},
     chansend={args=2},
     char2nr={args={1, 2}},
+    charidx={args={2, 3}},
     cindent={args=1},
     clearmatches={args={0, 1}},
     col={args=1},

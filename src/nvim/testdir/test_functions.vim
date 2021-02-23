@@ -833,6 +833,31 @@ func Test_byte2line_line2byte()
   bw!
 endfunc
 
+" Test for charidx()
+func Test_charidx()
+  let a = 'xáb́y'
+  call assert_equal(0, charidx(a, 0))
+  call assert_equal(1, charidx(a, 3))
+  call assert_equal(2, charidx(a, 4))
+  call assert_equal(3, charidx(a, 7))
+  call assert_equal(-1, charidx(a, 8))
+  call assert_equal(-1, charidx('', 0))
+
+  " count composing characters
+  call assert_equal(0, charidx(a, 0, 1))
+  call assert_equal(2, charidx(a, 2, 1))
+  call assert_equal(3, charidx(a, 4, 1))
+  call assert_equal(5, charidx(a, 7, 1))
+  call assert_equal(-1, charidx(a, 8, 1))
+  call assert_equal(-1, charidx('', 0, 1))
+
+  call assert_fails('let x = charidx([], 1)', 'E474:')
+  call assert_fails('let x = charidx("abc", [])', 'E474:')
+  call assert_fails('let x = charidx("abc", 1, [])', 'E474:')
+  call assert_fails('let x = charidx("abc", 1, -1)', 'E474:')
+  call assert_fails('let x = charidx("abc", 1, 2)', 'E474:')
+endfunc
+
 func Test_count()
   let l = ['a', 'a', 'A', 'b']
   call assert_equal(2, count(l, 'a'))

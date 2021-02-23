@@ -613,6 +613,7 @@ String manipulation:					*string-functions*
 	iconv()			convert text from one encoding to another
 	byteidx()		byte index of a character in a string
 	byteidxcomp()		like byteidx() but count composing characters
+	charidx()		character index of a byte in a string
 	repeat()		repeat a string multiple times
 	eval()			evaluate a string expression
 	execute()		execute an Ex command and get the output
