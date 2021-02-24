@@ -2195,6 +2195,13 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                               • hl_group : name of the highlight group used to
                                 highlight this mark.
                               • virt_text : virtual text to link to this mark.
+                              • virt_text_pos : positioning of virtual text.
+                                Possible values:
+                                • "eol": right after eol character (default)
+                                • "overlay": display over the specified
+                                  column, without shifting the underlying
+                                  text.
+
                               • ephemeral : for use with
                                 |nvim_set_decoration_provider| callbacks. The
                                 mark will only be used for the current redraw
