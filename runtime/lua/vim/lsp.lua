@@ -866,6 +866,8 @@ do
           start_column = start_column,
           new_end_row=new_end_row,
           new_end_column = new_end_column,
+          new_end_byte_length = new_end_byte_length,
+          old_end_byte_length = old_end_byte_length,
           })
     )
 
