@@ -342,7 +342,7 @@ int path_fnamencmp(const char *const fname1, const char *const fname2,
     p1 += utfc_ptr2len((const char_u *)p1);
     p2 += utfc_ptr2len((const char_u *)p2);
   }
-  return c1 - c2;
+  return p_fic ? CH_FOLD(c1) - CH_FOLD(c2) : c1 - c2;
 #else
   if (p_fic) {
     return mb_strnicmp((const char_u *)fname1, (const char_u *)fname2, len);
