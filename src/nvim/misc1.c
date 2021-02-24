@@ -412,7 +412,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
   if (*s == NUL)                /* empty line */
     return 1;
-  col = win_linetabsize(wp, s, (colnr_T)MAXCOL);
+  col = win_linetabsize(wp, s, MAXCOL);
 
   // If list mode is on, then the '$' at the end of the line may take up one
   // extra column.

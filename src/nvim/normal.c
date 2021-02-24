@@ -5225,16 +5225,13 @@ static void nv_left(cmdarg_T *cap)
        *		 'h' wraps to previous line if 'whichwrap' has 'h'.
        *	   CURS_LEFT wraps to previous line if 'whichwrap' has '<'.
        */
-      if (       (((cap->cmdchar == K_BS
-                    || cap->cmdchar == Ctrl_H)
-                   && vim_strchr(p_ww, 'b') != NULL)
-                  || (cap->cmdchar == 'h'
-                      && vim_strchr(p_ww, 'h') != NULL)
-                  || (cap->cmdchar == K_LEFT
-                      && vim_strchr(p_ww, '<') != NULL))
-                 && curwin->w_cursor.lnum > 1) {
-        --(curwin->w_cursor.lnum);
-        coladvance((colnr_T)MAXCOL);
+      if ((((cap->cmdchar == K_BS || cap->cmdchar == Ctrl_H)
+            && vim_strchr(p_ww, 'b') != NULL)
+           || (cap->cmdchar == 'h' && vim_strchr(p_ww, 'h') != NULL)
+           || (cap->cmdchar == K_LEFT && vim_strchr(p_ww, '<') != NULL))
+          && curwin->w_cursor.lnum > 1) {
+        curwin->w_cursor.lnum--;
+        coladvance(MAXCOL);
         curwin->w_set_curswant = true;
 
         // When the NL before the first char has to be deleted we
@@ -6471,7 +6468,7 @@ static void nv_visual(cmdarg_T *cap)
       }
       if (resel_VIsual_vcol == MAXCOL) {
         curwin->w_curswant = MAXCOL;
-        coladvance((colnr_T)MAXCOL);
+        coladvance(MAXCOL);
       } else if (VIsual_mode == Ctrl_V) {
         validate_virtcol();
         assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
@@ -7610,7 +7607,7 @@ void set_cursor_for_append_to_line(void)
     // Pretend Insert mode here to allow the cursor on the
     // character past the end of the line
     State = INSERT;
-    coladvance((colnr_T)MAXCOL);
+    coladvance(MAXCOL);
     State = save_State;
   } else {
     curwin->w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
@@ -7998,7 +7995,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
        * line. */
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-        coladvance((colnr_T)MAXCOL);
+        coladvance(MAXCOL);
       }
     }
     auto_format(false, true);

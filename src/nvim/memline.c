@@ -4142,7 +4142,7 @@ void goto_byte(long cnt)
   if (lnum < 1) {         // past the end
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_curswant = MAXCOL;
-    coladvance((colnr_T)MAXCOL);
+    coladvance(MAXCOL);
   } else {
     curwin->w_cursor.lnum = lnum;
     curwin->w_cursor.col = (colnr_T)boff;

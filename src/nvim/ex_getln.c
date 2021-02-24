@@ -6774,6 +6774,6 @@ static void set_search_match(pos_T *t)
   t->col = search_match_endcol;
   if (t->lnum > curbuf->b_ml.ml_line_count) {
     t->lnum = curbuf->b_ml.ml_line_count;
-    coladvance((colnr_T)MAXCOL);
+    coladvance(MAXCOL);
   }
 }

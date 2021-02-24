@@ -3152,7 +3152,7 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
   bool is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
-                  TAG_REGEXP | TAG_NOIC, (int)MAXCOL, buf_fname);
+                  TAG_REGEXP | TAG_NOIC, MAXCOL, buf_fname);
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; ++i) {
       int parse_result = parse_match(matches[i], &tp);
