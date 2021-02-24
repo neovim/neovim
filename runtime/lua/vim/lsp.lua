@@ -20,6 +20,7 @@ local lsp = {
 
   buf = require'vim.lsp.buf';
   diagnostic = require'vim.lsp.diagnostic';
+  color = require'vim.lsp.color';
   util = util;
 
   -- Allow raw RPC access.
@@ -48,6 +49,7 @@ lsp._request_name_to_capability = {
   ['textDocument/formatting'] = 'document_formatting';
   ['textDocument/completion'] = 'completion';
   ['textDocument/documentHighlight'] = 'document_highlight';
+  ['textDocument/documentColor'] = 'document_color';
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
