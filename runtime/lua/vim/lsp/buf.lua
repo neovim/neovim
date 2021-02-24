@@ -310,15 +310,21 @@ function M.workspace_symbol(query)
   request('workspace/symbol', params)
 end
 
---- Send request to server to resolve document highlights for the
---- current text document position. This request can be associated
---- to key mapping or to events such as `CursorHold`, eg:
+--- Send request to the server to resolve document highlights for the current
+--- text document position. This request can be triggered by a  key mapping or
+--- by events such as `CursorHold`, eg:
 ---
 --- <pre>
 --- vim.api.nvim_command [[autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()]]
 --- vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
 --- vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
 --- </pre>
+---
+--- Note: Usage of |vim.lsp.buf.document_highlight()| requires the following highlight groups
+---       to be defined or you won't be able to see the actual highlights.
+---         |LspReferenceText|
+---         |LspReferenceRead|
+---         |LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
   request('textDocument/documentHighlight', params)

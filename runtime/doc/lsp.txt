@@ -397,6 +397,11 @@ LSP HIGHLIGHT                                                    *lsp-highlight*
 
 Reference Highlights:
 
+Highlight groups that are meant to be used by |vim.lsp.buf.document_highlight()|.
+
+You can see more about the differences in types here:
+https://microsoft.github.io/language-server-protocol/specification#textDocument_documentHighlight
+
                                                            *hl-LspReferenceText*
 LspReferenceText          used for highlighting "text" references
                                                            *hl-LspReferenceRead*
@@ -932,14 +937,20 @@ definition()                                        *vim.lsp.buf.definition()*
                 Jumps to the definition of the symbol under the cursor.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
-                Send request to server to resolve document highlights for the
-                current text document position. This request can be associated
-                to key mapping or to events such as `CursorHold` , eg:
+                Send request to the server to resolve document highlights for
+                the current text document position. This request can be
+                triggered by a key mapping or by events such as `CursorHold` ,
+                eg:
 >
     vim.api.nvim_command [[autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()]]
     vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
     vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
 <
+
+                Note: Usage of |vim.lsp.buf.document_highlight()| requires the
+                following highlight groups to be defined or you won't be able
+                to see the actual highlights. |LspReferenceText|
+                |LspReferenceRead| |LspReferenceWrite|
 
 document_symbol()                              *vim.lsp.buf.document_symbol()*
                 Lists all symbols in the current buffer in the quickfix
