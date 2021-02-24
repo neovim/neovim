@@ -740,6 +740,14 @@ Integer nvim_strwidth(String text, Error *err)
   return (Integer)mb_string2cells((char_u *)text.data);
 }
 
+String nvim_fnameescape(String fname, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_FAST
+{
+  return cstr_as_string(
+      (char *) vim_strsave_fnameescape(fname.data, false));
+}
+
 /// Gets the paths contained in 'runtimepath'.
 ///
 /// @return List of paths
