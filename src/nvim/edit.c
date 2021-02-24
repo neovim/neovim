@@ -1627,11 +1627,11 @@ static void init_prompt(int cmdchar_todo)
       ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
     }
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    coladvance((colnr_T)MAXCOL);
+    coladvance(MAXCOL);
     changed_bytes(curbuf->b_ml.ml_line_count, 0);
   }
   if (cmdchar_todo == 'A') {
-    coladvance((colnr_T)MAXCOL);
+    coladvance(MAXCOL);
   }
   if (cmdchar_todo == 'I' || curwin->w_cursor.col <= (int)STRLEN(prompt)) {
     curwin->w_cursor.col = STRLEN(prompt);
@@ -6246,9 +6246,10 @@ void auto_format(
   if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
     // "cannot happen"
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    coladvance((colnr_T)MAXCOL);
-  } else
+    coladvance(MAXCOL);
+  } else {
     check_cursor_col();
+  }
 
   // Insert mode: If the cursor is now after the end of the line while it
   // previously wasn't, the line was broken.  Because of the rule above we
@@ -8432,8 +8433,8 @@ static void ins_left(void)
     // if 'whichwrap' set for cursor in insert mode may go to previous line.
     // always break undo when moving upwards/downwards, else undo may break
     start_arrow(&tpos);
-    --(curwin->w_cursor.lnum);
-    coladvance((colnr_T)MAXCOL);
+    curwin->w_cursor.lnum--;
+    coladvance(MAXCOL);
     curwin->w_set_curswant = true;  // so we stay at the end
   } else {
     vim_beep(BO_CRSR);
@@ -8467,7 +8468,7 @@ static void ins_end(int c)
   tpos = curwin->w_cursor;
   if (c == K_C_END)
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-  coladvance((colnr_T)MAXCOL);
+  coladvance(MAXCOL);
   curwin->w_curswant = MAXCOL;
 
   start_arrow(&tpos);

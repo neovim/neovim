@@ -4198,7 +4198,7 @@ skip:
       // when interactive leave cursor on the match
       if (!subflags.do_ask) {
         if (endcolumn) {
-          coladvance((colnr_T)MAXCOL);
+          coladvance(MAXCOL);
         } else {
           beginline(BL_WHITE | BL_FIX);
         }
@@ -5020,7 +5020,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
   if (keep_lang) {
     flags |= TAG_KEEP_LANG;
   }
-  if (find_tags(IObuff, num_matches, matches, flags, (int)MAXCOL, NULL) == OK
+  if (find_tags(IObuff, num_matches, matches, flags, MAXCOL, NULL) == OK
       && *num_matches > 0) {
     /* Sort the matches found on the heuristic number that is after the
      * tag name. */

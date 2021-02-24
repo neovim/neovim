@@ -4305,11 +4305,12 @@ format_lines(
            * tabs and spaces, according to current options */
           (void)set_indent(get_indent(), SIN_CHANGED);
 
-        /* put cursor on last non-space */
-        State = NORMAL;         /* don't go past end-of-line */
-        coladvance((colnr_T)MAXCOL);
-        while (curwin->w_cursor.col && ascii_isspace(gchar_cursor()))
+        // put cursor on last non-space
+        State = NORMAL;  // don't go past end-of-line
+        coladvance(MAXCOL);
+        while (curwin->w_cursor.col && ascii_isspace(gchar_cursor())) {
           dec_cursor();
+        }
 
         /* do the formatting, without 'showmode' */
         State = INSERT;         /* for open_line() */

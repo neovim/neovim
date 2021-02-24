@@ -2685,8 +2685,9 @@ fwd_word(
   while (--count >= 0) {
     /* When inside a range of folded lines, move to the last char of the
      * last line. */
-    if (hasFolding(curwin->w_cursor.lnum, NULL, &curwin->w_cursor.lnum))
-      coladvance((colnr_T)MAXCOL);
+    if (hasFolding(curwin->w_cursor.lnum, NULL, &curwin->w_cursor.lnum)) {
+      coladvance(MAXCOL);
+    }
     sclass = cls();
 
     /*
@@ -2803,8 +2804,9 @@ int end_word(long count, int bigword, int stop, int empty)
   while (--count >= 0) {
     /* When inside a range of folded lines, move to the last char of the
      * last line. */
-    if (hasFolding(curwin->w_cursor.lnum, NULL, &curwin->w_cursor.lnum))
-      coladvance((colnr_T)MAXCOL);
+    if (hasFolding(curwin->w_cursor.lnum, NULL, &curwin->w_cursor.lnum)) {
+      coladvance(MAXCOL);
+    }
     sclass = cls();
     if (inc_cursor() == -1)
       return FAIL;

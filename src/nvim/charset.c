@@ -708,7 +708,7 @@ int ptr2cells(const char_u *p)
 /// @return number of character cells.
 int vim_strsize(char_u *s)
 {
-  return vim_strnsize(s, (int)MAXCOL);
+  return vim_strnsize(s, MAXCOL);
 }
 
 /// Return the number of character cells string "s[len]" will take on the
