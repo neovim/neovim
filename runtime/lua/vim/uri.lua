@@ -101,6 +101,7 @@ local function uri_to_fname(uri)
   -- TODO improve this.
   if is_windows_file_uri(uri) then
     uri = uri:gsub('^file:///', '')
+    uri = uri:gsub('^([a-z]):', function(a) return string.upper(a) .. ":" end)
     uri = uri:gsub('/', '\\')
   else
     uri = uri:gsub('^file://', '')
