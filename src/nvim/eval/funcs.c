@@ -4131,7 +4131,9 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #ifdef _WIN64
     "win64",
 #endif
+#ifndef CASE_INSENSITIVE_FILENAME
     "fname_case",
+#endif
 #ifdef HAVE_ACL
     "acl",
 #endif
