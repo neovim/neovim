@@ -5,6 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
 local get_cur_win_var = helpers.curwinmeths.get_var
+local Screen = require('test.functional.ui.screen')
 
 describe('setqflist()', function()
   local setqflist = helpers.funcs.setqflist
@@ -67,5 +68,24 @@ describe('setloclist()', function()
     eq('bar', get_cur_win_var('quickfix_title'))
     command('lclose | wincmd w | lopen')
     eq('foo', get_cur_win_var('quickfix_title'))
+  end)
+
+  it("doesn't crash when when window is closed in the middle #13721", function()
+    local screen = Screen.new(30, 5)
+    screen:attach()
+
+    command("vsplit")
+    command("autocmd WinLeave * :call nvim_win_close(0, v:true)")
+
+    command("call setloclist(0, [])")
+    command("lopen")
+
+     screen:expect([[
+  ^                    │         |
+  ~                   │~        |
+  ~                   │~        |
+  [No Name]            <o Name] |
+                                |
+    ]])
   end)
 end)
