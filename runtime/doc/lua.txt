@@ -901,6 +901,14 @@ vim.env                                                 *vim.env*
             vim.env.FOO = 'bar'
             print(vim.env.TERM)
 <
+vim.reg                                                 *vim.reg*
+        Vim |registers|.
+        See |:let-register| for the Vimscript behavior.
+        Example: >
+            vim.reg.a = 'foo'
+            vim.reg.A = 'bar'
+            print(vim.reg.a)
+<
 
                                                         *lua-vim-options*
 From Lua you can work with editor |options| by reading and setting items in

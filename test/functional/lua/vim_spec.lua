@@ -1040,6 +1040,21 @@ describe('lua stdlib', function()
     eq(true, funcs.luaeval "vim.env.B == nil")
   end)
 
+  it('vim.reg', function()
+    exec_lua [[
+    vim.fn.setreg("a", 123)
+    vim.reg.b = 123
+    vim.reg.B = 456
+    ]]
+    eq('123', funcs.luaeval "vim.reg.a")
+    eq('123456', funcs.luaeval "vim.reg.b")
+    eq(true, funcs.luaeval "vim.reg.c == ''")
+    matches("^Error executing lua: .*: Invalid register name: '`'$",
+      pcall_err(exec_lua, "vim.reg['`'] = 'test'"))
+    matches("^Error executing lua: .*: Invalid register name: 'aaaa'$",
+      pcall_err(exec_lua, "print(vim.reg.aaaa)"))
+  end)
+
   it('vim.v', function()
     eq(funcs.luaeval "vim.api.nvim_get_vvar('progpath')", funcs.luaeval "vim.v.progpath")
     eq(false, funcs.luaeval "vim.v['false']")

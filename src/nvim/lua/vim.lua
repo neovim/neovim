@@ -368,6 +368,19 @@ do
     return v
   end
   vim.env = make_meta_accessor(getenv, vim.fn.setenv)
+
+  local function getreg(k)
+    local regname = tostring(k)
+    assert(#regname == 1, ("Invalid register name: '%s'"):format(regname))
+    return vim.fn.getreg(regname)
+  end
+  local function setreg(k, v)
+    local regname = tostring(k)
+    assert(#regname == 1, ("Invalid register name: '%s'"):format(regname))
+    return vim.fn.setreg(regname, v)
+  end
+  vim.reg = make_meta_accessor(getreg, setreg)
+
   -- TODO(ashkan) if/when these are available from an API, generate them
   -- instead of hardcoding.
   local window_options = {
