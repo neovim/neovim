@@ -333,6 +333,7 @@ describe('LSP', function()
           client.stop()
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
           eq(full_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_save)
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)
