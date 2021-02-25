@@ -962,6 +962,16 @@ return {
       defaults={if_true={vi="0"}}
     },
     {
+      full_name='foldsettings', abbreviation='fds',
+      short_desc=N_("various fold-related settings"),
+      type='bool', scope={'window'},
+      vi_def=false,
+      vim=true,
+      alloced=true,
+      redraw={'current_window'},
+      defaults={if_true={vi="#"}}
+    },
+    {
       full_name='foldignore', abbreviation='fdi',
       short_desc=N_("ignore lines when 'foldmethod' is \"indent\""),
       type='string', scope={'window'},

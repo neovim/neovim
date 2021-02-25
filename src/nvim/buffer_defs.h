@@ -172,6 +172,8 @@ typedef struct {
 # define w_p_fdc w_onebuf_opt.wo_fdc    // 'foldcolumn'
   char_u *wo_fdc_save;
 # define w_p_fdc_save w_onebuf_opt.wo_fdc_save  // 'fdc' saved for diff mode
+  int wo_fin;
+# define w_p_fen w_onebuf_opt.wo_fen    // 'foldinline'
   int wo_fen;
 # define w_p_fen w_onebuf_opt.wo_fen    // 'foldenable'
   int wo_fen_save;
@@ -188,6 +190,8 @@ typedef struct {
 # define w_p_fdm w_onebuf_opt.wo_fdm    // 'foldmethod'
   char_u      *wo_fdm_save;
 # define w_p_fdm_save w_onebuf_opt.wo_fdm_save  // 'fdm' saved for diff mode
+  char_u      *wo_fds;
+# define w_p_fds w_onebuf_opt.wo_fds    // 'foldsettings'
   long wo_fml;
 # define w_p_fml w_onebuf_opt.wo_fml    // 'foldminlines'
   long wo_fdn;

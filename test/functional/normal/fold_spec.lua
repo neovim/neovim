@@ -359,4 +359,11 @@ a]], '13m7')
     eq(10, funcs.foldclosedend(7))
     eq(14, funcs.foldclosedend(11))
   end)
+  -- it("inline folds with marker", function()
+  --   insert([[
+  --   {{{    }}}
+  --   ]])
+  --   feed_command('set foldmethod=marker', '%foldclose')
+  --   eq(2, funcs.foldclosedend(1))
+  -- end)
 end)

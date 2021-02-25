@@ -1987,15 +1987,48 @@ fill_foldcolumn(
 ///                            or explicitly return `false`.
 ///
 /// @return             the number of last row the line occupies.
-static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
-                    bool nochange, bool number_only, foldinfo_T foldinfo,
-                    Providers *providers)
+static int win_line(
+    win_T *wp, linenr_T lnum, int startrow, int endrow,
+    bool nochange, bool number_only, foldinfo_T foldinfo,
+    Providers *providers
+)
+{
+  return win_line2(wp, lnum, startrow, endrow, nochange, number_only, foldinfo,
+            providers);
+}
+
+// TODO rename to WinRow ?
+typedef struct {
+int statesToDraw;  // bitfield
+// int statesToDraw;  // bitfield
+int c1;
+int c2; // Use "c2" as filler character.
+hlf_T hl; //
+// LineState // Fill
+} WinLineStruct;
+
+// LineState
+// win_row()
+
+/// Goal is to remove win_draw_end / win_fill_end
+///
+/// Clear lines near the end of the window and mark the unused lines with "c1".
+/// Use "c2" as filler character.
+/// When "draw_margin" is true, then draw the sign/fold/number columns.
+// static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
+//                          int endrow, hlf_T hl)
+static int win_line2(
+    win_T *wp, linenr_T lnum, int startrow, int endrow,
+    bool nochange, bool number_only, foldinfo_T foldinfo,
+    Providers *providers
+)
 {
   int c = 0;                          // init for GCC
   long vcol = 0;                      // virtual column (for tabs)
   long vcol_sbr = -1;                 // virtual column after showbreak
   long vcol_prev = -1;                // "vcol" of previous character
   char_u      *line;                  // current line
+  // char_u      *current_content = NULL;          // current text to display
   char_u      *ptr;                   // current position in "line"
   int row;                            // row in the window, excl w_winrow
   ScreenGrid *grid = &wp->w_grid;     // grid specfic to the window
@@ -2005,6 +2038,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int n_extra = 0;                    // number of extra chars
   char_u      *p_extra = NULL;        // string of extra chars, plus NUL
   char_u      *p_extra_free = NULL;   // p_extra needs to be freed
+  char_u      *p_fold = NULL;         // p_extra needs to be freed
   int c_extra = NUL;                  // extra chars, all the same
   int c_final = NUL;                  // final char, mandatory if set
   int extra_attr = 0;                 // attributes when n_extra != 0
@@ -2103,8 +2137,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 # define WL_SIGN        WL_FOLD + 1     /* column for signs */
 #define WL_NR           WL_SIGN + 1     /* line number */
 # define WL_BRI         WL_NR + 1       /* 'breakindent' */
-# define WL_SBR         WL_BRI + 1       /* 'showbreak' or 'diff' */
-#define WL_LINE         WL_SBR + 1      /* text in the line */
+# define WL_SBR         WL_BRI + 1       // 'showbreak' or 'diff'
+#define WL_FOLDTEXT     WL_SBR + 1      /* text representing a fold */
+#define WL_LINE         WL_FOLDTEXT + 1 /* text in the line */
   int draw_state = WL_START;            /* what to draw next */
 
   int syntax_flags    = 0;
@@ -2118,6 +2153,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int did_wcol        = false;
   int match_conc      = 0;              ///< cchar for match functions
   int old_boguscols = 0;
+  fold_T *fp = NULL;                    ///< current fold when found
+
 # define VCOL_HLC (vcol - vcol_off)
 # define FIX_FOR_BOGUSCOLS \
   { \
@@ -2136,6 +2173,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
   char *err_text = NULL;
 
+  bool fold_found = foldFind(&wp->w_folds, lnum, &fp);
   buf_T *buf = wp->w_buffer;
 
   if (!number_only) {
@@ -2636,18 +2674,22 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
     // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
-      if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
+      if (draw_state == WL_CMDLINE - 1 && n_extra <= 0) {
         draw_state = WL_CMDLINE;
         if (cmdwin_type != 0 && wp == curwin) {
           /* Draw the cmdline character. */
           n_extra = 1;
-          c_extra = cmdwin_type;
-          c_final = NUL;
+          // c_extra = cmdwin_type;
+          // c_final = NUL;
           char_attr = win_hl_attr(wp, HLF_AT);
+          utf_char2bytes(cmdwin_type, extra);
+          ptr = extra;
+          // todo add a null
+          // current_content = &c_extra;
         }
       }
 
-      if (draw_state == WL_FOLD - 1 && n_extra == 0) {
+      if (draw_state == WL_FOLD - 1 && n_extra <= 0) {
         int fdc = compute_foldcolumn(wp, 0);
 
         draw_state = WL_FOLD;
@@ -2818,6 +2860,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             c_extra = wp->w_p_fcs_chars.diff;
             c_final = NUL;
           }
+          extra[0] = c_extra;
+          extra[1] = NUL;
+
           if (wp->w_p_rl) {
             n_extra = col + 1;
           } else {
@@ -2850,6 +2895,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       if (draw_state == WL_LINE - 1 && n_extra == 0) {
         sign_idx = 0;
         draw_state = WL_LINE;
+        ptr = line;
         if (saved_n_extra) {
           /* Continue item from end of wrapped line. */
           n_extra = saved_n_extra;
@@ -2883,47 +2929,84 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       break;
     }
 
-    if (draw_state == WL_LINE
-        && has_fold
-        && vcol == 0
-        && n_extra == 0
+    if (draw_state == WL_FOLDTEXT - 1  // == SBR
+        && foldinfo.fi_level == 0) {
+      // skip folds and go to line drawing
+      draw_state = WL_LINE;
+      ptr = line;
+      continue;
+    }
+
+    if (draw_state == WL_FOLDTEXT - 1  // == SBR
+        && foldinfo.fi_level != 0
+        && foldinfo.fi_lines > 0
+        // TODO switch mode against current_fold->startcol
+        // Depends on foldinline settings
+        && vcol >= fp->fd_startcol
+        && p_fold == NULL
+        // && n_extra == 0
         && row == startrow) {
+        XFREE_CLEAR(p_extra_free);
+
         char_attr = win_hl_attr(wp, HLF_FL);
 
         linenr_T lnume = lnum + foldinfo.fi_lines - 1;
         memset(buf_fold, ' ', FOLD_TEXT_LEN);
         p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold);
         n_extra = STRLEN(p_extra);
+        p_extra[n_extra] = NUL;
 
+        // we don't use the buf_fold buffer
         if (p_extra != buf_fold) {
-          xfree(p_extra_free);
-          p_extra_free = p_extra;
+          // xfree(p_extra_free);
+          p_fold = p_extra;
         }
         c_extra = NUL;
         c_final = NUL;
-        p_extra[n_extra] = NUL;
-    }
 
-    if (draw_state == WL_LINE
-        && has_fold
-        && col < grid->Columns
-        && n_extra == 0
-        && row == startrow) {
-      // fill rest of line with 'fold'
-      c_extra = wp->w_p_fcs_chars.fold;
+        // we don't use the buf_fold buffer
+        if (p_extra != buf_fold) {
+          // xfree(p_extra_free);
+          p_fold = p_extra;
+        }
+        c_extra = NUL;
       c_final = NUL;
 
-      n_extra = wp->w_p_rl ? (col + 1) : (grid->Columns - col);
+        n_extra = 0;  // to bypass old mechanism
     }
 
-    if (draw_state == WL_LINE
-        && has_fold
-        && col >= grid->Columns
-        && n_extra != 0
-        && row == startrow) {
-      // Truncate the folding.
-      n_extra = 0;
+    if (draw_state == WL_FOLDTEXT
+        // && fp->fd_endcol == vcol
+       ) {
+      if (*ptr == 0) {
+        // when we reach the end of the folded text, revert back to original
+        // text
+        draw_state = WL_LINE;
+      }
     }
+
+    // if (draw_state == WL_LINE
+    //     && foldinfo.fi_level != 0
+    //     && foldinfo.fi_lines > 0
+    //     && col < grid->Columns
+    //     && n_extra == 0
+    //     && row == startrow) {
+    //   // fill rest of line with 'fold'
+    //   c_extra = wp->w_p_fcs_chars.fold;
+    //   c_final = NUL;
+
+    //   n_extra = wp->w_p_rl ? (col + 1) : (grid->Columns - col);
+    // }
+
+    // if (draw_state == WL_LINE
+    //     && foldinfo.fi_level != 0
+    //     && foldinfo.fi_lines > 0
+    //     && col >= grid->Columns
+    //     && n_extra != 0
+    //     && row == startrow) {
+    //   // Truncate the folding.
+    //   n_extra = 0;
+    // }
 
     if (draw_state == WL_LINE && (area_highlighting || has_spell)) {
       // handle Visual or match highlighting in this line
@@ -3153,14 +3236,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         } else {
           n_extra -= mb_l - 1;
           p_extra += mb_l - 1;
-        }
+    }
         p_extra++;
       }
       n_extra--;
-    } else if (foldinfo.fi_lines > 0) {
-      // skip writing the buffer line itself
-      c = NUL;
-      XFREE_CLEAR(p_extra_free);
     } else {
       int c0;
 
@@ -4100,6 +4179,27 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       char_attr = hl_combine_attr(line_attr_lowprio, char_attr);
     }
 
+    if (
+        draw_state >WL_NR
+        // draw_state >= WL_FOLDTEXT
+        // true
+
+        && foldinfo.fi_lines > 0) {
+      ILOG("FoldedLight attribute");
+
+      if (p_fold != NULL) {
+        char_attr = win_hl_attr(wp, HLF_FL);
+        // char_attr = hl_combine_attr(win_hl_attr(wp, HLF_FL), char_attr);
+      } else {
+        char_attr = win_hl_attr(wp, HLF_FLL);
+        // char_attr = hl_combine_attr(win_hl_attr(wp, HLF_FLL), char_attr);
+      }
+
+    } else {
+      ILOG("skipping 'cos %d", draw_state);
+    }
+
+
     // Store character to be displayed.
     // Skip characters that are left of the screen for 'nowrap'.
     vcol_prev = vcol;
@@ -4324,6 +4424,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     cap_col = 0;
   }
 
+  if (p_fold) {
+    XFREE_CLEAR(p_fold);
+  }
   xfree(p_extra_free);
   xfree(err_text);
   return row;
@@ -4390,9 +4493,10 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 }
 
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
-// If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
+// @param 'nrcol' if true, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
 //
+// @param[in,out] draw_statep \ref WL_LINE
 // @param count max number of signs
 // @param[out] n_extrap number of characters from pp_extra to display
 // @param[in, out] sign_idxp Index of the displayed sign
