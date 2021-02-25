@@ -83,6 +83,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # Ignore case when comparing filenames on Windows and Mac.
+  set(CASE_INSENSITIVE_FILENAME TRUE)
   # Enable fixing case-insensitive filenames for Windows and Mac.
   set(USE_FNAME_CASE TRUE)
 endif()

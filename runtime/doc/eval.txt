@@ -5125,6 +5125,8 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 		        iconv		Can use |iconv()| for conversion.
 		        +shellslash	Can use backslashes in filenames (Windows)
 			clipboard	|clipboard| provider is available.
+			fname_case	Case in file names matters (for Darwin and MS-Windows
+					this is not present).
 			mac		MacOS system.
 			nvim		This is Nvim.
 			python2		Legacy Vim |python2| interface. |has-python|

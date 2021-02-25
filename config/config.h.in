@@ -40,6 +40,7 @@
 #cmakedefine HAVE_WORKING_LIBINTL
 #cmakedefine HAVE_WSL
 #cmakedefine UNIX
+#cmakedefine CASE_INSENSITIVE_FILENAME
 #cmakedefine USE_FNAME_CASE
 #cmakedefine HAVE_SYS_UIO_H
 #ifdef HAVE_SYS_UIO_H
