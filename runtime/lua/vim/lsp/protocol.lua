@@ -938,7 +938,7 @@ function protocol.resolve_capabilities(server_capabilities)
         text_document_did_change = textDocumentSync;
         text_document_will_save = false;
         text_document_will_save_wait_until = false;
-        text_document_save = false;
+        text_document_save = true;
         text_document_save_include_text = false;
       }
     elseif type(textDocumentSync) == 'table' then
