@@ -123,7 +123,7 @@ const uint8_t utf8len_tab_zero[] = {
 
 // Table for looking up the unicode block (language) that a code point resides in.
 
-const static struct 
+static const struct 
 {  const unsigned int begin;  const unsigned int end;  const UnicodeBlocks block;}
 unicode_block_table[] = {
   {0x0000, 0x007F, BASICLATIN},
@@ -1367,6 +1367,31 @@ bool utf_printable(int c)
 
   return !intable(nonprint, ARRAY_SIZE(nonprint), c);
 #endif
+}
+
+// Get unicode block of a Unicode character
+
+UnicodeBlocks utf_block(const int c)
+{
+  int bottom = 0;
+  int top = ARRAY_SIZE(unicode_block_table) - 1;
+  int middle = 0; //Start at zero so that latin chars are checked quickly
+  /* binary search in table */
+  while (true) {
+    if ((unsigned int)c > unicode_block_table[middle].end)  //If its greater than the end of the current block, then its obviously in the next half
+    {
+      bottom = middle + 1;
+    }
+    else if ((unsigned int)c < unicode_block_table[middle].begin)  //If its less than the begining, the its in the previous half
+    {
+      top = middle - 1;
+    }
+    else  //If not greater and not less, than its in the block
+    {
+      return (int)unicode_block_table[middle].block;
+    }
+    middle = (bottom + top) / 2;  //Move the currently checked element to the middle of where we're checking
+  }
 }
 
 /*
