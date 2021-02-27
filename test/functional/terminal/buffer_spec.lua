@@ -263,7 +263,7 @@ describe(':terminal buffer', function()
     feed_command('terminal')
     feed('<c-\\><c-n>')
     feed_command('put a') -- buffer a is empty
-    eq(2, eval('1+1')) -- check nvim still running
+    helpers.assert_alive()
   end)
 end)
 
@@ -284,7 +284,7 @@ describe('No heap-buffer-overflow when using', function()
     feed('$')
     -- Let termopen() modify the buffer
     feed_command('call termopen("echo")')
-    eq(2, eval('1+1')) -- check nvim still running
+    helpers.assert_alive()
     feed_command('bdelete!')
   end)
 end)
@@ -294,6 +294,6 @@ describe('No heap-buffer-overflow when', function()
     feed_command('set nowrap')
     feed_command('autocmd TermOpen * startinsert')
     feed_command('call feedkeys("4000ai\\<esc>:terminal!\\<cr>")')
-    eq(2, eval('1+1'))
+    helpers.assert_alive()
   end)
 end)
