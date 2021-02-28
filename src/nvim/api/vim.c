@@ -2883,5 +2883,5 @@ error:
 Integer nvim_get_time_ns(void)
   FUNC_API_SINCE(7)
 {
-  return (Integer) os_timens();
+  return (Integer)os_timens();
 }
