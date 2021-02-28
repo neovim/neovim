@@ -2880,5 +2880,5 @@ error:
 Float nvim_get_currenttime(void)
 FUNC_API_SINCE(7)
 {
-    return os_timef();
+  return os_timef();
 }
