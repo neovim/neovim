@@ -2876,9 +2876,12 @@ error:
 
 /// Get current Unix timestamp with nanosecond precision.
 ///
-/// @return current Unix timestamp
-Float nvim_get_currenttime(void)
+/// This timer is initialized and then reset each time time_init() function
+/// from os/time.c is called.
+///
+/// @return elapsed nanoseconds since last epoch.
+Integer nvim_get_time_ns(void)
   FUNC_API_SINCE(7)
 {
-  return os_timef();
+  return os_timens();
 }

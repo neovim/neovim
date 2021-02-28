@@ -211,10 +211,9 @@ Timestamp os_time(void)
 
 /// Obtains the current Unix timestamp with nanosecond precision.
 ///
-/// @return Fractional seconds since epoch.
-double os_timef(void)
+/// @return nanoseconds since epoch.
+uint64_t os_timens(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return ((double)init_time_s
-          + ((double)(os_hrtime() - init_time_ns) * 0.000000001));
+  return os_hrtime() - init_time_ns;
 }
