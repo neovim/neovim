@@ -1,5 +1,7 @@
 " Test for options
 
+source check.vim
+
 func Test_whichwrap()
   set whichwrap=b,s
   call assert_equal('b,s', &whichwrap)
@@ -602,6 +604,27 @@ func Test_opt_boolean()
   let &nu = v:false
   call assert_equal(0, &nu)
   set number&
+endfunc
+
+func Test_opt_winminheight_term()
+  " See test/functional/legacy/options_spec.lua
+  CheckRunVimInTerminal
+
+  " The tabline should be taken into account.
+  let lines =<< trim END
+    set wmh=0 stal=2
+    below sp | wincmd _
+    below sp | wincmd _
+    below sp | wincmd _
+    below sp
+  END
+  call writefile(lines, 'Xwinminheight')
+  let buf = RunVimInTerminal('-S Xwinminheight', #{rows: 11})
+  call term_sendkeys(buf, ":set wmh=1\n")
+  call WaitForAssert({-> assert_match('E36: Not enough room', term_getline(buf, 11))})
+
+  call StopVimInTerminal(buf)
+  call delete('Xwinminheight')
 endfunc
 
 " Test for setting option value containing spaces with isfname+=32
