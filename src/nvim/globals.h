@@ -333,9 +333,10 @@ EXTERN int garbage_collect_at_exit INIT(= false);
 #define SID_ENV         -4      // for sourcing environment variable
 #define SID_ERROR       -5      // option was reset because of an error
 #define SID_NONE        -6      // don't set scriptID
-#define SID_LUA         -7      // for Lua scripts/chunks
-#define SID_API_CLIENT  -8      // for API clients
-#define SID_STR         -9      // for sourcing a string
+#define SID_WINLAYOUT   -7      // changing window size
+#define SID_LUA         -8      // for Lua scripts/chunks
+#define SID_API_CLIENT  -9      // for API clients
+#define SID_STR         -10     // for sourcing a string
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });

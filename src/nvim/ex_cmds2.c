@@ -3024,6 +3024,7 @@ void scriptnames_slash_adjust(void)
 # endif
 
 /// Get a pointer to a script name.  Used for ":verbose set".
+/// Message appended to "Last set from "
 char_u *get_scriptname(LastSet last_set, bool *should_free)
 {
   *should_free = false;
@@ -3039,6 +3040,8 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
       return (char_u *)_("environment variable");
     case SID_ERROR:
       return (char_u *)_("error handler");
+    case SID_WINLAYOUT:
+      return (char_u *)_("changed window size");
     case SID_LUA:
       return (char_u *)_("Lua");
     case SID_API_CLIENT:

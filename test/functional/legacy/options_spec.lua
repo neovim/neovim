@@ -41,4 +41,32 @@ describe('set', function()
     ]])
     matches('E36: Not enough room', exc_exec('set wmh=1'))
   end)
+
+  it('scroll works', function()
+    local screen = Screen.new(42, 16)
+    screen:attach()
+    source([[
+      set scroll=2
+      set laststatus=2
+    ]])
+    command('verbose set scroll?')
+    screen:expect([[
+                                                |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+      ~                                         |
+                                                |
+        scroll=7                                |
+              Last set from changed window size |
+      Press ENTER or type command to continue^   |
+    ]])
+  end)
 end)

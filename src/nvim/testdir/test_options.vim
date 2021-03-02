@@ -636,4 +636,23 @@ func Test_isfname_with_options()
   setlocal keywordprg&
 endfunc
 
+" Test that resetting laststatus does change scroll option
+func Test_opt_reset_scroll()
+  " See test/functional/legacy/options_spec.lua
+  CheckRunVimInTerminal
+  let vimrc =<< trim [CODE]
+    set scroll=2
+    set laststatus=2
+  [CODE]
+  call writefile(vimrc, 'Xscroll')
+  let buf = RunVimInTerminal('-S Xscroll', {'rows': 16, 'cols': 45})
+  call term_sendkeys(buf, ":verbose set scroll?\n")
+  call WaitForAssert({-> assert_match('Last set.*window size', term_getline(buf, 15))})
+  call assert_match('^\s*scroll=7$', term_getline(buf, 14))
+  call StopVimInTerminal(buf)
+
+  " clean up
+  call delete('Xscroll')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
