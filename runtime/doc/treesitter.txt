@@ -365,4 +365,91 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
     ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
      (eq? @WarningMsg.left @WarningMsg.right))
 
+Treesitter language injection (WIP)		*lua-treesitter-language-injection*
+
+NOTE: This is a partially implemented feature, and not usable as a default
+solution yet. What is documented here is a temporary interface intended
+for those who want to experiment with this feature and contribute to
+its development.
+
+Languages can have nested languages within them, for example javascript inside
+HTML. We can "inject" a treesitter parser for a child language by configuring
+injection queries. Here is an example of Javascript and CSS injected into
+HTML. >
+
+    local query = [[
+      (script_element (raw_text) @javascript)
+      (style_element (raw_text) @css)
+    ]];
+
+    local parser = vim.treesitter.get_parser(nil, nil, {
+      injections = {html = query}
+    })
+
+    parser:parse()
+
+Any capture will be treated as the node treesitter will use for the injected
+language. The capture name will be used as the language. There are a couple
+reserved captures that do not have this behavior
+
+`@language`
+This will use a nodes text content as the language to be injected.
+
+`@content`
+This will use the captured nodes content as the injected content.
+
+`@combined`
+This will combine all matches of a pattern as one single block of content.
+By default, each match of a pattern is treated as it's own block of content
+and parsed independent of each other.
+
+`@<language>`
+Any other capture name will be treated as both the language and the content.
+
+`@_<name>`
+Any capture with a leading "_" will not be treated as a language and will have
+no special processing and is useful for capturing nodes for directives.
+
+Injections can be configured using `directives` instead of using capture
+names. Here is an example of a directive that resolves the language based on a
+buffer variable instead of statically in the query. >
+
+    local query = require("vim.treesitter.query")
+
+    query.add_directive("inject-preprocessor!", function(_, bufnr, _, _, data)
+      local success, lang = pcall(vim.api.nvim_buf_get_var, bufnr, "css_preprocessor")
+
+      data.language = success and lang or "css"
+    end)
+
+Here is the same HTML query using this directive. >
+
+    local query = [[
+      (script_element (raw_text) @javascript)
+      (style_element
+        ((raw_text) @content
+	 (#inject-preprocessor!)))
+    ]];
+
+    local parser = vim.treesitter.get_parser(nil, nil, {
+      injections = {html = query}
+    })
+
+    parser:parse()
+
+The following properties can be attached to the metadata object provided to
+the directive.
+
+`language`
+Same as the language capture.
+
+`content`
+A list of ranges or nodes to inject as content. These ranges and/or nodes will
+be treated as combined source and will be parsed within the same context. This
+differs from the `@content` capture which only captures a single node as
+content. This can also be a single number that references a captured node.
+
+`combined`
+Same as the combined capture.
+
  vim:tw=78:ts=8:ft=help:norl:

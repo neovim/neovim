@@ -445,7 +445,7 @@ describe('treesitter highlighting', function()
 
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c", {
-        queries = {c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}
+        injections = {c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}
       })
       local highlighter = vim.treesitter.highlighter
       test_hl = highlighter.new(parser, {queries = {c = hl_query}})
