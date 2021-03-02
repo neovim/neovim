@@ -8184,9 +8184,7 @@ static int tv_nr_compare(const void *a1, const void *a2)
   return li1->li_tv.vval.v_number - li2->li_tv.vval.v_number;
 }
 
-/*
- * "setcellwidths()" function
- */
+// "setcellwidths()" function
 static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   list_T *l;
@@ -8196,67 +8194,57 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   listitem_T **ptrs;
   cw_interval_T   *table;
 
-  if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL)
-  {
+  if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
     EMSG(_(e_listreq));
     return;
   }
   l = argvars[0].vval.v_list;
-  if (l->lv_len == 0)
-  {
+  if (l->lv_len == 0) {
     clear_cw_table();
     return;
   }
 
   ptrs = xmalloc(l->lv_len * sizeof(listitem_T *));
-  if (ptrs == NULL)
+  if (ptrs == NULL) {
     return;
+  }
 
   // Check that all entries are a list with three numbers, the range is
   // valid and the cell width is valid.
   item = 0;
-  for (li = l->lv_first; li != NULL; li = li->li_next)
-  {
+  for (li = l->lv_first; li != NULL; li = li->li_next) {
     listitem_T *lili;
     varnumber_T n1;
 
-    if (li->li_tv.v_type != VAR_LIST || li->li_tv.vval.v_list == NULL)
-    {
+    if (li->li_tv.v_type != VAR_LIST || li->li_tv.vval.v_list == NULL) {
       EMSGN(_("E1109: List item %lld is not a List"), item);
       xfree(ptrs);
       return;
     }
     for (lili = li->li_tv.vval.v_list->lv_first, i = 0; lili != NULL;
-        lili = lili->li_next, ++i)
-    {
-      if (lili->li_tv.v_type != VAR_NUMBER)
+         lili = lili->li_next, ++i) {
+      if (lili->li_tv.v_type != VAR_NUMBER) {
         break;
-      if (i == 0)
-      {
+      }
+      if (i == 0) {
         n1 = lili->li_tv.vval.v_number;
-        if (n1 < 0x100)
-        {
+        if (n1 < 0x100) {
           EMSG(_("E1114: Only values of 0x100 and higher supported"));
           xfree(ptrs);
           return;
         }
-      }
-      else if (i == 1 && lili->li_tv.vval.v_number < n1)
-      {
+      } else if (i == 1 && lili->li_tv.vval.v_number < n1) {
         EMSGN(_("E1111: List item %lld range invalid"), item);
         xfree(ptrs);
         return;
-      }
-      else if (i == 2 && (lili->li_tv.vval.v_number < 1
-            || lili->li_tv.vval.v_number > 2))
-      {
+      } else if (i == 2 && (lili->li_tv.vval.v_number < 1
+                            || lili->li_tv.vval.v_number > 2)) {
         EMSGN(_("E1112: List item %lld cell width invalid"), item);
         xfree(ptrs);
         return;
       }
     }
-    if (i != 3)
-    {
+    if (i != 3) {
       EMSGN(_("E1110: List item %lld does not contain 3 numbers"), item);
       xfree(ptrs);
       return;
@@ -8268,22 +8256,19 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   qsort((void *)ptrs, (size_t)l->lv_len, sizeof(listitem_T *), tv_nr_compare);
 
   table = xmalloc(l->lv_len * sizeof(cw_interval_T));
-  if (table == NULL)
-  {
+  if (table == NULL) {
     xfree(ptrs);
     return;
   }
 
   // Store the items in the new table.
   item = 0;
-  for (li = l->lv_first; li != NULL; li = li->li_next)
-  {
-    listitem_T	*lili = li->li_tv.vval.v_list->lv_first;
-    varnumber_T	n1;
+  for (li = l->lv_first; li != NULL; li = li->li_next) {
+    listitem_T *lili = li->li_tv.vval.v_list->lv_first;
+    varnumber_T n1;
 
     n1 = lili->li_tv.vval.v_number;
-    if (item > 0 && n1 <= table[item - 1].last)
-    {
+    if (item > 0 && n1 <= table[item - 1].last) {
       EMSGN(_("E1113: Overlapping ranges for 0x%llx"), (long)n1);
       xfree(ptrs);
       xfree(table);
@@ -8294,7 +8279,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     table[item].last = lili->li_tv.vval.v_number;
     lili = lili->li_next;
     table[item].width = lili->li_tv.vval.v_number;
-    ++item;
+    item++;
   }
 
   xfree(ptrs);

@@ -461,10 +461,8 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 cw_interval_T *cw_table = NULL;
 size_t cw_table_size = 0;
 
-/*
- * Return 1 or 2 when "c" is in the cellwidth table.
- * Return 0 if not.
- */
+// Return 1 or 2 when "c" is in the cellwidth table.
+// Return 0 if not.
 static int cw_value(int c)
 {
   int mid, bot, top;

@@ -74,9 +74,7 @@ extern const uint8_t utf8len_tab_zero[256];
 
 extern const uint8_t utf8len_tab[256];
 
-/*
- * Table set by setcellwidths().
- */
+// Table set by setcellwidths().
 typedef struct {
   long first;
   long last;
