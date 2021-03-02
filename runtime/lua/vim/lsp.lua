@@ -804,27 +804,21 @@ end
 --@returns string text from buffer
 local function buf_range_to_text(bufnr, range)
   -- Any deletion operation should send { text = "" }
-  vim.notify(vim.inspect({
-          start_row=range.start_row;
-          start_column=range.start_column;
-          byte_offset=range.byte_offset;
-          old_end_row=range.old_end_row;
-          old_end_column=range.old_end_column;
-          old_end_byte_length=range.old_end_byte_length;
-          new_end_row=range.new_end_row;
-          new_end_column=range.new_end_column;
-          new_end_byte_length=range.new_end_byte_length;
-        }))
   if range.new_end_byte_length < range.old_end_byte_length then
     return ""
   end
 
-  local lines = vim.api.nvim_buf_get_lines(
+  local original_lines = vim.api.nvim_buf_get_lines(
     bufnr, range.start_row, range.start_row + range.new_end_row + 1 , false
   )
 
-  lines[#lines] =  lines[#lines] ..'\n'
+  local lines = {}
+  for idx = 1, range.new_end_row do
+    table.insert(lines, original_lines[idx])
+  end
+
   vim.notify(vim.inspect(lines))
+  lines[#lines] =  lines[#lines] ..'\n'
 
   if not (range.start_column == 0 and range.new_end_column ==0) then
     if #lines > 1 then
@@ -877,17 +871,6 @@ do
     end
 
     local incremental_changes = once(function(_client)
-      vim.notify(vim.inspect({
-              start_row=start_row;
-              start_column=start_column;
-              byte_offset=byte_offset;
-              old_end_row=old_end_row;
-              old_end_column=old_end_column;
-              old_end_byte_length=old_end_byte_length;
-              new_end_row=new_end_row;
-              new_end_column=new_end_column;
-              new_end_byte_length=new_end_byte_length;
-            }))
       local text = buf_range_to_text(bufnr, {
                       start_row = start_row,
                       start_column = start_column,
