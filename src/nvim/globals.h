@@ -180,6 +180,11 @@ EXTERN int compl_cont_status INIT(= 0);
 # define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
                                 // expansion, (eg use complete=.)
 
+EXTERN char_u *edit_submode INIT(= NULL);        // msg for CTRL-X submode
+EXTERN char_u *edit_submode_pre INIT(= NULL);    // prepended to edit_submode
+EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
+EXTERN hlf_T edit_submode_highl;                 // highl. method for extra info
+
 // state for putting characters in the message area
 EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
@@ -328,9 +333,10 @@ EXTERN int garbage_collect_at_exit INIT(= false);
 #define SID_ENV         -4      // for sourcing environment variable
 #define SID_ERROR       -5      // option was reset because of an error
 #define SID_NONE        -6      // don't set scriptID
-#define SID_LUA         -7      // for Lua scripts/chunks
-#define SID_API_CLIENT  -8      // for API clients
-#define SID_STR         -9      // for sourcing a string
+#define SID_WINLAYOUT   -7      // changing window size
+#define SID_LUA         -8      // for Lua scripts/chunks
+#define SID_API_CLIENT  -9      // for API clients
+#define SID_STR         -10     // for sourcing a string
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });
@@ -639,10 +645,6 @@ EXTERN int arrow_used;                  // Normally false, set to true after
                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT(= false);   // put cursor after eol when
                                         // restarting edit after CTRL-O
-EXTERN char_u *edit_submode INIT(= NULL);  // msg for CTRL-X submode
-EXTERN char_u *edit_submode_pre INIT(= NULL);  // prepended to edit_submode
-EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
-EXTERN hlf_T edit_submode_highl;        // highl. method for extra info
 
 EXTERN int no_abbr INIT(= true);        // true when no abbreviations loaded
 

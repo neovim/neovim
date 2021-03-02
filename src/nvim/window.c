@@ -5501,7 +5501,7 @@ void win_setminheight(void)
 
   // loop until there is a 'winminheight' that is possible
   while (p_wmh > 0) {
-    const int room = Rows - p_ch;
+    const int room = Rows - p_ch - tabline_height();
     const int needed = frame_minheight(topframe, NULL);
     if (room >= needed) {
       break;
@@ -5960,9 +5960,17 @@ void win_new_width(win_T *wp, int width)
 
 void win_comp_scroll(win_T *wp)
 {
+  const long old_w_p_scr = wp->w_p_scr;
+
   wp->w_p_scr = wp->w_height / 2;
-  if (wp->w_p_scr == 0)
+  if (wp->w_p_scr == 0) {
     wp->w_p_scr = 1;
+  }
+  if (wp->w_p_scr != old_w_p_scr) {
+    // Used by "verbose set scroll".
+    wp->w_p_script_ctx[WV_SCROLL].script_ctx.sc_sid = SID_WINLAYOUT;
+    wp->w_p_script_ctx[WV_SCROLL].script_ctx.sc_lnum = 0;
+  }
 }
 
 /*

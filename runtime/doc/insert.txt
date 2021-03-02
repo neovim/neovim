@@ -287,8 +287,7 @@ character is written at the end of each line.  Thus if you want to insert a
 
 						*i_CTRL-X* *insert_expand*
 CTRL-X enters a sub-mode where several commands can be used.  Most of these
-commands do keyword completion; see |ins-completion|.  These are not available
-when Vim was compiled without the |+insert_expand| feature.
+commands do keyword completion; see |ins-completion|.
 
 Two commands can be used to scroll the window up or down, without exiting
 insert mode:
@@ -591,9 +590,6 @@ entering new data while keeping all the columns aligned.
 In Insert and Replace mode, there are several commands to complete part of a
 keyword or line that has been typed.  This is useful if you are using
 complicated keywords (e.g., function names with capitals and underscores).
-
-These commands are not available when the |+insert_expand| feature was
-disabled at compile time.
 
 Completion can be done for:
 

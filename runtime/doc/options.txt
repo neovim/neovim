@@ -4090,8 +4090,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	In the "popup" model the right mouse button produces a pop-up menu.
 	You need to define this first, see |popup-menu|.
-	In a terminal the popup menu works if Vim is compiled with the
-	|+insert_expand| option.
 
 	Note that you can further refine the meaning of buttons with mappings.
 	See |mouse-overview|.  But mappings are NOT used for modeless selection.
@@ -4858,7 +4856,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to window
 	Number of lines to scroll with CTRL-U and CTRL-D commands.  Will be
 	set to half the number of lines in the window when the window size
-	changes.  If you give a count to the CTRL-U or CTRL-D command it will
+	changes.  This may happen when enabling the |status-line| or
+	'tabline' option after setting the 'scroll' option.
+	If you give a count to the CTRL-U or CTRL-D command it will
 	be used as the new value for 'scroll'.  Reset to half the window
 	height with ":set scroll=0".
 
