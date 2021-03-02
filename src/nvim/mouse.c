@@ -728,14 +728,18 @@ int mouse_check_fold(void)
 
   if (wp && mouse_row >= 0 && mouse_row < Rows
       && mouse_col >= 0 && mouse_col <= Columns) {
-    ScreenGrid *gp = ui_has(kUIMultigrid) ? &wp->w_grid : &default_grid;
+    int multigrid = ui_has(kUIMultigrid);
+    ScreenGrid *gp = multigrid ? &wp->w_grid : &default_grid;
     int fdc = win_fdccol_count(wp);
+
+    row = multigrid && mouse_grid == 0 ? row : mouse_row;
+    col = multigrid && mouse_grid == 0 ? col : mouse_col;
 
     // Remember the character under the mouse, might be one of foldclose or
     // foldopen fillchars in the fold column.
     if (gp->chars != NULL) {
-      mouse_char = utf_ptr2char(gp->chars[gp->line_offset[mouse_row]
-                                          + (unsigned)mouse_col]);
+      mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
+                                          + (unsigned)col]);
     }
 
     // Check for position outside of the fold column.
