@@ -1,12 +1,12 @@
 " Test 'statusline'
 "
 " Not tested yet:
-"   %a
 "   %N
 "   %T
 "   %X
 
 source view_util.vim
+source check.vim
 source term_util.vim
 
 func s:get_statusline()
@@ -61,7 +61,19 @@ func Test_statusline_will_be_disabled_with_error()
 endfunc
 
 func Test_statusline()
-  new Xstatusline
+  CheckFeature quickfix
+
+  " %a: Argument list ({current} of {max})
+  set statusline=%a
+  call assert_match('^\s*$', s:get_statusline())
+  arglocal a1 a2
+  rewind
+  call assert_match('^ (1 of 2)\s*$', s:get_statusline())
+  next
+  call assert_match('^ (2 of 2)\s*$', s:get_statusline())
+  e Xstatusline
+  call assert_match('^ ((2) of 2)\s*$', s:get_statusline())
+
   only
   set laststatus=2
   set splitbelow
