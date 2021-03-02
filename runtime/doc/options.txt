@@ -4090,8 +4090,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	In the "popup" model the right mouse button produces a pop-up menu.
 	You need to define this first, see |popup-menu|.
-	In a terminal the popup menu works if Vim is compiled with the
-	|+insert_expand| option.
 
 	Note that you can further refine the meaning of buttons with mappings.
 	See |mouse-overview|.  But mappings are NOT used for modeless selection.

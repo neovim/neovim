@@ -180,6 +180,11 @@ EXTERN int compl_cont_status INIT(= 0);
 # define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
                                 // expansion, (eg use complete=.)
 
+EXTERN char_u *edit_submode INIT(= NULL);        // msg for CTRL-X submode
+EXTERN char_u *edit_submode_pre INIT(= NULL);    // prepended to edit_submode
+EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
+EXTERN hlf_T edit_submode_highl;                 // highl. method for extra info
+
 // state for putting characters in the message area
 EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
@@ -639,10 +644,6 @@ EXTERN int arrow_used;                  // Normally false, set to true after
                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT(= false);   // put cursor after eol when
                                         // restarting edit after CTRL-O
-EXTERN char_u *edit_submode INIT(= NULL);  // msg for CTRL-X submode
-EXTERN char_u *edit_submode_pre INIT(= NULL);  // prepended to edit_submode
-EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
-EXTERN hlf_T edit_submode_highl;        // highl. method for extra info
 
 EXTERN int no_abbr INIT(= true);        // true when no abbreviations loaded
 

@@ -7152,11 +7152,13 @@ static void win_redr_ruler(win_T *wp, int always)
   if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count)
     return;
 
-  /* Don't draw the ruler while doing insert-completion, it might overwrite
-   * the (long) mode message. */
-  if (wp == lastwin && lastwin->w_status_height == 0)
-    if (edit_submode != NULL)
+  // Don't draw the ruler while doing insert-completion, it might overwrite
+  // the (long) mode message.
+  if (wp == lastwin && lastwin->w_status_height == 0) {
+    if (edit_submode != NULL) {
       return;
+    }
+  }
 
   if (*p_ruf) {
     int save_called_emsg = called_emsg;
