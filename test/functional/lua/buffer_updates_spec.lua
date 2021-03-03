@@ -666,8 +666,62 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("sends events when undoing with undofile", function()
+      write_file("Xtest-undofile", dedent([[
+      12345
+      hello world
+      ]]))
+
+      command("e! Xtest-undofile")
+      command("set undodir=. | set undofile")
+
+      local ns = helpers.request('nvim_create_namespace', "ns1")
+      meths.buf_set_extmark(0, ns, 0, 0, {})
+
+      eq({"12345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      -- splice
+      feed("gg0d2l")
+
+      eq({"345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      -- move
+      command(".m+1")
+
+      eq({"hello world", "345"}, meths.buf_get_lines(0, 0, -1, true))
+
+      -- reload undofile and undo changes
+      command("w")
+      command("set noundofile")
+      command("bw!")
+      command("e! Xtest-undofile")
+
+      command("set undofile")
+
+      local check_events = setup_eventcheck(verify, nil)
+
+      feed("u")
+      eq({"345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      check_events {
+        { "test1", "bytes", 2, 6, 1, 0, 12, 1, 0, 4, 0, 0, 0 },
+        { "test1", "bytes", 2, 6, 0, 0, 0, 0, 0, 0, 1, 0, 4 }
+      }
+
+      feed("u")
+      eq({"12345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      check_events {
+        { "test1", "bytes", 2, 8, 0, 0, 0, 0, 0, 0, 0, 2, 2 }
+      }
+      command("bw!")
+    end)
+
+
     teardown(function()
       os.remove "Xtest-reload"
+      os.remove "Xtest-undofile"
+      os.remove ".Xtest-undofile.un~"
     end)
   end
 
