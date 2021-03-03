@@ -4,7 +4,7 @@
 " Maintainer:   Marcin Szamotulski <profunctor@pm.me>
 " Previous Maintainer:	Vincent Berthoux <twinside@gmail.com>
 " File Types:   .cabal
-" Last Change:  15 May 2018
+" Last Change:  3 Oct 2020
 " v1.5: Incorporated changes from
 "       https://github.com/sdiehl/haskell-vim-proto/blob/master/vim/syntax/cabal.vim
 "       Use `syn keyword` instead of `syn match`.
@@ -62,11 +62,12 @@ syn keyword cabalCategory contained
 	\ source-repository
 	\ flag
 	\ custom-setup
+	\ common
 syn match cabalCategoryTitle contained /[^{]*\ze{\?/
 syn match cabalCategoryRegion
 	\ contains=cabalCategory,cabalCategoryTitle
 	\ nextgroup=cabalCategory skipwhite
-	\ /^\c\s*\(contained\|executable\|library\|benchmark\|test-suite\|source-repository\|flag\|custom-setup\)\+\s*\%(.*$\|$\)/
+	\ /^\c\s*\(contained\|executable\|library\|benchmark\|test-suite\|source-repository\|flag\|custom-setup\|common\)\+\s*\%(.*$\|$\)/
 syn keyword cabalTruth true false
 
 " cabalStatementRegion which limits the scope of cabalStatement keywords, this
@@ -76,6 +77,7 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ default-language
 	\ default-extensions
 	\ author
+        \ autogen-modules
 	\ branch
 	\ bug-reports
 	\ build-depends
@@ -110,6 +112,7 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ homepage
 	\ hs-source-dirs
 	\ hugs-options
+	\ import
 	\ include-dirs
 	\ includes
 	\ install-includes
