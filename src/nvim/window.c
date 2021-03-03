@@ -710,7 +710,7 @@ int win_fdccol_count(win_T *wp)
 }
 
 
-static void ui_ext_win_position(win_T *wp)
+void ui_ext_win_position(win_T *wp)
 {
   if (!wp->w_floating) {
     ui_call_win_pos(wp->w_grid.handle, wp->handle, wp->w_winrow,

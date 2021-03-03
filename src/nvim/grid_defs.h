@@ -76,6 +76,12 @@ typedef struct {
   int comp_row;
   int comp_col;
 
+  // Requested width and height of the grid upon resize. Used by
+  // `ui_compositor` to correctly determine which regions need to
+  // be redrawn.
+  int comp_width;
+  int comp_height;
+
   // z-index of the grid. Grids with higher index is draw on top.
   // default_grid.comp_index is always zero.
   size_t comp_index;
@@ -86,6 +92,6 @@ typedef struct {
 } ScreenGrid;
 
 #define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, false, true, 0, 0, 0,  false }
+                           false, 0, 0, false, true, 0, 0, 0, 0, 0,  false }
 
 #endif  // NVIM_GRID_DEFS_H

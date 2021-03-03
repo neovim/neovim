@@ -5433,6 +5433,155 @@ describe('floatwin', function()
         ]])
       end
     end)
+
+    it("correctly redraws when overlaid windows are resized #13991", function()
+	  helpers.source([[
+        let popup_config = {"relative" : "editor",
+                    \ "width" : 7,
+                    \ "height" : 3,
+                    \ "row" : 1,
+                    \ "col" : 1,
+                    \ "style" : "minimal"}
+
+        let border_config = {"relative" : "editor",
+                    \ "width" : 9,
+                    \ "height" : 5,
+                    \ "row" : 0,
+                    \ "col" : 0,
+                    \ "style" : "minimal"}
+
+        let popup_buffer = nvim_create_buf(v:false, v:true)
+        let border_buffer = nvim_create_buf(v:false, v:true)
+        let popup_win = nvim_open_win(popup_buffer, v:true, popup_config)
+        let border_win = nvim_open_win(border_buffer, v:false, border_config)
+
+        call nvim_buf_set_lines(popup_buffer, 0, -1, v:true,
+                    \ ["long", "longer", "longest"])
+
+        call nvim_buf_set_lines(border_buffer, 0, -1, v:true,
+                    \ ["---------", "-       -", "-       -"])
+      ]])
+
+      if multigrid then
+        screen:expect{grid=[[
+		## grid 1
+		  [2:----------------------------------------]|
+		  [2:----------------------------------------]|
+		  [2:----------------------------------------]|
+		  [2:----------------------------------------]|
+		  [2:----------------------------------------]|
+		  [2:----------------------------------------]|
+		  [3:----------------------------------------]|
+		## grid 2
+		                                          |
+		  {1:~                                       }|
+		  {1:~                                       }|
+		  {1:~                                       }|
+		  {1:~                                       }|
+		  {1:~                                       }|
+		## grid 3
+		                                          |
+		## grid 5
+		  {2:^long   }|
+		  {2:longer }|
+		  {2:longest}|
+		## grid 6
+		  {2:---------}|
+		  {2:-       -}|
+		  {2:-       -}|
+		  {2:         }|
+		  {2:         }|
+		]], attr_ids={
+          [1] = {foreground = Screen.colors.Blue1, bold = true};
+          [2] = {background = Screen.colors.LightMagenta};
+        }, float_pos={
+           [5] = { {
+               id = 1002
+             }, "NW", 1, 1, 1, true },
+           [6] = { {
+               id = 1003
+             }, "NW", 1, 0, 0, true }
+        }}
+      else
+        screen:expect([[
+        {1:---------}                               |
+        {1:-^long   -}{0:                               }|
+        {1:-longer -}{0:                               }|
+        {1: longest }{0:                               }|
+        {1:         }{0:                               }|
+        {0:~                                       }|
+                                                |
+        ]])
+      end
+
+      helpers.source([[
+        let new_popup_config = {"width" : 1, "height" : 3}
+        let new_border_config = {"width" : 3, "height" : 5}
+
+        function! Resize()
+            call nvim_win_set_config(g:popup_win, g:new_popup_config)
+            call nvim_win_set_config(g:border_win, g:new_border_config)
+
+            call nvim_buf_set_lines(g:border_buffer, 0, -1, v:true,
+                        \ ["---", "- -", "- -"])
+        endfunction
+
+        nnoremap zz <cmd>call Resize()<cr>
+      ]])
+
+      helpers.feed("zz")
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+          {1:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {2:^l}|
+          {2:o}|
+          {2:n}|
+        ## grid 6
+          {2:---}|
+          {2:- -}|
+          {2:- -}|
+          {2:   }|
+          {2:   }|
+        ]], attr_ids={
+          [1] = {foreground = Screen.colors.Blue1, bold = true};
+          [2] = {background = Screen.colors.LightMagenta};
+        }, float_pos={
+          [5] = { {
+              id = 1002
+            }, "NW", 1, 1, 1, true },
+          [6] = { {
+              id = 1003
+            }, "NW", 1, 0, 0, true }
+        }}
+      else
+        screen:expect([[
+        {1:---}                                     |
+        {1:-^l-}{0:                                     }|
+        {1:-o-}{0:                                     }|
+        {1: n }{0:                                     }|
+        {1:   }{0:                                     }|
+        {0:~                                       }|
+                                                |
+        ]])
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()
