@@ -367,7 +367,7 @@ endif()
 include_directories("${PROJECT_BINARY_DIR}/config")
 include_directories("${PROJECT_SOURCE_DIR}/src")
 
-find_package(LibUV 1.28.0 REQUIRED)
+find_package(LibUV 1.41.0 REQUIRED)
 include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 
 find_package(Msgpack 1.0.0 REQUIRED)
