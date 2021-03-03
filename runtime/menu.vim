@@ -356,8 +356,8 @@ func! s:SetupColorSchemes() abort
   let s:did_setup_color_schemes = 1
 
   let n = globpath(&runtimepath, "colors/*.vim", 1, 1)
-  let n += globpath(&runtimepath, "pack/*/start/*/colors/*.vim", 1, 1)
-  let n += globpath(&runtimepath, "pack/*/opt/*/colors/*.vim", 1, 1)
+  let n += globpath(&packpath, "pack/*/start/*/colors/*.vim", 1, 1)
+  let n += globpath(&packpath, "pack/*/opt/*/colors/*.vim", 1, 1)
 
   " Ignore case for VMS and windows, sort on name
   let names = sort(map(n, 'substitute(v:val, "\\c.*[/\\\\:\\]]\\([^/\\\\:]*\\)\\.vim", "\\1", "")'), 1)
