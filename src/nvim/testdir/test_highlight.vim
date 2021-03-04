@@ -623,10 +623,47 @@ func Test_xxlast_highlight_RGB_color()
   hi clear
 endfunc
 
-" Test default highlighting is restored
-func Test_highlight_restore_defaults()
-  hi! link TestLink Identifier
-  hi! TestHi ctermbg=red
+func Test_highlight_clear_restores_links()
+  let aaa_id = hlID('aaa')
+  call assert_equal(aaa_id, 0)
+
+  " create default link aaa --> bbb
+  hi def link aaa bbb
+  let id_aaa = hlID('aaa')
+  let hl_aaa_bbb = HighlightArgs('aaa')
+
+  " try to redefine default link aaa --> ccc; check aaa --> bbb
+  hi def link aaa ccc
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " clear aaa; check aaa --> bbb
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " link aaa --> ccc; clear aaa; check aaa --> bbb
+  hi link aaa ccc
+  let id_ccc = hlID('ccc')
+  call assert_equal(synIDtrans(id_aaa), id_ccc)
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " forcibly set default link aaa --> ddd
+  hi! def link aaa ddd
+  let id_ddd = hlID('ddd')
+  let hl_aaa_ddd = HighlightArgs('aaa')
+  call assert_equal(synIDtrans(id_aaa), id_ddd)
+
+  " link aaa --> eee; clear aaa; check aaa --> ddd
+  hi link aaa eee
+  let eee_id = hlID('eee')
+  call assert_equal(synIDtrans(id_aaa), eee_id)
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_ddd)
+endfunc
+
+func Test_highlight_default_colorscheme_restores_links()
+  hi link TestLink Identifier
+  hi TestHi ctermbg=red
 
   let hlTestLinkPre = HighlightArgs('TestLink')
   let hlTestHiPre = HighlightArgs('TestHi')
@@ -637,19 +674,16 @@ func Test_highlight_restore_defaults()
     syntax reset
   endif
   let g:colors_name = 'test'
-  hi! link TestLink ErrorMsg
-  hi! TestHi ctermbg=green
+  hi link TestLink ErrorMsg
+  hi TestHi ctermbg=green
 
   " Restore default highlighting
   colorscheme default
-  syntax on
   " 'default' should work no matter if highlight group was cleared
   hi def link TestLink Identifier
   hi def TestHi ctermbg=red
-
   let hlTestLinkPost = HighlightArgs('TestLink')
   let hlTestHiPost = HighlightArgs('TestHi')
-
   call assert_equal(hlTestLinkPre, hlTestLinkPost)
   call assert_equal(hlTestHiPre, hlTestHiPost)
   hi clear
