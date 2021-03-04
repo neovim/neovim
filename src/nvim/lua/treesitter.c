@@ -1276,8 +1276,8 @@ int tslua_parse_query(lua_State *L)
   TSQuery *query = ts_query_new(lang, src, (uint32_t)len, &error_offset, &error_type);
 
   if (!query) {
-    return luaL_error(L, "query: %s at position %d",
-                      query_err_string(error_type), (int)error_offset);
+    return luaL_error(L, "query: %s at position %d for language %s",
+                      query_err_string(error_type), (int)error_offset, lang_name);
   }
 
   TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
