@@ -72,9 +72,7 @@ int jump_to_mouse(int flags,
   int row = mouse_row;
   int col = mouse_col;
   int grid = mouse_grid;
-  int mouse_char;
   int fdc = 0;
-  ScreenGrid *gp = &default_grid;
 
   mouse_past_bottom = false;
   mouse_past_eol = false;
@@ -303,25 +301,6 @@ retnomove:
     }
   }
 
-  // Remember the character under the mouse, might be one of foldclose or
-  // foldopen fillchars in the fold column.
-  if (ui_has(kUIMultigrid)) {
-    gp = &curwin->w_grid;
-  }
-  if (row >= 0 && row < Rows && col >= 0 && col <= Columns
-      && gp->chars != NULL) {
-    mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
-                                        + (unsigned)col]);
-  } else {
-    mouse_char = ' ';
-  }
-
-  // Check for position outside of the fold column.
-  if (curwin->w_p_rl ? col < curwin->w_width_inner - fdc :
-      col >= fdc + (cmdwin_type == 0 ? 0 : 1)) {
-    mouse_char = ' ';
-  }
-
   // compute the position in the buffer line from the posn on the screen
   if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursor.lnum)) {
     mouse_past_bottom = true;
@@ -362,11 +341,7 @@ retnomove:
     count |= CURSOR_MOVED;              // Cursor has moved
   }
 
-  if (mouse_char == curwin->w_p_fcs_chars.foldclosed) {
-    count |= MOUSE_FOLD_OPEN;
-  } else if (mouse_char != ' ') {
-    count |= MOUSE_FOLD_CLOSE;
-  }
+  count |= mouse_check_fold();
 
   return count;
 }
@@ -737,4 +712,48 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   }
 
   return col + nudge;
+}
+
+// Check clicked cell is foldcolumn
+int mouse_check_fold(void)
+{
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+  int mouse_char = ' ';
+
+  win_T *wp;
+
+  wp = mouse_find_win(&grid, &row, &col);
+
+  if (wp && mouse_row >= 0 && mouse_row < Rows
+      && mouse_col >= 0 && mouse_col <= Columns) {
+    int multigrid = ui_has(kUIMultigrid);
+    ScreenGrid *gp = multigrid ? &wp->w_grid : &default_grid;
+    int fdc = win_fdccol_count(wp);
+
+    row = multigrid && mouse_grid == 0 ? row : mouse_row;
+    col = multigrid && mouse_grid == 0 ? col : mouse_col;
+
+    // Remember the character under the mouse, might be one of foldclose or
+    // foldopen fillchars in the fold column.
+    if (gp->chars != NULL) {
+      mouse_char = utf_ptr2char(gp->chars[gp->line_offset[row]
+                                          + (unsigned)col]);
+    }
+
+    // Check for position outside of the fold column.
+    if (wp->w_p_rl ? col < wp->w_width_inner - fdc :
+        col >= fdc + (cmdwin_type == 0 ? 0 : 1)) {
+      mouse_char = ' ';
+    }
+  }
+
+  if (mouse_char == wp->w_p_fcs_chars.foldclosed) {
+    return MOUSE_FOLD_OPEN;
+  } else if (mouse_char != ' ') {
+    return MOUSE_FOLD_CLOSE;
+  }
+
+  return 0;
 }
