@@ -542,6 +542,13 @@ function lsp.start_client(config)
       client_ids[client_id] = nil
     end
 
+    if code ~= 0 or signal ~= 0 then
+      local msg = string.format("Client %s quit with exit code %s and signal %s", client_id, code, signal)
+      vim.schedule(function()
+        vim.notify(msg, vim.log.levels.WARN)
+      end)
+    end
+
     if config.on_exit then
       pcall(config.on_exit, code, signal, client_id)
     end
