@@ -623,4 +623,36 @@ func Test_xxlast_highlight_RGB_color()
   hi clear
 endfunc
 
+" Test default highlighting is restored
+func Test_highlight_restore_defaults()
+  hi! link TestLink Identifier
+  hi! TestHi ctermbg=red
+
+  let hlTestLinkPre = HighlightArgs('TestLink')
+  let hlTestHiPre = HighlightArgs('TestHi')
+
+  " Test colorscheme
+  hi clear
+  if exists('syntax_on')
+    syntax reset
+  endif
+  let g:colors_name = 'test'
+  hi! link TestLink ErrorMsg
+  hi! TestHi ctermbg=green
+
+  " Restore default highlighting
+  colorscheme default
+  syntax on
+  " 'default' should work no matter if highlight group was cleared
+  hi def link TestLink Identifier
+  hi def TestHi ctermbg=red
+
+  let hlTestLinkPost = HighlightArgs('TestLink')
+  let hlTestHiPost = HighlightArgs('TestHi')
+
+  call assert_equal(hlTestLinkPre, hlTestLinkPost)
+  call assert_equal(hlTestHiPre, hlTestHiPost)
+  hi clear
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

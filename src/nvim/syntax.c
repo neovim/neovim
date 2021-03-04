@@ -7076,13 +7076,14 @@ void restore_cterm_colors(void)
  */
 static int hl_has_settings(int idx, int check_link)
 {
-  return HL_TABLE()[idx].sg_attr != 0
-         || HL_TABLE()[idx].sg_cterm_fg != 0
-         || HL_TABLE()[idx].sg_cterm_bg != 0
-         || HL_TABLE()[idx].sg_rgb_fg_name != NULL
-         || HL_TABLE()[idx].sg_rgb_bg_name != NULL
-         || HL_TABLE()[idx].sg_rgb_sp_name != NULL
-         || (check_link && (HL_TABLE()[idx].sg_set & SG_LINK));
+  return HL_TABLE()[idx].sg_cleared == 0
+    && (HL_TABLE()[idx].sg_attr != 0
+        || HL_TABLE()[idx].sg_cterm_fg != 0
+        || HL_TABLE()[idx].sg_cterm_bg != 0
+        || HL_TABLE()[idx].sg_rgb_fg_name != NULL
+        || HL_TABLE()[idx].sg_rgb_bg_name != NULL
+        || HL_TABLE()[idx].sg_rgb_sp_name != NULL
+        || (check_link && (HL_TABLE()[idx].sg_set & SG_LINK)));
 }
 
 /*
