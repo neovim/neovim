@@ -975,6 +975,16 @@ function protocol.resolve_capabilities(server_capabilities)
     general_properties.rename = true
   end
 
+  if server_capabilities.codeLensProvider == nil then
+    general_properties.code_lens = false
+    general_properties.code_lens_resolve = false
+  elseif type(server_capabilities.codeLensProvider) == 'table' then
+    general_properties.code_lens = true
+    general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
+  else
+    error("The server sent invalid codeLensProvider")
+  end
+
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
   elseif type(server_capabilities.codeActionProvider) == 'boolean'
