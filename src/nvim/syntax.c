@@ -61,6 +61,7 @@ struct hl_group {
   int sg_link;                  ///< link to this highlight group ID
   int sg_deflink;               ///< default link; restored in highlight_clear()
   int sg_set;                   ///< combination of flags in \ref SG_SET
+  sctx_T sg_deflink_sctx;       ///< script where the default link was set
   sctx_T sg_script_ctx;         ///< script in which the group was last set
   // for terminal UIs
   int sg_cterm;                 ///< "cterm=" highlighting attr
@@ -6633,6 +6634,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       hlgroup = &HL_TABLE()[from_id - 1];
       if (dodefault && (forceit || hlgroup->sg_deflink == 0)) {
         hlgroup->sg_deflink = to_id;
+        hlgroup->sg_deflink_sctx = current_sctx;
+        hlgroup->sg_deflink_sctx.sc_lnum += sourcing_lnum;
       }
     }
 
@@ -7114,14 +7117,11 @@ static void highlight_clear(int idx)
   XFREE_CLEAR(HL_TABLE()[idx].sg_rgb_bg_name);
   XFREE_CLEAR(HL_TABLE()[idx].sg_rgb_sp_name);
   HL_TABLE()[idx].sg_blend = -1;
-  // Restore any default link.
+  // Restore default link and context if they exist. Otherwise clears.
   HL_TABLE()[idx].sg_link = HL_TABLE()[idx].sg_deflink;
-  // Clear the script ID only when there is no link, since that is not
-  // cleared.
-  if (HL_TABLE()[idx].sg_link == 0) {
-    HL_TABLE()[idx].sg_script_ctx.sc_sid = 0;
-    HL_TABLE()[idx].sg_script_ctx.sc_lnum = 0;
-  }
+  // Since we set the default link, set the location to where the default
+  // link was set.
+  HL_TABLE()[idx].sg_script_ctx = HL_TABLE()[idx].sg_deflink_sctx;
 }
 
 

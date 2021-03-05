@@ -3,6 +3,7 @@
 source view_util.vim
 source screendump.vim
 source check.vim
+source script_util.vim
 
 func Test_highlight()
   " basic test if ":highlight" doesn't crash
@@ -659,6 +660,39 @@ func Test_highlight_clear_restores_links()
   call assert_equal(synIDtrans(id_aaa), eee_id)
   hi clear aaa
   call assert_equal(HighlightArgs('aaa'), hl_aaa_ddd)
+endfunc
+
+func Test_highlight_clear_restores_context()
+  func FuncContextDefault()
+    hi def link Context ContextDefault
+  endfun
+
+  func FuncContextRelink()
+    " Dummy line
+    hi link Context ContextRelink
+  endfunc
+
+  let scriptContextDefault = MakeScript("FuncContextDefault")
+  let scriptContextRelink = MakeScript("FuncContextRelink")
+  let patContextDefault = fnamemodify(scriptContextDefault, ':t') .. ' line 1'
+  let patContextRelink = fnamemodify(scriptContextRelink, ':t') .. ' line 2'
+
+  exec "source" scriptContextDefault
+  let hlContextDefault = execute("verbose hi Context")
+  call assert_match(patContextDefault, hlContextDefault)
+
+  exec "source" scriptContextRelink
+  let hlContextRelink = execute("verbose hi Context")
+  call assert_match(patContextRelink, hlContextRelink)
+
+  hi clear
+  let hlContextAfterClear = execute("verbose hi Context")
+  call assert_match(patContextDefault, hlContextAfterClear)
+
+  delfunc FuncContextDefault
+  delfunc FuncContextRelink
+  call delete(scriptContextDefault)
+  call delete(scriptContextRelink)
 endfunc
 
 func Test_highlight_default_colorscheme_restores_links()

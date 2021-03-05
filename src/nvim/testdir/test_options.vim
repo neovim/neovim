@@ -225,7 +225,7 @@ func Test_set_completion()
 
   " Expand files and directories.
   call feedkeys(":set tags=./\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('./samples/ ./sautest/ ./screendump.vim ./setup.vim ./shared.vim', @:)
+  call assert_match('./samples/ ./sautest/ ./screendump.vim ./script_util.vim ./setup.vim ./shared.vim', @:)
 
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
