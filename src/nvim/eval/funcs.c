@@ -8861,13 +8861,16 @@ static void f_shiftwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *name;
-  dict_T *dict;
-  char *icon = NULL;
-  char *linehl = NULL;
-  char *text = NULL;
-  char *texthl = NULL;
-  char *numhl = NULL;
 
+  if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_UNKNOWN) {
+    // Define multiple signs
+    tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+    sign_define_multiple(argvars[0].vval.v_list, rettv->vval.v_list);
+    return;
+  }
+
+  // Define a single sign
   rettv->vval.v_number = -1;
 
   name = tv_get_string_chk(&argvars[0]);
@@ -8875,42 +8878,13 @@ static void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (argvars[1].v_type != VAR_DICT) {
-      EMSG(_(e_dictreq));
-      return;
-    }
-
-    // sign attributes
-    dict = argvars[1].vval.v_dict;
-    if (tv_dict_find(dict, "icon", -1) != NULL) {
-      icon = tv_dict_get_string(dict, "icon", true);
-    }
-    if (tv_dict_find(dict, "linehl", -1) != NULL) {
-      linehl = tv_dict_get_string(dict, "linehl", true);
-    }
-    if (tv_dict_find(dict, "text", -1) != NULL) {
-      text = tv_dict_get_string(dict, "text", true);
-    }
-    if (tv_dict_find(dict, "texthl", -1) != NULL) {
-      texthl = tv_dict_get_string(dict, "texthl", true);
-    }
-    if (tv_dict_find(dict, "numhl", -1) != NULL) {
-      numhl = tv_dict_get_string(dict, "numhl", true);
-    }
+  if (argvars[1].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_DICT) {
+    EMSG(_(e_dictreq));
+    return;
   }
 
-  if (sign_define_by_name((char_u *)name, (char_u *)icon, (char_u *)linehl,
-                          (char_u *)text, (char_u *)texthl, (char_u *)numhl)
-      == OK) {
-    rettv->vval.v_number = 0;
-  }
-
-  xfree(icon);
-  xfree(linehl);
-  xfree(text);
-  xfree(texthl);
-  xfree(numhl);
+  rettv->vval.v_number = sign_define_from_dict(
+      name, argvars[1].v_type == VAR_DICT ? argvars[1].vval.v_dict : NULL);
 }
 
 /// "sign_getdefined()" function
@@ -9031,89 +9005,58 @@ cleanup:
 /// "sign_place()" function
 static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int sign_id;
-  char_u *group = NULL;
-  const char *sign_name;
-  buf_T *buf;
-  dict_T *dict;
-  dictitem_T *di;
-  linenr_T lnum = 0;
-  int prio = SIGN_DEF_PRIO;
-  bool notanum = false;
+  dict_T *dict = NULL;
 
   rettv->vval.v_number = -1;
 
-  // Sign identifier
-  sign_id = (int)tv_get_number_chk(&argvars[0], &notanum);
-  if (notanum) {
-    return;
-  }
-  if (sign_id < 0) {
-    EMSG(_(e_invarg));
+  if (argvars[4].v_type != VAR_UNKNOWN
+      && (argvars[4].v_type != VAR_DICT
+          || ((dict = argvars[4].vval.v_dict) == NULL))) {
+    EMSG(_(e_dictreq));
     return;
   }
 
-  // Sign group
-  const char *group_chk = tv_get_string_chk(&argvars[1]);
-  if (group_chk == NULL) {
+  rettv->vval.v_number = sign_place_from_dict(
+      &argvars[0], &argvars[1], &argvars[2], &argvars[3], dict);
+}
+
+/// "sign_placelist()" function.  Place multiple signs.
+static void f_sign_placelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int sign_id;
+
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (argvars[0].v_type != VAR_LIST) {
+    EMSG(_(e_listreq));
     return;
   }
-  if (group_chk[0] == '\0') {
-    group = NULL;  // global sign group
-  } else {
-    group = vim_strsave((const char_u *)group_chk);
-  }
 
-  // Sign name
-  sign_name = tv_get_string_chk(&argvars[2]);
-  if (sign_name == NULL) {
-    goto cleanup;
-  }
-
-  // Buffer to place the sign
-  buf = get_buf_arg(&argvars[3]);
-  if (buf == NULL) {
-    goto cleanup;
-  }
-
-  if (argvars[4].v_type != VAR_UNKNOWN) {
-    if (argvars[4].v_type != VAR_DICT
-        || ((dict = argvars[4].vval.v_dict) == NULL)) {
+  // Process the List of sign attributes
+  TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
+    sign_id = -1;
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_DICT) {
+      sign_id = sign_place_from_dict(
+          NULL, NULL, NULL, NULL, TV_LIST_ITEM_TV(li)->vval.v_dict);
+    } else {
       EMSG(_(e_dictreq));
-      goto cleanup;
     }
-
-    // Line number where the sign is to be placed
-    if ((di = tv_dict_find(dict, "lnum", -1)) != NULL) {
-      lnum = (linenr_T)tv_get_number_chk(&di->di_tv, &notanum);
-      if (notanum) {
-        goto cleanup;
-      }
-      (void)lnum;
-      lnum = tv_get_lnum(&di->di_tv);
-    }
-    if ((di = tv_dict_find(dict, "priority", -1)) != NULL) {
-      // Sign priority
-      prio = (int)tv_get_number_chk(&di->di_tv, &notanum);
-      if (notanum) {
-        goto cleanup;
-      }
-    }
-  }
-
-  if (sign_place(&sign_id, group, (const char_u *)sign_name, buf, lnum, prio)
-      == OK) {
-    rettv->vval.v_number = sign_id;
-  }
-
-cleanup:
-  xfree(group);
+    tv_list_append_number(rettv->vval.v_list, sign_id);
+  });
 }
 
 /// "sign_undefine()" function
 static void f_sign_undefine(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *name;
+
+  if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_UNKNOWN) {
+    // Undefine multiple signs
+    tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+    sign_undefine_multiple(argvars[0].vval.v_list, rettv->vval.v_list);
+    return;
+  }
 
   rettv->vval.v_number = -1;
 
@@ -9137,11 +9080,7 @@ static void f_sign_undefine(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "sign_unplace()" function
 static void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  dict_T *dict;
-  dictitem_T *di;
-  int sign_id = 0;
-  buf_T *buf = NULL;
-  char_u *group = NULL;
+  dict_T *dict = NULL;
 
   rettv->vval.v_number = -1;
 
@@ -9150,46 +9089,38 @@ static void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  const char *group_chk = tv_get_string(&argvars[0]);
-  if (group_chk[0] == '\0') {
-    group = NULL;  // global sign group
-  } else {
-    group = vim_strsave((const char_u *)group_chk);
-  }
-
   if (argvars[1].v_type != VAR_UNKNOWN) {
     if (argvars[1].v_type != VAR_DICT) {
       EMSG(_(e_dictreq));
-      goto cleanup;
+      return;
     }
     dict = argvars[1].vval.v_dict;
-
-    if ((di = tv_dict_find(dict, "buffer", -1)) != NULL) {
-      buf = get_buf_arg(&di->di_tv);
-      if (buf == NULL) {
-        goto cleanup;
-      }
-    }
-    if (tv_dict_find(dict, "id", -1) != NULL) {
-      sign_id = tv_dict_get_number(dict, "id");
-    }
   }
 
-  if (buf == NULL) {
-    // Delete the sign in all the buffers
-    FOR_ALL_BUFFERS(cbuf) {
-      if (sign_unplace(sign_id, group, cbuf, 0) == OK) {
-        rettv->vval.v_number = 0;
-      }
-    }
-  } else {
-    if (sign_unplace(sign_id, group, buf, 0) == OK) {
-      rettv->vval.v_number = 0;
-    }
+  rettv->vval.v_number = sign_unplace_from_dict(&argvars[0], dict);
+}
+
+/// "sign_unplacelist()" function
+static void f_sign_unplacelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int retval;
+
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (argvars[0].v_type != VAR_LIST) {
+    EMSG(_(e_listreq));
+    return;
   }
 
-cleanup:
-  xfree(group);
+  TV_LIST_ITER_CONST(argvars[0].vval.v_list, li, {
+    retval = -1;
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_DICT) {
+      retval = sign_unplace_from_dict(NULL, TV_LIST_ITEM_TV(li)->vval.v_dict);
+    } else {
+      EMSG(_(e_dictreq));
+    }
+    tv_list_append_number(rettv->vval.v_list, retval);
+  });
 }
 
 /*
