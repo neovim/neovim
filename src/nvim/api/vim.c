@@ -1546,8 +1546,8 @@ theend:
 ///              - "c" |charwise| mode
 ///              - "l" |linewise| mode
 ///              - ""  guess by contents, see |setreg()|
-/// @param after  Insert after cursor (like |p|), or before (like |P|).
-/// @param follow  Place cursor at end of inserted text.
+/// @param after  If true insert after cursor (like |p|), or before (like |P|).
+/// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
 void nvim_put(ArrayOf(String) lines, String type, Boolean after,
               Boolean follow, Error *err)
