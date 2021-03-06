@@ -32,6 +32,8 @@ do
 
   vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
   local logfile = assert(io.open(logfilename, "a+"))
+  -- Start message for logging
+  logfile:write(string.format("[ START ] %s ] LSP logging initiated\n", os.date(log_date_format)))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
@@ -68,8 +70,6 @@ do
       logfile:flush()
     end
   end
-  -- Add some space to make it easier to distinguish different neovim runs.
-  logfile:write("\n")
 end
 
 -- This is put here on purpose after the loop above so that it doesn't
