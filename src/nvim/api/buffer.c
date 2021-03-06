@@ -1723,7 +1723,7 @@ Boolean nvim_buf_del_extmark(Buffer buffer,
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer,
-                               Integer src_id,
+                               Integer ns_id,
                                String hl_group,
                                Integer line,
                                Integer col_start,
@@ -1748,18 +1748,18 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     col_end = MAXCOL;
   }
 
-  uint64_t ns_id = src2ns(&src_id);
+  uint64_t ns = src2ns(&ns_id);
 
   if (!(line < buf->b_ml.ml_line_count)) {
     // safety check, we can't add marks outside the range
-    return src_id;
+    return ns_id;
   }
 
   int hl_id = 0;
   if (hl_group.size > 0) {
     hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
   } else {
-    return src_id;
+    return ns_id;
   }
 
   int end_line = (int)line;
@@ -1768,11 +1768,11 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     end_line++;
   }
 
-  extmark_set(buf, ns_id, 0,
+  extmark_set(buf, ns, 0,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
               decor_hl(hl_id), true, false, kExtmarkNoUndo);
-  return src_id;
+  return ns_id;
 }
 
 /// Clears namespaced objects (highlights, extmarks, virtual text) from
