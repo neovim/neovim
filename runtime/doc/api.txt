@@ -1415,9 +1415,9 @@ nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
                               • "c" |charwise| mode
                               • "l" |linewise| mode
                               • "" guess by contents, see |setreg()|
-                    {after}   Insert after cursor (like |p|), or before (like
+                    {after}   If true insert after cursor (like |p|), or before (like
                               |P|).
-                    {follow}  Place cursor at end of inserted text.
+                    {follow}  If true place cursor at end of inserted text.
 
                                                     *nvim_replace_termcodes()*
 nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
