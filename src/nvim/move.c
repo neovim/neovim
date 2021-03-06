@@ -772,8 +772,16 @@ void curs_columns(
   int textwidth = wp->w_width_inner - extra;
   if (textwidth <= 0) {
     // No room for text, put cursor in last char of window.
-    wp->w_wcol = wp->w_width_inner - 1;
-    wp->w_wrow = wp->w_height_inner - 1;
+    if (wp->w_width_inner > 0) {
+      wp->w_wcol = wp->w_width_inner - 1;
+    } else {
+      wp->w_wcol = 0;
+    }
+    if (wp->w_height_inner > 0) {
+      wp->w_wrow = wp->w_height_inner - 1;
+    } else {
+      wp->w_wcol = 0;
+    }
   } else if (wp->w_p_wrap
              && wp->w_width_inner != 0
              ) {
