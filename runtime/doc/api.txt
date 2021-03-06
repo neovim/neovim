@@ -1418,7 +1418,7 @@ nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
                     {after}   Insert after cursor (like |p|), or before (like
                               |P|). Expects boolean value: true, or false.
                     {follow}  Place cursor at end of inserted text. Expects
-                              boolean value true, or false.
+                              boolean value: true, or false.
 
                                                     *nvim_replace_termcodes()*
 nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
