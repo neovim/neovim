@@ -523,3 +523,21 @@ void nvim_win_close(Window window, Boolean force, Error *err)
   ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
   vim_ignored = try_leave(&tstate, err);
 }
+
+
+/// Gets the current window for grid.
+///
+/// @param grid   Grid id.
+/// @param[out] err Error details, if any.
+/// @return Window id.
+Window nvim_grid_get_window(Integer grid, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_REMOTE_ONLY
+{
+  win_T *win = get_win_by_grid_handle(grid);
+  if (win == NULL) {
+    api_set_error(err, kErrorTypeException, "No win for this grid.");
+    return 0;
+  }
+  return win->handle;
+}
