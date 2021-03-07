@@ -1407,19 +1407,20 @@ do_shell(
    * For autocommands we want to get the output on the current screen, to
    * avoid having to type return below.
    */
-  msg_putchar('\r');                    /* put cursor at start of line */
-  msg_putchar('\n');                    /* may shift screen one line up */
+  msg_putchar('\r');                    // put cursor at start of line
+  msg_putchar('\n');                    // may shift screen one line up
 
-  /* warning message before calling the shell */
+  // warning message before calling the shell
   if (p_warn
       && !autocmd_busy
-      && msg_silent == 0)
+      && msg_silent == 0) {
     FOR_ALL_BUFFERS(buf) {
       if (bufIsChanged(buf)) {
         MSG_PUTS(_("[No write since last change]\n"));
         break;
       }
     }
+  }
 
   // This ui_cursor_goto is required for when the '\n' resulted in a "delete line
   // 1" command to the terminal.
