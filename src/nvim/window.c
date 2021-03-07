@@ -1331,7 +1331,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (wp == NULL)
       return FAIL;
 
-    if (!ext_windows) {
+    if (ext_windows) {
+      // Make sure a win_pos event is sent to the clients, in case they rely on
+      // it to associate windows with grids
+      wp->w_pos_changed = true;
+    } else {
       new_frame(wp);
     }
 
