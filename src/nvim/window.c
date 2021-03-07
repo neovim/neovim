@@ -2558,11 +2558,7 @@ int win_close(win_T *win, bool free_buf)
     clear_snapshot(curtab, SNAP_HELP_IDX);
   }
 
-  if (ui_has(kUIWindows)) {
-    ui_call_win_close(win->w_grid.handle);
-    // If not handling windows, send the next (or prev) window in the list
-    wp = win->w_next == NULL ? win->w_prev : win->w_next;
-  } else if (win == curwin) {
+  if (!ui_has(kUIWindows) && win == curwin) {
     /*
      * Guess which window is going to be the new current window.
      * This may change because of the autocommands (sigh).
@@ -2607,6 +2603,10 @@ int win_close(win_T *win, bool free_buf)
   bool was_floating = win->w_floating;
   if (ui_has(kUIMultigrid)) {
     ui_call_win_close(win->w_grid.handle);
+    if (ui_has(kUIWindows)) {
+      // If not handling windows, send the next (or prev) window in the list
+      wp = win->w_next == NULL ? win->w_prev : win->w_next;
+    }
   }
 
   if (win->w_floating) {
