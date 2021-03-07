@@ -1865,7 +1865,7 @@ static void cs_release_csp(size_t i, bool freefnpp)
             alive = false;             // cscope process no longer exists
             break;
           }
-          os_delay(50L, false);           // sleep 50ms
+          os_delay(50L, false);  // sleep 50 ms
         }
       }
       if (alive)
