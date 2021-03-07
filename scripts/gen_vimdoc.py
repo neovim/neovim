@@ -48,6 +48,7 @@ import textwrap
 import subprocess
 import collections
 import msgpack
+import logging
 
 from xml.dom import minidom
 
@@ -57,9 +58,17 @@ if sys.version_info < MIN_PYTHON_VERSION:
     print("requires Python {}.{}+".format(*MIN_PYTHON_VERSION))
     sys.exit(1)
 
-DEBUG = ('DEBUG' in os.environ)
+# DEBUG = ('DEBUG' in os.environ)
 INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
 INCLUDE_DEPRECATED = ('INCLUDE_DEPRECATED' in os.environ)
+
+log = logging.getLogger(__name__)
+
+LOG_LEVELS = {
+    logging.getLevelName(level): level for level in [
+        logging.DEBUG, logging.INFO, logging.ERROR
+    ]
+}
 
 fmt_vimhelp = False  # HACK
 text_width = 78
@@ -157,7 +166,7 @@ CONFIG = {
         ]),
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
-        'section_name': {},
+        'section_name': {'lsp.lua': 'lsp'},
         'section_fmt': lambda name: (
             'Lua module: vim.lsp'
             if name.lower() == 'lsp'
@@ -726,8 +735,8 @@ def extract_from_xml(filename, target, width):
         if desc:
             for child in desc.childNodes:
                 paras.append(para_as_map(child))
-            if DEBUG:
-                print(textwrap.indent(
+            log.debug(
+                textwrap.indent(
                     re.sub(r'\n\s*\n+', '\n',
                            desc.toprettyxml(indent='  ', newl='\n')), ' ' * 16))
 
@@ -885,12 +894,13 @@ def main(config, args):
             os.remove(mpack_file)
 
         output_dir = out_dir.format(target=target)
+        debug = args.log_level >= logging.DEBUG
         p = subprocess.Popen(
                 ['doxygen', '-'],
                 stdin=subprocess.PIPE,
                 # silence warnings
                 # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
-                stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL))
+                stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
         p.communicate(
             config.format(
                 input=CONFIG[target]['files'],
@@ -1039,6 +1049,10 @@ def filter_source(filename):
 def parse_args():
     targets = ', '.join(CONFIG.keys())
     ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--log-level", "-l", choices=LOG_LEVELS.keys(),
+        default=logging.getLevelName(logging.ERROR), help="Set log verbosity"
+    )
     ap.add_argument('source_filter', nargs='*',
                     help="Filter source file(s)")
     ap.add_argument('-k', '--keep-tmpfiles', action='store_true',
@@ -1085,6 +1099,10 @@ Doxyfile = textwrap.dedent('''
 
 if __name__ == "__main__":
     args = parse_args()
+    print("Setting log level to %s" % args.log_level)
+    args.log_level = LOG_LEVELS[args.log_level]
+    log.setLevel(args.log_level)
+
     if len(args.source_filter) > 0:
         filter_source(args.source_filter[0])
     else:

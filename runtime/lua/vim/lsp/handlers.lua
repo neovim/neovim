@@ -26,7 +26,7 @@ end
 
 -- @msg of type ProgressParams
 -- Basically a token of type number/string
-local function progress_callback(_, _, params, client_id)
+local function progress_handler(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
@@ -62,7 +62,7 @@ local function progress_callback(_, _, params, client_id)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
-M['$/progress'] = progress_callback
+M['$/progress'] = progress_handler
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
 M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
