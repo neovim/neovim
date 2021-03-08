@@ -257,6 +257,7 @@ describe('LSP', function()
           eq(0, client.resolved_capabilities().text_document_did_change)
           client.request('shutdown')
           client.notify('exit')
+          client.stop()
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)

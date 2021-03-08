@@ -457,7 +457,7 @@ static int terminal_execute(VimState *state, int key)
     case K_EVENT:
       // We cannot let an event free the terminal yet. It is still needed.
       s->term->refcount++;
-      multiqueue_process_events(main_loop.events);
+      state_handle_k_event();
       s->term->refcount--;
       if (s->term->buf_handle == 0) {
         s->close = true;
