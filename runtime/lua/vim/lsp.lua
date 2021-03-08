@@ -262,6 +262,13 @@ end
 --@param bufnr (Number) Number of the buffer, or 0 for current
 --@param client Client object
 local function text_document_did_open_handler(bufnr, client)
+  local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, false)
+  if allow_incremental_sync then
+    if not client._cached_buffers then
+      client._cached_buffers = {}
+    end
+    client._cached_buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
+  end
   if not client.resolved_capabilities.text_document_open_close then
     return
   end
@@ -808,7 +815,6 @@ end
 --- Notify all attached clients that a buffer has changed.
 local text_document_did_change_handler
 do
-  local encoding_index = { ["utf-8"] = 1; ["utf-16"] = 2; ["utf-32"] = 3; }
   text_document_did_change_handler = function(_, bufnr, changedtick,
       firstline, lastline, new_lastline, old_byte_size, old_utf32_size,
       old_utf16_size)
@@ -827,23 +833,12 @@ do
     util.buf_versions[bufnr] = changedtick
     -- Lazy initialize these because clients may not even need them.
     local incremental_changes = once(function(client)
-      local size_index = encoding_index[client.offset_encoding]
-      local length = select(size_index, old_byte_size, old_utf16_size, old_utf32_size)
-      local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
-
-      -- This is necessary because we are specifying the full line including the
-      -- newline in range. Therefore, we must replace the newline as well.
-      if #lines > 0 then
-       table.insert(lines, '')
-      end
-      return {
-        range = {
-          start = { line = firstline, character = 0 };
-          ["end"] = { line = lastline, character = 0 };
-        };
-        rangeLength = length;
-        text = table.concat(lines, '\n');
-      };
+      local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
+      local startline =  math.min(firstline + 1, math.min(#client._cached_buffers[bufnr], #lines))
+      local endline =  math.min(-(#lines - new_lastline), 0)
+      local incremental_change = vim.lsp.util.compute_diff(client._cached_buffers[bufnr], lines, startline, endline)
+      client._cached_buffers[bufnr] = lines
+      return incremental_change
     end)
     local full_changes = once(function()
       return {
@@ -930,6 +925,9 @@ function lsp.buf_attach_client(bufnr, client_id)
         for_each_buffer_client(bufnr, function(client, _)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
+          end
+          if client._cached_buffers then
+            client._cached_buffers[bufnr] = nil
           end
         end)
         util.buf_versions[bufnr] = nil

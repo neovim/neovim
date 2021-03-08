@@ -400,6 +400,20 @@ function vim.tbl_count(t)
   return count
 end
 
+--- Creates a copy of a table containing only elements from start to end (inclusive)
+---
+--@param list table table
+--@param start integer Start range of slice
+--@param finish integer End range of slice
+--@returns Copy of table sliced from start to finish (inclusive)
+function vim.list_slice(list, start, finish)
+  local new_list = {}
+  for i = start or 1, finish or #list do
+    new_list[#new_list+1] = list[i]
+  end
+  return new_list
+end
+
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
 --@see https://www.lua.org/pil/20.2.html
