@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Update: 2018 Jun 3
+" Last Update: 2021 Mar 9
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -653,8 +653,8 @@ func s:InstallCommands()
   command Source call s:GotoSourcewinOrCreateIt()
   command Winbar call s:InstallWinbar()
 
-  " TODO: can the K mapping be restored?
   if !exists('g:termdebug_map_K') || g:termdebug_map_K
+    let s:k_map_saved = maparg('K', 'n', 0, 1)
     nnoremap K :Evaluate<CR>
   endif
 
@@ -693,8 +693,9 @@ func s:DeleteCommands()
   delcommand Source
   delcommand Winbar
 
-  if !exists('g:termdebug_map_K') || g:termdebug_map_K
-    nunmap K
+  if exists('s:k_map_saved')
+    call mapset('n', 0, s:k_map_saved)
+    unlet s:k_map_saved
   endif
 
   exe 'sign unplace ' . s:pc_id
