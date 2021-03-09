@@ -298,7 +298,7 @@ breakpoint, or use the "Clear breakpoint" right-click menu entry.
 Inspecting variables ~
 					*termdebug-variables* *:Evaluate*
  `:Evaluate`	    evaluate the expression under the cursor
- `K`		    same
+ `K`		    same (see |termdebug_map_K| to disable)
  `:Evaluate` {expr}   evaluate {expr}
  `:'<,'>Evaluate`     evaluate the Visually selected text
 
@@ -329,6 +329,10 @@ This works slightly differently:
 						*termdebug_use_prompt*
 Prompt mode can be used even when the |+terminal| feature is present with: >
 	let g:termdebug_use_prompt = 1
+<
+						*termdebug_map_K*
+The K key is normally mapped to :Evaluate. If you do not want this use: >
+	let g:termdebug_map_K = 0
 
 
 Communication ~
