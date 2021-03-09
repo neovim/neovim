@@ -716,8 +716,8 @@ describe('lua stdlib', function()
   end)
 
   it('vim.fn should error when calling API function', function()
-      eq({false, 'vim.lua:259: Tried to call API function with vim.fn: use vim.api.nvim_get_current_line instead'},
-          exec_lua([[return {pcall(vim.fn.nvim_get_current_line)}]]))
+      eq('Error executing lua: vim.lua:0: Tried to call API function with vim.fn: use vim.api.nvim_get_current_line instead',
+          pcall_err(exec_lua, "vim.fn.nvim_get_current_line()"))
   end)
 
   it('vim.rpcrequest and vim.rpcnotify', function()
