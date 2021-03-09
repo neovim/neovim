@@ -2656,7 +2656,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // already be in use.
           xfree(p_extra_free);
           p_extra_free = xmalloc(MAX_MCO * fdc + 1);
-          n_extra = fill_foldcolumn(p_extra_free, wp, foldinfo, lnum);
+          n_extra = (int)fill_foldcolumn(p_extra_free, wp, foldinfo, lnum);
           p_extra_free[n_extra] = NUL;
           p_extra = p_extra_free;
           c_extra = NUL;
