@@ -1032,8 +1032,11 @@ function M.fancy_floating_markdown(contents, opts)
   -- This is because the syntax command doesn't accept a target.
   local cwin = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(winnr)
+  api.nvim_win_set_option(winnr, 'conceallevel', 2)
+  api.nvim_win_set_option(winnr, 'concealcursor', 'n')
 
-  vim.cmd("ownsyntax markdown")
+  vim.cmd("ownsyntax lsp_markdown")
+  vim.cmd("set filetype=lsp_markdown")
   local idx = 1
   --@private
   local function apply_syntax_to_region(ft, start, finish)
