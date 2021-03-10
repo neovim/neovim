@@ -492,6 +492,30 @@ Dictionary nvim_win_get_config(Window window, Error *err)
   return rv;
 }
 
+/// Hides the window (like |:hide| with a |window-ID|).
+///
+/// @param window   Window handle, or 0 for current window
+/// @param[out] err Error details, if any
+void nvim_win_hide(Window window, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_CHECK_TEXTLOCK
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return;
+  }
+
+  tabpage_T *tabpage = win_find_tabpage(win);
+  TryState tstate;
+  try_enter(&tstate);
+  if (tabpage == curtab) {
+    win_close(win, false);
+  } else {
+    win_close_othertab(win, false, tabpage);
+  }
+  vim_ignored = try_leave(&tstate, err);
+}
+
 /// Closes the window (like |:close| with a |window-ID|).
 ///
 /// @param window   Window handle, or 0 for current window
