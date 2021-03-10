@@ -804,19 +804,72 @@ local function once(fn)
 end
 
 --@private
+--- converts retrieves buffer text based on row and column range
+---
+--@param bufnr integer Buffer handle
+--@param range table table containing start_row, start_column, new_end_row, and new_end_column from on_bytes callback
+--@returns string text from buffer
+local function buf_range_to_text(bufnr, range)
+  -- Any deletion operation should send { text = "" }
+  if range.new_end_byte_length < range.old_end_byte_length then
+    return ""
+  end
+
+  local original_lines = vim.api.nvim_buf_get_lines(
+    bufnr, range.start_row, range.start_row + range.new_end_row + 1 , false
+  )
+
+  local lines = {}
+  for idx = 1, range.new_end_row do
+    table.insert(lines, original_lines[idx])
+  end
+
+  vim.notify(vim.inspect(lines))
+  lines[#lines] =  lines[#lines] ..'\n'
+
+  if not (range.start_column == 0 and range.new_end_column ==0) then
+    if #lines > 1 then
+        lines[1] = lines[1]:sub(range.start_column + 1)
+        lines[#lines] = lines[#lines]:sub(1, range.new_end_column)
+    else
+          lines[1] = lines[1]:sub(range.start_column + 1, range.new_end_column + range.start_column)
+    end
+  end
+
+  return table.concat(lines, '\n')
+end
+
+--@private
 --@fn text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
 --- Notify all attached clients that a buffer has changed.
 local text_document_did_change_handler
 do
-  local encoding_index = { ["utf-8"] = 1; ["utf-16"] = 2; ["utf-32"] = 3; }
-  text_document_did_change_handler = function(_, bufnr, changedtick,
-      firstline, lastline, new_lastline, old_byte_size, old_utf32_size,
-      old_utf16_size)
+  -- on_bytes handler.
+  -- See nvim_buf_attach() -> on_bytes
+  text_document_did_change_handler = function(
+      _, bufnr, changedtick,
+      start_row, start_column, byte_offset,
+      old_end_row, old_end_column, old_end_byte_length,
+      new_end_row, new_end_column, new_end_byte_length)
+
+    -- TODO: New logging
 
     local _ = log.debug() and log.debug(
-      string.format("on_lines bufnr: %s, changedtick: %s, firstline: %s, lastline: %s, new_lastline: %s, old_byte_size: %s, old_utf32_size: %s, old_utf16_size: %s",
-      bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size),
-      nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+      string.format("on_bytes bufnr: %s, changedtick: %s, start_row: %s, " ..
+                    "start_column: %s, byte_offset: %s, old_end_row: %s, " ..
+                    "old_end_column: %s, old_end_byte_length: %s, " ..
+                    "new_end_row: %s, new_end_column: %s, new_end_byte_length: %s",
+                    bufnr, changedtick, start_row, start_column, byte_offset,
+                    old_end_row, old_end_column, old_end_byte_length, new_end_row,
+                    new_end_column, new_end_byte_length),
+      buf_range_to_text(bufnr, {
+          start_row = start_row,
+          start_column = start_column,
+          new_end_row=new_end_row,
+          new_end_column = new_end_column,
+          new_end_byte_length = new_end_byte_length,
+          old_end_byte_length = old_end_byte_length,
+          })
     )
 
     -- Don't do anything if there are no clients attached.
@@ -824,57 +877,85 @@ do
       return
     end
 
-    util.buf_versions[bufnr] = changedtick
-    -- Lazy initialize these because clients may not even need them.
-    local incremental_changes = once(function(client)
-      local size_index = encoding_index[client.offset_encoding]
-      local length = select(size_index, old_byte_size, old_utf16_size, old_utf32_size)
-      local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+    local incremental_changes = once(function(_client)
+      local text = buf_range_to_text(bufnr, {
+                      start_row = start_row,
+                      start_column = start_column,
+                      new_end_row=new_end_row,
+                      new_end_column = new_end_column,
+                      new_end_byte_length = new_end_byte_length,
+                      old_end_byte_length = old_end_byte_length,
+                      })
 
-      -- This is necessary because we are specifying the full line including the
-      -- newline in range. Therefore, we must replace the newline as well.
-      if #lines > 0 then
-       table.insert(lines, '')
+      local range_end_column
+      local range_start_column
+      if old_end_column > new_end_column then
+        range_start_column = start_column + new_end_column
+        range_end_column = start_column + old_end_column
+      else
+        range_start_column = start_column
+        range_end_column = start_column + old_end_column
       end
+
+      vim.notify(vim.inspect({
+          text=text;
+          range = {
+            start = { line = start_row, character = range_start_column  };
+            ["end"] = { line = start_row + old_end_row, character = range_end_column};
+          };
+          lines = vim.api.nvim_buf_get_lines(bufnr, start_row, start_row + new_end_row + 1, false);
+          start_row=start_row;
+          start_column=start_column;
+          byte_offset=byte_offset;
+          old_end_row=old_end_row;
+          old_end_column=old_end_column;
+          old_end_byte_length=old_end_byte_length;
+          new_end_row=new_end_row;
+          new_end_column=new_end_column;
+          new_end_byte_length=new_end_byte_length;
+        }))
+
       return {
         range = {
-          start = { line = firstline, character = 0 };
-          ["end"] = { line = lastline, character = 0 };
+          start = { line = start_row, character = range_start_column  };
+          ["end"] = { line = start_row + old_end_row, character = range_end_column };
         };
-        rangeLength = length;
-        text = table.concat(lines, '\n');
+        text = text;
       };
     end)
-    local full_changes = once(function()
+
+    local full_changes = once(function(_)
       return {
         text = buf_get_full_text(bufnr);
       };
     end)
+
+    util.buf_versions[bufnr] = changedtick
+
     local uri = vim.uri_from_bufnr(bufnr)
     for_each_buffer_client(bufnr, function(client, _client_id)
-      local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, false)
-
       local text_document_did_change = client.resolved_capabilities.text_document_did_change
-      local changes
       if text_document_did_change == protocol.TextDocumentSyncKind.None then
         return
-      --[=[ TODO(ashkan) there seem to be problems with the byte_sizes sent by
-      -- neovim right now so only send the full content for now. In general, we
-      -- can assume that servers *will* support both versions anyway, as there
-      -- is no way to specify the sync capability by the client.
-      -- See https://github.com/palantir/python-language-server/commit/cfd6675bc10d5e8dbc50fc50f90e4a37b7178821#diff-f68667852a14e9f761f6ebf07ba02fc8 for an example of pyls handling both.
-      --]=]
-      elseif not allow_incremental_sync or text_document_did_change == protocol.TextDocumentSyncKind.Full then
-        changes = full_changes(client)
-      elseif text_document_did_change == protocol.TextDocumentSyncKind.Incremental then
-        changes = incremental_changes(client)
       end
+
+      local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, false)
+
+      local calculate_changes
+      if not allow_incremental_sync or text_document_did_change == protocol.TextDocumentSyncKind.Full then
+        calculate_changes = full_changes
+      elseif text_document_did_change == protocol.TextDocumentSyncKind.Incremental then
+        calculate_changes = incremental_changes
+      else
+        vim.notify("Unsupported synchronization method for client.", vim.log.levels.ERROR)
+      end
+
       client.notify("textDocument/didChange", {
         textDocument = {
           uri = uri;
           version = changedtick;
         };
-        contentChanges = { changes; }
+        contentChanges = { calculate_changes(client); }
       })
     end)
   end
@@ -924,7 +1005,7 @@ function lsp.buf_attach_client(bufnr, client_id)
     nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)", bufnr))
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
-      on_lines = text_document_did_change_handler;
+      on_bytes = text_document_did_change_handler;
       on_detach = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
