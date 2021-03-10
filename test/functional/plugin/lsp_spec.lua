@@ -27,10 +27,10 @@ teardown(function()
   os.remove(fake_lsp_logfile)
 end)
 
-local function fake_lsp_server_setup(test_name, timeout_ms)
+local function fake_lsp_server_setup(test_name, timeout_ms, options)
   exec_lua([=[
     lsp = require('vim.lsp')
-    local test_name, fixture_filename, logfile, timeout = ...
+    local test_name, fixture_filename, logfile, timeout, options = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
       cmd_env = {
         NVIM_LOG_FILE = logfile;
@@ -52,18 +52,19 @@ local function fake_lsp_server_setup(test_name, timeout_ms)
       on_init = function(client, result)
         TEST_RPC_CLIENT = client
         vim.rpcrequest(1, "init", result)
+        client.config.flags.allow_incremental_sync = options.allow_incremental_sync or false
       end;
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
       end;
     }
-  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3)
+  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3, options or {})
 end
 
 local function test_rpc_server(config)
   if config.test_name then
     clear()
-    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3)
+    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options)
   end
   local client = setmetatable({}, {
     __index = function(_, name)
@@ -681,8 +682,7 @@ describe('LSP', function()
       }
     end)
 
-    -- TODO(askhan) we don't support full for now, so we can disable these tests.
-    pending('should check the body and didChange incremental', function()
+    it('should check the body and didChange incremental', function()
       local expected_callbacks = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
@@ -691,6 +691,7 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "basic_check_buffer_open_and_change_incremental";
+        options = { allow_incremental_sync = true };
         on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
@@ -717,7 +718,7 @@ describe('LSP', function()
           if method == 'start' then
             exec_lua [[
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
-                "boop";
+                "123boop";
               })
             ]]
             client.notify('finish')

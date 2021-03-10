@@ -751,8 +751,8 @@ start_client({config})                                *vim.lsp.start_client()*
                 table.
 >
 
-    -- In attach function for the client, you can do:
-    local custom_attach = function(client)
+    -- In init function for the client, you can do:
+    local custom_init = function(client)
       if client.config.flags then
         client.config.flags.allow_incremental_sync = true
       end
