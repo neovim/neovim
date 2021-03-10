@@ -1430,6 +1430,18 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///                 - "eol": right after eol character (default)
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
+///               - virt_text_hide : hide the virtual text when the background
+///                                  text is selected or hidden due to
+///                                  horizontal scroll 'nowrap'
+///               - hl_mode : control how highlights are combined with the
+///                           highlights of the text. Currently only affects
+///                           virt_text highlights, but might affect `hl_group`
+///                           in later versions.
+///                 - "replace": only show the virt_text color. This is the
+///                              default
+///                 - "combine": combine with background text color
+///                 - "blend": blend with background text color.
+///
 ///               - ephemeral : for use with |nvim_set_decoration_provider|
 ///                   callbacks. The mark will only be used for the current
 ///                   redraw cycle, and not be permantently stored in the
@@ -1477,11 +1489,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   bool ephemeral = false;
 
   uint64_t id = 0;
-  int line2 = -1, hl_id = 0;
-  DecorPriority priority = DECOR_PRIORITY_BASE;
+  int line2 = -1;
+  Decoration decor = DECORATION_INIT;
   colnr_T col2 = -1;
-  VirtText virt_text = KV_INITIAL_VALUE;
-  VirtTextPos virt_text_pos = kVTEndOfLine;
+
   bool right_gravity = true;
   bool end_right_gravity = false;
   bool end_gravity_set = false;
@@ -1528,12 +1539,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       switch (v->type) {
         case kObjectTypeString:
           hl_group = v->data.string;
-          hl_id = syn_check_group(
+          decor.hl_id = syn_check_group(
               (char_u *)(hl_group.data),
               (int)hl_group.size);
           break;
         case kObjectTypeInteger:
-          hl_id = (int)v->data.integer;
+          decor.hl_id = (int)v->data.integer;
           break;
         default:
           api_set_error(err, kErrorTypeValidation,
@@ -1546,7 +1557,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
                       "virt_text is not an Array");
         goto error;
       }
-      virt_text = parse_virt_text(v->data.array, err);
+      decor.virt_text = parse_virt_text(v->data.array, err);
       if (ERROR_SET(err)) {
         goto error;
       }
@@ -1558,9 +1569,33 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       }
       String str = v->data.string;
       if (strequal("eol", str.data)) {
-        virt_text_pos = kVTEndOfLine;
+        decor.virt_text_pos = kVTEndOfLine;
       } else if (strequal("overlay", str.data)) {
-        virt_text_pos = kVTOverlay;
+        decor.virt_text_pos = kVTOverlay;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_pos: invalid value");
+        goto error;
+      }
+    } else if (strequal("virt_text_hide", k.data)) {
+      decor.virt_text_hide = api_object_to_bool(*v,
+                                                "virt_text_hide", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
+    } else if (strequal("hl_mode", k.data)) {
+      if (v->type != kObjectTypeString) {
+        api_set_error(err, kErrorTypeValidation,
+                      "hl_mode is not a String");
+        goto error;
+      }
+      String str = v->data.string;
+      if (strequal("replace", str.data)) {
+        decor.hl_mode = kHlModeReplace;
+      } else if (strequal("combine", str.data)) {
+        decor.hl_mode = kHlModeCombine;
+      } else if (strequal("blend", str.data)) {
+        decor.hl_mode = kHlModeBlend;
       } else {
         api_set_error(err, kErrorTypeValidation,
                       "virt_text_pos: invalid value");
@@ -1583,7 +1618,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
                       "priority is not a valid value");
         goto error;
       }
-      priority = (DecorPriority)v->data.integer;
+      decor.priority = (DecorPriority)v->data.integer;
     } else if (strequal("right_gravity", k.data)) {
       if (v->type != kObjectTypeBoolean) {
         api_set_error(err, kErrorTypeValidation,
@@ -1631,23 +1666,23 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     col2 = 0;
   }
 
-  Decoration *decor = NULL, tmp = { 0 };
+  Decoration *d = NULL;
 
-  if (kv_size(virt_text) || priority != DECOR_PRIORITY_BASE) {
+  if (ephemeral) {
+    d = &decor;
+  } else if (kv_size(decor.virt_text)
+             || decor.priority != DECOR_PRIORITY_BASE) {
     // TODO(bfredl): this is a bit sketchy. eventually we should
     // have predefined decorations for both marks/ephemerals
-    decor = ephemeral ? &tmp : xcalloc(1, sizeof(*decor));
-    decor->hl_id = hl_id;
-    decor->virt_text = virt_text;
-    decor->priority = priority;
-    decor->virt_text_pos = virt_text_pos;
-  } else if (hl_id) {
-    decor = decor_hl(hl_id);
+    d = xcalloc(1, sizeof(*d));
+    *d = decor;
+  } else if (decor.hl_id) {
+    d = decor_hl(decor.hl_id);
   }
 
   // TODO(bfredl): synergize these two branches even more
   if (ephemeral && decor_state.buf == buf) {
-    decor_add_ephemeral((int)line, (int)col, line2, col2, decor, 0);
+    decor_add_ephemeral((int)line, (int)col, line2, col2, &decor, 0);
   } else {
     if (ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
@@ -1655,14 +1690,14 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     }
 
     id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
-                     line2, col2, decor, right_gravity,
+                     line2, col2, d, right_gravity,
                      end_right_gravity, kExtmarkNoUndo);
   }
 
   return (Integer)id;
 
 error:
-  clear_virttext(&virt_text);
+  clear_virttext(&decor.virt_text);
   return 0;
 }
 

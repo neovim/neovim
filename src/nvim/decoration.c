@@ -230,7 +230,7 @@ static void decor_add(DecorState *state, int start_row, int start_col,
   HlRange range = { start_row, start_col, end_row, end_col,
                     attr_id, MAX(priority, decor->priority),
                     kv_size(decor->virt_text) ? &decor->virt_text : NULL,
-                    decor->virt_text_pos,
+                    decor->virt_text_pos, decor->virt_text_hide, decor->hl_mode,
                     kv_size(decor->virt_text) && owned, -1 };
 
   kv_pushp(state->active);
@@ -245,7 +245,8 @@ static void decor_add(DecorState *state, int start_row, int start_col,
   kv_A(state->active, index) = range;
 }
 
-int decor_redraw_col(buf_T *buf, int col, int virt_col, DecorState *state)
+int decor_redraw_col(buf_T *buf, int col, int virt_col, bool hidden,
+                     DecorState *state)
 {
   if (col <= state->col_until) {
     return state->current;
@@ -324,7 +325,7 @@ next_mark:
     }
     if ((item.start_row == state->row && item.start_col <= col)
         && item.virt_text && item.virt_col == -1) {
-      item.virt_col = virt_col;
+      item.virt_col = (item.virt_text_hide && hidden) ? -2 : virt_col;
     }
     if (keep) {
       kv_A(state->active, j++) = item;
@@ -345,7 +346,7 @@ void decor_redraw_end(DecorState *state)
 
 VirtText *decor_redraw_virt_text(buf_T *buf, DecorState *state)
 {
-  decor_redraw_col(buf, MAXCOL, MAXCOL, state);
+  decor_redraw_col(buf, MAXCOL, MAXCOL, false, state);
   for (size_t i = 0; i < kv_size(state->active); i++) {
     HlRange item = kv_A(state->active, i);
     if (item.start_row == state->row && item.virt_text

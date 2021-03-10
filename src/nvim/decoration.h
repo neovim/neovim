@@ -23,15 +23,26 @@ typedef enum {
   kVTOverlay,
 } VirtTextPos;
 
+typedef enum {
+  kHlModeUnknown,
+  kHlModeReplace,
+  kHlModeCombine,
+  kHlModeBlend,
+} HlMode;
+
 struct Decoration
 {
   int hl_id;  // highlight group
   VirtText virt_text;
   VirtTextPos virt_text_pos;
+  bool virt_text_hide;
+  HlMode hl_mode;
   // TODO(bfredl): style, signs, etc
   DecorPriority priority;
   bool shared;  // shared decoration, don't free
 };
+#define DECORATION_INIT { 0, KV_INITIAL_VALUE, kVTEndOfLine, false, \
+                          kHlModeUnknown, DECOR_PRIORITY_BASE, false }
 
 typedef struct {
   int start_row;
@@ -39,9 +50,13 @@ typedef struct {
   int end_row;
   int end_col;
   int attr_id;
+  // TODO(bfredl): embed decoration instead, perhaps using an arena
+  // for ephemerals?
   DecorPriority priority;
   VirtText *virt_text;
   VirtTextPos virt_text_pos;
+  bool virt_text_hide;
+  HlMode hl_mode;
   bool virt_text_owned;
   int virt_col;
 } HlRange;
