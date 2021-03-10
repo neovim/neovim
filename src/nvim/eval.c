@@ -5280,14 +5280,10 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
         if (ht_stack == NULL) {
           abort = set_ref_in_ht(&dd->dv_hashtab, copyID, list_stack);
         } else {
-          ht_stack_T *newitem = try_malloc(sizeof(ht_stack_T));
-          if (newitem == NULL) {
-            abort = true;
-          } else {
-            newitem->ht = &dd->dv_hashtab;
-            newitem->prev = *ht_stack;
-            *ht_stack = newitem;
-          }
+          ht_stack_T *const newitem = xmalloc(sizeof(ht_stack_T));
+          newitem->ht = &dd->dv_hashtab;
+          newitem->prev = *ht_stack;
+          *ht_stack = newitem;
         }
 
         QUEUE *w = NULL;
@@ -5308,14 +5304,10 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
         if (list_stack == NULL) {
           abort = set_ref_in_list(ll, copyID, ht_stack);
         } else {
-          list_stack_T *newitem = try_malloc(sizeof(list_stack_T));
-          if (newitem == NULL) {
-            abort = true;
-          } else {
-            newitem->list = ll;
-            newitem->prev = *list_stack;
-            *list_stack = newitem;
-          }
+          list_stack_T *const newitem = xmalloc(sizeof(list_stack_T));
+          newitem->list = ll;
+          newitem->prev = *list_stack;
+          *list_stack = newitem;
         }
       }
       break;
