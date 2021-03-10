@@ -799,6 +799,8 @@ start_client({config})                                *vim.lsp.start_client()*
                                        See `initialize` in the LSP spec.
                     {name}             (string, default=client-id) Name in log
                                        messages.
+                    {get_language_id}  function(bufnr, filetype) -> language
+                                       ID as string. Defaults to the filetype.
                     {offset_encoding}  (default="utf-16") One of "utf-8",
                                        "utf-16", or "utf-32" which is the
                                        encoding that the LSP server expects.
