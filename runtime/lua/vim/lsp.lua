@@ -228,6 +228,7 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
     flags           = { config.flags, "t", true };
+    get_language_id = { config.get_language_id, "f", true };
   }
 
   local cmd, cmd_args = lsp._cmd_parts(config.cmd)
@@ -269,12 +270,12 @@ local function text_document_did_open_handler(bufnr, client)
     return
   end
   local filetype = nvim_buf_get_option(bufnr, 'filetype')
-  local languageId = client.config.language_id and client.config.language_id(bufnr, filetype) or filetype
+
   local params = {
     textDocument = {
       version = 0;
       uri = vim.uri_from_bufnr(bufnr);
-      languageId = languageId;
+      languageId = client.config.get_language_id(bufnr, filetype);
       text = buf_get_full_text(bufnr);
     }
   }
@@ -401,6 +402,9 @@ end
 ---
 --@param name (string, default=client-id) Name in log messages.
 ---
+--@param get_language_id function(bufnr, filetype) -> language ID as string.
+--- Defaults to the filetype.
+---
 --@param offset_encoding (default="utf-16") One of "utf-8", "utf-16",
 --- or "utf-32" which is the encoding that the LSP server expects. Client does
 --- not verify this is correct.
@@ -459,6 +463,11 @@ function lsp.start_client(config)
 
   config.flags = config.flags or {}
   config.settings = config.settings or {}
+
+  -- By default, get_language_id just returns the exact filetype it is passed.
+  --    It is possible to pass in something that will calculate a different filetype,
+  --    to be sent by the client.
+  config.get_language_id = config.get_language_id or function(_, filetype) return filetype end
 
   local client_id = next_client_id()
 
