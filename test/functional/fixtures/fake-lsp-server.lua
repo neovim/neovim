@@ -154,6 +154,7 @@ function tests.capabilities_for_client_supports_method()
           hoverProvider = true;
           definitionProvider = false;
           referencesProvider = false;
+          codeLensProvider = { resolveProvider = true; };
         }
       }
     end;

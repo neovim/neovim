@@ -336,6 +336,8 @@ describe('LSP', function()
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
           eq(full_kind, client.resolved_capabilities().text_document_did_change)
           eq(true, client.resolved_capabilities().text_document_save)
+          eq(false, client.resolved_capabilities().code_lens)
+          eq(false, client.resolved_capabilities().code_lens_resolve)
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)
@@ -361,6 +363,8 @@ describe('LSP', function()
           eq(true, client.resolved_capabilities().hover)
           eq(false, client.resolved_capabilities().goto_definition)
           eq(false, client.resolved_capabilities().rename)
+          eq(true, client.resolved_capabilities().code_lens)
+          eq(true, client.resolved_capabilities().code_lens_resolve)
 
           -- known methods for resolved capabilities
           eq(true, client.supports_method("textDocument/hover"))
