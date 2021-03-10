@@ -835,7 +835,7 @@ do
     local incremental_changes = once(function(client)
       local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
       local startline =  math.min(firstline + 1, math.min(#client._cached_buffers[bufnr], #lines))
-      local endline =  math.min(-(#lines - new_lastline), 0)
+      local endline =  math.min(-(#lines - new_lastline), -1)
       local incremental_change = vim.lsp.util.compute_diff(client._cached_buffers[bufnr], lines, startline, endline)
       client._cached_buffers[bufnr] = lines
       return incremental_change
