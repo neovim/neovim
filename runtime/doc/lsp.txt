@@ -749,15 +749,6 @@ start_client({config})                                *vim.lsp.start_client()*
 
                 The following parameters describe fields in the {config}
                 table.
->
-
-    -- In init function for the client, you can do:
-    local custom_init = function(client)
-      if client.config.flags then
-        client.config.flags.allow_incremental_sync = true
-      end
-    end
-<
 
                 Parameters: ~
                     {root_dir}         (required, string) Directory where the
@@ -856,8 +847,8 @@ start_client({config})                                *vim.lsp.start_client()*
                     {flags}            A table with flags for the client. The
                                        current (experimental) flags are:
                                        • allow_incremental_sync (bool, default
-                                         false): Allow using on_line callbacks
-                                         for lsp
+                                         true): Allow using incremental sync
+                                         for buffer edits
 
                 Return: ~
                     Client id. |vim.lsp.get_client_by_id()| Note: client may
