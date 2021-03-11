@@ -896,7 +896,7 @@ function lsp.start_client(config)
 
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
-      handler(err, result, {method=method, client_id=client_id, bufnr=bufnr})
+      handler(err, result, {method=method, client_id=client_id, bufnr=bufnr, params=params})
     end)
   end
 

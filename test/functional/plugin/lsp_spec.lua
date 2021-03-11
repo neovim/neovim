@@ -2353,6 +2353,10 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(err, result, ctx)
+          -- Don't compare & assert params, they're not relevant for the testcase
+          -- This allows us to be lazy and avoid declaring them
+          ctx.params = nil
+
           eq(table.remove(test.expected_handlers), {err, result, ctx}, "expected handler")
           if ctx.method == 'start' then
             exec_lua("vim.lsp.buf.rename()")
