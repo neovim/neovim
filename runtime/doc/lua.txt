@@ -1055,6 +1055,18 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 See also: ~
                     |vim.tbl_extend()|
 
+list_slice({list}, {start}, {finish})                       *vim.list_slice()*
+                Creates a copy of a table containing only elements from start
+                to end (inclusive)
+
+                Parameters: ~
+                    {list}    table table
+                    {start}   integer Start range of slice
+                    {finish}  integer End range of slice
+
+                Return: ~
+                    Copy of table sliced from start to finish (inclusive)
+
 pesc({s})                                                         *vim.pesc()*
                 Escapes magic chars in a Lua pattern.
 

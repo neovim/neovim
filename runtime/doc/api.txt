@@ -1415,8 +1415,8 @@ nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
                               • "c" |charwise| mode
                               • "l" |linewise| mode
                               • "" guess by contents, see |setreg()|
-                    {after}   If true insert after cursor (like |p|), or before (like
-                              |P|).
+                    {after}   If true insert after cursor (like |p|), or
+                              before (like |P|).
                     {follow}  If true place cursor at end of inserted text.
 
                                                     *nvim_replace_termcodes()*
@@ -1737,7 +1737,7 @@ nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
 
                                                     *nvim_buf_add_highlight()*
-nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line}, {col_start},
+nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
                        {col_end})
                 Adds a highlight to buffer.
 
@@ -2201,6 +2201,19 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                                 • "overlay": display over the specified
                                   column, without shifting the underlying
                                   text.
+
+                              • virt_text_hide : hide the virtual text when
+                                the background text is selected or hidden due
+                                to horizontal scroll 'nowrap'
+                              • hl_mode : control how highlights are combined
+                                with the highlights of the text. Currently
+                                only affects virt_text highlights, but might
+                                affect`hl_group`in later versions.
+                                • "replace": only show the virt_text color.
+                                  This is the default
+                                • "combine": combine with background text
+                                  color
+                                • "blend": blend with background text color.
 
                               • ephemeral : for use with
                                 |nvim_set_decoration_provider| callbacks. The
