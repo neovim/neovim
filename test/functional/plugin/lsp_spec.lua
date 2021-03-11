@@ -249,7 +249,7 @@ describe('LSP', function()
 
     it('should succeed with manual shutdown', function()
       local expected_callbacks = {
-        {NIL, "shutdown", {}, 1, NIL};
+        {NIL, "shutdown", {}, 1, NIL, NIL, NIL};
         {NIL, "test", {}, 1};
       }
       test_rpc_server {

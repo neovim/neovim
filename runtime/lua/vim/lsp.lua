@@ -710,7 +710,7 @@ function lsp.start_client(config)
     end
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
-      handler(err, method, result, client_id, bufnr)
+      handler(err, method, result, client_id, bufnr, nil, params)
     end)
   end
 
@@ -1274,8 +1274,8 @@ end
 --@param handler (function) See |lsp-handler|
 --@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
-  return function(err, method, params, client_id, bufnr, config)
-    return handler(err, method, params, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config))
+  return function(err, method, result, client_id, bufnr, config, params)
+    return handler(err, method, result, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config), params)
   end
 end
 

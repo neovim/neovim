@@ -403,16 +403,16 @@ end
 
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
-  M[k] = function(err, method, params, client_id, bufnr, config)
+  M[k] = function(err, method, result, client_id, bufnr, config, params)
     local _ = log.debug() and log.debug('default_handler', method, {
-      params = params, client_id = client_id, err = err, bufnr = bufnr, config = config
+      result = result, client_id = client_id, err = err, bufnr = bufnr, config = config, params = params
     })
 
     if err then
       return err_message(tostring(err))
     end
 
-    return fn(err, method, params, client_id, bufnr, config)
+    return fn(err, method, result, client_id, bufnr, config, params)
   end
 end
 

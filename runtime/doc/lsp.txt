@@ -235,6 +235,10 @@ For |lsp-request|, each |lsp-handler| has this signature: >
                             To configure a particular |lsp-handler|, see:
                                 |lsp-handler-configuration|
 
+	    {params}	(Params | nil)
+			    The params sent with the request which triggered
+			    this response.
+
         Returns: ~
             The |lsp-handler| can respond by returning two values: `result, err`
               Where `err` must be shaped like an RPC error:
