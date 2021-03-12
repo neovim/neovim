@@ -10731,7 +10731,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                INTEGER_OBJ(pid), false, false, &err);
   api_clear_error(&err);
 
-  channel_terminal_open(chan);
+  channel_terminal_open(curbuf, chan);
   channel_create_event(chan, NULL);
 }
 

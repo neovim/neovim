@@ -169,19 +169,20 @@ void terminal_teardown(void)
   multiqueue_free(refresh_timer.events);
   time_watcher_close(&refresh_timer, NULL);
   pmap_free(ptr_t)(invalidated_terminals);
+  invalidated_terminals = NULL;
 }
 
 // public API {{{
 
-Terminal *terminal_open(TerminalOptions opts)
+Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
 {
   // Create a new terminal instance and configure it
   Terminal *rv = xcalloc(1, sizeof(Terminal));
   rv->opts = opts;
   rv->cursor.visible = true;
   // Associate the terminal instance with the new buffer
-  rv->buf_handle = curbuf->handle;
-  curbuf->terminal = rv;
+  rv->buf_handle = buf->handle;
+  buf->terminal = rv;
   // Create VTerm
   rv->vt = vterm_new(opts.height, opts.width);
   vterm_set_utf8(rv->vt, 1);
@@ -198,28 +199,36 @@ Terminal *terminal_open(TerminalOptions opts)
   // have as many lines as screen rows when refresh_scrollback is called
   rv->invalid_start = 0;
   rv->invalid_end = opts.height;
-  refresh_screen(rv, curbuf);
+
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, buf);
+
+  refresh_screen(rv, buf);
   set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
-  curbuf->b_p_ma = false;     // 'nomodifiable'
-  curbuf->b_p_ul = -1;        // 'undolevels'
-  curbuf->b_p_scbk =          // 'scrollback' (initialize local from global)
+  buf->b_p_ma = false;     // 'nomodifiable'
+  buf->b_p_ul = -1;        // 'undolevels'
+  buf->b_p_scbk =          // 'scrollback' (initialize local from global)
     (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
-  curbuf->b_p_tw = 0;         // 'textwidth'
+  buf->b_p_tw = 0;         // 'textwidth'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
-  buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
+  if (buf->b_ffname != NULL) {
+    buf_set_term_title(buf, (char *)buf->b_ffname);
+  }
   RESET_BINDING(curwin);
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
-  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
   // Local 'scrollback' _after_ autocmds.
-  curbuf->b_p_scbk = (curbuf->b_p_scbk < 1) ? SB_MAX : curbuf->b_p_scbk;
+  buf->b_p_scbk = (buf->b_p_scbk < 1) ? SB_MAX : buf->b_p_scbk;
+
+  aucmd_restbuf(&aco);
 
   // Configure the scrollback buffer.
-  rv->sb_size = (size_t)curbuf->b_p_scbk;
+  rv->sb_size = (size_t)buf->b_p_scbk;
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   // Configure the color palette. Try to get the color from:
@@ -511,7 +520,9 @@ void terminal_destroy(Terminal *term)
   }
 
   if (!term->refcount) {
-    if (pmap_has(ptr_t)(invalidated_terminals, term)) {
+    // might be destroyed after terminal_teardown is invoked
+    if (invalidated_terminals
+        && pmap_has(ptr_t)(invalidated_terminals, term)) {
       // flush any pending changes to the buffer
       block_autocmds();
       refresh_terminal(term);
@@ -1324,6 +1335,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
 // focused) of a invalidated terminal
 static void refresh_screen(Terminal *term, buf_T *buf)
 {
+  assert(buf == curbuf);  // TODO(bfredl): remove this condition
   int changed = 0;
   int added = 0;
   int height;
