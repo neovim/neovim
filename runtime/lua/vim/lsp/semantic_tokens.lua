@@ -1,4 +1,6 @@
-local M = {}
+local M = {
+  namespace = vim.api.nvim_create_namespace('LspSemanticHighlights')
+}
 
 function M.on_semantic_tokens(...)
   print('on_semantic_tokens', vim.inspect(...))
@@ -22,6 +24,14 @@ local function modifiers_from_number(x, modifiers_table)
   return modifiers
 end
 
+local function create_highlight_name(semantic_token)
+  local name = 'LspSemantic' .. semantic_token.type:sub(1, 1):upper() .. semantic_token.type:sub(2)
+  -- TODO(smolck): How to handle modifiers?
+  -- for _, v in ipairs(semantic_token.modifiers) do
+  -- end
+  return name
+end
+
 local function handle_semantic_tokens_full(client, bufnr, response)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
@@ -42,20 +52,29 @@ local function handle_semantic_tokens_full(client, bufnr, response)
 
     if delta_line == 0 and semantic_tokens[prev_line + 1] then
       table.insert(semantic_tokens[prev_line + 1], #semantic_tokens, {
-        start_char = prev_start,
+        start_col = prev_start,
         length = data[i + 2],
-        token_type = token_type,
-        token_modifiers = modifiers
+        type = token_type,
+        modifiers = modifiers
       })
     else
       semantic_tokens[prev_line + 1] = {
         {
-          start_char = prev_start,
+          start_col = prev_start,
           length = data[i + 2],
-          token_type = token_type,
-          token_modifiers = modifiers
+          type = token_type,
+          modifiers = modifiers
         }
       }
+    end
+  end
+
+  local api = vim.api
+  vim.api.nvim_buf_clear_namespace(bufnr, M.namespace, 0, -1)
+  for line, tokens in pairs(semantic_tokens) do
+    for _, token in ipairs(tokens) do
+      local hl_name = create_highlight_name(token)
+      api.nvim_buf_add_highlight(bufnr, M.namespace, hl_name, line - 1, token.start_col, token.start_col + token.length)
     end
   end
 end
