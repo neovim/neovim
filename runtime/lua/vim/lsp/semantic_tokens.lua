@@ -6,8 +6,8 @@ end
 
 local function modifiers_from_number(x, modifiers_table)
   local function get_bit(n, k)
-    -- (n & ( 1 << k )) >> k
-    return bit.rshift(bit.band(n, (bit.lshift(1, k))), k)
+    -- (n >> k) & 1
+    return bit.band(bit.rshift(n, k), 1)
   end
 
   local modifiers = {}
