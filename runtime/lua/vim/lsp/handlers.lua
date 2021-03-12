@@ -16,6 +16,16 @@ local function err_message(...)
   api.nvim_command('redraw')
 end
 
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_semanticTokens
+M['textDocument/semanticTokens/full'] = function(err, result, ctx, config)
+  return require('vim.lsp.semantic_tokens').on_full(err, result, ctx, config)
+end
+
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
+M['workspace/semanticTokens/refresh'] = function(err, result, ctx, config)
+  return require('vim.lsp.semantic_tokens').on_refresh(err, result, ctx, config)
+end
+
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 M['workspace/executeCommand'] = function(_, _, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file

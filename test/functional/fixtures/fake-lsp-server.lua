@@ -927,6 +927,27 @@ function tests.basic_formatting()
   }
 end
 
+function tests.semantic_tokens_full()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          semanticTokensProvider = {
+            legend = {}
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/semanticTokens/full', function()
+        return nil, { resultId = 1, data = {} }
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
 -- Tests will be indexed by TEST_NAME
 
 local kill_timer = vim.loop.new_timer()

@@ -619,6 +619,55 @@ export interface WorkspaceClientCapabilities {
 function protocol.make_client_capabilities()
   return {
     textDocument = {
+      semanticTokens = {
+        dynamicRegistration = false,
+        tokenTypes = {
+          'namespace',
+          'type',
+          'class',
+          'enum',
+          'interface',
+          'struct',
+          'typeParameter',
+          'parameter',
+          'variable',
+          'property',
+          'enumMember',
+          'event',
+          'function',
+          'method',
+          'macro',
+          'keyword',
+          'modifier',
+          'comment',
+          'string',
+          'number',
+          'regexp',
+          'operator',
+        },
+        tokenModifiers = {
+          'declaration',
+          'definition',
+          'readonly',
+          'static',
+          'deprecated',
+          'abstract',
+          'async',
+          'modification',
+          'documentation',
+          'defaultLibrary',
+        },
+        formats = { 'relative' },
+        requests = {
+          -- TODO(smolck): Add support for this
+          -- range = true;
+          full = { delta = false },
+        },
+
+        overlappingTokenSupport = true,
+        -- TODO(theHamsta): Add support for this
+        multilineTokenSupport = false,
+      },
       synchronization = {
         dynamicRegistration = false,
 
@@ -885,6 +934,7 @@ function protocol._resolve_capabilities_compat(server_capabilities)
     or false
   general_properties.call_hierarchy = server_capabilities.callHierarchyProvider or false
   general_properties.execute_command = server_capabilities.executeCommandProvider ~= nil
+  general_properties.semantic_tokens_full = server_capabilities.semanticTokensProvider ~= nil
 
   if server_capabilities.renameProvider == nil then
     general_properties.rename = false

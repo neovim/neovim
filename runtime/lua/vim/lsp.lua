@@ -57,6 +57,7 @@ lsp._request_name_to_capability = {
   ['textDocument/formatting'] = { 'documentFormattingProvider' },
   ['textDocument/completion'] = { 'completionProvider' },
   ['textDocument/documentHighlight'] = { 'documentHighlightProvider' },
+  ['textDocument/semanticTokens/full'] = { 'semanticTokensProvider' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.

@@ -1283,6 +1283,11 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                     • name (string|nil): Restrict clients used for rename to
                       ones where client.name matches this field.
 
+semantic_tokens_full()                    *vim.lsp.buf.semantic_tokens_full()*
+    Requests semantic tokens from the server. No highlighting is performed.
+    See |vim.lsp.semantic_tokens.on_full()| on how to register callbacks to
+    perform highlighting.
+
 server_ready()                                    *vim.lsp.buf.server_ready()*
     Checks whether the language servers attached to the current buffer are
     ready.
@@ -1400,6 +1405,55 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
         {lenses}     (table) of lenses to store (`CodeLens[] | null`)
         {bufnr}      (number)
         {client_id}  (number)
+
+
+==============================================================================
+Lua module: vim.lsp.semantic_tokens                      *lsp-semantic_tokens*
+
+                                           *vim.lsp.semantic_tokens.on_full()*
+on_full({err}, {response}, {ctx}, {config})
+    |lsp-handler| for the method `textDocument/semanticTokens/full`
+
+    This function can be configured with |vim.lsp.with()| with the following
+    options for `config`
+
+    `on_token`: A function with signature `function(ctx, token)` that is
+    called whenever a semantic token is received from the server from context
+    `ctx` (see |lsp-handler| for the definition of `ctx`). This can be used
+    for highlighting the tokens. `token` is a table:
+>
+    {
+          line             -- line number 0-based
+          start_char       -- start character 0-based (in Unicode characters, not in byte offset as
+                           -- required by most of Neovim's API. Conversion might be needed for further
+                           -- processing!)
+          length           -- length in characters of this token
+          type             -- token type as string (see https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification)
+          modifiers        -- token modifier as string (see https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification)
+          offset_encoding  -- offset encoding used by the language server (see |lsp-sync|)
+    }
+<
+
+    `on_invalidate_range`: A function with signature `function(ctx,
+    line_start, line_end)` called whenever tokens in a specific line range
+    (`line_start`, `line_end`) should be considered invalidated (see
+    |lsp-handler| for the definition of `ctx`). `line_end` can be -1 to
+    indicate invalidation until the end of the buffer.
+
+                                        *vim.lsp.semantic_tokens.on_refresh()*
+on_refresh({err}, {_}, {ctx}, {_})
+    |lsp-handler| for the method `textDocument/semanticTokens/refresh`
+
+refresh({bufnr})                           *vim.lsp.semantic_tokens.refresh()*
+    Refresh the semantic tokens for the current buffer
+
+    It is recommended to trigger this using an autocmd or via keymap.
+>
+    autocmd BufEnter,CursorHold,InsertLeave <buffer> lua require 'vim.lsp.semantic_tokens'.refresh(vim.api.nvim_get_current_buf())
+<
+
+    Parameters: ~
+        {bufnr}  number
 
 
 ==============================================================================

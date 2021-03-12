@@ -28,6 +28,16 @@ local function request(method, params, handler)
   return vim.lsp.buf_request(0, method, params, handler)
 end
 
+--- Requests semantic tokens from the server.
+--- No highlighting is performed. See |vim.lsp.semantic_tokens.on_full()| on how to
+--- register callbacks to perform highlighting.
+---
+function M.semantic_tokens_full()
+  local params = { textDocument = util.make_text_document_params() }
+  require('vim.lsp.semantic_tokens')._save_tick(vim.api.nvim_get_current_buf())
+  return request('textDocument/semanticTokens/full', params)
+end
+
 --- Checks whether the language servers attached to the current buffer are
 --- ready.
 ---
