@@ -1,15 +1,10 @@
 local M = {}
 
--- TODO(smolck): Temporary
-local function prinspect(thing)
-  print('prinspect', vim.inspect(thing))
-end
-
 function M.on_semantic_tokens(...)
-  prinspect(...)
+  print('on_semantic_tokens', vim.inspect(...))
 end
 
-function M.handle_semantic_tokens_full(client, bufnr, response)
+local function handle_semantic_tokens_full(client, bufnr, response)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
@@ -51,14 +46,15 @@ function M.request_tokens_full(client_id, bufnr)
   local params = { textDocument = { uri = uri }; }
   local client = vim.lsp.get_client_by_id(client_id)
 
-  -- TODO(smolck): Not sure what the other params to this are
-  local response = client.request('textDocument/semanticTokens/full', params, function(_, _method, response, _, _)
-    M.handle_semantic_tokens_full(client, bufnr, response)
-  end)
+  -- TODO(smolck): Not sure what the other params to this are/mean
+  local handler = function(_, _, response, _, _)
+    handle_semantic_tokens_full(client, bufnr, response)
+  end
+  return client.request('textDocument/semanticTokens/full', params, handler)
 end
 
 function M.on_refresh()
-  print('unimplemented')
+  -- TODO(smolck): Unimplemented
 end
 
 return M
