@@ -6,6 +6,7 @@ end
 
 local function modifiers_from_number(x, modifiers_table)
   local function get_bit(n, k)
+    -- Based on/from https://stackoverflow.com/a/26230537
     -- (n >> k) & 1
     return bit.band(bit.rshift(n, k), 1)
   end
