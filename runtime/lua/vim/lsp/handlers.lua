@@ -4,6 +4,7 @@ local util = require 'vim.lsp.util'
 local vim = vim
 local api = vim.api
 local buf = require 'vim.lsp.buf'
+local semantic_tokens = require 'vim.lsp.semantic_tokens'
 
 local M = {}
 
@@ -15,6 +16,10 @@ local M = {}
 local function err_message(...)
   vim.notify(table.concat(vim.tbl_flatten{...}), vim.log.levels.ERROR)
   api.nvim_command("redraw")
+end
+
+M['workspace/semanticTokens/refresh'] = function()
+  return semantic_tokens.on_refresh()
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
