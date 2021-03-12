@@ -230,6 +230,13 @@ func Test_set_completion()
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
   set tags&
+
+  " Expand values for 'filetype'
+  call feedkeys(":set filetype=sshdconfi\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set filetype=sshdconfig', @:)
+  call feedkeys(":set filetype=a\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal('"set filetype=' .. getcompletion('a*', 'filetype')->join(), @:)
+  call assert_equal('"set filetype=' .. join(getcompletion('a*', 'filetype')), @:)
 endfunc
 
 func Test_set_errors()
