@@ -1330,6 +1330,9 @@ au BufNewFile,BufRead *.pml			setf promela
 au BufNewFile,BufRead *.proto			setf proto
 au BufNewFile,BufRead *.pbtxt			setf pbtxt
 
+" Poke
+au BufNewFile,BufRead *.pk      		setf poke
+
 " Protocols
 au BufNewFile,BufRead */etc/protocols		setf protocols
 
