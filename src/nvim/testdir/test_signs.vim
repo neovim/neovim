@@ -460,11 +460,11 @@ func Test_sign_funcs()
   call assert_fails('call sign_place(5, "", "sign1", [], {"lnum" : 10})',
 	      \ 'E158:')
   call assert_fails('call sign_place(21, "", "sign1", "Xsign",
-	      \ {"lnum" : -1})', 'E885:')
+	      \ {"lnum" : -1})', 'E474:')
   call assert_fails('call sign_place(22, "", "sign1", "Xsign",
-	      \ {"lnum" : 0})', 'E885:')
+	      \ {"lnum" : 0})', 'E474:')
   call assert_fails('call sign_place(22, "", "sign1", "Xsign",
-	      \ {"lnum" : []})', 'E745:')
+	      \ {"lnum" : []})', 'E474:')
   call assert_equal(-1, sign_place(1, "*", "sign1", "Xsign", {"lnum" : 10}))
 
   " Tests for sign_getplaced()
@@ -1944,6 +1944,14 @@ func Test_sign_funcs_multi()
 	      \ {'id' : 5, 'name' : 'sign1', 'buffer' : 'Xsign'}]))
   let s = sign_getplaced('Xsign', {'id' : 5, 'group' : ''})
   call assert_equal([{'id' : 5, 'name' : 'sign1', 'lnum' : 11,
+	      \ 'group' : '', 'priority' : 10}], s[0].signs)
+
+  " Place a sign using '.' as the line number
+  call cursor(23, 1)
+  call assert_equal([7], sign_placelist([
+	      \ {'id' : 7, 'name' : 'sign1', 'buffer' : '%', 'lnum' : '.'}]))
+  let s = sign_getplaced('%', {'lnum' : '.'})
+  call assert_equal([{'id' : 7, 'name' : 'sign1', 'lnum' : 23,
 	      \ 'group' : '', 'priority' : 10}], s[0].signs)
 
   " Place sign without a sign name

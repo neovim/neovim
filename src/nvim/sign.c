@@ -2033,8 +2033,9 @@ int sign_place_from_dict(
   // line number of the sign
   di = tv_dict_find(dict, "lnum", -1);
   if (di != NULL) {
-    lnum = (int)tv_get_number_chk(&di->di_tv, &notanum);
-    if (notanum) {
+    lnum = tv_get_lnum(&di->di_tv);
+    if (lnum <= 0) {
+      EMSG(_(e_invarg));
       goto cleanup;
     }
   }
