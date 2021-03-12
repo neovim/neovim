@@ -4,6 +4,23 @@ function M.on_semantic_tokens(...)
   print('on_semantic_tokens', vim.inspect(...))
 end
 
+local function modifiers_from_number(x, modifiers_table)
+  local function get_bit(n, k)
+    -- (n & ( 1 << k )) >> k
+    return bit.rshift(bit.band(n, (bit.lshift(1, k))), k)
+  end
+
+  local modifiers = {}
+  for i = 0, #modifiers_table - 1 do
+    local bit = get_bit(x, i)
+    if bit == 1 then
+      table.insert(modifiers, 1, modifiers_table[i + 1])
+    end
+  end
+
+  return modifiers
+end
+
 local function handle_semantic_tokens_full(client, bufnr, response)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
@@ -20,14 +37,14 @@ local function handle_semantic_tokens_full(client, bufnr, response)
 
     -- data[i+3] +1 because Lua tables are 1-indexed
     local token_type = token_types[data[i + 3] + 1]
-    print(token_type)
+    local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
 
     if delta_line == 0 and semantic_tokens[prev_line + 1] then
       table.insert(semantic_tokens[prev_line + 1], #semantic_tokens, {
         start_char = prev_start,
         length = data[i + 2],
         token_type = token_type,
-        -- token_modifiers = 
+        token_modifiers = modifiers
       })
     else
       semantic_tokens[prev_line + 1] = {
@@ -35,6 +52,7 @@ local function handle_semantic_tokens_full(client, bufnr, response)
           start_char = prev_start,
           length = data[i + 2],
           token_type = token_type,
+          token_modifiers = modifiers
         }
       }
     end
