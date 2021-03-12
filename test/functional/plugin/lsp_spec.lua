@@ -2068,4 +2068,29 @@ describe('LSP', function()
       eq(expected, qflist)
     end)
   end)
+
+  describe('vim.lsp.buf.code_action', function()
+    it('Calls client side command if available', function()
+      eq(1, exec_lua [[
+        local dummy_calls = 0
+        vim.lsp.commands.dummy = function()
+          dummy_calls = dummy_calls + 1
+        end
+        local actions = {
+          {
+            title = 'Dummy command',
+            command = 'dummy',
+          },
+        }
+        -- inputlist would require input and block the test;
+        vim.fn.inputlist = function()
+          return 1
+        end
+        local params = {}
+        local handler = require'vim.lsp.handlers'['textDocument/codeAction']
+        handler(nil, 'textDocument/codeAction', actions, nil, nil, nil, params)
+        return dummy_calls
+      ]])
+    end)
+  end)
 end)

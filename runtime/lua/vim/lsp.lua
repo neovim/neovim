@@ -1535,5 +1535,29 @@ end
 -- Define the LspDiagnostics signs if they're not defined already.
 require('vim.lsp.diagnostic')._define_default_signs_and_highlights()
 
+
+--- Registry for client side code action commands.
+---
+--- This is an extension point for plugins to handle custom commands which are
+--- not part of the core language server protocol specification.
+---
+--- The codeAction response contains commands which are either executed with a
+--- function from this registry, or via `vim.lsp.buf.execute_command` if there is
+--- no entry for a given command.
+---
+--- This is a table where the key must be a command name and the value must be
+--- function with two arguments.
+---
+--- The first argument to the function will be the `Command`:
+--    Command
+--      title: String
+--      command: String
+--      arguments?: any[]
+--
+--- The second argument are the params which were sent as payload with the
+--- original codeAction request.
+lsp.commands = {}
+
+
 return lsp
 -- vim:sw=2 ts=2 et
