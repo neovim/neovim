@@ -110,7 +110,7 @@ M['client/registerCapability'] = function(_, _, ctx)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
-M['textDocument/codeAction'] = function(_, result)
+M['textDocument/codeAction'] = function(_, result, ctx)
   if result == nil or vim.tbl_isempty(result) then
     print("No code actions available")
     return
@@ -127,19 +127,28 @@ M['textDocument/codeAction'] = function(_, result)
   if choice < 1 or choice > #result then
     return
   end
-  local action_chosen = result[choice]
-  -- textDocument/codeAction can return either Command[] or CodeAction[].
-  -- If it is a CodeAction, it can have either an edit, a command or both.
-  -- Edits should be executed first
-  if action_chosen.edit or type(action_chosen.command) == "table" then
-    if action_chosen.edit then
-      util.apply_workspace_edit(action_chosen.edit)
-    end
-    if type(action_chosen.command) == "table" then
-      buf.execute_command(action_chosen.command)
-    end
+  local action = result[choice]
+  -- textDocument/codeAction can return either Command[] or CodeAction[]
+  --
+  -- CodeAction
+  --  ...
+  --  edit?: WorkspaceEdit    -- <- must be applied before command
+  --  command?: Command
+  --
+  -- Command:
+  --  title: string
+  --  command: string
+  --  arguments?: any[]
+  --
+  if action.edit then
+    util.apply_workspace_edit(action.edit)
+  end
+  local command = type(action.command) == 'table' and action.command or action
+  local fn = vim.lsp.commands[command.command]
+  if fn then
+    fn(command, ctx)
   else
-    buf.execute_command(action_chosen)
+    buf.execute_command(command)
   end
 end
 

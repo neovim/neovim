@@ -1534,5 +1534,34 @@ function lsp._with_extend(name, options, user_config)
   return resulting_config
 end
 
+
+--- Registry for client side commands.
+--- This is an extension point for plugins to handle custom commands which are
+--- not part of the core language server protocol specification.
+---
+--- The registry is a table where the key is a unique command name,
+--- and the value is a function which is called if any LSP action
+--- (code action, code lenses, ...) triggers the command.
+---
+--- If a LSP response contains a command for which no matching entry is
+--- available in this registry, the command will be executed via the LSP server
+--- using `workspace/executeCommand`.
+---
+--- The first argument to the function will be the `Command`:
+--    Command
+--      title: String
+--      command: String
+--      arguments?: any[]
+--
+--- The second argument is the `ctx` of |lsp-handler|
+lsp.commands = setmetatable({}, {
+  __newindex = function(tbl, key, value)
+    assert(type(key) == 'string', "The key for commands in `vim.lsp.commands` must be a string")
+    assert(type(value) == 'function', "Command added to `vim.lsp.commands` must be a function")
+    rawset(tbl, key, value)
+  end;
+})
+
+
 return lsp
 -- vim:sw=2 ts=2 et
