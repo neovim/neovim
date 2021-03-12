@@ -5,10 +5,12 @@ local clear, feed = helpers.clear, helpers.feed
 local assert_alive = helpers.assert_alive
 local command, feed_command = helpers.command, helpers.feed_command
 local eval = helpers.eval
-local eq = helpers.eq
+local eq, neq = helpers.eq, helpers.neq
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
 local meths = helpers.meths
+local curbuf = helpers.curbuf
+local curwin = helpers.curwin
 local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local run = helpers.run
@@ -6369,6 +6371,36 @@ describe('float window', function()
   end)
   describe('without ext_multigrid', function()
     with_ext_multigrid(false)
+  end)
+
+  describe('open_floating_preview', function()
+    -- TODO(runiq): The CursorMoved and CursorMovedI events are triggered
+    -- somehow during the tests, which results in the floats being closed, so
+    -- we remove them from the list of close_events for now. Is there a way
+    -- around that?
+    it('works', function()
+      local orig_buf = curbuf()
+      local orig_win = curwin()
+
+      -- This is a little roundabout because open_floating_preview returns multiple values
+      -- Do it once to create the float...
+      local float_ids = funcs.luaeval([[(function()
+        local buf_id, win_id = vim.lsp.util.open_floating_preview({'foo','bar'}, '', {focus_id='test', close_events={'BufHidden','BufLeave','WinLeave'}})
+        return {buf_id = buf_id, win_id = win_id}
+      end)()
+      ]])
+      -- ... and do it again to focus the floating window
+      funcs.luaeval([[
+      vim.lsp.util.open_floating_preview({'foo','bar'}, '', {focus_id='test', close_events={'BufHidden','BufLeave','WinLeave'}})
+      ]])
+
+      local cur_buf = curbuf()
+      local cur_win = curwin()
+      neq(cur_buf.id, orig_buf.id)
+      neq(cur_win.id, orig_win.id)
+      eq(cur_buf.id, float_ids.buf_id)
+      eq(cur_win.id, float_ids.win_id)
+    end)
   end)
 end)
 
