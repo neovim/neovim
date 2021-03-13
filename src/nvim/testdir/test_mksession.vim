@@ -331,6 +331,20 @@ func Test_mkview_no_balt()
   %bwipe
 endfunc
 
+func Test_mksession_no_balt()
+  edit Xtestfile1
+  edit Xtestfile2
+
+  bdelete Xtestfile1
+  mksession! Xtestview
+
+  source Xtestview
+  call assert_equal(0, buflisted('Xtestfile1'))
+
+  call delete('Xtestview')
+  %bwipe
+endfunc
+
 " Test :mkview with a file argument.
 func Test_mkview_file()
   " Create a view with line number and a fold.

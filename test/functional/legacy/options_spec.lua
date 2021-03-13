@@ -42,6 +42,20 @@ describe('set', function()
     matches('E36: Not enough room', exc_exec('set wmh=1'))
   end)
 
+  it('winminheight works with tabline', function()
+    local screen = Screen.new(20, 11)
+    screen:attach()
+    source([[
+      set wmh=0 stal=2
+      split
+      split
+      split
+      split
+      tabnew
+    ]])
+    matches('E36: Not enough room', exc_exec('set wmh=1'))
+  end)
+
   it('scroll works', function()
     local screen = Screen.new(42, 16)
     screen:attach()
