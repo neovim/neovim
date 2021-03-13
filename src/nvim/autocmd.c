@@ -968,7 +968,7 @@ static int do_autocmd_event(event_T event,
 // Implementation of ":doautocmd [group] event [fname]".
 // Return OK for success, FAIL for failure;
 int do_doautocmd(char_u *arg,
-                 int do_msg,  // give message for no matching autocmds?
+                 bool do_msg,  // give message for no matching autocmds?
                  bool *did_something)
 {
   char_u *fname;
@@ -1017,11 +1017,12 @@ int do_doautocmd(char_u *arg,
 // ":doautoall": execute autocommands for each loaded buffer.
 void ex_doautoall(exarg_T *eap)
 {
-  int retval;
+  int retval = OK;
   aco_save_T aco;
   char_u *arg = eap->arg;
   int call_do_modelines = check_nomodeline(&arg);
   bufref_T bufref;
+  bool did_aucmd;
 
   // This is a bit tricky: For some commands curwin->w_buffer needs to be
   // equal to curbuf, but for some buffers there may not be a window.
@@ -1029,14 +1030,14 @@ void ex_doautoall(exarg_T *eap)
   // gives problems when the autocommands make changes to the list of
   // buffers or windows...
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ml.ml_mfp == NULL) {
+    // Only do loaded buffers and skip the current buffer, it's done last.
+    if (buf->b_ml.ml_mfp == NULL || buf == curbuf) {
       continue;
     }
     // Find a window for this buffer and save some values.
     aucmd_prepbuf(&aco, buf);
     set_bufref(&bufref, buf);
 
-    bool did_aucmd;
     // execute the autocommands for this buffer
     retval = do_doautocmd(arg, false, &did_aucmd);
 
@@ -1052,7 +1053,16 @@ void ex_doautoall(exarg_T *eap)
 
     // Stop if there is some error or buffer was deleted.
     if (retval == FAIL || !bufref_valid(&bufref)) {
+      retval = FAIL;
       break;
+    }
+  }
+
+  // Execute autocommands for the current buffer last.
+  if (retval == OK) {
+    (void)do_doautocmd(arg, false, &did_aucmd);
+    if (call_do_modelines && did_aucmd) {
+      do_modelines(0);
     }
   }
 
@@ -1661,11 +1671,13 @@ static bool apply_autocmds_group(event_T event,
     did_filetype = false;
     while (au_pending_free_buf != NULL) {
       buf_T *b = au_pending_free_buf->b_next;
+
       xfree(au_pending_free_buf);
       au_pending_free_buf = b;
     }
     while (au_pending_free_win != NULL) {
       win_T *w = au_pending_free_win->w_next;
+
       xfree(au_pending_free_win);
       au_pending_free_win = w;
     }

@@ -1922,20 +1922,28 @@ func Test_autocmd_window()
   %bw!
   edit one.txt
   tabnew two.txt
+  vnew three.txt
+  tabnew four.txt
+  tabprevious
   let g:blist = []
-  augroup aucmd_win_test
+  augroup aucmd_win_test1
     au!
     au BufEnter * call add(g:blist, [expand('<afile>'),
           \ win_gettype(bufwinnr(expand('<afile>')))])
   augroup END
 
   doautoall BufEnter
-  call assert_equal([['one.txt', 'autocmd'], ['two.txt', '']], g:blist)
+  call assert_equal([
+        \ ['one.txt', 'autocmd'],
+        \ ['two.txt', ''],
+        \ ['four.txt', 'autocmd'],
+        \ ['three.txt', ''],
+        \ ], g:blist)
 
-  augroup aucmd_win_test
+  augroup aucmd_win_test1
     au!
   augroup END
-  augroup! aucmd_win_test
+  augroup! aucmd_win_test1
   %bw!
 endfunc
 
