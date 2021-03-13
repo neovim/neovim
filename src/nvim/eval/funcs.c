@@ -117,8 +117,12 @@ char_u *get_function_name(expand_T *xp, int idx)
     intidx = -1;
   if (intidx < 0) {
     name = get_user_func_name(xp, idx);
-    if (name != NULL)
+    if (name != NULL) {
+      if (*name != '<' && STRNCMP("g:", xp->xp_pattern, 2) == 0) {
+        return cat_prefix_varname('g', name);
+      }
       return name;
+    }
   }
   while ((size_t)++intidx < ARRAY_SIZE(functions)
          && functions[intidx].name[0] == '\0') {
