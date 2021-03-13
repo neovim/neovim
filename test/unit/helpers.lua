@@ -1,4 +1,5 @@
 local ffi = require('ffi')
+local bit = require('bit')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
@@ -471,7 +472,8 @@ else
     wait = function(pid)
       ffi.errno(0)
       while true do
-        local r = ffi.C.waitpid(pid, nil, ffi.C.kPOSIXWaitWUNTRACED)
+        local status = ffi.new('int[1]', {-1})
+        local r = ffi.C.waitpid(pid, status, ffi.C.kPOSIXWaitWUNTRACED)
         if r == -1 then
           local err = ffi.errno(0)
           if err == ffi.C.kPOSIXErrnoECHILD then
@@ -482,6 +484,9 @@ else
           end
         else
           assert(r == pid)
+          local num = tonumber(status[0])
+          local b1, b2 = bit.band(num,255), bit.band(bit.rshift(num,8),255)
+          return ((b1 > 0) and b1) or b2
         end
       end
     end,
@@ -730,10 +735,20 @@ local function check_child_err(rd)
 end
 
 local function itp_parent(rd, pid, allow_failure)
-  local err, emsg = pcall(check_child_err, rd)
-  sc.wait(pid)
+  local success, emsg = pcall(check_child_err, rd)
+  local status = sc.wait(pid)
+  if status ~= 0 then
+    -- status is typcially signal + 128
+    local killmsg = "killed (exit status "..status..")"
+    if success then
+      success = false
+      emsg = killmsg
+    else
+      emsg = tostring(emsg) .. "\n" .. killmsg
+    end
+  end
   sc.close(rd)
-  if not err then
+  if not success then
     if allow_failure then
       io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
       os.execute([[
