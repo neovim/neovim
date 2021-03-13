@@ -1,5 +1,6 @@
 local M = {
-  namespace = vim.api.nvim_create_namespace('LspSemanticHighlights')
+  semantic_tokens = {},
+  _hl_namespace = vim.api.nvim_create_namespace('LspSemanticHighlights'),
 }
 
 function M.on_semantic_tokens(...)
@@ -32,13 +33,24 @@ local function create_highlight_name(semantic_token)
   return name
 end
 
+function M.create_highlights(bufnr)
+  local api = vim.api
+  vim.api.nvim_buf_clear_namespace(bufnr, M._hl_namespace, 0, -1)
+  for line, tokens in pairs(M.semantic_tokens[bufnr]) do
+    for _, token in ipairs(tokens) do
+      local hl_name = create_highlight_name(token)
+      api.nvim_buf_add_highlight(bufnr, M._hl_namespace, hl_name, line - 1, token.start_col, token.start_col + token.length)
+    end
+  end
+end
+
 local function handle_semantic_tokens_full(client, bufnr, response)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
   local data = response.data
 
-  local semantic_tokens = {}
+  local tokens = {}
   local prev_line, prev_start = nil, 0
   for i = 1, #data, 5 do
     local delta_line = data[i]
@@ -50,15 +62,15 @@ local function handle_semantic_tokens_full(client, bufnr, response)
     local token_type = token_types[data[i + 3] + 1]
     local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
 
-    if delta_line == 0 and semantic_tokens[prev_line + 1] then
-      table.insert(semantic_tokens[prev_line + 1], #semantic_tokens, {
+    if delta_line == 0 and tokens[prev_line + 1] then
+      table.insert(tokens[prev_line + 1], #tokens, {
         start_col = prev_start,
         length = data[i + 2],
         type = token_type,
         modifiers = modifiers
       })
     else
-      semantic_tokens[prev_line + 1] = {
+      tokens[prev_line + 1] = {
         {
           start_col = prev_start,
           length = data[i + 2],
@@ -68,15 +80,7 @@ local function handle_semantic_tokens_full(client, bufnr, response)
       }
     end
   end
-
-  local api = vim.api
-  vim.api.nvim_buf_clear_namespace(bufnr, M.namespace, 0, -1)
-  for line, tokens in pairs(semantic_tokens) do
-    for _, token in ipairs(tokens) do
-      local hl_name = create_highlight_name(token)
-      api.nvim_buf_add_highlight(bufnr, M.namespace, hl_name, line - 1, token.start_col, token.start_col + token.length)
-    end
-  end
+  M.semantic_tokens[bufnr] = tokens
 end
 
 function M.request_tokens_full(client_id, bufnr)
