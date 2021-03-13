@@ -5117,6 +5117,18 @@ ExpandFromContext (
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, num_file, file);
   }
+
+  // When expanding a function name starting with s:, match the <SNR>nr_
+  // prefix.
+  char_u *tofree = NULL;
+  if (xp->xp_context == EXPAND_USER_FUNC && STRNCMP(pat, "^s:", 3) == 0) {
+    const size_t len = STRLEN(pat) + 20;
+
+    tofree = xmalloc(len);
+    snprintf((char *)tofree, len, "^<SNR>\\d\\+_%s", pat + 3);
+    pat = tofree;
+  }
+
   if (xp->xp_context == EXPAND_LUA) {
     ILOG("PAT %s", pat);
     return nlua_expand_pat(xp, pat, num_file, file);
@@ -5195,6 +5207,7 @@ ExpandFromContext (
   }
 
   vim_regfree(regmatch.regprog);
+  xfree(tofree);
 
   return ret;
 }

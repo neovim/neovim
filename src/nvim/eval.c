@@ -3007,7 +3007,8 @@ static size_t varnamebuflen = 0;
 /*
  * Function to concatenate a prefix and a variable name.
  */
-static char_u *cat_prefix_varname(int prefix, char_u *name)
+char_u *cat_prefix_varname(int prefix, const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t len = STRLEN(name) + 3;
 

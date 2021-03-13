@@ -2086,9 +2086,12 @@ int was_set_insecurely(win_T *const wp, char_u *opt, int opt_flags)
 
 /// Get a pointer to the flags used for the P_INSECURE flag of option
 /// "opt_idx".  For some local options a local flags field is used.
+/// NOTE: Caller must make sure that "wp" is set to the window from which
+/// the option is used.
 static uint32_t *insecure_flag(win_T *const wp, int opt_idx, int opt_flags)
 {
-  if (opt_flags & OPT_LOCAL)
+  if (opt_flags & OPT_LOCAL) {
+    assert(wp != NULL);
     switch ((int)options[opt_idx].indir) {
     case PV_STL:        return &wp->w_p_stl_flags;
     case PV_FDE:        return &wp->w_p_fde_flags;
@@ -2097,6 +2100,7 @@ static uint32_t *insecure_flag(win_T *const wp, int opt_idx, int opt_flags)
     case PV_FEX:        return &wp->w_buffer->b_p_fex_flags;
     case PV_INEX:       return &wp->w_buffer->b_p_inex_flags;
     }
+  }
 
   // Nothing special, return global flags field.
   return &options[opt_idx].flags;
@@ -6178,6 +6182,8 @@ set_context_in_set_cmd(
         xp->xp_backslash = XP_BS_THREE;
       else
         xp->xp_backslash = XP_BS_ONE;
+    } else if (p == (char_u *)&p_ft) {
+      xp->xp_context = EXPAND_FILETYPE;
     } else {
       xp->xp_context = EXPAND_FILES;
       // for 'tags' need three backslashes for a space

@@ -900,6 +900,7 @@ return {
       normal_fname_chars=true,
       vi_def=true,
       alloced=true,
+      expand=true,
       varname='p_ft',
       defaults={if_true={vi=""}}
     },
