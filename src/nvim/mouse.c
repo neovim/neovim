@@ -717,23 +717,22 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
 // Check clicked cell is foldcolumn
 int mouse_check_fold(void)
 {
-  int grid = mouse_grid;
-  int row = mouse_row;
-  int col = mouse_col;
+  int click_grid = mouse_grid;
+  int click_row = mouse_row;
+  int click_col = mouse_col;
   int mouse_char = ' ';
 
   win_T *wp;
 
-  wp = mouse_find_win(&grid, &row, &col);
+  wp = mouse_find_win(&click_grid, &click_row, &click_col);
 
   if (wp && mouse_row >= 0 && mouse_row < Rows
       && mouse_col >= 0 && mouse_col <= Columns) {
     int multigrid = ui_has(kUIMultigrid);
     ScreenGrid *gp = multigrid ? &wp->w_grid : &default_grid;
     int fdc = win_fdccol_count(wp);
-
-    row = multigrid && mouse_grid == 0 ? row : mouse_row;
-    col = multigrid && mouse_grid == 0 ? col : mouse_col;
+    int row = multigrid && mouse_grid == 0 ? click_row : mouse_row;
+    int col = multigrid && mouse_grid == 0 ? click_col : mouse_col;
 
     // Remember the character under the mouse, might be one of foldclose or
     // foldopen fillchars in the fold column.
@@ -743,8 +742,8 @@ int mouse_check_fold(void)
     }
 
     // Check for position outside of the fold column.
-    if (wp->w_p_rl ? col < wp->w_width_inner - fdc :
-        col >= fdc + (cmdwin_type == 0 ? 0 : 1)) {
+    if (wp->w_p_rl ? click_col < wp->w_width_inner - fdc :
+        click_col >= fdc + (cmdwin_type == 0 ? 0 : 1)) {
       mouse_char = ' ';
     }
   }
