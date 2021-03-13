@@ -5501,8 +5501,8 @@ void win_setminheight(void)
 
   // loop until there is a 'winminheight' that is possible
   while (p_wmh > 0) {
-    const int room = Rows - p_ch - tabline_height();
-    const int needed = frame_minheight(topframe, NULL);
+    const int room = Rows - p_ch;
+    const int needed = min_rows() - 1;  // 1 was added for the cmdline
     if (room >= needed) {
       break;
     }
