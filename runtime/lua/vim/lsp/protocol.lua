@@ -628,7 +628,7 @@ function protocol.make_client_capabilities()
           full = { delta = false };
           tokenTypes = {
             namespace = 'namespace',
-            ['type'] = 'type',
+            type = 'type',
             class = 'class',
             enum = 'enum',
             interface = 'interface',
@@ -639,7 +639,6 @@ function protocol.make_client_capabilities()
             property = 'property',
             enumMember = 'enumMember',
             event = 'event',
-            ['function'] = 'function',
             method = 'method',
             macro = 'macro',
             keyword = 'keyword',
@@ -648,7 +647,8 @@ function protocol.make_client_capabilities()
             string = 'string',
             number = 'number',
             regexp = 'regexp',
-            operator = 'operator'
+            operator = 'operator',
+            ['function'] = 'function',
           };
           modifiers = {
             declaration = 'declaration',
