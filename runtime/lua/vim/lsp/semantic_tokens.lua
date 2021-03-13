@@ -3,10 +3,6 @@ local M = {
   _hl_namespace = vim.api.nvim_create_namespace('LspSemanticHighlights'),
 }
 
-function M.on_semantic_tokens(...)
-  print('on_semantic_tokens', vim.inspect(...))
-end
-
 local function modifiers_from_number(x, modifiers_table)
   local function get_bit(n, k)
     -- Based on/from https://stackoverflow.com/a/26230537
@@ -96,7 +92,13 @@ function M.request_tokens_full(client_id, bufnr)
 end
 
 function M.on_refresh()
-  -- TODO(smolck): Unimplemented
+  local bufnr = vim.fn.bufnr()
+  -- TODO(smolck): Just do the active clients for the current buffer?
+  -- If so, how to get those?
+  for _, client in pairs(vim.lsp.get_active_clients()) do
+    M.request_tokens_full(client.id, bufnr)
+  end
+  -- TODO(smolck): Anything else, like highlights? Probably not?
 end
 
 return M
