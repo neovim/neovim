@@ -156,7 +156,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          delete_release: ''
+          delete_release: true
           tag_name: nightly
       - uses: meeDamian/github-release@2.0
         with:
