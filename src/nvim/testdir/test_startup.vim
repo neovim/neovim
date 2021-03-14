@@ -111,10 +111,8 @@ func Test_pack_in_rtp_when_plugins_run()
 endfunc
 
 func Test_help_arg()
-  if !has('unix') && has('gui')
-    " this doesn't work with gvim on MS-Windows
-    return
-  endif
+  CheckNotMSWindows
+
   if RunVim([], [], '--help >Xtestout')
     let lines = readfile('Xtestout')
     call assert_true(len(lines) > 20)
@@ -411,6 +409,134 @@ func Test_A_F_H_arg()
 
   call delete('Xtestout')
 endfunc
+
+" Test the --echo-wid argument (for GTK GUI only).
+func Test_echo_wid()
+  CheckCanRunGui
+  CheckFeature gui_gtk
+
+  if RunVim([], [], '-g --echo-wid -cq >Xtest_echo_wid')
+    let lines = readfile('Xtest_echo_wid')
+    call assert_equal(1, len(lines))
+    call assert_match('^WID: \d\+$', lines[0])
+  endif
+
+  call delete('Xtest_echo_wid')
+endfunction
+
+" Test the -reverse and +reverse arguments (for GUI only).
+func Test_reverse()
+  CheckCanRunGui
+  CheckNotMSWindows
+
+  let after =<< trim [CODE]
+    call writefile([&background], "Xtest_reverse")
+    qall
+  [CODE]
+  if RunVim([], after, '-f -g -reverse')
+    let lines = readfile('Xtest_reverse')
+    call assert_equal(['dark'], lines)
+  endif
+  if RunVim([], after, '-f -g +reverse')
+    let lines = readfile('Xtest_reverse')
+    call assert_equal(['light'], lines)
+  endif
+
+  call delete('Xtest_reverse')
+endfunc
+
+" Test the -background and -foreground arguments (for GUI only).
+func Test_background_foreground()
+  CheckCanRunGui
+  CheckNotMSWindows
+
+  " Is there a better way to check the effect of -background & -foreground
+  " other than merely looking at &background (dark or light)?
+  let after =<< trim [CODE]
+    call writefile([&background], "Xtest_fg_bg")
+    qall
+  [CODE]
+  if RunVim([], after, '-f -g -background darkred -foreground yellow')
+    let lines = readfile('Xtest_fg_bg')
+    call assert_equal(['dark'], lines)
+  endif
+  if RunVim([], after, '-f -g -background ivory -foreground darkgreen')
+    let lines = readfile('Xtest_fg_bg')
+    call assert_equal(['light'], lines)
+  endif
+
+  call delete('Xtest_fg_bg')
+endfunc
+
+" Test the -font argument (for GUI only).
+func Test_font()
+  CheckCanRunGui
+  CheckNotMSWindows
+
+  if has('gui_gtk')
+    let font = 'Courier 14'
+  elseif has('gui_motif') || has('gui_athena')
+    let font = '-misc-fixed-bold-*'
+  else
+    throw 'Skipped: test does not set a valid font for this GUI'
+  endif
+
+  let after =<< trim [CODE]
+    call writefile([&guifont], "Xtest_font")
+    qall
+  [CODE]
+
+  if RunVim([], after, '--nofork -g -font "' .. font .. '"')
+    let lines = readfile('Xtest_font')
+    call assert_equal([font], lines)
+  endif
+
+  call delete('Xtest_font')
+endfunc
+
+" Test the -geometry argument (for GUI only).
+func Test_geometry()
+  CheckCanRunGui
+  CheckNotMSWindows
+
+  if has('gui_motif') || has('gui_athena')
+    " FIXME: With GUI Athena or Motif, the value of getwinposx(),
+    "        getwinposy() and getwinpos() do not match exactly the
+    "        value given in -geometry. Why?
+    "        So only check &columns and &lines for those GUIs.
+    let after =<< trim [CODE]
+      call writefile([&columns, &lines], "Xtest_geometry")
+      qall
+    [CODE]
+    if RunVim([], after, '-f -g -geometry 31x13+41+43')
+      let lines = readfile('Xtest_geometry')
+      call assert_equal(['31', '13'], lines)
+    endif
+  else
+    let after =<< trim [CODE]
+      call writefile([&columns, &lines, getwinposx(), getwinposy(), string(getwinpos())], "Xtest_geometry")
+      qall
+    [CODE]
+    if RunVim([], after, '-f -g -geometry 31x13+41+43')
+      let lines = readfile('Xtest_geometry')
+      call assert_equal(['31', '13', '41', '43', '[41, 43]'], lines)
+    endif
+  endif
+
+  call delete('Xtest_geometry')
+endfunc
+
+" Test the -iconic argument (for GUI only).
+func Test_iconic()
+  CheckCanRunGui
+  CheckNotMSWindows
+
+  call RunVim([], [], '-f -g -iconic -cq')
+
+  " TODO: currently only start vim iconified, but does not
+  "       check that vim is iconified. How could this be checked?
+endfunc
+
 
 func Test_invalid_args()
   if !has('unix') || has('gui_running')
@@ -777,17 +903,12 @@ func Test_progname()
   let prognames = ['nvim']
 
   for progname in prognames
-    if empty($DISPLAY)
-      if progname =~# 'g'
-        " Can't run gvim, gview (etc.) if $DISPLAY is not setup.
-        continue
-      endif
-      if has('gui') && (progname ==# 'evim' || progname ==# 'eview')
-        " evim or eview will start the GUI if there is gui support.
-        " So don't try to start them either if $DISPLAY is not setup.
-        continue
-      endif
-    endif
+    let run_with_gui = (progname =~# 'g') || (has('gui') && (progname ==# 'evim' || progname ==# 'eview'))
+
+    if empty($DISPLAY) && run_with_gui
+      " Can't run gvim, gview  (etc.) if $DISPLAY is not setup.
+      continue
+     endif
 
     exe 'silent !ln -s -f ' ..exepath(GetVimProg()) .. ' Xprogname/' .. progname
 
@@ -801,7 +922,15 @@ func Test_progname()
     if progname =~# 'g' && !has('gui')
       call assert_equal("E25: GUI cannot be used: Not enabled at compile time\n", stdout_stderr, progname)
     else
-      call assert_equal('', stdout_stderr, progname)
+      " GUI motif can output some warnings like this:
+      "   Warning:
+      "       Name: subMenu
+      "       Class: XmCascadeButton
+      "       Illegal mnemonic character;  Could not convert X KEYSYM to a keycode
+      " So don't check that stderr is empty with GUI Motif.
+      if run_with_gui && !has('gui_motif')
+        call assert_equal('', stdout_stderr, progname)
+      endif
       call assert_equal(expectations[progname], readfile('Xprogname_out'), progname)
     endif
 
