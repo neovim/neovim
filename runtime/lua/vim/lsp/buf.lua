@@ -46,6 +46,11 @@ local function request(method, params, handler)
   return vim.lsp.buf_request(0, method, params, handler)
 end
 
+function M.semantic_tokens_full()
+  local params = util.make_text_document_params()
+  return request('textDocument/semanticTokens/full', params)
+end
+
 --- Checks whether the language servers attached to the current buffer are
 --- ready.
 ---
