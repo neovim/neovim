@@ -623,51 +623,51 @@ function protocol.make_client_capabilities()
     textDocument = {
       semanticTokens = {
         dynamicRegistration = false;
+        tokenTypes = {
+          'namespace',
+          'type',
+          'class',
+          'enum',
+          'interface',
+          'struct',
+          'typeParameter',
+          'parameter',
+          'variable',
+          'property',
+          'enumMember',
+          'event',
+          'method',
+          'macro',
+          'keyword',
+          'modifier',
+          'comment',
+          'string',
+          'number',
+          'regexp',
+          'operator',
+          'function',
+        };
+        tokenModifiers = {
+          'declaration',
+          'definition',
+          'readonly',
+          'static',
+          'deprecated',
+          'abstract',
+          'async',
+          'modification',
+	        'documentation',
+	        'defaultLibrary'
+        };
+        formats = {'relative'};
         requests = {
           -- range = true;
           full = { delta = false };
-          tokenTypes = {
-            namespace = 'namespace',
-            type = 'type',
-            class = 'class',
-            enum = 'enum',
-            interface = 'interface',
-            struct = 'struct',
-            typeParameter = 'typeParameter',
-            parameter = 'parameter',
-            variable = 'variable',
-            property = 'property',
-            enumMember = 'enumMember',
-            event = 'event',
-            method = 'method',
-            macro = 'macro',
-            keyword = 'keyword',
-            modifier = 'modifier',
-            comment = 'comment',
-            string = 'string',
-            number = 'number',
-            regexp = 'regexp',
-            operator = 'operator',
-            ['function'] = 'function',
-          };
-          modifiers = {
-            declaration = 'declaration',
-            definition = 'definition',
-            readonly = 'readonly',
-            static = 'static',
-            deprecated = 'deprecated',
-            abstract = 'abstract',
-            async = 'async',
-            modification = 'modification',
-	          documentation = 'documentation',
-	          defaultLibrary = 'defaultLibrary'
-          };
-          formats = {'relative'};
 
           -- TODO(smolck): Add support for these
-          overlappingTokenSupport = false;
-          multilineTokenSupport = false;
         };
+        overlappingTokenSupport = false;
+        multilineTokenSupport = false;
       };
       synchronization = {
         dynamicRegistration = false;
