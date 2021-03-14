@@ -661,11 +661,13 @@ function protocol.make_client_capabilities()
         };
         formats = {'relative'};
         requests = {
+          -- TODO(smolck): Add support for this
           -- range = true;
-          full = { delta = false };
 
-          -- TODO(smolck): Add support for these
+          full = { delta = false };
         };
+
+        -- TODO(smolck): Add support for these
         overlappingTokenSupport = false;
         multilineTokenSupport = false;
       };
