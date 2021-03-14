@@ -6274,6 +6274,9 @@ retry:
   tab_page_click_defs = new_tab_page_click_defs;
   tab_page_click_defs_size = Columns;
 
+  default_grid.comp_height = Rows;
+  default_grid.comp_width = Columns;
+
   default_grid.row_offset = 0;
   default_grid.col_offset = 0;
   default_grid.handle = DEFAULT_GRID_HANDLE;
