@@ -656,8 +656,8 @@ function protocol.make_client_capabilities()
           'abstract',
           'async',
           'modification',
-	        'documentation',
-	        'defaultLibrary'
+          'documentation',
+          'defaultLibrary'
         };
         formats = {'relative'};
         requests = {
