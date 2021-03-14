@@ -1,7 +1,4 @@
-local M = {
-  semantic_tokens = {},
-  _hl_namespace = vim.api.nvim_create_namespace('LspSemanticHighlights'),
-}
+local M = { semantic_tokens = {}, }
 
 local function modifiers_from_number(x, modifiers_table)
   local function get_bit(n, k)
@@ -19,25 +16,6 @@ local function modifiers_from_number(x, modifiers_table)
   end
 
   return modifiers
-end
-
-local function create_highlight_name(semantic_token)
-  local name = 'LspSemantic' .. semantic_token.type:sub(1, 1):upper() .. semantic_token.type:sub(2)
-  -- TODO(smolck): How to handle modifiers?
-  -- for _, v in ipairs(semantic_token.modifiers) do
-  -- end
-  return name
-end
-
-function M.create_highlights(bufnr)
-  local api = vim.api
-  vim.api.nvim_buf_clear_namespace(bufnr, M._hl_namespace, 0, -1)
-  for line, tokens in pairs(M.semantic_tokens[bufnr]) do
-    for _, token in ipairs(tokens) do
-      local hl_name = create_highlight_name(token)
-      api.nvim_buf_add_highlight(bufnr, M._hl_namespace, hl_name, line - 1, token.start_col, token.start_col + token.length)
-    end
-  end
 end
 
 local function handle_semantic_tokens_full(client, bufnr, response)
@@ -98,7 +76,6 @@ function M.on_refresh()
   for _, client in pairs(vim.lsp.get_active_clients()) do
     M.request_tokens_full(client.id, bufnr)
   end
-  -- TODO(smolck): Anything else, like highlights? Probably not?
 end
 
 return M
