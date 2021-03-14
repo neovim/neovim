@@ -3716,6 +3716,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*lcs-space*
 	  space:c	Character to show for a space.  When omitted, spaces
 			are left blank.
+							*lcs-lead*
+	  lead:c	Character to show for leading spaces.  When omitted,
+			leading spaces are blank.  Overrides the "space"
+			setting for leading spaces.
 							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
 			trailing spaces are blank.  Overrides the "space"
