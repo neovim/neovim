@@ -179,7 +179,7 @@ describe('decorations providers', function()
                                               |
     ]]}
 
-    meths.set_hl_ns(ns1)
+    meths._set_hl_ns(ns1)
     screen:expect{grid=[[
       {10:  1 }{11:// just to see if there was an accid}|
       {10:    }{11:ent}                                 |
@@ -205,7 +205,7 @@ describe('decorations providers', function()
       local ns2 = a.nvim_create_namespace 'ns2'
       a.nvim_set_decoration_provider (ns2, {
         on_win = function (_, win, buf)
-          a.nvim_set_hl_ns(win == thewin and _G.ns1 or ns2)
+          a.nvim__set_hl_ns(win == thewin and _G.ns1 or ns2)
         end;
       })
     ]]
@@ -252,7 +252,7 @@ describe('decorations providers', function()
     ]]}
 
     meths.set_hl(ns1, 'LinkGroup', {fg = 'Blue'})
-    meths.set_hl_ns(ns1)
+    meths._set_hl_ns(ns1)
 
     screen:expect{grid=[[
       // just to see if there was an accident |
@@ -288,7 +288,7 @@ describe('decorations providers', function()
     ]]}
 
     meths.set_hl(ns1, 'LinkGroup', {fg = 'Blue', default=true})
-    meths.set_hl_ns(ns1)
+    meths._set_hl_ns(ns1)
     feed 'k'
 
     screen:expect{grid=[[

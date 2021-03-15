@@ -242,8 +242,7 @@ void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
 ///
 /// @param ns_id the namespace to activate
 /// @param[out] err Error details, if any
-void nvim_set_hl_ns(Integer ns_id, Error *err)
-  FUNC_API_SINCE(7)
+void nvim__set_hl_ns(Integer ns_id, Error *err)
   FUNC_API_FAST
 {
   if (ns_id >= 0) {
