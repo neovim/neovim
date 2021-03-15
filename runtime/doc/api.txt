@@ -538,6 +538,21 @@ nvim__screenshot({path})                                  *nvim__screenshot()*
                 Attributes: ~
                     {fast}
 
+nvim__set_hl_ns({ns_id})                                   *nvim__set_hl_ns()*
+                Set active namespace for highlights.
+
+                NB: this function can be called from async contexts, but the
+                semantics are not yet well-defined. To start with
+                |nvim_set_decoration_provider| on_win and on_line callbacks
+                are explicitly allowed to change the namespace during a redraw
+                cycle.
+
+                Attributes: ~
+                    {fast}
+
+                Parameters: ~
+                    {ns_id}  the namespace to activate
+
 nvim__stats()                                                  *nvim__stats()*
                 Gets internal stats.
 
@@ -598,6 +613,22 @@ nvim_call_function({fn}, {args})                        *nvim_call_function()*
 
                 Return: ~
                     Result of the function call
+
+nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
+                Send data to channel `id` . For a job, it writes it to the
+                stdin of the process. For the stdio channel |channel-stdio|,
+                it writes to Nvim's stdout. For an internal terminal instance
+                (|nvim_open_term()|) it writes directly to terimal output. See
+                |channel-bytes| for more information.
+
+                This function writes raw data, not RPC messages. If the
+                channel was created with `rpc=true` then the channel expects
+                RPC messages, use |vim.rpcnotify()| and |vim.rpcrequest()|
+                instead.
+
+                Parameters: ~
+                    {chan}  id of the channel
+                    {data}  data to write. 8-bit clean: can contain NUL bytes.
 
 nvim_command({command})                                       *nvim_command()*
                 Executes an ex-command.
@@ -1160,6 +1191,27 @@ nvim_notify({msg}, {log_level}, {opts})                        *nvim_notify()*
                     {log_level}  The log level
                     {opts}       Reserved for future use.
 
+nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
+                Open a terminal instance in a buffer
+
+                By default (and currently the only option) the terminal will
+                not be connected to an external process. Instead, input send
+                on the channel will be echoed directly by the terminal. This
+                is useful to disply ANSI terminal sequences returned as part
+                of a rpc message, or similar.
+
+                Note: to directly initiate the terminal using the right size,
+                display the buffer in a configured window before calling this.
+                For instance, for a floating display, first create an empty
+                buffer using |nvim_create_buf()|, then display it using
+                |nvim_open_win()|, and then call this function. Then
+                |nvim_chan_send()| cal be called immediately to process
+                sequences in a virtual terminal having the intended size.
+
+                Parameters: ~
+                    {buffer}  the buffer to use (expected to be empty)
+                    {opts}    Optional parameters. Reserved for future use.
+
 nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 Open a new window.
 
@@ -1622,21 +1674,6 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                              |nvim_get_hl_by_name|. in addition the following
                              keys are also recognized: `default` : don't
                              override existing definition, like `hi default`
-
-nvim_set_hl_ns({ns_id})                                     *nvim_set_hl_ns()*
-                Set active namespace for highlights.
-
-                NB: this function can be called from async contexts, but the
-                semantics are not yet well-defined. To start with
-                |nvim_set_decoration_provider| on_win and on_line callbacks
-                are explicitly allowed to change the namespace during a redraw
-                cycle.
-
-                Attributes: ~
-                    {fast}
-
-                Parameters: ~
-                    {ns_id}  the namespace to activate
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {opts})              *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
