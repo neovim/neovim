@@ -14,6 +14,7 @@ local retry = helpers.retry
 local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
+local matches = helpers.matches
 
 -- Use these to get access to a coroutine so that I can run async tests and use
 -- yield.
@@ -2091,6 +2092,20 @@ describe('LSP', function()
         handler(nil, 'textDocument/codeAction', actions, nil, nil, nil, params)
         return dummy_calls
       ]])
+    end)
+  end)
+  describe('vim.lsp.commands', function()
+    it('Accepts only string keys', function()
+      matches(
+        '.*The key for commands in `vim.lsp.commands` must be a string',
+        pcall_err(exec_lua, 'vim.lsp.commands[1] = function() end')
+      )
+    end)
+    it('Accepts only function values', function()
+      matches(
+        '.*Command added to `vim.lsp.commands` must be a function',
+        pcall_err(exec_lua, 'vim.lsp.commands.dummy = 10')
+      )
     end)
   end)
 end)

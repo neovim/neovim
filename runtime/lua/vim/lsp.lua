@@ -1556,7 +1556,13 @@ require('vim.lsp.diagnostic')._define_default_signs_and_highlights()
 --
 --- The second argument are the params which were sent as payload with the
 --- original codeAction request.
-lsp.commands = {}
+lsp.commands = setmetatable({}, {
+  __newindex = function(tbl, key, value)
+    assert(type(key) == 'string', "The key for commands in `vim.lsp.commands` must be a string")
+    assert(type(value) == 'function', "Command added to `vim.lsp.commands` must be a function")
+    rawset(tbl, key, value)
+  end;
+})
 
 
 return lsp
