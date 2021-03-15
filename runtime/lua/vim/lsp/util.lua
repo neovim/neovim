@@ -1036,7 +1036,6 @@ function M.fancy_floating_markdown(contents, opts)
   api.nvim_win_set_option(winnr, 'concealcursor', 'n')
 
   vim.cmd("ownsyntax lsp_markdown")
-  vim.cmd("set filetype=lsp_markdown")
   local idx = 1
   --@private
   local function apply_syntax_to_region(ft, start, finish)
