@@ -612,6 +612,29 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   return matches
 end
 
+
+--- Rename old_fname to new_fname
+--
+--@param opts (table)
+--         overwrite? bool
+--         ignoreIfExists? bool
+function M.rename(old_fname, new_fname, opts)
+  opts = opts or {}
+  local bufnr = vim.fn.bufadd(old_fname)
+  vim.fn.bufload(bufnr)
+  local target_exists = vim.loop.fs_stat(new_fname) ~= nil
+  if target_exists and not opts.overwrite or opts.ignoreIfExists then
+    vim.notify('Rename target already exists. Skipping rename.')
+    return
+  end
+  local ok, err = os.rename(old_fname, new_fname)
+  assert(ok, err)
+  api.nvim_buf_call(bufnr, function()
+    vim.cmd('saveas! ' .. vim.fn.fnameescape(new_fname))
+  end)
+end
+
+
 --- Applies a `WorkspaceEdit`.
 ---
 --@param workspace_edit (table) `WorkspaceEdit`
@@ -619,8 +642,14 @@ end
 function M.apply_workspace_edit(workspace_edit)
   if workspace_edit.documentChanges then
     for idx, change in ipairs(workspace_edit.documentChanges) do
-      if change.kind then
-        -- TODO(ashkan) handle CreateFile/RenameFile/DeleteFile
+      if change.kind == "rename" then
+        M.rename(
+          vim.uri_to_fname(change.oldUri),
+          vim.uri_to_fname(change.newUri),
+          change.options
+        )
+      elseif change.kind then
+        -- TODO(ashkan) handle CreateFile/DeleteFile
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
         M.apply_text_document_edit(change, idx)

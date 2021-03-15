@@ -11,6 +11,8 @@ local pesc = helpers.pesc
 local insert = helpers.insert
 local retry = helpers.retry
 local NIL = helpers.NIL
+local read_file = require('test.helpers').read_file
+local write_file = require('test.helpers').write_file
 
 -- Use these to get access to a coroutine so that I can run async tests and use
 -- yield.
@@ -1306,6 +1308,72 @@ describe('LSP', function()
       eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
       eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
       eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+  end)
+
+  describe('lsp.util.rename', function()
+    it('Can rename an existing file', function()
+      local old = helpers.tmpname()
+      write_file(old, 'Test content')
+      local new = helpers.tmpname()
+      os.remove(new)  -- only reserve the name, file must not exist for the test scenario
+      local lines = exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new)
+
+        -- after rename the target file must have the contents of the source file
+        local bufnr = vim.fn.bufadd(new)
+        return vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+      ]], old, new)
+      eq({'Test content'}, lines)
+      local exists = exec_lua('return vim.loop.fs_stat(...) ~= nil', old)
+      eq(false, exists)
+      exists = exec_lua('return vim.loop.fs_stat(...) ~= nil', new)
+      eq(true, exists)
+      os.remove(new)
+    end)
+    it('Does not rename file if target exists and ignoreIfExists is set or overwrite is false', function()
+      local old = helpers.tmpname()
+      write_file(old, 'Old File')
+      local new = helpers.tmpname()
+      write_file(new, 'New file')
+
+      exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        vim.lsp.util.rename(old, new, { ignoreIfExists = true })
+      ]], old, new)
+
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq('New file', read_file(new))
+
+      exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        vim.lsp.util.rename(old, new, { overwrite = false })
+      ]], old, new)
+
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq('New file', read_file(new))
+    end)
+    it('Does override target if overwrite is true', function()
+      local old = helpers.tmpname()
+      write_file(old, 'Old file')
+      local new = helpers.tmpname()
+      write_file(new, 'New file')
+      exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        vim.lsp.util.rename(old, new, { overwrite = true })
+      ]], old, new)
+
+      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new))
+      eq('Old file\n', read_file(new))
     end)
   end)
 
