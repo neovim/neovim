@@ -171,7 +171,7 @@ int tslua_add_language(lua_State *L)
 
   TSLanguage *lang = lang_parser();
   if (lang == NULL) {
-    return luaL_error(L, "Failed to load parser: internal error");
+    return luaL_error(L, "Failed to load parser %s: internal error", path);
   }
 
   uint32_t lang_version = ts_language_version(lang);
@@ -179,7 +179,8 @@ int tslua_add_language(lua_State *L)
       || lang_version > TREE_SITTER_LANGUAGE_VERSION) {
     return luaL_error(
         L,
-        "ABI version mismatch : supported between %d and %d, found %d",
+        "ABI version mismatch for %s: supported between %d and %d, found %d",
+        path,
         TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION,
         TREE_SITTER_LANGUAGE_VERSION, lang_version);
   }

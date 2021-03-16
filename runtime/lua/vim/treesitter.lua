@@ -12,11 +12,7 @@ local M = vim.tbl_extend("error", query, language)
 
 setmetatable(M, {
   __index = function (t, k)
-      if k == "TSHighlighter" then
-        a.nvim_err_writeln("vim.TSHighlighter is deprecated, please use vim.treesitter.highlighter")
-        t[k] = require'vim.treesitter.highlighter'
-        return t[k]
-      elseif k == "highlighter" then
+      if k == "highlighter" then
         t[k] = require'vim.treesitter.highlighter'
         return t[k]
       end
