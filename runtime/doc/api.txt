@@ -1415,8 +1415,8 @@ nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
                               • "c" |charwise| mode
                               • "l" |linewise| mode
                               • "" guess by contents, see |setreg()|
-                    {after}   If true insert after cursor (like |p|), or before (like
-                              |P|).
+                    {after}   If true insert after cursor (like |p|), or
+                              before (like |P|).
                     {follow}  If true place cursor at end of inserted text.
 
                                                     *nvim_replace_termcodes()*
@@ -1737,7 +1737,7 @@ nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
 
                                                     *nvim_buf_add_highlight()*
-nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line}, {col_start},
+nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
                        {col_end})
                 Adds a highlight to buffer.
 
@@ -2467,6 +2467,21 @@ nvim_win_get_width({window})                            *nvim_win_get_width()*
 
                 Return: ~
                     Width as a count of columns
+
+nvim_win_hide({window})                                      *nvim_win_hide()*
+                Closes the window and hide the buffer it contains (like
+                |:hide| with a |window-ID|).
+
+                Like |:hide| the buffer becomes hidden unless another window
+                is editing it, or 'bufhidden' is `unload` , `delete` or `wipe`
+                as opposed to |:close| or |nvim_win_close|, which will close
+                the buffer.
+
+                Attributes: ~
+                    not allowed when |textlock| is active
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
 
 nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                 Checks if a window is valid

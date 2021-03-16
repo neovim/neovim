@@ -1469,8 +1469,8 @@ show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
 ==============================================================================
 Lua module: vim.lsp.handlers                                    *lsp-handlers*
 
-                                        *vim.lsp.handlers.progress_callback()*
-progress_callback({_}, {_}, {params}, {client_id})
+                                         *vim.lsp.handlers.progress_handler()*
+progress_handler({_}, {_}, {params}, {client_id})
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 
