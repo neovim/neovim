@@ -308,6 +308,81 @@ local function text_document_did_open_handler(bufnr, client)
   end)
 end
 
+--@public
+-- Registers a client capability that is provided by a plugin.
+-- This function allows to extend lsp capabilities
+--@param capability (table) client capability table acording to lsp-specs
+--@param capability_resolver (function) This function recives
+--  server capabilities tabke as argument and sould return
+--  a table containing capability flags it supports. Flags
+--  need to have same name as handler method name
+--@param handlers (table) Table of handlers. This is used to extend lsp.handlers table.
+--@Example
+--  semantic tokens implementation by smlok
+--  <pre>
+--    local capability = {
+--      textDocument = {
+--        semanticTokens = {
+--          dynamicRegistration = false;
+--          tokenTypes = {
+--            ....
+--          };
+--          tokenModifiers = {
+--            ....
+--          };
+--          formats = {'relative'};
+--          requests = {
+--            ....
+--          };
+--        };
+--      };
+--    }
+--    local capability_resolver = function(server_capabilities)
+--      local properties = {}
+--      if server_capabilities.semanticTokensProvider ~= nil and server_capabilities.semanticTokensProvider.full then
+--        properties['textDocument/semanticTokens/full'] = true
+--      else
+--        properties['textDocument/semanticTokens/full'] = false
+--      end
+--      return properties
+--    end
+--    local handlers = {
+--      'textDocument/semanticTokens/full' = function()
+--        ...
+--      end,
+--      'workspace/semanticTokens/refresh' = function()
+--        ...
+--      end
+--    }
+--    vim.lsp.register_external_capability(capabilities,
+--      capability_resolver, handlers, handlers_to_capability_map)
+--  </pre>
+function lsp.register_external_capability(capability,
+  capability_resolver, handlers)
+  -- validate parameters
+  vim.validate{
+    capability = {capability, 't'},
+    capability_resolver = {capability_resolver, 'f'},
+    handlers = {handlers, 't'},
+  }
+  local protocol_tbl = {
+    capability = capability,
+    resolver = capability_resolver,
+  }
+  -- check if this capability is already registered
+  local added = false
+  for _, registered in pairs(protocol.external_capabilities) do
+    if vim.deep_equal(registered, protocol_tbl) then
+      added = true
+      break
+    end
+  end
+  if not added then
+    table.insert(protocol.external_capabilities,protocol_tbl)
+    default_handlers = vim.tbl_extend('force', default_handlers, handlers)
+  end
+end
+
 -- FIXME: DOC: Shouldn't need to use a dummy function
 --
 --- LSP client object. You can get an active client object via
@@ -670,6 +745,13 @@ function lsp.start_client(config)
       client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
       client.supports_method = function(method)
         local required_capability = lsp._request_name_to_capability[method]
+        if required_capability == nil then
+          -- With this capabilities can be resolved with method name
+          -- Insted of going through _request_name_to_capability table
+          -- It's added to simplify external capabilities
+          local resolved_method_status = client.resolved_capabilities[method]
+          if resolved_method_status ~= nil then return resolved_method_status end
+        end
         -- if we don't know about the method, assume that the client supports it.
         if not required_capability then
           return true

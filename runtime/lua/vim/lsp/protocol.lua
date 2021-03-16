@@ -3,6 +3,8 @@
 local if_nil = vim.F.if_nil
 
 local protocol = {}
+-- list to store capabilities declared through |lsp.register_external_capability|
+protocol.external_capabilities = {}
 
 --[=[
 --@private
@@ -619,7 +621,7 @@ export interface WorkspaceClientCapabilities {
 --- Gets a new ClientCapabilities object describing the LSP client
 --- capabilities.
 function protocol.make_client_capabilities()
-  return {
+  local capabilities =  {
     textDocument = {
       synchronization = {
         dynamicRegistration = false;
@@ -769,6 +771,18 @@ function protocol.make_client_capabilities()
       };
     };
   }
+  local external_capabilities = {}
+  for _, capability in pairs(protocol.external_capabilities) do
+    external_capabilities = vim.tbl_deep_extend('error'
+       , external_capabilities
+       , capability.capability
+       )
+  end
+
+  capabilities = vim.tbl_deep_extend('force'
+      , capabilities
+      , external_capabilities)
+  return capabilities
 end
 
 --[=[
@@ -1068,12 +1082,24 @@ function protocol.resolve_capabilities(server_capabilities)
     error("The server sent invalid signatureHelpProvider")
   end
 
-  return vim.tbl_extend("error"
+  local external_properties = {}
+  for _, capability in pairs(protocol.external_capabilities) do
+    external_properties = vim.tbl_extend('error'
+       , external_properties
+       , capability.resolver(server_capabilities)
+       )
+  end
+
+  local resolved_properties = vim.tbl_extend("error"
       , text_document_sync_properties
       , signature_help_properties
       , workspace_properties
       , general_properties
       )
+  resolved_properties = vim.tbl_extend("force"
+      , resolved_properties
+      , external_properties)
+  return resolved_properties
 end
 
 return protocol
