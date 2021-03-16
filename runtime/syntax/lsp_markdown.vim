@@ -7,9 +7,8 @@
 runtime! syntax/markdown.vim
 
 syn cluster mkdNonListItem add=mkdEscape,mkdNbsp
-syntax region mkdNonListItemBlock start=/\(\%^\(\s*\([-*+]\|\d\+\.\)\s\+\)\@!\|\n\(\_^\_$\|\s\{4,}[^]\|\t+[^\t]\)\@!\)/ end=/^\(\s*\([-*+]\|\d\+\.\)\s\+\)\@=/  contains=@mkdNonListItem
 
-syntax region mkdEscape matchgroup=mkdEscape start=/\\\ze[\\\x60*{}\[\]()#+\-,.!_>~|"$%&'\/:;<=?@^ ]/ end=/.\zs/ keepend contains=mkdEscapeCh contained oneline concealends
+syntax region mkdEscape matchgroup=mkdEscape start=/\\\ze[\\\x60*{}\[\]()#+\-,.!_>~|"$%&'\/:;<=?@^ ]/ end=/.\zs/ keepend contains=mkdEscapeCh oneline concealends
 syntax match mkdEscapeCh /./ contained
 syntax match mkdNbsp /&nbsp;/ conceal cchar= 
 
