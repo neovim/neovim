@@ -306,11 +306,16 @@ function LanguageTree:_get_injections()
       for id, node in pairs(match) do
         local data = metadata[id]
         local name = self._injection_query.captures[id]
+        local language_override = data.language
         local offset_range = data and data.offset
 
         -- Lang should override any other language tag
         if name == "language" then
-          lang = query.get_node_text(node, self._source)
+          if language_override then
+            lang = language_override
+          else
+            lang = query.get_node_text(node, self._source)
+          end
         elseif name == "combined" then
           combined = true
         elseif name == "content" then
