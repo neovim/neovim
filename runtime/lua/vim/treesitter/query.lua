@@ -242,7 +242,14 @@ local directive_handlers = {
     if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
       metadata[pred[2]][key] = range
     end
-  end
+  end,
+
+  ["downcase!"] = function(match, _, bufnr, pred, metadata)
+    local node = match[pred[2]]
+    local text = M.get_node_text(node, bufnr)
+    local language = string.lower(text)
+    metadata[pred[2]]['language'] = language
+  end,
 }
 
 --- Adds a new predicate to be used in queries

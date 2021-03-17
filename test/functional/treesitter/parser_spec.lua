@@ -594,6 +594,33 @@ int x = INT_MAX;
 
         eq(result, "value")
       end)
+
+    end)
+  end)
+
+  describe("when calling the downcase directive", function()
+    it("should allow overriding the language", function()
+      insert([[
+        int HTML = 42;
+      ]])
+
+      local result = exec_lua([[
+      local language_override
+
+      local query = vim.treesitter.parse_query("c", '((identifier) @language (#downcase! @language))')
+      local parser = vim.treesitter.get_parser(0, "c")
+
+      for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
+        for id, node in pairs(match) do
+          local data = metadata[id]
+          language_override = data.language
+        end
+      end
+
+      return language_override
+      ]])
+
+      eq(result, "html")
     end)
   end)
 end)
