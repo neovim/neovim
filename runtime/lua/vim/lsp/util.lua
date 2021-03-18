@@ -647,6 +647,27 @@ local function create_file(change)
 end
 
 
+local function delete_file(change)
+  local opts = change.options or {}
+  local fname = vim.uri_to_fname(change.uri)
+  local stat = vim.loop.fs_stat(fname)
+  if opts.ignoreIfNotExists and not stat then
+    return
+  end
+  assert(stat, "Cannot delete not existing file or folder " .. fname)
+  local flags
+  if stat and stat.type == 'directory' then
+    flags = opts.recursive and 'rf' or 'd'
+  else
+    flags = ''
+  end
+  local bufnr = vim.fn.bufadd(fname)
+  local result = tonumber(vim.fn.delete(fname, flags))
+  assert(result == 0, 'Could not delete file: ' .. fname .. ', stat: ' .. vim.inspect(stat))
+  api.nvim_buf_delete(bufnr, { force = true })
+end
+
+
 --- Applies a `WorkspaceEdit`.
 ---
 --@param workspace_edit (table) `WorkspaceEdit`
@@ -662,8 +683,9 @@ function M.apply_workspace_edit(workspace_edit)
         )
       elseif change.kind == 'create' then
         create_file(change)
+      elseif change.kind == 'delete' then
+        delete_file(change)
       elseif change.kind then
-        -- TODO(ashkan) handle DeleteFile
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
         M.apply_text_document_edit(change, idx)

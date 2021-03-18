@@ -1319,6 +1319,45 @@ describe('LSP', function()
       eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
       eq('', read_file(tmpfile))
     end)
+    it('DeleteFile delete file and buffer', function()
+      local tmpfile = helpers.tmpname()
+      write_file(tmpfile, 'Be gone')
+      local uri = exec_lua([[
+        local fname = select(1, ...)
+        local bufnr = vim.fn.bufadd(fname)
+        vim.fn.bufload(bufnr)
+        return vim.uri_from_fname(fname)
+      ]], tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'delete',
+            uri = uri,
+          }
+        }
+      }
+      eq(true, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
+      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(false, exec_lua('return vim.api.nvim_buf_is_loaded(vim.fn.bufadd(...))', tmpfile))
+    end)
+    it('DeleteFile fails if file does not exist and ignoreIfNotExists is false', function()
+      local tmpfile = helpers.tmpname()
+      os.remove(tmpfile)
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'delete',
+            uri = uri,
+            options = {
+              ignoreIfNotExists = false,
+            }
+          }
+        }
+      }
+      eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
+      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+    end)
   end)
 
   describe('completion_list_to_complete_items', function()
