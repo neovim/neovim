@@ -548,7 +548,7 @@ Object nvim_exec_lua(String code, Array args, Error *err)
 /// Notify the user with a message
 ///
 /// Relays the call to vim.notify . By default forwards your message in the
-/// echo area but can be overriden to trigger desktop notifications.
+/// echo area but can be overridden to trigger desktop notifications.
 ///
 /// @param msg        Message to display to the user
 /// @param log_level  The log level
