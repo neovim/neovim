@@ -749,6 +749,9 @@ function protocol.make_client_capabilities()
       };
       workspaceFolders = true;
       applyEdit = true;
+      workspaceEdit = {
+        resourceOperations = {'rename', 'create', 'delete',},
+      };
     };
     callHierarchy = {
       dynamicRegistration = false;
