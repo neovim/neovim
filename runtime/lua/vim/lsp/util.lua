@@ -635,6 +635,18 @@ function M.rename(old_fname, new_fname, opts)
 end
 
 
+local function create_file(change)
+  local opts = change.options or {}
+  -- from spec: Overwrite wins over `ignoreIfExists`
+  local fname = vim.uri_to_fname(change.uri)
+  if not opts.ignoreIfExists or opts.overwrite then
+    local file = io.open(fname, 'w')
+    file:close()
+  end
+  vim.fn.bufadd(fname)
+end
+
+
 --- Applies a `WorkspaceEdit`.
 ---
 --@param workspace_edit (table) `WorkspaceEdit`
@@ -648,8 +660,10 @@ function M.apply_workspace_edit(workspace_edit)
           vim.uri_to_fname(change.newUri),
           change.options
         )
+      elseif change.kind == 'create' then
+        create_file(change)
       elseif change.kind then
-        -- TODO(ashkan) handle CreateFile/DeleteFile
+        -- TODO(ashkan) handle DeleteFile
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
         M.apply_text_document_edit(change, idx)

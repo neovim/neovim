@@ -750,7 +750,7 @@ function protocol.make_client_capabilities()
       workspaceFolders = true;
       applyEdit = true;
       workspaceEdit = {
-        resourceOperations = {'rename',},
+        resourceOperations = {'rename', 'create',},
       };
     };
     callHierarchy = {

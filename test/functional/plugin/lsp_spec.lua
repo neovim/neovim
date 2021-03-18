@@ -1265,6 +1265,60 @@ describe('LSP', function()
         return vim.api.nvim_buf_get_lines(target_bufnr, 0, -1, false)
       ]], make_workspace_edit(edits), target_bufnr))
     end)
+    it('Supports file creation with CreateFile payload', function()
+      local tmpfile = helpers.tmpname()
+      os.remove(tmpfile) -- Should not exist, only interested in a tmpname
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'create',
+            uri = uri,
+          },
+        }
+      }
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+    end)
+    it('createFile does not touch file if it exists and ignoreIfExists is set', function()
+      local tmpfile = helpers.tmpname()
+      write_file(tmpfile, 'Dummy content')
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'create',
+            uri = uri,
+            options = {
+              ignoreIfExists = true,
+            },
+          },
+        }
+      }
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq('Dummy content', read_file(tmpfile))
+    end)
+    it('createFile overrides file if overwrite is set', function()
+      local tmpfile = helpers.tmpname()
+      write_file(tmpfile, 'Dummy content')
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'create',
+            uri = uri,
+            options = {
+              overwrite = true,
+              ignoreIfExists = true, -- overwrite must win over ignoreIfExists
+            },
+          },
+        }
+      }
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq('', read_file(tmpfile))
+    end)
   end)
 
   describe('completion_list_to_complete_items', function()
