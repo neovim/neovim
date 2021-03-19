@@ -34,40 +34,81 @@ bool os_has_conpty_working(void)
 TriState os_dyn_conpty_init(void)
 {
 #define OPENCONSOLE "OpenConsole.exe"
-  char *prog_path = xstrdup((const char *)get_vim_var_str(VV_PROGPATH));
-  char *tail = (char *)path_tail((char_u *)prog_path);
-  *tail = NUL;
-  size_t len = sizeof OPENCONSOLE + (size_t)(tail - prog_path);
-  char *exe_path = xmalloc(len);
-  snprintf(exe_path, len, "%s%s", prog_path, OPENCONSOLE);
-  const bool has_openconsole = os_can_exe(exe_path, NULL, false);
-  xfree(prog_path);
-  xfree(exe_path);
-  uv_lib_t lib;
-  if (uv_dlopen("conpty.dll", &lib) || !has_openconsole) {
-    uv_dlclose(&lib);
-    if (uv_dlopen("kernel32.dll", &lib)) {
-      uv_dlclose(&lib);
-      return kFalse;
-    }
+  wchar_t *utf16_dll_path = NULL;
+  char *utf8_dll_path = NULL;
+  char *exe_path = NULL;
+  TriState result = kFalse;
+  uv_lib_t lib_kernel32;
+  uv_lib_t *need_close = &lib_kernel32;
+  if (uv_dlopen("kernel32.dll", &lib_kernel32)) {
+    goto end;
   }
   static struct {
     char *name;
     FARPROC *ptr;
+    FARPROC proc;
   } conpty_entry[] = {
-    { "CreatePseudoConsole", (FARPROC *)&pCreatePseudoConsole },
-    { "ResizePseudoConsole", (FARPROC *)&pResizePseudoConsole },
-    { "ClosePseudoConsole", (FARPROC *)&pClosePseudoConsole },
-    { NULL, NULL }
+    { "CreatePseudoConsole", (FARPROC *)&pCreatePseudoConsole, NULL },
+    { "ResizePseudoConsole", (FARPROC *)&pResizePseudoConsole, NULL },
+    { "ClosePseudoConsole", (FARPROC *)&pClosePseudoConsole, NULL }
   };
-  for (int i = 0;
-       conpty_entry[i].name != NULL && conpty_entry[i].ptr != NULL; i++) {
-    if (uv_dlsym(&lib, conpty_entry[i].name, (void **)conpty_entry[i].ptr)) {
-      uv_dlclose(&lib);
-      return kFalse;
+  for (int i = 0; i < (int)ARRAY_SIZE(conpty_entry); i++) {
+    if (uv_dlsym(&lib_kernel32, conpty_entry[i].name,
+                 (void **)&conpty_entry[i].proc)) {
+      goto end;
+    }
+    *conpty_entry[i].ptr = conpty_entry[i].proc;
+  }
+  result = kTrue;
+  uv_lib_t lib_conpty;
+  need_close = &lib_conpty;
+  if (uv_dlopen("conpty.dll", &lib_conpty)) {
+    goto end;
+  } else {
+    for (int i = 0; i < (int)ARRAY_SIZE(conpty_entry); i++) {
+      if (uv_dlsym(&lib_conpty, conpty_entry[i].name,
+                   (void **)&conpty_entry[i].proc)) {
+        goto end;
+      }
+    }
+    DWORD buf_len = MAXPATHL * sizeof(wchar_t);
+    utf16_dll_path = xmalloc(buf_len);
+    DWORD ret;
+    retry:
+    SetLastError(ERROR_SUCCESS);
+    ret = GetModuleFileNameW(lib_conpty.handle, utf16_dll_path, buf_len);
+    if (ret != 0) {
+      if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        buf_len *= 2;
+        utf16_dll_path = xrealloc(utf16_dll_path, buf_len);
+        goto retry;
+      }
+    } else {
+      goto end;
+    }
+    if (utf16_to_utf8(utf16_dll_path, -1, &utf8_dll_path)) {
+      goto end;
+    }
+    char *tail = (char *)path_tail((char_u *)utf8_dll_path);
+    *tail = NUL;
+    size_t len = sizeof OPENCONSOLE + (size_t)(tail - utf8_dll_path);
+    exe_path = xmalloc(len);
+    snprintf(exe_path, len, "%s%s", utf8_dll_path, OPENCONSOLE);
+    if (!os_can_exe(exe_path, NULL, false)) {
+      goto end;
+    }
+    need_close = &lib_kernel32;
+    for (int i = 0; i < (int)ARRAY_SIZE(conpty_entry); i++) {
+      *conpty_entry[i].ptr = conpty_entry[i].proc;
     }
   }
-  return kTrue;
+
+end:
+  uv_dlclose(need_close);
+  xfree(utf16_dll_path);
+  xfree(utf8_dll_path);
+  xfree(exe_path);
+  return result;
 #undef OPENCONSOLE
 }
 
