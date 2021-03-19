@@ -1619,6 +1619,23 @@ static void win_init_some(win_T *newp, win_T *oldp)
   win_copy_options(oldp, newp);
 }
 
+/// Return TRUE if "win" is floating window in the current tab page.
+///
+/// @param  win  window to check
+bool win_valid_floating(const win_T *win)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (win == NULL) {
+    return false;
+  }
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp == win) {
+      return wp->w_floating;
+    }
+  }
+  return false;
+}
 
 /// Check if "win" is a pointer to an existing window in the current tabpage.
 ///
