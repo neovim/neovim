@@ -35,7 +35,7 @@ compile_commands.json
 /src/nvim/testdir/del
 /src/nvim/testdir/test*.out
 /src/nvim/testdir/test*.res
-/src/nvim/testdir/test.log
+/src/nvim/testdir/test*.log
 /src/nvim/testdir/messages
 /src/nvim/testdir/viminfo
 /src/nvim/testdir/test.ok

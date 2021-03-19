@@ -111,7 +111,8 @@ func Test_pack_in_rtp_when_plugins_run()
 endfunc
 
 func Test_help_arg()
-  CheckNotMSWindows
+  " This does not work with a GUI-only binary, such as on MS-Windows.
+  CheckAnyOf Unix NotGui
 
   if RunVim([], [], '--help >Xtestout')
     let lines = readfile('Xtestout')
@@ -427,7 +428,7 @@ endfunction
 " Test the -reverse and +reverse arguments (for GUI only).
 func Test_reverse()
   CheckCanRunGui
-  CheckNotMSWindows
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
 
   let after =<< trim [CODE]
     call writefile([&background], "Xtest_reverse")
@@ -448,7 +449,7 @@ endfunc
 " Test the -background and -foreground arguments (for GUI only).
 func Test_background_foreground()
   CheckCanRunGui
-  CheckNotMSWindows
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
 
   " Is there a better way to check the effect of -background & -foreground
   " other than merely looking at &background (dark or light)?
@@ -497,7 +498,7 @@ endfunc
 " Test the -geometry argument (for GUI only).
 func Test_geometry()
   CheckCanRunGui
-  CheckNotMSWindows
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
 
   if has('gui_motif') || has('gui_athena')
     " FIXME: With GUI Athena or Motif, the value of getwinposx(),
@@ -529,7 +530,7 @@ endfunc
 " Test the -iconic argument (for GUI only).
 func Test_iconic()
   CheckCanRunGui
-  CheckNotMSWindows
+  CheckAnyOf Feature:gui_gtk Feature:gui_motif Feature:gui_athena
 
   call RunVim([], [], '-f -g -iconic -cq')
 
