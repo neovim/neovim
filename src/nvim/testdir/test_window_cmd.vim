@@ -808,6 +808,39 @@ func Test_winnr()
   only | tabonly
 endfunc
 
+func Test_win_splitmove()
+  edit a
+  leftabove split b
+  leftabove vsplit c
+  leftabove split d
+  call assert_equal(0, win_splitmove(winnr(), winnr('l')))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'd')
+  call assert_equal(bufname(winbufnr(3)), 'b')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'vertical': 1}))
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'vertical': 1}))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'b')
+  call assert_equal(bufname(winbufnr(3)), 'd')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('k'), {'vertical': 1}))
+  call assert_equal(bufname(winbufnr(1)), 'd')
+  call assert_equal(bufname(winbufnr(2)), 'c')
+  call assert_equal(bufname(winbufnr(3)), 'b')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'rightbelow': v:true}))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'b')
+  call assert_equal(bufname(winbufnr(3)), 'a')
+  call assert_equal(bufname(winbufnr(4)), 'd')
+  only | bd
+
+  call assert_fails('call win_splitmove(winnr(), 123)', 'E957:')
+  call assert_fails('call win_splitmove(123, winnr())', 'E957:')
+  call assert_fails('call win_splitmove(winnr(), winnr())', 'E957:')
+endfunc
+
 func Test_window_resize()
   " Vertical :resize (absolute, relative, min and max size).
   vsplit

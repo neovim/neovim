@@ -2498,6 +2498,8 @@ win_gotoid({expr})		Number	go to |window-ID| {expr}
 win_id2tabwin({expr})		List	get tab and window nr from |window-ID|
 win_id2win({expr})		Number	get window nr from |window-ID|
 win_screenpos({nr})		List	get screen position of window {nr}
+win_splitmove({nr}, {target} [, {options}])
+				none	move window {nr} to split of {target}
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})			Number	height of window {nr}
@@ -9369,6 +9371,25 @@ win_screenpos({nr})					*win_screenpos()*
 		{nr} can be the window number or the |window-ID|.
 		Return [0, 0] if the window cannot be found in the current
 		tabpage.
+
+win_splitmove({nr}, {target} [, {options}])		*win_splitmove()*
+	        Move the window {nr} to a new split of the window {target}.
+		This is similar to moving to {target}, creating a new window
+		using |:split| but having the same contents as window {nr}, and
+		then closing {nr}.
+
+		Both {nr} and {target} can be window numbers or |window-ID|s.
+
+		Returns zero for success, non-zero for failure.
+
+		{options} is a Dictionary with the following optional entries:
+		  "vertical"	When TRUE, the split is created vertically,
+				like with |:vsplit|.
+		  "rightbelow"	When TRUE, the split is made below or to the
+				right (if vertical).  When FALSE, it is done
+				above or to the left (if vertical).  When not
+				present, the values of 'splitbelow' and
+				'splitright' are used.
 
 							*winbufnr()*
 winbufnr({nr})	The result is a Number, which is the number of the buffer
