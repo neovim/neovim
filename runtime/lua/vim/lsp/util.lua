@@ -911,8 +911,8 @@ function M.preview_location(location)
   end
   local range = location.targetRange or location.range
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range["end"].line+1, false)
-  local filetype = api.nvim_buf_get_option(bufnr, 'filetype')
-  return M.open_floating_preview(contents, filetype)
+  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
+  return M.open_floating_preview(contents, syntax)
 end
 
 --@private
@@ -1201,7 +1201,7 @@ end
 --- Shows contents in a floating window.
 ---
 --@param contents table of lines to show in window
---@param filetype string of filetype to set for opened buffer
+--@param syntax string of syntax to set for opened buffer
 --@param opts dictionary with optional fields
 --             - height    of floating window
 --             - width     of floating window
@@ -1214,10 +1214,10 @@ end
 --             - pad_bottom number of lines to pad contents at bottom
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
-function M.open_floating_preview(contents, filetype, opts)
+function M.open_floating_preview(contents, syntax, opts)
   validate {
     contents = { contents, 't' };
-    filetype = { filetype, 's', true };
+    syntax = { syntax, 's', true };
     opts = { opts, 't', true };
   }
   opts = opts or {}
@@ -1230,12 +1230,12 @@ function M.open_floating_preview(contents, filetype, opts)
   local width, height = M._make_floating_popup_size(contents, opts)
 
   local floating_bufnr = api.nvim_create_buf(false, true)
-  if filetype then
-    api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
+  if syntax then
+    api.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
   end
   local float_option = M.make_floating_popup_options(width, height, opts)
   local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
-  if filetype == 'markdown' then
+  if syntax == 'markdown' then
     api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)

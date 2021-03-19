@@ -1586,6 +1586,12 @@ convert_signature_help_to_markdown_lines({signature_help})
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 
+create_file({change})                             *vim.lsp.util.create_file()*
+                TODO: Documentation
+
+delete_file({change})                             *vim.lsp.util.delete_file()*
+                TODO: Documentation
+
                                      *vim.lsp.util.extract_completion_items()*
 extract_completion_items({result})
                 Can be used to extract the completion items from a `textDocument/completion` request, which may return one of `CompletionItem[]` , `CompletionList` or null.
@@ -1793,12 +1799,12 @@ make_workspace_params({added}, {removed})
                     {removed}
 
                                         *vim.lsp.util.open_floating_preview()*
-open_floating_preview({contents}, {filetype}, {opts})
+open_floating_preview({contents}, {syntax}, {opts})
                 Shows contents in a floating window.
 
                 Parameters: ~
                     {contents}  table of lines to show in window
-                    {filetype}  string of filetype to set for opened buffer
+                    {syntax}    string of syntax to set for opened buffer
                     {opts}      dictionary with optional fields
 
                 Return: ~
@@ -1828,6 +1834,10 @@ preview_location({location})                 *vim.lsp.util.preview_location()*
                 Return: ~
                     (bufnr,winnr) buffer and window number of floating window
                     or nil
+
+rename({old_fname}, {new_fname}, {opts})               *vim.lsp.util.rename()*
+                Parameters: ~
+                    {opts}  (table)
 
 set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
                 Replaces text in a range with new text.
