@@ -54,7 +54,7 @@ Install from source
 
 The build is CMake-based, but a Makefile is provided as a convenience.
 
-    make CMAKE_BUILD_TYPE=RelWithDebInfo
+    sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
 
 To install to a non-default location:
