@@ -20,6 +20,7 @@
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
 #include "nvim/vim.h"
+#include "nvim/aucmd.h"
 #include "nvim/buffer.h"
 #include "nvim/context.h"
 #include "nvim/file_search.h"

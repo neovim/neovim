@@ -4,6 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local source = helpers.source
+local request = helpers.request
 
 describe('WinScrolled', function()
   before_each(clear)
@@ -46,9 +47,9 @@ describe('WinScrolled', function()
 
     let g:scrolled = 0
     autocmd WinScrolled * let g:scrolled += 1
-    call feedkeys("LA\<CR><Esc>", "n")
+    call feedkeys("LA\<CR>\<Esc>", "n")
     ]])
-    eq(2, eval('g:scrolled'))
+    eq(1, eval('g:scrolled'))
   end)
 
   it('is triggered when the window is resized', function()
@@ -58,5 +59,58 @@ describe('WinScrolled', function()
     wincmd v
     ]])
     eq(1, eval('g:scrolled'))
+  end)
+
+  it('is triggered through nvim_win_set(width|height)', function()
+    source([[
+    let g:scrolled = 0
+    vsplit foo
+    split bar
+    autocmd WinScrolled <buffer> let g:scrolled += 1
+    echom 'before'
+    wincmd w
+    echom 'after'
+    ]])
+    request('nvim_win_set_width', 0, eval('winwidth(0) - 1'))
+    eq(1, eval('g:scrolled'))
+    request('nvim_win_set_height', 0, eval('winheight(0) - 1'))
+    eq(2, eval('g:scrolled'))
+  end)
+
+  it('is triggered through nvim_win_set_config', function()
+    source([[
+    let g:scrolled = 0
+    autocmd WinScrolled <buffer> let g:scrolled += 1
+    ]])
+    eq(0, eval('g:scrolled'))
+    local id = request('nvim_open_win', 0, false, {relative='win', width=10, height=5, bufpos={1, 1}})
+    eq(0, eval('g:scrolled'))
+    request('nvim_win_set_config', id, {relative='win', width=8, height=5, bufpos={1, 1}})
+    eq(1, eval('g:scrolled'))
+  end)
+
+  it('is triggered when non-current window is closed via wincmd', function()
+    source([[
+    vsplit foo
+    let g:scrolled = 0
+    autocmd WinScrolled <buffer> let g:scrolled += 1
+    split bar
+    wincmd l
+    wincmd c
+    ]])
+    eq(2, eval('g:scrolled'))
+  end)
+
+  it('is triggered when non-currenta window is closed via nvim_win_close', function()
+    source([[
+    vsplit foo
+    let g:scrolled = 0
+    autocmd WinScrolled <buffer> let g:scrolled += 1
+    vsplit bar
+    let g:win = win_getid()
+    wincmd W
+    ]])
+    request('nvim_win_close', eval('g:win'), true)
+    eq(2, eval('g:scrolled'))
   end)
 end)

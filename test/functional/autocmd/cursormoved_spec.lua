@@ -20,15 +20,17 @@ describe('CursorMoved', function()
     eq(2, eval('g:cursormoved'))
   end)
 
-  it("is not triggered by functions that don't change the window", function()
+  it("is triggered when changed from a non-current window", function()
     source([[
     let g:cursormoved = 0
     let g:buf = bufnr('%')
+    let g:win = win_getid()
     vsplit foo
     autocmd CursorMoved * let g:cursormoved += 1
-    call nvim_buf_set_lines(g:buf, 0, -1, v:true, ['aaa'])
+    call nvim_buf_set_lines(g:buf, 0, -1, v:true, ['a', 'b', 'c'])
+    call nvim_win_set_cursor(g:win, [3, 0])
     ]])
-    eq({'aaa'}, funcs.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
-    eq(0, eval('g:cursormoved'))
+    eq({'a', 'b', 'c'}, funcs.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
+    eq(1, eval('g:cursormoved'))
   end)
 end)

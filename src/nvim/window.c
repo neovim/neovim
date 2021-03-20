@@ -9,6 +9,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/aucmd.h"
 #include "nvim/window.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -605,6 +606,7 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
   wp->w_vsep_width = 0;
 
   win_config_float(wp, fconfig);
+  win_update_last_scroll(wp);
   wp->w_pos_changed = true;
   redraw_later(wp, VALID);
   return wp;
@@ -1541,6 +1543,10 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   // Send the window positions to the UI
   oldwin->w_pos_changed = true;
+
+  FOR_ALL_WINDOWS_IN_TAB(wpp, curtab) {
+    autocmd_check_window_scrolled(wpp);
+  }
 
   return OK;
 }
@@ -2733,6 +2739,11 @@ int win_close(win_T *win, bool free_buf)
 
   curwin->w_pos_changed = true;
   redraw_all_later(NOT_VALID);
+
+  FOR_ALL_WINDOWS_IN_TAB(wpp, curtab) {
+    autocmd_check_window_scrolled(wpp);
+  }
+
   return OK;
 }
 
@@ -2774,6 +2785,9 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   do_autocmd_winclosed(win);
   // autocmd may have freed the window already.
   if (!win_valid_any_tab(win)) {
+    FOR_ALL_WINDOWS_IN_TAB(wpp, tp) {
+      autocmd_check_window_scrolled(wpp);
+    }
     return;
   }
 
@@ -2833,8 +2847,13 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   /* Free the memory used for the window. */
   win_free_mem(win, &dir, tp);
 
-  if (free_tp)
+  if (free_tp) {
     free_tabpage(tp);
+  } else {
+    FOR_ALL_WINDOWS_IN_TAB(wpp, tp) {
+      autocmd_check_window_scrolled(wpp);
+    }
+  }
 }
 
 // Free the memory used for a window.
@@ -3718,6 +3737,8 @@ static int win_alloc_firstwin(win_T *oldwin)
     /* We don't want cursor- and scroll-binding in the first window. */
     RESET_BINDING(curwin);
   }
+
+  win_update_last_scroll(curwin);
 
   new_frame(curwin);
   topframe = curwin->w_frame;
@@ -4727,6 +4748,11 @@ static win_T *win_alloc(win_T *after, int hidden)
 
   new_wp->w_wincol = 0;
   new_wp->w_width = Columns;
+  new_wp->w_height =
+    Rows
+    - tabline_height()
+    - (p_ls == 2 ? 1 : 0)
+    - (p_ch);
 
   /* position the display and the cursor at the top of the file. */
   new_wp->w_topline = 1;
@@ -4989,21 +5015,26 @@ void shell_new_columns(void)
 /// @param wp the window to check
 bool win_did_scroll(win_T *wp)
 {
-  return (curwin->w_last_topline != curwin->w_topline
-          || curwin->w_last_leftcol != curwin->w_leftcol
-          || curwin->w_last_width != curwin->w_width
-          || curwin->w_last_height != curwin->w_height);
+  return (wp->w_last_topline != wp->w_topline
+          || wp->w_last_leftcol != wp->w_leftcol
+          || wp->w_last_width != wp->w_width
+          || wp->w_last_height != wp->w_height);
+}
+
+/// Update saved fields for WinScrolled autocmd
+void win_update_last_scroll(win_T *wp)
+{
+  wp->w_last_topline = wp->w_topline;
+  wp->w_last_leftcol = wp->w_leftcol;
+  wp->w_last_width = wp->w_width;
+  wp->w_last_height = wp->w_height;
 }
 
 /// Trigger WinScrolled autocmd
 void do_autocmd_winscrolled(win_T *wp)
 {
-  apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, curbuf);
-
-  wp->w_last_topline = wp->w_topline;
-  wp->w_last_leftcol = wp->w_leftcol;
-  wp->w_last_width = wp->w_width;
-  wp->w_last_height = wp->w_height;
+  win_update_last_scroll(wp);
+  apply_autocmds(EVENT_WINSCROLLED, NULL, NULL, false, wp->w_buffer);
 }
 
 /*
@@ -6284,10 +6315,9 @@ int tabline_height(void)
   if (ui_has(kUITabline)) {
     return 0;
   }
-  assert(first_tabpage);
   switch (p_stal) {
   case 0: return 0;
-  case 1: return (first_tabpage->tp_next == NULL) ? 0 : 1;
+  case 1: return (first_tabpage && first_tabpage->tp_next == NULL) ? 0 : 1;
   }
   return 1;
 }

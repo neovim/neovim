@@ -11,6 +11,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/aucmd.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"

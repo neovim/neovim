@@ -7,6 +7,7 @@
 #include <limits.h>
 
 #include "nvim/ascii.h"
+#include "nvim/aucmd.h"
 #include "nvim/globals.h"
 #include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
@@ -73,6 +74,8 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   // If window is not current, state logic will not validate its cursor.
   // So do it now.
   validate_cursor();
+
+  apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, buf);
 
   restore_win(save_curwin, save_curtab, false);
 }
@@ -143,6 +146,8 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
+  autocmd_check_cursor_moved(win, EVENT_CURSORMOVED);
+
   redraw_later(win, VALID);
 }
 
@@ -189,6 +194,10 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
   win_setheight((int)height);
   curwin = savewin;
   try_end(err);
+
+  FOR_ALL_WINDOWS(wp) {
+    autocmd_check_window_scrolled(wp);
+  }
 }
 
 /// Gets the window width
@@ -234,6 +243,10 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   win_setwidth((int)width);
   curwin = savewin;
   try_end(err);
+
+  FOR_ALL_WINDOWS(wp) {
+    autocmd_check_window_scrolled(wp);
+  }
 }
 
 /// Gets a window-scoped (w:) variable
@@ -439,6 +452,8 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
     win_set_minimal_style(win);
     didset_window_options(win);
   }
+
+  autocmd_check_window_scrolled(win);
 }
 
 /// Gets window configuration.

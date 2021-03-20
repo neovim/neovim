@@ -19,4 +19,22 @@ describe('BufModified', function()
     request("nvim_command", [[normal! u]])
     eq(2, eval('g:modified'))
   end)
+
+  it('is triggered through nvim_buf_call', function()
+    source([[
+    let g:buf = bufnr()
+    let g:modified = 0
+    autocmd BufModifiedSet * let g:modified += 1
+    e foo
+    ]])
+    eq(0, eval('g:modified'))
+    source([[
+    lua <<END
+    vim.api.nvim_buf_call(vim.g.buf, function()
+      vim.fn.feedkeys('aa', 'n')
+    end)
+    END
+    ]])
+    eq(1, eval('g:modified'))
+  end)
 end)

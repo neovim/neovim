@@ -212,6 +212,7 @@ int open_buffer(
 
   // mark cursor position as being invalid
   curwin->w_valid = 0;
+  win_update_last_scroll(curwin);
 
   if (curbuf->b_ffname != NULL) {
     int old_msg_silent = msg_silent;
@@ -1568,6 +1569,8 @@ void enter_buffer(buf_T *buf)
   curwin->w_cursor.coladd = 0;
   curwin->w_set_curswant = true;
   curwin->w_topline_was_set = false;
+
+  win_update_last_scroll(curwin);
 
   // mark cursor position as being invalid
   curwin->w_valid = 0;
