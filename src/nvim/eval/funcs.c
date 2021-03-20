@@ -3980,6 +3980,87 @@ static void f_win_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_wincol + 1);
 }
 
+//
+// Move the window wp into a new split of targetwin in a given direction
+//
+static void win_move_into_split(win_T *wp, win_T *targetwin,
+                                int size, int flags)
+{
+  int     dir;
+  int     height = wp->w_height;
+  win_T   *oldwin = curwin;
+
+  if (wp == targetwin) {
+    return;
+  }
+
+  // Jump to the target window
+  if (curwin != targetwin) {
+    win_goto(targetwin);
+  }
+
+  // Remove the old window and frame from the tree of frames
+  (void)winframe_remove(wp, &dir, NULL);
+  win_remove(wp, NULL);
+  last_status(false);     // may need to remove last status line
+  (void)win_comp_pos();   // recompute window positions
+
+  // Split a window on the desired side and put the old window there
+  (void)win_split_ins(size, flags, wp, dir);
+
+  // If splitting horizontally, try to preserve height
+  if (size == 0 && !(flags & WSP_VERT)) {
+    win_setheight_win(height, wp);
+    if (p_ea) {
+      win_equal(wp, true, 'v');
+    }
+  }
+
+  if (oldwin != curwin) {
+    win_goto(oldwin);
+  }
+}
+
+// "win_splitmove()" function
+static void f_win_splitmove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T   *wp;
+  win_T   *targetwin;
+  int     flags = 0, size = 0;
+
+  wp = find_win_by_nr_or_id(&argvars[0]);
+  targetwin = find_win_by_nr_or_id(&argvars[1]);
+
+  if (wp == NULL || targetwin == NULL || wp == targetwin
+      || !win_valid(wp) || !win_valid(targetwin)
+      || win_valid_floating(wp) || win_valid_floating(targetwin)) {
+    EMSG(_(e_invalwindow));
+    rettv->vval.v_number = -1;
+    return;
+  }
+
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    dict_T      *d;
+    dictitem_T  *di;
+
+    if (argvars[2].v_type != VAR_DICT || argvars[2].vval.v_dict == NULL) {
+      EMSG(_(e_invarg));
+      return;
+    }
+
+    d = argvars[2].vval.v_dict;
+    if (tv_dict_get_number(d, "vertical")) {
+      flags |= WSP_VERT;
+    }
+    if ((di = tv_dict_find(d, "rightbelow", -1)) != NULL) {
+      flags |= tv_get_number(&di->di_tv) ? WSP_BELOW : WSP_ABOVE;
+    }
+    size = tv_dict_get_number(d, "size");
+  }
+
+  win_move_into_split(wp, targetwin, size, flags);
+}
+
 // "getwinpos({timeout})" function
 static void f_getwinpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
