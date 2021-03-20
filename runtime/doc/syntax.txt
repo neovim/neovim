@@ -4689,6 +4689,7 @@ in their own color.
 			highlighting for groups added by the user!
 			Uses the current value of 'background' to decide which
 			default colors to use.
+			If there was a default link, restore it. |:hi-link|
 
 :hi[ghlight] clear {group-name}
 :hi[ghlight] {group-name} NONE
