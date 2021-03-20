@@ -518,13 +518,13 @@ end
 --- precedence is as follows: textEdit.newText > insertText > label
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function get_completion_word(item)
-  if item.textEdit ~= nil and item.textEdit.newText ~= nil then
+  if item.textEdit ~= nil and item.textEdit.newText ~= nil and item.textEdit.newText ~= "" then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
       return item.textEdit.newText
     else
       return M.parse_snippet(item.textEdit.newText)
     end
-  elseif item.insertText ~= nil then
+  elseif item.insertText ~= nil and item.insertText ~= "" then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
       return item.insertText
     else
