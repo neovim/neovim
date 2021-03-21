@@ -7607,7 +7607,9 @@ int win_signcol_count(win_T *wp)
     }
   }
 
-  return MAX(minimum, MIN(maximum, needed_signcols));
+  int ret = MAX(minimum, MIN(maximum, needed_signcols));
+  assert(ret <= SIGN_SHOW_MAX);
+  return ret;
 }
 
 /// Get window or buffer local options

@@ -413,54 +413,101 @@ linenr_T buf_change_sign_type(
     return (linenr_T)0;
 }
 
-/// Gets a sign from a given line.
-///
-/// Return the type number of the sign at line number 'lnum' in buffer 'buf'
-/// which has the attribute specified by 'type'. Returns 0 if a sign is not
-/// found at the line number or it doesn't have the specified attribute.
-/// @param buf Buffer in which to search
-/// @param lnum Line in which to search
+/// Return the sign attrs which has the attribute specified by 'type'. Returns
+/// NULL if a sign is not found with the specified attribute.
 /// @param type Type of sign to look for
+/// @param sattrs Sign attrs to search through
 /// @param idx if there multiple signs, this index will pick the n-th
-//          out of the most `max_signs` sorted ascending by Id.
+///        out of the most `max_signs` sorted ascending by Id.
 /// @param max_signs the number of signs, with priority for the ones
-//         with the highest Ids.
-/// @return Identifier of the matching sign, or 0
-int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type,
-                    int idx, int max_signs)
+///        with the highest Ids.
+/// @return Attrs of the matching sign, or NULL
+sign_attrs_T * sign_get_attr(SignType type, sign_attrs_T sattrs[],
+                             int idx, int max_signs)
 {
-    signlist_T *sign;  // a sign in a b_signlist
-    signlist_T *matches[9];
+    sign_attrs_T *matches[SIGN_SHOW_MAX];
     int nr_matches = 0;
 
-    FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-        if (sign->lnum == lnum
-            && (type == SIGN_ANY
-                || (type == SIGN_TEXT
-                    && sign_get_text(sign->typenr) != NULL)
-                || (type == SIGN_LINEHL
-                    && sign_get_attr(sign->typenr, SIGN_LINEHL) != 0)
-                || (type == SIGN_NUMHL
-                    && sign_get_attr(sign->typenr, SIGN_NUMHL) != 0))) {
-            matches[nr_matches] = sign;
+    for (int i = 0; i < SIGN_SHOW_MAX; i++) {
+        if (   (type == SIGN_TEXT   && sattrs[i].text   != NULL)
+            || (type == SIGN_LINEHL && sattrs[i].linehl != 0)
+            || (type == SIGN_NUMHL  && sattrs[i].numhl  != 0)) {
+            matches[nr_matches] = &sattrs[i];
             nr_matches++;
-            // signlist is sorted with most important (priority, id), thus we
+            // attr list is sorted with most important (priority, id), thus we
             // may stop as soon as we have max_signs matches
-            if (nr_matches == ARRAY_SIZE(matches) || nr_matches >= max_signs) {
+            if (nr_matches >= max_signs) {
                 break;
             }
         }
     }
 
-    if (nr_matches > 0) {
-        if (idx >= nr_matches) {
-            return 0;
-        }
-
-        return matches[nr_matches - idx -1]->typenr;
+    if (nr_matches > idx) {
+        return matches[nr_matches - idx - 1];
     }
 
-    return 0;
+    return NULL;
+}
+
+/// Lookup a sign by typenr. Returns NULL if sign is not found.
+static sign_T * find_sign_by_typenr(int typenr)
+{
+    sign_T *sp;
+
+    for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
+        if (sp->sn_typenr == typenr) {
+            return sp;
+        }
+    }
+    return NULL;
+}
+
+/// Return the attributes of all the signs placed on line 'lnum' in buffer
+/// 'buf'. Used when refreshing the screen. Returns the number of signs.
+/// @param buf Buffer in which to search
+/// @param lnum Line in which to search
+/// @param sattrs Output array for attrs
+/// @return Number of signs of which attrs were found
+int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
+{
+    signlist_T *sign;
+    sign_T     *sp;
+
+    int nr_matches = 0;
+
+    FOR_ALL_SIGNS_IN_BUF(buf, sign) {
+        if (sign->lnum > lnum) {
+            // Signs are sorted by line number in the buffer. No need to check
+            // for signs after the specified line number 'lnum'.
+            break;
+        }
+
+        if (sign->lnum == lnum) {
+            sign_attrs_T sattr;
+            memset(&sattr, 0, sizeof(sattr));
+            sattr.typenr = sign->typenr;
+            sp = find_sign_by_typenr(sign->typenr);
+            if (sp != NULL) {
+                sattr.text = sp->sn_text;
+                if (sattr.text != NULL && sp->sn_text_hl != 0) {
+                    sattr.texthl = syn_id2attr(sp->sn_text_hl);
+                }
+                if (sp->sn_line_hl != 0) {
+                    sattr.linehl = syn_id2attr(sp->sn_line_hl);
+                }
+                if (sp->sn_num_hl != 0) {
+                    sattr.numhl = syn_id2attr(sp->sn_num_hl);
+                }
+            }
+
+            sattrs[nr_matches] = sattr;
+            nr_matches++;
+            if (nr_matches == SIGN_SHOW_MAX) {
+                break;
+            }
+        }
+    }
+    return nr_matches;
 }
 
 /// Delete sign 'id' in group 'group' from buffer 'buf'.
@@ -557,6 +604,12 @@ static signlist_T * buf_getsign_at_line(
   signlist_T  *sign;    // a sign in the signlist
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
+    if (sign->lnum > lnum) {
+      // Signs are sorted by line number in the buffer. No need to check
+      // for signs after the specified line number 'lnum'.
+      break;
+    }
+
     if (sign->lnum == lnum && sign_in_group(sign, groupname)) {
       return sign;
     }
@@ -1611,50 +1664,6 @@ static void sign_undefine(sign_T *sp, sign_T *sp_prev)
     sp_prev->sn_next = sp->sn_next;
   }
   xfree(sp);
-}
-
-/// Gets highlighting attribute for sign "typenr" corresponding to "type".
-int sign_get_attr(int typenr, SignType type)
-{
-  sign_T  *sp;
-  int sign_hl = 0;
-
-  for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-    if (sp->sn_typenr == typenr) {
-      switch (type) {
-        case SIGN_TEXT:
-          sign_hl = sp->sn_text_hl;
-          break;
-        case SIGN_LINEHL:
-          sign_hl = sp->sn_line_hl;
-          break;
-        case SIGN_NUMHL:
-          sign_hl = sp->sn_num_hl;
-          break;
-        default:
-          abort();
-      }
-      if (sign_hl > 0) {
-        return syn_id2attr(sign_hl);
-      }
-      break;
-    }
-  }
-  return 0;
-}
-
-/// Get text mark for sign "typenr".
-/// Returns NULL if there isn't one.
-char_u * sign_get_text(int typenr)
-{
-  sign_T  *sp;
-
-  for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-    if (sp->sn_typenr == typenr) {
-      return sp->sn_text;
-    }
-  }
-  return NULL;
 }
 
 /// Undefine/free all signs.
