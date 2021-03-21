@@ -908,7 +908,7 @@ add_llist_tags(
         if (len > 128) {
             len = 128;
         }
-        xstrlcpy((char *)tag_name, (const char *)tagp.tagname, len);
+        xstrlcpy((char *)tag_name, (const char *)tagp.tagname, len + 1);
         tag_name[len] = NUL;
 
         // Save the tag file name
@@ -975,7 +975,8 @@ add_llist_tags(
             if (cmd_len > (CMDBUFFSIZE - 5)) {
                 cmd_len = CMDBUFFSIZE - 5;
             }
-            xstrlcat((char *)cmd, (char *)cmd_start, cmd_len);
+            snprintf((char *)cmd + len, CMDBUFFSIZE + 1 - len,
+                     "%.*s", cmd_len, cmd_start);
             len += cmd_len;
 
             if (cmd[len - 1] == '$') {
@@ -3406,6 +3407,7 @@ int set_tagstack(win_T *wp, const dict_T *d, int action)
 
   if ((di = tv_dict_find(d, "items", -1)) != NULL) {
     if (di->di_tv.v_type != VAR_LIST) {
+      EMSG(_(e_listreq));
       return FAIL;
     }
     l = di->di_tv.vval.v_list;
