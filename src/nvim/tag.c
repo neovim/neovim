@@ -3002,7 +3002,8 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
  */
 static int find_extra(char_u **pp)
 {
-  char_u      *str = *pp;
+  char_u *str = *pp;
+  char_u first_char = **pp;
 
   // Repeat for addresses separated with ';'
   for (;; ) {
@@ -3010,7 +3011,7 @@ static int find_extra(char_u **pp)
       str = skipdigits(str);
     } else if (*str == '/' || *str == '?') {
       str = skip_regexp(str + 1, *str, false, NULL);
-      if (*str != **pp) {
+      if (*str != first_char) {
         str = NULL;
       } else {
         str++;
@@ -3028,6 +3029,7 @@ static int find_extra(char_u **pp)
       break;
     }
     str++;  // skip ';'
+    first_char = *str;
   }
 
   if (str != NULL && STRNCMP(str, ";\"", 2) == 0) {

@@ -81,4 +81,28 @@ func Test_tagfunc()
   call delete('Xfile1')
 endfunc
 
+" Test for modifying the tag stack from a tag function and jumping to a tag
+" from a tag function
+func Test_tagfunc_settagstack()
+  func Mytagfunc1(pat, flags, info)
+    call settagstack(1, {'tagname' : 'mytag', 'from' : [0, 10, 1, 0]})
+    return [{'name' : 'mytag', 'filename' : 'Xtest', 'cmd' : '1'}]
+  endfunc
+  set tagfunc=Mytagfunc1
+  call writefile([''], 'Xtest')
+  call assert_fails('tag xyz', 'E986:')
+
+  func Mytagfunc2(pat, flags, info)
+    tag test_tag
+    return [{'name' : 'mytag', 'filename' : 'Xtest', 'cmd' : '1'}]
+  endfunc
+  set tagfunc=Mytagfunc2
+  call assert_fails('tag xyz', 'E986:')
+
+  call delete('Xtest')
+  set tagfunc&
+  delfunc Mytagfunc1
+  delfunc Mytagfunc2
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

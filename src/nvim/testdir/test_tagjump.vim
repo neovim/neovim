@@ -609,6 +609,295 @@ func Test_tagline()
   set tags&
 endfunc
 
+" Test for expanding environment variable in a tag file name
+func Test_tag_envvar()
+  call writefile(["Func1\t$FOO\t/^Func1/"], 'Xtags')
+  set tags=Xtags
+
+  let $FOO='TagTestEnv'
+
+  let caught_exception = v:false
+  try
+    tag Func1
+  catch /E429:/
+    call assert_match('E429:.*"TagTestEnv".*', v:exception)
+    let caught_exception = v:true
+  endtry
+  call assert_true(caught_exception)
+
+  set tags&
+  call delete('Xtags')
+  unlet $FOO
+endfunc
+
+" Test for :ptag
+func Test_ptag()
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "second\tXfile1\t2",
+        \ "third\tXfile1\t3",],
+        \ 'Xtags')
+  set tags=Xtags
+  call writefile(['first', 'second', 'third'], 'Xfile1')
+
+  enew | only
+  ptag third
+  call assert_equal(2, winnr())
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, getwinvar(1, '&previewwindow'))
+  call assert_equal(0, getwinvar(2, '&previewwindow'))
+  wincmd w
+  call assert_equal(3, line('.'))
+
+  " jump to the tag again
+  ptag third
+  call assert_equal(3, line('.'))
+
+  " close the preview window
+  pclose
+  call assert_equal(1, winnr('$'))
+
+  call delete('Xfile1')
+  call delete('Xtags')
+  set tags&
+endfunc
+
+" Tests for guessing the tag location
+func Test_tag_guess()
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "func1\tXfoo\t/^int func1(int x)/",
+        \ "func2\tXfoo\t/^int func2(int y)/",
+        \ "func3\tXfoo\t/^func3/",
+        \ "func4\tXfoo\t/^func4/"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+
+    int FUNC1  (int x) { }
+    int 
+    func2   (int y) { }
+    int * func3 () { }
+
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  let v:statusmsg = ''
+  ta func1
+  call assert_match('E435:', v:statusmsg)
+  call assert_equal(2, line('.'))
+  let v:statusmsg = ''
+  ta func2
+  call assert_match('E435:', v:statusmsg)
+  call assert_equal(4, line('.'))
+  let v:statusmsg = ''
+  ta func3
+  call assert_match('E435:', v:statusmsg)
+  call assert_equal(5, line('.'))
+  call assert_fails('ta func4', 'E434:')
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+endfunc
+
+" Test for an unsorted tags file
+func Test_tag_sort()
+  call writefile([
+        \ "first\tXfoo\t1",
+        \ "ten\tXfoo\t3",
+        \ "six\tXfoo\t2"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+    int first() {}
+    int six() {}
+    int ten() {}
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  call assert_fails('tag first', 'E432:')
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for an unsorted tags file
+func Test_tag_fold()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "!_TAG_FILE_SORTED\t2\t/0=unsorted, 1=sorted, 2=foldcase/",
+        \ "first\tXfoo\t1",
+        \ "second\tXfoo\t2",
+        \ "third\tXfoo\t3"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+    int first() {}
+    int second() {}
+    int third() {}
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  enew
+  tag second
+  call assert_equal('Xfoo', bufname(''))
+  call assert_equal(2, line('.'))
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for the :ltag command
+func Test_ltag()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfoo\t1",
+        \ "second\tXfoo\t/^int second() {}$/",
+        \ "third\tXfoo\t3"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+    int first() {}
+    int second() {}
+    int third() {}
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  enew
+  call setloclist(0, [], 'f')
+  ltag third
+  call assert_equal('Xfoo', bufname(''))
+  call assert_equal(3, line('.'))
+  call assert_equal([{'lnum': 3, 'bufnr': bufnr('Xfoo'), 'col': 0,
+        \ 'pattern': '', 'valid': 1, 'vcol': 0, 'nr': 0, 'type': '',
+        \ 'module': '', 'text': 'third'}], getloclist(0))
+
+  ltag second
+  call assert_equal(2, line('.'))
+  call assert_equal([{'lnum': 0, 'bufnr': bufnr('Xfoo'), 'col': 0,
+        \ 'pattern': '^\Vint second() {}\$', 'valid': 1, 'vcol': 0, 'nr': 0,
+        \ 'type': '', 'module': '', 'text': 'second'}], getloclist(0))
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for setting the last search pattern to the tag search pattern
+" when cpoptions has 't'
+func Test_tag_last_search_pat()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfoo\t/^int first() {}/",
+        \ "second\tXfoo\t/^int second() {}/",
+        \ "third\tXfoo\t/^int third() {}/"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+    int first() {}
+    int second() {}
+    int third() {}
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  enew
+  let save_cpo = &cpo
+  set cpo+=t
+  let @/ = ''
+  tag second
+  call assert_equal('^int second() {}', @/)
+  let &cpo = save_cpo
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for jumping to a tag when the tag stack is full
+func Test_tag_stack_full()
+  let l = []
+  for i in range(10, 31)
+    let l += ["var" .. i .. "\tXfoo\t/^int var" .. i .. ";$/"]
+  endfor
+  call writefile(l, 'Xtags')
+  set tags=Xtags
+
+  let l = []
+  for i in range(10, 31)
+    let l += ["int var" .. i .. ";"]
+  endfor
+  call writefile(l, 'Xfoo')
+
+  enew
+  for i in range(10, 30)
+    exe "tag var" .. i
+  endfor
+  let l = gettagstack()
+  call assert_equal(20, l.length)
+  call assert_equal('var11', l.items[0].tagname)
+  tag var31
+  let l = gettagstack()
+  call assert_equal('var12', l.items[0].tagname)
+  call assert_equal('var31', l.items[19].tagname)
+
+  " Jump from the top of the stack
+  call assert_fails('tag', 'E556:')
+
+  " Pop from an unsaved buffer
+  enew!
+  call append(1, "sample text")
+  call assert_fails('pop', 'E37:')
+  call assert_equal(21, gettagstack().curidx)
+  enew!
+
+  " Pop all the entries in the tag stack
+  call assert_fails('30pop', 'E555:')
+
+  " Pop the tag stack when it is empty
+  call settagstack(1, {'items' : []})
+  call assert_fails('pop', 'E73:')
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
+" Test for browsing multiple matching tags
+func Test_tag_multimatch()
+  call writefile([
+        \ "!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfoo\t1",
+        \ "first\tXfoo\t2",
+        \ "first\tXfoo\t3"],
+        \ 'Xtags')
+  set tags=Xtags
+  let code =<< trim [CODE]
+    int first() {}
+    int first() {}
+    int first() {}
+  [CODE]
+  call writefile(code, 'Xfoo')
+
+  tag first
+  tlast
+  call assert_equal(3, line('.'))
+  call assert_fails('tnext', 'E428:')
+  tfirst
+  call assert_equal(1, line('.'))
+  call assert_fails('tprev', 'E425:')
+
+  call delete('Xtags')
+  call delete('Xfoo')
+  set tags&
+  %bwipe
+endfunc
+
 " Test for the 'taglength' option
 func Test_tag_length()
   set tags=Xtags
