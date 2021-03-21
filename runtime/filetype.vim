@@ -164,6 +164,9 @@ au BufNewFile,BufRead *.mar			setf vmasm
 " Atlas
 au BufNewFile,BufRead *.atl,*.as		setf atlas
 
+" Atom is based on XML
+au BufNewFile,BufRead *.atom			setf xml
+
 " Autoit v3
 au BufNewFile,BufRead *.au3			setf autoit
 
@@ -1396,6 +1399,9 @@ if has("fname_case")
 else
   au BufNewFile,BufRead *.rmd,*.smd			setf rmd
 endif
+
+" RSS looks like XML
+au BufNewFile,BufRead *.rss				setf xml
 
 " R reStructuredText file
 if has("fname_case")
