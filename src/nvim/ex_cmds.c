@@ -2866,7 +2866,10 @@ void ex_append(exarg_T *eap)
       else if (*p == TAB)
         vcol += 8 - vcol % 8;
       else
+      {
+	update_screen(0);
         break;
+      }
     }
     if ((p[0] == '.' && p[1] == NUL)
         || (!did_undo && u_save(lnum, lnum + 1 + (empty ? 1 : 0))
