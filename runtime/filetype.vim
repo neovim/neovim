@@ -1400,6 +1400,9 @@ else
   au BufNewFile,BufRead *.rmd,*.smd			setf rmd
 endif
 
+" RSS looks like XML
+au BufNewFile,BufRead *.rss				setf xml
+
 " R reStructuredText file
 if has("fname_case")
   au BufNewFile,BufRead *.Rrst,*.rrst,*.Srst,*.srst	setf rrst
