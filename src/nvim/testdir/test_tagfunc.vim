@@ -43,11 +43,23 @@ func Test_tagfunc()
   call assert_equal('one', g:tagfunc_args[0])
   call assert_equal('c', g:tagfunc_args[1])
 
+  let g:tagfunc_args=[]
+  execute "tag /foo$"
+  call assert_equal('foo$', g:tagfunc_args[0])
+  call assert_equal('r', g:tagfunc_args[1])
+
   set cpt=t
   let g:tagfunc_args=[]
   execute "normal! i\<c-n>\<c-y>"
-  call assert_equal('ci', g:tagfunc_args[1])
+  call assert_equal('\<\k\k', g:tagfunc_args[0])
+  call assert_equal('cir', g:tagfunc_args[1])
   call assert_equal('nothing1', getline('.')[0:7])
+
+  let g:tagfunc_args=[]
+  execute "normal! ono\<c-n>\<c-n>\<c-y>"
+  call assert_equal('\<no', g:tagfunc_args[0])
+  call assert_equal('cir', g:tagfunc_args[1])
+  call assert_equal('nothing2', getline('.')[0:7])
 
   func BadTagFunc1(...)
     return 0
