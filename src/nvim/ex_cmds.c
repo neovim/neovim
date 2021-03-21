@@ -2866,7 +2866,7 @@ void ex_append(exarg_T *eap)
       } else if (*p == TAB) {
         vcol += 8 - vcol % 8;
       } else {
-	update_screen(0);
+        update_screen(0);
         break;
       }
     }
