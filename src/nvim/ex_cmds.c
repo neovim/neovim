@@ -2861,11 +2861,11 @@ void ex_append(exarg_T *eap)
     /* Look for the "." after automatic indent. */
     vcol = 0;
     for (p = theline; indent > vcol; ++p) {
-      if (*p == ' ')
+      if (*p == ' ') {
         ++vcol;
-      else if (*p == TAB)
+      } else if (*p == TAB) {
         vcol += 8 - vcol % 8;
-      else{
+      } else {
 	update_screen(0);
         break;
       }
