@@ -270,8 +270,10 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
       diagnostic.severity = DiagnosticSeverity.Error
     end
     -- Account for servers that place diagnostics on terminating newline
-    local start = diagnostic.range.start
-    start.line = math.min(start.line, buf_line_count - 1)
+    if buf_line_count > 0 then
+      local start = diagnostic.range.start
+      start.line = math.min(start.line, buf_line_count - 1)
+    end
   end
 
   diagnostic_cache[bufnr][client_id] = diagnostics
