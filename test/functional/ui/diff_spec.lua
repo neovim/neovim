@@ -1107,4 +1107,5 @@ it('diff updates line numbers below filler lines', function()
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
   ]])
+  command("hi CursorLineNr guibg=red")
 end)
