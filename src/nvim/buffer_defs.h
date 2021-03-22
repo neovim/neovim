@@ -1079,6 +1079,10 @@ typedef struct {
   bool external;
   bool focusable;
   WinStyle style;
+  bool border;
+  schar_T border_chars[8];
+  int border_hl_ids[8];
+  int border_attr[8];
 } FloatConfig;
 
 #define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
@@ -1256,6 +1260,11 @@ struct window_S {
   int w_height_request;
   int w_width_request;
 
+  int w_border_adj;
+  // outer size of window grid, including border
+  int w_height_outer;
+  int w_width_outer;
+
   /*
    * === start of cached values ====
    */
@@ -1331,7 +1340,8 @@ struct window_S {
                                     // w_redr_type is REDRAW_TOP
   linenr_T w_redraw_top;            // when != 0: first line needing redraw
   linenr_T w_redraw_bot;            // when != 0: last line needing redraw
-  int w_redr_status;                // if TRUE status line must be redrawn
+  bool w_redr_status;               // if true status line must be redrawn
+  bool w_redr_border;               // if true border must be redrawn
 
   // remember what is shown in the ruler for this window (if 'ruler' set)
   pos_T w_ru_cursor;                // cursor position shown in ruler
@@ -1409,6 +1419,7 @@ struct window_S {
   int w_tagstacklen;                    // number of tags on stack
 
   ScreenGrid w_grid;                    // the grid specific to the window
+  ScreenGrid w_grid_alloc;              // the grid specific to the window
   bool w_pos_changed;                   // true if window position changed
   bool w_floating;                       ///< whether the window is floating
   FloatConfig w_float_config;

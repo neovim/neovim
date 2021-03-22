@@ -8501,7 +8501,7 @@ static bool tv_is_luafunc(typval_T *tv)
 int check_luafunc_name(const char *str, bool paren)
 {
   const char *p = str;
-  while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.') {
+  while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.' || *p == '\'') {
     p++;
   }
   if (*p != (paren ? '(' : NUL)) {

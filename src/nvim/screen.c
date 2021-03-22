@@ -232,7 +232,7 @@ void screen_invalidate_highlights(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     redraw_later(wp, NOT_VALID);
-    wp->w_grid.valid = false;
+    wp->w_grid_alloc.valid = false;
   }
 }
 
@@ -582,9 +582,16 @@ int update_screen(int type)
 
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid.chars) {
-      grid_invalidate(&wp->w_grid);
+    if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid_alloc.chars) {
+      grid_invalidate(&wp->w_grid_alloc);
       wp->w_redr_type = NOT_VALID;
+    }
+
+    // reallocate grid if needed.
+    win_grid_alloc(wp);
+
+    if (wp->w_redr_border || wp->w_redr_type >= NOT_VALID) {
+      win_redr_border(wp);
     }
 
     if (wp->w_redr_type != 0) {
@@ -773,8 +780,6 @@ static void win_update(win_T *wp, Providers *providers)
   buf_signcols(buf);
 
   type = wp->w_redr_type;
-
-  win_grid_alloc(wp);
 
   if (type >= NOT_VALID) {
     wp->w_redr_status = true;
@@ -4404,14 +4409,10 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
 /// screen positions.
 void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 {
-  if (!(*grid)->chars && *grid != &default_grid) {
-      *row_off += (*grid)->row_offset;
-      *col_off += (*grid)->col_offset;
-    if (*grid == &msg_grid_adj && msg_grid.chars) {
-      *grid = &msg_grid;
-    } else {
-      *grid = &default_grid;
-    }
+  if ((*grid)->target) {
+    *row_off += (*grid)->row_offset;
+    *col_off += (*grid)->col_offset;
+    *grid = (*grid)->target;
   }
 }
 
@@ -5415,6 +5416,46 @@ theend:
   entered = FALSE;
 }
 
+static void win_redr_border(win_T *wp)
+{
+  wp->w_redr_border = false;
+  if (!(wp->w_floating && wp->w_float_config.border)) {
+    return;
+  }
+
+  ScreenGrid *grid = &wp->w_grid_alloc;
+
+  schar_T *chars = wp->w_float_config.border_chars;
+  int *attrs = wp->w_float_config.border_attr;
+
+  int endrow = grid->Rows-1, endcol = grid->Columns-1;
+
+  grid_puts_line_start(grid, 0);
+  grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
+  for (int i = 1; i < endcol; i++) {
+    grid_put_schar(grid, 0, i, chars[1], attrs[1]);
+  }
+  grid_put_schar(grid, 0, endcol, chars[2], attrs[2]);
+  grid_puts_line_flush(false);
+
+  for (int i = 1; i < endrow; i++) {
+    grid_puts_line_start(grid, i);
+    grid_put_schar(grid, i, 0, chars[7], attrs[7]);
+    grid_puts_line_flush(false);
+    grid_puts_line_start(grid, i);
+    grid_put_schar(grid, i, endcol, chars[3], attrs[3]);
+    grid_puts_line_flush(false);
+  }
+
+  grid_puts_line_start(grid, endrow);
+  grid_put_schar(grid, endrow, 0, chars[6], attrs[6]);
+  for (int i = 1; i < endcol; i++) {
+    grid_put_schar(grid, endrow, i, chars[5], attrs[5]);
+  }
+  grid_put_schar(grid, endrow, endcol, chars[4], attrs[4]);
+  grid_puts_line_flush(false);
+}
+
 // Low-level functions to manipulate invidual character cells on the
 // screen grid.
 
@@ -5550,6 +5591,20 @@ void grid_puts_line_start(ScreenGrid *grid, int row)
   assert(put_dirty_row == -1);
   put_dirty_row = row;
   put_dirty_grid = grid;
+}
+
+void grid_put_schar(ScreenGrid *grid, int row, int col, char_u *schar, int attr)
+{
+  assert(put_dirty_row == row);
+  unsigned int off = grid->line_offset[row] + col;
+  if (grid->attrs[off] != attr || schar_cmp(grid->chars[off], schar)) {
+      schar_copy(grid->chars[off], schar);
+      grid->attrs[off] = attr;
+
+      put_dirty_first = MIN(put_dirty_first, col);
+      // TODO(bfredl): Y U NO DOUBLEWIDTH?
+      put_dirty_last = MAX(put_dirty_last, col+1);
+  }
 }
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
@@ -6143,12 +6198,15 @@ void check_for_delay(int check_msg_scroll)
 void win_grid_alloc(win_T *wp)
 {
   ScreenGrid *grid = &wp->w_grid;
+  ScreenGrid *grid_allocated = &wp->w_grid_alloc;
 
   int rows = wp->w_height_inner;
   int cols = wp->w_width_inner;
+  int total_rows = wp->w_height_outer;
+  int total_cols = wp->w_width_outer;
 
   bool want_allocation = ui_has(kUIMultigrid) || wp->w_floating;
-  bool has_allocation = (grid->chars != NULL);
+  bool has_allocation = (grid_allocated->chars != NULL);
 
   if (grid->Rows != rows) {
     wp->w_lines_valid = 0;
@@ -6157,35 +6215,47 @@ void win_grid_alloc(win_T *wp)
   }
 
   int was_resized = false;
-  if ((has_allocation != want_allocation)
-      || grid->Rows != rows
-      || grid->Columns != cols) {
-    if (want_allocation) {
-      grid_alloc(grid, rows, cols, wp->w_grid.valid, false);
-      grid->valid = true;
-    } else {
-      // Single grid mode, all rendering will be redirected to default_grid.
-      // Only keep track of the size and offset of the window.
-      grid_free(grid);
-      grid->Rows = rows;
-      grid->Columns = cols;
-      grid->valid = false;
+  if (want_allocation && (!has_allocation
+                          || grid_allocated->Rows != total_rows
+                          || grid_allocated->Columns != total_cols)) {
+    grid_alloc(grid_allocated, total_rows, total_cols,
+               wp->w_grid_alloc.valid, false);
+    grid_allocated->valid = true;
+    if (wp->w_border_adj) {
+      wp->w_redr_border = true;
     }
     was_resized = true;
-  } else if (want_allocation && has_allocation && !wp->w_grid.valid) {
-    grid_invalidate(grid);
-    grid->valid = true;
+  } else if (!want_allocation && has_allocation) {
+    // Single grid mode, all rendering will be redirected to default_grid.
+    // Only keep track of the size and offset of the window.
+    grid_free(grid_allocated);
+    grid_allocated->valid = false;
+    was_resized = true;
+  } else if (want_allocation && has_allocation && !wp->w_grid_alloc.valid) {
+    grid_invalidate(grid_allocated);
+    grid_allocated->valid = true;
   }
 
-  grid->row_offset = wp->w_winrow;
-  grid->col_offset = wp->w_wincol;
+  grid->Rows = rows;
+  grid->Columns = cols;
+
+  if (want_allocation) {
+    grid->target = grid_allocated;
+    grid->row_offset = wp->w_border_adj;
+    grid->col_offset = wp->w_border_adj;
+  } else {
+    grid->target = &default_grid;
+    grid->row_offset = wp->w_winrow;
+    grid->col_offset = wp->w_wincol;
+  }
 
   // send grid resize event if:
   // - a grid was just resized
   // - screen_resize was called and all grid sizes must be sent
   // - the UI wants multigrid event (necessary)
   if ((send_grid_resize || was_resized) && want_allocation) {
-    ui_call_grid_resize(grid->handle, grid->Columns, grid->Rows);
+    ui_call_grid_resize(grid_allocated->handle,
+                        grid_allocated->Columns, grid_allocated->Rows);
   }
 }
 
@@ -7531,7 +7601,7 @@ void win_new_shellsize(void)
 win_T *get_win_by_grid_handle(handle_T handle)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_grid.handle == handle) {
+    if (wp->w_grid_alloc.handle == handle) {
       return wp;
     }
   }

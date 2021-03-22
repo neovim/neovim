@@ -1416,6 +1416,25 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 ///                    end-of-buffer region is hidden by setting `eob` flag of
 ///                    'fillchars' to a space char, and clearing the
 ///                    |EndOfBuffer| region in 'winhighlight'.
+///   - `border`: style of (optional) window border. This can either be a string
+///      or an array. the string values are:
+///     - "none" No border. This is the default
+///     - "single" a single line box
+///     - "double" a double line box
+///     If it is an array it should be an array of eight items or any divisor of
+///     eight. The array will specifify the eight chars building up the border
+///     in a clockwise fashion starting with the top-left corner. As, an
+///     example, the double box style could be specified as:
+///         [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ]
+///     if the number of chars are less than eight, they will be repeated. Thus
+///     an ASCII border could be specified as:
+///       [ "/", "-", "\\", "|" ]
+///     or all chars the same as:
+///       [ "x" ]
+///     By default `FloatBorder` highlight is used which links to `VertSplit`
+///     when not defined.  It could also be specified by character:
+///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ]
+///
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
@@ -2831,8 +2850,8 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     g = &pum_grid;
   } else if (grid > 1) {
     win_T *wp = get_win_by_grid_handle((handle_T)grid);
-    if (wp != NULL && wp->w_grid.chars != NULL) {
-      g = &wp->w_grid;
+    if (wp != NULL && wp->w_grid_alloc.chars != NULL) {
+      g = &wp->w_grid_alloc;
     } else {
       api_set_error(err, kErrorTypeValidation,
                     "No grid with the given handle");

@@ -605,6 +605,7 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
   wp->w_vsep_width = 0;
 
   win_config_float(wp, fconfig);
+  win_set_inner_size(wp);
   wp->w_pos_changed = true;
   redraw_later(wp, VALID);
   return wp;
@@ -667,6 +668,8 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 
   bool change_external = fconfig.external != wp->w_float_config.external;
+  bool change_border = fconfig.border != wp->w_float_config.border;
+
   wp->w_float_config = fconfig;
 
   if (!ui_has(kUIMultigrid)) {
@@ -676,10 +679,17 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
 
   win_set_inner_size(wp);
   must_redraw = MAX(must_redraw, VALID);
+
   wp->w_pos_changed = true;
-  if (change_external) {
+  if (change_external || change_border) {
     wp->w_hl_needs_update = true;
     redraw_later(wp, NOT_VALID);
+  }
+
+  // changing border style while keeping border only requires redrawing border
+  if (fconfig.border) {
+    wp->w_redr_border = true;
+    redraw_later(wp, VALID);
   }
 }
 
@@ -713,7 +723,7 @@ int win_fdccol_count(win_T *wp)
 void ui_ext_win_position(win_T *wp)
 {
   if (!wp->w_floating) {
-    ui_call_win_pos(wp->w_grid.handle, wp->handle, wp->w_winrow,
+    ui_call_win_pos(wp->w_grid_alloc.handle, wp->handle, wp->w_winrow,
                     wp->w_wincol, wp->w_width, wp->w_height);
     return;
   }
@@ -743,8 +753,8 @@ void ui_ext_win_position(win_T *wp)
     }
     if (ui_has(kUIMultigrid)) {
       String anchor = cstr_to_string(float_anchor_str[c.anchor]);
-      ui_call_win_float_pos(wp->w_grid.handle, wp->handle, anchor, grid->handle,
-                            row, col, c.focusable);
+      ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
+                            grid->handle, row, col, c.focusable);
     } else {
       // TODO(bfredl): ideally, compositor should work like any multigrid UI
       // and use standard win_pos events.
@@ -759,17 +769,17 @@ void ui_ext_win_position(win_T *wp)
       wp->w_wincol = comp_col;
       bool valid = (wp->w_redr_type == 0);
       bool on_top = (curwin == wp) || !curwin->w_floating;
-      ui_comp_put_grid(&wp->w_grid, comp_row, comp_col, wp->w_height,
-                       wp->w_width, valid, on_top);
-      ui_check_cursor_grid(wp->w_grid.handle);
-      wp->w_grid.focusable = wp->w_float_config.focusable;
+      ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
+                       wp->w_height_outer, wp->w_width_outer, valid, on_top);
+      ui_check_cursor_grid(wp->w_grid_alloc.handle);
+      wp->w_grid_alloc.focusable = wp->w_float_config.focusable;
       if (!valid) {
-        wp->w_grid.valid = false;
+        wp->w_grid_alloc.valid = false;
         redraw_later(wp, NOT_VALID);
       }
     }
   } else {
-    ui_call_win_external_pos(wp->w_grid.handle, wp->handle);
+    ui_call_win_external_pos(wp->w_grid_alloc.handle, wp->handle);
   }
 
 }
@@ -784,258 +794,10 @@ void ui_ext_win_viewport(win_T *wp)
       // interact with incomplete final line? Diff filler lines?
       botline = wp->w_buffer->b_ml.ml_line_count;
     }
-    ui_call_win_viewport(wp->w_grid.handle, wp->handle, wp->w_topline-1,
+    ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline-1,
                          botline, wp->w_cursor.lnum-1, wp->w_cursor.col);
     wp->w_viewport_invalid = false;
   }
-}
-
-static bool parse_float_anchor(String anchor, FloatAnchor *out)
-{
-  if (anchor.size == 0) {
-    *out = (FloatAnchor)0;
-  }
-  char *str = anchor.data;
-  if (striequal(str, "NW")) {
-    *out = 0;  //  NW is the default
-  } else if (striequal(str, "NE")) {
-    *out = kFloatAnchorEast;
-  } else if (striequal(str, "SW")) {
-    *out = kFloatAnchorSouth;
-  } else if (striequal(str, "SE")) {
-    *out = kFloatAnchorSouth | kFloatAnchorEast;
-  } else {
-    return false;
-  }
-  return true;
-}
-
-static bool parse_float_relative(String relative, FloatRelative *out)
-{
-  char *str = relative.data;
-  if (striequal(str, "editor")) {
-    *out = kFloatRelativeEditor;
-  }  else if (striequal(str, "win")) {
-    *out = kFloatRelativeWindow;
-  } else if (striequal(str, "cursor")) {
-    *out = kFloatRelativeCursor;
-  } else {
-    return false;
-  }
-  return true;
-}
-
-static bool parse_float_bufpos(Array bufpos, lpos_T *out)
-{
-  if (bufpos.size != 2
-      || bufpos.items[0].type != kObjectTypeInteger
-      || bufpos.items[1].type != kObjectTypeInteger) {
-    return false;
-  }
-  out->lnum = bufpos.items[0].data.integer;
-  out->col = bufpos.items[1].data.integer;
-  return true;
-}
-
-bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
-                        Error *err)
-{
-  // TODO(bfredl): use a get/has_key interface instead and get rid of extra
-  // flags
-  bool has_row = false, has_col = false, has_relative = false;
-  bool has_external = false, has_window = false;
-  bool has_width = false, has_height = false;
-  bool has_bufpos = false;
-
-  for (size_t i = 0; i < config.size; i++) {
-    char *key = config.items[i].key.data;
-    Object val = config.items[i].value;
-    if (!strcmp(key, "row")) {
-      has_row = true;
-      if (val.type == kObjectTypeInteger) {
-        fconfig->row = val.data.integer;
-      } else if (val.type == kObjectTypeFloat) {
-        fconfig->row = val.data.floating;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'row' key must be Integer or Float");
-        return false;
-      }
-    } else if (!strcmp(key, "col")) {
-      has_col = true;
-      if (val.type == kObjectTypeInteger) {
-        fconfig->col = val.data.integer;
-      } else if (val.type == kObjectTypeFloat) {
-        fconfig->col = val.data.floating;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'col' key must be Integer or Float");
-        return false;
-      }
-    } else if (strequal(key, "width")) {
-      has_width = true;
-      if (val.type == kObjectTypeInteger && val.data.integer > 0) {
-        fconfig->width = val.data.integer;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'width' key must be a positive Integer");
-        return false;
-      }
-    } else if (strequal(key, "height")) {
-      has_height = true;
-      if (val.type == kObjectTypeInteger && val.data.integer > 0) {
-        fconfig->height= val.data.integer;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'height' key must be a positive Integer");
-        return false;
-      }
-    } else if (!strcmp(key, "anchor")) {
-      if (val.type != kObjectTypeString) {
-        api_set_error(err, kErrorTypeValidation,
-                      "'anchor' key must be String");
-        return false;
-      }
-      if (!parse_float_anchor(val.data.string, &fconfig->anchor)) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Invalid value of 'anchor' key");
-        return false;
-      }
-    } else if (!strcmp(key, "relative")) {
-      if (val.type != kObjectTypeString) {
-        api_set_error(err, kErrorTypeValidation,
-                      "'relative' key must be String");
-        return false;
-      }
-      // ignore empty string, to match nvim_win_get_config
-      if (val.data.string.size > 0) {
-        has_relative = true;
-        if (!parse_float_relative(val.data.string, &fconfig->relative)) {
-          api_set_error(err, kErrorTypeValidation,
-                        "Invalid value of 'relative' key");
-          return false;
-        }
-      }
-    } else if (!strcmp(key, "win")) {
-      has_window = true;
-      if (val.type != kObjectTypeInteger
-          && val.type != kObjectTypeWindow) {
-        api_set_error(err, kErrorTypeValidation,
-                      "'win' key must be Integer or Window");
-        return false;
-      }
-      fconfig->window = val.data.integer;
-    } else if (!strcmp(key, "bufpos")) {
-      if (val.type != kObjectTypeArray) {
-        api_set_error(err, kErrorTypeValidation,
-                      "'bufpos' key must be Array");
-        return false;
-      }
-      if (!parse_float_bufpos(val.data.array, &fconfig->bufpos)) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Invalid value of 'bufpos' key");
-        return false;
-      }
-      has_bufpos = true;
-    } else if (!strcmp(key, "external")) {
-      if (val.type == kObjectTypeInteger) {
-        fconfig->external = val.data.integer;
-      } else if (val.type == kObjectTypeBoolean) {
-        fconfig->external = val.data.boolean;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'external' key must be Boolean");
-        return false;
-      }
-      has_external = fconfig->external;
-    } else if (!strcmp(key, "focusable")) {
-      if (val.type == kObjectTypeInteger) {
-        fconfig->focusable = val.data.integer;
-      } else if (val.type == kObjectTypeBoolean) {
-        fconfig->focusable = val.data.boolean;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'focusable' key must be Boolean");
-        return false;
-      }
-    } else if (!strcmp(key, "style")) {
-      if (val.type != kObjectTypeString) {
-        api_set_error(err, kErrorTypeValidation,
-                      "'style' key must be String");
-        return false;
-      }
-      if (val.data.string.data[0] == NUL) {
-        fconfig->style = kWinStyleUnused;
-      } else if (striequal(val.data.string.data, "minimal")) {
-        fconfig->style = kWinStyleMinimal;
-      }  else {
-        api_set_error(err, kErrorTypeValidation,
-                      "Invalid value of 'style' key");
-      }
-    } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "Invalid key '%s'", key);
-      return false;
-    }
-  }
-
-  if (has_window && !(has_relative
-                      && fconfig->relative == kFloatRelativeWindow)) {
-    api_set_error(err, kErrorTypeValidation,
-                  "'win' key is only valid with relative='win'");
-    return false;
-  }
-
-  if ((has_relative && fconfig->relative == kFloatRelativeWindow)
-      && (!has_window || fconfig->window == 0)) {
-    fconfig->window = curwin->handle;
-  }
-
-  if (has_window && !has_bufpos) {
-    fconfig->bufpos.lnum = -1;
-  }
-
-  if (has_bufpos) {
-    if (!has_row) {
-      fconfig->row = (fconfig->anchor & kFloatAnchorSouth) ? 0 : 1;
-      has_row = true;
-    }
-    if (!has_col) {
-      fconfig->col = 0;
-      has_col = true;
-    }
-  }
-
-  if (has_relative && has_external) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Only one of 'relative' and 'external' must be used");
-    return false;
-  } else if (!reconf && !has_relative && !has_external) {
-    api_set_error(err, kErrorTypeValidation,
-                  "One of 'relative' and 'external' must be used");
-    return false;
-  } else if (has_relative) {
-    fconfig->external = false;
-  }
-
-  if (!reconf && !(has_height && has_width)) {
-    api_set_error(err, kErrorTypeValidation,
-                  "Must specify 'width' and 'height'");
-    return false;
-  }
-
-  if (fconfig->external && !ui_has(kUIMultigrid)) {
-    api_set_error(err, kErrorTypeValidation,
-                  "UI doesn't support external windows");
-    return false;
-  }
-
-  if (has_relative != has_row || has_row != has_col) {
-    api_set_error(err, kErrorTypeValidation,
-                  "'relative' requires 'row'/'col' or 'bufpos'");
-    return false;
-  }
-  return true;
 }
 
 /*
@@ -1953,12 +1715,12 @@ static void win_totop(int size, int flags)
   }
 
   if (curwin->w_floating) {
-    ui_comp_remove_grid(&curwin->w_grid);
+    ui_comp_remove_grid(&curwin->w_grid_alloc);
     if (ui_has(kUIMultigrid)) {
       curwin->w_pos_changed = true;
     } else {
       // No longer a float, a non-multigrid UI shouldn't draw it as such
-      ui_call_win_hide(curwin->w_grid.handle);
+      ui_call_win_hide(curwin->w_grid_alloc.handle);
       win_free_grid(curwin, false);
     }
   } else {
@@ -2581,11 +2343,11 @@ int win_close(win_T *win, bool free_buf)
 
   bool was_floating = win->w_floating;
   if (ui_has(kUIMultigrid)) {
-    ui_call_win_close(win->w_grid.handle);
+    ui_call_win_close(win->w_grid_alloc.handle);
   }
 
   if (win->w_floating) {
-    ui_comp_remove_grid(&win->w_grid);
+    ui_comp_remove_grid(&win->w_grid_alloc);
     if (win->w_float_config.external) {
       for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
         if (tp == curtab) {
@@ -3763,9 +3525,11 @@ void win_init_size(void)
 {
   firstwin->w_height = ROWS_AVAIL;
   firstwin->w_height_inner = firstwin->w_height;
+  firstwin->w_height_outer = firstwin->w_height;
   topframe->fr_height = ROWS_AVAIL;
   firstwin->w_width = Columns;
   firstwin->w_width_inner = firstwin->w_width;
+  firstwin->w_width_outer = firstwin->w_width;
   topframe->fr_width = Columns;
 }
 
@@ -4131,7 +3895,7 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
         win_remove(wp, old_curtab);
         win_append(lastwin_nofloating(), wp);
       } else {
-        ui_comp_remove_grid(&wp->w_grid);
+        ui_comp_remove_grid(&wp->w_grid_alloc);
       }
     }
     wp->w_pos_changed = true;
@@ -4726,7 +4490,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->handle = ++last_win_id;
   handle_register_window(new_wp);
 
-  grid_assign_handle(&new_wp->w_grid);
+  grid_assign_handle(&new_wp->w_grid_alloc);
 
   // Init w: variables.
   new_wp->w_vars = tv_dict_alloc();
@@ -4850,15 +4614,14 @@ win_free (
 
 void win_free_grid(win_T *wp, bool reinit)
 {
-  if (wp->w_grid.handle != 0 && ui_has(kUIMultigrid)) {
-    ui_call_grid_destroy(wp->w_grid.handle);
-    wp->w_grid.handle = 0;
+  if (wp->w_grid_alloc.handle != 0 && ui_has(kUIMultigrid)) {
+    ui_call_grid_destroy(wp->w_grid_alloc.handle);
   }
-  grid_free(&wp->w_grid);
+  grid_free(&wp->w_grid_alloc);
   if (reinit) {
     // if a float is turned into a split and back into a float, the grid
     // data structure will be reused
-    memset(&wp->w_grid, 0, sizeof(wp->w_grid));
+    memset(&wp->w_grid_alloc, 0, sizeof(wp->w_grid_alloc));
   }
 }
 
@@ -5963,6 +5726,10 @@ void win_set_inner_size(win_T *wp)
   if (wp->w_buffer->terminal) {
     terminal_check_size(wp->w_buffer->terminal);
   }
+
+  wp->w_border_adj = wp->w_floating && wp->w_float_config.border ? 1 : 0;
+  wp->w_height_outer = wp->w_height_inner + 2 * wp->w_border_adj;
+  wp->w_width_outer = wp->w_width_inner + 2 * wp->w_border_adj;
 }
 
 /// Set the width of a window.
@@ -7099,11 +6866,11 @@ void get_framelayout(const frame_T *fr, list_T *l, bool outer)
 void win_ui_flush(void)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_pos_changed && wp->w_grid.chars != NULL) {
+    if (wp->w_pos_changed && wp->w_grid_alloc.chars != NULL) {
       if (tp == curtab) {
         ui_ext_win_position(wp);
       } else {
-        ui_call_win_hide(wp->w_grid.handle);
+        ui_call_win_hide(wp->w_grid_alloc.handle);
       }
       wp->w_pos_changed = false;
     }
