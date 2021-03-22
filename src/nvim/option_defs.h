@@ -541,6 +541,7 @@ static char *(p_rdb_values[]) = {
   "nothrottle",
   "invalid",
   "nodelta",
+  "provider",
   NULL
 };
 # endif
@@ -548,6 +549,7 @@ static char *(p_rdb_values[]) = {
 # define RDB_NOTHROTTLE         0x002
 # define RDB_INVALID            0x004
 # define RDB_NODELTA            0x008
+# define RDB_PROVIDER           0x010
 
 EXTERN long p_rdt;              // 'redrawtime'
 EXTERN int p_remap;             // 'remap'
