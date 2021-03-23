@@ -1959,7 +1959,6 @@ check_overwrite(
 
 /*
  * Handle ":wnext", ":wNext" and ":wprevious" commands.
-      redraw_later(curwin,VALID);
  */
 void ex_wnext(exarg_T *eap)
 {
@@ -2884,7 +2883,7 @@ void ex_append(exarg_T *eap)
     did_undo = true;
     ml_append(lnum, theline, (colnr_T)0, false);
     appended_lines_mark(lnum + (empty ? 1 : 0), 1L);
-
+    redrawWinline(curwin,lnum);
     xfree(theline);
     ++lnum;
 
@@ -2893,8 +2892,9 @@ void ex_append(exarg_T *eap)
       empty = 0;
     }
   }
+ 
   State = NORMAL;
-  redrawWinline(curwin,lnum);
+  
   if (eap->forceit)
     curbuf->b_p_ai = !curbuf->b_p_ai;
 
