@@ -1959,6 +1959,7 @@ check_overwrite(
 
 /*
  * Handle ":wnext", ":wNext" and ":wprevious" commands.
+      redraw_later(curwin,VALID);
  */
 void ex_wnext(exarg_T *eap)
 {
@@ -2866,7 +2867,6 @@ void ex_append(exarg_T *eap)
       } else if (*p == TAB) {
         vcol += 8 - vcol % 8;
       } else {
-	update_screen(0);
         break;
       }
     }
@@ -2894,7 +2894,7 @@ void ex_append(exarg_T *eap)
     }
   }
   State = NORMAL;
-
+  redrawWinline(curwin,lnum);
   if (eap->forceit)
     curbuf->b_p_ai = !curbuf->b_p_ai;
 
