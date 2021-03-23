@@ -258,9 +258,7 @@ M['textDocument/hover'] = function(_, method, result)
       -- return { 'No information available' }
       return
     end
-    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
-      pad_left = 1; pad_right = 1;
-    })
+    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines)
     util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
     return bufnr, winnr
   end)

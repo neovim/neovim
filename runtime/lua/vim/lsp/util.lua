@@ -875,6 +875,16 @@ function M.make_floating_popup_options(width, height, opts)
     row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,
+    border = {
+      {"", "NormalFloat"},
+      {"", "NormalFloat"},
+      {"", "NormalFloat"},
+      {" ", "NormalFloat"},
+      {"", "NormalFloat"},
+      {"", "NormalFloat"},
+      {"", "NormalFloat"},
+      {" ", "NormalFloat"}
+    },
   }
 end
 
@@ -981,27 +991,20 @@ function M.focusable_preview(unique_name, fn)
   end)
 end
 
---- Trims empty lines from input and pad left and right with spaces
+--- Trims empty lines from input and pad top and bottom with empty lines
 ---
 ---@param contents table of lines to trim and pad
 ---@param opts dictionary with optional fields
----             - pad_left   number of columns to pad contents at left (default 1)
----             - pad_right  number of columns to pad contents at right (default 1)
 ---             - pad_top    number of lines to pad contents at top (default 0)
 ---             - pad_bottom number of lines to pad contents at bottom (default 0)
 ---@return contents table of trimmed and padded lines
-function M._trim_and_pad(contents, opts)
+function M._trim(contents, opts)
   validate {
     contents = { contents, 't' };
     opts = { opts, 't', true };
   }
   opts = opts or {}
-  local left_padding = (" "):rep(opts.pad_left or 1)
-  local right_padding = (" "):rep(opts.pad_right or 1)
   contents = M.trim_empty_lines(contents)
-  for i, line in ipairs(contents) do
-    contents[i] = string.format('%s%s%s', left_padding, line:gsub("\r", ""), right_padding)
-  end
   if opts.pad_top then
     for _ = 1, opts.pad_top do
       table.insert(contents, 1, "")
@@ -1078,8 +1081,8 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  -- Clean up and add padding
-  stripped = M._trim_and_pad(stripped, opts)
+  -- Clean up
+  stripped = M._trim(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
@@ -1235,7 +1238,7 @@ function M.open_floating_preview(contents, syntax, opts)
   opts = opts or {}
 
   -- Clean up input: trim empty lines from the end, pad
-  contents = M._trim_and_pad(contents, opts)
+  contents = M._trim(contents, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
