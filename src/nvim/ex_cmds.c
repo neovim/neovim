@@ -2861,13 +2861,12 @@ void ex_append(exarg_T *eap)
     /* Look for the "." after automatic indent. */
     vcol = 0;
     for (p = theline; indent > vcol; ++p) {
-      if (*p == ' ') {
+      if (*p == ' ') 
         ++vcol;
-      } else if (*p == TAB) {
+      else if (*p == TAB) 
         vcol += 8 - vcol % 8;
-      } else {
+      else 
         break;
-      }
     }
     if ((p[0] == '.' && p[1] == NUL)
         || (!did_undo && u_save(lnum, lnum + 1 + (empty ? 1 : 0))
