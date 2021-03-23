@@ -23,7 +23,7 @@ local hl_query = [[
   "enum" @type
   "extern" @type
 
-  (string_literal) @string
+  (string_literal) @string.nonexistent-specializer-for-string.should-fallback-to-string
 
   (number_literal) @number
   (char_literal) @string
@@ -613,4 +613,91 @@ describe('treesitter highlighting', function()
       [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Grey100};
     }}
     end)
+
+  it("allows to use captures with dots (don't use fallback when specialization of foo exists)", function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+    char* x = "Will somebody ever read this?";
+    ]])
+
+    screen:expect{grid=[[
+      char* x = "Will somebody ever read this?";                       |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c", {})
+      local highlighter = vim.treesitter.highlighter
+      highlighter.hl_map['foo.bar'] = 'Type'
+      highlighter.hl_map['foo'] = 'String'
+      test_hl = highlighter.new(parser, {queries = {c = "(primitive_type) @foo.bar (string_literal) @foo"}})
+    ]]
+
+    screen:expect{grid=[[
+      {3:char}* x = {5:"Will somebody ever read this?"};                       |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
+
+  it("hl_map has the correct fallback behavior", function()
+    exec_lua [[
+      local hl_map = vim.treesitter.highlighter.hl_map
+      hl_map["foo"] = 1
+      hl_map["foo.bar"] = 2
+      hl_map["foo.bar.baz"] = 3
+
+      assert(hl_map["foo"] == 1)
+      assert(hl_map["foo.a.b.c.d"] == 1)
+      assert(hl_map["foo.bar"] == 2)
+      assert(hl_map["foo.bar.a.b.c.d"] == 2)
+      assert(hl_map["foo.bar.baz"] == 3)
+      assert(hl_map["foo.bar.baz.d"] == 3)
+
+      hl_map["FOO"] = 1
+      hl_map["FOO.BAR"] = 2
+      assert(hl_map["FOO.BAR.BAZ"] == 2)
+
+      hl_map["foo.missing.exists"] = 3
+      assert(hl_map["foo.missing"] == 1)
+      assert(hl_map["foo.missing.exists"] == 3)
+      assert(hl_map["foo.missing.exists.bar"] == 3)
+      assert(hl_map["total.nonsense.but.a.lot.of.dots"] == nil)
+      -- It will not perform a second look up of this variable but return a sentinel value
+      assert(hl_map["total.nonsense.but.a.lot.of.dots"] == "__notfound")
+    ]]
+
+  end)
 end)
