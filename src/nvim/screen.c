@@ -2758,7 +2758,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               // :sign defined with "numhl" highlight.
               char_attr = sign_get_attr(num_sign, SIGN_NUMHL);
             } else if ((wp->w_p_cul || wp->w_p_rnu)
-                       && lnum == wp->w_cursor.lnum) {
+                       && lnum == wp->w_cursor.lnum
+                       && filler_todo == 0) {
               // When 'cursorline' is set highlight the line number of
               // the current line differently.
               // TODO(vim): Can we use CursorLine instead of CursorLineNr
