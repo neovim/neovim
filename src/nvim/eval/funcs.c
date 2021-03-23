@@ -8809,8 +8809,6 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     if (set_tagstack(wp, d, action) == OK) {
       rettv->vval.v_number = 0;
-    } else {
-      EMSG(_(e_listreq));
     }
 }
 
