@@ -2883,7 +2883,7 @@ void ex_append(exarg_T *eap)
     did_undo = true;
     ml_append(lnum, theline, (colnr_T)0, false);
     appended_lines_mark(lnum + (empty ? 1 : 0), 1L);
-    redrawWinline(curwin,lnum);
+    redrawWinline(curwin, lnum);
     xfree(theline);
     ++lnum;
 
@@ -2893,8 +2893,7 @@ void ex_append(exarg_T *eap)
     }
   }
  
-  State = NORMAL;
-  
+  State = NORMAL; 
   if (eap->forceit)
     curbuf->b_p_ai = !curbuf->b_p_ai;
 
