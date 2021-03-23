@@ -1333,7 +1333,8 @@ void nvim_chan_send(Integer chan, String data, Error *err)
     return;
   }
 
-  channel_send((uint64_t)chan, data.data, data.size, &error);
+  channel_send((uint64_t)chan, data.data, data.size,
+               false, &error);
   if (error) {
     api_set_error(err, kErrorTypeValidation, "%s", error);
   }

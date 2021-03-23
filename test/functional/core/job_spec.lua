@@ -963,8 +963,10 @@ describe('jobs', function()
       return rv
     end
 
+    local j
     local function send(str)
-      nvim('command', 'call jobsend(j, "'..str..'")')
+      -- check no nvim_chan_free double free with pty job (#14198)
+      meths.chan_send(j, str)
     end
 
     before_each(function()
@@ -979,6 +981,7 @@ describe('jobs', function()
       nvim('command', 'let g:job_opts.pty = 1')
       nvim('command', 'let exec = [expand("<cfile>:p")]')
       nvim('command', "let j = jobstart(exec, g:job_opts)")
+      j = eval'j'
       eq('tty ready', next_chunk())
     end)
 
