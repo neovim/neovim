@@ -302,6 +302,35 @@ describe('decorations providers', function()
                                               |
     ]]}
   end)
+
+  it('can have virtual text', function()
+    insert(mulholland)
+    setup_provider [[
+      local hl = a.nvim_get_hl_id_by_name "ErrorMsg"
+      local test_ns = a.nvim_create_namespace "mulholland"
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+          a.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'+', 'ErrorMsg'}};
+            virt_text_pos='overlay';
+            ephemeral = true;
+          })
+        end
+      end
+    ]]
+
+    screen:expect{grid=[[
+      {2:+}/ just to see if there was an accident |
+      {2:+}/ on Mulholland Drive                  |
+      {2:+}ry_start();                            |
+      {2:+}ufref_T save_buf;                      |
+      {2:+}witch_buffer(&save_buf, buf);          |
+      {2:+}osp = getmark(mark, false);            |
+      {2:+}estore_buffer(&save_buf);^              |
+                                              |
+    ]]}
+  end)
 end)
 
 describe('extmark decorations', function()

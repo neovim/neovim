@@ -3921,9 +3921,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                              .hl_id = hl_err }));
         do_virttext = true;
       } else if (has_decor) {
-        VirtText *vp = decor_redraw_virt_text(wp->w_buffer, &decor_state);
-        if (vp) {
-          virt_text = *vp;
+        virt_text = decor_redraw_virt_text(wp->w_buffer, &decor_state);
+        if (kv_size(virt_text)) {
           do_virttext = true;
         }
       }
@@ -4353,10 +4352,10 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
   DecorState *state = &decor_state;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     HlRange *item = &kv_A(state->active, i);
-    if (item->start_row == state->row && item->virt_text
+    if (item->start_row == state->row && kv_size(item->virt_text)
         && item->virt_text_pos == kVTOverlay
         && item->virt_col >= 0) {
-        VirtText vt = *item->virt_text;
+        VirtText vt = item->virt_text;
         LineState s = LINE_STATE("");
         int virt_attr = 0;
         int col = item->virt_col;
