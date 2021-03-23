@@ -8764,6 +8764,10 @@ static bool ins_tab(void)
     getvcol(curwin, &fpos, &vcol, NULL, NULL);
     getvcol(curwin, cursor, &want_vcol, NULL, NULL);
 
+    // save start of changed region for extmark_splice
+    int start_row = fpos.lnum;
+    colnr_T start_col = fpos.col;
+
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
     while (ascii_iswhite(*ptr)) {
@@ -8812,6 +8816,11 @@ static bool ins_tab(void)
           for (temp = i; --temp >= 0; ) {
             replace_join(repl_off);
           }
+        }
+        if (!(State & VREPLACE_FLAG)) {
+          extmark_splice_cols(curbuf, start_row - 1, start_col,
+                              cursor->col - start_col, fpos.col - start_col,
+                              kExtmarkUndo);
         }
       }
       cursor->col -= i;

@@ -666,6 +666,70 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("tab with noexpandtab and softtabstop", function()
+      command("set noet")
+      command("set ts=4")
+      command("set sw=2")
+      command("set sts=2")
+
+      local check_events = setup_eventcheck(verify, {'asdfasdf'})
+
+      feed("gg0i<tab>")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 4, 0, 1, 1, 0, 0, 0, 0, 1, 1 },
+      }
+      feed("<tab>")
+
+      -- when spaces are merged into a tabstop
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 2, 2, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 6, 0, 3, 3, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 7, 0, 0, 0, 0, 4, 4, 0, 1, 1 },
+      }
+
+      feed("<esc>u")
+      check_events {
+        { "test1", "bytes", 1, 8, 0, 0, 0, 0, 1, 1, 0, 4, 4 },
+        { "test1", "bytes", 1, 8, 0, 0, 0, 0, 4, 4, 0, 0, 0 }
+      }
+
+      -- in REPLACE mode
+      feed("R<tab><tab>")
+      check_events {
+        { "test1", "bytes", 1, 9, 0, 0, 0, 0, 1, 1, 0, 1, 1 },
+        { "test1", "bytes", 1, 10, 0, 1, 1, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 11, 0, 2, 2, 0, 1, 1, 0, 1, 1 },
+        { "test1", "bytes", 1, 12, 0, 3, 3, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 13, 0, 0, 0, 0, 4, 4, 0, 1, 1 },
+      }
+      feed("<esc>u")
+      check_events {
+        { "test1", "bytes", 1, 14, 0, 0, 0, 0, 1, 1, 0, 4, 4 },
+        { "test1", "bytes", 1, 14, 0, 2, 2, 0, 2, 2, 0, 1, 1 },
+        { "test1", "bytes", 1, 14, 0, 0, 0, 0, 2, 2, 0, 1, 1 }
+      }
+
+      -- in VISUALREPLACE mode
+      feed("gR<tab><tab>")
+      check_events {
+          { "test1", "bytes", 1, 15, 0, 0, 0, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 16, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 17, 0, 2, 2, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 18, 0, 3, 3, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 19, 0, 3, 3, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 20, 0, 3, 3, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 22, 0, 2, 2, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 23, 0, 2, 2, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 25, 0, 1, 1, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 26, 0, 1, 1, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 28, 0, 0, 0, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 29, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 31, 0, 0, 0, 0, 4, 4, 0, 1, 1 };
+      }
+    end)
+
     it("sends events when undoing with undofile", function()
       write_file("Xtest-undofile", dedent([[
       12345
