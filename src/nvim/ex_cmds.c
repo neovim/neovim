@@ -2892,7 +2892,7 @@ void ex_append(exarg_T *eap)
     }
   }
  
-  State = NORMAL; 
+  State = NORMAL;
   if (eap->forceit)
     curbuf->b_p_ai = !curbuf->b_p_ai;
 
