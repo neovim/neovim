@@ -304,7 +304,7 @@ M['textDocument/typeDefinition'] = location_handler
 M['textDocument/implementation'] = location_handler
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-M['textDocument/signatureHelp'] = function(_, method, result)
+M['textDocument/signatureHelp'] = function(_, method, result, _, bufnr)
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
@@ -317,9 +317,11 @@ M['textDocument/signatureHelp'] = function(_, method, result)
     print('No signature help available')
     return
   end
-  util.focusable_preview(method, function()
+  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
+  local p_bufnr, _ = util.focusable_preview(method, function()
     return lines, util.try_trim_markdown_code_blocks(lines)
   end)
+  api.nvim_buf_set_option(p_bufnr, 'syntax', syntax)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
