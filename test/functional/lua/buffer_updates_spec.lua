@@ -781,6 +781,26 @@ describe('lua: nvim_buf_attach on_bytes', function()
       command("bw!")
     end)
 
+    it("blockwise paste with uneven line lengths", function()
+      local check_events = setup_eventcheck(verify, {'aaaa', 'aaa', 'aaa'})
+
+      -- eq({}, meths.buf_get_lines(0, 0, -1, true))
+      feed("gg0<c-v>jj$d")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 4, 4, 0, 0, 0 },
+        { "test1", "bytes", 1, 3, 1, 0, 1, 0, 3, 3, 0, 0, 0 },
+        { "test1", "bytes", 1, 3, 2, 0, 2, 0, 3, 3, 0, 0, 0 },
+      }
+
+      feed("p")
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 0, 0, 0, 0, 4, 4 },
+        { "test1", "bytes", 1, 4, 1, 0, 5, 0, 0, 0, 0, 3, 3 },
+        { "test1", "bytes", 1, 4, 2, 0, 9, 0, 0, 0, 0, 3, 3 },
+      }
+
+    end)
 
     teardown(function()
       os.remove "Xtest-reload"
