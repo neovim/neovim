@@ -53,7 +53,7 @@ typedef struct {
   // TODO(bfredl): embed decoration instead, perhaps using an arena
   // for ephemerals?
   DecorPriority priority;
-  VirtText *virt_text;
+  VirtText virt_text;
   VirtTextPos virt_text_pos;
   bool virt_text_hide;
   HlMode hl_mode;

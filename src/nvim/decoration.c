@@ -145,8 +145,7 @@ bool decor_redraw_reset(buf_T *buf, DecorState *state)
   for (size_t i = 0; i < kv_size(state->active); i++) {
     HlRange item = kv_A(state->active, i);
     if (item.virt_text_owned) {
-      clear_virttext(item.virt_text);
-      xfree(item.virt_text);
+      clear_virttext(&item.virt_text);
     }
   }
   kv_size(state->active) = 0;
@@ -229,7 +228,7 @@ static void decor_add(DecorState *state, int start_row, int start_col,
 
   HlRange range = { start_row, start_col, end_row, end_col,
                     attr_id, MAX(priority, decor->priority),
-                    kv_size(decor->virt_text) ? &decor->virt_text : NULL,
+                    decor->virt_text,
                     decor->virt_text_pos, decor->virt_text_hide, decor->hl_mode,
                     kv_size(decor->virt_text) && owned, -1 };
 
@@ -304,7 +303,7 @@ next_mark:
     bool active = false, keep = true;
     if (item.end_row < state->row
         || (item.end_row == state->row && item.end_col <= col)) {
-      if (!(item.start_row >= state->row && item.virt_text)) {
+      if (!(item.start_row >= state->row && kv_size(item.virt_text))) {
         keep = false;
       }
     } else {
@@ -324,14 +323,13 @@ next_mark:
       attr = hl_combine_attr(attr, item.attr_id);
     }
     if ((item.start_row == state->row && item.start_col <= col)
-        && item.virt_text && item.virt_col == -1) {
+        && kv_size(item.virt_text) && item.virt_col == -1) {
       item.virt_col = (item.virt_text_hide && hidden) ? -2 : virt_col;
     }
     if (keep) {
       kv_A(state->active, j++) = item;
     } else if (item.virt_text_owned) {
-      clear_virttext(item.virt_text);
-      xfree(item.virt_text);
+      clear_virttext(&item.virt_text);
     }
   }
   kv_size(state->active) = j;
@@ -344,22 +342,26 @@ void decor_redraw_end(DecorState *state)
   state->buf = NULL;
 }
 
-VirtText *decor_redraw_virt_text(buf_T *buf, DecorState *state)
+VirtText decor_redraw_virt_text(buf_T *buf, DecorState *state)
 {
   decor_redraw_col(buf, MAXCOL, MAXCOL, false, state);
   for (size_t i = 0; i < kv_size(state->active); i++) {
     HlRange item = kv_A(state->active, i);
-    if (item.start_row == state->row && item.virt_text
+    if (item.start_row == state->row && kv_size(item.virt_text)
         && item.virt_text_pos == kVTEndOfLine) {
       return item.virt_text;
     }
   }
-  return NULL;
+  return VIRTTEXT_EMPTY;
 }
 
 void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
                          Decoration *decor, DecorPriority priority)
 {
+  if (end_row == -1) {
+    end_row = start_row;
+    end_col = start_col;
+  }
   decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true,
             priority);
 }
