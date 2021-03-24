@@ -17,21 +17,43 @@ an idea of what lurks beneath: >
     :lua print(vim.inspect(package.loaded))
 
 Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
-"editor stdlib" (|functions| and Ex commands) and the |API|, all of which can
-be used from Lua code.
+"editor stdlib" (|functions| and |ex-commands|) and the |API|, all of which can
+be used from Lua code.  Those concepts together form the "namespaces" of the
+Nvim programming environment.
 
-Module conflicts are resolved by "last wins".  For example if both of these
-are on 'runtimepath':
+Module conflicts are resolved by "last wins".  For example if files are found
+according to 'runtimepath' in this order:
     runtime/lua/foo.lua
     ~/.config/nvim/lua/foo.lua
-then `require('foo')` loads "~/.config/nvim/lua/foo.lua", and
-"runtime/lua/foo.lua" is not used.  See |lua-require| to understand how Nvim
-finds and loads Lua modules.  The conventions are similar to VimL plugins,
-with some extra features.  See |lua-require-example| for a walkthrough.
+then `require('foo')` loads ~/.config/…/foo.lua and runtime/lua/foo.lua is not
+used.  See |lua-require| to understand how Nvim finds and loads Lua modules.
+The conventions are similar to Vimscript plugins, with extra features.
+
+CONCEPTS					*lua-compat*
+
+LuaJit and Lua 5.1 are the permanent interface for Nvim Lua.  Plugins only
+need to consider Lua 5.1, they don't need to worry about forward-compatibility
+with future Lua versions.  If Nvim ever decides to ship with Lua 5.3+ then
+a Lua 5.1 compatibility shim will be provided so that Lua
+5.1 plugins continue to work without modification.
+
+CONCEPTS					*lua-concepts*
+
+boundaries
+call Lua from Vimscript
+call Vimscript from Lua
+call Lua from Lua
+
+3 namespaces
+
+LUA IDIOMS
+next()
+unpack()
 
 ==============================================================================
 IMPORTING LUA MODULES					*lua-require*
 
+See also |lua-require-example| for a walkthrough.
                                                         *lua-package-path*
 Nvim automatically adjusts `package.path` and `package.cpath` according to
 effective 'runtimepath' value.  Adjustment happens whenever 'runtimepath' is
@@ -323,8 +345,8 @@ semantically equivalent in Lua to:
     end
 
 Lua nils, numbers, strings, tables and booleans are converted to their
-respective VimL types. An error is thrown if conversion of any other Lua types
-is attempted.
+respective Vimscript types. An error is thrown if conversion of any other Lua
+types is attempted.
 
 The magic global "_A" contains the second argument to luaeval().
 
@@ -372,9 +394,9 @@ Examples: >
     :  endfunction
     :echo Rand(1,10)
 
-Note: second argument to `luaeval` undergoes VimL to Lua conversion
-("marshalled"), so changes to Lua containers do not affect values in VimL.
-Return value is also always converted. When converting,
+Note: second argument to `luaeval` undergoes Vimscript to Lua conversion
+("marshalled"), so changes to Lua containers do not affect values in
+Vimscript. Return value is also always converted. When converting,
 |msgpack-special-dict|s are treated specially.
 
 ==============================================================================
@@ -863,7 +885,7 @@ vim.fn.{func}({...})					*vim.fn*
 
                                                         *lua-vim-variables*
 The Vim editor global dictionaries |g:| |w:| |b:| |t:| |v:| can be accessed
-from Lua conveniently and idiomatically by referencing the `vim.*` Lua tables
+from Lua conveniently and idiomatically by referencing the vim.x Lua tables
 described below. In this way you can easily read and modify global Vimscript
 variables from Lua.
 
@@ -874,37 +896,34 @@ Example: >
     vim.g.foo = nil   -- Delete (:unlet) the Vimscript variable.
 
 vim.g                                                   *vim.g*
-        Global (|g:|) editor variables.
-        Key with no value returns `nil`.
+        Global (|g:|) editor variables. Invalid key returns `nil`.
 
 vim.b                                                   *vim.b*
-        Buffer-scoped (|b:|) variables for the current buffer.
-        Invalid or unset key returns `nil`.
+        Buffer-scoped (|b:|) variables for the current buffer. Invalid key
+        returns `nil`.
 
 vim.w                                                   *vim.w*
-        Window-scoped (|w:|) variables for the current window.
-        Invalid or unset key returns `nil`.
+        Window-scoped (|w:|) variables for the current window. Invalid key
+        returns `nil`.
 
 vim.t                                                   *vim.t*
-        Tabpage-scoped (|t:|) variables for the current tabpage.
-        Invalid or unset key returns `nil`.
+        Tabpage-scoped (|t:|) variables for the current tabpage. Invalid key
+        returns `nil`.
 
 vim.v                                                   *vim.v*
-        |v:| variables.
-        Invalid or unset key returns `nil`.
+        Special (|v:|) variables. Invalid key returns `nil`.
 
 vim.env                                                 *vim.env*
-        Environment variables defined in the editor session.
-        See |expand-env| and |:let-environment| for the Vimscript behavior.
-        Invalid or unset key returns `nil`.
+        Environment variables. See |expand-env| and |:let-environment| for the
+        Vimscript behavior. Invalid key returns `nil`.
         Example: >
             vim.env.FOO = 'bar'
-            print(vim.env.TERM)
+            print(vim.env.NVIM_LOG_FILE)
 <
 
                                                         *lua-vim-options*
 From Lua you can work with editor |options| by reading and setting items in
-these Lua tables:
+these tables:
 
 vim.o                                                   *vim.o*
         Get or set editor options, like |:set|. Invalid key is an error.
