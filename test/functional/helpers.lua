@@ -418,7 +418,7 @@ end
 --
 --@see clear() for parameters.
 function module.new_argv(...)
-  local args = {unpack(module.nvim_argv)}
+  local args = {'timeout', '-s', 'ABRT', '1m', unpack(module.nvim_argv)}
   table.insert(args, '--headless')
   local new_args
   local env = nil
