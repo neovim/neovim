@@ -1366,9 +1366,11 @@ func Test_TextChangedI_with_setline()
 endfunc
 
 func Test_Changed_FirstTime()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
+  CheckFeature terminal
+  CheckNotGui
+  " Starting a terminal to run Vim is always considered flaky.
+  let g:test_is_flaky = 1
+
   " Prepare file for TextChanged event.
   call writefile([''], 'Xchanged.txt')
   let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
