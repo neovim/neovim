@@ -3437,6 +3437,12 @@ skip:
   return NULL;    // no error
 }
 
+void check_blending(win_T *wp)
+{
+  wp->w_grid_alloc.blending =
+    wp->w_p_winbl > 0 || (wp->w_floating && wp->w_float_config.shadow);
+}
+
 
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
@@ -4380,7 +4386,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     // 'floatblend'
     curwin->w_p_winbl = MAX(MIN(curwin->w_p_winbl, 100), 0);
     curwin->w_hl_needs_update = true;
-    curwin->w_grid_alloc.blending = curwin->w_p_winbl > 0;
+    check_blending(curwin);
   }
 
 
@@ -5895,6 +5901,7 @@ void didset_window_options(win_T *wp)
   set_chars_option(wp, &wp->w_p_fcs, true);
   set_chars_option(wp, &wp->w_p_lcs, true);
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
+  check_blending(wp);
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 

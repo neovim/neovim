@@ -8,6 +8,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/map.h"
 #include "nvim/message.h"
+#include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
@@ -342,16 +343,24 @@ void update_window_hl(win_T *wp, bool invalid)
     wp->w_hl_attrs[hlf] = attr;
   }
 
+  wp->w_float_config.shadow = false;
   if (wp->w_floating && wp->w_float_config.border) {
     for (int i = 0; i < 8; i++) {
       int attr = wp->w_hl_attrs[HLF_BORDER];
       if (wp->w_float_config.border_hl_ids[i]) {
         attr = hl_get_ui_attr(HLF_BORDER, wp->w_float_config.border_hl_ids[i],
                               false);
+        HlAttrs a = syn_attr2entry(attr);
+        if (a.hl_blend) {
+          wp->w_float_config.shadow = true;
+        }
       }
       wp->w_float_config.border_attr[i] = attr;
     }
   }
+
+  // shadow might cause blending
+  check_blending(wp);
 }
 
 /// Gets HL_UNDERLINE highlight.

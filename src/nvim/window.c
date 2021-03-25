@@ -668,7 +668,11 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 
   bool change_external = fconfig.external != wp->w_float_config.external;
-  bool change_border = fconfig.border != wp->w_float_config.border;
+  bool change_border = (fconfig.border != wp->w_float_config.border
+                        || memcmp(fconfig.border_hl_ids,
+                                  wp->w_float_config.border_hl_ids,
+                                  sizeof fconfig.border_hl_ids));
+
 
   wp->w_float_config = fconfig;
 
@@ -5731,9 +5735,16 @@ void win_set_inner_size(win_T *wp)
     terminal_check_size(wp->w_buffer->terminal);
   }
 
-  wp->w_border_adj = wp->w_floating && wp->w_float_config.border ? 1 : 0;
-  wp->w_height_outer = wp->w_height_inner + 2 * wp->w_border_adj;
-  wp->w_width_outer = wp->w_width_inner + 2 * wp->w_border_adj;
+  bool has_border = wp->w_floating && wp->w_float_config.border;
+  for (int i = 0; i < 4; i++) {
+    wp->w_border_adj[i] =
+      has_border && wp->w_float_config.border_chars[2 * i+1][0];
+  }
+
+  wp->w_height_outer = (wp->w_height_inner
+                        + wp->w_border_adj[0] + wp->w_border_adj[2]);
+  wp->w_width_outer = (wp->w_width_inner
+                       + wp->w_border_adj[1] + wp->w_border_adj[3]);
 }
 
 /// Set the width of a window.

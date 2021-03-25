@@ -1421,6 +1421,7 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 ///     - "none" No border. This is the default
 ///     - "single" a single line box
 ///     - "double" a double line box
+///     - "shadow" a drop shadow effect by blending with the background.
 ///     If it is an array it should be an array of eight items or any divisor of
 ///     eight. The array will specifify the eight chars building up the border
 ///     in a clockwise fashion starting with the top-left corner. As, an
@@ -1431,6 +1432,9 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 ///       [ "/", "-", "\\", "|" ]
 ///     or all chars the same as:
 ///       [ "x" ]
+///     An empty string can be used to turn off a specific border, for instance:
+///       [ "", "", "", ">", "", "", "", "<" ]
+///     will only make vertical borders but not horizontal ones.
 ///     By default `FloatBorder` highlight is used which links to `VertSplit`
 ///     when not defined.  It could also be specified by character:
 ///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ]
