@@ -184,14 +184,12 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
       insert_at--;
     }
     // not found: new grid
-    kv_push(layers, grid);
-    if (insert_at < kv_size(layers)-1) {
-      for (size_t i = kv_size(layers)-1; i > insert_at; i--) {
-        kv_A(layers, i) = kv_A(layers, i-1);
-        kv_A(layers, i)->comp_index = i;
-      }
-      kv_A(layers, insert_at) = grid;
+    kv_pushp(layers);
+    for (size_t i = kv_size(layers)-1; i > insert_at; i--) {
+      kv_A(layers, i) = kv_A(layers, i-1);
+      kv_A(layers, i)->comp_index = i;
     }
+    kv_A(layers, insert_at) = grid;
 
     grid->comp_row = row;
     grid->comp_col = col;
@@ -280,6 +278,9 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
   // should configure all grids before entering win_update()
   if (curgrid != &default_grid) {
     size_t new_index = kv_size(layers)-1;
+    if (kv_A(layers, new_index) == &msg_grid) {
+      new_index--;
+    }
     if (kv_A(layers, new_index) == &pum_grid) {
       new_index--;
     }
