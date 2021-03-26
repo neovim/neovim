@@ -24,7 +24,7 @@ endfunc
 
 func Test_for_invalid()
   call assert_fails("for x in 99", 'E714:')
-  call assert_fails("for x in 'asdf'", 'E714:')
+  call assert_fails("for x in function('winnr')", 'E714:')
   call assert_fails("for x in {'a': 9}", 'E714:')
 
   if 0
