@@ -1021,12 +1021,13 @@ static int first_submatch(regmmatch_T *rp)
  * Return 0 for failure, 1 for found, 2 for found and line offset added.
  */
 int do_search(
-    oparg_T         *oap,           /* can be NULL */
-    int dirc,                       /* '/' or '?' */
+    oparg_T         *oap,   // can be NULL
+    int pattern_delimiter,  // Pattern delimiter, e.g. '@' for :%s@abc@def@
+    int dirc,               // '/' or '?'
     char_u          *pat,
     long count,
     int options,
-    searchit_arg_T  *sia        // optional arguments or NULL
+    searchit_arg_T  *sia    // optional arguments or NULL
 )
 {
   pos_T pos;                    /* position of the last match */
@@ -1122,7 +1123,7 @@ int do_search(
        * If there is a matching '/' or '?', toss it.
        */
       ps = strcopy;
-      p = skip_regexp(pat, dirc, p_magic, &strcopy);
+      p = skip_regexp(pat, pattern_delimiter, p_magic, &strcopy);
       if (strcopy != ps) {
         /* made a copy of "pat" to change "\?" to "?" */
         searchcmdlen += (int)(STRLEN(pat) - STRLEN(strcopy));

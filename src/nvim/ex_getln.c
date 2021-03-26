@@ -490,7 +490,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     ccline.cmdbuff[skiplen + patlen] = NUL;
     memset(&sia, 0, sizeof(sia));
     sia.sa_tm = &tm;
-    found = do_search(NULL, firstc == ':' ? '/' : firstc,
+    found = do_search(NULL, firstc, firstc == ':' ? '/' : firstc,
                       ccline.cmdbuff + skiplen, count,
                       search_flags, &sia);
     ccline.cmdbuff[skiplen + patlen] = next_char;

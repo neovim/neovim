@@ -2785,3 +2785,19 @@ it('long :%s/ with inccommand does not collapse cmdline', function()
     AAAAAAA^     |
   ]])
 end)
+
+it(':%g@a/b highlights entire pattern', function()
+  local screen = Screen.new(10,5)
+  clear()
+  common_setup(screen)
+  command('set inccommand=nosplit')
+  feed('ia/b/c<Esc>')
+  feed(':%g@a/b')
+  screen:expect([[
+    {10:a/b}/c       |
+    {15:~           }|
+    {15:~           }|
+    {15:~           }|
+    :%g@a/b^     |
+  ]])
+end)

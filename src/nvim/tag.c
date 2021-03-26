@@ -2809,7 +2809,7 @@ static int jumpto_tag(
         // start search before first line
         curwin->w_cursor.lnum = 0;
       }
-      if (do_search(NULL, pbuf[0], pbuf + 1, (long)1,
+      if (do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, (long)1,
                     search_options, NULL)) {
         retval = OK;
       } else {
@@ -2819,8 +2819,8 @@ static int jumpto_tag(
         /*
          * try again, ignore case now
          */
-        p_ic = TRUE;
-        if (!do_search(NULL, pbuf[0], pbuf + 1, (long)1,
+        p_ic = true;
+        if (!do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, (long)1,
                        search_options, NULL)) {
           // Failed to find pattern, take a guess: "^func  ("
           found = 2;
@@ -2828,11 +2828,13 @@ static int jumpto_tag(
           cc = *tagp.tagname_end;
           *tagp.tagname_end = NUL;
           snprintf((char *)pbuf, LSIZE, "^%s\\s\\*(", tagp.tagname);
-          if (!do_search(NULL, '/', pbuf, (long)1, search_options, NULL)) {
+          if (!do_search(NULL, '/', '/', pbuf, (long)1, search_options,
+                         NULL)) {
             // Guess again: "^char * \<func  ("
             snprintf((char *)pbuf, LSIZE, "^\\[#a-zA-Z_]\\.\\*\\<%s\\s\\*(",
                      tagp.tagname);
-            if (!do_search(NULL, '/', pbuf, (long)1, search_options, NULL)) {
+            if (!do_search(NULL, '/', '/', pbuf, (long)1, search_options,
+                           NULL)) {
               found = 0;
             }
           }
