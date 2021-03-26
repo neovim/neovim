@@ -366,6 +366,9 @@ function module.check_cores(app, force)
   else
     initial_path = '.'
     re = '/core[^/]*$'
+    if 'freebsd' == module.uname() then
+      re = '/nvim.core$'
+    end
     exc_re = { '^/%.deps$', '^/%'..deps_prefix()..'$', local_tmpdir, '^/%node_modules$' }
     db_cmd = gdb_db_cmd
     random_skip = true
