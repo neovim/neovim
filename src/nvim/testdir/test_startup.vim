@@ -814,6 +814,34 @@ func Test_v_argv()
   call assert_equal(['arg1', '--cmd', 'echo v:argv', '--cmd', 'q'']'], list[idx:])
 endfunc
 
+" Test for the '-t' option to jump to a tag
+func Test_t_arg()
+  let before =<< trim [CODE]
+    set tags=Xtags
+  [CODE]
+  let after =<< trim [CODE]
+    let s = bufname('') .. ':L' .. line('.') .. 'C' .. col('.')
+    call writefile([s], "Xtestout")
+    qall
+  [CODE]
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "first\tXfile1\t/^    \\zsfirst$/",
+        \ "second\tXfile1\t/^    \\zssecond$/",
+        \ "third\tXfile1\t/^    \\zsthird$/"],
+        \ 'Xtags')
+  call writefile(['    first', '    second', '    third'], 'Xfile1')
+
+  for t_arg in ['-t second', '-tsecond']
+    if RunVim(before, after, '-t second')
+      call assert_equal(['Xfile1:L2C5'], readfile('Xtestout'), t_arg)
+      call delete('Xtestout')
+    endif
+  endfor
+
+  call delete('Xtags')
+  call delete('Xfile1')
+endfunc
+
 " Test the '-T' argument which sets the 'term' option.
 func Test_T_arg()
   throw 'skipped: Nvim does not support "-T" argument'
@@ -913,10 +941,12 @@ func Test_w_arg()
 
   " A number argument sets the 'window' option
   call writefile(["iwindow \<C-R>=&window\<CR>\<Esc>:wq! Xresult\<CR>"], 'Xscriptin', 'b')
-  if RunVim([], [], '-s Xscriptin -w 17')
-    call assert_equal(["window 17"], readfile('Xresult'))
-    call delete('Xresult')
-  endif
+  for w_arg in ['-w 17', '-w17']
+    if RunVim([], [], '-s Xscriptin ' .. w_arg)
+      call assert_equal(["window 17"], readfile('Xresult'), w_arg)
+      call delete('Xresult')
+    endif
+  endfor
   call delete('Xscriptin')
 endfunc
 
