@@ -431,6 +431,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   int skiplen, patlen;
   char_u next_char;
   char_u use_last_pat;
+  const bool did_do_incsearch = s->did_incsearch;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
@@ -439,6 +440,10 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
     restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
+    if (did_do_incsearch && vpeekc() == NUL) {
+      // may have skipped a redraw, do it now
+      redrawcmd();
+    }
     return;
   }
 
@@ -615,6 +620,25 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
     }
   }
   return OK;
+}
+
+// Return true if the command line has an Arabic character at or after "start"
+// for "len" bytes.
+static bool cmdline_has_arabic(int start, int len)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int mb_l;
+  int u8cc[MAX_MCO];
+
+  for (int j = start; j < start + len; j += mb_l) {
+    const char_u *const p = ccline.cmdbuff + j;
+    const int u8c = utfc_ptr2char_len(p, u8cc, start + len - j);
+    mb_l = utfc_ptr2len_len(p, start + len - j);
+    if (arabic_char(u8c)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s,
@@ -2254,7 +2278,8 @@ static int command_line_changed(CommandLineState *s)
     }
   }
 
-  if (cmdmsg_rl || (p_arshape && !p_tbidi)) {
+  if (cmdmsg_rl
+      || (p_arshape && !p_tbidi && cmdline_has_arabic(0, ccline.cmdlen))) {
     // Always redraw the whole command line to fix shaping and
     // right-left typing.  Not efficient, but it works.
     // Do it only when there are no characters left to read
@@ -3141,7 +3166,7 @@ static void draw_cmdline(int start, int len)
       msg_putchar('*');
       i += utfc_ptr2len(ccline.cmdbuff + start + i) - 1;
     }
-  } else if (p_arshape && !p_tbidi && len > 0) {
+  } else if (p_arshape && !p_tbidi && cmdline_has_arabic(start, len)) {
     bool do_arabicshape = false;
     int mb_l;
     for (int i = start; i < start + len; i += mb_l) {
