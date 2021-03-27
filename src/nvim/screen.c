@@ -2322,7 +2322,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
       }
       // do at least one character; happens when past end of line
-      if (fromcol == tocol) {
+      if (fromcol == tocol && search_match_endcol) {
         tocol = fromcol + 1;
       }
       area_highlighting = true;

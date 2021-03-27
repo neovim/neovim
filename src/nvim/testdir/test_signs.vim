@@ -1,8 +1,7 @@
 " Test for signs
 
-if !has('signs')
-  finish
-endif
+source check.vim
+CheckFeature signs
 
 source screendump.vim
 
@@ -1541,7 +1540,7 @@ endfunc
 
 " Tests for memory allocation failures in sign functions
 func Test_sign_memfailures()
-  throw 'skipped: Nvim does not support test_alloc_fail()'
+  CheckFunction test_alloc_fail
   call writefile(repeat(["Sun is shining"], 30), "Xsign")
   edit Xsign
 

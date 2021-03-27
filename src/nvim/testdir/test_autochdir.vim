@@ -1,10 +1,10 @@
 " Test 'autochdir' behavior
 
-if !exists("+autochdir")
-  throw 'Skipped: autochdir feature missing'
-endif
+source check.vim
+CheckOption autochdir
 
 func Test_set_filename()
+  CheckFunction test_autochdir
   let cwd = getcwd()
   call test_autochdir()
   set acd
@@ -17,3 +17,5 @@ func Test_set_filename()
   exe 'cd ' . cwd
   call delete('samples/Xtest')
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

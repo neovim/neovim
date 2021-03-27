@@ -379,8 +379,8 @@ void set_init_1(bool clean_arg)
 # else
     static char     *(names[3]) = {"TMPDIR", "TEMP", "TMP"};
 # endif
-    int len;
     garray_T ga;
+    opt_idx = findoption("backupskip");
 
     ga_init(&ga, 1, 100);
     for (size_t n = 0; n < ARRAY_SIZE(names); n++) {
@@ -401,15 +401,23 @@ void set_init_1(bool clean_arg)
       }
       if (p != NULL && *p != NUL) {
         // First time count the NUL, otherwise count the ','.
-        len = (int)strlen(p) + 3;
-        ga_grow(&ga, len);
-        if (!GA_EMPTY(&ga)) {
-          STRCAT(ga.ga_data, ",");
+        const size_t len = strlen(p) + 3;
+        char *item = xmalloc(len);
+        xstrlcpy(item, p, len);
+        add_pathsep(item);
+        xstrlcat(item, "*", len);
+        if (find_dup_item(ga.ga_data, (char_u *)item, options[opt_idx].flags)
+            == NULL) {
+          ga_grow(&ga, (int)len);
+          if (!GA_EMPTY(&ga)) {
+            STRCAT(ga.ga_data, ",");
+          }
+          STRCAT(ga.ga_data, p);
+          add_pathsep(ga.ga_data);
+          STRCAT(ga.ga_data, "*");
+          ga.ga_len += (int)len;
         }
-        STRCAT(ga.ga_data, p);
-        add_pathsep(ga.ga_data);
-        STRCAT(ga.ga_data, "*");
-        ga.ga_len += len;
+        xfree(item);
       }
       if(mustfree) {
         xfree(p);
@@ -711,6 +719,38 @@ static void set_string_default(const char *name, char *val, bool allocated)
         : (char_u *)xstrdup(val);
     options[opt_idx].flags |= P_DEF_ALLOCED;
   }
+}
+
+// For an option value that contains comma separated items, find "newval" in
+// "origval".  Return NULL if not found.
+static char_u *find_dup_item(char_u *origval, const char_u *newval,
+                             uint32_t flags)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  int bs = 0;
+
+  if (origval == NULL) {
+    return NULL;
+  }
+
+  const size_t newlen = STRLEN(newval);
+  for (char_u *s = origval; *s != NUL; s++) {
+    if ((!(flags & P_COMMA) || s == origval || (s[-1] == ',' && !(bs & 1)))
+        && STRNCMP(s, newval, newlen) == 0
+        && (!(flags & P_COMMA) || s[newlen] == ',' || s[newlen] == NUL)) {
+      return s;
+    }
+    // Count backslashes.  Only a comma with an even number of backslashes
+    // or a single backslash preceded by a comma before it is recognized as
+    // a separator.
+    if ((s > origval + 1 && s[-1] == '\\' && s[-2] != ',')
+        || (s == origval + 1 && s[-1] == '\\')) {
+      bs++;
+    } else {
+      bs = 0;
+    }
+  }
+  return NULL;
 }
 
 /// Set the Vi-default value of a number option.
@@ -1285,9 +1325,7 @@ int do_set(
             char *saved_newval = NULL;
             unsigned newlen;
             int comma;
-            int bs;
-            int new_value_alloced;                      /* new string option
-                                                           was allocated */
+            bool new_value_alloced = false;  // new string option was allocated
 
             /* When using ":set opt=val" for a global option
              * with a local value the local value will be
@@ -1486,33 +1524,19 @@ int do_set(
               i = 0;                    // init for GCC
               if (removing || (flags & P_NODUP)) {
                 i = (int)STRLEN(newval);
-                bs = 0;
-                for (s = origval; *s; s++) {
-                  if ((!(flags & P_COMMA)
-                       || s == origval
-                       || (s[-1] == ',' && !(bs & 1)))
-                      && STRNCMP(s, newval, i) == 0
-                      && (!(flags & P_COMMA)
-                          || s[i] == ','
-                          || s[i] == NUL)) {
-                    break;
-                  }
-                  // Count backslashes.  Only a comma with an even number of
-                  // backslashes or a single backslash preceded by a comma
-                  // before it is recognized as a separator
-                  if ((s > origval + 1 && s[-1] == '\\' && s[-2] != ',')
-                      || (s == origval + 1 && s[-1] == '\\')) {
-                    bs++;
-                  } else {
-                    bs = 0;
-                  }
-                }
+                s = find_dup_item(origval, newval, flags);
 
                 // do not add if already there
-                if ((adding || prepending) && *s) {
+                if ((adding || prepending) && s != NULL) {
                   prepending = false;
                   adding = false;
                   STRCPY(newval, origval);
+                }
+
+                // if no duplicate, move pointer to end of
+                // original value
+                if (s == NULL) {
+                  s = origval + (int)STRLEN(origval);
                 }
               }
 
@@ -2310,7 +2334,7 @@ static char_u *
 did_set_string_option(
     int opt_idx,                       // index in options[] table
     char_u **varp,                     // pointer to the option variable
-    int new_value_alloced,             // new value was allocated
+    bool new_value_alloced,            // new value was allocated
     char_u *oldval,                    // previous value of the option
     char_u *errbuf,                    // buffer for errors, or NULL
     size_t errbuflen,                  // length of errors buffer

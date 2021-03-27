@@ -1,5 +1,6 @@
 " Tests for :messages, :echomsg, :echoerr
 
+source check.vim
 source shared.vim
 
 func Test_messages()
@@ -77,7 +78,7 @@ func Test_echomsg()
 endfunc
 
 func Test_echoerr()
-  throw 'skipped: Nvim does not support test_ignore_error()'
+  CheckFunction test_ignore_error
   call test_ignore_error('IgNoRe')
   call assert_equal("\nIgNoRe hello", execute(':echoerr "IgNoRe hello"'))
   call assert_equal("\n12345 IgNoRe", execute(':echoerr 12345 "IgNoRe"'))

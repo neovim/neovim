@@ -2,10 +2,11 @@
 
 source shared.vim
 source screendump.vim
+source check.vim
 
+" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline()
-  " See test/functional/legacy/search_spec.lua
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -202,9 +203,9 @@ func Test_search_cmdline()
   bw!
 endfunc
 
+" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline2()
-  " See test/functional/legacy/search_spec.lua
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -351,7 +352,7 @@ func Test_searchc()
 endfunc
 
 func Cmdline3_prep()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   " need to disable char_avail,
   " so that expansion of commandline works
   call test_override("char_avail", 1)
@@ -361,14 +362,13 @@ func Cmdline3_prep()
 endfunc
 
 func Incsearch_cleanup()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   set noincsearch
   call test_override("char_avail", 0)
   bw!
 endfunc
 
 func Test_search_cmdline3()
-  throw 'skipped: Nvim does not support test_override()'
   if !exists('+incsearch')
     return
   endif
@@ -382,7 +382,6 @@ func Test_search_cmdline3()
 endfunc
 
 func Test_search_cmdline3s()
-  throw 'skipped: Nvim does not support test_override()'
   if !exists('+incsearch')
     return
   endif
@@ -409,7 +408,6 @@ func Test_search_cmdline3s()
 endfunc
 
 func Test_search_cmdline3g()
-  throw 'skipped: Nvim does not support test_override()'
   if !exists('+incsearch')
     return
   endif
@@ -433,7 +431,6 @@ func Test_search_cmdline3g()
 endfunc
 
 func Test_search_cmdline3v()
-  throw 'skipped: Nvim does not support test_override()'
   if !exists('+incsearch')
     return
   endif
@@ -450,9 +447,9 @@ func Test_search_cmdline3v()
   call Incsearch_cleanup()
 endfunc
 
+" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline4()
-  " See test/functional/legacy/search_spec.lua
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -507,7 +504,7 @@ func Test_search_cmdline5()
 endfunc
 
 func Test_search_cmdline7()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   " Test that pressing <c-g> in an empty command line
   " does not move the cursor
   if !exists('+incsearch')
@@ -798,7 +795,7 @@ func Test_incsearch_vimgrep_dump()
 endfunc
 
 func Test_keep_last_search_pattern()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -820,7 +817,7 @@ func Test_keep_last_search_pattern()
 endfunc
 
 func Test_word_under_cursor_after_match()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -840,7 +837,7 @@ func Test_word_under_cursor_after_match()
 endfunc
 
 func Test_subst_word_under_cursor()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -882,7 +879,7 @@ func Test_incsearch_with_change()
 endfunc
 
 func Test_incsearch_cmdline_modifier()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -960,7 +957,7 @@ func Test_incsearch_search_dump()
 endfunc
 
 func Test_incsearch_substitute()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -982,7 +979,7 @@ func Test_incsearch_substitute()
 endfunc
 
 func Test_incsearch_substitute_long_line()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   new
   call test_override("char_avail", 1)
   set incsearch
@@ -1104,7 +1101,7 @@ func Test_one_error_msg()
 endfunc
 
 func Test_incsearch_add_char_under_cursor()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !exists('+incsearch')
     return
   endif
@@ -1190,6 +1187,42 @@ func Test_search_smartcase_utf8()
   set ignorecase& smartcase&
   let &encoding = save_enc
   close!
+endfunc
+
+func Test_zzzz_incsearch_highlighting_newline()
+  CheckRunVimInTerminal
+  CheckOption incsearch
+  CheckScreendump
+  new
+  call test_override("char_avail", 1)
+
+  let commands =<< trim [CODE]
+    set incsearch nohls
+    call setline(1, ['test', 'xxx'])
+  [CODE]
+  call writefile(commands, 'Xincsearch_nl')
+  let buf = RunVimInTerminal('-S Xincsearch_nl', {'rows': 5, 'cols': 10})
+  " Need to send one key at a time to force a redraw
+  call term_sendkeys(buf, '/test')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_newline1', {})
+  call term_sendkeys(buf, '\n')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_newline2', {})
+  call term_sendkeys(buf, 'x')
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_newline3', {})
+  call term_sendkeys(buf, 'x')
+  call VerifyScreenDump(buf, 'Test_incsearch_newline4', {})
+  call term_sendkeys(buf, "\<CR>")
+  sleep 100m
+  call VerifyScreenDump(buf, 'Test_incsearch_newline5', {})
+  call StopVimInTerminal(buf)
+
+  " clean up
+  call delete('Xincsearch_nl')
+  call test_override("char_avail", 0)
+  bw
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
