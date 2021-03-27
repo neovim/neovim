@@ -10189,6 +10189,38 @@ static void f_strpart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = (char_u *)xmemdupz(p + n, (size_t)len);
 }
 
+// "strptime({format}, {timestring})" function
+static void f_strptime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char fmt_buf[NUMBUFLEN];
+  char str_buf[NUMBUFLEN];
+
+  struct tm tmval = {
+    .tm_isdst = -1,
+  };
+  char *fmt = (char *)tv_get_string_buf(&argvars[0], fmt_buf);
+  char *str = (char *)tv_get_string_buf(&argvars[1], str_buf);
+
+  vimconv_T conv = {
+    .vc_type = CONV_NONE,
+  };
+  char_u *enc = enc_locale();
+  convert_setup(&conv, p_enc, enc);
+  if (conv.vc_type != CONV_NONE) {
+    fmt = (char *)string_convert(&conv, (char_u *)fmt, NULL);
+  }
+  if (fmt == NULL
+      || os_strptime(str, fmt, &tmval) == NULL
+      || (rettv->vval.v_number = mktime(&tmval)) == -1) {
+    rettv->vval.v_number = 0;
+  }
+  if (conv.vc_type != CONV_NONE) {
+    xfree(fmt);
+  }
+  convert_setup(&conv, NULL, NULL);
+  xfree(enc);
+}
+
 /*
  * "strridx()" function
  */

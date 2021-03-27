@@ -444,7 +444,7 @@ as a key.
 To avoid having to put quotes around every key the #{} form can be used.  This
 does require the key to consist only of ASCII letters, digits, '-' and '_'.
 Example: >
-	let mydict = #{zero: 0, one_key: 1, two-key: 2, 333: 3}
+	:let mydict = #{zero: 0, one_key: 1, two-key: 2, 333: 3}
 Note that 333 here is the string "333".  Empty keys are not possible with #{}.
 
 A value can be any expression.  Using a Dictionary for a value creates a
@@ -2430,7 +2430,7 @@ strcharpart({str}, {start} [, {len}])
 				String	{len} characters of {str} at
 					character {start}
 strdisplaywidth({expr} [, {col}]) Number display length of the String {expr}
-strftime({format} [, {time}])	String	time in specified format
+strftime({format} [, {time}])	String	format time with a specified format
 strgetchar({str}, {index})	Number	get char {index} from {str}
 stridx({haystack}, {needle} [, {start}])
 				Number	index of {needle} in {haystack}
@@ -2439,6 +2439,8 @@ strlen({expr})			Number	length of the String {expr}
 strpart({str}, {start} [, {len} [, {chars}]])
 				String	{len} bytes/chars of {str} at
 					byte {start}
+strptime({format}, {timestring})
+				Number	Convert {timestring} to unix timestamp
 strridx({haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans({expr})		String	translate string to make it printable
@@ -4983,7 +4985,7 @@ getwininfo([{winid}])					*getwininfo()*
 
 getwinpos([{timeout}])					*getwinpos()*
 		The result is a list with two numbers, the result of
-		getwinposx() and getwinposy() combined:
+		|getwinposx()| and |getwinposy()| combined:
 			[x-pos, y-pos]
 		{timeout} can be used to specify how long to wait in msec for
 		a response from the terminal.  When omitted 100 msec is used.
@@ -5853,7 +5855,7 @@ list2str({list} [, {utf8}])				*list2str()*
 <
 localtime()						*localtime()*
 		Return the current time, measured as seconds since 1st Jan
-		1970.  See also |strftime()| and |getftime()|.
+		1970.  See also |strftime()|, |strptime()| and |getftime()|.
 
 
 log({expr})						*log()*
@@ -8488,7 +8490,7 @@ strftime({format} [, {time}])				*strftime()*
 		{format} depends on your system, thus this is not portable!
 		See the manual page of the C function strftime() for the
 		format.  The maximum length of the result is 80 characters.
-		See also |localtime()| and |getftime()|.
+		See also |localtime()|, |getftime()| and |strptime()|.
 		The language can be changed with the |:language| command.
 		Examples: >
 		  :echo strftime("%c")		   Sun Apr 27 11:49:23 1997
@@ -8578,6 +8580,31 @@ strpart({src}, {start} [, {len} [, {chars}]])			*strpart()*
 		example, to get the character under the cursor: >
 			strpart(getline("."), col(".") - 1, 1, v:true)
 <
+strptime({format}, {timestring})				*strptime()*
+		The result is a Number, which is a unix timestamp representing
+		the date and time in {timestring}, which is expected to match
+		the format specified in {format}.
+
+		The accepted {format} depends on your system, thus this is not
+		portable!  See the manual page of the C function strptime()
+		for the format.  Especially avoid "%c".  The value of $TZ also
+		matters.
+
+		If the {timestring} cannot be parsed with {format} zero is
+		returned.  If you do not know the format of {timestring} you
+		can try different {format} values until you get a non-zero
+		result.
+
+		See also |strftime()|.
+		Examples: >
+		  :echo strptime("%Y %b %d %X", "1997 Apr 27 11:49:23")
+<		  862156163 >
+		  :echo strftime("%c", strptime("%y%m%d %T", "970427 11:53:55"))
+<		  Sun Apr 27 11:53:55 1997 >
+		  :echo strftime("%c", strptime("%Y%m%d%H%M%S", "19970427115355") + 3600)
+<		  Sun Apr 27 12:53:55 1997
+
+
 strridx({haystack}, {needle} [, {start}])			*strridx()*
 		The result is a Number, which gives the byte index in
 		{haystack} of the last occurrence of the String {needle}.

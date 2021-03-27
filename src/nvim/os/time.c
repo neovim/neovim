@@ -196,6 +196,22 @@ char *os_ctime(char *result, size_t result_len)
   return os_ctime_r(&rawtime, result, result_len);
 }
 
+/// Portable version of POSIX strptime()
+///
+/// @param str[in]  string to convert
+/// @param format[in]  format to parse "str"
+/// @param tm[out]  time representation of "str"
+/// @return Pointer to first unprocessed character or NULL
+char *os_strptime(const char *str, const char *format, struct tm *tm)
+  FUNC_ATTR_NONNULL_ALL
+{
+#ifdef HAVE_STRPTIME
+  return strptime(str, format, tm);
+#else
+  return NULL;
+#endif
+}
+
 /// Obtains the current Unix timestamp.
 ///
 /// @return Seconds since epoch.

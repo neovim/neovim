@@ -788,6 +788,7 @@ Date and Time:				*date-functions* *time-functions*
 	getftime()		get last modification time of a file
 	localtime()		get current time in seconds
 	strftime()		convert time to a string
+	strptime()		convert a date/time string to time
 	reltime()		get the current or elapsed time accurately
 	reltimestr()		convert reltime() result to a string
 	reltimefloat()		convert reltime() result to a Float
