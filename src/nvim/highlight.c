@@ -151,7 +151,7 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
 
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
-  DecorProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_decor_provider(ns_id, true);
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
       && map_has(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id))) {
     return;
@@ -175,7 +175,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     ns_id = ns_hl_active;
   }
 
-  DecorProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_decor_provider(ns_id, true);
   ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id));
   // TODO(bfredl): map_ref true even this?
   bool valid_cache = it.version >= p->hl_valid;

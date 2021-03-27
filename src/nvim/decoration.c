@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/vim.h"
+#include "nvim/lua/executor.h"
 #include "nvim/extmark.h"
 #include "nvim/decoration.h"
 #include "nvim/screen.h"
@@ -364,4 +365,53 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
   }
   decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true,
             priority);
+}
+
+
+DecorProvider *get_decor_provider(NS ns_id, bool force)
+{
+  ssize_t i;
+  for (i = 0; i < (ssize_t)kv_size(decor_providers); i++) {
+    DecorProvider *item = &kv_A(decor_providers, i);
+    if (item->ns_id == ns_id) {
+      return item;
+    } else if (item->ns_id > ns_id) {
+      break;
+    }
+  }
+
+  if (!force) {
+    return NULL;
+  }
+
+  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
+    // allocates if needed:
+    (void)kv_a(decor_providers, (size_t)j+1);
+    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
+  }
+  DecorProvider *item = &kv_a(decor_providers, (size_t)i);
+  *item = DECORATION_PROVIDER_INIT(ns_id);
+
+  return item;
+}
+
+void decor_provider_clear(DecorProvider *p)
+{
+  if (p == NULL) {
+    return;
+  }
+  NLUA_CLEAR_REF(p->redraw_start);
+  NLUA_CLEAR_REF(p->redraw_buf);
+  NLUA_CLEAR_REF(p->redraw_win);
+  NLUA_CLEAR_REF(p->redraw_line);
+  NLUA_CLEAR_REF(p->redraw_end);
+  p->active = false;
+}
+
+void decor_free_all_mem(void)
+{
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    decor_provider_clear(&kv_A(decor_providers, i));
+  }
+  kv_destroy(decor_providers);
 }
