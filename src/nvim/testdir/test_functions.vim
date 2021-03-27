@@ -217,6 +217,7 @@ endfunc
 
 func Test_strptime()
   CheckFunction strptime
+  CheckNotMSWindows
 
   if exists('$TZ')
     let tz = $TZ
