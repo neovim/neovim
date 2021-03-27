@@ -5,6 +5,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#include "nvim/assert.h"
 #include "nvim/version.h"
 #include "nvim/misc1.h"
 #include "nvim/getchar.h"
@@ -18,6 +19,7 @@
 #include "nvim/vim.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/map.h"
 #include "nvim/message.h"
 #include "nvim/memline.h"
 #include "nvim/buffer_defs.h"
@@ -62,6 +64,11 @@ typedef struct {
       nlua_push_typval(lstate, &args[i], special); \
     } \
   }
+
+#if __has_feature(address_sanitizer)
+  PMap(handle_T) *nlua_ref_markers;
+# define NLUA_TRACK_REFS
+#endif
 
 /// Convert lua error into a Vim error message
 ///
@@ -547,6 +554,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 static lua_State *nlua_init(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
+#ifdef NLUA_TRACK_REFS
+  nlua_ref_markers = pmap_new(handle_T)();
+#endif
+
   lua_State *lstate = luaL_newstate();
   if (lstate == NULL) {
     EMSG(_("E970: Failed to initialize lua interpreter"));
@@ -554,8 +565,12 @@ static lua_State *nlua_init(void)
   }
   luaL_openlibs(lstate);
   nlua_state_init(lstate);
+
   return lstate;
 }
+
+// only to be used by nlua_enter and nlua_free_all_mem!
+static lua_State *global_lstate = NULL;
 
 /// Enter lua interpreter
 ///
@@ -567,24 +582,29 @@ static lua_State *nlua_init(void)
 static lua_State *nlua_enter(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  static lua_State *global_lstate = NULL;
   if (global_lstate == NULL) {
     global_lstate = nlua_init();
   }
   lua_State *const lstate = global_lstate;
-  // Last used p_rtp value. Must not be dereferenced because value pointed to
-  // may already be freed. Used to check whether &runtimepath option value
-  // changed.
-  static const void *last_p_rtp = NULL;
-  if (last_p_rtp != (const void *)p_rtp) {
-    // stack: (empty)
-    lua_getglobal(lstate, "vim");
-    // stack: vim
-    lua_pop(lstate, 1);
-    // stack: (empty)
-    last_p_rtp = (const void *)p_rtp;
-  }
   return lstate;
+}
+
+void nlua_free_all_mem(void)
+{
+  if (!global_lstate) {
+    return;
+  }
+
+#ifdef NLUA_TRACK_REFS
+  if (nlua_refcount) {
+    fprintf(stderr, "%d lua references were leaked!", nlua_refcount);
+  }
+
+  pmap_free(handle_T)(nlua_ref_markers);
+#endif
+
+  nlua_refcount = 0;
+  lua_close(global_lstate);
 }
 
 static void nlua_print_event(void **argv)
@@ -866,17 +886,31 @@ static int nlua_getenv(lua_State *lstate)
 }
 #endif
 
+
 /// add the value to the registry
 LuaRef nlua_ref(lua_State *lstate, int index)
 {
   lua_pushvalue(lstate, index);
-  return luaL_ref(lstate, LUA_REGISTRYINDEX);
+  LuaRef ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
+  if (ref > 0) {
+    // TODO: store traceback when LeakSanitizer is enabled
+    nlua_refcount++;
+#ifdef NLUA_TRACK_REFS
+    pmap_put(handle_T)(nlua_ref_markers, ref, xmalloc(3));
+#endif
+  }
+  return ref;
 }
 
 /// remove the value from the registry
 void nlua_unref(lua_State *lstate, LuaRef ref)
 {
   if (ref > 0) {
+    nlua_refcount--;
+#ifdef NLUA_TRACK_REFS
+    // NB: don't remove entry from map to track double-unreff
+    xfree(pmap_get(handle_T)(nlua_ref_markers, ref));
+#endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);
   }
 }
