@@ -31,14 +31,11 @@ endif
 SCRIPTS ?= $(SCRIPTS_DEFAULT)
 
 # Tests using runtest.vim.
-NEW_TESTS_ALOT := test_alot_utf8 test_alot
+NEW_TESTS_ALOT := test_alot_utf8 test_alot test_alot_latin
 NEW_TESTS_IN_ALOT := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' $(addsuffix .vim,$(NEW_TESTS_ALOT)))
-NEW_TESTS_IN_ALOT_LATIN := $(shell sed -n '/^source/ s/^source //; s/\.vim$$//p' test_alot_latin.vim)
 # Ignored tests.
-# test_alot_latin: Nvim does not allow setting encoding.
 # test_largefile: uses too much resources to run on CI.
 NEW_TESTS_IGNORE := \
-  test_alot_latin $(NEW_TESTS_IN_ALOT_LATIN) \
   test_largefile \
 
 NEW_TESTS := $(sort $(basename $(notdir $(wildcard test_*.vim))))
