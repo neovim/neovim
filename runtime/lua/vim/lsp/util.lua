@@ -373,9 +373,12 @@ function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx)
     adj_end_char = #old_lines[#old_lines + end_line + 1] + end_char + 1
   end
 
+  start_char = vim.str_utfindex(old_lines[start_line], start_char - 1)
+  adj_end_char = vim.str_utfindex(old_lines[#old_lines + end_line + 1], adj_end_char)
+
   local result = {
     range = {
-      start = { line = start_line - 1, character = start_char - 1},
+      start = { line = start_line - 1, character = start_char},
       ["end"] = { line = adj_end_line, character = adj_end_char}
     },
     text = text,
