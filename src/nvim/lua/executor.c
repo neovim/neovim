@@ -594,6 +594,10 @@ void nlua_free_all_mem(void)
   if (!global_lstate) {
     return;
   }
+  lua_State *lstate = global_lstate;
+
+  nlua_unref(lstate, nlua_nil_ref);
+  nlua_unref(lstate, nlua_empty_dict_ref);
 
 #ifdef NLUA_TRACK_REFS
   if (nlua_refcount) {
@@ -604,7 +608,7 @@ void nlua_free_all_mem(void)
 #endif
 
   nlua_refcount = 0;
-  lua_close(global_lstate);
+  lua_close(lstate);
 }
 
 static void nlua_print_event(void **argv)
