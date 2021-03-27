@@ -222,11 +222,7 @@ Boolean nvim_buf_attach(uint64_t channel_id,
   return buf_updates_register(buf, channel_id, cb, send_buffer);
 
 error:
-  // TODO(bfredl): ASAN build should check that the ref table is empty?
-  api_free_luaref(cb.on_lines);
-  api_free_luaref(cb.on_bytes);
-  api_free_luaref(cb.on_changedtick);
-  api_free_luaref(cb.on_detach);
+  buffer_update_callbacks_free(cb);
   return false;
 }
 
