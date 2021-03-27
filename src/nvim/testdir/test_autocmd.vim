@@ -76,7 +76,7 @@ if has('timers')
   endfunc
 
   func Test_OptionSet_modeline()
-    throw 'skipped: Nvim does not support test_override()'
+    CheckFunction test_override
     call test_override('starting', 1)
     au! OptionSet
     augroup set_tabstop
@@ -507,7 +507,7 @@ func s:AutoCommandOptionSet(match)
 endfunc
 
 func Test_OptionSet()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !has("eval") || !exists("+autochdir")
     return
   endif
@@ -648,7 +648,7 @@ func Test_OptionSet()
 endfunc
 
 func Test_OptionSet_diffmode()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   call test_override('starting', 1)
   " 18: Changing an option when entering diff mode
   new
@@ -682,7 +682,7 @@ func Test_OptionSet_diffmode()
 endfunc
 
 func Test_OptionSet_diffmode_close()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   call test_override('starting', 1)
   " 19: Try to close the current window when entering diff mode
   " should not segfault
@@ -1285,9 +1285,9 @@ func Test_autocommand_all_events()
 endfunc
 
 " Test TextChangedI and TextChangedP
+" See test/functional/viml/completion_spec.lua'
 func Test_ChangedP()
-  " Nvim does not support test_override().
-  throw 'skipped: see test/functional/viml/completion_spec.lua'
+  CheckFunction test_override
   new
   call setline(1, ['foo', 'bar', 'foobar'])
   call test_override("char_avail", 1)
@@ -1350,7 +1350,7 @@ func SetLineOne()
 endfunc
 
 func Test_TextChangedI_with_setline()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   new
   call test_override('char_avail', 1)
   autocmd TextChangedI <buffer> call SetLineOne()
