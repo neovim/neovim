@@ -862,6 +862,34 @@ func Test_x_arg()
   call delete('Xtest_x_arg')
 endfunc
 
+" Test for --not-a-term avoiding escape codes.
+func Test_not_a_term()
+  CheckUnix
+  CheckNotGui
+
+  if &shellredir =~ '%s'
+    let redir = printf(&shellredir,  'Xvimout')
+  else
+    let redir = &shellredir .. ' Xvimout'
+  endif
+
+  " Without --not-a-term there are a few escape sequences.
+  " This will take 2 seconds because of the missing --not-a-term
+  let cmd = GetVimProg() .. ' --cmd quit ' .. redir
+  exe "silent !" . cmd
+  " call assert_match("\<Esc>", readfile('Xvimout')->join())
+  call assert_match("\<Esc>", join(readfile('Xvimout')))
+  call delete('Xvimout')
+
+  " With --not-a-term there are no escape sequences.
+  let cmd = GetVimProg() .. ' --not-a-term --cmd quit ' .. redir
+  exe "silent !" . cmd
+  " call assert_notmatch("\<Esc>", readfile('Xvimout')->join())
+  call assert_notmatch("\<Esc>", join(readfile('Xvimout')))
+  call delete('Xvimout')
+endfunc
+
+
 " Test starting vim with various names: vim, ex, view, evim, etc.
 func Test_progname()
   CheckUnix
