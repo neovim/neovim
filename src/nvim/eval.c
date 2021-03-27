@@ -6263,6 +6263,7 @@ void common_function(typval_T *argvars, typval_T *rettv,
     // function(dict.MyFunc, [arg])
     arg_pt = argvars[0].vval.v_partial;
     s = partial_name(arg_pt);
+    // TODO(bfredl): do the entire nlua_is_table_from_lua dance
   } else {
     // function('MyFunc', [arg], dict)
     s = (char_u *)tv_get_string(&argvars[0]);
@@ -7362,7 +7363,6 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
     char_u *name = nlua_register_table_as_callable(arg);
 
     if (name != NULL) {
-      func_ref(name);
       callback->data.funcref = vim_strsave(name);
       callback->type = kCallbackFuncref;
     } else {
