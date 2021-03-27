@@ -978,7 +978,7 @@ function protocol.resolve_capabilities(server_capabilities)
     general_properties.rename = true
   end
 
-  if server_capabilities.codeLensProvider == nil then
+  if server_capabilities.codeLensProvider == nil or server_capabilities.codeLensProvider == false then
     general_properties.code_lens = false
     general_properties.code_lens_resolve = false
   elseif type(server_capabilities.codeLensProvider) == 'table' then
