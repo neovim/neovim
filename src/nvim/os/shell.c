@@ -123,7 +123,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   int shell_style = STYLE_ECHO;
   int check_spaces;
   static bool did_find_nul = false;
-  bool ampersent = false;
+  bool ampersand = false;
   // vimglob() function to define for Posix shell
   static char *sh_vimglob_func =
     "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
@@ -245,7 +245,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       p--;
     }
     if (*p == '&') {                            // remove trailing '&'
-      ampersent = true;
+      ampersand = true;
       *p = ' ';
     }
     STRCAT(command, ">");
@@ -309,7 +309,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     shellopts |= kShellOptHideMess;
   }
 
-  if (ampersent) {
+  if (ampersand) {
     STRCAT(command, "&");               // put the '&' after the redirection
   }
 
@@ -331,7 +331,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   // When running in the background, give it some time to create the temp
   // file, but don't wait for it to finish.
-  if (ampersent) {
+  if (ampersand) {
     os_delay(10L, true);
   }
 

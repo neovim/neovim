@@ -5895,7 +5895,7 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
       fprintf(f, " count %" PRId64, (int64_t)OPERAND_MIN(s));
       s += 4;
     } else if (op == RE_LNUM || op == RE_COL || op == RE_VCOL) {
-      /* one int plus comperator */
+      // one int plus comparator
       fprintf(f, " count %" PRId64, (int64_t)OPERAND_MIN(s));
       s += 5;
     }

@@ -398,7 +398,7 @@ void pum_redraw(void)
   char_u *p = NULL;
   int totwidth, width, w;
   int thumb_pos = 0;
-  int thumb_heigth = 1;
+  int thumb_height = 1;
   int round;
   int n;
 
@@ -449,11 +449,11 @@ void pum_redraw(void)
   }
 
   if (pum_scrollbar) {
-    thumb_heigth = pum_height * pum_height / pum_size;
-    if (thumb_heigth == 0) {
-      thumb_heigth = 1;
+    thumb_height = pum_height * pum_height / pum_size;
+    if (thumb_height == 0) {
+      thumb_height = 1;
     }
-    thumb_pos = (pum_first * (pum_height - thumb_heigth)
+    thumb_pos = (pum_first * (pum_height - thumb_height)
                  + (pum_size - pum_height) / 2)
                 / (pum_size - pum_height);
   }
@@ -616,11 +616,11 @@ void pum_redraw(void)
     if (pum_scrollbar > 0) {
       if (pum_rl) {
         grid_putchar(&pum_grid, ' ', row, col_off - pum_width,
-                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     i >= thumb_pos && i < thumb_pos + thumb_height
                      ? attr_thumb : attr_scroll);
       } else {
         grid_putchar(&pum_grid, ' ', row, col_off + pum_width,
-                     i >= thumb_pos && i < thumb_pos + thumb_heigth
+                     i >= thumb_pos && i < thumb_pos + thumb_height
                      ? attr_thumb : attr_scroll);
       }
     }
