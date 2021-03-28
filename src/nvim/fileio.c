@@ -3744,18 +3744,13 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
   if (shortmess(SHM_LINES)) {
      sprintf((char *)p, "%" PRId64 "L, %" PRId64 "C",
              (int64_t)lnum, (int64_t)nchars);
-  }
-  else {
-    if (lnum == 1)
-      STRCPY(p, _("1 line, "));
-    else
-      sprintf((char *)p, _("%" PRId64 " lines, "), (int64_t)lnum);
+  } else {
+    snprintf((char *)p, NGETTEXT("%ld line, ", "%ld lines, ", lnum),
+             "%ld", lnum);
     p += STRLEN(p);
-    if (nchars == 1)
-      STRCPY(p, _("1 character"));
-    else {
-      sprintf((char *)p, _("%" PRId64 " characters"), (int64_t)nchars);
-    }
+    vim_snprintf((char *)p, IOSIZE - (p - IObuff),
+                 NGETTEXT("%lld character", "%lld characters", nchars),
+                 (int64_t)nchars);
   }
 }
 

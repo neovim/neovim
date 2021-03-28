@@ -206,7 +206,6 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
 {
   long i;
   int first_char;
-  char_u          *s;
   int block_col = 0;
 
   if (u_save((linenr_T)(oap->start.lnum - 1),
@@ -244,23 +243,22 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   foldOpenCursor();
 
   if (oap->line_count > p_report) {
-    if (oap->op_type == OP_RSHIFT)
-      s = (char_u *)">";
-    else
-      s = (char_u *)"<";
-    if (oap->line_count == 1) {
-      if (amount == 1)
-        sprintf((char *)IObuff, _("1 line %sed 1 time"), s);
-      else
-        sprintf((char *)IObuff, _("1 line %sed %d times"), s, amount);
+    char *op;
+    char *msg_line_single;
+    char *msg_line_plural;
+
+    if (oap->op_type == OP_RSHIFT) {
+      op = ">";
     } else {
-      if (amount == 1)
-        sprintf((char *)IObuff, _("%" PRId64 " lines %sed 1 time"),
-            (int64_t)oap->line_count, s);
-      else
-        sprintf((char *)IObuff, _("%" PRId64 " lines %sed %d times"),
-            (int64_t)oap->line_count, s, amount);
+      op = "<";
     }
+    msg_line_single = NGETTEXT("%ld line %sed %d time",
+                               "%ld line %sed %d times", amount);
+    msg_line_plural = NGETTEXT("%ld lines %sed %d time",
+                               "%ld lines %sed %d times", amount);
+    vim_snprintf((char *)IObuff, IOSIZE,
+                 NGETTEXT(msg_line_single, msg_line_plural, oap->line_count),
+                 oap->line_count, op, amount);
     msg_attr_keep(IObuff, 0, true, false);
   }
 
@@ -679,10 +677,8 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
-    if (i == 1)
-      MSG(_("1 line indented "));
-    else
-      smsg(_("%" PRId64 " lines indented "), (int64_t)i);
+    smsg((char_u *)NGETTEXT("%ld line indented ",
+                            "%ld lines indented ", i), i);
   }
   /* set '[ and '] marks */
   curbuf->b_op_start = oap->start;
@@ -2038,10 +2034,8 @@ void op_tilde(oparg_T *oap)
   curbuf->b_op_end = oap->end;
 
   if (oap->line_count > p_report) {
-    if (oap->line_count == 1)
-      MSG(_("1 line changed"));
-    else
-      smsg(_("%" PRId64 " lines changed"), (int64_t)oap->line_count);
+    smsg((char_u *)NGETTEXT("%ld line changed", "%ld lines changed",
+                            oap->line_count), oap->line_count);
   }
 }
 
@@ -2684,17 +2678,14 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
       // redisplay now, so message is not deleted
       update_topline_redraw();
-      if (yanklines == 1) {
-        if (yank_type == kMTBlockWise) {
-          smsg(_("block of 1 line yanked%s"), namebuf);
-        } else {
-          smsg(_("1 line yanked%s"), namebuf);
-        }
-      } else if (yank_type == kMTBlockWise) {
-        smsg(_("block of %" PRId64 " lines yanked%s"),
-             (int64_t)yanklines, namebuf);
+      if (yank_type == kMTBlockWise) {
+        smsg((char_u *)NGETTEXT("block of %ld line yanked%s",
+                                "block of %ld lines yanked%s", yanklines),
+             yanklines, namebuf);
       } else {
-        smsg(_("%" PRId64 " lines yanked%s"), (int64_t)yanklines, namebuf);
+        smsg((char_u *)NGETTEXT("%ld line yanked%s",
+                                "%ld lines yanked%s", yanklines),
+             yanklines, namebuf);
       }
     }
   }
@@ -4696,11 +4687,8 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
     }
 
     if (change_cnt > p_report) {
-      if (change_cnt == 1) {
-        MSG(_("1 line changed"));
-      } else {
-        smsg((char *)_("%" PRId64 " lines changed"), (int64_t)change_cnt);
-      }
+      smsg((char_u *)NGETTEXT("%ld line changed", "%ld lines changed",
+                              change_cnt), change_cnt);
     }
   }
 }

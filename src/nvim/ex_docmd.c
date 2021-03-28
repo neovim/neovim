@@ -5023,21 +5023,17 @@ check_more(
       if ((p_confirm || cmdmod.confirm) && curbuf->b_fname != NULL) {
         char_u buff[DIALOG_MSG_SIZE];
 
-        if (n == 1)
-          STRLCPY(buff, _("1 more file to edit.  Quit anyway?"),
-              DIALOG_MSG_SIZE);
-        else
-          vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
-              _("%d more files to edit.  Quit anyway?"), n);
-        if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 1) == VIM_YES)
+        vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
+                     NGETTEXT("%d more file to edit.  Quit anyway?",
+                              "%d more files to edit.  Quit anyway?", n), n);
+        if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 1) == VIM_YES) {
           return OK;
+        }
         return FAIL;
       }
-      if (n == 1)
-        EMSG(_("E173: 1 more file to edit"));
-      else
-        EMSGN(_("E173: %" PRId64 " more files to edit"), n);
-      quitmore = 2;                 /* next try to quit is allowed */
+      EMSGN(NGETTEXT("E173: %lld more file to edit",
+                     "E173: %lld more files to edit", n), n);
+      quitmore = 2;                 // next try to quit is allowed
     }
     return FAIL;
   }
