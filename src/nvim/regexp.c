@@ -7139,6 +7139,7 @@ list_T *reg_submatch_list(int no)
     tv_list_append_string(list, s, (const char *)rsm.sm_match->endp[no] - s);
   }
 
+  tv_list_ref(list);
   return list;
 }
 
