@@ -2518,6 +2518,21 @@ nvim_win_get_width({window})                            *nvim_win_get_width()*
                 Return: ~
                     Width as a count of columns
 
+nvim_win_hide({window})                                      *nvim_win_hide()*
+                Closes the window and hide the buffer it contains (like
+                |:hide| with a |window-ID|).
+
+                Like |:hide| the buffer becomes hidden unless another window
+                is editing it, or 'bufhidden' is `unload` , `delete` or `wipe`
+                as opposed to |:close| or |nvim_win_close|, which will close
+                the buffer.
+
+                Attributes: ~
+                    not allowed when |textlock| is active
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
+
 nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                 Checks if a window is valid
 
