@@ -203,11 +203,13 @@ int pty_process_spawn(PtyProcess *ptyproc)
 cleanup:
   if (status) {
     // In the case of an error of MultiByteToWideChar or CreateProcessW.
-    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn(%s): %s: error code: %d",
+         proc->argv[0], emsg, status);
     status = os_translate_sys_error(status);
   } else if (err != NULL) {
     status = (int)winpty_error_code(err);
-    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn(%s): %s: error code: %d",
+         proc->argv[0], emsg, status);
     status = translate_winpty_error(status);
   }
   winpty_error_free(err);
