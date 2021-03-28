@@ -1288,6 +1288,29 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                                 height", may be fractional.
                               • `col` : Column position in units of "screen
                                 cell width", may be fractional.
+                              • `border`: style of (optional) window border. This
+                                can either be a string or an array. the string
+                                values are:
+                                • "none" No border. This is the default
+                                • "single" a single line box
+                                • "double" a double line box
+                                If it is an array it should be an array of
+                                eight items or any divisor of eight. The array
+                                will specifify the eight chars building up the
+                                border in a clockwise fashion starting with the
+                                top-left corner. As, an example, the double box
+                                style could be specified as:
+                                  [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ]
+                                if the number of chars are less than eight,
+                                they will be repeated. Thus an ASCII border
+                                could be specified as:
+                                  [ "/", "-", "\\", "|" ]
+                                or all chars the same as:
+                                  [ "x" ]
+                                By default `FloatBorder` highlight is used which
+                                links to `VertSplit` when not defined.  It could
+                                also be specified by character:
+                                  [ {"+", "MyCorner"}, {"x", "MyBorder"} ]
                               • `focusable` : Enable focus by user actions
                                 (wincmds, mouse events). Defaults to true.
                                 Non-focusable windows can be entered by
