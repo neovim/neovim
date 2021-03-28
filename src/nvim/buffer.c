@@ -282,7 +282,7 @@ int open_buffer(
 
   // Set/reset the Changed flag first, autocmds may change the buffer.
   // Apply the automatic commands, before processing the modelines.
-  // So the modelines have priority over auto commands.
+  // So the modelines have priority over autocommands.
 
   // When reading stdin, the buffer contents always needs writing, so set
   // the changed flag.  Unless in readonly mode: "ls | nvim -R -".
@@ -1946,6 +1946,17 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_fo);
   clear_string_option(&buf->b_p_flp);
   clear_string_option(&buf->b_p_isk);
+  clear_string_option(&buf->b_p_vsts);
+  if (buf->b_p_vsts_nopaste) {
+    xfree(buf->b_p_vsts_nopaste);
+  }
+  buf->b_p_vsts_nopaste = NULL;
+  if (buf->b_p_vsts_array) {
+    xfree(buf->b_p_vsts_array);
+  }
+  buf->b_p_vsts_array = NULL;
+  clear_string_option(&buf->b_p_vts);
+  XFREE_CLEAR(buf->b_p_vts_array);
   clear_string_option(&buf->b_p_keymap);
   keymap_ga_clear(&buf->b_kmap_ga);
   ga_clear(&buf->b_kmap_ga);
@@ -5375,8 +5386,8 @@ bool bt_terminal(const buf_T *const buf)
   return buf != NULL && buf->b_p_bt[0] == 't';
 }
 
-// Return true if "buf" is a "nofile", "acwrite" or "terminal" buffer.
-// This means the buffer name is not a file name.
+// Return true if "buf" is a "nofile", "acwrite", "terminal" or "prompt"
+// buffer.  This means the buffer name is not a file name.
 bool bt_nofile(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -5386,7 +5397,8 @@ bool bt_nofile(const buf_T *const buf)
                          || buf->b_p_bt[0] == 'p');
 }
 
-// Return true if "buf" is a "nowrite", "nofile" or "terminal" buffer.
+// Return true if "buf" is a "nowrite", "nofile", "terminal" or "prompt"
+// buffer.
 bool bt_dontwrite(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {

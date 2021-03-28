@@ -712,14 +712,15 @@ void ex_retab(exarg_T *eap)
   long len;
   long col;
   long vcol;
-  long start_col = 0;                   /* For start of white-space string */
-  long start_vcol = 0;                  /* For start of white-space string */
-  int temp;
+  long start_col = 0;                   // For start of white-space string
+  long start_vcol = 0;                  // For start of white-space string
   long old_len;
   char_u      *ptr;
-  char_u      *new_line = (char_u *)1;      /* init to non-NULL */
-  int did_undo;                         /* called u_save for current line */
-  int new_ts;
+  char_u      *new_line = (char_u *)1;  // init to non-NULL
+  int did_undo;                         // called u_save for current line
+  long *new_vts_array = NULL;
+  char_u *new_ts_str;  // string value of tab argument
+
   int save_list;
   linenr_T first_line = 0;              /* first changed line */
   linenr_T last_line = 0;               /* last changed line */
@@ -727,14 +728,24 @@ void ex_retab(exarg_T *eap)
   save_list = curwin->w_p_list;
   curwin->w_p_list = 0;             /* don't want list mode here */
 
-  new_ts = getdigits_int(&(eap->arg), false, -1);
-  if (new_ts < 0) {
-    EMSG(_(e_positive));
+  new_ts_str = eap->arg;
+  if (!tabstop_set(eap->arg, &new_vts_array)) {
     return;
   }
-  if (new_ts == 0)
-    new_ts = curbuf->b_p_ts;
-  for (lnum = eap->line1; !got_int && lnum <= eap->line2; ++lnum) {
+  while (ascii_isdigit(*(eap->arg)) || *(eap->arg) == ',') {
+    (eap->arg)++;
+  }
+
+  // This ensures that either new_vts_array and new_ts_str are freshly
+  // allocated, or new_vts_array points to an existing array and new_ts_str
+  // is null.
+  if (new_vts_array == NULL) {
+    new_vts_array = curbuf->b_p_vts_array;
+    new_ts_str = NULL;
+  } else {
+    new_ts_str = vim_strnsave(new_ts_str, eap->arg - new_ts_str);
+  }
+  for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     ptr = ml_get(lnum);
     col = 0;
     vcol = 0;
@@ -758,13 +769,12 @@ void ex_retab(exarg_T *eap)
           len = num_spaces = vcol - start_vcol;
           num_tabs = 0;
           if (!curbuf->b_p_et) {
-            temp = new_ts - (start_vcol % new_ts);
-            if (num_spaces >= temp) {
-              num_spaces -= temp;
-              num_tabs++;
-            }
-            num_tabs += num_spaces / new_ts;
-            num_spaces -= (num_spaces / new_ts) * new_ts;
+            int t, s;
+
+            tabstop_fromto(start_vcol, vcol,
+                           curbuf->b_p_ts, new_vts_array, &t, &s);
+            num_tabs = t;
+            num_spaces = s;
           }
           if (curbuf->b_p_et || got_tab
               || (num_spaces + num_tabs < len)) {
@@ -817,15 +827,42 @@ void ex_retab(exarg_T *eap)
   if (got_int)
     EMSG(_(e_interr));
 
-  if (curbuf->b_p_ts != new_ts)
+  // If a single value was given then it can be considered equal to
+  // either the value of 'tabstop' or the value of 'vartabstop'.
+  if (tabstop_count(curbuf->b_p_vts_array) == 0
+      && tabstop_count(new_vts_array) == 1
+      && curbuf->b_p_ts == tabstop_first(new_vts_array)) {
+    // not changed
+  } else if (tabstop_count(curbuf->b_p_vts_array) > 0
+             && tabstop_eq(curbuf->b_p_vts_array, new_vts_array)) {
+    // not changed
+  } else {
     redraw_curbuf_later(NOT_VALID);
+  }
   if (first_line != 0) {
     changed_lines(first_line, 0, last_line + 1, 0L, true);
   }
 
   curwin->w_p_list = save_list;         /* restore 'list' */
 
-  curbuf->b_p_ts = new_ts;
+  if (new_ts_str != NULL) {  // set the new tabstop
+    // If 'vartabstop' is in use or if the value given to retab has more
+    // than one tabstop then update 'vartabstop'.
+    long *old_vts_ary = curbuf->b_p_vts_array;
+
+    if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
+      set_string_option_direct("vts", -1, new_ts_str,
+                               OPT_FREE | OPT_LOCAL, 0);
+      curbuf->b_p_vts_array = new_vts_array;
+      xfree(old_vts_ary);
+    } else {
+      // 'vartabstop' wasn't in use and a single value was given to
+      // retab then update 'tabstop'.
+      curbuf->b_p_ts = tabstop_first(new_vts_array);
+      xfree(new_vts_array);
+    }
+    xfree(new_ts_str);
+  }
   coladvance(curwin->w_curswant);
 
   u_clearline();

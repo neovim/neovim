@@ -743,6 +743,11 @@ struct file_buffer {
   long b_p_wm;                  ///< 'wrapmargin'
   long b_p_wm_nobin;            ///< b_p_wm saved for binary mode
   long b_p_wm_nopaste;          ///< b_p_wm saved for paste mode
+  char_u *b_p_vsts;             ///< 'varsofttabstop'
+  long *b_p_vsts_array;          ///< 'varsofttabstop' in internal format
+  char_u *b_p_vsts_nopaste;     ///< b_p_vsts saved for paste mode
+  char_u *b_p_vts;              ///< 'vartabstop'
+  long *b_p_vts_array;           ///< 'vartabstop' in internal format
   char_u *b_p_keymap;           ///< 'keymap'
 
   // local values for options which are normally global

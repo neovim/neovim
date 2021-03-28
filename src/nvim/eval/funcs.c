@@ -4312,6 +4312,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "title",
     "user-commands",        // was accidentally included in 5.4
     "user_commands",
+    "vartabs",
     "vertsplit",
     "virtualedit",
     "visual",
@@ -8848,6 +8849,18 @@ static void f_shellescape(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_shiftwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  rettv->vval.v_number = 0;
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    long col;
+
+    col = (long)tv_get_number_chk(argvars, NULL);
+    if (col < 0) {
+      return;  // type error; errmsg already given
+    }
+    rettv->vval.v_number = get_sw_value_col(curbuf, col);
+    return;
+  }
   rettv->vval.v_number = get_sw_value(curbuf);
 }
 

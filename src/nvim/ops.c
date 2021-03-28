@@ -288,7 +288,7 @@ void shift_line(
 {
   int count;
   int i, j;
-  int p_sw = get_sw_value(curbuf);
+  int p_sw = (int)get_sw_value_indent(curbuf);
 
   count = get_indent();  // get current indent
 
@@ -332,8 +332,9 @@ static void shift_block(oparg_T *oap, int amount)
   const int oldstate = State;
   char_u *newp;
   const int oldcol = curwin->w_cursor.col;
-  const int p_sw = get_sw_value(curbuf);
-  const int p_ts = (int)curbuf->b_p_ts;
+  int p_sw = (int)get_sw_value_indent(curbuf);
+  long *p_vts = curbuf->b_p_vts_array;
+  const long p_ts = curbuf->b_p_ts;
   struct block_def bd;
   int incr;
   int i = 0, j = 0;
@@ -383,12 +384,11 @@ static void shift_block(oparg_T *oap, int amount)
     }
     /* OK, now total=all the VWS reqd, and textstart points at the 1st
      * non-ws char in the block. */
-    if (!curbuf->b_p_et)
-      i = ((ws_vcol % p_ts) + total) / p_ts;       /* number of tabs */
-    if (i)
-      j = ((ws_vcol % p_ts) + total) % p_ts;       /* number of spp */
-    else
+    if (!curbuf->b_p_et) {
+      tabstop_fromto(ws_vcol, ws_vcol + total, p_ts, p_vts, &i, &j);
+    } else {
       j = total;
+    }
 
     // if we're splitting a TAB, allow for it
     int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
@@ -3061,14 +3061,17 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     if (gchar_cursor() == TAB) {
       /* Don't need to insert spaces when "p" on the last position of a
        * tab or "P" on the first position. */
+      int viscol = getviscol();
       if (dir == FORWARD
-          ? (int)curwin->w_cursor.coladd < curbuf->b_p_ts - 1
-          : curwin->w_cursor.coladd > 0)
-        coladvance_force(getviscol());
-      else
+          ? tabstop_padding(viscol, curbuf->b_p_ts, curbuf->b_p_vts_array) != 1
+          : curwin->w_cursor.coladd > 0) {
+        coladvance_force(viscol);
+      } else {
         curwin->w_cursor.coladd = 0;
-    } else if (curwin->w_cursor.coladd > 0 || gchar_cursor() == NUL)
+      }
+    } else if (curwin->w_cursor.coladd > 0 || gchar_cursor() == NUL) {
       coladvance_force(getviscol() + (dir == FORWARD));
+    }
   }
 
   lnum = curwin->w_cursor.lnum;

@@ -309,7 +309,7 @@ return {
     setwinvar={args=3},
     sha256={args=1},
     shellescape={args={1, 2}},
-    shiftwidth={},
+    shiftwidth={args={0, 1}},
     sign_define={args={1, 2}},
     sign_getdefined={args={0, 1}},
     sign_getplaced={args={0, 2}},

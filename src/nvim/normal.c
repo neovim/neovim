@@ -6777,9 +6777,10 @@ static void nv_g_cmd(cmdarg_T *cap)
     }
     coladvance((colnr_T)i);
     if (flag) {
-      do
+      do {
         i = gchar_cursor();
-      while (ascii_iswhite(i) && oneright());
+      } while (ascii_iswhite(i) && oneright());
+      curwin->w_valid &= ~VALID_WCOL;
     }
     curwin->w_set_curswant = true;
     break;

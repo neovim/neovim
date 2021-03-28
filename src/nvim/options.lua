@@ -2999,6 +2999,23 @@ return {
       defaults={if_true={vi=4000}}
     },
     {
+      full_name='varsofttabstop', abbreviation='vsts',
+      short_desc=N_("list of numbers of spaces that <Tab> uses while editing"),
+      type='string', list='comma', scope={'buffer'},
+      vi_def=true,
+      varname='p_vsts',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='vartabstop', abbreviation='vts',
+      short_desc=N_("list of numbers of spaces that <Tab> in file uses"),
+      type='string', list='comma', scope={'buffer'},
+      vi_def=true,
+      varname='p_vts',
+      redraw={'current_buffer'},
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='verbose', abbreviation='vbs',
       short_desc=N_("give informative messages"),
       type='number', scope={'global'},

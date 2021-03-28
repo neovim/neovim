@@ -180,6 +180,8 @@ static long p_ts;
 static long p_tw;
 static int p_udf;
 static long p_wm;
+static char_u *p_vsts;
+static char_u *p_vts;
 static char_u   *p_keymap;
 
 // Saved values for when 'bin' is set.
@@ -194,6 +196,7 @@ static int p_et_nopaste;
 static long p_sts_nopaste;
 static long p_tw_nopaste;
 static long p_wm_nopaste;
+static char_u *p_vsts_nopaste;
 
 typedef struct vimoption {
   char        *fullname;        // full option name
@@ -1998,6 +2001,8 @@ static void didset_options2(void)
 
   // Parse default for 'wildmode'.
   check_opt_wim();
+  tabstop_set(curbuf->b_p_vsts, &curbuf->b_p_vsts_array);
+  tabstop_set(curbuf->b_p_vts,  &curbuf->b_p_vts_array);
 }
 
 /// Check for string options that are NULL (normally only termcap options).
@@ -2064,6 +2069,8 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_lw);
   check_string_option(&buf->b_p_bkc);
   check_string_option(&buf->b_p_menc);
+  check_string_option(&buf->b_p_vsts);
+  check_string_option(&buf->b_p_vts);
 }
 
 /// Free the string allocated for an option.
@@ -3109,6 +3116,67 @@ ambw_end:
   } else if (varp == &p_tpf) {
     if (opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true) != OK) {
       errmsg = e_invarg;
+    }
+  } else if (varp == &(curbuf->b_p_vsts)) {  // 'varsofttabstop'
+    char_u *cp;
+
+    if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
+      if (curbuf->b_p_vsts_array) {
+        xfree(curbuf->b_p_vsts_array);
+        curbuf->b_p_vsts_array = 0;
+      }
+    } else {
+      for (cp = *varp; *cp; cp++) {
+        if (ascii_isdigit(*cp)) {
+          continue;
+        }
+        if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
+          continue;
+        }
+        errmsg = e_invarg;
+        break;
+      }
+      if (errmsg == NULL) {
+        long *oldarray = curbuf->b_p_vsts_array;
+        if (tabstop_set(*varp, &(curbuf->b_p_vsts_array))) {
+          xfree(oldarray);
+        } else {
+          errmsg = e_invarg;
+        }
+      }
+    }
+  } else if (varp == &(curbuf->b_p_vts)) {  // 'vartabstop'
+    char_u *cp;
+
+    if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
+      if (curbuf->b_p_vts_array) {
+        xfree(curbuf->b_p_vts_array);
+        curbuf->b_p_vts_array = NULL;
+      }
+    } else {
+      for (cp = *varp; *cp; cp++) {
+        if (ascii_isdigit(*cp)) {
+          continue;
+        }
+        if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
+          continue;
+        }
+        errmsg = e_invarg;
+        break;
+      }
+      if (errmsg == NULL) {
+        long *oldarray = curbuf->b_p_vts_array;
+        if (tabstop_set(*varp, &(curbuf->b_p_vts_array))) {
+          if (oldarray) {
+            xfree(oldarray);
+          }
+          if (foldmethodIsIndent(curwin)) {
+            foldUpdateAll(curwin);
+          }
+        } else {
+          errmsg = e_invarg;
+        }
+      }
     }
   } else {
     // Options that are a list of flags.
@@ -5684,6 +5752,8 @@ static char_u *get_varp(vimoption_T *p)
   case PV_TW:     return (char_u *)&(curbuf->b_p_tw);
   case PV_UDF:    return (char_u *)&(curbuf->b_p_udf);
   case PV_WM:     return (char_u *)&(curbuf->b_p_wm);
+  case PV_VSTS:   return (char_u *)&(curbuf->b_p_vsts);
+  case PV_VTS:    return (char_u *)&(curbuf->b_p_vts);
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
   case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
@@ -5935,6 +6005,15 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_tfu = vim_strsave(p_tfu);
       buf->b_p_sts = p_sts;
       buf->b_p_sts_nopaste = p_sts_nopaste;
+      buf->b_p_vsts = vim_strsave(p_vsts);
+      if (p_vsts && p_vsts != empty_option) {
+        tabstop_set(p_vsts, &buf->b_p_vsts_array);
+      } else {
+        buf->b_p_vsts_array = 0;
+      }
+      buf->b_p_vsts_nopaste = p_vsts_nopaste
+                                ? vim_strsave(p_vsts_nopaste)
+                                : NULL;
       buf->b_p_com = vim_strsave(p_com);
       buf->b_p_cms = vim_strsave(p_cms);
       buf->b_p_fo = vim_strsave(p_fo);
@@ -6006,10 +6085,21 @@ void buf_copy_options(buf_T *buf, int flags)
        */
       if (dont_do_help) {
         buf->b_p_isk = save_p_isk;
+        if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
+          tabstop_set(p_vts, &buf->b_p_vts_array);
+        } else {
+          buf->b_p_vts_array = NULL;
+        }
       } else {
         buf->b_p_isk = vim_strsave(p_isk);
         did_isk = true;
         buf->b_p_ts = p_ts;
+        buf->b_p_vts = vim_strsave(p_vts);
+        if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
+          tabstop_set(p_vts, &buf->b_p_vts_array);
+        } else {
+          buf->b_p_vts_array = NULL;
+        }
         buf->b_help = false;
         if (buf->b_p_bt[0] == 'h') {
           clear_string_option(&buf->b_p_bt);
@@ -6624,6 +6714,12 @@ static void paste_option_changed(void)
         buf->b_p_sts_nopaste = buf->b_p_sts;
         buf->b_p_ai_nopaste = buf->b_p_ai;
         buf->b_p_et_nopaste = buf->b_p_et;
+        if (buf->b_p_vsts_nopaste) {
+          xfree(buf->b_p_vsts_nopaste);
+        }
+        buf->b_p_vsts_nopaste = buf->b_p_vsts && buf->b_p_vsts != empty_option
+                                    ? vim_strsave(buf->b_p_vsts)
+                                    : NULL;
       }
 
       // save global options
@@ -6638,6 +6734,12 @@ static void paste_option_changed(void)
       p_sts_nopaste = p_sts;
       p_tw_nopaste = p_tw;
       p_wm_nopaste = p_wm;
+      if (p_vsts_nopaste) {
+        xfree(p_vsts_nopaste);
+      }
+      p_vsts_nopaste = p_vsts && p_vsts != empty_option
+                          ? vim_strsave(p_vsts)
+                          : NULL;
     }
 
     // Always set the option values, also when 'paste' is set when it is
@@ -6649,6 +6751,14 @@ static void paste_option_changed(void)
       buf->b_p_sts = 0;             // softtabstop is 0
       buf->b_p_ai = 0;              // no auto-indent
       buf->b_p_et = 0;              // no expandtab
+      if (buf->b_p_vsts) {
+        free_string_option(buf->b_p_vsts);
+      }
+      buf->b_p_vsts = empty_option;
+      if (buf->b_p_vsts_array) {
+        xfree(buf->b_p_vsts_array);
+      }
+      buf->b_p_vsts_array = 0;
     }
 
     // set global options
@@ -6665,6 +6775,10 @@ static void paste_option_changed(void)
     p_wm = 0;
     p_sts = 0;
     p_ai = 0;
+    if (p_vsts) {
+      free_string_option(p_vsts);
+    }
+    p_vsts = empty_option;
   } else if (old_p_paste) {
     // Paste switched from on to off: Restore saved values.
 
@@ -6675,6 +6789,20 @@ static void paste_option_changed(void)
       buf->b_p_sts = buf->b_p_sts_nopaste;
       buf->b_p_ai = buf->b_p_ai_nopaste;
       buf->b_p_et = buf->b_p_et_nopaste;
+      if (buf->b_p_vsts) {
+        free_string_option(buf->b_p_vsts);
+      }
+      buf->b_p_vsts = buf->b_p_vsts_nopaste
+                        ? vim_strsave(buf->b_p_vsts_nopaste)
+                        : empty_option;
+      if (buf->b_p_vsts_array) {
+        xfree(buf->b_p_vsts_array);
+      }
+      if (buf->b_p_vsts && buf->b_p_vsts != empty_option) {
+        tabstop_set(buf->b_p_vsts, &buf->b_p_vsts_array);
+      } else {
+        buf->b_p_vsts_array = 0;
+      }
     }
 
     // restore global options
@@ -6692,6 +6820,10 @@ static void paste_option_changed(void)
     p_sts = p_sts_nopaste;
     p_tw = p_tw_nopaste;
     p_wm = p_wm_nopaste;
+    if (p_vsts) {
+      free_string_option(p_vsts);
+    }
+    p_vsts = p_vsts_nopaste ? vim_strsave(p_vsts_nopaste) : empty_option;
   }
 
   old_p_paste = p_paste;
@@ -6941,17 +7073,308 @@ int check_ff_value(char_u *p)
   return check_opt_strings(p, p_ff_values, false);
 }
 
+// Set the integer values corresponding to the string setting of 'vartabstop'.
+// "array" will be set, caller must free it if needed.
+bool tabstop_set(char_u *var, long **array)
+{
+  long valcount = 1;
+  int t;
+  char_u *cp;
+
+  if (var[0] == NUL || (var[0] == '0' && var[1] == NUL)) {
+    *array = NULL;
+    return true;
+  }
+
+  for (cp = var; *cp != NUL; cp++) {
+    if (cp == var || cp[-1] == ',') {
+      char_u *end;
+
+      if (strtol((char *)cp, (char **)&end, 10) <= 0) {
+        if (cp != end) {
+          EMSG(_(e_positive));
+        } else {
+          EMSG(_(e_invarg));
+        }
+        return false;
+      }
+    }
+
+    if (ascii_isdigit(*cp)) {
+      continue;
+    }
+    if (cp[0] == ',' && cp > var && cp[-1] != ',' && cp[1] != NUL) {
+      valcount++;
+      continue;
+    }
+    EMSG(_(e_invarg));
+    return false;
+  }
+
+  *array = (long *)xmalloc((unsigned)(valcount + 1) * sizeof(long));
+  (*array)[0] = valcount;
+
+  t = 1;
+  for (cp = var; *cp != NUL;) {
+    (*array)[t++] = atoi((char *)cp);
+    while (*cp  != NUL && *cp != ',') {
+      cp++;
+    }
+    if (*cp != NUL) {
+      cp++;
+    }
+  }
+
+  return true;
+}
+
+// Calculate the number of screen spaces a tab will occupy.
+// If "vts" is set then the tab widths are taken from that array,
+// otherwise the value of ts is used.
+int tabstop_padding(colnr_T col, long ts_arg, long *vts)
+{
+  long ts = ts_arg == 0 ? 8 : ts_arg;
+  long tabcount;
+  colnr_T tabcol = 0;
+  int t;
+  long padding = 0;
+
+  if (vts == NULL || vts[0] == 0) {
+    return (int)ts - (col % (int)ts);
+  }
+
+  tabcount = vts[0];
+
+  for (t = 1; t <= tabcount; t++) {
+    tabcol += vts[t];
+    if (tabcol > col) {
+      padding = (int)(tabcol - col);
+      break;
+    }
+  }
+  if (t > tabcount) {
+    padding = vts[tabcount] - (int)((col - tabcol) % vts[tabcount]);
+  }
+
+  return (int)padding;
+}
+
+// Find the size of the tab that covers a particular column.
+int tabstop_at(colnr_T col, long ts, long *vts)
+{
+  int tabcount;
+  colnr_T tabcol = 0;
+  int t;
+  int tab_size = 0;
+
+  if (vts == NULL || vts[0] == 0) {
+    return (int)ts;
+  }
+
+  tabcount = (int)vts[0];
+  for (t = 1; t <= tabcount; t++) {
+    tabcol += vts[t];
+    if (tabcol > col) {
+      tab_size = (int)vts[t];
+      break;
+    }
+  }
+  if (t > tabcount) {
+    tab_size = (int)vts[tabcount];
+  }
+
+  return tab_size;
+}
+
+// Find the column on which a tab starts.
+colnr_T tabstop_start(colnr_T col, long ts, long *vts)
+{
+  int tabcount;
+  colnr_T tabcol = 0;
+  int t;
+  int excess;
+
+  if (vts == NULL || vts[0] == 0) {
+    return (col / (int)ts) * (int)ts;
+  }
+
+  tabcount = (int)vts[0];
+  for (t = 1; t <= tabcount; t++) {
+    tabcol += vts[t];
+    if (tabcol > col) {
+      return tabcol - (int)vts[t];
+    }
+  }
+
+  excess = tabcol % vts[tabcount];
+  return excess + ((col - excess) / (int)vts[tabcount]) * (int)vts[tabcount];
+}
+
+// Find the number of tabs and spaces necessary to get from one column
+// to another.
+void tabstop_fromto(colnr_T start_col,
+                    colnr_T end_col,
+                    long ts_arg,
+                    long *vts,
+                    int *ntabs,
+                    int *nspcs)
+{
+  int spaces = end_col - start_col;
+  colnr_T tabcol = 0;
+  int padding = 0;
+  int tabcount;
+  int t;
+  long ts = ts_arg == 0 ? curbuf->b_p_ts : ts_arg;
+
+  if (vts == NULL || vts[0] == 0) {
+    int tabs = 0;
+    int initspc = 0;
+
+    initspc = (int)ts - (start_col % (int)ts);
+    if (spaces >= initspc) {
+      spaces -= initspc;
+      tabs++;
+    }
+    tabs += spaces / ts;
+    spaces -= (spaces / ts) * ts;
+
+    *ntabs = tabs;
+    *nspcs = spaces;
+    return;
+  }
+
+  // Find the padding needed to reach the next tabstop.
+  tabcount = (int)vts[0];
+  for (t = 1; t <= tabcount; t++) {
+    tabcol += vts[t];
+    if (tabcol > start_col) {
+      padding = (int)(tabcol - start_col);
+      break;
+    }
+  }
+  if (t > tabcount) {
+    padding =
+      (int)vts[tabcount] - (int)((start_col - tabcol) % (int)vts[tabcount]);
+  }
+
+  // If the space needed is less than the padding no tabs can be used.
+  if (spaces < padding) {
+    *ntabs = 0;
+    *nspcs = spaces;
+    return;
+  }
+
+  *ntabs = 1;
+  spaces -= padding;
+
+  // At least one tab has been used. See if any more will fit.
+  while (spaces != 0 && ++t <= tabcount) {
+    padding = (int)vts[t];
+    if (spaces < padding) {
+      *nspcs = spaces;
+      return;
+    }
+    *ntabs += 1;
+    spaces -= padding;
+  }
+
+  *ntabs += spaces / (int)vts[tabcount];
+  *nspcs = spaces % (int)vts[tabcount];
+}
+
+// See if two tabstop arrays contain the same values.
+bool tabstop_eq(long *ts1, long *ts2)
+{
+  int t;
+
+  if ((ts1 == 0 && ts2) || (ts1 && ts2 == 0)) {
+    return false;
+  }
+  if (ts1 == ts2) {
+    return true;
+  }
+  if (ts1[0] != ts2[0]) {
+    return false;
+  }
+
+  for (t = 1; t <= ts1[0]; t++) {
+    if (ts1[t] != ts2[t]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Copy a tabstop array, allocating space for the new array.
+int *tabstop_copy(long *oldts)
+{
+  long *newts;
+  int t;
+
+  if (oldts == 0) {
+    return 0;
+  }
+
+  newts = xmalloc((unsigned)(oldts[0] + 1) * sizeof(long));
+  for (t = 0; t <= oldts[0]; t++) {
+    newts[t] = oldts[t];
+  }
+
+  return (int *)newts;
+}
+
+// Return a count of the number of tabstops.
+int tabstop_count(long *ts)
+{
+  return ts != NULL ? (int)ts[0] : 0;
+}
+
+// Return the first tabstop, or 8 if there are no tabstops defined.
+int tabstop_first(long *ts)
+{
+  return ts != NULL ? (int)ts[1] : 8;
+}
+
 /// Return the effective shiftwidth value for current buffer, using the
 /// 'tabstop' value when 'shiftwidth' is zero.
 int get_sw_value(buf_T *buf)
 {
-  long result = buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
+  long result = get_sw_value_col(buf, 0);
   assert(result >= 0 && result <= INT_MAX);
   return (int)result;
 }
 
+// Idem, using the first non-black in the current line.
+long get_sw_value_indent(buf_T *buf)
+{
+  pos_T pos = curwin->w_cursor;
+
+  pos.col = (colnr_T)getwhitecols_curline();
+  return get_sw_value_pos(buf, &pos);
+}
+
+// Idem, using "pos".
+long get_sw_value_pos(buf_T *buf, pos_T *pos)
+{
+  pos_T save_cursor = curwin->w_cursor;
+  long sw_value;
+
+  curwin->w_cursor = *pos;
+  sw_value = get_sw_value_col(buf, get_nolist_virtcol());
+  curwin->w_cursor = save_cursor;
+  return sw_value;
+}
+
+// Idem, using virtual column "col".
+long get_sw_value_col(buf_T *buf, colnr_T col)
+{
+  return buf->b_p_sw ? buf->b_p_sw
+                     : tabstop_at(col, buf->b_p_ts, buf->b_p_vts_array);
+}
+
 /// Return the effective softtabstop value for the current buffer,
-/// using the effective shiftwidth  value when 'softtabstop' is negative.
+/// using the shiftwidth  value when 'softtabstop' is negative.
 int get_sts_value(void)
 {
   long result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;

@@ -824,6 +824,8 @@ enum {
   , BV_UDF
   , BV_UL
   , BV_WM
+  , BV_VSTS
+  , BV_VTS
   , BV_COUNT        // must be the last one
 };
 
