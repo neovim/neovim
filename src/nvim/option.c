@@ -7134,26 +7134,25 @@ bool tabstop_set(char_u *var, long **array)
 int tabstop_padding(colnr_T col, long ts_arg, long *vts)
 {
   long ts = ts_arg == 0 ? 8 : ts_arg;
-  long tabcount;
   colnr_T tabcol = 0;
   int t;
   long padding = 0;
 
   if (vts == NULL || vts[0] == 0) {
-    return (int)ts - (col % (int)ts);
+    return (int)(ts - (col % ts));
   }
 
-  tabcount = vts[0];
+  const long tabcount = vts[0];
 
   for (t = 1; t <= tabcount; t++) {
-    tabcol += vts[t];
+    tabcol += (colnr_T)vts[t];
     if (tabcol > col) {
-      padding = (int)(tabcol - col);
+      padding = tabcol - col;
       break;
     }
   }
   if (t > tabcount) {
-    padding = vts[tabcount] - (int)((col - tabcol) % vts[tabcount]);
+    padding = vts[tabcount] - ((col - tabcol) % vts[tabcount]);
   }
 
   return (int)padding;
@@ -7162,52 +7161,49 @@ int tabstop_padding(colnr_T col, long ts_arg, long *vts)
 // Find the size of the tab that covers a particular column.
 int tabstop_at(colnr_T col, long ts, long *vts)
 {
-  int tabcount;
   colnr_T tabcol = 0;
   int t;
-  int tab_size = 0;
+  long tab_size = 0;
 
   if (vts == NULL || vts[0] == 0) {
     return (int)ts;
   }
 
-  tabcount = (int)vts[0];
+  const long tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
-    tabcol += vts[t];
+    tabcol += (colnr_T)vts[t];
     if (tabcol > col) {
-      tab_size = (int)vts[t];
+      tab_size = vts[t];
       break;
     }
   }
   if (t > tabcount) {
-    tab_size = (int)vts[tabcount];
+    tab_size = vts[tabcount];
   }
 
-  return tab_size;
+  return (int)tab_size;
 }
 
 // Find the column on which a tab starts.
 colnr_T tabstop_start(colnr_T col, long ts, long *vts)
 {
-  int tabcount;
   colnr_T tabcol = 0;
   int t;
-  int excess;
 
   if (vts == NULL || vts[0] == 0) {
-    return (col / (int)ts) * (int)ts;
+    return (int)((col / ts) * ts);
   }
 
-  tabcount = (int)vts[0];
+  const long tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
-    tabcol += vts[t];
+    tabcol += (colnr_T)vts[t];
     if (tabcol > col) {
-      return tabcol - (int)vts[t];
+      return (int)(tabcol - vts[t]);
     }
   }
 
-  excess = tabcol % vts[tabcount];
-  return excess + ((col - excess) / (int)vts[tabcount]) * (int)vts[tabcount];
+  const int excess = (int)(tabcol % vts[tabcount]);
+  return (int)(excess + ((col - excess) / vts[tabcount]) * vts[tabcount]);
 }
 
 // Find the number of tabs and spaces necessary to get from one column
@@ -7221,22 +7217,20 @@ void tabstop_fromto(colnr_T start_col,
 {
   int spaces = end_col - start_col;
   colnr_T tabcol = 0;
-  int padding = 0;
-  int tabcount;
+  long padding = 0;
   int t;
   long ts = ts_arg == 0 ? curbuf->b_p_ts : ts_arg;
 
   if (vts == NULL || vts[0] == 0) {
     int tabs = 0;
-    int initspc = 0;
 
-    initspc = (int)ts - (start_col % (int)ts);
+    const int initspc = (int)(ts - (start_col % ts));
     if (spaces >= initspc) {
       spaces -= initspc;
       tabs++;
     }
-    tabs += spaces / ts;
-    spaces -= (spaces / ts) * ts;
+    tabs += (int)(spaces / ts);
+    spaces -= (int)((spaces / ts) * ts);
 
     *ntabs = tabs;
     *nspcs = spaces;
@@ -7244,17 +7238,16 @@ void tabstop_fromto(colnr_T start_col,
   }
 
   // Find the padding needed to reach the next tabstop.
-  tabcount = (int)vts[0];
+  const long tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
-    tabcol += vts[t];
+    tabcol += (colnr_T)vts[t];
     if (tabcol > start_col) {
-      padding = (int)(tabcol - start_col);
+      padding = tabcol - start_col;
       break;
     }
   }
   if (t > tabcount) {
-    padding =
-      (int)vts[tabcount] - (int)((start_col - tabcol) % (int)vts[tabcount]);
+    padding = vts[tabcount] - ((start_col - tabcol) % vts[tabcount]);
   }
 
   // If the space needed is less than the padding no tabs can be used.
@@ -7265,17 +7258,17 @@ void tabstop_fromto(colnr_T start_col,
   }
 
   *ntabs = 1;
-  spaces -= padding;
+  spaces -= (int)padding;
 
   // At least one tab has been used. See if any more will fit.
   while (spaces != 0 && ++t <= tabcount) {
-    padding = (int)vts[t];
+    padding = vts[t];
     if (spaces < padding) {
       *nspcs = spaces;
       return;
     }
     *ntabs += 1;
-    spaces -= padding;
+    spaces -= (int)padding;
   }
 
   *ntabs += spaces / (int)vts[tabcount];
