@@ -832,15 +832,16 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     }
 
     // Handle cterm attrs
-    if (strequal(key, "cterm") && val.type == kObjectTypeDictionary){
+    if (strequal(key, "cterm") && val.type == kObjectTypeDictionary) {
       cterm_mask_provided = true;
       Dictionary cterm_dict = val.data.dictionary;
-      for (size_t l = 0; l < cterm_dict.size; l++){
+      for (size_t l = 0; l < cterm_dict.size; l++) {
         char *cterm_dict_key = cterm_dict.items[l].key.data;
         Object cterm_dict_val = cterm_dict.items[l].value;
-        for (int m = 0; flags[m].name; m++){
-          if (strequal(flags[m].name, cterm_dict_key)){
-            if (api_object_to_bool(cterm_dict_val, cterm_dict_key, false, err)){
+        for (int m = 0; flags[m].name; m++) {
+          if (strequal(flags[m].name, cterm_dict_key)) {
+            if (api_object_to_bool(cterm_dict_val, cterm_dict_key, false,
+                                   err)) {
               cterm_mask |= flags[m].flag;
             }
           break;
@@ -881,7 +882,6 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       }
     }
 
-
     if (flags[j].name || colors[k].name) {
       // handled above
     } else if (link_id && strequal(key, "link")) {
@@ -903,7 +903,7 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
   }
 
   // apply gui mask as default for cterm mask
-  if (!cterm_mask_provided){
+  if (!cterm_mask_provided) {
     cterm_mask = mask;
   }
   if (use_rgb) {
@@ -911,8 +911,10 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     hlattrs.rgb_bg_color = bg;
     hlattrs.rgb_fg_color = fg;
     hlattrs.rgb_sp_color = sp;
-    hlattrs.cterm_bg_color = ctermbg == -1 ? cterm_normal_bg_color : ctermbg + 1;
-    hlattrs.cterm_fg_color = ctermfg == -1 ? cterm_normal_fg_color : ctermfg + 1;
+    hlattrs.cterm_bg_color =
+        ctermbg == -1 ? cterm_normal_bg_color : ctermbg + 1;
+    hlattrs.cterm_fg_color =
+        ctermfg == -1 ? cterm_normal_fg_color : ctermfg + 1;
     hlattrs.cterm_ae_attr = cterm_mask;
   } else {
     hlattrs.cterm_ae_attr = cterm_mask;

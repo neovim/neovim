@@ -221,7 +221,7 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///              `ctermbg`: sets background of cterm color
 ///              `cterm`  : cterm attribute map. sets attributed for
 ///                         cterm colors. similer to `hi cterm`
-///                         Note: by default cterm attributes are 
+///                         Note: by default cterm attributes are
 ///                               same as attributes of gui color
 /// @param[out] err Error details, if any
 ///
