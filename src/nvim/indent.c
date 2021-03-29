@@ -429,11 +429,9 @@ int get_number_indent(linenr_T lnum)
   return (int)col;
 }
 
-/*
- * Return appropriate space number for breakindent, taking influencing
- * parameters into account. Window must be specified, since it is not
- * necessarily always the current one.
- */
+// Return appropriate space number for breakindent, taking influencing
+// parameters into account. Window must be specified, since it is not
+// necessarily always the current one.
 int get_breakindent_win(win_T *wp, const char_u *line)
   FUNC_ATTR_NONNULL_ALL
 {
