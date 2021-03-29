@@ -224,6 +224,20 @@ text before the cursor and start omni completion when some condition is met.
 For abbreviations |v:char| is set to the character that was typed to trigger
 the abbreviation.  You can use this to decide how to expand the {lhs}.  You
 should not either insert or change the v:char.
+ 
+Also, keep in mind that the expression may be evaluated when looking for
+typeahead, before the previous command has been executed.  For example: >
+	func StoreColumn()
+	  let g:column = col('.')
+	  return 'x'
+	endfunc
+	nnoremap <expr> x StoreColumn()
+	nmap ! f!x
+You will notice that g:column has the value from before executing "fx",
+because "z" is evaluated before "fx" is executed.
+This can be solved by inserting <Ignore> before the character that is
+expression-mapped: >
+	nmap ! f!<Ignore>x
 
 Be very careful about side effects!  The expression is evaluated while
 obtaining characters, you may very well make the command dysfunctional.
