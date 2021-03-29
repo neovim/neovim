@@ -1301,6 +1301,10 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     p_wh = i;
   }
 
+  if (!win_valid(oldwin)) {
+    return FAIL;
+  }
+
   // Send the window positions to the UI
   oldwin->w_pos_changed = true;
 

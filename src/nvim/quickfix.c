@@ -3617,6 +3617,15 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   if (win_split(height, flags) == FAIL) {
     return FAIL;  // not enough room for window
   }
+
+  // User autocommands may have invalidated the previous window after calling
+  // win_split, so add a check to ensure that the win is still here
+  if (IS_LL_STACK(qi) && !win_valid(win)) {
+    // close the window that was supposed to be for the loclist
+    win_close(curwin, false);
+    return FAIL;
+  }
+
   RESET_BINDING(curwin);
 
   if (IS_LL_STACK(qi)) {
