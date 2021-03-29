@@ -1079,13 +1079,15 @@ do_execreg(
         }
       }
       escaped = vim_strsave_escape_csi(reg->y_array[i]);
-      retval = ins_typebuf(escaped, remap, 0, TRUE, silent);
+      retval = ins_typebuf(escaped, remap, 0, true, silent);
       xfree(escaped);
-      if (retval == FAIL)
+      if (retval == FAIL) {
         return FAIL;
-      if (colon && ins_typebuf((char_u *)":", remap, 0, TRUE, silent)
-          == FAIL)
+      }
+      if (colon
+          && ins_typebuf((char_u *)":", remap, 0, true, silent) == FAIL) {
         return FAIL;
+      }
     }
     reg_executing = regname == 0 ? '"' : regname;  // disable the 'q' command
   }
@@ -1109,8 +1111,9 @@ static void put_reedit_in_typebuf(int silent)
       buf[0] = (char_u)(restart_edit == 'I' ? 'i' : restart_edit);
       buf[1] = NUL;
     }
-    if (ins_typebuf(buf, REMAP_NONE, 0, TRUE, silent) == OK)
+    if (ins_typebuf(buf, REMAP_NONE, 0, true, silent) == OK) {
       restart_edit = NUL;
+    }
   }
 }
 
@@ -1130,25 +1133,29 @@ static int put_in_typebuf(
   int retval = OK;
 
   put_reedit_in_typebuf(silent);
-  if (colon)
-    retval = ins_typebuf((char_u *)"\n", REMAP_NONE, 0, TRUE, silent);
+  if (colon) {
+    retval = ins_typebuf((char_u *)"\n", REMAP_NONE, 0, true, silent);
+  }
   if (retval == OK) {
     char_u  *p;
 
-    if (esc)
+    if (esc) {
       p = vim_strsave_escape_csi(s);
-    else
+    } else {
       p = s;
-    if (p == NULL)
+    }
+    if (p == NULL) {
       retval = FAIL;
-    else
-      retval = ins_typebuf(p, esc ? REMAP_NONE : REMAP_YES,
-          0, TRUE, silent);
-    if (esc)
+    } else {
+      retval = ins_typebuf(p, esc ? REMAP_NONE : REMAP_YES, 0, true, silent);
+    }
+    if (esc) {
       xfree(p);
+    }
   }
-  if (colon && retval == OK)
-    retval = ins_typebuf((char_u *)":", REMAP_NONE, 0, TRUE, silent);
+  if (colon && retval == OK) {
+    retval = ins_typebuf((char_u *)":", REMAP_NONE, 0, true, silent);
+  }
   return retval;
 }
 
