@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
+local eq = helpers.eq
 local feed = helpers.feed
 local pending_c_parser = helpers.pending_c_parser
 
@@ -512,5 +513,62 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
                                                                        |
     ]]}
+  end)
+
+  it("supports highlighting with custom highlight groups", function()
+    if pending_c_parser(pending) then return end
+
+    insert(hl_text)
+
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query}})
+    ]]
+
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queue}             |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
+      {                                                                |
+        {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
+            || {6:lstate} != {6:lstate}) {                                     |
+          {11:lua_pushliteral}(lstate, {5:"vim.schedule: expected function"});  |
+          {4:return} {11:lua_error}(lstate);                                    |
+        }                                                              |
+                                                                       |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
+                                                                       |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
+        {4:return} {5:0};                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+
+    -- This will change ONLY the literal strings to look like comments
+    -- The only literal string is the "vim.schedule: expected function" in this test.
+    exec_lua [[vim.cmd("highlight link cString comment")]]
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queue}             |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
+      {                                                                |
+        {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
+            || {6:lstate} != {6:lstate}) {                                     |
+          {11:lua_pushliteral}(lstate, {2:"vim.schedule: expected function"});  |
+          {4:return} {11:lua_error}(lstate);                                    |
+        }                                                              |
+                                                                       |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
+                                                                       |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
+        {4:return} {5:0};                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+    screen:expect{ unchanged=true }
   end)
 end)
