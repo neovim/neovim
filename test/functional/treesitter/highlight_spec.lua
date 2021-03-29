@@ -4,7 +4,6 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
-local eq = helpers.eq
 local feed = helpers.feed
 local pending_c_parser = helpers.pending_c_parser
 
