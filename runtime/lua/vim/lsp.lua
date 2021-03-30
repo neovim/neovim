@@ -850,20 +850,23 @@ do
     end
 
     util.buf_versions[bufnr] = changedtick
-    -- Lazy initialize these because clients may not even need them.
-    local incremental_changes = once(function(client)
+
+    local incremental_changes = function(client)
       local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
       local startline =  math.min(firstline + 1, math.min(#client._cached_buffers[bufnr], #lines))
       local endline =  math.min(-(#lines - new_lastline), -1)
-      local incremental_change = vim.lsp.util.compute_diff(client._cached_buffers[bufnr], lines, startline, endline)
+      local incremental_change = vim.lsp.util.compute_diff(
+        client._cached_buffers[bufnr], lines, startline, endline, client.offset_encoding or "utf-16")
       client._cached_buffers[bufnr] = lines
       return incremental_change
-    end)
+    end
+
     local full_changes = once(function()
       return {
         text = buf_get_full_text(bufnr);
       };
     end)
+
     local uri = vim.uri_from_bufnr(bufnr)
     for_each_buffer_client(bufnr, function(client)
       local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, true)

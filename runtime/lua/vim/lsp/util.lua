@@ -357,8 +357,11 @@ end
 --- Returns the range table for the difference between old and new lines
 --@param old_lines table list of lines
 --@param new_lines table list of lines
+--@param start_line_idx int line to begin search for first difference
+--@param end_line_idx int line to begin search for last difference
+--@param offset_encoding string encoding requested by language server
 --@returns table start_line_idx and start_col_idx of range
-function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx)
+function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx, offset_encoding)
   local start_line, start_char = first_difference(old_lines, new_lines, start_line_idx)
   local end_line, end_char = last_difference(vim.list_slice(old_lines, start_line, #old_lines),
       vim.list_slice(new_lines, start_line, #new_lines), start_char, end_line_idx)
@@ -373,13 +376,19 @@ function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx)
     adj_end_char = #old_lines[#old_lines + end_line + 1] + end_char + 1
   end
 
-  local _, utf16_start_char = vim.str_utfindex(old_lines[start_line], start_char - 1)
-  local _, utf16_end_char = vim.str_utfindex(old_lines[#old_lines + end_line + 1], adj_end_char)
+  local _
+  if offset_encoding == "utf-16" then
+    _, start_char = vim.str_utfindex(old_lines[start_line], start_char - 1)
+    _, end_char = vim.str_utfindex(old_lines[#old_lines + end_line + 1], adj_end_char)
+  else
+    start_char = start_char - 1
+    end_char = adj_end_char
+  end
 
   local result = {
     range = {
-      start = { line = start_line - 1, character = utf16_start_char},
-      ["end"] = { line = adj_end_line, character = utf16_end_char}
+      start = { line = start_line - 1, character = start_char},
+      ["end"] = { line = adj_end_line, character = end_char}
     },
     text = text,
     rangeLength = length + 1,
