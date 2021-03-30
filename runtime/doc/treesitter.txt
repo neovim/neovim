@@ -32,6 +32,12 @@ retained for the lifetime of a buffer but this is subject to change. A plugin
 should keep a reference to the parser object as long as it wants incremental
 updates.
 
+                                             *vim.treesitter.language_version*
+To check which language version is compiled with neovim, the number is stored
+within `vim.treesitter.language_version`. This number is not too helpful
+unless you are wondering about compatibility between different versions of
+compiled grammars.
+
 Parser files						*treesitter-parsers*
 
 Parsers are the heart of tree-sitter. They are libraries that tree-sitter will

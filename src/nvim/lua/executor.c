@@ -1272,6 +1272,12 @@ bool nlua_exec_file(const char *path)
   return true;
 }
 
+int tslua_get_language_version(lua_State *L)
+{
+  lua_pushnumber(L, TREE_SITTER_LANGUAGE_VERSION);
+  return 1;
+}
+
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   tslua_init(lstate);
@@ -1288,8 +1294,11 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, tslua_inspect_lang);
   lua_setfield(lstate, -2, "_ts_inspect_language");
 
-  lua_pushcfunction(lstate, ts_lua_parse_query);
+  lua_pushcfunction(lstate, tslua_parse_query);
   lua_setfield(lstate, -2, "_ts_parse_query");
+
+  lua_pushcfunction(lstate, tslua_get_language_version);
+  lua_setfield(lstate, -2, "_ts_get_language_version");
 }
 
 int nlua_expand_pat(expand_T *xp,
