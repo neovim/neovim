@@ -9002,7 +9002,7 @@ static void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = -1;
 
-  // Sign identifer
+  // Sign identifier
   sign_id = (int)tv_get_number_chk(&argvars[0], &notanum);
   if (notanum) {
     return;
@@ -9050,7 +9050,7 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = -1;
 
-  // Sign identifer
+  // Sign identifier
   sign_id = (int)tv_get_number_chk(&argvars[0], &notanum);
   if (notanum) {
     return;

@@ -1947,13 +1947,9 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_flp);
   clear_string_option(&buf->b_p_isk);
   clear_string_option(&buf->b_p_vsts);
-  if (buf->b_p_vsts_nopaste) {
-    xfree(buf->b_p_vsts_nopaste);
-  }
+  xfree(buf->b_p_vsts_nopaste);
   buf->b_p_vsts_nopaste = NULL;
-  if (buf->b_p_vsts_array) {
-    xfree(buf->b_p_vsts_array);
-  }
+  xfree(buf->b_p_vsts_array);
   buf->b_p_vsts_array = NULL;
   clear_string_option(&buf->b_p_vts);
   XFREE_CLEAR(buf->b_p_vts_array);

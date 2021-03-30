@@ -7494,7 +7494,7 @@ static void ex_syncbind(exarg_T *eap)
 
       ctrl_o[0] = Ctrl_O;
       ctrl_o[1] = 0;
-      ins_typebuf(ctrl_o, REMAP_NONE, 0, TRUE, FALSE);
+      ins_typebuf(ctrl_o, REMAP_NONE, 0, true, false);
     }
   }
 }

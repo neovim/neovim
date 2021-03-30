@@ -7269,7 +7269,6 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
   char_u *p;
   char_u *line;
   int icase;
-  int i;
 
   if (keytyped == NUL) {
     // Can happen with CTRL-Y and CTRL-E on a short line.
@@ -7354,8 +7353,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
             && p[curwin->w_cursor.col - 1] == ':'
             && p[curwin->w_cursor.col - 2] == ':') {
           p[curwin->w_cursor.col - 1] = ' ';
-          i = (cin_iscase(p, FALSE) || cin_isscopedecl(p)
-               || cin_islabel());
+          const bool i = cin_iscase(p, false)
+            || cin_isscopedecl(p)
+            || cin_islabel();
           p = get_cursor_line_ptr();
           p[curwin->w_cursor.col - 1] = ':';
           if (i) {

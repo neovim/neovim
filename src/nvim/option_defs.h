@@ -165,8 +165,8 @@ enum {
   SHM_WRI            = 'w',  ///< "[w]" instead of "written".
   SHM_ABBREVIATIONS  = 'a',  ///< Use abbreviations from #SHM_ALL_ABBREVIATIONS.
   SHM_WRITE          = 'W',  ///< Don't use "written" at all.
-  SHM_TRUNC          = 't',  ///< Trunctate file messages.
-  SHM_TRUNCALL       = 'T',  ///< Trunctate all messages.
+  SHM_TRUNC          = 't',  ///< Truncate file messages.
+  SHM_TRUNCALL       = 'T',  ///< Truncate all messages.
   SHM_OVER           = 'o',  ///< Overwrite file messages.
   SHM_OVERALL        = 'O',  ///< Overwrite more messages.
   SHM_SEARCH         = 's',  ///< No search hit bottom messages.

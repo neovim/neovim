@@ -559,7 +559,9 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
  */
 static void realloc_post_list(void)
 {
-  size_t new_max = (post_end - post_start) + 1000;
+  // For weird patterns the number of states can be very high. Increasing by
+  // 50% seems a reasonable compromise between memory use and speed.
+  const size_t new_max = (post_end - post_start) * 3 / 2;
   int *new_start = xrealloc(post_start, new_max * sizeof(int));
   post_ptr = new_start + (post_ptr - post_start);
   post_end = new_start + new_max;
