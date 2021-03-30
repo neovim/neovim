@@ -97,7 +97,7 @@ func Do_test_quotestar_for_x11()
   if has('unix') && has('gui') && !has('gui_running')
     let @* = ''
 
-    " Running in a terminal and the GUI is avaiable: Tell the server to open
+    " Running in a terminal and the GUI is available: Tell the server to open
     " the GUI and check that the remote command still works.
     " Need to wait for the GUI to start up, otherwise the send hangs in trying
     " to send to the terminal window.

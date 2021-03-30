@@ -30,7 +30,7 @@ func Test_syn_iskeyword()
 	\ 'CREATE TABLE FOOBAR(',
 	\ '    DLTD_BY VARCHAR2(100)',
 	\ ');',
-  	\ ''])
+	\ ''])
 
   syntax on
   set ft=sql
@@ -521,7 +521,7 @@ func Test_synstack_synIDtrans()
 
   norm f/
   call assert_equal(['cComment', 'cCommentStart'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
-  call assert_equal(['Comment', 'Comment'],        map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+  call assert_equal(['Comment', 'Comment'],	   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
 
   norm fA
   call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
