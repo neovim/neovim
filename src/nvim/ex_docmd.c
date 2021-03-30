@@ -5032,7 +5032,7 @@ check_more(
         return FAIL;
       }
       EMSGN(NGETTEXT("E173: %lld more file to edit",
-                     "E173: %lld more files to edit", n), n);
+                     "E173: %lld more files to edit", (int64_t)n), n);
       quitmore = 2;                 // next try to quit is allowed
     }
     return FAIL;

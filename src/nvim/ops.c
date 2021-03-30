@@ -677,8 +677,7 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
-    smsg((char_u *)NGETTEXT("%ld line indented ",
-                            "%ld lines indented ", i), i);
+    smsg(NGETTEXT("%ld line indented ", "%ld lines indented ", i), i);
   }
   /* set '[ and '] marks */
   curbuf->b_op_start = oap->start;
@@ -2034,8 +2033,8 @@ void op_tilde(oparg_T *oap)
   curbuf->b_op_end = oap->end;
 
   if (oap->line_count > p_report) {
-    smsg((char_u *)NGETTEXT("%ld line changed", "%ld lines changed",
-                            oap->line_count), oap->line_count);
+    smsg(NGETTEXT("%ld line changed", "%ld lines changed", oap->line_count),
+         oap->line_count);
   }
 }
 
@@ -2679,12 +2678,11 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       // redisplay now, so message is not deleted
       update_topline_redraw();
       if (yank_type == kMTBlockWise) {
-        smsg((char_u *)NGETTEXT("block of %ld line yanked%s",
-                                "block of %ld lines yanked%s", yanklines),
+        smsg(NGETTEXT("block of %ld line yanked%s",
+                      "block of %ld lines yanked%s", yanklines),
              yanklines, namebuf);
       } else {
-        smsg((char_u *)NGETTEXT("%ld line yanked%s",
-                                "%ld lines yanked%s", yanklines),
+        smsg(NGETTEXT("%ld line yanked%s", "%ld lines yanked%s", yanklines),
              yanklines, namebuf);
       }
     }
@@ -4687,8 +4685,8 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
     }
 
     if (change_cnt > p_report) {
-      smsg((char_u *)NGETTEXT("%ld line changed", "%ld lines changed",
-                              change_cnt), change_cnt);
+      smsg(NGETTEXT("%ld line changed", "%ld lines changed", change_cnt),
+           change_cnt);
     }
   }
 }
