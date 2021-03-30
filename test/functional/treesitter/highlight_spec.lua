@@ -472,4 +472,45 @@ describe('treesitter highlighting', function()
                                                                        |
     ]]}
   end)
+
+  it("supports overriding queries, like ", function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+    int x = INT_MAX;
+    #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+    #define foo void main() { \
+                  return 42;  \
+                }
+    ]])
+
+    exec_lua [[
+      local injection_query = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"
+      require('vim.treesitter.query').set_query("c", "highlights", hl_query)
+      require('vim.treesitter.query').set_query("c", "injections", injection_query)
+
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
+    ]]
+
+    screen:expect{grid=[[
+      {3:int} x = {5:INT_MAX};                                                 |
+      #define {5:READ_STRING}(x, y) ({3:char_u} *)read_string((x), ({3:size_t})(y))|
+      #define foo {3:void} main() { \                                      |
+                    {4:return} {5:42};  \                                      |
+                  }                                                    |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
 end)
