@@ -3749,8 +3749,8 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
              "%ld", lnum);
     p += STRLEN(p);
     vim_snprintf((char *)p, IOSIZE - (p - IObuff),
-                 NGETTEXT("%"PRIu64" character", "%"PRIu64" characters", nchars),
-                 (int64_t)nchars);
+                 NGETTEXT("%"PRIu64" character", "%"PRIu64" characters",
+                          nchars), (int64_t)nchars);
   }
 }
 

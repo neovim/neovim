@@ -826,10 +826,14 @@ void msgmore(long n)
   if (pn > p_report) {
     if (n > 0) {
       vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-                   NGETTEXT("%ld more line", "%ld more lines", pn), pn);
+                   NGETTEXT("%ld more line", "%ld more lines",
+                            (unsigned long)pn),
+                   pn);
     } else {
       vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-                   NGETTEXT("%ld line less", "%ld fewer lines", pn), pn);
+                   NGETTEXT("%ld line less", "%ld fewer lines",
+                            (unsigned long)pn),
+                   pn);
     }
     if (got_int) {
       xstrlcat((char *)msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
