@@ -1038,14 +1038,14 @@ do_bufdel(
       errormsg = IObuff;
     } else if (deleted >= p_report) {
       if (command == DOBUF_UNLOAD) {
-        smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded", deleted),
-             deleted);
+        smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded",
+                      (unsigned long)deleted), deleted);
       } else if (command == DOBUF_DEL) {
-        smsg(NGETTEXT("%d buffer deleted", "%d buffers deleted", deleted),
-             deleted);
+        smsg(NGETTEXT("%d buffer deleted", "%d buffers deleted",
+                      (unsigned long)deleted), deleted);
       } else {
-        smsg(NGETTEXT("%d buffer wiped out", "%d buffers wiped out", deleted),
-             deleted);
+        smsg(NGETTEXT("%d buffer wiped out", "%d buffers wiped out",
+                      (unsigned long)deleted), deleted);
       }
     }
   }
@@ -3160,8 +3160,8 @@ fileinfo(
     // Current line and column are already on the screen -- webb
     vim_snprintf_add((char *)buffer, IOSIZE,
                      NGETTEXT("%ld line --%d%%--", "%ld lines --%d%%--",
-                              curbuf->b_ml.ml_line_count),
-                     (long)curbuf->b_ml.ml_line_count, n);
+                              (u_long)curbuf->b_ml.ml_line_count),
+                     (unsigned long)curbuf->b_ml.ml_line_count, n);
   } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
         _("line %" PRId64 " of %" PRId64 " --%d%%-- col "),
