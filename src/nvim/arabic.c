@@ -42,7 +42,7 @@
 #define a_DAL                           0x062f
 #define a_THAL                          0x0630
 #define a_REH                           0x0631
-#define a_ZAIN                          0x0632
+#define a_ZAD                          0x0632
 #define a_SEEN                          0x0633
 #define a_SHEEN                         0x0634
 #define a_SAD                           0x0635
@@ -163,8 +163,8 @@
 #define a_f_THAL                        0xfeac
 #define a_s_REH                         0xfead
 #define a_f_REH                         0xfeae
-#define a_s_ZAIN                        0xfeaf
-#define a_f_ZAIN                        0xfeb0
+#define a_s_ZAD                        0xfeaf
+#define a_f_ZAD                        0xfeb0
 #define a_s_SEEN                        0xfeb1
 #define a_f_SEEN                        0xfeb2
 #define a_i_SEEN                        0xfeb3
@@ -270,7 +270,7 @@ static bool A_is_a(int cur_c)
     case a_DAL:
     case a_THAL:
     case a_REH:
-    case a_ZAIN:
+    case a_ZAD:
     case a_SEEN:
     case a_SHEEN:
     case a_SAD:
@@ -317,7 +317,7 @@ static bool A_is_s(int cur_c)
     case a_s_DAL:
     case a_s_THAL:
     case a_s_REH:
-    case a_s_ZAIN:
+    case a_s_ZAD:
     case a_s_SEEN:
     case a_s_SHEEN:
     case a_s_SAD:
@@ -362,7 +362,7 @@ static bool A_is_f(int cur_c)
     case a_f_DAL:
     case a_f_THAL:
     case a_f_REH:
-    case a_f_ZAIN:
+    case a_f_ZAD:
     case a_f_SEEN:
     case a_f_SHEEN:
     case a_f_SAD:
@@ -405,7 +405,7 @@ static int chg_c_a2s(int cur_c)
     case a_DAL: return a_s_DAL;
     case a_THAL: return a_s_THAL;
     case a_REH: return a_s_REH;
-    case a_ZAIN: return a_s_ZAIN;
+    case a_ZAD: return a_s_ZAD;
     case a_TATWEEL: return cur_c;   // exceptions
     case a_WAW: return a_s_WAW;
     case a_ALEF_MAKSURA: return a_s_ALEF_MAKSURA;
@@ -450,7 +450,7 @@ static int chg_c_a2i(int cur_c)
     case a_DAL: return a_s_DAL;  // exceptions
     case a_THAL: return a_s_THAL;  // exceptions
     case a_REH: return a_s_REH;  // exceptions
-    case a_ZAIN: return a_s_ZAIN;  // exceptions
+    case a_ZAD: return a_s_ZAD;  // exceptions
     case a_TATWEEL: return cur_c;  // exceptions
     case a_WAW: return a_s_WAW;  // exceptions
     case a_ALEF_MAKSURA: return a_s_ALEF_MAKSURA;  // exceptions
@@ -501,7 +501,7 @@ static int chg_c_a2m(int cur_c)
     case a_DAL: return a_f_DAL;  // exception
     case a_THAL: return a_f_THAL;    // exception
     case a_REH: return a_f_REH;  // exception
-    case a_ZAIN: return a_f_ZAIN;    // exception
+    case a_ZAD: return a_f_ZAD;    // exception
     case a_SEEN: return a_m_SEEN;
     case a_SHEEN: return a_m_SHEEN;
     case a_SAD: return a_m_SAD;
@@ -555,7 +555,7 @@ static int chg_c_a2f(int cur_c)
     case a_DAL: return a_f_DAL;
     case a_THAL: return a_f_THAL;
     case a_REH: return a_f_REH;
-    case a_ZAIN: return a_f_ZAIN;
+    case a_ZAD: return a_f_ZAD;
     case a_SEEN: return a_f_SEEN;
     case a_SHEEN: return a_f_SHEEN;
     case a_SAD: return a_f_SAD;
@@ -629,7 +629,7 @@ static int chg_c_f2m(int cur_c)
     case a_f_DAL:
     case a_f_THAL:
     case a_f_REH:
-    case a_f_ZAIN:
+    case a_f_ZAD:
     case a_f_WAW:
     case a_f_ALEF_MAKSURA:
       return cur_c;
