@@ -1109,7 +1109,7 @@ static int querycursor_gc(lua_State *L)
 
 // Query methods
 
-int ts_lua_parse_query(lua_State *L)
+int tslua_parse_query(lua_State *L)
 {
   if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
     return luaL_error(L, "string expected");

@@ -10,6 +10,8 @@ local parsers = {}
 
 local M = vim.tbl_extend("error", query, language)
 
+M.language_version = vim._ts_get_language_version()
+
 setmetatable(M, {
   __index = function (t, k)
       if k == "highlighter" then
