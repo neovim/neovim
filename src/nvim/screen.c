@@ -2082,6 +2082,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int change_start = MAXCOL;            // first col of changed area
   int change_end = -1;                  // last col of changed area
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
+  colnr_T leadcol = 0;                  // start of leading spaces
   bool need_showbreak = false;          // overlong line, skip first x chars
   int line_attr = 0;                    // attribute for the whole line
   int line_attr_lowprio = 0;            // low-priority attribute for the line
@@ -2427,6 +2428,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   if (wp->w_p_list && !has_fold) {
     if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.trail
+        || wp->w_p_lcs_chars.lead
         || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
     }
@@ -2437,6 +2439,20 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         trailcol--;
       }
       trailcol += (colnr_T) (ptr - line);
+    }
+    // find end of leading whitespace
+    if (wp->w_p_lcs_chars.lead) {
+      leadcol = 0;
+      while (ascii_iswhite(ptr[leadcol])) {
+        leadcol++;
+      }
+      if (ptr[leadcol] == NUL) {
+        // in a line full of spaces all of them are treated as trailing
+        leadcol = (colnr_T)0;
+      } else {
+        // keep track of the first column not filled with spaces
+        leadcol += (colnr_T)(ptr - line) + 1;
+      }
     }
   }
 
@@ -3462,6 +3478,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                   || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
                  && curwin->w_p_lcs_chars.nbsp)
                 || (c == ' ' && curwin->w_p_lcs_chars.space
+                    && ptr - line >= leadcol
                     && ptr - line <= trailcol))) {
           c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
           n_attr = 1;
@@ -3477,8 +3494,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           }
         }
 
-        if (trailcol != MAXCOL && ptr > line + trailcol && c == ' ') {
-          c = wp->w_p_lcs_chars.trail;
+        if ((trailcol != MAXCOL && ptr > line + trailcol && c == ' ')
+            || (leadcol != 0 && ptr < line + leadcol && c == ' ')) {
+          c = (ptr > line + trailcol) ? wp->w_p_lcs_chars.trail
+                                      : wp->w_p_lcs_chars.lead;
           n_attr = 1;
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr

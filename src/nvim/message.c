@@ -1705,6 +1705,7 @@ void msg_prt_line(char_u *s, int list)
   char_u *p_extra = NULL;  // init to make SASC shut up
   int n;
   int attr = 0;
+  char_u *lead = NULL;
   char_u *trail = NULL;
   int l;
 
@@ -1712,11 +1713,24 @@ void msg_prt_line(char_u *s, int list)
     list = true;
   }
 
-  // find start of trailing whitespace
-  if (list && curwin->w_p_lcs_chars.trail) {
-    trail = s + STRLEN(s);
-    while (trail > s && ascii_iswhite(trail[-1])) {
-      trail--;
+  if (list) {
+    // find start of trailing whitespace
+    if (curwin->w_p_lcs_chars.trail) {
+      trail = s + STRLEN(s);
+      while (trail > s && ascii_iswhite(trail[-1])) {
+        trail--;
+      }
+    }
+    // find end of leading whitespace
+    if (curwin->w_p_lcs_chars.lead) {
+      lead = s;
+      while (ascii_iswhite(lead[0])) {
+        lead++;
+      }
+      // in a line full of spaces all of them are treated as trailing
+      if (*lead == NUL) {
+        lead = NULL;
+      }
     }
   }
 
@@ -1792,6 +1806,9 @@ void msg_prt_line(char_u *s, int list)
         c = *p_extra++;
         /* Use special coloring to be able to distinguish <hex> from
          * the same in plain text. */
+        attr = HL_ATTR(HLF_8);
+      } else if (c == ' ' && lead != NULL && s <= lead) {
+        c = curwin->w_p_lcs_chars.lead;
         attr = HL_ATTR(HLF_8);
       } else if (c == ' ' && trail != NULL && s > trail) {
         c = curwin->w_p_lcs_chars.trail;

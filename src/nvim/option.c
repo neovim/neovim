@@ -3477,6 +3477,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
     { &wp->w_p_lcs_chars.prec,    "precedes", NUL  },
     { &wp->w_p_lcs_chars.space,   "space",    NUL  },
     { &wp->w_p_lcs_chars.tab2,    "tab",      NUL  },
+    { &wp->w_p_lcs_chars.lead,    "lead",     NUL  },
     { &wp->w_p_lcs_chars.trail,   "trail",    NUL  },
     { &wp->w_p_lcs_chars.conceal, "conceal",  NUL  },
   };
