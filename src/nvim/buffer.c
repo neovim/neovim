@@ -3160,7 +3160,7 @@ fileinfo(
     // Current line and column are already on the screen -- webb
     vim_snprintf_add((char *)buffer, IOSIZE,
                      NGETTEXT("%ld line --%d%%--", "%ld lines --%d%%--",
-                              (u_long)curbuf->b_ml.ml_line_count),
+                              (unsigned long)curbuf->b_ml.ml_line_count),
                      (unsigned long)curbuf->b_ml.ml_line_count, n);
   } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
