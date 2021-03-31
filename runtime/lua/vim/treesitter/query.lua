@@ -90,6 +90,27 @@ local function new_match_metadata()
   return setmetatable({}, match_metatable)
 end
 
+--- The explicitly set queries from |vim.treesitter.query.set_query()|
+local explicit_queries = setmetatable({}, {
+  __index = function(t, k)
+    local lang_queries = {}
+    rawset(t, k, lang_queries)
+
+    return lang_queries
+  end,
+})
+
+--- Sets the runtime query {query_name} for {lang}
+---
+--- This allows users to override any runtime files and/or configuration
+--- set by plugins.
+---@param lang string: The language to use for the query
+---@param query_name string: The name of the query (i.e. "highlights")
+---@param text string: The query text (unparsed).
+function M.set_query(lang, query_name, text)
+  explicit_queries[lang][query_name] = M.parse_query(lang, text)
+end
+
 --- Returns the runtime query {query_name} for {lang}.
 --
 -- @param lang The language to use for the query
@@ -97,6 +118,10 @@ end
 --
 -- @return The corresponding query, parsed.
 function M.get_query(lang, query_name)
+  if explicit_queries[lang][query_name] then
+    return explicit_queries[lang][query_name]
+  end
+
   local query_files = M.get_query_files(lang, query_name)
   local query_string = read_query_files(query_files)
 
