@@ -2001,7 +2001,9 @@ static void didset_options2(void)
 
   // Parse default for 'wildmode'.
   check_opt_wim();
+  xfree(curbuf->b_p_vsts_array);
   tabstop_set(curbuf->b_p_vsts, &curbuf->b_p_vsts_array);
+  xfree(curbuf->b_p_vts_array);
   tabstop_set(curbuf->b_p_vts,  &curbuf->b_p_vts_array);
 }
 
@@ -3167,9 +3169,7 @@ ambw_end:
       if (errmsg == NULL) {
         long *oldarray = curbuf->b_p_vts_array;
         if (tabstop_set(*varp, &(curbuf->b_p_vts_array))) {
-          if (oldarray) {
-            xfree(oldarray);
-          }
+          xfree(oldarray);
           if (foldmethodIsIndent(curwin)) {
             foldUpdateAll(curwin);
           }
