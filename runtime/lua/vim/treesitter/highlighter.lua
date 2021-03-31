@@ -12,9 +12,23 @@ TSHighlighterQuery.__index = TSHighlighterQuery
 
 local ns = a.nvim_create_namespace("treesitter/highlighter")
 
+local AtomStyleCaptureFallback = {}
+
+-- If @definition.special does not exist use @definition instead
+function AtomStyleCaptureFallback:__index(capture)
+  local rtn
+  local shortened = capture
+  while not rtn and shortened:find('.', 1, true) do
+    shortened = shortened:gsub('%..*$', '')
+    rtn = rawget(self, shortened)
+  end
+  rawset(self, capture, rtn or "__notfound")
+  return rtn
+end
+
 -- These are conventions defined by nvim-treesitter, though it
 -- needs to be user extensible also.
-TSHighlighter.hl_map = {
+TSHighlighter.hl_map = setmetatable({
     ["error"] = "Error",
 
 -- Miscs
@@ -58,7 +72,9 @@ TSHighlighter.hl_map = {
     ["type.builtin"] = "Type",
     ["structure"] = "Structure",
     ["include"] = "Include",
-}
+}, AtomStyleCaptureFallback)
+
+TSHighlighter.hl_map.__index = AtomStyleCaptureFallback
 
 local function is_highlight_name(capture_name)
   local firstc = string.sub(capture_name, 1, 1)

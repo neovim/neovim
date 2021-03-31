@@ -23,7 +23,7 @@ local hl_query = [[
   "enum" @type
   "extern" @type
 
-  (string_literal) @string
+  (string_literal) @string.nonexistent-specializer-for-string.should-fallback-to-string
 
   (number_literal) @number
   (char_literal) @string
@@ -458,6 +458,64 @@ describe('treesitter highlighting', function()
                     {4:return} {5:42};  \                                      |
                   }                                                    |
       ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
+
+  it("allows to use captures with dots (don't use fallback when specialization of foo exists)", function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+    char* x = "Will somebody ever read this?";
+    ]])
+
+    screen:expect{grid=[[
+      char* x = "Will somebody ever read this?";                       |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c", {})
+      local highlighter = vim.treesitter.highlighter
+      highlighter.hl_map['foo.bar'] = 'Type'
+      highlighter.hl_map['foo'] = 'String'
+      test_hl = highlighter.new(parser, {queries = {c = "(primitive_type) @foo.bar (string_literal) @foo"}})
+    ]]
+
+    screen:expect{grid=[[
+      {3:char}* x = {5:"Will somebody ever read this?"};                       |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
       {1:~                                                                }|
       {1:~                                                                }|
       {1:~                                                                }|
