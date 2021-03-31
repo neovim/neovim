@@ -6,6 +6,7 @@ local Watcher = {}
 Watcher.__index = Watcher
 local WatcherList = {}
 local check_handle = nil
+local in_focus = 1
 
 -- Checks if a buffer should have a watcher attached to it.
 local function valid_buf(bufnr)
@@ -31,17 +32,19 @@ local function check_notifications()
   end
 end
 
+function Watcher.set_focus(focus)
+  in_focus = focus
+  if in_focus then
+   check_notifications()
+  end
+end
+
 local function fs_event_start(bufnr)
   local watcher = WatcherList[bufnr]
   watcher.handle = uv.new_fs_event()
   watcher.handle:start(watcher.fpath, {}, vim.schedule_wrap(function(...)
     watcher:on_change(...)
   end))
-end
-
-local function check_handle_start()
-  check_handle = uv.new_check()
-  check_handle:start(vim.schedule_wrap(check_notifications))
 end
 
 local function set_mechanism(option_type, bufnr)
@@ -51,29 +54,23 @@ local function set_mechanism(option_type, bufnr)
       for _, watcher in pairs(WatcherList) do
         watcher._start_handle = fs_event_start
       end
-      Watcher.start_notifications = check_handle_start
     else
       for _, watcher in pairs(WatcherList) do
         watcher._start_handle = nil
       end
-      Watcher.start_notifications = nil
     end
   elseif option_type == 'local' then
     bufnr = bufnr or vim.api.nvim_get_current_buf()
+    local watcher = WatcherList[bufnr]
     local status, option = pcall(vim.api.nvim_buf_get_option, bufnr, 'filechangenotify')
     if not status then
       option = vim.api.nvim_get_option('filechangenotify')
     end
     if vim.tbl_contains(vim.split(option, ','), 'watcher') then
-      WatcherList[bufnr]._start_handle = fs_event_start
-      Watcher.start_notifications = check_handle_start
+      watcher._start_handle = fs_event_start
     else
-      WatcherList[bufnr]._start_handle = nil
+      watcher._start_handle = nil
     end
-  end
-  Watcher.stop_notifications()
-  if Watcher.start_notifications then
-    Watcher.start_notifications()
   end
 end
 
@@ -143,6 +140,9 @@ function Watcher:on_change(err)
   end
 
   self.pending_notifs = true
+  if in_focus then
+    check_notifications()
+  end
 
   self:debounce()
 end
@@ -196,12 +196,6 @@ function Watcher.stop_notifications()
     check_handle:close()
   end
   check_handle = nil
-end
-
---- Start reacting to notifications for all watcher.
---- A stub that calls the correct function depending upon
---- the option value for `fcnotify`.
-function Watcher.start_notifications()
 end
 
 --- Function for checking which option was set and
