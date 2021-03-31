@@ -505,11 +505,11 @@ static int build_env_block(dict_T *denv, wchar_t **env_block)
   *env_block = xmalloc(sizeof(**env_block) * env_block_len);
   wchar_t *pos = *env_block;
 
-  QUEUE_FOREACH(q, &env_q) {
+  QUEUE_FOREACH(q, &env_q, {
     EnvNode *env_node = QUEUE_DATA(q, EnvNode, node);
     memcpy(pos, env_node->str, env_node->len * sizeof(*pos));
     pos += env_node->len;
-  }
+  })
 
   *pos = L'\0';
 
