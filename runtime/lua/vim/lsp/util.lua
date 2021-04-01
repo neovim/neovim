@@ -1385,13 +1385,13 @@ function M.symbols_to_items(symbols, bufnr)
           kind = kind,
           text = '['..kind..'] '..symbol.name,
         })
-      elseif symbol.range then -- DocumentSymbole type
+      elseif symbol.selectionRange then -- DocumentSymbole type
         local kind = M._get_symbol_kind_name(symbol.kind)
         table.insert(_items, {
           -- bufnr = _bufnr,
           filename = vim.api.nvim_buf_get_name(_bufnr),
-          lnum = symbol.range.start.line + 1,
-          col = symbol.range.start.character + 1,
+          lnum = symbol.selectionRange.start.line + 1,
+          col = symbol.selectionRange.start.character + 1,
           kind = kind,
           text = '['..kind..'] '..symbol.name
         })
