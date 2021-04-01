@@ -167,4 +167,6 @@ void msg_ruler(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_history_show(Array entries)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_history_clear(void)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY;
 #endif  // NVIM_API_UI_EVENTS_IN_H
