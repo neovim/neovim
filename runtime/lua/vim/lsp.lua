@@ -1142,8 +1142,11 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   end
   local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
   local expected_result_count = 0
-  for _ in pairs(client_request_ids) do
-    expected_result_count = expected_result_count + 1
+  for client_id, _ in pairs(client_request_ids) do
+    local client = vim.lsp.get_client_by_id(client_id)
+    if client.supports_method(method) then
+      expected_result_count = expected_result_count + 1
+    end
   end
 
   local wait_result, reason = vim.wait(timeout_ms or 100, function()
