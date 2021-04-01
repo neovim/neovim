@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
+local assert_alive = helpers.assert_alive
 
 local function new_screen(opt)
   local screen = Screen.new(25, 5)
@@ -840,5 +841,16 @@ describe('cmdline redraw', function()
     :012345678901234567890123|
     456789^                   |
     ]], unchanged=true}
+  end)
+end)
+
+describe("cmdline height", function()
+  it("does not crash resized screen #14263", function()
+    clear()
+    local screen = Screen.new(25, 10)
+    screen:attach()
+    command('set cmdheight=9999')
+    screen:try_resize(25, 5)
+    assert_alive()
   end)
 end)

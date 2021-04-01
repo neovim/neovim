@@ -7507,6 +7507,10 @@ void screen_resize(int width, int height)
   Rows = height;
   Columns = width;
   check_shellsize();
+  int max_p_ch = Rows - min_rows() + 1;
+  if (!ui_has(kUIMessages) && p_ch > max_p_ch) {
+    p_ch = max_p_ch ? max_p_ch : 1;
+  }
   height = Rows;
   width = Columns;
   p_lines = Rows;
