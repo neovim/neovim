@@ -21,7 +21,9 @@ function M.check_health()
     if not is_loadable then
       report_error(string.format("Impossible to load parser for %s: %s", parsername, ret))
     elseif ret then
-      report_ok(string.format("Loaded parser for %s", parsername))
+      local lang = ts.language.inspect_language(parsername)
+      report_ok(string.format("Loaded parser for %s: ABI version %d",
+                              parsername, lang._abi_version))
     else
       report_error(string.format("Unable to load parser for %s", parsername))
     end
