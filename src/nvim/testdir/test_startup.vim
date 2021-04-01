@@ -932,7 +932,7 @@ func Test_w_arg()
 
   " Test for failing to open the script output file. This test works only when
   " the language is English.
-  if v:lang == "C" || v:lang =~ '^[Ee]n'
+  if !has('win32') && (v:lang == "C" || v:lang =~ '^[Ee]n')
     call mkdir("Xdir")
     let m = system(GetVimCommand() .. " -w Xdir")
     call assert_equal("Cannot open for script output: \"Xdir\"\n", m)
