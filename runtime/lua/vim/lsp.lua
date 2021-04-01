@@ -941,6 +941,15 @@ function lsp.buf_attach_client(bufnr, client_id)
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler;
+      on_reload = function()
+        local params = { textDocument = { uri = uri; } }
+        for_each_buffer_client(bufnr, function(client, _)
+          if client.resolved_capabilities.text_document_open_close then
+            client.notify('textDocument/didClose', params)
+          end
+          text_document_did_open_handler(bufnr, client)
+        end)
+      end;
       on_detach = function()
         local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, _)
