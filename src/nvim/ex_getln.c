@@ -775,9 +775,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     redrawcmd();
   }
 
-  // redraw the statusline for statuslines that display the current mode
-  // using the mode() function.
-  if (!cmd_silent && msg_scrolled == 0) {
+  // Redraw the statusline in case it uses the current mode using the mode()
+  // function.
+  if (!cmd_silent && msg_scrolled == 0 && *p_stl != NUL) {
     curwin->w_redr_status = true;
     redraw_statuslines();
   }
