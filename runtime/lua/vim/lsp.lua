@@ -931,7 +931,13 @@ function lsp.buf_attach_client(bufnr, client_id)
     all_buffer_active_clients[bufnr] = buffer_client_ids
 
     local uri = vim.uri_from_bufnr(bufnr)
-    nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)", bufnr))
+    local buf_did_save_autocommand = [=[
+      augroup lsp_c_%d_b_%d_did_save
+        au!
+        au BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)
+      augroup END
+    ]=]
+    vim.api.nvim_exec(string.format(buf_did_save_autocommand, client_id, bufnr, bufnr), false)
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler;
