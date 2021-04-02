@@ -29,6 +29,10 @@ jobs:
           - cc: clang
             runner: macos-10.15
             os: osx
+          - flavor: functionaltest-lua
+            cc: gcc
+            runner: ubuntu-20.04
+            os: linux
     runs-on: ${{ matrix.runner }}
     if: github.event.pull_request.draft == false
     env:
