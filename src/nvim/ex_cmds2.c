@@ -2535,7 +2535,7 @@ void ex_source(exarg_T *eap)
 
 static void cmd_source(char_u *fname, exarg_T *eap)
 {
-  if (*fname == NUL) {
+  if (eap != NULL && *fname == NUL) {
     cmd_source_buffer(eap);
   } else if (eap != NULL && eap->forceit) {
     // ":source!": read Normal mode commands
@@ -2575,7 +2575,8 @@ static char_u *get_buffer_line(int c, void *cookie, int indent, bool do_concat)
   return (char_u *)xstrdup((const char *)curr_line);
 }
 
-static void cmd_source_buffer(exarg_T *eap)
+static void cmd_source_buffer(const exarg_T *eap)
+  FUNC_ATTR_NONNULL_ALL
 {
   GetBufferLineCookie cookie = {
       .curr_lnum = eap->line1,
