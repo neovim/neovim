@@ -22,6 +22,16 @@ local function dedupe_files(files)
   return result
 end
 
+local function safe_read(filename, read_quantifier)
+  local file, err = io.open(filename, 'r')
+  if not file then
+    error(err)
+  end
+  local content = file:read(read_quantifier)
+  io.close(file)
+  return content
+end
+
 function M.get_query_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
   local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
@@ -38,7 +48,7 @@ function M.get_query_files(lang, query_name, is_included)
   local MODELINE_FORMAT = "^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$"
 
   for _, file in ipairs(lang_files) do
-    local modeline = io.open(file, 'r'):read('*l')
+    local modeline = safe_read(file, '*l')
 
     if modeline then
       local langlist = modeline:match(MODELINE_FORMAT)
@@ -73,7 +83,7 @@ local function read_query_files(filenames)
   local contents = {}
 
   for _,filename in ipairs(filenames) do
-    table.insert(contents, io.open(filename, 'r'):read('*a'))
+    table.insert(contents, safe_read(filename, '*a'))
   end
 
   return table.concat(contents, '')
