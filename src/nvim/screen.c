@@ -3154,6 +3154,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           mb_utf8 = false;
         }
       } else {
+        assert(p_extra != NULL);
         c = *p_extra;
         mb_c = c;
         // If the UTF-8 character is more than one byte:

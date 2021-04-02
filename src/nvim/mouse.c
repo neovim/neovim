@@ -748,7 +748,7 @@ int mouse_check_fold(void)
     }
   }
 
-  if (mouse_char == wp->w_p_fcs_chars.foldclosed) {
+  if (wp && mouse_char == wp->w_p_fcs_chars.foldclosed) {
     return MOUSE_FOLD_OPEN;
   } else if (mouse_char != ' ') {
     return MOUSE_FOLD_CLOSE;

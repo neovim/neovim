@@ -4093,9 +4093,10 @@ ExpandOne (
   }
 
   if (mode == WILD_CANCEL) {
-    ss = vim_strsave(orig_save);
+    ss = vim_strsave(orig_save ? orig_save : (char_u *)"");
   } else if (mode == WILD_APPLY) {
-    ss =  vim_strsave(findex == -1 ? orig_save : xp->xp_files[findex]);
+    ss =  vim_strsave(findex == -1 ? (orig_save ? orig_save : (char_u *)"") :
+                      xp->xp_files[findex]);
   }
 
   /* free old names */

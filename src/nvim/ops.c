@@ -2807,7 +2807,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   size_t y_size;
   size_t oldlen;
   int y_width = 0;
-  colnr_T vcol;
+  colnr_T vcol = 0;
   int delcount;
   int incr = 0;
   struct block_def bd;
