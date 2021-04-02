@@ -2960,7 +2960,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
     size_t j;
-    for (j = 0; cbs[j].name; j++) {
+    for (j = 0; cbs[j].name && cbs[j].dest; j++) {
       if (strequal(cbs[j].name, k.data)) {
         if (v->type != kObjectTypeLuaRef) {
           api_set_error(err, kErrorTypeValidation,
