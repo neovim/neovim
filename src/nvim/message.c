@@ -869,18 +869,18 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
  */
 char_u *msg_may_trunc(int force, char_u *s)
 {
-  int n;
   int room;
 
   room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (n = (int)STRLEN(s) - room) > 0) {
+      && (int)STRLEN(s) - room > 0) {
     int size = vim_strsize(s);
 
     // There may be room anyway when there are multibyte chars.
     if (size <= room) {
       return s;
     }
+    int n;
     for (n = 0; size >= room; ) {
       size -= utf_ptr2cells(s + n);
       n += utfc_ptr2len(s + n);
