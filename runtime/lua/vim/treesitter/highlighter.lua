@@ -221,6 +221,9 @@ local function on_line_impl(self, buf, line)
     local state = self:get_highlight_state(tstree)
     local highlighter_query = self:get_query(tree:lang())
 
+    -- Some injected languages may not have highlight queries.
+    if not highlighter_query:query() then return end
+
     if state.iter == nil then
       state.iter = highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
     end
