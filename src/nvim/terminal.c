@@ -580,6 +580,9 @@ static bool is_filter_char(int c)
 
 void terminal_paste(long count, char_u **y_array, size_t y_size)
 {
+  if (y_size == 0) {
+    return;
+  }
   vterm_keyboard_start_paste(curbuf->terminal->vt);
   terminal_flush_output(curbuf->terminal);
   size_t buff_len = STRLEN(y_array[0]);

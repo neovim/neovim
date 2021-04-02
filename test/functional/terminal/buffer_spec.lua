@@ -258,6 +258,13 @@ describe(':terminal buffer', function()
   it('handles wqall', function()
     eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
   end)
+
+  it('does not segfault when pasting empty buffer #13955', function()
+    feed_command('terminal')
+    feed('<c-\\><c-n>')
+    feed_command('put a') -- buffer a is empty
+    helpers.assert_alive()
+  end)
 end)
 
 describe('No heap-buffer-overflow when using', function()
