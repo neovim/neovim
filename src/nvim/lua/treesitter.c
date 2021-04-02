@@ -222,8 +222,9 @@ int tslua_inspect_lang(lua_State *L)
   lua_setfield(L, -2, "symbols");  // [retval]
 
   size_t nfields = (size_t)ts_language_field_count(lang);
-  lua_createtable(L, nfields-1, 1);  // [retval, fields]
-  for (size_t i = 0; i < nfields; i++) {
+  lua_createtable(L, nfields, 1);  // [retval, fields]
+  // Field IDs go from 1 to nfields inclusive (extra index 0 maps to NULL)
+  for (size_t i = 1; i <= nfields; i++) {
     lua_pushstring(L, ts_language_field_name_for_id(lang, i));
     lua_rawseti(L, -2, i);  // [retval, fields]
   }
