@@ -2,6 +2,7 @@
 #define NVIM_EDIT_H
 
 #include "nvim/vim.h"
+#include "nvim/api/private/defs.h"
 
 /*
  * Array indexes used for cptext argument of ins_compl_add().
@@ -11,6 +12,14 @@
 #define CPT_KIND        2   // "kind"
 #define CPT_INFO        3   // "info"
 #define CPT_COUNT       4   // Number of entries
+
+// lua functions used to filter completion matches
+// global_filterfunc is used for all completion sources,
+// while user_filterfunc is only used to filter matches
+// from vim.api.nvim_complete().
+EXTERN LuaRef global_filterfunc INIT(= LUA_NOREF);
+EXTERN LuaRef user_filterfunc INIT(= LUA_NOREF);
+EXTERN LuaRef active_filterfunc INIT(= LUA_NOREF);
 
 // values for cp_flags
 typedef enum {
@@ -48,4 +57,5 @@ typedef int (*IndentGetter)(void);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.h.generated.h"
 #endif
+
 #endif  // NVIM_EDIT_H

@@ -51,6 +51,7 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/ui.h"
+#include "nvim/undo.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -2982,4 +2983,107 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   return;
 error:
   clear_provider(p);
+}
+
+///
+/// Set matches and start insert completion: see |complete()|.
+///
+/// @param startcol: Byte offset where the completed text starts.
+///                     Any text between startcol and the current
+///                     cursor col is replaced by the completion.
+/// @param matches: A list of string matches.
+/// @param opts: Dictionary. Possible keys:
+///                 filterfunc: function used for filtering the
+///                     matches. See |nvim_register_filterfunc|.
+///                 exact: boolean value. If true, disables fuzzy
+///                     finding and reverts to default exact prefix
+///                     matching for this completion.
+String nvim_complete(Integer startcol,
+                     ArrayOf(String) matches,
+                     DictionaryOf(LuaRef) opts,
+                     Error *err)
+  FUNC_API_SINCE(7)
+{
+  typval_T tv;
+
+  if ((State & INSERT) == 0) {
+    api_set_error(err, kErrorTypeException,
+                  "complete() can only be used in Insert mode");
+    goto error;
+  }
+
+  // Check for undo allowed here, because if something was already inserted
+  // the line was already saved for undo and this check isn't done.
+  if (!undo_allowed()) {
+      goto error;
+  }
+
+  if (startcol <= 0) {
+      goto error;
+  }
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+
+    if (strequal(k.data, "filterfunc")) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation,
+                      "expected lua function");
+        goto error;
+      }
+      active_filterfunc = user_filterfunc = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal(k.data, "exact")) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation,
+                      "expected boolean");
+        goto error;
+      }
+      if (v->data.boolean) {
+        active_filterfunc = LUA_NOREF;
+      }
+    } else {
+      api_set_error(err, kErrorTypeValidation,
+                    "unexpected key");
+      goto error;
+    }
+  }
+
+  object_to_vim(ARRAY_OBJ(matches), &tv, err);
+  if ERROR_SET(err) {
+      goto error;
+  }
+
+  set_completion((colnr_T)startcol - 1, tv.vval.v_list);
+
+error:
+  tv_clear(&tv);
+
+  String ret = STRING_INIT;
+  return ret;
+}
+
+///
+/// Register a lua function for filtering completion matches.
+/// The function must take in two arguments: the prefix (the
+/// currently typed text), and the text for a completion entry, and
+/// returns a float. Higher return values imply a better match, and a
+/// return value of 0 removes the entry from being shown.
+/// To remove the currently registered function, call the function
+/// with a nil value.
+///
+/// @param func: function to register for filtering.
+///
+void nvim_register_filterfunc(LuaRef func, Error *err)
+  FUNC_API_SINCE(7)
+{
+  if (func == -1) {  // nil value for func
+    api_free_luaref(global_filterfunc);
+    active_filterfunc = global_filterfunc = LUA_NOREF;
+    return;
+  }
+
+  active_filterfunc = global_filterfunc = api_new_luaref(func);
+  return;
 }

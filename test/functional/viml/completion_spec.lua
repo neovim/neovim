@@ -1193,3 +1193,214 @@ describe('completion', function()
     feed('<esc>')
   end)
 end)
+
+describe("fuzzy completion", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 8)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {background = Screen.colors.LightMagenta},
+      [2] = {background = Screen.colors.Grey},
+      [3] = {bold = true},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [5] = {foreground = Screen.colors.Red},
+      [6] = {background = Screen.colors.Black},
+      [7] = {foreground = Screen.colors.White, background = Screen.colors.Red},
+      [8] = {reverse = true},
+      [9] = {bold = true, reverse = true},
+      [10] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow},
+    })
+
+    source([[
+      func ListMonths()
+        call complete(col("."), ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'])
+        return ""
+      endfunc
+
+      func HelloWorld()
+        call complete(col("."), ["hello", "world"])
+        return ""
+      endfunc
+			set completeopt+=noselect
+    ]])
+  end)
+
+  it("filters out all candidates if filterfunc returns 0", function()
+    feed_command("lua vim.api.nvim_register_filterfunc(function(a, b) return 0 end)")
+    feed("i=ListMonths()<cr>")
+	screen:expect([[
+  ^                                                            |
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+
+	feed("f")
+	screen:expect([[
+  f^                                                           |
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it("doesn't filter anything if filterfunc returns 1", function()
+    feed_command("lua vim.api.nvim_register_filterfunc(function(a, b) return 1 end)")
+    feed("i=ListMonths()<cr>")
+    screen:expect([[
+  ^                                                            |
+  {1:January        }{6: }{0:                                            }|
+  {1:February       }{6: }{0:                                            }|
+  {1:March          }{6: }{0:                                            }|
+  {1:April          }{2: }{0:                                            }|
+  {1:May            }{2: }{0:                                            }|
+  {1:June           }{2: }{0:                                            }|
+  {3:-- INSERT --}                                                |
+    ]])
+
+	  feed("f")
+    screen:expect([[
+  f^                                                           |
+  {1:January        }{6: }{0:                                            }|
+  {1:February       }{6: }{0:                                            }|
+  {1:March          }{6: }{0:                                            }|
+  {1:April          }{2: }{0:                                            }|
+  {1:May            }{2: }{0:                                            }|
+  {1:June           }{2: }{0:                                            }|
+  {3:-- INSERT --}                                                |
+   ]])
+  end)
+
+  it("sorts completions by score", function()
+    -- sort in reverse alphabetical order
+    feed_command("lua vim.api.nvim_register_filterfunc(function(a, b) return string.byte(b:sub(1, 1)) end)")
+    feed("i=ListMonths()<cr>")
+    screen:expect([[
+  ^                                                            |
+  {1:September      }{6: }{0:                                            }|
+  {1:October        }{6: }{0:                                            }|
+  {1:November       }{6: }{0:                                            }|
+  {1:March          }{2: }{0:                                            }|
+  {1:May            }{2: }{0:                                            }|
+  {1:January        }{2: }{0:                                            }|
+  {3:-- INSERT --}                                                |
+   ]])
+  end)
+
+  it("works with scrolling", function()
+    feed_command("lua vim.api.nvim_register_filterfunc(function(a, b) return string.byte(b:sub(1, 1)) end)")
+    feed("i=HelloWorld()<cr>")
+
+	screen:expect([[
+  ^                                                            |
+  {1:world          }{0:                                             }|
+  {1:hello          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+     ]])
+
+    feed("")
+
+	screen:expect([[
+  world^                                                       |
+  {2:world          }{0:                                             }|
+  {1:hello          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+
+    feed("<Down>")
+	screen:expect([[
+  world^                                                       |
+  {1:world          }{0:                                             }|
+  {2:hello          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+
+    -- should cycle back
+    feed("")
+
+    screen:expect([[
+  ^                                                            |
+  {1:world          }{0:                                             }|
+  {1:hello          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it("allows overriding the global filterfunc with a local one", function()
+
+    -- global filterfunc doesn't match anything, but local
+    -- filterfunc matches everything. Local filterfunc
+    -- should override the global one
+    feed_command("lua vim.api.nvim_register_filterfunc(function(a, b) return 0 end)")
+
+    feed([[i=luaeval('vim.api.nvim_complete(1, {"hello", "world"}, {filterfunc = function(a, b) return 1 end})')<cr>]])
+
+    screen:expect([[
+  ^                                                            |
+  {1:hello          }{0:                                             }|
+  {1:world          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it("can revert back to exact prefix matching", function()
+    feed_command("lua vim.api.nvim_regsiter_filterfunc(function(a, b) return 1 end)")
+    feed([[i=luaeval('vim.api.nvim_complete(1, {"hello", "world"}, {exact=true})')<cr>]])
+
+    screen:expect([[
+  ^                                                            |
+  {1:hello          }{0:                                             }|
+  {1:world          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+
+    feed("w")
+
+    screen:expect([[
+  w^                                                           |
+  {1:world          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+  end)
+end)
