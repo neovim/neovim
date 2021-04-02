@@ -2971,7 +2971,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     y_array = reg->y_array;
   }
 
-  if (y_size > 0 && curbuf->terminal) {
+  if (curbuf->terminal) {
     terminal_paste(count, y_array, y_size);
     return;
   }
