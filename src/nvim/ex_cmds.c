@@ -790,7 +790,8 @@ void ex_retab(exarg_T *eap)
             /* len is actual number of white characters used */
             len = num_spaces + num_tabs;
             old_len = (long)STRLEN(ptr);
-            new_line = xmalloc(old_len - col + start_col + len + 1);
+            long new_len = old_len - col + start_col + len + 1;
+            new_line = xmalloc(new_len);
 
             if (start_col > 0)
               memmove(new_line, ptr, (size_t)start_col);
@@ -803,6 +804,8 @@ void ex_retab(exarg_T *eap)
             if (ml_replace(lnum, new_line, false) == OK) {
               // "new_line" may have been copied
               new_line = curbuf->b_ml.ml_line_ptr;
+              extmark_splice_cols(curbuf, lnum - 1, 0, (colnr_T)old_len,
+                                  (colnr_T)new_len - 1, kExtmarkUndo);
             }
             if (first_line == 0) {
               first_line = lnum;
