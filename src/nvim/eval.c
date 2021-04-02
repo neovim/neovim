@@ -5981,6 +5981,35 @@ static void assert_append_cmd_or_arg(garray_T *gap, typval_T *argvars,
   }
 }
 
+int assert_beeps(typval_T *argvars, bool no_beep)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *const cmd = tv_get_string_chk(&argvars[0]);
+  int ret = 0;
+
+  called_vim_beep = false;
+  suppress_errthrow = true;
+  emsg_silent = false;
+  do_cmdline_cmd(cmd);
+  if (no_beep ? called_vim_beep : !called_vim_beep) {
+    garray_T ga;
+    prepare_assert_error(&ga);
+    if (no_beep) {
+      ga_concat(&ga, (const char_u *)"command did beep: ");
+    } else {
+      ga_concat(&ga, (const char_u *)"command did not beep: ");
+    }
+    ga_concat(&ga, (const char_u *)cmd);
+    assert_error(&ga);
+    ga_clear(&ga);
+    ret = 1;
+  }
+
+  suppress_errthrow = false;
+  emsg_on_display = false;
+  return ret;
+}
+
 int assert_fails(typval_T *argvars)
   FUNC_ATTR_NONNULL_ALL
 {
