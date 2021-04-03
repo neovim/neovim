@@ -5,6 +5,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#include "nvim/assert.h"
 #include "nvim/version.h"
 #include "nvim/misc1.h"
 #include "nvim/getchar.h"
@@ -18,6 +19,7 @@
 #include "nvim/vim.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/map.h"
 #include "nvim/message.h"
 #include "nvim/memline.h"
 #include "nvim/buffer_defs.h"
@@ -32,9 +34,7 @@
 #include "nvim/event/time.h"
 #include "nvim/event/loop.h"
 
-#ifdef WIN32
 #include "nvim/os/os.h"
-#endif
 
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
@@ -62,6 +62,11 @@ typedef struct {
       nlua_push_typval(lstate, &args[i], special); \
     } \
   }
+
+#if __has_feature(address_sanitizer)
+  PMap(handle_T) *nlua_ref_markers = NULL;
+# define NLUA_TRACK_REFS
+#endif
 
 /// Convert lua error into a Vim error message
 ///
@@ -547,6 +552,13 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 static lua_State *nlua_init(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
+#ifdef NLUA_TRACK_REFS
+  const char *env = os_getenv("NVIM_LUA_NOTRACK");
+  if (!env || !*env) {
+    nlua_ref_markers = pmap_new(handle_T)();
+  }
+#endif
+
   lua_State *lstate = luaL_newstate();
   if (lstate == NULL) {
     EMSG(_("E970: Failed to initialize lua interpreter"));
@@ -554,8 +566,12 @@ static lua_State *nlua_init(void)
   }
   luaL_openlibs(lstate);
   nlua_state_init(lstate);
+
   return lstate;
 }
+
+// only to be used by nlua_enter and nlua_free_all_mem!
+static lua_State *global_lstate = NULL;
 
 /// Enter lua interpreter
 ///
@@ -567,24 +583,37 @@ static lua_State *nlua_init(void)
 static lua_State *nlua_enter(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  static lua_State *global_lstate = NULL;
   if (global_lstate == NULL) {
     global_lstate = nlua_init();
   }
   lua_State *const lstate = global_lstate;
-  // Last used p_rtp value. Must not be dereferenced because value pointed to
-  // may already be freed. Used to check whether &runtimepath option value
-  // changed.
-  static const void *last_p_rtp = NULL;
-  if (last_p_rtp != (const void *)p_rtp) {
-    // stack: (empty)
-    lua_getglobal(lstate, "vim");
-    // stack: vim
-    lua_pop(lstate, 1);
-    // stack: (empty)
-    last_p_rtp = (const void *)p_rtp;
-  }
   return lstate;
+}
+
+void nlua_free_all_mem(void)
+{
+  if (!global_lstate) {
+    return;
+  }
+  lua_State *lstate = global_lstate;
+
+  nlua_unref(lstate, nlua_nil_ref);
+  nlua_unref(lstate, nlua_empty_dict_ref);
+
+#ifdef NLUA_TRACK_REFS
+  if (nlua_refcount) {
+    fprintf(stderr, "%d lua references were leaked!", nlua_refcount);
+  }
+
+  if (nlua_ref_markers) {
+    // in case there are leaked luarefs, leak the associated memory
+    // to get LeakSanitizer stacktraces on exit
+    pmap_free(handle_T)(nlua_ref_markers);
+  }
+#endif
+
+  nlua_refcount = 0;
+  lua_close(lstate);
 }
 
 static void nlua_print_event(void **argv)
@@ -866,17 +895,35 @@ static int nlua_getenv(lua_State *lstate)
 }
 #endif
 
+
 /// add the value to the registry
 LuaRef nlua_ref(lua_State *lstate, int index)
 {
   lua_pushvalue(lstate, index);
-  return luaL_ref(lstate, LUA_REGISTRYINDEX);
+  LuaRef ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
+  if (ref > 0) {
+    nlua_refcount++;
+#ifdef NLUA_TRACK_REFS
+  if (nlua_ref_markers) {
+    // dummy allocation to make LeakSanitizer track our luarefs
+    pmap_put(handle_T)(nlua_ref_markers, ref, xmalloc(3));
+  }
+#endif
+  }
+  return ref;
 }
 
 /// remove the value from the registry
 void nlua_unref(lua_State *lstate, LuaRef ref)
 {
   if (ref > 0) {
+    nlua_refcount--;
+#ifdef NLUA_TRACK_REFS
+    // NB: don't remove entry from map to track double-unref
+    if (nlua_ref_markers) {
+      xfree(pmap_get(handle_T)(nlua_ref_markers, ref));
+    }
+#endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);
   }
 }
@@ -893,19 +940,11 @@ void nlua_pushref(lua_State *lstate, LuaRef ref)
   lua_rawgeti(lstate, LUA_REGISTRYINDEX, ref);
 }
 
+
 /// Gets a new reference to an object stored at original_ref
 ///
 /// NOTE: It does not copy the value, it creates a new ref to the lua object.
 ///       Leaves the stack unchanged.
-LuaRef nlua_newref(lua_State *lstate, LuaRef original_ref)
-{
-  nlua_pushref(lstate, original_ref);
-  LuaRef new_ref = nlua_ref(lstate, -1);
-  lua_pop(lstate, 1);
-
-  return new_ref;
-}
-
 LuaRef api_new_luaref(LuaRef original_ref)
 {
   if (original_ref == LUA_NOREF) {
@@ -913,7 +952,10 @@ LuaRef api_new_luaref(LuaRef original_ref)
   }
 
   lua_State *const lstate = nlua_enter();
-  return nlua_newref(lstate, original_ref);
+  nlua_pushref(lstate, original_ref);
+  LuaRef new_ref = nlua_ref(lstate, -1);
+  lua_pop(lstate, 1);
+  return new_ref;
 }
 
 
@@ -1023,25 +1065,13 @@ int typval_exec_lua_callable(
     typval_T *rettv
 )
 {
-  int offset = 0;
   LuaRef cb = lua_cb.func_ref;
-
-  if (cb == LUA_NOREF) {
-    // This shouldn't happen.
-    luaL_error(lstate, "Invalid function passed to VimL");
-    return ERROR_OTHER;
-  }
 
   nlua_pushref(lstate, cb);
 
-  if (lua_cb.table_ref != LUA_NOREF) {
-    offset += 1;
-    nlua_pushref(lstate, lua_cb.table_ref);
-  }
-
   PUSH_ALL_TYPVALS(lstate, argvars, argcount, false);
 
-  if (lua_pcall(lstate, argcount + offset, 1, 0)) {
+  if (lua_pcall(lstate, argcount, 1, 0)) {
     nlua_print(lstate);
     return ERROR_OTHER;
   }
@@ -1508,6 +1538,8 @@ static int regex_match_line(lua_State *lstate)
   return nret;
 }
 
+// Required functions for lua c functions as VimL callbacks
+
 int nlua_CFunction_func_call(
     int argcount,
     typval_T *argvars,
@@ -1517,53 +1549,40 @@ int nlua_CFunction_func_call(
     lua_State *const lstate = nlua_enter();
     LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
 
-    return typval_exec_lua_callable(
-        lstate,
-        funcstate->lua_callable,
-        argcount,
-        argvars,
-        rettv);
+    return typval_exec_lua_callable(lstate, funcstate->lua_callable,
+                                    argcount, argvars, rettv);
 }
-/// Required functions for lua c functions as VimL callbacks
+
 void nlua_CFunction_func_free(void *state)
 {
     lua_State *const lstate = nlua_enter();
     LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
 
     nlua_unref(lstate, funcstate->lua_callable.func_ref);
-    nlua_unref(lstate, funcstate->lua_callable.table_ref);
     xfree(funcstate);
 }
 
 bool nlua_is_table_from_lua(typval_T *const arg)
 {
-  if (arg->v_type != VAR_DICT && arg->v_type != VAR_LIST) {
+  if (arg->v_type == VAR_DICT) {
+    return arg->vval.v_dict->lua_table_ref != LUA_NOREF;
+  } else if (arg->v_type == VAR_LIST) {
+    return arg->vval.v_list->lua_table_ref != LUA_NOREF;
+  } else {
     return false;
   }
-
-  if (arg->v_type == VAR_DICT) {
-    return arg->vval.v_dict->lua_table_ref > 0
-      && arg->vval.v_dict->lua_table_ref != LUA_NOREF;
-  } else if (arg->v_type == VAR_LIST) {
-    return arg->vval.v_list->lua_table_ref > 0
-      && arg->vval.v_list->lua_table_ref != LUA_NOREF;
-  }
-
-  return false;
 }
 
 char_u *nlua_register_table_as_callable(typval_T *const arg)
 {
-  if (!nlua_is_table_from_lua(arg)) {
-    return NULL;
-  }
-
-  LuaRef table_ref;
+  LuaRef table_ref = LUA_NOREF;
   if (arg->v_type == VAR_DICT) {
     table_ref = arg->vval.v_dict->lua_table_ref;
   } else if (arg->v_type == VAR_LIST) {
     table_ref = arg->vval.v_list->lua_table_ref;
-  } else {
+  }
+
+  if (table_ref == LUA_NOREF) {
     return NULL;
   }
 
@@ -1573,53 +1592,32 @@ char_u *nlua_register_table_as_callable(typval_T *const arg)
   int top = lua_gettop(lstate);
 #endif
 
-  nlua_pushref(lstate, table_ref);
+  nlua_pushref(lstate, table_ref);  // [table]
   if (!lua_getmetatable(lstate, -1)) {
+    lua_pop(lstate, 1);
+    assert(top == lua_gettop(lstate));
     return NULL;
-  }
+  }  // [table, mt]
 
-  lua_getfield(lstate, -1, "__call");
+  lua_getfield(lstate, -1, "__call");  // [table, mt, mt.__call]
   if (!lua_isfunction(lstate, -1)) {
+    lua_pop(lstate, 3);
+    assert(top == lua_gettop(lstate));
     return NULL;
   }
-
-  LuaRef new_table_ref = nlua_newref(lstate, table_ref);
+  lua_pop(lstate, 2);  // [table]
 
   LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
   state->lua_callable.func_ref = nlua_ref(lstate, -1);
-  state->lua_callable.table_ref = new_table_ref;
 
-  char_u *name = register_cfunc(
-      &nlua_CFunction_func_call,
-      &nlua_CFunction_func_free,
-      state);
+  char_u *name = register_cfunc(&nlua_CFunction_func_call,
+                                &nlua_CFunction_func_free, state);
 
 
-  lua_pop(lstate, 3);
+  lua_pop(lstate, 1);  // []
   assert(top == lua_gettop(lstate));
 
   return name;
-}
-
-/// Helper function to free a list_T
-void nlua_free_typval_list(list_T *const l)
-{
-  if (l->lua_table_ref != LUA_NOREF && l->lua_table_ref > 0) {
-    lua_State *const lstate = nlua_enter();
-    nlua_unref(lstate, l->lua_table_ref);
-    l->lua_table_ref = LUA_NOREF;
-  }
-}
-
-
-/// Helper function to free a dict_T
-void nlua_free_typval_dict(dict_T *const d)
-{
-  if (d->lua_table_ref != LUA_NOREF && d->lua_table_ref > 0) {
-    lua_State *const lstate = nlua_enter();
-    nlua_unref(lstate, d->lua_table_ref);
-    d->lua_table_ref = LUA_NOREF;
-  }
 }
 
 void nlua_execute_log_keystroke(int c)

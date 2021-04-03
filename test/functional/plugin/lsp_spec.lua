@@ -29,6 +29,16 @@ teardown(function()
   os.remove(fake_lsp_logfile)
 end)
 
+local function clear_notrace()
+  -- problem: here be dragons
+  -- solution: don't look for dragons to closely
+  clear {env={
+    NVIM_LUA_NOTRACK="1";
+    VIMRUNTIME=os.getenv"VIMRUNTIME";
+  }}
+end
+
+
 local function fake_lsp_server_setup(test_name, timeout_ms, options)
   exec_lua([=[
     lsp = require('vim.lsp')
@@ -36,6 +46,7 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
     TEST_RPC_CLIENT_ID = lsp.start_client {
       cmd_env = {
         NVIM_LOG_FILE = logfile;
+        NVIM_LUA_NOTRACK = "1";
       };
       cmd = {
         vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
@@ -65,7 +76,7 @@ end
 
 local function test_rpc_server(config)
   if config.test_name then
-    clear()
+    clear_notrace()
     fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options)
   end
   local client = setmetatable({}, {
@@ -120,7 +131,7 @@ end
 describe('LSP', function()
   describe('server_name specified', function()
     before_each(function()
-      clear()
+      clear_notrace()
       -- Run an instance of nvim on the file which contains our "scripts".
       -- Pass TEST_NAME to pick the script.
       local test_name = "basic_init"
@@ -250,6 +261,10 @@ describe('LSP', function()
     end)
 
     it('should succeed with manual shutdown', function()
+      if 'openbsd' == helpers.uname() then
+        pending('hangs the build on openbsd #14028, re-enable with freeze timeout #14204')
+        return
+      end
       local expected_callbacks = {
         {NIL, "shutdown", {}, 1, NIL};
         {NIL, "test", {}, 1};
@@ -314,7 +329,7 @@ describe('LSP', function()
       }
     end)
     it('workspace/configuration returns NIL per section if client was started without config.settings', function()
-      clear()
+      clear_notrace()
       fake_lsp_server_setup('workspace/configuration no settings')
       eq({ NIL, NIL, }, exec_lua [[
         local params = {
@@ -941,7 +956,7 @@ end)
 
 describe('LSP', function()
   before_each(function()
-    clear()
+    clear_notrace()
   end)
 
   local function make_edit(y_0, x_0, y_1, x_1, text)

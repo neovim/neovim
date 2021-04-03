@@ -219,6 +219,7 @@ list_T *tv_list_alloc(const ptrdiff_t len)
   list->lv_used_next = gc_first_list;
   gc_first_list = list;
   list_log(list, NULL, (void *)(uintptr_t)len, "alloc");
+  list->lua_table_ref = LUA_NOREF;
   return list;
 }
 
@@ -302,7 +303,7 @@ void tv_list_free_list(list_T *const l)
   }
   list_log(l, NULL, NULL, "freelist");
 
-  nlua_free_typval_list(l);
+  NLUA_CLEAR_REF(l->lua_table_ref);
   xfree(l);
 }
 
@@ -1404,6 +1405,8 @@ dict_T *tv_dict_alloc(void)
   d->dv_copyID = 0;
   QUEUE_INIT(&d->watchers);
 
+  d->lua_table_ref = LUA_NOREF;
+
   return d;
 }
 
@@ -1454,7 +1457,7 @@ void tv_dict_free_dict(dict_T *const d)
     d->dv_used_next->dv_used_prev = d->dv_used_prev;
   }
 
-  nlua_free_typval_dict(d);
+  NLUA_CLEAR_REF(d->lua_table_ref);
   xfree(d);
 }
 

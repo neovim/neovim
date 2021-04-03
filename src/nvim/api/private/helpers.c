@@ -1708,33 +1708,6 @@ const char *describe_ns(NS ns_id)
   return "(UNKNOWN PLUGIN)";
 }
 
-DecorProvider *get_provider(NS ns_id, bool force)
-{
-  ssize_t i;
-  for (i = 0; i < (ssize_t)kv_size(decor_providers); i++) {
-    DecorProvider *item = &kv_A(decor_providers, i);
-    if (item->ns_id == ns_id) {
-      return item;
-    } else if (item->ns_id > ns_id) {
-      break;
-    }
-  }
-
-  if (!force) {
-    return NULL;
-  }
-
-  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
-    // allocates if needed:
-    (void)kv_a(decor_providers, (size_t)j+1);
-    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
-  }
-  DecorProvider *item = &kv_a(decor_providers, (size_t)i);
-  *item = DECORATION_PROVIDER_INIT(ns_id);
-
-  return item;
-}
-
 static bool parse_float_anchor(String anchor, FloatAnchor *out)
 {
   if (anchor.size == 0) {

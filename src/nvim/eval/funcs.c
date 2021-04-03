@@ -810,6 +810,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  bool owned = false;
   char_u      *func;
   partial_T   *partial = NULL;
   dict_T      *selfdict = NULL;
@@ -820,6 +821,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     func = partial_name(partial);
   } else if (nlua_is_table_from_lua(&argvars[0])) {
     func = nlua_register_table_as_callable(&argvars[0]);
+    owned = true;
   } else {
     func = (char_u *)tv_get_string(&argvars[0]);
   }
@@ -837,6 +839,9 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   func_call(func, &argvars[1], partial, selfdict, rettv);
+  if (owned) {
+    func_unref(func);
+  }
 }
 
 /*

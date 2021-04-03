@@ -2708,6 +2708,7 @@ Dictionary nvim__stats(void)
   Dictionary rv = ARRAY_DICT_INIT;
   PUT(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
   PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
+  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_refcount));
   return rv;
 }
 
@@ -2880,19 +2881,6 @@ void nvim__screenshot(String path)
   ui_call_screenshot(path);
 }
 
-static void clear_provider(DecorProvider *p)
-{
-  if (p == NULL) {
-    return;
-  }
-  NLUA_CLEAR_REF(p->redraw_start);
-  NLUA_CLEAR_REF(p->redraw_buf);
-  NLUA_CLEAR_REF(p->redraw_win);
-  NLUA_CLEAR_REF(p->redraw_line);
-  NLUA_CLEAR_REF(p->redraw_end);
-  p->active = false;
-}
-
 /// Set or change decoration provider for a namespace
 ///
 /// This is a very general purpose interface for having lua callbacks
@@ -2937,8 +2925,8 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
                                   Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
-  DecorProvider *p = get_provider((NS)ns_id, true);
-  clear_provider(p);
+  DecorProvider *p = get_decor_provider((NS)ns_id, true);
+  decor_provider_clear(p);
 
   // regardless of what happens, it seems good idea to redraw
   redraw_all_later(NOT_VALID);  // TODO(bfredl): too soon?
@@ -2981,5 +2969,5 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   p->active = true;
   return;
 error:
-  clear_provider(p);
+  decor_provider_clear(p);
 }
