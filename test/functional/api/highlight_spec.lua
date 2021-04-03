@@ -217,34 +217,36 @@ describe("API: set highlight", function()
     undercurl = true,
   }
 
-  before_each(function()
-    _G.ns = meths.get_namespaces().Test_set_hl
+  local function get_ns()
+    local ns = meths.get_namespaces().Test_set_hl
     if not ns then ns = meths.create_namespace('Test_set_hl') end
     meths._set_hl_ns(ns)
-  end)
-
-  after_each(function()
-    _G.ns = nil
-  end)
+    return ns
+  end
 
   it ("can set gui highlight", function()
+    local ns = get_ns()
     meths.set_hl(ns, 'Test_hl', highlight1)
     eq(highlight1, meths.get_hl_by_name('Test_hl', true))
   end)
 
   it ("can set cterm highlight", function()
+    local ns = get_ns()
     meths.set_hl(ns, 'Test_hl', highlight2_config)
     eq(highlight2_result, meths.get_hl_by_name('Test_hl', false))
   end)
 
   it ("cterm attr defaults to gui attr", function()
+    local ns = get_ns()
     meths.set_hl(ns, 'Test_hl', highlight1)
     eq({
       bold = true,
       italic = true,
     }, meths.get_hl_by_name('Test_hl', false))
   end)
+
   it ("can overwrite attr for cterm", function()
+    local ns = get_ns()
     meths.set_hl(ns, 'Test_hl', highlight3_config)
     eq(highlight3_result_gui, meths.get_hl_by_name('Test_hl', true))
     eq(highlight3_result_cterm, meths.get_hl_by_name('Test_hl', false))
