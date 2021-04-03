@@ -34,9 +34,7 @@
 #include "nvim/event/time.h"
 #include "nvim/event/loop.h"
 
-#ifdef WIN32
 #include "nvim/os/os.h"
-#endif
 
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
@@ -66,7 +64,7 @@ typedef struct {
   }
 
 #if __has_feature(address_sanitizer)
-  PMap(handle_T) *nlua_ref_markers;
+  PMap(handle_T) *nlua_ref_markers = NULL;
 # define NLUA_TRACK_REFS
 #endif
 
@@ -555,7 +553,10 @@ static lua_State *nlua_init(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #ifdef NLUA_TRACK_REFS
-  nlua_ref_markers = pmap_new(handle_T)();
+  const char *env = os_getenv("NVIM_LUA_NOTRACK");
+  if (!env || !*env) {
+    nlua_ref_markers = pmap_new(handle_T)();
+  }
 #endif
 
   lua_State *lstate = luaL_newstate();
@@ -604,7 +605,11 @@ void nlua_free_all_mem(void)
     fprintf(stderr, "%d lua references were leaked!", nlua_refcount);
   }
 
-  pmap_free(handle_T)(nlua_ref_markers);
+  if (nlua_ref_markers) {
+    // in case there are leaked luarefs, leak the associated memory
+    // to get LeakSanitizer stacktraces on exit
+    pmap_free(handle_T)(nlua_ref_markers);
+  }
 #endif
 
   nlua_refcount = 0;
@@ -897,10 +902,12 @@ LuaRef nlua_ref(lua_State *lstate, int index)
   lua_pushvalue(lstate, index);
   LuaRef ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
   if (ref > 0) {
-    // TODO: store traceback when LeakSanitizer is enabled
     nlua_refcount++;
 #ifdef NLUA_TRACK_REFS
+  if (nlua_ref_markers) {
+    // dummy allocation to make LeakSanitizer track our luarefs
     pmap_put(handle_T)(nlua_ref_markers, ref, xmalloc(3));
+  }
 #endif
   }
   return ref;
@@ -912,8 +919,10 @@ void nlua_unref(lua_State *lstate, LuaRef ref)
   if (ref > 0) {
     nlua_refcount--;
 #ifdef NLUA_TRACK_REFS
-    // NB: don't remove entry from map to track double-unreff
-    xfree(pmap_get(handle_T)(nlua_ref_markers, ref));
+    // NB: don't remove entry from map to track double-unref
+    if (nlua_ref_markers) {
+      xfree(pmap_get(handle_T)(nlua_ref_markers, ref));
+    }
 #endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);
   }
