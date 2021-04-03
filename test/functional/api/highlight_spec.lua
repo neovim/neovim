@@ -218,11 +218,12 @@ describe("API: set highlight", function()
   }
 
   local function get_ns()
-    local ns = meths.get_namespaces().Test_set_hl
-    if not ns then ns = meths.create_namespace('Test_set_hl') end
+    local ns = meths.create_namespace('Test_set_hl')
     meths._set_hl_ns(ns)
     return ns
   end
+
+  before_each(clear)
 
   it ("can set gui highlight", function()
     local ns = get_ns()
