@@ -2047,6 +2047,7 @@ assert_inrange({lower}, {upper}, {actual} [, {msg}])
 				Number	assert {actual} is inside the range
 assert_match({pat}, {text} [, {msg}])
 				Number	assert {pat} matches {text}
+assert_nobeep({cmd})		Number	assert {cmd} does not cause a beep
 assert_notequal({exp}, {act} [, {msg}])
 				Number	assert {exp} is not equal {act}
 assert_notmatch({pat}, {text} [, {msg}])
@@ -2638,7 +2639,8 @@ argv([{nr} [, {winid}])
 assert_beeps({cmd})					*assert_beeps()*
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce a beep or visual bell.
-		Also see |assert_fails()| and |assert-return|.
+		Also see |assert_fails()|, |assert_nobeep()| and
+		|assert-return|.
 
 							*assert_equal()*
 assert_equal({expected}, {actual}, [, {msg}])
@@ -2720,6 +2722,11 @@ assert_match({pattern}, {actual} [, {msg}])
 	assert_match('^f.*o$', 'foobar')
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
+
+assert_nobeep({cmd})					*assert_nobeep()*
+		Run {cmd} and add an error message to |v:errors| if it
+		produces a beep or visual bell.
+		Also see |assert_beeps()|.
 
 							*assert_notequal()*
 assert_notequal({expected}, {actual} [, {msg}])

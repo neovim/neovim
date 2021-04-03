@@ -391,28 +391,16 @@ static void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "assert_beeps(cmd [, error])" function
 static void f_assert_beeps(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  const char *const cmd = tv_get_string_chk(&argvars[0]);
-  garray_T ga;
-  int ret = 0;
+  rettv->vval.v_number = assert_beeps(argvars, false);
+}
 
-  called_vim_beep = false;
-  suppress_errthrow = true;
-  emsg_silent = false;
-  do_cmdline_cmd(cmd);
-  if (!called_vim_beep) {
-    prepare_assert_error(&ga);
-    ga_concat(&ga, (const char_u *)"command did not beep: ");
-    ga_concat(&ga, (const char_u *)cmd);
-    assert_error(&ga);
-    ga_clear(&ga);
-    ret = 1;
-  }
-
-  suppress_errthrow = false;
-  emsg_on_display = false;
-  rettv->vval.v_number = ret;
+// "assert_nobeep(cmd [, error])" function
+static void f_assert_nobeep(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = assert_beeps(argvars, true);
 }
 
 // "assert_equal(expected, actual[, msg])" function
