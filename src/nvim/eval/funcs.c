@@ -916,7 +916,7 @@ static void f_chansend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   uint64_t id = argvars[0].vval.v_number;
   const char *error = NULL;
-  rettv->vval.v_number = channel_send(id, input, input_len, &error);
+  rettv->vval.v_number = channel_send(id, input, input_len, true, &error);
   if (error) {
     EMSG(error);
   }
