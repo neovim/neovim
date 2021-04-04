@@ -110,7 +110,7 @@ typedef uint16_t disptick_T;  // display tick type
 #include "nvim/regexp_defs.h"
 // for synstate_T (needs reg_extmatch_T, win_T, buf_T)
 #include "nvim/syntax_defs.h"
-// for signlist_T
+// for sign_entry_T
 #include "nvim/sign_defs.h"
 
 #include "nvim/os/fs_defs.h"    // for FileID
@@ -848,7 +848,7 @@ struct file_buffer {
                                 // normally points to this, but some windows
                                 // may use a different synblock_T.
 
-  signlist_T *b_signlist;       // list of signs to draw
+  sign_entry_T *b_signlist;     // list of placed signs
   int b_signcols_max;           // cached maximum number of sign columns
   int b_signcols;               // last calculated number of sign columns
 

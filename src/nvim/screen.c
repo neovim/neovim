@@ -2384,7 +2384,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   // TODO(bfredl, vigoux): this should not take priority over decoration!
   sign_attrs_T * sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1);
   if (sattr != NULL) {
-    line_attr = sattr->linehl;
+    line_attr = sattr->sat_linehl;
   }
 
   // Highlight the current line in the quickfix window.
@@ -2776,7 +2776,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
             if (num_sattr != NULL) {
               // :sign defined with "numhl" highlight.
-              char_attr = num_sattr->numhl;
+              char_attr = num_sattr->sat_numhl;
             } else if ((wp->w_p_cul || wp->w_p_rnu)
                        && lnum == wp->w_cursor.lnum
                        && filler_todo == 0) {
@@ -4485,7 +4485,7 @@ static void get_sign_display_info(
   if (row == startrow + filler_lines && filler_todo <= 0) {
     sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, *sign_idxp, count);
     if (sattr != NULL) {
-      *pp_extra = sattr->text;
+      *pp_extra = sattr->sat_text;
       if (*pp_extra != NULL) {
         *c_extrap = NUL;
         *c_finalp = NUL;
@@ -4518,7 +4518,7 @@ static void get_sign_display_info(
           (*pp_extra)[*n_extrap] = NUL;
         }
       }
-      *char_attrp = sattr->texthl;
+      *char_attrp = sattr->sat_texthl;
     }
   }
 

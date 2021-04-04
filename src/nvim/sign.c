@@ -83,13 +83,13 @@ static signgroup_T * sign_group_ref(const char_u *groupname)
     group = xmalloc((unsigned)(sizeof(signgroup_T) + STRLEN(groupname)));
 
     STRCPY(group->sg_name, groupname);
-    group->refcount = 1;
-    group->next_sign_id = 1;
+    group->sg_refcount = 1;
+    group->sg_next_sign_id = 1;
     hash_add_item(&sg_table, hi, group->sg_name, hash);
   } else {
     // existing group
     group = HI2SG(hi);
-    group->refcount++;
+    group->sg_refcount++;
   }
 
   return group;
@@ -105,8 +105,8 @@ static void sign_group_unref(char_u *groupname)
   hi = hash_find(&sg_table, groupname);
   if (!HASHITEM_EMPTY(hi)) {
     group = HI2SG(hi);
-    group->refcount--;
-    if (group->refcount == 0) {
+    group->sg_refcount--;
+    if (group->sg_refcount == 0) {
       // All the signs in this group are removed
       hash_remove(&sg_table, hi);
       xfree(group);
@@ -117,12 +117,12 @@ static void sign_group_unref(char_u *groupname)
 /// Returns TRUE if 'sign' is in 'group'.
 /// A sign can either be in the global group (sign->group == NULL)
 /// or in a named group. If 'group' is '*', then the sign is part of the group.
-int sign_in_group(signlist_T *sign, const char_u *group)
+int sign_in_group(sign_entry_T *sign, const char_u *group)
 {
     return ((group != NULL && STRCMP(group, "*") == 0)
-            || (group == NULL && sign->group == NULL)
-            || (group != NULL && sign->group != NULL
-                && STRCMP(group, sign->group->sg_name) == 0));
+            || (group == NULL && sign->se_group == NULL)
+            || (group != NULL && sign->se_group != NULL
+                && STRCMP(group, sign->se_group->sg_name) == 0));
 }
 
 /// Get the next free sign identifier in the specified group
@@ -130,7 +130,7 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
 {
   int id = 1;
   signgroup_T *group = NULL;
-  signlist_T *sign;
+  sign_entry_T *sign;
   hashitem_T *hi;
   int found = false;
 
@@ -147,13 +147,13 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
     if (group == NULL) {
       id = next_sign_id++;    // global group
     } else {
-      id = group->next_sign_id++;
+      id = group->sg_next_sign_id++;
     }
 
     // Check whether this sign is already placed in the buffer
     found = true;
     FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-      if (id == sign->id && sign_in_group(sign, groupname)) {
+      if (id == sign->se_id && sign_in_group(sign, groupname)) {
         found = false;    // sign identifier is in use
         break;
       }
@@ -167,8 +167,8 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
 /// 'next' signs.
 static void insert_sign(
     buf_T *buf,             // buffer to store sign in
-    signlist_T *prev,       // previous sign entry
-    signlist_T *next,       // next sign entry
+    sign_entry_T *prev,       // previous sign entry
+    sign_entry_T *next,       // next sign entry
     int id,                 // sign ID
     const char_u *group,    // sign group; NULL for global group
     int prio,               // sign priority
@@ -177,21 +177,21 @@ static void insert_sign(
     bool has_text_or_icon   // sign has text or icon
 )
 {
-  signlist_T *newsign = xmalloc(sizeof(signlist_T));
-  newsign->id = id;
-  newsign->lnum = lnum;
-  newsign->typenr = typenr;
-  newsign->has_text_or_icon = has_text_or_icon;
+  sign_entry_T *newsign = xmalloc(sizeof(sign_entry_T));
+  newsign->se_id = id;
+  newsign->se_lnum = lnum;
+  newsign->se_typenr = typenr;
+  newsign->se_has_text_or_icon = has_text_or_icon;
   if (group != NULL) {
-    newsign->group = sign_group_ref(group);
+    newsign->se_group = sign_group_ref(group);
   } else {
-    newsign->group = NULL;
+    newsign->se_group = NULL;
   }
-  newsign->priority = prio;
-  newsign->next = next;
-  newsign->prev = prev;
+  newsign->se_priority = prio;
+  newsign->se_next = next;
+  newsign->se_prev = prev;
   if (next != NULL) {
-    next->prev = newsign;
+    next->se_prev = newsign;
   }
   buf->b_signcols_max = -1;
 
@@ -206,14 +206,14 @@ static void insert_sign(
     // first sign in signlist
     buf->b_signlist = newsign;
   } else {
-    prev->next = newsign;
+    prev->se_next = newsign;
   }
 }
 
 /// Insert a new sign sorted by line number and sign priority.
 static void insert_sign_by_lnum_prio(
     buf_T *buf,            // buffer to store sign in
-    signlist_T *prev,      // previous sign entry
+    sign_entry_T *prev,      // previous sign entry
     int id,                // sign ID
     const char_u *group,   // sign group; NULL for global group
     int prio,              // sign priority
@@ -222,19 +222,19 @@ static void insert_sign_by_lnum_prio(
     bool has_text_or_icon  // sign has text or icon
 )
 {
-  signlist_T  *sign;
+  sign_entry_T  *sign;
 
   // keep signs sorted by lnum, priority and id: insert new sign at
   // the proper position in the list for this lnum.
-  while (prev != NULL && prev->lnum == lnum
-         && (prev->priority < prio
-             || (prev->priority == prio && prev->id <= id))) {
-    prev = prev->prev;
+  while (prev != NULL && prev->se_lnum == lnum
+         && (prev->se_priority < prio
+             || (prev->se_priority == prio && prev->se_id <= id))) {
+    prev = prev->se_prev;
   }
   if (prev == NULL) {
     sign = buf->b_signlist;
   } else {
-    sign = prev->next;
+    sign = prev->se_next;
   }
 
   insert_sign(buf, prev, sign, id, group, prio, lnum, typenr, has_text_or_icon);
@@ -254,16 +254,16 @@ char_u * sign_typenr2name(int typenr)
 }
 
 /// Return information about a sign in a Dict
-dict_T * sign_get_info(signlist_T *sign)
+dict_T * sign_get_info(sign_entry_T *sign)
 {
   dict_T  *d = tv_dict_alloc();
-  tv_dict_add_nr(d,  S_LEN("id"), sign->id);
-  tv_dict_add_str(d, S_LEN("group"), ((sign->group == NULL)
+  tv_dict_add_nr(d,  S_LEN("id"), sign->se_id);
+  tv_dict_add_str(d, S_LEN("group"), ((sign->se_group == NULL)
                                       ? (char *)""
-                                      : (char *)sign->group->sg_name));
-  tv_dict_add_nr(d,  S_LEN("lnum"), sign->lnum);
-  tv_dict_add_str(d, S_LEN("name"), (char *)sign_typenr2name(sign->typenr));
-  tv_dict_add_nr(d,  S_LEN("priority"), sign->priority);
+                                      : (char *)sign->se_group->sg_name));
+  tv_dict_add_nr(d,  S_LEN("lnum"), sign->se_lnum);
+  tv_dict_add_str(d, S_LEN("name"), (char *)sign_typenr2name(sign->se_typenr));
+  tv_dict_add_nr(d,  S_LEN("priority"), sign->se_priority);
 
   return d;
 }
@@ -271,17 +271,17 @@ dict_T * sign_get_info(signlist_T *sign)
 // Sort the signs placed on the same line as "sign" by priority.  Invoked after
 // changing the priority of an already placed sign.  Assumes the signs in the
 // buffer are sorted by line number and priority.
-static void sign_sort_by_prio_on_line(buf_T *buf, signlist_T *sign)
+static void sign_sort_by_prio_on_line(buf_T *buf, sign_entry_T *sign)
   FUNC_ATTR_NONNULL_ALL
 {
   // If there is only one sign in the buffer or only one sign on the line or
   // the sign is already sorted by priority, then return.
-  if ((sign->prev == NULL
-       || sign->prev->lnum != sign->lnum
-       || sign->prev->priority > sign->priority)
-      && (sign->next == NULL
-          || sign->next->lnum != sign->lnum
-          || sign->next->priority < sign->priority)) {
+  if ((sign->se_prev == NULL
+       || sign->se_prev->se_lnum != sign->se_lnum
+       || sign->se_prev->se_priority > sign->se_priority)
+      && (sign->se_next == NULL
+          || sign->se_next->se_lnum != sign->se_lnum
+          || sign->se_next->se_priority < sign->se_priority)) {
     return;
   }
 
@@ -289,55 +289,55 @@ static void sign_sort_by_prio_on_line(buf_T *buf, signlist_T *sign)
   // Find a sign after which 'sign' should be inserted
 
   // First search backward for a sign with higher priority on the same line
-  signlist_T *p = sign;
-  while (p->prev != NULL
-         && p->prev->lnum == sign->lnum
-         && p->prev->priority <= sign->priority) {
-    p = p->prev;
+  sign_entry_T *p = sign;
+  while (p->se_prev != NULL
+         && p->se_prev->se_lnum == sign->se_lnum
+         && p->se_prev->se_priority <= sign->se_priority) {
+    p = p->se_prev;
   }
   if (p == sign) {
     // Sign not found. Search forward for a sign with priority just before
     // 'sign'.
-    p = sign->next;
-    while (p->next != NULL
-           && p->next->lnum == sign->lnum
-           && p->next->priority > sign->priority) {
-      p = p->next;
+    p = sign->se_next;
+    while (p->se_next != NULL
+           && p->se_next->se_lnum == sign->se_lnum
+           && p->se_next->se_priority > sign->se_priority) {
+      p = p->se_next;
     }
   }
 
   // Remove 'sign' from the list
   if (buf->b_signlist == sign) {
-    buf->b_signlist = sign->next;
+    buf->b_signlist = sign->se_next;
   }
-  if (sign->prev != NULL) {
-    sign->prev->next = sign->next;
+  if (sign->se_prev != NULL) {
+    sign->se_prev->se_next = sign->se_next;
   }
-  if (sign->next != NULL) {
-    sign->next->prev = sign->prev;
+  if (sign->se_next != NULL) {
+    sign->se_next->se_prev = sign->se_prev;
   }
-  sign->prev = NULL;
-  sign->next = NULL;
+  sign->se_prev = NULL;
+  sign->se_next = NULL;
 
   // Re-insert 'sign' at the right place
-  if (p->priority <= sign->priority) {
+  if (p->se_priority <= sign->se_priority) {
     // 'sign' has a higher priority and should be inserted before 'p'
-    sign->prev = p->prev;
-    sign->next = p;
-    p->prev = sign;
-    if (sign->prev != NULL) {
-      sign->prev->next = sign;
+    sign->se_prev = p->se_prev;
+    sign->se_next = p;
+    p->se_prev = sign;
+    if (sign->se_prev != NULL) {
+      sign->se_prev->se_next = sign;
     }
     if (buf->b_signlist == p) {
       buf->b_signlist = sign;
     }
   } else {
     // 'sign' has a lower priority and should be inserted after 'p'
-    sign->prev = p;
-    sign->next = p->next;
-    p->next = sign;
-    if (sign->next != NULL) {
-      sign->next->prev = sign;
+    sign->se_prev = p;
+    sign->se_next = p->se_next;
+    p->se_next = sign;
+    if (sign->se_next != NULL) {
+      sign->se_next->se_prev = sign;
     }
   }
 }
@@ -354,19 +354,19 @@ void buf_addsign(
     bool has_text_or_icon     // sign has text or icon
 )
 {
-  signlist_T *sign;    // a sign in the signlist
-  signlist_T *prev;    // the previous sign
+  sign_entry_T *sign;    // a sign in the signlist
+  sign_entry_T *prev;    // the previous sign
 
   prev = NULL;
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if (lnum == sign->lnum && id == sign->id
+    if (lnum == sign->se_lnum && id == sign->se_id
         && sign_in_group(sign, groupname)) {
       // Update an existing sign
-      sign->typenr = typenr;
-      sign->priority = prio;
+      sign->se_typenr = typenr;
+      sign->se_priority = prio;
       sign_sort_by_prio_on_line(buf, sign);
       return;
-    } else if (lnum < sign->lnum) {
+    } else if (lnum < sign->se_lnum) {
       insert_sign_by_lnum_prio(
           buf,
           prev,
@@ -402,14 +402,14 @@ linenr_T buf_change_sign_type(
     int prio            // sign priority
 )
 {
-    signlist_T *sign;  // a sign in the signlist
+    sign_entry_T *sign;  // a sign in the signlist
 
     FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-        if (sign->id == markId && sign_in_group(sign, group)) {
-            sign->typenr = typenr;
-            sign->priority = prio;
+        if (sign->se_id == markId && sign_in_group(sign, group)) {
+            sign->se_typenr = typenr;
+            sign->se_priority = prio;
             sign_sort_by_prio_on_line(buf, sign);
-            return sign->lnum;
+            return sign->se_lnum;
         }
     }
 
@@ -432,9 +432,9 @@ sign_attrs_T * sign_get_attr(SignType type, sign_attrs_T sattrs[],
     int nr_matches = 0;
 
     for (int i = 0; i < SIGN_SHOW_MAX; i++) {
-        if (   (type == SIGN_TEXT   && sattrs[i].text   != NULL)
-            || (type == SIGN_LINEHL && sattrs[i].linehl != 0)
-            || (type == SIGN_NUMHL  && sattrs[i].numhl  != 0)) {
+        if (   (type == SIGN_TEXT   && sattrs[i].sat_text   != NULL)
+            || (type == SIGN_LINEHL && sattrs[i].sat_linehl != 0)
+            || (type == SIGN_NUMHL  && sattrs[i].sat_numhl  != 0)) {
             matches[nr_matches] = &sattrs[i];
             nr_matches++;
             // attr list is sorted with most important (priority, id), thus we
@@ -473,33 +473,33 @@ static sign_T * find_sign_by_typenr(int typenr)
 /// @return Number of signs of which attrs were found
 int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
 {
-    signlist_T *sign;
-    sign_T     *sp;
+    sign_entry_T *sign;
+    sign_T       *sp;
 
     int nr_matches = 0;
 
     FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-        if (sign->lnum > lnum) {
+        if (sign->se_lnum > lnum) {
             // Signs are sorted by line number in the buffer. No need to check
             // for signs after the specified line number 'lnum'.
             break;
         }
 
-        if (sign->lnum == lnum) {
+        if (sign->se_lnum == lnum) {
             sign_attrs_T sattr;
             memset(&sattr, 0, sizeof(sattr));
-            sattr.typenr = sign->typenr;
-            sp = find_sign_by_typenr(sign->typenr);
+            sattr.sat_typenr = sign->se_typenr;
+            sp = find_sign_by_typenr(sign->se_typenr);
             if (sp != NULL) {
-                sattr.text = sp->sn_text;
-                if (sattr.text != NULL && sp->sn_text_hl != 0) {
-                    sattr.texthl = syn_id2attr(sp->sn_text_hl);
+                sattr.sat_text = sp->sn_text;
+                if (sattr.sat_text != NULL && sp->sn_text_hl != 0) {
+                    sattr.sat_texthl = syn_id2attr(sp->sn_text_hl);
                 }
                 if (sp->sn_line_hl != 0) {
-                    sattr.linehl = syn_id2attr(sp->sn_line_hl);
+                    sattr.sat_linehl = syn_id2attr(sp->sn_line_hl);
                 }
                 if (sp->sn_num_hl != 0) {
-                    sattr.numhl = syn_id2attr(sp->sn_num_hl);
+                    sattr.sat_numhl = syn_id2attr(sp->sn_num_hl);
                 }
             }
 
@@ -528,26 +528,26 @@ linenr_T buf_delsign(
     char_u *group       // sign group
 )
 {
-  signlist_T **lastp;  // pointer to pointer to current sign
-  signlist_T *sign;    // a sign in a b_signlist
-  signlist_T *next;    // the next sign in a b_signlist
+  sign_entry_T **lastp;  // pointer to pointer to current sign
+  sign_entry_T *sign;    // a sign in a b_signlist
+  sign_entry_T *next;    // the next sign in a b_signlist
   linenr_T lnum;       // line number whose sign was deleted
 
   buf->b_signcols_max = -1;
   lastp = &buf->b_signlist;
   lnum = 0;
   for (sign = buf->b_signlist; sign != NULL; sign = next) {
-    next = sign->next;
-    if ((id == 0 || sign->id == id)
-        && (atlnum == 0 || sign->lnum == atlnum)
+    next = sign->se_next;
+    if ((id == 0 || sign->se_id == id)
+        && (atlnum == 0 || sign->se_lnum == atlnum)
         && sign_in_group(sign, group)) {
       *lastp = next;
       if (next != NULL) {
-        next->prev = sign->prev;
+        next->se_prev = sign->se_prev;
       }
-      lnum = sign->lnum;
-      if (sign->group != NULL) {
-        sign_group_unref(sign->group->sg_name);
+      lnum = sign->se_lnum;
+      if (sign->se_group != NULL) {
+        sign_group_unref(sign->se_group->sg_name);
       }
       xfree(sign);
       redraw_buf_line_later(buf, lnum);
@@ -561,7 +561,7 @@ linenr_T buf_delsign(
         break;
       }
     } else {
-      lastp = &sign->next;
+      lastp = &sign->se_next;
     }
   }
 
@@ -585,11 +585,11 @@ int buf_findsign(
     char_u *group   // sign group
 )
 {
-    signlist_T *sign;  // a sign in the signlist
+    sign_entry_T *sign;  // a sign in the signlist
 
     FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-        if (sign->id == id && sign_in_group(sign, group)) {
-            return (int)sign->lnum;
+        if (sign->se_id == id && sign_in_group(sign, group)) {
+            return (int)sign->se_lnum;
         }
     }
 
@@ -598,22 +598,22 @@ int buf_findsign(
 
 /// Return the sign at line 'lnum' in buffer 'buf'. Returns NULL if a sign is
 /// not found at the line. If 'groupname' is NULL, searches in the global group.
-static signlist_T * buf_getsign_at_line(
+static sign_entry_T * buf_getsign_at_line(
     buf_T *buf,        // buffer whose sign we are searching for
     linenr_T lnum,     // line number of sign
     char_u *groupname  // sign group name
 )
 {
-  signlist_T  *sign;    // a sign in the signlist
+  sign_entry_T *sign;    // a sign in the signlist
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if (sign->lnum > lnum) {
+    if (sign->se_lnum > lnum) {
       // Signs are sorted by line number in the buffer. No need to check
       // for signs after the specified line number 'lnum'.
       break;
     }
 
-    if (sign->lnum == lnum && sign_in_group(sign, groupname)) {
+    if (sign->se_lnum == lnum && sign_in_group(sign, groupname)) {
       return sign;
     }
   }
@@ -628,11 +628,11 @@ int buf_findsign_id(
     char_u *groupname   // sign group name
 )
 {
-    signlist_T *sign;   // a sign in the signlist
+    sign_entry_T *sign;   // a sign in the signlist
 
     sign = buf_getsign_at_line(buf, lnum, groupname);
     if (sign != NULL) {
-      return sign->id;
+      return sign->se_id;
     }
 
     return 0;
@@ -641,9 +641,9 @@ int buf_findsign_id(
 /// Delete signs in buffer "buf".
 void buf_delete_signs(buf_T *buf, char_u *group)
 {
-    signlist_T  *sign;
-    signlist_T  **lastp;  // pointer to pointer to current sign
-    signlist_T *next;
+    sign_entry_T  *sign;
+    sign_entry_T **lastp;  // pointer to pointer to current sign
+    sign_entry_T  *next;
 
     // When deleting the last sign need to redraw the windows to remove the
     // sign column. Not when curwin is NULL (this means we're exiting).
@@ -653,18 +653,18 @@ void buf_delete_signs(buf_T *buf, char_u *group)
 
     lastp = &buf->b_signlist;
     for (sign = buf->b_signlist; sign != NULL; sign = next) {
-      next = sign->next;
+      next = sign->se_next;
       if (sign_in_group(sign, group)) {
         *lastp = next;
         if (next != NULL) {
-          next->prev = sign->prev;
+          next->se_prev = sign->se_prev;
         }
-        if (sign->group != NULL) {
-          sign_group_unref(sign->group->sg_name);
+        if (sign->se_group != NULL) {
+          sign_group_unref(sign->se_group->sg_name);
         }
         xfree(sign);
       } else {
-        lastp = &sign->next;
+        lastp = &sign->se_next;
       }
     }
     buf->b_signcols_max = -1;
@@ -674,7 +674,7 @@ void buf_delete_signs(buf_T *buf, char_u *group)
 void sign_list_placed(buf_T *rbuf, char_u *sign_group)
 {
   buf_T *buf;
-  signlist_T  *sign;
+  sign_entry_T  *sign;
   char  lbuf[MSG_BUF_LEN];
   char  group[MSG_BUF_LEN];
 
@@ -698,16 +698,16 @@ void sign_list_placed(buf_T *rbuf, char_u *sign_group)
       if (!sign_in_group(sign, sign_group)) {
         continue;
       }
-      if (sign->group != NULL) {
+      if (sign->se_group != NULL) {
         vim_snprintf(group, MSG_BUF_LEN, _("  group=%s"),
-                     sign->group->sg_name);
+                     sign->se_group->sg_name);
       } else {
         group[0] = '\0';
       }
       vim_snprintf(lbuf, MSG_BUF_LEN,
                    _("    line=%ld  id=%d%s  name=%s  priority=%d"),
-                   (long)sign->lnum, sign->id, group,
-                   sign_typenr2name(sign->typenr), sign->priority);
+                   (long)sign->se_lnum, sign->se_id, group,
+                   sign_typenr2name(sign->se_typenr), sign->se_priority);
       MSG_PUTS(lbuf);
       msg_putchar('\n');
     }
@@ -726,25 +726,25 @@ void sign_mark_adjust(
     long amount_after
 )
 {
-  signlist_T *sign;    // a sign in a b_signlist
+  sign_entry_T *sign;    // a sign in a b_signlist
   linenr_T new_lnum;   // new line number to assign to sign
 
   curbuf->b_signcols_max = -1;
 
   FOR_ALL_SIGNS_IN_BUF(curbuf, sign) {
-    new_lnum = sign->lnum;
-    if (sign->lnum >= line1 && sign->lnum <= line2) {
+    new_lnum = sign->se_lnum;
+    if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
       if (amount != MAXLNUM) {
         new_lnum += amount;
       }
-    } else if (sign->lnum > line2) {
+    } else if (sign->se_lnum > line2) {
       new_lnum += amount_after;
     }
     // If the new sign line number is past the last line in the buffer,
     // then don't adjust the line number. Otherwise, it will always be past
     // the last line and will not be visible.
-    if (sign->lnum >= line1 && new_lnum <= curbuf->b_ml.ml_line_count) {
-      sign->lnum = new_lnum;
+    if (sign->se_lnum >= line1 && new_lnum <= curbuf->b_ml.ml_line_count) {
+      sign->se_lnum = new_lnum;
     }
   }
 }
@@ -1544,7 +1544,7 @@ void sign_getlist(const char_u *name, list_T *retlist)
 list_T *get_buffer_signs(buf_T *buf)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  signlist_T *sign;
+  sign_entry_T *sign;
   dict_T *d;
   list_T *const l = tv_list_alloc(kListLenMayKnow);
 
@@ -1565,7 +1565,7 @@ static void sign_get_placed_in_buf(
 {
   dict_T *d;
   list_T *l;
-  signlist_T *sign;
+  sign_entry_T *sign;
 
   d = tv_dict_alloc();
   tv_list_append_dict(retlist, d);
@@ -1580,9 +1580,9 @@ static void sign_get_placed_in_buf(
       continue;
     }
     if ((lnum == 0 && sign_id == 0)
-        || (sign_id == 0 && lnum == sign->lnum)
-        || (lnum == 0 && sign_id == sign->id)
-        || (lnum == sign->lnum && sign_id == sign->id)) {
+        || (sign_id == 0 && lnum == sign->se_lnum)
+        || (lnum == 0 && sign_id == sign->se_id)
+        || (lnum == sign->se_lnum && sign_id == sign->se_id)) {
       tv_list_append_dict(l, sign_get_info(sign));
     }
   }

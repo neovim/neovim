@@ -5489,20 +5489,20 @@ bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 int buf_signcols(buf_T *buf)
 {
     if (buf->b_signcols_max == -1) {
-        signlist_T *sign;  // a sign in the signlist
+        sign_entry_T *sign;  // a sign in the sign list
         buf->b_signcols_max = 0;
         int linesum = 0;
         linenr_T curline = 0;
 
         FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-          if (sign->lnum > curline) {
+          if (sign->se_lnum > curline) {
             if (linesum > buf->b_signcols_max) {
               buf->b_signcols_max = linesum;
             }
-            curline = sign->lnum;
+            curline = sign->se_lnum;
             linesum = 0;
           }
-          if (sign->has_text_or_icon) {
+          if (sign->se_has_text_or_icon) {
             linesum++;
           }
         }
