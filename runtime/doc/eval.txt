@@ -156,9 +156,13 @@ This will invoke the function as if using: >
 	call myDict.Callback('foo', 'bar')
 
 Note that binding a function to a Dictionary also happens when the function is
-a member of the Dictionary: >
+a member of the Dictionary, for example: >
 
-	let myDict.myFunction = MyFunction
+	function MyFunction() dict
+	  echo self
+	endfunction
+
+	let myDict.myFunction = function('MyFunction')
 	call myDict.myFunction()
 
 Here MyFunction() will get myDict passed as "self".  This happens when the
