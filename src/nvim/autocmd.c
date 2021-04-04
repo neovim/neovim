@@ -1621,13 +1621,21 @@ static bool apply_autocmds_group(event_T event,
       ap->last = false;
     }
     ap->last = true;
-    check_lnums(true);  // make sure cursor and topline are valid
+
+    if (nesting == 1) {
+      // make sure cursor and topline are valid
+      check_lnums(true);
+    }
 
     // Execute the autocmd. The `getnextac` callback handles iteration.
     do_cmdline(NULL, getnextac, (void *)&patcmd,
                DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
 
-    reset_lnums();  // restore cursor and topline, unless they were changed
+    if (nesting == 1) {
+      // restore cursor and topline, unless they were changed
+      reset_lnums();
+    }
+
 
     if (eap != NULL) {
       (void)set_cmdarg(NULL, save_cmdarg);

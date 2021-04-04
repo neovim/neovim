@@ -958,6 +958,7 @@ Testing:				    *test-functions*
 	assert_true()		assert that an expression is true
 	assert_exception()	assert that a command throws an exception
 	assert_beeps()		assert that a command beeps
+	assert_nobeep()		assert that a command does not cause a beep
 	assert_fails()		assert that a command fails
 
 Timers:						*timer-functions*
