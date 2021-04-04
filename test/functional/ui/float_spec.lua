@@ -42,6 +42,10 @@ describe('float window', function()
     [20] = {bold = true, foreground = Screen.colors.Brown},
     [21] = {background = Screen.colors.Gray90},
     [22] = {background = Screen.colors.LightRed},
+    [23] = {foreground = Screen.colors.Black, background = Screen.colors.White};
+    [24] = {foreground = Screen.colors.Black, background = Screen.colors.Grey80};
+    [25] = {blend = 100, background = Screen.colors.Gray0};
+    [26] = {blend = 80, background = Screen.colors.Gray0};
   }
 
   it('behavior', function()
@@ -644,7 +648,6 @@ describe('float window', function()
       end
 
       meths.win_set_config(win, {border="single"})
-
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -689,7 +692,6 @@ describe('float window', function()
 
       -- support: ascii char, UTF-8 char, composed char, highlight per char
       meths.win_set_config(win, {border={"x", {"å", "ErrorMsg"}, {"\\"}, {"n̈̊", "Search"}}})
-
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -710,10 +712,10 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 5
-          {5:xååååååååå\}|
-          {5:n̈̊}{1: halloj! }{5:n̈̊}|
-          {5:n̈̊}{1: BORDAA  }{5:n̈̊}|
-          {5:\åååååååååx}|
+          {5:x}{7:ååååååååå}{5:\}|
+          {17:n̈̊}{1: halloj! }{17:n̈̊}|
+          {17:n̈̊}{1: BORDAA  }{17:n̈̊}|
+          {5:\}{7:ååååååååå}{5:x}|
         ]], float_pos={
           [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
         }, win_viewport={
@@ -769,6 +771,97 @@ describe('float window', function()
           {0:~    }{1: BORDAA  }{0:                          }|
           {0:~                                       }|
           {0:~                                       }|
+                                                  |
+        ]]}
+      end
+
+      meths.win_set_config(win, {border={"", "", "", ">", "", "", "", "<"}})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {5:<}{1: halloj! }{5:>}|
+          {5:<}{1: BORDAA  }{5:>}|
+        ]], float_pos={
+          [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:<}{1: halloj! }{5:>}{0:                        }|
+          {0:~    }{5:<}{1: BORDAA  }{5:>}{0:                        }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+      end
+
+      insert [[
+        neeed some dummy
+        background text
+        to show the effect
+        of color blending
+        of border shadow
+      ]]
+
+      meths.win_set_config(win, {border="shadow"})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+            neeed some dummy                      |
+            background text                       |
+            to show the effect                    |
+            of color blending                     |
+            of border shadow                      |
+          ^                                        |
+        ## grid 3
+                                                  |
+        ## grid 5
+          {1: halloj! }{25: }|
+          {1: BORDAA  }{26: }|
+          {25: }{26:         }|
+        ]], float_pos={
+          [5] = { { id = 1002 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 6, curline = 5, curcol = 0};
+          [5] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0};
+        }}
+      else
+        screen:expect{grid=[[
+            neeed some dummy                      |
+            background text                       |
+            to {1: halloj! }{23:e}ffect                    |
+            of {1: BORDAA  }{24:n}ding                     |
+            of {23:b}{24:order sha}dow                      |
+          ^                                        |
                                                   |
         ]]}
       end
@@ -835,7 +928,6 @@ describe('float window', function()
       end
 
       feed 'i<c-x><c-p>'
-
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -873,12 +965,8 @@ describe('float window', function()
           {1: abb            }|
           {13: acc            }|
         ]], float_pos={
-          [5] = { {
-              id = 1002
-            }, "NW", 1, 0, 5, true },
-          [6] = { {
-              id = -1
-            }, "NW", 5, 4, 0, false }
+          [5] = { { id = 1002 }, "NW", 1, 0, 5, true },
+          [6] = { { id = -1 }, "NW", 5, 4, 0, false }
         }, win_viewport={
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0};
           [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 2, curcol = 3};

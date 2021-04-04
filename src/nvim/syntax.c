@@ -6047,6 +6047,8 @@ static const char *highlight_init_both[] = {
   "default link MsgSeparator StatusLine",
   "default link NormalFloat Pmenu",
   "default link FloatBorder VertSplit",
+  "default FloatShadow blend=80 guibg=Black",
+  "default FloatShadowThrough blend=100 guibg=Black",
   "RedrawDebugNormal cterm=reverse gui=reverse",
   "RedrawDebugClear ctermbg=Yellow guibg=Yellow",
   "RedrawDebugComposed ctermbg=Green guibg=Green",

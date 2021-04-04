@@ -1760,10 +1760,12 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
   struct {
     const char *name;
     schar_T chars[8];
+    bool shadow_color;
   } defaults[] = {
-    { "double", { "╔", "═", "╗", "║", "╝", "═", "╚", "║" } },
-    { "single", { "┌", "─", "┐", "│", "┘", "─", "└", "│" } },
-    { NULL, { { NUL } } },
+    { "double", { "╔", "═", "╗", "║", "╝", "═", "╚", "║" }, false },
+    { "single", { "┌", "─", "┐", "│", "┘", "─", "└", "│" }, false },
+    { "shadow", { "", "", " ", " ", " ", " ", " ", "" }, true },
+    { NULL, { { NUL } } , false },
   };
 
   schar_T *chars = fconfig->border_chars;
@@ -1807,13 +1809,16 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
         api_set_error(err, kErrorTypeValidation, "invalid border char");
         return;
       }
-      if (!string.size
-          || mb_string2cells_len((char_u *)string.data, string.size) != 1) {
+      if (string.size
+          && mb_string2cells_len((char_u *)string.data, string.size) > 1) {
         api_set_error(err, kErrorTypeValidation,
                       "border chars must be one cell");
+        return;
       }
       size_t len = MIN(string.size, sizeof(*chars)-1);
-      memcpy(chars[i], string.data, len);
+      if (len) {
+        memcpy(chars[i], string.data, len);
+      }
       chars[i][len] = NUL;
       hl_ids[i] = hl_id;
     }
@@ -1821,6 +1826,13 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
       memcpy(chars+size, chars, sizeof(*chars) * size);
       memcpy(hl_ids+size, hl_ids, sizeof(*hl_ids) * size);
       size <<= 1;
+    }
+    if ((chars[7][0] && chars[1][0] && !chars[0][0])
+        || (chars[1][0] && chars[3][0] && !chars[2][0])
+        || (chars[3][0] && chars[5][0] && !chars[4][0])
+        || (chars[5][0] && chars[7][0] && !chars[6][0])) {
+      api_set_error(err, kErrorTypeValidation,
+                    "corner between used edges must be specified");
     }
   } else if (style.type == kObjectTypeString) {
     String str = style.data.string;
@@ -1832,6 +1844,15 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
       if (strequal(str.data, defaults[i].name)) {
         memcpy(chars, defaults[i].chars, sizeof(defaults[i].chars));
         memset(hl_ids, 0, 8 * sizeof(*hl_ids));
+        if (defaults[i].shadow_color) {
+          int hl_blend = SYN_GROUP_STATIC("FloatShadow");
+          int hl_through = SYN_GROUP_STATIC("FloatShadowThrough");
+          hl_ids[2] = hl_through;
+          hl_ids[3] = hl_blend;
+          hl_ids[4] = hl_blend;
+          hl_ids[5] = hl_blend;
+          hl_ids[6] = hl_through;
+        }
         return;
       }
     }

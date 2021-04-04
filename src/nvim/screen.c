@@ -5454,32 +5454,50 @@ static void win_redr_border(win_T *wp)
   schar_T *chars = wp->w_float_config.border_chars;
   int *attrs = wp->w_float_config.border_attr;
 
-  int endrow = grid->Rows-1, endcol = grid->Columns-1;
 
-  grid_puts_line_start(grid, 0);
-  grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
-  for (int i = 1; i < endcol; i++) {
-    grid_put_schar(grid, 0, i, chars[1], attrs[1]);
-  }
-  grid_put_schar(grid, 0, endcol, chars[2], attrs[2]);
-  grid_puts_line_flush(false);
+  int *adj = wp->w_border_adj;
+  int irow = wp->w_height_inner, icol = wp->w_width_inner;
 
-  for (int i = 1; i < endrow; i++) {
-    grid_puts_line_start(grid, i);
-    grid_put_schar(grid, i, 0, chars[7], attrs[7]);
+  if (adj[0]) {
+    grid_puts_line_start(grid, 0);
+    if (adj[3]) {
+      grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
+    }
+    for (int i = 0; i < icol; i++) {
+      grid_put_schar(grid, 0, i+adj[3], chars[1], attrs[1]);
+    }
+    if (adj[1]) {
+      grid_put_schar(grid, 0, icol+adj[3], chars[2], attrs[2]);
+    }
     grid_puts_line_flush(false);
-    grid_puts_line_start(grid, i);
-    grid_put_schar(grid, i, endcol, chars[3], attrs[3]);
-    grid_puts_line_flush(false);
   }
 
-  grid_puts_line_start(grid, endrow);
-  grid_put_schar(grid, endrow, 0, chars[6], attrs[6]);
-  for (int i = 1; i < endcol; i++) {
-    grid_put_schar(grid, endrow, i, chars[5], attrs[5]);
+  for (int i = 0; i < irow; i++) {
+    if (adj[3]) {
+      grid_puts_line_start(grid, i+adj[0]);
+      grid_put_schar(grid, i+adj[0], 0, chars[7], attrs[7]);
+      grid_puts_line_flush(false);
+    }
+    if (adj[1]) {
+      int ic = (i == 0 && !adj[0] && chars[2][0]) ? 2 : 3;
+      grid_puts_line_start(grid, i+adj[0]);
+      grid_put_schar(grid, i+adj[0], icol+adj[3], chars[ic], attrs[ic]);
+      grid_puts_line_flush(false);
+    }
   }
-  grid_put_schar(grid, endrow, endcol, chars[4], attrs[4]);
-  grid_puts_line_flush(false);
+
+  if (adj[2]) {
+    grid_puts_line_start(grid, irow+adj[0]);
+    if (adj[3]) {
+      grid_put_schar(grid, irow+adj[0], 0, chars[6], attrs[6]);
+    }
+    for (int i = 0; i < icol; i++) {
+      int ic = (i == 0 && !adj[3] && chars[6][0]) ? 6 : 5;
+      grid_put_schar(grid, irow+adj[0], i+adj[3], chars[ic], attrs[ic]);
+    }
+    grid_put_schar(grid, irow+adj[0], icol+adj[3], chars[4], attrs[4]);
+    grid_puts_line_flush(false);
+  }
 }
 
 // Low-level functions to manipulate invidual character cells on the
@@ -6247,7 +6265,7 @@ void win_grid_alloc(win_T *wp)
     grid_alloc(grid_allocated, total_rows, total_cols,
                wp->w_grid_alloc.valid, false);
     grid_allocated->valid = true;
-    if (wp->w_border_adj) {
+    if (wp->w_floating && wp->w_float_config.border) {
       wp->w_redr_border = true;
     }
     was_resized = true;
@@ -6267,8 +6285,8 @@ void win_grid_alloc(win_T *wp)
 
   if (want_allocation) {
     grid->target = grid_allocated;
-    grid->row_offset = wp->w_border_adj;
-    grid->col_offset = wp->w_border_adj;
+    grid->row_offset = wp->w_border_adj[0];
+    grid->col_offset = wp->w_border_adj[3];
   } else {
     grid->target = &default_grid;
     grid->row_offset = wp->w_winrow;
