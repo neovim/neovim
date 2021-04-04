@@ -507,7 +507,21 @@ describe('search highlighting', function()
       {1:~                                       }|
       :syntax keyword MyGroup special         |
     ]])
+  end)
 
+  it('highlights entire pattern on :%g@a/b', function()
+    command('set inccommand=nosplit')
+    feed('ia/b/c<Esc>')
+    feed(':%g@a/b')
+    screen:expect([[
+      {3:a/b}/c                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      :%g@a/b^                                 |
+    ]])
   end)
 end)
 

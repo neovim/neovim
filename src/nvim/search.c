@@ -1021,8 +1021,9 @@ static int first_submatch(regmmatch_T *rp)
  * Return 0 for failure, 1 for found, 2 for found and line offset added.
  */
 int do_search(
-    oparg_T         *oap,           /* can be NULL */
-    int dirc,                       /* '/' or '?' */
+    oparg_T         *oap,           // can be NULL
+    int dirc,                       // '/' or '?'
+    int search_delim,  // delimiter for search, e.g. '%' in s%regex%replacement
     char_u          *pat,
     long count,
     int options,
@@ -1101,8 +1102,8 @@ int do_search(
 
     searchstr = pat;
     dircp = NULL;
-    /* use previous pattern */
-    if (pat == NULL || *pat == NUL || *pat == dirc) {
+    // use previous pattern
+    if (pat == NULL || *pat == NUL || *pat == search_delim) {
       if (spats[RE_SEARCH].pat == NULL) {           // no previous pattern
         searchstr = spats[RE_SUBST].pat;
         if (searchstr == NULL) {
@@ -1122,15 +1123,15 @@ int do_search(
        * If there is a matching '/' or '?', toss it.
        */
       ps = strcopy;
-      p = skip_regexp(pat, dirc, p_magic, &strcopy);
+      p = skip_regexp(pat, search_delim, p_magic, &strcopy);
       if (strcopy != ps) {
         /* made a copy of "pat" to change "\?" to "?" */
         searchcmdlen += (int)(STRLEN(pat) - STRLEN(strcopy));
         pat = strcopy;
         searchstr = strcopy;
       }
-      if (*p == dirc) {
-        dircp = p;              /* remember where we put the NUL */
+      if (*p == search_delim) {
+        dircp = p;              // remember where we put the NUL
         *p++ = NUL;
       }
       spats[0].off.line = FALSE;
@@ -1320,7 +1321,7 @@ int do_search(
                  RE_LAST, sia);
 
     if (dircp != NULL) {
-      *dircp = dirc;  // restore second '/' or '?' for normal_cmd()
+      *dircp = search_delim;  // restore second '/' or '?' for normal_cmd()
     }
 
     if (!shortmess(SHM_SEARCH)
@@ -1400,6 +1401,7 @@ int do_search(
     }
 
     dirc = *++pat;
+    search_delim = dirc;
     if (dirc != '?' && dirc != '/') {
       retval = 0;
       EMSG(_("E386: Expected '?' or '/'  after ';'"));

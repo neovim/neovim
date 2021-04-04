@@ -723,6 +723,30 @@ func Test_incsearch_substitute_dump()
   call delete('Xis_subst_script')
 endfunc
 
+func Test_incsearch_highlighting()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+
+  call writefile([
+	\ 'set incsearch hlsearch',
+	\ 'call setline(1, "hello/there")',
+	\ ], 'Xis_subst_hl_script')
+  let buf = RunVimInTerminal('-S Xis_subst_hl_script', {'rows': 4, 'cols': 20})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 300m
+
+  " Using a different search delimiter should still highlight matches
+  " that contain a '/'.
+  call term_sendkeys(buf, ":%s;ello/the")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_15', {})
+  call term_sendkeys(buf, "<Esc>")
+endfunc
+
 " Similar to Test_incsearch_substitute_dump() for :sort
 func Test_incsearch_sort_dump()
   if !exists('+incsearch')

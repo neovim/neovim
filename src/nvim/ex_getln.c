@@ -275,8 +275,9 @@ static void init_incsearch_state(incsearch_state_T *s)
 
 // Return true when 'incsearch' highlighting is to be done.
 // Sets search_first_line and search_last_line to the address range.
-static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
-                                      int *skiplen, int *patlen)
+static bool do_incsearch_highlighting(int firstc, int *search_delim,
+                                      incsearch_state_T *s, int *skiplen,
+                                      int *patlen)
   FUNC_ATTR_NONNULL_ALL
 {
   char_u *cmd;
@@ -303,6 +304,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   search_last_line = MAXLNUM;
 
   if (firstc == '/' || firstc == '?') {
+    *search_delim = firstc;
     return true;
   }
   if (firstc != ':') {
@@ -371,6 +373,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
 
   p = skipwhite(p);
   delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
+  *search_delim = delim;
   end = skip_regexp(p, delim, p_magic, NULL);
 
   use_last_pat = end == p && *end == delim;
@@ -431,12 +434,14 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   int skiplen, patlen;
   char_u next_char;
   char_u use_last_pat;
+  int search_delim;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
+                                 &patlen)) {
     restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
     return;
@@ -490,7 +495,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     ccline.cmdbuff[skiplen + patlen] = NUL;
     memset(&sia, 0, sizeof(sia));
     sia.sa_tm = &tm;
-    found = do_search(NULL, firstc == ':' ? '/' : firstc,
+    found = do_search(NULL, firstc == ':' ? '/' : firstc, search_delim,
                       ccline.cmdbuff + skiplen, count,
                       search_flags, &sia);
     ccline.cmdbuff[skiplen + patlen] = next_char;
@@ -581,13 +586,15 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
   FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
+  int search_delim;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
   // Add a character from under the cursor for 'incsearch'
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
+                                 &patlen)) {
     restore_last_search_pattern();
     return FAIL;
   }
@@ -604,7 +611,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
           && !pat_has_uppercase(ccline.cmdbuff + skiplen)) {
         *c = mb_tolower(*c);
       }
-      if (*c == firstc
+      if (*c == search_delim
           || vim_strchr((char_u *)(p_magic ? "\\~^$.*[" : "\\^$"), *c)
           != NULL) {
         // put a backslash before special characters
@@ -1465,13 +1472,14 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
                                               bool next_match)
   FUNC_ATTR_NONNULL_ALL
 {
-  int skiplen, patlen;
+  int skiplen, patlen, search_delim;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
+                                 &patlen)) {
     restore_last_search_pattern();
     return OK;
   }
@@ -1489,7 +1497,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
   char_u save;
 
 
-  if (firstc == ccline.cmdbuff[skiplen]) {
+  if (search_delim == ccline.cmdbuff[skiplen]) {
     pat = last_search_pattern();
     skiplen = 0;
     patlen = (int)STRLEN(pat);
