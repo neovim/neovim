@@ -670,7 +670,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       command("set noet")
       command("set ts=4")
       command("set sw=2")
-      command("set sts=2")
+      command("set sts=4")
 
       local check_events = setup_eventcheck(verify, {'asdfasdf'})
 
@@ -688,6 +688,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { "test1", "bytes", 1, 6, 0, 3, 3, 0, 0, 0, 0, 1, 1 },
         { "test1", "bytes", 1, 7, 0, 0, 0, 0, 4, 4, 0, 1, 1 },
       }
+
 
       feed("<esc>u")
       check_events {
@@ -727,6 +728,29 @@ describe('lua: nvim_buf_attach on_bytes', function()
           { "test1", "bytes", 1, 28, 0, 0, 0, 0, 1, 1, 0, 0, 0 };
           { "test1", "bytes", 1, 29, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
           { "test1", "bytes", 1, 31, 0, 0, 0, 0, 4, 4, 0, 1, 1 };
+      }
+
+      -- inserting tab after other tabs
+      command("set sw=4")
+      feed("<esc>0a<tab>")
+      check_events {
+        { "test1", "bytes", 1, 32, 0, 1, 1, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 33, 0, 2, 2, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 34, 0, 3, 3, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 35, 0, 4, 4, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 36, 0, 1, 1, 0, 4, 4, 0, 1, 1 };
+      }
+    end)
+
+    it("retab", function()
+      command("set noet")
+      command("set ts=4")
+
+      local check_events = setup_eventcheck(verify, {"			asdf"})
+      command("retab 8")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 7, 7, 0, 9, 9 };
       }
     end)
 
