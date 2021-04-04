@@ -2084,6 +2084,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
   colnr_T leadcol = 0;                  // start of leading spaces
   bool need_showbreak = false;          // overlong line, skip first x chars
+  sign_attrs_T sattrs[SIGN_SHOW_MAX];   // attributes for signs
+  int num_signs;                        // number of signs for line
   int line_attr = 0;                    // attribute for the whole line
   int line_attr_lowprio = 0;            // low-priority attribute for the line
   matchitem_T *cur;                     // points to the match list
@@ -2375,11 +2377,14 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     wp->w_last_cursorline = wp->w_cursor.lnum;
   }
 
+  memset(sattrs, 0, sizeof(sattrs));
+  num_signs = buf_get_signattrs(wp->w_buffer, lnum, sattrs);
+
   // If this line has a sign with line highlighting set line_attr.
   // TODO(bfredl, vigoux): this should not take priority over decoration!
-  v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL, 0, 1);
-  if (v != 0) {
-    line_attr = sign_get_attr((int)v, SIGN_LINEHL);
+  sign_attrs_T * sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1);
+  if (sattr != NULL) {
+    line_attr = sattr->linehl;
   }
 
   // Highlight the current line in the quickfix window.
@@ -2696,7 +2701,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           int count = win_signcol_count(wp);
           if (count > 0) {
               get_sign_display_info(
-                  false, wp, lnum, row,
+                  false, wp, sattrs, row,
                   startrow, filler_lines, filler_todo, count,
                   &c_extra, &c_final, extra, sizeof(extra),
                   &p_extra, &n_extra,
@@ -2715,10 +2720,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // in 'lnum', then display the sign instead of the line
           // number.
           if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
-              && buf_findsign_id(wp->w_buffer, lnum, (char_u *)"*") != 0) {
+              && num_signs > 0) {
             int count = win_signcol_count(wp);
             get_sign_display_info(
-                true, wp, lnum, row,
+                true, wp, sattrs, row,
                 startrow, filler_lines, filler_todo, count,
                 &c_extra, &c_final, extra, sizeof(extra),
                 &p_extra, &n_extra,
@@ -2768,11 +2773,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             n_extra = number_width(wp) + 1;
             char_attr = win_hl_attr(wp, HLF_N);
 
-            int num_sign = buf_getsigntype(
-                wp->w_buffer, lnum, SIGN_NUMHL, 0, 1);
-            if (num_sign != 0) {
+            sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
+            if (num_sattr != NULL) {
               // :sign defined with "numhl" highlight.
-              char_attr = sign_get_attr(num_sign, SIGN_NUMHL);
+              char_attr = num_sattr->numhl;
             } else if ((wp->w_p_cul || wp->w_p_rnu)
                        && lnum == wp->w_cursor.lnum
                        && filler_todo == 0) {
@@ -4451,7 +4455,7 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 static void get_sign_display_info(
     bool nrcol,
     win_T *wp,
-    linenr_T lnum,
+    sign_attrs_T sattrs[],
     int row,
     int startrow,
     int filler_lines,
@@ -4468,8 +4472,6 @@ static void get_sign_display_info(
     int *sign_idxp
 )
 {
-  int text_sign;
-
   // Draw cells with the sign value or blank.
   *c_extrap = ' ';
   *c_finalp = NUL;
@@ -4481,10 +4483,9 @@ static void get_sign_display_info(
   }
 
   if (row == startrow + filler_lines && filler_todo <= 0) {
-    text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
-                                *sign_idxp, count);
-    if (text_sign != 0) {
-      *pp_extra = sign_get_text(text_sign);
+    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, *sign_idxp, count);
+    if (sattr != NULL) {
+      *pp_extra = sattr->text;
       if (*pp_extra != NULL) {
         *c_extrap = NUL;
         *c_finalp = NUL;
@@ -4517,7 +4518,7 @@ static void get_sign_display_info(
           (*pp_extra)[*n_extrap] = NUL;
         }
       }
-      *char_attrp = sign_get_attr(text_sign, SIGN_TEXT);
+      *char_attrp = sattr->texthl;
     }
   }
 
