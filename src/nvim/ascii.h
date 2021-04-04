@@ -31,7 +31,9 @@
 #define CSI             0x9b    // Control Sequence Introducer
 #define CSI_STR         "\233"
 #define DCS             0x90    // Device Control String
+#define DCS_STR         "\033P"
 #define STERM           0x9c    // String Terminator
+#define STERM_STR       "\033\\"
 
 #define POUND           0xA3
 
