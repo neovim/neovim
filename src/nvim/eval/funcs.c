@@ -1098,7 +1098,7 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_complete_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = ins_compl_add_tv(&argvars[0], 0);
+  rettv->vval.v_number = ins_compl_add_tv(&argvars[0], 0, false);
 }
 
 /*
