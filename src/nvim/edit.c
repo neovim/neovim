@@ -2319,7 +2319,11 @@ static int ins_compl_add(char_u *const str, int len,
   const Direction dir = (cdir == kDirectionNotSet ? compl_direction : cdir);
   int flags = flags_arg;
 
-  os_breakcheck();
+  if (flags & CP_FAST) {
+    fast_breakcheck();
+  } else {
+    os_breakcheck();
+  }
 #define FREE_CPTEXT(cptext, cptext_allocated) \
   do { \
     if (cptext != NULL && cptext_allocated) { \
