@@ -3971,7 +3971,8 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if (curwin->w_curswant >= width1) {
+        if (curwin->w_curswant >= width1
+            && !hasFolding(curwin->w_cursor.lnum, NULL, NULL)) {
           // Move back within the line. This can give a negative value
           // for w_curswant if width1 < width2 (with cpoptions+=n),
           // which will get clipped to column 0.
@@ -4003,14 +4004,16 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
         else
           n = width1;
-        if (curwin->w_curswant + width2 < (colnr_T)n)
-          /* move forward within line */
+        if (curwin->w_curswant + width2 < (colnr_T)n
+            && !hasFolding(curwin->w_cursor.lnum, NULL, NULL)) {
+          // move forward within line
           curwin->w_curswant += width2;
-        else {
-          /* to next line */
-          /* Move to the end of a closed fold. */
+        } else {
+          // to next line
+
+          // Move to the end of a closed fold.
           (void)hasFolding(curwin->w_cursor.lnum, NULL,
-              &curwin->w_cursor.lnum);
+                           &curwin->w_cursor.lnum);
           if (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
             retval = false;
             break;
