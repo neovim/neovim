@@ -3978,7 +3978,7 @@ static void ins_compl_add_dict(dict_T *dict)
 ///
 /// @param[in]  tv  Object to get matches from.
 /// @param[in]  dir  Completion direction.
-/// @param[in]  fast  use fast_breakcheck() instead of ui_breakcheck().
+/// @param[in]  fast  use fast_breakcheck() instead of os_breakcheck().
 ///
 /// @return NOTDONE if the given string is already in the list of completions,
 ///         otherwise it is added to the list and  OK is returned. FAIL will be
