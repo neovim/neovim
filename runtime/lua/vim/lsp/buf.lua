@@ -364,6 +364,11 @@ function M.range_code_action(context, start_pos, end_pos)
   request('textDocument/codeAction', params)
 end
 
+function M.document_fold()
+  local params = { textDocument = vim.lsp.util.make_text_document_params() }
+  request('textDocument/foldingRange', params)
+end
+
 --- Executes an LSP server command.
 ---
 --@param command A valid `ExecuteCommandParams` object

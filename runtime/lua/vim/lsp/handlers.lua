@@ -408,6 +408,11 @@ local make_call_hierarchy_handler = function(direction)
   end
 end
 
+M['textDocument/foldingRange'] = function(_, _, result, _, bufnr, _)
+  if not result then return end
+  util.calculate_folds(bufnr, result)
+end
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy/incomingCalls
 M['callHierarchy/incomingCalls'] = make_call_hierarchy_handler('from')
 

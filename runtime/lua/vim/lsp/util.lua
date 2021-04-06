@@ -1410,6 +1410,23 @@ function M.symbols_to_items(symbols, bufnr)
   return _symbols_to_items(symbols, {}, bufnr)
 end
 
+function M.calculate_folds(bufnr, ranges)
+  local level = 0
+  local foldlevels = {}
+  for linenr = 1, api.nvim_buf_line_count(bufnr) do
+    level = 0
+    for _, range in pairs(ranges) do
+      if range.startLine <= linenr - 1 and linenr - 1 <= range.endLine then
+        level = level + 1
+      end
+    end
+    foldlevels[linenr] = level
+  end
+  function M.foldexpr(line)
+    return foldlevels[line]
+  end
+end
+
 --- Removes empty lines from the beginning and end.
 --@param lines (table) list of lines to trim
 --@returns (table) trimmed list of lines
