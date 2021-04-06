@@ -2319,7 +2319,11 @@ static int ins_compl_add(char_u *const str, int len,
   const Direction dir = (cdir == kDirectionNotSet ? compl_direction : cdir);
   int flags = flags_arg;
 
-  os_breakcheck();
+  if (flags & CP_FAST) {
+    fast_breakcheck();
+  } else {
+    os_breakcheck();
+  }
 #define FREE_CPTEXT(cptext, cptext_allocated) \
   do { \
     if (cptext != NULL && cptext_allocated) { \
@@ -2523,7 +2527,8 @@ static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
 
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
     if ((add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
-                               icase ? CP_ICASE : 0, false)) == OK) {
+                               CP_FAST | (icase ? CP_ICASE : 0),
+                               false)) == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
     }
@@ -2598,7 +2603,7 @@ void set_completion(colnr_T startcol, list_T *list)
     flags |= CP_ICASE;
   }
   if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, NULL, 0,
-                    flags, false) != OK) {
+                    flags | CP_FAST, false) != OK) {
     return;
   }
 
@@ -3318,8 +3323,8 @@ static int ins_compl_bs(void)
   // allow the word to be deleted, we won't match everything.
   // Respect the 'backspace' option.
   if ((int)(p - line) - (int)compl_col < 0
-      || ((int)(p - line) - (int)compl_col == 0
-          && ctrl_x_mode != CTRL_X_OMNI) || ctrl_x_mode == CTRL_X_EVAL
+      || ((int)(p - line) - (int)compl_col == 0 && ctrl_x_mode != CTRL_X_OMNI)
+      || ctrl_x_mode == CTRL_X_EVAL
       || (!can_bs(BS_START) && (int)(p - line) - (int)compl_col
           - compl_length < 0)) {
     return K_BS;
@@ -3934,7 +3939,7 @@ static void ins_compl_add_list(list_T *const list)
 
   // Go through the List with matches and add each of them.
   TV_LIST_ITER(list, li, {
-    if (ins_compl_add_tv(TV_LIST_ITEM_TV(li), dir) == OK) {
+    if (ins_compl_add_tv(TV_LIST_ITEM_TV(li), dir, true) == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
     } else if (did_emsg) {
@@ -3973,17 +3978,18 @@ static void ins_compl_add_dict(dict_T *dict)
 ///
 /// @param[in]  tv  Object to get matches from.
 /// @param[in]  dir  Completion direction.
+/// @param[in]  fast  use fast_breakcheck() instead of os_breakcheck().
 ///
 /// @return NOTDONE if the given string is already in the list of completions,
 ///         otherwise it is added to the list and  OK is returned. FAIL will be
 ///         returned in case of error.
-int ins_compl_add_tv(typval_T *const tv, const Direction dir)
+int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *word;
   bool dup = false;
   bool empty = false;
-  int flags = 0;
+  int flags = fast ? CP_FAST : 0;
   char *(cptext[CPT_COUNT]);
   typval_T user_data;
 

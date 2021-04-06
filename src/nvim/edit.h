@@ -19,6 +19,7 @@ typedef enum {
   CP_CONT_S_IPOS = 4,    // use CONT_S_IPOS for compl_cont_status
   CP_EQUAL = 8,          // ins_compl_equal() always returns true
   CP_ICASE = 16,         // ins_compl_equal ignores case
+  CP_FAST = 32,          // use fast_breakcheck instead of os_breakcheck
 } cp_flags_T;
 
 typedef int (*IndentGetter)(void);
