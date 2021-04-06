@@ -6,7 +6,12 @@ labels: bug, lsp
 
 ---
 
-<!-- Before reporting: search existing issues and check the FAQ. -->
+<!-- 
+Before reporting: search existing issues and check the FAQ. Usage questions
+such as "How do I...?" or "Why isn't X language server/feature working?" belong 
+on the [Neovim Discourse](https://neovim.discourse.group/c/7-category/7) and will
+be closed.
+-->
 
 - `nvim --version`:
 - language server name/version:
@@ -34,10 +39,17 @@ You can find the location of the log with the following command.
 
 </details>
 
-### Steps to reproduce using `nvim -u NORC`
+### Steps to reproduce using nvim -u minimal_init.lua
+<!-- 
+  Note, if the issue is with an autocompletion or other LSP plugin, please
+  report to the upstream tracker.  Download the minmal config with 
+  wget https://raw.githubusercontent.com/neovim/nvim-lspconfig/master/test/minimal_init.lua
+  and modify it to include any specific commands or servers pertaining to your issues.
+-->
+
 
 ```
-nvim -u NORC
+nvim -u minimal_init.lua
 ```
 
 ### Actual behaviour
