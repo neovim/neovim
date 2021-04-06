@@ -2051,7 +2051,6 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int n = false;
-  int len = 0;
 
   const char *p = tv_get_string(&argvars[0]);
   if (*p == '$') {  // Environment variable.
@@ -2082,29 +2081,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = au_exists(p + 1);
     }
   } else {  // Internal variable.
-    typval_T tv;
-
-    // get_name_len() takes care of expanding curly braces
-    const char *name = p;
-    char *tofree;
-    len = get_name_len((const char **)&p, &tofree, true, false);
-    if (len > 0) {
-      if (tofree != NULL) {
-        name = tofree;
-      }
-      n = (get_var_tv(name, len, &tv, NULL, false, true) == OK);
-      if (n) {
-        // Handle d.key, l[idx], f(expr).
-        n = (handle_subscript(&p, &tv, true, false) == OK);
-        if (n) {
-          tv_clear(&tv);
-        }
-      }
-    }
-    if (*p != NUL)
-      n = FALSE;
-
-    xfree(tofree);
+    n = var_exists(p);
   }
 
   rettv->vval.v_number = n;
