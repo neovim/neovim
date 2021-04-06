@@ -1147,7 +1147,7 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
     end
   end
 
-  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext')
+  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
   for i, hi in ipairs(highlights) do
     local prefixlen, hiname = unpack(hi)
     -- Start highlight after the prefix

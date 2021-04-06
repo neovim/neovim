@@ -245,8 +245,30 @@ M['textDocument/completion'] = function(_, _, result)
   vim.fn.complete(textMatch+1, matches)
 end
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
-M['textDocument/hover'] = function(_, method, result)
+--- |lsp-handler| for the method "textDocument/hover"
+--- <pre>
+--- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+---   vim.lsp.handlers.hover, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = {
+---       {"┌", "FloatBorder"},
+---       {"─", "FloatBorder"},
+---       {"┐", "FloatBorder"},
+---       {"│", "FloatBorder"},
+---       {"┘", "FloatBorder"},
+---       {"─", "FloatBorder"},
+---       {"└", "FloatBorder"},
+---       {"│", "FloatBorder"}
+---     }
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.hover(_, method, result, _, _, config)
+  config = config or {}
   util.focusable_float(method, function()
     if not (result and result.contents) then
       -- return { 'No information available' }
@@ -258,11 +280,16 @@ M['textDocument/hover'] = function(_, method, result)
       -- return { 'No information available' }
       return
     end
-    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines)
+    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
+      border = config.border
+    })
     util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
     return bufnr, winnr
   end)
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+M['textDocument/hover'] = M.hover
 
 --@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
@@ -301,8 +328,30 @@ M['textDocument/typeDefinition'] = location_handler
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation
 M['textDocument/implementation'] = location_handler
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-M['textDocument/signatureHelp'] = function(_, method, result, _, bufnr)
+--- |lsp-handler| for the method "textDocument/signatureHelp"
+--- <pre>
+--- vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+---   vim.lsp.handlers.signature_help, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = {
+---       {"┌", "FloatBorder"},
+---       {"─", "FloatBorder"},
+---       {"┐", "FloatBorder"},
+---       {"│", "FloatBorder"},
+---       {"┘", "FloatBorder"},
+---       {"─", "FloatBorder"},
+---       {"└", "FloatBorder"},
+---       {"│", "FloatBorder"}
+---     }
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.signature_help(_, method, result, _, bufnr, config)
+  config = config or {}
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
@@ -317,10 +366,13 @@ M['textDocument/signatureHelp'] = function(_, method, result, _, bufnr)
   end
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
   local p_bufnr, _ = util.focusable_preview(method, function()
-    return lines, util.try_trim_markdown_code_blocks(lines)
+    return lines, util.try_trim_markdown_code_blocks(lines), config
   end)
   api.nvim_buf_set_option(p_bufnr, 'syntax', syntax)
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+M['textDocument/signatureHelp'] = M.signature_help
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
 M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)

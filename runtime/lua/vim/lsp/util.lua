@@ -875,7 +875,7 @@ function M.make_floating_popup_options(width, height, opts)
     row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,
-    border = {
+    border = opts.border or {
       {"", "NormalFloat"},
       {"", "NormalFloat"},
       {"", "NormalFloat"},
