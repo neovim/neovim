@@ -838,6 +838,10 @@ function protocol.make_client_capabilities()
       callHierarchy = {
         dynamicRegistration = false,
       },
+      foldingRange = {
+        dynamicRegistration = false,
+        lineFoldingOnly = true,
+      },
     },
     workspace = {
       symbol = {
@@ -893,9 +897,131 @@ end
 ---@param server_capabilities table Table of capabilities supported by the server
 ---@return lsp.ServerCapabilities|nil Normalized table of capabilities
 function protocol.resolve_capabilities(server_capabilities)
+<<<<<<< HEAD
   local TextDocumentSyncKind = protocol.TextDocumentSyncKind
   local textDocumentSync = server_capabilities.textDocumentSync
   if textDocumentSync == nil then
+=======
+  local general_properties = {}
+  local text_document_sync_properties
+  do
+    local TextDocumentSyncKind = protocol.TextDocumentSyncKind
+    local textDocumentSync = server_capabilities.textDocumentSync
+    if textDocumentSync == nil then
+      -- Defaults if omitted.
+      text_document_sync_properties = {
+        text_document_open_close = false;
+        text_document_did_change = TextDocumentSyncKind.None;
+--        text_document_did_change = false;
+        text_document_will_save = false;
+        text_document_will_save_wait_until = false;
+        text_document_save = false;
+        text_document_save_include_text = false;
+      }
+    elseif type(textDocumentSync) == 'number' then
+      -- Backwards compatibility
+      if not TextDocumentSyncKind[textDocumentSync] then
+        return nil, "Invalid server TextDocumentSyncKind for textDocumentSync"
+      end
+      text_document_sync_properties = {
+        text_document_open_close = true;
+        text_document_did_change = textDocumentSync;
+        text_document_will_save = false;
+        text_document_will_save_wait_until = false;
+        text_document_save = true;
+        text_document_save_include_text = false;
+      }
+    elseif type(textDocumentSync) == 'table' then
+      text_document_sync_properties = {
+        text_document_open_close = if_nil(textDocumentSync.openClose, false);
+        text_document_did_change = if_nil(textDocumentSync.change, TextDocumentSyncKind.None);
+        text_document_will_save = if_nil(textDocumentSync.willSave, false);
+        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false);
+        text_document_save = if_nil(textDocumentSync.save, false);
+        text_document_save_include_text = if_nil(type(textDocumentSync.save) == 'table'
+                                                and textDocumentSync.save.includeText, false);
+      }
+    else
+      return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
+    end
+  end
+  general_properties.completion = server_capabilities.completionProvider ~= nil
+  general_properties.hover = server_capabilities.hoverProvider or false
+  general_properties.goto_definition = server_capabilities.definitionProvider or false
+  general_properties.find_references = server_capabilities.referencesProvider or false
+  general_properties.document_highlight = server_capabilities.documentHighlightProvider or false
+  general_properties.document_symbol = server_capabilities.documentSymbolProvider or false
+  general_properties.workspace_symbol = server_capabilities.workspaceSymbolProvider or false
+  general_properties.document_formatting = server_capabilities.documentFormattingProvider or false
+  general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider or false
+  general_properties.call_hierarchy = server_capabilities.callHierarchyProvider or false
+  general_properties.execute_command = server_capabilities.executeCommandProvider ~= nil
+  general_properties.document_fold = server_capabilities.foldingRangeProvider or false
+
+  if server_capabilities.renameProvider == nil then
+    general_properties.rename = false
+  elseif type(server_capabilities.renameProvider) == 'boolean' then
+    general_properties.rename = server_capabilities.renameProvider
+  else
+    general_properties.rename = true
+  end
+
+  if server_capabilities.codeLensProvider == nil then
+    general_properties.code_lens = false
+    general_properties.code_lens_resolve = false
+  elseif type(server_capabilities.codeLensProvider) == 'table' then
+    general_properties.code_lens = true
+    general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
+  else
+    error("The server sent invalid codeLensProvider")
+  end
+
+  if server_capabilities.codeActionProvider == nil then
+    general_properties.code_action = false
+  elseif type(server_capabilities.codeActionProvider) == 'boolean'
+    or type(server_capabilities.codeActionProvider) == 'table' then
+    general_properties.code_action = server_capabilities.codeActionProvider
+  else
+    error("The server sent invalid codeActionProvider")
+  end
+
+  if server_capabilities.declarationProvider == nil then
+    general_properties.declaration = false
+  elseif type(server_capabilities.declarationProvider) == 'boolean' then
+    general_properties.declaration = server_capabilities.declarationProvider
+  elseif type(server_capabilities.declarationProvider) == 'table' then
+    -- TODO: support more detailed declarationProvider options.
+    general_properties.declaration = false
+  else
+    error("The server sent invalid declarationProvider")
+  end
+
+  if server_capabilities.typeDefinitionProvider == nil then
+    general_properties.type_definition = false
+  elseif type(server_capabilities.typeDefinitionProvider) == 'boolean' then
+    general_properties.type_definition = server_capabilities.typeDefinitionProvider
+  elseif type(server_capabilities.typeDefinitionProvider) == 'table' then
+    -- TODO: support more detailed typeDefinitionProvider options.
+    general_properties.type_definition = false
+  else
+    error("The server sent invalid typeDefinitionProvider")
+  end
+
+  if server_capabilities.implementationProvider == nil then
+    general_properties.implementation = false
+  elseif type(server_capabilities.implementationProvider) == 'boolean' then
+    general_properties.implementation = server_capabilities.implementationProvider
+  elseif type(server_capabilities.implementationProvider) == 'table' then
+    -- TODO(ashkan) support more detailed implementation options.
+    general_properties.implementation = false
+  else
+    error("The server sent invalid implementationProvider")
+  end
+
+  local workspace = server_capabilities.workspace
+  local workspace_properties = {}
+  if workspace == nil or workspace.workspaceFolders == nil then
+>>>>>>> cb28765a1 (Add basic implementation)
     -- Defaults if omitted.
     server_capabilities.textDocumentSync = {
       openClose = false,

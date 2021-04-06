@@ -178,6 +178,7 @@ won't run if your server doesn't support them.
 - textDocument/diagnostic
 - textDocument/documentHighlight
 - textDocument/documentSymbol
+- textDocument/foldingRange
 - textDocument/formatting
 - textDocument/hover
 - textDocument/implementation*
@@ -1191,6 +1192,19 @@ definition({options})                               *vim.lsp.buf.definition()*
                    • on_list: (function) |lsp-on-list-handler| replacing the
                      default handler. Called for any non-empty result.
 
+document_fold()                                  *vim.lsp.buf.document_fold()*
+    Creates |folds| for the current buffer.
+
+    This will also set 'foldmethod' to "expr" and use |vim.lsp.buf.foldexpr()|
+    for 'foldexpr'.
+
+    Note: The folds are not updated automatically after subsequent changes. To
+    update them whenever leaving insert mode, use >
+    vim.api.nvim_command[[autocmd InsertLeave <buffer> lua vim.lsp.buf.document_fold()]]
+<
+    See also: ~
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_foldingRange
+
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
     text document position. This request can be triggered by a key mapping or
@@ -1221,6 +1235,21 @@ execute_command({command_params})              *vim.lsp.buf.execute_command()*
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+
+foldexpr({lnum})                                      *vim.lsp.buf.foldexpr()*
+    Returns the fold level for a line in the current buffer as determined by a
+    server.
+
+                Can be used as 'foldexpr', see |fold-expr|.
+
+                Note: To update the folds it is necessary to call
+                |vim.lsp.buf.document_fold()|.
+
+    Parameters: ~
+      • {lnum}  (`integer`) line number |v:lnum|
+
+    Return: ~
+        (`integer`) fold level
 
 format({options})                                       *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language
@@ -1669,6 +1698,34 @@ signature_help({_}, {result}, {ctx}, {config})
                     • See |vim.lsp.util.open_floating_preview()| for more
                       options
 
+                                           *vim.lsp.handlers.signature_help()*
+signature_help({_}, {method}, {result}, {_}, {bufnr}, {config})
+                Parameters: ~
+                    {config}  table Configuration table.
+                              • border: (default=nil)
+                                • Add borders to the floating window
+                                • See |vim.api.nvim_open_win()|
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_typeDefinition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation|lsp-handler| for the method "textDocument/signatureHelp">
+
+                 vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+                   vim.lsp.handlers.signature_help, {
+                     -- Use a sharp border with `FloatBorder` highlights
+                     border = {
+                       {"┌", "FloatBorder"},
+                       {"─", "FloatBorder"},
+                       {"┐", "FloatBorder"},
+                       {"│", "FloatBorder"},
+                       {"┘", "FloatBorder"},
+                       {"─", "FloatBorder"},
+                       {"└", "FloatBorder"},
+                       {"│", "FloatBorder"}
+                     }
+                   }
+                 )
+<
+
 
 ==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
@@ -1740,6 +1797,37 @@ character_offset({buf}, {row}, {col}, {offset_encoding})
         (`integer`) `offset_encoding` index of the character in line {row}
         column {col} in buffer {buf}
 
+                                        *vim.lsp.util.close_preview_autocmd()*
+close_preview_autocmd({events}, {winnr})
+                Creates autocommands to close a preview window when events
+                happen.
+
+                Parameters: ~
+                    {events}  (table) list of events
+                    {winnr}   (number) window id of preview window
+
+                See also: ~
+                    |autocmd-events|
+
+                                                 *vim.lsp.util.compute_diff()*
+compute_diff({old_lines}, {new_lines}, {start_line_idx}, {end_line_idx},
+             {offset_encoding})
+                Returns the range table for the difference between old and new
+                lines
+
+                Parameters: ~
+                    {old_lines}        table list of lines
+                    {new_lines}        table list of lines
+                    {start_line_idx}   int line to begin search for first
+                                       difference
+                    {end_line_idx}     int line to begin search for last
+                                       difference
+                    {offset_encoding}  string encoding requested by language
+                                       server
+
+                Return: ~
+                    table start_line_idx and start_col_idx of range
+
                               *vim.lsp.util.convert_input_to_markdown_lines()*
 convert_input_to_markdown_lines({input}, {contents})
     Converts any of `MarkedString` | `MarkedString[]` | `MarkupContent` into a
@@ -1792,9 +1880,33 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     See also: ~
       • 'shiftwidth'
 
+get_fold_level({bufnr}, {linenr})              *vim.lsp.util.get_fold_level()*
+    Returns the fold level for a line in a buffer.
+
+    Parameters: ~
+      • {bufnr}   (`integer?`) buffer id
+      • {linenr}  (`integer?`) line number (1-indexed)
+
+    Return: ~
+        (`integer`) fold level
+
                                              *vim.lsp.util.jump_to_location()*
 jump_to_location({location}, {offset_encoding}, {reuse_win})
     Jumps to a location.
+=======
+get_fold_level({bufnr}, {linenr})              *vim.lsp.util.get_fold_level()*
+                Returns the fold level for a line in a buffer.
+
+                Parameters: ~
+                    {bufnr}   buffer id
+                    {linenr}  line number (1-indexed)
+
+                Return: ~
+                    fold level
+
+get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
+                TODO: Documentation
+>>>>>>> 660b35d8b (Add documentation)
 
     Parameters: ~
       • {location}         (`table`) (`Location`|`LocationLink`)
@@ -2038,6 +2150,13 @@ symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
 
     Parameters: ~
       • {symbols}  (`table`) DocumentSymbol[] or SymbolInformation[]
+
+update_folds({bufnr}, {ranges})                  *vim.lsp.util.update_folds()*
+    Applies a list of fold ranges to a certain buffer.
+
+    Parameters: ~
+      • {bufnr}   (`integer?`) buffer id
+      • {ranges}  (`table[]`) list of `FoldingRange` objects
 
 
 ==============================================================================

@@ -556,6 +556,12 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_incomingCalls
 M[ms.callHierarchy_incomingCalls] = make_call_hierarchy_handler('from')
 
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_foldingRange
+M[ms.textDocument_foldingRange] = function(_, result, ctx, _)
+  if not result then return end
+  util.update_folds(ctx.bufnr, result)
+end
+
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_outgoingCalls
 M[ms.callHierarchy_outgoingCalls] = make_call_hierarchy_handler('to')
 

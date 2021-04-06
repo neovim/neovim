@@ -810,6 +810,36 @@ function M.code_action(options)
   end
 end
 
+--- Creates |folds| for the current buffer.
+---
+--- This will also set 'foldmethod' to "expr" and use |vim.lsp.buf.foldexpr()|
+--- for 'foldexpr'.
+---
+--- Note: The folds are not updated automatically after subsequent changes.
+--- To update them whenever leaving insert mode, use
+---
+--- <pre>
+--- vim.api.nvim_command[[autocmd InsertLeave <buffer> lua vim.lsp.buf.document_fold()]]
+--- </pre>
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_foldingRange
+function M.document_fold()
+  local params = { textDocument = vim.lsp.util.make_text_document_params() }
+  request('textDocument/foldingRange', params)
+end
+
+--- Returns the fold level for a line in the current buffer as determined
+--- by a server.
+---
+--- Can be used as 'foldexpr', see |fold-expr|.
+---
+--- Note: To update the folds it is necessary to call |vim.lsp.buf.document_fold()|.
+--@param lnum line number |v:lnum|
+--@returns fold level
+function M.foldexpr(lnum)
+  local bufnr = vim.api.nvim_get_current_buf()
+  return util.get_fold_level(bufnr, lnum)
+end
+
 --- Executes an LSP server command.
 ---
 ---@param command_params table A valid `ExecuteCommandParams` object
