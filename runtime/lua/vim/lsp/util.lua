@@ -1410,20 +1410,27 @@ function M.symbols_to_items(symbols, bufnr)
   return _symbols_to_items(symbols, {}, bufnr)
 end
 
-function M.calculate_folds(bufnr, ranges)
-  local level = 0
+do
   local foldlevels = {}
-  for linenr = 1, api.nvim_buf_line_count(bufnr) do
-    level = 0
-    for _, range in pairs(ranges) do
-      if range.startLine <= linenr - 1 and linenr - 1 <= range.endLine then
-        level = level + 1
+
+  function M.calculate_folds(bufnr, ranges)
+    foldlevels[bufnr] = {}
+    local level = 0
+    for linenr = 1, api.nvim_buf_line_count(bufnr) do
+      level = 0
+      for _, range in pairs(ranges) do
+        if range.startLine <= linenr - 1 and linenr - 1 <= range.endLine then
+          level = level + 1
+        end
       end
+      foldlevels[bufnr][linenr] = level
     end
-    foldlevels[linenr] = level
   end
-  function M.foldexpr(line)
-    return foldlevels[line]
+
+  function M.foldexpr(linenr)
+    local bufnr = api.nvim_get_current_buf()
+    if not foldlevels[bufnr] then return 0 end
+    return foldlevels[bufnr][linenr]
   end
 end
 
