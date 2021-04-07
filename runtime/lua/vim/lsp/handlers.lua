@@ -269,7 +269,7 @@ end
 ---         - See |vim.api.nvim_open_win()|
 function M.hover(_, method, result, _, _, config)
   config = config or {}
-  util.focusable_float(method, function()
+  local bufnr, winnr = util.focusable_float(method, function()
     if not (result and result.contents) then
       -- return { 'No information available' }
       return
@@ -286,6 +286,7 @@ function M.hover(_, method, result, _, _, config)
     util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
     return bufnr, winnr
   end)
+  return bufnr, winnr
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
