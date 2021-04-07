@@ -1765,6 +1765,7 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
     { "double", { "╔", "═", "╗", "║", "╝", "═", "╚", "║" }, false },
     { "single", { "┌", "─", "┐", "│", "┘", "─", "└", "│" }, false },
     { "shadow", { "", "", " ", " ", " ", " ", " ", "" }, true },
+    { "solid", { " ", " ", " ", " ", " ", " ", " ", " " }, false },
     { NULL, { { NUL } } , false },
   };
 
