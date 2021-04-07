@@ -860,7 +860,7 @@ func Test_Backtrace_DefFunction()
     vim9script
 
     def DoAThing(): number
-      let a = 100 * 2
+      var a = 100 * 2
       a += 3
       return a
     enddef
