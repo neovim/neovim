@@ -184,6 +184,7 @@ specification. These LSP requests/notifications are defined by default:
     textDocument/definition
     textDocument/documentHighlight
     textDocument/documentSymbol
+    textDocument/foldingRange
     textDocument/formatting
     textDocument/hover
     textDocument/implementation*
@@ -929,6 +930,22 @@ declaration()                                      *vim.lsp.buf.declaration()*
 definition()                                        *vim.lsp.buf.definition()*
                 Jumps to the definition of the symbol under the cursor.
 
+document_fold()                                  *vim.lsp.buf.document_fold()*
+                Creates |folds| for the current buffer.
+
+                This will also set 'foldmethod' to "expr" and use
+                |vim.lsp.buf.foldexpr()| for 'foldexpr'.
+
+                Note: The folds are not updated automatically after subsequent
+                changes. To update them whenever leaving insert mode, use
+>
+
+    vim.api.nvim_command[[autocmd InsertLeave <buffer> lua vim.lsp.buf.document_fold()]]
+<
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_foldingRange
+
 document_highlight()                        *vim.lsp.buf.document_highlight()*
                 Send request to the server to resolve document highlights for
                 the current text document position. This request can be
@@ -957,6 +974,21 @@ execute_command({command})                     *vim.lsp.buf.execute_command()*
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+
+foldexpr({lnum})                                      *vim.lsp.buf.foldexpr()*
+                Returns the fold level for a line in the current buffer as
+                determined by a server.
+
+                Can be used as 'foldexpr', see |fold-expr|.
+
+                Note: To update the folds it is necessary to call
+                |vim.lsp.buf.document_fold()|.
+
+                Parameters: ~
+                    {lnum}  line number |v:lnum|
+
+                Return: ~
+                    fold level
 
 formatting({options})                               *vim.lsp.buf.formatting()*
                 Formats the current buffer.
@@ -1467,6 +1499,34 @@ progress_handler({_}, {_}, {params}, {client_id})
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 
+                                           *vim.lsp.handlers.signature_help()*
+signature_help({_}, {method}, {result}, {_}, {bufnr}, {config})
+                Parameters: ~
+                    {config}  table Configuration table.
+                              • border: (default=nil)
+                                • Add borders to the floating window
+                                • See |vim.api.nvim_open_win()|
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_typeDefinition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation|lsp-handler| for the method "textDocument/signatureHelp">
+
+                 vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+                   vim.lsp.handlers.signature_help, {
+                     -- Use a sharp border with `FloatBorder` highlights
+                     border = {
+                       {"┌", "FloatBorder"},
+                       {"─", "FloatBorder"},
+                       {"┐", "FloatBorder"},
+                       {"│", "FloatBorder"},
+                       {"┘", "FloatBorder"},
+                       {"─", "FloatBorder"},
+                       {"└", "FloatBorder"},
+                       {"│", "FloatBorder"}
+                     }
+                   }
+                 )
+<
+
 
 ==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
@@ -1541,13 +1601,20 @@ close_preview_autocmd({events}, {winnr})
                     |autocmd-events|
 
                                                  *vim.lsp.util.compute_diff()*
-compute_diff({old_lines}, {new_lines}, {start_line_idx}, {end_line_idx})
+compute_diff({old_lines}, {new_lines}, {start_line_idx}, {end_line_idx},
+             {offset_encoding})
                 Returns the range table for the difference between old and new
                 lines
 
                 Parameters: ~
-                    {old_lines}  table list of lines
-                    {new_lines}  table list of lines
+                    {old_lines}        table list of lines
+                    {new_lines}        table list of lines
+                    {start_line_idx}   int line to begin search for first
+                                       difference
+                    {end_line_idx}     int line to begin search for last
+                                       difference
+                    {offset_encoding}  string encoding requested by language
+                                       server
 
                 Return: ~
                     table start_line_idx and start_col_idx of range
@@ -1677,6 +1744,16 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
 
                 See also: ~
                     |softtabstop|
+
+get_fold_level({bufnr}, {linenr})              *vim.lsp.util.get_fold_level()*
+                Returns the fold level for a line in a buffer.
+
+                Parameters: ~
+                    {bufnr}   buffer id
+                    {linenr}  line number (1-indexed)
+
+                Return: ~
+                    fold level
 
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
@@ -1915,6 +1992,13 @@ try_trim_markdown_code_blocks({lines})
 
                 Return: ~
                     (string) filetype or 'markdown' if it was unchanged.
+
+update_folds({bufnr}, {ranges})                  *vim.lsp.util.update_folds()*
+                Applies a list of fold ranges to a certain buffer.
+
+                Parameters: ~
+                    {bufnr}   buffer id
+                    {ranges}  list of `FoldingRange` objects
 
 
 ==============================================================================

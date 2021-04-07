@@ -1413,7 +1413,11 @@ end
 do
   local foldlevels = {}
 
-  function M.calculate_folds(bufnr, ranges)
+  --- Applies a list of fold ranges to a certain buffer.
+  ---
+  --@param bufnr buffer id
+  --@param ranges list of `FoldingRange` objects
+  function M.update_folds(bufnr, ranges)
     foldlevels[bufnr] = {}
     local level
     for linenr = 1, api.nvim_buf_line_count(bufnr) do
@@ -1425,10 +1429,20 @@ do
       end
       foldlevels[bufnr][linenr] = level
     end
+    -- Force refresh by setting folding options
+    for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
+      vim.api.nvim_win_set_option(winid, 'foldexpr',
+        "luaeval('vim.lsp.buf.foldexpr('..v:lnum..')')")
+      vim.api.nvim_win_set_option(winid, 'foldmethod', "expr")
+    end
   end
 
+  --- Returns the fold level for a line in a buffer.
+  --@param bufnr buffer id
+  --@param linenr line number (1-indexed)
+  --@returns fold level
   function M.get_fold_level(bufnr, linenr)
-    if not foldlevels[bufnr] then return nil end
+    if not foldlevels[bufnr] then return 0 end
     return foldlevels[bufnr][linenr]
   end
 end
