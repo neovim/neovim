@@ -1,5 +1,8 @@
 " Tests for the writefile() function and some :write commands.
 
+source check.vim
+source term_util.vim
+
 func Test_writefile()
   let f = tempname()
   call writefile(["over","written"], f, "b")
@@ -179,3 +182,120 @@ func Test_writefile_sync_arg()
   call writefile(['two'], 'Xtest', 'S')
   call delete('Xtest')
 endfunc
+
+" Tests for reading and writing files with conversion for Win32.
+func Test_write_file_encoding()
+  CheckMSWindows
+  throw 'skipped: Nvim does not support :w ++enc=cp1251'
+  let save_encoding = &encoding
+  let save_fileencodings = &fileencodings
+  set encoding& fileencodings&
+  let text =<< trim END
+    1 utf-8 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+    2 cp1251 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+    3 cp866 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+  END
+  call writefile(text, 'Xfile')
+  edit Xfile
+
+  " write tests:
+  " combine three values for 'encoding' with three values for 'fileencoding'
+  " also write files for read tests
+  call cursor(1, 1)
+  set encoding=utf-8
+  .w! ++enc=utf-8 Xtest
+  .w ++enc=cp1251 >> Xtest
+  .w ++enc=cp866 >> Xtest
+  .w! ++enc=utf-8 Xutf8
+  let expected =<< trim END
+    1 utf-8 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+    1 utf-8 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+    1 utf-8 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+  END
+  call assert_equal(expected, readfile('Xtest'))
+
+  call cursor(2, 1)
+  set encoding=cp1251
+  .w! ++enc=utf-8 Xtest
+  .w ++enc=cp1251 >> Xtest
+  .w ++enc=cp866 >> Xtest
+  .w! ++enc=cp1251 Xcp1251
+  let expected =<< trim END
+    2 cp1251 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+    2 cp1251 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+    2 cp1251 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+  END
+  call assert_equal(expected, readfile('Xtest'))
+
+  call cursor(3, 1)
+  set encoding=cp866
+  .w! ++enc=utf-8 Xtest
+  .w ++enc=cp1251 >> Xtest
+  .w ++enc=cp866 >> Xtest
+  .w! ++enc=cp866 Xcp866
+  let expected =<< trim END
+    3 cp866 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+    3 cp866 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+    3 cp866 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+  END
+  call assert_equal(expected, readfile('Xtest'))
+
+  " read three 'fileencoding's with utf-8 'encoding'
+  set encoding=utf-8 fencs=utf-8,cp1251
+  e Xutf8
+  .w! ++enc=utf-8 Xtest
+  e Xcp1251
+  .w ++enc=utf-8 >> Xtest
+  set fencs=utf-8,cp866
+  e Xcp866
+  .w ++enc=utf-8 >> Xtest
+  let expected =<< trim END
+    1 utf-8 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+    2 cp1251 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+    3 cp866 text: ÐÐ»Ñ Vim version 6.2.  ÐÐ¾ÑÐ»ÐµÐ´Ð½ÐµÐµ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ: 1970 Jan 01
+  END
+  call assert_equal(expected, readfile('Xtest'))
+
+  " read three 'fileencoding's with cp1251 'encoding'
+  set encoding=utf-8 fencs=utf-8,cp1251
+  e Xutf8
+  .w! ++enc=cp1251 Xtest
+  e Xcp1251
+  .w ++enc=cp1251 >> Xtest
+  set fencs=utf-8,cp866
+  e Xcp866
+  .w ++enc=cp1251 >> Xtest
+  let expected =<< trim END
+    1 utf-8 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+    2 cp1251 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+    3 cp866 text: Äëÿ Vim version 6.2.  Ïîñëåäíåå èçìåíåíèå: 1970 Jan 01
+  END
+  call assert_equal(expected, readfile('Xtest'))
+
+  " read three 'fileencoding's with cp866 'encoding'
+  set encoding=cp866 fencs=utf-8,cp1251
+  e Xutf8
+  .w! ++enc=cp866 Xtest
+  e Xcp1251
+  .w ++enc=cp866 >> Xtest
+  set fencs=utf-8,cp866
+  e Xcp866
+  .w ++enc=cp866 >> Xtest
+  let expected =<< trim END
+    1 utf-8 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+    2 cp1251 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+    3 cp866 text: «ï Vim version 6.2.  ®á«¥¤­¥¥ ¨§¬¥­¥­¨¥: 1970 Jan 01
+  END
+  call assert_equal(expected, readfile('Xtest'))
+
+  call delete('Xfile')
+  call delete('Xtest')
+  call delete('Xutf8')
+  call delete('Xcp1251')
+  call delete('Xcp866')
+  let &encoding = save_encoding
+  let &fileencodings = save_fileencodings
+  %bw!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
