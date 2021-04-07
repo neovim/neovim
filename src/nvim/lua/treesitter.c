@@ -230,6 +230,11 @@ int tslua_inspect_lang(lua_State *L)
   }
 
   lua_setfield(L, -2, "fields");  // [retval]
+
+  uint32_t lang_version = ts_language_version(lang);
+  lua_pushinteger(L, lang_version);  // [retval, version]
+  lua_setfield(L, -2, "_abi_version");
+
   return 1;
 }
 
