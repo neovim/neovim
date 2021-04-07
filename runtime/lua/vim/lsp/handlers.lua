@@ -411,6 +411,10 @@ end
 M['textDocument/foldingRange'] = function(_, _, result, _, bufnr, _)
   if not result then return end
   util.calculate_folds(bufnr, result)
+  for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
+    vim.wo[winid].foldexpr = "luaeval('vim.lsp.buf.foldexpr('..v:lnum..')')"
+    vim.wo[winid].foldmethod = "expr"
+  end
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy/incomingCalls

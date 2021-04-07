@@ -1415,10 +1415,10 @@ do
 
   function M.calculate_folds(bufnr, ranges)
     foldlevels[bufnr] = {}
-    local level = 0
+    local level
     for linenr = 1, api.nvim_buf_line_count(bufnr) do
       level = 0
-      for _, range in pairs(ranges) do
+      for _, range in ipairs(ranges) do
         if range.startLine <= linenr - 1 and linenr - 1 <= range.endLine then
           level = level + 1
         end
@@ -1427,9 +1427,8 @@ do
     end
   end
 
-  function M.foldexpr(linenr)
-    local bufnr = api.nvim_get_current_buf()
-    if not foldlevels[bufnr] then return 0 end
+  function M.get_fold_level(bufnr, linenr)
+    if not foldlevels[bufnr] then return nil end
     return foldlevels[bufnr][linenr]
   end
 end

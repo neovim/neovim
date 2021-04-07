@@ -369,6 +369,16 @@ function M.document_fold()
   request('textDocument/foldingRange', params)
 end
 
+function M.foldexpr(lnum)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local foldlevel = util.get_fold_level(bufnr, lnum)
+  if not foldlevel then
+    M.document_fold()
+    return 0
+  end
+  return foldlevel
+end
+
 --- Executes an LSP server command.
 ---
 --@param command A valid `ExecuteCommandParams` object
