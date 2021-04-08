@@ -506,6 +506,15 @@ func Test_dict_lock_extend()
   call assert_equal({'a': 99, 'b': 100}, d)
 endfunc
 
+" Cannot use += with a locked dict
+func Test_dict_lock_operator()
+  unlet! d
+  let d = {}
+  lockvar d
+  call assert_fails("let d += {'k' : 10}", 'E741:')
+  unlockvar d
+endfunc
+
 " No remove() of write-protected scope-level variable
 func! Tfunc(this_is_a_long_parameter_name)
   call assert_fails("call remove(a:, 'this_is_a_long_parameter_name')", 'E742')
