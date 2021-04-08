@@ -791,3 +791,40 @@ func Test_scope_dict()
   " Test for v:
   call s:check_scope_dict('v', v:true)
 endfunc
+
+" Test for a null list
+func Test_null_list()
+  let l = v:_null_list
+  call assert_equal('', join(l))
+  call assert_equal(0, len(l))
+  call assert_equal(1, empty(l))
+  call assert_fails('let s = join([1, 2], [])', 'E730:')
+  call assert_equal([], split(v:_null_string))
+  call assert_equal([], l[:2])
+  call assert_true([] == l)
+  call assert_equal('[]', string(l))
+  " call assert_equal(0, sort(l))
+  " call assert_equal(0, sort(l))
+  " call assert_equal(0, uniq(l))
+  let k = [] + l
+  call assert_equal([], k)
+  let k = l + []
+  call assert_equal([], k)
+  call assert_equal(0, len(copy(l)))
+  call assert_equal(0, count(l, 5))
+  call assert_equal([], deepcopy(l))
+  call assert_equal(5, get(l, 2, 5))
+  call assert_equal(-1, index(l, 2, 5))
+  " call assert_equal(0, insert(l, 2, -1))
+  call assert_equal(0, min(l))
+  call assert_equal(0, max(l))
+  " call assert_equal(0, remove(l, 0, 2))
+  call assert_equal([], repeat(l, 2))
+  " call assert_equal(0, reverse(l))
+  " call assert_equal(0, sort(l))
+  call assert_equal('[]', string(l))
+  " call assert_equal(0, extend(l, l, 0))
+  lockvar l
+  call assert_equal(1, islocked('l'))
+  unlockvar l
+endfunc
