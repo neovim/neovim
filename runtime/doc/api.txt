@@ -2294,6 +2294,9 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                                 exists) will be shifted in when new text is
                                 inserted (true for right, false for left).
                                 Defaults to false.
+                              • priority: a priority value for the highlight
+                                group. For example treesitter highlighting
+                                uses a value of 100.
 
                 Return: ~
                     Id of the created/updated extmark

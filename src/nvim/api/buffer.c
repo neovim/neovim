@@ -1449,6 +1449,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///                   the extmark end position (if it exists) will be shifted
 ///                   in when new text is inserted (true for right, false
 ///                   for left). Defaults to false.
+///               - priority: a priority value for the highlight group. For
+///                   example treesitter highlighting uses a value of 100.
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,

@@ -17,6 +17,9 @@ setmetatable(M, {
       if k == "highlighter" then
         t[k] = require'vim.treesitter.highlighter'
         return t[k]
+      elseif k == "language" then
+        t[k] = require"vim.treesitter.language"
+        return t[k]
       end
    end
  })

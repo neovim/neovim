@@ -1513,16 +1513,7 @@ signature_help({_}, {method}, {result}, {_}, {bufnr}, {config})
                  vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
                    vim.lsp.handlers.signature_help, {
                      -- Use a sharp border with `FloatBorder` highlights
-                     border = {
-                       {"┌", "FloatBorder"},
-                       {"─", "FloatBorder"},
-                       {"┐", "FloatBorder"},
-                       {"│", "FloatBorder"},
-                       {"┘", "FloatBorder"},
-                       {"─", "FloatBorder"},
-                       {"└", "FloatBorder"},
-                       {"│", "FloatBorder"}
-                     }
+                     border = "single"
                    }
                  )
 <

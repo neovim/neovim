@@ -45,7 +45,7 @@ describe('treesitter API', function()
       return {keys, lang.fields, symbols}
     ]]))
 
-    eq({fields=true, symbols=true}, keys)
+    eq({fields=true, symbols=true, _abi_version=true}, keys)
 
     local fset = {}
     for _,f in pairs(fields) do
