@@ -537,19 +537,64 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it('inccomand=nosplit and substitute', function()
-      local check_events = setup_eventcheck(verify, {"abcde"})
+      local check_events = setup_eventcheck(verify,
+                                            {"abcde", "12345"})
       meths.set_option('inccommand', 'nosplit')
 
-      feed ':%s/bcd/'
+      -- linewise substitute
+      feed(':%s/bcd/')
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 0, 0 };
         { "test1", "bytes", 1, 5, 0, 1, 1, 0, 0, 0, 0, 3, 3 };
       }
 
-      feed 'a'
+      feed('a')
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
         { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 3, 3 };
+      }
+
+      feed("<esc>")
+
+      -- splitting lines
+      feed([[:%s/abc/\r]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 1, 0, 1 };
+        { "test1", "bytes", 1, 6, 0, 0, 0, 1, 0, 1, 0, 3, 3 };
+      }
+
+      feed("<esc>")
+      -- multi-line regex
+      feed([[:%s/de\n123/a]])
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 3, 3, 1, 3, 6, 0, 1, 1 };
+        { "test1", "bytes", 1, 6, 0, 3, 3, 0, 1, 1, 1, 3, 6 };
+      }
+
+      feed("<esc>")
+      -- replacing with unicode
+      feed(":%s/b/→")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 3, 3 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with escaped characters
+      feed([[:%s/b/\\]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with expression register
+      feed([[:%s/b/\=5+5]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 };
       }
     end)
 
