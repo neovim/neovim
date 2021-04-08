@@ -230,17 +230,17 @@ typedef enum
 
 /// types for expressions.
 typedef enum {
-  ETYPE_UNKNOWN = 0,
-  ETYPE_EQUAL,        ///< ==
-  ETYPE_NEQUAL,       ///< !=
-  ETYPE_GREATER,      ///< >
-  ETYPE_GEQUAL,       ///< >=
-  ETYPE_SMALLER,      ///< <
-  ETYPE_SEQUAL,       ///< <=
-  ETYPE_MATCH,        ///< =~
-  ETYPE_NOMATCH,      ///< !~
-  ETYPE_IS,           ///< is
-  ETYPE_ISNOT,        ///< isnot
+  EXPR_UNKNOWN = 0,
+  EXPR_EQUAL,         ///< ==
+  EXPR_NEQUAL,        ///< !=
+  EXPR_GREATER,       ///< >
+  EXPR_GEQUAL,        ///< >=
+  EXPR_SMALLER,       ///< <
+  EXPR_SEQUAL,        ///< <=
+  EXPR_MATCH,         ///< =~
+  EXPR_NOMATCH,       ///< !~
+  EXPR_IS,            ///< is
+  EXPR_ISNOT,         ///< isnot
 } exptype_T;
 
 /// Type for dict_list function
