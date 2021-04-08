@@ -10647,7 +10647,8 @@ int typval_compare(
       }
     }
   } else if (tv_is_func(*typ1) || tv_is_func(*typ2)) {
-    if (type != ETYPE_EQUAL && type != ETYPE_NEQUAL) {
+    if (type != ETYPE_EQUAL && type != ETYPE_NEQUAL
+        && type != ETYPE_IS && type != ETYPE_ISNOT) {
       EMSG(_("E694: Invalid operation for Funcrefs"));
       tv_clear(typ1);
       return FAIL;
@@ -10680,15 +10681,15 @@ int typval_compare(
     const float_T f2 = tv_get_float(typ2);
     n1 = false;
     switch (type) {
+      case ETYPE_IS:
       case ETYPE_EQUAL:    n1 = f1 == f2; break;
+      case ETYPE_ISNOT:
       case ETYPE_NEQUAL:   n1 = f1 != f2; break;
       case ETYPE_GREATER:  n1 = f1 > f2; break;
       case ETYPE_GEQUAL:   n1 = f1 >= f2; break;
       case ETYPE_SMALLER:  n1 = f1 < f2; break;
       case ETYPE_SEQUAL:   n1 = f1 <= f2; break;
       case ETYPE_UNKNOWN:
-      case ETYPE_IS:
-      case ETYPE_ISNOT:
       case ETYPE_MATCH:
       case ETYPE_NOMATCH:  break;  // avoid gcc warning
     }
@@ -10699,15 +10700,15 @@ int typval_compare(
     n1 = tv_get_number(typ1);
     n2 = tv_get_number(typ2);
     switch (type) {
+      case ETYPE_IS:
       case ETYPE_EQUAL:    n1 = n1 == n2; break;
+      case ETYPE_ISNOT:
       case ETYPE_NEQUAL:   n1 = n1 != n2; break;
       case ETYPE_GREATER:  n1 = n1 > n2; break;
       case ETYPE_GEQUAL:   n1 = n1 >= n2; break;
       case ETYPE_SMALLER:  n1 = n1 < n2; break;
       case ETYPE_SEQUAL:   n1 = n1 <= n2; break;
       case ETYPE_UNKNOWN:
-      case ETYPE_IS:
-      case ETYPE_ISNOT:
       case ETYPE_MATCH:
       case ETYPE_NOMATCH:  break;  // avoid gcc warning
     }
@@ -10724,7 +10725,9 @@ int typval_compare(
     }
     n1 = false;
     switch (type) {
+      case ETYPE_IS:
       case ETYPE_EQUAL:    n1 = i == 0; break;
+      case ETYPE_ISNOT:
       case ETYPE_NEQUAL:   n1 = i != 0; break;
       case ETYPE_GREATER:  n1 = i > 0; break;
       case ETYPE_GEQUAL:   n1 = i >= 0; break;
@@ -10738,8 +10741,6 @@ int typval_compare(
           n1 = !n1;
         }
         break;
-      case ETYPE_IS:
-      case ETYPE_ISNOT:
       case ETYPE_UNKNOWN:  break;  // avoid gcc warning
     }
   }
