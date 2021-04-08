@@ -43,14 +43,14 @@ describe('fcnotify watcher', function()
     feed_command('autocmd fcnotify')
     screen:expect{grid=[[
                                               |
-      {16:~                                       }|
       {5:                                        }|
       :autocmd fcnotify                       |
       {14:--- Autocommands ---}                    |
       {14:fcnotify}  {14:OptionSet}                     |
           filechangenotify                    |
-                    call v:lua.vim.fcnotify.ch|
-      eck_option(v:option_type)               |
+                    call v:lua.vim.fcnotify.ha|
+      ndle_option_set(v:option_type, v:option_|
+      new)                                    |
       {15:Press ENTER or type command to continue}^ |
     ]]}
   end)
@@ -60,15 +60,15 @@ describe('fcnotify watcher', function()
 
     feed_command('autocmd fcnotify')
     screen:expect{grid=[[
-          *         call  v:lua.vim.fcnotify.s|
-      tart_notifications()                    |
+      andle_focus_gained()                    |
       {14:fcnotify}  {14:FocusLost}                     |
-          *         call v:lua.vim.fcnotify.st|
-      op_notifications()                      |
+          *         call v:lua.vim.fcnotify.ha|
+      ndle_focus_lost()                       |
       {14:fcnotify}  {14:OptionSet}                     |
           filechangenotify                    |
-                    call v:lua.vim.fcnotify.ch|
-      eck_option(v:option_type)               |
+                    call v:lua.vim.fcnotify.ha|
+      ndle_option_set(v:option_type, v:option_|
+      new)                                    |
       {15:Press ENTER or type command to continue}^ |
     ]]}
   end)
@@ -224,6 +224,7 @@ describe('fcnotify onfocus', function()
   it('autoread with unmodified buffer', function()
     helpers.write_file(path, '')
     lfs.touch(path, os.time() - 10)
+    feed_command('set fcnotify=autoread,onfocus')
     feed_command('edit '..path)
     feed_data('\027[O')
     screen:expect{grid=[[
@@ -253,6 +254,7 @@ describe('fcnotify onfocus', function()
   it('autoread with modified buffer', function()
     helpers.write_file(path, '')
     lfs.touch(path, os.time() - 10)
+    feed_command('set fcnotify=autoread,onfocus')
     feed_command('edit '..path)
     feed_data([[o]])
     feed_data('\027[O')

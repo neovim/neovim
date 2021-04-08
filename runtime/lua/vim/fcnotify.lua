@@ -1,15 +1,15 @@
--- Create a file watcher, each watcher is identified by the name of the file that it
--- watches.
+-- Create a file watcher, each watcher is identified by the buffer number of the file it is watching.
 
 local uv = vim.loop
+
 local Watcher = {}
 Watcher.__index = Watcher
 local WatcherList = {}
-local check_handle = nil
-local in_focus = 1
+
+local in_focus = true
 
 -- Checks if a buffer should have a watcher attached to it.
-local function valid_buf(bufnr)
+local function buf_isvalid(bufnr)
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return false
   end
@@ -20,58 +20,42 @@ local function valid_buf(bufnr)
   return buflisted or buftype == '' or buftype == 'acwrite'
 end
 
--- Callback for the check handle, checks if there are pending notifications
--- for any watcher, and handles them as per the value of the `fcnotify`
--- option.
-local function check_notifications()
+-- Checks for pending notifications and reacts if notifications are pending.
+-- Only called when neovim is in focus.
+local function handle_pending_notifications()
   for _, watcher in pairs(WatcherList) do
-    if watcher.pending_notifs and valid_buf(watcher.bufnr) then
+    if watcher.pending_notifs and buf_isvalid(watcher.bufnr) then
       vim.api.nvim_command(string.format('checktime %d', watcher.bufnr))
       watcher.pending_notifs = false
     end
   end
 end
 
-function Watcher.set_focus(focus)
-  in_focus = focus
+--- Set in_focus to true and handle pending notifications.
+---
+--@param none
+local function handle_focus_gained()
+  in_focus = true
   if in_focus then
-   check_notifications()
+    handle_pending_notifications()
   end
 end
 
-local function fs_event_start(bufnr)
+--- Set in_focus to false
+---
+--@param none
+local function handle_focus_lost()
+    in_focus = false
+end
+
+-- Start the libuv fs_event handle
+local function fs_event_start_buf(bufnr)
   local watcher = WatcherList[bufnr]
+  if watcher.handle and not watcher.handle:is_closing() then watcher.handle:close() end
   watcher.handle = uv.new_fs_event()
   watcher.handle:start(watcher.fpath, {}, vim.schedule_wrap(function(...)
     watcher:on_change(...)
   end))
-end
-
-local function set_mechanism(option_type, bufnr)
-  if option_type == 'global' then
-    local option = vim.api.nvim_get_option('filechangenotify')
-    if vim.tbl_contains(vim.split(option, ','), 'watcher') then
-      for _, watcher in pairs(WatcherList) do
-        watcher._start_handle = fs_event_start
-      end
-    else
-      for _, watcher in pairs(WatcherList) do
-        watcher._start_handle = nil
-      end
-    end
-  elseif option_type == 'local' then
-    bufnr = bufnr or vim.api.nvim_get_current_buf()
-    local watcher = WatcherList[bufnr]
-    local status, option = pcall(vim.api.nvim_buf_get_option, bufnr, 'filechangenotify')
-    if not status then
-      option = vim.api.nvim_get_option('filechangenotify')
-    end
-    if vim.tbl_contains(vim.split(option, ','), 'watcher') then
-      watcher._start_handle = fs_event_start
-    else
-      watcher._start_handle = nil
-    end
-  end
 end
 
 --- Creates and initializes a new watcher object with the given filename.
@@ -83,9 +67,14 @@ function Watcher:new(bufnr)
   -- get full path name for the file
   local fname = vim.api.nvim_buf_get_name(bufnr)
   local fpath = vim.fn.fnamemodify(fname, ':p')
-  local w = {bufnr = bufnr, fname = fname, fpath = fpath,
-       handle = nil, pending_notifs = false}
-  w._start_handle = nil
+  local w = {
+    bufnr = bufnr,
+    fname = fname,
+    fpath = fpath,
+    handle = nil,
+    pending_notifs = false,
+    _start_handle = nil
+  }
   setmetatable(w, self)
   return w
 end
@@ -93,8 +82,7 @@ end
 --- Starts the watcher
 ---
 --@param self: (required, table) The watcher which should be started.
-function Watcher:start()
-  set_mechanism('local', self.bufnr)
+function Watcher:start_handle()
   if self._start_handle then
     self._start_handle(self.bufnr)
   end
@@ -103,7 +91,7 @@ end
 --- Stops the watcher and closes the handle.
 ---
 --@param self: (required, table) The watcher which should be stopped.
-function Watcher:stop()
+function Watcher:stop_handle()
   if self.handle == nil then
     return
   end
@@ -124,8 +112,8 @@ end
 ---
 --@param self:(required, table) The watcher object which should be debounced.
 function Watcher:debounce()
-  self:stop()
-  self:start()
+  self:stop_handle()
+  self:start_handle()
 end
 
 --- Callback for watcher handle. Marks a watcher as having pending
@@ -141,7 +129,7 @@ function Watcher:on_change(err)
 
   self.pending_notifs = true
   if in_focus then
-    check_notifications()
+    handle_pending_notifications()
   end
 
   self:debounce()
@@ -151,18 +139,19 @@ end
 --- Watcher:start() that can be called from vimscript.
 ---
 --@param bufnr: (required, string) The path that the watcher should watch.
-function Watcher.start_watch(bufnr)
+local function start_watching_buf(bufnr)
   bufnr = tonumber(bufnr)
-  if not valid_buf(bufnr) then
+  if not buf_isvalid(bufnr) then
     return
   end
 
   if WatcherList[bufnr] ~= nil then
+    WatcherList[bufnr]:debounce()
     return
   end
 
   WatcherList[bufnr] = Watcher:new(bufnr)
-  WatcherList[bufnr]:start()
+  WatcherList[bufnr]:start_handle()
 end
 
 --- Stops the watcher watching a given file and closes it's handle. A
@@ -170,10 +159,10 @@ end
 ---
 --@param bufnr: (required, string) The buffer number of the buffer
 --- that was being watched.
-function Watcher.stop_watch(bufnr)
+local function stop_watching_buf(bufnr)
   bufnr = tonumber(bufnr)
   -- can't close watchers for certain buffers
-  if not valid_buf(bufnr) then
+  if not buf_isvalid(bufnr) then
     return
   end
 
@@ -182,20 +171,27 @@ function Watcher.stop_watch(bufnr)
     return
   end
 
-  WatcherList[bufnr]:stop()
+  WatcherList[bufnr]:stop_handle()
 end
 
---- Stop reacting to notifications for all the watchers until we are
---- asked to start reacting again.
-function Watcher.stop_notifications()
-  if check_handle == nil then
-    return
+-- Get the backend for a watcher depending upon the value of filechangenotify option
+local function get_watcher_backend(option_value)
+  if vim.tbl_contains(vim.split(option_value, ','), 'watcher') then
+    return fs_event_start_buf
+  else
+    return nil
   end
-  check_handle:stop()
-  if not check_handle:is_closing() then
-    check_handle:close()
-  end
-  check_handle = nil
+end
+
+local function update_watcher_backend(bufnr, option_value)
+  local watcher = WatcherList[bufnr]
+  watcher._start_handle = get_watcher_backend(option_value)
+  watcher:debounce()
+end
+
+local function init_watcher_list()
+  local bufnr = vim.api.nvim_get_current_buf()
+  WatcherList[bufnr] = Watcher:new(bufnr)
 end
 
 --- Function for checking which option was set and
@@ -203,17 +199,23 @@ end
 --- watchers.
 ---
 --@param: (required, string) option_type 'global' or 'local'
-function Watcher.check_option(option_type)
-  set_mechanism(option_type)
+local function handle_option_set(option_type, option_value)
+  if vim.tbl_isempty(WatcherList) then init_watcher_list() end
   if option_type == 'global' then
-    for _, watcher in pairs(WatcherList) do
-      watcher:debounce()
+    for bufnr, _ in pairs(WatcherList) do
+      update_watcher_backend(bufnr, option_value)
     end
   elseif option_type == 'local' then
     local bufnr = vim.api.nvim_get_current_buf()
-    WatcherList[bufnr]:debounce()
+    update_watcher_backend(bufnr, option_value)
   end
   vim.api.nvim_command(':runtime plugin/fcnotify.vim')
 end
 
-return Watcher
+return {
+  handle_focus_gained = handle_focus_gained,
+  handle_focus_lost = handle_focus_lost,
+  start_watching_buf = start_watching_buf,
+  stop_watching_buf = stop_watching_buf,
+  handle_option_set = handle_option_set,
+}
