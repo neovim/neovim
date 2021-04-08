@@ -784,9 +784,18 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   // Redraw the statusline in case it uses the current mode using the mode()
   // function.
-  if (!cmd_silent && msg_scrolled == 0 && *p_stl != NUL) {
-    curwin->w_redr_status = true;
-    redraw_statuslines();
+  if (!cmd_silent && msg_scrolled == 0) {
+    bool found_one = false;
+
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (*p_stl != NUL || *wp->w_p_stl != NUL) {
+        wp->w_redr_status = true;
+        found_one = true;
+      }
+    }
+    if (found_one) {
+      redraw_statuslines();
+    }
   }
 
   did_emsg = false;
