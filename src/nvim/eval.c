@@ -916,6 +916,17 @@ varnumber_T eval_to_number(char_u *expr)
   return retval;
 }
 
+// Top level evaluation function.
+// Returns an allocated typval_T with the result.
+// Returns NULL when there is an error.
+typval_T *eval_expr(char_u *arg)
+{
+  typval_T *tv = xmalloc(sizeof(*tv));
+  if (eval0(arg, tv, NULL, true) == FAIL) {
+    XFREE_CLEAR(tv);
+  }
+  return tv;
+}
 
 /*
  * Prepare v: variable "idx" to be used.
@@ -3129,21 +3140,6 @@ static int pattern_match(char_u *pat, char_u *text, bool ic)
   return matches;
 }
 
-/*
- * types for expressions.
- */
-typedef enum {
-  TYPE_UNKNOWN = 0,
-  TYPE_EQUAL,         // ==
-  TYPE_NEQUAL,        // !=
-  TYPE_GREATER,       // >
-  TYPE_GEQUAL,        // >=
-  TYPE_SMALLER,       // <
-  TYPE_SEQUAL,        // <=
-  TYPE_MATCH,         // =~
-  TYPE_NOMATCH,       // !~
-} exptype_T;
-
 // TODO(ZyX-I): move to eval/expressions
 
 /*
@@ -3420,11 +3416,9 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   char_u      *p;
-  int i;
   exptype_T type = TYPE_UNKNOWN;
   bool type_is = false;             // true for "is" and "isnot"
   int len = 2;
-  varnumber_T n1, n2;
   bool ic;
 
   /*
@@ -3490,173 +3484,11 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
       tv_clear(rettv);
       return FAIL;
     }
-
     if (evaluate) {
-      if (type_is && rettv->v_type != var2.v_type) {
-        /* For "is" a different type always means FALSE, for "notis"
-         * it means TRUE. */
-        n1 = (type == TYPE_NEQUAL);
-      } else if (rettv->v_type == VAR_LIST || var2.v_type == VAR_LIST) {
-        if (type_is) {
-          n1 = (rettv->v_type == var2.v_type
-                && rettv->vval.v_list == var2.vval.v_list);
-          if (type == TYPE_NEQUAL)
-            n1 = !n1;
-        } else if (rettv->v_type != var2.v_type
-                   || (type != TYPE_EQUAL && type != TYPE_NEQUAL)) {
-          if (rettv->v_type != var2.v_type) {
-            EMSG(_("E691: Can only compare List with List"));
-          } else {
-            EMSG(_("E692: Invalid operation for List"));
-          }
-          tv_clear(rettv);
-          tv_clear(&var2);
-          return FAIL;
-        } else {
-          // Compare two Lists for being equal or unequal.
-          n1 = tv_list_equal(rettv->vval.v_list, var2.vval.v_list, ic, false);
-          if (type == TYPE_NEQUAL) {
-            n1 = !n1;
-          }
-        }
-      } else if (rettv->v_type == VAR_DICT || var2.v_type == VAR_DICT) {
-        if (type_is) {
-          n1 = (rettv->v_type == var2.v_type
-                && rettv->vval.v_dict == var2.vval.v_dict);
-          if (type == TYPE_NEQUAL)
-            n1 = !n1;
-        } else if (rettv->v_type != var2.v_type
-                   || (type != TYPE_EQUAL && type != TYPE_NEQUAL)) {
-          if (rettv->v_type != var2.v_type)
-            EMSG(_("E735: Can only compare Dictionary with Dictionary"));
-          else
-            EMSG(_("E736: Invalid operation for Dictionary"));
-          tv_clear(rettv);
-          tv_clear(&var2);
-          return FAIL;
-        } else {
-          // Compare two Dictionaries for being equal or unequal.
-          n1 = tv_dict_equal(rettv->vval.v_dict, var2.vval.v_dict,
-                             ic, false);
-          if (type == TYPE_NEQUAL) {
-            n1 = !n1;
-          }
-        }
-      } else if (tv_is_func(*rettv) || tv_is_func(var2)) {
-        if (type != TYPE_EQUAL && type != TYPE_NEQUAL) {
-          EMSG(_("E694: Invalid operation for Funcrefs"));
-          tv_clear(rettv);
-          tv_clear(&var2);
-          return FAIL;
-        }
-        if ((rettv->v_type == VAR_PARTIAL
-             && rettv->vval.v_partial == NULL)
-            || (var2.v_type == VAR_PARTIAL
-                && var2.vval.v_partial == NULL)) {
-            // when a partial is NULL assume not equal
-            n1 = false;
-        } else if (type_is) {
-          if (rettv->v_type == VAR_FUNC && var2.v_type == VAR_FUNC) {
-            // strings are considered the same if their value is
-            // the same
-            n1 = tv_equal(rettv, &var2, ic, false);
-          } else if (rettv->v_type == VAR_PARTIAL
-                     && var2.v_type == VAR_PARTIAL) {
-            n1 = (rettv->vval.v_partial == var2.vval.v_partial);
-          } else {
-            n1 = false;
-          }
-        } else {
-          n1 = tv_equal(rettv, &var2, ic, false);
-        }
-        if (type == TYPE_NEQUAL) {
-          n1 = !n1;
-        }
-      }
-      /*
-       * If one of the two variables is a float, compare as a float.
-       * When using "=~" or "!~", always compare as string.
-       */
-      else if ((rettv->v_type == VAR_FLOAT || var2.v_type == VAR_FLOAT)
-               && type != TYPE_MATCH && type != TYPE_NOMATCH) {
-        float_T f1, f2;
+      const int ret = typval_compare(rettv, &var2, type, type_is, ic);
 
-        if (rettv->v_type == VAR_FLOAT) {
-          f1 = rettv->vval.v_float;
-        } else {
-          f1 = tv_get_number(rettv);
-        }
-        if (var2.v_type == VAR_FLOAT) {
-          f2 = var2.vval.v_float;
-        } else {
-          f2 = tv_get_number(&var2);
-        }
-        n1 = false;
-        switch (type) {
-          case TYPE_EQUAL:    n1 = (f1 == f2); break;
-          case TYPE_NEQUAL:   n1 = (f1 != f2); break;
-          case TYPE_GREATER:  n1 = (f1 > f2); break;
-          case TYPE_GEQUAL:   n1 = (f1 >= f2); break;
-          case TYPE_SMALLER:  n1 = (f1 < f2); break;
-          case TYPE_SEQUAL:   n1 = (f1 <= f2); break;
-          case TYPE_UNKNOWN:
-          case TYPE_MATCH:
-          case TYPE_NOMATCH:  break;
-        }
-      }
-      /*
-       * If one of the two variables is a number, compare as a number.
-       * When using "=~" or "!~", always compare as string.
-       */
-      else if ((rettv->v_type == VAR_NUMBER || var2.v_type == VAR_NUMBER)
-               && type != TYPE_MATCH && type != TYPE_NOMATCH) {
-        n1 = tv_get_number(rettv);
-        n2 = tv_get_number(&var2);
-        switch (type) {
-          case TYPE_EQUAL:    n1 = (n1 == n2); break;
-          case TYPE_NEQUAL:   n1 = (n1 != n2); break;
-          case TYPE_GREATER:  n1 = (n1 > n2); break;
-          case TYPE_GEQUAL:   n1 = (n1 >= n2); break;
-          case TYPE_SMALLER:  n1 = (n1 < n2); break;
-          case TYPE_SEQUAL:   n1 = (n1 <= n2); break;
-          case TYPE_UNKNOWN:
-          case TYPE_MATCH:
-          case TYPE_NOMATCH:  break;
-        }
-      } else {
-        char buf1[NUMBUFLEN];
-        char buf2[NUMBUFLEN];
-        const char *const s1 = tv_get_string_buf(rettv, buf1);
-        const char *const s2 = tv_get_string_buf(&var2, buf2);
-        if (type != TYPE_MATCH && type != TYPE_NOMATCH) {
-          i = mb_strcmp_ic(ic, s1, s2);
-        } else {
-          i = 0;
-        }
-        n1 = false;
-        switch (type) {
-          case TYPE_EQUAL:    n1 = (i == 0); break;
-          case TYPE_NEQUAL:   n1 = (i != 0); break;
-          case TYPE_GREATER:  n1 = (i > 0); break;
-          case TYPE_GEQUAL:   n1 = (i >= 0); break;
-          case TYPE_SMALLER:  n1 = (i < 0); break;
-          case TYPE_SEQUAL:   n1 = (i <= 0); break;
-
-          case TYPE_MATCH:
-          case TYPE_NOMATCH: {
-            n1 = pattern_match((char_u *)s2, (char_u *)s1, ic);
-            if (type == TYPE_NOMATCH) {
-              n1 = !n1;
-            }
-            break;
-          }
-          case TYPE_UNKNOWN: break;  // Avoid gcc warning.
-        }
-      }
-      tv_clear(rettv);
       tv_clear(&var2);
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = n1;
+      return ret;
     }
   }
 
@@ -8000,8 +7832,8 @@ int get_id_len(const char **const arg)
  */
 int get_name_len(const char **const arg,
                  char **alias,
-                 int evaluate,
-                 int verbose)
+                 bool evaluate,
+                 bool verbose)
 {
   int len;
 
@@ -8486,10 +8318,8 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   return oldval;
 }
 
-/*
- * Get the value of internal variable "name".
- * Return OK or FAIL.
- */
+// Get the value of internal variable "name".
+// Return OK or FAIL.  If OK is returned "rettv" must be cleared.
 int get_var_tv(
     const char *name,
     int len,           // length of "name"
@@ -10745,4 +10575,203 @@ bool invoke_prompt_interrupt(void)
     callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
     tv_clear(&rettv);
     return true;
+}
+
+// Compare "typ1" and "typ2".  Put the result in "typ1".
+int typval_compare(
+    typval_T *typ1,   // first operand
+    typval_T *typ2,   // second operand
+    exptype_T type,   // operator
+    bool type_is,     // true for "is" and "isnot"
+    bool ic           // ignore case
+)
+  FUNC_ATTR_NONNULL_ALL
+{
+  varnumber_T n1, n2;
+
+  if (type_is && typ1->v_type != typ2->v_type) {
+    // For "is" a different type always means false, for "notis"
+    // it means true.
+    n1 = type == TYPE_NEQUAL;
+  } else if (typ1->v_type == VAR_LIST || typ2->v_type == VAR_LIST) {
+    if (type_is) {
+      n1 = typ1->v_type == typ2->v_type
+        && typ1->vval.v_list == typ2->vval.v_list;
+      if (type == TYPE_NEQUAL) {
+        n1 = !n1;
+      }
+    } else if (typ1->v_type != typ2->v_type
+               || (type != TYPE_EQUAL && type != TYPE_NEQUAL)) {
+      if (typ1->v_type != typ2->v_type) {
+        EMSG(_("E691: Can only compare List with List"));
+      } else {
+        EMSG(_("E692: Invalid operation for List"));
+      }
+      tv_clear(typ1);
+      return FAIL;
+    } else {
+      // Compare two Lists for being equal or unequal.
+      n1 = tv_list_equal(typ1->vval.v_list, typ2->vval.v_list, ic, false);
+      if (type == TYPE_NEQUAL) {
+        n1 = !n1;
+      }
+    }
+  } else if (typ1->v_type == VAR_DICT || typ2->v_type == VAR_DICT) {
+    if (type_is) {
+      n1 = typ1->v_type == typ2->v_type
+        && typ1->vval.v_dict == typ2->vval.v_dict;
+      if (type == TYPE_NEQUAL) {
+        n1 = !n1;
+      }
+    } else if (typ1->v_type != typ2->v_type
+               || (type != TYPE_EQUAL && type != TYPE_NEQUAL)) {
+      if (typ1->v_type != typ2->v_type) {
+        EMSG(_("E735: Can only compare Dictionary with Dictionary"));
+      } else {
+        EMSG(_("E736: Invalid operation for Dictionary"));
+      }
+      tv_clear(typ1);
+      return FAIL;
+    } else {
+      // Compare two Dictionaries for being equal or unequal.
+      n1 = tv_dict_equal(typ1->vval.v_dict, typ2->vval.v_dict, ic, false);
+      if (type == TYPE_NEQUAL) {
+        n1 = !n1;
+      }
+    }
+  } else if (tv_is_func(*typ1) || tv_is_func(*typ2)) {
+    if (type != TYPE_EQUAL && type != TYPE_NEQUAL) {
+      EMSG(_("E694: Invalid operation for Funcrefs"));
+      tv_clear(typ1);
+      return FAIL;
+    }
+    if ((typ1->v_type == VAR_PARTIAL && typ1->vval.v_partial == NULL)
+        || (typ2->v_type == VAR_PARTIAL && typ2->vval.v_partial == NULL)) {
+      // when a partial is NULL assume not equal
+      n1 = false;
+    } else if (type_is) {
+      if (typ1->v_type == VAR_FUNC && typ2->v_type == VAR_FUNC) {
+        // strings are considered the same if their value is
+        // the same
+        n1 = tv_equal(typ1, typ2, ic, false);
+      } else if (typ1->v_type == VAR_PARTIAL && typ2->v_type == VAR_PARTIAL) {
+        n1 = typ1->vval.v_partial == typ2->vval.v_partial;
+      } else {
+        n1 = false;
+      }
+    } else {
+      n1 = tv_equal(typ1, typ2, ic, false);
+    }
+    if (type == TYPE_NEQUAL) {
+      n1 = !n1;
+    }
+  } else if ((typ1->v_type == VAR_FLOAT || typ2->v_type == VAR_FLOAT)
+             && type != TYPE_MATCH && type != TYPE_NOMATCH) {
+    // If one of the two variables is a float, compare as a float.
+    // When using "=~" or "!~", always compare as string.
+    const float_T f1 = tv_get_float(typ1);
+    const float_T f2 = tv_get_float(typ2);
+    n1 = false;
+    switch (type) {
+      case TYPE_EQUAL:    n1 = f1 == f2; break;
+      case TYPE_NEQUAL:   n1 = f1 != f2; break;
+      case TYPE_GREATER:  n1 = f1 > f2; break;
+      case TYPE_GEQUAL:   n1 = f1 >= f2; break;
+      case TYPE_SMALLER:  n1 = f1 < f2; break;
+      case TYPE_SEQUAL:   n1 = f1 <= f2; break;
+      case TYPE_UNKNOWN:
+      case TYPE_MATCH:
+      case TYPE_NOMATCH:  break;
+    }
+  } else if ((typ1->v_type == VAR_NUMBER || typ2->v_type == VAR_NUMBER)
+             && type != TYPE_MATCH && type != TYPE_NOMATCH) {
+    // If one of the two variables is a number, compare as a number.
+    // When using "=~" or "!~", always compare as string.
+    n1 = tv_get_number(typ1);
+    n2 = tv_get_number(typ2);
+    switch (type) {
+      case TYPE_EQUAL:    n1 = n1 == n2; break;
+      case TYPE_NEQUAL:   n1 = n1 != n2; break;
+      case TYPE_GREATER:  n1 = n1 > n2; break;
+      case TYPE_GEQUAL:   n1 = n1 >= n2; break;
+      case TYPE_SMALLER:  n1 = n1 < n2; break;
+      case TYPE_SEQUAL:   n1 = n1 <= n2; break;
+      case TYPE_UNKNOWN:
+      case TYPE_MATCH:
+      case TYPE_NOMATCH:  break;
+    }
+  } else {
+    char buf1[NUMBUFLEN];
+    char buf2[NUMBUFLEN];
+    const char *const s1 = tv_get_string_buf(typ1, buf1);
+    const char *const s2 = tv_get_string_buf(typ2, buf2);
+    int i;
+    if (type != TYPE_MATCH && type != TYPE_NOMATCH) {
+      i = mb_strcmp_ic(ic, s1, s2);
+    } else {
+      i = 0;
+    }
+    n1 = false;
+    switch (type) {
+      case TYPE_EQUAL:    n1 = i == 0; break;
+      case TYPE_NEQUAL:   n1 = i != 0; break;
+      case TYPE_GREATER:  n1 = i > 0; break;
+      case TYPE_GEQUAL:   n1 = i >= 0; break;
+      case TYPE_SMALLER:  n1 = i < 0; break;
+      case TYPE_SEQUAL:   n1 = i <= 0; break;
+
+      case TYPE_MATCH:
+      case TYPE_NOMATCH:
+        n1 = pattern_match((char_u *)s2, (char_u *)s1, ic);
+        if (type == TYPE_NOMATCH) {
+          n1 = !n1;
+        }
+        break;
+      case TYPE_UNKNOWN: break;  // Avoid gcc warning.
+    }
+  }
+  tv_clear(typ1);
+  typ1->v_type = VAR_NUMBER;
+  typ1->vval.v_number = n1;
+  return OK;
+}
+
+char *typval_tostring(typval_T *arg)
+{
+  if (arg == NULL) {
+    return xstrdup("(does not exist)");
+  }
+  return encode_tv2string(arg, NULL);
+}
+
+bool var_exists(const char *var)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char *tofree;
+  bool n = false;
+
+  // get_name_len() takes care of expanding curly braces
+  const char *name = var;
+  const int len = get_name_len((const char **)&var, &tofree, true, false);
+  if (len > 0) {
+    typval_T tv;
+
+    if (tofree != NULL) {
+      name = tofree;
+    }
+    n = get_var_tv(name, len, &tv, NULL, false, true) == OK;
+    if (n) {
+      // Handle d.key, l[idx], f(expr).
+      n = handle_subscript(&var, &tv, true, false) == OK;
+      if (n) {
+        tv_clear(&tv);
+      }
+    }
+  }
+  if (*var != NUL) {
+    n = false;
+  }
+
+  xfree(tofree);
+  return n;
 }
