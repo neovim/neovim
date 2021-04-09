@@ -309,54 +309,46 @@ local function text_document_did_open_handler(bufnr, client)
 end
 
 --@public
--- Registers a client capability that is provided by a plugin.
--- This function allows to extend lsp capabilities
+--- Registers a lsp client capability. Capabilites registered 
+--- through this function are considered supported by client.
+--- And are used as basis of what functionalities are
+--- available.
 --@param capability (table) client capability table acording to lsp-specs
---@param capability_resolver (function) This function recives
---  server capabilities tabke as argument and sould return
---  a table containing capability flags it supports. Flags
---  need to have same name as handler method name
+--@param capability_resolver (function) This function receives
+---  server capabilities table as argument and should return
+---  a table containing capability flags it supports. Flags
+---  need to have same name as handler method name
 --@param handlers (table) Table of handlers. This is used to extend lsp.handlers table.
---@Example
---  semantic tokens implementation by smlok
---  <pre>
---    local capability = {
---      textDocument = {
---        semanticTokens = {
---          dynamicRegistration = false;
---          tokenTypes = {
---            ....
---          };
---          tokenModifiers = {
---            ....
---          };
---          formats = {'relative'};
---          requests = {
---            ....
---          };
---        };
---      };
---    }
---    local capability_resolver = function(server_capabilities)
---      local properties = {}
---      if server_capabilities.semanticTokensProvider ~= nil and server_capabilities.semanticTokensProvider.full then
---        properties['textDocument/semanticTokens/full'] = true
---      else
---        properties['textDocument/semanticTokens/full'] = false
---      end
---      return properties
---    end
---    local handlers = {
---      'textDocument/semanticTokens/full' = function()
---        ...
---      end,
---      'workspace/semanticTokens/refresh' = function()
---        ...
---      end
---    }
---    vim.lsp.register_external_capability(capabilities,
---      capability_resolver, handlers, handlers_to_capability_map)
---  </pre>
+---Example:
+---  semantic tokens implementation by smlok
+---  <pre>
+---    local capability = {
+---      textDocument = {
+---        semanticTokens = {
+---          ....
+---        };
+---      };
+---    }
+---    local capability_resolver = function(server_capabilities)
+---      local properties = {}
+---      if server_capabilities.semanticTokensProvider ~= nil and server_capabilities.semanticTokensProvider.full then
+---        properties['textDocument/semanticTokens/full'] = true
+---      else
+---        properties['textDocument/semanticTokens/full'] = false
+---      end
+---      return properties
+---    end
+---    local handlers = {
+---      'textDocument/semanticTokens/full' = function()
+---        ...
+---      end,
+---      'workspace/semanticTokens/refresh' = function()
+---        ...
+---      end
+---    }
+---    vim.lsp.register_external_capability(capabilities,
+---      capability_resolver, handlers, handlers_to_capability_map)
+---  </pre>
 function lsp.register_external_capability(capability,
   capability_resolver, handlers)
   -- validate parameters
@@ -377,8 +369,9 @@ function lsp.register_external_capability(capability,
       break
     end
   end
+  -- Extend capabilities
   if not added then
-    table.insert(protocol.external_capabilities,protocol_tbl)
+    table.insert(protocol.external_capabilities, protocol_tbl)
     default_handlers = vim.tbl_extend('force', default_handlers, handlers)
   end
 end
@@ -750,7 +743,9 @@ function lsp.start_client(config)
           -- Insted of going through _request_name_to_capability table
           -- It's added to simplify external capabilities
           local resolved_method_status = client.resolved_capabilities[method]
-          if resolved_method_status ~= nil then return resolved_method_status end
+          if resolved_method_status ~= nil then
+            return resolved_method_status
+          end
         end
         -- if we don't know about the method, assume that the client supports it.
         if not required_capability then
