@@ -18,7 +18,8 @@ an idea of what lurks beneath: >
 
 Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
 "editor stdlib" (|functions| and Ex commands) and the |API|, all of which can
-be used from Lua code.
+be used from Lua code. A good overview of using Lua in neovim is given by
+https://github.com/nanotee/nvim-lua-guide.
 
 Module conflicts are resolved by "last wins".  For example if both of these
 are on 'runtimepath':
@@ -831,6 +832,7 @@ LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
 
 Nvim Lua provides an interface to Vimscript variables and functions, and
 editor commands and options.
+See also https://github.com/nanotee/nvim-lua-guide.
 
 vim.call({func}, {...})					*vim.call()*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.
