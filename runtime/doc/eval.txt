@@ -5563,13 +5563,14 @@ id({expr})						*id()*
 		Returns a |String| which is a unique identifier of the
 		container type (|List|, |Dict| and |Partial|). It is
 		guaranteed that for the mentioned types `id(v1) ==# id(v2)`
-		returns true iff `type(v1) == type(v2) && v1 is v2` (note:
-		|v:_null_list| and |v:_null_dict| have the same `id()` with
-		different types because they are internally represented as
-		a NULL pointers). Currently `id()` returns a hexadecimal
-		representanion of the pointers to the containers (i.e. like
-		`0x994a40`), same as `printf("%p", {expr})`, but it is advised
-		against counting on exact format of return value.
+		returns true iff `type(v1) == type(v2) && v1 is v2`.
+		Note that |v:_null_string|, |v:_null_list|, and |v:_null_dict|
+		have the same `id()` with different types because they are
+		internally represented as a NULL pointers.  `id()` returns a
+		hexadecimal representanion of the pointers to the containers
+		(i.e. like `0x994a40`), same as `printf("%p", {expr})`,
+		but it is advised against counting on the exact format of
+		return value.
 
 		It is not guaranteed that `id(no_longer_existing_container)`
 		will not be equal to some other `id()`: new containers may
