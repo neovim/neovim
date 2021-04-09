@@ -82,7 +82,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   int status;
   if ((status = uv_spawn(&proc->loop->uv, &uvproc->uv, &uvproc->uvopts))) {
-    ELOG("uv_spawn failed: %s", uv_strerror(status));
+    ELOG("uv_spawn(%s) failed: %s", uvproc->uvopts.file, uv_strerror(status));
     if (uvproc->uvopts.env) {
       os_free_fullenv(uvproc->uvopts.env);
     }
