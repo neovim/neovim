@@ -309,7 +309,7 @@ local function text_document_did_open_handler(bufnr, client)
 end
 
 --@public
---- Registers a lsp client capability. Capabilites registered 
+--- Registers a lsp client capability. Capabilites registered
 --- through this function are considered supported by client.
 --- And are used as basis of what functionalities are
 --- available.
