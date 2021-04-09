@@ -3,6 +3,7 @@ image: freebsd/12.x
 packages:
 - cmake
 - gmake
+- gdb
 - ninja
 - libtool
 - sha

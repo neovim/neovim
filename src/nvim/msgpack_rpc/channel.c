@@ -219,7 +219,7 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
     char buf[256];
     snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
              channel->id);
-    call_set_error(channel, buf, WARN_LOG_LEVEL);
+    call_set_error(channel, buf, INFO_LOG_LEVEL);
     goto end;
   }
 

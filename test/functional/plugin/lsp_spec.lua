@@ -49,7 +49,7 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
         NVIM_LUA_NOTRACK = "1";
       };
       cmd = {
-        vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
+        'timeout', '-s', 'ABRT', '1m', vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
         "-c", string.format("lua TEST_NAME = %q", test_name),
         "-c", string.format("lua TIMEOUT = %d", timeout),
         "-c", "luafile "..fixture_filename,
@@ -144,7 +144,7 @@ describe('LSP', function()
               NVIM_LOG_FILE = logfile;
             };
             cmd = {
-              vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
+              'timeout', '-s', 'ABRT', '1m', vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
               "-c", string.format("lua TEST_NAME = %q", test_name),
               "-c", "luafile "..fixture_filename;
             };
