@@ -444,19 +444,20 @@ func Test_statusline_using_mode()
   CheckScreendump
 
   let lines =<< trim END
-    set laststatus=2
-    let &statusline = '-%{mode()}-'
+    setlocal statusline=-%{mode()}-
+    split
+    setlocal statusline=+%{mode()}+
   END
   call writefile(lines, 'XTest_statusline')
 
-  let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 5, 'cols': 50})
+  let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 7, 'cols': 50})
   call VerifyScreenDump(buf, 'Test_statusline_mode_1', {})
 
   call term_sendkeys(buf, ":")
   call VerifyScreenDump(buf, 'Test_statusline_mode_2', {})
 
   " clean up
-  call term_sendkeys(buf, "\<CR>")
+  call term_sendkeys(buf, "close\<CR>")
   call StopVimInTerminal(buf)
   call delete('XTest_statusline')
 endfunc
