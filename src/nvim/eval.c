@@ -229,6 +229,7 @@ static struct vimvar {
   // Neovim
   VV(VV_STDERR,         "stderr",           VAR_NUMBER, VV_RO),
   VV(VV_MSGPACK_TYPES,  "msgpack_types",    VAR_DICT, VV_RO),
+  VV(VV__NULL_STRING,   "_null_string",     VAR_STRING, VV_RO),
   VV(VV__NULL_LIST,     "_null_list",       VAR_LIST, VV_RO),
   VV(VV__NULL_DICT,     "_null_dict",       VAR_DICT, VV_RO),
   VV(VV_LUA,            "lua",              VAR_PARTIAL, VV_RO),

@@ -158,6 +158,7 @@ typedef enum {
     // Neovim
     VV_STDERR,
     VV_MSGPACK_TYPES,
+    VV__NULL_STRING,  // String with NULL value. For test purposes only.
     VV__NULL_LIST,  // List with NULL value. For test purposes only.
     VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
     VV_LUA,
