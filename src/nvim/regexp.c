@@ -6665,6 +6665,10 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
   int len = 0;                  /* init for GCC */
   static char_u *eval_result = NULL;
 
+  // We need to keep track of how many backslashes we escape, so that the byte
+  // counts for `extmark_splice` are correct.
+  int num_escaped = 0;
+
   // Be paranoid...
   if ((source == NULL && expr == NULL) || dest == NULL) {
     EMSG(_(e_null));
@@ -6840,6 +6844,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           // later.  Used to insert a literal CR.
           default:
             if (backslash) {
+              num_escaped += 1;
               if (copy) {
                 *dst = '\\';
               }
@@ -6979,7 +6984,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
     *dst = NUL;
 
 exit:
-  return (int)((dst - dest) + 1);
+  return (int)((dst - dest) + 1 - num_escaped);
 }
 
 
