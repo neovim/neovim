@@ -165,6 +165,35 @@ void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
   map_put(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id), it);
 }
 
+// Clear hl_group with hl_from namespace ns_id
+void ns_del_hl(NS ns_id, int hl_id)
+{
+  if (ns_id <= 0 || hl_id <= 0) {
+    // Invalid parameter
+    return;
+  }
+  if (map_has(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id))) {
+    highlight_clear(hl_id);
+    map_del(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id));
+  }
+  return;
+}
+
+// Clears all highlight groups in ns_id
+void ns_clear_hl(NS ns_id)
+{
+  if (ns_id <= 0) {
+    return;
+  }
+  ColorKey highlight_group;
+  ColorItem val  = COLOR_ITEM_INITIALIZER;
+  map_foreach(ns_hl, highlight_group, val, {
+    if (highlight_group.ns_id == ns_id) {
+      ns_del_hl(highlight_group.ns_id, highlight_group.syn_id);
+    }
+  });
+}
+
 int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
 {
   static int recursive = 0;

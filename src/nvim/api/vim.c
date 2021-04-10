@@ -233,6 +233,32 @@ void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
   }
 }
 
+/// Clear highlight group from a namespace
+///
+/// @param ns_id number of namespace for this highlight
+/// @param highlight_groups A list of highlight group names. These highlight
+///                         groups are cleard from namespace . If an empty
+///                         list is given entire namespace is cleared.
+void nvim_namespace_clear_hl(Integer ns_id, Array highlight_groups)
+  FUNC_API_SINCE(7)
+{
+  if (highlight_groups.size == 0) {
+    // empty name clear entire ns_id
+    ns_clear_hl((NS)ns_id);
+  } else {
+    // clear hlgroups in names from ns
+    String name = STRING_INIT;
+    for (size_t i = 0; i < highlight_groups.size; i++) {
+      if (highlight_groups.items[i].type == kObjectTypeString) {
+        name = highlight_groups.items[i].data.string;
+        int hl_id = syn_check_group( (char_u *)(name.data), (int)name.size);
+        ns_del_hl((NS)ns_id, hl_id);
+      }
+    }
+  }
+  return;
+}
+
 /// Set active namespace for highlights.
 ///
 /// NB: this function can be called from async contexts, but the

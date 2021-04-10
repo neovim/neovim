@@ -7103,7 +7103,7 @@ static int hl_has_settings(int idx, int check_link)
 /*
  * Clear highlighting for one group.
  */
-static void highlight_clear(int idx)
+void highlight_clear(int idx)
 {
   HL_TABLE()[idx].sg_cleared = true;
 
