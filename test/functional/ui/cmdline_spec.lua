@@ -759,6 +759,7 @@ local function test_cmdline(linegrid)
   end)
 
   it("doesn't send invalid events when aborting mapping #10000", function()
+    command('set notimeout')
     command('cnoremap ab c')
 
     feed(':xa')
