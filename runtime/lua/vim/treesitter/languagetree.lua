@@ -15,7 +15,8 @@ LanguageTree.__index = LanguageTree
 -- @param opts.queries A table of language to injection query strings.
 --                     This is useful for overriding the built-in runtime file
 --                     searching for the injection language query per language.
-function LanguageTree.new(source, lang, opts)
+-- @param parent Optionally set parent for this language tree
+function LanguageTree.new(source, lang, opts, parent)
   language.require_language(lang)
   opts = opts or {}
 
@@ -27,6 +28,7 @@ function LanguageTree.new(source, lang, opts)
     _regions = {},
     _trees = {},
     _opts = opts,
+    _parent = parent,
     _injection_query = custom_queries[lang]
       and query.parse_query(lang, custom_queries[lang])
       or query.get_query(lang, "injections"),
@@ -80,6 +82,11 @@ end
 -- Returns a map of language to child tree.
 function LanguageTree:children()
   return self._children
+end
+
+-- Returns the parent of this language tree (if any)
+function LanguageTree:parent()
+  return self._parent
 end
 
 -- Returns the source content of the language tree (bufnr or string).
@@ -199,7 +206,7 @@ function LanguageTree:add_child(lang)
     self:remove_child(lang)
   end
 
-  self._children[lang] = LanguageTree.new(self._source, lang, self._opts)
+  self._children[lang] = LanguageTree.new(self._source, lang, self._opts, self)
 
   self:invalidate()
   self:_do_callback('child_added', self._children[lang])
