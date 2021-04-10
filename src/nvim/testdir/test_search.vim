@@ -1344,7 +1344,7 @@ func Test_search_smartcase_utf8()
   close!
 endfunc
 
-func Test_zzzz_incsearch_highlighting_newline()
+func Test_incsearch_highlighting_newline()
   CheckRunVimInTerminal
   CheckOption incsearch
   CheckScreendump
@@ -1357,20 +1357,16 @@ func Test_zzzz_incsearch_highlighting_newline()
   [CODE]
   call writefile(commands, 'Xincsearch_nl')
   let buf = RunVimInTerminal('-S Xincsearch_nl', {'rows': 5, 'cols': 10})
-  " Need to send one key at a time to force a redraw
   call term_sendkeys(buf, '/test')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_newline1', {})
+  " Need to send one key at a time to force a redraw
   call term_sendkeys(buf, '\n')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_newline2', {})
   call term_sendkeys(buf, 'x')
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_newline3', {})
   call term_sendkeys(buf, 'x')
   call VerifyScreenDump(buf, 'Test_incsearch_newline4', {})
   call term_sendkeys(buf, "\<CR>")
-  sleep 100m
   call VerifyScreenDump(buf, 'Test_incsearch_newline5', {})
   call StopVimInTerminal(buf)
 
