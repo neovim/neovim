@@ -215,10 +215,17 @@ M['textDocument/documentSymbol'] = symbol_handler
 M['workspace/symbol'] = symbol_handler
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
-M['textDocument/rename'] = function(_, _, result)
-  if not result then return end
-  util.apply_workspace_edit(result)
-end
+M['textDocument/rename'] = function(err, _, result, client_id)
+   if not util.workspace_edit_has_edits(result) then
+     local err_msg = ""
+     if err then err_msg = ": " .. err.message end
+     local client = vim.lsp.get_client_by_id(client_id)
+     local client_name = client and client.name or string.format("id=%d", client_id)
+     err_message("LSP[", client_name, "] Unable to rename symbol", err_msg)
+   else
+     util.apply_workspace_edit(result)
+   end
+ end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
 M['textDocument/rangeFormatting'] = function(_, _, result)

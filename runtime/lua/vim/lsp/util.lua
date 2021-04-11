@@ -624,6 +624,20 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   return matches
 end
 
+--- Checks to see if a `WorkspaceEdit` contains any edits.
+ ---
+ --- @param workspace_edit (table) `WorkspaceEdit`
+ --- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
+ function M.workspace_edit_has_edits(workspace_edit)
+   if not workspace_edit then
+     return false
+   elseif (workspace_edit.documentChanges and #workspace_edit.documentChanges > 0) or
+     (workspace_edit.changes and #workspace_edit.changes > 0) then
+     return true
+   else
+     return false
+   end
+ end
 
 --- Rename old_fname to new_fname
 --

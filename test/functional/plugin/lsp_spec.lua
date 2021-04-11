@@ -1167,6 +1167,43 @@ describe('LSP', function()
     end)
   end)
 
+  describe('lsp.util.workspace_edit_has_edits', function()
+    it('returns false if there are no documentChanges or changes', function()
+      local expected = false
+      local actual = exec_lua [[
+        local no_edits = {}
+        return vim.lsp.util.workspace_edit_has_edits(no_edits)
+      ]]
+      eq(expected, actual)
+    end)
+    it('returns false documentChanges exists but is empty', function()
+      local expected = false
+      local actual = exec_lua [[
+        local empty_document_changes = {documentChanges = {}}
+        return vim.lsp.util.workspace_edit_has_edits(empty_document_changes)
+      ]]
+      eq(expected, actual)
+    end)
+    it('returns true if documentChanges is nill but changes has edits', function()
+      local expected = false
+      local actual = exec_lua [[
+        local only_changes = {
+          changes = {
+            ['file://fake/uri'] = {
+              range = {
+                start = { line = 0, character = 2},
+                ['end'] = {line = 0, character = 3}
+              },
+            newText = 'new stuff'
+            }
+          }
+        }
+        return vim.lsp.util.workspace_edit_has_edits(only_changes)
+      ]]
+      eq(expected, actual)
+    end)
+  end)
+
   describe('workspace_apply_edit', function()
     it('workspace/applyEdit returns ApplyWorkspaceEditResponse', function()
       local expected = {
