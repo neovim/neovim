@@ -3417,7 +3417,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   char_u      *p;
-  exptype_T type = EXPR_UNKNOWN;
+  exprtype_T type = EXPR_UNKNOWN;
   int len = 2;
   bool ic;
 
@@ -10588,7 +10588,7 @@ bool invoke_prompt_interrupt(void)
 int typval_compare(
     typval_T *typ1,   // first operand
     typval_T *typ2,   // second operand
-    exptype_T type,   // operator
+    exprtype_T type,  // operator
     bool ic           // ignore case
 )
   FUNC_ATTR_NONNULL_ALL

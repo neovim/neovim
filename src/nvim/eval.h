@@ -241,7 +241,7 @@ typedef enum {
   EXPR_NOMATCH,       ///< !~
   EXPR_IS,            ///< is
   EXPR_ISNOT,         ///< isnot
-} exptype_T;
+} exprtype_T;
 
 /// Type for dict_list function
 typedef enum {
