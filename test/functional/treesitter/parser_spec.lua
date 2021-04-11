@@ -646,6 +646,19 @@ int x = INT_MAX;
           {2, 29, 2, 68}  -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
+      it("should list all directives", function()
+        local res_list = exec_lua[[
+        local query = require'vim.treesitter.query'
+
+        local list = query.list_directives()
+
+        table.sort(list)
+
+        return list
+        ]]
+
+        eq({ 'offset!', 'set!' }, res_list)
+      end)
     end)
   end)
 
