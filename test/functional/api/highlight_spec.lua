@@ -158,3 +158,55 @@ describe('API: highlight',function()
     assert_alive()
   end)
 end)
+
+describe("API: higlight clear", function()
+
+  local ns1 = meths.create_namespace('Test_ns1')
+  local ns2 = meths.create_namespace('Test_ns2')
+  local hl1 = {
+    foreground = 0082920,
+    background = 2929121,
+    bold = true,
+  }
+  local hl2 = {
+    foreground = 92919022,
+    background = 02820913,
+    italic = true,
+  }
+  local cleared = {}
+
+  before_each(function()
+    clear()
+    -- highlights for ns1
+    meths.set_hl(ns1, 'hl1', hl1)
+    meths.set_hl(ns1, 'hl2', hl2)
+    meths.set_hl(ns1, 'hl3', hl2)
+    -- highlights for ns2
+    meths.set_hl(ns2, 'hl1', hl1)
+  end)
+
+  it('can clear specific highlights in namespace', function()
+    meths._set_hl_ns(ns1)
+    -- clear specific highlight groups from a ns
+    meths.namespace_clear_hl(ns1, {'hl1', 'hl2'})
+    eq(cleared, meths.get_hl_by_name('hl1', true))
+    eq(cleared, meths.get_hl_by_name('hl2', true))
+    -- hl3 is untouched
+    eq(hl2, meths.get_hl_by_name('hl3', true))
+    -- ns2 is untouched
+    meths._set_hl_ns(ns2)
+    eq(hl1, meths.get_hl_by_name('hl1', true))
+  end)
+
+  it('can clear entire namespace', function()
+    meths._set_hl_ns(ns1)
+    meths.namespace_clear_hl(ns1, {})
+    -- All cleared
+    eq(cleared, meths.get_hl_by_name('hl1', true))
+    eq(cleared, meths.get_hl_by_name('hl2', true))
+    eq(cleared, meths.get_hl_by_name('hl3', true))
+    -- ns2 is untouched
+    meths._set_hl_ns(ns2)
+    eq(hl1, meths.get_hl_by_name('hl1', true))
+  end)
+end)
