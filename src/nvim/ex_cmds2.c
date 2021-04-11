@@ -876,7 +876,7 @@ debuggy_find(
           debug_newval = typval_tostring(bp->dbg_val);
           line = true;
         } else {
-          if (typval_compare(tv, bp->dbg_val, TYPE_EQUAL, true, false) == OK
+          if (typval_compare(tv, bp->dbg_val, EXPR_IS, false) == OK
               && tv->vval.v_number == false) {
             line = true;
             debug_oldval = typval_tostring(bp->dbg_val);
