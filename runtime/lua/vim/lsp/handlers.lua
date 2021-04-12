@@ -5,6 +5,8 @@ local vim = vim
 local api = vim.api
 local buf = require 'vim.lsp.buf'
 
+local if_nil = vim.F.if_nil
+
 local M = {}
 
 -- FIXME: DOC: Expose in vimdocs
@@ -188,11 +190,20 @@ M['textDocument/publishDiagnostics'] = function(...)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = function(_, _, result)
+--@param config table Configuration table.
+---      - focus_qf:     (default=false)
+---          - Focus on quickfix window
+M['textDocument/references'] = function(_, _, result, _, _, config)
+  config = config or {}
+  config.focus_qf = if_nil(config.focus_qf, false)
+
   if not result then return end
   util.set_qflist(util.locations_to_items(result))
   api.nvim_command("copen")
-  api.nvim_command("wincmd p")
+
+  if not config.focus_qf then
+    api.nvim_command("wincmd p")
+  end
 end
 
 --@private
@@ -201,13 +212,22 @@ end
 --@param _ (not used)
 --@param result (list of Symbols) LSP method name
 --@param result (table) result of LSP method; a location or a list of locations.
+--@param config table Configuration table.
+---      - focus_qf:     (default=false)
+---          - Focus on quickfix window
 ---(`textDocument/definition` can return `Location` or `Location[]`
-local symbol_handler = function(_, _, result, _, bufnr)
+local symbol_handler = function(_, _, result, _, bufnr, config)
+  config = config or {}
+  config.focus_qf = if_nil(config.focus_qf, false)
+
   if not result or vim.tbl_isempty(result) then return end
 
   util.set_qflist(util.symbols_to_items(result, bufnr))
   api.nvim_command("copen")
-  api.nvim_command("wincmd p")
+
+  if not config.focus_qf then
+    api.nvim_command("wincmd p")
+  end
 end
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
 M['textDocument/documentSymbol'] = symbol_handler
@@ -288,8 +308,14 @@ M['textDocument/hover'] = M.hover
 --@param _ (not used)
 --@param method (string) LSP method name
 --@param result (table) result of LSP method; a location or a list of locations.
+--@param config table Configuration table.
+---      - focus_qf:     (default=false)
+---          - Focus on quickfix window
 ---(`textDocument/definition` can return `Location` or `Location[]`
-local function location_handler(_, method, result)
+local function location_handler(_, method, result, _, _, config)
+  config = config or {}
+  config.focus_qf = if_nil(config.focus_qf, false)
+
   if result == nil or vim.tbl_isempty(result) then
     local _ = log.info() and log.info(method, 'No location found')
     return nil
@@ -304,7 +330,10 @@ local function location_handler(_, method, result)
     if #result > 1 then
       util.set_qflist(util.locations_to_items(result))
       api.nvim_command("copen")
-      api.nvim_command("wincmd p")
+
+      if not config.focus_qf then
+        api.nvim_command("wincmd p")
+      end
     end
   else
     util.jump_to_location(result)
@@ -371,7 +400,10 @@ end
 --@returns `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
 --@returns `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,
 local make_call_hierarchy_handler = function(direction)
-  return function(_, _, result)
+  return function(_, _, result, _, _, config)
+    config = config or {}
+    config.focus_qf = if_nil(config.focus_qf, false)
+
     if not result then return end
     local items = {}
     for _, call_hierarchy_call in pairs(result) do
@@ -387,7 +419,10 @@ local make_call_hierarchy_handler = function(direction)
     end
     util.set_qflist(items)
     api.nvim_command("copen")
-    api.nvim_command("wincmd p")
+
+    if not config.focus_qf then
+      api.nvim_command("wincmd p")
+    end
   end
 end
 
