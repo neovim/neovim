@@ -4818,7 +4818,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   |xdg| ($XDG_CONFIG_DIRS, defaults to /etc/xdg).  This also contains
 	   preferences from system administrator.
 	3. Data home directory, for plugins installed by user.
-	   Given by `stdpath("data")`.  |$XDG_DATA_HOME|
+	   Given by `stdpath("data")/site`.  |$XDG_DATA_HOME|
 	4. nvim/site subdirectories for each directory in $XDG_DATA_DIRS.
 	   This is for plugins which were installed by system administrator,
 	   but are not part of the Nvim distribution. XDG_DATA_DIRS defaults
