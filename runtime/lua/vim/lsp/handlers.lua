@@ -191,15 +191,16 @@ end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 --@param config table Configuration table.
----      - focus_qf:     (default=false)
----          - Focus on quickfix window
+---      - focus_qf:     (default=false) Focus on quickfix window
+---      - full_width:   (default=false) Span the quickfix window to take up the full width
 M['textDocument/references'] = function(_, _, result, _, _, config)
   config = config or {}
   config.focus_qf = if_nil(config.focus_qf, false)
+  config.full_width = if_nil(config.full_width, false)
 
   if not result then return end
   util.set_qflist(util.locations_to_items(result))
-  api.nvim_command("copen")
+  api.nvim_command(config.full_width and "botright copen" or "copen")
 
   if not config.focus_qf then
     api.nvim_command("wincmd p")
@@ -212,18 +213,19 @@ end
 --@param _ (not used)
 --@param result (list of Symbols) LSP method name
 --@param result (table) result of LSP method; a location or a list of locations.
---@param config table Configuration table.
----      - focus_qf:     (default=false)
----          - Focus on quickfix window
 ---(`textDocument/definition` can return `Location` or `Location[]`
+--@param config table Configuration table.
+---      - focus_qf:     (default=false) Focus on quickfix window
+---      - full_width:   (default=false) Span the quickfix window to take up the full width
 local symbol_handler = function(_, _, result, _, bufnr, config)
   config = config or {}
   config.focus_qf = if_nil(config.focus_qf, false)
+  config.full_width = if_nil(config.full_width, false)
 
   if not result or vim.tbl_isempty(result) then return end
 
   util.set_qflist(util.symbols_to_items(result, bufnr))
-  api.nvim_command("copen")
+  api.nvim_command(config.full_width and "botright copen" or "copen")
 
   if not config.focus_qf then
     api.nvim_command("wincmd p")
@@ -308,13 +310,14 @@ M['textDocument/hover'] = M.hover
 --@param _ (not used)
 --@param method (string) LSP method name
 --@param result (table) result of LSP method; a location or a list of locations.
---@param config table Configuration table.
----      - focus_qf:     (default=false)
----          - Focus on quickfix window
 ---(`textDocument/definition` can return `Location` or `Location[]`
+--@param config table Configuration table.
+---      - focus_qf:     (default=false) Focus on quickfix window
+---      - full_width:   (default=false) Span the quickfix window to take up the full width
 local function location_handler(_, method, result, _, _, config)
   config = config or {}
   config.focus_qf = if_nil(config.focus_qf, false)
+  config.full_width = if_nil(config.full_width, false)
 
   if result == nil or vim.tbl_isempty(result) then
     local _ = log.info() and log.info(method, 'No location found')
@@ -329,7 +332,7 @@ local function location_handler(_, method, result, _, _, config)
 
     if #result > 1 then
       util.set_qflist(util.locations_to_items(result))
-      api.nvim_command("copen")
+      api.nvim_command(config.full_width and "botright copen" or "copen")
 
       if not config.focus_qf then
         api.nvim_command("wincmd p")
@@ -403,6 +406,7 @@ local make_call_hierarchy_handler = function(direction)
   return function(_, _, result, _, _, config)
     config = config or {}
     config.focus_qf = if_nil(config.focus_qf, false)
+    config.full_width = if_nil(config.full_width, false)
 
     if not result then return end
     local items = {}
@@ -418,7 +422,7 @@ local make_call_hierarchy_handler = function(direction)
       end
     end
     util.set_qflist(items)
-    api.nvim_command("copen")
+    api.nvim_command(config.full_width and "botright copen" or "copen")
 
     if not config.focus_qf then
       api.nvim_command("wincmd p")
