@@ -104,6 +104,10 @@ function! tutor#CheckLine(line)
     if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
         let bufn = bufnr('%')
         let ctext = getline(a:line)
+        let signs = sign_getplaced('.', {'lnum': a:line})[0].signs
+        if !empty(signs)
+            call sign_unplace('', {'id': signs[0].id})
+        endif
         if b:tutor_metadata['expect'][string(a:line)] == -1 || ctext ==# b:tutor_metadata['expect'][string(a:line)]
             exe "sign place ".b:tutor_sign_id." line=".a:line." name=tutorok buffer=".bufn
         else
