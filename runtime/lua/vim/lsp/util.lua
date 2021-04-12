@@ -890,7 +890,7 @@ function M.make_floating_popup_options(width, height, opts)
   else
     anchor = anchor..'S'
     height = math.min(lines_above, height)
-    row = 0
+    row = -get_border_size(opts).height
   end
 
   if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
