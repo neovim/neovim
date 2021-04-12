@@ -400,8 +400,6 @@ function! s:check_python(version) abort
     endfor
   endif
 
-  let pip = 'pip' . (a:version == 2 ? '' : '3')
-
   if empty(python_exe)
     " No Python executable can import 'neovim'. Check if any Python executable
     " can import 'pynvim'. If so, that Python failed to import 'neovim' as
@@ -413,9 +411,9 @@ function! s:check_python(version) abort
             \ 'Detected pip upgrade failure: Python executable can import "pynvim" but '
             \ . 'not "neovim": '. pynvim_exe,
             \ "Use that Python version to reinstall \"pynvim\" and optionally \"neovim\".\n"
-            \ . pip ." uninstall pynvim neovim\n"
-            \ . pip ." install pynvim\n"
-            \ . pip ." install neovim  # only if needed by third-party software")
+            \ . pynvim_exe ." -m pip uninstall pynvim neovim\n"
+            \ . pynvim_exe ." -m pip install pynvim\n"
+            \ . pynvim_exe ." -m pip install neovim  # only if needed by third-party software")
     endif
   else
     let [pyversion, current, latest, status] = s:version_info(python_exe)
@@ -440,7 +438,7 @@ function! s:check_python(version) abort
     if s:is_bad_response(current)
       call health#report_error(
         \ "pynvim is not installed.\nError: ".current,
-        \ ['Run in shell: '. pip .' install pynvim'])
+        \ ['Run in shell: '. python_exe .' -m pip install pynvim'])
     endif
 
     if s:is_bad_response(latest)
