@@ -2058,7 +2058,7 @@ static bool check_compl_option(bool dict_opt)
       vim_beep(BO_COMPL);
       setcursor();
       ui_flush();
-      os_delay(2000L, false);
+      os_delay(2004L, false);
     }
     return false;
   }

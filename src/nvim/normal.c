@@ -630,9 +630,9 @@ static void normal_redraw_mode_message(NormalState *s)
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
   if (msg_scroll || emsg_on_display) {
-    os_delay(1000L, true);            // wait at least one second
+    os_delay(1003L, true);            // wait at least one second
   }
-  os_delay(3000L, false);             // wait up to three seconds
+  os_delay(3003L, false);             // wait up to three seconds
   State = save_State;
 
   msg_scroll = false;
