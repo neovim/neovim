@@ -30,7 +30,7 @@ setmetatable(M, {
 ---
 --- @param bufnr The buffer the parser will be tied to
 --- @param lang The language of the parser
---- @param opts Options to pass to the language tree
+--- @param opts Options to pass to the created language tree
 function M._create_parser(bufnr, lang, opts)
   language.require_language(lang)
   if bufnr == 0 then
@@ -41,10 +41,12 @@ function M._create_parser(bufnr, lang, opts)
 
   local self = LanguageTree.new(bufnr, lang, opts)
 
+  ---@private
   local function bytes_cb(_, ...)
     self:_on_bytes(...)
   end
 
+  ---@private
   local function detach_cb(_, ...)
     if parsers[bufnr] == self then
       parsers[bufnr] = nil
@@ -52,6 +54,7 @@ function M._create_parser(bufnr, lang, opts)
     self:_on_detach(...)
   end
 
+  ---@private
   local function reload_cb(_, ...)
     self:_on_reload(...)
   end
@@ -69,8 +72,8 @@ end
 --- Unconditionnally attach the provided callback
 ---
 --- @param bufnr The buffer the parser should be tied to
---- @param ft The filetype of this parser
---- @param opts Options object to pass to the parser
+--- @param lang The filetype of this parser
+--- @param opts Options object to pass to the created language tree
 ---
 --- @returns The parser
 function M.get_parser(bufnr, lang, opts)
@@ -96,7 +99,7 @@ end
 ---
 --- @param str The string to parse
 --- @param lang The language of this string
---- @param opts Some options to pass to the parser
+--- @param opts Options to pass to the created language tree
 function M.get_string_parser(str, lang, opts)
   vim.validate {
     str = { str, 'string' },

@@ -194,7 +194,9 @@ CONFIG = {
             'treesitter.lua',
             'language.lua',
             'query.lua',
-            'highlighter.lua'
+            'highlighter.lua',
+            'languagetree.lua',
+            'health.lua',
         ],
         'files': ' '.join([
             os.path.join(base_dir, 'runtime/lua/vim/treesitter.lua'),
@@ -211,7 +213,10 @@ CONFIG = {
             '*lua-treesitter-core*'
             if name.lower() == 'treesitter'
             else f'*treesitter-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name: f'*{name}()*',
+        'fn_helptag_fmt': lambda fstem, name: (
+            f'*{name}()*'
+            if name != 'new'
+            else f'*{fstem}.{name}()*'),
         # 'fn_helptag_fmt': lambda fstem, name: (
         #     f'*vim.treesitter.{name}()*'
         #     if fstem == 'treesitter'
