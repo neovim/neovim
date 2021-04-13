@@ -232,6 +232,12 @@ local function validate_client_config(config)
     flags           = { config.flags, "t", true };
     get_language_id = { config.get_language_id, "f", true };
   }
+  assert(
+    (not config.flags
+      or not config.flags.debounce_text_changes
+      or type(config.flags.debounce_text_changes) == 'number'),
+    "flags.debounce_text_changes must be nil or a number with the debounce time in milliseconds"
+  )
 
   local cmd, cmd_args = lsp._cmd_parts(config.cmd)
   local offset_encoding = valid_encodings.UTF16
@@ -260,21 +266,165 @@ local function buf_get_full_text(bufnr)
 end
 
 --@private
+--- Memoizes a function. On first run, the function return value is saved and
+--- immediately returned on subsequent runs.
+---
+--@param fn (function) Function to run
+--@returns (function) Memoized function
+local function once(fn)
+  local value
+  return function(...)
+    if not value then value = fn(...) end
+    return value
+  end
+end
+
+
+local changetracking = {}
+do
+  --- client_id → state
+  ---
+  ---   state
+  ---     pending_change?: function that the timer starts to trigger didChange
+  ---     pending_changes: list of tables with the pending changesets; for incremental_sync only
+  ---     use_incremental_sync: bool
+  ---     buffers?: table (bufnr → lines); for incremental sync only
+  ---     timer?: uv_timer
+  local state_by_client = {}
+
+  function changetracking.init(client, bufnr)
+    local state = state_by_client[client.id]
+    if not state then
+      state = {
+        pending_changes = {};
+        use_incremental_sync = (
+          if_nil(client.config.flags.allow_incremental_sync, true)
+          and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
+        );
+      }
+      state_by_client[client.id] = state
+    end
+    if not state.use_incremental_sync then
+      return
+    end
+    if not state.buffers then
+      state.buffers = {}
+    end
+    state.buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
+  end
+
+  function changetracking.reset_buf(client, bufnr)
+    local state = state_by_client[client.id]
+    if state then
+      changetracking._reset_timer(state)
+      if state.buffers then
+        state.buffers[bufnr] = nil
+      end
+    end
+  end
+
+  function changetracking.reset(client_id)
+    local state = state_by_client[client_id]
+    if state then
+      state_by_client[client_id] = nil
+      changetracking._reset_timer(state)
+    end
+  end
+
+  function changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+    local incremental_changes = function(client)
+      local cached_buffers = state_by_client[client.id].buffers
+      local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
+      local startline =  math.min(firstline + 1, math.min(#cached_buffers[bufnr], #lines))
+      local endline =  math.min(-(#lines - new_lastline), -1)
+      local incremental_change = vim.lsp.util.compute_diff(
+        cached_buffers[bufnr], lines, startline, endline, client.offset_encoding or 'utf-16')
+      cached_buffers[bufnr] = lines
+      return incremental_change
+    end
+    local full_changes = once(function()
+      return {
+        text = buf_get_full_text(bufnr);
+      };
+    end)
+    local uri = vim.uri_from_bufnr(bufnr)
+    return function(client)
+      if client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.None then
+        return
+      end
+      local state = state_by_client[client.id]
+      local debounce = client.config.flags.debounce_text_changes
+      if not debounce then
+        local changes = state.use_incremental_sync and incremental_changes(client) or full_changes()
+        client.notify("textDocument/didChange", {
+          textDocument = {
+            uri = uri;
+            version = changedtick;
+          };
+          contentChanges = { changes, }
+        })
+        return
+      end
+      changetracking._reset_timer(state)
+      if state.use_incremental_sync then
+        -- This must be done immediately and cannot be delayed
+        -- The contents would further change and startline/endline may no longer fit
+        table.insert(state.pending_changes, incremental_changes(client))
+      end
+      state.pending_change = function()
+        state.pending_change = nil
+        if client.is_stopped() then
+          return
+        end
+        local contentChanges
+        if state.use_incremental_sync then
+          contentChanges = state.pending_changes
+          state.pending_changes = {}
+        else
+          contentChanges = { full_changes(), }
+        end
+        client.notify("textDocument/didChange", {
+          textDocument = {
+            uri = uri;
+            version = changedtick;
+          };
+          contentChanges = contentChanges
+        })
+      end
+      state.timer = vim.loop.new_timer()
+      -- Must use schedule_wrap because `full_changes()` calls nvim_buf_get_lines
+      state.timer:start(debounce, 0, vim.schedule_wrap(state.pending_change))
+    end
+  end
+
+  function changetracking._reset_timer(state)
+    if state.timer then
+      state.timer:stop()
+      state.timer:close()
+      state.timer = nil
+    end
+  end
+
+  --- Flushes any outstanding change notification.
+  function changetracking.flush(client)
+    local state = state_by_client[client.id]
+    if state then
+      changetracking._reset_timer(state)
+      if state.pending_change then
+        state.pending_change()
+      end
+    end
+  end
+end
+
+
+--@private
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
 --@param bufnr (Number) Number of the buffer, or 0 for current
 --@param client Client object
 local function text_document_did_open_handler(bufnr, client)
-  local use_incremental_sync = (
-    if_nil(client.config.flags.allow_incremental_sync, true)
-    and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
-  )
-  if use_incremental_sync then
-    if not client._cached_buffers then
-      client._cached_buffers = {}
-    end
-    client._cached_buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
-  end
+  changetracking.init(client, bufnr)
   if not client.resolved_capabilities.text_document_open_close then
     return
   end
@@ -469,6 +619,9 @@ end
 --- server in the initialize request. Invalid/empty values will default to "off"
 --@param flags: A table with flags for the client. The current (experimental) flags are:
 --- - allow_incremental_sync (bool, default true): Allow using incremental sync for buffer edits
+--- - debounce_text_changes (number, default nil): Debounce didChange
+---       notifications to the server by the given number in milliseconds. No debounce
+---       occurs if nil
 ---
 --@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
 --- fully initialized. Use `on_init` to do any actions once
@@ -563,6 +716,7 @@ function lsp.start_client(config)
     uninitialized_clients[client_id] = nil
 
     lsp.diagnostic.reset(client_id, all_buffer_active_clients)
+    changetracking.reset(client_id)
     all_client_active_buffers[client_id] = nil
     for _, client_ids in pairs(all_buffer_active_clients) do
       client_ids[client_id] = nil
@@ -721,6 +875,9 @@ function lsp.start_client(config)
       handler = resolve_handler(method)
         or error(string.format("not found: %q request handler for client %q.", method, client.name))
     end
+    -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
+    changetracking.flush(client)
+
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
       handler(err, method, result, client_id, bufnr)
@@ -765,6 +922,7 @@ function lsp.start_client(config)
   function client.stop(force)
 
     lsp.diagnostic.reset(client_id, all_buffer_active_clients)
+    changetracking.reset(client_id)
     all_client_active_buffers[client_id] = nil
     for _, client_ids in pairs(all_buffer_active_clients) do
       client_ids[client_id] = nil
@@ -816,20 +974,6 @@ function lsp.start_client(config)
 end
 
 --@private
---- Memoizes a function. On first run, the function return value is saved and
---- immediately returned on subsequent runs.
----
---@param fn (function) Function to run
---@returns (function) Memoized function
-local function once(fn)
-  local value
-  return function(...)
-    if not value then value = fn(...) end
-    return value
-  end
-end
-
---@private
 --@fn text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
 --- Notify all attached clients that a buffer has changed.
 local text_document_did_change_handler
@@ -848,45 +992,9 @@ do
     if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
       return
     end
-
     util.buf_versions[bufnr] = changedtick
-
-    local incremental_changes = function(client)
-      local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
-      local startline =  math.min(firstline + 1, math.min(#client._cached_buffers[bufnr], #lines))
-      local endline =  math.min(-(#lines - new_lastline), -1)
-      local incremental_change = vim.lsp.util.compute_diff(
-        client._cached_buffers[bufnr], lines, startline, endline, client.offset_encoding or "utf-16")
-      client._cached_buffers[bufnr] = lines
-      return incremental_change
-    end
-
-    local full_changes = once(function()
-      return {
-        text = buf_get_full_text(bufnr);
-      };
-    end)
-
-    local uri = vim.uri_from_bufnr(bufnr)
-    for_each_buffer_client(bufnr, function(client)
-      local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, true)
-      local text_document_did_change = client.resolved_capabilities.text_document_did_change
-      local changes
-      if text_document_did_change == protocol.TextDocumentSyncKind.None then
-        return
-      elseif not allow_incremental_sync or text_document_did_change == protocol.TextDocumentSyncKind.Full then
-        changes = full_changes(client)
-      elseif text_document_did_change == protocol.TextDocumentSyncKind.Incremental then
-        changes = incremental_changes(client)
-      end
-      client.notify("textDocument/didChange", {
-        textDocument = {
-          uri = uri;
-          version = changedtick;
-        };
-        contentChanges = { changes; }
-      })
-    end)
+    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+    for_each_buffer_client(bufnr, compute_change_and_notify)
   end
 end
 
@@ -956,9 +1064,7 @@ function lsp.buf_attach_client(bufnr, client_id)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
-          if client._cached_buffers then
-            client._cached_buffers[bufnr] = nil
-          end
+          changetracking.reset_buf(client, bufnr)
         end)
         util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil
