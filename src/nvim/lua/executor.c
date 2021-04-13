@@ -17,6 +17,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/vim.h"
+#include "nvim/extmark.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/map.h"
@@ -1243,13 +1244,16 @@ void ex_luado(exarg_T *const eap)
       break;
     }
     lua_pushvalue(lstate, -1);
-    lua_pushstring(lstate, (const char *)ml_get_buf(curbuf, l, false));
+    const char *old_line = (const char *)ml_get_buf(curbuf, l, false);
+    lua_pushstring(lstate, old_line);
     lua_pushnumber(lstate, (lua_Number)l);
     if (lua_pcall(lstate, 2, 1, 0)) {
       nlua_error(lstate, _("E5111: Error calling lua: %.*s"));
       break;
     }
     if (lua_isstring(lstate, -1)) {
+      size_t old_line_len = STRLEN(old_line);
+
       size_t new_line_len;
       const char *const new_line = lua_tolstring(lstate, -1, &new_line_len);
       char *const new_line_transformed = xmemdupz(new_line, new_line_len);
@@ -1259,7 +1263,7 @@ void ex_luado(exarg_T *const eap)
         }
       }
       ml_replace(l, (char_u *)new_line_transformed, false);
-      changed_bytes(l, 0);
+      inserted_bytes(l, 0, (int)old_line_len, (int)new_line_len);
     }
     lua_pop(lstate, 1);
   }

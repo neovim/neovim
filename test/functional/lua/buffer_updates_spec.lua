@@ -871,6 +871,24 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     end)
 
+    it(":luado", function()
+      local check_events = setup_eventcheck(verify, {"abc", "12345"})
+
+      command(".luado return 'a'")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 0, 1, 1 };
+      }
+
+      command("luado return 10")
+
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 1, 0, 3, 0, 5, 5, 0, 2, 2 };
+      }
+
+    end)
+
     teardown(function()
       os.remove "Xtest-reload"
       os.remove "Xtest-undofile"
