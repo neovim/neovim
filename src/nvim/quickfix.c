@@ -1293,13 +1293,15 @@ static int qf_parse_fmt_f(regmatch_T *rmp,
   expand_env(rmp->startp[midx], fields->namebuf, CMDBUFFSIZE);
   *rmp->endp[midx] = c;
 
-  // For separate filename patterns (%O, %P and %Q), the specified file
-  // should exist.
-  if (vim_strchr((char_u *)"OPQ", prefix) != NULL
-      && !os_path_exists(fields->namebuf)) {
+  // Cases in which the file must exist:
+  // - when the appropriate option is set
+  // - for separate filename patterns (%O, %P and %Q)
+  bool must_exist = p_qfonlyexisting
+                 || (vim_strchr((char_u *)"OPQ", prefix) != NULL);
+
+  if (must_exist && !os_path_exists(fields->namebuf)) {
     return QF_FAIL;
   }
-
   return QF_OK;
 }
 
