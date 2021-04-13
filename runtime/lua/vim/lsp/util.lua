@@ -18,6 +18,40 @@ end
 
 local M = {}
 
+local default_border = {
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {" ", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {" ", "NormalFloat"},
+}
+
+--@private
+-- Check the border given by opts or the default border for the additional
+-- size it adds to a float.
+--@returns size of border in height and width
+local function get_border_size(opts)
+  local border = opts and opts.border or default_border
+  local height = 0
+  local width = 0
+
+  if type(border) == 'string' then
+    -- 'single', 'double', etc.
+    height = 2
+    width = 2
+  else
+    height = height + vim.fn.strdisplaywidth(border[2][1])  -- top
+    height = height + vim.fn.strdisplaywidth(border[6][1])  -- bottom
+    width  = width  + vim.fn.strdisplaywidth(border[4][1])  -- right
+    width  = width  + vim.fn.strdisplaywidth(border[8][1])  -- left
+  end
+
+  return { height = height, width = width }
+end
+
 --@private
 local function split_lines(value)
   return split(value, '\n', true)
@@ -856,7 +890,7 @@ function M.make_floating_popup_options(width, height, opts)
   else
     anchor = anchor..'S'
     height = math.min(lines_above, height)
-    row = 0
+    row = -get_border_size(opts).height
   end
 
   if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
@@ -875,16 +909,7 @@ function M.make_floating_popup_options(width, height, opts)
     row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,
-    border = opts.border or {
-      {"", "NormalFloat"},
-      {"", "NormalFloat"},
-      {"", "NormalFloat"},
-      {" ", "NormalFloat"},
-      {"", "NormalFloat"},
-      {"", "NormalFloat"},
-      {"", "NormalFloat"},
-      {" ", "NormalFloat"}
-    },
+    border = opts.border or default_border,
   }
 end
 
@@ -1185,6 +1210,20 @@ function M._make_floating_popup_size(contents, opts)
       width = math.max(line_widths[i], width)
     end
   end
+
+  local border_width = get_border_size(opts).width
+  local screen_width = api.nvim_win_get_width(0)
+  width = math.min(width, screen_width)
+
+  -- make sure borders are always inside the screen
+  if width + border_width > screen_width then
+    width = width - (width + border_width - screen_width)
+  end
+
+  if wrap_at > width then
+    wrap_at = width
+  end
+
   if max_width then
     width = math.min(width, max_width)
     wrap_at = math.min(wrap_at or max_width, max_width)
