@@ -3469,13 +3469,13 @@ static void syn_cmd_onoff(exarg_T *eap, char *name)
   }
 }
 
-void syn_maybe_on(void)
+void syn_maybe_enable(void)
 {
   if (!did_syntax_onoff) {
     exarg_T ea;
     ea.arg = (char_u *)"";
     ea.skip = false;
-    syn_cmd_onoff(&ea, "syntax");
+    syn_cmd_enable(&ea, false);
   }
 }
 
