@@ -1137,19 +1137,6 @@ describe('LSP', function()
         '2nd line of 语text';
       }, buf_lines(target_bufnr))
     end)
-    it('correctly goes ahead with the edit if the version is vim.NIL', function()
-      -- we get vim.NIL when we decode json null value.
-      local json = exec_lua[[
-        return vim.fn.json_decode("{ \"a\": 1, \"b\": null }")
-      ]]
-      eq(json.b, exec_lua("return vim.NIL"))
-
-      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit(exec_lua("return vim.NIL")))
-      eq({
-        'First ↥ 🤦 🦄 line of text';
-        '2nd line of 语text';
-      }, buf_lines(target_bufnr))
-    end)
     it('skips the edit if the version of the edit is behind the local buffer ', function()
       local apply_edit_mocking_current_version = function(edit, versionedBuf)
         exec_lua([[

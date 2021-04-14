@@ -470,7 +470,6 @@ function M.apply_text_document_edit(text_document_edit, index)
   -- `VersionedTextDocumentIdentifier`s version may be null
   --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
   if should_check_version and (text_document.version
-      and text_document.version ~= vim.NIL
       and text_document.version > 0
       and M.buf_versions[bufnr]
       and M.buf_versions[bufnr] > text_document.version) then
