@@ -1140,7 +1140,7 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
 
     local message_lines = vim.split(diagnostic.message, '\n', true)
     table.insert(lines, prefix..message_lines[1])
-    table.insert(highlights, {#prefix + 1, hiname})
+    table.insert(highlights, {#prefix, hiname})
     for j = 2, #message_lines do
       table.insert(lines, message_lines[j])
       table.insert(highlights, {0, hiname})
