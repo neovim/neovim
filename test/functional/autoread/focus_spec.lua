@@ -9,6 +9,7 @@ local feed_data = thelpers.feed_data
 if helpers.pending_win32(pending) then return end
 
 describe('autoread TUI FocusGained/FocusLost', function()
+  local f1 = 'xtest-foo'
   local screen
 
   before_each(function()
@@ -17,8 +18,12 @@ describe('autoread TUI FocusGained/FocusLost', function()
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
   end)
 
+  teardown(function()
+    os.remove(f1)
+  end)
+
   it('external file change', function()
-    local path = 'xtest-foo'
+    local path = f1
     local expected_addition = [[
     line 1
     line 2
