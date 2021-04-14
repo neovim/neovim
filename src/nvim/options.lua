@@ -841,6 +841,14 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='filechangenotify', abbreviation='fcnotify',
+      type='string', list='comma', scope={'global', 'buffer'},
+      vi_def=true,
+      vim=true,
+      varname='p_fcnotify',
+      defaults={if_true={vi="autoread,onfocus"}}
+    },
+    {
       full_name='fileencoding', abbreviation='fenc',
       short_desc=N_("file encoding for multi-byte text"),
       type='string', scope={'buffer'},

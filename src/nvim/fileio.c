@@ -114,6 +114,7 @@ struct bw_info {
 # include "fileio.c.generated.h"
 #endif
 
+static bool notified_diff = false;
 static char *e_auchangedbuf = N_(
     "E812: Autocommands changed buffer or buffer name");
 
@@ -2538,11 +2539,13 @@ buf_write(
     /*
      * Check if the timestamp hasn't changed since reading the file.
      */
-    if (overwriting) {
+    if (overwriting && !notified_diff) {
       retval = check_mtime(buf, &file_info_old);
       if (retval == FAIL)
         goto fail;
     }
+
+    notified_diff = false;
   }
 
 #ifdef HAVE_ACL
@@ -4671,6 +4674,7 @@ check_timestamps(
 )
 {
   int didit = 0;
+  bool onfocus = strstr((char *)p_fcnotify, "onfocus") != NULL;
 
   /* Don't check timestamps while system() or another low-level function may
    * cause us to lose and gain focus. */
@@ -4694,6 +4698,12 @@ check_timestamps(
     did_check_timestamps = true;
     already_warned = false;
     FOR_ALL_BUFFERS(buf) {
+      if (*buf->b_p_fcnotify != NUL) {
+        onfocus = strstr((char *)buf->b_p_fcnotify, "onfocus") != NULL;
+      }
+      if (focus && !onfocus) {
+        continue;
+      }
       // Only check buffers in a window.
       if (buf->b_nwindows > 0) {
         bufref_T bufref;
@@ -4761,6 +4771,22 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   return retval;
 }
 
+// Create a diff split for the given buffer.
+static void create_buf_diff_split(buf_T *buf)
+{
+  tabpage_new();
+  win_split(0, WSP_VERT);
+  do_cmdline((char_u *)"set buftype=nofile", NULL, NULL, 0);
+  readfile(buf->b_ffname, buf->b_fname, (linenr_T)1, (linenr_T)0,
+           (linenr_T)MAXLNUM, NULL, 0);
+  do_cmdline((char_u *)"0d_", NULL, NULL, 0);
+  do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+  do_window('r', 0, NUL);
+  do_window('p', 0, NUL);
+  do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->handle, false);
+  do_cmdline((char_u *)"diffthis", NULL, NULL, 0);
+}
+
 /*
  * Check if buffer "buf" has been changed.
  * Also check if the file for a new buffer unexpectedly appeared.
@@ -4821,10 +4847,14 @@ int buf_check_timestamp(buf_T *buf)
       buf_store_file_info(buf, &file_info);
     }
 
-    /* Don't do anything for a directory.  Might contain the file
-     * explorer. */
+    bool autoread = strstr((char *)p_fcnotify, "autoread") != NULL;
+    if (*buf->b_p_fcnotify != NUL) {
+      autoread = strstr((char *)buf->b_p_fcnotify, "autoread") != NULL;
+    }
+    // Don't do anything for a directory.  Might contain the file
+    // explorer.
     if (os_isdir(buf->b_fname)) {
-    } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
+    } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar) && autoread
                && !bufIsChanged(buf) && file_info_ok) {
       // If 'autoread' is set, the buffer has no changes and the file still
       // exists, reload the buffer.  Use the buffer-local option value if it
@@ -4925,8 +4955,14 @@ int buf_check_timestamp(buf_T *buf)
         xstrlcat(tbuf, "\n", tbuf_len - 1);
         xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
-      if (do_dialog(VIM_WARNING, (char_u *) _("Warning"), (char_u *) tbuf,
-                    (char_u *) _("&OK\n&Load File"), 1, NULL, true) == 2) {
+      int choice = do_dialog(VIM_WARNING, (char_u *)_("Warning"),
+                             (char_u *)tbuf,
+                             (char_u *)_("&OK\n&Show diff\n&Load File"),
+                             1, NULL, true);
+      if (choice == 2) {
+        create_buf_diff_split(buf);
+        notified_diff = true;
+      } else if (choice == 3) {
         reload = true;
       }
     } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {

@@ -425,6 +425,7 @@ EXTERN char_u   *p_gefm;        // 'grepformat'
 EXTERN char_u   *p_gp;          // 'grepprg'
 EXTERN char_u   *p_ei;          // 'eventignore'
 EXTERN int p_exrc;              // 'exrc'
+EXTERN char_u   *p_fcnotify;    // 'filechangenotify'
 EXTERN char_u   *p_fencs;       // 'fileencodings'
 EXTERN char_u   *p_ffs;         // 'fileformats'
 EXTERN int p_fic;               // 'fileignorecase'
@@ -773,6 +774,7 @@ enum {
   , BV_FIXEOL
   , BV_EP
   , BV_ET
+  , BV_FCNOTIFY
   , BV_FENC
   , BV_FP
   , BV_BEXPR

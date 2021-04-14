@@ -313,6 +313,8 @@ static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) =       { "manual", "expr", "marker", "indent",
                                         "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) =       { "all", NULL };
+static char *(p_fcn_values[]) =       { "off", "autoread", "watcher", "onfocus",
+                                        NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
 #ifdef BACKSLASH_IN_FILENAME
@@ -2073,6 +2075,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_menc);
   check_string_option(&buf->b_p_vsts);
   check_string_option(&buf->b_p_vts);
+  check_string_option(&buf->b_p_fcnotify);
 }
 
 /// Free the string allocated for an option.
@@ -2530,6 +2533,18 @@ ambw_end:
     }
   } else if (varp == &p_ei) {  // 'eventignore'
     if (check_ei() == FAIL) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_fcnotify) {  // 'filechangenotify'
+    char_u *fcnotify = p_fcnotify;
+
+    if (opt_flags & OPT_LOCAL) {
+      fcnotify = curbuf->b_p_fcnotify;
+    }
+
+    if (check_opt_strings(fcnotify, p_fcn_values, true) != OK
+        || (strstr((char *)fcnotify, "off")
+            && vim_strchr(fcnotify, ','))) {
       errmsg = e_invarg;
     }
   // 'encoding', 'fileencoding' and 'makeencoding'
@@ -5549,6 +5564,9 @@ void unset_global_local_option(char *name, void *from)
     case PV_MENC:
       clear_string_option(&buf->b_p_menc);
       break;
+    case PV_FCNOTIFY:
+      clear_string_option(&buf->b_p_fcnotify);
+      break;
     case PV_LCS:
       clear_string_option(&((win_T *)from)->w_p_lcs);
       set_chars_option((win_T *)from, &((win_T *)from)->w_p_lcs, true);
@@ -5573,30 +5591,31 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
   }
   if ((opt_flags & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
     switch ((int)p->indir) {
-    case PV_FP:   return (char_u *)&(curbuf->b_p_fp);
-    case PV_EFM:  return (char_u *)&(curbuf->b_p_efm);
-    case PV_GP:   return (char_u *)&(curbuf->b_p_gp);
-    case PV_MP:   return (char_u *)&(curbuf->b_p_mp);
-    case PV_EP:   return (char_u *)&(curbuf->b_p_ep);
-    case PV_KP:   return (char_u *)&(curbuf->b_p_kp);
-    case PV_PATH: return (char_u *)&(curbuf->b_p_path);
-    case PV_AR:   return (char_u *)&(curbuf->b_p_ar);
-    case PV_TAGS: return (char_u *)&(curbuf->b_p_tags);
-    case PV_TC:   return (char_u *)&(curbuf->b_p_tc);
-    case PV_SISO: return (char_u *)&(curwin->w_p_siso);
-    case PV_SO:   return (char_u *)&(curwin->w_p_so);
-    case PV_DEF:  return (char_u *)&(curbuf->b_p_def);
-    case PV_INC:  return (char_u *)&(curbuf->b_p_inc);
-    case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
-    case PV_TSR:  return (char_u *)&(curbuf->b_p_tsr);
-    case PV_TFU:  return (char_u *)&(curbuf->b_p_tfu);
-    case PV_STL:  return (char_u *)&(curwin->w_p_stl);
-    case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
-    case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
-    case PV_BKC:  return (char_u *)&(curbuf->b_p_bkc);
-    case PV_MENC: return (char_u *)&(curbuf->b_p_menc);
-    case PV_FCS:  return (char_u *)&(curwin->w_p_fcs);
-    case PV_LCS:  return (char_u *)&(curwin->w_p_lcs);
+    case PV_FP:         return (char_u *)&(curbuf->b_p_fp);
+    case PV_EFM:        return (char_u *)&(curbuf->b_p_efm);
+    case PV_GP:         return (char_u *)&(curbuf->b_p_gp);
+    case PV_MP:         return (char_u *)&(curbuf->b_p_mp);
+    case PV_EP:         return (char_u *)&(curbuf->b_p_ep);
+    case PV_KP:         return (char_u *)&(curbuf->b_p_kp);
+    case PV_PATH:       return (char_u *)&(curbuf->b_p_path);
+    case PV_AR:         return (char_u *)&(curbuf->b_p_ar);
+    case PV_TAGS:       return (char_u *)&(curbuf->b_p_tags);
+    case PV_TC:         return (char_u *)&(curbuf->b_p_tc);
+    case PV_SISO:       return (char_u *)&(curwin->w_p_siso);
+    case PV_SO:         return (char_u *)&(curwin->w_p_so);
+    case PV_DEF:        return (char_u *)&(curbuf->b_p_def);
+    case PV_INC:        return (char_u *)&(curbuf->b_p_inc);
+    case PV_DICT:       return (char_u *)&(curbuf->b_p_dict);
+    case PV_TSR:        return (char_u *)&(curbuf->b_p_tsr);
+    case PV_TFU:        return (char_u *)&(curbuf->b_p_tfu);
+    case PV_STL:        return (char_u *)&(curwin->w_p_stl);
+    case PV_UL:         return (char_u *)&(curbuf->b_p_ul);
+    case PV_LW:         return (char_u *)&(curbuf->b_p_lw);
+    case PV_BKC:        return (char_u *)&(curbuf->b_p_bkc);
+    case PV_MENC:       return (char_u *)&(curbuf->b_p_menc);
+    case PV_FCNOTIFY:   return (char_u *)&(curbuf->b_p_fcnotify);
+    case PV_FCS:        return (char_u *)&(curwin->w_p_fcs);
+    case PV_LCS:        return (char_u *)&(curwin->w_p_lcs);
     }
     return NULL;     // "cannot happen"
   }
@@ -5661,6 +5680,8 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curwin->w_p_fcs) : p->var;
   case PV_LCS:    return *curwin->w_p_lcs != NUL
            ? (char_u *)&(curwin->w_p_lcs) : p->var;
+  case PV_FCNOTIFY: return *curbuf->b_p_fcnotify != NUL
+           ? (char_u *)&(curbuf->b_p_fcnotify) : p->var;
 
   case PV_ARAB:   return (char_u *)&(curwin->w_p_arab);
   case PV_LIST:   return (char_u *)&(curwin->w_p_list);
@@ -6084,6 +6105,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_udf = p_udf;
       buf->b_p_lw = empty_option;
       buf->b_p_menc = empty_option;
+      buf->b_p_fcnotify = empty_option;
 
       /*
        * Don't copy the options set by ex_help(), use the saved values,
