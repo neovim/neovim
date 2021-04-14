@@ -473,6 +473,7 @@ int x = INT_MAX;
         ]])
 
         eq("table", exec_lua("return type(parser:children().c)"))
+        eq(true, exec_lua("return parser:children().c:parent() == parser"))
         eq(5, exec_lua("return #parser:children().c:trees()"))
         eq({
           {0, 0, 7, 0},   -- root tree
