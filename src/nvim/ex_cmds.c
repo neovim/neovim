@@ -968,12 +968,6 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
                      -(last_line - dest - extra), 0L, kExtmarkNOOP);
 
-  // extmarks are handled separately
-  extmark_move_region(curbuf, line1-1, 0, start_byte,
-                      line2-line1+1, 0, extent_byte,
-                      dest+line_off, 0, dest_byte+byte_off,
-                      kExtmarkUndo);
-
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
   // send update regarding the new lines that were added
@@ -994,6 +988,11 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     else
       smsg(_("%" PRId64 " lines moved"), (int64_t)num_lines);
   }
+
+  extmark_move_region(curbuf, line1-1, 0, start_byte,
+                      line2-line1+1, 0, extent_byte,
+                      dest+line_off, 0, dest_byte+byte_off,
+                      kExtmarkUndo);
 
   /*
    * Leave the cursor on the last of the moved lines.
