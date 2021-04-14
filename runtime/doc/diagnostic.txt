@@ -175,6 +175,14 @@ DiagnosticSignInfo
 DiagnosticSignHint
   Used for "Hint" signs in sign column.
 
+Note: Most custom colorschemes call `highlight clear` by convention on
+initialization. If the colorscheme does not define highlight groups for
+diagnostics, you can set the highlights after the colorscheme has initialized
+with an autocommand. You will need to set this autocommand before enabling the
+colorscheme: >
+
+   autocmd ColorScheme * source $VIMRUNTIME/plugin/diagnostic.vim
+
 ==============================================================================
 SIGNS							*diagnostic-signs*
 
