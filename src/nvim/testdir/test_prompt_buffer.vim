@@ -156,4 +156,40 @@ func Test_prompt_buffer_edit()
   call assert_equal(0, prompt_setprompt([], ''))
 endfunc
 
+func Test_prompt_buffer_getbufinfo()
+  new
+  call assert_equal('', prompt_getprompt('%'))
+  call assert_equal('', prompt_getprompt(bufnr('%')))
+  let another_buffer = bufnr('%')
+
+  set buftype=prompt
+  call assert_equal('% ', prompt_getprompt('%'))
+  call prompt_setprompt( bufnr( '%' ), 'This is a test: ' )
+  call assert_equal('This is a test: ', prompt_getprompt('%'))
+
+  call prompt_setprompt( bufnr( '%' ), '' )
+  " Nvim doesn't support method call syntax yet.
+  " call assert_equal('', '%'->prompt_getprompt())
+  call assert_equal('', prompt_getprompt('%'))
+
+  call prompt_setprompt( bufnr( '%' ), 'Another: ' )
+  call assert_equal('Another: ', prompt_getprompt('%'))
+  let another = bufnr('%')
+
+  new
+
+  call assert_equal('', prompt_getprompt('%'))
+  call assert_equal('Another: ', prompt_getprompt(another))
+
+  " Doesn't exist
+  let buffers_before = len( getbufinfo() )
+  call assert_equal('', prompt_getprompt( bufnr('$') + 1))
+  call assert_equal(buffers_before, len( getbufinfo()))
+
+  " invalid type
+  call assert_fails('call prompt_getprompt({})', 'E728:')
+
+  %bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

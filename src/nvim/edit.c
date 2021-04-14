@@ -1604,13 +1604,20 @@ void edit_putchar(int c, bool highlight)
   }
 }
 
-// Return the effective prompt for the current buffer.
-char_u *prompt_text(void)
+/// Return the effective prompt for the specified buffer.
+char_u *buf_prompt_text(const buf_T *const buf)
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-    if (curbuf->b_prompt_text == NULL) {
-      return (char_u *)"% ";
-    }
-    return curbuf->b_prompt_text;
+  if (buf->b_prompt_text == NULL) {
+    return (char_u *)"% ";
+  }
+  return buf->b_prompt_text;
+}
+
+// Return the effective prompt for the current buffer.
+char_u *prompt_text(void) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return buf_prompt_text(curbuf);
 }
 
 // Prepare for prompt mode: Make sure the last line has the prompt text.
