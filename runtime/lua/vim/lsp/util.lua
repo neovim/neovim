@@ -1220,7 +1220,7 @@ function M._make_floating_popup_size(contents, opts)
     width = width - (width + border_width - screen_width)
   end
 
-  if wrap_at > width then
+  if wrap_at and wrap_at > width then
     wrap_at = width
   end
 
