@@ -37,33 +37,28 @@ struct Decoration
   VirtTextPos virt_text_pos;
   bool virt_text_hide;
   HlMode hl_mode;
+  bool hl_eol;
   // TODO(bfredl): style, signs, etc
   DecorPriority priority;
   bool shared;  // shared decoration, don't free
 };
 #define DECORATION_INIT { 0, KV_INITIAL_VALUE, kVTEndOfLine, false, \
-                          kHlModeUnknown, DECOR_PRIORITY_BASE, false }
+                          kHlModeUnknown, false, DECOR_PRIORITY_BASE, false }
 
 typedef struct {
   int start_row;
   int start_col;
   int end_row;
   int end_col;
-  int attr_id;
-  // TODO(bfredl): embed decoration instead, perhaps using an arena
-  // for ephemerals?
-  DecorPriority priority;
-  VirtText virt_text;
-  VirtTextPos virt_text_pos;
-  bool virt_text_hide;
-  HlMode hl_mode;
+  Decoration decor;
+  int attr_id;  // cached lookup of decor.hl_id
   bool virt_text_owned;
   int virt_col;
-} HlRange;
+} DecorRange;
 
 typedef struct {
   MarkTreeIter itr[1];
-  kvec_t(HlRange) active;
+  kvec_t(DecorRange) active;
   buf_T *buf;
   int top_row;
   int row;

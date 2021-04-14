@@ -3951,7 +3951,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                              .hl_id = hl_err }));
         do_virttext = true;
       } else if (has_decor) {
-        virt_text = decor_redraw_virt_text(wp->w_buffer, &decor_state);
+        virt_text = decor_redraw_eol(wp->w_buffer, &decor_state, &line_attr);
         if (kv_size(virt_text)) {
           do_virttext = true;
         }
@@ -4381,11 +4381,12 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
 {
   DecorState *state = &decor_state;
   for (size_t i = 0; i < kv_size(state->active); i++) {
-    HlRange *item = &kv_A(state->active, i);
-    if (item->start_row == state->row && kv_size(item->virt_text)
-        && item->virt_text_pos == kVTOverlay
+    DecorRange *item = &kv_A(state->active, i);
+    if (item->start_row == state->row && kv_size(item->decor.virt_text)
+        && item->decor.virt_text_pos == kVTOverlay
         && item->virt_col >= 0) {
-        VirtText vt = item->virt_text;
+        VirtText vt = item->decor.virt_text;
+        HlMode hl_mode = item->decor.hl_mode;
         LineState s = LINE_STATE("");
         int virt_attr = 0;
         int col = item->virt_col;
@@ -4405,9 +4406,9 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
           }
           int attr;
           bool through = false;
-          if (item->hl_mode == kHlModeCombine) {
+          if (hl_mode == kHlModeCombine) {
             attr = hl_combine_attr(linebuf_attr[col], virt_attr);
-          } else if (item->hl_mode == kHlModeBlend) {
+          } else if (hl_mode == kHlModeBlend) {
             through = (*s.p == ' ');
             attr = hl_blend_attrs(linebuf_attr[col], virt_attr, &through);
           } else {

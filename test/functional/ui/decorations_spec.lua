@@ -29,6 +29,7 @@ describe('decorations providers', function()
       [10] = {italic = true, background = Screen.colors.Magenta};
       [11] = {foreground = Screen.colors.Red, background = tonumber('0x005028')};
       [12] = {foreground = tonumber('0x990000')};
+      [13] = {background = Screen.colors.LightBlue};
     }
   end)
 
@@ -328,6 +329,37 @@ describe('decorations providers', function()
       {2:+}witch_buffer(&save_buf, buf);          |
       {2:+}osp = getmark(mark, false);            |
       {2:+}estore_buffer(&save_buf);^              |
+                                              |
+    ]]}
+  end)
+
+  it('can highlight beyond EOL', function()
+    insert(mulholland)
+    setup_provider [[
+      local test_ns = a.nvim_create_namespace "veberod"
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+          if string.find(a.nvim_buf_get_lines(buf, line, line+1, true)[1], "buf") then
+            a.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+              end_line = line+1;
+              hl_group = 'DiffAdd';
+              hl_eol = true;
+              ephemeral = true;
+            })
+          end
+        end
+      end
+    ]]
+
+    screen:expect{grid=[[
+      // just to see if there was an accident |
+      // on Mulholland Drive                  |
+      try_start();                            |
+      {13:bufref_T save_buf;                      }|
+      {13:switch_buffer(&save_buf, buf);          }|
+      posp = getmark(mark, false);            |
+      {13:restore_buffer(&save_buf);^              }|
                                               |
     ]]}
   end)

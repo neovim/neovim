@@ -1437,6 +1437,10 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///                              default
 ///                 - "combine": combine with background text color
 ///                 - "blend": blend with background text color.
+///               - hl_eol : when true, for a multiline highlight covering the
+///                          EOL of a line, continue the highlight for the rest
+///                          of the screen line (just like for diff and
+///                          cursorline highlight).
 ///
 ///               - ephemeral : for use with |nvim_set_decoration_provider|
 ///                   callbacks. The mark will only be used for the current
@@ -1581,6 +1585,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       if (ERROR_SET(err)) {
         goto error;
       }
+    } else if (strequal("hl_eol", k.data)) {
+      decor.hl_eol = api_object_to_bool(*v, "hl_eol", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
     } else if (strequal("hl_mode", k.data)) {
       if (v->type != kObjectTypeString) {
         api_set_error(err, kErrorTypeValidation,
@@ -1669,7 +1678,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   if (ephemeral) {
     d = &decor;
   } else if (kv_size(decor.virt_text)
-             || decor.priority != DECOR_PRIORITY_BASE) {
+             || decor.priority != DECOR_PRIORITY_BASE
+             || decor.hl_eol) {
     // TODO(bfredl): this is a bit sketchy. eventually we should
     // have predefined decorations for both marks/ephemerals
     d = xcalloc(1, sizeof(*d));
@@ -1680,7 +1690,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
 
   // TODO(bfredl): synergize these two branches even more
   if (ephemeral && decor_state.buf == buf) {
-    decor_add_ephemeral((int)line, (int)col, line2, col2, &decor, 0);
+    decor_add_ephemeral((int)line, (int)col, line2, col2, &decor);
   } else {
     if (ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
