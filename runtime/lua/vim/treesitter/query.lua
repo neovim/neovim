@@ -89,17 +89,6 @@ local function read_query_files(filenames)
   return table.concat(contents, '')
 end
 
-local match_metatable = {
-  __index = function(tbl, key)
-    rawset(tbl, key, {})
-    return tbl[key]
-  end
-}
-
-local function new_match_metadata()
-  return setmetatable({}, match_metatable)
-end
-
 --- The explicitly set queries from |vim.treesitter.query.set_query()|
 local explicit_queries = setmetatable({}, {
   __index = function(t, k)
@@ -259,7 +248,7 @@ predicate_handlers["vim-match?"] = predicate_handlers["match?"]
 -- Directives store metadata or perform side effects against a match.
 -- Directives should always end with a `!`.
 -- Directive handler receive the following arguments
--- (match, pattern, bufnr, predicate)
+-- (match, pattern, bufnr, predicate, metadata)
 local directive_handlers = {
   ["set!"] = function(_, _, _, pred, metadata)
     if #pred == 4 then
@@ -279,7 +268,6 @@ local directive_handlers = {
     local start_col_offset = pred[4] or 0
     local end_row_offset = pred[5] or 0
     local end_col_offset = pred[6] or 0
-    local key = pred[7] or "offset"
 
     range[1] = range[1] + start_row_offset
     range[2] = range[2] + start_col_offset
@@ -288,7 +276,7 @@ local directive_handlers = {
 
     -- If this produces an invalid range, we just skip it.
     if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
-      metadata[pred[2]][key] = range
+      metadata.content = {range}
     end
   end
 }
@@ -420,7 +408,7 @@ function Query:iter_captures(node, source, start, stop)
   local raw_iter = node:_rawquery(self.query, true, start, stop)
   local function iter()
     local capture, captured_node, match = raw_iter()
-    local metadata = new_match_metadata()
+    local metadata = {}
 
     if match ~= nil then
       local active = self:match_preds(match, match.pattern, source)
@@ -455,7 +443,7 @@ function Query:iter_matches(node, source, start, stop)
   local raw_iter = node:_rawquery(self.query, false, start, stop)
   local function iter()
     local pattern, match = raw_iter()
-    local metadata = new_match_metadata()
+    local metadata = {}
 
     if match ~= nil then
       local active = self:match_preds(match, pattern, source)

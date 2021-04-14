@@ -12,14 +12,19 @@ LanguageTree.__index = LanguageTree
 -- @param source Can be a bufnr or a string of text to parse
 -- @param lang The language this tree represents
 -- @param opts Options table
--- @param opts.queries A table of language to injection query strings.
---                     This is useful for overriding the built-in runtime file
---                     searching for the injection language query per language.
+-- @param opts.injections A table of language to injection query strings.
+--                        This is useful for overriding the built-in runtime file
+--                        searching for the injection language query per language.
 function LanguageTree.new(source, lang, opts)
   language.require_language(lang)
   opts = opts or {}
 
-  local custom_queries = opts.queries or {}
+  if opts.queries then
+    a.nvim_err_writeln("'queries' is no longer supported. Use 'injections' now")
+    opts.injections = opts.queries
+  end
+
+  local injections = opts.injections or {}
   local self = setmetatable({
     _source = source,
     _lang = lang,
@@ -27,8 +32,8 @@ function LanguageTree.new(source, lang, opts)
     _regions = {},
     _trees = {},
     _opts = opts,
-    _injection_query = custom_queries[lang]
-      and query.parse_query(lang, custom_queries[lang])
+    _injection_query = injections[lang]
+      and query.parse_query(lang, injections[lang])
       or query.get_query(lang, "injections"),
     _valid = false,
     _parser = vim._create_ts_parser(lang),
@@ -297,33 +302,50 @@ function LanguageTree:_get_injections()
 
     for pattern, match, metadata in self._injection_query:iter_matches(root_node, self._source, start_line, end_line+1) do
       local lang = nil
-      local injection_node = nil
-      local combined = false
+      local ranges = {}
+      local combined = metadata.combined
+
+      -- Directives can configure how injections are captured as well as actual node captures.
+      -- This allows more advanced processing for determining ranges and language resolution.
+      if metadata.content then
+        local content = metadata.content
+
+        -- Allow for captured nodes to be used
+        if type(content) == "number" then
+          content = {match[content]}
+        end
+
+        if content then
+          vim.list_extend(ranges, content)
+        end
+      end
+
+      if metadata.language then
+        lang = metadata.language
+      end
 
       -- You can specify the content and language together
       -- using a tag with the language, for example
       -- @javascript
       for id, node in pairs(match) do
-        local data = metadata[id]
         local name = self._injection_query.captures[id]
-        local offset_range = data and data.offset
 
         -- Lang should override any other language tag
-        if name == "language" then
+        if name == "language" and not lang then
           lang = query.get_node_text(node, self._source)
         elseif name == "combined" then
           combined = true
-        elseif name == "content" then
-          injection_node = offset_range or node
+        elseif name == "content" and #ranges == 0 then
+          table.insert(ranges, node)
         -- Ignore any tags that start with "_"
         -- Allows for other tags to be used in matches
         elseif string.sub(name, 1, 1) ~= "_" then
-          if lang == nil then
+          if not lang then
             lang = name
           end
 
-          if not injection_node then
-            injection_node = offset_range or node
+          if #ranges == 0 then
+            table.insert(ranges, node)
           end
         end
       end
@@ -337,21 +359,21 @@ function LanguageTree:_get_injections()
         injections[tree_index][lang] = {}
       end
 
-      -- Key by pattern so we can either combine each node to parse in the same
-      -- context or treat each node independently.
+      -- Key this by pattern. If combined is set to true all captures of this pattern
+      -- will be parsed by treesitter as the same "source".
+      -- If combined is false, each "region" will be parsed as a single source.
       if not injections[tree_index][lang][pattern] then
-        injections[tree_index][lang][pattern] = { combined = combined, nodes = {} }
+        injections[tree_index][lang][pattern] = { combined = combined, regions = {} }
       end
 
-      table.insert(injections[tree_index][lang][pattern].nodes, injection_node)
+      table.insert(injections[tree_index][lang][pattern].regions, ranges)
     end
   end
 
   local result = {}
 
   -- Generate a map by lang of node lists.
-  -- Each list is a set of ranges that should be parsed
-  -- together.
+  -- Each list is a set of ranges that should be parsed together.
   for _, lang_map in ipairs(injections) do
     for lang, patterns in pairs(lang_map) do
       if not result[lang] then
@@ -360,10 +382,10 @@ function LanguageTree:_get_injections()
 
       for _, entry in pairs(patterns) do
         if entry.combined then
-          table.insert(result[lang], entry.nodes)
+          table.insert(result[lang], vim.tbl_flatten(entry.regions))
         else
-          for _, node in ipairs(entry.nodes) do
-            table.insert(result[lang], {node})
+          for _, ranges in ipairs(entry.regions) do
+            table.insert(result[lang], ranges)
           end
         end
       end
