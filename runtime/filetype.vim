@@ -413,6 +413,10 @@ endif
 " Lynx config files
 au BufNewFile,BufRead lynx.cfg			setf lynx
 
+" Modula-3 configuration language (must be before *.cfg and *makefile)
+au BufNewFile,BufRead *.quake,cm3.cfg		setf m3quake
+au BufNewFile,BufRead m3makefile,m3overrides	setf m3build
+
 " Quake
 au BufNewFile,BufRead *baseq[2-3]/*.cfg,*id1/*.cfg	setf quake
 au BufNewFile,BufRead *quake[1-3]/*.cfg			setf quake
@@ -1041,10 +1045,10 @@ au BufNewFile,BufRead *.mod
 	\   setf modsim3 |
 	\ endif
 
-" Modula 2  (.md removed in favor of Markdown)
+" Modula-2  (.md removed in favor of Markdown)
 au BufNewFile,BufRead *.m2,*.DEF,*.MOD,*.mi	setf modula2
 
-" Modula 3 (.m3, .i3, .mg, .ig)
+" Modula-3 (.m3, .i3, .mg, .ig)
 au BufNewFile,BufRead *.[mi][3g]		setf modula3
 
 " Monk
