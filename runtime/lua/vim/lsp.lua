@@ -267,14 +267,20 @@ end
 
 --@private
 --- Memoizes a function. On first run, the function return value is saved and
---- immediately returned on subsequent runs.
+--- immediately returned on subsequent runs. If the function returns a multival,
+--- only the first returned value will be memoized and returned. The function will only be run once,
+--- even if it has side-effects.
 ---
 --@param fn (function) Function to run
 --@returns (function) Memoized function
 local function once(fn)
   local value
+  local ran = false
   return function(...)
-    if not value then value = fn(...) end
+    if not ran then
+      value = fn(...)
+      ran = true
+    end
     return value
   end
 end
@@ -1239,9 +1245,49 @@ function lsp.buf_request(bufnr, method, params, handler)
   return client_request_ids, _cancel_all_requests
 end
 
---- Sends a request to a server and waits for the response.
+---Sends an async request for all active clients attached to the buffer.
+---Executes the callback on the combined result.
+---Parameters are the same as |vim.lsp.buf_request()| but the return result and callback are
+---different.
 ---
---- Calls |vim.lsp.buf_request()| but blocks Nvim while awaiting the result.
+--@param bufnr (number) Buffer handle, or 0 for current.
+--@param method (string) LSP method name
+--@param params (optional, table) Parameters to send to the server
+--@param callback (function) The callback to call when all requests are finished.
+--  Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
+--  A map of client_id:request_result will be provided to the callback
+--
+--@returns (function) A function that will cancel all requests which is the same as the one returned from `buf_request`.
+function lsp.buf_request_all(bufnr, method, params, callback)
+  local request_results = {}
+  local result_count = 0
+  local expected_result_count = 0
+  local cancel, client_request_ids
+
+  local set_expected_result_count = once(function()
+    for _ in pairs(client_request_ids) do
+      expected_result_count = expected_result_count + 1
+    end
+  end)
+
+  local function _sync_handler(err, _, result, client_id)
+    request_results[client_id] = { error = err, result = result }
+    result_count = result_count + 1
+    set_expected_result_count()
+
+    if result_count >= expected_result_count then
+      callback(request_results)
+    end
+  end
+
+  client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
+
+  return cancel
+end
+
+--- Sends a request to all server and waits for the response of all of them.
+---
+--- Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the result.
 --- Parameters are the same as |vim.lsp.buf_request()| but the return result is
 --- different. Wait maximum of {timeout_ms} (default 100) ms.
 ---
@@ -1255,26 +1301,21 @@ end
 ---        returns `(nil, err)` where `err` is a string describing the failure
 ---        reason.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
-  local request_results = {}
-  local result_count = 0
-  local function _sync_handler(err, _, result, client_id)
-    request_results[client_id] = { error = err, result = result }
-    result_count = result_count + 1
-  end
-  local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
-  local expected_result_count = 0
-  for _ in pairs(client_request_ids) do
-    expected_result_count = expected_result_count + 1
-  end
+  local request_results
+
+  local cancel = lsp.buf_request_all(bufnr, method, params, function(it)
+    request_results = it
+  end)
 
   local wait_result, reason = vim.wait(timeout_ms or 100, function()
-    return result_count >= expected_result_count
+    return request_results ~= nil
   end, 10)
 
   if not wait_result then
     cancel()
     return nil, wait_result_reason[reason]
   end
+
   return request_results
 end
 
