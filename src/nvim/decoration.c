@@ -230,6 +230,10 @@ static void decor_add(DecorState *state, int start_row, int start_col,
                        *decor, attr_id,
                     kv_size(decor->virt_text) && owned, -1 };
 
+  if (decor->virt_text_pos == kVTEndOfLine) {
+    range.win_col = -2;  // handled separately
+  }
+
   kv_pushp(state->active);
   size_t index;
   for (index = kv_size(state->active)-1; index > 0; index--) {
@@ -242,7 +246,7 @@ static void decor_add(DecorState *state, int start_row, int start_col,
   kv_A(state->active, index) = range;
 }
 
-int decor_redraw_col(buf_T *buf, int col, int virt_col, bool hidden,
+int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden,
                      DecorState *state)
 {
   if (col <= state->col_until) {
@@ -321,8 +325,9 @@ next_mark:
       attr = hl_combine_attr(attr, item.attr_id);
     }
     if ((item.start_row == state->row && item.start_col <= col)
-        && kv_size(item.decor.virt_text) && item.virt_col == -1) {
-      item.virt_col = (item.decor.virt_text_hide && hidden) ? -2 : virt_col;
+        && kv_size(item.decor.virt_text)
+        && item.decor.virt_text_pos == kVTOverlay && item.win_col == -1) {
+      item.win_col = (item.decor.virt_text_hide && hidden) ? -2 : win_col;
     }
     if (keep) {
       kv_A(state->active, j++) = item;
@@ -340,17 +345,22 @@ void decor_redraw_end(DecorState *state)
   state->buf = NULL;
 }
 
-VirtText decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr)
+VirtText decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr,
+                          bool *aligned)
 {
   decor_redraw_col(buf, MAXCOL, MAXCOL, false, state);
   VirtText text = VIRTTEXT_EMPTY;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
-    if (!kv_size(text)
-        && item.start_row == state->row && kv_size(item.decor.virt_text)
-        && item.decor.virt_text_pos == kVTEndOfLine) {
-      text = item.decor.virt_text;
+    if (item.start_row == state->row && kv_size(item.decor.virt_text)) {
+      if (!kv_size(text) && item.decor.virt_text_pos == kVTEndOfLine) {
+        text = item.decor.virt_text;
+      } else if (item.decor.virt_text_pos == kVTRightAlign
+                 || item.decor.virt_text_pos == kVTWinCol) {
+        *aligned = true;
+      }
     }
+
 
     if (item.decor.hl_eol && item.start_row <= state->row) {
       *eol_attr = hl_combine_attr(*eol_attr, item.attr_id);
