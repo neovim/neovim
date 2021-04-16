@@ -1217,7 +1217,6 @@ au BufNewFile,BufRead *.pm
 
 " Perl POD
 au BufNewFile,BufRead *.pod			setf pod
-au BufNewFile,BufRead *.pod6			setf pod6
 
 " Php, php3, php4, etc.
 " Also Phtml (was used for PHP 2 in the past)

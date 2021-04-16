@@ -358,7 +358,6 @@ let s:filename_checks = {
     \ 'plsql': ['file.pls', 'file.plsql'],
     \ 'po': ['file.po', 'file.pot'],
     \ 'pod': ['file.pod'],
-    \ 'pod6': ['file.pod6'],
     \ 'poke': ['file.pk'],
     \ 'postscr': ['file.ps', 'file.pfa', 'file.afm', 'file.eps', 'file.epsf', 'file.epsi', 'file.ai'],
     \ 'pov': ['file.pov'],
