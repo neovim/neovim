@@ -4947,11 +4947,11 @@ int buf_check_timestamp(buf_T *buf)
         (void)msg_end();
         if (emsg_silent == 0) {
           ui_flush();
-          /* give the user some time to think about it */
-          os_delay(1000L, true);
+          // give the user some time to think about it
+          os_delay(1004L, true);
 
-          /* don't redraw and erase the message */
-          redraw_cmdline = FALSE;
+          // don't redraw and erase the message
+          redraw_cmdline = false;
         }
       }
       already_warned = TRUE;

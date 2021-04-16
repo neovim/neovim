@@ -276,28 +276,28 @@ func Test_augroup_warning()
   augroup TheWarning
     au VimEnter * echo 'entering'
   augroup END
-  call assert_true(match(execute('au VimEnter'), "TheWarning.*VimEnter") >= 0)
+  call assert_match("TheWarning.*VimEnter", execute('au VimEnter'))
   redir => res
   augroup! TheWarning
   redir END
-  call assert_true(match(res, "W19:") >= 0)
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("W19:", res)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
 
   " check "Another" does not take the pace of the deleted entry
   augroup Another
   augroup END
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
   augroup! Another
 
   " no warning for postpone aucmd delete
   augroup StartOK
     au VimEnter * call RemoveGroup()
   augroup END
-  call assert_true(match(execute('au VimEnter'), "StartOK.*VimEnter") >= 0)
+  call assert_match("StartOK.*VimEnter", execute('au VimEnter'))
   redir => res
   doautocmd VimEnter
   redir END
-  call assert_true(match(res, "W19:") < 0)
+  call assert_notmatch("W19:", res)
   au! VimEnter
 endfunc
 
@@ -325,7 +325,7 @@ func Test_augroup_deleted()
     au VimEnter * echo
   augroup end
   augroup! x
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
   au! VimEnter
 endfunc
 

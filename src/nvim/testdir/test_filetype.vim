@@ -275,6 +275,8 @@ let s:filename_checks = {
     \ 'lss': ['file.lss'],
     \ 'lua': ['file.lua', 'file.rockspec', 'file.nse'],
     \ 'lynx': ['lynx.cfg'],
+    \ 'm3build': ['m3makefile', 'm3overrides'],
+    \ 'm3quake': ['file.quake', 'cm3.cfg'],
     \ 'm4': ['file.at'],
     \ 'mail': ['snd.123', '.letter', '.letter.123', '.followup', '.article', '.article.123', 'pico.123', 'mutt-xx-xxx', 'muttng-xx-xxx', 'ae123.txt', 'file.eml'],
     \ 'mailaliases': ['/etc/mail/aliases', '/etc/aliases'],

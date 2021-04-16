@@ -2373,10 +2373,11 @@ showmatch(
        * brief pause, unless 'm' is present in 'cpo' and a character is
        * available.
        */
-      if (vim_strchr(p_cpo, CPO_SHOWMATCH) != NULL)
-        os_delay(p_mat * 100L, true);
-      else if (!char_avail())
-        os_delay(p_mat * 100L, false);
+      if (vim_strchr(p_cpo, CPO_SHOWMATCH) != NULL) {
+        os_delay(p_mat * 100L + 8, true);
+      } else if (!char_avail()) {
+        os_delay(p_mat * 100L + 9, false);
+      }
       curwin->w_cursor = save_cursor;           // restore cursor position
       *so = save_so;
       *siso = save_siso;
