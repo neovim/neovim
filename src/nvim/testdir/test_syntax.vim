@@ -24,6 +24,32 @@ func GetSyntaxItem(pat)
   return c
 endfunc
 
+func AssertHighlightGroups(lnum, startcol, expected, trans = 1, msg = "")
+  " Assert that the characters starting at a given (line, col)
+  " sequentially match the expected highlight groups.
+  " If groups are provided as a string, each character is assumed to be a
+  " group and spaces represent no group, useful for visually describing tests.
+  let l:expectedGroups = type(a:expected) == v:t_string
+        "\ ? a:expected->split('\zs')->map({_, v -> trim(v)})
+        \ ? map(split(a:expected, '\zs'), {_, v -> trim(v)})
+        \ : a:expected
+  let l:errors = 0
+  " let l:msg = (a:msg->empty() ? "" : a:msg .. ": ")
+  let l:msg = (empty(a:msg) ? "" : a:msg .. ": ")
+        \ .. "Wrong highlight group at " .. a:lnum .. ","
+
+  " for l:i in range(a:startcol, a:startcol + l:expectedGroups->len() - 1)
+  "   let l:errors += synID(a:lnum, l:i, a:trans)
+  "        \ ->synIDattr("name")
+  "        \ ->assert_equal(l:expectedGroups[l:i - 1],
+  for l:i in range(a:startcol, a:startcol + len(l:expectedGroups) - 1)
+    let l:errors +=
+          \ assert_equal(synIDattr(synID(a:lnum, l:i, a:trans), "name"),
+          \    l:expectedGroups[l:i - 1],
+          \    l:msg .. l:i)
+  endfor
+endfunc
+
 func Test_syn_iskeyword()
   new
   call setline(1, [
@@ -707,3 +733,22 @@ func Test_syntax_foldlevel()
 
   quit!
 endfunc
+
+func Test_syn_include_contains_TOP()
+  let l:case = "TOP in included syntax means its group list name"
+  new
+  syntax include @INCLUDED syntax/c.vim
+  syntax region FencedCodeBlockC start=/```c/ end=/```/ contains=@INCLUDED
+
+  call setline(1,  ['```c', '#if 0', 'int', '#else', 'int', '#endif', '```' ])
+  let l:expected = ["cCppOutIf2"]
+  eval AssertHighlightGroups(3, 1, l:expected, 1)
+  " cCppOutElse has contains=TOP
+  let l:expected = ["cType"]
+  eval AssertHighlightGroups(5, 1, l:expected, 1, l:case)
+  syntax clear
+  bw!
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab
