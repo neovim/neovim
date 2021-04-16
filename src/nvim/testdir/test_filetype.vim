@@ -605,7 +605,7 @@ let s:script_checks = {
       \          ['#!/path/pike0'],
       \          ['#!/path/pike9']],
       \ 'lua': [['#!/path/lua']],
-      \ 'perl6': [['#!/path/perl6']],
+      \ 'raku': [['#!/path/raku']],
       \ 'perl': [['#!/path/perl']],
       \ 'php': [['#!/path/php']],
       \ 'python': [['#!/path/python'],
