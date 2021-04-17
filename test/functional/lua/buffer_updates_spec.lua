@@ -889,6 +889,23 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
     end)
 
+    it("flushes deleted bytes on move", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC", "DDD"})
+
+      feed(":.move+1<cr>")
+
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 4, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 1, 0, 4, 0, 0, 0, 1, 0, 4 };
+      }
+
+      feed("jd2j")
+
+      check_events {
+        { "test1", "bytes", 1, 6, 2, 0, 8, 2, 0, 8, 0, 0, 0 };
+      }
+    end)
+
     teardown(function()
       os.remove "Xtest-reload"
       os.remove "Xtest-undofile"

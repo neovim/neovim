@@ -702,6 +702,7 @@ void extmark_move_region(
     int new_row, colnr_T new_col, bcount_t new_byte,
     ExtmarkOp undo)
 {
+  curbuf->deleted_bytes2 = 0;
   // TODO(bfredl): this is not synced to the buffer state inside the callback.
   // But unless we make the undo implementation smarter, this is not ensured
   // anyway.
