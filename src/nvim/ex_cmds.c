@@ -5856,7 +5856,7 @@ void ex_helpclose(exarg_T *eap)
 {
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (bt_help(win->w_buffer)) {
-      win_close(win, false);
+      win_close(win, false, eap->forceit);
       return;
     }
   }
