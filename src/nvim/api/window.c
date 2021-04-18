@@ -168,9 +168,10 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
 /// Gets the window width
 ///
 /// @param window   Window handle, or 0 for current window
+/// @param inner    Exclude the left margin
 /// @param[out] err Error details, if any
 /// @return Width as a count of columns
-Integer nvim_win_get_width(Window window, Error *err)
+Integer nvim_win_get_width(Window window, Boolean inner, Error *err)
   FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -179,7 +180,11 @@ Integer nvim_win_get_width(Window window, Error *err)
     return 0;
   }
 
-  return win->w_width;
+  if (inner) {
+    return win->w_width - win_col_off(win);
+  } else {
+    return win->w_width;
+  }
 }
 
 /// Sets the window width. This will only succeed if the screen is split
