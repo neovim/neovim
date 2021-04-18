@@ -232,7 +232,7 @@ void screen_invalidate_highlights(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     redraw_later(wp, NOT_VALID);
-    wp->w_grid.valid = false;
+    wp->w_grid_alloc.valid = false;
   }
 }
 
@@ -582,9 +582,16 @@ int update_screen(int type)
 
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid.chars) {
-      grid_invalidate(&wp->w_grid);
+    if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid_alloc.chars) {
+      grid_invalidate(&wp->w_grid_alloc);
       wp->w_redr_type = NOT_VALID;
+    }
+
+    // reallocate grid if needed.
+    win_grid_alloc(wp);
+
+    if (wp->w_redr_border || wp->w_redr_type >= NOT_VALID) {
+      win_redr_border(wp);
     }
 
     if (wp->w_redr_type != 0) {
@@ -773,8 +780,6 @@ static void win_update(win_T *wp, Providers *providers)
   buf_signcols(buf);
 
   type = wp->w_redr_type;
-
-  win_grid_alloc(wp);
 
   if (type >= NOT_VALID) {
     wp->w_redr_status = true;
@@ -2077,7 +2082,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int change_start = MAXCOL;            // first col of changed area
   int change_end = -1;                  // last col of changed area
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
+  colnr_T leadcol = 0;                  // start of leading spaces
   bool need_showbreak = false;          // overlong line, skip first x chars
+  sign_attrs_T sattrs[SIGN_SHOW_MAX];   // attributes for signs
+  int num_signs;                        // number of signs for line
   int line_attr = 0;                    // attribute for the whole line
   int line_attr_lowprio = 0;            // low-priority attribute for the line
   matchitem_T *cur;                     // points to the match list
@@ -2095,6 +2103,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   bool do_virttext = false;             // draw virtual text for this line
 
   char_u buf_fold[FOLD_TEXT_LEN + 1];   // Hold value returned by get_foldtext
+
+  bool area_active = false;
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
@@ -2315,7 +2325,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
       }
       // do at least one character; happens when past end of line
-      if (fromcol == tocol) {
+      if (fromcol == tocol && search_match_endcol) {
         tocol = fromcol + 1;
       }
       area_highlighting = true;
@@ -2367,11 +2377,14 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     wp->w_last_cursorline = wp->w_cursor.lnum;
   }
 
+  memset(sattrs, 0, sizeof(sattrs));
+  num_signs = buf_get_signattrs(wp->w_buffer, lnum, sattrs);
+
   // If this line has a sign with line highlighting set line_attr.
   // TODO(bfredl, vigoux): this should not take priority over decoration!
-  v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL, 0, 1);
-  if (v != 0) {
-    line_attr = sign_get_attr((int)v, SIGN_LINEHL);
+  sign_attrs_T * sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1);
+  if (sattr != NULL) {
+    line_attr = sattr->sat_linehl;
   }
 
   // Highlight the current line in the quickfix window.
@@ -2420,6 +2433,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   if (wp->w_p_list && !has_fold) {
     if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.trail
+        || wp->w_p_lcs_chars.lead
         || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
     }
@@ -2430,6 +2444,20 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         trailcol--;
       }
       trailcol += (colnr_T) (ptr - line);
+    }
+    // find end of leading whitespace
+    if (wp->w_p_lcs_chars.lead) {
+      leadcol = 0;
+      while (ascii_iswhite(ptr[leadcol])) {
+        leadcol++;
+      }
+      if (ptr[leadcol] == NUL) {
+        // in a line full of spaces all of them are treated as trailing
+        leadcol = (colnr_T)0;
+      } else {
+        // keep track of the first column not filled with spaces
+        leadcol += (colnr_T)(ptr - line) + 1;
+      }
     }
   }
 
@@ -2656,7 +2684,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // already be in use.
           xfree(p_extra_free);
           p_extra_free = xmalloc(MAX_MCO * fdc + 1);
-          n_extra = fill_foldcolumn(p_extra_free, wp, foldinfo, lnum);
+          n_extra = (int)fill_foldcolumn(p_extra_free, wp, foldinfo, lnum);
           p_extra_free[n_extra] = NUL;
           p_extra = p_extra_free;
           c_extra = NUL;
@@ -2673,7 +2701,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           int count = win_signcol_count(wp);
           if (count > 0) {
               get_sign_display_info(
-                  false, wp, lnum, row,
+                  false, wp, sattrs, row,
                   startrow, filler_lines, filler_todo, count,
                   &c_extra, &c_final, extra, sizeof(extra),
                   &p_extra, &n_extra,
@@ -2692,10 +2720,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // in 'lnum', then display the sign instead of the line
           // number.
           if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
-              && buf_findsign_id(wp->w_buffer, lnum, (char_u *)"*") != 0) {
+              && num_signs > 0) {
             int count = win_signcol_count(wp);
             get_sign_display_info(
-                true, wp, lnum, row,
+                true, wp, sattrs, row,
                 startrow, filler_lines, filler_todo, count,
                 &c_extra, &c_final, extra, sizeof(extra),
                 &p_extra, &n_extra,
@@ -2745,13 +2773,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             n_extra = number_width(wp) + 1;
             char_attr = win_hl_attr(wp, HLF_N);
 
-            int num_sign = buf_getsigntype(
-                wp->w_buffer, lnum, SIGN_NUMHL, 0, 1);
-            if (num_sign != 0) {
+            sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
+            if (num_sattr != NULL) {
               // :sign defined with "numhl" highlight.
-              char_attr = sign_get_attr(num_sign, SIGN_NUMHL);
+              char_attr = num_sattr->sat_numhl;
             } else if ((wp->w_p_cul || wp->w_p_rnu)
-                       && lnum == wp->w_cursor.lnum) {
+                       && lnum == wp->w_cursor.lnum
+                       && filler_todo == 0) {
               // When 'cursorline' is set highlight the line number of
               // the current line differently.
               // TODO(vim): Can we use CursorLine instead of CursorLineNr
@@ -2850,6 +2878,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       if (draw_state == WL_LINE - 1 && n_extra == 0) {
         sign_idx = 0;
         draw_state = WL_LINE;
+
+        if (has_decor && row == startrow + filler_lines) {
+          // hide virt_text on text hidden by 'nowrap'
+          decor_redraw_col(wp->w_buffer, vcol, off, true, &decor_state);
+        }
+
         if (saved_n_extra) {
           /* Continue item from end of wrapped line. */
           n_extra = saved_n_extra;
@@ -2934,10 +2968,14 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               && vcol_prev < vcol               // not at margin
               && vcol < tocol)) {
         area_attr = attr;                       // start highlighting
+        if (area_highlighting) {
+          area_active = true;
+        }
       } else if (area_attr != 0 && (vcol == tocol
                                     || (noinvcur
                                         && (colnr_T)vcol == wp->w_virtcol))) {
         area_attr = 0;                          // stop highlighting
+        area_active = false;
      }
 
       if (!n_extra) {
@@ -3120,6 +3158,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           mb_utf8 = false;
         }
       } else {
+        assert(p_extra != NULL);
         c = *p_extra;
         mb_c = c;
         // If the UTF-8 character is more than one byte:
@@ -3397,9 +3436,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
+        if (wp->w_buffer->terminal) {
+          char_attr = hl_combine_attr(term_attrs[vcol], char_attr);
+        }
+
         if (has_decor && v > 0) {
+          bool selected = (area_active || (area_highlighting && noinvcur
+                                           && (colnr_T)vcol == wp->w_virtcol));
           int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v-1, off,
-                                              &decor_state);
+                                              selected, &decor_state);
           if (extmark_attr != 0) {
             if (!attr_pri) {
               char_attr = hl_combine_attr(char_attr, extmark_attr);
@@ -3407,10 +3452,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               char_attr = hl_combine_attr(extmark_attr, char_attr);
             }
           }
-        }
-
-        if (wp->w_buffer->terminal) {
-          char_attr = hl_combine_attr(term_attrs[vcol], char_attr);
         }
 
         // Found last space before word: check for line break.
@@ -3421,8 +3462,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
           if (c == TAB && n_extra + col > grid->Columns) {
-            n_extra = (int)wp->w_buffer->b_p_ts
-                      - vcol % (int)wp->w_buffer->b_p_ts - 1;
+            n_extra = tabstop_padding(vcol, wp->w_buffer->b_p_ts,
+                                      wp->w_buffer->b_p_vts_array) - 1;
           }
           c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
           c_final = NUL;
@@ -3442,6 +3483,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                   || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
                  && curwin->w_p_lcs_chars.nbsp)
                 || (c == ' ' && curwin->w_p_lcs_chars.space
+                    && ptr - line >= leadcol
                     && ptr - line <= trailcol))) {
           c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
           n_attr = 1;
@@ -3457,8 +3499,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           }
         }
 
-        if (trailcol != MAXCOL && ptr > line + trailcol && c == ' ') {
-          c = wp->w_p_lcs_chars.trail;
+        if ((trailcol != MAXCOL && ptr > line + trailcol && c == ' ')
+            || (leadcol != 0 && ptr < line + leadcol && c == ' ')) {
+          c = (ptr > line + trailcol) ? wp->w_p_lcs_chars.trail
+                                      : wp->w_p_lcs_chars.lead;
           n_attr = 1;
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
@@ -3488,8 +3532,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             vcol_adjusted = vcol - MB_CHARLEN(p_sbr);
           }
           // tab amount depends on current column
-          tab_len = (int)wp->w_buffer->b_p_ts
-                    - vcol_adjusted % (int)wp->w_buffer->b_p_ts - 1;
+          tab_len = tabstop_padding(vcol_adjusted,
+                                    wp->w_buffer->b_p_ts,
+                                    wp->w_buffer->b_p_vts_array) - 1;
 
           if (!wp->w_p_lbr || !wp->w_p_list) {
             n_extra = tab_len;
@@ -3522,6 +3567,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
+              if (*p == NUL) {
+                tab_len = i;
+                break;
+              }
               int lcs = wp->w_p_lcs_chars.tab2;
 
               // if tab3 is given, need to change the char
@@ -3902,9 +3951,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
                                              .hl_id = hl_err }));
         do_virttext = true;
       } else if (has_decor) {
-        VirtText *vp = decor_redraw_virt_text(wp->w_buffer, &decor_state);
-        if (vp) {
-          virt_text = *vp;
+        virt_text = decor_redraw_eol(wp->w_buffer, &decor_state, &line_attr);
+        if (kv_size(virt_text)) {
           do_virttext = true;
         }
       }
@@ -4333,11 +4381,12 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
 {
   DecorState *state = &decor_state;
   for (size_t i = 0; i < kv_size(state->active); i++) {
-    HlRange *item = &kv_A(state->active, i);
-    if (item->start_row == state->row && item->virt_text
-        && item->virt_text_pos == kVTOverlay
+    DecorRange *item = &kv_A(state->active, i);
+    if (item->start_row == state->row && kv_size(item->decor.virt_text)
+        && item->decor.virt_text_pos == kVTOverlay
         && item->virt_col >= 0) {
-        VirtText vt = *item->virt_text;
+        VirtText vt = item->decor.virt_text;
+        HlMode hl_mode = item->decor.hl_mode;
         LineState s = LINE_STATE("");
         int virt_attr = 0;
         int col = item->virt_col;
@@ -4355,10 +4404,22 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
             virt_pos++;
             continue;
           }
-          int cells = line_putchar(&s, &linebuf_char[col], 2, false);
-          linebuf_attr[col++] = virt_attr;
+          int attr;
+          bool through = false;
+          if (hl_mode == kHlModeCombine) {
+            attr = hl_combine_attr(linebuf_attr[col], virt_attr);
+          } else if (hl_mode == kHlModeBlend) {
+            through = (*s.p == ' ');
+            attr = hl_blend_attrs(linebuf_attr[col], virt_attr, &through);
+          } else {
+            attr = virt_attr;
+          }
+          schar_T dummy[2];
+          int cells = line_putchar(&s, through ? dummy : &linebuf_char[col],
+                                   max_col-col, false);
+          linebuf_attr[col++] = attr;
           if (cells > 1) {
-            linebuf_attr[col++] = virt_attr;
+            linebuf_attr[col++] = attr;
           }
         }
         *end_col = MAX(*end_col, col);
@@ -4378,14 +4439,10 @@ void draw_virt_text(buf_T *buf, int *end_col, int max_col)
 /// screen positions.
 void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 {
-  if (!(*grid)->chars && *grid != &default_grid) {
-      *row_off += (*grid)->row_offset;
-      *col_off += (*grid)->col_offset;
-    if (*grid == &msg_grid_adj && msg_grid.chars) {
-      *grid = &msg_grid;
-    } else {
-      *grid = &default_grid;
-    }
+  if ((*grid)->target) {
+    *row_off += (*grid)->row_offset;
+    *col_off += (*grid)->col_offset;
+    *grid = (*grid)->target;
   }
 }
 
@@ -4399,7 +4456,7 @@ void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 static void get_sign_display_info(
     bool nrcol,
     win_T *wp,
-    linenr_T lnum,
+    sign_attrs_T sattrs[],
     int row,
     int startrow,
     int filler_lines,
@@ -4416,8 +4473,6 @@ static void get_sign_display_info(
     int *sign_idxp
 )
 {
-  int text_sign;
-
   // Draw cells with the sign value or blank.
   *c_extrap = ' ';
   *c_finalp = NUL;
@@ -4429,10 +4484,9 @@ static void get_sign_display_info(
   }
 
   if (row == startrow + filler_lines && filler_todo <= 0) {
-    text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
-                                *sign_idxp, count);
-    if (text_sign != 0) {
-      *pp_extra = sign_get_text(text_sign);
+    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, *sign_idxp, count);
+    if (sattr != NULL) {
+      *pp_extra = sattr->sat_text;
       if (*pp_extra != NULL) {
         *c_extrap = NUL;
         *c_finalp = NUL;
@@ -4465,7 +4519,7 @@ static void get_sign_display_info(
           (*pp_extra)[*n_extrap] = NUL;
         }
       }
-      *char_attrp = sign_get_attr(text_sign, SIGN_TEXT);
+      *char_attrp = sattr->sat_texthl;
     }
   }
 
@@ -5389,6 +5443,64 @@ theend:
   entered = FALSE;
 }
 
+static void win_redr_border(win_T *wp)
+{
+  wp->w_redr_border = false;
+  if (!(wp->w_floating && wp->w_float_config.border)) {
+    return;
+  }
+
+  ScreenGrid *grid = &wp->w_grid_alloc;
+
+  schar_T *chars = wp->w_float_config.border_chars;
+  int *attrs = wp->w_float_config.border_attr;
+
+
+  int *adj = wp->w_border_adj;
+  int irow = wp->w_height_inner, icol = wp->w_width_inner;
+
+  if (adj[0]) {
+    grid_puts_line_start(grid, 0);
+    if (adj[3]) {
+      grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
+    }
+    for (int i = 0; i < icol; i++) {
+      grid_put_schar(grid, 0, i+adj[3], chars[1], attrs[1]);
+    }
+    if (adj[1]) {
+      grid_put_schar(grid, 0, icol+adj[3], chars[2], attrs[2]);
+    }
+    grid_puts_line_flush(false);
+  }
+
+  for (int i = 0; i < irow; i++) {
+    if (adj[3]) {
+      grid_puts_line_start(grid, i+adj[0]);
+      grid_put_schar(grid, i+adj[0], 0, chars[7], attrs[7]);
+      grid_puts_line_flush(false);
+    }
+    if (adj[1]) {
+      int ic = (i == 0 && !adj[0] && chars[2][0]) ? 2 : 3;
+      grid_puts_line_start(grid, i+adj[0]);
+      grid_put_schar(grid, i+adj[0], icol+adj[3], chars[ic], attrs[ic]);
+      grid_puts_line_flush(false);
+    }
+  }
+
+  if (adj[2]) {
+    grid_puts_line_start(grid, irow+adj[0]);
+    if (adj[3]) {
+      grid_put_schar(grid, irow+adj[0], 0, chars[6], attrs[6]);
+    }
+    for (int i = 0; i < icol; i++) {
+      int ic = (i == 0 && !adj[3] && chars[6][0]) ? 6 : 5;
+      grid_put_schar(grid, irow+adj[0], i+adj[3], chars[ic], attrs[ic]);
+    }
+    grid_put_schar(grid, irow+adj[0], icol+adj[3], chars[4], attrs[4]);
+    grid_puts_line_flush(false);
+  }
+}
+
 // Low-level functions to manipulate invidual character cells on the
 // screen grid.
 
@@ -5524,6 +5636,20 @@ void grid_puts_line_start(ScreenGrid *grid, int row)
   assert(put_dirty_row == -1);
   put_dirty_row = row;
   put_dirty_grid = grid;
+}
+
+void grid_put_schar(ScreenGrid *grid, int row, int col, char_u *schar, int attr)
+{
+  assert(put_dirty_row == row);
+  unsigned int off = grid->line_offset[row] + col;
+  if (grid->attrs[off] != attr || schar_cmp(grid->chars[off], schar)) {
+      schar_copy(grid->chars[off], schar);
+      grid->attrs[off] = attr;
+
+      put_dirty_first = MIN(put_dirty_first, col);
+      // TODO(bfredl): Y U NO DOUBLEWIDTH?
+      put_dirty_last = MAX(put_dirty_last, col+1);
+  }
 }
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
@@ -6101,7 +6227,7 @@ void check_for_delay(int check_msg_scroll)
       && !did_wait_return
       && emsg_silent == 0) {
     ui_flush();
-    os_delay(1000L, true);
+    os_delay(1006L, true);
     emsg_on_display = false;
     if (check_msg_scroll) {
       msg_scroll = false;
@@ -6117,12 +6243,15 @@ void check_for_delay(int check_msg_scroll)
 void win_grid_alloc(win_T *wp)
 {
   ScreenGrid *grid = &wp->w_grid;
+  ScreenGrid *grid_allocated = &wp->w_grid_alloc;
 
   int rows = wp->w_height_inner;
   int cols = wp->w_width_inner;
+  int total_rows = wp->w_height_outer;
+  int total_cols = wp->w_width_outer;
 
   bool want_allocation = ui_has(kUIMultigrid) || wp->w_floating;
-  bool has_allocation = (grid->chars != NULL);
+  bool has_allocation = (grid_allocated->chars != NULL);
 
   if (grid->Rows != rows) {
     wp->w_lines_valid = 0;
@@ -6131,35 +6260,47 @@ void win_grid_alloc(win_T *wp)
   }
 
   int was_resized = false;
-  if ((has_allocation != want_allocation)
-      || grid->Rows != rows
-      || grid->Columns != cols) {
-    if (want_allocation) {
-      grid_alloc(grid, rows, cols, wp->w_grid.valid, false);
-      grid->valid = true;
-    } else {
-      // Single grid mode, all rendering will be redirected to default_grid.
-      // Only keep track of the size and offset of the window.
-      grid_free(grid);
-      grid->Rows = rows;
-      grid->Columns = cols;
-      grid->valid = false;
+  if (want_allocation && (!has_allocation
+                          || grid_allocated->Rows != total_rows
+                          || grid_allocated->Columns != total_cols)) {
+    grid_alloc(grid_allocated, total_rows, total_cols,
+               wp->w_grid_alloc.valid, false);
+    grid_allocated->valid = true;
+    if (wp->w_floating && wp->w_float_config.border) {
+      wp->w_redr_border = true;
     }
     was_resized = true;
-  } else if (want_allocation && has_allocation && !wp->w_grid.valid) {
-    grid_invalidate(grid);
-    grid->valid = true;
+  } else if (!want_allocation && has_allocation) {
+    // Single grid mode, all rendering will be redirected to default_grid.
+    // Only keep track of the size and offset of the window.
+    grid_free(grid_allocated);
+    grid_allocated->valid = false;
+    was_resized = true;
+  } else if (want_allocation && has_allocation && !wp->w_grid_alloc.valid) {
+    grid_invalidate(grid_allocated);
+    grid_allocated->valid = true;
   }
 
-  grid->row_offset = wp->w_winrow;
-  grid->col_offset = wp->w_wincol;
+  grid->Rows = rows;
+  grid->Columns = cols;
+
+  if (want_allocation) {
+    grid->target = grid_allocated;
+    grid->row_offset = wp->w_border_adj[0];
+    grid->col_offset = wp->w_border_adj[3];
+  } else {
+    grid->target = &default_grid;
+    grid->row_offset = wp->w_winrow;
+    grid->col_offset = wp->w_wincol;
+  }
 
   // send grid resize event if:
   // - a grid was just resized
   // - screen_resize was called and all grid sizes must be sent
   // - the UI wants multigrid event (necessary)
   if ((send_grid_resize || was_resized) && want_allocation) {
-    ui_call_grid_resize(grid->handle, grid->Columns, grid->Rows);
+    ui_call_grid_resize(grid_allocated->handle,
+                        grid_allocated->Columns, grid_allocated->Rows);
   }
 }
 
@@ -6247,6 +6388,9 @@ retry:
 
   tab_page_click_defs = new_tab_page_click_defs;
   tab_page_click_defs_size = Columns;
+
+  default_grid.comp_height = Rows;
+  default_grid.comp_width = Columns;
 
   default_grid.row_offset = 0;
   default_grid.col_offset = 0;
@@ -7384,6 +7528,10 @@ void screen_resize(int width, int height)
   Rows = height;
   Columns = width;
   check_shellsize();
+  int max_p_ch = Rows - min_rows() + 1;
+  if (!ui_has(kUIMessages) && p_ch > max_p_ch) {
+    p_ch = max_p_ch ? max_p_ch : 1;
+  }
   height = Rows;
   width = Columns;
   p_lines = Rows;
@@ -7486,8 +7634,9 @@ void win_new_shellsize(void)
   static long old_Columns = 0;
 
   if (old_Rows != Rows) {
-    // if 'window' uses the whole screen, keep it using that */
-    if (p_window == old_Rows - 1 || old_Rows == 0) {
+    // If 'window' uses the whole screen, keep it using that.
+    // Don't change it when set with "-w size" on the command line.
+    if (p_window == old_Rows - 1 || (old_Rows == 0 && p_window == 0)) {
       p_window = Rows - 1;
     }
     old_Rows = Rows;
@@ -7502,7 +7651,7 @@ void win_new_shellsize(void)
 win_T *get_win_by_grid_handle(handle_T handle)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_grid.handle == handle) {
+    if (wp->w_grid_alloc.handle == handle) {
       return wp;
     }
   }

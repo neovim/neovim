@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/vim.h"
+#include "nvim/lua/executor.h"
 #include "nvim/extmark.h"
 #include "nvim/decoration.h"
 #include "nvim/screen.h"
@@ -143,10 +144,9 @@ bool decor_redraw_reset(buf_T *buf, DecorState *state)
   state->row = -1;
   state->buf = buf;
   for (size_t i = 0; i < kv_size(state->active); i++) {
-    HlRange item = kv_A(state->active, i);
+    DecorRange item = kv_A(state->active, i);
     if (item.virt_text_owned) {
-      clear_virttext(item.virt_text);
-      xfree(item.virt_text);
+      clear_virttext(&item.decor.virt_text);
     }
   }
   kv_size(state->active) = 0;
@@ -190,14 +190,14 @@ bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
 
     if (mark.id&MARKTREE_END_FLAG) {
       decor_add(state, altpos.row, altpos.col, mark.row, mark.col,
-                decor, false, 0);
+                decor, false);
     } else {
       if (altpos.row == -1) {
         altpos.row = mark.row;
         altpos.col = mark.col;
       }
       decor_add(state, mark.row, mark.col, altpos.row, altpos.col,
-                decor, false, 0);
+                decor, false);
     }
 
 next_mark:
@@ -222,22 +222,19 @@ bool decor_redraw_line(buf_T *buf, int row, DecorState *state)
 }
 
 static void decor_add(DecorState *state, int start_row, int start_col,
-                      int end_row, int end_col, Decoration *decor, bool owned,
-                      DecorPriority priority)
+                      int end_row, int end_col, Decoration *decor, bool owned)
 {
   int attr_id = decor->hl_id > 0 ? syn_id2attr(decor->hl_id) : 0;
 
-  HlRange range = { start_row, start_col, end_row, end_col,
-                    attr_id, MAX(priority, decor->priority),
-                    kv_size(decor->virt_text) ? &decor->virt_text : NULL,
-                    decor->virt_text_pos,
+  DecorRange range = { start_row, start_col, end_row, end_col,
+                       *decor, attr_id,
                     kv_size(decor->virt_text) && owned, -1 };
 
   kv_pushp(state->active);
   size_t index;
   for (index = kv_size(state->active)-1; index > 0; index--) {
-    HlRange item = kv_A(state->active, index-1);
-    if (item.priority <= range.priority) {
+    DecorRange item = kv_A(state->active, index-1);
+    if (item.decor.priority <= range.decor.priority) {
       break;
     }
     kv_A(state->active, index) = kv_A(state->active, index-1);
@@ -245,7 +242,8 @@ static void decor_add(DecorState *state, int start_row, int start_col,
   kv_A(state->active, index) = range;
 }
 
-int decor_redraw_col(buf_T *buf, int col, int virt_col, DecorState *state)
+int decor_redraw_col(buf_T *buf, int col, int virt_col, bool hidden,
+                     DecorState *state)
 {
   if (col <= state->col_until) {
     return state->current;
@@ -290,7 +288,7 @@ int decor_redraw_col(buf_T *buf, int col, int virt_col, DecorState *state)
     }
 
     decor_add(state, mark.row, mark.col, endpos.row, endpos.col,
-              decor, false, 0);
+              decor, false);
 
 next_mark:
     marktree_itr_next(buf->b_marktree, state->itr);
@@ -299,11 +297,11 @@ next_mark:
   int attr = 0;
   size_t j = 0;
   for (size_t i = 0; i < kv_size(state->active); i++) {
-    HlRange item = kv_A(state->active, i);
+    DecorRange item = kv_A(state->active, i);
     bool active = false, keep = true;
     if (item.end_row < state->row
         || (item.end_row == state->row && item.end_col <= col)) {
-      if (!(item.start_row >= state->row && item.virt_text)) {
+      if (!(item.start_row >= state->row && kv_size(item.decor.virt_text))) {
         keep = false;
       }
     } else {
@@ -323,14 +321,13 @@ next_mark:
       attr = hl_combine_attr(attr, item.attr_id);
     }
     if ((item.start_row == state->row && item.start_col <= col)
-        && item.virt_text && item.virt_col == -1) {
-      item.virt_col = virt_col;
+        && kv_size(item.decor.virt_text) && item.virt_col == -1) {
+      item.virt_col = (item.decor.virt_text_hide && hidden) ? -2 : virt_col;
     }
     if (keep) {
       kv_A(state->active, j++) = item;
     } else if (item.virt_text_owned) {
-      clear_virttext(item.virt_text);
-      xfree(item.virt_text);
+      clear_virttext(&item.decor.virt_text);
     }
   }
   kv_size(state->active) = j;
@@ -343,22 +340,81 @@ void decor_redraw_end(DecorState *state)
   state->buf = NULL;
 }
 
-VirtText *decor_redraw_virt_text(buf_T *buf, DecorState *state)
+VirtText decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr)
 {
-  decor_redraw_col(buf, MAXCOL, MAXCOL, state);
+  decor_redraw_col(buf, MAXCOL, MAXCOL, false, state);
+  VirtText text = VIRTTEXT_EMPTY;
   for (size_t i = 0; i < kv_size(state->active); i++) {
-    HlRange item = kv_A(state->active, i);
-    if (item.start_row == state->row && item.virt_text
-        && item.virt_text_pos == kVTEndOfLine) {
-      return item.virt_text;
+    DecorRange item = kv_A(state->active, i);
+    if (!kv_size(text)
+        && item.start_row == state->row && kv_size(item.decor.virt_text)
+        && item.decor.virt_text_pos == kVTEndOfLine) {
+      text = item.decor.virt_text;
+    }
+
+    if (item.decor.hl_eol && item.start_row <= state->row) {
+      *eol_attr = hl_combine_attr(*eol_attr, item.attr_id);
     }
   }
-  return NULL;
+
+  return text;
 }
 
 void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
-                         Decoration *decor, DecorPriority priority)
+                         Decoration *decor)
 {
-  decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true,
-            priority);
+  if (end_row == -1) {
+    end_row = start_row;
+    end_col = start_col;
+  }
+  decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true);
+}
+
+
+DecorProvider *get_decor_provider(NS ns_id, bool force)
+{
+  ssize_t i;
+  for (i = 0; i < (ssize_t)kv_size(decor_providers); i++) {
+    DecorProvider *item = &kv_A(decor_providers, i);
+    if (item->ns_id == ns_id) {
+      return item;
+    } else if (item->ns_id > ns_id) {
+      break;
+    }
+  }
+
+  if (!force) {
+    return NULL;
+  }
+
+  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
+    // allocates if needed:
+    (void)kv_a(decor_providers, (size_t)j+1);
+    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
+  }
+  DecorProvider *item = &kv_a(decor_providers, (size_t)i);
+  *item = DECORATION_PROVIDER_INIT(ns_id);
+
+  return item;
+}
+
+void decor_provider_clear(DecorProvider *p)
+{
+  if (p == NULL) {
+    return;
+  }
+  NLUA_CLEAR_REF(p->redraw_start);
+  NLUA_CLEAR_REF(p->redraw_buf);
+  NLUA_CLEAR_REF(p->redraw_win);
+  NLUA_CLEAR_REF(p->redraw_line);
+  NLUA_CLEAR_REF(p->redraw_end);
+  p->active = false;
+}
+
+void decor_free_all_mem(void)
+{
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    decor_provider_clear(&kv_A(decor_providers, i));
+  }
+  kv_destroy(decor_providers);
 }

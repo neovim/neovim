@@ -255,7 +255,6 @@ func TriggerTheProblem()
 endfunc
 
 func Test_visual_mode_reset()
-  set belloff=all
   enew
   let g:msg = "Everything's fine."
   enew
@@ -268,7 +267,6 @@ func Test_visual_mode_reset()
   exe "normal! GV:call TriggerTheProblem()\<CR>"
   call assert_equal("Everything's fine.", g:msg)
 
-  set belloff&
 endfunc
 
 func Test_Visual_word_textobject()

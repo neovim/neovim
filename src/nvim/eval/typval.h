@@ -89,6 +89,7 @@ typedef struct dict_watcher {
   size_t key_pattern_len;
   QUEUE node;
   bool busy;  // prevent recursion if the dict is changed in the callback
+  bool needs_free;
 } DictWatcher;
 
 /// Bool variable values
@@ -341,8 +342,9 @@ struct ufunc {
                                  ///< used for s: variables
   int          uf_refcount;      ///< reference count, see func_name_refcount()
   funccall_T   *uf_scoped;       ///< l: local variables for closure
-  char_u       uf_name[];        ///< Name of function; can start with <SNR>123_
-                                 ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
+  char_u       uf_name[];  ///< Name of function (actual size equals name);
+                           ///< can start with <SNR>123_
+                           ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
 };
 
 struct partial_S {

@@ -27,6 +27,8 @@
 #define HL_CONCEAL     0x20000 /* can be concealed */
 #define HL_CONCEALENDS 0x40000 /* can be concealed */
 
+#define SYN_GROUP_STATIC(s) syn_check_group((char_u *)S_LEN(s))
+
 typedef struct {
   char *name;
   RgbValue color;

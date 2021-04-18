@@ -1,0 +1,49 @@
+name: Nightly
+on:
+  schedule:
+    - cron: '3 3 * * *'
+
+jobs:
+  update-vim-patches:
+    runs-on: ubuntu-20.04
+    env:
+      VIM_SOURCE_DIR: ${{ format('{0}/vim-src', github.workspace) }}
+      VERSION_BRANCH: marvim/ci-version-update
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v2
+        with:
+          repository: vim/vim
+          path: ${{ env.VIM_SOURCE_DIR }}
+          fetch-depth: 0
+
+      - run: |
+          gh release download -R neovim/neovim -p nvim.appimage
+          chmod a+x nvim.appimage
+          mkdir -p $HOME/.local/bin
+          mv nvim.appimage $HOME/.local/bin/nvim
+          printf '%s\n' "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Setup git config
+        run: |
+          git config --global user.name 'marvim'
+          git config --global user.email 'marvim@users.noreply.github.com'
+
+      - name: Update src/version.c
+        id: update-version
+        run: |
+          git checkout -b ${VERSION_BRANCH}
+          nvim -i NONE -u NONE --headless +'luafile scripts/vimpatch.lua' +q
+          printf '::set-output name=NEW_PATCHES::%s\n' $([ -z "$(git diff)" ]; echo $?)
+
+      - name: Automatic PR
+        if: ${{ steps.update-version.outputs.NEW_PATCHES != 0 }}
+        run: |
+          git add -u
+          git commit -m 'version.c: update [skip ci]'
+          git push --force https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY} ${VERSION_BRANCH}
+          gh pr create --fill --label vim-patch --base master --head ${VERSION_BRANCH} || true

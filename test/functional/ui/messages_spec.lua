@@ -456,6 +456,8 @@ describe('ui/ext_messages', function()
       {1:~                        }|
     ]], messages={
       {kind="echomsg", content={{"stuff"}}},
+    }, showmode={
+      { "-- INSERT --", 3 }
     }}
   end)
 

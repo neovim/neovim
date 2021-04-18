@@ -2,13 +2,13 @@
 
 source shared.vim
 source screendump.vim
+source check.vim
 
+" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline()
-  " See test/functional/legacy/search_spec.lua
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckFunction test_override
+  CheckOption incsearch
+
   " need to disable char_avail,
   " so that expansion of commandline works
   call test_override("char_avail", 1)
@@ -202,12 +202,11 @@ func Test_search_cmdline()
   bw!
 endfunc
 
+" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline2()
-  " See test/functional/legacy/search_spec.lua
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckFunction test_override
+  CheckOption incsearch
+
   " need to disable char_avail,
   " so that expansion of commandline works
   call test_override("char_avail", 1)
@@ -351,7 +350,7 @@ func Test_searchc()
 endfunc
 
 func Cmdline3_prep()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   " need to disable char_avail,
   " so that expansion of commandline works
   call test_override("char_avail", 1)
@@ -361,17 +360,15 @@ func Cmdline3_prep()
 endfunc
 
 func Incsearch_cleanup()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   set noincsearch
   call test_override("char_avail", 0)
   bw!
 endfunc
 
 func Test_search_cmdline3()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckOption incsearch
+
   call Cmdline3_prep()
   1
   " first match
@@ -382,10 +379,8 @@ func Test_search_cmdline3()
 endfunc
 
 func Test_search_cmdline3s()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckOption incsearch
+
   call Cmdline3_prep()
   1
   call feedkeys(":%s/the\<c-l>/xxx\<cr>", 'tx')
@@ -409,10 +404,8 @@ func Test_search_cmdline3s()
 endfunc
 
 func Test_search_cmdline3g()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckOption incsearch
+
   call Cmdline3_prep()
   1
   call feedkeys(":g/the\<c-l>/d\<cr>", 'tx')
@@ -433,10 +426,8 @@ func Test_search_cmdline3g()
 endfunc
 
 func Test_search_cmdline3v()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckOption incsearch
+
   call Cmdline3_prep()
   1
   call feedkeys(":v/the\<c-l>/d\<cr>", 'tx')
@@ -450,12 +441,11 @@ func Test_search_cmdline3v()
   call Incsearch_cleanup()
 endfunc
 
+" See test/functional/legacy/search_spec.lua
 func Test_search_cmdline4()
-  " See test/functional/legacy/search_spec.lua
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckFunction test_override
+  CheckOption incsearch
+
   " need to disable char_avail,
   " so that expansion of commandline works
   call test_override("char_avail", 1)
@@ -487,9 +477,8 @@ func Test_search_cmdline4()
 endfunc
 
 func Test_search_cmdline5()
-  if !exists('+incsearch')
-    return
-  endif
+  CheckOption incsearch
+
   " Do not call test_override("char_avail", 1) so that <C-g> and <C-t> work
   " regardless char_avail.
   new
@@ -506,8 +495,48 @@ func Test_search_cmdline5()
   bw!
 endfunc
 
+func Test_search_cmdline6()
+  " Test that consecutive matches
+  " are caught by <c-g>/<c-t>
+  CheckFunction test_override
+  CheckOption incsearch
+
+  " need to disable char_avail,
+  " so that expansion of commandline works
+  call test_override("char_avail", 1)
+  new
+  call setline(1, [' bbvimb', ''])
+  set incsearch
+  " first match
+  norm! gg0
+  call feedkeys("/b\<cr>", 'tx')
+  call assert_equal([0,1,2,0], getpos('.'))
+  " second match
+  norm! gg0
+  call feedkeys("/b\<c-g>\<cr>", 'tx')
+  call assert_equal([0,1,3,0], getpos('.'))
+  " third match
+  norm! gg0
+  call feedkeys("/b\<c-g>\<c-g>\<cr>", 'tx')
+  call assert_equal([0,1,7,0], getpos('.'))
+  " first match again
+  norm! gg0
+  call feedkeys("/b\<c-g>\<c-g>\<c-g>\<cr>", 'tx')
+  call assert_equal([0,1,2,0], getpos('.'))
+  set nowrapscan
+  " last match
+  norm! gg0
+  call feedkeys("/b\<c-g>\<c-g>\<c-g>\<cr>", 'tx')
+  call assert_equal([0,1,7,0], getpos('.'))
+  " clean up
+  set wrapscan&vim
+  set noincsearch
+  call test_override("char_avail", 0)
+  bw!
+endfunc
+
 func Test_search_cmdline7()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   " Test that pressing <c-g> in an empty command line
   " does not move the cursor
   if !exists('+incsearch')
@@ -601,26 +630,226 @@ func Test_search_regexp()
   enew!
 endfunc
 
-" Test for search('multi-byte char', 'bce')
-func Test_search_multibyte()
-  let save_enc = &encoding
-  set encoding=utf8
-  enew!
-  call append('$', 'Ａ')
-  call cursor(2, 1)
-  call assert_equal(2, search('Ａ', 'bce', line('.')))
-  enew!
-  let &encoding = save_enc
+func Test_search_cmdline_incsearch_highlight()
+  CheckFunction test_override
+  CheckOption incsearch
+
+  set incsearch hlsearch
+  " need to disable char_avail,
+  " so that expansion of commandline works
+  call test_override("char_avail", 1)
+  new
+  call setline(1, ['aaa  1 the first', '  2 the second', '  3 the third'])
+
+  1
+  call feedkeys("/second\<cr>", 'tx')
+  call assert_equal('second', @/)
+  call assert_equal('  2 the second', getline('.'))
+
+  " Canceling search won't change @/
+  1
+  let @/ = 'last pattern'
+  call feedkeys("/third\<C-c>", 'tx')
+  call assert_equal('last pattern', @/)
+  call feedkeys("/third\<Esc>", 'tx')
+  call assert_equal('last pattern', @/)
+  call feedkeys("/3\<bs>\<bs>", 'tx')
+  call assert_equal('last pattern', @/)
+  call feedkeys("/third\<c-g>\<c-t>\<Esc>", 'tx')
+  call assert_equal('last pattern', @/)
+
+  " clean up
+  set noincsearch nohlsearch
+  bw!
+endfunc
+
+func Test_search_cmdline_incsearch_highlight_attr()
+  CheckOption incsearch
+  CheckFeature terminal
+  CheckNotGui
+
+  let h = winheight(0)
+  if h < 3
+    return
+  endif
+
+  " Prepare buffer text
+  let lines = ['abb vim vim vi', 'vimvivim']
+  call writefile(lines, 'Xsearch.txt')
+  let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile', 'Xsearch.txt'], {'term_rows': 3})
+
+  call WaitForAssert({-> assert_equal(lines, [term_getline(buf, 1), term_getline(buf, 2)])})
+  " wait for vim to complete initialization
+  call term_wait(buf)
+
+  " Get attr of normal(a0), incsearch(a1), hlsearch(a2) highlight
+  call term_sendkeys(buf, ":set incsearch hlsearch\<cr>")
+  call term_sendkeys(buf, '/b')
+  call term_wait(buf, 200)
+  let screen_line1 = term_scrape(buf, 1)
+  call assert_true(len(screen_line1) > 2)
+  " a0: attr_normal
+  let a0 = screen_line1[0].attr
+  " a1: attr_incsearch
+  let a1 = screen_line1[1].attr
+  " a2: attr_hlsearch
+  let a2 = screen_line1[2].attr
+  call assert_notequal(a0, a1)
+  call assert_notequal(a0, a2)
+  call assert_notequal(a1, a2)
+  call term_sendkeys(buf, "\<cr>gg0")
+
+  " Test incremental highlight search
+  call term_sendkeys(buf, "/vim")
+  call term_wait(buf, 200)
+  " Buffer:
+  " abb vim vim vi
+  " vimvivim
+  " Search: /vim
+  let attr_line1 = [a0,a0,a0,a0,a1,a1,a1,a0,a2,a2,a2,a0,a0,a0]
+  let attr_line2 = [a2,a2,a2,a0,a0,a2,a2,a2]
+  call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
+  call assert_equal(attr_line2, map(term_scrape(buf, 2)[:len(attr_line2)-1], 'v:val.attr'))
+
+  " Test <C-g>
+  call term_sendkeys(buf, "\<C-g>\<C-g>")
+  call term_wait(buf, 200)
+  let attr_line1 = [a0,a0,a0,a0,a2,a2,a2,a0,a2,a2,a2,a0,a0,a0]
+  let attr_line2 = [a1,a1,a1,a0,a0,a2,a2,a2]
+  call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
+  call assert_equal(attr_line2, map(term_scrape(buf, 2)[:len(attr_line2)-1], 'v:val.attr'))
+
+  " Test <C-t>
+  call term_sendkeys(buf, "\<C-t>")
+  call term_wait(buf, 200)
+  let attr_line1 = [a0,a0,a0,a0,a2,a2,a2,a0,a1,a1,a1,a0,a0,a0]
+  let attr_line2 = [a2,a2,a2,a0,a0,a2,a2,a2]
+  call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
+  call assert_equal(attr_line2, map(term_scrape(buf, 2)[:len(attr_line2)-1], 'v:val.attr'))
+
+  " Type Enter and a1(incsearch highlight) should become a2(hlsearch highlight)
+  call term_sendkeys(buf, "\<cr>")
+  call term_wait(buf, 200)
+  let attr_line1 = [a0,a0,a0,a0,a2,a2,a2,a0,a2,a2,a2,a0,a0,a0]
+  let attr_line2 = [a2,a2,a2,a0,a0,a2,a2,a2]
+  call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
+  call assert_equal(attr_line2, map(term_scrape(buf, 2)[:len(attr_line2)-1], 'v:val.attr'))
+
+  " Test nohlsearch. a2(hlsearch highlight) should become a0(normal highlight)
+  call term_sendkeys(buf, ":1\<cr>")
+  call term_sendkeys(buf, ":set nohlsearch\<cr>")
+  call term_sendkeys(buf, "/vim")
+  call term_wait(buf, 200)
+  let attr_line1 = [a0,a0,a0,a0,a1,a1,a1,a0,a0,a0,a0,a0,a0,a0]
+  let attr_line2 = [a0,a0,a0,a0,a0,a0,a0,a0]
+  call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
+  call assert_equal(attr_line2, map(term_scrape(buf, 2)[:len(attr_line2)-1], 'v:val.attr'))
+  call delete('Xsearch.txt')
+
+  call delete('Xsearch.txt')
+  bwipe!
+endfunc
+
+func Test_incsearch_cmdline_modifier()
+  CheckFunction test_override
+  CheckOption incsearch
+
+  call test_override("char_avail", 1)
+  new
+  call setline(1, ['foo'])
+  set incsearch
+  " Test that error E14 does not occur in parsing command modifier.
+  call feedkeys("V:tab", 'tx')
+
+  call Incsearch_cleanup()
+endfunc
+
+func Test_incsearch_scrolling()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  call assert_equal(0, &scrolloff)
+  call writefile([
+	\ 'let dots = repeat(".", 120)',
+	\ 'set incsearch cmdheight=2 scrolloff=0',
+	\ 'call setline(1, [dots, dots, dots, "", "target", dots, dots])',
+	\ 'normal gg',
+	\ 'redraw',
+	\ ], 'Xscript')
+  let buf = RunVimInTerminal('-S Xscript', {'rows': 9, 'cols': 70})
+  " Need to send one key at a time to force a redraw
+  call term_sendkeys(buf, '/')
+  sleep 100m
+  call term_sendkeys(buf, 't')
+  sleep 100m
+  call term_sendkeys(buf, 'a')
+  sleep 100m
+  call term_sendkeys(buf, 'r')
+  sleep 100m
+  call term_sendkeys(buf, 'g')
+  call VerifyScreenDump(buf, 'Test_incsearch_scrolling_01', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xscript')
+endfunc
+
+func Test_incsearch_search_dump()
+  CheckOption incsearch
+  CheckScreendump
+
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'for n in range(1, 8)',
+	\ '  call setline(n, "foo " . n)',
+	\ 'endfor',
+	\ '3',
+	\ ], 'Xis_search_script')
+  let buf = RunVimInTerminal('-S Xis_search_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, '/fo')
+  call VerifyScreenDump(buf, 'Test_incsearch_search_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+  sleep 100m
+
+  call term_sendkeys(buf, '/\v')
+  call VerifyScreenDump(buf, 'Test_incsearch_search_02', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_search_script')
+endfunc
+
+func Test_incsearch_substitute()
+  CheckFunction test_override
+  CheckOption incsearch
+
+  call test_override("char_avail", 1)
+  new
+  set incsearch
+  for n in range(1, 10)
+    call setline(n, 'foo ' . n)
+  endfor
+  4
+  call feedkeys(":.,.+2s/foo\<BS>o\<BS>o/xxx\<cr>", 'tx')
+  call assert_equal('foo 3', getline(3))
+  call assert_equal('xxx 4', getline(4))
+  call assert_equal('xxx 5', getline(5))
+  call assert_equal('xxx 6', getline(6))
+  call assert_equal('foo 7', getline(7))
+
+  call Incsearch_cleanup()
 endfunc
 
 " Similar to Test_incsearch_substitute() but with a screendump halfway.
 func Test_incsearch_substitute_dump()
-  if !exists('+incsearch')
-    return
-  endif
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckOption incsearch
+  CheckScreendump
+
   call writefile([
 	\ 'set incsearch hlsearch scrolloff=0',
 	\ 'for n in range(1, 10)',
@@ -726,14 +955,58 @@ func Test_incsearch_substitute_dump()
   call delete('Xis_subst_script')
 endfunc
 
+func Test_incsearch_highlighting()
+  CheckOption incsearch
+  CheckScreendump
+
+  call writefile([
+	\ 'set incsearch hlsearch',
+	\ 'call setline(1, "hello/there")',
+	\ ], 'Xis_subst_hl_script')
+  let buf = RunVimInTerminal('-S Xis_subst_hl_script', {'rows': 4, 'cols': 20})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 300m
+
+  " Using a different search delimiter should still highlight matches
+  " that contain a '/'.
+  call term_sendkeys(buf, ":%s;ello/the")
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_15', {})
+  call term_sendkeys(buf, "<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_subst_hl_script')
+endfunc
+
+func Test_incsearch_with_change()
+  CheckFeature timers
+  CheckOption incsearch
+  CheckScreendump
+ 
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'call setline(1, ["one", "two ------ X", "three"])',
+	\ 'call timer_start(200, { _ -> setline(2, "x")})',
+	\ ], 'Xis_change_script')
+  let buf = RunVimInTerminal('-S Xis_change_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 300m
+
+  " Highlight X, it will be deleted by the timer callback.
+  call term_sendkeys(buf, ':%s/X')
+  call VerifyScreenDump(buf, 'Test_incsearch_change_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_change_script')
+endfunc
+
 " Similar to Test_incsearch_substitute_dump() for :sort
 func Test_incsearch_sort_dump()
-  if !exists('+incsearch')
-    return
-  endif
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckOption incsearch
+  CheckScreendump
+
   call writefile([
 	\ 'set incsearch hlsearch scrolloff=0',
 	\ 'call setline(1, ["another one 2", "that one 3", "the one 1"])',
@@ -757,12 +1030,9 @@ endfunc
 
 " Similar to Test_incsearch_substitute_dump() for :vimgrep famiry
 func Test_incsearch_vimgrep_dump()
-  if !exists('+incsearch')
-    return
-  endif
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps'
-  endif
+  CheckOption incsearch
+  CheckScreendump
+
   call writefile([
 	\ 'set incsearch hlsearch scrolloff=0',
 	\ 'call setline(1, ["another one 2", "that one 3", "the one 1"])',
@@ -798,10 +1068,9 @@ func Test_incsearch_vimgrep_dump()
 endfunc
 
 func Test_keep_last_search_pattern()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckFunction test_override
+  CheckOption incsearch
+
   new
   call setline(1, ['foo', 'foo', 'foo'])
   set incsearch
@@ -820,10 +1089,9 @@ func Test_keep_last_search_pattern()
 endfunc
 
 func Test_word_under_cursor_after_match()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckFunction test_override
+  CheckOption incsearch
+
   new
   call setline(1, 'foo bar')
   set incsearch
@@ -840,10 +1108,9 @@ func Test_word_under_cursor_after_match()
 endfunc
 
 func Test_subst_word_under_cursor()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckFunction test_override
+  CheckOption incsearch
+
   new
   call setline(1, ['int SomeLongName;', 'for (xxx = 1; xxx < len; ++xxx)'])
   set incsearch
@@ -857,132 +1124,8 @@ func Test_subst_word_under_cursor()
   set noincsearch
 endfunc
 
-func Test_incsearch_with_change()
-  if !has('timers') || !exists('+incsearch') || !CanRunVimInTerminal()
-    throw 'Skipped: cannot make screendumps and/or timers feature and/or incsearch option missing'
-  endif
-
-  call writefile([
-	\ 'set incsearch hlsearch scrolloff=0',
-	\ 'call setline(1, ["one", "two ------ X", "three"])',
-	\ 'call timer_start(200, { _ -> setline(2, "x")})',
-	\ ], 'Xis_change_script')
-  let buf = RunVimInTerminal('-S Xis_change_script', {'rows': 9, 'cols': 70})
-  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
-  " the 'ambiwidth' check.
-  sleep 300m
-
-  " Highlight X, it will be deleted by the timer callback.
-  call term_sendkeys(buf, ':%s/X')
-  call VerifyScreenDump(buf, 'Test_incsearch_change_01', {})
-  call term_sendkeys(buf, "\<Esc>")
-
-  call StopVimInTerminal(buf)
-  call delete('Xis_change_script')
-endfunc
-
-func Test_incsearch_cmdline_modifier()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
-  call test_override("char_avail", 1)
-  new
-  call setline(1, ['foo'])
-  set incsearch
-  " Test that error E14 does not occur in parsing command modifier.
-  call feedkeys("V:tab", 'tx')
-
-  call Incsearch_cleanup()
-endfunc
-
-func Test_incsearch_scrolling()
-  if !CanRunVimInTerminal()
-    return
-  endif
-  call assert_equal(0, &scrolloff)
-  call writefile([
-	\ 'let dots = repeat(".", 120)',
-	\ 'set incsearch cmdheight=2 scrolloff=0',
-	\ 'call setline(1, [dots, dots, dots, "", "target", dots, dots])',
-	\ 'normal gg',
-	\ 'redraw',
-	\ ], 'Xscript')
-  let buf = RunVimInTerminal('-S Xscript', {'rows': 9, 'cols': 70})
-  " Need to send one key at a time to force a redraw
-  call term_sendkeys(buf, '/')
-  sleep 100m
-  call term_sendkeys(buf, 't')
-  sleep 100m
-  call term_sendkeys(buf, 'a')
-  sleep 100m
-  call term_sendkeys(buf, 'r')
-  sleep 100m
-  call term_sendkeys(buf, 'g')
-  call VerifyScreenDump(buf, 'Test_incsearch_scrolling_01', {})
-
-  call term_sendkeys(buf, "\<Esc>")
-  call StopVimInTerminal(buf)
-  call delete('Xscript')
-endfunc
-
-func Test_incsearch_search_dump()
-  if !exists('+incsearch')
-    return
-  endif
-  if !CanRunVimInTerminal()
-    return
-  endif
-  call writefile([
-	\ 'set incsearch hlsearch scrolloff=0',
-	\ 'for n in range(1, 8)',
-	\ '  call setline(n, "foo " . n)',
-	\ 'endfor',
-	\ '3',
-	\ ], 'Xis_search_script')
-  let buf = RunVimInTerminal('-S Xis_search_script', {'rows': 9, 'cols': 70})
-  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
-  " the 'ambiwidth' check.
-  sleep 100m
-
-  " Need to send one key at a time to force a redraw.
-  call term_sendkeys(buf, '/fo')
-  call VerifyScreenDump(buf, 'Test_incsearch_search_01', {})
-  call term_sendkeys(buf, "\<Esc>")
-  sleep 100m
-
-  call term_sendkeys(buf, '/\v')
-  call VerifyScreenDump(buf, 'Test_incsearch_search_02', {})
-  call term_sendkeys(buf, "\<Esc>")
-
-  call StopVimInTerminal(buf)
-  call delete('Xis_search_script')
-endfunc
-
-func Test_incsearch_substitute()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
-  call test_override("char_avail", 1)
-  new
-  set incsearch
-  for n in range(1, 10)
-    call setline(n, 'foo ' . n)
-  endfor
-  4
-  call feedkeys(":.,.+2s/foo\<BS>o\<BS>o/xxx\<cr>", 'tx')
-  call assert_equal('foo 3', getline(3))
-  call assert_equal('xxx 4', getline(4))
-  call assert_equal('xxx 5', getline(5))
-  call assert_equal('xxx 6', getline(6))
-  call assert_equal('foo 7', getline(7))
-
-  call Incsearch_cleanup()
-endfunc
-
 func Test_incsearch_substitute_long_line()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   new
   call test_override("char_avail", 1)
   set incsearch
@@ -997,9 +1140,8 @@ func Test_incsearch_substitute_long_line()
 endfunc
 
 func Test_search_undefined_behaviour()
-  if !has("terminal")
-    return
-  endif
+  CheckFeature terminal
+
   let h = winheight(0)
   if h < 3
     return
@@ -1013,6 +1155,18 @@ endfunc
 
 func Test_search_undefined_behaviour2()
   call search("\%UC0000000")
+endfunc
+
+" Test for search('multi-byte char', 'bce')
+func Test_search_multibyte()
+  let save_enc = &encoding
+  set encoding=utf8
+  enew!
+  call append('$', 'Ａ')
+  call cursor(2, 1)
+  call assert_equal(2, search('Ａ', 'bce', line('.')))
+  enew!
+  let &encoding = save_enc
 endfunc
 
 " This was causing E874.  Also causes an invalid read?
@@ -1053,9 +1207,8 @@ func Test_search_Ctrl_L_combining()
     " ' ̇' U+0307 Dec:775 COMBINING DOT ABOVE &#x307; /\%u307\Z "\u0307"
     " ' ̣' U+0323 Dec:803 COMBINING DOT BELOW &#x323; /\%u323 "\u0323" 
   " Those should also appear on the commandline
-  if !exists('+incsearch')
-    return
-  endif
+  CheckOption incsearch
+
   call Cmdline3_prep()
   1
   let bufcontent = ['', 'Miạ̀́̇m']
@@ -1104,10 +1257,9 @@ func Test_one_error_msg()
 endfunc
 
 func Test_incsearch_add_char_under_cursor()
-  throw 'skipped: Nvim does not support test_override()'
-  if !exists('+incsearch')
-    return
-  endif
+  CheckFunction test_override
+  CheckOption incsearch
+
   set incsearch
   new
   call setline(1, ['find match', 'anything'])
@@ -1190,6 +1342,38 @@ func Test_search_smartcase_utf8()
   set ignorecase& smartcase&
   let &encoding = save_enc
   close!
+endfunc
+
+func Test_incsearch_highlighting_newline()
+  CheckRunVimInTerminal
+  CheckOption incsearch
+  CheckScreendump
+  new
+  call test_override("char_avail", 1)
+
+  let commands =<< trim [CODE]
+    set incsearch nohls
+    call setline(1, ['test', 'xxx'])
+  [CODE]
+  call writefile(commands, 'Xincsearch_nl')
+  let buf = RunVimInTerminal('-S Xincsearch_nl', {'rows': 5, 'cols': 10})
+  call term_sendkeys(buf, '/test')
+  call VerifyScreenDump(buf, 'Test_incsearch_newline1', {})
+  " Need to send one key at a time to force a redraw
+  call term_sendkeys(buf, '\n')
+  call VerifyScreenDump(buf, 'Test_incsearch_newline2', {})
+  call term_sendkeys(buf, 'x')
+  call VerifyScreenDump(buf, 'Test_incsearch_newline3', {})
+  call term_sendkeys(buf, 'x')
+  call VerifyScreenDump(buf, 'Test_incsearch_newline4', {})
+  call term_sendkeys(buf, "\<CR>")
+  call VerifyScreenDump(buf, 'Test_incsearch_newline5', {})
+  call StopVimInTerminal(buf)
+
+  " clean up
+  call delete('Xincsearch_nl')
+  call test_override("char_avail", 0)
+  bw
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -315,8 +315,10 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     dispatchers = { dispatchers, 't', true };
   }
 
-  if not (vim.fn.executable(cmd) == 1) then
-    error(string.format("The given command %q is not executable.", cmd))
+  if extra_spawn_params and extra_spawn_params.cwd then
+      assert(is_dir(extra_spawn_params.cwd), "cwd must be a directory")
+  elseif not (vim.fn.executable(cmd) == 1) then
+      error(string.format("The given command %q is not executable.", cmd))
   end
   if dispatchers then
     local user_dispatchers = dispatchers
@@ -370,9 +372,6 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     }
     if extra_spawn_params then
       spawn_params.cwd = extra_spawn_params.cwd
-      if spawn_params.cwd then
-        assert(is_dir(spawn_params.cwd), "cwd must be a directory")
-      end
       spawn_params.env = env_merge(extra_spawn_params.env)
     end
     handle, pid = uv.spawn(cmd, spawn_params, onexit)

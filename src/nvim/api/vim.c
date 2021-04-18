@@ -39,6 +39,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/fileio.h"
+#include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
@@ -241,8 +242,7 @@ void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
 ///
 /// @param ns_id the namespace to activate
 /// @param[out] err Error details, if any
-void nvim_set_hl_ns(Integer ns_id, Error *err)
-  FUNC_API_SINCE(7)
+void nvim__set_hl_ns(Integer ns_id, Error *err)
   FUNC_API_FAST
 {
   if (ns_id >= 0) {
@@ -1246,6 +1246,100 @@ fail:
   return 0;
 }
 
+/// Open a terminal instance in a buffer
+///
+/// By default (and currently the only option) the terminal will not be
+/// connected to an external process. Instead, input send on the channel
+/// will be echoed directly by the terminal. This is useful to disply
+/// ANSI terminal sequences returned as part of a rpc message, or similar.
+///
+/// Note: to directly initiate the terminal using the right size, display the
+/// buffer in a configured window before calling this. For instance, for a
+/// floating display, first create an empty buffer using |nvim_create_buf()|,
+/// then display it using |nvim_open_win()|, and then  call this function.
+/// Then |nvim_chan_send()| cal be called immediately to process sequences
+/// in a virtual terminal having the intended size.
+///
+/// @param buffer the buffer to use (expected to be empty)
+/// @param opts   Optional parameters. Reserved for future use.
+/// @param[out] err Error details, if any
+Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return 0;
+  }
+
+  TerminalOptions topts;
+  Channel *chan = channel_alloc(kChannelStreamInternal);
+  topts.data = chan;
+  // NB: overriden in terminal_check_size if a window is already
+  // displaying the buffer
+  topts.width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0);
+  topts.height = (uint16_t)curwin->w_height_inner;
+  topts.write_cb = term_write;
+  topts.resize_cb = term_resize;
+  topts.close_cb = term_close;
+  Terminal *term = terminal_open(buf, topts);
+  terminal_check_size(term);
+  chan->term = term;
+  channel_incref(chan);
+  return (Integer)chan->id;
+}
+
+static void term_write(char *buf, size_t size, void *data)
+{
+  // TODO(bfredl): lua callback
+}
+
+static void term_resize(uint16_t width, uint16_t height, void *data)
+{
+  // TODO(bfredl): lua callback
+}
+
+static void term_close(void *data)
+{
+  Channel *chan = data;
+  terminal_destroy(chan->term);
+  chan->term = NULL;
+  channel_decref(chan);
+}
+
+
+/// Send data to channel `id`. For a job, it writes it to the
+/// stdin of the process. For the stdio channel |channel-stdio|,
+/// it writes to Nvim's stdout.  For an internal terminal instance
+/// (|nvim_open_term()|) it writes directly to terimal output.
+/// See |channel-bytes| for more information.
+///
+/// This function writes raw data, not RPC messages.  If the channel
+/// was created with `rpc=true` then the channel expects RPC
+/// messages, use |vim.rpcnotify()| and |vim.rpcrequest()| instead.
+///
+/// @param chan id of the channel
+/// @param data data to write. 8-bit clean: can contain NUL bytes.
+/// @param[out] err Error details, if any
+void nvim_chan_send(Integer chan, String data, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY
+{
+  const char *error = NULL;
+  if (!data.size) {
+    return;
+  }
+
+  channel_send((uint64_t)chan, data.data, data.size,
+               false, &error);
+  if (error) {
+    api_set_error(err, kErrorTypeValidation, "%s", error);
+  }
+}
+
 /// Open a new window.
 ///
 /// Currently this is used to open floating and external windows.
@@ -1323,6 +1417,29 @@ fail:
 ///                    end-of-buffer region is hidden by setting `eob` flag of
 ///                    'fillchars' to a space char, and clearing the
 ///                    |EndOfBuffer| region in 'winhighlight'.
+///   - `border`: style of (optional) window border. This can either be a string
+///      or an array. the string values are:
+///     - "none" No border. This is the default
+///     - "single" a single line box
+///     - "double" a double line box
+///     - "shadow" a drop shadow effect by blending with the background.
+///     If it is an array it should be an array of eight items or any divisor of
+///     eight. The array will specifify the eight chars building up the border
+///     in a clockwise fashion starting with the top-left corner. As, an
+///     example, the double box style could be specified as:
+///         [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ]
+///     if the number of chars are less than eight, they will be repeated. Thus
+///     an ASCII border could be specified as:
+///       [ "/", "-", "\\", "|" ]
+///     or all chars the same as:
+///       [ "x" ]
+///     An empty string can be used to turn off a specific border, for instance:
+///       [ "", "", "", ">", "", "", "", "<" ]
+///     will only make vertical borders but not horizontal ones.
+///     By default `FloatBorder` highlight is used which links to `VertSplit`
+///     when not defined.  It could also be specified by character:
+///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ]
+///
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
@@ -1546,8 +1663,8 @@ theend:
 ///              - "c" |charwise| mode
 ///              - "l" |linewise| mode
 ///              - ""  guess by contents, see |setreg()|
-/// @param after  Insert after cursor (like |p|), or before (like |P|).
-/// @param follow  Place cursor at end of inserted text.
+/// @param after  If true insert after cursor (like |p|), or before (like |P|).
+/// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
 void nvim_put(ArrayOf(String) lines, String type, Boolean after,
               Boolean follow, Error *err)
@@ -2596,6 +2713,7 @@ Dictionary nvim__stats(void)
   Dictionary rv = ARRAY_DICT_INIT;
   PUT(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
   PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
+  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_refcount));
   return rv;
 }
 
@@ -2738,8 +2856,8 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     g = &pum_grid;
   } else if (grid > 1) {
     win_T *wp = get_win_by_grid_handle((handle_T)grid);
-    if (wp != NULL && wp->w_grid.chars != NULL) {
-      g = &wp->w_grid;
+    if (wp != NULL && wp->w_grid_alloc.chars != NULL) {
+      g = &wp->w_grid_alloc;
     } else {
       api_set_error(err, kErrorTypeValidation,
                     "No grid with the given handle");
@@ -2766,19 +2884,6 @@ void nvim__screenshot(String path)
   FUNC_API_FAST
 {
   ui_call_screenshot(path);
-}
-
-static void clear_provider(DecorProvider *p)
-{
-  if (p == NULL) {
-    return;
-  }
-  NLUA_CLEAR_REF(p->redraw_start);
-  NLUA_CLEAR_REF(p->redraw_buf);
-  NLUA_CLEAR_REF(p->redraw_win);
-  NLUA_CLEAR_REF(p->redraw_line);
-  NLUA_CLEAR_REF(p->redraw_end);
-  p->active = false;
 }
 
 /// Set or change decoration provider for a namespace
@@ -2825,8 +2930,8 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
                                   Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
-  DecorProvider *p = get_provider((NS)ns_id, true);
-  clear_provider(p);
+  DecorProvider *p = get_decor_provider((NS)ns_id, true);
+  decor_provider_clear(p);
 
   // regardless of what happens, it seems good idea to redraw
   redraw_all_later(NOT_VALID);  // TODO(bfredl): too soon?
@@ -2848,7 +2953,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
     size_t j;
-    for (j = 0; cbs[j].name; j++) {
+    for (j = 0; cbs[j].name && cbs[j].dest; j++) {
       if (strequal(cbs[j].name, k.data)) {
         if (v->type != kObjectTypeLuaRef) {
           api_set_error(err, kErrorTypeValidation,
@@ -2869,5 +2974,5 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   p->active = true;
   return;
 error:
-  clear_provider(p);
+  decor_provider_clear(p);
 }

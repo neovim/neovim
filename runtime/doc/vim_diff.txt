@@ -70,6 +70,8 @@ the differences.
 - |matchit| plugin is enabled. To disable it in your config: >
     :let loaded_matchit = 1
 
+- |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
+
 ==============================================================================
 3. New Features						       *nvim-features*
 

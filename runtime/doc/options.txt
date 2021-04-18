@@ -3716,6 +3716,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*lcs-space*
 	  space:c	Character to show for a space.  When omitted, spaces
 			are left blank.
+							*lcs-lead*
+	  lead:c	Character to show for leading spaces.  When omitted,
+			leading spaces are blank.  Overrides the "space"
+			setting for leading spaces.
 							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
 			trailing spaces are blank.  Overrides the "space"
@@ -4814,7 +4818,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   |xdg| ($XDG_CONFIG_DIRS, defaults to /etc/xdg).  This also contains
 	   preferences from system administrator.
 	3. Data home directory, for plugins installed by user.
-	   Given by `stdpath("data")`.  |$XDG_DATA_HOME|
+	   Given by `stdpath("data")/site`.  |$XDG_DATA_HOME|
 	4. nvim/site subdirectories for each directory in $XDG_DATA_DIRS.
 	   This is for plugins which were installed by system administrator,
 	   but are not part of the Nvim distribution. XDG_DATA_DIRS defaults
@@ -5551,6 +5555,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   "number"	display signs in the 'number' column. If the number
 			column is not present, then behaves like 'auto'.
 
+	Note regarding 'orphaned signs': with signcolumn numbers higher than
+	1, deleting lines will also remove the associated signs automatically,
+	in contrast to the default Vim behavior of keeping and grouping them.
+	This is done in order for the signcolumn appearence not appear weird
+	during line deletion.
+
 
 			*'smartcase'* *'scs'* *'nosmartcase'* *'noscs'*
 'smartcase' 'scs'	boolean	(default off)
@@ -5620,6 +5630,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	spaces is minimized by using <Tab>s.
 	The 'L' flag in 'cpoptions' changes how tabs are used when 'list' is
 	set.
+
+	The value of 'softtabstop' will be ignored if |'varsofttabstop'| is set
+	to anything other than an empty string.
 
 						*'spell'* *'nospell'*
 'spell'			boolean	(default off)
@@ -6158,6 +6171,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   though.  Otherwise aligned comments will be wrong when 'tabstop' is
 	   changed.
 
+	The value of 'tabstop' will be ignored if |'vartabstop'| is set to
+	anything other than an empty string.
+
 			*'tagbsearch'* *'tbs'* *'notagbsearch'* *'notbs'*
 'tagbsearch' 'tbs'	boolean	(default on)
 			global
@@ -6541,6 +6557,38 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If this many milliseconds nothing is typed the swap file will be
 	written to disk (see |crash-recovery|).  Also used for the
 	|CursorHold| autocommand event.
+
+					*'varsofttabstop'* *'vsts'*
+'varsofttabstop' 'vsts'	string	(default "")
+			local to buffer
+	A list of the number of spaces that a <Tab> counts for while editing,
+	such as inserting a <Tab> or using <BS>.  It "feels" like variable-
+	width <Tab>s are being inserted, while in fact a mixture of spaces
+	and <Tab>s is used.  Tab widths are separated with commas, with the
+	final value applying to all subsequent tabs.
+
+	For example, when editing assembly language files where statements
+	start in the 8th column and comments in the 40th, it may be useful
+	to use the following: >
+		:set varsofttabstop=8,32,8
+<	This will set soft tabstops at the 8th and 40th columns, and at every
+	8th column thereafter.
+
+	Note that the value of |'softtabstop'| will be ignored while
+	'varsofttabstop' is set.
+
+						*'vartabstop'* *'vts'*
+'vartabstop' 'vts'	string	(default "")
+			local to buffer
+	A list of the number of spaces that a <Tab> in the file counts for,
+	separated by commas.  Each value corresponds to one tab, with the
+	final value applying to all subsequent tabs. For example: >
+		:set vartabstop=4,20,10,8
+<	This will make the first tab 4 spaces wide, the second 20 spaces,
+	the third 10 spaces, and all following tabs 8 spaces.
+
+	Note that the value of |'tabstop'| will be ignored while 'vartabstop'
+	is set.
 
 						*'verbose'* *'vbs'*
 'verbose' 'vbs'		number	(default 0)

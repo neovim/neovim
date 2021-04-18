@@ -263,8 +263,15 @@ end
 -- vim.fn.{func}(...)
 vim.fn = setmetatable({}, {
   __index = function(t, key)
-    local function _fn(...)
-      return vim.call(key, ...)
+    local _fn
+    if vim.api[key] ~= nil then
+      _fn = function()
+        error(string.format("Tried to call API function with vim.fn: use vim.api.%s instead", key))
+      end
+    else
+      _fn = function(...)
+        return vim.call(key, ...)
+      end
     end
     t[key] = _fn
     return _fn

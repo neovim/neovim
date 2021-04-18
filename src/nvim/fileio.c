@@ -4280,7 +4280,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
   if (fname == NULL || *fname == NUL) {
     retval = xmalloc(MAXPATHL + extlen + 3);  // +3 for PATHSEP, "_" (Win), NUL
     if (os_dirname((char_u *)retval, MAXPATHL) == FAIL
-        || (fnamelen = strlen(retval)) == 0) {
+        || strlen(retval) == 0) {
       xfree(retval);
       return NULL;
     }
@@ -4947,11 +4947,11 @@ int buf_check_timestamp(buf_T *buf)
         (void)msg_end();
         if (emsg_silent == 0) {
           ui_flush();
-          /* give the user some time to think about it */
-          os_delay(1000L, true);
+          // give the user some time to think about it
+          os_delay(1004L, true);
 
-          /* don't redraw and erase the message */
-          redraw_cmdline = FALSE;
+          // don't redraw and erase the message
+          redraw_cmdline = false;
         }
       }
       already_warned = TRUE;

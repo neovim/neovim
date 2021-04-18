@@ -147,8 +147,8 @@ set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0
 set(MSGPACK_SHA256 bfbb71b7c02f806393bc3cbc491b40523b89e64f83860c58e3e54af47de176e4)
 
 # https://github.com/LuaJIT/LuaJIT/tree/v2.1
-set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/1d8b747c161db457e032a023ebbff511f5de5ec2.tar.gz)
-set(LUAJIT_SHA256 20a159c38a98ecdb6368e8d655343b6036622a29a1621da9dc303f7ed9bf37f3)
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/787736990ac3b7d5ceaba2697c7d0f58f77bb782.tar.gz)
+set(LUAJIT_SHA256 2e3f74bc279f46cc463abfc67b36e69faaf0366237004771f4cac4bf2a9f5efb)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
@@ -196,11 +196,12 @@ set(GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47
 set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz)
 set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
 
-set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/99151b1.tar.gz)
-set(TREESITTER_C_SHA256 950386f9ba77fb6a7e992198d4f219c34238a2bbc005c5f53c4212d0f8772b06)
+set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/5aa0bbb.tar.gz)
+set(TREESITTER_C_SHA256 a5dcb37460d83002dfae7f9a208170ddbc9a047f231b9d6b75da7d36d707db2f)
 
-set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/0.18.0.zip)
-set(TREESITTER_SHA256 ac53b7708ca47161dac7f8e852bd61accb8527d45b7ad72e29e12e8e72dbe440)
+# This is 0.19.4+2, fixes some segfaults https://github.com/tree-sitter/tree-sitter/commit/89e1157a299596f3ce2155ba9fd69d5e2c03d3e6
+set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/89e1157a299596f3ce2155ba9fd69d5e2c03d3e6.zip)
+set(TREESITTER_SHA256 d5be9fd92cbf783680f921b2adccbd721b9aa8b2c445114a216b6544330f252c)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)

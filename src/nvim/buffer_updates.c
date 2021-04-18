@@ -176,7 +176,7 @@ void buf_updates_unload(buf_T *buf, bool can_reload)
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
     } else {
-      free_update_callbacks(cb);
+      buffer_update_callbacks_free(cb);
     }
   }
   kv_size(buf->update_callbacks) = j;
@@ -290,7 +290,7 @@ void buf_updates_send_changes(buf_T *buf,
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
-        free_update_callbacks(cb);
+        buffer_update_callbacks_free(cb);
         keep = false;
       }
       api_free_object(res);
@@ -342,7 +342,7 @@ void buf_updates_send_splice(
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
-        free_update_callbacks(cb);
+        buffer_update_callbacks_free(cb);
         keep = false;
       }
     }
@@ -378,7 +378,7 @@ void buf_updates_changedtick(buf_T *buf)
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
-        free_update_callbacks(cb);
+        buffer_update_callbacks_free(cb);
         keep = false;
       }
       api_free_object(res);
@@ -406,8 +406,11 @@ void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
     rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);
 }
 
-static void free_update_callbacks(BufUpdateCallbacks cb)
+void buffer_update_callbacks_free(BufUpdateCallbacks cb)
 {
   api_free_luaref(cb.on_lines);
+  api_free_luaref(cb.on_bytes);
   api_free_luaref(cb.on_changedtick);
+  api_free_luaref(cb.on_reload);
+  api_free_luaref(cb.on_detach);
 }

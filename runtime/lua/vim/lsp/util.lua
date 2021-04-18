@@ -18,6 +18,40 @@ end
 
 local M = {}
 
+local default_border = {
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {" ", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {" ", "NormalFloat"},
+}
+
+--@private
+-- Check the border given by opts or the default border for the additional
+-- size it adds to a float.
+--@returns size of border in height and width
+local function get_border_size(opts)
+  local border = opts and opts.border or default_border
+  local height = 0
+  local width = 0
+
+  if type(border) == 'string' then
+    -- 'single', 'double', etc.
+    height = 2
+    width = 2
+  else
+    height = height + vim.fn.strdisplaywidth(border[2][1])  -- top
+    height = height + vim.fn.strdisplaywidth(border[6][1])  -- bottom
+    width  = width  + vim.fn.strdisplaywidth(border[4][1])  -- right
+    width  = width  + vim.fn.strdisplaywidth(border[8][1])  -- left
+  end
+
+  return { height = height, width = width }
+end
+
 --@private
 local function split_lines(value)
   return split(value, '\n', true)
@@ -226,6 +260,177 @@ end
 -- function M.glob_to_regex(glob)
 -- end
 
+--@private
+--- Finds the first line and column of the difference between old and new lines
+--@param old_lines table list of lines
+--@param new_lines table list of lines
+--@returns (int, int) start_line_idx and start_col_idx of range
+local function first_difference(old_lines, new_lines, start_line_idx)
+  local line_count = math.min(#old_lines, #new_lines)
+  if line_count == 0 then return 1, 1 end
+  if not start_line_idx then
+    for i = 1, line_count do
+      start_line_idx = i
+      if old_lines[start_line_idx] ~= new_lines[start_line_idx] then
+        break
+      end
+    end
+  end
+  local old_line = old_lines[start_line_idx]
+  local new_line = new_lines[start_line_idx]
+  local length = math.min(#old_line, #new_line)
+  local start_col_idx = 1
+  while start_col_idx <= length do
+    if string.sub(old_line, start_col_idx, start_col_idx) ~= string.sub(new_line, start_col_idx, start_col_idx) then
+      break
+    end
+    start_col_idx  = start_col_idx  + 1
+  end
+  return start_line_idx, start_col_idx
+end
+
+
+--@private
+--- Finds the last line and column of the differences between old and new lines
+--@param old_lines table list of lines
+--@param new_lines table list of lines
+--@param start_char integer First different character idx of range
+--@returns (int, int) end_line_idx and end_col_idx of range
+local function last_difference(old_lines, new_lines, start_char, end_line_idx)
+  local line_count = math.min(#old_lines, #new_lines)
+  if line_count == 0 then return 0,0 end
+  if not end_line_idx then
+    end_line_idx = -1
+  end
+  for i = end_line_idx, -line_count, -1  do
+    if old_lines[#old_lines + i + 1] ~= new_lines[#new_lines + i + 1] then
+      end_line_idx = i
+      break
+    end
+  end
+  local old_line
+  local new_line
+  if end_line_idx <= -line_count then
+    end_line_idx = -line_count
+    old_line  = string.sub(old_lines[#old_lines + end_line_idx + 1], start_char)
+    new_line  = string.sub(new_lines[#new_lines + end_line_idx + 1], start_char)
+  else
+    old_line  = old_lines[#old_lines + end_line_idx + 1]
+    new_line  = new_lines[#new_lines + end_line_idx + 1]
+  end
+  local old_line_length = #old_line
+  local new_line_length = #new_line
+  local length = math.min(old_line_length, new_line_length)
+  local end_col_idx = -1
+  while end_col_idx >= -length do
+    local old_char =  string.sub(old_line, old_line_length + end_col_idx + 1, old_line_length + end_col_idx + 1)
+    local new_char =  string.sub(new_line, new_line_length + end_col_idx + 1, new_line_length + end_col_idx + 1)
+    if old_char ~= new_char then
+      break
+    end
+    end_col_idx = end_col_idx - 1
+  end
+  return end_line_idx, end_col_idx
+
+end
+
+--@private
+--- Get the text of the range defined by start and end line/column
+--@param lines table list of lines
+--@param start_char integer First different character idx of range
+--@param end_char integer Last different character idx of range
+--@param start_line integer First different line idx of range
+--@param end_line integer Last different line idx of range
+--@returns string text extracted from defined region
+local function extract_text(lines, start_line, start_char, end_line, end_char)
+  if start_line == #lines + end_line + 1 then
+    if end_line == 0 then return '' end
+    local line = lines[start_line]
+    local length = #line + end_char - start_char
+    return string.sub(line, start_char, start_char + length + 1)
+  end
+  local result = string.sub(lines[start_line], start_char) .. '\n'
+  for line_idx = start_line + 1, #lines + end_line do
+    result = result .. lines[line_idx] .. '\n'
+  end
+  if end_line ~= 0 then
+    local line = lines[#lines + end_line + 1]
+    local length = #line + end_char + 1
+    result = result .. string.sub(line, 1, length)
+  end
+  return result
+end
+
+--@private
+--- Compute the length of the substituted range
+--@param lines table list of lines
+--@param start_char integer First different character idx of range
+--@param end_char integer Last different character idx of range
+--@param start_line integer First different line idx of range
+--@param end_line integer Last different line idx of range
+--@returns (int, int) end_line_idx and end_col_idx of range
+local function compute_length(lines, start_line, start_char, end_line, end_char)
+  local adj_end_line = #lines + end_line + 1
+  local adj_end_char
+  if adj_end_line > #lines then
+    adj_end_char =  end_char - 1
+  else
+    adj_end_char = #lines[adj_end_line] + end_char
+  end
+  if start_line == adj_end_line then
+    return adj_end_char - start_char + 1
+  end
+  local result = #lines[start_line] - start_char + 1
+  for line = start_line + 1, adj_end_line -1 do
+    result = result + #lines[line] + 1
+  end
+  result = result + adj_end_char + 1
+  return result
+end
+
+--- Returns the range table for the difference between old and new lines
+--@param old_lines table list of lines
+--@param new_lines table list of lines
+--@param start_line_idx int line to begin search for first difference
+--@param end_line_idx int line to begin search for last difference
+--@param offset_encoding string encoding requested by language server
+--@returns table start_line_idx and start_col_idx of range
+function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx, offset_encoding)
+  local start_line, start_char = first_difference(old_lines, new_lines, start_line_idx)
+  local end_line, end_char = last_difference(vim.list_slice(old_lines, start_line, #old_lines),
+      vim.list_slice(new_lines, start_line, #new_lines), start_char, end_line_idx)
+  local text = extract_text(new_lines, start_line, start_char, end_line, end_char)
+  local length = compute_length(old_lines, start_line, start_char, end_line, end_char)
+
+  local adj_end_line = #old_lines + end_line
+  local adj_end_char
+  if end_line == 0 then
+    adj_end_char = 0
+  else
+    adj_end_char = #old_lines[#old_lines + end_line + 1] + end_char + 1
+  end
+
+  local _
+  if offset_encoding == "utf-16" then
+    _, start_char = vim.str_utfindex(old_lines[start_line], start_char - 1)
+    _, end_char = vim.str_utfindex(old_lines[#old_lines + end_line + 1], adj_end_char)
+  else
+    start_char = start_char - 1
+    end_char = adj_end_char
+  end
+
+  local result = {
+    range = {
+      start = { line = start_line - 1, character = start_char},
+      ["end"] = { line = adj_end_line, character = end_char}
+    },
+    text = text,
+    rangeLength = length + 1,
+  }
+
+  return result
+end
+
 --- Can be used to extract the completion items from a
 --- `textDocument/completion` request, which may return one of
 --- `CompletionItem[]`, `CompletionList` or null.
@@ -265,6 +470,7 @@ function M.apply_text_document_edit(text_document_edit, index)
   -- `VersionedTextDocumentIdentifier`s version may be null
   --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
   if should_check_version and (text_document.version
+      and text_document.version > 0
       and M.buf_versions[bufnr]
       and M.buf_versions[bufnr] > text_document.version) then
     print("Buffer ", text_document.uri, " newer than edits.")
@@ -359,13 +565,13 @@ end
 --- precedence is as follows: textEdit.newText > insertText > label
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function get_completion_word(item)
-  if item.textEdit ~= nil and item.textEdit.newText ~= nil then
+  if item.textEdit ~= nil and item.textEdit.newText ~= nil and item.textEdit.newText ~= "" then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
       return item.textEdit.newText
     else
       return M.parse_snippet(item.textEdit.newText)
     end
-  elseif item.insertText ~= nil then
+  elseif item.insertText ~= nil and item.insertText ~= "" then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
       return item.insertText
     else
@@ -453,6 +659,62 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   return matches
 end
 
+
+--- Rename old_fname to new_fname
+--
+--@param opts (table)
+--         overwrite? bool
+--         ignoreIfExists? bool
+function M.rename(old_fname, new_fname, opts)
+  opts = opts or {}
+  local bufnr = vim.fn.bufadd(old_fname)
+  vim.fn.bufload(bufnr)
+  local target_exists = vim.loop.fs_stat(new_fname) ~= nil
+  if target_exists and not opts.overwrite or opts.ignoreIfExists then
+    vim.notify('Rename target already exists. Skipping rename.')
+    return
+  end
+  local ok, err = os.rename(old_fname, new_fname)
+  assert(ok, err)
+  api.nvim_buf_call(bufnr, function()
+    vim.cmd('saveas! ' .. vim.fn.fnameescape(new_fname))
+  end)
+end
+
+
+local function create_file(change)
+  local opts = change.options or {}
+  -- from spec: Overwrite wins over `ignoreIfExists`
+  local fname = vim.uri_to_fname(change.uri)
+  if not opts.ignoreIfExists or opts.overwrite then
+    local file = io.open(fname, 'w')
+    file:close()
+  end
+  vim.fn.bufadd(fname)
+end
+
+
+local function delete_file(change)
+  local opts = change.options or {}
+  local fname = vim.uri_to_fname(change.uri)
+  local stat = vim.loop.fs_stat(fname)
+  if opts.ignoreIfNotExists and not stat then
+    return
+  end
+  assert(stat, "Cannot delete not existing file or folder " .. fname)
+  local flags
+  if stat and stat.type == 'directory' then
+    flags = opts.recursive and 'rf' or 'd'
+  else
+    flags = ''
+  end
+  local bufnr = vim.fn.bufadd(fname)
+  local result = tonumber(vim.fn.delete(fname, flags))
+  assert(result == 0, 'Could not delete file: ' .. fname .. ', stat: ' .. vim.inspect(stat))
+  api.nvim_buf_delete(bufnr, { force = true })
+end
+
+
 --- Applies a `WorkspaceEdit`.
 ---
 --@param workspace_edit (table) `WorkspaceEdit`
@@ -460,8 +722,17 @@ end
 function M.apply_workspace_edit(workspace_edit)
   if workspace_edit.documentChanges then
     for idx, change in ipairs(workspace_edit.documentChanges) do
-      if change.kind then
-        -- TODO(ashkan) handle CreateFile/RenameFile/DeleteFile
+      if change.kind == "rename" then
+        M.rename(
+          vim.uri_to_fname(change.oldUri),
+          vim.uri_to_fname(change.newUri),
+          change.options
+        )
+      elseif change.kind == 'create' then
+        create_file(change)
+      elseif change.kind == 'delete' then
+        delete_file(change)
+      elseif change.kind then
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
         M.apply_text_document_edit(change, idx)
@@ -620,7 +891,7 @@ function M.make_floating_popup_options(width, height, opts)
   else
     anchor = anchor..'S'
     height = math.min(lines_above, height)
-    row = 0
+    row = -get_border_size(opts).height
   end
 
   if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
@@ -639,6 +910,7 @@ function M.make_floating_popup_options(width, height, opts)
     row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,
+    border = opts.border or default_border,
   }
 end
 
@@ -687,8 +959,8 @@ function M.preview_location(location)
   end
   local range = location.targetRange or location.range
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range["end"].line+1, false)
-  local filetype = api.nvim_buf_get_option(bufnr, 'filetype')
-  return M.open_floating_preview(contents, filetype)
+  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
+  return M.open_floating_preview(contents, syntax)
 end
 
 --@private
@@ -745,27 +1017,20 @@ function M.focusable_preview(unique_name, fn)
   end)
 end
 
---- Trims empty lines from input and pad left and right with spaces
+--- Trims empty lines from input and pad top and bottom with empty lines
 ---
 ---@param contents table of lines to trim and pad
 ---@param opts dictionary with optional fields
----             - pad_left   number of columns to pad contents at left (default 1)
----             - pad_right  number of columns to pad contents at right (default 1)
 ---             - pad_top    number of lines to pad contents at top (default 0)
 ---             - pad_bottom number of lines to pad contents at bottom (default 0)
 ---@return contents table of trimmed and padded lines
-function M._trim_and_pad(contents, opts)
+function M._trim(contents, opts)
   validate {
     contents = { contents, 't' };
     opts = { opts, 't', true };
   }
   opts = opts or {}
-  local left_padding = (" "):rep(opts.pad_left or 1)
-  local right_padding = (" "):rep(opts.pad_right or 1)
   contents = M.trim_empty_lines(contents)
-  for i, line in ipairs(contents) do
-    contents[i] = string.format('%s%s%s', left_padding, line:gsub("\r", ""), right_padding)
-  end
   if opts.pad_top then
     for _ = 1, opts.pad_top do
       table.insert(contents, 1, "")
@@ -842,8 +1107,8 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  -- Clean up and add padding
-  stripped = M._trim_and_pad(stripped, opts)
+  -- Clean up
+  stripped = M._trim(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
@@ -873,8 +1138,10 @@ function M.fancy_floating_markdown(contents, opts)
   -- This is because the syntax command doesn't accept a target.
   local cwin = vim.api.nvim_get_current_win()
   vim.api.nvim_set_current_win(winnr)
+  api.nvim_win_set_option(winnr, 'conceallevel', 2)
+  api.nvim_win_set_option(winnr, 'concealcursor', 'n')
 
-  vim.cmd("ownsyntax markdown")
+  vim.cmd("ownsyntax lsp_markdown")
   local idx = 1
   --@private
   local function apply_syntax_to_region(ft, start, finish)
@@ -944,6 +1211,20 @@ function M._make_floating_popup_size(contents, opts)
       width = math.max(line_widths[i], width)
     end
   end
+
+  local border_width = get_border_size(opts).width
+  local screen_width = api.nvim_win_get_width(0)
+  width = math.min(width, screen_width)
+
+  -- make sure borders are always inside the screen
+  if width + border_width > screen_width then
+    width = width - (width + border_width - screen_width)
+  end
+
+  if wrap_at and wrap_at > width then
+    wrap_at = width
+  end
+
   if max_width then
     width = math.min(width, max_width)
     wrap_at = math.min(wrap_at or max_width, max_width)
@@ -975,7 +1256,7 @@ end
 --- Shows contents in a floating window.
 ---
 --@param contents table of lines to show in window
---@param filetype string of filetype to set for opened buffer
+--@param syntax string of syntax to set for opened buffer
 --@param opts dictionary with optional fields
 --             - height    of floating window
 --             - width     of floating window
@@ -988,28 +1269,28 @@ end
 --             - pad_bottom number of lines to pad contents at bottom
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
-function M.open_floating_preview(contents, filetype, opts)
+function M.open_floating_preview(contents, syntax, opts)
   validate {
     contents = { contents, 't' };
-    filetype = { filetype, 's', true };
+    syntax = { syntax, 's', true };
     opts = { opts, 't', true };
   }
   opts = opts or {}
 
   -- Clean up input: trim empty lines from the end, pad
-  contents = M._trim_and_pad(contents, opts)
+  contents = M._trim(contents, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
   local width, height = M._make_floating_popup_size(contents, opts)
 
   local floating_bufnr = api.nvim_create_buf(false, true)
-  if filetype then
-    api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
+  if syntax then
+    api.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
   end
   local float_option = M.make_floating_popup_options(width, height, opts)
   local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
-  if filetype == 'markdown' then
+  if syntax == 'markdown' then
     api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)

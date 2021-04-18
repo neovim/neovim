@@ -400,7 +400,6 @@ nlua_pop_typval_table_processing_end:
       case LUA_TFUNCTION: {
         LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
         state->lua_callable.func_ref = nlua_ref(lstate, -1);
-        state->lua_callable.table_ref = LUA_NOREF;
 
         char_u *name = register_cfunc(
             &nlua_CFunction_func_call,
@@ -412,6 +411,7 @@ nlua_pop_typval_table_processing_end:
         break;
       }
       case LUA_TUSERDATA: {
+        // TODO(bfredl): check mt.__call and convert to function?
         nlua_pushref(lstate, nlua_nil_ref);
         bool is_nil = lua_rawequal(lstate, -2, -1);
         lua_pop(lstate, 1);

@@ -106,8 +106,6 @@ argument.
 		This can be used to find out where time is spent while loading
 		your |config|, plugins and opening the first file.
 		When {fname} already exists new messages are appended.
-		(Only available when compiled with the |+startuptime|
-		feature).
 
 							*-+*
 +[num]		The cursor will be positioned on line "num" for the first

@@ -387,9 +387,10 @@ static int put_view(
   if (wp->w_alt_fnum) {
     buf_T *const alt = buflist_findnr(wp->w_alt_fnum);
 
-    // Set the alternate file.
+    // Set the alternate file if the buffer is listed.
     if ((flagp == &ssop_flags) && alt != NULL && alt->b_fname != NULL
         && *alt->b_fname != NUL
+        && alt->b_p_bl
         && (fputs("balt ", fd) < 0
             || ses_fname(fd, alt, flagp, true) == FAIL)) {
       return FAIL;

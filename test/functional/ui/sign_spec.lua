@@ -264,6 +264,24 @@ describe('Signs', function()
         {0:~                                                    }|
                                                              |
       ]]}
+      -- line deletion deletes signs.
+      command('2d')
+      screen:expect([[
+        {1:>>}XX{2:  }{6:  1 }a                                          |
+        XX{1:>>}WW{6:  2 }^c                                          |
+        {2:      }{6:  3 }                                           |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
     end)
 
     it('auto-resize sign column with minimum size (#13783)', function()

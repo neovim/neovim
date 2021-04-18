@@ -569,6 +569,21 @@ func Test_cmdline_complete_user_cmd()
   delcommand Foo
 endfunc
 
+func s:ScriptLocalFunction()
+  echo 'yes'
+endfunc
+
+func Test_cmdline_complete_user_func()
+  call feedkeys(":func Test_cmdline_complete_user\<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_match('"func Test_cmdline_complete_user', @:)
+  call feedkeys(":func s:ScriptL\<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_match('"func <SNR>\d\+_ScriptLocalFunction', @:)
+
+  " g: prefix also works
+  call feedkeys(":echo g:Test_cmdline_complete_user_f\<Tab>\<Home>\"\<cr>", 'tx')
+  call assert_match('"echo g:Test_cmdline_complete_user_func', @:)
+endfunc
+
 func Test_cmdline_complete_user_names()
   if has('unix') && executable('whoami')
     let whoami = systemlist('whoami')[0]

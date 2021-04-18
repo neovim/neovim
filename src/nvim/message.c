@@ -178,6 +178,7 @@ void msg_grid_validate(void)
     msg_grid.throttled = false;  // don't throttle in 'cmdheight' area
     msg_scrolled_at_flush = msg_scrolled;
     msg_grid.focusable = false;
+    msg_grid_adj.target = &msg_grid;
     if (!msg_scrolled) {
       msg_grid_set_pos(Rows - p_ch, false);
     }
@@ -188,6 +189,7 @@ void msg_grid_validate(void)
     ui_call_grid_destroy(msg_grid.handle);
     msg_grid.throttled = false;
     msg_grid_adj.row_offset = 0;
+    msg_grid_adj.target = &default_grid;
     redraw_cmdline = true;
   } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != Rows - p_ch) {
     msg_grid_set_pos(Rows - p_ch, false);
@@ -867,18 +869,18 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
  */
 char_u *msg_may_trunc(int force, char_u *s)
 {
-  int n;
   int room;
 
   room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (n = (int)STRLEN(s) - room) > 0) {
+      && (int)STRLEN(s) - room > 0) {
     int size = vim_strsize(s);
 
     // There may be room anyway when there are multibyte chars.
     if (size <= room) {
       return s;
     }
+    int n;
     for (n = 0; size >= room; ) {
       size -= utf_ptr2cells(s + n);
       n += utfc_ptr2len(s + n);
@@ -1703,6 +1705,7 @@ void msg_prt_line(char_u *s, int list)
   char_u *p_extra = NULL;  // init to make SASC shut up
   int n;
   int attr = 0;
+  char_u *lead = NULL;
   char_u *trail = NULL;
   int l;
 
@@ -1710,11 +1713,24 @@ void msg_prt_line(char_u *s, int list)
     list = true;
   }
 
-  // find start of trailing whitespace
-  if (list && curwin->w_p_lcs_chars.trail) {
-    trail = s + STRLEN(s);
-    while (trail > s && ascii_iswhite(trail[-1])) {
-      trail--;
+  if (list) {
+    // find start of trailing whitespace
+    if (curwin->w_p_lcs_chars.trail) {
+      trail = s + STRLEN(s);
+      while (trail > s && ascii_iswhite(trail[-1])) {
+        trail--;
+      }
+    }
+    // find end of leading whitespace
+    if (curwin->w_p_lcs_chars.lead) {
+      lead = s;
+      while (ascii_iswhite(lead[0])) {
+        lead++;
+      }
+      // in a line full of spaces all of them are treated as trailing
+      if (*lead == NUL) {
+        lead = NULL;
+      }
     }
   }
 
@@ -1756,7 +1772,9 @@ void msg_prt_line(char_u *s, int list)
       c = *s++;
       if (c == TAB && (!list || curwin->w_p_lcs_chars.tab1)) {
         // tab amount depends on current column
-        n_extra = curbuf->b_p_ts - col % curbuf->b_p_ts - 1;
+        n_extra = tabstop_padding(col,
+                                  curbuf->b_p_ts,
+                                  curbuf->b_p_vts_array) - 1;
         if (!list) {
           c = ' ';
           c_extra = ' ';
@@ -1788,6 +1806,9 @@ void msg_prt_line(char_u *s, int list)
         c = *p_extra++;
         /* Use special coloring to be able to distinguish <hex> from
          * the same in plain text. */
+        attr = HL_ATTR(HLF_8);
+      } else if (c == ' ' && lead != NULL && s <= lead) {
+        c = curwin->w_p_lcs_chars.lead;
         attr = HL_ATTR(HLF_8);
       } else if (c == ' ' && trail != NULL && s > trail) {
         c = curwin->w_p_lcs_chars.trail;

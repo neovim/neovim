@@ -282,7 +282,7 @@ int open_buffer(
 
   // Set/reset the Changed flag first, autocmds may change the buffer.
   // Apply the automatic commands, before processing the modelines.
-  // So the modelines have priority over auto commands.
+  // So the modelines have priority over autocommands.
 
   // When reading stdin, the buffer contents always needs writing, so set
   // the changed flag.  Unless in readonly mode: "ls | nvim -R -".
@@ -1844,7 +1844,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
       EMSG(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0) {
         ui_flush();
-        os_delay(3000L, true);  // make sure it is noticed
+        os_delay(3001L, true);  // make sure it is noticed
       }
       top_file_num = 1;
     }
@@ -1946,6 +1946,13 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_fo);
   clear_string_option(&buf->b_p_flp);
   clear_string_option(&buf->b_p_isk);
+  clear_string_option(&buf->b_p_vsts);
+  xfree(buf->b_p_vsts_nopaste);
+  buf->b_p_vsts_nopaste = NULL;
+  xfree(buf->b_p_vsts_array);
+  buf->b_p_vsts_array = NULL;
+  clear_string_option(&buf->b_p_vts);
+  XFREE_CLEAR(buf->b_p_vts_array);
   clear_string_option(&buf->b_p_keymap);
   keymap_ga_clear(&buf->b_kmap_ga);
   ga_clear(&buf->b_kmap_ga);
@@ -5375,8 +5382,8 @@ bool bt_terminal(const buf_T *const buf)
   return buf != NULL && buf->b_p_bt[0] == 't';
 }
 
-// Return true if "buf" is a "nofile", "acwrite" or "terminal" buffer.
-// This means the buffer name is not a file name.
+// Return true if "buf" is a "nofile", "acwrite", "terminal" or "prompt"
+// buffer.  This means the buffer name is not a file name.
 bool bt_nofile(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -5386,7 +5393,8 @@ bool bt_nofile(const buf_T *const buf)
                          || buf->b_p_bt[0] == 'p');
 }
 
-// Return true if "buf" is a "nowrite", "nofile" or "terminal" buffer.
+// Return true if "buf" is a "nowrite", "nofile", "terminal" or "prompt"
+// buffer.
 bool bt_dontwrite(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -5481,20 +5489,20 @@ bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 int buf_signcols(buf_T *buf)
 {
     if (buf->b_signcols_max == -1) {
-        signlist_T *sign;  // a sign in the signlist
+        sign_entry_T *sign;  // a sign in the sign list
         buf->b_signcols_max = 0;
         int linesum = 0;
         linenr_T curline = 0;
 
         FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-          if (sign->lnum > curline) {
+          if (sign->se_lnum > curline) {
             if (linesum > buf->b_signcols_max) {
               buf->b_signcols_max = linesum;
             }
-            curline = sign->lnum;
+            curline = sign->se_lnum;
             linesum = 0;
           }
-          if (sign->has_text_or_icon) {
+          if (sign->se_has_text_or_icon) {
             linesum++;
           }
         }

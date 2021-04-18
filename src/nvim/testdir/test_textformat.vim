@@ -891,6 +891,14 @@ func Test_mps()
   bwipe!
 endfunc
 
+func Test_empty_matchpairs()
+  split
+  set matchpairs= showmatch
+  call assert_nobeep('call feedkeys("ax\tx\t\<Esc>", "xt")')
+  set matchpairs& noshowmatch
+  bwipe!
+endfunc
+
 " Test for ra on multi-byte characters
 func Test_ra_multibyte()
   new

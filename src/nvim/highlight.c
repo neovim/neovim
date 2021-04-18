@@ -8,6 +8,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/map.h"
 #include "nvim/message.h"
+#include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
@@ -151,7 +152,7 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
 
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
-  DecorProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_decor_provider(ns_id, true);
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
       && map_has(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id))) {
     return;
@@ -175,7 +176,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     ns_id = ns_hl_active;
   }
 
-  DecorProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_decor_provider(ns_id, true);
   ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id));
   // TODO(bfredl): map_ref true even this?
   bool valid_cache = it.version >= p->hl_valid;
@@ -341,6 +342,25 @@ void update_window_hl(win_T *wp, bool invalid)
     }
     wp->w_hl_attrs[hlf] = attr;
   }
+
+  wp->w_float_config.shadow = false;
+  if (wp->w_floating && wp->w_float_config.border) {
+    for (int i = 0; i < 8; i++) {
+      int attr = wp->w_hl_attrs[HLF_BORDER];
+      if (wp->w_float_config.border_hl_ids[i]) {
+        attr = hl_get_ui_attr(HLF_BORDER, wp->w_float_config.border_hl_ids[i],
+                              false);
+        HlAttrs a = syn_attr2entry(attr);
+        if (a.hl_blend) {
+          wp->w_float_config.shadow = true;
+        }
+      }
+      wp->w_float_config.border_attr[i] = attr;
+    }
+  }
+
+  // shadow might cause blending
+  check_blending(wp);
 }
 
 /// Gets HL_UNDERLINE highlight.
@@ -517,6 +537,10 @@ static HlAttrs get_colors_force(int attr)
 /// @return the resulting attributes.
 int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 {
+  if (front_attr < 0 || back_attr < 0) {
+    return -1;
+  }
+
   HlAttrs fattrs = get_colors_force(front_attr);
   int ratio = fattrs.hl_blend;
   if (ratio <= 0) {

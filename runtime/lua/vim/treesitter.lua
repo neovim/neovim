@@ -10,14 +10,15 @@ local parsers = {}
 
 local M = vim.tbl_extend("error", query, language)
 
+M.language_version = vim._ts_get_language_version()
+
 setmetatable(M, {
   __index = function (t, k)
-      if k == "TSHighlighter" then
-        a.nvim_err_writeln("vim.TSHighlighter is deprecated, please use vim.treesitter.highlighter")
+      if k == "highlighter" then
         t[k] = require'vim.treesitter.highlighter'
         return t[k]
-      elseif k == "highlighter" then
-        t[k] = require'vim.treesitter.highlighter'
+      elseif k == "language" then
+        t[k] = require"vim.treesitter.language"
         return t[k]
       end
    end

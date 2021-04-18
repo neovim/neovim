@@ -968,7 +968,7 @@ static int do_autocmd_event(event_T event,
 // Implementation of ":doautocmd [group] event [fname]".
 // Return OK for success, FAIL for failure;
 int do_doautocmd(char_u *arg,
-                 int do_msg,  // give message for no matching autocmds?
+                 bool do_msg,  // give message for no matching autocmds?
                  bool *did_something)
 {
   char_u *fname;
@@ -1017,11 +1017,12 @@ int do_doautocmd(char_u *arg,
 // ":doautoall": execute autocommands for each loaded buffer.
 void ex_doautoall(exarg_T *eap)
 {
-  int retval;
+  int retval = OK;
   aco_save_T aco;
   char_u *arg = eap->arg;
   int call_do_modelines = check_nomodeline(&arg);
   bufref_T bufref;
+  bool did_aucmd;
 
   // This is a bit tricky: For some commands curwin->w_buffer needs to be
   // equal to curbuf, but for some buffers there may not be a window.
@@ -1029,14 +1030,14 @@ void ex_doautoall(exarg_T *eap)
   // gives problems when the autocommands make changes to the list of
   // buffers or windows...
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ml.ml_mfp == NULL) {
+    // Only do loaded buffers and skip the current buffer, it's done last.
+    if (buf->b_ml.ml_mfp == NULL || buf == curbuf) {
       continue;
     }
     // Find a window for this buffer and save some values.
     aucmd_prepbuf(&aco, buf);
     set_bufref(&bufref, buf);
 
-    bool did_aucmd;
     // execute the autocommands for this buffer
     retval = do_doautocmd(arg, false, &did_aucmd);
 
@@ -1052,7 +1053,16 @@ void ex_doautoall(exarg_T *eap)
 
     // Stop if there is some error or buffer was deleted.
     if (retval == FAIL || !bufref_valid(&bufref)) {
+      retval = FAIL;
       break;
+    }
+  }
+
+  // Execute autocommands for the current buffer last.
+  if (retval == OK) {
+    (void)do_doautocmd(arg, false, &did_aucmd);
+    if (call_do_modelines && did_aucmd) {
+      do_modelines(0);
     }
   }
 
@@ -1182,10 +1192,10 @@ void aucmd_restbuf(aco_save_T *aco)
 
     win_remove(curwin, NULL);
     handle_unregister_window(curwin);
-    if (curwin->w_grid.chars != NULL) {
-      ui_comp_remove_grid(&curwin->w_grid);
-      ui_call_win_hide(curwin->w_grid.handle);
-      grid_free(&curwin->w_grid);
+    if (curwin->w_grid_alloc.chars != NULL) {
+      ui_comp_remove_grid(&curwin->w_grid_alloc);
+      ui_call_win_hide(curwin->w_grid_alloc.handle);
+      grid_free(&curwin->w_grid_alloc);
     }
 
     aucmd_win_used = false;
@@ -1611,13 +1621,21 @@ static bool apply_autocmds_group(event_T event,
       ap->last = false;
     }
     ap->last = true;
-    check_lnums(true);  // make sure cursor and topline are valid
+
+    if (nesting == 1) {
+      // make sure cursor and topline are valid
+      check_lnums(true);
+    }
 
     // Execute the autocmd. The `getnextac` callback handles iteration.
     do_cmdline(NULL, getnextac, (void *)&patcmd,
                DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
 
-    reset_lnums();  // restore cursor and topline, unless they were changed
+    if (nesting == 1) {
+      // restore cursor and topline, unless they were changed
+      reset_lnums();
+    }
+
 
     if (eap != NULL) {
       (void)set_cmdarg(NULL, save_cmdarg);
@@ -1661,11 +1679,13 @@ static bool apply_autocmds_group(event_T event,
     did_filetype = false;
     while (au_pending_free_buf != NULL) {
       buf_T *b = au_pending_free_buf->b_next;
+
       xfree(au_pending_free_buf);
       au_pending_free_buf = b;
     }
     while (au_pending_free_win != NULL) {
       win_T *w = au_pending_free_win->w_next;
+
       xfree(au_pending_free_win);
       au_pending_free_win = w;
     }

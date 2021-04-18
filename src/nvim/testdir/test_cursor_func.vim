@@ -92,6 +92,11 @@ func Test_screenpos()
     \ 'endcol': wincol + 9}, screenpos(winid, 2, 22))
   close
   bwipe!
+
+  call assert_equal({'col': 1, 'row': 1, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
+  nmenu WinBar.TEST :
+  call assert_equal({'col': 1, 'row': 2, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
+  nunmenu WinBar.TEST
 endfunc
 
 func Test_screenpos_number()

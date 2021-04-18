@@ -2660,7 +2660,7 @@ endfunc
 " Test for incsearch highlighting of the :vimgrep pattern
 " This test used to cause "E315: ml_get: invalid lnum" errors.
 func Test_vimgrep_incsearch()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   enew
   set incsearch
   call test_override("char_avail", 1)

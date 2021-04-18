@@ -333,10 +333,10 @@ describe('highlight defaults', function()
     command('highlight clear EndOfBuffer')
     screen:expect{grid=[[
       ^                                                     |
-      ~                                                    |
-      ~                                                    |
+      {1:~                                                    }|
+      {1:~                                                    }|
                                                            |
-    ]], hl_groups={EndOfBuffer=0, MsgSeparator=2}}
+    ]], hl_groups={EndOfBuffer=1, MsgSeparator=2}}
   end)
 end)
 

@@ -161,7 +161,7 @@ void channel_init(void)
 ///
 /// Channel is allocated with refcount 1, which should be decreased
 /// when the underlying stream closes.
-static Channel *channel_alloc(ChannelStreamType type)
+Channel *channel_alloc(ChannelStreamType type)
 {
   Channel *chan = xcalloc(1, sizeof(*chan));
   if (type == kChannelStreamStdio) {
@@ -499,43 +499,54 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
 }
 
 /// @param data will be consumed
-size_t channel_send(uint64_t id, char *data, size_t len, const char **error)
+size_t channel_send(uint64_t id, char *data, size_t len,
+                    bool data_owned, const char **error)
 {
   Channel *chan = find_channel(id);
+  size_t written = 0;
   if (!chan) {
-    EMSG(_(e_invchan));
-    goto err;
+    *error = _(e_invchan);
+    goto retfree;
   }
 
   if (chan->streamtype == kChannelStreamStderr) {
     if (chan->stream.err.closed) {
       *error = _("Can't send data to closed stream");
-      goto err;
+      goto retfree;
     }
     // unbuffered write
-    size_t written = fwrite(data, len, 1, stderr);
-    xfree(data);
-    return len * written;
+    written = len * fwrite(data, len, 1, stderr);
+    goto retfree;
+  }
+
+  if (chan->streamtype == kChannelStreamInternal && chan->term) {
+    terminal_receive(chan->term, data, len);
+    written = len;
+    goto retfree;
   }
 
 
   Stream *in = channel_instream(chan);
   if (in->closed) {
     *error = _("Can't send data to closed stream");
-    goto err;
+    goto retfree;
   }
 
   if (chan->is_rpc) {
     *error = _("Can't send raw data to rpc channel");
-    goto err;
+    goto retfree;
   }
 
-  WBuffer *buf = wstream_new_buffer(data, len, 1, xfree);
+  // write can be delayed indefinitely, so always use an allocated buffer
+  WBuffer *buf = wstream_new_buffer(data_owned ? data : xmemdup(data, len),
+                                    len, 1, xfree);
   return wstream_write(in, buf) ? len : 0;
 
-err:
-  xfree(data);
-  return 0;
+retfree:
+  if (data_owned) {
+    xfree(data);
+  }
+  return written;
 }
 
 /// Convert binary byte array to a readfile()-style list
@@ -724,8 +735,8 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
 /// Open terminal for channel
 ///
 /// Channel `chan` is assumed to be an open pty channel,
-/// and curbuf is assumed to be a new, unmodified buffer.
-void channel_terminal_open(Channel *chan)
+/// and `buf` is assumed to be a new, unmodified buffer.
+void channel_terminal_open(buf_T *buf, Channel *chan)
 {
   TerminalOptions topts;
   topts.data = chan;
@@ -734,8 +745,8 @@ void channel_terminal_open(Channel *chan)
   topts.write_cb = term_write;
   topts.resize_cb = term_resize;
   topts.close_cb = term_close;
-  curbuf->b_p_channel = (long)chan->id;  // 'channel' option
-  Terminal *term = terminal_open(topts);
+  buf->b_p_channel = (long)chan->id;  // 'channel' option
+  Terminal *term = terminal_open(buf, topts);
   chan->term = term;
   channel_incref(chan);
 }

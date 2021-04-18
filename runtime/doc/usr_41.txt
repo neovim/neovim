@@ -788,6 +788,7 @@ Date and Time:				*date-functions* *time-functions*
 	getftime()		get last modification time of a file
 	localtime()		get current time in seconds
 	strftime()		convert time to a string
+	strptime()		convert a date/time string to time
 	reltime()		get the current or elapsed time accurately
 	reltimestr()		convert reltime() result to a string
 	reltimefloat()		convert reltime() result to a Float
@@ -942,8 +943,10 @@ Signs:						*sign-functions*
 	sign_getplaced()	get a list of placed signs
 	sign_jump()		jump to a sign
 	sign_place()		place a sign
+	sign_placelist()	place a list of signs
 	sign_undefine()		undefine a sign
 	sign_unplace()		unplace a sign
+	sign_unplacelist()	unplace a list of signs
 
 
 Testing:				    *test-functions*
@@ -957,6 +960,7 @@ Testing:				    *test-functions*
 	assert_true()		assert that an expression is true
 	assert_exception()	assert that a command throws an exception
 	assert_beeps()		assert that a command beeps
+	assert_nobeep()		assert that a command does not cause a beep
 	assert_fails()		assert that a command fails
 
 Timers:						*timer-functions*

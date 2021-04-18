@@ -3,6 +3,7 @@
 source view_util.vim
 source screendump.vim
 source check.vim
+source script_util.vim
 
 func Test_highlight()
   " basic test if ":highlight" doesn't crash
@@ -620,6 +621,105 @@ func Test_xxlast_highlight_RGB_color()
   call assert_equal('#110000', synIDattr(synIDtrans(hlID('MySearch')), 'fg#'))
   call assert_equal('#001100', synIDattr(synIDtrans(hlID('MySearch')), 'bg#'))
   call assert_equal('#000011', synIDattr(synIDtrans(hlID('MySearch')), 'sp#'))
+  hi clear
+endfunc
+
+func Test_highlight_clear_restores_links()
+  let aaa_id = hlID('aaa')
+  call assert_equal(aaa_id, 0)
+
+  " create default link aaa --> bbb
+  hi def link aaa bbb
+  let id_aaa = hlID('aaa')
+  let hl_aaa_bbb = HighlightArgs('aaa')
+
+  " try to redefine default link aaa --> ccc; check aaa --> bbb
+  hi def link aaa ccc
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " clear aaa; check aaa --> bbb
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " link aaa --> ccc; clear aaa; check aaa --> bbb
+  hi link aaa ccc
+  let id_ccc = hlID('ccc')
+  call assert_equal(synIDtrans(id_aaa), id_ccc)
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " forcibly set default link aaa --> ddd
+  hi! def link aaa ddd
+  let id_ddd = hlID('ddd')
+  let hl_aaa_ddd = HighlightArgs('aaa')
+  call assert_equal(synIDtrans(id_aaa), id_ddd)
+
+  " link aaa --> eee; clear aaa; check aaa --> ddd
+  hi link aaa eee
+  let eee_id = hlID('eee')
+  call assert_equal(synIDtrans(id_aaa), eee_id)
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_ddd)
+endfunc
+
+func Test_highlight_clear_restores_context()
+  func FuncContextDefault()
+    hi def link Context ContextDefault
+  endfun
+
+  func FuncContextRelink()
+    " Dummy line
+    hi link Context ContextRelink
+  endfunc
+
+  let scriptContextDefault = MakeScript("FuncContextDefault")
+  let scriptContextRelink = MakeScript("FuncContextRelink")
+  let patContextDefault = fnamemodify(scriptContextDefault, ':t') .. ' line 1'
+  let patContextRelink = fnamemodify(scriptContextRelink, ':t') .. ' line 2'
+
+  exec "source" scriptContextDefault
+  let hlContextDefault = execute("verbose hi Context")
+  call assert_match(patContextDefault, hlContextDefault)
+
+  exec "source" scriptContextRelink
+  let hlContextRelink = execute("verbose hi Context")
+  call assert_match(patContextRelink, hlContextRelink)
+
+  hi clear
+  let hlContextAfterClear = execute("verbose hi Context")
+  call assert_match(patContextDefault, hlContextAfterClear)
+
+  delfunc FuncContextDefault
+  delfunc FuncContextRelink
+  call delete(scriptContextDefault)
+  call delete(scriptContextRelink)
+endfunc
+
+func Test_highlight_default_colorscheme_restores_links()
+  hi link TestLink Identifier
+  hi TestHi ctermbg=red
+
+  let hlTestLinkPre = HighlightArgs('TestLink')
+  let hlTestHiPre = HighlightArgs('TestHi')
+
+  " Test colorscheme
+  hi clear
+  if exists('syntax_on')
+    syntax reset
+  endif
+  let g:colors_name = 'test'
+  hi link TestLink ErrorMsg
+  hi TestHi ctermbg=green
+
+  " Restore default highlighting
+  colorscheme default
+  " 'default' should work no matter if highlight group was cleared
+  hi def link TestLink Identifier
+  hi def TestHi ctermbg=red
+  let hlTestLinkPost = HighlightArgs('TestLink')
+  let hlTestHiPost = HighlightArgs('TestHi')
+  call assert_equal(hlTestLinkPre, hlTestLinkPost)
+  call assert_equal(hlTestHiPre, hlTestHiPost)
   hi clear
 endfunc
 

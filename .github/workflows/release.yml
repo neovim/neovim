@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gcc-multilib gettext gperf libtool-bin locales ninja-build pkg-config unzip
+          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
       - name: Build release
         id: build
         run: |
@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gcc-multilib gettext gperf libtool-bin locales ninja-build pkg-config unzip
+          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         run: make appimage-latest
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
@@ -156,7 +156,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          delete_release: ''
+          delete_release: true
           tag_name: nightly
       - uses: meeDamian/github-release@2.0
         with:

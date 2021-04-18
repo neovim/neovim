@@ -76,7 +76,7 @@ if has('timers')
   endfunc
 
   func Test_OptionSet_modeline()
-    throw 'skipped: Nvim does not support test_override()'
+    CheckFunction test_override
     call test_override('starting', 1)
     au! OptionSet
     augroup set_tabstop
@@ -276,28 +276,28 @@ func Test_augroup_warning()
   augroup TheWarning
     au VimEnter * echo 'entering'
   augroup END
-  call assert_true(match(execute('au VimEnter'), "TheWarning.*VimEnter") >= 0)
+  call assert_match("TheWarning.*VimEnter", execute('au VimEnter'))
   redir => res
   augroup! TheWarning
   redir END
-  call assert_true(match(res, "W19:") >= 0)
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("W19:", res)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
 
   " check "Another" does not take the pace of the deleted entry
   augroup Another
   augroup END
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
   augroup! Another
 
   " no warning for postpone aucmd delete
   augroup StartOK
     au VimEnter * call RemoveGroup()
   augroup END
-  call assert_true(match(execute('au VimEnter'), "StartOK.*VimEnter") >= 0)
+  call assert_match("StartOK.*VimEnter", execute('au VimEnter'))
   redir => res
   doautocmd VimEnter
   redir END
-  call assert_true(match(res, "W19:") < 0)
+  call assert_notmatch("W19:", res)
   au! VimEnter
 endfunc
 
@@ -325,7 +325,7 @@ func Test_augroup_deleted()
     au VimEnter * echo
   augroup end
   augroup! x
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
   au! VimEnter
 endfunc
 
@@ -507,7 +507,7 @@ func s:AutoCommandOptionSet(match)
 endfunc
 
 func Test_OptionSet()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !has("eval") || !exists("+autochdir")
     return
   endif
@@ -648,7 +648,7 @@ func Test_OptionSet()
 endfunc
 
 func Test_OptionSet_diffmode()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   call test_override('starting', 1)
   " 18: Changing an option when entering diff mode
   new
@@ -682,7 +682,7 @@ func Test_OptionSet_diffmode()
 endfunc
 
 func Test_OptionSet_diffmode_close()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   call test_override('starting', 1)
   " 19: Try to close the current window when entering diff mode
   " should not segfault
@@ -1285,9 +1285,9 @@ func Test_autocommand_all_events()
 endfunc
 
 " Test TextChangedI and TextChangedP
+" See test/functional/viml/completion_spec.lua'
 func Test_ChangedP()
-  " Nvim does not support test_override().
-  throw 'skipped: see test/functional/viml/completion_spec.lua'
+  CheckFunction test_override
   new
   call setline(1, ['foo', 'bar', 'foobar'])
   call test_override("char_avail", 1)
@@ -1350,7 +1350,7 @@ func SetLineOne()
 endfunc
 
 func Test_TextChangedI_with_setline()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   new
   call test_override('char_avail', 1)
   autocmd TextChangedI <buffer> call SetLineOne()
@@ -1366,9 +1366,11 @@ func Test_TextChangedI_with_setline()
 endfunc
 
 func Test_Changed_FirstTime()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
+  CheckFeature terminal
+  CheckNotGui
+  " Starting a terminal to run Vim is always considered flaky.
+  let g:test_is_flaky = 1
+
   " Prepare file for TextChanged event.
   call writefile([''], 'Xchanged.txt')
   let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
@@ -1922,20 +1924,28 @@ func Test_autocmd_window()
   %bw!
   edit one.txt
   tabnew two.txt
+  vnew three.txt
+  tabnew four.txt
+  tabprevious
   let g:blist = []
-  augroup aucmd_win_test
+  augroup aucmd_win_test1
     au!
     au BufEnter * call add(g:blist, [expand('<afile>'),
           \ win_gettype(bufwinnr(expand('<afile>')))])
   augroup END
 
   doautoall BufEnter
-  call assert_equal([['one.txt', 'autocmd'], ['two.txt', '']], g:blist)
+  call assert_equal([
+        \ ['one.txt', 'autocmd'],
+        \ ['two.txt', ''],
+        \ ['four.txt', 'autocmd'],
+        \ ['three.txt', ''],
+        \ ], g:blist)
 
-  augroup aucmd_win_test
+  augroup aucmd_win_test1
     au!
   augroup END
-  augroup! aucmd_win_test
+  augroup! aucmd_win_test1
   %bw!
 endfunc
 

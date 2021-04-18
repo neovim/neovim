@@ -11,6 +11,8 @@ local pesc = helpers.pesc
 local insert = helpers.insert
 local retry = helpers.retry
 local NIL = helpers.NIL
+local read_file = require('test.helpers').read_file
+local write_file = require('test.helpers').write_file
 
 -- Use these to get access to a coroutine so that I can run async tests and use
 -- yield.
@@ -27,13 +29,24 @@ teardown(function()
   os.remove(fake_lsp_logfile)
 end)
 
-local function fake_lsp_server_setup(test_name, timeout_ms)
+local function clear_notrace()
+  -- problem: here be dragons
+  -- solution: don't look for dragons to closely
+  clear {env={
+    NVIM_LUA_NOTRACK="1";
+    VIMRUNTIME=os.getenv"VIMRUNTIME";
+  }}
+end
+
+
+local function fake_lsp_server_setup(test_name, timeout_ms, options)
   exec_lua([=[
     lsp = require('vim.lsp')
-    local test_name, fixture_filename, logfile, timeout = ...
+    local test_name, fixture_filename, logfile, timeout, options = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
       cmd_env = {
         NVIM_LOG_FILE = logfile;
+        NVIM_LUA_NOTRACK = "1";
       };
       cmd = {
         vim.v.progpath, '-Es', '-u', 'NONE', '--headless',
@@ -52,18 +65,19 @@ local function fake_lsp_server_setup(test_name, timeout_ms)
       on_init = function(client, result)
         TEST_RPC_CLIENT = client
         vim.rpcrequest(1, "init", result)
+        client.config.flags.allow_incremental_sync = options.allow_incremental_sync or false
       end;
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
       end;
     }
-  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3)
+  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3, options or {})
 end
 
 local function test_rpc_server(config)
   if config.test_name then
-    clear()
-    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3)
+    clear_notrace()
+    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options)
   end
   local client = setmetatable({}, {
     __index = function(_, name)
@@ -117,7 +131,7 @@ end
 describe('LSP', function()
   describe('server_name specified', function()
     before_each(function()
-      clear()
+      clear_notrace()
       -- Run an instance of nvim on the file which contains our "scripts".
       -- Pass TEST_NAME to pick the script.
       local test_name = "basic_init"
@@ -247,6 +261,10 @@ describe('LSP', function()
     end)
 
     it('should succeed with manual shutdown', function()
+      if 'openbsd' == helpers.uname() then
+        pending('hangs the build on openbsd #14028, re-enable with freeze timeout #14204')
+        return
+      end
       local expected_callbacks = {
         {NIL, "shutdown", {}, 1, NIL};
         {NIL, "test", {}, 1};
@@ -257,6 +275,7 @@ describe('LSP', function()
           eq(0, client.resolved_capabilities().text_document_did_change)
           client.request('shutdown')
           client.notify('exit')
+          client.stop()
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)
@@ -310,7 +329,7 @@ describe('LSP', function()
       }
     end)
     it('workspace/configuration returns NIL per section if client was started without config.settings', function()
-      clear()
+      clear_notrace()
       fake_lsp_server_setup('workspace/configuration no settings')
       eq({ NIL, NIL, }, exec_lua [[
         local params = {
@@ -334,6 +353,8 @@ describe('LSP', function()
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
           eq(full_kind, client.resolved_capabilities().text_document_did_change)
           eq(true, client.resolved_capabilities().text_document_save)
+          eq(false, client.resolved_capabilities().code_lens)
+          eq(false, client.resolved_capabilities().code_lens_resolve)
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)
@@ -359,6 +380,8 @@ describe('LSP', function()
           eq(true, client.resolved_capabilities().hover)
           eq(false, client.resolved_capabilities().goto_definition)
           eq(false, client.resolved_capabilities().rename)
+          eq(true, client.resolved_capabilities().code_lens)
+          eq(true, client.resolved_capabilities().code_lens_resolve)
 
           -- known methods for resolved capabilities
           eq(true, client.supports_method("textDocument/hover"))
@@ -680,8 +703,7 @@ describe('LSP', function()
       }
     end)
 
-    -- TODO(askhan) we don't support full for now, so we can disable these tests.
-    pending('should check the body and didChange incremental', function()
+    it('should check the body and didChange incremental', function()
       local expected_callbacks = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
@@ -690,6 +712,7 @@ describe('LSP', function()
       local client
       test_rpc_server {
         test_name = "basic_check_buffer_open_and_change_incremental";
+        options = { allow_incremental_sync = true };
         on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
@@ -716,7 +739,7 @@ describe('LSP', function()
           if method == 'start' then
             exec_lua [[
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
-                "boop";
+                "123boop";
               })
             ]]
             client.notify('finish')
@@ -933,7 +956,7 @@ end)
 
 describe('LSP', function()
   before_each(function()
-    clear()
+    clear_notrace()
   end)
 
   local function make_edit(y_0, x_0, y_1, x_1, text)
@@ -1101,14 +1124,14 @@ describe('LSP', function()
         '2nd line of 语text';
       }, buf_lines(target_bufnr))
     end)
-    it('correctly goes ahead with the edit if the version is vim.NIL', function()
-      -- we get vim.NIL when we decode json null value.
-      local json = exec_lua[[
-        return vim.fn.json_decode("{ \"a\": 1, \"b\": null }")
-      ]]
-      eq(json.b, exec_lua("return vim.NIL"))
-
-      exec_lua('vim.lsp.util.apply_text_document_edit(...)', text_document_edit(exec_lua("return vim.NIL")))
+    it('always accepts edit with version = 0', function()
+      exec_lua([[
+        local args = {...}
+        local bufnr = select(1, ...)
+        local text_edit = select(2, ...)
+        vim.lsp.util.buf_versions[bufnr] = 10
+        vim.lsp.util.apply_text_document_edit(text_edit)
+      ]], target_bufnr, text_document_edit(0))
       eq({
         'First ↥ 🤦 🦄 line of text';
         '2nd line of 语text';
@@ -1257,6 +1280,99 @@ describe('LSP', function()
         return vim.api.nvim_buf_get_lines(target_bufnr, 0, -1, false)
       ]], make_workspace_edit(edits), target_bufnr))
     end)
+    it('Supports file creation with CreateFile payload', function()
+      local tmpfile = helpers.tmpname()
+      os.remove(tmpfile) -- Should not exist, only interested in a tmpname
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'create',
+            uri = uri,
+          },
+        }
+      }
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+    end)
+    it('createFile does not touch file if it exists and ignoreIfExists is set', function()
+      local tmpfile = helpers.tmpname()
+      write_file(tmpfile, 'Dummy content')
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'create',
+            uri = uri,
+            options = {
+              ignoreIfExists = true,
+            },
+          },
+        }
+      }
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq('Dummy content', read_file(tmpfile))
+    end)
+    it('createFile overrides file if overwrite is set', function()
+      local tmpfile = helpers.tmpname()
+      write_file(tmpfile, 'Dummy content')
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'create',
+            uri = uri,
+            options = {
+              overwrite = true,
+              ignoreIfExists = true, -- overwrite must win over ignoreIfExists
+            },
+          },
+        }
+      }
+      exec_lua('vim.lsp.util.apply_workspace_edit(...)', edit)
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq('', read_file(tmpfile))
+    end)
+    it('DeleteFile delete file and buffer', function()
+      local tmpfile = helpers.tmpname()
+      write_file(tmpfile, 'Be gone')
+      local uri = exec_lua([[
+        local fname = select(1, ...)
+        local bufnr = vim.fn.bufadd(fname)
+        vim.fn.bufload(bufnr)
+        return vim.uri_from_fname(fname)
+      ]], tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'delete',
+            uri = uri,
+          }
+        }
+      }
+      eq(true, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
+      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+      eq(false, exec_lua('return vim.api.nvim_buf_is_loaded(vim.fn.bufadd(...))', tmpfile))
+    end)
+    it('DeleteFile fails if file does not exist and ignoreIfNotExists is false', function()
+      local tmpfile = helpers.tmpname()
+      os.remove(tmpfile)
+      local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
+      local edit = {
+        documentChanges = {
+          {
+            kind = 'delete',
+            uri = uri,
+            options = {
+              ignoreIfNotExists = false,
+            }
+          }
+        }
+      }
+      eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
+      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', tmpfile))
+    end)
   end)
 
   describe('completion_list_to_complete_items', function()
@@ -1300,6 +1416,72 @@ describe('LSP', function()
       eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list, prefix))
       eq(expected, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], completion_list_items, prefix))
       eq({}, exec_lua([[return vim.lsp.util.text_document_completion_list_to_complete_items(...)]], {}, prefix))
+    end)
+  end)
+
+  describe('lsp.util.rename', function()
+    it('Can rename an existing file', function()
+      local old = helpers.tmpname()
+      write_file(old, 'Test content')
+      local new = helpers.tmpname()
+      os.remove(new)  -- only reserve the name, file must not exist for the test scenario
+      local lines = exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+        vim.lsp.util.rename(old, new)
+
+        -- after rename the target file must have the contents of the source file
+        local bufnr = vim.fn.bufadd(new)
+        return vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+      ]], old, new)
+      eq({'Test content'}, lines)
+      local exists = exec_lua('return vim.loop.fs_stat(...) ~= nil', old)
+      eq(false, exists)
+      exists = exec_lua('return vim.loop.fs_stat(...) ~= nil', new)
+      eq(true, exists)
+      os.remove(new)
+    end)
+    it('Does not rename file if target exists and ignoreIfExists is set or overwrite is false', function()
+      local old = helpers.tmpname()
+      write_file(old, 'Old File')
+      local new = helpers.tmpname()
+      write_file(new, 'New file')
+
+      exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        vim.lsp.util.rename(old, new, { ignoreIfExists = true })
+      ]], old, new)
+
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq('New file', read_file(new))
+
+      exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        vim.lsp.util.rename(old, new, { overwrite = false })
+      ]], old, new)
+
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq('New file', read_file(new))
+    end)
+    it('Does override target if overwrite is true', function()
+      local old = helpers.tmpname()
+      write_file(old, 'Old file')
+      local new = helpers.tmpname()
+      write_file(new, 'New file')
+      exec_lua([[
+        local old = select(1, ...)
+        local new = select(2, ...)
+
+        vim.lsp.util.rename(old, new, { overwrite = true })
+      ]], old, new)
+
+      eq(false, exec_lua('return vim.loop.fs_stat(...) ~= nil', old))
+      eq(true, exec_lua('return vim.loop.fs_stat(...) ~= nil', new))
+      eq('Old file\n', read_file(new))
     end)
   end)
 

@@ -823,31 +823,36 @@ func Test_fold_create_delete()
 endfunc
 
 func Test_fold_relative_move()
-  enew!
+  new
   set fdm=indent sw=2 wrap tw=80
 
-  let content = [ '  foo', '  bar', '  baz',
-              \   repeat('x', &columns + 1),
-              \   '  foo', '  bar', '  baz'
+  let longtext = repeat('x', &columns + 1)
+  let content = [ '  foo', '  ' .. longtext, '  baz',
+              \   longtext,
+              \   '  foo', '  ' .. longtext, '  baz'
               \ ]
   call append(0, content)
 
   normal zM
 
-  call cursor(3, 1)
-  call assert_true(foldclosed(line('.')))
-  normal gj
-  call assert_equal(2, winline())
+  for lnum in range(1, 3)
+    call cursor(lnum, 1)
+    call assert_true(foldclosed(line('.')))
+    normal gj
+    call assert_equal(2, winline())
+  endfor
 
   call cursor(2, 1)
   call assert_true(foldclosed(line('.')))
   normal 2gj
   call assert_equal(3, winline())
 
-  call cursor(5, 1)
-  call assert_true(foldclosed(line('.')))
-  normal gk
-  call assert_equal(3, winline())
+  for lnum in range(5, 7)
+    call cursor(lnum, 1)
+    call assert_true(foldclosed(line('.')))
+    normal gk
+    call assert_equal(3, winline())
+  endfor
 
   call cursor(6, 1)
   call assert_true(foldclosed(line('.')))

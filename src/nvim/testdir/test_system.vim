@@ -93,7 +93,6 @@ function! Test_system_exmode()
 endfunc
 
 func Test_system_with_shell_quote()
-  throw 'skipped: enable after porting method patches'
   CheckMSWindows
 
   call mkdir('Xdir with spaces', 'p')
@@ -122,7 +121,8 @@ func Test_system_with_shell_quote()
         let msg = printf('shell=%s shellxquote=%s', &shell, &shellxquote)
 
         try
-          let out = 'echo 123'->system()
+          " let out = 'echo 123'->system()
+          let out = system('echo 123')
         catch
           call assert_report(printf('%s: %s', msg, v:exception))
           continue

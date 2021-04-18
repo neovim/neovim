@@ -427,6 +427,30 @@ func Test_error_in_map_expr()
   exe buf .. 'bwipe!'
 endfunc
 
+func Test_expr_map_gets_cursor()
+  new
+  call setline(1, ['one', 'some w!rd'])
+  func StoreColumn()
+    let g:exprLine = line('.')
+    let g:exprCol = col('.')
+    return 'x'
+  endfunc
+  nnoremap <expr> x StoreColumn()
+  2
+  nmap ! f!<Ignore>x
+  call feedkeys("!", 'xt')
+  call assert_equal('some wrd', getline(2))
+  call assert_equal(2, g:exprLine)
+  call assert_equal(7, g:exprCol)
+
+  bwipe!
+  unlet g:exprLine
+  unlet g:exprCol
+  delfunc StoreColumn
+  nunmap x
+  nunmap !
+endfunc
+
 " Test for mapping errors
 func Test_map_error()
   call assert_fails('unmap', 'E474:')

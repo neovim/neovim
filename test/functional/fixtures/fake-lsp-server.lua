@@ -154,6 +154,7 @@ function tests.capabilities_for_client_supports_method()
           hoverProvider = true;
           definitionProvider = false;
           referencesProvider = false;
+          codeLensProvider = { resolveProvider = true; };
         }
       }
     end;
@@ -402,11 +403,11 @@ function tests.basic_check_buffer_open_and_change_incremental()
         contentChanges = {
           {
             range = {
-              start = { line = 1; character = 0; };
-              ["end"] = { line = 2; character = 0; };
+              start = { line = 1; character = 3; };
+              ["end"] = { line = 1; character = 3; };
             };
-            rangeLength = 4;
-            text = "boop\n";
+            rangeLength = 0;
+            text = "boop";
           };
         }
       })

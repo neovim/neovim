@@ -26,7 +26,7 @@ end
 
 -- @msg of type ProgressParams
 -- Basically a token of type number/string
-local function progress_callback(_, _, params, client_id)
+local function progress_handler(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
@@ -62,7 +62,7 @@ local function progress_callback(_, _, params, client_id)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
-M['$/progress'] = progress_callback
+M['$/progress'] = progress_handler
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
 M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
@@ -245,9 +245,22 @@ M['textDocument/completion'] = function(_, _, result)
   vim.fn.complete(textMatch+1, matches)
 end
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
-M['textDocument/hover'] = function(_, method, result)
-  util.focusable_float(method, function()
+--- |lsp-handler| for the method "textDocument/hover"
+--- <pre>
+--- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+---   vim.lsp.handlers.hover, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single"
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.hover(_, method, result, _, _, config)
+  config = config or {}
+  local bufnr, winnr = util.focusable_float(method, function()
     if not (result and result.contents) then
       -- return { 'No information available' }
       return
@@ -259,12 +272,16 @@ M['textDocument/hover'] = function(_, method, result)
       return
     end
     local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
-      pad_left = 1; pad_right = 1;
+      border = config.border
     })
     util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
     return bufnr, winnr
   end)
+  return bufnr, winnr
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+M['textDocument/hover'] = M.hover
 
 --@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
@@ -303,8 +320,21 @@ M['textDocument/typeDefinition'] = location_handler
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation
 M['textDocument/implementation'] = location_handler
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-M['textDocument/signatureHelp'] = function(_, method, result)
+--- |lsp-handler| for the method "textDocument/signatureHelp"
+--- <pre>
+--- vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+---   vim.lsp.handlers.signature_help, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single"
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.signature_help(_, method, result, _, bufnr, config)
+  config = config or {}
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
@@ -317,10 +347,15 @@ M['textDocument/signatureHelp'] = function(_, method, result)
     print('No signature help available')
     return
   end
-  util.focusable_preview(method, function()
-    return lines, util.try_trim_markdown_code_blocks(lines)
+  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
+  local p_bufnr, _ = util.focusable_preview(method, function()
+    return lines, util.try_trim_markdown_code_blocks(lines), config
   end)
+  api.nvim_buf_set_option(p_bufnr, 'syntax', syntax)
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+M['textDocument/signatureHelp'] = M.signature_help
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
 M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
