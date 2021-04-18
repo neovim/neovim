@@ -376,6 +376,7 @@ let s:filename_checks = {
     \ 'ps1': ['file.ps1', 'file.psd1', 'file.psm1', 'file.pssc'],
     \ 'ps1xml': ['file.ps1xml'],
     \ 'psf': ['file.psf'],
+    \ 'psl': ['file.psl'],
     \ 'puppet': ['file.pp'],
     \ 'pyrex': ['file.pyx', 'file.pxd'],
     \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', 'file.ptl', 'file.pyi', 'SConstruct'],

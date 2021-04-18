@@ -596,7 +596,7 @@ au BufNewFile,BufRead *.fan,*.fwt		setf fan
 au BufNewFile,BufRead *.factor			setf factor
 
 " Fennel
-autocmd BufRead,BufNewFile *.fnl 		setf fennel
+autocmd BufRead,BufNewFile *.fnl		setf fennel
 
 " Fetchmail RC file
 au BufNewFile,BufRead .fetchmailrc		setf fetchmail
@@ -640,7 +640,7 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
 
 " Gift (Moodle)
-autocmd BufRead,BufNewFile *.gift 		setf gift
+autocmd BufRead,BufNewFile *.gift		setf gift
 
 " Git
 au BufNewFile,BufRead COMMIT_EDITMSG,MERGE_MSG,TAG_EDITMSG 	setf gitcommit
@@ -711,7 +711,7 @@ au BufNewFile,BufRead .gtkrc,gtkrc		setf gtkrc
 au BufNewFile,BufRead *.haml			setf haml
 
 " Hamster Classic | Playground files
-au BufNewFile,BufRead *.hsm	  		setf hamster
+au BufNewFile,BufRead *.hsm			setf hamster
 
 " Haskell
 au BufNewFile,BufRead *.hs,*.hsc,*.hs-boot	setf haskell
@@ -1338,12 +1338,15 @@ au BufNewFile,BufRead *.pdb			setf prolog
 " Promela
 au BufNewFile,BufRead *.pml			setf promela
 
+" Property Specification Language (PSL)
+au BufNewFile,BufRead *.psl			setf psl
+
 " Google protocol buffers
 au BufNewFile,BufRead *.proto			setf proto
 au BufNewFile,BufRead *.pbtxt			setf pbtxt
 
 " Poke
-au BufNewFile,BufRead *.pk      		setf poke
+au BufNewFile,BufRead *.pk			setf poke
 
 " Protocols
 au BufNewFile,BufRead */etc/protocols		setf protocols
