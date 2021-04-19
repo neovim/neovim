@@ -164,6 +164,69 @@ func Test_writefile_autowrite_nowrite()
   set noautowrite
 endfunc
 
+" Test for ':w !<cmd>' to pipe lines from the current buffer to an external
+" command.
+func Test_write_pipe_to_cmd()
+  if !has('unix')
+    return
+  endif
+  new
+  call setline(1, ['L1', 'L2', 'L3', 'L4'])
+  2,3w !cat > Xfile
+  call assert_equal(['L2', 'L3'], readfile('Xfile'))
+  close!
+  call delete('Xfile')
+endfunc
+
+" Test for :saveas
+func Test_saveas()
+  call assert_fails('saveas', 'E471:')
+  call writefile(['L1'], 'Xfile')
+  new Xfile
+  new
+  call setline(1, ['L1'])
+  call assert_fails('saveas Xfile', 'E139:')
+  close!
+  enew | only
+  call delete('Xfile')
+endfunc
+
+func Test_write_errors()
+  " Test for writing partial buffer
+  call writefile(['L1', 'L2', 'L3'], 'Xfile')
+  new Xfile
+  call assert_fails('1,2write', 'E140:')
+  close!
+
+  " Try to overwrite a directory
+  if has('unix')
+    call mkdir('Xdir1')
+    call assert_fails('write Xdir1', 'E17:')
+    call delete('Xdir1', 'd')
+  endif
+
+  " Test for :wall for a buffer with no name
+  enew | only
+  call setline(1, ['L1'])
+  call assert_fails('wall', 'E141:')
+  enew!
+
+  " Test for writing a 'readonly' file
+  new Xfile
+  set readonly
+  call assert_fails('write', 'E45:')
+  close
+
+  " Test for writing to a read-only file
+  new Xfile
+  call setfperm('Xfile', 'r--r--r--')
+  call assert_fails('write', 'E505:')
+  call setfperm('Xfile', 'rw-rw-rw-')
+  close
+
+  call delete('Xfile')
+endfunc
+
 func Test_writefile_sync_dev_stdout()
   if !has('unix')
     return

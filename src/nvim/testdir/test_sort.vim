@@ -1150,7 +1150,7 @@ func Test_sort_cmd()
 	\    'input' : [
 	\	'1.234',
 	\	'0.88',
-	\	'123.456',
+	\	'  +  123.456',
 	\	'1.15e-6',
 	\	'-1.1e3',
 	\	'-1.01e3',
@@ -1165,7 +1165,7 @@ func Test_sort_cmd()
 	\	'1.15e-6',
 	\	'0.88',
 	\	'1.234',
-	\	'123.456'
+	\	'  +  123.456'
 	\    ]
 	\ },
 	\ {
@@ -1197,6 +1197,30 @@ func Test_sort_cmd()
 	\	'cc',
 	\    ]
 	\ },
+	\ {
+	\    'name' : 'sort one line buffer',
+	\    'cmd' : 'sort',
+	\    'input' : [
+	\	'single line'
+	\    ],
+	\    'expected' : [
+	\	'single line'
+	\    ]
+	\ },
+	\ {
+	\    'name' : 'sort ignoring case',
+	\    'cmd' : '%sort i',
+	\    'input' : [
+	\	'BB',
+	\	'Cc',
+	\	'aa'
+	\    ],
+	\    'expected' : [
+	\	'aa',
+	\	'BB',
+	\	'Cc'
+	\    ]
+	\ },
 	\ ]
 
   for t in tests
@@ -1217,7 +1241,11 @@ func Test_sort_cmd()
     endif
   endfor
 
-  call assert_fails('sort no', 'E474')
+  " Needs atleast two lines for this test
+  call setline(1, ['line1', 'line2'])
+  call assert_fails('sort no', 'E474:')
+  call assert_fails('sort c', 'E475:')
+  call assert_fails('sort #pat%', 'E682:')
 
   enew!
 endfunc
@@ -1319,4 +1347,46 @@ func Test_sort_cmd_report()
     " the output comes from the :g command, not from the :sort
     call assert_match("6 fewer lines", res)
     enew!
-  endfunc
+endfunc
+
+" Test for a :sort command followed by another command
+func Test_sort_followed_by_cmd()
+  new
+  let var = ''
+  call setline(1, ['cc', 'aa', 'bb'])
+  %sort | let var = "sortcmdtest"
+  call assert_equal(var, "sortcmdtest")
+  call assert_equal(['aa', 'bb', 'cc'], getline(1, '$'))
+  " Test for :sort followed by a comment
+  call setline(1, ['3b', '1c', '2a'])
+  %sort /\d\+/ " sort alphabetically
+  call assert_equal(['2a', '3b', '1c'], getline(1, '$'))
+  close!
+endfunc
+
+" Test for :sort using last search pattern
+func Test_sort_last_search_pat()
+  new
+  let @/ = '\d\+'
+  call setline(1, ['3b', '1c', '2a'])
+  sort //
+  call assert_equal(['2a', '3b', '1c'], getline(1, '$'))
+  close!
+endfunc
+
+" Test for retaining marks across a :sort
+func Test_sort_with_marks()
+  new
+  call setline(1, ['cc', 'aa', 'bb'])
+  call setpos("'c", [0, 1, 0, 0])
+  call setpos("'a", [0, 2, 0, 0])
+  call setpos("'b", [0, 3, 0, 0])
+  %sort
+  call assert_equal(['aa', 'bb', 'cc'], getline(1, '$'))
+  call assert_equal(2, line("'a"))
+  call assert_equal(3, line("'b"))
+  call assert_equal(1, line("'c"))
+  close!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

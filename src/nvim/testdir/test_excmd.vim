@@ -54,6 +54,132 @@ func Test_buffers_lastused()
   bwipeout bufc
 endfunc
 
+" Test for the :copy command
+func Test_copy()
+  new
+
+  call setline(1, ['L1', 'L2', 'L3', 'L4'])
+  " copy lines in a range to inside the range
+  1,3copy 2
+  call assert_equal(['L1', 'L2', 'L1', 'L2', 'L3', 'L3', 'L4'], getline(1, 7))
+
+  close!
+endfunc
+
+" Test for the :file command
+func Test_file_cmd()
+  call assert_fails('3file', 'E474:')
+  call assert_fails('0,0file', 'E474:')
+  call assert_fails('0file abc', 'E474:')
+endfunc
+
+" Test for the :drop command
+func Test_drop_cmd()
+  call writefile(['L1', 'L2'], 'Xfile')
+  enew | only
+  drop Xfile
+  call assert_equal('L2', getline(2))
+  " Test for switching to an existing window
+  below new
+  drop Xfile
+  call assert_equal(1, winnr())
+  " Test for splitting the current window
+  enew | only
+  set modified
+  drop Xfile
+  call assert_equal(2, winnr('$'))
+  " Check for setting the argument list
+  call assert_equal(['Xfile'], argv())
+  enew | only!
+  call delete('Xfile')
+endfunc
+
+" Test for the :append command
+func Test_append_cmd()
+  new
+  call setline(1, ['  L1'])
+  call feedkeys(":append\<CR>  L2\<CR>  L3\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L1', '  L2', '  L3'], getline(1, '$'))
+  %delete _
+  " append after a specific line
+  call setline(1, ['  L1', '  L2', '  L3'])
+  call feedkeys(":2append\<CR>  L4\<CR>  L5\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L1', '  L2', '  L4', '  L5', '  L3'], getline(1, '$'))
+  %delete _
+  " append with toggling 'autoindent'
+  call setline(1, ['  L1'])
+  call feedkeys(":append!\<CR>  L2\<CR>  L3\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L1', '    L2', '      L3'], getline(1, '$'))
+  call assert_false(&autoindent)
+  %delete _
+  " append with 'autoindent' set and toggling 'autoindent'
+  set autoindent
+  call setline(1, ['  L1'])
+  call feedkeys(":append!\<CR>  L2\<CR>  L3\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L1', '  L2', '  L3'], getline(1, '$'))
+  call assert_true(&autoindent)
+  set autoindent&
+  close!
+endfunc
+
+" Test for the :insert command
+func Test_insert_cmd()
+  set noautoindent " test assumes noautoindent, but it's on by default in Nvim
+  new
+  call setline(1, ['  L1'])
+  call feedkeys(":insert\<CR>  L2\<CR>  L3\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L2', '  L3', '  L1'], getline(1, '$'))
+  %delete _
+  " insert before a specific line
+  call setline(1, ['  L1', '  L2', '  L3'])
+  call feedkeys(":2insert\<CR>  L4\<CR>  L5\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L1', '  L4', '  L5', '  L2', '  L3'], getline(1, '$'))
+  %delete _
+  " insert with toggling 'autoindent'
+  call setline(1, ['  L1'])
+  call feedkeys(":insert!\<CR>  L2\<CR>  L3\<CR>.\<CR>", 'xt')
+  call assert_equal(['    L2', '      L3', '  L1'], getline(1, '$'))
+  call assert_false(&autoindent)
+  %delete _
+  " insert with 'autoindent' set and toggling 'autoindent'
+  set autoindent
+  call setline(1, ['  L1'])
+  call feedkeys(":insert!\<CR>  L2\<CR>  L3\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L2', '  L3', '  L1'], getline(1, '$'))
+  call assert_true(&autoindent)
+  set autoindent&
+  close!
+endfunc
+
+" Test for the :change command
+func Test_change_cmd()
+  set noautoindent " test assumes noautoindent, but it's on by default in Nvim
+  new
+  call setline(1, ['  L1', 'L2', 'L3'])
+  call feedkeys(":change\<CR>  L4\<CR>  L5\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L4', '  L5', 'L2', 'L3'], getline(1, '$'))
+  %delete _
+  " change a specific line
+  call setline(1, ['  L1', '  L2', '  L3'])
+  call feedkeys(":2change\<CR>  L4\<CR>  L5\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L1', '  L4', '  L5', '  L3'], getline(1, '$'))
+  %delete _
+  " change with toggling 'autoindent'
+  call setline(1, ['  L1', 'L2', 'L3'])
+  call feedkeys(":change!\<CR>  L4\<CR>  L5\<CR>.\<CR>", 'xt')
+  call assert_equal(['    L4', '      L5', 'L2', 'L3'], getline(1, '$'))
+  call assert_false(&autoindent)
+  %delete _
+  " change with 'autoindent' set and toggling 'autoindent'
+  set autoindent
+  call setline(1, ['  L1', 'L2', 'L3'])
+  call feedkeys(":change!\<CR>  L4\<CR>  L5\<CR>.\<CR>", 'xt')
+  call assert_equal(['  L4', '  L5', 'L2', 'L3'], getline(1, '$'))
+  call assert_true(&autoindent)
+  set autoindent&
+  close!
+endfunc
+
 " Test for the :confirm command dialog
 func Test_confirm_cmd()
   CheckNotGui
