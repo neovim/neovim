@@ -13,7 +13,7 @@ jobs:
       matrix:
         include:
           - flavor: asan
-            cc: clang-11
+            cc: clang-12
             runner: ubuntu-20.04
             os: linux
           - flavor: lint
@@ -42,7 +42,7 @@ jobs:
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
         run: |
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
-          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'
+          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-12 main'
 
       - name: Install apt packages
         if: matrix.os == 'linux'
@@ -52,7 +52,7 @@ jobs:
 
       - name: Install new clang
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
-        run: sudo apt-get install -y clang-11
+        run: sudo apt-get install -y clang-12
 
       - name: Install brew packages
         if: matrix.os == 'osx'
