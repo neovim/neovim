@@ -22,19 +22,23 @@ func Test_sort_strings()
 
   " This does not appear to work correctly on Mac.
   if !has('mac')
-    let lc = execute('language collate')
     " With the following locales, the accentuated letters are ordered
     " similarly to the non-accentuated letters...
-    if lc =~? '"\(en\|es\|de\|fr\|it\|nl\).*\.utf-\?8"'
+    if v:collate =~? '^\(en\|es\|de\|fr\|it\|nl\).*\.utf-\?8$'
       call assert_equal(['a', 'A', 'ä', 'Ä', 'o', 'O', 'ô', 'Ô', 'œ', 'œ', 'p', 'P'],
       \            sort(['A', 'a', 'o', 'O', 'œ', 'œ', 'p', 'P', 'Ä', 'ä', 'ô', 'Ô'], 'l'))
     " ... whereas with a Swedish locale, the accentuated letters are ordered
     " after Z.
-    elseif lc =~? '"sv.*utf-\?8"'
+    elseif v:collate =~? '^sv.*utf-\?8$'
       call assert_equal(['a', 'A', 'o', 'O', 'p', 'P', 'ä', 'Ä', 'œ', 'œ', 'ô', 'Ô'],
       \            sort(['A', 'a', 'o', 'O', 'œ', 'œ', 'p', 'P', 'Ä', 'ä', 'ô', 'Ô'], 'l'))
     endif
   endif
+endfunc
+
+func Test_sort_null_string()
+  " null strings are sorted as empty strings.
+  call assert_equal(['', 'a', 'b'], sort(['b', v:_null_string, 'a']))
 endfunc
 
 func Test_sort_numeric()
@@ -1248,8 +1252,7 @@ func Test_sort_cmd()
     " With the following locales, the accentuated letters are ordered
     " similarly to the non-accentuated letters.
     " This does not appear to work on Mac
-    let lc = execute('language collate')
-    if lc =~? '"\(en\|es\|de\|fr\|it\|nl\).*\.utf-\?8"' && !has('mac')
+    if v:collate =~? '^\(en\|es\|de\|fr\|it\|nl\).*\.utf-\?8$' && !has('mac')
       let tests += [
 	\ {
 	\    'name' : 'sort with locale',
