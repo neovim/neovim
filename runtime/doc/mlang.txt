@@ -31,6 +31,7 @@ use of "-" and "_".
 :lan[guage] mes[sages]
 :lan[guage] cty[pe]
 :lan[guage] tim[e]
+:lan[guage] col[late]
 			Print the current language (aka locale).
 			With the "messages" argument the language used for
 			messages is printed.  Technical: LC_MESSAGES.
@@ -38,15 +39,19 @@ use of "-" and "_".
 			character encoding is printed.  Technical: LC_CTYPE.
 			With the "time" argument the language used for
 			strftime() is printed.  Technical: LC_TIME.
+			With the "collate" argument the language used for
+			collation order is printed.  Technical: LC_COLLATE.
 			Without argument all parts of the locale are printed
 			(this is system dependent).
 			The current language can also be obtained with the
-			|v:lang|, |v:ctype| and |v:lc_time| variables.
+			|v:lang|, |v:ctype|, |v:collate| and |v:lc_time|
+			variables.
 
 :lan[guage] {name}
 :lan[guage] mes[sages] {name}
 :lan[guage] cty[pe] {name}
 :lan[guage] tim[e] {name}
+:lan[guage] col[late] {name}
 			Set the current language (aka locale) to {name}.
 			The locale {name} must be a valid locale on your
 			system.  Some systems accept aliases like "en" or
@@ -66,7 +71,10 @@ use of "-" and "_".
 			With the "time" argument the language used for time
 			and date messages is set.  This affects strftime().
 			This sets $LC_TIME.
-			Without an argument both are set, and additionally
+			With the "collate" argument the language used for the
+			collation order is set.  This affects sorting of
+			characters. This sets $LC_COLLATE.
+			Without an argument all are set, and additionally
 			$LANG is set.
 			The LC_NUMERIC value will always be set to "C" so
 			that floating point numbers use '.' as the decimal

@@ -1495,6 +1495,15 @@ v:cmdarg	This variable is used for two purposes:
 		   the argument for the ":hardcopy" command.  This can be used
 		   in 'printexpr'.
 
+						*v:collate* *collate-variable*
+v:collate	The current locale setting for collation order of the runtime
+		environment.  This allows Vim scripts to be aware of the
+		current locale encoding.  Technical: it's the value of
+		LC_COLLATE.  When not using a locale the value is "C".
+		This variable can not be set directly, use the |:language|
+		command.
+		See |multi-lang|.
+
 					*v:cmdbang* *cmdbang-variable*
 v:cmdbang	Set like v:cmdarg for a file read/write command.  When a "!"
 		was used the value is 1, otherwise it is 0.  Note that this
