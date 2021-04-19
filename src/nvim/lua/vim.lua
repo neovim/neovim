@@ -309,7 +309,9 @@ setmetatable(vim, {
 })
 
 -- An easier alias for commands.
-vim.cmd = vim.api.nvim_command
+vim.cmd = function(command)
+  return vim.api.nvim_exec(command, false)
+end
 
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
