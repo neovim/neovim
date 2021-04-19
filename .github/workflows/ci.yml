@@ -38,12 +38,6 @@ jobs:
       - name: Setup commom environment variables
         run: ./.github/workflows/env.sh ${{ matrix.flavor }}
 
-      - name: Setup clang repository
-        if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
-        run: |
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
-          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-12 main'
-
       - name: Install apt packages
         if: matrix.os == 'linux'
         run: |
@@ -52,7 +46,11 @@ jobs:
 
       - name: Install new clang
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
-        run: sudo apt-get install -y clang-12
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 12
+          rm llvm.sh
 
       - name: Install brew packages
         if: matrix.os == 'osx'
