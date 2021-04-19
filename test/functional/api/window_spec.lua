@@ -401,4 +401,36 @@ describe('API/win', function()
       eq(1, funcs.exists('g:fired'))
     end)
   end)
+
+  describe('get_config', function()
+    it('includes border', function()
+      local b = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' }
+      local win = meths.open_win(0, true, {
+         relative='win', row=3, col=3, width=12, height=3,
+         border = b,
+      })
+
+      local cfg = meths.win_get_config(win)
+      eq(b, cfg.border)
+    end)
+    it('includes border with highlight group', function()
+      local b = {
+        {'a', 'Normal'},
+        {'b', 'Special'},
+        {'c', 'String'},
+        {'d', 'Comment'},
+        {'e', 'Visual'},
+        {'f', 'Error'},
+        {'g', 'Constant'},
+        {'h', 'PreProc'},
+      }
+      local win = meths.open_win(0, true, {
+         relative='win', row=3, col=3, width=12, height=3,
+         border = b,
+      })
+
+      local cfg = meths.win_get_config(win)
+      eq(b, cfg.border)
+    end)
+  end)
 end)
