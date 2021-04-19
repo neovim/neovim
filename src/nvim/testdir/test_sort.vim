@@ -13,6 +13,25 @@ func Test_sort_strings()
   " numbers compared as strings
   call assert_equal([1, 2, 3], sort([3, 2, 1]))
   call assert_equal([13, 28, 3], sort([3, 28, 13]))
+
+  call assert_equal(['A', 'O', 'P', 'a', 'o', 'p', 'Ä', 'Ô', 'ä', 'ô', 'œ', 'œ'],
+  \            sort(['A', 'O', 'P', 'a', 'o', 'p', 'Ä', 'Ô', 'ä', 'ô', 'œ', 'œ']))
+
+  call assert_equal(['A', 'a', 'o', 'O', 'p', 'P', 'Ä', 'Ô', 'ä', 'ô', 'œ', 'œ'],
+  \            sort(['A', 'a', 'o', 'O', 'œ', 'œ', 'p', 'P', 'Ä', 'ä', 'ô', 'Ô'], 'i'))
+
+  let lc = execute('language collate')
+  " With the following locales, the accentuated letters are ordered
+  " similarly to the non-accentuated letters...
+  if lc =~? '"\(en\|es\|de\|fr\|it\|nl\).*\.utf-\?8"'
+    call assert_equal(['a', 'A', 'ä', 'Ä', 'o', 'O', 'ô', 'Ô', 'œ', 'œ', 'p', 'P'],
+    \            sort(['A', 'a', 'o', 'O', 'œ', 'œ', 'p', 'P', 'Ä', 'ä', 'ô', 'Ô'], 'l'))
+  " ... whereas with a Swedish locale, the accentuated letters are ordered
+  " after Z.
+  elseif lc =~? '"sv.*utf-\?8"'
+    call assert_equal(['a', 'A', 'o', 'O', 'p', 'P', 'ä', 'Ä', 'œ', 'œ', 'ô', 'Ô'],
+    \            sort(['A', 'a', 'o', 'O', 'œ', 'œ', 'p', 'P', 'Ä', 'ä', 'ô', 'Ô'], 'l'))
+  endif
 endfunc
 
 func Test_sort_numeric()
@@ -1222,6 +1241,58 @@ func Test_sort_cmd()
 	\    ]
 	\ },
 	\ ]
+
+    " With the following locales, the accentuated letters are ordered
+    " similarly to the non-accentuated letters...
+    let lc = execute('language collate')
+    if lc =~? '"\(en\|es\|de\|fr\|it\|nl\).*\.utf-\?8"'
+      let tests += [
+	\ {
+	\    'name' : 'sort with locale',
+	\    'cmd' : '%sort l',
+	\    'input' : [
+	\	'A',
+	\	'E',
+	\	'O',
+	\	'À',
+	\	'È',
+	\	'É',
+	\	'Ô',
+	\	'Œ',
+	\	'Z',
+	\	'a',
+	\	'e',
+	\	'o',
+	\	'à',
+	\	'è',
+	\	'é',
+	\	'ô',
+	\	'œ',
+	\	'z'
+	\    ],
+	\    'expected' : [
+	\	'a',
+	\	'A',
+	\	'à',
+	\	'À',
+	\	'e',
+	\	'E',
+	\	'é',
+	\	'É',
+	\	'è',
+	\	'È',
+	\	'o',
+	\	'O',
+	\	'ô',
+	\	'Ô',
+	\	'œ',
+	\	'Œ',
+	\	'z',
+	\	'Z'
+	\    ]
+	\ },
+	\ ]
+  endif
 
   for t in tests
     enew!

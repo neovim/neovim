@@ -9166,6 +9166,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// struct storing information about current sort
 typedef struct {
   int item_compare_ic;
+  bool item_compare_lc;
   bool item_compare_numeric;
   bool item_compare_numbers;
   bool item_compare_float;
@@ -9240,10 +9241,10 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
     p2 = "";
   }
   if (!sortinfo->item_compare_numeric) {
-    if (sortinfo->item_compare_ic) {
-      res = STRICMP(p1, p2);
+    if (sortinfo->item_compare_lc) {
+      res = strcoll(p1, p2);
     } else {
-      res = STRCMP(p1, p2);
+      res = sortinfo->item_compare_ic ? STRICMP(p1, p2): STRCMP(p1, p2);
     }
   } else {
     double n1, n2;
@@ -9378,6 +9379,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     }
 
     info.item_compare_ic = false;
+    info.item_compare_lc = false;
     info.item_compare_numeric = false;
     info.item_compare_numbers = false;
     info.item_compare_float = false;
@@ -9422,6 +9424,9 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
           } else if (strcmp(info.item_compare_func, "i") == 0) {
             info.item_compare_func = NULL;
             info.item_compare_ic = true;
+          } else if (strcmp(info.item_compare_func, "l") == 0) {
+            info.item_compare_func = NULL;
+            info.item_compare_lc = true;
           }
         }
       }

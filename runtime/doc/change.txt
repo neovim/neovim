@@ -1742,13 +1742,21 @@ Vim has a sorting function and a sorting command.  The sorting function can be
 found here: |sort()|, |uniq()|.
 
 							*:sor* *:sort*
-:[range]sor[t][!] [b][f][i][n][o][r][u][x] [/{pattern}/]
+:[range]sor[t][!] [b][f][i][l][n][o][r][u][x] [/{pattern}/]
 			Sort lines in [range].  When no range is given all
 			lines are sorted.
 
 			With [!] the order is reversed.
 
 			With [i] case is ignored.
+
+			With [l] sort uses the current locale. See
+			`language collate` to check or set the locale used
+			for ordering. For example, with "en_US.UTF8",
+			Ö will be ordered after O and before P,
+			whereas with the Swedish locale "sv_SE.UTF8",
+			it will be after Z.
+			Case is typically ignored by the locale.
 
 			Options [n][f][x][o][b] are mutually exclusive.
 
@@ -1816,8 +1824,7 @@ found here: |sort()|, |uniq()|.
 Note that using `:sort` with `:global` doesn't sort the matching lines, it's
 quite useless.
 
-The details about sorting depend on the library function used.  There is no
-guarantee that sorting obeys the current locale.  You will have to try it out.
+`:sort` does not use the current locale unless the l flag is used.
 Vim does do a "stable" sort.
 
 The sorting can be interrupted, but if you interrupt it too late in the

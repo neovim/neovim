@@ -8359,6 +8359,13 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		When {func} is given and it is '1' or 'i' then case is
 		ignored.
 
+		When {func} is given and it is 'l' then the current locale
+		is used for ordering. See `language collate` to check or set
+		the locale used for ordering.  For example, with "en_US.UTF8",
+		Ö will be ordered after O and before P, whereas with the
+		Swedish locale "sv_SE.UTF8", it will be after Z.
+		Case is typically ignored by the locale.
+
 		When {func} is given and it is 'n' then all items will be
 		sorted numerical (Implementation detail: This uses the
 		strtod() function to parse numbers, Strings, Lists, Dicts and
