@@ -238,5 +238,6 @@
 # define PRAGMA_DIAG_POP
 #endif
 
+#define EMPTY_POS(a) ((a).lnum == 0 && (a).col == 0 && (a).coladd == 0)
 
 #endif  // NVIM_MACROS_H

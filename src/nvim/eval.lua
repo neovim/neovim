@@ -286,6 +286,7 @@ return {
     screenpos={args=3},
     screenrow={},
     search={args={1, 4}},
+    searchcount={args={0,1}},
     searchdecl={args={1, 3}},
     searchpair={args={3, 7}},
     searchpairpos={args={3, 7}},
