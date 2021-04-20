@@ -176,8 +176,8 @@ set(GPERF_URL https://github.com/neovim/deps/raw/ff5b4b18a87397a8564016071ae64f6
 set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
 
 # cat.exe curl.exe ca-bundle.crt diff.exe tee.exe xxd.exe
-set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
-set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
+set(WINTOOLS_URL https://github.com/neovim/deps/raw/da3520b568054ce057e6168243ff50eea223bfa0/opt/win32tools.zip)
+set(WINTOOLS_SHA256 190149d369ae1cd266bc39bceb2d1c061833a23640dfabd4089082c1a7824421)
 
 set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.16/neovim-qt.zip)
 set(WINGUI_SHA256 aad95a1f8413a9ebf36fc0298d0dfd7d786abf88cb0f4ae9f7ec895b70c7b312)
