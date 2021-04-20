@@ -8359,15 +8359,25 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		When {func} is given and it is '1' or 'i' then case is
 		ignored.
 
-		When {func} is given and it is 'l' then the current locale
-		is used for ordering. See `language collate` to check or set
-		the locale used for ordering.  For example, with "en_US.UTF8",
-		Ö will be ordered after O and before P, whereas with the
-		Swedish locale "sv_SE.UTF8", it will be after Z.
-		Case is typically ignored by the locale.
+		When {func} is given and it is 'l' then the current collation
+		locale is used for ordering. Implementation details: strcoll()
+		is used to compare strings. See |:language| check or set the
+		collation locale. |v:collate| can also be used to check the
+		current locale. Sorting using the locale typically ignores
+		case. Example: >
+			" ö is sorted similarly to o with English locale.
+			:language collate en_US.UTF8
+			:echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
+<			['n', 'o', 'O', 'ö', 'p', 'z'] ~
+>
+			" ö is sorted after z with Swedish locale.
+			:language collate sv_SE.UTF8
+			:echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
+<			['n', 'o', 'O', 'p', 'z', 'ö'] ~
+		This does not work properly on Mac.
 
 		When {func} is given and it is 'n' then all items will be
-		sorted numerical (Implementation detail: This uses the
+		sorted numerical (Implementation detail: this uses the
 		strtod() function to parse numbers, Strings, Lists, Dicts and
 		Funcrefs will be considered as being 0).
 
