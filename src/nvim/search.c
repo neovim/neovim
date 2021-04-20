@@ -4607,6 +4607,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (*pattern == NUL) {
         goto the_end;
       }
+      xfree(spats[last_idx].pat);
       spats[last_idx].pat = vim_strsave(pattern);
     }
     if (spats[last_idx].pat == NULL || *spats[last_idx].pat == NUL) {
