@@ -87,10 +87,10 @@ func Test_search_stat()
     \ searchcount(#{recompute: 0}))
   call assert_equal(
     \ #{current: 272, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: v:true, maxcount: 0}))
+    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 200}))
   call assert_equal(
     \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0]}))
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 200}))
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
   let stat = 'W \[1/>99\]'
@@ -100,10 +100,10 @@ func Test_search_stat()
     \ searchcount(#{recompute: 0}))
   call assert_equal(
     \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0}))
+    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 200}))
   call assert_equal(
     \ #{current: 271, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
-    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0]}))
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 200}))
 
   " Many matches
   call cursor(1, 1)
