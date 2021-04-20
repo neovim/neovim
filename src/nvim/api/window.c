@@ -462,7 +462,8 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       for (size_t i = 0; i < 8; i++) {
         Array tuple = ARRAY_DICT_INIT;
 
-        String s = cstrn_to_string((const char *)config->border_chars[i], sizeof(schar_T));
+        String s = cstrn_to_string(
+            (const char *)config->border_chars[i], sizeof(schar_T));
 
         int hi_id = config->border_hl_ids[i];
         char_u *hi_name = syn_id2name(hi_id);
