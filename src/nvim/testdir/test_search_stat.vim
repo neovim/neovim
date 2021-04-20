@@ -26,6 +26,14 @@ func Test_search_stat()
   call assert_equal(
     \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar', pos: [3, 1, 0]}))
+  " on last char of match
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 9, 0]}))
+  " on char after match
+  call assert_equal(
+    \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 10, 0]}))
   call assert_equal(
     \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
     \ searchcount(#{pattern: 'fooooobar', pos: [4, 1, 0]}))

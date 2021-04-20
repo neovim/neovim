@@ -4489,7 +4489,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
         cnt++;
         if (ltoreq(lastpos, p)) {
           cur = cnt;
-          if (ltoreq(p, endpos)) {
+          if (lt(p, endpos)) {
             exact_match = true;
           }
         }
