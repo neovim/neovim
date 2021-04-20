@@ -4422,7 +4422,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
     int             save_ws = p_ws;
     int             wraparound = false;
     pos_T           p = (*pos);
-    static  pos_T   lastpos = { 0, 0, 0 };
+    static pos_T    lastpos = { 0, 0, 0 };
     static int      cur = 0;
     static int      cnt = 0;
     static int      exact_match = false;
@@ -4535,11 +4535,16 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     if (argvars[0].v_type != VAR_UNKNOWN) {
-      dict_T    *dict = argvars[0].vval.v_dict;
+      dict_T    *dict;
       dictitem_T  *di;
       listitem_T  *li;
       bool error = false;
 
+      if (argvars[0].v_type != VAR_DICT || argvars[0].vval.v_dict == NULL) {
+        EMSG(_(e_dictreq));
+        return;
+      }
+      dict = argvars[0].vval.v_dict;
       di = tv_dict_find(dict, (const char *)"timeout", -1);
       if (di != NULL) {
         timeout = (long)tv_get_number_chk(&di->di_tv, &error);

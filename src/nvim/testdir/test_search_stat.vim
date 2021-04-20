@@ -259,6 +259,10 @@ func Test_search_stat()
   bwipe!
 endfunc
 
+func Test_searchcount_fails()
+  call assert_fails('echo searchcount("boo!")', 'E715:')
+endfunc
+
 func Test_search_stat_foldopen()
   CheckScreendump
 
