@@ -944,10 +944,10 @@ void api_free_luacallable(LuaCallable lua_cb)
     lua_cb.func_ref = LUA_NOREF;
   }
 
-  if (lua_cb.table_ref != LUA_NOREF) {
-    api_free_luaref(lua_cb.table_ref);
-    lua_cb.table_ref = LUA_NOREF;
-  }
+  // if (lua_cb.table_ref != LUA_NOREF) {
+  //   api_free_luaref(lua_cb.table_ref);
+  //   lua_cb.table_ref = LUA_NOREF;
+  // }
 }
 
 /// push a value referenced in the registry
