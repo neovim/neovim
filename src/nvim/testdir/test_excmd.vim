@@ -47,7 +47,7 @@ func Test_buffers_lastused()
   endfor
 
   call assert_equal(['bufb', 'bufa', 'bufc'], names)
-  call assert_match('[0-2] seconds ago', bufs[1][1])
+  call assert_match('[0-2] seconds\= ago', bufs[1][1])
 
   bwipeout bufa
   bwipeout bufb
