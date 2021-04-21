@@ -2,7 +2,7 @@
 " Language: R
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Tue Apr 07, 2015  04:38PM
+" Last Change:	Sat Aug 15, 2020  11:37AM
 
 " Only do this when not yet done for this buffer
 if exists("b:did_ftplugin")
@@ -20,7 +20,7 @@ setlocal formatoptions-=t
 setlocal commentstring=#\ %s
 setlocal comments=:#',:###,:##,:#
 
-if has("gui_win32") && !exists("b:browsefilter")
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "R Source Files (*.R)\t*.R\n" .
         \ "Files that include R (*.Rnw *.Rd *.Rmd *.Rrst)\t*.Rnw;*.Rd;*.Rmd;*.Rrst\n" .
         \ "All Files (*.*)\t*.*\n"
