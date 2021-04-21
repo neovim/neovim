@@ -137,6 +137,8 @@ jobs:
   publish:
     needs: [linux, appimage, macOS, windows]
     runs-on: ubuntu-20.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v2
       - if: github.event_name == 'workflow_dispatch'
