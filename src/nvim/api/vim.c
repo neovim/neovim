@@ -104,10 +104,14 @@ String nvim_exec(String src, Boolean output, Error *err)
   }
 
   try_start();
-  msg_silent++;
+  if (output) {
+    msg_silent++;
+  }
   do_source_str(src.data, "nvim_exec()");
-  capture_ga = save_capture_ga;
-  msg_silent = save_msg_silent;
+  if (output) {
+    capture_ga = save_capture_ga;
+    msg_silent = save_msg_silent;
+  }
   try_end(err);
 
   if (ERROR_SET(err)) {
