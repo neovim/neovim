@@ -602,12 +602,7 @@ static void f_bufname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_UNKNOWN) {
     buf = curbuf;
   } else {
-    if (!tv_check_str_or_nr(&argvars[0])) {
-      return;
-    }
-    emsg_off++;
-    buf = tv_get_buf(&argvars[0], false);
-    emsg_off--;
+    buf = tv_get_buf_from_arg(&argvars[0]);
   }
   if (buf != NULL && buf->b_fname != NULL) {
     rettv->vval.v_string = (char_u *)xstrdup((char *)buf->b_fname);
@@ -627,6 +622,9 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_UNKNOWN) {
     buf = curbuf;
   } else {
+    // Don't use tv_get_buf_from_arg(); we continue if the buffer wasn't found
+    // and the second argument isn't zero, but we want to return early if the
+    // first argument isn't a string or number so only one error is shown.
     if (!tv_check_str_or_nr(&argvars[0])) {
       return;
     }
@@ -653,16 +651,10 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
 {
-  if (!tv_check_str_or_nr(&argvars[0])) {
+  const buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL) {  // no need to search if invalid arg or buffer not found
     rettv->vval.v_number = -1;
     return;
-  }
-
-  emsg_off++;
-  buf_T *buf = tv_get_buf(&argvars[0], true);
-  if (buf == NULL) {  // no need to search if buffer was not found
-    rettv->vval.v_number = -1;
-    goto end;
   }
 
   int winnr = 0;
@@ -677,8 +669,6 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
     }
   }
   rettv->vval.v_number = (found_buf ? (get_nr ? winnr : winid) : -1);
-end:
-  emsg_off--;
 }
 
 /// "bufwinid(nr)" function
@@ -728,6 +718,18 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
     buf = find_buffer(tv);
   }
 
+  return buf;
+}
+
+/// Like tv_get_buf() but give an error message if the type is wrong.
+buf_T *tv_get_buf_from_arg(typval_T *const tv) FUNC_ATTR_NONNULL_ALL
+{
+  if (!tv_check_str_or_nr(tv)) {
+    return NULL;
+  }
+  emsg_off++;
+  buf_T *const buf = tv_get_buf(tv, false);
+  emsg_off--;
   return buf;
 }
 
@@ -2799,13 +2801,9 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
     // Information about one buffer.  Argument specifies the buffer
-    if (tv_check_num(&argvars[0])) {  // issue errmsg if type error
-      emsg_off++;
-      argbuf = tv_get_buf(&argvars[0], false);
-      emsg_off--;
-      if (argbuf == NULL) {
-        return;
-      }
+    argbuf = tv_get_buf_from_arg(&argvars[0]);
+    if (argbuf == NULL) {
+      return;
     }
   }
 
@@ -2875,13 +2873,7 @@ static void get_buffer_lines(buf_T *buf,
  */
 static void f_getbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  buf_T *buf = NULL;
-
-  if (tv_check_str_or_nr(&argvars[0])) {
-    emsg_off++;
-    buf = tv_get_buf(&argvars[0], false);
-    emsg_off--;
-  }
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
 
   const linenr_T lnum = tv_get_lnum_buf(&argvars[1], buf);
   const linenr_T end = (argvars[2].v_type == VAR_UNKNOWN
@@ -6497,6 +6489,26 @@ static void f_prompt_setinterrupt(typval_T *argvars,
 
     callback_free(&buf->b_prompt_interrupt);
     buf->b_prompt_interrupt= interrupt_callback;
+}
+
+/// "prompt_getprompt({buffer})" function
+void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // return an empty string by default, e.g. it's not a prompt buffer
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (!bt_prompt(buf)) {
+    return;
+  }
+
+  rettv->vval.v_string = vim_strsave(buf_prompt_text(buf));
 }
 
 // "prompt_setprompt({buffer}, {text})" function

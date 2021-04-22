@@ -978,6 +978,7 @@ Tags:						*tag-functions*
 	settagstack()		modify the tag stack of a window
 
 Prompt Buffer:					*promptbuffer-functions*
+	prompt_getprompt()	get the effective prompt text for a buffer
 	prompt_setcallback()	set prompt callback for a buffer
 	prompt_setinterrupt()	set interrupt callback for a buffer
 	prompt_setprompt()	set the prompt text for a buffer
