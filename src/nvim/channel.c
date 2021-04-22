@@ -609,7 +609,6 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf, size_
   } else {
     if (chan->term) {
       terminal_receive(chan->term, ptr, count);
-      terminal_flush_output(chan->term);
     }
 
     rbuffer_consumed(buf, count);
@@ -763,7 +762,7 @@ void channel_terminal_open(buf_T *buf, Channel *chan)
   channel_incref(chan);
 }
 
-static void term_write(char *buf, size_t size, void *data)
+static void term_write(const char *buf, size_t size, void *data)
 {
   Channel *chan = data;
   if (chan->stream.proc.in.closed) {

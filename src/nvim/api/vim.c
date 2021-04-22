@@ -1010,7 +1010,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   return (Integer)chan->id;
 }
 
-static void term_write(char *buf, size_t size, void *data)
+static void term_write(const char *buf, size_t size, void *data)
 {
   Channel *chan = data;
   LuaRef cb = chan->stream.internal.cb;
@@ -1020,7 +1020,7 @@ static void term_write(char *buf, size_t size, void *data)
   FIXED_TEMP_ARRAY(args, 3);
   args.items[0] = INTEGER_OBJ((Integer)chan->id);
   args.items[1] = BUFFER_OBJ(terminal_buf(chan->term));
-  args.items[2] = STRING_OBJ(((String){ .data = buf, .size = size }));
+  args.items[2] = STRING_OBJ(((String){ .data = (char *)buf, .size = size }));
   textlock++;
   nlua_call_ref(cb, "input", args, false, NULL);
   textlock--;
