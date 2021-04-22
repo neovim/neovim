@@ -110,10 +110,6 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'lua'
     set ft=lua
 
-    " Perl 6
-  elseif s:name =~# 'perl6'
-    set ft=perl6
-
     " Perl
   elseif s:name =~# 'perl'
     set ft=perl
@@ -129,6 +125,10 @@ if s:line1 =~# "^#!"
     " Groovy
   elseif s:name =~# '^groovy\>'
     set ft=groovy
+
+    " Raku
+  elseif s:name =~# 'raku'
+    set ft=raku
 
     " Ruby
   elseif s:name =~# 'ruby'
