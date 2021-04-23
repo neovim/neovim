@@ -1179,38 +1179,11 @@ function lsp._vim_exit_handler()
     client.stop()
   end
 
-  local function wait_async(timeout, ms, predicate, cb)
-    local timer = uv.new_timer()
-    local time = 0
-
-    local function done(in_time)
-      timer:stop()
-      timer:close()
-      cb(in_time)
+  if not vim.wait(500, function() return tbl_isempty(active_clients) end, 50) then
+    for _, client in pairs(active_clients) do
+      client.stop(true)
     end
-
-    timer:start(0, ms, function()
-      if predicate() == true then
-        done(true)
-        return
-      end
-
-      if time == timeout then
-        done(false)
-        return
-      end
-
-      time = time + ms
-    end)
   end
-
-  wait_async(500, 50, function() return tbl_isempty(active_clients) end, function(in_time)
-    if not in_time then
-      for _, client in pairs(active_clients) do
-        client.stop(true)
-      end
-    end
-  end)
 end
 
 nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
