@@ -132,6 +132,7 @@ Advanced editing ~
 |lua.txt|	Lua API
 
 Special issues ~
+|testing.txt|	testing Vim and Vim scripts
 |print.txt|	printing
 |remote.txt|	using Vim as a server or client
 
