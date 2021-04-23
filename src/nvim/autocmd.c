@@ -1929,7 +1929,7 @@ void autocmd_execute_for_matching_pat(AutoPatCmd *patcmd)
   // WITH_CMDLINE_EXECUTION(do_cmdline(NULL, getnextac, (void *)patcmd, flags));
   // prep_command(...)
   // execute_cmdline_stuff();
-  do_cmdline(NULL, getnextac, (void *)patcmd, flags);
+  do_cmdline_3(getnextac, (void *)patcmd, flags);
   // post_command(...)
 }
 
