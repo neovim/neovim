@@ -5,7 +5,8 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Contributor:  Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2016 Dec 28
+" Last Change:	2019 Sep 09
+"		Added RemoteCommand from pull request #4809
 " SSH Version:	7.4p1
 "
 
@@ -206,6 +207,7 @@ syn keyword sshconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshconfigKeyword PubkeyAuthentication
 syn keyword sshconfigKeyword RSAAuthentication
 syn keyword sshconfigKeyword RekeyLimit
+syn keyword sshconfigKeyword RemoteCommand
 syn keyword sshconfigKeyword RemoteForward
 syn keyword sshconfigKeyword RequestTTY
 syn keyword sshconfigKeyword RhostsRSAAuthentication
