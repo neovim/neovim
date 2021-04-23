@@ -81,7 +81,7 @@ if !exists("g:netrw_nogx")
   if !hasmapto('<Plug>NetrwBrowseX')
    nmap <unique> gx <Plug>NetrwBrowseX
   endif
-  nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(netrw#GX(),netrw#CheckIfRemote(netrw#GX()))<cr>
+  nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(expand((exists("g:netrw_gx")? g:netrw_gx : '<cfile>')),netrw#CheckIfRemote())<cr>
  endif
  if maparg('gx','v') == ""
   if !hasmapto('<Plug>NetrwBrowseXVis')

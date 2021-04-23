@@ -6713,8 +6713,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	":map <BS> X" to make backspace delete the character in front of the
 	cursor.
 	When 'l' is included and it is used after an operator at the end of a
-	line then it will not move to the next line.  This makes "dl", "cl",
-	"yl" etc. work normally.
+	line (not an empty line) then it will not move to the next line.  This
+	makes "dl", "cl", "yl" etc. work normally.
 
 						*'wildchar'* *'wc'*
 'wildchar' 'wc'		number	(Vim default: <Tab>, Vi default: CTRL-E)

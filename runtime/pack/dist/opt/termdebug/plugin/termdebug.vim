@@ -552,9 +552,14 @@ func s:DecodeMessage(quotedText)
     if a:quotedText[i] == '\'
       let i += 1
       if a:quotedText[i] == 'n'
-        " drop \n
-        let i += 1
-        continue
+	" drop \n
+	let i += 1
+	continue
+      elseif a:quotedText[i] == 't'
+	" append \t
+	let i += 1
+	let result .= "\t"
+	continue
       endif
     endif
     let result .= a:quotedText[i]
@@ -715,12 +720,22 @@ func s:CommOutput(job_id, msgs, event)
   endfor
 endfunc
 
+func s:GotoProgram()
+  if has('win32')
+    if executable('powershell')
+      call system(printf('powershell -Command "add-type -AssemblyName microsoft.VisualBasic;[Microsoft.VisualBasic.Interaction]::AppActivate(%d);"', s:pid))
+    endif
+  else
+    win_gotoid(s:ptywin)
+  endif
+endfunc
+
 " Install commands in the current window to control the debugger.
 func s:InstallCommands()
   let save_cpo = &cpo
   set cpo&vim
 
-  command Break call s:SetBreakpoint()
+  command -nargs=? Break call s:SetBreakpoint(<q-args>)
   command Clear call s:ClearBreakpoint()
   command Step call s:SendCommand('-exec-step')
   command Over call s:SendCommand('-exec-next')
@@ -738,7 +753,7 @@ func s:InstallCommands()
 
   command -range -nargs=* Evaluate call s:Evaluate(<range>, <q-args>)
   command Gdb call win_gotoid(s:gdbwin)
-  command Program call win_gotoid(s:ptywin)
+  command Program call s:GotoProgram()
   command Source call s:GotoSourcewinOrCreateIt()
   command Asm call s:GotoAsmwinOrCreateIt()
   command Winbar call s:InstallWinbar()
@@ -801,7 +816,7 @@ func s:DeleteCommands()
 endfunc
 
 " :Break - Set a breakpoint at the cursor position.
-func s:SetBreakpoint()
+func s:SetBreakpoint(at)
   " Setting a breakpoint may not work while the program is running.
   " Interrupt to make it work.
   let do_continue = 0
@@ -814,9 +829,11 @@ func s:SetBreakpoint()
     endif
     sleep 10m
   endif
+
   " Use the fname:lnum format, older gdb can't handle --source.
-  call s:SendCommand('-break-insert '
-        \ . fnameescape(expand('%:p')) . ':' . line('.'))
+  let at = empty(a:at) ?
+        \ fnameescape(expand('%:p')) . ':' . line('.') : a:at
+  call s:SendCommand('-break-insert ' . at)
   if do_continue
     call s:SendCommand('-exec-continue')
   endif
@@ -831,14 +848,14 @@ func s:ClearBreakpoint()
     let idx = 0
     for id in s:breakpoint_locations[bploc]
       if has_key(s:breakpoints, id)
-        " Assume this always works, the reply is simply "^done".
-        call s:SendCommand('-break-delete ' . id)
-        for subid in keys(s:breakpoints[id])
-          exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
-        endfor
-        unlet s:breakpoints[id]
-        unlet s:breakpoint_locations[bploc][idx]
-        break
+	" Assume this always works, the reply is simply "^done".
+	call s:SendCommand('-break-delete ' . id)
+	for subid in keys(s:breakpoints[id])
+	  exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+	endfor
+	unlet s:breakpoints[id]
+	unlet s:breakpoint_locations[bploc][idx]
+	break
       else
 	let idx += 1
       endif
@@ -1242,8 +1259,8 @@ func s:HandleBreakpointDelete(msg)
   if has_key(s:breakpoints, id)
     for [subid, entry] in items(s:breakpoints[id])
       if has_key(entry, 'placed')
-        exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
-        unlet entry['placed']
+	exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+	unlet entry['placed']
       endif
     endfor
     unlet s:breakpoints[id]
@@ -1267,7 +1284,7 @@ func s:BufRead()
   for [id, entries] in items(s:breakpoints)
     for [subid, entry] in items(entries)
       if entry['fname'] == fname
-        call s:PlaceSign(id, subid, entry)
+	call s:PlaceSign(id, subid, entry)
       endif
     endfor
   endfor
@@ -1279,7 +1296,7 @@ func s:BufUnloaded()
   for [id, entries] in items(s:breakpoints)
     for [subid, entry] in items(entries)
       if entry['fname'] == fname
-        let entry['placed'] = 0
+	let entry['placed'] = 0
       endif
     endfor
   endfor

@@ -1892,6 +1892,16 @@ displayed line.  The default value is 10.  The disadvantage of using a larger
 number is that redrawing can become slow.
 
 
+JSON						*json.vim* *ft-json-syntax*
+
+The json syntax file provides syntax highlighting with conceal support by
+default. To disable concealment: >
+	let g:vim_json_conceal = 0
+
+To disable syntax highlighting of errors: >
+	let g:vim_json_warnings = 0
+
+
 LACE						*lace.vim* *ft-lace-syntax*
 
 Lace (Language for Assembly of Classes in Eiffel) is case insensitive, but the

@@ -206,10 +206,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 			When {file} contains wildcards it is expanded to all
 			matching files.  Example: >
-				:runtime! plugin/*.vim
+				:runtime! plugin/**/*.vim
 <			This is what Vim uses to load the plugin files when
 			starting up.  This similar command: >
-				:runtime plugin/*.vim
+				:runtime plugin/**/*.vim
 <			would source the first file only.
 
 			When 'verbose' is one or higher, there is a message
