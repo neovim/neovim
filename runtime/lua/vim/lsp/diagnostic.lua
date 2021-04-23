@@ -1007,7 +1007,7 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
 
   local diagnostics = params.diagnostics
 
-  if if_nil(config.severity_sort, false) then
+  if config and if_nil(config.severity_sort, false) then
     table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
   end
 
