@@ -61,14 +61,14 @@ tag		char		action in Insert mode	~
 				the cursor
 |i_CTRL-Q|	CTRL-Q		same as CTRL-V, unless used for terminal
 				control flow
-|i_CTRL-R|	CTRL-R {0-9a-z"%#*:=}
+|i_CTRL-R|	CTRL-R {register}
 				insert the contents of a register
-|i_CTRL-R_CTRL-R| CTRL-R CTRL-R {0-9a-z"%#*:=}
+|i_CTRL-R_CTRL-R| CTRL-R CTRL-R {register}
 				insert the contents of a register literally
-|i_CTRL-R_CTRL-O| CTRL-R CTRL-O {0-9a-z"%#*:=}
+|i_CTRL-R_CTRL-O| CTRL-R CTRL-O {register}
 				insert the contents of a register literally
 				and don't auto-indent
-|i_CTRL-R_CTRL-P| CTRL-R CTRL-P {0-9a-z"%#*:=}
+|i_CTRL-R_CTRL-P| CTRL-R CTRL-P {register}
 				insert the contents of a register literally
 				and fix indent.
 		CTRL-S		(used for terminal control flow)

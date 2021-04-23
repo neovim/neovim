@@ -2,7 +2,7 @@
 " Language:             Inno Setup File (iss file) and My InnoSetup extension
 " Maintainer:           Jason Mills (jmills@cs.mun.ca)
 " Previous Maintainer:  Dominique Stéphan (dominique@mggen.com)
-" Last Change:          2004 Dec 14
+" Last Change:          2019 Sep 27
 "
 " Todo:
 "  - The paramter String: is matched as flag string (because of case ignore).
@@ -45,13 +45,13 @@ syn match  issParam	"Components:\|Description:\|GroupDescription:\|Types:\|Extra
 syn match  issParam	"StatusMsg:\|RunOnceId:\|Tasks:"
 syn match  issParam	"MessagesFile:\|LicenseFile:\|InfoBeforeFile:\|InfoAfterFile:"
 
-syn match  issComment	"^\s*;.*$"
+syn match  issComment	"^\s*;.*$" contains=@Spell
 
 " folder constant
-syn match  issFolder	"{[^{]*}"
+syn match  issFolder	"{[^{]*}" contains=@NoSpell
 
 " string
-syn region issString	start=+"+ end=+"+ contains=issFolder
+syn region issString	start=+"+ end=+"+ contains=issFolder,@Spell
 
 " [Dirs]
 syn keyword issDirsFlags deleteafterinstall uninsalwaysuninstall uninsneveruninstall

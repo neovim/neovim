@@ -1,7 +1,7 @@
 " Vim completion script
 " Language:	HTML and XHTML
 " Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
-" Last Change:	2014 Jun 20
+" Last Change:	2019 Sep 27
 
 " Distinguish between HTML versions.
 " To use with other HTML versions add another "elseif" condition to match
@@ -245,7 +245,8 @@ function! htmlcomplete#CompleteTags(findstart, base)
 	" If context contains white space it is attribute.
 	" It can be also value of attribute.
 	" We have to get first word to offer proper completions
-	if context == ''
+	if context =~ '^\s*$'
+		" empty or whitespace line
 		let tag = ''
 	else
 		let tag = split(context)[0]

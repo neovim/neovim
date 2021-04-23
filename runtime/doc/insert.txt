@@ -95,7 +95,7 @@ CTRL-K {char1} [char2]
 CTRL-N		Find next keyword (see |i_CTRL-N|).
 CTRL-P		Find previous keyword (see |i_CTRL-P|).
 
-CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
+CTRL-R {register}				*i_CTRL-R*
 		Insert the contents of a register.  Between typing CTRL-R and
 		the second character, '"' will be displayed to indicate that
 		you are expected to enter the name of a register.
@@ -132,7 +132,7 @@ CTRL-R {0-9a-z"%#*+:.-=}					*i_CTRL-R*
 				sequence will be broken.
 		See |registers| about registers.
 
-CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
+CTRL-R CTRL-R {register}			*i_CTRL-R_CTRL-R*
 		Insert the contents of a register.  Works like using a single
 		CTRL-R, but the text is inserted literally, not as if typed.
 		This differs when the register contains characters like <BS>.
@@ -144,7 +144,7 @@ CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-R*
 		The '.' register (last inserted text) is still inserted as
 		typed.
 
-CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
+CTRL-R CTRL-O {register}			*i_CTRL-R_CTRL-O*
 		Insert the contents of a register literally and don't
 		auto-indent.  Does the same as pasting with the mouse
 		|<MiddleMouse>|. When the register is linewise this will
@@ -153,7 +153,7 @@ CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-O*
 		The '.' register (last inserted text) is still inserted as
 		typed.
 
-CTRL-R CTRL-P {0-9a-z"%#*+/:.-=}			*i_CTRL-R_CTRL-P*
+CTRL-R CTRL-P {register}			*i_CTRL-R_CTRL-P*
 		Insert the contents of a register literally and fix the
 		indent, like |[<MiddleMouse>|.
 		Does not replace characters!

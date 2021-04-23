@@ -29,7 +29,8 @@ if exists("v:lang") || &langmenu != ""
     let s:lang = v:lang
   endif
   " A language name must be at least two characters, don't accept "C"
-  if strlen(s:lang) > 1
+  " Also skip "en_US" to avoid picking up "en_gb" translations.
+  if strlen(s:lang) > 1 && s:lang !~? '^en_us'
     " When the language does not include the charset add 'encoding'
     if s:lang =~ '^\a\a$\|^\a\a_\a\a$'
       let s:lang = s:lang . '.' . &enc

@@ -6504,8 +6504,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'undolevels' 'ul'	number	(default 1000)
 			global or local to buffer |global-local|
 	Maximum number of changes that can be undone.  Since undo information
-	is kept in memory, higher numbers will cause more memory to be used
-	(nevertheless, a single change can use an unlimited amount of memory).
+	is kept in memory, higher numbers will cause more memory to be used.
+	Nevertheless, a single change can already use a large amount of memory.
 	Set to 0 for Vi compatibility: One level of undo and "u" undoes
 	itself: >
 		set ul=0

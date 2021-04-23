@@ -8571,6 +8571,10 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 		unless {keepempty} is non-zero.
 		Note that on MS-Windows you may get trailing CR characters.
 
+		To see the difference between "echo hello" and "echo -n hello"
+		use |system()| and |split()|: >
+			echo split(system('echo hello'), '\n', 1)
+<
 		Returns an empty string on error.
 
 
