@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:         YAML
 " Maintainer:       Nikolai Pavlov <zyx.vim@gmail.com>
-" Last Change:	    2017 Jun 13
+" Last Change:	    2019 Sep 28
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
@@ -29,7 +29,7 @@ function s:FindPrevLessIndentedLine(lnum, ...)
     let curindent = a:0 ? a:1 : indent(a:lnum)
     while           prevlnum
                 \&&  indent(prevlnum) >=  curindent
-                \&& getline(prevlnum) =~# '^\s*#'
+                \&& getline(prevlnum) !~# '^\s*#'
         let prevlnum = prevnonblank(prevlnum-1)
     endwhile
     return prevlnum

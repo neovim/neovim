@@ -37,8 +37,8 @@ If the VIM environment variable is not set, Vim will try to find
 the path in another way (see |$VIMRUNTIME|).  Usually this works just
 fine.  If it doesn't, try setting the VIM environment variable to the
 directory where the Vim stuff is located.  For example, if your syntax files
-are in the "/usr/vim/vim50/syntax" directory, set $VIMRUNTIME to
-"/usr/vim/vim50".  You must do this in the shell, before starting Vim.
+are in the "/usr/vim/vim81/syntax" directory, set $VIMRUNTIME to
+"/usr/vim/vim81".  You must do this in the shell, before starting Vim.
 This command also sources the |menu.vim| script when the GUI is running or
 will start soon.  See |'go-M'| about avoiding that.
 

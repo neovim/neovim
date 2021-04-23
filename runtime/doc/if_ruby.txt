@@ -19,14 +19,14 @@ downloading Ruby there.
 :rub[y] {cmd}		Execute Ruby command {cmd}.  A command to try it out: >
 				:ruby print "Hello"
 
-:rub[y] << [endpattern]
+:rub[y] << [endmarker]
 {script}
-{endpattern}
+{endmarker}
 			Execute Ruby script {script}.
-			The {endpattern} after {script} must NOT be preceded
-			by any white space.
+			The {endmarker} after {script} must NOT be preceded by
+			any white space.
 
-			If [endpattern] is omitted, it defaults to a dot '.'
+			If [endmarker] is omitted, it defaults to a dot '.'
 			like for the |:append| and |:insert| commands.
 
 			This form of the |:ruby| command is mainly useful for

@@ -2506,7 +2506,7 @@ win_id2tabwin({expr})		List	get tab and window nr from |window-ID|
 win_id2win({expr})		Number	get window nr from |window-ID|
 win_screenpos({nr})		List	get screen position of window {nr}
 win_splitmove({nr}, {target} [, {options}])
-				none	move window {nr} to split of {target}
+				Number	move window {nr} to split of {target}
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})			Number	height of window {nr}
@@ -2584,6 +2584,9 @@ append({lnum}, {text})					*append()*
 
 appendbufline({expr}, {lnum}, {text})			*appendbufline()*
 		Like |append()| but append the text in buffer {expr}.
+
+		This function works only for loaded buffers. First call
+		|bufload()| if needed.
 
 		For the use of {expr}, see |bufname()|.
 
@@ -3334,6 +3337,9 @@ deletebufline({expr}, {first}[, {last}])		*deletebufline()*
 		Delete lines {first} to {last} (inclusive) from buffer {expr}.
 		If {last} is omitted then delete line {first} only.
 		On success 0 is returned, on failure 1 is returned.
+
+		This function works only for loaded buffers. First call
+		|bufload()| if needed.
 
 		For the use of {expr}, see |bufname()| above.
 
@@ -7369,13 +7375,24 @@ serverstop({address})					*serverstop()*
 		address returned by |serverlist()|.
 
 setbufline({expr}, {lnum}, {text})			*setbufline()*
-		Set line {lnum} to {text} in buffer {expr}.  To insert
-		lines use |append()|.
+		Set line {lnum} to {text} in buffer {expr}.  This works like
+		|setline()| for the specified buffer.
+
+		This function works only for loaded buffers. First call
+		|bufload()| if needed.
+
+		To insert lines use |appendbufline()|.
+		Any text properties in {lnum} are cleared.
+
+		{text} can be a string to set one line, or a list of strings
+		to set multiple lines.  If the list extends below the last
+		line then those lines are added.
 
 		For the use of {expr}, see |bufname()| above.
 
 		{lnum} is used like with |setline()|.
-		This works like |setline()| for the specified buffer.
+		When {lnum} is just below the last line the {text} will be
+		added below the last line.
 		On success 0 is returned, on failure 1 is returned.
 
 		If {expr} is not a valid buffer or {lnum} is not valid, an
@@ -7458,7 +7475,7 @@ setline({lnum}, {text})					*setline()*
 
 		{lnum} is used like with |getline()|.
 		When {lnum} is just below the last line the {text} will be
-		added as a new line.
+		added below the last line.
 
 		If this succeeds, 0 is returned.  If this fails (most likely
 		because {lnum} is invalid) 1 is returned.
@@ -9911,20 +9928,21 @@ This does NOT work: >
 
 						*:let=<<* *:let-heredoc*
 						*E990* *E991* *E172* *E221*
-:let {var-name} =<< [trim] {marker}
+:let {var-name} =<< [trim] {endmarker}
 text...
 text...
-{marker}
+{endmarker}
 			Set internal variable {var-name} to a List containing
-			the lines of text bounded by the string {marker}.
-			{marker} cannot start with a lower case character.
-			The last line should end only with the {marker} string
-			without any other character.  Watch out for white
-			space after {marker}!
+			the lines of text bounded by the string {endmarker}.
+			{endmarker} cannot start with a lower case character.
+			The last line should end only with the {endmarker}
+			string without any other character.  Watch out for
+			white space after {endmarker}!
 
 			Without "trim" any white space characters in the lines
 			of text are preserved.  If "trim" is specified before
-			{marker}, then indentation is stripped so you can do: >
+			{endmarker}, then indentation is stripped so you can
+			do: >
 				let text =<< trim END
 				   if ok
 				     echo 'done'
@@ -9938,23 +9956,31 @@ text...
 			non-empty text line is stripped from the input lines.
 			All leading indentation exactly matching the leading
 			indentation before `let` is stripped from the line
-			containing {marker}.  Note that the difference between
-			space and tab matters here.
+			containing {endmarker}.  Note that the difference
+			between space and tab matters here.
 
 			If {var-name} didn't exist yet, it is created.
 			Cannot be followed by another command, but can be
 			followed by a comment.
 
+			To avoid line continuation to be applied, consider
+			adding 'C' to 'cpoptions': >
+				set cpo+=C
+				let var =<< END
+				   \ leading backslash
+				END
+				set cpo-=C
+<
 			Examples: >
 				let var1 =<< END
-			Sample text 1
-			    Sample text 2
-			Sample text 3
-			END
+				Sample text 1
+				    Sample text 2
+				Sample text 3
+				END
 
 				let data =<< trim DATA
-				1 2 3 4
-				5 6 7 8
+					1 2 3 4
+					5 6 7 8
 				DATA
 <
 								*E121*

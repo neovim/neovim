@@ -1392,7 +1392,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'completeslash'* *'csl'*
 'completeslash' 'csl'	string	(default: "")
 			local to buffer
-			{not in Vi}  {only for MS-Windows}
+			{only for MS-Windows}
 	When this option is set it overrules 'shellslash' for completion:
 	- When this option is set to "slash", a forward slash is used for path
 	  completion in insert mode. This is useful when editing HTML tag, or

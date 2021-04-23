@@ -951,10 +951,12 @@ Function call arguments will indent 1 extra level. For two-space indentation: >
 -------------
 
 				*PHP_IndentFunctionDeclarationParameters*
-Extra indentation levels to add to arguments in multi-line function definitions. >
+Extra indentation levels to add to arguments in multi-line function
+definitions. >
     let g:PHP_IndentFunctionDeclarationParameters = 1
 
-Function arguments in declarations will indent 1 extra level. For two-space indentation: >
+Function arguments in declarations will indent 1 extra level. For two-space
+indentation: >
 
     function call_the_thing(
         $with_this,
