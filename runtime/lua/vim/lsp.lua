@@ -916,7 +916,7 @@ function lsp.start_client(config)
 
   -- Track this so that we can escalate automatically if we've alredy tried a
   -- graceful shutdown
-  local tried_graceful_shutdown = false
+  local graceful_shutdown_failed = false
   --@private
   --- Stops a client, optionally with force.
   ---
@@ -938,11 +938,10 @@ function lsp.start_client(config)
     if handle:is_closing() then
       return
     end
-    if force or (not client.initialized) or tried_graceful_shutdown then
+    if force or (not client.initialized) or graceful_shutdown_failed then
       handle:kill(15)
       return
     end
-    tried_graceful_shutdown = true
     -- Sending a signal after a process has exited is acceptable.
     rpc.request('shutdown', nil, function(err, _)
       if err == nil then
@@ -950,6 +949,7 @@ function lsp.start_client(config)
       else
         -- If there was an error in the shutdown request, then term to be safe.
         handle:kill(15)
+        graceful_shutdown_failed = true
       end
     end)
   end
