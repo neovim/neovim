@@ -592,14 +592,34 @@ buf_request({bufnr}, {method}, {params}, {handler})
                       You could instead iterate all clients and call their
                       `cancel_request()` methods.
 
+                                                   *vim.lsp.buf_request_all()*
+buf_request_all({bufnr}, {method}, {params}, {callback})
+                Sends an async request for all active clients attached to the
+                buffer. Executes the callback on the combined result.
+                Parameters are the same as |vim.lsp.buf_request()| but the
+                return result and callback are different.
+
+                Parameters: ~
+                    {bufnr}     (number) Buffer handle, or 0 for current.
+                    {method}    (string) LSP method name
+                    {params}    (optional, table) Parameters to send to the
+                                server
+                    {callback}  (function) The callback to call when all
+                                requests are finished.
+
+                Return: ~
+                    (function) A function that will cancel all requests which
+                    is the same as the one returned from `buf_request` .
+
                                                   *vim.lsp.buf_request_sync()*
 buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
-                Sends a request to a server and waits for the response.
+                Sends a request to all server and waits for the response of
+                all of them.
 
-                Calls |vim.lsp.buf_request()| but blocks Nvim while awaiting
-                the result. Parameters are the same as |vim.lsp.buf_request()|
-                but the return result is different. Wait maximum of
-                {timeout_ms} (default 100) ms.
+                Calls |vim.lsp.buf_request_all()| but blocks Nvim while
+                awaiting the result. Parameters are the same as
+                |vim.lsp.buf_request()| but the return result is different.
+                Wait maximum of {timeout_ms} (default 100) ms.
 
                 Parameters: ~
                     {bufnr}       (number) Buffer handle, or 0 for current.
@@ -678,6 +698,9 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
                 Return: ~
                     true if client is stopped, false otherwise.
 
+flush({client})                                              *vim.lsp.flush()*
+                TODO: Documentation
+
 get_active_clients()                            *vim.lsp.get_active_clients()*
                 Gets all active clients.
 
@@ -708,6 +731,15 @@ get_log_path()                                        *vim.lsp.get_log_path()*
                 Return: ~
                     (String) Path to logfile.
 
+init({client}, {bufnr})                                       *vim.lsp.init()*
+                client_id → state
+
+                state pending_change?: function that the timer starts to
+                trigger didChange pending_changes: list of tables with the
+                pending changesets; for incremental_sync only
+                use_incremental_sync: bool buffers?: table (bufnr → lines);
+                for incremental sync only timer?: uv_timer
+
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
                 Implements 'omnifunc' compatible LSP completion.
 
@@ -726,6 +758,16 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
                     |complete-functions|
                     |complete-items|
                     |CompleteDone|
+
+                                                           *vim.lsp.prepare()*
+prepare({bufnr}, {firstline}, {new_lastline}, {changedtick})
+                TODO: Documentation
+
+reset({client_id})                                           *vim.lsp.reset()*
+                TODO: Documentation
+
+reset_buf({client}, {bufnr})                             *vim.lsp.reset_buf()*
+                TODO: Documentation
 
 set_log_level({level})                               *vim.lsp.set_log_level()*
                 Sets the global log level for LSP logging.
@@ -849,6 +891,11 @@ start_client({config})                                *vim.lsp.start_client()*
                                        • allow_incremental_sync (bool, default
                                          true): Allow using incremental sync
                                          for buffer edits
+                                       • debounce_text_changes (number,
+                                         default nil): Debounce didChange
+                                         notifications to the server by the
+                                         given number in milliseconds. No
+                                         debounce occurs if nil
 
                 Return: ~
                     Client id. |vim.lsp.get_client_by_id()| Note: client may
@@ -1310,6 +1357,10 @@ on_publish_diagnostics({_}, {_}, {params}, {client_id}, {_}, {config})
                               • update_in_insert: (default=false)
                                 • Update diagnostics in InsertMode or wait
                                   until InsertLeave
+
+                              • severity_sort: (default=false)
+                                • Sort diagnostics (and thus signs and virtual
+                                  text)
 
 reset({client_id}, {buffer_client_map})           *vim.lsp.diagnostic.reset()*
                 Clear diagnotics and diagnostic cache
