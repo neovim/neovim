@@ -103,7 +103,11 @@ Help on help files					*helphelp*
 			current file.  See |help-translated|.
 
 							*:helpc* *:helpclose*
-:helpc[lose]            Close one help window, if there is one.
+:helpc[lose]		Close one help window, if there is one.
+			Vim will try to restore the window layout (including
+			cursor position) to the same layout it was before
+			opening the help window initially.  This might cause
+			triggering several autocommands.
 
 							*:helpg* *:helpgrep*
 :helpg[rep] {pattern}[@xx]

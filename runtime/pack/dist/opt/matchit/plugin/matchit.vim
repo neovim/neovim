@@ -1,13 +1,13 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  Maintainer:  Christian Brabandt
-"  Version:     1.15
-"  Last Change: 2019 Jan 28
+"  Version:     1.16
+"  Last Change: 2019 Oct 24
 "  Repository:  https://github.com/chrisbra/matchit
 "  Previous URL:http://www.vim.org/script.php?script_id=39
 "  Previous Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
 
 " Documentation:
-"  The documentation is in a separate file: ../doc/matchit.txt .
+"  The documentation is in a separate file: ../doc/matchit.txt
 
 " Credits:
 "  Vim editor by Bram Moolenaar (Thanks, Bram!)
@@ -48,8 +48,8 @@ set cpo&vim
 
 nnoremap <silent> <Plug>(MatchitNormalForward)     :<C-U>call matchit#Match_wrapper('',1,'n')<CR>
 nnoremap <silent> <Plug>(MatchitNormalBackward)    :<C-U>call matchit#Match_wrapper('',0,'n')<CR>
-vnoremap <silent> <Plug>(MatchitVisualForward)     :<C-U>call matchit#Match_wrapper('',1,'v')<CR>m'gv``
-vnoremap <silent> <Plug>(MatchitVisualBackward)    :<C-U>call matchit#Match_wrapper('',0,'v')<CR>m'gv``
+xnoremap <silent> <Plug>(MatchitVisualForward)     :<C-U>call matchit#Match_wrapper('',1,'v')<CR>m'gv``
+xnoremap <silent> <Plug>(MatchitVisualBackward)    :<C-U>call matchit#Match_wrapper('',0,'v')<CR>m'gv``
 onoremap <silent> <Plug>(MatchitOperationForward)  :<C-U>call matchit#Match_wrapper('',1,'o')<CR>
 onoremap <silent> <Plug>(MatchitOperationBackward) :<C-U>call matchit#Match_wrapper('',0,'o')<CR>
 
@@ -63,8 +63,8 @@ omap <silent> g% <Plug>(MatchitOperationBackward)
 " Analogues of [{ and ]} using matching patterns:
 nnoremap <silent> <Plug>(MatchitNormalMultiBackward)    :<C-U>call matchit#MultiMatch("bW", "n")<CR>
 nnoremap <silent> <Plug>(MatchitNormalMultiForward)     :<C-U>call matchit#MultiMatch("W",  "n")<CR>
-vnoremap <silent> <Plug>(MatchitVisualMultiBackward)    :<C-U>call matchit#MultiMatch("bW", "n")<CR>m'gv``
-vnoremap <silent> <Plug>(MatchitVisualMultiForward)     :<C-U>call matchit#MultiMatch("W",  "n")<CR>m'gv``
+xnoremap <silent> <Plug>(MatchitVisualMultiBackward)    :<C-U>call matchit#MultiMatch("bW", "n")<CR>m'gv``
+xnoremap <silent> <Plug>(MatchitVisualMultiForward)     :<C-U>call matchit#MultiMatch("W",  "n")<CR>m'gv``
 onoremap <silent> <Plug>(MatchitOperationMultiBackward) :<C-U>call matchit#MultiMatch("bW", "o")<CR>
 onoremap <silent> <Plug>(MatchitOperationMultiForward)  :<C-U>call matchit#MultiMatch("W",  "o")<CR>
 
@@ -76,7 +76,7 @@ omap <silent> [% <Plug>(MatchitOperationMultiBackward)
 omap <silent> ]% <Plug>(MatchitOperationMultiForward)
 
 " text object:
-vmap <silent> <Plug>(MatchitVisualTextObject) <Plug>(MatchitVisualMultiBackward)o<Plug>(MatchitVisualMultiForward)
+xmap <silent> <Plug>(MatchitVisualTextObject) <Plug>(MatchitVisualMultiBackward)o<Plug>(MatchitVisualMultiForward)
 xmap a% <Plug>(MatchitVisualTextObject)
 
 " Call this function to turn on debugging information.  Every time the main

@@ -287,6 +287,9 @@ CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 		    :+quit  " quit the next window
 		    :+2quit " quit the second next window
 <
+		When closing a help window, Vim will try to restore the
+		previous window layout |:helpclose|.
+
 :q[uit]!
 :{count}q[uit]!
 		Without {count}: Quit the current window.  If {count} is

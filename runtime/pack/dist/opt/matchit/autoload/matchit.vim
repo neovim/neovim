@@ -1,6 +1,6 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: 2019 Jan 28
+"  Last Change: 2019 Oct 24
 
 let s:last_mps = ""
 let s:last_words = ":"
@@ -211,6 +211,14 @@ function matchit#Match_wrapper(word, forward, mode) range
     execute "if " . skip . "| let skip = '0' | endif"
   endif
   let sp_return = searchpair(ini, mid, fin, flag, skip)
+  if &selection isnot# 'inclusive' && a:mode == 'v'
+    " move cursor one pos to the right, because selection is not inclusive
+    " add virtualedit=onemore, to make it work even when the match ends the " line
+    if !(col('.') < col('$')-1)
+      set ve=onemore
+    endif
+    norm! l
+  endif
   let final_position = "call cursor(" . line(".") . "," . col(".") . ")"
   " Restore cursor position and original screen.
   call winrestview(view)

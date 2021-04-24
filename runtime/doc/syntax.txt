@@ -1135,6 +1135,26 @@ startup vimrc: >
    :let filetype_w = "cweb"
 
 
+DART						*dart.vim* *ft-dart-syntax*
+
+Dart is an object-oriented, typed, class defined, garbage collected language
+used for developing mobile, desktop, web, and back-end applications.  Dart uses
+a C-like syntax derived from C, Java, and JavaScript, with features adopted
+from Smalltalk, Python, Ruby, and others.
+
+More information about the language and its development environment at the
+official Dart language website at https://dart.dev
+
+dart.vim syntax detects and highlights Dart statements, reserved words,
+type declarations, storage classes, conditionals, loops, interpolated values,
+and comments.  There is no support idioms from Flutter or any other Dart
+framework.
+
+Changes, fixes?  Submit an issue or pull request via:
+
+https://github.com/pr3d4t0r/dart-vim-syntax/
+
+
 DESKTOP					   *desktop.vim* *ft-desktop-syntax*
 
 Primary goal of this syntax file is to highlight .desktop and .directory files
