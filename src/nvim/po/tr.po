@@ -173,19 +173,19 @@ msgstr "E88: İlk arabellekten öncesine gidilemez"
 #, c-format
 msgid "E89: No write since last change for buffer %d (add ! to override)"
 msgstr ""
-"E89: Arabellek %d son eklemeden beri yazılmamış (yoksaymak için ! ekleyin)"
+"E89: Arabellek %d son değişiklikten sonra yazılmadı (yoksaymak için ! ekleyin)"
 
 msgid "E948: Job still running (add ! to end the job)"
 msgstr "E948: İş hâlâ sürüyor (bitirmek için ! ekleyin)"
 
 msgid "E37: No write since last change (add ! to override)"
-msgstr "E37: Son değişiklikten beri yazma yok (yoksaymak için ! ekleyin)"
+msgstr "E37: Son değişiklikten sonra yazılmadı (yoksaymak için ! ekleyin)"
 
 msgid "E948: Job still running"
 msgstr "E948: İş hâlâ sürüyor"
 
 msgid "E37: No write since last change"
-msgstr "E37: Son değişiklikten beri yazma yok"
+msgstr "E37: Son değişiklikten sonra yazılmadı"
 
 msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Uyarı: Dosya adları taşımı"
@@ -207,7 +207,7 @@ msgid "line %ld"
 msgstr "%ld. satır"
 
 msgid "E95: Buffer with this name already exists"
-msgstr "E95: Aynı adda bir arabellek halihazırda var"
+msgstr "E95: Aynı adda bir arabellek hâlihazırda var"
 
 msgid " [Modified]"
 msgstr " [Değiştirildi]"
@@ -268,7 +268,7 @@ msgid "[Popup]"
 msgstr "[Açılır pencere]"
 
 msgid "[Scratch]"
-msgstr "[Geçici]"
+msgstr "[Geçici alan]"
 
 msgid "WARNING: The file has been changed since reading it!!!"
 msgstr "UYARI: Bu dosya açıldıktan sonra başkası tarafından değiştirilmiş!!!"
@@ -289,7 +289,7 @@ msgid "NetBeans disallows writes of unmodified buffers"
 msgstr "NetBeans değiştirilmemiş arabelleklerin yazılmasına izin vermez"
 
 msgid "Partial writes disallowed for NetBeans buffers"
-msgstr "NetBeans arabellekleri için kısmi yazmalara izin verilmez"
+msgstr "NetBeans arabellekleri için kısmî yazmalara izin verilmez"
 
 msgid "is a directory"
 msgstr "bir dizin"
@@ -550,7 +550,7 @@ msgstr "extend() değişkeni"
 
 #, c-format
 msgid "E737: Key already exists: %s"
-msgstr "E737: Anahtar halihazırda var: %s"
+msgstr "E737: Anahtar hâlihazırda var: %s"
 
 #, c-format
 msgid "E96: Cannot diff more than %d buffers"
@@ -686,7 +686,7 @@ msgid "E105: Using :loadkeymap not in a sourced file"
 msgstr "E105: :loadkeymap kaynak alınmayan bir dosyada kullanılıyor"
 
 msgid "E791: Empty keymap entry"
-msgstr "E791: Boş düğme eşlem girişi"
+msgstr "E791: Boş düğme eşlem girdisi"
 
 msgid "E111: Missing ']'"
 msgstr "E111: Eksik ']'"
@@ -695,7 +695,7 @@ msgid "E719: Cannot use [:] with a Dictionary"
 msgstr "E719: [:] bir sözlük ile kullanılamıyor"
 
 msgid "E806: using Float as a String"
-msgstr "E806: Kayan, dizi olarak kullanılıyor"
+msgstr "E806: Kayan değer bir dizi olarak kullanılıyor"
 
 msgid "E274: No white space allowed before parenthesis"
 msgstr "E274: Ayraçtan önce boşluğa izin verilmez"
@@ -793,28 +793,28 @@ msgid "E974: Using a Blob as a Number"
 msgstr "E974: Bir ikili geniş nesneyi sayı olarak kullanma" 
 
 msgid "E891: Using a Funcref as a Float"
-msgstr "E891: Bir Funcref'i kayan olarak kullanma"
+msgstr "E891: Bir Funcref'i Kayan olarak kullanma"
 
 msgid "E892: Using a String as a Float"
-msgstr "E892: Bir diziyi kayan olarak kullanma"
+msgstr "E892: Bir diziyi Kayan olarak kullanma"
 
 msgid "E893: Using a List as a Float"
-msgstr "E893: Bir listeyi kayan olarak kullanma"
+msgstr "E893: Bir listeyi Kayan olarak kullanma"
 
 msgid "E894: Using a Dictionary as a Float"
-msgstr "E894: Bir sözlüğü kayan olarak kullanma"
+msgstr "E894: Bir sözlüğü Kayan olarak kullanma"
 
 msgid "E907: Using a special value as a Float"
-msgstr "E907: Özel bir değeri kayan olarak kullanma"
+msgstr "E907: Özel bir değeri Kayan olarak kullanma"
 
 msgid "E911: Using a Job as a Float"
-msgstr "E911: Bir işi kayan olarak kullanma"
+msgstr "E911: Bir işi Kayan olarak kullanma"
 
 msgid "E914: Using a Channel as a Float"
-msgstr "E914: Bir kanalı kayan olarak kullanma"
+msgstr "E914: Bir kanalı Kayan olarak kullanma"
 
 msgid "E975: Using a Blob as a Float"
-msgstr "E975: Bir ikili geniş nesneyi kayan olarak kullanma"
+msgstr "E975: Bir ikili geniş nesneyi Kayan olarak kullanma"
 
 msgid "E729: using Funcref as a String"
 msgstr "E729: Funcref dizi olarak kullanılıyor"
@@ -829,7 +829,7 @@ msgid "E976: using Blob as a String"
 msgstr "E976: İkili geniş nesne dizi olarak kullanılıyor"
 
 msgid "E908: using an invalid value as a String"
-msgstr "E908: Bir geçersiz değer dizi olarak kullanılıyor"
+msgstr "E908: Geçersiz bir değer dizi olarak kullanılıyor"
 
 msgid "E698: variable nested too deep for making a copy"
 msgstr "E698: Değişken kopyalama için çok iç içe geçmiş"
@@ -915,7 +915,7 @@ msgid "E277: Unable to read a server reply"
 msgstr "E277: Bir sunucu yanıtı okunamadı"
 
 msgid "E941: already started a server"
-msgstr "E941: Sunucu halihazırda çalışıyor"
+msgstr "E941: Sunucu hâlihazırda çalışıyor"
 
 msgid "E942: +clientserver feature not available"
 msgstr "E942: +clientserver özelliği mevcut değil"
@@ -1057,7 +1057,7 @@ msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *Süzgeç* otokomutları şu anki arabelleği değiştirmemelidir"
 
 msgid "[No write since last change]\n"
-msgstr "[Son değişiklikten beri yazma yok]\n"
+msgstr "[Son değişiklikten sonra yazılmadı]\n"
 
 msgid "Save As"
 msgstr "Farklı Kaydet"
@@ -1102,7 +1102,7 @@ msgid ""
 "Do you wish to try?"
 msgstr ""
 "\"%s\" dosya izinleri saltokunur.\n"
-"Yine de belki yazılabilir.\n"
+"Belki yine de yazılabilir.\n"
 "Denemek ister misiniz?"
 
 #, c-format
@@ -1131,7 +1131,7 @@ msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
 msgstr "%s ile değiştir (y/n/a/q/l/^E/^Y)?"
 
 msgid "(Interrupted) "
-msgstr "(Kesildi) "
+msgstr "(Yarıda kesildi) "
 
 #, c-format
 msgid "%ld match on %ld line"
@@ -1223,7 +1223,7 @@ msgstr "E947: İş \"%s\" arabelleğinde hâlâ sürüyor"
 
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
-msgstr "E162: \"%s\" arabelleğinde son değişiklikten beri yazma yok"
+msgstr "E162: \"%s\" arabelleği son değişiklikten sonra yazılmadı"
 
 msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
 msgstr "Uyarı: Diğer arabelleğe aniden girildi (otokomutları denetleyin)"
@@ -2830,7 +2830,7 @@ msgid "-t tag          edit file where tag is defined"
 msgstr "-t etiket       etiket tanımlanan dosyaları düzenle"
 
 msgid "-q [errorfile]  edit file with first error"
-msgstr "-q [hatalı]     hata içeren ilk dosyayı düzenle"
+msgstr "-q [hatalıd.]  hata içeren ilk dosyayı düzenle"
 
 msgid ""
 "\n"
@@ -3173,19 +3173,19 @@ msgstr ": Gönderme başarısız oldu.\n"
 
 #, c-format
 msgid "E224: global abbreviation already exists for %s"
-msgstr "E224: %s için genel kısaltma halihazırda var"
+msgstr "E224: %s için genel kısaltma hâlihazırda var"
 
 #, c-format
 msgid "E225: global mapping already exists for %s"
-msgstr "E225: %s için genel eşlemleme halihazırda var "
+msgstr "E225: %s için genel eşlemleme hâlihazırda var "
 
 #, c-format
 msgid "E226: abbreviation already exists for %s"
-msgstr "E226: %s için kısaltma halihazırda var"
+msgstr "E226: %s için kısaltma hâlihazırda var"
 
 #, c-format
 msgid "E227: mapping already exists for %s"
-msgstr "E227: %s için eşlemleme halihazırda var"
+msgstr "E227: %s için eşlemleme hâlihazırda var"
 
 msgid "No abbreviation found"
 msgstr "Kısaltma bulunamadı"
@@ -3270,7 +3270,7 @@ msgid "E297: Write error in swap file"
 msgstr "E297: Takas dosyasında yazma hatası"
 
 msgid "E300: Swap file already exists (symlink attack?)"
-msgstr "E300: Takas dosyası halihazırda var (sembol bağı saldırısı?)"
+msgstr "E300: Takas dosyası hâlihazırda var (sembol bağı saldırısı?)"
 
 msgid "E298: Didn't get block nr 0?"
 msgstr "E298: 0 numaralı blok alınmadı mı?"
@@ -3309,7 +3309,7 @@ msgid "E306: Cannot open %s"
 msgstr "E306: %s açılamıyor"
 
 msgid "Unable to read block 0 from "
-msgstr "Şuradan blok 0 okunamıyor: "
+msgstr "Blok 0 şuradan okunamıyor: "
 
 msgid ""
 "\n"
@@ -3684,7 +3684,7 @@ msgid "VIM - ATTENTION"
 msgstr "VİM - DİKKAT"
 
 msgid "Swap file already exists!"
-msgstr "Takas dosyası halihazırda var!"
+msgstr "Takas dosyası hâlihazırda var!"
 
 msgid ""
 "&Open Read-Only\n"
@@ -3761,7 +3761,7 @@ msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Geçersiz yazmaç adı: '%s'"
 
 msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "İletiler Türkçe çeviricisi: Emir SARI <bitigchi@me.com>"
+msgstr "İletileri Türkçeye çeviren: Emir SARI <bitigchi@me.com>"
 
 msgid "Interrupt: "
 msgstr "Yarıda kes: "
@@ -3895,7 +3895,7 @@ msgid "E838: netbeans is not supported with this GUI"
 msgstr "E838: NetBeans bu grafik arabirimde desteklenmiyor"
 
 msgid "E511: netbeans already connected"
-msgstr "E511: NetBeans halihazırda bağlı"
+msgstr "E511: NetBeans hâlihazırda bağlı"
 
 #, c-format
 msgid "E505: %s is read-only (add ! to override)"
@@ -4018,7 +4018,7 @@ msgid "E946: Cannot make a terminal with running job modifiable"
 msgstr "E946: Uçbirim bir iş çalışırken değiştirilebilir yapılamaz"
 
 msgid "E590: A preview window already exists"
-msgstr "E590: Bir önizleme penceresi halihazırda mevcut"
+msgstr "E590: Bir önizleme penceresi hâlihazırda mevcut"
 
 msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
 msgstr "W17: Arapça UTF-8 gerektirir, ':set encoding=utf-8' yapın"
@@ -5100,7 +5100,7 @@ msgstr ""
 
 #, c-format
 msgid "Expected Y or N in %s line %d: %s"
-msgstr "%s içinde %d. satırda E veya H bekleniyordu: %s"
+msgstr "%s içinde %d. satırda Y veya N bekleniyordu: %s"
 
 #, c-format
 msgid "Broken condition in %s line %d: %s"
@@ -5666,7 +5666,7 @@ msgstr "E968: En azından bir 'id' veya 'type' gerekli"
 
 #, c-format
 msgid "E969: Property type %s already defined"
-msgstr "E969: Özellik türü %s halihazırda tanımlanmış"
+msgstr "E969: Özellik türü %s hâlihazırda tanımlanmış"
 
 #, c-format
 msgid "E970: Unknown highlight group name: '%s'"
@@ -5879,10 +5879,10 @@ msgstr "E184: Böyle bir kullanıcı tanımlı komut yok: %s"
 
 #, c-format
 msgid "E122: Function %s already exists, add ! to replace it"
-msgstr "E122: %s işlevi halihazırda mevcut, değiştirmek için ! ekleyin"
+msgstr "E122: %s işlevi hâlihazırda mevcut, değiştirmek için ! ekleyin"
 
 msgid "E717: Dictionary entry already exists"
-msgstr "E717: Sözlük girdisi halihazırda mevcut"
+msgstr "E717: Sözlük girdisi hâlihazırda mevcut"
 
 msgid "E718: Funcref required"
 msgstr "E718: Funcref gerekli"
@@ -6356,7 +6356,7 @@ msgid ""
 "$"
 msgstr ""
 "\n"
-"# Son Değiştirme Dizisi:\n"
+"# Son Değiştirilen Dizi:\n"
 "$"
 
 #, c-format
@@ -6948,10 +6948,10 @@ msgid "E686: Argument of %s must be a List"
 msgstr "E686: %s değişkeni bir liste olmalı"
 
 msgid "search hit TOP, continuing at BOTTOM"
-msgstr "Dosyanın BAŞINA varıldı, arama dosyanın SONUNDAN sürecek"
+msgstr "Arama dosyanın BAŞINI geçti, dosyanın SONUNDAN sürüyor"
 
 msgid "search hit BOTTOM, continuing at TOP"
-msgstr "Dosyanın SONUNA varıldı, arama dosyanın BAŞINDAN sürecek"
+msgstr "Arama dosyanın SONUNU geçti, dosyanın BAŞINDAN sürüyor"
 
 #, c-format
 msgid "Need encryption key for \"%s\""

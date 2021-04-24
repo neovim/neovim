@@ -5177,7 +5177,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Environment variables are expanded |:set_env|.
 
 	If the name of the shell contains a space, you need to enclose it in
-	quotes.  Example: >
+	quotes.  Example with quotes: >
 		:set shell=\"c:\program\ files\unix\sh.exe\"\ -f
 <	Note the backslash before each quote (to avoid starting a comment) and 
 	each space (to avoid ending the option value), so better use |:let-&| 

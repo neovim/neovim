@@ -159,6 +159,9 @@ an 20.335 &Edit.-SEP1-				<Nop>
 vnoremenu 20.340 &Edit.Cu&t<Tab>"+x		"+x
 vnoremenu 20.350 &Edit.&Copy<Tab>"+y		"+y
 cnoremenu 20.350 &Edit.&Copy<Tab>"+y		<C-Y>
+if exists(':tlmenu')
+  tlnoremenu 20.350 &Edit.&Copy<Tab>"+y 	<C-W>:<C-Y><CR>
+endif
 nnoremenu 20.360 &Edit.&Paste<Tab>"+gP		"+gP
 cnoremenu	 &Edit.&Paste<Tab>"+gP		<C-R>+
 exe 'vnoremenu <script> &Edit.&Paste<Tab>"+gP	' . paste#paste_cmd['v']
@@ -566,7 +569,7 @@ func! s:XxdConv()
     %!mc vim:xxd
   else
     call s:XxdFind()
-    exe '%!"' . g:xxdprogram . '"'
+    exe '%!' . g:xxdprogram
   endif
   if getline(1) =~ "^0000000:"		" only if it worked
     set ft=xxd
@@ -580,7 +583,7 @@ func! s:XxdBack()
     %!mc vim:xxd -r
   else
     call s:XxdFind()
-    exe '%!"' . g:xxdprogram . '" -r'
+    exe '%!' . g:xxdprogram . ' -r'
   endif
   set ft=
   doautocmd filetypedetect BufReadPost
@@ -592,6 +595,9 @@ func! s:XxdFind()
     " On the PC xxd may not be in the path but in the install directory
     if has("win32") && !executable("xxd")
       let g:xxdprogram = $VIMRUNTIME . (&shellslash ? '/' : '\') . "xxd.exe"
+      if g:xxdprogram =~ ' '
+	let g:xxdprogram = '"' .. g:xxdprogram .. '"'
+      endif
     else
       let g:xxdprogram = "xxd"
     endif

@@ -382,6 +382,8 @@ Some commands work both in Insert mode and Command-line mode, some not:
 :cmap  :cnoremap  :cunmap  :cmapclear	     -	       yes	   -
 :lmap  :lnoremap  :lunmap  :lmapclear	    yes*       yes*	  yes*
 
+* If 'iminsert' is 1, see |language-mapping| below.
+
 The original Vi did not have separate mappings for
 Normal/Visual/Operator-pending mode and for Insert/Command-line mode.
 Therefore the ":map" and ":map!" commands enter and display mappings for

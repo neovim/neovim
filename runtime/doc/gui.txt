@@ -191,8 +191,9 @@ Creating New Menus					*creating-menus*
 				*E330* *E327* *E331* *E336* *E333*
 				*E328* *E329* *E337* *E792*
 To create a new menu item, use the ":menu" commands.  They are mostly like
-the ":map" set of commands but the first argument is a menu item name, given
-as a path of menus and submenus with a '.' between them, e.g.: >
+the ":map" set of commands (see |map-modes|), but the first argument is a menu
+item name, given as a path of menus and submenus with a '.' between them,
+e.g.: >
 
    :menu File.Save  :w<CR>
    :inoremenu File.Save  <C-O>:w<CR>
