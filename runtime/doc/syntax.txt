@@ -453,6 +453,16 @@ conversion. See |-E| and |-s-ex| for details. It is probably best to create a
 script to replace all the -c commands and use it with the -u flag instead of
 specifying each command separately.
 
+				    *hl-TOhtmlProgress* *TOhtml-progress-color*
+When displayed, the progress bar will show colored boxes along the statusline
+as the HTML conversion proceeds. By default, the background color as the
+current "DiffDelete" highlight group is used. If "DiffDelete" and "StatusLine"
+have the same background color, TOhtml will automatically adjust the color to
+differ. If you do not like the automatically selected colors, you can define
+your own highlight colors for the progress bar. Example: >
+
+	hi TOhtmlProgress guifg=#c0ffee ctermbg=7
+<
 							 *g:html_number_lines*
 Default: current 'number' setting.
 When 0, buffer text is displayed in the generated HTML without line numbering.
@@ -484,8 +494,8 @@ For example: >
 <
 							      *g:html_use_css*
 Default: 1.
-When 1, generate valid HTML 4.01 markup with CSS1 styling, supported in all
-modern browsers and most old browsers.
+When 1, generate valid HTML 5 markup with CSS styling, supported in all modern
+browsers and many old browsers.
 When 0, generate <font> tags and similar outdated markup. This is not
 recommended but it may work better in really old browsers, email clients,
 forum posts, and similar situations where basic CSS support is unavailable.
@@ -557,23 +567,43 @@ affected in this way as follows:
 Example, to make the fold column and line numbers uncopyable: >
 	:let g:html_prevent_copy = "fn"
 <
-This feature is currently implemented by inserting read-only <input> elements
-into the markup to contain the uncopyable areas. This does not work well in
-all cases. When pasting to some applications which understand HTML, the
-<input> elements also get pasted. But plain-text paste destinations should
-always work.
+The method used to prevent copying in the generated page depends on the value
+of |g:html_use_input_for_pc|.
+
+						    *g:html_use_input_for_pc*
+Default: "fallback"
+If |g:html_prevent_copy| is non-empty, then:
+
+When "all", read-only <input> elements are used in place of normal text for
+uncopyable regions. In some browsers, especially older browsers, after
+selecting an entire page and copying the selection, the <input> tags are not
+pasted with the page text. If |g:html_no_invalid| is 0, the <input> tags have
+invalid type; this works in more browsers, but the page will not validate.
+Note: this method does NOT work in recent versions of Chrome and equivalent
+browsers; the <input> tags get pasted with the text.
+
+When "fallback" (default value), the same <input> elements are generated for
+older browsers, but newer browsers (detected by CSS feature query) hide the
+<input> elements and instead use generated content in an ::before pseudoelement
+to display the uncopyable text. This method should work with the largest
+number of browsers, both old and new.
+
+When "none", the <input> elements are not generated at all. Only the
+generated-content method is used. This means that old browsers, notably
+Internet Explorer, will either copy the text intended not to be copyable, or
+the non-copyable text may not appear at all. However, this is the most
+standards-based method, and there will be much less markup.
 
 							   *g:html_no_invalid*
 Default: 0.
-When 0, if |g:html_prevent_copy| is non-empty, an invalid attribute is
-intentionally inserted into the <input> element for the uncopyable areas. This
-increases the number of applications you can paste to without also pasting the
-<input> elements. Specifically, Microsoft Word will not paste the <input>
-elements if they contain this invalid attribute.
-When 1, no invalid markup is ever intentionally inserted, and the generated
-page should validate. However, be careful pasting into Microsoft Word when
-|g:html_prevent_copy| is non-empty; it can be hard to get rid of the <input>
-elements which get pasted.
+When 0, if |g:html_prevent_copy| is non-empty and |g:html_use_input_for_pc| is
+not "none", an invalid attribute is intentionally inserted into the <input>
+element for the uncopyable areas. This prevents pasting the <input> elements
+in some applications. Specifically, some versions of Microsoft Word will not
+paste the <input> elements if they contain this invalid attribute. When 1, no
+invalid markup is inserted, and the generated page should validate. However,
+<input> elements may be pasted into some applications and can be difficult to
+remove afterward.
 
 							 *g:html_hover_unfold*
 Default: 0.

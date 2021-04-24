@@ -10105,21 +10105,6 @@ text...
 			Unlock the internal variable {name}.  Does the
 			opposite of |:lockvar|.
 
-                                                       *:eval*
-:eval {expr}           Evaluate {expr} and discard the result.  Example: >
-                               :eval append(Filter(Getlist()), '$')
-
-<                      The expression is supposed to have a side effect,
-                       since the resulting value is not used.  In the example
-                       the `append()` call appends the List with text to the
-                       buffer.  This is similar to `:call` but works with any
-                       expression.
-
-                       The command can be shortened to `:ev` or `:eva`, but
-                       these are hard to recognize and therefore not to be
-                       used.
-
-
 :if {expr1}			*:if* *:end* *:endif* *:en* *E171* *E579* *E580*
 :en[dif]		Execute the commands until the next matching ":else"
 			or ":endif" if {expr1} evaluates to non-zero.
@@ -10413,6 +10398,21 @@ text...
 			And to get a beep: >
 		:exe "normal \<Esc>"
 <
+							*:eval*
+:eval {expr}		Evaluate {expr} and discard the result.  Example: >
+				:eval append(Filter(Getlist()), '$')
+
+<			The expression is supposed to have a side effect,
+			since the resulting value is not used.  In the example
+			the `append()` call appends the List with text to the
+			buffer.  This is similar to `:call` but works with any
+			expression.
+
+			The command can be shortened to `:ev` or `:eva`, but
+			these are hard to recognize and therefore not to be
+			used.
+
+
 							*:exe* *:execute*
 :exe[cute] {expr1} ..	Executes the string that results from the evaluation
 			of {expr1} as an Ex command.
