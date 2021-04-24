@@ -82,3 +82,27 @@ func Test_execute_not_silent()
   endfor
   call assert_equal('xyz ', text2)
 endfunc
+
+func Test_win_execute()
+  let thiswin = win_getid()
+  new
+  let otherwin = win_getid()
+  call setline(1, 'the new window')
+  call win_gotoid(thiswin)
+  let line = win_execute(otherwin, 'echo getline(1)')
+  call assert_match('the new window', line)
+
+  if has('textprop')
+    let popupwin = popup_create('the popup win', {'line': 2, 'col': 3})
+    redraw
+    let line = win_execute(popupwin, 'echo getline(1)')
+    call assert_match('the popup win', line)
+
+    call assert_fails('call win_execute(popupwin, "bwipe!")', 'E937:')
+
+    call popup_close(popupwin)
+  endif
+
+  call win_gotoid(otherwin)
+  bwipe!
+endfunc

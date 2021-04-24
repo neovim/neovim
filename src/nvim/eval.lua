@@ -390,6 +390,7 @@ return {
     visualmode={args={0, 1}},
     wait={args={2,3}},
     wildmenumode={},
+    win_execute={args={2, 3}},
     win_findbuf={args=1},
     win_getid={args={0,2}},
     win_gettype={args={0,1}},
