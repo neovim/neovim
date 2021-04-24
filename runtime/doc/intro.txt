@@ -143,7 +143,7 @@ Vim would never have become what it is now, without the help of these people!
 	Sung-Hyun Nam		Work on multi-byte versions
 	Vince Negri		Win32 GUI and generic console enhancements
 	Steve Oualline		Author of the first Vim book |frombook|
-	Dominique Pelle		valgrind reports and many fixes
+	Dominique Pelle		Valgrind reports and many fixes
 	A.Politz		Many bug reports and some fixes
 	George V. Reilly	Win32 port, Win32 GUI start-off
 	Stephen Riehm		bug collector
