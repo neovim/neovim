@@ -1267,6 +1267,7 @@ fail:
 /// @param buffer the buffer to use (expected to be empty)
 /// @param opts   Optional parameters. Reserved for future use.
 /// @param[out] err Error details, if any
+/// @return Channel id, or 0 on error
 Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
 {

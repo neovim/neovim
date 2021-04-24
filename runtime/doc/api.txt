@@ -1212,6 +1212,9 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
                     {buffer}  the buffer to use (expected to be empty)
                     {opts}    Optional parameters. Reserved for future use.
 
+                Return: ~
+                    Channel id, or 0 on error
+
 nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 Open a new window.
 
@@ -2280,6 +2283,10 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                                   color
                                 • "blend": blend with background text color.
 
+                              • hl_eol : when true, for a multiline highlight
+                                covering the EOL of a line, continue the
+                                highlight for the rest of the screen line
+                                (just like for diff and cursorline highlight).
                               • ephemeral : for use with
                                 |nvim_set_decoration_provider| callbacks. The
                                 mark will only be used for the current redraw
