@@ -311,7 +311,7 @@ processing a quickfix or location list command, it will be aborted.
 							*:cex* *:cexpr* *E777*
 :cex[pr][!] {expr}	Create a quickfix list using the result of {expr} and
 			jump to the first error.
-			If {expr} is a String, then each new-line terminated
+			If {expr} is a String, then each newline terminated
 			line in the String is processed using the global value
 			of 'errorformat' and the result is added to the
 			quickfix list.
@@ -1090,7 +1090,7 @@ id-utils) in a similar way to its compiler integration (see |:make| above).
 			allowed with |:bufdo|.
 			An example that uses the argument list and avoids
 			errors for files without matches: >
-                                :silent argdo try 
+                                :silent argdo try
 				  \ | grepadd! something %
 				  \ | catch /E480:/
 				  \ | endtry"

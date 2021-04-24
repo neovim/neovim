@@ -17,7 +17,8 @@ Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 							*E712*
 There are six types of variables:
 
-Number		A 32 or 64 bit signed number.  |expr-number| *Number*
+							*Number* *Integer*
+Number		A 32 or 64 bit signed number.  |expr-number|
 		Examples:  -123  0x10  0177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*

@@ -74,9 +74,9 @@ higher.  Pressing "-" does the same thing, without the need to move to the
 You can press <F1> to get help on the things you can do in the netrw file
 browser.  This is what you get: >
 
-    9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help 
+    9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help
 
-    MAPS								 netrw-maps 
+    MAPS								 netrw-maps
      	 <F1>.............Help.......................................|netrw-help|
      	 <cr>.............Browsing...................................|netrw-cr|
      	 <del>............Deleting Files or Directories..............|netrw-delete|

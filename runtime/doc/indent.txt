@@ -528,7 +528,7 @@ The examples below assume a 'shiftwidth' of 4.
 <
 			*javascript-cinoptions* *javascript-indenting* *cino-J*
 	JN    Indent JavaScript object declarations correctly by not confusing
-	      them with labels.  The value 'N' is currently unused but must be 
+	      them with labels.  The value 'N' is currently unused but must be
 	      non-zero (e.g. 'J1').  If you enable this you probably also want
 	      to set |cino-j|. >
 
@@ -537,7 +537,7 @@ The examples below assume a 'shiftwidth' of 4.
 			that: this,
 			some: ok,
 		    },
-		    "bar":{ 
+		    "bar":{
 			a : 2,
 			b: "123abc",
 			x: 4,
@@ -887,7 +887,7 @@ To automatically remove '\r' characters when the 'fileformat' is set to Unix: >
 							*PHP_BracesAtCodeLevel*
 To indent braces at the same level than the code they contain: >
     :let g:PHP_BracesAtCodeLevel = 1
-    
+
 This will give the following result: >
     if ($foo)
 	{

@@ -394,10 +394,11 @@ to set options automatically for one or more files:
 
 					*modeline* *vim:* *vi:* *ex:* *E520*
 There are two forms of modelines.  The first form:
-	[text]{white}{vi:|vim:|ex:}[white]{options}
+	[text{white}]{vi:|vim:|ex:}[white]{options}
 
-[text]			any text or empty
-{white}			at least one blank character (<Space> or <Tab>)
+[text{white}]		empty or any text followed by at least one blank
+			character (<Space> or <Tab>); "ex:" always requires at
+			least one blank character
 {vi:|vim:|ex:}		the string "vi:", "vim:" or "ex:"
 [white]			optional white space
 {options}		a list of option settings, separated with white space

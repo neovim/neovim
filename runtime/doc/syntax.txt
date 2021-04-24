@@ -1378,26 +1378,26 @@ to your startup file.
 
 EUPHORIA	    *euphoria3.vim* *euphoria4.vim* *ft-euphoria-syntax*
 
-Two syntax highlighting files exists for Euphoria. One for Euphoria 
-version 3.1.1, which is the default syntax highlighting file, and one for 
+Two syntax highlighting files exists for Euphoria. One for Euphoria
+version 3.1.1, which is the default syntax highlighting file, and one for
 Euphoria version 4.0.5 or later.
 
-Euphoria version 3.1.1 (http://www.rapideuphoria.com/) is still necessary 
-for developing applications for the DOS platform, which Euphoria version 4 
+Euphoria version 3.1.1 (http://www.rapideuphoria.com/) is still necessary
+for developing applications for the DOS platform, which Euphoria version 4
 (http://www.openeuphoria.org/) does not support.
 
-The following file extensions are auto-detected as Euphoria file type: 
-    
+The following file extensions are auto-detected as Euphoria file type:
+
 	*.e, *.eu, *.ew, *.ex, *.exu, *.exw
 	*.E, *.EU, *.EW, *.EX, *.EXU, *.EXW
 
-To select syntax highlighting file for Euphoria, as well as for 
+To select syntax highlighting file for Euphoria, as well as for
 auto-detecting the *.e and *.E file extensions as Euphoria file type,
 add the following line to your startup file: >
 
 	:let filetype_euphoria="euphoria3"
 
-	or 
+	or
 
 	:let filetype_euphoria="euphoria4"
 
@@ -3492,26 +3492,26 @@ It will look much better with a font in a quadratic cell size, e.g. for X: >
 YAML						*yaml.vim* *ft-yaml-syntax*
 
 					*g:yaml_schema* *b:yaml_schema*
-A YAML schema is a combination of a set of tags and a mechanism for resolving 
-non-specific tags. For user this means that YAML parser may, depending on 
-plain scalar contents, treat plain scalar (which can actually be only string 
-and nothing else) as a value of the other type: null, boolean, floating-point, 
-integer. `g:yaml_schema` option determines according to which schema values 
+A YAML schema is a combination of a set of tags and a mechanism for resolving
+non-specific tags. For user this means that YAML parser may, depending on
+plain scalar contents, treat plain scalar (which can actually be only string
+and nothing else) as a value of the other type: null, boolean, floating-point,
+integer. `g:yaml_schema` option determines according to which schema values
 will be highlighted specially. Supported schemas are
 
 Schema		Description ~
 failsafe	No additional highlighting.
 json		Supports JSON-style numbers, booleans and null.
 core		Supports more number, boolean and null styles.
-pyyaml		In addition to core schema supports highlighting timestamps, 
-		but there are some differences in what is recognized as 
-		numbers and many additional boolean values not present in core 
+pyyaml		In addition to core schema supports highlighting timestamps,
+		but there are some differences in what is recognized as
+		numbers and many additional boolean values not present in core
 		schema.
 
 Default schema is `core`.
 
-Note that schemas are not actually limited to plain scalars, but this is the 
-only difference between schemas defined in YAML specification and the only 
+Note that schemas are not actually limited to plain scalars, but this is the
+only difference between schemas defined in YAML specification and the only
 difference defined in the syntax file.
 
 
@@ -3631,7 +3631,7 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
 	clear:		Syntax specific iskeyword setting is disabled and the
 			buffer-local 'iskeyword' setting is used.
-	{option}        Set the syntax 'iskeyword' option to a new value. 
+	{option}        Set the syntax 'iskeyword' option to a new value.
 
 	Example: >
   :syntax iskeyword @,48-57,192-255,$,_

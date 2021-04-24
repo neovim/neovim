@@ -621,7 +621,7 @@ Short explanation of each option:		*option-list*
 'binary'	  'bin'     read/write/edit file in binary mode
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
-'breakindent'	  'bri'     wrapped line repeats indent 
+'breakindent'	  'bri'     wrapped line repeats indent
 'breakindentopt'  'briopt'  settings for 'breakindent'
 'browsedir'	  'bsdir'   which directory to start browsing in
 'bufhidden'	  'bh'	    what to do when buffer is no longer in window
