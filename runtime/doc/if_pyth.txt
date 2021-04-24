@@ -586,17 +586,28 @@ functions to evaluate Python expressions and pass their values to Vim script.
 Python 3						*python3*
 
 							*:py3* *:python3*
-The `:py3` and `:python3` commands work similar to `:python`.  A simple check
-if the `:py3` command is working: >
-	:py3 print("Hello")
+:[range]py3 {stmt}
+:[range]py3 << [endmarker]
+{script}
+{endmarker}
 
-To see what version of Python you have: >
-	:py3 import sys
-	:py3 print(sys.version)
+:[range]python3 {stmt}
+:[range]python3 << [endmarker]
+{script}
+{endmarker}
+	The `:py3` and `:python3` commands work similar to `:python`.  A
+	simple check if the `:py3` command is working: >
+		:py3 print("Hello")
+<
+	To see what version of Python you have: >
+		:py3 import sys
+		:py3 print(sys.version)
 <							*:py3file*
-The `:py3file` command works similar to `:pyfile`.
+:[range]py3f[ile] {file}
+	The `:py3file` command works similar to `:pyfile`.
 							*:py3do*
-The `:py3do` command works similar to `:pydo`.
+:[range]py3do {body}
+	The `:py3do` command works similar to `:pydo`.
 
 							*E880*
 Raising SystemExit exception in python isn't endorsed way to quit vim, use: >

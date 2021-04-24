@@ -292,7 +292,7 @@ func s:StartDebug_term(dict)
     sleep 10m
   endwhile
 
-  " Interpret commands while the target is running.  This should usualy only be
+  " Interpret commands while the target is running.  This should usually only be
   " exec-interrupt, since many commands don't work properly while the target is
   " running.
   call s:SendCommand('-gdb-set mi-async on')
@@ -348,7 +348,7 @@ func s:StartDebug_prompt(dict)
     return
   endif
 
-  " Interpret commands while the target is running.  This should usualy only
+  " Interpret commands while the target is running.  This should usually only
   " be exec-interrupt, since many commands don't work properly while the
   " target is running.
   call s:SendCommand('-gdb-set mi-async on')

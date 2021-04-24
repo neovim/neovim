@@ -943,10 +943,12 @@ Basic.
 C							*c.vim* *ft-c-syntax*
 
 A few things in C highlighting are optional.  To enable them assign any value
-to the respective variable.  Example: >
+(including zero) to the respective variable.  Example: >
 	:let c_comment_strings = 1
-To disable them use ":unlet".  Example: >
+	:let c_no_bracket_error = 0
+To disable them use `:unlet`.  Example: >
 	:unlet c_comment_strings
+Setting the value to zero doesn't work!
 
 An alternative is to switch to the C++ highlighting: >
 	:set filetype=cpp
@@ -962,8 +964,8 @@ Variable		Highlight ~
 				except { and } in first column
 				Default is to highlight them, otherwise you
 				can't spot a missing ")".
-*c_curly_error*		highlight a missing }; this forces syncing from the
-			start of the file, can be slow
+*c_curly_error*		highlight a missing } by finding all pairs; this
+			forces syncing from the start of the file, can be slow
 *c_no_ansi*		don't do standard ANSI types and constants
 *c_ansi_typedefs*		 ... but do standard ANSI types
 *c_ansi_constants*	 ... but do standard ANSI constants
