@@ -1,17 +1,17 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	100
-" Last Change:	2016 Oct. 29
+" Version:	101
+" Last Change:	2019 Nov. 26
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
-"  Version 0.1 (April 2000) for Fortran 95 was based on the Fortran 77 syntax file by
-"  Mario Eusebio and Preben Guldberg. Since then, useful suggestions and contributions
-"  have been made, in chronological order, by:
+"  Version 0.1 for Fortran 95 was created (April 2000) by Ajit Thakkar from the
+"  Fortran 77 syntax file by Mario Eusebio and Preben Guldberg.
+"  Since then, useful suggestions and contributions have been made, in order, by:
 "  Andrej Panjkov, Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
 "  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, Matt Thompson, Jan Hermann,
-"  Stefano Zaghi, Vishnu V. Krishnan and Judicaël Grasset
+"  Stefano Zaghi, Vishnu V. Krishnan, Judicaël Grasset, and Takuma Yoshida
 
 if exists("b:current_syntax")
   finish
@@ -92,9 +92,9 @@ else
   syn match fortranConstructName	"^\s*\zs\a\w*\ze\s*:"
 endif
 if exists("fortran_more_precise")
-  syn match fortranConstructName "\(\<end\s*do\s\+\)\@<=\a\w*"
-  syn match fortranConstructName "\(\<end\s*if\s\+\)\@<=\a\w*"
-  syn match fortranConstructName "\(\<end\s*select\s\+\)\@<=\a\w*"
+  syn match fortranConstructName "\(\<end\s*do\s\+\)\@11<=\a\w*"
+  syn match fortranConstructName "\(\<end\s*if\s\+\)\@11<=\a\w*"
+  syn match fortranConstructName "\(\<end\s*select\s\+\)\@15<=\a\w*"
 endif
 
 syn match fortranUnitHeader	"\<end\>"
@@ -185,8 +185,8 @@ syn match fortranLabelNumber	display	"^    \d\s"ms=s+4,me=e-1
 if exists("fortran_more_precise")
   " Numbers as targets
   syn match fortranTarget	display	"\(\<if\s*(.\+)\s*\)\@<=\(\d\+\s*,\s*\)\{2}\d\+\>"
-  syn match fortranTarget	display	"\(\<do\s\+\)\@<=\d\+\>"
-  syn match fortranTarget	display	"\(\<go\s*to\s*(\=\)\@<=\(\d\+\s*,\s*\)*\d\+\>"
+  syn match fortranTarget	display	"\(\<do\s\+\)\@<11=\d\+\>"
+  syn match fortranTarget	display	"\(\<go\s*to\s*(\=\)\@<11=\(\d\+\s*,\s*\)*\d\+\>"
 endif
 
 syn keyword fortranTypeR	external
@@ -274,7 +274,7 @@ syn match fortranType			"\<elemental\>"
 syn match fortranType			"\<pure\>"
 syn match fortranType			"\<impure\>"
 if exists("fortran_more_precise")
-  syn match fortranConstructName "\(\<end\s*forall\s\+\)\@<=\a\w*\>"
+  syn match fortranConstructName "\(\<end\s*forall\s\+\)\@<15=\a\w*\>"
 endif
 
 if b:fortran_dialect == "f08"
@@ -375,7 +375,8 @@ syn match	cPreProc		"^\s*#\s*\(define\|ifdef\)\>.*"
 syn match	cPreProc		"^\s*#\s*\(elif\|if\)\>.*"
 syn match	cPreProc		"^\s*#\s*\(ifndef\|undef\)\>.*"
 syn match	cPreCondit		"^\s*#\s*\(else\|endif\)\>.*"
-syn region	cIncluded	contained start=+"[^(]+ skip=+\\\\\|\\"+ end=+"+ contains=fortranLeftMargin,fortranContinueMark,fortranSerialNumber
+syn region	cIncluded	contained start=+"[^("]+ skip=+\\\\\|\\"+ end=+"+ contains=fortranLeftMargin,fortranContinueMark,fortranSerialNumber
+"syn region	cIncluded	        contained start=+"[^("]+ skip=+\\\\\|\\"+ end=+"+
 syn match	cIncluded		contained "<[^>]*>"
 syn match	cInclude		"^\s*#\s*include\>\s*["<]" contains=cIncluded
 

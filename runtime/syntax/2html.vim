@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2018 Nov 11
+" Last Change: 2019 Nov 13
 "
 " Additional contributors:
 "
@@ -20,7 +20,12 @@
 " this file uses line continuations
 let s:cpo_sav = &cpo
 let s:ls  = &ls
+let s:ei_sav = &eventignore
 set cpo&vim
+
+" HTML filetype can take a while to load/highlight if the destination file
+" already exists.
+set eventignore+=FileType
 
 let s:end=line('$')
 
@@ -36,6 +41,14 @@ else
 endif
 
 let s:settings = tohtml#GetUserSettings()
+
+if s:settings.use_xhtml
+  let s:html5 = 0
+elseif s:settings.use_css && !s:settings.no_pre
+  let s:html5 = 1
+else
+  let s:html5 = 0
+endif
 
 if !exists('s:FOLDED_ID')
   let s:FOLDED_ID  = hlID("Folded")     | lockvar s:FOLDED_ID
@@ -69,9 +82,10 @@ if !empty(s:settings.prevent_copy)
   endif
 endif
 
-" When not in gui we can only guess the colors.
-" TODO - is this true anymore?
-if has("gui_running")
+" When gui colors are not supported, we can only guess the colors.
+" TODO - is this true anymore? Is there a way to ask the terminal what colors
+" each number means or read them from some file?
+if &termguicolors || has("gui_running")
   let s:whatterm = "gui"
 else
   let s:whatterm = "cterm"
@@ -352,6 +366,12 @@ if s:settings.use_css
 	  \ ]
   else
 
+    " New method: use generated content in the CSS. The only thing needed here
+    " is a span with no content, with an attribute holding the desired text.
+    "
+    " Old method: use an <input> element when text is unsectable. This is still
+    " used in conditional comments for Internet Explorer, where the new method
+    " doesn't work.
     "
     " Wrap the <input> in a <span> to allow fixing the stupid bug in some fonts
     " which cause browsers to display a 1px gap between lines when these
@@ -369,16 +389,26 @@ if s:settings.use_css
     " to use strchars(), because HTML specifies that the maxlength parameter
     " uses the number of unique codepoints for its limit.
     let wrapperfunc_lines += [
-	  \ '    if a:make_unselectable',
-	  \ '      return "<span ".a:extra_attrs."class=\"" . l:style_name .'.diffstyle.'"\">'.
-	  \                '<input'.s:unselInputType.' class=\"" . l:style_name .'.diffstyle.'"\"'.
-	  \                 ' value=\"".substitute(a:unformatted,''\s\+$'',"","")."\"'.
-	  \                 ' onselect=''this.blur(); return false;'''.
-	  \                 ' onmousedown=''this.blur(); return false;'''.
-	  \                 ' onclick=''this.blur(); return false;'''.
-	  \                 ' readonly=''readonly'''.
-	  \                 ' size=\"".strwidth(a:unformatted)."\"'.
-	  \                 (s:settings.use_xhtml ? '/' : '').'></span>"',
+	  \   '    if a:make_unselectable',
+	  \   '      return "<span ".a:extra_attrs."class=\"" . l:style_name .'.diffstyle.'"\"'
+	  \ ]
+    if s:settings.use_input_for_pc !=# 'all'
+      let wrapperfunc_lines[-1] .= ' " . "data-" . l:style_name . "-content=\"".a:text."\"'
+    endif
+    let wrapperfunc_lines[-1] .= '>'
+    if s:settings.use_input_for_pc !=# 'none'
+      let wrapperfunc_lines[-1] .=
+	    \                '<input'.s:unselInputType.' class=\"" . l:style_name .'.diffstyle.'"\"'.
+	    \                 ' value=\"".substitute(a:unformatted,''\s\+$'',"","")."\"'.
+	    \                 ' onselect=''this.blur(); return false;'''.
+	    \                 ' onmousedown=''this.blur(); return false;'''.
+	    \                 ' onclick=''this.blur(); return false;'''.
+	    \                 ' readonly=''readonly'''.
+	    \                 ' size=\"".strwidth(a:unformatted)."\"'.
+	    \                 (s:settings.use_xhtml ? '/' : '').'>'
+    endif
+    let wrapperfunc_lines[-1] .= '</span>"'
+    let wrapperfunc_lines += [
 	  \ '    else',
 	  \ '      return "<span ".a:extra_attrs."class=\"" . l:style_name .'. diffstyle .'"\">".a:text."</span>"'
 	  \ ]
@@ -501,27 +531,63 @@ else
   endfun
 endif
 if s:settings.prevent_copy =~# 'f'
-  " Note the <input> elements for fill spaces will have a single space for
-  " content, to allow active cursor CSS selection to work.
-  "
-  " Wrap the whole thing in a span for the 1px padding workaround for gaps.
-  function! s:FoldColumn_build(char, len, numfill, char2, class, click)
-    let l:input_open = "<input readonly='readonly'".s:unselInputType.
-	  \ " onselect='this.blur(); return false;'".
-	  \ " onmousedown='this.blur(); ".a:click." return false;'".
-	  \ " onclick='return false;' size='".
-	  \ string(a:len + (empty(a:char2) ? 0 : 1) + a:numfill) .
-	  \ "' "
-    let l:common_attrs = "class='FoldColumn' value='"
-    let l:input_close = (s:settings.use_xhtml ? "' />" : "'>")
-    return "<span class='".a:class."'>".
-	  \ l:input_open.l:common_attrs.repeat(a:char, a:len).
-	  \ (!empty(a:char2) ? a:char2 : "").
-	  \ l:input_close . "</span>"
-  endfun
-  function! s:FoldColumn_fill()
-    return s:FoldColumn_build('', s:foldcolumn, 0, '', 'FoldColumn', '')
-  endfun
+  if s:settings.use_input_for_pc ==# 'none'
+    " Simply space-pad to the desired width inside the generated content (note
+    " that the FoldColumn definition includes a whitespace:pre rule)
+    function! s:FoldColumn_build(char, len, numfill, char2, class, click)
+      return "<a href='#' class='".a:class."' onclick='".a:click."' data-FoldColumn-content='".
+	    \ repeat(a:char, a:len).a:char2.repeat(' ', a:numfill).
+	    \ "'></a>"
+    endfun
+    function! s:FoldColumn_fill()
+      return s:HtmlFormat(repeat(' ', s:foldcolumn), s:FOLD_C_ID, 0, "", 1)
+    endfun
+  else
+    " Note the <input> elements for fill spaces will have a single space for
+    " content, to allow active cursor CSS selection to work.
+    "
+    " Wrap the whole thing in a span for the 1px padding workaround for gaps.
+    "
+    " Build the function line by line containing only what is needed for the
+    " options in use for maximum code sharing with minimal branch logic for
+    " greater speed.
+    "
+    " Note, 'exec' commands do not recognize line continuations, so must
+    " concatenate lines rather than continue them.
+    let build_fun_lines = [
+	  \ 'function! s:FoldColumn_build(char, len, numfill, char2, class, click)',
+	  \ '  let l:input_open = "<input readonly=''readonly''".s:unselInputType.'.
+	  \ '          " onselect=''this.blur(); return false;''".'.
+	  \ '          " onmousedown=''this.blur(); ".a:click." return false;''".'.
+	  \ '          " onclick=''return false;'' size=''".'.
+	  \ '          string(a:len + (empty(a:char2) ? 0 : 1) + a:numfill) .'.
+	  \ '          "'' "',
+	  \ '  let l:common_attrs = "class=''FoldColumn'' value=''"',
+	  \ '  let l:input_close = (s:settings.use_xhtml ? "'' />" : "''>")'
+	  \ ]
+    if s:settings.use_input_for_pc ==# 'fallback'
+      let build_fun_lines += [
+	    \ '  let l:gen_content_link ='.
+	    \ '          "<a href=''#'' class=''FoldColumn'' onclick=''".a:click."'' data-FoldColumn-content=''".'.
+	    \ '          repeat(a:char, a:len).a:char2.repeat('' '', a:numfill).'.
+	    \ '          "''></a>"'
+	    \ ]
+    endif
+    let build_fun_lines += [
+	  \ '  return "<span class=''".a:class."''>".'.
+	  \ '          l:input_open.l:common_attrs.repeat(a:char, a:len).(a:char2).'.
+	  \ '          l:input_close.'.
+	  \ (s:settings.use_input_for_pc ==# 'fallback' ? 'l:gen_content_link.' : "").
+	  \ '          "</span>"',
+	  \ 'endfun'
+	  \ ]
+    " create the function we built line by line above
+    exec join(build_fun_lines, "\n")
+
+    function! s:FoldColumn_fill()
+      return s:FoldColumn_build(' ', s:foldcolumn, 0, '', 'FoldColumn', '')
+    endfun
+  endif
 else
   " For normal fold columns, simply space-pad to the desired width (note that
   " the FoldColumn definition includes a whitespace:pre rule)
@@ -755,7 +821,11 @@ call extend(s:lines, [
 " include encoding as close to the top as possible, but only if not already
 " contained in XML information (to avoid haggling over content type)
 if s:settings.encoding != "" && !s:settings.use_xhtml
-  call add(s:lines, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . s:tag_close)
+  if s:html5
+    call add(s:lines, '<meta charset="' . s:settings.encoding . '"' . s:tag_close)
+  else
+    call add(s:lines, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . s:tag_close)
+  endif
 endif
 call extend(s:lines, [
       \ ("<title>".expand("%:p:~")."</title>"),
@@ -766,6 +836,7 @@ call add(s:lines, '<meta name="syntax" content="'.s:current_syntax.'"'.s:tag_clo
 call add(s:lines, '<meta name="settings" content="'.
       \ join(filter(keys(s:settings),'s:settings[v:val]'),',').
       \ ',prevent_copy='.s:settings.prevent_copy.
+      \ ',use_input_for_pc='.s:settings.use_input_for_pc.
       \ '"'.s:tag_close)
 call add(s:lines, '<meta name="colorscheme" content="'.
       \ (exists('g:colors_name')
@@ -773,19 +844,21 @@ call add(s:lines, '<meta name="colorscheme" content="'.
       \ : 'none'). '"'.s:tag_close)
 
 if s:settings.use_css
+  call extend(s:lines, [
+	\ "<style" . (s:html5 ? "" : " type=\"text/css\"") . ">",
+	\ s:settings.use_xhtml ? "" : "<!--"])
+  let s:ieonly = []
   if s:settings.dynamic_folds
     if s:settings.hover_unfold
       " if we are doing hover_unfold, use css 2 with css 1 fallback for IE6
       call extend(s:lines, [
-	    \ "<style type=\"text/css\">",
-	    \ s:settings.use_xhtml ? "" : "<!--",
 	    \ ".FoldColumn { text-decoration: none; white-space: pre; }",
 	    \ "",
 	    \ "body * { margin: 0; padding: 0; }", "",
-	    \ ".open-fold   > .Folded { display: none;  }",
-	    \ ".open-fold   > .fulltext { display: inline; }",
-	    \ ".closed-fold > .fulltext { display: none;  }",
-	    \ ".closed-fold > .Folded { display: inline; }",
+	    \ ".open-fold   > span.Folded { display: none;  }",
+	    \ ".open-fold   > .fulltext   { display: inline; }",
+	    \ ".closed-fold > .fulltext   { display: none;  }",
+	    \ ".closed-fold > span.Folded { display: inline; }",
 	    \ "",
 	    \ ".open-fold   > .toggle-open   { display: none;   }",
 	    \ ".open-fold   > .toggle-closed { display: inline; }",
@@ -794,65 +867,60 @@ if s:settings.use_css
 	    \ "", "",
 	    \ '/* opening a fold while hovering won''t be supported by IE6 and other',
 	    \ "similar browsers, but it should fail gracefully. */",
-	    \ ".closed-fold:hover > .fulltext { display: inline; }",
+	    \ ".closed-fold:hover > .fulltext      { display: inline; }",
 	    \ ".closed-fold:hover > .toggle-filler { display: none; }",
-	    \ ".closed-fold:hover > .Folded { display: none; }",
-	    \ s:settings.use_xhtml ? "" : '-->',
-	    \ '</style>'])
-      " TODO: IE7 doesn't *actually* support XHTML, maybe we should remove this.
-      " But if it's served up as tag soup, maybe the following will work, so
-      " leave it in for now.
-      call extend(s:lines, [
+	    \ ".closed-fold:hover > .Folded        { display: none; }"])
+      " TODO: IE6 is REALLY old and I can't even test it anymore. Maybe we
+      " should remove this? Leave it in for now, it was working at one point,
+      " and doesn't affect any modern browsers. Even newer IE versions should
+      " support the above code and ignore the following.
+      let s:ieonly = [
 	    \ "<!--[if lt IE 7]><style type=\"text/css\">",
-	    \ ".open-fold   .Folded      { display: none; }",
 	    \ ".open-fold   .fulltext      { display: inline; }",
+	    \ ".open-fold   span.Folded    { display: none; }",
 	    \ ".open-fold   .toggle-open   { display: none; }",
-	    \ ".closed-fold .toggle-closed { display: inline; }",
+	    \ ".open-fold   .toggle-closed { display: inline; }",
 	    \ "",
 	    \ ".closed-fold .fulltext      { display: none; }",
-	    \ ".closed-fold .Folded      { display: inline; }",
+	    \ ".closed-fold span.Folded    { display: inline; }",
 	    \ ".closed-fold .toggle-open   { display: inline; }",
 	    \ ".closed-fold .toggle-closed { display: none; }",
 	    \ "</style>",
 	    \ "<![endif]-->",
-	    \])
+	    \]
     else
       " if we aren't doing hover_unfold, use CSS 1 only
       call extend(s:lines, [
-	    \ "<style type=\"text/css\">",
-	    \ s:settings.use_xhtml ? "" :"<!--",
 	    \ ".FoldColumn { text-decoration: none; white-space: pre; }",
-	    \ ".open-fold   .Folded      { display: none; }",
 	    \ ".open-fold   .fulltext      { display: inline; }",
+	    \ ".open-fold   span.Folded    { display: none; }",
 	    \ ".open-fold   .toggle-open   { display: none; }",
-	    \ ".closed-fold .toggle-closed { display: inline; }",
+	    \ ".open-fold   .toggle-closed { display: inline; }",
 	    \ "",
 	    \ ".closed-fold .fulltext      { display: none; }",
-	    \ ".closed-fold .Folded      { display: inline; }",
+	    \ ".closed-fold span.Folded    { display: inline; }",
 	    \ ".closed-fold .toggle-open   { display: inline; }",
 	    \ ".closed-fold .toggle-closed { display: none; }",
-	    \ s:settings.use_xhtml ? "" : '-->',
-	    \ '</style>'
 	    \])
     endif
-  else
-    " if we aren't doing any dynamic folding, no need for any special rules
-    call extend(s:lines, [
-	  \ "<style type=\"text/css\">",
-	  \ s:settings.use_xhtml ? "" : "<!--",
+  endif
+  " else we aren't doing any dynamic folding, no need for any special rules
+
+  call extend(s:lines, [
 	  \ s:settings.use_xhtml ? "" : '-->',
 	  \ "</style>",
 	  \])
-  endif
+  call extend(s:lines, s:ieonly)
+  unlet s:ieonly
 endif
 
-let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids || !empty(s:settings.prevent_copy)
+let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids
 
 " insert script tag if needed
 if s:uses_script
   call extend(s:lines, [
         \ "",
-        \ "<script type='text/javascript'>",
+        \ "<script" . (s:html5 ? "" : " type='text/javascript'") . ">",
         \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
 endif
 
@@ -924,65 +992,6 @@ if s:settings.line_ids
 	\ ])
 endif
 
-" Small text columns like the foldcolumn and line number column need a weird
-" hack to work around Webkit's and (in versions prior to 9) IE's lack of support
-" for the 'ch' unit without messing up Opera, which also doesn't support it but
-" works anyway.
-"
-" The problem is that without the 'ch' unit, it is not possible to specify a
-" size of an <input> in terms of character widths. Only Opera seems to do the
-" "sensible" thing and make the <input> sized to fit exactly as many characters
-" as specified by its "size" attribute, but the spec actually says "at least
-" wide enough to fit 'size' characters", so the other browsers are technically
-" correct as well.
-"
-" Anyway, this leads to two diffculties:
-"   1. The foldcolumn is made up of multiple elements side-by-side with
-"      different sizes, each of which has their own extra padding added. Thus, a
-"      column made up of one item of size 1 and another of size 2 would not
-"      necessarily be equal in size to another line's foldcolumn with a single
-"      item of size 3.
-"   2. The extra padding added to the <input> elements adds up to make the
-"      foldcolumn and line number column too wide, especially in Webkit
-"      browsers.
-"
-" So, the full workaround is:
-"   1. Define a default size in em, equal to the number of characters in the
-"      input element, in case javascript is disabled and the browser does not
-"      support the 'ch' unit. Unfortunately this makes Opera no longer work
-"      properly without javascript. 1em per character is much too wide but it
-"      looks better in webkit browsers than unaligned columns.
-"   2. Insert the following javascript to run at page load, which checks for the
-"      width of a single character (in an extraneous page element inserted
-"      before the page title, and set to hidden) and compares it to the width of
-"      another extra <input> element with only one character. If the width
-"      matches, the script does nothing more, but if not, it will figure out the
-"      fraction of an em unit which would correspond with a ch unit if there
-"      were one, and set the containing element (<pre> or <div>) to a class with
-"      pre-defined rules which is closest to that fraction of an em. Rules are
-"      defined from 0.05 em to 1em per ch.
-if !empty(s:settings.prevent_copy)
-  call extend(s:lines, [
-	\ '',
-	\ '/* simulate a "ch" unit by asking the browser how big a zero character is */',
-	\ 'function FixCharWidth() {',
-	\ '  /* get the hidden element which gives the width of a single character */',
-	\ '  var goodWidth = document.getElementById("oneCharWidth").clientWidth;',
-	\ '  /* get all input elements, we''ll filter on class later */',
-	\ '  var inputTags = document.getElementsByTagName("input");',
-	\ '  var ratio = 5;',
-	\ '  var inputWidth = document.getElementById("oneInputWidth").clientWidth;',
-	\ '  var emWidth = document.getElementById("oneEmWidth").clientWidth;',
-	\ '  if (inputWidth > goodWidth) {',
-	\ '    while (ratio < 100*goodWidth/emWidth && ratio < 100) {',
-	\ '      ratio += 5;',
-	\ '    }',
-	\ '    document.getElementById("vimCodeElement'.s:settings.id_suffix.'").className = "em"+ratio;',
-	\ '  }',
-	\ '}'
-	\ ])
-endif
-
 " insert script closing tag if needed
 if s:uses_script
   call extend(s:lines, [
@@ -992,18 +1001,9 @@ if s:uses_script
         \ ])
 endif
 
-call extend(s:lines, ["</head>"])
-if !empty(s:settings.prevent_copy)
-  call extend(s:lines,
-	\ ["<body onload='FixCharWidth();".(s:settings.line_ids ? " JumpToLine();" : "")."'>",
-	\ "<!-- hidden divs used by javascript to get the width of a char -->",
-	\ "<div id='oneCharWidth'>0</div>",
-	\ "<div id='oneInputWidth'><input size='1' value='0'".s:tag_close."</div>",
-	\ "<div id='oneEmWidth' style='width: 1em;'></div>"
-	\ ])
-else
-  call extend(s:lines, ["<body".(s:settings.line_ids ? " onload='JumpToLine();'" : "").">"])
-endif
+call extend(s:lines, ["</head>",
+      \ "<body".(s:settings.line_ids ? " onload='JumpToLine();'" : "").">"])
+
 if s:settings.no_pre
   " if we're not using CSS we use a font tag which can't have a div inside
   if s:settings.use_css
@@ -1035,14 +1035,68 @@ if !s:settings.no_progress
   let s:progressbar={}
 
   " Progessbar specific functions
+
+  func! s:SetProgbarColor()
+    if hlID("TOhtmlProgress") != 0
+      hi! link TOhtmlProgress_auto TOhtmlProgress
+    elseif hlID("TOhtmlProgress_auto")==0 ||
+       \ !exists("s:last_colors_name") || !exists("g:colors_name") ||
+       \ g:colors_name != s:last_colors_name
+      let s:last_colors_name = exists("g:colors_name") ? g:colors_name : "none"
+
+      let l:diffatr = synIDattr(hlID("DiffDelete"), "reverse", s:whatterm) ? "fg#" : "bg#"
+      let l:stlatr = synIDattr(hlID("StatusLine"), "reverse", s:whatterm) ? "fg#" : "bg#"
+
+      let l:progbar_color = synIDattr(hlID("DiffDelete"), l:diffatr, s:whatterm)
+      let l:stl_color = synIDattr(hlID("StatusLine"), l:stlatr, s:whatterm)
+
+      if "" == l:progbar_color
+	let l:progbar_color = synIDattr(hlID("DiffDelete"), "reverse", s:whatterm) ? s:fgc : s:bgc
+      endif
+      if "" == l:stl_color
+	let l:stl_color = synIDattr(hlID("StatusLine"), "reverse", s:whatterm) ? s:fgc : s:bgc
+      endif
+
+      if l:progbar_color == l:stl_color
+	if s:whatterm == 'cterm'
+	  if l:progbar_color >= (&t_Co/2)
+	    let l:progbar_color-=1
+	  else
+	    let l:progbar_color+=1
+	  endif
+	else
+	  let l:rgb = map(matchlist(l:progbar_color, '#\zs\x\x\ze\(\x\x\)\(\x\x\)')[:2], 'str2nr(v:val, 16)')
+	  let l:avg = (l:rgb[0] + l:rgb[1] + l:rgb[2])/3
+	  if l:avg >= 128
+	    let l:avg_new = l:avg
+	    while l:avg - l:avg_new < 0x15
+	      let l:rgb = map(l:rgb, 'v:val * 3 / 4')
+	      let l:avg_new = (l:rgb[0] + l:rgb[1] + l:rgb[2])/3
+	    endwhile
+	  else
+	    let l:avg_new = l:avg
+	    while l:avg_new - l:avg < 0x15
+	      let l:rgb = map(l:rgb, 'min([max([v:val, 4]) * 5 / 4, 255])')
+	      let l:avg_new = (l:rgb[0] + l:rgb[1] + l:rgb[2])/3
+	    endwhile
+	  endif
+	  let l:progbar_color = printf("#%02x%02x%02x", l:rgb[0], l:rgb[1], l:rgb[2])
+	endif
+	echomsg "diff detected progbar color set to" l:progbar_color
+      endif
+      exe "hi TOhtmlProgress_auto" s:whatterm."bg=".l:progbar_color
+    endif
+  endfun
+
   func! s:ProgressBar(title, max_value, winnr)
     let pgb=copy(s:progressbar)
     let pgb.title = a:title.' '
     let pgb.max_value = a:max_value
     let pgb.winnr = a:winnr
     let pgb.cur_value = 0
+
     let pgb.items = { 'title'   : { 'color' : 'Statusline' },
-	  \'bar'     : { 'color' : 'Statusline' , 'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' } ,
+	  \'bar'     : { 'color' : 'Statusline' , 'fillcolor' : 'TOhtmlProgress_auto' , 'bg' : 'Statusline' } ,
 	  \'counter' : { 'color' : 'Statusline' } }
     let pgb.last_value = 0
     let pgb.needs_redraw = 0
@@ -1134,6 +1188,8 @@ if !s:settings.no_progress
     " to process folds we make two passes through each line
     let s:pgb = s:ProgressBar("Processing folds:", line('$')*2, s:orgwin)
   endif
+
+  call s:SetProgbarColor()
 endif
 
 " First do some preprocessing for dynamic folding. Do this for the entire file
@@ -1577,28 +1633,44 @@ while s:lnum <= s:end
 	  let s:tabidx = 0
 	  let s:tabwidth = 0
 	  while s:idx >= 0
-	    while s:startcol+s:idx > s:tabwidth + s:tablist[s:tabidx] 
-	      let s:tabwidth += s:tablist[s:tabidx]
-	      if s:tabidx < len(s:tablist)-1
-		let s:tabidx = s:tabidx+1
-	      endif
-	    endwhile
-	    if has("multi_byte_encoding")
-	      if s:startcol + s:idx == 1
-		let s:i = s:tablist[s:tabidx]
-	      else
-		if s:idx == 0
-		  let s:prevc = matchstr(s:line, '.\%' . (s:startcol + s:idx + s:offset) . 'c')
-		else
-		  let s:prevc = matchstr(s:expandedtab, '.\%' . (s:idx + 1) . 'c')
-		endif
-		let s:vcol = virtcol([s:lnum, s:startcol + s:idx + s:offset - len(s:prevc)])
-		let s:i = s:tablist[s:tabidx] - (s:vcol - s:tabwidth)
-	      endif
-	      let s:offset -= s:i - 1
+	    if s:startcol + s:idx == 1
+	      let s:i = s:tablist[0]
 	    else
-	      let s:i = s:tablist[s:tabidx] - ((s:idx + s:startcol - 1) - s:tabwidth)
+	      " Get the character, which could be multiple bytes, which falls
+	      " immediately before the found tab. Extract it by matching a
+	      " character just prior to the column where the tab matches.
+	      " We'll use this to get the byte index of the character
+	      " immediately preceding the tab, so we can then look up the
+	      " virtual column that character appears in, to determine how
+	      " much of the current tabstop has been used up.
+	      if s:idx == 0
+		" if the found tab is the first character in the text being
+		" processed, we need to get the character prior to the text,
+		" given by startcol.
+		let s:prevc = matchstr(s:line, '.\%' . (s:startcol + s:offset) . 'c')
+	      else
+		" Otherwise, the byte index of the tab into s:expandedtab is
+		" given by s:idx.
+		let s:prevc = matchstr(s:expandedtab, '.\%' . (s:idx + 1) . 'c')
+	      endif
+	      let s:vcol = virtcol([s:lnum, s:startcol + s:idx + s:offset - len(s:prevc)])
+
+	      " find the tabstop interval to use for the tab we just found. Keep
+	      " adding tabstops (which could be variable) until we would exceed
+	      " the virtual screen position of the start of the found tab.
+	      while s:vcol >= s:tabwidth + s:tablist[s:tabidx]
+		let s:tabwidth += s:tablist[s:tabidx]
+		if s:tabidx < len(s:tablist)-1
+		  let s:tabidx = s:tabidx+1
+		endif
+	      endwhile
+	      let s:i = s:tablist[s:tabidx] - (s:vcol - s:tabwidth)
 	    endif
+	    " update offset to keep the index within the line corresponding to
+	    " actual tab characters instead of replaced spaces; s:idx reflects
+	    " replaced spaces in s:expandedtab, s:offset cancels out all but
+	    " the tab character itself.
+	    let s:offset -= s:i - 1
 	    let s:expandedtab = substitute(s:expandedtab, '\t', repeat(' ', s:i), '')
 	    let s:idx = stridx(s:expandedtab, "\t")
 	  endwhile
@@ -1674,12 +1746,10 @@ call append(line('$'), "<!-- vim: set foldmethod=manual : -->")
 
 " Now, when we finally know which, we define the colors and styles
 if s:settings.use_css
-  1;/<style type="text/+1
+  1;/<style\>/+1
 endif
 
 " Normal/global attributes
-" For Netscape 4, set <body> attributes too, though, strictly speaking, it's
-" incorrect.
 if s:settings.use_css
   if s:settings.no_pre
     call append('.', "body { color: " . s:fgc . "; background-color: " . s:bgc . "; font-family: ". s:htmlfont ."; }")
@@ -1702,61 +1772,111 @@ if s:settings.use_css
   " if we use any input elements for unselectable content, make sure they look
   " like normal text
   if !empty(s:settings.prevent_copy)
-    call append('.', 'input { border: none; margin: 0; padding: 0; font-family: '.s:htmlfont.'; }')
-    +
-    " ch units for browsers which support them, em units for a somewhat
-    " reasonable fallback. Also make sure the special elements for size
-    " calculations aren't seen.
-    call append('.', [
-	  \ "input[size='1'] { width: 1em; width: 1ch; }",
-	  \ "input[size='2'] { width: 2em; width: 2ch; }",
-	  \ "input[size='3'] { width: 3em; width: 3ch; }",
-	  \ "input[size='4'] { width: 4em; width: 4ch; }",
-	  \ "input[size='5'] { width: 5em; width: 5ch; }",
-	  \ "input[size='6'] { width: 6em; width: 6ch; }",
-	  \ "input[size='7'] { width: 7em; width: 7ch; }",
-	  \ "input[size='8'] { width: 8em; width: 8ch; }",
-	  \ "input[size='9'] { width: 9em; width: 9ch; }",
-	  \ "input[size='10'] { width: 10em; width: 10ch; }",
-	  \ "input[size='11'] { width: 11em; width: 11ch; }",
-	  \ "input[size='12'] { width: 12em; width: 12ch; }",
-	  \ "input[size='13'] { width: 13em; width: 13ch; }",
-	  \ "input[size='14'] { width: 14em; width: 14ch; }",
-	  \ "input[size='15'] { width: 15em; width: 15ch; }",
-	  \ "input[size='16'] { width: 16em; width: 16ch; }",
-	  \ "input[size='17'] { width: 17em; width: 17ch; }",
-	  \ "input[size='18'] { width: 18em; width: 18ch; }",
-	  \ "input[size='19'] { width: 19em; width: 19ch; }",
-	  \ "input[size='20'] { width: 20em; width: 20ch; }",
-	  \ "#oneCharWidth, #oneEmWidth, #oneInputWidth { padding: 0; margin: 0; position: absolute; left: -999999px; visibility: hidden; }"
-	  \ ])
-    +21
-    for w in range(5, 100, 5)
-      let base = 0.01 * w
-      call append('.', join(map(range(1,20), "'.em'.w.' input[size='''.v:val.'''] { width: '.string(v:val*base).'em; }'")))
+    if s:settings.use_input_for_pc !=# "none"
+      call append('.', 'input { border: none; margin: 0; padding: 0; font-family: '.s:htmlfont.'; }')
       +
-    endfor
-    if s:settings.prevent_copy =~# 'f'
-    " Make the cursor show active fold columns as active areas, and empty fold
-    " columns as not interactive.
-      call append('.', ['input.FoldColumn { cursor: pointer; }',
-	    \ 'input.FoldColumn[value=""] { cursor: default; }'
-	    \ ])
-      +2
+      " ch units for browsers which support them, em units for a somewhat
+      " reasonable fallback.
+      for w in range(1, 20, 1)
+	call append('.', [
+	      \ "input[size='".w."'] { width: ".w."em; width: ".w."ch; }"
+	      \ ])
+	+
+      endfor
     endif
-    " make line number column show as non-interactive if not selectable
-    if s:settings.prevent_copy =~# 'n'
-      call append('.', 'input.LineNr { cursor: default; }')
-      +
+
+    if s:settings.use_input_for_pc !=# 'all'
+      let s:unselectable_styles = []
+      if s:settings.prevent_copy =~# 'f'
+	call add(s:unselectable_styles, 'FoldColumn')
+      endif
+      if s:settings.prevent_copy =~# 'n'
+	call add(s:unselectable_styles, 'LineNr')
+      endif
+      if s:settings.prevent_copy =~# 't' && !s:settings.ignore_folding
+	call add(s:unselectable_styles, 'Folded')
+      endif
+      if s:settings.prevent_copy =~# 'd'
+	call add(s:unselectable_styles, 'DiffDelete')
+      endif
+      if s:settings.use_input_for_pc !=# 'none'
+	call append('.', [
+	      \ '/* Note: IE does not support @supports conditionals, but also does not fully support',
+	      \ '   "content:" with custom content, so we *want* the check to fail */',
+	      \ '@supports ( content: attr(data-custom-content) ) {'
+	      \ ])
+	+3
+      endif
+      " The line number column inside the foldtext is styled just like the fold
+      " text in Vim, but it should use the prevent_copy settings of line number
+      " rather than fold text. Apply the prevent_copy styles to foldtext
+      " specifically for line numbers, which always come after the fold column,
+      " or at the beginning of the line.
+      if s:settings.prevent_copy =~# 'n' && !s:settings.ignore_folding
+	call append('.', [
+	      \ '  .FoldColumn + .Folded, .Folded:first-child { user-select: none; }',
+	      \ '  .FoldColumn + [data-Folded-content]::before, [data-Folded-content]:first-child::before { content: attr(data-Folded-content); }',
+	      \ '  .FoldColumn + [data-Folded-content]::before, [data-Folded-content]:first-child::before { padding-bottom: 1px; display: inline-block; /* match the 1-px padding of standard items with background */ }',
+	      \ '  .FoldColumn + span[data-Folded-content]::before, [data-Folded-content]:first-child::before { cursor: default; }',
+	      \ ])
+	+4
+      endif
+      for s:style_name in s:unselectable_styles
+	call append('.', [
+	      \ '  .'.s:style_name.' { user-select: none; }',
+	      \ '  [data-'.s:style_name.'-content]::before { content: attr(data-'.s:style_name.'-content); }',
+	      \ '  [data-'.s:style_name.'-content]::before { padding-bottom: 1px; display: inline-block; /* match the 1-px padding of standard items with background */ }',
+	      \ '  span[data-'.s:style_name.'-content]::before { cursor: default; }',
+	      \ ])
+	+4
+      endfor
+      if s:settings.use_input_for_pc !=# 'none'
+	call append('.', [
+	      \ '  input { display: none; }',
+	      \ '}'
+	      \ ])
+	+2
+      endif
+      unlet s:unselectable_styles
     endif
-    " make fold text and line number column within fold text show as
-    " non-interactive if not selectable
-    if (s:settings.prevent_copy =~# 'n' || s:settings.prevent_copy =~# 't') && !s:settings.ignore_folding
-      call append('.', 'input.Folded { cursor: default; }')
-      +
+
+    " Fix mouse cursor shape for the fallback <input> method of uncopyable text
+    if s:settings.use_input_for_pc !=# 'none'
+      if s:settings.prevent_copy =~# 'f'
+	" Make the cursor show active fold columns as active areas, and empty fold
+	" columns as not interactive.
+	call append('.', ['input.FoldColumn { cursor: pointer; }',
+	      \ 'input.FoldColumn[value="'.repeat(' ', s:foldcolumn).'"] { cursor: default; }'
+	      \ ])
+	+2
+	if s:settings.use_input_for_pc !=# 'all'
+	  call append('.', [
+		\ 'a[data-FoldColumn-content="'.repeat(' ', s:foldcolumn).'"] { cursor: default; }'
+		\ ])
+	  +1
+	end
+      endif
+      " make line number column show as non-interactive if not selectable
+      if s:settings.prevent_copy =~# 'n'
+	call append('.', 'input.LineNr { cursor: default; }')
+	+
+      endif
+      " make fold text and line number column within fold text show as
+      " non-interactive if not selectable
+      if (s:settings.prevent_copy =~# 'n' || s:settings.prevent_copy =~# 't') && !s:settings.ignore_folding
+	call append('.', 'input.Folded { cursor: default; }')
+	+
+      endif
+      " make diff filler show as non-interactive if not selectable
+      if s:settings.prevent_copy =~# 'd'
+	call append('.', 'input.DiffDelete { cursor: default; }')
+	+
+      endif
     endif
   endif
 else
+  " For Netscape 4, set <body> attributes too, though, strictly speaking, it's
+  " incorrect.
   execute '%s:<body\([^>]*\):<body bgcolor="' . s:bgc . '" text="' . s:fgc . '"\1>\r<font face="'. s:htmlfont .'"'
 endif
 
@@ -1779,8 +1899,8 @@ endif
 " The DTD
 if s:settings.use_xhtml
   exe "normal! gg$a\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">"
-elseif s:settings.use_css && !s:settings.no_pre
-  exe "normal! gg0i<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n"
+elseif s:html5
+  exe "normal! gg0i<!DOCTYPE html>\n"
 else
   exe "normal! gg0i<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n"
 endif
@@ -1823,6 +1943,7 @@ exec 'resize' s:old_winheight
 let &l:winfixheight = s:old_winfixheight
 
 let &ls=s:ls
+let &eventignore=s:ei_sav
 
 " Save a little bit of memory (worth doing?)
 unlet s:htmlfont s:whitespace
@@ -1831,7 +1952,7 @@ unlet s:old_magic s:old_more s:old_fen s:old_winheight
 unlet! s:old_isprint
 unlet s:whatterm s:stylelist s:diffstylelist s:lnum s:end s:margin s:fgc s:bgc s:old_winfixheight
 unlet! s:col s:id s:attr s:len s:line s:new s:expandedtab s:concealinfo s:diff_mode
-unlet! s:orgwin s:newwin s:orgbufnr s:idx s:i s:offset s:ls s:origwin_stl
+unlet! s:orgwin s:newwin s:orgbufnr s:idx s:i s:offset s:ls s:ei_sav s:origwin_stl
 unlet! s:newwin_stl s:current_syntax
 if !v:profiling
   delfunc s:HtmlColor

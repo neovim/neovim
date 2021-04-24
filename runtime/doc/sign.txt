@@ -366,7 +366,7 @@ sign_define({list})
 
 		The one argument {list} can be used to define a list of signs.
 		Each list item is a dictionary with the above items in {dict}
-		and a 'name' item for the sign name.
+		and a "name" item for the sign name.
 
 		Returns 0 on success and -1 on failure.  When the one argument
 		{list} is used, then returns a List of values one for each

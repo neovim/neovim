@@ -339,8 +339,7 @@ msgstr "E512: Kapatma başarısız oldu"
 
 msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
 msgstr ""
-"E513: Yazma hatası, dönüştürme başarısız (yoksaymak için kodlamayı boş " 
-"bırakın)"
+"E513: Yazma hatası, dönüştürme başarısız (yoksaymak için 'fenc'i boş bırakın)"
 
 #, c-format
 msgid ""
@@ -519,7 +518,7 @@ msgstr "çerçeve en yüksek düzeyde: %d"
 
 #, c-format
 msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Kesme noktası şurada: \"%s%s\", %ld. satır"
+msgstr "\"%s%s\" içinde kesme noktası, %ld. satır"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -597,7 +596,6 @@ msgstr ""
 
 msgid "E100: No other buffer in diff mode"
 msgstr "E100: Karşılaştırma kipinde başka hiçbir arabellek yok"
-
 
 #, c-format
 msgid "E102: Can't find buffer \"%s\""
@@ -1172,14 +1170,14 @@ msgstr[0] "%ld değiştirme/%ld satırda"
 msgstr[1] "%ld değiştirme/%ld satırda"
 
 msgid "E147: Cannot do :global recursive with a range"
-msgstr "E147: :global özyinelemesi bir erim ile yapılamaz"
+msgstr "E147: :global özyineli bir erim ile yapılamaz"
 
 msgid "E148: Regular expression missing from global"
-msgstr "E148: Düzenli ifadeler genelden kayıp"
+msgstr "E148: Düzenli ifadeler eksik"
 
 #, c-format
 msgid "Pattern found in every line: %s"
-msgstr "Dizgi her satırda bulundu: %s"
+msgstr "Dizginin bulunduğu her satır: %s"
 
 #, c-format
 msgid "Pattern not found: %s"
@@ -1272,7 +1270,7 @@ msgid "Executing: %s"
 msgstr "Çalıştırılıyor: %s"
 
 msgid "E169: Command too recursive"
-msgstr "E169: Komut çok özyinelemeli"
+msgstr "E169: Komut çok özyineli"
 
 #, c-format
 msgid "E605: Exception not caught: %s"
@@ -1374,7 +1372,7 @@ msgid "Window position: X %d, Y %d"
 msgstr "Pencere konumu: X %d, Y %d"
 
 msgid "E188: Obtaining window position not implemented for this platform"
-msgstr "E188: Pencere konumunu alma özelliği bu sistemde mevcut değil"
+msgstr "E188: Pencere konumunu alma özelliği bu platformda mevcut değil"
 
 msgid "E466: :winpos requires two number arguments"
 msgstr "E466: :winpos iki adet sayı değişken gerektirir"
@@ -1807,7 +1805,7 @@ msgid "E222: Add to read buffer"
 msgstr "E222: Okuma arabelleğine ekle"
 
 msgid "E223: recursive mapping"
-msgstr "E223: Özyinelemeli eşlemleme"
+msgstr "E223: Özyineli eşlemleme"
 
 msgid "E851: Failed to create a new process for the GUI"
 msgstr "E851: Grafik arabirim için yeni bir işlem yaratılamadı"
@@ -2040,7 +2038,7 @@ msgstr "E253: Yazıtipi seti adı: %s"
 
 #, c-format
 msgid "Font0: %s"
-msgstr "Font0: %s"
+msgstr "Yazıtipi0: %s"
 
 #, c-format
 msgid "Font%d: %s"
@@ -2048,11 +2046,11 @@ msgstr "Yazıtipi%d: %s"
 
 #, c-format
 msgid "Font%d width is not twice that of font0"
-msgstr "Yazıtipi%d genişliği font0 genişliğinin iki katı olmalıdır"
+msgstr "Yazıtipi%d genişliği yazıtipi0 genişliğinin iki katı olmalıdır"
 
 #, c-format
 msgid "Font0 width: %d"
-msgstr "Font0 genişliği: %d"
+msgstr "Yazıtipi0 genişliği: %d"
 
 #, c-format
 msgid "Font%d width: %d"
@@ -2185,7 +2183,7 @@ msgid "Print job sent."
 msgstr "Yazdırma işi gönderildi"
 
 msgid "E679: recursive loop loading syncolor.vim"
-msgstr "E679: syncolor.vim yüklenirken özyinelemeli döngü"
+msgstr "E679: syncolor.vim yüklenirken özyineli döngü"
 
 #, c-format
 msgid "E411: highlight group not found: %s"
@@ -2354,7 +2352,7 @@ msgstr "E469: Geçersiz cscopequickfix bayrağı %c, %c için"
 
 #, c-format
 msgid "E259: no matches found for cscope query %s of %s"
-msgstr "E259: cscope sorguse %s/%s için eşleşme bulunamadı"
+msgstr "E259: cscope sorgusu %s/%s için eşleşme bulunamadı"
 
 msgid "cscope commands:\n"
 msgstr "cscope komutları:\n"
@@ -2519,7 +2517,7 @@ msgstr ""
 "E887: Üzgünüm, bu komut etkin değil, Python'un site birimi yüklenemedi."
 
 msgid "E659: Cannot invoke Python recursively"
-msgstr "E659: Python özyinelemeli olarak çalıştırılamıyor"
+msgstr "E659: Python özyineli olarak çalıştırılamıyor"
 
 msgid "E837: This Vim cannot execute :py3 after using :python"
 msgstr "E837: Bu Vim :python komutundan sonra :py3 komutunu çalıştıramaz"
@@ -2803,13 +2801,12 @@ msgstr "Sonrasında değişken eksik:"
 msgid "Garbage after option argument"
 msgstr "Seçenek değişkeninden sonra anlamsız veri"
 
-
 msgid "Invalid argument for"
 msgstr "Şunun için geçersiz değişken:"
 
 #, c-format
 msgid "%d files to edit\n"
-msgstr "düzenlenecek %d dosya\n"
+msgstr "%d dosya düzenleniyor\n"
 
 msgid "netbeans is not supported with this GUI\n"
 msgstr "NetBeans bu grafik arabirimde desteklenmiyor\n"
@@ -2892,7 +2889,7 @@ msgid ""
 msgstr ""
 "\n"
 "BÜYÜK/küçük harfin yoksayıldığı yerde bayrağı BÜYÜK harfli yapmak "
-"içinbaşına / koyun"
+"için başına / koyun"
 
 msgid ""
 "\n"
@@ -3091,7 +3088,7 @@ msgid "--servername <name>\tSend to/become the Vim server <name>"
 msgstr "--servername <ad>\t<ad> Vim sunucusuna gönder veya sunucu ol"
 
 msgid "--startuptime <file>\tWrite startup timing messages to <file>"
-msgstr "--startuptime <dsy>\tBaşlangıç zamanlama iletilerini <dosya>'ya yaz"
+msgstr "--startuptime <dsy>\tBaşlangıç zamanlama iletilerini <dsy>'ya yaz"
 
 msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
 msgstr "-i <viminfo>\t\t.viminfo yerine <viminfo> kullan"
@@ -3216,11 +3213,11 @@ msgstr ": Gönderme başarısız oldu.\n"
 
 #, c-format
 msgid "E224: global abbreviation already exists for %s"
-msgstr "E224: %s için genel kısaltma hâlihazırda var"
+msgstr "E224: %s için global kısaltma hâlihazırda var"
 
 #, c-format
 msgid "E225: global mapping already exists for %s"
-msgstr "E225: %s için genel eşlemleme hâlihazırda var "
+msgstr "E225: %s için global eşlemleme hâlihazırda var "
 
 #, c-format
 msgid "E226: abbreviation already exists for %s"
@@ -3504,7 +3501,6 @@ msgstr ""
 "\n"
 "Bu .swp dosyasını silmeniz iyi olur.\n"
 "\n"
-
 
 msgid "Swap files found:"
 msgstr "Takas dosyası bulundu:"
@@ -3878,14 +3874,14 @@ msgstr "Sayı girin ve <Enter>'a basın (boş iptal eder): "
 #, c-format
 msgid "%ld more line"
 msgid_plural "%ld more lines"
-msgstr[0] "%ld fazla satır"
-msgstr[1] "%ld fazla satır"
+msgstr[0] "%ld daha fazla satır"
+msgstr[1] "%ld daha fazla satır"
 
 #, c-format
 msgid "%ld line less"
 msgid_plural "%ld fewer lines"
-msgstr[0] "%ld az satır"
-msgstr[1] "%ld az satır"
+msgstr[0] "%ld daha az satır"
+msgstr[1] "%ld daha az satır"
 
 msgid " (Interrupted)"
 msgstr " (Yarıda kesildi)"
@@ -4583,7 +4579,7 @@ msgid "E70: Empty %s%%[]"
 msgstr "E70: Boş %s%%[]"
 
 msgid "E956: Cannot use pattern recursively"
-msgstr "E956: Dizgi özyinelemeli olarak kullanılamıyor"
+msgstr "E956: Dizgi özyineli olarak kullanılamıyor"
 
 #, c-format
 msgid "E554: Syntax error in %s{...}"
@@ -4744,7 +4740,6 @@ msgstr[1] "%ld satır kopyalandı%s"
 #, c-format
 msgid "E353: Nothing in register %s"
 msgstr "E353: Yazmaç %s boş"
-
 
 msgid ""
 "E883: search pattern and expression register may not contain two or more "
@@ -5335,11 +5330,11 @@ msgstr "E765: 'spellfile' içinde %d girdi yok"
 
 #, c-format
 msgid "Word '%.*s' removed from %s"
-msgstr "Sözcük '%.*s', %s içinden çıkartıldı"
+msgstr "Sözcük '%.*s' %s içinden çıkartıldı"
 
 #, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "Sözcük '%.*s', %s dosyasına eklendi"
+msgstr "Sözcük '%.*s' %s dosyasına eklendi"
 
 msgid "E763: Word characters differ between spell files"
 msgstr "E763: Sözcük karakterleri yazım dosyaları arasında ayrımlı"
@@ -5356,7 +5351,7 @@ msgstr "Üzgünüm, yalnızca %ld öneri"
 
 #, c-format
 msgid "Change \"%.*s\" to:"
-msgstr "\"%.*s\", şuna değiştirilecek:"
+msgstr "\"%.*s\" şuna değiştirilecek:"
 
 #, c-format
 msgid " < \"%.*s\""
@@ -5656,7 +5651,7 @@ msgid ""
 "--- Terminal keys ---"
 msgstr ""
 "\n"
-"--- Uçbirim anahtarları ---"
+"--- Uçbirim düğmeleri ---"
 
 msgid "Cannot open $VIMRUNTIME/rgb.txt"
 msgstr "$VIMRUNTIME/rgb.txt açılamıyor"
@@ -6402,7 +6397,7 @@ msgid ""
 "# global variables:\n"
 msgstr ""
 "\n"
-"# genel değişkenler:\n"
+"# global değişkenler:\n"
 
 msgid ""
 "\n"
@@ -6558,7 +6553,6 @@ msgstr "E370: %s kitaplığı yüklenemedi"
 msgid "Sorry, this command is disabled: the Perl library could not be loaded."
 msgstr "Üzgünüm, bu komut etkin değil: Perl kitaplığı yüklenemedi."
 
-
 msgid "Edit with &multiple Vims"
 msgstr "Birden &fazla Vim ile düzenle"
 
@@ -6566,7 +6560,7 @@ msgid "Edit with single &Vim"
 msgstr "Tek bir &Vim ile düzenle"
 
 msgid "Diff with Vim"
-msgstr "Ayrımları Vim ile gözet"
+msgstr "Vim kullanarak karşılaştır"
 
 msgid "Edit with &Vim"
 msgstr "&Vim ile düzenle"
@@ -6579,7 +6573,6 @@ msgstr "Mevcut Vim ile düzenle - "
 
 msgid "Edits the selected file(s) with Vim"
 msgstr "Seçili dosyaları Vim ile düzenler"
-
 
 msgid "gvimext.dll error"
 msgstr "gvimext.dll hatası"
@@ -6994,7 +6987,7 @@ msgid "E919: Directory not found in '%s': \"%s\""
 msgstr "E919: '%s' içinde dizin bulunamadı: \"%s\""
 
 msgid "E952: Autocommand caused recursive behavior"
-msgstr "E952: Otokomut özyineleme davranışına neden oldu"
+msgstr "E952: Otokomut özyineli davranışa neden oldu"
 
 msgid "E328: Menu only exists in another mode"
 msgstr "E328: Menü yalnızca başka bir kipte mevcut"
@@ -7170,11 +7163,11 @@ msgstr "pencereler arasında gezinirken hata"
 
 #, c-format
 msgid "unable to unset global option %s"
-msgstr "%s genel seçenek ayarı kapatılamıyor"
+msgstr "%s global seçenek ayarı kapatılamıyor"
 
 #, c-format
 msgid "unable to unset option %s which does not have global value"
-msgstr "genel bir değeri olmayan %s seçenek ayarı kapatılamıyor"
+msgstr "global değeri olmayan %s seçenek ayarı kapatılamıyor"
 
 msgid "attempt to refer to deleted tab page"
 msgstr "silinmiş sekme sayfasına başvurma denemesi"

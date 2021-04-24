@@ -944,7 +944,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    (mostly used in |Normal-mode| or |Cmdline-mode|).
 	esc	    hitting <Esc> in |Normal-mode|.
 	ex	    In |Visual-mode|, hitting |Q| results in an error.
-	hangul	    Error occurred when using hangul input.
+	hangul	    Ignored.
 	insertmode  Pressing <Esc> in 'insertmode'.
 	lang	    Calling the beep module for Lua/Mzscheme/TCL.
 	mess	    No output available for |g<|.
@@ -5288,12 +5288,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	of this option).
 	The default is ">".  For Unix, if the 'shell' option is "csh" or
 	"tcsh" during initializations, the default becomes ">&".  If the
-	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh",
-	"zsh-beta","bash" or "fish", the default becomes ">%s 2>&1".  This
-	means that stderr is also included.  For Win32, the Unix checks are
-	done and additionally "cmd" is checked for, which makes the default
-	">%s 2>&1".  Also, the same names with ".exe" appended are checked
-	for.
+	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
+	"bash" or "fish", the default becomes ">%s 2>&1".  This means that
+	stderr is also included.  For Win32, the Unix checks are done and
+	additionally "cmd" is checked for, which makes the default ">%s 2>&1".
+	Also, the same names with ".exe" appended are checked for.
 	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellredir' option changes automatically unless it was
@@ -5898,7 +5897,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	a S   Argument list status as in default title.  ({current} of {max})
 	      Empty if the argument file count is zero or one.
 	{ NF  Evaluate expression between '%{' and '}' and substitute result.
-	      Note that there is no '%' before the closing '}'.
+	      Note that there is no '%' before the closing '}'.  The
+	      expression cannot contain a '}' character, call a function to
+	      work around that.  See |stl-%{| below.
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.
@@ -5961,13 +5962,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:set statusline=...%(\ [%M%R%H]%)...
 <	Beware that an expression is evaluated each and every time the status
 	line is displayed.
-					*g:actual_curbuf* *g:actual_curwin*
-	The current buffer and current window will be set temporarily to that
-	of the window (and buffer) whose statusline is currently being drawn.
-	The expression will evaluate in this context.  The variable
-	"g:actual_curbuf" is set to the `bufnr()` number of the real current
-	buffer and "g:actual_curwin" to the |window-ID| of the real current
-	window.  These values are strings.
+				*stl-%{* *g:actual_curbuf* *g:actual_curwin*
+	While evaluationg %{} the current buffer and current window will be
+	set temporarily to that of the window (and buffer) whose statusline is
+	currently being drawn.  The expression will evaluate in this context.
+	The variable "g:actual_curbuf" is set to the `bufnr()` number of the
+	real current buffer and "g:actual_curwin" to the |window-ID| of the
+	real current window.  These values are strings.
 
 	The 'statusline' option will be evaluated in the |sandbox| if set from
 	a modeline, see |sandbox-option|.
@@ -7050,6 +7051,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	fail (and make sure not to exit Vim until the write was successful).
 	See |backup-table| for another explanation.
 	When the 'backupskip' pattern matches, a backup is not made anyway.
+	Depending on 'backupcopy' the backup is a new file or the original
+	file renamed (and a new file is written).
 
 						*'writedelay'* *'wd'*
 'writedelay' 'wd'	number	(default 0)

@@ -253,11 +253,11 @@ restores the character.
 
 	g intelligent turtle ~
 
-The next u command restores the next-to-last character deleted:
+The next "u" command restores the next-to-last character deleted:
 
 	ng intelligent turtle ~
 
-The next u command gives you the u, and so on:
+The next "u" command gives you the u, and so on:
 
 	ung intelligent turtle ~
 	oung intelligent turtle ~
@@ -364,7 +364,7 @@ To exit, use the "ZZ" command.  This command writes the file and exits.
 	Unlike many other editors, Vim does not automatically make a backup
 	file.  If you type "ZZ", your changes are committed and there's no
 	turning back.  You can configure the Vim editor to produce backup
-	files, see |07.4|.
+	files; see |07.4|.
 
 
 DISCARDING CHANGES
@@ -387,7 +387,7 @@ message and refuse to exit:
 	E37: No write since last change (use ! to override) ~
 
 By specifying the override, you are in effect telling Vim, "I know that what
-I'm doing looks stupid, but I'm a big boy and really want to do this."
+I'm doing looks stupid, but I really want to do this."
 
 If you want to continue editing with Vim: The ":e!" command reloads the
 original version of the file.
@@ -540,7 +540,7 @@ Summary: 					*help-summary*  >
    command argument %: >
    	:help c_%
 
-8) Ex-commands always start with ":", so to go to the :s command help: >
+8) Ex-commands always start with ":", so to go to the ":s" command help: >
 	:help :s
 
 9) Commands specifically for debugging start with ">".  To go to the help
@@ -550,22 +550,23 @@ Summary: 					*help-summary*  >
 10) Key combinations.  They usually start with a single letter indicating
     the mode for which they can be used.  E.g.: >
    	:help i_CTRL-X
-<    takes you to the family of Ctrl-X commands for insert mode which can be
-    used to auto complete different things.  Note, that certain keys will
+<    takes you to the family of CTRL-X commands for insert mode which can be
+    used to auto-complete different things.  Note, that certain keys will
     always be written the same, e.g. Control will always be CTRL.
     For normal mode commands there is no prefix and the topic is available at
     :h CTRL-<Letter>. E.g.  >
    	:help CTRL-W
 <    In contrast >
 	:help c_CTRL-R
-<    will describe what the Ctrl-R does when entering commands in the Command
+<    will describe what the CTRL-R does when entering commands in the Command
     line and >
-   	:help v_Ctrl-A
+   	:help v_CTRL-A
 <    talks about incrementing numbers in visual mode and >
 	:help g_CTRL-A
-<    talks about the g<C-A> command (e.g. you have to press "g" then <Ctrl-A>).
-    Here the "g" stand for the normal command "g" which always expects a second
-    key before doing something similar to the commands starting with "z"
+<    talks about the "g<C-A>" command (e.g. you have to press "g" then
+    <CTRL-A>).  Here the "g" stand for the normal command "g" which always
+    expects a second key before doing something similar to the commands
+    starting with "z"
 
 11) Regexp items always start with /.  So to get help for the "\+" quantifier
     in Vim regexes: >
@@ -636,15 +637,16 @@ Summary: 					*help-summary*  >
 <    Also if you want to access a certain chapter in the help, the chapter
     number can be accessed directly like this: >
     	:help 10.1
-<    goes to chapter 10.1 in |usr_10.txt| and talks about recording macros.
+<    which goes to chapter 10.1 in |usr_10.txt| and talks about recording
+    macros.
 
 19) Highlighting groups.  Always start with hl-groupname.  E.g. >
     	:help hl-WarningMsg
 <    talks about the WarningMsg highlighting group.
 
-20) Syntax highlighting is namespaced to :syn-topic e.g. >
+20) Syntax highlighting is namespaced to :syn-topic.  E.g. >
 	:help :syn-conceal
-<    talks about the conceal argument for the :syn command.
+<    talks about the conceal argument for the ":syn" command.
 
 21) Quickfix commands usually start with :c while location list commands
     usually start with :l
@@ -677,7 +679,7 @@ Summary: 					*help-summary*  >
 <    takes you exactly to the description of the swap error message and >
 	:help W10
 <    talks about the warning "Changing a readonly file".
-    Sometimes however, those error codes are not described, but rather are
+    Sometimes, however, those error codes are not described, but rather are
     listed at the Vim command that usually causes this.  So: >
     	:help E128
 <    takes you to the |:function| command

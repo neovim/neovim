@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Vim help file
 " Maintainer:	Bram Moolenaar (Bram@vim.org)
-" Last Change:	2019 May 12
+" Last Change:	2019 Nov 26
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -85,6 +85,7 @@ syn match helpSpecial		"\[group]"
 syn match helpNormal		"\[\(readonly\|fifo\|socket\|converted\|crypted\)]"
 
 syn match helpSpecial		"CTRL-."
+syn match helpSpecial		"CTRL-SHIFT-."
 syn match helpSpecial		"CTRL-Break"
 syn match helpSpecial		"CTRL-PageUp"
 syn match helpSpecial		"CTRL-PageDown"

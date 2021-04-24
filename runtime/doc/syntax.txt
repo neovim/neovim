@@ -2739,10 +2739,10 @@ To set a user-defined list of code block syntax highlighting: >
 To assign multiple code block types to a single syntax, define
 `rst_syntax_code_list` as a mapping: >
 	let rst_syntax_code_list = {
-		\ 'cpp' = ['cpp', 'c++'],
-                \ 'bash' = ['bash', 'sh'],
+		\ 'cpp': ['cpp', 'c++'],
+		\ 'bash': ['bash', 'sh'],
 		...
-	}
+	\ }
 
 To use color highlighting for emphasis text: >
 	let rst_use_emphasis_colors = 1
