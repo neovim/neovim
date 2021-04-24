@@ -143,7 +143,7 @@ let s:filename_checks = {
     \ 'diff': ['file.diff', 'file.rej'],
     \ 'dircolors': ['.dir_colors', '.dircolors', '/etc/DIR_COLORS'],
     \ 'dnsmasq': ['/etc/dnsmasq.conf'],
-    \ 'dockerfile': ['Dockerfile', 'file.Dockerfile'],
+    \ 'dockerfile': ['Containerfile', 'Dockerfile', 'file.Dockerfile'],
     \ 'dosbatch': ['file.bat', 'file.sys'],
     \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5'],
     \ 'dot': ['file.dot', 'file.gv'],

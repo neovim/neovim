@@ -521,6 +521,10 @@ CTRL-W +	Increase current window height by N (default 1).
 CTRL-W CTRL-_					*CTRL-W_CTRL-_* *CTRL-W__*
 CTRL-W _	Set current window height to N (default: highest possible).
 
+:{winnr}res[ize] [+-]N
+		Like `:resize` above, but apply the size to window {winnr}
+		instead of the current window.
+
 z{nr}<CR>	Set current window height to {nr}.
 
 						*CTRL-W_<*

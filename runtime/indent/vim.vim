@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Jun 27
+" Last Change:	2019 Oct 31
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -56,6 +56,31 @@ function GetVimIndentIntern()
   " and :else.  Add it three times for a line that starts with '\' or '"\ '
   " after a line that doesn't (or g:vim_indent_cont if it exists).
   let ind = indent(lnum)
+
+  " In heredoc indenting works completely differently.
+  if has('syntax_items') 
+    let syn_here = synIDattr(synID(v:lnum, 1, 1), "name")
+    if syn_here =~ 'vimLetHereDocStop'
+      " End of heredoc: use indent of matching start line
+      let lnum = v:lnum - 1
+      while lnum > 0
+	if synIDattr(synID(lnum, 1, 1), "name") !~ 'vimLetHereDoc'
+	  return indent(lnum)
+	endif
+	let lnum -= 1
+      endwhile
+      return 0
+    endif
+    if syn_here =~ 'vimLetHereDoc'
+      if synIDattr(synID(lnum, 1, 1), "name") !~ 'vimLetHereDoc'
+	" First line in heredoc: increase indent
+	return ind + shiftwidth()
+      endif
+      " Heredoc continues: no change in indent
+      return ind
+    endif
+  endif
+
   if cur_text =~ s:lineContPat && v:lnum > 1 && prev_text !~ s:lineContPat
     if exists("g:vim_indent_cont")
       let ind = ind + g:vim_indent_cont

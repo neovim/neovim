@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:  Bram Moolenaar <Bram@vim.org>
-" Last Change: 2018 Jul 3
+" Last Change: 2019 Oct 28
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
@@ -36,7 +36,7 @@ set cpo-=C
 
 " The function that is invoked (very often) to define a ":match" highlighting
 " for any matching paren.
-function! s:Highlight_Matching_Pair()
+func s:Highlight_Matching_Pair()
   " Remove any previous match.
   if exists('w:paren_hl_on') && w:paren_hl_on
     silent! call matchdelete(3)
@@ -196,10 +196,10 @@ function! s:Highlight_Matching_Pair()
 endfunction
 
 " Define commands that will disable and enable the plugin.
-command! DoMatchParen call s:DoMatchParen()
-command! NoMatchParen call s:NoMatchParen()
+command DoMatchParen call s:DoMatchParen()
+command NoMatchParen call s:NoMatchParen()
 
-func! s:NoMatchParen()
+func s:NoMatchParen()
   let w = winnr()
   noau windo silent! call matchdelete(3)
   unlet! g:loaded_matchparen
@@ -207,7 +207,7 @@ func! s:NoMatchParen()
   au! matchparen
 endfunc
 
-func! s:DoMatchParen()
+func s:DoMatchParen()
   runtime plugin/matchparen.vim
   let w = winnr()
   silent windo doau CursorMoved

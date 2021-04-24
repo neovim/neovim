@@ -44,3 +44,18 @@ let f = x
 " prev-line
 endfunc
 " END_INDENT
+
+" START_INDENT
+let a =<< END
+nothing
+END
+" END_INDENT
+
+" START_INDENT
+" INDENT_AT  this-line
+let a=<< trim END
+   blah
+      blah
+      blah this-line
+END
+" END_INDENT
