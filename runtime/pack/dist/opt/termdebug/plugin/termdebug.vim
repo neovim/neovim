@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Update: 2018 Jun 3
+" Last Change: 2019 Dec 11
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -726,7 +726,7 @@ func s:GotoProgram()
       call system(printf('powershell -Command "add-type -AssemblyName microsoft.VisualBasic;[Microsoft.VisualBasic.Interaction]::AppActivate(%d);"', s:pid))
     endif
   else
-    win_gotoid(s:ptywin)
+    call win_gotoid(s:ptywin)
   endif
 endfunc
 

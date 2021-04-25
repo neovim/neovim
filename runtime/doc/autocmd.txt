@@ -215,6 +215,8 @@ BufAdd				Just after creating a new buffer which is
 				added to the buffer list, or adding a buffer
 				to the buffer list, a buffer in the buffer
 				list was renamed.
+				Not triggered for the initial buffers created
+				during startup.
 				Before |BufEnter|.
 				NOTE: Current buffer "%" may be different from
 				the buffer being created "<afile>".
