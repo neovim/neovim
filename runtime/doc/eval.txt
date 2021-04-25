@@ -2645,8 +2645,6 @@ argv([{nr} [, {winid}])
 		The {winid} argument specifies the window ID, see |argc()|.
 		For the Vim command line arguments see |v:argv|.
 
-assert_ functions are documented here: |assert-functions-details|
-
 asin({expr})						*asin()*
 		Return the arc sine of {expr} measured in radians, as a |Float|
 		in the range of [-pi/2, pi/2].
@@ -2657,6 +2655,9 @@ asin({expr})						*asin()*
 <			0.927295 >
 			:echo asin(-0.5)
 <			-0.523599
+
+
+assert_ functions are documented here: |assert-functions-details|
 
 
 atan({expr})						*atan()*
@@ -3425,6 +3426,12 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 		The highlight ID can be used with |synIDattr()| to obtain
 		syntax information about the highlighting.
 
+empty({expr})						*empty()*
+		Return the Number 1 if {expr} is empty, zero otherwise.
+		A |List| or |Dictionary| is empty when it does not have any
+		items.  A Number is empty when its value is zero.  Special
+		variable is empty when it is |v:false| or |v:null|.
+
 environ()						*environ()*
 		Return all of environment variables as dictionary. You can
 		check if an environment variable exists like this: >
@@ -3432,12 +3439,6 @@ environ()						*environ()*
 <		Note that the variable name may be CamelCase; to ignore case
 		use this: >
 			:echo index(keys(environ()), 'HOME', 0, 1) != -1
-
-empty({expr})						*empty()*
-		Return the Number 1 if {expr} is empty, zero otherwise.
-		A |List| or |Dictionary| is empty when it does not have any
-		items.  A Number is empty when its value is zero.  Special
-		variable is empty when it is |v:false| or |v:null|.
 
 escape({string}, {chars})				*escape()*
 		Escape the characters in {chars} that occur in {string} with a
@@ -6153,9 +6154,9 @@ matchstrpos({expr}, {pat} [, {start} [, {count}]])		*matchstrpos()*
 
 							*max()*
 max({expr})	Return the maximum value of all items in {expr}.
-		{expr} can be a list or a dictionary.  For a dictionary,
-		it returns the maximum of all values in the dictionary.
-		If {expr} is neither a list nor a dictionary, or one of the
+		{expr} can be a List or a Dictionary.  For a Dictionary,
+		it returns the maximum of all values in the Dictionary.
+		If {expr} is neither a List nor a Dictionary, or one of the
 		items in {expr} cannot be used as a Number this results in
                 an error.  An empty |List| or |Dictionary| results in zero.
 
@@ -6207,9 +6208,9 @@ menu_get({path}, {modes})				*menu_get()*
 
 							*min()*
 min({expr})	Return the minimum value of all items in {expr}.
-		{expr} can be a list or a dictionary.  For a dictionary,
-		it returns the minimum of all values in the dictionary.
-		If {expr} is neither a list nor a dictionary, or one of the
+		{expr} can be a List or a Dictionary.  For a Dictionary,
+		it returns the minimum of all values in the Dictionary.
+		If {expr} is neither a List nor a Dictionary, or one of the
 		items in {expr} cannot be used as a Number this results in
 		an error.  An empty |List| or |Dictionary| results in zero.
 
@@ -9093,6 +9094,7 @@ win_splitmove({nr}, {target} [, {options}])		*win_splitmove()*
 		then closing {nr}.
 
 		Both {nr} and {target} can be window numbers or |window-ID|s.
+		Both must be in the current tab page.
 
 		Returns zero for success, non-zero for failure.
 

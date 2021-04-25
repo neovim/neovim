@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2019 Nov 13
+" Last Change: 2020 Jan 05
 "
 " Additional contributors:
 "
@@ -932,7 +932,7 @@ if s:settings.dynamic_folds
 	\ "{",
 	\ "  var fold;",
 	\ "  fold = document.getElementById(objID);",
-	\ "  if(fold.className == 'closed-fold')",
+	\ "  if (fold.className == 'closed-fold')",
 	\ "  {",
 	\ "    fold.className = 'open-fold';",
 	\ "  }",
