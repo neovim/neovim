@@ -204,14 +204,14 @@ the same entry.
 			Example output:
 
 >
-	 nr pri kind tag		file
+	  # pri kind tag		file
 	  1 F	f    mch_delay		os_amiga.c
 			mch_delay(msec, ignoreinput)
 	> 2 F	f    mch_delay		os_msdos.c
 			mch_delay(msec, ignoreinput)
 	  3 F	f    mch_delay		os_unix.c
 			mch_delay(msec, ignoreinput)
-	Enter nr of choice (<CR> to abort):
+	Type number and <Enter> (empty cancels):
 <
 			See |tag-priority| for the "pri" column.  Note that
 			this depends on the current file, thus using

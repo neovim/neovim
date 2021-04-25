@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Mar 08
+" Last Change:	2020 Jan 02
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.
@@ -298,7 +298,7 @@ endfunc
 
 func dist#ft#FTmms()
   let n = 1
-  while n < 10
+  while n < 20
     let line = getline(n)
     if line =~ '^\s*\(%\|//\)' || line =~ '^\*'
       setf mmix
