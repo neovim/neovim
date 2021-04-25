@@ -1,4 +1,3 @@
-
 # French Translation for Vim
 #
 # Do ":help uganda"  in Vim to read copying and usage conditions.
@@ -215,13 +214,6 @@ msgstr "Bas"
 msgid "Top"
 msgstr "Haut"
 
-msgid ""
-"\n"
-"# Buffer list:\n"
-msgstr ""
-"\n"
-"# Liste des tampons :\n"
-
 msgid "E382: Cannot write, 'buftype' option is set"
 msgstr "E382: Écriture impossible, l'option 'buftype' est activée"
 
@@ -297,9 +289,6 @@ msgstr "E915: tampon in_io nécessite in_buf ou in_name "
 #, c-format
 msgid "E918: buffer must be loaded: %s"
 msgstr "E918: le tampon doit être chargé : %s"
-
-msgid "E916: not a valid job"
-msgstr "E916: tâche invalide"
 
 # DB - TODO : Pas compris le message ni comment le déclencher malgré une visite
 #      dans le code.
@@ -464,156 +453,14 @@ msgstr "E105: :loadkeymap ne peut être utilisé que dans un script Vim"
 msgid "E791: Empty keymap entry"
 msgstr "E791: Entrée du descripteur de clavier (keymap) vide"
 
-# AB - Remplacer "complétion" par "complètement" ? Voir l'éthymologie
-#      d'"accrétion".
-msgid " Keyword completion (^N^P)"
-msgstr " Complètement de mot-clé (^N^P)"
-
-# DB - todo : Faut-il une majuscule à "mode" ?
-msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
-msgstr " mode ^X (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
-
-msgid " Whole line completion (^L^N^P)"
-msgstr " Complètement de ligne entière (^L^N^P)"
-
-msgid " File name completion (^F^N^P)"
-msgstr " Complètement de nom de fichier (^F^N^P)"
-
-msgid " Tag completion (^]^N^P)"
-msgstr " Complètement de marqueur (^]^N^P)"
-
-# AB - J'ai dû avoir une bonne raison de faire une version française aussi
-#      différente de la version anglaise. Il me faut la retrouver.
-# DB - TODO
-msgid " Path pattern completion (^N^P)"
-msgstr " Complètement global de mot-clé (^N^P)"
-
-msgid " Definition completion (^D^N^P)"
-msgstr " Complètement de définition (^D^N^P)"
-
-# AB - Trouver une meilleure formulation que "selon le".
-# DB : proposition : "avec"
-msgid " Dictionary completion (^K^N^P)"
-msgstr " Complètement avec le dictionnaire (^K^N^P)"
-
-# AB - Trouver une meilleure formulation que "selon le".
-msgid " Thesaurus completion (^T^N^P)"
-msgstr " Complètement avec le thésaurus (^T^N^P)"
-
-# AB - La version française est meilleure que la version anglaise.
-# DB : Suggestion.
-msgid " Command-line completion (^V^N^P)"
-msgstr " Complètement de ligne de commande (^V^N^P)"
-
-msgid " User defined completion (^U^N^P)"
-msgstr " Complètement défini par l'utilisateur (^U^N^P)"
-
-# DB : On doit pouvoir trouver nettement mieux que ça.
-msgid " Omni completion (^O^N^P)"
-msgstr " Complètement selon le type de fichier (Omni) (^O^N^P)"
-
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Suggestion d'orthographe (s^N^P)"
-
-msgid " Keyword Local completion (^N^P)"
-msgstr " Complètement local de mot-clé (^N/^P)"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-#      Il faut éviter de le faire trop long. Je pense que la version française
-#      est suffisamment compréhensible dans le contexte dans lequel elle est
-#      affichée.
-msgid "Hit end of paragraph"
-msgstr "Fin du paragraphe"
-
-msgid "E839: Completion function changed window"
-msgstr "E839: La fonction de complètement a changé la fenêtre"
-
-msgid "E840: Completion function deleted text"
-msgstr "E840: La fonction de complètement a effacé du texte"
-
-msgid "'dictionary' option is empty"
-msgstr "L'option 'dictionary' est vide"
-
-msgid "'thesaurus' option is empty"
-msgstr "L'option 'thesaurus' est vide"
-
-#, c-format
-msgid "Scanning dictionary: %s"
-msgstr "Examen du dictionnaire : %s"
-
-msgid " (insert) Scroll (^E/^Y)"
-msgstr " (insertion) Défilement (^E/^Y)"
-
-msgid " (replace) Scroll (^E/^Y)"
-msgstr " (remplacement) Défilement (^E/^Y)"
-
-#, c-format
-msgid "Scanning: %s"
-msgstr "Examen : %s"
-
-msgid "Scanning tags."
-msgstr "Examen des marqueurs."
-
-msgid "match in file"
-msgstr "correspondance dans le fichier"
-
-# AB - Cette chaîne de caractères est ajoutée en début de ligne lorsqu'une
-#      opération de complétion est répétée (typiquement avec CTRL-X CTRL-N).
-#      Que ce soit en anglais ou en français, il y a un problème de majuscules.
-#      Bien qu'insatisfaisante, cette traduction semble optimale.
-msgid " Adding"
-msgstr " Ajout"
-
-msgid "-- Searching..."
-msgstr "-- Recherche en cours..."
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-# AB - Faut-il utiliser "origine" ou "originel" au lieu d'"original" ?
-# DB : Suggestion.
-msgid "Back at original"
-msgstr "Retour au point de départ"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-msgid "Word from other line"
-msgstr "Mot d'une autre ligne"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-msgid "The only match"
-msgstr "La seule correspondance"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-# AB - Faut-il remplacer "sur" par "de" ?
-# DB : Pour moi, non.
-#, c-format
-msgid "match %d of %d"
-msgstr "Correspondance %d sur %d"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-# DB - todo : la VO n'a pas de majuscule.
-#, c-format
-msgid "match %d"
-msgstr "Correspondance %d"
-
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: Caractères inattendus avant '='"
-
-#, c-format
-msgid "E121: Undefined variable: %s"
-msgstr "E121: Variable non définie : %s"
 
 msgid "E111: Missing ']'"
 msgstr "E111: ']' manquant"
 
 msgid "E719: Cannot use [:] with a Dictionary"
 msgstr "E719: Utilisation de [:] impossible avec un Dictionnaire"
-
-#, c-format
-msgid "E734: Wrong variable type for %s="
-msgstr "E734: Type de variable erroné avec %s="
-
-#, c-format
-msgid "E461: Illegal variable name: %s"
-msgstr "E461: Nom de variable invalide : %s"
 
 msgid "E806: using Float as a String"
 msgstr "E806: Utilisation d'un Flottant comme une Chaîne"
@@ -784,15 +631,6 @@ msgstr "E742: Impossible de modifier la valeur de %s"
 msgid "E698: variable nested too deep for making a copy"
 msgstr "E698: variable trop imbriquée pour en faire une copie"
 
-# AB - La version française est capitalisée pour être en accord avec les autres
-#      commentaires enregistrés dans le fichier viminfo.
-msgid ""
-"\n"
-"# global variables:\n"
-msgstr ""
-"\n"
-"# Variables globales:\n"
-
 # DB - Plus précis ("la dernière fois") ?
 msgid ""
 "\n"
@@ -816,38 +654,17 @@ msgstr "E736: Opération invalide avec les Dictionnaires"
 msgid "E694: Invalid operation for Funcrefs"
 msgstr "E694: Opération invalide avec les Funcrefs"
 
-msgid "map() argument"
-msgstr "argument de map()"
-
-msgid "filter() argument"
-msgstr "argument de filter()"
-
 #, c-format
 msgid "E686: Argument of %s must be a List"
 msgstr "E686: L'argument de %s doit être une Liste"
 
-msgid "E928: String required"
-msgstr "E928: Chaîne requis"
-
 msgid "E808: Number or Float required"
 msgstr "E808: Nombre ou Flottant requis"
-
-msgid "add() argument"
-msgstr "argument de add()"
-
-msgid "E785: complete() can only be used in Insert mode"
-msgstr "E785: complete() n'est utilisable que dans le mode Insertion"
 
 # AB - Texte par défaut du bouton de la boîte de dialogue affichée par la
 #      fonction confirm().
 msgid "&Ok"
 msgstr "&Ok"
-
-#, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
-msgstr[0] "+-%s%3ld ligne : "
-msgstr[1] "+-%s%3ld lignes : "
 
 #, c-format
 msgid "E700: Unknown function: %s"
@@ -872,14 +689,8 @@ msgstr ""
 msgid "called inputrestore() more often than inputsave()"
 msgstr "inputrestore() a été appelé plus de fois qu'inputsave()"
 
-msgid "insert() argument"
-msgstr "argument de insert()"
-
 msgid "E786: Range not allowed"
 msgstr "E786: Les plages ne sont pas autorisées"
-
-msgid "E916: not a valid job"
-msgstr "E916: tâche invalide"
 
 msgid "E701: Invalid type for len()"
 msgstr "E701: Type invalide avec len()"
@@ -896,9 +707,6 @@ msgstr "E726: Le pas est nul"
 
 msgid "E727: Start past end"
 msgstr "E727: Début au-delà de la fin"
-
-msgid "<empty>"
-msgstr "<vide>"
 
 msgid "E240: No connection to the X server"
 msgstr "E240: Pas de connexion au serveur X"
@@ -917,34 +725,9 @@ msgstr "E941: serveur déjà démarré"
 msgid "E942: +clientserver feature not available"
 msgstr "E942: La fonctionnalité +clientserver n'est pas disponible"
 
-msgid "remove() argument"
-msgstr "argument de remove()"
-
-msgid "E655: Too many symbolic links (cycle?)"
-msgstr "E655: Trop de liens symboliques (cycle ?)"
-
-msgid "reverse() argument"
-msgstr "argument de reverse()"
-
 # AB - La version française est meilleure que la version anglaise.
 msgid "E258: Unable to send to client"
 msgstr "E258: La réponse n'a pas pu être envoyée au client"
-
-#, c-format
-msgid "E927: Invalid action: '%s'"
-msgstr "E927: Action invalide : « %s »"
-
-msgid "sort() argument"
-msgstr "argument de sort()"
-
-msgid "uniq() argument"
-msgstr "argument de uniq()"
-
-msgid "E702: Sort compare function failed"
-msgstr "E702: La fonction de comparaison de sort() a échoué"
-
-msgid "E882: Uniq compare function failed"
-msgstr "E882: La fonction de comparaison de uniq() a échoué"
 
 msgid "(Invalid)"
 msgstr "(Invalide)"
@@ -952,9 +735,6 @@ msgstr "(Invalide)"
 #, c-format
 msgid "E935: invalid submatch number: %d"
 msgstr "E935: numéro de submatch invalide : %d"
-
-msgid "E677: Error writing temp file"
-msgstr "E677: Erreur lors de l'écriture du fichier temporaire"
 
 msgid "E921: Invalid callback argument"
 msgstr "E921: Argument de callback invalide"
@@ -1011,98 +791,6 @@ msgstr ""
 #      nettement plus.
 msgid "[No write since last change]\n"
 msgstr "[Attention : tout n'est pas enregistré]\n"
-
-# AB - Le numéro et le message d'erreur (%s ci-dessous) et le "numéro" de ligne
-#      sont des chaînes de caractères dont le contenu est à la discrétion de
-#      l'appelant de la fonction viminfo_error().
-#, c-format
-msgid "%sviminfo: %s in line: "
-msgstr "%sviminfo : %s à la ligne "
-
-# AB - La version française est meilleure que la version anglaise.
-msgid "E136: viminfo: Too many errors, skipping rest of file"
-msgstr ""
-"E136: Il y a trop d'erreurs ; interruption de la lecture du fichier viminfo"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - ... dont les valeurs possibles sont les messages
-#      qui suivent.
-#, c-format
-msgid "Reading viminfo file \"%s\"%s%s%s"
-msgstr "Lecture du fichier viminfo \"%s\"%s%s%s"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - Voir ci-dessus.
-msgid " info"
-msgstr " info"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - Voir ci-dessus.
-msgid " marks"
-msgstr " marques"
-
-msgid " oldfiles"
-msgstr " vieux fichiers"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - Voir ci-dessus.
-msgid " FAILED"
-msgstr " ÉCHEC"
-
-# AB - J'espère que la plupart des utilisateurs aura l'idée d'aller vérifier
-#      ses droits d'accès.
-# AB - Le mot "viminfo" a été retiré pour que le message ne dépasse pas 80
-#      caractères dans le cas courant où %s = /home/12345678/.viminfo
-#, c-format
-msgid "E137: Viminfo file is not writable: %s"
-msgstr "E137: L'écriture dans le fichier %s est interdite"
-
-#, c-format
-msgid "E929: Too many viminfo temp files, like %s!"
-msgstr "E929: Trop de fichiers temporaires viminfo, comme %s!"
-
-# AB - Le point d'exclamation est superflu.
-# AB - Le mot "viminfo" a été retiré pour que le message ne dépasse pas 80
-#      caractères dans le cas courant où %s = /home/12345678/.viminfo
-#, c-format
-msgid "E138: Can't write viminfo file %s!"
-msgstr "E138: Impossible d'écrire le fichier %s"
-
-# AB - Ce texte est un message de débogage.
-#, c-format
-msgid "Writing viminfo file \"%s\""
-msgstr "Écriture du fichier viminfo \"%s\""
-
-#, c-format
-msgid "E886: Can't rename viminfo file to %s!"
-msgstr "E886: Impossible de renommer viminfo en %s"
-
-#, c-format
-msgid "# This viminfo file was generated by Vim %s.\n"
-msgstr "# Ce fichier viminfo a été généré par Vim %s.\n"
-
-# AB - Les deux versions, bien que différentes, se valent.
-msgid ""
-"# You may edit it if you're careful!\n"
-"\n"
-msgstr ""
-"# Vous pouvez l'éditer, mais soyez prudent.\n"
-"\n"
-
-msgid "# Value of 'encoding' when this file was written\n"
-msgstr "# 'encoding' dans lequel ce fichier a été écrit\n"
-
-# AB - Ce texte est passé en argument à la fonction viminfo_error().
-# AB - "illégal" est un terme trop fort à mon goût.
-msgid "Illegal starting char"
-msgstr "Caractère initial non valide"
-
-msgid ""
-"\n"
-"# Bar lines, copied verbatim:\n"
-msgstr ""
-"\n"
-"# Lignes commençant par |, copiées littéralement :\n"
 
 # AB - Ceci est un titre de boîte de dialogue. Vérifier que la version
 #      française est correcte pour les trois références ; j'ai un doute quant
@@ -1447,59 +1135,6 @@ msgid ""
 msgstr ""
 "\n"
 "    Nom         Args       Adresse   Complet.  Définition"
-
-msgid "No user-defined commands found"
-msgstr "Aucune commande définie par l'utilisateur trouvée"
-
-msgid "E175: No attribute specified"
-msgstr "E175: Pas d'attribut spécifié"
-
-msgid "E176: Invalid number of arguments"
-msgstr "E176: Nombre d'arguments invalide"
-
-msgid "E177: Count cannot be specified twice"
-msgstr "E177: Le quantificateur ne peut être spécifié deux fois"
-
-msgid "E178: Invalid default value for count"
-msgstr "E178: La valeur par défaut du quantificateur est invalide"
-
-msgid "E179: argument required for -complete"
-msgstr "E179: argument requis avec -complete"
-
-msgid "E179: argument required for -addr"
-msgstr "E179: argument requis avec -addr"
-
-#, c-format
-msgid "E181: Invalid attribute: %s"
-msgstr "E181: Attribut invalide : %s"
-
-msgid "E182: Invalid command name"
-msgstr "E182: Nom de commande invalide"
-
-msgid "E183: User defined commands must start with an uppercase letter"
-msgstr "E183: Les commandes utilisateur doivent commencer par une majuscule"
-
-msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr ""
-"E841: Nom réservé, ne peux pas être utilisé pour une commande utilisateur"
-
-#, c-format
-msgid "E184: No such user-defined command: %s"
-msgstr "E184: Aucune commande %s définie par l'utilisateur"
-
-#, c-format
-msgid "E180: Invalid address type value: %s"
-msgstr "E180: Valeur de type d'adresse invalide : %s"
-
-#, c-format
-msgid "E180: Invalid complete value: %s"
-msgstr "E180: Valeur invalide pour \"-complete=\" : %s"
-
-msgid "E468: Completion argument only allowed for custom completion"
-msgstr "E468: Seul le complètement personnalisé accepte un argument"
-
-msgid "E467: Custom completion requires a function argument"
-msgstr "E467: Le complètement personnalisé nécessite une fonction en argument"
 
 msgid "unknown"
 msgstr "inconnu"
@@ -1977,12 +1612,6 @@ msgstr "E219: { manquant."
 msgid "E220: Missing }."
 msgstr "E220: } manquant."
 
-msgid "<empty>"
-msgstr "<vide>"
-
-msgid "E655: Too many symbolic links (cycle?)"
-msgstr "E655: Trop de liens symboliques (cycle ?)"
-
 # DB : Les trois messages qui suivent sont des titres de boîtes
 #      de dialogue par défaut.
 msgid "Select Directory dialog"
@@ -2024,13 +1653,6 @@ msgstr "E346: Plus de répertoire \"%s\" dans 'cdpath'"
 msgid "E347: No more file \"%s\" found in path"
 msgstr "E347: Plus de fichier \"%s\" dans 'path'"
 
-msgid "E446: No file name under cursor"
-msgstr "E446: Aucun nom de fichier sous le curseur"
-
-#, c-format
-msgid "E447: Can't find file \"%s\" in path"
-msgstr "E447: Le fichier \"%s\" est introuvable dans 'path'"
-
 msgid "E490: No fold found"
 msgstr "E490: Aucun repli trouvé"
 
@@ -2045,12 +1667,6 @@ msgid "+--%3ld line folded "
 msgid_plural "+--%3ld lines folded "
 msgstr[0] "+--%3ld ligne déplacée "
 msgstr[1] "+--%3ld lignes déplacées "
-
-#, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
-msgstr[0] "+-%s%3ld ligne : "
-msgstr[1] "+-%s%3ld lignes : "
 
 msgid "E222: Add to read buffer"
 msgstr "E222: Ajout au tampon de lecture"
@@ -2275,7 +1891,9 @@ msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
 msgstr "E243: Argument non supporté : \"-%s\" ; Utilisez la version OLE."
 
 msgid "E988: GUI cannot be used. Cannot execute gvim.exe."
-msgstr "E988: L'interface graphique ne peut pas être utilisée. Impossible d'exécuter gvim.exe."
+msgstr ""
+"E988: L'interface graphique ne peut pas être utilisée. Impossible d'exécuter "
+"gvim.exe."
 
 msgid "E672: Unable to open window inside MDI application"
 msgstr "E672: Impossible d'ouvrir une fenêtre dans une application MDI"
@@ -2524,9 +2142,6 @@ msgstr "E799: ID invalide : %d (doit être plus grand ou égal à 1)"
 #, c-format
 msgid "E801: ID already taken: %d"
 msgstr "E801: ID déjà pris : %d"
-
-msgid "List or number required"
-msgstr "Liste ou nombre requis"
 
 #, c-format
 msgid "E802: Invalid ID: %d (must be greater than or equal to 1)"
@@ -2925,139 +2540,6 @@ msgid_plural "%ld lines indented "
 msgstr[0] "%ld ligne indentée "
 msgstr[1] "%ld lignes indentées "
 
-# AB - Remplacer "complétion" par "complètement" ? Voir l'éthymologie
-#      d'"accrétion".
-msgid " Keyword completion (^N^P)"
-msgstr " Complètement de mot-clé (^N^P)"
-
-# DB - todo : Faut-il une majuscule à "mode" ?
-msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
-msgstr " mode ^X (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
-
-msgid " Whole line completion (^L^N^P)"
-msgstr " Complètement de ligne entière (^L^N^P)"
-
-msgid " File name completion (^F^N^P)"
-msgstr " Complètement de nom de fichier (^F^N^P)"
-
-msgid " Tag completion (^]^N^P)"
-msgstr " Complètement de marqueur (^]^N^P)"
-
-# AB - J'ai dû avoir une bonne raison de faire une version française aussi
-#      différente de la version anglaise. Il me faut la retrouver.
-# DB - TODO
-msgid " Path pattern completion (^N^P)"
-msgstr " Complètement global de mot-clé (^N^P)"
-
-msgid " Definition completion (^D^N^P)"
-msgstr " Complètement de définition (^D^N^P)"
-
-# AB - Trouver une meilleure formulation que "selon le".
-# DB : proposition : "avec"
-msgid " Dictionary completion (^K^N^P)"
-msgstr " Complètement avec le dictionnaire (^K^N^P)"
-
-# AB - Trouver une meilleure formulation que "selon le".
-msgid " Thesaurus completion (^T^N^P)"
-msgstr " Complètement avec le thésaurus (^T^N^P)"
-
-# AB - La version française est meilleure que la version anglaise.
-# DB : Suggestion.
-msgid " Command-line completion (^V^N^P)"
-msgstr " Complètement de ligne de commande (^V^N^P)"
-
-msgid " User defined completion (^U^N^P)"
-msgstr " Complètement défini par l'utilisateur (^U^N^P)"
-
-# DB : On doit pouvoir trouver nettement mieux que ça.
-msgid " Omni completion (^O^N^P)"
-msgstr " Complètement selon le type de fichier (Omni) (^O^N^P)"
-
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Suggestion d'orthographe (s^N^P)"
-
-msgid " Keyword Local completion (^N^P)"
-msgstr " Complètement local de mot-clé (^N/^P)"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-#      Il faut éviter de le faire trop long. Je pense que la version française
-#      est suffisamment compréhensible dans le contexte dans lequel elle est
-#      affichée.
-msgid "Hit end of paragraph"
-msgstr "Fin du paragraphe"
-
-msgid "E839: Completion function changed window"
-msgstr "E839: La fonction de complètement a changé la fenêtre"
-
-msgid "E840: Completion function deleted text"
-msgstr "E840: La fonction de complètement a effacé du texte"
-
-msgid "'dictionary' option is empty"
-msgstr "L'option 'dictionary' est vide"
-
-msgid "'thesaurus' option is empty"
-msgstr "L'option 'thesaurus' est vide"
-
-#, c-format
-msgid "Scanning dictionary: %s"
-msgstr "Examen du dictionnaire : %s"
-
-msgid " (insert) Scroll (^E/^Y)"
-msgstr " (insertion) Défilement (^E/^Y)"
-
-msgid " (replace) Scroll (^E/^Y)"
-msgstr " (remplacement) Défilement (^E/^Y)"
-
-msgid "E785: complete() can only be used in Insert mode"
-msgstr "E785: complete() n'est utilisable que dans le mode Insertion"
-
-#, c-format
-msgid "Scanning: %s"
-msgstr "Examen : %s"
-
-msgid "Scanning tags."
-msgstr "Examen des marqueurs."
-
-msgid "match in file"
-msgstr "correspondance dans le fichier"
-
-# AB - Cette chaîne de caractères est ajoutée en début de ligne lorsqu'une
-#      opération de complétion est répétée (typiquement avec CTRL-X CTRL-N).
-#      Que ce soit en anglais ou en français, il y a un problème de majuscules.
-#      Bien qu'insatisfaisante, cette traduction semble optimale.
-msgid " Adding"
-msgstr " Ajout"
-
-msgid "-- Searching..."
-msgstr "-- Recherche en cours..."
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-# AB - Faut-il utiliser "origine" ou "originel" au lieu d'"original" ?
-# DB : Suggestion.
-msgid "Back at original"
-msgstr "Retour au point de départ"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-msgid "Word from other line"
-msgstr "Mot d'une autre ligne"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-msgid "The only match"
-msgstr "La seule correspondance"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-# AB - Faut-il remplacer "sur" par "de" ?
-# DB : Pour moi, non.
-#, c-format
-msgid "match %d of %d"
-msgstr "Correspondance %d sur %d"
-
-# AB - Ce texte s'ajoute à la fin d'un des messages de complétion ci-dessus.
-# DB - todo : la VO n'a pas de majuscule.
-#, c-format
-msgid "match %d"
-msgstr "Correspondance %d"
-
 #, c-format
 msgid "E938: Duplicate key in JSON: \"%s\""
 msgstr "E938: Clé dupliquée dans le document JSON : \"%s\""
@@ -3073,36 +2555,6 @@ msgstr "E696: Il manque une virgule dans la Liste %s"
 #, c-format
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: Il manque ']' à la fin de la Liste %s"
-
-msgid "sort() argument"
-msgstr "argument de sort()"
-
-msgid "uniq() argument"
-msgstr "argument de uniq()"
-
-msgid "E702: Sort compare function failed"
-msgstr "E702: La fonction de comparaison de sort() a échoué"
-
-msgid "E882: Uniq compare function failed"
-msgstr "E882: La fonction de comparaison de uniq() a échoué"
-
-msgid "map() argument"
-msgstr "argument de map()"
-
-msgid "filter() argument"
-msgstr "argument de filter()"
-
-msgid "add() argument"
-msgstr "argument de add()"
-
-msgid "insert() argument"
-msgstr "argument de insert()"
-
-msgid "remove() argument"
-msgstr "argument de remove()"
-
-msgid "reverse() argument"
-msgstr "argument de reverse()"
 
 msgid "Unknown option argument"
 msgstr "Option inconnue"
@@ -4236,9 +3688,6 @@ msgstr " (Interrompu)"
 msgid "Beep!"
 msgstr "Bip !"
 
-msgid "E677: Error writing temp file"
-msgstr "E677: Erreur lors de l'écriture du fichier temporaire"
-
 #, c-format
 msgid "%ld second ago"
 msgid_plural "%ld seconds ago"
@@ -4413,7 +3862,8 @@ msgid "E520: Not allowed in a modeline"
 msgstr "E520: Non autorisé dans une ligne de mode"
 
 msgid "E992: Not allowed in a modeline when 'modelineexpr' is off"
-msgstr "E992: Non autorisé dans une ligne de mode avec 'modelineexpr' désélectionnée"
+msgstr ""
+"E992: Non autorisé dans une ligne de mode avec 'modelineexpr' désélectionnée"
 
 msgid "E846: Key code not set"
 msgstr "E846: Le code de touche n'est pas configuré"
@@ -4546,7 +3996,8 @@ msgid "E528: Must specify a ' value"
 msgstr "E528: Une valeur ' doit être spécifiée"
 
 msgid "E595: 'showbreak' contains unprintable or wide character"
-msgstr "E595: 'showbreak' contient des caractères à largeur double ou non imprimables"
+msgstr ""
+"E595: 'showbreak' contient des caractères à largeur double ou non imprimables"
 
 msgid "E596: Invalid font(s)"
 msgstr "E596: Police(s) invalide(s)"
@@ -4802,7 +4253,9 @@ msgid "shell returned %d"
 msgstr "le shell a retourné %d"
 
 msgid "E278: Cannot put a terminal buffer in a popup window"
-msgstr "E278: Impossible de mettre un tampon de terminal dans une fenêtre contextuelle"
+msgstr ""
+"E278: Impossible de mettre un tampon de terminal dans une fenêtre "
+"contextuelle"
 
 #, c-format
 msgid "E997: Tabpage not found: %d"
@@ -4894,10 +4347,6 @@ msgstr "E681: le tampon n'est pas chargé"
 
 msgid "E777: String or List expected"
 msgstr "E777: Chaîne ou Liste attendue"
-
-#, c-format
-msgid "E927: Invalid action: '%s'"
-msgstr "E927: Action invalide : « %s »"
 
 #, c-format
 msgid "E369: invalid item in %s%%[]"
@@ -5302,19 +4751,6 @@ msgstr "E388: Impossible de trouver la définition"
 
 msgid "E389: Couldn't find pattern"
 msgstr "E389: Impossible de trouver le motif"
-
-msgid "Substitute "
-msgstr "Substitue "
-
-#, c-format
-msgid ""
-"\n"
-"# Last %sSearch Pattern:\n"
-"~"
-msgstr ""
-"\n"
-"# Dernier motif de recherche %s :\n"
-"~"
 
 msgid "E756: Spell checking is not enabled"
 msgstr "E756: La vérification orthographique n'est pas activée"
@@ -5993,10 +5429,6 @@ msgstr ""
 msgid "Cannot open $VIMRUNTIME/rgb.txt"
 msgstr "Impossible d'ouvrir $VIMRUNTIME/rgb.txt"
 
-#, c-format
-msgid "E181: Invalid attribute: %s"
-msgstr "E181: Attribut invalide : %s"
-
 msgid "E279: Sorry, ++shell is not supported on this system"
 msgstr "E279: ++shell non supporté sur cet environnement"
 
@@ -6180,58 +5612,9 @@ msgstr ""
 "\n"
 "    Nom               Args Adresse Complet     Définition"
 
-msgid "No user-defined commands found"
-msgstr "Aucune commande définie par l'utilisateur trouvée"
-
-#, c-format
-msgid "E180: Invalid address type value: %s"
-msgstr "E180: Valeur de type d'adresse invalide : %s"
-
-#, c-format
-msgid "E180: Invalid complete value: %s"
-msgstr "E180: Valeur invalide pour \"-complete=\" : %s"
-
-msgid "E468: Completion argument only allowed for custom completion"
-msgstr "E468: Seul le complètement personnalisé accepte un argument"
-
-msgid "E467: Custom completion requires a function argument"
-msgstr "E467: Le complètement personnalisé nécessite une fonction en argument"
-
-msgid "E175: No attribute specified"
-msgstr "E175: Pas d'attribut spécifié"
-
-msgid "E176: Invalid number of arguments"
-msgstr "E176: Nombre d'arguments invalide"
-
-msgid "E177: Count cannot be specified twice"
-msgstr "E177: Le quantificateur ne peut être spécifié deux fois"
-
-msgid "E178: Invalid default value for count"
-msgstr "E178: La valeur par défaut du quantificateur est invalide"
-
-msgid "E179: argument required for -complete"
-msgstr "E179: argument requis avec -complete"
-
-msgid "E179: argument required for -addr"
-msgstr "E179: argument requis avec -addr"
-
 #, c-format
 msgid "E174: Command already exists: add ! to replace it: %s"
 msgstr "E174: La commande existe déjà : ajoutez ! pour la redéfinir : %s"
-
-msgid "E182: Invalid command name"
-msgstr "E182: Nom de commande invalide"
-
-msgid "E183: User defined commands must start with an uppercase letter"
-msgstr "E183: Les commandes utilisateur doivent commencer par une majuscule"
-
-msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr ""
-"E841: Nom réservé, ne peux pas être utilisé pour une commande utilisateur"
-
-#, c-format
-msgid "E184: No such user-defined command: %s"
-msgstr "E184: Aucune commande %s définie par l'utilisateur"
 
 #, c-format
 msgid "E122: Function %s already exists, add ! to replace it"
@@ -6256,7 +5639,9 @@ msgid "E853: Duplicate argument name: %s"
 msgstr "E853: Nom d'argument dupliqué : %s"
 
 msgid "E989: Non-default argument follows default argument"
-msgstr "E989: Argument sans valeur par défaut ne peut pas suivre un argument avec valeur par défaut"
+msgstr ""
+"E989: Argument sans valeur par défaut ne peut pas suivre un argument avec "
+"valeur par défaut"
 
 #, c-format
 msgid "E740: Too many arguments for function %s"
@@ -6680,13 +6065,6 @@ msgstr "tapez  :help register<Entrée>   pour plus d'informations          "
 msgid "menu  Help->Sponsor/Register  for information    "
 msgstr "menu  Aide->Sponsor/Enregistrement pour plus d'info"
 
-msgid ""
-"\n"
-"# Buffer list:\n"
-msgstr ""
-"\n"
-"# Liste des tampons :\n"
-
 # DB - Messages et les suivants : fichier .viminfo.
 #      Pas de majuscule nécessaire pour les messages d'après.
 #, c-format
@@ -6712,34 +6090,6 @@ msgstr "ligne de saisie"
 msgid "Debug Line"
 msgstr "Ligne de débogage"
 
-msgid ""
-"\n"
-"# Bar lines, copied verbatim:\n"
-msgstr ""
-"\n"
-"# Lignes commençant par |, copiées littéralement :\n"
-
-# AB - Le numéro et le message d'erreur (%s ci-dessous) et le "numéro" de ligne
-#      sont des chaînes de caractères dont le contenu est à la discrétion de
-#      l'appelant de la fonction viminfo_error().
-#, c-format
-msgid "%sviminfo: %s in line: "
-msgstr "%sviminfo : %s à la ligne "
-
-# AB - La version française est meilleure que la version anglaise.
-msgid "E136: viminfo: Too many errors, skipping rest of file"
-msgstr ""
-"E136: Il y a trop d'erreurs ; interruption de la lecture du fichier viminfo"
-
-# AB - La version française est capitalisée pour être en accord avec les autres
-#      commentaires enregistrés dans le fichier viminfo.
-msgid ""
-"\n"
-"# global variables:\n"
-msgstr ""
-"\n"
-"# Variables globales:\n"
-
 # AB - Ne pas traduire le dollar.
 # AB - Ce message n'est volontairement pas traduit. En effet, il fait partie
 #      d'un groupe de trois messages dans viminfo, dont deux ne sont pas soumis
@@ -6754,19 +6104,6 @@ msgstr ""
 "\n"
 "# Dernières chaînes de substitution :\n"
 "$"
-
-#, c-format
-msgid ""
-"\n"
-"# Last %sSearch Pattern:\n"
-"~"
-msgstr ""
-"\n"
-"# Dernier motif de recherche %s :\n"
-"~"
-
-msgid "Substitute "
-msgstr "Substitue "
 
 msgid "Illegal register name"
 msgstr "Nom de registre invalide"
@@ -6806,79 +6143,6 @@ msgstr ""
 msgid "Missing '>'"
 msgstr "'>' manquant"
 
-# AB - Ce texte est passé en argument à la fonction viminfo_error().
-# AB - "illégal" est un terme trop fort à mon goût.
-msgid "Illegal starting char"
-msgstr "Caractère initial non valide"
-
-#, c-format
-msgid "# This viminfo file was generated by Vim %s.\n"
-msgstr "# Ce fichier viminfo a été généré par Vim %s.\n"
-
-# AB - Les deux versions, bien que différentes, se valent.
-msgid ""
-"# You may edit it if you're careful!\n"
-"\n"
-msgstr ""
-"# Vous pouvez l'éditer, mais soyez prudent.\n"
-"\n"
-
-msgid "# Value of 'encoding' when this file was written\n"
-msgstr "# 'encoding' dans lequel ce fichier a été écrit\n"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - ... dont les valeurs possibles sont les messages
-#      qui suivent.
-#, c-format
-msgid "Reading viminfo file \"%s\"%s%s%s"
-msgstr "Lecture du fichier viminfo \"%s\"%s%s%s"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - Voir ci-dessus.
-msgid " info"
-msgstr " info"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - Voir ci-dessus.
-msgid " marks"
-msgstr " marques"
-
-msgid " oldfiles"
-msgstr " vieux fichiers"
-
-# AB - Ce texte fait partie d'un message de débogage.
-# DB - Voir ci-dessus.
-msgid " FAILED"
-msgstr " ÉCHEC"
-
-# AB - J'espère que la plupart des utilisateurs aura l'idée d'aller vérifier
-#      ses droits d'accès.
-# AB - Le mot "viminfo" a été retiré pour que le message ne dépasse pas 80
-#      caractères dans le cas courant où %s = /home/12345678/.viminfo
-#, c-format
-msgid "E137: Viminfo file is not writable: %s"
-msgstr "E137: L'écriture dans le fichier %s est interdite"
-
-#, c-format
-msgid "E929: Too many viminfo temp files, like %s!"
-msgstr "E929: Trop de fichiers temporaires viminfo, comme %s!"
-
-# AB - Le point d'exclamation est superflu.
-# AB - Le mot "viminfo" a été retiré pour que le message ne dépasse pas 80
-#      caractères dans le cas courant où %s = /home/12345678/.viminfo
-#, c-format
-msgid "E138: Can't write viminfo file %s!"
-msgstr "E138: Impossible d'écrire le fichier %s"
-
-# AB - Ce texte est un message de débogage.
-#, c-format
-msgid "Writing viminfo file \"%s\""
-msgstr "Écriture du fichier viminfo \"%s\""
-
-#, c-format
-msgid "E886: Can't rename viminfo file to %s!"
-msgstr "E886: Impossible de renommer viminfo en %s"
-
 msgid "E195: Cannot open viminfo file for reading"
 msgstr "E195: Impossible d'ouvrir le viminfo en lecture"
 
@@ -6908,13 +6172,6 @@ msgstr ""
 msgid "E445: Other window contains changes"
 msgstr "E445: Les modifications de l'autre fenêtre n'ont pas été enregistrées"
 
-msgid "E446: No file name under cursor"
-msgstr "E446: Aucun nom de fichier sous le curseur"
-
-#, c-format
-msgid "E447: Can't find file \"%s\" in path"
-msgstr "E447: Le fichier \"%s\" est introuvable dans 'path'"
-
 #, c-format
 msgid "E799: Invalid ID: %ld (must be greater than or equal to 1)"
 msgstr "E799: ID invalide : %ld (doit être plus grand ou égal à 1)"
@@ -6922,9 +6179,6 @@ msgstr "E799: ID invalide : %ld (doit être plus grand ou égal à 1)"
 #, c-format
 msgid "E801: ID already taken: %ld"
 msgstr "E801: ID déjà pris: %ld"
-
-msgid "List or number required"
-msgstr "Liste ou nombre requis"
 
 #, c-format
 msgid "E802: Invalid ID: %ld (must be greater than or equal to 1)"
@@ -7223,18 +6477,6 @@ msgstr "E44: L'automate de regexp est corrompu"
 msgid "E45: 'readonly' option is set (add ! to override)"
 msgstr "E45: L'option 'readonly' est activée (ajoutez ! pour passer outre)"
 
-#, c-format
-msgid "E121: Undefined variable: %s"
-msgstr "E121: Variable non définie : %s"
-
-#, c-format
-msgid "E734: Wrong variable type for %s="
-msgstr "E734: Type de variable erroné avec %s="
-
-#, c-format
-msgid "E461: Illegal variable name: %s"
-msgstr "E461: Nom de variable invalide : %s"
-
 msgid "E995: Cannot modify existing variable"
 msgstr "E995: Impossible de modifier une variable existante"
 
@@ -7246,9 +6488,6 @@ msgstr "E46: La variable \"%s\" est en lecture seule"
 msgid "E794: Cannot set variable in the sandbox: \"%s\""
 msgstr ""
 "E794: Impossible de modifier une variable depuis le bac à sable : \"%s\""
-
-msgid "E928: String required"
-msgstr "E928: Chaîne requis"
 
 msgid "E713: Cannot use empty key for Dictionary"
 msgstr "E713: Impossible d'utiliser une clé vide dans un Dictionnaire"

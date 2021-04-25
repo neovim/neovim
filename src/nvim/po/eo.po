@@ -475,23 +475,11 @@ msgstr "kongruo %d"
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: Neatenditaj signoj en \":let\""
 
-#, c-format
-msgid "E121: Undefined variable: %s"
-msgstr "E121: Nedifinita variablo: %s"
-
 msgid "E111: Missing ']'"
 msgstr "E111: Mankas ']'"
 
 msgid "E719: Cannot use [:] with a Dictionary"
 msgstr "E719: Uzo de [:] ne eblas kun Vortaro"
-
-#, c-format
-msgid "E734: Wrong variable type for %s="
-msgstr "E734: Nevalida datumtipo de variablo de %s="
-
-#, c-format
-msgid "E461: Illegal variable name: %s"
-msgstr "E461: Nevalida nomo de variablo: %s"
 
 msgid "E806: using Float as a String"
 msgstr "E806: uzo de Glitpunktnombro kiel Ĉeno"
@@ -691,9 +679,6 @@ msgstr "argumento de filter()"
 msgid "E686: Argument of %s must be a List"
 msgstr "E686: Argumento de %s devas esti Listo"
 
-msgid "E928: String required"
-msgstr "E928: Ĉeno bezonata"
-
 msgid "E808: Number or Float required"
 msgstr "E808: Nombro aŭ Glitpunktnombro bezonata"
 
@@ -779,10 +764,6 @@ msgstr "argumento de reverse()"
 msgid "E258: Unable to send to client"
 msgstr "E258: Ne eblas sendi al kliento"
 
-#, c-format
-msgid "E927: Invalid action: '%s'"
-msgstr "E927: Nevalida ago: '%s'"
-
 msgid "sort() argument"
 msgstr "argumento de sort()"
 
@@ -801,9 +782,6 @@ msgstr "(Nevalida)"
 #, c-format
 msgid "E935: invalid submatch number: %d"
 msgstr "E935: nevalida indekso de \"submatch\": %d"
-
-msgid "E677: Error writing temp file"
-msgstr "E677: Eraro dum skribo de provizora dosiero"
 
 msgid "E921: Invalid callback argument"
 msgstr "E921: Nevalida argumento de reagfunctio"
@@ -1177,79 +1155,12 @@ msgid "E666: compiler not supported: %s"
 msgstr "E666: kompililo nesubtenata: %s"
 
 #, c-format
-msgid "Searching for \"%s\" in \"%s\""
-msgstr "Serĉado de \"%s\" en \"%s\""
-
-#, c-format
-msgid "Searching for \"%s\""
-msgstr "Serĉado de \"%s\""
-
-#, c-format
-msgid "not found in '%s': \"%s\""
-msgstr "ne trovita en '%s: \"%s\""
-
-#, c-format
 msgid "W20: Required python version 2.x not supported, ignoring file: %s"
 msgstr "W20: Pitono versio 2.x bezonata sed nesubtenata, ignoro de dosiero: %s"
 
 #, c-format
 msgid "W21: Required python version 3.x not supported, ignoring file: %s"
 msgstr "W21: pitono versio 3.x bezonata sed nesubtenata, ignoro de dosiero: %s"
-
-msgid "Source Vim script"
-msgstr "Ruli Vim-skripton"
-
-#, c-format
-msgid "Cannot source a directory: \"%s\""
-msgstr "Ne eblas ruli dosierujon: \"%s\""
-
-#, c-format
-msgid "could not source \"%s\""
-msgstr "ne eblis ruli \"%s\""
-
-#, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "linio %ld: ne eblis ruli \"%s\""
-
-#, c-format
-msgid "sourcing \"%s\""
-msgstr "rulas \"%s\""
-
-#, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "linio %ld: rulas \"%s\""
-
-#, c-format
-msgid "finished sourcing %s"
-msgstr "finis ruli %s"
-
-#, c-format
-msgid "continuing in %s"
-msgstr "daŭrigas en %s"
-
-msgid "modeline"
-msgstr "reĝimlinio"
-
-msgid "--cmd argument"
-msgstr "--cmd argumento"
-
-msgid "-c argument"
-msgstr "-c argumento"
-
-msgid "environment variable"
-msgstr "medivariablo"
-
-msgid "error handler"
-msgstr "erartraktilo"
-
-msgid "W15: Warning: Wrong line separator, ^M may be missing"
-msgstr "W15: Averto: Neĝusta disigilo de linio, ^M eble mankas"
-
-msgid "E167: :scriptencoding used outside of a sourced file"
-msgstr "E167: \":scriptencoding\" uzita ekster rulita dosiero"
-
-msgid "E168: :finish used outside of a sourced file"
-msgstr "E168: \":finish\" uzita ekster rulita dosiero"
 
 #, c-format
 msgid "Current %slanguage: \"%s\""
@@ -3935,9 +3846,6 @@ msgstr " (Interrompita)"
 msgid "Beep!"
 msgstr "Bip!"
 
-msgid "E677: Error writing temp file"
-msgstr "E677: Eraro dum skribo de provizora dosiero"
-
 #, c-format
 msgid "%ld second ago"
 msgid_plural "%ld seconds ago"
@@ -4088,9 +3996,6 @@ msgid_plural "%ld lines indented "
 msgstr[0] "%ld linio krommarĝenita "
 msgstr[1] "%ld linioj krommarĝenitaj "
 
-msgid "E748: No previously used register"
-msgstr "E748: Neniu reĝistro antaŭe uzata"
-
 msgid "cannot yank; delete anyway"
 msgstr "ne eblas kopii; tamen forviŝi"
 
@@ -4099,30 +4004,6 @@ msgid "%ld line changed"
 msgid_plural "%ld lines changed"
 msgstr[0] "%ld linio ŝanĝita"
 msgstr[1] "%ld linioj ŝanĝitaj"
-
-#, c-format
-msgid "freeing %ld lines"
-msgstr "malokupas %ld liniojn"
-
-#, c-format
-msgid " into \"%c"
-msgstr " en \"%c"
-
-#, c-format
-msgid "block of %ld line yanked%s"
-msgid_plural "block of %ld lines yanked%s"
-msgstr[0] "bloko de %ld linio kopiita%s"
-msgstr[1] "bloko de %ld linioj kopiitaj%s"
-
-#, c-format
-msgid "%ld line yanked%s"
-msgid_plural "%ld lines yanked%s"
-msgstr[0] "%ld linio kopiita%s"
-msgstr[1] "%ld linioj kopiitaj%s"
-
-#, c-format
-msgid "E353: Nothing in register %s"
-msgstr "E353: Nenio en reĝistro %s"
 
 msgid ""
 "\n"
@@ -4144,12 +4025,6 @@ msgstr ""
 #, c-format
 msgid "E574: Unknown register type %d"
 msgstr "E574: Nekonata tipo de reĝistro %d"
-
-msgid ""
-"E883: search pattern and expression register may not contain two or more "
-"lines"
-msgstr ""
-"E883: serĉa ŝablono kaj esprima reĝistro ne povas enhavi du aŭ pliajn liniojn"
 
 #, c-format
 msgid "%ld Cols; "
@@ -4205,64 +4080,8 @@ msgstr "E521: Nombro bezonata malantaŭ ="
 msgid "E522: Not found in termcap"
 msgstr "E522: Netrovita en termcap"
 
-msgid "E946: Cannot make a terminal with running job modifiable"
-msgstr "E946: Ne eblas igi modifebla terminalon kun aktiva tasko"
-
-msgid "E590: A preview window already exists"
-msgstr "E590: Antaŭvida fenestro jam ekzistas"
-
-msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
-msgstr "W17: La araba bezonas UTF-8, tajpu \":set encoding=utf-8\""
-
 msgid "E954: 24-bit colors are not supported on this environment"
 msgstr "E954: 24-bitaj koloroj ne estas subtenataj en tiu sistemo"
-
-#, c-format
-msgid "E593: Need at least %d lines"
-msgstr "E593: Bezonas almenaŭ %d liniojn"
-
-#, c-format
-msgid "E594: Need at least %d columns"
-msgstr "E594: Bezonas almenaŭ %d kolumnojn"
-
-#, c-format
-msgid "E355: Unknown option: %s"
-msgstr "E355: Nekonata opcio: %s"
-
-#, c-format
-msgid "E521: Number required: &%s = '%s'"
-msgstr "E521: Nombro bezonata: &%s = '%s'"
-
-msgid ""
-"\n"
-"--- Terminal codes ---"
-msgstr ""
-"\n"
-"--- Kodoj de terminalo ---"
-
-msgid ""
-"\n"
-"--- Global option values ---"
-msgstr ""
-"\n"
-"--- Mallokaj opcioj ---"
-
-msgid ""
-"\n"
-"--- Local option values ---"
-msgstr ""
-"\n"
-"--- Valoroj de lokaj opcioj ---"
-
-msgid ""
-"\n"
-"--- Options ---"
-msgstr ""
-"\n"
-"--- Opcioj ---"
-
-msgid "E356: get_varp ERROR"
-msgstr "E356: ERARO get_varp"
 
 #, c-format
 msgid "E539: Illegal character <%s>"
@@ -4271,15 +4090,6 @@ msgstr "E539: Nevalida signo <%s>"
 #, c-format
 msgid "For option %s"
 msgstr "Por opcio %s"
-
-msgid "E540: Unclosed expression sequence"
-msgstr "E540: '}' mankas"
-
-msgid "E541: too many items"
-msgstr "E541: tro da elementoj"
-
-msgid "E542: unbalanced groups"
-msgstr "E542: misekvilibraj grupoj"
 
 msgid "E529: Cannot set 'term' to empty string"
 msgstr "E529: Ne eblas agordi 'term' al malplena ĉeno"
@@ -4349,71 +4159,6 @@ msgstr "E537: 'commentstring' devas esti malplena aŭ enhavi %s"
 
 msgid "E538: No mouse support"
 msgstr "E538: Neniu muso subtenata"
-
-msgid "E540: Unclosed expression sequence"
-msgstr "E540: '}' mankas"
-
-msgid "E541: too many items"
-msgstr "E541: tro da elementoj"
-
-msgid "E542: unbalanced groups"
-msgstr "E542: misekvilibraj grupoj"
-
-msgid "E946: Cannot make a terminal with running job modifiable"
-msgstr "E946: Ne eblas igi modifebla terminalon kun aktiva tasko"
-
-msgid "E590: A preview window already exists"
-msgstr "E590: Antaŭvida fenestro jam ekzistas"
-
-msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
-msgstr "W17: La araba bezonas UTF-8, tajpu \":set encoding=utf-8\""
-
-#, c-format
-msgid "E593: Need at least %d lines"
-msgstr "E593: Bezonas almenaŭ %d liniojn"
-
-#, c-format
-msgid "E594: Need at least %d columns"
-msgstr "E594: Bezonas almenaŭ %d kolumnojn"
-
-#, c-format
-msgid "E355: Unknown option: %s"
-msgstr "E355: Nekonata opcio: %s"
-
-#, c-format
-msgid "E521: Number required: &%s = '%s'"
-msgstr "E521: Nombro bezonata: &%s = '%s'"
-
-msgid ""
-"\n"
-"--- Terminal codes ---"
-msgstr ""
-"\n"
-"--- Kodoj de terminalo ---"
-
-msgid ""
-"\n"
-"--- Global option values ---"
-msgstr ""
-"\n"
-"--- Mallokaj opcioj ---"
-
-msgid ""
-"\n"
-"--- Local option values ---"
-msgstr ""
-"\n"
-"--- Valoroj de lokaj opcioj ---"
-
-msgid ""
-"\n"
-"--- Options ---"
-msgstr ""
-"\n"
-"--- Opcioj ---"
-
-msgid "E356: get_varp ERROR"
-msgstr "E356: ERARO get_varp"
 
 #, c-format
 msgid "E357: 'langmap': Matching character missing for %s"
@@ -4732,10 +4477,6 @@ msgid "E777: String or List expected"
 msgstr "E777: Ĉeno aŭ Listo atendita"
 
 #, c-format
-msgid "E927: Invalid action: '%s'"
-msgstr "E927: Nevalida ago: '%s'"
-
-#, c-format
 msgid "E369: invalid item in %s%%[]"
 msgstr "E369: nevalida ano en %s%%[]"
 
@@ -4914,45 +4655,12 @@ msgstr "E876: (NFA-regulesprimo) ne sufiĉa spaco por enmemorigi la tutan NFA "
 msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr "E878: (NFA) Ne povis asigni memoron por traigi branĉojn!"
 
-msgid "E748: No previously used register"
-msgstr "E748: Neniu reĝistro antaŭe uzata"
-
-#, c-format
-msgid "freeing %ld lines"
-msgstr "malokupas %ld liniojn"
-
-#, c-format
-msgid " into \"%c"
-msgstr " en \"%c"
-
-#, c-format
-msgid "block of %ld line yanked%s"
-msgid_plural "block of %ld lines yanked%s"
-msgstr[0] "bloko de %ld linio kopiita%s"
-msgstr[1] "bloko de %ld linioj kopiitaj%s"
-
-#, c-format
-msgid "%ld line yanked%s"
-msgid_plural "%ld lines yanked%s"
-msgstr[0] "%ld linio kopiita%s"
-msgstr[1] "%ld linioj kopiitaj%s"
-
-#, c-format
-msgid "E353: Nothing in register %s"
-msgstr "E353: Nenio en reĝistro %s"
-
 msgid ""
 "\n"
 "Type Name Content"
 msgstr ""
 "\n"
 "Tipo Nomo Enhavo"
-
-msgid ""
-"E883: search pattern and expression register may not contain two or more "
-"lines"
-msgstr ""
-"E883: serĉa ŝablono kaj esprima reĝistro ne povas enhavi du aŭ pliajn liniojn"
 
 msgid " VREPLACE"
 msgstr " V-ANSTATAŬIGO"
@@ -5005,79 +4713,12 @@ msgstr " APARTIGITA BLOKO"
 msgid "recording"
 msgstr "registrado"
 
-#, c-format
-msgid "Searching for \"%s\" in \"%s\""
-msgstr "Serĉado de \"%s\" en \"%s\""
-
-#, c-format
-msgid "Searching for \"%s\""
-msgstr "Serĉado de \"%s\""
-
-#, c-format
-msgid "not found in '%s': \"%s\""
-msgstr "ne trovita en '%s: \"%s\""
-
-msgid "Source Vim script"
-msgstr "Ruli Vim-skripton"
-
-#, c-format
-msgid "Cannot source a directory: \"%s\""
-msgstr "Ne eblas ruli dosierujon: \"%s\""
-
-#, c-format
-msgid "could not source \"%s\""
-msgstr "ne eblis ruli \"%s\""
-
-#, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "linio %ld: ne eblis ruli \"%s\""
-
-#, c-format
-msgid "sourcing \"%s\""
-msgstr "rulas \"%s\""
-
-#, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "linio %ld: rulas \"%s\""
-
-#, c-format
-msgid "finished sourcing %s"
-msgstr "finis ruli %s"
-
-#, c-format
-msgid "continuing in %s"
-msgstr "daŭrigas en %s"
-
-msgid "modeline"
-msgstr "reĝimlinio"
-
-msgid "--cmd argument"
-msgstr "--cmd argumento"
-
-msgid "-c argument"
-msgstr "-c argumento"
-
-msgid "environment variable"
-msgstr "medivariablo"
-
-msgid "error handler"
-msgstr "erartraktilo"
-
-msgid "W15: Warning: Wrong line separator, ^M may be missing"
-msgstr "W15: Averto: Neĝusta disigilo de linio, ^M eble mankas"
-
-msgid "E167: :scriptencoding used outside of a sourced file"
-msgstr "E167: \":scriptencoding\" uzita ekster rulita dosiero"
-
 msgid "E984: :scriptversion used outside of a sourced file"
 msgstr "E984: :scriptversion uzita ekster rulita dosiero"
 
 #, c-format
 msgid "E999: scriptversion not supported: %d"
 msgstr "E999: scriptversion ne subtenata: %d"
-
-msgid "E168: :finish used outside of a sourced file"
-msgstr "E168: \":finish\" uzita ekster rulita dosiero"
 
 #, c-format
 msgid "E383: Invalid search string: %s"
@@ -6778,18 +6419,6 @@ msgstr "E44: Difekta programo de regulesprimo"
 msgid "E45: 'readonly' option is set (add ! to override)"
 msgstr "E45: La opcio 'readonly' estas ŝaltita '(aldonu ! por transpasi)"
 
-#, c-format
-msgid "E121: Undefined variable: %s"
-msgstr "E121: Nedifinita variablo: %s"
-
-#, c-format
-msgid "E734: Wrong variable type for %s="
-msgstr "E734: Nevalida datumtipo de variablo de %s="
-
-#, c-format
-msgid "E461: Illegal variable name: %s"
-msgstr "E461: Nevalida nomo de variablo: %s"
-
 msgid "E995: Cannot modify existing variable"
 msgstr "E995: Ne eblas ŝanĝi ekzistantan variablon"
 
@@ -6800,9 +6429,6 @@ msgstr "E46: Ne eblas ŝanĝi nurlegeblan variablon \"%s\""
 #, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%s\""
 msgstr "E794: Ne eblas agordi variablon en la sabloludejo: \"%s\""
-
-msgid "E928: String required"
-msgstr "E928: Ĉeno bezonata"
 
 msgid "E713: Cannot use empty key for Dictionary"
 msgstr "E713: Ne eblas uzi malplenan ŝlosilon de Vortaro"

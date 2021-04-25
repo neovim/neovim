@@ -1,4 +1,3 @@
-
 # Japanese translation for Vim
 #
 # Do ":help uganda"  in Vim to read copying and usage conditions.
@@ -278,18 +277,6 @@ msgstr "E915: in_io バッファは in_buf か in_name の設定が必要です"
 msgid "E918: buffer must be loaded: %s"
 msgstr "E918: バッファがロードされてなければなりません: %s"
 
-msgid "E916: not a valid job"
-msgstr "E916: 有効なジョブではありません"
-
-msgid "tagname"
-msgstr "タグ名"
-
-msgid " kind file\n"
-msgstr " ファイル種類\n"
-
-msgid "'history' option is zero"
-msgstr "オプション 'history' がゼロです"
-
 msgid "E821: File is encrypted with unknown method"
 msgstr "E821: ファイルが未知の方法で暗号化されています"
 
@@ -489,23 +476,11 @@ msgstr "%d 番目の該当"
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: 予期せぬ文字が :let にありました"
 
-#, c-format
-msgid "E121: Undefined variable: %s"
-msgstr "E121: 未定義の変数です: %s"
-
 msgid "E111: Missing ']'"
 msgstr "E111: ']' が見つかりません"
 
 msgid "E719: Cannot use [:] with a Dictionary"
 msgstr "E719: [:] を辞書型と組み合わせては使えません"
-
-#, c-format
-msgid "E734: Wrong variable type for %s="
-msgstr "E734: 異なった型の変数です %s="
-
-#, c-format
-msgid "E461: Illegal variable name: %s"
-msgstr "E461: 不正な変数名です: %s"
 
 msgid "E806: using Float as a String"
 msgstr "E806: 浮動小数点数を文字列として扱っています"
@@ -699,35 +674,18 @@ msgstr "E736: 辞書型には無効な操作です"
 msgid "E694: Invalid operation for Funcrefs"
 msgstr "E694: 関数参照型には無効な操作です"
 
-msgid "map() argument"
-msgstr "map() の引数"
-
-msgid "filter() argument"
-msgstr "filter() の引数"
-
 #, c-format
 msgid "E686: Argument of %s must be a List"
 msgstr "E686: %s の引数はリスト型でなければなりません"
 
-msgid "E928: String required"
-msgstr "E928: 文字列が必要です"
-
 msgid "E808: Number or Float required"
 msgstr "E808: 数値か浮動小数点数が必要です"
-
-msgid "add() argument"
-msgstr "add() の引数"
 
 msgid "E785: complete() can only be used in Insert mode"
 msgstr "E785: complete() は挿入モードでしか利用できません"
 
 msgid "&Ok"
 msgstr "&Ok"
-
-#, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
-msgstr[0] "+-%s%3ld 行: "
 
 #, c-format
 msgid "E700: Unknown function: %s"
@@ -749,14 +707,8 @@ msgstr ""
 msgid "called inputrestore() more often than inputsave()"
 msgstr "inputrestore() が inputsave() よりも多く呼ばれました"
 
-msgid "insert() argument"
-msgstr "insert() の引数"
-
 msgid "E786: Range not allowed"
 msgstr "E786: 範囲指定は許可されていません"
-
-msgid "E916: not a valid job"
-msgstr "E916: 有効なジョブではありません"
 
 msgid "E701: Invalid type for len()"
 msgstr "E701: len() には無効な型です"
@@ -790,34 +742,12 @@ msgstr "E941: サーバーはすでに開始しています"
 msgid "E942: +clientserver feature not available"
 msgstr "E942: +clientserver 機能が無効になっています"
 
-msgid "remove() argument"
-msgstr "remove() の引数"
-
 # Added at 10-Mar-2004.
 msgid "E655: Too many symbolic links (cycle?)"
 msgstr "E655: シンボリックリンクが多過ぎます (循環している可能性があります)"
 
-msgid "reverse() argument"
-msgstr "reverse() の引数"
-
 msgid "E258: Unable to send to client"
 msgstr "E258: クライアントへ送ることができません"
-
-#, c-format
-msgid "E927: Invalid action: '%s'"
-msgstr "E927: 無効な操作です: %s"
-
-msgid "sort() argument"
-msgstr "sort() の引数"
-
-msgid "uniq() argument"
-msgstr "uniq() の引数"
-
-msgid "E702: Sort compare function failed"
-msgstr "E702: ソートの比較関数が失敗しました"
-
-msgid "E882: Uniq compare function failed"
-msgstr "E882: Uniq の比較関数が失敗しました"
 
 msgid "(Invalid)"
 msgstr "(無効)"
@@ -825,9 +755,6 @@ msgstr "(無効)"
 #, c-format
 msgid "E935: invalid submatch number: %d"
 msgstr "E935: 無効なサブマッチ番号: %d"
-
-msgid "E677: Error writing temp file"
-msgstr "E677: 一時ファイル書込中にエラーが発生しました"
 
 msgid "E921: Invalid callback argument"
 msgstr "E921: 無効なコールバック引数です"
@@ -1147,79 +1074,12 @@ msgid "E666: compiler not supported: %s"
 msgstr "E666: そのコンパイラには対応していません: %s"
 
 #, c-format
-msgid "Searching for \"%s\" in \"%s\""
-msgstr "\"%s\" を \"%s\" から検索中"
-
-#, c-format
-msgid "Searching for \"%s\""
-msgstr "\"%s\" を検索中"
-
-#, c-format
-msgid "not found in '%s': \"%s\""
-msgstr "'%s' の中にはありません: \"%s\""
-
-#, c-format
 msgid "W20: Required python version 2.x not supported, ignoring file: %s"
 msgstr "W20: 要求されたpython 2.xは対応していません、ファイルを無視します: %s"
 
 #, c-format
 msgid "W21: Required python version 3.x not supported, ignoring file: %s"
 msgstr "W21: 要求されたpython 3.xは対応していません、ファイルを無視します: %s"
-
-msgid "Source Vim script"
-msgstr "Vimスクリプトの取込み"
-
-#, c-format
-msgid "Cannot source a directory: \"%s\""
-msgstr "ディレクトリは取込めません: \"%s\""
-
-#, c-format
-msgid "could not source \"%s\""
-msgstr "\"%s\" を取込めません"
-
-#, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "行 %ld: \"%s\" を取込めません"
-
-#, c-format
-msgid "sourcing \"%s\""
-msgstr "\"%s\" を取込中"
-
-#, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "行 %ld: %s を取込中"
-
-#, c-format
-msgid "finished sourcing %s"
-msgstr "%s の取込を完了"
-
-#, c-format
-msgid "continuing in %s"
-msgstr "%s の実行を継続中です"
-
-msgid "modeline"
-msgstr "モード行"
-
-msgid "--cmd argument"
-msgstr "--cmd 引数"
-
-msgid "-c argument"
-msgstr "-c 引数"
-
-msgid "environment variable"
-msgstr "環境変数"
-
-msgid "error handler"
-msgstr "エラーハンドラ"
-
-msgid "W15: Warning: Wrong line separator, ^M may be missing"
-msgstr "W15: 警告: 行区切が不正です. ^M がないのでしょう"
-
-msgid "E167: :scriptencoding used outside of a sourced file"
-msgstr "E167: :scriptencoding が取込スクリプト以外で使用されました"
-
-msgid "E168: :finish used outside of a sourced file"
-msgstr "E168: :finish が取込スクリプト以外で使用されました"
 
 #, c-format
 msgid "Current %slanguage: \"%s\""
@@ -1570,15 +1430,6 @@ msgstr "E788: 現在は他のバッファを編集することは許されません"
 
 msgid "E811: Not allowed to change buffer information now"
 msgstr "E811: 現在はバッファ情報を変更することは許されません"
-
-msgid "tagname"
-msgstr "タグ名"
-
-msgid " kind file\n"
-msgstr " ファイル種類\n"
-
-msgid "'history' option is zero"
-msgstr "オプション 'history' がゼロです"
 
 #, c-format
 msgid ""
@@ -1995,11 +1846,6 @@ msgid "+--%3ld line folded "
 msgid_plural "+--%3ld lines folded "
 msgstr[0] "+--%3ld 行が折畳まれました"
 
-#, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
-msgstr[0] "+-%s%3ld 行: "
-
 msgid "E222: Add to read buffer"
 msgstr "E222: 読込バッファへ追加"
 
@@ -2380,70 +2226,6 @@ msgstr "E365: PostScriptファイルの印刷に失敗しました"
 msgid "Print job sent."
 msgstr "印刷ジョブを送信しました。"
 
-msgid "E679: recursive loop loading syncolor.vim"
-msgstr "E679: syncolor.vim の再帰呼び出しを検出しました"
-
-#, c-format
-msgid "E411: highlight group not found: %s"
-msgstr "E411: ハイライトグループが見つかりません: %s"
-
-#, c-format
-msgid "E412: Not enough arguments: \":highlight link %s\""
-msgstr "E412: 引数が充分ではない: \":highlight link %s\""
-
-#, c-format
-msgid "E413: Too many arguments: \":highlight link %s\""
-msgstr "E413: 引数が多過ぎます: \":highlight link %s\""
-
-msgid "E414: group has settings, highlight link ignored"
-msgstr "E414: グループが設定されているのでハイライトリンクは無視されます"
-
-#, c-format
-msgid "E415: unexpected equal sign: %s"
-msgstr "E415: 予期せぬ等号です: %s"
-
-#, c-format
-msgid "E416: missing equal sign: %s"
-msgstr "E416: 等号がありません: %s"
-
-#, c-format
-msgid "E417: missing argument: %s"
-msgstr "E417: 引数がありません: %s"
-
-#, c-format
-msgid "E418: Illegal value: %s"
-msgstr "E418: 不正な値です: %s"
-
-msgid "E419: FG color unknown"
-msgstr "E419: 未知の前景色です"
-
-msgid "E420: BG color unknown"
-msgstr "E420: 未知の背景色です"
-
-#, c-format
-msgid "E421: Color name or number not recognized: %s"
-msgstr "E421: カラー名や番号を認識できません: %s"
-
-#, c-format
-msgid "E422: terminal code too long: %s"
-msgstr "E422: 終端コードが長過ぎます: %s"
-
-#, c-format
-msgid "E423: Illegal argument: %s"
-msgstr "E423: 不正な引数です: %s"
-
-msgid "E424: Too many different highlighting attributes in use"
-msgstr "E424: 多くの異なるハイライト属性が使われ過ぎています"
-
-msgid "E669: Unprintable character in group name"
-msgstr "E669: グループ名に印刷不可能な文字があります"
-
-msgid "W18: Invalid character in group name"
-msgstr "W18: グループ名に不正な文字があります"
-
-msgid "E849: Too many highlight and syntax groups"
-msgstr "E849: ハイライトと構文グループが多過ぎます"
-
 #, c-format
 msgid "E799: Invalid ID: %d (must be greater than or equal to 1)"
 msgstr "E799: 無効な ID: %d (1 以上でなければなりません)"
@@ -2451,9 +2233,6 @@ msgstr "E799: 無効な ID: %d (1 以上でなければなりません)"
 #, c-format
 msgid "E801: ID already taken: %d"
 msgstr "E801: ID はすでに利用中です: %d"
-
-msgid "List or number required"
-msgstr "リストか数値が必要です"
 
 #, c-format
 msgid "E802: Invalid ID: %d (must be greater than or equal to 1)"
@@ -2866,36 +2645,6 @@ msgstr "E696: リスト型にカンマがありません: %s"
 #, c-format
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: リスト型の最後に ']' がありません: %s"
-
-msgid "sort() argument"
-msgstr "sort() の引数"
-
-msgid "uniq() argument"
-msgstr "uniq() の引数"
-
-msgid "E702: Sort compare function failed"
-msgstr "E702: ソートの比較関数が失敗しました"
-
-msgid "E882: Uniq compare function failed"
-msgstr "E882: Uniq の比較関数が失敗しました"
-
-msgid "map() argument"
-msgstr "map() の引数"
-
-msgid "filter() argument"
-msgstr "filter() の引数"
-
-msgid "add() argument"
-msgstr "add() の引数"
-
-msgid "insert() argument"
-msgstr "insert() の引数"
-
-msgid "remove() argument"
-msgstr "remove() の引数"
-
-msgid "reverse() argument"
-msgstr "reverse() の引数"
 
 msgid "Unknown option argument"
 msgstr "未知のオプション引数です"
@@ -4021,9 +3770,6 @@ msgstr " (割込まれました)"
 msgid "Beep!"
 msgstr "ビーッ!"
 
-msgid "E677: Error writing temp file"
-msgstr "E677: 一時ファイル書込中にエラーが発生しました"
-
 #, c-format
 msgid "%ld second ago"
 msgid_plural "%ld seconds ago"
@@ -4173,9 +3919,6 @@ msgstr "1 行をインデントしました "
 msgid "%ld lines indented "
 msgstr "%ld 行をインデントしました "
 
-msgid "E748: No previously used register"
-msgstr "E748: まだレジスタを使用していません"
-
 msgid "cannot yank; delete anyway"
 msgstr "ヤンクできません; とにかく消去"
 
@@ -4185,14 +3928,6 @@ msgstr "1 行が変更されました"
 #, c-format
 msgid "%ld lines changed"
 msgstr "%ld 行が変更されました"
-
-#, c-format
-msgid "freeing %ld lines"
-msgstr "%ld 行を解放中"
-
-#, c-format
-msgid " into \"%c"
-msgstr " \"%c に"
 
 #, c-format
 msgid "block of 1 line yanked%s"
@@ -4209,10 +3944,6 @@ msgstr "%ld 行のブロックが%sヤンクされました"
 #, c-format
 msgid "%ld lines yanked%s"
 msgstr "%ld 行が%sヤンクされました"
-
-#, c-format
-msgid "E353: Nothing in register %s"
-msgstr "E353: レジスタ %s には何もありません"
 
 msgid ""
 "\n"
@@ -4234,11 +3965,6 @@ msgstr ""
 #, c-format
 msgid "E574: Unknown register type %d"
 msgstr "E574: 未知のレジスタ型 %d です"
-
-msgid ""
-"E883: search pattern and expression register may not contain two or more "
-"lines"
-msgstr "E883: 検索パターンと式レジスタには2行以上を含められません"
 
 #, c-format
 msgid "%ld Cols; "
@@ -4756,10 +4482,6 @@ msgid "E777: String or List expected"
 msgstr "E777: 文字列かリストが必要です"
 
 #, c-format
-msgid "E927: Invalid action: '%s'"
-msgstr "E927: 無効な操作です: '%s'"
-
-#, c-format
 msgid "E369: invalid item in %s%%[]"
 msgstr "E369: 無効な項目です: %s%%[]"
 
@@ -4938,17 +4660,6 @@ msgstr "E876: (NFA 正規表現) NFA全体を保存するには空きスペースが足りません"
 msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr "E878: (NFA) 現在横断中のブランチに十分なメモリを割り当てられません!"
 
-msgid "E748: No previously used register"
-msgstr "E748: まだレジスタを使用していません"
-
-#, c-format
-msgid "freeing %ld lines"
-msgstr "%ld 行を解放中"
-
-#, c-format
-msgid " into \"%c"
-msgstr " \"%c に"
-
 #, c-format
 msgid "block of %ld line yanked%s"
 msgid_plural "block of %ld lines yanked%s"
@@ -4959,21 +4670,12 @@ msgid "%ld line yanked%s"
 msgid_plural "%ld lines yanked%s"
 msgstr[0] "%ld 行が%sヤンクされました"
 
-#, c-format
-msgid "E353: Nothing in register %s"
-msgstr "E353: レジスタ %s には何もありません"
-
 msgid ""
 "\n"
 "Type Name Content"
 msgstr ""
 "\n"
 "型式 名前 内容"
-
-msgid ""
-"E883: search pattern and expression register may not contain two or more "
-"lines"
-msgstr "E883: 検索パターンと式レジスタには2行以上を含められません"
 
 msgid " VREPLACE"
 msgstr " 仮想置換"
@@ -5026,79 +4728,12 @@ msgstr " 矩形選択"
 msgid "recording"
 msgstr "記録中"
 
-#, c-format
-msgid "Searching for \"%s\" in \"%s\""
-msgstr "\"%s\" を \"%s\" から検索中"
-
-#, c-format
-msgid "Searching for \"%s\""
-msgstr "\"%s\" を検索中"
-
-#, c-format
-msgid "not found in '%s': \"%s\""
-msgstr "'%s' の中にはありません: \"%s\""
-
-msgid "Source Vim script"
-msgstr "Vimスクリプトの取込み"
-
-#, c-format
-msgid "Cannot source a directory: \"%s\""
-msgstr "ディレクトリは取込めません: \"%s\""
-
-#, c-format
-msgid "could not source \"%s\""
-msgstr "\"%s\" を取込めません"
-
-#, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "行 %ld: \"%s\" を取込めません"
-
-#, c-format
-msgid "sourcing \"%s\""
-msgstr "\"%s\" を取込中"
-
-#, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "行 %ld: %s を取込中"
-
-#, c-format
-msgid "finished sourcing %s"
-msgstr "%s の取込を完了"
-
-#, c-format
-msgid "continuing in %s"
-msgstr "%s の実行を継続中です"
-
-msgid "modeline"
-msgstr "モード行"
-
-msgid "--cmd argument"
-msgstr "--cmd 引数"
-
-msgid "-c argument"
-msgstr "-c 引数"
-
-msgid "environment variable"
-msgstr "環境変数"
-
-msgid "error handler"
-msgstr "エラーハンドラ"
-
-msgid "W15: Warning: Wrong line separator, ^M may be missing"
-msgstr "W15: 警告: 行区切が不正です。^M がないのでしょう"
-
-msgid "E167: :scriptencoding used outside of a sourced file"
-msgstr "E167: :scriptencoding が取込スクリプト以外で使用されました"
-
 msgid "E984: :scriptversion used outside of a sourced file"
 msgstr "E984: :scriptversion が取込スクリプト以外で使用されました"
 
 #, c-format
 msgid "E999: scriptversion not supported: %d"
 msgstr "E999: scriptversion はサポートされていません: %d"
-
-msgid "E168: :finish used outside of a sourced file"
-msgstr "E168: :finish が取込スクリプト以外で使用されました"
 
 #, c-format
 msgid "E383: Invalid search string: %s"
@@ -5690,70 +5325,6 @@ msgid ""
 "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"
 msgstr ""
 "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"
-
-msgid "E679: recursive loop loading syncolor.vim"
-msgstr "E679: syncolor.vim の再帰呼び出しを検出しました"
-
-#, c-format
-msgid "E411: highlight group not found: %s"
-msgstr "E411: ハイライトグループが見つかりません: %s"
-
-#, c-format
-msgid "E412: Not enough arguments: \":highlight link %s\""
-msgstr "E412: 引数が充分ではない: \":highlight link %s\""
-
-#, c-format
-msgid "E413: Too many arguments: \":highlight link %s\""
-msgstr "E413: 引数が多過ぎます: \":highlight link %s\""
-
-msgid "E414: group has settings, highlight link ignored"
-msgstr "E414: グループが設定されているのでハイライトリンクは無視されます"
-
-#, c-format
-msgid "E415: unexpected equal sign: %s"
-msgstr "E415: 予期せぬ等号です: %s"
-
-#, c-format
-msgid "E416: missing equal sign: %s"
-msgstr "E416: 等号がありません: %s"
-
-#, c-format
-msgid "E417: missing argument: %s"
-msgstr "E417: 引数がありません: %s"
-
-#, c-format
-msgid "E418: Illegal value: %s"
-msgstr "E418: 不正な値です: %s"
-
-msgid "E419: FG color unknown"
-msgstr "E419: 未知の前景色です"
-
-msgid "E420: BG color unknown"
-msgstr "E420: 未知の背景色です"
-
-#, c-format
-msgid "E421: Color name or number not recognized: %s"
-msgstr "E421: カラー名や番号を認識できません: %s"
-
-#, c-format
-msgid "E422: terminal code too long: %s"
-msgstr "E422: 終端コードが長過ぎます: %s"
-
-#, c-format
-msgid "E423: Illegal argument: %s"
-msgstr "E423: 不正な引数です: %s"
-
-msgid "E424: Too many different highlighting attributes in use"
-msgstr "E424: 多くの異なるハイライト属性が使われ過ぎています"
-
-msgid "E669: Unprintable character in group name"
-msgstr "E669: グループ名に印刷不可能な文字があります"
-
-msgid "W18: Invalid character in group name"
-msgstr "W18: グループ名に不正な文字があります"
-
-msgid "E849: Too many highlight and syntax groups"
-msgstr "E849: ハイライトと構文グループが多過ぎます"
 
 msgid "E555: at bottom of tag stack"
 msgstr "E555: タグスタックの末尾です"
@@ -6490,9 +6061,6 @@ msgstr "E799: 無効な ID: %ld (1 以上でなければなりません)"
 msgid "E801: ID already taken: %ld"
 msgstr "E801: ID はすでに利用中です: %ld"
 
-msgid "List or number required"
-msgstr "リストか数値が必要です"
-
 #, c-format
 msgid "E802: Invalid ID: %ld (must be greater than or equal to 1)"
 msgstr "E802: 無効な ID: %ld (1 以上でなければなりません)"
@@ -6767,18 +6335,6 @@ msgstr "E44: 不正な正規表現プログラムです"
 msgid "E45: 'readonly' option is set (add ! to override)"
 msgstr "E45: 'readonly' オプションが設定されています (! を追加で上書き)"
 
-#, c-format
-msgid "E121: Undefined variable: %s"
-msgstr "E121: 未定義の変数です: %s"
-
-#, c-format
-msgid "E734: Wrong variable type for %s="
-msgstr "E734: 異なった型の変数です %s="
-
-#, c-format
-msgid "E461: Illegal variable name: %s"
-msgstr "E461: 不正な変数名です: %s"
-
 msgid "E995: Cannot modify existing variable"
 msgstr "E995: 既存の変数を変更できません"
 
@@ -6789,9 +6345,6 @@ msgstr "E46: 読取専用変数 \"%s\" には値を設定できません"
 #, c-format
 msgid "E794: Cannot set variable in the sandbox: \"%s\""
 msgstr "E794: サンドボックスでは変数 \"%s\" に値を設定できません"
-
-msgid "E928: String required"
-msgstr "E928: 文字列が必要です"
 
 msgid "E713: Cannot use empty key for Dictionary"
 msgstr "E713: 辞書型に空のキーを使うことはできません"
