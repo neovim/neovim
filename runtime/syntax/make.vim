@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:	Makefile
-" Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>
+" Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>, <https://github.com/rohieb>
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:		https://github.com/vim/vim/syntax/make.vim
-" Last Change:	2019 Dec 04
+" URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
+" Last Change:	2020 Jan 15
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -42,6 +42,7 @@ syn region makeIdent	start="\${" skip="\\}\|\\\\" end="}" contains=makeStatement
 syn match makeIdent	"\$\$\w*"
 syn match makeIdent	"\$[^({]"
 syn match makeIdent	"^ *[^:#= \t]*\s*[:+?!*]="me=e-2
+syn match makeIdent	"^ *[^:#= \t]*\s*::="me=e-3
 syn match makeIdent	"^ *[^:#= \t]*\s*="me=e-1
 syn match makeIdent	"%"
 

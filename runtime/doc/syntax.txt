@@ -2283,7 +2283,7 @@ contain very long structures that Vim does not synchronize anymore.
 
 PAPP						*papp.vim* *ft-papp-syntax*
 
-The PApp syntax file handles .papp files and, to a lesser extend, .pxml
+The PApp syntax file handles .papp files and, to a lesser extent, .pxml
 and .pxsl files which are all a mixture of perl/xml/html/other using xml
 as the top-level file format.  By default everything inside phtml or pxml
 sections is treated as a string with embedded preprocessor commands.  If
@@ -2655,12 +2655,12 @@ Note: only existence of these options matter, not their value. You can replace
 
 QUAKE						*quake.vim* *ft-quake-syntax*
 
-The Quake syntax definition should work for most any FPS (First Person
-Shooter) based on one of the Quake engines.  However, the command names vary
-a bit between the three games (Quake, Quake 2, and Quake 3 Arena) so the
-syntax definition checks for the existence of three global variables to allow
-users to specify what commands are legal in their files.  The three variables
-can be set for the following effects:
+The Quake syntax definition should work for most FPS (First Person Shooter)
+based on one of the Quake engines.  However, the command names vary a bit
+between the three games (Quake, Quake 2, and Quake 3 Arena) so the syntax
+definition checks for the existence of three global variables to allow users
+to specify what commands are legal in their files.  The three variables can
+be set for the following effects:
 
 set to highlight commands only available in Quake: >
 	:let quake_is_quake1 = 1
@@ -2996,7 +2996,7 @@ variables in your vimrc:
 
    ksh: >
 	let g:is_kornshell = 1
-<   posix:  (using this is the nearly the same as setting g:is_kornshell to 1) >
+<   posix:  (using this is nearly the same as setting g:is_kornshell to 1) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1

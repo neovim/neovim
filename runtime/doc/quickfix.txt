@@ -225,8 +225,7 @@ processing a quickfix or location list command, it will be aborted.
 			e.g., a compiler will not compile the same file again,
 			`git commit` will abort the committing process, `fc`
 			(built-in for shells like bash and zsh) will not
-			execute the command, etc.  will not compile the same
-			file again.
+			execute the command, etc.
 			{N} can also be zero, in which case Vim exits
 			normally.
 			WARNING: All changes in files are lost.  It works like
@@ -1090,7 +1089,7 @@ id-utils) in a similar way to its compiler integration (see |:make| above).
 			allowed with |:bufdo|.
 			An example that uses the argument list and avoids
 			errors for files without matches: >
-                                :silent argdo try
+				:silent argdo try
 				  \ | grepadd! something %
 				  \ | catch /E480:/
 				  \ | endtry"
@@ -1266,7 +1265,7 @@ You can force the compiler to ignore makefiles by defining
 b:tex_ignore_makefile or g:tex_ignore_makefile variable (they are checked for
 existence only).
 
-If the compiler chose not to use make, it need to choose a right program for
+If the compiler chose not to use make, it needs to choose a right program for
 processing your input.  If b:tex_flavor or g:tex_flavor (in this precedence)
 variable exists, it defines TeX flavor for :make (actually, this is the name
 of executed command), and if both variables do not exist, it defaults to
