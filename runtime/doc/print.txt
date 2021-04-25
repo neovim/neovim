@@ -597,22 +597,15 @@ X11
 
     http://www.cs.wisc.edu/~ghost/gv/
 
-Windows
+MS-Windows
 
 - GSview.  Obtainable from:
 
     http://www.cs.wisc.edu/~ghost/gsview/
 
-DOS
-
-- ps_view.  Obtainable from:
-
-    ftp://ftp.pg.gda.pl/pub/TeX/support/ps_view/
-    ftp://ftp.dante.de/tex-archive/support/ps_view/
-
 Linux
 
-- GSview.  Linux version of the popular Windows previewer.
+- GSview.  Linux version of the popular MS-Windows previewer.
   Obtainable from:
 
     http://www.cs.wisc.edu/~ghost/gsview/

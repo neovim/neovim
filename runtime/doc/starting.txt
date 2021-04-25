@@ -622,7 +622,7 @@ Nvim will try to get the value for $VIMRUNTIME in this order:
 
 1. Environment variable $VIMRUNTIME, if it is set.
 2. Directory path "$VIM/vim{version}", if it exists, where {version} is the
-   Vim version number without '-' or '.'.  For example: "$VIM/vim54".
+   Vim version number without '-' or '.'.  For example: "$VIM/vim82".
 3. Directory path "$VIM/runtime", if it exists.
 4. Value of $VIM environment variable.  This is for backwards compatibility
    with older Vim versions.

@@ -318,8 +318,8 @@ A double click on a word selects that word.  'iskeyword' is used to specify
 which characters are included in a word.  A double click on a character
 that has a match selects until that match (like using "v%").  If the match is
 an #if/#else/#endif block, the selection becomes linewise.
-For xterm the time for double clicking can be set with the 'mousetime' option.
-For the other systems this time is defined outside of Vim.
+For MS-Windows and xterm the time for double clicking can be set with the
+'mousetime' option. For the other systems this time is defined outside of Vim.
 An example, for using a double click to jump to the tag under the cursor: >
 	:map <2-LeftMouse> :exe "tag ". expand("<cword>")<CR>
 

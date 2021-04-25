@@ -263,13 +263,13 @@ all loaded.  For example, if this command: >
 
 produces this output:
 
-	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim60 ~
+	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim82 ~
 
 then Vim will load all plugins in these directories and below:
 
 	/etc/vim/plugin/  ~
 	~/.config/nvim/plugin/  ~
-	/usr/local/share/vim/vim60/plugin/  ~
+	/usr/local/share/vim/vim82/plugin/  ~
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
 

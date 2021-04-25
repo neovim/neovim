@@ -590,9 +590,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(or Vim is run inside an xterm invoked with "-cjkwidth" option.),
 	this option should be set to "double" to match the width perceived
 	by Vim with the width of glyphs in the font.  Perhaps it also has
-	to be set to "double" under CJK Windows XP when the system locale is
-	set to one of CJK locales.
-	See Unicode Standard Annex #11 (http://www.unicode.org/reports/tr11).
+	to be set to "double" under CJK MS-Windows when the system locale is
+	set to one of CJK locales.  See Unicode Standard Annex #11
+	(http://www.unicode.org/reports/tr11).
 
 	Vim may set this option automatically at startup time when Vim is
 	compiled with the |+termresponse| feature and if t_u7 is set to the
@@ -837,9 +837,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  impossible!).  Writing may fail because of this.
 	- A directory "." means to put the backup file in the same directory
 	  as the edited file.
-	- A directory starting with "./" (or ".\" for MS-Windows) means
-	  to put the backup file relative to where the edited file is.  The
-	  leading "." is replaced with the path name of the edited file.
+	- A directory starting with "./" (or ".\" for MS-Windows) means to put
+	  the backup file relative to where the edited file is.  The leading
+	  "." is replaced with the path name of the edited file.
 	  ("." inside a directory name has no special meaning).
 	- Spaces after the comma are ignored, other spaces are considered part
 	  of the directory name.  To have a space at the start of a directory
@@ -2019,9 +2019,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  the edited file.  On Unix, a dot is prepended to the file name, so
 	  it doesn't show in a directory listing.  On MS-Windows the "hidden"
 	  attribute is set and a dot prepended if possible.
-	- A directory starting with "./" (or ".\" for MS-Windows) means
-	  to put the swap file relative to where the edited file is.  The
-	  leading "." is replaced with the path name of the edited file.
+	- A directory starting with "./" (or ".\" for MS-Windows) means to put
+	  the swap file relative to where the edited file is.  The leading "."
+	  is replaced with the path name of the edited file.
 	- For Unix and Win32, if a directory ends in two path separators "//",
 	  the swap file name will be built from the complete path to the file
 	  with all path separators substituted to percent '%' signs. This will
@@ -5218,9 +5218,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/s /c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
-	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For Windows
-	systems, the default is set according to the value of 'shell', to
-	reduce the need to set this option by the user.
+	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For MS-Windows, the
+	default is set according to the value of 'shell', to reduce the need
+	to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
 	part is passed as an argument to the shell command.
 	See |option-backslash| about including spaces and backslashes.
@@ -5230,7 +5230,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shellpipe'* *'sp'*
-'shellpipe' 'sp'	string	(default ">", "| tee", "|& tee" or "2>&1| tee")
+'shellpipe' 'sp'	string	(default ">", ">%s 2>&1", "| tee", "|& tee" or
+				 "2>&1| tee")
 			global
 	String to be used to put the output of the ":make" command in the
 	error file.  See also |:make_makeprg|.  See |option-backslash| about
@@ -5238,8 +5239,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The name of the temporary file can be represented by "%s" if necessary
 	(the file name is appended automatically if no %s appears in the value
 	of this option).
-	For Windows the default is ">".  The output is directly saved in a
-	file and not echoed to the screen.
+	For MS-Windows the default is ">%s 2>&1".  The output is directly
+	saved in a file and not echoed to the screen.
 	For Unix the default it "| tee".  The stdout of the compiler is saved
 	in a file and echoed to the screen.  If the 'shell' option is "csh" or
 	"tcsh" after initializations, the default becomes "|& tee".  If the
@@ -5305,11 +5306,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
 'shellslash' 'ssl'	boolean	(default off)
 			global
-			{only for Windows}
+			{only for MS-Windows}
 	When set, a forward slash is used when expanding file names.  This is
-	useful when a Unix-like shell is used instead of command.com or
-	cmd.exe.  Backward slashes can still be typed, but they are changed to
-	forward slashes by Vim.
+	useful when a Unix-like shell is used instead of cmd.exe.  Backward
+	slashes can still be typed, but they are changed to forward slashes by
+	Vim.
 	Note that setting or resetting this option has no effect for some
 	existing file names, thus this option needs to be set before opening
 	any file for best results.  This might change in the future.
