@@ -298,10 +298,13 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 							*gF*
 [count]gF		Same as "gf", except if a number follows the file
 			name, then the cursor is positioned on that line in
-			the file. The file name and the number must be
-			separated by a non-filename (see 'isfname') and
-			non-numeric character. White space between the
-			filename, the separator and the number are ignored.
+			the file.
+			The file name and the number must be separated by a
+			non-filename (see 'isfname') and non-numeric
+			character. " line " is also recognized, like it is
+			used in the output of `:verbose command UserCmd`
+			White space between the filename, the separator and
+			the number are ignored.
 			Examples:
 				eval.c:10 ~
 				eval.c @ 20 ~
@@ -508,15 +511,16 @@ If you start editing a new file and the 'fileformats' option is not empty
 (which is the default), Vim will try to detect whether the lines in the file
 are separated by the specified formats.  When set to "unix,dos", Vim will
 check for lines with a single <NL> (as used on Unix) or by a <CR><NL> pair
-(Windows).  Only when ALL lines end in <CR><NL>, 'fileformat' is set to "dos",
-otherwise it is set to "unix".  When 'fileformats' includes "mac", and no <NL>
-characters are found in the file, 'fileformat' is set to "mac".
+(MS-Windows).  Only when ALL lines end in <CR><NL>, 'fileformat' is
+set to "dos", otherwise it is set to "unix".  When 'fileformats' includes
+"mac", and no <NL> characters are found in the file, 'fileformat' is set to
+"mac".
 
-If the 'fileformat' option is set to "dos" on non-Windows systems the message
-"[dos format]" is shown to remind you that something unusual is happening.  On
-Windows systems you get the message "[unix format]" if 'fileformat' is set to
-"unix".  On all systems but the Macintosh you get the message "[mac format]"
-if 'fileformat' is set to "mac".
+If the 'fileformat' option is set to "dos" on non-MS-Windows systems the
+message "[dos format]" is shown to remind you that something unusual is
+happening.  On MS-Windows systems you get the message "[unix format]" if
+'fileformat' is set to "unix".  On all systems but the Macintosh you get the
+message "[mac format]" if 'fileformat' is set to "mac".
 
 If the 'fileformats' option is empty and DOS format is used, but while reading
 a file some lines did not end in <CR><NL>, "[CR missing]" will be included in
@@ -1018,11 +1022,11 @@ When the file name is actually a device name, Vim will not make a backup (that
 would be impossible).  You need to use "!", since the device already exists.
 Example for Unix: >
 	:w! /dev/lpt0
-and Windows: >
+and MS-Windows: >
 	:w! lpt0
 For Unix a device is detected when the name doesn't refer to a normal file or
 a directory.  A fifo or named pipe also looks like a device to Vim.
-For Windows the device is detected by its name:
+For MS-Windows the device is detected by its name:
 	CON
 	CLOCK$
 	NUL
@@ -1248,7 +1252,7 @@ exist, the next-higher scope in the hierarchy applies.
 			Does not change the meaning of an already opened file,
 			because its full path name is remembered.  Files from
 			the |arglist| may change though!
-			On Windows this also changes the active drive.
+			On MS-Windows this also changes the active drive.
 			To change to the directory of the current file: >
 				:cd %:h
 <

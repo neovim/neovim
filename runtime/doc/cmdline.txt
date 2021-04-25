@@ -898,7 +898,7 @@ These modifiers can be given, in this order:
 		separator is removed.  Thus ":p:h" on a directory name results
 		on the directory name itself (without trailing slash).
 		When the file name is an absolute path (starts with "/" for
-		Unix; "x:\" for Windows), that part is not removed.
+		Unix; "x:\" for Win32), that part is not removed.
 		When there is no head (path is relative to current directory)
 		the result is empty.
 	:t	Tail of the file name (last component of the name).  Must

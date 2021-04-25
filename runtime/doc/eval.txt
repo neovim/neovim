@@ -3466,16 +3466,15 @@ executable({expr})					*executable()*
 		arguments.
 		executable() uses the value of $PATH and/or the normal
 		searchpath for programs.		*PATHEXT*
-		On Windows the ".exe", ".bat", etc. can
-		optionally be included.  Then the extensions in $PATHEXT are
-		tried.  Thus if "foo.exe" does not exist, "foo.exe.bat" can be
-		found.  If $PATHEXT is not set then ".exe;.com;.bat;.cmd" is
-		used.  A dot by itself can be used in $PATHEXT to try using
-		the name without an extension.  When 'shell' looks like a
-		Unix shell, then the name is also tried without adding an
-		extension.
-		On Windows it only checks if the file exists and
-		is not a directory, not if it's really executable.
+		On MS-Windows the ".exe", ".bat", etc. can optionally be
+		included.  Then the extensions in $PATHEXT are tried.  Thus if
+		"foo.exe" does not exist, "foo.exe.bat" can be found.  If
+		$PATHEXT is not set then ".exe;.com;.bat;.cmd" is used.  A dot
+		by itself can be used in $PATHEXT to try using the name
+		without an extension.  When 'shell' looks like a Unix shell,
+		then the name is also tried without adding an extension.
+		On MS-Windows it only checks if the file exists and is not a
+		directory, not if it's really executable.
 		On Windows an executable in the same directory as Vim is
 		always found (it is added to $PATH at |startup|).
 		The result is a Number:

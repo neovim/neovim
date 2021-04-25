@@ -388,7 +388,7 @@ because the <CR> from the first lines will be lost.
 
 On other systems, Vim expects ":source"ed files to end in a <NL>.  These
 always work.  If you are using a file with <CR><NL> <EOL>s (for example, a
-file made on Windows), all lines will have a trailing <CR>.  This may cause
+file made on MS-Windows), all lines will have a trailing <CR>.  This may cause
 problems for some commands (e.g., mappings).  There is no automatic <EOL>
 detection, because it's common to start with a line that defines a mapping
 that ends in a <CR>, which will confuse the automaton.

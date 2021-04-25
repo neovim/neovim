@@ -27,8 +27,8 @@ start a new line.  One to move the carriage back to the first position
    When computers came out, storage was expensive.  Some people decided that
 they did not need two characters for end-of-line.  The Unix people decided
 they could use <Line Feed> only for end-of-line.  The Apple people
-standardized on <CR>.  The MS-DOS (and Microsoft Windows) folks decided to
-keep the old <CR><LF>.
+standardized on <CR>.  The Microsoft Windows folks decided to keep
+the old <CR><LF>.
    This means that if you try to move a file from one system to another, you
 have line-break problems.  The Vim editor automatically recognizes the
 different file formats and handles things properly behind your back.

@@ -2258,8 +2258,8 @@ msgstr "E799: Geçersiz ID: %d (1'e eşit veya 1'den büyük olmalıdır)"
 msgid "E801: ID already taken: %d"
 msgstr "E801: Kullanımda olan ID: %d"
 
-msgid "List or number required"
-msgstr "Liste veya numara gerekiyor"
+msgid "E290: List or number required"
+msgstr "E290: Liste veya numara gerekiyor"
 
 #, c-format
 msgid "E802: Invalid ID: %d (must be greater than or equal to 1)"

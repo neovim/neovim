@@ -6338,8 +6338,8 @@ msgstr "E799: Ugyldigt ID: %ld (skal være større end eller lig med 1)"
 msgid "E801: ID already taken: %ld"
 msgstr "E801: ID allerede taget: %ld"
 
-msgid "List or number required"
-msgstr "Liste eller nummer kræves"
+msgid "E290: List or number required"
+msgstr "E290: Liste eller nummer kræves"
 
 #, c-format
 msgid "E802: Invalid ID: %ld (must be greater than or equal to 1)"

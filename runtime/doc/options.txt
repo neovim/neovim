@@ -144,11 +144,11 @@ the option value, use '\"' instead.  This example sets the 'titlestring'
 option to 'hi "there"': >
    :set titlestring=hi\ \"there\"
 
-For Windows backslashes in file names are mostly not removed.  More
-precise: For options that expect a file name (those where environment
-variables are expanded) a backslash before a normal file name character is not
-removed.  But a backslash before a special character (space, backslash, comma,
-etc.) is used like explained above.
+For Win32 backslashes in file names are mostly not removed.  More precise: For
+options that expect a file name (those where environment variables are
+expanded) a backslash before a normal file name character is not removed.  But
+a backslash before a special character (space, backslash, comma, etc.) is used
+like explained above.
 There is one special situation, when the value starts with "\\": >
    :set dir=\\machine\path	    results in "\\machine\path"
    :set dir=\\\\machine\\path	    results in "\\machine\path"
@@ -837,8 +837,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  impossible!).  Writing may fail because of this.
 	- A directory "." means to put the backup file in the same directory
 	  as the edited file.
-	- A directory starting with "./" (or ".\" for Windows) means to
-	  put the backup file relative to where the edited file is.  The
+	- A directory starting with "./" (or ".\" for MS-Windows) means
+	  to put the backup file relative to where the edited file is.  The
 	  leading "." is replaced with the path name of the edited file.
 	  ("." inside a directory name has no special meaning).
 	- Spaces after the comma are ignored, other spaces are considered part
@@ -2019,9 +2019,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  the edited file.  On Unix, a dot is prepended to the file name, so
 	  it doesn't show in a directory listing.  On MS-Windows the "hidden"
 	  attribute is set and a dot prepended if possible.
-	- A directory starting with "./" (or ".\" for Windows) means to
-	  put the swap file relative to where the edited file is.  The leading
-	  "." is replaced with the path name of the edited file.
+	- A directory starting with "./" (or ".\" for MS-Windows) means
+	  to put the swap file relative to where the edited file is.  The
+	  leading "." is replaced with the path name of the edited file.
 	- For Unix and Win32, if a directory ends in two path separators "//",
 	  the swap file name will be built from the complete path to the file
 	  with all path separators substituted to percent '%' signs. This will
@@ -3014,7 +3014,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 
 						*'helpfile'* *'hf'*
-'helpfile' 'hf'		string	(default (MSDOS)  "$VIMRUNTIME\doc\help.txt"
+'helpfile' 'hf'		string	(default (MS-Windows) "$VIMRUNTIME\doc\help.txt"
 					 (others) "$VIMRUNTIME/doc/help.txt")
 			global
 	Name of the main help file.  All distributed help files should be
@@ -5238,8 +5238,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The name of the temporary file can be represented by "%s" if necessary
 	(the file name is appended automatically if no %s appears in the value
 	of this option).
-	For Windows the default is ">".  The output is directly saved in a file
-	and not echoed to the screen.
+	For Windows the default is ">".  The output is directly saved in a
+	file and not echoed to the screen.
 	For Unix the default it "| tee".  The stdout of the compiler is saved
 	in a file and echoed to the screen.  If the 'shell' option is "csh" or
 	"tcsh" after initializations, the default becomes "|& tee".  If the
