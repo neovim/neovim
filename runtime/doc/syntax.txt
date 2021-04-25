@@ -2729,6 +2729,13 @@ This will add highlighting for the commands that BASH (version 2.05a and
 later, and part earlier) adds.
 
 
+REGO						*rego.vim* *ft-rego-syntax*
+
+Rego is a query language developed by Styra.  It is mostly used as a policy
+language for kubernetes, but can be applied to almost anything.  Files with
+the following extensions are recognized as rego files: .rego.
+
+
 RESTRUCTURED TEXT			*rst.vim* *ft-rst-syntax*
 
 Syntax highlighting is enabled for code blocks within the document for a

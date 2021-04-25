@@ -475,9 +475,9 @@ If an error is detected the rest of the line is skipped.
 
 If you want to include a ':' in a set command precede it with a '\'.  The
 backslash in front of the ':' will be removed.  Example:
-   /* vi:set dir=c\:\tmp: */ ~
-This sets the 'dir' option to "c:\tmp".  Only a single backslash before the
-':' is removed.  Thus to include "\:" you have to specify "\\:".
+   /* vi:set fillchars=stl\:^,vert\:\|: */ ~
+This sets the 'fillchars' option to "stl:^,vert:\|".  Only a single backslash
+before the ':' is removed.  Thus to include "\:" you have to specify "\\:".
 							*E992*
 No other commands than "set" are supported, for security reasons (somebody
 might create a Trojan horse text file with modelines).  And not all options
@@ -5167,8 +5167,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shell'* *'sh'* *E91*
-'shell' 'sh'		string	(default $SHELL or "sh",
-					Windows: "cmd.exe")
+'shell' 'sh'		string	(default $SHELL or "sh", Win32: "cmd.exe")
 			global
 	Name of the shell to use for ! and :! commands.  When changing the
 	value also check these options: 'shellpipe', 'shellslash'

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-12 13:17+0300\n"
-"PO-Revision-Date: 2019-12-01 19:58+0300\n"
+"POT-Creation-Date: 2019-12-18 15:29+0300\n"
+"PO-Revision-Date: 2019-12-19 01:20+0300\n"
 "Last-Translator: Emir SARI <bitigchi@me.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
 "Language: tr\n"
@@ -347,7 +347,7 @@ msgid ""
 "override)"
 msgstr ""
 "E513: Yazma hatası, %ld. satırda dönüştürme başarısız (yoksaymak için "
-"kodlamayı boş bırakın)"
+"'fenc'i boş bırakın)"
 
 msgid "E514: write error (file system full?)"
 msgstr "E514: Yazma hatası (dosya sistemi dolu mu?)"
@@ -597,6 +597,10 @@ msgstr ""
 msgid "E100: No other buffer in diff mode"
 msgstr "E100: Karşılaştırma kipinde başka hiçbir arabellek yok"
 
+msgid "E101: More than two buffers in diff mode, don't know which one to use"
+msgstr "E101: Karşılaştırma kipinde ikiden fazla arabellek var, hangisinin "
+"kullanılacağı belli değil"
+
 #, c-format
 msgid "E102: Can't find buffer \"%s\""
 msgstr "E102: Arabellek \"%s\" bulunamıyor"
@@ -624,7 +628,7 @@ msgid "Cyrillic"
 msgstr "Kiril"
 
 msgid "Hebrew"
-msgstr "İbranice"
+msgstr "İbranca"
 
 msgid "Arabic"
 msgstr "Arapça"
@@ -1132,8 +1136,7 @@ msgid "E144: non-numeric argument to :z"
 msgstr "E144: :z için sayısal olmayan değişken"
 
 msgid "E145: Shell commands and some functionality not allowed in rvim"
-msgstr ""
-"E145: rvim içinde kabuk komutları ve bazı işlevselliğe izin verilmez"
+msgstr "E145: rvim içinde kabuk komutları ve bazı işlevselliğe izin verilmez"
 
 msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Düzenli ifadeler harflerle sınırlandırılamaz"
@@ -1266,6 +1269,7 @@ msgstr "Ex kipine giriliyor. Normal kipe geri dönmek için \"visual\" yazın."
 msgid "E501: At end-of-file"
 msgstr "E501: Dosyanın sonunda"
 
+#, c-format
 msgid "Executing: %s"
 msgstr "Çalıştırılıyor: %s"
 
@@ -1306,6 +1310,10 @@ msgstr ""
 "DAHİLİ: EX_DFLALL; ADDR_NONE, ADDR_UNSIGNED veya ADDR_QUICKFIX ile birlikte "
 "kullanılamıyor"
 
+msgid "E943: Command table needs to be updated, run 'make cmdidxs'"
+msgstr ""
+"E943: Komut tablosunun güncellenmesi gerekiyor, 'make cmdidxs' çalıştırın"
+
 msgid "E319: Sorry, the command is not available in this version"
 msgstr "E319: Üzgünüm, komut bu sürümde mevcut değil"
 
@@ -1345,7 +1353,7 @@ msgstr "Dosyayı yeni pencerede düzenle"
 
 #, c-format
 msgid "Tab page %d"
-msgstr "Sekme sayfası %d"
+msgstr "Sekme %d"
 
 msgid "No swap file"
 msgstr "Takas dosyası yok"
@@ -2085,9 +2093,6 @@ msgstr "Biçem:"
 msgid "Size:"
 msgstr "Büyüklük:"
 
-msgid "E256: Hangul automata ERROR"
-msgstr "E256: Hangul otomasyon HATASI"
-
 msgid "E550: Missing colon"
 msgstr "E550: Eksik iki nokta"
 
@@ -2800,6 +2805,9 @@ msgstr "Sonrasında değişken eksik:"
 msgid "Garbage after option argument"
 msgstr "Seçenek değişkeninden sonra anlamsız veri"
 
+msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
+msgstr "Çok fazla \"+komut\", \"-c komut\" veya \"--cmd komut\" değişkeni"
+
 msgid "Invalid argument for"
 msgstr "Şunun için geçersiz değişken:"
 
@@ -2887,8 +2895,8 @@ msgid ""
 "Where case is ignored prepend / to make flag upper case"
 msgstr ""
 "\n"
-"BÜYÜK/küçük harfin yoksayıldığı yerde bayrağı BÜYÜK harfli yapmak "
-"için başına / koyun"
+"BÜYÜK/küçük harfin yoksayıldığı yerde bayrağı BÜYÜK harfli yapmak için "
+"başına / koyun"
 
 msgid ""
 "\n"
@@ -2987,7 +2995,7 @@ msgid "-A\t\t\tStart in Arabic mode"
 msgstr "-A\t\t\tArapça kipinde başla"
 
 msgid "-H\t\t\tStart in Hebrew mode"
-msgstr "-H\t\t\tİbranice kipinde başla"
+msgstr "-H\t\t\tİbranca kipinde başla"
 
 msgid "-T <terminal>\tSet terminal type to <terminal>"
 msgstr "-T <uçbirim>\t\tUçbirim türünü <uçbirim>'e ayarla"
@@ -3050,8 +3058,7 @@ msgid "-X\t\t\tDo not connect to X server"
 msgstr "-X\t\t\tX sunucusuna bağlama"
 
 msgid "--remote <files>\tEdit <files> in a Vim server if possible"
-msgstr ""
-"--remote <dosya>\tOlanaklıysa bir Vim sunucusuda <dosya> düzenler"
+msgstr "--remote <dosya>\tOlanaklıysa bir Vim sunucusuda <dosya> düzenler"
 
 msgid "--remote-silent <files>  Same, don't complain if there is no server"
 msgstr "--remote-silent <dosya>  Aynısı, yalnızca sunucu yoksa şikayet etmez"
@@ -3421,8 +3428,8 @@ msgid ""
 "If you wrote the text file after changing the crypt key press enter"
 msgstr ""
 "\n"
-"Metin dosyasını şifreleme anahtarını değiştirdikten sonra yazdıysanız Enter'a "
-"basın"
+"Metin dosyasını şifreleme anahtarını değiştirdikten sonra yazdıysanız "
+"Enter'a basın"
 
 msgid ""
 "\n"
@@ -3500,6 +3507,9 @@ msgstr ""
 "\n"
 "Bu .swp dosyasını silmeniz iyi olur.\n"
 "\n"
+
+msgid "Using crypt key from swap file for the text file.\n"
+msgstr "Metin dosyası için takas dosyasındaki şifreleme anahtarı kullanılıyor.\n"
 
 msgid "Swap files found:"
 msgstr "Takas dosyası bulundu:"
@@ -3610,6 +3620,7 @@ msgstr "E314: Koruma başarısız oldu"
 msgid "E315: ml_get: invalid lnum: %ld"
 msgstr "E315: ml_get: geçersiz satır numarası: %ld"
 
+#, c-format
 msgid "E316: ml_get: cannot find line %ld in buffer %d %s"
 msgstr "E316: ml_get: %ld. satır %d %s arabelleğinde bulunamıyor"
 
@@ -4695,6 +4706,9 @@ msgstr "E879: (BSO düzenli ifadesi) Çok fazla \\z("
 msgid "E873: (NFA regexp) proper termination error"
 msgstr "E873: (BSO düzenli ifadesi) Düzgün sonlandırma hatası"
 
+msgid "Could not open temporary log file for writing, displaying on stderr... "
+msgstr ""
+"Geçici günlük dosyası yazma için açılamıyor, stderr'de görüntüleniyor..."
 
 msgid "E874: (NFA) Could not pop the stack!"
 msgstr "E874: (BSO) Yığın çıkartılamadı!"
@@ -4741,6 +4755,13 @@ msgid "E353: Nothing in register %s"
 msgstr "E353: Yazmaç %s boş"
 
 msgid ""
+"\n"
+"Type Name Content"
+msgstr ""
+"\n"
+"Tür Ad İçerik"
+
+msgid ""
 "E883: search pattern and expression register may not contain two or more "
 "lines"
 msgstr ""
@@ -4768,7 +4789,7 @@ msgid " (vreplace)"
 msgstr " (sanal değiştir)"
 
 msgid " Hebrew"
-msgstr " İbranice"
+msgstr " İbranca"
 
 msgid " Arabic"
 msgstr " Arapça"
@@ -5133,6 +5154,7 @@ msgstr "%s içinde %d. satırda yanlış COMPOUNDSYLMAX değeri: %s"
 msgid "Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"
 msgstr "%s içinde %d. satırda yanlış CHECKCOMPOUNDPATTERN değeri: %s"
 
+#, c-format
 msgid "Different combining flag in continued affix block in %s line %d: %s"
 msgstr ""
 "%s içinde %d. satırdaki sürdürülen ek bloğunda farklı birleştirici bayrak: %s"
@@ -5827,29 +5849,29 @@ msgid "more line"
 msgstr "ek satır"
 
 msgid "more lines"
-msgstr "ek satırlar"
+msgstr "ek satır"
 
 msgid "line less"
 msgstr "daha az satır"
 
 msgid "fewer lines"
-msgstr "daha az satırlar"
+msgstr "daha az satır"
 
 msgid "change"
 msgstr "değişiklik"
 
 msgid "changes"
-msgstr "değişiklikler"
+msgstr "değişiklik"
 
 #, c-format
 msgid "%ld %s; %s #%ld  %s"
 msgstr "%ld %s; %s #%ld  %s"
 
 msgid "before"
-msgstr "önce"
+msgstr "şunun öncesinde:"
 
 msgid "after"
-msgstr "sonra"
+msgstr "şunun sonrasında:"
 
 msgid "Nothing to undo"
 msgstr "Geri alınacak bir şey yok"
@@ -6222,7 +6244,7 @@ msgid "with Cocoa GUI."
 msgstr "(Cocoa grafik arabirim ile)."
 
 msgid "  Features included (+) or not (-):\n"
-msgstr "İçerilen özellikler (+), içerilmeyenler (-) ile gösterilir:\n"
+msgstr " İçerilen özellikler (+), içerilmeyenler (-) ile gösterilir:\n"
 
 msgid "   system vimrc file: \""
 msgstr "          sistem vimrc dosyası: \""
@@ -6414,7 +6436,7 @@ msgid ""
 "~"
 msgstr ""
 "\n"
-"# Son %sArama Dizgisi:\n"
+"# Son %sArama Dizgileri:\n"
 "~"
 
 msgid "Substitute "
@@ -6552,6 +6574,10 @@ msgstr "E370: %s kitaplığı yüklenemedi"
 msgid "Sorry, this command is disabled: the Perl library could not be loaded."
 msgstr "Üzgünüm, bu komut etkin değil: Perl kitaplığı yüklenemedi."
 
+msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
+msgstr "E299: Güvenli modül olmadan kum havuzu içerisinde Perl değerlendirmesine "
+"izin verilmiyor"
+
 msgid "Edit with &multiple Vims"
 msgstr "Birden &fazla Vim ile düzenle"
 
@@ -6573,6 +6599,9 @@ msgstr "Mevcut Vim ile düzenle - "
 msgid "Edits the selected file(s) with Vim"
 msgstr "Seçili dosyaları Vim ile düzenler"
 
+msgid "Error creating process: Check if gvim is in your path!"
+msgstr "İşlem oluşturulurken hata: gvim'in yol üzerinde olduğundan emin olun!"
+
 msgid "gvimext.dll error"
 msgstr "gvimext.dll hatası"
 
@@ -6580,7 +6609,7 @@ msgid "Path length too long!"
 msgstr "Yol çok uzun!"
 
 msgid "--No lines in buffer--"
-msgstr "--Arabellekte satır yok--"
+msgstr "--Arabellek içinde satır yok--"
 
 msgid "E470: Command aborted"
 msgstr "E470: Komut durduruldu"
@@ -6593,6 +6622,10 @@ msgstr "E10: \\ /, ? veya & tarafından izlenmeli"
 
 msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
 msgstr "E11: Komut satırı penceresinde geçersiz; <CR> çalıştırır, CTRL-C çıkar"
+
+msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+msgstr "E12: Mevcut dizin veya etiket aramasında exrc veya vimrc'den komutlara "
+"izin verilmiyor"
 
 msgid "E171: Missing :endif"
 msgstr "E171: Eksik :endif"
@@ -6709,7 +6742,7 @@ msgid "E25: GUI cannot be used: Not enabled at compile time"
 msgstr "E25: Grafik arabirim kullanılamıyor: Derlenirken etkinleştirilmemiş"
 
 msgid "E26: Hebrew cannot be used: Not enabled at compile time\n"
-msgstr "E26: İbranice kullanılamıyor: Derlenirken etkinleştirilmemiş\n"
+msgstr "E26: İbranca kullanılamıyor: Derlenirken etkinleştirilmemiş\n"
 
 msgid "E27: Farsi support has been removed\n"
 msgstr "E27: Farsça desteği kaldırıldı\n"
@@ -6879,6 +6912,7 @@ msgstr "E897: Liste veya ikili geniş nesne gerekiyor"
 msgid "E712: Argument of %s must be a List or Dictionary"
 msgstr "E712: %s ögesinin değişkeni bir liste veya sözlük olmalıdır"
 
+#, c-format
 msgid "E896: Argument of %s must be a List, Dictionary or Blob"
 msgstr "E896: %s değişkeni bir liste, sözlük veya ikili geniş nesne olmalıdır"
 
@@ -7282,7 +7316,7 @@ msgid ""
 "VB code (*.bas, *.frm)\t*.bas;*.frm\n"
 "Vim files (*.vim, _vimrc, _gvimrc)\t*.vim;_vimrc;_gvimrc\n"
 msgstr ""
-"Tüm Dosyalars (*.*)\t*.*\n"
+"Tüm Dosyalar (*.*)\t*.*\n"
 "C kaynak dosyaları (*.c, *.h)\t*.c;*.h\n"
 "C++ kaynak dosyaları (*.cpp, *.hpp)\t*.cpp;*.hpp\n"
 "VB kodu (*.bas, *.frm)\t*.bas;*.frm\n"
