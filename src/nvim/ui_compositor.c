@@ -180,7 +180,8 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     if (kv_A(layers, insert_at-1) == &pum_grid && (grid != &msg_grid)) {
       insert_at--;
     }
-    if (insert_at > 1 && !on_top) {
+    if (curwin && kv_A(layers, insert_at-1) == &curwin->w_grid_alloc
+        && !on_top) {
       insert_at--;
     }
     // not found: new grid
