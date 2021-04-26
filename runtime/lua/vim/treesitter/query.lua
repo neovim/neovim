@@ -208,10 +208,6 @@ local predicate_handlers = {
   ["lua-match?"] = function(match, _, source, predicate)
       local node = match[predicate[2]]
       local regex = predicate[3]
-      local start_row, _, end_row, _ = node:range()
-      if start_row ~= end_row then
-        return false
-      end
 
       return string.find(M.get_node_text(node, source), regex)
   end,
