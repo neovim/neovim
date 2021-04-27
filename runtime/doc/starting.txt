@@ -42,9 +42,12 @@ filename	One or more file names.  The first one will be the current
 		In most cases (except -s, -es, |--embed|, --headless) if stdin
 		is not a TTY then it is read as text, so "-" is implied: >
 			echo text | nvim file
-<		The buffer will be marked modified, because it contains text
-		that needs to be saved (except for readonly |-R| mode).
-
+<		The buffer will be marked as modified, because it contains
+		text that needs to be saved (except for readonly |-R| mode).
+		If you don't like that, put these lines in your init.vim: >
+			" Don't set 'modified' when reading from stdin
+			au StdinReadPost * set nomodified
+<
 		To read stdin as Normal commands use |-s| with "-": >
 			echo "ifoo" | nvim -s -
 <		To read stdin as Ex commands use |-es| or |-e|: >
