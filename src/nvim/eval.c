@@ -213,6 +213,7 @@ static struct vimvar {
   VV(VV_FALSE,          "false",            VAR_BOOL, VV_RO),
   VV(VV_TRUE,           "true",             VAR_BOOL, VV_RO),
   VV(VV_NULL,           "null",             VAR_SPECIAL, VV_RO),
+  VV(VV_NUMBERSIZE,     "numbersize",       VAR_NUMBER, VV_RO),
   VV(VV_VIM_DID_ENTER,  "vim_did_enter",    VAR_NUMBER, VV_RO),
   VV(VV_TESTING,        "testing",          VAR_NUMBER, 0),
   VV(VV_TYPE_NUMBER,    "t_number",         VAR_NUMBER, VV_RO),
@@ -394,6 +395,7 @@ void eval_init(void)
   set_vim_var_bool(VV_FALSE, kBoolVarFalse);
   set_vim_var_bool(VV_TRUE, kBoolVarTrue);
   set_vim_var_special(VV_NULL, kSpecialVarNull);
+  set_vim_var_nr(VV_NUMBERSIZE, sizeof(varnumber_T) * 8);
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);

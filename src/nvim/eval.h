@@ -142,6 +142,7 @@ typedef enum {
     VV_FALSE,
     VV_TRUE,
     VV_NULL,
+    VV_NUMBERSIZE,
     VV_VIM_DID_ENTER,
     VV_TESTING,
     VV_TYPE_NUMBER,

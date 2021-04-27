@@ -120,6 +120,12 @@ func Test_skip_after_throw()
   endtry
 endfunc
 
+func Test_numbersize()
+  " This will fail on systems without 64 bit int support or when not configured
+  " correctly.
+  call assert_equal(64, v:numbersize)
+endfunc
+
 func Test_curly_assignment()
   let s:svar = 'svar'
   let g:gvar = 'gvar'

@@ -19,6 +19,7 @@ There are six types of variables:
 
 							*Number* *Integer*
 Number		A 32 or 64 bit signed number.  |expr-number|
+		The number of bits is available in |v:numbersize|.
 		Examples:  -123  0x10  0177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*
@@ -1792,6 +1793,10 @@ v:null		Special value used to put "null" in JSON and NIL in msgpack.
 		used as a String (e.g. in |expr5| with string concatenation
 		operator) and to zero when used as a Number (e.g. in |expr5|
 		or |expr7| when used with numeric operators). Read-only.
+
+					*v:numbersize* *numbersize-variable*
+v:numbersize	Number of bits in a Number.  This is normally 64, but on some
+		systems it may be 32.
 
 					*v:oldfiles* *oldfiles-variable*
 v:oldfiles	List of file names that is loaded from the |shada| file on
