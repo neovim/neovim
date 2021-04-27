@@ -1,4 +1,4 @@
-name: Nightly
+name: vim-patches
 on:
   schedule:
     - cron: '3 3 * * *'
