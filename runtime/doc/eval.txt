@@ -4887,7 +4887,7 @@ getwininfo([{winid}])					*getwininfo()*
 			winrow		topmost screen column of the window
 
 getwinpos([{timeout}])					*getwinpos()*
-		The result is a list with two numbers, the result of
+		The result is a List with two numbers, the result of
 		|getwinposx()| and |getwinposy()| combined:
 			[x-pos, y-pos]
 		{timeout} can be used to specify how long to wait in msec for
@@ -9178,6 +9178,7 @@ winline()	The result is a Number, which is the screen line of the cursor
 							*winnr()*
 winnr([{arg}])	The result is a Number, which is the number of the current
 		window.  The top window has number 1.
+		Returns zero for a popup window.
 
 		The optional argument {arg} supports the following values:
 			$	the number of the last window (the window

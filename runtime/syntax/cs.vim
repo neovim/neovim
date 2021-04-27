@@ -3,7 +3,7 @@
 " Maintainer:          Nick Jensen <nickspoon@gmail.com>
 " Former Maintainers:  Anduin Withers <awithers@anduin.com>
 "                      Johannes Zellner <johannes@zellner.org>
-" Last Change:         2019-08-01
+" Last Change:         2020-01-27
 " Filenames:           *.cs
 " License:             Vim (see :h license)
 " Repository:          https://github.com/nickspoons/vim-cs
@@ -97,6 +97,8 @@ syn match	csXmlComment	"///.*$" contains=csXmlCommentLeader,@csXml,@Spell keepen
 syn include	@csXml syntax/xml.vim
 hi def link	xmlRegion Comment
 
+" Since syntax/xml.vim contains `syn spell toplevel`, we need to set it back to `default` here.
+syn spell default
 
 " [1] 9.5 Pre-processing directives
 syn region	csPreCondit	start="^\s*#\s*\(define\|undef\|if\|elif\|else\|endif\|line\|error\|warning\)" skip="\\$" end="$" contains=csComment keepend

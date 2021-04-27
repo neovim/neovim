@@ -893,8 +893,8 @@ The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the
 inverse order of file names.
 >
-	function! TagFunc(pattern, flags, info)
-	  function! CompareFilenames(item1, item2)
+	function TagFunc(pattern, flags, info)
+	  function CompareFilenames(item1, item2)
 	    let f1 = a:item1['filename']
 	    let f2 = a:item2['filename']
 	    return f1 >=# f2 ?

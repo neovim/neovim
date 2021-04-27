@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	101
-" Last Change:	2019 Nov. 26
+" Version:	102
+" Last Change:	2019 Dec. 14
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
@@ -185,8 +185,8 @@ syn match fortranLabelNumber	display	"^    \d\s"ms=s+4,me=e-1
 if exists("fortran_more_precise")
   " Numbers as targets
   syn match fortranTarget	display	"\(\<if\s*(.\+)\s*\)\@<=\(\d\+\s*,\s*\)\{2}\d\+\>"
-  syn match fortranTarget	display	"\(\<do\s\+\)\@<11=\d\+\>"
-  syn match fortranTarget	display	"\(\<go\s*to\s*(\=\)\@<11=\(\d\+\s*,\s*\)*\d\+\>"
+  syn match fortranTarget	display	"\(\<do\s\+\)\@11<=\d\+\>"
+  syn match fortranTarget	display	"\(\<go\s*to\s*(\=\)\@11<=\(\d\+\s*,\s*\)*\d\+\>"
 endif
 
 syn keyword fortranTypeR	external
@@ -274,7 +274,7 @@ syn match fortranType			"\<elemental\>"
 syn match fortranType			"\<pure\>"
 syn match fortranType			"\<impure\>"
 if exists("fortran_more_precise")
-  syn match fortranConstructName "\(\<end\s*forall\s\+\)\@<15=\a\w*\>"
+  syn match fortranConstructName "\(\<end\s*forall\s\+\)\@15<=\a\w*\>"
 endif
 
 if b:fortran_dialect == "f08"
