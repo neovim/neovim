@@ -6,6 +6,9 @@ on:
 jobs:
   update-vim-patches:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      pull-requests: write
     env:
       VIM_SOURCE_DIR: ${{ format('{0}/vim-src', github.workspace) }}
       VERSION_BRANCH: marvim/ci-version-update
