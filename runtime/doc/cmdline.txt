@@ -553,6 +553,7 @@ followed by another Vim command:
     :command
     :cscope
     :debug
+    :eval
     :folddoopen
     :folddoclosed
     :function

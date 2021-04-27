@@ -5978,6 +5978,10 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		The 'ignorecase' option is used to set the ignore-caseness of
 		the pattern.  'smartcase' is NOT used.  The matching is always
 		done like 'magic' is set and 'cpoptions' is empty.
+		Note that a match at the start is preferred, thus when the
+		pattern is using "*" (any number of matches) it tends to find
+		zero matches at the start instead of a number of matches
+		further down in the text.
 
 				*matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
@@ -10225,11 +10229,11 @@ text...
 			":endtry" is reached thereafter, the next
 			(dynamically) surrounding ":try" is checked for
 			a corresponding ":finally" etc.  Then the script
-			processing is terminated.  (Whether a function
-			definition has an "abort" argument does not matter.)
+			processing is terminated.  Whether a function
+			definition has an "abort" argument does not matter.
 			Example: >
-		:try | edit too much | finally | echo "cleanup" | endtry
-		:echo "impossible"	" not reached, script terminated above
+		try | call Unknown() | finally | echomsg "cleanup" | endtry
+		echomsg "not reached"
 <
 			Moreover, an error or interrupt (dynamically) inside
 			":try" and ":endtry" is converted to an exception.  It
@@ -10246,8 +10250,8 @@ text...
 			error exception is not caught, always beginning with
 			the error number.
 			Examples: >
-		:try | sleep 100 | catch /^Vim:Interrupt$/ | endtry
-		:try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
+		try | sleep 100 | catch /^Vim:Interrupt$/ | endtry
+		try | edit | catch /^Vim(edit):E\d\+/ | echo "error" | endtry
 <
 					*:cat* *:catch* *E603* *E604* *E605*
 :cat[ch] /{pattern}/	The following commands until the next |:catch|,
@@ -10414,6 +10418,9 @@ text...
 			The command can be shortened to `:ev` or `:eva`, but
 			these are hard to recognize and therefore not to be
 			used.
+
+			The command cannot be followed by "|" and another
+			command, since "|" is seen as part of the expression.
 
 
 							*:exe* *:execute*
