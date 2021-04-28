@@ -117,6 +117,11 @@ q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			recorded macro and the yank will overwrite the
 			recorded macro.
 
+			Note: The recording happens while you type, replaying
+			the register happens as if the keys come from a
+			mapping.  This matters, for example, for undo, which
+			only syncs when commands were typed.
+
 q			Stops recording.
 			Implementation note: The 'q' that stops recording is
 			not stored in the register, unless it was the result
@@ -129,7 +134,7 @@ q			Stops recording.
 			used.
 			The register is executed like a mapping, that means
 			that the difference between 'wildchar' and 'wildcharm'
-			applies.
+			applies, and undo might not be synced in the same way.
 			For "@=" you are prompted to enter an expression.  The
 			result of the expression is then executed.
 			See also |@:|.

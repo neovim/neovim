@@ -819,7 +819,7 @@ tag		char	      note action in Normal mode	~
 |zD|		zD		   delete folds recursively
 |zE|		zE		   eliminate all folds
 |zF|		zF		   create a fold for N lines
-|zG|		zG		   mark word as good spelled word
+|zG|		zG		   temporarily mark word as good spelled word
 |zH|		zH		   when 'wrap' off scroll half a screenwidth
 				   to the right
 |zL|		zL		   when 'wrap' off scroll half a screenwidth
@@ -828,7 +828,7 @@ tag		char	      note action in Normal mode	~
 |zN|		zN		   set 'foldenable'
 |zO|		zO		   open folds recursively
 |zR|		zR		   set 'foldlevel' to the deepest fold
-|zW|		zW		   mark word as wrong (bad) spelled word
+|zW|		zW		   temporarily mark word as bad spelled word
 |zX|		zX		   re-apply 'foldlevel'
 |z^|		z^		   cursor on line N (default line above
 				   window), otherwise like "z-"
@@ -840,7 +840,7 @@ tag		char	      note action in Normal mode	~
 				   position the cursor at the end (right side)
 				   of the screen
 |zf|		zf{motion}	   create a fold for Nmove text
-|zg|		zg		   mark word as good spelled word
+|zg|		zg		   permanently mark word as good spelled word
 |zh|		zh		   when 'wrap' off scroll screen N characters
 				   to the right
 |zi|		zi		   toggle 'foldenable'
@@ -861,7 +861,7 @@ tag		char	      note action in Normal mode	~
 |zuW|		zuW		   undo |zW|
 |zuG|		zuG		   undo |zG|
 |zv|		zv		   open enough folds to view the cursor line
-|zw|		zw		   mark word as wrong (bad) spelled word
+|zw|		zw		   permanently mark word as bad spelled word
 |zx|		zx		   re-apply 'foldlevel' and do "zv"
 |zz|		zz		   redraw, cursor line at center of window
 |z<Left>|	z<Left>		   same as "zh"

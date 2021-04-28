@@ -12,7 +12,7 @@ endif
 let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
-set cpo-=C
+set cpo&vim
 
 if !exists('*VimFtpluginUndo')
   func VimFtpluginUndo()
@@ -66,14 +66,14 @@ if !exists("no_plugin_maps") && !exists("no_vim_maps")
   let b:did_add_maps = 1
 
   " Move around functions.
-  nnoremap <silent><buffer> [[ m':call search('^\s*fu\%[nction]\>', "bW")<CR>
-  vnoremap <silent><buffer> [[ m':<C-U>exe "normal! gv"<Bar>call search('^\s*fu\%[nction]\>', "bW")<CR>
-  nnoremap <silent><buffer> ]] m':call search('^\s*fu\%[nction]\>', "W")<CR>
-  vnoremap <silent><buffer> ]] m':<C-U>exe "normal! gv"<Bar>call search('^\s*fu\%[nction]\>', "W")<CR>
-  nnoremap <silent><buffer> [] m':call search('^\s*endf\%[unction]\>', "bW")<CR>
-  vnoremap <silent><buffer> [] m':<C-U>exe "normal! gv"<Bar>call search('^\s*endf\%[unction]\>', "bW")<CR>
-  nnoremap <silent><buffer> ][ m':call search('^\s*endf\%[unction]\>', "W")<CR>
-  vnoremap <silent><buffer> ][ m':<C-U>exe "normal! gv"<Bar>call search('^\s*endf\%[unction]\>', "W")<CR>
+  nnoremap <silent><buffer> [[ m':call search('^\s*\(fu\%[nction]\\|def\)\>', "bW")<CR>
+  vnoremap <silent><buffer> [[ m':<C-U>exe "normal! gv"<Bar>call search('^\s*\(fu\%[nction]\\|def\)\>', "bW")<CR>
+  nnoremap <silent><buffer> ]] m':call search('^\s*\(fu\%[nction]\\|def\)\>', "W")<CR>
+  vnoremap <silent><buffer> ]] m':<C-U>exe "normal! gv"<Bar>call search('^\s*\(fu\%[nction]\\|def\)\>', "W")<CR>
+  nnoremap <silent><buffer> [] m':call search('^\s*end\(f\%[unction]\\|def\)\>', "bW")<CR>
+  vnoremap <silent><buffer> [] m':<C-U>exe "normal! gv"<Bar>call search('^\s*end\(f\%[unction]\\|def\)\>', "bW")<CR>
+  nnoremap <silent><buffer> ][ m':call search('^\s*end\(f\%[unction]\\|def\)\>', "W")<CR>
+  vnoremap <silent><buffer> ][ m':<C-U>exe "normal! gv"<Bar>call search('^\s*end\(f\%[unction]\\|def\)\>', "W")<CR>
 
   " Move around comments
   nnoremap <silent><buffer> ]" :call search('^\(\s*".*\n\)\@<!\(\s*"\)', "W")<CR>

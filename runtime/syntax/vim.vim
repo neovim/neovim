@@ -201,7 +201,7 @@ syn cluster	vimOperGroup	contains=vimEnvvar,vimFunc,vimFuncVar,vimOper,vimOperPa
 syn match	vimOper	"\%#=1\(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\|=\)[?#]\{0,2}"	skipwhite nextgroup=vimString,vimSpecFile
 syn match	vimOper	"\(\<is\|\<isnot\)[?#]\{0,2}\>"			skipwhite nextgroup=vimString,vimSpecFile
 syn match	vimOper	"||\|&&\|[-+.!]"				skipwhite nextgroup=vimString,vimSpecFile
-syn region	vimOperParen 	matchgroup=vimParenSep	start="(" end=")" contains=@vimOperGroup
+syn region	vimOperParen 	matchgroup=vimParenSep	start="(" end=")" contains=vimoperStar,@vimOperGroup
 syn region	vimOperParen	matchgroup=vimSep		start="{" end="}" contains=@vimOperGroup nextgroup=vimVar,vimFuncVar
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_noopererror")
  syn match	vimOperError	")"
@@ -272,7 +272,7 @@ syn match	vimComment	excludenl +\s#[^{].*$+lc=1	contains=@vimCommentGroup,vimCom
 syn match	vimComment	+\<endif\s\+#[^{].*$+lc=5	contains=@vimCommentGroup,vimCommentString
 syn match	vimComment	+\<else\s\+#[^{].*$+lc=4	contains=@vimCommentGroup,vimCommentString
 " Vim9 comment inside expression
-syn match	vim9Comment	+\s\zs#[^{].*$+	contains=@vimCommentGroup,vimCommentString
+syn match	vim9Comment	+\s\zs#[^{].*$+ms=s+1	contains=@vimCommentGroup,vimCommentString
 
 " Environment Variables: {{{2
 " =====================
@@ -293,7 +293,7 @@ syn region	vimString	oneline keepend	start=+[^a-zA-Z>!\\@]"+lc=1 skip=+\\\\\|\\"
 syn region	vimString	oneline keepend	start=+[^a-zA-Z>!\\@]'+lc=1 end=+'+
 syn region	vimString	oneline	start=+=!+lc=1	skip=+\\\\\|\\!+ end=+!+	contains=@vimStringGroup
 syn region	vimString	oneline	start="=+"lc=1	skip="\\\\\|\\+" end="+"	contains=@vimStringGroup
-syn region	vimString	oneline	start="\s/\s*\A"lc=1 skip="\\\\\|\\+" end="/"	contains=@vimStringGroup
+"syn region	vimString	oneline	start="\s/\s*\A"lc=1 skip="\\\\\|\\+" end="/"	contains=@vimStringGroup
 syn match	vimString	contained	+"[^"]*\\$+	skipnl nextgroup=vimStringCont
 syn match	vimStringCont	contained	+\(\\\\\|.\)\{-}[^\\]"+
 
@@ -911,6 +911,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimNumber	Number
  hi def link vimOperError	Error
  hi def link vimOper	Operator
+ hi def link vimOperStar	vimOper
  hi def link vimOption	PreProc
  hi def link vimParenSep	Delimiter
  hi def link vimPatSepErr	vimError

@@ -3,7 +3,7 @@
 " Language:    SPEC: Build/install scripts for Linux RPM packages
 " Maintainer:  Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer:  Donovan Rebbechi elflord@panix.com (until March 2014)
-" Last Change: 2020 Feb 07
+" Last Change: 2020 May 25
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -128,6 +128,8 @@ syn case match
 "sh-like comment stile, only valid in script part
 syn match shComment contained '#.*$'
 
+syn region dnlComment matchgroup=specComment start=+%dnl+ end=+$+
+
 syn region shQuote1 contained matchgroup=shQuoteDelim start=+'+ skip=+\\'+ end=+'+ contains=specMacroIdentifier
 syn region shQuote2 contained matchgroup=shQuoteDelim start=+"+ skip=+\\"+ end=+"+ contains=specVariables,specMacroIdentifier
 
@@ -173,6 +175,7 @@ endif
 
 "sh colors
 hi def link shComment			Comment
+hi def link dnlComment			Comment
 hi def link shIf				Statement
 hi def link shOperator			Special
 hi def link shQuote1			String

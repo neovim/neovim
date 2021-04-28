@@ -1,6 +1,6 @@
 " Vim script to work like "less"
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Mar 31
+" Last Change:	2020 May 18
 
 " Avoid loading this file twice, allow the user to define his own script.
 if exists("loaded_less")
@@ -66,8 +66,8 @@ endif
 " When reading from stdin don't consider the file modified.
 au VimEnter * set nomod
 
-" Can't modify the text
-set noma
+" Can't modify the text or write the file.
+set nomodifiable readonly
 
 " Give help
 noremap h :call <SID>Help()<CR>
