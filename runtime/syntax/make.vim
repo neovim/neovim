@@ -3,7 +3,7 @@
 " Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>, <https://github.com/rohieb>
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
-" Last Change:	2020 Jan 15
+" Last Change:	2020 Mar 04
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -13,22 +13,13 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-
 " some special characters
 syn match makeSpecial	"^\s*[@+-]\+"
 syn match makeNextLine	"\\\n\s*"
 
-" some directives
-syn match makePreCondit	"^ *\(ifn\=\(eq\|def\)\>\|else\(\s\+ifn\=\(eq\|def\)\)\=\>\|endif\>\)"
-syn match makeInclude	"^ *[-s]\=include\s.*$"
-syn match makeStatement	"^ *vpath"
-syn match makeExport    "^ *\(export\|unexport\)\>"
-syn match makeOverride	"^ *override"
-hi link makeOverride makeStatement
-hi link makeExport makeStatement
-
 " catch unmatched define/endef keywords.  endef only matches it is by itself on a line, possibly followed by a commend
-syn region makeDefine start="^\s*define\s" end="^\s*endef\s*\(#.*\)\?$" contains=makeStatement,makeIdent,makePreCondit,makeDefine
+syn region makeDefine start="^\s*define\s" end="^\s*endef\s*\(#.*\)\?$"
+	\ contains=makeStatement,makeIdent,makePreCondit,makeDefine
 
 " Microsoft Makefile specials
 syn case ignore
@@ -53,17 +44,36 @@ syn match makeConfig "@[A-Za-z0-9_]\+@"
 syn match makeImplicit		"^\.[A-Za-z0-9_./\t -]\+\s*:$"me=e-1
 syn match makeImplicit		"^\.[A-Za-z0-9_./\t -]\+\s*:[^=]"me=e-2
 
-syn region makeTarget   transparent matchgroup=makeTarget start="^[~A-Za-z0-9_./$()%-][A-Za-z0-9_./\t $()%-]*:\{1,2}[^:=]"rs=e-1 end=";"re=e-1,me=e-1 end="[^\\]$" keepend contains=makeIdent,makeSpecTarget,makeNextLine,makeComment,makeDString skipnl nextGroup=makeCommands
-syn match makeTarget		"^[~A-Za-z0-9_./$()%*@-][A-Za-z0-9_./\t $()%*@-]*::\=\s*$" contains=makeIdent,makeSpecTarget,makeComment skipnl nextgroup=makeCommands,makeCommandError
+syn region makeTarget transparent matchgroup=makeTarget
+	\ start="^[~A-Za-z0-9_./$()%-][A-Za-z0-9_./\t $()%-]*:\{1,2}[^:=]"rs=e-1
+	\ end=";"re=e-1,me=e-1 end="[^\\]$"
+	\ keepend contains=makeIdent,makeSpecTarget,makeNextLine,makeComment,makeDString
+	\ skipnl nextGroup=makeCommands
+syn match makeTarget		"^[~A-Za-z0-9_./$()%*@-][A-Za-z0-9_./\t $()%*@-]*::\=\s*$"
+	\ contains=makeIdent,makeSpecTarget,makeComment
+	\ skipnl nextgroup=makeCommands,makeCommandError
 
-syn region makeSpecTarget	transparent matchgroup=makeSpecTarget start="^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|EXPORT_ALL_VARIABLES\|KEEP_STATE\|LIBPATTERNS\|NOTPARALLEL\|DELETE_ON_ERROR\|INTERMEDIATE\|POSIX\|SECONDARY\)\>\s*:\{1,2}[^:=]"rs=e-1 end="[^\\]$" keepend contains=makeIdent,makeSpecTarget,makeNextLine,makeComment skipnl nextGroup=makeCommands
-syn match makeSpecTarget		"^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|EXPORT_ALL_VARIABLES\|KEEP_STATE\|LIBPATTERNS\|NOTPARALLEL\|DELETE_ON_ERROR\|INTERMEDIATE\|POSIX\|SECONDARY\)\>\s*::\=\s*$" contains=makeIdent,makeComment skipnl nextgroup=makeCommands,makeCommandError
+syn region makeSpecTarget	transparent matchgroup=makeSpecTarget
+	\ start="^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|EXPORT_ALL_VARIABLES\|KEEP_STATE\|LIBPATTERNS\|NOTPARALLEL\|DELETE_ON_ERROR\|INTERMEDIATE\|POSIX\|SECONDARY\)\>\s*:\{1,2}[^:=]"rs=e-1
+	\ end="[^\\]$" keepend
+	\ contains=makeIdent,makeSpecTarget,makeNextLine,makeComment skipnl nextGroup=makeCommands
+syn match makeSpecTarget	"^\.\(SUFFIXES\|PHONY\|DEFAULT\|PRECIOUS\|IGNORE\|SILENT\|EXPORT_ALL_VARIABLES\|KEEP_STATE\|LIBPATTERNS\|NOTPARALLEL\|DELETE_ON_ERROR\|INTERMEDIATE\|POSIX\|SECONDARY\)\>\s*::\=\s*$"
+	\ contains=makeIdent,makeComment
+	\ skipnl nextgroup=makeCommands,makeCommandError
 
 syn match makeCommandError "^\s\+\S.*" contained
-syn region makeCommands start=";"hs=s+1 start="^\t" end="^[^\t#]"me=e-1,re=e-1 end="^$" contained contains=makeCmdNextLine,makeSpecial,makeComment,makeIdent,makePreCondit,makeDefine,makeDString,makeSString nextgroup=makeCommandError
+syn region makeCommands contained start=";"hs=s+1 start="^\t"
+	\ end="^[^\t#]"me=e-1,re=e-1 end="^$"
+	\ contains=makeCmdNextLine,makeSpecial,makeComment,makeIdent,makePreCondit,makeDefine,makeDString,makeSString
+	\ nextgroup=makeCommandError
 syn match makeCmdNextLine	"\\\n."he=e-1 contained
 
-
+" some directives
+syn match makePreCondit	"^ *\(ifn\=\(eq\|def\)\>\|else\(\s\+ifn\=\(eq\|def\)\)\=\>\|endif\>\)"
+syn match makeInclude	"^ *[-s]\=include\s.*$"
+syn match makeStatement	"^ *vpath"
+syn match makeExport    "^ *\(export\|unexport\)\>"
+syn match makeOverride	"^ *override"
 " Statements / Functions (GNU make)
 syn match makeStatement contained "(\(abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|file\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|guile\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|subst\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
 
@@ -103,6 +113,9 @@ syn sync match makeCommandSync groupthere makeCommands "^[A-Za-z0-9_./$()%-][A-Z
 
 hi def link makeNextLine	makeSpecial
 hi def link makeCmdNextLine	makeSpecial
+hi link     makeOverride        makeStatement
+hi link     makeExport          makeStatement
+
 hi def link makeSpecTarget	Statement
 if !exists("make_no_commands")
 hi def link makeCommands	Number
