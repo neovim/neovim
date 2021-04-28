@@ -505,6 +505,7 @@ Test functions:
   test_null_blob()
   test_null_channel()
   test_null_dict()
+  test_null_function()
   test_null_job()
   test_null_list()
   test_null_partial()

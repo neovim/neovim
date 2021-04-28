@@ -1575,7 +1575,7 @@ static const char_u *skip_var_list(const char_u *arg, int *var_count,
         break;
       else if (*p == ';') {
         if (*semicolon == 1) {
-          EMSG(_("Double ; in list of variables"));
+          EMSG(_("E452: Double ; in list of variables"));
           return NULL;
         }
         *semicolon = 1;

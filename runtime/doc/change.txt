@@ -1402,7 +1402,7 @@ text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim: >
   func! format#Format()
     " only reformat on explicit gq command
     if mode() != 'n'
-      " fall back to Vims internal reformatting
+      " fall back to Vim's internal reformatting
       return 1
     endif
     let lines = getline(v:lnum, v:lnum + v:count - 1)

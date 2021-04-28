@@ -179,6 +179,29 @@ commands explained above the tag stack will look like this:
 The |gettagstack()| function returns the tag stack of a specified window. The
 |settagstack()| function modifies the tag stack of a window.
 
+							*tagstack-examples*
+Write to the tag stack just like `:tag` but with a user-defined
+jumper#jump_to_tag function: >
+	" Store where we're jumping from before we jump.
+	let tag = expand('<cword>')
+	let pos = [bufnr()] + getcurpos()[1:]
+	let item = {'bufnr': pos[0], 'from': pos, 'tagname': tag}
+	if jumper#jump_to_tag(tag)
+		" Jump was successful, write previous location to tag stack.
+		let winid = win_getid()
+		let stack = gettagstack(winid)
+		let stack['items'] = [item]
+		call settagstack(winid, stack, 't')
+	endif
+<
+Set current index of the tag stack to 4: >
+	call settagstack(1005, {'curidx' : 4})
+<
+Push a new item onto the tag stack: >
+	let pos = [bufnr('myfile.txt'), 10, 1, 0]
+	let newtag = [{'tagname' : 'mytag', 'from' : pos}]
+	call settagstack(2, {'items' : newtag}, 'a')
+<
 							*E73*
 When you try to use the tag stack while it doesn't contain anything you will
 get an error message.

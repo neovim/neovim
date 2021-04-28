@@ -1,7 +1,7 @@
 " Vim completion script
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2018 Aug 20
+" Last Change:	2020 Apr 08
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -635,3 +635,5 @@ endfunc
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
+
+" vim: noet sw=2 sts=2

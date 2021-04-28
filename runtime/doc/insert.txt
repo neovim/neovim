@@ -143,6 +143,8 @@ CTRL-R CTRL-R {register}			*i_CTRL-R_CTRL-R*
 		you also want to avoid these, use CTRL-R CTRL-O, see below.
 		The '.' register (last inserted text) is still inserted as
 		typed.
+		After this command, the '.' register contains the text from
+		the register as if it was inserted by typing it.
 
 CTRL-R CTRL-O {register}			*i_CTRL-R_CTRL-O*
 		Insert the contents of a register literally and don't
@@ -152,6 +154,9 @@ CTRL-R CTRL-O {register}			*i_CTRL-R_CTRL-O*
 		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
 		typed.
+		After this command, the '.' register contains the command
+		typed and not the text. I.e., the literals "^R^O" and not the
+		text from the register.
 
 CTRL-R CTRL-P {register}			*i_CTRL-R_CTRL-P*
 		Insert the contents of a register literally and fix the
@@ -159,6 +164,9 @@ CTRL-R CTRL-P {register}			*i_CTRL-R_CTRL-P*
 		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
 		typed.
+		After this command, the '.' register contains the command
+		typed and not the text. I.e., the literals "^R^P" and not the
+		text from the register.
 
 						*i_CTRL-T*
 CTRL-T		Insert one shiftwidth of indent at the start of the current
