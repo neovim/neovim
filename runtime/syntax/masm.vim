@@ -2,8 +2,7 @@
 " Language:	Microsoft Macro Assembler (80x86)
 " Orig Author:	Rob Brady <robb@datatone.com>
 " Maintainer:	Wu Yongwei <wuyongwei@gmail.com>
-" Last Change:	$Date: 2013/11/13 11:49:24 $
-" $Revision: 1.48 $
+" Last Change:	2020-05-07 17:04:10 +0800
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -13,10 +12,12 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+setlocal iskeyword=@,48-57,_,36,60,62,63,@-@
+
 syn case ignore
 
 
-syn match masmIdentifier	"[@a-z_$?][@a-z0-9_$?]*"
+syn match masmIdentifier	"[@a-z_$?][@a-z0-9_$?<>]*"
 syn match masmLabel		"^\s*[@a-z_$?][@a-z0-9_$?]*:"he=e-1
 
 syn match masmDecimal		"[-+]\?\d\+[dt]\?"

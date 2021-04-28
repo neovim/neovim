@@ -20,7 +20,7 @@ augroup gzip
   "
   " Set binary mode before reading the file.
   " Use "gzip -d", gunzip isn't always available.
-  autocmd BufReadPre,FileReadPre	*.gz,*.bz2,*.Z,*.lzma,*.xz,*.lz,*.zst setlocal bin
+  autocmd BufReadPre,FileReadPre	*.gz,*.bz2,*.Z,*.lzma,*.xz,*.lz,*.zst,*.br setlocal bin
   autocmd BufReadPost,FileReadPost	*.gz  call gzip#read("gzip -dn")
   autocmd BufReadPost,FileReadPost	*.bz2 call gzip#read("bzip2 -d")
   autocmd BufReadPost,FileReadPost	*.Z   call gzip#read("uncompress")
@@ -28,6 +28,7 @@ augroup gzip
   autocmd BufReadPost,FileReadPost	*.xz  call gzip#read("xz -d")
   autocmd BufReadPost,FileReadPost	*.lz  call gzip#read("lzip -d")
   autocmd BufReadPost,FileReadPost	*.zst call gzip#read("zstd -d --rm")
+  autocmd BufReadPost,FileReadPost	*.br call gzip#read("brotli -d --rm")
   autocmd BufWritePost,FileWritePost	*.gz  call gzip#write("gzip")
   autocmd BufWritePost,FileWritePost	*.bz2 call gzip#write("bzip2")
   autocmd BufWritePost,FileWritePost	*.Z   call gzip#write("compress -f")
@@ -35,6 +36,7 @@ augroup gzip
   autocmd BufWritePost,FileWritePost	*.xz  call gzip#write("xz -z")
   autocmd BufWritePost,FileWritePost	*.lz  call gzip#write("lzip")
   autocmd BufWritePost,FileWritePost	*.zst  call gzip#write("zstd --rm")
+  autocmd BufWritePost,FileWritePost	*.br  call gzip#write("brotli --rm")
   autocmd FileAppendPre			*.gz  call gzip#appre("gzip -dn")
   autocmd FileAppendPre			*.bz2 call gzip#appre("bzip2 -d")
   autocmd FileAppendPre			*.Z   call gzip#appre("uncompress")
@@ -42,6 +44,7 @@ augroup gzip
   autocmd FileAppendPre			*.xz   call gzip#appre("xz -d")
   autocmd FileAppendPre			*.lz   call gzip#appre("lzip -d")
   autocmd FileAppendPre			*.zst call gzip#appre("zstd -d --rm")
+  autocmd FileAppendPre			*.br call gzip#appre("brotli -d --rm")
   autocmd FileAppendPost		*.gz  call gzip#write("gzip")
   autocmd FileAppendPost		*.bz2 call gzip#write("bzip2")
   autocmd FileAppendPost		*.Z   call gzip#write("compress -f")
@@ -49,4 +52,5 @@ augroup gzip
   autocmd FileAppendPost		*.xz call gzip#write("xz -z")
   autocmd FileAppendPost		*.lz call gzip#write("lzip")
   autocmd FileAppendPost		*.zst call gzip#write("zstd --rm")
+  autocmd FileAppendPost		*.br call gzip#write("brotli --rm")
 augroup END

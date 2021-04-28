@@ -3,7 +3,7 @@
 " Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>, <https://github.com/rohieb>
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
-" Last Change:	2020 Mar 04
+" Last Change:	2020 May 03
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -73,7 +73,7 @@ syn match makePreCondit	"^ *\(ifn\=\(eq\|def\)\>\|else\(\s\+ifn\=\(eq\|def\)\)\=
 syn match makeInclude	"^ *[-s]\=include\s.*$"
 syn match makeStatement	"^ *vpath"
 syn match makeExport    "^ *\(export\|unexport\)\>"
-syn match makeOverride	"^ *override"
+syn match makeOverride	"^ *override\>"
 " Statements / Functions (GNU make)
 syn match makeStatement contained "(\(abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|file\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|guile\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|subst\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
 
