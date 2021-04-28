@@ -3,8 +3,8 @@
 " Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2019 Dec 24
-" Included patch from Jorge Maldonado Ventura to add the dialog element
+" Last Change:          2020 Mar 17
+" Included patch from Florian Breisch to add the summary element
 "
 
 " Please check :help html.vim for some comments and a description of the options
@@ -61,7 +61,8 @@ syn keyword htmlTagName contained datalist details dialog embed figcaption
 syn keyword htmlTagName contained figure footer header hgroup keygen main
 syn keyword htmlTagName contained mark menuitem meter nav output picture
 syn keyword htmlTagName contained progress rb rp rt rtc ruby section
-syn keyword htmlTagName contained slot source template time track video wbr
+syn keyword htmlTagName contained slot source summary template time track
+syn keyword htmlTagName contained video wbr
 
 " legal arg names
 syn keyword htmlArg contained action

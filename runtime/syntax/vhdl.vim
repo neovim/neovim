@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:		VHDL [VHSIC (Very High Speed Integrated Circuit) Hardware Description Language]
-" Maintainer:		Daniel Kho <daniel.kho@tauhop.com>
+" Maintainer:		Daniel Kho <daniel.kho@logik.haus>
 " Previous Maintainer:	Czo <Olivier.Sirol@lip6.fr>
 " Credits:		Stephan Hegel <stephan.hegel@snc.siemens.com.cn>
-" Last Changed:		2018 May 06 by Daniel Kho
+" Last Changed:		2020 Mar 09 by Daniel Kho
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -43,7 +43,7 @@ syn keyword 	vhdlStatement	sequence strong
 syn keyword 	vhdlStatement	then to transport type
 syn keyword 	vhdlStatement	unaffected units until use
 syn keyword 	vhdlStatement	variable
-" VHDL-2017 interface
+" VHDL-2019 interface
 syn keyword 	vhdlStatement	view
 syn keyword 	vhdlStatement	vmode vprop vunit
 syn keyword 	vhdlStatement	wait when while with
@@ -124,7 +124,7 @@ syn match   	vhdlAttribute	"\'succ"
 syn match   	vhdlAttribute	"\'val"
 syn match   	vhdlAttribute	"\'image"
 syn match   	vhdlAttribute	"\'value"
-" VHDL-2017 interface attribute
+" VHDL-2019 interface attribute
 syn match   	vhdlAttribute	"\'converse"
 
 syn keyword	vhdlBoolean	true false
@@ -167,7 +167,7 @@ syn match	vhdlOperator	"=\|\/=\|>\|<\|>="
 syn match	vhdlOperator	"<=\|:="
 syn match	vhdlOperator	"=>"
 
-" VHDL-2017 concurrent signal association (spaceship) operator
+" VHDL-202x concurrent signal association (spaceship) operator
 syn match	vhdlOperator	"<=>"
 
 " VHDL-2008 conversion, matching equality/non-equality operators
@@ -188,7 +188,7 @@ syn match	vhdlError	"\(<\)[&+\-\/\\]\+"
 syn match	vhdlError	"[>=&+\-\/\\]\+\(<\)"
 " Covers most operators
 " support negative sign after operators. E.g. q<=-b;
-" Supports VHDL-2017 spaceship (concurrent simple signal association).
+" Supports VHDL-202x spaceship (concurrent simple signal association).
 syn match	vhdlError	"\(<=\)[<=&+\*\\?:]\+"
 syn match	vhdlError	"[>=&+\-\*\\:]\+\(=>\)"
 syn match	vhdlError	"\(&\|+\|\-\|\*\*\|\/=\|??\|?=\|?\/=\|?<=\|?>=\|>=\|:=\|=>\)[<>=&+\*\\?:]\+"
