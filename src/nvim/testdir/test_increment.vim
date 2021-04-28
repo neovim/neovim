@@ -1,4 +1,4 @@
-" Tests for using Ctrl-A/Ctrl-X on visual selections
+" Tests for using Ctrl-A/Ctrl-X
 
 func SetUp()
   new dummy
@@ -777,6 +777,50 @@ func Test_increment_empty_line()
   exe "normal Gvgg\<C-A>"
   call assert_equal(['1', '1', '1', '1', '1', '1', ''], getline(1, 7))
   bwipe!
+endfunc
+
+" Try incrementing/decrementing a number when nrformats contains unsigned
+func Test_increment_unsigned()
+  set nrformats+=unsigned
+
+  call setline(1, '0')
+  exec "norm! gg0\<C-X>"
+  call assert_equal('0', getline(1))
+
+  call setline(1, '3')
+  exec "norm! gg010\<C-X>"
+  call assert_equal('0', getline(1))
+
+  call setline(1, '-0')
+  exec "norm! gg0\<C-X>"
+  call assert_equal("-0", getline(1))
+
+  call setline(1, '-11')
+  exec "norm! gg08\<C-X>"
+  call assert_equal('-3', getline(1))
+
+  " NOTE: 18446744073709551615 == 2^64 - 1
+  call setline(1, '18446744073709551615')
+  exec "norm! gg0\<C-A>"
+  call assert_equal('18446744073709551615', getline(1))
+
+  call setline(1, '-18446744073709551615')
+  exec "norm! gg0\<C-A>"
+  call assert_equal('-18446744073709551615', getline(1))
+
+  call setline(1, '-18446744073709551614')
+  exec "norm! gg08\<C-A>"
+  call assert_equal('-18446744073709551615', getline(1))
+
+  call setline(1, '-1')
+  exec "norm! gg0\<C-A>"
+  call assert_equal('-2', getline(1))
+
+  call setline(1, '-3')
+  exec "norm! gg08\<C-A>"
+  call assert_equal('-11', getline(1))
+
+  set nrformats-=unsigned
 endfunc
 
 func Test_normal_increment_with_virtualedit()

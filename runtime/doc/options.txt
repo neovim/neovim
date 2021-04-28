@@ -4208,6 +4208,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	bin	If included, numbers starting with "0b" or "0B" will be
 		considered to be binary.  Example: Using CTRL-X on
 		"0b1000" subtracts one, resulting in "0b0111".
+	unsigned    If included, numbers are recognized as unsigned. Thus a
+		leading dash or negative sign won't be considered as part of
+		the number.  Examples:
+		    Using CTRL-X on "2020" in "9-2020" results in "9-2019"
+		    (without "unsigned" it would become "9-2021").
+		    Using CTRL-A on "2020" in "9-2020" results in "9-2021"
+		    (without "unsigned" it would become "9-2019").
+		    Using CTRL-X on "0" or "18446744073709551615" (2^64) has
+		    no effect, overflow is prevented.
 	Numbers which simply begin with a digit in the range 1-9 are always
 	considered decimal.  This also happens for numbers that are not
 	recognized as octal or hex.
