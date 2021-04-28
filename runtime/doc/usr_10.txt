@@ -687,7 +687,7 @@ with any motion command, with text objects and in Visual mode.
 lowercase.  This can be shortened to "guu".  "gUgU" is shortened to "gUU" and
 "g~g~" to "g~~".  Example: >
 
-				g~~ 
+				g~~
 <	Some GIRLS have Fun    ---->   sOME girls HAVE fUN ~
 
 ==============================================================================

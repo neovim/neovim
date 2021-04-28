@@ -961,9 +961,9 @@ inside of strings can change!  Also see 'softtabstop' option. >
 5. Copying and moving text				*copy-move*
 
 							*quote*
-"{a-zA-Z0-9.%#:-"}	Use register {a-zA-Z0-9.%#:-"} for next delete, yank
-			or put (use uppercase character to append with
-			delete and yank) ({.%#:} only work with put).
+"{register}		Use {register} for next delete, yank or put.  Use
+			an uppercase character to append with delete and yank.
+			Registers ".", "%", "#" and ":" only work with put.
 
 							*:reg* *:registers*
 :reg[isters]		Display the type and contents of all numbered and

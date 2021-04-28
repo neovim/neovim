@@ -577,6 +577,7 @@ followed by another Vim command:
     :read !
     :scscope
     :sign
+    :terminal
     :vglobal
     :windo
     :write !

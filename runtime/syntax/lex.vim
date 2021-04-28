@@ -1,22 +1,19 @@
 " Vim syntax file
-" Language:	Lex
+" Language:	Lex and Flex
 " Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
-" Last Change:	Aug 31, 2016
-" Version:	17
-" URL:	http://mysite.verizon.net/astronaut/vim/index.html#SYNTAX_LEX
-"
-" Option:
-"   lex_uses_cpp : if this variable exists, then C++ is loaded rather than C
+" Contributor:	Robert A. van Engelen <engelen@acm.org>
+" Last Change:	Apr 24, 2020
+" Version:	18
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
 
-" Read the C/C++ syntax to start with
-let s:Cpath= fnameescape(expand("<sfile>:p:h").(exists("g:lex_uses_cpp")? "/cpp.vim" : "/c.vim"))
+" Read the C++ syntax to start with
+let s:Cpath= fnameescape(expand("<sfile>:p:h")."/cpp.vim")
 if !filereadable(s:Cpath)
- for s:Cpath in split(globpath(&rtp,(exists("g:lex_uses_cpp")? "syntax/cpp.vim" : "syntax/c.vim")),"\n")
+ for s:Cpath in split(globpath(&rtp,"syntax/cpp.vim"),"\n")
   if filereadable(fnameescape(s:Cpath))
    let s:Cpath= fnameescape(s:Cpath)
    break
@@ -29,115 +26,163 @@ exe "syn include @lexCcode ".s:Cpath
 " --- Lex stuff ---
 " --- ========= ---
 
-" Options Section
-syn match lexOptions '^%\s*option\>.*$' contains=lexPatString
+" Definitions
+" %%
+" Rules
+" %%
+" User Code
+"
+" --- ======= ---
+" --- Example ---
+" --- ======= ---
+"
+"   // this is a valid lex file
+"   // indented initial code block
+"   #include <stdlib.h>
+" %{
+" // initial code block
+" #include <stdio.h>
+" const char *sep = "";
+" %}
+" %option outfile="scanner.c" noyywrap nodefault
+" %x COMMENT
+" id      [A-Za-z_][A-Za-z0-9_]*
+" %%
+"   // indented initial action code block
+"   printf("BEGIN");
+" {id}    printf("%s%s", sep, yytext); sep = "";
+" .       |
+" \n      { sep = "\n"; }
+" "/*"    { BEGIN COMMENT; }
+" "//".*  { }
+" <COMMENT>{
+" "*/"    { BEGIN INITIAL; }
+" .|\n    
+" }
+" <*><<EOF>> { // end of file
+"              printf("\nEND\n");
+"              yyterminate();
+"            }
+" %%
+" void scan()
+" {
+"   while (yylex())
+"     continue;
+" }
+" /* main program */
+" int main()
+" { 
+"   scan();
+" }   
 
-" Abbreviations Section
+" Definitions Section with initial code blocks, abbreviations, options, states
 if has("folding")
- syn region lexAbbrvBlock	fold start="^\(\h\+\s\|%{\)"	end="^\ze%%$"	skipnl	nextgroup=lexPatBlock contains=lexAbbrv,lexInclude,lexAbbrvComment,lexStartState
+ syn region lexAbbrvBlock	fold	start="^\S"	end="^\ze%%"	skipnl	nextgroup=lexPatBlock	contains=lexOptions,lexAbbrv,lexInitialCodeBlock,lexInclude,lexAbbrvComment,lexStartState
 else
- syn region lexAbbrvBlock	start="^\(\h\+\s\|%{\)"	end="^\ze%%$"	skipnl	nextgroup=lexPatBlock contains=lexAbbrv,lexInclude,lexAbbrvComment,lexStartState
+ syn region lexAbbrvBlock		start="^\S"	end="^\ze%%"	skipnl	nextgroup=lexPatBlock	contains=lexOptions,lexAbbrv,lexInitialCodeBlock,lexInclude,lexAbbrvComment,lexStartState
 endif
-syn match  lexAbbrv		"^\I\i*\s"me=e-1			skipwhite	contained nextgroup=lexAbbrvRegExp
-syn match  lexAbbrv		"^%[sx]"					contained
-syn match  lexAbbrvRegExp	"\s\S.*$"lc=1				contained nextgroup=lexAbbrv,lexInclude
+syn match  lexOptions		"^%\a\+\(\s.*\|[^{]*\)$"				contains=lexOptionsEq,lexPatString,lexSlashQuote,lexBrace,lexSlashBrace
+syn match  lexOptionsEq		"="					skipwhite	contained
+syn match  lexAbbrv		"^\I\i*\s"me=e-1			skipwhite	contained	nextgroup=lexAbbrvPat
+syn match  lexAbbrvPat		"\s\S.*$"lc=1						contained	contains=lexPatAbbrv,lexPatString,lexSlashQuote,lexBrace,lexSlashBrace	nextgroup=lexAbbrv,lexInclude
+syn match  lexStartState	"^%\(xs\?\|s\)\(t\(a\(t\(e\?\)\?\)\?\)\?\)\?\(\s\+\I\i*\)\+\s*$"	contained	contains=lexStartStateCmd
+syn match  lexStartStateCmd	'^%\(xs\?\|s\)\(t\(a\(t\(e\?\)\?\)\?\)\?\)\?'	contained
 if has("folding")
- syn region lexInclude	fold matchgroup=lexSep	start="^%{"	end="%}"	contained	contains=@lexCcode
- syn region lexAbbrvComment	fold			start="^\s\+/\*"	end="\*/"	contains=@Spell
- syn region lexAbbrvComment	fold			start="\%^/\*"	end="\*/"	contains=@Spell
- syn region lexStartState	fold matchgroup=lexAbbrv	start="^%\a\+"	end="$"	contained
+ syn region lexInitialCodeBlock	fold				start="^\s\+"	end="^\S"me=e-1			contains=@lexCcode
+ syn region lexInclude		fold	matchgroup=lexSep	start="^%\a*{"	end="^%\?}"	contained	contains=@lexCcode,lexCFunctions
+ syn region lexAbbrvComment	fold				start="^\s*//"	end="$"		contains=@Spell
+ syn region lexAbbrvComment	fold				start="^\s*/\*"	end="\*/"	contains=@Spell
 else
- syn region lexInclude	matchgroup=lexSep		start="^%{"	end="%}"	contained	contains=@lexCcode
- syn region lexAbbrvComment				start="^\s\+/\*"	end="\*/"	contains=@Spell
- syn region lexAbbrvComment				start="\%^/\*"	end="\*/"	contains=@Spell
- syn region lexStartState	matchgroup=lexAbbrv		start="^%\a\+"	end="$"	contained
+ syn region lexInitialCodeBlock					start="^\s\+"	end="^\S"me=e-1			contains=@lexCcode
+ syn region lexInclude			matchgroup=lexSep	start="^%\a*{"	end="^%\?}"	contained	contains=@lexCcode,lexCFunctions
+ syn region lexAbbrvComment					start="^\s*//"	end="$"		contains=@Spell
+ syn region lexAbbrvComment					start="^\s*/\*"	end="\*/"	contains=@Spell
 endif
 
-"%% : Patterns {Actions}
+" Rules Section with patterns and actions
 if has("folding")
- syn region lexPatBlock	fold matchgroup=Todo	start="^%%$" matchgroup=Todo	end="^%\ze%$"	skipnl	skipwhite	nextgroup=lexFinalCodeBlock	contains=lexPatTag,lexPatTagZone,lexPatComment,lexPat,lexPatInclude
- syn region lexPat		fold			start=+\S+ skip="\\\\\|\\."	end="\s"me=e-1	skipwhite	contained nextgroup=lexMorePat,lexPatSep,lexPattern contains=lexPatTag,lexPatString,lexSlashQuote,lexBrace
- syn region lexPatInclude	fold matchgroup=lexSep	start="^%{"	end="%}"	contained	contains=lexPatCode
- syn region lexBrace	fold			start="\[" skip=+\\\\\|\\+	end="]"			contained
- syn region lexPatString	fold matchgroup=String	start=+"+	skip=+\\\\\|\\"+	matchgroup=String end=+"+	contained
+ syn region lexPatBlock		fold	matchgroup=Todo		start="^%%"	matchgroup=Todo		end="^\ze%%"	skipnl	skipwhite	nextgroup=lexFinalCodeBlock	contains=lexPatTag,lexPatTagZone,lexPatComment,lexPat,lexPatSep,lexPatInclude
+ syn region lexPat		fold				start="\S"	skip="\\\\\|\\\s"	end="\ze\(\s*$\|\s\+\(\h\|{\W\|{$\|[-+*]\|//\|/\*\)\)"	skipwhite	contained nextgroup=lexMorePat,lexPatSep,lexPatEnd	contains=lexPatTag,lexPatString,lexSlashQuote,lexPatAbbrv,lexBrace,lexSlashBrace
+ syn region lexPatInclude	fold	matchgroup=lexSep	start="^%{"	end="^%}"	contained	contains=@lexCcode
+ syn region lexBrace		fold	matchgroup=Character	start="\["	skip="\\.\|\[:\a\+:\]\|\[\.\a\+\.\]\|\[=.=\]"	end="\]"	contained
+ syn region lexPatString	fold	matchgroup=String	start=+"+	skip=+\\\\\|\\"+	matchgroup=String	end=+"+	contained
 else
- syn region lexPatBlock	matchgroup=Todo		start="^%%$" matchgroup=Todo	end="^%%$"	skipnl	skipwhite	nextgroup=lexFinalCodeBlock	contains=lexPatTag,lexPatTagZone,lexPatComment,lexPat,lexPatInclude
- syn region lexPat					start=+\S+ skip="\\\\\|\\."	end="\s"me=e-1	skipwhite	contained nextgroup=lexMorePat,lexPatSep,lexPattern contains=lexPatTag,lexPatString,lexSlashQuote,lexBrace
- syn region lexPatInclude	matchgroup=lexSep		start="^%{"	end="%}"	contained	contains=lexPatCode
- syn region lexBrace				start="\[" skip=+\\\\\|\\+	end="]"			contained
- syn region lexPatString	matchgroup=String		start=+"+	skip=+\\\\\|\\"+	matchgroup=String end=+"+	contained
+ syn region lexPatBlock			matchgroup=Todo		start="^%%"	matchgroup=Todo		end="^\ze%%"	skipnl	skipwhite	nextgroup=lexFinalCodeBlock	contains=lexPatTag,lexPatTagZone,lexPatComment,lexPat,lexPatSep,lexPatInclude
+ syn region lexPat						start="\S"	skip="\\\\\|\\\s"	end="\ze\(\s*$\|\s\+\(\h\|{\W\|{$\|[-+*]\|//\|/\*\)\)"	skipwhite	contained nextgroup=lexMorePat,lexPatSep,lexPatEnd	contains=lexPatTag,lexPatString,lexSlashQuote,lexPatAbbrv,lexBrace,lexSlashBrace
+ syn region lexPatInclude		matchgroup=lexSep	start="^%{"	end="^%}"	contained	contains=@lexCcode
+ syn region lexBrace			matchgroup=Character	start="\["	skip="\\.\|\[:\a\+:\]\|\[\.\a\+\.\]\|\[=.=\]"	end="\]"	contained
+ syn region lexPatString		matchgroup=String	start=+"+	skip=+\\\\\|\\"+	matchgroup=String	end=+"+	contained
 endif
-syn match  lexPatTag	"^<\I\i*\(,\I\i*\)*>"			contained nextgroup=lexPat,lexPatTag,lexMorePat,lexPatSep
-syn match  lexPatTagZone	"^<\I\i*\(,\I\i*\)*>\s\+\ze{"			contained nextgroup=lexPatTagZoneStart
-syn match  lexPatTag	+^<\I\i*\(,\I\i*\)*>*\(\\\\\)*\\"+		contained nextgroup=lexPat,lexPatTag,lexMorePat,lexPatSep
-
-" Lex Patterns
-syn region lexPattern	start='[^ \t{}]'	end="$"			contained	contains=lexPatRange
-syn region lexPatRange	matchgroup=Delimiter	start='\['	skip='\\\\\|\\.'	end='\]'	contains=lexEscape
-syn match  lexEscape	'\%(\\\\\)*\\.'				contained
+syn match  lexPatAbbrv		"{\I\i*}"hs=s+1,he=e-1					contained
+syn match  lexPatTag		"^<\^\?\(\I\i*\|\*\)\(,\^\?\(\I\i*\|\*\)\)*>"		contained	nextgroup=lexPat,lexMorePat,lexPatSep,lexPatEnd
+syn match  lexPatTagZone	"^<\^\?\(\I\i*\|\*\)\(,\^\?\(\I\i*\|\*\)\)*>\s*{$"me=e-1	contained	nextgroup=lexPatTagZoneStart
 
 if has("folding")
- syn region lexPatTagZoneStart matchgroup=lexPatTag	fold	start='{' end='}'	contained contains=lexPat,lexPatComment
- syn region lexPatComment	start="\s\+/\*" end="\*/"	fold	skipnl	contained contains=cTodo skipwhite nextgroup=lexPatComment,lexPat,@Spell
+ syn region lexPatTagZoneStart	fold	matchgroup=lexPatTag	start='{$'	end='^}'	skipnl	skipwhite	contained	contains=lexPatTag,lexPatTagZone,lexPatComment,lexPat,lexPatSep,lexPatInclude
+ syn region lexPatComment	fold	start="//"	end="$"		skipnl	contained	contains=cTodo	skipwhite	nextgroup=lexPatComment,lexPat,@Spell
+ syn region lexPatComment	fold	start="/\*"	end="\*/"	skipnl	contained	contains=cTodo	skipwhite	nextgroup=lexPatComment,lexPat,@Spell
 else
- syn region lexPatTagZoneStart matchgroup=lexPatTag		start='{' end='}'	contained contains=lexPat,lexPatComment
- syn region lexPatComment	start="\s\+/\*" end="\*/"		skipnl	contained contains=cTodo skipwhite nextgroup=lexPatComment,lexPat,@Spell
+ syn region lexPatTagZoneStart		matchgroup=lexPatTag		start='{'	end='^}'	skipnl	skipwhitecontained	contains=lexPatTag,lexPatTagZone,lexPatComment,lexPat,lexPatSep,lexPatInclude
+ syn region lexPatComment		start="//"	end="$"		skipnl	contained	contains=cTodo	skipwhite	nextgroup=lexPatComment,lexPat,@Spell
+ syn region lexPatComment		start="/\*"	end="\*/"	skipnl	contained	contains=cTodo	skipwhite	nextgroup=lexPatComment,lexPat,@Spell
 endif
-syn match  lexPatCodeLine	"[^{\[].*"				contained contains=@lexCcode
-syn match  lexMorePat	"\s*|\s*$"			skipnl	contained nextgroup=lexPat,lexPatTag,lexPatComment
-syn match  lexPatSep	"\s\+"					contained nextgroup=lexMorePat,lexPatCode,lexPatCodeLine
+syn match  lexPatEnd		"\s*$"				skipnl	contained
+syn match  lexPatCodeLine	"[^{\[].*"				contained	contains=@lexCcode,lexCFunctions
+syn match  lexMorePat		"\s*|\s*$"			skipnl	contained	nextgroup=lexPat,lexPatTag,lexPatComment
+syn match  lexPatSep		"\s\+"					contained	nextgroup=lexMorePat,lexPatCode,lexPatCodeLine
 syn match  lexSlashQuote	+\(\\\\\)*\\"+				contained
+syn match  lexSlashBrace	+\(\\\\\)*\\\[+				contained
 if has("folding")
- syn region lexPatCode matchgroup=Delimiter start="{" end="}"	fold	skipnl contained contains=@lexCcode,lexCFunctions
+ syn region lexPatCode		fold	matchgroup=Delimiter	start="{"	end="}"	skipnl	contained	contains=@lexCcode,lexCFunctions
 else
- syn region lexPatCode matchgroup=Delimiter start="{" end="}"	skipnl	contained contains=@lexCcode,lexCFunctions
+ syn region lexPatCode			matchgroup=Delimiter	start="{"	end="}"	skipnl	contained	contains=@lexCcode,lexCFunctions
 endif
 
-" Lex "functions" which may appear in C/C++ code blocks
-syn keyword lexCFunctions	BEGIN	input	unput	woutput	yyleng	yylook	yytext
-syn keyword lexCFunctions	ECHO	output	winput	wunput	yyless	yymore	yywrap
+" User Code Section with final code block
+syn region lexFinalCodeBlock	matchgroup=Todo	start="^%%"	end="\%$"	contained	contains=@lexCcode
 
-" %%
-"  lexAbbrevBlock
-" %%
-"  lexPatBlock
-" %%
-"  lexFinalCodeBlock
-syn region lexFinalCodeBlock matchgroup=Todo start="%$"me=e-1 end="\%$"	contained	contains=@lexCcode
+" Lex macros which may appear in C/C++ code blocks
+syn keyword lexCFunctions	BEGIN	ECHO	REJECT	yytext	YYText	yyleng	YYLeng	yymore	yyless	yywrap	yylook
+syn keyword lexCFunctions	yyrestart	yyterminate	yylineno	yycolumno	yyin	yyout
+syn keyword lexCFunctions	input	unput	output		winput		wunput		woutput
+syn keyword lexCFunctions	yyinput	yyunput	yyoutput	yywinput	yywunput	yywoutput
 
 " <c.vim> includes several ALLBUTs; these have to be treated so as to exclude lex* groups
-syn cluster cParenGroup	add=lex.*
+syn cluster cParenGroup		add=lex.*
 syn cluster cDefineGroup	add=lex.*
 syn cluster cPreProcGroup	add=lex.*
-syn cluster cMultiGroup	add=lex.*
+syn cluster cMultiGroup		add=lex.*
 
 " Synchronization
 syn sync clear
 syn sync minlines=500
 syn sync match lexSyncPat	grouphere  lexPatBlock	"^%[a-zA-Z]"
 syn sync match lexSyncPat	groupthere lexPatBlock	"^<$"
-syn sync match lexSyncPat	groupthere lexPatBlock	"^%%$"
+syn sync match lexSyncPat	groupthere lexPatBlock	"^%%"
 
 " The default highlighting.
 if !exists("skip_lex_syntax_inits")
  hi def link lexAbbrvComment	lexPatComment
- hi def link lexAbbrvRegExp	Macro
- hi def link lexAbbrv	SpecialChar
- hi def link lexBrace	lexPat
- hi def link lexCFunctions	Function
- hi def link lexCstruct	cStructure
- hi def link lexMorePat	SpecialChar
- hi def link lexOptions	PreProc
+ hi def link lexAbbrvPat	lexPat
+ hi def link lexAbbrv		Special
+ hi def link lexBrace		lexPat
+ hi def link lexCFunctions	PreProc
+ hi def link lexMorePat		Special
+ hi def link lexOptions		PreProc
+ hi def link lexOptionsEq	Operator
  hi def link lexPatComment	Comment
  hi def link lexPat		Function
- hi def link lexPatString	Function
- hi def link lexPatTag	Special
+ hi def link lexPatString	lexPat
+ hi def link lexPatAbbrv	Special
+ hi def link lexPatTag		Statement
  hi def link lexPatTagZone	lexPatTag
  hi def link lexSep		Delimiter
  hi def link lexSlashQuote	lexPat
- hi def link lexStartState	Statement
+ hi def link lexSlashBrace	lexPat
+ hi def link lexStartState	lexPatTag
+ hi def link lexStartStateCmd	Special
 endif
 
 let b:current_syntax = "lex"
 
-" vim:ts=10
+" vim:ts=8

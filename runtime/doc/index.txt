@@ -235,8 +235,7 @@ tag		char	      note action in Normal mode	~
 				2  filter Nmove text through the {filter}
 				   command
 |!!|		!!{filter}	2  filter N lines through the {filter} command
-|quote|		"{a-zA-Z0-9.%#:-"}  use register {a-zA-Z0-9.%#:-"} for next
-				   delete, yank or put (uppercase to append)
+|quote|		"{register}  	   use {register} for next delete, yank or put
 				   ({.%#:} only work with put)
 |#|		#		1  search backward for the Nth occurrence of
 				   the ident under the cursor
