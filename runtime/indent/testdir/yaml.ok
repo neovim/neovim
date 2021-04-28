@@ -12,3 +12,8 @@ map2:
 map: &anchor
 map: val
 # END_INDENT
+
+# START_INDENT
+map: multiline
+  value
+# END_INDENT

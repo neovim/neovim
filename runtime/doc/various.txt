@@ -260,6 +260,7 @@ g8			Print the hex values of the bytes used in the
 			use it to append a Vim command.  See |:bar|.
 
 			Any "%" in {cmd} is expanded to the current file name.
+			Any "#" in {cmd} is expanded to the alternate file name.
 			Special characters are not escaped, use quotes or
 			|shellescape()|: >
 				:!ls "%"

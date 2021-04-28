@@ -73,7 +73,7 @@ tag		char		action in Insert mode	~
 |i_CTRL-R_CTRL-P| CTRL-R CTRL-P {register}
 				insert the contents of a register literally
 				and fix indent.
-		CTRL-S		(used for terminal control flow)
+		CTRL-S		not used or used for terminal control flow
 |i_CTRL-T|	CTRL-T		insert one shiftwidth of indent in current
 				line
 |i_CTRL-U|	CTRL-U		delete all entered characters in the current
@@ -207,9 +207,9 @@ tag		char	      note action in Normal mode	~
 |CTRL-N|	CTRL-N		1  same as "j"
 |CTRL-O|	CTRL-O		1  go to N older entry in jump list
 |CTRL-P|	CTRL-P		1  same as "k"
-		CTRL-Q		   (used for terminal control flow)
+		CTRL-Q		   not used, or used for terminal control flow
 |CTRL-R|	CTRL-R		2  redo changes which were undone with 'u'
-		CTRL-S		   (used for terminal control flow)
+		CTRL-S		   not used, or used for terminal control flow
 |CTRL-T|	CTRL-T		   jump to N older Tag in tag list
 |CTRL-U|	CTRL-U		   scroll N lines Upwards (default: half a
 				   screen)
@@ -819,7 +819,7 @@ tag		char	      note action in Normal mode	~
 |zD|		zD		   delete folds recursively
 |zE|		zE		   eliminate all folds
 |zF|		zF		   create a fold for N lines
-|zG|		zG		   temporarily mark word as good spelled word
+|zG|		zG		   temporarily mark word as correctly spelled
 |zH|		zH		   when 'wrap' off scroll half a screenwidth
 				   to the right
 |zL|		zL		   when 'wrap' off scroll half a screenwidth
@@ -828,7 +828,7 @@ tag		char	      note action in Normal mode	~
 |zN|		zN		   set 'foldenable'
 |zO|		zO		   open folds recursively
 |zR|		zR		   set 'foldlevel' to the deepest fold
-|zW|		zW		   temporarily mark word as bad spelled word
+|zW|		zW		   temporarily mark word as incorrectly spelled
 |zX|		zX		   re-apply 'foldlevel'
 |z^|		z^		   cursor on line N (default line above
 				   window), otherwise like "z-"
@@ -840,7 +840,7 @@ tag		char	      note action in Normal mode	~
 				   position the cursor at the end (right side)
 				   of the screen
 |zf|		zf{motion}	   create a fold for Nmove text
-|zg|		zg		   permanently mark word as good spelled word
+|zg|		zg		   permanently mark word as correctly spelled
 |zh|		zh		   when 'wrap' off scroll screen N characters
 				   to the right
 |zi|		zi		   toggle 'foldenable'
@@ -861,7 +861,7 @@ tag		char	      note action in Normal mode	~
 |zuW|		zuW		   undo |zW|
 |zuG|		zuG		   undo |zG|
 |zv|		zv		   open enough folds to view the cursor line
-|zw|		zw		   permanently mark word as bad spelled word
+|zw|		zw		   permanently mark word as incorrectly spelled
 |zx|		zx		   re-apply 'foldlevel' and do "zv"
 |zz|		zz		   redraw, cursor line at center of window
 |z<Left>|	z<Left>		   same as "zh"
@@ -1047,7 +1047,7 @@ tag		command		action in Command-line editing mode	~
 |c_CTRL-R_CTRL-O| CTRL-R CTRL-O {regname}
 				insert the contents of a register or object
 				under the cursor literally
-		CTRL-S		(used for terminal control flow)
+		CTRL-S		not used, or used for terminal control flow
 |c_CTRL-T|	CTRL-T		previous match when 'incsearch' is active
 |c_CTRL-U|	CTRL-U		remove all characters
 |c_CTRL-V|	CTRL-V		insert next non-digit literally, insert three
