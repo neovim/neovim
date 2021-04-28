@@ -1,9 +1,9 @@
 " Vim filetype plugin file
 " Language:      Perl 6
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2013-07-21
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" Last Change:   2020 Apr 15
 " Contributors:  Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
 " Based on ftplugin/perl.vim by Dan Sharp <dwsharp at hotmail dot com>

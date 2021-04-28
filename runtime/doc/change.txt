@@ -197,7 +197,7 @@ gR			Enter Virtual Replace mode: Each character you type
 			start insert (for {Visual} see |Visual-mode|).
 
 							*v_r*
-{Visual}["x]r{char}	Replace all selected characters by {char}.
+{Visual}r{char}		Replace all selected characters by {char}.
 
 							*v_C*
 {Visual}["x]C		Delete the highlighted lines [into register x] and

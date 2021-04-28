@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:      Perl 6
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl/tree/master
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2013-07-21
+" Homepage:      https://github.com/vim-perl/vim-perl/tree/master
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" Last Change:   2020 Apr 15
 
 " Contributors:  Luke Palmer <fibonaci@babylonia.flatirons.org>
 "                Moritz Lenz <moritz@faui2k3.org>

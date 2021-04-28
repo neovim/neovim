@@ -511,10 +511,13 @@ a tag for each "#defined" macro, typedefs, enums, etc.
 Some programs that generate tags files:
 ctags			As found on most Unix systems.  Only supports C.  Only
 			does the basic work.
+universal ctags		A maintained version of ctags based on exuberant
+			ctags. See https://ctags.io.
 							*Exuberant_ctags*
 exuberant ctags		This is a very good one.  It works for C, C++, Java,
 			Fortran, Eiffel and others.  It can generate tags for
 			many items.  See http://ctags.sourceforge.net.
+			No new version since 2009.
 JTags			For Java, in Java.  It can be found at
 			http://www.fleiner.com/jtags/.
 ptags.py		For Python, in Python.  Found in your Python source

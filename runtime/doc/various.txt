@@ -338,7 +338,7 @@ g8			Print the hex values of the bytes used in the
 			locked or the variable type is changed, then further
 			command output messages will cause errors.
 			To get the output of one command the |execute()|
-			function can be used.
+			function can be used instead of redirection.
 
 :redi[r] =>> {var}	Append messages to an existing variable.  Only string
 			variables can be used.

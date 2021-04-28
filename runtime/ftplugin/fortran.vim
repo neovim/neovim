@@ -1,7 +1,8 @@
 " Vim settings file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, 77, 66)
 " Version:	0.50
-" Last Change:	2015 Nov. 30
+" Last Change:	2020 Apr 20
+" Patched By:	Eisuke Kawashima
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-plugin from Vim
 " Credits:
@@ -31,10 +32,10 @@ if !exists("b:fortran_fixed_source")
   elseif exists("fortran_fixed_source")
     " User guarantees fixed source form
     let b:fortran_fixed_source = 1
-  elseif expand("%:e") ==? "f\<90\|95\|03\|08\>"
+  elseif expand("%:e") =~? '^f\%(90\|95\|03\|08\)$'
     " Free-form file extension defaults as in Intel ifort, gcc(gfortran), NAG, Pathscale, and Cray compilers
     let b:fortran_fixed_source = 0
-  elseif expand("%:e") ==? "f\|f77\|for"
+  elseif expand("%:e") =~? '^\%(f\|f77\|for\)$'
     " Fixed-form file extension defaults
     let b:fortran_fixed_source = 1
   else
