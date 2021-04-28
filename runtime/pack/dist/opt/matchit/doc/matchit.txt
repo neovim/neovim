@@ -4,7 +4,7 @@ For instructions on installing this file, type
 	`:help matchit-install`
 inside Vim.
 
-For Vim version 8.1.  Last change:  2019 Oct 24
+For Vim version 8.1.  Last change:  2020 Mar 01
 
 
 		  VIM REFERENCE MANUAL    by Benji Fisher et al

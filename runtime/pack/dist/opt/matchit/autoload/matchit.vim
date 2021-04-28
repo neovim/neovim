@@ -1,6 +1,6 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: 2019 Oct 24
+"  Last Change: Mar 01, 2020
 
 let s:last_mps = ""
 let s:last_words = ":"
@@ -47,6 +47,8 @@ function matchit#Match_wrapper(word, forward, mode) range
   if a:mode == "v"
     execute "normal! gv\<Esc>"
   elseif a:mode == "o" && mode(1) !~# '[vV]'
+    exe "norm! v"
+  elseif a:mode == "n" && mode(1) =~# 'ni'
     exe "norm! v"
   endif
   " In s:CleanUp(), we may need to check whether the cursor moved forward.

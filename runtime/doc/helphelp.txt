@@ -368,4 +368,15 @@ highlighting.  So do these:
 
 You can find the details in $VIMRUNTIME/syntax/help.vim
 
+							*inclusion*
+Some people make a big deal about using "his" when referring to the user,
+thinking it means we assume the user is male.  That is of course not the case,
+it's just a habit of writing help text, which quite often is many years old.
+Also, a lot of the text is written by contributors for who English is not
+their first language.  We do not make any assumptions about the gender of the
+user, no matter how the text is phrased.  And we do not want to waste time on
+this discussion.  The goal is that the reader understands how Vim works, the
+exact wording is secondary.
+
+
  vim:tw=78:ts=8:noet:ft=help:norl:

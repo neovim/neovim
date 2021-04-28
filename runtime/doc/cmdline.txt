@@ -443,6 +443,10 @@ emulate it.  For example, this mimics autolist=ambiguous:
 This will find the longest match with the first 'wildchar', then list all
 matching files with the next.
 
+					*complete-script-local-functions*
+When completing user function names, prepend "s:" to find script-local
+functions.
+
 							*suffixes*
 For file name completion you can use the 'suffixes' option to set a priority
 between files with almost the same name.  If there are multiple matches,

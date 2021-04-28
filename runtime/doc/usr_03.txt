@@ -347,7 +347,8 @@ to find the first #include after the cursor: >
 
 And then type "n" several times.  You will move to each #include in the text.
 You can also use a count if you know which match you want.  Thus "3n" finds
-the third match.  Using a count with "/" doesn't work.
+the third match.  You can also use a count with "/": "4/the" goes to the
+fourth match of "the".
 
 The "?" command works like "/" but searches backwards: >
 
