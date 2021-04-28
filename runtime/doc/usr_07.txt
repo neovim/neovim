@@ -227,8 +227,8 @@ the file.
 
 FILE MARKS
 
-In chapter 4 was explained how you can place a mark in a file with "mx" and
-jump to that position with "`x".  That works within one file.  If you edit
+In section |03.10| was explained how you can place a mark in a file with "mx"
+and jump to that position with "`x".  That works within one file.  If you edit
 another file and place marks there, these are specific for that file.  Thus
 each file has its own set of marks, they are local to the file.
    So far we were using marks with a lowercase letter.  There are also marks

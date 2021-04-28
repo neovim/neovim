@@ -106,7 +106,7 @@ If you want to make sure that your changes are in the swap file use this
 command:
 
 					*:pre* *:preserve* *E313* *E314*
-:pre[serve]		Write all text for all buffers into swap file.  The
+:pre[serve]		Write all text for all buffers into swap files.  The
 			original file is no longer needed for recovery.
 
 A Vim swap file can be recognized by the first six characters: "b0VIM ".
