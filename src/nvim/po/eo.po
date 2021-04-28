@@ -2659,9 +2659,6 @@ msgstr "nekonata vimOption"
 msgid "keyboard interrupt"
 msgstr "klavara interrompo"
 
-msgid "vim error"
-msgstr "eraro de Vim"
-
 msgid "cannot create buffer/window command: object is being deleted"
 msgstr "ne eblas krei komandon de bufro/fenestro: objekto estas forviŝiĝanta"
 
@@ -2986,7 +2983,7 @@ msgstr ""
 msgid "-x\t\t\tEdit encrypted files"
 msgstr "-x\t\t\tRedakti ĉifradan dosieron"
 
-msgid "-display <display>\tConnect vim to this particular X-server"
+msgid "-display <display>\tConnect Vim to this particular X-server"
 msgstr "-display <ekrano>\tKonekti Vim al tiu X-servilo"
 
 msgid "-X\t\t\tDo not connect to X server"
@@ -3065,11 +3062,11 @@ msgstr ""
 "\n"
 "Argumentoj agnoskitaj de gvim (versio Athena):\n"
 
-msgid "-display <display>\tRun vim on <display>"
-msgstr "-display <ekrano>\tLanĉi vim sur <ekrano>"
+msgid "-display <display>\tRun Vim on <display>"
+msgstr "-display <ekrano>\tLanĉi Vim sur <ekrano>"
 
-msgid "-iconic\t\tStart vim iconified"
-msgstr "-iconic\t\tLanĉi vim piktograme"
+msgid "-iconic\t\tStart Vim iconified"
+msgstr "-iconic\t\tLanĉi Vim piktograme"
 
 msgid "-background <color>\tUse <color> for the background (also: -bg)"
 msgstr "-background <koloro>\tUzi <koloro>-n por la fona koloro (ankaŭ: -bg)"
@@ -3117,7 +3114,7 @@ msgstr ""
 "\n"
 "Argumentoj agnoskitaj de gvim (versio GTK+):\n"
 
-msgid "-display <display>\tRun vim on <display> (also: --display)"
+msgid "-display <display>\tRun Vim on <display> (also: --display)"
 msgstr "-display <ekrano>\tLanĉi Vim sur tiu <ekrano> (ankaŭ: --display)"
 
 msgid "--role <role>\tSet a unique role to identify the main window"
@@ -6656,7 +6653,7 @@ msgid "list index out of range"
 msgstr "indekso de listo ekster limoj"
 
 #, c-format
-msgid "internal error: failed to get vim list item %d"
+msgid "internal error: failed to get Vim list item %d"
 msgstr "interna eraro: obteno de vim-a listero %d malsukcesis"
 
 msgid "slice step cannot be zero"
@@ -6667,7 +6664,7 @@ msgid "attempt to assign sequence of size greater than %d to extended slice"
 msgstr "provis valorizi sekvencon kun pli ol %d eroj en etendita sekco"
 
 #, c-format
-msgid "internal error: no vim list item %d"
+msgid "internal error: no Vim list item %d"
 msgstr "interna eraro: neniu vim-a listero %d"
 
 msgid "internal error: not enough list items"
@@ -6776,19 +6773,19 @@ msgstr "malsukcesis ruli la kodon"
 msgid "E858: Eval did not return a valid python object"
 msgstr "E858: Eval ne revenis kun valida python-objekto"
 
-msgid "E859: Failed to convert returned python object to vim value"
+msgid "E859: Failed to convert returned python object to a Vim value"
 msgstr "E859: Konverto de revena python-objekto al vim-valoro malsukcesis"
 
 #, c-format
-msgid "unable to convert %s to vim dictionary"
+msgid "unable to convert %s to a Vim dictionary"
 msgstr "ne povis konverti %s al vim-vortaro"
 
 #, c-format
-msgid "unable to convert %s to vim list"
+msgid "unable to convert %s to a Vim list"
 msgstr "ne povis konverti %s al vim-listo"
 
 #, c-format
-msgid "unable to convert %s to vim structure"
+msgid "unable to convert %s to a Vim structure"
 msgstr "ne povis konverti %s al vim-strukturo"
 
 msgid "internal error: NULL reference passed"

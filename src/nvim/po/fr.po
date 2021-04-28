@@ -2482,9 +2482,6 @@ msgstr "vimOption inconnue"
 msgid "keyboard interrupt"
 msgstr "interruption clavier"
 
-msgid "vim error"
-msgstr "erreur Vim"
-
 msgid "cannot create buffer/window command: object is being deleted"
 msgstr ""
 "Impossible de créer commande de tampon/fenêtre : objet en cours d'effacement"
@@ -2818,7 +2815,7 @@ msgstr "-W <dest>\tÉcrire toutes les commandes tapées dans le fichier <dest>"
 msgid "-x\t\t\tEdit encrypted files"
 msgstr "-x\t\t\tÉditer des fichiers chiffrés"
 
-msgid "-display <display>\tConnect vim to this particular X-server"
+msgid "-display <display>\tConnect Vim to this particular X-server"
 msgstr "-display <display>\tConnecter Vim au serveur X spécifié"
 
 msgid "-X\t\t\tDo not connect to X server"
@@ -2901,10 +2898,10 @@ msgstr ""
 "\n"
 "Arguments reconnus par gvim (version Athena) :\n"
 
-msgid "-display <display>\tRun vim on <display>"
+msgid "-display <display>\tRun Vim on <display>"
 msgstr "-display <écran>\tLancer Vim sur ce <display>"
 
-msgid "-iconic\t\tStart vim iconified"
+msgid "-iconic\t\tStart Vim iconified"
 msgstr "-iconic\t\tIconifier Vim au démarrage"
 
 msgid "-background <color>\tUse <color> for the background (also: -bg)"
@@ -2954,7 +2951,7 @@ msgstr ""
 "\n"
 "Arguments reconnus par gvim (version GTK+) :\n"
 
-msgid "-display <display>\tRun vim on <display> (also: --display)"
+msgid "-display <display>\tRun Vim on <display> (also: --display)"
 msgstr ""
 "-display <display>\tLancer Vim sur ce <display>\t(également : --display)"
 
@@ -6734,7 +6731,7 @@ msgid "list index out of range"
 msgstr "index de liste hors limites"
 
 #, c-format
-msgid "internal error: failed to get vim list item %d"
+msgid "internal error: failed to get Vim list item %d"
 msgstr "erreur interne : accès à un élément %d de liste a échoué"
 
 msgid "slice step cannot be zero"
@@ -6747,7 +6744,7 @@ msgstr ""
 "découpage en tranche étendu "
 
 #, c-format
-msgid "internal error: no vim list item %d"
+msgid "internal error: no Vim list item %d"
 msgstr "erreur interne : pas d'élément %d de liste vim"
 
 msgid "internal error: not enough list items"
@@ -6858,19 +6855,19 @@ msgstr "exécution du code a échoué"
 msgid "E858: Eval did not return a valid python object"
 msgstr "E858: Eval n'a pas retourné un objet python valide"
 
-msgid "E859: Failed to convert returned python object to vim value"
+msgid "E859: Failed to convert returned python object to a Vim value"
 msgstr "E859: Conversion d'objet python à une valeur de vim a échoué"
 
 #, c-format
-msgid "unable to convert %s to vim dictionary"
+msgid "unable to convert %s to a Vim dictionary"
 msgstr "impossible de convertir %s à un dictionnaire vim"
 
 #, c-format
-msgid "unable to convert %s to vim list"
+msgid "unable to convert %s to a Vim list"
 msgstr "impossible de convertir %s à une liste de vim"
 
 #, c-format
-msgid "unable to convert %s to vim structure"
+msgid "unable to convert %s to a Vim structure"
 msgstr "impossible de convertir %s à une structure de vim"
 
 msgid "internal error: NULL reference passed"

@@ -442,6 +442,9 @@ This edits the same file again with 'fileformat' set to "unix". >
 	:w ++enc=latin1 newfile
 This writes the current buffer to "newfile" in latin1 format.
 
+The message given when writing a file will show "[converted]" when
+'fileencoding' or the value specified with ++enc differs from 'encoding'.
+
 There may be several ++opt arguments, separated by white space.  They must all
 appear before any |+cmd| argument.
 
@@ -1040,9 +1043,9 @@ The names can be in upper- or lowercase.
 
 							*:q* *:quit*
 :q[uit]			Quit the current window.  Quit Vim if this is the last
-			window.  This fails when changes have been made and
-			Vim refuses to |abandon| the current buffer, and when
-			the last file in the argument list has not been
+			|edit-window|.  This fails when changes have been made
+			and Vim refuses to |abandon| the current buffer, and
+			when the last file in the argument list has not been
 			edited.
 			If there are other tab pages and quitting the last
 			window in the current tab page the current tab page is
@@ -1067,18 +1070,22 @@ The names can be in upper- or lowercase.
 			code.  See |:cq|.
 
 							*:wq*
-:wq [++opt]		Write the current file and quit.  Writing fails when
-			the file is read-only or the buffer does not have a
-			name.  Quitting fails when the last file in the
-			argument list has not been edited.
+:wq [++opt]		Write the current file and close the window.  If this
+			was the last |edit-window| Vim quits.
+			Writing fails when the file is read-only or the buffer
+			does not have a name.  Quitting fails when the last
+			file in the argument list has not been edited.
 
-:wq! [++opt]		Write the current file and quit.  Writing fails when
-			the current buffer does not have a name.
+:wq! [++opt]		Write the current file and close the window.  If this
+			was the last |edit-window| Vim quits.  Writing fails
+			when the current buffer does not have a name.
 
-:wq [++opt] {file}	Write to {file} and quit.  Quitting fails when the
+:wq [++opt] {file}	Write to {file} and close the window.  If this was the
+			last |edit-window| Vim quits.  Quitting fails when the
 			last file in the argument list has not been edited.
 
-:wq! [++opt] {file}	Write to {file} and quit.
+:wq! [++opt] {file}	Write to {file} and close the current window.  Quit
+			Vim if this was the last |edit-window|.
 
 :[range]wq[!] [++opt] [file]
 			Same as above, but only write the lines in [range].
@@ -1095,10 +1102,10 @@ The names can be in upper- or lowercase.
 			Same as :xit.
 
 							*ZZ*
-ZZ			Write current file, if modified, and quit (same as
-			":x").  (Note: If there are several windows for the
-			current file, the file is written if it was modified
-			and the window is closed).
+ZZ			Write current file, if modified, and close the current
+			window (same as ":x").
+			If there are several windows for the current file,
+			only the current window is closed.
 
 							*ZQ*
 ZQ			Quit without checking for changes (same as ":q!").

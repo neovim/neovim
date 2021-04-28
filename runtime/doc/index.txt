@@ -353,8 +353,8 @@ tag		char	      note action in Normal mode	~
 				   register x]
 |Y|		["x]Y		   yank N lines [into register x]; synonym for
 				   "yy"
-|ZZ|		ZZ		   store current file if modified, and exit
-|ZQ|		ZQ		   exit current file always
+|ZZ|		ZZ		   write if buffer changed and close window
+|ZQ|		ZQ		   close window without writing
 |[|		[{char}		   square bracket command (see |[| below)
 		\		   not used
 |]|		]{char}		   square bracket command (see |]| below)
@@ -1676,7 +1676,7 @@ tag		command		action ~
 |:wqall|	:wqa[ll]	write all changed buffers and quit Vim
 |:wshada|	:wsh[ada]	write to ShaDa file
 |:wundo|	:wu[ndo]	write undo information to a file
-|:xit|		:x[it]		write if buffer changed and quit window or Vim
+|:xit|		:x[it]		write if buffer changed and close window
 |:xall|		:xa[ll]		same as ":wqall"
 |:xmapclear|	:xmapc[lear]	remove all mappings for Visual mode
 |:xmap|		:xm[ap]		like ":map" but for Visual mode

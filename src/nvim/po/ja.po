@@ -2580,9 +2580,6 @@ msgstr "未知の vimOption です"
 msgid "keyboard interrupt"
 msgstr "キーボード割込み"
 
-msgid "vim error"
-msgstr "vim エラー"
-
 msgid "cannot create buffer/window command: object is being deleted"
 msgstr ""
 "バッファ/ウィンドウ作成コマンドを作成できません: オブジェクトが消去されていま"
@@ -2903,7 +2900,7 @@ msgstr "-W <scriptout>\t入力した全コマンドをファイル <scriptout> �
 msgid "-x\t\t\tEdit encrypted files"
 msgstr "-x\t\t\t暗号化されたファイルを編集する"
 
-msgid "-display <display>\tConnect vim to this particular X-server"
+msgid "-display <display>\tConnect Vim to this particular X-server"
 msgstr "-display <display>\tvimを指定した X サーバーに接続する"
 
 msgid "-X\t\t\tDo not connect to X server"
@@ -2978,10 +2975,10 @@ msgstr ""
 "\n"
 "gvimによって解釈される引数(Athenaバージョン):\n"
 
-msgid "-display <display>\tRun vim on <display>"
+msgid "-display <display>\tRun Vim on <display>"
 msgstr "-display <display>\t<display> でvimを実行する"
 
-msgid "-iconic\t\tStart vim iconified"
+msgid "-iconic\t\tStart Vim iconified"
 msgstr "-iconic\t\t最小化した状態でvimを起動する"
 
 msgid "-background <color>\tUse <color> for the background (also: -bg)"
@@ -3028,8 +3025,8 @@ msgstr ""
 "\n"
 "gvimによって解釈される引数(GTK+バージョン):\n"
 
-msgid "-display <display>\tRun vim on <display> (also: --display)"
-msgstr "-display <display>\t<display> でvimを実行する(同義: --display)"
+msgid "-display <display>\tRun Vim on <display> (also: --display)"
+msgstr "-display <display>\t<display> でVimを実行する(同義: --display)"
 
 msgid "--role <role>\tSet a unique role to identify the main window"
 msgstr "--role <role>\tメインウィンドウを識別する一意な役割(role)を設定する"
@@ -6581,7 +6578,7 @@ msgid "list index out of range"
 msgstr "リスト範囲外のインデックスです"
 
 #, c-format
-msgid "internal error: failed to get vim list item %d"
+msgid "internal error: failed to get Vim list item %d"
 msgstr "内部エラー: vimのリスト要素 %d の取得に失敗しました"
 
 msgid "slice step cannot be zero"
@@ -6592,7 +6589,7 @@ msgid "attempt to assign sequence of size greater than %d to extended slice"
 msgstr "長さ %d の拡張スライスに、より長いスライスを割り当てようとしました"
 
 #, c-format
-msgid "internal error: no vim list item %d"
+msgid "internal error: no Vim list item %d"
 msgstr "内部エラー: vimのリスト要素 %d はありません"
 
 msgid "internal error: not enough list items"
@@ -6701,19 +6698,19 @@ msgstr "コードの実行に失敗しました"
 msgid "E858: Eval did not return a valid python object"
 msgstr "E858: 式評価は有効なpythonオブジェクトを返しませんでした"
 
-msgid "E859: Failed to convert returned python object to vim value"
+msgid "E859: Failed to convert returned python object to a Vim value"
 msgstr "E859: 返されたpythonオブジェクトをvimの値に変換できませんでした"
 
 #, c-format
-msgid "unable to convert %s to vim dictionary"
+msgid "unable to convert %s to a Vim dictionary"
 msgstr "%s vimの辞書型に変換できません"
 
 #, c-format
-msgid "unable to convert %s to vim list"
+msgid "unable to convert %s to a Vim list"
 msgstr "%s をvimのリストに変換できません"
 
 #, c-format
-msgid "unable to convert %s to vim structure"
+msgid "unable to convert %s to a Vim structure"
 msgstr "%s をvimの構造体に変換できません"
 
 msgid "internal error: NULL reference passed"

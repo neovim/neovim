@@ -269,8 +269,9 @@ CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 		Without {count}: Quit the current window. If {count} is
 		given quit the {count} window
 
-		When quitting the last window (not counting a help window),
-		exit Vim.
+							*edit-window*
+		When quitting the last edit window (not counting help or
+		preview windows), exit Vim.
 
 		When 'hidden' is set, and there is only one window for the
 		current buffer, it becomes hidden. When 'hidden' is not set,
@@ -287,8 +288,9 @@ CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 		    :+quit  " quit the next window
 		    :+2quit " quit the second next window
 <
-		When closing a help window, Vim will try to restore the
-		previous window layout |:helpclose|.
+		When closing a help window, and this is not the only window,
+		Vim will try to restore the previous window layout, see
+		|:helpclose|.
 
 :q[uit]!
 :{count}q[uit]!
@@ -309,9 +311,9 @@ CTRL-W c					*CTRL-W_c* *:clo* *:close*
 		[!] is used, the buffer becomes hidden (unless there is another
 		window editing it).
 
-		When there is only one window in the current tab page and
-		there is another tab page, this closes the current tab page.
-		|tab-page|.
+		When there is only one |edit-window| in the current tab page
+		and there is another tab page, this closes the current tab
+		page.  |tab-page|.
 
 		This command fails when:			*E444*
 		- There is only one window on the screen.

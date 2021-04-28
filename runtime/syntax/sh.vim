@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Oct 16, 2019
-" Version:		189
+" Last Change:		Apr 14, 2020
+" Version:		190
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -357,19 +357,18 @@ elseif !exists("g:sh_no_error")
  syn region  shExDoubleQuote	matchGroup=Error start=+\$"+ skip=+\\\\\|\\.+ end=+"+	contains=shStringSpecial
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell	nextgroup=shSpecialStart,shSpecialSQ
-syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
-syn region  shDoubleQuote	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+		contained contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
+syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\.+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
+syn region  shDoubleQuote	matchgroup=shQuote start=+"+ matchgroup=shSpecial skip=+\\"+ end=+"+		contained	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
 syn match   shStringSpecial	"[^[:print:] \t]"			contained
 syn match   shStringSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"			nextgroup=shComment
-syn match   shStringSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shSpecialSQ	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		contained	nextgroup=shBkslshSnglQuote,@shNoZSList
 syn match   shSpecialDQ	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		contained	nextgroup=shBkslshDblQuote,@shNoZSList
 syn match   shSpecialStart	"\%(\\\\\)*\\[\\"'`$()#]"			contained	nextgroup=shBkslshSnglQuote,shBkslshDblQuote,@shNoZSList
 syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shSpecialNoZS	contained	"\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shSpecialNxt	contained	"\\[\\"'`$()#]"
-syn region  shBkslshSnglQuote	contained	matchgroup=shQuote start=+'+ end=+'+	contains=@Spell	nextgroup=shSpecialStart
-syn region  shBkslshDblQuote	contained	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
+"syn region  shBkslshSnglQuote	contained	matchgroup=shQuote start=+'+ end=+'+	contains=@Spell	nextgroup=shSpecialStart
+"syn region  shBkslshDblQuote	contained	matchgroup=shQuote start=+"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
 
 " Comments: {{{1
 "==========
@@ -454,13 +453,13 @@ if !exists("g:sh_no_error")
  syn match  shDerefWordError	"[^}$[~]"	contained
 endif
 syn match  shDerefSimple	"\$\%(\h\w*\|\d\)"	nextgroup=@shNoZSList
-syn region shDeref	matchgroup=PreProc start="\${" end="}"	contains=@shDerefList,shDerefVarArray
+syn region shDeref	matchgroup=PreProc start="\${" end="}"	contains=@shDerefList,shDerefVarArray nextgroup=shSpecialStart
 syn match  shDerefSimple	"\$[-#*@!?]"	nextgroup=@shNoZSList
 syn match  shDerefSimple	"\$\$"	nextgroup=@shNoZSList
-syn match  shDerefSimple	"\${\d}"	nextgroup=@shNoZSList
+syn match  shDerefSimple	"\${\d}"	nextgroup=@shNoZSList	nextgroup=shSpecialStart
 if exists("b:is_bash") || exists("b:is_kornshell") || exists("b:is_posix")
- syn region shDeref	matchgroup=PreProc start="\${##\=" end="}"	contains=@shDerefList	nextgroup=@shSpecialNoZS
- syn region shDeref	matchgroup=PreProc start="\${\$\$" end="}"	contains=@shDerefList	nextgroup=@shSpecialNoZS
+ syn region shDeref	matchgroup=PreProc start="\${##\=" end="}"	contains=@shDerefList	nextgroup=@shSpecialNoZS,shSpecialStart
+ syn region shDeref	matchgroup=PreProc start="\${\$\$" end="}"	contains=@shDerefList	nextgroup=@shSpecialNoZS,shSpecialStart
 endif
 
 " ksh: ${!var[*]} array index list syntax: {{{1

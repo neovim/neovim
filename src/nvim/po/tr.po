@@ -2529,9 +2529,6 @@ msgstr "geçersiz vimOption"
 msgid "keyboard interrupt"
 msgstr "klavye araya girdi"
 
-msgid "vim error"
-msgstr "vim hatası"
-
 msgid "cannot create buffer/window command: object is being deleted"
 msgstr "arabellek/pencere komutu oluşturulamadı: öge şu anda siliniyor"
 
@@ -2991,7 +2988,7 @@ msgstr "-W <betikçık>\tGirilen tüm komutları <betikçık> dosyasına yaz"
 msgid "-x\t\t\tEdit encrypted files"
 msgstr "-x\t\t\tŞifrelenmiş dosyaları düzenle"
 
-msgid "-display <display>\tConnect vim to this particular X-server"
+msgid "-display <display>\tConnect Vim to this particular X-server"
 msgstr "-display <ekran>\tVim'i bu belirtilen X sunucusuna bağla"
 
 msgid "-X\t\t\tDo not connect to X server"
@@ -3069,10 +3066,10 @@ msgstr ""
 "\n"
 "gvim tarafından tanınan değişkenler (Athena sürümü):\n"
 
-msgid "-display <display>\tRun vim on <display>"
+msgid "-display <display>\tRun Vim on <display>"
 msgstr "-display <ekran>\tVim'i <ekran>'da çalıştır"
 
-msgid "-iconic\t\tStart vim iconified"
+msgid "-iconic\t\tStart Vim iconified"
 msgstr "-iconic\t\tVim'i simge durumunda başlat"
 
 msgid "-background <color>\tUse <color> for the background (also: -bg)"
@@ -3120,7 +3117,7 @@ msgstr ""
 "\n"
 "gvim tarafından tanınan değişkenler (GTK+ sürümü):\n"
 
-msgid "-display <display>\tRun vim on <display> (also: --display)"
+msgid "-display <display>\tRun Vim on <display> (also: --display)"
 msgstr "-display <ekran>\tVim'i <ekran>'da çalıştır (veya: --display)"
 
 msgid "--role <role>\tSet a unique role to identify the main window"
@@ -7437,7 +7434,7 @@ msgid "list index out of range"
 msgstr "liste dizini erimin dışında"
 
 #, c-format
-msgid "internal error: failed to get vim list item %d"
+msgid "internal error: failed to get Vim list item %d"
 msgstr "iç hata: %d vim liste ögesi alınamadı"
 
 msgid "slice step cannot be zero"
@@ -7448,7 +7445,7 @@ msgid "attempt to assign sequence of size greater than %d to extended slice"
 msgstr "genişletilmiş dilime %d boyuttan büyük bir sıralamayı atama denemesi"
 
 #, c-format
-msgid "internal error: no vim list item %d"
+msgid "internal error: no Vim list item %d"
 msgstr "iç hata: %d vim liste ögesi yok"
 
 msgid "internal error: not enough list items"
@@ -7557,19 +7554,19 @@ msgstr "kod çalıştırılamadı"
 msgid "E858: Eval did not return a valid python object"
 msgstr "E858: Eval geçerli bir python nesnesi döndürmedi"
 
-msgid "E859: Failed to convert returned python object to vim value"
+msgid "E859: Failed to convert returned python object to a Vim value"
 msgstr "E859: Döndürülen python nesnesi vim değerine dönüştürülemedi"
 
 #, c-format
-msgid "unable to convert %s to vim dictionary"
+msgid "unable to convert %s to a Vim dictionary"
 msgstr "%s vim sözlüğüne dönüştürülemedi"
 
 #, c-format
-msgid "unable to convert %s to vim list"
+msgid "unable to convert %s to a Vim list"
 msgstr "%s vim listesine dönüştürülemedi"
 
 #, c-format
-msgid "unable to convert %s to vim structure"
+msgid "unable to convert %s to a Vim structure"
 msgstr "%s vim yapısına dönüştürülemedi"
 
 msgid "internal error: NULL reference passed"

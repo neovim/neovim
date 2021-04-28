@@ -2,7 +2,7 @@
 " Language:	Microsoft Macro Assembler (80x86)
 " Orig Author:	Rob Brady <robb@datatone.com>
 " Maintainer:	Wu Yongwei <wuyongwei@gmail.com>
-" Last Change:	2020-05-07 17:04:10 +0800
+" Last Change:	2020-05-09 22:55:38 +0800
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -12,7 +12,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-setlocal iskeyword=@,48-57,_,36,60,62,63,@-@
+syn iskeyword @,48-57,_,36,60,62,63,@-@
 
 syn case ignore
 
