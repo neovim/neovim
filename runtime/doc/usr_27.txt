@@ -434,7 +434,7 @@ redefined without changing the search pattern.
 
 	/\f\+
 
-The "\f" items stands for file name characters.  Thus this matches a sequence
+The "\f" item stands for file name characters.  Thus this matches a sequence
 of characters that can be a file name.
    Which characters can be part of a file name depends on the system you are
 using.  On MS-Windows, the backslash is included, on Unix it is not.  This is

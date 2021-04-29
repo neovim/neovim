@@ -151,9 +151,6 @@ msgstr "[Modifita]"
 msgid "[Not edited]"
 msgstr "[Ne redaktita]"
 
-msgid "[New file]"
-msgstr "[Nova dosiero]"
-
 msgid "[Read errors]"
 msgstr "[Eraroj de legado]"
 
@@ -229,11 +226,15 @@ msgstr "    linio=%ld  id=%d  nomo=%s"
 msgid "E902: Cannot connect to port"
 msgstr "E902: Ne eblas konekti al pordo"
 
+msgid "E898: socket() in channel_connect()"
+msgstr "E898: socket() en channel_connect()"
+
+#, c-format
+msgid "E901: getaddrinfo() in channel_open(): %s"
+msgstr "E901: getaddrinfo() en channel_open(): %s"
+
 msgid "E901: gethostbyname() in channel_open()"
 msgstr "E901: gethostbyname() en channel_open()"
-
-msgid "E898: socket() in channel_open()"
-msgstr "E898: gethostbyname() en channel_open()"
 
 msgid "E903: received command with non-string argument"
 msgstr "E903: ricevis komandon kun argumento, kiu ne estas ĉeno"
@@ -490,8 +491,8 @@ msgstr "E687: Malpli da celoj ol Listeroj"
 msgid "E688: More targets than List items"
 msgstr "E688: Pli da celoj ol Listeroj"
 
-msgid "Double ; in list of variables"
-msgstr "Duobla ; en listo de variabloj"
+msgid "E452: Double ; in list of variables"
+msgstr "E452: Du ; en listo de variabloj"
 
 #, c-format
 msgid "E738: Can't list variables for %s"
@@ -1779,10 +1780,10 @@ msgstr[0] "%ld linio, "
 msgstr[1] "%ld linioj, "
 
 #, c-format
-msgid "%lld character"
-msgid_plural "%lld characters"
-msgstr[0] "%lld signo"
-msgstr[1] "%lld signoj"
+msgid "%lld byte"
+msgid_plural "%lld bytes"
+msgstr[0] "%lld bajto"
+msgstr[1] "%lld bajtoj"
 
 msgid "[noeol]"
 msgstr "[sen EOL]"
@@ -1984,10 +1985,6 @@ msgstr "E231: 'guifontwide' nevalida"
 
 msgid "E599: Value of 'imactivatekey' is invalid"
 msgstr "E599: Valoro de 'imactivatekey' estas nevalida"
-
-#, c-format
-msgid "E254: Cannot allocate color %s"
-msgstr "E254: Ne eblas disponigi koloron %s"
 
 msgid "No match at cursor, finding next"
 msgstr "Neniu kongruo ĉe kursorpozicio, trovas sekvan"
@@ -5353,6 +5350,9 @@ msgstr "E419: Nekonata malfona koloro"
 msgid "E420: BG color unknown"
 msgstr "E420: Nekonata fona koloro"
 
+msgid "E453: UL color unknown"
+msgstr "E453: Nekonata koloro de UL"
+
 #, c-format
 msgid "E421: Color name or number not recognized: %s"
 msgstr "E421: Kolora nomo aŭ nombro nerekonita: %s"
@@ -5726,6 +5726,9 @@ msgstr "E128: Nomo de funkcio devas eki per majusklo aŭ per \"s:\": %s"
 msgid "E884: Function name cannot contain a colon: %s"
 msgstr "E884: Nomo de funkcio ne povas enhavi dupunkton: %s"
 
+msgid "E454: function list was modified"
+msgstr "E454: listo de funkcioj ŝanĝiĝis"
+
 #, c-format
 msgid "E123: Undefined function: %s"
 msgstr "E123: Nedifinita funkcio: %s"
@@ -5777,6 +5780,10 @@ msgstr "E746: Nomo de funkcio ne kongruas kun dosiernomo de skripto: %s"
 #, c-format
 msgid "E131: Cannot delete function %s: It is in use"
 msgstr "E131: Ne eblas forviŝi funkcion %s: Estas nuntempe uzata"
+
+#, c-format
+msgid "E1084: Cannot delete Vim9 script function %s"
+msgstr "E1084: Ne eblas forviŝi funkcion de Vim9-skripto: %s"
 
 msgid "E133: :return not inside a function"
 msgstr "E133: \":return\" ekster funkcio"
@@ -5930,6 +5937,9 @@ msgstr "kun grafika interfaco X11-neXtaw."
 
 msgid "with X11-Athena GUI."
 msgstr "kun grafika interfaco X11-Athena."
+
+msgid "with Haiku GUI."
+msgstr "kun grafika interfaco Haiku."
 
 msgid "with Photon GUI."
 msgstr "kun grafika interfaco Photon."
@@ -6263,6 +6273,9 @@ msgstr "E476: Nevalida komando"
 #, c-format
 msgid "E17: \"%s\" is a directory"
 msgstr "E17: \"%s\" estas dosierujo"
+
+msgid "E756: Spell checking is not possible"
+msgstr "E756: malpermesata literumilo"
 
 #, c-format
 msgid "E364: Library call failed for \"%s()\""

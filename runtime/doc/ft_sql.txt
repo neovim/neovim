@@ -308,7 +308,7 @@ can create any of the following: >
 	~/.config/nvim/indent/sqlite.vim
 
 No changes are necessary to the SQLSetType function.  It will automatically
-pickup the new SQL files and load them when you issue the SQLSetType command.
+pick up the new SQL files and load them when you issue the SQLSetType command.
 
 
 ==============================================================================
@@ -515,7 +515,7 @@ beginning with those characters.  >
  4.3.2 Column Completion:			*sql-completion-columns*
 
 The SQL completion plugin can also display a list of columns for particular
-tables.  The column completion is trigger via <C-C>c.
+tables.  The column completion is triggered via <C-C>c.
 
 NOTE: The following example uses <Right> to trigger a column list while
       the popup window is active.
@@ -723,7 +723,7 @@ your platform (often a case on *nix) you define the following variable in
 your |init.vim|: >
     let g:omni_sql_no_default_maps = 1
 
-Do no edit ftplugin/sql.vim directly!  If you change this file your changes
+Do not edit ftplugin/sql.vim directly!  If you change this file your changes
 will be over written on future updates.  Vim has a special directory structure
 which allows you to make customizations without changing the files that are
 included with the Vim distribution.  If you wish to customize the maps

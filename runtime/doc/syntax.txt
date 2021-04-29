@@ -1906,7 +1906,7 @@ new highlightings for the following groups.:
     Debug, DebugSpecial, DebugString, DebugBoolean, DebugType
 which are used for the statement itself, special characters used in debug
 strings, strings, boolean constants and types (this, super) respectively.  I
-have opted to chose another background for those statements.
+have opted to choose another background for those statements.
 
 Javadoc is a program that takes special comments out of Java program files and
 creates HTML pages.  The standard configuration will highlight this HTML code

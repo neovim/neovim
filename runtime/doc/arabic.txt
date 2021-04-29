@@ -72,7 +72,7 @@ Arabic requires ISO-8859-6 as well as Presentation Form-B fonts
 (without Form-B, Arabic will _NOT_ be usable).	It is highly
 recommended that users search for so-called 'ISO-10646-1' fonts.
 Do an Internet search or check www.arabeyes.org for further
-info on where to attain the necessary Arabic fonts.
+info on where to obtain the necessary Arabic fonts.
 
 
 Font Installation
@@ -118,7 +118,7 @@ o  Setting the appropriate character Encoding
 >
 		:set encoding=utf-8
 <
-   to your vimrc file (entering the command manually into you VIM
+   to your vimrc file (entering the command manually into your Vim
    window is highly discouraged).  In short, include ':set
    encoding=utf-8' to your vimrc file.
 

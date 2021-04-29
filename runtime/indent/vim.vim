@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Oct 31
+" Last Change:	2020 Jul 19
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -11,6 +11,7 @@ let b:did_indent = 1
 
 setlocal indentexpr=GetVimIndent()
 setlocal indentkeys+==end,=else,=cat,=fina,=END,0\\,0=\"\\\ 
+setlocal indentkeys-=0#
 
 let b:undo_indent = "setl indentkeys< indentexpr<"
 

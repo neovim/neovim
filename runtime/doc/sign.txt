@@ -68,7 +68,7 @@ other plugins using signs.
 							*sign-priority*
 Each placed sign is assigned a priority value. When multiple signs are placed
 on the same line, the attributes of the sign with the highest priority is used
-independent of the sign group. The default priority for a sign is 10. The
+independently of the sign group. The default priority for a sign is 10. The
 priority is assigned at the time of placing a sign.
 
 When the line on which the sign is placed is deleted, the sign is moved to the

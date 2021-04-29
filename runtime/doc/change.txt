@@ -1698,7 +1698,7 @@ Some examples:
 Automatic formatting				*auto-format* *autoformat*
 
 When the 'a' flag is present in 'formatoptions' text is formatted
-automatically when inserting text or deleting text.  This works nice for
+automatically when inserting text or deleting text.  This works nicely for
 editing text paragraphs.  A few hints on how to use this:
 
 - You need to properly define paragraphs.  The simplest is paragraphs that are

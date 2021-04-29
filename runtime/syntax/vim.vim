@@ -268,6 +268,7 @@ syn match	vimComment	+\<endif\s\+".*$+lc=5	contains=@vimCommentGroup,vimCommentS
 syn match	vimComment	+\<else\s\+".*$+lc=4	contains=@vimCommentGroup,vimCommentString
 syn region	vimCommentString	contained oneline start='\S\s\+"'ms=e	end='"'
 " Vim9 comments - TODO: might be highlighted while they don't work
+syn match	vim9Comment	excludenl +^#[^{].*$+	contains=@vimCommentGroup,vimCommentString
 syn match	vim9Comment	excludenl +\s#[^{].*$+lc=1	contains=@vimCommentGroup,vimCommentString
 syn match	vim9Comment	+\<endif\s\+#[^{].*$+lc=5	contains=@vimCommentGroup,vimCommentString
 syn match	vim9Comment	+\<else\s\+#[^{].*$+lc=4	contains=@vimCommentGroup,vimCommentString
@@ -427,6 +428,9 @@ syn case match
 syn match vimFunc		"\%(\%([sSgGbBwWtTlL]:\|<[sS][iI][dD]>\)\=\%(\w\+\.\)*\I[a-zA-Z0-9_.]*\)\ze\s*("		contains=vimFuncName,vimUserFunc,vimExecute
 syn match vimUserFunc contained	"\%(\%([sSgGbBwWtTlL]:\|<[sS][iI][dD]>\)\=\%(\w\+\.\)*\I[a-zA-Z0-9_.]*\)\|\<\u[a-zA-Z0-9.]*\>\|\<if\>"	contains=vimNotation
 
+" User Command Highlighting: {{{2
+syn match vimUsrCmd	'^\s*\zs\u\w*.*$'
+
 " Errors And Warnings: {{{2
 " ====================
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_novimfunctionerror")
@@ -572,7 +576,7 @@ syn match	vimHiGuiFontname	contained	"'[a-zA-Z\-* ]\+'"
 syn match	vimHiGuiRgb	contained	"#\x\{6}"
 
 " Highlighting: hi group key=arg ... {{{2
-syn cluster	vimHiCluster contains=vimGroup,vimHiBlend,vimHiGroup,vimHiTerm,vimHiCTerm,vimHiStartStop,vimHiCtermFgBg,vimHiGui,vimHiGuiFont,vimHiGuiFgBg,vimHiKeyError,vimNotation
+syn cluster	vimHiCluster contains=vimGroup,vimHiBlend,vimHiGroup,vimHiTerm,vimHiCTerm,vimHiStartStop,vimHiCtermFgBg,vimHiCtermul,vimHiGui,vimHiGuiFont,vimHiGuiFgBg,vimHiKeyError,vimNotation
 syn region	vimHiKeyList	contained oneline start="\i\+" skip="\\\\\|\\|" end="$\||"	contains=@vimHiCluster
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_vimhikeyerror")
  syn match	vimHiKeyError	contained	"\i\+="he=e-1
@@ -581,6 +585,7 @@ syn match	vimHiTerm	contained	"\cterm="he=e-1		nextgroup=vimHiAttribList
 syn match	vimHiStartStop	contained	"\c\(start\|stop\)="he=e-1	nextgroup=vimHiTermcap,vimOption
 syn match	vimHiCTerm	contained	"\ccterm="he=e-1		nextgroup=vimHiAttribList
 syn match	vimHiCtermFgBg	contained	"\ccterm[fb]g="he=e-1	nextgroup=vimHiNmbr,vimHiCtermColor,vimFgBgAttrib,vimHiCtermError
+syn match	vimHiCtermul	contained	"\cctermul="he=e-1	nextgroup=vimHiNmbr,vimHiCtermColor,vimFgBgAttrib,vimHiCtermError
 syn match	vimHiGui	contained	"\cgui="he=e-1		nextgroup=vimHiAttribList
 syn match	vimHiGuiFont	contained	"\cfont="he=e-1		nextgroup=vimHiFontname
 syn match	vimHiGuiFgBg	contained	"\cgui\%([fb]g\|sp\)="he=e-1	nextgroup=vimHiGroup,vimHiGuiFontname,vimHiGuiRgb,vimFgBgAttrib
@@ -604,7 +609,7 @@ syn match	vimCtrlChar	"[--]"
 " Beginners - Patterns that involve ^ {{{2
 " =========
 syn match	vimLineComment	+^[ \t:]*".*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
-syn match	vim9LineComment	+^[ \t:]\+#.*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
+syn match	vim9LineComment	+^[ \t:]*#.*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
 syn match	vimCommentTitle	'"\s*\%([sS]:\|\h\w*#\)\=\u\w*\(\s\+\u\w*\)*:'hs=s+1	contained contains=vimCommentTitleLeader,vimTodo,@vimCommentGroup
 syn match	vimContinue	"^\s*\\"
 syn region	vimString	start="^\s*\\\z(['"]\)" skip='\\\\\|\\\z1' end="\z1" oneline keepend contains=@vimStringGroup,vimContinue
@@ -856,6 +861,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimError	Error
  hi def link vimFBVar	vimVar
  hi def link vimFgBgAttrib	vimHiAttrib
+ hi def link vimHiCtermul	vimHiTerm
  hi def link vimFold	Folded
  hi def link vimFTCmd	vimCommand
  hi def link vimFTOption	vimSynType

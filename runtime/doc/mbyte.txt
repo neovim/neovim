@@ -90,7 +90,7 @@ There are several ways to enter multi-byte characters:
 - For MS-Windows IME can be used.  See |IME|.
 - For all systems keymaps can be used.  See |mbyte-keymap|.
 
-The options 'iminsert', 'imsearch' and 'imcmdline' can be used to chose
+The options 'iminsert', 'imsearch' and 'imcmdline' can be used to choose
 the different input methods or disable them temporarily.
 
 ==============================================================================
@@ -103,8 +103,8 @@ in, or just use a certain locale inside Vim.
 
 WHAT IS A LOCALE?					*locale*
 
-There are many of languages in the world.  And there are different cultures
-and environments at least as much as the number of languages.	A linguistic
+There are many languages in the world.  And there are different cultures and
+environments at least as many as the number of languages.  A linguistic
 environment corresponding to an area is called "locale".  This includes
 information about the used language, the charset, collating order for sorting,
 date format, currency format and so on.  For Vim only the language and charset
@@ -512,7 +512,7 @@ input_server_name	is your |IM-server| name (check your |IM-server|
 your_input_style	is one of |OverTheSpot|, |OffTheSpot|, |Root|.  See
 			also |xim-input-style|.
 
-*international may not necessary if you use X11R6.
+*international may not be necessary if you use X11R6.
 *.inputMethod and *.preeditType are optional if you use X11R6.
 
 For example, when you are using kinput2 as |IM-server|, >
