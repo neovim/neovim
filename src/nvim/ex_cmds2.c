@@ -2719,16 +2719,19 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
   while (!(p->buf[i] == '\n' || p->buf[i] == '\0')) {
     i++;
   }
-  char buf[2046];
-  char *dst;
-  dst = xstpncpy(buf, (char *)p->buf + p->offset, i - p->offset);
-  if ((uint32_t)(dst - buf) != i - p->offset) {
+  size_t line_length = i - p->offset;
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char_u), (int)line_length);
+  ga_concat_len(&ga, (char *)p->buf + p->offset, line_length);
+  if (ga.ga_len != (int)line_length) {
     smsg(_(":source error parsing command %s"), p->buf);
     return NULL;
   }
-  buf[i - p->offset] = '\0';
+  ga_append(&ga, '\0');
   p->offset = i + 1;
-  return (char_u *)xstrdup(buf);
+  char_u *line = (char_u *)xstrdup(ga.ga_data);
+  ga_clear(&ga);
+  return line;
 }
 
 static int source_using_linegetter(void *cookie,
