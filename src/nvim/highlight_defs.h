@@ -74,6 +74,11 @@ typedef enum {
   , HLF_W           // warning messages
   , HLF_WM          // Wildmenu highlight
   , HLF_FL          // Folded line
+  , HLF_FL1         // Folded line depth 1
+  , HLF_FL2         // Folded line depth 2
+  , HLF_FL3         // Folded line depth 3
+  , HLF_FL4         // Folded line depth 4
+  , HLF_FL5         // Folded line depth 5
   , HLF_FC          // Fold column
   , HLF_ADD         // Added diff line
   , HLF_CHD         // Changed diff line
@@ -129,6 +134,11 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_W] = "WarningMsg",
   [HLF_WM] = "WildMenu",
   [HLF_FL] = "Folded",
+  [HLF_FL1] = "Folded1",
+  [HLF_FL2] = "Folded2",
+  [HLF_FL3] = "Folded3",
+  [HLF_FL4] = "Folded4",
+  [HLF_FL5] = "Folded5",
   [HLF_FC] = "FoldColumn",
   [HLF_ADD] = "DiffAdd",
   [HLF_CHD] = "DiffChange",

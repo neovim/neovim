@@ -2927,7 +2927,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         && vcol == 0
         && n_extra == 0
         && row == startrow) {
-        char_attr = win_hl_attr(wp, HLF_FL);
+        // only provide 5 layers of highlighting
+        // and then wrap around to the default
+        hlf_T highlight = HLF_FL;
+        if (foldinfo.fi_level > 0 && foldinfo.fi_level <= 5) {
+          highlight = highlight + foldinfo.fi_level;
+        }
+        char_attr = win_hl_attr(wp, highlight);
 
         linenr_T lnume = lnum + foldinfo.fi_lines - 1;
         memset(buf_fold, ' ', FOLD_TEXT_LEN);
