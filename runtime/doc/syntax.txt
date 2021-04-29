@@ -1191,11 +1191,13 @@ DESKTOP					   *desktop.vim* *ft-desktop-syntax*
 
 Primary goal of this syntax file is to highlight .desktop and .directory files
 according to freedesktop.org standard:
-http://standards.freedesktop.org/desktop-entry-spec/latest/
-But actually almost none implements this standard fully.  Thus it will
-highlight all Unix ini files.  But you can force strict highlighting according
-to standard by placing this in your vimrc file: >
-	:let enforce_freedesktop_standard = 1
+https://specifications.freedesktop.org/desktop-entry-spec/latest/
+To highlight nonstandard extensions that does not begin with X-, set >
+	let g:desktop_enable_nonstd = 1
+Note that this may cause wrong highlight.
+To highlight KDE-reserved features, set >
+	let g:desktop_enable_kde = 1
+g:desktop_enable_kde follows g:desktop_enable_nonstd if not supplied
 
 
 DIFF							*diff.vim*

@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Jul 18
+" Last Change:	2020 Jun 10
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -441,6 +441,9 @@ if has("syntax")
   call append("$", "spellcapcheck\tpattern to locate the end of a sentence")
   call append("$", "\t(local to buffer)")
   call <SID>OptionL("spc")
+  call append("$", "spelloptions\tflags to change how spell checking works")
+  call append("$", "\t(local to buffer)")
+  call <SID>OptionL("spo")
   call append("$", "spellsuggest\tmethods used to suggest corrections")
   call <SID>OptionG("sps", &sps)
   call append("$", "mkspellmem\tamount of memory used by :mkspell before compressing")

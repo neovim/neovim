@@ -450,12 +450,12 @@ if has("spell")
   an 40.335.260 &Tools.&Spelling.Set\ Language\ to\ "en_us"	:set spl=en_us spell<CR>
   an <silent> 40.335.270 &Tools.&Spelling.&Find\ More\ Languages	:call <SID>SpellLang()<CR>
 
-  let s:undo_spellang = ['aun &Tools.&Spelling.&Find\ More\ Languages']
+  let s:undo_spelllang = ['aun &Tools.&Spelling.&Find\ More\ Languages']
   func! s:SpellLang()
-    for cmd in s:undo_spellang
+    for cmd in s:undo_spelllang
       exe "silent! " . cmd
     endfor
-    let s:undo_spellang = []
+    let s:undo_spelllang = []
 
     if &enc == "iso-8859-15"
       let enc = "latin1"
@@ -478,7 +478,7 @@ if has("spell")
 	  let found += 1
 	  let menuname = '&Tools.&Spelling.' . escape(g:menutrans_set_lang_to, "\\. \t|") . '\ "' . nm . '"'
 	  exe 'an 40.335.' . n . ' ' . menuname . ' :set spl=' . nm . ' spell<CR>'
-	  let s:undo_spellang += ['aun ' . menuname]
+	  let s:undo_spelllang += ['aun ' . menuname]
 	endif
 	let n += 10
       endfor

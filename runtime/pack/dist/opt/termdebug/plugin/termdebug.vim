@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2020 May 22
+" Last Change: 2020 Jun 12
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -799,7 +799,7 @@ func s:DeleteCommands()
   delcommand Asm
   delcommand Winbar
 
-  if exists('s:k_map_saved')
+  if exists('s:k_map_saved') && !empty(s:k_map_saved)
     call mapset('n', 0, s:k_map_saved)
     unlet s:k_map_saved
   endif

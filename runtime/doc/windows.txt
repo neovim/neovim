@@ -115,6 +115,12 @@ status line, the '^' character is used for the current window, and '=' for
 other windows.  If 'mouse' is enabled, a status line can be dragged to resize
 windows.
 
+							*filler-lines*
+The lines after the last buffer line in a window are called filler lines.
+These lines start with a tilde (~) character. By default, these are
+highlighted as NonText (|hl-NonText|). The EndOfBuffer highlight group
+(|hl-EndOfBuffer|) can be used to change the highlighting of filler lines.
+
 ==============================================================================
 3. Opening and closing a window				*opening-window* *E36*
 

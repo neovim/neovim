@@ -41,6 +41,12 @@ prefer.  And you can use any colon command in it (commands that start with a
 specific file type.  A complicated macro can be defined by a separate Vim
 script file.  You can think of other uses yourself.
 
+	If you are familiar with Python, you can find a comparison between
+	Python and Vim script here, with pointers to other documents:
+	   https://gist.github.com/yegappan/16d964a37ead0979b05e655aa036cad0
+	And if you are familiar with Javascript:
+	   https://w0rp.com/blog/post/vim-script-for-the-javascripter/
+
 Let's start with a simple example: >
 
 	:let i = 1
@@ -93,6 +99,8 @@ and the value of the variable i.  Since i is one, this will print:
 Then there is the ":let i += 1" command.  This does the same thing as
 ":let i = i + 1".  This adds one to the variable i and assigns the new value
 to the same variable.
+Note: this is how it works in legacy Vim script, which is what we discuss in
+this file.
 
 The example was given to explain the commands, but would you really want to
 make such a loop, it can be written much more compact: >
