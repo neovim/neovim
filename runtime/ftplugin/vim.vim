@@ -86,7 +86,7 @@ endif
 if exists("loaded_matchit")
   let b:match_ignorecase = 0
   let b:match_words =
-	\ '\<\%(fu\%[nction]\|def\)\>[^(]:\<retu\%[rn]\>:\<\%(endf\%[unction]\|enddef\)\>,' .
+	\ '\<\%(fu\%[nction]\|def\)\>)\@!:\<retu\%[rn]\>:\<\%(endf\%[unction]\|enddef\)\>,' .
 	\ '\<\(wh\%[ile]\|for\)\>:\<brea\%[k]\>:\<con\%[tinue]\>:\<end\(w\%[hile]\|fo\%[r]\)\>,' .
 	\ '\<if\>:\<el\%[seif]\>:\<en\%[dif]\>,' .
 	\ '{:},' .

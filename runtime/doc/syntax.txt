@@ -3603,7 +3603,7 @@ DEFINING FOLDLEVEL					*:syn-foldlevel*
 	start:		Use level of item containing start of line.
 	minimum:	Use lowest local-minimum level of items on line.
 
-	The default is 'start'.  Use 'minimum' to search a line horizontally
+	The default is "start".  Use "minimum" to search a line horizontally
 	for the lowest level contained on the line that is followed by a
 	higher level.  This produces more natural folds when syntax items
 	may close and open horizontally within a line.
@@ -3748,9 +3748,9 @@ DEFINING REGIONS	*:syn-region* *:syn-start* *:syn-skip* *:syn-end*
 		[keepend]
 		[extend]
 		[excludenl]
-		start={start_pattern} ..
-		[skip={skip_pattern}]
-		end={end_pattern} ..
+		start={start-pattern} ..
+		[skip={skip-pattern}]
+		end={end-pattern} ..
 		[{options}]
 
 	This defines one region.  It may span several lines.
@@ -3772,12 +3772,12 @@ DEFINING REGIONS	*:syn-region* *:syn-start* *:syn-skip* *:syn-end*
 				extend a containing match or item.  Only
 				useful for end patterns.  Must be given before
 				the patterns it applies to. |:syn-excludenl|
-	start={start_pattern}	The search pattern that defines the start of
+	start={start-pattern}	The search pattern that defines the start of
 				the region.  See |:syn-pattern| below.
-	skip={skip_pattern}	The search pattern that defines text inside
+	skip={skip-pattern}	The search pattern that defines text inside
 				the region where not to look for the end
 				pattern.  See |:syn-pattern| below.
-	end={end_pattern}	The search pattern that defines the end of
+	end={end-pattern}	The search pattern that defines the end of
 				the region.  See |:syn-pattern| below.
 
 	Example: >

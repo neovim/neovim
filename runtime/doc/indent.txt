@@ -410,11 +410,11 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-(*
 	(N    When in unclosed parentheses, indent N characters from the line
-	      with the unclosed parentheses.  Add a 'shiftwidth' for every
+	      with the unclosed parenthesis.  Add a 'shiftwidth' for every
 	      extra unclosed parentheses.  When N is 0 or the unclosed
-	      parentheses is the first non-white character in its line, line
+	      parenthesis is the first non-white character in its line, line
 	      up with the next non-white character after the unclosed
-	      parentheses.  (default 'shiftwidth' * 2).
+	      parenthesis.  (default 'shiftwidth' * 2).
 
 		cino=			  cino=(0 >
 		  if (c1 && (c2 ||	    if (c1 && (c2 ||
@@ -435,7 +435,7 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-U*
 	UN    When N is non-zero, do not ignore the indenting specified by
-	      ( or u in case that the unclosed parentheses is the first
+	      ( or u in case that the unclosed parenthesis is the first
 	      non-white character in its line.  (default 0).
 
 		cino= or cino=(s	  cino=(s,U1 >
@@ -448,8 +448,8 @@ The examples below assume a 'shiftwidth' of 4.
 							*cino-w*
 	wN    When in unclosed parentheses and N is non-zero and either
 	      using "(0" or "u0", respectively, or using "U0" and the unclosed
-	      parentheses is the first non-white character in its line, line
-	      up with the character immediately after the unclosed parentheses
+	      parenthesis is the first non-white character in its line, line
+	      up with the character immediately after the unclosed parenthesis
 	      rather than the first non-white character.  (default 0).
 
 		cino=(0			  cino=(0,w1 >
@@ -460,11 +460,11 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-W*
 	WN    When in unclosed parentheses and N is non-zero and either
-	      using "(0" or "u0", respectively and the unclosed parentheses is
+	      using "(0" or "u0", respectively and the unclosed parenthesis is
 	      the last non-white character in its line and it is not the
-	      closing parentheses, indent the following line N characters
+	      closing parenthesis, indent the following line N characters
 	      relative to the outer context (i.e. start of the line or the
-	      next unclosed parentheses).  (default: 0).
+	      next unclosed parenthesis).  (default: 0).
 
 		cino=(0			   cino=(0,W4 >
 		  a_long_line(		    a_long_line(
@@ -491,8 +491,8 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-m*
 	mN    When N is non-zero, line up a line starting with a closing
-	      parentheses with the first character of the line with the
-	      matching opening parentheses.  (default 0).
+	      parenthesis with the first character of the line with the
+	      matching opening parenthesis.  (default 0).
 
 		cino=(s			  cino=(s,m1 >
 		  c = c1 && (		    c = c1 && (
@@ -506,7 +506,7 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-M*
 	MN    When N is non-zero, line up a line starting with a closing
-	      parentheses with the first character of the previous line.
+	      parenthesis with the first character of the previous line.
 	      (default 0).
 
 		cino=			  cino=M1 >
@@ -565,7 +565,7 @@ The examples below assume a 'shiftwidth' of 4.
 	      recognize preprocessor lines; right-shifting lines that start
 	      with "#" does not work.
 
-
+								*cino-P*
 	PN    When N is non-zero recognize C pragmas, and indent them like any
 	      other code; does not concern other preprocessor directives.
 	      When N is zero (default): don't recognize C pragmas, treating
@@ -992,7 +992,7 @@ Indent after a nested paren: >
 Indent for a continuation line: >
 	let g:pyindent_continue = 'shiftwidth() * 2'
 
-The method uses |searchpair()| to look back for unclosed parenthesis.  This
+The method uses |searchpair()| to look back for unclosed parentheses.  This
 can sometimes be slow, thus it timeouts after 150 msec.  If you notice the
 indenting isn't correct, you can set a larger timeout in msec: >
 	let g:pyindent_searchpair_timeout = 500

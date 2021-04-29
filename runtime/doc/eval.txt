@@ -4164,28 +4164,29 @@ getbufinfo([{dict}])
 
 		Each returned List item is a dictionary with the following
 		entries:
-			bufnr		buffer number.
+			bufnr		Buffer number.
 			changed		TRUE if the buffer is modified.
-			changedtick	number of changes made to the buffer.
+			changedtick	Number of changes made to the buffer.
 			hidden		TRUE if the buffer is hidden.
-			lastused	timestamp in seconds, like
+			lastused	Timestamp in seconds, like
 					|localtime()|, when the buffer was
 					last used.
 			listed		TRUE if the buffer is listed.
-			lnum		current line number in buffer.
-			linecount	number of lines in the buffer (only
+			lnum		Line number used for the buffer when
+					opened in the current window.
+			linecount	Number of lines in the buffer (only
 					valid when loaded)
 			loaded		TRUE if the buffer is loaded.
-			name		full path to the file in the buffer.
-			signs		list of signs placed in the buffer.
+			name		Full path to the file in the buffer.
+			signs		List of signs placed in the buffer.
 					Each list item is a dictionary with
 					the following fields:
 					    id	  sign identifier
 					    lnum  line number
 					    name  sign name
-			variables	a reference to the dictionary with
+			variables	A reference to the dictionary with
 					buffer-local variables.
-			windows		list of |window-ID|s that display this
+			windows		List of |window-ID|s that display this
 					buffer
 
 		Examples: >
@@ -4621,7 +4622,7 @@ getloclist({nr},[, {what}])				*getloclist()*
 			:echo getloclist(5, {'filewinid': 0})
 
 
-getmarklist([{expr}]					*getmarklist()*
+getmarklist([{expr}])					*getmarklist()*
 		Without the {expr} argument returns a |List| with information
 		about all the global marks. |mark|
 
@@ -7814,7 +7815,7 @@ settagstack({nr}, {dict} [, {action}])			*settagstack()*
 
 		Returns zero for success, -1 for failure.
 
-		Examples (for more examples see |tagstack-examples||):
+		Examples (for more examples see |tagstack-examples|):
 		    Empty the tag stack of window 3: >
 			call settagstack(3, {'items' : []})
 
@@ -8461,7 +8462,7 @@ swapname({expr})					*swapname()*
 		The result is the swap file path of the buffer {expr}.
 		For the use of {expr}, see |bufname()| above.
 		If buffer {expr} is the current buffer, the result is equal to
-		|:swapname| (unless no swap file).
+		|:swapname| (unless there is no swap file).
 		If buffer {expr} has no swap file, returns an empty string.
 
 synID({lnum}, {col}, {trans})				*synID()*

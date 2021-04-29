@@ -161,7 +161,7 @@ line break.
 ==============================================================================
 *04.3*	Repeating a change
 
-The "." command is one of the most simple yet powerful commands in Vim.  It
+The "." command is one of the simplest yet powerful commands in Vim.  It
 repeats the last change.  For instance, suppose you are editing an HTML file
 and want to delete all the <B> tags.  You position the cursor on the first <
 and delete the <B> with the command "df>".  You then go to the < of the next

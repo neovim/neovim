@@ -44,7 +44,7 @@ script file.  You can think of other uses yourself.
 	If you are familiar with Python, you can find a comparison between
 	Python and Vim script here, with pointers to other documents:
 	   https://gist.github.com/yegappan/16d964a37ead0979b05e655aa036cad0
-	And if you are familiar with Javascript:
+	And if you are familiar with JavaScript:
 	   https://w0rp.com/blog/post/vim-script-for-the-javascripter/
 
 Let's start with a simple example: >
@@ -1960,7 +1960,7 @@ Thus when a user types "\a", this sequence is invoked: >
 
 	\a  ->  <Plug>TypecorrAdd  ->  <SID>Add  ->  :call <SID>Add()
 
-If another script would also map <SID>Add, it would get another script ID and
+If another script was also map <SID>Add, it would get another script ID and
 thus define another mapping.
 
 Note that instead of s:Add() we use <SID>Add() here.  That is because the

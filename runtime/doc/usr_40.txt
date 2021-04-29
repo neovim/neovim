@@ -453,12 +453,12 @@ matching BufWritePre autocommands and executes them, and then it
 performs the ":write".
    The general form of the :autocmd command is as follows: >
 
-	:autocmd [group] {events} {file_pattern} [++nested] {command}
+	:autocmd [group] {events} {file-pattern} [++nested] {command}
 
 The [group] name is optional.  It is used in managing and calling the commands
 (more on this later).  The {events} parameter is a list of events (comma
 separated) that trigger the command.
-   {file_pattern} is a filename, usually with wildcards.  For example, using
+   {file-pattern} is a filename, usually with wildcards.  For example, using
 "*.txt" makes the autocommand be used for all files whose name end in ".txt".
 The optional [++nested] flag allows for nesting of autocommands (see below),
 and finally, {command} is the command to be executed.
@@ -489,7 +489,7 @@ See |autocmd-events| for a complete list of events.
 
 PATTERNS
 
-The {file_pattern} argument can actually be a comma-separated list of file
+The {file-pattern} argument can actually be a comma-separated list of file
 patterns.  For example: "*.c,*.h" matches files ending in ".c" and ".h".
    The usual file wildcards can be used.  Here is a summary of the most often
 used ones:
