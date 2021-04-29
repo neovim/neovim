@@ -890,8 +890,11 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
      * Appropriately expand any tabs to spaces.
      */
     if (line[col] == TAB || tab_spaces != 0) {
-      if (tab_spaces == 0)
-        tab_spaces = (int)(curbuf->b_p_ts - (print_pos % curbuf->b_p_ts));
+      if (tab_spaces == 0) {
+        tab_spaces = tabstop_padding(print_pos,
+                                     curbuf->b_p_ts,
+                                     curbuf->b_p_vts_array);
+      }
 
       while (tab_spaces > 0) {
         need_break = mch_print_text_out((char_u *)" ", 1);

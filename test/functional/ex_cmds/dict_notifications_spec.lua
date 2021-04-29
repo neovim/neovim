@@ -371,4 +371,79 @@ describe('VimL dictionary notifications', function()
     eq(1, eval('g:called'))
   end)
 
+  it('does not crash when using dictwatcherdel in callback', function()
+    source([[
+      let g:d = {}
+
+      function! W1(...)
+        " Delete current and following watcher.
+        call dictwatcherdel(g:d, '*', function('W1'))
+        call dictwatcherdel(g:d, '*', function('W2'))
+        try
+          call dictwatcherdel({}, 'meh', function('tr'))
+        catch
+          let g:exc = v:exception
+        endtry
+      endfunction
+      call dictwatcheradd(g:d, '*', function('W1'))
+
+      function! W2(...)
+      endfunction
+      call dictwatcheradd(g:d, '*', function('W2'))
+
+      let g:d.foo = 23
+    ]])
+    eq(23, eval('g:d.foo'))
+    eq("Vim(call):Couldn't find a watcher matching key and callback", eval('g:exc'))
+  end)
+
+  it('does not call watcher added in callback', function()
+    source([[
+      let g:d = {}
+      let g:calls = []
+
+      function! W1(...) abort
+        call add(g:calls, 'W1')
+        call dictwatcheradd(g:d, '*', function('W2'))
+      endfunction
+
+      function! W2(...) abort
+        call add(g:calls, 'W2')
+      endfunction
+
+      call dictwatcheradd(g:d, '*', function('W1'))
+      let g:d.foo = 23
+    ]])
+    eq(23, eval('g:d.foo'))
+    eq({"W1"}, eval('g:calls'))
+  end)
+
+  it('calls watcher deleted in callback', function()
+    source([[
+      let g:d = {}
+      let g:calls = []
+
+      function! W1(...) abort
+        call add(g:calls, "W1")
+        call dictwatcherdel(g:d, '*', function('W2'))
+      endfunction
+
+      function! W2(...) abort
+        call add(g:calls, "W2")
+      endfunction
+
+      call dictwatcheradd(g:d, '*', function('W1'))
+      call dictwatcheradd(g:d, '*', function('W2'))
+      let g:d.foo = 123
+
+      unlet g:d
+      let g:d = {}
+      call dictwatcheradd(g:d, '*', function('W2'))
+      call dictwatcheradd(g:d, '*', function('W1'))
+      let g:d.foo = 123
+    ]])
+    eq(123, eval('g:d.foo'))
+    eq({"W1", "W2", "W2", "W1"}, eval('g:calls'))
+  end)
+
 end)

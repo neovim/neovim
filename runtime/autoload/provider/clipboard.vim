@@ -132,6 +132,12 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
+  elseif executable('termux-clipboard-set')
+    let s:copy['+'] = ['termux-clipboard-set']
+    let s:paste['+'] = ['termux-clipboard-get']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'termux-clipboard'
   elseif !empty($TMUX) && executable('tmux')
     let s:copy['+'] = ['tmux', 'load-buffer', '-']
     let s:paste['+'] = ['tmux', 'save-buffer', '-']

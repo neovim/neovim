@@ -16,6 +16,8 @@ void nlua_add_api_functions(lua_State *lstate) REAL_FATTR_NONNULL_ALL;
 EXTERN LuaRef nlua_nil_ref INIT(= LUA_NOREF);
 EXTERN LuaRef nlua_empty_dict_ref INIT(= LUA_NOREF);
 
+EXTERN int nlua_refcount INIT(= 0);
+
 #define set_api_error(s, err) \
     do { \
       Error *err_ = (err); \

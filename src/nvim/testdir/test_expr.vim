@@ -501,3 +501,12 @@ func Test_empty_concatenate()
   call assert_equal('b', 'a'[4:0] . 'b')
   call assert_equal('b', 'b' . 'a'[4:0])
 endfunc
+
+func Test_eval_after_if()
+  let s:val = ''
+  func SetVal(x)
+    let s:val ..= a:x
+  endfunc
+  if 0 | eval SetVal('a') | endif | call SetVal('b')
+  call assert_equal('b', s:val)
+endfunc

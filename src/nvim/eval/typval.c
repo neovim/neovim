@@ -219,6 +219,7 @@ list_T *tv_list_alloc(const ptrdiff_t len)
   list->lv_used_next = gc_first_list;
   gc_first_list = list;
   list_log(list, NULL, (void *)(uintptr_t)len, "alloc");
+  list->lua_table_ref = LUA_NOREF;
   return list;
 }
 
@@ -302,7 +303,7 @@ void tv_list_free_list(list_T *const l)
   }
   list_log(l, NULL, NULL, "freelist");
 
-  nlua_free_typval_list(l);
+  NLUA_CLEAR_REF(l->lua_table_ref);
   xfree(l);
 }
 
@@ -1109,6 +1110,7 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
   watcher->key_pattern_len = key_pattern_len;
   watcher->callback = callback;
   watcher->busy = false;
+  watcher->needs_free = false;
   QUEUE_INSERT_TAIL(&dict->watchers, &watcher->node);
 }
 
@@ -1182,22 +1184,30 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
   QUEUE *w = NULL;
   DictWatcher *watcher = NULL;
   bool matched = false;
-  QUEUE_FOREACH(w, &dict->watchers) {
+  bool queue_is_busy = false;
+  QUEUE_FOREACH(w, &dict->watchers, {
     watcher = tv_dict_watcher_node_data(w);
+    if (watcher->busy) {
+      queue_is_busy = true;
+    }
     if (tv_callback_equal(&watcher->callback, &callback)
         && watcher->key_pattern_len == key_pattern_len
         && memcmp(watcher->key_pattern, key_pattern, key_pattern_len) == 0) {
       matched = true;
       break;
     }
-  }
+  })
 
   if (!matched) {
     return false;
   }
 
-  QUEUE_REMOVE(w);
-  tv_dict_watcher_free(watcher);
+  if (queue_is_busy) {
+    watcher->needs_free = true;
+  } else {
+    QUEUE_REMOVE(w);
+    tv_dict_watcher_free(watcher);
+  }
   return true;
 }
 
@@ -1258,9 +1268,10 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
 
   typval_T rettv;
 
+  bool any_needs_free = false;
   dict->dv_refcount++;
   QUEUE *w;
-  QUEUE_FOREACH(w, &dict->watchers) {
+  QUEUE_FOREACH(w, &dict->watchers, {
     DictWatcher *watcher = tv_dict_watcher_node_data(w);
     if (!watcher->busy && tv_dict_watcher_matches(watcher, key)) {
       rettv = TV_INITIAL_VALUE;
@@ -1268,7 +1279,19 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
       tv_clear(&rettv);
+      if (watcher->needs_free) {
+        any_needs_free = true;
+      }
     }
+  })
+  if (any_needs_free) {
+    QUEUE_FOREACH(w, &dict->watchers, {
+      DictWatcher *watcher = tv_dict_watcher_node_data(w);
+      if (watcher->needs_free) {
+        QUEUE_REMOVE(w);
+        tv_dict_watcher_free(watcher);
+      }
+    })
   }
   tv_dict_unref(dict);
 
@@ -1382,6 +1405,8 @@ dict_T *tv_dict_alloc(void)
   d->dv_copyID = 0;
   QUEUE_INIT(&d->watchers);
 
+  d->lua_table_ref = LUA_NOREF;
+
   return d;
 }
 
@@ -1432,7 +1457,7 @@ void tv_dict_free_dict(dict_T *const d)
     d->dv_used_next->dv_used_prev = d->dv_used_prev;
   }
 
-  nlua_free_typval_dict(d);
+  NLUA_CLEAR_REF(d->lua_table_ref);
   xfree(d);
 }
 

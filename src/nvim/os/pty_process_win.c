@@ -203,11 +203,13 @@ int pty_process_spawn(PtyProcess *ptyproc)
 cleanup:
   if (status) {
     // In the case of an error of MultiByteToWideChar or CreateProcessW.
-    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn(%s): %s: error code: %d",
+         proc->argv[0], emsg, status);
     status = os_translate_sys_error(status);
   } else if (err != NULL) {
     status = (int)winpty_error_code(err);
-    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn(%s): %s: error code: %d",
+         proc->argv[0], emsg, status);
     status = translate_winpty_error(status);
   }
   winpty_error_free(err);
@@ -343,19 +345,17 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
   utf8_cmd_line_len += argc;
   char *utf8_cmd_line = xmalloc(utf8_cmd_line_len);
   *utf8_cmd_line = NUL;
-  while (1) {
-    QUEUE *head = QUEUE_HEAD(&args_q);
-    QUEUE_REMOVE(head);
-    ArgNode *arg_node = QUEUE_DATA(head, ArgNode, node);
+  QUEUE *q;
+  QUEUE_FOREACH(q, &args_q, {
+    ArgNode *arg_node = QUEUE_DATA(q, ArgNode, node);
     xstrlcat(utf8_cmd_line, arg_node->arg, utf8_cmd_line_len);
     xfree(arg_node->arg);
     xfree(arg_node);
-    if (QUEUE_EMPTY(&args_q)) {
-      break;
-    } else {
+    QUEUE_REMOVE(q);
+    if (!QUEUE_EMPTY(&args_q)) {
       xstrlcat(utf8_cmd_line, " ", utf8_cmd_line_len);
     }
-  }
+  })
 
   int result = utf8_to_utf16(utf8_cmd_line, -1, cmd_line);
   xfree(utf8_cmd_line);
@@ -507,11 +507,11 @@ static int build_env_block(dict_T *denv, wchar_t **env_block)
   *env_block = xmalloc(sizeof(**env_block) * env_block_len);
   wchar_t *pos = *env_block;
 
-  QUEUE_FOREACH(q, &env_q) {
+  QUEUE_FOREACH(q, &env_q, {
     EnvNode *env_node = QUEUE_DATA(q, EnvNode, node);
     memcpy(pos, env_node->str, env_node->len * sizeof(*pos));
     pos += env_node->len;
-  }
+  })
 
   *pos = L'\0';
 

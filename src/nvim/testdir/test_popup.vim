@@ -871,7 +871,7 @@ func Test_popup_complete_backwards_ctrl_p()
 endfunc
 
 fun! Test_complete_o_tab()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   let s:o_char_pressed = 0
 
   fun! s:act_on_text_changed()

@@ -110,6 +110,7 @@ static char uilog_last_event[1024] = { 0 };
 void ui_init(void)
 {
   default_grid.handle = 1;
+  msg_grid_adj.target = &default_grid;
   ui_comp_init();
 }
 

@@ -256,7 +256,7 @@ EXTERN linenr_T sourcing_lnum INIT(= 0);    // line number of the source file
 
 EXTERN int ex_nesting_level INIT(= 0);          // nesting level
 EXTERN int debug_break_level INIT(= -1);        // break below this level
-EXTERN int debug_did_msg INIT(= false);         // did "debug mode" message
+EXTERN bool debug_did_msg INIT(= false);        // did "debug mode" message
 EXTERN int debug_tick INIT(= 0);                // breakpoint change count
 EXTERN int debug_backtrace_level INIT(= 0);     // breakpoint backtrace level
 
@@ -469,7 +469,7 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
 
 // Iterate through all the signs placed in a buffer
 #define FOR_ALL_SIGNS_IN_BUF(buf, sign) \
-  for (sign = buf->b_signlist; sign != NULL; sign = sign->next)   // NOLINT
+  for (sign = buf->b_signlist; sign != NULL; sign = sign->se_next)   // NOLINT
 
 
 // List of files being edited (global argument list).  curwin->w_alist points

@@ -833,6 +833,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   bool islambda = false;
   char_u numbuf[NUMBUFLEN];
   char_u      *name;
+  typval_T *tv_to_free[MAX_FUNC_ARGS];
+  int tv_to_free_len = 0;
   proftime_T wait_start;
   proftime_T call_start;
   int started_profiling = false;
@@ -984,6 +986,11 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     // "argvars" must have VAR_FIXED for v_lock.
     v->di_tv = isdefault ? def_rettv : argvars[i];
     v->di_tv.v_lock = VAR_FIXED;
+
+    if (isdefault) {
+      // Need to free this later, no matter where it's stored.
+      tv_to_free[tv_to_free_len++] = &v->di_tv;
+    }
 
     if (addlocal) {
       // Named arguments can be accessed without the "a:" prefix in lambda
@@ -1209,7 +1216,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
 
   did_emsg |= save_did_emsg;
   depth--;
-
+  for (int i = 0; i < tv_to_free_len; i++) {
+    tv_clear(tv_to_free[i]);
+  }
   cleanup_function_call(fc);
 
   if (--fp->uf_calls <= 0 && fp->uf_refcount <= 0) {

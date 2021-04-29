@@ -680,6 +680,24 @@ func Test_mksession_winpos()
   set sessionoptions&
 endfunc
 
+" Test for mksession without options restores winminheight
+func Test_mksession_winminheight()
+  set sessionoptions-=options
+  split
+  mksession! Xtest_mks.out
+  let found_restore = 0
+  let lines = readfile('Xtest_mks.out')
+  for line in lines
+    if line =~ '= s:save_winmin\(width\|height\)'
+      let found_restore += 1
+    endif
+  endfor
+  call assert_equal(2, found_restore)
+  call delete('Xtest_mks.out')
+  close
+  set sessionoptions&
+endfunc
+
 " Test for mksession with 'compatible' option
 func Test_mksession_compatible()
   throw 'skipped: Nvim does not support "compatible" option'

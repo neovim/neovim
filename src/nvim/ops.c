@@ -288,7 +288,7 @@ void shift_line(
 {
   int count;
   int i, j;
-  int p_sw = get_sw_value(curbuf);
+  int p_sw = (int)get_sw_value_indent(curbuf);
 
   count = get_indent();  // get current indent
 
@@ -332,8 +332,9 @@ static void shift_block(oparg_T *oap, int amount)
   const int oldstate = State;
   char_u *newp;
   const int oldcol = curwin->w_cursor.col;
-  const int p_sw = get_sw_value(curbuf);
-  const int p_ts = (int)curbuf->b_p_ts;
+  int p_sw = (int)get_sw_value_indent(curbuf);
+  long *p_vts = curbuf->b_p_vts_array;
+  const long p_ts = curbuf->b_p_ts;
   struct block_def bd;
   int incr;
   int i = 0, j = 0;
@@ -383,12 +384,11 @@ static void shift_block(oparg_T *oap, int amount)
     }
     /* OK, now total=all the VWS reqd, and textstart points at the 1st
      * non-ws char in the block. */
-    if (!curbuf->b_p_et)
-      i = ((ws_vcol % p_ts) + total) / p_ts;       /* number of tabs */
-    if (i)
-      j = ((ws_vcol % p_ts) + total) % p_ts;       /* number of spp */
-    else
+    if (!curbuf->b_p_et) {
+      tabstop_fromto(ws_vcol, ws_vcol + total, p_ts, p_vts, &i, &j);
+    } else {
       j = total;
+    }
 
     // if we're splitting a TAB, allow for it
     int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
@@ -1079,13 +1079,15 @@ do_execreg(
         }
       }
       escaped = vim_strsave_escape_csi(reg->y_array[i]);
-      retval = ins_typebuf(escaped, remap, 0, TRUE, silent);
+      retval = ins_typebuf(escaped, remap, 0, true, silent);
       xfree(escaped);
-      if (retval == FAIL)
+      if (retval == FAIL) {
         return FAIL;
-      if (colon && ins_typebuf((char_u *)":", remap, 0, TRUE, silent)
-          == FAIL)
+      }
+      if (colon
+          && ins_typebuf((char_u *)":", remap, 0, true, silent) == FAIL) {
         return FAIL;
+      }
     }
     reg_executing = regname == 0 ? '"' : regname;  // disable the 'q' command
   }
@@ -1109,8 +1111,9 @@ static void put_reedit_in_typebuf(int silent)
       buf[0] = (char_u)(restart_edit == 'I' ? 'i' : restart_edit);
       buf[1] = NUL;
     }
-    if (ins_typebuf(buf, REMAP_NONE, 0, TRUE, silent) == OK)
+    if (ins_typebuf(buf, REMAP_NONE, 0, true, silent) == OK) {
       restart_edit = NUL;
+    }
   }
 }
 
@@ -1130,25 +1133,29 @@ static int put_in_typebuf(
   int retval = OK;
 
   put_reedit_in_typebuf(silent);
-  if (colon)
-    retval = ins_typebuf((char_u *)"\n", REMAP_NONE, 0, TRUE, silent);
+  if (colon) {
+    retval = ins_typebuf((char_u *)"\n", REMAP_NONE, 0, true, silent);
+  }
   if (retval == OK) {
     char_u  *p;
 
-    if (esc)
+    if (esc) {
       p = vim_strsave_escape_csi(s);
-    else
+    } else {
       p = s;
-    if (p == NULL)
+    }
+    if (p == NULL) {
       retval = FAIL;
-    else
-      retval = ins_typebuf(p, esc ? REMAP_NONE : REMAP_YES,
-          0, TRUE, silent);
-    if (esc)
+    } else {
+      retval = ins_typebuf(p, esc ? REMAP_NONE : REMAP_YES, 0, true, silent);
+    }
+    if (esc) {
       xfree(p);
+    }
   }
-  if (colon && retval == OK)
-    retval = ins_typebuf((char_u *)":", REMAP_NONE, 0, TRUE, silent);
+  if (colon && retval == OK) {
+    retval = ins_typebuf((char_u *)":", REMAP_NONE, 0, true, silent);
+  }
   return retval;
 }
 
@@ -1669,12 +1676,18 @@ int op_delete(oparg_T *oap)
 
       curbuf_splice_pending++;
       pos_T startpos = curwin->w_cursor;  // start position for delete
+      bcount_t deleted_bytes = (bcount_t)STRLEN(
+          ml_get(startpos.lnum)) + 1 - startpos.col;
       truncate_line(true);        // delete from cursor to end of line
 
       curpos = curwin->w_cursor;  // remember curwin->w_cursor
       curwin->w_cursor.lnum++;
+
+      for (linenr_T i = 1; i <= oap->line_count - 2; i++) {
+        deleted_bytes += (bcount_t)STRLEN(
+            ml_get(startpos.lnum + i)) + 1;
+      }
       del_lines(oap->line_count - 2, false);
-      bcount_t deleted_bytes = (bcount_t)curbuf->deleted_bytes2 - startpos.col;
 
       // delete from start of line until op_end
       n = (oap->end.col + 1 - !oap->inclusive);
@@ -2800,7 +2813,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   size_t y_size;
   size_t oldlen;
   int y_width = 0;
-  colnr_T vcol;
+  colnr_T vcol = 0;
   int delcount;
   int incr = 0;
   struct block_def bd;
@@ -3061,14 +3074,17 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     if (gchar_cursor() == TAB) {
       /* Don't need to insert spaces when "p" on the last position of a
        * tab or "P" on the first position. */
+      int viscol = getviscol();
       if (dir == FORWARD
-          ? (int)curwin->w_cursor.coladd < curbuf->b_p_ts - 1
-          : curwin->w_cursor.coladd > 0)
-        coladvance_force(getviscol());
-      else
+          ? tabstop_padding(viscol, curbuf->b_p_ts, curbuf->b_p_vts_array) != 1
+          : curwin->w_cursor.coladd > 0) {
+        coladvance_force(viscol);
+      } else {
         curwin->w_cursor.coladd = 0;
-    } else if (curwin->w_cursor.coladd > 0 || gchar_cursor() == NUL)
+      }
+    } else if (curwin->w_cursor.coladd > 0 || gchar_cursor() == NUL) {
       coladvance_force(getviscol() + (dir == FORWARD));
+    }
   }
 
   lnum = curwin->w_cursor.lnum;
@@ -3177,7 +3193,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       // insert the new text
       totlen = (size_t)(count * (yanklen + spaces)
                         + bd.startspaces + bd.endspaces);
-      newp = (char_u *) xmalloc(totlen + oldlen + 1);
+      int addcount = (int)totlen + lines_appended;
+      newp = (char_u *)xmalloc(totlen + oldlen + 1);
       // copy part up to cursor to new line
       ptr = newp;
       memmove(ptr, oldp, (size_t)bd.textcol);
@@ -3194,6 +3211,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         if ((j < count - 1 || !shortline) && spaces) {
           memset(ptr, ' ', (size_t)spaces);
           ptr += spaces;
+        } else {
+          addcount -= spaces;
         }
       }
       // may insert some spaces after the new text
@@ -3205,7 +3224,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
       ml_replace(curwin->w_cursor.lnum, newp, false);
       extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum-1, bd.textcol,
-                          delcount, (int)totlen + lines_appended, kExtmarkUndo);
+                          delcount, addcount, kExtmarkUndo);
 
       ++curwin->w_cursor.lnum;
       if (i == 0)

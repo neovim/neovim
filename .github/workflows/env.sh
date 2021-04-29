@@ -34,7 +34,7 @@ case "$FLAVOR" in
     BUILD_FLAGS="$BUILD_FLAGS -DPREFER_LUA=ON"
     cat <<EOF >> "$GITHUB_ENV"
 CLANG_SANITIZER=ASAN_UBSAN
-SYMBOLIZER=asan_symbolize-11
+SYMBOLIZER=asan_symbolize-12
 ASAN_OPTIONS=detect_leaks=1:check_initialization_order=1:log_path=$GITHUB_WORKSPACE/build/log/asan
 UBSAN_OPTIONS=print_stacktrace=1 log_path=$GITHUB_WORKSPACE/build/log/ubsan
 EOF

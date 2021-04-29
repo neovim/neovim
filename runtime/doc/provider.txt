@@ -88,7 +88,7 @@ Example using pyenv: >
     pyenv install 3.4.4
     pyenv virtualenv 3.4.4 py3nvim
     pyenv activate py3nvim
-    pip install pynvim
+    python3 -m pip install pynvim
     pyenv which python  # Note the path
 The last command reports the interpreter path, add it to your init.vim: >
     let g:python3_host_prog = '/path/to/py3nvim/bin/python'

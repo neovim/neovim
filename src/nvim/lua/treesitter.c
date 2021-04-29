@@ -222,13 +222,19 @@ int tslua_inspect_lang(lua_State *L)
   lua_setfield(L, -2, "symbols");  // [retval]
 
   size_t nfields = (size_t)ts_language_field_count(lang);
-  lua_createtable(L, nfields-1, 1);  // [retval, fields]
-  for (size_t i = 0; i < nfields; i++) {
+  lua_createtable(L, nfields, 1);  // [retval, fields]
+  // Field IDs go from 1 to nfields inclusive (extra index 0 maps to NULL)
+  for (size_t i = 1; i <= nfields; i++) {
     lua_pushstring(L, ts_language_field_name_for_id(lang, i));
     lua_rawseti(L, -2, i);  // [retval, fields]
   }
 
   lua_setfield(L, -2, "fields");  // [retval]
+
+  uint32_t lang_version = ts_language_version(lang);
+  lua_pushinteger(L, lang_version);  // [retval, version]
+  lua_setfield(L, -2, "_abi_version");
+
   return 1;
 }
 
@@ -1109,7 +1115,7 @@ static int querycursor_gc(lua_State *L)
 
 // Query methods
 
-int ts_lua_parse_query(lua_State *L)
+int tslua_parse_query(lua_State *L)
 {
   if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
     return luaL_error(L, "string expected");

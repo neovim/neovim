@@ -317,8 +317,8 @@ endfunc
 " Test that the garbage collector isn't triggered if a timer callback invokes
 " vgetc().
 func Test_nocatch_garbage_collect()
-  " skipped: Nvim does not support test_garbagecollect_soon(), test_override()
-  return
+  CheckFunction test_garbagecollect_soon
+  CheckFunction test_override
   " 'uptimetime. must be bigger than the timer timeout
   set ut=200
   call test_garbagecollect_soon()

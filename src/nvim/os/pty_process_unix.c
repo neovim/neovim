@@ -175,7 +175,7 @@ static void init_child(PtyProcess *ptyproc)
 
   Process *proc = (Process *)ptyproc;
   if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    ELOG("chdir failed: %s", strerror(errno));
+    ELOG("chdir(%s) failed: %s", proc->cwd, strerror(errno));
     return;
   }
 
@@ -184,7 +184,7 @@ static void init_child(PtyProcess *ptyproc)
   assert(proc->env);
   environ = tv_dict_to_env(proc->env);
   execvp(prog, proc->argv);
-  ELOG("execvp failed: %s: %s", strerror(errno), prog);
+  ELOG("execvp(%s) failed: %s", prog, strerror(errno));
 
   _exit(122);  // 122 is EXEC_FAILED in the Vim source.
 }

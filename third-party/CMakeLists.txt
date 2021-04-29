@@ -175,9 +175,9 @@ set(LUA_COMPAT53_SHA256 bec3a23114a3d9b3218038309657f0f506ad10dfbc03bb54e91da7e5
 set(GPERF_URL https://github.com/neovim/deps/raw/ff5b4b18a87397a8564016071ae64f64bcd8c635/opt/gperf-3.1.tar.gz)
 set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
 
-# 7za.exe cat.exe curl.exe ca-bundle.crt diff.exe tee.exe tidy.exe xxd.exe
-set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
-set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
+# cat.exe curl.exe ca-bundle.crt diff.exe tee.exe xxd.exe
+set(WINTOOLS_URL https://github.com/neovim/deps/raw/da3520b568054ce057e6168243ff50eea223bfa0/opt/win32tools.zip)
+set(WINTOOLS_SHA256 190149d369ae1cd266bc39bceb2d1c061833a23640dfabd4089082c1a7824421)
 
 set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.16/neovim-qt.zip)
 set(WINGUI_SHA256 aad95a1f8413a9ebf36fc0298d0dfd7d786abf88cb0f4ae9f7ec895b70c7b312)
@@ -199,8 +199,9 @@ set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc891
 set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/5aa0bbb.tar.gz)
 set(TREESITTER_C_SHA256 a5dcb37460d83002dfae7f9a208170ddbc9a047f231b9d6b75da7d36d707db2f)
 
-set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.19.3.zip)
-set(TREESITTER_SHA256 1a2c5b816fa7f78587672a022a5f671004ac656ebad39857b3c15442c657fcb0)
+# This is 0.19.4+2, fixes some segfaults https://github.com/tree-sitter/tree-sitter/commit/89e1157a299596f3ce2155ba9fd69d5e2c03d3e6
+set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/89e1157a299596f3ce2155ba9fd69d5e2c03d3e6.zip)
+set(TREESITTER_SHA256 d5be9fd92cbf783680f921b2adccbd721b9aa8b2c445114a216b6544330f252c)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)

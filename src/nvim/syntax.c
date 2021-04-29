@@ -5306,13 +5306,17 @@ get_id_list(
           xfree(name);
           break;
         }
-        if (name[1] == 'A')
-          id = SYNID_ALLBUT;
-        else if (name[1] == 'T')
-          id = SYNID_TOP;
-        else
-          id = SYNID_CONTAINED;
-        id += current_syn_inc_tag;
+        if (name[1] == 'A') {
+          id = SYNID_ALLBUT + current_syn_inc_tag;
+        } else if (name[1] == 'T') {
+          if (curwin->w_s->b_syn_topgrp >= SYNID_CLUSTER) {
+            id = curwin->w_s->b_syn_topgrp;
+          } else {
+            id = SYNID_TOP + current_syn_inc_tag;
+          }
+        } else {
+          id = SYNID_CONTAINED + current_syn_inc_tag;
+        }
       } else if (name[1] == '@')   {
         if (skip) {
           id = -1;
@@ -6046,6 +6050,9 @@ static const char *highlight_init_both[] = {
   "default link Whitespace NonText",
   "default link MsgSeparator StatusLine",
   "default link NormalFloat Pmenu",
+  "default link FloatBorder VertSplit",
+  "default FloatShadow blend=80 guibg=Black",
+  "default FloatShadowThrough blend=100 guibg=Black",
   "RedrawDebugNormal cterm=reverse gui=reverse",
   "RedrawDebugClear ctermbg=Yellow guibg=Yellow",
   "RedrawDebugComposed ctermbg=Green guibg=Green",

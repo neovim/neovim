@@ -11,7 +11,6 @@
 
 typedef struct {
   LuaRef func_ref;
-  LuaRef table_ref;
 } LuaCallable;
 
 typedef struct {

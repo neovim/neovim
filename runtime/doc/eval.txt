@@ -444,7 +444,7 @@ as a key.
 To avoid having to put quotes around every key the #{} form can be used.  This
 does require the key to consist only of ASCII letters, digits, '-' and '_'.
 Example: >
-	let mydict = #{zero: 0, one_key: 1, two-key: 2, 333: 3}
+	:let mydict = #{zero: 0, one_key: 1, two-key: 2, 333: 3}
 Note that 333 here is the string "333".  Empty keys are not possible with #{}.
 
 A value can be any expression.  Using a Dictionary for a value creates a
@@ -2047,6 +2047,7 @@ assert_inrange({lower}, {upper}, {actual} [, {msg}])
 				Number	assert {actual} is inside the range
 assert_match({pat}, {text} [, {msg}])
 				Number	assert {pat} matches {text}
+assert_nobeep({cmd})		Number	assert {cmd} does not cause a beep
 assert_notequal({exp}, {act} [, {msg}])
 				Number	assert {exp} is not equal {act}
 assert_notmatch({pat}, {text} [, {msg}])
@@ -2308,7 +2309,7 @@ perleval({expr})		any	evaluate |perl| expression
 pow({x}, {y})			Float	{x} to the power of {y}
 prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
 printf({fmt}, {expr1}...)	String	format text
-prompt_addtext({buf}, {expr})	none	add text to a prompt buffer
+prompt_getprompt({buf})		String	get prompt text
 prompt_setcallback({buf}, {expr}) none	set prompt callback function
 prompt_setinterrupt({buf}, {text}) none	set prompt interrupt function
 prompt_setprompt({buf}, {text}) none	set prompt text
@@ -2393,8 +2394,9 @@ sha256({string})		String	SHA256 checksum of {string}
 shellescape({string} [, {special}])
 				String	escape {string} for use as shell
 					command argument
-shiftwidth()			Number	effective value of 'shiftwidth'
+shiftwidth([{col}])		Number	effective value of 'shiftwidth'
 sign_define({name} [, {dict}])	Number	define or update a sign
+sign_define({list})		List	define or update a list of signs
 sign_getdefined([{name}])	List	get a list of defined signs
 sign_getplaced([{expr} [, {dict}]])
 				List	get a list of placed signs
@@ -2402,9 +2404,12 @@ sign_jump({id}, {group}, {expr})
 				Number	jump to a sign
 sign_place({id}, {group}, {name}, {expr} [, {dict}])
 				Number	place a sign
+sign_placelist({list})		List	place a list of signs
 sign_undefine([{name}])		Number	undefine a sign
+sign_undefine({list})		List	undefine a list of signs
 sign_unplace({group} [, {dict}])
 				Number	unplace a sign
+sign_unplacelist({list})	List	unplace a list of signs
 simplify({filename})		String	simplify filename as much as possible
 sin({expr})			Float	sine of {expr}
 sinh({expr})			Float	hyperbolic sine of {expr}
@@ -2430,7 +2435,7 @@ strcharpart({str}, {start} [, {len}])
 				String	{len} characters of {str} at
 					character {start}
 strdisplaywidth({expr} [, {col}]) Number display length of the String {expr}
-strftime({format} [, {time}])	String	time in specified format
+strftime({format} [, {time}])	String	format time with a specified format
 strgetchar({str}, {index})	Number	get char {index} from {str}
 stridx({haystack}, {needle} [, {start}])
 				Number	index of {needle} in {haystack}
@@ -2439,6 +2444,8 @@ strlen({expr})			Number	length of the String {expr}
 strpart({str}, {start} [, {len} [, {chars}]])
 				String	{len} bytes/chars of {str} at
 					byte {start}
+strptime({format}, {timestring})
+				Number	Convert {timestring} to unix timestamp
 strridx({haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans({expr})		String	translate string to make it printable
@@ -2637,7 +2644,8 @@ argv([{nr} [, {winid}])
 assert_beeps({cmd})					*assert_beeps()*
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce a beep or visual bell.
-		Also see |assert_fails()| and |assert-return|.
+		Also see |assert_fails()|, |assert_nobeep()| and
+		|assert-return|.
 
 							*assert_equal()*
 assert_equal({expected}, {actual}, [, {msg}])
@@ -2719,6 +2727,11 @@ assert_match({pattern}, {actual} [, {msg}])
 	assert_match('^f.*o$', 'foobar')
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
+
+assert_nobeep({cmd})					*assert_nobeep()*
+		Run {cmd} and add an error message to |v:errors| if it
+		produces a beep or visual bell.
+		Also see |assert_beeps()|.
 
 							*assert_notequal()*
 assert_notequal({expected}, {actual} [, {msg}])
@@ -4983,7 +4996,7 @@ getwininfo([{winid}])					*getwininfo()*
 
 getwinpos([{timeout}])					*getwinpos()*
 		The result is a list with two numbers, the result of
-		getwinposx() and getwinposy() combined:
+		|getwinposx()| and |getwinposy()| combined:
 			[x-pos, y-pos]
 		{timeout} can be used to specify how long to wait in msec for
 		a response from the terminal.  When omitted 100 msec is used.
@@ -5349,9 +5362,8 @@ input({opts})
 		prompt        ""       Same as {prompt} in the first form.
 		default       ""       Same as {text} in the first form.
 		completion    nothing  Same as {completion} in the first form.
-		cancelreturn  ""       Same as {cancelreturn} from
-		                       |inputdialog()|. Also works with
-		                       input().
+		cancelreturn  ""       The value returned when the dialog is
+		                       cancelled.
 		highlight     nothing  Highlight handler: |Funcref|.
 
 		The highlighting set with |:echohl| is used for the prompt.
@@ -5551,13 +5563,14 @@ id({expr})						*id()*
 		Returns a |String| which is a unique identifier of the
 		container type (|List|, |Dict| and |Partial|). It is
 		guaranteed that for the mentioned types `id(v1) ==# id(v2)`
-		returns true iff `type(v1) == type(v2) && v1 is v2` (note:
-		|v:_null_list| and |v:_null_dict| have the same `id()` with
-		different types because they are internally represented as
-		a NULL pointers). Currently `id()` returns a hexadecimal
-		representanion of the pointers to the containers (i.e. like
-		`0x994a40`), same as `printf("%p", {expr})`, but it is advised
-		against counting on exact format of return value.
+		returns true iff `type(v1) == type(v2) && v1 is v2`.
+		Note that |v:_null_string|, |v:_null_list|, and |v:_null_dict|
+		have the same `id()` with different types because they are
+		internally represented as a NULL pointers.  `id()` returns a
+		hexadecimal representanion of the pointers to the containers
+		(i.e. like `0x994a40`), same as `printf("%p", {expr})`,
+		but it is advised against counting on the exact format of
+		return value.
 
 		It is not guaranteed that `id(no_longer_existing_container)`
 		will not be equal to some other `id()`: new containers may
@@ -5853,7 +5866,7 @@ list2str({list} [, {utf8}])				*list2str()*
 <
 localtime()						*localtime()*
 		Return the current time, measured as seconds since 1st Jan
-		1970.  See also |strftime()| and |getftime()|.
+		1970.  See also |strftime()|, |strptime()| and |getftime()|.
 
 
 log({expr})						*log()*
@@ -6733,6 +6746,13 @@ printf({fmt}, {expr1} ...)				*printf()*
 		The number of {exprN} arguments must exactly match the number
 		of "%" items.  If there are not sufficient or too many
 		arguments an error is given.  Up to 18 arguments can be used.
+
+prompt_getprompt({buf})					*prompt_getprompt()*
+		Returns the effective prompt text for buffer {buf}.  {buf} can
+		be a buffer name or number.  See |prompt-buffer|.
+
+		If the buffer doesn't exist or isn't a prompt buffer, an empty
+		string is returned.
 
 prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		Set prompt callback for buffer {buf} to {expr}.  When {expr}
@@ -7897,7 +7917,7 @@ shellescape({string} [, {special}])			*shellescape()*
 <		See also |::S|.
 
 
-shiftwidth()						*shiftwidth()*
+shiftwidth([{col}])						*shiftwidth()*
 		Returns the effective value of 'shiftwidth'. This is the
 		'shiftwidth' value unless it is zero, in which case it is the
 		'tabstop' value.  To be backwards compatible in indent
@@ -7913,7 +7933,13 @@ shiftwidth()						*shiftwidth()*
 			endif
 <		And then use s:sw() instead of &sw.
 
+		When there is one argument {col} this is used as column number
+		for which to return the 'shiftwidth' value. This matters for the
+		'vartabstop' feature. If no {col} argument is given, column 1
+		will be assumed.
+
 sign_define({name} [, {dict}])				*sign_define()*
+sign_define({list})
 		Define a new sign named {name} or modify the attributes of an
 		existing sign.  This is similar to the |:sign-define| command.
 
@@ -7923,24 +7949,38 @@ sign_define({name} [, {dict}])				*sign_define()*
 		The {name} can be a String or a Number.  The optional {dict}
 		argument specifies the sign attributes.  The following values
 		are supported:
-		    icon	full path to the bitmap file for the sign.
-		    linehl	highlight group used for the whole line the
+		   icon		full path to the bitmap file for the sign.
+		   linehl	highlight group used for the whole line the
 				sign is placed in.
-		    text	text that is displayed when there is no icon
+		   text		text that is displayed when there is no icon
 				or the GUI is not being used.
-		    texthl	highlight group used for the text item
-		    numhl	highlight group used for 'number' column at the
+		   texthl	highlight group used for the text item
+		   numhl	highlight group used for 'number' column at the
 				associated line. Overrides |hl-LineNr|,
 				|hl-CursorLineNr|.
 
 		If the sign named {name} already exists, then the attributes
 		of the sign are updated.
 
-		Returns 0 on success and -1 on failure.
+		The one argument {list} can be used to define a list of signs.
+		Each list item is a dictionary with the above items in {dict}
+		and a 'name' item for the sign name.
+
+		Returns 0 on success and -1 on failure.  When the one argument
+		{list} is used, then returns a List of values one for each
+		defined sign.
 
 		Examples: >
-			call sign_define("mySign", {"text" : "=>", "texthl" :
-					\ "Error", "linehl" : "Search"})
+			call sign_define("mySign", {
+				\ "text" : "=>",
+				\ "texthl" : "Error",
+				\ "linehl" : "Search"})
+			call sign_define([
+				\ {'name' : 'sign1',
+				\  'text' : '=>'},
+				\ {'name' : 'sign2',
+				\  'text' : '!!'}
+				\ ])
 <
 sign_getdefined([{name}])				*sign_getdefined()*
 		Get a list of defined signs and their attributes.
@@ -7952,14 +7992,14 @@ sign_getdefined([{name}])				*sign_getdefined()*
 
 		Each list item in the returned value is a dictionary with the
 		following entries:
-			icon	full path to the bitmap file of the sign
-			linehl	highlight group used for the whole line the
+		   icon		full path to the bitmap file of the sign
+		   linehl	highlight group used for the whole line the
 				sign is placed in.
-			name	name of the sign
-			text	text that is displayed when there is no icon
+		   name		name of the sign
+		   text		text that is displayed when there is no icon
 				or the GUI is not being used.
-			texthl	highlight group used for the text item
-			numhl	highlight group used for 'number' column at the
+		   texthl	highlight group used for the text item
+		   numhl	highlight group used for 'number' column at the
 				associated line. Overrides |hl-LineNr|,
 				|hl-CursorLineNr|.
 
@@ -8050,25 +8090,25 @@ sign_jump({id}, {group}, {expr})
 <
 							*sign_place()*
 sign_place({id}, {group}, {name}, {expr} [, {dict}])
-		Place the sign defined as {name} at line {lnum} in file {expr}
-		and assign {id} and {group} to sign.  This is similar to the
-		|:sign-place| command.
+		Place the sign defined as {name} at line {lnum} in file or
+		buffer {expr} and assign {id} and {group} to sign.  This is
+		similar to the |:sign-place| command.
 
 		If the sign identifier {id} is zero, then a new identifier is
 		allocated.  Otherwise the specified number is used. {group} is
 		the sign group name. To use the global sign group, use an
 		empty string.  {group} functions as a namespace for {id}, thus
 		two groups can use the same IDs. Refer to |sign-identifier|
-		for more information.
+		and |sign-group| for more information.
 
 		{name} refers to a defined sign.
 		{expr} refers to a buffer name or number. For the accepted
 		values, see |bufname()|.
 
 		The optional {dict} argument supports the following entries:
-			lnum		line number in the buffer {expr} where
-					the sign is to be placed. For the
-					accepted values, see |line()|.
+			lnum		line number in the file or buffer
+					{expr} where the sign is to be placed.
+					For the accepted values, see |line()|.
 			priority	priority of the sign. See
 					|sign-priority| for more information.
 
@@ -8097,16 +8137,84 @@ sign_place({id}, {group}, {name}, {expr} [, {dict}])
 			call sign_place(10, 'g3', 'sign4', 'json.c',
 					\ {'lnum' : 40, 'priority' : 90})
 <
+							*sign_placelist()*
+sign_placelist({list})
+		Place one or more signs.  This is similar to the
+		|sign_place()| function.  The {list} argument specifies the
+		List of signs to place. Each list item is a dict with the
+		following sign attributes:
+		    buffer	buffer name or number. For the accepted
+				values, see |bufname()|.
+		    group	sign group. {group} functions as a namespace
+				for {id}, thus two groups can use the same
+				IDs. If not specified or set to an empty
+				string, then the global group is used.   See
+				|sign-group| for more information.
+		    id		sign identifier. If not specified or zero,
+				then a new unique identifier is allocated.
+				Otherwise the specified number is used. See
+				|sign-identifier| for more information.
+		    lnum	line number in the buffer {expr} where the
+				sign is to be placed. For the accepted values,
+				see |line()|.
+		    name	name of the sign to place. See |sign_define()|
+				for more information.
+		    priority	priority of the sign. When multiple signs are
+				placed on a line, the sign with the highest
+				priority is used. If not specified, the
+				default value of 10 is used. See
+				|sign-priority| for more information.
+
+		If {id} refers to an existing sign, then the existing sign is
+		modified to use the specified {name} and/or {priority}.
+
+		Returns a List of sign identifiers. If failed to place a
+		sign, the corresponding list item is set to -1.
+
+		Examples: >
+			" Place sign s1 with id 5 at line 20 and id 10 at line
+			" 30 in buffer a.c
+			let [n1, n2] = sign_place([
+				\ {'id' : 5,
+				\  'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 20},
+				\ {'id' : 10,
+				\  'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 30}
+				\ ])
+
+			" Place sign s1 in buffer a.c at line 40 and 50
+			" with auto-generated identifiers
+			let [n1, n2] = sign_place([
+				\ {'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 40},
+				\ {'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 50}
+				\ ])
+<
 sign_undefine([{name}])					*sign_undefine()*
+sign_undefine({list})
 		Deletes a previously defined sign {name}. This is similar to
 		the |:sign-undefine| command. If {name} is not supplied, then
 		deletes all the defined signs.
 
-		Returns 0 on success and -1 on failure.
+		The one argument {list} can be used to undefine a list of
+		signs. Each list item is the name of a sign.
+
+		Returns 0 on success and -1 on failure.  For the one argument
+		{list} call, returns a list of values one for each undefined
+		sign.
 
 		Examples: >
 			" Delete a sign named mySign
 			call sign_undefine("mySign")
+
+			" Delete signs 'sign1' and 'sign2'
+			call sign_undefine(["sign1", "sign2"])
 
 			" Delete all the signs
 			call sign_undefine()
@@ -8152,6 +8260,32 @@ sign_unplace({group} [, {dict}])			*sign_unplace()*
 
 			" Remove all the placed signs from all the buffers
 			call sign_unplace('*')
+<
+sign_unplacelist({list})				*sign_unplacelist()*
+		Remove previously placed signs from one or more buffers.  This
+		is similar to the |sign_unplace()| function.
+
+		The {list} argument specifies the List of signs to remove.
+		Each list item is a dict with the following sign attributes:
+		    buffer	buffer name or number. For the accepted
+				values, see |bufname()|. If not specified,
+				then the specified sign is removed from all
+				the buffers.
+		    group	sign group name. If not specified or set to an
+				empty string, then the global sign group is
+				used. If set to '*', then all the groups
+				including the global group are used.
+		    id		sign identifier. If not specified, then all
+				the signs in the specified group are removed.
+
+		Returns a List where an entry is set to 0 if the corresponding
+		sign was successfully removed or -1 on failure.
+
+		Example: >
+			" Remove sign with id 10 from buffer a.vim and sign
+			" with id 20 from buffer b.vim
+			call sign_unplace([{'id' : 10, 'buffer' : "a.vim"},
+					\ {'id' : 20, 'buffer' : 'b.vim'}])
 <
 simplify({filename})					*simplify()*
 		Simplify the file name as much as possible without changing
@@ -8488,7 +8622,7 @@ strftime({format} [, {time}])				*strftime()*
 		{format} depends on your system, thus this is not portable!
 		See the manual page of the C function strftime() for the
 		format.  The maximum length of the result is 80 characters.
-		See also |localtime()| and |getftime()|.
+		See also |localtime()|, |getftime()| and |strptime()|.
 		The language can be changed with the |:language| command.
 		Examples: >
 		  :echo strftime("%c")		   Sun Apr 27 11:49:23 1997
@@ -8578,6 +8712,31 @@ strpart({src}, {start} [, {len} [, {chars}]])			*strpart()*
 		example, to get the character under the cursor: >
 			strpart(getline("."), col(".") - 1, 1, v:true)
 <
+strptime({format}, {timestring})				*strptime()*
+		The result is a Number, which is a unix timestamp representing
+		the date and time in {timestring}, which is expected to match
+		the format specified in {format}.
+
+		The accepted {format} depends on your system, thus this is not
+		portable!  See the manual page of the C function strptime()
+		for the format.  Especially avoid "%c".  The value of $TZ also
+		matters.
+
+		If the {timestring} cannot be parsed with {format} zero is
+		returned.  If you do not know the format of {timestring} you
+		can try different {format} values until you get a non-zero
+		result.
+
+		See also |strftime()|.
+		Examples: >
+		  :echo strptime("%Y %b %d %X", "1997 Apr 27 11:49:23")
+<		  862156163 >
+		  :echo strftime("%c", strptime("%y%m%d %T", "970427 11:53:55"))
+<		  Sun Apr 27 11:53:55 1997 >
+		  :echo strftime("%c", strptime("%Y%m%d%H%M%S", "19970427115355") + 3600)
+<		  Sun Apr 27 12:53:55 1997
+
+
 strridx({haystack}, {needle} [, {start}])			*strridx()*
 		The result is a Number, which gives the byte index in
 		{haystack} of the last occurrence of the String {needle}.
@@ -9947,6 +10106,8 @@ This function can then be called with: >
 The recursiveness of user functions is restricted with the |'maxfuncdepth'|
 option.
 
+It is also possible to use `:eval`.  It does not support a range.
+
 
 AUTOMATICALLY LOADING FUNCTIONS ~
 							*autoload-functions*
@@ -10379,6 +10540,20 @@ text...
 :unlo[ckvar][!] [depth] {name} ...			*:unlockvar* *:unlo*
 			Unlock the internal variable {name}.  Does the
 			opposite of |:lockvar|.
+
+                                                       *:eval*
+:eval {expr}           Evaluate {expr} and discard the result.  Example: >
+                               :eval append(Filter(Getlist()), '$')
+
+<                      The expression is supposed to have a side effect,
+                       since the resulting value is not used.  In the example
+                       the `append()` call appends the List with text to the
+                       buffer.  This is similar to `:call` but works with any
+                       expression.
+
+                       The command can be shortened to `:ev` or `:eva`, but
+                       these are hard to recognize and therefore not to be
+                       used.
 
 
 :if {expr1}			*:if* *:end* *:endif* *:en* *E171* *E579* *E580*

@@ -270,8 +270,10 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
       diagnostic.severity = DiagnosticSeverity.Error
     end
     -- Account for servers that place diagnostics on terminating newline
-    local start = diagnostic.range.start
-    start.line = math.min(start.line, buf_line_count - 1)
+    if buf_line_count > 0 then
+      local start = diagnostic.range.start
+      start.line = math.min(start.line, buf_line_count - 1)
+    end
   end
 
   diagnostic_cache[bufnr][client_id] = diagnostics
@@ -404,9 +406,7 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
     line_diagnostics = filter_by_severity_limit(opts.severity_limit, line_diagnostics)
   end
 
-  if opts.severity_sort then
-    table.sort(line_diagnostics, function(a, b) return a.severity < b.severity end)
-  end
+  table.sort(line_diagnostics, function(a, b) return a.severity < b.severity end)
 
   return line_diagnostics
 end
@@ -995,6 +995,8 @@ end
 ---         - See |vim.lsp.diagnostic.set_signs()|
 ---     - update_in_insert: (default=false)
 ---         - Update diagnostics in InsertMode or wait until InsertLeave
+---     - severity_sort:    (default=false)
+---         - Sort diagnostics (and thus signs and virtual text)
 function M.on_publish_diagnostics(_, _, params, client_id, _, config)
   local uri = params.uri
   local bufnr = vim.uri_to_bufnr(uri)
@@ -1004,6 +1006,10 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
   end
 
   local diagnostics = params.diagnostics
+
+  if config and if_nil(config.severity_sort, false) then
+    table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
+  end
 
   -- Always save the diagnostics, even if the buf is not loaded.
   -- Language servers may report compile or build errors via diagnostics
@@ -1032,6 +1038,7 @@ function M.display(diagnostics, bufnr, client_id, config)
     underline = true,
     virtual_text = true,
     update_in_insert = false,
+    severity_sort = false,
   }, config)
 
   -- TODO(tjdevries): Consider how we can make this a "standardized" kind of thing for |lsp-handlers|.
@@ -1114,7 +1121,6 @@ end
 ---@return table {popup_bufnr, win_id}
 function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
   opts = opts or {}
-  opts.severity_sort = if_nil(opts.severity_sort, true)
 
   local show_header = if_nil(opts.show_header, true)
 
@@ -1138,14 +1144,14 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
 
     local message_lines = vim.split(diagnostic.message, '\n', true)
     table.insert(lines, prefix..message_lines[1])
-    table.insert(highlights, {#prefix + 1, hiname})
+    table.insert(highlights, {#prefix, hiname})
     for j = 2, #message_lines do
       table.insert(lines, message_lines[j])
       table.insert(highlights, {0, hiname})
     end
   end
 
-  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext')
+  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
   for i, hi in ipairs(highlights) do
     local prefixlen, hiname = unpack(hi)
     -- Start highlight after the prefix

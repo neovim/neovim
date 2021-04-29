@@ -616,7 +616,7 @@ syn region	vimGlobal	matchgroup=Statement start='\<v\%[global]!\=/' skip='\\.' e
 "   g:vimsyn_embed =~# 'r' : embed ruby
 "   g:vimsyn_embed =~# 't' : embed tcl
 if !exists("g:vimsyn_embed")
- let g:vimsyn_embed= 0
+ let g:vimsyn_embed = 'l'
 endif
 
 " [-- lua --] {{{3

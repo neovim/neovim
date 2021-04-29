@@ -224,6 +224,20 @@ text before the cursor and start omni completion when some condition is met.
 For abbreviations |v:char| is set to the character that was typed to trigger
 the abbreviation.  You can use this to decide how to expand the {lhs}.  You
 should not either insert or change the v:char.
+ 
+Also, keep in mind that the expression may be evaluated when looking for
+typeahead, before the previous command has been executed.  For example: >
+	func StoreColumn()
+	  let g:column = col('.')
+	  return 'x'
+	endfunc
+	nnoremap <expr> x StoreColumn()
+	nmap ! f!x
+You will notice that g:column has the value from before executing "fx",
+because "z" is evaluated before "fx" is executed.
+This can be solved by inserting <Ignore> before the character that is
+expression-mapped: >
+	nmap ! f!<Ignore>x
 
 Be very careful about side effects!  The expression is evaluated while
 obtaining characters, you may very well make the command dysfunctional.
@@ -276,7 +290,7 @@ as a special key.
 						*<Cmd>* *:map-cmd*
 The <Cmd> pseudokey begins a "command mapping", which executes the command
 directly (without changing modes).  Where you might use ":...<CR>" in the
-{lhs} of a mapping, you can instead use "<Cmd>...<CR>".
+{rhs} of a mapping, you can instead use "<Cmd>...<CR>".
 Example: >
 	noremap x <Cmd>echo mode(1)<cr>
 <
@@ -300,7 +314,7 @@ Note:
 
 							*E5520*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the
-{lhs} of the mapping definition.  |Command-line| mode is never entered.
+{rhs} of the mapping definition.  |Command-line| mode is never entered.
 
 
 1.3 MAPPING AND MODES					*:map-modes*

@@ -337,11 +337,11 @@ the same as above, with a "p" prepended.
 A static tag is a tag that is defined for a specific file.  In a C program
 this could be a static function.
 
-In Vi jumping to a tag sets the current search pattern.  This means that
-the "n" command after jumping to a tag does not search for the same pattern
-that it did before jumping to the tag.  Vim does not do this as we consider it
-to be a bug.  You can still find the tag search pattern in the search history.
-If you really want the old Vi behavior, set the 't' flag in 'cpoptions'.
+In Vi jumping to a tag sets the current search pattern.  This means that the
+"n" command after jumping to a tag does not search for the same pattern that
+it did before jumping to the tag.  Vim does not do this as we consider it to
+be a bug.  If you really want the old Vi behavior, set the 't' flag in
+'cpoptions'.
 
 							*tag-binary-search*
 Vim uses binary searching in the tags file to find the desired tag quickly
@@ -419,8 +419,7 @@ would otherwise go unnoticed.  Example: >
 
 In Vi the ":tag" command sets the last search pattern when the tag is searched
 for.  In Vim this is not done, the previous search pattern is still remembered,
-unless the 't' flag is present in 'cpoptions'.  The search pattern is always
-put in the search history, so you can modify it if searching fails.
+unless the 't' flag is present in 'cpoptions'.
 
 							*tags-option*
 The 'tags' option is a list of file names.  Each of these files is searched
@@ -847,19 +846,25 @@ like |CTRL-]|.
 
 The function used for generating the taglist is specified by setting the
 'tagfunc' option.  The function will be called with three arguments:
-   a:pattern	The tag identifier used during the tag search.
-   a:flags	List of flags to control the function behavior.
+   a:pattern	The tag identifier or pattern used during the tag search.
+   a:flags	String containing flags to control the function behavior.
    a:info	Dict containing the following entries:
 		    buf_ffname	  Full filename which can be used for priority.
 		    user_data	  Custom data String, if stored in the tag
 				  stack previously by tagfunc.
 
-Currently two flags may be passed to the tag function:
+Currently up to three flags may be passed to the tag function:
   'c'		The function was invoked by a normal command being processed
 	        (mnemonic: the tag function may use the context around the
 		cursor to perform a better job of generating the tag list.)
   'i'		In Insert mode, the user was completing a tag (with
-		|i_CTRL-X_CTRL-]|).
+		|i_CTRL-X_CTRL-]| or 'completeopt' contains `t`).
+  'r'		The first argument to tagfunc should be interpreted as a
+		|pattern| (see |tag-regexp|), such as when using: >
+		  :tag /pat
+<		It is also given when completing in insert mode.
+		If this flag is not present, the argument is usually taken
+		literally as the full tag name.
 
 Note that when 'tagfunc' is set, the priority of the tags described in
 |tag-priority| does not apply.  Instead, the priority is exactly as the

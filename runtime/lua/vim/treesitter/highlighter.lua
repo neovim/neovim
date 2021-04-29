@@ -12,6 +12,16 @@ TSHighlighterQuery.__index = TSHighlighterQuery
 
 local ns = a.nvim_create_namespace("treesitter/highlighter")
 
+local _default_highlights = {}
+local _link_default_highlight_once = function(from, to)
+  if not _default_highlights[from] then
+    _default_highlights[from] = true
+    vim.cmd(string.format("highlight default link %s %s", from, to))
+  end
+
+  return from
+end
+
 -- These are conventions defined by nvim-treesitter, though it
 -- needs to be user extensible also.
 TSHighlighter.hl_map = {
@@ -70,9 +80,12 @@ function TSHighlighterQuery.new(lang, query_string)
 
   self.hl_cache = setmetatable({}, {
     __index = function(table, capture)
-      local hl = self:get_hl_from_capture(capture)
-      rawset(table, capture, hl)
+      local hl, is_vim_highlight = self:_get_hl_from_capture(capture)
+      if not is_vim_highlight then
+        hl = _link_default_highlight_once(lang .. hl, hl)
+      end
 
+      rawset(table, capture, hl)
       return hl
     end
   })
@@ -90,16 +103,16 @@ function TSHighlighterQuery:query()
   return self._query
 end
 
-function TSHighlighterQuery:get_hl_from_capture(capture)
+--- Get the hl from capture.
+--- Returns a tuple { highlight_name: string, is_builtin: bool }
+function TSHighlighterQuery:_get_hl_from_capture(capture)
   local name = self._query.captures[capture]
 
   if is_highlight_name(name) then
     -- From "Normal.left" only keep "Normal"
-    return vim.split(name, '.', true)[1]
+    return vim.split(name, '.', true)[1], true
   else
-    -- Default to false to avoid recomputing
-    local hl = TSHighlighter.hl_map[name]
-    return hl and a.nvim_get_hl_id_by_name(hl) or 0
+    return TSHighlighter.hl_map[name] or name, false
   end
 end
 
@@ -207,6 +220,9 @@ local function on_line_impl(self, buf, line)
 
     local state = self:get_highlight_state(tstree)
     local highlighter_query = self:get_query(tree:lang())
+
+    -- Some injected languages may not have highlight queries.
+    if not highlighter_query:query() then return end
 
     if state.iter == nil then
       state.iter = highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)

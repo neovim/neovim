@@ -18,6 +18,40 @@ end
 
 local M = {}
 
+local default_border = {
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {" ", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {"", "NormalFloat"},
+  {" ", "NormalFloat"},
+}
+
+--@private
+-- Check the border given by opts or the default border for the additional
+-- size it adds to a float.
+--@returns size of border in height and width
+local function get_border_size(opts)
+  local border = opts and opts.border or default_border
+  local height = 0
+  local width = 0
+
+  if type(border) == 'string' then
+    -- 'single', 'double', etc.
+    height = 2
+    width = 2
+  else
+    height = height + vim.fn.strdisplaywidth(border[2][1])  -- top
+    height = height + vim.fn.strdisplaywidth(border[6][1])  -- bottom
+    width  = width  + vim.fn.strdisplaywidth(border[4][1])  -- right
+    width  = width  + vim.fn.strdisplaywidth(border[8][1])  -- left
+  end
+
+  return { height = height, width = width }
+end
+
 --@private
 local function split_lines(value)
   return split(value, '\n', true)
@@ -357,8 +391,11 @@ end
 --- Returns the range table for the difference between old and new lines
 --@param old_lines table list of lines
 --@param new_lines table list of lines
+--@param start_line_idx int line to begin search for first difference
+--@param end_line_idx int line to begin search for last difference
+--@param offset_encoding string encoding requested by language server
 --@returns table start_line_idx and start_col_idx of range
-function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx)
+function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx, offset_encoding)
   local start_line, start_char = first_difference(old_lines, new_lines, start_line_idx)
   local end_line, end_char = last_difference(vim.list_slice(old_lines, start_line, #old_lines),
       vim.list_slice(new_lines, start_line, #new_lines), start_char, end_line_idx)
@@ -373,10 +410,19 @@ function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx)
     adj_end_char = #old_lines[#old_lines + end_line + 1] + end_char + 1
   end
 
+  local _
+  if offset_encoding == "utf-16" then
+    _, start_char = vim.str_utfindex(old_lines[start_line], start_char - 1)
+    _, end_char = vim.str_utfindex(old_lines[#old_lines + end_line + 1], adj_end_char)
+  else
+    start_char = start_char - 1
+    end_char = adj_end_char
+  end
+
   local result = {
     range = {
-      start = { line = start_line - 1, character = start_char - 1},
-      ["end"] = { line = adj_end_line, character = adj_end_char}
+      start = { line = start_line - 1, character = start_char},
+      ["end"] = { line = adj_end_line, character = end_char}
     },
     text = text,
     rangeLength = length + 1,
@@ -424,6 +470,7 @@ function M.apply_text_document_edit(text_document_edit, index)
   -- `VersionedTextDocumentIdentifier`s version may be null
   --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
   if should_check_version and (text_document.version
+      and text_document.version > 0
       and M.buf_versions[bufnr]
       and M.buf_versions[bufnr] > text_document.version) then
     print("Buffer ", text_document.uri, " newer than edits.")
@@ -844,7 +891,7 @@ function M.make_floating_popup_options(width, height, opts)
   else
     anchor = anchor..'S'
     height = math.min(lines_above, height)
-    row = 0
+    row = -get_border_size(opts).height
   end
 
   if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
@@ -863,7 +910,25 @@ function M.make_floating_popup_options(width, height, opts)
     row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,
+    border = opts.border or default_border,
   }
+end
+
+local function _should_add_to_tagstack(new_item)
+  local stack = vim.fn.gettagstack()
+
+  -- Check if we're at the bottom of the tagstack.
+  if stack.curidx <= 1 then return true end
+
+  local top_item = stack.items[stack.curidx-1]
+
+  -- Check if the item at the top of the tagstack is exactly the
+  -- same as the one we want to push.
+  if top_item.tagname ~= new_item.tagname then return true end
+  for i, v in ipairs(top_item.from) do
+    if v ~= new_item.from[i] then return true end
+  end
+  return false
 end
 
 --- Jumps to a location.
@@ -874,22 +939,33 @@ function M.jump_to_location(location)
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
   if uri == nil then return end
-  local bufnr = vim.uri_to_bufnr(uri)
-  -- Save position in jumplist
-  vim.cmd "normal! m'"
 
-  -- Push a new item into tagstack
-  local from = {vim.fn.bufnr('%'), vim.fn.line('.'), vim.fn.col('.'), 0}
-  local items = {{tagname=vim.fn.expand('<cword>'), from=from}}
-  vim.fn.settagstack(vim.fn.win_getid(), {items=items}, 't')
+  local from_bufnr = vim.fn.bufnr('%')
+  local from = {from_bufnr, vim.fn.line('.'), vim.fn.col('.'), 0}
+  local item = {tagname=vim.fn.expand('<cword>'), from=from}
 
   --- Jump to new location (adjusting for UTF-16 encoding of characters)
+  local bufnr = vim.uri_to_bufnr(uri)
   api.nvim_set_current_buf(bufnr)
   api.nvim_buf_set_option(0, 'buflisted', true)
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
   local col = get_line_byte_from_position(0, range.start)
+  -- This prevents the tagstack to be filled with items that provide
+  -- no motion when CTRL-T is pressed because they're both the source
+  -- and the destination.
+  local motionless =
+    bufnr == from_bufnr and
+    row+1 == from[2] and col+1 == from[3]
+  if not motionless and _should_add_to_tagstack(item) then
+    local winid = vim.fn.win_getid()
+    local items = {item}
+    vim.fn.settagstack(winid, {items=items}, 't')
+  end
+
+  -- Jump to new location
   api.nvim_win_set_cursor(0, {row + 1, col})
+
   return true
 end
 
@@ -969,27 +1045,20 @@ function M.focusable_preview(unique_name, fn)
   end)
 end
 
---- Trims empty lines from input and pad left and right with spaces
+--- Trims empty lines from input and pad top and bottom with empty lines
 ---
 ---@param contents table of lines to trim and pad
 ---@param opts dictionary with optional fields
----             - pad_left   number of columns to pad contents at left (default 1)
----             - pad_right  number of columns to pad contents at right (default 1)
 ---             - pad_top    number of lines to pad contents at top (default 0)
 ---             - pad_bottom number of lines to pad contents at bottom (default 0)
 ---@return contents table of trimmed and padded lines
-function M._trim_and_pad(contents, opts)
+function M._trim(contents, opts)
   validate {
     contents = { contents, 't' };
     opts = { opts, 't', true };
   }
   opts = opts or {}
-  local left_padding = (" "):rep(opts.pad_left or 1)
-  local right_padding = (" "):rep(opts.pad_right or 1)
   contents = M.trim_empty_lines(contents)
-  for i, line in ipairs(contents) do
-    contents[i] = string.format('%s%s%s', left_padding, line:gsub("\r", ""), right_padding)
-  end
   if opts.pad_top then
     for _ = 1, opts.pad_top do
       table.insert(contents, 1, "")
@@ -1066,8 +1135,8 @@ function M.fancy_floating_markdown(contents, opts)
       end
     end
   end
-  -- Clean up and add padding
-  stripped = M._trim_and_pad(stripped, opts)
+  -- Clean up
+  stripped = M._trim(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
@@ -1170,6 +1239,20 @@ function M._make_floating_popup_size(contents, opts)
       width = math.max(line_widths[i], width)
     end
   end
+
+  local border_width = get_border_size(opts).width
+  local screen_width = api.nvim_win_get_width(0)
+  width = math.min(width, screen_width)
+
+  -- make sure borders are always inside the screen
+  if width + border_width > screen_width then
+    width = width - (width + border_width - screen_width)
+  end
+
+  if wrap_at and wrap_at > width then
+    wrap_at = width
+  end
+
   if max_width then
     width = math.min(width, max_width)
     wrap_at = math.min(wrap_at or max_width, max_width)
@@ -1223,7 +1306,7 @@ function M.open_floating_preview(contents, syntax, opts)
   opts = opts or {}
 
   -- Clean up input: trim empty lines from the end, pad
-  contents = M._trim_and_pad(contents, opts)
+  contents = M._trim(contents, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))

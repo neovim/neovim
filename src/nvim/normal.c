@@ -630,9 +630,9 @@ static void normal_redraw_mode_message(NormalState *s)
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
   if (msg_scroll || emsg_on_display) {
-    os_delay(1000L, true);            // wait at least one second
+    os_delay(1003L, true);            // wait at least one second
   }
-  os_delay(3000L, false);             // wait up to three seconds
+  os_delay(3003L, false);             // wait up to three seconds
   State = save_State;
 
   msg_scroll = false;
@@ -3971,7 +3971,8 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if (curwin->w_curswant >= width1) {
+        if (curwin->w_curswant >= width1
+            && !hasFolding(curwin->w_cursor.lnum, NULL, NULL)) {
           // Move back within the line. This can give a negative value
           // for w_curswant if width1 < width2 (with cpoptions+=n),
           // which will get clipped to column 0.
@@ -4003,14 +4004,16 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
         else
           n = width1;
-        if (curwin->w_curswant + width2 < (colnr_T)n)
-          /* move forward within line */
+        if (curwin->w_curswant + width2 < (colnr_T)n
+            && !hasFolding(curwin->w_cursor.lnum, NULL, NULL)) {
+          // move forward within line
           curwin->w_curswant += width2;
-        else {
-          /* to next line */
-          /* Move to the end of a closed fold. */
+        } else {
+          // to next line
+
+          // Move to the end of a closed fold.
           (void)hasFolding(curwin->w_cursor.lnum, NULL,
-              &curwin->w_cursor.lnum);
+                           &curwin->w_cursor.lnum);
           if (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
             retval = false;
             break;
@@ -5459,7 +5462,7 @@ static int normal_search(
   curwin->w_set_curswant = true;
 
   memset(&sia, 0, sizeof(sia));
-  i = do_search(cap->oap, dir, pat, cap->count1,
+  i = do_search(cap->oap, dir, dir, pat, cap->count1,
                 opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, &sia);
   if (wrapped != NULL) {
     *wrapped = sia.sa_wrapped;
@@ -6777,9 +6780,10 @@ static void nv_g_cmd(cmdarg_T *cap)
     }
     coladvance((colnr_T)i);
     if (flag) {
-      do
+      do {
         i = gchar_cursor();
-      while (ascii_iswhite(i) && oneright());
+      } while (ascii_iswhite(i) && oneright());
+      curwin->w_valid &= ~VALID_WCOL;
     }
     curwin->w_set_curswant = true;
     break;

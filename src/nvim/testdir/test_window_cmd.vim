@@ -550,15 +550,28 @@ endfunc
 func Test_winrestcmd()
   2split
   3vsplit
-  let a = winrestcmd()
+  let restcmd = winrestcmd()
   call assert_equal(2, winheight(0))
   call assert_equal(3, winwidth(0))
   wincmd =
   call assert_notequal(2, winheight(0))
   call assert_notequal(3, winwidth(0))
-  exe a
+  exe restcmd
   call assert_equal(2, winheight(0))
   call assert_equal(3, winwidth(0))
+  only
+
+  wincmd v
+  wincmd s
+  wincmd v
+  redraw
+  let restcmd = winrestcmd()
+  wincmd _
+  wincmd |
+  exe restcmd
+  redraw
+  call assert_equal(restcmd, winrestcmd())
+
   only
 endfunc
 

@@ -10,10 +10,15 @@ local parsers = {}
 
 local M = vim.tbl_extend("error", query, language)
 
+M.language_version = vim._ts_get_language_version()
+
 setmetatable(M, {
   __index = function (t, k)
       if k == "highlighter" then
         t[k] = require'vim.treesitter.highlighter'
+        return t[k]
+      elseif k == "language" then
+        t[k] = require"vim.treesitter.language"
         return t[k]
       end
    end
