@@ -211,7 +211,7 @@ will automatically delete it:
 - The flag that the file was modified is not set.
 - The process is not running.
 
-You can programatically deal with this situation with the |FileChangedShell|
+You can programmatically deal with this situation with the |FileChangedShell|
 autocommand event.
 
 

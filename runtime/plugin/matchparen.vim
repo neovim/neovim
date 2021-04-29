@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:  Bram Moolenaar <Bram@vim.org>
-" Last Change: 2019 Oct 28
+" Last Change: 2020 Jun 18
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
@@ -21,6 +21,7 @@ endif
 augroup matchparen
   " Replace all matchparen autocommands
   autocmd! CursorMoved,CursorMovedI,WinEnter * call s:Highlight_Matching_Pair()
+  autocmd! WinLeave * call s:Remove_Matches()
   if exists('##TextChanged')
     autocmd! TextChanged,TextChangedI * call s:Highlight_Matching_Pair()
   endif
@@ -38,10 +39,7 @@ set cpo-=C
 " for any matching paren.
 func s:Highlight_Matching_Pair()
   " Remove any previous match.
-  if exists('w:paren_hl_on') && w:paren_hl_on
-    silent! call matchdelete(3)
-    let w:paren_hl_on = 0
-  endif
+  call s:Remove_Matches()
 
   " Avoid that we remove the popup menu.
   " Return when there are no colors (looks like the cursor jumps).
@@ -194,6 +192,14 @@ func s:Highlight_Matching_Pair()
     let w:paren_hl_on = 1
   endif
 endfunction
+
+func s:Remove_Matches()
+  if exists('w:paren_hl_on') && w:paren_hl_on
+    silent! call matchdelete(3)
+    let w:paren_hl_on = 0
+  endif
+endfunc
+
 
 " Define commands that will disable and enable the plugin.
 command DoMatchParen call s:DoMatchParen()

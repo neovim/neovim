@@ -23,4 +23,14 @@ bar">
 text
 </div>
 
+<dl>
+<dd>
+dd text
+</dd>
+<dt>
+dt text
+</dt>
+</dl>
+
+
 " END_INDENT
