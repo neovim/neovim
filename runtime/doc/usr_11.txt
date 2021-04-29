@@ -256,7 +256,7 @@ O  Open the file readonly.  Use this when you just want to view the file and
 
 E  Edit the file anyway.  Use this with caution!  If the file is being edited
    in another Vim, you might end up with two versions of the file.  Vim will
-   try to warn you when this happens, but better be safe then sorry.
+   try to warn you when this happens, but better be safe than sorry.
 
 R  Recover the file from the swap file.  Use this if you know that the swap
    file contains changes that you want to recover.

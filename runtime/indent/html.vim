@@ -1,9 +1,8 @@
 " Vim indent script for HTML
-" Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2020 Jun 18
-" Version:	1.0
+" Last Change:	2020 Jul 06
+" Version:	1.0 "{{{
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
 "		Supports template systems through hooks.
@@ -587,7 +586,7 @@ func! s:Alien3()
     return eval(b:hi_js1indent)
   endif
   if b:hi_indent.scripttype == "javascript"
-    return GetJavascriptIndent()
+    return eval(b:hi_js1indent) + GetJavascriptIndent()
   else
     return -1
   endif

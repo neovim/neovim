@@ -1267,7 +1267,7 @@ not match in "càt" (where the a has the composing character 0x0300), but
 0xe1, it does not have a compositing character).  It does match "cat" (where
 the a is just an a).
 
-When a composing character appears at the start of the pattern of after an
+When a composing character appears at the start of the pattern or after an
 item that doesn't include the composing character, a match is found at any
 character that includes this composing character.
 

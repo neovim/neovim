@@ -1334,7 +1334,7 @@ to 0, 'modeline' off, 'expandtab' off).  Setting the 'binary' option has the
 same effect.  Don't forget to do this before reading the file.
 
 There are a few things to remember when editing binary files:
-- When editing executable files the number of characters must not change.
+- When editing executable files the number of bytes must not change.
   Use only the "R" or "r" command to change text.  Do not delete characters
   with "x" or by backspacing.
 - Set the 'textwidth' option to 0.  Otherwise lines will unexpectedly be

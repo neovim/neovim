@@ -515,7 +515,7 @@ up mappings to simulate the commands that less supports.  Otherwise, you can
 still use the Vim commands.
 
 This isn't perfect.  For example, when viewing a short file Vim will still use
-the whole screen.  But it works good enough for most uses, and you get syntax
+the whole screen.  But it works well enough for most uses, and you get syntax
 highlighting.
 
 The "h" key will give you a short overview of the available commands.
