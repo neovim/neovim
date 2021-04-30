@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	awk, nawk, gawk, mawk
 " Maintainer:	Antonio Colombo <azc100@gmail.com>
-" Last Change:	2020 Mar 25
+" Last Change:	2020 Aug 18
 
 " AWK  ref. is: Alfred V. Aho, Brian W. Kernighan, Peter J. Weinberger
 " The AWK Programming Language, Addison-Wesley, 1988
@@ -26,6 +26,8 @@ endif
 
 let s:cpo_save = &cpo
 set cpo&vim
+
+syn iskeyword @,48-57,_,192-255,@-@
 
 " A bunch of useful Awk keywords
 " AWK  ref. p. 188

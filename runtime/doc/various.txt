@@ -92,7 +92,7 @@ g8			Print the hex values of the bytes used in the
 			encoding because it contains illegal bytes.
 			Does not wrap around the end of the file.
 			Note that when the cursor is on an illegal byte or the
-			cursor is halfway through a multi-byte character the
+			cursor is halfway through a multibyte character the
 			command won't move the cursor.
 
 						*:p* *:pr* *:print* *E749*
@@ -137,16 +137,16 @@ g8			Print the hex values of the bytes used in the
 :{range}z[+-^.=]{count}	Display several lines of text surrounding the line
 			specified with {range}, or around the current line
 			if there is no {range}.  If there is a {count}, that's
-			how many lines you'll see; if there is only one window
-			then twice the value of the 'scroll' option is used,
-			otherwise the current window height minus 3 is used.
+			how many lines you'll see; if there is no {count} and
+			only one window then twice the value of the 'scroll'
+			option is used, otherwise the current window height
+			minus 3 is used.
 
 			If there is a {count} the 'window' option is set to
 			its value.
 
 			:z can be used either alone or followed by any of
-			several punctuation marks.  These have the following
-			effect:
+			several marks.  These have the following effect:
 
 			mark   first line    last line      new cursor line ~
 			----   ----------    ---------      ------------

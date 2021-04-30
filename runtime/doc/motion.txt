@@ -478,10 +478,11 @@ a set of section macros, specified by the pairs of characters in the
 'sections' option.  The default is "SHNHH HUnhsh", which defines a section to
 start at the nroff macros ".SH", ".NH", ".H", ".HU", ".nh" and ".sh".
 
-The "]" and "[" commands stop at the '{' or '}' in the first column.  This is
-useful to find the start or end of a function in a C program.  Note that the
-first character of the command determines the search direction and the
-second character the type of brace found.
+The "]]" and "[[" commands stop at the '{' in the first column.  This is
+useful to find the start of a function in a C program.  To search for a '}' in
+the first column, the end of a C function, use "][" (forward) or "[]"
+(backward).  Note that the first character of the command determines the
+search direction.
 
 If your '{' or '}' are not in the first column, and you would like to use "[["
 and "]]" anyway, try these mappings: >
@@ -1169,7 +1170,7 @@ sequence of small changes in a line, for example "xxxxx", adds many positions
 to the change list.  When 'textwidth' is zero 'wrapmargin' is used.  When that
 also isn't set a fixed number of 79 is used.  Detail: For the computations
 bytes are used, not characters, to avoid a speed penalty (this only matters
-for multi-byte encodings).
+for multibyte encodings).
 
 Note that when text has been inserted or deleted the cursor position might be
 a bit different from the position of the change.  Especially when lines have

@@ -2028,8 +2028,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  is replaced with the path name of the edited file.
 	- For Unix and Win32, if a directory ends in two path separators "//",
 	  the swap file name will be built from the complete path to the file
-	  with all path separators substituted to percent '%' signs. This will
-	  ensure file name uniqueness in the preserve directory.
+	  with all path separators replaced by percent '%' signs (including
+	  the colon following the drive letter on Win32). This will ensure
+	  file name uniqueness in the preserve directory.
 	  On Win32, it is also possible to end with "\\".  However, When a
 	  separating comma is following, you must use "//", since "\\" will
 	  include the comma in the file name. Therefore it is recommended to
@@ -4762,7 +4763,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen.  If the statusline is given by 'statusline' (i.e. not empty),
 	this option takes precedence over 'ruler' and 'rulerformat'
 	If the number of characters displayed is different from the number of
-	bytes in the text (e.g., for a TAB or a multi-byte character), both
+	bytes in the text (e.g., for a TAB or a multibyte character), both
 	the text column (byte number) and the screen column are shown,
 	separated with a dash.
 	For an empty line "0-1" is shown.

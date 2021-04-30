@@ -680,7 +680,7 @@ Short explanation of each option:		*option-list*
 'eventignore'	  'ei'	    autocommand events that are ignored
 'expandtab'	  'et'	    use spaces when <Tab> is inserted
 'exrc'		  'ex'	    read .nvimrc and .exrc in the current directory
-'fileencoding'	  'fenc'    file encoding for multi-byte text
+'fileencoding'	  'fenc'    file encoding for multibyte text
 'fileencodings'   'fencs'   automatically detected character encodings
 'fileformat'	  'ff'	    file format used for file I/O
 'fileformats'	  'ffs'     automatically detected values for 'fileformat'

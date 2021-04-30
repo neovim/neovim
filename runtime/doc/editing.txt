@@ -614,7 +614,7 @@ list of the current window.
 				:args ## x
 <			This will add the "x" item and sort the new list.
 
-:argd[elete] {pattern} ..			*:argd* *:argdelete* *E480*
+:argd[elete] {pattern} ..		*:argd* *:argdelete* *E480* *E610*
 			Delete files from the argument list that match the
 			{pattern}s.  {pattern} is used like a file pattern,
 			see |file-pattern|.  "%" can be used to delete the
@@ -624,7 +624,7 @@ list of the current window.
 			Example: >
 				:argdel *.obj
 
-:[range]argd[elete]	Delete the {range} files from the argument list.
+:[range]argd[elete]	Delete the [range] files from the argument list.
 			Example: >
 				:10,$argdel
 <			Deletes arguments 10 and further, keeping 1-9. >

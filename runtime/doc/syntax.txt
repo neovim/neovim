@@ -4300,7 +4300,7 @@ Notes:
 - A negative offset for an end pattern may not always work, because the end
   pattern may be detected when the highlighting should already have stopped.
 - Before Vim 7.2 the offsets were counted in bytes instead of characters.
-  This didn't work well for multi-byte characters, so it was changed with the
+  This didn't work well for multibyte characters, so it was changed with the
   Vim 7.2 release.
 - The start of a match cannot be in a line other than where the pattern
   matched.  This doesn't work: "a\nb"ms=e.  You can make the highlighting

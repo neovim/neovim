@@ -358,7 +358,7 @@ Editing binary files.					|edit-binary|
 			last line in the file.
 
 Multi-language support.					|multi-lang|
-	Files in double-byte or multi-byte encodings can be edited.  There is
+	Files in double-byte or multibyte encodings can be edited.  There is
 	UTF-8 support to be able to edit various languages at the same time,
 	without switching fonts. |UTF-8|
 	Messages and menus are available in different languages.

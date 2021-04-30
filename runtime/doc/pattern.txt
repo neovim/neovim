@@ -928,7 +928,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	These three can be used to match specific columns in a buffer or
 	string.  The "23" can be any column number.  The first column is 1.
 	Actually, the column is the byte number (thus it's not exactly right
-	for multi-byte characters).
+	for multibyte characters).
 	WARNING: When inserting or deleting text Vim does not automatically
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
@@ -983,7 +983,7 @@ Character classes:
 \p	printable character (see 'isprint' option)	*/\p*
 \P	like "\p", but excluding digits			*/\P*
 
-NOTE: the above also work for multi-byte characters.  The ones below only
+NOTE: the above also work for multibyte characters.  The ones below only
 match ASCII characters, as indicated by the range.
 
 						*whitespace* *white-space*
@@ -1120,9 +1120,9 @@ x	A single character, with no special meaning, matches itself
 	  a list of at least one character, each of which is either '-', '.',
 	  '/', alphabetic, numeric, '_' or '~'.
 	  These items only work for 8-bit characters, except [:lower:] and
-	  [:upper:] also work for multi-byte characters when using the new
+	  [:upper:] also work for multibyte characters when using the new
 	  regexp engine.  See |two-engines|.  In the future these items may
-	  work for multi-byte characters.  For now, to get all "alpha"
+	  work for multibyte characters.  For now, to get all "alpha"
 	  characters you can use: [[:lower:][:upper:]].
 
 	  The "Func" column shows what library function is used.  The
@@ -1245,8 +1245,8 @@ When working with expression evaluation, a <NL> character in the pattern
 matches a <NL> in the string.  The use of "\n" (backslash n) to match a <NL>
 doesn't work there, it only works to match text in the buffer.
 
-						*pattern-multi-byte*
-Patterns will also work with multi-byte characters, mostly as you would
+				*pattern-multi-byte* *pattern-multibyte*
+Patterns will also work with multibyte characters, mostly as you would
 expect.  But invalid bytes may cause trouble, a pattern with an invalid byte
 will probably never match.
 

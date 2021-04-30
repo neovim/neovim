@@ -17,13 +17,14 @@ The ":messages" command can be used to view previously given messages.  This
 is especially useful when messages have been overwritten or truncated.  This
 depends on the 'shortmess' option.
 
-	:messages		Show all messages.
+	:mes[sages]		Show all messages.
 
-	:{count}messages	Show the {count} most recent messages.
+	:{count}mes[sages]	Show the {count} most recent messages.
 
-	:messages clear		Clear all messages.
+	:mes[sages] clear	Clear all messages.
 
-	:{count}messages clear	Clear messages, keeping only the {count} most
+	:{count}mes[sages] clear
+				Clear messages, keeping only the {count} most
 				recent ones.
 
 The number of remembered messages is fixed at 20 for the tiny version and 200

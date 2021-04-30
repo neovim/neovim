@@ -148,7 +148,7 @@ Programming language support ~
 
 Language support ~
 |digraph.txt|	list of available digraphs
-|mbyte.txt|	multi-byte text support
+|mbyte.txt|	multibyte text support
 |mlang.txt|	non-English language support
 |rileft.txt|	right-to-left editing mode
 |arabic.txt|	Arabic language support and editing

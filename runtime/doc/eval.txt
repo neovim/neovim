@@ -945,11 +945,14 @@ in any order.  E.g., these are all possible:
 
 expr8[expr1]		item of String or |List|	*expr-[]* *E111*
 							*subscript*
-
+In legacy Vim script:
 If expr8 is a Number or String this results in a String that contains the
-expr1'th single byte from expr8.  expr8 is used as a String, expr1 as a
-Number.  This doesn't recognize multi-byte encodings, see `byteidx()` for
-an alternative, or use `split()` to turn the string into a list of characters.
+expr1'th single byte from expr8.  expr8 is used as a String (a number is
+automatically converted to a String), expr1 as a Number.  This doesn't
+recognize multibyte encodings, see `byteidx()` for an alternative, or use
+`split()` to turn the string into a list of characters.  Example, to get the
+byte under the cursor: >
+	:let c = getline(".")[col(".") - 1]
 
 Index zero gives the first byte.  This is like it works in C.  Careful:
 text column numbers start with one!  Example, to get the byte under the
@@ -972,10 +975,13 @@ error.
 
 expr8[expr1a : expr1b]	substring or sublist		*expr-[:]*
 
-If expr8 is a Number or String this results in the substring with the bytes
-from expr1a to and including expr1b.  expr8 is used as a String, expr1a and
-expr1b are used as a Number.  This doesn't recognize multi-byte encodings, see
-|byteidx()| for computing the indexes.
+If expr8 is a String this results in the substring with the bytes or
+characters from expr1a to and including expr1b.  expr8 is used as a String,
+expr1a and expr1b are used as a Number.
+
+In legacy Vim script the indexes are byte indexes.  This doesn't recognize
+multibyte encodings, see |byteidx()| for computing the indexes.  If expr8 is
+a Number it is first converted to a String.
 
 If expr1a is omitted zero is used.  If expr1b is omitted the length of the
 string minus one is used.
@@ -988,6 +994,7 @@ expr1b is smaller than expr1a the result is an empty string.
 
 Examples: >
 	:let c = name[-1:]		" last byte of a string
+	:let c = name[0:-1]		" the whole string
 	:let c = name[-2:-2]		" last but one byte of a string
 	:let s = line(".")[4:]		" from the fifth byte to the end
 	:let s = s[:-3]			" remove last two bytes

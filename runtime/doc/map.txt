@@ -176,6 +176,12 @@ whether to use the "," mapping or the longer one.  To avoid this add the
 <nowait> argument.  Then the mapping will be used when it matches, Vim does
 not wait for more characters to be typed.  However, if the characters were
 already typed they are used.
+Note that this works when the <nowait> mapping fully matches and is found
+before any partial matches.  This works when:
+- There is only one matching buffer-local mapping, since these are always
+  found before global mappings.
+- There is another buffer-local mapping that partly matches, but it is was
+  defined earlier (last defined mapping is found first).
 
 						*:map-<silent>* *:map-silent*
 To define a mapping which will not be echoed on the command line, add
@@ -601,7 +607,7 @@ construct can be used:
 	<Char-033>	character 27
 	<Char-0x7f>	character 127
 	<S-Char-114>    character 114 ('r') shifted ('R')
-This is useful to specify a (multi-byte) character in a 'keymap' file.
+This is useful to specify a (multibyte) character in a 'keymap' file.
 Upper and lowercase differences are ignored.
 
 							*map-comments*
