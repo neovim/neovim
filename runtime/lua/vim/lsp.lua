@@ -891,6 +891,42 @@ function lsp.start_client(config)
   end
 
   --@private
+  --- Sends a request to the server and synchronously waits for the response.
+  ---
+  --- This is a wrapper around {client.request}
+  ---
+  --@param method (string) LSP method name.
+  --@param params (table) LSP request params.
+  --@param timeout_ms (number, optional, default=100) Maximum time in
+  ---milliseconds to wait for a result.
+  --@param bufnr (number) Buffer handle (0 for current).
+  --@returns { err, result }, where `err` and `result` come from the |lsp-handler|.
+  ---On timeout, cancel or error, returns `(nil, err)` where `err` is a
+  ---string describing the failure reason. If the request was unsuccessful
+  ---returns `nil`.
+  --@see |vim.lsp.buf_request_sync()|
+  function client.request_sync(method, params, timeout_ms, bufnr)
+    local request_result = nil
+    local function _sync_handler(err, _, result)
+      request_result = { error = err, result = result }
+    end
+
+    local success, request_id = client.request(method, params, _sync_handler,
+      bufnr)
+    if not success then return nil end
+
+    local wait_result, reason = vim.wait(timeout_ms or 100, function()
+      return request_result ~= nil
+    end, 10)
+
+    if not wait_result then
+      client.cancel_request(request_id)
+      return nil, wait_result_reason[reason]
+    end
+    return request_result
+  end
+
+  --@private
   --- Sends a notification to an LSP server.
   ---
   --@param method (string) LSP method name.
