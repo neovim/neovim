@@ -534,6 +534,19 @@ LspCodeLens
    Used to color the virtual text of the codelens. See
    |nvim_buf_set_virtual_text()|.
 
+                                                   *lsp-highlight-signature*
+Signature Highlights:
+
+Highlight groups that are meant to be used by |vim.lsp.buf.signature_help()|.
+
+                                                   *hl-LspSignatureParamActive*
+LspSignatureParamActive   used for highlighting the active signature parameter
+                                                   *hl-LspSignatureActive*
+LspSignatureActive        used for highlighting the active signature
+                                                   *hl-LspSignatureInactive*
+LspSignatureInactive      used for highlighting the inactive signatures, for
+                          languages that support function overloading
+
 ==============================================================================
 AUTOCOMMANDS                                                *lsp-autocommands*
 

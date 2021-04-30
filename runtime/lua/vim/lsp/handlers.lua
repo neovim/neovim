@@ -7,6 +7,8 @@ local buf = require 'vim.lsp.buf'
 
 local M = {}
 
+local signature_help_ns = api.nvim_create_namespace("lsp/signature_help")
+
 -- FIXME: DOC: Expose in vimdocs
 
 --@private
@@ -331,23 +333,40 @@ M['textDocument/implementation'] = location_handler
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.api.nvim_open_win()|
+---     - parameters_only: (default=false)
+---         - Display only a list of parameters
+---     - suppress_print: (default=false)
+---         - Stop printing a message if no signature is available
 function M.signature_help(_, method, result, _, bufnr, config)
   config = config or {}
   config.focus_id = method
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
-    print('No signature help available')
+    if not config.suppress_print then
+      print('No signature help available')
+    end
     return
   end
-  local ft = api.nvim_buf_get_option(bufnr, 'filetype')
-  local lines = util.convert_signature_help_to_markdown_lines(result, ft)
+  local lines, highlights = util.get_signature_help_with_highlights(result, config.parameters_only or false)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
-    print('No signature help available')
+    if not config.suppress_print then
+      print('No signature help available')
+    end
     return
   end
-  return util.open_floating_preview(lines, "markdown", config)
+  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
+  if syntax == "" then
+    syntax = api.nvim_buf_get_option(bufnr, 'filetype')
+  end
+  local p_bufnr, _ = util.open_floating_preview(lines, syntax, config)
+
+  if highlights then
+    for _, hi in ipairs(highlights) do
+      api.nvim_buf_set_extmark(p_bufnr, signature_help_ns, hi.line, hi.col, hi.opts)
+    end
+  end
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
