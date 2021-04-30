@@ -1,12 +1,12 @@
 " Vim compiler file
-" Compiler:	Java Development Kit Compiler
+" Compiler:	Dart Development Compiler
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2019 Oct 21
+" Last Change:	2019 May 08
 
 if exists("current_compiler")
   finish
 endif
-let current_compiler = "javac"
+let current_compiler = "dartdevc"
 
 if exists(":CompilerSet") != 2		" older Vim always used :setlocal
   command -nargs=* CompilerSet setlocal <args>
@@ -15,11 +15,13 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-CompilerSet makeprg=javac
-CompilerSet errorformat=%E%f:%l:\ error:\ %m,
-		       \%W%f:%l:\ warning:\ %m,
-		       \%-Z%p^,
-		       \%-C%.%#,
+CompilerSet makeprg=dartdevc
+CompilerSet errorformat=%E%f:%l:%c:\ Error:\ %m,
+		       \%CTry\ %.%#,
+		       \%Z\ %#^%\\+,
+		       \%Z%$,
+		       \%C%.%#,
+		       \%E%f:\ %trror:\ %m,
 		       \%-G%.%#
 
 let &cpo = s:cpo_save

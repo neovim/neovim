@@ -5256,7 +5256,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	of this option).
 	For MS-Windows the default is ">%s 2>&1".  The output is directly
 	saved in a file and not echoed to the screen.
-	For Unix the default it "| tee".  The stdout of the compiler is saved
+	For Unix the default is "| tee".  The stdout of the compiler is saved
 	in a file and echoed to the screen.  If the 'shell' option is "csh" or
 	"tcsh" after initializations, the default becomes "|& tee".  If the
 	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",

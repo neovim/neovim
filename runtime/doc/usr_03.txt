@@ -30,10 +30,11 @@ Table of contents: |usr_toc.txt|
 
 To move the cursor forward one word, use the "w" command.  Like most Vim
 commands, you can use a numeric prefix to move past multiple words.  For
-example, "3w" moves three words.  This figure shows how it works:
+example, "3w" moves three words.  This figure shows how it works (starting at
+the position marked with "x"):
 
 	This is a line with example text ~
-	  --->-->->----------------->
+	  x-->-->->----------------->
 	   w  w  w    3w
 
 Notice that "w" moves to the start of the next word if it already is at the
@@ -41,15 +42,15 @@ start of a word.
    The "b" command moves backward to the start of the previous word:
 
 	This is a line with example text ~
-	<----<--<-<---------<---
+	<----<--<-<---------<--x
 	   b   b b    2b      b
 
 There is also the "e" command that moves to the next end of a word and "ge",
 which moves to the previous end of a word:
 
 	This is a line with example text ~
-	   <-   <--- ----->   ---->
-	   ge    ge     e       e
+	   <----<----x---->------------>
+	   2ge   ge     e       we
 
 If you are at the last word of a line, the "w" command will take you to the
 first word in the next line.  Thus you can use this to move through a
@@ -82,12 +83,12 @@ an <End> key it will do the same thing.
 
 The "^" command moves to the first non-blank character of the line.  The "0"
 command (zero) moves to the very first character of the line, and the <Home>
-key does the same thing.  In a picture:
+key does the same thing.  In a picture ("." indicates a space):
 
 		  ^
-	     <------------
+	     <-----------x
 	.....This is a line with example text ~
-	<-----------------   --------------->
+	<----------------x   x-------------->
 		0		   $
 
 (the "....." indicates blanks here)

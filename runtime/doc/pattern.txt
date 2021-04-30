@@ -787,11 +787,12 @@ An ordinary atom can be:
 	^beep(		the start of the C function "beep" (probably).
 
 							*/\^*
-\^	Matches literal '^'.  Can be used at any position in the pattern.
+\^	Matches literal '^'.  Can be used at any position in the pattern, but
+	not inside [].
 
 							*/\_^*
 \_^	Matches start-of-line. |/zero-width|  Can be used at any position in
-	the pattern.
+	the pattern, but not inside [].
 	Example		matches ~
 	\_s*\_^foo	white space and blank lines and then "foo" at
 			start-of-line
@@ -802,12 +803,13 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	|/zero-width|
 
 							*/\$*
-\$	Matches literal '$'.  Can be used at any position in the pattern.
+\$	Matches literal '$'.  Can be used at any position in the pattern, but
+	not inside [].
 
 							*/\_$*
 \_$	Matches end-of-line. |/zero-width|  Can be used at any position in the
-	pattern.  Note that "a\_$b" never matches, since "b" cannot match an
-	end-of-line.  Use "a\nb" instead |/\n|.
+	pattern, but not inside [].  Note that "a\_$b" never matches, since
+	"b" cannot match an end-of-line.  Use "a\nb" instead |/\n|.
 	Example		matches ~
 	foo\_$\_s*	"foo" at end-of-line and following white space and
 			blank lines
@@ -830,8 +832,9 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	|/zero-width|
 
 							*/\zs*
-\zs	Matches at any position, and sets the start of the match there: The
-	next char is the first char of the whole match. |/zero-width|
+\zs	Matches at any position, but not inside [], and sets the start of the
+	match there: The next char is the first char of the whole match.
+	|/zero-width|
 	Example: >
 		/^\s*\zsif
 <	matches an "if" at the start of a line, ignoring white space.
@@ -842,8 +845,9 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	This cannot be followed by a multi. *E888*
 
 							*/\ze*
-\ze	Matches at any position, and sets the end of the match there: The
-	previous char is the last char of the whole match. |/zero-width|
+\ze	Matches at any position, but not inside [], and sets the end of the
+	match there: The previous char is the last char of the whole match.
+	|/zero-width|
 	Can be used multiple times, the last one encountered in a matching
 	branch is used.
 	Example: "end\ze\(if\|for\)" matches the "end" in "endif" and

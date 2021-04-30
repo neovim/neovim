@@ -327,9 +327,9 @@ Grouping is done with parentheses.  No surprises here.  Example: >
 	:echo (10 + 5) * 2
 <	30 ~
 
-Strings can be concatenated with ".".  Example: >
+Strings can be concatenated with ".." (see |expr6|).  Example: >
 
-	:echo "foo" . "bar"
+	:echo "foo" .. "bar"
 <	foobar ~
 
 When the ":echo" command gets multiple arguments, it separates them with a
@@ -496,9 +496,9 @@ So far the commands in the script were executed by Vim directly.  The
 very powerful way to build commands and execute them.
    An example is to jump to a tag, which is contained in a variable: >
 
-	:execute "tag " . tag_name
+	:execute "tag " .. tag_name
 
-The "." is used to concatenate the string "tag " with the value of variable
+The ".." is used to concatenate the string "tag " with the value of variable
 "tag_name".  Suppose "tag_name" has the value "get_cmd", then the command that
 will be executed is: >
 
@@ -514,7 +514,7 @@ This jumps to the first line and formats all lines with the "=" operator.
    To make ":normal" work with an expression, combine ":execute" with it.
 Example: >
 
-	:execute "normal " . normal_commands
+	:execute "normal " .. normal_commands
 
 The variable "normal_commands" must contain the Normal mode commands.
    Make sure that the argument for ":normal" is a complete command.  Otherwise
@@ -531,12 +531,12 @@ If you don't want to execute a string but evaluate it to get its expression
 value, you can use the eval() function: >
 
 	:let optname = "path"
-	:let optval = eval('&' . optname)
+	:let optval = eval('&' .. optname)
 
 A "&" character is prepended to "path", thus the argument to eval() is
 "&path".  The result will then be the value of the 'path' option.
    The same thing can be done with: >
-	:exe 'let optval = &' . optname
+	:exe 'let optval = &' .. optname
 
 ==============================================================================
 *41.6*	Using functions
@@ -1136,7 +1136,7 @@ Example: >
 	:    let n = n + len(split(getline(lnum)))
 	:    let lnum = lnum + 1
 	:  endwhile
-	:  echo "found " . n . " words"
+	:  echo "found " .. n .. " words"
 	:endfunction
 
 You can call this function with: >
@@ -1149,7 +1149,7 @@ It will be executed once and echo the number of words.
 range, with the cursor in that line.  Example: >
 
 	:function  Number()
-	:  echo "line " . line(".") . " contains: " . getline(".")
+	:  echo "line " .. line(".") .. " contains: " .. getline(".")
 	:endfunction
 
 If you call this function with: >
@@ -1173,11 +1173,11 @@ so on.  The variable "a:0" contains the number of extra arguments.
 
 	:function Show(start, ...)
 	:  echohl Title
-	:  echo "start is " . a:start
+	:  echo "start is " .. a:start
 	:  echohl None
 	:  let index = 1
 	:  while index <= a:0
-	:    echo "  Arg " . index . " is " . a:{index}
+	:    echo "  Arg " .. index .. " is " .. a:{index}
 	:    let index = index + 1
 	:  endwhile
 	:  echo ""
@@ -1585,10 +1585,10 @@ Another useful mechanism is the ":finally" command: >
 
 	:let tmp = tempname()
 	:try
-	:   exe ".,$write " . tmp
-	:   exe "!filter " . tmp
+	:   exe ".,$write " .. tmp
+	:   exe "!filter " .. tmp
 	:   .,$delete
-	:   exe "$read " . tmp
+	:   exe "$read " .. tmp
 	:finally
 	:   call delete(tmp)
 	:endtry
@@ -1939,8 +1939,8 @@ prepending it with "s:".
 We will define a function that adds a new typing correction: >
 
  30	function s:Add(from, correct)
- 31	  let to = input("type the correction for " . a:from . ": ")
- 32	  exe ":iabbrev " . a:from . " " . to
+ 31	  let to = input("type the correction for " .. a:from .. ": ")
+ 32	  exe ":iabbrev " .. a:from .. " " .. to
  ..
  36	endfunction
 
@@ -2045,7 +2045,7 @@ a few lines to count the number of corrections: >
  30	function s:Add(from, correct)
  ..
  34	  let s:count = s:count + 1
- 35	  echo s:count . " corrections now"
+ 35	  echo s:count .. " corrections now"
  36	endfunction
 
 First s:count is initialized to 4 in the script itself.  When later the
@@ -2088,11 +2088,11 @@ Here is the resulting complete example: >
  28	noremap <SID>Add  :call <SID>Add(expand("<cword>"), 1)<CR>
  29
  30	function s:Add(from, correct)
- 31	  let to = input("type the correction for " . a:from . ": ")
- 32	  exe ":iabbrev " . a:from . " " . to
+ 31	  let to = input("type the correction for " .. a:from .. ": ")
+ 32	  exe ":iabbrev " .. a:from .. " " .. to
  33	  if a:correct | exe "normal viws\<C-R>\" \b\e" | endif
  34	  let s:count = s:count + 1
- 35	  echo s:count . " corrections now"
+ 35	  echo s:count .. " corrections now"
  36	endfunction
  37
  38	if !exists(":Correct")
@@ -2340,7 +2340,7 @@ should be undone.  Set the b:undo_ftplugin variable to the commands that will
 undo the settings in your filetype plugin.  Example: >
 
 	let b:undo_ftplugin = "setlocal fo< com< tw< commentstring<"
-		\ . "| unlet b:match_ignorecase b:match_words b:match_skip"
+		\ .. "| unlet b:match_ignorecase b:match_words b:match_skip"
 
 Using ":setlocal" with "<" after the option name resets the option to its
 global value.  That is mostly the best way to reset the option value.
@@ -2461,17 +2461,17 @@ The following example shows how it's done: >
 		map <F19> :call BufNetWrite('something')<CR>
 
 		let s:did_load = 1
-		exe 'au FuncUndefined BufNet* source ' . expand('<sfile>')
+		exe 'au FuncUndefined BufNet* source ' .. expand('<sfile>')
 		finish
 	endif
 
 	function BufNetRead(...)
-		echo 'BufNetRead(' . string(a:000) . ')'
+		echo 'BufNetRead(' .. string(a:000) .. ')'
 		" read functionality here
 	endfunction
 
 	function BufNetWrite(...)
-		echo 'BufNetWrite(' . string(a:000) . ')'
+		echo 'BufNetWrite(' .. string(a:000) .. ')'
 		" write functionality here
 	endfunction
 

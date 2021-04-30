@@ -75,8 +75,9 @@ base, use |str2nr()|.
 
 						*TRUE* *FALSE* *Boolean*
 For boolean operators Numbers are used.  Zero is FALSE, non-zero is TRUE.
-You can also use |v:false| and |v:true|.  When TRUE is returned from a
-function it is the Number one, FALSE is the number zero.
+You can also use |v:false| and |v:true|.
+When TRUE is returned from a function it is the Number one, FALSE is the
+number zero.
 
 Note that in the command: >
 	:if "foo"
@@ -2818,7 +2819,7 @@ bufnr([{expr} [, {create}]])
 		the ":ls" command.  For the use of {expr}, see |bufname()|
 		above.
 		If the buffer doesn't exist, -1 is returned.  Or, if the
-		{create} argument is present and not zero, a new, unlisted,
+		{create} argument is present and TRUE, a new, unlisted,
 		buffer is created and its number is returned.
 		bufnr("$") is the last buffer: >
 			:let last_buffer = bufnr("$")
@@ -8161,7 +8162,7 @@ str2list({expr} [, {utf8}])				*str2list()*
 <		|list2str()| does the opposite.
 
 		When {utf8} is omitted or zero, the current 'encoding' is used.
-		With {utf8} set to 1, always treat the String as utf-8
+		With {utf8} set to TRUE, always treat the String as utf-8
 		characters.  With utf-8 composing characters are handled
 		properly: >
 			str2list("á")		returns [97, 769]
@@ -9136,7 +9137,8 @@ win_screenpos({nr})					*win_screenpos()*
 		Return the screen position of window {nr} as a list with two
 		numbers: [row, col].  The first window always has position
 		[1, 1], unless there is a tabline, then it is [2, 1].
-		{nr} can be the window number or the |window-ID|.
+		{nr} can be the window number or the |window-ID|.  Use zero
+		for the current window.
 		Return [0, 0] if the window cannot be found in the current
 		tabpage.
 

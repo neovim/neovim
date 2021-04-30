@@ -180,7 +180,7 @@ Note that this works when the <nowait> mapping fully matches and is found
 before any partial matches.  This works when:
 - There is only one matching buffer-local mapping, since these are always
   found before global mappings.
-- There is another buffer-local mapping that partly matches, but it is was
+- There is another buffer-local mapping that partly matches, but it is
   defined earlier (last defined mapping is found first).
 
 						*:map-<silent>* *:map-silent*
@@ -283,15 +283,8 @@ Here is an example that inserts a list number that increases: >
 CTRL-L inserts the next number, CTRL-R resets the count.  CTRL-R returns an
 empty string, so that nothing is inserted.
 
-Note that there are some tricks to make special keys work and escape CSI bytes
-in the text.  The |:map| command also does this, thus you must avoid that it
-is done twice.  This does not work: >
-	:imap <expr> <F3> "<Char-0x611B>"
-Because the <Char- sequence is escaped for being a |:imap| argument and then
-again for using <expr>.  This does work: >
-	:imap <expr> <F3> "\u611B"
-Using 0x80 as a single byte before other text does not work, it will be seen
-as a special key.
+Note that using 0x80 as a single byte before other text does not work, it will
+be seen as a special key.
 
 						*<Cmd>* *:map-cmd*
 The <Cmd> pseudokey begins a "command mapping", which executes the command
@@ -814,35 +807,47 @@ g@{motion}		Call the function set by the 'operatorfunc' option.
 
 Here is an example that counts the number of spaces with <F4>: >
 
-	nmap <silent> <F4> :set opfunc=CountSpaces<CR>g@
-	vmap <silent> <F4> :<C-U>call CountSpaces(visualmode(), 1)<CR>
+	nnoremap <expr> <F4> CountSpaces()
+	xnoremap <expr> <F4> CountSpaces()
+	" doubling <F4> works on a line
+	nnoremap <expr> <F4><F4> CountSpaces() .. '_'
 
-	function! CountSpaces(type, ...)
-	  let sel_save = &selection
-	  let &selection = "inclusive"
-	  let reg_save = @@
-
-	  if a:0  " Invoked from Visual mode, use gv command.
-	    silent exe "normal! gvy"
-	  elseif a:type == 'line'
-	    silent exe "normal! '[V']y"
-	  else
-	    silent exe "normal! `[v`]y"
+	function CountSpaces(type = '') abort
+	  if a:type == ''
+	    set opfunc=CountSpaces
+	    return 'g@'
 	  endif
 
-	  echomsg strlen(substitute(@@, '[^ ]', '', 'g'))
+	  let sel_save = &selection
+	  let reg_save = getreginfo('"')
+	  let cb_save = &clipboard
+	  let visual_marks_save = [getpos("'<"), getpos("'>")]
 
-	  let &selection = sel_save
-	  let @@ = reg_save
+	  try
+	    set clipboard= selection=inclusive
+	    let commands = #{line: "'[V']y", char: "`[v`]y", block: "`[\<c-v>`]y"}
+	    silent exe 'noautocmd keepjumps normal! ' .. get(commands, a:type, '')
+	    echom getreg('"')->count(' ')
+	  finally
+	    call setreg('"', reg_save)
+	    call setpos("'<", visual_marks_save[0])
+	    call setpos("'>", visual_marks_save[1])
+	    let &clipboard = cb_save
+	    let &selection = sel_save
+	  endtry
 	endfunction
+
+An <expr> mapping is used to be able to fetch any prefixed count and register.
+This also avoids using a command line, which would trigger CmdlineEnter and
+CmdlineLeave autocommands.
 
 Note that the 'selection' option is temporarily set to "inclusive" to be able
 to yank exactly the right text by using Visual mode from the '[ to the ']
 mark.
 
-Also note that there is a separate mapping for Visual mode.  It removes the
-"'<,'>" range that ":" inserts in Visual mode and invokes the function with
-visualmode() and an extra argument.
+Also note that the 'clipboard' option is temporarily emptied to avoid
+clobbering the `"*` or `"+` registers, if its value contains the item `unnamed`
+or `unnamedplus`.
 
 ==============================================================================
 2. Abbreviations			*abbreviations* *Abbreviations*
