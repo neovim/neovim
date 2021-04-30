@@ -375,7 +375,7 @@ int main(int argc, char **argv)
     // Does ":filetype plugin indent on".
     filetype_maybe_enable();
     // Sources syntax/syntax.vim, which calls `:filetype on`.
-    syn_maybe_on();
+    syn_maybe_enable();
   }
 
   // Read all the plugin files.
