@@ -799,35 +799,28 @@ function M.convert_input_to_markdown_lines(input, contents)
   return contents
 end
 
---- Converts `textDocument/SignatureHelp` response to markdown lines.
----
---@param signature_help Response of `textDocument/SignatureHelp`
---@returns list of lines of converted markdown.
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help)
-  if not signature_help.signatures then
-    return
+local function parameter_range_in_signature(signature, active_parameter)
+  local from, to = 0, 0
+  for i = 0,#signature.parameters-1,1 do
+    local parameter_label = signature.parameters[i+1].label
+    from, to = signature.label:find(parameter_label, to + 1, true)
+
+    if from == nil then
+      return nil
+    end
+
+    if i == active_parameter then
+      return from, to
+    end
+
   end
-  --The active signature. If omitted or the value lies outside the range of
-  --`signatures` the value defaults to zero or is ignored if `signatures.length
-  --=== 0`. Whenever possible implementors should make an active decision about
-  --the active signature and shouldn't rely on a default value.
-  local contents = {}
-  local active_signature = signature_help.activeSignature or 0
-  -- If the activeSignature is not inside the valid range, then clip it.
-  if active_signature >= #signature_help.signatures then
-    active_signature = 0
-  end
-  local signature = signature_help.signatures[active_signature + 1]
-  if not signature then
-    return
-  end
-  vim.list_extend(contents, vim.split(signature.label, '\n', true))
-  if signature.documentation then
-    M.convert_input_to_markdown_lines(signature.documentation, contents)
-  end
+
+  return nil
+end
+
+local function signature_label(signature, active_parameter)
+  local label = signature.label
   if signature.parameters and #signature.parameters > 0 then
-    local active_parameter = signature_help.activeParameter or 0
     -- If the activeParameter is not inside the valid range, then clip it.
     if active_parameter >= #signature.parameters then
       active_parameter = 0
@@ -852,12 +845,60 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
         documentation?: string | MarkupContent;
       }
       --]=]
-      -- TODO highlight parameter
-      if parameter.documentation then
-        M.convert_input_to_markdown_lines(parameter.documentation, contents)
+
+      local from, to
+      if type(parameter.label) == "string" then
+        from, to = parameter_range_in_signature(signature, active_parameter)
+      elseif #parameter.label == 2 then
+        from = vim.str_byteindex(signature.label, parameter.label[1]+1, 1)
+        to = vim.str_byteindex(signature.label, parameter.label[2], 1)
+      end
+
+      if from ~= nil and to ~= nil then
+        label = label:sub(0, from-1) .. "**" .. label:sub(from, to) .. "**" .. label:sub(to+1)
       end
     end
   end
+
+  return label
+end
+
+--- Converts `textDocument/SignatureHelp` response to markdown lines.
+---
+--@param signature_help Response of `textDocument/SignatureHelp`
+--@returns list of lines of converted markdown.
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+function M.convert_signature_help_to_markdown_lines(signature_help)
+  if not signature_help.signatures then
+    return
+  end
+  --The active signature. If omitted or the value lies outside the range of
+  --`signatures` the value defaults to zero or is ignored if `signatures.length
+  --=== 0`. Whenever possible implementors should make an active decision about
+  --the active signature and shouldn't rely on a default value.
+  local contents = {}
+  local active_signature = signature_help.activeSignature or 0
+  -- If the activeSignature is not inside the valid range, then clip it.
+  if active_signature >= #signature_help.signatures then
+    active_signature = 0
+  end
+  local signature = signature_help.signatures[active_signature + 1]
+  if not signature then
+    return
+  end
+
+  local active_parameter = signature_help.activeParameter or 0
+  local label = signature_label(signature, active_parameter)
+
+  vim.list_extend(contents, vim.split(label, '\n', true))
+
+  for i = 1,#signature_help.signatures,1 do
+    if i ~= active_signature + 1 then
+      label = signature_label(signature_help.signatures[i], active_parameter)
+      vim.list_extend(contents, vim.split(label, '\n', true))
+    end
+  end
+
   return contents
 end
 
