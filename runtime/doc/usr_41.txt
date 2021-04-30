@@ -1896,9 +1896,9 @@ for this mapping, but the user might already use it for something else.  To
 allow the user to define which keys a mapping in a plugin uses, the <Leader>
 item can be used: >
 
- 22	  map <unique> <Leader>a  <Plug>TypecorrAdd
+ 22	  map <unique> <Leader>a  <Plug>TypecorrAdd;
 
-The "<Plug>TypecorrAdd" thing will do the work, more about that further on.
+The "<Plug>TypecorrAdd;" thing will do the work, more about that further on.
 
 The user can set the "mapleader" variable to the key sequence that he wants
 this mapping to start with.  Thus if the user has done: >
@@ -1914,15 +1914,15 @@ already happened to exist. |:map-<unique>|
 But what if the user wants to define his own key sequence?  We can allow that
 with this mechanism: >
 
- 21	if !hasmapto('<Plug>TypecorrAdd')
- 22	  map <unique> <Leader>a  <Plug>TypecorrAdd
+ 21	if !hasmapto('<Plug>TypecorrAdd;')
+ 22	  map <unique> <Leader>a  <Plug>TypecorrAdd;
  23	endif
 
-This checks if a mapping to "<Plug>TypecorrAdd" already exists, and only
+This checks if a mapping to "<Plug>TypecorrAdd/" already exists, and only
 defines the mapping from "<Leader>a" if it doesn't.  The user then has a
 chance of putting this in his vimrc file: >
 
-	map ,c  <Plug>TypecorrAdd
+	map ,c  <Plug>TypecorrAdd;
 
 Then the mapped key sequence will be ",c" instead of "_a" or "\a".
 
@@ -1952,15 +1952,15 @@ function (without the "s:"), which is again another function.
 <SID> can be used with mappings.  It generates a script ID, which identifies
 the current script.  In our typing correction plugin we use it like this: >
 
- 24	noremap <unique> <script> <Plug>TypecorrAdd  <SID>Add
+ 24	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
  ..
  28	noremap <SID>Add  :call <SID>Add(expand("<cword>"), 1)<CR>
 
 Thus when a user types "\a", this sequence is invoked: >
 
-	\a  ->  <Plug>TypecorrAdd  ->  <SID>Add  ->  :call <SID>Add()
+	\a  ->  <Plug>TypecorrAdd;  ->  <SID>Add  ->  :call <SID>Add()
 
-If another script was also map <SID>Add, it would get another script ID and
+If another script also maps <SID>Add, it will get another script ID and
 thus define another mapping.
 
 Note that instead of s:Add() we use <SID>Add() here.  That is because the
@@ -2001,9 +2001,9 @@ difference between using <SID> and <Plug>:
 	To make it very unlikely that other plugins use the same sequence of
 	characters, use this structure: <Plug> scriptname mapname
 	In our example the scriptname is "Typecorr" and the mapname is "Add".
-	This results in "<Plug>TypecorrAdd".  Only the first character of
-	scriptname and mapname is uppercase, so that we can see where mapname
-	starts.
+	We add a semicolon as the terminator.  This results in
+	"<Plug>TypecorrAdd;".  Only the first character of scriptname and
+	mapname is uppercase, so that we can see where mapname starts.
 
 <SID>	is the script ID, a unique identifier for a script.
 	Internally Vim translates <SID> to "<SNR>123_", where "123" can be any
@@ -2078,10 +2078,10 @@ Here is the resulting complete example: >
  18		\ synchronization
  19	let s:count = 4
  20
- 21	if !hasmapto('<Plug>TypecorrAdd')
- 22	  map <unique> <Leader>a  <Plug>TypecorrAdd
+ 21	if !hasmapto('<Plug>TypecorrAdd;')
+ 22	  map <unique> <Leader>a  <Plug>TypecorrAdd;
  23	endif
- 24	noremap <unique> <script> <Plug>TypecorrAdd  <SID>Add
+ 24	noremap <unique> <script> <Plug>TypecorrAdd;  <SID>Add
  25
  26	noremenu <script> Plugin.Add\ Correction      <SID>Add
  27
@@ -2131,7 +2131,7 @@ Here is a simple example for a plugin help file, called "typecorr.txt": >
   6	There are currently only a few corrections.  Add your own if you like.
   7
   8	Mappings:
-  9	<Leader>a   or   <Plug>TypecorrAdd
+  9	<Leader>a   or   <Plug>TypecorrAdd;
  10		Add a correction for the word under the cursor.
  11
  12	Commands:
@@ -2269,13 +2269,13 @@ To make sure mappings will only work in the current buffer use the >
 command.  This needs to be combined with the two-step mapping explained above.
 An example of how to define functionality in a filetype plugin: >
 
-	if !hasmapto('<Plug>JavaImport')
-	  map <buffer> <unique> <LocalLeader>i <Plug>JavaImport
+	if !hasmapto('<Plug>JavaImport;')
+	  map <buffer> <unique> <LocalLeader>i <Plug>JavaImport;
 	endif
-	noremap <buffer> <unique> <Plug>JavaImport oimport ""<Left><Esc>
+	noremap <buffer> <unique> <Plug>JavaImport; oimport ""<Left><Esc>
 
 |hasmapto()| is used to check if the user has already defined a map to
-<Plug>JavaImport.  If not, then the filetype plugin defines the default
+<Plug>JavaImport;.  If not, then the filetype plugin defines the default
 mapping.  This starts with |<LocalLeader>|, which allows the user to select
 the key(s) he wants filetype plugin mappings to start with.  The default is a
 backslash.
@@ -2292,12 +2292,12 @@ plugin for the mail filetype: >
 	" Add mappings, unless the user didn't want this.
 	if !exists("no_plugin_maps") && !exists("no_mail_maps")
 	  " Quote text by inserting "> "
-	  if !hasmapto('<Plug>MailQuote')
-	    vmap <buffer> <LocalLeader>q <Plug>MailQuote
-	    nmap <buffer> <LocalLeader>q <Plug>MailQuote
+	  if !hasmapto('<Plug>MailQuote;')
+	    vmap <buffer> <LocalLeader>q <Plug>MailQuote;
+	    nmap <buffer> <LocalLeader>q <Plug>MailQuote;
 	  endif
-	  vnoremap <buffer> <Plug>MailQuote :s/^/> /<CR>
-	  nnoremap <buffer> <Plug>MailQuote :.,$s/^/> /<CR>
+	  vnoremap <buffer> <Plug>MailQuote; :s/^/> /<CR>
+	  nnoremap <buffer> <Plug>MailQuote; :.,$s/^/> /<CR>
 	endif
 
 Two global variables are used:

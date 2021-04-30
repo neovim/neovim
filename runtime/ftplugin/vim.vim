@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Jul 26
+" Last Change:	2020 Aug 14
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -49,7 +49,8 @@ setlocal isk+=#
 setlocal keywordprg=:help
 
 " Set 'comments' to format dashed lists in comments
-setlocal com=sO:\"\ -,mO:\"\ \ ,sO:#\ -,mO:#\ \ ,eO:##,:\",:#
+" Avoid that #{} starts a comment.
+setlocal com=sO:\"\ -,mO:\"\ \ ,sO:#\ -,mO:#\ \ ,eO:##,:\",b:#
 
 " Format comments to be up to 78 characters long
 if &tw == 0

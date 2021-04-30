@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Nov 29
+" Last Change:	2020 Aug 11
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -272,7 +272,8 @@ if exists("c_gnu")
   syn keyword	cType		__label__ __complex__ __volatile__
 endif
 
-syn keyword	cStructure	struct union enum typedef
+syn keyword	cTypedef	typedef
+syn keyword	cStructure	struct union enum
 syn keyword	cStorageClass	static register auto volatile extern const
 if exists("c_gnu")
   syn keyword	cStorageClass	inline __attribute__
@@ -311,8 +312,7 @@ if !exists("c_no_ansi") || exists("c_ansi_constants") || exists("c_gnu")
   if exists("c_gnu")
     syn keyword cConstant __GNUC__ __FUNCTION__ __PRETTY_FUNCTION__ __func__
   endif
-  syn keyword cConstant __LINE__ __FILE__ __DATE__ __TIME__ __STDC__
-  syn keyword cConstant __STDC_VERSION__
+  syn keyword cConstant __LINE__ __FILE__ __DATE__ __TIME__ __STDC__ __STDC_VERSION__ __STDC_HOSTED__
   syn keyword cConstant CHAR_BIT MB_LEN_MAX MB_CUR_MAX
   syn keyword cConstant UCHAR_MAX UINT_MAX ULONG_MAX USHRT_MAX
   syn keyword cConstant CHAR_MIN INT_MIN LONG_MIN SHRT_MIN
@@ -475,6 +475,7 @@ hi def link cSpecialError	cError
 hi def link cCurlyError		cError
 hi def link cOperator		Operator
 hi def link cStructure		Structure
+hi def link cTypedef		Structure
 hi def link cStorageClass	StorageClass
 hi def link cInclude		Include
 hi def link cPreProc		PreProc

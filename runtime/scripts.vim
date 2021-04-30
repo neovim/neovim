@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2020 Jun 07
+" Last change:	2020 Aug 15
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -150,7 +150,7 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'ocaml'
     set ft=ocaml
 
-    " Awk scripts
+    " Awk scripts; also finds "gawk"
   elseif s:name =~# 'awk\>'
     set ft=awk
 

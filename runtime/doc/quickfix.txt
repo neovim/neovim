@@ -1657,7 +1657,7 @@ special problem here is that it doesn't print information on leaving the
 directory and that it doesn't print the absolute path.
 
 To solve the problem with relative paths and missing "leave directory"
-messages Vim uses following algorithm:
+messages Vim uses the following algorithm:
 
 1) Check if the given directory is a subdirectory of the current directory.
    If this is true, store it as the current directory.

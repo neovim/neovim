@@ -1,7 +1,8 @@
 " Vim filetype plugin file
-" Language:             CSS
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2008-07-09
+" Language:		CSS
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Latest Revision:	2008-07-09
 
 if exists("b:did_ftplugin")
   finish

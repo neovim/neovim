@@ -56,8 +56,8 @@ Disadvantages:
   directories (although Vim tries to avoid that by comparing the path name).
   This will result in bogus ATTENTION warning messages.
 - When you use your home directory, and somebody else tries to edit the same
-  file, he will not see your swap file and will not get the ATTENTION warning
-  message.
+  file, that user will not see your swap file and will not get the ATTENTION
+  warning message.
 
 If you want to put swap files in a fixed place, put a command resembling the
 following ones in your vimrc:
