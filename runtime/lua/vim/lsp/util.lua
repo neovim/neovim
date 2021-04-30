@@ -818,7 +818,52 @@ local function parameter_range_in_signature(signature, active_parameter)
   return nil
 end
 
-local function signature_label(signature, active_parameter)
+local function build_signature_label_from_parameters(signature, active_parameter)
+  if not signature.parameters or #signature.parameters == 0 then
+    return "_no parameters_"
+  end
+
+  local label = ""
+  if type(signature.parameters[1].label) == "string" then
+    for i, param in ipairs(signature.parameters) do
+      if i > 1 then
+        label = label .. ", "
+      end
+
+      if i == active_parameter + 1 then
+        label = label .. "**`" .. param.label .. "`**"
+      else
+        label = label .. "`" .. param.label .. "`"
+      end
+    end
+  elseif #signature.parameters[1].label == 2 then
+    for i, param in ipairs(signature.parameters) do
+      if i > 1 then
+        label = label .. ", "
+      end
+
+      local from = vim.str_byteindex(signature.label, param.label[1]+1, 1)
+      local to = vim.str_byteindex(signature.label, param.label[2], 1)
+
+      if from ~= nil and to ~= nil then
+        local param_label = signature.label:sub(from, to)
+        if i == active_parameter + 1 then
+          label = label .. "**`" .. param_label .. "`**"
+        else
+          label = label .. "`" .. param_label .. "`"
+        end
+      end
+    end
+  end
+
+  return label
+end
+
+local function signature_label(signature, active_parameter, parametersOnly)
+  if parametersOnly then
+    return build_signature_label_from_parameters(signature, active_parameter)
+  end
+
   local label = signature.label
   if signature.parameters and #signature.parameters > 0 then
     -- If the activeParameter is not inside the valid range, then clip it.
@@ -868,7 +913,7 @@ end
 --@param signature_help Response of `textDocument/SignatureHelp`
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help)
+function M.convert_signature_help_to_markdown_lines(signature_help, parametersOnly)
   if not signature_help.signatures then
     return
   end
@@ -887,14 +932,14 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
     return
   end
 
-  local active_parameter = signature_help.activeParameter or 0
-  local label = signature_label(signature, active_parameter)
+  local active_parameter = signature.activeParameter or signature_help.activeParameter or 0
+  local label = signature_label(signature, active_parameter, parametersOnly)
 
   vim.list_extend(contents, vim.split(label, '\n', true))
 
   for i = 1,#signature_help.signatures,1 do
     if i ~= active_signature + 1 then
-      label = signature_label(signature_help.signatures[i], active_parameter)
+      label = signature_label(signature_help.signatures[i], active_parameter, parametersOnly)
       vim.list_extend(contents, vim.split(label, '\n', true))
     end
   end

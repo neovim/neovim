@@ -333,6 +333,8 @@ M['textDocument/implementation'] = location_handler
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.api.nvim_open_win()|
+---     - parametersOnly: (default=false)
+---         - Display only a list of parameters
 function M.signature_help(_, method, result, _, bufnr, config)
   config = config or {}
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
@@ -341,7 +343,7 @@ function M.signature_help(_, method, result, _, bufnr, config)
     print('No signature help available')
     return
   end
-  local lines = util.convert_signature_help_to_markdown_lines(result)
+  local lines = util.convert_signature_help_to_markdown_lines(result, config.parametersOnly or false)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
     print('No signature help available')
