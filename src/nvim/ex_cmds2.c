@@ -2723,15 +2723,9 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
   garray_T ga;
   ga_init(&ga, (int)sizeof(char_u), (int)line_length);
   ga_concat_len(&ga, (char *)p->buf + p->offset, line_length);
-  if (ga.ga_len != (int)line_length) {
-    smsg(_(":source error parsing command %s"), p->buf);
-    return NULL;
-  }
   ga_append(&ga, '\0');
   p->offset = i + 1;
-  char_u *line = (char_u *)xstrdup(ga.ga_data);
-  ga_clear(&ga);
-  return line;
+  return ga.ga_data;
 }
 
 static int source_using_linegetter(void *cookie,
