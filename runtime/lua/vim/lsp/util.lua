@@ -831,9 +831,9 @@ local function build_signature_label_from_parameters(signature, active_parameter
       end
 
       if i == active_parameter + 1 then
-        label = label .. "**`" .. param.label .. "`**"
+        label = label .. "**" .. param.label .. "**"
       else
-        label = label .. "`" .. param.label .. "`"
+        label = label .. param.label
       end
     end
   elseif #signature.parameters[1].label == 2 then
@@ -848,14 +848,15 @@ local function build_signature_label_from_parameters(signature, active_parameter
       if from ~= nil and to ~= nil then
         local param_label = signature.label:sub(from, to)
         if i == active_parameter + 1 then
-          label = label .. "**`" .. param_label .. "`**"
+          label = label .. "**" .. param_label .. "**"
         else
-          label = label .. "`" .. param_label .. "`"
+          label = label .. param_label
         end
       end
     end
   end
 
+  label, _ = label:gsub("\\n", " ")
   return label
 end
 
@@ -865,6 +866,7 @@ local function signature_label(signature, active_parameter, parametersOnly)
   end
 
   local label = signature.label
+  local from, to
   if signature.parameters and #signature.parameters > 0 then
     -- If the activeParameter is not inside the valid range, then clip it.
     if active_parameter >= #signature.parameters then
@@ -891,21 +893,17 @@ local function signature_label(signature, active_parameter, parametersOnly)
       }
       --]=]
 
-      local from, to
       if type(parameter.label) == "string" then
         from, to = parameter_range_in_signature(signature, active_parameter)
       elseif #parameter.label == 2 then
         from = vim.str_byteindex(signature.label, parameter.label[1]+1, 1)
         to = vim.str_byteindex(signature.label, parameter.label[2], 1)
       end
-
-      if from ~= nil and to ~= nil then
-        label = label:sub(0, from-1) .. "**" .. label:sub(from, to) .. "**" .. label:sub(to+1)
-      end
     end
   end
 
-  return label
+  label, _ = label:gsub("\\n", " ")
+  return label, {from - 1, to}
 end
 
 --- Converts `textDocument/SignatureHelp` response to markdown lines.
@@ -922,6 +920,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, parametersOn
   --=== 0`. Whenever possible implementors should make an active decision about
   --the active signature and shouldn't rely on a default value.
   local contents = {}
+  local highlights = {}
   local active_signature = signature_help.activeSignature or 0
   -- If the activeSignature is not inside the valid range, then clip it.
   if active_signature >= #signature_help.signatures then
@@ -933,18 +932,25 @@ function M.convert_signature_help_to_markdown_lines(signature_help, parametersOn
   end
 
   local active_parameter = signature.activeParameter or signature_help.activeParameter or 0
-  local label = signature_label(signature, active_parameter, parametersOnly)
+  local label, active_offset = signature_label(signature, active_parameter, parametersOnly)
 
-  vim.list_extend(contents, vim.split(label, '\n', true))
+  table.insert(contents, label)
+  table.insert(highlights, { line = 0, col = 0, opts = { end_line = 0, end_col = label:len(), hl_group = "TermCursor", priority = 200 } })
+  if active_offset then
+    table.insert(highlights, { line = 0, col = active_offset[1], opts = { end_line = 0, end_col = active_offset[2], hl_group = "MatchParen", priority = 100 } })
+  end
 
   for i = 1,#signature_help.signatures,1 do
     if i ~= active_signature + 1 then
-      label = signature_label(signature_help.signatures[i], active_parameter, parametersOnly)
-      vim.list_extend(contents, vim.split(label, '\n', true))
+      label, active_offset = signature_label(signature_help.signatures[i], active_parameter, parametersOnly)
+      table.insert(contents, label)
+      if active_offset then
+        table.insert(highlights, { line = i, col = active_offset[1], opts = { end_line = i, end_col = active_offset[2], hl_group = "MatchParen", priority = 100 } })
+      end
     end
   end
 
-  return contents
+  return contents, highlights
 end
 
 --- Creates a table with sensible default options for a floating window. The

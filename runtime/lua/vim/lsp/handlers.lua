@@ -7,6 +7,8 @@ local buf = require 'vim.lsp.buf'
 
 local M = {}
 
+local ns = api.nvim_create_namespace("lsp/popup")
+
 -- FIXME: DOC: Expose in vimdocs
 
 --@private
@@ -343,17 +345,24 @@ function M.signature_help(_, method, result, _, bufnr, config)
     print('No signature help available')
     return
   end
-  local lines = util.convert_signature_help_to_markdown_lines(result, config.parametersOnly or false)
+  local lines, highlights = util.convert_signature_help_to_markdown_lines(result, config.parametersOnly or false)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
     print('No signature help available')
     return
   end
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
+  local filetype = api.nvim_buf_get_option(bufnr, 'filetype')
   local p_bufnr, _ = util.focusable_preview(method, function()
-    return lines, util.try_trim_markdown_code_blocks(lines), config
+    return lines, filetype, config
   end)
   api.nvim_buf_set_option(p_bufnr, 'syntax', syntax)
+
+  if highlights then
+    for _, hi in ipairs(highlights) do
+      api.nvim_buf_set_extmark(p_bufnr, ns, hi.line, hi.col, hi.opts)
+    end
+  end
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
