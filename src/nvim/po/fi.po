@@ -4198,8 +4198,6 @@ msgstr "E537: commentstringin pitää olla tyhjä tai sisältää %s"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Sulkematon lausekesarja"
 
-msgid "E541: too many items"
-msgstr "E541: liikaa kohteita"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: epätasapainoisia ryhmiä"

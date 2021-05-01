@@ -1,6 +1,6 @@
 " VIM syntax file
 " Language:	groff
-" Maintainer:	Alejandro López-Valencia <dradul@yahoo.com>
+" Maintainer:	Alejandro LÃ³pez-Valencia <dradul@yahoo.com>
 " URL:		http://dradul.tripod.com/vim
 " Last Change:	2003-05-08-12:41:13 GMT-5.
 

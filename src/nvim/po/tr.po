@@ -3990,8 +3990,6 @@ msgstr "%s seçeneği için"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Kapatılmamış ifade sıralaması"
 
-msgid "E541: too many items"
-msgstr "E541: Çok fazla öge"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: Dengelenmemiş gruplar"

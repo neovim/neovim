@@ -63,10 +63,14 @@ g CTRL-G		Prints the current position of the cursor in five
 			ways: Column, Line, Word, Character and Byte.  If the
 			number of Characters and Bytes is the same then the
 			Character position is omitted.
+
 			If there are characters in the line that take more
 			than one position on the screen (<Tab> or special
-			character), both the "real" column and the screen
-			column are shown, separated with a dash.
+			character), or characters using more than one byte per
+			column (characters above 0x7F when 'encoding' is
+			utf-8), both the byte column and the screen column are
+			shown, separated by a dash.
+
 			Also see the 'ruler' option and the |wordcount()|
 			function.
 

@@ -1,7 +1,7 @@
 " zip.vim: Handles browsing zipfiles
 "            AUTOLOAD PORTION
 " Date:		Jan 07, 2020
-" Version:	30
+" Version:	31
 " Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " License:	Vim License  (see vim's :help license)
 " Copyright:    Copyright (C) 2005-2019 Charles E. Campbell {{{1
@@ -20,7 +20,7 @@
 if &cp || exists("g:loaded_zip")
  finish
 endif
-let g:loaded_zip= "v30"
+let g:loaded_zip= "v31"
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of zip needs vim 7.2 or later"
@@ -65,7 +65,7 @@ endif
 " zip#Browse: {{{2
 fun! zip#Browse(zipfile)
 "  call Dfunc("zip#Browse(zipfile<".a:zipfile.">)")
-  " sanity check: ensure that the zipfile has "PK" as its first two letters
+  " sanity check: insure that the zipfile has "PK" as its first two letters
   "               (zipped files have a leading PK as a "magic cookie")
   if !filereadable(a:zipfile) || readfile(a:zipfile, "", 1)[0] !~ '^PK'
    exe "noswapfile noautocmd noswapfile e ".fnameescape(a:zipfile)

@@ -4632,8 +4632,6 @@ msgstr "За опцију %s"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Низ израза није затворен"
 
-msgid "E541: too many items"
-msgstr "E541: превише ставки"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: неуравнотежене групе"

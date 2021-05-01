@@ -2,7 +2,7 @@
 " This is a GENERATED FILE. Please always refer to source file at the URI below.
 " Language: XKB (X Keyboard Extension) components
 " Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
-" Last Change: 2020 Oct 06
+" Last Change: 2020 Oct 18
 " URL: http://trific.ath.cx/Ftp/vim/syntax/xkb.vim
 
 " Setup
@@ -41,7 +41,7 @@ syn match xkbPhysicalKey "<\w\+>"
 syn keyword xkbPreproc augment include replace
 syn keyword xkbConstant False True
 syn keyword xkbModif override replace
-syn keyword xkbIdentifier action affect alias allowExplicit approx baseColor button clearLocks color controls cornerRadius count ctrls description driveskbd font fontSize gap group groups height indicator indicatorDrivesKeyboard interpret key keys labelColor latchToLock latchMods left level_name map maximum minimum modifier_map modifiers name offColor onColor outline preserve priority repeat row section section setMods shape slant solid symbols text top type useModMapMods virtualModifier virtualMods virtual_modifiers weight whichModState width
+syn keyword xkbIdentifier action affect alias allowExplicit approx baseColor button clearLocks color controls cornerRadius count ctrls description driveskbd font fontSize gap group groups height indicator indicatorDrivesKeyboard interpret key keys labelColor latchToLock latchMods left level_name map maximum minimum modifier_map modifiers name offColor onColor outline preserve priority repeat row section setMods shape slant solid symbols text top type useModMapMods virtualModifier virtualMods virtual_modifiers weight whichModState width
 syn keyword xkbFunction AnyOf ISOLock LatchGroup LatchMods LockControls LockGroup LockMods LockPointerButton MovePtr NoAction PointerButton SetControls SetGroup SetMods SetPtrDflt Terminate
 syn keyword xkbTModif default hidden partial virtual
 syn keyword xkbSect alphanumeric_keys alternate_group function_keys keypad_keys modifier_keys xkb_compatibility xkb_geometry xkb_keycodes xkb_keymap xkb_semantics xkb_symbols xkb_types

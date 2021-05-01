@@ -292,6 +292,7 @@ If you enter a value of 10, it will end up in the file as a 0.  The 10 is a
 the buffer to a file, the <NL> character is translated into <Nul>.  The <NL>
 character is written at the end of each line.  Thus if you want to insert a
 <NL> character in a file you will have to make a line break.
+Also see 'fileformat'.
 
 						*i_CTRL-X* *insert_expand*
 CTRL-X enters a sub-mode where several commands can be used.  Most of these

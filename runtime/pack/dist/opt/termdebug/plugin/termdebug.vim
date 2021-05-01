@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2020 Jul 12
+" Last Change: 2020 Oct 25
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -131,7 +131,11 @@ func s:StartDebug_internal(dict)
   " call ch_logfile('debuglog', 'w')
 
   let s:sourcewin = win_getid(winnr())
-  let s:startsigncolumn = &signcolumn
+
+  " Remember the old value of 'signcolumn' for each buffer that it's set in, so
+  " that we can restore the value for all buffers.
+  let b:save_signcolumn = &signcolumn
+  let s:signcolumn_buflist = [bufnr()]
 
   let s:save_columns = 0
   let s:allleft = 0
@@ -603,8 +607,20 @@ func s:EndDebugCommon()
     exe 'bwipe! ' . s:ptybuf
   endif
 
+  " Restore 'signcolumn' in all buffers for which it was set.
   call win_gotoid(s:sourcewin)
-  let &signcolumn = s:startsigncolumn
+  let was_buf = bufnr()
+  for bufnr in s:signcolumn_buflist
+    if bufexists(bufnr)
+      exe bufnr .. "buf"
+      if exists('b:save_signcolumn')
+	let &signcolumn = b:save_signcolumn
+	unlet b:save_signcolumn
+      endif
+    endif
+  endfor
+  exe was_buf .. "buf"
+
   call s:DeleteCommands()
 
   call win_gotoid(curwinid)
@@ -1174,6 +1190,10 @@ func s:HandleCursor(msg)
       exe lnum
       exe 'sign unplace ' . s:pc_id
       exe 'sign place ' . s:pc_id . ' line=' . lnum . ' name=debugPC file=' . fname
+      if !exists('b:save_signcolumn')
+	let b:save_signcolumn = &signcolumn
+	call add(s:signcolumn_buflist, bufnr())
+      endif
       setlocal signcolumn=yes
     endif
   elseif !s:stopped || fname != ''

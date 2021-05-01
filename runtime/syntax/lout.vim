@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:    Lout
-" Maintainer:  Christian V. J. Brüssow <cvjb@cvjb.de>
+" Maintainer:  Christian V. J. BrÃ¼ssow <cvjb@cvjb.de>
 " Last Change: So 12 Feb 2012 15:15:03 CET
 " Filenames:   *.lout,*.lt
 " URL:         http://www.cvjb.de/comp/vim/lout.vim

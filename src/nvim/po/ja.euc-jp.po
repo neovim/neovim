@@ -4092,8 +4092,6 @@ msgstr "オプション: %s"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: 式が終了していません"
 
-msgid "E541: too many items"
-msgstr "E541: 要素が多過ぎます"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: グループが釣合いません"

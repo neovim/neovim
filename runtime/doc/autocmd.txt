@@ -709,7 +709,7 @@ InsertEnter			Just before starting Insert mode.  Also for
 				string.
 							*InsertLeavePre*
 InsertLeavePre			Just before leaving Insert mode.  Also when
-				using CTRL-O |i_CTRL-O|.  Be caseful not to
+				using CTRL-O |i_CTRL-O|.  Be careful not to
 				change mode or use `:normal`, it will likely
 				cause trouble.
 							*InsertLeave*

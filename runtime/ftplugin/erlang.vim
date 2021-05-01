@@ -1,7 +1,7 @@
 " Vim ftplugin file
 " Language:     Erlang
-" Author:       Oscar Hellström <oscar@oscarh.net>
-" Contributors: Ricardo Catalinas Jiménez <jimenezrick@gmail.com>
+" Author:       Oscar HellstrÃ¶m <oscar@oscarh.net>
+" Contributors: Ricardo Catalinas JimÃ©nez <jimenezrick@gmail.com>
 "               Eduardo Lopez (http://github.com/tapichu)
 " License:      Vim license
 " Version:      2012/01/25

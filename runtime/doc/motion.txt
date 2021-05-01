@@ -182,11 +182,14 @@ l		or					*l*
 
 							*^*
 ^			To the first non-blank character of the line.
-			|exclusive| motion.
+			|exclusive| motion.  Any count is ignored.
 
 							*$* *<End>* *<kEnd>*
 $  or <End>		To the end of the line.  When a count is given also go
-			[count - 1] lines downward. |inclusive| motion.
+			[count - 1] lines downward, or as far is possible.
+			|inclusive| motion.  If a count of 2 of larger is
+			given and the cursor is on the last line, that is an
+			error an the cursor doesn't move.
 			In Visual mode the cursor goes to just after the last
 			character in the line.
 			When 'virtualedit' is active, "$" may move the cursor

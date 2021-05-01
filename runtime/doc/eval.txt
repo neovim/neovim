@@ -9306,7 +9306,8 @@ winsaveview()	Returns a |Dictionary| that contains information to restore
 			curswant	column for vertical movement
 			topline		first line in the window
 			topfill		filler lines, only in diff mode
-			leftcol		first column displayed
+			leftcol		first column displayed; only used when
+					'wrap' is off
 			skipcol		columns skipped
 		Note that no option values are saved.
 
@@ -9796,8 +9797,9 @@ be used to pass settings to the autoload script before it's loaded: >
 
 Note that when you make a mistake and call a function that is supposed to be
 defined in an autoload script, but the script doesn't actually define the
-function, the script will be sourced every time you try to call the function.
-And you will get an error message every time.
+function, you will get an error message for the missing function.  If you fix
+the autoload script it won't be automatically loaded again.  Either restart
+Vim or manually source the script.
 
 Also note that if you have two script files, and one calls a function in the
 other and vice versa, before the used function is defined, it won't work.
