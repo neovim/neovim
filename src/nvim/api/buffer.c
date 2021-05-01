@@ -1426,6 +1426,10 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///                 - "eol": right after eol character (default)
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
+///                 - "right_align": display right aligned in the window.
+///               - virt_text_win_col : position the virtual text at a fixed
+///                                     window column (starting from the first
+///                                     text column)
 ///               - virt_text_hide : hide the virtual text when the background
 ///                                  text is selected or hidden due to
 ///                                  horizontal scroll 'nowrap'
@@ -1574,11 +1578,22 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
         decor.virt_text_pos = kVTEndOfLine;
       } else if (strequal("overlay", str.data)) {
         decor.virt_text_pos = kVTOverlay;
+      } else if (strequal("right_align", str.data)) {
+        decor.virt_text_pos = kVTRightAlign;
       } else {
         api_set_error(err, kErrorTypeValidation,
                       "virt_text_pos: invalid value");
         goto error;
       }
+    } else if (strequal("virt_text_win_col",  k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_win_col is not a Number of the correct size");
+        goto error;
+      }
+
+      decor.col = (int)v->data.integer;
+      decor.virt_text_pos = kVTWinCol;
     } else if (strequal("virt_text_hide", k.data)) {
       decor.virt_text_hide = api_object_to_bool(*v,
                                                 "virt_text_hide", false, err);
@@ -1672,6 +1687,14 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   } else if (line2 >= 0) {
     col2 = 0;
   }
+
+  if (decor.virt_text_pos == kVTRightAlign) {
+    decor.col = 0;
+    for (size_t i = 0; i < kv_size(decor.virt_text); i++) {
+      decor.col += mb_string2cells((char_u *)kv_A(decor.virt_text, i).text);
+    }
+  }
+
 
   Decoration *d = NULL;
 

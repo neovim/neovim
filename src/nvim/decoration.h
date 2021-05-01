@@ -21,6 +21,8 @@ typedef uint16_t DecorPriority;
 typedef enum {
   kVTEndOfLine,
   kVTOverlay,
+  kVTWinCol,
+  kVTRightAlign,
 } VirtTextPos;
 
 typedef enum {
@@ -41,9 +43,10 @@ struct Decoration
   // TODO(bfredl): style, signs, etc
   DecorPriority priority;
   bool shared;  // shared decoration, don't free
+  int col;  // fixed col value, like win_col
 };
 #define DECORATION_INIT { 0, KV_INITIAL_VALUE, kVTEndOfLine, false, \
-                          kHlModeUnknown, false, DECOR_PRIORITY_BASE, false }
+                          kHlModeUnknown, false, DECOR_PRIORITY_BASE, false, 0 }
 
 typedef struct {
   int start_row;
@@ -53,7 +56,7 @@ typedef struct {
   Decoration decor;
   int attr_id;  // cached lookup of decor.hl_id
   bool virt_text_owned;
-  int virt_col;
+  int win_col;
 } DecorRange;
 
 typedef struct {
