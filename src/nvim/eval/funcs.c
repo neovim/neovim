@@ -2041,12 +2041,13 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // "win_execute(win_id, command)" function
 static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T *wp = win_id2wp(argvars);
+  tabpage_T *tp;
+  win_T *wp = win_id2wp_tp(argvars, &tp);
   win_T *save_curwin;
   tabpage_T *save_curtab;
 
-  if (wp != NULL) {
-    if (switch_win_noblock(&save_curwin, &save_curtab, wp, curtab, true) ==
+  if (wp != NULL && tp != NULL) {
+    if (switch_win_noblock(&save_curwin, &save_curtab, wp, tp, true) ==
         OK) {
       check_cursor();
       execute_common(argvars, rettv, fptr, 1);

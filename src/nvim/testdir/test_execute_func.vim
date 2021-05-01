@@ -104,3 +104,12 @@ func Test_win_execute()
   call win_gotoid(otherwin)
   bwipe!
 endfunc
+
+func Test_win_execute_other_tab()
+  let thiswin = win_getid()
+  tabnew
+  call win_execute(thiswin, 'let xyz = 1')
+  call assert_equal(1, xyz)
+  tabclose
+  unlet xyz
+endfunc
