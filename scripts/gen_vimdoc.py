@@ -186,6 +186,48 @@ CONFIG = {
         'module_override': {},
         'append_only': [],
     },
+    'treesitter': {
+        'mode': 'lua',
+        'filename': 'treesitter.txt',
+        'section_start_token': '*lua-treesitter-core*',
+        'section_order': [
+            'treesitter.lua',
+            'language.lua',
+            'query.lua',
+            'highlighter.lua',
+            'languagetree.lua',
+            'health.lua',
+        ],
+        'files': ' '.join([
+            os.path.join(base_dir, 'runtime/lua/vim/treesitter.lua'),
+            os.path.join(base_dir, 'runtime/lua/vim/treesitter/'),
+        ]),
+        'file_patterns': '*.lua',
+        'fn_name_prefix': '',
+        'section_name': {},
+        'section_fmt': lambda name: (
+            'Lua module: vim.treesitter'
+            if name.lower() == 'treesitter'
+            else f'Lua module: vim.treesitter.{name.lower()}'),
+        'helptag_fmt': lambda name: (
+            '*lua-treesitter-core*'
+            if name.lower() == 'treesitter'
+            else f'*treesitter-{name.lower()}*'),
+        'fn_helptag_fmt': lambda fstem, name: (
+            f'*{name}()*'
+            if name != 'new'
+            else f'*{fstem}.{name}()*'),
+        # 'fn_helptag_fmt': lambda fstem, name: (
+        #     f'*vim.treesitter.{name}()*'
+        #     if fstem == 'treesitter'
+        #     else (
+        #         '*vim.lsp.client*'
+        #         # HACK. TODO(justinmk): class/structure support in lua2dox
+        #         if 'lsp.client' == f'{fstem}.{name}'
+        #         else f'*vim.lsp.{fstem}.{name}()*')),
+        'module_override': {},
+        'append_only': [],
+    }
 }
 
 param_exclude = (
@@ -666,15 +708,6 @@ def extract_from_xml(filename, target, width):
         annotations = filter(None, map(lambda x: annotation_map.get(x),
                                        annotations.split()))
 
-        if not fmt_vimhelp:
-            pass
-        else:
-            fstem = '?'
-            if '.' in compoundname:
-                fstem = compoundname.split('.')[0]
-                fstem = CONFIG[target]['module_override'].get(fstem, fstem)
-            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name)
-
         params = []
         type_length = 0
 
@@ -695,17 +728,37 @@ def extract_from_xml(filename, target, width):
             if fmt_vimhelp and param_type.endswith('*'):
                 param_type = param_type.strip('* ')
                 param_name = '*' + param_name
+
             type_length = max(type_length, len(param_type))
             params.append((param_type, param_name))
+
+        # Handle Object Oriented style functions here.
+        #   We make sure they have "self" in the parameters,
+        #   and a parent function
+        if return_type.startswith('function') \
+                and len(return_type.split(' ')) >= 2 \
+                and any(x[1] == 'self' for x in params):
+            split_return = return_type.split(' ')
+            name = f'{split_return[1]}:{name}'
 
         c_args = []
         for param_type, param_name in params:
             c_args.append(('    ' if fmt_vimhelp else '') + (
                 '%s %s' % (param_type.ljust(type_length), param_name)).strip())
 
+        if not fmt_vimhelp:
+            pass
+        else:
+            fstem = '?'
+            if '.' in compoundname:
+                fstem = compoundname.split('.')[0]
+                fstem = CONFIG[target]['module_override'].get(fstem, fstem)
+            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name)
+
         prefix = '%s(' % name
         suffix = '%s)' % ', '.join('{%s}' % a[1] for a in params
                                    if a[0] not in ('void', 'Error'))
+
         if not fmt_vimhelp:
             c_decl = '%s %s(%s);' % (return_type, name, ', '.join(c_args))
             signature = prefix + suffix
@@ -774,7 +827,9 @@ def extract_from_xml(filename, target, width):
 
         xrefs.clear()
 
-    fns = collections.OrderedDict(sorted(fns.items()))
+    fns = collections.OrderedDict(sorted(
+        fns.items(),
+        key=lambda key_item_tuple: key_item_tuple[0].lower()))
     deprecated_fns = collections.OrderedDict(sorted(deprecated_fns.items()))
     return (fns, deprecated_fns)
 
@@ -1002,6 +1057,7 @@ def main(config, args):
                 title, helptag, section_doc = sections.pop(filename)
             except KeyError:
                 msg(f'warning: empty docs, skipping (target={target}): {filename}')
+                msg(f'    existing docs: {sections.keys()}')
                 continue
             i += 1
             if filename not in CONFIG[target]['append_only']:

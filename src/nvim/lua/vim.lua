@@ -400,7 +400,10 @@ do
                wfw = true;        winbl = true;      winblend = true;   winfixheight = true;
        winfixwidth = true; winhighlight = true;         winhl = true;           wrap = true;
   }
+
+  --@private
   local function new_buf_opt_accessor(bufnr)
+    --@private
     local function get(k)
       if window_options[k] then
         return a.nvim_err_writeln(k.." is a window option, not a buffer option")
@@ -410,23 +413,34 @@ do
       end
       return a.nvim_buf_get_option(bufnr or 0, k)
     end
+
+    --@private
     local function set(k, v)
       if window_options[k] then
         return a.nvim_err_writeln(k.." is a window option, not a buffer option")
       end
       return a.nvim_buf_set_option(bufnr or 0, k, v)
     end
+
     return make_meta_accessor(get, set)
   end
   vim.bo = new_buf_opt_accessor(nil)
+
+  --@private
   local function new_win_opt_accessor(winnr)
+
+    --@private
     local function get(k)
       if winnr == nil and type(k) == "number" then
         return new_win_opt_accessor(k)
       end
       return a.nvim_win_get_option(winnr or 0, k)
     end
-    local function set(k, v) return a.nvim_win_set_option(winnr or 0, k, v) end
+
+    --@private
+    local function set(k, v)
+      return a.nvim_win_set_option(winnr or 0, k, v)
+    end
     return make_meta_accessor(get, set)
   end
   vim.wo = new_win_opt_accessor(nil)
