@@ -754,8 +754,7 @@ end
 
 --- Converts any of `MarkedString` | `MarkedString[]` | `MarkupContent` into
 --- a list of lines containing valid markdown. Useful to populate the hover
---- window for `textDocument/hover`, for parsing the result of
---- `textDocument/signatureHelp`, and potentially others.
+--- window for `textDocument/hover`, and potentially others.
 ---
 --@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
 --@param contents (table, optional, default `{}`) List of strings to extend with converted lines
@@ -820,90 +819,86 @@ end
 
 local function build_signature_label_from_parameters(signature, active_parameter)
   if not signature.parameters or #signature.parameters == 0 then
-    return "_no parameters_"
+    return "<no parameters>", nil, nil
   end
 
   local label = ""
-  if type(signature.parameters[1].label) == "string" then
-    for i, param in ipairs(signature.parameters) do
-      if i > 1 then
-        label = label .. ", "
-      end
+  local from, to
+  for i, param in ipairs(signature.parameters) do
+    if i > 1 then
+      label = label .. ", "
+    end
 
-      if i == active_parameter + 1 then
-        label = label .. "**" .. param.label .. "**"
-      else
-        label = label .. param.label
+    local param_label = param.label
+    if type(param.label) == "table" and #param.label == 2 then
+      local pfrom = vim.str_byteindex(signature.label, param.label[1]+1, 1)
+      local pto = vim.str_byteindex(signature.label, param.label[2], 1)
+
+      if pfrom ~= nil and pto ~= nil then
+        param_label = signature.label:sub(pfrom, pto)
       end
     end
-  elseif #signature.parameters[1].label == 2 then
-    for i, param in ipairs(signature.parameters) do
-      if i > 1 then
-        label = label .. ", "
+
+    if i == active_parameter + 1 then
+      from = label:len()
+      to = from + param_label:len()
+    end
+
+    label = label .. param_label
+  end
+
+  return label, from + 1, to
+end
+
+local function signature_label(signature, active_parameter, parametersOnly)
+  local label, from, to
+  if parametersOnly then
+    label, from, to = build_signature_label_from_parameters(signature, active_parameter)
+  else
+    label = signature.label
+
+    if signature.parameters and #signature.parameters > 0 then
+      -- If the activeParameter is not inside the valid range, then clip it.
+      if active_parameter >= #signature.parameters then
+        active_parameter = 0
       end
+      local parameter = signature.parameters[active_parameter + 1]
+      if parameter then
+        --[=[
+        --Represents a parameter of a callable-signature. A parameter can
+        --have a label and a doc-comment.
+        interface ParameterInformation {
+          --The label of this parameter information.
+          --
+          --Either a string or an inclusive start and exclusive end offsets within its containing
+          --signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
+          --string representation as `Position` and `Range` does.
+          --
+          --*Note*: a label of type string should be a substring of its containing signature label.
+          --Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
+          label: string | [number, number];
+          --The human-readable doc-comment of this parameter. Will be shown
+          --in the UI but can be omitted.
+          documentation?: string | MarkupContent;
+        }
+        --]=]
 
-      local from = vim.str_byteindex(signature.label, param.label[1]+1, 1)
-      local to = vim.str_byteindex(signature.label, param.label[2], 1)
-
-      if from ~= nil and to ~= nil then
-        local param_label = signature.label:sub(from, to)
-        if i == active_parameter + 1 then
-          label = label .. "**" .. param_label .. "**"
-        else
-          label = label .. param_label
+        if type(parameter.label) == "string" then
+          from, to = parameter_range_in_signature(signature, active_parameter)
+        elseif #parameter.label == 2 then
+          from = vim.str_byteindex(signature.label, parameter.label[1]+1, 1)
+          to = vim.str_byteindex(signature.label, parameter.label[2], 1)
         end
       end
     end
   end
 
-  label, _ = label:gsub("\\n", " ")
-  return label
-end
-
-local function signature_label(signature, active_parameter, parametersOnly)
-  if parametersOnly then
-    return build_signature_label_from_parameters(signature, active_parameter)
-  end
-
-  local label = signature.label
-  local from, to
-  if signature.parameters and #signature.parameters > 0 then
-    -- If the activeParameter is not inside the valid range, then clip it.
-    if active_parameter >= #signature.parameters then
-      active_parameter = 0
-    end
-    local parameter = signature.parameters[active_parameter + 1]
-    if parameter then
-      --[=[
-      --Represents a parameter of a callable-signature. A parameter can
-      --have a label and a doc-comment.
-      interface ParameterInformation {
-        --The label of this parameter information.
-        --
-        --Either a string or an inclusive start and exclusive end offsets within its containing
-        --signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
-        --string representation as `Position` and `Range` does.
-        --
-        --*Note*: a label of type string should be a substring of its containing signature label.
-        --Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
-        label: string | [number, number];
-        --The human-readable doc-comment of this parameter. Will be shown
-        --in the UI but can be omitted.
-        documentation?: string | MarkupContent;
-      }
-      --]=]
-
-      if type(parameter.label) == "string" then
-        from, to = parameter_range_in_signature(signature, active_parameter)
-      elseif #parameter.label == 2 then
-        from = vim.str_byteindex(signature.label, parameter.label[1]+1, 1)
-        to = vim.str_byteindex(signature.label, parameter.label[2], 1)
-      end
-    end
-  end
 
   label, _ = label:gsub("\\n", " ")
-  return label, {from - 1, to}
+  if from ~= nil and to ~= nil then
+    return label, {from - 1, to}
+  end
+  return label, nil
 end
 
 --- Converts `textDocument/SignatureHelp` response to markdown lines.
@@ -911,7 +906,7 @@ end
 --@param signature_help Response of `textDocument/SignatureHelp`
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help, parametersOnly)
+function M.get_signature_help_with_highlights(signature_help, parametersOnly)
   if not signature_help.signatures then
     return
   end
@@ -934,18 +929,21 @@ function M.convert_signature_help_to_markdown_lines(signature_help, parametersOn
   local active_parameter = signature.activeParameter or signature_help.activeParameter or 0
   local label, active_offset = signature_label(signature, active_parameter, parametersOnly)
 
+  local hl_param = "LspSignatureParamActive"
+
   table.insert(contents, label)
-  table.insert(highlights, { line = 0, col = 0, opts = { end_line = 0, end_col = label:len(), hl_group = "TermCursor", priority = 200 } })
+  table.insert(highlights, { line = 0, col = 0, opts = { end_line = 0, end_col = label:len(), hl_group = "LspSignatureActive", priority = 200 } })
   if active_offset then
-    table.insert(highlights, { line = 0, col = active_offset[1], opts = { end_line = 0, end_col = active_offset[2], hl_group = "MatchParen", priority = 100 } })
+    table.insert(highlights, { line = 0, col = active_offset[1], opts = { end_line = 0, end_col = active_offset[2], hl_group = hl_param, priority = 100 } })
   end
 
   for i = 1,#signature_help.signatures,1 do
     if i ~= active_signature + 1 then
       label, active_offset = signature_label(signature_help.signatures[i], active_parameter, parametersOnly)
       table.insert(contents, label)
+      table.insert(highlights, { line = i, col = 0, opts = { end_line = i, end_col = label:len(), hl_group = "LspSignatureInactive", priority = 200 } })
       if active_offset then
-        table.insert(highlights, { line = i, col = active_offset[1], opts = { end_line = i, end_col = active_offset[2], hl_group = "MatchParen", priority = 100 } })
+        table.insert(highlights, { line = i, col = active_offset[1], opts = { end_line = i, end_col = active_offset[2], hl_group = hl_param, priority = 100 } })
       end
     end
   end

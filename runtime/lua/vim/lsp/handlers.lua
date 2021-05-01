@@ -345,18 +345,19 @@ function M.signature_help(_, method, result, _, bufnr, config)
     print('No signature help available')
     return
   end
-  local lines, highlights = util.convert_signature_help_to_markdown_lines(result, config.parametersOnly or false)
+  local lines, highlights = util.get_signature_help_with_highlights(result, config.parametersOnly or false)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
     print('No signature help available')
     return
   end
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
-  local filetype = api.nvim_buf_get_option(bufnr, 'filetype')
+  if syntax == "" then
+    syntax = api.nvim_buf_get_option(bufnr, 'filetype')
+  end
   local p_bufnr, _ = util.focusable_preview(method, function()
-    return lines, filetype, config
+    return lines, syntax, config
   end)
-  api.nvim_buf_set_option(p_bufnr, 'syntax', syntax)
 
   if highlights then
     for _, hi in ipairs(highlights) do
