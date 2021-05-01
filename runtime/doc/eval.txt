@@ -693,7 +693,7 @@ Example: >
 All expressions within one level are parsed from left to right.
 
 
-expr1							*expr1* *E109*
+expr1							*expr1* *trinary* *E109*
 -----
 
 expr2 ? expr1 : expr1

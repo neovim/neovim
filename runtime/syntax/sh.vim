@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Apr 14, 2020
-" Version:		190
+" Last Change:		Aug 10, 2020
+" Version:		193
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -20,8 +20,8 @@ if getline(1) =~ '\<ksh$'
 elseif getline(1) =~ '\<bash$'
  let b:is_bash      = 1
 elseif getline(1) =~ '\<dash$'
- let b:is_posix     = 1
-elseif !exists("g:is_kornshell") && !exists("g:is_bash") && !exists("g:is_posix") && !exists("g:is_sh")
+ let b:is_dash      = 1
+elseif !exists("g:is_kornshell") && !exists("g:is_bash") && !exists("g:is_posix") && !exists("g:is_sh") && !exists("g:is_dash")
  let s:shell = ""
  if executable("/bin/sh")
   let s:shell = resolve("/bin/sh")
@@ -33,7 +33,7 @@ elseif !exists("g:is_kornshell") && !exists("g:is_bash") && !exists("g:is_posix"
  elseif s:shell =~ 'bash$'
   let b:is_bash = 1
  elseif s:shell =~ 'dash$'
-  let b:is_posix = 1
+  let b:is_dash = 1
  endif
  unlet s:shell
 endif
@@ -45,7 +45,7 @@ endif
 " So, when the user sets "g:is_bash", "g:is_kornshell",
 " or "g:is_posix", a b:is_sh is converted into b:is_bash/b:is_kornshell,
 " respectively.
-if !exists("b:is_kornshell") && !exists("b:is_bash")
+if !exists("b:is_kornshell") && !exists("b:is_bash") && !exists("b:is_dash")
   if exists("g:is_posix") && !exists("g:is_kornshell")
    let g:is_kornshell= g:is_posix
   endif
@@ -59,9 +59,19 @@ if !exists("b:is_kornshell") && !exists("b:is_bash")
     if exists("b:is_sh")
       unlet b:is_sh
     endif
+  elseif exists("g:is_dash")
+    let b:is_dash= 1
+    if exists("b:is_sh")
+      unlet b:is_sh
+    endif
   else
     let b:is_sh= 1
   endif
+endif
+
+" if b:is_dash, set b:is_posix too
+if exists("b:is_dash")
+ let b:is_posix= 1
 endif
 
 " set up default g:sh_fold_enabled {{{1
@@ -133,7 +143,7 @@ syn cluster shCurlyList	contains=shNumber,shComma,shDeref,shDerefSimple,shDerefS
 " COMBAK: removing shEscape fromshDblQuoteList fails ksh04:43
 syn cluster shDblQuoteList	contains=shArithmetic,shCommandSub,shCommandSubBQ,shDeref,shDerefSimple,shPosnParm,shCtrlSeq,shSpecial,shSpecialDQ
 syn cluster shDerefList	contains=shDeref,shDerefSimple,shDerefVar,shDerefSpecial,shDerefWordError,shDerefPSR,shDerefPPS
-syn cluster shDerefVarList	contains=shDerefOff,shDerefOp,shDerefVarArray,shDerefOpError
+syn cluster shDerefVarList	contains=shDerefOffset,shDerefOp,shDerefVarArray,shDerefOpError
 syn cluster shEchoList	contains=shArithmetic,shCommandSub,shCommandSubBQ,shDeref,shDerefSimple,shEscape,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shCtrlSeq,shEchoQuote
 syn cluster shExprList1	contains=shCharClass,shNumber,shOperator,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shExpr,shDblBrace,shDeref,shDerefSimple,shCtrlSeq
 syn cluster shExprList2	contains=@shExprList1,@shCaseList,shTest
@@ -358,7 +368,7 @@ elseif !exists("g:sh_no_error")
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell	nextgroup=shSpecialStart,shSpecialSQ
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\.+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
-syn region  shDoubleQuote	matchgroup=shQuote start=+"+ matchgroup=shSpecial skip=+\\"+ end=+"+		contained	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
+syn region  shDoubleQuote	matchgroup=shQuote start=+"+ matchgroup=shSpecial skip=+\\"+ matchgroup=shQuote end=+"+		contained	contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
 syn match   shStringSpecial	"[^[:print:] \t]"			contained
 syn match   shStringSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"			nextgroup=shComment
 syn match   shSpecialSQ	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		contained	nextgroup=shBkslshSnglQuote,@shNoZSList
@@ -424,6 +434,9 @@ if exists("b:is_bash")
  syn region shSetList oneline matchgroup=shSet start="\<\%(set\|unset\)\>[/a-zA-Z_]\@!" end="\ze[;|#)]\|$"		matchgroup=shSetListDelim end="\ze[}|);&]" matchgroup=NONE end="\ze\s\+="	contains=@shIdList nextgroup=shComment
 elseif exists("b:is_kornshell") || exists("b:is_posix")
  syn match  shSet "^\s*set\ze\s\+$"
+ if exists("b:is_dash")
+  syn region shSetList oneline matchgroup=shSet start="\<\%(local\)\>\ze[/]\@!" end="$"	                 matchgroup=shSetListDelim end="\ze[}|);&]" matchgroup=NONE end="\ze\s\+[#=]"	contains=@shIdList
+ endif
  syn region shSetList oneline matchgroup=shSet start="\<\(export\)\>\ze[/]\@!" end="$"		matchgroup=shSetListDelim end="\ze[}|);&]" matchgroup=NONE end="\ze\s\+[#=]"	contains=@shIdList
  syn region shSetList oneline matchgroup=shSet start="\<\%(set\|unset\>\)\ze[/a-zA-Z_]\@!" end="\ze[;|#)]\|$"		matchgroup=shSetListDelim end="\ze[}|);&]" matchgroup=NONE end="\ze\s\+[#=]"	contains=@shIdList nextgroup=shComment
 else
@@ -471,14 +484,14 @@ endif
 " bash: ${!prefix*} and ${#parameter}: {{{1
 " ====================================
 if exists("b:is_bash")
- syn region shDeref	matchgroup=PreProc start="\${!" end="\*\=}"	contains=@shDerefList,shDerefOff
+ syn region shDeref	matchgroup=PreProc start="\${!" end="\*\=}"	contains=@shDerefList,shDerefOffset
  syn match  shDerefVar	contained	"{\@<=!\h\w*"		nextgroup=@shDerefVarList
 endif
 if exists("b:is_kornshell")
  syn match  shDerefVar	contained	"{\@<=!\h\w*[[:alnum:]_.]*"	nextgroup=@shDerefVarList
 endif
 
-syn match  shDerefSpecial	contained	"{\@<=[-*@?0]"		nextgroup=shDerefOp,shDerefOpError
+syn match  shDerefSpecial	contained	"{\@<=[-*@?0]"		nextgroup=shDerefOp,shDerefOffset,shDerefOpError
 syn match  shDerefSpecial	contained	"\({[#!]\)\@<=[[:alnum:]*@_]\+"	nextgroup=@shDerefVarList,shDerefOp
 syn match  shDerefVar	contained	"{\@<=\h\w*"		nextgroup=@shDerefVarList
 syn match  shDerefVar	contained	'\d'                            nextgroup=@shDerefVarList
@@ -502,6 +515,7 @@ syn region  shDerefVarArray   contained	matchgroup=shDeref start="\[" end="]"	co
 "        bash : ${parameter^^pattern} Case modification
 "        bash : ${parameter,pattern}  Case modification
 "        bash : ${parameter,,pattern} Case modification
+"        bash : ${@:start:qty}        display command line arguments from start to start+qty-1 (inferred)
 syn cluster shDerefPatternList	contains=shDerefPattern,shDerefString
 if !exists("g:sh_no_error")
  syn match shDerefOpError	contained	":[[:punct:]]"
@@ -522,17 +536,19 @@ syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!'+ 
 syn region shDerefString	contained	matchgroup=shDerefDelim start=+\%(\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial
 syn match  shDerefString	contained	"\\["']"	nextgroup=shDerefPattern
 
-if exists("b:is_bash")
- " bash : ${parameter:offset}
- " bash : ${parameter:offset:length}
- syn region shDerefOff	contained	start=':[^-=?+]' end='\ze:'	end='\ze}'	contains=shDeref,shDerefSimple,shDerefEscape	nextgroup=shDerefLen,shDeref,shDerefSimple
- syn region shDerefOff	contained	start=':\s-'	end='\ze:'	end='\ze}'	contains=shDeref,shDerefSimple,shDerefEscape	nextgroup=shDerefLen,shDeref,shDerefSimple
+if exists("b:is_bash") || exists("b:is_kornshell") || exists("b:is_posix")
+ " bash ksh posix : ${parameter:offset}
+ " bash ksh posix : ${parameter:offset:length}
+ syn region shDerefOffset	contained	start=':[^-=?+]' end='\ze:'	end='\ze}'	contains=shDeref,shDerefSimple,shDerefEscape	nextgroup=shDerefLen,shDeref,shDerefSimple
+ syn region shDerefOffset	contained	start=':\s-'	end='\ze:'	end='\ze}'	contains=shDeref,shDerefSimple,shDerefEscape	nextgroup=shDerefLen,shDeref,shDerefSimple
  syn match  shDerefLen	contained	":[^}]\+"	contains=shDeref,shDerefSimple,shArithmetic
+endif
 
+if exists("b:is_bash")
  " bash : ${parameter//pattern/string}
  " bash : ${parameter//pattern}
  syn match  shDerefPPS	contained	'/\{1,2}'	nextgroup=shDerefPPSleft
- syn region shDerefPPSleft	contained	start='.'	skip=@\%(\\\\\)*\\/@ matchgroup=shDerefOp	end='/' end='\ze}'	nextgroup=shDerefPPSright	contains=@shPPSLeftList
+ syn region shDerefPPSleft	contained	start='.'	skip=@\%(\\\\\)*\\/@ matchgroup=shDerefOp	end='/' end='\ze}' end='"'	nextgroup=shDerefPPSright	contains=@shPPSLeftList
  syn region shDerefPPSright	contained	start='.'	skip=@\%(\\\\\)\+@		end='\ze}'				contains=@shPPSRightList
 
  " bash : ${parameter/#substring/replacement}
@@ -675,8 +691,8 @@ if !exists("skip_sh_syntax_inits")
    hi def link bashSpecialVariables	shShellVariables
    hi def link bashStatement		shStatement
    hi def link shCharClass		shSpecial
-   hi def link shDerefOff		shDerefOp
-   hi def link shDerefLen		shDerefOff
+   hi def link shDerefOffset		shDerefOp
+   hi def link shDerefLen		shDerefOffset
  endif
  if exists("b:is_kornshell") || exists("b:is_posix")
    hi def link kshSpecialVariables	shShellVariables

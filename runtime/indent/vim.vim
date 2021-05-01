@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Jul 19
+" Last Change:	2020 Sep 27
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -10,7 +10,7 @@ endif
 let b:did_indent = 1
 
 setlocal indentexpr=GetVimIndent()
-setlocal indentkeys+==end,=else,=cat,=fina,=END,0\\,0=\"\\\ 
+setlocal indentkeys+==end,=},=else,=cat,=finall,=END,0\\,0=\"\\\ 
 setlocal indentkeys-=0#
 
 let b:undo_indent = "setl indentkeys< indentexpr<"
@@ -93,7 +93,7 @@ function GetVimIndentIntern()
   else
     " A line starting with :au does not increment/decrement indent.
     if prev_text !~ '^\s*au\%[tocmd]'
-      let i = match(prev_text, '\(^\||\)\s*\(if\|wh\%[ile]\|for\|try\|cat\%[ch]\|fina\%[lly]\|fu\%[nction]\|el\%[seif]\)\>')
+      let i = match(prev_text, '\(^\||\)\s*\(export\s\+\)\?\({\|\(if\|wh\%[ile]\|for\|try\|cat\%[ch]\|fina\|finall\%[y]\|fu\%[nction]\|def\|el\%[seif]\)\>\)')
       if i >= 0
 	let ind += shiftwidth()
 	if strpart(prev_text, i, 1) == '|' && has('syntax_items')
@@ -117,7 +117,7 @@ function GetVimIndentIntern()
 
   " Subtract a 'shiftwidth' on a :endif, :endwhile, :catch, :finally, :endtry,
   " :endfun, :else and :augroup END.
-  if cur_text =~ '^\s*\(ene\@!\|cat\|fina\|el\|aug\%[roup]\s\+[eE][nN][dD]\)'
+  if cur_text =~ '^\s*\(ene\@!\|}\|cat\|finall\|el\|aug\%[roup]\s\+[eE][nN][dD]\)'
     let ind = ind - shiftwidth()
   endif
 

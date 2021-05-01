@@ -353,6 +353,13 @@ ways to change this:
 3.  Docs for the default filetype plugins.		*ftplugin-docs*
 
 
+AWK							*ft-awk-plugin*
+
+Support for features specific to GNU Awk, like @include, can be enabled by
+setting: >
+	let g:awk_is_gawk = 1
+
+
 CHANGELOG						*ft-changelog-plugin*
 
 Allows for easy entrance of Changelog entries in Changelog files.  There are
