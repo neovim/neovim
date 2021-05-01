@@ -6335,6 +6335,13 @@ static win_T *get_snapshot_focus(int idx)
 int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage_T *tp, int no_display)
 {
   block_autocmds();
+  return switch_win_noblock(save_curwin, save_curtab, win, tp, no_display);
+}
+
+// As switch_win() but without blocking autocommands.
+int switch_win_noblock(win_T **save_curwin, tabpage_T **save_curtab,
+                       win_T *win, tabpage_T *tp, int no_display)
+{
   *save_curwin = curwin;
   if (tp != NULL) {
     *save_curtab = curtab;
@@ -6360,6 +6367,14 @@ int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage
 // triggered.
 void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
 {
+  restore_win_noblock(save_curwin, save_curtab, no_display);
+  unblock_autocmds();
+}
+
+// As restore_win() but without unblocking autocommands.
+void restore_win_noblock(win_T *save_curwin, tabpage_T *save_curtab,
+                         bool no_display)
+{
   if (save_curtab != NULL && valid_tabpage(save_curtab)) {
     if (no_display) {
       curtab->tp_firstwin = firstwin;
@@ -6374,7 +6389,6 @@ void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
     curwin = save_curwin;
     curbuf = curwin->w_buffer;
   }
-  unblock_autocmds();
 }
 
 /// Make "buf" the current buffer.

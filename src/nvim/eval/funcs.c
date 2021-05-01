@@ -2042,17 +2042,16 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   win_T *wp = win_id2wp(argvars);
-  win_T *save_curwin = curwin;
+  win_T *save_curwin;
+  tabpage_T *save_curtab;
 
   if (wp != NULL) {
-    curwin = wp;
-    curbuf = curwin->w_buffer;
-    check_cursor();
-    execute_common(argvars, rettv, fptr, 1);
-    if (win_valid(save_curwin)) {
-        curwin = save_curwin;
-        curbuf = curwin->w_buffer;
+    if (switch_win_noblock(&save_curwin, &save_curtab, wp, curtab, true) ==
+        OK) {
+      check_cursor();
+      execute_common(argvars, rettv, fptr, 1);
     }
+    restore_win_noblock(save_curwin, save_curtab, true);
   }
 }
 
