@@ -2093,7 +2093,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'emoji' 'emo'	boolean (default: on)
 			global
 	When on all Unicode emoji characters are considered to be full width.
-
+	This excludes "text emoji" characters, which are normally displayed as
+	single width.  Unfortunately there is no good specification for this
+	and it has been determined on trial-and-error basis.
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'
@@ -5903,8 +5905,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	N N   Printer page number.  (Only works in the 'printheader' option.)
 	l N   Line number.
 	L N   Number of lines in buffer.
-	c N   Column number.
-	v N   Virtual column number.
+	c N   Column number (byte index).
+	v N   Virtual column number (screen column).
 	V N   Virtual column number as -{num}.  Not displayed if equal to 'c'.
 	p N   Percentage through file in lines as in |CTRL-G|.
 	P S   Percentage through file of displayed window.  This is like the

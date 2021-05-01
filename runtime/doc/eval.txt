@@ -4638,7 +4638,7 @@ getmarklist([{expr}])					*getmarklist()*
 		local marks defined in buffer {expr}.  For the use of {expr},
 		see |bufname()|.
 
-		Each item in the retuned List is a |Dict| with the following:
+		Each item in the returned List is a |Dict| with the following:
 		    name - name of the mark prefixed by "'"
 		    pos - a |List| with the position of the mark:
 				[bufnum, lnum, col, off]

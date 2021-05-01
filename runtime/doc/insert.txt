@@ -1768,6 +1768,7 @@ a			Append text after the cursor [count] times.  If the
 
 							*A*
 A			Append text at the end of the line [count] times.
+			For using "A" in Visual block mode see |v_b_A|.
 
 <insert>	or				*i* *insert* *<Insert>*
 i			Insert text before the cursor [count] times.
@@ -1780,6 +1781,7 @@ I			Insert text before the first non-blank in the line
 			When the 'H' flag is present in 'cpoptions' and the
 			line only contains blanks, insert start just before
 			the last blank.
+			For using "I" in Visual block mode see |v_b_I|.
 
 							*gI*
 gI			Insert text in column 1 [count] times.

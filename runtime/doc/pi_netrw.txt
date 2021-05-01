@@ -437,9 +437,13 @@ settings are described below, in |netrw-browser-options|, and in
   *g:netrw_silent*	=0 : transfers done normally
 			=1 : transfers done silently
 
- *g:netrw_use_errorwindow* =1 : messages from netrw will use a separate one
+ *g:netrw_use_errorwindow* =2: messages from netrw will use a popup window
+			     Move the mouse and pause to remove the popup window.
+			     (default value if popup windows are availble)
+			 =1 : messages from netrw will use a separate one
 			      line window.  This window provides reliable
-			      delivery of messages. (default)
+			      delivery of messages.
+			     (default value if popup windows are not availble)
 			 =0 : messages from netrw will use echoerr ;
 			      messages don't always seem to show up this
 			      way, but one doesn't have to quit the window.
@@ -724,6 +728,8 @@ just as easily as if they were local files! >
 
 See |netrw-activate| for more on how to encourage your vim to use plugins
 such as netrw.
+
+For password-free use of scp:, see |netrw-ssh-hack|.
 
 
 ==============================================================================
@@ -1063,7 +1069,7 @@ QUICK HELP						*netrw-quickhelp* {{{2
 	  Reverse sorting order.........................|netrw-r|
 
 
-				*netrw-quickmap* *netrw-quickmaps*
+				*netrw-quickmap*  *netrw-quickmaps*
 QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 >
 	  ---			-----------------			----
@@ -1080,7 +1086,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   a	Cycles between normal display,                       |netrw-a|
 	    	hiding (suppress display of files matching g:netrw_list_hide)
 	    	and showing (display only files which match g:netrw_list_hide)
-	   c	Make browsing directory the current directory        |netrw-c|
+	   cd	Make browsing directory the current directory        |netrw-cd|
 	   C	Setting the editing window                           |netrw-C|
 	   d	Make a directory                                     |netrw-d|
 	   D	Attempt to remove the file(s)/directory(ies)         |netrw-D|
@@ -2098,7 +2104,7 @@ the two directories the same, use the "cd" map (type cd).  That map will
 set Vim's notion of the current directory to netrw's current browsing
 directory.
 
-*netrw-c* : This map's name has been changed from "c" to cd (see |netrw-cd|).
+|netrw-cd|: This map's name was changed from "c" to cd (see |netrw-cd|).
           This change was done to allow for |netrw-cb| and |netrw-cB| maps.
 
 Associated setting variable: |g:netrw_keepdir|
@@ -2752,7 +2758,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				=0 keep the current directory the same as the
 				   browsing directory.
 				The current browsing directory is contained in
-				b:netrw_curdir (also see |netrw-c|)
+				b:netrw_curdir (also see |netrw-cd|)
 
   *g:netrw_keepj*		="keepj" (default) netrw attempts to keep the
 				         |:jumps| table unaffected.
@@ -3053,7 +3059,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				(see |netrw-c-tab|).
 
   *g:netrw_xstrlen*		Controls how netrw computes string lengths,
-				including multibyte characters' string
+				including multi-byte characters' string
 				length. (thanks to N Weibull, T Mechelynck)
 				=0: uses Vim's built-in strlen()
 				=1: number of codepoints (Latin a + combining
@@ -3123,7 +3129,8 @@ a file using the local browser (by putting the cursor on it) and pressing
 
 Related topics:
  * To see what the current directory is, use |:pwd|
- * To make the currently browsed directory the current directory, see |netrw-c|
+ * To make the currently browsed directory the current directory, see
+   |netrw-cd|
  * To automatically make the currently browsed directory the current
    directory, see |g:netrw_keepdir|.
 
@@ -3798,9 +3805,15 @@ netrw:
 	   or
 	     http://vim.sourceforge.net/scripts/script.php?script_id=120
 
-	  Decho.vim is provided as a "vimball"; see |vimball-intro|.
+	  Decho.vim is provided as a "vimball"; see |vimball-intro|.  You
+	  should edit the Decho.vba.gz file and source it in: >
 
-	2. Edit the <netrw.vim> file by typing: >
+	  	vim Decho.vba.gz
+		:so %
+		:q
+<
+	2. To turn on debug tracing in netrw, then edit the <netrw.vim>
+	   file by typing: >
 
 		vim netrw.vim
 		:DechoOn
@@ -3822,14 +3835,34 @@ netrw:
 	   read/write your file over the network in a separate tab or
 	   server vim window.
 
-	   To save the file, use >
+	   Change the netrw.vimrc file to include the Decho plugin: >
+
+		set nocp
+		so $HOME/.vim/plugin/Decho.vim
+		so $HOME/.vim/plugin/netrwPlugin.vim
+<
+	   You should continue to run vim with >
+
+		vim -u netrw.vimrc --noplugins -i NONE [some path here]
+<
+	   to avoid entanglements with options and other plugins.
+
+	   To save the file: under linux, the output will be in a separate
+	   remote server window; in it, just save the file with >
+
+	   	:w! DBG
+
+<	   Under a vim that doesn't support clientserver, your debugging
+	   output will appear in another tab: >
 
 		:tabnext
 		:set bt=
 		:w! DBG
+<
+	   Furthermore, it'd be helpful if you would type >
 
-<	   Furthermore, it'd be helpful if you would type >
 		:Dsep <command>
+
 <	   where <command> is the command you're about to type next,
 	   thereby making it easier to associate which part of the
 	   debugging trace is due to which command.
@@ -3837,17 +3870,34 @@ netrw:
 	   Please send that information to <netrw.vim>'s maintainer along
 	   with the o/s you're using and the vim version that you're using
 	   (see |:version|)  (remove the embedded NOSPAM first) >
+
 		NcampObell@SdrPchip.AorgM-NOSPAM
 <
 ==============================================================================
 12. History						*netrw-history* {{{1
 
+	v170:	Mar 11, 2020	* (reported by Reiner Herrmann) netrw+tree
+				  would not hide with the ^\..* pattern
+				  correctly.
+				* (Marcin Szamotulski) NetrwOptionRestore
+				  did not restore options correctly that
+				  had a single quote in the option string.
+		Apr 13, 2020	* implemented error handling via popup
+				  windows (see |popup_beval()|)
+		Apr 30, 2020	* (reported by Manatsu Takahashi) while
+				  using Lexplore, a modified file could
+				  be overwritten.  Sol'n: will not overwrite,
+				  but will emit an |E37| (although one cannot
+				  add an ! to override)
+		Jun 07, 2020	* (reported by Jo Totland) repeatedly invoking
+				  :Lexplore and quitting it left unused
+				  hidden buffers.  Netrw will now set netrw
+				  buffers created by :Lexplore to |bh|=wipe.
 	v169:	Dec 20, 2019	* (reported by amkarthik) that netrw's x
 				  (|netrw-x|) would throw an error when
 				  attempting to open a local directory.
 	v168:	Dec 12, 2019	* scp timeout error message not reported,
 				  hopefully now fixed (Shane Xb Qian)
-
 	v167:	Nov 29, 2019	* netrw does a save&restore on @* and @+.
 				  That causes problems with the clipboard.
 				  Now restores occurs only if @* or @+ have
@@ -4305,4 +4355,4 @@ netrw:
 
 ==============================================================================
 Modelines: {{{1
- vim:tw=78:ts=8:noet:ft=help:norl:fdm=marker
+vim:tw=78:ts=8:ft=help:noet:norl:fdm=marker

@@ -1428,7 +1428,7 @@ The valid escape sequences are
 	<bang>	(See the '-bang' attribute) Expands to a ! if the
 		command was executed with a ! modifier, otherwise
 		expands to nothing.
-						*<mods>* *:command-modifiers*
+					*<mods>* *<q-mods>* *:command-modifiers*
 	<mods>  The command modifiers, if specified. Otherwise, expands to
 		nothing. Supported modifiers are |:aboveleft|, |:belowright|,
 		|:botright|, |:browse|, |:confirm|, |:hide|, |:keepalt|,
