@@ -337,18 +337,24 @@ M['textDocument/implementation'] = location_handler
 ---         - See |vim.api.nvim_open_win()|
 ---     - parametersOnly: (default=false)
 ---         - Display only a list of parameters
+---     - suppressPrint: (default=false)
+---         - Stop printing a message if no signature is available
 function M.signature_help(_, method, result, _, bufnr, config)
   config = config or {}
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
-    print('No signature help available')
+    if not config.suppressPrint then
+      print('No signature help available')
+    end
     return
   end
   local lines, highlights = util.get_signature_help_with_highlights(result, config.parametersOnly or false)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
-    print('No signature help available')
+    if not config.suppressPrint then
+      print('No signature help available')
+    end
     return
   end
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
