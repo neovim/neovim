@@ -742,15 +742,15 @@ void sign_mark_adjust(
     next = sign->se_next;
     new_lnum = sign->se_lnum;
     if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
-      if (amount == MAXLNUM && (!is_fixed || signcol >= 2)) {
+      if (amount != MAXLNUM) {
+        new_lnum += amount;
+      } else if (!is_fixed || signcol >= 2) {
         *lastp = next;
         if (next) {
           next->se_prev = last;
         }
         xfree(sign);
         continue;
-      } else {
-        new_lnum += amount;
       }
     } else if (sign->se_lnum > line2) {
       new_lnum += amount_after;
