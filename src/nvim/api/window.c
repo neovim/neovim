@@ -381,7 +381,7 @@ Integer nvim_win_get_number(Window window, Error *err)
   }
 
   int tabnr;
-  win_get_tabwin(window, &tabnr, &rv);
+  win_get_tabwin(win->handle, &tabnr, &rv);
 
   return rv;
 }
