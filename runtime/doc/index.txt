@@ -771,10 +771,10 @@ tag		char	      note action in Normal mode	~
 				   lines down
 |gk|		gk		1  like "k", but when 'wrap' on go N screen
 				   lines up
-|gn|		gn	      1,2  find the next match with the last used
-				   search pattern and Visually select it
 |gm|		gm		1  go to character at middle of the screenline
 |gM|		gM		1  go to character at middle of the text line
+|gn|		gn	      1,2  find the next match with the last used
+				   search pattern and Visually select it
 |go|		go		1  cursor to byte N in the buffer
 |gp|		["x]gp		2  put the text [from register x] after the
 				   cursor N times, leave the cursor after it

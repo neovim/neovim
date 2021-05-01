@@ -1858,7 +1858,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"x" delete each combining character on its own.  When it is off (the
 	default) the character along with its combining characters are
 	deleted.
-	Note: When 'delcombine' is set "xx" may work different from "2x"!
+	Note: When 'delcombine' is set "xx" may work differently from "2x"!
 
 	This is useful for Arabic, Hebrew and many other languages where one
 	may have combining characters overtop of base characters, and want
@@ -3554,7 +3554,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    characters.  Example: "abc;ABC"
 	Example: "aA,fgh;FGH,cCdDeE"
 	Special characters need to be preceded with a backslash.  These are
-	";", ',' and backslash itself.
+	";", ',', '"', '|' and backslash itself.
 
 	This will allow you to activate vim actions without having to switch
 	back and forth between the languages.  Your language characters will

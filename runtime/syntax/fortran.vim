@@ -1,18 +1,17 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	102
-" Last Change:	2020 Apr 20
-" Patched By:	Eisuke Kawashima
+" Version:	(v103) 2020 October 07
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
-"  Version 0.1 for Fortran 95 was created (April 2000) by Ajit Thakkar from the
-"  Fortran 77 syntax file by Mario Eusebio and Preben Guldberg.
+"  Version 0.1 for Fortran 95 was created in April 2000 by Ajit Thakkar from an
+"  older Fortran 77 syntax file by Mario Eusebio and Preben Guldberg.
 "  Since then, useful suggestions and contributions have been made, in order, by:
 "  Andrej Panjkov, Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
 "  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, Matt Thompson, Jan Hermann,
-"  Stefano Zaghi, Vishnu V. Krishnan, Judicaël Grasset, and Takuma Yoshida
+"  Stefano Zaghi, Vishnu V. Krishnan, Judicaël Grasset, Takuma Yoshida,
+"  Eisuke Kawashima, and André Chalella.`
 
 if exists("b:current_syntax")
   finish
@@ -102,6 +101,8 @@ syn match fortranUnitHeader	"\<end\>"
 syn match fortranType		"\<character\>"
 syn match fortranType		"\<complex\>"
 syn match fortranType		"\<integer\>"
+syn match fortranType		"\<real\>"
+syn match fortranType		"\<logical\>"
 syn keyword fortranType		intrinsic
 syn match fortranType		"\<implicit\>"
 syn keyword fortranStructure	dimension
@@ -149,11 +150,9 @@ syn keyword fortranExtraIntrinsic	algama cdabs cdcos cdexp cdlog cdsin cdsqrt cq
 syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 char cmplx conjg cos cosh exp ichar index int log log10 max min nint sign sin sinh sqrt tan tanh
 syn match fortranIntrinsic	"\<len\s*[(,]"me=s+3
 syn match fortranIntrinsic	"\<real\s*("me=s+4
-syn match fortranType		"\<implicit\s\+real"
-syn match fortranType		"^\s*real\>"
 syn match fortranIntrinsic	"\<logical\s*("me=s+7
-syn match fortranType		"\<implicit\s\+logical"
-syn match fortranType		"^\s*logical\>"
+syn match fortranType           "\<implicit\s\+real\>"
+syn match fortranType           "\<implicit\s\+logical\>"
 
 "Numbers of various sorts
 " Integers
@@ -168,6 +167,12 @@ syn match fortranFloatIll	display	"\<\d\+\.\([deq][-+]\=\d\+\)\=\(_\a\w*\)\=\>"
 syn match fortranFloatIll	display	"\<\d\+\.\d\+\([dq][-+]\=\d\+\)\=\(_\a\w*\)\=\>"
 " floating point number
 syn match fortranFloat	display	"\<\d\+\.\d\+\(e[-+]\=\d\+\)\=\(_\a\w*\)\=\>"
+" binary number
+syn match fortranBinary	display	"b["'][01]\+["']"
+" octal number
+syn match fortranOctal	display	"o["'][0-7]\+["']"
+" hexadecimal number
+syn match fortranHex	display	"z["'][0-9A-F]\+["']"
 " Numbers in formats
 syn match fortranFormatSpec	display	"\d*f\d\+\.\d\+"
 syn match fortranFormatSpec	display	"\d*e[sn]\=\d\+\.\d\+\(e\d+\>\)\="
@@ -215,7 +220,6 @@ syn match fortranUnitHeader	"\<submodule\>"
 syn keyword fortranUnitHeader	use only contains
 syn keyword fortranUnitHeader	result operator assignment
 syn match fortranUnitHeader	"\<interface\>"
-syn match fortranUnitHeader	"\<recursive\>"
 syn keyword fortranKeyword	allocate deallocate nullify cycle exit
 syn match fortranConditional	"\<select\>"
 syn keyword fortranConditional	case default where elsewhere
@@ -274,6 +278,7 @@ syn keyword fortranIntrinsic	null cpu_time
 syn match fortranType			"\<elemental\>"
 syn match fortranType			"\<pure\>"
 syn match fortranType			"\<impure\>"
+syn match fortranType           	"\<recursive\>"
 if exists("fortran_more_precise")
   syn match fortranConstructName "\(\<end\s*forall\s\+\)\@15<=\a\w*\>"
 endif
@@ -453,6 +458,9 @@ hi def link fortranTodo		Todo
 hi def link fortranContinueMark	Special
 hi def link fortranString	String
 hi def link fortranNumber	Number
+hi def link fortranBinary	Number
+hi def link fortranOctal	Number
+hi def link fortranHex  	Number
 hi def link fortranOperator	Operator
 hi def link fortranBoolean	Boolean
 hi def link fortranLabelError	Error

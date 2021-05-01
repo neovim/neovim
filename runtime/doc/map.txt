@@ -230,7 +230,13 @@ text before the cursor and start omni completion when some condition is met.
 For abbreviations |v:char| is set to the character that was typed to trigger
 the abbreviation.  You can use this to decide how to expand the {lhs}.  You
 should not either insert or change the v:char.
- 
+
+In case you want the mapping to not do anything, you can have the expression
+evaluate to an empty string.  If something changed that requires Vim to
+go through the main loop (e.g. to update the display), return "\<Ignore>".
+This is similar to "nothing" but makes Vim return from the loop that waits for
+input.
+
 Also, keep in mind that the expression may be evaluated when looking for
 typeahead, before the previous command has been executed.  For example: >
 	func StoreColumn()

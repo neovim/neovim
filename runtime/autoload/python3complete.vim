@@ -1,7 +1,8 @@
 "python3complete.vim - Omni Completion for python
-" Maintainer: Aaron Griffin <aaronmgriffin@gmail.com>
+" Maintainer: <vacancy>
+" Previous Maintainer: Aaron Griffin <aaronmgriffin@gmail.com>
 " Version: 0.9
-" Last Updated: 18 Jun 2009 (small fix 2015 Sep 14 from Debian)
+" Last Updated: 2020 Oct 9
 "
 " Roland Puntaier: this file contains adaptations for python3 and is parallel to pythoncomplete.vim
 "
@@ -83,7 +84,7 @@ function! python3complete#Complete(findstart, base)
                 break
             endif
         endwhile
-        execute "py3 vimpy3complete('" . cword . "', '" . a:base . "')"
+	execute "py3 vimpy3complete('" . escape(cword, "'") . "', '" . escape(a:base, "'") . "')"
         return g:python3complete_completions
     endif
 endfunction

@@ -61,7 +61,7 @@ syn match cssClassName "\.-\=[A-Za-z_][A-Za-z0-9_-]*" contains=cssClassNameDot
 syn match cssClassNameDot contained '\.'
 
 try
-syn match cssIdentifier "#[A-Za-zÀ-ÿ_@][A-Za-zÀ-ÿ0-9_@-]*"
+syn match cssIdentifier "#[A-Za-zÃ€-Ã¿_@][A-Za-zÃ€-Ã¿0-9_@-]*"
 catch /^.*/
 syn match cssIdentifier "#[A-Za-z_@][A-Za-z0-9_@-]*"
 endtry
@@ -649,5 +649,5 @@ endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
-" vim: ts=8
 
+" vim: ts=8

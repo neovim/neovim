@@ -1,13 +1,13 @@
 " Vim settings file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, 77, 66)
-" Version:	0.50
-" Last Change:	2020 Apr 20
-" Patched By:	Eisuke Kawashima
+" Version:	(v52) 2020 October 07
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-plugin from Vim
 " Credits:
-" Useful suggestions were made by Stefano Zacchiroli, Hendrik Merx, Ben
-" Fritz, and David Barnett.
+"  Version 0.1 was created in September 2000 by Ajit Thakkar.
+"  Since then, useful suggestions and contributions have been made, in order, by:
+"  Stefano Zacchiroli, Hendrik Merx, Ben Fritz, David Barnett, Eisuke Kawashima,
+"  and Doug Kearns.
 
 " Only do these settings when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -119,7 +119,7 @@ if !exists("b:match_words")
 endif
 
 " File filters for :browse e
-if has("gui_win32") && !exists("b:browsefilter")
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "Fortran Files (*.f;*.for;*.f77;*.f90;*.f95;*.f03;*.f08;*.fpp;*.ftn)\t*.f;*.for;*.f77;*.f90;*.f95;*.f03;*.f08;*.fpp;*.ftn\n" .
     \ "All Files (*.*)\t*.*\n"
 endif
