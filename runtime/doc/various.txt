@@ -134,15 +134,17 @@ g8			Print the hex values of the bytes used in the
 				quit
 <
 							*:z* *E144*
-:{range}z[+-^.=]{count}	Display several lines of text surrounding the line
-			specified with {range}, or around the current line
-			if there is no {range}.  If there is a {count}, that's
-			how many lines you'll see; if there is no {count} and
-			only one window then twice the value of the 'scroll'
-			option is used, otherwise the current window height
-			minus 3 is used.
+:[range]z[+-^.=][count]	Display several lines of text surrounding the line
+			specified with [range], or around the current line
+			if there is no [range].
 
-			If there is a {count} the 'window' option is set to
+			If there is a [count], that's how many lines you'll
+			see; if there is no [count] and only one window then
+			twice the value of the 'scroll' option is used,
+			otherwise the current window height minus 3 is used.
+			This is the value of "scr" in the table below.
+
+			If there is a [count] the 'window' option is set to
 			its value.
 
 			:z can be used either alone or followed by any of
@@ -160,7 +162,7 @@ g8			Print the hex values of the bytes used in the
 			If the mark is "=", a line of dashes is printed
 			around the current line.
 
-:{range}z#[+-^.=]{count}				*:z#*
+:[range]z#[+-^.=][count]				*:z#*
 			Like ":z", but number the lines.
 			{not in all versions of Vi, not with these arguments}
 

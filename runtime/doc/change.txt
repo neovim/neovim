@@ -1785,6 +1785,8 @@ found here: |sort()|, |uniq()|.
 			When /{pattern}/ is specified and there is no [r] flag
 			the text matched with {pattern} is skipped, so that
 			you sort on what comes after the match.
+			'ignorecase' applies to the pattern, but 'smartcase'
+			is not used.
 			Instead of the slash any non-letter can be used.
 			For example, to sort on the second comma-separated
 			field: >

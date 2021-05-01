@@ -2863,8 +2863,8 @@ byteidx({expr}, {nr})					*byteidx()*
 		Return byte index of the {nr}'th character in the string
 		{expr}.  Use zero for the first character, it then returns
 		zero.
-		This function is only useful when there are multibyte
-		characters, otherwise the returned value is equal to {nr}.
+		If there are no multibyte characters the returned value is
+		equal to {nr}.
 		Composing characters are not counted separately, their byte
 		length is added to the preceding base character.  See
 		|byteidxcomp()| below for counting composing characters
@@ -7189,11 +7189,16 @@ search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 
 		'ignorecase', 'smartcase' and 'magic' are used.
 
-		When the 'z' flag is not given, searching always starts in
-		column zero and then matches before the cursor are skipped.
-		When the 'c' flag is present in 'cpo' the next search starts
-		after the match.  Without the 'c' flag the next search starts
-		one column further.
+		When the 'z' flag is not given, forward searching always
+		starts in column zero and then matches before the cursor are
+		skipped.  When the 'c' flag is present in 'cpo' the next
+		search starts after the match.  Without the 'c' flag the next
+		search starts one column further.  This matters for
+		overlapping matches.
+		When searching backwards and the 'z' flag is given then the
+		search starts in column zero, thus no match in the current
+		line will be found (unless wrapping around the end of the
+		file).
 
 		When the {stopline} argument is given then the search stops
 		after searching this line.  This is useful to restrict the

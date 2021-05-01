@@ -306,14 +306,17 @@ preserved, so tricks with |gv| are not needed.  Commands can be invoked
 directly in cmdline-mode (which would otherwise require timer hacks).
 
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
-command: it is executed as if an (unrestricted) |autocmd| was invoked or an
-async event event was processed.
+command: it is executed as if an (unrestricted) |autocommand| was invoked
+or an async event event was processed.
 
 Note:
 - Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
   |CmdlineEnter| and |CmdlineLeave| events. This helps performance.
 - For the same reason, |keycodes| like <C-R><C-W> are interpreted as plain,
   unmapped keys.
+- The command is not echo'ed, no need for <silent>.
+- In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
+  Visual area, the cursor is at the other end.
 - In select-mode, |:map| and |:vmap| command mappings are executed in
   visual-mode.  Use |:smap| to handle select-mode.
 
@@ -1122,9 +1125,9 @@ Otherwise, using "<SID>" outside of a script context is an error.
 
 If you need to get the script number to use in a complicated script, you can
 use this function: >
-	function s:SID()
-	  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
-	endfun
+	func s:ScriptNumber()
+	  return matchstr(expand('<SID>'), '<SNR>\zs\d\+\ze_')
+	endfunc
 
 The "<SNR>" will be shown when listing functions and mappings.  This is useful
 to find out what they are defined to.

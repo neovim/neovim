@@ -2974,7 +2974,7 @@ vimrc file: >
 (Adapted from the html.vim help text by Claudio Fleiner <claudio@fleiner.com>)
 
 
-		*ft-posix-synax* *ft-dash-syntax*
+		*ft-posix-syntax* *ft-dash-syntax*
 SH		*sh.vim*  *ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*
 
 This covers syntax highlighting for the older Unix (Bourne) sh, and newer
