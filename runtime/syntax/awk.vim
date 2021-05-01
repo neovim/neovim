@@ -1,7 +1,8 @@
 " Vim syntax file
-" Language:	awk, nawk, gawk, mawk
-" Maintainer:	Antonio Colombo <azc100@gmail.com>
-" Last Change:	2020 Aug 18
+" Language:		awk, nawk, gawk, mawk
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Antonio Colombo <azc100@gmail.com>
+" Last Change:		2020 Aug 18
 
 " AWK  ref. is: Alfred V. Aho, Brian W. Kernighan, Peter J. Weinberger
 " The AWK Programming Language, Addison-Wesley, 1988

@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Oct 23
+" Last Change:	2020 Oct 27
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -803,7 +803,7 @@ if has("digraphs")
 endif
 call append("$", "tildeop\tthe \"~\" command behaves like an operator")
 call <SID>BinOptionG("top", &top)
-call <SID>AddOption("operatorfunc", "function called for the \"g@\"  operator")
+call <SID>AddOption("operatorfunc", "function called for the \"g@\" operator")
 call <SID>OptionG("opfunc", &opfunc)
 call append("$", "showmatch\twhen inserting a bracket, briefly jump to its match")
 call <SID>BinOptionG("sm", &sm)
@@ -1201,11 +1201,10 @@ endif
 
 if has("multi_byte")
   call <SID>Header("multi-byte characters")
-  call append("$", "encoding\tcharacter encoding used in Vim: \"latin1\", \"utf-8\"")
-  call append("$", "\t\"euc-jp\", \"big5\", etc.")
+  call <SID>AddOption("encoding", "character encoding used in Nvim: \"utf-8\"")
   call <SID>OptionG("enc", &enc)
   call append("$", "fileencoding\tcharacter encoding for the current file")
-  call append("$", "\t(local to buffer)")
+  call append("$", "\t" .. s:local_to_buffer)
   call <SID>OptionL("fenc")
   call append("$", "fileencodings\tautomatically detected character encodings")
   call <SID>OptionG("fencs", &fencs)
