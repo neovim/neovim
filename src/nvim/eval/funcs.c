@@ -2047,12 +2047,18 @@ static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tabpage_T *save_curtab;
 
   if (wp != NULL && tp != NULL) {
+    pos_T curpos = wp->w_cursor;
     if (switch_win_noblock(&save_curwin, &save_curtab, wp, tp, true) ==
         OK) {
       check_cursor();
       execute_common(argvars, rettv, fptr, 1);
     }
     restore_win_noblock(save_curwin, save_curtab, true);
+
+    // Update the status line if the cursor moved.
+    if (win_valid(wp) && !equalpos(curpos, wp->w_cursor)) {
+        wp->w_redr_status = true;
+    }
   }
 }
 

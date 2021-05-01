@@ -1,5 +1,7 @@
 " test execute()
 
+source view_util.vim
+
 func NestedEval()
   let nested = execute('echo "nested\nlines"')
   echo 'got: "' . nested . '"'
@@ -102,6 +104,24 @@ func Test_win_execute()
   endif
 
   call win_gotoid(otherwin)
+  bwipe!
+endfunc
+
+func Test_win_execute_update_ruler()
+  enew
+  call setline(1, range(500))
+  20
+  split
+  let winid = win_getid()
+  set ruler
+  wincmd w
+  let height = winheight(winid)
+  redraw
+  call assert_match('20,1', Screenline(height + 1))
+  let line = win_execute(winid, 'call cursor(100, 1)')
+  redraw
+  call assert_match('100,1', Screenline(height + 1))
+
   bwipe!
 endfunc
 
