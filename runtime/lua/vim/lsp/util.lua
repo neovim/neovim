@@ -944,6 +944,9 @@ function M.jump_to_location(location)
   local from = {from_bufnr, vim.fn.line('.'), vim.fn.col('.'), 0}
   local item = {tagname=vim.fn.expand('<cword>'), from=from}
 
+  -- Save position in jumplist
+  vim.cmd("mark '")
+
   --- Jump to new location (adjusting for UTF-16 encoding of characters)
   local bufnr = vim.uri_to_bufnr(uri)
   api.nvim_set_current_buf(bufnr)
