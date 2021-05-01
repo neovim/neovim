@@ -60,9 +60,9 @@ with the redo command.  If you make a new change after the undo command,
 the redo will not be possible anymore.
 
 'u' included, the Vi-compatible way:
-The undo command undoes the previous change, and also the previous undo command.
-The redo command repeats the previous undo command.  It does NOT repeat a
-change command, use "." for that.
+The undo command undoes the previous change, and also the previous undo
+command.  The redo command repeats the previous undo command.  It does NOT
+repeat a change command, use "." for that.
 
 Examples	Vim way			Vi-compatible way	~
 "uu"		two times undo		no-op
@@ -98,7 +98,7 @@ change again.  But you can do something like this: >
 
 	:undojoin | delete
 
-After this an "u" command will undo the delete command and the previous
+After this a "u" command will undo the delete command and the previous
 change.
 
 To do the opposite, break a change into two undo blocks, in Insert mode use

@@ -4242,9 +4242,9 @@ getbufvar({expr}, {varname} [, {def}])				*getbufvar()*
 		The result is the value of option or local buffer variable
 		{varname} in buffer {expr}.  Note that the name without "b:"
 		must be used.
-		When {varname} is empty returns a dictionary with all the
+		When {varname} is empty returns a |Dictionary| with all the
 		buffer-local variables.
-		When {varname} is equal to "&" returns a dictionary with all
+		When {varname} is equal to "&" returns a |Dictionary| with all
 		the buffer-local options.
 		Otherwise, when {varname} starts with "&" returns the value of
 		a buffer-local option.
@@ -4624,8 +4624,9 @@ getloclist({nr},[, {what}])				*getloclist()*
 		field is applicable only when called from a location list
 		window. See |location-list-file-window| for more details.
 
-		Returns an empty Dictionary if there is no location list for
-		the window {nr} or the window is not present.
+		Returns a |Dictionary| with default values if there is no
+		location list for the window {nr}.
+		Returns an empty Dictionary if window {nr} does not exist.
 
 		Examples (See also |getqflist-examples|): >
 			:echo getloclist(3, {'all': 0})
@@ -4701,7 +4702,7 @@ getpos({expr})	Get the position for {expr}.  For possible values of {expr}
 
 
 getqflist([{what}])					*getqflist()*
-		Returns a list with all the current quickfix errors.  Each
+		Returns a |List| with all the current quickfix errors.  Each
 		list item is a dictionary with these entries:
 			bufnr	number of buffer that has the file name, use
 				bufname() to get the name
@@ -8703,7 +8704,7 @@ tagfiles()	Returns a |List| with the file names used to search for tags
 
 
 taglist({expr} [, {filename}])				*taglist()*
-		Returns a list of tags matching the regular expression {expr}.
+		Returns a |List| of tags matching the regular expression {expr}.
 
 		If {filename} is passed it is used to prioritize the results
 		in the same way that |:tselect| does. See |tag-priority|.
@@ -9097,7 +9098,7 @@ wildmenumode()					*wildmenumode()*
 
 
 win_findbuf({bufnr})					*win_findbuf()*
-		Returns a list with |window-ID|s for windows that contain
+		Returns a |List| with |window-ID|s for windows that contain
 		buffer {bufnr}.  When there is none the list is empty.
 
 win_getid([{win} [, {tab}]])				*win_getid()*

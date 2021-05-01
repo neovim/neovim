@@ -351,8 +351,8 @@ For starters, read chapter 27 of the user manual |usr_27.txt|.
 						*/atom*
 5. An atom can be one of a long list of items.  Many atoms match one character
    in the text.  It is often an ordinary character or a character class.
-   Braces can be used to make a pattern into an atom.  The "\z(\)" construct
-   is only for syntax highlighting.
+   Parentheses can be used to make a pattern into an atom.  The "\z(\)"
+   construct is only for syntax highlighting.
 
    atom    ::=	    ordinary-atom		|/ordinary-atom|
 		or  \( pattern \)		|/\(|
@@ -666,7 +666,7 @@ overview.
 
 	Note that using "\&" works the same as using "\@=": "foo\&.." is the
 	same as "\(foo\)\@=..".  But using "\&" is easier, you don't need the
-	braces.
+	parentheses.
 
 
 							*/\@!*
@@ -1058,8 +1058,8 @@ x	A single character, with no special meaning, matches itself
 
 []	(with 'nomagic': \[])		*/[]* */\[]* */\_[]* */collection*
 \_[]
-	A collection.  This is a sequence of characters enclosed in brackets.
-	It matches any single character in the collection.
+	A collection.  This is a sequence of characters enclosed in square
+	brackets.  It matches any single character in the collection.
 	Example		matches ~
 	[xyz]		any 'x', 'y' or 'z'
 	[a-zA-Z]$	any alphabetic character at the end of a line
@@ -1118,11 +1118,12 @@ x	A single character, with no special meaning, matches itself
 *[:ident:]*	  [:ident:]		identifier character (same as "\i")
 *[:keyword:]*	  [:keyword:]		keyword character (same as "\k")
 *[:fname:]*	  [:fname:]		file name character (same as "\f")
-	  The brackets in character class expressions are additional to the
-	  brackets delimiting a collection.  For example, the following is a
-	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,
-	  a list of at least one character, each of which is either '-', '.',
-	  '/', alphabetic, numeric, '_' or '~'.
+	  The square brackets in character class expressions are additional to
+	  the square brackets delimiting a collection.  For example, the
+	  following is a plausible pattern for a UNIX filename:
+	  "[-./[:alnum:]_~]\+".  That is, a list of at least one character,
+	  each of which is either '-', '.', '/', alphabetic, numeric, '_' or
+	  '~'.
 	  These items only work for 8-bit characters, except [:lower:] and
 	  [:upper:] also work for multibyte characters when using the new
 	  regexp engine.  See |two-engines|.  In the future these items may

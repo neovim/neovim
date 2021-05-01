@@ -925,7 +925,7 @@ SELECTEMPTY, ... The indentation preceding the begin/end keywords has to
 match (spaces are not considered equal to a tab). >
 	let baan_fold_sql=1
 Note: Block folding can result in many small folds. It is suggested to |:set|
-the options 'foldminlines' and 'foldnestmax' in |init.vim| or use |:setlocal| 
+the options 'foldminlines' and 'foldnestmax' in |init.vim| or use |:setlocal|
 in .../after/syntax/baan.vim (see |after-directory|). Eg: >
 	set foldminlines=5
 	set foldnestmax=6
@@ -3151,6 +3151,7 @@ redrawing can become slow.
 
 
 TEX				*tex.vim* *ft-tex-syntax* *latex-syntax*
+				*syntax-tex* *syntax-latex*
 
 			Tex Contents~
 	Tex: Want Syntax Folding?			|tex-folding|
@@ -3167,6 +3168,7 @@ TEX				*tex.vim* *ft-tex-syntax* *latex-syntax*
 	Tex: Selective Conceal Mode			|g:tex_conceal|
 	Tex: Controlling iskeyword			|g:tex_isk|
 	Tex: Fine Subscript and Superscript Control	|tex-supersub|
+	Tex: Match Check Control			|tex-matchcheck|
 
 				*tex-folding* *g:tex_fold_enabled*
  Tex: Want Syntax Folding? ~
@@ -3387,9 +3389,25 @@ syntax highlighting script handles this with the following logic:
 	For example, I use Luxi Mono Bold; it doesn't support subscript
 	characters for "hklmnpst", so I put >
 		let g:tex_subscripts= "[0-9aeijoruvx,+-/().]"
-<	in ~/.config/nvim/ftplugin/tex/tex.vim in order to avoid having 
+<	in ~/.config/nvim/ftplugin/tex/tex.vim in order to avoid having
 	inscrutable utf-8 glyphs appear.
 
+					*tex-matchcheck* *g:tex_matchcheck*
+ Tex: Match Check Control~
+
+	Sometimes one actually wants mismatched parentheses, square braces,
+	and or curly braces; for example, \text{(1,10] is a range from but
+	not including 1 to and including 10}.  This wish, of course, conflicts
+	with the desire to provide delimiter mismatch detection.  To
+	accommodate these conflicting goals, syntax/tex.vim provides >
+		g:tex_matchcheck = '[({[]'
+<	which is shown along with its default setting.  So, if one doesn't
+	want [] and () to be checked for mismatches, try using >
+		let g:tex_matchcheck= '[{}]'
+<	If you don't want matching to occur inside bold and italicized
+	regions, >
+		let g:tex_excludematcher= 1
+<	will prevent the texMatcher group from being included in those regions.
 
 TF						*tf.vim* *ft-tf-syntax*
 
@@ -5073,9 +5091,9 @@ MsgSeparator	Separator for scrolled messages, `msgsep` flag of 'display'
 							*hl-MoreMsg*
 MoreMsg		|more-prompt|
 							*hl-NonText*
-NonText		'@' at the end of the window, characters from 'showbreak' 
-		and other characters that do not really exist in the text 
-		(e.g., ">" displayed when a double-wide character doesn't 
+NonText		'@' at the end of the window, characters from 'showbreak'
+		and other characters that do not really exist in the text
+		(e.g., ">" displayed when a double-wide character doesn't
 		fit at the end of the line). See also |hl-EndOfBuffer|.
 							*hl-Normal*
 Normal		normal text
@@ -5268,7 +5286,7 @@ script file to set these colors.  Put this file in a directory in
 the default colors.  This way these colors will be used after the ":syntax
 reset" command.
 
-For Unix you can use the file ~/.config/nvim/after/syntax/syncolor.vim.  
+For Unix you can use the file ~/.config/nvim/after/syntax/syncolor.vim.
 Example: >
 
 	if &background == "light"

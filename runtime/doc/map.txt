@@ -798,7 +798,7 @@ otherwise it is interpreted as two key presses:
 1.11 MAPPING AN OPERATOR				*:map-operator*
 
 An operator is used before a {motion} command.  To define your own operator
-you must create mapping that first sets the 'operatorfunc' option and then
+you must create a mapping that first sets the 'operatorfunc' option and then
 invoke the |g@| operator.  After the user types the {motion} command the
 specified function will be called.
 
@@ -1200,15 +1200,15 @@ last defined. Example: >
 See |:verbose-cmd| for more information.
 
 							*E174* *E182*
-:com[mand][!] [{attr}...] {cmd} {rep}
+:com[mand][!] [{attr}...] {cmd} {repl}
 			Define a user command.  The name of the command is
-			{cmd} and its replacement text is {rep}.  The command's
-			attributes (see below) are {attr}.  If the command
-			already exists, an error is reported, unless a ! is
-			specified, in which case the command is redefined.
-			There is one exception: When sourcing a script again,
-			a command that was previously defined in that script
-			will be silently replaced.
+			{cmd} and its replacement text is {repl}.  The
+			command's attributes (see below) are {attr}.  If the
+			command already exists, an error is reported, unless a
+			! is specified, in which case the command is
+			redefined.  There is one exception: When sourcing a
+			script again, a command that was previously defined in
+			that script will be silently replaced.
 
 
 :delc[ommand] {cmd}				*:delc* *:delcommand* *E184*
@@ -1415,11 +1415,11 @@ feature.  Use the full name for new scripts.
 
 Replacement text ~
 
-The replacement text for a user defined command is scanned for special escape
-sequences, using <...> notation.  Escape sequences are replaced with values
-from the entered command line, and all other text is copied unchanged.  The
-resulting string is executed as an Ex command.  To avoid the replacement use
-<lt> in place of the initial <.  Thus to include "<bang>" literally use
+The replacement text {repl} for a user defined command is scanned for special
+escape sequences, using <...> notation.  Escape sequences are replaced with
+values from the entered command line, and all other text is copied unchanged.
+The resulting string is executed as an Ex command.  To avoid the replacement
+use <lt> in place of the initial <.  Thus to include "<bang>" literally use
 "<lt>bang>".
 
 The valid escape sequences are

@@ -162,6 +162,25 @@ files in the directories specified in the 'runtimepath' option.
 The initial height of the help window can be set with the 'helpheight' option
 (default 20).
 
+When the help buffer is created, several local options are set to make sure
+the help text is displayed as it was intended:
+    'iskeyword'		nearly all ASCII chars except ' ', '*', '"' and '|'
+    'foldmethod'	"manual"
+    'tabstop'		8
+    'arabic'		off
+    'binary'		off
+    'buflisted'		off
+    'cursorbind'	off
+    'diff'		off
+    'foldenable'	off
+    'list'		off
+    'modifiable'	off
+    'number'		off
+    'relativenumber'	off
+    'rightleft'		off
+    'scrollbind'	off
+    'spell'		off
+
 Jump to specific subjects by using tags.  This can be done in two ways:
 - Use the "CTRL-]" command while standing on the name of a command or option.
   This only works when the tag is a keyword.  "<C-Leftmouse>" and
