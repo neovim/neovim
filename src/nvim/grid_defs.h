@@ -13,6 +13,15 @@
 typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
 typedef int sattr_T;
 
+enum {
+  kZIndexDefaultGrid = 0,
+  kZIndexFloatDefault = 50,
+  kZIndexPopupMenu = 100,
+  kZIndexMessages = 200,
+  kZIndexCmdlinePopupMenu = 250,
+};
+
+
 /// ScreenGrid represents a resizable rectuangular grid displayed by UI clients.
 ///
 /// chars[] contains the UTF-8 text that is currently displayed on the grid.
@@ -73,6 +82,9 @@ struct ScreenGrid {
   // whether the grid can be focused with mouse clicks.
   bool focusable;
 
+  // z-index: the order in the stack of grids.
+  int zindex;
+
   // Below is state owned by the compositor. Should generally not be set/read
   // outside this module, except for specific compatibilty hacks
 
@@ -96,7 +108,7 @@ struct ScreenGrid {
 };
 
 #define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, NULL, false, true, \
+                           false, 0, 0, NULL, false, true, 0, \
                            0, 0, 0, 0, 0,  false }
 
 #endif  // NVIM_GRID_DEFS_H

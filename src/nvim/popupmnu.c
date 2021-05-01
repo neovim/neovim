@@ -421,6 +421,10 @@ void pum_redraw(void)
   }
 
   grid_assign_handle(&pum_grid);
+
+  pum_grid.zindex = ((State == CMDLINE)
+                     ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu);
+
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col-col_off,
                                 pum_height, grid_width, false, true);
   bool invalid_grid = moved || pum_invalid;
@@ -439,7 +443,7 @@ void pum_redraw(void)
     int row_off = pum_above ? pum_height : 0;
     ui_call_win_float_pos(pum_grid.handle, -1, cstr_to_string(anchor),
                           pum_anchor_grid, pum_row-row_off, pum_col-col_off,
-                          false);
+                          false, pum_grid.zindex);
   }
 
 

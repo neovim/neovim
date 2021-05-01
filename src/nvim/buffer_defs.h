@@ -1083,6 +1083,7 @@ typedef struct {
   FloatRelative relative;
   bool external;
   bool focusable;
+  int zindex;
   WinStyle style;
   bool border;
   bool shadow;
@@ -1096,6 +1097,7 @@ typedef struct {
                                           .row = 0, .col = 0, .anchor = 0, \
                                           .relative = 0, .external = false, \
                                           .focusable = true, \
+                                          .zindex = kZIndexFloatDefault, \
                                           .style = kWinStyleUnused })
 
 // Structure to store last cursor position and topline.  Used by check_lnums()
