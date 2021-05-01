@@ -3,7 +3,7 @@
 " Maintainer:          Nick Jensen <nickspoon@gmail.com>
 " Former Maintainers:  Anduin Withers <awithers@anduin.com>
 "                      Johannes Zellner <johannes@zellner.org>
-" Last Change:         2020-01-27
+" Last Change:         2020-11-23
 " Filenames:           *.cs
 " License:             Vim (see :h license)
 " Repository:          https://github.com/nickspoons/vim-cs
@@ -18,7 +18,6 @@ endif
 let s:save_cpo = &cpoptions
 set cpoptions&vim
 
-
 syn keyword	csType	bool byte char decimal double float int long object sbyte short string T uint ulong ushort var void dynamic
 syn keyword	csStorage	delegate enum interface namespace struct
 syn keyword	csRepeat	break continue do for foreach goto return while
@@ -27,7 +26,7 @@ syn keyword	csLabel	case default
 syn match	csOperatorError	display +::+
 syn match	csGlobal	display +global::+
 " user labels (see [1] 8.6 Statements)
-syn match	csLabel	display +^\s*\I\i*\s*:\([^:]\)\@=+
+syn match	csLabel	display +^\s*\I\i*\s*:\%([^:]\)\@=+
 syn keyword	csModifier	abstract const extern internal override private protected public readonly sealed static virtual volatile
 syn keyword	csConstant	false null true
 syn keyword	csException	try catch finally throw when
@@ -39,9 +38,10 @@ syn keyword	csUnsupportedStatement	add remove value
 syn keyword	csUnspecifiedKeyword	explicit implicit
 
 " Contextual Keywords
-syn match	csContextualStatement	/\<yield[[:space:]\n]\+\(return\|break\)/me=s+5
-syn match	csContextualStatement	/\<partial[[:space:]\n]\+\(class\|struct\|interface\)/me=s+7
-syn match	csContextualStatement	/\<\(get\|set\)\(;\|[[:space:]\n]*{\)/me=s+3
+syn match	csContextualStatement	/\<yield[[:space:]\n]\+\%(return\|break\)/me=s+5
+syn match	csContextualStatement	/\<partial[[:space:]\n]\+\%(class\|struct\|interface\)/me=s+7
+syn match	csContextualStatement	/\<\%(get\|set\)\%(;\|[[:space:]\n]*{\)/me=s+3
+syn match	csContextualStatement	/\<\%(get\|set\)\s*=>/me=s+3
 syn match	csContextualStatement	/\<where\>[^:]\+:/me=s+5
 
 " Operators
@@ -101,7 +101,7 @@ hi def link	xmlRegion Comment
 syn spell default
 
 " [1] 9.5 Pre-processing directives
-syn region	csPreCondit	start="^\s*#\s*\(define\|undef\|if\|elif\|else\|endif\|line\|error\|warning\)" skip="\\$" end="$" contains=csComment keepend
+syn region	csPreCondit	start="^\s*#\s*\%(define\|undef\|if\|elif\|else\|endif\|line\|error\|warning\|pragma\)\>" skip="\\$" end="$" contains=csComment keepend
 syn region	csRegion	matchgroup=csPreCondit start="^\s*#\s*region.*$" end="^\s*#\s*endregion" transparent fold contains=TOP
 syn region	csSummary	start="^\s*/// <summary" end="^\%\(\s*///\)\@!" transparent fold keepend
 
@@ -120,25 +120,27 @@ syn match	csSpecialError	"\\." contained
 syn match	csSpecialCharError	"[^']" contained
 " [1] 9.4.4.4 Character literals
 syn match	csSpecialChar	+\\["\\'0abfnrtvx]+ contained display
+syn match	csUnicodeNumber	+\\x\x\{2,4}+ contained contains=csUnicodeSpecifier display
 syn match	csUnicodeNumber	+\\u\x\{4}+ contained contains=csUnicodeSpecifier display
 syn match	csUnicodeNumber	+\\U\x\{8}+ contained contains=csUnicodeSpecifier display
 syn match	csUnicodeSpecifier	+\\[uU]+ contained display
 
 syn region	csString	matchgroup=csQuote start=+"+  end=+"+ end=+$+ extend contains=csSpecialChar,csSpecialError,csUnicodeNumber,@Spell
-syn match	csCharacter	"'[^']*'" contains=csSpecialChar,csSpecialCharError display
+syn match	csCharacter	"'[^']*'" contains=csSpecialChar,csSpecialCharError,csUnicodeNumber display
 syn match	csCharacter	"'\\''" contains=csSpecialChar display
 syn match	csCharacter	"'[^\\]'" display
 syn match	csNumber	"\<0[0-7]*[lL]\=\>" display
-syn match	csNumber	"\<0[xX]\x\+[lL]\=\>" display
-syn match	csNumber	"\<\d\+[lL]\=\>" display
-syn match	csNumber	"\<\d\+\.\d*\%\([eE][-+]\=\d\+\)\=[fFdD]\=" display
-syn match	csNumber	"\.\d\+\%\([eE][-+]\=\d\+\)\=[fFdD]\=" display
-syn match	csNumber	"\<\d\+[eE][-+]\=\d\+[fFdD]\=\>" display
-syn match	csNumber	"\<\d\+\%\([eE][-+]\=\d\+\)\=[fFdD]\>" display
+syn match	csNumber	"\<0[xX][[:xdigit:]_]\+[lL]\=\>" display
+syn match	csNumber	"\<0[bB][01_]\+[lL]\=\>" display
+syn match	csNumber	"\<[[:digit:]_]\+[lL]\=\>" display
+syn match	csNumber	"\<[[:digit:]_]\+\.[[:digit:]_]*\%\([eE][-+]\=[[:digit:]_]\+\)\=[fFdDmM]\=" display
+syn match	csNumber	"\.[[:digit:]_]\+\%\([eE][-+]\=[[:digit:]_]\+\)\=[fFdDmM]\=" display
+syn match	csNumber	"\<[[:digit:]_]\+[eE][-+]\=[[:digit:]_]\+[fFdDmM]\=\>" display
+syn match	csNumber	"\<[[:digit:]_]\+\%\([eE][-+]\=[[:digit:]_]\+\)\=[fFdDmM]\>" display
 
-syn region	csInterpolatedString	matchgroup=csQuote start=+\$"+ end=+"+ end=+$+ extend contains=csInterpolation,csEscapedInterpolation,csSpecialChar,csSpecialError,csUnicodeNumber,@Spell
+syn region	csInterpolatedString	matchgroup=csQuote start=+\$"+ end=+"+ extend contains=csInterpolation,csEscapedInterpolation,csSpecialChar,csSpecialError,csUnicodeNumber,@Spell
 
-syn region	csInterpolation	matchgroup=csInterpolationDelimiter start=+{+ end=+}+ keepend contained contains=@csAll,csBracketed,csInterpolationAlign,csInterpolationFormat
+syn region	csInterpolation	matchgroup=csInterpolationDelimiter start=+{+ end=+}+ keepend contained contains=@csAll,csBraced,csBracketed,csInterpolationAlign,csInterpolationFormat
 syn match	csEscapedInterpolation	"{{" transparent contains=NONE display
 syn match	csEscapedInterpolation	"}}" transparent contains=NONE display
 syn region	csInterpolationAlign	matchgroup=csInterpolationAlignDel start=+,+ end=+}+ end=+:+me=e-1 contained contains=csNumber,csConstant,csCharacter,csParens,csOpSymbols,csString,csBracketed display
@@ -152,9 +154,10 @@ syn match	csQuoteError	+@$"+he=s+2,me=s+2
 
 syn region	csInterVerbString	matchgroup=csQuote start=+\$@"+ end=+"+ skip=+""+ extend contains=csInterpolation,csEscapedInterpolation,csSpecialChar,csSpecialError,csUnicodeNumber,csVerbatimQuote,@Spell
 
-syn region	csBracketed	matchgroup=csParens start=+(+ end=+)+ contained transparent contains=@csAll,csBracketed
+syn region	csBracketed	matchgroup=csParens start=+(+ end=+)+ extend contained transparent contains=@csAll,csBraced,csBracketed
+syn region	csBraced	matchgroup=csParens start=+{+ end=+}+ extend contained transparent contains=@csAll,csBraced,csBracketed
 
-syn cluster	csAll	contains=csCharacter,csClassType,csComment,csContextualStatement,csEndColon,csInterpolatedString,csIsType,csLabel,csLogicSymbols,csNewType,csConstant,csNumber,csOpSymbols,csOperatorError,csParens,csPreCondit,csRegion,csString,csSummary,csType,csUnicodeNumber,csUnicodeSpecifier,csVerbatimString,csUserType,csUserIdentifier,csUserInterface,csUserMethod
+syn cluster	csAll	contains=csCharacter,csClassType,csComment,csContextualStatement,csEndColon,csIsType,csLabel,csLogicSymbols,csNewType,csConstant,csNumber,csOpSymbols,csOperatorError,csParens,csPreCondit,csRegion,csString,csSummary,csType,csUnicodeNumber,csUnicodeSpecifier,csInterpolatedString,csVerbatimString,csInterVerbString,csUserType,csUserIdentifier,csUserInterface,csUserMethod
 
 " The default highlighting.
 hi def link	csType	Type

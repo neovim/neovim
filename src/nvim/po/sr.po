@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Serbian)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-11-18 10:14+0400\n"
-"PO-Revision-Date: 2018-05-15 10:50+0400\n"
+"POT-Creation-Date: 2020-11-23 22:13+0400\n"
+"PO-Revision-Date: 2020-11-27 00:43+0400\n"
 "Last-Translator: Ivan Pešić <ivan.pesic@gmail.com>\n"
 "Language-Team: Serbian\n"
 "Language: sr\n"
@@ -29,6 +29,9 @@ msgstr "E164: Не може да се иде испред првог фајла"
 
 msgid "E165: Cannot go beyond last file"
 msgstr "E165: Не може да се иде иза последњег фајла"
+
+msgid "E610: No argument to delete"
+msgstr "E610: Нема аргумента за брисање"
 
 msgid "E249: window layout changed unexpectedly"
 msgstr "E249: распоред прозора се нечекивано променио"
@@ -179,8 +182,7 @@ msgstr "E88: Не може да се иде испред првог бафера
 #, c-format
 msgid "E89: No write since last change for buffer %d (add ! to override)"
 msgstr ""
-"E89: Од последње измене није било уписа за бафер %d (додајте ! да "
-"премостите)"
+"E89: Од последње измене није било уписа за бафер %d (додајте ! да премостите)"
 
 msgid "E948: Job still running (add ! to end the job)"
 msgstr "E948: Задатак се још извршава (додајте ! да зауставите задатак)"
@@ -285,6 +287,12 @@ msgstr "УПОЗОРЕЊЕ: Овај фајл је промењен од кад 
 msgid "Do you really want to write to it"
 msgstr "Да ли заиста желите да пишете у њега"
 
+msgid "[New]"
+msgstr "[Ново]"
+
+msgid "[New File]"
+msgstr "[Нов фајл]"
+
 msgid "E676: No matching autocommands for acwrite buffer"
 msgstr "E676: Нема одговарајућих аутокоманди за acwrite бафер"
 
@@ -380,12 +388,6 @@ msgstr "[конвертовано]"
 msgid "[Device]"
 msgstr "[Уређај]"
 
-msgid "[New]"
-msgstr "[Ново]"
-
-msgid "[New File]"
-msgstr "[Нов фајл]"
-
 msgid " [a]"
 msgstr " [н]"
 
@@ -423,11 +425,15 @@ msgstr "W10: Упозорење: Мења се фајл који може сам
 msgid "E902: Cannot connect to port"
 msgstr "E902: Повезивање на порт није могуће"
 
+msgid "E898: socket() in channel_connect()"
+msgstr "E898: socket() у channel_connect()"
+
+#, c-format
+msgid "E901: getaddrinfo() in channel_open(): %s"
+msgstr "E901: getaddrinfo() у channel_open(): %s"
+
 msgid "E901: gethostbyname() in channel_open()"
 msgstr "E901: gethostbyname() у channel_open()"
-
-msgid "E898: socket() in channel_open()"
-msgstr "E898: socket() у channel_open()"
 
 msgid "E903: received command with non-string argument"
 msgstr "E903: примњена команда са аргуменом који није стринг"
@@ -536,22 +542,6 @@ msgstr "%3d  %s %s  линија %ld"
 #, c-format
 msgid "%3d  expr %s"
 msgstr "%3d  израз %s"
-
-#, c-format
-msgid "E720: Missing colon in Dictionary: %s"
-msgstr "E720: Недостаје тачка-зарез у Речнику: %s"
-
-#, c-format
-msgid "E721: Duplicate key in Dictionary: \"%s\""
-msgstr "E721: Дупликат кључа у Речнику: \"%s\""
-
-#, c-format
-msgid "E722: Missing comma in Dictionary: %s"
-msgstr "E722: Недостаје зарез у Речнику: %s"
-
-#, c-format
-msgid "E723: Missing end of Dictionary '}': %s"
-msgstr "E723: Недостаје крај Речника '}': %s"
 
 msgid "extend() argument"
 msgstr "extend() аргумент"
@@ -1775,15 +1765,6 @@ msgstr "Прекид"
 msgid "E579: :if nesting too deep"
 msgstr "E579: :if угњеждавање је сувише дубоко"
 
-msgid "E580: :endif without :if"
-msgstr "E580: :endif без :if"
-
-msgid "E581: :else without :if"
-msgstr "E581: :else без :if"
-
-msgid "E582: :elseif without :if"
-msgstr "E582: :elseif без :if"
-
 msgid "E583: multiple :else"
 msgstr "E583: вишеструко :else"
 
@@ -1793,35 +1774,23 @@ msgstr "E584: :elseif након :else"
 msgid "E585: :while/:for nesting too deep"
 msgstr "E585: :while/:for угњеждавање је сувише дубоко"
 
-msgid "E586: :continue without :while or :for"
-msgstr "E586: :continue без :while или :for"
-
-msgid "E587: :break without :while or :for"
-msgstr "E587: :break без :while или :for"
-
 msgid "E732: Using :endfor with :while"
 msgstr "E732: Коришћење :endfor са :while"
 
 msgid "E733: Using :endwhile with :for"
 msgstr "E733: Коришћење :endwhile са :for"
 
+msgid "E579: block nesting too deep"
+msgstr "E579: угњеждавање блокова је сувише дубоко"
+
 msgid "E601: :try nesting too deep"
 msgstr "E601: :try угњеждавање је сувише дубоко"
-
-msgid "E603: :catch without :try"
-msgstr "E603: :catch без :try"
 
 msgid "E604: :catch after :finally"
 msgstr "E604: :catch након :finally"
 
-msgid "E606: :finally without :try"
-msgstr "E606: :finally без :try"
-
-msgid "E607: multiple :finally"
-msgstr "E607: вишеструко :finally"
-
-msgid "E602: :endtry without :try"
-msgstr "E602: :endtry без :try"
+msgid "E193: :enddef not inside a function"
+msgstr "E193: :enddef није унутар функције"
 
 msgid "E193: :endfunction not inside a function"
 msgstr "E193: :endfunction није унутар функције"
@@ -2204,6 +2173,9 @@ msgstr "<празно>"
 msgid "E655: Too many symbolic links (cycle?)"
 msgstr "E655: Превише симболичких веза (циклус?)"
 
+msgid "writefile() first argument must be a List or a Blob"
+msgstr "Први аргумент writefile() мора бити Листа или Блоб"
+
 msgid "Select Directory dialog"
 msgstr "Дијалог избора директоријума"
 
@@ -2215,6 +2187,9 @@ msgstr "Дијалог отварања фајла"
 
 msgid "E338: Sorry, no file browser in console mode"
 msgstr "E338: Жао нам је, нема претраживача фајлова у конзолном режиму"
+
+msgid "no matches"
+msgstr "нема подударања"
 
 msgid "E854: path too long for completion"
 msgstr "E854: путања је сувише дугачка да би се довршила"
@@ -2318,10 +2293,6 @@ msgstr "E231: 'guifontwide' неисправан"
 msgid "E599: Value of 'imactivatekey' is invalid"
 msgstr "E599: Вредност 'imactivatekey' није исправна"
 
-#, c-format
-msgid "E254: Cannot allocate color %s"
-msgstr "E254: Боја %s не може да се алоцира"
-
 msgid "No match at cursor, finding next"
 msgstr "Нема подударања на месту курсора, тражи се даље"
 
@@ -2357,14 +2328,14 @@ msgid "E232: Cannot create BalloonEval with both message and callback"
 msgstr ""
 "E232: Не може да се креира BalloonEval и са поруком и са повратним позивом"
 
-msgid "_Cancel"
-msgstr "_Откажи"
-
 msgid "_Save"
 msgstr "_Сачувај"
 
 msgid "_Open"
 msgstr "_Отвори"
+
+msgid "_Cancel"
+msgstr "_Откажи"
 
 msgid "_OK"
 msgstr "_OK"
@@ -2546,6 +2517,25 @@ msgstr "Фонт0 ширина: %d"
 msgid "Font%d width: %d"
 msgstr "Фонт%d ширина: %d"
 
+msgid "E284: Cannot set IC values"
+msgstr "E284: IC вредности не могу да се поставе"
+
+msgid "E285: Failed to create input context"
+msgstr "E285: Креирање контекста уноса није успело"
+
+msgid "E286: Failed to open input method"
+msgstr "E286: Отварање методе уноса није успело"
+
+msgid "E287: Warning: Could not set destroy callback to IM"
+msgstr ""
+"E287: Упозорење: Постављање повратне функције за уништење IM није успело"
+
+msgid "E288: input method doesn't support any style"
+msgstr "E288: метод уноса не подржава ниједан стил"
+
+msgid "E289: input method doesn't support my preedit type"
+msgstr "E289: метод уноса не подржава мој preedit тип"
+
 msgid "Invalid font specification"
 msgstr "Неисправна спецификација фонта"
 
@@ -2575,9 +2565,6 @@ msgstr "Стил:"
 
 msgid "Size:"
 msgstr "Величина:"
-
-msgid "E256: Hangul automata ERROR"
-msgstr "E256: ГРЕШКА Hangul аутомата"
 
 msgid "E550: Missing colon"
 msgstr "E550: Недостаје двотачка"
@@ -6035,6 +6022,9 @@ msgstr "E419: Непозната FG боја"
 msgid "E420: BG color unknown"
 msgstr "E420: Непозната BG боја"
 
+msgid "E453: UL color unknown"
+msgstr "E453: Непозната UL боја"
+
 #, c-format
 msgid "E421: Color name or number not recognized: %s"
 msgstr "E421: Име боје или број нису препознати: %s"
@@ -6433,6 +6423,10 @@ msgid "E989: Non-default argument follows default argument"
 msgstr "E989: Неподразумевани аргумент следи иза подразумеваног аргумента"
 
 #, c-format
+msgid "E451: Expected }: %s"
+msgstr "E451: Очекује се }: %s"
+
+#, c-format
 msgid "E740: Too many arguments for function %s"
 msgstr "E740: Превише аргумената за функцију %s"
 
@@ -6463,20 +6457,8 @@ msgid "E699: Too many arguments"
 msgstr "E699: Сувише аргумената"
 
 #, c-format
-msgid "E117: Unknown function: %s"
-msgstr "E117: Непозната функција: %s"
-
-#, c-format
 msgid "E276: Cannot use function as a method: %s"
 msgstr "E276: Функција не може да се користи као метода: %s"
-
-#, c-format
-msgid "E933: Function was deleted: %s"
-msgstr "E933: Функција је обрисана: %s"
-
-#, c-format
-msgid "E119: Not enough arguments for function: %s"
-msgstr "E119: Нема довољно аргумената за функцију: %s"
 
 #, c-format
 msgid "E120: Using <SID> not in a script context: %s"
@@ -6497,6 +6479,9 @@ msgstr "E128: Име функције мора да почне великим с
 msgid "E884: Function name cannot contain a colon: %s"
 msgstr "E884: Име функције не може да садржи двотачку: %s"
 
+msgid "E454: function list was modified"
+msgstr "E454: листа функције је измењена"
+
 #, c-format
 msgid "E123: Undefined function: %s"
 msgstr "E123: Недефинисана функција: %s"
@@ -6514,6 +6499,10 @@ msgstr "E932: Затварајућа функција не би требало �
 
 msgid "E126: Missing :endfunction"
 msgstr "E126: Недостаје :endfunction"
+
+#, c-format
+msgid "W1001: Text found after :enddef: %s"
+msgstr "W1001: Пронађен је текст након :enddef: %s"
 
 #, c-format
 msgid "W22: Text found after :endfunction: %s"

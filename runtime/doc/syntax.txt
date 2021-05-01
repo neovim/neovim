@@ -5202,6 +5202,12 @@ If you like Question highlighting for C comments, put this in your vimrc file: >
 Without the "default" in the C syntax file, the highlighting would be
 overruled when the syntax file is loaded.
 
+To have a link survive `:highlight clear`, which is useful if you have
+highlighting for a specific filetype and you want to keep it when selecting
+another color scheme, put a command like this in the
+"after/syntax/{filetype}.vim" file: >
+    highlight! default link cComment Question
+
 ==============================================================================
 15. Cleaning up						*:syn-clear* *E391*
 
