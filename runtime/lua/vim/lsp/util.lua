@@ -799,7 +799,8 @@ function M.convert_input_to_markdown_lines(input, contents)
 end
 
 local function parameter_range_in_signature(signature, active_parameter)
-  local from, to = 0, 0
+  local from
+  local to = 0
   for i = 0,#signature.parameters-1,1 do
     local parameter_label = signature.parameters[i+1].label
     from, to = signature.label:find(parameter_label, to + 1, true)
@@ -894,7 +895,7 @@ local function signature_label(signature, active_parameter, parametersOnly)
   end
 
 
-  label, _ = label:gsub("\\n", " ")
+  label = label:gsub("\\n", " ")
   if from ~= nil and to ~= nil then
     return label, {from - 1, to}
   end
