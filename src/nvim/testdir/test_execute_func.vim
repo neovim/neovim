@@ -98,8 +98,6 @@ func Test_win_execute()
     let line = win_execute(popupwin, 'echo getline(1)')
     call assert_match('the popup win', line)
 
-    call assert_fails('call win_execute(popupwin, "bwipe!")', 'E937:')
-
     call popup_close(popupwin)
   endif
 
