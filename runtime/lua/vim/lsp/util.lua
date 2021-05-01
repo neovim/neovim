@@ -801,7 +801,7 @@ end
 local function parameter_range_in_signature(signature, active_parameter)
   local from
   local to = 0
-  for i = 0,#signature.parameters-1,1 do
+  for i = 0,#signature.parameters-1 do
     local parameter_label = signature.parameters[i+1].label
     from, to = signature.label:find(parameter_label, to + 1, true)
 
@@ -851,9 +851,9 @@ local function build_signature_label_from_parameters(signature, active_parameter
   return label, from + 1, to
 end
 
-local function signature_label(signature, active_parameter, parametersOnly)
+local function signature_label(signature, active_parameter, parameters_only)
   local label, from, to
-  if parametersOnly then
+  if parameters_only then
     label, from, to = build_signature_label_from_parameters(signature, active_parameter)
   else
     label = signature.label
@@ -907,7 +907,7 @@ end
 --@param signature_help Response of `textDocument/SignatureHelp`
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.get_signature_help_with_highlights(signature_help, parametersOnly)
+function M.get_signature_help_with_highlights(signature_help, parameters_only)
   if not signature_help.signatures then
     return
   end
@@ -928,7 +928,7 @@ function M.get_signature_help_with_highlights(signature_help, parametersOnly)
   end
 
   local active_parameter = signature.activeParameter or signature_help.activeParameter or 0
-  local label, active_offset = signature_label(signature, active_parameter, parametersOnly)
+  local label, active_offset = signature_label(signature, active_parameter, parameters_only)
 
   local hl_param = "LspSignatureParamActive"
 
@@ -938,9 +938,9 @@ function M.get_signature_help_with_highlights(signature_help, parametersOnly)
     table.insert(highlights, { line = 0, col = active_offset[1], opts = { end_line = 0, end_col = active_offset[2], hl_group = hl_param, priority = 100 } })
   end
 
-  for i = 1,#signature_help.signatures,1 do
+  for i = 1,#signature_help.signatures do
     if i ~= active_signature + 1 then
-      label, active_offset = signature_label(signature_help.signatures[i], active_parameter, parametersOnly)
+      label, active_offset = signature_label(signature_help.signatures[i], active_parameter, parameters_only)
       table.insert(contents, label)
       table.insert(highlights, { line = i, col = 0, opts = { end_line = i, end_col = label:len(), hl_group = "LspSignatureInactive", priority = 200 } })
       if active_offset then
