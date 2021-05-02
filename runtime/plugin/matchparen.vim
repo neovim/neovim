@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:  Bram Moolenaar <Bram@vim.org>
-" Last Change: 2020 Jun 18
+" Last Change: 2021 Apr 07
 
 " Exit quickly when:
 " - this plugin was already loaded (or disabled)
@@ -107,9 +107,10 @@ func s:Highlight_Matching_Pair()
     " Build an expression that detects whether the current cursor position is
     " in certain syntax types (string, comment, etc.), for use as
     " searchpairpos()'s skip argument.
-    " We match "escape" for special items, such as lispEscapeSpecial.
+    " We match "escape" for special items, such as lispEscapeSpecial, and
+    " match "symbol" for lispBarSymbol.
     let s_skip = '!empty(filter(map(synstack(line("."), col(".")), ''synIDattr(v:val, "name")''), ' .
-	\ '''v:val =~? "string\\|character\\|singlequote\\|escape\\|comment"''))'
+	\ '''v:val =~? "string\\|character\\|singlequote\\|escape\\symbol\\|comment"''))'
     " If executing the expression determines that the cursor is currently in
     " one of the syntax types, then we want searchpairpos() to find the pair
     " within those syntax types (i.e., not skip).  Otherwise, the cursor is

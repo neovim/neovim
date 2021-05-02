@@ -563,9 +563,11 @@ followed by another Vim command:
     :function
     :global
     :help
+    :helpgrep
     :lcscope
     :ldo
     :lfdo
+    :lhelpgrep
     :make
     :normal
     :perlfile

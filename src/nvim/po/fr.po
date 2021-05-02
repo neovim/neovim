@@ -2649,7 +2649,7 @@ msgstr "-T <term>\tRégler le type du terminal sur <terminal>"
 
 msgid "--not-a-term\t\tSkip warning for input/output not being a terminal"
 msgstr ""
-"--no-a-term\t\tAucun avertissement si l'entrée/sortie n'est pas un terminal"
+"--not-a-term\t\tAucun avertissement si l'entrée/sortie n'est pas un terminal"
 
 msgid "--ttyfail\t\tExit if input or output is not a terminal"
 msgstr "--ttyfail\t\tQuitte si l'entrée ou la sortie ne sont pas un terminal"

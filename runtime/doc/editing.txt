@@ -1210,13 +1210,13 @@ For versions of Vim where browsing is not supported, the command is executed
 unmodified.
 
 							*browsefilter*
-For Windows you can modify the filters that are used in the browse dialog.  By
-setting the g:browsefilter or b:browsefilter variables, you can change the
-filters globally or locally to the buffer.  The variable is set to a string in
-the format "{filter label}\t{pattern};{pattern}\n" where {filter label} is the
-text that appears in the "Files of Type" comboBox, and {pattern} is the
-pattern which filters the filenames.  Several patterns can be given, separated
-by ';'.
+For MS-Windows you can modify the filters that are used in the browse
+dialog.  By setting the g:browsefilter or b:browsefilter variables, you can
+change the filters globally or locally to the buffer.  The variable is set to
+a string in the format "{filter label}\t{pattern};{pattern}\n" where {filter
+label} is the text that appears in the "Files of Type" comboBox, and {pattern}
+is the pattern which filters the filenames.  Several patterns can be given,
+separated by ';'.
 
 For example, to have only Vim files in the dialog, you could use the following
 command: >
@@ -1294,7 +1294,7 @@ exist, the next-higher scope in the hierarchy applies.
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
 
-							*:lcd-* 
+							*:lcd-*
 :lc[d][!] -		Change to the previous current directory (before the
 			previous ":lcd {path}" command).
 

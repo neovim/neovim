@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	(v103) 2020 October 07
+" Version:	(v104) 2021 April 06
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
@@ -8,10 +8,10 @@
 "  older Fortran 77 syntax file by Mario Eusebio and Preben Guldberg.
 "  Since then, useful suggestions and contributions have been made, in order, by:
 "  Andrej Panjkov, Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
-"  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
+"  Walter Dieudonne, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, Matt Thompson, Jan Hermann,
-"  Stefano Zaghi, Vishnu V. Krishnan, Judicaël Grasset, Takuma Yoshida,
-"  Eisuke Kawashima, and André Chalella.`
+"  Stefano Zaghi, Vishnu V. Krishnan, Judicael Grasset, Takuma Yoshida,
+"  Eisuke Kawashima, Andre Chalella, and Fritz Reese.
 
 if exists("b:current_syntax")
   finish
@@ -360,8 +360,15 @@ syn cluster fortranCommentGroup contains=fortranTodo
 
 if (b:fortran_fixed_source == 1)
   if !exists("fortran_have_tabs")
-    "Flag items beyond column 72
-    syn match fortranSerialNumber	excludenl "^.\{73,}$"lc=72
+    " Fixed format requires a textwidth of 72 for code,
+    " but some vendor extensions allow longer lines
+    if exists("fortran_extended_line_length")
+      syn match fortranSerialNumber	excludenl "^.\{133,}$"lc=132
+    elseif exists("fortran_cardimage_line_length")
+      syn match fortranSerialNumber	excludenl "^.\{81,}$"lc=80
+    else
+      syn match fortranSerialNumber	excludenl "^.\{73,}$"lc=72
+    endif
     "Flag left margin errors
     syn match fortranLabelError	"^.\{-,4}[^0-9 ]" contains=fortranTab
     syn match fortranLabelError	"^.\{4}\d\S"

@@ -1249,7 +1249,7 @@ the following ways:
 
 The arguments are optional.  Example: >
 	:let F = {-> 'error function'}
-	:echo F()
+	:echo F('ignored')
 <	error function
 							*closure*
 Lambda expressions can access outer scope variables and arguments.  This is
@@ -4925,7 +4925,7 @@ getwininfo([{winid}])					*getwininfo()*
 		tab pages is returned.
 
 		Each List item is a |Dictionary| with the following entries:
-			botline		last displayed buffer line
+			botline		last complete displayed buffer line
 			bufnr		number of buffer in the window
 			height		window height (excluding winbar)
 			loclist		1 if showing a location list
