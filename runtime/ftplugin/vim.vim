@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Feb 20
+" Last Change:	2021 Apr 11
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -98,11 +98,11 @@ if exists("loaded_matchit")
   "   func name
   " require a parenthesis following, then there can be an "endfunc".
   let b:match_words =
-+	\ '\<\%(fu\%[nction]\|def\)!\=\s\+\S\+(:\<retu\%[rn]\>:\<\%(endf\%[unction]\|enddef\)\>,' .
-	\ '\<\(wh\%[ile]\|for\)\>:\<brea\%[k]\>:\<con\%[tinue]\>:\<end\(w\%[hile]\|fo\%[r]\)\>,' .
-	\ '\<if\>:\<el\%[seif]\>:\<en\%[dif]\>,' .
+	\ '\<\%(fu\%[nction]\|def\)!\=\s\+\S\+(:\%(\%(^\||\)\s*\)\@<=\<retu\%[rn]\>:\%(\%(^\||\)\s*\)\@<=\<\%(endf\%[unction]\|enddef\)\>,' .
+	\ '\<\(wh\%[ile]\|for\)\>:\%(\%(^\||\)\s*\)\@<=\<brea\%[k]\>:\%(\%(^\||\)\s*\)\@<=\<con\%[tinue]\>:\%(\%(^\||\)\s*\)\@<=\<end\(w\%[hile]\|fo\%[r]\)\>,' .
+	\ '\<if\>:\%(\%(^\||\)\s*\)\@<=\<el\%[seif]\>:\%(\%(^\||\)\s*\)\@<=\<en\%[dif]\>,' .
 	\ '{:},' .
-	\ '\<try\>:\<cat\%[ch]\>:\<fina\%[lly]\>:\<endt\%[ry]\>,' .
+	\ '\<try\>:\%(\%(^\||\)\s*\)\@<=\<cat\%[ch]\>:\%(\%(^\||\)\s*\)\@<=\<fina\%[lly]\>:\%(\%(^\||\)\s*\)\@<=\<endt\%[ry]\>,' .
 	\ '\<aug\%[roup]\s\+\%(END\>\)\@!\S:\<aug\%[roup]\s\+END\>,'
   " Ignore syntax region commands and settings, any 'en*' would clobber
   " if-endif.

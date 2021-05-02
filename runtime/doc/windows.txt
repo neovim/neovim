@@ -493,14 +493,14 @@ CTRL-W J	Move the current window to be at the very bottom, using the
 CTRL-W H	Move the current window to be at the far left, using the
 		full height of the screen.  This works like closing the
 		current window and then creating another one with
-		":vert topleft split", except that the current window contents
+		`:vert topleft split`, except that the current window contents
 		is used for the new window.
 
 						*CTRL-W_L*
 CTRL-W L	Move the current window to be at the far right, using the full
 		height of the screen.  This works like closing the
 		current window and then creating another one with
-		":vert botright split", except that the current window
+		`:vert botright split`, except that the current window
 		contents is used for the new window.
 
 						*CTRL-W_T*
@@ -543,7 +543,7 @@ CTRL-W <	Decrease current window width by N (default 1).
 						*CTRL-W_>*
 CTRL-W >	Increase current window width by N (default 1).
 
-:vertical res[ize] [N]			*:vertical-resize* *CTRL-W_bar*
+:vert[ical] res[ize] [N]			*:vertical-resize* *CTRL-W_bar*
 CTRL-W |	Set current window width to N (default: widest possible).
 
 You can also resize a window by dragging a status line up or down with the
