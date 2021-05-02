@@ -122,14 +122,14 @@ starts with a zero.  "017" is decimal 15.  A binary number starts with "0b" or
 decimal number, it will be interpreted as an octal number!
    The ":echo" command always prints decimal numbers.  Example: >
 
-	:echo 0x7f 036
+	:echo 0x7f 0o36
 <	127 30 ~
 
 A number is made negative with a minus sign.  This also works for hexadecimal,
 octal and binary numbers.  A minus sign is also used for subtraction.  Compare
 this with the previous example: >
 
-	:echo 0x7f -036
+	:echo 0x7f -0o36
 <	97 ~
 
 White space in an expression is ignored.  However, it's recommended to use it
@@ -137,7 +137,7 @@ for separating items, to make the expression easier to read.  For example, to
 avoid the confusion with a negative number above, put a space between the
 minus sign and the following number: >
 
-	:echo 0x7f - 036
+	:echo 0x7f - 0o36
 
 ==============================================================================
 *41.2*	Variables

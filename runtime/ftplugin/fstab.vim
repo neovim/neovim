@@ -2,7 +2,7 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/ftplugin/fstab.vim
-" Last Change: 2020 Dec 29
+" Last Change: 2021 Jan 02
 " Version: 1.0
 "
 " Credits:

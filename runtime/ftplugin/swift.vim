@@ -6,7 +6,16 @@
 " See https://swift.org/LICENSE.txt for license information
 " See https://swift.org/CONTRIBUTORS.txt for the list of Swift project authors
 "
-" Vim maintainer: Emir SARI <bitigchi@me.com>
+" Vim maintainer: 	Emir SARI <bitigchi@me.com>
+" Last Change:		2021 Jan 08
+
+" Only do this when not done yet for this buffer
+if exists("b:did_ftplugin")
+    finish
+endif
+
+let b:did_ftplugin = 1
+let b:undo_ftplugin = "setlocal comments< expandtab< tabstop< shiftwidth< smartindent<"
 
 setlocal comments=s1:/*,mb:*,ex:*/,:///,://
 setlocal expandtab

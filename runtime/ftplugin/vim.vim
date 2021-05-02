@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Aug 14
+" Last Change:	2021 Jan 05
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -48,17 +48,23 @@ setlocal isk+=#
 " Use :help to lookup the keyword under the cursor with K.
 setlocal keywordprg=:help
 
-" Set 'comments' to format dashed lists in comments
-" Avoid that #{} starts a comment.
-setlocal com=sO:\"\ -,mO:\"\ \ ,sO:#\ -,mO:#\ \ ,eO:##,:\",b:#
+" if "\n" .. getline(1, 10)->join("\n") =~# '\n\s*vim9\%[script]\>'
+if "\n" .. join(getline(1, 10), "\n") =~# '\n\s*vim9\%[script]\>'
+  " Set 'comments' to format dashed lists in comments
+  setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#
+  " Comments start with a double quote in a legacy script;
+  " with # in a Vim9 script
+  setlocal commentstring=\"%s
+else
+  setlocal com=sO:\"\ -,mO:\"\ \ ,:\"
+  setlocal commentstring=#%s
+endif
+
 
 " Format comments to be up to 78 characters long
 if &tw == 0
   setlocal tw=78
 endif
-
-" Comments start with a double quote; in Vim9 script # would also work
-setlocal commentstring=\"%s
 
 " Prefer Vim help instead of manpages.
 setlocal keywordprg=:help

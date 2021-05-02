@@ -1168,7 +1168,7 @@ x	A single character, with no special meaning, matches itself
 		\b	<BS>
 		\n	line break, see above |/[\n]|
 		\d123	decimal number of character
-		\o40	octal number of character up to 0377
+		\o40	octal number of character up to 0o377
 		\x20	hexadecimal number of character up to 0xff
 		\u20AC	hex. number of multibyte character up to 0xffff
 		\U1234	hex. number of multibyte character up to 0xffffffff
@@ -1205,7 +1205,8 @@ x	A single character, with no special meaning, matches itself
 \%d123	Matches the character specified with a decimal number.  Must be
 	followed by a non-digit.
 \%o40	Matches the character specified with an octal number up to 0377.
-	Numbers below 040 must be followed by a non-octal digit or a non-digit.
+	Numbers below 0o40 must be followed by a non-octal digit or a
+	non-digit.
 \%x2a	Matches the character specified with up to two hexadecimal characters.
 \%u20AC	Matches the character specified with up to four hexadecimal
 	characters.
