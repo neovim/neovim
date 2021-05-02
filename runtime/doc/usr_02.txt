@@ -522,7 +522,7 @@ Summary: 					*help-summary*  >
 <   for the corresponding flag of the 'cpoptions' settings, substitute <letter>
    by a specific flag, e.g.: >
 	:help cpo-;
-<   And for the guioption flags: >
+<   And for the 'guioptions' flags: >
 	:help go-<letter>
 
 4) Normal mode commands do not have a prefix. To go to the help page for the

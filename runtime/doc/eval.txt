@@ -1677,6 +1677,9 @@ v:fcs_choice	What should happen after a |FileChangedShell| event was
 		The default is empty.  If another (invalid) value is used then
 		Vim behaves like it is empty, there is no warning message.
 
+					*v:fname* *fname-variable*
+v:fname		The file name set by 'includeexpr'.  Empty otherwise.
+
 					*v:fname_in* *fname_in-variable*
 v:fname_in	The name of the input file.  Valid while evaluating:
 			option		used for ~

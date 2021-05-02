@@ -247,6 +247,11 @@ expression register: >
 
    :amenu Insert.foobar   "='foobar'<CR>P
 
+The special text <Cmd> begins a "command menu", it executes the command
+directly without changing modes.  Where you might use ":...<CR>" you can
+instead use "<Cmd>...<CR>".  See |<Cmd>| for more info.  Example: >
+	anoremenu File.Next <Cmd>next<CR>
+
 Note that <Esc> in Cmdline mode executes the command, like in a mapping.  This
 is Vi compatible.  Use CTRL-C to quit Cmdline mode.
 

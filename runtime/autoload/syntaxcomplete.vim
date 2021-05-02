@@ -1,11 +1,15 @@
 " Vim completion script
 " Language:    All languages, uses existing syntax highlighting rules
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
-" Version:     14.0
-" Last Change: 2020 Dec 30
+" Version:     15.0
+" Last Change: 2021 Apr 27
 " Usage:       For detailed help, ":help ft-syntax-omni"
 
 " History
+"
+" Version 15.0
+"   - SyntaxComplete ignored all buffer specific overrides, always used global
+"     https://github.com/vim/vim/issues/8153
 "
 " Version 14.0
 "   - Fixed issue with single quotes and is_keyword
@@ -42,7 +46,7 @@
 "         let g:omni_syntax_use_single_byte = 1
 "   - This by default will only allow single byte ASCII
 "     characters to be added and an additional check to ensure
-"     the charater is printable (see documentation for isprint).
+"     the character is printable (see documentation for isprint).
 "
 " Version 9.0
 "   - Add the check for cpo.
@@ -90,7 +94,7 @@ endif
 if exists('g:loaded_syntax_completion')
     finish
 endif
-let g:loaded_syntax_completion = 130
+let g:loaded_syntax_completion = 150
 
 " Turn on support for line continuations when creating the script
 let s:cpo_save = &cpo
@@ -145,14 +149,10 @@ let s:prepended  = ''
 " This function is used for the 'omnifunc' option.
 function! syntaxcomplete#Complete(findstart, base)
 
-    " Only display items in the completion window that are at least
-    " this many characters in length
-    if !exists('b:omni_syntax_ignorecase')
-        if exists('g:omni_syntax_ignorecase')
-            let b:omni_syntax_ignorecase = g:omni_syntax_ignorecase
-        else
-            let b:omni_syntax_ignorecase = &ignorecase
-        endif
+    " Allow user to override ignorecase per buffer 
+    let l:omni_syntax_ignorecase = g:omni_syntax_ignorecase
+    if exists('b:omni_syntax_ignorecase')
+        let l:omni_syntax_ignorecase = b:omni_syntax_ignorecase
     endif
 
     if a:findstart
@@ -183,7 +183,6 @@ function! syntaxcomplete#Complete(findstart, base)
     endif
 
     " let base = s:prepended . a:base
-    " let base = s:prepended
     let base = substitute(s:prepended, "'", "''", 'g')
 
     let filetype = substitute(&filetype, '\.', '_', 'g')
@@ -200,13 +199,13 @@ function! syntaxcomplete#Complete(findstart, base)
 
     if base != ''
         " let compstr    = join(compl_list, ' ')
-        " let expr       = (b:omni_syntax_ignorecase==0?'\C':'').'\<\%('.base.'\)\@!\w\+\s*'
+        " let expr       = (l:omni_syntax_ignorecase==0?'\C':'').'\<\%('.base.'\)\@!\w\+\s*'
         " let compstr    = substitute(compstr, expr, '', 'g')
         " let compl_list = split(compstr, '\s\+')
 
         " Filter the list based on the first few characters the user
         " entered
-        let expr = 'v:val '.(g:omni_syntax_ignorecase==1?'=~?':'=~#')." '^".escape(base, '\\/.*$^~[]').".*'"
+        let expr = 'v:val '.(l:omni_syntax_ignorecase==1?'=~?':'=~#')." '^".escape(base, '\\/.*$^~[]').".*'"
         let compl_list = filter(deepcopy(compl_list), expr)
     endif
 
@@ -227,6 +226,26 @@ function! syntaxcomplete#OmniSyntaxList(...)
     endif
 endfunc
 
+function! syntaxcomplete#OmniSyntaxClearCache()
+    let s:cache_name = []
+    let s:cache_list = []
+endfunction
+
+" To retrieve all syntax items regardless of syntax group:
+"     echo OmniSyntaxList( [] )
+" 
+" To retrieve only the syntax items for the sqlOperator syntax group:
+"     echo OmniSyntaxList( ['sqlOperator'] )
+" 
+" To retrieve all syntax items for both the sqlOperator and sqlType groups:
+"     echo OmniSyntaxList( ['sqlOperator', 'sqlType'] )
+" 
+" A regular expression can also be used:
+"     echo OmniSyntaxList( ['sql\w\+'] )
+" 
+" From within a plugin, you would typically assign the output to a List: >
+"     let myKeywords = []
+"     let myKeywords = OmniSyntaxList( ['sqlKeyword'] )
 function! OmniSyntaxList(...)
     let list_parms = []
     if a:0 > 0
@@ -244,37 +263,25 @@ function! OmniSyntaxList(...)
     "     let use_dictionary = a:1
     " endif
 
-    " Only display items in the completion window that are at least
-    " this many characters in length
-    if !exists('b:omni_syntax_use_iskeyword')
-        if exists('g:omni_syntax_use_iskeyword')
-            let b:omni_syntax_use_iskeyword = g:omni_syntax_use_iskeyword
-        else
-            let b:omni_syntax_use_iskeyword = 1
-        endif
-    endif
-
-    " Only display items in the completion window that are at least
-    " this many characters in length
-    if !exists('b:omni_syntax_minimum_length')
-        if exists('g:omni_syntax_minimum_length')
-            let b:omni_syntax_minimum_length = g:omni_syntax_minimum_length
-        else
-            let b:omni_syntax_minimum_length = 0
-        endif
-    endif
-
     let saveL = @l
     let filetype = substitute(&filetype, '\.', '_', 'g')
 
     if empty(list_parms)
+        " Allow user to override per buffer 
+        if exists('g:omni_syntax_group_include_'.filetype)
+            let l:omni_syntax_group_include_{filetype} = g:omni_syntax_group_include_{filetype}
+        endif
+        if exists('b:omni_syntax_group_include_'.filetype)
+            let l:omni_syntax_group_include_{filetype} = b:omni_syntax_group_include_{filetype}
+        endif
+
         " Default the include group to include the requested syntax group
         let syntax_group_include_{filetype} = ''
         " Check if there are any overrides specified for this filetype
-        if exists('g:omni_syntax_group_include_'.filetype)
+        if exists('l:omni_syntax_group_include_'.filetype)
             let syntax_group_include_{filetype} =
-                        \ substitute( g:omni_syntax_group_include_{filetype},'\s\+','','g')
-            let list_parms = split(g:omni_syntax_group_include_{filetype}, ',')
+                        \ substitute( l:omni_syntax_group_include_{filetype},'\s\+','','g')
+            let list_parms = split(l:omni_syntax_group_include_{filetype}, ',')
             if syntax_group_include_{filetype} =~ '\w'
                 let syntax_group_include_{filetype} =
                             \ substitute( syntax_group_include_{filetype},
@@ -329,11 +336,20 @@ function! OmniSyntaxList(...)
     else
         " Default the exclude group to nothing
         let syntax_group_exclude_{filetype} = ''
-        " Check if there are any overrides specified for this filetype
+
+        " Allow user to override per buffer 
         if exists('g:omni_syntax_group_exclude_'.filetype)
+            let l:omni_syntax_group_exclude_{filetype} = g:omni_syntax_group_exclude_{filetype}
+        endif
+        if exists('b:omni_syntax_group_exclude_'.filetype)
+            let l:omni_syntax_group_exclude_{filetype} = b:omni_syntax_group_exclude_{filetype}
+        endif
+
+        " Check if there are any overrides specified for this filetype
+        if exists('l:omni_syntax_group_exclude_'.filetype)
             let syntax_group_exclude_{filetype} =
-                        \ substitute( g:omni_syntax_group_exclude_{filetype},'\s\+','','g')
-            let list_exclude_groups = split(g:omni_syntax_group_exclude_{filetype}, ',')
+                        \ substitute( l:omni_syntax_group_exclude_{filetype},'\s\+','','g')
+            let list_exclude_groups = split(l:omni_syntax_group_exclude_{filetype}, ',')
             if syntax_group_exclude_{filetype} =~ '\w'
                 let syntax_group_exclude_{filetype} =
                             \ substitute( syntax_group_exclude_{filetype},
@@ -529,6 +545,30 @@ endfunction
 
 function! s:SyntaxCSyntaxGroupItems( group_name, syntax_full )
 
+    " Allow user to override iskeyword per buffer 
+    let l:omni_syntax_use_iskeyword = g:omni_syntax_use_iskeyword
+    if exists('b:omni_syntax_use_iskeyword')
+        let l:omni_syntax_use_iskeyword = b:omni_syntax_use_iskeyword
+    endif
+
+    " Allow user to override iskeyword_numeric per buffer 
+    let l:omni_syntax_use_iskeyword_numeric = g:omni_syntax_use_iskeyword_numeric
+    if exists('b:omni_syntax_use_iskeyword_numeric')
+        let l:omni_syntax_use_iskeyword_numeric = b:omni_syntax_use_iskeyword_numeric
+    endif
+
+    " Allow user to override iskeyword_numeric per buffer 
+    let l:omni_syntax_use_single_byte = g:omni_syntax_use_single_byte
+    if exists('b:omni_syntax_use_single_byte')
+        let l:omni_syntax_use_single_byte = b:omni_syntax_use_single_byte
+    endif
+
+    " Allow user to override minimum_length per buffer 
+    let l:omni_syntax_minimum_length = g:omni_syntax_minimum_length
+    if exists('b:omni_syntax_minimum_length')
+        let l:omni_syntax_minimum_length = b:omni_syntax_minimum_length
+    endif
+
     let syn_list = ""
 
     " From the full syntax listing, strip out the portion for the
@@ -647,14 +687,23 @@ function! s:SyntaxCSyntaxGroupItems( group_name, syntax_full )
                     \    syn_list, '\%(^\|\n\)\@<=\s*\(@\w\+\)'
                     \    , "", 'g'
                     \ )
-
-        if b:omni_syntax_use_iskeyword == 0
+ 
+        if l:omni_syntax_use_iskeyword == 0
             " There are a number of items which have non-word characters in
             " them, *'T_F1'*.  vim.vim is one such file.
             " This will replace non-word characters with spaces.
+            "   setlocal filetype=forth
+            "   let g:omni_syntax_use_iskeyword = 1
+            "   let g:omni_syntax_use_iskeyword_numeric = 1
+            " You will see entries like
+            "   #>>
+            "   (.local)
+            " These were found doing a grep in vim82\syntax
+            "   grep iskeyword *
+            "   forth.vim:setlocal iskeyword=!,@,33-35,%,$,38-64,A-Z,91-96,a-z,123-126,128-255
             let syn_list = substitute( syn_list, '[^0-9A-Za-z_ ]', ' ', 'g' )
         else
-            if g:omni_syntax_use_iskeyword_numeric == 1
+            if l:omni_syntax_use_iskeyword_numeric == 1
                 " iskeyword can contain value like this
                 " 38,42,43,45,47-58,60-62,64-90,97-122,_,+,-,*,/,%,<,=,>,:,$,?,!,@-@,94
                 " Numeric values convert to their ASCII equivalent using the
@@ -674,7 +723,7 @@ function! s:SyntaxCSyntaxGroupItems( group_name, syntax_full )
                         " cycle through each character within the range
                         let [b:start, b:end] = split(item, '-')
                         for range_item in range( b:start, b:end )
-                            if range_item <= 127 || g:omni_syntax_use_single_byte == 0
+                            if range_item <= 127 || l:omni_syntax_use_single_byte == 0
                                 if nr2char(range_item) =~ '\p'
                                     let accepted_chars = accepted_chars . nr2char(range_item)
                                 endif
@@ -682,13 +731,13 @@ function! s:SyntaxCSyntaxGroupItems( group_name, syntax_full )
                         endfor
                     elseif item =~ '^\d\+$'
                         " Only numeric, translate to a character
-                        if item < 127 || g:omni_syntax_use_single_byte == 0
+                        if item < 127 || l:omni_syntax_use_single_byte == 0
                             if nr2char(item) =~ '\p'
                                 let accepted_chars = accepted_chars . nr2char(item)
                             endif
                         endif
                     else
-                        if char2nr(item) < 127 || g:omni_syntax_use_single_byte == 0
+                        if char2nr(item) < 127 || l:omni_syntax_use_single_byte == 0
                             if item =~ '\p'
                                 let accepted_chars = accepted_chars . item
                             endif
@@ -724,9 +773,9 @@ function! s:SyntaxCSyntaxGroupItems( group_name, syntax_full )
             endif
         endif
 
-        if b:omni_syntax_minimum_length > 0
+        if l:omni_syntax_minimum_length > 0
             " If the user specified a minimum length, enforce it
-            let syn_list = substitute(' '.syn_list.' ', ' \S\{,'.b:omni_syntax_minimum_length.'}\ze ', ' ', 'g')
+            let syn_list = substitute(' '.syn_list.' ', ' \S\{,'.l:omni_syntax_minimum_length.'}\ze ', ' ', 'g')
         endif
     else
         let syn_list = ''
@@ -756,5 +805,6 @@ function! OmniSyntaxShowChars(spec)
   endfor
   return join(map(result, 'nr2char(v:val)'), ', ')
 endfunction
+
 let &cpo = s:cpo_save
 unlet s:cpo_save

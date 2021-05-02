@@ -223,9 +223,12 @@ have a look at |maparg()|.
 If the first argument to one of these commands is "<expr>" and it is used to
 define a new mapping or abbreviation, the argument is an expression.  The
 expression is evaluated to obtain the {rhs} that is used.  Example: >
-	:inoremap <expr> . InsertDot()
-The result of the InsertDot() function will be inserted.  It could check the
+	:inoremap <expr> . <SID>InsertDot()
+The result of the s:InsertDot() function will be inserted.  It could check the
 text before the cursor and start omni completion when some condition is met.
+Using a script-local function is preferred, to avoid polluting the global
+namespace.  Use <SID> in the RHS so that the script that the mapping was
+defined in can be found.
 
 For abbreviations |v:char| is set to the character that was typed to trigger
 the abbreviation.  You can use this to decide how to expand the {lhs}.  You
