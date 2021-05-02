@@ -10,6 +10,11 @@ let cmd =
 	    \ 'some '
 	    \ 'string'
 
+if 1
+    let x = [
+		\ ]
+endif
+
 " END_INDENT
 
 " START_INDENT

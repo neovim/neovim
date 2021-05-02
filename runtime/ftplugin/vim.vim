@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Jan 12
+" Last Change:	2021 Jan 23
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -92,8 +92,13 @@ endif
 " Let the matchit plugin know what items can be matched.
 if exists("loaded_matchit")
   let b:match_ignorecase = 0
+  " "func" can also be used as a type:
+  "   var Ref: func
+  " or to list functions:
+  "   func name
+  " require a parenthesis following, then there can be an "endfunc".
   let b:match_words =
-	\ '\<\%(fu\%[nction]\|def\)\>)\@!:\<retu\%[rn]\>:\<\%(endf\%[unction]\|enddef\)\>,' .
+	\ '\<\%(fu\%[nction]\|def\)\s\+\S\+(:\<retu\%[rn]\>:\<\%(endf\%[unction]\|enddef\)\>,' .
 	\ '\<\(wh\%[ile]\|for\)\>:\<brea\%[k]\>:\<con\%[tinue]\>:\<end\(w\%[hile]\|fo\%[r]\)\>,' .
 	\ '\<if\>:\<el\%[seif]\>:\<en\%[dif]\>,' .
 	\ '{:},' .

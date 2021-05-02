@@ -1808,7 +1808,7 @@ v:null		Special value used to put "null" in JSON and NIL in msgpack.
 					*v:numbermax* *numbermax-variable*
 v:numbermax	Maximum value of a number.
 
-					*v:numbermix* *numbermix-variable*
+					*v:numbermin* *numbermin-variable*
 v:numbermin	Minimum value of a number (negative)
 
 					*v:numbersize* *numbersize-variable*

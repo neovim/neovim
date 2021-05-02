@@ -159,6 +159,8 @@ let b:undo_ftplugin = "setlocal efm< foldmethod< foldexpr<"
 " - Only definitions below, executed once -------------------------------------
 
 if exists("*OMLetFoldLevel")
+  let &cpoptions = s:cposet
+  unlet s:cposet
   finish
 endif
 
@@ -635,7 +637,7 @@ endfunction
   nnoremap <silent> <Plug>OCamlPrintType :<C-U>call Ocaml_print_type("normal")<CR>
   xnoremap <silent> <Plug>OCamlPrintType :<C-U>call Ocaml_print_type("visual")<CR>`<
 
-let &cpoptions=s:cposet
+let &cpoptions = s:cposet
 unlet s:cposet
 
 " vim:sw=2 fdm=indent

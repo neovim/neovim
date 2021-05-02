@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Jan 06
+" Last Change:	2021 Jan 21
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -38,6 +38,9 @@ function GetVimIndentIntern()
   " Find a non-blank line above the current line.
   let lnum = prevnonblank(v:lnum - 1)
 
+  " The previous line, ignoring line continuation
+  let prev_text_end = lnum > 0 ? getline(lnum) : ''
+
   " If the current line doesn't start with '\' or '"\ ' and below a line that
   " starts with '\' or '"\ ', use the indent of the line above it.
   let cur_text = getline(v:lnum)
@@ -51,6 +54,8 @@ function GetVimIndentIntern()
   if lnum == 0
     return 0
   endif
+
+  " the start of the previous line, skipping over line continuation
   let prev_text = getline(lnum)
   let found_cont = 0
 
@@ -147,13 +152,13 @@ function GetVimIndentIntern()
   endif
 
   " Below a line starting with "]" we must be below the end of a list.
-  if prev_text =~ '^\s*]'
+  if prev_text_end =~ '^\s*]'
     let ind = ind - shiftwidth()
   endif
 
   " A line ending in "{"/"[} is most likely the start of a dict/list literal,
   " indent the next line more.  Not for a continuation line.
-  if prev_text =~ '[{[]\s*$' && !found_cont
+  if prev_text_end =~ '[{[]\s*$' && !found_cont
     let ind = ind + shiftwidth()
   endif
 

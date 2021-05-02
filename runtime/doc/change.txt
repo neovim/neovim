@@ -1575,23 +1575,31 @@ can separate the option letters with commas for readability.
 
 letter	 meaning when present in 'formatoptions'    ~
 
+							*fo-t*
 t	Auto-wrap text using textwidth
+							*fo-c*
 c	Auto-wrap comments using textwidth, inserting the current comment
 	leader automatically.
+							*fo-r*
 r	Automatically insert the current comment leader after hitting
 	<Enter> in Insert mode.
+							*fo-o*
 o	Automatically insert the current comment leader after hitting 'o' or
 	'O' in Normal mode.
+							*fo-q*
 q	Allow formatting of comments with "gq".
 	Note that formatting will not change blank lines or lines containing
 	only the comment leader.  A new paragraph starts after such a line,
 	or when the comment leader changes.
+							*fo-w*
 w	Trailing white space indicates a paragraph continues in the next line.
 	A line that ends in a non-white character ends a paragraph.
+							*fo-a*
 a	Automatic formatting of paragraphs.  Every time text is inserted or
 	deleted the paragraph will be reformatted.  See |auto-format|.
 	When the 'c' flag is present this only happens for recognized
 	comments.
+							*fo-n*
 n	When formatting text, recognize numbered lists.  This actually uses
 	the 'formatlistpat' option, thus any kind of list can be used.  The
 	indent of the text after the number is used for the next line.  The
@@ -1602,6 +1610,7 @@ n	When formatting text, recognize numbered lists.  This actually uses
 		1. the first item
 		   wraps
 		2. the second item
+<							*fo-2*
 2	When formatting text, use the indent of the second line of a paragraph
 	for the rest of the paragraph, instead of the indent of the first
 	line.  This supports paragraphs in which the first line has a
@@ -1611,36 +1620,46 @@ n	When formatting text, recognize numbered lists.  This actually uses
 		second line of the same paragraph
 		third line.
 <	This also works inside comments, ignoring the comment leader.
+							*fo-v*
 v	Vi-compatible auto-wrapping in insert mode: Only break a line at a
 	blank that you have entered during the current insert command.  (Note:
 	this is not 100% Vi compatible.  Vi has some "unexpected features" or
 	bugs in this area.  It uses the screen column instead of the line
 	column.)
+							*fo-b*
 b	Like 'v', but only auto-wrap if you enter a blank at or before
 	the wrap margin.  If the line was longer than 'textwidth' when you
 	started the insert, or you do not enter a blank in the insert before
 	reaching 'textwidth', Vim does not perform auto-wrapping.
+							*fo-l*
 l	Long lines are not broken in insert mode: When a line was longer than
 	'textwidth' when the insert command started, Vim does not
 	automatically format it.
+							*fo-m*
 m	Also break at a multibyte character above 255.  This is useful for
 	Asian text where every character is a word on its own.
+							*fo-M*
 M	When joining lines, don't insert a space before or after a multibyte
 	character.  Overrules the 'B' flag.
+							*fo-B*
 B	When joining lines, don't insert a space between two multibyte
 	characters.  Overruled by the 'M' flag.
+							*fo-1*
 1	Don't break a line after a one-letter word.  It's broken before it
 	instead (if possible).
+							*fo-]*
 ]	Respect textwidth rigorously. With this flag set, no line can be
 	longer than textwidth, unless line-break-prohibition rules make this
 	impossible.  Mainly for CJK scripts and works only if 'encoding' is
 	"utf-8".
+							*fo-j*
 j	Where it makes sense, remove a comment leader when joining lines.  For
 	example, joining:
 		int i;   // the index ~
 		         // in the list ~
 	Becomes:
 		int i;   // the index in the list ~
+							*fo-p*
 p	Don't break lines at single spaces that follow periods.  This is
 	intended to complement 'joinspaces' and |cpo-J|, for prose with
 	sentences separated by two spaces.  For example, with 'textwidth' set

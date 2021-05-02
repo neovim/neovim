@@ -74,11 +74,15 @@ endif
 if (b:fortran_fixed_source == 1)
   setlocal indentexpr=FortranGetFixedIndent()
   if exists("*FortranGetFixedIndent")
+    let &cpoptions = s:cposet
+    unlet s:cposet
     finish
   endif
 else
   setlocal indentexpr=FortranGetFreeIndent()
   if exists("*FortranGetFreeIndent")
+    let &cpoptions = s:cposet
+    unlet s:cposet
     finish
   endif
 endif
@@ -213,7 +217,7 @@ function FortranGetFixedIndent()
   return ind
 endfunction
 
-let &cpoptions=s:cposet
+let &cpoptions = s:cposet
 unlet s:cposet
 
 " vim:sw=2 tw=130

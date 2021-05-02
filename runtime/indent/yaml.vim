@@ -2,15 +2,12 @@
 " Language:	YAML
 " Maintainer:	Nikolai Pavlov <zyx.vim@gmail.com>
 " Last Update:	Lukas Reineke
-" Last Change:	2020 Jun 07
+" Last Change:	2021 Jan 19
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
   finish
 endif
-
-let s:save_cpo = &cpo
-set cpo&vim
 
 let b:did_indent = 1
 
@@ -24,6 +21,9 @@ let b:undo_indent = 'setlocal indentexpr< indentkeys< smartindent<'
 if exists('*GetYAMLIndent')
     finish
 endif
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 function s:FindPrevLessIndentedLine(lnum, ...)
     let prevlnum = prevnonblank(a:lnum-1)
