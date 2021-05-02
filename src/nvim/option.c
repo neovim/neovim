@@ -4005,6 +4005,11 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
         EMSG(_(errmsg));
       }
     }
+  } else if ((int *)varp == &curwin->w_allbuf_opt.wo_fdr) { // 'foldreloadslow'
+    // when 'foldreloadslow' is enabled
+    // foldUpdateAfterInsert will always update,
+    // even when using a slow fold method
+    foldUpdateAll(curwin);
   }
 
   if ((int *)varp == &curwin->w_p_arab) {
@@ -5685,6 +5690,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_FDI:    return (char_u *)&(curwin->w_p_fdi);
   case PV_FDL:    return (char_u *)&(curwin->w_p_fdl);
   case PV_FDM:    return (char_u *)&(curwin->w_p_fdm);
+  case PV_FDR:    return (char_u *)&(curwin->w_p_fdr);
   case PV_FML:    return (char_u *)&(curwin->w_p_fml);
   case PV_FDN:    return (char_u *)&(curwin->w_p_fdn);
   case PV_FDE:    return (char_u *)&(curwin->w_p_fde);
@@ -5842,6 +5848,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdm = vim_strsave(from->wo_fdm);
   to->wo_fdm_save = from->wo_diff_saved
                     ? vim_strsave(from->wo_fdm_save) : empty_option;
+  to->wo_fdr = from->wo_fdr;
   to->wo_fdn = from->wo_fdn;
   to->wo_fde = vim_strsave(from->wo_fde);
   to->wo_fdt = vim_strsave(from->wo_fdt);

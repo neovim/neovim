@@ -1011,6 +1011,12 @@ return {
       defaults={if_true={vi="manual"}}
     },
     {
+      full_name='foldreloadslow', abbreviation='fdr',
+      short_desc=N_("whether to reload slow fold methods"),
+      type='bool', scope={'window'},
+      defaults={if_true={vi=false}},
+    },
+    {
       full_name='foldminlines', abbreviation='fml',
       short_desc=N_("minimum number of lines for a fold to be closed"),
       type='number', scope={'window'},
