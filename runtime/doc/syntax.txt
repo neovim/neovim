@@ -2303,11 +2303,12 @@ http://papp.plan9.de.
 
 PASCAL						*pascal.vim* *ft-pascal-syntax*
 
-Files matching "*.p" could be Progress or Pascal.  If the automatic detection
-doesn't work for you, or you don't edit Progress at all, use this in your
-startup vimrc: >
+Files matching "*.p" could be Progress or Pascal and those matching "*.pp"
+could be Puppet or Pascal.  If the automatic detection doesn't work for you,
+or you only edit Pascal files, use this in your startup vimrc: >
 
-   :let filetype_p = "pascal"
+   :let filetype_p  = "pascal"
+   :let filetype_pp = "pascal"
 
 The Pascal syntax file has been extended to take into account some extensions
 provided by Turbo Pascal, Free Pascal Compiler and GNU Pascal Compiler.

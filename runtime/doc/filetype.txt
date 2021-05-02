@@ -136,6 +136,7 @@ can be used to overrule the filetype used for certain extensions:
 	*.w		g:filetype_w	|ft-cweb-syntax|
 	*.i		g:filetype_i	|ft-progress-syntax|
 	*.p		g:filetype_p	|ft-pascal-syntax|
+	*.pp		g:filetype_pp	|ft-pascal-syntax|
 	*.sh		g:bash_is_sh	|ft-sh-syntax|
 	*.tex		g:tex_flavor	|ft-tex-plugin|
 

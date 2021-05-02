@@ -4005,7 +4005,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the |more-prompt|.  When this option is off there are no pauses, the
 	listing continues until finished.
 
-						*'mouse'* *E538*
+						*'mouse'*
 'mouse'			string	(default "")
 			global
 

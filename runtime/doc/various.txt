@@ -505,6 +505,9 @@ gO			Show a filetype-specific, navigable "outline" of the
 			if at a visible position.
 			Queued messages are processed during the sleep.
 
+							*:sl!* *:sleep!*
+:[N]sl[eep]! [N] [m]	Same as above, but hide the cursor
+
 ==============================================================================
 2. Using Vim like less or more					*less*
 

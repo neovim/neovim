@@ -2,12 +2,15 @@
 " Language:	C++
 " Current Maintainer:	vim-jp (https://github.com/vim-jp/vim-cpp)
 " Previous Maintainer:	Ken Shan <ccshan@post.harvard.edu>
-" Last Change:	2019 Dec 18
+" Last Change:	2021 Jan 12
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
+
+" inform C syntax that the file was included from cpp.vim
+let b:filetype_in_cpp_family = 1
 
 " Read the C syntax to start with
 runtime! syntax/c.vim

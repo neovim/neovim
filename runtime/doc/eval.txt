@@ -3363,8 +3363,9 @@ delete({fname} [, {flags}])					*delete()*
 		Note: on MS-Windows it is not possible to delete a directory
 		that is being used.
 
-		The result is a Number, which is 0 if the delete operation was
-		successful and -1 when the deletion failed or partly failed.
+		The result is a Number, which is 0/false if the delete
+		operation was successful and -1/true when the deletion failed
+		or partly failed.
 
 deletebufline({expr}, {first}[, {last}])		*deletebufline()*
 		Delete lines {first} to {last} (inclusive) from buffer {expr}.
@@ -5113,8 +5114,8 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 
 
 has_key({dict}, {key})					*has_key()*
-		The result is a Number, which is 1 if |Dictionary| {dict} has
-		an entry with key {key}.  Zero otherwise.
+		The result is a Number, which is TRUE if |Dictionary| {dict}
+		has an entry with key {key}.  FALSE otherwise.
 
 haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 		The result is a Number, which is 1 when the tabpage or window
@@ -5132,16 +5133,16 @@ haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 		If {winnr} is -1 it is ignored, only the tab is resolved.
 
 hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
-		The result is a Number, which is 1 if there is a mapping that
-		contains {what} in somewhere in the rhs (what it is mapped to)
-		and this mapping exists in one of the modes indicated by
-		{mode}.
+		The result is a Number, which is TRUE if there is a mapping
+		that contains {what} in somewhere in the rhs (what it is
+		mapped to) and this mapping exists in one of the modes
+		indicated by {mode}.
 		When {abbr} is there and it is |TRUE| use abbreviations
 		instead of mappings.  Don't forget to specify Insert and/or
 		Command-line mode.
 		Both the global mappings and the mappings local to the current
 		buffer are checked for a match.
-		If no matching mapping is found 0 is returned.
+		If no matching mapping is found FALSE is returned.
 		The following characters are recognized in {mode}:
 			n	Normal mode
 			v	Visual mode
@@ -5172,8 +5173,8 @@ histadd({history}, {item})				*histadd()*
 		character is sufficient.
 		If {item} does already exist in the history, it will be
 		shifted to become the newest entry.
-		The result is a Number: 1 if the operation was successful,
-		otherwise 0 is returned.
+		The result is a Number: TRUE if the operation was successful,
+		otherwise FALSE is returned.
 
 		Example: >
 			:call histadd("input", strftime("%Y %b %d"))
@@ -5192,8 +5193,8 @@ histdel({history} [, {item}])				*histdel()*
 		an index, see |:history-indexing|.  The respective entry will
 		be removed if it exists.
 
-		The result is a Number: 1 for a successful operation,
-		otherwise 0 is returned.
+		The result is TRUE for a successful operation, otherwise FALSE
+		is returned.
 
 		Examples:
 		Clear expression register history: >
@@ -5236,7 +5237,7 @@ histnr({history})					*histnr()*
 			:let inp_index = histnr("expr")
 <
 hlexists({name})					*hlexists()*
-		The result is a Number, which is non-zero if a highlight group
+		The result is a Number, which is TRUE if a highlight group
 		called {name} exists.  This is when the group has been
 		defined in some way.  Not necessarily when highlighting has
 		been defined for it, it may also have been used for a syntax
@@ -5427,7 +5428,7 @@ inputrestore()						*inputrestore()*
 		Restore typeahead that was saved with a previous |inputsave()|.
 		Should be called the same number of times inputsave() is
 		called.  Calling it more often is harmless though.
-		Returns 1 when there is nothing to restore, 0 otherwise.
+		Returns TRUE when there is nothing to restore, FALSE otherwise.
 
 inputsave()						*inputsave()*
 		Preserve typeahead (also from mappings) and clear it, so that
@@ -5435,7 +5436,7 @@ inputsave()						*inputsave()*
 		followed by a matching inputrestore() after the prompt.  Can
 		be used several times, in which case there must be just as
 		many inputrestore() calls.
-		Returns 1 when out of memory, 0 otherwise.
+		Returns TRUE when out of memory, FALSE otherwise.
 
 inputsecret({prompt} [, {text}])			*inputsecret()*
 		This function acts much like the |input()| function with but
@@ -6291,6 +6292,10 @@ mkdir({name} [, {path} [, {prot}]])
 
 		If you try to create an existing directory with {path} set to
 		"p" mkdir() will silently exit.
+
+		The function result is a Number, which is TRUE if the call was
+		successful or FALSE if the directory creation failed or partly
+		failed.
 
 							*mode()*
 mode([expr])	Return a string that indicates the current mode.
@@ -7394,6 +7399,7 @@ server2client({clientid}, {string})			*server2client()*
 		Send a reply string to {clientid}.  The most recent {clientid}
 		that sent a string can be retrieved with expand("<client>").
 		Note:
+		Returns zero for success, -1 for failure.
 		This id has to be stored before the next command can be
 		received.  I.e. before returning from the received command and
 		before calling any commands that waits for input.
@@ -7510,8 +7516,8 @@ setcmdpos({pos})					*setcmdpos()*
 		before inserting the resulting text.
 		When the number is too big the cursor is put at the end of the
 		line.  A number smaller than one has undefined results.
-		Returns 0 when successful, 1 when not editing the command
-		line.
+		Returns FALSE when successful, TRUE when not editing the
+		command line.
 
 setenv({name}, {val})						*setenv()*
 		Set environment variable {name} to {val}.
@@ -7544,8 +7550,8 @@ setline({lnum}, {text})					*setline()*
 		When {lnum} is just below the last line the {text} will be
 		added below the last line.
 
-		If this succeeds, 0 is returned.  If this fails (most likely
-		because {lnum} is invalid) 1 is returned.
+		If this succeeds, FALSE is returned.  If this fails (most likely
+		because {lnum} is invalid) TRUE is returned.
 
 		Example: >
 			:call setline(5, strftime("%c"))
@@ -9134,7 +9140,7 @@ win_gettype([{nr}])					*win_gettype()*
 win_gotoid({expr})					*win_gotoid()*
 		Go to window with ID {expr}.  This may also change the current
 		tabpage.
-		Return 1 if successful, 0 if the window cannot be found.
+		Return TRUE if successful, FALSE if the window cannot be found.
 
 win_id2tabwin({expr}					*win_id2tabwin()*
 		Return a list with the tab number and window number of window
