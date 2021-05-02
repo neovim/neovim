@@ -176,9 +176,11 @@ function M.formatting_sync(options, timeout_ms)
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
-  local result = client.request_sync("textDocument/formatting", params, timeout_ms)
+  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
   if result and result.result then
     util.apply_text_edits(result.result)
+  elseif err then
+    vim.notify("vim.lsp.buf.formatting_sync: " .. err, vim.log.levels.WARN)
   end
 end
 
@@ -216,9 +218,11 @@ function M.formatting_seq_sync(options, timeout_ms, order)
   for _, client in ipairs(clients) do
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
-      local result = client.request_sync("textDocument/formatting", params, timeout_ms)
+      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
       if result and result.result then
         util.apply_text_edits(result.result)
+      elseif err then
+        vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
       end
     end
   end
