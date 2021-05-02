@@ -1710,8 +1710,8 @@ The coloring scheme for tags in the HTML file works as follows.
 
 The  <> of opening tags are colored differently than the </> of a closing tag.
 This is on purpose! For opening tags the 'Function' color is used, while for
-closing tags the 'Type' color is used (See syntax.vim to check how those are
-defined for you)
+closing tags the 'Identifier' color is used (See syntax.vim to check how those
+are defined for you)
 
 Known tag names are colored the same way as statements in C.  Unknown tag
 names are colored with the same color as the <> or </> respectively which
@@ -4628,7 +4628,7 @@ matches, nextgroup, etc.  But there are a few differences:
 - A line continuation pattern can be given.  It is used to decide which group
   of lines need to be searched like they were one line.  This means that the
   search for a match with the specified items starts in the first of the
-  consecutive that contain the continuation pattern.
+  consecutive lines that contain the continuation pattern.
 - When using "nextgroup" or "contains", this only works within one line (or
   group of continued lines).
 - When using a region, it must start and end in the same line (or group of

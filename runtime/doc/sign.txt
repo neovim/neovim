@@ -131,6 +131,9 @@ See |sign_define()| for the equivalent Vim script function.
 	texthl={group}
 		Highlighting group used for the text item.
 
+	Example: >
+		:sign define MySign text=>> texthl=Search linehl=DiffText
+<
 
 DELETING A SIGN						*:sign-undefine* *E155*
 
@@ -140,7 +143,9 @@ See |sign_undefine()| for the equivalent Vim script function.
 		Deletes a previously defined sign.  If signs with this {name}
 		are still placed this will cause trouble.
 
-
+		Example: >
+			:sign undefine MySign
+<
 
 LISTING SIGNS						*:sign-list* *E156*
 
@@ -194,6 +199,10 @@ See |sign_place()| for the equivalent Vim script function.
 		Same, but use buffer {nr}.  If the buffer argument is not
 		given, place the sign in the current buffer.
 
+		Example: >
+			:sign place 10 line=99 name=sign3
+			:sign place 10 line=99 name=sign3 buffer=3
+<
 							*E885*
 :sign place {id} name={name} file={fname}
 		Change the placed sign {id} in file {fname} to use the defined
@@ -206,10 +215,17 @@ See |sign_place()| for the equivalent Vim script function.
 		"priority={prio}" attribute can be used to change the priority
 		of an existing sign.
 
+		Example: >
+			:sign place 23 name=sign1 file=/path/to/edit.py
+<
 :sign place {id} name={name} [buffer={nr}]
 		Same, but use buffer {nr}.  If the buffer argument is not
 		given, use the current buffer.
 
+		Example: >
+			:sign place 23 name=sign1
+			:sign place 23 name=sign1 buffer=7
+<
 
 REMOVING SIGNS						*:sign-unplace* *E159*
 

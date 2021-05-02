@@ -621,9 +621,9 @@ Your directory layout would be like this:
    opt/fooextra/doc/tags  	        " help tags
 
 This allows for the user to do: >
-	mkdir ~/.local/share/nvim/site/pack/myfoobar
-	cd ~/.local/share/nvim/site/pack/myfoobar
-	git clone https://github.com/you/foobar.git
+	mkdir ~/.local/share/nvim/site/pack
+	cd ~/.local/share/nvim/site/pack
+	git clone https://github.com/you/foobar.git myfoobar
 
 Here "myfoobar" is a name that the user can choose, the only condition is that
 it differs from other packages.

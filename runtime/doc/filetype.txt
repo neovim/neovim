@@ -576,6 +576,13 @@ So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i
 To disable bold highlighting: >
      :highlight link manBold Normal
 
+
+MARKDOWN                                                *ft-markdown-plugin*
+
+To enable folding use this: >
+        let g:markdown_folding = 1
+<
+
 PDF							*ft-pdf-plugin*
 
 Two maps, <C-]> and <C-T>, are provided to simulate a tag stack for navigating

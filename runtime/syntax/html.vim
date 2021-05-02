@@ -3,8 +3,9 @@
 " Previous Maintainer:  Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2021 Feb 25
+" Last Change:          2021 Mar 02
 "			Included patch #7900 to fix comments
+"			Included patch #7916 to fix a few more things
 "
 
 " Please check :help html.vim for some comments and a description of the options
@@ -79,26 +80,16 @@ syn keyword htmlArg contained usemap ismap valign value vlink vspace width wrap
 syn match   htmlArg contained "\<\(http-equiv\|href\|title\)="me=e-1
 
 " aria attributes
-syn match htmlArg contained "\<\(aria-activedescendant\|aria-atomic\)\>"
-syn match htmlArg contained "\<\(aria-autocomplete\|aria-busy\|aria-checked\)\>"
-syn match htmlArg contained "\<\(aria-colcount\|aria-colindex\|aria-colspan\)\>"
-syn match htmlArg contained "\<\(aria-controls\|aria-current\)\>"
-syn match htmlArg contained "\<\(aria-describedby\|aria-details\)\>"
-syn match htmlArg contained "\<\(aria-disabled\|aria-dropeffect\)\>"
-syn match htmlArg contained "\<\(aria-errormessage\|aria-expanded\)\>"
-syn match htmlArg contained "\<\(aria-flowto\|aria-grabbed\|aria-haspopup\)\>"
-syn match htmlArg contained "\<\(aria-hidden\|aria-invalid\)\>"
-syn match htmlArg contained "\<\(aria-keyshortcuts\|aria-label\)\>"
-syn match htmlArg contained "\<\(aria-labelledby\|aria-level\|aria-live\)\>"
-syn match htmlArg contained "\<\(aria-modal\|aria-multiline\)\>"
-syn match htmlArg contained "\<\(aria-multiselectable\|aria-orientation\)\>"
-syn match htmlArg contained "\<\(aria-owns\|aria-placeholder\|aria-posinset\)\>"
-syn match htmlArg contained "\<\(aria-pressed\|aria-readonly\|aria-relevant\)\>"
-syn match htmlArg contained "\<\(aria-required\|aria-roledescription\)\>"
-syn match htmlArg contained "\<\(aria-rowcount\|aria-rowindex\|aria-rowspan\)\>"
-syn match htmlArg contained "\<\(aria-selected\|aria-setsize\|aria-sort\)\>"
-syn match htmlArg contained "\<\(aria-valuemax\|aria-valuemin\)\>"
-syn match htmlArg contained "\<\(aria-valuenow\|aria-valuetext\)\>"
+exe 'syn match htmlArg contained "\<aria-\%(' . join([
+    \ 'activedescendant', 'atomic', 'autocomplete', 'busy', 'checked', 'colcount',
+    \ 'colindex', 'colspan', 'controls', 'current', 'describedby', 'details',
+    \ 'disabled', 'dropeffect', 'errormessage', 'expanded', 'flowto', 'grabbed',
+    \ 'haspopup', 'hidden', 'invalid', 'keyshortcuts', 'label', 'labelledby', 'level',
+    \ 'live', 'modal', 'multiline', 'multiselectable', 'orientation', 'owns',
+    \ 'placeholder', 'posinset', 'pressed', 'readonly', 'relevant', 'required',
+    \ 'roledescription', 'rowcount', 'rowindex', 'rowspan', 'selected', 'setsize',
+    \ 'sort', 'valuemax', 'valuemin', 'valuenow', 'valuetext'
+    \ ], '\|') . '\)\>"'
 syn keyword htmlArg contained role
 
 " Netscape extensions
@@ -139,25 +130,19 @@ syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"
 
 " Comments (the real ones or the old netscape ones)
 if exists("html_wrong_comments")
-  syn region htmlComment                start=+<!--+    end=+--\s*>+ contains=@Spell
+  syn region htmlComment        start=+<!--+    end=+--\s*>+    contains=@Spell
 else
-  " The HTML 5.2 syntax 8.2.4.41-42: bogus comment is parser error; browser skips until next &gt;
-  " Note: must stand first to get lesser :syn-priority
-  syn region htmlComment                start=+<!+      end=+>+     contains=htmlCommentError
-  " Normal comment opening <!-- ...>
-  syn region htmlComment                start=+<!--+    end=+>+     contains=htmlCommentPart,@Spell
-  " Idem 8.2.4.43-44: <!--> and <!---> are parser errors; browser treats as comments
-  syn match htmlComment "<!---\?>" contains=htmlCommentError
-  " Idem 8.2.4.51: any number of consecutive dashes within comment is okay; --> closes comment
-  " Idem 8.2.4.52: closing comment by dash-dash-bang (--!>) is error ignored by parser(!); closes comment
-  syn region htmlCommentPart  contained start=+--+      end=+--!\?>+me=e-1  contains=htmlCommentNested,@htmlPreProc,@Spell
-  " Idem 8.2.4.49: opening nested comment <!-- is parser error, ignored by browser, except <!--> is all right
-  syn match htmlCommentNested contained "<!--[^>]"me=e-1
-  syn match htmlCommentNested contained "<!--->"me=e-3
-  syn match htmlCommentNested contained "<!---\?!>"me=e-4
-  syn match htmlCommentError contained "[^><!]"
+  " The HTML 5.2 syntax 8.2.4.41: bogus comment is parser error; browser skips until next &gt
+  syn region htmlComment        start=+<!+      end=+>+         contains=htmlCommentError keepend
+  " Idem 8.2.4.42,51: Comment starts with <!-- and ends with -->
+  " Idem 8.2.4.43,44: Except <!--> and <!---> are parser errors
+  " Idem 8.2.4.52: dash-dash-bang (--!>) is error ignored by parser, also closes comment
+  syn region htmlComment matchgroup=htmlComment start=+<!--\%(-\?>\)\@!+        end=+--!\?>+    contains=htmlCommentNested,@htmlPreProc,@Spell keepend
+  " Idem 8.2.4.49: nested comment is parser error, except <!--> is all right
+  syn match htmlCommentNested contained "<!-->\@!"
+  syn match htmlCommentError  contained "[^><!]"
 endif
-syn region htmlComment                  start=+<!DOCTYPE+ keepend end=+>+
+syn region htmlComment  start=+<!DOCTYPE+       end=+>+ keepend
 
 " server-parsed commands
 syn region htmlPreProc start=+<!--#+ end=+-->+ contains=htmlPreStmt,htmlPreError,htmlPreAttr
@@ -278,7 +263,7 @@ hi def link htmlEndTag                  Identifier
 hi def link htmlArg                     Type
 hi def link htmlTagName                 htmlStatement
 hi def link htmlSpecialTagName          Exception
-hi def link htmlValue                     String
+hi def link htmlValue                   String
 hi def link htmlSpecialChar             Special
 
 if !exists("html_no_rendering")
@@ -322,14 +307,10 @@ hi def link htmlPreProc            PreProc
 hi def link htmlPreAttr            String
 hi def link htmlPreProcAttrName    PreProc
 hi def link htmlPreProcAttrError   Error
-hi def link htmlSpecial            Special
-hi def link htmlSpecialChar        Special
 hi def link htmlString             String
 hi def link htmlStatement          Statement
 hi def link htmlComment            Comment
-hi def link htmlCommentPart        Comment
-hi def link htmlValue              String
-hi def link htmlCommentNested      htmlCommentError
+hi def link htmlCommentNested      htmlError
 hi def link htmlCommentError       htmlError
 hi def link htmlTagError           htmlError
 hi def link htmlEvent              javaScript

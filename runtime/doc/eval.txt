@@ -4698,6 +4698,10 @@ getpos({expr})	Get the position for {expr}.  For possible values of {expr}
 		Note that for '< and '> Visual mode matters: when it is "V"
 		(visual line mode) the column of '< is zero and the column of
 		'> is a large number.
+		The column number in the returned List is the byte position
+		within the line.
+		The column number can be very large, e.g. 2147483647, in which
+		case it means "after the end of the line".
 		This can be used to save and restore the position of a mark: >
 			let save_a_mark = getpos("'a")
 			...
@@ -6104,7 +6108,8 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 		to be used when fast match additions and deletions are
 		required, for example to highlight matching parentheses.
 							*E5030* *E5031*
-		The list {pos} can contain one of these items:
+		{pos} is a list of positions.  Each position can be one of
+		these:
 		- A number.  This whole line will be highlighted.  The first
 		  line has number 1.
 		- A list with one number, e.g., [23]. The whole line with this
@@ -6121,7 +6126,7 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 		ignored, as well as entries with negative column numbers and
 		lengths.
 
-		The maximum number of positions is 8.
+		The maximum number of positions in {pos} is 8.
 
 		Example: >
 			:highlight MyGroup ctermbg=green guibg=green
@@ -6130,8 +6135,7 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 			:call matchdelete(m)
 
 <		Matches added by |matchaddpos()| are returned by
-		|getmatches()| with an entry "pos1", "pos2", etc., with the
-		value a list like the {pos} item.
+		|getmatches()|.
 
 matcharg({nr})							*matcharg()*
 		Selects the {nr} match item, as set with a |:match|,
@@ -8224,7 +8228,8 @@ strchars({expr} [, {skipcc}])					*strchars()*
 <
 strcharpart({src}, {start} [, {len}])			*strcharpart()*
 		Like |strpart()| but using character index and length instead
-		of byte index and length.
+		of byte index and length.  Composing characters are counted
+		separately.
 		When a character index is used where a character does not
 		exist it is assumed to be one character.  For example: >
 			strcharpart('abc', -1, 2)
@@ -10508,7 +10513,7 @@ text...
 			Cannot be followed by a comment.
 			Examples: >
 		:execute "buffer" nextbuf
-		:execute "normal" count . "w"
+		:execute "normal" count .. "w"
 <
 			":execute" can be used to append a command to commands
 			that don't accept a '|'.  Example: >
@@ -10524,8 +10529,8 @@ text...
 			file names.  The |fnameescape()| function can be used
 			for Vim commands, |shellescape()| for |:!| commands.
 			Examples: >
-		:execute "e " . fnameescape(filename)
-		:execute "!ls " . shellescape(filename, 1)
+		:execute "e " .. fnameescape(filename)
+		:execute "!ls " .. shellescape(filename, 1)
 <
 			Note: The executed string may be any command-line, but
 			starting or ending "if", "while" and "for" does not

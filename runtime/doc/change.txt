@@ -623,6 +623,8 @@ Directory for temporary files is created in the first suitable directory of:
 			The space between `:substitute` and the 'c', 'g',
 			'i', 'I' and 'r' flags isn't required, but in scripts
 			it's a good idea to keep it to avoid confusion.
+			Also see the two and three letter commands to repeat
+			:substitute below |:substitute-repeat|.
 
 :[range]~[&][flags] [count]					*:~*
 			Repeat last substitute with same substitute string
@@ -843,20 +845,26 @@ either the first or second pattern in parentheses did not match, so either
 		*:sge* *:sgi* *:sgI* *:sgl* *:sgn* *:sgp* *:sgr* *:sI* *:si*
 		*:sic* *:sIc* *:sie* *:sIe* *:sIg* *:sIl* *:sin* *:sIn* *:sIp*
 		*:sip* *:sIr* *:sir* *:sr* *:src* *:srg* *:sri* *:srI* *:srl*
-		*:srn* *:srp*
+		*:srn* *:srp* *:substitute-repeat*
 2-letter and 3-letter :substitute commands ~
+
+These commands repeat the previous `:substitute` command with the given flags.
+The first letter is always "s", followed by one or two of the possible flag
+characters.  For example `:sce` works like `:s///ce`.  The table lists the
+possible combinations, not all flags are possible, because the command is
+short for another command.
 
      List of :substitute commands
      |      c    e    g    i    I    n    p    l    r
-     | c  :sc  :sce :scg :sci :scI :scn :scp :scl  ---
+     | c  :sc  :sce :scg :sci :scI :scn :scp :scl
      | e
      | g  :sgc :sge :sg  :sgi :sgI :sgn :sgp :sgl :sgr
-     | i  :sic :sie  --- :si  :siI :sin :sip  --- :sir
+     | i  :sic :sie      :si  :siI :sin :sip      :sir
      | I  :sIc :sIe :sIg :sIi :sI  :sIn :sIp :sIl :sIr
      | n
      | p
      | l
-     | r  :src  --- :srg :sri :srI :srn :srp :srl :sr
+     | r  :src      :srg :sri :srI :srn :srp :srl :sr
 
 Exceptions:
      :scr  is  `:scriptnames`
