@@ -1,14 +1,15 @@
 " Vim syntax file
 " Language:	OpenSSH client configuration file (ssh_config)
 " Author:	David Necas (Yeti)
-" Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
+" Maintainer:	Jakub Jelen <jakuje at gmail dot com>
+" Previous Maintainer:	Dominik Fischer <d dot f dot fischer at web dot de>
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Contributor:  Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2020 Feb 12
+" Last Change:	2021 Mar 29
 "		Added RemoteCommand from pull request #4809
 "		Included additional keywords from Martin.
-" SSH Version:	7.4p1
+" SSH Version:	8.5p1
 "
 
 " Setup
@@ -174,6 +175,7 @@ syn keyword sshconfigKeyword HostKeyAlgorithms
 syn keyword sshconfigKeyword HostKeyAlias
 syn keyword sshconfigKeyword HostName
 syn keyword sshconfigKeyword HostbasedAuthentication
+syn keyword sshconfigKeyword HostbasedAcceptedAlgorithms
 syn keyword sshconfigKeyword HostbasedKeyTypes
 syn keyword sshconfigKeyword IPQoS
 syn keyword sshconfigKeyword IdentitiesOnly
@@ -185,9 +187,11 @@ syn keyword sshconfigKeyword IPQoS
 syn keyword sshconfigKeyword KbdInteractiveAuthentication
 syn keyword sshconfigKeyword KbdInteractiveDevices
 syn keyword sshconfigKeyword KexAlgorithms
+syn keyword sshconfigKeyword KnownHostsCommand
 syn keyword sshconfigKeyword LocalCommand
 syn keyword sshconfigKeyword LocalForward
 syn keyword sshconfigKeyword LogLevel
+syn keyword sshconfigKeyword LogVerbose
 syn keyword sshconfigKeyword MACs
 syn keyword sshconfigKeyword Match
 syn keyword sshconfigKeyword NoHostAuthenticationForLocalhost
@@ -195,11 +199,13 @@ syn keyword sshconfigKeyword NumberOfPasswordPrompts
 syn keyword sshconfigKeyword PKCS11Provider
 syn keyword sshconfigKeyword PasswordAuthentication
 syn keyword sshconfigKeyword PermitLocalCommand
+syn keyword sshconfigKeyword PermitRemoteOpen
 syn keyword sshconfigKeyword Port
 syn keyword sshconfigKeyword PreferredAuthentications
 syn keyword sshconfigKeyword ProxyCommand
 syn keyword sshconfigKeyword ProxyJump
 syn keyword sshconfigKeyword ProxyUseFDPass
+syn keyword sshconfigKeyword PubkeyAcceptedAlgorithms
 syn keyword sshconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshconfigKeyword PubkeyAuthentication
 syn keyword sshconfigKeyword RekeyLimit

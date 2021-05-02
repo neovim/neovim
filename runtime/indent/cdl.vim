@@ -62,10 +62,14 @@ fun! CdlGetIndent(lnum)
   " PREVIOUS LINE
   let ind = indent(lnum)
   let line = getline(lnum)
-  let f = -1 " wether a '=' is a conditional or a asignment, -1 means we don't know yet
-  " one 'closing' element at the beginning of the line has already reduced the
-  "   indent, but 'else', 'elseif' & 'then' increment it for the next line
-  " '=' at the beginning has already de right indent (increased for asignments)
+
+  " Whether a '=' is a conditional or an assignment. -1 means we don't know
+  " yet.
+  " One 'closing' element at the beginning of the line has already reduced the
+  " indent, but 'else', 'elseif' & 'then' increment it for the next line.
+  " '=' at the beginning already has the right indent (increased for
+  " asignments).
+  let f = -1
   let inicio = matchend(line, '^\c\s*\(else\a*\|then\|endif\|/[*/]\|[);={]\)')
   if inicio > 0
     let c = line[inicio-1]

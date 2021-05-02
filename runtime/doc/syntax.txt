@@ -2205,9 +2205,10 @@ can use them.
 
 For example, Linux and BSD distributions use groff as their default text
 processing package.  In order to activate the extra syntax highlighting
-features for groff, add the following option to your start-up files: >
+features for groff, arrange for files to be recognized as groff (see
+|ft-groff-syntax|) or add the following option to your start-up files: >
 
-  :let b:nroff_is_groff = 1
+  :let nroff_is_groff = 1
 
 Groff is different from the old AT&T n/troff that you may still find in
 Solaris.  Groff macro and request names can be longer than 2 characters and

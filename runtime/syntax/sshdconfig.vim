@@ -7,8 +7,8 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Originally:	2009-07-09
-" Last Change:	2020-10-20
-" SSH Version:	8.4p1
+" Last Change:	2021-03-29
+" SSH Version:	8.5p1
 "
 
 " Setup
@@ -195,6 +195,7 @@ syn keyword sshdconfigKeyword HostCertificate
 syn keyword sshdconfigKeyword HostKey
 syn keyword sshdconfigKeyword HostKeyAgent
 syn keyword sshdconfigKeyword HostKeyAlgorithms
+syn keyword sshdconfigKeyword HostbasedAcceptedAlgorithms
 syn keyword sshdconfigKeyword HostbasedAcceptedKeyTypes
 syn keyword sshdconfigKeyword HostbasedAuthentication
 syn keyword sshdconfigKeyword HostbasedUsesNameFromPacketOnly
@@ -213,6 +214,7 @@ syn keyword sshdconfigKeyword KexAlgorithms
 syn keyword sshdconfigKeyword KeyRegenerationInterval
 syn keyword sshdconfigKeyword ListenAddress
 syn keyword sshdconfigKeyword LogLevel
+syn keyword sshdconfigKeyword LogVerbose
 syn keyword sshdconfigKeyword LoginGraceTime
 syn keyword sshdconfigKeyword MACs
 syn keyword sshdconfigKeyword Match
@@ -220,6 +222,8 @@ syn keyword sshdconfigKeyword MaxAuthTries
 syn keyword sshdconfigKeyword MaxSessions
 syn keyword sshdconfigKeyword MaxStartups
 syn keyword sshdconfigKeyword PasswordAuthentication
+syn keyword sshdconfigKeyword PerSourceMaxStartups
+syn keyword sshdconfigKeyword PerSourceNetBlockSize
 syn keyword sshdconfigKeyword PermitBlacklistedKeys
 syn keyword sshdconfigKeyword PermitEmptyPasswords
 syn keyword sshdconfigKeyword PermitListen
@@ -234,6 +238,7 @@ syn keyword sshdconfigKeyword Port
 syn keyword sshdconfigKeyword PrintLastLog
 syn keyword sshdconfigKeyword PrintMotd
 syn keyword sshdconfigKeyword Protocol
+syn keyword sshdconfigKeyword PubkeyAcceptedAlgorithms
 syn keyword sshdconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshdconfigKeyword PubkeyAuthentication
 syn keyword sshdconfigKeyword PubkeyAuthOptions

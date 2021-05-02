@@ -245,8 +245,8 @@ typeahead, before the previous command has been executed.  For example: >
 	endfunc
 	nnoremap <expr> x StoreColumn()
 	nmap ! f!x
-You will notice that g:column has the value from before executing "fx",
-because "z" is evaluated before "fx" is executed.
+You will notice that g:column has the value from before executing "f!",
+because "x" is evaluated before "f!" is executed.
 This can be solved by inserting <Ignore> before the character that is
 expression-mapped: >
 	nmap ! f!<Ignore>x
