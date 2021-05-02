@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Feb 18
+" Last Change:	2021 Apr 18
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -71,7 +71,8 @@ function GetVimIndentIntern()
       " End of heredoc: use indent of matching start line
       let lnum = v:lnum - 1
       while lnum > 0
-	if synIDattr(synID(lnum, 1, 1), "name") !~ 'vimLetHereDoc'
+	let attr = synIDattr(synID(lnum, 1, 1), "name")
+	if attr != '' && attr !~ 'vimLetHereDoc'
 	  return indent(lnum)
 	endif
 	let lnum -= 1

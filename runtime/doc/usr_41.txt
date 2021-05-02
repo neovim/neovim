@@ -115,12 +115,20 @@ if you are impatient.
 
 FOUR KINDS OF NUMBERS
 
-Numbers can be decimal, hexadecimal, octal or binary.  A hexadecimal number
-starts with "0x" or "0X".  For example "0x1f" is decimal 31.  An octal number
-starts with a zero.  "017" is decimal 15.  A binary number starts with "0b" or
-"0B".  For example "0b101" is decimal 5.  Careful: don't put a zero before a
-decimal number, it will be interpreted as an octal number!
-   The ":echo" command always prints decimal numbers.  Example: >
+Numbers can be decimal, hexadecimal, octal or binary.
+
+A hexadecimal number starts with "0x" or "0X".  For example "0x1f" is decimal
+31.
+
+An octal number starts with "0o", "0O" or a zero and another digit.  "0o17" is
+decimal 15.  Using just a zero prefix is not supported in Vim9 script.
+
+A binary number starts with "0b" or "0B".  For example "0b101" is decimal 5.
+
+A decimal number is just digits.  Careful: don't put a zero before a decimal
+number, it will be interpreted as an octal number in legacy script!
+
+The ":echo" command always prints decimal numbers.  Example: >
 
 	:echo 0x7f 0o36
 <	127 30 ~
