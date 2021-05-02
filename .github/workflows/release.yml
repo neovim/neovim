@@ -15,7 +15,7 @@ on:
 # Build on the oldest supported images, so we have broader compatibility
 jobs:
   linux:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     outputs:
       version: ${{ steps.build.outputs.version }}
       release: ${{ steps.build.outputs.release }}
@@ -43,7 +43,7 @@ jobs:
           retention-days: 1
 
   appimage:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:
