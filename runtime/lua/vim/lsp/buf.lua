@@ -112,14 +112,14 @@ function M.completion(context)
 end
 
 --@private
---- If there is more than one client with formatting capability, asks the user
---- which one to use.
+--- If there is more than one client that supports the given method,
+--- asks the user to select one.
 --
---@returns The client to use for formatting
-local function get_formatting_client()
+--@returns The client that the user selected or nil
+local function select_client(method)
   local clients = vim.tbl_values(vim.lsp.buf_get_clients());
   clients = vim.tbl_filter(function (client)
-    return client.resolved_capabilities.document_formatting
+    return client.supports_method(method)
   end, clients)
   -- better UX when choices are always in the same order (between restarts)
   table.sort(clients, function (a, b) return a.name < b.name end)
@@ -130,7 +130,7 @@ local function get_formatting_client()
       table.insert(choices, string.format("%d %s", k, v.name))
     end
     local user_choice = vim.fn.confirm(
-      "Select a language server for formatting:",
+      "Select a language server:",
       table.concat(choices, "\n"),
       0,
       "Question"
@@ -152,7 +152,7 @@ end
 --
 --@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 function M.formatting(options)
-  local client = get_formatting_client()
+  local client = select_client("textDocument/formatting")
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
@@ -172,7 +172,7 @@ end
 --@param timeout_ms (number) Request timeout
 --@see |vim.lsp.buf.formatting_seq_sync|
 function M.formatting_sync(options, timeout_ms)
-  local client = get_formatting_client()
+  local client = select_client("textDocument/formatting")
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
@@ -232,15 +232,12 @@ end
 --@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
-  validate { options = {options, 't', true} }
-  local sts = vim.bo.softtabstop;
-  options = vim.tbl_extend('keep', options or {}, {
-    tabSize = (sts > 0 and sts) or (sts < 0 and vim.bo.shiftwidth) or vim.bo.tabstop;
-    insertSpaces = vim.bo.expandtab;
-  })
+  local client = select_client("textDocument/rangeFormatting")
+  if client == nil then return end
+
   local params = util.make_given_range_params(start_pos, end_pos)
-  params.options = options
-  return request('textDocument/rangeFormatting', params)
+  params.options = util.make_formatting_params(options).options
+  return client.request("textDocument/rangeFormatting", params)
 end
 
 --- Renames all references to the symbol under the cursor.
