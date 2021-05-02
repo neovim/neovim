@@ -483,6 +483,13 @@ end
 ---     result. You can use this with `client.cancel_request(request_id)`
 ---     to cancel the request.
 ---
+---  - request_sync(method, params, timeout_ms, bufnr)
+---     Sends a request to the server and synchronously waits for the response.
+---     This is a wrapper around {client.request}
+---     Returns: { err=err, result=result }, a dictionary, where `err` and `result` come from
+---     the |lsp-handler|. On timeout, cancel or error, returns `(nil, err)` where `err` is a
+---     string describing the failure reason. If the request was unsuccessful returns `nil`.
+---
 ---  - notify(method, params)
 ---     Sends a notification to an LSP server.
 ---     Returns: a boolean to indicate if the notification was successful. If
