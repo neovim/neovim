@@ -1,10 +1,10 @@
 " Vim syntax file
 " Language:             HTML
-" Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
+" Previous Maintainer:  Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2020 Mar 17
-" Included patch from Florian Breisch to add the summary element
+" Last Change:          2021 Feb 25
+"			Included patch #7900 to fix comments
 "
 
 " Please check :help html.vim for some comments and a description of the options
@@ -141,9 +141,21 @@ syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"
 if exists("html_wrong_comments")
   syn region htmlComment                start=+<!--+    end=+--\s*>+ contains=@Spell
 else
-  syn region htmlComment                start=+<!+      end=+>+   contains=htmlCommentPart,htmlCommentError,@Spell
-  syn match  htmlCommentError contained "[^><!]"
-  syn region htmlCommentPart  contained start=+--+      end=+--\s*+  contains=@htmlPreProc,@Spell
+  " The HTML 5.2 syntax 8.2.4.41-42: bogus comment is parser error; browser skips until next &gt;
+  " Note: must stand first to get lesser :syn-priority
+  syn region htmlComment                start=+<!+      end=+>+     contains=htmlCommentError
+  " Normal comment opening <!-- ...>
+  syn region htmlComment                start=+<!--+    end=+>+     contains=htmlCommentPart,@Spell
+  " Idem 8.2.4.43-44: <!--> and <!---> are parser errors; browser treats as comments
+  syn match htmlComment "<!---\?>" contains=htmlCommentError
+  " Idem 8.2.4.51: any number of consecutive dashes within comment is okay; --> closes comment
+  " Idem 8.2.4.52: closing comment by dash-dash-bang (--!>) is error ignored by parser(!); closes comment
+  syn region htmlCommentPart  contained start=+--+      end=+--!\?>+me=e-1  contains=htmlCommentNested,@htmlPreProc,@Spell
+  " Idem 8.2.4.49: opening nested comment <!-- is parser error, ignored by browser, except <!--> is all right
+  syn match htmlCommentNested contained "<!--[^>]"me=e-1
+  syn match htmlCommentNested contained "<!--->"me=e-3
+  syn match htmlCommentNested contained "<!---\?!>"me=e-4
+  syn match htmlCommentError contained "[^><!]"
 endif
 syn region htmlComment                  start=+<!DOCTYPE+ keepend end=+>+
 
@@ -317,6 +329,7 @@ hi def link htmlStatement          Statement
 hi def link htmlComment            Comment
 hi def link htmlCommentPart        Comment
 hi def link htmlValue              String
+hi def link htmlCommentNested      htmlCommentError
 hi def link htmlCommentError       htmlError
 hi def link htmlTagError           htmlError
 hi def link htmlEvent              javaScript

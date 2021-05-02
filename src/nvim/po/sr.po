@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Serbian)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-23 22:13+0400\n"
-"PO-Revision-Date: 2020-11-27 00:43+0400\n"
+"POT-Creation-Date: 2021-02-14 01:49+0400\n"
+"PO-Revision-Date: 2021-02-14 01:54+0400\n"
 "Last-Translator: Ivan Pešić <ivan.pesic@gmail.com>\n"
 "Language-Team: Serbian\n"
 "Language: sr\n"
@@ -34,7 +34,7 @@ msgid "E610: No argument to delete"
 msgstr "E610: Нема аргумента за брисање"
 
 msgid "E249: window layout changed unexpectedly"
-msgstr "E249: распоред прозора се нечекивано променио"
+msgstr "E249: распоред прозора се неочекивано променио"
 
 msgid "--Deleted--"
 msgstr "--Обрисано--"
@@ -370,7 +370,7 @@ msgstr ""
 "празно да премостите)"
 
 msgid "E514: write error (file system full?)"
-msgstr "E514: грешка при упису (систем фајллова је пун?)"
+msgstr "E514: грешка при упису (систем фајлова је пун?)"
 
 msgid " CONVERSION ERROR"
 msgstr " ГРЕШКА КОНВЕРЗИЈЕ"
@@ -436,7 +436,7 @@ msgid "E901: gethostbyname() in channel_open()"
 msgstr "E901: gethostbyname() у channel_open()"
 
 msgid "E903: received command with non-string argument"
-msgstr "E903: примњена команда са аргуменом који није стринг"
+msgstr "E903: примљена команда са аргументом који није стринг"
 
 msgid "E904: last argument for expr/call must be a number"
 msgstr "E904: последњи аргумент за expr/call мора бити број"
@@ -1609,7 +1609,7 @@ msgid "E185: Cannot find color scheme '%s'"
 msgstr "E185: Шема боја '%s' не може да се пронађе"
 
 msgid "Greetings, Vim user!"
-msgstr "Поздрав, корисниче Vim-a"
+msgstr "Поздрав, корисниче програма Vim!"
 
 msgid "E784: Cannot close last tab page"
 msgstr "E784: Последња картица не може да се затвори"
@@ -1636,7 +1636,7 @@ msgstr ""
 "премошћавање)"
 
 msgid "E186: No previous directory"
-msgstr "E186: Нема претгодног директоријума"
+msgstr "E186: Нема претходног директоријума"
 
 msgid "E187: Unknown"
 msgstr "E187: Непознато"
@@ -2483,7 +2483,7 @@ msgstr ""
 
 #, c-format
 msgid "E250: Fonts for the following charsets are missing in fontset %s:"
-msgstr "E250: Фонтови за следеће сетове карактера недостају у фонтсету %s:"
+msgstr "E250: У фонтсету %s недостају фонтови за следеће скупове карактера:"
 
 #, c-format
 msgid "E252: Fontset name: %s"
@@ -2491,7 +2491,7 @@ msgstr "E252: Име фонтсета: %s"
 
 #, c-format
 msgid "Font '%s' is not fixed-width"
-msgstr "Фонт %s' није фиксне ширине"
+msgstr "Фонт '%s' није фиксне ширине"
 
 #, c-format
 msgid "E253: Fontset name: %s"
@@ -2507,7 +2507,7 @@ msgstr "Фонт%d: %s"
 
 #, c-format
 msgid "Font%d width is not twice that of font0"
-msgstr "Ширина фонт%d није два пута већа од ширине фонт0"
+msgstr "Фонт%d није два пута шири од фонт0"
 
 #, c-format
 msgid "Font0 width: %d"
@@ -6002,7 +6002,7 @@ msgstr "E414: група има поставке, highlight link се игнор
 
 #, c-format
 msgid "E415: unexpected equal sign: %s"
-msgstr "E415: неочкиван знак једнакости: %s"
+msgstr "E415: неочекиван знак једнакости: %s"
 
 #, c-format
 msgid "E416: missing equal sign: %s"
@@ -6371,7 +6371,7 @@ msgid "E177: Count cannot be specified twice"
 msgstr "E177: Бројач не може да се наведе два пута"
 
 msgid "E178: Invalid default value for count"
-msgstr "E178: Несправна подразумевана вредност за бројач"
+msgstr "E178: Неисправна подразумевана вредност за бројач"
 
 msgid "E179: argument required for -complete"
 msgstr "E179: потребан је аргумент за -complete"
@@ -6491,7 +6491,7 @@ msgid "E124: Missing '(': %s"
 msgstr "E124: Недостаје '(': %s"
 
 msgid "E862: Cannot use g: here"
-msgstr "E862: g: не може овде да се користи"
+msgstr "E862: Овде не може да се користи g:"
 
 #, c-format
 msgid "E932: Closure function should not be at top level: %s"
@@ -6602,14 +6602,14 @@ msgid ""
 "Included patches: "
 msgstr ""
 "\n"
-"Укључене исправке: "
+"Укључене закрпе: "
 
 msgid ""
 "\n"
 "Extra patches: "
 msgstr ""
 "\n"
-"Екстра исправке: "
+"Додатне закрпе: "
 
 msgid "Modified by "
 msgstr "Модификовао "
@@ -6747,7 +6747,7 @@ msgid "Linking: "
 msgstr "Повезивање: "
 
 msgid "  DEBUG BUILD"
-msgstr "  DEBUG ИЗДАЊЕ"
+msgstr "  ДИБАГ ИЗДАЊЕ"
 
 msgid "VIM - Vi IMproved"
 msgstr "VIM - Vi IMproved"
@@ -6756,7 +6756,7 @@ msgid "version "
 msgstr "верзија "
 
 msgid "by Bram Moolenaar et al."
-msgstr "написали Bram Moolenaar et al."
+msgstr "написали Брам Моленар и др."
 
 msgid "Vim is open source and freely distributable"
 msgstr "Vim је отвореног кода и може слободно да се дистрибуира"
@@ -6792,13 +6792,13 @@ msgid "Running modeless, typed text is inserted"
 msgstr "Безрежимски рад, умеће се откуцани текст"
 
 msgid "menu  Edit->Global Settings->Toggle Insert Mode  "
-msgstr "мени  Уређивање->Глобална подешавања->Преклапај режим Уметање  "
+msgstr "мени  Уређивање->Општа подешавања->Режим Уметање (да/не)  "
 
 msgid "                              for two modes      "
 msgstr "                              за два режима      "
 
 msgid "menu  Edit->Global Settings->Toggle Vi Compatible"
-msgstr "мени  Уређивање->Глобална подешавања->Преклапај Vi Компатибилно"
+msgstr "мени  Уређивање->Општа подешавања->'Vi' сагласно (да/не)"
 
 msgid "                              for Vim defaults   "
 msgstr "                              за Vim подразумевано   "
@@ -6976,11 +6976,11 @@ msgstr "E983: Дуплирани аргумент: %s"
 
 #, c-format
 msgid "E475: Invalid value for argument %s"
-msgstr "E475: Неважећa вредност за аргумент: %s"
+msgstr "E475: Неважећа вредност за аргумент: %s"
 
 #, c-format
 msgid "E475: Invalid value for argument %s: %s"
-msgstr "E475: Неважећa вредност за аргумент %s: %s"
+msgstr "E475: Неважећа вредност за аргумент %s: %s"
 
 #, c-format
 msgid "E15: Invalid expression: %s"

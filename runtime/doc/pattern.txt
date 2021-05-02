@@ -219,7 +219,7 @@ This is like executing two search commands after each other, except that:
 							*last-pattern*
 The last used pattern and offset are remembered.  They can be used to repeat
 the search, possibly in another direction or with another count.  Note that
-two patterns are remembered: One for 'normal' search commands and one for the
+two patterns are remembered: One for "normal" search commands and one for the
 substitute command ":s".  Each time an empty pattern is given, the previously
 used pattern is used.  However, if there is no previous search command, a
 previous substitute pattern is used, if possible.

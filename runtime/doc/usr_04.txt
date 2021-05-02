@@ -463,9 +463,9 @@ of characters to replace.  It will not continue on the next line.
 
 You can switch between Insert mode and Replace mode with the <Insert> key.
 
-When you use <BS> (backspace) to make correction, you will notice that the
-old text is put back.  Thus it works like an undo command for the last typed
-character.
+When you use <BS> (backspace) to make a correction, you will notice that the
+old text is put back.  Thus it works like an undo command for the previously
+typed character.
 
 ==============================================================================
 *04.10*	Conclusion

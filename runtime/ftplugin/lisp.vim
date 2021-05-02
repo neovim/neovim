@@ -14,13 +14,11 @@ endif
 " Don't load another plugin for this buffer
 let b:did_ftplugin = 1
 
-setl comments=:;
+setl comments=:;;;;,:;;;,:;;,:;,sr:#\|,mb:\|,ex:\|#
 setl define=^\\s*(def\\k*
 setl formatoptions-=t
 setl iskeyword+=+,-,*,/,%,<,=,>,:,$,?,!,@-@,94
 setl lisp
 setl commentstring=;%s
-
-setl comments^=:;;;,:;;,sr:#\|,mb:\|,ex:\|#
 
 let b:undo_ftplugin = "setlocal comments< define< formatoptions< iskeyword< lisp< commentstring<"
