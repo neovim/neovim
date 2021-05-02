@@ -21,10 +21,11 @@ let s:keepcpo = &cpo
 set cpo&vim
 
 syn keyword swiftKeyword
-      \ associatedtype
       \ break
+      \ case
       \ catch
       \ continue
+      \ default
       \ defer
       \ do
       \ else
@@ -42,6 +43,10 @@ syn keyword swiftKeyword
       \ while
 syn match swiftMultiwordKeyword
       \ "indirect case"
+
+syn keyword swiftCoreTypes
+      \ Any
+      \ AnyObject
 
 syn keyword swiftImport skipwhite skipempty nextgroup=swiftImportModule
       \ import
@@ -93,10 +98,13 @@ syn keyword swiftTypeDefinition skipwhite skipempty nextgroup=swiftTypeName
       \ class
       \ enum
       \ extension
+      \ operator
+      \ precedencegroup
       \ protocol
       \ struct
 
 syn keyword swiftTypeAliasDefinition skipwhite skipempty nextgroup=swiftTypeAliasName
+      \ associatedtype
       \ typealias
 
 syn match swiftMultiwordTypeDefinition skipwhite skipempty nextgroup=swiftTypeName
@@ -202,7 +210,7 @@ syn match swiftDecimal contained
       \ /[0-9]\+/
 
 syn match swiftPreproc
-      \ /#\(\<file\>\|\<line\>\|\<function\>\)/
+      \ /#\(\<column\>\|\<dsohandle\>\|\<file\>\|\<line\>\|\<function\>\)/
 syn match swiftPreproc
       \ /^\s*#\(\<if\>\|\<else\>\|\<elseif\>\|\<endif\>\|\<error\>\|\<warning\>\)/
 syn region swiftPreprocFalse
@@ -213,9 +221,9 @@ syn match swiftAttribute
 
 syn keyword swiftTodo MARK TODO FIXME contained
 
-syn match swiftCastOp skipwhite skipempty nextgroup=swiftType
+syn match swiftCastOp skipwhite skipempty nextgroup=swiftType,swiftCoreTypes
       \ "\<is\>"
-syn match swiftCastOp skipwhite skipempty nextgroup=swiftType
+syn match swiftCastOp skipwhite skipempty nextgroup=swiftType,swiftCoreTypes
       \ "\<as\>[!?]\?"
 
 syn match swiftNilOps
@@ -228,6 +236,7 @@ hi def link swiftImport Include
 hi def link swiftImportModule Title
 hi def link swiftImportComponent Identifier
 hi def link swiftKeyword Statement
+hi def link swiftCoreTypes Type
 hi def link swiftMultiwordKeyword Statement
 hi def link swiftTypeDefinition Define
 hi def link swiftMultiwordTypeDefinition Define

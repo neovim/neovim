@@ -324,7 +324,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 <CSI>		command sequence intro  ALT-Esc 155	*<CSI>*
 <xCSI>		CSI when typed in the GUI		*<xCSI>*
 
-<EOL>		end-of-line (can be <CR>, <LF> or <CR><LF>,
+<EOL>		end-of-line (can be <CR>, <NL> or <CR><NL>,
 		depends on system and 'fileformat')	*<EOL>*
 <Ignore>	cancel wait-for-character		*<Ignore>*
 <NOP>		no-op: do nothing (useful in mappings)	*<Nop>*

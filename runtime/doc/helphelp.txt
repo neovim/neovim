@@ -92,9 +92,9 @@ Help on help files					*helphelp*
 				:help k| only
 <			Note that a space before the '|' is seen as part of
 			the ":help" argument.
-			You can also use <LF> or <CR> to separate the help
+			You can also use <NL> or <CR> to separate the help
 			command from a following command.  You need to type
-			CTRL-V first to insert the <LF> or <CR>.  Example: >
+			CTRL-V first to insert the <NL> or <CR>.  Example: >
 				:help so<C-V><CR>only
 <
 

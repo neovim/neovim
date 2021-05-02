@@ -539,7 +539,7 @@ The first format is a normal tag, which is completely compatible with Vi.  It
 is the only format produced by traditional ctags implementations.  This is
 often used for functions that are global, also referenced in other files.
 
-The lines in the tags file can end in <LF> or <CR><LF>.  On the Macintosh <CR>
+The lines in the tags file can end in <NL> or <CR><NL>.  On the Macintosh <CR>
 also works.  The <CR> and <NL> characters can never appear inside a line.
 
 The second format is new.  It includes additional information in optional

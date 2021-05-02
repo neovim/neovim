@@ -43,8 +43,8 @@ This command also sources the |menu.vim| script when the GUI is running or
 will start soon.  See |'go-M'| about avoiding that.
 
 							*:syn-on* *:syntax-on*
-The `:syntax enable` command will keep your current color settings.  This
-allows using `:highlight` commands to set your preferred colors before or
+The `:syntax enable` command will keep most of your current color settings.
+This allows using `:highlight` commands to set your preferred colors before or
 after using this command.  If you want Vim to overrule your settings with the
 defaults, use: >
 	:syntax on

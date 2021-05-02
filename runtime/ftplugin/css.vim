@@ -2,7 +2,7 @@
 " Language:		CSS
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
-" Latest Revision:	2008-07-09
+" Last Change:		2020 Dec 21
 
 if exists("b:did_ftplugin")
   finish
@@ -12,11 +12,12 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let b:undo_ftplugin = "setl com< cms< inc< fo< ofu<"
+let b:undo_ftplugin = "setl com< cms< inc< fo< ofu< isk<"
 
 setlocal comments=s1:/*,mb:*,ex:*/ commentstring&
 setlocal formatoptions-=t formatoptions+=croql
 setlocal omnifunc=csscomplete#CompleteCSS
+setlocal iskeyword+=-
 
 let &l:include = '^\s*@import\s\+\%(url(\)\='
 

@@ -1,6 +1,6 @@
 " Vim script to work like "less"
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 May 18
+" Last Change:	2020 Dec 17
 
 " Avoid loading this file twice, allow the user to define his own script.
 if exists("loaded_less")
@@ -35,8 +35,16 @@ if argc() > 0
   endwhile
 endif
 
-set nocp
-syntax on
+" we don't want 'compatible' here
+if &cp
+  set nocp
+endif
+
+" enable syntax highlighting if not done already
+if !get(g:, 'syntax_on', 0)
+  syntax enable
+endif
+
 set so=0
 set hlsearch
 set incsearch

@@ -995,7 +995,7 @@ original file fails, there will be an error message telling you that you
 lost the original file.
 
 						*DOS-format-write*
-If the 'fileformat' is "dos", <CR> <NL> is used for <EOL>.  This is default
+If the 'fileformat' is "dos", <CR><NL> is used for <EOL>.  This is default
 for Windows. On other systems the message "[dos format]" is shown to
 remind you that an unusual <EOL> was used.
 						*Unix-format-write*
@@ -1350,8 +1350,8 @@ There are a few things to remember when editing binary files:
   It is also possible that you get an "out of memory" error when reading the
   file.
 - Make sure the 'binary' option is set BEFORE loading the
-  file.  Otherwise both <CR> <NL> and <NL> are considered to end a line
-  and when the file is written the <NL> will be replaced with <CR> <NL>.
+  file.  Otherwise both <CR><NL> and <NL> are considered to end a line
+  and when the file is written the <NL> will be replaced with <CR><NL>.
 - <Nul> characters are shown on the screen as ^@.  You can enter them with
   "CTRL-V CTRL-@" or "CTRL-V 000".
 - To insert a <NL> character in the file split a line.  When writing the

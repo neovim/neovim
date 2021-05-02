@@ -3996,7 +3996,8 @@ fnamemodify({fname}, {mods})				*fnamemodify()*
 			:echo fnamemodify("main.c", ":p:h")
 <		results in: >
 			/home/mool/vim/vim/src
-<		Note: Environment variables don't work in {fname}, use
+<		If {mods} is empty then {fname} is returned.
+		Note: Environment variables don't work in {fname}, use
 		|expand()| first then.
 
 foldclosed({lnum})					*foldclosed()*
@@ -4314,7 +4315,9 @@ getchar([expr])						*getchar()*
 			endif
 <
 		There is no prompt, you will somehow have to make clear to the
-		user that a character has to be typed.
+		user that a character has to be typed.  The screen is not
+		redrawn, e.g. when resizing the window.
+
 		There is no mapping for the character.
 		Key codes are replaced, thus when the user presses the <Del>
 		key you get the code for the <Del> key, not the raw character

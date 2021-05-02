@@ -183,11 +183,6 @@ CTRL-W CTRL_N						*CTRL-W_CTRL-N*
 		This behaves like a ":split" first, and then an ":enew"
 		command.
 
-:[N]vne[w] [++opt] [+cmd] [file]			*:vne* *:vnew*
-		Like |:new|, but split vertically.  If 'equalalways' is set
-		and 'eadirection' isn't "ver" the windows will be spread out
-		horizontally, unless a width was specified.
-
 :[N]new [++opt] [+cmd] {file}
 :[N]sp[lit] [++opt] [+cmd] {file}			*:split_f*
 		Create a new window and start editing file {file} in it.  This
@@ -198,6 +193,11 @@ CTRL-W CTRL_N						*CTRL-W_CTRL-N*
 		Make new window N high (default is to use half the existing
 		height).  Reduces the current window height to create room
 		(and others, if the 'equalalways' option is set).
+
+:[N]vne[w] [++opt] [+cmd] [file]			*:vne* *:vnew*
+		Like |:new|, but split vertically.  If 'equalalways' is set
+		and 'eadirection' isn't "ver" the windows will be spread out
+		horizontally, unless a width was specified.
 
 :[N]sv[iew] [++opt] [+cmd] [file]		*:sv* *:sview* *splitview*
 		Same as ":split", but set 'readonly' option for this buffer.

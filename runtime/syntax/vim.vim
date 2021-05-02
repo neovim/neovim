@@ -143,10 +143,13 @@ endif
 
 " Numbers {{{2
 " =======
-syn match vimNumber	"\<\d\+\%(\.\d\+\%([eE][+-]\=\d\+\)\=\)\=" skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
-syn match vimNumber	"-\d\+\%(\.\d\+\%([eE][+-]\=\d\+\)\=\)\="  skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
-syn match vimNumber	"\<0[xX]\x\+"		       skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
-syn match vimNumber	"\%(^\|\A\)\zs#\x\{6}"             	       skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
+syn match vimNumber	'\<\d\+\%(\.\d\+\%([eE][+-]\=\d\+\)\=\)\=' skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
+syn match vimNumber	'-\d\+\%(\.\d\+\%([eE][+-]\=\d\+\)\=\)\='  skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
+syn match vimNumber	'\<0[xX]\x\+'		       skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
+syn match vimNumber	'\%(^\|\A\)\zs#\x\{6}'             	       skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
+syn match vimNumber	'\<0[zZ][a-zA-Z0-9.]\+'                    skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment
+syn match vimNumber	'0[0-7]\+'		       skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment           
+syn match vimNumber	'0b[01]\+'		       skipwhite nextgroup=vimGlobal,vimSubst,vimCommand,vimComment,vim9Comment           
 
 " All vimCommands are contained by vimIsCommand. {{{2
 syn match vimCmdSep	"[:|]\+"	skipwhite nextgroup=vimAddress,vimAutoCmd,vimEcho,vimIsCommand,vimExtCmd,vimFilter,vimLet,vimMap,vimMark,vimSet,vimSyntax,vimUserCmd
@@ -202,7 +205,7 @@ syn match	vimOper	"\%#=1\(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\|=\)[?#]\{0,2}"	skipwhi
 syn match	vimOper	"\(\<is\|\<isnot\)[?#]\{0,2}\>"			skipwhite nextgroup=vimString,vimSpecFile
 syn match	vimOper	"||\|&&\|[-+.!]"				skipwhite nextgroup=vimString,vimSpecFile
 syn region	vimOperParen 	matchgroup=vimParenSep	start="(" end=")" contains=vimoperStar,@vimOperGroup
-syn region	vimOperParen	matchgroup=vimSep		start="{" end="}" contains=@vimOperGroup nextgroup=vimVar,vimFuncVar
+syn region	vimOperParen	matchgroup=vimSep		start="#\={" end="}" contains=@vimOperGroup nextgroup=vimVar,vimFuncVar
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_noopererror")
  syn match	vimOperError	")"
 endif
@@ -355,12 +358,12 @@ syn match	vimCmplxRepeat	'@[0-9a-z".=@:]\ze\($\|[^a-zA-Z]\>\)'
 syn region	vimSet		matchgroup=vimCommand start="\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skip="\%(\\\\\)*\\." end="$" end="|" matchgroup=vimNotation end="<[cC][rR]>" keepend oneline contains=vimSetEqual,vimOption,vimErrSetting,vimComment,vim9Comment,vimSetString,vimSetMod
 syn region	vimSetEqual	contained	start="[=:]\|[-+^]=" skip="\\\\\|\\\s" end="[| \t]\|$"me=e-1	contains=vimCtrlChar,vimSetSep,vimNotation,vimEnvvar oneline
 syn region	vimSetString	contained	start=+="+hs=s+1	skip=+\\\\\|\\"+  end=+"+		contains=vimCtrlChar
-syn match	vimSetSep	contained	"[,:]" skipwhite nextgroup=vimCommand
+syn match	vimSetSep	contained	"[,:]"
 syn match	vimSetMod	contained	"&vim\=\|[!&?<]\|all&"
 
 " Let: {{{2
 " ===
-syn keyword	vimLet	let var	unl[et]	skipwhite nextgroup=vimVar,vimFuncVar,vimLetHereDoc
+syn keyword	vimLet	let	unl[et]	skipwhite nextgroup=vimVar,vimFuncVar,vimLetHereDoc
 VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='=<<\s\+\%(trim\>\)\=\s*\z(\L\S*\)'	matchgroup=vimLetHereDocStop end='^\s*\z1\s*$'	contains=vimComment,vim9Comment
 
 " Abbreviations: {{{2
@@ -612,7 +615,7 @@ syn match	vimCtrlChar	"[--]"
 " Beginners - Patterns that involve ^ {{{2
 " =========
 syn match	vimLineComment	+^[ \t:]*".*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
-syn match	vim9LineComment	+^[ \t]*#.*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
+syn match	vim9LineComment	+^[ \t:]\+#.*$+	contains=@vimCommentGroup,vimCommentString,vimCommentTitle
 syn match	vimCommentTitle	'"\s*\%([sS]:\|\h\w*#\)\=\u\w*\(\s\+\u\w*\)*:'hs=s+1	contained contains=vimCommentTitleLeader,vimTodo,@vimCommentGroup
 syn match	vimContinue	"^\s*\\"
 syn region	vimString	start="^\s*\\\z(['"]\)" skip='\\\\\|\\\z1' end="\z1" oneline keepend contains=@vimStringGroup,vimContinue

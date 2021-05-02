@@ -2292,7 +2292,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to buffer
 	This gives the <EOL> of the current buffer, which is used for
 	reading/writing the buffer from/to a file:
-	    dos	    <CR> <NL>
+	    dos	    <CR><NL>
 	    unix    <NL>
 	    mac	    <CR>
 	When "dos" is used, CTRL-Z at the end of a file is ignored.
@@ -3778,6 +3778,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only switch it off when working with old Vi scripts.  In any other
 	situation write patterns that work when 'magic' is on.  Include "\M"
 	when you want to |/\M|.
+	In |Vim9| script the value of 'magic' is ignored, patterns behave like
+	it is always set.
 
 						*'makeef'* *'mef'*
 'makeef' 'mef'		string	(default: "")
