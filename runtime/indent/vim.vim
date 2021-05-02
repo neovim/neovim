@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Jan 21
+" Last Change:	2021 Feb 13
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -99,7 +99,9 @@ function GetVimIndentIntern()
     let ind = ind + shiftwidth()
   else
     " A line starting with :au does not increment/decrement indent.
-    if prev_text !~ '^\s*au\%[tocmd]'
+    " A { may start a block or a dict.  Assume that when a } follows it's a
+    " terminated dict.
+    if prev_text !~ '^\s*au\%[tocmd]' && prev_text !~ '^\s*{.*}'
       let i = match(prev_text, '\(^\||\)\s*\(export\s\+\)\?\({\|\(if\|wh\%[ile]\|for\|try\|cat\%[ch]\|fina\|finall\%[y]\|fu\%[nction]\|def\|el\%[seif]\)\>\)')
       if i >= 0
 	let ind += shiftwidth()
@@ -152,13 +154,17 @@ function GetVimIndentIntern()
   endif
 
   " Below a line starting with "]" we must be below the end of a list.
-  if prev_text_end =~ '^\s*]'
+  " Include a "}" and "},} in case a dictionary ends too.
+  if prev_text_end =~ '^\s*\(},\=\s*\)\=]'
     let ind = ind - shiftwidth()
   endif
 
+  let ends_in_comment = has('syntax_items')
+	      \ && synIDattr(synID(lnum, col('$'), 1), "name") =~ '\(Comment\|String\)$'
+
   " A line ending in "{"/"[} is most likely the start of a dict/list literal,
-  " indent the next line more.  Not for a continuation line.
-  if prev_text_end =~ '[{[]\s*$' && !found_cont
+  " indent the next line more.  Not for a continuation line or {{{.
+  if !ends_in_comment && prev_text_end =~ '\s[{[]\s*$' && !found_cont
     let ind = ind + shiftwidth()
   endif
 

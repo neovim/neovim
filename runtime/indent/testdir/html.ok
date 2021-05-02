@@ -19,7 +19,7 @@ div#d2 { color: green; }
 	</div>
 
 	<div
-	    class="foo bar">
+		class="foo bar">
 	    text
 	</div>
 

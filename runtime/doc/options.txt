@@ -3728,8 +3728,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
 			leading spaces are blank.  Overrides the "space"
-			setting for leading spaces.
-							*lcs-trail*
+			setting for leading spaces.  You can combine it with
+			"tab:", for example: >
+				:set listchars+=tab:>-,lead:.
+<							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
 			trailing spaces are blank.  Overrides the "space"
 			setting for trailing spaces.

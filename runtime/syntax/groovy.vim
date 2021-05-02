@@ -2,9 +2,9 @@
 " Language:	Groovy
 " Original Author:	Alessio Pace <billy.corgan AT tiscali.it>
 " Maintainer:	Tobias Rapp <yahuxo+vim AT mailbox.org>
-" Version: 	0.1.17
+" Version: 	0.1.18
 " URL:	  http://www.vim.org/scripts/script.php?script_id=945
-" Last Change:	2020 May 26
+" Last Change:	2021 Feb 03
 
 " THE ORIGINAL AUTHOR'S NOTES:
 "
@@ -253,7 +253,8 @@ if exists("groovy_regex_strings")
 endif
 " syn region groovyELExpr start=+${+ end=+}+ keepend contained
 syn match groovyELExpr /\${.\{-}}/ contained
-syn match groovyELExpr /\$[a-zA-Z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\u0100-\uFFFE_][a-zA-Z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\u0100-\uFFFE0-9_.]*/ contained
+" Fix: force use of the NFA regexp engine (2), see GitHub issue #7280
+syn match groovyELExpr /\%#=2\$[a-zA-Z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\u0100-\uFFFE_][a-zA-Z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\u0100-\uFFFE0-9_.]*/ contained
 hi def link groovyELExpr Identifier
 
 " TODO: better matching. I am waiting to understand how it really works in groovy

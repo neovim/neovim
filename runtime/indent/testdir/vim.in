@@ -15,6 +15,21 @@ let x = [
 \ ]
 endif
 
+" TODO: add searchpair() to find matching {
+"for x in [
+"{
+"key: 'value'
+"},
+"]
+"eval 0
+"endfor
+
+for x in [
+{key: 'value'},
+]
+eval 0
+endfor
+
 " END_INDENT
 
 " START_INDENT

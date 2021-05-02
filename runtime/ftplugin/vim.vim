@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Vim
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Jan 23
+" Last Change:	2021 Feb 07
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -98,7 +98,7 @@ if exists("loaded_matchit")
   "   func name
   " require a parenthesis following, then there can be an "endfunc".
   let b:match_words =
-	\ '\<\%(fu\%[nction]\|def\)\s\+\S\+(:\<retu\%[rn]\>:\<\%(endf\%[unction]\|enddef\)\>,' .
++	\ '\<\%(fu\%[nction]\|def\)!\=\s\+\S\+(:\<retu\%[rn]\>:\<\%(endf\%[unction]\|enddef\)\>,' .
 	\ '\<\(wh\%[ile]\|for\)\>:\<brea\%[k]\>:\<con\%[tinue]\>:\<end\(w\%[hile]\|fo\%[r]\)\>,' .
 	\ '\<if\>:\<el\%[seif]\>:\<en\%[dif]\>,' .
 	\ '{:},' .

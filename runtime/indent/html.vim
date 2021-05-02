@@ -1,7 +1,7 @@
 " Vim indent script for HTML
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2020 Dec 11
+" Last Change:	2021 Jan 26
 " Version:	1.0 "{{{
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -941,11 +941,11 @@ func! s:InsideTag(foundHtmlString)
       let idx = match(text, '<' . s:tagname . '\s\+\zs\w')
     endif
     if idx == -1
-      " after just "<tag" indent one level more
+      " after just "<tag" indent two levels more
       let idx = match(text, '<' . s:tagname . '$')
       if idx >= 0
-	call cursor(lnum, idx)
-	return virtcol('.') + shiftwidth()
+	call cursor(lnum, idx + 1)
+	return virtcol('.') - 1 + shiftwidth() * 2
       endif
     endif
     if idx > 0

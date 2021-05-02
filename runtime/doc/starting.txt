@@ -770,7 +770,11 @@ resulting file, when executed with a ":source" command:
    "options".  Script-local mappings will not be written.
 2. Restores global variables that start with an uppercase letter and contain
    at least one lowercase letter, if 'sessionoptions' contains "globals".
-3. Unloads all currently loaded buffers.
+3. Closes all windows in the current tab page, except the current one; closes
+   all tab pages except the current one (this results in currently loaded
+   buffers to be unloaded, some may become hidden if 'hidden' is set or
+   otherwise specified); wipes out the current buffer, if it is empty
+   and unnamed.
 4. Restores the current directory if 'sessionoptions' contains "curdir", or
    sets the current directory to where the Session file is if 'sessionoptions'
    contains "sesdir".

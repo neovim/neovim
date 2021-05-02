@@ -1006,6 +1006,12 @@ commands can be combined to create a NewGrep command: >
 			'smartcase' is not used.
 			If {pattern} is empty (e.g. // is specified), the last
 			used search pattern is used. |last-pattern|
+
+			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.
+			A file that is opened for matching may use a buffer
+			number, but it is reused if possible to avoid
+			consuming buffer numbers.
+
 :{count}vim[grep] ...
 			When a number is put before the command this is used
 			as the maximum number of matches to find.  Use

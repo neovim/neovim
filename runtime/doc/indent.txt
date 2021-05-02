@@ -606,14 +606,14 @@ the use of square and curly brackets, and otherwise by community convention.
 These conventions are not universally followed, so the Clojure indent script
 offers a few configurable options, listed below.
 
-If the current vim does not include |searchpairpos()|, the indent script falls
+If the current vim does not include searchpairpos(), the indent script falls
 back to normal 'lisp' indenting, and the following options are ignored.
 
 							*g:clojure_maxlines*
 
-Set maximum scan distance of |searchpairpos()|. Larger values trade
-performance for correctness when dealing with very long forms. A value of 0
-will scan without limits.
+Set maximum scan distance of searchpairpos(). Larger values trade performance
+for correctness when dealing with very long forms. A value of 0 will scan
+without limits.
 >
 	" Default
 	let g:clojure_maxlines = 100
