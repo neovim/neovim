@@ -762,6 +762,9 @@ and the screen is about to be redrawn:
 -> Press <Enter> or <Space> to redraw the screen and continue, without that
    key being used otherwise.
 -> Press ':' or any other Normal mode command character to start that command.
+   Note that after an external command some special keys, such as the cursor
+   keys, may not work normally, because the terminal is still set to a state
+   for executing the external command.
 -> Press 'k', <Up>, 'u', 'b' or 'g' to scroll back in the messages.  This
    works the same way as at the |more-prompt|.  Only works when 'more' is on.
 -> Pressing 'j', 'f', 'd' or <Down> is ignored when messages scrolled off the

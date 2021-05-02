@@ -384,15 +384,19 @@ the pattern will not match.  This is only useful when debugging Vim.
 ==============================================================================
 3. Magic							*/magic*
 
-Some characters in the pattern are taken literally.  They match with the same
-character in the text.  When preceded with a backslash however, these
-characters get a special meaning.
+Some characters in the pattern, such as letters, are taken literally.  They
+match exactly the same character in the text.  When preceded with a backslash
+however, these characters may get a special meaning.  For example, "a" matches
+the letter "a", while "\a" matches any alphabetic character.
 
 Other characters have a special meaning without a backslash.  They need to be
-preceded with a backslash to match literally.
+preceded with a backslash to match literally.  For example "." matches any
+character while "\." matches a dot.
 
 If a character is taken literally or not depends on the 'magic' option and the
-items mentioned next.
+items in the pattern mentioned next.  The 'magic' option should always be set,
+but it can be switched off for Vi compatibility.  We mention the effect of
+'nomagic' here for completeness, but we recommend against using that.
 							*/\m* */\M*
 Use of "\m" makes the pattern after it be interpreted as if 'magic' is set,
 ignoring the actual value of the 'magic' option.
@@ -401,30 +405,28 @@ Use of "\M" makes the pattern after it be interpreted as if 'nomagic' is used.
 Use of "\v" means that after it, all ASCII characters except '0'-'9', 'a'-'z',
 'A'-'Z' and '_' have special meaning: "very magic"
 
-Use of "\V" means that after it, only a backslash and terminating character
-(usually / or ?) have special meaning: "very nomagic"
+Use of "\V" means that after it, only a backslash and the terminating
+character (usually / or ?) have special meaning: "very nomagic"
 
 Examples:
 after:	  \v	   \m	    \M	     \V		matches ~
 		'magic' 'nomagic'
-	  $	   $	    $	     \$		matches end-of-line
-	  .	   .	    \.	     \.		matches any character
+	  a	   a	    a	     a		literal 'a'
+	  \a	   \a	    \a	     \a		any alphabetic character
+	  .	   .	    \.	     \.		any character
+	  \.	   \.	    .	     .		literal dot
+	  $	   $	    $	     \$		end-of-line
 	  *	   *	    \*	     \*		any number of the previous atom
 	  ~	   ~	    \~	     \~		latest substitute string
-	  ()	   \(\)     \(\)     \(\)	grouping into an atom
-	  |	   \|	    \|	     \|		separating alternatives
-	  \a	   \a	    \a	     \a		alphabetic character
+	  ()	   \(\)     \(\)     \(\)	group as an atom
+	  |	   \|	    \|	     \|		nothing: separates alternatives
 	  \\	   \\	    \\	     \\		literal backslash
-	  \.	   \.	    .	     .		literal dot
-	  \{	   {	    {	     {		literal '{'
-	  a	   a	    a	     a		literal 'a'
+	  \{	   {	    {	     {		literal curly brace
 
 {only Vim supports \m, \M, \v and \V}
 
-It is recommended to always keep the 'magic' option at the default setting,
-which is 'magic'.  This avoids portability problems.  To make a pattern immune
-to the 'magic' option being set or not, put "\m" or "\M" at the start of the
-pattern.
+If you want to you can make a pattern immune to the 'magic' option being set
+or not by putting "\m" or "\M" at the start of the pattern.
 
 ==============================================================================
 4. Overview of pattern items				*pattern-overview*

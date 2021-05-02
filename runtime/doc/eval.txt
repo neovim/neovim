@@ -10495,7 +10495,7 @@ text...
 :exe[cute] {expr1} ..	Executes the string that results from the evaluation
 			of {expr1} as an Ex command.
 			Multiple arguments are concatenated, with a space in
-			between.  To avoid the extra space use the "."
+			between.  To avoid the extra space use the ".."
 			operator to concatenate strings into one argument.
 			{expr1} is used as the processed command, command line
 			editing keys are not recognized.

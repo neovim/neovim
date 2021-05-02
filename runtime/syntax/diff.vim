@@ -2,7 +2,7 @@
 " Language:	Diff (context or unified)
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 "               Translations by Jakson Alves de Aquino.
-" Last Change:	2020 Dec 07
+" Last Change:	2020 Dec 30
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -348,11 +348,16 @@ syn match diffLine	"^\d\+\(,\d\+\)\=[cda]\d\+\>.*"
 syn match diffFile	"^diff\>.*"
 syn match diffFile	"^Index: .*"
 syn match diffFile	"^==== .*"
-" Old style diff uses *** for old and --- for new.
-" Unified diff uses --- for old and +++ for new; names are wrong but it works.
-syn match diffOldFile	"^+++ .*"
-syn match diffOldFile	"^\*\*\* .*"
-syn match diffNewFile	"^--- .*"
+
+if search('^@@ -\S\+ +\S\+ @@', 'nw', '', 100)
+  " unified
+  syn match diffOldFile	"^--- .*"
+  syn match diffNewFile	"^+++ .*"
+else
+  " context / old style
+  syn match diffOldFile	"^\*\*\* .*"
+  syn match diffNewFile	"^--- .*"
+endif
 
 " Used by git
 syn match diffIndexLine	"^index \x\x\x\x.*"

@@ -159,6 +159,9 @@ When no argument is given to |:help| the file given with the 'helpfile' option
 will be opened.  Otherwise the specified tag is searched for in all "doc/tags"
 files in the directories specified in the 'runtimepath' option.
 
+If you would like to open the help in the current window, see this tip:
+|help-curwin|.
+
 The initial height of the help window can be set with the 'helpheight' option
 (default 20).
 

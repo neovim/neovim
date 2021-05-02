@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
-" URL: https://raw.github.com/rid9/vim-fstab/master/fstab.vim
-" Last Change: 2020 Aug 06
+" URL: https://raw.github.com/rid9/vim-fstab/master/syntax/fstab.vim
+" Last Change: 2020 Dec 30
 " Version: 1.4
 "
 " Credits:
