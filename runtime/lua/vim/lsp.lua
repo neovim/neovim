@@ -904,7 +904,7 @@ function lsp.start_client(config)
   ---
   --@param method (string) LSP method name.
   --@param params (table) LSP request params.
-  --@param timeout_ms (number, optional, default=100) Maximum time in
+  --@param timeout_ms (number, optional, default=1000) Maximum time in
   ---milliseconds to wait for a result.
   --@param bufnr (number) Buffer handle (0 for current).
   --@returns { err=err, result=result }, a dictionary, where `err` and `result` come from the |lsp-handler|.
@@ -922,7 +922,7 @@ function lsp.start_client(config)
       bufnr)
     if not success then return nil end
 
-    local wait_result, reason = vim.wait(timeout_ms or 100, function()
+    local wait_result, reason = vim.wait(timeout_ms or 1000, function()
       return request_result ~= nil
     end, 10)
 
@@ -1332,12 +1332,12 @@ end
 ---
 --- Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the result.
 --- Parameters are the same as |vim.lsp.buf_request()| but the return result is
---- different. Wait maximum of {timeout_ms} (default 100) ms.
+--- different. Wait maximum of {timeout_ms} (default 1000) ms.
 ---
 --@param bufnr (number) Buffer handle, or 0 for current.
 --@param method (string) LSP method name
 --@param params (optional, table) Parameters to send to the server
---@param timeout_ms (optional, number, default=100) Maximum time in
+--@param timeout_ms (optional, number, default=1000) Maximum time in
 ---      milliseconds to wait for a result.
 ---
 --@returns Map of client_id:request_result. On timeout, cancel or error,
@@ -1350,7 +1350,7 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
     request_results = it
   end)
 
-  local wait_result, reason = vim.wait(timeout_ms or 100, function()
+  local wait_result, reason = vim.wait(timeout_ms or 1000, function()
     return request_results ~= nil
   end, 10)
 
