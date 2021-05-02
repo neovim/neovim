@@ -900,7 +900,7 @@ function lsp.start_client(config)
   --@param timeout_ms (number, optional, default=100) Maximum time in
   ---milliseconds to wait for a result.
   --@param bufnr (number) Buffer handle (0 for current).
-  --@returns { err, result }, where `err` and `result` come from the |lsp-handler|.
+  --@returns { err=err, result=result }, a dictionary, where `err` and `result` come from the |lsp-handler|.
   ---On timeout, cancel or error, returns `(nil, err)` where `err` is a
   ---string describing the failure reason. If the request was unsuccessful
   ---returns `nil`.
@@ -908,7 +908,7 @@ function lsp.start_client(config)
   function client.request_sync(method, params, timeout_ms, bufnr)
     local request_result = nil
     local function _sync_handler(err, _, result)
-      request_result = { error = err, result = result }
+      request_result = { err = err, result = result }
     end
 
     local success, request_id = client.request(method, params, _sync_handler,
