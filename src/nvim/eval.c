@@ -6326,7 +6326,7 @@ void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
   if (what_arg->v_type == VAR_UNKNOWN) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);
     if (is_qf || wp != NULL) {
-      (void)get_errorlist(NULL, wp, -1, rettv->vval.v_list);
+      (void)get_errorlist(NULL, wp, -1, 0, rettv->vval.v_list);
     }
   } else {
     tv_dict_alloc_ret(rettv);
