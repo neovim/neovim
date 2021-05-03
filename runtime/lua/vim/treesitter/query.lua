@@ -275,7 +275,11 @@ local directive_handlers = {
   ["set!"] = function(_, _, _, pred, metadata)
     if #pred == 4 then
       -- (#set! @capture "key" "value")
-      metadata[pred[2]][pred[3]] = pred[4]
+      local capture = pred[2]
+      if not metadata[capture] then
+        metadata[capture] = {}
+      end
+      metadata[capture][pred[3]] = pred[4]
     else
       -- (#set! "key" "value")
       metadata[pred[2]] = pred[3]

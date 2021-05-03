@@ -599,6 +599,56 @@ int x = INT_MAX;
 
         eq(result, "value")
       end)
+
+      describe("when setting a key on a capture", function()
+        it("it should create the nested table", function()
+          insert([[
+            int x = 3;
+          ]])
+
+          local result = exec_lua([[
+          local query = require("vim.treesitter.query")
+          local value
+
+          query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! @number "key" "value"))')
+          parser = vim.treesitter.get_parser(0, "c")
+
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
+            for _, nested_tbl in pairs(metadata) do
+              return nested_tbl.key
+            end
+          end
+          ]])
+
+          eq(result, "value")
+        end)
+
+        it("it should not overwrite the nested table", function()
+          insert([[
+            int x = 3;
+          ]])
+
+          local result = exec_lua([[
+          local query = require("vim.treesitter.query")
+          local result
+
+          query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! @number "key" "value") (#set! @number "key2" "value2"))')
+          parser = vim.treesitter.get_parser(0, "c")
+
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
+            for _, nested_tbl in pairs(metadata) do
+              return nested_tbl
+            end
+          end
+          ]])
+          local expected = {
+            ["key"] = "value",
+            ["key2"] = "value2",
+          }
+
+          eq(expected, result)
+        end)
+      end)
     end)
   end)
 end)
