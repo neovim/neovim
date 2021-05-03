@@ -10,7 +10,7 @@ local log = {}
 -- Can be used to lookup the number from the name or the name from the number.
 -- Levels by name: 'trace', 'debug', 'info', 'warn', 'error'
 -- Level numbers begin with 'trace' at 0
-log.levels = vim.log.levels
+log.levels = vim.deepcopy(vim.log.levels)
 
 -- Default log level is warn.
 local current_log_level = log.levels.WARN
