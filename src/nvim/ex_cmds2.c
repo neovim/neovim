@@ -2720,12 +2720,9 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
     i++;
   }
   size_t line_length = i - p->offset;
-  garray_T ga;
-  ga_init(&ga, (int)sizeof(char_u), (int)line_length);
-  ga_concat_len(&ga, (char *)p->buf + p->offset, line_length);
-  ga_append(&ga, '\0');
+  char_u *buf = xmemdupz(p->buf + p->offset, line_length);
   p->offset = i + 1;
-  return ga.ga_data;
+  return buf;
 }
 
 static int source_using_linegetter(void *cookie,
