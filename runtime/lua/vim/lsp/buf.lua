@@ -112,15 +112,14 @@ function M.completion(context)
 end
 
 --@private
---- If there is more than one client that supports the given method,
+--- If there is more than one client that matches the predicate,
 --- asks the user to select one.
---
+---
+--@param predicate Function or callable table
 --@returns The client that the user selected or nil
-local function select_client(method)
+local function select_client(predicate)
   local clients = vim.tbl_values(vim.lsp.buf_get_clients());
-  clients = vim.tbl_filter(function (client)
-    return client.supports_method(method)
-  end, clients)
+  clients = vim.tbl_filter(predicate, clients)
   -- better UX when choices are always in the same order (between restarts)
   table.sort(clients, function (a, b) return a.name < b.name end)
 
@@ -152,11 +151,22 @@ end
 --
 --@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 function M.formatting(options)
-  local client = select_client("textDocument/formatting")
+  local client = select_client(function (client)
+    return client.resolved_capabilities.document_formatting or
+      client.resolved_capabilities.document_range_formatting
+  end)
   if client == nil then return end
 
-  local params = util.make_formatting_params(options)
-  return client.request("textDocument/formatting", params)
+  if client.resolved_capabilities.document_formatting then
+    local params = util.make_formatting_params(options)
+    return client.request("textDocument/formatting", params)
+  else
+    local last_line = vim.fn.line("$")
+    local last_col = vim.fn.col({ last_line, "$" })
+    local params = util.make_given_range_params({ 1, 0 }, { last_line, last_col })
+    params.options = util.make_formatting_params(options).options
+    return client.request("textDocument/rangeFormatting", params)
+  end
 end
 
 --- Performs |vim.lsp.buf.formatting()| synchronously.
@@ -172,11 +182,23 @@ end
 --@param timeout_ms (number) Request timeout
 --@see |vim.lsp.buf.formatting_seq_sync|
 function M.formatting_sync(options, timeout_ms)
-  local client = select_client("textDocument/formatting")
+  local client = select_client(function (client)
+    return client.resolved_capabilities.document_formatting or
+      client.resolved_capabilities.document_range_formatting
+  end)
   if client == nil then return end
 
-  local params = util.make_formatting_params(options)
-  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
+  local result, err
+  if client.resolved_capabilities.document_formatting then
+    local params = util.make_formatting_params(options)
+    result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
+  else
+    local last_line = vim.fn.line("$")
+    local last_col = vim.fn.col({ last_line, "$" })
+    local params = util.make_given_range_params({ 1, 0 }, { last_line, last_col })
+    params.options = util.make_formatting_params(options).options
+    result, err = client.request_sync("textDocument/rangeFormatting", params, timeout_ms)
+  end
   if result and result.result then
     util.apply_text_edits(result.result)
   elseif err then
@@ -216,14 +238,21 @@ function M.formatting_seq_sync(options, timeout_ms, order)
 
   -- loop through the clients and make synchronous formatting requests
   for _, client in ipairs(clients) do
+    local result, err
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
-      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
-      if result and result.result then
-        util.apply_text_edits(result.result)
-      elseif err then
-        vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
-      end
+      result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
+    else
+      local last_line = vim.fn.line("$")
+      local last_col = vim.fn.col({ last_line, "$" })
+      local params = util.make_given_range_params({ 1, 0 }, { last_line, last_col })
+      params.options = util.make_formatting_params(options).options
+      result, err = client.request_sync("textDocument/rangeFormatting", params, timeout_ms)
+    end
+    if result and result.result then
+      util.apply_text_edits(result.result)
+    elseif err then
+      vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
     end
   end
 end
