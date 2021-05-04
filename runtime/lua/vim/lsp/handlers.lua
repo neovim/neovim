@@ -357,6 +357,12 @@ function M.signature_help(_, method, result, _, bufnr, config)
     end
     return
   end
+
+  if highlights and #highlights > 1 then
+    print(vim.inspect(highlights))
+    config.offset_x = -highlights[2].col - 1
+  end
+
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
   if syntax == "" then
     syntax = api.nvim_buf_get_option(bufnr, 'filetype')
