@@ -4812,7 +4812,7 @@ func Tqfexpr(info)
     let qfl = getqflist({'id' : a:info.id, 'idx' : a:info.idx,
           \ 'items' : 1}).items
   else
-    let qfl = getloclist(0, {'id' : a:info.id, 'idx' : a:info.idx,
+    let qfl = getloclist(a:info.winid, {'id' : a:info.id, 'idx' : a:info.idx,
           \ 'items' : 1}).items
   endif
 
@@ -4853,7 +4853,7 @@ func Xtest_qftextfunc(cchar)
       let qfl = getqflist({'id' : a:info.id, 'idx' : a:info.idx,
             \ 'items' : 1}).items
     else
-      let qfl = getloclist(0, {'id' : a:info.id, 'idx' : a:info.idx,
+      let qfl = getloclist(a:info.winid, {'id' : a:info.id, 'idx' : a:info.idx,
             \ 'items' : 1}).items
     endif
     if empty(qfl)
@@ -4867,6 +4867,11 @@ func Xtest_qftextfunc(cchar)
   Xwindow
   call assert_equal('Line 10, Col 2', getline(1))
   call assert_equal('Line 20, Col 4', getline(2))
+  Xclose
+  " Add entries to the list when the quickfix buffer is hidden
+  Xaddexpr ['F1:30:6:red']
+  Xwindow
+  call assert_equal('Line 30, Col 6', getline(3))
   Xclose
   call g:Xsetlist([], 'r', {'quickfixtextfunc' : ''})
   set quickfixtextfunc&

@@ -3728,7 +3728,7 @@ void ex_copen(exarg_T *eap)
   lnum = qfl->qf_index;
 
   // Fill the buffer with the quickfix list.
-  qf_fill_buffer(qfl, curbuf, NULL);
+  qf_fill_buffer(qfl, curbuf, NULL, curwin->handle);
 
   decr_quickfix_busy();
 
@@ -3891,6 +3891,11 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   buf = qf_find_buf(qi);
   if (buf != NULL) {
     linenr_T old_line_count = buf->b_ml.ml_line_count;
+    int qf_winid = 0;
+
+    if (IS_LL_STACK(qi)) {
+      qf_winid = curwin->handle;
+    }
 
     if (old_last == NULL) {
       // set curwin/curbuf to buf and save a few things
@@ -3899,7 +3904,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
     qf_update_win_titlevar(qi);
 
-    qf_fill_buffer(qf_get_curlist(qi), buf, old_last);
+    qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_winid);
     buf_inc_changedtick(buf);
 
     if (old_last == NULL) {
@@ -3920,7 +3925,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 // Add an error line to the quickfix buffer.
 static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
                            const qfline_T *qfp,
-                           char_u *dirname, bool first_bufline)
+                           char_u *dirname, int qf_winid, bool first_bufline)
   FUNC_ATTR_NONNULL_ALL
 {
   int len;
@@ -3938,10 +3943,11 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
     char_u *qfbuf_text;
     typval_T args[1];
 
-    // create 'info' dict argument
+    // create the dict argument
     dict_T *const dict = tv_dict_alloc_lock(VAR_FIXED);
 
     tv_dict_add_nr(dict, S_LEN("quickfix"), IS_QF_LIST(qfl));
+    tv_dict_add_nr(dict, S_LEN("winid"), qf_winid);
     tv_dict_add_nr(dict, S_LEN("id"), qfl->qf_id);
     tv_dict_add_nr(dict, S_LEN("idx"), lnum + 1);
     dict->dv_refcount++;
@@ -4028,7 +4034,8 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
 /// If "old_last" is not NULL append the items after this one.
 /// When "old_last" is NULL then "buf" must equal "curbuf"!  Because ml_delete()
 /// is used and autocommands will be triggered.
-static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
+static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
+                           int qf_winid)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   linenr_T lnum;
@@ -4067,7 +4074,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
       lnum = buf->b_ml.ml_line_count;
     }
     while (lnum < qfl->qf_count) {
-      if (qf_buf_add_line(qfl, buf, lnum, qfp, dirname,
+      if (qf_buf_add_line(qfl, buf, lnum, qfp, dirname, qf_winid,
                           prev_bufnr != qfp->qf_fnum) == FAIL) {
         break;
       }

@@ -1915,6 +1915,9 @@ following fields:
 
     quickfix	set to 1 when called for a quickfix list and 0 when called for
 		a location list.
+    winid	for a location list, set to the id of the window with the
+		location list. For a quickfix list, set to 0. Can be used in
+		getloclist() to get the location list entry.
     id		quickfix or location list identifier
     idx		index of the entry in the quickfix or location list
 
