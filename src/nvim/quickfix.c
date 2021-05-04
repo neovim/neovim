@@ -3924,44 +3924,15 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
 // Add an error line to the quickfix buffer.
 static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
-                           const qfline_T *qfp,
-                           char_u *dirname, int qf_winid, bool first_bufline)
-  FUNC_ATTR_NONNULL_ALL
+                           const qfline_T *qfp, char_u *dirname,
+                           char_u *qftf_str, bool first_bufline)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4, 5)
 {
   int len;
   buf_T *errbuf;
-  char_u  *qftf;
 
-  // If 'quickfixtextfunc' is set, then use the user-supplied function to get
-  // the text to display
-  qftf = p_qftf;
-  // Use the local value of 'quickfixtextfunc' if it is set.
-  if (qfl->qf_qftf != NULL) {
-    qftf = qfl->qf_qftf;
-  }
-  if (qftf != NULL && *qftf != NUL) {
-    char_u *qfbuf_text;
-    typval_T args[1];
-
-    // create the dict argument
-    dict_T *const dict = tv_dict_alloc_lock(VAR_FIXED);
-
-    tv_dict_add_nr(dict, S_LEN("quickfix"), IS_QF_LIST(qfl));
-    tv_dict_add_nr(dict, S_LEN("winid"), qf_winid);
-    tv_dict_add_nr(dict, S_LEN("id"), qfl->qf_id);
-    tv_dict_add_nr(dict, S_LEN("idx"), lnum + 1);
-    dict->dv_refcount++;
-    args[0].v_type = VAR_DICT;
-    args[0].vval.v_dict = dict;
-
-    qfbuf_text = (char_u *)call_func_retstr((const char *const)qftf, 1, args);
-    dict->dv_refcount--;
-
-    if (qfbuf_text == NULL) {
-      return FAIL;
-    }
-    STRLCPY(IObuff, qfbuf_text, IOSIZE - 1);
-    xfree(qfbuf_text);
+  if (qftf_str != NULL) {
+    STRLCPY(IObuff, qftf_str, IOSIZE - 1);
   } else {
     if (qfp->qf_module != NULL) {
       STRLCPY(IObuff, qfp->qf_module, IOSIZE - 1);
@@ -4029,6 +4000,42 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
   return OK;
 }
 
+static list_T *call_qftf_func(qf_list_T *qfl,
+                              int qf_winid,
+                              long start_idx,
+                              long end_idx)
+{
+  char_u *qftf = p_qftf;
+  list_T *qftf_list = NULL;
+
+  // If 'quickfixtextfunc' is set, then use the user-supplied function to get
+  // the text to display. Use the local value of 'quickfixtextfunc' if it is
+  // set.
+  if (qfl->qf_qftf != NULL) {
+    qftf = qfl->qf_qftf;
+  }
+  if (qftf != NULL && *qftf != NUL) {
+    typval_T args[1];
+
+    // create the dict argument
+    dict_T *const dict = tv_dict_alloc_lock(VAR_FIXED);
+
+    tv_dict_add_nr(dict, S_LEN("quickfix"), IS_QF_LIST(qfl));
+    tv_dict_add_nr(dict, S_LEN("winid"), qf_winid);
+    tv_dict_add_nr(dict, S_LEN("id"), qfl->qf_id);
+    tv_dict_add_nr(dict, S_LEN("start_idx"), start_idx);
+    tv_dict_add_nr(dict, S_LEN("end_idx"), end_idx);
+    dict->dv_refcount++;
+    args[0].v_type = VAR_DICT;
+    args[0].vval.v_dict = dict;
+
+    qftf_list = call_func_retlist(qftf, 1, args);
+    dict->dv_refcount--;
+  }
+
+  return qftf_list;
+}
+
 /// Fill current buffer with quickfix errors, replacing any previous contents.
 /// curbuf must be the quickfix buffer!
 /// If "old_last" is not NULL append the items after this one.
@@ -4041,6 +4048,8 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
   linenr_T lnum;
   qfline_T    *qfp;
   const bool old_KeyTyped = KeyTyped;
+  list_T *qftf_list = NULL;
+  listitem_T *qftf_li = NULL;
 
   if (old_last == NULL) {
     if (buf != curbuf) {
@@ -4073,8 +4082,19 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
       }
       lnum = buf->b_ml.ml_line_count;
     }
+
+    qftf_list = call_qftf_func(qfl, qf_winid, lnum + 1, (long)qfl->qf_count);
+    qftf_li = tv_list_first(qftf_list);
+
     while (lnum < qfl->qf_count) {
-      if (qf_buf_add_line(qfl, buf, lnum, qfp, dirname, qf_winid,
+        char_u *qftf_str = NULL;
+
+        if (qftf_li != NULL) {
+          // Use the text supplied by the user defined function
+          qftf_str = (char_u *)tv_get_string_chk(TV_LIST_ITEM_TV(qftf_li));
+        }
+
+      if (qf_buf_add_line(qfl, buf, lnum, qfp, dirname, qftf_str,
                           prev_bufnr != qfp->qf_fnum) == FAIL) {
         break;
       }
@@ -4083,6 +4103,10 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
       qfp = qfp->qf_next;
       if (qfp == NULL) {
         break;
+      }
+
+      if (qftf_li != NULL) {
+        qftf_li = TV_LIST_ITEM_NEXT(qftf_list, qftf_li);
       }
     }
     if (old_last == NULL) {
