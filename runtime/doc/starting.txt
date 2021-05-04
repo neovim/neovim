@@ -42,9 +42,12 @@ filename	One or more file names.  The first one will be the current
 		In most cases (except -s, -es, |--embed|, --headless) if stdin
 		is not a TTY then it is read as text, so "-" is implied: >
 			echo text | nvim file
-<		The buffer will be marked modified, because it contains text
-		that needs to be saved (except for readonly |-R| mode).
-
+<		The buffer will be marked as modified, because it contains
+		text that needs to be saved (except for readonly |-R| mode).
+		If you don't like that, put these lines in your init.vim: >
+			" Don't set 'modified' when reading from stdin
+			au StdinReadPost * set nomodified
+<
 		To read stdin as Normal commands use |-s| with "-": >
 			echo "ifoo" | nvim -s -
 <		To read stdin as Ex commands use |-es| or |-e|: >
@@ -390,7 +393,7 @@ accordingly.  Vim proceeds in this order:
 
 1. Set the 'shell' option			*SHELL* *COMSPEC*
 	The environment variable SHELL, if it exists, is used to set the
-	'shell' option.  On Windows, the COMSPEC variable is used
+	'shell' option.  On Win32, the COMSPEC variable is used
 	if SHELL is not set.
 
 2. Process the arguments
@@ -518,7 +521,8 @@ accordingly.  Vim proceeds in this order:
 	displayed yet).
 	When switching screens, it happens now.  Redrawing starts.
 	If the "-q" flag was given to Vim, the first error is jumped to.
-	Buffers for all windows will be loaded.
+	Buffers for all windows will be loaded, without triggering |BufAdd|
+	autocommands.
 
 14. Execute startup commands
 	If a "-t" flag was given to Vim, the tag is jumped to.
@@ -621,7 +625,7 @@ Nvim will try to get the value for $VIMRUNTIME in this order:
 
 1. Environment variable $VIMRUNTIME, if it is set.
 2. Directory path "$VIM/vim{version}", if it exists, where {version} is the
-   Vim version number without '-' or '.'.  For example: "$VIM/vim54".
+   Vim version number without '-' or '.'.  For example: "$VIM/vim82".
 3. Directory path "$VIM/runtime", if it exists.
 4. Value of $VIM environment variable.  This is for backwards compatibility
    with older Vim versions.
@@ -766,7 +770,11 @@ resulting file, when executed with a ":source" command:
    "options".  Script-local mappings will not be written.
 2. Restores global variables that start with an uppercase letter and contain
    at least one lowercase letter, if 'sessionoptions' contains "globals".
-3. Unloads all currently loaded buffers.
+3. Closes all windows in the current tab page, except the current one; closes
+   all tab pages except the current one (this results in currently loaded
+   buffers to be unloaded, some may become hidden if 'hidden' is set or
+   otherwise specified); wipes out the current buffer, if it is empty
+   and unnamed.
 4. Restores the current directory if 'sessionoptions' contains "curdir", or
    sets the current directory to where the Session file is if 'sessionoptions'
    contains "sesdir".
@@ -938,8 +946,8 @@ about to abandon with ":bdel", use ":wsh".  The '[' and ']' marks are not
 stored, but the '"' mark is.  The '"' mark is very useful for jumping to the
 cursor position when the file was last exited.  No marks are saved for files
 that start with any string given with the "r" flag in 'shada'.  This can be
-used to avoid saving marks for files on removable media (for Windows you would
-use "ra:,rb:".
+used to avoid saving marks for files on removable media (for MS-Windows you
+would use "ra:,rb:").
 The |v:oldfiles| variable is filled with the file names that the ShaDa file
 has marks for.
 

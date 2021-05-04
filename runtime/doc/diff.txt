@@ -57,11 +57,12 @@ reset to the global value.
 The options can still be overruled from a modeline when re-editing the file.
 However, 'foldmethod' and 'wrap' won't be set from a modeline when 'diff' is
 set.
+See `:diffoff` for an easy way to revert the options.
 
 The differences shown are actually the differences in the buffer.  Thus if you
 make changes after loading a file, these will be included in the displayed
 diffs.  You might have to do ":diffupdate" now and then, not all changes are
-immediately taken into account.
+immediately taken into account, especially when using an external diff command.
 
 In your vimrc file you could do something special when Vim was started in
 diff mode.  You could use a construct like this: >

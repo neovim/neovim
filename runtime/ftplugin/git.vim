@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	generic git output
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2016 Aug 29
+" Last Change:	2019 Dec 05
 
 " Only do this when not done yet for this buffer
 if (exists("b:did_ftplugin"))
@@ -10,7 +10,7 @@ endif
 let b:did_ftplugin = 1
 
 if !exists('b:git_dir')
-  if expand('%:p') =~# '[\/]\.git[\/]modules[\/]'
+  if expand('%:p') =~# '[\/]\.git[\/]modules[\/]\|:[\/][\/]\|^\a\a\+:'
     " Stay out of the way
   elseif expand('%:p') =~# '[\/]\.git[\/]worktrees'
     let b:git_dir = matchstr(expand('%:p'),'.*\.git[\/]worktrees[\/][^\/]\+\>')

@@ -1,8 +1,8 @@
 " netrwFileHandlers: contains various extension-based file handlers for
 "                    netrw's browsers' x command ("eXecute launcher")
 " Author:	Charles E. Campbell
-" Date:		May 03, 2013
-" Version:	11b	ASTRO-ONLY
+" Date:		Sep 18, 2020
+" Version:	11
 " Copyright:    Copyright (C) 1999-2012 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
@@ -20,7 +20,7 @@
 if exists("g:loaded_netrwFileHandlers") || &cp
  finish
 endif
-let g:loaded_netrwFileHandlers= "v11b"
+let g:loaded_netrwFileHandlers= "v11"
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of netrwFileHandlers needs vim 7.2"

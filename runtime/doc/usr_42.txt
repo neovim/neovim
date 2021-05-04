@@ -209,8 +209,8 @@ argument: >
 	:amenu <silent> Mine.Next\ File :call <SID>NextFile()<CR>
 
 Don't use "<silent>" too often.  It is not needed for short commands.  If you
-make a menu for someone else, being able the see the executed command will
-give him a hint about what he could have typed, instead of using the mouse.
+make a menu for someone else, being able to see the executed command will give
+him a hint about what he could have typed, instead of using the mouse.
 
 
 LISTING MENUS

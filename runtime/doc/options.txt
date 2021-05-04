@@ -144,11 +144,11 @@ the option value, use '\"' instead.  This example sets the 'titlestring'
 option to 'hi "there"': >
    :set titlestring=hi\ \"there\"
 
-For Windows backslashes in file names are mostly not removed.  More
-precise: For options that expect a file name (those where environment
-variables are expanded) a backslash before a normal file name character is not
-removed.  But a backslash before a special character (space, backslash, comma,
-etc.) is used like explained above.
+For Win32 backslashes in file names are mostly not removed.  More precise: For
+options that expect a file name (those where environment variables are
+expanded) a backslash before a normal file name character is not removed.  But
+a backslash before a special character (space, backslash, comma, etc.) is used
+like explained above.
 There is one special situation, when the value starts with "\\": >
    :set dir=\\machine\path	    results in "\\machine\path"
    :set dir=\\\\machine\\path	    results in "\\machine\path"
@@ -394,10 +394,11 @@ to set options automatically for one or more files:
 
 					*modeline* *vim:* *vi:* *ex:* *E520*
 There are two forms of modelines.  The first form:
-	[text]{white}{vi:|vim:|ex:}[white]{options}
+	[text{white}]{vi:|vim:|ex:}[white]{options}
 
-[text]			any text or empty
-{white}			at least one blank character (<Space> or <Tab>)
+[text{white}]		empty or any text followed by at least one blank
+			character (<Space> or <Tab>); "ex:" always requires at
+			least one blank character
 {vi:|vim:|ex:}		the string "vi:", "vim:" or "ex:"
 [white]			optional white space
 {options}		a list of option settings, separated with white space
@@ -410,10 +411,11 @@ Examples:
 
 The second form (this is compatible with some versions of Vi):
 
-	[text]{white}{vi:|vim:|Vim:|ex:}[white]se[t] {options}:[text]
+	[text{white}]{vi:|vim:|Vim:|ex:}[white]se[t] {options}:[text]
 
-[text]			any text or empty
-{white}			at least one blank character (<Space> or <Tab>)
+[text{white}]		empty or any text followed by at least one blank
+			character (<Space> or <Tab>); "ex:" always requires at
+			least one blank character
 {vi:|vim:|Vim:|ex:}	the string "vi:", "vim:", "Vim:" or "ex:"
 [white]			optional white space
 se[t]			the string "set " or "se " (note the space); When
@@ -474,9 +476,9 @@ If an error is detected the rest of the line is skipped.
 
 If you want to include a ':' in a set command precede it with a '\'.  The
 backslash in front of the ':' will be removed.  Example:
-   /* vi:set dir=c\:\tmp: */ ~
-This sets the 'dir' option to "c:\tmp".  Only a single backslash before the
-':' is removed.  Thus to include "\:" you have to specify "\\:".
+   /* vi:set fillchars=stl\:^,vert\:\|: */ ~
+This sets the 'fillchars' option to "stl:^,vert:\|".  Only a single backslash
+before the ':' is removed.  Thus to include "\:" you have to specify "\\:".
 							*E992*
 No other commands than "set" are supported, for security reasons (somebody
 might create a Trojan horse text file with modelines).  And not all options
@@ -589,9 +591,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(or Vim is run inside an xterm invoked with "-cjkwidth" option.),
 	this option should be set to "double" to match the width perceived
 	by Vim with the width of glyphs in the font.  Perhaps it also has
-	to be set to "double" under CJK Windows XP when the system locale is
-	set to one of CJK locales.
-	See Unicode Standard Annex #11 (http://www.unicode.org/reports/tr11).
+	to be set to "double" under CJK MS-Windows when the system locale is
+	set to one of CJK locales.  See Unicode Standard Annex #11
+	(http://www.unicode.org/reports/tr11).
 
 	Vim may set this option automatically at startup time when Vim is
 	compiled with the |+termresponse| feature and if t_u7 is set to the
@@ -836,9 +838,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  impossible!).  Writing may fail because of this.
 	- A directory "." means to put the backup file in the same directory
 	  as the edited file.
-	- A directory starting with "./" (or ".\" for Windows) means to
-	  put the backup file relative to where the edited file is.  The
-	  leading "." is replaced with the path name of the edited file.
+	- A directory starting with "./" (or ".\" for MS-Windows) means to put
+	  the backup file relative to where the edited file is.  The leading
+	  "." is replaced with the path name of the edited file.
 	  ("." inside a directory name has no special meaning).
 	- Spaces after the comma are ignored, other spaces are considered part
 	  of the directory name.  To have a space at the start of a directory
@@ -944,7 +946,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    (mostly used in |Normal-mode| or |Cmdline-mode|).
 	esc	    hitting <Esc> in |Normal-mode|.
 	ex	    In |Visual-mode|, hitting |Q| results in an error.
-	hangul	    Error occurred when using hangul input.
+	hangul	    Ignored.
 	insertmode  Pressing <Esc> in 'insertmode'.
 	lang	    Calling the beep module for Lua/Mzscheme/TCL.
 	mess	    No output available for |g<|.
@@ -1100,6 +1102,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	This option is used together with 'bufhidden' and 'swapfile' to
 	specify special kinds of buffers.   See |special-buffers|.
+	Also see |win_gettype()|, which returns the type of the window.
 
 	Be careful with changing this option, it can have many side effects!
 
@@ -1392,7 +1395,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'completeslash'* *'csl'*
 'completeslash' 'csl'	string	(default: "")
 			local to buffer
-			{not in Vi}  {only for MS-Windows}
+			{only for MS-Windows}
 	When this option is set it overrules 'shellslash' for completion:
 	- When this option is set to "slash", a forward slash is used for path
 	  completion in insert mode. This is useful when editing HTML tag, or
@@ -1855,7 +1858,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"x" delete each combining character on its own.  When it is off (the
 	default) the character along with its combining characters are
 	deleted.
-	Note: When 'delcombine' is set "xx" may work different from "2x"!
+	Note: When 'delcombine' is set "xx" may work differently from "2x"!
 
 	This is useful for Arabic, Hebrew and many other languages where one
 	may have combining characters overtop of base characters, and want
@@ -2009,6 +2012,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'directory' 'dir'	string	(default "$XDG_DATA_HOME/nvim/swap//")
 			global
 	List of directory names for the swap file, separated with commas.
+
+	Possible items:
 	- The swap file will be created in the first directory where this is
 	  possible.  If it is not possible in any directory, but last 
 	  directory listed in the option does not exist, it is created.
@@ -2018,13 +2023,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  the edited file.  On Unix, a dot is prepended to the file name, so
 	  it doesn't show in a directory listing.  On MS-Windows the "hidden"
 	  attribute is set and a dot prepended if possible.
-	- A directory starting with "./" (or ".\" for Windows) means to
-	  put the swap file relative to where the edited file is.  The leading
-	  "." is replaced with the path name of the edited file.
+	- A directory starting with "./" (or ".\" for MS-Windows) means to put
+	  the swap file relative to where the edited file is.  The leading "."
+	  is replaced with the path name of the edited file.
 	- For Unix and Win32, if a directory ends in two path separators "//",
 	  the swap file name will be built from the complete path to the file
-	  with all path separators substituted to percent '%' signs. This will
-	  ensure file name uniqueness in the preserve directory.
+	  with all path separators replaced by percent '%' signs (including
+	  the colon following the drive letter on Win32). This will ensure
+	  file name uniqueness in the preserve directory.
 	  On Win32, it is also possible to end with "\\".  However, When a
 	  separating comma is following, you must use "//", since "\\" will
 	  include the comma in the file name. Therefore it is recommended to
@@ -2044,9 +2050,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the same file twice will result in a warning.  Using "/tmp" on Unix is
 	discouraged: When the system crashes you lose the swap file.
 	"/var/tmp" is often not cleared when rebooting, thus is a better
-	choice than "/tmp".  But it can contain a lot of files, your swap
-	files get lost in the crowd.  That is why a "tmp" directory in your
-	home directory is tried first.
+	choice than "/tmp".  But others on the computer may be able to see the
+	files, and it can contain a lot of files, your swap files get lost in
+	the crowd.  That is why a "tmp" directory in your home directory is
+	tried first.
 	The use of |:set+=| and |:set-=| is preferred when adding or removing
 	directories from the list.  This avoids problems when a future version
 	uses another default.
@@ -2086,7 +2093,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'emoji' 'emo'	boolean (default: on)
 			global
 	When on all Unicode emoji characters are considered to be full width.
-
+	This excludes "text emoji" characters, which are normally displayed as
+	single width.  Unfortunately there is no good specification for this
+	and it has been determined on trial-and-error basis.
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'
@@ -2283,7 +2292,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to buffer
 	This gives the <EOL> of the current buffer, which is used for
 	reading/writing the buffer from/to a file:
-	    dos	    <CR> <NL>
+	    dos	    <CR><NL>
 	    unix    <NL>
 	    mac	    <CR>
 	When "dos" is used, CTRL-Z at the end of a file is ignored.
@@ -2970,7 +2979,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 								*'go-v'*
 	  'v'	Use a vertical button layout for dialogs.  When not included,
 		a horizontal layout is preferred, but when it doesn't fit a
-		vertical layout is used anyway.
+		vertical layout is used anyway.  Not supported in GTK 3.
 								*'go-p'*
 	  'p'	Use Pointer callbacks for X11 GUI.  This is required for some
 		window managers.  If the cursor is not blinking or hollow at
@@ -3013,7 +3022,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 
 						*'helpfile'* *'hf'*
-'helpfile' 'hf'		string	(default (MSDOS)  "$VIMRUNTIME\doc\help.txt"
+'helpfile' 'hf'		string	(default (MS-Windows) "$VIMRUNTIME\doc\help.txt"
 					 (others) "$VIMRUNTIME/doc/help.txt")
 			global
 	Name of the main help file.  All distributed help files should be
@@ -3420,7 +3429,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Keywords are used in searching and recognizing with many commands:
 	"w", "*", "[i", etc.  It is also used for "\k" in a |pattern|.  See
 	'isfname' for a description of the format of this option.  For '@'
-	characters above 255 check the "word" character class.
+	characters above 255 check the "word" character class (any character
+	that is not white space or punctuation).
 	For C programs you could use "a-z,A-Z,48-57,_,.,-,>".
 	For a help file it is set to all non-blank printable characters except
 	'*', '"' and '|' (so that CTRL-] on a command finds the help for that
@@ -3527,8 +3537,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	be able to execute Normal mode commands.
 	This is the opposite of the 'keymap' option, where characters are
 	mapped in Insert mode.
-	Also consider resetting 'langremap' to avoid 'langmap' applies to
-	characters resulting from a mapping.
+	Also consider setting 'langremap' to off, to prevent 'langmap' from
+	applying to characters resulting from a mapping.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -3545,7 +3555,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    characters.  Example: "abc;ABC"
 	Example: "aA,fgh;FGH,cCdDeE"
 	Special characters need to be preceded with a backslash.  These are
-	";", ',' and backslash itself.
+	";", ',', '"', '|' and backslash itself.
 
 	This will allow you to activate vim actions without having to switch
 	back and forth between the languages.  Your language characters will
@@ -3719,8 +3729,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
 			leading spaces are blank.  Overrides the "space"
-			setting for leading spaces.
-							*lcs-trail*
+			setting for leading spaces.  You can combine it with
+			"tab:", for example: >
+				:set listchars+=tab:>-,lead:.
+<							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
 			trailing spaces are blank.  Overrides the "space"
 			setting for trailing spaces.
@@ -3769,6 +3781,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only switch it off when working with old Vi scripts.  In any other
 	situation write patterns that work when 'magic' is on.  Include "\M"
 	when you want to |/\M|.
+	In |Vim9| script the value of 'magic' is ignored, patterns behave like
+	it is always set.
 
 						*'makeef'* *'mef'*
 'makeef' 'mef'		string	(default: "")
@@ -3827,7 +3841,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	jump between two double quotes.
 	The characters must be separated by a colon.
 	The pairs must be separated by a comma.  Example for including '<' and
-	'>' (HTML): >
+	'>' (for HTML): >
 		:set mps+=<:>
 
 <	A more exotic example, to jump between the '=' and ';' in an
@@ -3994,7 +4008,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the |more-prompt|.  When this option is off there are no pauses, the
 	listing continues until finished.
 
-						*'mouse'* *E538*
+						*'mouse'*
 'mouse'			string	(default "")
 			global
 
@@ -4205,6 +4219,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	bin	If included, numbers starting with "0b" or "0B" will be
 		considered to be binary.  Example: Using CTRL-X on
 		"0b1000" subtracts one, resulting in "0b0111".
+	unsigned    If included, numbers are recognized as unsigned. Thus a
+		leading dash or negative sign won't be considered as part of
+		the number.  Examples:
+		    Using CTRL-X on "2020" in "9-2020" results in "9-2019"
+		    (without "unsigned" it would become "9-2021").
+		    Using CTRL-A on "2020" in "9-2020" results in "9-2021"
+		    (without "unsigned" it would become "9-2019").
+		    Using CTRL-X on "0" or CTRL-A on "18446744073709551615"
+		    (2^64 - 1) has no effect, overflow is prevented.
 	Numbers which simply begin with a digit in the range 1-9 are always
 	considered decimal.  This also happens for numbers that are not
 	recognized as octal or hex.
@@ -4747,7 +4770,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen.  If the statusline is given by 'statusline' (i.e. not empty),
 	this option takes precedence over 'ruler' and 'rulerformat'
 	If the number of characters displayed is different from the number of
-	bytes in the text (e.g., for a TAB or a multi-byte character), both
+	bytes in the text (e.g., for a TAB or a multibyte character), both
 	the text column (byte number) and the screen column are shown,
 	separated with a dash.
 	For an empty line "0-1" is shown.
@@ -5166,8 +5189,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shell'* *'sh'* *E91*
-'shell' 'sh'		string	(default $SHELL or "sh",
-					Windows: "cmd.exe")
+'shell' 'sh'		string	(default $SHELL or "sh", Win32: "cmd.exe")
 			global
 	Name of the shell to use for ! and :! commands.  When changing the
 	value also check these options: 'shellpipe', 'shellslash'
@@ -5176,8 +5198,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 	Environment variables are expanded |:set_env|.
 
-	If the name of the shell contains a space, you might need to enclose
-	it in quotes.  Example: >
+	If the name of the shell contains a space, you need to enclose it in
+	quotes.  Example with quotes: >
 		:set shell=\"c:\program\ files\unix\sh.exe\"\ -f
 <	Note the backslash before each quote (to avoid starting a comment) and 
 	each space (to avoid ending the option value), so better use |:let-&| 
@@ -5218,9 +5240,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/s /c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
-	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For Windows
-	systems, the default is set according to the value of 'shell', to
-	reduce the need to set this option by the user.
+	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For MS-Windows, the
+	default is set according to the value of 'shell', to reduce the need
+	to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
 	part is passed as an argument to the shell command.
 	See |option-backslash| about including spaces and backslashes.
@@ -5230,7 +5252,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shellpipe'* *'sp'*
-'shellpipe' 'sp'	string	(default ">", "| tee", "|& tee" or "2>&1| tee")
+'shellpipe' 'sp'	string	(default ">", ">%s 2>&1", "| tee", "|& tee" or
+				 "2>&1| tee")
 			global
 	String to be used to put the output of the ":make" command in the
 	error file.  See also |:make_makeprg|.  See |option-backslash| about
@@ -5238,15 +5261,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The name of the temporary file can be represented by "%s" if necessary
 	(the file name is appended automatically if no %s appears in the value
 	of this option).
-	For Windows the default is ">".  The output is directly saved in a file
-	and not echoed to the screen.
-	For Unix the default it "| tee".  The stdout of the compiler is saved
+	For MS-Windows the default is ">%s 2>&1".  The output is directly
+	saved in a file and not echoed to the screen.
+	For Unix the default is "| tee".  The stdout of the compiler is saved
 	in a file and echoed to the screen.  If the 'shell' option is "csh" or
 	"tcsh" after initializations, the default becomes "|& tee".  If the
-	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh" or "bash" the
-	default becomes "2>&1| tee".  This means that stderr is also included.
-	Before using the 'shell' option a path is removed, thus "/bin/sh" uses
-	"sh".
+	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
+	"bash" or "fish" the default becomes "2>&1| tee".  This means that
+	stderr is also included.  Before using the 'shell' option a path is
+	removed, thus "/bin/sh" uses "sh".
 	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellpipe' option changes automatically, unless it was
@@ -5286,13 +5309,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The name of the temporary file can be represented by "%s" if necessary
 	(the file name is appended automatically if no %s appears in the value
 	of this option).
-	The default is ">".  For Unix, if the 'shell' option is "csh", "tcsh"
-	or "zsh" during initializations, the default becomes ">&".  If the
-	'shell' option is "sh", "ksh" or "bash" the default becomes
-	">%s 2>&1".  This means that stderr is also included.
-	For Win32, the Unix checks are done and additionally "cmd" is checked
-	for, which makes the default ">%s 2>&1".  Also, the same names with
-	".exe" appended are checked for.
+	The default is ">".  For Unix, if the 'shell' option is "csh" or
+	"tcsh" during initializations, the default becomes ">&".  If the
+	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
+	"bash" or "fish", the default becomes ">%s 2>&1".  This means that
+	stderr is also included.  For Win32, the Unix checks are done and
+	additionally "cmd" is checked for, which makes the default ">%s 2>&1".
+	Also, the same names with ".exe" appended are checked for.
 	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellredir' option changes automatically unless it was
@@ -5305,11 +5328,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
 'shellslash' 'ssl'	boolean	(default off)
 			global
-			{only for Windows}
+			{only for MS-Windows}
 	When set, a forward slash is used when expanding file names.  This is
-	useful when a Unix-like shell is used instead of command.com or
-	cmd.exe.  Backward slashes can still be typed, but they are changed to
-	forward slashes by Vim.
+	useful when a Unix-like shell is used instead of cmd.exe.  Backward
+	slashes can still be typed, but they are changed to forward slashes by
+	Vim.
 	Note that setting or resetting this option has no effect for some
 	existing file names, thus this option needs to be set before opening
 	any file for best results.  This might change in the future.
@@ -5887,8 +5910,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	N N   Printer page number.  (Only works in the 'printheader' option.)
 	l N   Line number.
 	L N   Number of lines in buffer.
-	c N   Column number.
-	v N   Virtual column number.
+	c N   Column number (byte index).
+	v N   Virtual column number (screen column).
 	V N   Virtual column number as -{num}.  Not displayed if equal to 'c'.
 	p N   Percentage through file in lines as in |CTRL-G|.
 	P S   Percentage through file of displayed window.  This is like the
@@ -5897,7 +5920,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	a S   Argument list status as in default title.  ({current} of {max})
 	      Empty if the argument file count is zero or one.
 	{ NF  Evaluate expression between '%{' and '}' and substitute result.
-	      Note that there is no '%' before the closing '}'.
+	      Note that there is no '%' before the closing '}'.  The
+	      expression cannot contain a '}' character, call a function to
+	      work around that.  See |stl-%{| below.
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.
@@ -5960,13 +5985,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:set statusline=...%(\ [%M%R%H]%)...
 <	Beware that an expression is evaluated each and every time the status
 	line is displayed.
-					*g:actual_curbuf* *g:actual_curwin*
-	The current buffer and current window will be set temporarily to that
-	of the window (and buffer) whose statusline is currently being drawn.
-	The expression will evaluate in this context.  The variable
-	"g:actual_curbuf" is set to the `bufnr()` number of the real current
-	buffer and "g:actual_curwin" to the |window-ID| of the real current
-	window.  These values are strings.
+				*stl-%{* *g:actual_curbuf* *g:actual_curwin*
+	While evaluating %{} the current buffer and current window will be set
+	temporarily to that of the window (and buffer) whose statusline is
+	currently being drawn.  The expression will evaluate in this context.
+	The variable "g:actual_curbuf" is set to the `bufnr()` number of the
+	real current buffer and "g:actual_curwin" to the |window-ID| of the
+	real current window.  These values are strings.
 
 	The 'statusline' option will be evaluated in the |sandbox| if set from
 	a modeline, see |sandbox-option|.
@@ -6504,8 +6529,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'undolevels' 'ul'	number	(default 1000)
 			global or local to buffer |global-local|
 	Maximum number of changes that can be undone.  Since undo information
-	is kept in memory, higher numbers will cause more memory to be used
-	(nevertheless, a single change can use an unlimited amount of memory).
+	is kept in memory, higher numbers will cause more memory to be used.
+	Nevertheless, a single change can already use a large amount of memory.
 	Set to 0 for Vi compatibility: One level of undo and "u" undoes
 	itself: >
 		set ul=0
@@ -6608,7 +6633,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	>= 14	Anything pending in a ":finally" clause.
 	>= 15	Every executed Ex command from a script (truncated at 200
 		characters).
-	>= 16	Every executed Ex command
+	>= 16	Every executed Ex command.
 
 	This option can also be set with the "-V" argument.  See |-V|.
 	This option is also set by the |:verbose| command.
@@ -6713,8 +6738,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	":map <BS> X" to make backspace delete the character in front of the
 	cursor.
 	When 'l' is included and it is used after an operator at the end of a
-	line then it will not move to the next line.  This makes "dl", "cl",
-	"yl" etc. work normally.
+	line (not an empty line) then it will not move to the next line.  This
+	makes "dl", "cl", "yl" etc. work normally.
 
 						*'wildchar'* *'wc'*
 'wildchar' 'wc'		number	(Vim default: <Tab>, Vi default: CTRL-E)
@@ -6808,23 +6833,31 @@ A jump table for the options with a short description can be found at |Q_op|.
 	part specifies what to do for each consecutive use of 'wildchar'.  The
 	first part specifies the behavior for the first use of 'wildchar',
 	The second part for the second use, etc.
-	These are the possible values for each part:
+
+	Each part consists of a colon separated list consisting of the
+	following possible values:
 	""		Complete only the first match.
 	"full"		Complete the next full match.  After the last match,
 			the original string is used and then the first match
-			again.
+			again.  Will also start 'wildmenu' if it is enabled.
 	"longest"	Complete till longest common string.  If this doesn't
 			result in a longer string, use the next part.
-	"longest:full"	Like "longest", but also start 'wildmenu' if it is
-			enabled.
 	"list"		When more than one match, list all matches.
+	"lastused"	When completing buffer names and more than one buffer
+			matches, sort buffers by time last used (other than
+			the current buffer).
+	When there is only a single match, it is fully completed in all cases.
+
+	Examples of useful colon-separated values:
+	"longest:full"	Like "longest", but also start 'wildmenu' if it is
+			enabled.  Will not complete to the next full match.
 	"list:full"	When more than one match, list all matches and
 			complete first match.
 	"list:longest"	When more than one match, list all matches and
 			complete till longest common string.
-	"list:lastused" When more than one buffer matches, sort buffers
-			by time last used (other than the current buffer).
-	When there is only a single match, it is fully completed in all cases.
+	"list:lastused" When more than one buffer matches, list all matches
+			and sort buffers by time last used (other than the
+			current buffer).
 
 	Examples: >
 		:set wildmode=full
@@ -6882,15 +6915,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'window'* *'wi'*
 'window' 'wi'		number  (default screen height - 1)
 			global
-	Window height.  Do not confuse this with the height of the Vim window,
-	use 'lines' for that.
-	Used for |CTRL-F| and |CTRL-B| when there is only one window and the
-	value is smaller than 'lines' minus one.  The screen will scroll
-	'window' minus two lines, with a minimum of one.
+	Window height used for |CTRL-F| and |CTRL-B| when there is only one
+	window and the value is smaller than 'lines' minus one.  The screen
+	will scroll 'window' minus two lines, with a minimum of one.
 	When 'window' is equal to 'lines' minus one CTRL-F and CTRL-B scroll
 	in a much smarter way, taking care of wrapping lines.
 	When resizing the Vim window, the value is smaller than 1 or more than
 	or equal to 'lines' it will be set to 'lines' minus 1.
+	Note: Do not confuse this with the height of the Vim window, use
+	'lines' for that.
 
 						*'winheight'* *'wh'* *E591*
 'winheight' 'wh'	number	(default 1)
@@ -7049,6 +7082,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	fail (and make sure not to exit Vim until the write was successful).
 	See |backup-table| for another explanation.
 	When the 'backupskip' pattern matches, a backup is not made anyway.
+	Depending on 'backupcopy' the backup is a new file or the original
+	file renamed (and a new file is written).
 
 						*'writedelay'* *'wd'*
 'writedelay' 'wd'	number	(default 0)

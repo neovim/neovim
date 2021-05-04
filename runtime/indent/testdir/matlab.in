@@ -37,6 +37,7 @@ end
 % START_INDENT
 if true
 A(1:end - 1)
+C{1:end - 1}
 disp foo
 end
 % END_INDENT
@@ -47,6 +48,14 @@ A = [{
 ] ...
 disp foo
 disp bar
+% END_INDENT
+
+% START_INDENT
+if true
+% end
+%% end
+disp foo
+end
 % END_INDENT
 
 % START_INDENT

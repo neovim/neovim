@@ -141,7 +141,7 @@ commands, except "gJ", delete any leading white space on the next line.  If
 the 'joinspaces' option is on, these commands insert two spaces after a '.',
 '!' or '?'.
 The 'B' and 'M' flags in 'formatoptions' change the behavior for inserting
-spaces before and after a multi-byte character |fo-table|.
+spaces before and after a multibyte character |fo-table|.
 
 The '[ mark is set at the end of the first line that was joined, '] at the end
 of the resulting line.
@@ -197,7 +197,7 @@ gR			Enter Virtual Replace mode: Each character you type
 			start insert (for {Visual} see |Visual-mode|).
 
 							*v_r*
-{Visual}["x]r{char}	Replace all selected characters by {char}.
+{Visual}r{char}		Replace all selected characters by {char}.
 
 							*v_C*
 {Visual}["x]C		Delete the highlighted lines [into register x] and
@@ -610,6 +610,8 @@ Directory for temporary files is created in the first suitable directory of:
 			|cmdline-ranges|.
 
 			See |:s_flags| for [flags].
+			The delimiter doesn't need to be /, see
+			|pattern-delimiter|.
 
 :[range]s[ubstitute] [flags] [count]
 :[range]&[&][flags] [count]					*:&*
@@ -621,6 +623,8 @@ Directory for temporary files is created in the first suitable directory of:
 			The space between `:substitute` and the 'c', 'g',
 			'i', 'I' and 'r' flags isn't required, but in scripts
 			it's a good idea to keep it to avoid confusion.
+			Also see the two and three letter commands to repeat
+			:substitute below |:substitute-repeat|.
 
 :[range]~[&][flags] [count]					*:~*
 			Repeat last substitute with same substitute string
@@ -744,7 +748,7 @@ This deletes "TESTING" from all lines, but only one per line.
 For compatibility with Vi these two exceptions are allowed:
 "\/{string}/" and "\?{string}?" do the same as "//{string}/r".
 "\&{string}&" does the same as "//{string}/".
-							*E146*
+						*pattern-delimiter* *E146*
 Instead of the '/' which surrounds the pattern and replacement string, you
 can use any other single-byte character, but not an alphanumeric character,
 '\', '"' or '|'.  This is useful if you want to include a '/' in the search
@@ -841,20 +845,26 @@ either the first or second pattern in parentheses did not match, so either
 		*:sge* *:sgi* *:sgI* *:sgl* *:sgn* *:sgp* *:sgr* *:sI* *:si*
 		*:sic* *:sIc* *:sie* *:sIe* *:sIg* *:sIl* *:sin* *:sIn* *:sIp*
 		*:sip* *:sIr* *:sir* *:sr* *:src* *:srg* *:sri* *:srI* *:srl*
-		*:srn* *:srp*
+		*:srn* *:srp* *:substitute-repeat*
 2-letter and 3-letter :substitute commands ~
+
+These commands repeat the previous `:substitute` command with the given flags.
+The first letter is always "s", followed by one or two of the possible flag
+characters.  For example `:sce` works like `:s///ce`.  The table lists the
+possible combinations, not all flags are possible, because the command is
+short for another command.
 
      List of :substitute commands
      |      c    e    g    i    I    n    p    l    r
-     | c  :sc  :sce :scg :sci :scI :scn :scp :scl  ---
+     | c  :sc  :sce :scg :sci :scI :scn :scp :scl
      | e
      | g  :sgc :sge :sg  :sgi :sgI :sgn :sgp :sgl :sgr
-     | i  :sic :sie  --- :si  :siI :sin :sip  --- :sir
+     | i  :sic :sie      :si  :siI :sin :sip      :sir
      | I  :sIc :sIe :sIg :sIi :sI  :sIn :sIp :sIl :sIr
      | n
      | p
      | l
-     | r  :src  --- :srg :sri :srI :srn :srp :srl :sr
+     | r  :src      :srg :sri :srI :srn :srp :srl :sr
 
 Exceptions:
      :scr  is  `:scriptnames`
@@ -959,9 +969,9 @@ inside of strings can change!  Also see 'softtabstop' option. >
 5. Copying and moving text				*copy-move*
 
 							*quote*
-"{a-zA-Z0-9.%#:-"}	Use register {a-zA-Z0-9.%#:-"} for next delete, yank
-			or put (use uppercase character to append with
-			delete and yank) ({.%#:} only work with put).
+"{register}		Use {register} for next delete, yank or put.  Use
+			an uppercase character to append with delete and yank.
+			Registers ".", "%", "#" and ":" only work with put.
 
 							*:reg* *:registers*
 :reg[isters]		Display the type and contents of all numbered and
@@ -1140,7 +1150,7 @@ Rationale:	In Vi the "y" command followed by a backwards motion would
 With a linewise yank command the cursor is put in the first line, but the
 column is unmodified, thus it may not be on the first yanked character.
 
-There are ten types of registers:			*registers* *E354*
+There are ten types of registers:		*registers* *{register}* *E354*
 1. The unnamed register ""
 2. 10 numbered registers "0 to "9
 3. The small delete register "-
@@ -1400,7 +1410,7 @@ text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim: >
   func! format#Format()
     " only reformat on explicit gq command
     if mode() != 'n'
-      " fall back to Vims internal reformatting
+      " fall back to Vim's internal reformatting
       return 1
     endif
     let lines = getline(v:lnum, v:lnum + v:count - 1)
@@ -1573,23 +1583,31 @@ can separate the option letters with commas for readability.
 
 letter	 meaning when present in 'formatoptions'    ~
 
+							*fo-t*
 t	Auto-wrap text using textwidth
+							*fo-c*
 c	Auto-wrap comments using textwidth, inserting the current comment
 	leader automatically.
+							*fo-r*
 r	Automatically insert the current comment leader after hitting
 	<Enter> in Insert mode.
+							*fo-o*
 o	Automatically insert the current comment leader after hitting 'o' or
 	'O' in Normal mode.
+							*fo-q*
 q	Allow formatting of comments with "gq".
 	Note that formatting will not change blank lines or lines containing
 	only the comment leader.  A new paragraph starts after such a line,
 	or when the comment leader changes.
+							*fo-w*
 w	Trailing white space indicates a paragraph continues in the next line.
 	A line that ends in a non-white character ends a paragraph.
+							*fo-a*
 a	Automatic formatting of paragraphs.  Every time text is inserted or
 	deleted the paragraph will be reformatted.  See |auto-format|.
 	When the 'c' flag is present this only happens for recognized
 	comments.
+							*fo-n*
 n	When formatting text, recognize numbered lists.  This actually uses
 	the 'formatlistpat' option, thus any kind of list can be used.  The
 	indent of the text after the number is used for the next line.  The
@@ -1600,6 +1618,7 @@ n	When formatting text, recognize numbered lists.  This actually uses
 		1. the first item
 		   wraps
 		2. the second item
+<							*fo-2*
 2	When formatting text, use the indent of the second line of a paragraph
 	for the rest of the paragraph, instead of the indent of the first
 	line.  This supports paragraphs in which the first line has a
@@ -1609,36 +1628,46 @@ n	When formatting text, recognize numbered lists.  This actually uses
 		second line of the same paragraph
 		third line.
 <	This also works inside comments, ignoring the comment leader.
+							*fo-v*
 v	Vi-compatible auto-wrapping in insert mode: Only break a line at a
 	blank that you have entered during the current insert command.  (Note:
 	this is not 100% Vi compatible.  Vi has some "unexpected features" or
 	bugs in this area.  It uses the screen column instead of the line
 	column.)
+							*fo-b*
 b	Like 'v', but only auto-wrap if you enter a blank at or before
 	the wrap margin.  If the line was longer than 'textwidth' when you
 	started the insert, or you do not enter a blank in the insert before
 	reaching 'textwidth', Vim does not perform auto-wrapping.
+							*fo-l*
 l	Long lines are not broken in insert mode: When a line was longer than
 	'textwidth' when the insert command started, Vim does not
 	automatically format it.
-m	Also break at a multi-byte character above 255.  This is useful for
+							*fo-m*
+m	Also break at a multibyte character above 255.  This is useful for
 	Asian text where every character is a word on its own.
-M	When joining lines, don't insert a space before or after a multi-byte
+							*fo-M*
+M	When joining lines, don't insert a space before or after a multibyte
 	character.  Overrules the 'B' flag.
-B	When joining lines, don't insert a space between two multi-byte
+							*fo-B*
+B	When joining lines, don't insert a space between two multibyte
 	characters.  Overruled by the 'M' flag.
+							*fo-1*
 1	Don't break a line after a one-letter word.  It's broken before it
 	instead (if possible).
+							*fo-]*
 ]	Respect textwidth rigorously. With this flag set, no line can be
 	longer than textwidth, unless line-break-prohibition rules make this
 	impossible.  Mainly for CJK scripts and works only if 'encoding' is
 	"utf-8".
+							*fo-j*
 j	Where it makes sense, remove a comment leader when joining lines.  For
 	example, joining:
 		int i;   // the index ~
 		         // in the list ~
 	Becomes:
 		int i;   // the index in the list ~
+							*fo-p*
 p	Don't break lines at single spaces that follow periods.  This is
 	intended to complement 'joinspaces' and |cpo-J|, for prose with
 	sentences separated by two spaces.  For example, with 'textwidth' set
@@ -1696,7 +1725,7 @@ Some examples:
 Automatic formatting				*auto-format* *autoformat*
 
 When the 'a' flag is present in 'formatoptions' text is formatted
-automatically when inserting text or deleting text.  This works nice for
+automatically when inserting text or deleting text.  This works nicely for
 editing text paragraphs.  A few hints on how to use this:
 
 - You need to properly define paragraphs.  The simplest is paragraphs that are
@@ -1783,6 +1812,8 @@ found here: |sort()|, |uniq()|.
 			When /{pattern}/ is specified and there is no [r] flag
 			the text matched with {pattern} is skipped, so that
 			you sort on what comes after the match.
+			'ignorecase' applies to the pattern, but 'smartcase'
+			is not used.
 			Instead of the slash any non-letter can be used.
 			For example, to sort on the second comma-separated
 			field: >

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     TypeScript and TypeScriptReact
 " Maintainer:   Bram Moolenaar, Herrington Darkholme
-" Last Change:	2019 Nov 30
+" Last Change:	2020 Oct 27
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https:github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github
@@ -21,15 +21,14 @@ if main_syntax == 'typescript' || main_syntax == 'typescriptreact'
   setlocal iskeyword+=$
   " syntax cluster htmlJavaScript                 contains=TOP
 endif
+" For private field added from TypeScript 3.8
+setlocal iskeyword+=#
 
 " lowest priority on least used feature
 syntax match   typescriptLabel                /[a-zA-Z_$]\k*:/he=e-1 contains=typescriptReserved nextgroup=@typescriptStatement skipwhite skipempty
 
 " other keywords like return,case,yield uses containedin
 syntax region  typescriptBlock                 matchgroup=typescriptBraces start=/{/ end=/}/ contains=@typescriptStatement,@typescriptComments fold
-
-
-"runtime syntax/basic/identifiers.vim
 syntax cluster afterIdentifier contains=
   \ typescriptDotNotation,
   \ typescriptFuncCallArg,
@@ -60,7 +59,56 @@ syntax region  typescriptFuncCallArg           contained matchgroup=typescriptPa
 syntax region  typescriptEventFuncCallArg      contained matchgroup=typescriptParens start=/(/ end=/)/ contains=@typescriptEventExpression
 syntax region  typescriptEventString           contained start=/\z(["']\)/  skip=/\\\\\|\\\z1\|\\\n/  end=/\z1\|$/ contains=typescriptASCII,@events
 
-"runtime syntax/basic/literal.vim
+syntax region  typescriptDestructureString
+  \ start=/\z(["']\)/  skip=/\\\\\|\\\z1\|\\\n/  end=/\z1\|$/
+  \ contains=typescriptASCII
+  \ nextgroup=typescriptDestructureAs
+  \ contained skipwhite skipempty
+
+syntax cluster typescriptVariableDeclarations
+  \ contains=typescriptVariableDeclaration,@typescriptDestructures
+
+syntax match typescriptVariableDeclaration /[A-Za-z_$]\k*/
+  \ nextgroup=typescriptTypeAnnotation,typescriptAssign
+  \ contained skipwhite skipempty
+
+syntax cluster typescriptDestructureVariables contains=
+  \ typescriptRestOrSpread,
+  \ typescriptDestructureComma,
+  \ typescriptDestructureLabel,
+  \ typescriptDestructureVariable,
+  \ @typescriptDestructures
+
+syntax match typescriptDestructureVariable    /[A-Za-z_$]\k*/ contained
+  \ nextgroup=typescriptDefaultParam
+  \ contained skipwhite skipempty
+
+syntax match typescriptDestructureLabel       /[A-Za-z_$]\k*\ze\_s*:/
+  \ nextgroup=typescriptDestructureAs
+  \ contained skipwhite skipempty
+
+syntax match typescriptDestructureAs /:/
+  \ nextgroup=typescriptDestructureVariable,@typescriptDestructures
+  \ contained skipwhite skipempty
+
+syntax match typescriptDestructureComma /,/ contained
+
+syntax cluster typescriptDestructures contains=
+  \ typescriptArrayDestructure,
+  \ typescriptObjectDestructure
+
+syntax region typescriptArrayDestructure matchgroup=typescriptBraces
+  \ start=/\[/ end=/]/
+  \ contains=@typescriptDestructureVariables,@typescriptComments
+  \ nextgroup=typescriptTypeAnnotation,typescriptAssign
+  \ transparent contained skipwhite skipempty fold
+
+syntax region typescriptObjectDestructure matchgroup=typescriptBraces
+  \ start=/{/ end=/}/
+  \ contains=typescriptDestructureString,@typescriptDestructureVariables,@typescriptComments
+  \ nextgroup=typescriptTypeAnnotation,typescriptAssign
+  \ transparent contained skipwhite skipempty fold
+
 "Syntax in the JavaScript code
 
 " String
@@ -77,15 +125,15 @@ syntax region  typescriptString
   \ contains=typescriptSpecial,@Spell
   \ extend
 
-syntax match   typescriptSpecial            contained "\v\\%(x\x\x|u%(\x{4}|\{\x{4,5}})|c\u|.)"
+syntax match   typescriptSpecial            contained "\v\\%(x\x\x|u%(\x{4}|\{\x{1,6}})|c\u|.)"
 
 " From vim runtime
 " <https://github.com/vim/vim/blob/master/runtime/syntax/javascript.vim#L48>
-syntax region  typescriptRegexpString          start=+/[^/*]+me=e-1 skip=+\\\\\|\\/+ end=+/[gimuy]\{0,5\}\s*$+ end=+/[gimuy]\{0,5\}\s*[;.,)\]}]+me=e-1 nextgroup=typescriptDotNotation oneline
+syntax region  typescriptRegexpString          start=+/[^/*]+me=e-1 skip=+\\\\\|\\/+ end=+/[gimuy]\{0,5\}\s*$+ end=+/[gimuy]\{0,5\}\s*[;.,)\]}:]+me=e-1 nextgroup=typescriptDotNotation oneline
 
 syntax region  typescriptTemplate
   \ start=/`/  skip=/\\\\\|\\`\|\n/  end=/`\|$/
-  \ contains=typescriptTemplateSubstitution
+  \ contains=typescriptTemplateSubstitution,typescriptSpecial,@Spell
   \ nextgroup=@typescriptSymbols
   \ skipwhite skipempty
 
@@ -100,17 +148,15 @@ syntax region  typescriptArray matchgroup=typescriptBraces
 syntax match typescriptNumber /\<0[bB][01][01_]*\>/        nextgroup=@typescriptSymbols skipwhite skipempty
 syntax match typescriptNumber /\<0[oO][0-7][0-7_]*\>/       nextgroup=@typescriptSymbols skipwhite skipempty
 syntax match typescriptNumber /\<0[xX][0-9a-fA-F][0-9a-fA-F_]*\>/ nextgroup=@typescriptSymbols skipwhite skipempty
-syntax match typescriptNumber /\d[0-9_]*\.\d[0-9_]*\|\d[0-9_]*\|\.\d[0-9]*/
-  \ nextgroup=typescriptExponent,@typescriptSymbols skipwhite skipempty
-syntax match typescriptExponent /[eE][+-]\=\d[0-9]*\>/
-  \ nextgroup=@typescriptSymbols skipwhite skipempty contained
+syntax match typescriptNumber /\<\%(\d[0-9_]*\%(\.\d[0-9_]*\)\=\|\.\d[0-9_]*\)\%([eE][+-]\=\d[0-9_]*\)\=\>/
+  \ nextgroup=typescriptSymbols skipwhite skipempty
 
-
-" runtime syntax/basic/object.vim
 syntax region  typescriptObjectLiteral         matchgroup=typescriptBraces
   \ start=/{/ end=/}/
-  \ contains=@typescriptComments,typescriptObjectLabel,typescriptStringProperty,typescriptComputedPropertyName
+  \ contains=@typescriptComments,typescriptObjectLabel,typescriptStringProperty,typescriptComputedPropertyName,typescriptObjectAsyncKeyword
   \ fold contained
+
+syntax keyword typescriptObjectAsyncKeyword async contained
 
 syntax match   typescriptObjectLabel  contained /\k\+\_s*/
   \ nextgroup=typescriptObjectColon,@typescriptCallImpl
@@ -136,7 +182,6 @@ syntax match typescriptObjectSpread /\.\.\./ contained containedin=typescriptObj
 
 syntax match typescriptObjectColon contained /:/ nextgroup=@typescriptValue skipwhite skipempty
 
-"runtime syntax/basic/symbols.vim
 " + - ^ ~
 syntax match typescriptUnaryOp /[+\-~!]/
  \ nextgroup=@typescriptValue
@@ -153,10 +198,12 @@ syntax match   typescriptBinaryOp contained /===\?/ nextgroup=@typescriptValue s
 syntax match   typescriptBinaryOp contained />\(>>=\|>>\|>=\|>\|=\)\?/ nextgroup=@typescriptValue skipwhite skipempty
 " 4: <<=, <<, <=, <
 syntax match   typescriptBinaryOp contained /<\(<=\|<\|=\)\?/ nextgroup=@typescriptValue skipwhite skipempty
-" 3: ||, |=, |
-syntax match   typescriptBinaryOp contained /|\(|\|=\)\?/ nextgroup=@typescriptValue skipwhite skipempty
-" 3: &&, &=, &
-syntax match   typescriptBinaryOp contained /&\(&\|=\)\?/ nextgroup=@typescriptValue skipwhite skipempty
+" 3: ||, |=, |, ||=
+syntax match   typescriptBinaryOp contained /||\?=\?/ nextgroup=@typescriptValue skipwhite skipempty
+" 4: &&, &=, &, &&=
+syntax match   typescriptBinaryOp contained /&&\?=\?/ nextgroup=@typescriptValue skipwhite skipempty
+" 2: ??, ??=
+syntax match   typescriptBinaryOp contained /??=\?/ nextgroup=@typescriptValue skipwhite skipempty
 " 2: *=, *
 syntax match   typescriptBinaryOp contained /\*=\?/ nextgroup=@typescriptValue skipwhite skipempty
 " 2: %=, %
@@ -177,11 +224,18 @@ syntax match typescriptBinaryOp contained /\*\*=\?/ nextgroup=@typescriptValue
 syntax cluster typescriptSymbols               contains=typescriptBinaryOp,typescriptKeywordOp,typescriptTernary,typescriptAssign,typescriptCastKeyword
 
 " runtime syntax/basic/reserved.vim
-
-"runtime syntax/basic/keyword.vim
 "Import
-syntax keyword typescriptImport                from as import
+syntax keyword typescriptImport                from as
+syntax keyword typescriptImport                import
+  \ nextgroup=typescriptImportType
+  \ skipwhite
+syntax keyword typescriptImportType            type
+  \ contained
 syntax keyword typescriptExport                export
+  \ nextgroup=typescriptExportType
+  \ skipwhite
+syntax match typescriptExportType              /\<type\s*{\@=/
+  \ contained skipwhite skipempty skipnl
 syntax keyword typescriptModule                namespace module
 
 "this
@@ -199,16 +253,12 @@ syntax keyword typescriptIdentifier            arguments this super
   \ nextgroup=@afterIdentifier
 
 syntax keyword typescriptVariable              let var
-  \ nextgroup=typescriptVariableDeclaration
-  \ skipwhite skipempty skipnl
+  \ nextgroup=@typescriptVariableDeclarations
+  \ skipwhite skipempty
 
 syntax keyword typescriptVariable const
-  \ nextgroup=typescriptEnum,typescriptVariableDeclaration
-  \ skipwhite
-
-syntax match typescriptVariableDeclaration /[A-Za-z_$]\k*/
-  \ nextgroup=typescriptTypeAnnotation,typescriptAssign
-  \ contained skipwhite skipempty skipnl
+  \ nextgroup=typescriptEnum,@typescriptVariableDeclarations
+  \ skipwhite skipempty
 
 syntax region typescriptEnum matchgroup=typescriptEnumKeyword start=/enum / end=/\ze{/
   \ nextgroup=typescriptBlock
@@ -271,7 +321,6 @@ syntax cluster typescriptAmbients contains=
   \ typescriptEnumKeyword,typescriptEnum,
   \ typescriptModule
 
-"runtime syntax/basic/doc.vim
 "Syntax coloring for Node.js shebang line
 syntax match   shellbang "^#!.*node\>"
 syntax match   shellbang "^#!.*iojs\>"
@@ -279,8 +328,9 @@ syntax match   shellbang "^#!.*iojs\>"
 
 "JavaScript comments
 syntax keyword typescriptCommentTodo TODO FIXME XXX TBD
+syntax match typescriptMagicComment "@ts-\%(ignore\|expect-error\)\>"
 syntax match   typescriptLineComment "//.*"
-  \ contains=@Spell,typescriptCommentTodo,typescriptRef
+  \ contains=@Spell,typescriptCommentTodo,typescriptRef,typescriptMagicComment
 syntax region  typescriptComment
   \ start="/\*"  end="\*/"
   \ contains=@Spell,typescriptCommentTodo extend
@@ -349,24 +399,27 @@ syntax region  typescriptDocLinkTag            contained matchgroup=typescriptDo
 
 syntax cluster typescriptDocs                  contains=typescriptDocParamType,typescriptDocNamedParamType,typescriptDocParam
 
-if main_syntax == "typescript"
+if exists("main_syntax") && main_syntax == "typescript"
   syntax sync clear
   syntax sync ccomment typescriptComment minlines=200
 endif
 
 syntax case match
 
-"runtime syntax/basic/type.vim
 " Types
 syntax match typescriptOptionalMark /?/ contained
 
+syntax cluster typescriptTypeParameterCluster contains=
+  \ typescriptTypeParameter,
+  \ typescriptGenericDefault
+
 syntax region typescriptTypeParameters matchgroup=typescriptTypeBrackets
   \ start=/</ end=/>/
-  \ contains=typescriptTypeParameter
+  \ contains=@typescriptTypeParameterCluster
   \ contained
 
 syntax match typescriptTypeParameter /\K\k*/
-  \ nextgroup=typescriptConstraint,typescriptGenericDefault
+  \ nextgroup=typescriptConstraint
   \ contained skipwhite skipnl
 
 syntax keyword typescriptConstraint extends
@@ -409,6 +462,7 @@ syntax cluster typescriptPrimaryType contains=
   \ typescriptTupleType,
   \ typescriptTypeQuery,
   \ typescriptStringLiteralType,
+  \ typescriptTemplateLiteralType,
   \ typescriptReadonlyArrayKeyword,
   \ typescriptAssertType
 
@@ -416,6 +470,17 @@ syntax region  typescriptStringLiteralType contained
   \ start=/\z(["']\)/  skip=/\\\\\|\\\z1\|\\\n/  end=/\z1\|$/
   \ nextgroup=typescriptUnion
   \ skipwhite skipempty
+
+syntax region  typescriptTemplateLiteralType contained
+  \ start=/`/  skip=/\\\\\|\\`\|\n/  end=/`\|$/
+  \ contains=typescriptTemplateSubstitutionType
+  \ nextgroup=typescriptTypeOperator
+  \ skipwhite skipempty
+
+syntax region  typescriptTemplateSubstitutionType matchgroup=typescriptTemplateSB
+  \ start=/\${/ end=/}/
+  \ contains=@typescriptType
+  \ contained
 
 syntax region typescriptParenthesizedType matchgroup=typescriptParens
   \ start=/(/ end=/)/
@@ -439,7 +504,7 @@ syntax region typescriptObjectType matchgroup=typescriptBraces
   \ start=/{/ end=/}/
   \ contains=@typescriptTypeMember,typescriptEndColons,@typescriptComments,typescriptAccessibilityModifier,typescriptReadonlyModifier
   \ nextgroup=@typescriptTypeOperator
-  \ contained skipwhite fold
+  \ contained skipwhite skipnl fold
 
 syntax cluster typescriptTypeMember contains=
   \ @typescriptCallSignature,
@@ -447,15 +512,20 @@ syntax cluster typescriptTypeMember contains=
   \ typescriptIndexSignature,
   \ @typescriptMembers
 
+syntax match typescriptTupleLable /\K\k*?\?:/
+    \ contained
+
 syntax region typescriptTupleType matchgroup=typescriptBraces
   \ start=/\[/ end=/\]/
-  \ contains=@typescriptType,@typescriptComments
+  \ contains=@typescriptType,@typescriptComments,typescriptRestOrSpread,typescriptTupleLable
   \ contained skipwhite
 
 syntax cluster typescriptTypeOperator
-  \ contains=typescriptUnion,typescriptTypeBracket
+  \ contains=typescriptUnion,typescriptTypeBracket,typescriptConstraint,typescriptConditionalType
 
 syntax match typescriptUnion /|\|&/ contained nextgroup=@typescriptPrimaryType skipwhite skipempty
+
+syntax match typescriptConditionalType /?\|:/ contained nextgroup=@typescriptPrimaryType skipwhite skipempty
 
 syntax cluster typescriptFunctionType contains=typescriptGenericFunc,typescriptFuncType
 syntax region typescriptGenericFunc matchgroup=typescriptTypeBrackets
@@ -511,6 +581,7 @@ syntax match typescriptTypeAnnotation /:/
 syntax cluster typescriptParameterList contains=
   \ typescriptTypeAnnotation,
   \ typescriptAccessibilityModifier,
+  \ typescriptReadonlyModifier,
   \ typescriptOptionalMark,
   \ typescriptRestOrSpread,
   \ typescriptFuncComma,
@@ -550,10 +621,9 @@ syntax keyword typescriptReadonlyArrayKeyword readonly
   \ nextgroup=@typescriptPrimaryType
   \ skipwhite
 
+
 " extension
 if get(g:, 'yats_host_keyword', 1)
-  "runtime syntax/yats.vim
-  "runtime syntax/yats/typescript.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Function Boolean
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Error EvalError
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName InternalError
@@ -584,7 +654,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptGlobalMethod
   hi def link typescriptGlobalMethod Structure
 
-  "runtime syntax/yats/es6-number.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Number nextgroup=typescriptGlobalNumberDot,typescriptFuncCallArg
   syntax match   typescriptGlobalNumberDot /\./ contained nextgroup=typescriptNumberStaticProp,typescriptNumberStaticMethod,typescriptProp
   syntax keyword typescriptNumberStaticProp contained EPSILON MAX_SAFE_INTEGER MAX_VALUE
@@ -599,7 +668,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptNumberMethod
   hi def link typescriptNumberMethod Keyword
 
-  "runtime syntax/yats/es6-string.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName String nextgroup=typescriptGlobalStringDot,typescriptFuncCallArg
   syntax match   typescriptGlobalStringDot /\./ contained nextgroup=typescriptStringStaticMethod,typescriptProp
   syntax keyword typescriptStringStaticMethod contained fromCharCode fromCodePoint raw nextgroup=typescriptFuncCallArg
@@ -615,7 +683,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptStringMethod
   hi def link typescriptStringMethod Keyword
 
-  "runtime syntax/yats/es6-array.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Array nextgroup=typescriptGlobalArrayDot,typescriptFuncCallArg
   syntax match   typescriptGlobalArrayDot /\./ contained nextgroup=typescriptArrayStaticMethod,typescriptProp
   syntax keyword typescriptArrayStaticMethod contained from isArray of nextgroup=typescriptFuncCallArg
@@ -629,7 +696,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptArrayMethod
   hi def link typescriptArrayMethod Keyword
 
-  "runtime syntax/yats/es6-object.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Object nextgroup=typescriptGlobalObjectDot,typescriptFuncCallArg
   syntax match   typescriptGlobalObjectDot /\./ contained nextgroup=typescriptObjectStaticMethod,typescriptProp
   syntax keyword typescriptObjectStaticMethod contained create defineProperties defineProperty nextgroup=typescriptFuncCallArg
@@ -646,7 +712,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptObjectMethod
   hi def link typescriptObjectMethod Keyword
 
-  "runtime syntax/yats/es6-symbol.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Symbol nextgroup=typescriptGlobalSymbolDot,typescriptFuncCallArg
   syntax match   typescriptGlobalSymbolDot /\./ contained nextgroup=typescriptSymbolStaticProp,typescriptSymbolStaticMethod,typescriptProp
   syntax keyword typescriptSymbolStaticProp contained length iterator match replace
@@ -657,13 +722,11 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptSymbolStaticMethod contained for keyFor nextgroup=typescriptFuncCallArg
   hi def link typescriptSymbolStaticMethod Keyword
 
-  "runtime syntax/yats/es6-function.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Function
   syntax keyword typescriptFunctionMethod contained apply bind call nextgroup=typescriptFuncCallArg
   syntax cluster props add=typescriptFunctionMethod
   hi def link typescriptFunctionMethod Keyword
 
-  "runtime syntax/yats/es6-math.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Math nextgroup=typescriptGlobalMathDot,typescriptFuncCallArg
   syntax match   typescriptGlobalMathDot /\./ contained nextgroup=typescriptMathStaticProp,typescriptMathStaticMethod,typescriptProp
   syntax keyword typescriptMathStaticProp contained E LN10 LN2 LOG10E LOG2E PI SQRT1_2
@@ -677,7 +740,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptMathStaticMethod contained sinh sqrt tan tanh trunc nextgroup=typescriptFuncCallArg
   hi def link typescriptMathStaticMethod Keyword
 
-  "runtime syntax/yats/es6-date.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Date nextgroup=typescriptGlobalDateDot,typescriptFuncCallArg
   syntax match   typescriptGlobalDateDot /\./ contained nextgroup=typescriptDateStaticMethod,typescriptProp
   syntax keyword typescriptDateStaticMethod contained UTC now parse nextgroup=typescriptFuncCallArg
@@ -699,13 +761,11 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptDateMethod
   hi def link typescriptDateMethod Keyword
 
-  "runtime syntax/yats/es6-json.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName JSON nextgroup=typescriptGlobalJSONDot,typescriptFuncCallArg
   syntax match   typescriptGlobalJSONDot /\./ contained nextgroup=typescriptJSONStaticMethod,typescriptProp
   syntax keyword typescriptJSONStaticMethod contained parse stringify nextgroup=typescriptFuncCallArg
   hi def link typescriptJSONStaticMethod Keyword
 
-  "runtime syntax/yats/es6-regexp.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName RegExp nextgroup=typescriptGlobalRegExpDot,typescriptFuncCallArg
   syntax match   typescriptGlobalRegExpDot /\./ contained nextgroup=typescriptRegExpStaticProp,typescriptProp
   syntax keyword typescriptRegExpStaticProp contained lastIndex
@@ -717,7 +777,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptRegExpMethod
   hi def link typescriptRegExpMethod Keyword
 
-  "runtime syntax/yats/es6-map.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Map WeakMap
   syntax keyword typescriptES6MapProp contained size
   syntax cluster props add=typescriptES6MapProp
@@ -727,7 +786,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptES6MapMethod
   hi def link typescriptES6MapMethod Keyword
 
-  "runtime syntax/yats/es6-set.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Set WeakSet
   syntax keyword typescriptES6SetProp contained size
   syntax cluster props add=typescriptES6SetProp
@@ -737,7 +795,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptES6SetMethod
   hi def link typescriptES6SetMethod Keyword
 
-  "runtime syntax/yats/es6-proxy.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Proxy
   syntax keyword typescriptProxyAPI contained getOwnPropertyDescriptor getOwnPropertyNames
   syntax keyword typescriptProxyAPI contained defineProperty deleteProperty freeze seal
@@ -745,7 +802,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptProxyAPI contained iterate ownKeys apply construct
   hi def link typescriptProxyAPI Keyword
 
-  "runtime syntax/yats/es6-promise.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Promise nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg
   syntax match   typescriptGlobalPromiseDot /\./ contained nextgroup=typescriptPromiseStaticMethod,typescriptProp
   syntax keyword typescriptPromiseStaticMethod contained resolve reject all race nextgroup=typescriptFuncCallArg
@@ -754,7 +810,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptPromiseMethod
   hi def link typescriptPromiseMethod Keyword
 
-  "runtime syntax/yats/es6-reflect.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Reflect
   syntax keyword typescriptReflectMethod contained apply construct defineProperty deleteProperty nextgroup=typescriptFuncCallArg
   syntax keyword typescriptReflectMethod contained enumerate get getOwnPropertyDescriptor nextgroup=typescriptFuncCallArg
@@ -763,14 +818,12 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptReflectMethod
   hi def link typescriptReflectMethod Keyword
 
-  "runtime syntax/yats/ecma-402.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Intl
   syntax keyword typescriptIntlMethod contained Collator DateTimeFormat NumberFormat nextgroup=typescriptFuncCallArg
   syntax keyword typescriptIntlMethod contained PluralRules nextgroup=typescriptFuncCallArg
   syntax cluster props add=typescriptIntlMethod
   hi def link typescriptIntlMethod Keyword
 
-  "runtime syntax/yats/node.vim
   syntax keyword typescriptNodeGlobal containedin=typescriptIdentifierName global process
   syntax keyword typescriptNodeGlobal containedin=typescriptIdentifierName console Buffer
   syntax keyword typescriptNodeGlobal containedin=typescriptIdentifierName module exports
@@ -788,7 +841,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName afterAll
   syntax keyword typescriptTestGlobal containedin=typescriptIdentifierName expect assert
 
-  "runtime syntax/yats/web.vim
   syntax keyword typescriptBOM containedin=typescriptIdentifierName AbortController
   syntax keyword typescriptBOM containedin=typescriptIdentifierName AbstractWorker AnalyserNode
   syntax keyword typescriptBOM containedin=typescriptIdentifierName App Apps ArrayBuffer
@@ -1038,7 +1090,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptBOM containedin=typescriptIdentifierName XMLHttpRequestEventTarget
   hi def link typescriptBOM Structure
 
-  "runtime syntax/yats/web-window.vim
   syntax keyword typescriptBOMWindowProp containedin=typescriptIdentifierName applicationCache
   syntax keyword typescriptBOMWindowProp containedin=typescriptIdentifierName closed
   syntax keyword typescriptBOMWindowProp containedin=typescriptIdentifierName Components
@@ -1145,7 +1196,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptBOMWindowCons containedin=typescriptIdentifierName XMLSerializer
   hi def link typescriptBOMWindowCons Structure
 
-  "runtime syntax/yats/web-navigator.vim
   syntax keyword typescriptBOMNavigatorProp contained battery buildID connection cookieEnabled
   syntax keyword typescriptBOMNavigatorProp contained doNotTrack maxTouchPoints oscpu
   syntax keyword typescriptBOMNavigatorProp contained productSub push serviceWorker
@@ -1164,7 +1214,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptServiceWorkerMethod
   hi def link typescriptServiceWorkerMethod Keyword
 
-  "runtime syntax/yats/web-location.vim
   syntax keyword typescriptBOMLocationProp contained href protocol host hostname port
   syntax keyword typescriptBOMLocationProp contained pathname search hash username password
   syntax keyword typescriptBOMLocationProp contained origin
@@ -1174,7 +1223,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptBOMLocationMethod
   hi def link typescriptBOMLocationMethod Keyword
 
-  "runtime syntax/yats/web-history.vim
   syntax keyword typescriptBOMHistoryProp contained length current next previous state
   syntax keyword typescriptBOMHistoryProp contained scrollRestoration
   syntax cluster props add=typescriptBOMHistoryProp
@@ -1183,7 +1231,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptBOMHistoryMethod
   hi def link typescriptBOMHistoryMethod Keyword
 
-  "runtime syntax/yats/web-console.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName console
   syntax keyword typescriptConsoleMethod contained count dir error group groupCollapsed nextgroup=typescriptFuncCallArg
   syntax keyword typescriptConsoleMethod contained groupEnd info log time timeEnd trace nextgroup=typescriptFuncCallArg
@@ -1191,7 +1238,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptConsoleMethod
   hi def link typescriptConsoleMethod Keyword
 
-  "runtime syntax/yats/web-xhr.vim
   syntax keyword typescriptXHRGlobal containedin=typescriptIdentifierName XMLHttpRequest
   hi def link typescriptXHRGlobal Structure
   syntax keyword typescriptXHRProp contained onreadystatechange readyState response
@@ -1204,7 +1250,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptXHRMethod
   hi def link typescriptXHRMethod Keyword
 
-  "runtime syntax/yats/web-blob.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Blob BlobBuilder
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName File FileReader
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName FileReaderSync
@@ -1236,7 +1281,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptURLStaticMethod contained createObjectURL revokeObjectURL nextgroup=typescriptFuncCallArg
   hi def link typescriptURLStaticMethod Keyword
 
-  "runtime syntax/yats/web-crypto.vim
   syntax keyword typescriptCryptoGlobal containedin=typescriptIdentifierName crypto
   hi def link typescriptCryptoGlobal Structure
   syntax keyword typescriptSubtleCryptoMethod contained encrypt decrypt sign verify nextgroup=typescriptFuncCallArg
@@ -1250,7 +1294,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptCryptoMethod
   hi def link typescriptCryptoMethod Keyword
 
-  "runtime syntax/yats/web-fetch.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Headers Request
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Response
   syntax keyword typescriptGlobalMethod containedin=typescriptIdentifierName fetch nextgroup=typescriptFuncCallArg
@@ -1274,7 +1317,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptResponseMethod
   hi def link typescriptResponseMethod Keyword
 
-  "runtime syntax/yats/web-service-worker.vim
   syntax keyword typescriptServiceWorkerProp contained controller ready
   syntax cluster props add=typescriptServiceWorkerProp
   hi def link typescriptServiceWorkerProp Keyword
@@ -1287,7 +1329,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptCacheMethod
   hi def link typescriptCacheMethod Keyword
 
-  "runtime syntax/yats/web-encoding.vim
   syntax keyword typescriptEncodingGlobal containedin=typescriptIdentifierName TextEncoder
   syntax keyword typescriptEncodingGlobal containedin=typescriptIdentifierName TextDecoder
   hi def link typescriptEncodingGlobal Structure
@@ -1298,21 +1339,18 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptEncodingMethod
   hi def link typescriptEncodingMethod Keyword
 
-  "runtime syntax/yats/web-geo.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Geolocation
   syntax keyword typescriptGeolocationMethod contained getCurrentPosition watchPosition nextgroup=typescriptFuncCallArg
   syntax keyword typescriptGeolocationMethod contained clearWatch nextgroup=typescriptFuncCallArg
   syntax cluster props add=typescriptGeolocationMethod
   hi def link typescriptGeolocationMethod Keyword
 
-  "runtime syntax/yats/web-network.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName NetworkInformation
   syntax keyword typescriptBOMNetworkProp contained downlink downlinkMax effectiveType
   syntax keyword typescriptBOMNetworkProp contained rtt type
   syntax cluster props add=typescriptBOMNetworkProp
   hi def link typescriptBOMNetworkProp Keyword
 
-  "runtime syntax/yats/web-payment.vim
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName PaymentRequest
   syntax keyword typescriptPaymentMethod contained show abort canMakePayment nextgroup=typescriptFuncCallArg
   syntax cluster props add=typescriptPaymentMethod
@@ -1340,7 +1378,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptPaymentShippingOptionProp
   hi def link typescriptPaymentShippingOptionProp Keyword
 
-  "runtime syntax/yats/dom-node.vim
   syntax keyword typescriptDOMNodeProp contained attributes baseURI baseURIObject childNodes
   syntax keyword typescriptDOMNodeProp contained firstChild lastChild localName namespaceURI
   syntax keyword typescriptDOMNodeProp contained nextSibling nodeName nodePrincipal
@@ -1364,7 +1401,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptDOMNodeType contained DOCUMENT_FRAGMENT_NODE NOTATION_NODE
   hi def link typescriptDOMNodeType Keyword
 
-  "runtime syntax/yats/dom-elem.vim
   syntax keyword typescriptDOMElemAttrs contained accessKey clientHeight clientLeft
   syntax keyword typescriptDOMElemAttrs contained clientTop clientWidth id innerHTML
   syntax keyword typescriptDOMElemAttrs contained length onafterscriptexecute onbeforescriptexecute
@@ -1387,7 +1423,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptDOMElemFuncs contained getAttribute
   hi def link typescriptDOMElemFuncs Keyword
 
-  "runtime syntax/yats/dom-document.vim
   syntax keyword typescriptDOMDocProp contained activeElement body cookie defaultView
   syntax keyword typescriptDOMDocProp contained designMode dir domain embeds forms head
   syntax keyword typescriptDOMDocProp contained images lastModified links location plugins
@@ -1419,7 +1454,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptDOMDocMethod
   hi def link typescriptDOMDocMethod Keyword
 
-  "runtime syntax/yats/dom-event.vim
   syntax keyword typescriptDOMEventTargetMethod contained addEventListener removeEventListener nextgroup=typescriptEventFuncCallArg
   syntax keyword typescriptDOMEventTargetMethod contained dispatchEvent waitUntil nextgroup=typescriptEventFuncCallArg
   syntax cluster props add=typescriptDOMEventTargetMethod
@@ -1480,7 +1514,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptDOMEventMethod
   hi def link typescriptDOMEventMethod Keyword
 
-  "runtime syntax/yats/dom-storage.vim
   syntax keyword typescriptDOMStorage contained sessionStorage localStorage
   hi def link typescriptDOMStorage Keyword
   syntax keyword typescriptDOMStorageProp contained length
@@ -1491,7 +1524,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptDOMStorageMethod
   hi def link typescriptDOMStorageMethod Keyword
 
-  "runtime syntax/yats/dom-form.vim
   syntax keyword typescriptDOMFormProp contained acceptCharset action elements encoding
   syntax keyword typescriptDOMFormProp contained enctype length method name target
   syntax cluster props add=typescriptDOMFormProp
@@ -1500,7 +1532,6 @@ if get(g:, 'yats_host_keyword', 1)
   syntax cluster props add=typescriptDOMFormMethod
   hi def link typescriptDOMFormMethod Keyword
 
-  "runtime syntax/yats/css.vim
   syntax keyword typescriptDOMStyle contained alignContent alignItems alignSelf animation
   syntax keyword typescriptDOMStyle contained animationDelay animationDirection animationDuration
   syntax keyword typescriptDOMStyle contained animationFillMode animationIterationCount
@@ -1575,8 +1606,6 @@ if get(g:, 'yats_host_keyword', 1)
 
 
   let typescript_props = 1
-
-  "runtime syntax/yats/event.vim
   syntax keyword typescriptAnimationEvent contained animationend animationiteration
   syntax keyword typescriptAnimationEvent contained animationstart beginEvent endEvent
   syntax keyword typescriptAnimationEvent contained repeatEvent
@@ -1710,14 +1739,12 @@ if get(g:, 'yats_host_keyword', 1)
 endif
 
 " patch
-"runtime syntax/basic/patch.vim
 " patch for generated code
 syntax keyword typescriptGlobal Promise
   \ nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg,typescriptTypeArguments oneline
 syntax keyword typescriptGlobal Map WeakMap
   \ nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg,typescriptTypeArguments oneline
 
-"runtime syntax/basic/members.vim
 syntax keyword typescriptConstructor           contained constructor
   \ nextgroup=@typescriptCallSignature
   \ skipwhite skipempty
@@ -1725,7 +1752,7 @@ syntax keyword typescriptConstructor           contained constructor
 
 syntax cluster memberNextGroup contains=typescriptMemberOptionality,typescriptTypeAnnotation,@typescriptCallSignature
 
-syntax match typescriptMember /\K\k*/
+syntax match typescriptMember /#\?\K\k*/
   \ nextgroup=@memberNextGroup
   \ contained skipwhite
 
@@ -1765,7 +1792,6 @@ syntax region  typescriptComputedMember   contained matchgroup=typescriptPropert
   \ nextgroup=@memberNextGroup
   \ skipwhite skipempty
 
-"runtime syntax/basic/class.vim
 "don't add typescriptMembers to nextgroup, let outer scope match it
 " so we won't match abstract method outside abstract class
 syntax keyword typescriptAbstract              abstract
@@ -1781,7 +1807,7 @@ syntax match   typescriptClassName             contained /\K\k*/
 
 syntax region typescriptClassTypeParameter
   \ start=/</ end=/>/
-  \ contains=typescriptTypeParameter
+  \ contains=@typescriptTypeParameterCluster
   \ nextgroup=typescriptClassBlock,typescriptClassExtends
   \ contained skipwhite skipnl
 
@@ -1813,7 +1839,7 @@ syntax match   typescriptInterfaceName             contained /\k\+/
   \ skipwhite skipnl
 syntax region typescriptInterfaceTypeParameter
   \ start=/</ end=/>/
-  \ contains=typescriptTypeParameter
+  \ contains=@typescriptTypeParameterCluster
   \ nextgroup=typescriptObjectType,typescriptInterfaceExtends
   \ contained
   \ skipwhite skipnl
@@ -1832,7 +1858,6 @@ syntax region typescriptInterfaceTypeArguments matchgroup=typescriptTypeBrackets
 
 syntax match typescriptInterfaceComma /,/ contained nextgroup=typescriptInterfaceHeritage skipwhite skipnl
 
-"runtime syntax/basic/cluster.vim
 "Block VariableStatement EmptyStatement ExpressionStatement IfStatement IterationStatement ContinueStatement BreakStatement ReturnStatement WithStatement LabelledStatement SwitchStatement ThrowStatement TryStatement DebuggerStatement
 syntax cluster typescriptStatement
   \ contains=typescriptBlock,typescriptVariable,
@@ -1872,7 +1897,6 @@ syntax cluster typescriptValue
 
 syntax cluster typescriptEventExpression       contains=typescriptArrowFuncDef,typescriptParenExp,@typescriptValue,typescriptRegexpString,@typescriptEventTypes,typescriptOperator,typescriptGlobal,jsxRegion
 
-"runtime syntax/basic/function.vim
 syntax keyword typescriptAsyncFuncKeyword      async
   \ nextgroup=typescriptFuncKeyword,typescriptArrowFuncDef
   \ skipwhite
@@ -1894,7 +1918,7 @@ syntax match   typescriptFuncName              contained /\K\k*/
   \ skipwhite
 
 " destructuring ({ a: ee }) =>
-syntax match   typescriptArrowFuncDef          contained /({\_[^}]*}\(:\_[^)]\)\?)\s*=>/
+syntax match   typescriptArrowFuncDef          contained /(\(\s*\({\_[^}]*}\|\k\+\)\(:\_[^)]\)\?,\?\)\+)\s*=>/
   \ contains=typescriptArrowFuncArg,typescriptArrowFunc
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty
@@ -1913,7 +1937,7 @@ syntax match   typescriptArrowFuncDef          contained /\K\k*\s*=>/
   \ skipwhite skipempty
 
 " TODO: optimize this pattern
-syntax region   typescriptArrowFuncDef          contained start=/(\_[^)]*):/ end=/=>/
+syntax region   typescriptArrowFuncDef          contained start=/(\_[^(^)]*):/ end=/=>/
   \ contains=typescriptArrowFuncArg,typescriptArrowFunc,typescriptTypeAnnotation
   \ nextgroup=@typescriptExpression,typescriptBlock
   \ skipwhite skipempty keepend
@@ -1925,7 +1949,7 @@ syntax region  typescriptArrowFuncArg          contained start=/<\|(/ end=/\ze=>
 syntax region typescriptReturnAnnotation contained start=/:/ end=/{/me=e-1 contains=@typescriptType nextgroup=typescriptBlock
 
 
-syntax region typescriptFuncImpl contained start=/function/ end=/{/me=e-1
+syntax region typescriptFuncImpl contained start=/function\>/ end=/{/me=e-1
   \ contains=typescriptFuncKeyword
   \ nextgroup=typescriptBlock
 
@@ -1941,9 +1965,8 @@ syntax region typescriptParamImpl matchgroup=typescriptParens
   \ nextgroup=typescriptReturnAnnotation,typescriptBlock
   \ contained skipwhite skipnl
 
-"runtime syntax/basic/decorator.vim
 syntax match typescriptDecorator /@\([_$a-zA-Z][_$a-zA-Z0-9]*\.\)*[_$a-zA-Z][_$a-zA-Z0-9]*\>/
-  \ nextgroup=typescriptArgumentList,typescriptTypeArguments
+  \ nextgroup=typescriptFuncCallArg,typescriptTypeArguments
   \ contains=@_semantic,typescriptDotNotation
 
 " Define the default highlighting.
@@ -1957,6 +1980,7 @@ hi def link typescriptComment              Comment
 hi def link typescriptLineComment          Comment
 hi def link typescriptDocComment           Comment
 hi def link typescriptCommentTodo          Todo
+hi def link typescriptMagicComment         SpecialComment
 hi def link typescriptRef                  Include
 hi def link typescriptDocNotation          SpecialComment
 hi def link typescriptDocTags              SpecialComment
@@ -1970,9 +1994,11 @@ hi def link typescriptDocParamType         Type
 hi def link typescriptString               String
 hi def link typescriptSpecial              Special
 hi def link typescriptStringLiteralType    String
+hi def link typescriptTemplateLiteralType  String
 hi def link typescriptStringMember         String
 hi def link typescriptTemplate             String
 hi def link typescriptEventString          String
+hi def link typescriptDestructureString    String
 hi def link typescriptASCII                Special
 hi def link typescriptTemplateSB           Label
 hi def link typescriptRegexpString         String
@@ -1986,6 +2012,7 @@ hi def link typescriptDefault              typescriptCase
 hi def link typescriptBranch               Conditional
 hi def link typescriptIdentifier           Structure
 hi def link typescriptVariable             Identifier
+hi def link typescriptDestructureVariable  PreProc
 hi def link typescriptEnumKeyword          Identifier
 hi def link typescriptRepeat               Repeat
 hi def link typescriptForOperator          Repeat
@@ -1997,14 +2024,17 @@ hi def link typescriptCastKeyword          Special
 hi def link typescriptType                 Type
 hi def link typescriptNull                 Boolean
 hi def link typescriptNumber               Number
-hi def link typescriptExponent             Number
 hi def link typescriptBoolean              Boolean
 hi def link typescriptObjectLabel          typescriptLabel
+hi def link typescriptDestructureLabel     Function
 hi def link typescriptLabel                Label
+hi def link typescriptTupleLable           Label
 hi def link typescriptStringProperty       String
 hi def link typescriptImport               Special
+hi def link typescriptImportType           Special
 hi def link typescriptAmbientDeclaration   Special
 hi def link typescriptExport               Special
+hi def link typescriptExportType           Special
 hi def link typescriptModule               Special
 hi def link typescriptTry                  Special
 hi def link typescriptExceptions           Special
@@ -2013,6 +2043,7 @@ hi def link typescriptMember              Function
 hi def link typescriptMethodAccessor       Operator
 
 hi def link typescriptAsyncFuncKeyword     Keyword
+hi def link typescriptObjectAsyncKeyword   Keyword
 hi def link typescriptAsyncFor             Keyword
 hi def link typescriptFuncKeyword          Keyword
 hi def link typescriptAsyncFunc            Keyword

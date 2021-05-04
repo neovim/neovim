@@ -4731,12 +4731,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   char_u      *ptr;
   int c;
   int todel;
-  bool dohex;
-  bool dooct;
-  bool dobin;
-  bool doalp;
   int firstdigit;
-  bool subtract;
   bool negative = false;
   bool was_positive = true;
   bool visual = VIsual_active;
@@ -4747,10 +4742,12 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   pos_T endpos;
   colnr_T save_coladd = 0;
 
-  dohex = (vim_strchr(curbuf->b_p_nf, 'x') != NULL);    // "heX"
-  dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    // "Octal"
-  dobin = (vim_strchr(curbuf->b_p_nf, 'b') != NULL);    // "Bin"
-  doalp = (vim_strchr(curbuf->b_p_nf, 'p') != NULL);    // "alPha"
+  const bool do_hex = vim_strchr(curbuf->b_p_nf, 'x') != NULL;    // "heX"
+  const bool do_oct = vim_strchr(curbuf->b_p_nf, 'o') != NULL;    // "Octal"
+  const bool do_bin = vim_strchr(curbuf->b_p_nf, 'b') != NULL;    // "Bin"
+  const bool do_alpha = vim_strchr(curbuf->b_p_nf, 'p') != NULL;  // "alPha"
+  // "Unsigned"
+  const bool do_unsigned = vim_strchr(curbuf->b_p_nf, 'u') != NULL;
 
   if (virtual_active()) {
     save_coladd = pos->coladd;
@@ -4767,21 +4764,21 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
   // First check if we are on a hexadecimal number, after the "0x".
   if (!VIsual_active) {
-    if (dobin) {
+    if (do_bin) {
       while (col > 0 && ascii_isbdigit(ptr[col])) {
         col--;
         col -= utf_head_off(ptr, ptr + col);
       }
     }
 
-    if (dohex) {
+    if (do_hex) {
       while (col > 0 && ascii_isxdigit(ptr[col])) {
         col--;
         col -= utf_head_off(ptr, ptr + col);
       }
     }
-    if (dobin
-        && dohex
+    if (do_bin
+        && do_hex
         && !((col > 0
               && (ptr[col] == 'X' || ptr[col] == 'x')
               && ptr[col - 1] == '0'
@@ -4797,13 +4794,13 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
         }
     }
 
-    if ((dohex
+    if ((do_hex
          && col > 0
          && (ptr[col] == 'X' || ptr[col] == 'x')
          && ptr[col - 1] == '0'
          && !utf_head_off(ptr, ptr + col - 1)
          && ascii_isxdigit(ptr[col + 1]))
-        || (dobin
+        || (do_bin
             && col > 0
             && (ptr[col] == 'B' || ptr[col] == 'b')
             && ptr[col - 1] == '0'
@@ -4818,13 +4815,13 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
       while (ptr[col] != NUL
              && !ascii_isdigit(ptr[col])
-             && !(doalp && ASCII_ISALPHA(ptr[col]))) {
+             && !(do_alpha && ASCII_ISALPHA(ptr[col]))) {
         col++;
       }
 
       while (col > 0
              && ascii_isdigit(ptr[col - 1])
-             && !(doalp && ASCII_ISALPHA(ptr[col]))) {
+             && !(do_alpha && ASCII_ISALPHA(ptr[col]))) {
         col--;
       }
     }
@@ -4832,7 +4829,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
   if (visual) {
     while (ptr[col] != NUL && length > 0 && !ascii_isdigit(ptr[col])
-           && !(doalp && ASCII_ISALPHA(ptr[col]))) {
+           && !(do_alpha && ASCII_ISALPHA(ptr[col]))) {
       int mb_len = utfc_ptr2len(ptr + col);
 
       col += mb_len;
@@ -4844,7 +4841,8 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
 
     if (col > pos->col && ptr[col - 1] == '-'
-        && !utf_head_off(ptr, ptr + col - 1)) {
+        && !utf_head_off(ptr, ptr + col - 1)
+        && !do_unsigned) {
       negative = true;
       was_positive = false;
     }
@@ -4852,12 +4850,12 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
   // If a number was found, and saving for undo works, replace the number.
   firstdigit = ptr[col];
-  if (!ascii_isdigit(firstdigit) && !(doalp && ASCII_ISALPHA(firstdigit))) {
+  if (!ascii_isdigit(firstdigit) && !(do_alpha && ASCII_ISALPHA(firstdigit))) {
     beep_flush();
     goto theend;
   }
 
-  if (doalp && ASCII_ISALPHA(firstdigit)) {
+  if (do_alpha && ASCII_ISALPHA(firstdigit)) {
     // decrement or increment alphabetic character
     if (op_type == OP_NR_SUB) {
       if (CharOrd(firstdigit) < Prenum1) {
@@ -4889,7 +4887,9 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     curwin->w_cursor.col = col;
   } else {
     if (col > 0 && ptr[col - 1] == '-'
-        && !utf_head_off(ptr, ptr + col - 1) && !visual) {
+        && !utf_head_off(ptr, ptr + col - 1)
+        && !visual
+        && !do_unsigned) {
       // negative number
       col--;
       negative = true;
@@ -4903,9 +4903,9 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
 
     vim_str2nr(ptr + col, &pre, &length,
-               0 + (dobin ? STR2NR_BIN : 0)
-               + (dooct ? STR2NR_OCT : 0)
-               + (dohex ? STR2NR_HEX : 0),
+               0 + (do_bin ? STR2NR_BIN : 0)
+               + (do_oct ? STR2NR_OCT : 0)
+               + (do_hex ? STR2NR_HEX : 0),
                NULL, &n, maxlen);
 
     // ignore leading '-' for hex, octal and bin numbers
@@ -4916,7 +4916,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
 
     // add or subtract
-    subtract = false;
+    bool subtract = false;
     if (op_type == OP_NR_SUB) {
       subtract ^= true;
     }
@@ -4946,6 +4946,17 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
       if (n == 0) {
         negative = false;
       }
+    }
+
+    if (do_unsigned && negative) {
+      if (subtract) {
+        // sticking at zero.
+        n = (uvarnumber_T)0;
+      } else {
+        // sticking at 2^64 - 1.
+        n = (uvarnumber_T)(-1);
+      }
+      negative = false;
     }
 
     if (visual && !was_positive && !negative && col > 0) {
@@ -5029,7 +5040,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     // total length of the number remains the same.
     // Don't do this when
     // the result may look like an octal number.
-    if (firstdigit == '0' && !(dooct && pre == 0)) {
+    if (firstdigit == '0' && !(do_oct && pre == 0)) {
       while (length-- > 0) {
         *ptr++ = '0';
       }

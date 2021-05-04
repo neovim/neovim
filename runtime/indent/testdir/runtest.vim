@@ -117,6 +117,7 @@ for fname in glob('testdir/*.in', 1, 1)
       echoerr 'Test ' . fname . ' FAILED!'
     else
       exe 'write ' . root . '.out'
+      echo "Test " . fname . " OK\n"
     endif
 
     quit!  " close the indented file

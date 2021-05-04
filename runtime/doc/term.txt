@@ -289,7 +289,7 @@ border, the text is scrolled.
 A selection can be started by pressing the left mouse button on the first
 character, moving the mouse to the last character, then releasing the mouse
 button.  You will not always see the selection until you release the button,
-only in some versions (GUI, Windows) will the dragging be shown immediately.
+only in some versions (GUI, Win32) will the dragging be shown immediately.
 Note that you can make the text scroll by moving the mouse at least one
 character in the first/last line in the window when 'scrolloff' is non-zero.
 
@@ -306,7 +306,7 @@ alt key is pressed (it may move the window).
 
 							*double-click*
 Double, triple and quadruple clicks are supported when the GUI is active, for
-Windows and for an xterm.  For selecting text, extra clicks extend the
+Win32 and for an xterm.  For selecting text, extra clicks extend the
 selection:
 	click		select ~
 	double		word or % match		*<2-LeftMouse>*
@@ -318,9 +318,8 @@ A double click on a word selects that word.  'iskeyword' is used to specify
 which characters are included in a word.  A double click on a character
 that has a match selects until that match (like using "v%").  If the match is
 an #if/#else/#endif block, the selection becomes linewise.
-For MS-DOS and xterm the time for double clicking can be set with the
-'mousetime' option.  For the other systems this time is defined outside of
-Vim.
+For MS-Windows and xterm the time for double clicking can be set with the
+'mousetime' option. For the other systems this time is defined outside of Vim.
 An example, for using a double click to jump to the tag under the cursor: >
 	:map <2-LeftMouse> :exe "tag ". expand("<cword>")<CR>
 

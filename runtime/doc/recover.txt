@@ -56,13 +56,13 @@ Disadvantages:
   directories (although Vim tries to avoid that by comparing the path name).
   This will result in bogus ATTENTION warning messages.
 - When you use your home directory, and somebody else tries to edit the same
-  file, he will not see your swap file and will not get the ATTENTION warning
-  message.
+  file, that user will not see your swap file and will not get the ATTENTION
+  warning message.
 
 If you want to put swap files in a fixed place, put a command resembling the
 following ones in your vimrc:
 	:set dir=~/tmp		(for Unix)
-	:set dir=c:\\tmp	(for Windows)
+	:set dir=c:\\tmp	(for Win32)
 This is also very handy when editing files on floppy.  Of course you will have
 to create that "tmp" directory for this to work!
 
@@ -106,8 +106,9 @@ If you want to make sure that your changes are in the swap file use this
 command:
 
 					*:pre* *:preserve* *E313* *E314*
-:pre[serve]		Write all text for all buffers into swap file.  The
-			original file is no longer needed for recovery.
+:pre[serve]		Write all text for the current buffer into its swap
+			file.  The original file is no longer needed for
+			recovery.  This sets a flag in the current buffer.
 
 A Vim swap file can be recognized by the first six characters: "b0VIM ".
 After that comes the version number, e.g., "3.0".

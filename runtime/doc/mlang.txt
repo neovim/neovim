@@ -7,7 +7,7 @@
 Multi-language features				*multilang* *multi-lang*
 
 This is about using messages and menus in various languages.  For editing
-multi-byte text see |multibyte|.
+multibyte text see |multibyte|.
 
 The basics are explained in the user manual: |usr_45.txt|.
 

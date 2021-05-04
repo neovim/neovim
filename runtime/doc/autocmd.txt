@@ -215,6 +215,8 @@ BufAdd				Just after creating a new buffer which is
 				added to the buffer list, or adding a buffer
 				to the buffer list, a buffer in the buffer
 				list was renamed.
+				Not triggered for the initial buffers created
+				during startup.
 				Before |BufEnter|.
 				NOTE: Current buffer "%" may be different from
 				the buffer being created "<afile>".
@@ -461,7 +463,7 @@ CompleteDone			After Insert mode completion is done.  Either
 
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time
-				specified with 'updatetime'.  Not re-triggered
+				specified with 'updatetime'.  Not triggered
 				until the user has pressed a key (i.e. doesn't
 				fire every 'updatetime' ms if you leave Vim to
 				make some coffee. :)  See |CursorHold-example|
@@ -707,7 +709,7 @@ InsertEnter			Just before starting Insert mode.  Also for
 				string.
 							*InsertLeavePre*
 InsertLeavePre			Just before leaving Insert mode.  Also when
-				using CTRL-O |i_CTRL-O|.  Be caseful not to
+				using CTRL-O |i_CTRL-O|.  Be careful not to
 				change mode or use `:normal`, it will likely
 				cause trouble.
 							*InsertLeave*
@@ -1207,8 +1209,8 @@ name!
 :aug[roup]! {name}		Delete the autocmd group {name}.  Don't use
 				this if there is still an autocommand using
 				this group!  You will get a warning if doing
-				it anyway. when the group is the current group
-				you will get error E936.
+				it anyway.  When the group is the current
+				group you will get error E936.
 
 To enter autocommands for a specific group, use this method:
 1. Select the group with ":augroup {name}".
@@ -1267,9 +1269,18 @@ option will not cause any commands to be executed.
 						*:doautoa* *:doautoall*
 :doautoa[ll] [<nomodeline>] [group] {event} [fname]
 			Like ":doautocmd", but apply the autocommands to each
-			loaded buffer.  Note that [fname] is used to select
-			the autocommands, not the buffers to which they are
-			applied.
+			loaded buffer.  The current buffer is done last.
+
+			Note that [fname] is used to select the autocommands,
+			not the buffers to which they are applied. Example: >
+				augroup mine
+				  autocmd!
+				  autocmd FileType * echo expand('<amatch>')
+				augroup END
+				doautoall mine FileType Loaded-Buffer
+<			Sourcing this script, you'll see as many
+			"Loaded-Buffer" echoed as there are loaded buffers.
+
 			Careful: Don't use this for autocommands that delete a
 			buffer, change to another buffer or change the
 			contents of a buffer; the result is unpredictable.

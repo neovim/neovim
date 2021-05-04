@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Java properties file
-" Maintainer:	David Bürgin <676c7473@gmail.com>
-" Last Change:	2013-11-19
+" Maintainer:	None
+" Last Change:	2019 Dec 01
 
 if exists("b:did_ftplugin")
   finish

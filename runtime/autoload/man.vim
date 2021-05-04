@@ -252,11 +252,11 @@ function! s:verify_exists(sect, name) abort
   if !empty($MANSECT)
     try
       let MANSECT = $MANSECT
-      unset $MANSECT
+      call setenv('MANSECT', v:null)
       return s:get_path('', a:name)
     catch /^command error (/
     finally
-      let $MANSECT = MANSECT
+      call setenv('MANSECT', MANSECT)
     endtry
   endif
 

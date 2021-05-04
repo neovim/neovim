@@ -2,10 +2,9 @@
 " Language:	Ratpoison configuration/commands file ( /etc/ratpoisonrc ~/.ratpoisonrc )
 " Maintainer:	Magnus Woldrich <m@japh.se>
 " URL:		http://github.com/trapd00r/vim-syntax-ratpoison
-" Last Change:	2011 Apr 11
+" Last Change:	2021-04-12 13:46:04
 " Previous Maintainer:	Doug Kearns <djkea2@gus.gscit.monash.edu.au>
 
-" quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
@@ -38,7 +37,7 @@ syn keyword ratpoisonCommandArg select set setenv sfdump shrink			contained
 syn keyword ratpoisonCommandArg source sselect startup_message time title	contained
 syn keyword ratpoisonCommandArg tmpwm unalias undefinekey undo unmanage		contained
 syn keyword ratpoisonCommandArg unsetenv verbexec version vsplit warp		contained
-syn keyword ratpoisonCommandArg windows						contained
+syn keyword ratpoisonCommandArg windows framefmt infofmt			contained
 
 syn match   ratpoisonGravityArg "\<\(n\|north\)\>"	contained
 syn match   ratpoisonGravityArg "\<\(nw\|northwest\)\>"	contained
@@ -92,19 +91,27 @@ syn keyword ratpoisonSetArg	barpadding	contained nextgroup=ratpoisonNumberArg
 syn keyword ratpoisonSetArg	bgcolor
 syn keyword ratpoisonSetArg	border		contained nextgroup=ratpoisonNumberArg
 syn keyword ratpoisonSetArg	fgcolor
+syn keyword ratpoisonSetArg	framefmt	contained nextgroup=ratpoisonWinFmtArg
 syn keyword ratpoisonSetArg	fwcolor
+syn keyword ratpoisonSetArg	framemsgwait	contained nextgroup=ratpoisonNumberArg
+syn keyword ratpoisonSetArg	gravity 	contained nextgroup=ratpoisonGravityArg
 syn keyword ratpoisonSetArg	bwcolor
+syn keyword ratpoisonSetArg	gravity	contained nextgroup=ratpoisonGravityArg
 syn keyword ratpoisonSetArg	historysize
 syn keyword ratpoisonSetArg	historycompaction
 syn keyword ratpoisonSetArg	historyexpansion
+syn keyword ratpoisonSetArg	infofmt         contained nextgroup=ratpoisonWinFmtArg
 syn keyword ratpoisonSetArg	topkmap
 syn keyword ratpoisonSetArg	barinpadding
 syn keyword ratpoisonSetArg	font
 syn keyword ratpoisonSetArg	framesels
+syn keyword ratpoisonSetArg	maxundos
 syn keyword ratpoisonSetArg	inputwidth	contained nextgroup=ratpoisonNumberArg
 syn keyword ratpoisonSetArg	maxsizegravity	contained nextgroup=ratpoisonGravityArg
+syn keyword ratpoisonSetArg	msgwait	        contained nextgroup=ratpoisonNumberArg
 syn keyword ratpoisonSetArg	padding		contained nextgroup=ratpoisonNumberArg
 syn keyword ratpoisonSetArg	resizeunit	contained nextgroup=ratpoisonNumberArg
+syn keyword ratpoisonSetArg	startup_message
 syn keyword ratpoisonSetArg	transgravity	contained nextgroup=ratpoisonGravityArg
 syn keyword ratpoisonSetArg	waitcursor	contained nextgroup=ratpoisonNumberArg
 syn keyword ratpoisonSetArg	winfmt		contained nextgroup=ratpoisonWinFmtArg
@@ -113,6 +120,8 @@ syn keyword ratpoisonSetArg	winliststyle	contained nextgroup=ratpoisonWinListArg
 syn keyword ratpoisonSetArg	winname		contained nextgroup=ratpoisonWinNameArg
 
 syn match   ratpoisonWinFmtArg  "%[nstacil]"			contained nextgroup=ratpoisonWinFmtArg skipwhite
+syn match   ratpoisonFrameFmtArg  "%[nstacil]"			contained nextgroup=ratpoisonWinFmtArg skipwhite
+syn match   ratpoisonInfoFmtArg  "%[nstacil]"			contained nextgroup=ratpoisonWinFmtArg skipwhite
 
 syn match   ratpoisonWinListArg "\<\(row\|column\)\>"		contained
 
@@ -126,6 +135,7 @@ syn match   ratpoisonDefCommand		"^\s*defbgcolor\s*"
 syn match   ratpoisonDefCommand		"^\s*defborder\s*"		nextgroup=ratpoisonNumberArg
 syn match   ratpoisonDefCommand		"^\s*deffgcolor\s*"
 syn match   ratpoisonDefCommand		"^\s*deffont\s*"
+syn match   ratpoisonDefCommand		"^\s*defframefmt\s*"		nextgroup=ratpoisonWinFmtArg
 syn match   ratpoisonDefCommand		"^\s*defframesels\s*"
 syn match   ratpoisonDefCommand		"^\s*definputwidth\s*"		nextgroup=ratpoisonNumberArg
 syn match   ratpoisonDefCommand		"^\s*defmaxsizegravity\s*"	nextgroup=ratpoisonGravityArg
@@ -243,14 +253,13 @@ syn match   ratpoisonVoidCommand	"^\s*\zsversion\ze\s*$"
 syn match   ratpoisonVoidCommand	"^\s*\zsvsplit\ze\s*$"
 syn match   ratpoisonVoidCommand	"^\s*\zswindows\ze\s*$"
 
-" Define the default highlighting.
-" Only when an item doesn't have highlighting yet
-
 hi def link ratpoisonBooleanArg	Boolean
 hi def link ratpoisonCommandArg	Keyword
 hi def link ratpoisonComment	Comment
 hi def link ratpoisonDefCommand	Identifier
+hi def link ratpoisonFrameFmtArg	Special
 hi def link ratpoisonGravityArg	Constant
+hi def link ratpoisonInfoFmtArg    Special
 hi def link ratpoisonKeySeqArg	Special
 hi def link ratpoisonNumberArg	Number
 hi def link ratpoisonSetArg	Keyword
@@ -260,7 +269,6 @@ hi def link ratpoisonVoidCommand	Identifier
 hi def link ratpoisonWinFmtArg	Special
 hi def link ratpoisonWinNameArg	Constant
 hi def link ratpoisonWinListArg	Constant
-
 
 let b:current_syntax = "ratpoison"
 

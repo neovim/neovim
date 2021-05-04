@@ -4129,8 +4129,6 @@ msgstr "E537: 'commentstring' moet leeg wees of %s bevat"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Onvoltooide uitdrukkingreeks"
 
-msgid "E541: too many items"
-msgstr "E541: te veel items"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: ongebalanseerde groepe"

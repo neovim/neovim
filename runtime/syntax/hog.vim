@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language: hog (Snort.conf + .rules)
 " Maintainer: Victor Roemer, <vroemer@badsec.org>.
-" Last Change: 2015 Oct 24  -> Rename syntax items from Snort -> Hog
+" Last Change: 2019 Sep 22
 "              2012 Oct 24  -> Originalish release
+"              2019 Sep 22  -> included PR 3069
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -91,7 +92,7 @@ syn match       HogOpRange    ":" contained
 
 " Rules
 syn keyword     HogRuleAction     activate alert drop block dynamic log pass reject sdrop sblock skipwhite nextgroup=HogRuleProto,HogRuleBlock
-syn keyword     HogRuleProto      ip tcp udp icmp skipwhite contained nextgroup=HogRuleSrcIP
+syn keyword     HogRuleProto      ip tcp tcp-pkt tcp-stream udp icmp http ftp tls smb dns dcerpc ssh smtp imap msn modbus dnp3 enip nfs ikev2 ntp skipwhite contained nextgroup=HogRuleSrcIP
 syn match       HogRuleSrcIP      "\S\+" transparent skipwhite contained contains=HogIPVarList,HogIPAddr,HogVar,HogOpNot nextgroup=HogRuleSrcPort
 syn match       HogRuleSrcPort    "\S\+" transparent skipwhite contained contains=HogPortVarList,HogVar,HogPort,HogOpRange,HogOpNot nextgroup=HogRuleDir
 syn match       HogRuleDir        "->\|<>" skipwhite contained nextgroup=HogRuleDstIP
@@ -100,13 +101,21 @@ syn match       HogRuleDstPort    "\S\+" transparent skipwhite contained contain
 syn region      HogRuleBlock      start="(" end=")" transparent skipwhite contained contains=HogRuleOption,HogComment fold
 ",HogString,HogComment,HogVar,HogOptNot
 "syn region      HogRuleOption     start="\<gid\|sid\|rev\|depth\|offset\|distance\|within\>" end="\ze;" skipwhite contained contains=HogNumber
-syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP msg gid sid rev classtype priority metadata content nocase rawbytes
-syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP depth offset distance within http_client_body http_cookie http_raw_cookie http_header
-syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP http_raw_header http_method http_uri http_raw_uri http_stat_code http_stat_msg
-syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP fast_pattern uricontent urilen isdataat pcre pkt_data file_data base64_decode base64_data
-syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP byte_test byte_jump byte_extract ftpbounce asn1 cvs dce_iface dce_opnum dce_stub_data
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP msg gid sid rev classtype priority metadata target content nocase rawbytes
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP depth startswith offset distance within http_client_body http_cookie http_raw_cookie http_header
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP http_raw_header http_request_line http_method http_uri http_raw_uri http_protocol http_response_line http_stat_code http_stat_msg
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP http_user_agent http_accept http_accept_enc http_accept_lang http_connection http_content_type http_content_len
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP http_referer http_start http_header_names http_server_body http_host http_raw_host
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP filename fileext filemagic filestore filemd5 filesha1 filesha256 filesize
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP dns_query tls_cert_subject tls_cert_issuer tls_cert_serial tls_cert_fingerprint
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP tls_sni tls_cert_notbefore tls_cert_notafter tls_cert_expired tls_cert_valid
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP tls.version tls.subject tls.issuerdn tls.fingerprint tls.store ja3_hash ja3_string
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP modbus dnp3_func dnp3_ind dnp3_obj dnp3_data enip_command cip_service
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP app-layer-protocol app-layer-event xbits iprep lua luajit
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP fast_pattern prefilter uricontent urilen isdataat pcre pkt_data file_data base64_decode base64_data
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP byte_test byte_jump byte_extract ftpdata_command ftpbounce asn1 cvs dce_iface dce_opnum dce_stub_data
 syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP sip_method sip_stat_code sip_header sip_body gtp_type gtp_info gtp_version ssl_version
-syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP ssl_state fragoffset ttl tos id ipopts fragbits dsize flags flow flowbits seq ack window
+syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP ssl_state fragoffset ttl tos id ipopts geoip fragbits dsize flags flow flowbits flowint seq ack window
 syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP itype icode icmp_id icmp_seq rpc ip_proto sameip stream_reassemble stream_size
 syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP logto session resp react tag activates activated_by count replace detection_filter
 syn keyword     HogRuleOption   skipwhite contained nextgroup=HogRuleSROP threshold reference sd_pattern file_type file_group

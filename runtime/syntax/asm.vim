@@ -1,11 +1,10 @@
 " Vim syntax file
-" Language:	GNU Assembler
-" Maintainer:	Erik Wognsen <erik.wognsen@gmail.com>
-"		Previous maintainer:
-"		Kevin Dahlhausen <kdahlhaus@yahoo.com>
-" Last Change:	2014 Feb 04
-
-" Thanks to Ori Avtalion for feedback on the comment markers!
+" Language:		GNU Assembler
+" Maintainer:		Doug Kearns dougkearns@gmail.com
+" Previous Maintainers: Erik Wognsen <erik.wognsen@gmail.com>
+"			Kevin Dahlhausen <kdahlhaus@yahoo.com>
+" Contributors:		Ori Avtalion, Lakshay Garg
+" Last Change:		2020 Oct 31
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -34,29 +33,49 @@ syn match asmType "\.space"
 syn match asmType "\.string"
 syn match asmType "\.word"
 
-syn match asmLabel		"[a-z_][a-z0-9_]*:"he=e-1
 syn match asmIdentifier		"[a-z_][a-z0-9_]*"
+syn match asmLabel		"[a-z_][a-z0-9_]*:"he=e-1
 
 " Various #'s as defined by GAS ref manual sec 3.6.2.1
-" Technically, the first decNumber def is actually octal,
+" Technically, the first asmDecimal def is actually octal,
 " since the value of 0-7 octal is the same as 0-7 decimal,
 " I (Kevin) prefer to map it as decimal:
-syn match decNumber		"0\+[1-7]\=[\t\n$,; ]"
-syn match decNumber		"[1-9]\d*"
-syn match octNumber		"0[0-7][0-7]\+"
-syn match hexNumber		"0[xX][0-9a-fA-F]\+"
-syn match binNumber		"0[bB][0-1]*"
+syn match asmDecimal		"\<0\+[1-7]\=\>"	 display
+syn match asmDecimal		"\<[1-9]\d*\>"		 display
+syn match asmOctal		"\<0[0-7][0-7]\+\>"	 display
+syn match asmHexadecimal	"\<0[xX][0-9a-fA-F]\+\>" display
+syn match asmBinary		"\<0[bB][0-1]\+\>"	 display
 
-syn keyword asmTodo		contained TODO
+syn match asmFloat		"\<\d\+\.\d*\%(e[+-]\=\d\+\)\=\>" display
+syn match asmFloat		"\.\d\+\%(e[+-]\=\d\+\)\=\>"	  display
+syn match asmFloat		"\<\d\%(e[+-]\=\d\+\)\>"	  display
+syn match asmFloat		"[+-]\=Inf\>\|\<NaN\>"		  display
 
+syn match asmFloat		"\%(0[edfghprs]\)[+-]\=\d*\%(\.\d\+\)\%(e[+-]\=\d\+\)\="    display
+syn match asmFloat		"\%(0[edfghprs]\)[+-]\=\d\+\%(\.\d\+\)\=\%(e[+-]\=\d\+\)\=" display
+" Avoid fighting the hexadecimal match for unicorn-like '0x' prefixed floats
+syn match asmFloat		"\%(0x\)[+-]\=\d*\%(\.\d\+\)\%(e[+-]\=\d\+\)\="		    display
+
+" Allow all characters to be escaped (and in strings) as these vary across
+" architectures [See sec 3.6.1.1 Strings]
+syn match asmCharacterEscape	"\\."    contained
+syn match asmCharacter		"'\\\=." contains=asmCharacterEscape
+
+syn match asmStringEscape	"\\\_."			contained
+syn match asmStringEscape	"\\\%(\o\{3}\|00[89]\)"	contained display
+syn match asmStringEscape	"\\x\x\+"		contained display
+
+syn region asmString		start="\"" end="\"" skip="\\\\\|\\\"" contains=asmStringEscape
+
+syn keyword asmTodo		contained TODO FIXME XXX NOTE
 
 " GAS supports one type of multi line comments:
-syn region asmComment		start="/\*" end="\*/" contains=asmTodo
+syn region asmComment		start="/\*" end="\*/" contains=asmTodo,@Spell
 
 " GAS (undocumentedly?) supports C++ style comments. Unlike in C/C++ however,
 " a backslash ending a C++ style comment does not extend the comment to the
 " next line (hence the syntax region does not define 'skip="\\$"')
-syn region asmComment		start="//" end="$" keepend contains=asmTodo
+syn region asmComment		start="//" end="$" keepend contains=asmTodo,@Spell
 
 " Line comment characters depend on the target architecture and command line
 " options and some comments may double as logical line number directives or
@@ -69,7 +88,7 @@ syn region asmComment		start="//" end="$" keepend contains=asmTodo
 " frequently used features of the most popular architectures (and also the
 " non-GNU assembly languages that use this syntax file because their asm files
 " are also named *.asm), the following are used as line comment characters:
-syn match asmComment		"[#;!|].*" contains=asmTodo
+syn match asmComment		"[#;!|].*" contains=asmTodo,@Spell
 
 " Side effects of this include:
 " - When `;' is used to separate statements on the same line (many targets
@@ -96,35 +115,50 @@ syn match asmMacro		"\.endm"
 " with '.', including the GCC auto-generated '.L' labels.
 syn match asmDirective		"\.[A-Za-z][0-9A-Za-z-_]*"
 
-
 syn case match
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
 " The default methods for highlighting.  Can be overridden later
-hi def link asmSection	Special
-hi def link asmLabel	Label
-hi def link asmComment	Comment
-hi def link asmTodo	Todo
+hi def link asmSection		Special
+hi def link asmLabel		Label
+hi def link asmComment		Comment
+hi def link asmTodo		Todo
 hi def link asmDirective	Statement
 
-hi def link asmInclude	Include
-hi def link asmCond	PreCondit
-hi def link asmMacro	Macro
+hi def link asmInclude		Include
+hi def link asmCond		PreCondit
+hi def link asmMacro		Macro
 
-hi def link hexNumber	Number
-hi def link decNumber	Number
-hi def link octNumber	Number
-hi def link binNumber	Number
+if exists('g:asm_legacy_syntax_groups')
+  hi def link hexNumber		Number
+  hi def link decNumber		Number
+  hi def link octNumber		Number
+  hi def link binNumber		Number
+  hi def link asmHexadecimal	hexNumber
+  hi def link asmDecimal	decNumber
+  hi def link asmOctal		octNumber
+  hi def link asmBinary		binNumber
+else
+  hi def link asmHexadecimal	Number
+  hi def link asmDecimal	Number
+  hi def link asmOctal		Number
+  hi def link asmBinary		Number
+endif
+hi def link asmFloat		Float
+
+hi def link asmString		String
+hi def link asmStringEscape	Special
+hi def link asmCharacter	Character
+hi def link asmCharacterEscape	Special
 
 hi def link asmIdentifier	Identifier
-hi def link asmType	Type
-
+hi def link asmType		Type
 
 let b:current_syntax = "asm"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
-" vim: ts=8
+" vim: nowrap sw=2 sts=2 ts=8 noet

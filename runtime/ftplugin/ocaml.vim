@@ -5,7 +5,7 @@
 "              Pierre Vittet       <pierre-vittet@pvittet.com>
 "              Stefano Zacchiroli  <zack@bononia.it>
 "              Vincent Aravantinos <firstname.name@imag.fr>
-" URL:         https://github.com/rgrinberg/vim-ocaml
+" URL:         https://github.com/ocaml/vim-ocaml
 " Last Change:
 "              2013 Oct 27 - Added commentstring (MM)
 "              2013 Jul 26 - load default compiler settings (MM)
@@ -38,7 +38,8 @@ let s:cposet=&cpoptions
 set cpo&vim
 
 " Comment string
-setlocal comments=
+setlocal comments=sr:(*\ ,mb:\ ,ex:*)
+setlocal comments^=sr:(**,mb:\ \ ,ex:*)
 setlocal commentstring=(*%s*)
 
 " Add mappings, unless the user didn't want this.
@@ -158,6 +159,8 @@ let b:undo_ftplugin = "setlocal efm< foldmethod< foldexpr<"
 " - Only definitions below, executed once -------------------------------------
 
 if exists("*OMLetFoldLevel")
+  let &cpoptions = s:cposet
+  unlet s:cposet
   finish
 endif
 
@@ -391,8 +394,8 @@ endfunction
     endif
   endfun
 
-  " This variable contain a dictionnary of list. Each element of the dictionnary
-  " represent an annotation system. An annotation system is a list with:
+  " This variable contains a dictionary of lists. Each element of the dictionary
+  " represents an annotation system. An annotation system is a list with:
   " - annotation file name as its key
   " - annotation file path as first element of the contained list
   " - build path as second element of the contained list
@@ -521,7 +524,7 @@ endfunction
   "c. link this stuff with what the user wants
   " ie. get the expression selected/under the cursor
 
-    let s:ocaml_word_char = '\w|[À-ÿ]|'''
+    let s:ocaml_word_char = '\w|[\xc0-\xff]|'''
 
       "In:  the current mode (eg. "visual", "normal", etc.)
       "Out: the borders of the expression we are looking for the type
@@ -634,7 +637,7 @@ endfunction
   nnoremap <silent> <Plug>OCamlPrintType :<C-U>call Ocaml_print_type("normal")<CR>
   xnoremap <silent> <Plug>OCamlPrintType :<C-U>call Ocaml_print_type("visual")<CR>`<
 
-let &cpoptions=s:cposet
+let &cpoptions = s:cposet
 unlet s:cposet
 
 " vim:sw=2 fdm=indent

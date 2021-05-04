@@ -119,7 +119,7 @@ CTRL-K {char1} {char2}					*c_CTRL-K*
 		enter digraph (see |digraphs|).  When {char1} is a special
 		key, the code for that key is inserted in <> form.
 
-CTRL-R {0-9a-z"%#:-=.}					*c_CTRL-R* *c_<C-R>*
+CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 		Insert the contents of a numbered or named register.  Between
 		typing CTRL-R and the second character '"' will be displayed
 		to indicate that you are expected to enter the name of a
@@ -178,8 +178,8 @@ CTRL-R CTRL-L				*c_CTRL-R_CTRL-L* *c_<C-R>_<C-L>*
 
 					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
 					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
-CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
-CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-R {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
+CTRL-R CTRL-O {register CTRL-F CTRL-P CTRL-W CTRL-A CTRL-L}
 		Insert register or object under the cursor.  Works like
 		|c_CTRL-R| but inserts the text literally.  For example, if
 		register a contains "xy^Hz" (where ^H is a backspace),
@@ -443,6 +443,10 @@ emulate it.  For example, this mimics autolist=ambiguous:
 This will find the longest match with the first 'wildchar', then list all
 matching files with the next.
 
+					*complete-script-local-functions*
+When completing user function names, prepend "s:" to find script-local
+functions.
+
 							*suffixes*
 For file name completion you can use the 'suffixes' option to set a priority
 between files with almost the same name.  If there are multiple matches,
@@ -553,14 +557,17 @@ followed by another Vim command:
     :command
     :cscope
     :debug
+    :eval
     :folddoopen
     :folddoclosed
     :function
     :global
     :help
+    :helpgrep
     :lcscope
     :ldo
     :lfdo
+    :lhelpgrep
     :make
     :normal
     :perlfile
@@ -572,6 +579,7 @@ followed by another Vim command:
     :read !
     :scscope
     :sign
+    :terminal
     :vglobal
     :windo
     :write !
@@ -752,7 +760,7 @@ three lines: >
 <
 
 Visual Mode and Range					*v_:*
-
+							*:star-visual-range*
 {Visual}:	Starts a command-line with the Visual selected lines as a
 		range.  The code `:'<,'>` is used for this range, which makes
 		it possible to select a similar line from the command-line
@@ -824,34 +832,37 @@ it, no matter how many backslashes.
 	   \\#			\#
 Also see |`=|.
 
-			       *:<cword>* *<cword>* *:<cWORD>* *<cWORD>*
-			       *:<cexpr>* *<cexpr>* *:<cfile>* *<cfile>*
-			       *:<afile>* *<afile>* *:<abuf>* *<abuf>*
-			       *:<amatch>* *<amatch>*
-			       *:<sfile>* *<sfile>* *:<slnum>* *<slnum>*
-			       *:<sflnum>* *<sflnum>* *E499* *E500*
+							*E499* *E500*
 Note: these are typed literally, they are not special keys!
+							*:<cword>* *<cword>*
 	<cword>    is replaced with the word under the cursor (like |star|)
+							*:<cWORD>* *<cWORD>*
 	<cWORD>    is replaced with the WORD under the cursor (see |WORD|)
+							*:<cexpr>* *<cexpr>*
 	<cexpr>    is replaced with the word under the cursor, including more
 		   to form a C expression.  E.g., when the cursor is on "arg"
 		   of "ptr->arg" then the result is "ptr->arg"; when the
 		   cursor is on "]" of "list[idx]" then the result is
 		   "list[idx]".  This is used for |v:beval_text|.
+							*:<cfile>* *<cfile>*
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)
+							*:<afile>* *<afile>*
 	<afile>    When executing autocommands, is replaced with the file name
 		   of the buffer being manipulated, or the file for a read or
 		   write.  *E495*
+							*:<abuf>* *<abuf>*
 	<abuf>     When executing autocommands, is replaced with the currently
 		   effective buffer number (for ":r file" and ":so file" it is
 		   the current buffer, the file being read/sourced is not in a
 		   buffer).  *E496*
+							*:<amatch>* *<amatch>*
 	<amatch>   When executing autocommands, is replaced with the match for
 		   which this autocommand was executed.  *E497*
 		   It differs from <afile> only when the file name isn't used
 		   to match with (for FileType, Syntax and SpellFileMissing
 		   events).
+							*:<sfile>* *<sfile>*
 	<sfile>    When executing a ":source" command, is replaced with the
 		   file name of the sourced file.  *E498*
 		   When executing a function, is replaced with:
@@ -860,10 +871,12 @@ Note: these are typed literally, they are not special keys!
 		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
 		   Note that filename-modifiers are useless when <sfile> is
 		   used inside a function.
+							*:<slnum>* *<slnum>*
 	<slnum>	   When executing a ":source" command, is replaced with the
 		   line number.  *E842*
 		   When executing a function it's the line number relative to
 		   the start of the function.
+							*:<sflnum>* *<sflnum>*
 	<sflnum>   When executing a script, is replaced with the line number.
 		   It differs from <slnum> in that <sflnum> is replaced with
 		   the script line number in any situation.  *E961*
@@ -898,7 +911,7 @@ These modifiers can be given, in this order:
 		separator is removed.  Thus ":p:h" on a directory name results
 		on the directory name itself (without trailing slash).
 		When the file name is an absolute path (starts with "/" for
-		Unix; "x:\" for Windows), that part is not removed.
+		Unix; "x:\" for Win32), that part is not removed.
 		When there is no head (path is relative to current directory)
 		the result is empty.
 	:t	Tail of the file name (last component of the name).  Must
@@ -1074,7 +1087,8 @@ CTRL-C		Continue in Command-line mode.  The command-line under the
 		in Normal mode.  There is no redraw, thus the window will
 		remain visible.
 :quit		Discard the command line and go back to Normal mode.
-		":close", ":exit", ":xit" and CTRL-\ CTRL-N also work.
+		":close", CTRL-W c, ":exit", ":xit" and CTRL-\ CTRL-N also
+		work.
 :qall		Quit Vim, unless there are changes in some buffer.
 :qall!		Quit Vim, discarding changes to any buffer.
 

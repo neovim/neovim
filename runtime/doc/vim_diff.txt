@@ -498,13 +498,23 @@ Test functions:
   test_alloc_fail()
   test_autochdir()
   test_disable_char_avail()
+  test_feedinput()
+  test_garbagecollect_soon
+  test_getvalue()
+  test_ignore_error()
+  test_null_blob()
   test_null_channel()
   test_null_dict()
+  test_null_function()
   test_null_job()
   test_null_list()
   test_null_partial()
   test_null_string()
+  test_option_not_set()
   test_override()
+  test_refcount()
+  test_scrollbar()
+  test_setmouse()
   test_settime()
 
 TUI:

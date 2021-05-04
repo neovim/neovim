@@ -139,11 +139,11 @@ Vim would never have become what it is now, without the help of these people!
 	Flemming Madsen		X11 client-server, various features and patches
 	Tony Mechelynck		answers many user questions
 	Paul Moore		Python interface extensions, many patches
-	Katsuhito Nagano	Work on multi-byte versions
-	Sung-Hyun Nam		Work on multi-byte versions
+	Katsuhito Nagano	Work on multibyte versions
+	Sung-Hyun Nam		Work on multibyte versions
 	Vince Negri		Win32 GUI and generic console enhancements
 	Steve Oualline		Author of the first Vim book |frombook|
-	Dominique Pelle		valgrind reports and many fixes
+	Dominique Pelle		Valgrind reports and many fixes
 	A.Politz		Many bug reports and some fixes
 	George V. Reilly	Win32 port, Win32 GUI start-off
 	Stephen Riehm		bug collector
@@ -324,7 +324,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 <CSI>		command sequence intro  ALT-Esc 155	*<CSI>*
 <xCSI>		CSI when typed in the GUI		*<xCSI>*
 
-<EOL>		end-of-line (can be <CR>, <LF> or <CR><LF>,
+<EOL>		end-of-line (can be <CR>, <NL> or <CR><NL>,
 		depends on system and 'fileformat')	*<EOL>*
 <Ignore>	cancel wait-for-character		*<Ignore>*
 <NOP>		no-op: do nothing (useful in mappings)	*<Nop>*

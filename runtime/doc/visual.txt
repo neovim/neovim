@@ -103,6 +103,7 @@ gn			Search forward for the last used search pattern, like
 			E.g., "dgn" deletes the text of the next match.
 			If Visual mode is active, extends the selection
 			until the end of the next match.
+			'wrapscan' applies
 			Note: Unlike `n` the search direction does not depend
 			on the previous search command.
 
@@ -111,7 +112,7 @@ gN			Like |gn| but searches backward, like with `N`.
 
 							*<LeftMouse>*
 <LeftMouse>		Set the current cursor position.  If Visual mode is
-			active it is stopped.  Only when 'mouse' option is
+			active it is stopped.  Only when 'mouse' option
 			contains 'n' or 'a'.  If the position is within 'so'
 			lines from the last line on the screen the text is
 			scrolled up.  If the position is within 'so' lines from
@@ -122,7 +123,7 @@ gN			Like |gn| but searches backward, like with `N`.
 <RightMouse>		Start Visual mode if it is not active.  The text from
 			the cursor position to the position of the click is
 			highlighted.  If Visual mode was already active move
-			the start or end of the highlighted text, which ever
+			the start or end of the highlighted text, whichever
 			is closest, to the position of the click.  Only when
 			'mouse' option contains 'n' or 'a'.
 
@@ -225,7 +226,7 @@ The objects that can be used are:
 	is	inner sentence					|v_is|
 	ap	a paragraph (with white space)			|v_ap|
 	ip	inner paragraph					|v_ip|
-	ab	a () block (with parenthesis)			|v_ab|
+	ab	a () block (with parentheses)			|v_ab|
 	ib	inner () block					|v_ib|
 	aB	a {} block (with braces)			|v_aB|
 	iB	inner {} block					|v_iB|
@@ -336,7 +337,7 @@ Visual-block Shift						*v_b_>*
 The block is shifted by 'shiftwidth'.  The RHS of the block is irrelevant.  The
 LHS of the block determines the point from which to apply a right shift, and
 padding includes TABs optimally according to 'ts' and 'et'.  The LHS of the
-block determines the point upto which to shift left.
+block determines the point up to which to shift left.
 See |v_b_>_example|.
 See |v_b_<_example|.
 

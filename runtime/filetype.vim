@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Apr 05
+" Last Change:	2021 Apr 17
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -392,8 +392,8 @@ au BufNewFile,BufRead configure.in,configure.ac setf config
 " CUDA  Cumpute Unified Device Architecture
 au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
-" Dockerfile
-au BufNewFile,BufRead Dockerfile,*.Dockerfile	setf dockerfile
+" Dockerfilb; Podman uses the same syntax with name Containerfile
+au BufNewFile,BufRead Containerfile,Dockerfile,*.Dockerfile	setf dockerfile
 
 " WildPackets EtherPeek Decoder
 au BufNewFile,BufRead *.dcd			setf dcd
@@ -791,11 +791,11 @@ au BufNewFile,BufRead *.inf,*.INF		setf inform
 au BufNewFile,BufRead */etc/initng/*/*.i,*.ii	setf initng
 
 " Innovation Data Processing
-au BufRead,BufNewFile upstream.dat\c,upstream.*.dat\c,*.upstream.dat\c 	setf upstreamdat
-au BufRead,BufNewFile fdrupstream.log,upstream.log\c,upstream.*.log\c,*.upstream.log\c,UPSTREAM-*.log\c 	setf upstreamlog
+au BufRead,BufNewFile upstream.dat\c,upstream.*.dat\c,*.upstream.dat\c	setf upstreamdat
+au BufRead,BufNewFile fdrupstream.log,upstream.log\c,upstream.*.log\c,*.upstream.log\c,UPSTREAM-*.log\c	setf upstreamlog
 au BufRead,BufNewFile upstreaminstall.log\c,upstreaminstall.*.log\c,*.upstreaminstall.log\c setf upstreaminstalllog
-au BufRead,BufNewFile usserver.log\c,usserver.*.log\c,*.usserver.log\c 	setf usserverlog
-au BufRead,BufNewFile usw2kagt.log\c,usw2kagt.*.log\c,*.usw2kagt.log\c 	setf usw2kagtlog
+au BufRead,BufNewFile usserver.log\c,usserver.*.log\c,*.usserver.log\c	setf usserverlog
+au BufRead,BufNewFile usw2kagt.log\c,usw2kagt.*.log\c,*.usw2kagt.log\c	setf usw2kagtlog
 
 " Ipfilter
 au BufNewFile,BufRead ipf.conf,ipf6.conf,ipf.rules	setf ipfilter
@@ -1094,7 +1094,7 @@ au BufNewFile,BufRead Mutt{ng,}rc		setf muttrc
 au BufRead,BufNewfile *.n1ql,*.nql		setf n1ql
 
 " Nano
-au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
+au BufNewFile,BufRead */etc/nanorc,*.nanorc	setf nanorc
 
 " Nastran input/DMAP
 "au BufNewFile,BufRead *.dat			setf nastran
@@ -1191,11 +1191,14 @@ au BufNewFile,BufRead *.pp			call dist#ft#FTpp()
 " Delphi or Lazarus program file
 au BufNewFile,BufRead *.dpr,*.lpr		setf pascal
 
+" Free Pascal makefile definition file
+au BufNewFile,BufRead *.fpc			setf fpcmake
+
 " PDF
 au BufNewFile,BufRead *.pdf			setf pdf
 
 " PCMK - HAE - crm configure edit
-au BufNewFile,BufRead *.pcmk 			setf pcmk
+au BufNewFile,BufRead *.pcmk			setf pcmk
 
 " Perl
 if has("fname_case")
@@ -1204,8 +1207,6 @@ else
   au BufNewFile,BufRead *.pl			call dist#ft#FTpl()
 endif
 au BufNewFile,BufRead *.plx,*.al,*.psgi		setf perl
-au BufNewFile,BufRead *.p6,*.pm6,*.pl6		setf perl6
-au BufNewFile,BufRead *.raku,*.rakumod		setf perl6
 
 " Perl, XPM or XPM2
 au BufNewFile,BufRead *.pm
@@ -1219,7 +1220,6 @@ au BufNewFile,BufRead *.pm
 
 " Perl POD
 au BufNewFile,BufRead *.pod			setf pod
-au BufNewFile,BufRead *.pod6			setf pod6
 
 " Php, php3, php4, etc.
 " Also Phtml (was used for PHP 2 in the past)
@@ -1227,7 +1227,7 @@ au BufNewFile,BufRead *.pod6			setf pod6
 au BufNewFile,BufRead *.php,*.php\d,*.phtml,*.ctp	setf php
 
 " PHP config
-au BufNewFile,BufRead php.ini,php.ini-*		setf dosini
+au BufNewFile,BufRead php.ini-*			setf dosini
 
 " Pike and Cmod
 au BufNewFile,BufRead *.pike,*.pmod		setf pike
@@ -1362,6 +1362,9 @@ au BufNewFile,BufRead *.ptl,*.pyi,SConstruct		   setf python
 " Radiance
 au BufNewFile,BufRead *.rad,*.mat		setf radiance
 
+" Raku (formelly Perl6)
+au BufNewFile,BufRead *.pm6,*.p6,*.t6,*.pod6,*.raku,*.rakumod,*.rakudoc,*.rakutest  setf raku
+
 " Ratpoison config/command files
 au BufNewFile,BufRead .ratpoisonrc,ratpoisonrc	setf ratpoison
 
@@ -1383,13 +1386,6 @@ au BufNewFile,BufRead *.rego			setf rego
 
 " Rexx
 au BufNewFile,BufRead *.rex,*.orx,*.rxo,*.rxj,*.jrexx,*.rexxj,*.rexx,*.testGroup,*.testUnit	setf rexx
-
-" R (Splus)
-if has("fname_case")
-  au BufNewFile,BufRead *.s,*.S			setf r
-else
-  au BufNewFile,BufRead *.s			setf r
-endif
 
 " R Help file
 if has("fname_case")
@@ -1564,7 +1560,8 @@ au BufNewFile,BufRead *.decl,*.dcl,*.dec
 au BufNewFile,BufRead catalog			setf catalog
 
 " Shell scripts (sh, ksh, bash, bash2, csh); Allow .profile_foo etc.
-" Gentoo ebuilds and Arch Linux PKGBUILDs are actually bash scripts
+" Gentoo ebuilds, Arch Linux PKGBUILDs and Alpine Linux APKBUILDs are actually
+" bash scripts.
 " NOTE: Patterns ending in a star are further down, these have lower priority.
 au BufNewFile,BufRead .bashrc,bashrc,bash.bashrc,.bash[_-]profile,.bash[_-]logout,.bash[_-]aliases,bash-fc[-.],*.ebuild,*.bash,*.eclass,PKGBUILD,APKBUILD call dist#ft#SetFileTypeSH("bash")
 au BufNewFile,BufRead .kshrc,*.ksh call dist#ft#SetFileTypeSH("ksh")
@@ -1720,10 +1717,10 @@ au BufNewFile,BufRead *.cm			setf voscm
 
 " Swift
 au BufNewFile,BufRead *.swift			setf swift
-au BufNewFile,BufRead *.swift.gyb 		setf swiftgyb
+au BufNewFile,BufRead *.swift.gyb		setf swiftgyb
 
 " Swift Intermediate Language
-au BufNewFile,BufRead *.sil 			setf sil
+au BufNewFile,BufRead *.sil			setf sil
 
 " Sysctl
 au BufNewFile,BufRead */etc/sysctl.conf,*/etc/sysctl.d/*.conf	setf sysctl
@@ -2159,7 +2156,7 @@ au BufNewFile,BufRead *fvwm2rc*
 au BufNewFile,BufRead */tmp/lltmp*		call s:StarSetf('gedcom')
 
 " Git
-au BufNewFile,BufRead */.gitconfig.d/*,/etc/gitconfig.d/* 	call s:StarSetf('gitconfig')
+au BufNewFile,BufRead */.gitconfig.d/*,/etc/gitconfig.d/*	call s:StarSetf('gitconfig')
 
 " Gitolite
 au BufNewFile,BufRead */gitolite-admin/conf/*	call s:StarSetf('gitolite')

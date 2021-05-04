@@ -4,7 +4,7 @@
 				| Zip File Interface |
 				+====================+
 
-Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
+Author:  Charles E. Campbell  <NcampObell@SdrPchip.AorgM-NOSPAM>
 	  (remove NOSPAM from Campbell's email first)
 Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 	The VIM LICENSE (see |copyright|) applies to the files in this
@@ -33,10 +33,11 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
    also write to the file.  Currently, one may not make a new file in
    zip archives via the plugin.
 
+   COMMANDS~
 								*zip-x*
-   x : may extract a listed file when the cursor is atop it
+   x : extract a listed file when the cursor is atop it
 
-   OPTIONS
+   OPTIONS~
 
    							*g:zip_nomax*
 
@@ -101,6 +102,10 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
 
 ==============================================================================
 4. History							*zip-history* {{{1
+   v29 Apr 02, 2017 * (Klartext) reported that an encrypted zip file could
+   		      opened but the swapfile held unencrypted contents.
+		      The solution is to edit the contents of a zip file
+		      using the |:noswapfile| modifier.
    v28 Oct 08, 2014 * changed the sanity checks for executables to reflect
    		      the command actually to be attempted in zip#Read()
 		      and zip#Write()
@@ -149,4 +154,4 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
    v1 Sep 15, 2005 * Initial release, had browsing, reading, and writing
 
 ==============================================================================
-vim:tw=78:ts=8:noet:ft=help:fdm=marker
+vim:tw=78:ts=8:ft=help:noet:norl:fdm=marker

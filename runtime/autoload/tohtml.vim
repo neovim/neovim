@@ -1,6 +1,6 @@
 " Vim autoload file for the tohtml plugin.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2018 Nov 11
+" Last Change: 2019 Aug 16
 "
 " Additional contributors:
 "
@@ -364,6 +364,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
   let body_line = ''
 
   let html = []
+  let s:html5 = 0
   if s:settings.use_xhtml
     call add(html, xml_line)
   endif
@@ -371,8 +372,9 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     call add(html, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">")
     call add(html, '<html xmlns="http://www.w3.org/1999/xhtml">')
   elseif s:settings.use_css && !s:settings.no_pre
-    call add(html, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">")
+    call add(html, "<!DOCTYPE html>")
     call add(html, '<html>')
+    let s:html5 = 1
   else
     call add(html, '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"')
     call add(html, '  "http://www.w3.org/TR/html4/loose.dtd">')
@@ -383,7 +385,11 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
   " include encoding as close to the top as possible, but only if not already
   " contained in XML information
   if s:settings.encoding != "" && !s:settings.use_xhtml
-    call add(html, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . tag_close)
+    if s:html5
+      call add(html, '<meta charset="' . s:settings.encoding . '"' . tag_close)
+    else
+      call add(html, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . tag_close)
+    endif
   endif
 
   call add(html, '<title>diff</title>')
@@ -392,6 +398,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
   call add(html, '<meta name="settings" content="'.
 	\ join(filter(keys(s:settings),'s:settings[v:val]'),',').
 	\ ',prevent_copy='.s:settings.prevent_copy.
+	\ ',use_input_for_pc='.s:settings.use_input_for_pc.
 	\ '"'.tag_close)
   call add(html, '<meta name="colorscheme" content="'.
 	\ (exists('g:colors_name')
@@ -400,16 +407,8 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 
   call add(html, '</head>')
   let body_line_num = len(html)
-  if !empty(s:settings.prevent_copy)
-    call add(html, "<body onload='FixCharWidth();".(s:settings.line_ids ? " JumpToLine();" : "")."'>")
-    call add(html, "<!-- hidden divs used by javascript to get the width of a char -->")
-    call add(html, "<div id='oneCharWidth'>0</div>")
-    call add(html, "<div id='oneInputWidth'><input size='1' value='0'".tag_close."</div>")
-    call add(html, "<div id='oneEmWidth' style='width: 1em;'></div>")
-  else
-    call add(html, '<body'.(s:settings.line_ids ? ' onload="JumpToLine();"' : '').'>')
-  endif
-  call add(html, "<table border='1' width='100%' id='vimCodeElement".s:settings.id_suffix."'>")
+  call add(html, '<body'.(s:settings.line_ids ? ' onload="JumpToLine();"' : '').'>')
+  call add(html, "<table ".(s:settings.use_css? "" : "border='1' width='100%' ")."id='vimCodeElement".s:settings.id_suffix."'>")
 
   call add(html, '<tr>')
   for buf in a:win_list
@@ -443,7 +442,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " Grab the style information. Some of this will be duplicated so only insert
     " it if it's not already there. {{{
     1
-    let style_start = search('^<style type="text/css">')
+    let style_start = search('^<style\( type="text/css"\)\?>')
     1
     let style_end = search('^</style>')
     if style_start > 0 && style_end > 0
@@ -481,7 +480,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " TODO: restore using grabbed lines if undolevel is 1?
     normal! 2u
     if s:settings.use_css
-      call add(html, '<td valign="top"><div>')
+      call add(html, '<td><div>')
     elseif s:settings.use_xhtml
       call add(html, '<td nowrap="nowrap" valign="top"><div>')
     else
@@ -515,7 +514,13 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     let name = substitute(name, '\d*\.x\?html$', '', '') . i . '.' . fnamemodify(copy(name), ":t:e")
     let i += 1
   endwhile
+
+  let s:ei_sav = &eventignore
+  set eventignore+=FileType
   exe "topleft new " . name
+  let &eventignore=s:ei_sav
+  unlet s:ei_sav
+
   setlocal modifiable
 
   " just in case some user autocmd creates content in the new buffer, make sure
@@ -544,7 +549,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " add required javascript in reverse order so we can just call append again
     " and again without adjusting {{{
 
-    let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids || !empty(s:settings.prevent_copy)
+    let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids
 
     " insert script closing tag if needed
     if s:uses_script
@@ -552,31 +557,6 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 	    \ '',
 	    \ s:settings.use_xhtml ? '//]]>' : '-->',
 	    \ "</script>"
-	    \ ])
-    endif
-
-    " insert script which corrects the size of small input elements in
-    " prevent_copy mode. See 2html.vim for details on why this is needed and how
-    " it works.
-    if !empty(s:settings.prevent_copy)
-      call append(style_start, [
-	    \ '',
-	    \ '/* simulate a "ch" unit by asking the browser how big a zero character is */',
-	    \ 'function FixCharWidth() {',
-	    \ '  /* get the hidden element which gives the width of a single character */',
-	    \ '  var goodWidth = document.getElementById("oneCharWidth").clientWidth;',
-	    \ '  /* get all input elements, we''ll filter on class later */',
-	    \ '  var inputTags = document.getElementsByTagName("input");',
-	    \ '  var ratio = 5;',
-	    \ '  var inputWidth = document.getElementById("oneInputWidth").clientWidth;',
-	    \ '  var emWidth = document.getElementById("oneEmWidth").clientWidth;',
-	    \ '  if (inputWidth > goodWidth) {',
-	    \ '    while (ratio < 100*goodWidth/emWidth && ratio < 100) {',
-	    \ '      ratio += 5;',
-	    \ '    }',
-	    \ '    document.getElementById("vimCodeElement'.s:settings.id_suffix.'").className = "em"+ratio;',
-	    \ '  }',
-	    \ '}'
 	    \ ])
     endif
 
@@ -659,10 +639,9 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     endif
 
     if s:uses_script
-      " insert script tag; javascript is always needed for the line number
-      " normalization for URL hashes
+      " insert script tag if needed
       call append(style_start, [
-	    \ "<script type='text/javascript'>",
+	    \ "<script" . (s:html5 ? "" : " type='text/javascript'") . ">",
 	    \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
     endif
 
@@ -673,11 +652,13 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " is pretty useless for really long lines. {{{
     if s:settings.use_css
       call append(style_start,
-	    \ ['<style type="text/css">']+
+	    \ ['<style' . (s:html5 ? '' : 'type="text/css"') . '>']+
 	    \ style+
 	    \ [ s:settings.use_xhtml ? '' : '<!--',
 	    \   'table { table-layout: fixed; }',
 	    \   'html, body, table, tbody { width: 100%; margin: 0; padding: 0; }',
+	    \   'table, td, th { border: 1px solid; }',
+	    \   'td { vertical-align: top; }',
 	    \   'th, td { width: '.printf("%.1f",100.0/len(a:win_list)).'%; }',
 	    \   'td div { overflow: auto; }',
 	    \   s:settings.use_xhtml ? '' : '-->',
@@ -720,21 +701,22 @@ func! tohtml#GetUserSettings() "{{{
     endif
 
     " get current option settings with appropriate defaults {{{
-    call tohtml#GetOption(user_settings,    'no_progress', !has("statusline") )
-    call tohtml#GetOption(user_settings,  'diff_one_file', 0 )
-    call tohtml#GetOption(user_settings,   'number_lines', &number )
-    call tohtml#GetOption(user_settings,       'pre_wrap', &wrap )
-    call tohtml#GetOption(user_settings,        'use_css', 1 )
-    call tohtml#GetOption(user_settings, 'ignore_conceal', 0 )
-    call tohtml#GetOption(user_settings, 'ignore_folding', 0 )
-    call tohtml#GetOption(user_settings,  'dynamic_folds', 0 )
-    call tohtml#GetOption(user_settings,  'no_foldcolumn', user_settings.ignore_folding)
-    call tohtml#GetOption(user_settings,   'hover_unfold', 0 )
-    call tohtml#GetOption(user_settings,         'no_pre', 0 )
-    call tohtml#GetOption(user_settings,     'no_invalid', 0 )
-    call tohtml#GetOption(user_settings,   'whole_filler', 0 )
-    call tohtml#GetOption(user_settings,      'use_xhtml', 0 )
-    call tohtml#GetOption(user_settings,       'line_ids', user_settings.number_lines )
+    call tohtml#GetOption(user_settings,       'no_progress', !has("statusline") )
+    call tohtml#GetOption(user_settings,     'diff_one_file', 0 )
+    call tohtml#GetOption(user_settings,      'number_lines', &number )
+    call tohtml#GetOption(user_settings,          'pre_wrap', &wrap )
+    call tohtml#GetOption(user_settings,           'use_css', 1 )
+    call tohtml#GetOption(user_settings,    'ignore_conceal', 0 )
+    call tohtml#GetOption(user_settings,    'ignore_folding', 0 )
+    call tohtml#GetOption(user_settings,     'dynamic_folds', 0 )
+    call tohtml#GetOption(user_settings,     'no_foldcolumn', user_settings.ignore_folding)
+    call tohtml#GetOption(user_settings,      'hover_unfold', 0 )
+    call tohtml#GetOption(user_settings,            'no_pre', 0 )
+    call tohtml#GetOption(user_settings,        'no_invalid', 0 )
+    call tohtml#GetOption(user_settings,      'whole_filler', 0 )
+    call tohtml#GetOption(user_settings,         'use_xhtml', 0 )
+    call tohtml#GetOption(user_settings,          'line_ids', user_settings.number_lines )
+    call tohtml#GetOption(user_settings, 'use_input_for_pc', 'fallback')
     " }}}
     
     " override those settings that need it {{{
@@ -866,6 +848,16 @@ func! tohtml#GetUserSettings() "{{{
     endif
     if empty(user_settings.prevent_copy)
       let user_settings.no_invalid = 0
+    endif
+
+    " enforce valid values for use_input_for_pc
+    if user_settings.use_input_for_pc !~# 'fallback\|none\|all'
+      let user_settings.use_input_for_pc = 'fallback'
+      echohl WarningMsg
+      echomsg '2html: "' . g:html_use_input_for_pc . '" is not valid for g:html_use_input_for_pc'
+      echomsg '2html: defaulting to "' . user_settings.use_input_for_pc . '"'
+      echohl None
+      sleep 3
     endif
 
     if exists('g:html_id_expr')

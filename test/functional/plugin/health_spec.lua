@@ -118,7 +118,7 @@ describe('health.vim', function()
         Error = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
         Heading = { bold=true, foreground=Screen.colors.Magenta },
         Heading2 = { foreground = Screen.colors.SlateBlue },
-        Bar = { foreground=Screen.colors.Purple },
+        Bar = { foreground = 0x6a0dad },
         Bullet = { bold=true, foreground=Screen.colors.Brown },
       })
       command("checkhealth foo success1")
