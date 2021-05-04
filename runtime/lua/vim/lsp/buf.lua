@@ -242,7 +242,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
       result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
-    else
+    elseif client.resolved_capabilities.document_range_formatting then
       local last_line = vim.fn.line("$")
       local last_col = vim.fn.col({ last_line, "$" })
       local params = util.make_given_range_params({ 1, 0 }, { last_line, last_col })
