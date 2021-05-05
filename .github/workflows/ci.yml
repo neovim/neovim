@@ -3,7 +3,9 @@ on:
   push:
     branches: '**'
   pull_request:
-    branches: 'master'
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
 
 jobs:
   unixish:
@@ -21,7 +23,7 @@ jobs:
             runner: ubuntu-20.04
             os: linux
           - flavor: tsan
-            cc: clang-11
+            cc: clang-12
             runner: ubuntu-20.04
             os: linux
           - cc: clang
