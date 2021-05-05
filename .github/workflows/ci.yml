@@ -3,7 +3,9 @@ on:
   push:
     branches: '**'
   pull_request:
-    branches: 'master'
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
 
 jobs:
   unixish:
