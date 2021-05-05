@@ -1,2 +1,7 @@
 *.h linguist-language=C
 src/nvim/testdir/test42.in diff
+.github/ export-ignore
+ci/ export-ignore
+.travis.yml export-ignore
+codecov.yml export-ignore
+.builds/ export-ignore
