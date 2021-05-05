@@ -19,7 +19,7 @@ jobs:
         run: |
           wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=neovim%2Fneovim" -O coverity_tool.tgz
           mkdir cov-scan
-          tar ax -f coverity_tool.tgz --strip-components=1 -c cov-scan
+          tar ax -f coverity_tool.tgz --strip-components=1 -C cov-scan
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
 
