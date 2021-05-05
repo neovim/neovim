@@ -3334,6 +3334,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             changed_cline_bef_curs();
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
+          changed_bytes(lnum, col);
+          extmark_splice_cols(curbuf, (int)lnum-1, col,
+                              0, (int)totlen, kExtmarkUndo);
         }
         if (VIsual_active) {
           lnum++;
@@ -3345,12 +3348,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
 
       curbuf->b_op_end = curwin->w_cursor;
-      /* For "CTRL-O p" in Insert mode, put cursor after last char */
-      if (totlen && (restart_edit != 0 || (flags & PUT_CURSEND)))
-        ++curwin->w_cursor.col;
-      changed_bytes(lnum, col);
-      extmark_splice_cols(curbuf, (int)lnum-1, col,
-                          0, (int)totlen, kExtmarkUndo);
+      // For "CTRL-O p" in Insert mode, put cursor after last char
+      if (totlen && (restart_edit != 0 || (flags & PUT_CURSEND))) {
+        curwin->w_cursor.col++;
+      }
     } else {
       // Insert at least one line.  When y_type is kMTCharWise, break the first
       // line in two.
