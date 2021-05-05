@@ -1691,7 +1691,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
   if (decor.virt_text_pos == kVTRightAlign) {
     decor.col = 0;
     for (size_t i = 0; i < kv_size(decor.virt_text); i++) {
-      decor.col += mb_string2cells((char_u *)kv_A(decor.virt_text, i).text);
+      decor.col
+          += (int)mb_string2cells((char_u *)kv_A(decor.virt_text, i).text);
     }
   }
 
