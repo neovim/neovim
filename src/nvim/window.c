@@ -676,9 +676,17 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
 
   wp->w_float_config = fconfig;
 
+  bool has_border = wp->w_floating && wp->w_float_config.border;
+  for (int i = 0; i < 4; i++) {
+    wp->w_border_adj[i] =
+      has_border && wp->w_float_config.border_chars[2 * i+1][0];
+  }
+
   if (!ui_has(kUIMultigrid)) {
-    wp->w_height = MIN(wp->w_height, Rows-1);
-    wp->w_width = MIN(wp->w_width, Columns);
+    wp->w_height = MIN(wp->w_height,
+                       Rows - 1 - (wp->w_border_adj[0] + wp->w_border_adj[2]));
+    wp->w_width = MIN(wp->w_width,
+                      Columns - (wp->w_border_adj[1] + wp->w_border_adj[3]));
   }
 
   win_set_inner_size(wp);
@@ -767,8 +775,8 @@ void ui_ext_win_position(win_T *wp)
 
       int comp_row = (int)row - (south ? wp->w_height : 0);
       int comp_col = (int)col - (east ? wp->w_width : 0);
-      comp_row = MAX(MIN(comp_row, Rows-wp->w_height-1), 0);
-      comp_col = MAX(MIN(comp_col, Columns-wp->w_width), 0);
+      comp_row = MAX(MIN(comp_row, Rows-wp->w_height_outer-1), 0);
+      comp_col = MAX(MIN(comp_col, Columns-wp->w_width_outer), 0);
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
       bool valid = (wp->w_redr_type == 0);
@@ -5732,12 +5740,6 @@ void win_set_inner_size(win_T *wp)
 
   if (wp->w_buffer->terminal) {
     terminal_check_size(wp->w_buffer->terminal);
-  }
-
-  bool has_border = wp->w_floating && wp->w_float_config.border;
-  for (int i = 0; i < 4; i++) {
-    wp->w_border_adj[i] =
-      has_border && wp->w_float_config.border_chars[2 * i+1][0];
   }
 
   wp->w_height_outer = (wp->w_height_inner

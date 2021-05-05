@@ -910,6 +910,57 @@ describe('float window', function()
       end
     end)
 
+    it('terminates border on edge of viewport when window extends past viewport', function()
+      local buf = meths.create_buf(false, false)
+      meths.open_win(buf, false, {relative='editor', width=40, height=7, row=0, col=0, border="single"})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:┌────────────────────────────────────────┐}|
+          {5:│}{1:                                        }{5:│}|
+          {5:│}{2:~                                       }{5:│}|
+          {5:│}{2:~                                       }{5:│}|
+          {5:│}{2:~                                       }{5:│}|
+          {5:│}{2:~                                       }{5:│}|
+          {5:│}{2:~                                       }{5:│}|
+          {5:│}{2:~                                       }{5:│}|
+          {5:└────────────────────────────────────────┘}|
+        ]], float_pos={
+          [4] = { { id = 1001 }, "NW", 1, 0, 0, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          {5:^┌──────────────────────────────────────┐}|
+          {5:│}{1:                                      }{5:│}|
+          {5:│}{2:~                                     }{5:│}|
+          {5:│}{2:~                                     }{5:│}|
+          {5:│}{2:~                                     }{5:│}|
+          {5:└──────────────────────────────────────┘}|
+                                                  |
+        ]]}
+      end
+    end)
+
     it('with border show popupmenu', function()
       screen:try_resize(40,10)
       local buf = meths.create_buf(false, false)
