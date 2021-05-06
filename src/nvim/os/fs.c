@@ -471,8 +471,6 @@ FILE *os_fopen(const char *path, const char *flags)
         abort();
     }
   }
-  // Per open(2) manpage.
-  assert((iflags|O_RDONLY) || (iflags|O_WRONLY) || (iflags|O_RDWR));
   // Per fopen(3) manpage: default to 0666, it will be umask-adjusted.
   int fd = os_open(path, iflags, 0666);
   if (fd < 0) {
