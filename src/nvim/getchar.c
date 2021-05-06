@@ -3831,7 +3831,16 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
           if (c >= ABBR_OFF) {
             c -= ABBR_OFF;
           }
-          j += utf_char2bytes(c, tb + j);
+          int newlen = utf_char2bytes(c, tb + j);
+          tb[j + newlen] = NUL;
+          // Need to escape K_SPECIAL.
+          char_u *escaped = vim_strsave_escape_csi(tb + j);
+          if (escaped != NULL) {
+            newlen = (int)STRLEN(escaped);
+            memmove(tb + j, escaped, (size_t)newlen);
+            j += newlen;
+            xfree(escaped);
+          }
         }
         tb[j] = NUL;
         // insert the last typed char
