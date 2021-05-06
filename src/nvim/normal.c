@@ -880,8 +880,9 @@ static void normal_finish_command(NormalState *s)
     s->old_mapped_len = typebuf_maplen();
   }
 
-  // If an operation is pending, handle it.  But not for K_IGNORE.
-  if (s->ca.cmdchar != K_IGNORE) {
+  // If an operation is pending, handle it.  But not for K_IGNORE or
+  // K_MOUSEMOVE.
+  if (s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_MOUSEMOVE) {
     do_pending_operator(&s->ca, s->old_col, false);
   }
 
