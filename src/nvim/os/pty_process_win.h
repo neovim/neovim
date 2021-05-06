@@ -15,7 +15,6 @@ typedef enum {
 
 typedef struct pty_process {
   Process process;
-  char *term_name;
   uint16_t width, height;
   union {
     winpty_t *winpty;
