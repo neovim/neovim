@@ -754,4 +754,13 @@ func Test_submatch_list_concatenate()
   call assert_equal(substitute('A1', pat, Rep, ''), "[['A1'], ['1']]")
 endfunc
 
+func Test_substitute_skipped_range()
+  new
+  if 0
+    /1/5/2/2/\n
+  endif
+  call assert_equal([0, 1, 1, 0, 1], getcurpos())
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

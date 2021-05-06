@@ -447,18 +447,25 @@ static int put_view(
   if (do_cursor) {
     // Restore the cursor line in the file and relatively in the
     // window.  Don't use "G", it changes the jumplist.
+    if (wp->w_height_inner <= 0) {
+      if (fprintf(fd, "let s:l = %" PRIdLINENR "\n", wp->w_cursor.lnum) < 0) {
+        return FAIL;
+      }
+    } else if (fprintf(fd,
+                       "let s:l = %" PRIdLINENR " - ((%" PRIdLINENR
+                       " * winheight(0) + %" PRId64 ") / %" PRId64 ")\n",
+                       wp->w_cursor.lnum,
+                       wp->w_cursor.lnum - wp->w_topline,
+                       (int64_t)(wp->w_height_inner / 2),
+                       (int64_t)wp->w_height_inner) < 0) {
+      return FAIL;
+    }
     if (fprintf(fd,
-                "let s:l = %" PRId64 " - ((%" PRId64
-                " * winheight(0) + %" PRId64 ") / %" PRId64 ")\n"
                 "if s:l < 1 | let s:l = 1 | endif\n"
                 "keepjumps exe s:l\n"
                 "normal! zt\n"
-                "keepjumps %" PRId64 "\n",
-                (int64_t)wp->w_cursor.lnum,
-                (int64_t)(wp->w_cursor.lnum - wp->w_topline),
-                (int64_t)(wp->w_height_inner / 2),
-                (int64_t)wp->w_height_inner,
-                (int64_t)wp->w_cursor.lnum) < 0) {
+                "keepjumps %" PRIdLINENR "\n",
+                wp->w_cursor.lnum) < 0) {
       return FAIL;
     }
     // Restore the cursor column and left offset when not wrapping.

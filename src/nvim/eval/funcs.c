@@ -3016,7 +3016,10 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = safe_vgetc();
     }
 
-    if (n == K_IGNORE || n == K_VER_SCROLLBAR || n == K_HOR_SCROLLBAR) {
+    if (n == K_IGNORE
+        || n == K_MOUSEMOVE
+        || n == K_VER_SCROLLBAR
+        || n == K_HOR_SCROLLBAR) {
       continue;
     }
     break;
