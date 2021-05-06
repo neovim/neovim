@@ -1895,6 +1895,17 @@ describe('LSP', function()
       eq('å', exec_lua[[return vim.fn.expand('<cword>')]])
     end)
 
+    it('adds current position to jumplist before jumping', function()
+      exec_lua([[
+        vim.api.nvim_win_set_buf(0, ...)
+        vim.api.nvim_win_set_cursor(0, {2, 0})
+      ]], default_target_bufnr)
+      jump(default_target_bufnr, location(default_target_uri, 0, 9, 0, 9))
+
+      local mark = exec_lua([[return vim.inspect(vim.api.nvim_buf_get_mark(..., "'"))]], default_target_bufnr)
+      eq('{ 2, 0 }', mark)
+    end)
+
     it('should not push item to tagstack if destination is the same as source', function()
       -- Set cursor at the 2nd line, 1st character. This is the source position
       -- for the test, and will also be the destination one, making the cursor
