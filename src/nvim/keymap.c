@@ -288,6 +288,7 @@ static const struct key_name_entry {
   { K_LEFTDRAG,        "LeftDrag" },
   { K_LEFTRELEASE,     "LeftRelease" },
   { K_LEFTRELEASE_NM,  "LeftReleaseNM" },
+  { K_MOUSEMOVE,       "MouseMove" },
   { K_MIDDLEMOUSE,     "MiddleMouse" },
   { K_MIDDLEDRAG,      "MiddleDrag" },
   { K_MIDDLERELEASE,   "MiddleRelease" },
@@ -338,9 +339,9 @@ static struct mousetable {
   {(int)KE_X2MOUSE,           MOUSE_X2,       TRUE,   FALSE},
   {(int)KE_X2DRAG,            MOUSE_X2,       FALSE,  TRUE},
   {(int)KE_X2RELEASE,         MOUSE_X2,       FALSE,  FALSE},
-  /* DRAG without CLICK */
-  {(int)KE_IGNORE,            MOUSE_RELEASE,  FALSE,  TRUE},
-  /* RELEASE without CLICK */
+  // DRAG without CLICK
+  {(int)K_MOUSEMOVE,          MOUSE_RELEASE,  FALSE,  TRUE},
+  // RELEASE without CLICK
   {(int)KE_IGNORE,            MOUSE_RELEASE,  FALSE,  FALSE},
   {0,                         0,              0,      0},
 };

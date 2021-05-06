@@ -294,6 +294,7 @@ static const struct nv_cmd {
   { K_LEFTDRAG, nv_mouse,      0,                      0 },
   { K_LEFTRELEASE, nv_mouse,   0,                      0 },
   { K_LEFTRELEASE_NM, nv_mouse, 0,                     0 },
+  { K_MOUSEMOVE, nv_mouse,     0,                      0 },
   { K_MIDDLEMOUSE, nv_mouse,   0,                      0 },
   { K_MIDDLEDRAG, nv_mouse,    0,                      0 },
   { K_MIDDLERELEASE, nv_mouse, 0,                      0 },
@@ -2263,6 +2264,10 @@ do_mouse (
     break;
   }
 
+  if (c == K_MOUSEMOVE) {
+    // Mouse moved without a button pressed.
+    return false;
+  }
 
   /*
    * Ignore drag and release events if we didn't get a click.
@@ -3390,7 +3395,7 @@ bool add_to_showcmd(int c)
   static int ignore[] =
   {
     K_IGNORE,
-    K_LEFTMOUSE, K_LEFTDRAG, K_LEFTRELEASE,
+    K_LEFTMOUSE, K_LEFTDRAG, K_LEFTRELEASE, K_MOUSEMOVE,
     K_MIDDLEMOUSE, K_MIDDLEDRAG, K_MIDDLERELEASE,
     K_RIGHTMOUSE, K_RIGHTDRAG, K_RIGHTRELEASE,
     K_MOUSEDOWN, K_MOUSEUP, K_MOUSELEFT, K_MOUSERIGHT,
@@ -7036,6 +7041,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case K_LEFTMOUSE:
   case K_LEFTDRAG:
   case K_LEFTRELEASE:
+  case K_MOUSEMOVE:
   case K_RIGHTMOUSE:
   case K_RIGHTDRAG:
   case K_RIGHTRELEASE:

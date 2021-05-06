@@ -1193,7 +1193,8 @@ void wait_return(int redraw)
              || c == K_MIDDLEDRAG || c == K_MIDDLERELEASE
              || c == K_RIGHTDRAG  || c == K_RIGHTRELEASE
              || c == K_MOUSELEFT  || c == K_MOUSERIGHT
-             || c == K_MOUSEDOWN  || c == K_MOUSEUP);
+             || c == K_MOUSEDOWN  || c == K_MOUSEUP
+             || c == K_MOUSEMOVE);
     os_breakcheck();
     /*
      * Avoid that the mouse-up event causes visual mode to start.

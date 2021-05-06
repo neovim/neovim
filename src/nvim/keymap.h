@@ -242,7 +242,7 @@ enum key_extra {
   , KE_NOP = 97               // no-op: does nothing
   // , KE_FOCUSGAINED = 98    // focus gained
   // , KE_FOCUSLOST = 99      // focus lost
-  // , KE_MOUSEMOVE = 100     // mouse moved with no button down
+  , KE_MOUSEMOVE = 100        // mouse moved with no button down
   // , KE_CANCEL = 101        // return from vgetc
   , KE_EVENT = 102            // event
   , KE_COMMAND = 104          // <Cmd> special key
@@ -411,6 +411,7 @@ enum key_extra {
 #define K_LEFTDRAG      TERMCAP2KEY(KS_EXTRA, KE_LEFTDRAG)
 #define K_LEFTRELEASE   TERMCAP2KEY(KS_EXTRA, KE_LEFTRELEASE)
 #define K_LEFTRELEASE_NM TERMCAP2KEY(KS_EXTRA, KE_LEFTRELEASE_NM)
+#define K_MOUSEMOVE     TERMCAP2KEY(KS_EXTRA, KE_MOUSEMOVE)
 #define K_MIDDLEMOUSE   TERMCAP2KEY(KS_EXTRA, KE_MIDDLEMOUSE)
 #define K_MIDDLEDRAG    TERMCAP2KEY(KS_EXTRA, KE_MIDDLEDRAG)
 #define K_MIDDLERELEASE TERMCAP2KEY(KS_EXTRA, KE_MIDDLERELEASE)
