@@ -2199,7 +2199,7 @@ bool one_nonfloat(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// always false for a floating window
 bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return firstwin == wp && !(wp->w_next && !wp->w_floating);
+  return wp != NULL && firstwin == wp && !(wp->w_next && !wp->w_floating);
 }
 
 /// Close the possibly last window in a tab page.
