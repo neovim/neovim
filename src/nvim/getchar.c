@@ -1586,7 +1586,9 @@ int plain_vgetc(void)
 
   do {
     c = safe_vgetc();
-  } while (c == K_IGNORE || c == K_VER_SCROLLBAR || c == K_HOR_SCROLLBAR);
+  } while (c == K_IGNORE
+           || c == K_VER_SCROLLBAR || c == K_HOR_SCROLLBAR
+           || c == K_MOUSEMOVE);
   return c;
 }
 
