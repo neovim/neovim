@@ -537,7 +537,7 @@ static char_u *fname_trans_sid(const char_u *const name,
       if (current_sctx.sc_sid <= 0) {
         *error = ERROR_SCRIPT;
       } else {
-        snprintf((char *)fname_buf + 3, FLEN_FIXED + 1, "%" PRId64 "_",
+        snprintf((char *)fname_buf + i, FLEN_FIXED + 1 - i, "%" PRId64 "_",
                  (int64_t)current_sctx.sc_sid);
         i = (int)STRLEN(fname_buf);
       }
