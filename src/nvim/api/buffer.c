@@ -442,7 +442,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
     goto end;
   }
 
-  bcount_t deleted_bytes = MAX(get_region_bytecount(start, end, 0, 0)-1, 0);
+  bcount_t deleted_bytes = get_region_bytecount(curbuf, start, end, 0, 0);
 
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by

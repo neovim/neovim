@@ -1677,8 +1677,8 @@ int op_delete(oparg_T *oap)
       curbuf_splice_pending++;
       pos_T startpos = curwin->w_cursor;  // start position for delete
       bcount_t deleted_bytes = get_region_bytecount(
-          startpos.lnum, oap->end.lnum, startpos.col,
-          oap->end.col) - !oap->inclusive;
+          curbuf, startpos.lnum, oap->end.lnum, startpos.col,
+          oap->end.col) + oap->inclusive;
       truncate_line(true);        // delete from cursor to end of line
 
       curpos = curwin->w_cursor;  // remember curwin->w_cursor
@@ -6300,19 +6300,32 @@ bool op_reg_set_previous(const char name)
   return true;
 }
 
-bcount_t get_region_bytecount(linenr_T start_lnum, linenr_T end_lnum,
-                              colnr_T start_col, colnr_T end_col)
+/// Get the byte count of buffer region. End-exclusive.
+///
+/// @return number of bytes
+bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum,
+                              linenr_T end_lnum, colnr_T start_col,
+                              colnr_T end_col)
 {
-  const char *first = (const char *)ml_get(start_lnum);
+  linenr_T max_lnum = buf->b_ml.ml_line_lnum;
+  if (start_lnum > max_lnum) {
+    return 0;
+  }
+  if (start_lnum == end_lnum) {
+    return end_col - start_col;
+  }
+  const char *first = (const char *)ml_get_buf(buf, start_lnum, false);
   bcount_t deleted_bytes = (bcount_t)STRLEN(first) - start_col + 1;
 
-  if (start_lnum == end_lnum) {
-    return deleted_bytes - ((bcount_t)STRLEN(first) - end_col + 1);
-  }
-
   for (linenr_T i = 1; i <= end_lnum-start_lnum-1; i++) {
+    if (start_lnum + i > max_lnum) {
+      return deleted_bytes;
+    }
     deleted_bytes += (bcount_t)STRLEN(
-        ml_get(start_lnum + i)) + 1;
+        ml_get_buf(buf, start_lnum + i, false)) + 1;
   }
-  return deleted_bytes + end_col + 1;
+  if (end_lnum > max_lnum) {
+    return deleted_bytes;
+  }
+  return deleted_bytes + end_col;
 }

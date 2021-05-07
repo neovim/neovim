@@ -962,20 +962,20 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
 
       -- delete
-      command("lua vim.api.nvim_buf_set_lines(0, 0, 1, true, {})")
+      meths.buf_set_lines(0, 0, 1, true, {})
 
       check_events {
         { "test1", "bytes", 1, 3, 0, 0, 0, 1, 0, 4, 0, 0, 0 };
       }
 
       -- add
-      command("lua vim.api.nvim_buf_set_lines(0, 0, 0, true, {'asdf'})")
+      meths.buf_set_lines(0, 0, 0, true, {'asdf'})
       check_events {
         { "test1", "bytes", 1, 4, 0, 0, 0, 0, 0, 0, 1, 0, 5 };
       }
 
       -- replace
-      command("lua vim.api.nvim_buf_set_lines(0, 0, 1, true, {'asdf', 'fdsa'})")
+      meths.buf_set_lines(0, 0, 1, true, {'asdf', 'fdsa'})
       check_events {
         { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 5, 2, 0, 10 };
       }
