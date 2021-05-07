@@ -70,7 +70,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       feed_command('let $GZIP = ""')
       --execute('au FileChangedShell * echo "caught FileChangedShell"')
       feed_command('set bin')
-      feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
+      feed_command("au FileReadPost    *.gz   '[,']!GZIP= gzip -d")
       -- Read and decompress the testfile.
       feed_command('$r Xtestfile.gz')
       expect('\n'..text1)
