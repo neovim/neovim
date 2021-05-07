@@ -62,6 +62,24 @@ describe('float window', function()
     eq(1000, funcs.win_getid())
   end)
 
+  it('win_execute() should work' , function()
+    local buf = meths.create_buf(false, false)
+    meths.buf_set_lines(buf, 0, -1, true, {'the floatwin'})
+    local win = meths.open_win(buf, false, {relative='win', width=16, height=1, row=0, col=10})
+    local line = funcs.win_execute(win, 'echo getline(1)')
+    eq('\nthe floatwin', line)
+    funcs.win_execute(win, 'bwipe!')
+  end)
+
+  it('win_execute() call commands that not allowed' , function()
+    local buf = meths.create_buf(false, false)
+    meths.buf_set_lines(buf, 0, -1, true, {'the floatwin'})
+    local win = meths.open_win(buf, true, {relative='win', width=16, height=1, row=0, col=10})
+    eq(pcall_err(funcs.win_execute, win, 'close'), 'Vim(close):E37: No write since last change (add ! to override)')
+    eq(pcall_err(funcs.win_execute, win, 'bdelete'), 'Vim(bdelete):E89: No write since last change for buffer 2 (add ! to override)')
+    funcs.win_execute(win, 'bwipe!')
+  end)
+
   it('closed immediately by autocmd #11383', function()
     eq('Error executing lua: [string "<nvim>"]:0: Window was closed immediately',
       pcall_err(exec_lua, [[

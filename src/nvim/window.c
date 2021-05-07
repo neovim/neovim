@@ -3466,6 +3466,9 @@ int win_alloc_first(void)
   first_tabpage = alloc_tabpage();
   first_tabpage->tp_topframe = topframe;
   curtab = first_tabpage;
+  curtab->tp_firstwin = firstwin;
+  curtab->tp_lastwin = lastwin;
+  curtab->tp_curwin = curwin;
 
   return OK;
 }
@@ -3634,6 +3637,8 @@ int win_new_tabpage(int after, char_u *filename)
       newtp->tp_next = tp->tp_next;
       tp->tp_next = newtp;
     }
+    newtp->tp_firstwin = newtp->tp_lastwin = newtp->tp_curwin = curwin;
+
     win_init_size();
     firstwin->w_winrow = tabline_height();
     win_comp_scroll(curwin);
@@ -6336,6 +6341,13 @@ static win_T *get_snapshot_focus(int idx)
 int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage_T *tp, int no_display)
 {
   block_autocmds();
+  return switch_win_noblock(save_curwin, save_curtab, win, tp, no_display);
+}
+
+// As switch_win() but without blocking autocommands.
+int switch_win_noblock(win_T **save_curwin, tabpage_T **save_curtab,
+                       win_T *win, tabpage_T *tp, int no_display)
+{
   *save_curwin = curwin;
   if (tp != NULL) {
     *save_curtab = curtab;
@@ -6361,6 +6373,14 @@ int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage
 // triggered.
 void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
 {
+  restore_win_noblock(save_curwin, save_curtab, no_display);
+  unblock_autocmds();
+}
+
+// As restore_win() but without unblocking autocommands.
+void restore_win_noblock(win_T *save_curwin, tabpage_T *save_curtab,
+                         bool no_display)
+{
   if (save_curtab != NULL && valid_tabpage(save_curtab)) {
     if (no_display) {
       curtab->tp_firstwin = firstwin;
@@ -6375,7 +6395,6 @@ void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
     curwin = save_curwin;
     curbuf = curwin->w_buffer;
   }
-  unblock_autocmds();
 }
 
 /// Make "buf" the current buffer.
@@ -6808,10 +6827,19 @@ void win_id2tabwin(typval_T *const argvars, typval_T *const rettv)
 
 win_T * win_id2wp(typval_T *argvars)
 {
+  return win_id2wp_tp(argvars, NULL);
+}
+
+// Return the window and tab pointer of window "id".
+win_T * win_id2wp_tp(typval_T *argvars, tabpage_T **tpp)
+{
   int id = tv_get_number(&argvars[0]);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->handle == id) {
+      if (tpp != NULL) {
+        *tpp = tp;
+      }
       return wp;
     }
   }

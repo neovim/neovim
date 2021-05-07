@@ -2529,6 +2529,8 @@ visualmode([expr])		String	last visual mode used
 wait({timeout}, {condition}[, {interval}])
 				Number  Wait until {condition} is satisfied
 wildmenumode()			Number	whether 'wildmenu' mode is active
+win_execute({id}, {command} [, {silent}])
+				String	execute {command} in window {id}
 win_findbuf({bufnr})		List	find windows containing {bufnr}
 win_getid([{win} [, {tab}]])	Number	get |window-ID| for {win} in {tab}
 win_gettype([{nr}])		String	type of window {nr}
@@ -3543,6 +3545,8 @@ execute({command} [, {silent}])				*execute()*
 		Note: If nested, an outer execute() will not observe output of
 		the inner calls.
 		Note: Text attributes (highlights) are not captured.
+		To execute a command in another window than the current one
+		use `win_execute()`.
 
 exepath({expr})						*exepath()*
 		Returns the full path of {expr} if it is an executable and
@@ -9123,6 +9127,12 @@ wildmenumode()					*wildmenumode()*
 <
 		(Note, this needs the 'wildcharm' option set appropriately).
 
+win_execute({id}, {command} [, {silent}])		*win_execute()*
+		Like `execute()` but in the context of window {id}.
+		The window will temporarily be made the current window,
+		without triggering autocommands.
+		Example: >
+			call win_execute(winid, 'syntax enable')
 
 win_findbuf({bufnr})					*win_findbuf()*
 		Returns a |List| with |window-ID|s for windows that contain
