@@ -1845,8 +1845,9 @@ end
 --@param row 0-indexed line
 --@param col 0-indexed byte offset in line
 --@returns (number, number) UTF-32 and UTF-16 index of the character in line {row} column {col} in buffer {buf}
-function M.character_offset(buf, row, col)
-  local line = api.nvim_buf_get_lines(buf, row, row+1, true)[1]
+function M.character_offset(bufnr, row, col)
+  local uri = vim.uri_from_bufnr(bufnr)
+  local line = M.get_line(uri, row)
   -- If the col is past the EOL, use the line length.
   if col > #line then
     return str_utfindex(line)
