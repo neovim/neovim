@@ -522,6 +522,8 @@ function vim.notify(msg, log_level, _opts)
 
   if log_level == vim.log.levels.ERROR then
     vim.api.nvim_err_writeln(msg)
+  elseif log_level == vim.log.levels.WARN then
+    vim.api.nvim_echo({{msg, 'WarningMsg'}}, true, {})
   else
     vim.api.nvim_echo({{msg}}, true, {})
   end
