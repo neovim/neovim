@@ -3952,8 +3952,10 @@ int build_stl_str_hl(
       // Attempt to copy the expression to evaluate into
       // the output buffer as a null-terminated string.
       char_u *t = out_p;
-      while (*fmt_p != '}' && *fmt_p != NUL && out_p < out_end_p)
+      char_u *block_start = fmt_p;
+      while (*fmt_p != '}' && *fmt_p != NUL && out_p < out_end_p) {
         *out_p++ = *fmt_p++;
+      }
       if (*fmt_p != '}') {          // missing '}' or out of space
         break;
       }
@@ -4004,6 +4006,28 @@ int build_stl_str_hl(
           itemisflag = false;
         }
       }
+
+      // If the output of the expression needs to be evaluated
+      // replace the %{} block with the result of evaluation
+      if (str != NULL && *str != 0 && strchr((const char *)str, '%') != NULL) {
+        size_t parsed_usefmt = (size_t)(block_start - usefmt - 1);
+        size_t str_length = strlen((const char *)str);
+        size_t fmt_length = strlen((const char *)fmt_p);
+        size_t new_fmt_len = parsed_usefmt + str_length + fmt_length + 1;
+        char_u * new_fmt = (char_u *)xmalloc(new_fmt_len * sizeof(char_u));
+        memcpy(new_fmt, usefmt, parsed_usefmt);
+        memcpy(new_fmt + parsed_usefmt, str, str_length);
+        memcpy(new_fmt + parsed_usefmt + str_length, fmt_p, fmt_length);
+        new_fmt[new_fmt_len - 1] = 0;
+        if (usefmt != fmt) {
+          xfree(usefmt);
+        }
+        XFREE_CLEAR(str);
+        usefmt = new_fmt;
+        fmt_p = usefmt + parsed_usefmt;
+        continue;
+      }
+
       break;
     }
 
