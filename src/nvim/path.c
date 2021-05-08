@@ -180,6 +180,34 @@ const char *path_next_component(const char *fname)
   return fname;
 }
 
+/// Returns the length of the path head on the current platform.
+/// @return
+///   - 3 on windows
+///   - 1 otherwise
+int path_head_length(void)
+{
+#ifdef WIN32
+  return 3;
+#else
+  return 1;
+#endif
+}
+
+/// Returns true if path begins with characters denoting the head of a path
+/// (e.g. '/' on linux and 'D:' on windows).
+/// @param path The path to be checked.
+/// @return
+///   - True if path begins with a path head
+///   - False otherwise
+bool is_path_head(const char_u *path)
+{
+#ifdef WIN32
+  return isalpha(path[0]) && path[1] == ':';
+#else
+  return vim_ispathsep(*path);
+#endif
+}
+
 /// Get a pointer to one character past the head of a path name.
 /// Unix: after "/"; Win: after "c:\"
 /// If there is no head, path is returned.
@@ -189,7 +217,7 @@ char_u *get_past_head(const char_u *path)
 
 #ifdef WIN32
   // May skip "c:"
-  if (isalpha(path[0]) && path[1] == ':') {
+  if (is_path_head(path)) {
     retval = path + 2;
   }
 #endif
@@ -1991,10 +2019,24 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 
   assert(dir_name != NULL);
   size_t len = strlen((char *)dir_name);
+
+  // If dir_name is a path head, full_path can always be made relative.
+  if (len == (size_t)path_head_length() && is_path_head(dir_name)) {
+    return full_path + len;
+  }
+
+  // If full_path and dir_name do not match, it's impossible to make one
+  // relative to the other.
+  if (fnamencmp(dir_name, full_path, len) != 0) {
+    return NULL;
+  }
+
   char_u *p = full_path + len;
 
-  if (fnamencmp(dir_name, full_path, len) != 0
-      || !vim_ispathsep(*p)) {
+  // If *p is not pointing to a path separator, this means that full_path's
+  // last directory name is longer than *dir_name's last directory, so they
+  // don't actually match.
+  if (!vim_ispathsep(*p)) {
     return NULL;
   }
 
