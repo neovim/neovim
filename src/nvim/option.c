@@ -855,15 +855,18 @@ void set_init_3(void)
         p_srr = (char_u *)">&";
         options[idx_srr].def_val[VI_DEFAULT] = p_srr;
       }
-    } else if (       fnamecmp(p, "sh") == 0
-                      || fnamecmp(p, "ksh") == 0
-                      || fnamecmp(p, "mksh") == 0
-                      || fnamecmp(p, "pdksh") == 0
-                      || fnamecmp(p, "zsh") == 0
-                      || fnamecmp(p, "zsh-beta") == 0
-                      || fnamecmp(p, "bash") == 0
-                      || fnamecmp(p, "fish") == 0
-                      ) {
+    } else if (fnamecmp(p, "sh") == 0
+               || fnamecmp(p, "ksh") == 0
+               || fnamecmp(p, "mksh") == 0
+               || fnamecmp(p, "pdksh") == 0
+               || fnamecmp(p, "zsh") == 0
+               || fnamecmp(p, "zsh-beta") == 0
+               || fnamecmp(p, "bash") == 0
+               || fnamecmp(p, "fish") == 0
+               || fnamecmp(p, "ash") == 0
+               || fnamecmp(p, "dash") == 0
+               ) {
+      // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = (char_u *)"2>&1| tee";
         options[idx_sp].def_val[VI_DEFAULT] = p_sp;
