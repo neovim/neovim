@@ -5267,9 +5267,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	in a file and echoed to the screen.  If the 'shell' option is "csh" or
 	"tcsh" after initializations, the default becomes "|& tee".  If the
 	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
-	"bash" or "fish" the default becomes "2>&1| tee".  This means that
-	stderr is also included.  Before using the 'shell' option a path is
-	removed, thus "/bin/sh" uses "sh".
+	"bash", "fish", "ash" or "dash" the default becomes "2>&1| tee".  This
+	means that stderr is also included.  Before using the 'shell' option a
+	path is removed, thus "/bin/sh" uses "sh".
 	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellpipe' option changes automatically, unless it was
