@@ -4017,8 +4017,8 @@ int build_stl_str_hl(
 
       // If the output of the expression needs to be evaluated
       // replace the %{} block with the result of evaluation
-      if (str != NULL && *str != 0 && strchr((const char *)str, '%') != NULL &&
-            evaldepth < MAX_STL_EVAL_DEPTH) {
+      if (str != NULL && *str != 0 && strchr((const char *)str, '%') != NULL
+          && evaldepth < MAX_STL_EVAL_DEPTH) {
         size_t parsed_usefmt = (size_t)(block_start - usefmt - 1);
         size_t str_length = strlen((const char *)str);
         size_t fmt_length = strlen((const char *)fmt_p);
