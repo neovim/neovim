@@ -4358,7 +4358,6 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
                        timeout);
     if (stat.cur > 0) {
       char  t[SEARCH_STAT_BUF_LEN];
-      size_t  len;
 
       if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
         if (stat.incomplete == 1) {
@@ -4388,7 +4387,7 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
         }
       }
 
-      len = STRLEN(t);
+      size_t len = strlen(t);
       if (show_top_bot_msg && len + 2 < SEARCH_STAT_BUF_LEN) {
         memmove(t + 2, t, len);
         t[0] = 'W';
