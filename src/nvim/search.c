@@ -4349,8 +4349,8 @@ int linewhite(linenr_T lnum)
 // Add the search count "[3/19]" to "msgbuf".
 // See update_search_stat() for other arguments.
 static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
-                                int show_top_bot_msg, char_u  *msgbuf,
-                                int recompute, int maxcount, long timeout)
+                                bool show_top_bot_msg, char_u  *msgbuf,
+                                bool recompute, int maxcount, long timeout)
 {
     searchstat_T stat;
 
@@ -4411,21 +4411,21 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
 
 // Add the search count information to "stat".
 // "stat" must not be NULL.
-// When "recompute" is TRUE always recompute the numbers.
+// When "recompute" is true always recompute the numbers.
 // dirc == 0: don't find the next/previous match (only set the result to "stat")
 // dirc == '/': find the next match
 // dirc == '?': find the previous match
 static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
-                               searchstat_T *stat, int recompute, int maxcount,
+                               searchstat_T *stat, bool recompute, int maxcount,
                                long timeout)
 {
     int             save_ws = p_ws;
-    int             wraparound = false;
+    bool             wraparound = false;
     pos_T           p = (*pos);
     static pos_T    lastpos = { 0, 0, 0 };
     static int      cur = 0;
     static int      cnt = 0;
-    static int      exact_match = false;
+    static bool      exact_match = false;
     static int      incomplete = 0;
     static int      last_maxcount = SEARCH_STAT_DEF_MAX_COUNT;
     static int      chgtick = 0;
@@ -4471,7 +4471,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
         && (dirc == 0 || dirc == '/' ? cur < cnt : cur > 0)) {
       cur += dirc == 0 ? 0 : dirc == '/' ? 1 : -1;
     } else {
-      int done_search = false;
+      bool done_search = false;
       pos_T endpos = { 0, 0, 0 };
       p_ws = false;
       if (timeout > 0) {
@@ -4525,7 +4525,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     char_u    *pattern = NULL;
     int     maxcount = SEARCH_STAT_DEF_MAX_COUNT;
     long    timeout = SEARCH_STAT_DEF_TIMEOUT;
-    int     recompute = true;
+    bool     recompute = true;
     searchstat_T  stat;
 
     tv_dict_alloc_ret(rettv);
