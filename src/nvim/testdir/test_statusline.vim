@@ -241,7 +241,7 @@ func Test_statusline()
   call assert_match('^vimLineComment\s*$', s:get_statusline())
   syntax off
 
-  "%{: evaluates enxpressions present in result of %{} expression
+  "%{: evaluates expressions present in result of %{} expression
   func! Inner_eval()
     return '%n some other text'
   endfunc
