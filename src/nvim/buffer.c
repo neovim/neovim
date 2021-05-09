@@ -3569,6 +3569,7 @@ int build_stl_str_hl(
   }
 
   int groupdepth = 0;
+  int evaldepth = 0;
 
   int curitem = 0;
   bool prevchar_isflag = true;
@@ -3906,6 +3907,13 @@ int build_stl_str_hl(
       continue;
     }
 
+    // Denotes end of expanded %{} block
+    if (*fmt_p == '}' && evaldepth > 0) {
+      fmt_p++;
+      evaldepth--;
+      continue;
+    }
+
     // An invalid item was specified.
     // Continue processing on the next character of the format string.
     if (vim_strchr(STL_ALL, *fmt_p) == NULL) {
@@ -4009,15 +4017,17 @@ int build_stl_str_hl(
 
       // If the output of the expression needs to be evaluated
       // replace the %{} block with the result of evaluation
-      if (str != NULL && *str != 0 && strchr((const char *)str, '%') != NULL) {
+      if (str != NULL && *str != 0 && strchr((const char *)str, '%') != NULL &&
+            evaldepth < MAX_STL_EVAL_DEPTH) {
         size_t parsed_usefmt = (size_t)(block_start - usefmt - 1);
         size_t str_length = strlen((const char *)str);
         size_t fmt_length = strlen((const char *)fmt_p);
-        size_t new_fmt_len = parsed_usefmt + str_length + fmt_length + 1;
+        size_t new_fmt_len = parsed_usefmt + str_length + fmt_length + 3;
         char_u * new_fmt = (char_u *)xmalloc(new_fmt_len * sizeof(char_u));
         memcpy(new_fmt, usefmt, parsed_usefmt);
         memcpy(new_fmt + parsed_usefmt, str, str_length);
-        memcpy(new_fmt + parsed_usefmt + str_length, fmt_p, fmt_length);
+        memcpy(new_fmt + parsed_usefmt + str_length, "%}", 2);
+        memcpy(new_fmt + parsed_usefmt + str_length + 2, fmt_p, fmt_length);
         new_fmt[new_fmt_len - 1] = 0;
         if (usefmt != fmt) {
           xfree(usefmt);
@@ -4025,6 +4035,7 @@ int build_stl_str_hl(
         XFREE_CLEAR(str);
         usefmt = new_fmt;
         fmt_p = usefmt + parsed_usefmt;
+        evaldepth++;
         continue;
       }
 

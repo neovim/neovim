@@ -10,6 +10,10 @@
 #include "nvim/eval.h"
 #include "nvim/macros.h"
 
+// Determines how deeply nested %{} blocks will be evaluated
+// in statusline.
+#define MAX_STL_EVAL_DEPTH 100
+
 // Values for buflist_getfile()
 enum getf_values {
   GETF_SETMARK = 0x01, // set pcmark before jumping
