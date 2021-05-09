@@ -268,6 +268,8 @@ describe('packadd', function()
         call assert_match('look-here', tags1[0])
         let tags2 = readfile(docdir2 . '/tags')
         call assert_match('look-away', tags2[0])
+
+        call assert_fails('helptags abcxyz', 'E150:')
       endfunc
 
       func Test_colorscheme()

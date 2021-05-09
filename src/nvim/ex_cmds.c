@@ -358,6 +358,7 @@ static int linelen(int *has_tab)
 static char_u   *sortbuf1;
 static char_u   *sortbuf2;
 
+static int sort_lc;       ///< sort using locale
 static int sort_ic;       ///< ignore case
 static int sort_nr;       ///< sort on number
 static int sort_rx;       ///< sort on regex instead of skipping it
@@ -381,6 +382,13 @@ typedef struct {
   } st_u;
 } sorti_T;
 
+static int string_compare(const void *s1, const void *s2) FUNC_ATTR_NONNULL_ALL
+{
+  if (sort_lc) {
+    return strcoll((char *)s1, (char *)s2);
+  }
+  return sort_ic ? STRICMP(s1, s2) : STRCMP(s1, s2);
+}
 
 static int sort_compare(const void *s1, const void *s2)
 {
@@ -424,8 +432,7 @@ static int sort_compare(const void *s1, const void *s2)
            l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1);
     sortbuf2[l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr] = NUL;
 
-    result = sort_ic ? STRICMP(sortbuf1, sortbuf2)
-             : STRCMP(sortbuf1, sortbuf2);
+    result = string_compare(sortbuf1, sortbuf2);
   }
 
   /* If two lines have the same value, preserve the original line order. */
@@ -466,7 +473,7 @@ void ex_sort(exarg_T *eap)
   regmatch.regprog = NULL;
   sorti_T *nrs = xmalloc(count * sizeof(sorti_T));
 
-  sort_abort = sort_ic = sort_rx = sort_nr = sort_flt = 0;
+  sort_abort = sort_ic = sort_lc = sort_rx = sort_nr = sort_flt = 0;
   size_t format_found = 0;
   bool change_occurred = false;   // Buffer contents changed.
 
@@ -474,6 +481,8 @@ void ex_sort(exarg_T *eap)
     if (ascii_iswhite(*p)) {
     } else if (*p == 'i') {
       sort_ic = true;
+    } else if (*p == 'l') {
+      sort_lc = true;
     } else if (*p == 'r') {
       sort_rx = true;
     } else if (*p == 'n') {
@@ -645,8 +654,7 @@ void ex_sort(exarg_T *eap)
     s = ml_get(get_lnum);
     size_t bytelen = STRLEN(s) + 1;  // include EOL in bytelen
     old_count += bytelen;
-    if (!unique || i == 0
-        || (sort_ic ? STRICMP(s, sortbuf1) : STRCMP(s, sortbuf1)) != 0) {
+    if (!unique || i == 0 || string_compare(s, sortbuf1) != 0) {
       // Copy the line into a buffer, it may become invalid in
       // ml_append(). And it's needed for "unique".
       STRCPY(sortbuf1, s);

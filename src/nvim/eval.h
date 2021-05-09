@@ -157,6 +157,7 @@ typedef enum {
     VV_EVENT,
     VV_ECHOSPACE,
     VV_ARGV,
+    VV_COLLATE,
     VV_EXITING,
     // Neovim
     VV_STDERR,
