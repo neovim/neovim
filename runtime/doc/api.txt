@@ -2252,7 +2252,7 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {line}    Line number where to place the mark, 0-based
+                    {line}    Line where to place the mark, 0-based
                     {col}     Column where to place the mark, 0-based
                     {opts}    Optional parameters.
                               • id : id of the extmark to edit.
