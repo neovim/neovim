@@ -27,6 +27,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
 #include "nvim/mark.h"
+#include "nvim/ops.h"
 #include "nvim/extmark.h"
 #include "nvim/decoration.h"
 #include "nvim/fileio.h"
@@ -441,6 +442,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
     goto end;
   }
 
+  bcount_t deleted_bytes = get_region_bytecount(curbuf, start, end, 0, 0);
+
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
   // repeatedly deleting line "start".
@@ -460,6 +463,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
+  bcount_t inserted_bytes = 0;
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
@@ -472,6 +476,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
       api_set_error(err, kErrorTypeException, "Failed to replace line");
       goto end;
     }
+
+    inserted_bytes += STRLEN(lines[i]) + 1;
     // Mark lines that haven't been passed to the buffer as they need
     // to be freed later
     lines[i] = NULL;
@@ -491,6 +497,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
       goto end;
     }
 
+    inserted_bytes += STRLEN(lines[i]) + 1;
+
     // Same as with replacing, but we also need to free lines
     xfree(lines[i]);
     lines[i] = NULL;
@@ -505,7 +513,11 @@ void nvim_buf_set_lines(uint64_t channel_id,
               (linenr_T)(end - 1),
               MAXLNUM,
               (long)extra,
-              kExtmarkUndo);
+              kExtmarkNOOP);
+
+  extmark_splice(curbuf, (int)start-1, 0, (int)(end-start), 0,
+                 deleted_bytes, (int)(end+extra-1), 0, inserted_bytes,
+                 kExtmarkUndo);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);

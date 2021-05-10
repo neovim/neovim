@@ -6,6 +6,7 @@
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/types.h"
+#include "nvim/extmark.h"
 #include "nvim/eval/typval.h"
 #include "nvim/os/time.h"
 #include "nvim/normal.h" // for MotionType and oparg_T
