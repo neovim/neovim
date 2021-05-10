@@ -6307,7 +6307,7 @@ bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum,
                               linenr_T end_lnum, colnr_T start_col,
                               colnr_T end_col)
 {
-  linenr_T max_lnum = buf->b_ml.ml_line_lnum;
+  linenr_T max_lnum = buf->b_ml.ml_line_count;
   if (start_lnum > max_lnum) {
     return 0;
   }

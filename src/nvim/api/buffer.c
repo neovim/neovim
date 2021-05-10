@@ -516,7 +516,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
               kExtmarkNOOP);
 
   extmark_splice(curbuf, (int)start-1, 0, (int)(end-start), 0,
-                 deleted_bytes, (int)(end+extra-1), 0, inserted_bytes,
+                 deleted_bytes, (int)new_len, 0, inserted_bytes,
                  kExtmarkUndo);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
