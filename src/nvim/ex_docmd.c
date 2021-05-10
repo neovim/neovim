@@ -6380,6 +6380,12 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
+  if (first_tabpage->tp_next && one_nonfloat_in_tab(curtab)
+      && has_unanchored_floats(curtab)) {
+    EMSG(e_floatonly);
+    return;
+  }
+
   win_T *wp;
 
   if (eap->addr_count > 0) {
@@ -6425,6 +6431,20 @@ static void ex_quit(exarg_T *eap)
       getout(0);
     }
     not_exiting();
+    // close floats anchored to it first
+    FOR_ALL_TAB_WINDOWS(tp, win) {
+      if (win == wp) {
+        continue;
+      }
+      if (win->w_floating
+          && win->w_float_config.relative == kFloatRelativeWindow
+          && win->w_float_config.window == wp->handle) {
+        // if we fail closing a window, terminate.
+        if (win_close(win, !buf_hide(win->w_buffer) || eap->forceit) == FAIL) {
+         return;
+        }
+      }
+    }
     // close window; may free buffer
     win_close(wp, !buf_hide(wp->w_buffer) || eap->forceit);
   }
@@ -6519,6 +6539,34 @@ ex_win_close(
 {
   int need_hide;
   buf_T       *buf = win->w_buffer;
+
+  if (!win->w_floating && has_unanchored_floats(tp ? tp : curtab)
+      && one_nonfloat_in_tab(tp ? tp : curtab)) {
+    EMSG(e_floatonly);
+    return;
+  }
+
+  if (!win->w_floating && !first_tabpage->tp_next
+      && (!firstwin->w_next || firstwin->w_next->w_floating)) {
+    EMSG(_("E444: Cannot close last window"));
+    return;
+  }
+
+  // close floats anchored to this window first.
+  win_T       *wp = (tp) ? tp->tp_firstwin : firstwin;
+  while (wp) {
+    win_T *next_win = wp->w_next;
+    if (wp->w_floating
+        &&wp->w_float_config.relative == kFloatRelativeWindow
+        && wp->w_float_config.window == win->handle) {
+      ex_win_close(forceit, wp, tp);
+      // if we fail closing any float, terminate.
+      if (win_valid(wp)) {
+        return;
+      }
+    }
+    wp = next_win;
+  }
 
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
   if (need_hide && !buf_hide(buf) && !forceit) {

@@ -2280,7 +2280,6 @@ int win_close(win_T *win, bool free_buf)
     EMSG(_("E444: Cannot close last window"));
     return FAIL;
   }
-
   if (win->w_closing
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return FAIL;     // window is already being closed
@@ -2291,12 +2290,6 @@ int win_close(win_T *win, bool free_buf)
   }
   if ((firstwin == aucmd_win || lastwin == aucmd_win) && one_window()) {
     EMSG(_("E814: Cannot close window, only autocmd window would remain"));
-    return FAIL;
-  }
-  if ((firstwin == win && lastwin_nofloating() == win)
-      && lastwin->w_floating) {
-    // TODO(bfredl): we might close the float also instead
-    EMSG(e_floatonly);
     return FAIL;
   }
 
@@ -2716,8 +2709,9 @@ winframe_remove (
   /*
    * If there is only one window there is nothing to remove.
    */
-  if (tp == NULL ? ONE_WINDOW : tp->tp_firstwin == tp->tp_lastwin)
+  if (tp == NULL ? ONE_WINDOW :tp->tp_firstwin == tp->tp_lastwin) {
     return NULL;
+  }
 
   /*
    * Remove the window from its frame.
@@ -6930,4 +6924,30 @@ win_T *lastwin_nofloating(void) {
     res = res->w_prev;
   }
   return res;
+}
+
+// Check if there is at least one unanchored floating window in the tabpage tp
+bool has_unanchored_floats(tabpage_T *tp)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+    if (wp->w_floating && wp->w_float_config.relative != kFloatRelativeWindow) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Check if there is only one nonfloat in the tabpage tp
+bool one_nonfloat_in_tab(tabpage_T *tp)
+{
+  int w_nonfloats = 0;
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+    if (!wp->w_floating) {
+      w_nonfloats++;
+      if (w_nonfloats > 1) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
