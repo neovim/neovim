@@ -982,12 +982,14 @@ static int check_external_diff(diffio_T *diffio)
           char_u linebuf[LBUFLEN];
 
           for (;;) {
-            // There must be a line that contains "1c1".
+            // There must be a line that contains "1c1" when doing a regular
+            // diff, or "@@ -1 +1 @@" when doing a unified one.
             if (vim_fgets(linebuf, LBUFLEN, fd)) {
               break;
             }
 
-            if (STRNCMP(linebuf, "1c1", 3) == 0) {
+            if (STRNCMP(linebuf, "1c1", 3) == 0
+                || STRNCMP(linebuf, "@@ -1 +1 @@", 11) == 0) {
               ok = kTrue;
             }
           }

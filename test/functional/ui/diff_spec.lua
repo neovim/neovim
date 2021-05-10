@@ -1128,3 +1128,32 @@ it('diff updates line numbers below filler lines', function()
       signcolumn=auto                       |
   ]]}
 end)
+
+it('supports unified diffs', function()
+  clear()
+  local screen = Screen.new(40, 5)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+    [2] = {reverse = true},
+    [3] = {bold = true, foreground = Screen.colors.Blue1},
+    [4] = {bold = true, reverse = true},
+  })
+  source([[
+    function! MyDiff()
+      silent execute "!diff  -u " . v:fname_in . " " . v:fname_new . " > " . v:fname_out
+    endfunction
+    set diffexpr=MyDiff()
+    call setline(1, ['a'])
+    vnew
+    call setline(1, ['a'])
+    windo diffthis
+  ]])
+  screen:expect([[
+    {1:- }a                {2:│}{1:- }^a                 |
+    {3:~                  }{2:│}{3:~                   }|
+    {3:~                  }{2:│}{3:~                   }|
+    {2:[No Name] [+]       }{4:[No Name] [+]       }|
+                                            |
+  ]])
+end)
