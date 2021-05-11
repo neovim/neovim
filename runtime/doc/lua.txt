@@ -1581,4 +1581,32 @@ uri_to_fname({uri})                                       *vim.uri_to_fname()*
                 Return: ~
                     Filename
 
+==============================================================================
+Lua module: xdiff                                                  *lua-xdiff*
+
+xdl_diff({a}, {b}, {opts})
+
+                Parameters: ~
+                    {a}      First string to compare
+                    {b}      Other string to compare
+                    {opts}   Optional parameters:
+                             • hunk_func: Lua callback invoked for each hunk
+                               in the diff. Return a negative number to cancel
+                               the callback for any remaining hunks.
+                               Args:
+                               • start_a
+                               • count_a
+                               • start_b
+                               • count_b
+                             • ctxlen: Integer
+                             • interhunkctxlen: Integer
+                             • ignore_whitespace: Boolean
+                             • ignore_whitespace_change: Boolean
+                             • ignore_whitespace_change_at_eol: Boolean
+                             • ignore_cr_at_eol: Boolean
+
+
+                Return: ~
+                    Diff as string, nil if {opts.hunk_func} is given.
+
  vim:tw=78:ts=8:ft=help:norl:
