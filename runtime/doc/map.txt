@@ -176,6 +176,12 @@ whether to use the "," mapping or the longer one.  To avoid this add the
 <nowait> argument.  Then the mapping will be used when it matches, Vim does
 not wait for more characters to be typed.  However, if the characters were
 already typed they are used.
+Note that this works when the <nowait> mapping fully matches and is found
+before any partial matches.  This works when:
+- There is only one matching buffer-local mapping, since these are always
+  found before global mappings.
+- There is another buffer-local mapping that partly matches, but it is
+  defined earlier (last defined mapping is found first).
 
 						*:map-<silent>* *:map-silent*
 To define a mapping which will not be echoed on the command line, add
@@ -217,14 +223,23 @@ have a look at |maparg()|.
 If the first argument to one of these commands is "<expr>" and it is used to
 define a new mapping or abbreviation, the argument is an expression.  The
 expression is evaluated to obtain the {rhs} that is used.  Example: >
-	:inoremap <expr> . InsertDot()
-The result of the InsertDot() function will be inserted.  It could check the
+	:inoremap <expr> . <SID>InsertDot()
+The result of the s:InsertDot() function will be inserted.  It could check the
 text before the cursor and start omni completion when some condition is met.
+Using a script-local function is preferred, to avoid polluting the global
+namespace.  Use <SID> in the RHS so that the script that the mapping was
+defined in can be found.
 
 For abbreviations |v:char| is set to the character that was typed to trigger
 the abbreviation.  You can use this to decide how to expand the {lhs}.  You
 should not either insert or change the v:char.
- 
+
+In case you want the mapping to not do anything, you can have the expression
+evaluate to an empty string.  If something changed that requires Vim to
+go through the main loop (e.g. to update the display), return "\<Ignore>".
+This is similar to "nothing" but makes Vim return from the loop that waits for
+input.
+
 Also, keep in mind that the expression may be evaluated when looking for
 typeahead, before the previous command has been executed.  For example: >
 	func StoreColumn()
@@ -233,8 +248,8 @@ typeahead, before the previous command has been executed.  For example: >
 	endfunc
 	nnoremap <expr> x StoreColumn()
 	nmap ! f!x
-You will notice that g:column has the value from before executing "fx",
-because "z" is evaluated before "fx" is executed.
+You will notice that g:column has the value from before executing "f!",
+because "x" is evaluated before "f!" is executed.
 This can be solved by inserting <Ignore> before the character that is
 expression-mapped: >
 	nmap ! f!<Ignore>x
@@ -277,15 +292,8 @@ Here is an example that inserts a list number that increases: >
 CTRL-L inserts the next number, CTRL-R resets the count.  CTRL-R returns an
 empty string, so that nothing is inserted.
 
-Note that there are some tricks to make special keys work and escape CSI bytes
-in the text.  The |:map| command also does this, thus you must avoid that it
-is done twice.  This does not work: >
-	:imap <expr> <F3> "<Char-0x611B>"
-Because the <Char- sequence is escaped for being a |:imap| argument and then
-again for using <expr>.  This does work: >
-	:imap <expr> <F3> "\u611B"
-Using 0x80 as a single byte before other text does not work, it will be seen
-as a special key.
+Note that using 0x80 as a single byte before other text does not work, it will
+be seen as a special key.
 
 						*<Cmd>* *:map-cmd*
 The <Cmd> pseudokey begins a "command mapping", which executes the command
@@ -301,14 +309,17 @@ preserved, so tricks with |gv| are not needed.  Commands can be invoked
 directly in cmdline-mode (which would otherwise require timer hacks).
 
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
-command: it is executed as if an (unrestricted) |autocmd| was invoked or an
-async event event was processed.
+command: it is executed as if an (unrestricted) |autocommand| was invoked
+or an async event event was processed.
 
 Note:
 - Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
   |CmdlineEnter| and |CmdlineLeave| events. This helps performance.
 - For the same reason, |keycodes| like <C-R><C-W> are interpreted as plain,
   unmapped keys.
+- The command is not echo'ed, no need for <silent>.
+- In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
+  Visual area, the cursor is at the other end.
 - In select-mode, |:map| and |:vmap| command mappings are executed in
   visual-mode.  Use |:smap| to handle select-mode.
 
@@ -381,6 +392,8 @@ Some commands work both in Insert mode and Command-line mode, some not:
 :imap  :inoremap  :iunmap  :imapclear	    yes		-	   -
 :cmap  :cnoremap  :cunmap  :cmapclear	     -	       yes	   -
 :lmap  :lnoremap  :lunmap  :lmapclear	    yes*       yes*	  yes*
+
+* If 'iminsert' is 1, see |language-mapping| below.
 
 The original Vi did not have separate mappings for
 Normal/Visual/Operator-pending mode and for Insert/Command-line mode.
@@ -599,7 +612,7 @@ construct can be used:
 	<Char-033>	character 27
 	<Char-0x7f>	character 127
 	<S-Char-114>    character 114 ('r') shifted ('R')
-This is useful to specify a (multi-byte) character in a 'keymap' file.
+This is useful to specify a (multibyte) character in a 'keymap' file.
 Upper and lowercase differences are ignored.
 
 							*map-comments*
@@ -788,7 +801,7 @@ otherwise it is interpreted as two key presses:
 1.11 MAPPING AN OPERATOR				*:map-operator*
 
 An operator is used before a {motion} command.  To define your own operator
-you must create mapping that first sets the 'operatorfunc' option and then
+you must create a mapping that first sets the 'operatorfunc' option and then
 invoke the |g@| operator.  After the user types the {motion} command the
 specified function will be called.
 
@@ -806,35 +819,47 @@ g@{motion}		Call the function set by the 'operatorfunc' option.
 
 Here is an example that counts the number of spaces with <F4>: >
 
-	nmap <silent> <F4> :set opfunc=CountSpaces<CR>g@
-	vmap <silent> <F4> :<C-U>call CountSpaces(visualmode(), 1)<CR>
+	nnoremap <expr> <F4> CountSpaces()
+	xnoremap <expr> <F4> CountSpaces()
+	" doubling <F4> works on a line
+	nnoremap <expr> <F4><F4> CountSpaces() .. '_'
 
-	function! CountSpaces(type, ...)
-	  let sel_save = &selection
-	  let &selection = "inclusive"
-	  let reg_save = @@
-
-	  if a:0  " Invoked from Visual mode, use gv command.
-	    silent exe "normal! gvy"
-	  elseif a:type == 'line'
-	    silent exe "normal! '[V']y"
-	  else
-	    silent exe "normal! `[v`]y"
+	function CountSpaces(type = '') abort
+	  if a:type == ''
+	    set opfunc=CountSpaces
+	    return 'g@'
 	  endif
 
-	  echomsg strlen(substitute(@@, '[^ ]', '', 'g'))
+	  let sel_save = &selection
+	  let reg_save = getreginfo('"')
+	  let cb_save = &clipboard
+	  let visual_marks_save = [getpos("'<"), getpos("'>")]
 
-	  let &selection = sel_save
-	  let @@ = reg_save
+	  try
+	    set clipboard= selection=inclusive
+	    let commands = #{line: "'[V']y", char: "`[v`]y", block: "`[\<c-v>`]y"}
+	    silent exe 'noautocmd keepjumps normal! ' .. get(commands, a:type, '')
+	    echom getreg('"')->count(' ')
+	  finally
+	    call setreg('"', reg_save)
+	    call setpos("'<", visual_marks_save[0])
+	    call setpos("'>", visual_marks_save[1])
+	    let &clipboard = cb_save
+	    let &selection = sel_save
+	  endtry
 	endfunction
+
+An <expr> mapping is used to be able to fetch any prefixed count and register.
+This also avoids using a command line, which would trigger CmdlineEnter and
+CmdlineLeave autocommands.
 
 Note that the 'selection' option is temporarily set to "inclusive" to be able
 to yank exactly the right text by using Visual mode from the '[ to the ']
 mark.
 
-Also note that there is a separate mapping for Visual mode.  It removes the
-"'<,'>" range that ":" inserts in Visual mode and invokes the function with
-visualmode() and an extra argument.
+Also note that the 'clipboard' option is temporarily emptied to avoid
+clobbering the `"*` or `"+` registers, if its value contains the item `unnamed`
+or `unnamedplus`.
 
 ==============================================================================
 2. Abbreviations			*abbreviations* *Abbreviations*
@@ -973,7 +998,8 @@ See |:verbose-cmd| for more information.
 			See |:map-<buffer>| for the optional <buffer> argument.
 
 						*:una* *:unabbreviate*
-:una[bbreviate] {lhs}	Remove abbreviation for {lhs} from the list.  If none
+:una[bbreviate] [<buffer>] {lhs}
+			Remove abbreviation for {lhs} from the list.  If none
 			is found, remove abbreviations in which {lhs} matches
 			with the {rhs}.  This is done so that you can even
 			remove abbreviations after expansion.  To avoid
@@ -988,7 +1014,8 @@ See |:verbose-cmd| for more information.
 			same as ":ab", but for Command-line mode only.
 
 						*:cuna* *:cunabbrev*
-:cuna[bbrev] {lhs}	same as ":una", but for Command-line mode only.
+:cuna[bbrev] [<buffer>] {lhs}
+			Same as ":una", but for Command-line mode only.
 
 						*:cnorea* *:cnoreabbrev*
 :cnorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
@@ -1000,7 +1027,8 @@ See |:verbose-cmd| for more information.
 			same as ":ab", but for Insert mode only.
 
 						*:iuna* *:iunabbrev*
-:iuna[bbrev] {lhs}	same as ":una", but for insert mode only.
+:iuna[bbrev] [<buffer>] {lhs}
+			Same as ":una", but for insert mode only.
 
 						*:inorea* *:inoreabbrev*
 :inorea[bbrev] [<expr>] [<buffer>] [lhs] [rhs]
@@ -1100,9 +1128,9 @@ Otherwise, using "<SID>" outside of a script context is an error.
 
 If you need to get the script number to use in a complicated script, you can
 use this function: >
-	function s:SID()
-	  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
-	endfun
+	func s:ScriptNumber()
+	  return matchstr(expand('<SID>'), '<SNR>\zs\d\+\ze_')
+	endfunc
 
 The "<SNR>" will be shown when listing functions and mappings.  This is useful
 to find out what they are defined to.
@@ -1175,15 +1203,15 @@ last defined. Example: >
 See |:verbose-cmd| for more information.
 
 							*E174* *E182*
-:com[mand][!] [{attr}...] {cmd} {rep}
+:com[mand][!] [{attr}...] {cmd} {repl}
 			Define a user command.  The name of the command is
-			{cmd} and its replacement text is {rep}.  The command's
-			attributes (see below) are {attr}.  If the command
-			already exists, an error is reported, unless a ! is
-			specified, in which case the command is redefined.
-			There is one exception: When sourcing a script again,
-			a command that was previously defined in that script
-			will be silently replaced.
+			{cmd} and its replacement text is {repl}.  The
+			command's attributes (see below) are {attr}.  If the
+			command already exists, an error is reported, unless a
+			! is specified, in which case the command is
+			redefined.  There is one exception: When sourcing a
+			script again, a command that was previously defined in
+			that script will be silently replaced.
 
 
 :delc[ommand] {cmd}				*:delc* *:delcommand* *E184*
@@ -1390,11 +1418,11 @@ feature.  Use the full name for new scripts.
 
 Replacement text ~
 
-The replacement text for a user defined command is scanned for special escape
-sequences, using <...> notation.  Escape sequences are replaced with values
-from the entered command line, and all other text is copied unchanged.  The
-resulting string is executed as an Ex command.  To avoid the replacement use
-<lt> in place of the initial <.  Thus to include "<bang>" literally use
+The replacement text {repl} for a user defined command is scanned for special
+escape sequences, using <...> notation.  Escape sequences are replaced with
+values from the entered command line, and all other text is copied unchanged.
+The resulting string is executed as an Ex command.  To avoid the replacement
+use <lt> in place of the initial <.  Thus to include "<bang>" literally use
 "<lt>bang>".
 
 The valid escape sequences are
@@ -1412,7 +1440,7 @@ The valid escape sequences are
 	<bang>	(See the '-bang' attribute) Expands to a ! if the
 		command was executed with a ! modifier, otherwise
 		expands to nothing.
-						*<mods>*
+					*<mods>* *<q-mods>* *:command-modifiers*
 	<mods>  The command modifiers, if specified. Otherwise, expands to
 		nothing. Supported modifiers are |:aboveleft|, |:belowright|,
 		|:botright|, |:browse|, |:confirm|, |:hide|, |:keepalt|,

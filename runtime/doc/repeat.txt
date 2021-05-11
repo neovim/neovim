@@ -70,7 +70,7 @@ The default for [range] is the whole buffer (1,$).  Use "CTRL-C" to interrupt
 the command.  If an error message is given for a line, the command for that
 line is aborted and the global command continues with the next marked or
 unmarked line.
-								*E147* 
+								*E147*
 When the command is used recursively, it only works on one line.  Giving a
 range is then not allowed. This is useful to find all lines that match a
 pattern and do not match another pattern: >
@@ -117,6 +117,11 @@ q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			recorded macro and the yank will overwrite the
 			recorded macro.
 
+			Note: The recording happens while you type, replaying
+			the register happens as if the keys come from a
+			mapping.  This matters, for example, for undo, which
+			only syncs when commands were typed.
+
 q			Stops recording.
 			Implementation note: The 'q' that stops recording is
 			not stored in the register, unless it was the result
@@ -129,7 +134,7 @@ q			Stops recording.
 			used.
 			The register is executed like a mapping, that means
 			that the difference between 'wildchar' and 'wildcharm'
-			applies.
+			applies, and undo might not be synced in the same way.
 			For "@=" you are prompted to enter an expression.  The
 			result of the expression is then executed.
 			See also |@:|.
@@ -153,7 +158,7 @@ q			Stops recording.
 			[addr] (default is current line).
 
 :[addr]@							*:@@*
-:[addr]@@		Repeat the previous :@{0-9a-z"}.  First set cursor at
+:[addr]@@		Repeat the previous :@{register}.  First set cursor at
 			line [addr] (default is current line).
 
 ==============================================================================
@@ -206,10 +211,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 			When {file} contains wildcards it is expanded to all
 			matching files.  Example: >
-				:runtime! plugin/*.vim
+				:runtime! plugin/**/*.vim
 <			This is what Vim uses to load the plugin files when
 			starting up.  This similar command: >
-				:runtime plugin/*.vim
+				:runtime plugin/**/*.vim
 <			would source the first file only.
 
 			When 'verbose' is one or higher, there is a message
@@ -248,6 +253,9 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			directories are added to 'runtimepath'.  This is
 			useful in your .vimrc.  The plugins will then be
 			loaded during initialization, see |load-plugins|.
+			Note that for ftdetect scripts to be loaded
+			you will need to write `filetype plugin indent on`
+			AFTER all `packadd!` commands.
 
 			Also see |pack-add|.
 
@@ -366,7 +374,7 @@ nested as deep as the number of files that can be opened at one time (about
 You can use the "<sfile>" string (literally, this is not a special key) inside
 of the sourced file, in places where a file name is expected.  It will be
 replaced by the file name of the sourced file.  For example, if you have a
-"other.vimrc" file in the same directory as your |init.vim| file, you can 
+"other.vimrc" file in the same directory as your |init.vim| file, you can
 source it from your |init.vim| file with this command: >
 	:source <sfile>:h/other.vimrc
 
@@ -388,7 +396,7 @@ because the <CR> from the first lines will be lost.
 
 On other systems, Vim expects ":source"ed files to end in a <NL>.  These
 always work.  If you are using a file with <CR><NL> <EOL>s (for example, a
-file made on Windows), all lines will have a trailing <CR>.  This may cause
+file made on MS-Windows), all lines will have a trailing <CR>.  This may cause
 problems for some commands (e.g., mappings).  There is no automatic <EOL>
 detection, because it's common to start with a line that defines a mapping
 that ends in a <CR>, which will confuse the automaton.
@@ -505,7 +513,7 @@ When Vim starts up, after processing your .vimrc, it scans all directories in
 directories are added to 'runtimepath'.  Then all the plugins are loaded.
 See |packload-two-steps| for how these two steps can be useful.
 
-In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and adds 
+In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and adds
 "~/.local/share/nvim/site/pack/foo/start/foobar" to 'runtimepath'.
 
 If the "foobar" plugin kicks in and sets the 'filetype' to "some", Vim will
@@ -591,8 +599,8 @@ Creating Vim packages					*package-create*
 This assumes you write one or more plugins that you distribute as a package.
 
 If you have two unrelated plugins you would use two packages, so that Vim
-users can chose what they include or not.  Or you can decide to use one
-package with optional plugins, and tell the user to add the ones he wants with
+users can choose what they include or not.  Or you can decide to use one
+package with optional plugins, and tell the user to add the preferred ones with
 `:packadd`.
 
 Decide how you want to distribute the package.  You can create an archive or
@@ -613,9 +621,9 @@ Your directory layout would be like this:
    opt/fooextra/doc/tags  	        " help tags
 
 This allows for the user to do: >
-	mkdir ~/.local/share/nvim/site/pack/myfoobar
-	cd ~/.local/share/nvim/site/pack/myfoobar
-	git clone https://github.com/you/foobar.git
+	mkdir ~/.local/share/nvim/site/pack
+	cd ~/.local/share/nvim/site/pack
+	git clone https://github.com/you/foobar.git myfoobar
 
 Here "myfoobar" is a name that the user can choose, the only condition is that
 it differs from other packages.
@@ -628,7 +636,7 @@ You could add this packadd command in one of your plugins, to be executed when
 the optional plugin is needed.
 
 Run the `:helptags` command to generate the doc/tags file.  Including this
-generated file in the package means that the user can drop the package in his
+generated file in the package means that the user can drop the package in the
 pack directory and the help command works right away.  Don't forget to re-run
 the command after changing the plugin help: >
 	:helptags path/start/foobar/doc
@@ -815,7 +823,7 @@ DEFINING BREAKPOINTS
 		valid in the script where it has been defined and if that
 		script is called from several other scripts, this will stop
 		whenever that particular variable will become visible or
-		unaccessible again.
+		inaccessible again.
 
 The [lnum] is the line number of the breakpoint.  Vim will stop at or after
 this line.  When omitted line 1 is used.

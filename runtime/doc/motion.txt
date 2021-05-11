@@ -182,11 +182,14 @@ l		or					*l*
 
 							*^*
 ^			To the first non-blank character of the line.
-			|exclusive| motion.
+			|exclusive| motion.  Any count is ignored.
 
 							*$* *<End>* *<kEnd>*
 $  or <End>		To the end of the line.  When a count is given also go
-			[count - 1] lines downward. |inclusive| motion.
+			[count - 1] lines downward, or as far is possible.
+			|inclusive| motion.  If a count of 2 of larger is
+			given and the cursor is on the last line, that is an
+			error an the cursor doesn't move.
 			In Visual mode the cursor goes to just after the last
 			character in the line.
 			When 'virtualedit' is active, "$" may move the cursor
@@ -478,10 +481,11 @@ a set of section macros, specified by the pairs of characters in the
 'sections' option.  The default is "SHNHH HUnhsh", which defines a section to
 start at the nroff macros ".SH", ".NH", ".H", ".HU", ".nh" and ".sh".
 
-The "]" and "[" commands stop at the '{' or '}' in the first column.  This is
-useful to find the start or end of a function in a C program.  Note that the
-first character of the command determines the search direction and the
-second character the type of brace found.
+The "]]" and "[[" commands stop at the '{' in the first column.  This is
+useful to find the start of a function in a C program.  To search for a '}' in
+the first column, the end of a C function, use "][" (forward) or "[]"
+(backward).  Note that the first character of the command determines the
+search direction.
 
 If your '{' or '}' are not in the first column, and you would like to use "[["
 and "]]" anyway, try these mappings: >
@@ -944,6 +948,7 @@ These commands are not marks themselves, but jump to a mark:
 			- numbered marks '0 - '9
 			- last insert position '^
 			- last change position '.
+			- last affected text area '[ and ']
 			- the Visual area '< and '>
 			- line numbers in placed signs
 			- line numbers in quickfix positions
@@ -1024,11 +1029,11 @@ The maximum number of entries is fixed at 100.
 
 For example, after three jump commands you have this jump list:
 
-  jump line  col file/text ~
-    3	  1    0 some text ~
-    2	 70    0 another line ~
-    1  1154   23 end. ~
- > ~
+    jump line  col file/text ~
+      3	  1    0 some text ~
+      2	 70    0 another line ~
+      1  1154   23 end. ~
+   > ~
 
 The "file/text" column shows the file name, or the text at the jump if it is
 in the current file (an indent is removed and a long line is truncated to fit
@@ -1037,11 +1042,11 @@ in the window).
 You are currently in line 1167.  If you then use the CTRL-O command, the
 cursor is put in line 1154.  This results in:
 
-  jump line  col file/text ~
-    2	  1    0 some text ~
-    1	 70    0 another line ~
- >  0  1154   23 end. ~
-    1  1167    0 foo bar ~
+    jump line  col file/text ~
+      2	  1    0 some text ~
+      1	 70    0 another line ~
+   >  0  1154   23 end. ~
+      1  1167    0 foo bar ~
 
 The pointer will be set at the last used jump position.  The next CTRL-O
 command will use the entry above it, the next CTRL-I command will use the
@@ -1068,12 +1073,12 @@ that calling setpos() does not do this.
 After the CTRL-O command that got you into line 1154 you could give another
 jump command (e.g., "G").  The jump list would then become:
 
-  jump line  col file/text ~
-    4	  1    0 some text ~
-    3	 70    0 another line ~
-    2  1167    0 foo bar ~
-    1  1154   23 end. ~
- > ~
+    jump line  col file/text ~
+      4	  1    0 some text ~
+      3	 70    0 another line ~
+      2  1167    0 foo bar ~
+      1  1154   23 end. ~
+   > ~
 
 The line numbers will be adjusted for deleted and inserted lines.  This fails
 if you stop editing a file without writing, like with ":n!".
@@ -1168,13 +1173,13 @@ sequence of small changes in a line, for example "xxxxx", adds many positions
 to the change list.  When 'textwidth' is zero 'wrapmargin' is used.  When that
 also isn't set a fixed number of 79 is used.  Detail: For the computations
 bytes are used, not characters, to avoid a speed penalty (this only matters
-for multi-byte encodings).
+for multibyte encodings).
 
 Note that when text has been inserted or deleted the cursor position might be
 a bit different from the position of the change.  Especially when lines have
 been deleted.
 
-When the |:keepjumps| command modifier is used the position of a change is not
+When the `:keepjumps` command modifier is used the position of a change is not
 remembered.
 
 							*:changes*
@@ -1215,7 +1220,7 @@ remembered.
 			#if, #ifdef, #else, #elif, #endif
 					C preprocessor conditionals (when the
 					cursor is on the # or no ([{
-					following)
+					is following)
 			For other items the matchit plugin can be used, see
 			|matchit|.  This plugin also helps to skip matches in
 			comments.
@@ -1244,19 +1249,19 @@ remembered.
 			#if/#else/#endif makes the movement linewise.
 
 						*[(*
-[(			go to [count] previous unmatched '('.
+[(			Go to [count] previous unmatched '('.
 			|exclusive| motion.
 
 						*[{*
-[{			go to [count] previous unmatched '{'.
+[{			Go to [count] previous unmatched '{'.
 			|exclusive| motion.
 
 						*])*
-])			go to [count] next unmatched ')'.
+])			Go to [count] next unmatched ')'.
 			|exclusive| motion.
 
 						*]}*
-]}			go to [count] next unmatched '}'.
+]}			Go to [count] next unmatched '}'.
 			|exclusive| motion.
 
 The above four commands can be used to go to the start or end of the current
@@ -1304,17 +1309,21 @@ file looks like this: >
 			body_two();
 		}
 	}
+
+[To try this out copy the text and put it in a new buffer, the help text above
+confuses the jump commands]
+
 Starting with the cursor on "body_two()", using "[m" will jump to the '{' at
 the start of "method_two()" (obviously this is much more useful when the
 method is long!).  Using "2[m" will jump to the start of "method_one()".
 Using "3[m" will jump to the start of the class.
 
 						*[#*
-[#			go to [count] previous unmatched "#if" or "#else".
+[#			Go to [count] previous unmatched "#if" or "#else".
 			|exclusive| motion.
 
 						*]#*
-]#			go to [count] next unmatched "#else" or "#endif".
+]#			Go to [count] next unmatched "#else" or "#endif".
 			|exclusive| motion.
 
 These two commands work in C programs that contain #if/#else/#endif
@@ -1322,11 +1331,11 @@ constructs.  It brings you to the start or end of the #if/#else/#endif where
 the current line is included.  You can then use "%" to go to the matching line.
 
 						*[star* *[/*
-[*  or  [/		go to [count] previous start of a C comment "/*".
+[*  or  [/		Go to [count] previous start of a C comment "/*".
 			|exclusive| motion.
 
 						*]star* *]/*
-]*  or  ]/		go to [count] next end of a C comment "*/".
+]*  or  ]/		Go to [count] next end of a C comment "*/".
 			|exclusive| motion.
 
 

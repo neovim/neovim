@@ -149,6 +149,21 @@ func Test_mksession_large_winheight()
   call delete('Xtest_mks_winheight.out')
 endfunc
 
+func Test_mksession_zero_winheight()
+  set winminheight=0
+  edit SomeFile
+  split
+  wincmd _
+  mksession! Xtest_mks_zero
+  set winminheight&
+  " let text = readfile('Xtest_mks_zero')->join()
+  let text = join(readfile('Xtest_mks_zero'))
+  call delete('Xtest_mks_zero')
+  close
+  " check there is no divide by zero
+  call assert_notmatch('/ 0[^0-9]', text)
+endfunc
+
 func Test_mksession_rtp()
   if has('win32')
     " TODO: fix problem with backslashes
@@ -677,6 +692,24 @@ func Test_mksession_winpos()
   endfor
   call assert_true(found_winpos)
   call delete('Xtest_mks.out')
+  set sessionoptions&
+endfunc
+
+" Test for mksession without options restores winminheight
+func Test_mksession_winminheight()
+  set sessionoptions-=options
+  split
+  mksession! Xtest_mks.out
+  let found_restore = 0
+  let lines = readfile('Xtest_mks.out')
+  for line in lines
+    if line =~ '= s:save_winmin\(width\|height\)'
+      let found_restore += 1
+    endif
+  endfor
+  call assert_equal(2, found_restore)
+  call delete('Xtest_mks.out')
+  close
   set sessionoptions&
 endfunc
 

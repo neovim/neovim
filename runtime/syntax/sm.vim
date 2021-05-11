@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	sendmail
-" Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Last Change:	Oct 25, 2016
-" Version:	8
+" Version:	9
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SM
 if exists("b:current_syntax")
   finish

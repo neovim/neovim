@@ -518,7 +518,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
         send_response(decoded.id, err, result)
       end)
     -- This works because we are expecting vim.NIL here
-    elseif decoded.id and (decoded.result or decoded.error) then
+    elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
       -- Server Result
       decoded.error = convert_NIL(decoded.error)
       decoded.result = convert_NIL(decoded.result)

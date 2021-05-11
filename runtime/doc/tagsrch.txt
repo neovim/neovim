@@ -179,6 +179,29 @@ commands explained above the tag stack will look like this:
 The |gettagstack()| function returns the tag stack of a specified window. The
 |settagstack()| function modifies the tag stack of a window.
 
+							*tagstack-examples*
+Write to the tag stack just like `:tag` but with a user-defined
+jumper#jump_to_tag function: >
+	" Store where we're jumping from before we jump.
+	let tag = expand('<cword>')
+	let pos = [bufnr()] + getcurpos()[1:]
+	let item = {'bufnr': pos[0], 'from': pos, 'tagname': tag}
+	if jumper#jump_to_tag(tag)
+		" Jump was successful, write previous location to tag stack.
+		let winid = win_getid()
+		let stack = gettagstack(winid)
+		let stack['items'] = [item]
+		call settagstack(winid, stack, 't')
+	endif
+<
+Set current index of the tag stack to 4: >
+	call settagstack(1005, {'curidx' : 4})
+<
+Push a new item onto the tag stack: >
+	let pos = [bufnr('myfile.txt'), 10, 1, 0]
+	let newtag = [{'tagname' : 'mytag', 'from' : pos}]
+	call settagstack(2, {'items' : newtag}, 'a')
+<
 							*E73*
 When you try to use the tag stack while it doesn't contain anything you will
 get an error message.
@@ -204,14 +227,14 @@ the same entry.
 			Example output:
 
 >
-	 nr pri kind tag		file
+	  # pri kind tag		file
 	  1 F	f    mch_delay		os_amiga.c
 			mch_delay(msec, ignoreinput)
 	> 2 F	f    mch_delay		os_msdos.c
 			mch_delay(msec, ignoreinput)
 	  3 F	f    mch_delay		os_unix.c
 			mch_delay(msec, ignoreinput)
-	Enter nr of choice (<CR> to abort):
+	Type number and <Enter> (empty cancels):
 <
 			See |tag-priority| for the "pri" column.  Note that
 			this depends on the current file, thus using
@@ -488,10 +511,13 @@ a tag for each "#defined" macro, typedefs, enums, etc.
 Some programs that generate tags files:
 ctags			As found on most Unix systems.  Only supports C.  Only
 			does the basic work.
+universal ctags		A maintained version of ctags based on exuberant
+			ctags. See https://ctags.io.
 							*Exuberant_ctags*
 exuberant ctags		This is a very good one.  It works for C, C++, Java,
 			Fortran, Eiffel and others.  It can generate tags for
 			many items.  See http://ctags.sourceforge.net.
+			No new version since 2009.
 JTags			For Java, in Java.  It can be found at
 			http://www.fleiner.com/jtags/.
 ptags.py		For Python, in Python.  Found in your Python source
@@ -513,7 +539,7 @@ The first format is a normal tag, which is completely compatible with Vi.  It
 is the only format produced by traditional ctags implementations.  This is
 often used for functions that are global, also referenced in other files.
 
-The lines in the tags file can end in <LF> or <CR><LF>.  On the Macintosh <CR>
+The lines in the tags file can end in <NL> or <CR><NL>.  On the Macintosh <CR>
 also works.  The <CR> and <NL> characters can never appear inside a line.
 
 The second format is new.  It includes additional information in optional
@@ -893,8 +919,8 @@ The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the
 inverse order of file names.
 >
-	function! TagFunc(pattern, flags, info)
-	  function! CompareFilenames(item1, item2)
+	function TagFunc(pattern, flags, info)
+	  function CompareFilenames(item1, item2)
 	    let f1 = a:item1['filename']
 	    let f2 = a:item2['filename']
 	    return f1 >=# f2 ?

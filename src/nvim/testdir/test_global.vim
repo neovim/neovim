@@ -29,3 +29,11 @@ func Test_nested_global()
   call assert_equal(['nothing', '++found', 'found bad', 'bad'], getline(1, 4))
   bwipe!
 endfunc
+
+func Test_global_error()
+  call assert_fails('g\\a', 'E10:')
+  call assert_fails('g', 'E148:')
+  call assert_fails('g/\(/y', 'E476:')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

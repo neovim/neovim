@@ -92,7 +92,7 @@ g8			Print the hex values of the bytes used in the
 			encoding because it contains illegal bytes.
 			Does not wrap around the end of the file.
 			Note that when the cursor is on an illegal byte or the
-			cursor is halfway through a multi-byte character the
+			cursor is halfway through a multibyte character the
 			command won't move the cursor.
 
 						*:p* *:pr* *:print* *E749*
@@ -134,19 +134,21 @@ g8			Print the hex values of the bytes used in the
 				quit
 <
 							*:z* *E144*
-:{range}z[+-^.=]{count}	Display several lines of text surrounding the line
-			specified with {range}, or around the current line
-			if there is no {range}.  If there is a {count}, that's
-			how many lines you'll see; if there is only one window
-			then twice the value of the 'scroll' option is used,
-			otherwise the current window height minus 3 is used.
+:[range]z[+-^.=][count]	Display several lines of text surrounding the line
+			specified with [range], or around the current line
+			if there is no [range].
 
-			If there is a {count} the 'window' option is set to
+			If there is a [count], that's how many lines you'll
+			see; if there is no [count] and only one window then
+			twice the value of the 'scroll' option is used,
+			otherwise the current window height minus 3 is used.
+			This is the value of "scr" in the table below.
+
+			If there is a [count] the 'window' option is set to
 			its value.
 
 			:z can be used either alone or followed by any of
-			several punctuation marks.  These have the following
-			effect:
+			several marks.  These have the following effect:
 
 			mark   first line    last line      new cursor line ~
 			----   ----------    ---------      ------------
@@ -160,7 +162,7 @@ g8			Print the hex values of the bytes used in the
 			If the mark is "=", a line of dashes is printed
 			around the current line.
 
-:{range}z#[+-^.=]{count}				*:z#*
+:[range]z#[+-^.=][count]				*:z#*
 			Like ":z", but number the lines.
 			{not in all versions of Vi, not with these arguments}
 
@@ -260,6 +262,7 @@ g8			Print the hex values of the bytes used in the
 			use it to append a Vim command.  See |:bar|.
 
 			Any "%" in {cmd} is expanded to the current file name.
+			Any "#" in {cmd} is expanded to the alternate file name.
 			Special characters are not escaped, use quotes or
 			|shellescape()|: >
 				:!ls "%"
@@ -338,7 +341,7 @@ g8			Print the hex values of the bytes used in the
 			locked or the variable type is changed, then further
 			command output messages will cause errors.
 			To get the output of one command the |execute()|
-			function can be used.
+			function can be used instead of redirection.
 
 :redi[r] =>> {var}	Append messages to an existing variable.  Only string
 			variables can be used.
@@ -358,7 +361,7 @@ g8			Print the hex values of the bytes used in the
 			it in / any non-ID character (see |'isident'|) can be
 			used, so long as it does not appear in {pat}.  Without
 			the enclosing character the pattern cannot include the
-			bar character.
+			bar character. 'ignorecase' is not used.
 
 			The pattern is matched against the relevant part of
 			the output, not necessarily the whole line. Only some
@@ -502,6 +505,9 @@ gO			Show a filetype-specific, navigable "outline" of the
 			if at a visible position.
 			Queued messages are processed during the sleep.
 
+							*:sl!* *:sleep!*
+:[N]sl[eep]! [N] [m]	Same as above, but hide the cursor.
+
 ==============================================================================
 2. Using Vim like less or more					*less*
 
@@ -514,7 +520,7 @@ up mappings to simulate the commands that less supports.  Otherwise, you can
 still use the Vim commands.
 
 This isn't perfect.  For example, when viewing a short file Vim will still use
-the whole screen.  But it works good enough for most uses, and you get syntax
+the whole screen.  But it works well enough for most uses, and you get syntax
 highlighting.
 
 The "h" key will give you a short overview of the available commands.

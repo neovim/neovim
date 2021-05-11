@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Update: 2018 Jun 3
+" Last Change: 2021 Jan 03
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -131,7 +131,11 @@ func s:StartDebug_internal(dict)
   " call ch_logfile('debuglog', 'w')
 
   let s:sourcewin = win_getid(winnr())
-  let s:startsigncolumn = &signcolumn
+
+  " Remember the old value of 'signcolumn' for each buffer that it's set in, so
+  " that we can restore the value for all buffers.
+  let b:save_signcolumn = &signcolumn
+  let s:signcolumn_buflist = [bufnr()]
 
   let s:save_columns = 0
   let s:allleft = 0
@@ -292,7 +296,7 @@ func s:StartDebug_term(dict)
     sleep 10m
   endwhile
 
-  " Interpret commands while the target is running.  This should usualy only be
+  " Interpret commands while the target is running.  This should usually only be
   " exec-interrupt, since many commands don't work properly while the target is
   " running.
   call s:SendCommand('-gdb-set mi-async on')
@@ -348,7 +352,7 @@ func s:StartDebug_prompt(dict)
     return
   endif
 
-  " Interpret commands while the target is running.  This should usualy only
+  " Interpret commands while the target is running.  This should usually only
   " be exec-interrupt, since many commands don't work properly while the
   " target is running.
   call s:SendCommand('-gdb-set mi-async on')
@@ -552,9 +556,14 @@ func s:DecodeMessage(quotedText)
     if a:quotedText[i] == '\'
       let i += 1
       if a:quotedText[i] == 'n'
-        " drop \n
-        let i += 1
-        continue
+	" drop \n
+	let i += 1
+	continue
+      elseif a:quotedText[i] == 't'
+	" append \t
+	let i += 1
+	let result .= "\t"
+	continue
       endif
     endif
     let result .= a:quotedText[i]
@@ -598,8 +607,20 @@ func s:EndDebugCommon()
     exe 'bwipe! ' . s:ptybuf
   endif
 
+  " Restore 'signcolumn' in all buffers for which it was set.
   call win_gotoid(s:sourcewin)
-  let &signcolumn = s:startsigncolumn
+  let was_buf = bufnr()
+  for bufnr in s:signcolumn_buflist
+    if bufexists(bufnr)
+      exe bufnr .. "buf"
+      if exists('b:save_signcolumn')
+	let &signcolumn = b:save_signcolumn
+	unlet b:save_signcolumn
+      endif
+    endif
+  endfor
+  exe was_buf .. "buf"
+
   call s:DeleteCommands()
 
   call win_gotoid(curwinid)
@@ -715,12 +736,22 @@ func s:CommOutput(job_id, msgs, event)
   endfor
 endfunc
 
+func s:GotoProgram()
+  if has('win32')
+    if executable('powershell')
+      call system(printf('powershell -Command "add-type -AssemblyName microsoft.VisualBasic;[Microsoft.VisualBasic.Interaction]::AppActivate(%d);"', s:pid))
+    endif
+  else
+    call win_gotoid(s:ptywin)
+  endif
+endfunc
+
 " Install commands in the current window to control the debugger.
 func s:InstallCommands()
   let save_cpo = &cpo
   set cpo&vim
 
-  command Break call s:SetBreakpoint()
+  command -nargs=? Break call s:SetBreakpoint(<q-args>)
   command Clear call s:ClearBreakpoint()
   command Step call s:SendCommand('-exec-step')
   command Over call s:SendCommand('-exec-next')
@@ -738,13 +769,15 @@ func s:InstallCommands()
 
   command -range -nargs=* Evaluate call s:Evaluate(<range>, <q-args>)
   command Gdb call win_gotoid(s:gdbwin)
-  command Program call win_gotoid(s:ptywin)
+  command Program call s:GotoProgram()
   command Source call s:GotoSourcewinOrCreateIt()
   command Asm call s:GotoAsmwinOrCreateIt()
   command Winbar call s:InstallWinbar()
 
-  " TODO: can the K mapping be restored?
-  nnoremap K :Evaluate<CR>
+  if !exists('g:termdebug_map_K') || g:termdebug_map_K
+    let s:k_map_saved = maparg('K', 'n', 0, 1)
+    nnoremap K :Evaluate<CR>
+  endif
 
   let &cpo = save_cpo
 endfunc
@@ -782,7 +815,14 @@ func s:DeleteCommands()
   delcommand Asm
   delcommand Winbar
 
-  nunmap K
+  if exists('s:k_map_saved')
+    if empty(s:k_map_saved)
+      nunmap K
+    else
+      call mapset('n', 0, s:k_map_saved)
+    endif
+    unlet s:k_map_saved
+  endif
 
   exe 'sign unplace ' . s:pc_id
   for [id, entries] in items(s:breakpoints)
@@ -801,7 +841,7 @@ func s:DeleteCommands()
 endfunc
 
 " :Break - Set a breakpoint at the cursor position.
-func s:SetBreakpoint()
+func s:SetBreakpoint(at)
   " Setting a breakpoint may not work while the program is running.
   " Interrupt to make it work.
   let do_continue = 0
@@ -814,9 +854,11 @@ func s:SetBreakpoint()
     endif
     sleep 10m
   endif
+
   " Use the fname:lnum format, older gdb can't handle --source.
-  call s:SendCommand('-break-insert '
-        \ . fnameescape(expand('%:p')) . ':' . line('.'))
+  let at = empty(a:at) ?
+        \ fnameescape(expand('%:p')) . ':' . line('.') : a:at
+  call s:SendCommand('-break-insert ' . at)
   if do_continue
     call s:SendCommand('-exec-continue')
   endif
@@ -831,14 +873,14 @@ func s:ClearBreakpoint()
     let idx = 0
     for id in s:breakpoint_locations[bploc]
       if has_key(s:breakpoints, id)
-        " Assume this always works, the reply is simply "^done".
-        call s:SendCommand('-break-delete ' . id)
-        for subid in keys(s:breakpoints[id])
-          exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
-        endfor
-        unlet s:breakpoints[id]
-        unlet s:breakpoint_locations[bploc][idx]
-        break
+	" Assume this always works, the reply is simply "^done".
+	call s:SendCommand('-break-delete ' . id)
+	for subid in keys(s:breakpoints[id])
+	  exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+	endfor
+	unlet s:breakpoints[id]
+	unlet s:breakpoint_locations[bploc][idx]
+	break
       else
 	let idx += 1
       endif
@@ -1152,6 +1194,10 @@ func s:HandleCursor(msg)
       exe lnum
       exe 'sign unplace ' . s:pc_id
       exe 'sign place ' . s:pc_id . ' line=' . lnum . ' name=debugPC file=' . fname
+      if !exists('b:save_signcolumn')
+	let b:save_signcolumn = &signcolumn
+	call add(s:signcolumn_buflist, bufnr())
+      endif
       setlocal signcolumn=yes
     endif
   elseif !s:stopped || fname != ''
@@ -1228,7 +1274,7 @@ endfunc
 
 func s:PlaceSign(id, subid, entry)
   let nr = printf('%d.%d', a:id, a:subid)
-  exe 'sign place ' . s:Breakpoint2SignNumber(a:id, a:subid) . ' line=' . a:entry['lnum'] . ' name=debugBreakpoint' . nr . ' file=' . a:entry['fname']
+  exe 'sign place ' . s:Breakpoint2SignNumber(a:id, a:subid) . ' line=' . a:entry['lnum'] . ' name=debugBreakpoint' . nr . ' priority=110 file=' . a:entry['fname']
   let a:entry['placed'] = 1
 endfunc
 
@@ -1242,8 +1288,8 @@ func s:HandleBreakpointDelete(msg)
   if has_key(s:breakpoints, id)
     for [subid, entry] in items(s:breakpoints[id])
       if has_key(entry, 'placed')
-        exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
-        unlet entry['placed']
+	exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+	unlet entry['placed']
       endif
     endfor
     unlet s:breakpoints[id]
@@ -1267,7 +1313,7 @@ func s:BufRead()
   for [id, entries] in items(s:breakpoints)
     for [subid, entry] in items(entries)
       if entry['fname'] == fname
-        call s:PlaceSign(id, subid, entry)
+	call s:PlaceSign(id, subid, entry)
       endif
     endfor
   endfor
@@ -1279,7 +1325,7 @@ func s:BufUnloaded()
   for [id, entries] in items(s:breakpoints)
     for [subid, entry] in items(entries)
       if entry['fname'] == fname
-        let entry['placed'] = 0
+	let entry['placed'] = 0
       endif
     endfor
   endfor

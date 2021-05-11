@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Jul 18
+" Last Change:	2020 Oct 27
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -68,6 +68,10 @@ fun! <SID>Space()
 
   endif
 endfun
+
+let s:local_to_window = '(local to window)'
+let s:local_to_buffer = '(local to buffer)'
+let s:global_or_local = '(global or local to buffer)'
 
 " find the window in which the option applies
 " returns 0 for global option, 1 for local option, -1 for error
@@ -154,6 +158,16 @@ call append(5, '" Hit <CR> on an index line to jump there.')
 call append(6, '" Hit <Space> on a "set" line to refresh it.')
 
 " These functions are called often below.  Keep them fast!
+
+" Add an option name and explanation.  The text can contain "\n" characters
+" where a line break is to be inserted.
+func <SID>AddOption(name, text)
+  let lines = split(a:text, "\n")
+  call append("$", a:name .. "\t" .. lines[0])
+  for line in lines[1:]
+    call append("$", "\t" .. line)
+  endfor
+endfunc
 
 " Init a local binary option
 fun! <SID>BinOptionL(name)
@@ -441,6 +455,9 @@ if has("syntax")
   call append("$", "spellcapcheck\tpattern to locate the end of a sentence")
   call append("$", "\t(local to buffer)")
   call <SID>OptionL("spc")
+  call append("$", "spelloptions\tflags to change how spell checking works")
+  call append("$", "\t(local to buffer)")
+  call <SID>OptionL("spo")
   call append("$", "spellsuggest\tmethods used to suggest corrections")
   call <SID>OptionG("sps", &sps)
   call append("$", "mkspellmem\tamount of memory used by :mkspell before compressing")
@@ -722,19 +739,19 @@ call <SID>OptionG("udir", &udir)
 call append("$", "undoreload\tmaximum number lines to save for undo on a buffer reload")
 call append("$", " \tset ur=" . &ur)
 call append("$", "modified\tchanges have been made and not written to a file")
-call append("$", "\t(local to buffer)")
+call append("$", "\t" .. s:local_to_buffer)
 call <SID>BinOptionL("mod")
 call append("$", "readonly\tbuffer is not to be written")
-call append("$", "\t(local to buffer)")
+call append("$", "\t" .. s:local_to_buffer)
 call <SID>BinOptionL("ro")
-call append("$", "modifiable\tchanges to the text are not possible")
-call append("$", "\t(local to buffer)")
+call <SID>AddOption("modifiable", "changes to the text are possible")
+call append("$", "\t" .. s:local_to_buffer)
 call <SID>BinOptionL("ma")
 call append("$", "textwidth\tline length above which to break a line")
-call append("$", "\t(local to buffer)")
+call append("$", "\t" .. s:local_to_buffer)
 call <SID>OptionL("tw")
 call append("$", "wrapmargin\tmargin from the right in which to break a line")
-call append("$", "\t(local to buffer)")
+call append("$", "\t" .. s:local_to_buffer)
 call <SID>OptionL("wm")
 call append("$", "backspace\tspecifies what <BS>, CTRL-W, etc. can do in Insert mode")
 call append("$", " \tset bs=" . &bs)
@@ -786,20 +803,19 @@ if has("digraphs")
 endif
 call append("$", "tildeop\tthe \"~\" command behaves like an operator")
 call <SID>BinOptionG("top", &top)
-call append("$", "operatorfunc\tfunction called for the\"g@\"  operator")
+call <SID>AddOption("operatorfunc", "function called for the \"g@\" operator")
 call <SID>OptionG("opfunc", &opfunc)
 call append("$", "showmatch\twhen inserting a bracket, briefly jump to its match")
 call <SID>BinOptionG("sm", &sm)
 call append("$", "matchtime\ttenth of a second to show a match for 'showmatch'")
 call append("$", " \tset mat=" . &mat)
 call append("$", "matchpairs\tlist of pairs that match for the \"%\" command")
-call append("$", "\t(local to buffer)")
+call append("$", "\t" .. s:local_to_buffer)
 call <SID>OptionL("mps")
 call append("$", "joinspaces\tuse two spaces after '.' when joining a line")
 call <SID>BinOptionG("js", &js)
-call append("$", "nrformats\t\"alpha\", \"octal\" and/or \"hex\"; number formats recognized for")
-call append("$", "\tCTRL-A and CTRL-X commands")
-call append("$", "\t(local to buffer)")
+call <SID>AddOption("nrformats", "\"alpha\", \"octal\", \"hex\", \"bin\" and/or \"unsigned\"; number formats\nrecognized for CTRL-A and CTRL-X commands")
+call append("$", "\t" .. s:local_to_buffer)
 call <SID>OptionL("nf")
 
 
@@ -873,11 +889,11 @@ endif
 
 if has("folding")
   call <SID>Header("folding")
-  call append("$", "foldenable\tset to display all folds open")
-  call append("$", "\t(local to window)")
+  call <SID>AddOption("foldenable", "unset to display all folds open")
+  call append("$", "\t" .. s:local_to_window)
   call <SID>BinOptionL("fen")
   call append("$", "foldlevel\tfolds with a level higher than this number will be closed")
-  call append("$", "\t(local to window)")
+  call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("fdl")
   call append("$", "foldlevelstart\tvalue for 'foldlevel' when starting to edit a file")
   call append("$", " \tset fdls=" . &fdls)
@@ -896,20 +912,20 @@ if has("folding")
   call <SID>OptionL("fml")
   call append("$", "commentstring\ttemplate for comments; used to put the marker in")
   call <SID>OptionL("cms")
-  call append("$", "foldmethod\tfolding type: \"manual\", \"indent\", \"expr\", \"marker\" or \"syntax\"")
-  call append("$", "\t(local to window)")
+  call <SID>AddOption("foldmethod", "folding type: \"manual\", \"indent\", \"expr\", \"marker\",\n\"syntax\" or \"diff\"")
+  call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("fdm")
   call append("$", "foldexpr\texpression used when 'foldmethod' is \"expr\"")
-  call append("$", "\t(local to window)")
+  call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("fde")
   call append("$", "foldignore\tused to ignore lines when 'foldmethod' is \"indent\"")
-  call append("$", "\t(local to window)")
+  call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("fdi")
   call append("$", "foldmarker\tmarkers used when 'foldmethod' is \"marker\"")
-  call append("$", "\t(local to window)")
+  call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("fmr")
   call append("$", "foldnestmax\tmaximum fold depth for when 'foldmethod' is \"indent\" or \"syntax\"")
-  call append("$", "\t(local to window)")
+  call append("$", "\t" .. s:local_to_window)
   call <SID>OptionL("fdn")
 endif
 
@@ -1014,7 +1030,7 @@ call append("$", " \tset ut=" . &ut)
 
 
 call <SID>Header("command line editing")
-call append("$", "history\thow many command lines are remembered ")
+call <SID>AddOption("history", "how many command lines are remembered")
 call append("$", " \tset hi=" . &hi)
 call append("$", "wildchar\tkey that triggers command-line expansion")
 call append("$", " \tset wc=" . &wc)
@@ -1078,7 +1094,7 @@ call <SID>BinOptionG("warn", &warn)
 
 
 if has("quickfix")
-  call <SID>Header("running make and jumping to errors")
+  call <SID>Header("running make and jumping to errors (quickfix)")
   call append("$", "errorfile\tname of the file that contains error messages")
   call <SID>OptionG("ef", &ef)
   call append("$", "errorformat\tlist of formats for error messages")
@@ -1102,12 +1118,12 @@ if has("quickfix")
 endif
 
 
-if has("msdos") || has("win16") || has("win32")
+if has("win32")
   call <SID>Header("system specific")
-  if has("msdos") || has("win16") || has("win32")
-    call append("$", "shellslash\tuse forward slashes in file names; for Unix-like shells")
-    call <SID>BinOptionG("ssl", &ssl)
-  endif
+  call <SID>AddOption("shellslash", "use forward slashes in file names; for Unix-like shells")
+  call <SID>BinOptionG("ssl", &ssl)
+  call <SID>AddOption("completeslash", "specifies slash/backslash used for completion")
+  call <SID>OptionG("csl", &csl)
 endif
 
 
@@ -1185,11 +1201,10 @@ endif
 
 if has("multi_byte")
   call <SID>Header("multi-byte characters")
-  call append("$", "encoding\tcharacter encoding used in Vim: \"latin1\", \"utf-8\"")
-  call append("$", "\t\"euc-jp\", \"big5\", etc.")
+  call <SID>AddOption("encoding", "character encoding used in Nvim: \"utf-8\"")
   call <SID>OptionG("enc", &enc)
   call append("$", "fileencoding\tcharacter encoding for the current file")
-  call append("$", "\t(local to buffer)")
+  call append("$", "\t" .. s:local_to_buffer)
   call <SID>OptionL("fenc")
   call append("$", "fileencodings\tautomatically detected character encodings")
   call <SID>OptionG("fencs", &fencs)
@@ -1211,7 +1226,7 @@ endif
 
 
 call <SID>Header("various")
-call append("$", "virtualedit\twhen to use virtual editing: \"block\", \"insert\" and/or \"all\"")
+call <SID>AddOption("virtualedit", "when to use virtual editing: \"block\", \"insert\", \"all\"\nand/or \"onemore\"")
 call <SID>OptionG("ve", &ve)
 call append("$", "eventignore\tlist of autocommand events which are to be ignored")
 call <SID>OptionG("ei", &ei)
@@ -1245,10 +1260,10 @@ if has("shada")
 endif
 if has("quickfix")
   call append("$", "bufhidden\twhat happens with a buffer when it's no longer in a window")
-  call append("$", "\t(local to buffer)")
+  call append("$", "\t" .. s:local_to_buffer)
   call <SID>OptionL("bh")
-  call append("$", "buftype\t\"\", \"nofile\", \"nowrite\" or \"quickfix\": type of buffer")
-  call append("$", "\t(local to buffer)")
+  call <SID>AddOption("buftype", "empty, \"nofile\", \"nowrite\", \"quickfix\", etc.: type of buffer")
+  call append("$", "\t" .. s:local_to_buffer)
   call <SID>OptionL("bt")
 endif
 call append("$", "buflisted\twhether the buffer shows up in the buffer list")

@@ -67,7 +67,7 @@ You can use ":highlight" to find out the current colors.  Exception: the
 ctermfg and ctermbg values are numbers, which are only valid for the current
 terminal.  Use the color names instead.  See ":help cterm-colors".
 
-The default color settings can be found in the source file src/syntax.c.
+The default color settings can be found in the source file src/highlight.c.
 Search for "highlight_init".
 
 If you think you have a color scheme that is good enough to be used by others,

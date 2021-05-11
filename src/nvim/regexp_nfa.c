@@ -6491,7 +6491,7 @@ static long nfa_regtry(nfa_regprog_T *prog,
 }
 
 /// Match a regexp against a string ("line" points to the string) or multiple
-/// lines ("line" is NULL, use reg_getline()).
+/// lines (if "line" is NULL, use reg_getline()).
 ///
 /// @param line String in which to search or NULL
 /// @param startcol Column to start looking for match

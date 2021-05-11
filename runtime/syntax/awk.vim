@@ -1,7 +1,8 @@
 " Vim syntax file
-" Language:	awk, nawk, gawk, mawk
-" Maintainer:	Antonio Colombo <azc100@gmail.com>
-" Last Change:	2016 Sep 05
+" Language:		awk, nawk, gawk, mawk
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Antonio Colombo <azc100@gmail.com>
+" Last Change:		2020 Aug 18
 
 " AWK  ref. is: Alfred V. Aho, Brian W. Kernighan, Peter J. Weinberger
 " The AWK Programming Language, Addison-Wesley, 1988
@@ -9,7 +10,7 @@
 " GAWK ref. is: Arnold D. Robbins
 " Effective AWK Programming, Third Edition, O'Reilly, 2001
 " Effective AWK Programming, Fourth Edition, O'Reilly, 2015
-" (also available and updated with the gawk source distribution)
+" (up-to-date version available with the gawk source distribution)
 
 " MAWK is a "new awk" meaning it implements AWK ref.
 " mawk conforms to the Posix 1003.2 (draft 11.3)
@@ -27,20 +28,27 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+syn iskeyword @,48-57,_,192-255,@-@
+
 " A bunch of useful Awk keywords
 " AWK  ref. p. 188
 syn keyword awkStatement	break continue delete exit
 syn keyword awkStatement	function getline next
 syn keyword awkStatement	print printf return
 " GAWK ref. Chapter 7-9
-syn keyword awkStatement	switch nextfile
+syn keyword awkStatement	case default switch nextfile
 syn keyword awkStatement	func
+" GAWK ref. Chapter 2.7, Including Other Files into Your Program
+" GAWK ref. Chapter 2.8, Loading Dynamic Extensions into Your Program
+" GAWK ref. Chapter 15, Namespaces
+" Directives
+syn keyword awkStatement	@include @load @namespace
 "
 " GAWK ref. Chapter 9, Functions
 " Numeric Functions
-syn keyword awkFunction	atan2 cos exp int intdiv log rand sin sqrt srand
+syn keyword awkFunction	atan2 cos exp int log rand sin sqrt srand
 " String Manipulation Functions
-syn keyword awkFunction	asort asort1 gensub gsub index length match 
+syn keyword awkFunction	asort asorti gensub gsub index length match 
 syn keyword awkFunction	patsplit split sprintf strtonum sub substr
 syn keyword awkFunction	tolower toupper
 " Input Output Functions
@@ -49,7 +57,7 @@ syn keyword awkFunction	close fflush system
 syn keyword awkFunction	mktime strftime systime
 " Bit Manipulation Functions
 syn keyword awkFunction	and compl lshift or rshift xor
-" Getting Type Functions
+" Getting Type Information Functions
 syn keyword awkFunction	isarray typeof
 " String-Translation Functions
 syn keyword awkFunction	bindtextdomain dcgettext dcngetext

@@ -1628,26 +1628,7 @@ func Test_sign_lnum_adjust()
   " Delete the line with the sign
   call deletebufline('', 4)
   let l = sign_getplaced(bufnr(''))
-  call assert_equal(4, l[0].signs[0].lnum)
-
-  " Undo the delete operation
-  undo
-  let l = sign_getplaced(bufnr(''))
-  call assert_equal(5, l[0].signs[0].lnum)
-
-  " Break the undo
-  let &undolevels=&undolevels
-
-  " Delete few lines at the end of the buffer including the line with the sign
-  " Sign line number should not change (as it is placed outside of the buffer)
-  call deletebufline('', 3, 6)
-  let l = sign_getplaced(bufnr(''))
-  call assert_equal(5, l[0].signs[0].lnum)
-
-  " Undo the delete operation. Sign should be restored to the previous line
-  undo
-  let l = sign_getplaced(bufnr(''))
-  call assert_equal(5, l[0].signs[0].lnum)
+  call assert_equal(0, len(l[0].signs))
 
   sign unplace * group=*
   sign undefine sign1

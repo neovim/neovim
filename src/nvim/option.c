@@ -292,7 +292,8 @@ typedef struct vimoption {
 
 static char *(p_ambw_values[]) =      { "single", "double", NULL };
 static char *(p_bg_values[]) =        { "light", "dark", NULL };
-static char *(p_nf_values[]) =        { "bin", "octal", "hex", "alpha", NULL };
+static char *(p_nf_values[]) =        { "bin", "octal", "hex", "alpha",
+                                        "unsigned", NULL };
 static char *(p_ff_values[]) =        { FF_UNIX, FF_DOS, FF_MAC, NULL };
 static char *(p_wak_values[]) =       { "yes", "menu", "no", NULL };
 static char *(p_mousem_values[]) =    { "extend", "popup", "popup_setpos",
@@ -854,15 +855,18 @@ void set_init_3(void)
         p_srr = (char_u *)">&";
         options[idx_srr].def_val[VI_DEFAULT] = p_srr;
       }
-    } else if (       fnamecmp(p, "sh") == 0
-                      || fnamecmp(p, "ksh") == 0
-                      || fnamecmp(p, "mksh") == 0
-                      || fnamecmp(p, "pdksh") == 0
-                      || fnamecmp(p, "zsh") == 0
-                      || fnamecmp(p, "zsh-beta") == 0
-                      || fnamecmp(p, "bash") == 0
-                      || fnamecmp(p, "fish") == 0
-                      ) {
+    } else if (fnamecmp(p, "sh") == 0
+               || fnamecmp(p, "ksh") == 0
+               || fnamecmp(p, "mksh") == 0
+               || fnamecmp(p, "pdksh") == 0
+               || fnamecmp(p, "zsh") == 0
+               || fnamecmp(p, "zsh-beta") == 0
+               || fnamecmp(p, "bash") == 0
+               || fnamecmp(p, "fish") == 0
+               || fnamecmp(p, "ash") == 0
+               || fnamecmp(p, "dash") == 0
+               ) {
+      // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = (char_u *)"2>&1| tee";
         options[idx_sp].def_val[VI_DEFAULT] = p_sp;
@@ -7583,8 +7587,18 @@ int csh_like_shell(void)
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)
 {
+  return win_signcol_configured(wp, NULL);
+}
+
+/// Return the number of requested sign columns, based on user / configuration.
+int win_signcol_configured(win_T *wp, int *is_fixed)
+{
   int minimum = 0, maximum = 1, needed_signcols;
   const char *scl = (const char *)wp->w_p_scl;
+
+  if (is_fixed) {
+    *is_fixed = 1;
+  }
 
   // Note: It checks "no" or "number" in 'signcolumn' option
   if (*scl == 'n'
@@ -7603,7 +7617,11 @@ int win_signcol_count(win_T *wp)
     return 1;
   }
 
-  // auto or auto:<NUM>
+  if (is_fixed) {
+    // auto or auto:<NUM>
+    *is_fixed = 0;
+  }
+
   if (!strncmp(scl, "auto:", 5)) {
     // Variable depending on a configuration
     maximum = scl[5] - '0';

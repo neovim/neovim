@@ -2,7 +2,7 @@
 " Language:     Debian sources.list
 " Maintainer:   Debian Vim Maintainers
 " Former Maintainer: Matthijs Mohlmann <matthijs@cacholong.nl>
-" Last Change: 2019 Apr 21
+" Last Change: 2020 Nov 28
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debsources.vim
 
 " Standard syntax initialization
@@ -23,19 +23,20 @@ let s:cpo = &cpo
 set cpo-=C
 let s:supported = [
       \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental',
-      \ 'wheezy', 'jessie', 'stretch', 'buster', 'bullseye', 'bookworm',
-      \ 'sid', 'rc-buggy',
+      \ 'jessie', 'stretch', 'buster', 'bullseye', 'bookworm',
+      \ 'trixie', 'sid', 'rc-buggy',
       \
-      \ 'trusty', 'xenial', 'bionic', 'cosmic', 'disco', 'eoan', 'devel'
+      \ 'trusty', 'xenial', 'bionic', 'focal', 'groovy', 'hirsute', 'devel'
       \ ]
 let s:unsupported = [
       \ 'buzz', 'rex', 'bo', 'hamm', 'slink', 'potato',
-      \ 'woody', 'sarge', 'etch', 'lenny', 'squeeze',
+      \ 'woody', 'sarge', 'etch', 'lenny', 'squeeze', 'wheezy',
       \
       \ 'warty', 'hoary', 'breezy', 'dapper', 'edgy', 'feisty',
       \ 'gutsy', 'hardy', 'intrepid', 'jaunty', 'karmic', 'lucid',
       \ 'maverick', 'natty', 'oneiric', 'precise', 'quantal', 'raring', 'saucy',
-      \ 'utopic', 'vivid', 'wily', 'yakkety', 'zesty', 'artful'
+      \ 'utopic', 'vivid', 'wily', 'yakkety', 'zesty', 'artful', 'cosmic',
+      \ 'disco', 'eoan'
       \ ]
 let &cpo=s:cpo
 

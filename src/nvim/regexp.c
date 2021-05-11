@@ -3436,7 +3436,7 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
 }
 
 /// Match a regexp against a string ("line" points to the string) or multiple
-/// lines ("line" is NULL, use reg_getline()).
+/// lines (if "line" is NULL, use reg_getline()).
 /// @return 0 for failure, or number of lines contained in the match.
 static long bt_regexec_both(char_u *line,
                             colnr_T col,      // column to start search

@@ -1322,7 +1322,7 @@ void openscript(
     do {
       update_topline_cursor();          // update cursor position and topline
       normal_cmd(&oa, false);           // execute one command
-      vpeekc();                         // check for end of file
+      (void)vpeekc();                   // check for end of file
     } while (scriptin[oldcurscript] != NULL);
 
     State = save_State;
@@ -1586,7 +1586,9 @@ int plain_vgetc(void)
 
   do {
     c = safe_vgetc();
-  } while (c == K_IGNORE || c == K_VER_SCROLLBAR || c == K_HOR_SCROLLBAR);
+  } while (c == K_IGNORE
+           || c == K_VER_SCROLLBAR || c == K_HOR_SCROLLBAR
+           || c == K_MOUSEMOVE);
   return c;
 }
 
@@ -3831,7 +3833,16 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
           if (c >= ABBR_OFF) {
             c -= ABBR_OFF;
           }
-          j += utf_char2bytes(c, tb + j);
+          int newlen = utf_char2bytes(c, tb + j);
+          tb[j + newlen] = NUL;
+          // Need to escape K_SPECIAL.
+          char_u *escaped = vim_strsave_escape_csi(tb + j);
+          if (escaped != NULL) {
+            newlen = (int)STRLEN(escaped);
+            memmove(tb + j, escaped, (size_t)newlen);
+            j += newlen;
+            xfree(escaped);
+          }
         }
         tb[j] = NUL;
         // insert the last typed char

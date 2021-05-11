@@ -213,6 +213,9 @@ static struct vimvar {
   VV(VV_FALSE,          "false",            VAR_BOOL, VV_RO),
   VV(VV_TRUE,           "true",             VAR_BOOL, VV_RO),
   VV(VV_NULL,           "null",             VAR_SPECIAL, VV_RO),
+  VV(VV_NUMBERMAX,      "numbermax",        VAR_NUMBER, VV_RO),
+  VV(VV_NUMBERMIN,      "numbermin",        VAR_NUMBER, VV_RO),
+  VV(VV_NUMBERSIZE,     "numbersize",       VAR_NUMBER, VV_RO),
   VV(VV_VIM_DID_ENTER,  "vim_did_enter",    VAR_NUMBER, VV_RO),
   VV(VV_TESTING,        "testing",          VAR_NUMBER, 0),
   VV(VV_TYPE_NUMBER,    "t_number",         VAR_NUMBER, VV_RO),
@@ -225,6 +228,7 @@ static struct vimvar {
   VV(VV_EVENT,          "event",            VAR_DICT, VV_RO),
   VV(VV_ECHOSPACE,      "echospace",        VAR_NUMBER, VV_RO),
   VV(VV_ARGV,           "argv",             VAR_LIST, VV_RO),
+  VV(VV_COLLATE,        "collate",          VAR_STRING, VV_RO),
   VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
   // Neovim
   VV(VV_STDERR,         "stderr",           VAR_NUMBER, VV_RO),
@@ -394,6 +398,9 @@ void eval_init(void)
   set_vim_var_bool(VV_FALSE, kBoolVarFalse);
   set_vim_var_bool(VV_TRUE, kBoolVarTrue);
   set_vim_var_special(VV_NULL, kSpecialVarNull);
+  set_vim_var_nr(VV_NUMBERMAX, VARNUMBER_MAX);
+  set_vim_var_nr(VV_NUMBERMIN, VARNUMBER_MIN);
+  set_vim_var_nr(VV_NUMBERSIZE, sizeof(varnumber_T) * 8);
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);
@@ -1569,7 +1576,7 @@ static const char_u *skip_var_list(const char_u *arg, int *var_count,
         break;
       else if (*p == ';') {
         if (*semicolon == 1) {
-          EMSG(_("Double ; in list of variables"));
+          EMSG(_("E452: Double ; in list of variables"));
           return NULL;
         }
         *semicolon = 1;

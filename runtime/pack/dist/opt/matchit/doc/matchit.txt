@@ -4,7 +4,7 @@ For instructions on installing this file, type
 	`:help matchit-install`
 inside Vim.
 
-For Vim version 8.1.  Last change:  2019 May 05
+For Vim version 8.1.  Last change:  2020 Mar 01
 
 
 		  VIM REFERENCE MANUAL    by Benji Fisher et al
@@ -377,6 +377,10 @@ The back reference '\'.d refers to the same thing as '\'.b:match_table[d] in
 ==============================================================================
 5. Known Bugs and Limitations				*matchit-bugs*
 
+Repository: https://github.com/chrisbra/matchit/
+Bugs can be reported at the repository (alternatively you can send me a mail).
+The latest development snapshot can also be downloaded there.
+
 Just because I know about a bug does not mean that it is on my todo list.  I
 try to respond to reports of bugs that cause real problems.  If it does not
 cause serious problems, or if there is a work-around, a bug may sit there for
@@ -388,4 +392,4 @@ try to implement this in a future version.  (This is not so easy to arrange as
 you might think!)
 
 ==============================================================================
-vim:tw=78:fo=tcq2:ft=help:
+vim:tw=78:ts=8:fo=tcq2:ft=help:

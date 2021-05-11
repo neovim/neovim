@@ -267,14 +267,20 @@ end
 
 --@private
 --- Memoizes a function. On first run, the function return value is saved and
---- immediately returned on subsequent runs.
+--- immediately returned on subsequent runs. If the function returns a multival,
+--- only the first returned value will be memoized and returned. The function will only be run once,
+--- even if it has side-effects.
 ---
 --@param fn (function) Function to run
 --@returns (function) Memoized function
 local function once(fn)
   local value
+  local ran = false
   return function(...)
-    if not value then value = fn(...) end
+    if not ran then
+      value = fn(...)
+      ran = true
+    end
     return value
   end
 end
@@ -476,6 +482,13 @@ end
 ---     If {status} is `true`, the function returns {request_id} as the second
 ---     result. You can use this with `client.cancel_request(request_id)`
 ---     to cancel the request.
+---
+---  - request_sync(method, params, timeout_ms, bufnr)
+---     Sends a request to the server and synchronously waits for the response.
+---     This is a wrapper around {client.request}
+---     Returns: { err=err, result=result }, a dictionary, where `err` and `result` come from
+---     the |lsp-handler|. On timeout, cancel or error, returns `(nil, err)` where `err` is a
+---     string describing the failure reason. If the request was unsuccessful returns `nil`.
 ---
 ---  - notify(method, params)
 ---     Sends a notification to an LSP server.
@@ -885,6 +898,42 @@ function lsp.start_client(config)
   end
 
   --@private
+  --- Sends a request to the server and synchronously waits for the response.
+  ---
+  --- This is a wrapper around {client.request}
+  ---
+  --@param method (string) LSP method name.
+  --@param params (table) LSP request params.
+  --@param timeout_ms (number, optional, default=1000) Maximum time in
+  ---milliseconds to wait for a result.
+  --@param bufnr (number) Buffer handle (0 for current).
+  --@returns { err=err, result=result }, a dictionary, where `err` and `result` come from the |lsp-handler|.
+  ---On timeout, cancel or error, returns `(nil, err)` where `err` is a
+  ---string describing the failure reason. If the request was unsuccessful
+  ---returns `nil`.
+  --@see |vim.lsp.buf_request_sync()|
+  function client.request_sync(method, params, timeout_ms, bufnr)
+    local request_result = nil
+    local function _sync_handler(err, _, result)
+      request_result = { err = err, result = result }
+    end
+
+    local success, request_id = client.request(method, params, _sync_handler,
+      bufnr)
+    if not success then return nil end
+
+    local wait_result, reason = vim.wait(timeout_ms or 1000, function()
+      return request_result ~= nil
+    end, 10)
+
+    if not wait_result then
+      client.cancel_request(request_id)
+      return nil, wait_result_reason[reason]
+    end
+    return request_result
+  end
+
+  --@private
   --- Sends a notification to an LSP server.
   ---
   --@param method (string) LSP method name.
@@ -910,7 +959,7 @@ function lsp.start_client(config)
 
   -- Track this so that we can escalate automatically if we've alredy tried a
   -- graceful shutdown
-  local tried_graceful_shutdown = false
+  local graceful_shutdown_failed = false
   --@private
   --- Stops a client, optionally with force.
   ---
@@ -932,11 +981,10 @@ function lsp.start_client(config)
     if handle:is_closing() then
       return
     end
-    if force or (not client.initialized) or tried_graceful_shutdown then
+    if force or (not client.initialized) or graceful_shutdown_failed then
       handle:kill(15)
       return
     end
-    tried_graceful_shutdown = true
     -- Sending a signal after a process has exited is acceptable.
     rpc.request('shutdown', nil, function(err, _)
       if err == nil then
@@ -944,6 +992,7 @@ function lsp.start_client(config)
       else
         -- If there was an error in the shutdown request, then term to be safe.
         handle:kill(15)
+        graceful_shutdown_failed = true
       end
     end)
   end
@@ -1239,42 +1288,77 @@ function lsp.buf_request(bufnr, method, params, handler)
   return client_request_ids, _cancel_all_requests
 end
 
---- Sends a request to a server and waits for the response.
----
---- Calls |vim.lsp.buf_request()| but blocks Nvim while awaiting the result.
---- Parameters are the same as |vim.lsp.buf_request()| but the return result is
---- different. Wait maximum of {timeout_ms} (default 100) ms.
+---Sends an async request for all active clients attached to the buffer.
+---Executes the callback on the combined result.
+---Parameters are the same as |vim.lsp.buf_request()| but the return result and callback are
+---different.
 ---
 --@param bufnr (number) Buffer handle, or 0 for current.
 --@param method (string) LSP method name
 --@param params (optional, table) Parameters to send to the server
---@param timeout_ms (optional, number, default=100) Maximum time in
+--@param callback (function) The callback to call when all requests are finished.
+--  Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
+--  A map of client_id:request_result will be provided to the callback
+--
+--@returns (function) A function that will cancel all requests which is the same as the one returned from `buf_request`.
+function lsp.buf_request_all(bufnr, method, params, callback)
+  local request_results = {}
+  local result_count = 0
+  local expected_result_count = 0
+  local cancel, client_request_ids
+
+  local set_expected_result_count = once(function()
+    for _ in pairs(client_request_ids) do
+      expected_result_count = expected_result_count + 1
+    end
+  end)
+
+  local function _sync_handler(err, _, result, client_id)
+    request_results[client_id] = { error = err, result = result }
+    result_count = result_count + 1
+    set_expected_result_count()
+
+    if result_count >= expected_result_count then
+      callback(request_results)
+    end
+  end
+
+  client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
+
+  return cancel
+end
+
+--- Sends a request to all server and waits for the response of all of them.
+---
+--- Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the result.
+--- Parameters are the same as |vim.lsp.buf_request()| but the return result is
+--- different. Wait maximum of {timeout_ms} (default 1000) ms.
+---
+--@param bufnr (number) Buffer handle, or 0 for current.
+--@param method (string) LSP method name
+--@param params (optional, table) Parameters to send to the server
+--@param timeout_ms (optional, number, default=1000) Maximum time in
 ---      milliseconds to wait for a result.
 ---
 --@returns Map of client_id:request_result. On timeout, cancel or error,
 ---        returns `(nil, err)` where `err` is a string describing the failure
 ---        reason.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
-  local request_results = {}
-  local result_count = 0
-  local function _sync_handler(err, _, result, client_id)
-    request_results[client_id] = { error = err, result = result }
-    result_count = result_count + 1
-  end
-  local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
-  local expected_result_count = 0
-  for _ in pairs(client_request_ids) do
-    expected_result_count = expected_result_count + 1
-  end
+  local request_results
 
-  local wait_result, reason = vim.wait(timeout_ms or 100, function()
-    return result_count >= expected_result_count
+  local cancel = lsp.buf_request_all(bufnr, method, params, function(it)
+    request_results = it
+  end)
+
+  local wait_result, reason = vim.wait(timeout_ms or 1000, function()
+    return request_results ~= nil
   end, 10)
 
   if not wait_result then
     cancel()
     return nil, wait_result_reason[reason]
   end
+
   return request_results
 end
 

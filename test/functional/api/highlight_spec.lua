@@ -159,54 +159,150 @@ describe('API: highlight',function()
   end)
 end)
 
-describe("API: higlight clear", function()
+describe("API: highlight", function()
+  describe("nvim_set_hl", function()
+    local highlight_color = {
+      fg = tonumber('0xff0000'),
+      bg = tonumber('0x0032aa'),
+      ctermfg = 8,
+      ctermbg = 15,
+    }
+    local highlight1 = {
+      background = highlight_color.bg,
+      foreground = highlight_color.fg,
+      bold = true,
+      italic = true,
+    }
+    local highlight2_config = {
+      ctermbg = highlight_color.ctermbg,
+      ctermfg = highlight_color.ctermfg,
+      underline = true,
+      reverse = true,
+    }
+    local highlight2_result = {
+      background = highlight_color.ctermbg,
+      foreground = highlight_color.ctermfg,
+      underline = true,
+      reverse = true,
+    }
+    local highlight3_config = {
+      background = highlight_color.bg,
+      foreground = highlight_color.fg,
+      ctermbg = highlight_color.ctermbg,
+      ctermfg = highlight_color.ctermfg,
+      bold = true,
+      italic = true,
+      reverse = true,
+      undercurl = true,
+      underline = true,
+      cterm = {
+        italic = true,
+        reverse = true,
+        undercurl = true,
+      }
+    }
+    local highlight3_result_gui = {
+      background = highlight_color.bg,
+      foreground = highlight_color.fg,
+      bold = true,
+      italic = true,
+      reverse = true,
+      undercurl = true,
+      underline = true,
+    }
+    local highlight3_result_cterm = {
+      background = highlight_color.ctermbg,
+      foreground = highlight_color.ctermfg,
+      italic = true,
+      reverse = true,
+      undercurl = true,
+    }
 
-  local ns1 = meths.create_namespace('Test_ns1')
-  local ns2 = meths.create_namespace('Test_ns2')
-  local hl1 = {
-    foreground = 0082920,
-    background = 2929121,
-    bold = true,
-  }
-  local hl2 = {
-    foreground = 92919022,
-    background = 02820913,
-    italic = true,
-  }
-  local cleared = {}
+    local function get_ns()
+      local ns = meths.create_namespace('Test_set_hl')
+      meths._set_hl_ns(ns)
+      return ns
+    end
 
-  before_each(function()
-    clear()
-    -- highlights for ns1
-    meths.set_hl(ns1, 'hl1', hl1)
-    meths.set_hl(ns1, 'hl2', hl2)
-    meths.set_hl(ns1, 'hl3', hl2)
-    -- highlights for ns2
-    meths.set_hl(ns2, 'hl1', hl1)
+    before_each(clear)
+
+    it ("can set gui highlight", function()
+      local ns = get_ns()
+      meths.set_hl(ns, 'Test_hl', highlight1)
+      eq(highlight1, meths.get_hl_by_name('Test_hl', true))
+    end)
+
+    it ("can set cterm highlight", function()
+      local ns = get_ns()
+      meths.set_hl(ns, 'Test_hl', highlight2_config)
+      eq(highlight2_result, meths.get_hl_by_name('Test_hl', false))
+    end)
+
+    it ("cterm attr defaults to gui attr", function()
+      local ns = get_ns()
+      meths.set_hl(ns, 'Test_hl', highlight1)
+      eq({
+        bold = true,
+        italic = true,
+      }, meths.get_hl_by_name('Test_hl', false))
+    end)
+
+    it ("can overwrite attr for cterm", function()
+      local ns = get_ns()
+      meths.set_hl(ns, 'Test_hl', highlight3_config)
+      eq(highlight3_result_gui, meths.get_hl_by_name('Test_hl', true))
+      eq(highlight3_result_cterm, meths.get_hl_by_name('Test_hl', false))
+    end)
   end)
 
-  it('can clear specific highlights in namespace', function()
-    meths._set_hl_ns(ns1)
-    -- clear specific highlight groups from a ns
-    meths.namespace_clear_hl(ns1, {'hl1', 'hl2'})
-    eq(cleared, meths.get_hl_by_name('hl1', true))
-    eq(cleared, meths.get_hl_by_name('hl2', true))
-    -- hl3 is untouched
-    eq(hl2, meths.get_hl_by_name('hl3', true))
-    -- ns2 is untouched
-    meths._set_hl_ns(ns2)
-    eq(hl1, meths.get_hl_by_name('hl1', true))
-  end)
+  describe("nvim_namespace_clear_hl", function()
+    local ns1 = meths.create_namespace('Test_ns1')
+    local ns2 = meths.create_namespace('Test_ns2')
+    local hl1 = {
+      foreground = 0082920,
+      background = 2929121,
+      bold = true,
+    }
+    local hl2 = {
+      foreground = 92919022,
+      background = 02820913,
+      italic = true,
+    }
+    local cleared = {}
 
-  it('can clear entire namespace', function()
-    meths._set_hl_ns(ns1)
-    meths.namespace_clear_hl(ns1, {})
-    -- All cleared
-    eq(cleared, meths.get_hl_by_name('hl1', true))
-    eq(cleared, meths.get_hl_by_name('hl2', true))
-    eq(cleared, meths.get_hl_by_name('hl3', true))
-    -- ns2 is untouched
-    meths._set_hl_ns(ns2)
-    eq(hl1, meths.get_hl_by_name('hl1', true))
+    before_each(function()
+      clear()
+      -- highlights for ns1
+      meths.set_hl(ns1, 'hl1', hl1)
+      meths.set_hl(ns1, 'hl2', hl2)
+      meths.set_hl(ns1, 'hl3', hl2)
+      -- highlights for ns2
+      meths.set_hl(ns2, 'hl1', hl1)
+    end)
+
+    it('can clear specific highlights in namespace', function()
+      meths._set_hl_ns(ns1)
+      -- clear specific highlight groups from a ns
+      meths.namespace_clear_hl(ns1, {'hl1', 'hl2'})
+      eq(cleared, meths.get_hl_by_name('hl1', true))
+      eq(cleared, meths.get_hl_by_name('hl2', true))
+      -- hl3 is untouched
+      eq(hl2, meths.get_hl_by_name('hl3', true))
+      -- ns2 is untouched
+      meths._set_hl_ns(ns2)
+      eq(hl1, meths.get_hl_by_name('hl1', true))
+    end)
+
+    it('can clear entire namespace', function()
+      meths._set_hl_ns(ns1)
+      meths.namespace_clear_hl(ns1, {})
+      -- All cleared
+      eq(cleared, meths.get_hl_by_name('hl1', true))
+      eq(cleared, meths.get_hl_by_name('hl2', true))
+      eq(cleared, meths.get_hl_by_name('hl3', true))
+      -- ns2 is untouched
+      meths._set_hl_ns(ns2)
+      eq(hl1, meths.get_hl_by_name('hl1', true))
+    end)
   end)
 end)

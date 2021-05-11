@@ -676,9 +676,17 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
 
   wp->w_float_config = fconfig;
 
+  bool has_border = wp->w_floating && wp->w_float_config.border;
+  for (int i = 0; i < 4; i++) {
+    wp->w_border_adj[i] =
+      has_border && wp->w_float_config.border_chars[2 * i+1][0];
+  }
+
   if (!ui_has(kUIMultigrid)) {
-    wp->w_height = MIN(wp->w_height, Rows-1);
-    wp->w_width = MIN(wp->w_width, Columns);
+    wp->w_height = MIN(wp->w_height,
+                       Rows - 1 - (wp->w_border_adj[0] + wp->w_border_adj[2]));
+    wp->w_width = MIN(wp->w_width,
+                      Columns - (wp->w_border_adj[1] + wp->w_border_adj[3]));
   }
 
   win_set_inner_size(wp);
@@ -767,14 +775,13 @@ void ui_ext_win_position(win_T *wp)
 
       int comp_row = (int)row - (south ? wp->w_height : 0);
       int comp_col = (int)col - (east ? wp->w_width : 0);
-      comp_row = MAX(MIN(comp_row, Rows-wp->w_height-1), 0);
-      comp_col = MAX(MIN(comp_col, Columns-wp->w_width), 0);
+      comp_row = MAX(MIN(comp_row, Rows-wp->w_height_outer-1), 0);
+      comp_col = MAX(MIN(comp_col, Columns-wp->w_width_outer), 0);
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
       bool valid = (wp->w_redr_type == 0);
-      bool on_top = (curwin == wp) || !curwin->w_floating;
       ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
-                       wp->w_height_outer, wp->w_width_outer, valid, on_top);
+                       wp->w_height_outer, wp->w_width_outer, valid, false);
       ui_check_cursor_grid(wp->w_grid_alloc.handle);
       wp->w_grid_alloc.focusable = wp->w_float_config.focusable;
       if (!valid) {
@@ -2192,7 +2199,7 @@ bool one_nonfloat(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// always false for a floating window
 bool last_nonfloat(win_T *wp) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return firstwin == wp && !(wp->w_next && !wp->w_floating);
+  return wp != NULL && firstwin == wp && !(wp->w_next && !wp->w_floating);
 }
 
 /// Close the possibly last window in a tab page.
@@ -3459,6 +3466,9 @@ int win_alloc_first(void)
   first_tabpage = alloc_tabpage();
   first_tabpage->tp_topframe = topframe;
   curtab = first_tabpage;
+  curtab->tp_firstwin = firstwin;
+  curtab->tp_lastwin = lastwin;
+  curtab->tp_curwin = curwin;
 
   return OK;
 }
@@ -3627,6 +3637,8 @@ int win_new_tabpage(int after, char_u *filename)
       newtp->tp_next = tp->tp_next;
       tp->tp_next = newtp;
     }
+    newtp->tp_firstwin = newtp->tp_lastwin = newtp->tp_curwin = curwin;
+
     win_init_size();
     firstwin->w_winrow = tabline_height();
     win_comp_scroll(curwin);
@@ -5735,12 +5747,6 @@ void win_set_inner_size(win_T *wp)
     terminal_check_size(wp->w_buffer->terminal);
   }
 
-  bool has_border = wp->w_floating && wp->w_float_config.border;
-  for (int i = 0; i < 4; i++) {
-    wp->w_border_adj[i] =
-      has_border && wp->w_float_config.border_chars[2 * i+1][0];
-  }
-
   wp->w_height_outer = (wp->w_height_inner
                         + wp->w_border_adj[0] + wp->w_border_adj[2]);
   wp->w_width_outer = (wp->w_width_inner
@@ -6335,6 +6341,13 @@ static win_T *get_snapshot_focus(int idx)
 int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage_T *tp, int no_display)
 {
   block_autocmds();
+  return switch_win_noblock(save_curwin, save_curtab, win, tp, no_display);
+}
+
+// As switch_win() but without blocking autocommands.
+int switch_win_noblock(win_T **save_curwin, tabpage_T **save_curtab,
+                       win_T *win, tabpage_T *tp, int no_display)
+{
   *save_curwin = curwin;
   if (tp != NULL) {
     *save_curtab = curtab;
@@ -6360,6 +6373,14 @@ int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage
 // triggered.
 void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
 {
+  restore_win_noblock(save_curwin, save_curtab, no_display);
+  unblock_autocmds();
+}
+
+// As restore_win() but without unblocking autocommands.
+void restore_win_noblock(win_T *save_curwin, tabpage_T *save_curtab,
+                         bool no_display)
+{
   if (save_curtab != NULL && valid_tabpage(save_curtab)) {
     if (no_display) {
       curtab->tp_firstwin = firstwin;
@@ -6374,7 +6395,6 @@ void restore_win(win_T *save_curwin, tabpage_T *save_curtab, bool no_display)
     curwin = save_curwin;
     curbuf = curwin->w_buffer;
   }
-  unblock_autocmds();
 }
 
 /// Make "buf" the current buffer.
@@ -6807,10 +6827,19 @@ void win_id2tabwin(typval_T *const argvars, typval_T *const rettv)
 
 win_T * win_id2wp(typval_T *argvars)
 {
+  return win_id2wp_tp(argvars, NULL);
+}
+
+// Return the window and tab pointer of window "id".
+win_T * win_id2wp_tp(typval_T *argvars, tabpage_T **tpp)
+{
   int id = tv_get_number(&argvars[0]);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->handle == id) {
+      if (tpp != NULL) {
+        *tpp = tp;
+      }
       return wp;
     }
   }

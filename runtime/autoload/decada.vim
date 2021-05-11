@@ -25,7 +25,7 @@ function decada#Unit_Name () dict				     " {{{1
     "	Convert filename into acs unit:
     "	    1:  remove the file extenstion.
     "	    2:  replace all double '_' or '-' with an dot (which denotes a separate)
-    "	    3:  remove a trailing '_' (wich denotes a specification)
+    "	    3:  remove a trailing '_' (which denotes a specification)
     return substitute (substitute (expand ("%:t:r"), '__\|-', ".", "g"), '_$', "", '')
 endfunction decada#Unit_Name					     " }}}1
 

@@ -2799,9 +2799,6 @@ msgstr "ukendt vimOption"
 msgid "keyboard interrupt"
 msgstr "tastaturafbryd"
 
-msgid "vim error"
-msgstr "fejl ved vim"
-
 msgid "cannot create buffer/window command: object is being deleted"
 msgstr "kan ikke oprette buffer-/vindue-kommando: objekt slettes"
 
@@ -3123,8 +3120,8 @@ msgstr "-W <scriptud>\tSkriv alle indtastede kommandoer til filen <scriptud>"
 msgid "-x\t\t\tEdit encrypted files"
 msgstr "-x\t\t\tRediger krypterede filer"
 
-msgid "-display <display>\tConnect vim to this particular X-server"
-msgstr "-display <display>\tForbind vim til denne X-server"
+msgid "-display <display>\tConnect Vim to this particular X-server"
+msgstr "-display <display>\tForbind Vim til denne X-server"
 
 msgid "-X\t\t\tDo not connect to X server"
 msgstr "-X\t\t\tOpret ikke forbindelse til X-server"
@@ -3203,11 +3200,11 @@ msgstr ""
 "\n"
 "Argumenter som genkendes af gvim (Athena-version):\n"
 
-msgid "-display <display>\tRun vim on <display>"
-msgstr "-display <display>\tKør vim på <display>"
+msgid "-display <display>\tRun Vim on <display>"
+msgstr "-display <display>\tKør Vim på <display>"
 
-msgid "-iconic\t\tStart vim iconified"
-msgstr "-iconic\t\tStart vim som ikon"
+msgid "-iconic\t\tStart Vim iconified"
+msgstr "-iconic\t\tStart Vim som ikon"
 
 msgid "-background <color>\tUse <color> for the background (also: -bg)"
 msgstr "-background <farve>\tBrug <farve> til baggrunden (også: -bg)"
@@ -3253,8 +3250,8 @@ msgstr ""
 "\n"
 "Argumenter genkendt af gvim (GTK+-version):\n"
 
-msgid "-display <display>\tRun vim on <display> (also: --display)"
-msgstr "-display <display>\tKør vim på <display> (også: --display)"
+msgid "-display <display>\tRun Vim on <display> (also: --display)"
+msgstr "-display <display>\tKør Vim på <display> (også: --display)"
 
 msgid "--role <role>\tSet a unique role to identify the main window"
 msgstr "--role <rolle>\tSæt en unik rolle til at identificere hovedvinduet"
@@ -4332,8 +4329,6 @@ msgstr "E538: Ingen understøttelse af mus"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Ulukket udtryk-sekvens"
 
-msgid "E541: too many items"
-msgstr "E541: for mange punkter"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: ubalancerede grupper"
@@ -6338,8 +6333,8 @@ msgstr "E799: Ugyldigt ID: %ld (skal være større end eller lig med 1)"
 msgid "E801: ID already taken: %ld"
 msgstr "E801: ID allerede taget: %ld"
 
-msgid "List or number required"
-msgstr "Liste eller nummer kræves"
+msgid "E290: List or number required"
+msgstr "E290: Liste eller nummer kræves"
 
 #, c-format
 msgid "E802: Invalid ID: %ld (must be greater than or equal to 1)"
@@ -6876,7 +6871,7 @@ msgid "list index out of range"
 msgstr "listeindeks udenfor område"
 
 #, c-format
-msgid "internal error: failed to get vim list item %d"
+msgid "internal error: failed to get Vim list item %d"
 msgstr "intern fejl: kunne ikke hente vim-listepunkt %d"
 
 msgid "slice step cannot be zero"
@@ -6887,7 +6882,7 @@ msgid "attempt to assign sequence of size greater than %d to extended slice"
 msgstr "forsøg på at tildele sekvens som er større end %d til udvidet slice"
 
 #, c-format
-msgid "internal error: no vim list item %d"
+msgid "internal error: no Vim list item %d"
 msgstr "intern fejl: intet vim-listepunkt %d"
 
 msgid "internal error: not enough list items"
@@ -6998,19 +6993,19 @@ msgstr "kunne ikke køre koden"
 msgid "E858: Eval did not return a valid python object"
 msgstr "E858: Eval returnerede ikke et gyldigt python-objekt"
 
-msgid "E859: Failed to convert returned python object to vim value"
+msgid "E859: Failed to convert returned python object to a Vim value"
 msgstr "E859: Kunne ikke konvertere returnerede python-objekt til vim-værdi"
 
 #, c-format
-msgid "unable to convert %s to vim dictionary"
+msgid "unable to convert %s to a Vim dictionary"
 msgstr "kan ikke konvertere %s til vim-ordbog"
 
 #, c-format
-msgid "unable to convert %s to vim list"
+msgid "unable to convert %s to a Vim list"
 msgstr "kan ikke konvertere %s til vim-liste"
 
 #, c-format
-msgid "unable to convert %s to vim structure"
+msgid "unable to convert %s to a Vim structure"
 msgstr "kan ikke konvertere %s til vim-struktur"
 
 msgid "internal error: NULL reference passed"

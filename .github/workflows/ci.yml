@@ -3,7 +3,9 @@ on:
   push:
     branches: '**'
   pull_request:
-    branches: 'master'
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
 
 jobs:
   unixish:
@@ -13,7 +15,7 @@ jobs:
       matrix:
         include:
           - flavor: asan
-            cc: clang-11
+            cc: clang-12
             runner: ubuntu-20.04
             os: linux
           - flavor: lint
@@ -21,7 +23,7 @@ jobs:
             runner: ubuntu-20.04
             os: linux
           - flavor: tsan
-            cc: clang-11
+            cc: clang-12
             runner: ubuntu-20.04
             os: linux
           - cc: clang
@@ -38,12 +40,6 @@ jobs:
       - name: Setup commom environment variables
         run: ./.github/workflows/env.sh ${{ matrix.flavor }}
 
-      - name: Setup clang repository
-        if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
-        run: |
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
-          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'
-
       - name: Install apt packages
         if: matrix.os == 'linux'
         run: |
@@ -52,7 +48,11 @@ jobs:
 
       - name: Install new clang
         if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
-        run: sudo apt-get install -y clang-11
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 12
+          rm llvm.sh
 
       - name: Install brew packages
         if: matrix.os == 'osx'
@@ -91,8 +91,8 @@ jobs:
     runs-on: windows-2016
     if: github.event.pull_request.draft == false
     env:
-      DEPS_BUILD_DIR: "C:/projects/nvim-deps"
-      DEPS_PREFIX: "C:/projects/nvim-deps/usr"
+      DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
+      DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
 
     strategy:
       fail-fast: false
@@ -104,7 +104,7 @@ jobs:
 
       - uses: actions/cache@v2
         with:
-          path: C:\projects\nvim-deps
+          path: ${{ env.DEPS_BUILD_DIR }}
           key: ${{ matrix.config }}-${{ hashFiles('third-party\**') }}
 
       - name: Run CI

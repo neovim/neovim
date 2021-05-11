@@ -136,6 +136,7 @@ can be used to overrule the filetype used for certain extensions:
 	*.w		g:filetype_w	|ft-cweb-syntax|
 	*.i		g:filetype_i	|ft-progress-syntax|
 	*.p		g:filetype_p	|ft-pascal-syntax|
+	*.pp		g:filetype_pp	|ft-pascal-syntax|
 	*.sh		g:bash_is_sh	|ft-sh-syntax|
 	*.tex		g:tex_flavor	|ft-tex-plugin|
 
@@ -263,13 +264,13 @@ all loaded.  For example, if this command: >
 
 produces this output:
 
-	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim60 ~
+	runtimepath=/etc/vim,~/.config/nvim,/usr/local/share/vim/vim82 ~
 
 then Vim will load all plugins in these directories and below:
 
 	/etc/vim/plugin/  ~
 	~/.config/nvim/plugin/  ~
-	/usr/local/share/vim/vim60/plugin/  ~
+	/usr/local/share/vim/vim82/plugin/  ~
 
 Note that the last one is the value of $VIMRUNTIME which has been expanded.
 
@@ -351,6 +352,13 @@ ways to change this:
 
 ==============================================================================
 3.  Docs for the default filetype plugins.		*ftplugin-docs*
+
+
+AWK							*ft-awk-plugin*
+
+Support for features specific to GNU Awk, like @include, can be enabled by
+setting: >
+	let g:awk_is_gawk = 1
 
 
 CHANGELOG						*ft-changelog-plugin*
@@ -567,6 +575,13 @@ So `groff`'s pre-formatting output will be the same as with `g:man_hardwrap=0` i
 
 To disable bold highlighting: >
      :highlight link manBold Normal
+
+
+MARKDOWN                                                *ft-markdown-plugin*
+
+To enable folding use this: >
+        let g:markdown_folding = 1
+<
 
 PDF							*ft-pdf-plugin*
 

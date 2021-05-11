@@ -3,7 +3,7 @@
 " Maintainer:	Josh Wainwright <wainwright DOT ja AT gmail DOT com>
 " Last Maintainer:	Andrew Rasmussen andyras@users.sourceforge.net
 " Original Maintainer:	John Hoelzel johnh51@users.sourceforge.net
-" Last Change:	2015-08-25
+" Last Change:	2020 May 12
 " Filenames:	*.gnu *.plt *.gpi *.gih *.gp *.gnuplot scripts: #!*gnuplot
 " URL:		http://www.vim.org/scripts/script.php?script_id=4873
 " Original URL:	http://johnh51.get.to/vim/syntax/gnuplot.vim
@@ -479,7 +479,7 @@ syn keyword gnuplotKeyword	terminal palette rgb rbg grb gbr brg bgr
 
 " ---- Macros ---- "
 
-syn region gnuplotMacro		start="@" end=" "
+syn match gnuplotMacro		"@[a-zA-Z0-9_]*"
 
 " ---- Todos ---- "
 

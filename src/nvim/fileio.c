@@ -4560,11 +4560,12 @@ int vim_rename(const char_u *from, const char_u *to)
 
       if (!os_path_exists(tempname)) {
         if (os_rename(from, tempname) == OK) {
-          if (os_rename(tempname, to) == OK)
+          if (os_rename(tempname, to) == OK) {
             return 0;
-          /* Strange, the second step failed.  Try moving the
-           * file back and return failure. */
-          os_rename(tempname, from);
+          }
+          // Strange, the second step failed.  Try moving the
+          // file back and return failure.
+          (void)os_rename(tempname, from);
           return -1;
         }
         /* If it fails for one temp name it will most likely fail
@@ -4947,11 +4948,11 @@ int buf_check_timestamp(buf_T *buf)
         (void)msg_end();
         if (emsg_silent == 0) {
           ui_flush();
-          /* give the user some time to think about it */
-          os_delay(1000L, true);
+          // give the user some time to think about it
+          os_delay(1004L, true);
 
-          /* don't redraw and erase the message */
-          redraw_cmdline = FALSE;
+          // don't redraw and erase the message
+          redraw_cmdline = false;
         }
       }
       already_warned = TRUE;
@@ -5203,37 +5204,112 @@ static void vim_maketempdir(void)
   (void)umask(umask_save);
 }
 
+// Evaluate "expr" for readdir().
+static varnumber_T readdir_checkitem(typval_T *expr, const char *name)
+{
+  typval_T save_val;
+  typval_T rettv;
+  typval_T argv[2];
+  varnumber_T retval = 0;
+  bool error = false;
+
+  prepare_vimvar(VV_VAL, &save_val);
+  set_vim_var_string(VV_VAL, name, -1);
+  argv[0].v_type = VAR_STRING;
+  argv[0].vval.v_string = (char_u *)name;
+
+  if (eval_expr_typval(expr, argv, 1, &rettv) == FAIL) {
+    goto theend;
+  }
+
+  retval = tv_get_number_chk(&rettv, &error);
+  if (error) {
+    retval = -1;
+  }
+
+  tv_clear(&rettv);
+
+theend:
+  set_vim_var_string(VV_VAL, NULL, 0);
+  restore_vimvar(VV_VAL, &save_val);
+  return retval;
+}
+
+/// Core part of "readdir()" function.
+/// Retrieve the list of files/directories of "dirp" into "gap".
+void readdir_core(
+    garray_T *gap,
+    Directory *dirp,
+    typval_T *expr,
+    bool is_checkitem)
+{
+  ga_init(gap, (int)sizeof(char *), 20);
+
+  for (;;) {
+    bool ignore;
+
+    const char *path = os_scandir_next(dirp);
+    if (path == NULL) {
+      break;
+    }
+
+    ignore = (path[0] == '.'
+              && (path[1] == NUL || (path[1] == '.' && path[2] == NUL)));
+    if (!ignore && expr != NULL && expr->v_type != VAR_UNKNOWN
+        && is_checkitem) {
+      varnumber_T r = readdir_checkitem(expr, path);
+
+      if (r < 0) {
+        break;
+      }
+      if (r == 0) {
+        ignore = true;
+      }
+    }
+
+    if (!ignore) {
+      ga_grow(gap, 1);
+      ((char **)gap->ga_data)[gap->ga_len++] = xstrdup(path);
+    }
+  }
+
+  if (gap->ga_len > 0) {
+    sort_strings((char_u **)gap->ga_data, gap->ga_len);
+  }
+
+  os_closedir(dirp);
+}
+
 /// Delete "name" and everything in it, recursively.
 /// @param name The path which should be deleted.
 /// @return 0 for success, -1 if some file was not deleted.
 int delete_recursive(const char *name)
 {
   int result = 0;
+  char *exp = (char *)vim_strsave((char_u *)name);
+  Directory dir;
 
-  if (os_isrealdir(name)) {
-    snprintf((char *)NameBuff, MAXPATHL, "%s/*", name);  // NOLINT
+  if (os_isrealdir(name) && os_scandir(&dir, exp)) {
+    garray_T ga;
 
-    char_u **files;
-    int file_count;
-    char_u *exp = vim_strsave(NameBuff);
-    if (gen_expand_wildcards(1, &exp, &file_count, &files,
-                             EW_DIR | EW_FILE | EW_SILENT | EW_ALLLINKS
-                             | EW_DODOT | EW_EMPTYOK) == OK) {
-      for (int i = 0; i < file_count; i++) {
-        if (delete_recursive((const char *)files[i]) != 0) {
-          result = -1;
-        }
+    readdir_core(&ga, &dir, NULL, false);
+
+    for (int i = 0; i < ga.ga_len; i++) {
+      vim_snprintf((char *)NameBuff, MAXPATHL, "%s/%s", exp,
+                   ((char_u **)ga.ga_data)[i]);
+      if (delete_recursive((const char *)NameBuff) != 0) {
+        result = -1;
       }
-      FreeWild(file_count, files);
-    } else {
-      result = -1;
     }
 
-    xfree(exp);
+    ga_clear_strings(&ga);
+
     os_rmdir(name);
   } else {
     result = os_remove(name) == 0 ? 0 : -1;
   }
+
+  xfree(exp);
 
   return result;
 }

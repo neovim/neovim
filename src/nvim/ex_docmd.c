@@ -1857,6 +1857,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case CMD_echoerr:
     case CMD_echomsg:
     case CMD_echon:
+    case CMD_eval:
     case CMD_execute:
     case CMD_filter:
     case CMD_help:
@@ -3641,7 +3642,8 @@ const char * set_one_cmd_context(
     } else {
       if (strncmp(arg, "messages", p - arg) == 0
           || strncmp(arg, "ctype", p - arg) == 0
-          || strncmp(arg, "time", p - arg) == 0) {
+          || strncmp(arg, "time", p - arg) == 0
+          || strncmp(arg, "collate", p - arg) == 0) {
         xp->xp_context = EXPAND_LOCALES;
         xp->xp_pattern = skipwhite((const char_u *)p);
       } else {

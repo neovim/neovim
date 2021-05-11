@@ -602,12 +602,7 @@ static void f_bufname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_UNKNOWN) {
     buf = curbuf;
   } else {
-    if (!tv_check_str_or_nr(&argvars[0])) {
-      return;
-    }
-    emsg_off++;
-    buf = tv_get_buf(&argvars[0], false);
-    emsg_off--;
+    buf = tv_get_buf_from_arg(&argvars[0]);
   }
   if (buf != NULL && buf->b_fname != NULL) {
     rettv->vval.v_string = (char_u *)xstrdup((char *)buf->b_fname);
@@ -627,6 +622,9 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_UNKNOWN) {
     buf = curbuf;
   } else {
+    // Don't use tv_get_buf_from_arg(); we continue if the buffer wasn't found
+    // and the second argument isn't zero, but we want to return early if the
+    // first argument isn't a string or number so only one error is shown.
     if (!tv_check_str_or_nr(&argvars[0])) {
       return;
     }
@@ -653,16 +651,10 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
 {
-  if (!tv_check_str_or_nr(&argvars[0])) {
+  const buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL) {  // no need to search if invalid arg or buffer not found
     rettv->vval.v_number = -1;
     return;
-  }
-
-  emsg_off++;
-  buf_T *buf = tv_get_buf(&argvars[0], true);
-  if (buf == NULL) {  // no need to search if buffer was not found
-    rettv->vval.v_number = -1;
-    goto end;
   }
 
   int winnr = 0;
@@ -677,8 +669,6 @@ static void buf_win_common(typval_T *argvars, typval_T *rettv, bool get_nr)
     }
   }
   rettv->vval.v_number = (found_buf ? (get_nr ? winnr : winid) : -1);
-end:
-  emsg_off--;
 }
 
 /// "bufwinid(nr)" function
@@ -728,6 +718,18 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
     buf = find_buffer(tv);
   }
 
+  return buf;
+}
+
+/// Like tv_get_buf() but give an error message if the type is wrong.
+buf_T *tv_get_buf_from_arg(typval_T *const tv) FUNC_ATTR_NONNULL_ALL
+{
+  if (!tv_check_str_or_nr(tv)) {
+    return NULL;
+  }
+  emsg_off++;
+  buf_T *const buf = tv_get_buf(tv, false);
+  emsg_off--;
   return buf;
 }
 
@@ -1951,8 +1953,8 @@ static char_u *get_list_line(int c, void *cookie, int indent, bool do_concat)
   return (char_u *)(s == NULL ? NULL : xstrdup(s));
 }
 
-// "execute(command)" function
-static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static void execute_common(typval_T *argvars, typval_T *rettv, FunPtr fptr,
+                           int arg_off)
 {
   const int save_msg_silent = msg_silent;
   const int save_emsg_silent = emsg_silent;
@@ -1966,9 +1968,9 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (argvars[1].v_type != VAR_UNKNOWN) {
+  if (argvars[arg_off + 1].v_type != VAR_UNKNOWN) {
     char buf[NUMBUFLEN];
-    const char *const s = tv_get_string_buf_chk(&argvars[1], buf);
+    const char *const s = tv_get_string_buf_chk(&argvars[arg_off + 1], buf);
 
     if (s == NULL) {
       return;
@@ -1995,10 +1997,10 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     msg_col = 0;  // prevent leading spaces
   }
 
-  if (argvars[0].v_type != VAR_LIST) {
-    do_cmdline_cmd(tv_get_string(&argvars[0]));
-  } else if (argvars[0].vval.v_list != NULL) {
-    list_T *const list = argvars[0].vval.v_list;
+  if (argvars[arg_off].v_type != VAR_LIST) {
+    do_cmdline_cmd(tv_get_string(&argvars[arg_off]));
+  } else if (argvars[arg_off].vval.v_list != NULL) {
+    list_T *const list = argvars[arg_off].vval.v_list;
     tv_list_ref(list);
     GetListLineCookie cookie = {
       .l = list,
@@ -2028,6 +2030,39 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = capture_ga->ga_data;
 
   capture_ga = save_capture_ga;
+}
+
+// "execute(command)" function
+static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  execute_common(argvars, rettv, fptr, 0);
+}
+
+// "win_execute(win_id, command)" function
+static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tabpage_T *tp;
+  win_T *wp = win_id2wp_tp(argvars, &tp);
+  win_T *save_curwin;
+  tabpage_T *save_curtab;
+  // Return an empty string if something fails.
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  if (wp != NULL && tp != NULL) {
+    pos_T curpos = wp->w_cursor;
+    if (switch_win_noblock(&save_curwin, &save_curtab, wp, tp, true) ==
+        OK) {
+      check_cursor();
+      execute_common(argvars, rettv, fptr, 1);
+    }
+    restore_win_noblock(save_curwin, save_curtab, true);
+
+    // Update the status line if the cursor moved.
+    if (win_valid(wp) && !equalpos(curpos, wp->w_cursor)) {
+        wp->w_redr_status = true;
+    }
+  }
 }
 
 /// "exepath()" function
@@ -2799,13 +2834,9 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
     // Information about one buffer.  Argument specifies the buffer
-    if (tv_check_num(&argvars[0])) {  // issue errmsg if type error
-      emsg_off++;
-      argbuf = tv_get_buf(&argvars[0], false);
-      emsg_off--;
-      if (argbuf == NULL) {
-        return;
-      }
+    argbuf = tv_get_buf_from_arg(&argvars[0]);
+    if (argbuf == NULL) {
+      return;
     }
   }
 
@@ -2875,13 +2906,7 @@ static void get_buffer_lines(buf_T *buf,
  */
 static void f_getbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  buf_T *buf = NULL;
-
-  if (tv_check_str_or_nr(&argvars[0])) {
-    emsg_off++;
-    buf = tv_get_buf(&argvars[0], false);
-    emsg_off--;
-  }
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
 
   const linenr_T lnum = tv_get_lnum_buf(&argvars[1], buf);
   const linenr_T end = (argvars[2].v_type == VAR_UNKNOWN
@@ -3024,7 +3049,10 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = safe_vgetc();
     }
 
-    if (n == K_IGNORE || n == K_VER_SCROLLBAR || n == K_HOR_SCROLLBAR) {
+    if (n == K_IGNORE
+        || n == K_MOUSEMOVE
+        || n == K_VER_SCROLLBAR
+        || n == K_HOR_SCROLLBAR) {
       continue;
     }
     break;
@@ -6499,6 +6527,26 @@ static void f_prompt_setinterrupt(typval_T *argvars,
     buf->b_prompt_interrupt= interrupt_callback;
 }
 
+/// "prompt_getprompt({buffer})" function
+void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // return an empty string by default, e.g. it's not a prompt buffer
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (!bt_prompt(buf)) {
+    return;
+  }
+
+  rettv->vval.v_string = vim_strsave(buf_prompt_text(buf));
+}
+
 // "prompt_setprompt({buffer}, {text})" function
 static void f_prompt_setprompt(typval_T *argvars,
                                typval_T *rettv, FunPtr fptr)
@@ -6613,37 +6661,6 @@ static void f_range(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-// Evaluate "expr" for readdir().
-static varnumber_T readdir_checkitem(typval_T *expr, const char *name)
-{
-  typval_T save_val;
-  typval_T rettv;
-  typval_T argv[2];
-  varnumber_T retval = 0;
-  bool error = false;
-
-  prepare_vimvar(VV_VAL, &save_val);
-  set_vim_var_string(VV_VAL, name, -1);
-  argv[0].v_type = VAR_STRING;
-  argv[0].vval.v_string = (char_u *)name;
-
-  if (eval_expr_typval(expr, argv, 1, &rettv) == FAIL) {
-    goto theend;
-  }
-
-  retval = tv_get_number_chk(&rettv, &error);
-  if (error) {
-    retval = -1;
-  }
-
-  tv_clear(&rettv);
-
-theend:
-  set_vim_var_string(VV_VAL, NULL, 0);
-  restore_vimvar(VV_VAL, &save_val);
-  return retval;
-}
-
 // "readdir()" function
 static void f_readdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -6655,43 +6672,14 @@ static void f_readdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, kListLenUnknown);
   path = tv_get_string(&argvars[0]);
   expr = &argvars[1];
-  ga_init(&ga, (int)sizeof(char *), 20);
 
   if (!os_scandir(&dir, path)) {
     smsg(_(e_notopen), path);
   } else {
-    for (;;) {
-      bool ignore;
-
-      path = os_scandir_next(&dir);
-      if (path == NULL) {
-        break;
-      }
-
-      ignore = (path[0] == '.'
-                && (path[1] == NUL || (path[1] == '.' && path[2] == NUL)));
-      if (!ignore && expr->v_type != VAR_UNKNOWN) {
-        varnumber_T r = readdir_checkitem(expr, path);
-
-        if (r < 0) {
-          break;
-        }
-        if (r == 0) {
-          ignore = true;
-        }
-      }
-
-      if (!ignore) {
-        ga_grow(&ga, 1);
-        ((char **)ga.ga_data)[ga.ga_len++] = xstrdup(path);
-      }
-    }
-
-    os_closedir(&dir);
+    readdir_core(&ga, &dir, expr, true);
   }
 
   if (rettv->vval.v_list != NULL && ga.ga_len > 0) {
-    sort_strings((char_u **)ga.ga_data, ga.ga_len);
     for (int i = 0; i < ga.ga_len; i++) {
       path = ((const char **)ga.ga_data)[i];
       tv_list_append_string(rettv->vval.v_list, path, -1);
@@ -9166,6 +9154,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// struct storing information about current sort
 typedef struct {
   int item_compare_ic;
+  bool item_compare_lc;
   bool item_compare_numeric;
   bool item_compare_numbers;
   bool item_compare_float;
@@ -9240,10 +9229,10 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
     p2 = "";
   }
   if (!sortinfo->item_compare_numeric) {
-    if (sortinfo->item_compare_ic) {
-      res = STRICMP(p1, p2);
+    if (sortinfo->item_compare_lc) {
+      res = strcoll(p1, p2);
     } else {
-      res = STRCMP(p1, p2);
+      res = sortinfo->item_compare_ic ? STRICMP(p1, p2): STRCMP(p1, p2);
     }
   } else {
     double n1, n2;
@@ -9378,6 +9367,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     }
 
     info.item_compare_ic = false;
+    info.item_compare_lc = false;
     info.item_compare_numeric = false;
     info.item_compare_numbers = false;
     info.item_compare_float = false;
@@ -9422,6 +9412,9 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
           } else if (strcmp(info.item_compare_func, "i") == 0) {
             info.item_compare_func = NULL;
             info.item_compare_ic = true;
+          } else if (strcmp(info.item_compare_func, "l") == 0) {
+            info.item_compare_func = NULL;
+            info.item_compare_lc = true;
           }
         }
       }

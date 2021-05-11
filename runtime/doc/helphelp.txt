@@ -92,9 +92,9 @@ Help on help files					*helphelp*
 				:help k| only
 <			Note that a space before the '|' is seen as part of
 			the ":help" argument.
-			You can also use <LF> or <CR> to separate the help
+			You can also use <NL> or <CR> to separate the help
 			command from a following command.  You need to type
-			CTRL-V first to insert the <LF> or <CR>.  Example: >
+			CTRL-V first to insert the <NL> or <CR>.  Example: >
 				:help so<C-V><CR>only
 <
 
@@ -103,7 +103,11 @@ Help on help files					*helphelp*
 			current file.  See |help-translated|.
 
 							*:helpc* *:helpclose*
-:helpc[lose]            Close one help window, if there is one.
+:helpc[lose]		Close one help window, if there is one.
+			Vim will try to restore the window layout (including
+			cursor position) to the same layout it was before
+			opening the help window initially.  This might cause
+			triggering several autocommands.
 
 							*:helpg* *:helpgrep*
 :helpg[rep] {pattern}[@xx]
@@ -155,8 +159,30 @@ When no argument is given to |:help| the file given with the 'helpfile' option
 will be opened.  Otherwise the specified tag is searched for in all "doc/tags"
 files in the directories specified in the 'runtimepath' option.
 
+If you would like to open the help in the current window, see this tip:
+|help-curwin|.
+
 The initial height of the help window can be set with the 'helpheight' option
 (default 20).
+
+When the help buffer is created, several local options are set to make sure
+the help text is displayed as it was intended:
+    'iskeyword'		nearly all ASCII chars except ' ', '*', '"' and '|'
+    'foldmethod'	"manual"
+    'tabstop'		8
+    'arabic'		off
+    'binary'		off
+    'buflisted'		off
+    'cursorbind'	off
+    'diff'		off
+    'foldenable'	off
+    'list'		off
+    'modifiable'	off
+    'number'		off
+    'relativenumber'	off
+    'rightleft'		off
+    'scrollbind'	off
+    'spell'		off
 
 Jump to specific subjects by using tags.  This can be done in two ways:
 - Use the "CTRL-]" command while standing on the name of a command or option.
@@ -363,5 +389,18 @@ highlighting.  So do these:
 	*Error	something wrong
 
 You can find the details in $VIMRUNTIME/syntax/help.vim
+
+							*inclusion*
+Vim is for everybody, no matter race, gender or anything.  Some people make a
+big deal about using "he" or "his" when referring to the user, thinking it
+means we assume the user is male.  That is not the case, it's just a habit of
+writing help text, which quite often is many years old.  Also, a lot of the
+text is written by contributors for whom English is not their first language.
+We do not make any assumptions about the gender of the user, no matter how the
+text is phrased.  Some people have suggested using "they", but that is not
+regular English. We do not want to spend much time on this discussion.  The
+goal is that the reader understands how Vim works, the exact wording is
+secondary.
+
 
  vim:tw=78:ts=8:noet:ft=help:norl:

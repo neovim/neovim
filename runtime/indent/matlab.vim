@@ -29,7 +29,7 @@ if exists("*GetMatlabIndent") | finish | endif
 let s:keepcpo = &cpo
 set cpo&vim
 
-let s:end = '\<end\>\%([^(]*)\)\@!' " Array indexing heuristic
+let s:end = '\<end\>\%([^({]*[)}]\)\@!' " Array indexing heuristic
 let s:open_pat = 'for\|if\|parfor\|spmd\|switch\|try\|while\|classdef\|properties\|methods\|events\|enumeration'
 let s:dedent_pat = '\C^\s*\zs\<\%(end\|else\|elseif\|catch\|\(case\|otherwise\|function\)\)\>'
 let s:start_pat = '\C\<\%(function\|' . s:open_pat . '\)\>'
@@ -38,7 +38,7 @@ let s:zflag = has('patch-7.4.984') ? 'z' : ''
 
 " Returns whether a comment or string envelops the specified column.
 function! s:IsCommentOrString(lnum, col)
-	return synIDattr(synID(a:lnum, a:col, 1), "name") =~# 'matlabComment\|matlabMultilineComment\|matlabString'
+	return synIDattr(synID(a:lnum, a:col, 1), "name") =~# 'matlabComment\|matlabMultilineComment\|matlabCellComment\|matlabString'
 endfunction
 
 " Returns whether the specified line continues on the next line.
@@ -105,7 +105,7 @@ function! GetMatlabIndent()
 	else
 		" Count how many blocks the previous line opens/closes
 		" Line continuations/brackets indent once per statement
-		let result = indent(prevlnum) + shiftwidth() * (open - close
+		let result = (prevlnum > 0) * indent(prevlnum) + shiftwidth() * (open - close
 					\ + (b:MATLAB_bracketlevel ? -!curbracketlevel : !!curbracketlevel)
 					\ + (curbracketlevel <= 0) * (above_lc - b:MATLAB_waslc))
 	endif

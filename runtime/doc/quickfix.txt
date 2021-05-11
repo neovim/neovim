@@ -225,8 +225,7 @@ processing a quickfix or location list command, it will be aborted.
 			e.g., a compiler will not compile the same file again,
 			`git commit` will abort the committing process, `fc`
 			(built-in for shells like bash and zsh) will not
-			execute the command, etc.  will not compile the same
-			file again.
+			execute the command, etc.
 			{N} can also be zero, in which case Vim exits
 			normally.
 			WARNING: All changes in files are lost.  It works like
@@ -311,7 +310,7 @@ processing a quickfix or location list command, it will be aborted.
 							*:cex* *:cexpr* *E777*
 :cex[pr][!] {expr}	Create a quickfix list using the result of {expr} and
 			jump to the first error.
-			If {expr} is a String, then each new-line terminated
+			If {expr} is a String, then each newline terminated
 			line in the String is processed using the global value
 			of 'errorformat' and the result is added to the
 			quickfix list.
@@ -484,7 +483,7 @@ EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 				etc.
 <			When the current file can't be |abandon|ed and the [!]
 			is not present, the command fails.
-			When an error is detected execution stops.
+			When going to the next entry fails execution stops.
 			The last buffer (or where an error occurred) becomes
 			the current buffer.
 			{cmd} can contain '|' to concatenate several commands.
@@ -926,11 +925,11 @@ or simpler >
 "$*" can be given multiple times, for example: >
    :set makeprg=gcc\ -o\ $*\ $*
 
-The 'shellpipe' option defaults to ">" on Windows.  This means that the output
-of the compiler is saved in a file and not shown on the screen directly.  For
-Unix "| tee" is used.  The compiler output is shown on the screen and saved in
-a file the same time.  Depending on the shell used "|& tee" or "2>&1| tee" is
-the default, so stderr output will be included.
+The 'shellpipe' option defaults to ">%s 2>&1" for Win32.
+This means that the output of the compiler is saved in a file and not shown on
+the screen directly.  For Unix "| tee" is used.  The compiler output is shown
+on the screen and saved in a file the same time.  Depending on the shell used
+"|& tee" or "2>&1| tee" is the default, so stderr output will be included.
 
 If 'shellpipe' is empty, the {errorfile} part will be omitted.  This is useful
 for compilers that write to an errorfile themselves.
@@ -995,8 +994,6 @@ commands can be combined to create a NewGrep command: >
 			the error list to the matches.  Files matching
 			'wildignore' are ignored; files in 'suffixes' are
 			searched last.
-			Without the 'g' flag each line is added only once.
-			With 'g' every match is added.
 
 			{pattern} is a Vim search pattern.  Instead of
 			enclosing it in / any non-ID character (see
@@ -1007,17 +1004,34 @@ commands can be combined to create a NewGrep command: >
 			'smartcase' is not used.
 			If {pattern} is empty (e.g. // is specified), the last
 			used search pattern is used. |last-pattern|
+
+			Flags:
+			'g'  Without the 'g' flag each line is added only
+			     once.  With 'g' every match is added.
+
+			'j'  Without the 'j' flag Vim jumps to the first
+			     match.  With 'j' only the quickfix list is
+			     updated.  With the [!] any changes in the current
+			     buffer are abandoned.
+
+			'f'  When the 'f' flag is specified, fuzzy string
+			     matching is used to find matching lines. In this
+			     case, {pattern} is treated as a literal string
+			     instead of a regular expression.  See
+			     |matchfuzzy()| for more info about fuzzy
+			     matching.
+
+			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.
+			A file that is opened for matching may use a buffer
+			number, but it is reused if possible to avoid
+			consuming buffer numbers.
+
 :{count}vim[grep] ...
 			When a number is put before the command this is used
 			as the maximum number of matches to find.  Use
 			":1vimgrep pattern file" to find only the first.
 			Useful if you only want to check if there is a match
 			and quit quickly when it's found.
-
-			Without the 'j' flag Vim jumps to the first match.
-			With 'j' only the quickfix list is updated.
-			With the [!] any changes in the current buffer are
-			abandoned.
 
 			Every second or so the searched file name is displayed
 			to give you an idea of the progress made.
@@ -1090,7 +1104,7 @@ id-utils) in a similar way to its compiler integration (see |:make| above).
 			allowed with |:bufdo|.
 			An example that uses the argument list and avoids
 			errors for files without matches: >
-                                :silent argdo try 
+				:silent argdo try
 				  \ | grepadd! something %
 				  \ | catch /E480:/
 				  \ | endtry"
@@ -1266,7 +1280,7 @@ You can force the compiler to ignore makefiles by defining
 b:tex_ignore_makefile or g:tex_ignore_makefile variable (they are checked for
 existence only).
 
-If the compiler chose not to use make, it need to choose a right program for
+If the compiler chose not to use make, it needs to choose a right program for
 processing your input.  If b:tex_flavor or g:tex_flavor (in this precedence)
 variable exists, it defines TeX flavor for :make (actually, this is the name
 of executed command), and if both variables do not exist, it defaults to
@@ -1658,7 +1672,7 @@ special problem here is that it doesn't print information on leaving the
 directory and that it doesn't print the absolute path.
 
 To solve the problem with relative paths and missing "leave directory"
-messages Vim uses following algorithm:
+messages Vim uses the following algorithm:
 
 1) Check if the given directory is a subdirectory of the current directory.
    If this is true, store it as the current directory.

@@ -54,7 +54,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
     return;
   }
 
-  if (switch_win(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
+  if (switch_win_noblock(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
     api_set_error(err,
                   kErrorTypeException,
                   "Failed to switch to window %d",
@@ -74,7 +74,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   // So do it now.
   validate_cursor();
 
-  restore_win(save_curwin, save_curtab, false);
+  restore_win_noblock(save_curwin, save_curtab, false);
 }
 
 /// Gets the (1,0)-indexed cursor position in the window. |api-indexing|
@@ -381,7 +381,7 @@ Integer nvim_win_get_number(Window window, Error *err)
   }
 
   int tabnr;
-  win_get_tabwin(window, &tabnr, &rv);
+  win_get_tabwin(win->handle, &tabnr, &rv);
 
   return rv;
 }

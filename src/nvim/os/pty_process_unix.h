@@ -7,7 +7,6 @@
 
 typedef struct pty_process {
   Process process;
-  char *term_name;
   uint16_t width, height;
   struct winsize winsize;
   int tty_fd;

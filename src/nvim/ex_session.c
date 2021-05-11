@@ -447,18 +447,25 @@ static int put_view(
   if (do_cursor) {
     // Restore the cursor line in the file and relatively in the
     // window.  Don't use "G", it changes the jumplist.
+    if (wp->w_height_inner <= 0) {
+      if (fprintf(fd, "let s:l = %" PRIdLINENR "\n", wp->w_cursor.lnum) < 0) {
+        return FAIL;
+      }
+    } else if (fprintf(fd,
+                       "let s:l = %" PRIdLINENR " - ((%" PRIdLINENR
+                       " * winheight(0) + %" PRId64 ") / %" PRId64 ")\n",
+                       wp->w_cursor.lnum,
+                       wp->w_cursor.lnum - wp->w_topline,
+                       (int64_t)(wp->w_height_inner / 2),
+                       (int64_t)wp->w_height_inner) < 0) {
+      return FAIL;
+    }
     if (fprintf(fd,
-                "let s:l = %" PRId64 " - ((%" PRId64
-                " * winheight(0) + %" PRId64 ") / %" PRId64 ")\n"
                 "if s:l < 1 | let s:l = 1 | endif\n"
                 "keepjumps exe s:l\n"
                 "normal! zt\n"
-                "keepjumps %" PRId64 "\n",
-                (int64_t)wp->w_cursor.lnum,
-                (int64_t)(wp->w_cursor.lnum - wp->w_topline),
-                (int64_t)(wp->w_height_inner / 2),
-                (int64_t)wp->w_height_inner,
-                (int64_t)wp->w_cursor.lnum) < 0) {
+                "keepjumps %" PRIdLINENR "\n",
+                wp->w_cursor.lnum) < 0) {
       return FAIL;
     }
     // Restore the cursor column and left offset when not wrapping.
@@ -690,18 +697,16 @@ static int makeopens(FILE *fd, char_u *dirnow)
       return FAIL;
     }
 
-    //
-    // Save current window layout.
-    //
-    PUTLINE_FAIL("set splitbelow splitright");
-    if (ses_win_rec(fd, tab_topframe) == FAIL) {
-      return FAIL;
-    }
-    if (!p_sb && put_line(fd, "set nosplitbelow") == FAIL) {
-      return FAIL;
-    }
-    if (!p_spr && put_line(fd, "set nosplitright") == FAIL) {
-      return FAIL;
+    if (tab_topframe->fr_layout != FR_LEAF) {
+      // Save current window layout.
+      PUTLINE_FAIL("let s:save_splitbelow = &splitbelow");
+      PUTLINE_FAIL("let s:save_splitright = &splitright");
+      PUTLINE_FAIL("set splitbelow splitright");
+      if (ses_win_rec(fd, tab_topframe) == FAIL) {
+        return FAIL;
+      }
+      PUTLINE_FAIL("let &splitbelow = s:save_splitbelow");
+      PUTLINE_FAIL("let &splitright = s:save_splitright");
     }
 
     //
@@ -720,22 +725,26 @@ static int makeopens(FILE *fd, char_u *dirnow)
       }
     }
 
-    // Go to the first window.
-    PUTLINE_FAIL("wincmd t");
+    if (tab_firstwin->w_next != NULL) {
+      // Go to the first window.
+      PUTLINE_FAIL("wincmd t");
 
-    // If more than one window, see if sizes can be restored.
-    // First set 'winheight' and 'winwidth' to 1 to avoid the windows being
-    // resized when moving between windows.
-    // Do this before restoring the view, so that the topline and the
-    // cursor can be set.  This is done again below.
-    // winminheight and winminwidth need to be set to avoid an error if the
-    // user has set winheight or winwidth.
-    if (fprintf(fd,
-                "set winminheight=0\n"
-                "set winheight=1\n"
-                "set winminwidth=0\n"
-                "set winwidth=1\n") < 0) {
-      return FAIL;
+      // If more than one window, see if sizes can be restored.
+      // First set 'winheight' and 'winwidth' to 1 to avoid the windows
+      // being resized when moving between windows.
+      // Do this before restoring the view, so that the topline and the
+      // cursor can be set.  This is done again below.
+      // winminheight and winminwidth need to be set to avoid an error if
+      // the user has set winheight or winwidth.
+      PUTLINE_FAIL("let s:save_winminheight = &winminheight");
+      PUTLINE_FAIL("let s:save_winminwidth = &winminwidth");
+      if (fprintf(fd,
+                  "set winminheight=0\n"
+                  "set winheight=1\n"
+                  "set winminwidth=0\n"
+                  "set winwidth=1\n") < 0) {
+        return FAIL;
+      }
     }
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
       return FAIL;
@@ -817,17 +826,19 @@ static int makeopens(FILE *fd, char_u *dirnow)
     return FAIL;
   }
 
-  // Re-apply options.
+  // Re-apply 'winheight', 'winwidth' and 'shortmess'.
   if (fprintf(fd,
               "set winheight=%" PRId64 " winwidth=%" PRId64
-              " winminheight=%" PRId64 " winminwidth=%" PRId64
               " shortmess=%s\n",
               (int64_t)p_wh,
               (int64_t)p_wiw,
-              (int64_t)p_wmh,
-              (int64_t)p_wmw,
               p_shm) < 0) {
     return FAIL;
+  }
+  if (tab_firstwin->w_next != NULL) {
+    // Restore 'winminheight' and 'winminwidth'.
+    PUTLINE_FAIL("let &winminheight = s:save_winminheight");
+    PUTLINE_FAIL("let &winminwidth = s:save_winminwidth");
   }
 
   //

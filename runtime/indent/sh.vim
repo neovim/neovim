@@ -3,7 +3,7 @@
 " Maintainer:          Christian Brabandt <cb@256bit.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
 " Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
-" Latest Revision:     2019-07-26
+" Latest Revision:     2019-10-24
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
@@ -134,7 +134,7 @@ function! GetShIndent()
   " TODO: should we do the same for other "end" lines?
   if curline =~ '^\s*\%(fi\);\?\s*\%(#.*\)\=$'
     let ind = indent(v:lnum)
-    let previous_line = searchpair('\<if\>', '', '\<fi\>\zs', 'bnW', 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment"')
+    let previous_line = searchpair('\<if\>', '', '\<fi\>\zs', 'bnW', 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment\\|quote"')
     if previous_line > 0
       let ind = indent(previous_line)
     endif
@@ -195,7 +195,7 @@ endfunction
 function! s:is_function_definition(line)
   return a:line =~ '^\s*\<\k\+\>\s*()\s*{' ||
        \ a:line =~ '^\s*{' ||
-       \ a:line =~ '^\s*function\s*\w\S\+\s*\%(()\)\?\s*{'
+       \ a:line =~ '^\s*function\s*\k\+\s*\%(()\)\?\s*{'
 endfunction
 
 function! s:is_array(line)

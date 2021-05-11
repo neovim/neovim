@@ -1071,10 +1071,10 @@ func Test_inputlist()
 endfunc
 
 func Test_balloon_show()
-  if has('balloon_eval')
-    " This won't do anything but must not crash either.
-    call balloon_show('hi!')
-  endif
+  CheckFeature balloon_eval
+
+  " This won't do anything but must not crash either.
+  call balloon_show('hi!')
 endfunc
 
 func Test_shellescape()
@@ -1402,6 +1402,10 @@ func Test_bufadd_bufload()
 endfunc
 
 func Test_readdir()
+  if isdirectory('Xdir')
+    call delete('Xdir', 'rf')
+  endif
+
   call mkdir('Xdir')
   call writefile([], 'Xdir/foo.txt')
   call writefile([], 'Xdir/bar.txt')
@@ -1446,6 +1450,29 @@ func Test_nr2char()
 
   call assert_equal("\x80\xfc\b\xf4\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x100000) .. '>"'))
   call assert_equal("\x80\xfc\b\xfd\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX\x80\xfeX", eval('"\<M-' .. nr2char(0x40000000) .. '>"'))
+endfunc
+
+func HasDefault(msg = 'msg')
+  return a:msg
+endfunc
+
+func Test_default_arg_value()
+  call assert_equal('msg', HasDefault())
+endfunc
+
+func Test_delete_rf()
+  call mkdir('Xdir')
+  call writefile([], 'Xdir/foo.txt')
+  call writefile([], 'Xdir/bar.txt')
+  call mkdir('Xdir/[a-1]')  " issue #696
+  call writefile([], 'Xdir/[a-1]/foo.txt')
+  call writefile([], 'Xdir/[a-1]/bar.txt')
+  call assert_true(filereadable('Xdir/foo.txt'))
+  call assert_true(filereadable('Xdir/[a-1]/foo.txt'))
+
+  call assert_equal(0, delete('Xdir', 'rf'))
+  call assert_false(filereadable('Xdir/foo.txt'))
+  call assert_false(filereadable('Xdir/[a-1]/foo.txt'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

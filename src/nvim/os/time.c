@@ -62,6 +62,7 @@ uint64_t os_now(void)
 /// @param ignoreinput If true, only SIGINT (CTRL-C) can interrupt.
 void os_delay(uint64_t ms, bool ignoreinput)
 {
+  DLOG("%" PRIu64 " ms", ms);
   if (ignoreinput) {
     if (ms > INT_MAX) {
       ms = INT_MAX;

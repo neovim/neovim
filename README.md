@@ -52,7 +52,10 @@ Pre-built packages for Windows, macOS, and Linux are found on the
 Install from source
 -------------------
 
+See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
+
 The build is CMake-based, but a Makefile is provided as a convenience.
+After installing the dependencies, run the following command.
 
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
@@ -62,28 +65,11 @@ To install to a non-default location:
     make CMAKE_INSTALL_PREFIX=/full/path/
     make install
 
-To skip bundled (`third-party/*`) dependencies:
-
-1. Install the dependencies using a package manager.
-   ```
-   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libutf8proc-dev
-   sudo luarocks build mpack
-   sudo luarocks build lpeg
-   sudo luarocks build inspect
-   ```
-2. Build with `USE_BUNDLED=OFF`:
-   ```
-   make CMAKE_BUILD_TYPE=RelWithDebInfo USE_BUNDLED=OFF
-   sudo make install
-   ```
-
 To inspect the build, these CMake features are useful:
 
 - `cmake --build build --target help` lists all build targets.
 - `build/CMakeCache.txt` (or `cmake -LAH build/`) contains the resolved values of all CMake variables.
 - `build/compile_commands.json` shows the full compiler invocations for each translation unit.
-
-See the [Building Neovim](https://github.com/neovim/neovim/wiki/Building-Neovim) wiki page for details.
 
 Transitioning from Vim
 --------------------

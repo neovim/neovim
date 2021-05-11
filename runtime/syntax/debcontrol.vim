@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2018 Aug 11
+" Last Change: 2020 Oct 26
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -47,22 +47,24 @@ exe 'syn keyword debcontrolArchitecture contained '. join(s:pairs)
 
 unlet s:kernels s:archs s:pairs
 
+" Keep in sync with https://metadata.ftp-master.org/sections.822
+" curl -q https://metadata.ftp-master.debian.org/sections.822 2>/dev/null| grep-dctrl -n --not -FSection -sSection  / -
 let s:sections = [
       \ 'admin', 'cli-mono', 'comm', 'database', 'debian-installer', 'debug'
       \, 'devel', 'doc', 'editors', 'education', 'electronics', 'embedded'
-      \, 'fonts', 'games', 'gnome', 'gnustep', 'gnu-r', 'golang', 'graphics'
+      \, 'fonts', 'games', 'gnome', 'gnu-r', 'gnustep', 'golang', 'graphics'
       \, 'hamradio', 'haskell', 'httpd', 'interpreters', 'introspection'
-      \, 'java\%(script\)\=', 'kde', 'kernel', 'libs', 'libdevel', 'lisp'
-      \, 'localization', 'mail', 'math', 'metapackages', 'misc', 'net'
-      \, 'news', 'ocaml', 'oldlibs', 'otherosfs', 'perl', 'php', 'python'
-      \, 'ruby', 'rust', 'science', 'shells', 'sound', 'text', 'tex'
+      \, 'java', 'javascript', 'kde', 'kernel', 'libdevel', 'libs', 'lisp'
+      \, 'localization', 'mail', 'math', 'metapackages', 'misc', 'net', 'news'
+      \, 'ocaml', 'oldlibs', 'otherosfs', 'perl', 'php', 'python', 'raku'
+      \, 'ruby', 'rust', 'science', 'shells', 'sound', 'tasks', 'tex', 'text'
       \, 'utils', 'vcs', 'video', 'web', 'x11', 'xfce', 'zope'
       \ ]
 
 syn keyword debcontrolMultiArch contained no foreign allowed same
 syn match debcontrolName contained "[a-z0-9][a-z0-9+.-]\+"
 syn keyword debcontrolPriority contained extra important optional required standard
-exe 'syn match debcontrolSection contained "\%(\%(contrib\|non-free\|non-US/main\|non-US/contrib\|non-US/non-free\|restricted\|universe\|multiverse\)/\)\=\%('.join(s:sections, '\|').'\)"'
+exe 'syn match debcontrolSection contained "\%(\%(contrib\|non-free\|non-US/main\|non-US/contrib\|non-US/non-free\|restricted\|universe\|multiverse\)/\)\=\<\%('.join(s:sections, '\|').'\)\>"'
 syn keyword debcontrolPackageType contained udeb deb
 syn match debcontrolVariable contained "\${.\{-}}"
 syn keyword debcontrolDmUpload contained yes

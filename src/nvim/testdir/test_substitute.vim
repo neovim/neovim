@@ -426,6 +426,8 @@ func Test_substitute_errors()
   call assert_fails('s/FOO/bar/', 'E486:')
   call assert_fails('s/foo/bar/@', 'E488:')
   call assert_fails('s/\(/bar/', 'E476:')
+  call assert_fails('s afooabara', 'E146:')
+  call assert_fails('s\\a', 'E10:')
 
   setl nomodifiable
   call assert_fails('s/foo/bar/', 'E21:')
@@ -752,6 +754,15 @@ func Test_submatch_list_concatenate()
   let Rep = {-> string([submatch(0, 1)] + [[submatch(1)]])}
   " call substitute('A1', pat, Rep, '')->assert_equal("[['A1'], ['1']]")
   call assert_equal(substitute('A1', pat, Rep, ''), "[['A1'], ['1']]")
+endfunc
+
+func Test_substitute_skipped_range()
+  new
+  if 0
+    /1/5/2/2/\n
+  endif
+  call assert_equal([0, 1, 1, 0, 1], getcurpos())
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

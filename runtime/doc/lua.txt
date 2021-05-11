@@ -841,10 +841,18 @@ vim.call({func}, {...})					*vim.call()*
             vim.fn[func]({...})
 
 vim.cmd({cmd})                                          *vim.cmd()*
-        Invokes an Ex command (the ":" commands, Vimscript statements).
+        Executes multiple lines of Vimscript at once. It is an alias to
+        |nvim_exec()|, where `output` is set to false. Thus it works identical
+        to |:source|.
         See also |ex-cmd-index|.
         Example: >
             vim.cmd('echo 42')
+            vim.cmd([[
+              augroup My_group
+                autocmd!
+                autocmd FileType c setlocal cindent
+              augroup END
+            ]])
 
 vim.fn.{func}({...})					*vim.fn*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.

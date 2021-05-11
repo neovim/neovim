@@ -104,10 +104,14 @@ String nvim_exec(String src, Boolean output, Error *err)
   }
 
   try_start();
-  msg_silent++;
+  if (output) {
+    msg_silent++;
+  }
   do_source_str(src.data, "nvim_exec()");
-  capture_ga = save_capture_ga;
-  msg_silent = save_msg_silent;
+  if (output) {
+    capture_ga = save_capture_ga;
+    msg_silent = save_msg_silent;
+  }
   try_end(err);
 
   if (ERROR_SET(err)) {
@@ -217,6 +221,12 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///            in addition the following keys are also recognized:
 ///              `default`: don't override existing definition,
 ///                         like `hi default`
+///              `ctermfg`: sets foreground of cterm color
+///              `ctermbg`: sets background of cterm color
+///              `cterm`  : cterm attribute map. sets attributed for
+///                         cterm colors. similer to `hi cterm`
+///                         Note: by default cterm attributes are
+///                               same as attributes of gui color
 /// @param[out] err Error details, if any
 ///
 /// TODO: ns_id = 0, should modify :highlight namespace
@@ -1289,6 +1299,7 @@ fail:
 /// @param buffer the buffer to use (expected to be empty)
 /// @param opts   Optional parameters. Reserved for future use.
 /// @param[out] err Error details, if any
+/// @return Channel id, or 0 on error
 Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
 {

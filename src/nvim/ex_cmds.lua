@@ -928,6 +928,12 @@ module.cmds = {
     func='ex_edit',
   },
   {
+    command='eval',
+    flags=bit.bor(EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
+    addr_type='ADDR_NONE',
+    func='ex_eval',
+  },
+  {
     command='ex',
     flags=bit.bor(BANG, FILE1, CMDARG, ARGOPT, TRLBAR),
     addr_type='ADDR_NONE',

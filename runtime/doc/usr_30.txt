@@ -336,7 +336,7 @@ How to do that is explained here: |indent-expression|.
 ==============================================================================
 *30.4*	Other indenting
 
-The most simple form of automatic indenting is with the 'autoindent' option.
+The simplest form of automatic indenting is with the 'autoindent' option.
 It uses the indent from the previous line.  A bit smarter is the 'smartindent'
 option.  This is useful for languages where no indent file is available.
 'smartindent' is not as smart as 'cindent', but smarter than 'autoindent'.

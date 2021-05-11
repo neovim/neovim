@@ -189,20 +189,20 @@ vim.eval(str)						*python-eval*
 						# a number.
 
 vim.strwidth(str)					*python-strwidth*
-	Like |strwidth()|: returns number of display cells str occupies, tab 
+	Like |strwidth()|: returns number of display cells str occupies, tab
 	is counted as one cell.
 
 vim.foreach_rtp(callable)				*python-foreach_rtp*
-	Call the given callable for each path in 'runtimepath' until either 
-	callable returns something but None, the exception is raised or there 
-	are no longer paths. If stopped in case callable returned non-None, 
+	Call the given callable for each path in 'runtimepath' until either
+	callable returns something but None, the exception is raised or there
+	are no longer paths. If stopped in case callable returned non-None,
 	vim.foreach_rtp function returns the value returned by callable.
 
 vim.chdir(*args, **kwargs)				*python-chdir*
 vim.fchdir(*args, **kwargs)				*python-fchdir*
 	Run os.chdir or os.fchdir, then all appropriate vim stuff.
-	Note: you should not use these functions directly, use os.chdir and 
-	      os.fchdir instead. Behavior of vim.fchdir is undefined in case 
+	Note: you should not use these functions directly, use os.chdir and
+	      os.fchdir instead. Behavior of vim.fchdir is undefined in case
 	      os.fchdir does not exist.
 
 Error object of the "vim" module
@@ -237,15 +237,15 @@ vim.windows						*python-windows*
 	    :py w in vim.windows	# Membership test
 	    :py n = len(vim.windows)	# Number of elements
 	    :py for w in vim.windows:	# Sequential access
-<	Note: vim.windows object always accesses current tab page. 
-	|python-tabpage|.windows objects are bound to parent |python-tabpage| 
-	object and always use windows from that tab page (or throw vim.error 
-	in case tab page was deleted). You can keep a reference to both 
-	without keeping a reference to vim module object or |python-tabpage|, 
+<	Note: vim.windows object always accesses current tab page.
+	|python-tabpage|.windows objects are bound to parent |python-tabpage|
+	object and always use windows from that tab page (or throw vim.error
+	in case tab page was deleted). You can keep a reference to both
+	without keeping a reference to vim module object or |python-tabpage|,
 	they will not lose their properties in this case.
 
 vim.tabpages						*python-tabpages*
-	A sequence object providing access to the list of vim tab pages. The 
+	A sequence object providing access to the list of vim tab pages. The
 	object supports the following operations: >
 	    :py t = vim.tabpages[i]	# Indexing (read-only)
 	    :py t in vim.tabpages	# Membership test
@@ -266,12 +266,12 @@ vim.current						*python-current*
 	"current range".  A range is a bit like a buffer, but with all access
 	restricted to a subset of lines.  See |python-range| for more details.
 
-	Note: When assigning to vim.current.{buffer,window,tabpage} it expects 
-	valid |python-buffer|, |python-window| or |python-tabpage| objects 
-	respectively. Assigning triggers normal (with |autocommand|s) 
-	switching to given buffer, window or tab page. It is the only way to 
-	switch UI objects in python: you can't assign to 
-	|python-tabpage|.window attribute. To switch without triggering 
+	Note: When assigning to vim.current.{buffer,window,tabpage} it expects
+	valid |python-buffer|, |python-window| or |python-tabpage| objects
+	respectively. Assigning triggers normal (with |autocommand|s)
+	switching to given buffer, window or tab page. It is the only way to
+	switch UI objects in python: you can't assign to
+	|python-tabpage|.window attribute. To switch without triggering
 	autocommands use >
 	    py << EOF
 	    saved_eventignore = vim.options['eventignore']
@@ -284,11 +284,11 @@ vim.current						*python-current*
 <
 vim.vars						*python-vars*
 vim.vvars						*python-vvars*
-	Dictionary-like objects holding dictionaries with global (|g:|) and 
+	Dictionary-like objects holding dictionaries with global (|g:|) and
 	vim (|v:|) variables respectively.
 
 vim.options						*python-options*
-	Object partly supporting mapping protocol (supports setting and 
+	Object partly supporting mapping protocol (supports setting and
 	getting items) providing a read-write access to global options.
 	Note: unlike |:set| this provides access only to global options. You
 	cannot use this object to obtain or set local options' values or
@@ -299,7 +299,7 @@ vim.options						*python-options*
 	buffer-local options and |python-window| objects to access to
 	window-local options.
 
-	Type of this object is available via "Options" attribute of vim 
+	Type of this object is available via "Options" attribute of vim
 	module.
 
 Output from Python					*python-output*
@@ -320,10 +320,10 @@ Output from Python					*python-output*
 		    *python2-directory* *python3-directory* *pythonx-directory*
 Python 'runtimepath' handling				*python-special-path*
 
-In python vim.VIM_SPECIAL_PATH special directory is used as a replacement for 
-the list of paths found in 'runtimepath': with this directory in sys.path and 
-vim.path_hooks in sys.path_hooks python will try to load module from 
-{rtp}/python2 (or python3) and {rtp}/pythonx (for both python versions) for 
+In python vim.VIM_SPECIAL_PATH special directory is used as a replacement for
+the list of paths found in 'runtimepath': with this directory in sys.path and
+vim.path_hooks in sys.path_hooks python will try to load module from
+{rtp}/python2 (or python3) and {rtp}/pythonx (for both python versions) for
 each {rtp} found in 'runtimepath'.
 
 Implementation is similar to the following, but written in C: >
@@ -351,8 +351,8 @@ Implementation is similar to the following, but written in C: >
             fmr = find_module(fullname, path)
             return load_module(fullname, *fmr)
 
-    # It uses vim module itself in place of VimPathFinder class: it does not 
-    # matter for python which object has find_module function attached to as 
+    # It uses vim module itself in place of VimPathFinder class: it does not
+    # matter for python which object has find_module function attached to as
     # an attribute.
     class VimPathFinder(object):
         @classmethod
@@ -375,28 +375,28 @@ Implementation is similar to the following, but written in C: >
     sys.path_hooks.append(hook)
 
 vim.VIM_SPECIAL_PATH					*python-VIM_SPECIAL_PATH*
-	String constant used in conjunction with vim path hook. If path hook 
-	installed by vim is requested to handle anything but path equal to 
-	vim.VIM_SPECIAL_PATH constant it raises ImportError. In the only other 
+	String constant used in conjunction with vim path hook. If path hook
+	installed by vim is requested to handle anything but path equal to
+	vim.VIM_SPECIAL_PATH constant it raises ImportError. In the only other
 	case it uses special loader.
 
-	Note: you must not use value of this constant directly, always use 
+	Note: you must not use value of this constant directly, always use
 	      vim.VIM_SPECIAL_PATH object.
 
 vim.find_module(...)					*python-find_module*
 vim.path_hook(path)					*python-path_hook*
-	Methods or objects used to implement path loading as described above. 
-	You should not be using any of these directly except for vim.path_hook 
-	in case you need to do something with sys.meta_path. It is not 
-	guaranteed that any of the objects will exist in the future vim 
+	Methods or objects used to implement path loading as described above.
+	You should not be using any of these directly except for vim.path_hook
+	in case you need to do something with sys.meta_path. It is not
+	guaranteed that any of the objects will exist in the future vim
 	versions.
 
 vim._get_paths						*python-_get_paths*
-	Methods returning a list of paths which will be searched for by path 
-	hook. You should not rely on this method being present in future 
+	Methods returning a list of paths which will be searched for by path
+	hook. You should not rely on this method being present in future
 	versions, but can use it for debugging.
 
-	It returns a list of {rtp}/python2 (or {rtp}/python3) and 
+	It returns a list of {rtp}/python2 (or {rtp}/python3) and
 	{rtp}/pythonx directories for each {rtp} in 'runtimepath'.
 
 ==============================================================================
@@ -425,21 +425,21 @@ line numbers, which start from 1.  This is particularly relevant when dealing
 with marks (see below) which use vim line numbers.
 
 The buffer object attributes are:
-	b.vars		Dictionary-like object used to access 
+	b.vars		Dictionary-like object used to access
 			|buffer-variable|s.
-	b.options	Mapping object (supports item getting, setting and 
-			deleting) that provides access to buffer-local options 
-			and buffer-local values of |global-local| options. Use 
-			|python-window|.options if option is window-local, 
-			this object will raise KeyError. If option is 
-			|global-local| and local value is missing getting it 
+	b.options	Mapping object (supports item getting, setting and
+			deleting) that provides access to buffer-local options
+			and buffer-local values of |global-local| options. Use
+			|python-window|.options if option is window-local,
+			this object will raise KeyError. If option is
+			|global-local| and local value is missing getting it
 			will return None.
 	b.name		String, RW. Contains buffer name (full path).
-			Note: when assigning to b.name |BufFilePre| and 
+			Note: when assigning to b.name |BufFilePre| and
 			|BufFilePost| autocommands are launched.
 	b.number	Buffer number. Can be used as |python-buffers| key.
 			Read-only.
-	b.valid		True or False. Buffer object becomes invalid when 
+	b.valid		True or False. Buffer object becomes invalid when
 			corresponding buffer is wiped out.
 
 The buffer object methods are:
@@ -527,16 +527,16 @@ Window attributes are:
 				This is a tuple, (row,col).
 	height (read-write)	The window height, in rows
 	width (read-write)	The window width, in columns
-	vars (read-only)	The window |w:| variables. Attribute is 
-				unassignable, but you can change window 
+	vars (read-only)	The window |w:| variables. Attribute is
+				unassignable, but you can change window
 				variables this way
-	options (read-only)	The window-local options. Attribute is 
-				unassignable, but you can change window 
-				options this way. Provides access only to 
-				window-local options, for buffer-local use 
-				|python-buffer| and for global ones use 
-				|python-options|. If option is |global-local| 
-				and local value is missing getting it will 
+	options (read-only)	The window-local options. Attribute is
+				unassignable, but you can change window
+				options this way. Provides access only to
+				window-local options, for buffer-local use
+				|python-buffer| and for global ones use
+				|python-options|. If option is |global-local|
+				and local value is missing getting it will
 				return None.
 	number (read-only)	Window number.  The first window has number 1.
 				This is zero in case it cannot be determined
@@ -545,7 +545,7 @@ Window attributes are:
 	row, col (read-only)	On-screen window position in display cells.
 				First position is zero.
 	tabpage (read-only)	Window tab page.
-	valid (read-write)	True or False. Window object becomes invalid 
+	valid (read-write)	True or False. Window object becomes invalid
 				when corresponding window is closed.
 
 The height attribute is writable only if the screen is split horizontally.
@@ -556,21 +556,21 @@ Window object type is available using "Window" attribute of vim module.
 ==============================================================================
 Tab page objects					*python-tabpage*
 
-Tab page objects represent vim tab pages. You can obtain them in a number of 
+Tab page objects represent vim tab pages. You can obtain them in a number of
 ways:
 	- via vim.current.tabpage (|python-current|)
 	- from indexing vim.tabpages (|python-tabpages|)
 
-You can use this object to access tab page windows. They have no methods and 
+You can use this object to access tab page windows. They have no methods and
 no sequence or other interfaces.
 
 Tab page attributes are:
-	number		The tab page number like the one returned by 
+	number		The tab page number like the one returned by
 			|tabpagenr()|.
 	windows		Like |python-windows|, but for current tab page.
 	vars		The tab page |t:| variables.
 	window		Current tabpage window.
-	valid		True or False. Tab page object becomes invalid when 
+	valid		True or False. Tab page object becomes invalid when
 			corresponding tab page is closed.
 
 TabPage object type is available using "TabPage" attribute of vim module.
@@ -578,7 +578,7 @@ TabPage object type is available using "TabPage" attribute of vim module.
 ==============================================================================
 pyeval() and py3eval() Vim functions			*python-pyeval*
 
-To facilitate bi-directional interface, you can use |pyeval()| and |py3eval()| 
+To facilitate bi-directional interface, you can use |pyeval()| and |py3eval()|
 functions to evaluate Python expressions and pass their values to Vim script.
 |pyxeval()| is also available.
 
@@ -586,17 +586,28 @@ functions to evaluate Python expressions and pass their values to Vim script.
 Python 3						*python3*
 
 							*:py3* *:python3*
-The `:py3` and `:python3` commands work similar to `:python`.  A simple check
-if the `:py3` command is working: >
-	:py3 print("Hello")
+:[range]py3 {stmt}
+:[range]py3 << [endmarker]
+{script}
+{endmarker}
 
-To see what version of Python you have: >
-	:py3 import sys
-	:py3 print(sys.version)
+:[range]python3 {stmt}
+:[range]python3 << [endmarker]
+{script}
+{endmarker}
+	The `:py3` and `:python3` commands work similar to `:python`.  A
+	simple check if the `:py3` command is working: >
+		:py3 print("Hello")
+<
+	To see what version of Python you have: >
+		:py3 import sys
+		:py3 print(sys.version)
 <							*:py3file*
-The `:py3file` command works similar to `:pyfile`.
+:[range]py3f[ile] {file}
+	The `:py3file` command works similar to `:pyfile`.
 							*:py3do*
-The `:py3do` command works similar to `:pydo`.
+:[range]py3do {body}
+	The `:py3do` command works similar to `:pydo`.
 
 							*E880*
 Raising SystemExit exception in python isn't endorsed way to quit vim, use: >

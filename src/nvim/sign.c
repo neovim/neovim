@@ -18,6 +18,7 @@
 #include "nvim/move.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
+#include "nvim/option.h"
 
 /// Struct to hold the sign properties.
 typedef struct sign sign_T;
@@ -726,16 +727,30 @@ void sign_mark_adjust(
     long amount_after
 )
 {
-  sign_entry_T *sign;    // a sign in a b_signlist
-  linenr_T new_lnum;   // new line number to assign to sign
+  sign_entry_T *sign;           // a sign in a b_signlist
+  sign_entry_T *next;           // the next sign in a b_signlist
+  sign_entry_T *last = NULL;    // pointer to pointer to current sign
+  sign_entry_T **lastp = NULL;  // pointer to pointer to current sign
+  linenr_T new_lnum;            // new line number to assign to sign
+  int is_fixed = 0;
+  int signcol = win_signcol_configured(curwin, &is_fixed);
 
   curbuf->b_signcols_max = -1;
+  lastp = &curbuf->b_signlist;
 
-  FOR_ALL_SIGNS_IN_BUF(curbuf, sign) {
+  for (sign = curbuf->b_signlist; sign != NULL; sign = next) {
+    next = sign->se_next;
     new_lnum = sign->se_lnum;
     if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
       if (amount != MAXLNUM) {
         new_lnum += amount;
+      } else if (!is_fixed || signcol >= 2) {
+        *lastp = next;
+        if (next) {
+          next->se_prev = last;
+        }
+        xfree(sign);
+        continue;
       }
     } else if (sign->se_lnum > line2) {
       new_lnum += amount_after;
@@ -746,6 +761,9 @@ void sign_mark_adjust(
     if (sign->se_lnum >= line1 && new_lnum <= curbuf->b_ml.ml_line_count) {
       sign->se_lnum = new_lnum;
     }
+
+    last = sign;
+    lastp = &sign->se_next;
   }
 }
 

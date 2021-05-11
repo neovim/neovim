@@ -625,7 +625,7 @@ do_tag(
         }
         if (ic && !msg_scrolled && msg_silent == 0) {
           ui_flush();
-          os_delay(1000L, true);
+          os_delay(1007L, true);
         }
       }
 
@@ -2853,7 +2853,7 @@ static int jumpto_tag(
             MSG(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
               ui_flush();
-              os_delay(1000L, true);
+              os_delay(1010L, true);
             }
           }
           retval = OK;

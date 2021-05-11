@@ -37,14 +37,14 @@ If the VIM environment variable is not set, Vim will try to find
 the path in another way (see |$VIMRUNTIME|).  Usually this works just
 fine.  If it doesn't, try setting the VIM environment variable to the
 directory where the Vim stuff is located.  For example, if your syntax files
-are in the "/usr/vim/vim50/syntax" directory, set $VIMRUNTIME to
-"/usr/vim/vim50".  You must do this in the shell, before starting Vim.
+are in the "/usr/vim/vim82/syntax" directory, set $VIMRUNTIME to
+"/usr/vim/vim82".  You must do this in the shell, before starting Vim.
 This command also sources the |menu.vim| script when the GUI is running or
 will start soon.  See |'go-M'| about avoiding that.
 
 							*:syn-on* *:syntax-on*
-The `:syntax enable` command will keep your current color settings.  This
-allows using `:highlight` commands to set your preferred colors before or
+The `:syntax enable` command will keep most of your current color settings.
+This allows using `:highlight` commands to set your preferred colors before or
 after using this command.  If you want Vim to overrule your settings with the
 defaults, use: >
 	:syntax on
@@ -56,10 +56,10 @@ with: >
 For a color terminal see |:hi-normal-cterm|.
 For setting up your own colors syntax highlighting see |syncolor|.
 
-NOTE: The syntax files on Windows have lines that end in <CR><NL>.  The files
-for Unix end in <NL>.  This means you should use the right type of file for
-your system.  Although on Windows the right format is automatically selected
-if the 'fileformats' option is not empty.
+NOTE: The syntax files on MS-Windows have lines that end in <CR><NL>.
+The files for Unix end in <NL>.  This means you should use the right type of
+file for your system.  Although on MS-Windows the right format is
+automatically selected if the 'fileformats' option is not empty.
 
 NOTE: When using reverse video ("gvim -fg white -bg black"), the default value
 of 'background' will not be set until the GUI window is opened, which is after
@@ -194,7 +194,7 @@ The name for a highlight or syntax group must consist of ASCII letters, digits
 and the underscore.  As a regexp: "[a-zA-Z0-9_]*".  However, Vim does not give
 an error when using other characters.
 
-To be able to allow each user to pick his favorite set of colors, there must
+To be able to allow each user to pick their favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
 These are the suggested group names (if syntax highlighting works properly
 you can see the actual color, except for "Ignore"):
@@ -453,6 +453,16 @@ conversion. See |-E| and |-s-ex| for details. It is probably best to create a
 script to replace all the -c commands and use it with the -u flag instead of
 specifying each command separately.
 
+				    *hl-TOhtmlProgress* *TOhtml-progress-color*
+When displayed, the progress bar will show colored boxes along the statusline
+as the HTML conversion proceeds. By default, the background color as the
+current "DiffDelete" highlight group is used. If "DiffDelete" and "StatusLine"
+have the same background color, TOhtml will automatically adjust the color to
+differ. If you do not like the automatically selected colors, you can define
+your own highlight colors for the progress bar. Example: >
+
+	hi TOhtmlProgress guifg=#c0ffee ctermbg=7
+<
 							 *g:html_number_lines*
 Default: current 'number' setting.
 When 0, buffer text is displayed in the generated HTML without line numbering.
@@ -484,8 +494,8 @@ For example: >
 <
 							      *g:html_use_css*
 Default: 1.
-When 1, generate valid HTML 4.01 markup with CSS1 styling, supported in all
-modern browsers and most old browsers.
+When 1, generate valid HTML 5 markup with CSS styling, supported in all modern
+browsers and many old browsers.
 When 0, generate <font> tags and similar outdated markup. This is not
 recommended but it may work better in really old browsers, email clients,
 forum posts, and similar situations where basic CSS support is unavailable.
@@ -557,23 +567,43 @@ affected in this way as follows:
 Example, to make the fold column and line numbers uncopyable: >
 	:let g:html_prevent_copy = "fn"
 <
-This feature is currently implemented by inserting read-only <input> elements
-into the markup to contain the uncopyable areas. This does not work well in
-all cases. When pasting to some applications which understand HTML, the
-<input> elements also get pasted. But plain-text paste destinations should
-always work.
+The method used to prevent copying in the generated page depends on the value
+of |g:html_use_input_for_pc|.
+
+						    *g:html_use_input_for_pc*
+Default: "fallback"
+If |g:html_prevent_copy| is non-empty, then:
+
+When "all", read-only <input> elements are used in place of normal text for
+uncopyable regions. In some browsers, especially older browsers, after
+selecting an entire page and copying the selection, the <input> tags are not
+pasted with the page text. If |g:html_no_invalid| is 0, the <input> tags have
+invalid type; this works in more browsers, but the page will not validate.
+Note: this method does NOT work in recent versions of Chrome and equivalent
+browsers; the <input> tags get pasted with the text.
+
+When "fallback" (default value), the same <input> elements are generated for
+older browsers, but newer browsers (detected by CSS feature query) hide the
+<input> elements and instead use generated content in an ::before pseudoelement
+to display the uncopyable text. This method should work with the largest
+number of browsers, both old and new.
+
+When "none", the <input> elements are not generated at all. Only the
+generated-content method is used. This means that old browsers, notably
+Internet Explorer, will either copy the text intended not to be copyable, or
+the non-copyable text may not appear at all. However, this is the most
+standards-based method, and there will be much less markup.
 
 							   *g:html_no_invalid*
 Default: 0.
-When 0, if |g:html_prevent_copy| is non-empty, an invalid attribute is
-intentionally inserted into the <input> element for the uncopyable areas. This
-increases the number of applications you can paste to without also pasting the
-<input> elements. Specifically, Microsoft Word will not paste the <input>
-elements if they contain this invalid attribute.
-When 1, no invalid markup is ever intentionally inserted, and the generated
-page should validate. However, be careful pasting into Microsoft Word when
-|g:html_prevent_copy| is non-empty; it can be hard to get rid of the <input>
-elements which get pasted.
+When 0, if |g:html_prevent_copy| is non-empty and |g:html_use_input_for_pc| is
+not "none", an invalid attribute is intentionally inserted into the <input>
+element for the uncopyable areas. This prevents pasting the <input> elements
+in some applications. Specifically, some versions of Microsoft Word will not
+paste the <input> elements if they contain this invalid attribute. When 1, no
+invalid markup is inserted, and the generated page should validate. However,
+<input> elements may be pasted into some applications and can be difficult to
+remove afterward.
 
 							 *g:html_hover_unfold*
 Default: 0.
@@ -895,7 +925,7 @@ SELECTEMPTY, ... The indentation preceding the begin/end keywords has to
 match (spaces are not considered equal to a tab). >
 	let baan_fold_sql=1
 Note: Block folding can result in many small folds. It is suggested to |:set|
-the options 'foldminlines' and 'foldnestmax' in |init.vim| or use |:setlocal| 
+the options 'foldminlines' and 'foldnestmax' in |init.vim| or use |:setlocal|
 in .../after/syntax/baan.vim (see |after-directory|). Eg: >
 	set foldminlines=5
 	set foldnestmax=6
@@ -913,10 +943,12 @@ Basic.
 C							*c.vim* *ft-c-syntax*
 
 A few things in C highlighting are optional.  To enable them assign any value
-to the respective variable.  Example: >
+(including zero) to the respective variable.  Example: >
 	:let c_comment_strings = 1
-To disable them use ":unlet".  Example: >
+	:let c_no_bracket_error = 0
+To disable them use `:unlet`.  Example: >
 	:unlet c_comment_strings
+Setting the value to zero doesn't work!
 
 An alternative is to switch to the C++ highlighting: >
 	:set filetype=cpp
@@ -932,8 +964,8 @@ Variable		Highlight ~
 				except { and } in first column
 				Default is to highlight them, otherwise you
 				can't spot a missing ")".
-*c_curly_error*		highlight a missing }; this forces syncing from the
-			start of the file, can be slow
+*c_curly_error*		highlight a missing } by finding all pairs; this
+			forces syncing from the start of the file, can be slow
 *c_no_ansi*		don't do standard ANSI types and constants
 *c_ansi_typedefs*		 ... but do standard ANSI types
 *c_ansi_constants*	 ... but do standard ANSI constants
@@ -1135,15 +1167,37 @@ startup vimrc: >
    :let filetype_w = "cweb"
 
 
+DART						*dart.vim* *ft-dart-syntax*
+
+Dart is an object-oriented, typed, class defined, garbage collected language
+used for developing mobile, desktop, web, and back-end applications.  Dart uses
+a C-like syntax derived from C, Java, and JavaScript, with features adopted
+from Smalltalk, Python, Ruby, and others.
+
+More information about the language and its development environment at the
+official Dart language website at https://dart.dev
+
+dart.vim syntax detects and highlights Dart statements, reserved words,
+type declarations, storage classes, conditionals, loops, interpolated values,
+and comments.  There is no support idioms from Flutter or any other Dart
+framework.
+
+Changes, fixes?  Submit an issue or pull request via:
+
+https://github.com/pr3d4t0r/dart-vim-syntax/
+
+
 DESKTOP					   *desktop.vim* *ft-desktop-syntax*
 
 Primary goal of this syntax file is to highlight .desktop and .directory files
 according to freedesktop.org standard:
-http://standards.freedesktop.org/desktop-entry-spec/latest/
-But actually almost none implements this standard fully.  Thus it will
-highlight all Unix ini files.  But you can force strict highlighting according
-to standard by placing this in your vimrc file: >
-	:let enforce_freedesktop_standard = 1
+https://specifications.freedesktop.org/desktop-entry-spec/latest/
+To highlight nonstandard extensions that does not begin with X-, set >
+	let g:desktop_enable_nonstd = 1
+Note that this may cause wrong highlight.
+To highlight KDE-reserved features, set >
+	let g:desktop_enable_kde = 1
+g:desktop_enable_kde follows g:desktop_enable_nonstd if not supplied
 
 
 DIFF							*diff.vim*
@@ -1326,26 +1380,26 @@ to your startup file.
 
 EUPHORIA	    *euphoria3.vim* *euphoria4.vim* *ft-euphoria-syntax*
 
-Two syntax highlighting files exists for Euphoria. One for Euphoria 
-version 3.1.1, which is the default syntax highlighting file, and one for 
+Two syntax highlighting files exist for Euphoria. One for Euphoria
+version 3.1.1, which is the default syntax highlighting file, and one for
 Euphoria version 4.0.5 or later.
 
-Euphoria version 3.1.1 (http://www.rapideuphoria.com/) is still necessary 
-for developing applications for the DOS platform, which Euphoria version 4 
+Euphoria version 3.1.1 (http://www.rapideuphoria.com/) is still necessary
+for developing applications for the DOS platform, which Euphoria version 4
 (http://www.openeuphoria.org/) does not support.
 
-The following file extensions are auto-detected as Euphoria file type: 
-    
+The following file extensions are auto-detected as Euphoria file type:
+
 	*.e, *.eu, *.ew, *.ex, *.exu, *.exw
 	*.E, *.EU, *.EW, *.EX, *.EXU, *.EXW
 
-To select syntax highlighting file for Euphoria, as well as for 
+To select syntax highlighting file for Euphoria, as well as for
 auto-detecting the *.e and *.E file extensions as Euphoria file type,
 add the following line to your startup file: >
 
 	:let filetype_euphoria="euphoria3"
 
-	or 
+	or
 
 	:let filetype_euphoria="euphoria4"
 
@@ -1656,8 +1710,8 @@ The coloring scheme for tags in the HTML file works as follows.
 
 The  <> of opening tags are colored differently than the </> of a closing tag.
 This is on purpose! For opening tags the 'Function' color is used, while for
-closing tags the 'Type' color is used (See syntax.vim to check how those are
-defined for you)
+closing tags the 'Identifier' color is used (See syntax.vim to check how those
+are defined for you)
 
 Known tag names are colored the same way as statements in C.  Unknown tag
 names are colored with the same color as the <> or </> respectively which
@@ -1852,7 +1906,7 @@ new highlightings for the following groups.:
     Debug, DebugSpecial, DebugString, DebugBoolean, DebugType
 which are used for the statement itself, special characters used in debug
 strings, strings, boolean constants and types (this, super) respectively.  I
-have opted to chose another background for those statements.
+have opted to choose another background for those statements.
 
 Javadoc is a program that takes special comments out of Java program files and
 creates HTML pages.  The standard configuration will highlight this HTML code
@@ -1890,6 +1944,16 @@ to a larger number: >
 This will make the syntax synchronization start 50 lines before the first
 displayed line.  The default value is 10.  The disadvantage of using a larger
 number is that redrawing can become slow.
+
+
+JSON						*json.vim* *ft-json-syntax*
+
+The json syntax file provides syntax highlighting with conceal support by
+default. To disable concealment: >
+	let g:vim_json_conceal = 0
+
+To disable syntax highlighting of errors: >
+	let g:vim_json_warnings = 0
 
 
 LACE						*lace.vim* *ft-lace-syntax*
@@ -2141,9 +2205,10 @@ can use them.
 
 For example, Linux and BSD distributions use groff as their default text
 processing package.  In order to activate the extra syntax highlighting
-features for groff, add the following option to your start-up files: >
+features for groff, arrange for files to be recognized as groff (see
+|ft-groff-syntax|) or add the following option to your start-up files: >
 
-  :let b:nroff_is_groff = 1
+  :let nroff_is_groff = 1
 
 Groff is different from the old AT&T n/troff that you may still find in
 Solaris.  Groff macro and request names can be longer than 2 characters and
@@ -2221,7 +2286,7 @@ contain very long structures that Vim does not synchronize anymore.
 
 PAPP						*papp.vim* *ft-papp-syntax*
 
-The PApp syntax file handles .papp files and, to a lesser extend, .pxml
+The PApp syntax file handles .papp files and, to a lesser extent, .pxml
 and .pxsl files which are all a mixture of perl/xml/html/other using xml
 as the top-level file format.  By default everything inside phtml or pxml
 sections is treated as a string with embedded preprocessor commands.  If
@@ -2239,11 +2304,12 @@ http://papp.plan9.de.
 
 PASCAL						*pascal.vim* *ft-pascal-syntax*
 
-Files matching "*.p" could be Progress or Pascal.  If the automatic detection
-doesn't work for you, or you don't edit Progress at all, use this in your
-startup vimrc: >
+Files matching "*.p" could be Progress or Pascal and those matching "*.pp"
+could be Puppet or Pascal.  If the automatic detection doesn't work for you,
+or you only edit Pascal files, use this in your startup vimrc: >
 
-   :let filetype_p = "pascal"
+   :let filetype_p  = "pascal"
+   :let filetype_pp = "pascal"
 
 The Pascal syntax file has been extended to take into account some extensions
 provided by Turbo Pascal, Free Pascal Compiler and GNU Pascal Compiler.
@@ -2593,12 +2659,12 @@ Note: only existence of these options matter, not their value. You can replace
 
 QUAKE						*quake.vim* *ft-quake-syntax*
 
-The Quake syntax definition should work for most any FPS (First Person
-Shooter) based on one of the Quake engines.  However, the command names vary
-a bit between the three games (Quake, Quake 2, and Quake 3 Arena) so the
-syntax definition checks for the existence of three global variables to allow
-users to specify what commands are legal in their files.  The three variables
-can be set for the following effects:
+The Quake syntax definition should work for most FPS (First Person Shooter)
+based on one of the Quake engines.  However, the command names vary a bit
+between the three games (Quake, Quake 2, and Quake 3 Arena) so the syntax
+definition checks for the existence of three global variables to allow users
+to specify what commands are legal in their files.  The three variables can
+be set for the following effects:
 
 set to highlight commands only available in Quake: >
 	:let quake_is_quake1 = 1
@@ -2667,6 +2733,13 @@ This will add highlighting for the commands that BASH (version 2.05a and
 later, and part earlier) adds.
 
 
+REGO						*rego.vim* *ft-rego-syntax*
+
+Rego is a query language developed by Styra.  It is mostly used as a policy
+language for kubernetes, but can be applied to almost anything.  Files with
+the following extensions are recognized as rego files: .rego.
+
+
 RESTRUCTURED TEXT			*rst.vim* *ft-rst-syntax*
 
 Syntax highlighting is enabled for code blocks within the document for a
@@ -2679,10 +2752,10 @@ To set a user-defined list of code block syntax highlighting: >
 To assign multiple code block types to a single syntax, define
 `rst_syntax_code_list` as a mapping: >
 	let rst_syntax_code_list = {
-		\ 'cpp' = ['cpp', 'c++'],
-                \ 'bash' = ['bash', 'sh'],
+		\ 'cpp': ['cpp', 'c++'],
+		\ 'bash': ['bash', 'sh'],
 		...
-	}
+	\ }
 
 To use color highlighting for emphasis text: >
 	let rst_use_emphasis_colors = 1
@@ -2903,7 +2976,7 @@ vimrc file: >
 (Adapted from the html.vim help text by Claudio Fleiner <claudio@fleiner.com>)
 
 
-		*ft-posix-synax* *ft-dash-syntax*
+		*ft-posix-syntax* *ft-dash-syntax*
 SH		*sh.vim*  *ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*
 
 This covers syntax highlighting for the older Unix (Bourne) sh, and newer
@@ -2927,7 +3000,7 @@ variables in your vimrc:
 
    ksh: >
 	let g:is_kornshell = 1
-<   posix:  (using this is the nearly the same as setting g:is_kornshell to 1) >
+<   posix:  (using this is nearly the same as setting g:is_kornshell to 1) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1
@@ -3080,6 +3153,7 @@ redrawing can become slow.
 
 
 TEX				*tex.vim* *ft-tex-syntax* *latex-syntax*
+				*syntax-tex* *syntax-latex*
 
 			Tex Contents~
 	Tex: Want Syntax Folding?			|tex-folding|
@@ -3096,6 +3170,7 @@ TEX				*tex.vim* *ft-tex-syntax* *latex-syntax*
 	Tex: Selective Conceal Mode			|g:tex_conceal|
 	Tex: Controlling iskeyword			|g:tex_isk|
 	Tex: Fine Subscript and Superscript Control	|tex-supersub|
+	Tex: Match Check Control			|tex-matchcheck|
 
 				*tex-folding* *g:tex_fold_enabled*
  Tex: Want Syntax Folding? ~
@@ -3316,9 +3391,25 @@ syntax highlighting script handles this with the following logic:
 	For example, I use Luxi Mono Bold; it doesn't support subscript
 	characters for "hklmnpst", so I put >
 		let g:tex_subscripts= "[0-9aeijoruvx,+-/().]"
-<	in ~/.config/nvim/ftplugin/tex/tex.vim in order to avoid having 
+<	in ~/.config/nvim/ftplugin/tex/tex.vim in order to avoid having
 	inscrutable utf-8 glyphs appear.
 
+					*tex-matchcheck* *g:tex_matchcheck*
+ Tex: Match Check Control~
+
+	Sometimes one actually wants mismatched parentheses, square braces,
+	and or curly braces; for example, \text{(1,10] is a range from but
+	not including 1 to and including 10}.  This wish, of course, conflicts
+	with the desire to provide delimiter mismatch detection.  To
+	accommodate these conflicting goals, syntax/tex.vim provides >
+		g:tex_matchcheck = '[({[]'
+<	which is shown along with its default setting.  So, if one doesn't
+	want [] and () to be checked for mismatches, try using >
+		let g:tex_matchcheck= '[{}]'
+<	If you don't want matching to occur inside bold and italicized
+	regions, >
+		let g:tex_excludematcher= 1
+<	will prevent the texMatcher group from being included in those regions.
 
 TF						*tf.vim* *ft-tf-syntax*
 
@@ -3430,26 +3521,26 @@ It will look much better with a font in a quadratic cell size, e.g. for X: >
 YAML						*yaml.vim* *ft-yaml-syntax*
 
 					*g:yaml_schema* *b:yaml_schema*
-A YAML schema is a combination of a set of tags and a mechanism for resolving 
-non-specific tags. For user this means that YAML parser may, depending on 
-plain scalar contents, treat plain scalar (which can actually be only string 
-and nothing else) as a value of the other type: null, boolean, floating-point, 
-integer. `g:yaml_schema` option determines according to which schema values 
+A YAML schema is a combination of a set of tags and a mechanism for resolving
+non-specific tags. For user this means that YAML parser may, depending on
+plain scalar contents, treat plain scalar (which can actually be only string
+and nothing else) as a value of the other type: null, boolean, floating-point,
+integer. `g:yaml_schema` option determines according to which schema values
 will be highlighted specially. Supported schemas are
 
 Schema		Description ~
 failsafe	No additional highlighting.
 json		Supports JSON-style numbers, booleans and null.
 core		Supports more number, boolean and null styles.
-pyyaml		In addition to core schema supports highlighting timestamps, 
-		but there are some differences in what is recognized as 
-		numbers and many additional boolean values not present in core 
+pyyaml		In addition to core schema supports highlighting timestamps,
+		but there are some differences in what is recognized as
+		numbers and many additional boolean values not present in core
 		schema.
 
 Default schema is `core`.
 
-Note that schemas are not actually limited to plain scalars, but this is the 
-only difference between schemas defined in YAML specification and the only 
+Note that schemas are not actually limited to plain scalars, but this is the
+only difference between schemas defined in YAML specification and the only
 difference defined in the syntax file.
 
 
@@ -3532,7 +3623,7 @@ DEFINING FOLDLEVEL					*:syn-foldlevel*
 	start:		Use level of item containing start of line.
 	minimum:	Use lowest local-minimum level of items on line.
 
-	The default is 'start'.  Use 'minimum' to search a line horizontally
+	The default is "start".  Use "minimum" to search a line horizontally
 	for the lowest level contained on the line that is followed by a
 	higher level.  This produces more natural folds when syntax items
 	may close and open horizontally within a line.
@@ -3569,7 +3660,7 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
 	clear:		Syntax specific iskeyword setting is disabled and the
 			buffer-local 'iskeyword' setting is used.
-	{option}        Set the syntax 'iskeyword' option to a new value. 
+	{option}        Set the syntax 'iskeyword' option to a new value.
 
 	Example: >
   :syntax iskeyword @,48-57,192-255,$,_
@@ -3677,9 +3768,9 @@ DEFINING REGIONS	*:syn-region* *:syn-start* *:syn-skip* *:syn-end*
 		[keepend]
 		[extend]
 		[excludenl]
-		start={start_pattern} ..
-		[skip={skip_pattern}]
-		end={end_pattern} ..
+		start={start-pattern} ..
+		[skip={skip-pattern}]
+		end={end-pattern} ..
 		[{options}]
 
 	This defines one region.  It may span several lines.
@@ -3701,12 +3792,12 @@ DEFINING REGIONS	*:syn-region* *:syn-start* *:syn-skip* *:syn-end*
 				extend a containing match or item.  Only
 				useful for end patterns.  Must be given before
 				the patterns it applies to. |:syn-excludenl|
-	start={start_pattern}	The search pattern that defines the start of
+	start={start-pattern}	The search pattern that defines the start of
 				the region.  See |:syn-pattern| below.
-	skip={skip_pattern}	The search pattern that defines text inside
+	skip={skip-pattern}	The search pattern that defines text inside
 				the region where not to look for the end
 				pattern.  See |:syn-pattern| below.
-	end={end_pattern}	The search pattern that defines the end of
+	end={end-pattern}	The search pattern that defines the end of
 				the region.  See |:syn-pattern| below.
 
 	Example: >
@@ -4229,7 +4320,7 @@ Notes:
 - A negative offset for an end pattern may not always work, because the end
   pattern may be detected when the highlighting should already have stopped.
 - Before Vim 7.2 the offsets were counted in bytes instead of characters.
-  This didn't work well for multi-byte characters, so it was changed with the
+  This didn't work well for multibyte characters, so it was changed with the
   Vim 7.2 release.
 - The start of a match cannot be in a line other than where the pattern
   matched.  This doesn't work: "a\nb"ms=e.  You can make the highlighting
@@ -4417,8 +4508,8 @@ two different ways:
 	  (e.g., "syntax/pod.vim") the file is searched for in 'runtimepath'.
 	  All matching files are loaded.  Using a relative path is
 	  recommended, because it allows a user to replace the included file
-	  with his own version, without replacing the file that does the ":syn
-	  include".
+	  with their own version, without replacing the file that does the
+	  ":syn include".
 
 						*E847*
 The maximum number of includes is 999.
@@ -4538,7 +4629,7 @@ matches, nextgroup, etc.  But there are a few differences:
 - A line continuation pattern can be given.  It is used to decide which group
   of lines need to be searched like they were one line.  This means that the
   search for a match with the specified items starts in the first of the
-  consecutive that contain the continuation pattern.
+  consecutive lines that contain the continuation pattern.
 - When using "nextgroup" or "contains", this only works within one line (or
   group of continued lines).
 - When using a region, it must start and end in the same line (or group of
@@ -4850,8 +4941,8 @@ ctermbg={color-nr}				*highlight-ctermbg*
 							*E419* *E420*
 	When Vim knows the normal foreground and background colors, "fg" and
 	"bg" can be used as color names.  This only works after setting the
-	colors for the Normal group and for the Windows console.  Example, for
-	reverse video: >
+	colors for the Normal group and for the MS-Windows console.  Example,
+	for reverse video: >
 	    :highlight Visual ctermfg=bg ctermbg=fg
 <	Note that the colors are used that are valid at the moment this
 	command are given.  If the Normal group colors are changed later, the
@@ -5002,9 +5093,9 @@ MsgSeparator	Separator for scrolled messages, `msgsep` flag of 'display'
 							*hl-MoreMsg*
 MoreMsg		|more-prompt|
 							*hl-NonText*
-NonText		'@' at the end of the window, characters from 'showbreak' 
-		and other characters that do not really exist in the text 
-		(e.g., ">" displayed when a double-wide character doesn't 
+NonText		'@' at the end of the window, characters from 'showbreak'
+		and other characters that do not really exist in the text
+		(e.g., ">" displayed when a double-wide character doesn't
 		fit at the end of the line). See also |hl-EndOfBuffer|.
 							*hl-Normal*
 Normal		normal text
@@ -5131,6 +5222,12 @@ If you like Question highlighting for C comments, put this in your vimrc file: >
 Without the "default" in the C syntax file, the highlighting would be
 overruled when the syntax file is loaded.
 
+To have a link survive `:highlight clear`, which is useful if you have
+highlighting for a specific filetype and you want to keep it when selecting
+another color scheme, put a command like this in the
+"after/syntax/{filetype}.vim" file: >
+    highlight! default link cComment Question
+
 ==============================================================================
 15. Cleaning up						*:syn-clear* *E391*
 
@@ -5191,7 +5288,7 @@ script file to set these colors.  Put this file in a directory in
 the default colors.  This way these colors will be used after the ":syntax
 reset" command.
 
-For Unix you can use the file ~/.config/nvim/after/syntax/syncolor.vim.  
+For Unix you can use the file ~/.config/nvim/after/syntax/syncolor.vim.
 Example: >
 
 	if &background == "light"

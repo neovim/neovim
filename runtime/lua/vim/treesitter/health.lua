@@ -1,10 +1,14 @@
 local M = {}
 local ts = vim.treesitter
 
+--- Lists the parsers currently installed
+---
+---@return A list of parsers
 function M.list_parsers()
   return vim.api.nvim_get_runtime_file('parser/*', true)
 end
 
+--- Performs a healthcheck for treesitter integration
 function M.check_health()
   local report_info = vim.fn['health#report_info']
   local report_ok = vim.fn['health#report_ok']

@@ -10,6 +10,26 @@ let cmd =
 \ 'some '
 \ 'string'
 
+if 1
+let x = [
+\ ]
+endif
+
+" TODO: add searchpair() to find matching {
+"for x in [
+"{
+"key: 'value'
+"},
+"]
+"eval 0
+"endfor
+
+for x in [
+{key: 'value'},
+]
+eval 0
+endfor
+
 " END_INDENT
 
 " START_INDENT
@@ -22,7 +42,26 @@ let cmd =
 " END_INDENT
 
 " START_INDENT
+" INDENT_EXE let g:vim_indent_cont = 5
+
+let list = [
+\ 'one',
+\ 'two']
+
+" END_INDENT
+
+" START_INDENT
 " INDENT_EXE unlet g:vim_indent_cont
+
+let list = [
+'one',
+'two',
+]
+echo
+
+" END_INDENT
+
+" START_INDENT
 " INDENT_AT  this-line
 func Some()
 let f = x " this-line
@@ -43,4 +82,19 @@ func Some()
 let f = x
 " prev-line
 endfunc
+" END_INDENT
+
+" START_INDENT
+let a =<< END
+nothing
+END
+" END_INDENT
+
+" START_INDENT
+" INDENT_AT  this-line
+let a=<< trim END
+   blah
+      blah
+      blah this-line
+END
 " END_INDENT
