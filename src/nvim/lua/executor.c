@@ -40,6 +40,7 @@
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/lua/xdiff.h"
 
 #include "luv/luv.h"
 
@@ -516,6 +517,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
+
+  // vim.diff
+  lua_pushcfunction(lstate, &nlua_xdl_diff);
+  lua_setfield(lstate, -2, "diff");
 
   lua_setglobal(lstate, "vim");
 

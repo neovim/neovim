@@ -1581,4 +1581,70 @@ uri_to_fname({uri})                                       *vim.uri_to_fname()*
                 Return: ~
                     Filename
 
+==============================================================================
+Lua module: diff                                                    *lua-diff*
+
+diff({a}, {b}, {opts})                                            *vim.diff()*
+                Run diff on strings {a} and {b}.
+
+                Examples: >
+                vim.diff('a\n', 'b\nc\n')
+                -->
+                @@ -1 +1,2 @@
+                -a
+                +b
+                +c
+
+                vim.diff('a\n', 'b\nc\n', {hunk_lines = true})
+                -->
+                {
+                    {1, 1, 1, 2}
+                }
+<
+                Parameters: ~
+                    {a}      First string to compare
+                    {b}      Second string to compare
+                    {opts}   Optional parameters:
+                             • `on_hunk` (callback):
+                               Invoked for each hunk in the diff. Return a
+                               negative number to cancel the callback for any
+                               remaining hunks.
+                               Args:
+                               • `start_a` (integer): Start line of hunk in {a}, 1-based.
+                               • `count_a` (integer): Hunk size in {a}.
+                               • `start_b` (integer): Start line of hunk in {b}, 1-based.
+                               • `count_b` (integer): Hunk size in {b}.
+                             • `hunk_lines` (boolean):
+                               Return an array of the hunk locations. Cannot
+                               be used with `on_hunk`.
+                             • `algorithm` (string):
+                               Diff algorithm to use. Values:
+                               • "myers"      the default algorithm
+                               • "minimal"    spend extra time to generate the
+                                              smallest possible diff
+                               • "patience"   patience diff algorithm
+                               • "histogram"  histogram diff algorithm
+                             • `ctxlen` (integer): Context length
+                             • `interhunkctxlen` (integer):
+                               Inter hunk context length
+                             • `ignore_whitespace` (boolean):
+                               Ignore whitespace
+                             • `ignore_whitespace_change` (boolean):
+                               Ignore whitespace change
+                             • `ignore_whitespace_change_at_eol` (boolean)
+                               Ignore whitespace change at end-of-line.
+                             • `ignore_cr_at_eol` (boolean)
+                               Ignore carriage return at end-of-line
+                             • `ignore_blank_lines` (boolean)
+                               Ignore blank lines
+                             • `indent_heuristic` (boolean):
+                               Use the indent heuristic for the internal
+                               diff library.
+
+                Return: ~
+                    String of diff in unified diff format, otherwise:
+                      • nil if {opts.on_hunk} is given.
+                      • Array of hunk locations if {opts.hunk_lines} is
+                        `true`.
+
  vim:tw=78:ts=8:ft=help:norl:
