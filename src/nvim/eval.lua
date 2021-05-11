@@ -217,7 +217,7 @@ return {
     len={args=1},
     libcall={args=3},
     libcallnr={args=3},
-    line={args=1},
+    line={args={1, 2}},
     line2byte={args=1},
     lispindent={args=1},
     list2str={args={1, 2}},

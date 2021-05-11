@@ -7617,7 +7617,7 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
 /// @param[out]  ret_fnum  Set to fnum for marks.
 ///
 /// @return Pointer to position or NULL in case of error (e.g. invalid type).
-pos_T *var2fpos(const typval_T *const tv, const int dollar_lnum,
+pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum,
                 int *const ret_fnum)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {

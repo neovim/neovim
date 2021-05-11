@@ -5540,18 +5540,36 @@ static void f_libcallnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   libcall_common(argvars, rettv, VAR_NUMBER);
 }
 
-/*
- * "line(string)" function
- */
+// "line(string, [winid])" function
 static void f_line(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   linenr_T lnum = 0;
-  pos_T       *fp;
+  pos_T *fp = NULL;
   int fnum;
 
-  fp = var2fpos(&argvars[0], TRUE, &fnum);
-  if (fp != NULL)
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    tabpage_T *tp;
+    win_T *save_curwin;
+    tabpage_T *save_curtab;
+
+    // use window specified in the second argument
+    win_T *wp = win_id2wp_tp(&argvars[1], &tp);
+    if (wp != NULL && tp != NULL) {
+      if (switch_win_noblock(&save_curwin, &save_curtab, wp, tp, true)
+          == OK) {
+        check_cursor();
+        fp = var2fpos(&argvars[0], true, &fnum);
+      }
+      restore_win_noblock(save_curwin, save_curtab, true);
+    }
+  } else {
+    // use current window
+    fp = var2fpos(&argvars[0], true, &fnum);
+  }
+
+  if (fp != NULL) {
     lnum = fp->lnum;
+  }
   rettv->vval.v_number = lnum;
 }
 
