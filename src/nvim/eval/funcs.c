@@ -6661,6 +6661,37 @@ static void f_range(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// Evaluate "expr" for readdir().
+static varnumber_T readdir_checkitem(typval_T *expr, const char *name)
+{
+  typval_T save_val;
+  typval_T rettv;
+  typval_T argv[2];
+  varnumber_T retval = 0;
+  bool error = false;
+
+  prepare_vimvar(VV_VAL, &save_val);
+  set_vim_var_string(VV_VAL, name, -1);
+  argv[0].v_type = VAR_STRING;
+  argv[0].vval.v_string = (char_u *)name;
+
+  if (eval_expr_typval(expr, argv, 1, &rettv) == FAIL) {
+    goto theend;
+  }
+
+  retval = tv_get_number_chk(&rettv, &error);
+  if (error) {
+    retval = -1;
+  }
+
+  tv_clear(&rettv);
+
+theend:
+  set_vim_var_string(VV_VAL, NULL, 0);
+  restore_vimvar(VV_VAL, &save_val);
+  return retval;
+}
+
 // "readdir()" function
 static void f_readdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -6672,14 +6703,43 @@ static void f_readdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, kListLenUnknown);
   path = tv_get_string(&argvars[0]);
   expr = &argvars[1];
+  ga_init(&ga, (int)sizeof(char *), 20);
 
   if (!os_scandir(&dir, path)) {
     smsg(_(e_notopen), path);
   } else {
-    readdir_core(&ga, &dir, expr, true);
+    for (;;) {
+      bool ignore;
+
+      path = os_scandir_next(&dir);
+      if (path == NULL) {
+        break;
+      }
+
+      ignore = (path[0] == '.'
+                && (path[1] == NUL || (path[1] == '.' && path[2] == NUL)));
+      if (!ignore && expr->v_type != VAR_UNKNOWN) {
+        varnumber_T r = readdir_checkitem(expr, path);
+
+        if (r < 0) {
+          break;
+        }
+        if (r == 0) {
+          ignore = true;
+        }
+      }
+
+      if (!ignore) {
+        ga_grow(&ga, 1);
+        ((char **)ga.ga_data)[ga.ga_len++] = xstrdup(path);
+      }
+    }
+
+    os_closedir(&dir);
   }
 
   if (rettv->vval.v_list != NULL && ga.ga_len > 0) {
+    sort_strings((char_u **)ga.ga_data, ga.ga_len);
     for (int i = 0; i < ga.ga_len; i++) {
       path = ((const char **)ga.ga_data)[i];
       tv_list_append_string(rettv->vval.v_list, path, -1);

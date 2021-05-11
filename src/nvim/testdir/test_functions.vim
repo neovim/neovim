@@ -1402,10 +1402,6 @@ func Test_bufadd_bufload()
 endfunc
 
 func Test_readdir()
-  if isdirectory('Xdir')
-    call delete('Xdir', 'rf')
-  endif
-
   call mkdir('Xdir')
   call writefile([], 'Xdir/foo.txt')
   call writefile([], 'Xdir/bar.txt')
@@ -1458,21 +1454,6 @@ endfunc
 
 func Test_default_arg_value()
   call assert_equal('msg', HasDefault())
-endfunc
-
-func Test_delete_rf()
-  call mkdir('Xdir')
-  call writefile([], 'Xdir/foo.txt')
-  call writefile([], 'Xdir/bar.txt')
-  call mkdir('Xdir/[a-1]')  " issue #696
-  call writefile([], 'Xdir/[a-1]/foo.txt')
-  call writefile([], 'Xdir/[a-1]/bar.txt')
-  call assert_true(filereadable('Xdir/foo.txt'))
-  call assert_true(filereadable('Xdir/[a-1]/foo.txt'))
-
-  call assert_equal(0, delete('Xdir', 'rf'))
-  call assert_false(filereadable('Xdir/foo.txt'))
-  call assert_false(filereadable('Xdir/[a-1]/foo.txt'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
