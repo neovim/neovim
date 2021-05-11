@@ -231,7 +231,7 @@ local predicate_handlers = {
 
     local compiled_vim_regexes = setmetatable({}, {
       __index = function(t, pattern)
-        local res = vim.regex(check_magic(vim.fn.escape(pattern, '\\')))
+        local res = vim.regex(check_magic(pattern))
         rawset(t, pattern, res)
         return res
       end
