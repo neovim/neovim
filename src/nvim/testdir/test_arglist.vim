@@ -26,8 +26,6 @@ func Test_argidx()
 endfunc
 
 func Test_argadd()
-  call Reset_arglist()
-
   %argdelete
   argadd a b c
   call assert_equal(0, argidx())
@@ -105,11 +103,6 @@ func Init_abc()
   next
 endfunc
 
-func Reset_arglist()
-  cd
-  args a | %argd
-endfunc
-
 func Assert_argc(l)
   call assert_equal(len(a:l), argc())
   let i = 0
@@ -122,7 +115,8 @@ endfunc
 " Test for [count]argument and [count]argdelete commands
 " Ported from the test_argument_count.in test script
 func Test_argument()
-  call Reset_arglist()
+  " Clean the argument list
+  arga a | %argd
 
   let save_hidden = &hidden
   set hidden
@@ -250,7 +244,8 @@ endfunc
 " Test for 0argadd and 0argedit
 " Ported from the test_argument_0count.in test script
 func Test_zero_argadd()
-  call Reset_arglist()
+  " Clean the argument list
+  arga a | %argd
 
   arga a b c d
   2argu
@@ -275,6 +270,10 @@ func Test_zero_argadd()
   argedit file\ with\ spaces another file
   call assert_equal(['edited', 'a', 'file with spaces', 'another', 'file', 'third', 'b', 'c', 'd'], argv())
   call assert_equal('file with spaces', expand('%'))
+endfunc
+
+func Reset_arglist()
+  args a | %argd
 endfunc
 
 " Test for argc()
@@ -409,7 +408,6 @@ endfunc
 " Test for the :argdelete command
 func Test_argdelete()
   call Reset_arglist()
-
   args aa a aaa b bb
   argdelete a*
   call assert_equal(['b', 'bb'], argv())
