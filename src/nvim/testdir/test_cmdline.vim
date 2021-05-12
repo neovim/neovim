@@ -1005,6 +1005,25 @@ func Test_buffers_lastused()
   bwipeout bufc
 endfunc
 
+" Test for CmdwinEnter autocmd
+func Test_cmdwin_autocmd()
+  CheckFeature cmdwin
+
+  augroup CmdWin
+    au!
+    autocmd BufLeave * if &buftype == '' | update | endif
+    autocmd CmdwinEnter * startinsert
+  augroup END
+
+  call assert_fails('call feedkeys("q:xyz\<CR>", "xt")', 'E492:')
+  call assert_equal('xyz', @:)
+
+  augroup CmdWin
+    au!
+  augroup END
+  augroup! CmdWin
+endfunc
+
 func Test_cmdlineclear_tabenter()
   " See test/functional/legacy/cmdline_spec.lua
   CheckScreendump

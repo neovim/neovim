@@ -2434,6 +2434,11 @@ int do_ecmd(
      * is returned by buflist_new(), nothing to do here.
      */
     if (buf != curbuf) {
+      const int save_cmdwin_type = cmdwin_type;
+
+      // BufLeave applies to the old buffer.
+      cmdwin_type = 0;
+
       /*
        * Be careful: The autocommands may delete any buffer and change
        * the current buffer.
@@ -2449,6 +2454,7 @@ int do_ecmd(
       }
       set_bufref(&au_new_curbuf, buf);
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      cmdwin_type = save_cmdwin_type;
       if (!bufref_valid(&au_new_curbuf)) {
         // New buffer has been deleted.
         delbuf_msg(new_name);  // Frees new_name.
