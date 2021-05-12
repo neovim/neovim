@@ -54,3 +54,29 @@ func Test_ex_mode()
   set sw&
   let &encoding = encoding_save
 endfunc
+
+func Test_ex_mode_errors()
+  " Not allowed to enter ex mode when text is locked
+  au InsertCharPre <buffer> normal! gQ<CR>
+  let caught_e523 = 0
+  try
+    call feedkeys("ix\<esc>", 'xt')
+  catch /^Vim\%((\a\+)\)\=:E523/ " catch E523
+    let caught_e523 = 1
+  endtry
+  call assert_equal(1, caught_e523)
+  au! InsertCharPre
+
+  new
+  au CmdLineEnter * call ExEnterFunc()
+  func ExEnterFunc()
+
+  endfunc
+  call feedkeys("gQvi\r", 'xt')
+
+  au! CmdLineEnter
+  delfunc ExEnterFunc
+  quit
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
