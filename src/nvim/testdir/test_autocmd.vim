@@ -452,6 +452,27 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
   endfor
 endfunc
 
+" Using :blast and :ball for many events caused a crash, because b_nwindows was
+" not incremented correctly.
+func Test_autocmd_blast_badd()
+  let content =<< trim [CODE]
+      au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* blast
+      edit foo1
+      au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* ball
+      edit foo2
+      call writefile(['OK'], 'Xerrors')
+      qall
+  [CODE]
+
+  call writefile(content, 'XblastBall')
+  call system(GetVimCommand() .. ' --clean -S XblastBall')
+  " call assert_match('OK', readfile('Xerrors')->join())
+  call assert_match('OK', join(readfile('Xerrors')))
+
+  call delete('XblastBall')
+  call delete('Xerrors')
+endfunc
+
 " SEGV occurs in older versions.
 func Test_autocmd_bufwipe_in_SessLoadPost2()
   tabnew

@@ -2462,6 +2462,7 @@ int do_ecmd(
         auto_buf = true;
       } else {
         win_T *the_curwin = curwin;
+        buf_T *was_curbuf = curbuf;
 
         // Set w_closing to avoid that autocommands close the window.
         // Set b_locked for the same reason.
@@ -2475,9 +2476,10 @@ int do_ecmd(
         // Close the link to the current buffer. This will set
         // oldwin->w_buffer to NULL.
         u_sync(false);
-        close_buffer(oldwin, curbuf,
-                     (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,
-                     false);
+        const bool did_decrement = close_buffer(
+            oldwin, curbuf,
+            (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,
+            false);
 
         // Autocommands may have closed the window.
         if (win_valid(the_curwin)) {
@@ -2497,6 +2499,14 @@ int do_ecmd(
           goto theend;
         }
         if (buf == curbuf) {  // already in new buffer
+          // close_buffer() has decremented the window count,
+          // increment it again here and restore w_buffer.
+          if (did_decrement && buf_valid(was_curbuf)) {
+            was_curbuf->b_nwindows++;
+          }
+          if (win_valid_any_tab(oldwin) && oldwin->w_buffer == NULL) {
+            oldwin->w_buffer = was_curbuf;
+          }
           auto_buf = true;
         } else {
           // <VN> We could instead free the synblock
