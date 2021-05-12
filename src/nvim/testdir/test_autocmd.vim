@@ -1949,6 +1949,26 @@ func Test_autocmd_window()
   %bw!
 endfunc
 
+" Test for trying to close the tab that has the temporary window for exeucing
+" an autocmd.
+func Test_close_autocmd_tab()
+  edit one.txt
+  tabnew two.txt
+   augroup aucmd_win_test
+    au!
+    au BufEnter * if expand('<afile>') == 'one.txt' | tabfirst | tabonly | endif
+  augroup END
+
+  call assert_fails('doautoall BufEnter', 'E813:')
+
+  tabonly
+  augroup aucmd_win_test
+    au!
+  augroup END
+  augroup! aucmd_win_test
+  %bwipe!
+endfunc
+
 func Test_autocmd_closes_window()
   au BufNew,BufWinLeave * e %e
   file yyy

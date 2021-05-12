@@ -6520,6 +6520,12 @@ ex_win_close(
   int need_hide;
   buf_T       *buf = win->w_buffer;
 
+  // Never close the autocommand window.
+  if (win == aucmd_win) {
+    EMSG(_(e_autocmd_close));
+    return;
+  }
+
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
   if (need_hide && !buf_hide(buf) && !forceit) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
