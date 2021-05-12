@@ -2439,16 +2439,14 @@ int do_ecmd(
       // BufLeave applies to the old buffer.
       cmdwin_type = 0;
 
-      /*
-       * Be careful: The autocommands may delete any buffer and change
-       * the current buffer.
-       * - If the buffer we are going to edit is deleted, give up.
-       * - If the current buffer is deleted, prefer to load the new
-       *   buffer when loading a buffer is required.  This avoids
-       *   loading another buffer which then must be closed again.
-       * - If we ended up in the new buffer already, need to skip a few
-       *	 things, set auto_buf.
-       */
+      // Be careful: The autocommands may delete any buffer and change
+      // the current buffer.
+      // - If the buffer we are going to edit is deleted, give up.
+      // - If the current buffer is deleted, prefer to load the new
+      //   buffer when loading a buffer is required.  This avoids
+      //   loading another buffer which then must be closed again.
+      // - If we ended up in the new buffer already, need to skip a few
+      //         things, set auto_buf.
       if (buf->b_fname != NULL) {
         new_name = vim_strsave(buf->b_fname);
       }

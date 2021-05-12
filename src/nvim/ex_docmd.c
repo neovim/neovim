@@ -212,7 +212,7 @@ void do_exmode(int improved)
   while (exmode_active) {
     /* Check for a ":normal" command and no more characters left. */
     if (ex_normal_busy > 0 && typebuf.tb_len == 0) {
-      exmode_active = FALSE;
+      exmode_active = 0;
       break;
     }
     msg_scroll = true;
@@ -7307,7 +7307,7 @@ do_exedit(
    */
   if (exmode_active && (eap->cmdidx == CMD_visual
                         || eap->cmdidx == CMD_view)) {
-    exmode_active = FALSE;
+    exmode_active = 0;
     ex_pressedreturn = false;
     if (*eap->arg == NUL) {
       /* Special case:  ":global/pat/visual\NLvi-commands" */
