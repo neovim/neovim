@@ -46,7 +46,7 @@ endfunction
 
 function! s:detect()
   if exists("g:ruby_host_prog")
-    return expand(g:ruby_host_prog)
+    return expand(g:ruby_host_prog, v:true)
   elseif has('win32')
     return exepath('neovim-ruby-host.bat')
   else

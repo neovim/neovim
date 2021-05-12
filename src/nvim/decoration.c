@@ -383,8 +383,9 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
 
 DecorProvider *get_decor_provider(NS ns_id, bool force)
 {
-  ssize_t i;
-  for (i = 0; i < (ssize_t)kv_size(decor_providers); i++) {
+  size_t i;
+  size_t len = kv_size(decor_providers);
+  for (i = 0; i < len; i++) {
     DecorProvider *item = &kv_A(decor_providers, i);
     if (item->ns_id == ns_id) {
       return item;
@@ -397,12 +398,16 @@ DecorProvider *get_decor_provider(NS ns_id, bool force)
     return NULL;
   }
 
-  for (ssize_t j = (ssize_t)kv_size(decor_providers)-1; j >= i; j++) {
-    // allocates if needed:
-    (void)kv_a(decor_providers, (size_t)j+1);
-    kv_A(decor_providers, (size_t)j+1) = kv_A(decor_providers, j);
+  // Adding a new provider, so allocate room in the vector
+  (void)kv_a(decor_providers, len);
+  if (i < len) {
+    // New ns_id needs to be inserted between existing providers to maintain
+    // ordering, so shift other providers with larger ns_id
+    memmove(&kv_A(decor_providers, i + 1),
+            &kv_A(decor_providers, i),
+            (len - i) * sizeof(kv_a(decor_providers, i)));
   }
-  DecorProvider *item = &kv_a(decor_providers, (size_t)i);
+  DecorProvider *item = &kv_a(decor_providers, i);
   *item = DECORATION_PROVIDER_INIT(ns_id);
 
   return item;

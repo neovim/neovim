@@ -131,7 +131,7 @@ static int msg_grid_scroll_discount = 0;
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
-  char buf[MAX_MCO];
+  char buf[MAX_MCO + 1];
   size_t size = utf_char2bytes(curwin->w_p_fcs_chars.msgsep, (char_u *)buf);
   buf[size] = '\0';
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
@@ -1193,7 +1193,8 @@ void wait_return(int redraw)
              || c == K_MIDDLEDRAG || c == K_MIDDLERELEASE
              || c == K_RIGHTDRAG  || c == K_RIGHTRELEASE
              || c == K_MOUSELEFT  || c == K_MOUSERIGHT
-             || c == K_MOUSEDOWN  || c == K_MOUSEUP);
+             || c == K_MOUSEDOWN  || c == K_MOUSEUP
+             || c == K_MOUSEMOVE);
     os_breakcheck();
     /*
      * Avoid that the mouse-up event causes visual mode to start.

@@ -992,6 +992,7 @@ static int insert_handle_key(InsertState *s)
   case K_LEFTDRAG:
   case K_LEFTRELEASE:
   case K_LEFTRELEASE_NM:
+  case K_MOUSEMOVE:
   case K_MIDDLEMOUSE:
   case K_MIDDLEDRAG:
   case K_MIDDLERELEASE:

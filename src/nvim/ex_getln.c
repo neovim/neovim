@@ -1953,6 +1953,7 @@ static int command_line_handle_key(CommandLineState *s)
   case K_X2MOUSE:
   case K_X2DRAG:
   case K_X2RELEASE:
+  case K_MOUSEMOVE:
     return command_line_not_changed(s);
 
 

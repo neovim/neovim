@@ -1015,6 +1015,7 @@ au BufNewFile,BufRead *.hgrc,*hgrc		setf cfg
 
 " Meson Build system config
 au BufNewFile,BufRead meson.build,meson_options.txt setf meson
+au BufNewFile,BufRead *.wrap			setf dosini
 
 " Messages (logs mostly)
 au BufNewFile,BufRead */log/{auth,cron,daemon,debug,kern,lpr,mail,messages,news/news,syslog,user}{,.log,.err,.info,.warn,.crit,.notice}{,.[0-9]*,-[0-9]*} setf messages

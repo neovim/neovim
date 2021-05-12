@@ -450,6 +450,7 @@ static int terminal_execute(VimState *state, int key)
     case K_LEFTMOUSE:
     case K_LEFTDRAG:
     case K_LEFTRELEASE:
+    case K_MOUSEMOVE:
     case K_MIDDLEMOUSE:
     case K_MIDDLEDRAG:
     case K_MIDDLERELEASE:
@@ -1098,6 +1099,7 @@ static bool send_mouse_event(Terminal *term, int c)
     switch (c) {
       case K_LEFTDRAG: drag = true;   FALLTHROUGH;
       case K_LEFTMOUSE: button = 1; break;
+      case K_MOUSEMOVE: drag = true; button = 0; break;
       case K_MIDDLEDRAG: drag = true; FALLTHROUGH;
       case K_MIDDLEMOUSE: button = 2; break;
       case K_RIGHTDRAG: drag = true;  FALLTHROUGH;

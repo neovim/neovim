@@ -66,6 +66,18 @@ describe('decorations providers', function()
     expect_events(expected, actual, "beam trace")
   end
 
+  it('does not OOM when inserting, rather than appending, to the decoration provider vector', function()
+    -- Add a dummy decoration provider with a larger ns id than what setup_provider() creates.
+    -- This forces get_decor_provider() to insert into the providers vector,
+    -- rather than append, which used to spin in an infinite loop allocating
+    -- memory until nvim crashed/was killed.
+    setup_provider([[
+      local ns2 = a.nvim_create_namespace "ns2"
+      a.nvim_set_decoration_provider(ns2, {})
+    ]])
+    helpers.assert_alive()
+  end)
+
   it('leave a trace', function()
     insert(mulholland)
 

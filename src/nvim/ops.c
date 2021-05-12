@@ -1676,17 +1676,14 @@ int op_delete(oparg_T *oap)
 
       curbuf_splice_pending++;
       pos_T startpos = curwin->w_cursor;  // start position for delete
-      bcount_t deleted_bytes = (bcount_t)STRLEN(
-          ml_get(startpos.lnum)) + 1 - startpos.col;
+      bcount_t deleted_bytes = get_region_bytecount(
+          curbuf, startpos.lnum, oap->end.lnum, startpos.col,
+          oap->end.col) + oap->inclusive;
       truncate_line(true);        // delete from cursor to end of line
 
       curpos = curwin->w_cursor;  // remember curwin->w_cursor
       curwin->w_cursor.lnum++;
 
-      for (linenr_T i = 1; i <= oap->line_count - 2; i++) {
-        deleted_bytes += (bcount_t)STRLEN(
-            ml_get(startpos.lnum + i)) + 1;
-      }
       del_lines(oap->line_count - 2, false);
 
       // delete from start of line until op_end
@@ -1694,7 +1691,6 @@ int op_delete(oparg_T *oap)
       curwin->w_cursor.col = 0;
       (void)del_bytes((colnr_T)n, !virtual_op,
                       oap->op_type == OP_DELETE && !oap->is_VIsual);
-      deleted_bytes += n;
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       (void)do_join(2, false, false, false, false);
       curbuf_splice_pending--;
@@ -3334,6 +3330,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             changed_cline_bef_curs();
             curwin->w_cursor.col += (colnr_T)(totlen - 1);
           }
+          changed_bytes(lnum, col);
+          extmark_splice_cols(curbuf, (int)lnum-1, col,
+                              0, (int)totlen, kExtmarkUndo);
         }
         if (VIsual_active) {
           lnum++;
@@ -3345,12 +3344,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
 
       curbuf->b_op_end = curwin->w_cursor;
-      /* For "CTRL-O p" in Insert mode, put cursor after last char */
-      if (totlen && (restart_edit != 0 || (flags & PUT_CURSEND)))
-        ++curwin->w_cursor.col;
-      changed_bytes(lnum, col);
-      extmark_splice_cols(curbuf, (int)lnum-1, col,
-                          0, (int)totlen, kExtmarkUndo);
+      // For "CTRL-O p" in Insert mode, put cursor after last char
+      if (totlen && (restart_edit != 0 || (flags & PUT_CURSEND))) {
+        curwin->w_cursor.col++;
+      }
     } else {
       // Insert at least one line.  When y_type is kMTCharWise, break the first
       // line in two.
@@ -6301,4 +6298,34 @@ bool op_reg_set_previous(const char name)
 
   y_previous = &y_regs[i];
   return true;
+}
+
+/// Get the byte count of buffer region. End-exclusive.
+///
+/// @return number of bytes
+bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum,
+                              linenr_T end_lnum, colnr_T start_col,
+                              colnr_T end_col)
+{
+  linenr_T max_lnum = buf->b_ml.ml_line_count;
+  if (start_lnum > max_lnum) {
+    return 0;
+  }
+  if (start_lnum == end_lnum) {
+    return end_col - start_col;
+  }
+  const char *first = (const char *)ml_get_buf(buf, start_lnum, false);
+  bcount_t deleted_bytes = (bcount_t)STRLEN(first) - start_col + 1;
+
+  for (linenr_T i = 1; i <= end_lnum-start_lnum-1; i++) {
+    if (start_lnum + i > max_lnum) {
+      return deleted_bytes;
+    }
+    deleted_bytes += (bcount_t)STRLEN(
+        ml_get_buf(buf, start_lnum + i, false)) + 1;
+  }
+  if (end_lnum > max_lnum) {
+    return deleted_bytes;
+  }
+  return deleted_bytes + end_col;
 }

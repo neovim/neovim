@@ -1953,8 +1953,8 @@ static char_u *get_list_line(int c, void *cookie, int indent, bool do_concat)
   return (char_u *)(s == NULL ? NULL : xstrdup(s));
 }
 
-// "execute(command)" function
-static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static void execute_common(typval_T *argvars, typval_T *rettv, FunPtr fptr,
+                           int arg_off)
 {
   const int save_msg_silent = msg_silent;
   const int save_emsg_silent = emsg_silent;
@@ -1968,9 +1968,9 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (argvars[1].v_type != VAR_UNKNOWN) {
+  if (argvars[arg_off + 1].v_type != VAR_UNKNOWN) {
     char buf[NUMBUFLEN];
-    const char *const s = tv_get_string_buf_chk(&argvars[1], buf);
+    const char *const s = tv_get_string_buf_chk(&argvars[arg_off + 1], buf);
 
     if (s == NULL) {
       return;
@@ -1997,10 +1997,10 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     msg_col = 0;  // prevent leading spaces
   }
 
-  if (argvars[0].v_type != VAR_LIST) {
-    do_cmdline_cmd(tv_get_string(&argvars[0]));
-  } else if (argvars[0].vval.v_list != NULL) {
-    list_T *const list = argvars[0].vval.v_list;
+  if (argvars[arg_off].v_type != VAR_LIST) {
+    do_cmdline_cmd(tv_get_string(&argvars[arg_off]));
+  } else if (argvars[arg_off].vval.v_list != NULL) {
+    list_T *const list = argvars[arg_off].vval.v_list;
     tv_list_ref(list);
     GetListLineCookie cookie = {
       .l = list,
@@ -2030,6 +2030,39 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = capture_ga->ga_data;
 
   capture_ga = save_capture_ga;
+}
+
+// "execute(command)" function
+static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  execute_common(argvars, rettv, fptr, 0);
+}
+
+// "win_execute(win_id, command)" function
+static void f_win_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tabpage_T *tp;
+  win_T *wp = win_id2wp_tp(argvars, &tp);
+  win_T *save_curwin;
+  tabpage_T *save_curtab;
+  // Return an empty string if something fails.
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  if (wp != NULL && tp != NULL) {
+    pos_T curpos = wp->w_cursor;
+    if (switch_win_noblock(&save_curwin, &save_curtab, wp, tp, true) ==
+        OK) {
+      check_cursor();
+      execute_common(argvars, rettv, fptr, 1);
+    }
+    restore_win_noblock(save_curwin, save_curtab, true);
+
+    // Update the status line if the cursor moved.
+    if (win_valid(wp) && !equalpos(curpos, wp->w_cursor)) {
+        wp->w_redr_status = true;
+    }
+  }
 }
 
 /// "exepath()" function
@@ -3016,7 +3049,10 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = safe_vgetc();
     }
 
-    if (n == K_IGNORE || n == K_VER_SCROLLBAR || n == K_HOR_SCROLLBAR) {
+    if (n == K_IGNORE
+        || n == K_MOUSEMOVE
+        || n == K_VER_SCROLLBAR
+        || n == K_HOR_SCROLLBAR) {
       continue;
     }
     break;
@@ -9178,6 +9214,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// struct storing information about current sort
 typedef struct {
   int item_compare_ic;
+  bool item_compare_lc;
   bool item_compare_numeric;
   bool item_compare_numbers;
   bool item_compare_float;
@@ -9252,10 +9289,10 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
     p2 = "";
   }
   if (!sortinfo->item_compare_numeric) {
-    if (sortinfo->item_compare_ic) {
-      res = STRICMP(p1, p2);
+    if (sortinfo->item_compare_lc) {
+      res = strcoll(p1, p2);
     } else {
-      res = STRCMP(p1, p2);
+      res = sortinfo->item_compare_ic ? STRICMP(p1, p2): STRCMP(p1, p2);
     }
   } else {
     double n1, n2;
@@ -9390,6 +9427,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     }
 
     info.item_compare_ic = false;
+    info.item_compare_lc = false;
     info.item_compare_numeric = false;
     info.item_compare_numbers = false;
     info.item_compare_float = false;
@@ -9434,6 +9472,9 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
           } else if (strcmp(info.item_compare_func, "i") == 0) {
             info.item_compare_func = NULL;
             info.item_compare_ic = true;
+          } else if (strcmp(info.item_compare_func, "l") == 0) {
+            info.item_compare_func = NULL;
+            info.item_compare_lc = true;
           }
         }
       }

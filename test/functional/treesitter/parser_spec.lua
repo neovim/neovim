@@ -235,6 +235,41 @@ void ui_refresh(void)
     }, res)
   end)
 
+  it('can match special regex characters like \\ * + ( with `vim-match?`', function()
+    if pending_c_parser(pending) then return end
+
+    insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
+
+    local res = exec_lua([[
+      cquery = vim.treesitter.parse_query("c", '((_) @plus (vim-match? @plus "^\\\\+$"))'..
+                                               '((_) @times (vim-match? @times "^\\\\*$"))'..
+                                               '((_) @paren (vim-match? @paren "^\\\\($"))'..
+                                               '((_) @escape (vim-match? @escape "^\\\\\\\\n$"))'..
+                                               '((_) @string (vim-match? @string "^\\"\\\\\\\\n\\"$"))')
+      parser = vim.treesitter.get_parser(0, "c")
+      tree = parser:parse()[1]
+      res = {}
+      for pattern, match in cquery:iter_matches(tree:root(), 0) do
+        -- can't transmit node over RPC. just check the name and range
+        local mrepr = {}
+        for cid,node in pairs(match) do
+          table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        end
+        table.insert(res, {pattern, mrepr})
+      end
+      return res
+    ]])
+
+    eq({
+      { 2, { { "times", '*', 0, 4, 0, 5 } } },
+      { 5, { { "string", 'string_literal', 0, 16, 0, 20 } } },
+      { 4, { { "escape", 'escape_sequence', 0, 17, 0, 19 } } },
+      { 3, { { "paren", '(', 0, 22, 0, 23 } } },
+      { 1, { { "plus", '+', 0, 25, 0, 26 } } },
+      { 2, { { "times", '*', 0, 30, 0, 31 } } },
+    }, res)
+  end)
+
   it('allow loading query with escaped quotes and capture them with `lua-match?` and `vim-match?`', function()
     if pending_c_parser(pending) then return end
 
