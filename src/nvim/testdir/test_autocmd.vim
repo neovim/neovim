@@ -2000,4 +2000,13 @@ func Test_autocmd_closes_window()
   au! BufWinLeave
 endfunc
 
+func Test_autocmd_closing_cmdwin()
+  au BufWinLeave * nested q
+  call assert_fails("norm 7q?\n", 'E855:')
+
+  au! BufWinLeave
+  new
+  only
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
