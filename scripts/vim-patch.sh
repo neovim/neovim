@@ -578,7 +578,7 @@ list_missing_previous_vimpatches_for_patch() {
   local -a fnames
   while IFS= read -r line ; do
     fnames+=("$line")
-  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}")
+  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}" -- . ':!src/version.c')
   local i=0
   local n=${#fnames[@]}
   printf '=== getting missing patches for %d files ===\n' "$n"
