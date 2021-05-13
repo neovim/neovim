@@ -30,7 +30,7 @@ end
 ---
 --@param method (string) LSP method name
 --@param params (optional, table) Parameters to send to the server
---@param handler (optional, functionnil) See |lsp-handler|. Follows |lsp-handler-resolution|
+--@param handler (optional, function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
 --@returns 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
@@ -448,13 +448,15 @@ end
 --- Executes an LSP server command.
 ---
 --@param command A valid `ExecuteCommandParams` object
+--@param handler (optional, function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-function M.execute_command(command)
+function M.execute_command(command, handler)
   validate {
     command = { command.command, 's' },
-    arguments = { command.arguments, 't', true }
+    arguments = { command.arguments, 't', true },
+    handler = { handler, 'f', true }
   }
-  request('workspace/executeCommand', command)
+  request('workspace/executeCommand', command, handler)
 end
 
 return M
