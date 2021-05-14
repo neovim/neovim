@@ -1080,9 +1080,9 @@ endfunc
 func Test_efm_dirstack()
   " Create the directory stack and files
   call mkdir('dir1')
-  call mkdir('dir1/a')
-  call mkdir('dir1/a/b')
-  call mkdir('dir1/c')
+  call mkdir('dir1/a', 'p')
+  call mkdir('dir1/a/b', 'p')
+  call mkdir('dir1/c', 'p')
   call mkdir('dir2')
 
   let lines =<< trim [DATA]
@@ -3653,6 +3653,9 @@ func Xqftick_tests(cchar)
 	      \ {'filename' : 'F7', 'lnum' : 11, 'text' : 'L11'}], 'r')
   call assert_equal(2, g:Xgetlist({'changedtick' : 0}).changedtick)
 
+  if isdirectory("Xone")
+    call delete("Xone", 'rf')
+  endif
   call writefile(["F8:80:L80", "F8:81:L81"], "Xone")
   Xfile Xone
   call assert_equal(1, g:Xgetlist({'changedtick' : 0}).changedtick)
