@@ -3017,7 +3017,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit,
 
   if (retval != OK) {
     if (opened_window) {
-      win_close(curwin, true);          // Close opened window
+      win_close(curwin, true, false);          // Close opened window
     }
     if (qf_ptr != NULL && qf_ptr->qf_fnum != 0) {
        // Couldn't open file, so put index back where it was.  This could
@@ -3547,7 +3547,7 @@ void ex_cclose(exarg_T *eap)
   // Find existing quickfix window and close it.
   win = qf_find_win(qi);
   if (win != NULL) {
-    win_close(win, false);
+    win_close(win, false, false);
   }
 }
 
@@ -3622,7 +3622,7 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   // win_split, so add a check to ensure that the win is still here
   if (IS_LL_STACK(qi) && !win_valid(win)) {
     // close the window that was supposed to be for the loclist
-    win_close(curwin, false);
+    win_close(curwin, false, false);
     return FAIL;
   }
 
@@ -5572,7 +5572,7 @@ static void wipe_dummy_buffer(buf_T *buf, char_u *dirname_start)
     if (firstwin->w_next != NULL) {
       for (win_T *wp = firstwin; wp != NULL; wp = wp->w_next) {
         if (wp->w_buffer == buf) {
-          if (win_close(wp, false) == OK) {
+          if (win_close(wp, false, false) == OK) {
             did_one = true;
           }
           break;

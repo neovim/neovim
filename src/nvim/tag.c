@@ -2914,7 +2914,7 @@ static int jumpto_tag(
   } else {
     RedrawingDisabled--;
     if (postponed_split) {              // close the window
-      win_close(curwin, false);
+      win_close(curwin, false, false);
       postponed_split = 0;
     }
   }
