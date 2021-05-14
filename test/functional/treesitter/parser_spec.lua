@@ -270,6 +270,65 @@ void ui_refresh(void)
     }, res)
   end)
 
+  it('supports builtin query predicate any-of?', function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+      #include <stdio.h>
+
+      int main(void) {
+        int i;
+        for(i=1; i<=100; i++) {
+          if(((i%3)||(i%5))== 0)
+            printf("number= %d FizzBuzz\n", i);
+          else if((i%3)==0)
+            printf("number= %d Fizz\n", i);
+          else if((i%5)==0)
+            printf("number= %d Buzz\n", i);
+          else
+            printf("number= %d\n",i);
+        }
+        return 0;
+      }
+    ]])
+    exec_lua([[
+      function get_query_result(query_text)
+        cquery = vim.treesitter.parse_query("c", query_text)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for cid, node in cquery:iter_captures(tree:root(), 0) do
+          -- can't transmit node over RPC. just check the name, range, and text
+          local text = vim.treesitter.get_node_text(node, 0)
+          local range = {node:range()}
+          table.insert(res, {cquery.captures[cid], node:type(), range, text})
+        end
+        return res
+      end
+    ]])
+
+    local res0 = exec_lua([[return get_query_result(...)]],
+      [[((primitive_type) @c-keyword (#any-of? @c-keyword "int" "float"))]])
+    eq({
+      { "c-keyword", "primitive_type", { 2, 2, 2, 5 }, "int" },
+      { "c-keyword", "primitive_type", { 3, 4, 3, 7 }, "int" },
+    }, res0)
+
+    local res1 = exec_lua([[return get_query_result(...)]],
+      [[
+        ((string_literal) @fizzbuzz-strings (#any-of? @fizzbuzz-strings
+          "\"number= %d FizzBuzz\\n\""
+          "\"number= %d Fizz\\n\""
+          "\"number= %d Buzz\\n\""
+        ))
+      ]])
+    eq({
+      { "fizzbuzz-strings", "string_literal", { 6, 15, 6, 38 }, "\"number= %d FizzBuzz\\n\""},
+      { "fizzbuzz-strings", "string_literal", { 8, 15, 8, 34 }, "\"number= %d Fizz\\n\""},
+      { "fizzbuzz-strings", "string_literal", { 10, 15, 10, 34 }, "\"number= %d Buzz\\n\""},
+    }, res1)
+  end)
+
   it('allow loading query with escaped quotes and capture them with `lua-match?` and `vim-match?`', function()
     if pending_c_parser(pending) then return end
 
@@ -343,7 +402,7 @@ void ui_refresh(void)
     return list
     ]]
 
-    eq({ 'contains?', 'eq?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
+    eq({ 'any-of?', 'contains?', 'eq?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
   end)
 
 

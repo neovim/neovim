@@ -260,7 +260,25 @@ local predicate_handlers = {
     end
 
     return false
-  end
+  end,
+
+  ["any-of?"] = function(match, _, source, predicate)
+    local node = match[predicate[2]]
+    local node_text = M.get_node_text(node, source)
+
+    -- Since 'predicate' will not be used by callers of this function, use it
+    -- to store a string set built from the list of words to check against.
+    local string_set = predicate["string_set"]
+    if not string_set then
+      string_set = {}
+      for i=3,#predicate do
+        string_set[predicate[i]] = true
+      end
+      predicate["string_set"] = string_set
+    end
+
+    return string_set[node_text]
+  end,
 }
 
 -- As we provide lua-match? also expose vim-match?

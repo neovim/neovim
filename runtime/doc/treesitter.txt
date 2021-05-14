@@ -212,6 +212,11 @@ Here is a list of built-in predicates :
 			((identifier) @foo (#contains? @foo "foo"))
 			((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
 <
+	`any-of?`					*ts-predicate-any-of?*
+		Will check if the text is the same as any of the following
+		arguments : >
+			((identifier) @foo (#any-of? @foo "foo" "bar"))
+<
 							*lua-treesitter-not-predicate*
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
