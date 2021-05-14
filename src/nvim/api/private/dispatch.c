@@ -14,6 +14,13 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 
+// ===========================================================================
+// NEW API FILES MUST GO HERE.
+//
+//  When creating a new API file, you must include it here,
+//  so that the dispatcher can find the C functions that you are creating!
+// ===========================================================================
+#include "nvim/api/autocmd.h"
 #include "nvim/api/buffer.h"
 #include "nvim/api/tabpage.h"
 #include "nvim/api/ui.h"

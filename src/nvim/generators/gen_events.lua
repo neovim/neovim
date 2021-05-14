@@ -41,7 +41,7 @@ names_tgt:write('\n  {0, NULL, (event_T)0},')
 enum_tgt:write('\n} event_T;\n')
 names_tgt:write('\n};\n')
 
-local gen_autopat_events = function(name)
+local function generate_autopat(name)
   names_tgt:write(string.format('\nstatic AutoPat *%s[NUM_EVENTS] = {\n ', name))
   local line_len = 1
   for _ = 1,((#events) - 1) do
@@ -60,8 +60,8 @@ local gen_autopat_events = function(name)
   names_tgt:write('\n};\n')
 end
 
-gen_autopat_events("first_autopat")
-gen_autopat_events("last_autopat")
+generate_autopat("first_autopat")
+generate_autopat("last_autopat")
 
 enum_tgt:close()
 names_tgt:close()

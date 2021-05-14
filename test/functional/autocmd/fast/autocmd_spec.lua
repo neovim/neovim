@@ -16,8 +16,29 @@ local exc_exec = helpers.exc_exec
 local curbufmeths = helpers.curbufmeths
 local source = helpers.source
 
+
+local assert_no_autocmds = function(event)
+  eq('\n--- Autocommands ---', funcs.execute('autocmd ' .. event))
+end
+
 describe('autocmd', function()
   before_each(clear)
+
+  it('saves autocmds with a single pattern', function()
+    command('autocmd BufEnter * :echo "BufEnter"')
+    local expected = dedent [[
+
+      --- Autocommands ---
+      BufEnter
+          *         :echo "BufEnter"]]
+
+    eq(expected, funcs.execute('autocmd BufEnter'))
+
+    local autocmds = meths.get_autocmds { events = "BufEnter" }
+    eq(1, #autocmds)
+    eq("*", autocmds[1].pattern)
+    eq([[:echo "BufEnter"]], autocmds[1].command)
+  end)
 
   it(':tabnew, :split, :close events order, <afile>', function()
     local expected = {
@@ -106,8 +127,7 @@ describe('autocmd', function()
   end)
 
   describe('BufLeave autocommand', function()
-    it('can wipe out the buffer created by :edit which triggered autocmd',
-    function()
+    it('can wipe out the buffer created by :edit which triggered autocmd', function()
       meths.set_option('hidden', true)
       curbufmeths.set_lines(0, 1, false, {
         'start of test file xx',
@@ -124,9 +144,7 @@ describe('autocmd', function()
   end)
 
   it('++once', function()  -- :help autocmd-once
-    --
     -- ":autocmd ... ++once" executes its handler once, then removes the handler.
-    --
     local expected = {
       'Many1',
       'Once1',
@@ -178,7 +196,6 @@ describe('autocmd', function()
 
     --
     -- ":autocmd ... <buffer> ++once ++nested"
-    --
     expected = {
       'OptionSet-Once',
       'CursorMoved-Once',
@@ -192,7 +209,6 @@ describe('autocmd', function()
 
     --
     -- :autocmd should not show empty section after ++once handlers expire.
-    --
     expected = {
       'Once1',
       'Once2',
@@ -342,5 +358,253 @@ describe('autocmd', function()
       {1:~                               }|
       :doautocmd SessionLoadPost      |
     ]]}
+  end)
+
+  it('should allow creating a function over multiple lines', function()
+    command [[autocmd! User ExampleAutocmd]]
+    command [[autocmd User ExampleAutocmd function! HelloWorld()]]
+    command [[autocmd User ExampleAutocmd     echo "Hello World"]]
+    command [[autocmd User ExampleAutocmd endfunction]]
+
+    command [[doautocmd User ExampleAutocmd]]
+    eq(1, funcs.exists("*HelloWorld"))
+  end)
+
+  it('should handle InsertCharPre v:char replacement', function()
+    curbufmeths.set_lines(0, -1, false, {'abc'})
+    funcs.cursor(1, 1)
+
+    meths.exec([[
+      function! DoIt(...)
+        call cursor(1, 4)
+        if len(a:000)
+          let v:char=a:1
+        endif
+      endfunction
+    ]], false)
+
+    command [[au! InsertCharPre]]
+    command [[au InsertCharPre * :call DoIt('y')]]
+    feed("ix<esc>")
+    eq({'abcy'}, curbufmeths.get_lines(0, 1, false))
+
+    command [[au! InsertCharPre]]
+    command [[au InsertCharPre * :call DoIt("\n")]]
+
+    curbufmeths.set_lines(0, -1, false, {'abc'})
+    command [[call cursor(1, 1)]]
+    feed("ix<esc>")
+
+    eq({'abc', ''}, curbufmeths.get_lines(0, 2, false))
+
+    command [[%d]]
+
+    -- Change cursor position in InsertEnter command
+    -- 1. when setting v:char, keeps changed cursor position
+    command [[au! InsertCharPre]]
+    command [[au InsertEnter * :call DoIt('y')]]
+    curbufmeths.set_lines(0, -1, false, {'abc'})
+    funcs.cursor(1, 1)
+    feed("ix<esc>")
+    eq({'abxc'}, curbufmeths.get_lines(0, 1, false))
+
+    -- 2. when not setting v:char, restores changed cursor position
+    command [[au! InsertEnter]]
+    command [[au InsertEnter * :call DoIt()]]
+
+    curbufmeths.set_lines(0, -1, false, {'abc'})
+    funcs.cursor(1, 1)
+    feed("ix<esc>")
+
+    eq({'xabc'}, curbufmeths.get_lines(0, 1, false))
+
+    command [[au! InsertCharPre]]
+    command [[au! InsertEnter]]
+  end)
+
+  describe('Insert-Style Autocmds', function()
+    local setup_buffer = function()
+      curbufmeths.set_lines(0, -1, false, {'abc'})
+      funcs.cursor(1, 1)
+    end
+
+    local feed_x = function() feed("ix<esc>") end
+
+    before_each(function()
+      meths.exec([[
+        function! DoIt(...)
+          call cursor(1, 4)
+          if len(a:000)
+            let v:char=a:1
+          endif
+        endfunction
+      ]], false)
+
+      setup_buffer()
+    end)
+
+    it('should set character at end of line', function()
+      -- Insert y instead of the letter you typed.
+      command [[au! InsertCharPre]]
+      command [[au InsertCharPre <buffer> :call DoIt('y')]]
+
+      feed_x()
+      eq({'abcy'}, curbufmeths.get_lines(0, -1, false))
+    end)
+
+    it('should allow creating new line at end of line', function()
+      -- Setting <Enter> in InsertCharPre
+      command [[au! InsertCharPre <buffer> :call DoIt("\n")]]
+
+      feed_x()
+      eq({'abc', ''}, curbufmeths.get_lines(0, 2, false))
+    end)
+
+    it('should allow setting cursor position on InsertEnter', function()
+      -- Change cursor position in InsertEnter command
+      -- 1. when setting v:char, keeps changed cursor position
+      command [[au! InsertCharPre]]
+      command [[au! InsertEnter <buffer> :call DoIt('y')]]
+
+      feed_x()
+      eq({'abxc'}, curbufmeths.get_lines(0, 1, false))
+    end)
+
+    it('should respect crazy InsertEnter behavior', function()
+      -- 2. when not setting v:char, restores changed cursor position
+      command [[au! InsertEnter <buffer> :call DoIt()]]
+
+      feed_x()
+
+      eq({'xabc'}, curbufmeths.get_lines(0, 1, false))
+    end)
+  end)
+
+  describe('Insert-Style Autocmds with inline removals', function()
+    local setup_buffer = function()
+      curbufmeths.set_lines(0, -1, false, {'abc'})
+      funcs.cursor(1, 1)
+    end
+
+    local feed_x = function() feed("ix<esc>") end
+
+    before_each(function()
+      meths.exec([[
+        function! DoIt(...)
+          call cursor(1, 4)
+          if len(a:000)
+            let v:char=a:1
+          endif
+        endfunction
+      ]], false)
+
+      setup_buffer()
+    end)
+
+    it('should set character at end of line', function()
+      command [[au! InsertCharPre <buffer> :call DoIt('y')]]
+
+      feed_x()
+      eq({'abcy'}, curbufmeths.get_lines(0, -1, false))
+    end)
+
+    it('should allow creating new line at end of line', function()
+      command [[au! InsertCharPre <buffer> :call DoIt("\n")]]
+
+      feed_x()
+      eq({'abc', ''}, curbufmeths.get_lines(0, 2, false))
+    end)
+
+    it('should allow setting cursor position on InsertEnter', function()
+      -- Change cursor position in InsertEnter command
+      -- 1. when setting v:char, keeps changed cursor position
+      command [[au! InsertEnter <buffer> :call DoIt('y')]]
+
+      feed_x()
+      eq({'abxc'}, curbufmeths.get_lines(0, 1, false))
+    end)
+
+    it('should respect crazy InsertEnter behavior', function()
+      -- 2. when not setting v:char, restores changed cursor position
+      command [[au! InsertEnter <buffer> :call DoIt()]]
+
+      feed_x()
+
+      eq({'xabc'}, curbufmeths.get_lines(0, 1, false))
+    end)
+  end)
+
+  it('should clear patterns and additions in the same execution', function()
+    command [[au! InsertEnter]]
+
+    command [[au! InsertEnter <buffer> :call DoIt('y')]]
+    local aus = meths.get_autocmds { events = 'InsertEnter' }
+    eq(1, #aus)
+
+    local existing_autocmd = aus[1]
+    eq(":call DoIt('y')", existing_autocmd.command)
+
+    command [[au! InsertEnter <buffer> :call DoIt()]]
+    aus = meths.get_autocmds { events = 'InsertEnter' }
+    eq(1, #aus)
+  end)
+
+  describe('Insert-Style Autocmds with inline removals, no clears', function()
+    local setup_buffer = function()
+      curbufmeths.set_lines(0, -1, false, {'abc'})
+      funcs.cursor(1, 1)
+    end
+
+    local feed_x = function() feed("ix<esc>") end
+
+    before_each(function()
+      meths.exec([[
+        function! DoIt(...)
+          call cursor(1, 4)
+          if len(a:000)
+            let v:char=a:1
+          endif
+        endfunction
+      ]], false)
+
+      setup_buffer()
+    end)
+
+    it('just work', function()
+      command [[au! InsertCharPre <buffer> :call DoIt('y')]]
+
+      setup_buffer()
+      feed_x()
+      eq({'abcy'}, curbufmeths.get_lines(0, -1, false))
+
+      command [[au! InsertCharPre <buffer> :call DoIt("\n")]]
+
+      setup_buffer()
+      feed_x()
+      eq({'abc', ''}, curbufmeths.get_lines(0, 2, false))
+
+      -- Change cursor position in InsertEnter command
+      -- 1. when setting v:char, keeps changed cursor position
+      command [[au! InsertCharPre]]
+      assert_no_autocmds('InsertCharPre')
+
+      command [[au! InsertEnter <buffer> :call DoIt('y')]]
+
+      setup_buffer()
+      feed_x()
+      eq({'abxc'}, curbufmeths.get_lines(0, 1, false))
+
+      -- 2. when not setting v:char, restores changed cursor position
+      command [[au! InsertEnter <buffer> :call DoIt()]]
+
+      local enter_aus = meths.get_autocmds { events = 'InsertEnter', }
+      eq(1, #enter_aus)
+      eq(':call DoIt()', enter_aus[1].command)
+
+      setup_buffer()
+      feed_x()
+
+      eq({'xabc'}, curbufmeths.get_lines(0, 1, false))
+    end)
   end)
 end)
