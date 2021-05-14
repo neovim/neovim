@@ -190,7 +190,6 @@ func Test_autocmd_bufunload_avoiding_SEGV_02()
 
   normal! i1
   call assert_fails('edit a.txt', 'E517:')
-  call feedkeys("\<CR>")
 
   autocmd! test_autocmd_bufunload
   augroup! test_autocmd_bufunload
@@ -450,6 +449,27 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
   for file in ['Session.vim', 'Xvimrc', 'Xerrors']
     call delete(file)
   endfor
+endfunc
+
+" Using :blast and :ball for many events caused a crash, because b_nwindows was
+" not incremented correctly.
+func Test_autocmd_blast_badd()
+  let content =<< trim [CODE]
+      au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* blast
+      edit foo1
+      au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* ball
+      edit foo2
+      call writefile(['OK'], 'Xerrors')
+      qall
+  [CODE]
+
+  call writefile(content, 'XblastBall')
+  call system(GetVimCommand() .. ' --clean -S XblastBall')
+  " call assert_match('OK', readfile('Xerrors')->join())
+  call assert_match('OK', join(readfile('Xerrors')))
+
+  call delete('XblastBall')
+  call delete('Xerrors')
 endfunc
 
 " SEGV occurs in older versions.
@@ -1949,6 +1969,26 @@ func Test_autocmd_window()
   %bw!
 endfunc
 
+" Test for trying to close the tab that has the temporary window for exeucing
+" an autocmd.
+func Test_close_autocmd_tab()
+  edit one.txt
+  tabnew two.txt
+   augroup aucmd_win_test
+    au!
+    au BufEnter * if expand('<afile>') == 'one.txt' | tabfirst | tabonly | endif
+  augroup END
+
+  call assert_fails('doautoall BufEnter', 'E813:')
+
+  tabonly
+  augroup aucmd_win_test
+    au!
+  augroup END
+  augroup! aucmd_win_test
+  %bwipe!
+endfunc
+
 func Test_autocmd_closes_window()
   au BufNew,BufWinLeave * e %e
   file yyy
@@ -1958,6 +1998,15 @@ func Test_autocmd_closes_window()
   bwipe %
   au! BufNew
   au! BufWinLeave
+endfunc
+
+func Test_autocmd_closing_cmdwin()
+  au BufWinLeave * nested q
+  call assert_fails("norm 7q?\n", 'E855:')
+
+  au! BufWinLeave
+  new
+  only
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

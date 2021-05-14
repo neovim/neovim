@@ -2434,21 +2434,25 @@ int do_ecmd(
      * is returned by buflist_new(), nothing to do here.
      */
     if (buf != curbuf) {
-      /*
-       * Be careful: The autocommands may delete any buffer and change
-       * the current buffer.
-       * - If the buffer we are going to edit is deleted, give up.
-       * - If the current buffer is deleted, prefer to load the new
-       *   buffer when loading a buffer is required.  This avoids
-       *   loading another buffer which then must be closed again.
-       * - If we ended up in the new buffer already, need to skip a few
-       *	 things, set auto_buf.
-       */
+      const int save_cmdwin_type = cmdwin_type;
+
+      // BufLeave applies to the old buffer.
+      cmdwin_type = 0;
+
+      // Be careful: The autocommands may delete any buffer and change
+      // the current buffer.
+      // - If the buffer we are going to edit is deleted, give up.
+      // - If the current buffer is deleted, prefer to load the new
+      //   buffer when loading a buffer is required.  This avoids
+      //   loading another buffer which then must be closed again.
+      // - If we ended up in the new buffer already, need to skip a few
+      //         things, set auto_buf.
       if (buf->b_fname != NULL) {
         new_name = vim_strsave(buf->b_fname);
       }
       set_bufref(&au_new_curbuf, buf);
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      cmdwin_type = save_cmdwin_type;
       if (!bufref_valid(&au_new_curbuf)) {
         // New buffer has been deleted.
         delbuf_msg(new_name);  // Frees new_name.
@@ -2462,6 +2466,7 @@ int do_ecmd(
         auto_buf = true;
       } else {
         win_T *the_curwin = curwin;
+        buf_T *was_curbuf = curbuf;
 
         // Set w_closing to avoid that autocommands close the window.
         // Set b_locked for the same reason.
@@ -2475,9 +2480,10 @@ int do_ecmd(
         // Close the link to the current buffer. This will set
         // oldwin->w_buffer to NULL.
         u_sync(false);
-        close_buffer(oldwin, curbuf,
-                     (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,
-                     false);
+        const bool did_decrement = close_buffer(
+            oldwin, curbuf,
+            (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,
+            false);
 
         // Autocommands may have closed the window.
         if (win_valid(the_curwin)) {
@@ -2497,6 +2503,14 @@ int do_ecmd(
           goto theend;
         }
         if (buf == curbuf) {  // already in new buffer
+          // close_buffer() has decremented the window count,
+          // increment it again here and restore w_buffer.
+          if (did_decrement && buf_valid(was_curbuf)) {
+            was_curbuf->b_nwindows++;
+          }
+          if (win_valid_any_tab(oldwin) && oldwin->w_buffer == NULL) {
+            oldwin->w_buffer = was_curbuf;
+          }
           auto_buf = true;
         } else {
           // <VN> We could instead free the synblock

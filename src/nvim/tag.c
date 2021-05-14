@@ -1143,7 +1143,6 @@ static int find_tagfunc_tags(
   typval_T  args[4];
   typval_T  rettv;
   char_u flagString[4];
-  dict_T  *d;
   taggy_T *tag = &curwin->w_tagstack[curwin->w_tagstackidx];
 
   if (*curbuf->b_p_tfu == NUL) {
@@ -1156,7 +1155,7 @@ static int find_tagfunc_tags(
   args[1].vval.v_string = flagString;
 
   // create 'info' dict argument
-  d = tv_dict_alloc();
+  dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
   if (tag->user_data != NULL) {
     tv_dict_add_str(d, S_LEN("user_data"), (const char *)tag->user_data);
   }

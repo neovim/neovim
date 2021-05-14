@@ -407,7 +407,8 @@ bool buf_valid(buf_T *buf)
 ///               there to be only one window with this buffer. e.g. when
 ///               ":quit" is supposed to close the window but autocommands
 ///               close all other windows.
-void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
+/// @returns true when we got to the end and b_nwindows was decremented.
+bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 {
   bool unload_buf = (action != 0);
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
@@ -444,7 +445,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
   // halfway a command that relies on it). Unloading is allowed.
   if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
     EMSG(_("E937: Attempt to delete a buffer that is in use"));
-    return;
+    return false;
   }
 
   if (win != NULL  // Avoid bogus clang warning.
@@ -471,13 +472,13 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
                        buf) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       EMSG(_(e_auabort));
-      return;
+      return false;
     }
     buf->b_locked--;
     if (abort_if_last && last_nonfloat(win)) {
       // Autocommands made this the only window.
       EMSG(_(e_auabort));
-      return;
+      return false;
     }
 
     // When the buffer becomes hidden, but is not unloaded, trigger
@@ -488,17 +489,17 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
                          buf) && !bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         EMSG(_(e_auabort));
-        return;
+        return false;
       }
       buf->b_locked--;
       if (abort_if_last && last_nonfloat(win)) {
         // Autocommands made this the only window.
         EMSG(_(e_auabort));
-        return;
+        return false;
       }
     }
     if (aborting()) {       // autocmds may abort script processing
-      return;
+      return false;
     }
   }
 
@@ -525,7 +526,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
   /* Return when a window is displaying the buffer or when it's not
    * unloaded. */
   if (buf->b_nwindows > 0 || !unload_buf) {
-    return;
+    return false;
   }
 
   if (buf->terminal) {
@@ -561,11 +562,11 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 
   if (!bufref_valid(&bufref)) {
     // Autocommands may have deleted the buffer.
-    return;
+    return false;
   }
   if (aborting()) {
     // Autocmds may abort script processing.
-    return;
+    return false;
   }
 
   /*
@@ -576,7 +577,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
    * deleted buffer.
    */
   if (buf == curbuf && !is_curbuf) {
-    return;
+    return false;
   }
 
   if (win != NULL  // Avoid bogus clang warning.
@@ -636,6 +637,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
       buf->b_p_bl = false;
     }
   }
+  // NOTE: at this point "curbuf" may be invalid!
+  return true;
 }
 
 /// Make buffer not contain a file.

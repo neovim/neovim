@@ -477,7 +477,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
       goto end;
     }
 
-    inserted_bytes += STRLEN(lines[i]) + 1;
+    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
     // Mark lines that haven't been passed to the buffer as they need
     // to be freed later
     lines[i] = NULL;
@@ -497,7 +497,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
       goto end;
     }
 
-    inserted_bytes += STRLEN(lines[i]) + 1;
+    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
 
     // Same as with replacing, but we also need to free lines
     xfree(lines[i]);

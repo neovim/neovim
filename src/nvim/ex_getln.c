@@ -6635,11 +6635,13 @@ static int open_cmdwin(void)
     wp = curwin;
     set_bufref(&bufref, curbuf);
     win_goto(old_curwin);
-    win_close(wp, true);
+    if (win_valid(wp) && wp != curwin) {
+      win_close(wp, true);
+    }
 
     // win_close() may have already wiped the buffer when 'bh' is
-    // set to 'wipe'.
-    if (bufref_valid(&bufref)) {
+    // set to 'wipe', autocommands may have closed other windows
+    if (bufref_valid(&bufref) && bufref.br_buf != curbuf) {
       close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false);
     }
 

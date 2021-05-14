@@ -10,6 +10,7 @@ source test_cursor_func.vim
 source test_ex_equal.vim
 source test_ex_undo.vim
 source test_ex_z.vim
+source test_ex_mode.vim
 source test_execute_func.vim
 source test_expand_func.vim
 source test_feedkeys.vim

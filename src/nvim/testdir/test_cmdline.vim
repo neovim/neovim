@@ -477,7 +477,7 @@ func Test_expand_star_star()
   call delete('a', 'rf')
 endfunc
 
-func Test_paste_in_cmdline()
+func Test_cmdline_paste()
   let @a = "def"
   call feedkeys(":abc \<C-R>a ghi\<C-B>\"\<CR>", 'tx')
   call assert_equal('"abc def ghi', @:)
@@ -517,18 +517,38 @@ func Test_paste_in_cmdline()
   bwipe!
 endfunc
 
-func Test_remove_char_in_cmdline()
-  call feedkeys(":abc def\<S-Left>\<Del>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"abc ef', @:)
+func Test_cmdline_remove_char()
+  let encoding_save = &encoding
 
-  call feedkeys(":abc def\<S-Left>\<BS>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"abcdef', @:)
+  " for e in ['utf8', 'latin1']
+  for e in ['utf8']
+    exe 'set encoding=' . e
 
-  call feedkeys(":abc def ghi\<S-Left>\<C-W>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"abc ghi', @:)
+    call feedkeys(":abc def\<S-Left>\<Del>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"abc ef', @:, e)
 
-  call feedkeys(":abc def\<S-Left>\<C-U>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"def', @:)
+    call feedkeys(":abc def\<S-Left>\<BS>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"abcdef', @:)
+
+    call feedkeys(":abc def ghi\<S-Left>\<C-W>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"abc ghi', @:, e)
+
+    call feedkeys(":abc def\<S-Left>\<C-U>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"def', @:, e)
+  endfor
+
+  let &encoding = encoding_save
+endfunc
+
+func Test_cmdline_keymap_ctrl_hat()
+  if !has('keymap')
+    return
+  endif
+
+  set keymap=esperanto
+  call feedkeys(":\"Jxauxdo \<C-^>Jxauxdo \<C-^>Jxauxdo\<CR>", 'tx')
+  call assert_equal('"Jxauxdo Ĵaŭdo Jxauxdo', @:)
+  set keymap=
 endfunc
 
 func Test_illegal_address1()
@@ -863,20 +883,20 @@ func Test_cmdline_overstrike()
 
     " Test overstrike in the middle of the command line.
     call feedkeys(":\"01234\<home>\<right>\<right>ab\<right>\<insert>cd\<enter>", 'xt')
-    call assert_equal('"0ab1cd4', @:)
+    call assert_equal('"0ab1cd4', @:, e)
 
     " Test overstrike going beyond end of command line.
     call feedkeys(":\"01234\<home>\<right>\<right>ab\<right>\<insert>cdefgh\<enter>", 'xt')
-    call assert_equal('"0ab1cdefgh', @:)
+    call assert_equal('"0ab1cdefgh', @:, e)
 
     " Test toggling insert/overstrike a few times.
     call feedkeys(":\"01234\<home>\<right>ab\<right>\<insert>cd\<right>\<insert>ef\<enter>", 'xt')
-    call assert_equal('"ab0cd3ef4', @:)
+    call assert_equal('"ab0cd3ef4', @:, e)
   endfor
 
   " Test overstrike with multi-byte characters.
   call feedkeys(":\"テキストエディタ\<home>\<right>\<right>ab\<right>\<insert>cd\<enter>", 'xt')
-  call assert_equal('"テabキcdエディタ', @:)
+  call assert_equal('"テabキcdエディタ', @:, e)
 
   let &encoding = encoding_save
 endfunc
@@ -985,6 +1005,25 @@ func Test_buffers_lastused()
   bwipeout bufc
 endfunc
 
+" Test for CmdwinEnter autocmd
+func Test_cmdwin_autocmd()
+  CheckFeature cmdwin
+
+  augroup CmdWin
+    au!
+    autocmd BufLeave * if &buftype == '' | update | endif
+    autocmd CmdwinEnter * startinsert
+  augroup END
+
+  call assert_fails('call feedkeys("q:xyz\<CR>", "xt")', 'E492:')
+  call assert_equal('xyz', @:)
+
+  augroup CmdWin
+    au!
+  augroup END
+  augroup! CmdWin
+endfunc
+
 func Test_cmdlineclear_tabenter()
   " See test/functional/legacy/cmdline_spec.lua
   CheckScreendump
@@ -1031,6 +1070,54 @@ func Test_read_shellcmd()
     call assert_notmatch('^"r.*\<runtest.vim\>', @:)
     call assert_match('^"r ++enc\S\+ !.*\<rm\>', @:)
   endif
+endfunc
+
+" Test for recalling newer or older cmdline from history with <Up>, <Down>,
+" <S-Up>, <S-Down>, <PageUp>, <PageDown>, <C-p>, or <C-n>.
+func Test_recalling_cmdline()
+  CheckFeature cmdline_hist
+
+  let g:cmdlines = []
+  cnoremap <Plug>(save-cmdline) <Cmd>let g:cmdlines += [getcmdline()]<CR>
+
+  let histories = [
+  \  {'name': 'cmd',    'enter': ':',                    'exit': "\<Esc>"},
+  \  {'name': 'search', 'enter': '/',                    'exit': "\<Esc>"},
+  \  {'name': 'expr',   'enter': ":\<C-r>=",             'exit': "\<Esc>\<Esc>"},
+  \  {'name': 'input',  'enter': ":call input('')\<CR>", 'exit': "\<CR>"},
+  "\ TODO: {'name': 'debug', ...}
+  \]
+  let keypairs = [
+  \  {'older': "\<Up>",     'newer': "\<Down>",     'prefixmatch': v:true},
+  \  {'older': "\<S-Up>",   'newer': "\<S-Down>",   'prefixmatch': v:false},
+  \  {'older': "\<PageUp>", 'newer': "\<PageDown>", 'prefixmatch': v:false},
+  \  {'older': "\<C-p>",    'newer': "\<C-n>",      'prefixmatch': v:false},
+  \]
+  let prefix = 'vi'
+  for h in histories
+    call histadd(h.name, 'vim')
+    call histadd(h.name, 'virtue')
+    call histadd(h.name, 'Virgo')
+    call histadd(h.name, 'vogue')
+    call histadd(h.name, 'emacs')
+    for k in keypairs
+      let g:cmdlines = []
+      let keyseqs = h.enter
+      \          .. prefix
+      \          .. repeat(k.older .. "\<Plug>(save-cmdline)", 2)
+      \          .. repeat(k.newer .. "\<Plug>(save-cmdline)", 2)
+      \          .. h.exit
+      call feedkeys(keyseqs, 'xt')
+      call histdel(h.name, -1) " delete the history added by feedkeys above
+      let expect = k.prefixmatch
+      \          ? ['virtue', 'vim',   'virtue', prefix]
+      \          : ['emacs',  'vogue', 'emacs',  prefix]
+      call assert_equal(expect, g:cmdlines)
+    endfor
+  endfor
+
+  unlet g:cmdlines
+  cunmap <Plug>(save-cmdline)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
