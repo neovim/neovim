@@ -1595,6 +1595,12 @@ function M.make_given_range_params(start_pos, end_pos)
   if B[2] > 0 then
     B = {B[1], M.character_offset(0, B[1], B[2])}
   end
+  -- we need to offset the end character position otherwise we loose the last
+  -- character of the selection, as LSP end position is exclusive
+  -- see https://microsoft.github.io/language-server-protocol/specification#range
+  if vim.o.selection ~= 'exclusive' then
+    B[2] = B[2] + 1
+  end
   return {
     textDocument = M.make_text_document_params(),
     range = {
