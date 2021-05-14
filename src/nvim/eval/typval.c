@@ -2106,6 +2106,13 @@ list_T *tv_list_alloc_ret(typval_T *const ret_tv, const ptrdiff_t len)
   return l;
 }
 
+dict_T *tv_dict_alloc_lock(VarLockStatus lock)
+{
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = lock;
+  return d;
+}
+
 /// Allocate an empty dictionary for a return value
 ///
 /// Also sets reference count.
@@ -2114,9 +2121,8 @@ list_T *tv_list_alloc_ret(typval_T *const ret_tv, const ptrdiff_t len)
 void tv_dict_alloc_ret(typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
-  dict_T *const d = tv_dict_alloc();
+  dict_T *const d = tv_dict_alloc_lock(VAR_UNLOCKED);
   tv_dict_set_ret(ret_tv, d);
-  ret_tv->v_lock = VAR_UNLOCKED;
 }
 
 //{{{3 Clear
