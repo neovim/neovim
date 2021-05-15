@@ -5152,3 +5152,527 @@ bool search_was_last_used(void)
 {
   return last_idx == 0;
 }
+
+
+// Fuzzy string matching
+//
+// Ported from the lib_fts library authored by Forrest Smith.
+// https://github.com/forrestthewoods/lib_fts/tree/master/code
+//
+// Blog describing the algorithm:
+// https://www.forrestthewoods.com/blog/reverse_engineering_sublime_texts_fuzzy_match/
+//
+// Each matching string is assigned a score. The following factors are checked:
+//   Matched letter
+//   Unmatched letter
+//   Consecutively matched letters
+//   Proximity to start
+//   Letter following a separator (space, underscore)
+//   Uppercase letter following lowercase (aka CamelCase)
+//
+// Matched letters are good. Unmatched letters are bad. Matching near the start
+// is good. Matching the first letter in the middle of a phrase is good.
+// Matching the uppercase letters in camel case entries is good.
+//
+// The score assigned for each factor is explained below.
+// File paths are different from file names. File extensions may be ignorable.
+// Single words care about consecutive matches but not separators or camel
+// case.
+//   Score starts at 0
+//   Matched letter: +0 points
+//   Unmatched letter: -1 point
+//   Consecutive match bonus: +5 points
+//   Separator bonus: +10 points
+//   Camel case bonus: +10 points
+//   Unmatched leading letter: -3 points (max: -9)
+//
+// There is some nuance to this. Scores don’t have an intrinsic meaning. The
+// score range isn’t 0 to 100. It’s roughly [-50, 50]. Longer words have a
+// lower minimum score due to unmatched letter penalty. Longer search patterns
+// have a higher maximum score due to match bonuses.
+//
+// Separator and camel case bonus is worth a LOT. Consecutive matches are worth
+// quite a bit.
+//
+// There is a penalty if you DON’T match the first three letters. Which
+// effectively rewards matching near the start. However there’s no difference
+// in matching between the middle and end.
+//
+// There is not an explicit bonus for an exact match. Unmatched letters receive
+// a penalty. So shorter strings and closer matches are worth more.
+
+typedef struct
+{
+    listitem_T *item;
+    int score;
+    list_T *lmatchpos;
+} fuzzyItem_T;
+
+// bonus for adjacent matches; this is higher than SEPARATOR_BONUS so that
+// matching a whole word is preferred.
+#define SEQUENTIAL_BONUS 40
+// bonus if match occurs after a separator
+#define SEPARATOR_BONUS 30
+// bonus if match is uppercase and prev is lower
+#define CAMEL_BONUS 30
+// bonus if the first letter is matched
+#define FIRST_LETTER_BONUS 15
+// penalty applied for every letter in str before the first match
+#define LEADING_LETTER_PENALTY -5
+// maximum penalty for leading letters
+#define MAX_LEADING_LETTER_PENALTY -15
+// penalty for every letter that doesn't match
+#define UNMATCHED_LETTER_PENALTY -1
+// Score for a string that doesn't fuzzy match the pattern
+#define SCORE_NONE -9999
+
+#define FUZZY_MATCH_RECURSION_LIMIT 10
+// Maximum number of characters that can be fuzzy matched
+#define MAXMATCHES 256
+
+// compute a score for a fuzzy matched string. the matching character locations
+// are in 'matches'.
+static int fuzzy_match_compute_score(
+    char *str,
+    int strsize,
+    matchidx_T *matches,
+    int nummatches)
+{
+  int score;
+  int penalty;
+  int unmatched;
+  int i;
+  char *const p = str;
+  matchidx_T sidx = 0;
+
+  // initialize score
+  score = 100;
+
+  // apply leading letter penalty
+  penalty = LEADING_LETTER_PENALTY * matches[0];
+  if (penalty < MAX_LEADING_LETTER_PENALTY) {
+    penalty = MAX_LEADING_LETTER_PENALTY;
+  }
+  score += penalty;
+
+  // apply unmatched penalty
+  unmatched = strsize - nummatches;
+  score += UNMATCHED_LETTER_PENALTY * unmatched;
+
+  // apply ordering bonuses
+  for (i = 0; i < nummatches; i++) {
+    matchidx_T curridx = matches[i];
+
+    if (i > 0) {
+      matchidx_T previdx = matches[i - 1];
+
+      // sequential
+      if (curridx == (previdx + 1)) {
+        score += SEQUENTIAL_BONUS;
+      }
+    }
+
+    // check for bonuses based on neighbor character value
+    if (curridx > 0) {
+      // camel case
+      int neighbor;
+      int curr;
+      int neighborseparator;
+
+      while (sidx < curridx) {
+        neighbor = (*utf_ptr2char)((char_u *const)p);
+        (void)mb_ptr2char_adv((const char_u **const)&p);
+        sidx++;
+      }
+      curr = (*utf_ptr2char)((char_u *const)p);
+
+      if (mb_islower(neighbor) && mb_isupper(curr)) {
+        score += CAMEL_BONUS;
+      }
+
+      // separator
+      neighborseparator = neighbor == '_' || neighbor == ' ';
+      if (neighborseparator) {
+        score += SEPARATOR_BONUS;
+      }
+    } else {
+      // first letter
+      score += FIRST_LETTER_BONUS;
+    }
+  }
+  return score;
+}
+
+static bool fuzzy_match_recursive(
+    char *fuzpat,
+    char *str,
+    matchidx_T strIdx,
+    int *outScore,
+    char *strBegin,
+    int strLen,
+    matchidx_T *srcMatches,
+    matchidx_T *matches,
+    int maxMatches,
+    int nextMatch,
+    int *recursionCount)
+{
+  // Recursion params
+  bool recursiveMatch = false;
+  matchidx_T bestRecursiveMatches[MAXMATCHES];
+  int bestRecursiveScore = 0;
+  bool first_match;
+  bool matched;
+
+  // Count recursions
+  (*recursionCount)++;
+  if (*recursionCount >= FUZZY_MATCH_RECURSION_LIMIT) {
+    return false;
+  }
+
+  // Detect end of strings
+  if (*fuzpat == NUL || *str == NUL) {
+    return false;
+  }
+
+  // Loop through fuzpat and str looking for a match
+  first_match = true;
+  while (*fuzpat != NUL && *str != NUL) {
+    int c1;
+    int c2;
+
+    c1 = utf_ptr2char((char_u *const)fuzpat);
+    c2 = utf_ptr2char((char_u *const)str);
+
+    // Found match
+    if (mb_tolower(c1) == mb_tolower(c2)) {
+      matchidx_T recursiveMatches[MAXMATCHES];
+      int recursiveScore = 0;
+      char *next_char;
+
+      // Supplied matches buffer was too short
+      if (nextMatch >= maxMatches) {
+        return true;
+      }
+
+      // "Copy-on-Write" srcMatches into matches
+      if (first_match && srcMatches) {
+        memcpy(matches, srcMatches, nextMatch * sizeof(srcMatches[0]));
+        first_match = false;
+      }
+
+      // Recursive call that "skips" this match
+      next_char = str + (*utf_ptr2len)((char_u *const)str);
+
+      if (fuzzy_match_recursive(fuzpat, next_char, strIdx + 1,
+                                &recursiveScore, strBegin, strLen, matches,
+                                recursiveMatches,
+                                sizeof(recursiveMatches)
+                                / sizeof(recursiveMatches[0]),
+                                nextMatch, recursionCount)) {
+        // Pick best recursive score
+        if (!recursiveMatch || recursiveScore > bestRecursiveScore) {
+          memcpy(bestRecursiveMatches, recursiveMatches,
+                 MAXMATCHES * sizeof(recursiveMatches[0]));
+          bestRecursiveScore = recursiveScore;
+        }
+        recursiveMatch = true;
+      }
+
+      // Advance
+      matches[nextMatch++] = strIdx;
+      (void)mb_ptr2char_adv((const char_u **const)&fuzpat);
+    }
+    (void)mb_ptr2char_adv((const char_u **const)&str);
+  }
+
+  // Determine if full fuzpat was matched
+  matched = *fuzpat == NUL ? true : false;
+
+  // Calculate score
+  if (matched) {
+    *outScore = fuzzy_match_compute_score(strBegin, strLen, matches,
+                                          nextMatch);
+  }
+
+  // Return best result
+  if (recursiveMatch && (!matched || bestRecursiveScore > *outScore)) {
+    // Recursive score is better than "this"
+    memcpy(matches, bestRecursiveMatches, maxMatches * sizeof(matches[0]));
+    *outScore = bestRecursiveScore;
+    return true;
+  } else if (matched) {
+    return true;  // "this" score is better than recursive
+  }
+
+  return false;  // no match
+}
+
+// fuzzy_match()
+//
+// Performs exhaustive search via recursion to find all possible matches and
+// match with highest score.
+// Scores values have no intrinsic meaning.  Possible score range is not
+// normalized and varies with pattern.
+// Recursion is limited internally (default=10) to prevent degenerate cases
+// (fuzpat="aaaaaa" str="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").
+// Uses char_u for match indices. Therefore patterns are limited to MAXMATCHES
+// characters.
+//
+// Returns true if 'fuzpat' matches 'str'. Also returns the match score in
+// 'outScore' and the matching character positions in 'matches'.
+static int fuzzy_match(
+    char *str,
+    char *fuzpat,
+    int *outScore,
+    matchidx_T *matches,
+    int maxMatches)
+{
+  int recursionCount = 0;
+  int len = utf_char2len(*str);
+
+  *outScore = 0;
+
+  return fuzzy_match_recursive(
+      fuzpat, str, 0, outScore, str, len, NULL,
+      matches, maxMatches, 0, &recursionCount);
+}
+
+// Sort the fuzzy matches in the descending order of the match score.
+static int fuzzy_item_compare(const void *s1, const void *s2)
+{
+  int v1 = ((fuzzyItem_T *)s1)->score;
+  int v2 = ((fuzzyItem_T *)s2)->score;
+
+  return v1 == v2 ? 0 : v1 > v2 ? -1 : 1;
+}
+
+// Fuzzy search the string 'str' in a list of 'items' and return the matching
+// strings in 'fmatchlist'.
+// If 'items' is a list of strings, then search for 'str' in the list.
+// If 'items' is a list of dicts, then either use 'key' to lookup the string
+// for each item or use 'item_cb' Funcref function to get the string.
+// If 'retmatchpos' is true, then return a list of positions where 'str'
+// matches for each item.
+static void match_fuzzy(
+    list_T *items,
+    char *str,
+    char *key,
+    Callback *item_cb,
+    int retmatchpos,
+    list_T *fmatchlist)
+{
+  long len;
+  fuzzyItem_T *ptrs;
+  long i = 0;
+  bool found_match = false;
+  matchidx_T matches[MAXMATCHES];
+
+  len = tv_list_len(items);
+  if (len == 0) {
+    return;
+  }
+
+  ptrs = xcalloc(sizeof(fuzzyItem_T), len);
+  if (ptrs == NULL) {
+    return;
+  }
+
+  // For all the string items in items, get the fuzzy matching score
+  TV_LIST_ITER(items, li, {
+    int score;
+    char *itemstr;
+    typval_T rettv;
+    typval_T *tv_li = TV_LIST_ITEM_TV(li);
+
+    ptrs[i].item = li;
+    ptrs[i].score = SCORE_NONE;
+    itemstr = NULL;
+    rettv.v_type = VAR_UNKNOWN;
+
+    if (tv_check_str(tv_li)) {  // list of strings
+      itemstr = (char *)tv_li->vval.v_string;
+    } else if (tv_is_dict(*tv_li) && key != NULL) {
+      // For a dict, either use the specified key to lookup the string or
+      // use the specified callback function to get the string.
+      if (key != NULL) {
+        itemstr = tv_dict_get_string(tv_li->vval.v_dict,
+                                     key, false);
+      } else {
+        typval_T argv[2];
+
+        // Invoke the supplied callback (if any) to get the dict item
+        tv_li->vval.v_dict->dv_refcount++;
+        argv[0].v_type = VAR_DICT;
+        argv[0].vval.v_dict = tv_li->vval.v_dict;
+        argv[1].v_type = VAR_UNKNOWN;
+        if (callback_call(item_cb, 1, argv, &rettv)) {
+          if (rettv.v_type == VAR_STRING) {
+            itemstr = (char *)tv_get_string(&rettv);
+          }
+        }
+        tv_dict_unref(tv_li->vval.v_dict);
+      }
+    }
+
+    if (itemstr != NULL
+        && fuzzy_match(itemstr, str, &score, matches,
+                       sizeof(matches) / sizeof(matches[0]))) {
+      // Copy the list of matching positions in itemstr to a list, if
+      // 'retmatchpos' is set.
+      if (retmatchpos) {
+        int j;
+        int strsz;
+
+        ptrs[i].lmatchpos = tv_list_alloc(kListLenMayKnow);
+        if (ptrs[i].lmatchpos == NULL) {
+          goto done;
+        }
+        strsz = MB_CHARLEN((char_u *)str);
+        for (j = 0; j < strsz; j++) {
+          tv_list_append_number(ptrs[i].lmatchpos, matches[j]);
+        }
+      }
+      ptrs[i].score = score;
+      found_match = true;
+    }
+    i++;
+    tv_clear(&rettv);
+  });
+
+  if (found_match) {
+    typval_T *tv_li;
+    list_T *l;
+    listitem_T *li;
+
+    // Sort the list by the descending order of the match score
+    qsort((void *)ptrs, (size_t)len, sizeof(fuzzyItem_T), fuzzy_item_compare);
+
+    // For matchfuzzy(), return a list of matched strings.
+    //    ['str1', 'str2', 'str3']
+    // For matchfuzzypos(), return a list with two items.
+    // The first item is a list of matched strings. The second item
+    // is a list of lists where each list item is a list of matched
+    // character positions.
+    //    [['str1', 'str2', 'str3'], [[1, 3], [1, 3], [1, 3]]]
+    if (retmatchpos) {
+      li = tv_list_find(fmatchlist, 0);
+      tv_li = TV_LIST_ITEM_TV(li);
+      if (li == NULL || tv_li->vval.v_list == NULL) {
+        goto done;
+      }
+      l = tv_li->vval.v_list;
+    } else {
+      l = fmatchlist;
+    }
+
+    // Copy the matching strings with a valid score to the return list
+    for (i = 0; i < len; i++) {
+      if (ptrs[i].score == SCORE_NONE) {
+        break;
+      }
+      tv_list_append_tv(l, TV_LIST_ITEM_TV(ptrs[i].item));
+    }
+
+    // next copy the list of matching positions
+    if (retmatchpos) {
+      li = tv_list_find(fmatchlist, -1);
+      tv_li = TV_LIST_ITEM_TV(li);
+      if (li == NULL || tv_li->vval.v_list == NULL) {
+        goto done;
+      }
+      l = tv_li->vval.v_list;
+
+      for (i = 0; i < len; i++) {
+        if (ptrs[i].score == SCORE_NONE) {
+          break;
+        }
+        if (ptrs[i].lmatchpos != NULL) {
+          tv_list_append_list(l, ptrs[i].lmatchpos);
+        }
+      }
+    }
+  }
+
+done:
+  xfree(ptrs);
+}
+
+// Do fuzzy matching. Returns the list of matched strings in 'rettv'.
+// If 'retmatchpos' is TRUE, also returns the matching character positions.
+void do_fuzzymatch(typval_T *argvars, typval_T *rettv, int retmatchpos)
+{
+  Callback cb = CALLBACK_NONE;
+  char *key = NULL;
+
+  // validate and get the arguments
+  if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
+    EMSG2(_(e_listreq), retmatchpos ? "matchfuzzypos()" : "matchfuzzy()");
+    return;
+  }
+  if (argvars[1].v_type != VAR_STRING
+      || argvars[1].vval.v_string == NULL) {
+    EMSG2(_(e_invarg2), tv_get_string(&argvars[1]));
+    return;
+  }
+
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    dict_T *d;
+    dictitem_T *di;
+
+    if (argvars[2].v_type != VAR_DICT || argvars[2].vval.v_dict == NULL) {
+      EMSG(_(e_dictreq));
+      return;
+    }
+
+    // To search a dict, either a callback function or a key can be
+    // specified.
+    d = argvars[2].vval.v_dict;
+    if ((di = tv_dict_find(d, "key", -1)) != NULL) {
+      if (di->di_tv.v_type != VAR_STRING
+          || di->di_tv.vval.v_string == NULL
+          || *di->di_tv.vval.v_string == NUL) {
+        EMSG2(_(e_invarg2), tv_get_string(&di->di_tv));
+        return;
+      }
+      key = (char *)tv_get_string(&di->di_tv);
+    } else if ((di = tv_dict_find(d, "text_cb", -1)) != NULL) {
+      if (callback_from_typval(&cb, &di->di_tv)) {
+        EMSG2(_(e_invargval), "text_cb");
+        return;
+      }
+    }
+  }
+
+  // get the fuzzy matches
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+
+  if (retmatchpos) {
+    list_T *l;
+
+    // For matchfuzzypos(), a list with two items are returned. First item
+    // is a list of matching strings and the second item is a list of
+    // lists with matching positions within each string.
+    l = tv_list_alloc(kListLenShouldKnow);
+    if (l == NULL) {
+      goto done;
+    }
+
+    tv_list_append_list(rettv->vval.v_list, l);
+
+    l = tv_list_alloc(kListLenShouldKnow);
+    if (l == NULL) {
+      goto done;
+    }
+
+    tv_list_append_list(rettv->vval.v_list, l);
+  }
+
+  char buf[NUMBUFLEN];
+  if (tv_get_string_buf_chk(&argvars[1], buf)) {
+    match_fuzzy(argvars[0].vval.v_list, buf, key,
+                &cb, retmatchpos, rettv->vval.v_list);
+  }
+
+done:
+  callback_free(&cb);
+}

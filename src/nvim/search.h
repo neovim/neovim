@@ -78,6 +78,7 @@ typedef struct {
     int         sa_wrapped;    ///< search wrapped around
 } searchit_arg_T;
 
+typedef uint32_t matchidx_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.h.generated.h"
