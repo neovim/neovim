@@ -2770,10 +2770,9 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         }
       } else if (strcmp(what, "args") == 0) {
         rettv->v_type = VAR_LIST;
-        if (tv_list_alloc_ret(rettv, pt->pt_argc) != NULL) {
-          for (int i = 0; i < pt->pt_argc; i++) {
-            tv_list_append_tv(rettv->vval.v_list, &pt->pt_argv[i]);
-          }
+        tv_list_alloc_ret(rettv, pt->pt_argc);
+        for (int i = 0; i < pt->pt_argc; i++) {
+          tv_list_append_tv(rettv->vval.v_list, &pt->pt_argv[i]);
         }
       } else {
         EMSG2(_(e_invarg2), what);

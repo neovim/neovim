@@ -162,6 +162,7 @@ void channel_init(void)
 /// Channel is allocated with refcount 1, which should be decreased
 /// when the underlying stream closes.
 Channel *channel_alloc(ChannelStreamType type)
+  FUNC_ATTR_NONNULL_RET
 {
   Channel *chan = xcalloc(1, sizeof(*chan));
   if (type == kChannelStreamStdio) {
