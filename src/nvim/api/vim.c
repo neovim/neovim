@@ -1417,6 +1417,15 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 ///   - `external`: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
+///   - `zindex`: Stacking order. floats with higher `zindex` go on top on
+///               floats with lower indices. Must be larger than zero. The
+///               following screen elements have hard-coded z-indices:
+///       - 100: insert completion popupmenu
+///       - 200: message scrollback
+///       - 250: cmdline completion popupmenu (when wildoptions+=pum)
+///     The default value for floats are 50.  In general, values below 100 are
+///     recommended, unless there is a good reason to overshadow builtin
+///     elements.
 ///   - `style`: Configure the appearance of the window. Currently only takes
 ///       one non-empty value:
 ///       - "minimal"  Nvim will display the window with many UI options

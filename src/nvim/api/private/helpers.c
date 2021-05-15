@@ -1909,7 +1909,7 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
     } else if (strequal(key, "height")) {
       has_height = true;
       if (val.type == kObjectTypeInteger && val.data.integer > 0) {
-        fconfig->height= (int)val.data.integer;
+        fconfig->height = (int)val.data.integer;
       } else {
         api_set_error(err, kErrorTypeValidation,
                       "'height' key must be a positive Integer");
@@ -1981,6 +1981,14 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
       } else {
         api_set_error(err, kErrorTypeValidation,
                       "'focusable' key must be Boolean");
+        return false;
+      }
+    } else if (strequal(key, "zindex")) {
+      if (val.type == kObjectTypeInteger && val.data.integer > 0) {
+        fconfig->zindex = (int)val.data.integer;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "'zindex' key must be a positive Integer");
         return false;
       }
     } else if (!strcmp(key, "border")) {

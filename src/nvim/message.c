@@ -165,6 +165,7 @@ void msg_grid_validate(void)
     // TODO(bfredl): eventually should be set to "invalid". I e all callers
     // will use the grid including clear to EOS if necessary.
     grid_alloc(&msg_grid, Rows, Columns, false, true);
+    msg_grid.zindex = kZIndexMessages;
 
     xfree(msg_grid.dirty_col);
     msg_grid.dirty_col = xcalloc(Rows, sizeof(*msg_grid.dirty_col));

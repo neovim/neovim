@@ -165,22 +165,13 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     }
 #endif
 
-    // TODO(bfredl): this is pretty ad-hoc, add a proper z-order/priority
-    // scheme. For now:
-    // - msg_grid is always on top.
-    // - pum_grid is on top of all windows but not msg_grid. Except for when
-    //   wildoptions=pum, and completing the cmdline with scrolled messages,
-    //   then the pum has to be drawn over the scrolled messages.
     size_t insert_at = kv_size(layers);
-    bool cmd_completion = (grid == &pum_grid && (State & CMDLINE)
-                           && (wop_flags & WOP_PUM));
-    if (kv_A(layers, insert_at-1) == &msg_grid && !cmd_completion) {
+    while (insert_at > 0 && kv_A(layers, insert_at-1)->zindex > grid->zindex) {
       insert_at--;
     }
-    if (kv_A(layers, insert_at-1) == &pum_grid && (grid != &msg_grid)) {
-      insert_at--;
-    }
+
     if (curwin && kv_A(layers, insert_at-1) == &curwin->w_grid_alloc
+        && kv_A(layers, insert_at-1)->zindex == grid->zindex
         && !on_top) {
       insert_at--;
     }
@@ -279,12 +270,11 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
   // should configure all grids before entering win_update()
   if (curgrid != &default_grid) {
     size_t new_index = kv_size(layers)-1;
-    if (kv_A(layers, new_index) == &msg_grid) {
+
+    while (new_index > 1 && kv_A(layers, new_index)->zindex > curgrid->zindex) {
       new_index--;
     }
-    if (kv_A(layers, new_index) == &pum_grid) {
-      new_index--;
-    }
+
     if (curgrid->comp_index < new_index) {
       ui_comp_raise_grid(curgrid, new_index);
     }

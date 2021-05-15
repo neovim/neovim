@@ -429,6 +429,15 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
       extstate.win_viewport = nil
     end
 
+    if expected.float_pos then
+      expected.float_pos = deepcopy(expected.float_pos)
+      for _, v in pairs(expected.float_pos) do
+        if not v.external and v[7] == nil then
+          v[7] = 50
+        end
+      end
+    end
+
     -- Convert assertion errors into invalid screen state descriptions.
     for _, k in ipairs(concat_tables(ext_keys, {'mode', 'mouse_enabled'})) do
       -- Empty states are considered the default and need not be mentioned.
@@ -1287,6 +1296,11 @@ function Screen:get_snapshot(attrs, ignore)
 end
 
 local function fmt_ext_state(name, state)
+  local function remove_all_metatables(item, path)
+    if path[#path] ~= inspect.METATABLE then
+      return item
+    end
+  end
   if name == "win_viewport" then
     local str = "{\n"
     for k,v in pairs(state) do
@@ -1295,13 +1309,18 @@ local function fmt_ext_state(name, state)
              ..", curcol = "..v.curcol.."};\n")
     end
     return str .. "}"
+  elseif name == "float_pos" then
+    local str = "{\n"
+    for k,v in pairs(state) do
+      str = str.."  ["..k.."] = {{id = "..v[1].id.."}"
+      for i = 2, #v do
+        str = str..", "..inspect(v[i])
+      end
+      str = str .. "};\n"
+    end
+    return str .. "}"
   else
     -- TODO(bfredl): improve formatting of more states
-    local function remove_all_metatables(item, path)
-      if path[#path] ~= inspect.METATABLE then
-        return item
-      end
-    end
     return inspect(state,{process=remove_all_metatables})
   end
 end
