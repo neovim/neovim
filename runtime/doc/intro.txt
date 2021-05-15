@@ -169,6 +169,7 @@ Vim would never have become what it is now, without the help of these people!
 	Ken Takata		fixes and features
 	Kazunobu Kuriyama	GTK 3
 	Christian Brabandt	many fixes, features, user support, etc.
+	Yegappan Lakshmanan	many quickfix features
 
 I wish to thank all the people that sent me bug reports and suggestions.  The
 list is too long to mention them all here.  Vim would not be the same without
