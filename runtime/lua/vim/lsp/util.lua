@@ -566,13 +566,15 @@ end
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function get_completion_word(item)
   if item.textEdit ~= nil and item.textEdit.newText ~= nil and item.textEdit.newText ~= "" then
-    if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
+    local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
+    if insert_text_format == "PlainText" or insert_text_format == nil then
       return item.textEdit.newText
     else
       return M.parse_snippet(item.textEdit.newText)
     end
   elseif item.insertText ~= nil and item.insertText ~= "" then
-    if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText" then
+    local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
+    if insert_text_format == "PlainText" or insert_text_format == nil then
       return item.insertText
     else
       return M.parse_snippet(item.insertText)
