@@ -1677,6 +1677,7 @@ static void int_wordlist_spl(char_u *fname)
 // Allocate a new slang_T for language "lang".  "lang" can be NULL.
 // Caller must fill "sl_next".
 slang_T *slang_alloc(char_u *lang)
+  FUNC_ATTR_NONNULL_RET
 {
   slang_T *lp = xcalloc(1, sizeof(slang_T));
 
