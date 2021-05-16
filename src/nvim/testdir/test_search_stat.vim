@@ -8,6 +8,41 @@ func Test_search_stat()
   set shortmess-=S
   " Append 50 lines with text to search for, "foobar" appears 20 times
   call append(0, repeat(['foobar', 'foo', 'fooooobar', 'foba', 'foobar'], 10))
+  call nvim_win_set_cursor(0, [1, 0])
+
+  " searchcount() returns an empty dictionary when previous pattern was not set
+  call assert_equal({}, searchcount(#{pattern: ''}))
+  " but setting @/ should also work (even 'n' nor 'N' was executed)
+  " recompute the count when the last position is different.
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 40, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'foo'}))
+  call assert_equal(
+    \ #{current: 0, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar'}))
+  call assert_equal(
+    \ #{current: 0, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar', pos: [2, 1, 0]}))
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 1, 0]}))
+  " on last char of match
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 9, 0]}))
+  " on char after match
+  call assert_equal(
+    \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar', pos: [3, 10, 0]}))
+  call assert_equal(
+    \ #{current: 1, exact_match: 0, total: 10, incomplete: 0, maxcount: 99},
+    \ searchcount(#{pattern: 'fooooobar', pos: [4, 1, 0]}))
+  call assert_equal(
+    \ #{current: 1, exact_match: 0, total: 2, incomplete: 2, maxcount: 1},
+    \ searchcount(#{pattern: 'fooooobar', pos: [4, 1, 0], maxcount: 1}))
+  call assert_equal(
+    \ #{current: 0, exact_match: 0, total: 2, incomplete: 2, maxcount: 1},
+    \ searchcount(#{pattern: 'fooooobar', maxcount: 1}))
 
   " match at second line
   call cursor(1, 1)
@@ -17,6 +52,9 @@ func Test_search_stat()
   let stat = '\[2/50\]'
   let pat = escape(@/, '()*?'). '\s\+'
   call assert_match(pat .. stat, g:a)
+  call assert_equal(
+    \ #{current: 2, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
+    \ searchcount(#{recompute: 0}))
   " didn't get added to message history
   call assert_equal(messages_before, execute('messages'))
 
@@ -25,6 +63,9 @@ func Test_search_stat()
   let g:a = execute(':unsilent :norm! n')
   let stat = '\[50/50\]'
   call assert_match(pat .. stat, g:a)
+  call assert_equal(
+    \ #{current: 50, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
+    \ searchcount(#{recompute: 0}))
 
   " No search stat
   set shortmess+=S
@@ -32,6 +73,14 @@ func Test_search_stat()
   let stat = '\[2/50\]'
   let g:a = execute(':unsilent :norm! n')
   call assert_notmatch(pat .. stat, g:a)
+  call writefile(getline(1, '$'), 'sample.txt')
+  " n does not update search stat
+  call assert_equal(
+    \ #{current: 50, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
+    \ searchcount(#{recompute: 0}))
+  call assert_equal(
+    \ #{current: 2, exact_match: 1, total: 50, incomplete: 0, maxcount: 99},
+    \ searchcount(#{recompute: v:true}))
   set shortmess-=S
 
   " Many matches
@@ -41,10 +90,28 @@ func Test_search_stat()
   let g:a = execute(':unsilent :norm! n')
   let stat = '\[>99/>99\]'
   call assert_match(pat .. stat, g:a)
+  call assert_equal(
+    \ #{current: 100, exact_match: 0, total: 100, incomplete: 2, maxcount: 99},
+    \ searchcount(#{recompute: 0}))
+  call assert_equal(
+    \ #{current: 272, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: v:true, maxcount: 0, timeout: 200}))
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 200}))
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
   let stat = 'W \[1/>99\]'
   call assert_match(pat .. stat, g:a)
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 100, incomplete: 2, maxcount: 99},
+    \ searchcount(#{recompute: 0}))
+  call assert_equal(
+    \ #{current: 1, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, timeout: 200}))
+  call assert_equal(
+    \ #{current: 271, exact_match: 1, total: 280, incomplete: 0, maxcount: 0},
+    \ searchcount(#{recompute: 1, maxcount: 0, pos: [line('$')-2, 1, 0], timeout: 200}))
 
   " Many matches
   call cursor(1, 1)
@@ -180,10 +247,20 @@ func Test_search_stat()
   call assert_match('^\s\+' .. stat, g:b)
   unmap n
 
+  " Time out
+  %delete _
+  call append(0, repeat(['foobar', 'foo', 'fooooobar', 'foba', 'foobar'], 100000))
+  call cursor(1, 1)
+  call assert_equal(1, searchcount(#{pattern: 'foo', maxcount: 0, timeout: 1}).incomplete)
+
   " Clean up
   set shortmess+=S
   " close the window
   bwipe!
+endfunc
+
+func Test_searchcount_fails()
+  call assert_fails('echo searchcount("boo!")', 'E715:')
 endfunc
 
 func Test_search_stat_foldopen()
@@ -252,9 +329,9 @@ func Test_searchcount_in_statusline()
     function TestSearchCount() abort
       let search_count = searchcount()
       if !empty(search_count)
-	return '[' . search_count.current . '/' . search_count.total . ']'
+        return '[' . search_count.current . '/' . search_count.total . ']'
       else
-	return ''
+        return ''
       endif
     endfunction
     set hlsearch
