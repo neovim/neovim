@@ -881,7 +881,8 @@ function M.make_floating_popup_options(width, height, opts)
   local anchor = ''
   local row, col
 
-  local lines_above = vim.fn.winline() - 1
+  local win_pos = vim.api.nvim_win_get_position(0)
+  local lines_above = win_pos[1] + vim.fn.winline() - 1
   local lines_below = vim.fn.winheight(0) - lines_above
 
   if lines_above < lines_below then
@@ -894,7 +895,7 @@ function M.make_floating_popup_options(width, height, opts)
     row = -get_border_size(opts).height
   end
 
-  if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
+  if win_pos[2] + vim.fn.wincol() + width <= api.nvim_get_option('columns') then
     anchor = anchor..'W'
     col = 0
   else
