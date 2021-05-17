@@ -135,12 +135,6 @@ FAQ                                                     *lsp-faq*
      autocmd BufWritePre *.rs lua vim.lsp.buf.formatting_sync(nil, 1000)
 
 <
-                                                           *vim.lsp.callbacks*
-- Q: What happened to `vim.lsp.callbacks`?
-  A: After better defining the interface of |lsp-handler|s, we thought it best
-     to remove the generic usage of `callbacks` and transform to `handlers`.
-     Due to this, `vim.lsp.callbacks` was renamed to |vim.lsp.handlers|.
-
                                                            *lsp-vs-treesitter*
 - Q: How do LSP and Treesitter compare?
   A: LSP requires a client and language server. The language server uses
