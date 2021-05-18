@@ -1875,7 +1875,7 @@ NOT LOADING
 
 It's possible that a user doesn't always want to load this plugin.  Or the
 system administrator has dropped it in the system-wide plugin directory, but a
-user has his own plugin he wants to use.  Then the user must have a chance to
+user has their own plugin they want to use.  Then the user must have a chance to
 disable loading this specific plugin.  This will make it possible: >
 
   6	if exists("g:loaded_typecorr")
@@ -1908,7 +1908,7 @@ item can be used: >
 
 The "<Plug>TypecorrAdd;" thing will do the work, more about that further on.
 
-The user can set the "mapleader" variable to the key sequence that he wants
+The user can set the "mapleader" variable to the key sequence that they want
 this mapping to start with.  Thus if the user has done: >
 
 	let mapleader = "_"
@@ -1919,7 +1919,7 @@ will be used, which is a backslash.  Then a map for "\a" will be defined.
 Note that <unique> is used, this will cause an error message if the mapping
 already happened to exist. |:map-<unique>|
 
-But what if the user wants to define his own key sequence?  We can allow that
+But what if the user wants to define their own key sequence?  We can allow that
 with this mechanism: >
 
  21	if !hasmapto('<Plug>TypecorrAdd;')
@@ -1928,7 +1928,7 @@ with this mechanism: >
 
 This checks if a mapping to "<Plug>TypecorrAdd;" already exists, and only
 defines the mapping from "<Leader>a" if it doesn't.  The user then has a
-chance of putting this in his vimrc file: >
+chance of putting this in their vimrc file: >
 
 	map ,c  <Plug>TypecorrAdd;
 
@@ -2033,7 +2033,7 @@ Now let's add a user command to add a correction: >
 The user command is defined only if no command with the same name already
 exists.  Otherwise we would get an error here.  Overriding the existing user
 command with ":command!" is not a good idea, this would probably make the user
-wonder why the command he defined himself doesn't work.  |:command|
+wonder why the command they defined themself doesn't work.  |:command|
 
 
 SCRIPT VARIABLES
@@ -2285,7 +2285,7 @@ An example of how to define functionality in a filetype plugin: >
 |hasmapto()| is used to check if the user has already defined a map to
 <Plug>JavaImport;.  If not, then the filetype plugin defines the default
 mapping.  This starts with |<LocalLeader>|, which allows the user to select
-the key(s) he wants filetype plugin mappings to start with.  The default is a
+the key(s) they want filetype plugin mappings to start with.  The default is a
 backslash.
 "<unique>" is used to give an error message if the mapping already exists or
 overlaps with an existing mapping.
