@@ -166,6 +166,7 @@ return {
     getpos={args=1},
     getqflist={args={0, 1}},
     getreg={args={0, 3}},
+    getreginfo={args={0, 1}, base=1},
     getregtype={args={0, 1}},
     gettabinfo={args={0, 1}},
     gettabvar={args={2, 3}},

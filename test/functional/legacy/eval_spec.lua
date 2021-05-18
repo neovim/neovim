@@ -600,7 +600,6 @@ describe('eval', function()
     command([[call ErrExe('call setreg(1)')]])
     command([[call ErrExe('call setreg(1, 2, 3, 4)')]])
     command([=[call ErrExe('call setreg([], 2)')]=])
-    command([[call ErrExe('call setreg(1, {})')]])
     command([=[call ErrExe('call setreg(1, 2, [])')]=])
     command([=[call ErrExe('call setreg("/", ["1", "2"])')]=])
     command([=[call ErrExe('call setreg("=", ["1", "2"])')]=])
@@ -615,8 +614,6 @@ describe('eval', function()
       Vim(call):E118: Too many arguments for function: setreg
       Executing call setreg([], 2)
       Vim(call):E730: using List as a String
-      Executing call setreg(1, {})
-      Vim(call):E731: using Dictionary as a String
       Executing call setreg(1, 2, [])
       Vim(call):E730: using List as a String
       Executing call setreg("/", ["1", "2"])

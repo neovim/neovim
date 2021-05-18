@@ -90,6 +90,13 @@ typedef struct yankreg {
   dict_T *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
 
+/// Modes for get_yank_register()
+typedef enum {
+  YREG_PASTE,
+  YREG_YANK,
+  YREG_PUT,
+} yreg_mode_t;
+
 /// Convert register name into register index
 ///
 /// @param[in]  regname  Register name.
