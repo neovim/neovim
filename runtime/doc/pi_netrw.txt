@@ -3181,8 +3181,8 @@ window, then the one window will be horizontally split (by default).
 If there's more than one window, the previous window will be re-used on
 the selected file/directory.  If the previous window's associated buffer
 has been modified, and there's only one window with that buffer, then
-the user will be asked if s/he wishes to save the buffer first (yes,
-no, or cancel).
+the user will be asked if they wish to save the buffer first (yes, no, or
+cancel).
 
 Related Actions |netrw-cr| |netrw-o| |netrw-t| |netrw-v|
 Associated setting variables:

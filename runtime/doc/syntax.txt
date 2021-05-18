@@ -1969,7 +1969,7 @@ LEX						*lex.vim* *ft-lex-syntax*
 Lex uses brute-force synchronizing as the "^%%$" section delimiter
 gives no clue as to what section follows.  Consequently, the value for >
 	:syn sync minlines=300
-may be changed by the user if s/he is experiencing synchronization
+may be changed by the user if they are experiencing synchronization
 difficulties (such as may happen with large lex files).
 
 
@@ -3009,11 +3009,11 @@ variables in your vimrc:
 
 <   (dash users should use posix)
 
-If there's no "#! ..." line, and the user hasn't availed himself/herself of a
-default sh.vim syntax setting as just shown, then syntax/sh.vim will assume
-the Bourne shell syntax.  No need to quote RFCs or market penetration
-statistics in error reports, please -- just select the default version of the
-sh your system uses and install the associated "let..." in your <.vimrc>.
+If there's no "#! ..." line, and the user hasn't availed themself of a default
+sh.vim syntax setting as just shown, then syntax/sh.vim will assume the Bourne
+shell syntax.  No need to quote RFCs or market penetration statistics in error
+reports, please -- just select the default version of the sh your system uses
+and install the associated "let..." in your <.vimrc>.
 
 The syntax/sh.vim file provides several levels of syntax-based folding: >
 
