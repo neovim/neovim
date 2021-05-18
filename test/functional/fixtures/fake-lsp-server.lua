@@ -464,6 +464,23 @@ function tests.invalid_header()
   io.stdout:write("Content-length: \r\n")
 end
 
+function tests.decode_nil()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      notify('start')
+      notify("workspace/executeCommand", {
+        arguments = { "EXTRACT_METHOD", {metadata = {field = vim.NIL}}, 3, 0, 6123, vim.NIL },
+        command = "refactor.perform",
+        title = "EXTRACT_METHOD"
+      })
+      notify('finish')
+    end;
+  }
+end
+
 -- Tests will be indexed by TEST_NAME
 
 local kill_timer = vim.loop.new_timer()

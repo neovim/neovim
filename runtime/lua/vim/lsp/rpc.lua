@@ -50,8 +50,13 @@ recursive_convert_NIL = function(v, tbl_processed)
     return nil
   elseif not tbl_processed[v] and type(v) == 'table' then
     tbl_processed[v] = true
+    local inside_list = vim.tbl_islist(v)
     return vim.tbl_map(function(x)
-      return recursive_convert_NIL(x, tbl_processed)
+      if not inside_list or (inside_list and type(x) == "table") then
+        return recursive_convert_NIL(x, tbl_processed)
+      else
+        return x
+      end
     end, v)
   end
 
