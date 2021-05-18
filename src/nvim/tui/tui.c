@@ -2009,9 +2009,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   }
 
   data->unibi_ext.save_title = (int)unibi_add_ext_str(
-      ut, "ext.save_title", "\x1b[22;0;0t");
+      ut, "ext.save_title", "\x1b[22;0t");
   data->unibi_ext.restore_title = (int)unibi_add_ext_str(
-      ut, "ext.restore_title", "\x1b[23;0;0t");
+      ut, "ext.restore_title", "\x1b[23;0t");
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
