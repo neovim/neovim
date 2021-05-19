@@ -423,10 +423,6 @@ function! s:check_python(version) abort
                   \ ' This could lead to confusing error messages.')
     endif
 
-    if a:version == 3 && str2float(pyversion) < 3.3
-      call health#report_warn('Python 3.3+ is recommended.')
-    endif
-
     call health#report_info('Python version: ' . pyversion)
 
     if s:is_bad_response(status)
