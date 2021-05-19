@@ -9,6 +9,7 @@ local eq = helpers.eq
 local pcall_err = helpers.pcall_err
 local pesc = helpers.pesc
 local insert = helpers.insert
+local funcs = helpers.funcs
 local retry = helpers.retry
 local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
@@ -1820,36 +1821,20 @@ describe('LSP', function()
   end)
 
   describe('lsp.util.jump_to_location', function()
-    local default_target_bufnr
-    local default_target_uri = 'file://fake/uri'
-
-    local create_buf = function(uri, lines)
-      for i, line in ipairs(lines) do
-        lines[i] = '"' .. line .. '"'
-      end
-      lines = table.concat(lines, ", ")
-
-      -- Let's set "hidden" to true in order to avoid errors when switching
-      -- between buffers in test.
-      local code = string.format([[
-        vim.api.nvim_set_option('hidden', true)
-
-        local bufnr = vim.uri_to_bufnr("%s")
-        local lines = {%s}
-        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
-        return bufnr
-      ]], uri, lines)
-
-      return exec_lua(code)
-    end
+    local target_bufnr
 
     before_each(function()
-      default_target_bufnr = create_buf(default_target_uri, {'1st line of text', 'å å ɧ 汉语 ↥ 🤦 🦄'})
+      target_bufnr = exec_lua [[
+        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local lines = {"1st line of text", "å å ɧ 汉语 ↥ 🤦 🦄"}
+        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
+        return bufnr
+      ]]
     end)
 
-    local location = function(uri, start_line, start_char, end_line, end_char)
+    local location = function(start_line, start_char, end_line, end_char)
       return {
-        uri = uri,
+        uri = "file://fake/uri",
         range = {
           start = { line = start_line, character = start_char },
           ["end"] = { line = end_line, character = end_char },
@@ -1857,9 +1842,9 @@ describe('LSP', function()
       }
     end
 
-    local jump = function(bufnr, msg)
+    local jump = function(msg)
       eq(true, exec_lua('return vim.lsp.util.jump_to_location(...)', msg))
-      eq(bufnr, exec_lua[[return vim.fn.bufnr('%')]])
+      eq(target_bufnr, exec_lua[[return vim.fn.bufnr('%')]])
       return {
         line = exec_lua[[return vim.fn.line('.')]],
         col = exec_lua[[return vim.fn.col('.')]],
@@ -1867,13 +1852,13 @@ describe('LSP', function()
     end
 
     it('jumps to a Location', function()
-      local pos = jump(default_target_bufnr, location(default_target_uri, 0, 9, 0, 9))
+      local pos = jump(location(0, 9, 0, 9))
       eq(1, pos.line)
       eq(10, pos.col)
     end)
 
     it('jumps to a LocationLink', function()
-      local pos = jump(default_target_bufnr, {
+      local pos = jump({
           targetUri = "file://fake/uri",
           targetSelectionRange = {
             start = { line = 0, character = 4 },
@@ -1889,104 +1874,22 @@ describe('LSP', function()
     end)
 
     it('jumps to the correct multibyte column', function()
-      local pos = jump(default_target_bufnr, location(default_target_uri, 1, 2, 1, 2))
+      local pos = jump(location(1, 2, 1, 2))
       eq(2, pos.line)
       eq(4, pos.col)
       eq('å', exec_lua[[return vim.fn.expand('<cword>')]])
     end)
 
     it('adds current position to jumplist before jumping', function()
-      exec_lua([[
-        vim.api.nvim_win_set_buf(0, ...)
-        vim.api.nvim_win_set_cursor(0, {2, 0})
-      ]], default_target_bufnr)
-      jump(default_target_bufnr, location(default_target_uri, 0, 9, 0, 9))
+      funcs.nvim_win_set_buf(0, target_bufnr)
+      local mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 1, 0 }, mark)
 
-      local mark = exec_lua([[return vim.inspect(vim.api.nvim_buf_get_mark(..., "'"))]], default_target_bufnr)
-      eq('{ 2, 0 }', mark)
-    end)
+      funcs.nvim_win_set_cursor(0, {2, 3})
+      jump(location(0, 9, 0, 9))
 
-    it('should not push item to tagstack if destination is the same as source', function()
-      -- Set cursor at the 2nd line, 1st character. This is the source position
-      -- for the test, and will also be the destination one, making the cursor
-      -- "motionless", thus not triggering a push to the tagstack.
-      exec_lua(string.format([[
-        vim.api.nvim_win_set_buf(0, %d)
-        vim.api.nvim_win_set_cursor(0, {2, 0})
-      ]], default_target_bufnr))
-
-      -- Jump to 'f' in 'foobar', at the 2nd line.
-      jump(default_target_bufnr, location(default_target_uri, 1, 0, 1, 0))
-
-      local stack = exec_lua[[return vim.fn.gettagstack()]]
-      eq(0, stack.length)
-    end)
-
-    it('should not push the same item from same buffer twice to tagstack', function()
-      -- Set cursor at the 2nd line, 5th character.
-      exec_lua(string.format([[
-        vim.api.nvim_win_set_buf(0, %d)
-        vim.api.nvim_win_set_cursor(0, {2, 4})
-      ]], default_target_bufnr))
-
-      local stack
-
-      -- Jump to 1st line, 1st column.
-      jump(default_target_bufnr, location(default_target_uri, 0, 0, 0, 0))
-
-      stack = exec_lua[[return vim.fn.gettagstack()]]
-      eq({default_target_bufnr, 2, 5, 0}, stack.items[1].from)
-
-      -- Go back to 5th character at 2nd line, which is currently at the top of
-      -- the tagstack.
-      exec_lua(string.format([[
-        vim.api.nvim_win_set_cursor(0, {2, 4})
-      ]], default_target_bufnr))
-
-      -- Jump again to 1st line, 1st column. Since we're jumping from the same
-      -- position we have just jumped from, this jump shouldn't be pushed to
-      -- the tagstack.
-      jump(default_target_bufnr, location(default_target_uri, 0, 0, 0, 0))
-
-      stack = exec_lua[[return vim.fn.gettagstack()]]
-      eq({default_target_bufnr, 2, 5, 0}, stack.items[1].from)
-      eq(1, stack.length)
-    end)
-
-    it('should not push the same item from another buffer twice to tagstack', function()
-      local target_uri = 'file://foo/bar'
-      local target_bufnr = create_buf(target_uri, {'this is a line', 'foobar'})
-
-      -- Set cursor at the 1st line, 3rd character of the default test buffer.
-      exec_lua(string.format([[
-        vim.api.nvim_win_set_buf(0, %d)
-        vim.api.nvim_win_set_cursor(0, {1, 2})
-      ]], default_target_bufnr))
-
-      local stack
-
-      -- Jump to 1st line, 1st column of a different buffer from the source
-      -- position.
-      jump(target_bufnr, location(target_uri, 0, 0, 0, 0))
-
-      stack = exec_lua[[return vim.fn.gettagstack()]]
-      eq({default_target_bufnr, 1, 3, 0}, stack.items[1].from)
-
-      -- Go back to 3rd character at 1st line of the default test buffer, which
-      -- is currently at the top of the tagstack.
-      exec_lua(string.format([[
-        vim.api.nvim_win_set_buf(0, %d)
-        vim.api.nvim_win_set_cursor(0, {1, 2})
-      ]], default_target_bufnr))
-
-      -- Jump again to 1st line, 1st column of the different buffer. Since
-      -- we're jumping from the same position we have just jumped from, this
-      -- jump shouldn't be pushed to the tagstack.
-      jump(target_bufnr, location(target_uri, 0, 0, 0, 0))
-
-      stack = exec_lua[[return vim.fn.gettagstack()]]
-      eq({default_target_bufnr, 1, 3, 0}, stack.items[1].from)
-      eq(1, stack.length)
+      mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 2, 3 }, mark)
     end)
   end)
 
