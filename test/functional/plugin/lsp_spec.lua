@@ -9,6 +9,7 @@ local eq = helpers.eq
 local pcall_err = helpers.pcall_err
 local pesc = helpers.pesc
 local insert = helpers.insert
+local funcs = helpers.funcs
 local retry = helpers.retry
 local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
@@ -1880,14 +1881,15 @@ describe('LSP', function()
     end)
 
     it('adds current position to jumplist before jumping', function()
-      exec_lua([[
-        vim.api.nvim_win_set_buf(0, ...)
-        vim.api.nvim_win_set_cursor(0, {2, 0})
-      ]], default_target_bufnr)
-      jump(default_target_bufnr, location(default_target_uri, 0, 9, 0, 9))
+      funcs.nvim_win_set_buf(0, target_bufnr)
+      local mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 1, 0 }, mark)
 
-      local mark = exec_lua([[return vim.inspect(vim.api.nvim_buf_get_mark(..., "'"))]], default_target_bufnr)
-      eq('{ 2, 0 }', mark)
+      funcs.nvim_win_set_cursor(0, {2, 3})
+      jump(location(0, 9, 0, 9))
+
+      mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 2, 3 }, mark)
     end)
   end)
 
