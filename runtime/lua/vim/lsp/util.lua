@@ -1086,12 +1086,16 @@ function M.fancy_floating_markdown(contents, opts)
       local ft = line:match("^```([a-zA-Z0-9_]*)$")
       -- local ft = line:match("^```(.*)$")
       -- TODO(ashkan): validate the filetype here.
+      local is_pre = line:match("^%s*<pre>%s*$")
+      if is_pre then
+        ft = ""
+      end
       if ft then
         local start = #stripped
         i = i + 1
         while i <= #contents do
           line = contents[i]
-          if line == "```" then
+          if line == "```" or (is_pre and line:match("^%s*</pre>%s*$")) then
             i = i + 1
             break
           end
@@ -1120,12 +1124,19 @@ function M.fancy_floating_markdown(contents, opts)
   local insert_separator = opts.separator
   if insert_separator == nil then insert_separator = true end
   if insert_separator then
-    for i, h in ipairs(highlights) do
-      h.start = h.start + i - 1
-      h.finish = h.finish + i - 1
+    local offset = 0
+    for _, h in ipairs(highlights) do
+      h.start = h.start + offset
+      h.finish = h.finish + offset
+      -- check if a seperator already exists and use that one instead of creating a new one
       if h.finish + 1 <= #stripped then
-        table.insert(stripped, h.finish + 1, string.rep("─", math.min(width, opts.wrap_at or width)))
-        height = height + 1
+        if stripped[h.finish + 1]:match("^---+$") then
+          stripped[h.finish + 1] = string.rep("─", math.min(width, opts.wrap_at or width))
+        else
+          table.insert(stripped, h.finish + 1, string.rep("─", math.min(width, opts.wrap_at or width)))
+          offset = offset + 1
+          height = height + 1
+        end
       end
     end
   end
@@ -1143,11 +1154,13 @@ function M.fancy_floating_markdown(contents, opts)
   api.nvim_win_set_option(winnr, 'conceallevel', 2)
   api.nvim_win_set_option(winnr, 'concealcursor', 'n')
 
-  vim.cmd("ownsyntax lsp_markdown")
   local idx = 1
   --@private
   local function apply_syntax_to_region(ft, start, finish)
-    if ft == '' then return end
+    if ft == "" then
+      vim.cmd(string.format("syntax region markdownCodeBlock start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
+      return
+    end
     local name = ft..idx
     idx = idx + 1
     local lang = "@"..ft:upper()
@@ -1155,16 +1168,20 @@ function M.fancy_floating_markdown(contents, opts)
     if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
       return
     end
-    vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s", name, start, finish + 1, lang))
+    vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s keepend", name, start, finish + 1, lang))
   end
   -- Previous highlight region.
-  -- TODO(ashkan): this wasn't working for some reason, but I would like to
-  -- make sure that regions between code blocks are definitely markdown.
-  -- local ph = {start = 0; finish = 1;}
+  local ph = 1
   for _, h in ipairs(highlights) do
-    -- apply_syntax_to_region('markdown', ph.finish, h.start)
+    if ph <= h.start - 1 then
+      apply_syntax_to_region('lsp_markdown', ph, h.start - 1)
+    end
     apply_syntax_to_region(h.ft, h.start, h.finish)
-    -- ph = h
+    ph = h.finish + 1
+  end
+
+  if ph <= #stripped then
+    apply_syntax_to_region('lsp_markdown', ph, #stripped)
   end
 
   vim.api.nvim_set_current_win(cwin)
