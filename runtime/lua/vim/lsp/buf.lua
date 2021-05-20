@@ -297,26 +297,30 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   return choice
 end
 
+local function call_hierarchy(method)
+  local params = util.make_position_params()
+  request('textDocument/prepareCallHierarchy', params, function(err, _, result)
+    if err then
+      vim.notify(err.message, vim.log.levels.WARN)
+      return
+    end
+    local call_hierarchy_item = pick_call_hierarchy_item(result)
+    vim.lsp.buf_request(0, method, { item = call_hierarchy_item })
+  end)
+end
+
 --- Lists all the call sites of the symbol under the cursor in the
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist|.
 function M.incoming_calls()
-  local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(_, _, result)
-    local call_hierarchy_item = pick_call_hierarchy_item(result)
-    vim.lsp.buf_request(0, 'callHierarchy/incomingCalls', { item = call_hierarchy_item })
-  end)
+  call_hierarchy('callHierarchy/incomingCalls')
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one in the |inputlist|.
 function M.outgoing_calls()
-  local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(_, _, result)
-    local call_hierarchy_item = pick_call_hierarchy_item(result)
-    vim.lsp.buf_request(0, 'callHierarchy/outgoingCalls', { item = call_hierarchy_item })
-  end)
+  call_hierarchy('callHierarchy/outgoingCalls')
 end
 
 --- List workspace folders.

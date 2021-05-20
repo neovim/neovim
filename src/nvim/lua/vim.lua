@@ -341,32 +341,24 @@ do
     end
     return setmetatable({}, mt)
   end
-  local function pcall_ret(status, ...)
-    if status then return ... end
-  end
-  local function nil_wrap(fn)
-    return function(...)
-      return pcall_ret(pcall(fn, ...))
+  local function make_dict_accessor(scope)
+    validate {
+      scope = {scope, 's'};
+    }
+    local mt = {}
+    function mt:__newindex(k, v)
+      return vim._setvar(scope, 0, k, v)
     end
+    function mt:__index(k)
+      return vim._getvar(scope, 0, k)
+    end
+    return setmetatable({}, mt)
   end
-
-  vim.b = make_meta_accessor(
-    nil_wrap(function(v) return a.nvim_buf_get_var(0, v) end),
-    function(v, k) return a.nvim_buf_set_var(0, v, k) end,
-    function(v) return a.nvim_buf_del_var(0, v) end
-  )
-  vim.w = make_meta_accessor(
-    nil_wrap(function(v) return a.nvim_win_get_var(0, v) end),
-    function(v, k) return a.nvim_win_set_var(0, v, k) end,
-    function(v) return a.nvim_win_del_var(0, v) end
-  )
-  vim.t = make_meta_accessor(
-    nil_wrap(function(v) return a.nvim_tabpage_get_var(0, v) end),
-    function(v, k) return a.nvim_tabpage_set_var(0, v, k) end,
-    function(v) return a.nvim_tabpage_del_var(0, v) end
-  )
-  vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
-  vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
+  vim.g = make_dict_accessor('g')
+  vim.v = make_dict_accessor('v')
+  vim.b = make_dict_accessor('b')
+  vim.w = make_dict_accessor('w')
+  vim.t = make_dict_accessor('t')
   vim.o = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
 
   local function getenv(k)

@@ -945,12 +945,20 @@ describe('lua stdlib', function()
     exec_lua [[
     vim.api.nvim_set_var("testing", "hi")
     vim.api.nvim_set_var("other", 123)
+    vim.api.nvim_set_var("floaty", 5120.1)
+    vim.api.nvim_set_var("nullvar", vim.NIL)
     vim.api.nvim_set_var("to_delete", {hello="world"})
     ]]
 
     eq('hi', funcs.luaeval "vim.g.testing")
     eq(123, funcs.luaeval "vim.g.other")
+    eq(5120.1, funcs.luaeval "vim.g.floaty")
     eq(NIL, funcs.luaeval "vim.g.nonexistant")
+    eq(NIL, funcs.luaeval "vim.g.nullvar")
+    -- lost over RPC, so test locally:
+    eq({false, true}, exec_lua [[
+      return {vim.g.nonexistant == vim.NIL, vim.g.nullvar == vim.NIL}
+    ]])
 
     eq({hello="world"}, funcs.luaeval "vim.g.to_delete")
     exec_lua [[
@@ -963,12 +971,20 @@ describe('lua stdlib', function()
     exec_lua [[
     vim.api.nvim_buf_set_var(0, "testing", "hi")
     vim.api.nvim_buf_set_var(0, "other", 123)
+    vim.api.nvim_buf_set_var(0, "floaty", 5120.1)
+    vim.api.nvim_buf_set_var(0, "nullvar", vim.NIL)
     vim.api.nvim_buf_set_var(0, "to_delete", {hello="world"})
     ]]
 
     eq('hi', funcs.luaeval "vim.b.testing")
     eq(123, funcs.luaeval "vim.b.other")
+    eq(5120.1, funcs.luaeval "vim.b.floaty")
     eq(NIL, funcs.luaeval "vim.b.nonexistant")
+    eq(NIL, funcs.luaeval "vim.b.nullvar")
+    -- lost over RPC, so test locally:
+    eq({false, true}, exec_lua [[
+      return {vim.b.nonexistant == vim.NIL, vim.b.nullvar == vim.NIL}
+    ]])
 
     eq({hello="world"}, funcs.luaeval "vim.b.to_delete")
     exec_lua [[

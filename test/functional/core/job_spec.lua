@@ -118,6 +118,32 @@ describe('jobs', function()
     end
   end)
 
+  it('handles case-insensitively matching #env vars', function()
+    nvim('command', "let $TOTO = 'abc'")
+    -- Since $Toto is being set in the job, it should take precedence over the
+    -- global $TOTO on Windows
+    nvim('command', "let g:job_opts = {'env': {'Toto': 'def'}, 'stdout_buffered': v:true}")
+    if iswin() then
+      nvim('command', [[let j = jobstart('set | find /I "toto="', g:job_opts)]])
+    else
+      nvim('command', [[let j = jobstart('env | grep -i toto=', g:job_opts)]])
+    end
+    nvim('command', "call jobwait([j])")
+    nvim('command', "let g:output = Normalize(g:job_opts.stdout)")
+    local actual = eval('g:output')
+    local expected
+    if iswin() then
+      -- Toto is normalized to TOTO so we can detect duplicates, and because
+      -- Windows doesn't care about case
+      expected = {'TOTO=def', ''}
+    else
+      expected = {'TOTO=abc', 'Toto=def', ''}
+    end
+    table.sort(actual)
+    table.sort(expected)
+    eq(expected, actual)
+  end)
+
   it('uses &shell and &shellcmdflag if passed a string', function()
     nvim('command', "let $VAR = 'abc'")
     if iswin() then

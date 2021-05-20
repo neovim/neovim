@@ -1850,15 +1850,30 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ptrdiff_t len = end - str;
     assert(len > 0);
     const char * value = str + len + 1;
-    if (tv_dict_find(rettv->vval.v_dict, str, len) != NULL) {
+
+    char c = env[i][len];
+    env[i][len] = NUL;
+
+#ifdef WIN32
+    // Upper-case all the keys for Windows so we can detect duplicates
+    char *const key = strcase_save(str, true);
+#else
+    char *const key = xstrdup(str);
+#endif
+
+    env[i][len] = c;
+
+    if (tv_dict_find(rettv->vval.v_dict, key, len) != NULL) {
       // Since we're traversing from the end of the env block to the front, any
       // duplicate names encountered should be ignored.  This preserves the
       // semantics of env vars defined later in the env block taking precedence.
+      xfree(key);
       continue;
     }
     tv_dict_add_str(rettv->vval.v_dict,
-                    str, len,
+                    key, len,
                     value);
+    xfree(key);
   }
   os_free_fullenv(env);
 }
@@ -5096,7 +5111,21 @@ static dict_T *create_environment(const dictitem_T *job_env,
   }
 
   if (job_env) {
+#ifdef WIN32
+    TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {
+      // Always use upper-case keys for Windows so we detect duplicate keys
+      char *const key = strcase_save((const char *)var->di_key, true);
+      size_t len = strlen(key);
+      dictitem_T *dv = tv_dict_find(env, key, len);
+      if (dv) {
+        tv_dict_item_remove(env, dv);
+      }
+      tv_dict_add_str(env, key, len, tv_get_string(&var->di_tv));
+      xfree(key);
+    });
+#else
     tv_dict_extend(env, job_env->di_tv.vval.v_dict, "force");
+#endif
   }
 
   if (pty) {

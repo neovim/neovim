@@ -3010,7 +3010,7 @@ static int find_extra(char_u **pp)
   // Repeat for addresses separated with ';'
   for (;; ) {
     if (ascii_isdigit(*str)) {
-      str = skipdigits(str);
+      str = skipdigits(str + 1);
     } else if (*str == '/' || *str == '?') {
       str = skip_regexp(str + 1, *str, false, NULL);
       if (*str != first_char) {

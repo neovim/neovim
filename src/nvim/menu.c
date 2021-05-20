@@ -1069,7 +1069,7 @@ char_u *get_menu_names(expand_T *xp, int idx)
 #define TBUFFER_LEN 256
   static char_u tbuffer[TBUFFER_LEN];         /*hack*/
   char_u              *str;
-  static int should_advance = FALSE;
+  static bool should_advance = false;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
@@ -1089,12 +1089,13 @@ char_u *get_menu_names(expand_T *xp, int idx)
 
   if (menu->modes & expand_modes) {
     if (menu->children != NULL) {
-      if (should_advance)
-        STRLCPY(tbuffer, menu->en_dname, TBUFFER_LEN - 1);
-      else {
-        STRLCPY(tbuffer, menu->dname,  TBUFFER_LEN - 1);
-        if (menu->en_dname == NULL)
-          should_advance = TRUE;
+      if (should_advance) {
+        STRLCPY(tbuffer, menu->en_dname, TBUFFER_LEN);
+      } else {
+        STRLCPY(tbuffer, menu->dname,  TBUFFER_LEN);
+        if (menu->en_dname == NULL) {
+          should_advance = true;
+        }
       }
       /* hack on menu separators:  use a 'magic' char for the separator
        * so that '.' in names gets escaped properly */
@@ -1105,8 +1106,9 @@ char_u *get_menu_names(expand_T *xp, int idx)
         str = menu->en_dname;
       else {
         str = menu->dname;
-        if (menu->en_dname == NULL)
-          should_advance = TRUE;
+        if (menu->en_dname == NULL) {
+          should_advance = true;
+        }
       }
     }
   } else
