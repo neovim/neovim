@@ -804,9 +804,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
   int bg_attr = win_bg_attr(wp);
 
-  filler_lines = diff_check(wp, lnum);
-  if (filler_lines < 0) {
-    if (filler_lines == -1) {
+  int linestatus = 0;
+  filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
+  if (filler_lines < 0 || linestatus < 0) {
+    if (filler_lines == -1 || linestatus == -1) {
       if (diff_find_change(wp, lnum, &change_start, &change_end)) {
         diff_hlf = HLF_ADD;             // added line
       } else if (change_start == 0) {
@@ -817,7 +818,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     } else {
       diff_hlf = HLF_ADD;               // added line
     }
-    filler_lines = 0;
+    if (linestatus == 0) {
+      filler_lines = 0;
+    }
     area_highlighting = true;
   }
   VirtLines virt_lines = KV_INITIAL_VALUE;

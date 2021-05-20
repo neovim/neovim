@@ -2017,6 +2017,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 				Use the indent heuristic for the internal
 				diff library.
 
+		linematch:{n}   Enable a second stage diff on each generated
+				hunk in order to align lines. When the total
+				number of lines in a hunk exceeds {n}, the
+				second stage diff will not be performed as
+				very large hunks can cause noticeable lag. A
+				recommended setting is "linematch:60", as this
+				will enable alignment for a 2 buffer diff with
+				hunks of up to 30 lines each, or a 3 buffer
+				diff with hunks of up to 20 lines each.
+
                 algorithm:{text} Use the specified diff algorithm with the
 				internal diff engine. Currently supported
 				algorithms are:
