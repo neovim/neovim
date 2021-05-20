@@ -1772,7 +1772,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   // count, it's a buffer name.
   ///
   if ((ea.argt & EX_COUNT) && ascii_isdigit(*ea.arg)
-      && (!(ea.argt & EX_BUFNAME) || *(p = skipdigits(ea.arg)) == NUL
+      && (!(ea.argt & EX_BUFNAME) || *(p = skipdigits(ea.arg + 1)) == NUL
           || ascii_iswhite(*p))) {
     n = getdigits_long(&ea.arg, false, -1);
     ea.arg = skipwhite(ea.arg);
@@ -2790,15 +2790,18 @@ static struct cmdmod {
  */
 int modifier_len(char_u *cmd)
 {
-  int i, j;
   char_u      *p = cmd;
 
-  if (ascii_isdigit(*cmd))
-    p = skipwhite(skipdigits(cmd));
-  for (i = 0; i < (int)ARRAY_SIZE(cmdmods); ++i) {
-    for (j = 0; p[j] != NUL; ++j)
-      if (p[j] != cmdmods[i].name[j])
+  if (ascii_isdigit(*cmd)) {
+    p = skipwhite(skipdigits(cmd + 1));
+  }
+  for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
+    int j;
+    for (j = 0; p[j] != NUL; j++) {
+      if (p[j] != cmdmods[i].name[j]) {
         break;
+      }
+    }
     if (j >= cmdmods[i].minlen
         && !ASCII_ISALPHA(p[j])
         && (p == cmd || cmdmods[i].has_count)) {
