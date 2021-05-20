@@ -578,7 +578,7 @@ list_missing_previous_vimpatches_for_patch() {
   local -a fnames
   while IFS= read -r line ; do
     fnames+=("$line")
-  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}")
+  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}" -- . ':!src/version.c')
   local i=0
   local n=${#fnames[@]}
   printf '=== getting missing patches for %d files ===\n' "$n"
@@ -593,18 +593,20 @@ list_missing_previous_vimpatches_for_patch() {
     _set_missing_vimpatches 1 -- "${fname}"
 
     set +u  # Avoid "unbound variable" with bash < 4.4 below.
-    local missing_vim_commit_info="${missing_vim_patches[0]}"
-    if [[ -z "${missing_vim_commit_info}" ]]; then
-      printf -- "-\n"
-    else
-      local missing_vim_commit="${missing_vim_commit_info%%:*}"
-      if [[ -z "${vim_tag}" ]] || [[ "${missing_vim_commit}" < "${vim_tag}" ]]; then
-        printf -- "%s\n" "$missing_vim_commit_info"
-        missing_list+=("$missing_vim_commit_info")
+    for missing_vim_commit_info in "${missing_vim_patches[@]}"; do
+      if [[ -z "${missing_vim_commit_info}" ]]; then
+        printf -- "-\r"
       else
-        printf -- "-\n"
+        printf -- "-\r"
+        local missing_vim_commit="${missing_vim_commit_info%%:*}"
+        if [[ -z "${vim_tag}" ]] || [[ "${missing_vim_commit}" < "${vim_tag}" ]]; then
+          printf -- "%s\n" "$missing_vim_commit_info"
+          missing_list+=("$missing_vim_commit_info")
+        else
+          printf -- "-\r"
+        fi
       fi
-    fi
+    done
     set -u
   done
 
