@@ -936,6 +936,26 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("virtual edit", function ()
+      local check_events = setup_eventcheck(verify, { "", "	" })
+
+      meths.set_option("virtualedit", "all")
+
+      feed [[<Right><Right>iab<ESC>]]
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 2, 2 };
+        { "test1", "bytes", 1, 4, 0, 2, 2, 0, 0, 0, 0, 2, 2 };
+      }
+
+      feed [[j<Right><Right>iab<ESC>]]
+
+      check_events {
+        { "test1", "bytes", 1, 5, 1, 0, 5, 0, 1, 1, 0, 8, 8 };
+        { "test1", "bytes", 1, 6, 1, 5, 10, 0, 0, 0, 0, 2, 2 };
+      }
+    end)
+
     it("block visual paste", function()
       local check_events = setup_eventcheck(verify, {"AAA",
                                                      "BBB",

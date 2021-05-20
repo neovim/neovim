@@ -14,6 +14,7 @@
 #include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/screen.h"
+#include "nvim/extmark.h"
 #include "nvim/state.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -181,7 +182,7 @@ static int coladvance2(
         memset(newline + idx, ' ', (size_t)correct);
 
         ml_replace(pos->lnum, newline, false);
-        changed_bytes(pos->lnum, (colnr_T)idx);
+        inserted_bytes(pos->lnum, (colnr_T)idx, 0, correct);
         idx += correct;
         col = wcol;
       } else {
@@ -206,7 +207,7 @@ static int coladvance2(
         memcpy(newline + idx + csize, line + idx + 1, n);
 
         ml_replace(pos->lnum, newline, false);
-        changed_bytes(pos->lnum, idx);
+        inserted_bytes(pos->lnum, idx, 1, csize);
         idx += (csize - 1 + correct);
         col += correct;
       }
