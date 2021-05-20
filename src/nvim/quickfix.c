@@ -3932,16 +3932,16 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
   buf_T *errbuf;
 
   if (qftf_str != NULL) {
-    STRLCPY(IObuff, qftf_str, IOSIZE - 1);
+    STRLCPY(IObuff, qftf_str, IOSIZE);
   } else {
     if (qfp->qf_module != NULL) {
-      STRLCPY(IObuff, qfp->qf_module, IOSIZE - 1);
+      STRLCPY(IObuff, qfp->qf_module, IOSIZE);
       len = (int)STRLEN(IObuff);
     } else if (qfp->qf_fnum != 0
                && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
                && errbuf->b_fname != NULL) {
       if (qfp->qf_type == 1) {  // :helpgrep
-        STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE - 1);
+        STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE);
       } else {
         // Shorten the file name if not done already.
         // For optimization, do this only for the first entry in a
@@ -3954,7 +3954,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
           }
           shorten_buf_fname(errbuf, dirname, false);
         }
-        STRLCPY(IObuff, errbuf->b_fname, IOSIZE - 1);
+        STRLCPY(IObuff, errbuf->b_fname, IOSIZE);
       }
       len = (int)STRLEN(IObuff);
     } else {
@@ -4087,7 +4087,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
     qftf_li = tv_list_first(qftf_list);
 
     while (lnum < qfl->qf_count) {
-        char_u *qftf_str = NULL;
+      char_u *qftf_str = NULL;
 
         if (qftf_li != NULL) {
           // Use the text supplied by the user defined function
