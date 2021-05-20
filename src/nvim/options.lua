@@ -2074,6 +2074,14 @@ return {
       defaults={if_true={vi=0}}
     },
     {
+      full_name='quickfixtextfunc', abbreviation='qftf',
+      short_desc=N_("customize the quickfix window"),
+      type='string', scope={'global'},
+      vi_def=true,
+      varname='p_qftf',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='quoteescape', abbreviation='qe',
       short_desc=N_("escape characters used in a string"),
       type='string', scope={'buffer'},

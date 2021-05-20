@@ -1889,5 +1889,67 @@ be used.  See the description further above how to make such a filter known
 by Vim.
 
 
+=============================================================================
+10. Customizing the quickfix window		*quickfix-window-function*
+
+The default format for the lines displayed in the quickfix window and location
+list window is:
+
+    <filename>|<lnum> col <col>|<text>
+
+The values displayed in each line correspond to the "bufnr", "lnum", "col" and
+"text" fields returned by the |getqflist()| function.
+
+For some quickfix/location lists, the displayed text need to be customized.
+For example, if only the filename is present for a quickfix entry, then the
+two "|" field separator characters after the filename are not needed.  Another
+use case is to customize the path displayed for a filename. By default, the
+complete path (which may be too long) is displayed for files which are not
+under the current directory tree. The file path may need to be simplified to a
+common parent directory.
+
+The displayed text can be customized by setting the 'quickfixtextfunc' option
+to a Vim function.  This function will be called with a dict argument and
+should return a List of strings to be displayed in the quickfix or location
+list window. The dict argument will have the following fields:
+
+    quickfix	set to 1 when called for a quickfix list and 0 when called for
+		a location list.
+    winid	for a location list, set to the id of the window with the
+		location list. For a quickfix list, set to 0. Can be used in
+		getloclist() to get the location list entry.
+    id		quickfix or location list identifier
+    start_idx	index of the first entry for which text should be returned
+    end_idx	index of the last entry for which text should be returned
+
+The function should return a single line of text to display in the quickfix
+window for each entry from start_idx to end_idx. The function can obtain
+information about the entries using the |getqflist()| function and specifying
+the quickfix list identifier "id". For a location list, getloclist() function
+can be used with the 'winid' argument.
+
+If a quickfix or location list specific customization is needed, then the
+'quickfixtextfunc' attribute of the list can be set using the |setqflist()| or
+|setloclist()| function. This overrides the global 'quickfixtextfunc' option.
+
+The example below displays the list of old files (|v:oldfiles|) in a quickfix
+window. As there is no line, column number and error text information
+associated with each entry, the 'quickfixtextfunc' function returns only the
+filename.
+Example: >
+    " create a quickfix list from v:oldfiles
+    call setqflist([], ' ', {'lines' : v:oldfiles, 'efm' : '%f',
+					\ 'quickfixtextfunc' : 'QfOldFiles'})
+    func QfOldFiles(info)
+	" get information about a range of quickfix entries
+	let items = getqflist({'id' : a:info.id, 'items' : 1}).items
+	let l = []
+	for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)
+	    " use the simplified file name
+	  call add(l, fnamemodify(bufname(items[idx].bufnr), ':p:.'))
+	endfor
+	return l
+    endfunc
+<
 
  vim:tw=78:ts=8:noet:ft=help:norl:
