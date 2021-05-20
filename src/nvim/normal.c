@@ -1942,10 +1942,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_FORMAT:
       if (*curbuf->b_p_fex != NUL) {
         op_formatexpr(oap);             // use expression
-      } else if (*p_fp != NUL || *curbuf->b_p_fp != NUL) {
-        op_colon(oap);                  // use external command
       } else {
-        op_format(oap, false);          // use internal function
+        if (*p_fp != NUL || *curbuf->b_p_fp != NUL) {
+          op_colon(oap);                // use external command
+        } else {
+          op_format(oap, false);        // use internal function
+        }
       }
       break;
 

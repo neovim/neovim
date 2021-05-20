@@ -1619,7 +1619,7 @@ void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty,
       char buf[IOSIZE];
 
       // apply :filter /pat/ to variable name
-      xstrlcpy(buf, prefix, IOSIZE - 1);
+      xstrlcpy(buf, prefix, IOSIZE);
       xstrlcat(buf, (char *)di->di_key, IOSIZE);
       if (message_filtered((char_u *)buf)) {
         continue;

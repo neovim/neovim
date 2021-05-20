@@ -781,9 +781,58 @@ func Test_diff_lastline()
   bwipe!
 endfunc
 
+func WriteDiffFiles(buf, list1, list2)
+  call writefile(a:list1, 'Xfile1')
+  call writefile(a:list2, 'Xfile2')
+  if a:buf
+    call term_sendkeys(a:buf, ":checktime\<CR>")
+  endif
+endfunc
+" Verify a screendump with both the internal and external diff.
+func VerifyBoth(buf, dumpfile, extra)
+  " trailing : for leaving the cursor on the command line
+  for cmd in [":set diffopt=filler" . a:extra . "\<CR>:", ":set diffopt+=internal\<CR>:"]
+    call term_sendkeys(a:buf, cmd)
+    if VerifyScreenDump(a:buf, a:dumpfile, {}, cmd =~ 'internal' ? 'internal' : 'external')
+      break " don't let the next iteration overwrite the "failed" file.
+      " don't let the next iteration overwrite the "failed" file.
+      return
+    endif
+  endfor
+
+  " also test unified diff
+  call term_sendkeys(a:buf, ":call SetupUnified()\<CR>:")
+  call VerifyScreenDump(a:buf, a:dumpfile, {}, 'unified')
+  call term_sendkeys(a:buf, ":call StopUnified()\<CR>:")
+endfunc
+
+" Verify a screendump with the internal diff only.
+func VerifyInternal(buf, dumpfile, extra)
+  call term_sendkeys(a:buf, ":diffupdate!\<CR>")
+  " trailing : for leaving the cursor on the command line
+  call term_sendkeys(a:buf, ":set diffopt=internal,filler" . a:extra . "\<CR>:")
+  call TermWait(a:buf)
+  call VerifyScreenDump(a:buf, a:dumpfile, {})
+endfunc
+
 func Test_diff_screen()
   CheckScreendump
   CheckFeature menu
+
+  let lines =<< trim END
+      func UnifiedDiffExpr()
+        " Prepend some text to check diff type detection
+        call writefile(['warning', '  message'], v:fname_out)
+        silent exe '!diff -u ' .. v:fname_in .. ' ' .. v:fname_new .. '>>' .. v:fname_out
+      endfunc
+      func SetupUnified()
+        set diffexpr=UnifiedDiffExpr()
+      endfunc
+      func StopUnified()
+        set diffexpr=
+      endfunc
+  END
+  call writefile(lines, 'XdiffSetup')
 
   " clean up already existing swap files, just in case
   call delete('.Xfile1.swp')
@@ -791,7 +840,7 @@ func Test_diff_screen()
 
   " Test 1: Add a line in beginning of file 2
   call WriteDiffFiles(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-  let buf = RunVimInTerminal('-d Xfile1 Xfile2', {})
+  let buf = RunVimInTerminal('-d -S XdiffSetup Xfile1 Xfile2', {})
   " Set autoread mode, so that Vim won't complain once we re-write the test
   " files
   call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
@@ -911,6 +960,7 @@ func Test_diff_screen()
   call StopVimInTerminal(buf)
   call delete('Xfile1')
   call delete('Xfile2')
+  call delete('XdiffSetup')
 endfunc
 
 func Test_diff_with_cursorline()

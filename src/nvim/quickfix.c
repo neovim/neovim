@@ -3919,13 +3919,13 @@ static int qf_buf_add_line(buf_T *buf, linenr_T lnum, const qfline_T *qfp,
   buf_T *errbuf;
 
   if (qfp->qf_module != NULL) {
-    STRLCPY(IObuff, qfp->qf_module, IOSIZE - 1);
+    STRLCPY(IObuff, qfp->qf_module, IOSIZE);
     len = (int)STRLEN(IObuff);
   } else if (qfp->qf_fnum != 0
              && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
              && errbuf->b_fname != NULL) {
     if (qfp->qf_type == 1) {  // :helpgrep
-      STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE - 1);
+      STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE);
     } else {
       // Shorten the file name if not done already.
       // For optimization, do this only for the first entry in a
@@ -3938,7 +3938,7 @@ static int qf_buf_add_line(buf_T *buf, linenr_T lnum, const qfline_T *qfp,
         }
         shorten_buf_fname(errbuf, dirname, false);
       }
-      STRLCPY(IObuff, errbuf->b_fname, IOSIZE - 1);
+      STRLCPY(IObuff, errbuf->b_fname, IOSIZE);
     }
     len = (int)STRLEN(IObuff);
   } else {

@@ -65,7 +65,7 @@ FileComparison path_full_compare(char_u *const s1, char_u *const s2,
   if (expandenv) {
       expand_env(s1, exp1, MAXPATHL);
   } else {
-      xstrlcpy((char *)exp1, (const char *)s1, MAXPATHL - 1);
+      xstrlcpy((char *)exp1, (const char *)s1, MAXPATHL);
   }
   bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
   bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
