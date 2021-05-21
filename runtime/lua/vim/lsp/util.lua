@@ -883,7 +883,7 @@ function M.make_floating_popup_options(width, height, opts)
 
   local win_pos = vim.api.nvim_win_get_position(0)
   local lines_above = win_pos[1] + vim.fn.winline() - 1
-  local lines_below = vim.fn.winheight(0) - lines_above
+  local lines_below = api.nvim_get_option('lines') - lines_above
 
   if lines_above < lines_below then
     anchor = anchor..'N'
