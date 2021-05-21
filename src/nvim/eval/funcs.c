@@ -9420,7 +9420,6 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   int res;
   typval_T rettv;
   typval_T argv[3];
-  int dummy;
   const char *func_name;
   partial_T *partial = sortinfo->item_compare_partial;
 
@@ -9444,10 +9443,11 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   tv_copy(TV_LIST_ITEM_TV(si2->item), &argv[1]);
 
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this
-  res = call_func((const char_u *)func_name,
-                  -1,
-                  &rettv, 2, argv, NULL, 0L, 0L, &dummy, true,
-                  partial, sortinfo->item_compare_selfdict);
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.evaluate = true;
+  funcexe.partial = partial;
+  funcexe.selfdict = sortinfo->item_compare_selfdict;
+  res = call_func((const char_u *)func_name, -1, &rettv, 2, argv, &funcexe);
   tv_clear(&argv[0]);
   tv_clear(&argv[1]);
 

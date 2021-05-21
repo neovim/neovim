@@ -737,15 +737,15 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv,
                      int argc, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
-  int dummy;
+  funcexe_T funcexe = FUNCEXE_INIT;
 
   if (expr->v_type == VAR_FUNC) {
     const char_u *const s = expr->vval.v_string;
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    if (call_func(s, -1, rettv, argc, argv, NULL,
-                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
+    funcexe.evaluate = true;
+    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
   } else if (expr->v_type == VAR_PARTIAL) {
@@ -754,8 +754,9 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv,
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    if (call_func(s, -1, rettv, argc, argv, NULL,
-                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
+    funcexe.evaluate = true;
+    funcexe.partial = partial;
+    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
   } else {
@@ -1051,7 +1052,6 @@ int call_vim_function(
 )
   FUNC_ATTR_NONNULL_ALL
 {
-  int doesrange;
   int ret;
   int len = (int)STRLEN(func);
   partial_T *pt = NULL;
@@ -1067,9 +1067,12 @@ int call_vim_function(
   }
 
   rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
-  ret = call_func(func, len, rettv, argc, argv, NULL,
-                  curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                  &doesrange, true, pt, NULL);
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = true;
+  funcexe.partial = pt;
+  ret = call_func(func, len, rettv, argc, argv, &funcexe);
 
 fail:
   if (ret == FAIL) {
@@ -3988,9 +3991,12 @@ static int eval7(
         s = xmemdupz(s, len);
 
         // Invoke the function.
-        ret = get_func_tv(s, len, rettv, arg,
-                          curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                          &len, evaluate, partial, NULL);
+        funcexe_T funcexe = FUNCEXE_INIT;
+        funcexe.firstline = curwin->w_cursor.lnum;
+        funcexe.lastline = curwin->w_cursor.lnum;
+        funcexe.evaluate = evaluate;
+        funcexe.partial = partial;
+        ret = get_func_tv(s, len, rettv, arg, &funcexe);
 
         xfree(s);
 
@@ -7260,10 +7266,12 @@ bool callback_call(Callback *const callback, const int argcount_in,
       abort();
   }
 
-  int dummy;
-  return call_func(name, -1, rettv, argcount_in, argvars_in,
-                   NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
-                   true, partial, NULL);
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = true;
+  funcexe.partial = partial;
+  return call_func(name, -1, rettv, argcount_in, argvars_in, &funcexe);
 }
 
 static bool set_ref_in_callback(Callback *callback, int copyID,
@@ -8426,7 +8434,6 @@ handle_subscript(
   int ret = OK;
   dict_T      *selfdict = NULL;
   const char_u *s;
-  int len;
   typval_T functv;
   int slen = 0;
   bool lua = false;
@@ -8474,9 +8481,14 @@ handle_subscript(
       } else {
         s = (char_u *)"";
       }
-      ret = get_func_tv(s, lua ? slen : -1, rettv, (char_u **)arg,
-                        curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                        &len, evaluate, pt, selfdict);
+
+      funcexe_T funcexe = FUNCEXE_INIT;
+      funcexe.firstline = curwin->w_cursor.lnum;
+      funcexe.lastline = curwin->w_cursor.lnum;
+      funcexe.evaluate = evaluate;
+      funcexe.partial = pt;
+      funcexe.selfdict = selfdict;
+      ret = get_func_tv(s, lua ? slen : -1, rettv, (char_u **)arg, &funcexe);
 
       // Clear the funcref afterwards, so that deleting it while
       // evaluating the arguments is possible (see test55).
@@ -10416,19 +10428,11 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments,
   typval_T rettv = { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
   tv_list_ref(arguments);
 
-  int dummy;
-  (void)call_func((const char_u *)func,
-                  name_len,
-                  &rettv,
-                  2,
-                  argvars,
-                  NULL,
-                  curwin->w_cursor.lnum,
-                  curwin->w_cursor.lnum,
-                  &dummy,
-                  true,
-                  NULL,
-                  NULL);
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = true;
+  (void)call_func((const char_u *)func, name_len, &rettv, 2, argvars, &funcexe);
 
   tv_list_unref(arguments);
   // Restore caller scope information

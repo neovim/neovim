@@ -30,8 +30,31 @@ typedef enum {
   ERROR_DELETED,
 } FnameTransError;
 
+/// Used in funcexe_T. Returns the new argcount.
 typedef int (*ArgvFunc)(int current_argcount, typval_T *argv, int argskip,
                         int called_func_argcount);
+
+/// Structure passed between functions dealing with function call execution.
+typedef struct {
+  ArgvFunc argv_func;  ///< when not NULL, can be used to fill in arguments only
+                       ///< when the invoked function uses them
+  linenr_T firstline;  ///< first line of range
+  linenr_T lastline;   ///< last line of range
+  bool *doesrange;     ///< [out] if not NULL: function handled range
+  bool evaluate;       ///< actually evaluate expressions
+  partial_T *partial;  ///< for extra arguments
+  dict_T *selfdict;    ///< Dictionary for "self"
+} funcexe_T;
+
+#define FUNCEXE_INIT (funcexe_T) { \
+  .argv_func = NULL, \
+  .firstline = 0, \
+  .lastline = 0, \
+  .doesrange = NULL, \
+  .evaluate = false, \
+  .partial = NULL, \
+  .selfdict = NULL, \
+}
 
 #define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
 #define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]

@@ -614,12 +614,15 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   recursive++;
   try_start();
   typval_T rettv;
-  int dummy;
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = true;
+  funcexe.selfdict = self;
   // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
   // (see above) to capture abort-causing non-exception errors.
   (void)call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
-                  vim_args, NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                  &dummy, true, NULL, self);
+                  vim_args, &funcexe);
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
   }
