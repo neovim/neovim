@@ -951,7 +951,7 @@ end
 ---
 --@param location a single `Location` or `LocationLink`
 --@returns (bufnr,winnr) buffer and window number of floating window or nil
-function M.preview_location(location)
+function M.preview_location(location, opts)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
   if uri == nil then return end
@@ -962,7 +962,13 @@ function M.preview_location(location)
   local range = location.targetRange or location.range
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range["end"].line+1, false)
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
-  return M.open_floating_preview(contents, syntax)
+  if syntax == "" then
+    -- When no syntax is set, we use filetype as fallback. This might not result
+    -- in a valid syntax definition. See also ft detection in fancy_floating_win.
+    -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
+    syntax = api.nvim_buf_get_option(bufnr, 'filetype')
+  end
+  return M.open_floating_preview(contents, syntax, opts)
 end
 
 --@private
