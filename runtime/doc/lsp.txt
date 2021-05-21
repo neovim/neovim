@@ -525,6 +525,19 @@ LspDiagnosticsSignHint
   Used for "Hint" signs in sign column.
   See |vim.lsp.diagnostic.set_signs()|
 
+                                                   *lsp-highlight-signature*
+Signature Highlights:
+
+Highlight groups that are meant to be used by |vim.lsp.buf.signature_help()|.
+
+                                                   *hl-LspSignatureParamActive*
+LspSignatureParamActive   used for highlighting the active signature parameter
+                                                   *hl-LspSignatureActive*
+LspSignatureActive        used for highlighting the active signature
+                                                   *hl-LspSignatureInactive*
+LspSignatureInactive      used for highlighting the inactive signatures, for
+                          languages that support function overloading
+
 ==============================================================================
 AUTOCOMMANDS                                                *lsp-autocommands*
 
