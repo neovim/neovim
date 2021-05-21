@@ -1386,11 +1386,17 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     argend--;
   }
   expr = skipwhite(argend);
-  if (*expr != '=' && !((vim_strchr((char_u *)"+-*/%.", *expr) != NULL
-                         && expr[1] == '=') || STRNCMP(expr, "..=", 3) == 0)) {
+  const bool concat = expr[0] == '.'
+                      && ((expr[1] == '=' && current_sctx.sc_version < 2)
+                          || (expr[1] == '.' && expr[2] == '='));
+  if (*expr != '='
+      && !((vim_strchr((char_u *)"+-*/%", *expr) != NULL && expr[1] == '=')
+           || concat)) {
     // ":let" without "=": list variables
     if (*arg == '[') {
       EMSG(_(e_invarg));
+    } else if (expr[0] == '.') {
+      EMSG(_("E985: .= is not supported with script version 2"));
     } else if (!ends_excmd(*arg)) {
       // ":let var1 var2"
       arg = (char_u *)list_arg_vars(eap, (const char *)arg, &first);
@@ -3517,7 +3523,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
  * Handle fourth level expression:
  *	+	number addition
  *	-	number subtraction
- *	.	string concatenation
+ *	.	string concatenation (if script version is 1)
  *	..	string concatenation
  *
  * "arg" must point to the first non-white of the expression.
@@ -3544,9 +3550,13 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
    * Repeat computing, until no '+', '-' or '.' is following.
    */
   for (;; ) {
+    // "." is only string concatenation when scriptversion is 1
     op = **arg;
-    if (op != '+' && op != '-' && op != '.')
+    const bool concat
+        = op == '.' && (*(*arg + 1) == '.' || current_sctx.sc_version < 2);
+    if (op != '+' && op != '-' && !concat) {
       break;
+    }
 
     if ((op != '+' || rettv->v_type != VAR_LIST)
         && (op == '.' || rettv->v_type != VAR_FLOAT)) {
@@ -3839,6 +3849,12 @@ static int eval7(
   }
   end_leader = *arg;
 
+  if (**arg == '.' && (!isdigit(*(*arg + 1)) || current_sctx.sc_version < 2)) {
+    EMSG2(_(e_invexpr2), *arg);
+    (*arg)++;
+    return FAIL;
+  }
+
   switch (**arg) {
   // Number constant.
   case '0':
@@ -3851,15 +3867,23 @@ static int eval7(
   case '7':
   case '8':
   case '9':
+  case '.':
   {
-    char_u *p = skipdigits(*arg + 1);
+    char_u *p;
     int get_float = false;
 
     // We accept a float when the format matches
     // "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
     // strict to avoid backwards compatibility problems.
+    // With script version 2 and later the leading digit can be
+    // omitted.
     // Don't look for a float after the "." operator, so that
     // ":let vers = 1.2.3" doesn't fail.
+    if (**arg == '.') {
+      p = *arg;
+    } else {
+      p = skipdigits(*arg + 1);
+    }
     if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
       get_float = true;
       p = skipdigits(p + 2);

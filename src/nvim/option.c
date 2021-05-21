@@ -2220,6 +2220,7 @@ set_string_option_direct(
         script_ctx.sc_sid = set_sid;
         script_ctx.sc_seq = 0;
         script_ctx.sc_lnum = 0;
+        script_ctx.sc_version = 1;
       }
       set_option_sctx_idx(idx, opt_flags, script_ctx);
     }
@@ -3764,7 +3765,8 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
     .script_ctx = {
       script_ctx.sc_sid,
       script_ctx.sc_seq,
-      script_ctx.sc_lnum + sourcing_lnum
+      script_ctx.sc_lnum + sourcing_lnum,
+      script_ctx.sc_version
     },
     current_channel_id
   };

@@ -1944,6 +1944,7 @@ static int execute_env(char *env)
     current_sctx.sc_sid = SID_ENV;
     current_sctx.sc_seq = 0;
     current_sctx.sc_lnum = 0;
+    current_sctx.sc_version = 1;
     do_cmdline_cmd((char *)initstr);
     sourcing_name = save_sourcing_name;
     sourcing_lnum = save_sourcing_lnum;

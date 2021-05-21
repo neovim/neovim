@@ -267,6 +267,7 @@ typedef struct {
   scid_T sc_sid;     // script ID
   int sc_seq;        // sourcing sequence number
   linenr_T sc_lnum;  // line number
+  int sc_version;    // :scriptversion
 } sctx_T;
 
 /// Maximum number of function arguments

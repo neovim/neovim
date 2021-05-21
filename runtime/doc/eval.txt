@@ -875,6 +875,7 @@ result is a new list with the two lists Concatenated.
 
 For String concatenation ".." is preferred, since "." is ambiguous, it is also
 used for |Dict| member access and floating point numbers.
+When |vimscript-version| is 2 or higher, using "." is not allowed.
 
 expr7 * expr7  Number multiplication				*expr-star*
 expr7 / expr7  Number division					*expr-/*
@@ -10078,16 +10079,19 @@ This does NOT work: >
 			When the selected range of items is partly past the
 			end of the list, items will be added.
 
-                                            *:let+=* *:let-=* *:letstar=*
-                                            *:let/=* *:let%=* *:let.=* *E734*
+			*:let+=* *:let-=* *:letstar=*
+			*:let/=* *:let%=* *:let.=* *:let..=* *E734* *E985*
 :let {var} += {expr1}	Like ":let {var} = {var} + {expr1}".
 :let {var} -= {expr1}	Like ":let {var} = {var} - {expr1}".
 :let {var} *= {expr1}	Like ":let {var} = {var} * {expr1}".
 :let {var} /= {expr1}	Like ":let {var} = {var} / {expr1}".
 :let {var} %= {expr1}	Like ":let {var} = {var} % {expr1}".
 :let {var} .= {expr1}	Like ":let {var} = {var} . {expr1}".
+:let {var} ..= {expr1}	Like ":let {var} = {var} .. {expr1}".
 			These fail if {var} was not set yet and when the type
 			of {var} and {expr1} don't fit the operator.
+			`.=` is not supported with Vim script version 2 and
+			later, see |vimscript-version|.
 
 
 :let ${env-name} = {expr1}			*:let-environment* *:let-$*
@@ -11825,6 +11829,37 @@ code can be used: >
       endif
     endfor
     unlet scriptnames_output
+
+==============================================================================
+Vim script versions		*vimscript-version* *vimscript-versions*
+							*scriptversion*
+
+Over time many features have been added to Vim script.  This includes Ex
+commands, functions, variable types, etc.  Each individual feature can be
+checked with the |has()| and |exists()| functions.
+
+Sometimes old syntax of functionality gets in the way of making Vim better.
+When support is taken away this will break older Vim scripts.  To make this
+explicit the |:scriptversion| command can be used.  When a Vim script is not
+compatible with older versions of Vim this will give an explicit error,
+instead of failing in mysterious ways.
+
+							*scriptversion-1*  >
+ :scriptversion 1
+<	This is the original Vim script, same as not using a |:scriptversion|
+	command.  Can be used to go back to old syntax for a range of lines.
+
+	Test for support with: >
+		has('vimscript-1')
+
+<							*scriptversion-2*  >
+ :scriptversion 2
+<	String concatenation with "." is not supported, use ".." instead.
+	This avoids the ambiguity using "." for Dict member access and
+	floating point numbers.  Now ".5" means the number 0.5.
+
+	Test for support with: >
+		has('vimscript-2')
 
 ==============================================================================
 The sandbox					*eval-sandbox* *sandbox* *E48*

@@ -339,7 +339,7 @@ EXTERN int garbage_collect_at_exit INIT(= false);
 #define SID_STR         -10     // for sourcing a string
 
 // Script CTX being sourced or was sourced to define the current function.
-EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });
+EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 COMMA 1 });
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT(= 0);
 

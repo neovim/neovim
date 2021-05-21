@@ -90,6 +90,42 @@ func Test_string_concatenation()
   call assert_equal('ab', a)
 endfunc
 
+scriptversion 2
+func Test_string_concat_scriptversion2()
+  let a = 'a'
+  let b = 'b'
+
+  call assert_fails('echo a . b', 'E15:')
+  call assert_fails('let a .= b', 'E985:')
+  call assert_fails('let vers = 1.2.3', 'E15:')
+
+  if has('float')
+    let f = .5
+    call assert_equal(0.5, f)
+  endif
+endfunc
+
+scriptversion 1
+func Test_string_concat_scriptversion1()
+  let a = 'a'
+  let b = 'b'
+
+  echo a . b
+  let a .= b
+  let vers = 1.2.3
+  call assert_equal('123', vers)
+
+  if has('float')
+    call assert_fails('let f = .5', 'E15:')
+  endif
+endfunc
+
+func Test_scriptversion()
+  call writefile(['scriptversion 9'], 'Xversionscript')
+  call assert_fails('source Xversionscript', 'E999:')
+  call delete('Xversionscript')
+endfunc
+
 func Test_nocatch_restore_silent_emsg()
   silent! try
     throw 1
