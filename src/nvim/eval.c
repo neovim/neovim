@@ -3165,6 +3165,8 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
 {
   int ret;
   char_u      *p;
+  const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
 
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evaluate);
@@ -3174,8 +3176,10 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
     }
     // Report the invalid expression unless the expression evaluation has
     // been cancelled due to an aborting error, an interrupt, or an
-    // exception.
-    if (!aborting()) {
+    // exception, or we already gave a more specific error.
+    // Also check called_emsg for when using assert_fails().
+    if (!aborting() && did_emsg == did_emsg_before
+        && called_emsg == called_emsg_before) {
       emsgf(_(e_invexpr2), arg);
     }
     ret = FAIL;
@@ -9278,6 +9282,7 @@ void ex_echo(exarg_T *eap)
   bool atstart = true;
   bool need_clear = true;
   const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
 
   if (eap->skip)
     ++emsg_skip;
@@ -9292,7 +9297,8 @@ void ex_echo(exarg_T *eap)
         // Report the invalid expression unless the expression evaluation
         // has been cancelled due to an aborting error, an interrupt, or an
         // exception.
-        if (!aborting() && did_emsg == did_emsg_before) {
+        if (!aborting() && did_emsg == did_emsg_before
+            && called_emsg == called_emsg_before) {
           EMSG2(_(e_invexpr2), p);
         }
         need_clr_eos = false;
