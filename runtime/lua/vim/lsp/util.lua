@@ -804,9 +804,10 @@ end
 --- Converts `textDocument/SignatureHelp` response to markdown lines.
 ---
 --@param signature_help Response of `textDocument/SignatureHelp`
+--@param ft optional filetype that will be use as the `lang` for the label markdown code block
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help)
+function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   if not signature_help.signatures then
     return
   end
@@ -824,7 +825,12 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
   if not signature then
     return
   end
-  vim.list_extend(contents, vim.split(signature.label, '\n', true))
+  local label = signature.label
+  if ft then
+    -- wrap inside a code block so fancy_markdown can render it properly
+    label = ("```%s\n%s\n```"):format(ft, label)
+  end
+  vim.list_extend(contents, vim.split(label, '\n', true))
   if signature.documentation then
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
@@ -951,7 +957,7 @@ end
 ---
 --@param location a single `Location` or `LocationLink`
 --@returns (bufnr,winnr) buffer and window number of floating window or nil
-function M.preview_location(location)
+function M.preview_location(location, opts)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
   if uri == nil then return end
@@ -962,7 +968,13 @@ function M.preview_location(location)
   local range = location.targetRange or location.range
   local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range["end"].line+1, false)
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
-  return M.open_floating_preview(contents, syntax)
+  if syntax == "" then
+    -- When no syntax is set, we use filetype as fallback. This might not result
+    -- in a valid syntax definition. See also ft detection in fancy_floating_win.
+    -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
+    syntax = api.nvim_buf_get_option(bufnr, 'filetype')
+  end
+  return M.open_floating_preview(contents, syntax, opts)
 end
 
 --@private
@@ -1154,34 +1166,29 @@ function M.fancy_floating_markdown(contents, opts)
   api.nvim_win_set_option(winnr, 'conceallevel', 2)
   api.nvim_win_set_option(winnr, 'concealcursor', 'n')
 
+  vim.cmd("ownsyntax lsp_markdown")
+
   local idx = 1
   --@private
   local function apply_syntax_to_region(ft, start, finish)
     if ft == "" then
-      vim.cmd(string.format("syntax region markdownCodeBlock start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
+      vim.cmd(string.format("syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
       return
     end
     local name = ft..idx
     idx = idx + 1
     local lang = "@"..ft:upper()
+    -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
+    pcall(vim.api.nvim_buf_del_var, bufnr, "current_syntax")
     -- TODO(ashkan): better validation before this.
     if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
       return
     end
     vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s keepend", name, start, finish + 1, lang))
   end
-  -- Previous highlight region.
-  local ph = 1
-  for _, h in ipairs(highlights) do
-    if ph <= h.start - 1 then
-      apply_syntax_to_region('lsp_markdown', ph, h.start - 1)
-    end
-    apply_syntax_to_region(h.ft, h.start, h.finish)
-    ph = h.finish + 1
-  end
 
-  if ph <= #stripped then
-    apply_syntax_to_region('lsp_markdown', ph, #stripped)
+  for _, h in ipairs(highlights) do
+    apply_syntax_to_region(h.ft, h.start, h.finish)
   end
 
   vim.api.nvim_set_current_win(cwin)
