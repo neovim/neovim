@@ -97,7 +97,7 @@ describe('NULL', function()
     null_expr_test('makes filter() return v:_null_list', 'filter(L, "1") is# L', 0, 1)
     null_test('is treated by :let as empty list', ':let [l] = L', 'Vim(let):E688: More targets than List items')
     null_expr_test('is accepted as an empty list by inputlist()', '[feedkeys("\\n"), inputlist(L)]',
-                   'Type number and <Enter> or click with mouse (empty cancels): ', {0, 0})
+                   'Type number and <Enter> or click with the mouse (q or empty cancels): ', {0, 0})
     null_expr_test('is accepted as an empty list by writefile()',
                    ('[writefile(L, "%s"), readfile("%s")]'):format(tmpfname, tmpfname),
                    0, {0, {}})
