@@ -11861,6 +11861,15 @@ instead of failing in mysterious ways.
 	Test for support with: >
 		has('vimscript-2')
 
+<							*scriptversion-3*  >
+ :scriptversion 3
+<	All |vim-variable|s must be prefixed by "v:".  E.g. "version" doesn't
+	work as |v:version| anymore, it can be used as a normal variable.
+	Same for some obvious names as "count" and others.
+
+	Test for support with: >
+		has('vimscript-3')
+
 ==============================================================================
 The sandbox					*eval-sandbox* *sandbox* *E48*
 

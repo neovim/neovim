@@ -120,6 +120,26 @@ func Test_string_concat_scriptversion1()
   endif
 endfunc
 
+scriptversion 3
+func Test_vvar_scriptversion3()
+  call assert_fails('echo version', 'E121:')
+  call assert_false(exists('version'))
+  let version = 1
+  call assert_equal(1, version)
+endfunc
+
+scriptversion 2
+func Test_vvar_scriptversion2()
+  call assert_true(exists('version'))
+  echo version
+  call assert_fails('let version = 1', 'E46:')
+  call assert_equal(v:version, version)
+endfunc
+
+" :scriptversion 1 is required for the tests below until
+" Test_vvar_scriptversion1() is ported here from v8.1.2035
+scriptversion 1
+
 func Test_scriptversion()
   call writefile(['scriptversion 9'], 'Xversionscript')
   call assert_fails('source Xversionscript', 'E999:')

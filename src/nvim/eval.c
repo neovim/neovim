@@ -8669,10 +8669,13 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len,
     }
     *varname = name;
 
-    // "version" is "v:version" in all scopes
-    hi = hash_find_len(&compat_hashtab, name, name_len);
-    if (!HASHITEM_EMPTY(hi)) {
-      return &compat_hashtab;
+    // "version" is "v:version" in all scopes if scriptversion < 3.
+    // Same for a few other variables marked with VV_COMPAT.
+    if (current_sctx.sc_version < 3) {
+      hi = hash_find_len(&compat_hashtab, name, name_len);
+      if (!HASHITEM_EMPTY(hi)) {
+        return &compat_hashtab;
+      }
     }
 
     if (funccal == NULL) {  // global variable
