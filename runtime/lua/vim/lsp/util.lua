@@ -804,9 +804,10 @@ end
 --- Converts `textDocument/SignatureHelp` response to markdown lines.
 ---
 --@param signature_help Response of `textDocument/SignatureHelp`
+--@param ft optional filetype that will be use as the `lang` for the label markdown code block
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help)
+function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   if not signature_help.signatures then
     return
   end
@@ -824,7 +825,12 @@ function M.convert_signature_help_to_markdown_lines(signature_help)
   if not signature then
     return
   end
-  vim.list_extend(contents, vim.split(signature.label, '\n', true))
+  local label = signature.label
+  if ft then
+    -- wrap inside a code block so fancy_markdown can render it properly
+    label = ("```%s\n%s\n```"):format(ft, label)
+  end
+  vim.list_extend(contents, vim.split(label, '\n', true))
   if signature.documentation then
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end

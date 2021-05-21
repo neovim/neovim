@@ -271,9 +271,7 @@ function M.hover(_, method, result, _, _, config)
       -- return { 'No information available' }
       return
     end
-    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
-      border = config.border
-    })
+    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, config)
     util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
     return bufnr, winnr
   end)
@@ -341,17 +339,20 @@ function M.signature_help(_, method, result, _, bufnr, config)
     print('No signature help available')
     return
   end
-  local lines = util.convert_signature_help_to_markdown_lines(result)
-  lines = util.trim_empty_lines(lines)
-  if vim.tbl_isempty(lines) then
-    print('No signature help available')
-    return
-  end
-  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
-  local p_bufnr, _ = util.focusable_preview(method, function()
-    return lines, util.try_trim_markdown_code_blocks(lines), config
+  local p_bufnr, winnr = util.focusable_float(method, function()
+    local ft = api.nvim_buf_get_option(bufnr, 'filetype')
+    local lines = util.convert_signature_help_to_markdown_lines(result, ft)
+    lines = util.trim_empty_lines(lines)
+    if vim.tbl_isempty(lines) then
+      print('No signature help available')
+      return
+    end
+    local p_bufnr, p_winnr = util.fancy_floating_markdown(lines, config)
+    util.close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden", "InsertCharPre"}, p_winnr)
+
+    return p_bufnr, p_winnr
   end)
-  api.nvim_buf_set_option(p_bufnr, 'syntax', syntax)
+  return p_bufnr, winnr
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
