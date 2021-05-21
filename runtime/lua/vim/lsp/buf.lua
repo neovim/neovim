@@ -297,6 +297,7 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   return choice
 end
 
+--@private
 local function call_hierarchy(method)
   local params = util.make_position_params()
   request('textDocument/prepareCallHierarchy', params, function(err, _, result)
