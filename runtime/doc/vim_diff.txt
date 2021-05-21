@@ -460,6 +460,7 @@ Commands:
   :Print
   :promptfind
   :promptrepl
+  :scriptversion (always version 1)
   :shell
   :sleep! (does not hide the cursor; same as :sleep)
   :smile
