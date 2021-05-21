@@ -1079,6 +1079,10 @@ func Test_inputlist()
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>q", 'tx')
   call assert_equal(0, c)
 
+  " Cancel after inputting a number
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>5q", 'tx')
+  call assert_equal(0, c)
+
   call assert_fails('call inputlist("")', 'E686:')
 endfunc
 
