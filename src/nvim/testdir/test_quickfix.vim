@@ -261,13 +261,13 @@ func XwindowTests(cchar)
   " Open the window
   Xopen 5
   call assert_true(winnr('$') == 2 && getline('.') ==# '|| non-error 1'
-		      \  && winheight('.') == 5)
+		      \  && winheight(0) == 5)
 
   " Opening the window again, should move the cursor to that window
   wincmd t
   Xopen 7
   call assert_true(winnr('$') == 2 && winnr() == 2 &&
-	\ winheight('.') == 7 &&
+	\ winheight(0) == 7 &&
 	\ getline('.') ==# '|| non-error 1')
 
   " :cnext in quickfix window should move to the next entry
