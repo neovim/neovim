@@ -1160,34 +1160,29 @@ function M.fancy_floating_markdown(contents, opts)
   api.nvim_win_set_option(winnr, 'conceallevel', 2)
   api.nvim_win_set_option(winnr, 'concealcursor', 'n')
 
+  vim.cmd("ownsyntax lsp_markdown")
+
   local idx = 1
   --@private
   local function apply_syntax_to_region(ft, start, finish)
     if ft == "" then
-      vim.cmd(string.format("syntax region markdownCodeBlock start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
+      vim.cmd(string.format("syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
       return
     end
     local name = ft..idx
     idx = idx + 1
     local lang = "@"..ft:upper()
+    -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
+    pcall(vim.api.nvim_buf_del_var, bufnr, "current_syntax")
     -- TODO(ashkan): better validation before this.
     if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
       return
     end
     vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s keepend", name, start, finish + 1, lang))
   end
-  -- Previous highlight region.
-  local ph = 1
-  for _, h in ipairs(highlights) do
-    if ph <= h.start - 1 then
-      apply_syntax_to_region('lsp_markdown', ph, h.start - 1)
-    end
-    apply_syntax_to_region(h.ft, h.start, h.finish)
-    ph = h.finish + 1
-  end
 
-  if ph <= #stripped then
-    apply_syntax_to_region('lsp_markdown', ph, #stripped)
+  for _, h in ipairs(highlights) do
+    apply_syntax_to_region(h.ft, h.start, h.finish)
   end
 
   vim.api.nvim_set_current_win(cwin)
