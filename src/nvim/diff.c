@@ -76,12 +76,6 @@ typedef struct {
   mmfile_t din_mmfile;  // used for internal diff
 } diffin_T;
 
-// used for diff result
-typedef struct {
-  char_u *dout_fname;  // used for external diff
-  garray_T dout_ga;     // used for internal diff
-} diffout_T;
-
 // two diff inputs and one result
 typedef struct {
   diffin_T dio_orig;      // original file input
@@ -100,6 +94,47 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
 #endif
+
+// Allocates a new diff hunk block after the provided block.
+//
+// @return the new diff hunk
+static Diff2Hunk *diff2_hunk_alloc(Diff2Hunk *cur_hunk)
+{
+  Diff2Hunk *new_hunk = xmalloc(sizeof(Diff2Hunk));
+
+  if (cur_hunk == NULL) {
+    new_hunk->next = NULL;
+  } else {
+    new_hunk->next = cur_hunk->next;
+    cur_hunk->next = new_hunk;
+  }
+  return new_hunk;
+}
+
+// Returns the length of the provided list
+//
+// @param the head of the list
+size_t diff2_hunk_list_length(Diff2Hunk *head)
+{
+  size_t len = 0;
+  while (head != NULL) {
+    len += 1;
+    head = head->next;
+  }
+  return len;
+}
+
+// Deallocates the entire Diff2Hunk list.
+//
+// @param the head of the list
+void diff2_hunk_list_dealloc(Diff2Hunk *cur)
+{
+  while (cur != NULL) {
+    Diff2Hunk *next = cur->next;
+    xfree(cur);
+    cur = next;
+  }
+}
 
 /// Called when deleting or unloading a buffer: No longer make a diff with it.
 ///
@@ -1549,47 +1584,42 @@ void ex_diffoff(exarg_T *eap)
   }
 }
 
-/// Read the diff output and add each entry to the diff list.
+/// Parses the diff output.
 ///
-/// @param idx_orig idx of original file
-/// @param idx_new idx of new file
-/// @dout diff output
-static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
+/// @param diff output to parse
+/// @param the parsed list of diff hunks
+/// @return whether the parsing was successful
+bool diff_parse(diffout_T *input, Diff2Hunk **output_head)
 {
   FILE *fd = NULL;
   int line_idx = 0;
-  diff_T *dprev = NULL;
-  diff_T *dp = curtab->tp_first_diff;
-  diff_T *dn, *dpl;
   char_u linebuf[LBUFLEN];  // only need to hold the diff line
   char_u *line;
-  long off;
-  int i;
   linenr_T lnum_orig, lnum_new;
   long count_orig, count_new;
-  int notset = true;  // block "*dp" not set yet
+  Diff2Hunk *output_tail = NULL;
   enum {
     DIFF_ED,
     DIFF_UNIFIED,
     DIFF_NONE,
   } diffstyle = DIFF_NONE;
 
-  if (dout->dout_fname == NULL) {
+  if (input->dout_fname == NULL) {
     diffstyle = DIFF_UNIFIED;
   } else {
-    fd = os_fopen((char *)dout->dout_fname, "r");
+    fd = os_fopen((char *)input->dout_fname, "r");
     if (fd == NULL) {
       emsg(_("E98: Cannot read diff output"));
-      return;
+      return false;
     }
   }
 
   for (;;) {
     if (fd == NULL) {
-      if (line_idx >= dout->dout_ga.ga_len) {
+      if (line_idx >= input->dout_ga.ga_len) {
         break;      // did last line
       }
-      line = ((char_u **)dout->dout_ga.ga_data)[line_idx++];
+      line = ((char_u **)input->dout_ga.ga_data)[line_idx++];
     } else {
       if (vim_fgets(linebuf, LBUFLEN, fd)) {
         break;      // end of file
@@ -1644,6 +1674,50 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       }
     }
 
+    output_tail = diff2_hunk_alloc(output_tail);
+    output_tail->lstart_orig = lnum_orig;
+    output_tail->lstart_dest = lnum_new;
+    output_tail->count_orig = count_orig;
+    output_tail->count_dest = count_new;
+
+    if (*output_head == NULL) {
+      *output_head = output_tail;
+    }
+  }
+
+  if (fd != NULL) {
+    fclose(fd);
+  }
+  return true;
+}
+
+/// Read the diff output and add each entry to the diff list.
+///
+/// @param idx_orig idx of original file
+/// @param idx_new idx of new file
+/// @dout diff output
+static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
+{
+  diff_T *dprev = NULL;
+  diff_T *dp = curtab->tp_first_diff;
+  diff_T *dn, *dpl;
+  long off;
+  int i;
+  int notset = true;  // block "*dp" not set yet
+
+  Diff2Hunk *diff2_hunks_head = NULL;
+  bool parse_status = diff_parse(dout, &diff2_hunks_head);
+  if (!parse_status) {
+    return;
+  }
+
+  for (Diff2Hunk *diff2_hunks_cur = diff2_hunks_head;
+       diff2_hunks_cur;
+       diff2_hunks_cur = diff2_hunks_cur->next) {
+    linenr_T lnum_orig = diff2_hunks_cur->lstart_orig;
+    linenr_T lnum_new = diff2_hunks_cur->lstart_dest;
+    long count_orig = diff2_hunks_cur->count_orig;
+    long count_new = diff2_hunks_cur->count_dest;
     // Go over blocks before the change, for which orig and new are equal.
     // Copy blocks from orig to new.
     while (dp != NULL
@@ -1742,6 +1816,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     }
     notset = false;  // "*dp" has been set
   }
+  diff2_hunk_list_dealloc(diff2_hunks_head);
 
 // for remaining diff blocks orig and new are equal
   while (dp != NULL) {
@@ -1751,10 +1826,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     dprev = dp;
     dp = dp->df_next;
     notset = true;
-  }
-
-  if (fd != NULL) {
-    fclose(fd);
   }
 }
 
