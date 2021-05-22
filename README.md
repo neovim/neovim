@@ -126,3 +126,8 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 [Homebrew]: https://formulae.brew.sh/formula/neovim
 
 <!-- vim: set tw=80: -->
+
+Contributor over time
+-------
+
+[![Contributor over time](https://contributor-graph-api.apiseven.com/contributors-svg?chart=contributorOverTime&repo=neovim/neovim)](https://www.apiseven.com/en/contributor-graph?chart=contributorOverTime&repo=neovim/neovim)
