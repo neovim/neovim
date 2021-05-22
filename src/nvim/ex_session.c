@@ -937,8 +937,13 @@ void ex_mkrc(exarg_T *eap)
 
     if (!view_session || (eap->cmdidx == CMD_mksession
                           && (*flagp & SSOP_OPTIONS))) {
+      int flags = OPT_GLOBAL;
+
+      if (eap->cmdidx == CMD_mksession && (*flagp & SSOP_SKIP_RTP)) {
+        flags |= OPT_SKIPRTP;
+      }
       failed |= (makemap(fd, NULL) == FAIL
-                 || makeset(fd, OPT_GLOBAL, false) == FAIL);
+                 || makeset(fd, flags, false) == FAIL);
     }
 
     if (!failed && view_session) {

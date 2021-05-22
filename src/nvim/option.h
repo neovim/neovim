@@ -19,6 +19,9 @@ typedef enum {
   OPT_MODELINE = 8,   ///< Option in modeline.
   OPT_WINONLY  = 16,  ///< Only set window-local options.
   OPT_NOWIN    = 32,  ///< Don’t set window-local options.
+  OPT_ONECOLUMN = 64,  ///< list options one per line
+  OPT_NO_REDRAW = 128,  ///< ignore redraw flags on option
+  OPT_SKIPRTP = 256,  ///< "skiprtp" in 'sessionoptions'
 } OptionFlags;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
