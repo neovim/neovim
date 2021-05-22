@@ -939,9 +939,6 @@ void ex_mkrc(exarg_T *eap)
                           && (*flagp & SSOP_OPTIONS))) {
       failed |= (makemap(fd, NULL) == FAIL
                  || makeset(fd, OPT_GLOBAL, false) == FAIL);
-      if (p_hls && fprintf(fd, "%s", "set hlsearch\n") < 0) {
-        failed = true;
-      }
     }
 
     if (!failed && view_session) {
@@ -1000,6 +997,9 @@ void ex_mkrc(exarg_T *eap)
                   "%s",
                   "let &g:so = s:so_save | let &g:siso = s:siso_save\n")
           < 0) {
+        failed = true;
+      }
+      if (p_hls && fprintf(fd, "%s", "set hlsearch\n") < 0) {
         failed = true;
       }
       if (no_hlsearch && fprintf(fd, "%s", "nohlsearch\n") < 0) {
