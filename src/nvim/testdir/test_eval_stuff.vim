@@ -33,6 +33,24 @@ func Test_for_invalid()
   redraw
 endfunc
 
+func Test_readfile_binary()
+  new
+  call setline(1, ['one', 'two', 'three'])
+  setlocal ff=dos
+  silent write XReadfile
+  let lines = readfile('XReadfile')
+  call assert_equal(['one', 'two', 'three'], lines)
+  let lines = readfile('XReadfile', '', 2)
+  call assert_equal(['one', 'two'], lines)
+  let lines = readfile('XReadfile', 'b')
+  call assert_equal(["one\r", "two\r", "three\r", ""], lines)
+  let lines = readfile('XReadfile', 'b', 2)
+  call assert_equal(["one\r", "two\r"], lines)
+
+  bwipe!
+  call delete('XReadfile')
+endfunc
+
 func Test_mkdir_p()
   call mkdir('Xmkdir/nested', 'p')
   call assert_true(isdirectory('Xmkdir/nested'))
@@ -90,6 +108,15 @@ func Test_string_concatenation()
   call assert_equal('ab', a)
 endfunc
 
+" Test fix for issue #4507
+func Test_skip_after_throw()
+  try
+    throw 'something'
+    let x = wincol() || &ts
+  catch /something/
+  endtry
+endfunc
+
 func Test_nocatch_restore_silent_emsg()
   silent! try
     throw 1
@@ -109,15 +136,6 @@ func Test_let_errmsg()
   let v:errmsg = ''
   call assert_fails('let v:errmsg = []', 'E730:')
   let v:errmsg = ''
-endfunc
-
-" Test fix for issue #4507
-func Test_skip_after_throw()
-  try
-    throw 'something'
-    let x = wincol() || &ts
-  catch /something/
-  endtry
 endfunc
 
 func Test_number_max_min_size()

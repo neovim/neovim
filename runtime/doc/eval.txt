@@ -2508,7 +2508,8 @@ stdpath({what})                 String/List  returns the standard path(s) for {w
 str2float({expr})		Float	convert String to Float
 str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 					ASCII/UTF8 value
-str2nr({expr} [, {base}])	Number	convert String to Number
+str2nr({expr} [, {base} [, {quoted}]])
+				Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
 strcharpart({str}, {start} [, {len}])
 				String	{len} characters of {str} at
@@ -8637,9 +8638,11 @@ str2list({expr} [, {utf8}])				*str2list()*
 <		Can also be used as a |method|: >
 			GetString()->str2list()
 
-str2nr({expr} [, {base}])				*str2nr()*
+str2nr({expr} [, {base} [, {quoted}]])				*str2nr()*
 		Convert string {expr} to a number.
 		{base} is the conversion base, it can be 2, 8, 10 or 16.
+		When {quoted} is present and non-zero then embedded single
+		quotes are ignored, thus "1'000'000" is a million.
 
 		When {base} is omitted base 10 is used.  This also means that
 		a leading zero doesn't cause octal conversion to be used, as

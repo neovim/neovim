@@ -344,7 +344,7 @@ return {
     stdpath={args=1},
     str2float={args=1, base=1},
     str2list={args={1, 2}, base=1},
-    str2nr={args={1, 2}},
+    str2nr={args={1, 3}},
     strcharpart={args={2, 3}},
     strchars={args={1,2}},
     strdisplaywidth={args={1, 2}},
