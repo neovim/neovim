@@ -73,7 +73,7 @@ function M.set_lines(lines, A, B, new_lines)
   -- way the LSP describes the range including the last newline is by
   -- specifying a line number after what we would call the last line.
   local i_n = math.min(B[1] + 1, #lines)
-  if not (i_0 >= 1 and i_0 <= #lines and i_n >= 1 and i_n <= #lines) then
+  if not (i_0 >= 1 and i_0 <= #lines + 1 and i_n >= 1 and i_n <= #lines) then
     error("Invalid range: "..vim.inspect{A = A; B = B; #lines, new_lines})
   end
   local prefix = ""
