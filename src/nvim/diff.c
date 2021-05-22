@@ -1088,24 +1088,16 @@ static int diff_file_internal(diffio_T *diffio)
   return OK;
 }
 
-/// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
-///
-/// @param dio
-///
-/// @return OK or FAIL
-static int diff_file(diffio_T *dio)
+static void diff_file_external(diffio_T *dio)
 {
   char *tmp_orig = (char *)dio->dio_orig.din_fname;
   char *tmp_new = (char *)dio->dio_new.din_fname;
   char *tmp_diff = (char *)dio->dio_diff.dout_fname;
+
   if (*p_dex != NUL) {
     // Use 'diffexpr' to generate the diff file.
     eval_diff(tmp_orig, tmp_new, tmp_diff);
-    return OK;
-  }
-  // Use xdiff for generating the diff.
-  if (dio->dio_internal) {
-    return diff_file_internal(dio);
+    return;
   } else {
     const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
                         + STRLEN(p_srr) + 27);
@@ -1135,7 +1127,22 @@ static int diff_file(diffio_T *dio)
                      NULL);
     unblock_autocmds();
     xfree(cmd);
+  }
+}
+
+/// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
+///
+/// @param dio
+///
+/// @return OK or FAIL
+static int diff_file(diffio_T *dio)
+{
+  if (*p_dex != NUL || !dio->dio_internal) {
+    diff_file_external(dio);
     return OK;
+  } else {
+    // Use xdiff for generating the diff.
+    return diff_file_internal(dio);
   }
 }
 
