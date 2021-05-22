@@ -319,19 +319,19 @@ func Test_setbufvar_options()
   let prev_id = win_getid()
 
   wincmd j
-  let wh = winheight('.')
+  let wh = winheight(0)
   let dummy_buf = bufnr('dummy_buf1', v:true)
   call setbufvar(dummy_buf, '&buftype', 'nofile')
   execute 'belowright vertical split #' . dummy_buf
-  call assert_equal(wh, winheight('.'))
+  call assert_equal(wh, winheight(0))
   let dum1_id = win_getid()
 
   wincmd h
-  let wh = winheight('.')
+  let wh = winheight(0)
   let dummy_buf = bufnr('dummy_buf2', v:true)
   call setbufvar(dummy_buf, '&buftype', 'nofile')
   execute 'belowright vertical split #' . dummy_buf
-  call assert_equal(wh, winheight('.'))
+  call assert_equal(wh, winheight(0))
 
   bwipe!
   call win_gotoid(prev_id)
@@ -1066,6 +1066,22 @@ func Test_inputlist()
   call assert_equal(2, c)
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>3\<cr>", 'tx')
   call assert_equal(3, c)
+
+  " CR to cancel
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>\<cr>", 'tx')
+  call assert_equal(0, c)
+
+  " Esc to cancel
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>\<Esc>", 'tx')
+  call assert_equal(0, c)
+
+  " q to cancel
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>q", 'tx')
+  call assert_equal(0, c)
+
+  " Cancel after inputting a number
+  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>5q", 'tx')
+  call assert_equal(0, c)
 
   call assert_fails('call inputlist("")', 'E686:')
 endfunc

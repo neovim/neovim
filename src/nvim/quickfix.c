@@ -2672,7 +2672,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
 static int qf_jump_to_usable_window(int qf_fnum, bool newwin,
                                     int *opened_window)
 {
-  win_T       *usable_win_ptr = NULL;
+  win_T *usable_wp = NULL;
   bool usable_win = false;
 
   // If opening a new window, then don't use the location list referred by
@@ -2681,8 +2681,8 @@ static int qf_jump_to_usable_window(int qf_fnum, bool newwin,
   qf_info_T *ll_ref = newwin ? NULL : curwin->w_llist_ref;
   if (ll_ref != NULL) {
     // Find a non-quickfix window with this location list
-    usable_win_ptr = qf_find_win_with_loclist(ll_ref);
-    if (usable_win_ptr != NULL) {
+    usable_wp = qf_find_win_with_loclist(ll_ref);
+    if (usable_wp != NULL) {
       usable_win = true;
     }
   }
@@ -2710,7 +2710,7 @@ static int qf_jump_to_usable_window(int qf_fnum, bool newwin,
     *opened_window = true;  // close it when fail
   } else {
     if (curwin->w_llist_ref != NULL) {  // In a location window
-      qf_goto_win_with_ll_file(usable_win_ptr, qf_fnum, ll_ref);
+      qf_goto_win_with_ll_file(usable_wp, qf_fnum, ll_ref);
     } else {  // In a quickfix window
       qf_goto_win_with_qfl_file(qf_fnum);
     }
@@ -3038,14 +3038,11 @@ theend:
     qfl->qf_ptr = qf_ptr;
     qfl->qf_index = qf_index;
   }
-  if (p_swb != old_swb && opened_window) {
+  if (p_swb != old_swb && p_swb == empty_option && opened_window) {
     // Restore old 'switchbuf' value, but not when an autocommand or
     // modeline has changed the value.
-    if (p_swb == empty_option) {
-      p_swb = old_swb;
-      swb_flags = old_swb_flags;
-    } else
-      free_string_option(old_swb);
+    p_swb = old_swb;
+    swb_flags = old_swb_flags;
   }
 }
 
