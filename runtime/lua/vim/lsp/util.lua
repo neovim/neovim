@@ -4,6 +4,7 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require 'vim.highlight'
+local uv = vim.loop
 
 local npcall = vim.F.npcall
 local split = vim.split
@@ -1361,6 +1362,45 @@ local position_sort = sort_by_key(function(v)
   return {v.start.line, v.start.character}
 end)
 
+-- Gets the zero-indexed line from the given uri.
+-- For non-file uris, we load the buffer and get the line.
+-- If a loaded buffer exists, then that is used.
+-- Otherwise we get the line using libuv which is a lot faster than loading the buffer.
+--@param uri string uri of the resource to get the line from
+--@param row number zero-indexed line number
+--@return string the line at row in filename
+function M.get_line(uri, row)
+  -- load the buffer if this is not a file uri
+  -- Custom language server protocol extensions can result in servers sending URIs with custom schemes. Plugins are able to load these via `BufReadCmd` autocmds.
+  if uri:sub(1, 4) ~= "file" then
+    local bufnr = vim.uri_to_bufnr(uri)
+    vim.fn.bufload(bufnr)
+    return (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { "" })[1]
+  end
+
+  local filename = vim.uri_to_fname(uri)
+
+  -- use loaded buffers if available
+  if vim.fn.bufloaded(filename) == 1 then
+    local bufnr = vim.fn.bufnr(filename, false)
+    return (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { "" })[1]
+  end
+
+  local fd = uv.fs_open(filename, "r", 438)
+  -- TODO: what should we do in this case?
+  if not fd then return "" end
+  local stat = uv.fs_fstat(fd)
+  local data = uv.fs_read(fd, stat.size, 0)
+  uv.fs_close(fd)
+
+  local lnum = 0
+  for line in string.gmatch(data, "([^\n]*)\n?") do
+    if lnum == row then return line end
+    lnum = lnum + 1
+  end
+  return ""
+end
+
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
@@ -1389,14 +1429,12 @@ function M.locations_to_items(locations)
   for _, uri in ipairs(keys) do
     local rows = grouped[uri]
     table.sort(rows, position_sort)
-    local bufnr = vim.uri_to_bufnr(uri)
-    vim.fn.bufload(bufnr)
     local filename = vim.uri_to_fname(uri)
     for _, temp in ipairs(rows) do
       local pos = temp.start
       local row = pos.line
-      local line = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or {""})[1]
-      local col = M.character_offset(bufnr, row, pos.character)
+      local line = M.get_line(uri, row)
+      local col = pos.character
       table.insert(items, {
         filename = filename,
         lnum = row + 1,
