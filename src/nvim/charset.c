@@ -1396,6 +1396,7 @@ bool vim_isblankline(char_u *lbuf)
 /// If "what" contains STR2NR_OCT recognize octal numbers.
 /// If "what" contains STR2NR_HEX recognize hex numbers.
 /// If "what" contains STR2NR_FORCE always assume bin/oct/hex.
+/// If "what" contains STR2NR_QUOTE ignore embedded single quotes
 /// If maxlen > 0, check at a maximum maxlen chars.
 /// If strict is true, check the number strictly. return *len = 0 if fail.
 ///
@@ -1434,7 +1435,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   if (what & STR2NR_FORCE) {
     // When forcing main consideration is skipping the prefix. Octal and decimal
     // numbers have no prefixes to skip. pre is not set.
-    switch ((unsigned)what & (~(unsigned)STR2NR_FORCE)) {
+    switch (what & ~(STR2NR_FORCE | STR2NR_QUOTE)) {
       case STR2NR_HEX: {
         if (!STRING_ENDED(ptr + 2)
             && ptr[0] == '0'
@@ -1504,7 +1505,18 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   abort();  // Should’ve used goto earlier.
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
-    while (!STRING_ENDED(ptr) && (cond)) { \
+    const char *const after_prefix = ptr; \
+    while (!STRING_ENDED(ptr)) { \
+      if ((what & STR2NR_QUOTE) && ptr > after_prefix && *ptr == '\'') { \
+        ptr++; \
+        if (!STRING_ENDED(ptr) && (cond)) { \
+          continue; \
+        } \
+        ptr--; \
+      } \
+      if (!(cond)) { \
+        break; \
+      } \
       const uvarnumber_T digit = (uvarnumber_T)(conv); \
       /* avoid ubsan error for overflow */ \
       if (un < UVARNUMBER_MAX / base \

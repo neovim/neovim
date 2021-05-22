@@ -354,4 +354,24 @@ describe('vim_str2nr()', function()
       end
     end
   end)
+  -- Test_str2nr() in test_functions.vim already tests normal usage
+  itp('works with weirdly quoted numbers', function()
+    local flags = lib.STR2NR_DEC + lib.STR2NR_QUOTE
+    test_vim_str2nr("'027", flags, {len = 0}, 0)
+    test_vim_str2nr("'027", flags, {len = 0}, 0, false)
+    test_vim_str2nr("1'2'3'4", flags, {len = 7, num = 1234, unum = 1234, pre = 0}, 0)
+
+    -- counter-intuitive, but like Vim, strict=true should partially accept
+    -- these: (' and - are not alpha-numeric)
+    test_vim_str2nr("7''331", flags, {len = 1, num = 7, unum = 7, pre = 0}, 0)
+    test_vim_str2nr("123'x4", flags, {len = 3, num = 123, unum = 123, pre = 0}, 0)
+    test_vim_str2nr("1337'", flags, {len = 4, num = 1337, unum = 1337, pre = 0}, 0)
+    test_vim_str2nr("-'", flags, {len = 1, num = 0, unum = 0, pre = 0}, 0)
+
+    flags = lib.STR2NR_HEX + lib.STR2NR_QUOTE
+    local hex = ('x'):byte()
+    test_vim_str2nr("0x'abcd", flags, {len = 0}, 0)
+    test_vim_str2nr("0x'abcd", flags, {len = 1, num = 0, unum = 0, pre = 0}, 0, false)
+    test_vim_str2nr("0xab''cd", flags, {len = 4, num = 171, unum = 171, pre = hex}, 0)
+  end)
 end)
