@@ -161,6 +161,12 @@ func Test_str2nr()
   call assert_equal(11259375, str2nr('0XABCDEF', 16))
   call assert_equal(-11259375, str2nr('-0xABCDEF', 16))
 
+  call assert_equal(1, str2nr("1'000'000", 10, 0))
+  call assert_equal(256, str2nr("1'0000'0000", 2, 1))
+  call assert_equal(262144, str2nr("1'000'000", 8, 1))
+  call assert_equal(1000000, str2nr("1'000'000", 10, 1))
+  call assert_equal(65536, str2nr("1'00'00", 16, 1))
+
   call assert_equal(0, str2nr('0x10'))
   call assert_equal(0, str2nr('0b10'))
   call assert_equal(1, str2nr('12', 2))

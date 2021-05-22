@@ -27,9 +27,11 @@ typedef enum {
   ///
   /// STR2NR_FORCE|STR2NR_DEC is actually not different from supplying zero
   /// as flags, but still present for completeness.
-  STR2NR_FORCE = (1 << 3),
+  STR2NR_FORCE = (1 << 7),
   /// Recognize all formats vim_str2nr() can recognize.
   STR2NR_ALL = STR2NR_BIN | STR2NR_OCT | STR2NR_HEX,
+  STR2NR_NO_OCT = STR2NR_BIN | STR2NR_HEX,  ///< Disallow octal numbers.
+  STR2NR_QUOTE = (1 << 4),  ///< Ignore embedded single quotes.
 } ChStr2NrFlags;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

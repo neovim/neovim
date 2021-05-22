@@ -90,6 +90,15 @@ func Test_string_concatenation()
   call assert_equal('ab', a)
 endfunc
 
+" Test fix for issue #4507
+func Test_skip_after_throw()
+  try
+    throw 'something'
+    let x = wincol() || &ts
+  catch /something/
+  endtry
+endfunc
+
 scriptversion 2
 func Test_string_concat_scriptversion2()
   call assert_true(has('vimscript-2'))
@@ -146,11 +155,22 @@ func Test_dict_access_scriptversion2()
   call assert_true(1 && l:x.foo)
 endfunc
 
-" :scriptversion 1 is required for the tests below until
-" Test_vvar_scriptversion1() is ported here from v8.1.2035
-scriptversion 1
+scriptversion 4
+func Test_vvar_scriptversion4()
+  call assert_equal(17, 017)
+  call assert_equal(18, 018)
+  call assert_equal(64, 0b1'00'00'00)
+  call assert_equal(1048576, 0x10'00'00)
+  call assert_equal(1000000, 1'000'000)
+endfunc
 
-func Test_scriptversion()
+scriptversion 1
+func Test_vvar_scriptversion1()
+  call assert_equal(15, 017)
+  call assert_equal(18, 018)
+endfunc
+
+func Test_scriptversion_fail()
   call writefile(['scriptversion 9'], 'Xversionscript')
   call assert_fails('source Xversionscript', 'E999:')
   call delete('Xversionscript')
@@ -175,15 +195,6 @@ func Test_let_errmsg()
   let v:errmsg = ''
   call assert_fails('let v:errmsg = []', 'E730:')
   let v:errmsg = ''
-endfunc
-
-" Test fix for issue #4507
-func Test_skip_after_throw()
-  try
-    throw 'something'
-    let x = wincol() || &ts
-  catch /something/
-  endtry
 endfunc
 
 func Test_number_max_min_size()

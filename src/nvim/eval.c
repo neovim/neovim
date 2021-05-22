@@ -3908,7 +3908,10 @@ static int eval7(
         rettv->vval.v_float = f;
       }
     } else {
-      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
+      const int what = current_sctx.sc_version >= 4
+                           ? STR2NR_NO_OCT | STR2NR_QUOTE
+                           : STR2NR_ALL;
+      vim_str2nr(*arg, NULL, &len, what, &n, NULL, 0, true);
       if (len == 0) {
         EMSG2(_(e_invexpr2), *arg);
         ret = FAIL;

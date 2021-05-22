@@ -3492,7 +3492,7 @@ void ex_scriptversion(exarg_T *eap)
   const int nr = getdigits_int(&eap->arg, false, 0);
   if (nr == 0 || *eap->arg != NUL) {
     EMSG(_(e_invarg));
-  } else if (nr > 3) {
+  } else if (nr > 4) {
     EMSG2(_("E999: scriptversion not supported: %d"), nr);
   } else {
     current_sctx.sc_version = nr;
