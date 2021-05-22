@@ -90,6 +90,13 @@ typedef struct {
   int dio_internal;  // using internal diff
 } diffio_T;
 
+// This structure holds the result of running an external diff on a sample
+// input.
+typedef struct {
+  bool io_error;
+  TriState ok;
+} SampleExtDiffResult;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
 #endif
@@ -960,6 +967,75 @@ theend:
   }
 }
 
+
+// Runs an external diff program on sample file.
+static void run_external_diff_on_sample(diffio_T *diffio,
+                                        SampleExtDiffResult *result)
+{
+  FILE *fd = os_fopen((char *)diffio->dio_orig.din_fname, "w");
+  result->io_error = false;
+  result->ok = kFalse;
+
+  if (fd == NULL) {
+    result->io_error = true;
+    goto theend;
+  }
+
+  if (fwrite("line1\n", (size_t)6, (size_t)1, fd) != 1) {
+    result->io_error = true;
+  }
+  fclose(fd);
+  fd = NULL;
+  if (result->io_error) {
+    goto cleanuporig;
+  }
+
+  fd = os_fopen((char *)diffio->dio_new.din_fname, "w");
+  if (fd == NULL) {
+    result->io_error = true;
+    goto cleanuporig;
+  }
+
+  if (fwrite("line2\n", (size_t)6, (size_t)1, fd) != 1) {
+    result->io_error = true;
+  }
+  fclose(fd);
+  fd = NULL;
+  if (result->io_error) {
+    goto cleanupnew;
+  }
+
+  diff_file_external(diffio);
+  fd = os_fopen((char *)diffio->dio_diff.dout_fname, "r");
+
+  if (fd == NULL) {
+    result->io_error = true;
+  } else {
+    char_u linebuf[LBUFLEN];
+
+    for (;;) {
+      // For normal diff there must be a line that contains
+      // "1c1".  For unified diff "@@ -1 +1 @@".
+      if (vim_fgets(linebuf, LBUFLEN, fd)) {
+        break;
+      }
+
+      if (STRNCMP(linebuf, "1c1", 3) == 0
+          || STRNCMP(linebuf, "@@ -1 +1 @@", 11) == 0) {
+        result->ok = kTrue;
+      }
+    }
+    fclose(fd);
+  }
+  os_remove((char *)diffio->dio_diff.dout_fname);
+cleanupnew:
+  os_remove((char *)diffio->dio_new.din_fname);
+cleanuporig:
+  os_remove((char *)diffio->dio_orig.din_fname);
+theend:
+  return;
+}
+
 ///
 /// Do a quick test if "diff" really works.  Otherwise it looks like there
 /// are no differences.  Can't use the return value, it's non-zero when
@@ -968,57 +1044,9 @@ theend:
 static int check_external_diff(diffio_T *diffio)
 {
   // May try twice, first with "-a" and then without.
-  int io_error = false;
-  TriState ok = kFalse;
+  SampleExtDiffResult sample_result;
   for (;;) {
-    ok = kFalse;
-    FILE *fd = os_fopen((char *)diffio->dio_orig.din_fname, "w");
-
-    if (fd == NULL) {
-      io_error = true;
-    } else {
-      if (fwrite("line1\n", (size_t)6, (size_t)1, fd) != 1) {
-        io_error = true;
-      }
-      fclose(fd);
-      fd = os_fopen((char *)diffio->dio_new.din_fname, "w");
-
-      if (fd == NULL) {
-        io_error = true;
-      } else {
-        if (fwrite("line2\n", (size_t)6, (size_t)1, fd) != 1) {
-          io_error = true;
-        }
-        fclose(fd);
-        fd = NULL;
-        if (diff_file(diffio) == OK) {
-          fd = os_fopen((char *)diffio->dio_diff.dout_fname, "r");
-        }
-
-        if (fd == NULL) {
-          io_error = true;
-        } else {
-          char_u linebuf[LBUFLEN];
-
-          for (;;) {
-            // For normal diff there must be a line that contains
-            // "1c1".  For unified diff "@@ -1 +1 @@".
-            if (vim_fgets(linebuf, LBUFLEN, fd)) {
-              break;
-            }
-
-            if (STRNCMP(linebuf, "1c1", 3) == 0
-                || STRNCMP(linebuf, "@@ -1 +1 @@", 11) == 0) {
-              ok = kTrue;
-            }
-          }
-          fclose(fd);
-        }
-        os_remove((char *)diffio->dio_diff.dout_fname);
-        os_remove((char *)diffio->dio_new.din_fname);
-      }
-      os_remove((char *)diffio->dio_orig.din_fname);
-    }
+    run_external_diff_on_sample(diffio, &sample_result);
 
     // When using 'diffexpr' break here.
     if (*p_dex != NUL) {
@@ -1029,16 +1057,16 @@ static int check_external_diff(diffio_T *diffio)
     if (diff_a_works != kNone) {
       break;
     }
-    diff_a_works = ok;
+    diff_a_works = sample_result.ok;
 
     // If "-a" works break here, otherwise retry without "-a".
-    if (ok) {
+    if (sample_result.ok) {
       break;
     }
   }
 
-  if (!ok) {
-    if (io_error) {
+  if (!sample_result.ok) {
+    if (sample_result.io_error) {
       emsg(_("E810: Cannot read or write temp files"));
     }
     emsg(_("E97: Cannot create diffs"));
