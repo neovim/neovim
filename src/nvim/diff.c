@@ -709,7 +709,7 @@ static void clear_diffout(diffout_T *dout)
 /// @param din
 ///
 /// @return FAIL for failure.
-static int diff_write_buffer(buf_T *buf, diffin_T *din)
+static int diff_write_buffer(buf_T *buf, mmfile_t *din_mmfile)
 {
   linenr_T lnum;
   char_u *s;
@@ -734,8 +734,8 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
     }
     return FAIL;
   }
-  din->din_mmfile.ptr = (char *)ptr;
-  din->din_mmfile.size = len;
+  din_mmfile->ptr = (char *)ptr;
+  din_mmfile->size = len;
 
   len = 0;
   for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
@@ -776,7 +776,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
 static int diff_write(buf_T *buf, diffin_T *din)
 {
   if (din->din_fname == NULL) {
-    return diff_write_buffer(buf, din);
+    return diff_write_buffer(buf, &din->din_mmfile);
   }
 
   // Always use 'fileformat' set to "unix".
