@@ -72,7 +72,13 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       prepare_gz_file('Xtestfile', text1)
       --execute('au FileChangedShell * echo "caught FileChangedShell"')
       feed_command('set bin')
-      feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
+      if iswin() then
+          feed_command('let $GZIP = ""')
+          feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
+      else
+          -- Note: GZIP= Does not work in Windows
+          feed_command("au FileReadPost    *.gz   '[,']!GZIP= gzip -d")
+      end
       -- Read and decompress the testfile.
       feed_command('$r Xtestfile.gz')
       expect('\n'..text1)
