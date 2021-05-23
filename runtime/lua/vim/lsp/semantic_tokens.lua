@@ -1,4 +1,6 @@
-local M = { semantic_tokens = {}, }
+local M = {}
+
+local semantic_tokens = {}
 
 local function modifiers_from_number(x, modifiers_table)
   local function get_bit(n, k)
@@ -18,7 +20,8 @@ local function modifiers_from_number(x, modifiers_table)
   return modifiers
 end
 
-local function handle_semantic_tokens_full(client, bufnr, response)
+function M._handle_semantic_tokens_full(client_id, bufnr, response)
+  local client = vim.lsp.get_client_by_id(client_id)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
@@ -54,18 +57,25 @@ local function handle_semantic_tokens_full(client, bufnr, response)
       }
     end
   end
-  M.semantic_tokens[bufnr] = tokens
+
+  if semantic_tokens[client_id] then
+    semantic_tokens[client_id][bufnr] = tokens
+  else
+    semantic_tokens[client_id] = { [bufnr] = tokens }
+  end
 end
 
 function M.request_tokens_full(client_id, bufnr)
-  local uri = vim.uri_from_bufnr(bufnr or vim.fn.bufnr())
+  bufnr = bufnr or vim.fn.bufnr()
+  local uri = vim.uri_from_bufnr(bufnr)
   local params = { textDocument = { uri = uri }; }
-  local client = vim.lsp.get_client_by_id(client_id)
 
   -- TODO(smolck): Not sure what the other params to this are/mean
   local handler = function(_, _, response, _, _)
-    handle_semantic_tokens_full(client, bufnr, response)
+    M._handle_semantic_tokens_full(client_id, bufnr, response)
   end
+
+  local client = vim.lsp.get_client_by_id(client_id)
   return client.request('textDocument/semanticTokens/full', params, handler)
 end
 
@@ -76,6 +86,10 @@ function M.on_refresh()
   for _, client in pairs(vim.lsp.get_active_clients()) do
     M.request_tokens_full(client.id, bufnr)
   end
+end
+
+function M.get_semantic_tokens(client_id, bufnr)
+  return semantic_tokens[client_id][bufnr or vim.fn.bufnr()]
 end
 
 return M

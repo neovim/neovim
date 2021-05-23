@@ -18,8 +18,8 @@ local function err_message(...)
   api.nvim_command("redraw")
 end
 
-M['textDocument/semanticTokens/full'] = function(...)
-  print('why does this never get printed')
+M['textDocument/semanticTokens/full'] = function(_, _, res, client_id, bufnr)
+  semantic_tokens._handle_semantic_tokens_full(client_id, bufnr, res)
 end
 
 M['workspace/semanticTokens/refresh'] = function()

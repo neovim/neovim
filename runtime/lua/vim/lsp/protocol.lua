@@ -1016,6 +1016,7 @@ function protocol.resolve_capabilities(server_capabilities)
   general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider or false
   general_properties.call_hierarchy = server_capabilities.callHierarchyProvider or false
   general_properties.execute_command = server_capabilities.executeCommandProvider ~= nil
+  general_properties.semantic_tokens_full = server_capabilities.semanticTokensProvider ~= nil
 
   if server_capabilities.renameProvider == nil then
     general_properties.rename = false
