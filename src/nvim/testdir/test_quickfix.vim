@@ -1080,9 +1080,9 @@ endfunc
 func Test_efm_dirstack()
   " Create the directory stack and files
   call mkdir('dir1')
-  call mkdir('dir1/a', 'p')
-  call mkdir('dir1/a/b', 'p')
-  call mkdir('dir1/c', 'p')
+  call mkdir('dir1/a')
+  call mkdir('dir1/a/b')
+  call mkdir('dir1/c')
   call mkdir('dir2')
 
   let lines =<< trim [DATA]

@@ -1,7 +1,6 @@
 " Test argument list commands
 
 func Reset_arglist()
-  cd
   args a | %argd
 endfunc
 
