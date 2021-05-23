@@ -523,27 +523,33 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       decoded.error = convert_NIL(decoded.error)
       decoded.result = convert_NIL(decoded.result)
 
-      -- Do not surface RequestCancelled or ContentModified to users, it is RPC-internal.
-      if decoded.error then
-        if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
-          local _ = log.debug() and log.debug("Received cancellation ack", decoded)
-        elseif decoded.error.code == protocol.ErrorCodes.ContentModified then
-          local _ = log.debug() and log.debug("Received content modified ack", decoded)
-        end
-        local result_id = tonumber(decoded.id)
-        -- Clear any callback since this is cancelled now.
-        -- This is safe to do assuming that these conditions hold:
-        -- - The server will not send a result callback after this cancellation.
-        -- - If the server sent this cancellation ACK after sending the result, the user of this RPC
-        -- client will ignore the result themselves.
-        if result_id then
-          message_callbacks[result_id] = nil
-        end
-        return
-      end
-
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
+
+      -- Do not surface RequestCancelled or ContentModified to users, it is RPC-internal.
+      if decoded.error then
+        local mute_error = false
+        if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
+          local _ = log.debug() and log.debug("Received cancellation ack", decoded)
+          mute_error = true
+        elseif decoded.error.code == protocol.ErrorCodes.ContentModified then
+          local _ = log.debug() and log.debug("Received content modified ack", decoded)
+          mute_error = true
+        end
+
+        if mute_error then
+          -- Clear any callback since this is cancelled now.
+          -- This is safe to do assuming that these conditions hold:
+          -- - The server will not send a result callback after this cancellation.
+          -- - If the server sent this cancellation ACK after sending the result, the user of this RPC
+          -- client will ignore the result themselves.
+          if result_id then
+            message_callbacks[result_id] = nil
+          end
+          return
+        end
+      end
+
       local callback = message_callbacks[result_id]
       if callback then
         message_callbacks[result_id] = nil
