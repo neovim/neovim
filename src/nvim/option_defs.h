@@ -572,11 +572,12 @@ EXTERN char_u   *p_slm;         // 'selectmode'
 EXTERN char_u   *p_ssop;        // 'sessionoptions'
 EXTERN unsigned ssop_flags;
 # ifdef IN_OPTION_C
-// Also used for 'viewoptions'!
+// Also used for 'viewoptions'!  Keep in sync with SSOP_ flags.
 static char *(p_ssop_values[]) = {
   "buffers", "winpos", "resize", "winsize",
   "localoptions", "options", "help", "blank", "globals", "slash", "unix",
-  "sesdir", "curdir", "folds", "cursor", "tabpages", NULL
+  "sesdir", "curdir", "folds", "cursor", "tabpages", "terminal", "skiprtp",
+  NULL
 };
 # endif
 # define SSOP_BUFFERS           0x001
@@ -595,6 +596,8 @@ static char *(p_ssop_values[]) = {
 # define SSOP_FOLDS             0x2000
 # define SSOP_CURSOR            0x4000
 # define SSOP_TABPAGES          0x8000
+# define SSOP_TERMINAL          0x10000
+# define SSOP_SKIP_RTP          0x20000
 
 EXTERN char_u   *p_sh;          // 'shell'
 EXTERN char_u   *p_shcf;        // 'shellcmdflag'

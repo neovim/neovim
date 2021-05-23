@@ -5052,6 +5052,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global values for local options)
 	   options	all options and mappings (also global values for local
 			options)
+	   skiprtp	exclude 'runtimepath' and 'packpath' from the options
 	   resize	size of the Vim window: 'lines' and 'columns'
 	   sesdir	the directory in which the session file is located
 			will become the current directory (useful with

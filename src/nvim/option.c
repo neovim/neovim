@@ -5232,6 +5232,11 @@ int makeset(FILE *fd, int opt_flags, int local_only)
           continue;
         }
 
+        if ((opt_flags & OPT_SKIPRTP)
+            && (p->var == (char_u *)&p_rtp || p->var == (char_u *)&p_pp)) {
+          continue;
+        }
+
         round = 2;
         if (p->indir != PV_NONE) {
           if (p->var == VAR_WIN) {
