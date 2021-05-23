@@ -103,7 +103,6 @@ endfunc
 
 func Test_command_count_2()
   silent! %argd
-
   arga a b c d
   call assert_fails('5argu', 'E16:')
 

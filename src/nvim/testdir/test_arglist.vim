@@ -408,7 +408,6 @@ endfunc
 " Test for the :argdelete command
 func Test_argdelete()
   call Reset_arglist()
-
   args aa a aaa b bb
   argdelete a*
   call assert_equal(['b', 'bb'], argv())
