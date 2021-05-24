@@ -689,7 +689,9 @@ func Test_listdict_extend()
   let l = [1, 2, 3]
   call assert_fails("call extend(l, [4, 5, 6], 4)", 'E684:')
   call assert_fails("call extend(l, [4, 5, 6], -4)", 'E684:')
-  call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
+  if has('float')
+    call assert_fails("call extend(l, [4, 5, 6], 1.2)", 'E805:')
+  endif
 
   " Test extend() with dictionaries.
 
@@ -713,7 +715,9 @@ func Test_listdict_extend()
   let d = {'a': 'A', 'b': 'B'}
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'xxx')", 'E475:')
-  call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E806:')
+  if has('float')
+    call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E806:')
+  endif
   call assert_equal({'a': 'A', 'b': 'B'}, d)
 
   call assert_fails("call extend([1, 2], 1)", 'E712:')
