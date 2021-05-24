@@ -76,12 +76,6 @@ typedef struct {
     mmfile_t  din_mmfile;  // used for internal diff
 } diffin_T;
 
-// used for diff result
-typedef struct {
-    char_u   *dout_fname;  // used for external diff
-    garray_T  dout_ga;     // used for internal diff
-} diffout_T;
-
 // two diff inputs and one result
 typedef struct {
     diffin_T    dio_orig;      // original file input
@@ -90,9 +84,57 @@ typedef struct {
     int         dio_internal;  // using internal diff
 } diffio_T;
 
+// This structure holds the result of running an external diff on a sample
+// input.
+typedef struct {
+  bool io_error;
+  TriState ok;
+} SampleExtDiffResult;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
 #endif
+
+// Allocates a new diff hunk block after the provided block.
+//
+// @return the new diff hunk
+static Diff2Hunk *diff2_hunk_alloc(Diff2Hunk *cur_hunk)
+{
+  Diff2Hunk *new_hunk = xmalloc(sizeof(Diff2Hunk));
+
+  if (cur_hunk == NULL) {
+    new_hunk->next = NULL;
+  } else {
+    new_hunk->next = cur_hunk->next;
+    cur_hunk->next = new_hunk;
+  }
+  return new_hunk;
+}
+
+// Returns the length of the provided list
+//
+// @param the head of the list
+size_t diff2_hunk_list_length(Diff2Hunk *head)
+{
+  size_t len = 0;
+  while (head != NULL) {
+    len += 1;
+    head = head->next;
+  }
+  return len;
+}
+
+// Deallocates the entire Diff2Hunk list.
+//
+// @param the head of the list
+void diff2_hunk_list_dealloc(Diff2Hunk *cur)
+{
+  while (cur != NULL) {
+    Diff2Hunk *next = cur->next;
+    xfree(cur);
+    cur = next;
+  }
+}
 
 /// Called when deleting or unloading a buffer: No longer make a diff with it.
 ///
@@ -688,7 +730,7 @@ static void clear_diffout(diffout_T *dout)
 /// @param din
 ///
 /// @return FAIL for failure.
-static int diff_write_buffer(buf_T *buf, diffin_T *din)
+static int diff_write_buffer(buf_T *buf, mmfile_t *din_mmfile)
 {
   linenr_T   lnum;
   char_u    *s;
@@ -713,8 +755,8 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
     }
     return FAIL;
   }
-  din->din_mmfile.ptr = (char *)ptr;
-  din->din_mmfile.size = len;
+  din_mmfile->ptr = (char *)ptr;
+  din_mmfile->size = len;
 
   len = 0;
   for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
@@ -755,7 +797,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
 static int diff_write(buf_T *buf, diffin_T *din)
 {
   if (din->din_fname == NULL) {
-    return diff_write_buffer(buf, din);
+    return diff_write_buffer(buf, &din->din_mmfile);
   }
 
   // Always use 'fileformat' set to "unix".
@@ -941,6 +983,73 @@ theend:
   }
 }
 
+
+// Runs an external diff program on sample file.
+static void run_external_diff_on_sample(diffio_T *diffio,
+                                        SampleExtDiffResult *result)
+{
+  FILE *fd = os_fopen((char *)diffio->dio_orig.din_fname, "w");
+  result->io_error = false;
+  result->ok = kFalse;
+
+  if (fd == NULL) {
+    result->io_error = true;
+    goto theend;
+  }
+
+  if (fwrite("line1\n", (size_t)6, (size_t)1, fd) != 1) {
+    result->io_error = true;
+  }
+  fclose(fd);
+  fd = NULL;
+  if (result->io_error) {
+    goto cleanuporig;
+  }
+
+  fd = os_fopen((char *)diffio->dio_new.din_fname, "w");
+  if (fd == NULL) {
+    result->io_error = true;
+    goto cleanuporig;
+  }
+
+  if (fwrite("line2\n", (size_t)6, (size_t)1, fd) != 1) {
+    result->io_error = true;
+  }
+  fclose(fd);
+  fd = NULL;
+  if (result->io_error) {
+    goto cleanupnew;
+  }
+
+  diff_file_external(diffio);
+  fd = os_fopen((char *)diffio->dio_diff.dout_fname, "r");
+
+  if (fd == NULL) {
+    result->io_error = true;
+  } else {
+    char_u linebuf[LBUFLEN];
+
+    for (;;) {
+      // There must be a line that contains "1c1".
+      if (vim_fgets(linebuf, LBUFLEN, fd)) {
+        break;
+      }
+
+      if (STRNCMP(linebuf, "1c1", 3) == 0) {
+        result->ok = kTrue;
+      }
+    }
+    fclose(fd);
+  }
+  os_remove((char *)diffio->dio_diff.dout_fname);
+cleanupnew:
+  os_remove((char *)diffio->dio_new.din_fname);
+cleanuporig:
+  os_remove((char *)diffio->dio_orig.din_fname);
+theend:
+  return;
+}
+
 ///
 /// Do a quick test if "diff" really works.  Otherwise it looks like there
 /// are no differences.  Can't use the return value, it's non-zero when
@@ -949,55 +1058,9 @@ theend:
 static int check_external_diff(diffio_T *diffio)
 {
   // May try twice, first with "-a" and then without.
-  int io_error = false;
-  TriState ok = kFalse;
+  SampleExtDiffResult sample_result;
   for (;;) {
-    ok = kFalse;
-    FILE *fd = os_fopen((char *)diffio->dio_orig.din_fname, "w");
-
-    if (fd == NULL) {
-      io_error = true;
-    } else {
-      if (fwrite("line1\n", (size_t)6, (size_t)1, fd) != 1) {
-        io_error = true;
-      }
-      fclose(fd);
-      fd = os_fopen((char *)diffio->dio_new.din_fname, "w");
-
-      if (fd == NULL) {
-        io_error = true;
-      } else {
-        if (fwrite("line2\n", (size_t)6, (size_t)1, fd) != 1) {
-          io_error = true;
-        }
-        fclose(fd);
-        fd = NULL;
-        if (diff_file(diffio) == OK) {
-          fd = os_fopen((char *)diffio->dio_diff.dout_fname, "r");
-        }
-
-        if (fd == NULL) {
-          io_error = true;
-        } else {
-          char_u linebuf[LBUFLEN];
-
-          for (;;) {
-            // There must be a line that contains "1c1".
-            if (vim_fgets(linebuf, LBUFLEN, fd)) {
-              break;
-            }
-
-            if (STRNCMP(linebuf, "1c1", 3) == 0) {
-              ok = kTrue;
-            }
-          }
-          fclose(fd);
-        }
-        os_remove((char *)diffio->dio_diff.dout_fname);
-        os_remove((char *)diffio->dio_new.din_fname);
-      }
-      os_remove((char *)diffio->dio_orig.din_fname);
-    }
+    run_external_diff_on_sample(diffio, &sample_result);
 
     // When using 'diffexpr' break here.
     if (*p_dex != NUL) {
@@ -1008,16 +1071,16 @@ static int check_external_diff(diffio_T *diffio)
     if (diff_a_works != kNone) {
       break;
     }
-    diff_a_works = ok;
+    diff_a_works = sample_result.ok;
 
     // If "-a" works break here, otherwise retry without "-a".
-    if (ok) {
+    if (sample_result.ok) {
       break;
     }
   }
 
-  if (!ok) {
-    if (io_error) {
+  if (!sample_result.ok) {
+    if (sample_result.io_error) {
       EMSG(_("E810: Cannot read or write temp files"));
     }
     EMSG(_("E97: Cannot create diffs"));
@@ -1067,24 +1130,16 @@ static int diff_file_internal(diffio_T *diffio)
   return OK;
 }
 
-/// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
-///
-/// @param dio
-///
-/// @return OK or FAIL
-static int diff_file(diffio_T *dio)
+static void diff_file_external(diffio_T *dio)
 {
   char  *tmp_orig = (char *)dio->dio_orig.din_fname;
   char  *tmp_new = (char *)dio->dio_new.din_fname;
   char  *tmp_diff = (char *)dio->dio_diff.dout_fname;
+
   if (*p_dex != NUL) {
     // Use 'diffexpr' to generate the diff file.
     eval_diff(tmp_orig, tmp_new, tmp_diff);
-    return OK;
-  }
-  // Use xdiff for generating the diff.
-  if (dio->dio_internal) {
-    return diff_file_internal(dio);
+    return;
   } else {
     const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
                         + STRLEN(p_srr) + 27);
@@ -1114,7 +1169,22 @@ static int diff_file(diffio_T *dio)
                      NULL);
     unblock_autocmds();
     xfree(cmd);
+  }
+}
+
+/// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
+///
+/// @param dio
+///
+/// @return OK or FAIL
+static int diff_file(diffio_T *dio)
+{
+  if (*p_dex != NUL || !dio->dio_internal) {
+    diff_file_external(dio);
     return OK;
+  } else {
+    // Use xdiff for generating the diff.
+    return diff_file_internal(dio);
   }
 }
 
@@ -1493,47 +1563,42 @@ void ex_diffoff(exarg_T *eap)
   }
 }
 
-/// Read the diff output and add each entry to the diff list.
+/// Parses the diff output.
 ///
-/// @param idx_orig idx of original file
-/// @param idx_new idx of new file
-/// @dout diff output
-static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
+/// @param diff output to parse
+/// @param the parsed list of diff hunks
+/// @return whether the parsing was successful
+bool diff_parse(diffout_T *input, Diff2Hunk **output_head)
 {
   FILE *fd = NULL;
   int line_idx = 0;
-  diff_T *dprev = NULL;
-  diff_T *dp = curtab->tp_first_diff;
-  diff_T *dn, *dpl;
   char_u linebuf[LBUFLEN];  // only need to hold the diff line
   char_u *line;
-  long off;
-  int i;
   linenr_T lnum_orig, lnum_new;
   long count_orig, count_new;
-  int notset = true;  // block "*dp" not set yet
+  Diff2Hunk *output_tail = NULL;
   enum {
     DIFF_ED,
     DIFF_UNIFIED,
     DIFF_NONE
   } diffstyle = DIFF_NONE;
 
-  if (dout->dout_fname == NULL) {
+  if (input->dout_fname == NULL) {
     diffstyle = DIFF_UNIFIED;
   } else {
-    fd = os_fopen((char *)dout->dout_fname, "r");
+    fd = os_fopen((char *)input->dout_fname, "r");
     if (fd == NULL) {
       EMSG(_("E98: Cannot read diff output"));
-      return;
+      return false;
     }
   }
 
   for (;;) {
     if (fd == NULL) {
-      if (line_idx >= dout->dout_ga.ga_len) {
+      if (line_idx >= input->dout_ga.ga_len) {
         break;      // did last line
       }
-      line = ((char_u **)dout->dout_ga.ga_data)[line_idx++];
+      line = ((char_u **)input->dout_ga.ga_data)[line_idx++];
     } else {
       if (vim_fgets(linebuf, LBUFLEN, fd)) {
         break;      // end of file
@@ -1588,6 +1653,50 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       }
     }
 
+    output_tail = diff2_hunk_alloc(output_tail);
+    output_tail->lstart_orig = lnum_orig;
+    output_tail->lstart_dest = lnum_new;
+    output_tail->count_orig = count_orig;
+    output_tail->count_dest = count_new;
+
+    if (*output_head == NULL) {
+      *output_head = output_tail;
+    }
+  }
+
+  if (fd != NULL) {
+    fclose(fd);
+  }
+  return true;
+}
+
+/// Read the diff output and add each entry to the diff list.
+///
+/// @param idx_orig idx of original file
+/// @param idx_new idx of new file
+/// @dout diff output
+static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
+{
+  diff_T *dprev = NULL;
+  diff_T *dp = curtab->tp_first_diff;
+  diff_T *dn, *dpl;
+  long off;
+  int i;
+  int notset = true;  // block "*dp" not set yet
+
+  Diff2Hunk *diff2_hunks_head = NULL;
+  bool parse_status = diff_parse(dout, &diff2_hunks_head);
+  if (!parse_status) {
+    return;
+  }
+
+  for (Diff2Hunk *diff2_hunks_cur = diff2_hunks_head;
+       diff2_hunks_cur;
+       diff2_hunks_cur = diff2_hunks_cur->next) {
+    linenr_T lnum_orig = diff2_hunks_cur->lstart_orig;
+    linenr_T lnum_new = diff2_hunks_cur->lstart_dest;
+    long count_orig = diff2_hunks_cur->count_orig;
+    long count_new = diff2_hunks_cur->count_dest;
     // Go over blocks before the change, for which orig and new are equal.
     // Copy blocks from orig to new.
     while (dp != NULL
@@ -1686,6 +1795,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     }
     notset = false;  // "*dp" has been set
   }
+  diff2_hunk_list_dealloc(diff2_hunks_head);
 
   // for remaining diff blocks orig and new are equal
   while (dp != NULL) {
@@ -1695,10 +1805,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     dprev = dp;
     dp = dp->df_next;
     notset = true;
-  }
-
-  if (fd != NULL) {
-    fclose(fd);
   }
 }
 
