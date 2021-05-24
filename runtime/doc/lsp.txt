@@ -856,6 +856,8 @@ start_client({config})                                *vim.lsp.start_client()*
                                        |vim.lsp.start_client()|. You can use
                                        this to modify parameters before they
                                        are sent.
+                    {no_wait}          (boolean) Do not wait the language
+                                       server to exit before closing NeoVim.
                     {on_init}          Callback (client, initialize_result)
                                        invoked after LSP "initialize", where
                                        `result` is a table of `capabilities`
