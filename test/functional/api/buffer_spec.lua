@@ -423,6 +423,10 @@ describe('api/buf', function()
       -- will join multiple lines if needed
       set_text(0, 6, 3, 4, {'bar'})
       eq({'hello bar'}, get_lines(0,  1, true))
+
+      -- can append text after last line
+      set_text(2, 0, 2, 0, {'new line'})
+      eq({'hello bar', '', 'new line'}, get_lines(0, -1, true))
     end)
 
     it('works with undo', function()
