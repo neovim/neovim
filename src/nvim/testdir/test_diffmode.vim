@@ -802,6 +802,7 @@ func VerifyBoth(buf, dumpfile, extra)
 
   " also test unified diff
   call term_sendkeys(a:buf, ":call SetupUnified()\<CR>:")
+  call term_sendkeys(a:buf, ":redraw!\<CR>:")
   call VerifyScreenDump(a:buf, a:dumpfile, {}, 'unified')
   call term_sendkeys(a:buf, ":call StopUnified()\<CR>:")
 endfunc
@@ -823,10 +824,11 @@ func Test_diff_screen()
       func UnifiedDiffExpr()
         " Prepend some text to check diff type detection
         call writefile(['warning', '  message'], v:fname_out)
-        silent exe '!diff -u ' .. v:fname_in .. ' ' .. v:fname_new .. '>>' .. v:fname_out
+        silent exe '!diff -U0 ' .. v:fname_in .. ' ' .. v:fname_new .. '>>' .. v:fname_out
       endfunc
       func SetupUnified()
         set diffexpr=UnifiedDiffExpr()
+        diffupdate
       endfunc
       func StopUnified()
         set diffexpr=
@@ -1145,5 +1147,6 @@ func Test_diff_and_scroll()
   bwipe!
   set ls&
 endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
