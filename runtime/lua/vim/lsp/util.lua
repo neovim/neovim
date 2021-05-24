@@ -207,6 +207,7 @@ end
 --@param text_edits (table) list of `TextEdit` objects
 --@param buf_nr (number) Buffer id
 function M.apply_text_edits(text_edits, bufnr)
+  bufnr = bufnr or api.nvim_get_current_buf()
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -250,8 +251,26 @@ function M.apply_text_edits(text_edits, bufnr)
   if set_eol and #lines[#lines] == 0 then
     table.remove(lines)
   end
+  -- save and restore local marks since they get deleted by nvim_buf_set_lines
+  local marks = {}
+  for _, m in pairs(vim.fn.getmarklist(bufnr)) do
+    if m.mark:match("^'[a-z]$") then
+      marks[m.mark] = m.pos
+    end
+  end
   api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
+  -- no need to restore marks that still exist
+  for _, m in pairs(vim.fn.getmarklist(bufnr)) do
+    marks[m.mark] = nil
+  end
+  -- restore marks
+  for mark, pos in pairs(marks) do
+    if pos then
+      vim.fn.setpos(mark, pos)
+    end
+  end
 end
+
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
 -- local valid_unix_path_characters = "[^/]"
