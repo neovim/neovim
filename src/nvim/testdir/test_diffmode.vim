@@ -1148,5 +1148,38 @@ func Test_diff_and_scroll()
   set ls&
 endfunc
 
+func Test_diff_filler_cursorcolumn()
+  CheckScreendump
+
+  let content =<< trim END
+    call setline(1, ['aa', 'bb', 'cc'])
+    vnew
+    call setline(1, ['aa', 'cc'])
+    windo diffthis
+    wincmd p
+    setlocal cursorcolumn foldcolumn=0
+    norm! gg0
+    redraw!
+  END
+  call writefile(content, 'Xtest_diff_cuc')
+  let buf = RunVimInTerminal('-S Xtest_diff_cuc', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_cuc_01', {})
+
+  call term_sendkeys(buf, "l")
+  call term_sendkeys(buf, "\<C-l>")
+  call VerifyScreenDump(buf, 'Test_diff_cuc_02', {})
+  call term_sendkeys(buf, "0j")
+  call term_sendkeys(buf, "\<C-l>")
+  call VerifyScreenDump(buf, 'Test_diff_cuc_03', {})
+  call term_sendkeys(buf, "l")
+  call term_sendkeys(buf, "\<C-l>")
+  call VerifyScreenDump(buf, 'Test_diff_cuc_04', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_cuc')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
