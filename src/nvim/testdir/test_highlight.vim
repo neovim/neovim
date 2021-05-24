@@ -595,6 +595,42 @@ func Test_cursorline_with_visualmode()
   call delete('Xtest_cursorline_with_visualmode')
 endfunc
 
+func Test_colorcolumn_bri()
+  CheckScreendump
+
+  " check 'colorcolumn' when 'breakindent' is set
+  let lines =<< trim END
+	call setline(1, 'The quick brown fox jumped over the lazy dogs')
+  END
+  call writefile(lines, 'Xtest_colorcolumn_bri')
+  let buf = RunVimInTerminal('-S Xtest_colorcolumn_bri', {'rows': 10,'columns': 40})
+  call term_sendkeys(buf, ":set co=40 linebreak bri briopt=shift:2 cc=40,41,43\<CR>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_colorcolumn_2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_colorcolumn_bri')
+endfunc
+
+func Test_colorcolumn_sbr()
+  CheckScreendump
+
+  " check 'colorcolumn' when 'showbreak' is set
+  let lines =<< trim END
+	call setline(1, 'The quick brown fox jumped over the lazy dogs')
+  END
+  call writefile(lines, 'Xtest_colorcolumn_srb')
+  let buf = RunVimInTerminal('-S Xtest_colorcolumn_srb', {'rows': 10,'columns': 40})
+  call term_sendkeys(buf, ":set co=40 showbreak=+++>\\  cc=40,41,43\<CR>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_colorcolumn_3', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_colorcolumn_srb')
+endfunc
+
 " This test must come before the Test_cursorline test, as it appears this
 " defines the Normal highlighting group anyway.
 func Test_1_highlight_Normalgroup_exists()
