@@ -118,6 +118,7 @@ func Test_cscopeWithCscopeConnections()
     endfor
 
     " Test: Invalid find command
+    call assert_fails('cs find', 'E560:')
     call assert_fails('cs find x', 'E560:')
 
     if has('float')
@@ -179,12 +180,19 @@ func Test_cscopeWithCscopeConnections()
     let a = execute('cstag TEST_COUNT')
     call assert_match('(1 of 1): <<TEST_COUNT>> #define TEST_COUNT 50000', a)
     call assert_equal('#define TEST_COUNT 50000', getline('.'))
+    call assert_fails('cstag DOES_NOT_EXIST', 'E257:')
     set csto=1
     let a = execute('cstag index_to_key')
     call assert_match('(1 of 1): <<index_to_key>> #define index_to_key(i) ((i) ^ 15167)', a)
     call assert_equal('#define index_to_key(i) ((i) ^ 15167)', getline('.'))
-    call assert_fails('cstag xxx', 'E257:')
+    call assert_fails('cstag DOES_NOT_EXIST', 'E257:')
     call assert_fails('cstag', 'E562:')
+    let save_tags = &tags
+    set tags=
+    call assert_fails('cstag DOES_NOT_EXIST', 'E257:')
+    let a = execute('cstag index_to_key')
+    call assert_match('(1 of 1): <<index_to_key>> #define index_to_key(i) ((i) ^ 15167)', a)
+    let &tags = save_tags
 
     " Test: 'cst' option
     set nocst
@@ -208,12 +216,16 @@ func Test_cscopeWithCscopeConnections()
     cd ..
     call delete('Xcscoperelative', 'd')
 
+    " Test: E259: no match found
+    call assert_fails('cscope find g DOES_NOT_EXIST', 'E259:')
+
     " Test: this should trigger call to cs_print_tags()
     " Unclear how to check result though, we just exercise the code.
     set cst cscopequickfix=s0
     call feedkeys(":cs find s main\<CR>", 't')
 
     " Test: cscope kill
+    call assert_fails('cscope kill', 'E560:')
     call assert_fails('cscope kill 2', 'E261:')
     call assert_fails('cscope kill xxx', 'E261:')
 
