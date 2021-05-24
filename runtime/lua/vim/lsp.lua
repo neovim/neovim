@@ -228,6 +228,7 @@ local function validate_client_config(config)
     on_init         = { config.on_init, "f", true };
     settings        = { config.settings, "t", true };
     before_init     = { config.before_init, "f", true };
+    no_wait         = { config.no_wait, "b", true };
     offset_encoding = { config.offset_encoding, "s", true };
     flags           = { config.flags, "t", true };
     get_language_id = { config.get_language_id, "f", true };
@@ -596,6 +597,9 @@ end
 --@param offset_encoding (default="utf-16") One of "utf-8", "utf-16",
 --- or "utf-32" which is the encoding that the LSP server expects. Client does
 --- not verify this is correct.
+---
+--@param no_wait (boolean) Do not wait the language server to exit
+--- before closing NeoVim.
 ---
 --@param on_error Callback with parameters (code, ...), invoked
 --- when the client operation throws an error. `code` is a number describing
@@ -1218,8 +1222,11 @@ function lsp._vim_exit_handler()
   if tbl_isempty(active_clients) then
     return
   end
-  for _, client in pairs(active_clients) do
+  for client_id, client in pairs(active_clients) do
     client.stop()
+    if client.config.no_wait then
+      active_clients[client_id] = nil
+    end
   end
 
   if not vim.wait(500, function() return tbl_isempty(active_clients) end, 50) then
