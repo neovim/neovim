@@ -115,23 +115,25 @@ func Test_cscopeWithCscopeConnections()
     " Test 10: Invalid find command
     call assert_fails('cs find x', 'E560:')
 
-    " Test 11: Find places where this symbol is assigned a value
-    " this needs a cscope >= 15.8
-    " unfortunately, Travis has cscope version 15.7
-    let cscope_version = systemlist('cscope --version')[0]
-    let cs_version = str2float(matchstr(cscope_version, '\d\+\(\.\d\+\)\?'))
-    if cs_version >= 15.8
-      for cmd in ['cs find a item', 'cs find 9 item']
-        let a = execute(cmd)
-        call assert_equal(['', '(1 of 4): <<test_mf_hash>> item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);'], split(a, '\n', 1))
-        call assert_equal('	item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);', getline('.'))
-        cnext
-        call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
-        cnext
-        call assert_equal('	    item = mf_hash_find(&ht, key);', getline('.'))
-        cnext
-        call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
-      endfor
+    if has('float')
+      " Test 11: Find places where this symbol is assigned a value
+      " this needs a cscope >= 15.8
+      " unfortunately, Travis has cscope version 15.7
+      let cscope_version = systemlist('cscope --version')[0]
+      let cs_version = str2float(matchstr(cscope_version, '\d\+\(\.\d\+\)\?'))
+      if cs_version >= 15.8
+        for cmd in ['cs find a item', 'cs find 9 item']
+          let a = execute(cmd)
+          call assert_equal(['', '(1 of 4): <<test_mf_hash>> item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);'], split(a, '\n', 1))
+          call assert_equal('	item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);', getline('.'))
+          cnext
+          call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
+          cnext
+          call assert_equal('	    item = mf_hash_find(&ht, key);', getline('.'))
+          cnext
+          call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
+        endfor
+      endif
     endif
 
     " Test 12: leading whitespace is not removed for cscope find text
