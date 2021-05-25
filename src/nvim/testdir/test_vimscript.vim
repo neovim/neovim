@@ -1271,8 +1271,10 @@ func Test_num64()
     call assert_equal(-9223372036854775807, -1 / 0)
     call assert_equal(-9223372036854775807 - 1,  0 / 0)
 
-    call assert_equal( 0x7FFFffffFFFFffff, float2nr( 1.0e150))
-    call assert_equal(-0x7FFFffffFFFFffff, float2nr(-1.0e150))
+    if has('float')
+      call assert_equal( 0x7FFFffffFFFFffff, float2nr( 1.0e150))
+      call assert_equal(-0x7FFFffffFFFFffff, float2nr(-1.0e150))
+    endif
 
     let rng = range(0xFFFFffff, 0x100000001)
     call assert_equal([0xFFFFffff, 0x100000000, 0x100000001], rng)
@@ -1531,22 +1533,22 @@ func Test_compound_assignment_operators()
     call assert_equal('string', x)
     let x += 1
     call assert_equal(1, x)
-    let x -= 1.5
-    call assert_equal(-0.5, x)
 
     if has('float')
-        " Test for float
-        let x = 0.5
-        let x += 4.5
-        call assert_equal(5.0, x)
-        let x -= 1.5
-        call assert_equal(3.5, x)
-        let x *= 3.0
-        call assert_equal(10.5, x)
-        let x /= 2.5
-        call assert_equal(4.2, x)
-        call assert_fails('let x %= 0.5', 'E734')
-        call assert_fails('let x .= "f"', 'E734')
+      " Test for float
+      let x -= 1.5
+      call assert_equal(-0.5, x)
+      let x = 0.5
+      let x += 4.5
+      call assert_equal(5.0, x)
+      let x -= 1.5
+      call assert_equal(3.5, x)
+      let x *= 3.0
+      call assert_equal(10.5, x)
+      let x /= 2.5
+      call assert_equal(4.2, x)
+      call assert_fails('let x %= 0.5', 'E734')
+      call assert_fails('let x .= "f"', 'E734')
     endif
 
     " Test for environment variable

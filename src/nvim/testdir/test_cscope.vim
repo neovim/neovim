@@ -22,7 +22,7 @@ endfunc
 
 func Test_cscopeWithCscopeConnections()
     call CscopeSetupOrClean(1)
-    " Test 0: E568: duplicate cscope database not added
+    " Test: E568: duplicate cscope database not added
     try
       set nocscopeverbose
       cscope add Xcscope.out
@@ -33,44 +33,49 @@ func Test_cscopeWithCscopeConnections()
     call assert_fails('cscope add', 'E560')
     call assert_fails('cscope add Xcscope.out', 'E568')
     call assert_fails('cscope add doesnotexist.out', 'E563')
+    if has('unix')
+      call assert_fails('cscope add /dev/null', 'E564:')
+    endif
 
-    " Test 1: Find this C-Symbol
+    " Test: Find this C-Symbol
     for cmd in ['cs find s main', 'cs find 0 main']
       let a = execute(cmd)
-      " Test 1.1 test where it moves the cursor
+      " Test where it moves the cursor
       call assert_equal('main(void)', getline('.'))
-      " Test 1.2 test the output of the :cs command
+      " Test the output of the :cs command
       call assert_match('\n(1 of 1): <<main>> main(void )', a)
     endfor
 
-    " Test 2: Find this definition
-    for cmd in ['cs find g test_mf_hash', 'cs find 1 test_mf_hash']
+    " Test: Find this definition
+    for cmd in ['cs find g test_mf_hash',
+          \     'cs find 1 test_mf_hash',
+          \     'cs find 1   test_mf_hash'] " leading space ignored.
       exe cmd
       call assert_equal(['', '/*', ' * Test mf_hash_*() functions.', ' */', '    static void', 'test_mf_hash(void)', '{'], getline(line('.')-5, line('.')+1))
     endfor
 
-    " Test 3: Find functions called by this function
+    " Test: Find functions called by this function
     for cmd in ['cs find d test_mf_hash', 'cs find 2 test_mf_hash']
       let a = execute(cmd)
       call assert_match('\n(1 of 42): <<mf_hash_init>> mf_hash_init(&ht);', a)
       call assert_equal('    mf_hash_init(&ht);', getline('.'))
     endfor
 
-    " Test 4: Find functions calling this function
+    " Test: Find functions calling this function
     for cmd in ['cs find c test_mf_hash', 'cs find 3 test_mf_hash']
       let a = execute(cmd)
       call assert_match('\n(1 of 1): <<main>> test_mf_hash();', a)
       call assert_equal('    test_mf_hash();', getline('.'))
     endfor
 
-    " Test 5: Find this text string
+    " Test: Find this text string
     for cmd in ['cs find t Bram', 'cs find 4 Bram']
       let a = execute(cmd)
       call assert_match('(1 of 1): <<<unknown>>>  \* VIM - Vi IMproved^Iby Bram Moolenaar', a)
       call assert_equal(' * VIM - Vi IMproved	by Bram Moolenaar', getline('.'))
     endfor
 
-    " Test 6: Find this egrep pattern
+    " Test: Find this egrep pattern
     " test all matches returned by cscope
     for cmd in ['cs find e ^\#includ.', 'cs find 6 ^\#includ.']
       let a = execute(cmd)
@@ -83,7 +88,7 @@ func Test_cscopeWithCscopeConnections()
       call assert_fails('cnext', 'E553:')
     endfor
 
-    " Test 7: Find the same egrep pattern using lcscope this time.
+    " Test: Find the same egrep pattern using lcscope this time.
     let a = execute('lcs find e ^\#includ.')
     call assert_match('\n(1 of 3): <<<unknown>>> #include <assert.h>', a)
     call assert_equal('#include <assert.h>', getline('.'))
@@ -93,7 +98,7 @@ func Test_cscopeWithCscopeConnections()
     call assert_equal('#include "memfile.c"', getline('.'))
     call assert_fails('lnext', 'E553:')
 
-    " Test 8: Find this file
+    " Test: Find this file
     for cmd in ['cs find f Xmemfile_test.c', 'cs find 7 Xmemfile_test.c']
       enew
       let a = execute(cmd)
@@ -101,7 +106,7 @@ func Test_cscopeWithCscopeConnections()
       call assert_equal('Xmemfile_test.c', @%)
     endfor
 
-    " Test 9: Find files #including this file
+    " Test: Find files #including this file
     for cmd in ['cs find i assert.h', 'cs find 8 assert.h']
       enew
       let a = execute(cmd)
@@ -112,39 +117,42 @@ func Test_cscopeWithCscopeConnections()
       call assert_equal('#include <assert.h>', getline('.'))
     endfor
 
-    " Test 10: Invalid find command
+    " Test: Invalid find command
+    call assert_fails('cs find', 'E560:')
     call assert_fails('cs find x', 'E560:')
 
-    " Test 11: Find places where this symbol is assigned a value
-    " this needs a cscope >= 15.8
-    " unfortunately, Travis has cscope version 15.7
-    let cscope_version = systemlist('cscope --version')[0]
-    let cs_version = str2float(matchstr(cscope_version, '\d\+\(\.\d\+\)\?'))
-    if cs_version >= 15.8
-      for cmd in ['cs find a item', 'cs find 9 item']
-        let a = execute(cmd)
-        call assert_equal(['', '(1 of 4): <<test_mf_hash>> item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);'], split(a, '\n', 1))
-        call assert_equal('	item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);', getline('.'))
-        cnext
-        call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
-        cnext
-        call assert_equal('	    item = mf_hash_find(&ht, key);', getline('.'))
-        cnext
-        call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
-      endfor
+    if has('float')
+      " Test: Find places where this symbol is assigned a value
+      " this needs a cscope >= 15.8
+      " unfortunately, Travis has cscope version 15.7
+      let cscope_version = systemlist('cscope --version')[0]
+      let cs_version = str2float(matchstr(cscope_version, '\d\+\(\.\d\+\)\?'))
+      if cs_version >= 15.8
+        for cmd in ['cs find a item', 'cs find 9 item']
+          let a = execute(cmd)
+          call assert_equal(['', '(1 of 4): <<test_mf_hash>> item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);'], split(a, '\n', 1))
+          call assert_equal('	item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);', getline('.'))
+          cnext
+          call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
+          cnext
+          call assert_equal('	    item = mf_hash_find(&ht, key);', getline('.'))
+          cnext
+          call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
+        endfor
+      endif
     endif
 
-    " Test 12: leading whitespace is not removed for cscope find text
+    " Test: leading whitespace is not removed for cscope find text
     let a = execute('cscope find t     test_mf_hash')
     call assert_equal(['', '(1 of 1): <<<unknown>>>     test_mf_hash();'], split(a, '\n', 1))
     call assert_equal('    test_mf_hash();', getline('.'))
 
-    " Test 13: test with scscope
+    " Test: test with scscope
     let a = execute('scs find t Bram')
     call assert_match('(1 of 1): <<<unknown>>>  \* VIM - Vi IMproved^Iby Bram Moolenaar', a)
     call assert_equal(' * VIM - Vi IMproved	by Bram Moolenaar', getline('.'))
 
-    " Test 14: cscope help
+    " Test: cscope help
     for cmd in ['cs', 'cs help', 'cs xxx']
       let a = execute(cmd)
       call assert_match('^cscope commands:\n', a)
@@ -158,28 +166,35 @@ func Test_cscopeWithCscopeConnections()
     let a = execute('scscope help')
     call assert_match('This cscope command does not support splitting the window\.', a)
 
-    " Test 15: reset connections
+    " Test: reset connections
     let a = execute('cscope reset')
     call assert_match('\nAdded cscope database.*Xcscope.out (#0)', a)
     call assert_match('\nAll cscope databases reset', a)
 
-    " Test 16: cscope show
+    " Test: cscope show
     let a = execute('cscope show')
     call assert_match('\n 0 \d\+.*Xcscope.out\s*<none>', a)
 
-    " Test 17: cstag and 'csto' option
+    " Test: cstag and 'csto' option
     set csto=0
     let a = execute('cstag TEST_COUNT')
     call assert_match('(1 of 1): <<TEST_COUNT>> #define TEST_COUNT 50000', a)
     call assert_equal('#define TEST_COUNT 50000', getline('.'))
+    call assert_fails('cstag DOES_NOT_EXIST', 'E257:')
     set csto=1
     let a = execute('cstag index_to_key')
     call assert_match('(1 of 1): <<index_to_key>> #define index_to_key(i) ((i) ^ 15167)', a)
     call assert_equal('#define index_to_key(i) ((i) ^ 15167)', getline('.'))
-    call assert_fails('cstag xxx', 'E257:')
+    call assert_fails('cstag DOES_NOT_EXIST', 'E257:')
     call assert_fails('cstag', 'E562:')
+    let save_tags = &tags
+    set tags=
+    call assert_fails('cstag DOES_NOT_EXIST', 'E257:')
+    let a = execute('cstag index_to_key')
+    call assert_match('(1 of 1): <<index_to_key>> #define index_to_key(i) ((i) ^ 15167)', a)
+    let &tags = save_tags
 
-    " Test 18: 'cst' option
+    " Test: 'cst' option
     set nocst
     call assert_fails('tag TEST_COUNT', 'E426:')
     set cst
@@ -189,12 +204,28 @@ func Test_cscopeWithCscopeConnections()
     let a = execute('tags')
     call assert_match('1  1 TEST_COUNT\s\+\d\+\s\+#define index_to_key', a)
 
-    " Test 19: this should trigger call to cs_print_tags()
+    " Test: 'cscoperelative'
+    call mkdir('Xcscoperelative')
+    cd Xcscoperelative
+    let a = execute('cs find g test_mf_hash')
+    call assert_notequal('test_mf_hash(void)', getline('.'))
+    set cscoperelative
+    let a = execute('cs find g test_mf_hash')
+    call assert_equal('test_mf_hash(void)', getline('.'))
+    set nocscoperelative
+    cd ..
+    call delete('Xcscoperelative', 'd')
+
+    " Test: E259: no match found
+    call assert_fails('cscope find g DOES_NOT_EXIST', 'E259:')
+
+    " Test: this should trigger call to cs_print_tags()
     " Unclear how to check result though, we just exercise the code.
     set cst cscopequickfix=s0
     call feedkeys(":cs find s main\<CR>", 't')
 
-    " Test 20: cscope kill
+    " Test: cscope kill
+    call assert_fails('cscope kill', 'E560:')
     call assert_fails('cscope kill 2', 'E261:')
     call assert_fails('cscope kill xxx', 'E261:')
 
@@ -211,20 +242,20 @@ func Test_cscopeWithCscopeConnections()
     let a = execute('cscope kill -1')
     call assert_equal('', a)
 
-    " Test 21: 'csprg' option
+    " Test: 'csprg' option
     call assert_equal('cscope', &csprg)
     set csprg=doesnotexist
     call assert_fails('cscope add Xcscope2.out', 'E609:')
     set csprg=cscope
 
-    " Test 22: multiple cscope connections
+    " Test: multiple cscope connections
     cscope add Xcscope.out
     cscope add Xcscope2.out . -C
     let a = execute('cscope show')
     call assert_match('\n 0 \d\+.*Xcscope.out\s*<none>', a)
     call assert_match('\n 1 \d\+.*Xcscope2.out\s*\.', a)
 
-    " Test 23: test Ex command line completion
+    " Test: test Ex command line completion
     call feedkeys(":cs \<C-A>\<C-B>\"\<CR>", 'tx')
     call assert_equal('"cs add find help kill reset show', @:)
 
@@ -240,19 +271,26 @@ func Test_cscopeWithCscopeConnections()
     call feedkeys(":cs add Xcscope\<C-A>\<C-B>\"\<CR>", 'tx')
     call assert_equal('"cs add Xcscope.out Xcscope2.out', @:)
 
-    " Test 24: cscope_connection()
+    " Test: cscope_connection()
     call assert_equal(cscope_connection(), 1)
     call assert_equal(cscope_connection(0, 'out'), 1)
     call assert_equal(cscope_connection(0, 'xxx'), 1)
+
     call assert_equal(cscope_connection(1, 'out'), 1)
     call assert_equal(cscope_connection(1, 'xxx'), 0)
+
     call assert_equal(cscope_connection(2, 'out'), 0)
+    call assert_equal(cscope_connection(2, getcwd() .. '/Xcscope.out', 1), 1)
+
     call assert_equal(cscope_connection(3, 'xxx', '..'), 0)
     call assert_equal(cscope_connection(3, 'out', 'xxx'), 0)
     call assert_equal(cscope_connection(3, 'out', '.'), 1)
+
     call assert_equal(cscope_connection(4, 'out', '.'), 0)
 
-    " CleanUp
+    call assert_equal(cscope_connection(5, 'out'), 0)
+    call assert_equal(cscope_connection(-1, 'out'), 0)
+
     call CscopeSetupOrClean(0)
 endfunc
 

@@ -211,7 +211,7 @@ let s:filename_checks = {
     \ 'gtkrc': ['.gtkrc', 'gtkrc', '.gtkrc-file', 'gtkrc-file'],
     \ 'haml': ['file.haml'],
     \ 'hamster': ['file.hsm'],
-    \ 'haskell': ['file.hs', 'file.hsc', 'file.hs-boot'],
+    \ 'haskell': ['file.hs', 'file.hsc', 'file.hs-boot', 'file.hsig'],
     \ 'haste': ['file.ht'],
     \ 'hastepreproc': ['file.htpp'],
     \ 'hb': ['file.hb'],
