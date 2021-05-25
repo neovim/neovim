@@ -1986,6 +1986,10 @@ describe('API', function()
 
       eq(meths.get_option_info'winhighlight', options_info.winhighlight)
     end)
+
+    it('should not crash when echoed', function()
+      meths.exec("echo nvim_get_all_options_info()", true)
+    end)
   end)
 
   describe('nvim_get_option_info', function()
