@@ -4,7 +4,9 @@
 " URL:		http://neovim.io
 " Remark:	Uses markdown syntax file
 
-runtime! syntax/markdown.vim
+" always source the system included markdown instead of any other installed
+" markdown.vim syntax files
+execute 'source' expand('<sfile>:p:h') .. '/markdown.vim'
 
 syn cluster mkdNonListItem add=mkdEscape,mkdNbsp
 

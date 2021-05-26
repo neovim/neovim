@@ -975,6 +975,8 @@ function M.preview_location(location, opts)
     -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
     syntax = api.nvim_buf_get_option(bufnr, 'filetype')
   end
+  opts = opts or {}
+  opts.focus_id = "location"
   return M.open_floating_preview(contents, syntax, opts)
 end
 
@@ -997,7 +999,9 @@ end
 ---buffer id, the newly created window will be the new focus associated with
 ---the current buffer via the tag `unique_name`.
 --@returns (pbufnr, pwinnr) if `fn()` has created a new window; nil otherwise
+---@deprecated please use open_floating_preview directly
 function M.focusable_float(unique_name, fn)
+  vim.notify("focusable_float is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
   -- Go back to previous window if we are in a focusable one
   if npcall(api.nvim_win_get_var, 0, unique_name) then
     return api.nvim_command("wincmd p")
@@ -1026,10 +1030,10 @@ end
 --@param fn (function) The return values of this function will be passed
 ---directly to |vim.lsp.util.open_floating_preview()|, in the case that a new
 ---floating window should be created
+---@deprecated please use open_floating_preview directly
 function M.focusable_preview(unique_name, fn)
-  return M.focusable_float(unique_name, function()
-    return M.open_floating_preview(fn())
-  end)
+  vim.notify("focusable_preview is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
+  return M.open_floating_preview(fn(), {focus_id = unique_name})
 end
 
 --- Trims empty lines from input and pad top and bottom with empty lines
@@ -1061,13 +1065,20 @@ end
 
 
 
--- TODO: refactor to separate stripping/converting and make use of open_floating_preview
---
+--- @deprecated please use open_floating_preview directly
+function M.fancy_floating_markdown(contents, opts)
+  vim.notify("fancy_floating_markdown is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
+  return M.open_floating_preview(contents, "markdown", opts)
+end
+
 --- Converts markdown into syntax highlighted regions by stripping the code
 --- blocks and converting them into highlighted code.
 --- This will by default insert a blank line separator after those code block
 --- regions to improve readability.
---- The result is shown in a floating preview.
+---
+--- This method configures the given buffer and returns the lines to set.
+---
+--- If you want to open a popup with fancy markdown, use `open_floating_preview` instead
 ---
 ---@param contents table of lines to show in window
 ---@param opts dictionary with optional fields
@@ -1082,7 +1093,7 @@ end
 ---  - pad_bottom number of lines to pad contents at bottom
 ---  - separator insert separator after code block
 ---@returns width,height size of float
-function M.fancy_floating_markdown(contents, opts)
+function M.stylize_markdown(bufnr, contents, opts)
   validate {
     contents = { contents, 't' };
     opts = { opts, 't', true };
@@ -1154,24 +1165,13 @@ function M.fancy_floating_markdown(contents, opts)
     end
   end
 
-  -- Make the floating window.
-  local bufnr = api.nvim_create_buf(false, true)
-  local winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
-  api.nvim_buf_set_option(bufnr, 'modifiable', false)
-  api.nvim_buf_set_option(bufnr, 'bufhidden', 'wipe')
-
-  -- Switch to the floating window to apply the syntax highlighting.
-  -- This is because the syntax command doesn't accept a target.
-  local cwin = vim.api.nvim_get_current_win()
-  vim.api.nvim_set_current_win(winnr)
-  api.nvim_win_set_option(winnr, 'conceallevel', 2)
-  api.nvim_win_set_option(winnr, 'concealcursor', 'n')
-
-  vim.cmd("ownsyntax lsp_markdown")
 
   local idx = 1
   --@private
+  -- keep track of syntaxes we already inlcuded.
+  -- no need to include the same syntax more than once
+  local langs = {}
   local function apply_syntax_to_region(ft, start, finish)
     if ft == "" then
       vim.cmd(string.format("syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
@@ -1180,21 +1180,37 @@ function M.fancy_floating_markdown(contents, opts)
     local name = ft..idx
     idx = idx + 1
     local lang = "@"..ft:upper()
-    -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
-    pcall(vim.api.nvim_buf_del_var, bufnr, "current_syntax")
-    -- TODO(ashkan): better validation before this.
-    if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
-      return
+    if not langs[lang] then
+      -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
+      pcall(vim.api.nvim_buf_del_var, bufnr, "current_syntax")
+      -- TODO(ashkan): better validation before this.
+      if not pcall(vim.cmd, string.format("syntax include %s syntax/%s.vim", lang, ft)) then
+        return
+      end
+      langs[lang] = true
     end
     vim.cmd(string.format("syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s keepend", name, start, finish + 1, lang))
   end
 
-  for _, h in ipairs(highlights) do
-    apply_syntax_to_region(h.ft, h.start, h.finish)
-  end
+  -- needs to run in the buffer for the regions to work
+  api.nvim_buf_call(bufnr, function()
+    -- we need to apply lsp_markdown regions speperately, since otherwise
+    -- markdown regions can "bleed" through the other syntax regions
+    -- and mess up the formatting
+    local last = 1
+    for _, h in ipairs(highlights) do
+      if last < h.start then
+        apply_syntax_to_region("lsp_markdown", last, h.start - 1)
+      end
+      apply_syntax_to_region(h.ft, h.start, h.finish)
+      last = h.finish + 1
+    end
+    if last < #stripped then
+      apply_syntax_to_region("lsp_markdown", last, #stripped)
+    end
+  end)
 
-  vim.api.nvim_set_current_win(cwin)
-  return bufnr, winnr
+  return stripped
 end
 
 --- Creates autocommands to close a preview window when events happen.
@@ -1203,7 +1219,9 @@ end
 --@param winnr (number) window id of preview window
 --@see |autocmd-events|
 function M.close_preview_autocmd(events, winnr)
-  api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
+  if #events > 0 then
+    api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
+  end
 end
 
 --@internal
@@ -1288,13 +1306,16 @@ end
 --@param opts dictionary with optional fields
 --             - height    of floating window
 --             - width     of floating window
---             - wrap_at   character to wrap at for computing height
+--             - wrap boolean enable wrapping of long lines (defaults to true)
+--             - wrap_at   character to wrap at for computing height when wrap is enabled
 --             - max_width  maximal width of floating window
 --             - max_height maximal height of floating window
 --             - pad_left   number of columns to pad contents at left
 --             - pad_right  number of columns to pad contents at right
 --             - pad_top    number of lines to pad contents at top
 --             - pad_bottom number of lines to pad contents at bottom
+--             - focus_id if a popup with this id is opened, then focus it
+--             - close_events list of events that closes the floating window
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1304,27 +1325,77 @@ function M.open_floating_preview(contents, syntax, opts)
     opts = { opts, 't', true };
   }
   opts = opts or {}
+  opts.wrap = opts.wrap ~= false -- wrapping by default
+  opts.stylize_markdown = opts.stylize_markdown ~= false
+  opts.close_events = opts.close_events or {"CursorMoved", "CursorMovedI", "BufHidden", "InsertCharPre"}
+
+  local bufnr = api.nvim_get_current_buf()
+
+  -- check if this popup is focusable and we need to focus
+  if opts.focus_id then
+    -- Go back to previous window if we are in a focusable one
+    local current_winnr = api.nvim_get_current_win()
+    if npcall(api.nvim_win_get_var, current_winnr, opts.focus_id) then
+      api.nvim_command("wincmd p")
+      return bufnr, current_winnr
+    end
+    do
+      local win = find_window_by_var(opts.focus_id, bufnr)
+      if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
+        -- focus and return the existing buf, win
+        api.nvim_set_current_win(win)
+        api.nvim_command("stopinsert")
+        return api.nvim_win_get_buf(win), win
+      end
+    end
+  end
+
+  local floating_bufnr = api.nvim_create_buf(false, true)
+  local do_stylize = syntax == "markdown" and opts.stylize_markdown
+
 
   -- Clean up input: trim empty lines from the end, pad
   contents = M._trim(contents, opts)
 
+  if do_stylize then
+    -- applies the syntax and sets the lines to the buffer
+    contents = M.stylize_markdown(floating_bufnr, contents, opts)
+  else
+    if syntax then
+      api.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
+    end
+    api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
+  end
+
   -- Compute size of float needed to show (wrapped) lines
-  opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
+  if opts.wrap then
+    opts.wrap_at = opts.wrap_at or api.nvim_win_get_width(0)
+  else
+    opts.wrap_at = nil
+  end
   local width, height = M._make_floating_popup_size(contents, opts)
 
-  local floating_bufnr = api.nvim_create_buf(false, true)
-  if syntax then
-    api.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
-  end
   local float_option = M.make_floating_popup_options(width, height, opts)
   local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
-  if syntax == 'markdown' then
+  if do_stylize then
     api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
+    api.nvim_win_set_option(floating_winnr, 'concealcursor', 'n')
   end
-  api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
+  -- disable folding
+  api.nvim_win_set_option(floating_winnr, 'foldenable', false)
+  -- soft wrapping
+  api.nvim_win_set_option(floating_winnr, 'wrap', opts.wrap)
+
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
   api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
-  M.close_preview_autocmd({"CursorMoved", "CursorMovedI", "BufHidden", "BufLeave"}, floating_winnr)
+  api.nvim_buf_set_keymap(floating_bufnr, "n", "q", "<cmd>bdelete<cr>", {silent = true, noremap = true})
+  M.close_preview_autocmd(opts.close_events, floating_winnr)
+
+  -- save focus_id
+  if opts.focus_id then
+    api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
+  end
+
   return floating_bufnr, floating_winnr
 end
 
