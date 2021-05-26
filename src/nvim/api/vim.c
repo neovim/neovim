@@ -3005,21 +3005,21 @@ error:
 Dictionary nvim_get_api(void)
   FUNC_API_SINCE(7)
 {
-    msgpack_unpacked unpacked;
-    msgpack_unpacked_init(&unpacked);
-    if (msgpack_unpack_next(&unpacked,
-                            (const char *)api_doc_metadata,
-                            sizeof(api_doc_metadata),
-                            NULL) != MSGPACK_UNPACK_SUCCESS) {
-        abort();
-    }
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  if (msgpack_unpack_next(&unpacked,
+                          (const char *)api_doc_metadata,
+                          sizeof(api_doc_metadata),
+                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+    abort();
+  }
 
-    Object api_doc_obj;
-    msgpack_rpc_to_object(&unpacked.data, &api_doc_obj);
-    msgpack_unpacked_destroy(&unpacked);
+  Object api_doc_obj;
+  msgpack_rpc_to_object(&unpacked.data, &api_doc_obj);
+  msgpack_unpacked_destroy(&unpacked);
 
-    Dictionary api_doc = ARRAY_DICT_INIT;
-    PUT(api_doc, "api", DICTIONARY_OBJ(api_doc));
+  Dictionary api_doc = ARRAY_DICT_INIT;
+  PUT(api_doc, "api", DICTIONARY_OBJ(api_doc));
 
-    return api_doc;
+  return api_doc;
 }
