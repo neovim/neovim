@@ -156,7 +156,7 @@ function M.formatting(options)
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
-  return client.request("textDocument/formatting", params)
+  return client.request("textDocument/formatting", params, nil, vim.api.nvim_get_current_buf())
 end
 
 --- Performs |vim.lsp.buf.formatting()| synchronously.
@@ -176,7 +176,7 @@ function M.formatting_sync(options, timeout_ms)
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
-  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
+  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
   if result and result.result then
     util.apply_text_edits(result.result)
   elseif err then
@@ -218,7 +218,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
   for _, client in ipairs(clients) do
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
-      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
+      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
       if result and result.result then
         util.apply_text_edits(result.result)
       elseif err then
