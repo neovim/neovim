@@ -2997,7 +2997,11 @@ error:
   decor_provider_clear(p);
 }
 
-/// Gets api function documentation
+/// @param opts Optional parameters; only valid key is the `docs` boolean.
+///
+/// @returns |api-metadata| map (Dictionary) with an optional additional `docs`
+///          key containing function documentation as a map (Dictionary) of the
+///          form { "nvim_win_set_option": {...}, "nvim_win_get_option": {...}, ... }
 Dictionary nvim_get_api(Dictionary opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_FAST
 {
