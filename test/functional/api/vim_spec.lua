@@ -2188,4 +2188,17 @@ describe('API', function()
       ]]}
     end)
   end)
+
+  describe('nvim_get_api', function()
+    it('works like nvim_get_api_info', function()
+      local info1 = meths.get_api { docs = false }
+      local info2 = meths.get_api_info()[2]
+      eq(info1, info2)
+    end)
+
+    it('works with docs = true', function()
+      local info = meths.get_api { docs = true }
+      eq(info.docs.nvim_win_close.doc, { 'Closes the window (like |:close| with a |window-ID|).' })
+    end)
+  end)
 end)
