@@ -175,7 +175,7 @@ funcs_metadata_output:close()
 
 local api_doc_metadata_output = io.open(api_doc_metadata_outputf, 'wb')
 local api_mpack = io.open(arg[7], 'r')
-local api_packed = mpack.pack(api_mpack:read('*all'))
+local api_packed = api_mpack:read('*all')
 api_mpack:close()
 dump_bin_array(api_doc_metadata_output, 'api_doc_metadata', api_packed)
 api_doc_metadata_output:close()
