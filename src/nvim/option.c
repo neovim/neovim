@@ -7705,7 +7705,7 @@ Dictionary get_vimoption(String name, Error *err)
 Dictionary get_all_vimoptions(void)
 {
   Dictionary retval = ARRAY_DICT_INIT;
-  for (size_t i = 0; i < PARAM_COUNT; i++) {
+  for (size_t i = 0; options[i].fullname != NULL; i++) {
     Dictionary opt_dict = vimoption2dict(&options[i]);
     PUT(retval, options[i].fullname, DICTIONARY_OBJ(opt_dict));
   }
