@@ -3005,14 +3005,9 @@ error:
 Dictionary nvim_get_api(Dictionary opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_FAST
 {
-  if (opts.size > 1) {
-    api_set_error(err, kErrorTypeValidation, "too many options passed");
-    return (Dictionary)ARRAY_DICT_INIT;
-  }
-
   bool docs = false;
-  if (opts.size > 0) {
-    KeyValuePair *key_and_val = &opts.items[0];
+  for (size_t i = 0; i < opts.size; i++) {
+    KeyValuePair *key_and_val = &opts.items[i];
     char* optname = key_and_val->key.data;
 
     if (!strequal(optname, "docs")) {
