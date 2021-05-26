@@ -44,6 +44,7 @@ endfunc
 
 func Test_display_registers()
     " Disable clipboard
+    let save_clipboard = g:clipboard
     let g:clipboard = {}
 
     e file1
@@ -81,6 +82,7 @@ func Test_display_registers()
           \ .         '  c  ":   ls', a)
 
     bwipe!
+    let g:clipboard = save_clipboard
 endfunc
 
 func Test_recording_status_in_ex_line()
