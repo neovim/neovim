@@ -1014,13 +1014,6 @@ commands can be combined to create a NewGrep command: >
 			     updated.  With the [!] any changes in the current
 			     buffer are abandoned.
 
-			'f'  When the 'f' flag is specified, fuzzy string
-			     matching is used to find matching lines. In this
-			     case, {pattern} is treated as a literal string
-			     instead of a regular expression.  See
-			     |matchfuzzy()| for more info about fuzzy
-			     matching.
-
 			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.
 			A file that is opened for matching may use a buffer
 			number, but it is reused if possible to avoid

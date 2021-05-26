@@ -759,13 +759,15 @@ three lines: >
 		3:d<CR>		is translated into: .,.+2d<CR>
 <
 
-Visual Mode and Range					*v_:*
-							*:star-visual-range*
+Visual Mode and Range
+							*v_:*
 {Visual}:	Starts a command-line with the Visual selected lines as a
 		range.  The code `:'<,'>` is used for this range, which makes
 		it possible to select a similar line from the command-line
 		history for repeating a command on different Visually selected
 		lines.
+
+:*						*:star* *:star-visual-range*
 		When Visual mode was already ended, a short way to use the
 		Visual area for a range is `:*`.
 

@@ -2,6 +2,7 @@
 " Language:	Meson
 " License:	VIM License
 " Maintainer:	Nirbheek Chauhan <nirbheek.chauhan@gmail.com>
+"		Liam Beguin <liambeguin@gmail.com>
 " Last Change:	2019 Oct 18
 " Credits:	Zvezdan Petkovic <zpetkovic@acm.org>
 "		Neil Schemenauer <nas@meson.ca>
@@ -17,11 +18,7 @@
 "   let meson_space_error_highlight = 1
 "
 
-" For version 5.x: Clear all syntax items.
-" For version 6.x: Quit when a syntax file was already loaded.
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+if exists("b:current_syntax")
   finish
 endif
 
@@ -32,8 +29,9 @@ set cpo&vim
 
 " http://mesonbuild.com/Syntax.html
 syn keyword mesonConditional	elif else if endif
-syn keyword mesonRepeat	foreach endforeach
-syn keyword mesonOperator	and not or
+syn keyword mesonRepeat		foreach endforeach
+syn keyword mesonOperator	and not or in
+syn keyword mesonStatement	continue break
 
 syn match   mesonComment	"#.*$" contains=mesonTodo,@Spell
 syn keyword mesonTodo		FIXME NOTE NOTES TODO XXX contained
@@ -117,10 +115,12 @@ syn keyword mesonBuiltin
   \ subdir
   \ subdir_done
   \ subproject
+  \ summary
   \ target_machine
   \ test
   \ vcs_tag
   \ warning
+  \ range
 
 if exists("meson_space_error_highlight")
   " trailing whitespace
@@ -130,31 +130,20 @@ if exists("meson_space_error_highlight")
   syn match   mesonSpaceError	display "\t\+ "
 endif
 
-if version >= 508 || !exists("did_meson_syn_inits")
-  if version <= 508
-    let did_meson_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-
-  " The default highlight links.  Can be overridden later.
-  HiLink mesonStatement		Statement
-  HiLink mesonConditional	Conditional
-  HiLink mesonRepeat		Repeat
-  HiLink mesonOperator		Operator
-  HiLink mesonComment		Comment
-  HiLink mesonTodo		Todo
-  HiLink mesonString		String
-  HiLink mesonEscape		Special
-  HiLink mesonNumber		Number
-  HiLink mesonBuiltin		Function
-  HiLink mesonConstant		Number
-  if exists("meson_space_error_highlight")
-    HiLink mesonSpaceError	Error
-  endif
-
-  delcommand HiLink
+" The default highlight links.  Can be overridden later.
+hi def link mesonStatement	Statement
+hi def link mesonConditional	Conditional
+hi def link mesonRepeat	Repeat
+hi def link mesonOperator	Operator
+hi def link mesonComment	Comment
+hi def link mesonTodo		Todo
+hi def link mesonString	String
+hi def link mesonEscape	Special
+hi def link mesonNumber	Number
+hi def link mesonBuiltin	Function
+hi def link mesonConstant	Number
+if exists("meson_space_error_higlight")
+  hi def link mesonSpaceError	Error
 endif
 
 let b:current_syntax = "meson"
