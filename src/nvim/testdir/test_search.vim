@@ -1177,13 +1177,28 @@ func Test_look_behind()
   bwipe!
 endfunc
 
+func Test_search_visual_area_linewise()
+  new
+  call setline(1, ['aa', 'bb', 'cc'])
+  exe "normal 2GV\<Esc>"
+  for engine in [1, 2]
+    exe 'set regexpengine=' .. engine
+    exe "normal gg/\\%'<\<CR>>"
+    call assert_equal([0, 2, 1, 0, 1], getcurpos(), 'engine ' .. engine)
+    exe "normal gg/\\%'>\<CR>"
+    call assert_equal([0, 2, 2, 0, 2], getcurpos(), 'engine ' .. engine)
+  endfor
+
+  bwipe!
+  set regexpengine&
+endfunc
+
 func Test_search_sentence()
   new
   " this used to cause a crash
-  call assert_fails("/\\%')", 'E486')
-  call assert_fails("/", 'E486')
   /\%'(
   /
+  bwipe
 endfunc
 
 " Test that there is no crash when there is a last search pattern but no last

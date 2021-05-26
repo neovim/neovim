@@ -2,6 +2,7 @@
 " Language:		Meson
 " License:		VIM License
 " Maintainer:		Nirbheek Chauhan <nirbheek.chauhan@gmail.com>
+"	        	Liam Beguin <liambeguin@gmail.com>
 " Original Authors:	David Bustos <bustos@caltech.edu>
 "			Bram Moolenaar <Bram@vim.org>
 " Last Change:		2019 Oct 18

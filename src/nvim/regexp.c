@@ -692,6 +692,7 @@ static char_u *regparse;        ///< Input-scan pointer.
 static int prevchr_len;         ///< byte length of previous char
 static int num_complex_braces;  ///< Complex \{...} count
 static int regnpar;             ///< () count.
+static bool wants_nfa;          ///< regex should use NFA engine
 static int regnzpar;            ///< \z() count.
 static int re_has_z;            ///< \z item detected
 static char_u *regcode;         ///< Code-emit pointer, or JUST_CALC_SIZE
@@ -3974,17 +3975,25 @@ static bool regmatch(
 
           pos = getmark_buf(rex.reg_buf, mark, false);
           if (pos == NULL                    // mark doesn't exist
-              || pos->lnum <= 0              // mark isn't set in reg_buf
-              || (pos->lnum == rex.lnum + rex.reg_firstlnum
-                  ? (pos->col == (colnr_T)(rex.input - rex.line)
-                     ? (cmp == '<' || cmp == '>')
-                     : (pos->col < (colnr_T)(rex.input - rex.line)
-                        ? cmp != '>'
-                        : cmp != '<'))
-                  : (pos->lnum < rex.lnum + rex.reg_firstlnum
-                     ? cmp != '>'
-                     : cmp != '<'))) {
+              || pos->lnum <= 0) {           // mark isn't set in reg_buf
             status = RA_NOMATCH;
+          } else {
+            const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
+              && pos->col == MAXCOL
+              ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))
+              : pos->col;
+
+            if (pos->lnum == rex.lnum + rex.reg_firstlnum
+                ? (pos_col == (colnr_T)(rex.input - rex.line)
+                   ? (cmp == '<' || cmp == '>')
+                   : (pos_col < (colnr_T)(rex.input - rex.line)
+                      ? cmp != '>'
+                      : cmp != '<'))
+                : (pos->lnum < rex.lnum + rex.reg_firstlnum
+                   ? cmp != '>'
+                   : cmp != '<')) {
+              status = RA_NOMATCH;
+            }
           }
         }
         break;
@@ -7240,7 +7249,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
   // Check for error compiling regexp with initial engine.
   if (prog == NULL) {
 #ifdef BT_REGEXP_DEBUG_LOG
-    // Debugging log for NFA.
+    // Debugging log for BT engine.
     if (regexp_engine != BACKTRACKING_ENGINE) {
       FILE *f = fopen(BT_REGEXP_DEBUG_LOG_NAME, "a");
       if (f) {
@@ -7257,6 +7266,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
     // But don't try if an error message was given.
     if (regexp_engine == AUTOMATIC_ENGINE && !called_emsg) {
       regexp_engine = BACKTRACKING_ENGINE;
+      report_re_switch(expr);
       prog = bt_regengine.regcomp(expr, re_flags);
     }
   }

@@ -50,6 +50,11 @@ Multiple repeats					*multi-repeat*
 :[range]v[global]/{pattern}/[cmd]
 			Same as :g!.
 
+Example: >
+	:g/^Obsolete/d _
+Using the underscore after `:d` avoids clobbering registers or the clipboard.
+This also makes it faster.
+
 Instead of the '/' which surrounds the {pattern}, you can use any other
 single byte character, but not an alphabetic character, '\', '"' or '|'.
 This is useful if you want to include a '/' in the search pattern or
