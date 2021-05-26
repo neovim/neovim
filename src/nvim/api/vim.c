@@ -56,6 +56,7 @@
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
+# include "api/private/api_doc_metadata.generated.h"
 #endif
 
 void api_vim_init(void)
@@ -1972,7 +1973,7 @@ Array nvim_get_api_info(uint64_t channel_id)
 
   assert(channel_id <= INT64_MAX);
   ADD(rv, INTEGER_OBJ((int64_t)channel_id));
-  ADD(rv, DICTIONARY_OBJ(api_metadata(false)));
+  ADD(rv, DICTIONARY_OBJ(api_metadata()));
 
   return rv;
 }
@@ -3024,5 +3025,22 @@ Dictionary nvim_get_api(Dictionary opts, Error *err)
     docs = key_and_val->value.data.boolean;
   }
 
-  return api_metadata(docs);
+  Dictionary rv = api_metadata();
+  if (docs) {
+    msgpack_unpacked unpacked;
+    msgpack_unpacked_init(&unpacked);
+    if (msgpack_unpack_next(&unpacked,
+                            (const char *)api_doc_metadata,
+                            sizeof(api_doc_metadata),
+                            NULL) != MSGPACK_UNPACK_SUCCESS) {
+      abort();
+    }
+
+    Object api_docs;
+    msgpack_rpc_to_object(&unpacked.data, &api_docs);
+    msgpack_unpacked_destroy(&unpacked);
+    PUT(rv, "docs", api_docs);
+  }
+
+  return rv;
 }

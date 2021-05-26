@@ -45,7 +45,6 @@ typedef struct {
 # include "api/private/helpers.c.generated.h"
 # include "api/private/funcs_metadata.generated.h"
 # include "api/private/ui_events_metadata.generated.h"
-# include "api/private/api_doc_metadata.generated.h"
 #endif
 
 /// Start block that may cause VimL exceptions while evaluating another code
@@ -1249,7 +1248,7 @@ void api_clear_error(Error *value)
   value->type = kErrorTypeNone;
 }
 
-Dictionary api_metadata(bool with_docs)
+Dictionary api_metadata(void)
 {
   static Dictionary metadata = ARRAY_DICT_INIT;
 
@@ -1259,28 +1258,9 @@ Dictionary api_metadata(bool with_docs)
     init_ui_event_metadata(&metadata);
     init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
-    if (with_docs) {
-      init_docs_metadata(&metadata);
-    }
   }
 
   return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
-}
-
-static void init_docs_metadata(Dictionary *metadata) {
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)api_doc_metadata,
-                          sizeof(api_doc_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
-    abort();
-  }
-
-  Object api_docs;
-  msgpack_rpc_to_object(&unpacked.data, &api_docs);
-  msgpack_unpacked_destroy(&unpacked);
-  PUT(*metadata, "docstrings", api_docs);
 }
 
 static void init_function_metadata(Dictionary *metadata)

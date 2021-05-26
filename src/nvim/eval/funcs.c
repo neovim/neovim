@@ -290,7 +290,7 @@ static void f_and(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "api_info()" function
 static void f_api_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  Dictionary metadata = api_metadata(false);
+  Dictionary metadata = api_metadata();
   (void)object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
   api_free_dictionary(metadata);
 }
