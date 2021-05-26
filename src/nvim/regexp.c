@@ -3974,17 +3974,25 @@ static bool regmatch(
 
           pos = getmark_buf(rex.reg_buf, mark, false);
           if (pos == NULL                    // mark doesn't exist
-              || pos->lnum <= 0              // mark isn't set in reg_buf
-              || (pos->lnum == rex.lnum + rex.reg_firstlnum
-                  ? (pos->col == (colnr_T)(rex.input - rex.line)
-                     ? (cmp == '<' || cmp == '>')
-                     : (pos->col < (colnr_T)(rex.input - rex.line)
-                        ? cmp != '>'
-                        : cmp != '<'))
-                  : (pos->lnum < rex.lnum + rex.reg_firstlnum
-                     ? cmp != '>'
-                     : cmp != '<'))) {
+              || pos->lnum <= 0) {           // mark isn't set in reg_buf
             status = RA_NOMATCH;
+          } else {
+            const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
+              && pos->col == MAXCOL
+              ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))
+              : pos->col;
+
+            if (pos->lnum == rex.lnum + rex.reg_firstlnum
+                ? (pos_col == (colnr_T)(rex.input - rex.line)
+                   ? (cmp == '<' || cmp == '>')
+                   : (pos_col < (colnr_T)(rex.input - rex.line)
+                      ? cmp != '>'
+                      : cmp != '<'))
+                : (pos->lnum < rex.lnum + rex.reg_firstlnum
+                   ? cmp != '>'
+                   : cmp != '<')) {
+              status = RA_NOMATCH;
+            }
           }
         }
         break;

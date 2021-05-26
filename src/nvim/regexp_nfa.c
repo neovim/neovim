@@ -6055,21 +6055,27 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
       {
         pos_T *pos = getmark_buf(rex.reg_buf, t->state->val, false);
 
-        // Compare the mark position to the match position.
-        result = (pos != NULL                        // mark doesn't exist
-                  && pos->lnum > 0          // mark isn't set in reg_buf
-                  && (pos->lnum == rex.lnum + rex.reg_firstlnum
-                      ? (pos->col == (colnr_T)(rex.input - rex.line)
-                         ? t->state->c == NFA_MARK
-                         : (pos->col < (colnr_T)(rex.input - rex.line)
-                            ? t->state->c == NFA_MARK_GT
-                            : t->state->c == NFA_MARK_LT))
-                      : (pos->lnum < rex.lnum + rex.reg_firstlnum
-                         ? t->state->c == NFA_MARK_GT
-                         : t->state->c == NFA_MARK_LT)));
-        if (result) {
-          add_here = true;
-          add_state = t->state->out;
+        // Compare the mark position to the match position, if the mark
+        // exists and mark is set in reg_buf.
+        if (pos != NULL && pos->lnum > 0) {
+          const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
+            && pos->col == MAXCOL
+            ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))
+            : pos->col;
+
+          result = pos->lnum == rex.lnum + rex.reg_firstlnum
+            ? (pos_col == (colnr_T)(rex.input - rex.line)
+               ? t->state->c == NFA_MARK
+               : (pos_col < (colnr_T)(rex.input - rex.line)
+                  ? t->state->c == NFA_MARK_GT
+                  : t->state->c == NFA_MARK_LT))
+            : (pos->lnum < rex.lnum + rex.reg_firstlnum
+               ? t->state->c == NFA_MARK_GT
+               : t->state->c == NFA_MARK_LT);
+          if (result) {
+            add_here = true;
+            add_state = t->state->out;
+          }
         }
         break;
       }
