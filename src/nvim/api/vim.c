@@ -56,7 +56,6 @@
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
-# include "api/private/api_doc_metadata.generated.h"
 #endif
 
 void api_vim_init(void)
@@ -1973,7 +1972,7 @@ Array nvim_get_api_info(uint64_t channel_id)
 
   assert(channel_id <= INT64_MAX);
   ADD(rv, INTEGER_OBJ((int64_t)channel_id));
-  ADD(rv, DICTIONARY_OBJ(api_metadata()));
+  ADD(rv, DICTIONARY_OBJ(api_metadata(false)));
 
   return rv;
 }
@@ -2999,27 +2998,31 @@ error:
 }
 
 /// Gets api function documentation
-//
-// @return Dictionary of the form
-// { "nvim_win_set_option": {...}, "nvim_win_get_option": {...}, ... }
-Dictionary nvim_get_api(void)
-  FUNC_API_SINCE(7)
+Dictionary nvim_get_api(Dictionary opts, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_FAST
 {
-  msgpack_unpacked unpacked;
-  msgpack_unpacked_init(&unpacked);
-  if (msgpack_unpack_next(&unpacked,
-                          (const char *)api_doc_metadata,
-                          sizeof(api_doc_metadata),
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
-    abort();
+  if (opts.size > 1) {
+    api_set_error(err, kErrorTypeValidation, "too many options passed");
+    return (Dictionary)ARRAY_DICT_INIT;
   }
 
-  Object api_doc_obj;
-  msgpack_rpc_to_object(&unpacked.data, &api_doc_obj);
-  msgpack_unpacked_destroy(&unpacked);
+  bool docs = false;
+  if (opts.size > 0) {
+    KeyValuePair *key_and_val = &opts.items[0];
+    char* optname = key_and_val->key.data;
 
-  Dictionary api_doc = ARRAY_DICT_INIT;
-  PUT(api_doc, "api", DICTIONARY_OBJ(api_doc));
+    if (!strequal(optname, "docs")) {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", optname);
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
 
-  return api_doc;
+    if (key_and_val->value.type != kObjectTypeBoolean) {
+      api_set_error(err, kErrorTypeValidation, "gave non-boolean value for opt: %s", optname);
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+
+    docs = key_and_val->value.data.boolean;
+  }
+
+  return api_metadata(docs);
 }
