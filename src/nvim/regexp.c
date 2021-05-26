@@ -692,6 +692,7 @@ static char_u *regparse;        ///< Input-scan pointer.
 static int prevchr_len;         ///< byte length of previous char
 static int num_complex_braces;  ///< Complex \{...} count
 static int regnpar;             ///< () count.
+static bool wants_nfa;          ///< regex should use NFA engine
 static int regnzpar;            ///< \z() count.
 static int re_has_z;            ///< \z item detected
 static char_u *regcode;         ///< Code-emit pointer, or JUST_CALC_SIZE
@@ -7248,7 +7249,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
   // Check for error compiling regexp with initial engine.
   if (prog == NULL) {
 #ifdef BT_REGEXP_DEBUG_LOG
-    // Debugging log for NFA.
+    // Debugging log for BT engine.
     if (regexp_engine != BACKTRACKING_ENGINE) {
       FILE *f = fopen(BT_REGEXP_DEBUG_LOG_NAME, "a");
       if (f) {
@@ -7265,6 +7266,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
     // But don't try if an error message was given.
     if (regexp_engine == AUTOMATIC_ENGINE && !called_emsg) {
       regexp_engine = BACKTRACKING_ENGINE;
+      report_re_switch(expr);
       prog = bt_regengine.regcomp(expr, re_flags);
     }
   }
