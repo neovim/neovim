@@ -30,7 +30,7 @@ local funcs_metadata_outputf = arg[3]
 local mpack_outputf = arg[4]
 local lua_c_bindings_outputf = arg[5]
 
-local api_doc_metadata_outpuf = arg[6]
+local api_doc_metadata_outputf = arg[6]
 
 -- set of function names, used to detect duplicates
 local function_names = {}
@@ -173,7 +173,7 @@ dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
 
 
-local api_doc_metadata_output = io.open(api_doc_metadata_outpuf, 'wb')
+local api_doc_metadata_output = io.open(api_doc_metadata_outputf, 'wb')
 local api_mpack = io.open(arg[7], 'r')
 local api_packed = mpack.pack(api_mpack:read('*all'))
 api_mpack:close()
