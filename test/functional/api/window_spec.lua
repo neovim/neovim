@@ -387,4 +387,18 @@ describe('API/win', function()
       eq({oldbuf}, meths.list_bufs())
     end)
   end)
+
+  describe('open_win', function()
+    it('noautocmd option works', function()
+      command('autocmd BufEnter,BufLeave,BufWinEnter * let g:fired = 1')
+      meths.open_win(meths.create_buf(true, true), true, {
+        relative='win', row=3, col=3, width=12, height=3, noautocmd=true
+      })
+      eq(0, funcs.exists('g:fired'))
+      meths.open_win(meths.create_buf(true, true), true, {
+        relative='win', row=3, col=3, width=12, height=3
+      })
+      eq(1, funcs.exists('g:fired'))
+    end)
+  end)
 end)

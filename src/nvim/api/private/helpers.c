@@ -1645,7 +1645,7 @@ bool api_object_to_bool(Object obj, const char *what,
   } else if (obj.type == kObjectTypeNil) {
     return nil_value;  // caller decides what NIL (missing retval in lua) means
   } else {
-    api_set_error(err, kErrorTypeValidation, "%s is not an boolean", what);
+    api_set_error(err, kErrorTypeValidation, "%s is not a boolean", what);
     return false;
   }
 }
@@ -1868,7 +1868,7 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
 }
 
 bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
-                        Error *err)
+                        bool new_win, Error *err)
 {
   // TODO(bfredl): use a get/has_key interface instead and get rid of extra
   // flags
@@ -2014,6 +2014,12 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
       }  else {
         api_set_error(err, kErrorTypeValidation,
                       "Invalid value of 'style' key");
+      }
+    } else if (strequal(key, "noautocmd") && new_win) {
+      fconfig->noautocmd
+          = api_object_to_bool(val, "'noautocmd' key", false, err);
+      if (ERROR_SET(err)) {
+        return false;
       }
     } else {
       api_set_error(err, kErrorTypeValidation,
