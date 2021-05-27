@@ -1195,7 +1195,7 @@ describe('lua stdlib', function()
 
         vim.opt.makeprg = "global-local"
         table.insert(result, vim.api.nvim_get_option('makeprg'))
-        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+        table.insert(result, (pcall(vim.api.nvim_buf_get_option, 0, 'makeprg')))
 
         vim.opt_local.mp = "only-local"
         table.insert(result, vim.api.nvim_get_option('makeprg'))
@@ -1213,7 +1213,7 @@ describe('lua stdlib', function()
 
       -- Set -> global & local
       eq("global-local", result[1])
-      eq("global-local", result[2])
+      eq(false, result[2])
 
       -- Setlocal -> only local
       eq("global-local", result[3])
@@ -1223,9 +1223,9 @@ describe('lua stdlib', function()
       eq("only-global", result[5])
       eq("only-local", result[6])
 
-      -- set -> global & local and fixes overrides
+      -- set -> doesn't override previously set value
       eq("global-local", result[7])
-      eq("global-local", result[8])
+      eq("only-local", result[8])
     end)
 
     it('should allow all sorts of string manipulation', function()

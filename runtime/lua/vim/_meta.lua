@@ -4,11 +4,11 @@ local vim = assert(vim)
 local a = vim.api
 local validate = vim.validate
 
-local SET_TYPES = {
+local SET_TYPES = setmetatable({
   SET = 0,
   LOCAL = 1,
   GLOBAL = 2,
-}
+}, { __index = error })
 
 local options_info = {}
 for _, v in pairs(a.nvim_get_all_options_info()) do
@@ -170,10 +170,13 @@ local function set_scoped_option(k, v, set_type)
     a.nvim_set_option(k, v)
   end
 
-  if set_type ~= SET_TYPES.GLOBAL then
-    if is_window_option(info) then
+  if is_window_option(info) then
+    if set_type ~= SET_TYPES.GLOBAL then
       a.nvim_win_set_option(0, k, v)
-    elseif is_buffer_option(info) then
+    end
+  elseif is_buffer_option(info) then
+    if set_type == SET_TYPES.LOCAL
+        or (set_type == SET_TYPES.SET and not info.global_local) then
       a.nvim_buf_set_option(0, k, v)
     end
   end
@@ -206,20 +209,19 @@ local function get_scoped_option(k, set_type)
   end
 
   if is_window_option(info) then
-    local was_set, value = pcall(a.nvim_win_get_option, 0, k)
-    if was_set then return value end
-
-    if info.global_local then
-      return a.nvim_get_option(k)
+    if vim.api.nvim_get_option_info(k).was_set then
+      local was_set, value = pcall(a.nvim_win_get_option, 0, k)
+      if was_set then return value end
     end
 
-    error("win_get: This should not be able to happen, given my understanding of options // " .. k)
+    return a.nvim_get_option(k)
   end
 
   error("This fallback case should not be possible. " .. k)
 end
 
 -- vim global option
+--  this ONLY sets the global option. like `setglobal`
 vim.go = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
 
 -- vim `set` style options.
@@ -503,7 +505,7 @@ local remove_value = (function()
     end,
 
     [OptionTypes.STRING] = function()
-      error("This seems dumb... please don't do it :)")
+      error("Subtraction not supported for strings.")
     end,
 
     [OptionTypes.ARRAY] = function(left, right)

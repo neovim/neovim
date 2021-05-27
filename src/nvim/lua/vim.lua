@@ -39,9 +39,6 @@ assert(vim)
 vim.inspect = package.loaded['vim.inspect']
 assert(vim.inspect)
 
--- These are for loading runtime modules lazily since they aren't available in
--- the nvim binary as specified in executor.c
-
 local pathtrails = {}
 vim._so_trails = {}
 for s in  (package.cpath..';'):gmatch('[^;]*;') do
@@ -87,6 +84,8 @@ end
 
 table.insert(package.loaders, 1, vim._load_package)
 
+-- These are for loading runtime modules lazily since they aren't available in
+-- the nvim binary as specified in executor.c
 setmetatable(vim, {
   __index = function(t, key)
     if key == 'treesitter' then
@@ -639,6 +638,6 @@ vim._expand_pat_get_parts = function(lua_string)
   return parts, search_index
 end
 
-require('vim._meta')
+pcall(require, 'vim._meta')
 
 return module
