@@ -314,32 +314,8 @@ end
 
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
-  local a = vim.api
   local validate = vim.validate
-  local function make_meta_accessor(get, set, del)
-    validate {
-      get = {get, 'f'};
-      set = {set, 'f'};
-      del = {del, 'f', true};
-    }
-    local mt = {}
-    if del then
-      function mt:__newindex(k, v)
-        if v == nil then
-          return del(k)
-        end
-        return set(k, v)
-      end
-    else
-      function mt:__newindex(k, v)
-        return set(k, v)
-      end
-    end
-    function mt:__index(k)
-      return get(k)
-    end
-    return setmetatable({}, mt)
-  end
+
   local function make_dict_accessor(scope)
     validate {
       scope = {scope, 's'};
@@ -353,6 +329,7 @@ do
     end
     return setmetatable({}, mt)
   end
+
   vim.g = make_dict_accessor('g')
   vim.v = make_dict_accessor('v')
   vim.b = make_dict_accessor('b')
