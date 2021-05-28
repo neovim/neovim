@@ -1001,11 +1001,13 @@ Option:get()
         vim.cmd [[set wildignore=*.pyc,*.o]]
 
         print(vim.inspect(vim.opt.wildignore:get()))
-        -- { "*.pyc", ".o", }
+        -- { "*.pyc", "*.o", }
 
         for _, ignore_pattern in ipairs(vim.opt.wildignore:get()) do
             print("Will ignore:", ignore_pattern)
         end
+        -- Will ignore: *.pyc
+        -- Will ignore: *.o
 <
     For values that are comma-separated maps, a table will be returned with
     the names as keys and the values as entries: >
@@ -1035,21 +1037,41 @@ Option:append(value)
 
     Append a value to string-style options. See |:set+=|
 
+    These are equivalent:
+        `vim.opt.formatoptions:append('j')`
+        `vim.opt.formatoptions = vim.opt.formatoptions + 'j'`
+
                                                            *vim.opt:prepend()*
 Option:prepend(value)
 
     Prepend a value to string-style options. See |:set^=|
+
+    These are equivalent:
+        `vim.opt.wildignore:prepend('*.o')`
+        `vim.opt.wildignore = vim.opt.wildignore ^ '*.o'`
 
                                                             *vim.opt:remove()*
 Option:remove(value)
 
     Remove a value to string-style options. See |:set-=|
 
+    These are equivalent:
+        `vim.opt.wildignore:remove('*.pyc')`
+        `vim.opt.wildignore = vim.opt.wildignore - '*.pyc'`
+
 
 In general, using `vim.opt` will provide the expected result when the user is
 used to interacting with editor |options| via `set`. There are still times
 where the user may want to set particular options via a shorthand in Lua,
 which is where |vim.o|, |vim.bo|, and |vim.wo| come into play.
+
+The behavior for |:set|, |:setlocal|, and |:setglobal| is defined for
+buffer-local and window-local options as:
+
+    Command      lua            global value       local value ~
+  :set          vim.o               set                set
+  :setlocal     vim.bo/vim.wo        -                 set
+  :setglobal    vim.go              set                 -
 
 vim.o                                                   *vim.o*
         Get or set editor options, like |:set|. Invalid key is an error.
@@ -1061,6 +1083,8 @@ vim.o                                                   *vim.o*
 vim.go                                                  *vim.go*
         Get or set an |option|. Invalid key is an error.
 
+        This is a wrapper around |nvim_set_option()| and |nvim_get_option()|
+
         NOTE: This is different than |vim.o| because this ONLY sets the global
         option, which generally produces confusing behavior for  options with
         |global-local| values.
@@ -1071,12 +1095,20 @@ vim.go                                                  *vim.go*
 
 vim.bo                                                  *vim.bo*
         Get or set buffer-scoped |local-options|. Invalid key is an error.
+
+        This is a wrapper around |nvim_buf_set_option()| and
+        |nvim_buf_get_option()|
+
         Example: >
             vim.bo.buflisted = true
             print(vim.bo.comments)
 
 vim.wo                                                  *vim.wo*
         Get or set window-scoped |local-options|. Invalid key is an error.
+
+        This is a wrapper around |nvim_win_set_option()| and
+        |nvim_win_get_option()|
+
         Example: >
             vim.wo.cursorcolumn = true
             print(vim.wo.foldmarker)

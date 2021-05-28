@@ -336,8 +336,6 @@ do
   vim.t = make_dict_accessor('t')
 end
 
--- TODO: TJ Find out if we want to put the stuff back here.
-
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
 --@param bufnr number of buffer

@@ -5,8 +5,8 @@ local a = vim.api
 local validate = vim.validate
 
 local SET_TYPES = setmetatable({
-  SET = 0,
-  LOCAL = 1,
+  SET    = 0,
+  LOCAL  = 1,
   GLOBAL = 2,
 }, { __index = error })
 
