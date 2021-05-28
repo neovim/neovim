@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "nvim/eval/typval.h"
 #include "nvim/normal.h"
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/regexp_defs.h"
@@ -90,6 +91,35 @@ typedef struct exarg exarg_T;
 #define BAD_DROP        -2      // erase it
 
 typedef void (*ex_func_T)(exarg_T *eap);
+
+// NOTE: These possible could be removed and changed so that
+// Callback could take a "command" style string, and simply
+// execute that (instead of it being a function).
+//
+// But it's still a bit weird to do that.
+//
+// Another option would be that we just make a callback reference to
+// "execute($INPUT)" or something like that, so whatever the user
+// sends in via autocmds is just executed via this.
+//
+// However, that would probably have some performance cost (probably
+// very marginal, but still some cost either way).
+typedef enum {
+  CALLABLE_NONE,
+  CALLABLE_EX,
+  CALLABLE_CB,
+} AucmdExecutableType;
+
+typedef struct aucmd_executable_t AucmdExecutable;
+struct aucmd_executable_t {
+  AucmdExecutableType type;
+  union {
+    char_u *cmd;
+    Callback cb;
+  } callable;
+};
+
+#define AUCMD_EXECUTABLE_INIT { .type = CALLABLE_NONE }
 
 typedef char_u *(*LineGetter)(int, void *, int, bool);
 

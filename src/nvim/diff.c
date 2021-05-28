@@ -85,9 +85,9 @@ typedef struct {
 // used for recording hunks from xdiff
 typedef struct {
   linenr_T lnum_orig;
-  long     count_orig;
+  long count_orig;
   linenr_T lnum_new;
-  long     count_new;
+  long count_new;
 } diffhunk_T;
 
 // two diff inputs and one result
@@ -1285,7 +1285,7 @@ void ex_diffpatch(exarg_T *eap)
           ex_file(eap);
 
           // Do filetype detection with the new name.
-          if (au_has_group((char_u *)"filetypedetect")) {
+          if (augroup_exists("filetypedetect")) {
             do_cmdline_cmd(":doau filetypedetect BufRead");
           }
         }
@@ -3159,8 +3159,7 @@ static int parse_diff_unified(char_u *line, diffhunk_T *hunk)
 /// Callback function for the xdl_diff() function.
 /// Stores the diff output in a grow array.
 ///
-static int xdiff_out(long start_a, long count_a, long start_b, long count_b,
-                     void *priv)
+static int xdiff_out(long start_a, long count_a, long start_b, long count_b, void *priv)
 {
   diffout_T *dout = (diffout_T *)priv;
   diffhunk_T *p = xmalloc(sizeof(*p));

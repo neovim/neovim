@@ -4,6 +4,11 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 
+// event_T definition
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "auevents_enum.generated.h"
+#endif
+
 // Struct to save values in before executing autocommands for a buffer that is
 // not the current buffer.
 typedef struct {
@@ -18,22 +23,23 @@ typedef struct {
 } aco_save_T;
 
 typedef struct AutoCmd {
-  char_u *cmd;                 // Command to be executed (NULL when
-                               // command has been removed)
+  AucmdExecutable exec;
   bool once;                            // "One shot": removed after execution
   bool nested;                          // If autocommands nest here
   bool last;                            // last command in list
+  int64_t id;                           // TODO(tjdevries): Explain
   sctx_T script_ctx;                    // script context where defined
-  struct AutoCmd *next;                // Next AutoCmd in list
+  char *desc;                           // Description for the autocmd.
+  struct AutoCmd *next;                 // Next AutoCmd in list
 } AutoCmd;
 
 typedef struct AutoPat {
-  struct AutoPat *next;                // next AutoPat in AutoPat list; MUST
-                                       // be the first entry
-  char_u *pat;                 // pattern as typed (NULL when pattern
-                               // has been removed)
-  regprog_T *reg_prog;            // compiled regprog for pattern
-  AutoCmd *cmds;                // list of commands to do
+  struct AutoPat *next;                 // next AutoPat in AutoPat list; MUST
+                                        // be the first entry
+  char_u *pat;                          // pattern as typed (NULL when pattern
+                                        // has been removed)
+  regprog_T *reg_prog;                  // compiled regprog for pattern
+  AutoCmd *cmds;                        // list of commands to do
   int group;                            // group ID
   int patlen;                           // strlen() of pat
   int buflocal_nr;                      // !=0 for buffer-local AutoPat
@@ -41,13 +47,7 @@ typedef struct AutoPat {
   char last;                            // last pattern for apply_autocmds()
 } AutoPat;
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "auevents_enum.generated.h"
-#endif
-
-///
 /// Struct used to keep status while executing autocommands for an event.
-///
 typedef struct AutoPatCmd {
   AutoPat *curpat;          // next AutoPat to examine
   AutoCmd *nextcmd;         // next AutoCmd to execute
@@ -75,8 +75,16 @@ EXTERN bool au_did_filetype INIT(= false);
 # include "autocmd.h.generated.h"
 #endif
 
-#define AUGROUP_DEFAULT    -1      // default autocmd group
-#define AUGROUP_ERROR      -2      // erroneous autocmd group
-#define AUGROUP_ALL        -3      // all autocmd groups
+#define AUGROUP_DEFAULT    (-1)      // default autocmd group
+#define AUGROUP_ERROR      (-2)      // erroneous autocmd group
+#define AUGROUP_ALL        (-3)      // all autocmd groups
+#define AUGROUP_DELETED    (-4)      // all autocmd groups
+// #define AUGROUP_NS       -5      // TODO(tjdevries): Support namespaced based augroups
+
+#define BUFLOCAL_PAT_LEN 25
+
+/// Iterates over all the events for auto commands
+#define FOR_ALL_AUEVENTS(event) \
+  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1))  // NOLINT
 
 #endif  // NVIM_AUTOCMD_H

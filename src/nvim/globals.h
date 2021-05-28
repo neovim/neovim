@@ -326,16 +326,16 @@ EXTERN int want_garbage_collect INIT(= false);
 EXTERN int garbage_collect_at_exit INIT(= false);
 
 // Special values for current_SID.
-#define SID_MODELINE    -1      // when using a modeline
-#define SID_CMDARG      -2      // for "--cmd" argument
-#define SID_CARG        -3      // for "-c" argument
-#define SID_ENV         -4      // for sourcing environment variable
-#define SID_ERROR       -5      // option was reset because of an error
-#define SID_NONE        -6      // don't set scriptID
-#define SID_WINLAYOUT   -7      // changing window size
-#define SID_LUA         -8      // for Lua scripts/chunks
-#define SID_API_CLIENT  -9      // for API clients
-#define SID_STR         -10     // for sourcing a string with no script item
+#define SID_MODELINE    (-1)      // when using a modeline
+#define SID_CMDARG      (-2)      // for "--cmd" argument
+#define SID_CARG        (-3)      // for "-c" argument
+#define SID_ENV         (-4)      // for sourcing environment variable
+#define SID_ERROR       (-5)      // option was reset because of an error
+#define SID_NONE        (-6)      // don't set scriptID
+#define SID_WINLAYOUT   (-7)      // changing window size
+#define SID_LUA         (-8)      // for Lua scripts/chunks
+#define SID_API_CLIENT  (-9)      // for API clients
+#define SID_STR         (-10)     // for sourcing a string with no script item
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });

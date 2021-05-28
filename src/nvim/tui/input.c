@@ -5,7 +5,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/aucmd.h"
+#include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/macros.h"
@@ -378,7 +378,7 @@ static bool handle_focus_event(TermInput *input)
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 3);
-    aucmd_schedule_focusgained(focus_gained);
+    autocmd_schedule_focusgained(focus_gained);
     return true;
   }
   return false;

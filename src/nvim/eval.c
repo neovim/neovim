@@ -6,6 +6,7 @@
  */
 
 #include <math.h>
+#include <stdlib.h>
 
 #include "auto/config.h"
 
@@ -3258,7 +3259,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
   // b: variables
   // In cmdwin, the alternative buffer should be used.
   hashtab_T *ht
-      = is_in_cmdwin() ? &prevwin->w_buffer->b_vars->dv_hashtab : &curbuf->b_vars->dv_hashtab;
+    = is_in_cmdwin() ? &prevwin->w_buffer->b_vars->dv_hashtab : &curbuf->b_vars->dv_hashtab;
   if (bdone < ht->ht_used) {
     if (bdone++ == 0) {
       hi = ht->ht_array;
@@ -7746,6 +7747,7 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
       callback->type = kCallbackFuncref;
     }
   } else if (nlua_is_table_from_lua(arg)) {
+    // TODO(tjdvries): UnifiedCallback
     char_u *name = nlua_register_table_as_callable(arg);
 
     if (name != NULL) {
@@ -7775,6 +7777,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
 {
   partial_T *partial;
   char_u *name;
+  Array args = ARRAY_DICT_INIT;
   switch (callback->type) {
   case kCallbackFuncref:
     name = callback->data.funcref;
@@ -7784,6 +7787,13 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   case kCallbackPartial:
     partial = callback->data.partial;
     name = partial_name(partial);
+    break;
+
+  case kCallbackLua:
+    ILOG(" We tryin  to call dat dang lua ref ");
+    nlua_call_ref(callback->data.luaref, "aucmd", args, false, NULL);
+
+    return false;
     break;
 
   case kCallbackNone:
