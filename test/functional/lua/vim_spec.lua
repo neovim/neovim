@@ -1113,6 +1113,464 @@ describe('lua stdlib', function()
     eq(0, funcs.luaeval "vim.wo[1000].cole")
   end)
 
+  describe('vim.opt', function()
+    -- TODO: We still need to write some tests for optlocal, opt and then getting the options
+    --  Probably could also do some stuff with getting things from viml side as well to confirm behavior is the same.
+
+    it('should allow setting number values', function()
+      local scrolloff = exec_lua [[
+        vim.opt.scrolloff = 10
+        return vim.o.scrolloff
+      ]]
+      eq(scrolloff, 10)
+    end)
+
+    pending('should handle STUPID window things', function()
+      local result = exec_lua [[
+        local result = {}
+
+        table.insert(result, vim.api.nvim_get_option('scrolloff'))
+        table.insert(result, vim.api.nvim_win_get_option(0, 'scrolloff'))
+
+        return result
+      ]]
+
+      eq({}, result)
+    end)
+
+    it('should allow setting tables', function()
+      local wildignore = exec_lua [[
+        vim.opt.wildignore = { 'hello', 'world' }
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, "hello,world")
+    end)
+
+    it('should allow setting tables with shortnames', function()
+      local wildignore = exec_lua [[
+        vim.opt.wig = { 'hello', 'world' }
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, "hello,world")
+    end)
+
+    it('should error when you attempt to set string values to numeric options', function()
+      local result = exec_lua [[
+        return {
+          pcall(function() vim.opt.textwidth = 'hello world' end)
+        }
+      ]]
+
+      eq(false, result[1])
+    end)
+
+    it('should error when you attempt to setlocal a global value', function()
+      local result = exec_lua [[
+        return pcall(function() vim.opt_local.clipboard = "hello" end)
+      ]]
+
+      eq(false, result)
+    end)
+
+    it('should allow you to set boolean values', function()
+      eq({true, false, true}, exec_lua [[
+        local results = {}
+
+        vim.opt.autoindent = true
+        table.insert(results, vim.bo.autoindent)
+
+        vim.opt.autoindent = false
+        table.insert(results, vim.bo.autoindent)
+
+        vim.opt.autoindent = not vim.opt.autoindent:get()
+        table.insert(results, vim.bo.autoindent)
+
+        return results
+      ]])
+    end)
+
+    it('should change current buffer values and defaults for global local values', function()
+      local result = exec_lua [[
+        local result = {}
+
+        vim.opt.makeprg = "global-local"
+        table.insert(result, vim.api.nvim_get_option('makeprg'))
+        table.insert(result, (pcall(vim.api.nvim_buf_get_option, 0, 'makeprg')))
+
+        vim.opt_local.mp = "only-local"
+        table.insert(result, vim.api.nvim_get_option('makeprg'))
+        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+
+        vim.opt_global.makeprg = "only-global"
+        table.insert(result, vim.api.nvim_get_option('makeprg'))
+        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+
+        vim.opt.makeprg = "global-local"
+        table.insert(result, vim.api.nvim_get_option('makeprg'))
+        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
+        return result
+      ]]
+
+      -- Set -> global & local
+      eq("global-local", result[1])
+      eq(false, result[2])
+
+      -- Setlocal -> only local
+      eq("global-local", result[3])
+      eq("only-local", result[4])
+
+      -- Setglobal -> only global
+      eq("only-global", result[5])
+      eq("only-local", result[6])
+
+      -- set -> doesn't override previously set value
+      eq("global-local", result[7])
+      eq("only-local", result[8])
+    end)
+
+    it('should allow all sorts of string manipulation', function()
+      eq({'hello', 'hello world', 'start hello world'}, exec_lua [[
+        local results = {}
+
+        vim.opt.makeprg = "hello"
+        table.insert(results, vim.o.makeprg)
+
+        vim.opt.makeprg = vim.opt.makeprg + " world"
+        table.insert(results, vim.o.makeprg)
+
+        vim.opt.makeprg = vim.opt.makeprg ^ "start "
+        table.insert(results, vim.o.makeprg)
+
+        return results
+      ]])
+    end)
+
+    describe('option:get()', function()
+      it('should work for boolean values', function()
+        eq(false, exec_lua [[
+          vim.opt.number = false
+          return vim.opt.number:get()
+        ]])
+      end)
+
+      it('should work for number values', function()
+        local tabstop = exec_lua[[
+          vim.opt.tabstop = 10
+          return vim.opt.tabstop:get()
+        ]]
+
+        eq(10, tabstop)
+      end)
+
+      it('should work for string values', function()
+        eq("hello world", exec_lua [[
+          vim.opt.makeprg = "hello world"
+          return vim.opt.makeprg:get()
+        ]])
+      end)
+
+      it('should work for set type flaglists', function()
+        local formatoptions = exec_lua [[
+          vim.opt.formatoptions = 'tcro'
+          return vim.opt.formatoptions:get()
+        ]]
+
+        eq(true, formatoptions.t)
+        eq(true, not formatoptions.q)
+      end)
+
+      it('should work for set type flaglists', function()
+        local formatoptions = exec_lua [[
+          vim.opt.formatoptions = { t = true, c = true, r = true, o = true }
+          return vim.opt.formatoptions:get()
+        ]]
+
+        eq(true, formatoptions.t)
+        eq(true, not formatoptions.q)
+      end)
+
+      it('should work for array list type options', function()
+        local wildignore = exec_lua [[
+          vim.opt.wildignore = "*.c,*.o,__pycache__"
+          return vim.opt.wildignore:get()
+        ]]
+
+        eq(3, #wildignore)
+        eq("*.c", wildignore[1])
+      end)
+
+      it('should work for key-value pair options', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = "tab:>~,space:_"
+          return vim.opt.listchars:get()
+        ]]
+
+        eq({
+          tab = ">~",
+          space = "_",
+        }, listchars)
+      end)
+
+      it('should allow you to add numeric options', function()
+        eq(16, exec_lua [[
+          vim.opt.tabstop = 12
+          vim.opt.tabstop = vim.opt.tabstop + 4
+          return vim.bo.tabstop
+        ]])
+      end)
+
+      it('should allow you to subtract numeric options', function()
+        eq(2, exec_lua [[
+          vim.opt.tabstop = 4
+          vim.opt.tabstop = vim.opt.tabstop - 2
+          return vim.bo.tabstop
+        ]])
+      end)
+    end)
+
+    describe('key:value style options', function()
+      it('should handle dictionary style', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+
+          return vim.o.listchars
+        ]]
+        eq("eol:~,space:.", listchars)
+      end)
+
+      it('should allow adding dictionary style', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+
+          vim.opt.listchars = vim.opt.listchars + { space = "-" }
+
+          return vim.o.listchars
+        ]]
+
+        eq("eol:~,space:-", listchars)
+      end)
+
+      it('should allow adding dictionary style', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          vim.opt.listchars = vim.opt.listchars + { space = "-" } + { space = "_" }
+
+          return vim.o.listchars
+        ]]
+
+        eq("eol:~,space:_", listchars)
+      end)
+
+      it('should allow completely new keys', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          vim.opt.listchars = vim.opt.listchars + { tab = ">>>" }
+
+          return vim.o.listchars
+        ]]
+
+        eq("eol:~,space:.,tab:>>>", listchars)
+      end)
+
+      it('should allow subtracting dictionary style', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          vim.opt.listchars = vim.opt.listchars - "space"
+
+          return vim.o.listchars
+        ]]
+
+        eq("eol:~", listchars)
+      end)
+
+      it('should allow subtracting dictionary style', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          vim.opt.listchars = vim.opt.listchars - "space" - "eol"
+
+          return vim.o.listchars
+        ]]
+
+        eq("", listchars)
+      end)
+
+      it('should allow subtracting dictionary style multiple times', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          vim.opt.listchars = vim.opt.listchars - "space" - "space"
+
+          return vim.o.listchars
+        ]]
+
+        eq("eol:~", listchars)
+      end)
+
+      it('should allow adding a key:value string to a listchars', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          vim.opt.listchars = vim.opt.listchars + "tab:>~"
+
+          return vim.o.listchars
+        ]]
+
+        eq("eol:~,space:.,tab:>~", listchars)
+      end)
+
+      it('should allow prepending a key:value string to a listchars', function()
+        local listchars = exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          vim.opt.listchars = vim.opt.listchars ^ "tab:>~"
+
+          return vim.o.listchars
+        ]]
+
+        eq("eol:~,space:.,tab:>~", listchars)
+      end)
+    end)
+
+    it('should automatically set when calling remove', function()
+      eq("foo,baz", exec_lua [[
+        vim.opt.wildignore = "foo,bar,baz"
+        vim.opt.wildignore:remove("bar")
+
+        return vim.o.wildignore
+      ]])
+    end)
+
+    it('should automatically set when calling remove with a table', function()
+      eq("foo", exec_lua [[
+        vim.opt.wildignore = "foo,bar,baz"
+        vim.opt.wildignore:remove { "bar", "baz" }
+
+        return vim.o.wildignore
+      ]])
+    end)
+
+    it('should automatically set when calling append', function()
+      eq("foo,bar,baz,bing", exec_lua [[
+        vim.opt.wildignore = "foo,bar,baz"
+        vim.opt.wildignore:append("bing")
+
+        return vim.o.wildignore
+      ]])
+    end)
+
+    it('should automatically set when calling append with a table', function()
+      eq("foo,bar,baz,bing,zap", exec_lua [[
+        vim.opt.wildignore = "foo,bar,baz"
+        vim.opt.wildignore:append { "bing", "zap" }
+
+        return vim.o.wildignore
+      ]])
+    end)
+
+    it('should allow adding tables', function()
+      local wildignore = exec_lua [[
+        vim.opt.wildignore = 'foo'
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo')
+
+      wildignore = exec_lua [[
+        vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo,bar,baz')
+    end)
+
+    it('should handle adding duplicates', function()
+      local wildignore = exec_lua [[
+        vim.opt.wildignore = 'foo'
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo')
+
+      wildignore = exec_lua [[
+        vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo,bar,baz')
+
+      wildignore = exec_lua [[
+        vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo,bar,baz')
+    end)
+
+    it('should allow adding multiple times', function()
+      local wildignore = exec_lua [[
+        vim.opt.wildignore = 'foo'
+        vim.opt.wildignore = vim.opt.wildignore + 'bar' + 'baz'
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo,bar,baz')
+    end)
+
+    it('should remove values when you use minus', function()
+      local wildignore = exec_lua [[
+        vim.opt.wildignore = 'foo'
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo')
+
+      wildignore = exec_lua [[
+        vim.opt.wildignore = vim.opt.wildignore + { 'bar', 'baz' }
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo,bar,baz')
+
+      wildignore = exec_lua [[
+        vim.opt.wildignore = vim.opt.wildignore - 'bar'
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'foo,baz')
+    end)
+
+    it('should prepend values when using ^', function()
+      local wildignore = exec_lua [[
+        vim.opt.wildignore = 'foo'
+        vim.opt.wildignore = vim.opt.wildignore ^ 'first'
+        return vim.o.wildignore
+      ]]
+      eq('first,foo', wildignore)
+
+      wildignore = exec_lua [[
+        vim.opt.wildignore = vim.opt.wildignore ^ 'super_first'
+        return vim.o.wildignore
+      ]]
+      eq(wildignore, 'super_first,first,foo')
+    end)
+
+  end)
+
   it('vim.cmd', function()
     exec_lua [[
     vim.cmd "autocmd BufNew * ++once lua BUF = vim.fn.expand('<abuf>')"

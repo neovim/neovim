@@ -912,9 +912,167 @@ vim.env                                                 *vim.env*
             print(vim.env.TERM)
 <
 
-                                                        *lua-vim-options*
-From Lua you can work with editor |options| by reading and setting items in
-these Lua tables:
+                                                             *lua-vim-options*
+                                                                 *lua-vim-opt*
+                                                                 *lua-vim-set*
+                                                            *lua-vim-optlocal*
+                                                            *lua-vim-setlocal*
+
+In vimL, there is a succint and simple way to set options. For more
+information, see |set-option|. In Lua, the corresponding method is `vim.opt`.
+
+`vim.opt` provides several conveniences for setting and controlling options
+from within Lua.
+
+    Examples: ~
+
+    To set a boolean toggle:
+        In vimL:
+            `set number`
+
+        In Lua:
+            `vim.opt.number = true`
+
+    To set an array of values:
+        In vimL:
+            `set wildignore=*.o,*.a,__pycache__`
+
+        In Lua, there are two ways you can do this now. One is very similar to
+        the vimL way:
+            `vim.opt.wildignore = '*.o,*.a,__pycache__'`
+
+        However, vim.opt also supports a more elegent way of setting
+        list-style options, but using lua tables:
+            `vim.opt.wildignore = { '*.o', '*.a', '__pycache__' }`
+
+    To replicate the behavior of |:set+=|, use: >
+
+        -- vim.opt supports appending options via the "+" operator
+        vim.opt.wildignore = vim.opt.wildignore + { "*.pyc", "node_modules" }
+
+        -- or using the `:append(...)` method
+        vim.opt.wildignore:append { "*.pyc", "node_modules" }
+<
+
+    To replicate the behavior of |:set^=|, use: >
+
+        -- vim.opt supports prepending options via the "^" operator
+        vim.opt.wildignore = vim.opt.wildignore ^ { "new_first_value" }
+
+        -- or using the `:prepend(...)` method
+        vim.opt.wildignore:prepend { "new_first_value" }
+<
+    To replicate the behavior of |:set-=|, use: >
+
+        -- vim.opt supports removing options via the "-" operator
+        vim.opt.wildignore = vim.opt.wildignore - { "node_modules" }
+
+        -- or using the `:remove(...)` method
+        vim.opt.wildignore:remove { "node_modules" }
+<
+    To set a map of values:
+        In vimL:
+            `set listchars=space:_,tab:>~`
+
+        In Lua:
+            `vim.opt.listchars = { space = '_', tab = '>~' }`
+
+
+In any of the above examples, to replicate the behavior |setlocal|, use
+`vim.opt_local`. Additionally, to replicate the behavior of |setglobal|, use
+`vim.opt_global`.
+                                                                     *vim.opt*
+
+|vim.opt| returns an Option object.
+
+For example: `local listchar_object = vim.opt.listchar`
+
+An `Option` has the following methods:
+
+
+                                                               *vim.opt:get()*
+Option:get()
+
+    Returns a lua-representation of the option. Boolean, number and string
+    values will be returned in exactly the same fashion.
+
+    For values that are comma-separated lists, an array will be returned with
+    the values as entries in the array: >
+        vim.cmd [[set wildignore=*.pyc,*.o]]
+
+        print(vim.inspect(vim.opt.wildignore:get()))
+        -- { "*.pyc", "*.o", }
+
+        for _, ignore_pattern in ipairs(vim.opt.wildignore:get()) do
+            print("Will ignore:", ignore_pattern)
+        end
+        -- Will ignore: *.pyc
+        -- Will ignore: *.o
+<
+    For values that are comma-separated maps, a table will be returned with
+    the names as keys and the values as entries: >
+        vim.cmd [[set listchars=space:_,tab:>~]]
+
+        print(vim.inspect(vim.opt.listchars:get()))
+        --  { space = "_", tab = ">~", }
+
+        for char, representation in pairs(vim.opt.listchars:get()) do
+            print(char, "->", representation)
+        end
+<
+    For values that are lists of flags, a set will be returned with the flags
+    as keys and `true` as entries. >
+        vim.cmd [[set formatoptions=njtcroql]]
+
+        print(vim.inspect(vim.opt.formatoptions:get()))
+        -- { n = true, j = true, c = true, ... }
+
+        local format_opts = vim.opt.formatoptions:get()
+        if format_opts.j then
+            print("J is enabled!")
+        end
+<
+                                                            *vim.opt:append()*
+Option:append(value)
+
+    Append a value to string-style options. See |:set+=|
+
+    These are equivalent:
+        `vim.opt.formatoptions:append('j')`
+        `vim.opt.formatoptions = vim.opt.formatoptions + 'j'`
+
+                                                           *vim.opt:prepend()*
+Option:prepend(value)
+
+    Prepend a value to string-style options. See |:set^=|
+
+    These are equivalent:
+        `vim.opt.wildignore:prepend('*.o')`
+        `vim.opt.wildignore = vim.opt.wildignore ^ '*.o'`
+
+                                                            *vim.opt:remove()*
+Option:remove(value)
+
+    Remove a value to string-style options. See |:set-=|
+
+    These are equivalent:
+        `vim.opt.wildignore:remove('*.pyc')`
+        `vim.opt.wildignore = vim.opt.wildignore - '*.pyc'`
+
+
+In general, using `vim.opt` will provide the expected result when the user is
+used to interacting with editor |options| via `set`. There are still times
+where the user may want to set particular options via a shorthand in Lua,
+which is where |vim.o|, |vim.bo|, |vim.wo|, and |vim.go| come into play.
+
+The behavior of |vim.o|, |vim.bo|, |vim.wo|, and |vim.go| is designed to
+follow that of |:set|, |:setlocal|, and |:setglobal| which can be seen in the
+table below:
+
+    lua            command      global_value       local_value ~
+vim.o           :set                set                set
+vim.bo/vim.wo   :setlocal            -                 set
+vim.go          :setglobal          set                 -
 
 vim.o                                                   *vim.o*
         Get or set editor options, like |:set|. Invalid key is an error.
@@ -922,14 +1080,36 @@ vim.o                                                   *vim.o*
             vim.o.cmdheight = 4
             print(vim.o.columns)
 
+
+vim.go                                                  *vim.go*
+        Get or set an |option|. Invalid key is an error.
+
+        This is a wrapper around |nvim_set_option()| and |nvim_get_option()|.
+
+        NOTE: This is different than |vim.o| because this ONLY sets the global
+        option, which generally produces confusing behavior for options with
+        |global-local| values.
+
+        Example: >
+            vim.go.cmdheight = 4
+<
+
 vim.bo                                                  *vim.bo*
         Get or set buffer-scoped |local-options|. Invalid key is an error.
+
+        This is a wrapper around |nvim_buf_set_option()| and
+        |nvim_buf_get_option()|.
+
         Example: >
             vim.bo.buflisted = true
             print(vim.bo.comments)
 
 vim.wo                                                  *vim.wo*
         Get or set window-scoped |local-options|. Invalid key is an error.
+
+        This is a wrapper around |nvim_win_set_option()| and
+        |nvim_win_get_option()|.
+
         Example: >
             vim.wo.cursorcolumn = true
             print(vim.wo.foldmarker)

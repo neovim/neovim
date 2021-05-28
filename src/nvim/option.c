@@ -4883,7 +4883,7 @@ int get_option_value_strict(char *name,
     if (p->flags & P_STRING) {
       *stringval = xstrdup(*(char **)(varp));
     } else if (p->flags & P_NUM) {
-      *numval = *(long *) varp;
+      *numval = *(long *)varp;
     } else {
       *numval = *(int *)varp;
     }
