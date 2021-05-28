@@ -14,8 +14,7 @@ before_each(clear)
 describe('autocmd api', function()
   describe('nvim_create_autocmd', function()
     it('does not allow "command" and "callback" in the same autocmd', function()
-      local ok, _ = pcall(meths.create_autocmd, {
-        event = "BufReadPost",
+      local ok, _ = pcall(meths.create_autocmd, "BufReadPost", {
         pattern = "*.py,*.pyi",
         command = "echo 'Should Have Errored",
         callback = "not allowed",
@@ -28,12 +27,11 @@ describe('autocmd api', function()
       eq(1, exec_lua([[
         local count = 0
 
-        vim.api.nvim_create_autocmd {
-          event = "FileType",
+        vim.api.nvim_create_autocmd("FileType", {
           pattern = "*",
           callback = function() count = count + 1 end,
           once = true
-        }
+        })
 
         vim.cmd "set filetype=txt"
         vim.cmd "set filetype=python"
@@ -45,11 +43,10 @@ describe('autocmd api', function()
     it('allows passing buffer by key', function()
       meths.set_var('called', 0)
 
-      meths.create_autocmd {
-        event = "Filetype",
+      meths.create_autocmd("FileType", {
         command = "let g:called = g:called + 1",
         buffer = 0,
-      }
+      })
 
       meths.command "set filetype=txt"
       eq(1, meths.get_var('called'))
@@ -62,8 +59,7 @@ describe('autocmd api', function()
     end)
 
     it('does not allow passing buffer and patterns', function()
-      local ok = pcall(meths.create_autocmd, {
-        event = "Filetype",
+      local ok = pcall(meths.create_autocmd, "Filetype", {
         command = "let g:called = g:called + 1",
         buffer = 0,
         pattern = "*.py",
@@ -73,8 +69,7 @@ describe('autocmd api', function()
     end)
 
     it('does not allow passing invalid buffers', function()
-      local ok, msg = pcall(meths.create_autocmd, {
-        event = "Filetype",
+      local ok, msg = pcall(meths.create_autocmd, "Filetype", {
         command = "let g:called = g:called + 1",
         buffer = -1,
       })
@@ -85,17 +80,15 @@ describe('autocmd api', function()
 
     it('errors on non-functions for cb', function()
       eq(false, pcall(exec_lua, [[
-        vim.api.nvim_create_autocmd {
-          event = "BufReadPost",
+        vim.api.nvim_create_autocmd("BufReadPost", {
           pattern = "*.py,*.pyi",
           callback = 5,
-        }
+        })
       ]]))
     end)
 
     it('allow passing pattern and <buffer> in same pattern', function()
-      local ok = pcall(meths.create_autocmd, {
-        event = "BufReadPost",
+      local ok = pcall(meths.create_autocmd, "BufReadPost", {
         pattern = "*.py,<buffer>",
         command = "echo 'Should Not Error'"
       })
@@ -104,22 +97,20 @@ describe('autocmd api', function()
     end)
 
     it('should handle multiple values as comma separated list', function()
-      meths.create_autocmd {
-        event = "BufReadPost",
+      meths.create_autocmd("BufReadPost", {
         pattern = "*.py,*.pyi",
         command = "echo 'Should Not Have Errored'"
-      }
+      })
 
       -- We should have one autocmd for *.py and one for *.pyi
       eq(2, #meths.get_autocmds { event = "BufReadPost" })
     end)
 
     it('should handle multiple values as array', function()
-      meths.create_autocmd {
-        event = "BufReadPost",
+      meths.create_autocmd("BufReadPost", {
         pattern = { "*.py", "*.pyi", },
         command = "echo 'Should Not Have Errored'"
-      }
+      })
 
       -- We should have one autocmd for *.py and one for *.pyi
       eq(2, #meths.get_autocmds { event = "BufReadPost" })
@@ -127,23 +118,21 @@ describe('autocmd api', function()
 
     describe('desc', function()
       it('can add description to one autocmd', function()
-        meths.create_autocmd {
-          event = "BufReadPost",
+        meths.create_autocmd("BufReadPost", {
           pattern = "*.py",
           command = "echo 'Should Not Have Errored'",
           desc = "Can show description",
-        }
+        })
 
         eq("Can show description", meths.get_autocmds { event = "BufReadPost" }[1].desc)
       end)
 
       it('can add description to multiple autocmd', function()
-        meths.create_autocmd {
-          event = "BufReadPost",
+        meths.create_autocmd("BufReadPost", {
           pattern = {"*.py", "*.pyi"},
           command = "echo 'Should Not Have Errored'",
           desc = "Can show description",
-        }
+        })
 
         local aus = meths.get_autocmds { event = "BufReadPost" }
         eq(2, #aus)
@@ -154,12 +143,11 @@ describe('autocmd api', function()
 
     pending('script and verbose settings', function()
       it('marks API client', function()
-        meths.create_autocmd {
-          event = "BufReadPost",
+        meths.create_autocmd("BufReadPost", {
           pattern = "*.py",
           command = "echo 'Should Not Have Errored'",
           desc = "Can show description",
-        }
+        })
 
         local aus = meths.get_autocmds { event = "BufReadPost" }
         eq(1, #aus, aus)
@@ -211,8 +199,7 @@ describe('autocmd api', function()
         command [[au! InsertLeave]]
         command [[au InsertEnter * :echo "1"]]
         source [[
-          call nvim_create_autocmd(#{
-            \ event: "InsertLeave",
+          call nvim_create_autocmd("InsertLeave", #{
             \ command: ":echo 2",
             \ })
         ]]
@@ -283,12 +270,11 @@ describe('autocmd api', function()
       it('raises error for undefined augroup', function()
         local success, code = unpack(meths.exec_lua([[
           return {pcall(function()
-            vim.api.nvim_create_autocmd {
-              event = "FileType",
+            vim.api.nvim_create_autocmd("FileType", {
               pattern = "*",
               group = "NotDefined",
               command = "echo 'hello'",
-            }
+            })
           end)}
         ]], {}))
 
@@ -358,14 +344,13 @@ describe('autocmd api', function()
     it("can trigger builtin autocmds", function()
       meths.set_var("autocmd_executed", false)
 
-      meths.create_autocmd {
-        event = "BufReadPost",
+      meths.create_autocmd("BufReadPost", {
         pattern = "*",
         command = "let g:autocmd_executed = v:true",
-      }
+      })
 
       eq(false, meths.get_var("autocmd_executed"))
-      meths.do_autocmd { event = "BufReadPost" }
+      meths.do_autocmd("BufReadPost", {})
       eq(true, meths.get_var("autocmd_executed"))
     end)
 
@@ -373,17 +358,16 @@ describe('autocmd api', function()
       meths.set_var("buffer_executed", -1)
       eq(-1, meths.get_var("buffer_executed"))
 
-      meths.create_autocmd {
-        event = "BufLeave",
+      meths.create_autocmd("BufLeave", {
         pattern = "*",
         command = 'let g:buffer_executed = +expand("<abuf>")',
-      }
+      })
 
       -- Doesn't execute for other non-matching events
-      meths.do_autocmd { event = "CursorHold", buffer = 1 }
+      meths.do_autocmd("CursorHold", { buffer = 1 })
       eq(-1, meths.get_var("buffer_executed"))
 
-      meths.do_autocmd { event = "BufLeave", buffer = 1 }
+      meths.do_autocmd("BufLeave", { buffer = 1 })
       eq(1, meths.get_var("buffer_executed"))
     end)
 
@@ -391,14 +375,13 @@ describe('autocmd api', function()
       meths.set_var("filename_executed", 'none')
       eq('none', meths.get_var("filename_executed"))
 
-      meths.create_autocmd {
-        event = "BufEnter",
+      meths.create_autocmd("BufEnter", {
         pattern = "*.py",
         command = 'let g:filename_executed = expand("<afile>")',
-      }
+      })
 
       -- Doesn't execute for other non-matching events
-      meths.do_autocmd { event = "CursorHold", buffer = 1 }
+      meths.do_autocmd("CursorHold", { buffer = 1 })
       eq('none', meths.get_var("filename_executed"))
 
       meths.command('edit __init__.py')
@@ -406,7 +389,7 @@ describe('autocmd api', function()
     end)
 
     it('cannot pass buf and fname', function()
-      local ok = pcall(meths.do_autocmd, { pattern = "literally_cannot_error.rs", buffer = 1 })
+      local ok = pcall(meths.do_autocmd, "BufReadPre", { pattern = "literally_cannot_error.rs", buffer = 1 })
       eq(false, ok)
     end)
 
@@ -418,38 +401,36 @@ describe('autocmd api', function()
       meths.command('edit __init__.py')
       eq('none', meths.get_var("filename_executed"))
 
-      meths.create_autocmd {
-        event = "CursorHoldI",
+      meths.create_autocmd("CursorHoldI", {
         pattern = "__init__.py",
         command = 'let g:filename_executed = expand("<afile>")',
-      }
+      })
 
       -- Doesn't execute for other non-matching events
-      meths.do_autocmd { event = "CursorHoldI", buffer = 1 }
+      meths.do_autocmd("CursorHoldI", { buffer = 1 })
       eq('none', meths.get_var("filename_executed"))
 
-      meths.do_autocmd { event = "CursorHoldI", buffer = tonumber(meths.get_current_buf()) }
+      meths.do_autocmd("CursorHoldI", { buffer = tonumber(meths.get_current_buf()) })
       eq('__init__.py', meths.get_var("filename_executed"))
 
       -- Reset filename
       meths.set_var("filename_executed", 'none')
 
-      meths.do_autocmd { event = "CursorHoldI", pattern = '__init__.py' }
+      meths.do_autocmd("CursorHoldI", { pattern = '__init__.py' })
       eq('__init__.py', meths.get_var("filename_executed"))
     end)
 
     it("works with user autocmds", function()
       meths.set_var("matched", 'none')
 
-      meths.create_autocmd {
-        event = "User",
+      meths.create_autocmd("User", {
         pattern = "TestCommand",
         command = 'let g:matched = "matched"'
-      }
+      })
 
-      meths.do_autocmd { event = "User", pattern = "OtherCommand" }
+      meths.do_autocmd("User", { pattern = "OtherCommand" })
       eq('none', meths.get_var('matched'))
-      meths.do_autocmd { event = "User", pattern = "TestCommand" }
+      meths.do_autocmd("User", { pattern = "TestCommand" })
       eq('matched', meths.get_var('matched'))
     end)
   end)
@@ -465,7 +446,6 @@ describe('autocmd api', function()
       opts = opts or {}
 
       local resulting = {
-        event = "FileType",
         pattern = "*",
         command = "let g:executed = g:executed + 1",
       }
@@ -473,7 +453,7 @@ describe('autocmd api', function()
       resulting.group = opts.group
       resulting.once = opts.once
 
-      meths.create_autocmd(resulting)
+      meths.create_autocmd("FileType", resulting)
     end
 
     local set_ft = function(ft)
@@ -487,7 +467,7 @@ describe('autocmd api', function()
 
     it('can be added in a group', function()
       local augroup = "TestGroup"
-      meths.create_augroup({ name = augroup, clear = true })
+      meths.create_augroup(augroup, { clear = true })
       make_counting_autocmd { group = augroup }
 
       set_ft("txt")
@@ -516,8 +496,7 @@ describe('autocmd api', function()
     end)
 
     it('errors on unexpected keys', function()
-      local success, code = pcall(meths.create_autocmd, {
-        event = "FileType",
+      local success, code = pcall(meths.create_autocmd, "FileType", {
         pattern = "*",
         not_a_valid_key = "NotDefined",
       })
@@ -530,11 +509,10 @@ describe('autocmd api', function()
       exec_lua([[
         vim.g.executed = false
 
-        vim.api.nvim_create_autocmd {
-          event = "FileType",
+        vim.api.nvim_create_autocmd("FileType", {
           pattern = "*",
           callback = function() vim.g.executed = true end,
-        }
+        })
       ]], {})
 
 
@@ -551,17 +529,15 @@ describe('autocmd api', function()
           count = count + 1
         end
 
-        vim.api.nvim_create_autocmd {
-          event = "FileType",
+        vim.api.nvim_create_autocmd("FileType", {
           pattern = "*",
           callback = counter,
-        }
+        })
 
-        vim.api.nvim_create_autocmd {
-          event = "FileType",
+        vim.api.nvim_create_autocmd("FileType", {
           pattern = "*",
           callback = counter,
-        }
+        })
 
         vim.cmd "set filetype=txt"
         vim.cmd "set filetype=txt"
@@ -579,15 +555,14 @@ describe('autocmd api', function()
         MyVal = {}
         WeakTable[MyVal] = true
 
-        vim.api.nvim_create_autocmd {
-          event = "FileType",
+        vim.api.nvim_create_autocmd("FileType", {
           pattern = "*",
           callback = function()
             OnceCount = OnceCount + 1
             MyVal = {}
           end,
           once = true
-        }
+        })
       ]])
 
       command [[set filetype=txt]]
@@ -610,10 +585,9 @@ describe('autocmd api', function()
 
     it('groups can be cleared', function()
       local augroup = "TestGroup"
-      meths.create_augroup({ name = augroup, clear = true })
-      meths.create_autocmd({
+      meths.create_augroup(augroup, { clear = true })
+      meths.create_autocmd("FileType", {
         group = augroup,
-        event = "FileType",
         command = "let g:executed = g:executed + 1"
       })
 
@@ -621,7 +595,7 @@ describe('autocmd api', function()
       set_ft("txt")
       eq(2, get_executed_count(), "should only count twice")
 
-      meths.create_augroup({ name = augroup, clear = true })
+      meths.create_augroup(augroup, { clear = true })
       eq({}, meths.get_autocmds { group = augroup })
 
       set_ft("txt")
@@ -632,7 +606,7 @@ describe('autocmd api', function()
     it('groups work with once', function()
       local augroup = "TestGroup"
 
-      meths.create_augroup({ name = augroup, clear = true })
+      meths.create_augroup(augroup, { clear = true })
       make_counting_autocmd { group = augroup, once = true }
 
       set_ft("txt")
@@ -644,7 +618,7 @@ describe('autocmd api', function()
     it('autocmds can be registered multiple times.', function()
       local augroup = "TestGroup"
 
-      meths.create_augroup({ name = augroup, clear = true })
+      meths.create_augroup(augroup, { clear = true })
       make_counting_autocmd { group = augroup, once = false }
       make_counting_autocmd { group = augroup, once = false }
       make_counting_autocmd { group = augroup, once = false }
@@ -658,15 +632,14 @@ describe('autocmd api', function()
     it('can be deleted', function()
       local augroup = "WillBeDeleted"
 
-      meths.create_augroup({ name = augroup, clear = true })
-      meths.create_autocmd {
-        event = {"Filetype"},
+      meths.create_augroup(augroup, { clear = true })
+      meths.create_autocmd({"Filetype"}, {
         pattern = "*",
         command = "echo 'does not matter'",
-      }
+      })
 
       -- Clears the augroup from before, which erases the autocmd
-      meths.create_augroup({ name = augroup, clear = true })
+      meths.create_augroup(augroup, { clear = true })
 
       local result = #meths.get_autocmds { group = augroup }
 
@@ -678,12 +651,11 @@ describe('autocmd api', function()
 
       meths.set_var("value_set", false)
 
-      meths.create_augroup({ name = augroup, clear = true })
-      meths.create_autocmd {
-        event = "Filetype",
+      meths.create_augroup(augroup, { clear = true })
+      meths.create_autocmd("Filetype", {
         pattern = "<buffer>",
         command = "let g:value_set = v:true",
-      }
+      })
 
       command "new"
       command "set filetype=python"
@@ -699,8 +671,7 @@ describe('autocmd api', function()
           let g:vimscript_executed = g:vimscript_executed + 1
         endfunction
 
-        call nvim_create_autocmd(#{
-          \ event: "Filetype",
+        call nvim_create_autocmd("FileType", #{
           \ pattern: ["python", "javascript"],
           \ callback: "MyVimscriptFunction",
           \ })
@@ -773,7 +744,7 @@ describe('autocmd api', function()
        command('autocmd! BufReadPost *.py :echo "Hello"')
        command('augroup END')
 
-       local augroup_id = meths.create_augroup { name = "TEMP_ABCD", clear = false }
+       local augroup_id = meths.create_augroup("TEMP_ABCD", { clear = false })
        meths.del_augroup_by_id(augroup_id)
 
        -- For good reason, we kill all the autocmds from del_augroup,

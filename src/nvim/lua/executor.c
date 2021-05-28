@@ -1354,6 +1354,9 @@ bool nlua_ref_is_function(LuaRef ref)
 {
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, ref);
+
+  // TODO(tjdevries): This should probably check for callable tables as well.
+  //                    We should put some work maybe into simplifying how all of that works
   bool is_function = (lua_type(lstate, -1) == LUA_TFUNCTION);
   lua_pop(lstate, 1);
 

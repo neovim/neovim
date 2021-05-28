@@ -116,7 +116,6 @@ return {
     "callback";
     "command";
     "desc";
-    "event";
     "group";
     "once";
     "nested";
@@ -124,7 +123,6 @@ return {
   };
   do_autocmd = {
     "buffer";
-    "event";
     "group";
     "modeline";
     "pattern";
@@ -132,12 +130,10 @@ return {
   get_autocmds = {
     "event";
     "group";
-    "id";
     "pattern";
   };
   create_augroup = {
     "clear";
-    "name";
   };
 }
 
