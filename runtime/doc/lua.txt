@@ -1084,7 +1084,7 @@ vim.o                                                   *vim.o*
 vim.go                                                  *vim.go*
         Get or set an |option|. Invalid key is an error.
 
-        This is a wrapper around |nvim_set_option()| and |nvim_get_option()|
+        This is a wrapper around |nvim_set_option()| and |nvim_get_option()|.
 
         NOTE: This is different than |vim.o| because this ONLY sets the global
         option, which generally produces confusing behavior for options with
@@ -1098,7 +1098,7 @@ vim.bo                                                  *vim.bo*
         Get or set buffer-scoped |local-options|. Invalid key is an error.
 
         This is a wrapper around |nvim_buf_set_option()| and
-        |nvim_buf_get_option()|
+        |nvim_buf_get_option()|.
 
         Example: >
             vim.bo.buflisted = true
@@ -1108,7 +1108,7 @@ vim.wo                                                  *vim.wo*
         Get or set window-scoped |local-options|. Invalid key is an error.
 
         This is a wrapper around |nvim_win_set_option()| and
-        |nvim_win_get_option()|
+        |nvim_win_get_option()|.
 
         Example: >
             vim.wo.cursorcolumn = true
