@@ -1063,15 +1063,16 @@ Option:remove(value)
 In general, using `vim.opt` will provide the expected result when the user is
 used to interacting with editor |options| via `set`. There are still times
 where the user may want to set particular options via a shorthand in Lua,
-which is where |vim.o|, |vim.bo|, and |vim.wo| come into play.
+which is where |vim.o|, |vim.bo|, |vim.wo|, and |vim.go| come into play.
 
-The behavior for |:set|, |:setlocal|, and |:setglobal| is defined for
-buffer-local and window-local options as:
+The behavior of |vim.o|, |vim.bo|, |vim.wo|, and |vim.go| is designed to
+follow that of |:set|, |:setlocal|, and |:setglobal| which can be seen in the
+table below:
 
-    Command      lua            global value       local value ~
-  :set          vim.o               set                set
-  :setlocal     vim.bo/vim.wo        -                 set
-  :setglobal    vim.go              set                 -
+    lua            command      global_value       local_value ~
+vim.o           :set                set                set
+vim.bo/vim.wo   :setlocal            -                 set
+vim.go          :setglobal          set                 -
 
 vim.o                                                   *vim.o*
         Get or set editor options, like |:set|. Invalid key is an error.
@@ -1086,7 +1087,7 @@ vim.go                                                  *vim.go*
         This is a wrapper around |nvim_set_option()| and |nvim_get_option()|
 
         NOTE: This is different than |vim.o| because this ONLY sets the global
-        option, which generally produces confusing behavior for  options with
+        option, which generally produces confusing behavior for options with
         |global-local| values.
 
         Example: >
