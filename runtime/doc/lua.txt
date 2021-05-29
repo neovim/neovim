@@ -1053,7 +1053,7 @@ Option:prepend(value)
                                                             *vim.opt:remove()*
 Option:remove(value)
 
-    Remove a value to string-style options. See |:set-=|
+    Remove a value from string-style options. See |:set-=|
 
     These are equivalent:
         `vim.opt.wildignore:remove('*.pyc')`
