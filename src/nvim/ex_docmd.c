@@ -6340,7 +6340,7 @@ void not_exiting(void)
   exiting = false;
 }
 
-static bool before_quit_autocmds(win_T *wp, bool quit_all, int forceit)
+bool before_quit_autocmds(win_T *wp, bool quit_all, int forceit)
 {
   apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
 
@@ -6406,7 +6406,7 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
-  // If there are more files or windows we won't exit.
+  // If there is only one relevant window we will exit.
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
     exiting = true;
   }
