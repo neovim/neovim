@@ -1208,6 +1208,15 @@ static void normal_check_window_scrolled(NormalState *s)
   }
 }
 
+static void normal_check_window_resized(NormalState *s)
+{
+  // Trigger Resized if the window dimensions changed.
+  if (!finish_op && has_event(EVENT_WINRESIZED)
+      && win_did_resize(curwin)) {
+    do_autocmd_winresized(curwin);
+  }
+}
+
 static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
@@ -1348,6 +1357,7 @@ static int normal_check(VimState *state)
     normal_check_cursor_moved(s);
     normal_check_text_changed(s);
     normal_check_window_scrolled(s);
+    normal_check_window_resized(s);
     normal_check_buffer_modified(s);
 
     // Updating diffs from changed() does not always work properly,
