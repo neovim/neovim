@@ -5017,7 +5017,7 @@ char_u *check_nextcmd(char_u *p)
 static int
 check_more(
     int message,                // when FALSE check only, no messages
-    int forceit
+    bool forceit
 )
 {
   int n = ARGCOUNT - curwin->w_arg_idx - 1;
@@ -6340,7 +6340,7 @@ void not_exiting(void)
   exiting = false;
 }
 
-static bool before_quit_autocmds(win_T *wp, bool quit_all, int forceit)
+bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
 {
   apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, wp->w_buffer);
 
@@ -6406,7 +6406,7 @@ static void ex_quit(exarg_T *eap)
     return;
   }
 
-  // If there are more files or windows we won't exit.
+  // If there is only one relevant window we will exit.
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
     exiting = true;
   }
@@ -6749,7 +6749,7 @@ static void ex_stop(exarg_T *eap)
   apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
 }
 
-// ":exit", ":xit" and ":wq": Write file and quite the current window.
+// ":exit", ":xit" and ":wq": Write file and quit the current window.
 static void ex_exit(exarg_T *eap)
 {
   if (cmdwin_type != 0) {
@@ -6762,17 +6762,15 @@ static void ex_exit(exarg_T *eap)
     return;
   }
 
-  if (before_quit_autocmds(curwin, false, eap->forceit)) {
-    return;
-  }
-
-  // if more files or windows we won't exit
+  // we plan to exit if there is only one relevant window
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
     exiting = true;
   }
-  if (((eap->cmdidx == CMD_wq
-        || curbufIsChanged())
-       && do_write(eap) == FAIL)
+  // Write the buffer for ":wq" or when it was changed.
+  // Trigger QuitPre and ExitPre.
+  // Check if we can exit now, after autocommands have changed things.
+  if (((eap->cmdidx == CMD_wq || curbufIsChanged()) && do_write(eap) == FAIL)
+      || before_quit_autocmds(curwin, false, eap->forceit)
       || check_more(true, eap->forceit) == FAIL
       || (only_one_window() && check_changed_any(eap->forceit, false))) {
     not_exiting();

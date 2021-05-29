@@ -361,4 +361,25 @@ func Test_write_file_encoding()
   %bw!
 endfunc
 
+" Check that buffer is written before triggering QuitPre
+func Test_wq_quitpre_autocommand()
+  edit Xsomefile
+  call setline(1, 'hello')
+  split
+  let g:seq = []
+  augroup Testing
+    au QuitPre * call add(g:seq, 'QuitPre - ' .. (&modified ? 'modified' : 'not modified'))
+    au BufWritePost * call add(g:seq, 'written')
+  augroup END
+  wq
+  call assert_equal(['written', 'QuitPre - not modified'], g:seq)
+
+  augroup Testing
+    au!
+  augroup END
+  bwipe!
+  unlet g:seq
+  call delete('Xsomefile')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
