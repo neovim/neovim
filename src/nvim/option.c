@@ -1276,9 +1276,9 @@ int do_set(
               }
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
               // Allow negative, octal and hex numbers.
-              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0);
-              if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
-                errmsg = e_invarg;
+              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
+              if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
+                errmsg = (char_u *)N_("E521: Number required after =");
                 goto skip;
               }
             } else {

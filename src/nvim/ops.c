@@ -5017,7 +5017,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
                0 + (do_bin ? STR2NR_BIN : 0)
                + (do_oct ? STR2NR_OCT : 0)
                + (do_hex ? STR2NR_HEX : 0),
-               NULL, &n, maxlen);
+               NULL, &n, maxlen, false);
 
     // ignore leading '-' for hex, octal and bin numbers
     if (pre && negative) {

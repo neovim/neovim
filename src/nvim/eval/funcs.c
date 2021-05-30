@@ -10030,7 +10030,8 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       what = 0;
     }
   }
-  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0);
+  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0, false);
+  // Text after the number is silently ignored.
   if (isneg) {
     rettv->vval.v_number = -n;
   } else {

@@ -1397,6 +1397,7 @@ bool vim_isblankline(char_u *lbuf)
 /// If "what" contains STR2NR_HEX recognize hex numbers.
 /// If "what" contains STR2NR_FORCE always assume bin/oct/hex.
 /// If maxlen > 0, check at a maximum maxlen chars.
+/// If strict is true, check the number strictly. return *len = 0 if fail.
 ///
 /// @param start
 /// @param prep Returns guessed type of number 0 = decimal, 'x' or 'X' is
@@ -1407,9 +1408,12 @@ bool vim_isblankline(char_u *lbuf)
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
+/// @param strict If true, fail if the number has unexpected trailing
+///               alpha-numeric chars: *len is set to 0 and nothing else is
+///               returned.
 void vim_str2nr(const char_u *const start, int *const prep, int *const len,
                 const int what, varnumber_T *const nptr,
-                uvarnumber_T *const unptr, const int maxlen)
+                uvarnumber_T *const unptr, const int maxlen, const bool strict)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *ptr = (const char *)start;
@@ -1418,6 +1422,10 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   int pre = 0;  // default is decimal
   const bool negative = (ptr[0] == '-');
   uvarnumber_T un = 0;
+
+  if (len != NULL) {
+    *len = 0;
+  }
 
   if (negative) {
     ptr++;
@@ -1492,7 +1500,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
     goto vim_str2nr_dec;
   }
 
-  // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
+  // Do the conversion manually to avoid sscanf() quirks.
   abort();  // Should’ve used goto earlier.
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
@@ -1524,6 +1532,12 @@ vim_str2nr_hex:
 #undef PARSE_NUMBER
 
 vim_str2nr_proceed:
+  // Check for an alpha-numeric character immediately following, that is
+  // most likely a typo.
+  if (strict && ptr - (const char *)start != maxlen && ASCII_ISALNUM(*ptr)) {
+    return;
+  }
+
   if (prep != NULL) {
     *prep = pre;
   }

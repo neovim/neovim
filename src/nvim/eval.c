@@ -3950,7 +3950,12 @@ static int eval7(
         rettv->vval.v_float = f;
       }
     } else {
-      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0);
+      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
+      if (len == 0) {
+        EMSG2(_(e_invexpr2), *arg);
+        ret = FAIL;
+        break;
+      }
       *arg += len;
       if (evaluate) {
         rettv->v_type = VAR_NUMBER;
