@@ -502,6 +502,17 @@ func Test_empty_concatenate()
   call assert_equal('b', 'b' . 'a'[4:0])
 endfunc
 
+func Test_broken_number()
+  let X = 'bad'
+  call assert_fails('echo 1X', 'E15:')
+  call assert_fails('echo 0b1X', 'E15:')
+  call assert_fails('echo 0b12', 'E15:')
+  call assert_fails('echo 0x1X', 'E15:')
+  call assert_fails('echo 011X', 'E15:')
+  call assert_equal(2, str2nr('2a'))
+  call assert_fails('inoremap <Char-0b1z> b', 'E474:')
+endfunc
+
 func Test_eval_after_if()
   let s:val = ''
   func SetVal(x)
