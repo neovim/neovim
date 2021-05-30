@@ -1569,6 +1569,128 @@ describe('lua stdlib', function()
       eq(wildignore, 'super_first,first,foo')
     end)
 
+    describe('option types', function()
+      it('should allow to set option with numeric value', function()
+        eq(4, exec_lua [[
+          vim.opt.tabstop = 4
+          return vim.bo.tabstop
+        ]])
+
+        matches("Invalid option type 'string' for 'tabstop'", pcall_err(exec_lua, [[
+          vim.opt.tabstop = '4'
+        ]]))
+        matches("Invalid option type 'boolean' for 'tabstop'", pcall_err(exec_lua, [[
+          vim.opt.tabstop = true
+        ]]))
+        matches("Invalid option type 'table' for 'tabstop'", pcall_err(exec_lua, [[
+          vim.opt.tabstop = {4, 2}
+        ]]))
+        matches("Invalid option type 'function' for 'tabstop'", pcall_err(exec_lua, [[
+          vim.opt.tabstop = function()
+            return 4
+          end
+        ]]))
+      end)
+
+      it('should allow to set option with boolean value', function()
+        eq(true, exec_lua [[
+          vim.opt.undofile = true
+          return vim.bo.undofile
+        ]])
+
+        matches("Invalid option type 'number' for 'undofile'", pcall_err(exec_lua, [[
+          vim.opt.undofile = 0
+        ]]))
+        matches("Invalid option type 'table' for 'undofile'", pcall_err(exec_lua, [[
+          vim.opt.undofile = {true}
+        ]]))
+        matches("Invalid option type 'string' for 'undofile'", pcall_err(exec_lua, [[
+          vim.opt.undofile = 'true'
+        ]]))
+        matches("Invalid option type 'function' for 'undofile'", pcall_err(exec_lua, [[
+          vim.opt.undofile = function()
+            return true
+          end
+        ]]))
+      end)
+
+      it('should allow to set option with array or string value', function()
+        eq('indent,eol,start', exec_lua [[
+          vim.opt.backspace = {'indent','eol','start'}
+          return vim.go.backspace
+        ]])
+        eq('indent,eol,start', exec_lua [[
+          vim.opt.backspace = 'indent,eol,start'
+          return vim.go.backspace
+        ]])
+
+        matches("Invalid option type 'boolean' for 'backspace'", pcall_err(exec_lua, [[
+          vim.opt.backspace = true
+        ]]))
+        matches("Invalid option type 'number' for 'backspace'", pcall_err(exec_lua, [[
+          vim.opt.backspace = 2
+        ]]))
+        matches("Invalid option type 'function' for 'backspace'", pcall_err(exec_lua, [[
+          vim.opt.backspace = function()
+            return 'indent,eol,start'
+          end
+        ]]))
+      end)
+
+      it('should allow set option with map value', function()
+        eq("eol:~,space:.", exec_lua [[
+          vim.opt.listchars = {
+            eol = "~",
+            space = ".",
+          }
+          return vim.o.listchars
+        ]])
+        eq("eol:~,space:.,tab:>~", exec_lua [[
+          vim.opt.listchars = "eol:~,space:.,tab:>~"
+          return vim.o.listchars
+        ]])
+
+        matches("Invalid option type 'boolean' for 'listchars'", pcall_err(exec_lua, [[
+          vim.opt.listchars = true
+        ]]))
+        matches("Invalid option type 'number' for 'listchars'", pcall_err(exec_lua, [[
+          vim.opt.listchars = 2
+        ]]))
+        matches("Invalid option type 'function' for 'listchars'", pcall_err(exec_lua, [[
+          vim.opt.listchars = function()
+            return "eol:~,space:.,tab:>~"
+          end
+        ]]))
+      end)
+
+      it('should allow set option with set value', function()
+        local ww = exec_lua [[
+          vim.opt.whichwrap = {
+            b = true,
+            s = 1,
+          }
+          return vim.go.whichwrap
+        ]]
+        eq(true, ww == "bs" or ww == "sb")
+        eq("b,s,<,>,[,]", exec_lua [[
+          vim.opt.whichwrap = "b,s,<,>,[,]"
+          return vim.go.whichwrap
+        ]])
+
+        matches("Invalid option type 'boolean' for 'whichwrap'", pcall_err(exec_lua, [[
+          vim.opt.whichwrap = true
+        ]]))
+        matches("Invalid option type 'number' for 'whichwrap'", pcall_err(exec_lua, [[
+          vim.opt.whichwrap = 2
+        ]]))
+        matches("Invalid option type 'function' for 'whichwrap'", pcall_err(exec_lua, [[
+          vim.opt.whichwrap = function()
+            return "b,s,<,>,[,]"
+          end
+        ]]))
+      end)
+    end)
+
   end)
 
   it('vim.cmd', function()

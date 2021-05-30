@@ -306,16 +306,51 @@ local get_option_type = function(name, info)
 end
 
 
+-- Check whether the OptionTypes is allowed for vim.opt
+-- If it does not match, throw an error which indicates which option causes the error.
+local function check_type_of_value(name, value, types)
+  local type_of_value = type(value)
+  local types_available = {}
+  if type(types) == "string" then
+    table.insert(types_available, types)
+  else
+    types_available = types
+  end
+
+  local matched = false
+  for _, type in pairs(types_available) do
+    if type == type_of_value then
+      matched = true
+      break
+    end
+  end
+
+  if not matched then
+    error(debug.traceback(string.format("Invalid option type '%s' for '%s'", type_of_value, name)))
+  end
+end
+
+
 --- Convert a lua value to a vimoption_T value
 local convert_value_to_vim = (function()
   -- Map of functions to take a Lua style value and convert to vimoption_T style value.
   -- Each function takes (info, lua_value) -> vim_value
   local to_vim_value = {
-    [OptionTypes.BOOLEAN] = function(_, value) return value end,
-    [OptionTypes.NUMBER] = function(_, value) return value end,
-    [OptionTypes.STRING] = function(_, value) return value end,
+    [OptionTypes.BOOLEAN] = function(info, value)
+      check_type_of_value(info.name, value, "boolean")
+      return value
+    end,
+    [OptionTypes.NUMBER] = function(info, value)
+      check_type_of_value(info.name, value, "number")
+      return value
+    end,
+    [OptionTypes.STRING] = function(info, value)
+      check_type_of_value(info.name, value, "string")
+      return value
+    end,
 
-    [OptionTypes.SET] = function(_, value)
+    [OptionTypes.SET] = function(info, value)
+      check_type_of_value(info.name, value, {"string", "table"})
       if type(value) == "string" then return value end
       local result = ''
       for k in pairs(value) do
@@ -325,14 +360,15 @@ local convert_value_to_vim = (function()
       return result
     end,
 
-    [OptionTypes.ARRAY] = function(_, value)
+    [OptionTypes.ARRAY] = function(info, value)
+      check_type_of_value(info.name, value, {"string", "table"})
       if type(value) == "string" then return value end
       return table.concat(remove_duplicate_values(value), ",")
     end,
 
-    [OptionTypes.MAP] = function(_, value)
+    [OptionTypes.MAP] = function(info, value)
+      check_type_of_value(info.name, value, {"string", "table"})
       if type(value) == "string" then return value end
-      if type(value) == "function" then error(debug.traceback("asdf")) end
 
       local result = {}
       for opt_key, opt_value in pairs(value) do
