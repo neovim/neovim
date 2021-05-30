@@ -317,8 +317,8 @@ function M.save(diagnostics, bufnr, client_id)
 
     -- Clean up our data when the buffer unloads.
     api.nvim_buf_attach(bufnr, false, {
-      on_detach = function(b)
-        clear_diagnostic_cache(b, client_id)
+      on_detach = function()
+        clear_diagnostic_cache(bufnr, client_id)
         _diagnostic_cleanup[bufnr][client_id] = nil
       end
     })
