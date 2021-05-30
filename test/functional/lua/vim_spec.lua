@@ -1228,6 +1228,21 @@ describe('lua stdlib', function()
       eq("only-local", result[8])
     end)
 
+    it('should allow you to retrieve window opts even if they have not been set', function()
+      local result = exec_lua [[
+        local result = {}
+        table.insert(result, vim.opt.number:get())
+        table.insert(result, vim.opt_local.number:get())
+
+        vim.opt_local.number = true
+        table.insert(result, vim.opt.number:get())
+        table.insert(result, vim.opt_local.number:get())
+
+        return result
+      ]]
+      eq({false, false, true, true}, result)
+    end)
+
     it('should allow all sorts of string manipulation', function()
       eq({'hello', 'hello world', 'start hello world'}, exec_lua [[
         local results = {}
