@@ -309,7 +309,10 @@ end
 -- Check whether the OptionTypes is allowed for vim.opt
 -- If it does not match, throw an error which indicates which option causes the error.
 local function check_type_of_value(name, value, types)
-  local type_of_value = type(value)
+  local types_conversion = {}
+  types_conversion["array"] = "table"
+  types_conversion["map"] = "table"
+  types_conversion["set"] = "table"
   local types_available = {}
   if type(types) == "string" then
     table.insert(types_available, types)
@@ -317,16 +320,21 @@ local function check_type_of_value(name, value, types)
     types_available = types
   end
 
+  local type_of_value = type(value)
   local matched = false
   for _, type in pairs(types_available) do
     if type == type_of_value then
       matched = true
       break
     end
+    if types_conversion[type] ~= nil and types_conversion[type] == type_of_value then
+      matched = true
+      break
+    end
   end
 
   if not matched then
-    error(debug.traceback(string.format("Invalid option type '%s' for '%s'", type_of_value, name)))
+    error(string.format("Invalid option type '%s' for '%s', should be %s", type_of_value, name, table.concat(types_available, " or ")))
   end
 end
 
@@ -350,7 +358,7 @@ local convert_value_to_vim = (function()
     end,
 
     [OptionTypes.SET] = function(info, value)
-      check_type_of_value(info.name, value, {"string", "table"})
+      check_type_of_value(info.name, value, {"string", "set"})
       if type(value) == "string" then return value end
       local result = ''
       for k in pairs(value) do
@@ -361,13 +369,13 @@ local convert_value_to_vim = (function()
     end,
 
     [OptionTypes.ARRAY] = function(info, value)
-      check_type_of_value(info.name, value, {"string", "table"})
+      check_type_of_value(info.name, value, {"string", "array"})
       if type(value) == "string" then return value end
       return table.concat(remove_duplicate_values(value), ",")
     end,
 
     [OptionTypes.MAP] = function(info, value)
-      check_type_of_value(info.name, value, {"string", "table"})
+      check_type_of_value(info.name, value, {"string", "map"})
       if type(value) == "string" then return value end
 
       local result = {}

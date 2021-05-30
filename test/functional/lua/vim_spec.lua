@@ -1637,7 +1637,7 @@ describe('lua stdlib', function()
         ]]))
       end)
 
-      it('should allow set option with map value', function()
+      it('should allow set option with map or string value', function()
         eq("eol:~,space:.", exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -1663,7 +1663,7 @@ describe('lua stdlib', function()
         ]]))
       end)
 
-      it('should allow set option with set value', function()
+      it('should allow set option with set or string value', function()
         local ww = exec_lua [[
           vim.opt.whichwrap = {
             b = true,
