@@ -1228,6 +1228,14 @@ describe('lua stdlib', function()
       eq("only-local", result[8])
     end)
 
+    it('should allow you to retrieve window opts even if they have not been set', function()
+      local result = exec_lua [[
+        local result = vim.opt.number:get()
+        return result
+      ]]
+      eq(false, result)
+    end)
+
     it('should allow all sorts of string manipulation', function()
       eq({'hello', 'hello world', 'start hello world'}, exec_lua [[
         local results = {}

@@ -209,12 +209,12 @@ local function get_scoped_option(k, set_type)
   end
 
   if is_window_option(info) then
-    if vim.api.nvim_get_option_info(k).was_set then
-      local was_set, value = pcall(a.nvim_win_get_option, 0, k)
-      if was_set then return value end
+    local was_set, value = pcall(a.nvim_win_get_option, 0, k)
+    if was_set then
+      return value
+    else
+      return a.nvim_get_option(k)
     end
-
-    return a.nvim_get_option(k)
   end
 
   error("This fallback case should not be possible. " .. k)
