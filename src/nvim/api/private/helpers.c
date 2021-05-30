@@ -1968,24 +1968,15 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
       }
       has_bufpos = true;
     } else if (!strcmp(key, "external")) {
-      if (val.type == kObjectTypeInteger) {
-        fconfig->external = val.data.integer;
-      } else if (val.type == kObjectTypeBoolean) {
-        fconfig->external = val.data.boolean;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'external' key must be Boolean");
+      has_external = fconfig->external
+          = api_object_to_bool(val, "'external' key", false, err);
+      if (ERROR_SET(err)) {
         return false;
       }
-      has_external = fconfig->external;
     } else if (!strcmp(key, "focusable")) {
-      if (val.type == kObjectTypeInteger) {
-        fconfig->focusable = val.data.integer;
-      } else if (val.type == kObjectTypeBoolean) {
-        fconfig->focusable = val.data.boolean;
-      } else {
-        api_set_error(err, kErrorTypeValidation,
-                      "'focusable' key must be Boolean");
+      fconfig->focusable
+          = api_object_to_bool(val, "'focusable' key", true, err);
+      if (ERROR_SET(err)) {
         return false;
       }
     } else if (strequal(key, "zindex")) {
