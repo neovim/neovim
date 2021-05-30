@@ -311,6 +311,28 @@ local get_option_type = function(name, info)
 end
 
 
+-- Check whether the OptionTypes is allowed for vim.opt
+-- If it does not match, throw an error which indicates which option causes the error.
+local function assert_valid_value(name, value, types)
+  local type_of_value = type(value)
+  for _, valid_type in ipairs(types) do
+    if valid_type == type_of_value then
+      return
+    end
+  end
+
+  error(string.format("Invalid option type '%s' for '%s', should be %s", type_of_value, name, table.concat(types, " or ")))
+end
+
+local valid_types = {
+  [OptionTypes.BOOLEAN] = { "boolean" },
+  [OptionTypes.NUMBER]  = { "number" },
+  [OptionTypes.STRING]  = { "string" },
+  [OptionTypes.SET]     = { "string", "table" },
+  [OptionTypes.ARRAY]   = { "string", "table" },
+  [OptionTypes.MAP]     = { "string", "table" },
+}
+
 --- Convert a lua value to a vimoption_T value
 local convert_value_to_vim = (function()
   -- Map of functions to take a Lua style value and convert to vimoption_T style value.
@@ -340,7 +362,6 @@ local convert_value_to_vim = (function()
 
     [OptionTypes.MAP] = function(_, value)
       if type(value) == "string" then return value end
-      if type(value) == "function" then error(debug.traceback("asdf")) end
 
       local result = {}
       for opt_key, opt_value in pairs(value) do
@@ -353,7 +374,10 @@ local convert_value_to_vim = (function()
   }
 
   return function(name, info, value)
-    return to_vim_value[get_option_type(name, info)](info, value)
+    local option_type = get_option_type(name, info)
+    assert_valid_value(name, value, valid_types[option_type])
+
+    return to_vim_value[option_type](info, value)
   end
 end)()
 
