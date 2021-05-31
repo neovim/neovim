@@ -187,8 +187,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 							*:ru* *:runtime*
 :ru[ntime][!] [where] {file} ..
-			Read Ex commands from {file} in each directory given
-			by 'runtimepath' and/or 'packpath'.  There is no error
+			Source vim/lua {file} in each directory given by
+			'runtimepath' and/or 'packpath'. The vim files are
+			executed in same mannar as |:source| and lua files
+			similarly as |:luafile|. There is no error
 			for non-existing files.
 
 			Example: >
@@ -244,6 +246,8 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Note that {name} is the directory name, not the name
 			of the .vim file.  All the files matching the pattern
 				pack/*/opt/{name}/plugin/**/*.vim ~
+			and
+				pack/*/opt/{name}/plugin/**/*.lua ~
 			will be sourced.  This allows for using subdirectories
 			below "plugin", just like with plugins in
 			'runtimepath'.

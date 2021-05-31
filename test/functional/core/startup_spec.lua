@@ -11,6 +11,7 @@ local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
 local mkdir = helpers.mkdir
+local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
@@ -492,6 +493,53 @@ describe('user config init', function()
       matches('Conflicting configs', meths.exec('messages', true))
     end)
   end)
+end)
+
+describe('runtime/plugin', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+
+  before_each(function()
+    mkdir_p(xconfig .. pathsep .. 'nvim')
+  end)
+
+  after_each(function()
+    rmdir(xhome)
+  end)
+
+  it('loads plugin/*.lua from XDG config home', function()
+    local plugin_folder_path = table.concat({xconfig, 'nvim', 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[
+    vim.g.lua_plugin = 1
+    ]])
+
+    clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
+
+    eq(1, eval('g:lua_plugin'))
+    rmdir(plugin_folder_path)
+  end)
+
+
+  it('loads plugin/*.lua from start plugins', function()
+    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'catagory',
+                                      'start', 'test_plugin'}, pathsep)
+    local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
+                                          pathsep)
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[
+    vim.g.lua_plugin = 2
+    ]])
+
+    clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
+
+    eq(2, eval('g:lua_plugin'))
+    rmdir(plugin_path)
+  end)
+
 end)
 
 describe('user session', function()

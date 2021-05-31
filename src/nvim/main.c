@@ -1367,7 +1367,8 @@ static void load_plugins(void)
 {
   if (p_lpl) {
     char_u *rtp_copy = NULL;
-    char_u *const plugin_pattern = (char_u *)"plugin/**/*.vim";  // NOLINT
+    char_u *const plugin_pattern_vim = (char_u *)"plugin/**/*.vim";  // NOLINT
+    char_u *const plugin_pattern_lua = (char_u *)"plugin/**/*.lua";  // NOLINT
 
     // First add all package directories to 'runtimepath', so that their
     // autoload directories can be found.  Only if not done already with a
@@ -1380,7 +1381,10 @@ static void load_plugins(void)
     }
 
     source_in_path(rtp_copy == NULL ? p_rtp : rtp_copy,
-                   plugin_pattern,
+                   plugin_pattern_vim,
+                   DIP_ALL | DIP_NOAFTER);
+    source_in_path(rtp_copy == NULL ? p_rtp : rtp_copy,
+                   plugin_pattern_lua,
                    DIP_ALL | DIP_NOAFTER);
     TIME_MSG("loading plugins");
     xfree(rtp_copy);
@@ -1392,7 +1396,8 @@ static void load_plugins(void)
     }
     TIME_MSG("loading packages");
 
-    source_runtime(plugin_pattern, DIP_ALL | DIP_AFTER);
+    source_runtime(plugin_pattern_vim, DIP_ALL | DIP_AFTER);
+    source_runtime(plugin_pattern_lua, DIP_ALL | DIP_AFTER);
     TIME_MSG("loading after plugins");
   }
 }
