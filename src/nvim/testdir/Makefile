@@ -175,6 +175,7 @@ newtests: newtestssilent
 
 newtestssilent: $(NEW_TESTS_RES)
 
+# NOTE: uses "-u NONE" to do no initialization (including syntax highlighting).
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*
 	@rm -rf $*.failed test.ok $(RM_ON_RUN)
