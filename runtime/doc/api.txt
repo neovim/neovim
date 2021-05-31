@@ -993,7 +993,7 @@ nvim_get_option_info({name})                          *nvim_get_option_info()*
                 Resulting dictionary has keys:
                 • name: Name of the option (like 'filetype')
                 • shortname: Shortened name of the option (like 'ft')
-                • type: type of option ("string", "integer" or "boolean")
+                • type: type of option ("string", "number" or "boolean")
                 • default: The default value for the option
                 • was_set: Whether the option was set.
                 • last_set_sid: Last set script id (if any)
@@ -1299,6 +1299,17 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                                 an external top-level window. Currently
                                 accepts no other positioning configuration
                                 together with this.
+                              • `zindex`: Stacking order. floats with higher`zindex`go on top on floats with lower indices. Must
+                                be larger than zero. The following screen
+                                elements have hard-coded z-indices:
+                                • 100: insert completion popupmenu
+                                • 200: message scrollback
+                                • 250: cmdline completion popupmenu (when
+                                  wildoptions+=pum) The default value for
+                                  floats are 50. In general, values below 100
+                                  are recommended, unless there is a good
+                                  reason to overshadow builtin elements.
+
                               • `style`: Configure the appearance of the window.
                                 Currently only takes one non-empty value:
                                 • "minimal" Nvim will display the window with
@@ -1705,6 +1716,12 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                              |nvim_get_hl_by_name|. in addition the following
                              keys are also recognized: `default` : don't
                              override existing definition, like `hi default`
+                             `ctermfg` : sets foreground of cterm color
+                             `ctermbg` : sets background of cterm color
+                             `cterm` : cterm attribute map. sets attributed
+                             for cterm colors. similer to `hi cterm` Note: by
+                             default cterm attributes are same as attributes
+                             of gui color
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {opts})              *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
@@ -2269,7 +2286,12 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                                 • "overlay": display over the specified
                                   column, without shifting the underlying
                                   text.
+                                • "right_align": display right aligned in the
+                                  window.
 
+                              • virt_text_win_col : position the virtual text
+                                at a fixed window column (starting from the
+                                first text column)
                               • virt_text_hide : hide the virtual text when
                                 the background text is selected or hidden due
                                 to horizontal scroll 'nowrap'
