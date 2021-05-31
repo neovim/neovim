@@ -4,8 +4,11 @@
 #include <uv.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#include "nvim/eval.h"
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"
+#include "nvim/path.h"
 
 #ifndef EXTENDED_STARTUPINFO_PRESENT
 # define EXTENDED_STARTUPINFO_PRESENT 0x00080000
@@ -30,28 +33,83 @@ bool os_has_conpty_working(void)
 
 TriState os_dyn_conpty_init(void)
 {
-  uv_lib_t kernel;
-  if (uv_dlopen("kernel32.dll", &kernel)) {
-    uv_dlclose(&kernel);
-    return kFalse;
+#define OPENCONSOLE "OpenConsole.exe"
+  wchar_t *utf16_dll_path = NULL;
+  char *utf8_dll_path = NULL;
+  char *exe_path = NULL;
+  TriState result = kFalse;
+  uv_lib_t lib_kernel32;
+  uv_lib_t *need_close = &lib_kernel32;
+  if (uv_dlopen("kernel32.dll", &lib_kernel32)) {
+    goto end;
   }
   static struct {
     char *name;
     FARPROC *ptr;
+    FARPROC proc;
   } conpty_entry[] = {
-    { "CreatePseudoConsole", (FARPROC *)&pCreatePseudoConsole },
-    { "ResizePseudoConsole", (FARPROC *)&pResizePseudoConsole },
-    { "ClosePseudoConsole", (FARPROC *)&pClosePseudoConsole },
-    { NULL, NULL }
+    { "CreatePseudoConsole", (FARPROC *)&pCreatePseudoConsole, NULL },
+    { "ResizePseudoConsole", (FARPROC *)&pResizePseudoConsole, NULL },
+    { "ClosePseudoConsole", (FARPROC *)&pClosePseudoConsole, NULL }
   };
-  for (int i = 0;
-       conpty_entry[i].name != NULL && conpty_entry[i].ptr != NULL; i++) {
-    if (uv_dlsym(&kernel, conpty_entry[i].name, (void **)conpty_entry[i].ptr)) {
-      uv_dlclose(&kernel);
-      return kFalse;
+  for (int i = 0; i < (int)ARRAY_SIZE(conpty_entry); i++) {
+    if (uv_dlsym(&lib_kernel32, conpty_entry[i].name,
+                 (void **)&conpty_entry[i].proc)) {
+      goto end;
+    }
+    *conpty_entry[i].ptr = conpty_entry[i].proc;
+  }
+  result = kTrue;
+  uv_lib_t lib_conpty;
+  need_close = &lib_conpty;
+  if (uv_dlopen("conpty.dll", &lib_conpty)) {
+    goto end;
+  } else {
+    for (int i = 0; i < (int)ARRAY_SIZE(conpty_entry); i++) {
+      if (uv_dlsym(&lib_conpty, conpty_entry[i].name,
+                   (void **)&conpty_entry[i].proc)) {
+        goto end;
+      }
+    }
+    DWORD buf_len = MAXPATHL * sizeof(wchar_t);
+    utf16_dll_path = xmalloc(buf_len);
+    DWORD ret;
+    retry:
+    SetLastError(ERROR_SUCCESS);
+    ret = GetModuleFileNameW(lib_conpty.handle, utf16_dll_path, buf_len);
+    if (ret != 0) {
+      if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        buf_len *= 2;
+        utf16_dll_path = xrealloc(utf16_dll_path, buf_len);
+        goto retry;
+      }
+    } else {
+      goto end;
+    }
+    if (utf16_to_utf8(utf16_dll_path, -1, &utf8_dll_path)) {
+      goto end;
+    }
+    char *tail = (char *)path_tail((char_u *)utf8_dll_path);
+    *tail = NUL;
+    size_t len = sizeof OPENCONSOLE + (size_t)(tail - utf8_dll_path);
+    exe_path = xmalloc(len);
+    snprintf(exe_path, len, "%s%s", utf8_dll_path, OPENCONSOLE);
+    if (!os_can_exe(exe_path, NULL, false)) {
+      goto end;
+    }
+    need_close = &lib_kernel32;
+    for (int i = 0; i < (int)ARRAY_SIZE(conpty_entry); i++) {
+      *conpty_entry[i].ptr = conpty_entry[i].proc;
     }
   }
-  return kTrue;
+
+end:
+  uv_dlclose(need_close);
+  xfree(utf16_dll_path);
+  xfree(utf8_dll_path);
+  xfree(exe_path);
+  return result;
+#undef OPENCONSOLE
 }
 
 conpty_t *os_conpty_init(char **in_name, char **out_name,
@@ -68,7 +126,7 @@ conpty_t *os_conpty_init(char **in_name, char **out_name,
     | PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE;
 
   sa.nLength = sizeof(sa);
-  snprintf(buf, sizeof(buf), "\\\\.\\pipe\\nvim-term-in-%d-%d",
+  snprintf(buf, sizeof(buf), "\\\\.\\pipe\\nvim-term-in-%"PRIx64"-%d",
            os_get_pid(), count);
   *in_name = xstrdup(buf);
   if ((in_read = CreateNamedPipeA(
@@ -83,7 +141,7 @@ conpty_t *os_conpty_init(char **in_name, char **out_name,
     emsg = "create input pipe failed";
     goto failed;
   }
-  snprintf(buf, sizeof(buf), "\\\\.\\pipe\\nvim-term-out-%d-%d",
+  snprintf(buf, sizeof(buf), "\\\\.\\pipe\\nvim-term-out-%"PRIx64"-%d",
            os_get_pid(), count);
   *out_name = xstrdup(buf);
   if ((out_write = CreateNamedPipeA(
