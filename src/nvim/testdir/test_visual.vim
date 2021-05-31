@@ -738,4 +738,26 @@ func Test_select_mode_gv()
   bwipe!
 endfunc
 
+func Test_visual_put_in_block_using_zp()
+  new
+  " paste using zP
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ '/subdir', 
+    \ '/longsubdir',
+    \ '/longlongsubdir'])
+  exe "normal! 5G\<c-v>2j$y"
+  norm! 1Gf;zP
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
+  %d
+  " paste using zP
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ '/subdir', 
+    \ '/longsubdir',
+    \ '/longlongsubdir'])
+  exe "normal! 5G\<c-v>2j$y"
+  norm! 1Gf;hzp
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
