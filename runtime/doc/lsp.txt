@@ -1625,6 +1625,9 @@ buf_highlight_references({bufnr}, {references})
                     {references}  List of `DocumentHighlight` objects to
                                   highlight
 
+buf_lines({bufnr})                                  *vim.lsp.util.buf_lines()*
+                TODO: Documentation
+
 character_offset({buf}, {row}, {col})        *vim.lsp.util.character_offset()*
                 Returns the UTF-32 and UTF-16 offsets for a position in a
                 certain buffer.
@@ -1746,6 +1749,14 @@ get_line({uri}, {row})                               *vim.lsp.util.get_line()*
 
                 Return: ~
                     string the line at row in filename
+
+get_lines({uri}, {rows})                            *vim.lsp.util.get_lines()*
+                Parameters: ~
+                    {uri}   string uri of the resource to get the lines from
+                    {rows}  number[] zero-indexed line numbers
+
+                Return: ~
+                    table<number string> a table mapping rows to lines
 
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
