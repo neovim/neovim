@@ -619,15 +619,15 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                 Calls |vim.lsp.buf_request_all()| but blocks Nvim while
                 awaiting the result. Parameters are the same as
                 |vim.lsp.buf_request()| but the return result is different.
-                Wait maximum of {timeout_ms} (default 100) ms.
+                Wait maximum of {timeout_ms} (default 1000) ms.
 
                 Parameters: ~
                     {bufnr}       (number) Buffer handle, or 0 for current.
                     {method}      (string) LSP method name
                     {params}      (optional, table) Parameters to send to the
                                   server
-                    {timeout_ms}  (optional, number, default=100) Maximum time
-                                  in milliseconds to wait for a result.
+                    {timeout_ms}  (optional, number, default=1000) Maximum
+                                  time in milliseconds to wait for a result.
 
                 Return: ~
                     Map of client_id:request_result. On timeout, cancel or
@@ -651,6 +651,14 @@ client()                                                      *vim.lsp.client*
                     {status} is `true` , the function returns {request_id} as
                     the second result. You can use this with
                     `client.cancel_request(request_id)` to cancel the request.
+                  • request_sync(method, params, timeout_ms, bufnr) Sends a
+                    request to the server and synchronously waits for the
+                    response. This is a wrapper around {client.request}
+                    Returns: { err=err, result=result }, a dictionary, where
+                    `err` and `result` come from the |lsp-handler|. On
+                    timeout, cancel or error, returns `(nil, err)` where `err`
+                    is a string describing the failure reason. If the request
+                    was unsuccessful returns `nil` .
                   • notify(method, params) Sends a notification to an LSP
                     server. Returns: a boolean to indicate if the notification
                     was successful. If it is false, then it will always be
@@ -939,6 +947,9 @@ add_workspace_folder({workspace_folder})
                 not provided, the user will be prompted for a path using
                 |input()|.
 
+call_hierarchy({method})                        *vim.lsp.buf.call_hierarchy()*
+                TODO: Documentation
+
 clear_references()                            *vim.lsp.buf.clear_references()*
                 Removes document highlights from current buffer.
 
@@ -1017,6 +1028,32 @@ formatting({options})                               *vim.lsp.buf.formatting()*
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 
+                                           *vim.lsp.buf.formatting_seq_sync()*
+formatting_seq_sync({options}, {timeout_ms}, {order})
+                Formats the current buffer by sequentially requesting
+                formatting from attached clients.
+
+                Useful when multiple clients with formatting capability are
+                attached.
+
+                Since it's synchronous, can be used for running on save, to
+                make sure buffer is formatted prior to being saved.
+                {timeout_ms} is passed on to the |vim.lsp.client| `request_sync` method. Example: >
+
+                 vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
+<
+
+                Parameters: ~
+                    {options}     (optional, table) `FormattingOptions`
+                                  entries
+                    {timeout_ms}  (optional, number) Request timeout
+                    {order}       (optional, table) List of client names.
+                                  Formatting is requested from clients in the
+                                  following order: first all clients that are
+                                  not in the `order` list, then the remaining
+                                  clients in the order as they occur in the
+                                  `order` list.
+
                                                *vim.lsp.buf.formatting_sync()*
 formatting_sync({options}, {timeout_ms})
                 Performs |vim.lsp.buf.formatting()| synchronously.
@@ -1032,6 +1069,9 @@ formatting_sync({options}, {timeout_ms})
                 Parameters: ~
                     {options}     Table with valid `FormattingOptions` entries
                     {timeout_ms}  (number) Request timeout
+
+                See also: ~
+                    |vim.lsp.buf.formatting_seq_sync|
 
 hover()                                                  *vim.lsp.buf.hover()*
                 Displays hover information about the symbol under the cursor
@@ -1650,12 +1690,15 @@ convert_input_to_markdown_lines({input}, {contents})
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 
                      *vim.lsp.util.convert_signature_help_to_markdown_lines()*
-convert_signature_help_to_markdown_lines({signature_help})
+convert_signature_help_to_markdown_lines({signature_help}, {ft})
                 Converts `textDocument/SignatureHelp` response to markdown
                 lines.
 
                 Parameters: ~
                     {signature_help}  Response of `textDocument/SignatureHelp`
+                    {ft}              optional filetype that will be use as
+                                      the `lang` for the label markdown code
+                                      block
 
                 Return: ~
                     list of lines of converted markdown.
@@ -1683,65 +1726,6 @@ extract_completion_items({result})
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 
-                                      *vim.lsp.util.fancy_floating_markdown()*
-fancy_floating_markdown({contents}, {opts})
-                Converts markdown into syntax highlighted regions by stripping
-                the code blocks and converting them into highlighted code.
-                This will by default insert a blank line separator after those
-                code block regions to improve readability. The result is shown
-                in a floating preview.
-
-                Parameters: ~
-                    {contents}  table of lines to show in window
-                    {opts}      dictionary with optional fields
-                                • height of floating window
-                                • width of floating window
-                                • wrap_at character to wrap at for computing
-                                  height
-                                • max_width maximal width of floating window
-                                • max_height maximal height of floating window
-                                • pad_left number of columns to pad contents
-                                  at left
-                                • pad_right number of columns to pad contents
-                                  at right
-                                • pad_top number of lines to pad contents at
-                                  top
-                                • pad_bottom number of lines to pad contents
-                                  at bottom
-                                • separator insert separator after code block
-
-                Return: ~
-                    width,height size of float
-
-focusable_float({unique_name}, {fn})          *vim.lsp.util.focusable_float()*
-                Parameters: ~
-                    {unique_name}  (string) Window variable
-                    {fn}           (function) should return create a new
-                                   window and return a tuple of
-                                   ({focusable_buffer_id}, {window_id}). if
-                                   {focusable_buffer_id} is a valid buffer id,
-                                   the newly created window will be the new
-                                   focus associated with the current buffer
-                                   via the tag `unique_name` .
-
-                Return: ~
-                    (pbufnr, pwinnr) if `fn()` has created a new window; nil
-                    otherwise
-
-                                            *vim.lsp.util.focusable_preview()*
-focusable_preview({unique_name}, {fn})
-                Focuses/unfocuses the floating preview window associated with
-                the current buffer via the window variable `unique_name` . If
-                no such preview window exists, makes a new one.
-
-                Parameters: ~
-                    {unique_name}  (string) Window variable
-                    {fn}           (function) The return values of this
-                                   function will be passed directly to
-                                   |vim.lsp.util.open_floating_preview()|, in
-                                   the case that a new floating window should
-                                   be created
-
 get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                 Returns visual width of tabstop.
 
@@ -1754,6 +1738,14 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
 
                 See also: ~
                     |softtabstop|
+
+get_line({uri}, {row})                               *vim.lsp.util.get_line()*
+                Parameters: ~
+                    {uri}  string uri of the resource to get the line from
+                    {row}  number zero-indexed line number
+
+                Return: ~
+                    string the line at row in filename
 
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
@@ -1897,7 +1889,7 @@ parse_snippet({input})                          *vim.lsp.util.parse_snippet()*
                 Return: ~
                     (string) parsed snippet
 
-preview_location({location})                 *vim.lsp.util.preview_location()*
+preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
                 Previews a location in a floating window
 
                 behavior depends on type of location:
@@ -1945,6 +1937,41 @@ set_qflist({items})                                *vim.lsp.util.set_qflist()*
 
                 Parameters: ~
                     {items}  (table) list of items
+
+                                             *vim.lsp.util.stylize_markdown()*
+stylize_markdown({bufnr}, {contents}, {opts})
+                Converts markdown into syntax highlighted regions by stripping
+                the code blocks and converting them into highlighted code.
+                This will by default insert a blank line separator after those
+                code block regions to improve readability.
+
+                This method configures the given buffer and returns the lines
+                to set.
+
+                If you want to open a popup with fancy markdown, use
+                `open_floating_preview` instead
+
+                Parameters: ~
+                    {contents}  table of lines to show in window
+                    {opts}      dictionary with optional fields
+                                • height of floating window
+                                • width of floating window
+                                • wrap_at character to wrap at for computing
+                                  height
+                                • max_width maximal width of floating window
+                                • max_height maximal height of floating window
+                                • pad_left number of columns to pad contents
+                                  at left
+                                • pad_right number of columns to pad contents
+                                  at right
+                                • pad_top number of lines to pad contents at
+                                  top
+                                • pad_bottom number of lines to pad contents
+                                  at bottom
+                                • separator insert separator after code block
+
+                Return: ~
+                    width,height size of float
 
 symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
                 Converts symbols to quickfix list items.
