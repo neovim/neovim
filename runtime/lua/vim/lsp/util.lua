@@ -1442,12 +1442,33 @@ end)
 --@param row number zero-indexed line number
 --@return string the line at row in filename
 function M.get_line(uri, row)
+  return M.get_lines(uri, { row })[row]
+end
+
+-- Gets the zero-indexed lines from the given uri.
+-- For non-file uris, we load the buffer and get the lines.
+-- If a loaded buffer exists, then that is used.
+-- Otherwise we get the lines using libuv which is a lot faster than loading the buffer.
+--@param uri string uri of the resource to get the lines from
+--@param rows number[] zero-indexed line numbers
+--@return table<number string> a table mapping rows to lines
+function M.get_lines(uri, rows)
+  rows = type(rows) == "table" and rows or { rows }
+
+  local function buf_lines(bufnr)
+    local lines = {}
+    for _, row in pairs(rows) do
+      lines[row] = (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { "" })[1]
+    end
+    return lines
+  end
+
   -- load the buffer if this is not a file uri
   -- Custom language server protocol extensions can result in servers sending URIs with custom schemes. Plugins are able to load these via `BufReadCmd` autocmds.
   if uri:sub(1, 4) ~= "file" then
     local bufnr = vim.uri_to_bufnr(uri)
     vim.fn.bufload(bufnr)
-    return (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { "" })[1]
+    return buf_lines(bufnr)
   end
 
   local filename = vim.uri_to_fname(uri)
@@ -1455,22 +1476,44 @@ function M.get_line(uri, row)
   -- use loaded buffers if available
   if vim.fn.bufloaded(filename) == 1 then
     local bufnr = vim.fn.bufnr(filename, false)
-    return (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { "" })[1]
+    return buf_lines(bufnr)
   end
 
+  -- get the data from the file
   local fd = uv.fs_open(filename, "r", 438)
-  -- TODO: what should we do in this case?
   if not fd then return "" end
   local stat = uv.fs_fstat(fd)
   local data = uv.fs_read(fd, stat.size, 0)
   uv.fs_close(fd)
 
+  local lines = {} -- rows we need to retrieve
+  local need = 0 -- keep track of how many unique rows we need
+  for _, row in pairs(rows) do
+    if not lines[row] then
+      need = need + 1
+    end
+    lines[row] = true
+  end
+
+  local found = 0
   local lnum = 0
+
   for line in string.gmatch(data, "([^\n]*)\n?") do
-    if lnum == row then return line end
+    if lines[lnum] == true then
+      lines[lnum] = line
+      found = found + 1
+      if found == need then break end
+    end
     lnum = lnum + 1
   end
-  return ""
+
+  -- change any lines we didn't find to the empty string
+  for i, line in pairs(lines) do
+    if line == true then
+      lines[i] = ""
+    end
+  end
+  return lines
 end
 
 --- Returns the items with the byte position calculated correctly and in sorted
@@ -1502,10 +1545,22 @@ function M.locations_to_items(locations)
     local rows = grouped[uri]
     table.sort(rows, position_sort)
     local filename = vim.uri_to_fname(uri)
+
+    -- list of row numbers
+    local uri_rows = {}
     for _, temp in ipairs(rows) do
       local pos = temp.start
       local row = pos.line
-      local line = M.get_line(uri, row)
+      table.insert(uri_rows, row)
+    end
+
+    -- get all the lines for this uri
+    local lines = M.get_lines(uri, uri_rows)
+
+    for _, temp in ipairs(rows) do
+      local pos = temp.start
+      local row = pos.line
+      local line = lines[row] or ""
       local col = pos.character
       table.insert(items, {
         filename = filename,
