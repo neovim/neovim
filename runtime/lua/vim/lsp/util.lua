@@ -44,10 +44,30 @@ local function get_border_size(opts)
     height = 2
     width = 2
   else
-    height = height + vim.fn.strdisplaywidth(border[2][1])  -- top
-    height = height + vim.fn.strdisplaywidth(border[6][1])  -- bottom
-    width  = width  + vim.fn.strdisplaywidth(border[4][1])  -- right
-    width  = width  + vim.fn.strdisplaywidth(border[8][1])  -- left
+    local function border_width(id)
+      if type(border[id]) == "table" then
+        -- border specified as a table of <character, highlight group>
+        return vim.fn.strdisplaywidth(border[id][1])
+      elseif type(border[id]) == "string" then
+        -- border specified as a list of border characters
+        return vim.fn.strdisplaywidth(border[id])
+      end
+      error("floating preview border is not correct. Please refer to the docs |vim.api.nvim_open_win()|" .. vim.inspect(border))
+    end
+    local function border_height(id)
+      if type(border[id]) == "table" then
+        -- border specified as a table of <character, highlight group>
+        return #border[id][1] > 0 and 1 or 0
+      elseif type(border[id]) == "string" then
+        -- border specified as a list of border characters
+        return #border[id] > 0 and 1 or 0
+      end
+      error("floating preview border is not correct. Please refer to the docs |vim.api.nvim_open_win()|" .. vim.inspect(border))
+    end
+    height = height + border_height(2)  -- top
+    height = height + border_height(6)  -- bottom
+    width  = width  + border_width(4)  -- right
+    width  = width  + border_width(8)  -- left
   end
 
   return { height = height, width = width }
