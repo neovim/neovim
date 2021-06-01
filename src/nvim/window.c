@@ -570,6 +570,45 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
   }
 }
 
+void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
+{
+  win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  tabpage_T *tab = win_find_tabpage(win), *save_curtab = curtab;
+
+  if (!win || !buf) {
+    return;
+  }
+
+  if (noautocmd) {
+    block_autocmds();
+  }
+  if (switch_win_noblock(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
+    api_set_error(err,
+                  kErrorTypeException,
+                  "Failed to switch to window %d",
+                  window);
+  }
+
+  try_start();
+  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+  if (!try_end(err) && result == FAIL) {
+    api_set_error(err,
+                  kErrorTypeException,
+                  "Failed to set buffer %d",
+                  buffer);
+  }
+
+  // If window is not current, state logic will not validate its cursor.
+  // So do it now.
+  validate_cursor();
+
+  restore_win_noblock(save_curwin, save_curtab, false);
+  if (noautocmd) {
+    unblock_autocmds();
+  }
+}
+
 /// Create a new float.
 ///
 /// if wp == NULL allocate a new window, otherwise turn existing window into a

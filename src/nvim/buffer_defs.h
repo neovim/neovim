@@ -1090,6 +1090,7 @@ typedef struct {
   schar_T border_chars[8];
   int border_hl_ids[8];
   int border_attr[8];
+  bool noautocmd;
 } FloatConfig;
 
 #define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
@@ -1098,7 +1099,8 @@ typedef struct {
                                           .relative = 0, .external = false, \
                                           .focusable = true, \
                                           .zindex = kZIndexFloatDefault, \
-                                          .style = kWinStyleUnused })
+                                          .style = kWinStyleUnused, \
+                                          .noautocmd = false })
 
 // Structure to store last cursor position and topline.  Used by check_lnums()
 // and reset_lnums().

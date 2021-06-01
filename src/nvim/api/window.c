@@ -46,35 +46,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   FUNC_API_SINCE(5)
   FUNC_API_CHECK_TEXTLOCK
 {
-  win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  tabpage_T *tab = win_find_tabpage(win), *save_curtab = curtab;
-
-  if (!win || !buf) {
-    return;
-  }
-
-  if (switch_win(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to window %d",
-                  window);
-  }
-
-  try_start();
-  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
-  if (!try_end(err) && result == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to set buffer %d",
-                  buffer);
-  }
-
-  // If window is not current, state logic will not validate its cursor.
-  // So do it now.
-  validate_cursor();
-
-  restore_win(save_curwin, save_curtab, false);
+  win_set_buf(window, buffer, false, err);
 }
 
 /// Gets the (1,0)-indexed cursor position in the window. |api-indexing|
@@ -423,7 +395,7 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
   // reuse old values, if not overriden
   FloatConfig fconfig = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
 
-  if (!parse_float_config(config, &fconfig, !new_float, err)) {
+  if (!parse_float_config(config, &fconfig, !new_float, false, err)) {
     return;
   }
   if (new_float) {
