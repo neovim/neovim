@@ -915,6 +915,7 @@ function M.make_floating_popup_options(width, height, opts)
     anchor = anchor,
     col = col + (opts.offset_x or 0),
     height = height,
+    focusable = opts.focusable,
     relative = 'cursor',
     row = row + (opts.offset_y or 0),
     style = 'minimal',
@@ -1316,6 +1317,7 @@ end
 --             - pad_bottom number of lines to pad contents at bottom
 --             - focus_id if a popup with this id is opened, then focus it
 --             - close_events list of events that closes the floating window
+--             - focusable (boolean, default true): Make float focusable
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1332,7 +1334,7 @@ function M.open_floating_preview(contents, syntax, opts)
   local bufnr = api.nvim_get_current_buf()
 
   -- check if this popup is focusable and we need to focus
-  if opts.focus_id then
+  if opts.focus_id and opts.focusable ~= false then
     -- Go back to previous window if we are in a focusable one
     local current_winnr = api.nvim_get_current_win()
     if npcall(api.nvim_win_get_var, current_winnr, opts.focus_id) then
