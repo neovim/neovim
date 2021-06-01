@@ -1305,19 +1305,19 @@ end
 --@param contents table of lines to show in window
 --@param syntax string of syntax to set for opened buffer
 --@param opts dictionary with optional fields
---             - height    of floating window
---             - width     of floating window
---             - wrap boolean enable wrapping of long lines (defaults to true)
---             - wrap_at   character to wrap at for computing height when wrap is enabled
---             - max_width  maximal width of floating window
---             - max_height maximal height of floating window
---             - pad_left   number of columns to pad contents at left
---             - pad_right  number of columns to pad contents at right
---             - pad_top    number of lines to pad contents at top
---             - pad_bottom number of lines to pad contents at bottom
---             - focus_id if a popup with this id is opened, then focus it
---             - close_events list of events that closes the floating window
---             - focusable (boolean, default true): Make float focusable
+---             - height    of floating window
+---             - width     of floating window
+---             - wrap boolean enable wrapping of long lines (defaults to true)
+---             - wrap_at   character to wrap at for computing height when wrap is enabled
+---             - max_width  maximal width of floating window
+---             - max_height maximal height of floating window
+---             - pad_left   number of columns to pad contents at left
+---             - pad_right  number of columns to pad contents at right
+---             - pad_top    number of lines to pad contents at top
+---             - pad_bottom number of lines to pad contents at bottom
+---             - focus_id if a popup with this id is opened, then focus it
+---             - close_events list of events that closes the floating window
+---             - focusable (boolean, default true): Make float focusable
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
