@@ -1,4 +1,4 @@
-" Tests for various Visual mode.
+" Tests for various Visual modes.
 
 func Test_block_shift_multibyte()
   " Uses double-wide character.
@@ -735,6 +735,274 @@ func Test_select_mode_gv()
   call assert_equal(['', 'xxx '], getline(1, '$'))
 
   set selection&vim
+  bwipe!
+endfunc
+
+" Tests for the visual block mode commands
+func Test_visual_block_mode()
+  new
+  call append(0, '')
+  call setline(1, ['abcdefghijklm', 'abcdefghijklm', 'abcdefghijklm',
+        \ 'abcdefghijklm', 'abcdefghijklm'])
+  call cursor(1, 1)
+
+  " Test shift-right of a block
+  exe "normal jllll\<C-V>jj>wll\<C-V>jlll>"
+  " Test shift-left of a block
+  exe "normal G$hhhh\<C-V>kk<"
+  " Test block-insert
+  exe "normal Gkl\<C-V>kkkIxyz"
+  " Test block-replace
+  exe "normal Gllll\<C-V>kkklllrq"
+  " Test block-change
+  exe "normal G$khhh\<C-V>hhkkcmno"
+  call assert_equal(['axyzbcdefghijklm',
+        \ 'axyzqqqq   mno	      ghijklm',
+        \ 'axyzqqqqef mno        ghijklm',
+        \ 'axyzqqqqefgmnoklm',
+        \ 'abcdqqqqijklm'], getline(1, 5))
+
+  " Test from ':help v_b_I_example'
+  %d _
+  setlocal tabstop=8 shiftwidth=4
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3jISTRING"
+  let expected =<< trim END
+    abcdefghijklmnSTRINGopqrstuvwxyz
+    abc	      STRING  defghijklmnopqrstuvwxyz
+    abcdef  ghi   STRING  	jklmnopqrstuvwxyz
+    abcdefghijklmnSTRINGopqrstuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_A_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3j$ASTRING"
+  let expected =<< trim END
+    abcdefghijklmnopqrstuvwxyzSTRING
+    abc		defghijklmnopqrstuvwxyzSTRING
+    abcdef  ghi		jklmnopqrstuvwxyzSTRING
+    abcdefghijklmnopqrstuvwxyzSTRING
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_<_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3j3l<.."
+  let expected =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc	      defghijklmnopqrstuvwxyz
+    abcdef  ghi   jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_>_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3j>.."
+  let expected =<< trim END
+    abcdefghijklmn		  opqrstuvwxyz
+    abc			    defghijklmnopqrstuvwxyz
+    abcdef  ghi			    jklmnopqrstuvwxyz
+    abcdefghijklmn		  opqrstuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_r_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>5l3jrX"
+  let expected =<< trim END
+    abcdefghijklmnXXXXXXuvwxyz
+    abc	      XXXXXXhijklmnopqrstuvwxyz
+    abcdef  ghi   XXXXXX    jklmnopqrstuvwxyz
+    abcdefghijklmnXXXXXXuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  bwipe!
+  set tabstop& shiftwidth&
+endfunc
+
+" Test block-insert using cursor keys for movement
+func Test_visual_block_insert_cursor_keys()
+  new
+  call append(0, ['aaaaaa', 'bbbbbb', 'cccccc', 'dddddd'])
+  call cursor(1, 1)
+
+  exe "norm! l\<C-V>jjjlllI\<Right>\<Right>  \<Esc>"
+  call assert_equal(['aaa  aaa', 'bbb  bbb', 'ccc  ccc', 'ddd  ddd'],
+        \ getline(1, 4))
+
+  call deletebufline('', 1, '$')
+  call setline(1, ['xaaa', 'bbbb', 'cccc', 'dddd'])
+  call cursor(1, 1)
+  exe "norm! \<C-V>jjjI<>\<Left>p\<Esc>"
+  call assert_equal(['<p>xaaa', '<p>bbbb', '<p>cccc', '<p>dddd'],
+        \ getline(1, 4))
+  bwipe!
+endfunc
+
+func Test_visual_block_create()
+  new
+  call append(0, '')
+  " Test for Visual block was created with the last <C-v>$
+  call setline(1, ['A23', '4567'])
+  call cursor(1, 1)
+  exe "norm! l\<C-V>j$Aab\<Esc>"
+  call assert_equal(['A23ab', '4567ab'], getline(1, 2))
+
+  " Test for Visual block was created with the middle <C-v>$ (1)
+  call deletebufline('', 1, '$')
+  call setline(1, ['B23', '4567'])
+  call cursor(1, 1)
+  exe "norm! l\<C-V>j$hAab\<Esc>"
+  call assert_equal(['B23 ab', '4567ab'], getline(1, 2))
+
+  " Test for Visual block was created with the middle <C-v>$ (2)
+  call deletebufline('', 1, '$')
+  call setline(1, ['C23', '4567'])
+  call cursor(1, 1)
+  exe "norm! l\<C-V>j$hhAab\<Esc>"
+  call assert_equal(['C23ab', '456ab7'], getline(1, 2))
+  bwipe!
+endfunc
+
+" Test for Visual block insert when virtualedit=all
+func Test_virtualedit_visual_block()
+  set ve=all
+  new
+  call append(0, ["\t\tline1", "\t\tline2", "\t\tline3"])
+  call cursor(1, 1)
+  exe "norm! 07l\<C-V>jjIx\<Esc>"
+  call assert_equal(["       x \tline1",
+        \ "       x \tline2",
+        \ "       x \tline3"], getline(1, 3))
+
+  " Test for Visual block append when virtualedit=all
+  exe "norm! 012l\<C-v>jjAx\<Esc>"
+  call assert_equal(['       x     x   line1',
+        \ '       x     x   line2',
+        \ '       x     x   line3'], getline(1, 3))
+  set ve=
+  bwipe!
+endfunc
+
+" Test for changing case
+func Test_visual_change_case()
+  new
+  " gUe must uppercase a whole word, also when ß changes to SS
+  exe "normal Gothe youtußeuu end\<Esc>Ypk0wgUe\r"
+  " gUfx must uppercase until x, inclusive.
+  exe "normal O- youßtußexu -\<Esc>0fogUfx\r"
+  " VU must uppercase a whole line
+  exe "normal YpkVU\r"
+  " same, when it's the last line in the buffer
+  exe "normal YPGi111\<Esc>VUddP\r"
+  " Uppercase two lines
+  exe "normal Oblah di\rdoh dut\<Esc>VkUj\r"
+  " Uppercase part of two lines
+  exe "normal ddppi333\<Esc>k0i222\<Esc>fyllvjfuUk"
+  call assert_equal(['the YOUTUSSEUU end', '- yOUSSTUSSEXu -',
+        \ 'THE YOUTUSSEUU END', '111THE YOUTUSSEUU END', 'BLAH DI', 'DOH DUT',
+        \ '222the yoUTUSSEUU END', '333THE YOUTUßeuu end'], getline(2, '$'))
+  bwipe!
+endfunc
+
+" Test for Visual replace using Enter or NL
+func Test_visual_replace_crnl()
+  new
+  exe "normal G3o123456789\e2k05l\<C-V>2jr\r"
+  exe "normal G3o98765\e2k02l\<C-V>2jr\<C-V>\r\n"
+  exe "normal G3o123456789\e2k05l\<C-V>2jr\n"
+  exe "normal G3o98765\e2k02l\<C-V>2jr\<C-V>\n"
+  call assert_equal(['12345', '789', '12345', '789', '12345', '789', "98\r65",
+        \ "98\r65", "98\r65", '12345', '789', '12345', '789', '12345', '789',
+        \ "98\n65", "98\n65", "98\n65"], getline(2, '$'))
+  bwipe!
+endfunc
+
+func Test_ve_block_curpos()
+  new
+  " Test cursor position. When ve=block and Visual block mode and $gj
+  call append(0, ['12345', '789'])
+  call cursor(1, 3)
+  set virtualedit=block
+  exe "norm! \<C-V>$gj\<Esc>"
+  call assert_equal([0, 2, 4, 0], getpos("'>"))
+  set virtualedit=
+  bwipe!
+endfunc
+
+" Test for block_insert when replacing spaces in front of the a with tabs
+func Test_block_insert_replace_tabs()
+  new
+  set ts=8 sts=4 sw=4
+  call append(0, ["#define BO_ALL\t    0x0001",
+        \ "#define BO_BS\t    0x0002",
+        \ "#define BO_CRSR\t    0x0004"])
+  call cursor(1, 1)
+  exe "norm! f0\<C-V>2jI\<tab>\<esc>"
+  call assert_equal([
+        \ "#define BO_ALL\t\t0x0001",
+        \ "#define BO_BS\t    \t0x0002",
+        \ "#define BO_CRSR\t    \t0x0004", ''], getline(1, '$'))
+  set ts& sts& sw&
+  bwipe!
+endfunc
+
+func Test_visual_put_in_block_using_zp()
+  new
+  " paste using zP
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ '/subdir', 
+    \ '/longsubdir',
+    \ '/longlongsubdir'])
+  exe "normal! 5G\<c-v>2j$y"
+  norm! 1Gf;zP
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
+  %d
+  " paste using zP
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ '/subdir', 
+    \ '/longsubdir',
+    \ '/longlongsubdir'])
+  exe "normal! 5G\<c-v>2j$y"
+  norm! 1Gf;hzp
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
   bwipe!
 endfunc
 

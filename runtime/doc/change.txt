@@ -1091,6 +1091,11 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			Using the mouse only works when 'mouse' contains 'n'
 			or 'a'.
 
+["x]zp		    or					*zp* *zP*
+["x]zP			Like "p" and "P", except without adding trailing spaces
+			when pasting a block.  Thus the inserted text will not
+			always be a rectangle.
+
 You can use these commands to copy text from one place to another.  Do this
 by first getting the text into a register with a yank, delete or change
 command, then inserting the register contents with a put command.  You can
@@ -1129,6 +1134,9 @@ When you use a blockwise Visual mode command and yank only a single line into
 a register, a paste on a visual selected area will paste that single line on
 each of the selected lines (thus replacing the blockwise selected region by a
 block of the pasted line).
+
+Use |zP|/|zp| to paste a blockwise yanked register without appending trailing
+spaces.
 
 							*blockwise-register*
 If you use a blockwise Visual mode command to get the text into the register,

@@ -851,6 +851,8 @@ tag		char	      note action in Normal mode	~
 |zm|		zm		   subtract one from 'foldlevel'
 |zn|		zn		   reset 'foldenable'
 |zo|		zo		   open fold
+|zp|		zp		   paste in block-mode without trailing spaces
+|zP|		zP		   paste in block-mode without trailing spaces
 |zr|		zr		   add one to 'foldlevel'
 |zs|		zs		   when 'wrap' off scroll horizontally to
 				   position the cursor at the start (left

@@ -2788,13 +2788,13 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   recursive = false;
 }
 
-/*
- * Put contents of register "regname" into the text.
- * Caller must check "regname" to be valid!
- * "flags": PUT_FIXINDENT     make indent look nice
- *          PUT_CURSEND       leave cursor after end of new text
- *          PUT_LINE          force linewise put (":put")
-    dir: BACKWARD for 'P', FORWARD for 'p' */
+// Put contents of register "regname" into the text.
+// Caller must check "regname" to be valid!
+// "flags": PUT_FIXINDENT     make indent look nice
+//          PUT_CURSEND       leave cursor after end of new text
+//          PUT_LINE          force linewise put (":put")
+//          PUT_BLOCK_INNER   in block mode, do not add trailing spaces
+// dir: BACKWARD for 'P', FORWARD for 'p'
 void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 {
   char_u *ptr;
@@ -3126,7 +3126,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     curwin->w_cursor.coladd = 0;
     bd.textcol = 0;
     for (i = 0; i < y_size; i++) {
-      int spaces;
+      int spaces = 0;
       char shortline;
       // can just be 0 or 1, needed for blockwise paste beyond the current
       // buffer end
@@ -3177,13 +3177,16 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
       yanklen = (int)STRLEN(y_array[i]);
 
-      // calculate number of spaces required to fill right side of block
-      spaces = y_width + 1;
-      for (long j = 0; j < yanklen; j++) {
-        spaces -= lbr_chartabsize(NULL, &y_array[i][j], 0);
-      }
-      if (spaces < 0) {
-        spaces = 0;
+      if ((flags & PUT_BLOCK_INNER) == 0) {
+        // calculate number of spaces required to fill right side of
+        // block
+        spaces = y_width + 1;
+        for (int j = 0; j < yanklen; j++) {
+          spaces -= lbr_chartabsize(NULL, &y_array[i][j], 0);
+        }
+        if (spaces < 0) {
+          spaces = 0;
+        }
       }
 
       // insert the new text
