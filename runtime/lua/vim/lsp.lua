@@ -1421,7 +1421,7 @@ function lsp.omnifunc(findstart, base)
 
   local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
-    if err or not result then return end
+    if err or not result or vim.fn.mode() ~= "i" then return end
     local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
