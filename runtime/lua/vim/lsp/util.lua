@@ -935,6 +935,7 @@ function M.make_floating_popup_options(width, height, opts)
     anchor = anchor,
     col = col + (opts.offset_x or 0),
     height = height,
+    focusable = opts.focusable,
     relative = 'cursor',
     row = row + (opts.offset_y or 0),
     style = 'minimal',
@@ -1324,18 +1325,19 @@ end
 --@param contents table of lines to show in window
 --@param syntax string of syntax to set for opened buffer
 --@param opts dictionary with optional fields
---             - height    of floating window
---             - width     of floating window
---             - wrap boolean enable wrapping of long lines (defaults to true)
---             - wrap_at   character to wrap at for computing height when wrap is enabled
---             - max_width  maximal width of floating window
---             - max_height maximal height of floating window
---             - pad_left   number of columns to pad contents at left
---             - pad_right  number of columns to pad contents at right
---             - pad_top    number of lines to pad contents at top
---             - pad_bottom number of lines to pad contents at bottom
---             - focus_id if a popup with this id is opened, then focus it
---             - close_events list of events that closes the floating window
+---             - height    of floating window
+---             - width     of floating window
+---             - wrap boolean enable wrapping of long lines (defaults to true)
+---             - wrap_at   character to wrap at for computing height when wrap is enabled
+---             - max_width  maximal width of floating window
+---             - max_height maximal height of floating window
+---             - pad_left   number of columns to pad contents at left
+---             - pad_right  number of columns to pad contents at right
+---             - pad_top    number of lines to pad contents at top
+---             - pad_bottom number of lines to pad contents at bottom
+---             - focus_id if a popup with this id is opened, then focus it
+---             - close_events list of events that closes the floating window
+---             - focusable (boolean, default true): Make float focusable
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1352,7 +1354,7 @@ function M.open_floating_preview(contents, syntax, opts)
   local bufnr = api.nvim_get_current_buf()
 
   -- check if this popup is focusable and we need to focus
-  if opts.focus_id then
+  if opts.focus_id and opts.focusable ~= false then
     -- Go back to previous window if we are in a focusable one
     local current_winnr = api.nvim_get_current_win()
     if npcall(api.nvim_win_get_var, current_winnr, opts.focus_id) then
