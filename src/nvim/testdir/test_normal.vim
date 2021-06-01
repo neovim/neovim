@@ -2883,3 +2883,35 @@ func Test_normal_gk()
   bw!
   set cpoptions& number& numberwidth&
 endfunc
+
+" Some commands like yy, cc, dd, >>, << and !! accept a count after
+" typing the first letter of the command.
+func Test_normal_count_after_operator()
+  new
+  setlocal shiftwidth=4 tabstop=8 autoindent
+  call setline(1, ['one', 'two', 'three', 'four', 'five'])
+  let @a = ''
+  normal! j"ay4y
+  call assert_equal("two\nthree\nfour\nfive\n", @a)
+  normal! 3G>2>
+  call assert_equal(['one', 'two', '    three', '    four', 'five'],
+        \ getline(1, '$'))
+  exe "normal! 3G0c2cred\nblue"
+  call assert_equal(['one', 'two', '    red', '    blue', 'five'],
+        \ getline(1, '$'))
+  exe "normal! gg<8<"
+  call assert_equal(['one', 'two', 'red', 'blue', 'five'],
+        \ getline(1, '$'))
+  exe "normal! ggd3d"
+  call assert_equal(['blue', 'five'], getline(1, '$'))
+  call setline(1, range(1, 4))
+  call feedkeys("gg!3!\<C-B>\"\<CR>", 'xt')
+  call assert_equal('".,.+2!', @:)
+  call feedkeys("gg!1!\<C-B>\"\<CR>", 'xt')
+  call assert_equal('".!', @:)
+  call feedkeys("gg!9!\<C-B>\"\<CR>", 'xt')
+  call assert_equal('".,$!', @:)
+  bw!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

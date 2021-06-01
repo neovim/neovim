@@ -762,7 +762,99 @@ func Test_visual_block_mode()
         \ 'axyzqqqqefgmnoklm',
         \ 'abcdqqqqijklm'], getline(1, 5))
 
+  " Test from ':help v_b_I_example'
+  %d _
+  setlocal tabstop=8 shiftwidth=4
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3jISTRING"
+  let expected =<< trim END
+    abcdefghijklmnSTRINGopqrstuvwxyz
+    abc	      STRING  defghijklmnopqrstuvwxyz
+    abcdef  ghi   STRING  	jklmnopqrstuvwxyz
+    abcdefghijklmnSTRINGopqrstuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_A_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3j$ASTRING"
+  let expected =<< trim END
+    abcdefghijklmnopqrstuvwxyzSTRING
+    abc		defghijklmnopqrstuvwxyzSTRING
+    abcdef  ghi		jklmnopqrstuvwxyzSTRING
+    abcdefghijklmnopqrstuvwxyzSTRING
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_<_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3j3l<.."
+  let expected =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc	      defghijklmnopqrstuvwxyz
+    abcdef  ghi   jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_>_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>3j>.."
+  let expected =<< trim END
+    abcdefghijklmn		  opqrstuvwxyz
+    abc			    defghijklmnopqrstuvwxyz
+    abcdef  ghi			    jklmnopqrstuvwxyz
+    abcdefghijklmn		  opqrstuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
+  " Test from ':help v_b_r_example'
+  %d _
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyz
+    abc		defghijklmnopqrstuvwxyz
+    abcdef  ghi		jklmnopqrstuvwxyz
+    abcdefghijklmnopqrstuvwxyz
+  END
+  call setline(1, lines)
+  exe "normal ggfo\<C-V>5l3jrX"
+  let expected =<< trim END
+    abcdefghijklmnXXXXXXuvwxyz
+    abc	      XXXXXXhijklmnopqrstuvwxyz
+    abcdef  ghi   XXXXXX    jklmnopqrstuvwxyz
+    abcdefghijklmnXXXXXXuvwxyz
+  END
+  call assert_equal(expected, getline(1, '$'))
+
   bwipe!
+  set tabstop& shiftwidth&
 endfunc
 
 " Test block-insert using cursor keys for movement
