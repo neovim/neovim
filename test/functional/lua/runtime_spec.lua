@@ -172,5 +172,35 @@ describe('runtime:', function()
     end)
   end)
 
+  describe('syntax', function()
+    local syntax_folder = table.concat({xconfig, 'nvim', 'syntax'}, pathsep)
+
+    before_each(clear)
+
+    it('loads lua syntaxes on filetype change', function()
+      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, pathsep)
+      mkdir_p(syntax_folder)
+      write_file(syntax_file , [[vim.g.lua_syntax = 1]])
+
+      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
+
+      exec('set filetype=my-lang')
+      eq(1, eval('g:lua_syntax'))
+      rmdir(syntax_folder)
+    end)
+
+    it('loads lua syntaxes on syntax change', function()
+      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, pathsep)
+      mkdir_p(syntax_folder)
+      write_file(syntax_file , [[vim.g.lua_syntax = 5]])
+
+      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
+
+      exec('set syntax=my-lang')
+      eq(5, eval('g:lua_syntax'))
+      rmdir(syntax_folder)
+    end)
+  end)
+
 end)
 
