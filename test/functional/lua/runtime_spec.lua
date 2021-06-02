@@ -136,5 +136,24 @@ describe('runtime:', function()
       rmdir(ftplugin_folder)
     end)
   end)
+
+  describe('indent', function()
+    local indent_folder = table.concat({xconfig, 'nvim', 'indent'}, pathsep)
+
+    before_each(clear)
+
+    it('loads lua indents', function()
+      local indent_file = table.concat({indent_folder , 'new-ft.lua'}, pathsep)
+      mkdir_p(indent_folder)
+      write_file(indent_file , [[ vim.g.lua_indent = 1 ]])
+
+      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
+
+      exec [[set filetype=new-ft]]
+      eq(1, eval('g:lua_indent'))
+      rmdir(indent_folder)
+    end)
+  end)
+
 end)
 
