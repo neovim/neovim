@@ -9,61 +9,36 @@ local rmdir = helpers.rmdir
 local write_file = helpers.write_file
 
 describe('runtime:', function()
-  local xhome = 'Xhome'
-  local pathsep = helpers.get_pathsep()
-  local xconfig = xhome .. pathsep .. 'Xconfig'
+  local plug_dir = 'Test_Plugin'
+  local sep = helpers.get_pathsep()
+  local init = 'dummy_init.lua'
+
+  setup(function()
+    io.open(init, 'w'):close()  --  touch init file
+    clear{args = {'-u', init}}
+    exec('set rtp+=' .. plug_dir)
+  end)
+
+  teardown(function()
+    os.remove(init)
+  end)
 
   before_each(function()
-    clear()
-    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(plug_dir)
   end)
 
   after_each(function()
-    rmdir(xhome)
-  end)
-
-  describe('plugin', function()
-    before_each(clear)
-    it('loads plugin/*.lua from XDG config home', function()
-      local plugin_folder_path = table.concat({xconfig, 'nvim', 'plugin'}, pathsep)
-      local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
-      mkdir_p(plugin_folder_path)
-      write_file(plugin_file_path, [[ vim.g.lua_plugin = 1 ]])
-
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
-
-      eq(1, eval('g:lua_plugin'))
-      rmdir(plugin_folder_path)
-    end)
-
-
-    it('loads plugin/*.lua from start plugins', function()
-      local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'catagory',
-      'start', 'test_plugin'}, pathsep)
-      local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
-      local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
-      pathsep)
-      mkdir_p(plugin_folder_path)
-      write_file(plugin_file_path, [[vim.g.lua_plugin = 2]])
-
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
-
-      eq(2, eval('g:lua_plugin'))
-      rmdir(plugin_path)
-    end)
+    rmdir(plug_dir)
   end)
 
   describe('colors', function()
-    before_each(clear)
+    local colorscheme_folder = plug_dir .. sep .. 'colors'
+
     it('loads lua colorscheme', function()
-      local colorscheme_folder = table.concat({xconfig, 'nvim', 'colors'},
-                                                   pathsep)
-      local colorscheme_file = table.concat({colorscheme_folder, 'new_colorscheme.lua'},
-                                            pathsep)
+      local colorscheme_file = colorscheme_folder .. sep .. 'new_colorscheme.lua'
       mkdir_p(colorscheme_folder)
       write_file(colorscheme_file, [[vim.g.lua_colorscheme = 1]])
 
-      clear{ args_rm={'-' }, env={ XDG_CONFIG_HOME=xconfig }}
       exec('colorscheme new_colorscheme')
 
       eq(1, eval('g:lua_colorscheme'))
@@ -71,15 +46,11 @@ describe('runtime:', function()
     end)
 
     it('loads vim colorscheme when both lua and vim version exist', function()
-      local colorscheme_folder = table.concat({xconfig, 'nvim', 'colors'},
-                                                   pathsep)
-      local colorscheme_file = table.concat({colorscheme_folder, 'new_colorscheme'},
-                                            pathsep)
+      local colorscheme_file = colorscheme_folder .. sep .. 'new_colorscheme'
       mkdir_p(colorscheme_folder)
       write_file(colorscheme_file..'.vim', [[let g:colorscheme = 'vim']])
       write_file(colorscheme_file..'.lua', [[vim.g.colorscheme = 'lua']])
 
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
       exec('colorscheme new_colorscheme')
 
       eq('vim', eval('g:colorscheme'))
@@ -88,16 +59,13 @@ describe('runtime:', function()
   end)
 
   describe('compiler', function()
-    local compiler_folder = table.concat({xconfig, 'nvim', 'compiler'}, pathsep)
-    before_each(clear)
+    local compiler_folder = plug_dir .. sep .. 'compiler'
 
     it('loads lua compilers', function()
-      local compiler_file = table.concat({compiler_folder, 'new_compiler.lua'},
-                                            pathsep)
+      local compiler_file = compiler_folder .. sep .. 'new_compiler.lua'
       mkdir_p(compiler_folder)
       write_file(compiler_file, [[vim.g.lua_compiler = 1]])
 
-      clear{ args_rm={'-' }, env={ XDG_CONFIG_HOME=xconfig }}
       exec('compiler new_compiler')
 
       eq(1, eval('g:lua_compiler'))
@@ -105,13 +73,11 @@ describe('runtime:', function()
     end)
 
     it('loads vim compilers when both lua and vim version exist', function()
-      local compiler_file = table.concat({compiler_folder, 'new_compiler'},
-                                            pathsep)
+      local compiler_file = compiler_folder .. sep .. 'new_compiler'
       mkdir_p(compiler_folder)
       write_file(compiler_file..'.vim', [[let g:compiler = 'vim']])
       write_file(compiler_file..'.lua', [[vim.g.compiler = 'lua']])
 
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
       exec('compiler new_compiler')
 
       eq('vim', eval('g:compiler'))
@@ -120,16 +86,12 @@ describe('runtime:', function()
   end)
 
   describe('ftplugin', function()
-    local ftplugin_folder = table.concat({xconfig, 'nvim', 'ftplugin'}, pathsep)
-
-    before_each(clear)
+    local ftplugin_folder = table.concat({plug_dir, 'ftplugin'}, sep)
 
     it('loads lua ftplugins', function()
-      local ftplugin_file = table.concat({ftplugin_folder , 'new-ft.lua'}, pathsep)
+      local ftplugin_file = table.concat({ftplugin_folder , 'new-ft.lua'}, sep)
       mkdir_p(ftplugin_folder)
       write_file(ftplugin_file , [[vim.g.lua_ftplugin = 1]])
-
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
 
       exec [[set filetype=new-ft]]
       eq(1, eval('g:lua_ftplugin'))
@@ -138,16 +100,12 @@ describe('runtime:', function()
   end)
 
   describe('indent', function()
-    local indent_folder = table.concat({xconfig, 'nvim', 'indent'}, pathsep)
-
-    before_each(clear)
+    local indent_folder = table.concat({plug_dir, 'indent'}, sep)
 
     it('loads lua indents', function()
-      local indent_file = table.concat({indent_folder , 'new-ft.lua'}, pathsep)
+      local indent_file = table.concat({indent_folder , 'new-ft.lua'}, sep)
       mkdir_p(indent_folder)
       write_file(indent_file , [[vim.g.lua_indent = 1]])
-
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
 
       exec [[set filetype=new-ft]]
       eq(1, eval('g:lua_indent'))
@@ -155,34 +113,13 @@ describe('runtime:', function()
     end)
   end)
 
-  describe('ftdetect', function()
-    local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
-
-    before_each(clear)
-
-    it('loads lua ftdetects', function()
-      local ftdetect_file = table.concat({ftdetect_folder , 'new-ft.lua'}, pathsep)
-      mkdir_p(ftdetect_folder)
-      write_file(ftdetect_file , [[vim.g.lua_ftdetect = 1]])
-
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
-
-      eq(1, eval('g:lua_ftdetect'))
-      rmdir(ftdetect_folder)
-    end)
-  end)
-
   describe('syntax', function()
-    local syntax_folder = table.concat({xconfig, 'nvim', 'syntax'}, pathsep)
-
-    before_each(clear)
+    local syntax_folder = table.concat({plug_dir, 'syntax'}, sep)
 
     it('loads lua syntaxes on filetype change', function()
-      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, pathsep)
+      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, sep)
       mkdir_p(syntax_folder)
       write_file(syntax_file , [[vim.g.lua_syntax = 1]])
-
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
 
       exec('set filetype=my-lang')
       eq(1, eval('g:lua_syntax'))
@@ -190,11 +127,9 @@ describe('runtime:', function()
     end)
 
     it('loads lua syntaxes on syntax change', function()
-      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, pathsep)
+      local syntax_file = table.concat({syntax_folder , 'my-lang.lua'}, sep)
       mkdir_p(syntax_folder)
       write_file(syntax_file , [[vim.g.lua_syntax = 5]])
-
-      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
 
       exec('set syntax=my-lang')
       eq(5, eval('g:lua_syntax'))

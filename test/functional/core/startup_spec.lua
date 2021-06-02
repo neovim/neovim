@@ -11,6 +11,7 @@ local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
 local mkdir = helpers.mkdir
+local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
@@ -491,6 +492,62 @@ describe('user config init', function()
       eq(1, eval('g:lua_rc'))
       matches('Conflicting configs', meths.exec('messages', true))
     end)
+  end)
+end)
+
+describe('runtime:', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+
+  setup(function()
+    mkdir_p(xconfig .. pathsep .. 'nvim')
+  end)
+
+  teardown(function()
+    rmdir(xhome)
+  end)
+
+  it('loads plugin/*.lua from XDG config home', function()
+    local plugin_folder_path = table.concat({xconfig, 'nvim', 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[ vim.g.lua_plugin = 1 ]])
+
+    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+
+    eq(1, eval('g:lua_plugin'))
+    rmdir(plugin_folder_path)
+  end)
+
+  it('loads plugin/*.lua from start plugins', function()
+    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'catagory',
+    'start', 'test_plugin'}, pathsep)
+    local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
+    pathsep)
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[vim.g.lua_plugin = 2]])
+
+    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+
+    eq(2, eval('g:lua_plugin'))
+    rmdir(plugin_path)
+  end)
+
+  it('loads ftdetect/*.lua', function()
+    local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
+    local ftdetect_file = table.concat({ftdetect_folder , 'new-ft.lua'}, pathsep)
+    mkdir_p(ftdetect_folder)
+    write_file(ftdetect_file , [[vim.g.lua_ftdetect = 1]])
+
+    -- TODO(shadmansaleh): Figure out why this test fails without
+    --                     setting VIMRUNTIME
+    clear{ args_rm={'-u'}, env={XDG_CONFIG_HOME=xconfig,
+                                VIMRUNTIME='runtime/'}}
+
+    eq(1, eval('g:lua_ftdetect'))
+    rmdir(ftdetect_folder)
   end)
 end)
 
