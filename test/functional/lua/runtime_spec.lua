@@ -23,6 +23,7 @@ describe('runtime:', function()
   end)
 
   describe('plugin', function()
+    before_each(clear)
     it('loads plugin/*.lua from XDG config home', function()
       local plugin_folder_path = table.concat({xconfig, 'nvim', 'plugin'}, pathsep)
       local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
@@ -53,6 +54,7 @@ describe('runtime:', function()
   end)
 
   describe('colors', function()
+    before_each(clear)
     it('loads lua colorscheme', function()
       local colorscheme_folder = table.concat({xconfig, 'nvim', 'colors'},
                                                    pathsep)
@@ -87,6 +89,7 @@ describe('runtime:', function()
 
   describe('compiler', function()
     local compiler_folder = table.concat({xconfig, 'nvim', 'compiler'}, pathsep)
+    before_each(clear)
 
     it('loads lua compilers', function()
       local compiler_file = table.concat({compiler_folder, 'new_compiler.lua'},
@@ -113,6 +116,24 @@ describe('runtime:', function()
 
       eq('vim', eval('g:compiler'))
       rmdir(compiler_folder)
+    end)
+  end)
+
+  describe('ftplugin', function()
+    local ftplugin_folder = table.concat({xconfig, 'nvim', 'ftplugin'}, pathsep)
+
+    before_each(clear)
+
+    it('loads lua ftplugins', function()
+      local ftplugin_file = table.concat({ftplugin_folder , 'new-ft.lua'}, pathsep)
+      mkdir_p(ftplugin_folder)
+      write_file(ftplugin_file , [[ vim.g.lua_ftplugin = 1 ]])
+
+      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
+
+      exec [[set filetype=new-ft]]
+      eq(1, eval('g:lua_ftplugin'))
+      rmdir(ftplugin_folder)
     end)
   end)
 end)

@@ -411,7 +411,7 @@ Examples for the "stuff" filetype on Unix: >
 The <filetype> part is the name of the filetype the plugin is to be used for.
 Only files of this filetype will use the settings from the plugin.  The <name>
 part of the plugin file doesn't matter, you can use it to have several plugins
-for the same filetype.  Note that it must end in ".vim".
+for the same filetype.  Note that it must end in ".vim" or ".lua".
 
 
 Further reading:
