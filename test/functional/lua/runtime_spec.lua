@@ -85,5 +85,35 @@ describe('runtime:', function()
     end)
   end)
 
+  describe('compiler', function()
+    local compiler_folder = table.concat({xconfig, 'nvim', 'compiler'}, pathsep)
+
+    it('loads lua compilers', function()
+      local compiler_file = table.concat({compiler_folder, 'new_compiler.lua'},
+                                            pathsep)
+      mkdir_p(compiler_folder)
+      write_file(compiler_file, [[vim.g.lua_compiler = 1]])
+
+      clear{ args_rm={'-' }, env={ XDG_CONFIG_HOME=xconfig }}
+      exec('compiler new_compiler')
+
+      eq(1, eval('g:lua_compiler'))
+      rmdir(compiler_folder)
+    end)
+
+    it('loads vim compilers when both lua and vim version exist', function()
+      local compiler_file = table.concat({compiler_folder, 'new_compiler'},
+                                            pathsep)
+      mkdir_p(compiler_folder)
+      write_file(compiler_file..'.vim', [[let g:compiler = 'vim']])
+      write_file(compiler_file..'.lua', [[vim.g.compiler = 'lua']])
+
+      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
+      exec('compiler new_compiler')
+
+      eq('vim', eval('g:compiler'))
+      rmdir(compiler_folder)
+    end)
+  end)
 end)
 

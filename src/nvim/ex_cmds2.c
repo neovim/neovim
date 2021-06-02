@@ -2421,6 +2421,7 @@ void ex_compiler(exarg_T *eap)
   if (*eap->arg == NUL) {
     // List all compiler scripts.
     do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.vim')");  // NOLINT
+    do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.lua')");  // NOLINT
   } else {
     size_t bufsize = STRLEN(eap->arg) + 14;
     buf = xmalloc(bufsize);
@@ -2445,7 +2446,11 @@ void ex_compiler(exarg_T *eap)
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
     if (source_in_path(p_rtp, buf, DIP_ALL) == FAIL) {
-      EMSG2(_("E666: compiler not supported: %s"), eap->arg);
+      // Try lua compiler
+      snprintf((char *)buf, bufsize, "compiler/%s.lua", eap->arg);
+      if (source_in_path(p_rtp, buf, DIP_ALL) == FAIL) {
+        EMSG2(_("E666: compiler not supported: %s"), eap->arg);
+      }
     }
     xfree(buf);
 
