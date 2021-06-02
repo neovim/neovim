@@ -127,7 +127,7 @@ describe('runtime:', function()
     it('loads lua ftplugins', function()
       local ftplugin_file = table.concat({ftplugin_folder , 'new-ft.lua'}, pathsep)
       mkdir_p(ftplugin_folder)
-      write_file(ftplugin_file , [[ vim.g.lua_ftplugin = 1 ]])
+      write_file(ftplugin_file , [[vim.g.lua_ftplugin = 1]])
 
       clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
 
@@ -145,13 +145,30 @@ describe('runtime:', function()
     it('loads lua indents', function()
       local indent_file = table.concat({indent_folder , 'new-ft.lua'}, pathsep)
       mkdir_p(indent_folder)
-      write_file(indent_file , [[ vim.g.lua_indent = 1 ]])
+      write_file(indent_file , [[vim.g.lua_indent = 1]])
 
       clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
 
       exec [[set filetype=new-ft]]
       eq(1, eval('g:lua_indent'))
       rmdir(indent_folder)
+    end)
+  end)
+
+  describe('ftdetect', function()
+    local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
+
+    before_each(clear)
+
+    it('loads lua ftdetects', function()
+      local ftdetect_file = table.concat({ftdetect_folder , 'new-ft.lua'}, pathsep)
+      mkdir_p(ftdetect_folder)
+      write_file(ftdetect_file , [[vim.g.lua_ftdetect = 1]])
+
+      clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig, VIMRUNTIME='runtime/' }}
+
+      eq(1, eval('g:lua_ftdetect'))
+      rmdir(ftdetect_folder)
     end)
   end)
 
