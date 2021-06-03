@@ -157,6 +157,7 @@ endfunc
 
 scriptversion 4
 func Test_vvar_scriptversion4()
+  call assert_true(has('vimscript-4'))
   call assert_equal(17, 017)
   call assert_equal(18, 018)
   call assert_equal(64, 0b1'00'00'00)

@@ -4329,6 +4329,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "vimscript-1",
     "vimscript-2",
     "vimscript-3",
+    "vimscript-4",
     "virtualedit",
     "visual",
     "visualextra",
