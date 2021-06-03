@@ -2958,7 +2958,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   }
 
   if (l_do_profiling == PROF_YES) {
-    bool forceit;
+    bool forceit = false;
 
     // Check if we do profiling for this script.
     if (!si->sn_prof_on && has_profiling(true, si->sn_name, &forceit)) {
