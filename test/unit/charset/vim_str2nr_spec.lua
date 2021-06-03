@@ -98,9 +98,11 @@ describe('vim_str2nr()', function()
       lib.STR2NR_BIN,
       lib.STR2NR_OCT,
       lib.STR2NR_HEX,
+      lib.STR2NR_OOCT,
       lib.STR2NR_BIN + lib.STR2NR_OCT,
       lib.STR2NR_BIN + lib.STR2NR_HEX,
       lib.STR2NR_OCT + lib.STR2NR_HEX,
+      lib.STR2NR_OOCT + lib.STR2NR_HEX,
       lib.STR2NR_ALL,
       lib.STR2NR_FORCE + lib.STR2NR_DEC,
     }) do
@@ -212,13 +214,15 @@ describe('vim_str2nr()', function()
       end
     end
   end)
-  itp('works with octal numbers', function()
+  itp('works with octal numbers (0 prefix; scriptversion < 4)', function()
     for _, flags in ipairs({
       lib.STR2NR_OCT,
       lib.STR2NR_OCT + lib.STR2NR_BIN,
       lib.STR2NR_OCT + lib.STR2NR_HEX,
       lib.STR2NR_ALL,
       lib.STR2NR_FORCE + lib.STR2NR_OCT,
+      lib.STR2NR_FORCE + lib.STR2NR_OOCT,
+      lib.STR2NR_FORCE + lib.STR2NR_OCT + lib.STR2NR_OOCT,
     }) do
       local oct
       if flags > lib.STR2NR_FORCE then
@@ -257,6 +261,98 @@ describe('vim_str2nr()', function()
 
       if flags > lib.STR2NR_FORCE then
         test_vim_str2nr('-54', flags, {len = 3, num = -44, unum = 44, pre = 0}, 0)
+        test_vim_str2nr('-0548', flags, {len = 0}, 5)
+        test_vim_str2nr('-0548', flags, {len = 0}, 0)
+        test_vim_str2nr('-0548', flags, {len = 4, num = -44, unum = 44, pre = 0}, 5, false)
+        test_vim_str2nr('-0548', flags, {len = 4, num = -44, unum = 44, pre = 0}, 0, false)
+      else
+        test_vim_str2nr('-0548', flags, {len = 5, num = -548, unum = 548, pre = 0}, 5)
+        test_vim_str2nr('-0548', flags, {len = 5, num = -548, unum = 548, pre = 0}, 0)
+      end
+    end
+  end)
+  itp('works with octal numbers (0o or 0O prefix)', function()
+    for _, flags in ipairs({
+      lib.STR2NR_OOCT,
+      lib.STR2NR_OOCT + lib.STR2NR_BIN,
+      lib.STR2NR_OOCT + lib.STR2NR_HEX,
+      lib.STR2NR_OCT + lib.STR2NR_OOCT,
+      lib.STR2NR_OCT + lib.STR2NR_OOCT + lib.STR2NR_BIN,
+      lib.STR2NR_OCT + lib.STR2NR_OOCT + lib.STR2NR_HEX,
+      lib.STR2NR_ALL,
+      lib.STR2NR_FORCE + lib.STR2NR_OCT,
+      lib.STR2NR_FORCE + lib.STR2NR_OOCT,
+      lib.STR2NR_FORCE + lib.STR2NR_OCT + lib.STR2NR_OOCT,
+    }) do
+      local oct
+      local OCT
+      if flags > lib.STR2NR_FORCE then
+        oct = 0
+        OCT = 0
+      else
+        oct = ('o'):byte()
+        OCT = ('O'):byte()
+      end
+
+      test_vim_str2nr( '0o054',  flags, {len = 5, num =  44, unum = 44, pre = oct}, 0)
+      test_vim_str2nr( '0o054',  flags, {len = 1, num =   0, unum =  0, pre = 0  }, 1)
+      test_vim_str2nr( '0o054',  flags, {len = 0}, 2)
+      test_vim_str2nr( '0o054',  flags, {len = 3, num =   0, unum =  0, pre = oct}, 3)
+      test_vim_str2nr( '0o054',  flags, {len = 4, num =   5, unum =  5, pre = oct}, 4)
+      test_vim_str2nr( '0o054',  flags, {len = 5, num =  44, unum = 44, pre = oct}, 5)
+      test_vim_str2nr( '0o0548', flags, {len = 5, num =  44, unum = 44, pre = oct}, 5)
+      test_vim_str2nr( '0o054',  flags, {len = 5, num =  44, unum = 44, pre = oct}, 6)
+
+      test_vim_str2nr( '0o054x', flags, {len = 0}, 6)
+      test_vim_str2nr( '0o054x', flags, {len = 0}, 0)
+      test_vim_str2nr( '0o054x', flags, {len = 5, num =  44, unum = 44, pre = oct}, 6, false)
+      test_vim_str2nr( '0o054x', flags, {len = 5, num =  44, unum = 44, pre = oct}, 0, false)
+
+      test_vim_str2nr('-0o054',  flags, {len = 6, num = -44, unum = 44, pre = oct}, 0)
+      test_vim_str2nr('-0o054',  flags, {len = 1, num =   0, unum =  0, pre = 0  }, 1)
+      test_vim_str2nr('-0o054',  flags, {len = 2, num =   0, unum =  0, pre = 0  }, 2)
+      test_vim_str2nr('-0o054',  flags, {len = 0}, 3)
+      test_vim_str2nr('-0o054',  flags, {len = 4, num =   0, unum =  0, pre = oct}, 4)
+      test_vim_str2nr('-0o054',  flags, {len = 5, num =  -5, unum =  5, pre = oct}, 5)
+      test_vim_str2nr('-0o054',  flags, {len = 6, num = -44, unum = 44, pre = oct}, 6)
+      test_vim_str2nr('-0o0548', flags, {len = 6, num = -44, unum = 44, pre = oct}, 6)
+      test_vim_str2nr('-0o054',  flags, {len = 6, num = -44, unum = 44, pre = oct}, 7)
+
+      test_vim_str2nr('-0o054x', flags, {len = 0}, 7)
+      test_vim_str2nr('-0o054x', flags, {len = 0}, 0)
+      test_vim_str2nr('-0o054x', flags, {len = 6, num = -44, unum = 44, pre = oct}, 7, false)
+      test_vim_str2nr('-0o054x', flags, {len = 6, num = -44, unum = 44, pre = oct}, 0, false)
+
+      test_vim_str2nr( '0O054',  flags, {len = 5, num =  44, unum = 44, pre = OCT}, 0)
+      test_vim_str2nr( '0O054',  flags, {len = 1, num =   0, unum =  0, pre = 0  }, 1)
+      test_vim_str2nr( '0O054',  flags, {len = 0}, 2)
+      test_vim_str2nr( '0O054',  flags, {len = 3, num =   0, unum =  0, pre = OCT}, 3)
+      test_vim_str2nr( '0O054',  flags, {len = 4, num =   5, unum =  5, pre = OCT}, 4)
+      test_vim_str2nr( '0O054',  flags, {len = 5, num =  44, unum = 44, pre = OCT}, 5)
+      test_vim_str2nr( '0O0548', flags, {len = 5, num =  44, unum = 44, pre = OCT}, 5)
+      test_vim_str2nr( '0O054',  flags, {len = 5, num =  44, unum = 44, pre = OCT}, 6)
+
+      test_vim_str2nr( '0O054x', flags, {len = 0}, 6)
+      test_vim_str2nr( '0O054x', flags, {len = 0}, 0)
+      test_vim_str2nr( '0O054x', flags, {len = 5, num =  44, unum = 44, pre = OCT}, 6, false)
+      test_vim_str2nr( '0O054x', flags, {len = 5, num =  44, unum = 44, pre = OCT}, 0, false)
+
+      test_vim_str2nr('-0O054',  flags, {len = 6, num = -44, unum = 44, pre = OCT}, 0)
+      test_vim_str2nr('-0O054',  flags, {len = 1, num =   0, unum =  0, pre = 0  }, 1)
+      test_vim_str2nr('-0O054',  flags, {len = 2, num =   0, unum =  0, pre = 0  }, 2)
+      test_vim_str2nr('-0O054',  flags, {len = 0}, 3)
+      test_vim_str2nr('-0O054',  flags, {len = 4, num =   0, unum =  0, pre = OCT}, 4)
+      test_vim_str2nr('-0O054',  flags, {len = 5, num =  -5, unum =  5, pre = OCT}, 5)
+      test_vim_str2nr('-0O054',  flags, {len = 6, num = -44, unum = 44, pre = OCT}, 6)
+      test_vim_str2nr('-0O0548', flags, {len = 6, num = -44, unum = 44, pre = OCT}, 6)
+      test_vim_str2nr('-0O054',  flags, {len = 6, num = -44, unum = 44, pre = OCT}, 7)
+
+      test_vim_str2nr('-0O054x', flags, {len = 0}, 7)
+      test_vim_str2nr('-0O054x', flags, {len = 0}, 0)
+      test_vim_str2nr('-0O054x', flags, {len = 6, num = -44, unum = 44, pre = OCT}, 7, false)
+      test_vim_str2nr('-0O054x', flags, {len = 6, num = -44, unum = 44, pre = OCT}, 0, false)
+
+      if flags > lib.STR2NR_FORCE then
         test_vim_str2nr('-0548', flags, {len = 0}, 5)
         test_vim_str2nr('-0548', flags, {len = 0}, 0)
         test_vim_str2nr('-0548', flags, {len = 4, num = -44, unum = 44, pre = 0}, 5, false)
