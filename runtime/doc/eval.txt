@@ -20,7 +20,7 @@ There are six types of variables:
 							*Number* *Integer*
 Number		A 32 or 64 bit signed number.  |expr-number|
 		The number of bits is available in |v:numbersize|.
-		Examples:  -123  0x10  0177  0b1011
+		Examples:  -123  0x10  0177  0o177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*
 		Examples: 123.456  1.15e-6  -1.1e3
@@ -54,14 +54,15 @@ the Number.  Examples:
 	Number -1	-->	String "-1" ~
 							*octal*
 Conversion from a String to a Number is done by converting the first digits to
-a number.  Hexadecimal "0xf9", Octal "017", and Binary "0b10" numbers are
-recognized.  If the String doesn't start with digits, the result is zero.
-Examples:
+a number.  Hexadecimal "0xf9", Octal "017" or "0o17", and Binary "0b10"
+numbers are recognized.  If the String doesn't start with digits, the result
+is zero. Examples:
 	String "456"	-->	Number 456 ~
 	String "6bar"	-->	Number 6 ~
 	String "foo"	-->	Number 0 ~
 	String "0xf1"	-->	Number 241 ~
 	String "0100"	-->	Number 64 ~
+	String "0o100"	-->	Number 64 ~
 	String "0b101"	-->	Number 5 ~
 	String "-8"	-->	Number -8 ~
 	String "+8"	-->	Number 0 ~
@@ -1085,7 +1086,7 @@ number			number constant			*expr-number*
 				*hex-number* *octal-number* *binary-number*
 
 Decimal, Hexadecimal (starting with 0x or 0X), Binary (starting with 0b or 0B)
-and Octal (starting with 0).
+and Octal (starting with 0, 0o or 0O).
 
 						*floating-point-format*
 Floating point numbers can be written in two forms:
@@ -6554,9 +6555,9 @@ mkdir({name} [, {path} [, {prot}]])
 		If {path} is "p" then intermediate directories are created as
 		necessary.  Otherwise it must be "".
 		If {prot} is given it is used to set the protection bits of
-		the new directory.  The default is 0755 (rwxr-xr-x: r/w for
-		the user readable for others).  Use 0700 to make it unreadable
-		for others.
+		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
+		the user, readable for others).  Use 0o700 to make it
+		unreadable for others.
 
 		{prot} is applied for all parts of {name}.  Thus if you create
 		/tmp/foo/bar then /tmp/foo will be created with 0700. Example: >
@@ -8650,9 +8651,9 @@ str2nr({expr} [, {base} [, {quoted}]])				*str2nr()*
 			let nr = str2nr('123')
 <
 		When {base} is 16 a leading "0x" or "0X" is ignored.  With a
-		different base the result will be zero. Similarly, when {base}
-		is 8 a leading "0" is ignored, and when {base} is 2 a leading
-		"0b" or "0B" is ignored.
+		different base the result will be zero. Similarly, when
+		{base} is 8 a leading "0", "0o" or "0O" is ignored, and when
+		{base} is 2 a leading "0b" or "0B" is ignored.
 		Text after the number is silently ignored.
 
 

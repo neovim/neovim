@@ -10022,7 +10022,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     case 8: {
-      what |= STR2NR_OCT | STR2NR_FORCE;
+      what |= STR2NR_OCT | STR2NR_OOCT | STR2NR_FORCE;
       break;
     }
     case 16: {

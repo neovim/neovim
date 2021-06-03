@@ -1385,6 +1385,8 @@ bool vim_isblankline(char_u *lbuf)
 /// If "prep" is not NULL, returns a flag to indicate the type of the number:
 ///   0      decimal
 ///   '0'    octal
+///   'O'    octal
+///   'o'    octal
 ///   'B'    bin
 ///   'b'    bin
 ///   'X'    hex
@@ -1402,8 +1404,8 @@ bool vim_isblankline(char_u *lbuf)
 ///
 /// @param start
 /// @param prep Returns guessed type of number 0 = decimal, 'x' or 'X' is
-///             hexadecimal, '0' = octal, 'b' or 'B' is binary. When using
-///             STR2NR_FORCE is always zero.
+///             hexadecimal, '0', 'o' or 'O' is octal, 'b' or 'B' is binary.
+///             When using STR2NR_FORCE is always zero.
 /// @param len Returns the detected length of number.
 /// @param what Recognizes what number passed, @see ChStr2NrFlags.
 /// @param nptr Returns the signed result.
@@ -1433,8 +1435,8 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   }
 
   if (what & STR2NR_FORCE) {
-    // When forcing main consideration is skipping the prefix. Octal and decimal
-    // numbers have no prefixes to skip. pre is not set.
+    // When forcing main consideration is skipping the prefix. Decimal numbers
+    // have no prefixes to skip. pre is not set.
     switch (what & ~(STR2NR_FORCE | STR2NR_QUOTE)) {
       case STR2NR_HEX: {
         if (!STRING_ENDED(ptr + 2)
@@ -1454,7 +1456,16 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         }
         goto vim_str2nr_bin;
       }
-      case STR2NR_OCT: {
+      // Make STR2NR_OOCT work the same as STR2NR_OCT when forcing.
+      case STR2NR_OCT:
+      case STR2NR_OOCT:
+      case STR2NR_OCT | STR2NR_OOCT: {
+        if (!STRING_ENDED(ptr + 2)
+            && ptr[0] == '0'
+            && (ptr[1] == 'o' || ptr[1] == 'O')
+            && ascii_isbdigit(ptr[2])) {
+          ptr += 2;
+        }
         goto vim_str2nr_oct;
       }
       case 0: {
@@ -1464,9 +1475,9 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         abort();
       }
     }
-  } else if ((what & (STR2NR_HEX|STR2NR_OCT|STR2NR_BIN))
-             && !STRING_ENDED(ptr + 1)
-             && ptr[0] == '0' && ptr[1] != '8' && ptr[1] != '9') {
+  } else if ((what & (STR2NR_HEX | STR2NR_OCT | STR2NR_OOCT | STR2NR_BIN))
+             && !STRING_ENDED(ptr + 1) && ptr[0] == '0' && ptr[1] != '8'
+             && ptr[1] != '9') {
     pre = ptr[1];
     // Detect hexadecimal: 0x or 0X followed by hex digit.
     if ((what & STR2NR_HEX)
@@ -1484,7 +1495,15 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       ptr += 2;
       goto vim_str2nr_bin;
     }
-    // Detect octal number: zero followed by octal digits without '8' or '9'.
+    // Detect octal: 0o or 0O followed by octal digits (without '8' or '9').
+    if ((what & STR2NR_OOCT)
+        && !STRING_ENDED(ptr + 2)
+        && (pre == 'O' || pre == 'o')
+        && ascii_isbdigit(ptr[2])) {
+      ptr += 2;
+      goto vim_str2nr_oct;
+    }
+    // Detect old octal format: 0 followed by octal digits.
     pre = 0;
     if (!(what & STR2NR_OCT)
         || !('0' <= ptr[1] && ptr[1] <= '7')) {
