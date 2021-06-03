@@ -163,6 +163,12 @@ func Test_vvar_scriptversion4()
   call assert_equal(64, 0b1'00'00'00)
   call assert_equal(1048576, 0x10'00'00)
   call assert_equal(1000000, 1'000'000)
+  " Nvim doesn't support method call syntax yet.
+  " call assert_equal("1234", execute("echo 1'234")->trim())
+  " call assert_equal('1  234', execute("echo 1''234")->trim())
+  call assert_equal("1234", trim(execute("echo 1'234")))
+  call assert_equal('1  234', trim(execute("echo 1''234")))
+  call assert_fails("echo 1'''234", 'E115:')
 endfunc
 
 scriptversion 1
