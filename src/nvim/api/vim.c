@@ -2954,6 +2954,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
   DecorProvider *p = get_decor_provider((NS)ns_id, true);
+  assert(p != NULL);
   decor_provider_clear(p);
 
   // regardless of what happens, it seems good idea to redraw

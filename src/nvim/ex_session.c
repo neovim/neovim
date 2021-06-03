@@ -725,7 +725,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
       }
     }
 
-    if (tab_firstwin->w_next != NULL) {
+    if (tab_firstwin != NULL && tab_firstwin->w_next != NULL) {
       // Go to the first window.
       PUTLINE_FAIL("wincmd t");
 
