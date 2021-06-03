@@ -477,7 +477,7 @@ accordingly.  Vim proceeds in this order:
 	then all the "*.lua" files will be sourced. If two files with same
 	name but different extensions exists they will be treated in same
 	manner. For example when both "foo.vim" and "foo.lua" exists then
-	first "foo.vim" will be sourced then "foo.lua" will be ran.
+	first "foo.vim" will be sourced then "foo.lua" will be sourced.
 	However, directories in 'runtimepath' ending in "after" are skipped
 	here and only loaded after packages, see below.
 	Loading plugins won't be done when:

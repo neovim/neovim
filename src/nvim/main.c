@@ -1101,11 +1101,7 @@ static void command_line_scan(mparm_T *parmp)
 
               size_t s_size = STRLEN(a) + 9;
               char *s = xmalloc(s_size);
-              if (path_with_extension(a, "lua")) {
-                snprintf(s, s_size, "luafile %s", a);
-              } else {
-                snprintf(s, s_size, "so %s", a);
-              }
+              snprintf(s, s_size, "so %s", a);
               parmp->cmds_tofree[parmp->n_commands] = true;
               parmp->commands[parmp->n_commands++] = s;
             } else {
@@ -1888,12 +1884,8 @@ static void source_startup_scripts(const mparm_T *const parmp)
         || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
-      if (path_with_extension(parmp->use_vimrc, "lua")) {
-        nlua_exec_file(parmp->use_vimrc);
-      } else {
-        if (do_source((char_u *)parmp->use_vimrc, false, DOSO_NONE) != OK) {
-          EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
-        }
+      if (do_source((char_u *)parmp->use_vimrc, false, DOSO_NONE) != OK) {
+        EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
       }
     }
   } else if (!silent_mode) {

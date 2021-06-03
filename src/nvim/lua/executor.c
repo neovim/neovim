@@ -1161,6 +1161,24 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len,
   }
 }
 
+int nlua_source_using_linegetter(LineGetter fgetline,
+                                 void *cookie, char *name)
+{
+  garray_T ga;
+  char_u *line = NULL;
+
+  ga_init(&ga, (int)sizeof(char_u *), 10);
+  while ((line = fgetline(0, cookie, 0, false)) != NULL) {
+    GA_APPEND(char_u *, &ga, line);
+  }
+  char *code = (char *)ga_concat_strings_sep(&ga, "\n");
+  size_t len = strlen(code);
+  nlua_typval_exec(code, len, name, NULL, 0, false, NULL);
+  ga_clear_strings(&ga);
+  xfree(code);
+  return OK;
+}
+
 /// Call a LuaCallable given some typvals
 ///
 /// Used to call any lua callable passed from Lua into VimL

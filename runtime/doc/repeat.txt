@@ -172,9 +172,11 @@ Using Vim scripts					*using-scripts*
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
-:so[urce] {file}	Read Ex commands from {file}.  These are commands that
-			start with a ":".
+:so[urce] {file}	Runs vim or lua {file}
 			Triggers the |SourcePre| autocommand.
+
+			Note: Only files ending with `.lua` is sourced as
+			lua file. Anything else is assumed to be vimscript.
 							*:source!*
 :so[urce]! {file}	Read Vim commands from {file}.  These are commands
 			that are executed from Normal mode, like you type

@@ -15,7 +15,6 @@
 #include "nvim/misc1.h"
 #include "nvim/os/os.h"
 #include "nvim/runtime.h"
-#include "nvim/lua/executor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "runtime.c.generated.h"
@@ -50,11 +49,7 @@ void ex_runtime(exarg_T *eap)
 
 static void source_callback(char_u *fname, void *cookie)
 {
-  if (path_with_extension((const char *)fname, "lua")) {
-    nlua_exec_file((const char *)fname);
-  } else {
-    (void)do_source(fname, false, DOSO_NONE);
-  }
+  (void)do_source(fname, false, DOSO_NONE);
 }
 
 /// Find the file "name" in all directories in "path" and invoke
@@ -259,11 +254,7 @@ static void source_all_matches(char_u *pat)
 
   if (gen_expand_wildcards(1, &pat, &num_files, &files, EW_FILE) == OK) {
     for (int i = 0; i < num_files; i++) {
-      if (path_with_extension((const char *)files[i], "lua")) {
-        nlua_exec_file((const char *)files[i]);
-      } else {
-        (void)do_source(files[i], false, DOSO_NONE);
-      }
+      (void)do_source(files[i], false, DOSO_NONE);
     }
     FreeWild(num_files, files);
   }
