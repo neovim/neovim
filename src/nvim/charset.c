@@ -1463,7 +1463,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         if (!STRING_ENDED(ptr + 2)
             && ptr[0] == '0'
             && (ptr[1] == 'o' || ptr[1] == 'O')
-            && ascii_isbdigit(ptr[2])) {
+            && ascii_isodigit(ptr[2])) {
           ptr += 2;
         }
         goto vim_str2nr_oct;
@@ -1499,14 +1499,14 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
     if ((what & STR2NR_OOCT)
         && !STRING_ENDED(ptr + 2)
         && (pre == 'O' || pre == 'o')
-        && ascii_isbdigit(ptr[2])) {
+        && ascii_isodigit(ptr[2])) {
       ptr += 2;
       goto vim_str2nr_oct;
     }
     // Detect old octal format: 0 followed by octal digits.
     pre = 0;
     if (!(what & STR2NR_OCT)
-        || !('0' <= ptr[1] && ptr[1] <= '7')) {
+        || !ascii_isodigit(ptr[1])) {
       goto vim_str2nr_dec;
     }
     for (int i = 2; !STRING_ENDED(ptr + i) && ascii_isdigit(ptr[i]); i++) {
@@ -1552,7 +1552,7 @@ vim_str2nr_bin:
   PARSE_NUMBER(2, (*ptr == '0' || *ptr == '1'), (*ptr - '0'));
   goto vim_str2nr_proceed;
 vim_str2nr_oct:
-  PARSE_NUMBER(8, ('0' <= *ptr && *ptr <= '7'), (*ptr - '0'));
+  PARSE_NUMBER(8, (ascii_isodigit(*ptr)), (*ptr - '0'));
   goto vim_str2nr_proceed;
 vim_str2nr_dec:
   PARSE_NUMBER(10, (ascii_isdigit(*ptr)), (*ptr - '0'));
