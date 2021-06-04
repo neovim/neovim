@@ -59,7 +59,6 @@ jobs:
         run: |
           # Workaround brew issues
           rm -f /usr/local/bin/2to3
-          brew unlink gcc@8 gcc@9
           brew update >/dev/null
           brew upgrade
           brew install automake ccache perl cpanminus ninja
