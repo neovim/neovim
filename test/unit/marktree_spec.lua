@@ -186,5 +186,20 @@ describe('marktree', function()
       lib.marktree_check(tree)
       shadoworder(tree, shadow, iter2)
     end
+
+    -- Check iterator validity for 2 specific edge cases:
+    -- https://github.com/neovim/neovim/pull/14719
+    lib.marktree_clear(tree)
+    for i = 1,20 do
+      lib.marktree_put(tree, i, i, false)
+    end
+
+    lib.marktree_itr_get(tree, 10, 10, iter)
+    lib.marktree_del_itr(tree, iter, false)
+    eq(11, iter[0].node.key[iter[0].i].pos.col)
+
+    lib.marktree_itr_get(tree, 11, 11, iter)
+    lib.marktree_del_itr(tree, iter, false)
+    eq(12, iter[0].node.key[iter[0].i].pos.col)
  end)
 end)
