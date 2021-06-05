@@ -5120,8 +5120,8 @@ static void nv_scroll(cmdarg_T *cap)
         /* Count a fold for one screen line. */
         lnum = curwin->w_topline;
         while (n-- > 0 && lnum < curwin->w_botline - 1) {
-          hasFolding(lnum, NULL, &lnum);
-          ++lnum;
+          (void)hasFolding(lnum, NULL, &lnum);
+          lnum++;
         }
         n = lnum - curwin->w_topline;
       }
