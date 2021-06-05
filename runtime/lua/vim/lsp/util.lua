@@ -1599,8 +1599,8 @@ end
 --- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
 ---
 --@param items (table) list of items
-function M.set_loclist(items)
-  vim.fn.setloclist(0, {}, ' ', {
+function M.set_loclist(items, win_id)
+  vim.fn.setloclist(win_id or 0, {}, ' ', {
     title = 'Language Server';
     items = items;
   })

@@ -1202,6 +1202,8 @@ function M.set_loclist(opts)
 
   local open_loclist = if_nil(opts.open_loclist, true)
 
+  local win_id = vim.api.nvim_get_current_win()
+
   local bufnr = vim.api.nvim_get_current_buf()
   local buffer_diags = M.get(bufnr, opts.client_id)
 
@@ -1234,7 +1236,7 @@ function M.set_loclist(opts)
 
   table.sort(items, function(a, b) return a.lnum < b.lnum end)
 
-  util.set_loclist(items)
+  util.set_loclist(items, win_id)
   if open_loclist then
     vim.cmd [[lopen]]
   end
