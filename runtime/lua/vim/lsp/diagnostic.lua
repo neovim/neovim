@@ -5,6 +5,7 @@ local highlight = vim.highlight
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
+local config = require('vim.lsp.config')
 
 local if_nil = vim.F.if_nil
 
@@ -913,10 +914,13 @@ function M._get_floating_severity_highlight_name(severity)
 end
 
 --- This should be called to update the highlights for the LSP client.
-function M._define_default_signs_and_highlights()
+--- @private
+function M._setup(opts, force)
+  opts = opts or {}
+  opts = vim.tbl_deep_extend("force", {}, config.options.diagnostics)
   --@private
   local function define_default_sign(name, properties)
-    if vim.tbl_isempty(vim.fn.sign_getdefined(name)) then
+    if force or vim.tbl_isempty(vim.fn.sign_getdefined(name)) then
       vim.fn.sign_define(name, properties)
     end
   end
@@ -936,8 +940,13 @@ function M._define_default_signs_and_highlights()
   for severity, sign_hl_name in pairs(sign_highlight_map) do
     local severity_name = DiagnosticSeverity[severity]
 
+    local text = (severity_name or 'U'):sub(1, 1)
+    if opts.signs and opts.signs[severity_name:lower()] then
+      text = opts.signs[severity_name:lower()]
+    end
+
     define_default_sign(sign_hl_name, {
-      text = (severity_name or 'U'):sub(1, 1),
+      text = text,
       texthl = sign_hl_name,
       linehl = '',
       numhl = '',
@@ -1032,14 +1041,15 @@ end
 
 --@private
 --- Display diagnostics for the buffer, given a configuration.
-function M.display(diagnostics, bufnr, client_id, config)
-  config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
+function M.display(diagnostics, bufnr, client_id, opts)
+  opts = vim.tbl_deep_extend("force", {}, config.options.diagnostics.display, opts or {})
+  opts = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
     signs = true,
     underline = true,
     virtual_text = true,
     update_in_insert = false,
     severity_sort = false,
-  }, config)
+  }, opts)
 
   -- TODO(tjdevries): Consider how we can make this a "standardized" kind of thing for |lsp-handlers|.
   --    It seems like we would probably want to do this more often as we expose more of them.
@@ -1065,13 +1075,13 @@ function M.display(diagnostics, bufnr, client_id, config)
     end
   end
 
-  if resolve_optional_value(config.update_in_insert) then
+  if resolve_optional_value(opts.update_in_insert) then
     M._clear_scheduled_display(bufnr, client_id)
   else
     local mode = vim.api.nvim_get_mode()
 
     if string.sub(mode.mode, 1, 1) == 'i' then
-      M._schedule_display(bufnr, client_id, config)
+      M._schedule_display(bufnr, client_id, opts)
       return
     end
   end
@@ -1086,17 +1096,17 @@ function M.display(diagnostics, bufnr, client_id, config)
     return
   end
 
-  local underline_opts = resolve_optional_value(config.underline)
+  local underline_opts = resolve_optional_value(opts.underline)
   if underline_opts then
     M.set_underline(diagnostics, bufnr, client_id, nil, underline_opts)
   end
 
-  local virtual_text_opts = resolve_optional_value(config.virtual_text)
+  local virtual_text_opts = resolve_optional_value(opts.virtual_text)
   if virtual_text_opts then
     M.set_virtual_text(diagnostics, bufnr, client_id, nil, virtual_text_opts)
   end
 
-  local signs_opts = resolve_optional_value(config.signs)
+  local signs_opts = resolve_optional_value(opts.signs)
   if signs_opts then
     M.set_signs(diagnostics, bufnr, client_id, nil, signs_opts)
   end

@@ -219,7 +219,7 @@ local function tbl_extend(behavior, deep_extend, ...)
     vim.validate{["after the second argument"] = {tbl,'t'}}
     if tbl then
       for k, v in pairs(tbl) do
-        if type(v) == 'table' and deep_extend and not vim.tbl_islist(v) then
+        if type(v) == 'table' and deep_extend and not vim.tbl_islist(v) and (ret[k] == nil or type(ret[k]) == "table") then
           ret[k] = tbl_extend(behavior, true, ret[k] or vim.empty_dict(), v)
         elseif behavior ~= 'force' and ret[k] ~= nil then
           if behavior == 'error' then
