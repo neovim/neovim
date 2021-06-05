@@ -1461,10 +1461,10 @@ static int nfa_regatom(void)
         if (nfa_regatom() == FAIL)
           return FAIL;
       }
-      getchr();                    /* get the ] */
-      if (n == 0)
-        EMSG2_RET_FAIL(_(e_empty_sb),
-            reg_magic == MAGIC_ALL);
+      (void)getchr();  // get the ]
+      if (n == 0) {
+        EMSG2_RET_FAIL(_(e_empty_sb), reg_magic == MAGIC_ALL);
+      }
       EMIT(NFA_OPT_CHARS);
       EMIT(n);
 
