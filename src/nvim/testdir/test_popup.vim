@@ -850,6 +850,34 @@ func Test_popup_position()
   call delete('Xtest')
 endfunc
 
+func Test_popup_command()
+  if !CanRunVimInTerminal() || !has('menu')
+    return
+  endif
+
+  call writefile([
+	\ 'one two three four five',
+	\ 'and one two Xthree four five',
+	\ 'one more two three four five',
+	\ ], 'Xtest')
+  let buf = RunVimInTerminal('Xtest', {})
+  call term_sendkeys(buf, ":source $VIMRUNTIME/menu.vim\<CR>")
+  call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_01', {})
+
+  " Select a word
+  call term_sendkeys(buf, "jj")
+  call VerifyScreenDump(buf, 'Test_popup_command_02', {})
+
+  " Select a word
+  call term_sendkeys(buf, "j\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_03', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xtest')
+endfunc
+
 func Test_popup_complete_backwards()
   new
   call setline(1, ['Post', 'Port', 'Po'])
