@@ -188,7 +188,7 @@ any of these approaches:
 
   2. Start Nvim with |--api-info|. Useful for statically-compiled clients.
      Example (requires Python "pyyaml" and "msgpack-python" modules): >
-     nvim --api-info | python -c 'import msgpack, sys, yaml; print yaml.dump(msgpack.unpackb(sys.stdin.read()))'
+     nvim --api-info | python -c 'import msgpack, sys, yaml; yaml.dump(msgpack.unpackb(sys.stdin.read()), sys.stdout)'
 <
   3. Use the |api_info()| Vimscript function. >
      :lua print(vim.inspect(vim.fn.api_info()))
