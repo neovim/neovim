@@ -40,9 +40,12 @@ local function get_border_size(opts)
   local width = 0
 
   if type(border) == 'string' then
-    -- 'single', 'double', etc.
-    height = 2
-    width = 2
+    local border_size = {none = {0, 0}, single = {2, 2}, double = {2, 2}, shadow = {1, 1}}
+    if border_size[border] == nil then
+      error("floating preview border is not correct. Please refer to the docs |vim.api.nvim_open_win()|"
+              .. vim.inspect(border))
+    end
+    height, width = unpack(border_size[border])
   else
     local function border_width(id)
       if type(border[id]) == "table" then
