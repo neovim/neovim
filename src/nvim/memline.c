@@ -2238,7 +2238,7 @@ static int ml_append_int(
      */
     lineadd = buf->b_ml.ml_locked_lineadd;
     buf->b_ml.ml_locked_lineadd = 0;
-    ml_find_line(buf, (linenr_T)0, ML_FLUSH);       /* flush data block */
+    (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);  // flush data block
 
     /*
      * update pointer blocks for the new data block
