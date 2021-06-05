@@ -1217,13 +1217,11 @@ function M.set_loclist(opts)
     local row = pos.line
     local col = util.character_offset(bufnr, row, pos.character)
 
-    local line = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or {""})[1]
-
     table.insert(items, {
       bufnr = bufnr,
       lnum = row + 1,
       col = col + 1,
-      text = line .. " | " .. diag.message,
+      text = diag.message,
       type = loclist_type_map[diag.severity or DiagnosticSeverity.Error] or 'E',
     })
   end
