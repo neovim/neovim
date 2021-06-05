@@ -2012,9 +2012,6 @@ int sign_place_from_dict(
       group = NULL;
     } else {
       group = vim_strsave(group);
-      if (group == NULL) {
-        return -1;
-      }
     }
   }
 
@@ -2114,9 +2111,6 @@ int sign_unplace_from_dict(typval_T *group_tv, dict_T *dict)
       group = NULL;
     } else {
       group = vim_strsave(group);
-      if (group == NULL) {
-        return -1;
-      }
     }
   }
 
