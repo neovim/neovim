@@ -1372,6 +1372,13 @@ function M.open_floating_preview(contents, syntax, opts)
     end
   end
 
+  -- check if another floating preview already exists for this buffer
+  -- and close it if needed
+  local existing_float = npcall(api.nvim_buf_get_var, bufnr, "lsp_floating_preview")
+  if existing_float and api.nvim_win_is_valid(existing_float) then
+    api.nvim_win_close(existing_float, true)
+  end
+
   local floating_bufnr = api.nvim_create_buf(false, true)
   local do_stylize = syntax == "markdown" and opts.stylize_markdown
 
@@ -1417,6 +1424,7 @@ function M.open_floating_preview(contents, syntax, opts)
   if opts.focus_id then
     api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
   end
+  api.nvim_buf_set_var(bufnr, "lsp_floating_preview", floating_winnr)
 
   return floating_bufnr, floating_winnr
 end
