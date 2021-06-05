@@ -144,10 +144,6 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs,
           c = *p;
           *p = NUL;
           expr = vim_strsave(expr);
-          if (expr == NULL) {
-            *p = c;
-            goto err_ret;
-          }
           ((char_u **)(default_args->ga_data))
             [default_args->ga_len] = expr;
           default_args->ga_len++;
