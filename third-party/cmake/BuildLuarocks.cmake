@@ -139,6 +139,14 @@ add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
 add_custom_target(mpack DEPENDS ${ROCKS_DIR}/mpack)
 list(APPEND THIRD_PARTY_DEPS mpack)
 
+# lua-cjson
+add_custom_command(OUTPUT ${ROCKS_DIR}/lua-cjson
+  COMMAND ${LUAROCKS_BINARY}
+  ARGS build lua-cjson 2.1.0.6-1 ${LUAROCKS_BUILDARGS}
+  DEPENDS luarocks)
+add_custom_target(lua-cjson DEPENDS ${ROCKS_DIR}/lua-cjson)
+list(APPEND THIRD_PARTY_DEPS lua-cjson)
+
 # lpeg
 add_custom_command(OUTPUT ${ROCKS_DIR}/lpeg
   COMMAND ${LUAROCKS_BINARY}

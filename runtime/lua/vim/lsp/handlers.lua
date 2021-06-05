@@ -1,5 +1,6 @@
 local log = require 'vim.lsp.log'
 local protocol = require 'vim.lsp.protocol'
+local cjson = require 'cjson'
 local util = require 'vim.lsp.util'
 local vim = vim
 local api = vim.api
@@ -73,7 +74,7 @@ M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
     err_message("LSP[", client_name, "] client has shut down after sending the message")
   end
   client.messages.progress[token] = {}
-  return vim.NIL
+  return cjson.null
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
@@ -91,7 +92,7 @@ M['window/showMessageRequest'] = function(_, _, params)
   -- window/showMessageRequest can return either MessageActionItem[] or null.
   local choice = vim.fn.inputlist(option_strings)
   if choice < 1 or choice > #actions then
-      return vim.NIL
+      return cjson.null
   else
     return actions[choice]
   end
@@ -106,7 +107,7 @@ M['client/registerCapability'] = function(_, _, _, client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   local warning = string.format(warning_tpl, client_name)
   log.warn(warning)
-  return vim.NIL
+  return cjson.null
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
@@ -172,10 +173,10 @@ M['workspace/configuration'] = function(err, _, params, client_id)
   local result = {}
   for _, item in ipairs(params.items) do
     if item.section then
-      local value = util.lookup_section(client.config.settings, item.section) or vim.NIL
+      local value = util.lookup_section(client.config.settings, item.section) or cjson.null
       -- For empty sections with no explicit '' key, return settings as is
-      if value == vim.NIL and item.section == '' then
-        value = client.config.settings or vim.NIL
+      if value == cjson.null and item.section == '' then
+        value = client.config.settings or cjson.null
       end
       table.insert(result, value)
     end

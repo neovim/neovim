@@ -1,5 +1,6 @@
 local vim = vim
 local uv = vim.loop
+local cjson = require('cjson')
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
@@ -11,7 +12,7 @@ local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedu
 --@param data (table) Data to encode
 --@returns (string) Encoded object
 local function json_encode(data)
-  local status, result = pcall(vim.fn.json_encode, data)
+  local status, result = pcall(cjson.encode, data)
   if status then
     return result
   else
@@ -24,7 +25,7 @@ end
 --@param data (string) Data to decode
 --@returns (table) Decoded JSON object
 local function json_decode(data)
-  local status, result = pcall(vim.fn.json_decode, data)
+  local status, result = pcall(cjson.decode, data)
   if status then
     return result
   else
@@ -41,7 +42,7 @@ local function is_dir(filename)
   return stat and stat.type == 'directory' or false
 end
 
-local NIL = vim.NIL
+local NIL = cjson.null
 
 --@private
 local recursive_convert_NIL
@@ -518,7 +519,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
         send_response(decoded.id, err, result)
       end)
     -- This works because we are expecting vim.NIL here
-    elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
+    elseif decoded.id and (decoded.result ~= cjson.null or decoded.error ~= cjson.null) then
       -- Server Result
       decoded.error = convert_NIL(decoded.error)
       decoded.result = convert_NIL(decoded.result)
