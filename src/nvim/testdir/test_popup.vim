@@ -1079,7 +1079,9 @@ endfunc
 
 " Test for the popup menu with the 'rightleft' option set
 func Test_pum_rightleft()
+  CheckFeature rightleft
   CheckScreendump
+
   let lines =<< trim END
     abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
     vim
@@ -1136,11 +1138,13 @@ func Test_pum_scrollbar()
   call term_sendkeys(buf, "\<C-E>\<Esc>dd")
   call term_wait(buf)
 
-  call term_sendkeys(buf, ":set rightleft\<CR>")
-  call term_wait(buf)
-  call term_sendkeys(buf, "Go\<C-P>\<C-P>\<C-P>")
-  call term_wait(buf)
-  call VerifyScreenDump(buf, 'Test_pum_scrollbar_02', {'rows': 7})
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call term_wait(buf)
+    call term_sendkeys(buf, "Go\<C-P>\<C-P>\<C-P>")
+    call term_wait(buf)
+    call VerifyScreenDump(buf, 'Test_pum_scrollbar_02', {'rows': 7})
+  endif
 
   call StopVimInTerminal(buf)
   call delete('Xtest1')
