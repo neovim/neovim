@@ -835,7 +835,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
               p_shm) < 0) {
     return FAIL;
   }
-  if (tab_firstwin->w_next != NULL) {
+  if (tab_firstwin != NULL && tab_firstwin->w_next != NULL) {
     // Restore 'winminheight' and 'winminwidth'.
     PUTLINE_FAIL("let &winminheight = s:save_winminheight");
     PUTLINE_FAIL("let &winminwidth = s:save_winminwidth");
