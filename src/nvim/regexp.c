@@ -2912,7 +2912,7 @@ static int peekchr(void)
       at_start = false;  // be able to say "/\*ptr"
       regparse++;
       after_slash++;
-      peekchr();
+      (void)peekchr();
       regparse--;
       after_slash--;
       curchr = toggle_Magic(curchr);

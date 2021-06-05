@@ -2101,7 +2101,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_decor = false;               // this buffer has decoration
   bool do_virttext = false;             // draw virtual text for this line
-  int win_col_offset;                   // offsett for window columns
+  int win_col_offset = 0;               // offset for window columns
 
   char_u buf_fold[FOLD_TEXT_LEN + 1];   // Hold value returned by get_foldtext
 

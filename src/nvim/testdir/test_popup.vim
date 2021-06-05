@@ -850,6 +850,34 @@ func Test_popup_position()
   call delete('Xtest')
 endfunc
 
+func Test_popup_command()
+  if !CanRunVimInTerminal() || !has('menu')
+    return
+  endif
+
+  call writefile([
+	\ 'one two three four five',
+	\ 'and one two Xthree four five',
+	\ 'one more two three four five',
+	\ ], 'Xtest')
+  let buf = RunVimInTerminal('Xtest', {})
+  call term_sendkeys(buf, ":source $VIMRUNTIME/menu.vim\<CR>")
+  call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_01', {})
+
+  " Select a word
+  call term_sendkeys(buf, "jj")
+  call VerifyScreenDump(buf, 'Test_popup_command_02', {})
+
+  " Select a word
+  call term_sendkeys(buf, "j\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_03', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xtest')
+endfunc
+
 func Test_popup_complete_backwards()
   new
   call setline(1, ['Post', 'Port', 'Po'])
@@ -1075,6 +1103,79 @@ func Test_pum_getpos()
   call assert_equal( {}, pum_getpos() )
   bw!
   unlet g:pum_pos
+endfunc
+
+" Test for the popup menu with the 'rightleft' option set
+func Test_pum_rightleft()
+  CheckFeature rightleft
+  CheckScreendump
+
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+    vim
+    victory
+  END
+  call writefile(lines, 'Xtest1')
+  let buf = RunVimInTerminal('--cmd "set rightleft" Xtest1', {})
+  call term_wait(buf)
+  call term_sendkeys(buf, "Go\<C-P>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_pum_rightleft_01', {'rows': 8})
+  call term_sendkeys(buf, "\<C-P>\<C-Y>")
+  call term_wait(buf)
+  redraw!
+  call assert_match('\s*miv', Screenline(5))
+
+  " Test for expanding tabs to spaces in the popup menu
+  let lines =<< trim END
+    one	two
+    one	three
+    four
+  END
+  call writefile(lines, 'Xtest2')
+  call term_sendkeys(buf, "\<Esc>:e! Xtest2\<CR>")
+  call term_wait(buf)
+  call term_sendkeys(buf, "Goone\<C-X>\<C-L>")
+  call term_wait(buf)
+  redraw!
+  call VerifyScreenDump(buf, 'Test_pum_rightleft_02', {'rows': 7})
+  call term_sendkeys(buf, "\<C-Y>")
+  call term_wait(buf)
+  redraw!
+  call assert_match('\s*eerht     eno', Screenline(4))
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest1')
+  call delete('Xtest2')
+endfunc
+
+" Test for a popup menu with a scrollbar
+func Test_pum_scrollbar()
+  CheckScreendump
+  let lines =<< trim END
+    one
+    two
+    three
+  END
+  call writefile(lines, 'Xtest1')
+  let buf = RunVimInTerminal('--cmd "set pumheight=2" Xtest1', {})
+  call term_wait(buf)
+  call term_sendkeys(buf, "Go\<C-P>\<C-P>\<C-P>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_pum_scrollbar_01', {'rows': 7})
+  call term_sendkeys(buf, "\<C-E>\<Esc>dd")
+  call term_wait(buf)
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call term_wait(buf)
+    call term_sendkeys(buf, "Go\<C-P>\<C-P>\<C-P>")
+    call term_wait(buf)
+    call VerifyScreenDump(buf, 'Test_pum_scrollbar_02', {'rows': 7})
+  endif
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest1')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

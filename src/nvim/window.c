@@ -2528,7 +2528,7 @@ int win_close(win_T *win, bool free_buf)
       // only resize that frame.  Otherwise resize all windows.
       win_equal(curwin, curwin->w_frame->fr_parent == win_frame, dir);
     } else {
-      win_comp_pos();
+      (void)win_comp_pos();
     }
   }
 
@@ -6296,9 +6296,10 @@ restore_snapshot (
       && curtab->tp_snapshot[idx]->fr_height == topframe->fr_height
       && check_snapshot_rec(curtab->tp_snapshot[idx], topframe) == OK) {
     wp = restore_snapshot_rec(curtab->tp_snapshot[idx], topframe);
-    win_comp_pos();
-    if (wp != NULL && close_curwin)
+    (void)win_comp_pos();
+    if (wp != NULL && close_curwin) {
       win_goto(wp);
+    }
     redraw_all_later(NOT_VALID);
   }
   clear_snapshot(curtab, idx);

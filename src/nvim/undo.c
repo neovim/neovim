@@ -1018,9 +1018,7 @@ static ExtmarkUndoObject *unserialize_extmark(bufinfo_T *bi, bool *error,
       goto error;
   }
 
-  if (buf) {
-    xfree(buf);
-  }
+  xfree(buf);
 
   return extup;
 

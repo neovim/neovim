@@ -3552,7 +3552,7 @@ term_again:
      * Position the cursor over the rightmost paren, so that
      * matching it will take us back to the start of the line.
      */
-    find_last_paren(l, '(', ')');
+    (void)find_last_paren(l, '(', ')');
 
     if ((trypos = find_match_paren(curbuf->b_ind_maxparen)) != NULL)
       curwin->w_cursor = *trypos;
