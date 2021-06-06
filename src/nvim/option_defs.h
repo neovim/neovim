@@ -502,6 +502,7 @@ EXTERN long p_ls;               // 'laststatus'
 EXTERN long p_stal;             // 'showtabline'
 EXTERN char_u   *p_lcs;         // 'listchars'
 
+EXTERN int p_nm                 // 'noshowmode'
 EXTERN int p_lz;                // 'lazyredraw'
 EXTERN int p_lpl;               // 'loadplugins'
 EXTERN int p_magic;             // 'magic'
