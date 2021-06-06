@@ -1598,8 +1598,9 @@ function M.locations_to_items(locations)
   return items
 end
 
---- Fills current window's location list with given list of items.
+--- Fills target window's location list with given list of items.
 --- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
+--- Defaults to current window.
 ---
 --@param items (table) list of items
 function M.set_loclist(items, win_id)
