@@ -330,15 +330,19 @@ end
 -- Diagnostic Retrieval {{{
 
 
---- Get all diagnostics for all clients
+--- Get all diagnostics for clients
 ---
----@return {bufnr: Diagnostic[]}
-function M.get_all()
+---@param client_id number Restrict included diagnostics to the client
+---                        If nil, diagnostics of all clients are included.
+---@return table with diagnostics grouped by bufnr (bufnr: Diagnostic[])
+function M.get_all(client_id)
   local diagnostics_by_bufnr = {}
   for bufnr, buf_diagnostics in pairs(diagnostic_cache) do
     diagnostics_by_bufnr[bufnr] = {}
-    for _, client_diagnostics in pairs(buf_diagnostics) do
-      vim.list_extend(diagnostics_by_bufnr[bufnr], client_diagnostics)
+    for cid, client_diagnostics in pairs(buf_diagnostics) do
+      if client_id == nil or cid == client_id then
+        vim.list_extend(diagnostics_by_bufnr[bufnr], client_diagnostics)
+      end
     end
   end
   return diagnostics_by_bufnr
@@ -1162,13 +1166,6 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
   return popup_bufnr, winnr
 end
 
-local loclist_type_map = {
-  [DiagnosticSeverity.Error] = 'E',
-  [DiagnosticSeverity.Warning] = 'W',
-  [DiagnosticSeverity.Information] = 'I',
-  [DiagnosticSeverity.Hint] = 'I',
-}
-
 
 --- Clear diagnotics and diagnostic cache
 ---
@@ -1201,51 +1198,24 @@ end
 ---             - Set the list with workspace diagnostics
 function M.set_loclist(opts)
   opts = opts or {}
-
   local open_loclist = if_nil(opts.open_loclist, true)
-
-  local win_id = vim.api.nvim_get_current_win()
-  local current_bufnr = vim.api.nvim_get_current_buf()
-  local diags = opts.workspace and M.get_all() or {
+  local current_bufnr = api.nvim_get_current_buf()
+  local diags = opts.workspace and M.get_all(opts.client_id) or {
     [current_bufnr] = M.get(current_bufnr, opts.client_id)
   }
-
-  local items = {}
-  local insert_diag = function(bufnr, diag)
-    local pos = diag.range.start
-    local row = pos.line
-
-    local col = util.character_offset(bufnr, row, pos.character) or 0
-
-    table.insert(items, {
-      bufnr = bufnr,
-      lnum = row + 1,
-      col = col + 1,
-      text = diag.message,
-      type = loclist_type_map[diag.severity or DiagnosticSeverity.Error] or 'E',
-    })
+  local predicate = function(d)
+    local severity = to_severity(opts.severity)
+    if severity then
+      return d.severity == severity
+    end
+    severity = to_severity(opts.severity_limit)
+    if severity then
+      return d.severity == severity
+    end
+    return true
   end
-
-  for bufnr, diagnostic in pairs(diags) do
-    if opts.severity then
-      diagnostic = filter_to_severity_limit(opts.severity, diagnostic)
-    elseif opts.severity_limit then
-      diagnostic = filter_by_severity_limit(opts.severity_limit, diagnostic)
-    end
-
-    for _, diag in ipairs(diagnostic) do
-      insert_diag(bufnr, diag)
-    end
-  end
-
-  table.sort(items, function(a, b)
-    if a.bufnr == b.bufnr then
-      return a.lnum < b.lnum
-    else
-      return a.bufnr < b.bufnr
-    end
-  end)
-
+  local items = util.diagnostics_to_items(diags, predicate)
+  local win_id = vim.api.nvim_get_current_win()
   util.set_loclist(items, win_id)
   if open_loclist then
     vim.cmd [[lopen]]

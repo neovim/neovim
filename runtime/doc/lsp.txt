@@ -1196,11 +1196,16 @@ get({bufnr}, {client_id})                           *vim.lsp.diagnostic.get()*
                                  diagnostics. Else, return just the
                                  diagnostics associated with the client_id.
 
-get_all()                                       *vim.lsp.diagnostic.get_all()*
-                Get all diagnostics for all clients
+get_all({client_id})                            *vim.lsp.diagnostic.get_all()*
+                Get all diagnostics for clients
+
+                Parameters: ~
+                    {client_id}  number Restrict included diagnostics to the
+                                 client If nil, diagnostics of all clients are
+                                 included.
 
                 Return: ~
-                    {bufnr:Diagnostic[]}
+                    table with diagnostics grouped by bufnr (bufnr:Diagnostic[])
 
                                               *vim.lsp.diagnostic.get_count()*
 get_count({bufnr}, {severity}, {client_id})
@@ -1724,6 +1729,19 @@ create_file({change})                             *vim.lsp.util.create_file()*
 
 delete_file({change})                             *vim.lsp.util.delete_file()*
                 TODO: Documentation
+
+                                         *vim.lsp.util.diagnostics_to_items()*
+diagnostics_to_items({diagnostics_by_bufnr}, {predicate})
+                Convert diagnostics grouped by bufnr to a list of items for
+                use in the quickfix or location list.
+
+                Parameters: ~
+                    {diagnostics_by_bufnr}  table bufnr -> Diagnostic []
+                    {predicate}             an optional function to filter the
+                                            diagnostics.
+
+                Return: ~
+                    table (A list of items)
 
                                      *vim.lsp.util.extract_completion_items()*
 extract_completion_items({result})

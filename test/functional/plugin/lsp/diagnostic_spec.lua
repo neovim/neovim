@@ -86,6 +86,39 @@ describe('vim.lsp.diagnostic', function()
         eq(2, #result[1])
         eq('Diagnostic #1', result[1][1].message)
       end)
+      it('Can convert diagnostic to quickfix items format', function()
+        local bufnr = exec_lua([[
+          local fake_uri = ...
+          return vim.uri_to_bufnr(fake_uri)
+        ]], fake_uri)
+        local result = exec_lua([[
+          local bufnr = ...
+          vim.lsp.diagnostic.save(
+            {
+              make_error('Diagnostic #1', 1, 1, 1, 1),
+              make_error('Diagnostic #2', 2, 1, 2, 1),
+            }, bufnr, 1
+          )
+          return vim.lsp.util.diagnostics_to_items(vim.lsp.diagnostic.get_all())
+        ]], bufnr)
+        local expected = {
+          {
+            bufnr = bufnr,
+            col = 2,
+            lnum = 2,
+            text = 'Diagnostic #1',
+            type = 'E'
+          },
+          {
+            bufnr = bufnr,
+            col = 2,
+            lnum = 3,
+            text = 'Diagnostic #2',
+            type = 'E'
+          },
+        }
+        eq(expected, result)
+      end)
       it('should be able to save and count a single client error', function()
         eq(1, exec_lua [[
           vim.lsp.diagnostic.save(
