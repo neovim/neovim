@@ -1822,6 +1822,14 @@ return {
       varname='p_mouset',
       defaults={if_true={vi=500}}
     },
+        {
+      full_name='noshowmode', abbreviation='nm',
+      short_desc=N_("turns off the --INSERT-- etc mode messages at very bottom"),
+      type='bool', scope={'global'},
+      vi_def=true,
+      varname='p_nm',
+      defaults={if_true={vi=false}}
+    },
     {
       full_name='nrformats', abbreviation='nf',
       short_desc=N_("number formats recognized for CTRL-A command"),
