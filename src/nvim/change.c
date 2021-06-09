@@ -1690,18 +1690,22 @@ int open_line(
       if (trunc_line && !(flags & OPENLINE_KEEPTRAIL)) {
         truncate_spaces(saved_line);
       }
+
       ml_replace(curwin->w_cursor.lnum, saved_line, false);
 
       int new_len = (int)STRLEN(saved_line);
 
       // TODO(vigoux): maybe there is issues there with expandtabs ?
+      int cols_spliced = 0;
       if (new_len < curwin->w_cursor.col) {
         extmark_splice_cols(
-            curbuf, (int)curwin->w_cursor.lnum,
+            curbuf, (int)curwin->w_cursor.lnum - 1,
             new_len, curwin->w_cursor.col - new_len, 0, kExtmarkUndo);
+        cols_spliced = curwin->w_cursor.col - new_len;
       }
 
       saved_line = NULL;
+
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
                       curwin->w_cursor.lnum + 1, 1L, true);
@@ -1715,13 +1719,14 @@ int open_line(
         }
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
-        int cols_added = mincol-1+less_cols_off-less_cols;
-        extmark_splice(curbuf, (int)lnum-1, mincol-1,
+        int cols_added = mincol-1+less_cols_off-less_cols-new_len;
+        extmark_splice(curbuf, (int)lnum-1, mincol-1 - cols_spliced,
                        0, less_cols_off, less_cols_off,
                        1, cols_added, 1 + cols_added, kExtmarkUndo);
       } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
       }
+
     }
 
     // Put the cursor on the new line.  Careful: the scrollup() above may
