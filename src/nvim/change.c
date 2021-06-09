@@ -1717,7 +1717,7 @@ int open_line(
         }
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
-        int cols_added = mincol-1+less_cols_off-less_cols-new_len;
+        int cols_added = mincol-1+less_cols_off-less_cols;
         extmark_splice(curbuf, (int)lnum-1, mincol-1 - cols_spliced,
                        0, less_cols_off, less_cols_off,
                        1, cols_added, 1 + cols_added, kExtmarkUndo);
