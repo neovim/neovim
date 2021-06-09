@@ -1690,7 +1690,6 @@ int open_line(
       if (trunc_line && !(flags & OPENLINE_KEEPTRAIL)) {
         truncate_spaces(saved_line);
       }
-
       ml_replace(curwin->w_cursor.lnum, saved_line, false);
 
       int new_len = (int)STRLEN(saved_line);
@@ -1705,7 +1704,6 @@ int open_line(
       }
 
       saved_line = NULL;
-
       if (did_append) {
         changed_lines(curwin->w_cursor.lnum, curwin->w_cursor.col,
                       curwin->w_cursor.lnum + 1, 1L, true);
@@ -1726,7 +1724,6 @@ int open_line(
       } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
       }
-
     }
 
     // Put the cursor on the new line.  Careful: the scrollup() above may
