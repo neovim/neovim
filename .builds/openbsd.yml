@@ -24,7 +24,6 @@ environment:
 tasks:
 - build-deps: |
     export AUTOCONF_VERSION=2.69
-    export AUTOMAKE_VERSION=1.15
     mkdir neovim/.deps
     cd neovim/.deps
     cmake -G Ninja ../third-party/
