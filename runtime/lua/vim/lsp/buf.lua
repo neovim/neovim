@@ -47,7 +47,7 @@ local function request(method, params, handler)
 end
 
 function M.semantic_tokens_full()
-  local params = util.make_text_document_params()
+  local params = { textDocument = util.make_text_document_params() }
   return request('textDocument/semanticTokens/full', params)
 end
 
