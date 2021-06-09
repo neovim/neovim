@@ -3,15 +3,15 @@
 image: openbsd/latest
 
 packages:
-- autoconf-2.69p2
-- automake-1.15.1
+- autoconf
+- automake
 - cmake
-- gettext-runtime-0.20.1p1
-- gettext-tools-0.20.1p3
+- gettext-runtime
+- gettext-tools
 - gmake
 - libtool
-- ninja-1.10.0
-- unzip-6.0p13
+- ninja
+- unzip
 
 sources:
 - https://github.com/neovim/neovim
