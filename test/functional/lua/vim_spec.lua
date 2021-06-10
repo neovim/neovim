@@ -1931,6 +1931,34 @@ describe('lua stdlib', function()
       eq(buf2, val)
     end)
   end)
+
+  describe('vim.api.nvim_win_call', function()
+    it('can access window options', function()
+      command('vsplit')
+      local win1 = meths.get_current_win()
+      command('wincmd w')
+      local win2 = exec_lua [[
+        win2 = vim.api.nvim_get_current_win()
+        return win2
+      ]]
+      command('wincmd p')
+
+      eq('', meths.win_get_option(win1, 'winhighlight'))
+      eq('', meths.win_get_option(win2, 'winhighlight'))
+
+      local val = exec_lua [[
+        return vim.api.nvim_win_call(win2, function()
+          vim.cmd "setlocal winhighlight=Normal:Normal"
+          return vim.api.nvim_get_current_win()
+        end)
+      ]]
+
+      eq('', meths.win_get_option(win1, 'winhighlight'))
+      eq('Normal:Normal', meths.win_get_option(win2, 'winhighlight'))
+      eq(win1, meths.get_current_win())
+      eq(win2, val)
+    end)
+  end)
 end)
 
 describe('lua: require("mod") from packages', function()
