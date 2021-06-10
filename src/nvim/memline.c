@@ -1207,6 +1207,7 @@ void ml_recover(bool checkext)
          && !(curbuf->b_ml.ml_flags & ML_EMPTY))
     ml_delete(curbuf->b_ml.ml_line_count, false);
   curbuf->b_flags |= BF_RECOVERED;
+  check_cursor();
 
   recoverymode = FALSE;
   if (got_int)
