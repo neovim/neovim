@@ -6,20 +6,21 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include "nvim/ascii.h"
-#include "nvim/globals.h"
-#include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/lua/executor.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/vim.h"
+#include "nvim/api/window.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
-#include "nvim/option.h"
-#include "nvim/window.h"
-#include "nvim/screen.h"
+#include "nvim/globals.h"
 #include "nvim/move.h"
+#include "nvim/option.h"
+#include "nvim/screen.h"
+#include "nvim/syntax.h"
+#include "nvim/window.h"
 
 /// Gets the current buffer in a window
 ///
@@ -455,6 +456,26 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           float_anchor_str[config->anchor])));
       PUT(rv, "row", FLOAT_OBJ(config->row));
       PUT(rv, "col", FLOAT_OBJ(config->col));
+    }
+    if (config->border) {
+      Array border = ARRAY_DICT_INIT;
+      for (size_t i = 0; i < 8; i++) {
+        Array tuple = ARRAY_DICT_INIT;
+
+        String s = cstrn_to_string(
+            (const char *)config->border_chars[i], sizeof(schar_T));
+
+        int hi_id = config->border_hl_ids[i];
+        char_u *hi_name = syn_id2name(hi_id);
+        if (hi_name[0]) {
+          ADD(tuple, STRING_OBJ(s));
+          ADD(tuple, STRING_OBJ(cstr_to_string((const char *)hi_name)));
+          ADD(border, ARRAY_OBJ(tuple));
+        } else {
+          ADD(border, STRING_OBJ(s));
+        }
+      }
+      PUT(rv, "border", ARRAY_OBJ(border));
     }
   }
 
