@@ -59,6 +59,16 @@ describe('writefile()', function()
     eq('\n', read_file(fname))
   end)
 
+  it('writes list with a null string to a file', function()
+    eq(0, exc_exec(
+       ('call writefile([v:_null_string], "%s", "b")'):format(
+          fname)))
+    eq('', read_file(fname))
+    eq(0, exc_exec(('call writefile([v:_null_string], "%s")'):format(
+        fname)))
+    eq('\n', read_file(fname))
+  end)
+
   it('appends to a file', function()
     eq(nil, read_file(fname))
     eq(0, funcs.writefile({'abc', 'def', 'ghi'}, fname))

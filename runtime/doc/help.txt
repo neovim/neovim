@@ -30,7 +30,7 @@ Get specific help:  It is possible to go directly to whatever you want help
 		    help entries for "word".
 		    Or use ":helpgrep word". |:helpgrep|
 
-  Getting started:  Do the Vim tutor, a 20 minute interactive training for the
+  Getting started:  Do the Vim tutor, a 30-minute interactive course for the
 		    basic commands, see |vimtutor|.
 		    Read the user manual from start to end: |usr_01.txt|
 
@@ -40,7 +40,7 @@ through the help of many others.  See |credits|.
 						*doc-file-list* *Q_ct*
 BASIC:
 |quickref|	Overview of the most common commands you will use
-|tutor|		20 minutes training course for beginners
+|tutor|		30-minute interactive course for beginners
 |copying|	About copyrights
 |iccf|		Helping poor children in Uganda
 |sponsor|	Sponsor Vim development, become a registered Vim user
@@ -132,6 +132,7 @@ Advanced editing ~
 |lua.txt|	Lua API
 
 Special issues ~
+|testing.txt|	testing Vim and Vim scripts
 |print.txt|	printing
 |remote.txt|	using Vim as a server or client
 
@@ -147,7 +148,7 @@ Programming language support ~
 
 Language support ~
 |digraph.txt|	list of available digraphs
-|mbyte.txt|	multi-byte text support
+|mbyte.txt|	multibyte text support
 |mlang.txt|	non-English language support
 |rileft.txt|	right-to-left editing mode
 |arabic.txt|	Arabic language support and editing

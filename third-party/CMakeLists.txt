@@ -147,8 +147,8 @@ set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0
 set(MSGPACK_SHA256 bfbb71b7c02f806393bc3cbc491b40523b89e64f83860c58e3e54af47de176e4)
 
 # https://github.com/LuaJIT/LuaJIT/tree/v2.1
-set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/1d8b747c161db457e032a023ebbff511f5de5ec2.tar.gz)
-set(LUAJIT_SHA256 20a159c38a98ecdb6368e8d655343b6036622a29a1621da9dc303f7ed9bf37f3)
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/787736990ac3b7d5ceaba2697c7d0f58f77bb782.tar.gz)
+set(LUAJIT_SHA256 2e3f74bc279f46cc463abfc67b36e69faaf0366237004771f4cac4bf2a9f5efb)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
@@ -175,12 +175,12 @@ set(LUA_COMPAT53_SHA256 bec3a23114a3d9b3218038309657f0f506ad10dfbc03bb54e91da7e5
 set(GPERF_URL https://github.com/neovim/deps/raw/ff5b4b18a87397a8564016071ae64f64bcd8c635/opt/gperf-3.1.tar.gz)
 set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
 
-# 7za.exe cat.exe curl.exe ca-bundle.crt diff.exe tee.exe tidy.exe xxd.exe
-set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
-set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
+# cat.exe curl.exe curl-ca-bundle.crt diff.exe tee.exe xxd.exe
+set(WINTOOLS_URL https://github.com/neovim/deps/raw/9efd42511dcab26995fa3490f2319b270949159e/opt/win32tools.zip)
+set(WINTOOLS_SHA256 378069d88a34e7f7283622213569020a2aba7a54f0b431fba28690f7eae3af9c)
 
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.16/neovim-qt.zip)
-set(WINGUI_SHA256 aad95a1f8413a9ebf36fc0298d0dfd7d786abf88cb0f4ae9f7ec895b70c7b312)
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.16.1/neovim-qt.zip)
+set(WINGUI_SHA256 ddb4492db03da407703fb0ab271c4eb060250d1a7d71200e2b3b981cb0de59de)
 
 set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
 set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)
@@ -196,11 +196,12 @@ set(GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47
 set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz)
 set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
 
-set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/6002fcd.tar.gz)
-set(TREESITTER_C_SHA256 46f8d44fa886d9ddb92571bb6fa8b175992c8758eca749cb1217464e512b6e97)
+set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/5aa0bbb.tar.gz)
+set(TREESITTER_C_SHA256 a5dcb37460d83002dfae7f9a208170ddbc9a047f231b9d6b75da7d36d707db2f)
 
-set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/0.17.3.zip)
-set(TREESITTER_SHA256 19068b6663f5a4cacd5d805fa437419e3c29eb615ed9523e438b400b79f39c20)
+# This is 0.19.4+2, fixes some segfaults https://github.com/tree-sitter/tree-sitter/commit/89e1157a299596f3ce2155ba9fd69d5e2c03d3e6
+set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/89e1157a299596f3ce2155ba9fd69d5e2c03d3e6.zip)
+set(TREESITTER_SHA256 d5be9fd92cbf783680f921b2adccbd721b9aa8b2c445114a216b6544330f252c)
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)

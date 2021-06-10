@@ -491,6 +491,27 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
               end
             end
 
+            -- Big hax
+            if string.find(fn, ":") then
+              -- TODO: We need to add a first parameter of "SELF" here
+              -- local colon_place = string.find(fn, ":")
+              -- local name = string.sub(fn, 1, colon_place)
+              fn = fn:gsub(":", ".", 1)
+              outStream:writeln("/// @param self")
+
+              local paren_start = string.find(fn, "(", 1, true)
+              local paren_finish = string.find(fn, ")", 1, true)
+
+              -- Nothing in between the parens
+              local comma
+              if paren_finish == paren_start + 1 then
+                comma = ""
+              else
+                comma = ", "
+              end
+              fn = string.sub(fn, 1, paren_start) .. "self" .. comma .. string.sub(fn, paren_start + 1)
+            end
+
             -- add vanilla function
             outStream:writeln(fn_type .. 'function ' .. fn .. '{}')
           end

@@ -284,7 +284,7 @@ foreach(sfile ${NVIM_SOURCES}
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
-    COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags} ${C_FLAGS_ARRAY}
+    COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
     COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
     DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
@@ -505,16 +505,50 @@ if(WIN32)
   set(EXTERNAL_BLOBS_SCRIPT
     "file(MAKE_DIRECTORY \"${PROJECT_BINARY_DIR}/windows_runtime_deps/platforms\")")
   foreach(DEP_FILE IN ITEMS
-                      ca-bundle.crt
-                      cat.exe
+                      curl-ca-bundle.crt
                       curl.exe
                       diff.exe
                       tee.exe
-                      tidy.exe
                       win32yank.exe
                       winpty-agent.exe
+                      winpty.dll
                       xxd.exe
 
+                      # Dependencies for neovim-qt
+                      bearer/qgenericbearer.dll
+                      iconengines/qsvgicon.dll
+                      imageformats/qgif.dll
+                      imageformats/qicns.dll
+                      imageformats/qico.dll
+                      imageformats/qjpeg.dll
+                      imageformats/qsvg.dll
+                      imageformats/qtga.dll
+                      imageformats/qtiff.dll
+                      imageformats/qwbmp.dll
+                      imageformats/qwebp.dll
+                      platforms/qwindows.dll
+                      styles/qwindowsvistastyle.dll
+                      translations/qt_ar.qm
+                      translations/qt_bg.qm
+                      translations/qt_ca.qm
+                      translations/qt_cs.qm
+                      translations/qt_da.qm
+                      translations/qt_de.qm
+                      translations/qt_en.qm
+                      translations/qt_es.qm
+                      translations/qt_fi.qm
+                      translations/qt_fr.qm
+                      translations/qt_gd.qm
+                      translations/qt_he.qm
+                      translations/qt_hu.qm
+                      translations/qt_it.qm
+                      translations/qt_ja.qm
+                      translations/qt_ko.qm
+                      translations/qt_lv.qm
+                      translations/qt_pl.qm
+                      translations/qt_ru.qm
+                      translations/qt_sk.qm
+                      translations/qt_uk.qm
                       D3Dcompiler_47.dll
                       libEGL.dll
                       libgcc_s_dw2-1.dll
@@ -522,14 +556,13 @@ if(WIN32)
                       libstdc++-6.dll
                       libwinpthread-1.dll
                       nvim-qt.exe
+                      opengl32sw.dll
                       Qt5Core.dll
                       Qt5Gui.dll
                       Qt5Network.dll
                       Qt5Svg.dll
                       Qt5Widgets.dll
-                      winpty.dll
 
-                      platforms/qwindows.dll
                       )
     get_filename_component(DEP_FILE_DIR ${DEP_FILE} DIRECTORY)
     set(EXTERNAL_BLOBS_SCRIPT "${EXTERNAL_BLOBS_SCRIPT}\n"

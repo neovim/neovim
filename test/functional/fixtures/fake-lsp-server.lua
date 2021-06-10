@@ -70,11 +70,11 @@ local function expect_notification(method, params, ...)
       ..., "expect_notification", "message")
 end
 
-local function expect_request(method, callback, ...)
+local function expect_request(method, handler, ...)
   local req = read_message()
   assert_eq(method, req.method,
       ..., "expect_request", "method")
-  local err, result = callback(req.params)
+  local err, result = handler(req.params)
   respond(req.id, err, result)
 end
 
@@ -109,6 +109,23 @@ function tests.basic_init()
   }
 end
 
+function tests.check_workspace_configuration()
+  skeleton {
+    on_init = function(_params)
+      return { capabilities = {} }
+    end;
+    body = function()
+      notify('start')
+      notify('workspace/configuration', { items = {
+              { section = "testSetting1" };
+              { section = "testSetting2" };
+          } })
+      expect_notification('workspace/configuration', { true; vim.NIL})
+      notify('shutdown')
+    end;
+  }
+end
+
 function tests.basic_check_capabilities()
   skeleton {
     on_init = function(params)
@@ -137,6 +154,7 @@ function tests.capabilities_for_client_supports_method()
           hoverProvider = true;
           definitionProvider = false;
           referencesProvider = false;
+          codeLensProvider = { resolveProvider = true; };
         }
       }
     end;
@@ -385,11 +403,11 @@ function tests.basic_check_buffer_open_and_change_incremental()
         contentChanges = {
           {
             range = {
-              start = { line = 1; character = 0; };
-              ["end"] = { line = 2; character = 0; };
+              start = { line = 1; character = 3; };
+              ["end"] = { line = 1; character = 3; };
             };
-            rangeLength = 4;
-            text = "boop\n";
+            rangeLength = 0;
+            text = "boop";
           };
         }
       })

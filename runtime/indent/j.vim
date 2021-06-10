@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	J
-" Maintainer:	David Bürgin <676c7473@gmail.com>
-" URL:		https://github.com/glts/vim-j
+" Maintainer:	David Bürgin <dbuergin@gluet.ch>
+" URL:		https://gitlab.com/glts/vim-j
 " Last Change:	2015-01-11
 
 if exists('b:did_indent')

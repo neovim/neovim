@@ -412,7 +412,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
   if (*s == NUL)                /* empty line */
     return 1;
-  col = win_linetabsize(wp, s, (colnr_T)MAXCOL);
+  col = win_linetabsize(wp, s, MAXCOL);
 
   // If list mode is on, then the '$' at the end of the line may take up one
   // extra column.
@@ -602,6 +602,7 @@ int is_mouse_key(int c)
          || c == K_LEFTDRAG
          || c == K_LEFTRELEASE
          || c == K_LEFTRELEASE_NM
+         || c == K_MOUSEMOVE
          || c == K_MIDDLEMOUSE
          || c == K_MIDDLEDRAG
          || c == K_MIDDLERELEASE
@@ -752,8 +753,12 @@ get_number (
       skip_redraw = TRUE;           /* skip redraw once */
       do_redraw = FALSE;
       break;
-    } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
+    } else if (c == Ctrl_C || c == ESC || c == 'q') {
+      n = 0;
       break;
+    } else if (c == CAR || c == NL) {
+      break;
+    }
   }
   no_mapping--;
   return n;
@@ -770,11 +775,13 @@ int prompt_for_number(int *mouse_used)
   int save_cmdline_row;
   int save_State;
 
-  /* When using ":silent" assume that <CR> was entered. */
-  if (mouse_used != NULL)
-    MSG_PUTS(_("Type number and <Enter> or click with mouse (empty cancels): "));
-  else
-    MSG_PUTS(_("Type number and <Enter> (empty cancels): "));
+  // When using ":silent" assume that <CR> was entered.
+  if (mouse_used != NULL) {
+    MSG_PUTS(_("Type number and <Enter> or click with the mouse "
+               "(q or empty cancels): "));
+  } else {
+    MSG_PUTS(_("Type number and <Enter> (q or empty cancels): "));
+  }
 
   /* Set the state such that text can be selected/copied/pasted and we still
    * get mouse events. */

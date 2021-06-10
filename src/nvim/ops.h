@@ -6,6 +6,7 @@
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/types.h"
+#include "nvim/extmark.h"
 #include "nvim/eval/typval.h"
 #include "nvim/os/time.h"
 #include "nvim/normal.h" // for MotionType and oparg_T
@@ -13,13 +14,14 @@
 
 typedef int (*Indenter)(void);
 
-/* flags for do_put() */
-#define PUT_FIXINDENT    1      /* make indent look nice */
-#define PUT_CURSEND      2      /* leave cursor after end of new text */
-#define PUT_CURSLINE     4      /* leave cursor on last line of new text */
-#define PUT_LINE         8      /* put register as lines */
-#define PUT_LINE_SPLIT   16     /* split line for linewise register */
-#define PUT_LINE_FORWARD 32     /* put linewise register below Visual sel. */
+// flags for do_put()
+#define PUT_FIXINDENT    1      // make indent look nice
+#define PUT_CURSEND      2      // leave cursor after end of new text
+#define PUT_CURSLINE     4      // leave cursor on last line of new text
+#define PUT_LINE         8      // put register as lines
+#define PUT_LINE_SPLIT   16     // split line for linewise register
+#define PUT_LINE_FORWARD 32     // put linewise register below Visual sel.
+#define PUT_BLOCK_INNER  64     // in block mode, do not add trailing spaces
 
 /*
  * Registers:

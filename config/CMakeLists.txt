@@ -52,6 +52,7 @@ check_function_exists(setsid HAVE_SETSID)
 check_function_exists(sigaction HAVE_SIGACTION)
 check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
+check_function_exists(strptime HAVE_STRPTIME)
 
 # Symbols
 check_symbol_exists(FD_CLOEXEC "fcntl.h" HAVE_FD_CLOEXEC)

@@ -1,5 +1,7 @@
 " test execute()
 
+source view_util.vim
+
 func NestedEval()
   let nested = execute('echo "nested\nlines"')
   echo 'got: "' . nested . '"'
@@ -81,4 +83,55 @@ func Test_execute_not_silent()
     let text2 .= nr2char(screenchar(&lines, col))
   endfor
   call assert_equal('xyz ', text2)
+endfunc
+
+func Test_win_execute()
+  let thiswin = win_getid()
+  new
+  let otherwin = win_getid()
+  call setline(1, 'the new window')
+  call win_gotoid(thiswin)
+  let line = win_execute(otherwin, 'echo getline(1)')
+  call assert_match('the new window', line)
+  let line = win_execute(134343, 'echo getline(1)')
+  call assert_equal('', line)
+
+  if has('textprop')
+    let popupwin = popup_create('the popup win', {'line': 2, 'col': 3})
+    redraw
+    let line = win_execute(popupwin, 'echo getline(1)')
+    call assert_match('the popup win', line)
+
+    call popup_close(popupwin)
+  endif
+
+  call win_gotoid(otherwin)
+  bwipe!
+endfunc
+
+func Test_win_execute_update_ruler()
+  enew
+  call setline(1, range(500))
+  20
+  split
+  let winid = win_getid()
+  set ruler
+  wincmd w
+  let height = winheight(winid)
+  redraw
+  call assert_match('20,1', Screenline(height + 1))
+  let line = win_execute(winid, 'call cursor(100, 1)')
+  redraw
+  call assert_match('100,1', Screenline(height + 1))
+
+  bwipe!
+endfunc
+
+func Test_win_execute_other_tab()
+  let thiswin = win_getid()
+  tabnew
+  call win_execute(thiswin, 'let xyz = 1')
+  call assert_equal(1, xyz)
+  tabclose
+  unlet xyz
 endfunc

@@ -20,5 +20,12 @@ function F.npcall(fn, ...)
   return F.ok_or_nil(pcall(fn, ...))
 end
 
+--- Wrap a function to return nil if it fails, otherwise the value
+function F.nil_wrap(fn)
+  return function(...)
+    return F.npcall(fn, ...)
+  end
+end
+
 
 return F

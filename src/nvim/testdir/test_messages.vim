@@ -1,5 +1,6 @@
 " Tests for :messages, :echomsg, :echoerr
 
+source check.vim
 source shared.vim
 
 func Test_messages()
@@ -31,6 +32,8 @@ func Test_messages()
   finally
     let &more = oldmore
   endtry
+
+  call assert_fails('message 1', 'E474:')
 endfunc
 
  " Patch 7.4.1696 defined the "clearmode()" command for clearing the mode
@@ -75,7 +78,7 @@ func Test_echomsg()
 endfunc
 
 func Test_echoerr()
-  throw 'skipped: Nvim does not support test_ignore_error()'
+  CheckFunction test_ignore_error
   call test_ignore_error('IgNoRe')
   call assert_equal("\nIgNoRe hello", execute(':echoerr "IgNoRe hello"'))
   call assert_equal("\n12345 IgNoRe", execute(':echoerr 12345 "IgNoRe"'))
@@ -87,65 +90,6 @@ func Test_echoerr()
   call test_ignore_error('<lambda>')
   call assert_match("function('<lambda>\\d*')", execute(':echoerr {-> 1234}'))
   call test_ignore_error('RESET')
-endfunc
-
-func Test_mode_message_at_leaving_insert_by_ctrl_c()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
-
-  " Set custom statusline built by user-defined function.
-  let testfile = 'Xtest.vim'
-  call writefile([
-        \ 'func StatusLine() abort',
-        \ '  return ""',
-        \ 'endfunc',
-        \ 'set statusline=%!StatusLine()',
-        \ 'set laststatus=2',
-        \ ], testfile)
-
-  let rows = 10
-  let buf = term_start([GetVimProg(), '--clean', '-S', testfile], {'term_rows': rows})
-  call term_wait(buf, 200)
-  call assert_equal('run', job_status(term_getjob(buf)))
-
-  call term_sendkeys(buf, "i")
-  call WaitForAssert({-> assert_match('^-- INSERT --\s*$', term_getline(buf, rows))})
-  call term_sendkeys(buf, "\<C-C>")
-  call WaitForAssert({-> assert_match('^\s*$', term_getline(buf, rows))})
-
-  call term_sendkeys(buf, ":qall!\<CR>")
-  call WaitForAssert({-> assert_equal('dead', job_status(term_getjob(buf)))})
-  exe buf . 'bwipe!'
-  call delete(testfile)
-endfunc
-
-func Test_mode_message_at_leaving_insert_with_esc_mapped()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
-
-  " Set custom statusline built by user-defined function.
-  let testfile = 'Xtest.vim'
-  call writefile([
-        \ 'set laststatus=2',
-        \ 'inoremap <Esc> <Esc>00',
-        \ ], testfile)
-
-  let rows = 10
-  let buf = term_start([GetVimProg(), '--clean', '-S', testfile], {'term_rows': rows})
-  call term_wait(buf, 200)
-  call assert_equal('run', job_status(term_getjob(buf)))
-
-  call term_sendkeys(buf, "i")
-  call WaitForAssert({-> assert_match('^-- INSERT --\s*$', term_getline(buf, rows))})
-  call term_sendkeys(buf, "\<Esc>")
-  call WaitForAssert({-> assert_match('^\s*$', term_getline(buf, rows))})
-
-  call term_sendkeys(buf, ":qall!\<CR>")
-  call WaitForAssert({-> assert_equal('dead', job_status(term_getjob(buf)))})
-  exe buf . 'bwipe!'
-  call delete(testfile)
 endfunc
 
 func Test_echospace()

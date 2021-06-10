@@ -1,0 +1,44 @@
+name: Coverity
+on:
+  schedule:
+    - cron: '0 10 * * 1'  # Run every Monday at 00:10
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
+
+      - name: Download Coverity
+        run: |
+          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=neovim%2Fneovim" -O coverity_tool.tgz
+          mkdir cov-scan
+          tar ax -f coverity_tool.tgz --strip-components=1 -C cov-scan
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+      - name: Build dependencies
+        run: make deps
+
+      - name: Build/scan neovim
+        run: |
+          env PATH=$(pwd)/cov-scan/bin:$PATH cov-build --dir cov-int make
+
+      - name: Submit results
+        run: |
+          tar zcf cov-scan.tgz cov-int
+          curl --form token=$TOKEN \
+            --form email=$EMAIL \
+            --form file=@cov-scan.tgz \
+            --form version="$(git rev-parse HEAD)" \
+            --form description="Weekly GHA scan" \
+            'https://scan.coverity.com/builds?project=neovim%2Fneovim'
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}

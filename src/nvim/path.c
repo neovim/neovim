@@ -65,7 +65,7 @@ FileComparison path_full_compare(char_u *const s1, char_u *const s2,
   if (expandenv) {
       expand_env(s1, exp1, MAXPATHL);
   } else {
-      xstrlcpy((char *)exp1, (const char *)s1, MAXPATHL - 1);
+      xstrlcpy((char *)exp1, (const char *)s1, MAXPATHL);
   }
   bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
   bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
@@ -342,7 +342,7 @@ int path_fnamencmp(const char *const fname1, const char *const fname2,
     p1 += utfc_ptr2len((const char_u *)p1);
     p2 += utfc_ptr2len((const char_u *)p2);
   }
-  return c1 - c2;
+  return p_fic ? CH_FOLD(c1) - CH_FOLD(c2) : c1 - c2;
 #else
   if (p_fic) {
     return mb_strnicmp((const char_u *)fname1, (const char_u *)fname2, len);

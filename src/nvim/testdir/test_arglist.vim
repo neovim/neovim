@@ -80,6 +80,24 @@ func Test_argadd()
   call assert_equal(0, len(argv()))
 endfunc
 
+func Test_argadd_empty_curbuf()
+  new
+  let curbuf = bufnr('%')
+  call writefile(['test', 'Xargadd'], 'Xargadd')
+  " must not re-use the current buffer.
+  argadd Xargadd
+  call assert_equal(curbuf, bufnr('%'))
+  call assert_equal('', bufname('%'))
+  call assert_equal(1, line('$'))
+  rew
+  call assert_notequal(curbuf, bufnr('%'))
+  call assert_equal('Xargadd', bufname('%'))
+  call assert_equal(2, line('$'))
+
+  %argd
+  bwipe!
+endfunc
+
 func Init_abc()
   args a b c
   next

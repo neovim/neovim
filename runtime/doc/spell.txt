@@ -854,7 +854,7 @@ time ":mkspell" is used.  Vim will then convert everything to 'encoding' and
 generate a spell file for 'encoding'.  If some of the used characters to not
 fit in 'encoding' you will get an error message.
 							*spell-affix-mbyte*
-When using a multi-byte encoding it's possible to use more different affix
+When using a multibyte encoding it's possible to use more different affix
 flags.  But Myspell doesn't support that, thus you may not want to use it
 anyway.  For compatibility use an 8-bit encoding.
 
@@ -1411,7 +1411,7 @@ are spelling mistakes this may not be quite right.
 Common words can be specified with the COMMON item.  This will give better
 suggestions when editing a short file.  Example:
 
-	COMMON  the of to and a in is it you that he was for on are ~
+	COMMON  the of to and a in is it you that he she was for on are ~
 
 The words must be separated by white space, up to 25 per line.
 When multiple regions are specified in a ":mkspell" command the common words

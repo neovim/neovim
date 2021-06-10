@@ -708,7 +708,7 @@ int ptr2cells(const char_u *p)
 /// @return number of character cells.
 int vim_strsize(char_u *s)
 {
-  return vim_strnsize(s, (int)MAXCOL);
+  return vim_strnsize(s, MAXCOL);
 }
 
 /// Return the number of character cells string "s[len]" will take on the
@@ -744,8 +744,7 @@ int vim_strnsize(char_u *s, int len)
 /// @return Number of characters.
 #define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
   if (*(p) == TAB && (!(wp)->w_p_list || wp->w_p_lcs_chars.tab1)) { \
-    const int ts = (int)(buf)->b_p_ts; \
-    return (ts - (int)(col % ts)); \
+    return tabstop_padding(col, (buf)->b_p_ts, (buf)->b_p_vts_array); \
   } else { \
     return ptr2cells(p); \
   }
@@ -1143,8 +1142,9 @@ static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   int n;
 
   if ((*s == TAB) && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
-    n = (int)wp->w_buffer->b_p_ts;
-    return n - (col % n);
+    return tabstop_padding(col,
+                           wp->w_buffer->b_p_ts,
+                           wp->w_buffer->b_p_vts_array);
   }
   n = ptr2cells(s);
 
@@ -1211,6 +1211,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
   char_u *line;   // start of the line
   int incr;
   int head;
+  long *vts = wp->w_buffer->b_p_vts_array;
   int ts = (int)wp->w_buffer->b_p_ts;
   int c;
 
@@ -1251,7 +1252,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
 
       // A tab gets expanded, depending on the current column
       if (c == TAB) {
-        incr = ts - (vcol % ts);
+        incr = tabstop_padding(vcol, ts, vts);
       } else {
         // For utf-8, if the byte is >= 0x80, need to look at
         // further bytes to find the cell width.
@@ -1747,7 +1748,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         goto vim_str2nr_dec;
       }
       default: {
-        assert(false);
+        abort();
       }
     }
   } else if ((what & (STR2NR_HEX|STR2NR_OCT|STR2NR_BIN))
@@ -1788,7 +1789,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   }
 
   // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
-  assert(false);  // Should’ve used goto earlier.
+  abort();  // Should’ve used goto earlier.
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
     while (!STRING_ENDED(ptr) && (cond)) { \

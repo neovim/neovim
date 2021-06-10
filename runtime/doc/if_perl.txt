@@ -22,14 +22,15 @@ See |provider-perl| for more information.
 :[range]perl << [endmarker]
 {script}
 {endmarker}
-			Execute perl script {script}.  Useful for including
-			perl code in Vim scripts.  Requires perl, see
-			|script-here|.
+			Execute perl script {script}.
+			The {endmarker} after {script} must NOT be preceded by
+			any white space.
 
-The {endmarker} below the {script} must NOT be preceded by any white space.
+			If [endmarker] is omitted, it defaults to a dot '.'
+			like for the |:append| and |:insert| commands.
 
-If [endmarker] is omitted from after the "<<", a dot '.' must be used after
-{script}, like for the |:append| and |:insert| commands.
+			Useful for including perl code in Vim scripts.
+			Requires perl, see |script-here|.
 
 Example: >
 	function! MyVimMethod()

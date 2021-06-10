@@ -1049,6 +1049,8 @@ it('diff updates line numbers below filler lines', function()
     [9] = {background = Screen.colors.LightMagenta},
     [10] = {bold = true, foreground = Screen.colors.Brown},
     [11] = {foreground = Screen.colors.Brown},
+    [12] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
+    [13] = {background = Screen.colors.Gray90};
   })
   source([[
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
@@ -1107,4 +1109,22 @@ it('diff updates line numbers below filler lines', function()
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
   ]])
+  command("set signcolumn number tgc cursorline")
+  command("hi CursorLineNr guibg=red")
+  screen:expect{grid=[[
+    {1:  }a                {3:│}{11:  2 }a               |
+    {1:  }a                {3:│}{11:  1 }a               |
+    {1:  }a                {3:│}{12:3   }{13:^a               }|
+    {1:  }{8:x}{9:                }{3:│}{11:  1 }{8:y}{9:               }|
+    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+    {1:  }b                {3:│}{11:  2 }b               |
+    {1:  }b                {3:│}{11:  3 }b               |
+    {1:  }b                {3:│}{11:  4 }b               |
+    {1:  }b                {3:│}{11:  5 }b               |
+    {1:  }b                {3:│}{11:  6 }b               |
+    {6:~                  }{3:│}{6:~                   }|
+    {3:[No Name] [+]       }{7:[No Name] [+]       }|
+      signcolumn=auto                       |
+  ]]}
 end)

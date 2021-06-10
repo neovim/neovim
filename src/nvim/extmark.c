@@ -71,7 +71,8 @@ static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
 /// @returns the mark id
 uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                      int row, colnr_T col, int end_row, colnr_T end_col,
-                     Decoration *decor, ExtmarkOp op)
+                     Decoration *decor, bool right_gravity,
+                     bool end_right_gravity, ExtmarkOp op)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
   assert(ns != NULL);
@@ -109,10 +110,10 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
 
   if (end_row > -1) {
     mark = marktree_put_pair(buf->b_marktree,
-                             row, col, true,
-                             end_row, end_col, false);
+                             row, col, right_gravity,
+                             end_row, end_col, end_right_gravity);
   } else {
-    mark = marktree_put(buf->b_marktree, row, col, true);
+    mark = marktree_put(buf->b_marktree, row, col, right_gravity);
   }
 
 revised:
@@ -560,6 +561,23 @@ void extmark_adjust(buf_T *buf,
                       new_row, 0, new_byte, undo);
 }
 
+// Adjust extmarks following a text edit.
+//
+// @param buf
+// @param start_row   Start row of the region to be changed
+// @param start_col   Start col of the region to be changed
+// @param old_row     End row of the region to be changed.
+//                      Encoded as an offset to start_row.
+// @param old_col     End col of the region to be changed. Encodes
+//                      an offset from start_col if old_row = 0; otherwise,
+//                      encodes the end column of the old region.
+// @param old_byte    Byte extent of the region to be changed.
+// @param new_row     Row offset of the new region.
+// @param new_col     Col offset of the new region. Encodes an offset from
+//                      start_col if new_row = 0; otherwise, encodes
+//                      the end column of the new region.
+// @param new_byte    Byte extent of the new region.
+// @param undo
 void extmark_splice(buf_T *buf,
                     int start_row, colnr_T start_col,
                     int old_row, colnr_T old_col, bcount_t old_byte,
@@ -684,6 +702,7 @@ void extmark_move_region(
     int new_row, colnr_T new_col, bcount_t new_byte,
     ExtmarkOp undo)
 {
+  curbuf->deleted_bytes2 = 0;
   // TODO(bfredl): this is not synced to the buffer state inside the callback.
   // But unless we make the undo implementation smarter, this is not ensured
   // anyway.

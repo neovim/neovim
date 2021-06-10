@@ -245,7 +245,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           } else {
             dictitem_T *const di = tv_dict_item_alloc_len(s, len);
             if (tv_dict_add(cur.tv->vval.v_dict, di) == FAIL) {
-              assert(false);
+              abort();
             }
             kv_push(stack, cur);
             cur = (TVPopStackItem) { &di->di_tv, false, false, 0 };
@@ -391,7 +391,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             break;
           }
           default: {
-            assert(false);
+            abort();
           }
         }
 nlua_pop_typval_table_processing_end:
@@ -400,7 +400,6 @@ nlua_pop_typval_table_processing_end:
       case LUA_TFUNCTION: {
         LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
         state->lua_callable.func_ref = nlua_ref(lstate, -1);
-        state->lua_callable.table_ref = LUA_NOREF;
 
         char_u *name = register_cfunc(
             &nlua_CFunction_func_call,
@@ -412,6 +411,7 @@ nlua_pop_typval_table_processing_end:
         break;
       }
       case LUA_TUSERDATA: {
+        // TODO(bfredl): check mt.__call and convert to function?
         nlua_pushref(lstate, nlua_nil_ref);
         bool is_nil = lua_rawequal(lstate, -2, -1);
         lua_pop(lstate, 1);
@@ -1200,7 +1200,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
             break;
           }
           default: {
-            assert(false);
+            abort();
           }
         }
         break;

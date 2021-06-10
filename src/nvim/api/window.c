@@ -11,6 +11,7 @@
 #include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/lua/executor.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -46,35 +47,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   FUNC_API_SINCE(5)
   FUNC_API_CHECK_TEXTLOCK
 {
-  win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  tabpage_T *tab = win_find_tabpage(win), *save_curtab = curtab;
-
-  if (!win || !buf) {
-    return;
-  }
-
-  if (switch_win(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to window %d",
-                  window);
-  }
-
-  try_start();
-  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
-  if (!try_end(err) && result == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to set buffer %d",
-                  buffer);
-  }
-
-  // If window is not current, state logic will not validate its cursor.
-  // So do it now.
-  validate_cursor();
-
-  restore_win(save_curwin, save_curtab, false);
+  win_set_buf(window, buffer, false, err);
 }
 
 /// Gets the (1,0)-indexed cursor position in the window. |api-indexing|
@@ -381,7 +354,7 @@ Integer nvim_win_get_number(Window window, Error *err)
   }
 
   int tabnr;
-  win_get_tabwin(window, &tabnr, &rv);
+  win_get_tabwin(win->handle, &tabnr, &rv);
 
   return rv;
 }
@@ -423,7 +396,7 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
   // reuse old values, if not overriden
   FloatConfig fconfig = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
 
-  if (!parse_float_config(config, &fconfig, !new_float, err)) {
+  if (!parse_float_config(config, &fconfig, !new_float, false, err)) {
     return;
   }
   if (new_float) {
@@ -492,6 +465,35 @@ Dictionary nvim_win_get_config(Window window, Error *err)
   return rv;
 }
 
+/// Closes the window and hide the buffer it contains (like |:hide| with a
+/// |window-ID|).
+///
+/// Like |:hide| the buffer becomes hidden unless another window is editing it,
+/// or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to |:close| or
+/// |nvim_win_close|, which will close the buffer.
+///
+/// @param window   Window handle, or 0 for current window
+/// @param[out] err Error details, if any
+void nvim_win_hide(Window window, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_CHECK_TEXTLOCK
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return;
+  }
+
+  tabpage_T *tabpage = win_find_tabpage(win);
+  TryState tstate;
+  try_enter(&tstate);
+  if (tabpage == curtab) {
+    win_close(win, false);
+  } else {
+    win_close_othertab(win, false, tabpage);
+  }
+  vim_ignored = try_leave(&tstate, err);
+}
+
 /// Closes the window (like |:close| with a |window-ID|).
 ///
 /// @param window   Window handle, or 0 for current window
@@ -522,4 +524,40 @@ void nvim_win_close(Window window, Boolean force, Error *err)
   try_enter(&tstate);
   ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
   vim_ignored = try_leave(&tstate, err);
+}
+
+/// Calls a function with window as temporary current window.
+///
+/// @see |win_execute()|
+/// @see |nvim_buf_call()|
+///
+/// @param window     Window handle, or 0 for current window
+/// @param fun        Function to call inside the window (currently lua callable
+///                   only)
+/// @param[out] err   Error details, if any
+/// @return           Return value of function. NB: will deepcopy lua values
+///                   currently, use upvalues to send lua references in and out.
+Object nvim_win_call(Window window, LuaRef fun, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_LUA_ONLY
+{
+  win_T *win = find_window_by_handle(window, err);
+  if (!win) {
+    return NIL;
+  }
+  tabpage_T *tabpage = win_find_tabpage(win);
+
+  win_T *save_curwin;
+  tabpage_T *save_curtab;
+
+  try_start();
+  Object res = OBJECT_INIT;
+  if (switch_win_noblock(&save_curwin, &save_curtab, win, tabpage, true) ==
+      OK) {
+    Array args = ARRAY_DICT_INIT;
+    res = nlua_call_ref(fun, NULL, args, true, err);
+  }
+  restore_win_noblock(save_curwin, save_curtab, true);
+  try_end(err);
+  return res;
 }

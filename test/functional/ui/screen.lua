@@ -170,7 +170,7 @@ function Screen.new(width, height)
     ruler = {},
     hl_groups = {},
     _default_attr_ids = nil,
-    _mouse_enabled = true,
+    mouse_enabled = true,
     _attrs = {},
     _hl_info = {[0]={}},
     _attr_table = {[0]={{},{}}},
@@ -318,7 +318,7 @@ function Screen:expect(expected, attr_ids, ...)
   assert(next({...}) == nil, "invalid args to expect()")
   if type(expected) == "table" then
     assert(not (attr_ids ~= nil))
-    local is_key = {grid=true, attr_ids=true, condition=true,
+    local is_key = {grid=true, attr_ids=true, condition=true, mouse_enabled=true,
                     any=true, mode=true, unchanged=true, intermediate=true,
                     reset=true, timeout=true, request_cb=true, hl_groups=true}
     for _, v in ipairs(ext_keys) do
@@ -422,12 +422,24 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
     if expected.mode ~= nil then
       extstate.mode = self.mode
     end
+    if expected.mouse_enabled ~= nil then
+      extstate.mouse_enabled = self.mouse_enabled
+    end
     if expected.win_viewport == nil then
       extstate.win_viewport = nil
     end
 
+    if expected.float_pos then
+      expected.float_pos = deepcopy(expected.float_pos)
+      for _, v in pairs(expected.float_pos) do
+        if not v.external and v[7] == nil then
+          v[7] = 50
+        end
+      end
+    end
+
     -- Convert assertion errors into invalid screen state descriptions.
-    for _, k in ipairs(concat_tables(ext_keys, {'mode'})) do
+    for _, k in ipairs(concat_tables(ext_keys, {'mode', 'mouse_enabled'})) do
       -- Empty states are considered the default and need not be mentioned.
       if (not (expected[k] == nil and isempty(extstate[k]))) then
         local status, res = pcall(eq, expected[k], extstate[k], k)
@@ -799,17 +811,15 @@ function Screen:_handle_busy_stop()
 end
 
 function Screen:_handle_mouse_on()
-  self._mouse_enabled = true
+  self.mouse_enabled = true
 end
 
 function Screen:_handle_mouse_off()
-  self._mouse_enabled = false
+  self.mouse_enabled = false
 end
 
 function Screen:_handle_mode_change(mode, idx)
-  if self._mode_info ~= nil then
-    assert(mode == self._mode_info[idx+1].name)
-  end
+  assert(mode == self._mode_info[idx+1].name)
   self.mode = mode
 end
 
@@ -1286,6 +1296,11 @@ function Screen:get_snapshot(attrs, ignore)
 end
 
 local function fmt_ext_state(name, state)
+  local function remove_all_metatables(item, path)
+    if path[#path] ~= inspect.METATABLE then
+      return item
+    end
+  end
   if name == "win_viewport" then
     local str = "{\n"
     for k,v in pairs(state) do
@@ -1294,13 +1309,18 @@ local function fmt_ext_state(name, state)
              ..", curcol = "..v.curcol.."};\n")
     end
     return str .. "}"
+  elseif name == "float_pos" then
+    local str = "{\n"
+    for k,v in pairs(state) do
+      str = str.."  ["..k.."] = {{id = "..v[1].id.."}"
+      for i = 2, #v do
+        str = str..", "..inspect(v[i])
+      end
+      str = str .. "};\n"
+    end
+    return str .. "}"
   else
     -- TODO(bfredl): improve formatting of more states
-    local function remove_all_metatables(item, path)
-      if path[#path] ~= inspect.METATABLE then
-        return item
-      end
-    end
     return inspect(state,{process=remove_all_metatables})
   end
 end

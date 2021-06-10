@@ -19,7 +19,7 @@ func Test_setbufline_getbufline()
   let b = bufnr('%')
   wincmd w
   call assert_equal(1, setbufline(b, 5, ['x']))
-  call assert_equal(1, setbufline(bufnr('$') + 1, 1, ['x']))
+  call assert_equal(1, setbufline(1234, 1, ['x']))
   call assert_equal(0, setbufline(b, 4, ['d', 'e']))
   call assert_equal(['c'], getbufline(b, 3))
   call assert_equal(['d'], getbufline(b, 4))
@@ -112,6 +112,17 @@ func Test_deletebufline()
   call assert_equal(0, deletebufline(b, 1))
   call assert_equal(['b', 'c'], getbufline(b, 1, 2))
   exe "bwipe! " . b
+
+  edit XbufOne
+  let one = bufnr()
+  call setline(1, ['a', 'b', 'c'])
+  setlocal nomodifiable
+  split XbufTwo
+  let two = bufnr()
+  call assert_fails('call deletebufline(one, 1)', 'E21:')
+  call assert_equal(two, bufnr())
+  bwipe! XbufTwo
+  bwipe! XbufOne
 endfunc
 
 func Test_appendbufline_redraw()

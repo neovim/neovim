@@ -513,8 +513,8 @@ func Test_window_colon_command()
 endfunc
 
 func Test_access_freed_mem()
-  " This was accessing freed memory
-  au * 0 vs xxx
+  " This was accessing freed memory (but with what events?)
+  au BufEnter,BufLeave,WinEnter,WinLeave 0 vs xxx
   arg 0
   argadd
   all
@@ -550,15 +550,28 @@ endfunc
 func Test_winrestcmd()
   2split
   3vsplit
-  let a = winrestcmd()
+  let restcmd = winrestcmd()
   call assert_equal(2, winheight(0))
   call assert_equal(3, winwidth(0))
   wincmd =
   call assert_notequal(2, winheight(0))
   call assert_notequal(3, winwidth(0))
-  exe a
+  exe restcmd
   call assert_equal(2, winheight(0))
   call assert_equal(3, winwidth(0))
+  only
+
+  wincmd v
+  wincmd s
+  wincmd v
+  redraw
+  let restcmd = winrestcmd()
+  wincmd _
+  wincmd |
+  exe restcmd
+  redraw
+  call assert_equal(restcmd, winrestcmd())
+
   only
 endfunc
 
@@ -808,6 +821,55 @@ func Test_winnr()
   only | tabonly
 endfunc
 
+func Test_win_splitmove()
+  edit a
+  leftabove split b
+  leftabove vsplit c
+  leftabove split d
+  call assert_equal(0, win_splitmove(winnr(), winnr('l')))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'd')
+  call assert_equal(bufname(winbufnr(3)), 'b')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'vertical': 1}))
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'vertical': 1}))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'b')
+  call assert_equal(bufname(winbufnr(3)), 'd')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('k'), {'vertical': 1}))
+  call assert_equal(bufname(winbufnr(1)), 'd')
+  call assert_equal(bufname(winbufnr(2)), 'c')
+  call assert_equal(bufname(winbufnr(3)), 'b')
+  call assert_equal(bufname(winbufnr(4)), 'a')
+  call assert_equal(0, win_splitmove(winnr(), winnr('j'), {'rightbelow': v:true}))
+  call assert_equal(bufname(winbufnr(1)), 'c')
+  call assert_equal(bufname(winbufnr(2)), 'b')
+  call assert_equal(bufname(winbufnr(3)), 'a')
+  call assert_equal(bufname(winbufnr(4)), 'd')
+  only | bd
+
+  call assert_fails('call win_splitmove(winnr(), 123)', 'E957:')
+  call assert_fails('call win_splitmove(123, winnr())', 'E957:')
+  call assert_fails('call win_splitmove(winnr(), winnr())', 'E957:')
+
+  tabnew
+  call assert_fails('call win_splitmove(1, win_getid(1, 1))', 'E957:')
+  tabclose
+endfunc
+
+func Test_floatwin_splitmove()
+  vsplit
+  let win2 = win_getid()
+  let popup_winid = nvim_open_win(0, 0, {'relative': 'win',
+        \ 'row': 3, 'col': 3, 'width': 12, 'height': 3})
+  call assert_fails('call win_splitmove(popup_winid, win2)', 'E957:')
+  call assert_fails('call win_splitmove(win2, popup_winid)', 'E957:')
+
+  call nvim_win_close(popup_winid, 1)
+  bwipe
+endfunc
+
 func Test_window_resize()
   " Vertical :resize (absolute, relative, min and max size).
   vsplit
@@ -850,6 +912,14 @@ func Test_window_resize()
   exe other_winnr .. 'resize +1'
   call assert_equal(12, winheight(other_winnr))
   call assert_equal(&lines - 10 - 3 -2, winheight(0))
+  close
+
+  vsplit
+  wincmd l
+  let other_winnr = winnr('h')
+  call assert_notequal(winnr(), other_winnr)
+  exe 'vert ' .. other_winnr .. 'resize -' .. &columns
+  call assert_equal(0, winwidth(other_winnr))
 
   %bwipe!
 endfunc

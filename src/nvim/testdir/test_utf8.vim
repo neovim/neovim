@@ -84,7 +84,7 @@ func Test_list2str_str2list_utf8()
 
   " Null list is the same as an empty list
   call assert_equal('', list2str([]))
-  " call assert_equal('', list2str(test_null_list()))
+  call assert_equal('', list2str(v:_null_list))
 endfunc
 
 func Test_list2str_str2list_latin1()

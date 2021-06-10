@@ -211,6 +211,8 @@ func Test_digraphs()
   call Put_Dig("00")
   call Put_Dig("el")
   call assert_equal(['␀', 'ü', '∞', 'l'], getline(line('.')-3,line('.')))
+  call assert_fails('digraph xy z', 'E39:')
+  call assert_fails('digraph x', 'E474:')
   bw!
 endfunc
 

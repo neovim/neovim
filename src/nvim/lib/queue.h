@@ -33,11 +33,17 @@ typedef struct _queue {
 #define QUEUE_DATA(ptr, type, field) \
   ((type *)((char *)(ptr) - offsetof(type, field)))
 
-// Important note: mutating the list while QUEUE_FOREACH is
-// iterating over its elements results in undefined behavior.
-#define QUEUE_FOREACH(q, h) \
-  for (  /* NOLINT(readability/braces) */ \
-      (q) = (h)->next; (q) != (h); (q) = (q)->next)
+// Important note: the node currently being processed can be safely deleted.
+// otherwise, mutating the list while QUEUE_FOREACH is iterating over its
+// elements results in undefined behavior.
+#define QUEUE_FOREACH(q, h, code) \
+  (q) = (h)->next; \
+  while((q) != (h)) { \
+    QUEUE *next = q->next; \
+    code \
+    (q) = next; \
+  }
+
 
 // ffi.cdef is unable to swallow `bool` in place of `int` here.
 static inline int QUEUE_EMPTY(const QUEUE *const q)

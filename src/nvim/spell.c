@@ -112,6 +112,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/undo.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
@@ -1676,6 +1677,7 @@ static void int_wordlist_spl(char_u *fname)
 // Allocate a new slang_T for language "lang".  "lang" can be NULL.
 // Caller must fill "sl_next".
 slang_T *slang_alloc(char_u *lang)
+  FUNC_ATTR_NONNULL_RET
 {
   slang_T *lp = xcalloc(1, sizeof(slang_T));
 
@@ -2889,8 +2891,14 @@ void spell_suggest(int count)
     msg_col = 0;
     // Ask for choice.
     selected = prompt_for_number(&mouse_used);
-    if (mouse_used)
+
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_clear();
+    }
+
+    if (mouse_used) {
       selected -= lines_left;
+    }
     lines_left = Rows;                  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()
     msg_scroll = msg_scroll_save;
@@ -3028,7 +3036,7 @@ void ex_spellrepall(exarg_T *eap)
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
+    if (do_search(NULL, '/', '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
         || u_save_cursor() == FAIL) {
       break;
     }
@@ -3123,6 +3131,7 @@ spell_find_suggest (
   static bool expr_busy = false;
   int c;
   langp_T     *lp;
+  bool did_intern = false;
 
   // Set the info in "*su".
   memset(su, 0, sizeof(suginfo_T));
@@ -3206,14 +3215,16 @@ spell_find_suggest (
         spell_suggest_expr(su, buf + 5);
         expr_busy = false;
       }
-    } else if (STRNCMP(buf, "file:", 5) == 0)
+    } else if (STRNCMP(buf, "file:", 5) == 0) {
       // Use list of suggestions in a file.
       spell_suggest_file(su, buf + 5);
-    else {
-      // Use internal method.
+    } else if (!did_intern) {
+      // Use internal method once.
       spell_suggest_intern(su, interactive);
-      if (sps_flags & SPS_DOUBLE)
+      if (sps_flags & SPS_DOUBLE) {
         do_combine = true;
+      }
+      did_intern = true;
     }
   }
 
@@ -6621,7 +6632,7 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  get_option_value((char_u *)"spl", &dummy, &spl, OPT_LOCAL);
+  get_option_value("spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");

@@ -30,6 +30,8 @@ An alternative is using the 'keymap' option.
 			it is the Unicode character, see |digraph-encoding|.
 			Example: >
 	:digr e: 235 a: 228
+<			You can use `:exe` to enter a hex number: >
+	:exe 'digr += ' .. 0x2A72
 <			Avoid defining a digraph with '_' (underscore) as the
 			first character, it has a special meaning in the
 			future.

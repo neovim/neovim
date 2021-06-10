@@ -10,13 +10,7 @@ local log = {}
 -- Can be used to lookup the number from the name or the name from the number.
 -- Levels by name: 'trace', 'debug', 'info', 'warn', 'error'
 -- Level numbers begin with 'trace' at 0
-log.levels = {
-  TRACE = 0;
-  DEBUG = 1;
-  INFO  = 2;
-  WARN  = 3;
-  ERROR = 4;
-}
+log.levels = vim.deepcopy(vim.log.levels)
 
 -- Default log level is warn.
 local current_log_level = log.levels.WARN
@@ -28,7 +22,7 @@ do
   local function path_join(...)
     return table.concat(vim.tbl_flatten{...}, path_sep)
   end
-  local logfilename = path_join(vim.fn.stdpath('data'), 'lsp.log')
+  local logfilename = path_join(vim.fn.stdpath('cache'), 'lsp.log')
 
   --- Returns the log filename.
   --@returns (string) log filename
@@ -36,8 +30,10 @@ do
     return logfilename
   end
 
-  vim.fn.mkdir(vim.fn.stdpath('data'), "p")
+  vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
   local logfile = assert(io.open(logfilename, "a+"))
+  -- Start message for logging
+  logfile:write(string.format("[ START ] %s ] LSP logging initiated\n", os.date(log_date_format)))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
@@ -74,8 +70,6 @@ do
       logfile:flush()
     end
   end
-  -- Add some space to make it easier to distinguish different neovim runs.
-  logfile:write("\n")
 end
 
 -- This is put here on purpose after the loop above so that it doesn't

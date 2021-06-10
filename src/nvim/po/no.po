@@ -3452,10 +3452,6 @@ msgstr "-y\t\t\tLett modus (som \"evim\", uten modus)"
 msgid "-R\t\t\tReadonly mode (like \"view\")"
 msgstr "-R\t\t\tSkrivebeskyttet modus (som \"view\")"
 
-#: ../main.c:2208
-msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tBegrenset modus (som \"rvim\")"
-
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
 msgstr "-m\t\t\tModifisering (lagring av filer) ikke tillatt"

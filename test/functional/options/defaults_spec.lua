@@ -204,9 +204,8 @@ describe('startup defaults', function()
   end)
 
   describe('$NVIM_LOG_FILE', function()
-    local datasubdir = iswin() and 'nvim-data' or 'nvim'
     local xdgdir = 'Xtest-startup-xdg-logpath'
-    local xdgdatadir = xdgdir..'/'..datasubdir
+    local xdgcachedir = xdgdir..'/nvim'
     after_each(function()
       os.remove('Xtest-logpath')
       rmdir(xdgdir)
@@ -218,28 +217,21 @@ describe('startup defaults', function()
       }})
       eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
     end)
-    it('defaults to stdpath("data")/log if empty', function()
-      eq(true, mkdir(xdgdir) and mkdir(xdgdatadir))
+    it('defaults to stdpath("cache")/log if empty', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgcachedir))
       clear({env={
-        XDG_DATA_HOME=xdgdir,
+        XDG_CACHE_HOME=xdgdir,
         NVIM_LOG_FILE='',  -- Empty is invalid.
       }})
-      eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      eq(xdgcachedir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
-    it('defaults to stdpath("data")/log if invalid', function()
-      eq(true, mkdir(xdgdir) and mkdir(xdgdatadir))
+    it('defaults to stdpath("cache")/log if invalid', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgcachedir))
       clear({env={
-        XDG_DATA_HOME=xdgdir,
+        XDG_CACHE_HOME=xdgdir,
         NVIM_LOG_FILE='.',  -- Any directory is invalid.
       }})
-      eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
-    end)
-    it('defaults to .nvimlog if stdpath("data") is invalid', function()
-      clear({env={
-        XDG_DATA_HOME='Xtest-missing-xdg-dir',
-        NVIM_LOG_FILE='.',  -- Any directory is invalid.
-      }})
-      eq('.nvimlog', eval('$NVIM_LOG_FILE'))
+      eq(xdgcachedir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
   end)
 end)

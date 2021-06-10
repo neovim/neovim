@@ -327,10 +327,10 @@ for next.
 ==============================================================================
 *20.5*	Command line window
 
-Typing the text in the command line works different from typing text in Insert
-mode.  It doesn't allow many commands to change the text.  For most commands
-that's OK, but sometimes you have to type a complicated command.  That's where
-the command line window is useful.
+Typing the text in the command line works differently from typing text in
+Insert mode.  It doesn't allow many commands to change the text.  For most
+commands that's OK, but sometimes you have to type a complicated command.
+That's where the command line window is useful.
 
 Open the command line window with this command: >
 

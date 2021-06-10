@@ -62,7 +62,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         goto vim_str2nr_dec;
       }
       default: {
-        assert(false);
+        abort();
       }
     }
   } else if ((what & (STR2NR_HEX|STR2NR_OCT|STR2NR_BIN))
@@ -102,7 +102,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   }
 
   // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
-  assert(false);  // Should’ve used goto earlier.
+  abort();  // Should’ve used goto earlier.
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
     while (!STRING_ENDED(ptr) && (cond)) { \

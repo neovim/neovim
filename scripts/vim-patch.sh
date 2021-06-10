@@ -180,8 +180,12 @@ preprocess_patch() {
   local file="$1"
   local nvim="nvim -u NORC -i NONE --headless"
 
-  # Remove *.proto, Make*, gui_*, some if_*
-  local na_src='proto\|Make*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
+  # Remove Filelist, README
+  local na_files='Filelist\|README.*'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/\<\%('"${na_files}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove *.proto, Make*, INSTALL*, gui_*, beval.*, some if_*, gvim, libvterm, tee, VisVim, xpm, xxd
+  local na_src='auto\|configure.*\|GvimExt\|libvterm\|proto\|tee\|VisVim\|xpm\|xxd\|Make*\|INSTALL*\|beval.*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove unwanted Vim doc files.
@@ -191,9 +195,13 @@ preprocess_patch() {
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
-  # Remove screen dumps, testdir/Make_*.mak files
-  local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump'
+  # Remove gui, option, setup, screen dumps, testdir/Make_*.mak files
+  local na_src_testdir='gen_opt_test.vim\|gui_.*\|Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump\|setup_gui.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove testdir/test_*.vim files
+  local na_src_testdir='balloon.*\|channel.*\|crypt.vim\|gui.*\|job_fails.vim\|json.vim\|mzscheme.vim\|netbeans.*\|paste.vim\|popupwin.*\|restricted.vim\|shortpathname.vim\|tcl.vim\|terminal.*\|xxd.vim'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove version.c #7555
   local na_po='version.c'
@@ -570,7 +578,7 @@ list_missing_previous_vimpatches_for_patch() {
   local -a fnames
   while IFS= read -r line ; do
     fnames+=("$line")
-  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}")
+  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}" -- . ':!src/version.c')
   local i=0
   local n=${#fnames[@]}
   printf '=== getting missing patches for %d files ===\n' "$n"
@@ -585,18 +593,20 @@ list_missing_previous_vimpatches_for_patch() {
     _set_missing_vimpatches 1 -- "${fname}"
 
     set +u  # Avoid "unbound variable" with bash < 4.4 below.
-    local missing_vim_commit_info="${missing_vim_patches[0]}"
-    if [[ -z "${missing_vim_commit_info}" ]]; then
-      printf -- "-\n"
-    else
-      local missing_vim_commit="${missing_vim_commit_info%%:*}"
-      if [[ -z "${vim_tag}" ]] || [[ "${missing_vim_commit}" < "${vim_tag}" ]]; then
-        printf -- "%s\n" "$missing_vim_commit_info"
-        missing_list+=("$missing_vim_commit_info")
+    for missing_vim_commit_info in "${missing_vim_patches[@]}"; do
+      if [[ -z "${missing_vim_commit_info}" ]]; then
+        printf -- "-\r"
       else
-        printf -- "-\n"
+        printf -- "-\r"
+        local missing_vim_commit="${missing_vim_commit_info%%:*}"
+        if [[ -z "${vim_tag}" ]] || [[ "${missing_vim_commit}" < "${vim_tag}" ]]; then
+          printf -- "%s\n" "$missing_vim_commit_info"
+          missing_list+=("$missing_vim_commit_info")
+        else
+          printf -- "-\r"
+        fi
       fi
-    fi
+    done
     set -u
   done
 

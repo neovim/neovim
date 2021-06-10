@@ -165,8 +165,8 @@ enum {
   SHM_WRI            = 'w',  ///< "[w]" instead of "written".
   SHM_ABBREVIATIONS  = 'a',  ///< Use abbreviations from #SHM_ALL_ABBREVIATIONS.
   SHM_WRITE          = 'W',  ///< Don't use "written" at all.
-  SHM_TRUNC          = 't',  ///< Trunctate file messages.
-  SHM_TRUNCALL       = 'T',  ///< Trunctate all messages.
+  SHM_TRUNC          = 't',  ///< Truncate file messages.
+  SHM_TRUNCALL       = 'T',  ///< Truncate all messages.
   SHM_OVER           = 'o',  ///< Overwrite file messages.
   SHM_OVERALL        = 'O',  ///< Overwrite more messages.
   SHM_SEARCH         = 's',  ///< No search hit bottom messages.
@@ -282,9 +282,14 @@ enum {
 #define WIM_BUFLASTUSED 8
 
 // arguments for can_bs()
+// each defined char should be unique over all values
+// except for BS_START, that intentionally also matches BS_NOSTOP
+// because BS_NOSTOP behaves exactly the same except it
+// does not stop at the start of the insert point
 #define BS_INDENT       'i'     // "Indent"
-#define BS_EOL          'o'     // "eOl"
+#define BS_EOL          'l'     // "eoL"
 #define BS_START        's'     // "Start"
+#define BS_NOSTOP       'p'     // "nostoP
 
 #define LISPWORD_VALUE \
   "defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object"
@@ -554,6 +559,7 @@ EXTERN int p_ri;                // 'revins'
 EXTERN int p_ru;                // 'ruler'
 EXTERN char_u   *p_ruf;         // 'rulerformat'
 EXTERN char_u   *p_pp;          // 'packpath'
+EXTERN char_u   *p_qftf;        // 'quickfixtextfunc'
 EXTERN char_u   *p_rtp;         // 'runtimepath'
 EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
@@ -566,11 +572,12 @@ EXTERN char_u   *p_slm;         // 'selectmode'
 EXTERN char_u   *p_ssop;        // 'sessionoptions'
 EXTERN unsigned ssop_flags;
 # ifdef IN_OPTION_C
-// Also used for 'viewoptions'!
+// Also used for 'viewoptions'!  Keep in sync with SSOP_ flags.
 static char *(p_ssop_values[]) = {
   "buffers", "winpos", "resize", "winsize",
   "localoptions", "options", "help", "blank", "globals", "slash", "unix",
-  "sesdir", "curdir", "folds", "cursor", "tabpages", NULL
+  "sesdir", "curdir", "folds", "cursor", "tabpages", "terminal", "skiprtp",
+  NULL
 };
 # endif
 # define SSOP_BUFFERS           0x001
@@ -589,6 +596,8 @@ static char *(p_ssop_values[]) = {
 # define SSOP_FOLDS             0x2000
 # define SSOP_CURSOR            0x4000
 # define SSOP_TABPAGES          0x8000
+# define SSOP_TERMINAL          0x10000
+# define SSOP_SKIP_RTP          0x20000
 
 EXTERN char_u   *p_sh;          // 'shell'
 EXTERN char_u   *p_shcf;        // 'shellcmdflag'
@@ -616,6 +625,19 @@ EXTERN int p_sta;               // 'smarttab'
 EXTERN int p_sb;                // 'splitbelow'
 EXTERN long p_tpm;              // 'tabpagemax'
 EXTERN char_u   *p_tal;         // 'tabline'
+EXTERN char_u   *p_tpf;         // 'termpastefilter'
+EXTERN unsigned int tpf_flags;  ///< flags from 'termpastefilter'
+#ifdef IN_OPTION_C
+static char *(p_tpf_values[]) =
+  { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
+#endif
+# define TPF_BS                 0x001
+# define TPF_HT                 0x002
+# define TPF_FF                 0x004
+# define TPF_ESC                0x008
+# define TPF_DEL                0x010
+# define TPF_C0                 0x020
+# define TPF_C1                 0x040
 EXTERN char_u   *p_sps;         // 'spellsuggest'
 EXTERN int p_spr;               // 'splitright'
 EXTERN int p_sol;               // 'startofline'
@@ -806,6 +828,8 @@ enum {
   , BV_UDF
   , BV_UL
   , BV_WM
+  , BV_VSTS
+  , BV_VTS
   , BV_COUNT        // must be the last one
 };
 

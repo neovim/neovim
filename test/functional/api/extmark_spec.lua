@@ -1389,6 +1389,40 @@ describe('API/extmarks', function()
       undo]],false)
     eq(2, meths.eval('1+1')) -- did not crash
   end)
+
+  it('works with left and right gravity', function()
+    -- right gravity should move with inserted text, while
+    -- left gravity should stay in place.
+    curbufmeths.set_extmark(ns, 0, 5, {right_gravity = false})
+    curbufmeths.set_extmark(ns, 0, 5, {right_gravity = true})
+    feed([[Aasdfasdf]])
+
+    eq({ {1, 0, 5}, {2, 0, 13} },
+        curbufmeths.get_extmarks(ns, 0, -1, {}))
+
+    -- but both move when text is inserted before
+    feed([[<esc>Iasdf<esc>]])
+    -- eq({}, curbufmeths.get_lines(0, -1, true))
+    eq({ {1, 0, 9}, {2, 0, 17} },
+        curbufmeths.get_extmarks(ns, 0, -1, {}))
+
+    -- clear text
+    curbufmeths.set_text(0, 0, 0, 17, {})
+
+    -- handles set_text correctly as well
+    eq({ {1, 0, 0}, {2, 0, 0} },
+        meths.buf_get_extmarks(0, ns, 0, -1, {}))
+    curbufmeths.set_text(0, 0, 0, 0, {'asdfasdf'})
+    eq({ {1, 0, 0}, {2, 0, 8} },
+        curbufmeths.get_extmarks(ns, 0, -1, {}))
+
+    feed('u')
+    -- handles pasting
+    meths.exec([[let @a='asdfasdf']], false)
+    feed([["ap]])
+    eq({ {1, 0, 0}, {2, 0, 8} },
+        meths.buf_get_extmarks(0, ns, 0, -1, {}))
+  end)
 end)
 
 describe('Extmarks buffer api with many marks', function()

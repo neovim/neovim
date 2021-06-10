@@ -34,6 +34,13 @@ local constants = {
     Hint = 4;
   };
 
+  DiagnosticTag = {
+    -- Unused or unnecessary code
+    Unnecessary = 1;
+    -- Deprecated or obsolete code
+    Deprecated = 2;
+  };
+
   MessageType = {
     -- An error message.
     Error = 1;
@@ -521,6 +528,13 @@ export interface TextDocumentClientCapabilities {
   publishDiagnostics?: {
     --Whether the clients accepts diagnostics with related information.
     relatedInformation?: boolean;
+    --Client supports the tag property to provide meta data about a diagnostic.
+	  --Clients supporting tags have to handle unknown tags gracefully.
+    --Since 3.15.0
+    tagSupport?: {
+      --The tags supported by this client
+      valueSet: DiagnosticTag[];
+    };
   };
   --Capabilities specific to `textDocument/foldingRange` requests.
   --
@@ -706,6 +720,18 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false;
         prepareSupport = true;
       };
+      publishDiagnostics = {
+        relatedInformation = true;
+        tagSupport = {
+          valueSet = (function()
+            local res = {}
+            for k in ipairs(protocol.DiagnosticTag) do
+              if type(k) == 'number' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+      };
     };
     workspace = {
       symbol = {
@@ -723,6 +749,9 @@ function protocol.make_client_capabilities()
       };
       workspaceFolders = true;
       applyEdit = true;
+      workspaceEdit = {
+        resourceOperations = {'rename', 'create', 'delete',},
+      };
     };
     callHierarchy = {
       dynamicRegistration = false;
@@ -730,7 +759,15 @@ function protocol.make_client_capabilities()
     experimental = nil;
     window = {
       workDoneProgress = true;
-    }
+      showMessage = {
+        messageActionItem = {
+          additionalPropertiesSupport = false;
+        };
+      };
+      showDocument = {
+        support = false;
+      };
+    };
   }
 end
 
@@ -904,7 +941,7 @@ function protocol.resolve_capabilities(server_capabilities)
         text_document_did_change = textDocumentSync;
         text_document_will_save = false;
         text_document_will_save_wait_until = false;
-        text_document_save = false;
+        text_document_save = true;
         text_document_save_include_text = false;
       }
     elseif type(textDocumentSync) == 'table' then
@@ -939,6 +976,16 @@ function protocol.resolve_capabilities(server_capabilities)
     general_properties.rename = server_capabilities.renameProvider
   else
     general_properties.rename = true
+  end
+
+  if server_capabilities.codeLensProvider == nil then
+    general_properties.code_lens = false
+    general_properties.code_lens_resolve = false
+  elseif type(server_capabilities.codeLensProvider) == 'table' then
+    general_properties.code_lens = true
+    general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
+  else
+    error("The server sent invalid codeLensProvider")
   end
 
   if server_capabilities.codeActionProvider == nil then

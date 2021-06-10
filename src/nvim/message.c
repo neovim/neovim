@@ -131,7 +131,7 @@ static int msg_grid_scroll_discount = 0;
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
-  char buf[MAX_MCO];
+  char buf[MAX_MCO + 1];
   size_t size = utf_char2bytes(curwin->w_p_fcs_chars.msgsep, (char_u *)buf);
   buf[size] = '\0';
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
@@ -165,6 +165,7 @@ void msg_grid_validate(void)
     // TODO(bfredl): eventually should be set to "invalid". I e all callers
     // will use the grid including clear to EOS if necessary.
     grid_alloc(&msg_grid, Rows, Columns, false, true);
+    msg_grid.zindex = kZIndexMessages;
 
     xfree(msg_grid.dirty_col);
     msg_grid.dirty_col = xcalloc(Rows, sizeof(*msg_grid.dirty_col));
@@ -178,6 +179,7 @@ void msg_grid_validate(void)
     msg_grid.throttled = false;  // don't throttle in 'cmdheight' area
     msg_scrolled_at_flush = msg_scrolled;
     msg_grid.focusable = false;
+    msg_grid_adj.target = &msg_grid;
     if (!msg_scrolled) {
       msg_grid_set_pos(Rows - p_ch, false);
     }
@@ -188,6 +190,7 @@ void msg_grid_validate(void)
     ui_call_grid_destroy(msg_grid.handle);
     msg_grid.throttled = false;
     msg_grid_adj.row_offset = 0;
+    msg_grid_adj.target = &default_grid;
     redraw_cmdline = true;
   } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != Rows - p_ch) {
     msg_grid_set_pos(Rows - p_ch, false);
@@ -867,18 +870,18 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
  */
 char_u *msg_may_trunc(int force, char_u *s)
 {
-  int n;
   int room;
 
   room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (n = (int)STRLEN(s) - room) > 0) {
+      && (int)STRLEN(s) - room > 0) {
     int size = vim_strsize(s);
 
     // There may be room anyway when there are multibyte chars.
     if (size <= room) {
       return s;
     }
+    int n;
     for (n = 0; size >= room; ) {
       size -= utf_ptr2cells(s + n);
       n += utfc_ptr2len(s + n);
@@ -888,6 +891,40 @@ char_u *msg_may_trunc(int force, char_u *s)
     *s = '<';
   }
   return s;
+}
+
+void clear_hl_msg(HlMessage *hl_msg)
+{
+  for (size_t i = 0; i < kv_size(*hl_msg); i++) {
+    xfree(kv_A(*hl_msg, i).text.data);
+  }
+  kv_destroy(*hl_msg);
+  *hl_msg = (HlMessage)KV_INITIAL_VALUE;
+}
+
+#define LINE_BUFFER_SIZE 4096
+
+void add_hl_msg_hist(HlMessage hl_msg)
+{
+  // TODO(notomo): support multi highlighted message history
+  size_t pos = 0;
+  char buf[LINE_BUFFER_SIZE];
+  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+    HlMessageChunk chunk = kv_A(hl_msg, i);
+    for (uint32_t j = 0; j < chunk.text.size; j++) {
+      if (pos == LINE_BUFFER_SIZE - 1) {
+        buf[pos] = NUL;
+        add_msg_hist((const char *)buf, -1, MSG_HIST, true);
+        pos = 0;
+        continue;
+      }
+      buf[pos++] = chunk.text.data[j];
+    }
+  }
+  if (pos != 0) {
+    buf[pos] = NUL;
+    add_msg_hist((const char *)buf, -1, MSG_HIST, true);
+  }
 }
 
 /// @param[in]  len  Length of s or -1.
@@ -1128,11 +1165,11 @@ void wait_return(int redraw)
       if (p_more) {
         if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
             || c == K_UP || c == K_PAGEUP) {
-          if (msg_scrolled > Rows) {
-            // scroll back to show older messages
+          if (msg_scrolled > Rows)
+            /* scroll back to show older messages */
             do_more_prompt(c);
-          } else {
-            msg_didout = false;
+          else {
+            msg_didout = FALSE;
             c = K_IGNORE;
             msg_col =
               cmdmsg_rl ? Columns - 1 :
@@ -1158,14 +1195,7 @@ void wait_return(int redraw)
              || c == K_RIGHTDRAG  || c == K_RIGHTRELEASE
              || c == K_MOUSELEFT  || c == K_MOUSERIGHT
              || c == K_MOUSEDOWN  || c == K_MOUSEUP
-             || (!mouse_has(MOUSE_RETURN)
-                 && mouse_row < msg_row
-                 && (c == K_LEFTMOUSE
-                     || c == K_MIDDLEMOUSE
-                     || c == K_RIGHTMOUSE
-                     || c == K_X1MOUSE
-                     || c == K_X2MOUSE))
-             );
+             || c == K_MOUSEMOVE);
     os_breakcheck();
     /*
      * Avoid that the mouse-up event causes visual mode to start.
@@ -1677,6 +1707,7 @@ void msg_prt_line(char_u *s, int list)
   char_u *p_extra = NULL;  // init to make SASC shut up
   int n;
   int attr = 0;
+  char_u *lead = NULL;
   char_u *trail = NULL;
   int l;
 
@@ -1684,11 +1715,24 @@ void msg_prt_line(char_u *s, int list)
     list = true;
   }
 
-  // find start of trailing whitespace
-  if (list && curwin->w_p_lcs_chars.trail) {
-    trail = s + STRLEN(s);
-    while (trail > s && ascii_iswhite(trail[-1])) {
-      trail--;
+  if (list) {
+    // find start of trailing whitespace
+    if (curwin->w_p_lcs_chars.trail) {
+      trail = s + STRLEN(s);
+      while (trail > s && ascii_iswhite(trail[-1])) {
+        trail--;
+      }
+    }
+    // find end of leading whitespace
+    if (curwin->w_p_lcs_chars.lead) {
+      lead = s;
+      while (ascii_iswhite(lead[0])) {
+        lead++;
+      }
+      // in a line full of spaces all of them are treated as trailing
+      if (*lead == NUL) {
+        lead = NULL;
+      }
     }
   }
 
@@ -1730,7 +1774,9 @@ void msg_prt_line(char_u *s, int list)
       c = *s++;
       if (c == TAB && (!list || curwin->w_p_lcs_chars.tab1)) {
         // tab amount depends on current column
-        n_extra = curbuf->b_p_ts - col % curbuf->b_p_ts - 1;
+        n_extra = tabstop_padding(col,
+                                  curbuf->b_p_ts,
+                                  curbuf->b_p_vts_array) - 1;
         if (!list) {
           c = ' ';
           c_extra = ' ';
@@ -1762,6 +1808,9 @@ void msg_prt_line(char_u *s, int list)
         c = *p_extra++;
         /* Use special coloring to be able to distinguish <hex> from
          * the same in plain text. */
+        attr = HL_ATTR(HLF_8);
+      } else if (c == ' ' && lead != NULL && s <= lead) {
+        c = curwin->w_p_lcs_chars.lead;
         attr = HL_ATTR(HLF_8);
       } else if (c == ' ' && trail != NULL && s > trail) {
         c = curwin->w_p_lcs_chars.trail;
@@ -2097,17 +2146,15 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       store_sb_text((char_u **)&sb_str, (char_u *)s, attr, &sb_col, true);
     }
 
-    if (*s == '\n') {             // go to next line
-      msg_didout = false;         // remember that line is empty
-      if (cmdmsg_rl) {
+    if (*s == '\n') {               /* go to next line */
+      msg_didout = FALSE;           /* remember that line is empty */
+      if (cmdmsg_rl)
         msg_col = Columns - 1;
-      } else {
+      else
         msg_col = 0;
-      }
-      if (++msg_row >= Rows) {    // safety check
+      if (++msg_row >= Rows)        /* safety check */
         msg_row = Rows - 1;
-      }
-    } else if (*s == '\r') {      // go to column 0
+    } else if (*s == '\r') {      /* go to column 0 */
       msg_col = 0;
     } else if (*s == '\b') {      /* go to previous char */
       if (msg_col)
@@ -2220,12 +2267,14 @@ void msg_scroll_up(bool may_throttle)
 /// per screen update.
 ///
 /// NB: The bookkeeping is quite messy, and rests on a bunch of poorly
-/// documented assumtions. For instance that the message area always grows while
-/// being throttled, messages are only being output on the last line etc.
+/// documented assumptions. For instance that the message area always grows
+/// while being throttled, messages are only being output on the last line
+/// etc.
 ///
-/// Probably message scrollback storage should reimplented as a file_buffer, and
-/// message scrolling in TUI be reimplemented as a modal floating window. Then
-/// we get throttling "for free" using standard redraw_later code paths.
+/// Probably message scrollback storage should be reimplemented as a
+/// file_buffer, and message scrolling in TUI be reimplemented as a modal
+/// floating window. Then we get throttling "for free" using standard
+/// redraw_later code paths.
 void msg_scroll_flush(void)
 {
   if (msg_grid.throttled) {
@@ -2880,10 +2929,10 @@ void repeat_message(void)
     ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
   } else if (State == HITRETURN || State == SETWSIZE) {
     if (msg_row == Rows - 1) {
-      // Avoid drawing the "hit-enter" prompt below the previous one,
-      // overwrite it.  Esp. useful when regaining focus and a
-      // FocusGained autocmd exists but didn't draw anything.
-      msg_didout = false;
+      /* Avoid drawing the "hit-enter" prompt below the previous one,
+       * overwrite it.  Esp. useful when regaining focus and a
+       * FocusGained autocmd exists but didn't draw anything. */
+      msg_didout = FALSE;
       msg_col = 0;
       msg_clr_eos();
     }

@@ -42,7 +42,7 @@ Tuning Vim
 |usr_42.txt|  Add new menus
 |usr_43.txt|  Using filetypes
 |usr_44.txt|  Your own syntax highlighted
-|usr_45.txt|  Select your language
+|usr_45.txt|  Select your language (locale)
 
 
 Reference manual
@@ -327,7 +327,7 @@ Make Vim work as you like it.
 		|44.11|	Installing a syntax file
 		|44.12|	Portable syntax file layout
 
-|usr_45.txt|  Select your language
+|usr_45.txt|  Select your language (locale)
 		|45.1|	Language for Messages
 		|45.2|	Language for Menus
 		|45.3|	Using another encoding

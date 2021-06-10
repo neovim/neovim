@@ -39,6 +39,85 @@ assert(vim)
 vim.inspect = package.loaded['vim.inspect']
 assert(vim.inspect)
 
+local pathtrails = {}
+vim._so_trails = {}
+for s in  (package.cpath..';'):gmatch('[^;]*;') do
+    s = s:sub(1, -2)  -- Strip trailing semicolon
+  -- Find out path patterns. pathtrail should contain something like
+  -- /?.so, \?.dll. This allows not to bother determining what correct
+  -- suffixes are.
+  local pathtrail = s:match('[/\\][^/\\]*%?.*$')
+  if pathtrail and not pathtrails[pathtrail] then
+    pathtrails[pathtrail] = true
+    table.insert(vim._so_trails, pathtrail)
+  end
+end
+
+function vim._load_package(name)
+  local basename = name:gsub('%.', '/')
+  local paths = {"lua/"..basename..".lua", "lua/"..basename.."/init.lua"}
+  for _,path in ipairs(paths) do
+    local found = vim.api.nvim_get_runtime_file(path, false)
+    if #found > 0 then
+      local f, err = loadfile(found[1])
+      return f or error(err)
+    end
+  end
+
+  for _,trail in ipairs(vim._so_trails) do
+    local path = "lua"..trail:gsub('?', basename) -- so_trails contains a leading slash
+    local found = vim.api.nvim_get_runtime_file(path, false)
+    if #found > 0 then
+      -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
+      -- a) strip prefix up to and including the first dash, if any
+      -- b) replace all dots by underscores
+      -- c) prepend "luaopen_"
+      -- So "foo-bar.baz" should result in "luaopen_bar_baz"
+      local dash = name:find("-", 1, true)
+      local modname = dash and name:sub(dash + 1) or name
+      local f, err = package.loadlib(found[1], "luaopen_"..modname:gsub("%.", "_"))
+      return f or error(err)
+    end
+  end
+  return nil
+end
+
+table.insert(package.loaders, 1, vim._load_package)
+
+-- These are for loading runtime modules lazily since they aren't available in
+-- the nvim binary as specified in executor.c
+setmetatable(vim, {
+  __index = function(t, key)
+    if key == 'treesitter' then
+      t.treesitter = require('vim.treesitter')
+      return t.treesitter
+    elseif key == 'F' then
+      t.F = require('vim.F')
+      return t.F
+    elseif require('vim.uri')[key] ~= nil then
+      -- Expose all `vim.uri` functions on the `vim` module.
+      t[key] = require('vim.uri')[key]
+      return t[key]
+    elseif key == 'lsp' then
+      t.lsp = require('vim.lsp')
+      return t.lsp
+    elseif key == 'highlight' then
+      t.highlight = require('vim.highlight')
+      return t.highlight
+    end
+  end
+})
+
+vim.log = {
+  levels = {
+    TRACE = 0;
+    DEBUG = 1;
+    INFO  = 2;
+    WARN  = 3;
+    ERROR = 4;
+  }
+}
+
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
@@ -94,44 +173,6 @@ function vim._os_proc_children(ppid)
   end
   return children
 end
-
-local pathtrails = {}
-vim._so_trails = {}
-for s in  (package.cpath..';'):gmatch('[^;]*;') do
-    s = s:sub(1, -2)  -- Strip trailing semicolon
-  -- Find out path patterns. pathtrail should contain something like
-  -- /?.so, \?.dll. This allows not to bother determining what correct
-  -- suffixes are.
-  local pathtrail = s:match('[/\\][^/\\]*%?.*$')
-  if pathtrail and not pathtrails[pathtrail] then
-    pathtrails[pathtrail] = true
-    table.insert(vim._so_trails, pathtrail)
-  end
-end
-
-function vim._load_package(name)
-  local basename = name:gsub('%.', '/')
-  local paths = {"lua/"..basename..".lua", "lua/"..basename.."/init.lua"}
-  for _,path in ipairs(paths) do
-    local found = vim.api.nvim_get_runtime_file(path, false)
-    if #found > 0 then
-      local f, err = loadfile(found[1])
-      return f or error(err)
-    end
-  end
-
-  for _,trail in ipairs(vim._so_trails) do
-    local path = "lua/"..trail:gsub('?',basename)
-    local found = vim.api.nvim_get_runtime_file(path, false)
-    if #found > 0 then
-      local f, err = package.loadlib(found[1])
-      return f or error(err)
-    end
-  end
-  return nil
-end
-
-table.insert(package.loaders, 1, vim._load_package)
 
 -- TODO(ZyX-I): Create compatibility layer.
 
@@ -246,8 +287,15 @@ end
 -- vim.fn.{func}(...)
 vim.fn = setmetatable({}, {
   __index = function(t, key)
-    local function _fn(...)
-      return vim.call(key, ...)
+    local _fn
+    if vim.api[key] ~= nil then
+      _fn = function()
+        error(string.format("Tried to call API function with vim.fn: use vim.api.%s instead", key))
+      end
+    else
+      _fn = function(...)
+        return vim.call(key, ...)
+      end
     end
     t[key] = _fn
     return _fn
@@ -258,152 +306,34 @@ vim.funcref = function(viml_func_name)
   return vim.fn[viml_func_name]
 end
 
--- These are for loading runtime modules lazily since they aren't available in
--- the nvim binary as specified in executor.c
-local function __index(t, key)
-  if key == 'treesitter' then
-    t.treesitter = require('vim.treesitter')
-    return t.treesitter
-  elseif require('vim.uri')[key] ~= nil then
-    -- Expose all `vim.uri` functions on the `vim` module.
-    t[key] = require('vim.uri')[key]
-    return t[key]
-  elseif key == 'lsp' then
-    t.lsp = require('vim.lsp')
-    return t.lsp
-  elseif key == 'highlight' then
-    t.highlight = require('vim.highlight')
-    return t.highlight
-  elseif key == 'F' then
-    t.F = require('vim.F')
-    return t.F
-  end
-end
-
-setmetatable(vim, {
-  __index = __index
-})
-
 -- An easier alias for commands.
-vim.cmd = vim.api.nvim_command
+vim.cmd = function(command)
+  return vim.api.nvim_exec(command, false)
+end
 
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
-  local a = vim.api
   local validate = vim.validate
-  local function make_meta_accessor(get, set, del)
+
+  local function make_dict_accessor(scope)
     validate {
-      get = {get, 'f'};
-      set = {set, 'f'};
-      del = {del, 'f', true};
+      scope = {scope, 's'};
     }
     local mt = {}
-    if del then
-      function mt:__newindex(k, v)
-        if v == nil then
-          return del(k)
-        end
-        return set(k, v)
-      end
-    else
-      function mt:__newindex(k, v)
-        return set(k, v)
-      end
+    function mt:__newindex(k, v)
+      return vim._setvar(scope, 0, k, v)
     end
     function mt:__index(k)
-      return get(k)
+      return vim._getvar(scope, 0, k)
     end
     return setmetatable({}, mt)
   end
-  local function pcall_ret(status, ...)
-    if status then return ... end
-  end
-  local function nil_wrap(fn)
-    return function(...)
-      return pcall_ret(pcall(fn, ...))
-    end
-  end
 
-  vim.b = make_meta_accessor(
-    nil_wrap(function(v) return a.nvim_buf_get_var(0, v) end),
-    function(v, k) return a.nvim_buf_set_var(0, v, k) end,
-    function(v) return a.nvim_buf_del_var(0, v) end
-  )
-  vim.w = make_meta_accessor(
-    nil_wrap(function(v) return a.nvim_win_get_var(0, v) end),
-    function(v, k) return a.nvim_win_set_var(0, v, k) end,
-    function(v) return a.nvim_win_del_var(0, v) end
-  )
-  vim.t = make_meta_accessor(
-    nil_wrap(function(v) return a.nvim_tabpage_get_var(0, v) end),
-    function(v, k) return a.nvim_tabpage_set_var(0, v, k) end,
-    function(v) return a.nvim_tabpage_del_var(0, v) end
-  )
-  vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
-  vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
-  vim.o = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
-
-  local function getenv(k)
-    local v = vim.fn.getenv(k)
-    if v == vim.NIL then
-      return nil
-    end
-    return v
-  end
-  vim.env = make_meta_accessor(getenv, vim.fn.setenv)
-  -- TODO(ashkan) if/when these are available from an API, generate them
-  -- instead of hardcoding.
-  local window_options = {
-              arab = true;       arabic = true;   breakindent = true; breakindentopt = true;
-               bri = true;       briopt = true;            cc = true;           cocu = true;
-              cole = true;  colorcolumn = true; concealcursor = true;   conceallevel = true;
-               crb = true;          cuc = true;           cul = true;     cursorbind = true;
-      cursorcolumn = true;   cursorline = true;          diff = true;            fcs = true;
-               fdc = true;          fde = true;           fdi = true;            fdl = true;
-               fdm = true;          fdn = true;           fdt = true;            fen = true;
-         fillchars = true;          fml = true;           fmr = true;     foldcolumn = true;
-        foldenable = true;     foldexpr = true;    foldignore = true;      foldlevel = true;
-        foldmarker = true;   foldmethod = true;  foldminlines = true;    foldnestmax = true;
-          foldtext = true;          lbr = true;           lcs = true;      linebreak = true;
-              list = true;    listchars = true;            nu = true;         number = true;
-       numberwidth = true;          nuw = true; previewwindow = true;            pvw = true;
-    relativenumber = true;    rightleft = true;  rightleftcmd = true;             rl = true;
-               rlc = true;          rnu = true;           scb = true;            scl = true;
-               scr = true;       scroll = true;    scrollbind = true;     signcolumn = true;
-             spell = true;   statusline = true;           stl = true;            wfh = true;
-               wfw = true;        winbl = true;      winblend = true;   winfixheight = true;
-       winfixwidth = true; winhighlight = true;         winhl = true;           wrap = true;
-  }
-  local function new_buf_opt_accessor(bufnr)
-    local function get(k)
-      if window_options[k] then
-        return a.nvim_err_writeln(k.." is a window option, not a buffer option")
-      end
-      if bufnr == nil and type(k) == "number" then
-        return new_buf_opt_accessor(k)
-      end
-      return a.nvim_buf_get_option(bufnr or 0, k)
-    end
-    local function set(k, v)
-      if window_options[k] then
-        return a.nvim_err_writeln(k.." is a window option, not a buffer option")
-      end
-      return a.nvim_buf_set_option(bufnr or 0, k, v)
-    end
-    return make_meta_accessor(get, set)
-  end
-  vim.bo = new_buf_opt_accessor(nil)
-  local function new_win_opt_accessor(winnr)
-    local function get(k)
-      if winnr == nil and type(k) == "number" then
-        return new_win_opt_accessor(k)
-      end
-      return a.nvim_win_get_option(winnr or 0, k)
-    end
-    local function set(k, v) return a.nvim_win_set_option(winnr or 0, k, v) end
-    return make_meta_accessor(get, set)
-  end
-  vim.wo = new_win_opt_accessor(nil)
+  vim.g = make_dict_accessor('g')
+  vim.v = make_dict_accessor('v')
+  vim.b = make_dict_accessor('b')
+  vim.w = make_dict_accessor('w')
+  vim.t = make_dict_accessor('t')
 end
 
 --- Get a table of lines with start, end columns for a region marked by two points
@@ -471,6 +401,25 @@ function vim.defer_fn(fn, timeout)
   return timer
 end
 
+
+--- Notification provider
+--- without a runtime, writes to :Messages
+--  see :help nvim_notify
+--@param msg Content of the notification to show to the user
+--@param log_level Optional log level
+--@param opts Dictionary with optional options (timeout, etc)
+function vim.notify(msg, log_level, _opts)
+
+  if log_level == vim.log.levels.ERROR then
+    vim.api.nvim_err_writeln(msg)
+  elseif log_level == vim.log.levels.WARN then
+    vim.api.nvim_echo({{msg, 'WarningMsg'}}, true, {})
+  else
+    vim.api.nvim_echo({{msg}}, true, {})
+  end
+end
+
+
 local on_keystroke_callbacks = {}
 
 --- Register a lua {fn} with an {id} to be run after every keystroke.
@@ -526,5 +475,167 @@ function vim._log_keystroke(char)
       table.concat(failed_messages, "\n")))
   end
 end
+
+--- Generate a list of possible completions for the string.
+--- String starts with ^ and then has the pattern.
+---
+---     1. Can we get it to just return things in the global namespace with that name prefix
+---     2. Can we get it to return things from global namespace even with `print(` in front.
+function vim._expand_pat(pat, env)
+  env = env or _G
+
+  pat = string.sub(pat, 2, #pat)
+
+  if pat == '' then
+    local result = vim.tbl_keys(env)
+    table.sort(result)
+    return result, 0
+  end
+
+  -- TODO: We can handle spaces in [] ONLY.
+  --    We should probably do that at some point, just for cooler completion.
+  -- TODO: We can suggest the variable names to go in []
+  --    This would be difficult as well.
+  --    Probably just need to do a smarter match than just `:match`
+
+  -- Get the last part of the pattern
+  local last_part = pat:match("[%w.:_%[%]'\"]+$")
+  if not last_part then return {}, 0 end
+
+  local parts, search_index = vim._expand_pat_get_parts(last_part)
+
+  local match_part = string.sub(last_part, search_index, #last_part)
+  local prefix_match_pat = string.sub(pat, 1, #pat - #match_part) or ''
+
+  local final_env = env
+
+  for _, part in ipairs(parts) do
+    if type(final_env) ~= 'table' then
+      return {}, 0
+    end
+    local key
+
+    -- Normally, we just have a string
+    -- Just attempt to get the string directly from the environment
+    if type(part) == "string" then
+      key = part
+    else
+      -- However, sometimes you want to use a variable, and complete on it
+      --    With this, you have the power.
+
+      -- MY_VAR = "api"
+      -- vim[MY_VAR]
+      -- -> _G[MY_VAR] -> "api"
+      local result_key = part[1]
+      if not result_key then
+        return {}, 0
+      end
+
+      local result = rawget(env, result_key)
+
+      if result == nil then
+        return {}, 0
+      end
+
+      key = result
+    end
+    local field = rawget(final_env, key)
+    if field == nil then
+      local mt = getmetatable(final_env)
+      if mt and type(mt.__index) == "table" then
+        field = rawget(mt.__index, key)
+      end
+    end
+    final_env = field
+
+    if not final_env then
+      return {}, 0
+    end
+  end
+
+  local keys = {}
+  local function insert_keys(obj)
+    for k,_ in pairs(obj) do
+      if type(k) == "string" and string.sub(k,1,string.len(match_part)) == match_part then
+        table.insert(keys,k)
+      end
+    end
+  end
+
+  if type(final_env) == "table" then
+    insert_keys(final_env)
+  end
+  local mt = getmetatable(final_env)
+  if mt and type(mt.__index) == "table" then
+    insert_keys(mt.__index)
+  end
+
+  table.sort(keys)
+
+  return keys, #prefix_match_pat
+end
+
+vim._expand_pat_get_parts = function(lua_string)
+  local parts = {}
+
+  local accumulator, search_index = '', 1
+  local in_brackets, bracket_end = false, -1
+  local string_char = nil
+  for idx = 1, #lua_string do
+    local s = lua_string:sub(idx, idx)
+
+    if not in_brackets and (s == "." or s == ":") then
+      table.insert(parts, accumulator)
+      accumulator = ''
+
+      search_index = idx + 1
+    elseif s == "[" then
+      in_brackets = true
+
+      table.insert(parts, accumulator)
+      accumulator = ''
+
+      search_index = idx + 1
+    elseif in_brackets then
+      if idx == bracket_end then
+        in_brackets = false
+        search_index = idx + 1
+
+        if string_char == "VAR" then
+          table.insert(parts, { accumulator })
+          accumulator = ''
+
+          string_char = nil
+        end
+      elseif not string_char then
+        bracket_end = string.find(lua_string, ']', idx, true)
+
+        if s == '"' or s == "'" then
+          string_char = s
+        elseif s ~= ' ' then
+          string_char = "VAR"
+          accumulator = s
+        end
+      elseif string_char then
+        if string_char ~= s then
+          accumulator = accumulator .. s
+        else
+          table.insert(parts, accumulator)
+          accumulator = ''
+
+          string_char = nil
+        end
+      end
+    else
+      accumulator = accumulator .. s
+    end
+  end
+
+  parts = vim.tbl_filter(function(val) return #val > 0 end, parts)
+
+  return parts, search_index
+end
+
+pcall(require, 'vim._meta')
 
 return module

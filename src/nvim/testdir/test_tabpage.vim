@@ -142,9 +142,6 @@ endfunc
 
 " Test autocommands
 function Test_tabpage_with_autocmd()
-  if !has('autocmd')
-    return
-  endif
   command -nargs=1 -bar C :call add(s:li, '=== ' . <q-args> . ' ===')|<args>
   augroup TestTabpageGroup
     au!

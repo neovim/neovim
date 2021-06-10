@@ -2,7 +2,7 @@
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
-			     Select your language
+			Select your language (locale)
 
 
 The messages in Vim can be given in several languages.  This chapter explains

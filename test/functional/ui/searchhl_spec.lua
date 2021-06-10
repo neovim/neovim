@@ -20,7 +20,6 @@ describe('search highlighting', function()
       [2] = {background = colors.Yellow}, -- Search
       [3] = {reverse = true},
       [4] = {foreground = colors.Red}, -- Message
-      [5] = {bold = true, reverse = true},
       [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
     })
   end)
@@ -176,15 +175,7 @@ describe('search highlighting', function()
     ]])
     feed('/foo')
     helpers.poke_eventloop()
-    screen:expect{grid=[[
-        {3:foo} bar baz       {3:│}                   |
-        bar baz {2:foo}       {3:│}                   |
-        bar {2:foo} baz       {3:│}                   |
-                          {3:│}                   |
-      {1:~                   }{3:│}                   |
-      {5:[No Name] [+]        }{3:term               }|
-      /foo^                                    |
-    ]]}
+    screen:expect_unchanged()
   end)
 
   it('works with incsearch', function()
@@ -480,6 +471,19 @@ describe('search highlighting', function()
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
+    -- check hilights work also in folds
+    feed("zf4j")
+    command("%foldopen")
+    screen:expect([[
+        very {5:spec^ial}{2: te}{6:xt}                     |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {4:search hit BOTTOM, continuing at TOP}    |
+    ]])
+
     feed_command("call clearmatches()")
     screen:expect([[
         very spec{2:^ial te}xt                     |
@@ -503,7 +507,21 @@ describe('search highlighting', function()
       {1:~                                       }|
       :syntax keyword MyGroup special         |
     ]])
+  end)
 
+  it('highlights entire pattern on :%g@a/b', function()
+    command('set inccommand=nosplit')
+    feed('ia/b/c<Esc>')
+    feed(':%g@a/b')
+    screen:expect([[
+      {3:a/b}/c                                   |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      :%g@a/b^                                 |
+    ]])
   end)
 end)
 

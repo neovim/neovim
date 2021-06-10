@@ -45,7 +45,7 @@ void xfree(void *const p)
       return;
     }
   }
-  assert(false);
+  abort();
 }
 
 void *xrealloc(void *const p, size_t new_size)
@@ -63,7 +63,7 @@ void *xrealloc(void *const p, size_t new_size)
       return ret;
     }
   }
-  assert(false);
+  abort();
   return (void *)(intptr_t)1;
 }
 

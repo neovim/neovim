@@ -900,6 +900,7 @@ return {
       normal_fname_chars=true,
       vi_def=true,
       alloced=true,
+      expand=true,
       varname='p_ft',
       defaults={if_true={vi=""}}
     },
@@ -2073,6 +2074,14 @@ return {
       defaults={if_true={vi=0}}
     },
     {
+      full_name='quickfixtextfunc', abbreviation='qftf',
+      short_desc=N_("customize the quickfix window"),
+      type='string', scope={'global'},
+      vi_def=true,
+      varname='p_qftf',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='quoteescape', abbreviation='qe',
       short_desc=N_("escape characters used in a string"),
       type='string', scope={'buffer'},
@@ -2313,6 +2322,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       secure=true,
+      expand=true,
       varname='p_shadafile',
       defaults={if_true={vi=""}}
     },
@@ -2820,6 +2830,14 @@ return {
       defaults={if_true={vi=false}}
     },
     {
+      full_name='termpastefilter', abbreviation='tpf',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      vim=true,
+      varname='p_tpf',
+      defaults={if_true={vi="", vim="BS,HT,ESC,DEL"}}
+    },
+    {
       full_name='terse',
       short_desc=N_("hides notification of search wrap"),
       type='bool', scope={'global'},
@@ -2987,6 +3005,23 @@ return {
       vi_def=true,
       varname='p_ut',
       defaults={if_true={vi=4000}}
+    },
+    {
+      full_name='varsofttabstop', abbreviation='vsts',
+      short_desc=N_("list of numbers of spaces that <Tab> uses while editing"),
+      type='string', list='comma', scope={'buffer'},
+      vi_def=true,
+      varname='p_vsts',
+      defaults={if_true={vi=""}}
+    },
+    {
+      full_name='vartabstop', abbreviation='vts',
+      short_desc=N_("list of numbers of spaces that <Tab> in file uses"),
+      type='string', list='comma', scope={'buffer'},
+      vi_def=true,
+      varname='p_vts',
+      redraw={'current_buffer'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='verbose', abbreviation='vbs',

@@ -52,6 +52,37 @@ func Test_assert_fails_in_try_block()
   endtry
 endfunc
 
+func Test_assert_inrange()
+  call assert_equal(0, assert_inrange(7, 7, 7))
+  call assert_equal(0, assert_inrange(5, 7, 5))
+  call assert_equal(0, assert_inrange(5, 7, 6))
+  call assert_equal(0, assert_inrange(5, 7, 7))
+  call assert_equal(1, assert_inrange(5, 7, 4))
+  call assert_match("Expected range 5 - 7, but got 4", v:errors[0])
+  call remove(v:errors, 0)
+  call assert_equal(1, assert_inrange(5, 7, 8))
+  call assert_match("Expected range 5 - 7, but got 8", v:errors[0])
+  call remove(v:errors, 0)
+
+  call assert_fails('call assert_inrange(1, 1)', 'E119:')
+
+  if has('float')
+    call assert_equal(0, assert_inrange(7.0, 7, 7))
+    call assert_equal(0, assert_inrange(7, 7.0, 7))
+    call assert_equal(0, assert_inrange(7, 7, 7.0))
+    call assert_equal(0, assert_inrange(5, 7, 5.0))
+    call assert_equal(0, assert_inrange(5, 7, 6.0))
+    call assert_equal(0, assert_inrange(5, 7, 7.0))
+
+    call assert_equal(1, assert_inrange(5, 7, 4.0))
+    call assert_match("Expected range 5.0 - 7.0, but got 4.0", v:errors[0])
+    call remove(v:errors, 0)
+    call assert_equal(1, assert_inrange(5, 7, 8.0))
+    call assert_match("Expected range 5.0 - 7.0, but got 8.0", v:errors[0])
+    call remove(v:errors, 0)
+  endif
+endfunc
+
 " Must be last.
 func Test_zz_quit_detected()
   " Verify that if a test function ends Vim the test script detects this.

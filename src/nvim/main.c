@@ -375,7 +375,7 @@ int main(int argc, char **argv)
     // Does ":filetype plugin indent on".
     filetype_maybe_enable();
     // Sources syntax/syntax.vim, which calls `:filetype on`.
-    syn_maybe_on();
+    syn_maybe_enable();
   }
 
   // Read all the plugin files.
@@ -1404,9 +1404,9 @@ static void load_plugins(void)
 static void handle_quickfix(mparm_T *paramp)
 {
   if (paramp->edit_type == EDIT_QF) {
-    if (paramp->use_ef != NULL)
-      set_string_option_direct((char_u *)"ef", -1,
-          paramp->use_ef, OPT_FREE, SID_CARG);
+    if (paramp->use_ef != NULL) {
+      set_string_option_direct("ef", -1, paramp->use_ef, OPT_FREE, SID_CARG);
+    }
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, true, IObuff, p_menc) < 0) {
       msg_putchar('\n');
@@ -2006,7 +2006,7 @@ static void version(void)
   info_message = TRUE;  // use mch_msg(), not mch_errmsg()
   list_version();
   msg_putchar('\n');
-  msg_didout = false;
+  msg_didout = FALSE;
 }
 
 /// Prints help message for "nvim -h" or "nvim --help".
@@ -2044,7 +2044,6 @@ static void usage(void)
   mch_msg(_("  -u <config>           Use this config file\n"));
   mch_msg(_("  -v, --version         Print version information\n"));
   mch_msg(_("  -V[N][file]           Verbose [level][file]\n"));
-  mch_msg(_("  -Z                    Restricted mode\n"));
   mch_msg("\n");
   mch_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));

@@ -625,7 +625,7 @@ do_tag(
         }
         if (ic && !msg_scrolled && msg_silent == 0) {
           ui_flush();
-          os_delay(1000L, true);
+          os_delay(1007L, true);
         }
       }
 
@@ -908,7 +908,7 @@ add_llist_tags(
         if (len > 128) {
             len = 128;
         }
-        xstrlcpy((char *)tag_name, (const char *)tagp.tagname, len);
+        xstrlcpy((char *)tag_name, (const char *)tagp.tagname, len + 1);
         tag_name[len] = NUL;
 
         // Save the tag file name
@@ -975,7 +975,8 @@ add_llist_tags(
             if (cmd_len > (CMDBUFFSIZE - 5)) {
                 cmd_len = CMDBUFFSIZE - 5;
             }
-            xstrlcat((char *)cmd, (char *)cmd_start, cmd_len);
+            snprintf((char *)cmd + len, CMDBUFFSIZE + 1 - len,
+                     "%.*s", cmd_len, cmd_start);
             len += cmd_len;
 
             if (cmd[len - 1] == '$') {
@@ -1141,8 +1142,7 @@ static int find_tagfunc_tags(
   int         result = FAIL;
   typval_T  args[4];
   typval_T  rettv;
-  char_u      flagString[3];
-  dict_T  *d;
+  char_u flagString[4];
   taggy_T *tag = &curwin->w_tagstack[curwin->w_tagstackidx];
 
   if (*curbuf->b_p_tfu == NUL) {
@@ -1155,7 +1155,7 @@ static int find_tagfunc_tags(
   args[1].vval.v_string = flagString;
 
   // create 'info' dict argument
-  d = tv_dict_alloc();
+  dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
   if (tag->user_data != NULL) {
     tv_dict_add_str(d, S_LEN("user_data"), (const char *)tag->user_data);
   }
@@ -1170,9 +1170,10 @@ static int find_tagfunc_tags(
   args[3].v_type = VAR_UNKNOWN;
 
   vim_snprintf((char *)flagString, sizeof(flagString),
-               "%s%s",
+               "%s%s%s",
                g_tag_at_cursor      ? "c": "",
-               flags & TAG_INS_COMP ? "i": "");
+               flags & TAG_INS_COMP ? "i": "",
+               flags & TAG_REGEXP   ? "r": "");
 
   save_pos = curwin->w_cursor;
   result = call_vim_function(curbuf->b_p_tfu, 3, args, &rettv);
@@ -1461,7 +1462,7 @@ find_tags(
       p_ic = ignorecase_opt(pat, true, true);
       break;
     default:
-      assert(false);
+      abort();
   }
 
   help_save = curbuf->b_help;
@@ -2809,7 +2810,7 @@ static int jumpto_tag(
         // start search before first line
         curwin->w_cursor.lnum = 0;
       }
-      if (do_search(NULL, pbuf[0], pbuf + 1, (long)1,
+      if (do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, (long)1,
                     search_options, NULL)) {
         retval = OK;
       } else {
@@ -2819,8 +2820,8 @@ static int jumpto_tag(
         /*
          * try again, ignore case now
          */
-        p_ic = TRUE;
-        if (!do_search(NULL, pbuf[0], pbuf + 1, (long)1,
+        p_ic = true;
+        if (!do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, (long)1,
                        search_options, NULL)) {
           // Failed to find pattern, take a guess: "^func  ("
           found = 2;
@@ -2828,11 +2829,12 @@ static int jumpto_tag(
           cc = *tagp.tagname_end;
           *tagp.tagname_end = NUL;
           snprintf((char *)pbuf, LSIZE, "^%s\\s\\*(", tagp.tagname);
-          if (!do_search(NULL, '/', pbuf, (long)1, search_options, NULL)) {
+          if (!do_search(NULL, '/', '/', pbuf, (long)1, search_options, NULL)) {
             // Guess again: "^char * \<func  ("
             snprintf((char *)pbuf, LSIZE, "^\\[#a-zA-Z_]\\.\\*\\<%s\\s\\*(",
                      tagp.tagname);
-            if (!do_search(NULL, '/', pbuf, (long)1, search_options, NULL)) {
+            if (!do_search(NULL, '/', '/', pbuf, (long)1,
+                           search_options, NULL)) {
               found = 0;
             }
           }
@@ -2850,7 +2852,7 @@ static int jumpto_tag(
             MSG(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
               ui_flush();
-              os_delay(1000L, true);
+              os_delay(1010L, true);
             }
           }
           retval = OK;
@@ -3002,15 +3004,16 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
  */
 static int find_extra(char_u **pp)
 {
-  char_u      *str = *pp;
+  char_u *str = *pp;
+  char_u first_char = **pp;
 
   // Repeat for addresses separated with ';'
   for (;; ) {
     if (ascii_isdigit(*str)) {
-      str = skipdigits(str);
+      str = skipdigits(str + 1);
     } else if (*str == '/' || *str == '?') {
       str = skip_regexp(str + 1, *str, false, NULL);
-      if (*str != **pp) {
+      if (*str != first_char) {
         str = NULL;
       } else {
         str++;
@@ -3028,6 +3031,7 @@ static int find_extra(char_u **pp)
       break;
     }
     str++;  // skip ';'
+    first_char = *str;
   }
 
   if (str != NULL && STRNCMP(str, ";\"", 2) == 0) {
@@ -3152,7 +3156,7 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
   bool is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
-                  TAG_REGEXP | TAG_NOIC, (int)MAXCOL, buf_fname);
+                  TAG_REGEXP | TAG_NOIC, MAXCOL, buf_fname);
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; ++i) {
       int parse_result = parse_match(matches[i], &tp);
@@ -3404,6 +3408,7 @@ int set_tagstack(win_T *wp, const dict_T *d, int action)
 
   if ((di = tv_dict_find(d, "items", -1)) != NULL) {
     if (di->di_tv.v_type != VAR_LIST) {
+      EMSG(_(e_listreq));
       return FAIL;
     }
     l = di->di_tv.vval.v_list;

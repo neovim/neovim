@@ -33,6 +33,7 @@
 #cmakedefine HAVE_STRCASECMP
 #cmakedefine HAVE_STRINGS_H
 #cmakedefine HAVE_STRNCASECMP
+#cmakedefine HAVE_STRPTIME
 #cmakedefine HAVE_SYS_SDT_H
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_WAIT_H
@@ -40,6 +41,7 @@
 #cmakedefine HAVE_WORKING_LIBINTL
 #cmakedefine HAVE_WSL
 #cmakedefine UNIX
+#cmakedefine CASE_INSENSITIVE_FILENAME
 #cmakedefine USE_FNAME_CASE
 #cmakedefine HAVE_SYS_UIO_H
 #ifdef HAVE_SYS_UIO_H

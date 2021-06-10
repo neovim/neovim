@@ -219,6 +219,7 @@ list_T *tv_list_alloc(const ptrdiff_t len)
   list->lv_used_next = gc_first_list;
   gc_first_list = list;
   list_log(list, NULL, (void *)(uintptr_t)len, "alloc");
+  list->lua_table_ref = LUA_NOREF;
   return list;
 }
 
@@ -302,7 +303,7 @@ void tv_list_free_list(list_T *const l)
   }
   list_log(l, NULL, NULL, "freelist");
 
-  nlua_free_typval_list(l);
+  NLUA_CLEAR_REF(l->lua_table_ref);
   xfree(l);
 }
 
@@ -1109,6 +1110,7 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
   watcher->key_pattern_len = key_pattern_len;
   watcher->callback = callback;
   watcher->busy = false;
+  watcher->needs_free = false;
   QUEUE_INSERT_TAIL(&dict->watchers, &watcher->node);
 }
 
@@ -1182,22 +1184,30 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
   QUEUE *w = NULL;
   DictWatcher *watcher = NULL;
   bool matched = false;
-  QUEUE_FOREACH(w, &dict->watchers) {
+  bool queue_is_busy = false;
+  QUEUE_FOREACH(w, &dict->watchers, {
     watcher = tv_dict_watcher_node_data(w);
+    if (watcher->busy) {
+      queue_is_busy = true;
+    }
     if (tv_callback_equal(&watcher->callback, &callback)
         && watcher->key_pattern_len == key_pattern_len
         && memcmp(watcher->key_pattern, key_pattern, key_pattern_len) == 0) {
       matched = true;
       break;
     }
-  }
+  })
 
   if (!matched) {
     return false;
   }
 
-  QUEUE_REMOVE(w);
-  tv_dict_watcher_free(watcher);
+  if (queue_is_busy) {
+    watcher->needs_free = true;
+  } else {
+    QUEUE_REMOVE(w);
+    tv_dict_watcher_free(watcher);
+  }
   return true;
 }
 
@@ -1258,9 +1268,10 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
 
   typval_T rettv;
 
+  bool any_needs_free = false;
   dict->dv_refcount++;
   QUEUE *w;
-  QUEUE_FOREACH(w, &dict->watchers) {
+  QUEUE_FOREACH(w, &dict->watchers, {
     DictWatcher *watcher = tv_dict_watcher_node_data(w);
     if (!watcher->busy && tv_dict_watcher_matches(watcher, key)) {
       rettv = TV_INITIAL_VALUE;
@@ -1268,7 +1279,19 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
       tv_clear(&rettv);
+      if (watcher->needs_free) {
+        any_needs_free = true;
+      }
     }
+  })
+  if (any_needs_free) {
+    QUEUE_FOREACH(w, &dict->watchers, {
+      DictWatcher *watcher = tv_dict_watcher_node_data(w);
+      if (watcher->needs_free) {
+        QUEUE_REMOVE(w);
+        tv_dict_watcher_free(watcher);
+      }
+    })
   }
   tv_dict_unref(dict);
 
@@ -1382,6 +1405,8 @@ dict_T *tv_dict_alloc(void)
   d->dv_copyID = 0;
   QUEUE_INIT(&d->watchers);
 
+  d->lua_table_ref = LUA_NOREF;
+
   return d;
 }
 
@@ -1432,7 +1457,7 @@ void tv_dict_free_dict(dict_T *const d)
     d->dv_used_next->dv_used_prev = d->dv_used_prev;
   }
 
-  nlua_free_typval_dict(d);
+  NLUA_CLEAR_REF(d->lua_table_ref);
   xfree(d);
 }
 
@@ -1521,6 +1546,33 @@ varnumber_T tv_dict_get_number(const dict_T *const d, const char *const key)
     return 0;
   }
   return tv_get_number(&di->di_tv);
+}
+
+/// Converts a dict to an environment
+///
+///
+char **tv_dict_to_env(dict_T *denv)
+{
+  size_t env_size = (size_t)tv_dict_len(denv);
+
+  size_t i = 0;
+  char **env = NULL;
+
+  // + 1 for NULL
+  env = xmalloc((env_size + 1) * sizeof(*env));
+
+  TV_DICT_ITER(denv, var, {
+    const char *str = tv_get_string(&var->di_tv);
+    assert(str);
+    size_t len = STRLEN(var->di_key) + strlen(str) + strlen("=") + 1;
+    env[i] = xmalloc(len);
+    snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
+    i++;
+  });
+
+  // must be null terminated
+  env[env_size] = NULL;
+  return env;
 }
 
 /// Get a string item from a dictionary
@@ -2046,12 +2098,20 @@ void tv_dict_set_keys_readonly(dict_T *const dict)
 ///
 /// @return [allocated] pointer to the created list.
 list_T *tv_list_alloc_ret(typval_T *const ret_tv, const ptrdiff_t len)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   list_T *const l = tv_list_alloc(len);
   tv_list_set_ret(ret_tv, l);
   ret_tv->v_lock = VAR_UNLOCKED;
   return l;
+}
+
+dict_T *tv_dict_alloc_lock(VarLockStatus lock)
+  FUNC_ATTR_NONNULL_RET
+{
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = lock;
+  return d;
 }
 
 /// Allocate an empty dictionary for a return value
@@ -2062,9 +2122,8 @@ list_T *tv_list_alloc_ret(typval_T *const ret_tv, const ptrdiff_t len)
 void tv_dict_alloc_ret(typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
-  dict_T *const d = tv_dict_alloc();
+  dict_T *const d = tv_dict_alloc_lock(VAR_UNLOCKED);
   tv_dict_set_ret(ret_tv, d);
-  ret_tv->v_lock = VAR_UNLOCKED;
 }
 
 //{{{3 Clear
@@ -2494,7 +2553,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
       break;
     }
     case VAR_UNKNOWN: {
-      assert(false);
+      abort();
     }
   }
 #undef CHANGE_LOCK
@@ -2666,7 +2725,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
     }
   }
 
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2719,7 +2778,7 @@ bool tv_check_str_or_nr(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2764,7 +2823,7 @@ bool tv_check_num(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 
@@ -2809,7 +2868,7 @@ bool tv_check_str(const typval_T *const tv)
       return false;
     }
   }
-  assert(false);
+  abort();
   return false;
 }
 

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:    FORTH
 " Current Maintainer:  Johan Kotlinski <kotlinski@gmail.com>
-" Previous Maintainer:  Christian V. J. Brüssow <cvjb@cvjb.de>
+" Previous Maintainer:  Christian V. J. BrÃ¼ssow <cvjb@cvjb.de>
 " Last Change: 2018-03-29
 " Filenames:   *.fs,*.ft
 " URL:	       https://github.com/jkotlinski/forth.vim

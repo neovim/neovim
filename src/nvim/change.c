@@ -68,7 +68,7 @@ void change_warning(int col)
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
-      os_delay(1000L, true);  // give the user time to think about it
+      os_delay(1002L, true);  // give the user time to think about it
     }
     curbuf->b_did_warn = true;
     redraw_cmdline = false;  // don't redraw and erase the message
@@ -109,7 +109,7 @@ void changed(void)
       // and don't let the emsg() set msg_scroll.
       if (need_wait_return && emsg_silent == 0) {
         ui_flush();
-        os_delay(2000L, true);
+        os_delay(2002L, true);
         wait_return(true);
         msg_scroll = save_msg_scroll;
       } else {
@@ -828,6 +828,7 @@ int copy_indent(int size, char_u *src)
   int tab_pad;
   int ind_done;
   int round;
+  int ind_col;
 
   // Round 1: compute the number of characters needed for the indent
   // Round 2: copy the characters.
@@ -835,13 +836,15 @@ int copy_indent(int size, char_u *src)
     todo = size;
     ind_len = 0;
     ind_done = 0;
+    ind_col = 0;
     s = src;
 
     // Count/copy the usable portion of the source line.
     while (todo > 0 && ascii_iswhite(*s)) {
       if (*s == TAB) {
-        tab_pad = (int)curbuf->b_p_ts
-                  - (ind_done % (int)curbuf->b_p_ts);
+        tab_pad = tabstop_padding(ind_done,
+                                  curbuf->b_p_ts,
+                                  curbuf->b_p_vts_array);
 
         // Stop if this tab will overshoot the target.
         if (todo < tab_pad) {
@@ -849,9 +852,11 @@ int copy_indent(int size, char_u *src)
         }
         todo -= tab_pad;
         ind_done += tab_pad;
+        ind_col += tab_pad;
       } else {
         todo--;
         ind_done++;
+        ind_col++;
       }
       ind_len++;
 
@@ -862,11 +867,12 @@ int copy_indent(int size, char_u *src)
     }
 
     // Fill to next tabstop with a tab, if possible.
-    tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
+    tab_pad = tabstop_padding(ind_done, curbuf->b_p_ts, curbuf->b_p_vts_array);
 
     if ((todo >= tab_pad) && !curbuf->b_p_et) {
       todo -= tab_pad;
       ind_len++;
+      ind_col += tab_pad;
 
       if (p != NULL) {
         *p++ = TAB;
@@ -874,12 +880,20 @@ int copy_indent(int size, char_u *src)
     }
 
     // Add tabs required for indent.
-    while (todo >= (int)curbuf->b_p_ts && !curbuf->b_p_et) {
-      todo -= (int)curbuf->b_p_ts;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = TAB;
+    if (!curbuf->b_p_et) {
+      for (;;) {
+        tab_pad = tabstop_padding(ind_col,
+                                  curbuf->b_p_ts,
+                                  curbuf->b_p_vts_array);
+        if (todo < tab_pad) {
+          break;
+        }
+        todo -= tab_pad;
+        ind_len++;
+        ind_col += tab_pad;
+        if (p != NULL) {
+          *p++ = TAB;
+        }
       }
     }
 
@@ -1029,7 +1043,9 @@ int open_line(
       || do_si
       ) {
     // count white space on current line
-    newindent = get_indent_str(saved_line, (int)curbuf->b_p_ts, false);
+    newindent = get_indent_str_vtab(saved_line,
+                                    curbuf->b_p_ts,
+                                    curbuf->b_p_vts_array, false);
     if (newindent == 0 && !(flags & OPENLINE_COM_LIST)) {
       newindent = second_line_indent;  // for ^^D command in insert mode
     }
@@ -1453,7 +1469,9 @@ int open_line(
         if (curbuf->b_p_ai
             || do_si
             ) {
-          newindent = get_indent_str(leader, (int)curbuf->b_p_ts, false);
+          newindent = get_indent_str_vtab(leader,
+                                          curbuf->b_p_ts,
+                                          curbuf->b_p_vts_array, false);
         }
 
         // Add the indent offset
@@ -1677,10 +1695,12 @@ int open_line(
       int new_len = (int)STRLEN(saved_line);
 
       // TODO(vigoux): maybe there is issues there with expandtabs ?
+      int cols_spliced = 0;
       if (new_len < curwin->w_cursor.col) {
         extmark_splice_cols(
-            curbuf, (int)curwin->w_cursor.lnum,
+            curbuf, (int)curwin->w_cursor.lnum - 1,
             new_len, curwin->w_cursor.col - new_len, 0, kExtmarkUndo);
+        cols_spliced = curwin->w_cursor.col - new_len;
       }
 
       saved_line = NULL;
@@ -1698,7 +1718,7 @@ int open_line(
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
         int cols_added = mincol-1+less_cols_off-less_cols;
-        extmark_splice(curbuf, (int)lnum-1, mincol-1,
+        extmark_splice(curbuf, (int)lnum-1, mincol-1 - cols_spliced,
                        0, less_cols_off, less_cols_off,
                        1, cols_added, 1 + cols_added, kExtmarkUndo);
       } else {

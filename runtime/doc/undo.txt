@@ -60,9 +60,9 @@ with the redo command.  If you make a new change after the undo command,
 the redo will not be possible anymore.
 
 'u' included, the Vi-compatible way:
-The undo command undoes the previous change, and also the previous undo command.
-The redo command repeats the previous undo command.  It does NOT repeat a
-change command, use "." for that.
+The undo command undoes the previous change, and also the previous undo
+command.  The redo command repeats the previous undo command.  It does NOT
+repeat a change command, use "." for that.
 
 Examples	Vim way			Vi-compatible way	~
 "uu"		two times undo		no-op
@@ -98,7 +98,7 @@ change again.  But you can do something like this: >
 
 	:undojoin | delete
 
-After this an "u" command will undo the delete command and the previous
+After this a "u" command will undo the delete command and the previous
 change.
 
 To do the opposite, break a change into two undo blocks, in Insert mode use
@@ -257,7 +257,7 @@ respectively:
 		(the magic number at the start of the file is wrong), then
 		this fails, unless the ! was added.
 		If it exists and does look like an undo file it is
-		overwritten. If there is no undo-history, nothing will be 
+		overwritten. If there is no undo-history, nothing will be
 		written.
 		Implementation detail: Overwriting happens by first deleting
 		the existing file and then creating a new file with the same
@@ -371,7 +371,7 @@ back the text of three deletes ago with '"3P'.
 						*redo-register*
 If you want to get back more than one part of deleted text, you can use a
 special feature of the repeat command ".".  It will increase the number of the
-register used.  So if you first do ""1P", the following "." will result in a
+register used.  So if you first do '"1P', the following "." will result in a
 '"2P'.  Repeating this will result in all numbered registers being inserted.
 
 Example:	If you deleted text with 'dd....' it can be restored with

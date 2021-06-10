@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Nov 04
+" Last Change:	2020 Apr 13
 
 " This file sets up for syntax highlighting.
 " It is loaded from "syntax.vim" and "manual.vim".
@@ -52,9 +52,11 @@ fun! s:SynSet()
 
   if s != ""
     " Load the syntax file(s).  When there are several, separated by dots,
-    " load each in sequence.
+    " load each in sequence.  Skip empty entries.
     for name in split(s, '\.')
-      exe "runtime! syntax/" . name . ".vim syntax/" . name . "/*.vim"
+      if !empty(name)
+	exe "runtime! syntax/" . name . ".vim syntax/" . name . "/*.vim"
+      endif
     endfor
   endif
 endfun

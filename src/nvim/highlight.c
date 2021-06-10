@@ -8,6 +8,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/map.h"
 #include "nvim/message.h"
+#include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
@@ -151,7 +152,7 @@ int hl_get_syn_attr(int ns_id, int idx, HlAttrs at_en)
 
 void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
-  DecorProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_decor_provider(ns_id, true);
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
       && map_has(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id))) {
     return;
@@ -175,7 +176,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     ns_id = ns_hl_active;
   }
 
-  DecorProvider *p = get_provider(ns_id, true);
+  DecorProvider *p = get_decor_provider(ns_id, true);
   ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id));
   // TODO(bfredl): map_ref true even this?
   bool valid_cache = it.version >= p->hl_valid;
@@ -341,6 +342,25 @@ void update_window_hl(win_T *wp, bool invalid)
     }
     wp->w_hl_attrs[hlf] = attr;
   }
+
+  wp->w_float_config.shadow = false;
+  if (wp->w_floating && wp->w_float_config.border) {
+    for (int i = 0; i < 8; i++) {
+      int attr = wp->w_hl_attrs[HLF_BORDER];
+      if (wp->w_float_config.border_hl_ids[i]) {
+        attr = hl_get_ui_attr(HLF_BORDER, wp->w_float_config.border_hl_ids[i],
+                              false);
+        HlAttrs a = syn_attr2entry(attr);
+        if (a.hl_blend) {
+          wp->w_float_config.shadow = true;
+        }
+      }
+      wp->w_float_config.border_attr[i] = attr;
+    }
+  }
+
+  // shadow might cause blending
+  check_blending(wp);
 }
 
 /// Gets HL_UNDERLINE highlight.
@@ -517,6 +537,10 @@ static HlAttrs get_colors_force(int attr)
 /// @return the resulting attributes.
 int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 {
+  if (front_attr < 0 || back_attr < 0) {
+    return -1;
+  }
+
   HlAttrs fattrs = get_colors_force(front_attr);
   int ratio = fattrs.hl_blend;
   if (ratio <= 0) {
@@ -782,8 +806,11 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
 {
   HlAttrs hlattrs = HLATTRS_INIT;
 
-  int32_t fg = -1, bg = -1, sp = -1;
+  int32_t fg = -1, bg = -1, ctermfg = -1, ctermbg = -1, sp = -1;
   int16_t mask = 0;
+  int16_t cterm_mask = 0;
+  bool cterm_mask_provided = false;
+
   for (size_t i = 0; i < dict.size; i++) {
     char *key = dict.items[i].key.data;
     Object val = dict.items[i].value;
@@ -813,6 +840,25 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       }
     }
 
+    // Handle cterm attrs
+    if (strequal(key, "cterm") && val.type == kObjectTypeDictionary) {
+      cterm_mask_provided = true;
+      Dictionary cterm_dict = val.data.dictionary;
+      for (size_t l = 0; l < cterm_dict.size; l++) {
+        char *cterm_dict_key = cterm_dict.items[l].key.data;
+        Object cterm_dict_val = cterm_dict.items[l].value;
+        for (int m = 0; flags[m].name; m++) {
+          if (strequal(flags[m].name, cterm_dict_key)) {
+            if (api_object_to_bool(cterm_dict_val, cterm_dict_key, false,
+                                   err)) {
+              cterm_mask |= flags[m].flag;
+            }
+          break;
+          }
+        }
+      }
+    }
+
     struct {
       const char *name;
       const char *shortname;
@@ -820,6 +866,8 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     } colors[] = {
       { "foreground", "fg", &fg },
       { "background", "bg", &bg },
+      { "ctermfg", NULL, &ctermfg },
+      { "ctermbg", NULL, &ctermbg },
       { "special", "sp", &sp },
       { NULL, NULL, NULL },
     };
@@ -843,7 +891,6 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
       }
     }
 
-
     if (flags[j].name || colors[k].name) {
       // handled above
     } else if (link_id && strequal(key, "link")) {
@@ -864,13 +911,22 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     }
   }
 
+  // apply gui mask as default for cterm mask
+  if (!cterm_mask_provided) {
+    cterm_mask = mask;
+  }
   if (use_rgb) {
     hlattrs.rgb_ae_attr = mask;
     hlattrs.rgb_bg_color = bg;
     hlattrs.rgb_fg_color = fg;
     hlattrs.rgb_sp_color = sp;
+    hlattrs.cterm_bg_color =
+        ctermbg == -1 ? cterm_normal_bg_color : ctermbg + 1;
+    hlattrs.cterm_fg_color =
+        ctermfg == -1 ? cterm_normal_fg_color : ctermfg + 1;
+    hlattrs.cterm_ae_attr = cterm_mask;
   } else {
-    hlattrs.cterm_ae_attr = mask;
+    hlattrs.cterm_ae_attr = cterm_mask;
     hlattrs.cterm_bg_color = bg == -1 ? cterm_normal_bg_color : bg + 1;
     hlattrs.cterm_fg_color = fg == -1 ? cterm_normal_fg_color : fg + 1;
   }

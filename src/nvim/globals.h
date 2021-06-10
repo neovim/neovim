@@ -139,9 +139,8 @@ EXTERN int mod_mask INIT(= 0x0);  // current key modifiers
 EXTERN int cmdline_row;
 
 EXTERN int redraw_cmdline INIT(= false);          // cmdline must be redrawn
-EXTERN bool redraw_mode INIT(= false);            // mode must be redrawn
 EXTERN int clear_cmdline INIT(= false);           // cmdline must be cleared
-EXTERN bool mode_displayed INIT(= false);         // mode is being displayed
+EXTERN int mode_displayed INIT(= false);          // mode is being displayed
 EXTERN int cmdline_star INIT(= false);            // cmdline is crypted
 EXTERN int redrawing_cmdline INIT(= false);       // cmdline is being redrawn
 EXTERN int cmdline_was_last_drawn INIT(= false);  // cmdline was last drawn
@@ -181,6 +180,11 @@ EXTERN int compl_cont_status INIT(= 0);
 # define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
                                 // expansion, (eg use complete=.)
 
+EXTERN char_u *edit_submode INIT(= NULL);        // msg for CTRL-X submode
+EXTERN char_u *edit_submode_pre INIT(= NULL);    // prepended to edit_submode
+EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
+EXTERN hlf_T edit_submode_highl;                 // highl. method for extra info
+
 // state for putting characters in the message area
 EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
@@ -200,7 +204,7 @@ EXTERN int keep_msg_attr INIT(= 0);         // highlight attr for keep_msg
 EXTERN int keep_msg_more INIT(= false);     // keep_msg was set by msgmore()
 EXTERN int need_fileinfo INIT(= false);     // do fileinfo() after redraw
 EXTERN int msg_scroll INIT(= false);        // msg_start() will scroll
-EXTERN bool msg_didout INIT(= false);       // msg_outstr() was used in line
+EXTERN int msg_didout INIT(= false);        // msg_outstr() was used in line
 EXTERN int msg_didany INIT(= false);        // msg_outstr() was used at all
 EXTERN int msg_nowait INIT(= false);        // don't wait for this msg
 EXTERN int emsg_off INIT(= 0);              // don't display errors for now,
@@ -216,6 +220,8 @@ EXTERN bool emsg_severe INIT(= false);      // use message of next of several
 EXTERN int did_endif INIT(= false);         // just had ":endif"
 EXTERN dict_T vimvardict;                   // Dictionary with v: variables
 EXTERN dict_T globvardict;                  // Dictionary with g: variables
+/// g: value
+#define globvarht globvardict.dv_hashtab
 EXTERN int did_emsg;                        // set by emsg() when the message
                                             // is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
@@ -250,7 +256,7 @@ EXTERN linenr_T sourcing_lnum INIT(= 0);    // line number of the source file
 
 EXTERN int ex_nesting_level INIT(= 0);          // nesting level
 EXTERN int debug_break_level INIT(= -1);        // break below this level
-EXTERN int debug_did_msg INIT(= false);         // did "debug mode" message
+EXTERN bool debug_did_msg INIT(= false);        // did "debug mode" message
 EXTERN int debug_tick INIT(= 0);                // breakpoint change count
 EXTERN int debug_backtrace_level INIT(= 0);     // breakpoint backtrace level
 
@@ -327,9 +333,10 @@ EXTERN int garbage_collect_at_exit INIT(= false);
 #define SID_ENV         -4      // for sourcing environment variable
 #define SID_ERROR       -5      // option was reset because of an error
 #define SID_NONE        -6      // don't set scriptID
-#define SID_LUA         -7      // for Lua scripts/chunks
-#define SID_API_CLIENT  -8      // for API clients
-#define SID_STR         -9      // for sourcing a string
+#define SID_WINLAYOUT   -7      // changing window size
+#define SID_LUA         -8      // for Lua scripts/chunks
+#define SID_API_CLIENT  -9      // for API clients
+#define SID_STR         -10     // for sourcing a string
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });
@@ -462,7 +469,7 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
 
 // Iterate through all the signs placed in a buffer
 #define FOR_ALL_SIGNS_IN_BUF(buf, sign) \
-  for (sign = buf->b_signlist; sign != NULL; sign = sign->next)   // NOLINT
+  for (sign = buf->b_signlist; sign != NULL; sign = sign->se_next)   // NOLINT
 
 
 // List of files being edited (global argument list).  curwin->w_alist points
@@ -638,10 +645,6 @@ EXTERN int arrow_used;                  // Normally false, set to true after
                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT(= false);   // put cursor after eol when
                                         // restarting edit after CTRL-O
-EXTERN char_u *edit_submode INIT(= NULL);  // msg for CTRL-X submode
-EXTERN char_u *edit_submode_pre INIT(= NULL);  // prepended to edit_submode
-EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
-EXTERN hlf_T edit_submode_highl;        // highl. method for extra info
 
 EXTERN int no_abbr INIT(= true);        // true when no abbreviations loaded
 
@@ -865,7 +868,6 @@ EXTERN char_u e_failed[] INIT(= N_("E472: Command failed"));
 EXTERN char_u e_internal[] INIT(= N_("E473: Internal error"));
 EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_interr[] INIT(= N_("Interrupted"));
-EXTERN char_u e_invaddr[] INIT(= N_("E14: Invalid address"));
 EXTERN char_u e_invarg[] INIT(= N_("E474: Invalid argument"));
 EXTERN char_u e_invarg2[] INIT(= N_("E475: Invalid argument: %s"));
 EXTERN char_u e_invargval[] INIT(= N_("E475: Invalid value for argument %s"));
@@ -985,6 +987,8 @@ EXTERN char_u e_dirnotf[] INIT(= N_(
     "E919: Directory not found in '%s': \"%s\""));
 EXTERN char_u e_au_recursive[] INIT(= N_(
     "E952: Autocommand caused recursive behavior"));
+EXTERN char_u e_autocmd_close[] INIT(= N_(
+    "E813: Cannot close autocmd window"));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
@@ -1009,6 +1013,8 @@ EXTERN char_u e_floatonly[] INIT(=N_(
 EXTERN char_u e_floatexchange[] INIT(=N_(
     "E5602: Cannot exchange or rotate float"));
 
+EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_(
+    "E1155: Cannot define autocommands for ALL events"));
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

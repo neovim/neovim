@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Apr 23
+" Last Change:	2021 Jan 11
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -12,6 +12,9 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
+
+" check if this was included from cpp.vim
+let s:in_cpp_family = exists("b:filetype_in_cpp_family")
 
 " Optional embedded Autodoc parsing
 " To enable it add: let g:c_autodoc = 1
@@ -55,7 +58,7 @@ if !exists("c_no_cformat")
 endif
 
 " cCppString: same as cString, but ends at end of line
-if s:ft ==# "cpp" && !exists("cpp_no_cpp11") && !exists("c_no_cformat")
+if s:in_cpp_family && !exists("cpp_no_cpp11") && !exists("c_no_cformat")
   " ISO C++11
   syn region	cString		start=+\(L\|u\|u8\|U\|R\|LR\|u8R\|uR\|UR\)\="+ skip=+\\\\\|\\"+ end=+"+ contains=cSpecial,cFormat,@Spell extend
   syn region 	cCppString	start=+\(L\|u\|u8\|U\|R\|LR\|u8R\|uR\|UR\)\="+ skip=+\\\\\|\\"\|\\$+ excludenl end=+"+ end='$' contains=cSpecial,cFormat,@Spell
@@ -87,7 +90,7 @@ syn match	cSpecialCharacter display "L\='\\\o\{1,3}'"
 syn match	cSpecialCharacter display "'\\x\x\{1,2}'"
 syn match	cSpecialCharacter display "L'\\x\x\+'"
 
-if (s:ft ==# "c" && !exists("c_no_c11")) || (s:ft ==# "cpp" && !exists("cpp_no_cpp11"))
+if (s:ft ==# "c" && !exists("c_no_c11")) || (s:in_cpp_family && !exists("cpp_no_cpp11"))
   " ISO C11 or ISO C++ 11
   if exists("c_no_cformat")
     syn region	cString		start=+\%(U\|u8\=\)"+ skip=+\\\\\|\\"+ end=+"+ contains=cSpecial,@Spell extend
@@ -130,21 +133,21 @@ endif
 " But avoid matching <::.
 syn cluster	cParenGroup	contains=cParenError,cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserLabel,cBitField,cOctalZero,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom
 if exists("c_no_curly_error")
-  if s:ft ==# 'cpp' && !exists("cpp_no_cpp11")
+  if s:in_cpp_family && !exists("cpp_no_cpp11")
     syn region	cParen		transparent start='(' end=')' contains=ALLBUT,@cParenGroup,cCppParen,@cStringGroup,@Spell
     " cCppParen: same as cParen but ends at end-of-line; used in cDefine
     syn region	cCppParen	transparent start='(' skip='\\$' excludenl end=')' end='$' contained contains=ALLBUT,@cParenGroup,cParen,cString,@Spell
     syn match	cParenError	display ")"
     syn match	cErrInParen	display contained "^^<%\|^%>"
   else
-    syn region	cParen		transparent start='(' end=')' end='}'me=s-1 contains=ALLBUT,cBlock,@cParenGroup,cCppParen,@cStringGroup,@Spell
+    syn region	cParen		transparent start='(' end=')' contains=ALLBUT,cBlock,@cParenGroup,cCppParen,@cStringGroup,@Spell
     " cCppParen: same as cParen but ends at end-of-line; used in cDefine
     syn region	cCppParen	transparent start='(' skip='\\$' excludenl end=')' end='$' contained contains=ALLBUT,@cParenGroup,cParen,cString,@Spell
     syn match	cParenError	display ")"
     syn match	cErrInParen	display contained "^[{}]\|^<%\|^%>"
   endif
 elseif exists("c_no_bracket_error")
-  if s:ft ==# 'cpp' && !exists("cpp_no_cpp11")
+  if s:in_cpp_family && !exists("cpp_no_cpp11")
     syn region	cParen		transparent start='(' end=')' contains=ALLBUT,@cParenGroup,cCppParen,@cStringGroup,@Spell
     " cCppParen: same as cParen but ends at end-of-line; used in cDefine
     syn region	cCppParen	transparent start='(' skip='\\$' excludenl end=')' end='$' contained contains=ALLBUT,@cParenGroup,cParen,cString,@Spell
@@ -158,7 +161,7 @@ elseif exists("c_no_bracket_error")
     syn match	cErrInParen	display contained "[{}]\|<%\|%>"
   endif
 else
-  if s:ft ==# 'cpp' && !exists("cpp_no_cpp11")
+  if s:in_cpp_family && !exists("cpp_no_cpp11")
     syn region	cParen		transparent start='(' end=')' contains=ALLBUT,@cParenGroup,cCppParen,cErrInBracket,cCppBracket,@cStringGroup,@Spell
     " cCppParen: same as cParen but ends at end-of-line; used in cDefine
     syn region	cCppParen	transparent start='(' skip='\\$' excludenl end=')' end='$' contained contains=ALLBUT,@cParenGroup,cErrInBracket,cParen,cBracket,cString,@Spell
@@ -272,12 +275,13 @@ if exists("c_gnu")
   syn keyword	cType		__label__ __complex__ __volatile__
 endif
 
-syn keyword	cStructure	struct union enum typedef
+syn keyword	cTypedef	typedef
+syn keyword	cStructure	struct union enum
 syn keyword	cStorageClass	static register auto volatile extern const
 if exists("c_gnu")
   syn keyword	cStorageClass	inline __attribute__
 endif
-if !exists("c_no_c99") && s:ft !=# 'cpp'
+if !exists("c_no_c99") && !s:in_cpp_family
   syn keyword	cStorageClass	inline restrict
 endif
 if !exists("c_no_c11")
@@ -311,8 +315,7 @@ if !exists("c_no_ansi") || exists("c_ansi_constants") || exists("c_gnu")
   if exists("c_gnu")
     syn keyword cConstant __GNUC__ __FUNCTION__ __PRETTY_FUNCTION__ __func__
   endif
-  syn keyword cConstant __LINE__ __FILE__ __DATE__ __TIME__ __STDC__
-  syn keyword cConstant __STDC_VERSION__
+  syn keyword cConstant __LINE__ __FILE__ __DATE__ __TIME__ __STDC__ __STDC_VERSION__ __STDC_HOSTED__
   syn keyword cConstant CHAR_BIT MB_LEN_MAX MB_CUR_MAX
   syn keyword cConstant UCHAR_MAX UINT_MAX ULONG_MAX USHRT_MAX
   syn keyword cConstant CHAR_MIN INT_MIN LONG_MIN SHRT_MIN
@@ -346,6 +349,8 @@ if !exists("c_no_ansi") || exists("c_ansi_constants") || exists("c_gnu")
   syn keyword cConstant SIGSTOP SIGTERM SIGTRAP SIGTSTP SIGTTIN SIGTTOU SIGUSR1 SIGUSR2
   syn keyword cConstant _IOFBF _IOLBF _IONBF BUFSIZ EOF WEOF FOPEN_MAX FILENAME_MAX L_tmpnam
   syn keyword cConstant SEEK_CUR SEEK_END SEEK_SET TMP_MAX stderr stdin stdout EXIT_FAILURE EXIT_SUCCESS RAND_MAX
+  " used in assert.h
+  syn keyword cConstant NDEBUG
   " POSIX 2001
   syn keyword cConstant SIGBUS SIGPOLL SIGPROF SIGSYS SIGURG SIGVTALRM SIGXCPU SIGXFSZ
   " non-POSIX signals
@@ -418,7 +423,7 @@ endif
 syn cluster	cLabelGroup	contains=cUserLabel
 syn match	cUserCont	display "^\s*\zs\I\i*\s*:$" contains=@cLabelGroup
 syn match	cUserCont	display ";\s*\zs\I\i*\s*:$" contains=@cLabelGroup
-if s:ft ==# 'cpp'
+if s:in_cpp_family
   syn match	cUserCont	display "^\s*\zs\%(class\|struct\|enum\)\@!\I\i*\s*:[^:]"me=e-1 contains=@cLabelGroup
   syn match	cUserCont	display ";\s*\zs\%(class\|struct\|enum\)\@!\I\i*\s*:[^:]"me=e-1 contains=@cLabelGroup
 else
@@ -475,6 +480,7 @@ hi def link cSpecialError	cError
 hi def link cCurlyError		cError
 hi def link cOperator		Operator
 hi def link cStructure		Structure
+hi def link cTypedef		Structure
 hi def link cStorageClass	StorageClass
 hi def link cInclude		Include
 hi def link cPreProc		PreProc

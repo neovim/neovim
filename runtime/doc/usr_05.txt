@@ -45,8 +45,8 @@ This file is always used and is recommended:
 	~/AppData/Local/nvim/init.vim   (Windows) ~
 
 The vimrc file can contain all the commands that you type after a colon.  The
-most simple ones are for setting options.  For example, if you want Vim to
-always start with the 'ignorecase' option on, add this line your vimrc file: >
+simplest ones are for setting options.  For example, if you want Vim to always
+start with the 'incsearch' option on, add this line your vimrc file: >
 
 	set ignorecase
 

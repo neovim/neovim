@@ -2078,7 +2078,7 @@ viml_pexpr_parse_process_token:
       case kExprLexMissing:
       case kExprLexSpacing:
       case kExprLexEOC: {
-        assert(false);
+        abort();
       }
       case kExprLexInvalid: {
         ERROR_FROM_TOKEN(cur_token);
@@ -3028,7 +3028,7 @@ viml_pexpr_parse_end:
           // Until trailing "}" it is impossible to distinguish curly braces
           // identifier and dictionary, so it must not appear in the stack like
           // this.
-          assert(false);
+          abort();
         }
         case kExprNodeInteger:
         case kExprNodeFloat:
@@ -3042,7 +3042,7 @@ viml_pexpr_parse_end:
           // These are plain values and not containers, for them it should only
           // be possible to show up in the topmost stack element, but it was
           // unconditionally popped at the start.
-          assert(false);
+          abort();
         }
         case kExprNodeComma:
         case kExprNodeColon:

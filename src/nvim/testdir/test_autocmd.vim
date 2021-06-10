@@ -76,7 +76,7 @@ if has('timers')
   endfunc
 
   func Test_OptionSet_modeline()
-    throw 'skipped: Nvim does not support test_override()'
+    CheckFunction test_override
     call test_override('starting', 1)
     au! OptionSet
     augroup set_tabstop
@@ -190,7 +190,6 @@ func Test_autocmd_bufunload_avoiding_SEGV_02()
 
   normal! i1
   call assert_fails('edit a.txt', 'E517:')
-  call feedkeys("\<CR>")
 
   autocmd! test_autocmd_bufunload
   augroup! test_autocmd_bufunload
@@ -276,28 +275,28 @@ func Test_augroup_warning()
   augroup TheWarning
     au VimEnter * echo 'entering'
   augroup END
-  call assert_true(match(execute('au VimEnter'), "TheWarning.*VimEnter") >= 0)
+  call assert_match("TheWarning.*VimEnter", execute('au VimEnter'))
   redir => res
   augroup! TheWarning
   redir END
-  call assert_true(match(res, "W19:") >= 0)
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("W19:", res)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
 
   " check "Another" does not take the pace of the deleted entry
   augroup Another
   augroup END
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
   augroup! Another
 
   " no warning for postpone aucmd delete
   augroup StartOK
     au VimEnter * call RemoveGroup()
   augroup END
-  call assert_true(match(execute('au VimEnter'), "StartOK.*VimEnter") >= 0)
+  call assert_match("StartOK.*VimEnter", execute('au VimEnter'))
   redir => res
   doautocmd VimEnter
   redir END
-  call assert_true(match(res, "W19:") < 0)
+  call assert_notmatch("W19:", res)
   au! VimEnter
 endfunc
 
@@ -325,7 +324,7 @@ func Test_augroup_deleted()
     au VimEnter * echo
   augroup end
   augroup! x
-  call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  call assert_match("-Deleted-.*VimEnter", execute('au VimEnter'))
   au! VimEnter
 endfunc
 
@@ -452,6 +451,27 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
   endfor
 endfunc
 
+" Using :blast and :ball for many events caused a crash, because b_nwindows was
+" not incremented correctly.
+func Test_autocmd_blast_badd()
+  let content =<< trim [CODE]
+      au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* blast
+      edit foo1
+      au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* ball
+      edit foo2
+      call writefile(['OK'], 'Xerrors')
+      qall
+  [CODE]
+
+  call writefile(content, 'XblastBall')
+  call system(GetVimCommand() .. ' --clean -S XblastBall')
+  " call assert_match('OK', readfile('Xerrors')->join())
+  call assert_match('OK', join(readfile('Xerrors')))
+
+  call delete('XblastBall')
+  call delete('Xerrors')
+endfunc
+
 " SEGV occurs in older versions.
 func Test_autocmd_bufwipe_in_SessLoadPost2()
   tabnew
@@ -507,7 +527,7 @@ func s:AutoCommandOptionSet(match)
 endfunc
 
 func Test_OptionSet()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   if !has("eval") || !exists("+autochdir")
     return
   endif
@@ -648,7 +668,7 @@ func Test_OptionSet()
 endfunc
 
 func Test_OptionSet_diffmode()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   call test_override('starting', 1)
   " 18: Changing an option when entering diff mode
   new
@@ -682,7 +702,7 @@ func Test_OptionSet_diffmode()
 endfunc
 
 func Test_OptionSet_diffmode_close()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   call test_override('starting', 1)
   " 19: Try to close the current window when entering diff mode
   " should not segfault
@@ -1110,14 +1130,14 @@ func Test_BufReadCmd()
 endfunc
 
 func SetChangeMarks(start, end)
-  exe a:start. 'mark ['
-  exe a:end. 'mark ]'
+  exe a:start .. 'mark ['
+  exe a:end .. 'mark ]'
 endfunc
 
 " Verify the effects of autocmds on '[ and ']
 func Test_change_mark_in_autocmds()
   edit! Xtest
-  call feedkeys("ia\<CR>b\<CR>c\<CR>d\<C-g>u", 'xtn')
+  call feedkeys("ia\<CR>b\<CR>c\<CR>d\<C-g>u\<Esc>", 'xtn')
 
   call SetChangeMarks(2, 3)
   write
@@ -1279,32 +1299,15 @@ func Test_TextYankPost()
   bwipe!
 endfunc
 
-func Test_nocatch_wipe_all_buffers()
-  " Real nasty autocommand: wipe all buffers on any event.
-  au * * bwipe *
-  call assert_fails('next x', 'E93')
-  bwipe
-  au!
-endfunc
-
-func Test_nocatch_wipe_dummy_buffer()
-  " Nasty autocommand: wipe buffer on any event.
-  au * x bwipe
-  call assert_fails('lv½ /x', 'E480')
-  au!
-endfunc
-
-func Test_wipe_cbuffer()
-  sv x
-  au * * bw
-  lb
-  au!
+func Test_autocommand_all_events()
+  call assert_fails('au * * bwipe', 'E1155:')
+  call assert_fails('au * x bwipe', 'E1155:')
 endfunc
 
 " Test TextChangedI and TextChangedP
+" See test/functional/viml/completion_spec.lua'
 func Test_ChangedP()
-  " Nvim does not support test_override().
-  throw 'skipped: see test/functional/viml/completion_spec.lua'
+  CheckFunction test_override
   new
   call setline(1, ['foo', 'bar', 'foobar'])
   call test_override("char_avail", 1)
@@ -1367,7 +1370,7 @@ func SetLineOne()
 endfunc
 
 func Test_TextChangedI_with_setline()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   new
   call test_override('char_avail', 1)
   autocmd TextChangedI <buffer> call SetLineOne()
@@ -1383,9 +1386,11 @@ func Test_TextChangedI_with_setline()
 endfunc
 
 func Test_Changed_FirstTime()
-  if !has('terminal') || has('gui_running')
-    return
-  endif
+  CheckFeature terminal
+  CheckNotGui
+  " Starting a terminal to run Vim is always considered flaky.
+  let g:test_is_flaky = 1
+
   " Prepare file for TextChanged event.
   call writefile([''], 'Xchanged.txt')
   let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
@@ -1939,21 +1944,69 @@ func Test_autocmd_window()
   %bw!
   edit one.txt
   tabnew two.txt
+  vnew three.txt
+  tabnew four.txt
+  tabprevious
   let g:blist = []
-  augroup aucmd_win_test
+  augroup aucmd_win_test1
     au!
     au BufEnter * call add(g:blist, [expand('<afile>'),
           \ win_gettype(bufwinnr(expand('<afile>')))])
   augroup END
 
   doautoall BufEnter
-  call assert_equal([['one.txt', 'autocmd'], ['two.txt', '']], g:blist)
+  call assert_equal([
+        \ ['one.txt', 'autocmd'],
+        \ ['two.txt', ''],
+        \ ['four.txt', 'autocmd'],
+        \ ['three.txt', ''],
+        \ ], g:blist)
 
+  augroup aucmd_win_test1
+    au!
+  augroup END
+  augroup! aucmd_win_test1
+  %bw!
+endfunc
+
+" Test for trying to close the tab that has the temporary window for exeucing
+" an autocmd.
+func Test_close_autocmd_tab()
+  edit one.txt
+  tabnew two.txt
+   augroup aucmd_win_test
+    au!
+    au BufEnter * if expand('<afile>') == 'one.txt' | tabfirst | tabonly | endif
+  augroup END
+
+  call assert_fails('doautoall BufEnter', 'E813:')
+
+  tabonly
   augroup aucmd_win_test
     au!
   augroup END
   augroup! aucmd_win_test
-  %bw!
+  %bwipe!
+endfunc
+
+func Test_autocmd_closes_window()
+  au BufNew,BufWinLeave * e %e
+  file yyy
+  au BufNew,BufWinLeave * ball
+  call assert_fails('n xxx', 'E143:')
+
+  bwipe %
+  au! BufNew
+  au! BufWinLeave
+endfunc
+
+func Test_autocmd_closing_cmdwin()
+  au BufWinLeave * nested q
+  call assert_fails("norm 7q?\n", 'E855:')
+
+  au! BufWinLeave
+  new
+  only
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -136,7 +136,7 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
       end)
 
       it('with nargs/count', function()
-        call(fn, args..', {"nargs": "1", "range": "5"}')
+        call(fn, args..', {"nargs": "1", "count": "5"}')
         local function on_setup()
           command('5RpcCommand arg')
         end
@@ -152,7 +152,7 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
       end)
 
       it('with nargs/count/bang', function()
-        call(fn, args..', {"nargs": "1", "range": "5", "bang": ""}')
+        call(fn, args..', {"nargs": "1", "count": "5", "bang": ""}')
         local function on_setup()
           command('5RpcCommand! arg')
         end
@@ -169,7 +169,7 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
       end)
 
       it('with nargs/count/bang/register', function()
-        call(fn, args..', {"nargs": "1", "range": "5", "bang": "",'..
+        call(fn, args..', {"nargs": "1", "count": "5", "bang": "",'..
         ' "register": ""}')
         local function on_setup()
           command('5RpcCommand! b arg')
@@ -188,7 +188,7 @@ local function command_specs_for(fn, sync, first_arg_factory, init)
       end)
 
       it('with nargs/count/bang/register/eval', function()
-        call(fn, args..', {"nargs": "1", "range": "5", "bang": "",'..
+        call(fn, args..', {"nargs": "1", "count": "5", "bang": "",'..
         ' "register": "", "eval": "@<reg>"}')
         local function on_setup()
           command('let @b = "regb"')

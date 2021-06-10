@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	matlab
 " Maintainer:	Jake Wasserman <jwasserman at gmail dot com>
-" Last Changed: 2014 Dec 30
+" Last Change: 	2019 Sep 27
 
 " Contributors:
 " Charles Campbell
@@ -24,8 +24,9 @@ endif
 
 setlocal suffixesadd=.m
 setlocal suffixes+=.asv
+setlocal commentstring=%\ %s
 
-let b:undo_ftplugin = "setlocal suffixesadd< suffixes< "
+let b:undo_ftplugin = "setlocal suffixesadd< suffixes< commentstring< "
 	\ . "| unlet! b:match_words"
 
 let &cpo = s:save_cpo

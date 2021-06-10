@@ -158,3 +158,98 @@ describe('API: highlight',function()
     assert_alive()
   end)
 end)
+
+describe("API: set highlight", function()
+  local highlight_color = {
+    fg = tonumber('0xff0000'),
+    bg = tonumber('0x0032aa'),
+    ctermfg = 8,
+    ctermbg = 15,
+  }
+  local highlight1 = {
+    background = highlight_color.bg,
+    foreground = highlight_color.fg,
+    bold = true,
+    italic = true,
+  }
+  local highlight2_config = {
+    ctermbg = highlight_color.ctermbg,
+    ctermfg = highlight_color.ctermfg,
+    underline = true,
+    reverse = true,
+  }
+  local highlight2_result = {
+    background = highlight_color.ctermbg,
+    foreground = highlight_color.ctermfg,
+    underline = true,
+    reverse = true,
+  }
+  local highlight3_config = {
+    background = highlight_color.bg,
+    foreground = highlight_color.fg,
+    ctermbg = highlight_color.ctermbg,
+    ctermfg = highlight_color.ctermfg,
+    bold = true,
+    italic = true,
+    reverse = true,
+    undercurl = true,
+    underline = true,
+    cterm = {
+      italic = true,
+      reverse = true,
+      undercurl = true,
+    }
+  }
+  local highlight3_result_gui = {
+    background = highlight_color.bg,
+    foreground = highlight_color.fg,
+    bold = true,
+    italic = true,
+    reverse = true,
+    undercurl = true,
+    underline = true,
+  }
+  local highlight3_result_cterm = {
+    background = highlight_color.ctermbg,
+    foreground = highlight_color.ctermfg,
+    italic = true,
+    reverse = true,
+    undercurl = true,
+  }
+
+  local function get_ns()
+    local ns = meths.create_namespace('Test_set_hl')
+    meths._set_hl_ns(ns)
+    return ns
+  end
+
+  before_each(clear)
+
+  it ("can set gui highlight", function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight1)
+    eq(highlight1, meths.get_hl_by_name('Test_hl', true))
+  end)
+
+  it ("can set cterm highlight", function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight2_config)
+    eq(highlight2_result, meths.get_hl_by_name('Test_hl', false))
+  end)
+
+  it ("cterm attr defaults to gui attr", function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight1)
+    eq({
+      bold = true,
+      italic = true,
+    }, meths.get_hl_by_name('Test_hl', false))
+  end)
+
+  it ("can overwrite attr for cterm", function()
+    local ns = get_ns()
+    meths.set_hl(ns, 'Test_hl', highlight3_config)
+    eq(highlight3_result_gui, meths.get_hl_by_name('Test_hl', true))
+    eq(highlight3_result_cterm, meths.get_hl_by_name('Test_hl', false))
+  end)
+end)

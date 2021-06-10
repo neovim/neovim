@@ -18,7 +18,8 @@ an idea of what lurks beneath: >
 
 Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
 "editor stdlib" (|functions| and Ex commands) and the |API|, all of which can
-be used from Lua code.
+be used from Lua code. A good overview of using Lua in neovim is given by
+https://github.com/nanotee/nvim-lua-guide.
 
 Module conflicts are resolved by "last wins".  For example if both of these
 are on 'runtimepath':
@@ -622,6 +623,9 @@ vim.api.{func}({...})					*vim.api*
         Example: call the "nvim_get_current_line()" API function: >
             print(tostring(vim.api.nvim_get_current_line()))
 
+vim.version()    					*vim.version*
+        Returns the version of the current neovim build.
+
 vim.in_fast_event()					*vim.in_fast_event()*
         Returns true if the code is executing as part of a "fast" event
         handler, where most of the API is disabled. These are low-level events
@@ -645,42 +649,6 @@ vim.empty_dict()					    *vim.empty_dict()*
 
 	Note: if numeric keys are added to the table, the metatable will be
 	ignored and the dict converted to a list/array anyway.
-
-vim.region({bufnr}, {pos1}, {pos2}, {type}, {inclusive})       *vim.region()*
-        Converts a selection specified by the buffer ({bufnr}), starting
-        position ({pos1}, a zero-indexed pair `{line1,column1}`), ending
-        position ({pos2}, same format as {pos1}), the type of the register
-        for the selection ({type}, see |regtype|), and a boolean indicating
-        whether the selection is inclusive or not, into a zero-indexed table 
-        of linewise selections of the form `{linenr = {startcol, endcol}}` .
-
-                                             *vim.register_keystroke_callback()*
-vim.register_keystroke_callback({fn}, {ns_id})
-        Register a lua {fn} with an {ns_id} to be run after every keystroke.
-
-        Parameters: ~
-            {fn}: (function): Function to call on keystroke.
-                    It should take one argument, which is a string.
-                    The string will contain the literal keys typed.
-                    See |i_CTRL-V|
-
-                    If {fn} is `nil`, it removes the callback for the
-                    associated {ns_id}.
-
-            {ns_id}: (number)  Namespace ID. If not passed or 0, will generate
-                     and return a new namespace ID from |nvim_create_namespace()|
-
-        Return: ~
-            (number) Namespace ID associated with {fn}
-
-        NOTE: {fn} will be automatically removed if an error occurs while
-        calling. This is to prevent the annoying situation of every keystroke
-        erroring while trying to remove a broken callback.
-
-        NOTE: {fn} will receive the keystrokes after mappings have been
-        evaluated
-
-        NOTE: {fn} will *NOT* be cleared from |nvim_buf_clear_namespace()|
 
 vim.rpcnotify({channel}, {method}[, {args}...])		    *vim.rpcnotify()*
 	Sends {event} to {channel} via |RPC| and returns immediately.
@@ -828,6 +796,7 @@ LUA-VIMSCRIPT BRIDGE                                    *lua-vimscript*
 
 Nvim Lua provides an interface to Vimscript variables and functions, and
 editor commands and options.
+See also https://github.com/nanotee/nvim-lua-guide.
 
 vim.call({func}, {...})					*vim.call()*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.
@@ -836,10 +805,18 @@ vim.call({func}, {...})					*vim.call()*
             vim.fn[func]({...})
 
 vim.cmd({cmd})                                          *vim.cmd()*
-        Invokes an Ex command (the ":" commands, Vimscript statements).
+        Executes multiple lines of Vimscript at once. It is an alias to
+        |nvim_exec()|, where `output` is set to false. Thus it works identical
+        to |:source|.
         See also |ex-cmd-index|.
         Example: >
             vim.cmd('echo 42')
+            vim.cmd([[
+              augroup My_group
+                autocmd!
+                autocmd FileType c setlocal cindent
+              augroup END
+            ]])
 
 vim.fn.{func}({...})					*vim.fn*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.
@@ -899,9 +876,167 @@ vim.env                                                 *vim.env*
             print(vim.env.TERM)
 <
 
-                                                        *lua-vim-options*
-From Lua you can work with editor |options| by reading and setting items in
-these Lua tables:
+                                                             *lua-vim-options*
+                                                                 *lua-vim-opt*
+                                                                 *lua-vim-set*
+                                                            *lua-vim-optlocal*
+                                                            *lua-vim-setlocal*
+
+In vimL, there is a succint and simple way to set options. For more
+information, see |set-option|. In Lua, the corresponding method is `vim.opt`.
+
+`vim.opt` provides several conveniences for setting and controlling options
+from within Lua.
+
+    Examples: ~
+
+    To set a boolean toggle:
+        In vimL:
+            `set number`
+
+        In Lua:
+            `vim.opt.number = true`
+
+    To set an array of values:
+        In vimL:
+            `set wildignore=*.o,*.a,__pycache__`
+
+        In Lua, there are two ways you can do this now. One is very similar to
+        the vimL way:
+            `vim.opt.wildignore = '*.o,*.a,__pycache__'`
+
+        However, vim.opt also supports a more elegent way of setting
+        list-style options, but using lua tables:
+            `vim.opt.wildignore = { '*.o', '*.a', '__pycache__' }`
+
+    To replicate the behavior of |:set+=|, use: >
+
+        -- vim.opt supports appending options via the "+" operator
+        vim.opt.wildignore = vim.opt.wildignore + { "*.pyc", "node_modules" }
+
+        -- or using the `:append(...)` method
+        vim.opt.wildignore:append { "*.pyc", "node_modules" }
+<
+
+    To replicate the behavior of |:set^=|, use: >
+
+        -- vim.opt supports prepending options via the "^" operator
+        vim.opt.wildignore = vim.opt.wildignore ^ { "new_first_value" }
+
+        -- or using the `:prepend(...)` method
+        vim.opt.wildignore:prepend { "new_first_value" }
+<
+    To replicate the behavior of |:set-=|, use: >
+
+        -- vim.opt supports removing options via the "-" operator
+        vim.opt.wildignore = vim.opt.wildignore - { "node_modules" }
+
+        -- or using the `:remove(...)` method
+        vim.opt.wildignore:remove { "node_modules" }
+<
+    To set a map of values:
+        In vimL:
+            `set listchars=space:_,tab:>~`
+
+        In Lua:
+            `vim.opt.listchars = { space = '_', tab = '>~' }`
+
+
+In any of the above examples, to replicate the behavior |setlocal|, use
+`vim.opt_local`. Additionally, to replicate the behavior of |setglobal|, use
+`vim.opt_global`.
+                                                                     *vim.opt*
+
+|vim.opt| returns an Option object.
+
+For example: `local listchar_object = vim.opt.listchar`
+
+An `Option` has the following methods:
+
+
+                                                               *vim.opt:get()*
+Option:get()
+
+    Returns a lua-representation of the option. Boolean, number and string
+    values will be returned in exactly the same fashion.
+
+    For values that are comma-separated lists, an array will be returned with
+    the values as entries in the array: >
+        vim.cmd [[set wildignore=*.pyc,*.o]]
+
+        print(vim.inspect(vim.opt.wildignore:get()))
+        -- { "*.pyc", "*.o", }
+
+        for _, ignore_pattern in ipairs(vim.opt.wildignore:get()) do
+            print("Will ignore:", ignore_pattern)
+        end
+        -- Will ignore: *.pyc
+        -- Will ignore: *.o
+<
+    For values that are comma-separated maps, a table will be returned with
+    the names as keys and the values as entries: >
+        vim.cmd [[set listchars=space:_,tab:>~]]
+
+        print(vim.inspect(vim.opt.listchars:get()))
+        --  { space = "_", tab = ">~", }
+
+        for char, representation in pairs(vim.opt.listchars:get()) do
+            print(char, "->", representation)
+        end
+<
+    For values that are lists of flags, a set will be returned with the flags
+    as keys and `true` as entries. >
+        vim.cmd [[set formatoptions=njtcroql]]
+
+        print(vim.inspect(vim.opt.formatoptions:get()))
+        -- { n = true, j = true, c = true, ... }
+
+        local format_opts = vim.opt.formatoptions:get()
+        if format_opts.j then
+            print("J is enabled!")
+        end
+<
+                                                            *vim.opt:append()*
+Option:append(value)
+
+    Append a value to string-style options. See |:set+=|
+
+    These are equivalent:
+        `vim.opt.formatoptions:append('j')`
+        `vim.opt.formatoptions = vim.opt.formatoptions + 'j'`
+
+                                                           *vim.opt:prepend()*
+Option:prepend(value)
+
+    Prepend a value to string-style options. See |:set^=|
+
+    These are equivalent:
+        `vim.opt.wildignore:prepend('*.o')`
+        `vim.opt.wildignore = vim.opt.wildignore ^ '*.o'`
+
+                                                            *vim.opt:remove()*
+Option:remove(value)
+
+    Remove a value from string-style options. See |:set-=|
+
+    These are equivalent:
+        `vim.opt.wildignore:remove('*.pyc')`
+        `vim.opt.wildignore = vim.opt.wildignore - '*.pyc'`
+
+
+In general, using `vim.opt` will provide the expected result when the user is
+used to interacting with editor |options| via `set`. There are still times
+where the user may want to set particular options via a shorthand in Lua,
+which is where |vim.o|, |vim.bo|, |vim.wo|, and |vim.go| come into play.
+
+The behavior of |vim.o|, |vim.bo|, |vim.wo|, and |vim.go| is designed to
+follow that of |:set|, |:setlocal|, and |:setglobal| which can be seen in the
+table below:
+
+    lua            command      global_value       local_value ~
+vim.o           :set                set                set
+vim.bo/vim.wo   :setlocal            -                 set
+vim.go          :setglobal          set                 -
 
 vim.o                                                   *vim.o*
         Get or set editor options, like |:set|. Invalid key is an error.
@@ -909,14 +1044,36 @@ vim.o                                                   *vim.o*
             vim.o.cmdheight = 4
             print(vim.o.columns)
 
+
+vim.go                                                  *vim.go*
+        Get or set an |option|. Invalid key is an error.
+
+        This is a wrapper around |nvim_set_option()| and |nvim_get_option()|.
+
+        NOTE: This is different than |vim.o| because this ONLY sets the global
+        option, which generally produces confusing behavior for options with
+        |global-local| values.
+
+        Example: >
+            vim.go.cmdheight = 4
+<
+
 vim.bo                                                  *vim.bo*
         Get or set buffer-scoped |local-options|. Invalid key is an error.
+
+        This is a wrapper around |nvim_buf_set_option()| and
+        |nvim_buf_get_option()|.
+
         Example: >
             vim.bo.buflisted = true
             print(vim.bo.comments)
 
 vim.wo                                                  *vim.wo*
         Get or set window-scoped |local-options|. Invalid key is an error.
+
+        This is a wrapper around |nvim_win_set_option()| and
+        |nvim_win_get_option()|.
+
         Example: >
             vim.wo.cursorcolumn = true
             print(vim.wo.foldmarker)
@@ -925,6 +1082,23 @@ vim.wo                                                  *vim.wo*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
+defer_fn({fn}, {timeout})                                     *vim.defer_fn()*
+                Defers calling `fn` until `timeout` ms passes.
+
+                Use to do a one-shot timer that calls `fn` Note: The {fn} is |schedule_wrap|ped automatically, so API
+                functions are safe to call.
+
+                Parameters: ~
+                    {fn}       Callback to call once `timeout` expires
+                    {timeout}  Number of milliseconds to wait before calling
+                               `fn`
+
+                Return: ~
+                    timer luv timer object
+
+insert_keys({obj})                                         *vim.insert_keys()*
+                TODO: Documentation
+
 inspect({object}, {options})                                   *vim.inspect()*
                 Return a human-readable representation of the given object.
 
@@ -932,8 +1106,18 @@ inspect({object}, {options})                                   *vim.inspect()*
                     https://github.com/kikito/inspect.lua
                     https://github.com/mpeterv/vinspect
 
-make_meta_accessor({get}, {set}, {del})             *vim.make_meta_accessor()*
+make_dict_accessor({scope})                         *vim.make_dict_accessor()*
                 TODO: Documentation
+
+notify({msg}, {log_level}, {_opts})                             *vim.notify()*
+                Notification provider without a runtime, writes to :Messages
+
+                Parameters: ~
+                    {msg}        Content of the notification to show to the
+                                 user
+                    {log_level}  Optional log level
+                    {opts}       Dictionary with optional options (timeout,
+                                 etc)
 
 paste({lines}, {phase})                                          *vim.paste()*
                 Paste handler, invoked by |nvim_paste()| when a conforming UI
@@ -966,6 +1150,53 @@ paste({lines}, {phase})                                          *vim.paste()*
 
                 See also: ~
                     |paste|
+
+region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
+                Get a table of lines with start, end columns for a region
+                marked by two points
+
+                Parameters: ~
+                    {bufnr}      number of buffer
+                    {pos1}       (line, column) tuple marking beginning of
+                                 region
+                    {pos2}       (line, column) tuple marking end of region
+                    {regtype}    type of selection (:help setreg)
+                    {inclusive}  boolean indicating whether the selection is
+                                 end-inclusive
+
+                Return: ~
+                    region lua table of the form {linenr = {startcol,endcol}}
+
+                                           *vim.register_keystroke_callback()*
+register_keystroke_callback({fn}, {ns_id})
+                Register a lua {fn} with an {id} to be run after every
+                keystroke.
+
+                If {fn} is nil, it removes the callback for the associated
+                {ns_id}
+                Note:
+                    {fn} will not be cleared from |nvim_buf_clear_namespace()|
+
+                Note:
+                    {fn} will receive the keystrokes after mappings have been
+                    evaluated
+
+                Parameters: ~
+                    {fn}     function: Function to call. It should take one
+                          argument, which is a string. The string will contain
+                          the literal keys typed. See |i_CTRL-V|
+                    {ns_id}  number? Namespace ID. If not passed or 0, will
+                             generate and return a new namespace ID from
+                             |nvim_create_namesapce()|
+
+                Return: ~
+                    number Namespace ID associated with {fn}
+
+                Note:
+                    {fn} will be automatically removed if an error occurs
+                    while calling. This is to prevent the annoying situation
+                    of every keystroke erroring while trying to remove a
+                    broken callback.
 
 schedule_wrap({cb})                                      *vim.schedule_wrap()*
                 Defers callback `cb` until the Nvim API is safe to call.
@@ -1051,6 +1282,18 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
 
                 See also: ~
                     |vim.tbl_extend()|
+
+list_slice({list}, {start}, {finish})                       *vim.list_slice()*
+                Creates a copy of a table containing only elements from start
+                to end (inclusive)
+
+                Parameters: ~
+                    {list}    table table
+                    {start}   integer Start range of slice
+                    {finish}  integer End range of slice
+
+                Return: ~
+                    Copy of table sliced from start to finish (inclusive)
 
 pesc({s})                                                         *vim.pesc()*
                 Escapes magic chars in a Lua pattern.

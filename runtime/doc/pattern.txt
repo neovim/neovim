@@ -219,7 +219,7 @@ This is like executing two search commands after each other, except that:
 							*last-pattern*
 The last used pattern and offset are remembered.  They can be used to repeat
 the search, possibly in another direction or with another count.  Note that
-two patterns are remembered: One for 'normal' search commands and one for the
+two patterns are remembered: One for "normal" search commands and one for the
 substitute command ":s".  Each time an empty pattern is given, the previously
 used pattern is used.  However, if there is no previous search command, a
 previous substitute pattern is used, if possible.
@@ -351,8 +351,8 @@ For starters, read chapter 27 of the user manual |usr_27.txt|.
 						*/atom*
 5. An atom can be one of a long list of items.  Many atoms match one character
    in the text.  It is often an ordinary character or a character class.
-   Braces can be used to make a pattern into an atom.  The "\z(\)" construct
-   is only for syntax highlighting.
+   Parentheses can be used to make a pattern into an atom.  The "\z(\)"
+   construct is only for syntax highlighting.
 
    atom    ::=	    ordinary-atom		|/ordinary-atom|
 		or  \( pattern \)		|/\(|
@@ -384,15 +384,19 @@ the pattern will not match.  This is only useful when debugging Vim.
 ==============================================================================
 3. Magic							*/magic*
 
-Some characters in the pattern are taken literally.  They match with the same
-character in the text.  When preceded with a backslash however, these
-characters get a special meaning.
+Some characters in the pattern, such as letters, are taken literally.  They
+match exactly the same character in the text.  When preceded with a backslash
+however, these characters may get a special meaning.  For example, "a" matches
+the letter "a", while "\a" matches any alphabetic character.
 
 Other characters have a special meaning without a backslash.  They need to be
-preceded with a backslash to match literally.
+preceded with a backslash to match literally.  For example "." matches any
+character while "\." matches a dot.
 
 If a character is taken literally or not depends on the 'magic' option and the
-items mentioned next.
+items in the pattern mentioned next.  The 'magic' option should always be set,
+but it can be switched off for Vi compatibility.  We mention the effect of
+'nomagic' here for completeness, but we recommend against using that.
 							*/\m* */\M*
 Use of "\m" makes the pattern after it be interpreted as if 'magic' is set,
 ignoring the actual value of the 'magic' option.
@@ -401,30 +405,28 @@ Use of "\M" makes the pattern after it be interpreted as if 'nomagic' is used.
 Use of "\v" means that after it, all ASCII characters except '0'-'9', 'a'-'z',
 'A'-'Z' and '_' have special meaning: "very magic"
 
-Use of "\V" means that after it, only a backslash and terminating character
-(usually / or ?) have special meaning: "very nomagic"
+Use of "\V" means that after it, only a backslash and the terminating
+character (usually / or ?) have special meaning: "very nomagic"
 
 Examples:
 after:	  \v	   \m	    \M	     \V		matches ~
 		'magic' 'nomagic'
-	  $	   $	    $	     \$		matches end-of-line
-	  .	   .	    \.	     \.		matches any character
+	  a	   a	    a	     a		literal 'a'
+	  \a	   \a	    \a	     \a		any alphabetic character
+	  .	   .	    \.	     \.		any character
+	  \.	   \.	    .	     .		literal dot
+	  $	   $	    $	     \$		end-of-line
 	  *	   *	    \*	     \*		any number of the previous atom
 	  ~	   ~	    \~	     \~		latest substitute string
-	  ()	   \(\)     \(\)     \(\)	grouping into an atom
-	  |	   \|	    \|	     \|		separating alternatives
-	  \a	   \a	    \a	     \a		alphabetic character
+	  ()	   \(\)     \(\)     \(\)	group as an atom
+	  |	   \|	    \|	     \|		nothing: separates alternatives
 	  \\	   \\	    \\	     \\		literal backslash
-	  \.	   \.	    .	     .		literal dot
-	  \{	   {	    {	     {		literal '{'
-	  a	   a	    a	     a		literal 'a'
+	  \{	   {	    {	     {		literal curly brace
 
 {only Vim supports \m, \M, \v and \V}
 
-It is recommended to always keep the 'magic' option at the default setting,
-which is 'magic'.  This avoids portability problems.  To make a pattern immune
-to the 'magic' option being set or not, put "\m" or "\M" at the start of the
-pattern.
+If you want to you can make a pattern immune to the 'magic' option being set
+or not by putting "\m" or "\M" at the start of the pattern.
 
 ==============================================================================
 4. Overview of pattern items				*pattern-overview*
@@ -666,7 +668,7 @@ overview.
 
 	Note that using "\&" works the same as using "\@=": "foo\&.." is the
 	same as "\(foo\)\@=..".  But using "\&" is easier, you don't need the
-	braces.
+	parentheses.
 
 
 							*/\@!*
@@ -787,11 +789,12 @@ An ordinary atom can be:
 	^beep(		the start of the C function "beep" (probably).
 
 							*/\^*
-\^	Matches literal '^'.  Can be used at any position in the pattern.
+\^	Matches literal '^'.  Can be used at any position in the pattern, but
+	not inside [].
 
 							*/\_^*
 \_^	Matches start-of-line. |/zero-width|  Can be used at any position in
-	the pattern.
+	the pattern, but not inside [].
 	Example		matches ~
 	\_s*\_^foo	white space and blank lines and then "foo" at
 			start-of-line
@@ -802,12 +805,13 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	|/zero-width|
 
 							*/\$*
-\$	Matches literal '$'.  Can be used at any position in the pattern.
+\$	Matches literal '$'.  Can be used at any position in the pattern, but
+	not inside [].
 
 							*/\_$*
 \_$	Matches end-of-line. |/zero-width|  Can be used at any position in the
-	pattern.  Note that "a\_$b" never matches, since "b" cannot match an
-	end-of-line.  Use "a\nb" instead |/\n|.
+	pattern, but not inside [].  Note that "a\_$b" never matches, since
+	"b" cannot match an end-of-line.  Use "a\nb" instead |/\n|.
 	Example		matches ~
 	foo\_$\_s*	"foo" at end-of-line and following white space and
 			blank lines
@@ -830,8 +834,9 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	|/zero-width|
 
 							*/\zs*
-\zs	Matches at any position, and sets the start of the match there: The
-	next char is the first char of the whole match. |/zero-width|
+\zs	Matches at any position, but not inside [], and sets the start of the
+	match there: The next char is the first char of the whole match.
+	|/zero-width|
 	Example: >
 		/^\s*\zsif
 <	matches an "if" at the start of a line, ignoring white space.
@@ -842,8 +847,9 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	This cannot be followed by a multi. *E888*
 
 							*/\ze*
-\ze	Matches at any position, and sets the end of the match there: The
-	previous char is the last char of the whole match. |/zero-width|
+\ze	Matches at any position, but not inside [], and sets the end of the
+	match there: The previous char is the last char of the whole match.
+	|/zero-width|
 	Can be used multiple times, the last one encountered in a matching
 	branch is used.
 	Example: "end\ze\(if\|for\)" matches the "end" in "endif" and
@@ -928,7 +934,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	These three can be used to match specific columns in a buffer or
 	string.  The "23" can be any column number.  The first column is 1.
 	Actually, the column is the byte number (thus it's not exactly right
-	for multi-byte characters).
+	for multibyte characters).
 	WARNING: When inserting or deleting text Vim does not automatically
 	update the matches.  This means Syntax highlighting quickly becomes
 	wrong.
@@ -983,7 +989,7 @@ Character classes:
 \p	printable character (see 'isprint' option)	*/\p*
 \P	like "\p", but excluding digits			*/\P*
 
-NOTE: the above also work for multi-byte characters.  The ones below only
+NOTE: the above also work for multibyte characters.  The ones below only
 match ASCII characters, as indicated by the range.
 
 						*whitespace* *white-space*
@@ -1054,8 +1060,8 @@ x	A single character, with no special meaning, matches itself
 
 []	(with 'nomagic': \[])		*/[]* */\[]* */\_[]* */collection*
 \_[]
-	A collection.  This is a sequence of characters enclosed in brackets.
-	It matches any single character in the collection.
+	A collection.  This is a sequence of characters enclosed in square
+	brackets.  It matches any single character in the collection.
 	Example		matches ~
 	[xyz]		any 'x', 'y' or 'z'
 	[a-zA-Z]$	any alphabetic character at the end of a line
@@ -1114,15 +1120,16 @@ x	A single character, with no special meaning, matches itself
 *[:ident:]*	  [:ident:]		identifier character (same as "\i")
 *[:keyword:]*	  [:keyword:]		keyword character (same as "\k")
 *[:fname:]*	  [:fname:]		file name character (same as "\f")
-	  The brackets in character class expressions are additional to the
-	  brackets delimiting a collection.  For example, the following is a
-	  plausible pattern for a Unix filename: "[-./[:alnum:]_~]\+" That is,
-	  a list of at least one character, each of which is either '-', '.',
-	  '/', alphabetic, numeric, '_' or '~'.
+	  The square brackets in character class expressions are additional to
+	  the square brackets delimiting a collection.  For example, the
+	  following is a plausible pattern for a UNIX filename:
+	  "[-./[:alnum:]_~]\+".  That is, a list of at least one character,
+	  each of which is either '-', '.', '/', alphabetic, numeric, '_' or
+	  '~'.
 	  These items only work for 8-bit characters, except [:lower:] and
-	  [:upper:] also work for multi-byte characters when using the new
+	  [:upper:] also work for multibyte characters when using the new
 	  regexp engine.  See |two-engines|.  In the future these items may
-	  work for multi-byte characters.  For now, to get all "alpha"
+	  work for multibyte characters.  For now, to get all "alpha"
 	  characters you can use: [[:lower:][:upper:]].
 
 	  The "Func" column shows what library function is used.  The
@@ -1161,7 +1168,7 @@ x	A single character, with no special meaning, matches itself
 		\b	<BS>
 		\n	line break, see above |/[\n]|
 		\d123	decimal number of character
-		\o40	octal number of character up to 0377
+		\o40	octal number of character up to 0o377
 		\x20	hexadecimal number of character up to 0xff
 		\u20AC	hex. number of multibyte character up to 0xffff
 		\U1234	hex. number of multibyte character up to 0xffffffff
@@ -1198,7 +1205,8 @@ x	A single character, with no special meaning, matches itself
 \%d123	Matches the character specified with a decimal number.  Must be
 	followed by a non-digit.
 \%o40	Matches the character specified with an octal number up to 0377.
-	Numbers below 040 must be followed by a non-octal digit or a non-digit.
+	Numbers below 0o40 must be followed by a non-octal digit or a
+	non-digit.
 \%x2a	Matches the character specified with up to two hexadecimal characters.
 \%u20AC	Matches the character specified with up to four hexadecimal
 	characters.
@@ -1245,8 +1253,8 @@ When working with expression evaluation, a <NL> character in the pattern
 matches a <NL> in the string.  The use of "\n" (backslash n) to match a <NL>
 doesn't work there, it only works to match text in the buffer.
 
-						*pattern-multi-byte*
-Patterns will also work with multi-byte characters, mostly as you would
+				*pattern-multi-byte* *pattern-multibyte*
+Patterns will also work with multibyte characters, mostly as you would
 expect.  But invalid bytes may cause trouble, a pattern with an invalid byte
 will probably never match.
 
@@ -1267,7 +1275,7 @@ not match in "càt" (where the a has the composing character 0x0300), but
 0xe1, it does not have a compositing character).  It does match "cat" (where
 the a is just an a).
 
-When a composing character appears at the start of the pattern of after an
+When a composing character appears at the start of the pattern or after an
 item that doesn't include the composing character, a match is found at any
 character that includes this composing character.
 

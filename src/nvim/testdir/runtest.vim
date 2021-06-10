@@ -13,6 +13,9 @@
 " For csh:
 "     setenv TEST_FILTER Test_channel
 "
+" While working on a test you can make $TEST_NO_RETRY non-empty to not retry:
+"     export TEST_NO_RETRY=yes
+"
 " To ignore failure for tests that are known to fail in a certain environment,
 " set $TEST_MAY_FAIL to a comma separated list of function names.  E.g. for
 " sh/bash:
@@ -373,9 +376,6 @@ let s:flaky_tests = [
       \ 'Test_with_partial_callback()',
       \ ]
 
-" Pattern indicating a common flaky test failure.
-let s:flaky_errors_re = 'StopVimInTerminal\|VerifyScreenDump'
-
 " Locate Test_ functions and execute them.
 redir @q
 silent function /^Test_
@@ -410,14 +410,19 @@ for s:test in sort(s:tests)
   let total_errors = []
   let run_nr = 1
 
+  " A test can set g:test_is_flaky to retry running the test.
+  let g:test_is_flaky = 0
+
   call RunTheTest(s:test)
 
   " Repeat a flaky test.  Give up when:
+  " - $TEST_NO_RETRY is not empty
   " - it fails again with the same message
   " - it fails five times (with a different message)
   if len(v:errors) > 0
+        \ && $TEST_NO_RETRY == ''
         \ && (index(s:flaky_tests, s:test) >= 0
-        \      || v:errors[0] =~ s:flaky_errors_re)
+        \      || g:test_is_flaky)
     while 1
       call add(s:messages, 'Found errors in ' . s:test . ':')
       call extend(s:messages, v:errors)

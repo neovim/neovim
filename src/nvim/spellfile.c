@@ -3942,7 +3942,7 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
       msg_start();
       msg_puts(_(msg_compressing));
       msg_clr_eos();
-      msg_didout = false;
+      msg_didout = FALSE;
       msg_col = 0;
       ui_flush();
     }
@@ -5387,7 +5387,8 @@ spell_add_word (
                    len, word, NameBuff);
             }
           }
-          if (fseek(fd, fpos_next, SEEK_SET) <= 0) {
+          if (fseek(fd, fpos_next, SEEK_SET) != 0) {
+            PERROR(_("Seek error in spellfile"));
             break;
           }
         }

@@ -13,7 +13,7 @@ local M = {}
 --- Writes to error buffer.
 --@param ... (table of strings) Will be concatenated before being written
 local function err_message(...)
-  api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+  vim.notify(table.concat(vim.tbl_flatten{...}), vim.log.levels.ERROR)
   api.nvim_command("redraw")
 end
 
@@ -26,10 +26,11 @@ end
 
 -- @msg of type ProgressParams
 -- Basically a token of type number/string
-local function progress_callback(_, _, params, client_id)
+local function progress_handler(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
-    err_message("LSP[", client_id, "] client has shut down after sending the message")
+    err_message("LSP[", client_name, "] client has shut down after sending the message")
   end
   local val = params.value    -- unspecified yet
   local token = params.token  -- string or number
@@ -43,14 +44,11 @@ local function progress_callback(_, _, params, client_id)
         percentage = val.percentage,
       }
     elseif val.kind == 'report' then
-      client.messages.progress[token] = {
-        message = val.message,
-        percentage = val.percentage,
-      }
+      client.messages.progress[token].message = val.message;
+      client.messages.progress[token].percentage = val.percentage;
     elseif val.kind == 'end' then
       if client.messages.progress[token] == nil then
-        err_message(
-          'echom "[lsp-status] Received `end` message with no corresponding `begin` from "')
+        err_message("LSP[", client_name, "] received `end` message with no corresponding `begin`")
       else
         client.messages.progress[token].message = val.message
         client.messages.progress[token].done = true
@@ -63,7 +61,53 @@ local function progress_callback(_, _, params, client_id)
   vim.api.nvim_command("doautocmd <nomodeline> User LspProgressUpdate")
 end
 
-M['$/progress'] = progress_callback
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
+M['$/progress'] = progress_handler
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
+M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
+  local client = vim.lsp.get_client_by_id(client_id)
+  local token = params.token  -- string or number
+  local client_name = client and client.name or string.format("id=%d", client_id)
+  if not client then
+    err_message("LSP[", client_name, "] client has shut down after sending the message")
+  end
+  client.messages.progress[token] = {}
+  return vim.NIL
+end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
+M['window/showMessageRequest'] = function(_, _, params)
+
+  local actions = params.actions
+  print(params.message)
+  local option_strings = {params.message, "\nRequest Actions:"}
+  for i, action in ipairs(actions) do
+    local title = action.title:gsub('\r\n', '\\r\\n')
+    title = title:gsub('\n', '\\n')
+    table.insert(option_strings, string.format("%d. %s", i, title))
+  end
+
+  -- window/showMessageRequest can return either MessageActionItem[] or null.
+  local choice = vim.fn.inputlist(option_strings)
+  if choice < 1 or choice > #actions then
+      return vim.NIL
+  else
+    return actions[choice]
+  end
+end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
+M['client/registerCapability'] = function(_, _, _, client_id)
+  local warning_tpl = "The language server %s triggers a registerCapability "..
+                      "handler despite dynamicRegistration set to false. "..
+                      "Report upstream, this warning is harmless"
+  local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format("id=%d", client_id)
+  local warning = string.format(warning_tpl, client_name)
+  log.warn(warning)
+  return vim.NIL
+end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 M['textDocument/codeAction'] = function(_, _, actions)
@@ -111,6 +155,32 @@ M['workspace/applyEdit'] = function(_, _, workspace_edit)
     applied = status;
     failureReason = result;
   }
+end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
+M['workspace/configuration'] = function(err, _, params, client_id)
+  local client = vim.lsp.get_client_by_id(client_id)
+  if not client then
+    err_message("LSP[id=", client_id, "] client has shut down after sending the message")
+    return
+  end
+  if err then error(vim.inspect(err)) end
+  if not params.items then
+    return {}
+  end
+
+  local result = {}
+  for _, item in ipairs(params.items) do
+    if item.section then
+      local value = util.lookup_section(client.config.settings, item.section) or vim.NIL
+      -- For empty sections with no explicit '' key, return settings as is
+      if value == vim.NIL and item.section == '' then
+        value = client.config.settings or vim.NIL
+      end
+      table.insert(result, value)
+    end
+  end
+  return result
 end
 
 M['textDocument/publishDiagnostics'] = function(...)
@@ -175,26 +245,37 @@ M['textDocument/completion'] = function(_, _, result)
   vim.fn.complete(textMatch+1, matches)
 end
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
-M['textDocument/hover'] = function(_, method, result)
-  util.focusable_float(method, function()
-    if not (result and result.contents) then
-      -- return { 'No information available' }
-      return
-    end
-    local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
-    markdown_lines = util.trim_empty_lines(markdown_lines)
-    if vim.tbl_isempty(markdown_lines) then
-      -- return { 'No information available' }
-      return
-    end
-    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
-      pad_left = 1; pad_right = 1;
-    })
-    util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
-    return bufnr, winnr
-  end)
+--- |lsp-handler| for the method "textDocument/hover"
+--- <pre>
+--- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+---   vim.lsp.handlers.hover, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single"
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.hover(_, method, result, _, _, config)
+  config = config or {}
+  config.focus_id = method
+  if not (result and result.contents) then
+    -- return { 'No information available' }
+    return
+  end
+  local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
+  markdown_lines = util.trim_empty_lines(markdown_lines)
+  if vim.tbl_isempty(markdown_lines) then
+    -- return { 'No information available' }
+    return
+  end
+  return util.open_floating_preview(markdown_lines, "markdown", config)
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+M['textDocument/hover'] = M.hover
 
 --@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
@@ -233,24 +314,40 @@ M['textDocument/typeDefinition'] = location_handler
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation
 M['textDocument/implementation'] = location_handler
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-M['textDocument/signatureHelp'] = function(_, method, result)
+--- |lsp-handler| for the method "textDocument/signatureHelp"
+--- <pre>
+--- vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+---   vim.lsp.handlers.signature_help, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single"
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.signature_help(_, method, result, _, bufnr, config)
+  config = config or {}
+  config.focus_id = method
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
     print('No signature help available')
     return
   end
-  local lines = util.convert_signature_help_to_markdown_lines(result)
+  local ft = api.nvim_buf_get_option(bufnr, 'filetype')
+  local lines = util.convert_signature_help_to_markdown_lines(result, ft)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
     print('No signature help available')
     return
   end
-  util.focusable_preview(method, function()
-    return lines, util.try_trim_markdown_code_blocks(lines)
-  end)
+  return util.open_floating_preview(lines, "markdown", config)
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+M['textDocument/signatureHelp'] = M.signature_help
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
 M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
@@ -339,7 +436,7 @@ for k, fn in pairs(M) do
     })
 
     if err then
-      error(tostring(err))
+      return err_message(tostring(err))
     end
 
     return fn(err, method, params, client_id, bufnr, config)

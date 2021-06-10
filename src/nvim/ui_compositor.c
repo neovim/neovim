@@ -127,6 +127,9 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
                       bool valid, bool on_top)
 {
   bool moved;
+
+  grid->comp_height = height;
+  grid->comp_width = width;
   if (grid->comp_index != 0) {
     moved = (row != grid->comp_row) || (col != grid->comp_col);
     if (ui_comp_should_draw()) {
@@ -157,38 +160,28 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
 #ifndef NDEBUG
     for (size_t i = 0; i < kv_size(layers); i++) {
       if (kv_A(layers, i) == grid) {
-        assert(false);
+        abort();
       }
     }
 #endif
 
-    // TODO(bfredl): this is pretty ad-hoc, add a proper z-order/priority
-    // scheme. For now:
-    // - msg_grid is always on top.
-    // - pum_grid is on top of all windows but not msg_grid. Except for when
-    //   wildoptions=pum, and completing the cmdline with scrolled messages,
-    //   then the pum has to be drawn over the scrolled messages.
     size_t insert_at = kv_size(layers);
-    bool cmd_completion = (grid == &pum_grid && (State & CMDLINE)
-                           && (wop_flags & WOP_PUM));
-    if (kv_A(layers, insert_at-1) == &msg_grid && !cmd_completion) {
+    while (insert_at > 0 && kv_A(layers, insert_at-1)->zindex > grid->zindex) {
       insert_at--;
     }
-    if (kv_A(layers, insert_at-1) == &pum_grid && (grid != &msg_grid)) {
-      insert_at--;
-    }
-    if (insert_at > 1 && !on_top) {
+
+    if (curwin && kv_A(layers, insert_at-1) == &curwin->w_grid_alloc
+        && kv_A(layers, insert_at-1)->zindex == grid->zindex
+        && !on_top) {
       insert_at--;
     }
     // not found: new grid
-    kv_push(layers, grid);
-    if (insert_at < kv_size(layers)-1) {
-      for (size_t i = kv_size(layers)-1; i > insert_at; i--) {
-        kv_A(layers, i) = kv_A(layers, i-1);
-        kv_A(layers, i)->comp_index = i;
-      }
-      kv_A(layers, insert_at) = grid;
+    kv_pushp(layers);
+    for (size_t i = kv_size(layers)-1; i > insert_at; i--) {
+      kv_A(layers, i) = kv_A(layers, i-1);
+      kv_A(layers, i)->comp_index = i;
     }
+    kv_A(layers, insert_at) = grid;
 
     grid->comp_row = row;
     grid->comp_col = col;
@@ -277,9 +270,11 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
   // should configure all grids before entering win_update()
   if (curgrid != &default_grid) {
     size_t new_index = kv_size(layers)-1;
-    if (kv_A(layers, new_index) == &pum_grid) {
+
+    while (new_index > 1 && kv_A(layers, new_index)->zindex > curgrid->zindex) {
       new_index--;
     }
+
     if (curgrid->comp_index < new_index) {
       ui_comp_raise_grid(curgrid, new_index);
     }
@@ -334,17 +329,25 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
   sattr_T *bg_attrs = &default_grid.attrs[default_grid.line_offset[row]
                                           +(size_t)startcol];
 
+  int grid_width, grid_height;
   while (col < endcol) {
     int until = 0;
     for (size_t i = 0; i < kv_size(layers); i++) {
       ScreenGrid *g = kv_A(layers, i);
-      if (g->comp_row > row || row >= g->comp_row + g->Rows
+      // compose_line may have been called after a shrinking operation but
+      // before the resize has actually been applied. Therefore, we need to
+      // first check to see if any grids have pending updates to width/height,
+      // to ensure that we don't accidentally put any characters into `linebuf`
+      // that have been invalidated.
+      grid_width = MIN(g->Columns, g->comp_width);
+      grid_height = MIN(g->Rows, g->comp_height);
+      if (g->comp_row > row || row >= g->comp_row + grid_height
           || g->comp_disabled) {
         continue;
       }
-      if (g->comp_col <= col && col < g->comp_col+g->Columns) {
+      if (g->comp_col <= col && col < g->comp_col + grid_width) {
         grid = g;
-        until = g->comp_col+g->Columns;
+        until = g->comp_col + grid_width;
       } else if (g->comp_col > col) {
         until = MIN(until, g->comp_col);
       }

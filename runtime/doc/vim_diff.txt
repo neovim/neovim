@@ -70,6 +70,8 @@ the differences.
 - |matchit| plugin is enabled. To disable it in your config: >
     :let loaded_matchit = 1
 
+- |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
+
 ==============================================================================
 3. New Features						       *nvim-features*
 
@@ -144,7 +146,6 @@ Command-line highlighting:
   removed in the future).
 
 Commands:
-  |:autocmd| accepts the `++once` flag
   |:checkhealth|
   |:drop| is always available
   |:Man| is available by default, with many improvements such as completion
@@ -157,8 +158,6 @@ Events:
   |TermOpen|
   |UIEnter|
   |UILeave|
-  |VimResume|
-  |VimSuspend|
   |WinClosed|
 
 Functions:
@@ -195,11 +194,9 @@ Options:
   'cpoptions'   flags: |cpo-_|
   'display'     flags: "msgsep" minimizes scrolling when showing messages
   'guicursor'   works in the terminal
-  'fillchars'   flags: "msgsep" (see 'display'), "eob" for |hl-EndOfBuffer|
-                marker, "foldopen", "foldsep", "foldclose"
+  'fillchars'   flags: "msgsep" (see 'display')
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
-  'listchars'   local to window
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns
@@ -500,13 +497,23 @@ Test functions:
   test_alloc_fail()
   test_autochdir()
   test_disable_char_avail()
+  test_feedinput()
+  test_garbagecollect_soon
+  test_getvalue()
+  test_ignore_error()
+  test_null_blob()
   test_null_channel()
   test_null_dict()
+  test_null_function()
   test_null_job()
   test_null_list()
   test_null_partial()
   test_null_string()
+  test_option_not_set()
   test_override()
+  test_refcount()
+  test_scrollbar()
+  test_setmouse()
   test_settime()
 
 TUI:

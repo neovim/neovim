@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Sep 28
+" Last Change:	2020 Feb 01
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -15,11 +15,15 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo-=C
 
-let b:undo_ftplugin = "setl fo< com< ofu<"
+let b:undo_ftplugin = "setl fo< com< ofu< cms< def< inc<"
 
 " Set 'formatoptions' to break comment lines but not other lines,
 " and insert the comment leader when hitting <CR> or using "o".
 setlocal fo-=t fo+=croql
+
+" These options have the right value as default, but the user may have
+" overruled that.
+setlocal commentstring& define& include&
 
 " Set completion with CTRL-X CTRL-O to autoloaded function.
 if exists('&ofu')

@@ -849,7 +849,7 @@ bool marktree_splice(MarkTree *b,
   MarkTreeIter itr[1] = { 0 };
   MarkTreeIter enditr[1] = { 0 };
 
-  mtpos_t oldbase[MT_MAX_DEPTH];
+  mtpos_t oldbase[MT_MAX_DEPTH] = { 0 };
 
   marktree_itr_get_ext(b, start, itr, false, true, oldbase);
   if (!itr->node) {

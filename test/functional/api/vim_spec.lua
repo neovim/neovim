@@ -193,6 +193,44 @@ describe('API', function()
       eq('', nvim('exec', 'echo', true))
       eq('foo 42', nvim('exec', 'echo "foo" 42', true))
     end)
+
+    it('displays messages when output=false', function()
+      local screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+      })
+      meths.exec("echo 'hello'", false)
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        hello                                   |
+      ]]}
+    end)
+
+    it('does\'t display messages when output=true', function()
+      local screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+      })
+      meths.exec("echo 'hello'", true)
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+                                                |
+      ]]}
+    end)
   end)
 
   describe('nvim_command', function()
@@ -472,6 +510,18 @@ describe('API', function()
       -- "special" float values are still accepted as return values.
       eq(2.5, meths.exec_lua("return vim.api.nvim_eval('2.5')", {}))
       eq("{\n  [false] = 2.5,\n  [true] = 3\n}", meths.exec_lua("return vim.inspect(vim.api.nvim_eval('2.5'))", {}))
+    end)
+  end)
+
+  describe('nvim_notify', function()
+    it('can notify a info message', function()
+      nvim("notify", "hello world", 2, {})
+    end)
+
+    it('can be overriden', function()
+      command("lua vim.notify = function(...) return 42 end")
+      eq(42, meths.exec_lua("return vim.notify('Hello world')", {}))
+      nvim("notify", "hello world", 4, {})
     end)
   end)
 
@@ -971,6 +1021,12 @@ describe('API', function()
     it("during normal-mode gU, returns blocking=false #6166", function()
       nvim("input", "gu")
       eq({mode='no', blocking=false}, nvim("get_mode"))
+    end)
+
+    it("at '-- More --' prompt returns blocking=true #11899", function()
+      command('set more')
+      feed(':digraphs<cr>')
+      eq({mode='rm', blocking=true}, nvim("get_mode"))
     end)
   end)
 
@@ -1930,6 +1986,10 @@ describe('API', function()
 
       eq(meths.get_option_info'winhighlight', options_info.winhighlight)
     end)
+
+    it('should not crash when echoed', function()
+      meths.exec("echo nvim_get_all_options_info()", true)
+    end)
   end)
 
   describe('nvim_get_option_info', function()
@@ -1994,6 +2054,142 @@ describe('API', function()
         type = "boolean",
         was_set = true
       }, meths.get_option_info'showcmd')
+    end)
+  end)
+
+  describe('nvim_echo', function()
+    local screen
+
+    before_each(function()
+      clear()
+      screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        [1] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [2] = {bold = true, reverse = true},
+        [3] = {foreground = Screen.colors.Brown, bold = true}, -- Statement
+        [4] = {foreground = Screen.colors.SlateBlue}, -- Special
+      })
+      command('highlight Statement gui=bold guifg=Brown')
+      command('highlight Special guifg=SlateBlue')
+    end)
+
+    it('should clear cmdline message before echo', function()
+      feed(':call nvim_echo([["msg"]], v:false, {})<CR>')
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        msg                                     |
+      ]]}
+    end)
+
+    it('can show highlighted line', function()
+      nvim_async("echo", {{"msg_a"}, {"msg_b", "Statement"}, {"msg_c", "Special"}}, true, {})
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        msg_a{3:msg_b}{4:msg_c}                         |
+      ]]}
+    end)
+
+    it('can show highlighted multiline', function()
+      nvim_async("echo", {{"msg_a\nmsg_a", "Statement"}, {"msg_b", "Special"}}, true, {})
+      screen:expect{grid=[[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {2:                                        }|
+        {3:msg_a}                                   |
+        {3:msg_a}{4:msg_b}                              |
+        {1:Press ENTER or type command to continue}^ |
+      ]]}
+    end)
+
+    it('can save message history', function()
+      nvim('command', 'set cmdheight=2') -- suppress Press ENTER
+      nvim("echo", {{"msg\nmsg"}, {"msg"}}, true, {})
+      eq("msg\nmsgmsg", meths.exec('messages', true))
+    end)
+
+    it('can disable saving message history', function()
+      nvim('command', 'set cmdheight=2') -- suppress Press ENTER
+      nvim_async("echo", {{"msg\nmsg"}, {"msg"}}, false, {})
+      eq("", meths.exec("messages", true))
+    end)
+  end)
+
+
+  describe('nvim_open_term', function()
+    local screen
+
+    before_each(function()
+      clear()
+      screen = Screen.new(100, 35)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+        [1] = {background = Screen.colors.Plum1};
+        [2] = {background = tonumber('0xffff40'), bg_indexed = true};
+        [3] = {background = Screen.colors.Plum1, fg_indexed = true, foreground = tonumber('0x00e000')};
+        [4] = {bold = true, reverse = true, background = Screen.colors.Plum1};
+      })
+    end)
+
+    it('can batch process sequences', function()
+      local b = meths.create_buf(true,true)
+      meths.open_win(b, false, {width=79, height=31, row=1, col=1, relative='editor'})
+      local t = meths.open_term(b, {})
+
+      meths.chan_send(t, io.open("test/functional/fixtures/smile2.cat", "r"):read("*a"))
+      screen:expect{grid=[[
+        ^                                                                                                    |
+        {0:~}{1::smile                                                                         }{0:                    }|
+        {0:~}{1:                            }{2:oooo$$$$$$$$$$$$oooo}{1:                               }{0:                    }|
+        {0:~}{1:                        }{2:oo$$$$$$$$$$$$$$$$$$$$$$$$o}{1:                            }{0:                    }|
+        {0:~}{1:                     }{2:oo$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o}{1:         }{2:o$}{1:   }{2:$$}{1: }{2:o$}{1:      }{0:                    }|
+        {0:~}{1:     }{2:o}{1: }{2:$}{1: }{2:oo}{1:        }{2:o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$o}{1:       }{2:$$}{1: }{2:$$}{1: }{2:$$o$}{1:     }{0:                    }|
+        {0:~}{1:  }{2:oo}{1: }{2:$}{1: }{2:$}{1: "}{2:$}{1:      }{2:o$$$$$$$$$}{1:    }{2:$$$$$$$$$$$$$}{1:    }{2:$$$$$$$$$o}{1:       }{2:$$$o$$o$}{1:      }{0:                    }|
+        {0:~}{1:  "}{2:$$$$$$o$}{1:     }{2:o$$$$$$$$$}{1:      }{2:$$$$$$$$$$$}{1:      }{2:$$$$$$$$$$o}{1:    }{2:$$$$$$$$}{1:       }{0:                    }|
+        {0:~}{1:    }{2:$$$$$$$}{1:    }{2:$$$$$$$$$$$}{1:      }{2:$$$$$$$$$$$}{1:      }{2:$$$$$$$$$$$$$$$$$$$$$$$}{1:       }{0:                    }|
+        {0:~}{1:    }{2:$$$$$$$$$$$$$$$$$$$$$$$}{1:    }{2:$$$$$$$$$$$$$}{1:    }{2:$$$$$$$$$$$$$$}{1:  """}{2:$$$}{1:         }{0:                    }|
+        {0:~}{1:     "}{2:$$$}{1:""""}{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:     "}{2:$$$}{1:        }{0:                    }|
+        {0:~}{1:      }{2:$$$}{1:   }{2:o$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:     "}{2:$$$o}{1:      }{0:                    }|
+        {0:~}{1:     }{2:o$$}{1:"   }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:       }{2:$$$o}{1:     }{0:                    }|
+        {0:~}{1:     }{2:$$$}{1:    }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:" "}{2:$$$$$$ooooo$$$$o}{1:   }{0:                    }|
+        {0:~}{1:    }{2:o$$$oooo$$$$$}{1:  }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:   }{2:o$$$$$$$$$$$$$$$$$}{1:  }{0:                    }|
+        {0:~}{1:    }{2:$$$$$$$$}{1:"}{2:$$$$}{1:   }{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:     }{2:$$$$}{1:""""""""        }{0:                    }|
+        {0:~}{1:   """"       }{2:$$$$}{1:    "}{2:$$$$$$$$$$$$$$$$$$$$$$$$$$$$}{1:"      }{2:o$$$}{1:                 }{0:                    }|
+        {0:~}{1:              "}{2:$$$o}{1:     """}{2:$$$$$$$$$$$$$$$$$$}{1:"}{2:$$}{1:"         }{2:$$$}{1:                  }{0:                    }|
+        {0:~}{1:                }{2:$$$o}{1:          "}{2:$$}{1:""}{2:$$$$$$}{1:""""           }{2:o$$$}{1:                   }{0:                    }|
+        {0:~}{1:                 }{2:$$$$o}{1:                                }{2:o$$$}{1:"                    }{0:                    }|
+        {0:~}{1:                  "}{2:$$$$o}{1:      }{2:o$$$$$$o}{1:"}{2:$$$$o}{1:        }{2:o$$$$}{1:                      }{0:                    }|
+        {0:~}{1:                    "}{2:$$$$$oo}{1:     ""}{2:$$$$o$$$$$o}{1:   }{2:o$$$$}{1:""                       }{0:                    }|
+        {0:~}{1:                       ""}{2:$$$$$oooo}{1:  "}{2:$$$o$$$$$$$$$}{1:"""                          }{0:                    }|
+        {0:~}{1:                          ""}{2:$$$$$$$oo}{1: }{2:$$$$$$$$$$}{1:                               }{0:                    }|
+        {0:~}{1:                                  """"}{2:$$$$$$$$$$$}{1:                              }{0:                    }|
+        {0:~}{1:                                      }{2:$$$$$$$$$$$$}{1:                             }{0:                    }|
+        {0:~}{1:                                       }{2:$$$$$$$$$$}{1:"                             }{0:                    }|
+        {0:~}{1:                                        "}{2:$$$}{1:""""                               }{0:                    }|
+        {0:~}{1:                                                                               }{0:                    }|
+        {0:~}{3:Press ENTER or type command to continue}{1:                                        }{0:                    }|
+        {0:~}{4:term://~/config2/docs/pres//32693:vim --clean +smile         29,39          All}{0:                    }|
+        {0:~}{1::call nvim__screenshot("smile2.cat")                                           }{0:                    }|
+        {0:~                                                                                                   }|
+        {0:~                                                                                                   }|
+                                                                                                            |
+      ]]}
     end)
   end)
 end)

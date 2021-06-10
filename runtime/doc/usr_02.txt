@@ -29,8 +29,8 @@ To start Vim, enter this command: >
 
 	gvim file.txt
 
-On Unix you can type this at any command prompt.  If you are running Windows,
-open a command prompt window and enter the command.  In either case, Vim
+On Unix you can type this at any command prompt.  If you are running Microsoft
+Windows, open a Command Prompt and enter the command.  In either case, Vim
 starts editing a file called file.txt.  Because this is a new file, you get a
 blank window. This is what your screen will look like:
 
@@ -42,7 +42,7 @@ blank window. This is what your screen will look like:
 	|~					|
 	|"file.txt" [New file]			|
 	+---------------------------------------+
-		('#" is the cursor position.)
+		('#' is the cursor position.)
 
 The tilde (~) lines indicate lines not in the file.  In other words, when Vim
 runs out of file to display, it displays tilde lines.  At the bottom of the
@@ -253,11 +253,11 @@ restores the character.
 
 	g intelligent turtle ~
 
-The next u command restores the next-to-last character deleted:
+The next "u" command restores the next-to-last character deleted:
 
 	ng intelligent turtle ~
 
-The next u command gives you the u, and so on:
+The next "u" command gives you the u, and so on:
 
 	ung intelligent turtle ~
 	oung intelligent turtle ~
@@ -364,7 +364,7 @@ To exit, use the "ZZ" command.  This command writes the file and exits.
 	Unlike many other editors, Vim does not automatically make a backup
 	file.  If you type "ZZ", your changes are committed and there's no
 	turning back.  You can configure the Vim editor to produce backup
-	files, see |07.4|.
+	files; see |07.4|.
 
 
 DISCARDING CHANGES
@@ -387,7 +387,7 @@ message and refuse to exit:
 	E37: No write since last change (use ! to override) ~
 
 By specifying the override, you are in effect telling Vim, "I know that what
-I'm doing looks stupid, but I'm a big boy and really want to do this."
+I'm doing looks stupid, but I really want to do this."
 
 If you want to continue editing with Vim: The ":e!" command reloads the
 original version of the file.
@@ -499,14 +499,14 @@ Summary: 					*help-summary*  >
 
 1) Use Ctrl-D after typing a topic and let Vim show all available topics.
    Or press Tab to complete: >
-    	:help some<Tab>
+	:help some<Tab>
 <   More information on how to use the help: >
 	:help helphelp
 
 2) Follow the links in bars to related help.  You can go from the detailed
    help to the user documentation, which describes certain commands more from
    a user perspective and less detailed.  E.g. after: >
-   	:help pattern.txt
+	:help pattern.txt
 <   You can see the user guide topics |03.9| and |usr_27.txt| in the
    introduction.
 
@@ -518,29 +518,29 @@ Summary: 					*help-summary*  >
 <   to open the help page which describes all option handling and then search
    using regular expressions, e.g. textwidth.
    Certain options have their own namespace, e.g.: >
-   	:help cpo-<letter>
+	:help cpo-<letter>
 <   for the corresponding flag of the 'cpoptions' settings, substitute <letter>
    by a specific flag, e.g.: >
-  	:help cpo-;
-<   And for the guioption flags: >
-  	:help go-<letter>
+	:help cpo-;
+<   And for the 'guioptions' flags: >
+	:help go-<letter>
 
 4) Normal mode commands do not have a prefix. To go to the help page for the
    "gt" command: >
-   	:help gt
+	:help gt
 
 5) Insert mode commands start with i_.  Help for deleting a word: >
-   	:help i_CTRL-W
+	:help i_CTRL-W
 
 6) Visual mode commands start with v_.  Help for jumping to the other side of
    the Visual area: >
-   	:help v_o
+	:help v_o
 
 7) Command line editing and arguments start with c_.  Help for using the
    command argument %: >
-   	:help c_%
+	:help c_%
 
-8) Ex-commands always start with ":", so to go to the :s command help: >
+8) Ex-commands always start with ":", so to go to the ":s" command help: >
 	:help :s
 
 9) Commands specifically for debugging start with ">".  To go to the help
@@ -549,55 +549,56 @@ Summary: 					*help-summary*  >
 
 10) Key combinations.  They usually start with a single letter indicating
     the mode for which they can be used.  E.g.: >
-   	:help i_CTRL-X
-<    takes you to the family of Ctrl-X commands for insert mode which can be
-    used to auto complete different things.  Note, that certain keys will
+	:help i_CTRL-X
+<    takes you to the family of CTRL-X commands for insert mode which can be
+    used to auto-complete different things.  Note, that certain keys will
     always be written the same, e.g. Control will always be CTRL.
     For normal mode commands there is no prefix and the topic is available at
     :h CTRL-<Letter>. E.g.  >
-   	:help CTRL-W
+	:help CTRL-W
 <    In contrast >
 	:help c_CTRL-R
-<    will describe what the Ctrl-R does when entering commands in the Command
+<    will describe what the CTRL-R does when entering commands in the Command
     line and >
-   	:help v_Ctrl-A
+	:help v_CTRL-A
 <    talks about incrementing numbers in visual mode and >
 	:help g_CTRL-A
-<    talks about the g<C-A> command (e.g. you have to press "g" then <Ctrl-A>).
-    Here the "g" stand for the normal command "g" which always expects a second
-    key before doing something similar to the commands starting with "z"
+<    talks about the "g<C-A>" command (e.g. you have to press "g" then
+    <CTRL-A>).  Here the "g" stands for the normal command "g" which always
+    expects a second key before doing something similar to the commands
+    starting with "z".
 
 11) Regexp items always start with /.  So to get help for the "\+" quantifier
     in Vim regexes: >
-   	:help /\+
+	:help /\+
 <    If you need to know everything about regular expressions, start reading
     at: >
-   	:help pattern.txt
+	:help pattern.txt
 
 12) Registers always start with "quote". To find out about the special ":"
     register: >
-   	:help quote:
+	:help quote:
 
 13) Vim Script is available at >
 	:help eval.txt
 <   Certain aspects of the language are available at :h expr-X where "X" is a
    single letter. E.g.  >
-   	:help expr-!
-<   will take you to the topic describing the "!" (Not) operator for
-   VimScript.
+	:help expr-!
+<   will take you to the topic describing the "!" (Not) operator for Vim
+   Script.
    Also important is >
-   	:help function-list
+	:help function-list
 <   to find a short description of all functions available.  Help topics for
    Vim script functions always include the "()", so: >
-   	:help append()
+	:help append()
 <   talks about the append Vim script function rather than how to append text
    in the current buffer.
 
 14) Mappings are talked about in the help page :h |map.txt|. Use >
-    	:help mapmode-i
+	:help mapmode-i
 <    to find out about the |:imap| command.  Also use :map-topic
     to find out about certain subtopics particular for mappings.  e.g: >
-    	:help :map-local
+	:help :map-local
 <    for buffer-local mappings or >
 	:help map-bar
 <    for how the '|' is handled in mappings.
@@ -608,7 +609,7 @@ Summary: 					*help-summary*  >
 
 16) Window management commands always start with CTRL-W, so you find the
     corresponding help at :h CTRL-W_letter.  E.g. >
-   	:help CTRL-W_p
+	:help CTRL-W_p
 <    for moving the previous accessed window.  You can also access >
 	:help windows.txt
 <    and read your way through if you are looking for window handling
@@ -617,57 +618,58 @@ Summary: 					*help-summary*  >
 17) Use |:helpgrep| to search in all help pages (and also of any installed
     plugins).  See |:helpgrep| for how to use it.
     To search for a topic: >
-    	:helpgrep topic
+	:helpgrep topic
 <    This takes you to the first match.  To go to the next one: >
 	:cnext
 <    All matches are available in the quickfix window which can be opened
     with: >
-    	:copen
+	:copen
 <    Move around to the match you like and press Enter to jump to that help.
 
 18) The user manual.  This describes help topics for beginners in a rather
     friendly way.  Start at |usr_toc.txt| to find the table of content (as you
     might have guessed): >
-    	:help usr_toc.txt
+	:help usr_toc.txt
 <    Skim over the contents to find interesting topics. The "Digraphs" and
     "Entering special characters" items are in chapter 24, so to go to that
     particular help page: >
-    	:help usr_24.txt
+	:help usr_24.txt
 <    Also if you want to access a certain chapter in the help, the chapter
     number can be accessed directly like this: >
-    	:help 10.1
-<    goes to chapter 10.1 in |usr_10.txt| and talks about recording macros.
+	:help 10.1
+<    which goes to chapter 10.1 in |usr_10.txt| and talks about recording
+    macros.
 
 19) Highlighting groups.  Always start with hl-groupname.  E.g. >
-    	:help hl-WarningMsg
+	:help hl-WarningMsg
 <    talks about the WarningMsg highlighting group.
 
-20) Syntax highlighting is namespaced to :syn-topic e.g. >
+20) Syntax highlighting is namespaced to :syn-topic.  E.g. >
 	:help :syn-conceal
-<    talks about the conceal argument for the :syn command.
+<    talks about the conceal argument for the ":syn" command.
 
 21) Quickfix commands usually start with :c while location list commands
     usually start with :l
 
 22) Autocommand events can be found by their name: >
-     	:help BufWinLeave
+	:help BufWinLeave
 <    To see all possible events: >
 	:help events
 
 23) Command-line switches always start with "-".  So for the help of the -f
     command switch of Vim use: >
-    	:help -f
+	:help -f
 
 24) Optional features always start with "+".  To find out about the
     conceal feature use: >
-    	:help +conceal
+	:help +conceal
 
 25) Documentation for included filetype specific functionality is usually
     available  in the form ft-<filetype>-<functionality>.  So >
-    	:help ft-c-syntax
+	:help ft-c-syntax
 <    talks about the C syntax file and the option it provides.  Sometimes,
     additional sections for omni completion >
-    	:help ft-php-omni
+	:help ft-php-omni
 <    or filetype plugins >
 	:help ft-tex-plugin
 <    are available.
@@ -677,9 +679,9 @@ Summary: 					*help-summary*  >
 <    takes you exactly to the description of the swap error message and >
 	:help W10
 <    talks about the warning "Changing a readonly file".
-    Sometimes however, those error codes are not described, but rather are
+    Sometimes, however, those error codes are not described, but rather are
     listed at the Vim command that usually causes this.  So: >
-    	:help E128
+	:help E128
 <    takes you to the |:function| command
 
 
