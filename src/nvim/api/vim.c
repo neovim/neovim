@@ -24,6 +24,7 @@
 #include "nvim/context.h"
 #include "nvim/file_search.h"
 #include "nvim/highlight.h"
+#include "nvim/fold.h"
 #include "nvim/window.h"
 #include "nvim/types.h"
 #include "nvim/ex_cmds2.h"
