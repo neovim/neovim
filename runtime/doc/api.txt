@@ -2464,6 +2464,22 @@ nvim_buf_set_virtual_text({buffer}, {src_id}, {line}, {chunks}, {opts})
 ==============================================================================
 Window Functions                                                  *api-window*
 
+nvim_win_call({window}, {fun})                               *nvim_win_call()*
+                Calls a function with window as temporary current window.
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
+                    {fun}     Function to call inside the window (currently
+                              lua callable only)
+
+                Return: ~
+                    Return value of function. NB: will deepcopy lua values
+                    currently, use upvalues to send lua references in and out.
+
+                See also: ~
+                    |win_execute()|
+                    |nvim_buf_call()|
+
 nvim_win_close({window}, {force})                           *nvim_win_close()*
                 Closes the window (like |:close| with a |window-ID|).
 
