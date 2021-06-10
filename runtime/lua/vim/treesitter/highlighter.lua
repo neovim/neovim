@@ -116,7 +116,7 @@ function TSHighlighterQuery:_get_hl_from_capture(capture)
     -- From "Normal.left" only keep "Normal"
     return vim.split(name, '.', true)[1], true
   else
-    return TSHighlighter.hl_map[name] or name, false
+    return TSHighlighter.hl_map[name] or 0, false
   end
 end
 
