@@ -74,15 +74,26 @@ For Comment) and `[RDY]` (Ready).
 
 ### Commit messages
 
-Follow [commit message hygiene][hygiene] to *make reviews easier* and to make
-the VCS/git logs more valuable.
+Follow the [convential commits guidelines][conventional_commits] to *make reviews easier* and to make
+the VCS/git logs more valuable. The general structure of a commit message is as follows:
 
-- Try to keep the first line under 72 characters.
-- **Prefix the commit subject with a _scope_:** `doc:`, `test:`, `foo.c:`,
+```
+<type>([optional scope]): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+- **Prefix the commit subject with a _type_:** `doc:`, `test:`
   `runtime:`, ...
     - Subject line for commits with only style/lint changes can be a single
       word: `style` or `lint`.
+- **Add the optional scope following <type> if possible:** `(lsp)`, `(treesitter)`, `(multigrid)`, ...
+- Try to keep the first line under 72 characters.
 - A blank line must separate the subject from the description.
+- Breaking changes must be indicated at the very beginning of the footer or body section of a commit. A breaking change must consist of the uppercase text BREAKING CHANGE, followed by a colon, a space, and a description of what has changed about the API.
+- Check your commit message for spelling and grammatical mistakes.
 - Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
 ### Automated builds (CI)
@@ -222,7 +233,7 @@ as context, use the `-W` argument as well.
 [github-issues]: https://github.com/neovim/neovim/issues
 [1820]: https://github.com/neovim/neovim/pull/1820
 [hub]: https://hub.github.com/
-[hygiene]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+[conventional_commits]: https://www.conventionalcommits.org
 [style-guide]: http://neovim.io/develop/style-guide.xml
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
