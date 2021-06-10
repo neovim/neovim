@@ -1,5 +1,8 @@
 " Test editing line in Ex mode (see :help Q and :help gQ).
 
+source check.vim
+source shared.vim
+
 " Helper function to test editing line in Q Ex mode
 func Ex_Q(cmd)
   " Is there a simpler way to test editing Ex line?
@@ -77,6 +80,22 @@ func Test_ex_mode_errors()
   au! CmdLineEnter
   delfunc ExEnterFunc
   quit
+endfunc
+
+func Test_ex_mode_count_overflow()
+  " this used to cause a crash
+  let lines =<< trim END
+    call feedkeys("\<Esc>Q\<CR>")
+    v9|9silent! vi|333333233333y32333333%O
+    call writefile(['done'], 'Xdidexmode')
+    qall!
+  END
+  call writefile(lines, 'Xexmodescript')
+  call assert_equal(1, RunVim([], [], '-e -s -S Xexmodescript -c qa'))
+  call assert_equal(['done'], readfile('Xdidexmode'))
+
+  call delete('Xdidexmode')
+  call delete('Xexmodescript')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

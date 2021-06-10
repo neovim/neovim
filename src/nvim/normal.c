@@ -818,7 +818,7 @@ static bool normal_get_command_count(NormalState *s)
     }
 
     if (s->ca.count0 < 0) {
-      // got too large!
+      // overflow
       s->ca.count0 = 999999999L;
     }
 
@@ -1025,9 +1025,13 @@ static int normal_execute(VimState *state, int key)
     // If you give a count before AND after the operator, they are
     // multiplied.
     if (s->ca.count0) {
-      s->ca.count0 *= s->ca.opcount;
+      s->ca.count0 = (long)((uint64_t)s->ca.count0 * (uint64_t)s->ca.opcount);
     } else {
       s->ca.count0 = s->ca.opcount;
+    }
+    if (s->ca.count0 < 0) {
+      // overflow
+      s->ca.count0 = 999999999L;
     }
   }
 
@@ -5816,6 +5820,9 @@ static void nv_percent(cmdarg_T *cap)
       } else {
         curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count *
                                  cap->count0 + 99L) / 100L;
+      }
+      if (curwin->w_cursor.lnum < 1) {
+        curwin->w_cursor.lnum = 1;
       }
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
