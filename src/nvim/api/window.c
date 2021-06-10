@@ -476,8 +476,6 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         }
       }
       PUT(rv, "border", ARRAY_OBJ(border));
-    } else {
-      PUT(rv, "border", STRING_OBJ(cstr_to_string("none")));
     }
   }
 
