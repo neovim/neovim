@@ -2227,8 +2227,9 @@ static linenr_T foldUpdateIEMSRecurse(
   if (getlevel == foldlevelMarker && flp->start <= flp->lvl - level
       && flp->lvl > 0) {
     (void)foldFind(gap, startlnum - 1, &fp);
-    if (fp >= ((fold_T *)gap->ga_data) + gap->ga_len
-        || fp->fd_top >= startlnum) {
+    if (fp != NULL
+        && (fp >= ((fold_T *)gap->ga_data) + gap->ga_len
+            || fp->fd_top >= startlnum)) {
       fp = NULL;
     }
   }
