@@ -1424,12 +1424,12 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param line  Line number where to place the mark
-/// @param col  Column where to place the mark
+/// @param line  Line where to place the mark, 0-based
+/// @param col  Column where to place the mark, 0-based
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
 ///               - end_line : ending line of the mark, 0-based inclusive.
-///               - end_col : ending col of the mark, 0-based inclusive.
+///               - end_col : ending col of the mark, 0-based exclusive.
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
 ///               - virt_text : virtual text to link to this mark.
