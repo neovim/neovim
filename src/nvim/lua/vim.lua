@@ -349,6 +349,11 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
     vim.fn.bufload(bufnr)
   end
 
+  -- check that region falls within current buffer
+  local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
+  pos1[1] = math.min(pos1[1], buf_line_count - 1)
+  pos2[1] = math.min(pos2[1], buf_line_count - 1)
+
   -- in case of block selection, columns need to be adjusted for non-ASCII characters
   -- TODO: handle double-width characters
   local bufline
