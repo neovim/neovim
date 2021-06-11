@@ -267,7 +267,7 @@ local key_value_options = {
   winhl     = true,
 }
 
----@class OptionType
+---@class OptionTypes
 --- Option Type Enum
 local OptionTypes = setmetatable({
   BOOLEAN = 0,
@@ -342,14 +342,29 @@ local convert_value_to_vim = (function()
     [OptionTypes.NUMBER] = function(_, value) return value end,
     [OptionTypes.STRING] = function(_, value) return value end,
 
-    [OptionTypes.SET] = function(_, value)
+    [OptionTypes.SET] = function(info, value)
       if type(value) == "string" then return value end
-      local result = ''
-      for k in pairs(value) do
-        result = result .. k
-      end
 
-      return result
+      if info.flaglist and info.commalist then
+        local keys = {}
+        for k, v in pairs(value) do
+          if v then
+            table.insert(keys, k)
+          end
+        end
+
+        table.sort(keys)
+        return table.concat(keys, ",")
+      else
+        local result = ''
+        for k, v in pairs(value) do
+          if v then
+            result = result .. k
+          end
+        end
+
+        return result
+      end
     end,
 
     [OptionTypes.ARRAY] = function(info, value)
@@ -404,12 +419,22 @@ local convert_value_to_lua = (function()
 
       assert(info.flaglist, "That is the only one I know how to handle")
 
-      local result = {}
-      for i = 1, #value do
-        result[value:sub(i, i)] = true
-      end
+      if info.flaglist and info.commalist then
+        local split_value = vim.split(value, ",")
+        local result = {}
+        for _, v in ipairs(split_value) do
+          result[v] = true
+        end
 
-      return result
+        return result
+      else
+        local result = {}
+        for i = 1, #value do
+          result[value:sub(i, i)] = true
+        end
+
+        return result
+      end
     end,
 
     [OptionTypes.MAP] = function(info, raw_value)

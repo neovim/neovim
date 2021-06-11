@@ -1314,6 +1314,22 @@ describe('lua stdlib', function()
         eq("*.c", wildignore[1])
       end)
 
+      it('should work for options that are both commalist and flaglist', function()
+        local result = exec_lua [[
+          vim.opt.whichwrap = "b,s"
+          return vim.opt.whichwrap:get()
+        ]]
+
+        eq({b = true, s = true}, result)
+
+        result = exec_lua [[
+          vim.opt.whichwrap = { b = true, s = false, h = true }
+          return vim.opt.whichwrap:get()
+        ]]
+
+        eq({b = true, h = true}, result)
+      end)
+
       it('should work for key-value pair options', function()
         local listchars = exec_lua [[
           vim.opt.listchars = "tab:>~,space:_"
@@ -1695,7 +1711,8 @@ describe('lua stdlib', function()
           }
           return vim.go.whichwrap
         ]]
-        eq(true, ww == "bs" or ww == "sb")
+
+        eq(ww, "b,s")
         eq("b,s,<,>,[,]", exec_lua [[
           vim.opt.whichwrap = "b,s,<,>,[,]"
           return vim.go.whichwrap
