@@ -325,9 +325,12 @@ local convert_value_to_vim = (function()
       return result
     end,
 
-    [OptionTypes.ARRAY] = function(_, value)
+    [OptionTypes.ARRAY] = function(info, value)
       if type(value) == "string" then return value end
-      return table.concat(remove_duplicate_values(value), ",")
+      if not info.allows_duplicates then
+        value = remove_duplicate_values(value)
+      end
+      return table.concat(value, ",")
     end,
 
     [OptionTypes.MAP] = function(_, value)

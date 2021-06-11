@@ -1569,7 +1569,15 @@ describe('lua stdlib', function()
       eq(wildignore, 'super_first,first,foo')
     end)
 
-  end)
+    it('should not remove duplicates from wildmode: #14708', function()
+      local wildmode = exec_lua [[
+        vim.opt.wildmode = {"full", "list", "full"}
+        return vim.o.wildmode
+      ]]
+
+      eq(wildmode, 'full,list,full')
+    end)
+  end) -- vim.opt
 
   it('vim.cmd', function()
     exec_lua [[
