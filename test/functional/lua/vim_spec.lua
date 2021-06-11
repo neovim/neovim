@@ -1731,6 +1731,26 @@ describe('lua stdlib', function()
         ]]))
       end)
     end)
+
+    -- isfname=a,b,c,,,d,e,f
+    it('can handle isfname ,,,', function()
+      local result = exec_lua [[
+        vim.opt.isfname = "a,b,,,c"
+        return { vim.opt.isfname:get(), vim.api.nvim_get_option('isfname') }
+      ]]
+
+      eq({{",", "a", "b", "c"}, "a,b,,,c"}, result)
+    end)
+
+    -- isfname=a,b,c,^,,def
+    it('can handle isfname ,^,,', function()
+      local result = exec_lua [[
+        vim.opt.isfname = "a,b,^,,c"
+        return { vim.opt.isfname:get(), vim.api.nvim_get_option('isfname') }
+      ]]
+
+      eq({{"^,", "a", "b", "c"}, "a,b,^,,c"}, result)
+    end)
   end) -- vim.opt
 
   it('vim.cmd', function()

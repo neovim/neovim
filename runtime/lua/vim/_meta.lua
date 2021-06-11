@@ -405,10 +405,44 @@ local convert_value_to_lua = (function()
     [OptionTypes.NUMBER] = function(_, value) return value end,
     [OptionTypes.STRING] = function(_, value) return value end,
 
-    [OptionTypes.ARRAY] = function(_, value)
+    [OptionTypes.ARRAY] = function(info, value)
       if type(value) == "table" then
-        value = remove_duplicate_values(value)
+        if not info.allows_duplicates then
+          value = remove_duplicate_values(value)
+        end
+
         return value
+      end
+
+      -- Handles unescaped commas in a list.
+      if string.find(value, ",,,") then
+        local comma_split = vim.split(value, ",,,")
+        local left = comma_split[1]
+        local right = comma_split[2]
+
+        local result = {}
+        vim.list_extend(result, vim.split(left, ","))
+        table.insert(result, ",")
+        vim.list_extend(result, vim.split(right, ","))
+
+        table.sort(result)
+
+        return result
+      end
+
+      if string.find(value, ",^,,", 1, true) then
+        local comma_split = vim.split(value, ",^,,", true)
+        local left = comma_split[1]
+        local right = comma_split[2]
+
+        local result = {}
+        vim.list_extend(result, vim.split(left, ","))
+        table.insert(result, "^,")
+        vim.list_extend(result, vim.split(right, ","))
+
+        table.sort(result)
+
+        return result
       end
 
       return vim.split(value, ",")

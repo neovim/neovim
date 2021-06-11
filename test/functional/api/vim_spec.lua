@@ -2003,6 +2003,7 @@ describe('API', function()
 
     it('should have information about window options', function()
       eq({
+        allows_duplicates = true,
         commalist = false;
         default = "";
         flaglist = false;
@@ -2020,6 +2021,7 @@ describe('API', function()
 
     it('should have information about buffer options', function()
       eq({
+        allows_duplicates = true,
         commalist = false,
         default = "",
         flaglist = false,
@@ -2041,6 +2043,7 @@ describe('API', function()
       eq(false, meths.get_option'showcmd')
 
       eq({
+        allows_duplicates = true,
         commalist = false,
         default = true,
         flaglist = false,
