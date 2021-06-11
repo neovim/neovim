@@ -3977,6 +3977,7 @@ int do_join(size_t count,
   del_lines((long)count - 1, false);
   curwin->w_cursor.lnum = t;
   curbuf_splice_pending--;
+  curbuf->deleted_bytes2 = 0;
 
   /*
    * Set the cursor column:
