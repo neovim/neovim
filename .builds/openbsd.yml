@@ -3,11 +3,11 @@
 image: openbsd/6.8
 
 packages:
-- autoconf-2.69p2
+- autoconf
 - automake-1.15.1
 - cmake
-- gettext-runtime-0.20.1p1
-- gettext-tools-0.20.1p3
+- gettext-runtime
+- gettext-tools
 - gmake
 - libtool
 - ninja-1.10.0
