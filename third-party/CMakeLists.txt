@@ -203,6 +203,19 @@ set(TREESITTER_C_SHA256 a5dcb37460d83002dfae7f9a208170ddbc9a047f231b9d6b75da7d36
 set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/6ed42747a4e0faee9b65edbbacc86ed0caeae05c.zip)
 set(TREESITTER_SHA256 07b8d090ae856d4ea8a494c08900271545d44af2558278a27693f9a47d9e75e3)
 
+
+if(USE_BUNDLED_UNIBILIUM)
+	message("USE_BUNDLED_UNIBILIUM is ON")
+else()
+	message("USE_BUNDLED_UNIBILIUM is OFF")
+endif()
+
+if(USE_BUNDLED_LIBTERMKEY)
+	message("USE_BUNDLED_LIBTERMKEY is ON")
+else()
+	message("USE_BUNDLED_LIBTERMKEY is OFF")
+endif()
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
