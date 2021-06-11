@@ -55,7 +55,8 @@ fun! s:SynSet()
     " load each in sequence.  Skip empty entries.
     for name in split(s, '\.')
       if !empty(name)
-	exe "runtime! syntax/" . name . ".vim syntax/" . name . "/*.vim"
+        exe "runtime! syntax/" . name . ".vim syntax/" . name . "/*.vim"
+        exe "runtime! syntax/" . name . ".lua syntax/" . name . "/*.lua"
       endif
     endfor
   endif

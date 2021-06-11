@@ -245,7 +245,8 @@ int source_in_path(char_u *path, char_u *name, int flags)
   return do_in_path_and_pp(path, name, flags, source_callback, NULL);
 }
 
-// Expand wildcards in "pat" and invoke do_source() for each match.
+// Expand wildcards in "pat" and invoke do_source()/nlua_exec_file()
+// for each match.
 static void source_all_matches(char_u *pat)
 {
   int num_files;
@@ -405,17 +406,15 @@ theend:
 /// Load scripts in "plugin" and "ftdetect" directories of the package.
 static int load_pack_plugin(char_u *fname)
 {
-  static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
   static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
 
-  int retval = FAIL;
   char *const ffname = fix_fname((char *)fname);
   size_t len = strlen(ffname) + STRLEN(ftpat);
-  char_u *pat = try_malloc(len + 1);
-  if (pat == NULL) {
-    goto theend;
-  }
-  vim_snprintf((char *)pat, len, plugpat, ffname);
+  char_u *pat = xmallocz(len);
+
+  vim_snprintf((char *)pat, len, "%s/plugin/**/*.vim", ffname);  // NOLINT
+  source_all_matches(pat);
+  vim_snprintf((char *)pat, len, "%s/plugin/**/*.lua", ffname);  // NOLINT
   source_all_matches(pat);
 
   char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
@@ -426,16 +425,15 @@ static int load_pack_plugin(char_u *fname)
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf((char *)pat, len, ftpat, ffname);
     source_all_matches(pat);
+    vim_snprintf((char *)pat, len, "%s/ftdetect/*.lua", ffname);  // NOLINT
+    source_all_matches(pat);
     do_cmdline_cmd("augroup END");
   }
   xfree(cmd);
   xfree(pat);
-  retval = OK;
-
-theend:
   xfree(ffname);
 
-  return retval;
+  return OK;
 }
 
 // used for "cookie" of add_pack_plugin()

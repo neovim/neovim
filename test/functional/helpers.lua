@@ -878,6 +878,11 @@ function module.os_kill(pid)
     or  'kill -9 '..pid..' > /dev/null'))
 end
 
+-- Create directories with non exsisting intermidiate directories
+function module.mkdir_p(path)
+  return module.meths.call_function('mkdir', {path, 'p'})
+end
+
 module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)

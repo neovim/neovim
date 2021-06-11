@@ -469,10 +469,15 @@ accordingly.  Vim proceeds in this order:
 7. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
+		:runtime! plugin/**/*.lua
 <	The result is that all directories in the 'runtimepath' option will be
 	searched for the "plugin" sub-directory and all files ending in ".vim"
-	will be sourced (in alphabetical order per directory), also in
-	subdirectories.
+	and ".lua" will be sourced (in alphabetical order per directory),
+	also in subdirectories. First all the "*.vim" files will be sourced and
+	then all the "*.lua" files will be sourced. If two files with same
+	name but different extensions exists they will be treated in same
+	manner. For example when both "foo.vim" and "foo.lua" exists then
+	first "foo.vim" will be sourced then "foo.lua" will be sourced.
 	However, directories in 'runtimepath' ending in "after" are skipped
 	here and only loaded after packages, see below.
 	Loading plugins won't be done when:

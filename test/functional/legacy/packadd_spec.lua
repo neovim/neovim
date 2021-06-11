@@ -101,9 +101,14 @@ describe('packadd', function()
         call setline(1, 'let g:plugin_works = 24')
         wq
 
+        exe 'split ' . plugdir . '/plugin/test.lua'
+        call setline(1, 'vim.g.plugin_lua_works = 24')
+        wq
+
         packadd other
 
         call assert_equal(24, g:plugin_works)
+        call assert_equal(24, g:plugin_lua_works)
         call assert_true(len(&rtp) > len(rtp))
         call assert_match(Escape(plugdir) . '\($\|,\)', &rtp)
       endfunc
@@ -117,13 +122,18 @@ describe('packadd', function()
         exe 'split ' . s:plugdir . '/plugin/test.vim'
         call setline(1, 'let g:plugin_works = 42')
         wq
+        exe 'split ' . s:plugdir . '/plugin/test.lua'
+        call setline(1, 'let g:plugin_lua_works = 42')
+        wq
         let g:plugin_works = 0
+        let g:plugin_lua_works = 0
 
         packadd! mytest
 
         call assert_true(len(&rtp) > len(rtp))
         call assert_match(Escape(s:plugdir) . '\($\|,\)', &rtp)
         call assert_equal(0, g:plugin_works)
+        call assert_equal(0, g:plugin_lua_works)
 
         " check the path is not added twice
         let new_rtp = &rtp

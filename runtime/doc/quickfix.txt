@@ -1208,8 +1208,8 @@ not "b:current_compiler".  What the command actually does is the following:
 - Delete the "current_compiler" and "b:current_compiler" variables.
 - Define the "CompilerSet" user command.  With "!" it does ":set", without "!"
   it does ":setlocal".
-- Execute ":runtime! compiler/{name}.vim".  The plugins are expected to set
-  options with "CompilerSet" and set the "current_compiler" variable to the
+- Execute ":runtime! compiler/{name}.(vim|lua)".  The plugins are expected to
+  set options with "CompilerSet" and set the "current_compiler" variable to the
   name of the compiler.
 - Delete the "CompilerSet" user command.
 - Set "b:current_compiler" to the value of "current_compiler".

@@ -4749,8 +4749,9 @@ in their own color.
 			feature it will output "unknown".
 
 :colo[rscheme] {name}	Load color scheme {name}.  This searches 'runtimepath'
-			for the file "colors/{name}.vim".  The first one that
+			for the file "colors/{name}.(vim|lua)".  The first one that
 			is found is loaded.
+			Note: "colors/{name}.vim" is tried first.
 			Also searches all plugins in 'packpath', first below
 			"start" and then under "opt".
 

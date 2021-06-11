@@ -2303,6 +2303,7 @@ au BufNewFile,BufRead *.txt
 " Use the filetype detect plugins.  They may overrule any of the previously
 " detected filetypes.
 runtime! ftdetect/*.vim
+runtime! ftdetect/*.lua
 
 " NOTE: The above command could have ended the filetypedetect autocmd group
 " and started another one. Let's make sure it has ended to get to a consistent
