@@ -960,6 +960,7 @@ These commands are not marks themselves, but jump to a mark:
 			- the view of a window on a buffer
 			- folds
 			- diffs
+			- extmarks
 
 :kee[pmarks] {command}				*:kee* *:keep* *:keepmarks*
 			Currently only has effect for the filter command

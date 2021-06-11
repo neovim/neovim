@@ -1001,6 +1001,14 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("append with lockmarks", function ()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
+
+      funcs.execute("lockmarks call append(1, 'abc')")
+
+      check_events {}
+    end)
+
     teardown(function()
       os.remove "Xtest-reload"
       os.remove "Xtest-undofile"

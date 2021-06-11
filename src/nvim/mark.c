@@ -1003,24 +1003,22 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
     }
 
     sign_mark_adjust(line1, line2, amount, amount_after);
-    if (op != kExtmarkNOOP) {
-      extmark_adjust(curbuf, line1, line2, amount, amount_after, op);
-    }
   }
-
-  /* previous context mark */
+  if (op != kExtmarkNOOP) {
+    extmark_adjust(curbuf, line1, line2, amount, amount_after, op);
+  }
+  // previous context mark
   one_adjust(&(curwin->w_pcmark.lnum));
 
-  /* previous pcmark */
+  // previous pcmark
   one_adjust(&(curwin->w_prev_pcmark.lnum));
 
-  /* saved cursor for formatting */
-  if (saved_cursor.lnum != 0)
+  // saved cursor for formatting
+  if (saved_cursor.lnum != 0) {
     one_adjust_nodel(&(saved_cursor.lnum));
+  }
 
-  /*
-   * Adjust items in all windows related to the current buffer.
-   */
+  // Adjust items in all windows related to the current buffer.
   FOR_ALL_TAB_WINDOWS(tab, win) {
     if (!cmdmod.lockmarks) {
       /* Marks in the jumplist.  When deleting lines, this may create
