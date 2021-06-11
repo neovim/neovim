@@ -169,7 +169,7 @@
 
 #if NVIM_HAS_ATTRIBUTE(fallthrough) \
     && (!defined(__apple_build_version__) || __apple_build_version__ >= 7000000)
-# define FALLTHROUGH __attribute__((fallthrough))
+# define FALLTHROUGH {} __attribute__((fallthrough))
 #else
 # define FALLTHROUGH
 #endif
