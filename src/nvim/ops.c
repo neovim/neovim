@@ -156,6 +156,9 @@ int get_op_type(int char1, int char2)
     // subtract
     return OP_NR_SUB;
   }
+  if (char1 == 'z' && char2 == 'y') {  // OP_YANK
+    return OP_YANK;
+  }
   for (i = 0;; i++) {
     if (opchars[i][0] == char1 && opchars[i][1] == char2) {
       break;
@@ -2563,7 +2566,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     switch (reg->y_type) {
     case kMTBlockWise:
       block_prep(oap, &bd, lnum, false);
-      yank_copy_line(reg, &bd, y_idx);
+      yank_copy_line(reg, &bd, y_idx, oap->excl_tr_ws);
       break;
 
     case kMTLineWise:
@@ -2627,7 +2630,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         bd.textlen = endcol - startcol + oap->inclusive;
       }
       bd.textstart = p + startcol;
-      yank_copy_line(reg, &bd, y_idx);
+      yank_copy_line(reg, &bd, y_idx, false);
       break;
     }
     // NOTREACHED
@@ -2714,7 +2717,11 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   return;
 }
 
-static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx)
+// Copy a block range into a register.
+// If "exclude_trailing_space" is set, do not copy trailing whitespaces.
+static void yank_copy_line(yankreg_T *reg, const struct block_def *bd,
+                           size_t y_idx, bool exclude_trailing_space)
+  FUNC_ATTR_NONNULL_ALL
 {
   int size = bd->startspaces + bd->endspaces + bd->textlen;
   assert(size >= 0);
@@ -2726,6 +2733,14 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx)
   pnew += bd->textlen;
   memset(pnew, ' ', (size_t)bd->endspaces);
   pnew += bd->endspaces;
+  if (exclude_trailing_space) {
+    int s = bd->textlen + bd->endspaces;
+
+    while (ascii_iswhite(*(bd->textstart + s - 1)) && s > 0) {
+      s = s - utf_head_off(bd->textstart, bd->textstart + s - 1) - 1;
+      pnew--;
+    }
+  }
   *pnew = NUL;
 }
 

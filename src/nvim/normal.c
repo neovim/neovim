@@ -1870,6 +1870,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         }
       } else {
         curwin->w_p_lbr = lbr_saved;
+        oap->excl_tr_ws = cap->cmdchar == 'z';
         (void)op_yank(oap, !gui_yank, false);
       }
       check_cursor_col();
@@ -4393,6 +4394,9 @@ dozet:
   case 'p':
     nv_put(cap);
     break;
+  // "zy" Yank without trailing spaces
+  case 'y':  nv_operator(cap);
+             break;
 
   /* "zF": create fold command */
   /* "zf": create fold operator */
