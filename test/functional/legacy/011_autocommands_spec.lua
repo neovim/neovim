@@ -17,6 +17,7 @@ local lfs = require('lfs')
 local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
   helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed
+local command = helpers.command
 local iswin = helpers.iswin
 local read_file = helpers.read_file
 
@@ -28,7 +29,7 @@ end
 local function prepare_gz_file(name, text)
   write_file(name, text..'\n')
   -- Compress the file with gzip.
-  os.execute('gzip --force '..name)
+  command([[call system(['gzip', '--force', ']]..name..[['])]])
   -- This should create the .gz file and delete the original.
   neq(nil, lfs.attributes(name..'.gz'))
   eq(nil, lfs.attributes(name))
@@ -54,7 +55,9 @@ describe('file reading, writing and bufnew and filter autocommands', function()
        */
       ]])
   end)
-  before_each(clear)
+  before_each(function ()
+    clear({env={GZIP=nil}})
+  end)
   teardown(function()
     os.remove('Xtestfile.gz')
     os.remove('Xtest.c')
@@ -67,7 +70,6 @@ describe('file reading, writing and bufnew and filter autocommands', function()
 
     it('FileReadPost (using gzip)', function()
       prepare_gz_file('Xtestfile', text1)
-      feed_command('let $GZIP = ""')
       --execute('au FileChangedShell * echo "caught FileChangedShell"')
       feed_command('set bin')
       feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
@@ -79,7 +81,6 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     it('BufReadPre, BufReadPost (using gzip)', function()
       prepare_gz_file('Xtestfile', text1)
       local gzip_data = read_file('Xtestfile.gz')
-      feed_command('let $GZIP = ""')
       -- Setup autocommands to decompress before reading and re-compress afterwards.
       feed_command("au BufReadPre   *.gz  exe '!gzip -d ' . shellescape(expand('<afile>'))")
       feed_command("au BufReadPre   *.gz  call rename(expand('<afile>:r'), expand('<afile>'))")
