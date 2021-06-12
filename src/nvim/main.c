@@ -1820,7 +1820,6 @@ static bool do_user_initialization(void)
     }
 
     xfree(vimrc_path);
-    xfree(init_lua_path);
     return false;
   }
   xfree(init_lua_path);
