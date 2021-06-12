@@ -1006,4 +1006,59 @@ func Test_visual_put_in_block_using_zp()
   bwipe!
 endfunc
 
+func Test_visual_put_in_block_using_zy_and_zp()
+  new
+
+  " Test 1) Paste using zp - after the cursor without trailing spaces
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;hzp
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 2) Paste using zP - in front of the cursor without trailing spaces
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;zP
+  call assert_equal(['/path/subdir;text', '/path/longsubdir;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 3) Paste using p - with trailing spaces
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;hp
+  call assert_equal(['/path/subdir        ;text', '/path/longsubdir    ;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 4) Paste using P - with trailing spaces
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /subdir           columntext',
+		\ 'texttext  /longsubdir       columntext',
+    \ 'texttext  /longlongsubdir   columntext'])
+  exe "normal! 5G0f/\<c-v>2jezy"
+  norm! 1G0f;P
+  call assert_equal(['/path/subdir        ;text', '/path/longsubdir    ;text', '/path/longlongsubdir;text'], getline(1, 3))
+
+  " Test 5) Yank with spaces inside the block
+  %d
+  call setline(1, ['/path;text', '/path;text', '/path;text', '', 
+    \ 'texttext  /sub    dir/           columntext',
+    \ 'texttext  /lon    gsubdir/       columntext',
+    \ 'texttext  /lon    glongsubdir/   columntext'])
+  exe "normal! 5G0f/\<c-v>2jf/zy"
+  norm! 1G0f;zP
+  call assert_equal(['/path/sub    dir/;text', '/path/lon    gsubdir/;text', '/path/lon    glongsubdir/;text'], getline(1, 3))
+  bwipe!
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

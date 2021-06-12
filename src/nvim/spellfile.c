@@ -2942,9 +2942,9 @@ static void add_fromto(spellinfo_T *spin, garray_T *gap, char_u *from, char_u *t
   char_u word[MAXWLEN];
 
   fromto_T *ftp = GA_APPEND_VIA_PTR(fromto_T, gap);
-  (void)spell_casefold(from, (int)STRLEN(from), word, MAXWLEN);
+  (void)spell_casefold(curwin, from, (int)STRLEN(from), word, MAXWLEN);
   ftp->ft_from = getroom_save(spin, word);
-  (void)spell_casefold(to, (int)STRLEN(to), word, MAXWLEN);
+  (void)spell_casefold(curwin, to, (int)STRLEN(to), word, MAXWLEN);
   ftp->ft_to = getroom_save(spin, word);
 }
 
@@ -3764,7 +3764,7 @@ store_word (
     char_u *word,
     int flags,                      // extra flags, WF_BANNED
     int region,                     // supported region(s)
-    char_u *pfxlist,                // list of prefix IDs or NULL
+    const char_u *pfxlist,          // list of prefix IDs or NULL
     bool need_affix                 // only store word with affix ID
 )
 {
@@ -3772,25 +3772,28 @@ store_word (
   int ct = captype(word, word + len);
   char_u foldword[MAXWLEN];
   int res = OK;
-  char_u      *p;
 
-  (void)spell_casefold(word, len, foldword, MAXWLEN);
-  for (p = pfxlist; res == OK; ++p) {
-    if (!need_affix || (p != NULL && *p != NUL))
+  (void)spell_casefold(curwin, word, len, foldword, MAXWLEN);
+  for (const char_u *p = pfxlist; res == OK; p++) {
+    if (!need_affix || (p != NULL && *p != NUL)) {
       res = tree_add_word(spin, foldword, spin->si_foldroot, ct | flags,
-          region, p == NULL ? 0 : *p);
-    if (p == NULL || *p == NUL)
+                          region, p == NULL ? 0 : *p);
+    }
+    if (p == NULL || *p == NUL) {
       break;
+    }
   }
   ++spin->si_foldwcount;
 
   if (res == OK && (ct == WF_KEEPCAP || (flags & WF_KEEPCAP))) {
-    for (p = pfxlist; res == OK; ++p) {
-      if (!need_affix || (p != NULL && *p != NUL))
+    for (const char_u *p = pfxlist; res == OK; p++) {
+      if (!need_affix || (p != NULL && *p != NUL)) {
         res = tree_add_word(spin, word, spin->si_keeproot, flags,
-            region, p == NULL ? 0 : *p);
-      if (p == NULL || *p == NUL)
+                            region, p == NULL ? 0 : *p);
+      }
+      if (p == NULL || *p == NUL) {
         break;
+      }
     }
     ++spin->si_keepwcount;
   }

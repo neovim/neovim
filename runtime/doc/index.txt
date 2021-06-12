@@ -865,6 +865,7 @@ tag		char	      note action in Normal mode	~
 |zv|		zv		   open enough folds to view the cursor line
 |zw|		zw		   permanently mark word as incorrectly spelled
 |zx|		zx		   re-apply 'foldlevel' and do "zv"
+|zy|		zy		   yank without trailing spaces
 |zz|		zz		   redraw, cursor line at center of window
 |z<Left>|	z<Left>		   same as "zh"
 |z<Right>|	z<Right>	   same as "zl"

@@ -796,6 +796,26 @@ func Test_fold_delete_first_line()
   set foldmethod&
 endfunc
 
+func Test_undo_fold_deletion()
+  new
+  set fdm=marker
+  let lines =<< trim END
+      " {{{
+      " }}}1
+      " {{{
+  END
+  call setline(1, lines)
+  3d
+  g/"/d
+  undo
+  redo
+  " eval getline(1, '$')->assert_equal([''])
+  eval assert_equal(getline(1, '$'), [''])
+
+  set fdm&vim
+  bwipe!
+endfunc
+
 " this was crashing
 func Test_move_no_folds()
   new
