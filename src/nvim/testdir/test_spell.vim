@@ -176,19 +176,19 @@ endfunc
 func Test_spellsuggest()
   " No suggestions when spell checking is not enabled.
   set nospell
-  call assert_equal([], spellsuggest('mercurry'))
+  call assert_equal([], spellsuggest('marrch'))
 
   set spell
 
   " With 1 argument.
-  call assert_equal(['mercury', 'Mercury'], spellsuggest('mercurry')[0:1])
+  call assert_equal(['march', 'March'], spellsuggest('marrch')[0:1])
 
   " With 2 arguments.
-  call assert_equal(['mercury', 'Mercury'], spellsuggest('mercurry', 2))
+  call assert_equal(['march', 'March'], spellsuggest('marrch', 2))
 
   " With 3 arguments.
-  call assert_equal(['mercury'], spellsuggest('mercurry', 1, 0))
-  call assert_equal(['Mercury'], spellsuggest('mercurry', 1, 1))
+  call assert_equal(['march'], spellsuggest('marrch', 1, 0))
+  call assert_equal(['March'], spellsuggest('marrch', 1, 1))
 
   " Test with digits and hyphen.
   call assert_equal('Carbon-14', spellsuggest('Carbon-15')[0])
@@ -199,9 +199,9 @@ func Test_spellsuggest()
   " ALLCAP word.  Otherwise, if the first letter is UPPER then
   " suggest ONECAP.  Exception: "ALl" most likely should be "All",
   " require three upper case letters.
-  call assert_equal(['MACARONI', 'macaroni'], spellsuggest('maCARONI', 2))
-  call assert_equal(['macaroni', 'MACARONI'], spellsuggest('maCAroni', 2))
-  call assert_equal(['Macaroni'], spellsuggest('MACAroni', 1))
+  call assert_equal(['THIRD', 'third'], spellsuggest('thIRD', 2))
+  call assert_equal(['third', 'THIRD'], spellsuggest('tHIrd', 2))
+  call assert_equal(['Third'], spellsuggest('THird', 1))
   call assert_equal(['All'],      spellsuggest('ALl', 1))
 
   set spell&
@@ -211,18 +211,22 @@ endfunc
 func Test_spellsuggest_option_methods()
   set spell
 
-  set spellsuggest=fast
-  call assert_equal(['Keyword', 'Keyboard'], spellsuggest('Keybord', 2))
+  for e in ['utf-8']
+    exe 'set encoding=' .. e
 
-  " With best or double option, "Keyboard" should become the top suggestion
-  " because of better phonetic matching.
-  set spellsuggest=best
-  call assert_equal(['Keyboard', 'Keyword'], spellsuggest('Keybord', 2))
+    set spellsuggest=fast
+    call assert_equal(['Stick', 'Stitch'], spellsuggest('Stich', 2), e)
 
-  set spellsuggest=double
-  call assert_equal(['Keyboard', 'Keyword'], spellsuggest('Keybord', 2))
+    " With best or double option, "Stitch" should become the top suggestion
+    " because of better phonetic matching.
+    set spellsuggest=best
+    call assert_equal(['Stitch', 'Stick'], spellsuggest('Stich', 2), e)
 
-  set spell& spellsuggest&
+    set spellsuggest=double
+    call assert_equal(['Stitch', 'Stick'], spellsuggest('Stich', 2), e)
+  endfor
+
+  set spell& spellsuggest& encoding&
 endfunc
 
 " Test 'spellsuggest' option with value file:{filename}
@@ -264,32 +268,32 @@ func Test_spellsuggest_option_number()
   " We limited the number of suggestions to 2, so selecting
   " the 1st and 2nd suggestion should correct the word, but
   " selecting a 3rd suggestion should do nothing.
-  call setline(1, 'Keybord')
-  norm 1z=
-  call assert_equal('Keyboard', getline(1))
+  call setline(1, 'A baord')
+  norm $1z=
+  call assert_equal('A board', getline(1))
 
-  call setline(1, 'Keybord')
-  norm 2z=
-  call assert_equal('Keyword', getline(1))
+  call setline(1, 'A baord')
+  norm $2z=
+  call assert_equal('A bard', getline(1))
 
-  call setline(1, 'Keybord')
-  norm 3z=
-  call assert_equal('Keybord', getline(1))
+  call setline(1, 'A baord')
+  norm $3z=
+  call assert_equal('A baord', getline(1))
 
-  let a = execute('norm z=')
+  let a = execute('norm $z=')
   call assert_equal(
   \    "\n"
-  \ .. "Change \"Keybord\" to:\n"
-  \ .. " 1 \"Keyboard\"\n"
-  \ .. " 2 \"Keyword\"\n"
+  \ .. "Change \"baord\" to:\n"
+  \ .. " 1 \"board\"\n"
+  \ .. " 2 \"bard\"\n"
   \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
 
   set spell spellsuggest=0
-  call assert_equal("\nSorry, no suggestions", execute('norm z='))
+  call assert_equal("\nSorry, no suggestions", execute('norm $z='))
 
   " Unlike z=, function spellsuggest(...) should not be affected by the
   " max number of suggestions (2) set by the 'spellsuggest' option.
-  call assert_equal(['Keyboard', 'Keyword', 'Keyboards'], spellsuggest('Keybord', 3))
+  call assert_equal(['board', 'bard', 'broad'], spellsuggest('baord', 3))
 
   set spellsuggest& spell&
   bwipe!
@@ -302,25 +306,24 @@ func Test_spellsuggest_option_expr()
   " So shorter suggestions are preferred.
   func MySuggest()
     let spellsuggest_save = &spellsuggest
-    set spellsuggest=best
+    set spellsuggest=3,best
     let result = map(spellsuggest(v:val, 3), "[toupper(v:val), len(v:val)]")
     let &spellsuggest = spellsuggest_save
     return result
   endfunc
 
-  set spell spellsuggest=3,expr:MySuggest()
-  call assert_equal(['KEYWORD', 'KEYBOARD', 'KEYBOARDS'], spellsuggest('Keybord', 3))
-  call assert_equal(['KEYWORD', 'KEYBOARD', 'KEYBOARDS'], spellsuggest('Keybord', 3))
+  set spell spellsuggest=expr:MySuggest()
+  call assert_equal(['BARD', 'BOARD', 'BROAD'], spellsuggest('baord', 3))
 
   new
-  call setline(1, 'Keybord')
+  call setline(1, 'baord')
   let a = execute('norm z=')
   call assert_equal(
   \    "\n"
-  \ .. "Change \"Keybord\" to:\n"
-  \ .. " 1 \"KEYWORD\"\n"
-  \ .. " 2 \"KEYBOARD\"\n"
-  \ .. " 3 \"KEYBOARDS\"\n"
+  \ .. "Change \"baord\" to:\n"
+  \ .. " 1 \"BARD\"\n"
+  \ .. " 2 \"BOARD\"\n"
+  \ .. " 3 \"BROAD\"\n"
   \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
 
   " With verbose, z= should show the score i.e. word length with
@@ -329,10 +332,10 @@ func Test_spellsuggest_option_expr()
   let a = execute('norm z=')
   call assert_equal(
   \    "\n"
-  \ .. "Change \"Keybord\" to:\n"
-  \ .. " 1 \"KEYWORD\"                   (7 - 0)\n"
-  \ .. " 2 \"KEYBOARD\"                  (8 - 0)\n"
-  \ .. " 3 \"KEYBOARDS\"                 (9 - 0)\n"
+  \ .. "Change \"baord\" to:\n"
+  \ .. " 1 \"BARD\"                      (4 - 0)\n"
+  \ .. " 2 \"BOARD\"                     (5 - 0)\n"
+  \ .. " 3 \"BROAD\"                     (5 - 0)\n"
   \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
 
   set spell& spellsuggest& verbose&
