@@ -1811,7 +1811,7 @@ static bool do_user_initialization(void)
 
   char_u *init_lua_path = (char_u *)stdpaths_user_conf_subpath("init.lua");
   if (os_path_exists(init_lua_path)
-      && nlua_exec_file((const char *)init_lua_path)) {
+      && do_source(init_lua_path, true, DOSO_VIMRC)) {
     os_setenv("MYVIMRC", (const char *)init_lua_path, 1);
     char_u *vimrc_path = (char_u *)stdpaths_user_conf_subpath("init.vim");
 
