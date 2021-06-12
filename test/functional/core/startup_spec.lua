@@ -443,10 +443,7 @@ describe('user config init', function()
   before_each(function()
     rmdir(xhome)
 
-    -- TODO, make mkdir_p helper
-    mkdir(xhome)
-    mkdir(xconfig)
-    mkdir(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xconfig .. pathsep .. 'nvim')
 
     write_file(init_lua_path, [[
       vim.g.lua_rc = 1
