@@ -811,7 +811,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:^~                        }|
     ]], messages={
-      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Helli"\nType number and <Enter> or click with the mouse (q or empty cancels): ' } }, kind = ""}
+      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\nType number and <Enter> or click with the mouse (q or empty cancels): ' } }, kind = ""}
     }}
 
     feed('1')
@@ -822,7 +822,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:^~                        }|
     ]], messages={
-      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Helli"\nType number and <Enter> or click with the mouse (q or empty cancels): ' } }, kind = ""},
+      {content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\nType number and <Enter> or click with the mouse (q or empty cancels): ' } }, kind = ""},
       { content = { { "1" } }, kind = "" }
     }}
 

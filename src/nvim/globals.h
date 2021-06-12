@@ -878,6 +878,7 @@ EXTERN char_u e_invexpr2[] INIT(= N_("E15: Invalid expression: %s"));
 EXTERN char_u e_invrange[] INIT(= N_("E16: Invalid range"));
 EXTERN char_u e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
+EXTERN char_u e_no_spell[] INIT(= N_("E756: Spell checking is not possible"));
 EXTERN char_u e_invchan[] INIT(= N_("E900: Invalid channel id"));
 EXTERN char_u e_invchanjob[] INIT(= N_("E900: Invalid channel id: not a job"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));

@@ -1343,7 +1343,7 @@ static bool no_spell_checking(win_T *wp)
 {
   if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL
       || GA_EMPTY(&wp->w_s->b_langp)) {
-    EMSG(_("E756: Spell checking is not enabled"));
+    EMSG(_(e_no_spell));
     return true;
   }
   return false;
@@ -2771,9 +2771,17 @@ void spell_suggest(int count)
   int selected = count;
   int badlen = 0;
   int msg_scroll_save = msg_scroll;
+  const int wo_spell_save = curwin->w_p_spell;
 
-  if (no_spell_checking(curwin))
+  if (!curwin->w_p_spell) {
+    did_set_spelllang(curwin);
+    curwin->w_p_spell = true;
+  }
+
+  if (*curwin->w_s->b_p_spl == NUL) {
+    EMSG(_(e_no_spell));
     return;
+  }
 
   if (VIsual_active) {
     // Use the Visually selected text as the bad word.  But reject
@@ -2966,6 +2974,7 @@ void spell_suggest(int count)
 
   spell_find_cleanup(&sug);
   xfree(line);
+  curwin->w_p_spell = wo_spell_save;
 }
 
 // Check if the word at line "lnum" column "col" is required to start with a
@@ -5761,7 +5770,9 @@ cleanup_suggestions (
         xfree(stp[i].st_word);
       }
       gap->ga_len = keep;
-      return stp[keep - 1].st_score;
+      if (keep >= 1) {
+        return stp[keep - 1].st_score;
+      }
     }
   }
   return maxscore;

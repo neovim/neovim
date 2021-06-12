@@ -284,4 +284,11 @@ extern int did_set_spelltab;
 
 extern char *e_format;
 
+// Values for "what" argument of spell_add_word()
+typedef enum {
+  SPELL_ADD_GOOD = 0,
+  SPELL_ADD_BAD = 1,
+  SPELL_ADD_RARE = 2,
+} SpellAddType;
+
 #endif  // NVIM_SPELL_DEFS_H

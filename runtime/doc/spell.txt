@@ -110,6 +110,23 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 :spellw[rong]! {word}	Add {word} as a wrong (bad) word to the internal word
 			list, like with |zW|.
 
+							*:spellra* *:spellrare*
+:[count]spellr[are] {word}
+			Add {word} as a rare word to 'spellfile', similar to
+			|zw|.  Without count the first name is used, with
+			a count of two the second entry, etc.
+
+			There are no normal mode commands to mark words as
+			rare as this is a fairly uncommon command and all
+			intuitive commands for this are already taken. If you
+			want you can add mappings with e.g.: >
+		nnoremap z?  :exe ':spellrare  ' . expand('<cWORD>')<CR>
+		nnoremap z/  :exe ':spellrare! ' . expand('<cWORD>')<CR>
+<			|:spellundo|, |zuw|, or |zuW| can be used to undo this.
+
+:spellr[rare]! {word}	Add {word} as a rare word to the internal word
+			list, similar to |zW|.
+
 :[count]spellu[ndo] {word}				*:spellu* *:spellundo*
 			Like |zuw|.  [count] used as with |:spellgood|.
 

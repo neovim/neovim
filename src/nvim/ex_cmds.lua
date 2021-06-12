@@ -2568,6 +2568,12 @@ module.cmds = {
     func='ex_spellrepall',
   },
   {
+    command='spellrare',
+    flags=bit.bor(BANG, RANGE, NEEDARG, EXTRA, TRLBAR),
+    addr_type='ADDR_OTHER',
+    func='ex_spell',
+  },
+  {
     command='spellundo',
     flags=bit.bor(BANG, RANGE, NEEDARG, EXTRA, TRLBAR),
     addr_type='ADDR_OTHER',
