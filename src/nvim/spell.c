@@ -5761,7 +5761,9 @@ cleanup_suggestions (
         xfree(stp[i].st_word);
       }
       gap->ga_len = keep;
-      return stp[keep - 1].st_score;
+      if (keep >= 1) {
+        return stp[keep - 1].st_score;
+      }
     }
   }
   return maxscore;
