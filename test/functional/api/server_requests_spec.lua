@@ -278,8 +278,9 @@ describe('server -> client', function()
     local nvim_argv = merge_args(helpers.nvim_argv, {'--headless'})
     local function connect_test(server, mode, address)
       local serverpid = funcs.getpid()
-      local client = spawn(nvim_argv)
-      set_session(client, true)
+      local client = spawn(nvim_argv, false, nil, true)
+      set_session(client)
+
       local clientpid = funcs.getpid()
       neq(serverpid, clientpid)
       local id = funcs.sockconnect(mode, address, {rpc=true})
@@ -288,7 +289,7 @@ describe('server -> client', function()
       funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
       local client_id = funcs.rpcrequest(id, 'nvim_get_api_info')[1]
 
-      set_session(server, true)
+      set_session(server)
       eq(serverpid, funcs.getpid())
       eq('hello', meths.get_current_line())
 
@@ -296,7 +297,7 @@ describe('server -> client', function()
       funcs.rpcrequest(client_id, 'nvim_set_current_line', 'howdy!')
       eq(id, funcs.rpcrequest(client_id, 'nvim_get_api_info')[1])
 
-      set_session(client, true)
+      set_session(client)
       eq(clientpid, funcs.getpid())
       eq('howdy!', meths.get_current_line())
 

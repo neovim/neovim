@@ -29,11 +29,11 @@ describe('channels', function()
   end)
 
   pending('can connect to socket', function()
-    local server = spawn(nvim_argv)
+    local server = spawn(nvim_argv, nil, nil, true)
     set_session(server)
     local address = funcs.serverlist()[1]
-    local client = spawn(nvim_argv)
-    set_session(client, true)
+    local client = spawn(nvim_argv, nil, nil, true)
+    set_session(client)
     source(init)
 
     meths.set_var('address', address)
@@ -42,11 +42,11 @@ describe('channels', function()
     ok(id > 0)
 
     command("call chansend(g:id, msgpackdump([[2,'nvim_set_var',['code',23]]]))")
-    set_session(server, true)
+    set_session(server)
     retry(nil, 1000, function()
       eq(23, meths.get_var('code'))
     end)
-    set_session(client, true)
+    set_session(client)
 
     command("call chansend(g:id, msgpackdump([[0,0,'nvim_eval',['2+3']]]))")
 

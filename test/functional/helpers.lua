@@ -96,10 +96,7 @@ function module.get_session()
   return session
 end
 
-function module.set_session(s, keep)
-  if session and not keep then
-    session:close()
-  end
+function module.set_session(s)
   session = s
 end
 
@@ -366,7 +363,11 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
-function module.spawn(argv, merge, env)
+function module.spawn(argv, merge, env, keep)
+  if session and not keep then
+    session:close()
+  end
+
   local child_stream = ChildProcessStream.spawn(
       merge and module.merge_args(prepend_argv, argv) or argv,
       env)
