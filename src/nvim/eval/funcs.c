@@ -9661,6 +9661,18 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *word = "";
   hlf_T attr = HLF_COUNT;
   size_t len = 0;
+  const int wo_spell_save = curwin->w_p_spell;
+
+  if (!curwin->w_p_spell) {
+    did_set_spelllang(curwin);
+    curwin->w_p_spell = true;
+  }
+
+  if (*curwin->w_s->b_p_spl == NUL) {
+    EMSG(_(e_no_spell));
+    curwin->w_p_spell = wo_spell_save;
+    return;
+  }
 
   if (argvars[0].v_type == VAR_UNKNOWN) {
     // Find the start and length of the badly spelled word.
@@ -9669,7 +9681,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       word = (char *)get_cursor_pos_ptr();
       curwin->w_set_curswant = true;
     }
-  } else if (curwin->w_p_spell && *curbuf->b_s.b_p_spl != NUL) {
+  } else if (*curbuf->b_s.b_p_spl != NUL) {
     const char *str = tv_get_string_chk(&argvars[0]);
     int capcol = -1;
 
@@ -9687,6 +9699,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   }
+  curwin->w_p_spell = wo_spell_save;
 
   assert(len <= INT_MAX);
   tv_list_alloc_ret(rettv, 2);
@@ -9708,8 +9721,20 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int maxcount;
   garray_T ga = GA_EMPTY_INIT_VALUE;
   bool need_capital = false;
+  const int wo_spell_save = curwin->w_p_spell;
 
-  if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
+  if (!curwin->w_p_spell) {
+    did_set_spelllang(curwin);
+    curwin->w_p_spell = true;
+  }
+
+  if (*curwin->w_s->b_p_spl == NUL) {
+    EMSG(_(e_no_spell));
+    curwin->w_p_spell = wo_spell_save;
+    return;
+  }
+
+  if (*curwin->w_s->b_p_spl != NUL) {
     const char *const str = tv_get_string(&argvars[0]);
     if (argvars[1].v_type != VAR_UNKNOWN) {
       maxcount = tv_get_number_chk(&argvars[1], &typeerr);
@@ -9736,6 +9761,7 @@ f_spellsuggest_return:
     tv_list_append_allocated_string(rettv->vval.v_list, p);
   }
   ga_clear(&ga);
+  curwin->w_p_spell = wo_spell_save;
 }
 
 static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)

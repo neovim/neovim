@@ -106,11 +106,14 @@ foobar/?
    set spelllang=Xwords.spl
    call assert_equal(['foobar', 'rare'], spellbadword('foo foobar'))
 
-  " Typo should not be detected without the 'spell' option.
+  " Typo should be detected even without the 'spell' option.
   set spelllang=en_gb nospell
   call assert_equal(['', ''], spellbadword('centre'))
-  call assert_equal(['', ''], spellbadword('My bycycle.'))
-  call assert_equal(['', ''], spellbadword('A sentence. another sentence'))
+  call assert_equal(['bycycle', 'bad'], spellbadword('My bycycle.'))
+  call assert_equal(['another', 'caps'], spellbadword('A sentence. another sentence'))
+
+  set spelllang=
+  call assert_fails("call spellbadword('maxch')", 'E756:')
 
   call delete('Xwords.spl')
   call delete('Xwords')
@@ -174,9 +177,9 @@ endfunc
 
 " Test spellsuggest({word} [, {max} [, {capital}]])
 func Test_spellsuggest()
-  " No suggestions when spell checking is not enabled.
+  " Verify suggestions are given even when spell checking is not enabled.
   set nospell
-  call assert_equal([], spellsuggest('marrch'))
+  call assert_equal(['march', 'March'], spellsuggest('marrch', 2))
 
   set spell
 
@@ -203,6 +206,13 @@ func Test_spellsuggest()
   call assert_equal(['third', 'THIRD'], spellsuggest('tHIrd', 2))
   call assert_equal(['Third'], spellsuggest('THird', 1))
   call assert_equal(['All'],      spellsuggest('ALl', 1))
+
+  call assert_fails("call spellsuggest('maxch', [])", 'E745:')
+  call assert_fails("call spellsuggest('maxch', 2, [])", 'E745:')
+
+  set spelllang=
+  call assert_fails("call spellsuggest('maxch')", 'E756:')
+  set spelllang&
 
   set spell&
 endfunc
@@ -628,6 +638,34 @@ func Test_zeq_crash()
   set spell
   call feedkeys('iasdz=:\"', 'tx')
 
+  bwipe!
+endfunc
+
+" Check that z= works even when 'nospell' is set.  This test uses one of the
+" tests in Test_spellsuggest_option_number() just to verify that z= basically
+" works and that "E756: Spell checking is not enabled" is not generated.
+func Test_zeq_nospell()
+  new
+  set nospell spellsuggest=1,best
+  call setline(1, 'A baord')
+  try
+    norm $1z=
+    call assert_equal('A board', getline(1))
+  catch
+    call assert_report("Caught exception: " . v:exception)
+  endtry
+  set spell& spellsuggest&
+  bwipe!
+endfunc
+
+" Check that "E756: Spell checking is not possible" is reported when z= is
+" executed and 'spelllang' is empty.
+func Test_zeq_no_spelllang()
+  new
+  set spelllang= spellsuggest=1,best
+  call setline(1, 'A baord')
+  call assert_fails('normal $1z=', 'E756:')
+  set spelllang& spellsuggest&
   bwipe!
 endfunc
 
