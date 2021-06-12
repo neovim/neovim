@@ -125,7 +125,7 @@ Advanced editing ~
 |windows.txt|	commands for using multiple windows and buffers
 |tabpage.txt|	commands for using multiple tab pages
 |spell.txt|	spell checking
-|diff.txt|	working with two to four versions of the same file
+|diff.txt|	working with two to eight versions of the same file
 |autocmd.txt|	automatically executing commands on an event
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
