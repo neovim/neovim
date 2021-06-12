@@ -517,15 +517,17 @@ end
 
 --- Helper function to iterate through all of the diagnostic lines
 ---@return table list of diagnostics
-local _iter_diagnostic_lines = function(start, finish, step, bufnr, opts, client_id)
+local _iter_diagnostic_lines = function(cursor_position, search_forward, bufnr, opts, client_id)
+  local start = cursor_position[1]
+  local finish = search_forward and vim.api.nvim_buf_line_count(bufnr) or 0
   if bufnr == nil then
     bufnr = vim.api.nvim_get_current_buf()
   end
 
   local wrap = if_nil(opts.wrap, true)
 
-  local search = function(search_start, search_finish, search_step)
-    for line_nr = search_start, search_finish, search_step do
+  local search = function(search_start, search_finish)
+    for line_nr = search_start, search_finish, search_forward and 1 or -1 do
       local line_diagnostics = M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
       if line_diagnostics and not vim.tbl_isempty(line_diagnostics) then
         return line_diagnostics
@@ -533,18 +535,18 @@ local _iter_diagnostic_lines = function(start, finish, step, bufnr, opts, client
     end
   end
 
-  local result = search(start, finish, step)
+  local result = search(start, finish)
 
   if wrap then
     local wrap_start, wrap_finish
-    if step == 1 then
+    if search_forward then
       wrap_start, wrap_finish = 1, start
     else
       wrap_start, wrap_finish = vim.api.nvim_buf_line_count(bufnr), start
     end
 
     if not result then
-      result = search(wrap_start, wrap_finish, step)
+      result = search(wrap_start, wrap_finish)
     end
   end
 
@@ -602,8 +604,9 @@ function M.get_prev(opts)
   local win_id = opts.win_id or vim.api.nvim_get_current_win()
   local bufnr = vim.api.nvim_win_get_buf(win_id)
   local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
+  cursor_position[1] = cursor_position[1] - 2
 
-  return _iter_diagnostic_lines(cursor_position[1] - 2, 0, -1, bufnr, opts, opts.client_id)
+  return _iter_diagnostic_lines(cursor_position, false, bufnr, opts, opts.client_id)
 end
 
 --- Return the pos, {row, col}, for the prev diagnostic in the current buffer.
@@ -636,7 +639,7 @@ function M.get_next(opts)
   local bufnr = vim.api.nvim_win_get_buf(win_id)
   local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
 
-  return _iter_diagnostic_lines(cursor_position[1], vim.api.nvim_buf_line_count(bufnr), 1, bufnr, opts, opts.client_id)
+  return _iter_diagnostic_lines(cursor_position, true, bufnr, opts, opts.client_id)
 end
 
 --- Return the pos, {row, col}, for the next diagnostic in the current buffer.
