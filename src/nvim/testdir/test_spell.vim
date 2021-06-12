@@ -172,6 +172,175 @@ func Test_spellreall()
   bwipe!
 endfunc
 
+" Test spellsuggest({word} [, {max} [, {capital}]])
+func Test_spellsuggest()
+  " No suggestions when spell checking is not enabled.
+  set nospell
+  call assert_equal([], spellsuggest('mercurry'))
+
+  set spell
+
+  " With 1 argument.
+  call assert_equal(['mercury', 'Mercury'], spellsuggest('mercurry')[0:1])
+
+  " With 2 arguments.
+  call assert_equal(['mercury', 'Mercury'], spellsuggest('mercurry', 2))
+
+  " With 3 arguments.
+  call assert_equal(['mercury'], spellsuggest('mercurry', 1, 0))
+  call assert_equal(['Mercury'], spellsuggest('mercurry', 1, 1))
+
+  " Test with digits and hyphen.
+  call assert_equal('Carbon-14', spellsuggest('Carbon-15')[0])
+
+  " Comment taken from spellsuggest.c explains the following test cases:
+  "
+  " If there are more UPPER than lower case letters suggest an
+  " ALLCAP word.  Otherwise, if the first letter is UPPER then
+  " suggest ONECAP.  Exception: "ALl" most likely should be "All",
+  " require three upper case letters.
+  call assert_equal(['MACARONI', 'macaroni'], spellsuggest('maCARONI', 2))
+  call assert_equal(['macaroni', 'MACARONI'], spellsuggest('maCAroni', 2))
+  call assert_equal(['Macaroni'], spellsuggest('MACAroni', 1))
+  call assert_equal(['All'],      spellsuggest('ALl', 1))
+
+  set spell&
+endfunc
+
+" Test 'spellsuggest' option with methods fast, best and double.
+func Test_spellsuggest_option_methods()
+  set spell
+
+  set spellsuggest=fast
+  call assert_equal(['Keyword', 'Keyboard'], spellsuggest('Keybord', 2))
+
+  " With best or double option, "Keyboard" should become the top suggestion
+  " because of better phonetic matching.
+  set spellsuggest=best
+  call assert_equal(['Keyboard', 'Keyword'], spellsuggest('Keybord', 2))
+
+  set spellsuggest=double
+  call assert_equal(['Keyboard', 'Keyword'], spellsuggest('Keybord', 2))
+
+  set spell& spellsuggest&
+endfunc
+
+" Test 'spellsuggest' option with value file:{filename}
+func Test_spellsuggest_option_file()
+  set spell spellsuggest=file:Xspellsuggest
+  call writefile(['emacs/vim',
+        \         'theribal/terrible',
+        \         'teribal/terrrible',
+        \         'terribal'],
+        \         'Xspellsuggest')
+
+  call assert_equal(['vim'],      spellsuggest('emacs', 2))
+  call assert_equal(['terrible'], spellsuggest('theribal',2))
+
+  " If the suggestion is misspelled (*terrrible* with 3 r),
+  " it should not be proposed.
+  " The entry for "terribal" should be ignored because of missing slash.
+  call assert_equal([], spellsuggest('teribal', 2))
+  call assert_equal([], spellsuggest('terribal', 2))
+
+  set spell spellsuggest=best,file:Xspellsuggest
+  call assert_equal(['vim', 'Emacs'],       spellsuggest('emacs', 2))
+  call assert_equal(['terrible', 'tribal'], spellsuggest('theribal', 2))
+  call assert_equal(['tribal'],             spellsuggest('teribal', 1))
+  call assert_equal(['tribal'],             spellsuggest('terribal', 1))
+
+  call delete('Xspellsuggest')
+  call assert_fails("call spellsuggest('vim')", "E484: Can't open file Xspellsuggest")
+
+  set spellsuggest& spell&
+endfunc
+
+" Test 'spellsuggest' option with value {number}
+" to limit the number of suggestions
+func Test_spellsuggest_option_number()
+  set spell spellsuggest=2,best
+  new
+
+  " We limited the number of suggestions to 2, so selecting
+  " the 1st and 2nd suggestion should correct the word, but
+  " selecting a 3rd suggestion should do nothing.
+  call setline(1, 'Keybord')
+  norm 1z=
+  call assert_equal('Keyboard', getline(1))
+
+  call setline(1, 'Keybord')
+  norm 2z=
+  call assert_equal('Keyword', getline(1))
+
+  call setline(1, 'Keybord')
+  norm 3z=
+  call assert_equal('Keybord', getline(1))
+
+  let a = execute('norm z=')
+  call assert_equal(
+  \    "\n"
+  \ .. "Change \"Keybord\" to:\n"
+  \ .. " 1 \"Keyboard\"\n"
+  \ .. " 2 \"Keyword\"\n"
+  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+
+  set spell spellsuggest=0
+  " FIXME: the following line is currently commented out as it triggers a
+  " memory error detected in cleanup_suggestions() by asan or valgrind.
+  "call assert_equal("\nSorry, no suggestions", execute('norm z='))
+
+  " Unlike z=, function spellsuggest(...) should not be affected by the
+  " max number of suggestions (2) set by the 'spellsuggest' option.
+  call assert_equal(['Keyboard', 'Keyword', 'Keyboards'], spellsuggest('Keybord', 3))
+
+  set spellsuggest& spell&
+  bwipe!
+endfunc
+
+" Test 'spellsuggest' option with value expr:{expr}
+func Test_spellsuggest_option_expr()
+  " A silly 'spellsuggest' function which makes suggestions all uppercase
+  " and makes the score of each suggestion the length of the suggested word.
+  " So shorter suggestions are preferred.
+  func MySuggest()
+    let spellsuggest_save = &spellsuggest
+    set spellsuggest=best
+    let result = map(spellsuggest(v:val, 3), "[toupper(v:val), len(v:val)]")
+    let &spellsuggest = spellsuggest_save
+    return result
+  endfunc
+
+  set spell spellsuggest=3,expr:MySuggest()
+  call assert_equal(['KEYWORD', 'KEYBOARD', 'KEYBOARDS'], spellsuggest('Keybord', 3))
+  call assert_equal(['KEYWORD', 'KEYBOARD', 'KEYBOARDS'], spellsuggest('Keybord', 3))
+
+  new
+  call setline(1, 'Keybord')
+  let a = execute('norm z=')
+  call assert_equal(
+  \    "\n"
+  \ .. "Change \"Keybord\" to:\n"
+  \ .. " 1 \"KEYWORD\"\n"
+  \ .. " 2 \"KEYBOARD\"\n"
+  \ .. " 3 \"KEYBOARDS\"\n"
+  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+
+  " With verbose, z= should show the score i.e. word length with
+  " our SpellSuggest() function.
+  set verbose=1
+  let a = execute('norm z=')
+  call assert_equal(
+  \    "\n"
+  \ .. "Change \"Keybord\" to:\n"
+  \ .. " 1 \"KEYWORD\"                   (7 - 0)\n"
+  \ .. " 2 \"KEYBOARD\"                  (8 - 0)\n"
+  \ .. " 3 \"KEYBOARDS\"                 (9 - 0)\n"
+  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+
+  set spell& spellsuggest& verbose&
+  bwipe!
+endfunc
+
 func Test_spellinfo()
   throw 'skipped: Nvim does not support enc=latin1'
   new
@@ -227,7 +396,7 @@ func Test_zz_basic()
         \ )
 
   call assert_equal("gebletegek", soundfold('goobledygoook'))
-  call assert_equal("kepereneven", soundfold('kóopërÿnôven'))
+  call assert_equal("kepereneven", soundfold('kÃ³opÃ«rÃ¿nÃ´ven'))
   call assert_equal("everles gesvets etele", soundfold('oeverloos gezwets edale'))
 endfunc
 
@@ -408,7 +577,7 @@ func Test_zz_sal_and_addition()
   mkspell! Xtest Xtest
   set spl=Xtest.latin1.spl spell
   call assert_equal('kbltykk', soundfold('goobledygoook'))
-  call assert_equal('kprnfn', soundfold('kóopërÿnôven'))
+  call assert_equal('kprnfn', soundfold('kÃ³opÃ«rÃ¿nÃ´ven'))
   call assert_equal('*fls kswts tl', soundfold('oeverloos gezwets edale'))
 
   "also use an addition file
