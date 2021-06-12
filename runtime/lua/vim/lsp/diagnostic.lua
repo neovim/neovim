@@ -374,6 +374,62 @@ function M.get(bufnr, client_id)
   return diagnostic_cache[bufnr][client_id] or {}
 end
 
+--- Get the diagnostics by cursor
+---
+---@param bufnr number The buffer number
+---@param cursor table The cursor
+---@param opts table|nil Configuration keys
+---         - severity: (DiagnosticSeverity, default nil)
+---             - Only return diagnostics with this severity. Overrides severity_limit
+---         - severity_limit: (DiagnosticSeverity, default nil)
+---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---@param client_id number the client id
+---@return table Table with map of line number to list of diagnostics.
+--               Structured: { [1] = {...}, [5] = {.... } }
+function M.get_cursor_diagnostics(bufnr, cursor, opts, client_id)
+  opts = opts or {}
+
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not cursor then
+    local curr_cursor = vim.api.nvim_win_get_cursor(0)
+    curr_cursor[1] = curr_cursor[1] - 1
+    cursor = curr_cursor
+  end
+
+  local client_get_diags = function(iter_client_id)
+    local line_diags = (diagnostic_cache_lines[bufnr][iter_client_id] or {})[cursor[1]] or {}
+    local cursor_diags = {}
+    for _, diag in pairs(line_diags) do
+      if diag.range.start.character <= cursor[2] and cursor[2] < diag.range['end'].character then
+        table.insert(cursor_diags, diag)
+      end
+    end
+    return cursor_diags
+  end
+
+  local line_diagnostics
+  if client_id == nil then
+    line_diagnostics = {}
+    for iter_client_id, _ in pairs(diagnostic_cache_lines[bufnr]) do
+      for _, diagnostic in ipairs(client_get_diags(iter_client_id)) do
+        table.insert(line_diagnostics, diagnostic)
+      end
+    end
+  else
+    line_diagnostics = vim.deepcopy(client_get_diags(client_id))
+  end
+
+  if opts.severity then
+    line_diagnostics = filter_to_severity_limit(opts.severity, line_diagnostics)
+  elseif opts.severity_limit then
+    line_diagnostics = filter_by_severity_limit(opts.severity_limit, line_diagnostics)
+  end
+
+  table.sort(line_diagnostics, function(a, b) return a.severity < b.severity end)
+
+  return line_diagnostics
+end
+
 --- Get the diagnostics by line
 ---
 ---@param bufnr number The buffer number
