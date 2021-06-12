@@ -2901,6 +2901,53 @@ describe('float window', function()
         end
       end)
 
+      it('command menu rendered above cursor (pum_above)', function()
+        command('set wildmenu wildmode=longest:full wildoptions=pum')
+        feed(':sign u<tab>')
+        if multigrid then
+          screen:expect{grid=[[
+          ## grid 1
+            [2:----------------------------------------]|
+            [2:----------------------------------------]|
+            [2:----------------------------------------]|
+            [2:----------------------------------------]|
+            [2:----------------------------------------]|
+            [2:----------------------------------------]|
+            [3:----------------------------------------]|
+          ## grid 2
+                                                    |
+            {0:~                                       }|
+            {0:~                                       }|
+            {0:~                                       }|
+            {0:~                                       }|
+            {0:~                                       }|
+          ## grid 3
+            :sign un^                                |
+          ## grid 4
+            {7:            }|
+            {12:~           }|
+            {12:~           }|
+            {12:~           }|
+          ## grid 5
+            {1: undefine       }|
+            {1: unplace        }|
+          ]], float_pos={
+            [5] = {{id = -1}, "SW", 1, 6, 5, false, 250};
+            [4] = {{id = 1001}, "NW", 1, 2, 5, true, 50};
+          }}
+        else
+          screen:expect{grid=[[
+                                                    |
+            {0:~                                       }|
+            {0:~    }{7:            }{0:                       }|
+            {0:~    }{12:~           }{0:                       }|
+            {0:~    }{1: undefine       }{0:                   }|
+            {0:~    }{1: unplace        }{0:                   }|
+            :sign un^                                |
+          ]]}
+        end
+      end)
+
       it('with ext_popupmenu', function()
         screen:set_option('ext_popupmenu', true)
         feed('ix ')
