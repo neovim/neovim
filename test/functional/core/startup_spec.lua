@@ -526,12 +526,25 @@ describe('runtime:', function()
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
     pathsep)
+    local profiler_file = 'test_startuptime.log'
+
     mkdir_p(plugin_folder_path)
     write_file(plugin_file_path, [[vim.g.lua_plugin = 2]])
 
-    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+    clear{ args_rm={'-u'}, args={'--startuptime', profiler_file}, env={ XDG_CONFIG_HOME=xconfig }}
 
     eq(2, eval('g:lua_plugin'))
+    -- Check if plugin_file_path is listed in :scriptname
+    local scripts = meths.exec(':scriptnames', true)
+    assert.Truthy(scripts:find(plugin_file_path))
+
+    -- Check if plugin_file_path is listed in startup profile
+    local profile_reader = io.open(profiler_file, 'r')
+    local profile_log = profile_reader:read('*a')
+    profile_reader:close()
+    assert.Truthy(profile_log :find(plugin_file_path))
+
+    os.remove(profiler_file)
     rmdir(plugin_path)
   end)
 

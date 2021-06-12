@@ -2809,10 +2809,6 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   proftime_T wait_start;
   bool trigger_source_post = false;
 
-  if (path_with_extension((const char *)fname, "lua")) {
-    return (int)nlua_exec_file((const char *)fname);
-  }
-
   p = expand_env_save(fname);
   if (p == NULL) {
     return retval;
@@ -3005,10 +3001,15 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
     firstline = p;
   }
 
-  // Call do_cmdline, which will call getsourceline() to get the lines.
-  do_cmdline(firstline, getsourceline, (void *)&cookie,
-             DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
-  retval = OK;
+  if (path_with_extension((const char *)fname, "lua")) {
+    // Source the file as lua
+    retval = (int)nlua_exec_file((const char *)fname);
+  } else {
+    // Call do_cmdline, which will call getsourceline() to get the lines.
+    do_cmdline(firstline, getsourceline, (void *)&cookie,
+               DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
+    retval = OK;
+  }
 
   if (l_do_profiling == PROF_YES) {
     // Get "si" again, "script_items" may have been reallocated.
