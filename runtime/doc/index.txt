@@ -1612,7 +1612,7 @@ tag		command		action ~
 |:tab|		:tab		create new tab when opening new window
 |:tag|		:ta[g]		jump to tag
 |:tags|		:tags		show the contents of the tag stack
-|:tcd|		:tcd		change directory for tab page
+|:tcd|		:tc[d]		change directory for tab page
 |:tchdir|	:tch[dir]	change directory for tab page
 |:terminal|	:te[rminal]	open a terminal buffer
 |:tfirst|	:tf[irst]	jump to first matching tag
