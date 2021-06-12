@@ -1168,6 +1168,70 @@ end
 -- }}}
 -- Diagnostic User Functions {{{
 
+--- Open a floating window with the diagnostics from {cursor}
+---
+--- The floating window can be customized with the following highlight groups:
+--- <pre>
+--- LspDiagnosticsFloatingError
+--- LspDiagnosticsFloatingWarning
+--- LspDiagnosticsFloatingInformation
+--- LspDiagnosticsFloatingHint
+--- </pre>
+---@param opts table Configuration table
+---     - show_header (boolean, default true): Show "Diagnostics:" header.
+---@param bufnr number The buffer number
+---@param cursor number The cursor
+---@param client_id number|nil the client id
+---@return table {popup_bufnr, win_id}
+function M.show_cursor_diagnostics(opts, bufnr, cursor, client_id)
+  opts = opts or {}
+
+  local show_header = if_nil(opts.show_header, true)
+
+  bufnr = bufnr or 0
+  if not cursor then
+    local curr_cursor = vim.api.nvim_win_get_cursor(0)
+    curr_cursor[1] = curr_cursor[1] - 1
+    cursor = curr_cursor
+  end
+
+  local lines = {}
+  local highlights = {}
+  if show_header then
+    table.insert(lines, "Diagnostics:")
+    table.insert(highlights, {0, "Bold"})
+  end
+
+  local line_diagnostics = M.get_cursor_diagnostics(bufnr, cursor, opts, client_id)
+  if vim.tbl_isempty(line_diagnostics) then return end
+
+  for i, diagnostic in ipairs(line_diagnostics) do
+    local prefix = string.format("%d. ", i)
+    local hiname = M._get_floating_severity_highlight_name(diagnostic.severity)
+    assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
+
+    local message_lines = vim.split(diagnostic.message, '\n', true)
+    table.insert(lines, prefix..message_lines[1])
+    table.insert(highlights, {#prefix, hiname})
+    for j = 2, #message_lines do
+      table.insert(lines, message_lines[j])
+      table.insert(highlights, {0, hiname})
+    end
+  end
+
+  opts.focus_id = "line_diagnostics"
+  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
+  for i, hi in ipairs(highlights) do
+    local prefixlen, hiname = unpack(hi)
+    -- Start highlight after the prefix
+    api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
+  end
+
+  return popup_bufnr, winnr
+end
+-- }}}
+-- Diagnostic User Functions {{{
+
 --- Open a floating window with the diagnostics from {line_nr}
 ---
 --- The floating window can be customized with the following highlight groups:
