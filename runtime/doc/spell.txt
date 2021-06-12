@@ -110,7 +110,7 @@ zuG			Undo |zW| and |zG|, remove the word from the internal
 :spellw[rong]! {word}	Add {word} as a wrong (bad) word to the internal word
 			list, like with |zW|.
 
-							*:spellr* *:spellrare*
+							*:spellra* *:spellrare*
 :[count]spellr[are] {word}
 			Add {word} as a rare word to 'spellfile', similar to
 			|zw|.  Without count the first name is used, with
