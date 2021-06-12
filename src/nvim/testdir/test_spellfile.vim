@@ -170,3 +170,71 @@ func Test_spell_normal()
   set spellfile=
   bw!
 endfunc
+
+" Test CHECKCOMPOUNDPATTERN (see :help spell-CHECKCOMPOUNDPATTERN)
+func Test_spellfile_CHECKCOMPOUNDPATTERN()
+  call writefile(['4',
+        \         'one/c',
+        \         'two/c',
+        \         'three/c',
+        \         'four'], 'XtestCHECKCOMPOUNDPATTERN.dic')
+  " Forbid compound words where first word ends with 'wo' and second starts with 'on'.
+  call writefile(['CHECKCOMPOUNDPATTERN 1',
+        \         'CHECKCOMPOUNDPATTERN wo on',
+        \         'COMPOUNDFLAG c'], 'XtestCHECKCOMPOUNDPATTERN.aff')
+
+  let output = execute('mkspell! XtestCHECKCOMPOUNDPATTERN-utf8.spl XtestCHECKCOMPOUNDPATTERN')
+  set spell spelllang=XtestCHECKCOMPOUNDPATTERN-utf8.spl
+
+  " Check valid words with and without valid compounds.
+  for goodword in ['one', 'two', 'three', 'four',
+        \          'oneone', 'onetwo',  'onethree',
+        \          'twotwo', 'twothree',
+        \          'threeone', 'threetwo', 'threethree',
+        \          'onetwothree', 'onethreetwo', 'twothreeone', 'oneoneone']
+    call assert_equal(['', ''], spellbadword(goodword), goodword)
+  endfor
+
+  " Compounds 'twoone' or 'threetwoone' should be forbidden by CHECKCOMPOUNPATTERN.
+  " 'four' does not have the 'c' flag in *.aff file so no compound.
+  " 'five' is not in the *.dic file.
+  for badword in ['five', 'onetwox',
+        \         'twoone', 'threetwoone',
+        \         'fourone', 'onefour']
+    call assert_equal([badword, 'bad'], spellbadword(badword))
+  endfor
+
+  set spell& spelllang&
+  call delete('XtestCHECKCOMPOUNDPATTERN.dic')
+  call delete('XtestCHECKCOMPOUNDPATTERN.aff')
+  call delete('XtestCHECKCOMPOUNDPATTERN-utf8.spl')
+endfunc
+
+" Test COMMON (better suggestions with common words, see :help spell-COMMON)
+func Test_spellfile_COMMON()
+  call writefile(['7',
+        \         'and',
+        \         'ant',
+        \         'end',
+        \         'any',
+        \         'tee',
+        \         'the',
+        \         'ted'], 'XtestCOMMON.dic')
+  call writefile(['COMMON the and'], 'XtestCOMMON.aff')
+
+  let output = execute('mkspell! XtestCOMMON-utf8.spl XtestCOMMON')
+  set spell spelllang=XtestCOMMON-utf8.spl
+
+  " COMMON words 'and' and 'the' should be the top suggestions.
+  call assert_equal(['and', 'ant'], spellsuggest('anr', 2))
+  call assert_equal(['and', 'end'], spellsuggest('ond', 2))
+  call assert_equal(['the', 'ted'], spellsuggest('tha', 2))
+  call assert_equal(['the', 'tee'], spellsuggest('dhe', 2))
+
+  set spell& spelllang&
+  call delete('XtestCOMMON.dic')
+  call delete('XtestCOMMON.aff')
+  call delete('XtestCOMMON-utf8.spl')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
