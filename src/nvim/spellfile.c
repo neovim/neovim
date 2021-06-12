@@ -5290,13 +5290,16 @@ static void spell_message(const spellinfo_T *spin, char_u *str)
 }
 
 // ":[count]spellgood  {word}"
-// ":[count]spellwrong  {word}"
+// ":[count]spellwrong {word}"
 // ":[count]spellundo  {word}"
+// ":[count]spellrare  {word}"
 void ex_spell(exarg_T *eap)
 {
-  spell_add_word(eap->arg, (int)STRLEN(eap->arg), eap->cmdidx == CMD_spellwrong,
-      eap->forceit ? 0 : (int)eap->line2,
-      eap->cmdidx == CMD_spellundo);
+  spell_add_word(eap->arg, (int)STRLEN(eap->arg),
+                 eap->cmdidx == CMD_spellwrong ? SPELL_ADD_BAD :
+                 eap->cmdidx == CMD_spellrare ? SPELL_ADD_RARE : SPELL_ADD_GOOD,
+                 eap->forceit ? 0 : (int)eap->line2,
+                 eap->cmdidx == CMD_spellundo);
 }
 
 // Add "word[len]" to 'spellfile' as a good or bad word.
@@ -5304,10 +5307,10 @@ void
 spell_add_word (
     char_u *word,
     int len,
-    int bad,
-    int idx,                   // "zG" and "zW": zero, otherwise index in
-                               // 'spellfile'
-    bool undo                   // true for "zug", "zuG", "zuw" and "zuW"
+    SpellAddType what,        // SPELL_ADD_ values
+    int idx,                  // "zG" and "zW": zero, otherwise index in
+                              // 'spellfile'
+    bool undo                 // true for "zug", "zuG", "zuw" and "zuW"
 )
 {
   FILE        *fd = NULL;
@@ -5364,7 +5367,7 @@ spell_add_word (
     fname = fnamebuf;
   }
 
-  if (bad || undo) {
+  if (what == SPELL_ADD_BAD || undo) {
     // When the word appears as good word we need to remove that one,
     // since its flags sort before the one with WF_BANNED.
     fd = os_fopen((char *)fname, "r");
@@ -5422,13 +5425,16 @@ spell_add_word (
       }
     }
 
-    if (fd == NULL)
+    if (fd == NULL) {
       EMSG2(_(e_notopen), fname);
-    else {
-      if (bad)
+    } else {
+      if (what == SPELL_ADD_BAD) {
         fprintf(fd, "%.*s/!\n", len, word);
-      else
+      } else if (what == SPELL_ADD_RARE) {
+        fprintf(fd, "%.*s/?\n", len, word);
+      } else {
         fprintf(fd, "%.*s\n", len, word);
+      }
       fclose(fd);
 
       home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);
