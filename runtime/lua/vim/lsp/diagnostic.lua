@@ -407,27 +407,27 @@ function M.get_cursor_diagnostics(bufnr, cursor, opts, client_id)
     return cursor_diags
   end
 
-  local line_diagnostics
+  local cursor_diagnostics
   if client_id == nil then
-    line_diagnostics = {}
+    cursor_diagnostics = {}
     for iter_client_id, _ in pairs(diagnostic_cache_lines[bufnr]) do
       for _, diagnostic in ipairs(client_get_diags(iter_client_id)) do
-        table.insert(line_diagnostics, diagnostic)
+        table.insert(cursor_diagnostics, diagnostic)
       end
     end
   else
-    line_diagnostics = vim.deepcopy(client_get_diags(client_id))
+    cursor_diagnostics = vim.deepcopy(client_get_diags(client_id))
   end
 
   if opts.severity then
-    line_diagnostics = filter_to_severity_limit(opts.severity, line_diagnostics)
+    cursor_diagnostics = filter_to_severity_limit(opts.severity, cursor_diagnostics)
   elseif opts.severity_limit then
-    line_diagnostics = filter_by_severity_limit(opts.severity_limit, line_diagnostics)
+    cursor_diagnostics = filter_by_severity_limit(opts.severity_limit, cursor_diagnostics)
   end
 
-  table.sort(line_diagnostics, function(a, b) return a.severity < b.severity end)
+  table.sort(cursor_diagnostics, function(a, b) return a.severity < b.severity end)
 
-  return line_diagnostics
+  return cursor_diagnostics
 end
 
 --- Get the diagnostics by line
