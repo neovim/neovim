@@ -3693,6 +3693,8 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 					line number
 			<sflnum>	script file line number, also when in
 					a function
+			<SID>		"<SNR>123_"  where "123" is the
+					current script ID  |<SID>|
 			<cword>		word under the cursor
 			<cWORD>		WORD under the cursor
 			<client>	the {clientid} of the last received
@@ -10193,7 +10195,9 @@ text...
 {endmarker}
 			Set internal variable {var-name} to a |List|
 			containing the lines of text bounded by the string
-			{endmarker}.
+			{endmarker}. The lines of text is used as a
+			|literal-string|.
+			{endmarker} must not contain white space.
 			{endmarker} cannot start with a lower case character.
 			The last line should end only with the {endmarker}
 			string without any other character.  Watch out for
