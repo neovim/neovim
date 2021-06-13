@@ -72,11 +72,6 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       prepare_gz_file('Xtestfile', text1)
       --execute('au FileChangedShell * echo "caught FileChangedShell"')
       feed_command('set bin')
-      feed_command("call setenv('GZIP', v:null)")
-      if not iswin() then
-          -- Ignore non standard shell configuration
-          feed_command('set shell=sh')
-      end
       feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
       -- Read and decompress the testfile.
       feed_command('$r Xtestfile.gz')
