@@ -400,7 +400,7 @@ function M.get_cursor_diagnostics(bufnr, cursor, opts, client_id)
     local line_diags = (diagnostic_cache_lines[bufnr][iter_client_id] or {})[cursor[1]] or {}
     local cursor_diags = {}
     for _, diag in pairs(line_diags) do
-      if diag.range.start.character <= cursor[2] and cursor[2] < diag.range['end'].character then
+      if diag.range['start'].character <= cursor[2] and cursor[2] <= diag.range['end'].character then
         table.insert(cursor_diags, diag)
       end
     end
