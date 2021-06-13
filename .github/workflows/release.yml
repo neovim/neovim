@@ -13,6 +13,7 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+
 
 # Build on the oldest supported images, so we have broader compatibility
+# Upgrade to gcc-11 to prevent it from using its builtins (#14150)
 jobs:
   linux:
     runs-on: ubuntu-18.04
@@ -26,11 +27,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
+          sudo apt-get install -y autoconf automake build-essential cmake gcc-11 gettext gperf libtool-bin locales ninja-build pkg-config unzip
       - name: Build release
         id: build
         run: |
-          make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
+          CC=gcc-11 make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
           printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
           printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1)"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
@@ -51,11 +52,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
+          sudo apt-get install -y autoconf automake build-essential cmake gcc-11 gettext gperf libtool-bin locales ninja-build pkg-config unzip
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
-        run: make appimage-latest
+        run: CC=gcc-11 make appimage-latest
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        run: make appimage-nightly
+        run: CC=gcc-11 make appimage-nightly
       - uses: actions/upload-artifact@v2
         with:
           name: appimage
