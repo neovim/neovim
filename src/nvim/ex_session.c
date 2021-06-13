@@ -193,6 +193,9 @@ static int ses_do_win(win_T *wp)
   if (bt_help(wp->w_buffer)) {
     return ssop_flags & SSOP_HELP;
   }
+  if (bt_terminal(wp->w_buffer)) {
+    return ssop_flags & SSOP_TERMINAL;
+  }
   return true;
 }
 
@@ -616,6 +619,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   FOR_ALL_BUFFERS(buf) {
     if (!(only_save_windows && buf->b_nwindows == 0)
         && !(buf->b_help && !(ssop_flags & SSOP_HELP))
+        && !(bt_terminal(buf) && !(ssop_flags & SSOP_TERMINAL))
         && buf->b_fname != NULL
         && buf->b_p_bl) {
       if (fprintf(fd, "badd +%" PRId64 " ",
