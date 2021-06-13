@@ -806,14 +806,20 @@ function M.convert_input_to_markdown_lines(input, contents)
     assert(type(input) == 'table', "Expected a table for Hover.contents")
     -- MarkupContent
     if input.kind then
-      -- The kind can be either plaintext or markdown. However, either way we
-      -- will just be rendering markdown, so we handle them both the same way.
-      -- TODO these can have escaped/sanitized html codes in markdown. We
-      -- should make sure we handle this correctly.
+      -- The kind can be either plaintext or markdown.
+      -- If it's plaintext, then wrap it in a <text></text> block
 
       -- Some servers send input.value as empty, so let's ignore this :(
+      input.value = input.value or ''
+
+      if input.kind == "plaintext" then
+        -- wrap this in a <text></text> block so that stylize_markdown
+        -- can properly process it as plaintext
+        input.value = string.format("<text>\n%s\n</text>", input.value or "")
+      end
+
       -- assert(type(input.value) == 'string')
-      list_extend(contents, split_lines(input.value or ''))
+      list_extend(contents, split_lines(input.value))
     -- MarkupString variation 2
     elseif input.language then
       -- Some servers send input.value as empty, so let's ignore this :(
@@ -1134,26 +1140,45 @@ function M.stylize_markdown(bufnr, contents, opts)
   }
   opts = opts or {}
 
+  -- table of fence types to {ft, begin, end}
+  -- when ft is nil, we get the ft from the regex match
+  local matchers = {
+    block = {nil, "```+([a-zA-Z0-9_]*)", "```+"},
+    pre = {"", "<pre>", "</pre>"},
+    code = {"", "<code>", "</code>"},
+    text = {"plaintex", "<text>", "</text>"},
+  }
+
+  local match_begin = function(line)
+    for type, pattern in pairs(matchers) do
+      local ret = line:match(string.format("^%%s*%s%%s*$", pattern[2]))
+      if ret then
+        return {
+          type = type,
+          ft = pattern[1] or ret
+        }
+      end
+    end
+  end
+
+  local match_end = function(line, match)
+    local pattern = matchers[match.type]
+    return line:match(string.format("^%%s*%s%%s*$", pattern[3]))
+  end
+
   local stripped = {}
   local highlights = {}
   do
     local i = 1
     while i <= #contents do
       local line = contents[i]
-      -- TODO(ashkan): use a more strict regex for filetype?
-      local ft = line:match("^```([a-zA-Z0-9_]*)$")
-      -- local ft = line:match("^```(.*)$")
-      -- TODO(ashkan): validate the filetype here.
-      local is_pre = line:match("^%s*<pre>%s*$")
-      if is_pre then
-        ft = ""
-      end
-      if ft then
+      local match = match_begin(line)
+      if match then
         local start = #stripped
         i = i + 1
         while i <= #contents do
           line = contents[i]
-          if line == "```" or (is_pre and line:match("^%s*</pre>%s*$")) then
+          if match_end(line, match) then
             i = i + 1
             break
           end
@@ -1161,7 +1186,7 @@ function M.stylize_markdown(bufnr, contents, opts)
           i = i + 1
         end
         table.insert(highlights, {
-          ft = ft;
+          ft = match.ft;
           start = start + 1;
           finish = #stripped + 1 - 1;
         })
