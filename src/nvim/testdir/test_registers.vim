@@ -44,7 +44,7 @@ endfunc
 
 func Test_display_registers()
     " Disable clipboard
-    let save_clipboard = g:clipboard
+    let save_clipboard = get(g:, 'clipboard', {})
     let g:clipboard = {}
 
     e file1
