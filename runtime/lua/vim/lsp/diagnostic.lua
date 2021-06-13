@@ -515,16 +515,16 @@ end
 -- }}}
 -- Diagnostic Movements {{{
 
---- Helper function to iterate through all of the diagnostic lines
----@return table list of diagnostics
-local _iter_diagnostic_lines = function(cursor_position, search_forward, bufnr, opts, client_id)
-  cursor_position[1] = cursor_position[1] - 1
+--- Helper function to find the next diagnostic relative to a position
+---@return table the next diagnostic if found
+local _next_diagnostic = function(position, search_forward, bufnr, opts, client_id)
+  position[1] = position[1] - 1
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local wrap = if_nil(opts.wrap, true)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
-    local line_nr = cursor_position[1] + offset
+    local line_nr = position[1] + offset
     if line_nr < 0 or line_nr >= line_count then
       if not wrap then
         return
@@ -537,23 +537,23 @@ local _iter_diagnostic_lines = function(cursor_position, search_forward, bufnr, 
         table.sort(line_diagnostics, function(a, b) return a.range.start.character < b.range.start.character end)
         if i == 0 then
           for _, v in pairs(line_diagnostics) do
-            if v.range.start.character > cursor_position[2] then
-              return {v}
+            if v.range.start.character > position[2] then
+              return v
             end
           end
         else
-          return {line_diagnostics[1]}
+          return line_diagnostics[1]
         end
       else -- search backwards
         table.sort(line_diagnostics, function(a, b) return a.range.start.character > b.range.start.character end)
         if i == 0 then
           for _, v in pairs(line_diagnostics) do
-            if v.range.start.character < cursor_position[2] then
-              return {v}
+            if v.range.start.character < position[2] then
+              return v
             end
           end
         else
-          return {line_diagnostics[1]}
+          return line_diagnostics[1]
         end
       end
     end
@@ -561,26 +561,23 @@ local _iter_diagnostic_lines = function(cursor_position, search_forward, bufnr, 
 end
 
 --@private
---- Helper function to ierate through diagnostic lines and return a position
+--- Helper function to return a position from a diagnostic
 ---
 ---@return table {row, col}
-local function _iter_diagnostic_lines_pos(opts, line_diagnostics)
+local function _diagnostic_pos(opts, diagnostic)
   opts = opts or {}
 
   local win_id = opts.win_id or vim.api.nvim_get_current_win()
   local bufnr = vim.api.nvim_win_get_buf(win_id)
 
-  if line_diagnostics == nil or vim.tbl_isempty(line_diagnostics) then
-    return false
-  end
+  if not diagnostic then return false end
 
-  local iter_diagnostic = line_diagnostics[1]
-  return to_position(iter_diagnostic.range.start, bufnr)
+  return to_position(diagnostic.range.start, bufnr)
 end
 
 --@private
 -- Move to the diagnostic position
-local function _iter_diagnostic_move_pos(name, opts, pos)
+local function _diagnostic_move_pos(name, opts, pos)
   opts = opts or {}
 
   local enable_popup = if_nil(opts.enable_popup, true)
@@ -612,14 +609,14 @@ function M.get_prev(opts)
   local bufnr = vim.api.nvim_win_get_buf(win_id)
   local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
 
-  return _iter_diagnostic_lines(cursor_position, false, bufnr, opts, opts.client_id)
+  return _next_diagnostic(cursor_position, false, bufnr, opts, opts.client_id)
 end
 
 --- Return the pos, {row, col}, for the prev diagnostic in the current buffer.
 ---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Previous diagnostic position
 function M.get_prev_pos(opts)
-  return _iter_diagnostic_lines_pos(
+  return _diagnostic_pos(
     opts,
     M.get_prev(opts)
   )
@@ -628,7 +625,7 @@ end
 --- Move to the previous diagnostic
 ---@param opts table See |vim.lsp.diagnostic.goto_next()|
 function M.goto_prev(opts)
-  return _iter_diagnostic_move_pos(
+  return _diagnostic_move_pos(
     "DiagnosticPrevious",
     opts,
     M.get_prev_pos(opts)
@@ -645,14 +642,14 @@ function M.get_next(opts)
   local bufnr = vim.api.nvim_win_get_buf(win_id)
   local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
 
-  return _iter_diagnostic_lines(cursor_position, true, bufnr, opts, opts.client_id)
+  return _next_diagnostic(cursor_position, true, bufnr, opts, opts.client_id)
 end
 
 --- Return the pos, {row, col}, for the next diagnostic in the current buffer.
 ---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Next diagnostic position
 function M.get_next_pos(opts)
-  return _iter_diagnostic_lines_pos(
+  return _diagnostic_pos(
     opts,
     M.get_next(opts)
   )
@@ -677,7 +674,7 @@ end
 ---         - {win_id}: (number, default 0)
 ---             - Window ID
 function M.goto_next(opts)
-  return _iter_diagnostic_move_pos(
+  return _diagnostic_move_pos(
     "DiagnosticNext",
     opts,
     M.get_next_pos(opts)
