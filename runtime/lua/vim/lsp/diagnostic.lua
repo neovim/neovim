@@ -400,7 +400,8 @@ function M.get_position_diagnostics(bufnr, position, opts, client_id)
     local line_diags = (diagnostic_cache_lines[bufnr][iter_client_id] or {})[position[1]] or {}
     local position_diags = {}
     for _, diag in pairs(line_diags) do
-      if diag.range['start'].character <= position[2] and position[2] <= diag.range['end'].character then
+      if position[2] >= diag.range['start'].character and
+        (position[2] <= diag.range['end'].character or position[1] < diag.range['end'].line) then
         table.insert(position_diags, diag)
       end
     end
