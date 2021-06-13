@@ -518,13 +518,14 @@ end
 --- Helper function to iterate through all of the diagnostic lines
 ---@return table list of diagnostics
 local _iter_diagnostic_lines = function(cursor_position, search_forward, bufnr, opts, client_id)
+  cursor_position[1] = cursor_position[1] - 1
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local wrap = if_nil(opts.wrap, true)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
     local line_nr = cursor_position[1] + offset
-    if line_nr < 1 or line_nr > line_count then
+    if line_nr < 0 or line_nr >= line_count then
       if not wrap then
         return
       end
@@ -532,8 +533,29 @@ local _iter_diagnostic_lines = function(cursor_position, search_forward, bufnr, 
     end
     local line_diagnostics = M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
     if line_diagnostics and not vim.tbl_isempty(line_diagnostics) then
-      -- TODO: do filtering here
-      return line_diagnostics
+      if search_forward then
+        table.sort(line_diagnostics, function(a, b) return a.range.start.character < b.range.start.character end)
+        if i == 0 then
+          for _, v in pairs(line_diagnostics) do
+            if v.range.start.character > cursor_position[2] then
+              return {v}
+            end
+          end
+        else
+          return {line_diagnostics[1]}
+        end
+      else -- search backwards
+        table.sort(line_diagnostics, function(a, b) return a.range.start.character > b.range.start.character end)
+        if i == 0 then
+          for _, v in pairs(line_diagnostics) do
+            if v.range.start.character < cursor_position[2] then
+              return {v}
+            end
+          end
+        else
+          return {line_diagnostics[1]}
+        end
+      end
     end
   end
 end
@@ -574,7 +596,7 @@ local function _iter_diagnostic_move_pos(name, opts, pos)
   if enable_popup then
     -- This is a bit weird... I'm surprised that we need to wait til the next tick to do this.
     vim.schedule(function()
-      M.show_line_diagnostics(opts.popup_opts, vim.api.nvim_win_get_buf(win_id))
+      M.show_cursor_diagnostics(opts.popup_opts, vim.api.nvim_win_get_buf(win_id))
     end)
   end
 end
@@ -589,7 +611,6 @@ function M.get_prev(opts)
   local win_id = opts.win_id or vim.api.nvim_get_current_win()
   local bufnr = vim.api.nvim_win_get_buf(win_id)
   local cursor_position = opts.cursor_position or vim.api.nvim_win_get_cursor(win_id)
-  cursor_position[1] = cursor_position[1] - 2
 
   return _iter_diagnostic_lines(cursor_position, false, bufnr, opts, opts.client_id)
 end
