@@ -374,10 +374,10 @@ function M.get(bufnr, client_id)
   return diagnostic_cache[bufnr][client_id] or {}
 end
 
---- Get the diagnostics by cursor
+--- Get the diagnostics by position
 ---
 ---@param bufnr number The buffer number
----@param cursor table The cursor
+---@param position table The (0,0)-indexed position
 ---@param opts table|nil Configuration keys
 ---         - severity: (DiagnosticSeverity, default nil)
 ---             - Only return diagnostics with this severity. Overrides severity_limit
@@ -386,48 +386,48 @@ end
 ---@param client_id number the client id
 ---@return table Table with map of line number to list of diagnostics.
 --               Structured: { [1] = {...}, [5] = {.... } }
-function M.get_cursor_diagnostics(bufnr, cursor, opts, client_id)
+function M.get_position_diagnostics(bufnr, position, opts, client_id)
   opts = opts or {}
 
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if not cursor then
-    local curr_cursor = vim.api.nvim_win_get_cursor(0)
-    curr_cursor[1] = curr_cursor[1] - 1
-    cursor = curr_cursor
+  if not position then
+    local curr_position = vim.api.nvim_win_get_cursor(0)
+    curr_position[1] = curr_position[1] - 1
+    position = curr_position
   end
 
   local client_get_diags = function(iter_client_id)
-    local line_diags = (diagnostic_cache_lines[bufnr][iter_client_id] or {})[cursor[1]] or {}
-    local cursor_diags = {}
+    local line_diags = (diagnostic_cache_lines[bufnr][iter_client_id] or {})[position[1]] or {}
+    local position_diags = {}
     for _, diag in pairs(line_diags) do
-      if diag.range['start'].character <= cursor[2] and cursor[2] <= diag.range['end'].character then
-        table.insert(cursor_diags, diag)
+      if diag.range['start'].character <= position[2] and position[2] <= diag.range['end'].character then
+        table.insert(position_diags, diag)
       end
     end
-    return cursor_diags
+    return position_diags
   end
 
-  local cursor_diagnostics
+  local position_diagnostics
   if client_id == nil then
-    cursor_diagnostics = {}
+    position_diagnostics = {}
     for iter_client_id, _ in pairs(diagnostic_cache_lines[bufnr]) do
       for _, diagnostic in ipairs(client_get_diags(iter_client_id)) do
-        table.insert(cursor_diagnostics, diagnostic)
+        table.insert(position_diagnostics, diagnostic)
       end
     end
   else
-    cursor_diagnostics = vim.deepcopy(client_get_diags(client_id))
+    position_diagnostics = vim.deepcopy(client_get_diags(client_id))
   end
 
   if opts.severity then
-    cursor_diagnostics = filter_to_severity_limit(opts.severity, cursor_diagnostics)
+    position_diagnostics = filter_to_severity_limit(opts.severity, position_diagnostics)
   elseif opts.severity_limit then
-    cursor_diagnostics = filter_by_severity_limit(opts.severity_limit, cursor_diagnostics)
+    position_diagnostics = filter_by_severity_limit(opts.severity_limit, position_diagnostics)
   end
 
-  table.sort(cursor_diagnostics, function(a, b) return a.severity < b.severity end)
+  table.sort(position_diagnostics, function(a, b) return a.severity < b.severity end)
 
-  return cursor_diagnostics
+  return position_diagnostics
 end
 
 --- Get the diagnostics by line
@@ -596,7 +596,7 @@ local function _iter_diagnostic_move_pos(name, opts, pos)
   if enable_popup then
     -- This is a bit weird... I'm surprised that we need to wait til the next tick to do this.
     vim.schedule(function()
-      M.show_cursor_diagnostics(opts.popup_opts, vim.api.nvim_win_get_buf(win_id))
+      M.show_position_diagnostics(opts.popup_opts, vim.api.nvim_win_get_buf(win_id))
     end)
   end
 end
@@ -1177,7 +1177,7 @@ end
 -- }}}
 -- Diagnostic User Functions {{{
 
---- Open a floating window with the diagnostics from {cursor}
+--- Open a floating window with the diagnostics from {position}
 ---
 --- The floating window can be customized with the following highlight groups:
 --- <pre>
@@ -1189,19 +1189,19 @@ end
 ---@param opts table Configuration table
 ---     - show_header (boolean, default true): Show "Diagnostics:" header.
 ---@param bufnr number The buffer number
----@param cursor number The cursor
+---@param position table The (0,0)-indexed position
 ---@param client_id number|nil the client id
 ---@return table {popup_bufnr, win_id}
-function M.show_cursor_diagnostics(opts, bufnr, cursor, client_id)
+function M.show_position_diagnostics(opts, bufnr, position, client_id)
   opts = opts or {}
 
   local show_header = if_nil(opts.show_header, true)
 
   bufnr = bufnr or 0
-  if not cursor then
-    local curr_cursor = vim.api.nvim_win_get_cursor(0)
-    curr_cursor[1] = curr_cursor[1] - 1
-    cursor = curr_cursor
+  if not position then
+    local curr_position = vim.api.nvim_win_get_cursor(0)
+    curr_position[1] = curr_position[1] - 1
+    position = curr_position
   end
 
   local lines = {}
@@ -1211,10 +1211,10 @@ function M.show_cursor_diagnostics(opts, bufnr, cursor, client_id)
     table.insert(highlights, {0, "Bold"})
   end
 
-  local line_diagnostics = M.get_cursor_diagnostics(bufnr, cursor, opts, client_id)
-  if vim.tbl_isempty(line_diagnostics) then return end
+  local position_diagnostics = M.get_position_diagnostics(bufnr, position, opts, client_id)
+  if vim.tbl_isempty(position_diagnostics) then return end
 
-  for i, diagnostic in ipairs(line_diagnostics) do
+  for i, diagnostic in ipairs(position_diagnostics) do
     local prefix = string.format("%d. ", i)
     local hiname = M._get_floating_severity_highlight_name(diagnostic.severity)
     assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
@@ -1228,7 +1228,7 @@ function M.show_cursor_diagnostics(opts, bufnr, cursor, client_id)
     end
   end
 
-  opts.focus_id = "line_diagnostics"
+  opts.focus_id = "position_diagnostics"
   local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
   for i, hi in ipairs(highlights) do
     local prefixlen, hiname = unpack(hi)
