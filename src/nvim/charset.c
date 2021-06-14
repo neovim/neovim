@@ -1150,15 +1150,29 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 
 /// skipwhite: skip over ' ' and '\t'.
 ///
-/// @param[in]  q  String to skip in.
+/// @param[in]  p  String to skip in.
 ///
 /// @return Pointer to character after the skipped whitespace.
-char_u *skipwhite(const char_u *q)
+char_u *skipwhite(const char_u *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
-  const char_u *p = q;
-  while (ascii_iswhite(*p)) {
+  return skipwhite_len(p, STRLEN(p));
+}
+
+/// Like `skipwhite`, but skip up to `len` characters.
+/// @see skipwhite
+///
+/// @param[in]  p    String to skip in.
+/// @param[in]  len  Max length to skip.
+///
+/// @return Pointer to character after the skipped whitespace, or the `len`-th
+///         character in the string.
+char_u *skipwhite_len(const char_u *p, size_t len)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
+{
+  for (; len > 0 && ascii_iswhite(*p); len--) {
     p++;
   }
   return (char_u *)p;
@@ -1302,6 +1316,18 @@ char_u* skiptowhite_esc(char_u *p) {
     ++p;
   }
   return p;
+}
+
+/// Skip over text until '\n' or NUL.
+///
+/// @param[in]  p  Text to skip over.
+///
+/// @return Pointer to the next '\n' or NUL character.
+char_u *skip_to_newline(const char_u *const p)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
+{
+  return (char_u *)xstrchrnul((const char *)p, NL);
 }
 
 /// Gets a number from a string and skips over it, signalling overflow.
