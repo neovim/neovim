@@ -1166,8 +1166,13 @@ function M.stylize_markdown(bufnr, contents, opts)
     return line:match(string.format("^%%s*%s%%s*$", pattern[3]))
   end
 
+  -- Clean up
+  contents = M._trim(contents, opts)
+
   local stripped = {}
   local highlights = {}
+  -- keep track of lnums that contain markdown
+  local markdown_lines = {}
   do
     local i = 1
     while i <= #contents do
@@ -1192,16 +1197,23 @@ function M.stylize_markdown(bufnr, contents, opts)
         })
       else
         table.insert(stripped, line)
+        markdown_lines[#stripped] = true
         i = i + 1
       end
     end
   end
-  -- Clean up
-  stripped = M._trim(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
   local width, height = M._make_floating_popup_size(stripped, opts)
+
+  local sep_line = string.rep("─", math.min(width, opts.wrap_at or width))
+
+  for l in pairs(markdown_lines) do
+    if stripped[l]:match("^---+$") then
+      stripped[l] = sep_line
+    end
+  end
 
   -- Insert blank line separator after code block
   local insert_separator = opts.separator
@@ -1213,16 +1225,15 @@ function M.stylize_markdown(bufnr, contents, opts)
       h.finish = h.finish + offset
       -- check if a seperator already exists and use that one instead of creating a new one
       if h.finish + 1 <= #stripped then
-        if stripped[h.finish + 1]:match("^---+$") then
-          stripped[h.finish + 1] = string.rep("─", math.min(width, opts.wrap_at or width))
-        else
-          table.insert(stripped, h.finish + 1, string.rep("─", math.min(width, opts.wrap_at or width)))
+        if stripped[h.finish + 1] ~= sep_line then
+          table.insert(stripped, h.finish + 1, sep_line)
           offset = offset + 1
           height = height + 1
         end
       end
     end
   end
+
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
