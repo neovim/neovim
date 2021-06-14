@@ -50,7 +50,7 @@ local function get_border_size(opts)
   local width = 0
 
   if type(border) == 'string' then
-    local border_size = {none = {0, 0}, single = {2, 2}, double = {2, 2}, shadow = {1, 1}}
+    local border_size = {none = {0, 0}, single = {2, 2}, double = {2, 2}, rounded = {2, 2}, solid = {2, 2}, shadow = {1, 1}}
     if border_size[border] == nil then
       error("floating preview border is not correct. Please refer to the docs |vim.api.nvim_open_win()|"
               .. vim.inspect(border))
