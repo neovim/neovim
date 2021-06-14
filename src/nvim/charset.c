@@ -1453,8 +1453,23 @@ char_u *skipwhite(const char_u *q)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
+  return skipwhite_len(q, STRLEN(q));
+}
+
+/// Like `skipwhite`, but skip up to `len` characters.
+/// @see skipwhite
+///
+/// @param[in]  q    String to skip in.
+/// @param[in]  len  Max length to skip.
+///
+/// @return Pointer to character after the skipped whitespace, or the `len`-th
+///         character in the string.
+char_u *skipwhite_len(const char_u *q, size_t len)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
+{
   const char_u *p = q;
-  while (ascii_iswhite(*p)) {
+  for (; len > 0 && ascii_iswhite(*p); len--) {
     p++;
   }
   return (char_u *)p;
@@ -1598,6 +1613,21 @@ char_u* skiptowhite_esc(char_u *p) {
     ++p;
   }
   return p;
+}
+
+/// Skip over text until '\n' or NUL.
+///
+/// @param[in]  p  Text to skip over.
+///
+/// @return Pointer to the next '\n' or NUL character.
+char_u *skip_to_newline(const char_u *p)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
+{
+  while (*p != '\n' && *p != NUL) {
+    p++;
+  }
+  return (char_u *)p;
 }
 
 /// Gets a number from a string and skips over it, signalling overflow.
