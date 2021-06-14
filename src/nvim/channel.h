@@ -28,6 +28,10 @@ typedef enum {
   kChannelPartAll
 } ChannelPart;
 
+typedef enum {
+  kChannelStdinPipe,
+  kChannelStdinNull,
+} ChannelStdinMode;
 
 typedef struct {
   Stream in;

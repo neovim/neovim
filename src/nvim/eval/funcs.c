@@ -5182,6 +5182,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool pty = false;
   bool clear_env = false;
   bool overlapped = false;
+  ChannelStdinMode stdin = kChannelStdinPipe;
   CallbackReader on_stdout = CALLBACK_READER_INIT,
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
@@ -5195,6 +5196,17 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     pty = tv_dict_get_number(job_opts, "pty") != 0;
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
     overlapped = tv_dict_get_number(job_opts, "overlapped") != 0;
+
+    char *s = tv_dict_get_string(job_opts, "stdin", false);
+    if (s) {
+      if (!strncmp(s, "null", NUMBUFLEN)) {
+        stdin = kChannelStdinNull;
+      } else if (!strncmp(s, "pipe", NUMBUFLEN)) {
+        // Nothing to do, default value
+      } else {
+        EMSG3(_(e_invargNval), "stdin", s);
+      }
+    }
 
     if (pty && rpc) {
       EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
@@ -5252,8 +5264,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   env = create_environment(job_env, clear_env, pty, term_name);
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, overlapped, detach, cwd, width, height,
-                                    env, &rettv->vval.v_number);
+                                    rpc, overlapped, detach, stdin, cwd, width,
+                                    height, env, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -7733,8 +7745,9 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
-                                    false, true, false, false, NULL, 0, 0,
-                                    NULL, &rettv->vval.v_number);
+                                    false, true, false, false,
+                                    kChannelStdinPipe, NULL, 0, 0, NULL,
+                                    &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -10850,9 +10863,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const bool rpc = false;
   const bool overlapped = false;
   const bool detach = false;
+  ChannelStdinMode stdin = kChannelStdinPipe;
   uint16_t term_width = MAX(0, curwin->w_width_inner - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
-                                    pty, rpc, overlapped, detach, cwd,
+                                    pty, rpc, overlapped, detach, stdin, cwd,
                                     term_width, curwin->w_height_inner,
                                     env, &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
