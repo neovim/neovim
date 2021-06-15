@@ -5370,7 +5370,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
         }
         p = buf;
         while (*p != NUL) {
-            // for each comma seperated option part, append value to
+            // for each comma separated option part, append value to
             // the option, :set rtp+=value
             if (fprintf(fd, "%s %s+=", cmd, name) < 0) {
               goto fail;
