@@ -23,9 +23,23 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
-  set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    # pkg-config 29.2 has a bug on OpenBSD which causes it to drop any paths that
+    # *contain* system include paths. To avoid this, we prefix what would be
+    # "/usr/include" as "/_usr/include".
+    # This check is also performed in the third-party/CMakeLists.txt and in the
+    # else clause following here.
+    # https://github.com/neovim/neovim/pull/14745#issuecomment-860201794
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
 else()
-  set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
   # When running from within CLion or Visual Studio,
   # build bundled dependencies automatically.
   if(NOT EXISTS ${DEPS_PREFIX}

@@ -8,10 +8,12 @@
 " markdown.vim syntax files
 execute 'source' expand('<sfile>:p:h') .. '/markdown.vim'
 
-syn cluster mkdNonListItem add=mkdEscape,mkdNbsp
+syn cluster mkdNonListItem add=mkdEscape,mkdNbsp,mkdLine
 
 syntax region mkdEscape matchgroup=mkdEscape start=/\\\ze[\\\x60*{}\[\]()#+\-,.!_>~|"$%&'\/:;<=?@^ ]/ end=/.\zs/ keepend contains=mkdEscapeCh oneline concealends
 syntax match mkdEscapeCh /./ contained
 syntax match mkdNbsp /&nbsp;/ conceal cchar= 
+syntax match mkdLine /---/ conceal cchar= 
+syntax match markdownH2 "" contained
 
 hi def link mkdEscape special

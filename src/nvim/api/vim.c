@@ -1437,28 +1437,30 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 ///                    end-of-buffer region is hidden by setting `eob` flag of
 ///                    'fillchars' to a space char, and clearing the
 ///                    |EndOfBuffer| region in 'winhighlight'.
-///   - `border`: style of (optional) window border. This can either be a string
-///      or an array. the string values are:
-///     - "none" No border. This is the default
-///     - "single" a single line box
-///     - "double" a double line box
-///     - "shadow" a drop shadow effect by blending with the background.
-///     If it is an array it should be an array of eight items or any divisor of
+///   - `border`: Style of (optional) window border. This can either be a string
+///      or an array. The string values are
+///     - "none": No border (default).
+///     - "single": A single line box.
+///     - "double": A double line box.
+///     - "rounded": Like "single", but with rounded corners ("╭" etc.).
+///     - "solid": Adds padding by a single whitespace cell.
+///     - "shadow": A drop shadow effect by blending with the background.
+///     - If it is an array, it should have a length of eight or any divisor of
 ///     eight. The array will specifify the eight chars building up the border
-///     in a clockwise fashion starting with the top-left corner. As, an
-///     example, the double box style could be specified as:
-///         [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ]
-///     if the number of chars are less than eight, they will be repeated. Thus
-///     an ASCII border could be specified as:
-///       [ "/", "-", "\\", "|" ]
-///     or all chars the same as:
-///       [ "x" ]
-///     An empty string can be used to turn off a specific border, for instance:
+///     in a clockwise fashion starting with the top-left corner. As an
+///     example, the double box style could be specified as
+///       [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
+///     If the number of chars are less than eight, they will be repeated. Thus
+///     an ASCII border could be specified as
+///       [ "/", "-", "\\", "|" ],
+///     or all chars the same as
+///       [ "x" ].
+///     An empty string can be used to turn off a specific border, for instance,
 ///       [ "", "", "", ">", "", "", "", "<" ]
 ///     will only make vertical borders but not horizontal ones.
-///     By default `FloatBorder` highlight is used which links to `VertSplit`
+///     By default, `FloatBorder` highlight is used, which links to `VertSplit`
 ///     when not defined.  It could also be specified by character:
-///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ]
+///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ].
 ///   - `noautocmd`: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.

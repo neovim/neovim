@@ -2692,6 +2692,28 @@ func Test_cwindow_jump()
   set efm&vim
 endfunc
 
+func Test_cwindow_highlight()
+  CheckScreendump
+
+  let lines =<< trim END
+	call setline(1, ['some', 'text', 'with', 'matches'])
+	write XCwindow
+	vimgrep e XCwindow
+	redraw
+	cwindow 4
+  END
+  call writefile(lines, 'XtestCwindow')
+  let buf = RunVimInTerminal('-S XtestCwindow', #{rows: 12})
+  call VerifyScreenDump(buf, 'Test_quickfix_cwindow_1', {})
+  call term_sendkeys(buf, ":cnext\<CR>")
+  call VerifyScreenDump(buf, 'Test_quickfix_cwindow_2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestCwindow')
+  call delete('XCwindow')
+endfunc
+
 func XvimgrepTests(cchar)
   call s:setup_commands(a:cchar)
 

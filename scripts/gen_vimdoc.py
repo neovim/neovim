@@ -154,6 +154,7 @@ CONFIG = {
             'lsp.lua',
             'buf.lua',
             'diagnostic.lua',
+            'codelens.lua',
             'handlers.lua',
             'util.lua',
             'log.lua',

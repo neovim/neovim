@@ -271,12 +271,12 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
     end
     -- Account for servers that place diagnostics on terminating newline
     if buf_line_count > 0 then
-      diagnostic.range.start.line = math.min(
+      diagnostic.range.start.line = math.max(math.min(
         diagnostic.range.start.line, buf_line_count - 1
-      )
-      diagnostic.range["end"].line = math.min(
+      ), 0)
+      diagnostic.range["end"].line = math.max(math.min(
         diagnostic.range["end"].line, buf_line_count - 1
-      )
+      ), 0)
     end
   end
 
