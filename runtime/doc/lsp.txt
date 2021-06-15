@@ -947,9 +947,6 @@ add_workspace_folder({workspace_folder})
                 not provided, the user will be prompted for a path using
                 |input()|.
 
-call_hierarchy({method})                        *vim.lsp.buf.call_hierarchy()*
-                TODO: Documentation
-
 clear_references()                            *vim.lsp.buf.clear_references()*
                 Removes document highlights from current buffer.
 
