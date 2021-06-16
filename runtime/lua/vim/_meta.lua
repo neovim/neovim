@@ -463,6 +463,12 @@ local add_value = (function()
     end,
 
     [OptionTypes.ARRAY] = function(left, right)
+      -- prevent appending onto "" default values
+      -- https://github.com/neovim/neovim/issues/14828
+      if #left == 1 and left[1] == "" then
+        left = {}
+      end
+
       for _, v in ipairs(right) do
         table.insert(left, v)
       end
