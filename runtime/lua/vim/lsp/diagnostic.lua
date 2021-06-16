@@ -1202,7 +1202,7 @@ end
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
 function M.set_qflist(opts)
   opts = opts or {}
-  local open_qflist = if_nil(opts.onen_qflist, true)
+  local open_qflist = if_nil(opts.open_qflist, true)
   local diags = M.get_all(opts.client_id) 
   local predicate = function(d)
     local severity = to_severity(opts.severity)
