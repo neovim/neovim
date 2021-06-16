@@ -165,7 +165,13 @@ tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col}
 Query   						*lua-treesitter-query*
 
 Tree-sitter queries are supported, they are a way to do pattern-matching over
-a tree, using a simple to write lisp-like format.
+a tree, using a simple to write lisp-like format. See
+https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax for more
+information on how to write queries.
+
+Note: The perdicates listed in the web page above differ from those Neovim
+supports. See |lua-treesitter-predicates| for a complete list of predicates
+supported by Neovim.
 
 A `query` consists of one or more patterns. A `pattern` is defined over node
 types in the syntax tree.  A `match` corresponds to specific elements of the
