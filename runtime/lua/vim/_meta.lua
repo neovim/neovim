@@ -422,6 +422,12 @@ local prepend_value = (function()
     end,
 
     [OptionTypes.ARRAY] = function(left, right)
+      -- prevent prepending before ""
+      -- https://github.com/neovim/neovim/issues/14828
+      if #left == 1 and left[1] == "" then
+        left = {}
+      end
+
       for i = #right, 1, -1 do
         table.insert(left, 1, right[i])
       end
