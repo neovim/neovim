@@ -1123,6 +1123,8 @@ end
 --- </pre>
 ---@param opts table Configuration table
 ---     - show_header (boolean, default true): Show "Diagnostics:" header.
+---     - Plus all the opts for |vim.lsp.diagnostic.get_line_diagnostics()|
+---          and |vim.lsp.util.open_floating_preview()| can be used here.
 ---@param bufnr number The buffer number
 ---@param line_nr number The line number
 ---@param client_id number|nil the client id
