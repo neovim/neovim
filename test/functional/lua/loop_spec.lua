@@ -147,7 +147,8 @@ describe('vim.loop', function()
       {1:~                                                 }|
       {5:-- INSERT --}                                      |
     ]])
-    eq({blocking=false, mode='n'}, exec_lua("return _G.mode"))
+    eq({blocking=false, mode='n', wintype=''},
+        exec_lua("return _G.mode"))
   end)
 
   it("is equal to require('luv')", function()
