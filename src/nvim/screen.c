@@ -2757,8 +2757,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               }
               if (wp->w_p_rl) {                       // reverse line numbers
                 // like rl_mirror(), but keep the space at the end
-                char_u *p2 = skiptowhite(extra) - 1;
-                for (char_u *p1 = extra; p1 < p2; p1++, p2--) {
+                char_u *p2 = skipwhite(extra);
+                p2 = skiptowhite(p2) - 1;
+                for (char_u *p1 = skipwhite(extra); p1 < p2; p1++, p2--) {
                   const int t = *p1;
                   *p1 = *p2;
                   *p2 = t;
