@@ -867,7 +867,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   end
   local label = signature.label
   if ft then
-    -- wrap inside a code block so fancy_markdown can render it properly
+    -- wrap inside a code block so stylize_markdown can render it properly
     label = ("```%s\n%s\n```"):format(ft, label)
   end
   vim.list_extend(contents, vim.split(label, '\n', true))
@@ -1011,7 +1011,7 @@ function M.preview_location(location, opts)
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
   if syntax == "" then
     -- When no syntax is set, we use filetype as fallback. This might not result
-    -- in a valid syntax definition. See also ft detection in fancy_floating_win.
+    -- in a valid syntax definition. See also ft detection in stylize_markdown.
     -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
     syntax = api.nvim_buf_get_option(bufnr, 'filetype')
   end
@@ -1027,53 +1027,6 @@ local function find_window_by_var(name, value)
       return win
     end
   end
-end
-
---- Enters/leaves the focusable window associated with the current buffer via the
---window - variable `unique_name`. If no such window exists, run the function
---{fn}.
----
---@param unique_name (string) Window variable
---@param fn (function) should return create a new window and return a tuple of
----({focusable_buffer_id}, {window_id}). if {focusable_buffer_id} is a valid
----buffer id, the newly created window will be the new focus associated with
----the current buffer via the tag `unique_name`.
---@returns (pbufnr, pwinnr) if `fn()` has created a new window; nil otherwise
----@deprecated please use open_floating_preview directly
-function M.focusable_float(unique_name, fn)
-  vim.notify("focusable_float is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  -- Go back to previous window if we are in a focusable one
-  if npcall(api.nvim_win_get_var, 0, unique_name) then
-    return api.nvim_command("wincmd p")
-  end
-  local bufnr = api.nvim_get_current_buf()
-  do
-    local win = find_window_by_var(unique_name, bufnr)
-    if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
-      api.nvim_set_current_win(win)
-      api.nvim_command("stopinsert")
-      return
-    end
-  end
-  local pbufnr, pwinnr = fn()
-  if pbufnr then
-    api.nvim_win_set_var(pwinnr, unique_name, bufnr)
-    return pbufnr, pwinnr
-  end
-end
-
---- Focuses/unfocuses the floating preview window associated with the current
---- buffer via the window variable `unique_name`. If no such preview window
---- exists, makes a new one.
----
---@param unique_name (string) Window variable
---@param fn (function) The return values of this function will be passed
----directly to |vim.lsp.util.open_floating_preview()|, in the case that a new
----floating window should be created
----@deprecated please use open_floating_preview directly
-function M.focusable_preview(unique_name, fn)
-  vim.notify("focusable_preview is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  return M.open_floating_preview(fn(), {focus_id = unique_name})
 end
 
 --- Trims empty lines from input and pad top and bottom with empty lines
@@ -1101,14 +1054,6 @@ function M._trim(contents, opts)
     end
   end
   return contents
-end
-
-
-
---- @deprecated please use open_floating_preview directly
-function M.fancy_floating_markdown(contents, opts)
-  vim.notify("fancy_floating_markdown is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  return M.open_floating_preview(contents, "markdown", opts)
 end
 
 --- Converts markdown into syntax highlighted regions by stripping the code
