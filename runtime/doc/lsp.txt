@@ -1426,7 +1426,7 @@ save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
                     {bufnr}        number
                     {client_id}    number
 
-set_qflist({opts})                         *vim.lsp.diagnostic.set_loclist()*
+set_qflist({opts})                         *vim.lsp.diagnostic.set_qflist()*
                 Sets the quickfix list
 
                 Parameters: ~
