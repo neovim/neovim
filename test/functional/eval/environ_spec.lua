@@ -78,3 +78,50 @@ describe('empty $HOME', function()
     write_and_test_tilde()
   end)
 end)
+
+describe('inside $VIM_TERMINAL', function()
+  local vimterminal = os.getenv("VIM_TERMINAL")
+  local vimruntime = os.getenv("VIMRUNTIME")
+  local vimenv = os.getenv("VIM")
+  local fake_vimterminal = "802"
+  local fake_vimruntime = "/usr/share/vim/vim82"
+  local fake_vimenv = "/usr/share/vim"
+
+  --recover $VIM_TERMINAL, $VIMRUNTIME, $VIM after each test
+  after_each(function()
+    if vimterminal ~= nil then
+      setenv('VIM_TERMINAL', vimterminal)
+    else
+      setenv('VIM_TERMINAL', "")
+    end
+
+    if vimruntime ~= nil then
+      setenv('VIMRUNTIME', vimruntime)
+    else
+      setenv('VIMRUNTIME', "")
+    end
+
+    if vimenv ~= nil then
+      setenv('VIM', vimenv)
+    else
+      setenv('VIM', "")
+    end
+  end)
+
+  -- fake a VIM_TERMINAL environment
+  local function fake_vim_terminal_env()
+    setenv("VIM_TERMINAL", fake_vimterminal)
+    setenv("VIMRUNTIME", fake_vimruntime)
+    setenv("VIM", fake_vimenv)
+  end
+
+  -- check if $VIMRUNTIME/$VIM is explictly set
+  local function test_vimruntime()
+    return (eval("$VIMRUNTIME") ~= fake_vimruntime) and (eval("$VIM") ~= fake_vimenv)
+  end
+
+  it("When $VIM_TERMINAL set, VIM/VIMRUNTIME need to be set explicitly", function()
+    fake_vim_terminal_env()
+    eq(true, test_vimruntime())
+  end)
+end)
