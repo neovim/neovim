@@ -1447,6 +1447,9 @@ set_qflist({opts})                         *vim.lsp.diagnostic.set_loclist()*
                                 "Warning" means { "Error", "Warning" } will be
                                 valid.
 
+                            • {workspace}: (boolean, default true)
+                              • Set the list with workspace diagnostics
+
 set_loclist({opts})                         *vim.lsp.diagnostic.set_loclist()*
                 Sets the location list
 

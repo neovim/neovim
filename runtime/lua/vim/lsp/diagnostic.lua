@@ -1190,20 +1190,24 @@ function M.reset(client_id, buffer_client_map)
   end)
 end
 
---- Sets the quickfix list
+--- Gets diagnostics, converts them to quickfix/location list items, and applies the item_handler callback to the items.
+---@param item_handler function Callback to apply to the diagnostic items
+---@param command string|nil Command to execute after applying the item_handler
 ---@param opts table|nil Configuration table. Keys:
----         - {open_qflist}: (boolean, default true)
----             - Open quickfix list after set
 ---         - {client_id}: (number)
 ---             - If nil, will consider all clients attached to buffer.
 ---         - {severity}: (DiagnosticSeverity)
 ---             - Exclusive severity to consider. Overrides {severity_limit}
 ---         - {severity_limit}: (DiagnosticSeverity)
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
-function M.set_qflist(opts)
+---         - {workspace}: (boolean, default false)
+---             - Set the list with workspace diagnostics
+local function apply_to_diagnostic_items(item_handler, command, opts)
   opts = opts or {}
-  local open_qflist = if_nil(opts.open_qflist, true)
-  local diags = M.get_all(opts.client_id) 
+  local current_bufnr = api.nvim_get_current_buf()
+  local diags = opts.workspace and M.get_all(opts.client_id) or {
+    [current_bufnr] = M.get(current_bufnr, opts.client_id)
+  }
   local predicate = function(d)
     local severity = to_severity(opts.severity)
     if severity then
@@ -1216,10 +1220,30 @@ function M.set_qflist(opts)
     return true
   end
   local items = util.diagnostics_to_items(diags, predicate)
-  util.set_qflist(items)
-  if open_qflist then
-    vim.cmd [[copen]]
+  item_handler(items)
+  if command then
+    vim.cmd(command)
   end
+end
+
+--- Sets the quickfix list
+---@param opts table|nil Configuration table. Keys:
+---         - {open_qflist}: (boolean, default true)
+---             - Open quickfix list after set
+---         - {client_id}: (number)
+---             - If nil, will consider all clients attached to buffer.
+---         - {severity}: (DiagnosticSeverity)
+---             - Exclusive severity to consider. Overrides {severity_limit}
+---         - {severity_limit}: (DiagnosticSeverity)
+---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---         - {workspace}: (boolean, default true)
+---             - Set the list with workspace diagnostics
+function M.set_qflist(opts)
+  opts = opts or {}
+  opts.workspace = if_nil(opts.workspace, true)
+  local open_qflist = if_nil(opts.open_qflist, true)
+  local command = open_qflist and [[copen]] or nil
+  apply_to_diagnostic_items(util.set_qflist, command, opts)
 end
 
 --- Sets the location list
@@ -1237,27 +1261,8 @@ end
 function M.set_loclist(opts)
   opts = opts or {}
   local open_loclist = if_nil(opts.open_loclist, true)
-  local current_bufnr = api.nvim_get_current_buf()
-  local diags = opts.workspace and M.get_all(opts.client_id) or {
-    [current_bufnr] = M.get(current_bufnr, opts.client_id)
-  }
-  local predicate = function(d)
-    local severity = to_severity(opts.severity)
-    if severity then
-      return d.severity == severity
-    end
-    severity = to_severity(opts.severity_limit)
-    if severity then
-      return d.severity == severity
-    end
-    return true
-  end
-  local items = util.diagnostics_to_items(diags, predicate)
-  local win_id = vim.api.nvim_get_current_win()
-  util.set_loclist(items, win_id)
-  if open_loclist then
-    vim.cmd [[lopen]]
-  end
+  local command = open_loclist and [[lopen]] or nil
+  apply_to_diagnostic_items(util.set_loclist, command, opts)
 end
 -- }}}
 
