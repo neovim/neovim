@@ -917,13 +917,19 @@ char *vim_getenv(const char *name)
   }
 #endif
 
+  bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
+  bool vimenv = (strcmp(name, "VIM") == 0);
+  bool in_vimterm = (os_getenv("VIM_TERMINAL") != NULL);
+
   const char *kos_env_path = os_getenv(name);
-  if (kos_env_path != NULL) {
+  // VIM or VIMRUNTIME need to be set when run in vim terminal
+  if (kos_env_path != NULL
+      && !((vimruntime && in_vimterm) || (vimenv && in_vimterm))
+      ) {
     return xstrdup(kos_env_path);
   }
 
-  bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
-  if (!vimruntime && strcmp(name, "VIM") != 0) {
+  if (!vimruntime && !vimenv) {
     return NULL;
   }
 
@@ -936,7 +942,7 @@ char *vim_getenv(const char *name)
 #endif
       ) {
     kos_env_path = os_getenv("VIM");
-    if (kos_env_path != NULL) {
+    if (kos_env_path != NULL && !in_vimterm) {
       vim_path = vim_version_dir(kos_env_path);
       if (vim_path == NULL) {
         vim_path = xstrdup(kos_env_path);
