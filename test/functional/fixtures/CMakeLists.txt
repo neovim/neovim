@@ -1,5 +1,5 @@
 add_executable(tty-test EXCLUDE_FROM_ALL tty-test.c)
-target_link_libraries(tty-test ${LIBUV_LIBRARIES})
+target_link_libraries(tty-test ${LIBUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(shell-test EXCLUDE_FROM_ALL shell-test.c)
 add_executable(printargs-test EXCLUDE_FROM_ALL printargs-test.c)
@@ -9,4 +9,4 @@ if(WIN32)
 endif()
 
 add_executable(streams-test EXCLUDE_FROM_ALL streams-test.c)
-target_link_libraries(streams-test ${LIBUV_LIBRARIES})
+target_link_libraries(streams-test ${LIBUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

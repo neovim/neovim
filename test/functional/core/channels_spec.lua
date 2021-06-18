@@ -188,6 +188,7 @@ describe('channels', function()
     eq({"notification", "stderr", {3, {""}}}, next_msg())
 
     command("call rpcnotify(id, 'nvim_command', 'quit')")
+
     eq({"notification", "exit", {3, 0}}, next_msg())
   end)
 

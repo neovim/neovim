@@ -12,6 +12,7 @@
 #include "nvim/event/wstream.h"
 #include "nvim/event/process.h"
 #include "nvim/event/libuv_process.h"
+#include "nvim/os/os.h"
 #include "nvim/os/process.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/globals.h"
@@ -70,6 +71,12 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
       break;
     default:
       abort();
+  }
+
+  if (proc->type == kProcessTypeUv) {
+    os_close(((LibuvProcess *)proc)->uvstdio[0].data.fd);
+    os_close(((LibuvProcess *)proc)->uvstdio[1].data.fd);
+    os_close(((LibuvProcess *)proc)->uvstdio[2].data.fd);
   }
 
   if (status) {
