@@ -525,6 +525,15 @@ LspDiagnosticsSignHint
   Used for "Hint" signs in sign column.
   See |vim.lsp.diagnostic.set_signs()|
 
+                                                      *lsp-highlight-codelens*
+
+Highlight groups related to |lsp-codelens| functionality.
+
+                                                              *hl-LspCodeLens*
+LspCodeLens
+   Used to color the virtual text of the codelens. See
+   |nvim_buf_set_virtual_text()|.
+
 ==============================================================================
 AUTOCOMMANDS                                                *lsp-autocommands*
 
