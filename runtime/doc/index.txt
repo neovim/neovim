@@ -1457,8 +1457,6 @@ tag		command		action ~
 |:print|	:p[rint]	print lines
 |:profdel|	:profd[el]	stop profiling a function or script
 |:profile|	:prof[ile]	profiling functions and scripts
-|:promptfind|	:pro[mptfind]	open GUI dialog for searching
-|:promptrepl|	:promptr[epl]	open GUI dialog for search/replace
 |:pop|		:po[p]		jump to older entry in tag stack
 |:popup|	:popu[p]	popup a menu by name
 |:ppop|		:pp[op]		":pop" in preview window

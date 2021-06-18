@@ -421,6 +421,8 @@ Commands:
   :mode (no longer accepts an argument)
   :open
   :Print
+  :promptfind
+  :promptrepl
   :shell
   :smile
   :tearoff
