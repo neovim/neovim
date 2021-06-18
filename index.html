@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="vim out of the box">
+        <link type="application/atom+xml" rel="alternate" href="https://neovim.io/news.xml" title="Neovim">
+        <title>News - Neovim</title>
+        <link href="/css/normalize.min.css" rel="stylesheet">
+            <link href="/css/bootstrap.css" rel="stylesheet">
+        <link href="/css/main.css" rel="stylesheet">
+        <link rel="canonical" href="https://neovim.io/news/">
+      <script charset="utf-8" src="https://platform.twitter.com/js/button.5573c974dc31bbdab5ea7923a0bd5cf3.js"></script>
+    </head>
+    <body>
+        <header class="container">
+      <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+          <a href="/" class="navbar-brand">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="height: 2.5em" viewBox="0 0 742 214">
+      <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="a">
+          <stop stop-color="#16B0ED" stop-opacity=".8" offset="0%"></stop>
+          <stop stop-color="#0F59B2" stop-opacity=".837" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="b">
+          <stop stop-color="#7DB643" offset="0%"></stop>
+          <stop stop-color="#367533" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="c">
+          <stop stop-color="#88C649" stop-opacity=".8" offset="0%"></stop>
+          <stop stop-color="#439240" stop-opacity=".84" offset="100%"></stop>
+        </linearGradient>
+      </defs>
+      <g fill="none" fill-rule="evenodd">
+        <path d="M.027 45.459L45.224-.173v212.171L.027 166.894V45.459z" fill="url(#a)" transform="translate(1 1)"></path>
+        <path d="M129.337 45.89L175.152-.149l-.928 212.146-45.197-45.104.31-121.005z" fill="url(#b)" transform="matrix(-1 0 0 1 305 1)"></path>
+        <path d="M45.194-.137L162.7 179.173l-32.882 32.881L12.25 33.141 45.194-.137z" fill="url(#c)" transform="translate(1 1)"></path>
+        <path d="M46.234 84.032l-.063 7.063-36.28-53.563 3.36-3.422 32.983 49.922z" fill-opacity=".13" fill="#000"></path>
+        <g fill="#444">
+          <path d="M227 154V64.44h4.655c1.55 0 2.445.75 2.685 2.25l.806 13.502c4.058-5.16 8.786-9.316 14.188-12.466 5.4-3.15 11.413-4.726 18.037-4.726 4.893 0 9.205.781 12.935 2.34 3.729 1.561 6.817 3.811 9.264 6.751 2.448 2.942 4.297 6.48 5.55 10.621 1.253 4.14 1.88 8.821 1.88 14.042V154h-8.504V96.754c0-8.402-1.91-14.987-5.729-19.757-3.82-4.771-9.667-7.156-17.544-7.156-5.851 0-11.28 1.516-16.292 4.545-5.013 3.032-9.489 7.187-13.427 12.467V154H227zM350.624 63c5.066 0 9.755.868 14.069 2.605 4.312 1.738 8.052 4.268 11.219 7.592s5.638 7.412 7.419 12.264C385.11 90.313 386 95.883 386 102.17c0 1.318-.195 2.216-.588 2.696-.393.48-1.01.719-1.851.719h-64.966v1.70c0 6.708.784 12.609 2.353 17.7 1.567 5.09 3.8 9.357 6.695 12.802 2.895 3.445 6.393 6.034 10.495 7.771 4.1 1.738 8.686 2.606 13.752 2.606 4.524 0 8.446-.494 11.762-1.483 3.317-.988 6.108-2.097 8.37-3.324 2.261-1.227 4.056-2.336 5.383-3.324 1.326-.988 2.292-1.482 2.895-1.482.784 0 1.388.3 1.81.898l2.352 2.875c-1.448 1.797-3.362 3.475-5.745 5.031-2.383 1.558-5.038 2.891-7.962 3.998-2.926 1.109-6.062 1.991-9.41 2.65a52.21 52.21 0 01-10.088.989c-6.152 0-11.762-1.064-16.828-3.19-5.067-2.125-9.415-5.225-13.043-9.298-3.63-4.074-6.435-9.06-8.415-14.96C310.99 121.655 310 114.9 310 107.294c0-6.408.92-12.323 2.76-17.744 1.84-5.421 4.493-10.093 7.961-14.016 3.467-3.922 7.72-6.991 12.758-9.209C338.513 64.11 344.229 63 350.624 63zm.573 6c-4.696 0-8.904.702-12.623 2.105-3.721 1.404-6.936 3.421-9.65 6.053-2.713 2.631-4.908 5.79-6.586 9.474S319.55 94.439 319 99h60c0-4.679-.672-8.874-2.013-12.588-1.343-3.712-3.232-6.856-5.67-9.43-2.44-2.571-5.367-4.545-8.782-5.92-3.413-1.374-7.192-2.062-11.338-2.062zM435.546 63c6.526 0 12.368 1.093 17.524 3.28 5.154 2.186 9.5 5.286 13.04 9.298 3.538 4.013 6.238 8.85 8.099 14.51 1.861 5.66 2.791 11.994 2.791 19.002 0 7.008-.932 13.327-2.791 18.957-1.861 5.631-4.561 10.452-8.099 14.465-3.54 4.012-7.886 7.097-13.04 9.254-5.156 2.156-10.998 3.234-17.524 3.234-6.529 0-12.369-1.078-17.525-3.234-5.155-2.157-9.517-5.242-13.085-9.254-3.57-4.013-6.285-8.836-8.145-14.465-1.861-5.63-2.791-11.95-2.791-18.957 0-7.008.93-13.342 2.791-19.002 1.861-5.66 4.576-10.496 8.145-14.51 3.568-4.012 7.93-7.112 13.085-9.299C423.177 64.094 429.017 63 435.546 63zm-.501 86c5.341 0 10.006-.918 13.997-2.757 3.99-1.838 7.32-4.474 9.992-7.909 2.67-3.435 4.664-7.576 5.986-12.428 1.317-4.85 1.98-10.288 1.98-16.316 0-5.965-.66-11.389-1.98-16.27-1.322-4.88-3.316-9.053-5.986-12.519-2.67-3.463-6-6.13-9.992-7.999-3.991-1.867-8.657-2.802-13.997-2.802s-10.008.935-13.997 2.802c-3.991 1.87-7.322 4.536-9.992 8-2.671 3.465-4.68 7.637-6.03 12.518-1.35 4.881-2.026 10.305-2.026 16.27 0 6.026.675 11.465 2.025 16.316 1.35 4.852 3.36 8.993 6.031 12.428 2.67 3.435 6 6.07 9.992 7.91 3.99 1.838 8.656 2.756 13.997 2.756z" fill="currentColor"></path>
+          <path d="M530.57 152h-20.05L474 60h18.35c1.61 0 2.967.39 4.072 1.166 1.103.778 1.865 1.763 2.283 2.959l17.722 49.138a92.762 92.762 0 012.551 8.429c.686 2.751 1.298 5.5 1.835 8.25.537-2.75 1.148-5.499 1.835-8.25a77.713 77.713 0 012.64-8.429l18.171-49.138c.417-1.196 1.164-2.181 2.238-2.96 1.074-.776 2.356-1.165 3.849-1.165H567l-36.43 92zM572 61h23v92h-23zM610 153V60.443h13.624c2.887 0 4.78 1.354 5.682 4.06l1.443 6.856a52.7 52.7 0 015.097-4.962 32.732 32.732 0 015.683-3.879 30.731 30.731 0 016.496-2.57c2.314-.632 4.855-.948 7.624-.948 5.832 0 10.63 1.579 14.39 4.736 3.758 3.157 6.57 7.352 8.434 12.585 1.444-3.068 3.248-5.698 5.413-7.894 2.165-2.194 4.541-3.984 7.127-5.367a32.848 32.848 0 018.254-3.068 39.597 39.597 0 018.796-.992c5.111 0 9.653.783 13.622 2.345 3.97 1.565 7.307 3.849 10.014 6.857 2.706 3.007 4.766 6.675 6.18 11.005C739.29 83.537 740 88.5 740 94.092V153h-22.284V94.092c0-5.894-1.294-10.329-3.878-13.306-2.587-2.977-6.376-4.465-11.368-4.465-2.286 0-4.404.391-6.358 1.172a15.189 15.189 0 00-5.144 3.383c-1.473 1.474-2.631 3.324-3.474 5.548-.842 2.225-1.263 4.781-1.263 7.668V153h-22.37V94.092c0-6.194-1.249-10.704-3.744-13.532-2.497-2.825-6.18-4.24-11.051-4.24-3.19 0-6.18.798-8.976 2.391-2.799 1.593-5.399 3.775-7.804 6.54V153H610zM572 30h23v19h-23z" fill="currentColor" fill-opacity=".8"></path>
+        </g>
+      </g>
+    </svg>
+    
+          </a>
+    
+          <button type="button" data-bs-toggle="collapse" data-bs-target="#neovim-navbar" class="navbar-toggler" aria-expanded="false">
+            <span class="navbar-toggler-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </span>
+          </button>
+          <div class="collapse navbar-collapse justify-content-end" id="neovim-navbar">
+            <ul class="navbar-nav">
+                 
+              <li class="nav-item dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="neovim-dropdown" role="button">About</a>
+                <ul class="dropdown-menu" aria-labelledby="neovim-dropdown">
+                  
+    
+                  <li>
+                    <a class="dropdown-item" href="/charter/">
+                      Vision
+                    </a>
+                  </li>
+    
+                  
+    
+                  <li>
+                    <a class="dropdown-item" href="/roadmap/">
+                      Roadmap
+                    </a>
+                  </li>
+    
+                  
+    
+                  <li>
+                    <a class="dropdown-item" href="/screenshots/">
+                      Screenshots
+                    </a>
+                  </li>
+    
+                  
+                </ul>
+              </li>
+                    
+              <li class="nav-item">
+                <a href="/news/" class="nav-link">News</a>
+              </li>
+    
+                   
+              <li class="nav-item">
+                <a href="https://github.com/neovim/neovim" class="nav-link">Development</a>
+              </li>
+    
+                  
+              <li class="nav-item dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="neovim-dropdown" role="button">Documentation</a>
+                <ul class="dropdown-menu" aria-labelledby="neovim-dropdown">
+                  
+    
+                  <li>
+                    <a class="dropdown-item" href="/doc/general/">
+                      General
+                    </a>
+                  </li>
+    
+                  
+    
+                  <li>
+                    <a class="dropdown-item" href="/doc/lua-resources/">
+                      Lua resources
+                    </a>
+                  </li>
+    
+                  
+    
+                  <li>
+                    <a class="dropdown-item" href="/doc/lsp/">
+                      LSP
+                    </a>
+                  </li>
+    
+                  
+    
+                  <li>
+                    <a class="dropdown-item" href="/doc/treesitter/">
+                      Tree-sitter
+                    </a>
+                  </li>
+    
+                  
+                </ul>
+              </li>
+                    
+              <li class="nav-item">
+                <a href="http://discourse.neovim.io" class="nav-link">Forum</a>
+              </li>
+    
+                   
+              <li class="nav-item">
+                <a href="/sponsors/" class="nav-link">Sponsors</a>
+              </li>
+    
+               
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+    
+    
+    <section class="front-section">
+      <div class="newsletter container golden-grid">
+        <div class="col-wide">
+          <h1>Newsletter #10 - Neovim v0.4.4</h1>
+    
+          <div style="margin-top: 0.5em; margin-bottom: 0.5em;">
+            <a class="release-date" href="/news/2020/10/">October 2020</a>
+          </div>
+    
+          <h2 id="what-is-neovim">What is Neovim?</h2>
+    
+    <p>Neovim is a fork of the venerable text-editor vim, focused on extensibility and
+    usability. It is not a rewrite but a continuation and extension of Vim. Many
+    clones and derivatives exist, some very clever—but none are Vim. Neovim is built
+    for users who want the good parts of Vim, and more. See a list of differences
+    via <a href="https://neovim.io/doc/user/vim_diff.html">:help vim-differences</a>.</p>
+    
+    <h3 id="participating">Participating</h3>
+    
+    <p>If you are interested in contributing to Neovim, visit <a href="https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md">the github
+    page</a> for details.
+    We have a great test suite and automated CI, so you can just jump in and have a
+    go. Don’t be afraid to open a PR to get comments or just take advantage of the
+    infrastructure!</p>
+    
+    <p>To get in touch with the team, join the <a href="https://gitter.im/neovim">gitter channel</a>
+    (also accessible via <a href="https://webchat.freenode.net/?channels=neovim">IRC</a>), or
+    visit the <a href="https://www.reddit.com/r/neovim/">Neovim subreddit</a>, which many of
+    the developers read. Taking part in conversations is a contribution, too!</p>
+    
+    <h2 id="whats-new">What’s new</h2>
+    
+    <p>The <a href="https://neovim.io/news/2020/04/">last newsletter</a> covered the release of
+    Neovim v0.3.0, it is now time to do the same thing with the most exciting
+    Neovim release that happened since then: v0.4.4!</p>
+    
+    <h4 id="044-for-users">0.4.4 for Users</h4>
+    
+    <ul>
+      <li>
+        <p>Neovim started detecting the background color of the terminal for xterm-compatible terminals (<strong><a href="https://github.com/joshtriplett" class="user-mention">@joshtriplett</a></strong>, <a href="https://github.com/neovim/neovim/pull/9509">#9509</a>)</p>
+      </li>
+      <li>
+        <p>The <code class="language-plaintext highlighter-rouge">'maxcombine'</code> option has been removed, it now always default to 6 (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/7992">#7992</a>)</p>
+      </li>
+      <li>
+        <p>The <code class="language-plaintext highlighter-rouge">'fillchars'</code> setting now has an <code class="language-plaintext highlighter-rouge">eob</code> option, letting users configure the character used to represent lines after the end of a buffer (previously hardcoded to <code class="language-plaintext highlighter-rouge">~</code>) (<strong><a href="https://github.com/FriedSock" class="user-mention">@FriedSock</a></strong>, <a href="https://github.com/neovim/neovim/pull/8546">#8546</a>)</p>
+      </li>
+      <li>
+        <p><code class="language-plaintext highlighter-rouge">F</code> has been added to the default <code class="language-plaintext highlighter-rouge">'shortmess'</code> option and <code class="language-plaintext highlighter-rouge">S</code> has been removed (<strong><a href="https://github.com/justinmk" class="user-mention">@justinmk</a></strong>, <a href="https://github.com/neovim/neovim/pull/8619">#8619</a>, <a href="https://github.com/neovim/neovim/pull/10136">#10136</a>)</p>
+      </li>
+      <li>
+        <p>The <code class="language-plaintext highlighter-rouge">CursorLine</code> type will now be smarter: if its foreground color is not set, the text of the <code class="language-plaintext highlighter-rouge">CursorLine</code> will use the <code class="language-plaintext highlighter-rouge">CursorLine</code>’s background color and default syntax highlighting colors as foreground (<strong><a href="https://github.com/zhou13" class="user-mention">@zhou13</a></strong>, <a href="https://github.com/neovim/neovim/pull/8578">#8578</a>).</p>
+      </li>
+      <li>
+        <p>The terminal UI can now support undercurl and colored underline, provided that your terminal has support for that (<strong><a href="https://github.com/blueyed" class="user-mention">@blueyed</a></strong>, <a href="https://github.com/neovim/neovim/pull/9052">#9052</a>).</p>
+      </li>
+      <li>
+        <p>Neovim’s <code class="language-plaintext highlighter-rouge">'background'</code> setting now defaults to <code class="language-plaintext highlighter-rouge">dark</code> to get a consistent setting across platforms (<strong><a href="https://github.com/justinmk" class="user-mention">@justinmk</a></strong>, <a href="https://github.com/neovim/neovim/pull/9205">#9205</a>).</p>
+      </li>
+      <li>
+        <p><code class="language-plaintext highlighter-rouge">'fillchars'</code> and <code class="language-plaintext highlighter-rouge">'listchars'</code> now are window-local options (<strong><a href="https://github.com/mhinz" class="user-mention">@mhinz</a></strong>, <a href="https://github.com/neovim/neovim/pull/9539">#9539</a>).</p>
+      </li>
+      <li>
+        <p>The popupmenu can now be made (pseudo) transparent (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/9571">#9571</a>).</p>
+      </li>
+      <li>
+        <p>Floating windows! This enables all kinds of useful features, such as <a href="https://github.com/iamcco/clock.nvim">big clocks</a> (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <strong><a href="https://github.com/dzhou121" class="user-mention">@dzhou121</a></strong>, <a href="https://github.com/neovim/neovim/pull/6619">#6619</a>)</p>
+      </li>
+      <li>
+        <p>Autocommands now have a <code class="language-plaintext highlighter-rouge">++once</code> modifier to let them execute only once (<strong><a href="https://github.com/justinmk" class="user-mention">@justinmk</a></strong>, <a href="https://github.com/neovim/neovim/pull/9706">#9706</a>)</p>
+      </li>
+      <li>
+        <p>A new autocommand event named <code class="language-plaintext highlighter-rouge">CompleteChanged</code> has been implemented (<strong><a href="https://github.com/chemzqm" class="user-mention">@chemzqm</a></strong>, <a href="https://github.com/neovim/neovim/pull/9616">#9616</a>)</p>
+      </li>
+      <li>
+        <p>Vim’s TermDebug plugin has been ported to neovim (<strong><a href="https://github.com/kwon-young" class="user-mention">@kwon-young</a></strong>, <a href="https://github.com/neovim/neovim/pull/8364">#8364</a>).</p>
+      </li>
+      <li>
+        <p>The wildmenu can now be turned into a popup menu with <code class="language-plaintext highlighter-rouge">wildoptions=pum</code> (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/9607">#9607</a>). In fact, that’s the default!</p>
+      </li>
+      <li>
+        <p>There now are two events triggered when a UI connects to and disconnects from Neovim: UIEnter and UILeave (<strong><a href="https://github.com/equalsraf" class="user-mention">@equalsraf</a></strong>, <a href="https://github.com/neovim/neovim/6917">#6917</a>).</p>
+      </li>
+      <li>
+        <p>There also are <code class="language-plaintext highlighter-rouge">TermEnter</code> and <code class="language-plaintext highlighter-rouge">TermLeave</code> autocommands triggered when entering/leaving a terminal (<strong>usama54321</strong>, <a href="https://github.com/neovim/neovim/8550">#8550</a>).</p>
+      </li>
+    </ul>
+    
+    <h4 id="044-for-developers">0.4.4 for Developers</h4>
+    
+    <ul>
+      <li>New UI extensions:
+        <ul>
+          <li>The <code class="language-plaintext highlighter-rouge">ext_hlstate</code> extension allows semantic identification of builtin and syntax highlights (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/8221">#8221</a>).</li>
+          <li>The <code class="language-plaintext highlighter-rouge">ext_linegrid</code> extension sends more gradual screen updates for improved performance (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/9064">#9064</a>).</li>
+          <li>The <code class="language-plaintext highlighter-rouge">ext_multigrid</code> extension introduces the concept of a “grid” which is just a rendering surface (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <strong><a href="https://github.com/UtkarshMe" class="user-mention">@UtkarshMe</a></strong> <a href="https://github.com/neovim/neovim/pull/8455%5D">#8455</a>).</li>
+          <li>The <code class="language-plaintext highlighter-rouge">ext_messages</code> extension enables UIs to provide an external command line (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <strong><a href="https://github.com/dzhou121" class="user-mention">@dzhou121</a></strong> <a href="https://github.com/neovim/neovim/pull/7466">#7466</a>)</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">ext_popupmenu</code> makes neovim send information about its popup menu (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong> <a href="https://github.com/neovim/neovim/pull/9607">#9607</a>).</li>
+        </ul>
+      </li>
+      <li>New API function:
+        <ul>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_buf_get_offset</code>: returns the byte offset of a line (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/9180">#9180</a>)</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_buf_is_loaded</code>: checks if a buffer is loaded (<strong><a href="https://github.com/phodge" class="user-mention">@phodge</a></strong>, <a href="https://github.com/neovim/neovim/pull/7688">#7688</a>).</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_create_buf</code>: create a new buffer (<strong><a href="https://github.com/bredl" class="user-mention">@bredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/9272">#9272</a>)</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_get_context</code>/<code class="language-plaintext highlighter-rouge">nvim_load_context</code>:  explore and restore the editor’s state (<strong><a href="https://github.com/justinmk" class="user-mention">@justinmk</a></strong>, <a href="https://github.com/neovim/neovim/pull/10619">#10619</a>.</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_input_mouse</code>: perform mouse actions (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull9429">#9429</a>).</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_open_win</code>: creating floating external windows</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_set_keymap</code>: sets a global mapping for a mode (<strong><a href="https://github.com/yilin-yang" class="user-mention">@yilin-yang</a></strong>, <a href="https://github.com/neovim/neovim/pull/9224">#9224</a>).</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_win_close</code>: close a window (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/9667">#9667</a>).</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_win_set_buf</code>: sets the current buffer of a window (<strong><a href="https://github.com/justinmk" class="user-mention">@justinmk</a></strong>, <a href="https://github.com/neovim/neovim/pull/9100">#9100</a>)</li>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_win_set_config</code>: configure the layout of a window (<strong><a href="https://github.com/mhinz" class="user-mention">@mhinz</a></strong>, <a href="https://github.com/neovim/neovim/pull/9626">#9626</a>).</li>
+        </ul>
+      </li>
+      <li>Changed API functions:
+        <ul>
+          <li>
+    <code class="language-plaintext highlighter-rouge">nvim_buf_lines_event</code> will now send events for terminal buffers (<strong><a href="https://github.com/justinmk" class="user-mention">@justinmk</a></strong>, <a href="https://github.com/neovim/neovim/pull/8616">#8616</a>).</li>
+        </ul>
+      </li>
+      <li>
+        <p>Neovim now always waits for a UI when launched with –embed, unless –headless is also supplied (<strong><a href="https://github.com/bfredl" class="user-mention">@bfredl</a></strong>, <a href="https://github.com/neovim/neovim/pull/9024">#9024</a>).</p>
+      </li>
+      <li>Neovim’s libuv loop has been exposed to lua as <code class="language-plaintext highlighter-rouge">vim.loop</code> (<strong><a href="https://github.com/zhaozg" class="user-mention">@zhaozg</a></strong>, <strong><a href="https://github.com/andreypopp" class="user-mention">@andreypopp</a></strong>, <a href="https://github.com/neovim/neovim/pull/10123">#10123</a>).</li>
+    </ul>
+    
+    <h3 id="whats-next">What’s next?</h3>
+    
+    <p>Neovim contributors have been hard at work and added a lot of new features to v0.5.0 like an <a href="https://microsoft.github.io/language-server-protocol/">LSP client</a> written in Lua and <a href="https://github.com/tree-sitter/tree-sitter">TreeSitter</a> integration. The next Neovim release promises to be fascinating!</p>
+    
+    <h2 id="around-neovim">Around Neovim</h2>
+    
+    <h2 id="related-projects">Related projects</h2>
+    
+    <p>The wiki page of <a href="https://github.com/neovim/neovim/wiki/Related-projects">related
+    projects</a> is an evergrowing list of projects that somehow make use of Neovim’s extended capabilities. Here’s a gist of additions since the last newsletter:</p>
+    
+    <h3 id="plugins">Plugins</h3>
+    
+    <p>The following plugins have found their way into our <a href="https://github.com/neovim/neovim/wiki">wiki</a>:</p>
+    
+    <ul>
+      <li>
+    <a href="https://github.com/neoclide/coc.nvim">coc.nvim</a>: Language Server Protocol client that aims to replicate VSCode’s functionnalities</li>
+      <li>
+    <a href="https://github.com/iamcco/markdown-preview.nvim">markdown-preview.nvim</a>: Provides preview of your markdown files in your browser, with synchronized scrolling.</li>
+      <li>
+    <a href="https://github.com/sakhnik/nvim-gdb">nvim-gdb</a>: thin wrapper for GDB, LLDB and PDB</li>
+      <li>
+    <a href="https://github.com/Vigemus/nero.nvim">nero.nvim</a>: A REPL for Neovim</li>
+      <li>
+    <a href="https://github.com/huawenyu/neogdb.vim">neogdb.vim</a>: Vim GDB front-end for neovim</li>
+      <li>
+    <a href="https://github.com/bfredl/nvim-luadev">nvim-luadev</a>: REPL for developing lua plugins</li>
+      <li>
+    <a href="https://github.com/Olical/conjure">Conjure</a>: Clojure and ClojureScript tooling for Neovim over a socket</li>
+      <li>
+    <a href="https://github.com/Olical/aniseed">Aniseed</a>: Write plugins for Neovim in Fennel, a Lisp that compiles to Lua.</li>
+      <li>
+    <a href="https://github.com/rafcamlet/nvim-luapad">nvim-luapad</a>: Interactive real time neovim scratchpad for the embedded lua engine.</li>
+    </ul>
+    
+    <h3 id="api-clients">API Clients</h3>
+    
+    <p>Plenty of new API clients:</p>
+    
+    <ul>
+      <li>Java: <a href="https://github.com/esensar/neovim-java">neovim-java</a>
+    </li>
+      <li>D: <a href="https://github.com/viniarck/nvimhost-d">viniarck/nvimhost-d</a>
+    </li>
+      <li>Scala: <a href="https://github.com/viniarck/nvimhost-scala">viniarck/nvimhost-scala</a>
+    </li>
+      <li>NodeJS: <a href="https://github.com/neoclide/neovim">neoclide/neovim</a>
+    </li>
+      <li>Dart: <a href="https://github.com/smolck/dart-nvim-api">smolck/dart-nvim-api</a>
+    </li>
+      <li>Ocaml: <a href="https://github.com/janestreet/vcaml">janestreet/vcaml</a>
+    </li>
+    </ul>
+    
+    <p>The python client also has been renamed to “pynvim”.</p>
+    
+    <h3 id="guis">GUIs</h3>
+    
+    <p>Maybe 2018/2019 weren’t the years of the Linux desktop, but they sure were the years of the Neovim GUI:</p>
+    
+    <ul>
+      <li>
+    <a href="https://github.com/veonim/veonim">veonim</a>: a really cool electron-based GUI that aims to replicate the VSCode experience.</li>
+      <li>
+    <a href="http://dinvim.com">DinVim Vim for Mac</a>: A “safe and secure” Neovim GUI - available on the OSX app store.</li>
+      <li>
+    <a href="https://github.com/akiyosi/gonvim">akiyosi/gonvim</a>: A maintained fork of gonvim.</li>
+      <li>
+    <a href="https://github.com/etorth/libnvc">etorth/libnvc</a>: An easy to embed GUI based on SDL.</li>
+      <li>
+    <a href="https://github.com/mvilim/neovim-pytc-example">mvilim/neovim-pytc-example</a>: The first terminal UI for Neovim that isn’t the default terminal UI!</li>
+      <li>
+    <a href="https://github.com/vhakulinen/gnvim">GNvim</a>: “GUI for neovim, without any web bloat” written in Rust.</li>
+      <li>
+    <a href="https://github.com/glacambre/firenvim">Firenvim</a>: A big ball of web bloat that embeds Neovim in Chrome, Firefox and other browsers.</li>
+      <li>
+    <a href="https://github.com/beeender/glrnvim">glrnvim</a>: A terminal wrapper that launches neovim inside of alacritty.</li>
+      <li>
+    <a href="https://github.com/yatli/fvim">yatli/fvim</a>: A beautiful UI written in F# - who knew functionnal languages could actually be used for writing software?</li>
+      <li>
+    <a href="https://github.com/asvetliakov/vscode-neovim">Neo Vim</a>: A new attempt at integration neovim into VSCode.</li>
+      <li>
+    <a href="https://github.com/Kethku/neovide">kethku/neovide</a>: A “No nonsense Neovim client writen in rust” with a tiny bit of cursor madness.</li>
+      <li>
+    <a href="https://github.com/dontpanic92/dotnvim">dontpanic92/dotnvim</a>: A C# neovim client with transparent backgrounds!</li>
+    </ul>
+    
+    <h3 id="blog-posts">Blog posts</h3>
+    
+    <p>Some posts that talk specifically about Neovim things:</p>
+    
+    <ul>
+      <li>Writing Neovim plugins in lua: https://www.2n.pl/blog/how-to-write-neovim-plugins-in-lua</li>
+      <li>Writing your init.vim in lua: https://teukka.tech/luanvim.html</li>
+      <li>Using Neovim’s event loop from lua: https://teukka.tech/vimloop.html</li>
+    </ul>
+    
+    <h2 id="stats">Stats</h2>
+    
+    <p>Changed lines since the last newsletter:</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git log v0.3.0..v0.4.4 --numstat --pretty=tformat: --numstat | nawk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf "added lines: %s removed lines: %s total lines: %s\n", add, subs, loc }'
+    added lines: 168844 removed lines: 75466 total lines: 93378
+    </code></pre></div></div>
+    
+    <p>Merged commits:</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git log v0.3.0..v0.4.4 --pretty=oneline | wc -l
+    3477
+    </code></pre></div></div>
+    
+    <p>Different commit authors:</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git shortlog -e -s -n v0.3.0..v0.4.4 | wc -l
+    164
+    </code></pre></div></div>
+    
+    <p>Documentation changes:</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git log v0.3.0..v0.4.4 --numstat --pretty=tformat: --numstat runtime/doc | nawk '{ add += $1; subs += $2; loc += $1 - $2 } END { printf "added lines: %s removed lines: %s total lines: %s\n", add, subs, loc }'
+    added lines: 9226 removed lines: 7002 total lines: 2224
+    </code></pre></div></div>
+    
+    <h2 id="thanks">Thanks</h2>
+    
+    <p>Thank you contributors, sponsors, bug-reporters, supporters.
+    Note that you can now sponsor neovim via <a href="https://github.com/sponsors/neovim">github Sponsors</a> or on <a href="https://opencollective.com/neovim">OpenCollective</a>.
+    Thank you <strong><a href="https://github.com/justinmk" class="user-mention">@justinmk</a></strong> for the awesome project and thank you <strong><a href="https://github.com/brammool" class="user-mention">@brammool</a></strong> for your foundational work.</p>
+    
+        </div>
+    
+        <div class="col-narrow">
+      <h3>News</h3>
+      <p>
+      Find more updates in the <a href="/news/archive/">news archive</a>.
+      </p>
+    
+      <h3>What is Neovim?</h3>
+    <p>
+      Neovim is a Vim-based text editor engineered for
+      <a href="https://github.com/neovim/neovim/wiki/Related-projects#api-clients">extensibility</a>
+      and
+      <a href="https://neovim.io/doc/user/vim_diff.html#nvim-features">usability</a>,
+      to encourage new applications and
+      <a href="https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#getting-started">contributions</a>.
+    </p>
+    
+    <p>
+      Visit the <a href="https://gitter.im/neovim">gitter channel</a>
+      or <a href="https://matrix.to/#/#neovim:matrix.org">IRC</a>
+      to chat with the team.
+    </p>
+    
+    
+      <h3>Twitter</h3>
+      <iframe id="twitter-widget-0" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" class="twitter-follow-button twitter-follow-button-rendered" style="position: static; visibility: visible; width: 140px; height: 28px;" title="Twitter Follow Button" src="https://platform.twitter.com/widgets/follow_button.06c6ee58c3810956b7509218508c7b56.en.html#dnt=false&amp;id=twitter-widget-0&amp;lang=en&amp;screen_name=Neovim&amp;show_count=false&amp;show_screen_name=true&amp;size=l&amp;time=1623949267240" data-screen-name="Neovim"></iframe>
+      <script id="twitter-wjs" src="https://platform.twitter.com/widgets.js"></script><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+    
+      <h3>RSS</h3>
+      <p>
+      RSS clients can follow the
+      <a href="/news.xml">RSS feed</a>.
+      </p>
+    </div>
+    
+      </div>
+    </section>
+    
+    
+        <footer>
+      <div class="container flex">
+        <div>
+        
+          <a href="/about/">About</a>
+          
+            ·
+          
+        
+          <a href="/news/">News</a>
+          
+            ·
+          
+        
+          <a href="https://github.com/neovim/neovim">Development</a>
+          
+            ·
+          
+        
+          <a href="/doc/">Documentation</a>
+          
+            ·
+          
+        
+          <a href="http://discourse.neovim.io">Forum</a>
+          
+            ·
+          
+        
+          <a href="/sponsors/">Sponsors</a>
+          
+        
+        </div>
+    
+        <div>
+          This site's source is <a target="blank" href="https://github.com/neovim/neovim.github.io/">hosted on GitHub</a>.
+        </div>
+      </div>
+    </footer>
+    <script src="/js/jquery.js"></script>
+        <script src="/js/sponsors-override.js"></script>
+        <script src="/js/sponsors.js"></script>
+            <script src="/js/bootstrap.js"></script>
+      
+    
+    <iframe scrolling="no" frameborder="0" allowtransparency="true" src="https://platform.twitter.com/widgets/widget_iframe.06c6ee58c3810956b7509218508c7b56.html?origin=https%3A%2F%2Fneovim.io" title="Twitter settings iframe" style="display: none;"></iframe><iframe id="rufous-sandbox" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" style="position: absolute; visibility: hidden; display: none; width: 0px; height: 0px; padding: 0px; border: none;" title="Twitter analytics iframe"></iframe></body>
+
+</html>
