@@ -424,6 +424,7 @@ Commands:
   :promptfind
   :promptrepl
   :shell
+  :sleep! (does not hide the cursor; same as :sleep)
   :smile
   :tearoff
 
