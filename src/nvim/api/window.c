@@ -456,6 +456,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           float_anchor_str[config->anchor])));
       PUT(rv, "row", FLOAT_OBJ(config->row));
       PUT(rv, "col", FLOAT_OBJ(config->col));
+      PUT(rv, "zindex", INTEGER_OBJ(config->zindex));
     }
     if (config->border) {
       Array border = ARRAY_DICT_INIT;
