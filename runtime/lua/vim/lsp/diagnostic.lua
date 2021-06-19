@@ -1214,9 +1214,9 @@ function M.set_loclist(opts)
     if severity then
       return d.severity == severity
     end
-    severity = to_severity(opts.severity_limit)
-    if severity then
-      return d.severity == severity
+    local severity_limit = to_severity(opts.severity_limit)
+    if severity_limit then
+      return d.severity <= severity_limit
     end
     return true
   end
