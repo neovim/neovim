@@ -4184,10 +4184,6 @@ static char_u *invalid_range(exarg_T *eap)
         }
         break;
       case ADDR_UNSIGNED:
-        if (eap->line2 < 0) {
-          return (char_u *)_(e_invrange);
-        }
-        break;
       case ADDR_NONE:
         // Will give an error elsewhere.
         break;
