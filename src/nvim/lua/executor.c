@@ -40,6 +40,7 @@
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/json/lua_cjson.h"
 
 #include "luv/luv.h"
 
