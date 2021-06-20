@@ -1201,6 +1201,7 @@ tag		command		action ~
 |:cgetfile|	:cg[etfile]	read file with error messages
 |:changes|	:changes	print the change list
 |:chdir|	:chd[ir]	change directory
+|:checkhealth|	:checkh[ealth]	run healthchecks
 |:checkpath|	:che[ckpath]	list included files
 |:checktime|	:checkt[ime]	check timestamp of loaded buffers
 |:chistory|	:chi[story]	list the error lists
@@ -1278,6 +1279,7 @@ tag		command		action ~
 |:endtry|	:endt[ry]	end previous :try
 |:endwhile|	:endw[hile]	end previous :while
 |:enew|		:ene[w]		edit a new, unnamed buffer
+|:eval|		:ev[al]		evaluate an expression and discard the result
 |:ex|		:ex		same as ":edit"
 |:execute|	:exe[cute]	execute result of expressions
 |:exit|		:exi[t]		same as ":xit"
@@ -1451,14 +1453,12 @@ tag		command		action ~
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
-|:perl|		:perl		execute perl command
-|:perldo|	:perldo		execute perl command for each line
-|:perfile|	:perlfile	execute perl script file
+|:perl|		:pe[rl]		execute perl command
+|:perldo|	:perld[o]	execute perl command for each line
+|:perlfile|	:perlf[ile]	execute perl script file
 |:print|	:p[rint]	print lines
 |:profdel|	:profd[el]	stop profiling a function or script
 |:profile|	:prof[ile]	profiling functions and scripts
-|:promptfind|	:pro[mptfind]	open GUI dialog for searching
-|:promptrepl|	:promptr[epl]	open GUI dialog for search/replace
 |:pop|		:po[p]		jump to older entry in tag stack
 |:popup|	:popu[p]	popup a menu by name
 |:ppop|		:pp[op]		":pop" in preview window
@@ -1537,7 +1537,6 @@ tag		command		action ~
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
 |:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
-|:scriptversion|  :scriptv[ersion]   version of Vim script used
 |:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already
@@ -1549,8 +1548,6 @@ tag		command		action ~
 |:sign|		:sig[n]		manipulate signs
 |:silent|	:sil[ent]	run a command silently
 |:sleep|	:sl[eep]	do nothing for a few seconds
-|:sleep!|	:sl[eep]!	do nothing for a few seconds, without the
-				cursor visible
 |:slast|	:sla[st]	split window and go to last file in the
 				argument list
 |:smagic|	:sm[agic]	:substitute with 'magic'

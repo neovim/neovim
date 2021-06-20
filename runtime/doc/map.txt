@@ -855,7 +855,7 @@ Here is an example that counts the number of spaces with <F4>: >
 	    set clipboard= selection=inclusive
 	    let commands = #{line: "'[V']y", char: "`[v`]y", block: "`[\<c-v>`]y"}
 	    silent exe 'noautocmd keepjumps normal! ' .. get(commands, a:type, '')
-	    echom getreg('"')->count(' ')
+	    echom count(getreg('"'), ' ')
 	  finally
 	    call setreg('"', reg_save)
 	    call setpos("'<", visual_marks_save[0])

@@ -506,7 +506,8 @@ gO			Show a filetype-specific, navigable "outline" of the
 			Queued messages are processed during the sleep.
 
 							*:sl!* *:sleep!*
-:[N]sl[eep]! [N] [m]	Same as above, but hide the cursor.
+:[N]sl[eep]! [N] [m]	Same as above. Unlike Vim, it does not hide the
+			cursor. |vim-differences|
 
 ==============================================================================
 2. Using Vim like less or more					*less*
