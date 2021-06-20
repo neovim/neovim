@@ -3011,15 +3011,15 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
     current_sctx.sc_lnum = 0;
     sourcing_lnum = 0;
     // Source the file as lua
-    retval = (int)nlua_exec_file((const char *)fname);
+    nlua_exec_file((const char *)fname);
     current_sctx = current_sctx_backup;
     sourcing_lnum = sourcing_lnum_backup;
   } else {
     // Call do_cmdline, which will call getsourceline() to get the lines.
     do_cmdline(firstline, getsourceline, (void *)&cookie,
                DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
-    retval = OK;
   }
+  retval = OK;
 
   if (l_do_profiling == PROF_YES) {
     // Get "si" again, "script_items" may have been reallocated.
