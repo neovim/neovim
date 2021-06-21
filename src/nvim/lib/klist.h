@@ -128,7 +128,6 @@
 #define kl_val(iter) ((iter)->data)
 #define kl_next(iter) ((iter)->next)
 #define kl_begin(kl) ((kl)->head)
-#define kl_end(kl) ((kl)->tail)
 
 #define kl_init(name) kl_init_##name()
 #define kl_destroy(name, kl) kl_destroy_##name(kl)
