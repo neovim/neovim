@@ -66,7 +66,6 @@
         mp->buf[mp->n++] = p; \
     }
 
-#define kmempool_t(name) kmp_##name##_t
 #define kmp_init(name) kmp_init_##name()
 #define kmp_destroy(name, mp) kmp_destroy_##name(mp)
 #define kmp_alloc(name, mp) kmp_alloc_##name(mp)
@@ -125,16 +124,11 @@
 
 #define kliter_t(name) kl1_##name
 #define klist_t(name) kl_##name##_t
-#define kl_val(iter) ((iter)->data)
-#define kl_next(iter) ((iter)->next)
-#define kl_begin(kl) ((kl)->head)
-#define kl_end(kl) ((kl)->tail)
 
 #define kl_init(name) kl_init_##name()
 #define kl_destroy(name, kl) kl_destroy_##name(kl)
 #define kl_push(name, kl, d) kl_push_##name(kl, d)
 #define kl_shift_at(name, kl, node) kl_shift_at_##name(kl, node)
-#define kl_shift(name, kl) kl_shift_at(name, kl, &kl->head)
 #define kl_empty(kl) ((kl)->size == 0)
 // Iteration macros. It's ok to modify the list while iterating as long as a
 // `break` statement is executed before the next iteration.
