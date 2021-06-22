@@ -105,8 +105,8 @@ local function test_rpc_server(config)
       return NIL
     end
     if method == 'handler' then
-      if config.on_callback then
-        config.on_callback(unpack(args))
+      if config.on_handler then
+        config.on_handler(unpack(args))
       end
     end
     return NIL
@@ -215,7 +215,7 @@ describe('LSP', function()
     end)
 
     it('should run correctly', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "test", {}, 1};
       }
       test_rpc_server {
@@ -232,15 +232,15 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         -- Note that NIL must be used here.
-        -- on_callback(err, method, result, client_id)
-        on_callback = function(...)
-          eq(table.remove(expected_callbacks), {...})
+        -- on_handler(err, method, result, client_id)
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...})
         end;
       }
     end)
 
     it('should fail', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "test", {}, 1};
       }
       test_rpc_server {
@@ -255,8 +255,8 @@ describe('LSP', function()
           assert_log(pesc([[assert_eq failed: left == "\"shutdown\"", right == "\"test\""]]),
             fake_lsp_logfile)
         end;
-        on_callback = function(...)
-          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...}, "expected callback")
         end;
       }
     end)
@@ -266,7 +266,7 @@ describe('LSP', function()
         pending('hangs the build on openbsd #14028, re-enable with freeze timeout #14204')
         return
       end
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1, NIL};
         {NIL, "test", {}, 1};
       }
@@ -282,14 +282,14 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(...)
-          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...}, "expected callback")
         end;
       }
     end)
 
     it('client should return settings via workspace/configuration handler', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "workspace/configuration", { items = {
               { section = "testSetting1" };
@@ -307,8 +307,8 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+        on_handler = function(err, method, params, client_id)
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'start' then
             exec_lua([=[
               local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
@@ -344,7 +344,7 @@ describe('LSP', function()
     end)
 
     it('should verify capabilities sent', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
       }
       test_rpc_server {
@@ -361,14 +361,14 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(...)
-          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...}, "expected callback")
         end;
       }
     end)
 
     it('client.supports_methods() should validate capabilities', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
       }
       test_rpc_server {
@@ -395,14 +395,14 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(...)
-          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...}, "expected callback")
         end;
       }
     end)
 
     it('should call unsupported_method when trying to call an unsupported method', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
       }
       test_rpc_server {
@@ -436,14 +436,14 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(...)
-          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...}, "expected callback")
         end;
       }
     end)
 
     it('shouldn\'t call unsupported_method when no client and trying to call an unsupported method', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
       }
       test_rpc_server {
@@ -469,14 +469,14 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(...)
-          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...}, "expected callback")
         end;
       }
     end)
 
     it('should not send didOpen if the buffer closes before init', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
       }
@@ -509,8 +509,8 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+        on_handler = function(err, method, params, client_id)
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -519,7 +519,7 @@ describe('LSP', function()
     end)
 
     it('should check the body sent attaching before init', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -552,11 +552,11 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -565,7 +565,7 @@ describe('LSP', function()
     end)
 
     it('should check the body sent attaching after init', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -595,11 +595,11 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -608,7 +608,7 @@ describe('LSP', function()
     end)
 
     it('should check the body and didChange full', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -638,7 +638,7 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             exec_lua [[
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
@@ -647,7 +647,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -656,7 +656,7 @@ describe('LSP', function()
     end)
 
     it('should check the body and didChange full with noeol', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -687,7 +687,7 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             exec_lua [[
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
@@ -696,7 +696,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -705,7 +705,7 @@ describe('LSP', function()
     end)
 
     it('should check the body and didChange incremental', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -736,7 +736,7 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             exec_lua [[
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
@@ -745,7 +745,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -755,7 +755,7 @@ describe('LSP', function()
 
     -- TODO(askhan) we don't support full for now, so we can disable these tests.
     pending('should check the body and didChange incremental normal mode editing', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -785,12 +785,12 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             helpers.command("normal! 1Go")
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -799,7 +799,7 @@ describe('LSP', function()
     end)
 
     it('should check the body and didChange full with 2 changes', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -829,7 +829,7 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             exec_lua [[
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
@@ -841,7 +841,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -850,7 +850,7 @@ describe('LSP', function()
     end)
 
     it('should check the body and didChange full lifecycle', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -880,7 +880,7 @@ describe('LSP', function()
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
-        on_callback = function(err, method, params, client_id)
+        on_handler = function(err, method, params, client_id)
           if method == 'start' then
             exec_lua [[
               vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
@@ -893,7 +893,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
             client.stop()
           end
@@ -904,7 +904,7 @@ describe('LSP', function()
 
   describe("parsing tests", function()
     it('should handle invalid content-length correctly', function()
-      local expected_callbacks = {
+      local expected_handlers = {
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
         {NIL, "start", {}, 1};
@@ -923,7 +923,7 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(err, method, params, client_id)
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected handler")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
         end;
       }
     end)
