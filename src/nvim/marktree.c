@@ -356,6 +356,7 @@ void marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
         y = y->level ? y->ptr[0] : NULL;
       }
     }
+    itr->i--;
   }
 
   b->n_keys--;
