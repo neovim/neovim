@@ -52,17 +52,18 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
-#define STARTS_WITH(str, prefix) (strlen(str) >= (sizeof(prefix) - 1) \
-    && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
-#define TMUX_WRAP(is_tmux, seq) ((is_tmux) \
-    ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
+#define STARTS_WITH(str, prefix) \
+    (strlen(str) >= (sizeof(prefix) - 1) \
+     && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
+#define TMUX_WRAP(is_tmux, seq) \
+    ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
 
 #ifdef NVIM_UNIBI_HAS_VAR_FROM
 #define UNIBI_SET_NUM_VAR(var, num) \
   do { \
-    (var) = unibi_var_from_num((num)); \
+      (var) = unibi_var_from_num((num)); \
   } while (0)
 #else
 #define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
