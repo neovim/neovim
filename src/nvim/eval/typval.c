@@ -1164,6 +1164,21 @@ void callback_free(Callback *callback)
   callback->type = kCallbackNone;
 }
 
+/// Copy a callback into a typval_T.
+void callback_put(Callback *cb, typval_T *tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (cb->type == kCallbackPartial) {
+    tv->v_type = VAR_PARTIAL;
+    tv->vval.v_partial = cb->data.partial;
+    cb->data.partial->pt_refcount++;
+  } else if (cb->type == kCallbackFuncref) {
+    tv->v_type = VAR_FUNC;
+    tv->vval.v_string = vim_strsave(cb->data.funcref);
+    func_ref(cb->data.funcref);
+  }
+}
+
 /// Remove watcher from a dictionary
 ///
 /// @param  dict  Dictionary to remove watcher from.

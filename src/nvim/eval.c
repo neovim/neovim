@@ -7324,14 +7324,7 @@ void add_timer_info(typval_T *rettv, timer_T *timer)
     return;
   }
 
-  if (timer->callback.type == kCallbackPartial) {
-    di->di_tv.v_type = VAR_PARTIAL;
-    di->di_tv.vval.v_partial = timer->callback.data.partial;
-    timer->callback.data.partial->pt_refcount++;
-  } else if (timer->callback.type == kCallbackFuncref) {
-    di->di_tv.v_type = VAR_FUNC;
-    di->di_tv.vval.v_string = vim_strsave(timer->callback.data.funcref);
-  }
+  callback_put(&timer->callback, &di->di_tv);
 }
 
 void add_timer_info_all(typval_T *rettv)
