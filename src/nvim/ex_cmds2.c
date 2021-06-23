@@ -2665,7 +2665,8 @@ static void cmd_source_buffer(const exarg_T *eap)
   };
   if (curbuf != NULL && curbuf->b_fname
       && path_with_extension((const char *)curbuf->b_fname, "lua")) {
-    nlua_source_using_linegetter(get_buffer_line, (void *)&cookie, ":source");
+    nlua_source_using_linegetter(get_buffer_line, (void *)&cookie,
+                                 ":source (no file)");
   } else {
     source_using_linegetter((void *)&cookie, get_buffer_line,
                             ":source (no file)");
@@ -3002,14 +3003,23 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   }
 
   if (path_with_extension((const char *)fname, "lua")) {
+    // TODO(shadmansaleh): Properly handle :verbose for lua
+    // For now change currennt_sctx before sourcing lua files
+    // So verbose doesn't say everything was done in line 1 since we don't know
+    const sctx_T current_sctx_backup = current_sctx;
+    const linenr_T sourcing_lnum_backup = sourcing_lnum;
+    current_sctx.sc_lnum = 0;
+    sourcing_lnum = 0;
     // Source the file as lua
-    retval = (int)nlua_exec_file((const char *)fname);
+    nlua_exec_file((const char *)fname);
+    current_sctx = current_sctx_backup;
+    sourcing_lnum = sourcing_lnum_backup;
   } else {
     // Call do_cmdline, which will call getsourceline() to get the lines.
     do_cmdline(firstline, getsourceline, (void *)&cookie,
                DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
-    retval = OK;
   }
+  retval = OK;
 
   if (l_do_profiling == PROF_YES) {
     // Get "si" again, "script_items" may have been reallocated.

@@ -9,6 +9,8 @@ local feed_command = helpers.feed_command
 local write_file = helpers.write_file
 local exec = helpers.exec
 local eval = helpers.eval
+local exec_capture = helpers.exec_capture
+local neq = helpers.neq
 
 describe(':source', function()
   before_each(function()
@@ -88,6 +90,29 @@ describe(':source', function()
     feed_command(':source')
 
     eq(12, eval('g:c'))
+    os.remove(test_file)
+  end)
+
+  it("doesn't throw E484 for lua parsing/runtime errors", function()
+    local test_file = 'test.lua'
+
+    -- Does throw E484 for unreadable files
+    local ok, result = pcall(exec_capture, ":source "..test_file ..'noexisting')
+    eq(false, ok)
+    neq(nil, result:find("E484"))
+
+    -- Doesn't throw for parsing error
+    write_file (test_file, "vim.g.c = ")
+    ok, result = pcall(exec_capture, ":source "..test_file)
+    eq(false, ok)
+    eq(nil, result:find("E484"))
+    os.remove(test_file)
+
+    -- Doesn't throw for runtime error
+    write_file (test_file, "error('Cause error anyway :D')")
+    ok, result = pcall(exec_capture, ":source "..test_file)
+    eq(false, ok)
+    eq(nil, result:find("E484"))
     os.remove(test_file)
   end)
 end)
