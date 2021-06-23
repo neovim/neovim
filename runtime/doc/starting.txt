@@ -416,11 +416,11 @@ accordingly.  Vim proceeds in this order:
 	the same time.  Each line in a "init.vim" is executed as an Ex command
 	line.  See also |vimrc-intro| and |base-directories|.
 
-	The Nvim config file is "init.vim", located at:
-		Unix		~/.config/nvim/init.vim
-		Windows		~/AppData/Local/nvim/init.vim
+	The config file is located at:
+		Unix		~/.config/nvim/init.vim (or init.lua)
+		Windows		~/AppData/Local/nvim/init.vim (or init.lua)
 	or if |$XDG_CONFIG_HOME| is defined:
-				$XDG_CONFIG_HOME/nvim/init.vim
+				$XDG_CONFIG_HOME/nvim/init.vim (or init.lua)
 
 	If Nvim was started with "-u {file}" then {file} is used as the config
 	and all initializations until 5. are skipped. $MYVIMRC is not set.
