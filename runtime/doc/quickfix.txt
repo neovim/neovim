@@ -1919,7 +1919,10 @@ The function should return a single line of text to display in the quickfix
 window for each entry from start_idx to end_idx. The function can obtain
 information about the entries using the |getqflist()| function and specifying
 the quickfix list identifier "id". For a location list, getloclist() function
-can be used with the 'winid' argument.
+can be used with the 'winid' argument. If an empty list is returned, then the
+default format is used to display all the entries. If an item in the returned
+list is an empty string, then the default format is used to display the
+corresponding entry.
 
 If a quickfix or location list specific customization is needed, then the
 'quickfixtextfunc' attribute of the list can be set using the |setqflist()| or

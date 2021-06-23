@@ -1162,20 +1162,48 @@ void callback_free(Callback *callback)
     }
   }
   callback->type = kCallbackNone;
+  callback->data.funcref = NULL;
 }
 
 /// Copy a callback into a typval_T.
 void callback_put(Callback *cb, typval_T *tv)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (cb->type == kCallbackPartial) {
-    tv->v_type = VAR_PARTIAL;
-    tv->vval.v_partial = cb->data.partial;
-    cb->data.partial->pt_refcount++;
-  } else if (cb->type == kCallbackFuncref) {
-    tv->v_type = VAR_FUNC;
-    tv->vval.v_string = vim_strsave(cb->data.funcref);
-    func_ref(cb->data.funcref);
+  switch (cb->type) {
+    case kCallbackPartial:
+      tv->v_type = VAR_PARTIAL;
+      tv->vval.v_partial = cb->data.partial;
+      cb->data.partial->pt_refcount++;
+      break;
+    case kCallbackFuncref:
+      tv->v_type = VAR_FUNC;
+      tv->vval.v_string = vim_strsave(cb->data.funcref);
+      func_ref(cb->data.funcref);
+      break;
+    default:
+      tv->v_type = VAR_SPECIAL;
+      tv->vval.v_special = kSpecialVarNull;
+      break;
+  }
+}
+
+// Copy callback from "src" to "dest", incrementing the refcounts.
+void callback_copy(Callback *dest, Callback *src)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dest->type = src->type;
+  switch (src->type) {
+    case kCallbackPartial:
+      dest->data.partial = src->data.partial;
+      dest->data.partial->pt_refcount++;
+      break;
+    case kCallbackFuncref:
+      dest->data.funcref = vim_strsave(src->data.funcref);
+      func_ref(src->data.funcref);
+      break;
+    default:
+      dest->data.funcref = NULL;
+      break;
   }
 }
 

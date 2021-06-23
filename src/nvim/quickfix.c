@@ -100,7 +100,7 @@ typedef struct qf_list_S {
   char_u      *qf_title;        ///< title derived from the command that created
                                 ///< the error list or set by setqflist
   typval_T    *qf_ctx;          ///< context set by setqflist/setloclist
-  char_u      *qf_qftf;         ///< 'quickfixtextfunc' setting for this list
+  Callback  qftf_cb;            ///< 'quickfixtextfunc' callback function
 
   struct dir_stack_T *qf_dir_stack;
   char_u *qf_directory;
@@ -540,6 +540,9 @@ static int efm_to_regpat(const char_u *efm, int len, efm_T *fmt_ptr,
 }
 
 static efm_T *fmt_start = NULL;  // cached across qf_parse_line() calls
+
+// callback function for 'quickfixtextfunc'
+static Callback qftf_cb;
 
 static void free_efm_list(efm_T **efm_first)
 {
@@ -1978,7 +1981,7 @@ static int copy_loclist_entries(const qf_list_T *from_qfl, qf_list_T *to_qfl)
 }
 
 /// Copy the specified location list 'from_qfl' to 'to_qfl'.
-static int copy_loclist(const qf_list_T *from_qfl, qf_list_T *to_qfl)
+static int copy_loclist(qf_list_T *from_qfl, qf_list_T *to_qfl)
   FUNC_ATTR_NONNULL_ALL
 {
   // Some of the fields are populated by qf_add_entry()
@@ -2000,11 +2003,7 @@ static int copy_loclist(const qf_list_T *from_qfl, qf_list_T *to_qfl)
   } else {
     to_qfl->qf_ctx = NULL;
   }
-  if (from_qfl->qf_qftf != NULL) {
-    to_qfl->qf_qftf = vim_strsave(from_qfl->qf_qftf);
-  } else {
-    to_qfl->qf_qftf = NULL;
-  }
+  callback_copy(&to_qfl->qftf_cb, &from_qfl->qftf_cb);
 
   if (from_qfl->qf_count) {
     if (copy_loclist_entries(from_qfl, to_qfl) == FAIL) {
@@ -3385,7 +3384,7 @@ static void qf_free(qf_list_T *qfl)
   XFREE_CLEAR(qfl->qf_title);
   tv_free(qfl->qf_ctx);
   qfl->qf_ctx = NULL;
-  XFREE_CLEAR(qfl->qf_qftf);
+  callback_free(&qfl->qftf_cb);
   qfl->qf_id = 0;
   qfl->qf_changedtick = 0L;
 }
@@ -3860,6 +3859,41 @@ static buf_T *qf_find_buf(qf_info_T *qi)
   return NULL;
 }
 
+// Process the 'quickfixtextfunc' option value.
+bool qf_process_qftf_option(void)
+{
+  typval_T *tv;
+  Callback cb;
+
+  if (p_qftf == NULL || *p_qftf == NUL) {
+    callback_free(&qftf_cb);
+    return true;
+  }
+
+  if (*p_qftf == '{') {
+    // Lambda expression
+    tv = eval_expr(p_qftf);
+    if (tv == NULL) {
+      return false;
+    }
+  } else {
+    // treat everything else as a function name string
+    tv = xcalloc(1, sizeof(*tv));
+    tv->v_type = VAR_STRING;
+    tv->vval.v_string = vim_strsave(p_qftf);
+  }
+
+  if (!callback_from_typval(&cb, tv)) {
+    tv_free(tv);
+    return false;
+  }
+
+  callback_free(&qftf_cb);
+  qftf_cb = cb;
+  tv_free(tv);
+  return true;
+}
+
 /// Update the w:quickfix_title variable in the quickfix/location list window in
 /// all the tab pages.
 static void qf_update_win_titlevar(qf_info_T *qi)
@@ -3928,7 +3962,9 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
   int len;
   buf_T *errbuf;
 
-  if (qftf_str != NULL) {
+  // If the 'quickfixtextfunc' function returned an non-empty custom string
+  // for this entry, then use it.
+  if (qftf_str != NULL && *qftf_str != NUL) {
     STRLCPY(IObuff, qftf_str, IOSIZE);
   } else {
     if (qfp->qf_module != NULL) {
@@ -3997,22 +4033,25 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
   return OK;
 }
 
+// Call the 'quickfixtextfunc' function to get the list of lines to display in
+// the quickfix window for the entries 'start_idx' to 'end_idx'.
 static list_T *call_qftf_func(qf_list_T *qfl,
                               int qf_winid,
                               long start_idx,
                               long end_idx)
 {
-  char_u *qftf = p_qftf;
+  Callback *cb = &qftf_cb;
   list_T *qftf_list = NULL;
 
   // If 'quickfixtextfunc' is set, then use the user-supplied function to get
   // the text to display. Use the local value of 'quickfixtextfunc' if it is
   // set.
-  if (qfl->qf_qftf != NULL) {
-    qftf = qfl->qf_qftf;
+  if (qfl->qftf_cb.type != kCallbackNone) {
+    cb = &qfl->qftf_cb;
   }
-  if (qftf != NULL && *qftf != NUL) {
+  if (cb != NULL && cb->type != kCallbackNone) {
     typval_T args[1];
+    typval_T rettv;
 
     // create the dict argument
     dict_T *const dict = tv_dict_alloc_lock(VAR_FIXED);
@@ -4026,8 +4065,16 @@ static list_T *call_qftf_func(qf_list_T *qfl,
     args[0].v_type = VAR_DICT;
     args[0].vval.v_dict = dict;
 
-    qftf_list = call_func_retlist(qftf, 1, args);
-    dict->dv_refcount--;
+    qftf_list = NULL;
+
+    if (callback_call(cb, 1, args, &rettv)) {
+      if (rettv.v_type == VAR_LIST) {
+        qftf_list = rettv.vval.v_list;
+        tv_list_ref(qftf_list);
+      }
+      tv_clear(&rettv);
+    }
+    tv_dict_unref(dict);
   }
 
   return qftf_list;
@@ -4064,6 +4111,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
   if (qfl != NULL) {
      char_u dirname[MAXPATHL];
      int prev_bufnr = -1;
+     bool invalid_val = false;
 
      *dirname = NUL;
 
@@ -4086,10 +4134,15 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
     while (lnum < qfl->qf_count) {
       char_u *qftf_str = NULL;
 
-        if (qftf_li != NULL) {
-          // Use the text supplied by the user defined function
-          qftf_str = (char_u *)tv_get_string_chk(TV_LIST_ITEM_TV(qftf_li));
+      // Use the text supplied by the user defined function (if any).
+      // If the returned value is not string, then ignore the rest
+      // of the returned values and use the default.
+      if (qftf_li != NULL && !invalid_val) {
+        qftf_str = (char_u *)tv_get_string_chk(TV_LIST_ITEM_TV(qftf_li));
+        if (qftf_str == NULL) {
+          invalid_val = true;
         }
+      }
 
       if (qf_buf_add_line(qfl, buf, lnum, qfp, dirname, qftf_str,
                           prev_bufnr != qfp->qf_fnum) == FAIL) {
@@ -5796,7 +5849,9 @@ enum {
   QF_GETLIST_SIZE = 0x80,
   QF_GETLIST_TICK = 0x100,
   QF_GETLIST_FILEWINID = 0x200,
-  QF_GETLIST_ALL = 0x3FF,
+  QF_GETLIST_QFBUFNR = 0x400,
+  QF_GETLIST_QFTF = 0x800,
+  QF_GETLIST_ALL = 0xFFF,
 };
 
 /// Parse text from 'di' and return the quickfix list items.
@@ -5894,6 +5949,9 @@ static int qf_getprop_keys2flags(const dict_T *what, bool loclist)
   if (loclist && tv_dict_find(what, S_LEN("filewinid")) != NULL) {
     flags |= QF_GETLIST_FILEWINID;
   }
+  if (tv_dict_find(what, S_LEN("quickfixtextfunc")) != NULL) {
+    flags |= QF_GETLIST_QFTF;
+  }
 
   return flags;
 }
@@ -5985,6 +6043,9 @@ static int qf_getprop_defaults(qf_info_T *qi,
   if ((status == OK) && locstack && (flags & QF_GETLIST_FILEWINID)) {
     status = tv_dict_add_nr(retdict, S_LEN("filewinid"), 0);
   }
+  if ((status == OK) && (flags & QF_GETLIST_QFTF)) {
+    status = tv_dict_add_str(retdict, S_LEN("quickfixtextfunc"), "");
+  }
 
   return status;
 }
@@ -6060,6 +6121,26 @@ static int qf_getprop_idx(qf_list_T *qfl, int eidx, dict_T *retdict)
   return tv_dict_add_nr(retdict, S_LEN("idx"), eidx);
 }
 
+/// Return the 'quickfixtextfunc' function of a quickfix/location list
+/// @return OK or FAIL
+static int qf_getprop_qftf(qf_list_T *qfl, dict_T *retdict)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int status;
+
+  if (qfl->qftf_cb.type != kCallbackNone) {
+    typval_T tv;
+
+    callback_put(&qfl->qftf_cb, &tv);
+    status = tv_dict_add_tv(retdict, S_LEN("quickfixtextfunc"), &tv);
+    tv_clear(&tv);
+  } else {
+    status = tv_dict_add_str(retdict, S_LEN("quickfixtextfunc"), "");
+  }
+
+  return status;
+}
+
 /// Return quickfix/location list details (title) as a dictionary.
 /// 'what' contains the details to return. If 'list_idx' is -1,
 /// then current list is used. Otherwise the specified list is used.
@@ -6133,19 +6214,25 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((status == OK) && (wp != NULL) && (flags & QF_GETLIST_FILEWINID)) {
     status = qf_getprop_filewinid(wp, qi, retdict);
   }
+  if ((status == OK) && (flags & QF_GETLIST_QFTF)) {
+    status = qf_getprop_qftf(qfl, retdict);
+  }
 
   return status;
 }
 
 /// Set the current index in the specified quickfix list
-static int qf_setprop_qftf(qf_info_T *qi, qf_list_T *qfl,
-                           dictitem_T *di)
+/// @return OK
+static int qf_setprop_qftf(qf_list_T *qfl, dictitem_T *di)
+  FUNC_ATTR_NONNULL_ALL
 {
-    XFREE_CLEAR(qfl->qf_qftf);
-    if (di->di_tv.v_type == VAR_STRING && di->di_tv.vval.v_string != NULL) {
-      qfl->qf_qftf = vim_strsave(di->di_tv.vval.v_string);
-    }
-    return OK;
+  Callback cb;
+
+  callback_free(&qfl->qftf_cb);
+  if (callback_from_typval(&cb, &di->di_tv)) {
+    qfl->qftf_cb = cb;
+  }
+  return OK;
 }
 
 /// Add a new quickfix entry to list at 'qf_idx' in the stack 'qi' from the
@@ -6514,7 +6601,7 @@ static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action,
     retval = qf_setprop_curidx(qi, qfl, di);
   }
   if ((di = tv_dict_find(what, S_LEN("quickfixtextfunc"))) != NULL) {
-    retval = qf_setprop_qftf(qi, qfl, di);
+    retval = qf_setprop_qftf(qfl, di);
   }
 
   if (newlist || retval == OK) {

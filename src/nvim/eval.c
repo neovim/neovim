@@ -7200,12 +7200,15 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
     r = FAIL;
   } else if (arg->v_type == VAR_FUNC || arg->v_type == VAR_STRING) {
     char_u *name = arg->vval.v_string;
-    if (name != NULL) {
+    if (name == NULL) {
+      r = FAIL;
+    } else if (*name == NUL) {
+      callback->type = kCallbackNone;
+      callback->data.funcref = NULL;
+    } else {
       func_ref(name);
       callback->data.funcref = vim_strsave(name);
       callback->type = kCallbackFuncref;
-    } else {
-      r = FAIL;
     }
   } else if (nlua_is_table_from_lua(arg)) {
     char_u *name = nlua_register_table_as_callable(arg);
@@ -7216,8 +7219,10 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
     } else {
       r = FAIL;
     }
-  } else if (arg->v_type == VAR_NUMBER && arg->vval.v_number == 0) {
+  } else if (arg->v_type == VAR_SPECIAL
+             || (arg->v_type == VAR_NUMBER && arg->vval.v_number == 0)) {
     callback->type = kCallbackNone;
+    callback->data.funcref = NULL;
   } else {
     r = FAIL;
   }
