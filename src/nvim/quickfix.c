@@ -5713,7 +5713,7 @@ static void wipe_dummy_buffer(buf_T *buf, char_u *dirname_start)
     // work when got_int is set.
     enter_cleanup(&cs);
 
-    wipe_buffer(buf, FALSE);
+    wipe_buffer(buf, true);
 
     // Restore the error/interrupt/exception state if not discarded by a
     // new aborting error, interrupt, or uncaught exception.

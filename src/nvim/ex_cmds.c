@@ -4773,8 +4773,9 @@ void ex_help(exarg_T *eap)
    * window. */
   if (empty_fnum != 0 && curbuf->b_fnum != empty_fnum) {
     buf = buflist_findnr(empty_fnum);
-    if (buf != NULL && buf->b_nwindows == 0)
-      wipe_buffer(buf, TRUE);
+    if (buf != NULL && buf->b_nwindows == 0) {
+      wipe_buffer(buf, true);
+    }
   }
 
   /* keep the previous alternate file */
