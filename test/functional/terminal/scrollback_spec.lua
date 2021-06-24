@@ -12,6 +12,8 @@ local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
 local pcall_err = helpers.pcall_err
+local exec_lua = helpers.exec_lua
+local assert_alive = helpers.assert_alive
 
 describe(':terminal scrollback', function()
   local screen
@@ -526,4 +528,50 @@ describe("'scrollback' option", function()
     eq(734, curbufmeths.get_option('scrollback'))
   end)
 
+end)
+
+describe("pending scrollback line handling", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(30, 7)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {foreground = Screen.colors.Brown},
+    }
+  end)
+
+  it("does not crash after setting 'number' #14891", function()
+    exec_lua [[
+      local a = vim.api
+      local buf = a.nvim_create_buf(true, true)
+      local chan = a.nvim_open_term(buf, {})
+      a.nvim_win_set_option(0, "number", true)
+      local lines = {}
+      for i = 1, 12 do table.insert(lines, "a") end
+      a.nvim_chan_send(chan, table.concat(lines, "\n"))
+      a.nvim_win_set_buf(0, buf)
+    ]]
+    screen:expect [[
+      {1:  1 }^a                         |
+      {1:  2 } a                        |
+      {1:  3 }  a                       |
+      {1:  4 }   a                      |
+      {1:  5 }    a                     |
+      {1:  6 }     a                    |
+                                    |
+    ]]
+    feed('G')
+    screen:expect [[
+      {1:  7 }      a                   |
+      {1:  8 }       a                  |
+      {1:  9 }        a                 |
+      {1: 10 }         a                |
+      {1: 11 }          a               |
+      {1: 12 }           ^a              |
+                                    |
+    ]]
+    assert_alive()
+  end)
 end)
