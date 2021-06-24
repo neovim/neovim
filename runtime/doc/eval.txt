@@ -7879,7 +7879,8 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 				the last quickfix list.
 		    quickfixtextfunc
 				function to get the text to display in the
-				quickfix window.  Refer to
+				quickfix window.  The value can be the name of
+				a function or a funcref or a lambda.  Refer to
 				|quickfix-window-function| for an explanation
 				of how to write the function and an example.
 		    title	quickfix list title text. See |quickfix-title|

@@ -36,4 +36,8 @@ func Test_global_error()
   call assert_fails('g/\(/y', 'E476:')
 endfunc
 
+func Test_wrong_delimiter()
+  call assert_fails('g x^bxd', 'E146:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

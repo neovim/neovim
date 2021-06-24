@@ -4607,7 +4607,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	customize the information displayed in the quickfix or location window
 	for each entry in the corresponding quickfix or location list.  See
 	|quickfix-window-function| for an explanation of how to write the
-	function and an example.
+	function and an example. The value can be the name of a function or a
+	lambda.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
