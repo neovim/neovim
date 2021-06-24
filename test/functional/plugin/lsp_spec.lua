@@ -927,6 +927,48 @@ describe('LSP', function()
         end;
       }
     end)
+
+    it('should not trim vim.NIL from the end of a list', function()
+      local expected_handlers = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "workspace/executeCommand", {
+          arguments = { "EXTRACT_METHOD", {metadata = {}}, 3, 0, 6123, NIL },
+          command = "refactor.perform",
+          title = "EXTRACT_METHOD"
+        }, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "decode_nil";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          exec_lua [[
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(err, method, params, client_id)
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
+          if method == 'finish' then
+            client.stop()
+          end
+        end;
+      }
+    end)
   end)
   describe('lsp._cmd_parts test', function()
     local function _cmd_parts(input)
