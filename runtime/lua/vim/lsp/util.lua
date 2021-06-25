@@ -1059,6 +1059,7 @@ end
 -- Generates a table mapping markdown code block lang to vim syntax,
 -- based on g:markdown_fenced_languages
 -- @return a table of lang -> syntax mappings
+-- @private
 local function get_markdown_fences()
   local fences = {}
   for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
