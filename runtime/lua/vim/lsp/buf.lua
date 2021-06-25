@@ -339,7 +339,7 @@ end
 --- Add the folder at path to the workspace folders. If {path} is
 --- not provided, the user will be prompted for a path using |input()|.
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'), 'dir')
   vim.api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   if vim.fn.isdirectory(workspace_folder) == 0 then
