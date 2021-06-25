@@ -3483,12 +3483,13 @@ func Xgetlist_empty_tests(cchar)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0,
 		  \ 'items' : [], 'nr' : 0, 'size' : 0,
-		  \ 'title' : '', 'winid' : 0, 'changedtick': 0},
-		  \ g:Xgetlist({'all' : 0}))
+		  \ 'title' : '', 'winid' : 0, 'changedtick': 0,
+                  \ 'quickfixtextfunc' : ''}, g:Xgetlist({'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0,
 		\ 'items' : [], 'nr' : 0, 'size' : 0, 'title' : '',
-		\ 'winid' : 0, 'changedtick': 0, 'filewinid' : 0},
+		\ 'winid' : 0, 'changedtick': 0, 'filewinid' : 0,
+		\ 'quickfixtextfunc' : ''},
 		\ g:Xgetlist({'all' : 0}))
   endif
 
@@ -3526,11 +3527,13 @@ func Xgetlist_empty_tests(cchar)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
+		\ 'quickfixtextfunc' : '',
 		\ 'changedtick' : 0}, g:Xgetlist({'id' : qfid, 'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0, 'filewinid' : 0},
+		\ 'changedtick' : 0, 'filewinid' : 0,
+                \ 'quickfixtextfunc' : ''},
 		\ g:Xgetlist({'id' : qfid, 'all' : 0}))
   endif
 
@@ -3547,12 +3550,13 @@ func Xgetlist_empty_tests(cchar)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0}, g:Xgetlist({'nr' : 5, 'all' : 0}))
+		\ 'changedtick' : 0,
+                \ 'quickfixtextfunc' : ''}, g:Xgetlist({'nr' : 5, 'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0, 'filewinid' : 0},
-		\ g:Xgetlist({'nr' : 5, 'all' : 0}))
+		\ 'changedtick' : 0, 'filewinid' : 0,
+                \ 'quickfixtextfunc' : ''}, g:Xgetlist({'nr' : 5, 'all' : 0}))
   endif
 endfunc
 
@@ -4994,6 +4998,9 @@ func Xtest_qftextfunc(cchar)
 
   set efm=%f:%l:%c:%m
   set quickfixtextfunc=Tqfexpr
+  call assert_equal('Tqfexpr', &quickfixtextfunc)
+  call assert_equal('',
+        \ g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc)
   Xexpr ['F1:10:2:green', 'F1:20:4:blue']
   Xwindow
   call assert_equal('F1-L10C2-green', getline(1))
@@ -5030,12 +5037,15 @@ func Xtest_qftextfunc(cchar)
   call assert_equal('Line 10, Col 2', getline(1))
   call assert_equal('Line 20, Col 4', getline(2))
   Xclose
+  call assert_equal(function('PerQfText'),
+        \ g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc)
   " Add entries to the list when the quickfix buffer is hidden
   Xaddexpr ['F1:30:6:red']
   Xwindow
   call assert_equal('Line 30, Col 6', getline(3))
   Xclose
   call g:Xsetlist([], 'r', {'quickfixtextfunc' : ''})
+  call assert_equal('', g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc)
   set quickfixtextfunc&
   delfunc PerQfText
 
@@ -5074,12 +5084,53 @@ func Xtest_qftextfunc(cchar)
   "                                                                 \ 'E730:')
   Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']
   call assert_fails('Xwindow', 'E730:')
-  call assert_equal(['one', 'F1|20 col 4| blue', 'two'], getline(1, '$'))
+  call assert_equal(['one', 'F1|20 col 4| blue', 'F1|30 col 6| red'],
+        \ getline(1, '$'))
   Xclose
 
   set quickfixtextfunc&
   delfunc Xqftext
   delfunc Xqftext2
+
+  " set the global option to a lambda function
+  set quickfixtextfunc={d\ ->\ map(g:Xgetlist({'id'\ :\ d.id,\ 'items'\ :\ 1}).items[d.start_idx-1:d.end_idx-1],\ 'v:val.text')}
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal(['green', 'blue'], getline(1, '$'))
+  Xclose
+  call assert_equal("{d -> map(g:Xgetlist({'id' : d.id, 'items' : 1}).items[d.start_idx-1:d.end_idx-1], 'v:val.text')}", &quickfixtextfunc)
+  set quickfixtextfunc&
+
+  " use a lambda function that returns an empty list
+  set quickfixtextfunc={d\ ->\ []}
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal(['F1|10 col 2| green', 'F1|20 col 4| blue'],
+        \ getline(1, '$'))
+  Xclose
+  set quickfixtextfunc&
+
+  " use a lambda function that returns a list with empty strings
+  set quickfixtextfunc={d\ ->\ ['',\ '']}
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal(['F1|10 col 2| green', 'F1|20 col 4| blue'],
+        \ getline(1, '$'))
+  Xclose
+  set quickfixtextfunc&
+
+  " set the per-quickfix list text function to a lambda function
+  call g:Xsetlist([], ' ',
+        \ {'quickfixtextfunc' :
+        \   {d -> map(g:Xgetlist({'id' : d.id, 'items' : 1}).items[d.start_idx-1:d.end_idx-1],
+        \ "'Line ' .. v:val.lnum .. ', Col ' .. v:val.col")}})
+  Xaddexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal('Line 10, Col 2', getline(1))
+  call assert_equal('Line 20, Col 4', getline(2))
+  Xclose
+  call assert_match("function('<lambda>\\d\\+')", string(g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc))
+  call g:Xsetlist([], 'f')
 endfunc
 
 func Test_qftextfunc()

@@ -120,7 +120,7 @@ typedef enum {
   VAR_DICT,         ///< Dictionary, .v_dict is used.
   VAR_FLOAT,        ///< Floating-point value, .v_float is used.
   VAR_BOOL,         ///< true, false
-  VAR_SPECIAL,      ///< Special value (true, false, null), .v_special
+  VAR_SPECIAL,      ///< Special value (null), .v_special
                     ///< is used.
   VAR_PARTIAL,      ///< Partial, .v_partial is used.
 } VarType;

@@ -5665,7 +5665,7 @@ bool buf_contents_changed(buf_T *buf)
 void
 wipe_buffer(
     buf_T *buf,
-    int aucmd                   // When true trigger autocommands.
+    bool aucmd                  // When true trigger autocommands.
 )
 {
   if (!aucmd) {

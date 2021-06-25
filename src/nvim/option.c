@@ -85,6 +85,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
+#include "nvim/quickfix.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of
@@ -3181,6 +3182,10 @@ ambw_end:
           errmsg = e_invarg;
         }
       }
+    }
+  } else if (varp == &p_qftf) {
+    if (!qf_process_qftf_option()) {
+      errmsg = e_invarg;
     }
   } else {
     // Options that are a list of flags.

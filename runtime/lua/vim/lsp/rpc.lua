@@ -50,8 +50,13 @@ recursive_convert_NIL = function(v, tbl_processed)
     return nil
   elseif not tbl_processed[v] and type(v) == 'table' then
     tbl_processed[v] = true
+    local inside_list = vim.tbl_islist(v)
     return vim.tbl_map(function(x)
-      return recursive_convert_NIL(x, tbl_processed)
+      if not inside_list or (inside_list and type(x) == "table") then
+        return recursive_convert_NIL(x, tbl_processed)
+      else
+        return x
+      end
     end, v)
   end
 
@@ -444,7 +449,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       method = method;
       params = params;
     }
-    if result then
+    if result and message_callbacks then
       message_callbacks[message_id] = schedule_wrap(callback)
       return result, message_id
     else
@@ -543,14 +548,14 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
           -- - The server will not send a result callback after this cancellation.
           -- - If the server sent this cancellation ACK after sending the result, the user of this RPC
           -- client will ignore the result themselves.
-          if result_id then
+          if result_id and message_callbacks then
             message_callbacks[result_id] = nil
           end
           return
         end
       end
 
-      local callback = message_callbacks[result_id]
+      local callback = message_callbacks and message_callbacks[result_id]
       if callback then
         message_callbacks[result_id] = nil
         validate {
