@@ -263,7 +263,11 @@ static struct vimvar {
 /// Variable used for v:
 static ScopeDictDictItem vimvars_var;
 
+#define VVLUA_PREFIX "v:lua."
+
 static partial_T *vvlua_partial;
+
+static bool has_luaprefix(const char *name);
 
 /// v: hashtab
 #define vimvarht  vimvardict.dv_hashtab
@@ -1053,7 +1057,7 @@ int call_vim_function(const char_u *func, int argc, typval_T *argv, typval_T *re
   int len = (int)STRLEN(func);
   partial_T *pt = NULL;
 
-  if (len >= 6 && !memcmp(func, "v:lua.", 6)) {
+  if (has_luaprefix((char *)func)) {
     func += 6;
     len = check_luafunc_name((const char *)func, false);
     if (len == 0) {
@@ -4414,8 +4418,8 @@ static int eval_method(char_u **const arg, typval_T *const rettv, const bool eva
   int len;
   char_u *name = *arg;
   char_u *lua_funcname = NULL;
-  if (STRNCMP(name, "v:lua.", 6) == 0) {
-    lua_funcname = name + 6;
+  if (has_luaprefix((char *)name)) {
+    lua_funcname = name + sizeof(VVLUA_PREFIX) - 1;
     *arg = (char_u *)skip_luafunc_name((const char *)lua_funcname);
     *arg = skipwhite(*arg);  // to detect trailing whitespace later
     len = *arg - lua_funcname;
@@ -7684,7 +7688,7 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
   }
 
   if (r == FAIL) {
-    EMSG(_("E921: Invalid callback argument"));
+    EMSG(_(e_invalidcallbackarg));
     return false;
   }
   return true;
@@ -7700,6 +7704,14 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   case kCallbackFuncref:
     name = callback->data.funcref;
     partial = NULL;
+    if (has_luaprefix((char *)name)) {
+      name += sizeof(VVLUA_PREFIX) - 1;
+      if (!check_luafunc_name((const char *)name, false)) {
+        EMSG(_(e_invalidcallbackarg));
+        return false;
+      }
+      partial = vvlua_partial;
+    }
     break;
 
   case kCallbackPartial:
@@ -8902,6 +8914,12 @@ bool is_luafunc(partial_T *partial)
 static bool tv_is_luafunc(typval_T *tv)
 {
   return tv->v_type == VAR_PARTIAL && is_luafunc(tv->vval.v_partial);
+}
+
+static bool has_luaprefix(const char *name)
+{
+  size_t len = STRLEN(name);
+  return len >= (sizeof(VVLUA_PREFIX) - 1) && !memcmp(name, S_LEN(VVLUA_PREFIX));
 }
 
 /// Skips one character past the end of the name of a v:lua function.
