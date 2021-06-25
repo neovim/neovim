@@ -1056,6 +1056,20 @@ function M._trim(contents, opts)
   return contents
 end
 
+-- Generates a table mapping markdown code block lang to vim syntax,
+-- based on g:markdown_fenced_languages
+-- @return a table of lang -> syntax mappings
+local function get_markdown_fences()
+  local fences = {}
+  for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
+    local lang, syntax = fence:match("^(.*)=(.*)$")
+    if lang then
+      fences[lang] = syntax
+    end
+  end
+  return fences
+end
+
 --- Converts markdown into syntax highlighted regions by stripping the code
 --- blocks and converting them into highlighted code.
 --- This will by default insert a blank line separator after those code block
@@ -1187,11 +1201,13 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- keep track of syntaxes we already inlcuded.
   -- no need to include the same syntax more than once
   local langs = {}
+  local fences = get_markdown_fences()
   local function apply_syntax_to_region(ft, start, finish)
     if ft == "" then
       vim.cmd(string.format("syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
       return
     end
+    ft = fences[ft] or ft
     local name = ft..idx
     idx = idx + 1
     local lang = "@"..ft:upper()
