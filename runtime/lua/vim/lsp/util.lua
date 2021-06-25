@@ -149,7 +149,7 @@ local function sort_by_key(fn)
 end
 --@private
 local edit_sort_key = sort_by_key(function(e)
-  return {e.A[1], e.A[2], e.i}
+  return {e.A.row, e.A.col, e.i}
 end)
 
 --@private
@@ -246,21 +246,38 @@ function M.apply_text_edits(text_edits, bufnr)
     vim.fn.bufload(bufnr)
   end
   api.nvim_buf_set_option(bufnr, 'buflisted', true)
-  local start_line, finish_line = math.huge, -1
+  local text_start = { row=math.huge; col=math.huge }
+  local text_end = { row=-1, col=-1 }
+
   local cleaned = {}
   for i, e in ipairs(text_edits) do
     -- adjust start and end column for UTF-16 encoding of non-ASCII characters
-    local start_row = e.range.start.line
-    local start_col = get_line_byte_from_position(bufnr, e.range.start)
-    local end_row = e.range["end"].line
-    local end_col = get_line_byte_from_position(bufnr, e.range['end'])
-    start_line = math.min(e.range.start.line, start_line)
-    finish_line = math.max(e.range["end"].line, finish_line)
+    local edit_start = {
+      row = e.range["start"].line;
+      col = get_line_byte_from_position(bufnr, e.range["start"])
+    }
+    local edit_end = {
+      row = e.range["end"].line;
+      col = get_line_byte_from_position(bufnr, e.range["end"])
+    }
+
+    if edit_start.row == text_start.row then
+      text_start.col = math.min(edit_start.col, text_start.col)
+    elseif edit_start.row < text_start.row then
+      text_start = edit_start
+    end
+
+    if edit_end.row == text_end.row then
+      text_end.col = math.max(edit_end.col, text_end.col)
+    elseif edit_end.row > text_end.row then
+      text_end = edit_end
+    end
+
     -- TODO(ashkan) sanity check ranges for overlap.
     table.insert(cleaned, {
       i = i;
-      A = {start_row; start_col};
-      B = {end_row; end_col};
+      A = vim.deepcopy(edit_start);
+      B = vim.deepcopy(edit_end);
       lines = vim.split(e.newText, '\n', true);
     })
   end
@@ -268,23 +285,63 @@ function M.apply_text_edits(text_edits, bufnr)
   -- Reverse sort the orders so we can apply them without interfering with
   -- eachother. Also add i as a sort key to mimic a stable sort.
   table.sort(cleaned, edit_sort_key)
-  local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
+  local lines = api.nvim_buf_get_lines(bufnr, text_start.row, text_end.row + 1, false)
+
+  -- Trim incomplete lines to changes
+  if #lines == 1 then
+    lines[1] = lines[1]:sub(text_start.col + 1, text_end.col)
+  elseif #lines > 1 then
+    lines[1] = lines[1]:sub(text_start.col + 1)
+    lines[#lines] = lines[#lines]:sub(1, text_end.col)
+  end
+
   local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
-  local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) <= finish_line + 1
+  local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) <= text_end.row + 1
   if set_eol and (#lines == 0 or #lines[#lines] ~= 0) then
     table.insert(lines, '')
   end
 
+
   for i = #cleaned, 1, -1 do
     local e = cleaned[i]
-    local A = {e.A[1] - start_line, e.A[2]}
-    local B = {e.B[1] - start_line, e.B[2]}
+    local A = {e.A.row - text_start.row, e.A.col - (i == 1 and text_start.col or 0)}
+    local B = {e.B.row - text_start.row, e.B.col - (i == 1 and text_start.col or 0)}
     lines = M.set_lines(lines, A, B, e.lines)
   end
+
   if set_eol and #lines[#lines] == 0 then
     table.remove(lines)
   end
-  api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
+
+  local function clamp(value, start, end_)
+    if value < start then
+      return start
+    end
+    if value > end_ then
+      return end_
+    end
+    return value
+  end
+  -- If inserting at the end, add newline and set edit to the last col
+  -- If editing past the last line, edit until the last character of the last line
+  local nbuflines = api.nvim_buf_line_count(bufnr)
+
+  if text_end.row > nbuflines - 1 then
+    text_end.row = nbuflines - 1
+    text_end.col = #api.nvim_buf_get_lines(bufnr, -2, -1, true)[1]
+  else
+    text_end.col = clamp(text_end.col, 0, #api.nvim_buf_get_lines(bufnr, text_end.row, text_end.row + 1, true)[1])
+  end
+
+  if text_start.row > nbuflines - 1 then
+    text_start.row = nbuflines - 1
+    text_start.col = #api.nvim_buf_get_lines(bufnr, -2, -1, true)[1]
+    table.insert(lines, 1, '')
+  else
+    text_start.col = clamp(text_start.col, 0, #api.nvim_buf_get_lines(bufnr, text_start.row, text_start.row + 1, true)[1])
+  end
+
+  api.nvim_buf_set_text(bufnr, text_start.row, text_start.col, text_end.row, text_end.col, lines)
 end
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
