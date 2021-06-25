@@ -1153,7 +1153,7 @@ function M.stylize_markdown(bufnr, contents, opts)
         table.insert(highlights, {
           ft = match.ft;
           start = start + 1;
-          finish = #stripped + 1 - 1;
+          finish = #stripped;
         })
       else
         table.insert(stripped, line)
