@@ -1236,7 +1236,7 @@ function M.stylize_markdown(bufnr, contents, opts)
       apply_syntax_to_region(h.ft, h.start, h.finish)
       last = h.finish + 1
     end
-    if last < #stripped then
+    if last <= #stripped then
       apply_syntax_to_region("lsp_markdown", last, #stripped)
     end
   end)
