@@ -449,7 +449,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       method = method;
       params = params;
     }
-    if result then
+    if result and message_callbacks then
       message_callbacks[message_id] = schedule_wrap(callback)
       return result, message_id
     else
@@ -548,14 +548,14 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
           -- - The server will not send a result callback after this cancellation.
           -- - If the server sent this cancellation ACK after sending the result, the user of this RPC
           -- client will ignore the result themselves.
-          if result_id then
+          if result_id and message_callbacks then
             message_callbacks[result_id] = nil
           end
           return
         end
       end
 
-      local callback = message_callbacks[result_id]
+      local callback = message_callbacks and message_callbacks[result_id]
       if callback then
         message_callbacks[result_id] = nil
         validate {
