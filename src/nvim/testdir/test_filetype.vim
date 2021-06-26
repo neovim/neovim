@@ -424,7 +424,7 @@ let s:filename_checks = {
     \ 'sass': ['file.sass'],
     \ 'sather': ['file.sa'],
     \ 'sbt': ['file.sbt'],
-    \ 'scala': ['file.scala'],
+    \ 'scala': ['file.scala', 'file.sc'],
     \ 'scheme': ['file.scm', 'file.ss', 'file.rkt'],
     \ 'scilab': ['file.sci', 'file.sce'],
     \ 'screen': ['.screenrc', 'screenrc'],
