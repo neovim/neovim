@@ -389,7 +389,7 @@ au BufNewFile,BufRead *.cfm,*.cfi,*.cfc		setf cf
 " Configure scripts
 au BufNewFile,BufRead configure.in,configure.ac setf config
 
-" CUDA  Cumpute Unified Device Architecture
+" CUDA Compute Unified Device Architecture
 au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
 " Dockerfilb; Podman uses the same syntax with name Containerfile
@@ -404,8 +404,15 @@ au BufNewFile,BufRead *enlightenment/*.cfg	setf c
 " Eterm
 au BufNewFile,BufRead *Eterm/*.cfg		setf eterm
 
+" Elixir or Euphoria
+au BufNewFile,BufRead *.ex call dist#ft#ExCheck()
+
+" Elixir
+au BufRead,BufNewFile mix.lock,*.exs setf elixir
+au BufRead,BufNewFile *.eex,*.leex setf eelixir
+
 " Euphoria 3 or 4
-au BufNewFile,BufRead *.eu,*.ew,*.ex,*.exu,*.exw  call dist#ft#EuphoriaCheck()
+au BufNewFile,BufRead *.eu,*.ew,*.exu,*.exw  call dist#ft#EuphoriaCheck()
 if has("fname_case")
    au BufNewFile,BufRead *.EU,*.EW,*.EX,*.EXU,*.EXW  call dist#ft#EuphoriaCheck()
 endif
