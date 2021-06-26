@@ -178,11 +178,6 @@ enum {
 
 // Boolean constants
 
-#ifndef TRUE
-# define FALSE  0           // note: this is an int, not a long!
-# define TRUE   1
-#endif
-
 #define MAYBE   2           // sometimes used for a variant on TRUE
 
 #define STATUS_HEIGHT   1       // height of a status line under a window
