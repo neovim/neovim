@@ -101,6 +101,17 @@ describe('autocmd', function()
     }, eval('g:evs'))
   end)
 
+  it('WinClosed from root directory', function()
+    command('cd /')
+    command('let g:evs = []')
+    command('autocmd WinClosed * :call add(g:evs, ["WinClosed", expand("<afile>")])')
+    command('new')
+    command('close')
+    eq({
+      {'WinClosed', '1001'},
+    }, eval('g:evs'))
+  end)
+
   it('v:vim_did_enter is 1 after VimEnter', function()
     eq(1, eval('v:vim_did_enter'))
   end)
