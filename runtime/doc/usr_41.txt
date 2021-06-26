@@ -99,8 +99,6 @@ and the value of the variable i.  Since i is one, this will print:
 Then there is the ":let i += 1" command.  This does the same thing as
 ":let i = i + 1".  This adds one to the variable i and assigns the new value
 to the same variable.
-Note: this is how it works in legacy Vim script, which is what we discuss in
-this file.
 
 The example was given to explain the commands, but would you really want to
 make such a loop, it can be written much more compact: >
@@ -120,24 +118,23 @@ Numbers can be decimal, hexadecimal, octal or binary.
 A hexadecimal number starts with "0x" or "0X".  For example "0x1f" is decimal
 31.
 
-An octal number starts with "0o", "0O" or a zero and another digit.  "0o17" is
-decimal 15.  Using just a zero prefix is not supported in Vim9 script.
+An octal number starts with a zero and another digit.  "017" is decimal 15.
 
 A binary number starts with "0b" or "0B".  For example "0b101" is decimal 5.
 
 A decimal number is just digits.  Careful: don't put a zero before a decimal
-number, it will be interpreted as an octal number in legacy script!
+number, it will be interpreted as an octal number!
 
 The ":echo" command always prints decimal numbers.  Example: >
 
-	:echo 0x7f 0o36
+	:echo 0x7f 036
 <	127 30 ~
 
 A number is made negative with a minus sign.  This also works for hexadecimal,
 octal and binary numbers.  A minus sign is also used for subtraction.  Compare
 this with the previous example: >
 
-	:echo 0x7f -0o36
+	:echo 0x7f -036
 <	97 ~
 
 White space in an expression is ignored.  However, it's recommended to use it
@@ -145,7 +142,7 @@ for separating items, to make the expression easier to read.  For example, to
 avoid the confusion with a negative number above, put a space between the
 minus sign and the following number: >
 
-	:echo 0x7f - 0o36
+	:echo 0x7f - 036
 
 ==============================================================================
 *41.2*	Variables
