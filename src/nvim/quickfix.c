@@ -3925,7 +3925,15 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
     int qf_winid = 0;
 
     if (IS_LL_STACK(qi)) {
-      qf_winid = curwin->handle;
+      if (curwin->w_llist == qi) {
+        win = curwin;
+      } else {
+        win = qf_find_win_with_loclist(qi);
+        if (win == NULL) {
+          return;
+        }
+      }
+      qf_winid = (int)win->handle;
     }
 
     if (old_last == NULL) {
