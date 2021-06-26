@@ -858,6 +858,9 @@ au BufNewFile,BufRead *.jov,*.j73,*.jovial	setf jovial
 " JSON
 au BufNewFile,BufRead *.json,*.jsonp,*.webmanifest	setf json
 
+" JSON Patch (RFC 6902)
+au BufNewFile,BufRead *.json-patch			setf json
+
 " Jupyter Notebook is also json
 au BufNewFile,BufRead *.ipynb				setf json
 
