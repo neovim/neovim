@@ -438,6 +438,13 @@ describe('lua stdlib', function()
     ]]))
   end)
 
+  it('vim.tbl_repeat', function()
+    eq({{1, 2, 3}, {1, 2, 3}, {1, 2, 3}, {1, 2, 3}},
+      exec_lua("return vim.tbl_repeat({1, 2, 3}, 4)"))
+    eq({"foo"}, exec_lua("return vim.tbl_repeat('foo', 1)"))
+    eq({}, exec_lua("return vim.tbl_repeat(123, 0)"))
+  end)
+
   it('vim.tbl_islist', function()
     eq(true, exec_lua("return vim.tbl_islist({})"))
     eq(false, exec_lua("return vim.tbl_islist(vim.empty_dict())"))

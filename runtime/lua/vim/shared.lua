@@ -174,6 +174,21 @@ function vim.tbl_filter(func, t)
   return rettab
 end
 
+--- Create a table with a given value repeated multiple times.
+---
+--- Does *not* copy the provided object, so the returned table contains
+--- identical objects.
+---
+---@param value the value to repeat
+---@param count integer the number of times to repeat the given value
+function vim.tbl_repeat(value, count)
+  vim.validate{count={count, "number"}}
+
+  local result = {}
+  for i=1, count do result[i] = value end
+  return result
+end
+
 --- Checks if a list-like (vector) table contains `value`.
 ---
 --@param t Table to check
