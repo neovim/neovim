@@ -164,13 +164,13 @@ static compl_T    *compl_old_match = NULL;
 
 /* After using a cursor key <Enter> selects a match in the popup menu,
  * otherwise it inserts a line break. */
-static int compl_enter_selects = false;
+static bool compl_enter_selects = false;
 
 /* When "compl_leader" is not NULL only matches that start with this string
  * are used. */
 static char_u     *compl_leader = NULL;
 
-static int compl_get_longest = false;           // put longest common string
+static bool compl_get_longest = false;          // put longest common string
                                                 // in compl_leader
 
 static int compl_no_insert = false;             // false: select & insert
@@ -182,7 +182,7 @@ static bool compl_used_match;       // Selected one of the matches.
                                     // When false the match was edited or using
                                     // the longest common string.
 
-static int compl_was_interrupted = false;         // didn't finish finding
+static bool compl_was_interrupted = false;        // didn't finish finding
                                                   // completions.
 
 static bool compl_restarting = false;           // don't insert match
@@ -207,7 +207,7 @@ static char_u     *compl_orig_text = NULL;  /* text as it was before
 static int compl_cont_mode = 0;
 static expand_T compl_xp;
 
-static int compl_opt_refresh_always = false;
+static bool compl_opt_refresh_always = false;
 
 static int pum_selected_item = -1;
 
@@ -1652,7 +1652,7 @@ static void init_prompt(int cmdchar_todo)
 }
 
 // Return true if the cursor is in the editable position of the prompt line.
-int prompt_curpos_editable(void)
+bool prompt_curpos_editable(void)
 {
     return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
         && curwin->w_cursor.col >= (int)STRLEN(prompt_text());
@@ -1725,7 +1725,7 @@ void
 change_indent (
     int type,
     int amount,
-    int round,
+    bool round,
     int replaced,                   // replaced character, put on replace stack
     int call_changed_bytes                 // call changed_bytes()
 )
@@ -4045,7 +4045,7 @@ static int ins_compl_get_exp(pos_T *ini)
   static pos_T first_match_pos;
   static pos_T last_match_pos;
   static char_u *e_cpt = (char_u *)"";   // curr. entry in 'complete'
-  static int found_all = false;          // Found all matches of a
+  static bool found_all = false;          // Found all matches of a
                                          // certain type.
   static buf_T *ins_buf = NULL;          // buffer being scanned
 
@@ -4062,7 +4062,7 @@ static int ins_compl_get_exp(pos_T *ini)
   char_u *ptr;
   char_u *dict = NULL;
   int dict_f = 0;
-  int set_match_pos;
+  bool set_match_pos;
   int l_ctrl_x_mode = ctrl_x_mode;
 
   assert(curbuf != NULL);
@@ -4778,7 +4778,7 @@ void pum_ext_select_item(int item, bool insert, bool finish)
 // "frequency" specifies out of how many calls we actually check.
 // "in_compl_func" is true when called from complete_check(), don't set
 // compl_curr_match.
-void ins_compl_check_keys(int frequency, int in_compl_func)
+void ins_compl_check_keys(int frequency, bool in_compl_func)
 {
   static int count = 0;
 
@@ -5454,8 +5454,8 @@ int get_literal(void)
   int cc;
   int nc;
   int i;
-  int hex = false;
-  int octal = false;
+  bool hex = false;
+  bool octal = false;
   int unicode = 0;
 
   if (got_int)
@@ -5538,7 +5538,7 @@ int get_literal(void)
 /// Insert character, taking care of special keys and mod_mask
 ///
 /// @param ctrlv `c` was typed after CTRL-V
-static void insert_special(int c, int allow_modmask, int ctrlv)
+static void insert_special(int c, bool allow_modmask, bool ctrlv)
 {
   char_u  *p;
   int len;
@@ -6791,7 +6791,7 @@ int oneleft(void)
 int
 cursor_up (
     long n,
-    int upd_topline                    // When true: update topline
+    bool upd_topline                    // When true: update topline
 )
 {
   linenr_T lnum;
@@ -6848,7 +6848,7 @@ cursor_up (
 int
 cursor_down (
     long n,
-    int upd_topline                    // When true: update topline
+    bool upd_topline                    // When true: update topline
 )
 {
   linenr_T lnum;
@@ -7287,7 +7287,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
   int try_match_word;
   char_u *p;
   char_u *line;
-  int icase;
+  bool icase;
 
   if (keytyped == NUL) {
     // Can happen with CTRL-Y and CTRL-E on a short line.
@@ -7559,7 +7559,7 @@ int hkmap(int c)
 
 static void ins_reg(void)
 {
-  int need_redraw = false;
+  bool need_redraw = false;
   int regname;
   int literally = 0;
   int vis_active = VIsual_active;

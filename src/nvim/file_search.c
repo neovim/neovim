@@ -253,7 +253,7 @@ vim_findfile_init (
     char_u *filename,
     char_u *stopdirs,
     int level,
-    int free_visited,
+    bool free_visited,
     int find_what,
     void *search_ctx_arg,
     int tagfile,                    /* expanding names of tags files */
@@ -1286,7 +1286,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
  * check if the given path is in the stopdirs
  * returns true if yes else false
  */
-static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
+static bool ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
 {
   int i = 0;
 
@@ -1347,7 +1347,7 @@ find_file_in_path (
     char_u *ptr,               /* file name */
     size_t len,                /* length of file name */
     int options,
-    int first,                      /* use count'th matching file name */
+    bool first,                      /* use count'th matching file name */
     char_u *rel_fname         /* file name searching relative to */
 )
 {
@@ -1407,7 +1407,7 @@ find_file_in_path_option (
 )
 {
   static char_u       *dir;
-  static int did_findfile_init = false;
+  static bool did_findfile_init = false;
   char_u save_char;
   char_u              *file_name = NULL;
   char_u              *buf = NULL;

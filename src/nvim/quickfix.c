@@ -96,7 +96,7 @@ typedef struct qf_list_S {
   qfline_T    *qf_ptr;          ///< pointer to the current error
   int qf_count;                 ///< number of errors (0 means empty list)
   int qf_index;                 ///< current index in the error list
-  int qf_nonevalid;            ///< true if not a single valid entry found
+  bool qf_nonevalid;            ///< true if not a single valid entry found
   char_u      *qf_title;        ///< title derived from the command that created
                                 ///< the error list or set by setqflist
   typval_T    *qf_ctx;          ///< context set by setqflist/setloclist
@@ -1907,7 +1907,7 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
 /// For a location list command, returns the stack for the current window.  If
 /// the location list is not found, then returns NULL and prints an error
 /// message if 'print_emsg' is true.
-static qf_info_T * qf_cmd_get_stack(exarg_T *eap, int print_emsg)
+static qf_info_T * qf_cmd_get_stack(exarg_T *eap, bool print_emsg)
 {
   qf_info_T *qi = &ql_info;
 
@@ -2907,7 +2907,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin,
 /// the file.
 static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr,
                              int forceit, win_T *oldwin, int *opened_window,
-                             int openfold, int print_message)
+                             int openfold, bool print_message)
 {
   buf_T *old_curbuf;
   linenr_T old_lnum;
@@ -2971,7 +2971,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit,
   unsigned old_swb_flags = swb_flags;
   int opened_window = false;
   win_T *oldwin = curwin;
-  int print_message = true;
+  bool print_message = true;
   const bool old_KeyTyped = KeyTyped;           // getting file may reset it
   int retval = OK;
 
@@ -3784,7 +3784,7 @@ linenr_T qf_current_entry(win_T *wp)
 
 // Update the cursor position in the quickfix window to the current error.
 // Return true if there is a quickfix window.
-static int qf_win_pos_update(
+static bool qf_win_pos_update(
     qf_info_T *qi,
     int old_qf_index               // previous qf_index or zero
 )
@@ -4251,7 +4251,7 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
 }
 
 // Return true when using ":vimgrep" for ":grep".
-int grep_internal(cmdidx_T cmdidx)
+bool grep_internal(cmdidx_T cmdidx)
 {
   return (cmdidx == CMD_grep
           || cmdidx == CMD_lgrep
@@ -5346,7 +5346,7 @@ void ex_vimgrep(exarg_T *eap)
   qf_list_T   *qfl;
   win_T *wp = NULL;
   buf_T       *buf;
-  int duplicate_name = false;
+  bool duplicate_name = false;
   int using_dummy;
   int redraw_for_dummy = false;
   int found_match;
@@ -5610,7 +5610,7 @@ load_dummy_buffer (
   buf_T       *newbuf;
   bufref_T newbufref;
   bufref_T newbuf_to_wipe;
-  int failed = true;
+  bool failed = true;
   aco_save_T aco;
   int readfile_result;
 

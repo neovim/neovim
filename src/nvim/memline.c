@@ -382,7 +382,7 @@ error:
  */
 void ml_setname(buf_T *buf)
 {
-  int success = false;
+  bool success = false;
   memfile_T   *mfp;
   char_u      *fname;
   char_u      *dirp;
@@ -557,7 +557,7 @@ void check_need_swap(bool newfile)
  * Close memline for buffer 'buf'.
  * If 'del_file' is true, delete the swap file
  */
-void ml_close(buf_T *buf, int del_file)
+void ml_close(buf_T *buf, bool del_file)
 {
   if (buf->b_ml.ml_mfp == NULL)                 /* not open */
     return;
@@ -579,7 +579,7 @@ void ml_close(buf_T *buf, int del_file)
  * When 'del_file' is true, delete the memfiles.
  * But don't delete files that were ":preserve"d when we are POSIX compatible.
  */
-void ml_close_all(int del_file)
+void ml_close_all(bool del_file)
 {
   FOR_ALL_BUFFERS(buf) {
     ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0));
@@ -758,12 +758,12 @@ void ml_recover(bool checkext)
   blocknr_T bnum;
   int page_count;
   int len;
-  int directly;
+  bool directly;
   linenr_T lnum;
   char_u      *p;
   int i;
   long error;
-  int cannot_open;
+  bool cannot_open;
   linenr_T line_count;
   bool has_error;
   int idx;
@@ -771,7 +771,7 @@ void ml_recover(bool checkext)
   int txt_start;
   off_T size;
   int called_from_main;
-  int serious_error = true;
+  bool serious_error = true;
   long mtime;
   int attr;
   int orig_file_status = NOTDONE;
@@ -1267,7 +1267,7 @@ theend:
 int 
 recover_names (
     char_u *fname,             /* base for swap file name */
-    int list,                       /* when true, list the swap file names */
+    bool list,                       /* when true, list the swap file names */
     int nr,                         /* when non-zero, return nr'th swap file name */
     char_u **fname_out        /* result when "nr" > 0 */
 )
@@ -1591,7 +1591,7 @@ static time_t swapfile_info(char_u *fname)
 static time_t swapfile_unchanged(char *fname)
 {
   struct block0 b0;
-  int ret = true;
+  bool ret = true;
 
   // Swap file must exist.
   if (!os_path_exists((char_u *)fname)) {
@@ -1671,7 +1671,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
  * If 'check_char' is true, stop syncing when character becomes available, but
  * always sync at least one block.
  */
-void ml_sync_all(int check_file, int check_char, bool do_fsync)
+void ml_sync_all(bool check_file, bool check_char, bool do_fsync)
 {
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL)
@@ -1715,13 +1715,13 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
  *
  * when message is true the success of preserving is reported
  */
-void ml_preserve(buf_T *buf, int message, bool do_fsync)
+void ml_preserve(buf_T *buf, bool message, bool do_fsync)
 {
   bhdr_T      *hp;
   linenr_T lnum;
   memfile_T   *mfp = buf->b_ml.ml_mfp;
   int status;
-  int got_int_save = got_int;
+  bool got_int_save = got_int;
 
   if (mfp == NULL || mfp->mf_fname == NULL) {
     if (message)
@@ -2096,7 +2096,7 @@ static int ml_append_int(
     int total_moved = 0;                    /* init to shut up gcc */
     DATA_BL     *dp_right, *dp_left;
     int stack_idx;
-    int in_left;
+    bool in_left;
     int lineadd;
     blocknr_T bnum_left, bnum_right;
     linenr_T lnum_left, lnum_right;
@@ -2761,7 +2761,7 @@ static void ml_flush_line(buf_T *buf)
   int start;
   int count;
   int i;
-  static int entered = false;
+  static bool entered = false;
 
   if (buf->b_ml.ml_line_lnum == 0 || buf->b_ml.ml_mfp == NULL)
     return;             /* nothing to do */
@@ -2894,7 +2894,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
   memfile_T   *mfp;
   linenr_T t;
   blocknr_T bnum, bnum2;
-  int dirty;
+  bool dirty;
   linenr_T low, high;
   int top;
   int page_count;
@@ -3438,7 +3438,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           && !buf->b_help && !(buf->b_flags & BF_DUMMY)) {
         int fd;
         struct block0 b0;
-        int differ = false;
+        bool differ = false;
 
         // Try to read block 0 from the swap file to get the original
         // file name (and inode number).

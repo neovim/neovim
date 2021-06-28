@@ -329,7 +329,7 @@ static inline void zero_fmark_additional_data(fmark_T *fmarks)
  */
 int u_savecommon(buf_T *buf,
                  linenr_T top, linenr_T bot,
-                 linenr_T newbot, int reload)
+                 linenr_T newbot, bool reload)
 {
   linenr_T lnum;
   long i;

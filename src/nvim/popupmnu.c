@@ -646,9 +646,9 @@ void pum_redraw(void)
 ///
 /// @returns true when the window was resized and the location of the popup
 /// menu must be recomputed.
-static int pum_set_selected(int n, int repeat)
+static bool pum_set_selected(int n, int repeat)
 {
-  int resized = false;
+  bool resized = false;
   int context = pum_height / 2;
 
   pum_selected = n;

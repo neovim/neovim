@@ -323,8 +323,8 @@ void update_curbuf(int type)
 /// @param type set to a NOT_VALID to force redraw of entire screen
 int update_screen(int type)
 {
-  static int did_intro = false;
-  int did_one;
+  static bool did_intro = false;
+  bool did_one;
 
   // Don't do anything if the screen structures are (not yet) valid.
   // A VimResized autocmd can invoke redrawing in the middle of a resize,
@@ -746,7 +746,7 @@ static void win_update(win_T *wp, Providers *providers)
                                    updating.  0 when no mid area updating. */
   int bot_start = 999;          /* first row of the bot area that needs
                                    updating.  999 when no bot area updating */
-  int scrolled_down = false;            /* true when scrolled down when
+  bool scrolled_down = false;            /* true when scrolled down when
                                            w_topline got smaller a bit */
   bool top_to_mod = false;      // redraw above mod_top
 
@@ -755,8 +755,8 @@ static void win_update(win_T *wp, Providers *providers)
   int idx;                      /* current index in w_lines[] */
   int srow;                     /* starting row of the current line */
 
-  int eof = false;              /* if true, we hit the end of the file */
-  int didline = false;           /* if true, we finished the last line */
+  bool eof = false;              /* if true, we hit the end of the file */
+  bool didline = false;           /* if true, we finished the last line */
   int i;
   long j;
   static bool recursive = false;  // being called recursively
@@ -1839,7 +1839,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
 /*
  * Advance **color_cols and return true when there are columns to draw.
  */
-static int advance_color_col(int vcol, int **color_cols)
+static bool advance_color_col(int vcol, int **color_cols)
 {
   while (**color_cols >= 0 && vcol > **color_cols)
     ++*color_cols;
@@ -2041,23 +2041,23 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int tocol = MAXCOL;                   // end of inverting
   int fromcol_prev = -2;                // start of inverting after cursor
   bool noinvcur = false;                // don't invert the cursor
-  int lnum_in_visual_area = false;
+  bool lnum_in_visual_area = false;
   pos_T pos;
   long v;
 
   int char_attr = 0;                    /* attributes for next character */
-  int attr_pri = false;                /* char_attr has priority */
-  int area_highlighting = false;           /* Visual or incsearch highlighting
+  bool attr_pri = false;                /* char_attr has priority */
+  bool area_highlighting = false;           /* Visual or incsearch highlighting
                                               in this line */
   int attr = 0;                         /* attributes for area highlighting */
   int area_attr = 0;                    /* attributes desired by highlighting */
   int search_attr = 0;                  /* attributes desired by 'hlsearch' */
   int vcol_save_attr = 0;               /* saved attr for 'cursorcolumn' */
   int syntax_attr = 0;                  /* attributes desired by syntax */
-  int has_syntax = false;               /* this buffer has syntax highl. */
+  bool has_syntax = false;               /* this buffer has syntax highl. */
   int save_did_emsg;
   int eol_hl_off = 0;                   // 1 if highlighted char after EOL
-  int draw_color_col = false;           // highlight colorcolumn
+  bool draw_color_col = false;           // highlight colorcolumn
   int *color_cols = NULL;               // pointer to according columns array
   bool has_spell = false;               // this buffer has spell checking
 # define SPWORDLEN 150
@@ -2125,11 +2125,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
   int conceal_attr    = win_hl_attr(wp, HLF_CONCEAL);
-  int is_concealing   = false;
+  bool is_concealing  = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
   int vcol_off        = 0;              ///< offset for concealed characters
-  int did_wcol        = false;
+  bool did_wcol       = false;
   int match_conc      = 0;              ///< cchar for match functions
   int old_boguscols = 0;
 # define VCOL_HLC (vcol - vcol_off)
@@ -4592,7 +4592,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int off_from, int off_to,
 /// If "wrap" is true, then hint to the UI that "row" contains a line
 /// which has wrapped into the next row.
 static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
-                             int clear_width, int rlflag, win_T *wp,
+                             int clear_width, bool rlflag, win_T *wp,
                              int bg_attr, bool wrap)
 {
   unsigned off_from;
@@ -4922,12 +4922,12 @@ win_redr_status_matches (
   int fillchar;
   int attr;
   int i;
-  int highlight = true;
+  bool highlight = true;
   char_u      *selstart = NULL;
   int selstart_col = 0;
   char_u      *selend = NULL;
   static int first_match = 0;
-  int add_left = false;
+  bool add_left = false;
   char_u      *s;
   int emenu;
   int l;
@@ -5095,7 +5095,7 @@ static void win_redr_status(win_T *wp)
   int fillchar;
   int attr;
   int this_ru_col;
-  static int busy = false;
+  static bool busy = false;
 
   // May get here recursively when 'statusline' (indirectly)
   // invokes ":redrawstatus".  Simply ignore the call then.
@@ -5207,7 +5207,7 @@ static void win_redr_status(win_T *wp)
  */
 static void redraw_custom_statusline(win_T *wp)
 {
-  static int entered = false;
+  static bool entered = false;
   int saved_did_emsg = did_emsg;
 
   /* When called recursively return.  This can happen when the statusline
@@ -5235,7 +5235,7 @@ static void redraw_custom_statusline(win_T *wp)
  * line of the window right of it.  If not, then it's a vertical separator.
  * Only call if (wp->w_vsep_width != 0).
  */
-int stl_connected(win_T *wp)
+bool stl_connected(win_T *wp)
 {
   frame_T     *fr;
 
@@ -5308,7 +5308,7 @@ win_redr_custom (
     bool draw_ruler
 )
 {
-  static int entered = false;
+  static bool entered = false;
   int attr;
   int curattr;
   int row;
@@ -5323,7 +5323,7 @@ win_redr_custom (
   char_u      *p;
   stl_hlrec_t *hltab;
   StlClickRecord *tabtab;
-  int use_sandbox = false;
+  bool use_sandbox = false;
   win_T       *ewp;
   int p_crb_save;
 
@@ -5695,7 +5695,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   int mbyte_cells = 1;
   int u8c = 0;
   int u8cc[MAX_MCO];
-  int clear_next_cell = false;
+  bool clear_next_cell = false;
   int prev_c = 0;                       /* previous Arabic character */
   int pc, nc, nc1;
   int pcc[MAX_MCO];
@@ -6288,7 +6288,7 @@ void win_grid_alloc(win_T *wp)
     wp->w_lines = xcalloc(rows+1, sizeof(wline_T));
   }
 
-  int was_resized = false;
+  bool was_resized = false;
   if (want_allocation && (!has_allocation
                           || grid_allocated->Rows != total_rows
                           || grid_allocated->Columns != total_cols)) {
@@ -6792,7 +6792,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 // Return the length of the message (0 if no message).
 int showmode(void)
 {
-  int need_clear;
+  bool need_clear;
   int length = 0;
   int do_mode;
   int attr;
@@ -7288,7 +7288,7 @@ static int fillchar_vsep(win_T *wp, int *attr)
 /*
  * Return true if redrawing should currently be done.
  */
-int redrawing(void)
+bool redrawing(void)
 {
   return !RedrawingDisabled
          && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
@@ -7297,7 +7297,7 @@ int redrawing(void)
 /*
  * Return true if printing messages should currently be done.
  */
-int messaging(void)
+bool messaging(void)
 {
   return !(p_lz && char_avail() && !KeyTyped);
 }
@@ -7306,7 +7306,7 @@ int messaging(void)
  * Show current status info in ruler and various other places
  * If always is false, only show ruler if position has changed.
  */
-void showruler(int always)
+void showruler(bool always)
 {
   if (!always && !redrawing())
     return;
@@ -7366,7 +7366,7 @@ static void win_redr_ruler(win_T *wp, int always)
   /*
    * Check if not in Insert mode and the line is empty (will show "0-1").
    */
-  int empty_line = false;
+  bool empty_line = false;
   if (!(State & INSERT)
       && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false) == NUL)
     empty_line = true;

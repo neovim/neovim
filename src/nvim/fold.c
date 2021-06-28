@@ -134,7 +134,7 @@ void copyFoldingState(win_T *wp_from, win_T *wp_to)
 /*
  * Return true if there may be folded lines in the current window.
  */
-int hasAnyFolding(win_T *win)
+bool hasAnyFolding(win_T *win)
 {
   /* very simple now, but can become more complex later */
   return !win->w_buffer->terminal && win->w_p_fen
@@ -319,7 +319,7 @@ foldinfo_T fold_info(win_T *win, linenr_T lnum)
 /*
  * Return true if 'foldmethod' is "manual"
  */
-int foldmethodIsManual(win_T *wp)
+bool foldmethodIsManual(win_T *wp)
 {
   return wp->w_p_fdm[3] == 'u';
 }
@@ -328,7 +328,7 @@ int foldmethodIsManual(win_T *wp)
 /*
  * Return true if 'foldmethod' is "indent"
  */
-int foldmethodIsIndent(win_T *wp)
+bool foldmethodIsIndent(win_T *wp)
 {
   return wp->w_p_fdm[0] == 'i';
 }
@@ -337,7 +337,7 @@ int foldmethodIsIndent(win_T *wp)
 /*
  * Return true if 'foldmethod' is "expr"
  */
-int foldmethodIsExpr(win_T *wp)
+bool foldmethodIsExpr(win_T *wp)
 {
   return wp->w_p_fdm[1] == 'x';
 }
@@ -346,7 +346,7 @@ int foldmethodIsExpr(win_T *wp)
 /*
  * Return true if 'foldmethod' is "marker"
  */
-int foldmethodIsMarker(win_T *wp)
+bool foldmethodIsMarker(win_T *wp)
 {
   return wp->w_p_fdm[2] == 'r';
 }
@@ -355,7 +355,7 @@ int foldmethodIsMarker(win_T *wp)
 /*
  * Return true if 'foldmethod' is "syntax"
  */
-int foldmethodIsSyntax(win_T *wp)
+bool foldmethodIsSyntax(win_T *wp)
 {
   return wp->w_p_fdm[0] == 's';
 }
@@ -364,7 +364,7 @@ int foldmethodIsSyntax(win_T *wp)
 /*
  * Return true if 'foldmethod' is "diff"
  */
-int foldmethodIsDiff(win_T *wp)
+bool foldmethodIsDiff(win_T *wp)
 {
   return wp->w_p_fdm[0] == 'd';
 }
@@ -395,9 +395,9 @@ void
 opFoldRange(
     pos_T firstpos,
     pos_T lastpos,
-    int opening,                    // true to open, false to close
-    int recurse,                    // true to do it recursively
-    int had_visual                  // true when Visual selection used
+    bool opening,                    // true to open, false to close
+    bool recurse,                    // true to do it recursively
+    bool had_visual                  // true when Visual selection used
 )
 {
   int done = DONE_NOTHING;              // avoid error messages
@@ -518,10 +518,10 @@ void foldCheckClose(void)
 }
 
 /* checkCloseRec() {{{2 */
-static int checkCloseRec(garray_T *gap, linenr_T lnum, int level)
+static bool checkCloseRec(garray_T *gap, linenr_T lnum, int level)
 {
   fold_T      *fp;
-  int retval = false;
+  bool retval = false;
 
   fp = (fold_T *)gap->ga_data;
   for (int i = 0; i < gap->ga_len; ++i) {
@@ -544,7 +544,7 @@ static int checkCloseRec(garray_T *gap, linenr_T lnum, int level)
  * Return true if it's allowed to manually create or delete a fold.
  * Give an error message and return false if not.
  */
-int foldManualAllowed(int create)
+bool foldManualAllowed(int create)
 {
   if (foldmethodIsManual(curwin) || foldmethodIsMarker(curwin))
     return true;
@@ -565,8 +565,8 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
   garray_T fold_ga;
   int i;
   int cont;
-  int use_level = false;
-  int closed = false;
+  bool use_level = false;
+  bool closed = false;
   int level = 0;
   pos_T start_rel = start;
   pos_T end_rel = end;
@@ -834,7 +834,7 @@ void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
       || foldmethodIsMarker(wp)
       || foldmethodIsDiff(wp)
       || foldmethodIsSyntax(wp)) {
-    int save_got_int = got_int;
+    bool save_got_int = got_int;
 
     /* reset got_int here, otherwise it won't work */
     got_int = false;
@@ -1197,8 +1197,8 @@ static void setFoldRepeat(pos_T pos, long count, int do_open)
 static linenr_T
 setManualFold(
     pos_T pos,
-    int opening,               // true when opening, false when closing
-    int recurse,               // true when closing/opening recursive
+    bool opening,               // true when opening, false when closing
+    bool recurse,               // true when closing/opening recursive
     int *donep
 )
 {
@@ -1237,8 +1237,8 @@ static linenr_T
 setManualFoldWin(
     win_T *wp,
     linenr_T lnum,
-    int opening,                // true when opening, false when closing
-    int recurse,                // true when closing/opening recursive
+    bool opening,                // true when opening, false when closing
+    bool recurse,                // true when closing/opening recursive
     int *donep
 )
 {
@@ -1247,8 +1247,8 @@ setManualFoldWin(
   fold_T      *found = NULL;
   int j;
   int level = 0;
-  int use_level = false;
-  int found_fold = false;
+  bool use_level = false;
+  bool found_fold = false;
   garray_T    *gap;
   linenr_T next = MAXLNUM;
   linenr_T off = 0;
@@ -1796,8 +1796,8 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
 {
   char_u      *text = NULL;
   /* an error occurred when evaluating 'fdt' setting */
-  static int got_fdt_error = false;
-  int save_did_emsg = did_emsg;
+  static bool got_fdt_error = false;
+  bool save_did_emsg = did_emsg;
   static win_T    *last_wp = NULL;
   static linenr_T last_lnum = 0;
 
@@ -1898,8 +1898,8 @@ void foldtext_cleanup(char_u *str)
 {
   char_u      *s;
   char_u      *p;
-  int did1 = false;
-  int did2 = false;
+  bool did1 = false;
+  bool did2 = false;
 
   /* Ignore leading and trailing white space in 'commentstring'. */
   char_u *cms_start = skipwhite(curbuf->b_p_cms);

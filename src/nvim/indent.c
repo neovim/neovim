@@ -65,7 +65,7 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 // Count the size (in window cells) of the indent in line "ptr", with
 // 'tabstop' at "ts".
 // If @param list is true, count only screen size for tabs.
-int get_indent_str(const char_u *ptr, int ts, int list)
+int get_indent_str(const char_u *ptr, int ts, bool list)
   FUNC_ATTR_NONNULL_ALL
 {
   int count = 0;
@@ -135,11 +135,11 @@ int set_indent(int size, int flags)
   int todo;
   int ind_len;  // Measured in characters.
   int line_len;
-  int doit = false;
+  bool doit = false;
   int ind_done = 0;  // Measured in spaces.
   int ind_col = 0;
   int tab_pad;
-  int retval = false;
+  bool retval = false;
 
   // Number of initial whitespace chars when 'et' and 'pi' are both set.
   int orig_char_len = -1;

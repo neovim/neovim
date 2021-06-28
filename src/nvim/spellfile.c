@@ -437,7 +437,7 @@ typedef struct spellinfo_S {
 
   sblock_T    *si_blocks;       // memory blocks used
   long si_blocks_cnt;           // memory blocks allocated
-  int si_did_emsg;              // true when ran out of memory
+  bool si_did_emsg;              // true when ran out of memory
 
   long si_compress_cnt;         // words to add before lowering
                                 // compression limit
@@ -451,7 +451,7 @@ typedef struct spellinfo_S {
 
   int si_ascii;                 // handling only ASCII words
   int si_add;                   // addition file
-  int si_clear_chartab;        // when true clear char tables
+  bool si_clear_chartab;        // when true clear char tables
   int si_region;                // region mask
   vimconv_T si_conv;            // for conversion to 'encoding'
   int si_memtot;                // runtime memory used

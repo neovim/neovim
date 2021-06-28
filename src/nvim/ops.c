@@ -76,9 +76,9 @@ struct block_def {
   colnr_T textcol;              /* index of chars (partially) in block */
   colnr_T start_vcol;           /* start col of 1st char wholly inside block */
   colnr_T end_vcol;             /* start col of 1st char wholly after block */
-  int is_short;                /* true if line is too short to fit in block */
-  int is_MAX;                  /* true if curswant==MAXCOL when starting */
-  int is_oneChar;              /* true if block within one character */
+  bool is_short;                /* true if line is too short to fit in block */
+  bool is_MAX;                  /* true if curswant==MAXCOL when starting */
+  bool is_oneChar;              /* true if block within one character */
   int pre_whitesp;              /* screen cols of ws before block */
   int pre_whitesp_c;            /* chars of ws before block */
   colnr_T end_char_vcols;       /* number of vcols of post-block char */
@@ -174,13 +174,13 @@ int get_op_type(int char1, int char2)
 /*
  * Return true if operator "op" always works on whole lines.
  */
-int op_on_lines(int op)
+bool op_on_lines(int op)
 {
   return opchars[op][2] & OPF_LINES;
 }
 
 // Return true if operator "op" changes text.
-int op_is_change(int op)
+bool op_is_change(int op)
 {
     return opchars[op][2] & OPF_CHANGE;
 }
@@ -1470,7 +1470,7 @@ int op_delete(oparg_T *oap)
    */
   if (oap->regname != '_') {
     yankreg_T *reg = NULL;
-    int did_yank = false;
+    bool did_yank = false;
     if (oap->regname != 0) {
       // yank without message
       did_yank = op_yank(oap, false, true);
@@ -1768,7 +1768,7 @@ int op_replace(oparg_T *oap, int c)
   colnr_T oldlen;
   struct block_def bd;
   char_u              *after_p = NULL;
-  int had_ctrl_v_cr = false;
+  bool had_ctrl_v_cr = false;
 
   if ((curbuf->b_ml.ml_flags & ML_EMPTY ) || oap->empty)
     return OK;              /* nothing to do */
@@ -1985,7 +1985,7 @@ void op_tilde(oparg_T *oap)
 {
   pos_T pos;
   struct block_def bd;
-  int did_change = false;
+  bool did_change = false;
 
   if (u_save((linenr_T)(oap->start.lnum - 1),
           (linenr_T)(oap->end.lnum + 1)) == FAIL)
@@ -2057,7 +2057,7 @@ void op_tilde(oparg_T *oap)
  * Also works correctly when the number of bytes changes.
  * Returns true if some character was changed.
  */
-static int swapchars(int op_type, pos_T *pos, int length)
+static bool swapchars(int op_type, pos_T *pos, int length)
   FUNC_ATTR_NONNULL_ALL
 {
   int did_change = 0;
@@ -2323,7 +2323,7 @@ void op_insert(oparg_T *oap, long count1)
  *
  * return true if edit() returns because of a CTRL-O command
  */
-int op_change(oparg_T *oap)
+bool op_change(oparg_T *oap)
 {
   colnr_T l;
   int retval;
@@ -2576,7 +2576,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     case kMTCharWise:
     {
       colnr_T startcol = 0, endcol = MAXCOL;
-      int is_oneChar = false;
+      bool is_oneChar = false;
       colnr_T cs, ce;
       p = ml_get(lnum);
       bd.startspaces = 0;
@@ -2837,7 +2837,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   int indent;
   int orig_indent = 0;                  /* init for gcc */
   int indent_diff = 0;                  /* init for gcc */
-  int first_indent = true;
+  bool first_indent = true;
   int lendiff = 0;
   pos_T old_pos;
   char_u      *insert_string = NULL;
@@ -3553,7 +3553,7 @@ void adjust_cursor_eol(void)
 /*
  * Return true if lines starting with '#' should be left aligned.
  */
-int preprocs_left(void)
+bool preprocs_left(void)
 {
   return ((curbuf->b_p_si && !curbuf->b_p_cin)
           || (curbuf->b_p_cin && in_cinkeys('#', ' ', true)
@@ -3820,7 +3820,7 @@ char_u *skip_comment(
 int do_join(size_t count,
             int insert_space,
             int save_undo,
-            int use_formatoptions,
+            bool use_formatoptions,
             bool setmark)
 {
   char_u      *curr = NULL;
@@ -4022,7 +4022,7 @@ theend:
  * the first line.  White-space is ignored.  Note that the whole of
  * 'leader1' must match 'leader2_len' characters from 'leader2' -- webb
  */
-static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, int leader2_len, char_u *leader2_flags)
+static bool same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, int leader2_len, char_u *leader2_flags)
 {
   int idx1 = 0, idx2 = 0;
   char_u  *p;
@@ -4223,7 +4223,7 @@ format_lines(
   bool advance = true;
   int second_indent = -1;           // indent for second line (comment aware)
   bool first_par_line = true;
-  int smd_save;
+  bool smd_save;
   long count;
   bool need_set_indent = true;      // set indent of next paragraph
   bool force_format = false;
@@ -4419,7 +4419,7 @@ format_lines(
 /*
  * Return true if line "lnum" ends in a white character.
  */
-static int ends_in_white(linenr_T lnum)
+static bool ends_in_white(linenr_T lnum)
 {
   char_u      *s = ml_get(lnum);
   size_t l;
@@ -4438,7 +4438,7 @@ static int ends_in_white(linenr_T lnum)
  * previous line.  A new paragraph starts after a blank line, or when the
  * comment leader changes -- webb.
  */
-static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, int do_comments)
+static bool fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, int do_comments)
 {
   char_u      *flags = NULL;        /* init for GCC */
   char_u      *ptr;
@@ -4467,7 +4467,7 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
  * Return true when a paragraph starts in line "lnum".  Return false when the
  * previous line is in the same paragraph.  Used for auto-formatting.
  */
-int paragraph_start(linenr_T lnum)
+bool paragraph_start(linenr_T lnum)
 {
   char_u *p;
   int leader_len = 0;                // leader len of current line

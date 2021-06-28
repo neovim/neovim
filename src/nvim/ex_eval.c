@@ -85,7 +85,7 @@
  * error messages on parsing errors during the expression evaluation are given
  * (even if a try conditional is active).
  */
-static int cause_abort = false;
+static bool cause_abort = false;
 
 // Return true when immediately aborting on error, or when an interrupt
 // occurred or an exception was thrown but not caught.  Use for ":{range}call"
@@ -121,7 +121,7 @@ void update_force_abort(void)
 // execution of a failing subcommand as long as the error message has not been
 // displayed and actually caused the abortion.
 //
-int should_abort(int retcode)
+bool should_abort(int retcode)
 {
   return (retcode == FAIL && trylevel != 0 && !emsg_silent) || aborting();
 }
@@ -132,7 +132,7 @@ int should_abort(int retcode)
 // to find finally clauses to be executed, and that some errors in skipped
 // commands are still reported.
 //
-int aborted_in_try(void)
+bool aborted_in_try(void)
 {
   /* This function is only called after an error.  In this case, "force_abort"
    * determines whether searching for finally clauses is necessary. */
@@ -340,7 +340,7 @@ void do_errthrow(cstack_T *cstack, char_u *cmdname)
  * exception if appropriate.  Return true if the current exception is discarded,
  * false otherwise.
  */
-int do_intthrow(cstack_T *cstack)
+bool do_intthrow(cstack_T *cstack)
 {
   // If no interrupt occurred or no try conditional is active and no exception
   // is being thrown, do nothing (for compatibility of non-EH scripts).
@@ -812,7 +812,7 @@ void ex_eval(exarg_T *eap)
  */
 void ex_if(exarg_T *eap)
 {
-  int skip;
+  bool skip;
   int result;
   cstack_T *const cstack = eap->cstack;
 
@@ -871,7 +871,7 @@ void ex_endif(exarg_T *eap)
  */
 void ex_else(exarg_T *eap)
 {
-  int skip;
+  bool skip;
   int result;
   cstack_T *const cstack = eap->cstack;
 
@@ -1193,7 +1193,7 @@ void ex_throw(exarg_T *eap)
 void do_throw(cstack_T *cstack)
 {
   int idx;
-  int inactivate_try = false;
+  bool inactivate_try = false;
 
   //
   // Cleanup and deactivate up to the next surrounding try conditional that
@@ -1304,9 +1304,9 @@ void ex_try(exarg_T *eap)
 void ex_catch(exarg_T *eap)
 {
   int idx = 0;
-  int give_up = false;
-  int skip = false;
-  int caught = false;
+  bool give_up = false;
+  bool skip = false;
+  bool caught = false;
   char_u      *end;
   char_u save_char = 0;
   char_u      *save_cpo;
@@ -1457,7 +1457,7 @@ void ex_catch(exarg_T *eap)
 void ex_finally(exarg_T *eap)
 {
   int idx;
-  int skip = false;
+  bool skip = false;
   int pending = CSTP_NONE;
   cstack_T *const cstack = eap->cstack;
 
@@ -1579,7 +1579,7 @@ void ex_endtry(exarg_T *eap)
 {
   int idx;
   int skip;
-  int rethrow = false;
+  bool rethrow = false;
   int pending = CSTP_NONE;
   void        *rettv = NULL;
   cstack_T *const cstack = eap->cstack;
@@ -1910,10 +1910,10 @@ void leave_cleanup(cleanup_T *csp)
  * entered, is restored (used by ex_endtry()).  This is normally done only
  * when such a try conditional is left.
  */
-int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
+int cleanup_conditionals(cstack_T *cstack, int searched_cond, bool inclusive)
 {
   int idx;
-  int stop = false;
+  bool stop = false;
 
   for (idx = cstack->cs_idx; idx >= 0; --idx) {
     if (cstack->cs_flags[idx] & CSF_TRY) {
@@ -2056,7 +2056,7 @@ void ex_endfunction(exarg_T *eap)
 //
 // Return true if the string "p" looks like a ":while" or ":for" command.
 //
-int has_loop_cmd(char_u *p)
+bool has_loop_cmd(char_u *p)
 {
   int len;
 

@@ -2770,7 +2770,7 @@ void spell_suggest(int count)
   int limit;
   int selected = count;
   int badlen = 0;
-  int msg_scroll_save = msg_scroll;
+  bool msg_scroll_save = msg_scroll;
   const int wo_spell_save = curwin->w_p_spell;
 
   if (!curwin->w_p_spell) {

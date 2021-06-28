@@ -195,7 +195,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
 
     // TODO(bfredl): or "inherit", combine with global value?
     bool fallback = true;
-    int tmp = false;
+    bool tmp = false;
     HlAttrs attrs = HLATTRS_INIT;
     if (ret.type == kObjectTypeDictionary) {
       Dictionary dict = ret.data.dictionary;

@@ -78,8 +78,8 @@ int get_leader_len(char_u *line, char_u **flags,
 {
   int i, j;
   int result;
-  int got_com = false;
-  int found_one;
+  bool got_com = false;
+  bool found_one;
   char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
   char_u      *string;                  /* pointer to comment string */
   char_u      *list;
@@ -217,7 +217,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   char_u      *com_leader;
   char_u      *com_flags;
   char_u      *list;
-  int found_one;
+  bool found_one;
   char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
 
   /*
@@ -595,7 +595,7 @@ int ask_yesno(const char *const str, const bool direct)
 /*
  * Return true if "c" is a mouse key.
  */
-int is_mouse_key(int c)
+bool is_mouse_key(int c)
 {
   return c == K_LEFTMOUSE
          || c == K_LEFTMOUSE_NM
@@ -917,7 +917,7 @@ void free_users(void)
  */
 static void init_users(void)
 {
-  static int lazy_init_done = false;
+  static bool lazy_init_done = false;
 
   if (lazy_init_done) {
     return;
@@ -1175,7 +1175,7 @@ void FreeWild(int count, char_u **files)
  * Don't do this when still processing a command or a mapping.
  * Don't do this when inside a ":normal" command.
  */
-int goto_im(void)
+bool goto_im(void)
 {
   return p_im && stuff_empty() && typebuf_typed();
 }

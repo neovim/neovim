@@ -833,7 +833,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   int tv_to_free_len = 0;
   proftime_T wait_start;
   proftime_T call_start;
-  int started_profiling = false;
+  bool started_profiling = false;
   bool did_save_redo = false;
   save_redo_T save_redo;
 
@@ -2846,7 +2846,7 @@ void ex_return(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   typval_T rettv;
-  int returning = false;
+  bool returning = false;
 
   if (current_funccal == NULL) {
     EMSG(_("E133: :return not inside a function"));
@@ -3020,7 +3020,7 @@ end:
  * with the return rettv.  Returns true when the return can be carried out,
  * false when the return gets pending.
  */
-int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
+bool do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
 {
   int idx;
   cstack_T *const cstack = eap->cstack;
@@ -3167,7 +3167,7 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
 // Return true if the currently active function should be ended, because a
 // return was encountered or an error occurred.  Used inside a ":while".
 //
-int func_has_ended(void *cookie)
+bool func_has_ended(void *cookie)
 {
   funccall_T  *fcp = (funccall_T *)cookie;
 
@@ -3180,7 +3180,7 @@ int func_has_ended(void *cookie)
 //
 // return true if cookie indicates a function which "abort"s on errors.
 //
-int func_has_abort(void *cookie)
+bool func_has_abort(void *cookie)
 {
   return ((funccall_T *)cookie)->func->uf_flags & FC_ABORT;
 }
@@ -3281,7 +3281,7 @@ int func_level(void *cookie)
 //
 // Return true when a function was ended by a ":return" command.
 //
-int current_func_returned(void)
+bool current_func_returned(void)
 {
   return current_funccal->returned;
 }

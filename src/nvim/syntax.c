@@ -370,9 +370,9 @@ static synblock_T *syn_block;           // current buffer for highlighting
 static proftime_T *syn_tm;              // timeout limit
 static linenr_T current_lnum = 0;       // lnum of current state
 static colnr_T current_col = 0;         // column of current state
-static int current_state_stored = 0;    // true if stored current state
+static bool current_state_stored = 0;    // true if stored current state
                                         // after setting current_finished
-static int current_finished = 0;        // current line has been finished
+static bool current_finished = 0;        // current line has been finished
 static garray_T current_state           // current stack of state_items
   = GA_EMPTY_INIT_VALUE;
 static int16_t *current_next_list = NULL;   // when non-zero, nextgroup list
@@ -381,7 +381,7 @@ static int current_line_id = 0;             // unique number for current line
 
 #define CUR_STATE(idx)  ((stateitem_T *)(current_state.ga_data))[idx]
 
-static int syn_time_on = false;
+static bool syn_time_on = false;
 # define IF_SYN_TIME(p) (p)
 
 // Set the timeout used for syntax highlighting.
@@ -855,7 +855,7 @@ static void restore_chartab(char_u *chartab)
 /*
  * Return true if the line-continuation pattern matches in line "lnum".
  */
-static int syn_match_linecont(linenr_T lnum)
+static bool syn_match_linecont(linenr_T lnum)
 {
   if (syn_block->b_syn_linecont_prog != NULL) {
     regmmatch_T regmatch;
@@ -865,7 +865,7 @@ static int syn_match_linecont(linenr_T lnum)
 
     regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
     regmatch.regprog = syn_block->b_syn_linecont_prog;
-    int r = syn_regexec(&regmatch, lnum, (colnr_T)0,
+    bool r = syn_regexec(&regmatch, lnum, (colnr_T)0,
                         IF_SYN_TIME(&syn_block->b_syn_linecont_time));
     syn_block->b_syn_linecont_prog = regmatch.regprog;
 
@@ -902,10 +902,10 @@ static void syn_start_line(void)
  * When "startofline" is true the last item is always updated.
  * When "startofline" is false the item with "keepend" is forcefully updated.
  */
-static void syn_update_ends(int startofline)
+static void syn_update_ends(bool startofline)
 {
   stateitem_T *cur_si;
-  int seen_keepend;
+  bool seen_keepend;
 
   if (startofline) {
     /* Check for a match carried over from a previous line with a
@@ -1155,13 +1155,13 @@ static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
  * Reduce the number of entries in the state stack for syn_buf.
  * Returns true if at least one entry was freed.
  */
-static int syn_stack_cleanup(void)
+static bool syn_stack_cleanup(void)
 {
   synstate_T  *p, *prev;
   disptick_T tick;
-  int above;
+  bool above;
   int dist;
-  int retval = false;
+  bool retval = false;
 
   if (syn_block->b_sst_first == NULL) {
     return retval;
@@ -1388,7 +1388,7 @@ static void load_current_state(synstate_T *from)
  * Compare saved state stack "*sp" with the current state.
  * Return true when they are equal.
  */
-static int syn_stack_equal(synstate_T *sp)
+static bool syn_stack_equal(synstate_T *sp)
 {
   bufstate_T  *bp;
   reg_extmatch_T      *six, *bsx;
@@ -1494,9 +1494,9 @@ static void validate_current_state(void)
  * This will only be called just after get_syntax_attr() for the previous
  * line, to check if the next line needs to be redrawn too.
  */
-int syntax_check_changed(linenr_T lnum)
+bool syntax_check_changed(linenr_T lnum)
 {
-  int retval = true;
+  bool retval = true;
   synstate_T  *sp;
 
   /*
@@ -2154,7 +2154,7 @@ static int syn_current_attr(
 /*
  * Check if we already matched pattern "idx" at the current column.
  */
-static int did_match_already(int idx, garray_T *gap)
+static bool did_match_already(int idx, garray_T *gap)
 {
   for (int i = current_state.ga_len; --i >= 0; ) {
     if (CUR_STATE(i).si_m_startcol == (int)current_col
@@ -2461,7 +2461,7 @@ static void
 update_si_end(
     stateitem_T *sip,
     int startcol,               /* where to start searching for the end */
-    int force                  /* when true overrule a previous end */
+    bool force                  /* when true overrule a previous end */
 )
 {
   lpos_T hl_endpos;
@@ -2570,7 +2570,7 @@ find_endpos(
   regmmatch_T best_regmatch;        /* startpos/endpos of best match */
   lpos_T pos;
   char_u      *line;
-  int had_match = false;
+  bool had_match = false;
   char_u buf_chartab[32];  // chartab array for syn option iskeyword
 
   /* just in case we are invoked for a keyword */
@@ -2897,12 +2897,12 @@ static char_u *syn_getcurline(void)
  * Call vim_regexec() to find a match with "rmp" in "syn_buf".
  * Returns true when there is a match.
  */
-static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
+static bool syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
 {
   int r;
   int timed_out = 0;
   proftime_T pt;
-  const int l_syn_time_on = syn_time_on;
+  const bool l_syn_time_on = syn_time_on;
 
   if (l_syn_time_on) {
     pt = profile_start();
@@ -4078,7 +4078,7 @@ get_syn_options(
     char_u *arg,            // next argument to be checked
     syn_opt_arg_T *opt,     // various things
     int *conceal_char,
-    int skip                // true if skipping over command
+    bool skip                // true if skipping over command
 )
 {
   char_u      *gname_start, *gname;
@@ -4553,9 +4553,9 @@ syn_cmd_region(
   int pat_count = 0;                            /* nr of syn_patterns found */
   int syn_id;
   int matchgroup_id = 0;
-  int not_enough = false;                       /* not enough arguments */
-  int illegal = false;                          /* illegal arguments */
-  int success = false;
+  bool not_enough = false;                       /* not enough arguments */
+  bool illegal = false;                          /* illegal arguments */
+  bool success = false;
   syn_opt_arg_T syn_opt_arg;
   int conceal_char = NUL;
 
@@ -5124,8 +5124,8 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   char_u      *arg_end;
   char_u      *key = NULL;
   char_u      *next_arg;
-  int illegal = false;
-  int finished = false;
+  bool illegal = false;
+  bool finished = false;
   long n;
   char_u      *cpo_save;
 
@@ -5435,7 +5435,7 @@ static int16_t *copy_id_list(const int16_t *const list)
  * the current item.
  * This function is called very often, keep it fast!!
  */
-static int
+static bool
 in_id_list(
     stateitem_T *cur_si,    // current item or NULL
     int16_t *list,          // id list
@@ -5443,7 +5443,7 @@ in_id_list(
     int contained           // group id is contained
 )
 {
-  int retval;
+  bool retval;
   int16_t *scl_list;
   int16_t item;
   int16_t id = ssp->id;
@@ -6342,7 +6342,7 @@ void syn_init_cmdline_highlight(bool reset, bool init)
 /// @param reset clear groups first
 void init_highlight(bool both, bool reset)
 {
-  static int had_both = false;
+  static bool had_both = false;
 
   // Try finding the color scheme file.  Used when a color file was loaded
   // and 'background' or 't_Co' is changed.
@@ -6423,7 +6423,7 @@ int load_colors(char_u *name)
 {
   char_u      *buf;
   int retval = FAIL;
-  static int recursive = false;
+  static bool recursive = false;
 
   // When being called recursively, this is probably because setting
   // 'background' caused the highlighting to be reloaded.  This means it is
@@ -7096,7 +7096,7 @@ void restore_cterm_colors(void)
  * Return true if highlight group "idx" has any settings.
  * When "check_link" is true also check for an existing link.
  */
-static int hl_has_settings(int idx, int check_link)
+static bool hl_has_settings(int idx, bool check_link)
 {
   return HL_TABLE()[idx].sg_cleared == 0
     && (HL_TABLE()[idx].sg_attr != 0
@@ -7470,7 +7470,7 @@ int syn_name2attr(const char_u *name)
 /*
  * Return true if highlight group "name" exists.
  */
-int highlight_exists(const char_u *name)
+bool highlight_exists(const char_u *name)
 {
   return syn_name2id(name) > 0;
 }
@@ -7838,7 +7838,7 @@ const char *get_highlight_name(expand_T *const xp, int idx)
 
 /// Obtain a highlight group name.
 /// When "skip_cleared" is true don't return a cleared entry.
-const char *get_highlight_name_ext(expand_T *xp, int idx, int skip_cleared)
+const char *get_highlight_name_ext(expand_T *xp, int idx, bool skip_cleared)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (idx < 0) {

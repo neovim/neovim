@@ -907,7 +907,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
  */
 static vimmenu_T        *expand_menu = NULL;
 static int expand_modes = 0x0;
-static int expand_emenu;                /* true for ":emenu" command */
+static bool expand_emenu;                /* true for ":emenu" command */
 
 /*
  * Work out what to complete when doing command line completion of menu names.
@@ -1021,7 +1021,7 @@ char_u *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T    *menu = NULL;
   char_u              *str;
-  static int should_advance = false;
+  static bool should_advance = false;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
@@ -1331,7 +1331,7 @@ bool menu_is_toolbar(const char_u *const name)
  * Return true if the name is a menu separator identifier: Starts and ends
  * with '-'
  */
-int menu_is_separator(char_u *name)
+bool menu_is_separator(char_u *name)
 {
   return name[0] == '-' && name[STRLEN(name) - 1] == '-';
 }
@@ -1340,7 +1340,7 @@ int menu_is_separator(char_u *name)
 /// True if a popup menu or starts with \ref MNU_HIDDEN_CHAR
 ///
 /// @return true if the menu is hidden
-static int menu_is_hidden(char_u *name)
+static bool menu_is_hidden(char_u *name)
 {
   return (name[0] == MNU_HIDDEN_CHAR)
           || (menu_is_popup(name) && name[5] != NUL);

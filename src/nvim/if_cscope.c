@@ -217,7 +217,7 @@ void ex_scscope(exarg_T *eap)
 /// Implementation of ":cstag"
 void ex_cstag(exarg_T *eap)
 {
-  int ret = false;
+  bool ret = false;
 
   if (*eap->arg == NUL) {
     (void)EMSG(_("E562: Usage: cstag <ident>"));
@@ -898,7 +898,7 @@ static int cs_find(exarg_T *eap)
 
 
 /// Common code for cscope find, shared by cs_find() and ex_cstag().
-static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
+static bool cs_find_common(char *opt, char *pat, int forceit, int verbose,
                           int use_ll, char_u *cmdline)
 {
   char *cmd;

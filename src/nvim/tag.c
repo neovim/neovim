@@ -119,7 +119,7 @@ static char_u   *tagmatchname = NULL;   /* name of last used tag */
  */
 static taggy_T ptag_entry = { NULL, { { 0, 0, 0 }, 0, 0, NULL }, 0, 0, NULL };
 
-static int tfu_in_use = false;  // disallow recursive call of tagfunc
+static bool tfu_in_use = false;  // disallow recursive call of tagfunc
 
 // Used instead of NUL to separate tag fields in the growarrays.
 #define TAG_SEP 0x02
@@ -144,7 +144,7 @@ static int tfu_in_use = false;  // disallow recursive call of tagfunc
  *
  * for cscope, returns true if we jumped to tag or aborted, false otherwise
  */
-int
+bool
 do_tag(
     char_u *tag,               // tag (pattern) to jump to
     int type,
@@ -161,18 +161,18 @@ do_tag(
   int oldtagstackidx = tagstackidx;
   int prevtagstackidx = tagstackidx;
   int prev_num_matches;
-  int new_tag = false;
+  bool new_tag = false;
   int i;
   int ic;
-  int no_regexp = false;
+  bool no_regexp = false;
   int error_cur_match = 0;
-  int save_pos = false;
+  bool save_pos = false;
   fmark_T saved_fmark;
-  int jumped_to_tag = false;
+  bool jumped_to_tag = false;
   int new_num_matches;
   char_u      **new_matches;
   int use_tagstack;
-  int skip_msg = false;
+  bool skip_msg = false;
   char_u *buf_ffname = curbuf->b_ffname;  // name for priority computation
   int use_tfu = 1;
 
@@ -1371,12 +1371,12 @@ find_tags(
   tagname_T tn;                         /* info for get_tagfname() */
   int first_file;                       /* trying first tag file */
   tagptrs_T tagp;
-  int did_open = false;                 /* did open a tag file */
-  int stop_searching = false;           /* stop when match found or error */
+  bool did_open = false;                 /* did open a tag file */
+  bool stop_searching = false;           /* stop when match found or error */
   int retval = FAIL;                    /* return value */
   int is_static;                        /* current tag line is static */
   int is_current;                       /* file name matches */
-  int eof = false;                      /* found end-of-file */
+  bool eof = false;                      /* found end-of-file */
   char_u      *p;
   char_u      *s;
   int i;
@@ -1404,9 +1404,9 @@ find_tags(
   }   state;                    /* Current search state */
 
   int cmplen;
-  int match;                   /* matches */
+  bool match;                   /* matches */
   int match_no_ic = 0;          /* matches with rm_ic == false */
-  int match_re;                /* match with regexp */
+  bool match_re;                /* match with regexp */
   int matchoff = 0;
   int save_emsg_off;
 
@@ -1430,15 +1430,15 @@ find_tags(
 
   int findall = (mincount == MAXCOL || mincount == TAG_MANY);
   /* find all matching tags */
-  int sort_error = false;                      /* tags file not sorted */
-  int linear;                                  /* do a linear search */
-  int sortic = false;                          /* tag file sorted in nocase */
-  int line_error = false;                      /* syntax error */
+  bool sort_error = false;                      /* tags file not sorted */
+  bool linear;                                  /* do a linear search */
+  bool sortic = false;                          /* tag file sorted in nocase */
+  bool line_error = false;                      /* syntax error */
   int has_re = (flags & TAG_REGEXP);            /* regexp used */
   int help_only = (flags & TAG_HELP);
   int name_only = (flags & TAG_NAMES);
   int noic = (flags & TAG_NOIC);
-  int get_it_again = false;
+  bool get_it_again = false;
   int use_cscope = (flags & TAG_CSCOPE);
   int verbose = (flags & TAG_VERBOSE);
   int use_tfu = ((flags & TAG_NO_TAGFUNC) == 0);
@@ -2300,7 +2300,7 @@ void free_tag_stuff(void)
 int
 get_tagfname(
     tagname_T *tnp,       // holds status info
-    int first,              // true when first file name is wanted
+    bool first,              // true when first file name is wanted
     char_u *buf       // pointer to buffer of MAXPATHL chars
 )
 {
@@ -2608,7 +2608,7 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
 static int jumpto_tag(
     const char_u *lbuf_arg,   // line from the tags file for this tag
     int forceit,              // :ta with !
-    int keep_help            // keep help flag (false for cscope)
+    bool keep_help            // keep help flag (false for cscope)
 )
 {
   int save_secure;
@@ -2977,10 +2977,10 @@ static char_u *expand_tag_fname(char_u *fname, char_u *const tag_fname,
  * Return true if tag for file "fname" if tag file "tag_fname" is for current
  * file.
  */
-static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname, char_u *buf_ffname)
+static bool test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname, char_u *buf_ffname)
 {
   int c;
-  int retval = false;
+  bool retval = false;
   char_u  *fullname;
 
   if (buf_ffname != NULL) {     /* if the buffer has a name */

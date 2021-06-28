@@ -118,7 +118,7 @@ static void sign_group_unref(char_u *groupname)
 /// Returns true if 'sign' is in 'group'.
 /// A sign can either be in the global group (sign->group == NULL)
 /// or in a named group. If 'group' is '*', then the sign is part of the group.
-int sign_in_group(sign_entry_T *sign, const char_u *group)
+bool sign_in_group(sign_entry_T *sign, const char_u *group)
 {
     return ((group != NULL && STRCMP(group, "*") == 0)
             || (group == NULL && sign->se_group == NULL)
@@ -133,7 +133,7 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
   signgroup_T *group = NULL;
   sign_entry_T *sign;
   hashitem_T *hi;
-  int found = false;
+  bool found = false;
 
   if (groupname != NULL) {
     hi = hash_find(&sg_table, groupname);
@@ -1151,7 +1151,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
   char_u  *linehl = NULL;
   char_u  *texthl = NULL;
   char_u  *numhl = NULL;
-  int failed = false;
+  bool failed = false;
 
   // set values for a defined sign.
   for (;;) {
@@ -1338,7 +1338,7 @@ static int parse_sign_cmd_args(
   char_u  *arg1;
   char_u  *name;
   char_u  *filename = NULL;
-  int   lnum_arg = false;
+  bool   lnum_arg = false;
 
   // first arg could be placed sign id
   arg1 = arg;

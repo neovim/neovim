@@ -2014,7 +2014,7 @@ void ex_version(exarg_T *eap)
 /// When "wrap" is true wrap the string in [].
 /// @param s
 /// @param wrap
-static void version_msg_wrap(char_u *s, int wrap)
+static void version_msg_wrap(char_u *s, bool wrap)
 {
   int len = (int)vim_strsize(s) + (wrap ? 2 : 0);
 
@@ -2204,7 +2204,7 @@ void maybe_intro_message(void)
 /// Or with the ":intro" command (for Sven :-).
 ///
 /// @param colon true for ":intro"
-void intro_message(int colon)
+void intro_message(bool colon)
 {
   int i;
   long row;

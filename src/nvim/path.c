@@ -233,7 +233,7 @@ char_u *get_past_head(const char_u *path)
  * Return true if 'c' is a path separator.
  * Note that for MS-Windows this includes the colon.
  */
-int vim_ispathsep(int c)
+bool vim_ispathsep(int c)
 {
 #ifdef UNIX
   return c == '/';          // Unix has ':' inside file names
@@ -249,7 +249,7 @@ int vim_ispathsep(int c)
 /*
  * Like vim_ispathsep(c), but exclude the colon for MS-Windows.
  */
-int vim_ispathsep_nocolon(int c)
+bool vim_ispathsep_nocolon(int c)
 {
   return vim_ispathsep(c)
 #ifdef BACKSLASH_IN_FILENAME
@@ -261,7 +261,7 @@ int vim_ispathsep_nocolon(int c)
 /*
  * return true if 'c' is a path list separator.
  */
-int vim_ispathlistsep(int c)
+bool vim_ispathlistsep(int c)
 {
 #ifdef UNIX
   return c == ':';
@@ -348,7 +348,7 @@ int path_fnamecmp(const char *fname1, const char *fname2)
 /// @param[in]  len  Compare at most len bytes.
 ///
 /// @return 0 if they are equal, non-zero otherwise.
-int path_fnamencmp(const char *const fname1, const char *const fname2,
+bool path_fnamencmp(const char *const fname1, const char *const fname2,
                    size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {

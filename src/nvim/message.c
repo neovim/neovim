@@ -74,7 +74,7 @@ MessageHistoryEntry *last_msg_hist = NULL;
 static int msg_hist_len = 0;
 
 static FILE *verbose_fd = NULL;
-static int verbose_did_open = false;
+static bool verbose_did_open = false;
 
 /*
  * When writing messages to the screen, there are many different situations.
@@ -209,7 +209,7 @@ void msg_grid_validate(void)
  * When terminal not initialized (yet) mch_errmsg(..) is used.
  * return true if wait_return not called
  */
-int msg(char_u *s)
+bool msg(char_u *s)
 {
   return msg_attr_keep(s, 0, false, false);
 }
@@ -270,7 +270,7 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
-  int retval;
+  bool retval;
   char_u *buf = NULL;
 
   if (keep && multiline) {
@@ -512,7 +512,7 @@ void reset_last_sourcing(void)
 /*
  * Return true if "sourcing_name" differs from "last_sourcing_name".
  */
-static int other_sourcing_name(void)
+static bool other_sourcing_name(void)
 {
   if (sourcing_name != NULL) {
     if (last_sourcing_name != NULL)
@@ -597,7 +597,7 @@ void msg_source(int attr)
  * If "msg" is in 'debug': do error message but without side effects.
  * If "emsg_skip" is set: never do error messages.
  */
-int emsg_not_now(void)
+bool emsg_not_now(void)
 {
   if ((emsg_off > 0 && vim_strchr(p_debug, 'm') == NULL
        && vim_strchr(p_debug, 't') == NULL)
@@ -845,7 +845,7 @@ void msg_schedule_emsgf(const char *const fmt, ...)
  * Careful: The string may be changed by msg_may_trunc()!
  * Returns a pointer to the printed message, if wait_return() not called.
  */
-char_u *msg_trunc_attr(char_u *s, int force, int attr)
+char_u *msg_trunc_attr(char_u *s, bool force, int attr)
 {
   int n;
 
@@ -868,7 +868,7 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
  * Return a pointer to where the truncated message starts.
  * Note: May change the message by replacing a character with '<'.
  */
-char_u *msg_may_trunc(int force, char_u *s)
+char_u *msg_may_trunc(bool force, char_u *s)
 {
   int room;
 
@@ -1257,7 +1257,7 @@ void wait_return(int redraw)
  */
 static void hit_return_msg(void)
 {
-  int save_p_more = p_more;
+  bool save_p_more = p_more;
 
   p_more = false;       /* don't want see this message when scrolling back */
   if (msg_didout)       /* start on a new line */
@@ -1304,7 +1304,7 @@ void msg_ext_set_kind(const char *msg_kind)
  */
 void msg_start(void)
 {
-  int did_return = false;
+  bool did_return = false;
 
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
@@ -2443,7 +2443,7 @@ void sb_text_end_cmdline(void)
 /// Clear any text remembered for scrolling back.
 /// When "all" is false keep the last line.
 /// Called when redrawing the screen.
-void clear_sb_text(int all)
+void clear_sb_text(bool all)
 {
   msgchunk_T  *mp;
   msgchunk_T  **lastp;
@@ -2553,7 +2553,7 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
 // Returns true when messages should be printed to stdout/stderr:
 //    - "batch mode" ("silent mode", -es/-Es)
 //    - no UI and not embedded
-int msg_use_printf(void)
+bool msg_use_printf(void)
 {
   return !embedded_mode && !ui_active();
 }
@@ -2609,13 +2609,13 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
  * otherwise it's NUL.
  * Returns true when jumping ahead to "confirm_msg_tail".
  */
-static int do_more_prompt(int typed_char)
+static bool do_more_prompt(int typed_char)
 {
   static bool entered = false;
   int used_typed_char = typed_char;
   int oldState = State;
   int c;
-  int retval = false;
+  bool retval = false;
   int toscroll;
   bool to_redraw = false;
   msgchunk_T  *mp_last = NULL;
@@ -2997,7 +2997,7 @@ void msg_clr_cmdline(void)
  * call wait_return if the message does not fit in the available space
  * return true if wait_return not called.
  */
-int msg_end(void)
+bool msg_end(void)
 {
   /*
    * If the string is larger than the window,
@@ -3358,7 +3358,7 @@ do_dialog (
     int dfltbutton,
     char_u *textfield,          /* IObuff for inputdialog(), NULL
                                            otherwise */
-    int ex_cmd                 /* when true pressing : accepts default and starts
+    bool ex_cmd                 /* when true pressing : accepts default and starts
                                Ex command */
 )
 {

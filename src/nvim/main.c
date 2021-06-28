@@ -1464,7 +1464,7 @@ static void read_stdin(void)
  */
 static void create_windows(mparm_T *parmp)
 {
-  int dorewind;
+  bool dorewind;
   int done = 0;
 
   /*

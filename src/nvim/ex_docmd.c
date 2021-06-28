@@ -116,7 +116,7 @@ typedef struct {
 struct loop_cookie {
   garray_T    *lines_gap;               // growarray with line info
   int current_line;                     // last read line from growarray
-  int repeating;                        // true when looping a second time
+  bool repeating;                        // true when looping a second time
   // When "repeating" is false use "getline" and "cookie" to get lines
   char_u      *(*getline)(int, void *, int, bool);
   void        *cookie;
@@ -126,11 +126,11 @@ struct loop_cookie {
 /* Struct to save a few things while debugging.  Used in do_cmdline() only. */
 struct dbg_stuff {
   int trylevel;
-  int force_abort;
+  bool force_abort;
   except_T    *caught_stack;
   char_u      *vv_exception;
   char_u      *vv_throwpoint;
-  int did_emsg;
+  bool did_emsg;
   int got_int;
   int need_rethrow;
   int check_cstack;
@@ -311,11 +311,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
 {
   char_u      *next_cmdline;            // next cmd to execute
   char_u      *cmdline_copy = NULL;     // copy of cmd line
-  int used_getline = false;             // used "fgetline" to obtain command
+  bool used_getline = false;             // used "fgetline" to obtain command
   static int recursive = 0;             // recursive depth
   int msg_didout_before_start = 0;
   int count = 0;                        // line number count
-  int did_inc = false;                  // incremented RedrawingDisabled
+  bool did_inc = false;                  // incremented RedrawingDisabled
   int retval = OK;
   cstack_T cstack = {                   // conditional stack
     .cs_idx = -1,
@@ -999,7 +999,7 @@ static void store_loop_line(garray_T *gap, char_u *line)
 // If "fgetline" is get_loop_line(), return true if the getline it uses equals
 // "func".  * Otherwise return true when "fgetline" equals "func".
 //
-int getline_equal(LineGetter fgetline,
+bool getline_equal(LineGetter fgetline,
                   void *cookie, /* argument for fgetline() */
                   LineGetter func)
 {
@@ -2497,7 +2497,7 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
  * Check for an Ex command with optional tail.
  * If there is a match advance "pp" to the argument and return true.
  */
-int
+bool
 checkforcmd(
     char_u **pp,              // start of command
     char *cmd,                // name of command
@@ -2665,11 +2665,11 @@ find_ucmd (
   int len = (int)(p - eap->cmd);
   int j, k, matchlen = 0;
   ucmd_T      *uc;
-  int found = false;
-  int possible = false;
+  bool found = false;
+  bool possible = false;
   char_u      *cp, *np;             // Point into typed cmd and test name
   garray_T    *gap;
-  int amb_local = false;            // Found ambiguous buffer-local command,
+  bool amb_local = false;            // Found ambiguous buffer-local command,
                                     // only full match global is accepted.
 
   /*
@@ -3102,7 +3102,7 @@ const char * set_one_cmd_context(
 
   if (ea.argt & EX_XFILE) {
     int c;
-    int in_quote = false;
+    bool in_quote = false;
     const char *bow = NULL;  // Beginning of word.
 
     /*
@@ -4604,7 +4604,7 @@ static char_u *getargcmd(char_u **argp)
 static char_u *
 skip_cmd_arg (
     char_u *p,
-    int rembs              // true to halve the number of backslashes
+    bool rembs              // true to halve the number of backslashes
 )
 {
   while (*p && !ascii_isspace(*p)) {
@@ -5015,7 +5015,7 @@ char_u *check_nextcmd(char_u *p)
  */
 static int
 check_more(
-    int message,                // when false check only, no messages
+    bool message,                // when false check only, no messages
     bool forceit
 )
 {
@@ -7977,7 +7977,7 @@ static void ex_at(exarg_T *eap)
       == FAIL) {
     beep_flush();
   } else {
-    int save_efr = exec_from_reg;
+    bool save_efr = exec_from_reg;
 
     exec_from_reg = true;
 
@@ -8118,7 +8118,7 @@ static void ex_redir(exarg_T *eap)
         EMSG2(_(e_invarg2), eap->arg);
       }
     } else if (*arg == '=' && arg[1] == '>') {
-      int append;
+      bool append;
 
       /* redirect to a variable */
       close_redir();
@@ -8154,7 +8154,7 @@ static void ex_redraw(exarg_T *eap)
     return;  // Ignore :redraw during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;
-  int p = p_lz;
+  bool p = p_lz;
 
   RedrawingDisabled = 0;
   p_lz = false;
@@ -8188,7 +8188,7 @@ static void ex_redrawstatus(exarg_T *eap)
     return;  // Ignore :redrawstatus during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;
-  int p = p_lz;
+  bool p = p_lz;
 
   RedrawingDisabled = 0;
   p_lz = false;
@@ -8545,7 +8545,7 @@ static void ex_psearch(exarg_T *eap)
 
 static void ex_findpat(exarg_T *eap)
 {
-  int whole = true;
+  bool whole = true;
   long n;
   char_u      *p;
   int action;
@@ -8783,7 +8783,7 @@ eval_vars (
   buf_T       *buf;
   int valid = VALID_HEAD | VALID_PATH;  // Assume valid result.
   bool tilde_file = false;
-  int skip_mod = false;
+  bool skip_mod = false;
   char strbuf[30];
 
   *errormsg = NULL;

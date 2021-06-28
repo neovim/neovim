@@ -488,7 +488,7 @@ int prt_header_height(void)
 /*
  * Return true if using a line number for printing.
  */
-int prt_use_number(void)
+bool prt_use_number(void)
 {
   return printer_opts[OPT_PRINT_NUMBER].present
          && TOLOWER_ASC(printer_opts[OPT_PRINT_NUMBER].string[0]) == 'y';
@@ -530,7 +530,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum,
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
-    int use_sandbox = false;
+    bool use_sandbox = false;
 
     /*
      * Need to (temporarily) set current line number and first/last line
@@ -838,7 +838,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
 {
   colnr_T col;
   char_u      *line;
-  int need_break = false;
+  bool need_break = false;
   int outputlen;
   int tab_spaces;
   int print_pos;
@@ -1236,7 +1236,7 @@ static struct prt_dsc_comment_S prt_dsc_table[] =
  * Variables for the output PostScript file.
  */
 static FILE *prt_ps_fd;
-static int prt_file_error;
+static bool prt_file_error;
 static char_u *prt_ps_file_name = NULL;
 
 /*
@@ -1285,8 +1285,8 @@ static int prt_bufsiz;
 static int prt_media;
 static int prt_portrait;
 static int prt_num_copies;
-static int prt_duplex;
-static int prt_tumble;
+static bool prt_duplex;
+static bool prt_tumble;
 static int prt_collate;
 
 /*
@@ -1295,7 +1295,7 @@ static int prt_collate;
 static char_u prt_line_buffer[257];
 static garray_T prt_ps_buffer = GA_EMPTY_INIT_VALUE;
 
-static int prt_do_conv;
+static bool prt_do_conv;
 static vimconv_T prt_conv;
 
 static int prt_out_mbyte;
@@ -2063,7 +2063,7 @@ static int prt_get_lpp(void)
   return lpp - prt_header_height();
 }
 
-static int prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_encoding_S **pp_mbenc)
+static bool prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_encoding_S **pp_mbenc)
 {
   int mbenc;
   int enc_len;
@@ -2083,7 +2083,7 @@ static int prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap, 
   return false;
 }
 
-static int prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_charset_S **pp_mbchar)
+static bool prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_charset_S **pp_mbchar)
 {
   int mbchar;
   int char_len;
@@ -2105,7 +2105,7 @@ static int prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap, st
   return false;
 }
 
-int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
+bool mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 {
   int i;
   char        *paper_name;
@@ -2387,7 +2387,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   return OK;
 }
 
-static int prt_add_resource(struct prt_ps_resource_S *resource)
+static bool prt_add_resource(struct prt_ps_resource_S *resource)
 {
   FILE*       fd_resource;
   char_u resource_buffer[512];
@@ -2437,7 +2437,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
   return true;
 }
 
-int mch_print_begin(prt_settings_T *psettings)
+bool mch_print_begin(prt_settings_T *psettings)
 {
   int bbox[4];
   double left;
@@ -2451,7 +2451,7 @@ int mch_print_begin(prt_settings_T *psettings)
   char_u      *p;
   struct prt_ps_resource_S res_cidfont;
   struct prt_ps_resource_S res_cmap;
-  int retval = false;
+  bool retval = false;
 
   /*
    * PS DSC Header comments - no PS code!
@@ -2877,7 +2877,7 @@ int mch_print_begin_page(char_u *str)
   return !prt_file_error;
 }
 
-int mch_print_blank_page(void)
+bool mch_print_blank_page(void)
 {
   return mch_print_begin_page(NULL) ? (mch_print_end_page()) : false;
 }

@@ -125,7 +125,7 @@ struct cmdline_info {
                                 // may point into cmdbuff
   int xp_context;               // type of expansion
   char_u      *xp_arg;          // user-defined expansion arg
-  int input_fn;                // when true Invoked for input() function
+  bool input_fn;                // when true Invoked for input() function
   unsigned prompt_id;  ///< Prompt number, used to disable coloring on errors.
   Callback highlight_callback;  ///< Callback used for coloring user input.
   ColoredCmdline last_colors;   ///< Last cmdline colors
@@ -167,8 +167,8 @@ typedef struct command_line_state {
   long count;
   int indent;
   int c;
-  int gotesc;                          // true when <ESC> just typed
-  int do_abbr;                         // when true check for abbr.
+  bool gotesc;                          // true when <ESC> just typed
+  bool do_abbr;                         // when true check for abbr.
   char_u *lookfor;                      // string to match
   int hiscnt;                           // current history line in use
   int save_hiscnt;                      // history line before attempting
@@ -1103,7 +1103,7 @@ static int command_line_execute(VimState *state, int key)
     } else if (s->c == K_UP) {
       // Hitting <Up>: Remove one submenu name in front of the
       // cursor
-      int found = false;
+      bool found = false;
 
       int j = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
       int i = 0;
@@ -1157,7 +1157,7 @@ static int command_line_execute(VimState *state, int key)
     } else if (STRNCMP(s->xpc.xp_pattern, upseg + 1, 3) == 0
         && s->c == K_DOWN) {
       // If in a direct ancestor, strip off one ../ to go down
-      int found = false;
+      bool found = false;
 
       int j = ccline.cmdpos;
       int i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
@@ -1178,7 +1178,7 @@ static int command_line_execute(VimState *state, int key)
       }
     } else if (s->c == K_UP) {
       // go up a directory
-      int found = false;
+      bool found = false;
 
       int j = ccline.cmdpos - 1;
       int i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
@@ -2389,7 +2389,7 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
 // Return true when the text must not be changed and we can't switch to
 // another window or buffer.  Used when editing the command line etc.
 //
-int text_locked(void)
+bool text_locked(void)
 {
   if (cmdwin_type != 0) {
     return true;
@@ -2416,7 +2416,7 @@ char_u * get_text_locked_msg(void) {
 
 /// Check if "curbuf->b_ro_locked" or "allbuf_lock" is set and
 /// return true when it is and give an error message.
-int curbuf_locked(void)
+bool curbuf_locked(void)
 {
   if (curbuf->b_ro_locked > 0) {
     EMSG(_("E788: Not allowed to edit another buffer now"));
@@ -2429,7 +2429,7 @@ int curbuf_locked(void)
 // Check if "allbuf_lock" is set and return true when it is and give an error
 // message.
 //
-int allbuf_locked(void)
+bool allbuf_locked(void)
 {
   if (allbuf_lock > 0) {
     EMSG(_("E811: Not allowed to change buffer information now"));
@@ -2531,7 +2531,7 @@ getexmodeline(
   char_u      *pend;
   int startcol = 0;
   int c1 = 0;
-  int escaped = false;                  // CTRL-V typed
+  bool escaped = false;                  // CTRL-V typed
   int vcol = 0;
   char_u      *p;
   int prev_char;
@@ -3391,7 +3391,7 @@ void cmdline_ui_flush(void)
  * right when "shift" is true.  Used for CTRL-V, CTRL-K, etc.
  * "c" must be printable (fit in one display cell)!
  */
-void putcmdline(char c, int shift)
+void putcmdline(char c, bool shift)
 {
   if (cmd_silent) {
     return;
@@ -3439,7 +3439,7 @@ void unputcmdline(void)
  * twice in a row, then 'redraw' should be false and redrawcmd() should be
  * called afterwards.
  */
-void put_on_cmdline(char_u *str, int len, int redraw)
+void put_on_cmdline(char_u *str, int len, bool redraw)
 {
   int i;
   int m;
@@ -3679,7 +3679,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
  * When "literally" is false, insert as typed, but don't leave the command
  * line.
  */
-void cmdline_paste_str(char_u *s, int literally)
+void cmdline_paste_str(char_u *s, bool literally)
 {
   int c, cv;
 
@@ -3922,7 +3922,7 @@ nextwild (
     expand_T *xp,
     int type,
     int options,                   // extra options for ExpandOne()
-    int escape                     // if true, escape the returned matches
+    bool escape                     // if true, escape the returned matches
 )
 {
   int i, j;
@@ -4068,7 +4068,7 @@ ExpandOne (
   char_u      *ss = NULL;
   static int findex;
   static char_u *orig_save = NULL;      // kept value of orig
-  int orig_saved = false;
+  bool orig_saved = false;
   int i;
   int non_suf_match;                    /* number without matching suffix */
 
@@ -4618,7 +4618,7 @@ char_u *sm_gettail(char_u *s, bool eager)
 {
   char_u      *p;
   char_u      *t = s;
-  int had_sep = false;
+  bool had_sep = false;
 
   for (p = s; *p != NUL; ) {
     if (vim_ispathsep(*p)
@@ -4645,7 +4645,7 @@ char_u *sm_gettail(char_u *s, bool eager)
 // When not completing file names or there is a wildcard in the path false is
 // returned.
 //
-static int expand_showtail(expand_T *xp)
+static bool expand_showtail(expand_T *xp)
 {
   char_u      *s;
   char_u      *end;
@@ -5035,7 +5035,7 @@ ExpandFromContext (
     /*
      * Expand file or directory names.
      */
-    int free_pat = false;
+    bool free_pat = false;
     int i;
 
     // for ":set path=" and ":set tags=" halve backslashes for escaped space
@@ -5912,11 +5912,11 @@ static inline void clear_hist_entry(histentry_T *hisptr)
  * Check if command line 'str' is already in history.
  * If 'move_to_front' is true, matching entry is moved to end of history.
  */
-static int 
+static bool 
 in_history (
     int type,
     char_u *str,
-    int move_to_front,              // Move the entry to the front if it exists
+    bool move_to_front,              // Move the entry to the front if it exists
     int sep
 )
 {
@@ -6173,7 +6173,7 @@ static int calc_hist_idx(int histype, int num)
 {
   int i;
   histentry_T *hist;
-  int wrapped = false;
+  bool wrapped = false;
 
   if (hislen == 0 || histype < 0 || histype >= HIST_COUNT
       || (i = hisidx[histype]) < 0 || num == 0)
@@ -6285,7 +6285,7 @@ int del_history_entry(int histype, char_u *str)
  * Remove an indexed entry from a history.
  * "histype" may be one of the HIST_ values.
  */
-int del_history_idx(int histype, int idx)
+bool del_history_idx(int histype, int idx)
 {
   int i, j;
 

@@ -1202,7 +1202,7 @@ int vim_vsnprintf_typval(
           {
             // floating point
             char format[40];
-            int remove_trailing_zeroes = false;
+            bool remove_trailing_zeroes = false;
 
             double f = tvs ? tv_float(tvs, &arg_idx) : va_arg(ap, double);
             double abs_f = f < 0 ? -f : f;

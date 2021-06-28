@@ -904,13 +904,13 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int new_size = size;
   int i;
   int need_status = 0;
-  int do_equal = false;
+  bool do_equal = false;
   int needed;
   int available;
   int oldwin_height = 0;
   int layout;
   frame_T   *frp, *curfrp, *frp2, *prevfrp;
-  int before;
+  bool before;
   int minheight;
   int wmh1;
   bool did_set_fraction = false;
@@ -1525,7 +1525,7 @@ int win_count(void)
 int 
 make_windows (
     int count,
-    int vertical              /* split windows vertically if true */
+    bool vertical              /* split windows vertically if true */
 )
 {
   int maxcount;
@@ -2310,8 +2310,8 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
 int win_close(win_T *win, bool free_buf)
 {
   win_T       *wp;
-  int other_buffer = false;
-  int close_curwin = false;
+  bool other_buffer = false;
+  bool close_curwin = false;
   int dir;
   bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
@@ -3880,7 +3880,7 @@ leave_tabpage (
  * Only trigger *Enter autocommands when trigger_enter_autocmds is true.
  * Only trigger *Leave autocommands when trigger_leave_autocmds is true.
  */
-static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_autocmds, int trigger_leave_autocmds)
+static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_autocmds, bool trigger_leave_autocmds)
 {
   int old_off = tp->tp_firstwin->w_winrow;
   win_T       *next_prevwin = tp->tp_prevwin;
@@ -4033,7 +4033,7 @@ void goto_tabpage(int n)
  * Only trigger *Leave autocommands when trigger_leave_autocmds is true.
  * Note: doesn't update the GUI tab.
  */
-void goto_tabpage_tp(tabpage_T *tp, int trigger_enter_autocmds, int trigger_leave_autocmds)
+void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_leave_autocmds)
 {
   /* Don't repeat a message in another tab page. */
   set_keep_msg(NULL, 0);
@@ -4349,11 +4349,11 @@ void win_enter(win_T *wp, bool undo_sync)
  * Can be called with "curwin_invalid" true, which means that curwin has just
  * been closed and isn't valid.
  */
-static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
+static void win_enter_ext(win_T *wp, bool undo_sync, bool curwin_invalid,
                           int trigger_new_autocmds, int trigger_enter_autocmds,
                           int trigger_leave_autocmds)
 {
-  int other_buffer = false;
+  bool other_buffer = false;
 
   if (wp == curwin && !curwin_invalid)          /* nothing to do */
     return;
@@ -4542,7 +4542,7 @@ win_T *buf_jump_open_tab(buf_T *buf)
  * Allocate a window structure and link it in the window list when "hidden" is
  * false.
  */
-static win_T *win_alloc(win_T *after, int hidden)
+static win_T *win_alloc(win_T *after, bool hidden)
 {
   static int last_win_id = LOWEST_WIN_ID - 1;
 
@@ -5419,7 +5419,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
   frame_T     *fr;
   int room;
   int row;
-  int up;               /* if true, drag status line up, otherwise down */
+  bool up;               /* if true, drag status line up, otherwise down */
   int n;
 
   fr = dragwin->w_frame;
@@ -5536,7 +5536,7 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
   frame_T     *curfr;
   frame_T     *fr;
   int room;
-  int left;             /* if true, drag separator line left, otherwise right */
+  bool left;             /* if true, drag separator line left, otherwise right */
   int n;
 
   fr = dragwin->w_frame;
@@ -6220,7 +6220,7 @@ bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
  * current buffer, and before applying autocommands.
  * When "do_curwin" is true, also check current window.
  */
-void check_lnums(int do_curwin)
+void check_lnums(bool do_curwin)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if ((do_curwin || wp != curwin) && wp->w_buffer == curbuf) {
@@ -6415,7 +6415,7 @@ static win_T *get_snapshot_focus(int idx)
  * triggered, another tabpage access is limited.
  * Returns FAIL if switching to "win" failed.
  */
-int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage_T *tp, int no_display)
+int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win, tabpage_T *tp, bool no_display)
 {
   block_autocmds();
   return switch_win_noblock(save_curwin, save_curtab, win, tp, no_display);
@@ -6695,7 +6695,7 @@ fail:
 
 /// Delete match with ID 'id' in the match list of window 'wp'.
 /// Print error messages if 'perr' is true.
-int match_delete(win_T *wp, int id, int perr)
+int match_delete(win_T *wp, int id, bool perr)
 {
   matchitem_T *cur = wp->w_match_head;
   matchitem_T *prev = cur;

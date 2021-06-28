@@ -680,7 +680,7 @@ void eval_patch(const char *const origfile, const char *const difffile,
  * Sets "error" to true if there was an error.
  * Return true or false.
  */
-int
+bool
 eval_to_bool(
     char_u *arg,
     bool *error,
@@ -843,7 +843,7 @@ int skip_expr(char_u **pp)
  * a Float to a String.
  * Return pointer to allocated memory, or NULL for failure.
  */
-char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
+char_u *eval_to_string(char_u *arg, char_u **nextcmd, bool convert)
 {
   typval_T tv;
   char *retval;
@@ -879,7 +879,7 @@ char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
  * Call eval_to_string() without using current local variables and using
  * textlock.  When "use_sandbox" is true use the sandbox.
  */
-char_u *eval_to_string_safe(char_u *arg, char_u **nextcmd, int use_sandbox)
+char_u *eval_to_string_safe(char_u *arg, char_u **nextcmd, bool use_sandbox)
 {
   char_u      *retval;
   funccal_entry_T funccal_entry;
@@ -1604,7 +1604,7 @@ static const char_u *skip_var_one(const char_u *arg)
  * List variables for hashtab "ht" with prefix "prefix".
  * If "empty" is true also list NULL strings as empty strings.
  */
-void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty,
+void list_hashtable_vars(hashtab_T *ht, const char *prefix, bool empty,
                          int *first)
 {
   hashitem_T  *hi;
@@ -1686,7 +1686,7 @@ static void list_script_vars(int *first)
  */
 static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
 {
-  int error = false;
+  bool error = false;
   int len;
   const char *name;
   const char *name_start;
@@ -1987,7 +1987,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
   dictitem_T  *v;
   typval_T var1;
   typval_T var2;
-  int empty1 = false;
+  bool empty1 = false;
   listitem_T  *ni;
   hashtab_T *ht = NULL;
   int quiet = flags & GLV_QUIET;
@@ -2569,7 +2569,7 @@ void free_for_info(void *fi_void)
 void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
   FUNC_ATTR_NONNULL_ALL
 {
-  int got_eq = false;
+  bool got_eq = false;
   int c;
   char_u      *p;
 
@@ -3125,7 +3125,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
 
 /// Return true if "pat" matches "text".
 /// Does not use 'cpo' and always uses 'magic'.
-static int pattern_match(char_u *pat, char_u *text, bool ic)
+static bool pattern_match(char_u *pat, char_u *text, bool ic)
 {
   int matches = 0;
   regmatch_T regmatch;
@@ -3158,7 +3158,7 @@ static int pattern_match(char_u *pat, char_u *text, bool ic)
  * Note: "rettv.v_lock" is not set.
  * Return OK or FAIL.
  */
-int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
+int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, bool evaluate)
 {
   int ret;
   char_u      *p;
@@ -3198,7 +3198,7 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
  */
 int eval1(char_u **arg, typval_T *rettv, int evaluate)
 {
-  int result;
+  bool result;
   typval_T var2;
 
   /*
@@ -3272,7 +3272,7 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   long result;
-  int first;
+  bool first;
   bool error = false;
 
   /*
@@ -3341,7 +3341,7 @@ static int eval3(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   long result;
-  int first;
+  bool first;
   bool error = false;
 
   /*
@@ -3848,7 +3848,7 @@ static int eval7(
   case '9':
   {
     char_u *p = skipdigits(*arg + 1);
-    int get_float = false;
+    bool get_float = false;
 
     // We accept a float when the format matches
     // "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
@@ -4091,7 +4091,7 @@ eval_index(
   bool empty2 = false;
   long n1, n2 = 0;
   ptrdiff_t len = -1;
-  int range = false;
+  bool range = false;
   char_u      *key = NULL;
 
   switch (rettv->v_type) {
@@ -8047,7 +8047,7 @@ static char_u *make_expanded_name(const char_u *in_start, char_u *expr_start,
 // Return true if character "c" can be used in a variable or function name.
 // Does not include '{' or '}' for magic braces.
 //
-int eval_isnamec(int c)
+bool eval_isnamec(int c)
 {
   return ASCII_ISALNUM(c) || c == '_' || c == ':' || c == AUTOLOAD_CHAR;
 }
@@ -8056,7 +8056,7 @@ int eval_isnamec(int c)
 // Return true if character "c" can be used as the first character in a
 // variable or function name (excluding '{' and '}').
 //
-int eval_isnamec1(int c)
+bool eval_isnamec1(int c)
 {
   return ASCII_ISALPHA(c) || c == '_';
 }
@@ -8108,7 +8108,7 @@ void set_vim_var_char(int c)
  * Set v:count to "count" and v:count1 to "count1".
  * When "set_prevcount" is true first set v:prevcount from v:count.
  */
-void set_vcount(long count, long count1, int set_prevcount)
+void set_vcount(long count, long count1, bool set_prevcount)
 {
   if (set_prevcount)
     vimvars[VV_PREVCOUNT].vv_nr = vimvars[VV_COUNT].vv_nr;
@@ -8790,7 +8790,7 @@ void vars_clear(hashtab_T *ht)
 //
 // Like vars_clear(), but only free the value if "free_val" is true.
 //
-void vars_clear_ext(hashtab_T *ht, int free_val)
+void vars_clear_ext(hashtab_T *ht, bool free_val)
 {
   int todo;
   hashitem_T  *hi;
@@ -10166,7 +10166,7 @@ repeat:
           || (src[*usedlen + 1] == 'g' && src[*usedlen + 2] == 's'))) {
     int sep;
     char_u      *flags;
-    int didit = false;
+    bool didit = false;
 
     flags = (char_u *)"";
     s = src + *usedlen + 2;

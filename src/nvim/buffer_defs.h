@@ -420,7 +420,7 @@ typedef struct {
 typedef struct {
   hashtab_T b_keywtab;                  // syntax keywords hash table
   hashtab_T b_keywtab_ic;               // idem, ignore case
-  int b_syn_error;                      // true when error occurred in HL
+  bool b_syn_error;                      // true when error occurred in HL
   bool b_syn_slow;                      // true when 'redrawtime' reached
   int b_syn_ic;                         // ignore case for :syn cmds
   int b_syn_foldlevel;                  // how to compute foldlevel on a line
@@ -429,7 +429,7 @@ typedef struct {
   garray_T b_syn_clusters;              // table for syntax clusters
   int b_spell_cluster_id;               // @Spell cluster ID or 0
   int b_nospell_cluster_id;             // @NoSpell cluster ID or 0
-  int b_syn_containedin;                // true when there is an item with a
+  bool b_syn_containedin;                // true when there is an item with a
                                         // "containedin" argument
   int b_syn_sync_flags;                 // flags about how to sync
   int16_t b_syn_sync_id;                // group to sync on
@@ -812,7 +812,7 @@ struct file_buffer {
   linenr_T b_no_eol_lnum;       /* non-zero lnum when last line of next binary
                                  * write should not have an end-of-line */
 
-  int b_start_eol;              // last line had eol when it was read
+  bool b_start_eol;             // last line had eol when it was read
   int b_start_ffc;              // first char of 'ff' when edit started
   char_u      *b_start_fenc;    // 'fileencoding' when edit started or NULL
   int b_bad_char;               // "++bad=" argument when edit started or 0

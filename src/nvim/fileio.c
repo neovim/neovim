@@ -185,7 +185,7 @@ readfile(
 )
 {
   int fd = 0;
-  int newfile = (flags & READ_NEW);
+  bool newfile = (flags & READ_NEW);
   int check_readonly;
   int filtering = (flags & READ_FILTER);
   int read_stdin = (flags & READ_STDIN);
@@ -206,12 +206,12 @@ readfile(
   long size = 0;
   uint8_t *p = NULL;
   off_T filesize = 0;
-  int skip_read = false;
+  bool skip_read = false;
   context_sha256_T sha_ctx;
-  int read_undo_file = false;
+  bool read_undo_file = false;
   int split = 0;  // number of split lines
   linenr_T linecnt;
-  int error = false;                    // errors encountered
+  bool error = false;                    // errors encountered
   int ff_error = EOL_UNKNOWN;           // file format with errors
   long linerest = 0;                    // remaining chars in line
   int perm = 0;
@@ -245,11 +245,11 @@ readfile(
   long real_size = 0;
 # ifdef HAVE_ICONV
   iconv_t iconv_fd = (iconv_t)-1;       // descriptor for iconv() or -1
-  int did_iconv = false;               // true when iconv() failed and trying
+  bool did_iconv = false;               // true when iconv() failed and trying
                                         // 'charconvert' next
 # endif
-  int converted = false;               // true if conversion done
-  int notconverted = false;            // true if conversion wanted but it
+  bool converted = false;               // true if conversion done
+  bool notconverted = false;            // true if conversion wanted but it
                                        //  wasn't possible
   char_u conv_rest[CONV_RESTLEN];
   int conv_restlen = 0;                 /* nr of bytes in conv_rest[] */
@@ -2146,16 +2146,16 @@ buf_write(
     linenr_T end,
     exarg_T *eap,                   /* for forced 'ff' and 'fenc', can be
                                            NULL! */
-    int append,                             /* append to the file */
-    int forceit,
-    int reset_changed,
+    bool append,                             /* append to the file */
+    bool forceit,
+    bool reset_changed,
     int filtering
 )
 {
   int fd;
   char_u          *backup = NULL;
-  int backup_copy = false;               // copy the original file?
-  int dobackup;
+  bool backup_copy = false;               // copy the original file?
+  bool dobackup;
   char_u          *ffname;
   char_u          *wfname = NULL;       /* name of file to write to */
   char_u          *s;
@@ -2180,18 +2180,18 @@ buf_write(
   int bufsize;
   long perm;                                // file permissions
   int retval = OK;
-  int newfile = false;                     // true if file doesn't exist yet
+  bool newfile = false;                     // true if file doesn't exist yet
   int msg_save = msg_scroll;
-  int overwriting;                         // true if writing over original
-  int no_eol = false;                      // no end-of-line written
-  int device = false;                      // writing to a device
+  bool overwriting;                         // true if writing over original
+  bool no_eol = false;                      // no end-of-line written
+  bool device = false;                      // writing to a device
   int prev_got_int = got_int;
   int checking_conversion;
   bool file_readonly = false;               // overwritten file is read-only
   static char     *err_readonly =
     "is read-only (cannot override: \"W\" in 'cpoptions')";
 #if defined(UNIX)
-  int made_writable = false;                // 'w' bit has been set
+  bool made_writable = false;                // 'w' bit has been set
 #endif
   /* writing everything */
   int whole = (start == 1 && end == buf->b_ml.ml_line_count);
@@ -2199,8 +2199,8 @@ buf_write(
   int fileformat;
   int write_bin;
   struct bw_info write_info;            // info for buf_write_bytes()
-  int converted = false;
-  int notconverted = false;
+  bool converted = false;
+  bool notconverted = false;
   char_u          *fenc;                // effective 'fileencoding'
   char_u          *fenc_tofree = NULL;   // allocated "fenc"
 #ifdef HAS_BW_FLAGS
@@ -2210,7 +2210,7 @@ buf_write(
   vim_acl_T acl = NULL;                 /* ACL copied from original file to
                                            backup or new file */
 #endif
-  int write_undo_file = false;
+  bool write_undo_file = false;
   context_sha256_T sha_ctx;
   unsigned int bkc = get_bkc_value(buf);
 
@@ -2299,12 +2299,12 @@ buf_write(
 
   {
     aco_save_T aco;
-    int buf_ffname = false;
-    int buf_sfname = false;
-    int buf_fname_f = false;
-    int buf_fname_s = false;
-    int did_cmd = false;
-    int nofile_err = false;
+    bool buf_ffname = false;
+    bool buf_sfname = false;
+    bool buf_fname_f = false;
+    bool buf_fname_s = false;
+    bool did_cmd = false;
+    bool nofile_err = false;
     int empty_memline = (buf->b_ml.ml_mfp == NULL);
     bufref_T bufref;
 
@@ -2687,7 +2687,7 @@ buf_write(
 
     if (backup_copy) {
       char_u *wp;
-      int some_error = false;
+      bool some_error = false;
       char_u      *dirp;
       char_u      *rootname;
       char_u      *p;
@@ -4093,7 +4093,7 @@ static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
 static bool need_conversion(const char_u *fenc)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int same_encoding;
+  bool same_encoding;
   int enc_flags;
   int fenc_flags;
 
@@ -4232,7 +4232,7 @@ static int make_bom(char_u *buf, char_u *name)
 /// When "force" is false: Only try to shorten absolute file names.
 /// For buffers that have buftype "nofile" or "scratch": never change the file
 /// name.
-void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
+void shorten_buf_fname(buf_T *buf, char_u *dirname, bool force)
 {
   char_u      *p;
 
@@ -4687,7 +4687,7 @@ int vim_rename(const char_u *from, const char_u *to)
   return 0;
 }
 
-static int already_warned = false;
+static bool already_warned = false;
 
 // Check if any not hidden buffer has been changed.
 // Postpone the check if there are characters in the stuff buffer, a global
@@ -4695,7 +4695,7 @@ static int already_warned = false;
 // busy.
 // Returns true if some message was written (screen should be redrawn and
 // cursor positioned).
-int
+bool
 check_timestamps(
     int focus                      // called for GUI focus event
 )
@@ -5442,7 +5442,7 @@ char_u * file_pat_to_reg_pat(
   char_u      *reg_pat;
   const char_u *p;
   int nested = 0;
-  int add_dollar = true;
+  bool add_dollar = true;
 
   if (allow_dirs != NULL) {
     *allow_dirs = false;

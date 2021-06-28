@@ -96,7 +96,7 @@ static int typeahead_char = 0;          // typeahead char that's not flushed
 // when block_redo is true redo buffer will not be changed
 // used by edit() to repeat insertions and 'V' command for redoing
 //
-static int block_redo = false;
+static bool block_redo = false;
 
 // Make a hash value for a mapping.
 // "mode" is the lower 4 bits of the State for the mapping.
@@ -349,7 +349,7 @@ static void add_char_buff(buffheader_T *buf, int c)
  * If advance == true go to the next char.
  * No translation is done K_SPECIAL and CSI are escaped.
  */
-static int read_readbuffers(int advance)
+static int read_readbuffers(bool advance)
 {
   int c;
 
@@ -398,7 +398,7 @@ static void start_stuff(void)
 //
 // Return true if the stuff buffer is empty.
 //
-int stuff_empty(void)
+bool stuff_empty(void)
 {
   return (readbuf1.bh_first.b_next == NULL && readbuf2.bh_first.b_next == NULL);
 }
@@ -407,7 +407,7 @@ int stuff_empty(void)
 // Return true if readbuf1 is empty.  There may still be redo characters in
 // redbuf2.
 //
-int readbuf1_empty(void)
+bool readbuf1_empty(void)
 {
   return (readbuf1.bh_first.b_next == NULL);
 }
@@ -1013,7 +1013,7 @@ bool typebuf_changed(
 // Return true if there are no characters in the typeahead buffer that have
 // not been typed (result from a mapping or come from ":normal").
 //
-int typebuf_typed(void)
+bool typebuf_typed(void)
 {
   return typebuf.tb_maplen == 0;
 }
@@ -1359,7 +1359,7 @@ void close_all_scripts(void)
 //
 // Return true when reading keys from a script file.
 //
-int using_script(void)
+bool using_script(void)
 {
   return scriptin[curscript] != NULL;
 }
@@ -1624,7 +1624,7 @@ int vpeekc_any(void)
  * Call vpeekc() without causing anything to be mapped.
  * Return true if a character is available, false otherwise.
  */
-int char_avail(void)
+bool char_avail(void)
 {
   int retval;
 
@@ -2442,7 +2442,7 @@ int inchar(
 )
 {
   int len = 0;  // Init for GCC.
-  int retesc = false;  // Return ESC with gotint.
+  bool retesc = false;  // Return ESC with gotint.
   const int tb_change_cnt = typebuf.tb_change_cnt;
 
   if (wait_time == -1L || wait_time > 100L) {
@@ -2765,8 +2765,8 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   char_u      *p;
   int n;
   int len = 0;  // init for GCC
-  int did_it = false;
-  int did_local = false;
+  bool did_it = false;
+  bool did_local = false;
   int round;
   int retval = 0;
   int hash;
@@ -3234,7 +3234,7 @@ int get_map_mode(char_u **cmdp, bool forceit)
  * Clear all mappings or abbreviations.
  * 'abbr' should be false for mappings, true for abbreviations.
  */
-void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, int abbr)
+void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, bool abbr)
 {
   int mode;
   int local;

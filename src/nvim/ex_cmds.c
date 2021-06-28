@@ -715,7 +715,7 @@ sortend:
 void ex_retab(exarg_T *eap)
 {
   linenr_T lnum;
-  int got_tab = false;
+  bool got_tab = false;
   long num_spaces = 0;
   long num_tabs;
   long len;
@@ -726,7 +726,7 @@ void ex_retab(exarg_T *eap)
   long old_len;
   char_u      *ptr;
   char_u      *new_line = (char_u *)1;  // init to non-NULL
-  int did_undo;                         // called u_save for current line
+  bool did_undo;                         // called u_save for current line
   long *new_vts_array = NULL;
   char_u *new_ts_str;  // string value of tab argument
 
@@ -1107,7 +1107,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit,
   char_u              *p;
   char_u              *trailarg;
   int len;
-  int scroll_save = msg_scroll;
+  bool scroll_save = msg_scroll;
 
   //
   // Disallow shell commands from .exrc and .vimrc in current directory for
@@ -1628,7 +1628,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
  */
 void print_line(linenr_T lnum, int use_number, int list)
 {
-  int save_silent = silent_mode;
+  bool save_silent = silent_mode;
 
   // apply :filter /pat/
   if (message_filtered(ml_get(lnum))) {
@@ -1758,7 +1758,7 @@ void ex_write(exarg_T *eap)
  */
 int do_write(exarg_T *eap)
 {
-  int other;
+  bool other;
   char_u      *fname = NULL;            /* init to shut up gcc */
   char_u      *ffname;
   int retval = FAIL;
@@ -2088,7 +2088,7 @@ void do_wqall(exarg_T *eap)
  * Check the 'write' option.
  * Return true and give a message when it's not st.
  */
-int not_writing(void)
+bool not_writing(void)
 {
   if (p_write) {
     return false;
@@ -2102,7 +2102,7 @@ int not_writing(void)
  * read-only). Ask for overruling in a dialog. Return true and give an error
  * message when the buffer is readonly.
  */
-static int check_readonly(int *forceit, buf_T *buf)
+static bool check_readonly(int *forceit, buf_T *buf)
 {
   /* Handle a file being readonly when the 'readonly' option is set or when
    * the file exists and permissions are read-only. */
@@ -2253,12 +2253,12 @@ int do_ecmd(
     win_T *oldwin
 )
 {
-  int other_file;                       // true if editing another file
-  int oldbuf;                           // true if using existing buffer
-  int auto_buf = false;                 // true if autocommands brought us
-                                        // into the buffer unexpectedly
+  bool other_file;                       // true if editing another file
+  bool oldbuf;                           // true if using existing buffer
+  bool auto_buf = false;                 // true if autocommands brought us
+                                         // into the buffer unexpectedly
   char_u      *new_name = NULL;
-  int did_set_swapcommand = false;
+  bool did_set_swapcommand = false;
   buf_T       *buf;
   bufref_T     bufref;
   bufref_T     old_curbuf;
@@ -2271,7 +2271,7 @@ int do_ecmd(
   int solcol = -1;
   pos_T       *pos;
   char_u      *command = NULL;
-  int did_get_winopts = false;
+  bool did_get_winopts = false;
   int readfile_flags = 0;
   bool did_inc_redrawing_disabled = false;
   long *so_ptr = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
@@ -3152,7 +3152,7 @@ void ex_z(exarg_T *eap)
  * If so, give an error message and return true.
  * Otherwise, return false.
  */
-int check_secure(void)
+bool check_secure(void)
 {
   if (secure) {
     secure = 2;
@@ -3395,8 +3395,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   int delimiter;
   bool has_second_delim = false;
   int sublen;
-  int got_quit = false;
-  int got_match = false;
+  bool got_quit = false;
+  bool got_match = false;
   int which_pat;
   char_u *cmd = eap->arg;
   linenr_T first_line = 0;  // first changed line
@@ -3585,10 +3585,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
       colnr_T prev_matchcol = MAXCOL;
       char_u      *new_end, *new_start = NULL;
       char_u      *p1;
-      int did_sub = false;
+      bool did_sub = false;
       int lastone;
       long nmatch_tl = 0;               // nr of lines matched below lnum
-      int do_again;                     // do it again after joining lines
+      bool do_again;                     // do it again after joining lines
       bool skip_match = false;
       linenr_T sub_firstlnum;           // nr of first sub line
 

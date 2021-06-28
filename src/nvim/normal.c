@@ -8149,7 +8149,7 @@ static void nv_event(cmdarg_T *cap)
 /*
  * Return true when 'mousemodel' is set to "popup" or "popup_setpos".
  */
-static int mouse_model_popup(void)
+static bool mouse_model_popup(void)
 {
   return p_mousem[0] == 'p';
 }
