@@ -571,7 +571,7 @@ static linenr_T find_longest_lnum(void)
 }
 
 ///
-/// Do a horizontal scroll.  Return TRUE if the cursor moved, FALSE otherwise.
+/// Do a horizontal scroll.  Return true if the cursor moved, false otherwise.
 ///
 bool mouse_scroll_horiz(int dir)
 {

@@ -779,7 +779,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   int movelen = oldlen - col - count + 1;  // includes trailing NUL
   if (movelen <= 1) {
     // If we just took off the last character of a non-blank line, and
-    // fixpos is TRUE, we don't want to end up positioned at the NUL,
+    // fixpos is true, we don't want to end up positioned at the NUL,
     // unless "restart_edit" is set or 'virtualedit' contains "onemore".
     if (col > 0 && fixpos && restart_edit == 0
         && (ve_flags & VE_ONEMORE) == 0

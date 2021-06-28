@@ -542,7 +542,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 
   /*
    * Free all things allocated for this buffer.
-   * Also calls the "BufDelete" autocommands when del_buf is TRUE.
+   * Also calls the "BufDelete" autocommands when del_buf is true.
    */
   /* Remember if we are closing the current buffer.  Restore the number of
    * windows, so that autocommands in buf_freeall() don't get confused. */
@@ -5046,7 +5046,7 @@ do_arg_all(
   xfree(opened);
 }
 
-// Return TRUE if "buf" is a prompt buffer.
+// Return true if "buf" is a prompt buffer.
 int bt_prompt(buf_T *buf)
 {
     return buf != NULL && buf->b_p_bt[0] == 'p';

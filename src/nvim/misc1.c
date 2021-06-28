@@ -78,7 +78,7 @@ int get_leader_len(char_u *line, char_u **flags,
 {
   int i, j;
   int result;
-  int got_com = FALSE;
+  int got_com = false;
   int found_one;
   char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
   char_u      *string;                  /* pointer to comment string */
@@ -98,7 +98,7 @@ int get_leader_len(char_u *line, char_u **flags,
     /*
      * scan through the 'comments' option for a match
      */
-    found_one = FALSE;
+    found_one = false;
     for (list = curbuf->b_p_com; *list; ) {
       /* Get one option part into part_buf[].  Advance "list" to next
        * one.  Put "string" at start of string.  */
@@ -167,7 +167,7 @@ int get_leader_len(char_u *line, char_u **flags,
 
       if (middle_match_len == 0)
         i += j;
-      found_one = TRUE;
+      found_one = true;
       break;
     }
 
@@ -177,7 +177,7 @@ int get_leader_len(char_u *line, char_u **flags,
       if (!got_com && flags != NULL)
         *flags = saved_flags;
       i += middle_match_len;
-      found_one = TRUE;
+      found_one = true;
     }
 
     /* No match found, stop scanning. */
@@ -194,7 +194,7 @@ int get_leader_len(char_u *line, char_u **flags,
       result = i;
 
     /* If this comment doesn't nest, stop here. */
-    got_com = TRUE;
+    got_com = true;
     if (vim_strchr(part_buf, COM_NEST) == NULL)
       break;
   }
@@ -228,7 +228,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
     /*
      * scan through the 'comments' option for a match
      */
-    found_one = FALSE;
+    found_one = false;
     for (list = curbuf->b_p_com; *list; ) {
       char_u *flags_save = list;
 
@@ -288,7 +288,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       /*
        * We have found a match, stop searching.
        */
-      found_one = TRUE;
+      found_one = true;
 
       if (flags)
         *flags = flags_save;
@@ -409,7 +409,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   unsigned int col;
   int width;
 
-  s = ml_get_buf(wp->w_buffer, lnum, FALSE);
+  s = ml_get_buf(wp->w_buffer, lnum, false);
   if (*s == NUL)                /* empty line */
     return 1;
   col = win_linetabsize(wp, s, MAXCOL);
@@ -539,7 +539,7 @@ void check_status(buf_T *buf)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf && wp->w_status_height) {
-      wp->w_redr_status = TRUE;
+      wp->w_redr_status = true;
       if (must_redraw < VALID) {
         must_redraw = VALID;
       }
@@ -593,7 +593,7 @@ int ask_yesno(const char *const str, const bool direct)
 }
 
 /*
- * Return TRUE if "c" is a mouse key.
+ * Return true if "c" is a mouse key.
  */
 int is_mouse_key(int c)
 {
@@ -721,7 +721,7 @@ get_number (
   int typed = 0;
 
   if (mouse_used != NULL)
-    *mouse_used = FALSE;
+    *mouse_used = false;
 
   /* When not printing messages, the user won't know what to type, return a
    * zero (as if CR was hit). */
@@ -743,15 +743,15 @@ get_number (
       }
       n /= 10;
     } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
-      *mouse_used = TRUE;
+      *mouse_used = true;
       n = mouse_row + 1;
       break;
     } else if (n == 0 && c == ':' && colon) {
       stuffcharReadbuff(':');
       if (!exmode_active)
         cmdline_row = msg_row;
-      skip_redraw = TRUE;           /* skip redraw once */
-      do_redraw = FALSE;
+      skip_redraw = true;           /* skip redraw once */
+      do_redraw = false;
       break;
     } else if (c == Ctrl_C || c == ESC || c == 'q') {
       n = 0;
@@ -792,7 +792,7 @@ int prompt_for_number(int *mouse_used)
   // May show different mouse shape.
   setmouse();
 
-  i = get_number(TRUE, mouse_used);
+  i = get_number(true, mouse_used);
   if (KeyTyped) {
     // don't call wait_return() now
     if (msg_row > 0) {
@@ -849,7 +849,7 @@ void msgmore(long n)
     }
     if (msg(msg_buf)) {
       set_keep_msg(msg_buf, 0);
-      keep_msg_more = TRUE;
+      keep_msg_more = true;
     }
   }
 }
@@ -917,13 +917,13 @@ void free_users(void)
  */
 static void init_users(void)
 {
-  static int lazy_init_done = FALSE;
+  static int lazy_init_done = false;
 
   if (lazy_init_done) {
     return;
   }
 
-  lazy_init_done = TRUE;
+  lazy_init_done = true;
   
   os_get_usernames(&ga_users);
 }
@@ -1171,7 +1171,7 @@ void FreeWild(int count, char_u **files)
 }
 
 /*
- * Return TRUE when need to go to Insert mode because of 'insertmode'.
+ * Return true when need to go to Insert mode because of 'insertmode'.
  * Don't do this when still processing a command or a mapping.
  * Don't do this when inside a ":normal" command.
  */
