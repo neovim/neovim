@@ -2011,10 +2011,10 @@ void ex_version(exarg_T *eap)
 
 /// Output a string for the version message.  If it's going to wrap, output a
 /// newline, unless the message is too long to fit on the screen anyway.
-/// When "wrap" is TRUE wrap the string in [].
+/// When "wrap" is true wrap the string in [].
 /// @param s
 /// @param wrap
-static void version_msg_wrap(char_u *s, int wrap)
+static void version_msg_wrap(char_u *s, bool wrap)
 {
   int len = (int)vim_strsize(s) + (wrap ? 2 : 0);
 
@@ -2195,7 +2195,7 @@ void maybe_intro_message(void)
       && (curbuf->b_fname == NULL)
       && (firstwin->w_next == NULL)
       && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {
-    intro_message(FALSE);
+    intro_message(false);
   }
 }
 
@@ -2203,8 +2203,8 @@ void maybe_intro_message(void)
 /// Only used when starting Vim on an empty file, without a file name.
 /// Or with the ":intro" command (for Sven :-).
 ///
-/// @param colon TRUE for ":intro"
-void intro_message(int colon)
+/// @param colon true for ":intro"
+void intro_message(bool colon)
 {
   int i;
   long row;
@@ -2320,7 +2320,7 @@ static void do_intro_line(long row, char_u *mesg, int attr)
 void ex_intro(exarg_T *eap)
 {
   screenclear();
-  intro_message(TRUE);
-  wait_return(TRUE);
+  intro_message(true);
+  wait_return(true);
 }
 

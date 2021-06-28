@@ -1745,7 +1745,7 @@ static int do_arglist(char_u *str, int what, int after, bool will_edit)
   char_u      **exp_files;
   char_u      *p;
   int match;
-  int arg_escaped = true;
+  bool arg_escaped = true;
 
   // Set default argument for ":argadd" command.
   if (what == AL_ADD && *str == NUL) {

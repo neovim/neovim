@@ -107,7 +107,7 @@ static garray_T ga_loaded = { 0, 0, sizeof(char_u *), 4, NULL };
  * Info used by a ":for" loop.
  */
 typedef struct {
-  int fi_semicolon;             // TRUE if ending in '; var]'
+  int fi_semicolon;             // true if ending in '; var]'
   int fi_varcount;              // nr of variables in the list
   listwatch_T fi_lw;            // keep an eye on the item used.
   list_T      *fi_list;         // list being used
@@ -526,7 +526,7 @@ var_redir_start(
   /* check if we can write to the variable: set it to or append an empty
    * string */
   save_emsg = did_emsg;
-  did_emsg = FALSE;
+  did_emsg = false;
   tv.v_type = VAR_STRING;
   tv.vval.v_string = (char_u *)"";
   if (append) {
@@ -655,7 +655,7 @@ void eval_diff(const char *const origfile, const char *const newfile,
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_NEW, newfile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool(p_dex, &err, NULL, FALSE);
+  (void)eval_to_bool(p_dex, &err, NULL, false);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_NEW, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
@@ -669,7 +669,7 @@ void eval_patch(const char *const origfile, const char *const difffile,
   set_vim_var_string(VV_FNAME_IN, origfile, -1);
   set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
-  (void)eval_to_bool(p_pex, &err, NULL, FALSE);
+  (void)eval_to_bool(p_pex, &err, NULL, false);
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_DIFF, NULL, -1);
   set_vim_var_string(VV_FNAME_OUT, NULL, -1);
@@ -677,10 +677,10 @@ void eval_patch(const char *const origfile, const char *const difffile,
 
 /*
  * Top level evaluation function, returning a boolean.
- * Sets "error" to TRUE if there was an error.
- * Return TRUE or FALSE.
+ * Sets "error" to true if there was an error.
+ * Return true or false.
  */
-int
+bool
 eval_to_bool(
     char_u *arg,
     bool *error,
@@ -834,16 +834,16 @@ int skip_expr(char_u **pp)
   typval_T rettv;
 
   *pp = skipwhite(*pp);
-  return eval1(pp, &rettv, FALSE);
+  return eval1(pp, &rettv, false);
 }
 
 /*
  * Top level evaluation function, returning a string.
- * When "convert" is TRUE convert a List into a sequence of lines and convert
+ * When "convert" is true convert a List into a sequence of lines and convert
  * a Float to a String.
  * Return pointer to allocated memory, or NULL for failure.
  */
-char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
+char_u *eval_to_string(char_u *arg, char_u **nextcmd, bool convert)
 {
   typval_T tv;
   char *retval;
@@ -877,9 +877,9 @@ char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
 
 /*
  * Call eval_to_string() without using current local variables and using
- * textlock.  When "use_sandbox" is TRUE use the sandbox.
+ * textlock.  When "use_sandbox" is true use the sandbox.
  */
-char_u *eval_to_string_safe(char_u *arg, char_u **nextcmd, int use_sandbox)
+char_u *eval_to_string_safe(char_u *arg, char_u **nextcmd, bool use_sandbox)
 {
   char_u      *retval;
   funccal_entry_T funccal_entry;
@@ -1376,7 +1376,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
   int semicolon = 0;
   char_u op[2];
   char_u      *argend;
-  int first = TRUE;
+  int first = true;
 
   argend = (char_u *)skip_var_list(arg, &var_count, &semicolon);
   if (argend == NULL) {
@@ -1602,9 +1602,9 @@ static const char_u *skip_var_one(const char_u *arg)
 
 /*
  * List variables for hashtab "ht" with prefix "prefix".
- * If "empty" is TRUE also list NULL strings as empty strings.
+ * If "empty" is true also list NULL strings as empty strings.
  */
-void list_hashtable_vars(hashtab_T *ht, const char *prefix, int empty,
+void list_hashtable_vars(hashtab_T *ht, const char *prefix, bool empty,
                          int *first)
 {
   hashitem_T  *hi;
@@ -1686,7 +1686,7 @@ static void list_script_vars(int *first)
  */
 static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
 {
-  int error = FALSE;
+  bool error = false;
   int len;
   const char *name;
   const char *name_start;
@@ -1714,7 +1714,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
           EMSG2(_(e_invarg2), arg);
           break;
         }
-        error = TRUE;
+        error = true;
       } else {
         if (tofree != NULL) {
           name = tofree;
@@ -1987,7 +1987,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv,
   dictitem_T  *v;
   typval_T var1;
   typval_T var2;
-  int empty1 = FALSE;
+  bool empty1 = false;
   listitem_T  *ni;
   hashtab_T *ht = NULL;
   int quiet = flags & GLV_QUIET;
@@ -2478,7 +2478,7 @@ notify:
 /*
  * Evaluate the expression used in a ":for var in expr" command.
  * "arg" points to "var".
- * Set "*errp" to TRUE for an error, FALSE otherwise;
+ * Set "*errp" to true for an error, false otherwise;
  * Return a pointer that holds the info.  Null when there is an error.
  */
 void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
@@ -2532,7 +2532,7 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
 /*
  * Use the first item in a ":for" list.  Advance to the next.
  * Assign the values to the variable (list).  "arg" points to the first one.
- * Return TRUE when a valid item was found, FALSE when at end of list or
+ * Return true when a valid item was found, false when at end of list or
  * something wrong.
  */
 bool next_for_item(void *fi_void, char_u *arg)
@@ -2569,7 +2569,7 @@ void free_for_info(void *fi_void)
 void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
   FUNC_ATTR_NONNULL_ALL
 {
-  int got_eq = FALSE;
+  bool got_eq = false;
   int c;
   char_u      *p;
 
@@ -2608,7 +2608,7 @@ void set_context_for_expression(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
       // environment variable
       xp->xp_context = EXPAND_ENV_VARS;
     } else if (c == '=') {
-      got_eq = TRUE;
+      got_eq = true;
       xp->xp_context = EXPAND_EXPRESSION;
     } else if (c == '#'
                && xp->xp_context == EXPAND_EXPRESSION) {
@@ -3123,9 +3123,9 @@ char_u *get_user_var_name(expand_T *xp, int idx)
 
 // TODO(ZyX-I): move to eval/expressions
 
-/// Return TRUE if "pat" matches "text".
+/// Return true if "pat" matches "text".
 /// Does not use 'cpo' and always uses 'magic'.
-static int pattern_match(char_u *pat, char_u *text, bool ic)
+static bool pattern_match(char_u *pat, char_u *text, bool ic)
 {
   int matches = 0;
   regmatch_T regmatch;
@@ -3145,20 +3145,20 @@ static int pattern_match(char_u *pat, char_u *text, bool ic)
 
 // TODO(ZyX-I): move to eval/expressions
 
-/*
- * The "evaluate" argument: When FALSE, the argument is only parsed but not
- * executed.  The function may return OK, but the rettv will be of type
- * VAR_UNKNOWN.  The function still returns FAIL for a syntax error.
- */
+//
+// The "evaluate" argument: When false, the argument is only parsed but not
+// executed.  The function may return OK, but the rettv will be of type
+// VAR_UNKNOWN.  The function still returns FAIL for a syntax error.
+//
 
 /*
  * Handle zero level expression.
  * This calls eval1() and handles error message and nextcmd.
- * Put the result in "rettv" when returning OK and "evaluate" is TRUE.
+ * Put the result in "rettv" when returning OK and "evaluate" is true.
  * Note: "rettv.v_lock" is not set.
  * Return OK or FAIL.
  */
-int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
+int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, bool evaluate)
 {
   int ret;
   char_u      *p;
@@ -3198,7 +3198,7 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
  */
 int eval1(char_u **arg, typval_T *rettv, int evaluate)
 {
-  int result;
+  bool result;
   typval_T var2;
 
   /*
@@ -3208,7 +3208,7 @@ int eval1(char_u **arg, typval_T *rettv, int evaluate)
     return FAIL;
 
   if ((*arg)[0] == '?') {
-    result = FALSE;
+    result = false;
     if (evaluate) {
       bool error = false;
 
@@ -3272,7 +3272,7 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   long result;
-  int first;
+  bool first;
   bool error = false;
 
   /*
@@ -3284,8 +3284,8 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Repeat until there is no following "||".
    */
-  first = TRUE;
-  result = FALSE;
+  first = true;
+  result = false;
   while ((*arg)[0] == '|' && (*arg)[1] == '|') {
     if (evaluate && first) {
       if (tv_get_number_chk(rettv, &error) != 0) {
@@ -3341,7 +3341,7 @@ static int eval3(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
   long result;
-  int first;
+  bool first;
   bool error = false;
 
   /*
@@ -3353,8 +3353,8 @@ static int eval3(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Repeat until there is no following "&&".
    */
-  first = TRUE;
-  result = TRUE;
+  first = true;
+  result = true;
   while ((*arg)[0] == '&' && (*arg)[1] == '&') {
     if (evaluate && first) {
       if (tv_get_number_chk(rettv, &error) == 0) {
@@ -3530,8 +3530,9 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Get the first variable.
    */
-  if (eval6(arg, rettv, evaluate, FALSE) == FAIL)
+  if (eval6(arg, rettv, evaluate, false) == FAIL) {
     return FAIL;
+  }
 
   /*
    * Repeat computing, until no '+', '-' or '.' is following.
@@ -3714,8 +3715,9 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
      * Get the second variable.
      */
     *arg = skipwhite(*arg + 1);
-    if (eval7(arg, &var2, evaluate, FALSE) == FAIL)
+    if (eval7(arg, &var2, evaluate, false) == FAIL) {
       return FAIL;
+    }
 
     if (evaluate) {
       if (var2.v_type == VAR_FLOAT) {
@@ -3846,7 +3848,7 @@ static int eval7(
   case '9':
   {
     char_u *p = skipdigits(*arg + 1);
-    int get_float = false;
+    bool get_float = false;
 
     // We accept a float when the format matches
     // "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
@@ -4089,7 +4091,7 @@ eval_index(
   bool empty2 = false;
   long n1, n2 = 0;
   ptrdiff_t len = -1;
-  int range = false;
+  bool range = false;
   char_u      *key = NULL;
 
   switch (rettv->v_type) {
@@ -4160,7 +4162,7 @@ eval_index(
      * Get the second variable from inside the [:].
      */
     if (**arg == ':') {
-      range = TRUE;
+      range = true;
       *arg = skipwhite(*arg + 1);
       if (**arg == ']') {
         empty2 = true;
@@ -5984,7 +5986,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
     // We reset "did_emsg" to be able to detect whether an error
     // occurred during evaluation of the expression.
     save_did_emsg = did_emsg;
-    did_emsg = FALSE;
+    did_emsg = false;
 
     prepare_vimvar(VV_KEY, &save_key);
     if (argvars[0].v_type == VAR_DICT) {
@@ -8011,7 +8013,7 @@ static char_u *make_expanded_name(const char_u *in_start, char_u *expr_start,
   c1 = *in_end;
   *in_end = NUL;
 
-  temp_result = eval_to_string(expr_start + 1, &nextcmd, FALSE);
+  temp_result = eval_to_string(expr_start + 1, &nextcmd, false);
   if (temp_result != NULL && nextcmd == NULL) {
     retval = xmalloc(STRLEN(temp_result) + (expr_start - in_start)
                      + (in_end - expr_end) + 1);
@@ -8041,20 +8043,20 @@ static char_u *make_expanded_name(const char_u *in_start, char_u *expr_start,
   return retval;
 }
 
-/*
- * Return TRUE if character "c" can be used in a variable or function name.
- * Does not include '{' or '}' for magic braces.
- */
-int eval_isnamec(int c)
+//
+// Return true if character "c" can be used in a variable or function name.
+// Does not include '{' or '}' for magic braces.
+//
+bool eval_isnamec(int c)
 {
   return ASCII_ISALNUM(c) || c == '_' || c == ':' || c == AUTOLOAD_CHAR;
 }
 
-/*
- * Return TRUE if character "c" can be used as the first character in a
- * variable or function name (excluding '{' and '}').
- */
-int eval_isnamec1(int c)
+//
+// Return true if character "c" can be used as the first character in a
+// variable or function name (excluding '{' and '}').
+//
+bool eval_isnamec1(int c)
 {
   return ASCII_ISALPHA(c) || c == '_';
 }
@@ -8104,9 +8106,9 @@ void set_vim_var_char(int c)
 
 /*
  * Set v:count to "count" and v:count1 to "count1".
- * When "set_prevcount" is TRUE first set v:prevcount from v:count.
+ * When "set_prevcount" is true first set v:prevcount from v:count.
  */
-void set_vcount(long count, long count1, int set_prevcount)
+void set_vcount(long count, long count1, bool set_prevcount)
 {
   if (set_prevcount)
     vimvars[VV_PREVCOUNT].vv_nr = vimvars[VV_COUNT].vv_nr;
@@ -8782,13 +8784,13 @@ void unref_var_dict(dict_T *dict)
  */
 void vars_clear(hashtab_T *ht)
 {
-  vars_clear_ext(ht, TRUE);
+  vars_clear_ext(ht, true);
 }
 
-/*
- * Like vars_clear(), but only free the value if "free_val" is TRUE.
- */
-void vars_clear_ext(hashtab_T *ht, int free_val)
+//
+// Like vars_clear(), but only free the value if "free_val" is true.
+//
+void vars_clear_ext(hashtab_T *ht, bool free_val)
 {
   int todo;
   hashitem_T  *hi;
@@ -8877,7 +8879,7 @@ static void list_one_var_a(const char *prefix, const char *name,
   }
   if (*first) {
     msg_clr_eos();
-    *first = FALSE;
+    *first = false;
   }
 }
 
@@ -9490,7 +9492,7 @@ void func_do_profile(ufunc_T *fp)
     fp->uf_prof_initialized = true;
   }
 
-  fp->uf_profiling = TRUE;
+  fp->uf_profiling = true;
 }
 
 /*
@@ -9550,7 +9552,7 @@ void func_dump_profile(FILE *fd)
           if (FUNCLINE(fp, i) == NULL)
             continue;
           prof_func_line(fd, fp->uf_tml_count[i],
-              &fp->uf_tml_total[i], &fp->uf_tml_self[i], TRUE);
+                         &fp->uf_tml_total[i], &fp->uf_tml_self[i], true);
           fprintf(fd, "%s\n", FUNCLINE(fp, i));
         }
         fprintf(fd, "\n");
@@ -9560,11 +9562,11 @@ void func_dump_profile(FILE *fd)
 
   if (st_len > 0) {
     qsort((void *)sorttab, (size_t)st_len, sizeof(ufunc_T *),
-        prof_total_cmp);
-    prof_sort_list(fd, sorttab, st_len, "TOTAL", FALSE);
+          prof_total_cmp);
+    prof_sort_list(fd, sorttab, st_len, "TOTAL", false);
     qsort((void *)sorttab, (size_t)st_len, sizeof(ufunc_T *),
-        prof_self_cmp);
-    prof_sort_list(fd, sorttab, st_len, "SELF", TRUE);
+          prof_self_cmp);
+    prof_sort_list(fd, sorttab, st_len, "SELF", true);
   }
 
   xfree(sorttab);
@@ -9749,8 +9751,9 @@ void func_line_exec(void *cookie)
   funccall_T  *fcp = (funccall_T *)cookie;
   ufunc_T     *fp = fcp->func;
 
-  if (fp->uf_profiling && fp->uf_tml_idx >= 0)
-    fp->uf_tml_execed = TRUE;
+  if (fp->uf_profiling && fp->uf_tml_idx >= 0) {
+    fp->uf_tml_execed = true;
+  }
 }
 
 /*
@@ -10028,12 +10031,14 @@ repeat:
     pbuf = NULL;
     // Need full path first (use expand_env() to remove a "~/")
     if (!has_fullname) {
-      if (c == '.' && **fnamep == '~')
+      if (c == '.' && **fnamep == '~') {
         p = pbuf = expand_env_save(*fnamep);
-      else
-        p = pbuf = (char_u *)FullName_save((char *)*fnamep, FALSE);
-    } else
+      } else {
+        p = pbuf = (char_u *)FullName_save((char *)*fnamep, false);
+      }
+    } else {
       p = *fnamep;
+    }
 
     has_fullname = 0;
 
@@ -10161,7 +10166,7 @@ repeat:
           || (src[*usedlen + 1] == 'g' && src[*usedlen + 2] == 's'))) {
     int sep;
     char_u      *flags;
-    int didit = FALSE;
+    bool didit = false;
 
     flags = (char_u *)"";
     s = src + *usedlen + 2;
@@ -10188,7 +10193,7 @@ repeat:
           *fnamelen = STRLEN(s);
           xfree(*bufp);
           *bufp = s;
-          didit = TRUE;
+          didit = true;
           xfree(sub);
           xfree(str);
         }

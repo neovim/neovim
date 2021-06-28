@@ -67,7 +67,7 @@ FileDescriptor *scriptin[NSCRIPT] = { NULL };
  * The bytes are stored like in the typeahead buffer:
  * - K_SPECIAL introduces a special key (two more bytes follow).  A literal
  *   K_SPECIAL is stored as K_SPECIAL KS_SPECIAL KE_FILLER.
- * - CSI introduces a GUI termcap code (also when gui.in_use is FALSE,
+ * - CSI introduces a GUI termcap code (also when gui.in_use is false,
  *   otherwise switching the GUI on would make mappings invalid).
  *   A literal CSI is stored as CSI KS_EXTRA KE_CSI.
  * These translations are also done on multi-byte characters!
@@ -92,11 +92,11 @@ static buffheader_T readbuf2 = { { NULL, { NUL } }, NULL, 0, 0 };
 
 static int typeahead_char = 0;          // typeahead char that's not flushed
 
-/*
- * when block_redo is TRUE redo buffer will not be changed
- * used by edit() to repeat insertions and 'V' command for redoing
- */
-static int block_redo = FALSE;
+//
+// when block_redo is true redo buffer will not be changed
+// used by edit() to repeat insertions and 'V' command for redoing
+//
+static bool block_redo = false;
 
 // Make a hash value for a mapping.
 // "mode" is the lower 4 bits of the State for the mapping.
@@ -214,7 +214,7 @@ char_u *get_recorded(void)
   char_u      *p;
   size_t len;
 
-  p = get_buffcont(&recordbuff, TRUE);
+  p = get_buffcont(&recordbuff, true);
   free_buff(&recordbuff);
 
   /*
@@ -243,7 +243,7 @@ char_u *get_recorded(void)
  */
 char_u *get_inserted(void)
 {
-  return get_buffcont(&redobuff, FALSE);
+  return get_buffcont(&redobuff, false);
 }
 
 /// Add string after the current block of the given buffer
@@ -346,10 +346,10 @@ static void add_char_buff(buffheader_T *buf, int c)
 /*
  * Get one byte from the read buffers.  Use readbuf1 one first, use readbuf2
  * if that one is empty.
- * If advance == TRUE go to the next char.
+ * If advance == true go to the next char.
  * No translation is done K_SPECIAL and CSI are escaped.
  */
-static int read_readbuffers(int advance)
+static int read_readbuffers(bool advance)
 {
   int c;
 
@@ -395,19 +395,19 @@ static void start_stuff(void)
   }
 }
 
-/*
- * Return TRUE if the stuff buffer is empty.
- */
-int stuff_empty(void)
+//
+// Return true if the stuff buffer is empty.
+//
+bool stuff_empty(void)
 {
   return (readbuf1.bh_first.b_next == NULL && readbuf2.bh_first.b_next == NULL);
 }
 
-/*
- * Return TRUE if readbuf1 is empty.  There may still be redo characters in
- * redbuf2.
- */
-int readbuf1_empty(void)
+//
+// Return true if readbuf1 is empty.  There may still be redo characters in
+// redbuf2.
+//
+bool readbuf1_empty(void)
 {
   return (readbuf1.bh_first.b_next == NULL);
 }
@@ -430,7 +430,7 @@ void flush_buffers(flush_buffers_T flush_typeahead)
   init_typebuf();
 
   start_stuff();
-  while (read_readbuffers(TRUE) != NUL) {
+  while (read_readbuffers(true) != NUL) {
   }
 
   if (flush_typeahead == FLUSH_MINIMAL) {
@@ -485,7 +485,7 @@ void CancelRedo(void)
     redobuff = old_redobuff;
     old_redobuff.bh_first.b_next = NULL;
     start_stuff();
-    while (read_readbuffers(TRUE) != NUL) {
+    while (read_readbuffers(true) != NUL) {
     }
   }
 }
@@ -820,7 +820,7 @@ int start_redo_ins(void)
 
 void stop_redo_ins(void)
 {
-  block_redo = FALSE;
+  block_redo = false;
 }
 
 /*
@@ -991,15 +991,15 @@ void ins_char_typebuf(int c)
   (void)ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
 }
 
-/*
- * Return TRUE if the typeahead buffer was changed (while waiting for a
- * character to arrive).  Happens when a message was received from a client or
- * from feedkeys().
- * But check in a more generic way to avoid trouble: When "typebuf.tb_buf"
- * changed it was reallocated and the old pointer can no longer be used.
- * Or "typebuf.tb_off" may have been changed and we would overwrite characters
- * that was just added.
- */
+//
+// Return true if the typeahead buffer was changed (while waiting for a
+// character to arrive).  Happens when a message was received from a client or
+// from feedkeys().
+// But check in a more generic way to avoid trouble: When "typebuf.tb_buf"
+// changed it was reallocated and the old pointer can no longer be used.
+// Or "typebuf.tb_off" may have been changed and we would overwrite characters
+// that was just added.
+//
 bool typebuf_changed(
     int tb_change_cnt              // old value of typebuf.tb_change_cnt
 )
@@ -1009,11 +1009,11 @@ bool typebuf_changed(
                                 );
 }
 
-/*
- * Return TRUE if there are no characters in the typeahead buffer that have
- * not been typed (result from a mapping or come from ":normal").
- */
-int typebuf_typed(void)
+//
+// Return true if there are no characters in the typeahead buffer that have
+// not been typed (result from a mapping or come from ":normal").
+//
+bool typebuf_typed(void)
 {
   return typebuf.tb_maplen == 0;
 }
@@ -1161,7 +1161,7 @@ void may_sync_undo(void)
 {
   if ((!(State & (INSERT + CMDLINE)) || arrow_used)
       && scriptin[curscript] == NULL)
-    u_sync(FALSE);
+    u_sync(false);
 }
 
 /*
@@ -1356,10 +1356,10 @@ void close_all_scripts(void)
 
 #endif
 
-/*
- * Return TRUE when reading keys from a script file.
- */
-int using_script(void)
+//
+// Return true when reading keys from a script file.
+//
+bool using_script(void)
 {
   return scriptin[curscript] != NULL;
 }
@@ -1622,9 +1622,9 @@ int vpeekc_any(void)
 
 /*
  * Call vpeekc() without causing anything to be mapped.
- * Return TRUE if a character is available, FALSE otherwise.
+ * Return true if a character is available, false otherwise.
  */
-int char_avail(void)
+bool char_avail(void)
 {
   int retval;
 
@@ -1657,8 +1657,8 @@ void vungetc(int c)
 ///
 /// if "advance" is true (vgetc()):
 ///    Really get the character.
-///    KeyTyped is set to TRUE in the case the user typed the key.
-///    KeyStuffed is TRUE if the character comes from the stuff buffer.
+///    KeyTyped is set to true in the case the user typed the key.
+///    KeyStuffed is true if the character comes from the stuff buffer.
 /// if "advance" is false (vpeekc()):
 ///    Just look whether there is a character available.
 ///    Return NUL if not.
@@ -1709,8 +1709,9 @@ static int vgetorpeek(bool advance)
 
   ++vgetc_busy;
 
-  if (advance)
-    KeyStuffed = FALSE;
+  if (advance) {
+    KeyStuffed = false;
+  }
 
   init_typebuf();
   start_stuff();
@@ -1760,7 +1761,7 @@ static int vgetorpeek(bool advance)
         if (got_int) {
           // flush all input
           c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L);
-          // If inchar() returns TRUE (script file was active) or we
+          // If inchar() returns true (script file was active) or we
           // are inside a mapping, get out of Insert mode.
           // Otherwise we behave like having gotten a CTRL-C.
           // As a result typing CTRL-C in insert mode will
@@ -1856,14 +1857,16 @@ static int vgetorpeek(bool advance)
                 // find the match length of this mapping
                 for (mlen = 1; mlen < typebuf.tb_len; mlen++) {
                   c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
-                  if (nomap > 0)
-                    --nomap;
-                  else if (c2 == K_SPECIAL)
+                  if (nomap > 0) {
+                    nomap--;
+                  } else if (c2 == K_SPECIAL) {
                     nomap = 2;
-                  else
-                    LANGMAP_ADJUST(c2, TRUE);
-                  if (mp->m_keys[mlen] != c2)
+                  } else {
+                    LANGMAP_ADJUST(c2, true);
+                  }
+                  if (mp->m_keys[mlen] != c2) {
                     break;
+                  }
                 }
 
                 /* Don't allow mapping the first byte(s) of a
@@ -2104,9 +2107,10 @@ static int vgetorpeek(bool advance)
               else
                 noremap = REMAP_SKIP;
               i = ins_typebuf(s, noremap,
-                  0, TRUE, cmd_silent || save_m_silent);
-              if (save_m_expr)
+                              0, true, cmd_silent || save_m_silent);
+              if (save_m_expr) {
                 xfree(s);
+              }
             }
             xfree(save_m_keys);
             xfree(save_m_str);
@@ -2440,7 +2444,7 @@ int inchar(
 )
 {
   int len = 0;  // Init for GCC.
-  int retesc = false;  // Return ESC with gotint.
+  bool retesc = false;  // Return ESC with gotint.
   const int tb_change_cnt = typebuf.tb_change_cnt;
 
   if (wait_time == -1L || wait_time > 100L) {
@@ -2485,7 +2489,7 @@ int inchar(
 
   if (read_size <= 0) {  // Did not get a character from script.
     // If we got an interrupt, skip all previously typed characters and
-    // return TRUE if quit reading script file.
+    // return true if quit reading script file.
     // Stop reading typeahead when a single CTRL-C was read,
     // fill_input_buf() returns this when not able to read from stdin.
     // Don't use buf[] here, closescript() may have freed typebuf.tb_buf[]
@@ -2763,8 +2767,8 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   char_u      *p;
   int n;
   int len = 0;  // init for GCC
-  int did_it = false;
-  int did_local = false;
+  bool did_it = false;
+  bool did_local = false;
   int round;
   int retval = 0;
   int hash;
@@ -3182,7 +3186,7 @@ static void validate_maphash(void)
 {
   if (!maphash_valid) {
     memset(maphash, 0, sizeof(maphash));
-    maphash_valid = TRUE;
+    maphash_valid = true;
   }
 }
 
@@ -3230,9 +3234,9 @@ int get_map_mode(char_u **cmdp, bool forceit)
 
 /*
  * Clear all mappings or abbreviations.
- * 'abbr' should be FALSE for mappings, TRUE for abbreviations.
+ * 'abbr' should be false for mappings, true for abbreviations.
  */
-void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, int abbr)
+void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, bool abbr)
 {
   int mode;
   int local;
@@ -3405,8 +3409,8 @@ static void showmap(
   else
     msg_putchar(' ');
 
-  /* Use FALSE below if we only want things like <Up> to show up as such on
-   * the rhs, and not M-x etc, TRUE gets both -- webb */
+  // Use false below if we only want things like <Up> to show up as such on
+  // the rhs, and not M-x etc, true gets both -- webb
   if (*mp->m_str == NUL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
@@ -3814,7 +3818,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
        *
        * Characters 0x000 - 0x100: normal chars, may need CTRL-V,
        * except K_SPECIAL: Becomes K_SPECIAL KS_SPECIAL KE_FILLER
-       * Characters where IS_SPECIAL() == TRUE: key codes, need
+       * Characters where IS_SPECIAL() == true: key codes, need
        * K_SPECIAL. Other characters (with ABBR_OFF): don't use CTRL-V.
        *
        * Character CTRL-] is treated specially - it completes the
@@ -3908,9 +3912,9 @@ eval_map_expr (
   save_cursor = curwin->w_cursor;
   save_msg_col = msg_col;
   save_msg_row = msg_row;
-  p = eval_to_string(expr, NULL, FALSE);
-  --textlock;
-  --ex_normal_lock;
+  p = eval_to_string(expr, NULL, false);
+  textlock--;
+  ex_normal_lock--;
   curwin->w_cursor = save_cursor;
   msg_col = save_msg_col;
   msg_row = save_msg_row;
@@ -4367,7 +4371,7 @@ void add_map(char_u *map, int mode)
 
   p_cpo = (char_u *)"";         // Allow <> notation
   s = vim_strsave(map);
-  (void)do_map(0, s, mode, FALSE);
+  (void)do_map(0, s, mode, false);
   xfree(s);
   p_cpo = cpo_save;
 }

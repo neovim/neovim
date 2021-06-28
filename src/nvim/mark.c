@@ -260,7 +260,7 @@ pos_T *movemark(int count)
         continue;
       }
       if (buflist_getfile(jmp->fmark.fnum, jmp->fmark.mark.lnum,
-              0, FALSE) == FAIL)
+              0, false) == FAIL)
         return (pos_T *)NULL;
       /* Set lnum again, autocommands my have changed it */
       curwin->w_cursor = jmp->fmark.mark;
@@ -298,14 +298,14 @@ pos_T *movechangelist(int count)
 
 /*
  * Find mark "c" in buffer pointed to by "buf".
- * If "changefile" is TRUE it's allowed to edit another file for '0, 'A, etc.
+ * If "changefile" is true it's allowed to edit another file for '0, 'A, etc.
  * If "fnum" is not NULL store the fnum there for '0, 'A etc., don't edit
  * another file.
  * Returns:
  * - pointer to pos_T if found.  lnum is 0 when mark not set, -1 when mark is
  *   in another file which can't be gotten. (caller needs to check lnum!)
  * - NULL if there is no mark called 'c'.
- * - -1 if mark is in other file and jumped there (only if changefile is TRUE)
+ * - -1 if mark is in other file and jumped there (only if changefile is true)
  */
 pos_T *getmark_buf(buf_T *buf, int c, bool changefile)
 {
@@ -351,7 +351,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
     pos = curwin->w_cursor;
     listcmd_busy = true;            // avoid that '' is changed
     if (findpar(&oa.inclusive,
-            c == '}' ? FORWARD : BACKWARD, 1L, NUL, FALSE)) {
+            c == '}' ? FORWARD : BACKWARD, 1L, NUL, false)) {
       pos_copy = curwin->w_cursor;
       posp = &pos_copy;
     }
@@ -411,7 +411,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
       if (namedfm[c].fmark.mark.lnum != 0
           && changefile && namedfm[c].fmark.fnum) {
         if (buflist_getfile(namedfm[c].fmark.fnum,
-                (linenr_T)1, GETF_SETMARK, FALSE) == OK) {
+                (linenr_T)1, GETF_SETMARK, false) == OK) {
           /* Set the lnum now, autocommands could have changed it */
           curwin->w_cursor = namedfm[c].fmark.mark;
           return (pos_T *)-1;
@@ -595,7 +595,7 @@ char_u *fm_getname(fmark_T *fmark, int lead_len)
 {
   if (fmark->fnum == curbuf->b_fnum)                /* current buffer */
     return mark_line(&(fmark->mark), lead_len);
-  return buflist_nr2name(fmark->fnum, FALSE, TRUE);
+  return buflist_nr2name(fmark->fnum, false, true);
 }
 
 /*

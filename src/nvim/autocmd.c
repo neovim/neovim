@@ -79,7 +79,7 @@ static const char *deleted_augroup = NULL;
 // The ID of the current group.  Group 0 is the default one.
 static int current_augroup = AUGROUP_DEFAULT;
 
-static int au_need_clean = false;  // need to delete marked patterns
+static bool au_need_clean = false;  // need to delete marked patterns
 
 static event_T last_event;
 static int last_group;
@@ -320,7 +320,7 @@ static void au_del_group(char_u *name)
   } else {
     event_T event;
     AutoPat *ap;
-    int in_use = false;
+    bool in_use = false;
 
     for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
          event = (event_T)((int)event + 1)) {
@@ -596,8 +596,8 @@ void do_autocmd(char_u *arg_in, int forceit)
   char_u *pat;
   char_u *envpat = NULL;
   char_u *cmd;
-  int need_free = false;
-  int nested = false;
+  bool need_free = false;
+  bool nested = false;
   bool once = false;
   int group;
 
@@ -972,7 +972,7 @@ int do_doautocmd(char_u *arg,
                  bool *did_something)
 {
   char_u *fname;
-  int nothing_done = true;
+  bool nothing_done = true;
   int group;
 
   if (did_something != NULL) {
@@ -1401,7 +1401,7 @@ static bool apply_autocmds_group(event_T event,
   AutoPat *ap;
   char_u *save_cmdarg;
   long save_cmdbang;
-  static int filechangeshell_busy = false;
+  static bool filechangeshell_busy = false;
   proftime_T wait_time;
   bool did_save_redobuff = false;
   save_redo_T save_redo;

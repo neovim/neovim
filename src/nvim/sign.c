@@ -133,7 +133,7 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
   signgroup_T *group = NULL;
   sign_entry_T *sign;
   hashitem_T *hi;
-  int found = false;
+  bool found = false;
 
   if (groupname != NULL) {
     hi = hash_find(&sg_table, groupname);
@@ -1151,7 +1151,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
   char_u  *linehl = NULL;
   char_u  *texthl = NULL;
   char_u  *numhl = NULL;
-  int failed = false;
+  bool failed = false;
 
   // set values for a defined sign.
   for (;;) {
@@ -1338,7 +1338,7 @@ static int parse_sign_cmd_args(
   char_u  *arg1;
   char_u  *name;
   char_u  *filename = NULL;
-  int   lnum_arg = false;
+  bool   lnum_arg = false;
 
   // first arg could be placed sign id
   arg1 = arg;

@@ -125,7 +125,7 @@ struct cmdline_info {
                                 // may point into cmdbuff
   int xp_context;               // type of expansion
   char_u      *xp_arg;          // user-defined expansion arg
-  int input_fn;                 // when TRUE Invoked for input() function
+  bool input_fn;                // when true Invoked for input() function
   unsigned prompt_id;  ///< Prompt number, used to disable coloring on errors.
   Callback highlight_callback;  ///< Callback used for coloring user input.
   ColoredCmdline last_colors;   ///< Last cmdline colors
@@ -167,8 +167,8 @@ typedef struct command_line_state {
   long count;
   int indent;
   int c;
-  int gotesc;                           // TRUE when <ESC> just typed
-  int do_abbr;                          // when TRUE check for abbr.
+  bool gotesc;                          // true when <ESC> just typed
+  bool do_abbr;                         // when true check for abbr.
   char_u *lookfor;                      // string to match
   int hiscnt;                           // current history line in use
   int save_hiscnt;                      // history line before attempting
@@ -1103,7 +1103,7 @@ static int command_line_execute(VimState *state, int key)
     } else if (s->c == K_UP) {
       // Hitting <Up>: Remove one submenu name in front of the
       // cursor
-      int found = false;
+      bool found = false;
 
       int j = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
       int i = 0;
@@ -1157,7 +1157,7 @@ static int command_line_execute(VimState *state, int key)
     } else if (STRNCMP(s->xpc.xp_pattern, upseg + 1, 3) == 0
         && s->c == K_DOWN) {
       // If in a direct ancestor, strip off one ../ to go down
-      int found = false;
+      bool found = false;
 
       int j = ccline.cmdpos;
       int i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
@@ -1178,7 +1178,7 @@ static int command_line_execute(VimState *state, int key)
       }
     } else if (s->c == K_UP) {
       // go up a directory
-      int found = false;
+      bool found = false;
 
       int j = ccline.cmdpos - 1;
       int i = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
@@ -2385,13 +2385,15 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
   return ret;
 }
 
-/*
- * Return TRUE when the text must not be changed and we can't switch to
- * another window or buffer.  Used when editing the command line etc.
- */
-int text_locked(void) {
-  if (cmdwin_type != 0)
-    return TRUE;
+//
+// Return true when the text must not be changed and we can't switch to
+// another window or buffer.  Used when editing the command line etc.
+//
+bool text_locked(void)
+{
+  if (cmdwin_type != 0) {
+    return true;
+  }
   return textlock != 0;
 }
 
@@ -2413,27 +2415,27 @@ char_u * get_text_locked_msg(void) {
 }
 
 /// Check if "curbuf->b_ro_locked" or "allbuf_lock" is set and
-/// return TRUE when it is and give an error message.
-int curbuf_locked(void)
+/// return true when it is and give an error message.
+bool curbuf_locked(void)
 {
   if (curbuf->b_ro_locked > 0) {
     EMSG(_("E788: Not allowed to edit another buffer now"));
-    return TRUE;
+    return true;
   }
   return allbuf_locked();
 }
 
-/*
- * Check if "allbuf_lock" is set and return TRUE when it is and give an error
- * message.
- */
-int allbuf_locked(void)
+//
+// Check if "allbuf_lock" is set and return true when it is and give an error
+// message.
+//
+bool allbuf_locked(void)
 {
   if (allbuf_lock > 0) {
     EMSG(_("E811: Not allowed to change buffer information now"));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static int cmdline_charsize(int idx)
@@ -2878,7 +2880,7 @@ color_cmdline_error:
 
 /*
  * Draw part of the cmdline at the current cursor position.  But draw stars
- * when cmdline_star is TRUE.
+ * when cmdline_star is true.
  */
 static void draw_cmdline(int start, int len)
 {
@@ -3125,10 +3127,10 @@ void cmdline_ui_flush(void)
 
 /*
  * Put a character on the command line.  Shifts the following text to the
- * right when "shift" is TRUE.  Used for CTRL-V, CTRL-K, etc.
+ * right when "shift" is true.  Used for CTRL-V, CTRL-K, etc.
  * "c" must be printable (fit in one display cell)!
  */
-void putcmdline(char c, int shift)
+void putcmdline(char c, bool shift)
 {
   if (cmd_silent) {
     return;
@@ -3150,7 +3152,7 @@ void putcmdline(char c, int shift)
   ui_cursor_shape();
 }
 
-/// Undo a putcmdline(c, FALSE).
+/// Undo a putcmdline(c, false).
 void unputcmdline(void)
 {
   if (cmd_silent) {
@@ -3171,12 +3173,12 @@ void unputcmdline(void)
 /*
  * Put the given string, of the given length, onto the command line.
  * If len is -1, then STRLEN() is used to calculate the length.
- * If 'redraw' is TRUE then the new part of the command line, and the remaining
+ * If 'redraw' is true then the new part of the command line, and the remaining
  * part will be redrawn, otherwise it will not.  If this function is called
- * twice in a row, then 'redraw' should be FALSE and redrawcmd() should be
+ * twice in a row, then 'redraw' should be false and redrawcmd() should be
  * called afterwards.
  */
-void put_on_cmdline(char_u *str, int len, int redraw)
+void put_on_cmdline(char_u *str, int len, bool redraw)
 {
   int i;
   int m;
@@ -3248,14 +3250,14 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   }
 
   if (redraw && !cmd_silent) {
-    msg_no_more = TRUE;
+    msg_no_more = true;
     i = cmdline_row;
     cursorcmd();
     draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     /* Avoid clearing the rest of the line too often. */
     if (cmdline_row != i || ccline.overstrike)
       msg_clr_eos();
-    msg_no_more = FALSE;
+    msg_no_more = false;
   }
   if (KeyTyped) {
     m = Columns * Rows;
@@ -3412,17 +3414,17 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 
 /*
  * Put a string on the command line.
- * When "literally" is TRUE, insert literally.
- * When "literally" is FALSE, insert as typed, but don't leave the command
+ * When "literally" is true, insert literally.
+ * When "literally" is false, insert as typed, but don't leave the command
  * line.
  */
-void cmdline_paste_str(char_u *s, int literally)
+void cmdline_paste_str(char_u *s, bool literally)
 {
   int c, cv;
 
-  if (literally)
-    put_on_cmdline(s, -1, TRUE);
-  else
+  if (literally) {
+    put_on_cmdline(s, -1, true);
+  } else {
     while (*s != NUL) {
       cv = *s;
       if (cv == Ctrl_V && s[1]) {
@@ -3436,6 +3438,7 @@ void cmdline_paste_str(char_u *s, int literally)
       }
       stuffcharReadbuff(c);
     }
+  }
 }
 
 /// Delete characters on the command line, from "from" to the current position.
@@ -3514,11 +3517,11 @@ void redrawcmd(void)
   msg_start();
   redrawcmdprompt();
 
-  /* Don't use more prompt, truncate the cmdline if it doesn't fit. */
-  msg_no_more = TRUE;
+  // Don't use more prompt, truncate the cmdline if it doesn't fit.
+  msg_no_more = true;
   draw_cmdline(0, ccline.cmdlen);
   msg_clr_eos();
-  msg_no_more = FALSE;
+  msg_no_more = false;
 
   ccline.cmdspos = cmd_screencol(ccline.cmdpos);
 
@@ -3530,7 +3533,7 @@ void redrawcmd(void)
    * An emsg() before may have set msg_scroll. This is used in normal mode,
    * in cmdline mode we can reset them now.
    */
-  msg_scroll = FALSE;           /* next message overwrites cmdline */
+  msg_scroll = false;           // next message overwrites cmdline
 
   // Typing ':' at the more prompt may set skip_redraw.  We don't want this
   // in cmdline mode.
@@ -3657,8 +3660,8 @@ static int
 nextwild (
     expand_T *xp,
     int type,
-    int options,                    /* extra options for ExpandOne() */
-    int escape                     /* if TRUE, escape the returned matches */
+    int options,                   // extra options for ExpandOne()
+    bool escape                     // if true, escape the returned matches
 )
 {
   int i, j;
@@ -3803,8 +3806,8 @@ ExpandOne (
 {
   char_u      *ss = NULL;
   static int findex;
-  static char_u *orig_save = NULL;      /* kept value of orig */
-  int orig_saved = FALSE;
+  static char_u *orig_save = NULL;      // kept value of orig
+  bool orig_saved = false;
   int i;
   int non_suf_match;                    /* number without matching suffix */
 
@@ -3872,7 +3875,7 @@ ExpandOne (
   if (xp->xp_numfiles == -1 && mode != WILD_APPLY && mode != WILD_CANCEL) {
     xfree(orig_save);
     orig_save = orig;
-    orig_saved = TRUE;
+    orig_saved = true;
 
     /*
      * Do the expansion.
@@ -4245,7 +4248,7 @@ static int showmatches(expand_T *xp, int wildmenu)
       if (!showtail && (xp->xp_context == EXPAND_FILES
                         || xp->xp_context == EXPAND_SHELLCMD
                         || xp->xp_context == EXPAND_BUFFERS)) {
-        home_replace(NULL, files_found[i], NameBuff, MAXPATHL, TRUE);
+        home_replace(NULL, files_found[i], NameBuff, MAXPATHL, true);
         j = vim_strsize(NameBuff);
       } else
         j = vim_strsize(L_SHOWFILE(i));
@@ -4313,11 +4316,11 @@ static int showmatches(expand_T *xp, int wildmenu)
             p = L_SHOWFILE(k);
           } else {
             home_replace(NULL, files_found[k], NameBuff, MAXPATHL,
-                TRUE);
+                         true);
             p = NameBuff;
           }
         } else {
-          j = FALSE;
+          j = false;
           p = L_SHOWFILE(k);
         }
         lastlen = msg_outtrans_attr(p, j ? attr : 0);
@@ -4328,7 +4331,7 @@ static int showmatches(expand_T *xp, int wildmenu)
       }
       ui_flush();                          /* show one line at a time */
       if (got_int) {
-        got_int = FALSE;
+        got_int = false;
         break;
       }
     }
@@ -4354,7 +4357,7 @@ char_u *sm_gettail(char_u *s, bool eager)
 {
   char_u      *p;
   char_u      *t = s;
-  int had_sep = FALSE;
+  bool had_sep = false;
 
   for (p = s; *p != NUL; ) {
     if (vim_ispathsep(*p)
@@ -4369,19 +4372,19 @@ char_u *sm_gettail(char_u *s, bool eager)
       }
     } else if (had_sep) {
       t = p;
-      had_sep = FALSE;
+      had_sep = false;
     }
     MB_PTR_ADV(p);
   }
   return t;
 }
 
-/*
- * Return TRUE if we only need to show the tail of completion matches.
- * When not completing file names or there is a wildcard in the path FALSE is
- * returned.
- */
-static int expand_showtail(expand_T *xp)
+//
+// Return true if we only need to show the tail of completion matches.
+// When not completing file names or there is a wildcard in the path false is
+// returned.
+//
+static bool expand_showtail(expand_T *xp)
 {
   char_u      *s;
   char_u      *end;
@@ -4390,21 +4393,23 @@ static int expand_showtail(expand_T *xp)
   if (xp->xp_context != EXPAND_FILES
       && xp->xp_context != EXPAND_SHELLCMD
       && xp->xp_context != EXPAND_DIRECTORIES)
-    return FALSE;
+    return false;
 
   end = path_tail(xp->xp_pattern);
-  if (end == xp->xp_pattern)            /* there is no path separator */
-    return FALSE;
+  if (end == xp->xp_pattern) {            // there is no path separator
+    return false;
+  }
 
   for (s = xp->xp_pattern; s < end; s++) {
     /* Skip escaped wildcards.  Only when the backslash is not a path
     * separator, on DOS the '*' "path\*\file" must not be skipped. */
-    if (rem_backslash(s))
-      ++s;
-    else if (vim_strchr((char_u *)"*?[", *s) != NULL)
-      return FALSE;
+    if (rem_backslash(s)) {
+      s++;
+    } else if (vim_strchr((char_u *)"*?[", *s) != NULL) {
+      return false;
+    }
   }
-  return TRUE;
+  return true;
 }
 
 /// Prepare a string for expansion.
@@ -4769,12 +4774,12 @@ ExpandFromContext (
     /*
      * Expand file or directory names.
      */
-    int free_pat = FALSE;
+    bool free_pat = false;
     int i;
 
     // for ":set path=" and ":set tags=" halve backslashes for escaped space
     if (xp->xp_backslash != XP_BS_NONE) {
-      free_pat = TRUE;
+      free_pat = true;
       pat = vim_strsave(pat);
       for (i = 0; pat[i]; ++i)
         if (pat[i] == '\\') {
@@ -4958,7 +4963,7 @@ ExpandFromContext (
     for (i = 0; i < (int)ARRAY_SIZE(tab); ++i)
       if (xp->xp_context == tab[i].context) {
         if (tab[i].ic) {
-          regmatch.rm_ic = TRUE;
+          regmatch.rm_ic = true;
         }
         ExpandGeneric(xp, &regmatch, num_file, file, tab[i].func,
                       tab[i].escaped);
@@ -5644,13 +5649,13 @@ static inline void clear_hist_entry(histentry_T *hisptr)
 
 /*
  * Check if command line 'str' is already in history.
- * If 'move_to_front' is TRUE, matching entry is moved to end of history.
+ * If 'move_to_front' is true, matching entry is moved to end of history.
  */
-static int 
+static bool 
 in_history (
     int type,
     char_u *str,
-    int move_to_front,              // Move the entry to the front if it exists
+    bool move_to_front,              // Move the entry to the front if it exists
     int sep
 )
 {
@@ -5658,20 +5663,23 @@ in_history (
   int last_i = -1;
   char_u  *p;
 
-  if (hisidx[type] < 0)
-    return FALSE;
+  if (hisidx[type] < 0) {
+    return false;
+  }
   i = hisidx[type];
   do {
-    if (history[type][i].hisstr == NULL)
-      return FALSE;
+    if (history[type][i].hisstr == NULL) {
+      return false;
+    }
 
     /* For search history, check that the separator character matches as
      * well. */
     p = history[type][i].hisstr;
     if (STRCMP(str, p) == 0
         && (type != HIST_SEARCH || sep == p[STRLEN(p) + 1])) {
-      if (!move_to_front)
-        return TRUE;
+      if (!move_to_front) {
+        return true;
+      }
       last_i = i;
       break;
     }
@@ -5904,7 +5912,7 @@ static int calc_hist_idx(int histype, int num)
 {
   int i;
   histentry_T *hist;
-  int wrapped = FALSE;
+  bool wrapped = false;
 
   if (hislen == 0 || histype < 0 || histype >= HIST_COUNT
       || (i = hisidx[histype]) < 0 || num == 0)
@@ -5917,7 +5925,7 @@ static int calc_hist_idx(int histype, int num)
         if (wrapped)
           break;
         i += hislen;
-        wrapped = TRUE;
+        wrapped = true;
       }
     if (hist[i].hisnum == num && hist[i].hisstr != NULL)
       return i;
@@ -5978,7 +5986,7 @@ int del_history_entry(int histype, char_u *str)
   bool found = false;
 
   regmatch.regprog = NULL;
-  regmatch.rm_ic = FALSE;       /* always match case */
+  regmatch.rm_ic = false;       // always match case
   if (hislen != 0
       && histype >= 0
       && histype < HIST_COUNT
@@ -6016,13 +6024,14 @@ int del_history_entry(int histype, char_u *str)
  * Remove an indexed entry from a history.
  * "histype" may be one of the HIST_ values.
  */
-int del_history_idx(int histype, int idx)
+bool del_history_idx(int histype, int idx)
 {
   int i, j;
 
   i = calc_hist_idx(histype, idx);
-  if (i < 0)
-    return FALSE;
+  if (i < 0) {
+    return false;
+  }
   idx = hisidx[histype];
   hist_free_entry(&history[histype][i]);
 
@@ -6042,7 +6051,7 @@ int del_history_idx(int histype, int idx)
     i += hislen;
   }
   hisidx[histype] = i;
-  return TRUE;
+  return true;
 }
 
 /// Get indices that specify a range within a list (not a range of text lines

@@ -174,9 +174,9 @@ const VimLFuncDef *find_internal_func(const char *const name)
   return find_internal_func_gperf(name, len);
 }
 
-/*
- * Return TRUE for a non-zero Number and a non-empty String.
- */
+//
+// Return true for a non-zero Number and a non-empty String.
+//
 static int non_zero_arg(typval_T *argvars)
 {
   return ((argvars[0].v_type == VAR_NUMBER
@@ -704,7 +704,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
 
   // Ignore 'magic' and 'cpoptions' here to make scripts portable
   save_magic = p_magic;
-  p_magic = TRUE;
+  p_magic = true;
   save_cpo = p_cpo;
   p_cpo = (char_u *)"";
 
@@ -791,7 +791,7 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
  */
 static void f_byteidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  byteidx(argvars, rettv, FALSE);
+  byteidx(argvars, rettv, false);
 }
 
 /*
@@ -799,7 +799,7 @@ static void f_byteidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_byteidxcomp(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  byteidx(argvars, rettv, TRUE);
+  byteidx(argvars, rettv, true);
 }
 
 /// "call(func, arglist [, dict])" function
@@ -1039,7 +1039,7 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   pos_T       *fp;
   int fnum = curbuf->b_fnum;
 
-  fp = var2fpos(&argvars[0], FALSE, &fnum);
+  fp = var2fpos(&argvars[0], false, &fnum);
   if (fp != NULL && fnum == curbuf->b_fnum) {
     if (fp->col == MAXCOL) {
       // '> can be MAXCOL, get the length of the line then
@@ -2471,7 +2471,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
  */
 static void f_filter(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  filter_map(argvars, rettv, FALSE);
+  filter_map(argvars, rettv, false);
 }
 
 /*
@@ -2591,7 +2591,7 @@ static void foldclosed_both(typval_T *argvars, typval_T *rettv, int end)
  */
 static void f_foldclosed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  foldclosed_both(argvars, rettv, FALSE);
+  foldclosed_both(argvars, rettv, false);
 }
 
 /*
@@ -2599,7 +2599,7 @@ static void f_foldclosed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_foldclosedend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  foldclosed_both(argvars, rettv, TRUE);
+  foldclosed_both(argvars, rettv, true);
 }
 
 /*
@@ -2879,7 +2879,7 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  * Get line or list of lines from buffer "buf" into "rettv".
  * Return a range (from start to end) of lines in rettv from the specified
  * buffer.
- * If 'retlist' is TRUE, then the lines are returned as a Vim List.
+ * If 'retlist' is true, then the lines are returned as a Vim List.
  */
 static void get_buffer_lines(buf_T *buf,
                              linenr_T start,
@@ -4783,7 +4783,7 @@ static bool inputsecret_flag = false;
  */
 static void f_input(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_user_input(argvars, rettv, FALSE, inputsecret_flag);
+  get_user_input(argvars, rettv, false, inputsecret_flag);
 }
 
 /*
@@ -4791,7 +4791,7 @@ static void f_input(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_inputdialog(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_user_input(argvars, rettv, TRUE, inputsecret_flag);
+  get_user_input(argvars, rettv, true, inputsecret_flag);
 }
 
 /*
@@ -5715,8 +5715,8 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   char_u *keys_buf = NULL;
   char_u *rhs;
   int mode;
-  int abbr = FALSE;
-  int get_dict = FALSE;
+  int abbr = false;
+  int get_dict = false;
   mapblock_T  *mp;
   int buffer_local;
 
@@ -5790,7 +5790,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_map(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  filter_map(argvars, rettv, TRUE);
+  filter_map(argvars, rettv, true);
 }
 
 /*
@@ -5798,7 +5798,7 @@ static void f_map(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_maparg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_maparg(argvars, rettv, TRUE);
+  get_maparg(argvars, rettv, true);
 }
 
 /*
@@ -5806,7 +5806,7 @@ static void f_maparg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  get_maparg(argvars, rettv, FALSE);
+  get_maparg(argvars, rettv, false);
 }
 
 
@@ -6255,7 +6255,7 @@ static void max_min(const typval_T *const tv, typval_T *const rettv,
  */
 static void f_max(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  max_min(argvars, rettv, TRUE);
+  max_min(argvars, rettv, true);
 }
 
 /*
@@ -6263,7 +6263,7 @@ static void f_max(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_min(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  max_min(argvars, rettv, FALSE);
+  max_min(argvars, rettv, false);
 }
 
 /*
@@ -11310,7 +11310,7 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   pos_T       *fp;
   int fnum = curbuf->b_fnum;
 
-  fp = var2fpos(&argvars[0], FALSE, &fnum);
+  fp = var2fpos(&argvars[0], false, &fnum);
   if (fp != NULL && fp->lnum <= curbuf->b_ml.ml_line_count
       && fnum == curbuf->b_fnum) {
     // Limit the column to a valid value, getvvcol() doesn't check.

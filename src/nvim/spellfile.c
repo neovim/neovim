@@ -437,7 +437,7 @@ typedef struct spellinfo_S {
 
   sblock_T    *si_blocks;       // memory blocks used
   long si_blocks_cnt;           // memory blocks allocated
-  int si_did_emsg;              // TRUE when ran out of memory
+  bool si_did_emsg;              // true when ran out of memory
 
   long si_compress_cnt;         // words to add before lowering
                                 // compression limit
@@ -451,7 +451,7 @@ typedef struct spellinfo_S {
 
   int si_ascii;                 // handling only ASCII words
   int si_add;                   // addition file
-  int si_clear_chartab;             // when TRUE clear char tables
+  bool si_clear_chartab;        // when true clear char tables
   int si_region;                // region mask
   vimconv_T si_conv;            // for conversion to 'encoding'
   int si_memtot;                // runtime memory used
@@ -1876,7 +1876,7 @@ static void spell_clear_flags(wordnode_T *node)
   wordnode_T  *np;
 
   for (np = node; np != NULL; np = np->wn_sibling) {
-    np->wn_u1.index = FALSE;
+    np->wn_u1.index = false;
     spell_clear_flags(np->wn_child);
   }
 }
@@ -1892,7 +1892,7 @@ static void spell_print_node(wordnode_T *node, int depth)
     msg((char_u *)line2);
     msg((char_u *)line3);
   } else {
-    node->wn_u1.index = TRUE;
+    node->wn_u1.index = true;
 
     if (node->wn_byte != NUL) {
       if (node->wn_child != NULL)
@@ -5035,7 +5035,7 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
 
   for (linenr_T lnum = 1; lnum <= wcount; ++lnum) {
     // <sugline>: <sugnr> ... NUL
-    char_u *line = ml_get_buf(spin->si_spellbuf, lnum, FALSE);
+    char_u *line = ml_get_buf(spin->si_spellbuf, lnum, false);
     size_t len = STRLEN(line) + 1;
     if (fwrite(line, len, 1, fd) == 0) {
       EMSG(_(e_write));
@@ -5388,7 +5388,7 @@ spell_add_word (
           if (fseek(fd, fpos, SEEK_SET) == 0) {
             fputc('#', fd);
             if (undo) {
-              home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);
+              home_replace(NULL, fname, NameBuff, MAXPATHL, true);
               smsg(_("Word '%.*s' removed from %s"),
                    len, word, NameBuff);
             }
@@ -5437,7 +5437,7 @@ spell_add_word (
       }
       fclose(fd);
 
-      home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);
+      home_replace(NULL, fname, NameBuff, MAXPATHL, true);
       smsg(_("Word '%.*s' added to %s"), len, word, NameBuff);
     }
   }

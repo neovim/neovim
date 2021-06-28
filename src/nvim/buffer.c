@@ -102,7 +102,7 @@ typedef enum {
 // Read data from buffer for retrying.
 static int
 read_buffer(
-    int     read_stdin,     // read file from stdin, otherwise fifo
+    bool     read_stdin,    // read file from stdin, otherwise fifo
     exarg_T *eap,           // for forced 'ff' and 'fenc' or NULL
     int     flags)          // extra flags for readfile()
 {
@@ -162,7 +162,7 @@ int open_buffer(
   int retval = OK;
   bufref_T       old_curbuf;
   long old_tw = curbuf->b_p_tw;
-  int read_fifo = false;
+  bool read_fifo = false;
 
   /*
    * The 'readonly' flag is only set when BF_NEVERLOADED is being reset.
@@ -1133,7 +1133,7 @@ do_buffer(
 {
   buf_T       *buf;
   buf_T       *bp;
-  int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
+  bool unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
 
   switch (start) {
@@ -1928,7 +1928,7 @@ bool curbuf_reusable(void)
  * If "free_p_ff" is true also free 'fileformat', 'buftype' and
  * 'fileencoding'.
  */
-void free_buf_options(buf_T *buf, int free_p_ff)
+void free_buf_options(buf_T *buf, bool free_p_ff)
 {
   if (free_p_ff) {
     clear_string_option(&buf->b_p_fenc);
@@ -3256,7 +3256,7 @@ void maketitle(void)
 
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
-        int use_sandbox = false;
+        bool use_sandbox = false;
         int save_called_emsg = called_emsg;
 
         use_sandbox = was_set_insecurely(curwin, (char_u *)"titlestring", 0);
@@ -3367,7 +3367,7 @@ void maketitle(void)
     icon_str = (char_u *)buf;
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
-        int use_sandbox = false;
+        bool use_sandbox = false;
         int save_called_emsg = called_emsg;
 
         use_sandbox = was_set_insecurely(curwin, (char_u *)"iconstring", 0);
@@ -4791,7 +4791,7 @@ do_arg_all(
                                 //  3: opened in curtab and curwin
 
   int opened_len;               // length of opened[]
-  int use_firstwin = false;     // use first window for arglist
+  bool use_firstwin = false;    // use first window for arglist
   bool tab_drop_empty_window = false;
   int split_ret = OK;
   bool p_ea_save;
@@ -5293,7 +5293,7 @@ chk_modeline(
   char_u      *linecopy;                // local copy of any modeline found
   int prev;
   intmax_t vers;
-  int end;
+  bool end;
   int retval = OK;
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;

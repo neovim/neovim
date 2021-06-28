@@ -967,7 +967,7 @@ int do_set(
   int key;
   uint32_t flags;                   // flags for current option
   char_u      *varp = NULL;         // pointer to variable for current option
-  int did_show = false;             // already showed one value
+  bool did_show = false;            // already showed one value
   int adding;                       // "opt+=arg"
   int prepending;                   // "opt^=arg"
   int removing;                     // "opt-=arg"
@@ -1731,7 +1731,7 @@ static void did_set_option(
     int opt_idx,
     int opt_flags,              // possibly with OPT_MODELINE
     int new_value,              // value was replaced completely
-    int value_checked           // value was checked to be safe, no need to
+    bool value_checked           // value was checked to be safe, no need to
                                 // set P_INSECURE
 )
 {
@@ -2335,7 +2335,7 @@ did_set_string_option(
 {
   char_u      *errmsg = NULL;
   char_u      *s, *p;
-  int did_chartab = false;
+  bool did_chartab = false;
   char_u      **gvarp;
   bool free_oldval = (options[opt_idx].flags & P_ALLOCED);
   bool value_changed = false;
@@ -5256,7 +5256,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
               return FAIL;
             }
           } else {    // P_STRING
-            int do_endif = false;
+            bool do_endif = false;
 
             // Don't set 'syntax' and 'filetype' again if the value is
             // already right, avoids reloading the syntax file.
@@ -5911,10 +5911,10 @@ void didset_window_options(win_T *wp)
 /// BCO_NOHELP   Don't copy the values to a help buffer.
 void buf_copy_options(buf_T *buf, int flags)
 {
-  int should_copy = true;
+  bool should_copy = true;
   char_u      *save_p_isk = NULL;           // init for GCC
   int dont_do_help;
-  int did_isk = false;
+  bool did_isk = false;
 
   /*
    * Skip this when the option defaults have not been set yet.  Happens when
@@ -6168,7 +6168,7 @@ set_context_in_set_cmd(
   int opt_idx = 0;              // init for GCC
   char_u      *p;
   char_u      *s;
-  int is_term_option = false;
+  bool is_term_option = false;
   int key;
 
   expand_option_flags = opt_flags;
@@ -6698,7 +6698,7 @@ bool shortmess(int x)
 /// paste_option_changed() - Called after p_paste was set or reset.
 static void paste_option_changed(void)
 {
-  static int old_p_paste = false;
+  static bool old_p_paste = false;
   static int save_sm = 0;
   static int save_sta = 0;
   static int save_ru = 0;

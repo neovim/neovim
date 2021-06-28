@@ -644,11 +644,11 @@ void pum_redraw(void)
 /// @param n
 /// @param repeat
 ///
-/// @returns TRUE when the window was resized and the location of the popup
+/// @returns true when the window was resized and the location of the popup
 /// menu must be recomputed.
-static int pum_set_selected(int n, int repeat)
+static bool pum_set_selected(int n, int repeat)
 {
-  int resized = FALSE;
+  bool resized = false;
   int context = pum_height / 2;
 
   pum_selected = n;
@@ -782,12 +782,12 @@ static int pum_set_selected(int n, int repeat)
 
             if (curwin->w_height < lnum) {
               win_setheight((int)lnum);
-              resized = TRUE;
+              resized = true;
             }
           }
 
           curbuf->b_changed = false;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           curwin->w_cursor.lnum = 1;
           curwin->w_cursor.col = 0;
 
@@ -801,7 +801,7 @@ static int pum_set_selected(int n, int repeat)
             // window is not resized, skip the preview window's
             // status line redrawing.
             if (ins_compl_active() && !resized) {
-              curwin->w_redr_status = FALSE;
+              curwin->w_redr_status = false;
             }
 
             // Return cursor to where we were
@@ -910,7 +910,7 @@ void pum_recompose(void)
 /// Gets the height of the menu.
 ///
 /// @return the height of the popup menu, the number of entries visible.
-/// Only valid when pum_visible() returns TRUE!
+/// Only valid when pum_visible() returns true!
 int pum_get_height(void)
 {
   if (pum_external) {

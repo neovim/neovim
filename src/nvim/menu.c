@@ -907,7 +907,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
  */
 static vimmenu_T        *expand_menu = NULL;
 static int expand_modes = 0x0;
-static int expand_emenu;                /* TRUE for ":emenu" command */
+static bool expand_emenu;                /* true for ":emenu" command */
 
 /*
  * Work out what to complete when doing command line completion of menu names.
@@ -1021,7 +1021,7 @@ char_u *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T    *menu = NULL;
   char_u              *str;
-  static int should_advance = FALSE;
+  static bool should_advance = false;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
@@ -1044,7 +1044,7 @@ char_u *get_menu_name(expand_T *xp, int idx)
     else {
       str = menu->dname;
       if (menu->en_dname == NULL)
-        should_advance = TRUE;
+        should_advance = true;
     }
   else
     str = (char_u *)"";
@@ -1147,7 +1147,7 @@ char_u *menu_name_skip(char_u *const name)
 }
 
 /*
- * Return TRUE when "name" matches with menu "menu".  The name is compared in
+ * Return true when "name" matches with menu "menu".  The name is compared in
  * two ways: raw menu name and menu name without '&'.  ignore part after a TAB.
  */
 static bool menu_name_equal(const char_u *const name, vimmenu_T *const menu)
@@ -1328,10 +1328,10 @@ bool menu_is_toolbar(const char_u *const name)
 }
 
 /*
- * Return TRUE if the name is a menu separator identifier: Starts and ends
+ * Return true if the name is a menu separator identifier: Starts and ends
  * with '-'
  */
-int menu_is_separator(char_u *name)
+bool menu_is_separator(char_u *name)
 {
   return name[0] == '-' && name[STRLEN(name) - 1] == '-';
 }
@@ -1340,7 +1340,7 @@ int menu_is_separator(char_u *name)
 /// True if a popup menu or starts with \ref MNU_HIDDEN_CHAR
 ///
 /// @return true if the menu is hidden
-static int menu_is_hidden(char_u *name)
+static bool menu_is_hidden(char_u *name)
 {
   return (name[0] == MNU_HIDDEN_CHAR)
           || (menu_is_popup(name) && name[5] != NUL);
@@ -1395,8 +1395,8 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
     }
 
     /* Activate visual mode */
-    VIsual_active = TRUE;
-    VIsual_reselect = TRUE;
+    VIsual_active = true;
+    VIsual_reselect = true;
     check_cursor();
     VIsual = curwin->w_cursor;
     curwin->w_cursor = tpos;

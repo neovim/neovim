@@ -833,7 +833,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   int tv_to_free_len = 0;
   proftime_T wait_start;
   proftime_T call_start;
-  int started_profiling = false;
+  bool started_profiling = false;
   bool did_save_redo = false;
   save_redo_T save_redo;
 
@@ -1107,7 +1107,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   const sctx_T save_current_sctx = current_sctx;
   current_sctx = fp->uf_script_ctx;
   save_did_emsg = did_emsg;
-  did_emsg = FALSE;
+  did_emsg = false;
 
   if (default_arg_err && (fp->uf_flags & FC_ABORT)) {
     did_emsg = true;
@@ -1531,7 +1531,7 @@ call_func(
 
       // Trigger FuncUndefined event, may load the function.
       if (fp == NULL
-          && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, TRUE, NULL)
+          && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, true, NULL)
           && !aborting()) {
         // executed an autocommand, search for the function again
         fp = find_func(rfname);
@@ -1958,7 +1958,7 @@ void ex_function(exarg_T *eap)
    * ":function /pat": list functions matching pattern.
    */
   if (*eap->arg == '/') {
-    p = skip_regexp(eap->arg + 1, '/', TRUE, NULL);
+    p = skip_regexp(eap->arg + 1, '/', true, NULL);
     if (!eap->skip) {
       regmatch_T regmatch;
 
@@ -2017,14 +2017,15 @@ void ex_function(exarg_T *eap)
       }
       xfree(fudi.fd_newkey);
       return;
-    } else
-      eap->skip = TRUE;
+    } else {
+      eap->skip = true;
+    }
   }
 
   /* An error in a function call during evaluation of an expression in magic
    * braces should not cause the function not to be defined. */
   saved_did_emsg = did_emsg;
-  did_emsg = FALSE;
+  did_emsg = false;
 
   //
   // ":function func" with only function name: list function.
@@ -2845,7 +2846,7 @@ void ex_return(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   typval_T rettv;
-  int returning = FALSE;
+  bool returning = false;
 
   if (current_funccal == NULL) {
     EMSG(_("E133: :return not inside a function"));
@@ -3016,10 +3017,10 @@ end:
  * for a pending return at the ":endtry" or after returning from an extra
  * do_cmdline().  "reanimate" is used in the latter case.  "is_cmd" is set
  * when called due to a ":return" command.  "rettv" may point to a typval_T
- * with the return rettv.  Returns TRUE when the return can be carried out,
- * FALSE when the return gets pending.
+ * with the return rettv.  Returns true when the return can be carried out,
+ * false when the return gets pending.
  */
-int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
+bool do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
 {
   int idx;
   cstack_T *const cstack = eap->cstack;
@@ -3069,7 +3070,7 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
     }
     report_make_pending(CSTP_RETURN, rettv);
   } else {
-    current_funccal->returned = TRUE;
+    current_funccal->returned = true;
 
     /* If the return is carried out now, store the return value.  For
      * a return immediately after reanimation, the value is already
@@ -3123,8 +3124,8 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
 
   // If breakpoints have been added/deleted need to check for it.
   if (fcp->dbg_tick != debug_tick) {
-    fcp->breakpoint = dbg_find_breakpoint(FALSE, fp->uf_name,
-        sourcing_lnum);
+    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name,
+                                          sourcing_lnum);
     fcp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES)
@@ -3162,11 +3163,11 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
   return retval;
 }
 
-/*
- * Return TRUE if the currently active function should be ended, because a
- * return was encountered or an error occurred.  Used inside a ":while".
- */
-int func_has_ended(void *cookie)
+//
+// Return true if the currently active function should be ended, because a
+// return was encountered or an error occurred.  Used inside a ":while".
+//
+bool func_has_ended(void *cookie)
 {
   funccall_T  *fcp = (funccall_T *)cookie;
 
@@ -3176,10 +3177,10 @@ int func_has_ended(void *cookie)
          || fcp->returned;
 }
 
-/*
- * return TRUE if cookie indicates a function which "abort"s on errors.
- */
-int func_has_abort(void *cookie)
+//
+// return true if cookie indicates a function which "abort"s on errors.
+//
+bool func_has_abort(void *cookie)
 {
   return ((funccall_T *)cookie)->func->uf_flags & FC_ABORT;
 }
@@ -3277,10 +3278,10 @@ int func_level(void *cookie)
   return ((funccall_T *)cookie)->level;
 }
 
-/*
- * Return TRUE when a function was ended by a ":return" command.
- */
-int current_func_returned(void)
+//
+// Return true when a function was ended by a ":return" command.
+//
+bool current_func_returned(void)
 {
   return current_funccal->returned;
 }
