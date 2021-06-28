@@ -1,5 +1,6 @@
 " Tests for startup using utf-8.
 
+source check.vim
 source shared.vim
 source screendump.vim
 
@@ -73,7 +74,7 @@ func Test_detect_ambiwidth()
 	\ 'call test_option_not_set("ambiwidth")',
 	\ 'redraw',
 	\ ], 'Xscript')
-  let buf = RunVimInTerminal('-S Xscript', {})
+  let buf = RunVimInTerminal('-S Xscript', #{keep_t_u7: 1})
   call term_wait(buf)
   call term_sendkeys(buf, "S\<C-R>=&ambiwidth\<CR>\<Esc>")
   call WaitForAssert({-> assert_match('single', term_getline(buf, 1))})

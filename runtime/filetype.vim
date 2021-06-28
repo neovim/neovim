@@ -851,6 +851,9 @@ au BufNewFile,BufRead *.jov,*.j73,*.jovial	setf jovial
 " JSON
 au BufNewFile,BufRead *.json,*.jsonp,*.webmanifest	setf json
 
+" Jupyter Notebook is also json
+au BufNewFile,BufRead *.ipynb				setf json
+
 " Kixtart
 au BufNewFile,BufRead *.kix			setf kix
 

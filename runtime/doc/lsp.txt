@@ -525,6 +525,15 @@ LspDiagnosticsSignHint
   Used for "Hint" signs in sign column.
   See |vim.lsp.diagnostic.set_signs()|
 
+                                                      *lsp-highlight-codelens*
+
+Highlight groups related to |lsp-codelens| functionality.
+
+                                                              *hl-LspCodeLens*
+LspCodeLens
+   Used to color the virtual text of the codelens. See
+   |nvim_buf_set_virtual_text()|.
+
 ==============================================================================
 AUTOCOMMANDS                                                *lsp-autocommands*
 
@@ -946,9 +955,6 @@ add_workspace_folder({workspace_folder})
                 Add the folder at path to the workspace folders. If {path} is
                 not provided, the user will be prompted for a path using
                 |input()|.
-
-call_hierarchy({method})                        *vim.lsp.buf.call_hierarchy()*
-                TODO: Documentation
 
 clear_references()                            *vim.lsp.buf.clear_references()*
                 Removes document highlights from current buffer.
@@ -1550,12 +1556,60 @@ show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
                     {opts}       table Configuration table
                                  • show_header (boolean, default true): Show
                                    "Diagnostics:" header.
+                                 • Plus all the opts for
+                                   |vim.lsp.diagnostic.get_line_diagnostics()|
+                                   and |vim.lsp.util.open_floating_preview()|
+                                   can be used here.
                     {bufnr}      number The buffer number
                     {line_nr}    number The line number
                     {client_id}  number|nil the client id
 
                 Return: ~
                     table {popup_bufnr, win_id}
+
+
+==============================================================================
+Lua module: vim.lsp.codelens                                    *lsp-codelens*
+
+display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
+                Display the lenses using virtual text
+
+                Parameters: ~
+                    {lenses}     table of lenses to display ( `CodeLens[] |
+                                 null` )
+                    {bufnr}      number
+                    {client_id}  number
+
+get({bufnr})                                          *vim.lsp.codelens.get()*
+                Return all lenses for the given buffer
+
+                Return: ~
+                    table ( `CodeLens[]` )
+
+                                              *vim.lsp.codelens.on_codelens()*
+on_codelens({err}, {_}, {result}, {client_id}, {bufnr})
+                |lsp-handler| for the method `textDocument/codeLens`
+
+refresh()                                         *vim.lsp.codelens.refresh()*
+                Refresh the codelens for the current buffer
+
+                It is recommended to trigger this using an autocmd or via
+                keymap.
+>
+    autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
+<
+
+run()                                                 *vim.lsp.codelens.run()*
+                Run the code lens in the current line
+
+save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
+                Store lenses for a specific buffer and client
+
+                Parameters: ~
+                    {lenses}     table of lenses to store ( `CodeLens[] |
+                                 null` )
+                    {bufnr}      number
+                    {client_id}  number
 
 
 ==============================================================================

@@ -913,22 +913,7 @@ This replaces an end-of-line with a new line containing the value of $HOME. >
 This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 
 
-4.3 Search and replace					*search-replace*
-
-							*:pro* *:promptfind*
-:promptf[ind] [string]
-			Put up a Search dialog.  When [string] is given, it is
-			used as the initial search string.
-			{only for Win32 GUI}
-
-						*:promptr* *:promptrepl*
-:promptr[epl] [string]
-			Put up a Search/Replace dialog.  When [string] is
-			given, it is used as the initial search string.
-			{only for Win32 GUI}
-
-
-4.4 Changing tabs					*change-tabs*
+4.3 Changing tabs					*change-tabs*
 							*:ret* *:retab* *:retab!*
 :[range]ret[ab][!] [new_tabstop]
 			Replace all sequences of white-space containing a

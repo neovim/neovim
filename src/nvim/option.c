@@ -85,6 +85,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
+#include "nvim/quickfix.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of
@@ -3182,6 +3183,10 @@ ambw_end:
         }
       }
     }
+  } else if (varp == &p_qftf) {
+    if (!qf_process_qftf_option()) {
+      errmsg = e_invarg;
+    }
   } else {
     // Options that are a list of flags.
     p = NULL;
@@ -5370,7 +5375,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
         }
         p = buf;
         while (*p != NUL) {
-            // for each comma seperated option part, append value to
+            // for each comma separated option part, append value to
             // the option, :set rtp+=value
             if (fprintf(fd, "%s %s+=", cmd, name) < 0) {
               goto fail;

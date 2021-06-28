@@ -3344,6 +3344,15 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
   return cmd;
 }
 
+static int check_regexp_delim(int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (isalpha(c)) {
+    EMSG(_("E146: Regular expressions can't be delimited by letters"));
+    return FAIL;
+  }
+  return OK;
+}
 
 /// Perform a substitution from line eap->line1 to line eap->line2 using the
 /// command pointed to by eap->arg which should be of the form:
@@ -3408,16 +3417,14 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   /* new pattern and substitution */
   if (eap->cmd[0] == 's' && *cmd != NUL && !ascii_iswhite(*cmd)
       && vim_strchr((char_u *)"0123456789cegriIp|\"", *cmd) == NULL) {
-    /* don't accept alphanumeric for separator */
-    if (isalpha(*cmd)) {
-      EMSG(_("E146: Regular expressions can't be delimited by letters"));
+    // don't accept alphanumeric for separator
+    if (check_regexp_delim(*cmd) == FAIL) {
       return NULL;
     }
-    /*
-     * undocumented vi feature:
-     *  "\/sub/" and "\?sub?" use last used search pattern (almost like
-     *  //sub/r).  "\&sub&" use last substitute pattern (like //sub/).
-     */
+
+    // undocumented vi feature:
+    //  "\/sub/" and "\?sub?" use last used search pattern (almost like
+    //  //sub/r).  "\&sub&" use last substitute pattern (like //sub/).
     if (*cmd == '\\') {
       ++cmd;
       if (vim_strchr((char_u *)"/?&", *cmd) == NULL) {
@@ -4455,6 +4462,8 @@ void ex_global(exarg_T *eap)
   } else if (*cmd == NUL) {
     EMSG(_("E148: Regular expression missing from global"));
     return;
+  } else if (check_regexp_delim(*cmd) == FAIL) {
+    return;
   } else {
     delim = *cmd;               /* get the delimiter */
     if (delim)
@@ -4773,8 +4782,9 @@ void ex_help(exarg_T *eap)
    * window. */
   if (empty_fnum != 0 && curbuf->b_fnum != empty_fnum) {
     buf = buflist_findnr(empty_fnum);
-    if (buf != NULL && buf->b_nwindows == 0)
-      wipe_buffer(buf, TRUE);
+    if (buf != NULL && buf->b_nwindows == 0) {
+      wipe_buffer(buf, true);
+    }
   }
 
   /* keep the previous alternate file */

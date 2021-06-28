@@ -187,12 +187,15 @@ M['textDocument/publishDiagnostics'] = function(...)
   return require('vim.lsp.diagnostic').on_publish_diagnostics(...)
 end
 
+M['textDocument/codeLens'] = function(...)
+  return require('vim.lsp.codelens').on_codelens(...)
+end
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 M['textDocument/references'] = function(_, _, result)
   if not result then return end
   util.set_qflist(util.locations_to_items(result))
   api.nvim_command("copen")
-  api.nvim_command("wincmd p")
 end
 
 --@private
@@ -207,7 +210,6 @@ local symbol_handler = function(_, _, result, _, bufnr)
 
   util.set_qflist(util.symbols_to_items(result, bufnr))
   api.nvim_command("copen")
-  api.nvim_command("wincmd p")
 end
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
 M['textDocument/documentSymbol'] = symbol_handler
@@ -298,7 +300,6 @@ local function location_handler(_, method, result)
     if #result > 1 then
       util.set_qflist(util.locations_to_items(result))
       api.nvim_command("copen")
-      api.nvim_command("wincmd p")
     end
   else
     util.jump_to_location(result)
@@ -379,7 +380,6 @@ local make_call_hierarchy_handler = function(direction)
     end
     util.set_qflist(items)
     api.nvim_command("copen")
-    api.nvim_command("wincmd p")
   end
 end
 

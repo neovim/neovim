@@ -156,7 +156,7 @@ function M.formatting(options)
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
-  return client.request("textDocument/formatting", params)
+  return client.request("textDocument/formatting", params, nil, vim.api.nvim_get_current_buf())
 end
 
 --- Performs |vim.lsp.buf.formatting()| synchronously.
@@ -176,7 +176,7 @@ function M.formatting_sync(options, timeout_ms)
   if client == nil then return end
 
   local params = util.make_formatting_params(options)
-  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
+  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
   if result and result.result then
     util.apply_text_edits(result.result)
   elseif err then
@@ -218,7 +218,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
   for _, client in ipairs(clients) do
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
-      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms)
+      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
       if result and result.result then
         util.apply_text_edits(result.result)
       elseif err then
@@ -297,6 +297,7 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   return choice
 end
 
+--@private
 local function call_hierarchy(method)
   local params = util.make_position_params()
   request('textDocument/prepareCallHierarchy', params, function(err, _, result)
@@ -338,7 +339,7 @@ end
 --- Add the folder at path to the workspace folders. If {path} is
 --- not provided, the user will be prompted for a path using |input()|.
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'), 'dir')
   vim.api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   if vim.fn.isdirectory(workspace_folder) == 0 then

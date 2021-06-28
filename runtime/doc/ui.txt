@@ -219,8 +219,8 @@ the editor.
 
 ["busy_start"]
 ["busy_stop"]
-	Nvim started or stopped being busy, and possibly not responsive to
-	user input. This could be indicated to the user by hiding the cursor.
+	Indicates to the UI that it must stop rendering the cursor. This event
+	is misnamed and does not actually have anything to do with busyness.
 
 ["suspend"]
 	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or

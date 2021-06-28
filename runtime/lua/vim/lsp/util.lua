@@ -50,7 +50,7 @@ local function get_border_size(opts)
   local width = 0
 
   if type(border) == 'string' then
-    local border_size = {none = {0, 0}, single = {2, 2}, double = {2, 2}, shadow = {1, 1}}
+    local border_size = {none = {0, 0}, single = {2, 2}, double = {2, 2}, rounded = {2, 2}, solid = {2, 2}, shadow = {1, 1}}
     if border_size[border] == nil then
       error("floating preview border is not correct. Please refer to the docs |vim.api.nvim_open_win()|"
               .. vim.inspect(border))
@@ -806,14 +806,20 @@ function M.convert_input_to_markdown_lines(input, contents)
     assert(type(input) == 'table', "Expected a table for Hover.contents")
     -- MarkupContent
     if input.kind then
-      -- The kind can be either plaintext or markdown. However, either way we
-      -- will just be rendering markdown, so we handle them both the same way.
-      -- TODO these can have escaped/sanitized html codes in markdown. We
-      -- should make sure we handle this correctly.
+      -- The kind can be either plaintext or markdown.
+      -- If it's plaintext, then wrap it in a <text></text> block
 
       -- Some servers send input.value as empty, so let's ignore this :(
+      input.value = input.value or ''
+
+      if input.kind == "plaintext" then
+        -- wrap this in a <text></text> block so that stylize_markdown
+        -- can properly process it as plaintext
+        input.value = string.format("<text>\n%s\n</text>", input.value or "")
+      end
+
       -- assert(type(input.value) == 'string')
-      list_extend(contents, split_lines(input.value or ''))
+      list_extend(contents, split_lines(input.value))
     -- MarkupString variation 2
     elseif input.language then
       -- Some servers send input.value as empty, so let's ignore this :(
@@ -861,7 +867,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   end
   local label = signature.label
   if ft then
-    -- wrap inside a code block so fancy_markdown can render it properly
+    -- wrap inside a code block so stylize_markdown can render it properly
     label = ("```%s\n%s\n```"):format(ft, label)
   end
   vim.list_extend(contents, vim.split(label, '\n', true))
@@ -1005,7 +1011,7 @@ function M.preview_location(location, opts)
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
   if syntax == "" then
     -- When no syntax is set, we use filetype as fallback. This might not result
-    -- in a valid syntax definition. See also ft detection in fancy_floating_win.
+    -- in a valid syntax definition. See also ft detection in stylize_markdown.
     -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
     syntax = api.nvim_buf_get_option(bufnr, 'filetype')
   end
@@ -1021,53 +1027,6 @@ local function find_window_by_var(name, value)
       return win
     end
   end
-end
-
---- Enters/leaves the focusable window associated with the current buffer via the
---window - variable `unique_name`. If no such window exists, run the function
---{fn}.
----
---@param unique_name (string) Window variable
---@param fn (function) should return create a new window and return a tuple of
----({focusable_buffer_id}, {window_id}). if {focusable_buffer_id} is a valid
----buffer id, the newly created window will be the new focus associated with
----the current buffer via the tag `unique_name`.
---@returns (pbufnr, pwinnr) if `fn()` has created a new window; nil otherwise
----@deprecated please use open_floating_preview directly
-function M.focusable_float(unique_name, fn)
-  vim.notify("focusable_float is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  -- Go back to previous window if we are in a focusable one
-  if npcall(api.nvim_win_get_var, 0, unique_name) then
-    return api.nvim_command("wincmd p")
-  end
-  local bufnr = api.nvim_get_current_buf()
-  do
-    local win = find_window_by_var(unique_name, bufnr)
-    if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
-      api.nvim_set_current_win(win)
-      api.nvim_command("stopinsert")
-      return
-    end
-  end
-  local pbufnr, pwinnr = fn()
-  if pbufnr then
-    api.nvim_win_set_var(pwinnr, unique_name, bufnr)
-    return pbufnr, pwinnr
-  end
-end
-
---- Focuses/unfocuses the floating preview window associated with the current
---- buffer via the window variable `unique_name`. If no such preview window
---- exists, makes a new one.
----
---@param unique_name (string) Window variable
---@param fn (function) The return values of this function will be passed
----directly to |vim.lsp.util.open_floating_preview()|, in the case that a new
----floating window should be created
----@deprecated please use open_floating_preview directly
-function M.focusable_preview(unique_name, fn)
-  vim.notify("focusable_preview is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  return M.open_floating_preview(fn(), {focus_id = unique_name})
 end
 
 --- Trims empty lines from input and pad top and bottom with empty lines
@@ -1097,12 +1056,19 @@ function M._trim(contents, opts)
   return contents
 end
 
-
-
---- @deprecated please use open_floating_preview directly
-function M.fancy_floating_markdown(contents, opts)
-  vim.notify("fancy_floating_markdown is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  return M.open_floating_preview(contents, "markdown", opts)
+-- Generates a table mapping markdown code block lang to vim syntax,
+-- based on g:markdown_fenced_languages
+-- @return a table of lang -> syntax mappings
+-- @private
+local function get_markdown_fences()
+  local fences = {}
+  for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
+    local lang, syntax = fence:match("^(.*)=(.*)$")
+    if lang then
+      fences[lang] = syntax
+    end
+  end
+  return fences
 end
 
 --- Converts markdown into syntax highlighted regions by stripping the code
@@ -1134,26 +1100,50 @@ function M.stylize_markdown(bufnr, contents, opts)
   }
   opts = opts or {}
 
+  -- table of fence types to {ft, begin, end}
+  -- when ft is nil, we get the ft from the regex match
+  local matchers = {
+    block = {nil, "```+([a-zA-Z0-9_]*)", "```+"},
+    pre = {"", "<pre>", "</pre>"},
+    code = {"", "<code>", "</code>"},
+    text = {"plaintex", "<text>", "</text>"},
+  }
+
+  local match_begin = function(line)
+    for type, pattern in pairs(matchers) do
+      local ret = line:match(string.format("^%%s*%s%%s*$", pattern[2]))
+      if ret then
+        return {
+          type = type,
+          ft = pattern[1] or ret
+        }
+      end
+    end
+  end
+
+  local match_end = function(line, match)
+    local pattern = matchers[match.type]
+    return line:match(string.format("^%%s*%s%%s*$", pattern[3]))
+  end
+
+  -- Clean up
+  contents = M._trim(contents, opts)
+
   local stripped = {}
   local highlights = {}
+  -- keep track of lnums that contain markdown
+  local markdown_lines = {}
   do
     local i = 1
     while i <= #contents do
       local line = contents[i]
-      -- TODO(ashkan): use a more strict regex for filetype?
-      local ft = line:match("^```([a-zA-Z0-9_]*)$")
-      -- local ft = line:match("^```(.*)$")
-      -- TODO(ashkan): validate the filetype here.
-      local is_pre = line:match("^%s*<pre>%s*$")
-      if is_pre then
-        ft = ""
-      end
-      if ft then
+      local match = match_begin(line)
+      if match then
         local start = #stripped
         i = i + 1
         while i <= #contents do
           line = contents[i]
-          if line == "```" or (is_pre and line:match("^%s*</pre>%s*$")) then
+          if match_end(line, match) then
             i = i + 1
             break
           end
@@ -1161,22 +1151,29 @@ function M.stylize_markdown(bufnr, contents, opts)
           i = i + 1
         end
         table.insert(highlights, {
-          ft = ft;
+          ft = match.ft;
           start = start + 1;
           finish = #stripped + 1 - 1;
         })
       else
         table.insert(stripped, line)
+        markdown_lines[#stripped] = true
         i = i + 1
       end
     end
   end
-  -- Clean up
-  stripped = M._trim(stripped, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
   local width, height = M._make_floating_popup_size(stripped, opts)
+
+  local sep_line = string.rep("─", math.min(width, opts.wrap_at or width))
+
+  for l in pairs(markdown_lines) do
+    if stripped[l]:match("^---+$") then
+      stripped[l] = sep_line
+    end
+  end
 
   -- Insert blank line separator after code block
   local insert_separator = opts.separator
@@ -1188,16 +1185,15 @@ function M.stylize_markdown(bufnr, contents, opts)
       h.finish = h.finish + offset
       -- check if a seperator already exists and use that one instead of creating a new one
       if h.finish + 1 <= #stripped then
-        if stripped[h.finish + 1]:match("^---+$") then
-          stripped[h.finish + 1] = string.rep("─", math.min(width, opts.wrap_at or width))
-        else
-          table.insert(stripped, h.finish + 1, string.rep("─", math.min(width, opts.wrap_at or width)))
+        if stripped[h.finish + 1] ~= sep_line then
+          table.insert(stripped, h.finish + 1, sep_line)
           offset = offset + 1
           height = height + 1
         end
       end
     end
   end
+
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
@@ -1206,11 +1202,13 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- keep track of syntaxes we already inlcuded.
   -- no need to include the same syntax more than once
   local langs = {}
+  local fences = get_markdown_fences()
   local function apply_syntax_to_region(ft, start, finish)
     if ft == "" then
       vim.cmd(string.format("syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
       return
     end
+    ft = fences[ft] or ft
     local name = ft..idx
     idx = idx + 1
     local lang = "@"..ft:upper()
@@ -1239,7 +1237,7 @@ function M.stylize_markdown(bufnr, contents, opts)
       apply_syntax_to_region(h.ft, h.start, h.finish)
       last = h.finish + 1
     end
-    if last < #stripped then
+    if last <= #stripped then
       apply_syntax_to_region("lsp_markdown", last, #stripped)
     end
   end)

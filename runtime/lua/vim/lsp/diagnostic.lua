@@ -271,12 +271,12 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
     end
     -- Account for servers that place diagnostics on terminating newline
     if buf_line_count > 0 then
-      diagnostic.range.start.line = math.min(
+      diagnostic.range.start.line = math.max(math.min(
         diagnostic.range.start.line, buf_line_count - 1
-      )
-      diagnostic.range["end"].line = math.min(
+      ), 0)
+      diagnostic.range["end"].line = math.max(math.min(
         diagnostic.range["end"].line, buf_line_count - 1
-      )
+      ), 0)
     end
   end
 
@@ -321,9 +321,9 @@ function M.save(diagnostics, bufnr, client_id)
 
     -- Clean up our data when the buffer unloads.
     api.nvim_buf_attach(bufnr, false, {
-      on_detach = function(b)
+      on_detach = function(_, b)
         clear_diagnostic_cache(b, client_id)
-        _diagnostic_cleanup[bufnr][client_id] = nil
+        _diagnostic_cleanup[b][client_id] = nil
       end
     })
   end
@@ -1250,6 +1250,8 @@ end
 --- </pre>
 ---@param opts table Configuration table
 ---     - show_header (boolean, default true): Show "Diagnostics:" header.
+---     - Plus all the opts for |vim.lsp.diagnostic.get_line_diagnostics()|
+---          and |vim.lsp.util.open_floating_preview()| can be used here.
 ---@param bufnr number The buffer number
 ---@param line_nr number The line number
 ---@param client_id number|nil the client id
@@ -1339,9 +1341,9 @@ function M.set_loclist(opts)
     if severity then
       return d.severity == severity
     end
-    severity = to_severity(opts.severity_limit)
-    if severity then
-      return d.severity == severity
+    local severity_limit = to_severity(opts.severity_limit)
+    if severity_limit then
+      return d.severity <= severity_limit
     end
     return true
   end

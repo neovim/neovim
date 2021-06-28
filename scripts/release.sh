@@ -64,10 +64,9 @@ _do_release_commit() {
 
   if ! test "$ARG1" = '--use-current-commit' ; then
     echo "Building changelog since ${__LAST_TAG}..."
-    __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:[^[:space:]]')"
 
     git add CMakeLists.txt
-    git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
+    (echo "${__RELEASE_MSG}"; ./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:[^[:space:]]') | git commit --edit -F -
   fi
 
   git tag --sign -a v"${__VERSION}" -m "NVIM v${__VERSION}"

@@ -257,7 +257,7 @@ let s:filename_checks = {
     \ 'jgraph': ['file.jgr'],
     \ 'jovial': ['file.jov', 'file.j73', 'file.jovial'],
     \ 'jproperties': ['file.properties', 'file.properties_xx', 'file.properties_xx_xx', 'some.properties_xx_xx_file'],
-    \ 'json': ['file.json', 'file.jsonp', 'file.webmanifest', 'Pipfile.lock'],
+    \ 'json': ['file.json', 'file.jsonp', 'file.webmanifest', 'Pipfile.lock', 'file.ipynb'],
     \ 'jsp': ['file.jsp'],
     \ 'kconfig': ['Kconfig', 'Kconfig.debug', 'Kconfig.file'],
     \ 'kivy': ['file.kv'],

@@ -13,25 +13,6 @@ VIM.TREESITTER						*lua-treesitter*
 
 Nvim integrates the tree-sitter library for incremental parsing of buffers.
 
-Currently Nvim does not provide the tree-sitter parsers, instead these must
-be built separately, for instance using the tree-sitter utility. The only
-exception is a C parser being included in official builds for testing
-purposes. Parsers are searched for as `parser/{lang}.*` in any 'runtimepath'
-directory. A parser can also be loaded manually using a full path: >
-
-    vim.treesitter.require_language("python", "/path/to/python.so")
-
-<Create a parser for a buffer and a given language (if another plugin uses the
-same buffer/language combination, it will be safely reused). Use >
-
-    parser = vim.treesitter.get_parser(bufnr, lang)
-
-<`bufnr=0` can be used for current buffer. `lang` will default to 'filetype'  (this
-doesn't work yet for some filetypes like "cpp") Currently, the parser will be
-retained for the lifetime of a buffer but this is subject to change. A plugin
-should keep a reference to the parser object as long as it wants incremental
-updates.
-
                                              *vim.treesitter.language_version*
 To check which language version is compiled with neovim, the number is stored
 within `vim.treesitter.language_version`. This number is not too helpful
@@ -41,10 +22,25 @@ compiled grammars.
 Parser files						*treesitter-parsers*
 
 Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
-search for in the `parser` runtime directory.
+search for in the `parser` runtime directory.  Currently Nvim does not provide
+the tree-sitter parsers, instead these must be built separately, for instance
+using the tree-sitter utility. The only exception is a C parser being included
+in official builds for testing purposes. Parsers are searched for as
+`parser/{lang}.*` in any 'runtimepath' directory.
+A parser can also be loaded manually using a full path: >
 
-For a parser to be available for a given language, there must be a file named
-`{lang}.so` within the parser directory.
+    vim.treesitter.require_language("python", "/path/to/python.so")
+
+<Create a parser for a buffer and a given language (if another plugin uses the
+same buffer/language combination, it will be safely reused). Use >
+
+    parser = vim.treesitter.get_parser(bufnr, lang)
+
+<`bufnr=0` can be used for current buffer. `lang` will default to 'filetype'.
+Currently, the parser will be retained for the lifetime of a buffer but this
+is subject to change. A plugin should keep a reference to the parser object as
+long as it wants incremental updates.
+
 
 Parser methods						*lua-treesitter-parser*
 
@@ -59,11 +55,11 @@ it should call `parse()` again. If the buffer wasn't edited, the same tree will
 be returned again without extra work. If the buffer was parsed before,
 incremental parsing will be done of the changed parts.
 
-NB: to use the parser directly inside a |nvim_buf_attach| Lua callback, you must
-call `get_parser()` before you register your callback. But preferably parsing
-shouldn't be done directly in the change callback anyway as they will be very
-frequent. Rather a plugin that does any kind of analysis on a tree should use
-a timer to throttle too frequent updates.
+Note: to use the parser directly inside a |nvim_buf_attach| Lua callback, you
+must call `get_parser()` before you register your callback. But preferably
+parsing shouldn't be done directly in the change callback anyway as they will
+be very frequent. Rather a plugin that does any kind of analysis on a tree
+should use a timer to throttle too frequent updates.
 
 tsparser:set_included_regions({region_list})			*tsparser:set_included_regions()*
 	Changes the regions the parser should consider. This is used for
@@ -153,7 +149,8 @@ tsnode:id()						*tsnode:id()*
 	except for being a primitive lua type with value equality (so not a table).
 	Presently it is a (non-printable) string.
 
-	NB: the id is not guaranteed to be unique for nodes from different trees.
+	Note: the id is not guaranteed to be unique for nodes from different
+	trees.
 
 tsnode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
 							*tsnode:descendant_for_range()*
@@ -167,9 +164,14 @@ tsnode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col}
 
 Query   						*lua-treesitter-query*
 
-Tree-sitter queries are supported, with some limitations. Currently, the only
-supported match predicate is `eq?` (both comparing a capture against a string
-and two captures against each other).
+Tree-sitter queries are supported, they are a way to do pattern-matching over
+a tree, using a simple to write lisp-like format. See
+https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax for more
+information on how to write queries.
+
+Note: The perdicates listed in the web page above differ from those Neovim
+supports. See |lua-treesitter-predicates| for a complete list of predicates
+supported by Neovim.
 
 A `query` consists of one or more patterns. A `pattern` is defined over node
 types in the syntax tree.  A `match` corresponds to specific elements of the
@@ -214,6 +216,9 @@ Here is a list of built-in predicates :
 <
 	`any-of?`					*ts-predicate-any-of?*
 		Will check if the text is the same as any of the following
+		This is the recommended way to check if the node matches one
+		of many keywords for exemple, as it has been optimized for
+		this.
 		arguments : >
 			((identifier) @foo (#any-of? @foo "foo" "bar"))
 <
