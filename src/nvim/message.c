@@ -62,7 +62,7 @@ struct msgchunk_S {
 #define DLG_BUTTON_SEP  '\n'
 #define DLG_HOTKEY_CHAR '&'
 
-static int confirm_msg_used = false;            /* displaying confirm_msg */
+static int confirm_msg_used = 0;            /* displaying confirm_msg */
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.c.generated.h"
 #endif
