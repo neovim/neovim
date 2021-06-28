@@ -370,9 +370,9 @@ static synblock_T *syn_block;           // current buffer for highlighting
 static proftime_T *syn_tm;              // timeout limit
 static linenr_T current_lnum = 0;       // lnum of current state
 static colnr_T current_col = 0;         // column of current state
-static bool current_state_stored = 0;    // true if stored current state
+static bool current_state_stored = false;    // true if stored current state
                                         // after setting current_finished
-static bool current_finished = 0;        // current line has been finished
+static bool current_finished = false;        // current line has been finished
 static garray_T current_state           // current stack of state_items
   = GA_EMPTY_INIT_VALUE;
 static int16_t *current_next_list = NULL;   // when non-zero, nextgroup list
