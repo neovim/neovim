@@ -1751,6 +1751,70 @@ describe('lua stdlib', function()
 
       eq({{"^,", "a", "b", "c"}, "a,b,^,,c"}, result)
     end)
+
+
+
+    describe('https://github.com/neovim/neovim/issues/14828', function()
+      it('gives empty list when item is empty:array', function()
+        eq({}, exec_lua [[
+          vim.cmd("set wildignore=")
+          return vim.opt.wildignore:get()
+        ]])
+
+        eq({}, exec_lua [[
+          vim.opt.wildignore = {}
+          return vim.opt.wildignore:get()
+        ]])
+      end)
+
+      it('gives empty list when item is empty:set', function()
+        eq({}, exec_lua [[
+          vim.cmd("set formatoptions=")
+          return vim.opt.formatoptions:get()
+        ]])
+
+        eq({}, exec_lua [[
+          vim.opt.formatoptions = {}
+          return vim.opt.formatoptions:get()
+        ]])
+      end)
+
+      it('does not append to empty item', function()
+        eq({"*.foo", "*.bar"},  exec_lua [[
+          vim.opt.wildignore = {}
+          vim.opt.wildignore:append { "*.foo", "*.bar" }
+
+          return vim.opt.wildignore:get()
+        ]])
+      end)
+
+      it('does not prepend to empty item', function()
+        eq({"*.foo", "*.bar"},  exec_lua [[
+          vim.opt.wildignore = {}
+          vim.opt.wildignore:prepend { "*.foo", "*.bar" }
+
+          return vim.opt.wildignore:get()
+        ]])
+      end)
+
+      it('append to empty set', function()
+        eq({ t = true },  exec_lua [[
+          vim.opt.formatoptions = {}
+          vim.opt.formatoptions:append("t")
+
+          return vim.opt.formatoptions:get()
+        ]])
+      end)
+
+      it('prepend to empty set', function()
+        eq({ t = true },  exec_lua [[
+          vim.opt.formatoptions = {}
+          vim.opt.formatoptions:prepend("t")
+
+          return vim.opt.formatoptions:get()
+        ]])
+      end)
+    end)
   end) -- vim.opt
 
   it('vim.cmd', function()

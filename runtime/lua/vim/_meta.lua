@@ -414,6 +414,12 @@ local convert_value_to_lua = (function()
         return value
       end
 
+      -- Empty strings mean that there is nothing there,
+      -- so empty table should be returned.
+      if value == '' then
+        return {}
+      end
+
       -- Handles unescaped commas in a list.
       if string.find(value, ",,,") then
         local comma_split = vim.split(value, ",,,")
@@ -450,6 +456,12 @@ local convert_value_to_lua = (function()
 
     [OptionTypes.SET] = function(info, value)
       if type(value) == "table" then return value end
+
+      -- Empty strings mean that there is nothing there,
+      -- so empty table should be returned.
+      if value == '' then
+        return {}
+      end
 
       assert(info.flaglist, "That is the only one I know how to handle")
 
