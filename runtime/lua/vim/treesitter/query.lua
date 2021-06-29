@@ -99,9 +99,23 @@ end
 
 --- The explicitly set queries from |vim.treesitter.query.set_query()|
 local explicit_queries = setmetatable({}, {
-  __index = function(t, k)
+  __index = function(t, lang)
     local lang_queries = {}
-    rawset(t, k, lang_queries)
+    rawset(t, lang, lang_queries)
+
+    return lang_queries
+  end,
+})
+--
+--- The explicitly set queries from |vim.treesitter.query.set_query_files()|
+local explicit_query_files = setmetatable({}, {
+  __index = function(t, lang)
+    local lang_queries = setmetatable({}, {
+      __index = function(_, query_name)
+        return M.get_query_files(lang, query_name)
+      end
+    })
+    rawset(t, lang, lang_queries)
 
     return lang_queries
   end,
@@ -116,11 +130,25 @@ local explicit_queries = setmetatable({}, {
 --- @param query_name string: The name of the query (i.e. "highlights")
 --- @param text string|function: The query text (unparsed) or function returning the text.
 function M.set_query(lang, query_name, text)
-  explicit_queries[lang][query_name] = function()
-    if type(text) == 'function' then
-      text = text()
-    end
-    return M.parse_query(lang, text)
+  explicit_queries[lang][query_name] = text
+end
+
+--- Sets the files used for parsing the queries
+---
+--- This allows users to override runtime files that would normally be parsed for the queries
+---
+--- @param lang string: The language to use for the query
+--- @param query_name string: The name of the query (i.e. "highlights")
+--- @param files string|function: The query text (unparsed) or function returning those files.
+function M.set_query_files(lang, query_name, files)
+  explicit_query_files[lang][query_name] = files
+end
+
+local function eval_if_fn(maybe_fn)
+  if type(maybe_fn) == 'function' then
+    return maybe_fn()
+  else
+    return maybe_fn
   end
 end
 
@@ -131,17 +159,12 @@ end
 ---
 --- @return The corresponding query, parsed.
 function M.get_query(lang, query_name)
-  local explicit_query = explicit_queries[lang][query_name]
-  if type(explicit_query) == 'function' then
-    explicit_query = explicit_query()
-    explicit_queries[lang][query_name] = explicit_query
-  end
-  if explicit_query then
-    return explicit_query
-  end
+  local query_string = eval_if_fn(explicit_queries[lang][query_name])
 
-  local query_files = M.get_query_files(lang, query_name)
-  local query_string = read_query_files(query_files)
+  if not query_string then
+    local query_files = eval_if_fn(explicit_query_files[lang][query_name])
+    query_string = read_query_files(query_files)
+  end
 
   if #query_string > 0 then
     return M.parse_query(lang, query_string)
