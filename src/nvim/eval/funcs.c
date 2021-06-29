@@ -3750,6 +3750,48 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "getmousepos()" function
+void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  dict_T *d;
+  win_T *wp;
+  int row = mouse_row;
+  int col = mouse_col;
+  int grid = mouse_grid;
+  varnumber_T winid = 0;
+  varnumber_T winrow = 0;
+  varnumber_T wincol = 0;
+  varnumber_T line = 0;
+  varnumber_T column = 0;
+
+  tv_dict_alloc_ret(rettv);
+  d = rettv->vval.v_dict;
+
+  tv_dict_add_nr(d, S_LEN("screenrow"), (varnumber_T)mouse_row + 1);
+  tv_dict_add_nr(d, S_LEN("screencol"), (varnumber_T)mouse_col + 1);
+
+  wp = mouse_find_win(&grid, &row, &col);
+  if (wp != NULL) {
+    int height = wp->w_height + wp->w_status_height;
+    // The height is adjusted by 1 when there is a bottom border. This is not
+    // necessary for a top border since `row` starts at -1 in that case.
+    if (row < height + wp->w_border_adj[2]) {
+      winid = wp->handle;
+      winrow = row + 1 + wp->w_border_adj[0];  // Adjust by 1 for top border
+      wincol = col + 1 + wp->w_border_adj[3];  // Adjust by 1 for left border
+      if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
+        mouse_comp_pos(wp, &row, &col, &line);
+        column = col + 1;
+      }
+    }
+  }
+  tv_dict_add_nr(d, S_LEN("winid"), winid);
+  tv_dict_add_nr(d, S_LEN("winrow"), winrow);
+  tv_dict_add_nr(d, S_LEN("wincol"), wincol);
+  tv_dict_add_nr(d, S_LEN("line"), line);
+  tv_dict_add_nr(d, S_LEN("column"), column);
+}
+
 /*
  * "getpid()" function
  */

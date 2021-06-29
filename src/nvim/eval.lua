@@ -162,6 +162,7 @@ return {
     getloclist={args={1, 2}},
     getmarklist={args={0, 1}},
     getmatches={args={0, 1}},
+    getmousepos={},
     getpid={},
     getpos={args=1},
     getqflist={args={0, 1}},

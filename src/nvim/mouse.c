@@ -363,6 +363,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   bool retval = false;
   int off;
   int count;
+  char_u *p;
 
   if (win->w_p_rl) {
     col = win->w_width_inner - 1 - col;
@@ -407,6 +408,12 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     col += row * (win->w_width_inner - off);
     // add skip column (for long wrapping line)
     col += win->w_skipcol;
+    // limit to text length plus one
+    p = ml_get_buf(win->w_buffer, lnum, false);
+    count = STRLEN(p);
+    if (col > count) {
+      col = count;
+    }
   }
 
   if (!win->w_p_wrap) {
