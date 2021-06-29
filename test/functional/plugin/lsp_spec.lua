@@ -256,7 +256,7 @@ describe('LSP', function()
             fake_lsp_logfile)
         end;
         on_handler = function(...)
-          eq(table.remove(expected_handlers), {...}, "expected callback")
+          eq(table.remove(expected_handlers), {...}, "expected handler")
         end;
       }
     end)
@@ -283,7 +283,7 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(...)
-          eq(table.remove(expected_handlers), {...}, "expected callback")
+          eq(table.remove(expected_handlers), {...}, "expected handler")
         end;
       }
     end)
@@ -308,7 +308,7 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(err, method, params, client_id)
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'start' then
             exec_lua([=[
               local client = vim.lsp.get_client_by_id(TEST_RPC_CLIENT_ID)
@@ -362,7 +362,7 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(...)
-          eq(table.remove(expected_handlers), {...}, "expected callback")
+          eq(table.remove(expected_handlers), {...}, "expected handler")
         end;
       }
     end)
@@ -396,7 +396,7 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(...)
-          eq(table.remove(expected_handlers), {...}, "expected callback")
+          eq(table.remove(expected_handlers), {...}, "expected handler")
         end;
       }
     end)
@@ -412,7 +412,7 @@ describe('LSP', function()
               BUFFER = vim.api.nvim_get_current_buf()
               lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
               vim.lsp.handlers['textDocument/typeDefinition'] = function(err, method)
-                vim.lsp._last_lsp_callback = { err = err; method = method }
+                vim.lsp._last_lsp_handler = { err = err; method = method }
               end
               vim.lsp._unsupported_method = function(method)
                 vim.lsp._last_unsupported_method = method
@@ -425,7 +425,7 @@ describe('LSP', function()
           client.stop()
           local method = exec_lua("return vim.lsp._last_unsupported_method")
           eq("textDocument/typeDefinition", method)
-          local lsp_cb_call = exec_lua("return vim.lsp._last_lsp_callback")
+          local lsp_cb_call = exec_lua("return vim.lsp._last_lsp_handler")
           eq("fake-error", lsp_cb_call.err)
           eq("textDocument/typeDefinition", lsp_cb_call.method)
           exec_lua [[
@@ -437,7 +437,7 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(...)
-          eq(table.remove(expected_handlers), {...}, "expected callback")
+          eq(table.remove(expected_handlers), {...}, "expected handler")
         end;
       }
     end)
@@ -451,7 +451,7 @@ describe('LSP', function()
         on_setup = function()
             exec_lua([=[
               vim.lsp.handlers['textDocument/typeDefinition'] = function(err, method)
-                vim.lsp._last_lsp_callback = { err = err; method = method }
+                vim.lsp._last_lsp_handler = { err = err; method = method }
               end
               vim.lsp._unsupported_method = function(method)
                 vim.lsp._last_unsupported_method = method
@@ -463,14 +463,14 @@ describe('LSP', function()
         on_init = function(client)
           client.stop()
           eq(NIL, exec_lua("return vim.lsp._last_unsupported_method"))
-          eq(NIL, exec_lua("return vim.lsp._last_lsp_callback"))
+          eq(NIL, exec_lua("return vim.lsp._last_lsp_handler"))
         end;
         on_exit = function(code, signal)
           eq(0, code, "exit code", fake_lsp_logfile)
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(...)
-          eq(table.remove(expected_handlers), {...}, "expected callback")
+          eq(table.remove(expected_handlers), {...}, "expected handler")
         end;
       }
     end)
@@ -510,7 +510,7 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(err, method, params, client_id)
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -556,7 +556,7 @@ describe('LSP', function()
           if method == 'start' then
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -599,7 +599,7 @@ describe('LSP', function()
           if method == 'start' then
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -647,7 +647,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -696,7 +696,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -745,7 +745,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -790,7 +790,7 @@ describe('LSP', function()
             helpers.command("normal! 1Go")
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -841,7 +841,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end
@@ -893,7 +893,7 @@ describe('LSP', function()
             ]]
             client.notify('finish')
           end
-          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected callback")
+          eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
             client.stop()
           end

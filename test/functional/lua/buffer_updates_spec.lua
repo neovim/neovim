@@ -1001,6 +1001,39 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("flushes delbytes on substitute", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      feed("gg0")
+      command("s/AAA/GGG/")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 0, 3, 3 };
+      }
+
+      -- check that byte updates for :delete (which uses curbuf->deleted_bytes2)
+      -- are correct
+      command("delete")
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 1, 0, 4, 0, 0, 0 };
+      }
+    end)
+
+    it("flushes delbytes on join", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      feed("gg0J")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 3, 3, 1, 0, 1, 0, 1, 1 };
+      }
+
+      command("delete")
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 8, 0, 0, 0 };
+      }
+    end)
+
     teardown(function()
       os.remove "Xtest-reload"
       os.remove "Xtest-undofile"

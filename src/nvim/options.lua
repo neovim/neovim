@@ -3152,7 +3152,7 @@ return {
       full_name='wildmode', abbreviation='wim',
       short_desc=N_("mode for 'wildchar' command-line expansion"),
       type='string', list='onecomma', scope={'global'},
-      deny_duplicates=true,
+      deny_duplicates=false,
       vim=true,
       varname='p_wim',
       defaults={if_true={vi="", vim="full"}}

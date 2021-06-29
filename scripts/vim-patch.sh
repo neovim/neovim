@@ -372,7 +372,7 @@ submit_pr() {
   pr_title="${pr_title// /,}" # Replace spaces with commas.
 
   local pr_message
-  pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
+  pr_message="$(printf 'vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
 
   if [[ $push_first -ne 0 ]]; then
     echo "Pushing to 'origin/${checked_out_branch}'."

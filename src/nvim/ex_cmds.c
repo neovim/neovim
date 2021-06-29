@@ -4237,6 +4237,8 @@ skip:
     }
   }
 
+  curbuf->deleted_bytes2 = 0;
+
   if (first_line != 0) {
     /* Need to subtract the number of added lines from "last_line" to get
      * the line number before the change (same as adding the number of
