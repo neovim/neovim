@@ -172,9 +172,13 @@ Using Vim scripts					*using-scripts*
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
-:so[urce] {file}	Runs |Ex| commands or Lua code (".lua" files) read
-			from {file}.
+:so[urce] [file]	Runs |Ex| commands or Lua code (".lua" files) read
+			from [file].
 			Triggers the |SourcePre| autocommand.
+
+			When [file] is omitted, the contents of the current
+			buffer are executed instead.
+
 							*:source!*
 :so[urce]! {file}	Runs |Normal-mode| commands read from {file}. When
 			used after |:global|, |:argdo|, |:windo|, |:bufdo|, in
