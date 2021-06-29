@@ -9,7 +9,7 @@
 "tui":
   - src/nvim/tui/tui.*
 
-"tree-sitter":
+"treesitter":
   - src/nvim/lua/treesitter.*
   - runtime/lua/vim/treesitter.lua
   - runtime/lua/vim/treesitter/*
