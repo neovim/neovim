@@ -30,8 +30,7 @@ New tests should be added as new style tests.  These use functions such as
 |assert_equal()| to keep the test commands and the expected result in one
 place.
 						*old-style-testing*
-In some cases an old style test needs to be used.  E.g. when testing Vim
-without the |+eval| feature.
+In some cases an old style test needs to be used.
 
 Find more information in the file src/testdir/README.txt.
 

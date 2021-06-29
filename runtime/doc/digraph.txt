@@ -342,8 +342,8 @@ $	DO	0x24	 36	DOLLAR SIGN
 þ	th	0xfe	254	LATIN SMALL LETTER THORN (Icelandic)
 ÿ	y:	0xff	255	LATIN SMALL LETTER Y WITH DIAERESIS
 
-If your Vim is compiled with |multibyte| support and you are using a multibyte
-'encoding', Vim provides this enhanced set of additional digraphs:
+If you are using a multibyte 'encoding', Vim provides this enhanced set of
+additional digraphs:
 
 							*digraph-table-mbyte*
 char  digraph	hex	dec	official name ~

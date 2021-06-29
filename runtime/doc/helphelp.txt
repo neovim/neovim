@@ -249,7 +249,6 @@ command: >
 
 It is possible to add translated help files, next to the original English help
 files.  Vim will search for all help in "doc" directories in 'runtimepath'.
-This is only available when compiled with the |+multi_lang| feature.
 
 At this moment translations are available for:
 	Chinese  - multiple authors

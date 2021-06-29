@@ -480,7 +480,6 @@ accordingly.  Vim proceeds in this order:
 	- The |--noplugin| command line argument is used.
 	- The |--clean| command line argument is used.
 	- The "-u NONE" command line argument is used |-u|.
-	- When Vim was compiled without the |+eval| feature.
 	Note that using "-c 'set noloadplugins'" doesn't work, because the
 	commands from the command line have not been executed yet.  You can
 	use "--cmd 'set noloadplugins'" or "--cmd 'set loadplugins'" |--cmd|.
