@@ -1384,4 +1384,128 @@ describe('ui/mouse/input', function()
 
     end) -- level 3 - wrapped
   end)
+
+  it('getmousepos works correctly', function()
+    local winwidth = meths.get_option('winwidth')
+    -- Set winwidth=1 so that window sizes don't change.
+    meths.set_option('winwidth', 1)
+    command('tabedit')
+    local tabpage = meths.get_current_tabpage()
+    insert('hello')
+    command('vsplit')
+    local opts = {
+      relative='editor',
+      width=12,
+      height=1,
+      col=8,
+      row=1,
+      anchor='NW',
+      style='minimal',
+      border='single',
+      focusable=1
+    }
+    local float = meths.open_win(meths.get_current_buf(), false, opts)
+    command('redraw')
+    local lines = meths.get_option('lines')
+    local columns = meths.get_option('columns')
+
+    -- Test that screenrow and screencol are set properly for all positions.
+    for row = 0, lines - 1 do
+      for col = 0, columns - 1 do
+        -- Skip the X button that would close the tab.
+        if row ~= 0 or col ~= columns - 1 then
+          meths.input_mouse('left', 'press', '', 0, row, col)
+          meths.set_current_tabpage(tabpage)
+          local mousepos = funcs.getmousepos()
+          eq(row + 1, mousepos.screenrow)
+          eq(col + 1, mousepos.screencol)
+          -- All other values should be 0 when clicking on the command line.
+          if row == lines - 1 then
+            eq(0, mousepos.winid)
+            eq(0, mousepos.winrow)
+            eq(0, mousepos.wincol)
+            eq(0, mousepos.line)
+            eq(0, mousepos.column)
+          end
+        end
+      end
+    end
+
+    -- Test that mouse position values are properly set for the floating window
+    -- with a border. 1 is added to the height and width to account for the
+    -- border.
+    for win_row = 0, opts.height + 1 do
+      for win_col = 0, opts.width + 1 do
+        local row = win_row + opts.row
+        local col = win_col + opts.col
+        meths.input_mouse('left', 'press', '', 0, row, col)
+        local mousepos = funcs.getmousepos()
+        eq(float.id, mousepos.winid)
+        eq(win_row + 1, mousepos.winrow)
+        eq(win_col + 1, mousepos.wincol)
+        local line = 0
+        local column = 0
+        if win_row > 0 and win_row < opts.height + 1
+            and win_col > 0 and win_col < opts.width + 1 then
+          -- Because of border, win_row and win_col don't need to be
+          -- incremented by 1.
+          line = math.min(win_row, funcs.line('$'))
+          column = math.min(win_col, #funcs.getline(line) + 1)
+        end
+        eq(line, mousepos.line)
+        eq(column, mousepos.column)
+      end
+    end
+
+    -- Test that mouse position values are properly set for the floating
+    -- window, after removing the border.
+    opts.border = 'none'
+    meths.win_set_config(float, opts)
+    command('redraw')
+    for win_row = 0, opts.height - 1 do
+      for win_col = 0, opts.width - 1 do
+        local row = win_row + opts.row
+        local col = win_col + opts.col
+        meths.input_mouse('left', 'press', '', 0, row, col)
+        local mousepos = funcs.getmousepos()
+        eq(float.id, mousepos.winid)
+        eq(win_row + 1, mousepos.winrow)
+        eq(win_col + 1, mousepos.wincol)
+        local line = math.min(win_row + 1, funcs.line('$'))
+        local column = math.min(win_col + 1, #funcs.getline(line) + 1)
+        eq(line, mousepos.line)
+        eq(column, mousepos.column)
+      end
+    end
+
+    -- Test that mouse position values are properly set for ordinary windows.
+    -- Set the float to be unfocusable instead of closing, to additionally test
+    -- that getmousepos does not consider unfocusable floats. (see discussion
+    -- in PR #14937 for details).
+    opts.focusable = false
+    meths.win_set_config(float, opts)
+    command('redraw')
+    for nr = 1, 2 do
+      for win_row = 0, funcs.winheight(nr) - 1 do
+        for win_col = 0, funcs.winwidth(nr) - 1 do
+          local row = win_row + funcs.win_screenpos(nr)[1] - 1
+          local col = win_col + funcs.win_screenpos(nr)[2] - 1
+          meths.input_mouse('left', 'press', '', 0, row, col)
+          local mousepos = funcs.getmousepos()
+          eq(funcs.win_getid(nr), mousepos.winid)
+          eq(win_row + 1, mousepos.winrow)
+          eq(win_col + 1, mousepos.wincol)
+          local line = math.min(win_row + 1, funcs.line('$'))
+          local column = math.min(win_col + 1, #funcs.getline(line) + 1)
+          eq(line, mousepos.line)
+          eq(column, mousepos.column)
+        end
+      end
+    end
+
+    -- Restore state and release mouse.
+    command('tabclose!')
+    meths.set_option('winwidth', winwidth)
+    meths.input_mouse('left', 'release', '', 0, 0, 0)
+  end)
 end)
