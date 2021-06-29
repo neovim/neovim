@@ -1073,7 +1073,11 @@ static int node_rawquery(lua_State *L)
   // TODO(bfredl): these are expensive allegedly,
   // use a reuse list later on?
   TSQueryCursor *cursor = ts_query_cursor_new();
+  // TODO(clason): API introduced after tree-sitter release 0.19.5
+  // remove guard when minimum ts version is bumped to 0.19.6+
+#ifdef NVIM_TS_HAS_SET_MATCH_LIMIT
   ts_query_cursor_set_match_limit(cursor, 32);
+#endif
   ts_query_cursor_exec(cursor, query, node);
 
   bool captures = lua_toboolean(L, 3);
