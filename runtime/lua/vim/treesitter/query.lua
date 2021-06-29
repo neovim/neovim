@@ -114,9 +114,14 @@ local explicit_queries = setmetatable({}, {
 ---
 --- @param lang string: The language to use for the query
 --- @param query_name string: The name of the query (i.e. "highlights")
---- @param text string: The query text (unparsed).
+--- @param text string|function: The query text (unparsed) or function returning the text.
 function M.set_query(lang, query_name, text)
-  explicit_queries[lang][query_name] = M.parse_query(lang, text)
+  explicit_queries[lang][query_name] = function()
+    if type(text) == 'function' then
+      text = text()
+    end
+    return M.parse_query(lang, text)
+  end
 end
 
 --- Returns the runtime query {query_name} for {lang}.
@@ -126,8 +131,13 @@ end
 ---
 --- @return The corresponding query, parsed.
 function M.get_query(lang, query_name)
-  if explicit_queries[lang][query_name] then
-    return explicit_queries[lang][query_name]
+  local explicit_query = explicit_queries[lang][query_name]
+  if type(explicit_query) == 'function' then
+    explicit_query = explicit_query()
+    explicit_queries[lang][query_name] = explicit_query
+  end
+  if explicit_query then
+    return explicit_query
   end
 
   local query_files = M.get_query_files(lang, query_name)
