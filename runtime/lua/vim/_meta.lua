@@ -209,12 +209,17 @@ local function get_scoped_option(k, set_type)
   end
 
   if is_window_option(info) then
-    if vim.api.nvim_get_option_info(k).was_set then
-      local was_set, value = pcall(a.nvim_win_get_option, 0, k)
-      if was_set then return value end
+    local ok, value = pcall(a.nvim_win_get_option, 0, k)
+    if ok then
+      return value
     end
 
-    return a.nvim_get_option(k)
+    local global_ok, global_val = pcall(a.nvim_get_option, k)
+    if global_ok then
+      return global_val
+    end
+
+    error("win_get: This should never happen. File an issue and tag @tjdevries")
   end
 
   error("This fallback case should not be possible. " .. k)
@@ -262,7 +267,7 @@ local key_value_options = {
   winhl     = true,
 }
 
----@class OptionType
+---@class OptionTypes
 --- Option Type Enum
 local OptionTypes = setmetatable({
   BOOLEAN = 0,
@@ -306,6 +311,28 @@ local get_option_type = function(name, info)
 end
 
 
+-- Check whether the OptionTypes is allowed for vim.opt
+-- If it does not match, throw an error which indicates which option causes the error.
+local function assert_valid_value(name, value, types)
+  local type_of_value = type(value)
+  for _, valid_type in ipairs(types) do
+    if valid_type == type_of_value then
+      return
+    end
+  end
+
+  error(string.format("Invalid option type '%s' for '%s', should be %s", type_of_value, name, table.concat(types, " or ")))
+end
+
+local valid_types = {
+  [OptionTypes.BOOLEAN] = { "boolean" },
+  [OptionTypes.NUMBER]  = { "number" },
+  [OptionTypes.STRING]  = { "string" },
+  [OptionTypes.SET]     = { "string", "table" },
+  [OptionTypes.ARRAY]   = { "string", "table" },
+  [OptionTypes.MAP]     = { "string", "table" },
+}
+
 --- Convert a lua value to a vimoption_T value
 local convert_value_to_vim = (function()
   -- Map of functions to take a Lua style value and convert to vimoption_T style value.
@@ -315,24 +342,41 @@ local convert_value_to_vim = (function()
     [OptionTypes.NUMBER] = function(_, value) return value end,
     [OptionTypes.STRING] = function(_, value) return value end,
 
-    [OptionTypes.SET] = function(_, value)
+    [OptionTypes.SET] = function(info, value)
       if type(value) == "string" then return value end
-      local result = ''
-      for k in pairs(value) do
-        result = result .. k
-      end
 
-      return result
+      if info.flaglist and info.commalist then
+        local keys = {}
+        for k, v in pairs(value) do
+          if v then
+            table.insert(keys, k)
+          end
+        end
+
+        table.sort(keys)
+        return table.concat(keys, ",")
+      else
+        local result = ''
+        for k, v in pairs(value) do
+          if v then
+            result = result .. k
+          end
+        end
+
+        return result
+      end
     end,
 
-    [OptionTypes.ARRAY] = function(_, value)
+    [OptionTypes.ARRAY] = function(info, value)
       if type(value) == "string" then return value end
-      return table.concat(remove_duplicate_values(value), ",")
+      if not info.allows_duplicates then
+        value = remove_duplicate_values(value)
+      end
+      return table.concat(value, ",")
     end,
 
     [OptionTypes.MAP] = function(_, value)
       if type(value) == "string" then return value end
-      if type(value) == "function" then error(debug.traceback("asdf")) end
 
       local result = {}
       for opt_key, opt_value in pairs(value) do
@@ -345,7 +389,10 @@ local convert_value_to_vim = (function()
   }
 
   return function(name, info, value)
-    return to_vim_value[get_option_type(name, info)](info, value)
+    local option_type = get_option_type(name, info)
+    assert_valid_value(name, value, valid_types[option_type])
+
+    return to_vim_value[option_type](info, value)
   end
 end)()
 
@@ -358,10 +405,50 @@ local convert_value_to_lua = (function()
     [OptionTypes.NUMBER] = function(_, value) return value end,
     [OptionTypes.STRING] = function(_, value) return value end,
 
-    [OptionTypes.ARRAY] = function(_, value)
+    [OptionTypes.ARRAY] = function(info, value)
       if type(value) == "table" then
-        value = remove_duplicate_values(value)
+        if not info.allows_duplicates then
+          value = remove_duplicate_values(value)
+        end
+
         return value
+      end
+
+      -- Empty strings mean that there is nothing there,
+      -- so empty table should be returned.
+      if value == '' then
+        return {}
+      end
+
+      -- Handles unescaped commas in a list.
+      if string.find(value, ",,,") then
+        local comma_split = vim.split(value, ",,,")
+        local left = comma_split[1]
+        local right = comma_split[2]
+
+        local result = {}
+        vim.list_extend(result, vim.split(left, ","))
+        table.insert(result, ",")
+        vim.list_extend(result, vim.split(right, ","))
+
+        table.sort(result)
+
+        return result
+      end
+
+      if string.find(value, ",^,,", 1, true) then
+        local comma_split = vim.split(value, ",^,,", true)
+        local left = comma_split[1]
+        local right = comma_split[2]
+
+        local result = {}
+        vim.list_extend(result, vim.split(left, ","))
+        table.insert(result, "^,")
+        vim.list_extend(result, vim.split(right, ","))
+
+        table.sort(result)
+
+        return result
       end
 
       return vim.split(value, ",")
@@ -370,14 +457,30 @@ local convert_value_to_lua = (function()
     [OptionTypes.SET] = function(info, value)
       if type(value) == "table" then return value end
 
-      assert(info.flaglist, "That is the only one I know how to handle")
-
-      local result = {}
-      for i = 1, #value do
-        result[value:sub(i, i)] = true
+      -- Empty strings mean that there is nothing there,
+      -- so empty table should be returned.
+      if value == '' then
+        return {}
       end
 
-      return result
+      assert(info.flaglist, "That is the only one I know how to handle")
+
+      if info.flaglist and info.commalist then
+        local split_value = vim.split(value, ",")
+        local result = {}
+        for _, v in ipairs(split_value) do
+          result[v] = true
+        end
+
+        return result
+      else
+        local result = {}
+        for i = 1, #value do
+          result[value:sub(i, i)] = true
+        end
+
+        return result
+      end
     end,
 
     [OptionTypes.MAP] = function(info, raw_value)

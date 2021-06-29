@@ -7765,6 +7765,7 @@ static Dictionary vimoption2dict(vimoption_T *opt)
     }
     PUT(dict, "type", CSTR_TO_OBJ(type));
     PUT(dict, "default", def);
+    PUT(dict, "allows_duplicates", BOOL(!(opt->flags & P_NODUP)));
 
     return dict;
 }
