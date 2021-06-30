@@ -410,7 +410,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     col += win->w_skipcol;
     // limit to text length plus one
     p = ml_get_buf(win->w_buffer, lnum, false);
-    count = STRLEN(p);
+    count = (int)STRLEN(p);
     if (col > count) {
       col = count;
     }
