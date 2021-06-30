@@ -913,6 +913,17 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('does not crash when resize #13900', function()
+    local screen = thelpers.screen_setup(0, '["'..nvim_prog
+       ..[[", '-u', 'NORC', '-i', 'NONE', '-c']]
+       ..[[, ':let g:wh=getwininfo(win_getid(winnr()))[0]["height"] | for n in range(1,g:wh-1) | call setline(n,"") | endfor | call setline(g:wh,"aa")']]..']')
+
+    command([[call chansend(b:terminal_job_id, "\<C-w>v\<C-w>l\<C-w>|")]])
+    command("vsplit")
+    command([[call chansend(b:terminal_job_id, ":echo 'alive'\<CR>")]])
+    screen:expect{any='alive'}
+  end)
 end)
 
 describe('TUI UIEnter/UILeave', function()

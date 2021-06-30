@@ -20,15 +20,27 @@ struct ugrid {
   UCell **cells;
 };
 
+static inline UCell *ugrid_get_cell(UGrid *grid, int row, int col)
+{
+  if (row >= 0 && row < grid->height && col >= 0 && col < grid->width) {
+    return &grid->cells[row][col];
+  }
+  return NULL;
+}
+
 // -V:UGRID_FOREACH_CELL:625
 
 #define UGRID_FOREACH_CELL(grid, row, startcol, endcol, code) \
   do { \
-    UCell *row_cells = (grid)->cells[row]; \
-    for (int curcol = startcol; curcol < endcol; curcol++) { \
-      UCell *cell = row_cells + curcol; \
-      (void)(cell); \
-      code; \
+    if (row >= 0 && row < (grid)->height) { \
+      UCell *row_cells = (grid)->cells[row]; \
+      for (int curcol = startcol < 0 ? 0 : \
+           startcol >= (grid)->width ? (grid)->width - 1 : \
+           startcol; curcol < endcol && curcol < (grid)->width; curcol++) { \
+        UCell *cell = row_cells + curcol; \
+        (void)(cell); \
+        code; \
+      } \
     } \
   } while (0)
 
