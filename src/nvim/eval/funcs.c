@@ -3761,7 +3761,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   varnumber_T winid = 0;
   varnumber_T winrow = 0;
   varnumber_T wincol = 0;
-  varnumber_T line = 0;
+  linenr_T line = 0;
   varnumber_T column = 0;
 
   tv_dict_alloc_ret(rettv);
@@ -3788,7 +3788,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_add_nr(d, S_LEN("winid"), winid);
   tv_dict_add_nr(d, S_LEN("winrow"), winrow);
   tv_dict_add_nr(d, S_LEN("wincol"), wincol);
-  tv_dict_add_nr(d, S_LEN("line"), line);
+  tv_dict_add_nr(d, S_LEN("line"), (varnumber_T)line);
   tv_dict_add_nr(d, S_LEN("column"), column);
 }
 
