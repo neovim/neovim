@@ -1,5 +1,8 @@
 " Tests for various Visual modes.
 
+source shared.vim
+source check.vim
+
 func Test_block_shift_multibyte()
   " Uses double-wide character.
   split
@@ -1058,6 +1061,25 @@ func Test_visual_put_in_block_using_zy_and_zp()
   norm! 1G0f;zP
   call assert_equal(['/path/sub    dir/;text', '/path/lon    gsubdir/;text', '/path/lon    glongsubdir/;text'], getline(1, 3))
   bwipe!
+endfunc
+
+func Test_visual_put_blockedit_zy_and_zp()
+  new
+
+  call setline(1, ['aa', 'bbbbb', 'ccc', '', 'XX', 'GGHHJ', 'RTZU'])
+  exe "normal! gg0\<c-v>2j$zy"
+  norm! 5gg0zP
+  call assert_equal(['aa', 'bbbbb', 'ccc', '', 'aaXX', 'bbbbbGGHHJ', 'cccRTZU'], getline(1, 7))
+  "
+  " now with blockmode editing
+  sil %d
+  :set ve=block
+  call setline(1, ['aa', 'bbbbb', 'ccc', '', 'XX', 'GGHHJ', 'RTZU'])
+  exe "normal! gg0\<c-v>2j$zy"
+  norm! 5gg0zP
+  call assert_equal(['aa', 'bbbbb', 'ccc', '', 'aaXX', 'bbbbbGGHHJ', 'cccRTZU'], getline(1, 7))
+  set ve&vim
+  bw!
 endfunc
 
 
