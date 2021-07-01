@@ -2719,10 +2719,13 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
 // Copy a block range into a register.
 // If "exclude_trailing_space" is set, do not copy trailing whitespaces.
-static void yank_copy_line(yankreg_T *reg, const struct block_def *bd,
+static void yank_copy_line(yankreg_T *reg, struct block_def *bd,
                            size_t y_idx, bool exclude_trailing_space)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (exclude_trailing_space) {
+    bd->endspaces = 0;
+  }
   int size = bd->startspaces + bd->endspaces + bd->textlen;
   assert(size >= 0);
   char_u *pnew = xmallocz((size_t)size);

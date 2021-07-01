@@ -123,7 +123,7 @@ end
 w('\n\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
-funcs = mpack.unpack(io.open(funcs_file):read("*all"))
+funcs = mpack.unpack(io.open(funcs_file, 'rb'):read("*all"))
 local started = 0
 for name, def in pairs(funcs) do
   if name then

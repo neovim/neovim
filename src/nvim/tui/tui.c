@@ -52,21 +52,18 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
-#define STARTS_WITH(str, prefix) (strlen(str) >= (sizeof(prefix) - 1) \
-    && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
-#define TMUX_WRAP(is_tmux, seq) ((is_tmux) \
-                                 ? DCS_STR "tmux;\x1b" seq STERM_STR : seq)
-#define SCREEN_TMUX_WRAP(is_screen, is_tmux, seq) \
-    ((is_screen) \
-     ? DCS_STR seq STERM_STR : (is_tmux) \
-     ? DCS_STR "tmux;\x1b" seq STERM_STR : seq)
+#define STARTS_WITH(str, prefix) \
+    (strlen(str) >= (sizeof(prefix) - 1) \
+     && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
+#define TMUX_WRAP(is_tmux, seq) \
+    ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
 
 #ifdef NVIM_UNIBI_HAS_VAR_FROM
 #define UNIBI_SET_NUM_VAR(var, num) \
   do { \
-    (var) = unibi_var_from_num((num)); \
+      (var) = unibi_var_from_num((num)); \
   } while (0)
 #else
 #define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
@@ -301,12 +298,6 @@ static void terminfo_start(UI *ui)
                                      data->invis, sizeof data->invis);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
-  // Ask the terminal to send us the background color.
-  // If get_bg is sent at the same time after enter_ca_mode, tmux will not send
-  // get_bg to the host terminal. To avoid this, send get_bg before
-  // enter_ca_mode.
-  data->input.waiting_for_bg_response = 5;
-  unibi_out_ext(ui, data->unibi_ext.get_bg);
   // Enter alternate screen, save title, and clear.
   // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(ui, unibi_enter_ca_mode);
@@ -314,6 +305,9 @@ static void terminfo_start(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.save_title);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
+  // Ask the terminal to send us the background color.
+  data->input.waiting_for_bg_response = 5;
+  unibi_out_ext(ui, data->unibi_ext.get_bg);
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
@@ -335,7 +329,6 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
-
   flush_buf(ui);
 }
 
@@ -1780,10 +1773,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 #define XTERM_SETAB_16 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
 
-  data->unibi_ext.get_bg =
-    (int)unibi_add_ext_str(ut, "ext.get_bg",
-                           SCREEN_TMUX_WRAP((screen && !tmux), tmux,
-                                            "\x1b]11;?\x07"));
+  data->unibi_ext.get_bg = (int)unibi_add_ext_str(ut, "ext.get_bg",
+                                                  "\x1b]11;?\x07");
 
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
