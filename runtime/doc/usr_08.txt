@@ -235,7 +235,7 @@ windows like this:
 	+----------------------------------+
 
 Clearly the last one should be at the top.  Go to that window (using CTRL-W w)
-and the type this command: >
+and then type this command: >
 
 	CTRL-W K
 

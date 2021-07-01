@@ -436,7 +436,7 @@ the space bar):
 			     replace the column list with the list of tables.
 			   - This allows you to quickly drill down into a
 			     table to view its columns and back again.
-			   - <Right> and <Left> can be also be chosen via
+			   - <Right> and <Left> can also be chosen via
 			     your |init.vim| >
                                 let g:ftplugin_sql_omni_key_right = '<Right>'
                                 let g:ftplugin_sql_omni_key_left  = '<Left>'
