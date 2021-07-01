@@ -4599,11 +4599,11 @@ static win_T *win_alloc(win_T *after, int hidden)
 
 // Free one wininfo_T.
 void
-free_wininfo(wininfo_T *wip, buf_T *bp)
+free_wininfo(wininfo_T *wip)
 {
   if (wip->wi_optset) {
     clear_winopt(&wip->wi_opt);
-    deleteFoldRecurse(bp, &wip->wi_folds);
+    deleteFoldRecurse(&wip->wi_folds);
   }
   xfree(wip);
 }
@@ -4675,7 +4675,7 @@ win_free (
             } else {
               wip2->wi_prev->wi_next = wip2->wi_next;
             }
-            free_wininfo(wip2, buf);
+            free_wininfo(wip2);
             break;
           }
         }

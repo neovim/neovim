@@ -796,7 +796,7 @@ void deleteFold(
  */
 void clearFolding(win_T *win)
 {
-  deleteFoldRecurse(win->w_buffer, &win->w_folds);
+  deleteFoldRecurse(&win->w_folds);
   win->w_foldinvalid = false;
 }
 
@@ -1356,7 +1356,7 @@ static void deleteFoldEntry(win_T *const wp, garray_T *const gap, const int idx,
   fold_T *fp = (fold_T *)gap->ga_data + idx;
   if (recursive || GA_EMPTY(&fp->fd_nested)) {
     // recursively delete the contained folds
-    deleteFoldRecurse(wp->w_buffer, &fp->fd_nested);
+    deleteFoldRecurse(&fp->fd_nested);
     gap->ga_len--;
     if (idx < gap->ga_len) {
       memmove(fp, fp + 1, sizeof(*fp) * (size_t)(gap->ga_len - idx));
@@ -1398,9 +1398,9 @@ static void deleteFoldEntry(win_T *const wp, garray_T *const gap, const int idx,
 /*
  * Delete nested folds in a fold.
  */
-void deleteFoldRecurse(buf_T *bp, garray_T *gap)
+void deleteFoldRecurse(garray_T *gap)
 {
-# define DELETE_FOLD_NESTED(fd) deleteFoldRecurse(bp, &((fd)->fd_nested))
+# define DELETE_FOLD_NESTED(fd) deleteFoldRecurse(&((fd)->fd_nested))
   GA_DEEP_CLEAR(gap, fold_T, DELETE_FOLD_NESTED);
 }
 
