@@ -2455,13 +2455,13 @@ void ex_function(exarg_T *eap)
       goto erret;
     }
     if (fudi.fd_di == NULL) {
-      if (tv_check_lock(fudi.fd_dict->dv_lock, (const char *)eap->arg,
-                        TV_CSTRING)) {
+      if (var_check_lock(fudi.fd_dict->dv_lock, (const char *)eap->arg,
+                         TV_CSTRING)) {
         // Can't add a function to a locked dictionary
         goto erret;
       }
-    } else if (tv_check_lock(fudi.fd_di->di_tv.v_lock, (const char *)eap->arg,
-                             TV_CSTRING)) {
+    } else if (var_check_lock(fudi.fd_di->di_tv.v_lock, (const char *)eap->arg,
+                              TV_CSTRING)) {
       // Can't change an existing function if it is locked
       goto erret;
     }

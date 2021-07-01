@@ -2623,7 +2623,7 @@ describe('typval.c', function()
     describe('check_lock()', function()
       local function tv_check_lock(lock, name, name_len, emsg)
         return check_emsg(function()
-          return lib.tv_check_lock(lock, name, name_len)
+          return lib.var_check_lock(lock, name, name_len)
         end, emsg)
       end
       itp('works', function()

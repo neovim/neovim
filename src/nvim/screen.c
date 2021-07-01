@@ -7211,7 +7211,24 @@ void ui_ext_tabline_update(void)
 
     ADD(tabs, DICTIONARY_OBJ(tab_info));
   }
-  ui_call_tabline_update(curtab->handle, tabs);
+
+  Array buffers = ARRAY_DICT_INIT;
+  FOR_ALL_BUFFERS(buf) {
+    // Do not include unlisted buffers
+    if (!buf->b_p_bl) {
+      continue;
+    }
+
+    Dictionary buffer_info = ARRAY_DICT_INIT;
+    PUT(buffer_info, "buffer", BUFFER_OBJ(buf->handle));
+
+    get_trans_bufname(buf);
+    PUT(buffer_info, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
+
+    ADD(buffers, DICTIONARY_OBJ(buffer_info));
+  }
+
+  ui_call_tabline_update(curtab->handle, tabs, curbuf->handle, buffers);
 }
 
 /*
