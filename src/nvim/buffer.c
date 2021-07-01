@@ -840,11 +840,7 @@ static void clear_wininfo(buf_T *buf)
   while (buf->b_wininfo != NULL) {
     wip = buf->b_wininfo;
     buf->b_wininfo = wip->wi_next;
-    if (wip->wi_optset) {
-      clear_winopt(&wip->wi_opt);
-      deleteFoldRecurse(buf, &wip->wi_folds);
-    }
-    xfree(wip);
+    free_wininfo(wip, buf);
   }
 }
 
