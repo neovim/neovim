@@ -160,6 +160,38 @@ jobs:
         with:
           delete_release: true
           tag_name: nightly
+      # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
+      # containing folder from the output.
+      - name: Generate Linux64 SHA256 checksums
+        run: |
+          cd ./nvim-linux64
+          sha256sum nvim-linux64.tar.gz > nvim-linux64.tar.gz.sha256sum
+          echo "SHA_LINUX_64=$(cat nvim-linux64.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate App Image SHA256 checksums
+        run: |
+          cd ./appimage
+          sha256sum nvim.appimage > nvim.appimage.sha256sum
+          echo "SHA_APP_IMAGE=$(cat nvim.appimage.sha256sum)" >> $GITHUB_ENV
+      - name: Generate App Image Zsync SHA256 checksums
+        run: |
+          cd ./appimage
+          sha256sum nvim.appimage.zsync > nvim.appimage.zsync.sha256sum
+          echo "SHA_APP_IMAGE_ZSYNC=$(cat nvim.appimage.zsync.sha256sum)" >> $GITHUB_ENV
+      - name: Generate macOS SHA256 checksums
+        run: |
+          cd ./nvim-macos
+          sha256sum nvim-macos.tar.gz > nvim-macos.tar.gz.sha256sum
+          echo "SHA_MACOS=$(cat nvim-macos.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate Win32 SHA256 checksums
+        run: |
+          cd ./nvim-win32
+          sha256sum nvim-win32.zip > nvim-win32.zip.sha256sum
+          echo "SHA_WIN_32=$(cat nvim-win32.zip.sha256sum)" >> $GITHUB_ENV
+      - name: Generate Win64 SHA256 checksums
+        run: |
+          cd ./nvim-win64
+          sha256sum nvim-win64.zip > nvim-win64.zip.sha256sum
+          echo "SHA_WIN_64=$(cat nvim-win64.zip.sha256sum)" >> $GITHUB_ENV
       - uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -171,11 +203,17 @@ jobs:
           allow_override: ${{ env.TAG_NAME == 'nightly' }}
           files: |
             nvim-macos.tar.gz:./nvim-macos/nvim-macos.tar.gz
+            nvim-macos.tar.gz.sha256sum:./nvim-macos/nvim-macos.tar.gz.sha256sum
             nvim-linux64.tar.gz:./nvim-linux64/nvim-linux64.tar.gz
+            nvim-linux64.tar.gz.sha256sum:./nvim-linux64/nvim-linux64.tar.gz.sha256sum
             nvim.appimage:./appimage/nvim.appimage
+            nvim.appimage.sha256sum:./appimage/nvim.appimage.sha256sum
             nvim.appimage.zsync:./appimage/nvim.appimage.zsync
+            nvim.appimage.zsync.sha256sum:./appimage/nvim.appimage.zsync.sha256sum
             nvim-win32.zip:./nvim-win32/nvim-win32.zip
+            nvim-win32.zip.sha256sum:./nvim-win32/nvim-win32.zip.sha256sum
             nvim-win64.zip:./nvim-win64/nvim-win64.zip
+            nvim-win64.zip.sha256sum:./nvim-win64/nvim-win64.zip.sha256sum
           body: |
             ${{ env.SUBJECT }}
             ```
@@ -207,3 +245,14 @@ jobs:
             ### Other
 
             - Install by [package manager](https://github.com/neovim/neovim/wiki/Installing-Neovim)
+
+            ## SHA256 Checksums
+
+            ```
+            ${{ env.SHA_LINUX_64 }}
+            ${{ env.SHA_APP_IMAGE }}
+            ${{ env.SHA_APP_IMAGE_ZSYNC }}
+            ${{ env.SHA_MACOS }}
+            ${{ env.SHA_WIN_64 }}
+            ${{ env.SHA_WIN_32 }}
+            ```
