@@ -5238,11 +5238,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that such processing is done after |:set| did its own round of 
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
 							*shell-powershell*
-	To use powershell: >
+	To use PowerShell: >
 		let &shell = has('win32') ? 'powershell' : 'pwsh'
-		set shellquote= shellpipe=\| shellxquote=
-		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
-		set shellredir=\|\ Out-File\ -Encoding\ UTF8
+		let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
+		let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+		let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+		set shellquote= shellxquote=
 
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.

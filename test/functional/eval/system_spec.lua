@@ -174,6 +174,21 @@ describe('system()', function()
       end)
     end
 
+    it('works with powershell w/ UTF-8 text (#13713)', function()
+      if not helpers.has_powershell() then
+        pending("not tested; powershell was not found", function() end)
+        return
+      end
+      -- Should work with recommended config used in helper
+      helpers.set_shell_powershell()
+      eq('ああ\n', eval([[system('Write-Output "ああ"')]]))
+      -- Sanity test w/ default encoding
+      -- * on Windows, expected to default to Western European enc
+      -- * on Linux, expected to default to UTF8
+      command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
+      eq(iswin() and '??\n' or 'ああ\n', eval([[system('Write-Output "ああ"')]]))
+    end)
+
     it('`echo` and waits for its return', function()
       feed(':call system("echo")<cr>')
       screen:expect([[
@@ -554,4 +569,20 @@ describe('systemlist()', function()
     assert(out[1]:sub(0, 5) == 'pid: ', out)
     os_kill(out[1]:match("%d+"))
   end)
+
+  it('works with powershell w/ UTF-8 text (#13713)', function()
+    if not helpers.has_powershell() then
+      pending("not tested; powershell was not found", function() end)
+      return
+    end
+    -- Should work with recommended config used in helper
+    helpers.set_shell_powershell()
+    eq({iswin() and 'あ\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
+    -- Sanity test w/ default encoding
+    -- * on Windows, expected to default to Western European enc
+    -- * on Linux, expected to default to UTF8
+    command([[let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ']])
+    eq({iswin() and '?\r' or 'あ'}, eval([[systemlist('Write-Output あ')]]))
+  end)
+
 end)
