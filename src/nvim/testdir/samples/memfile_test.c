@@ -37,8 +37,8 @@ test_mf_hash(void)
     mf_hashtab_T   ht;
     mf_hashitem_T  *item;
     blocknr_T      key;
-    long_u	   i;
-    long_u	   num_buckets;
+    size_t	   i;
+    size_t	   num_buckets;
 
     mf_hash_init(&ht);
 
