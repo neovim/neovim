@@ -5127,7 +5127,6 @@ getmousepos()						*getmousepos()*
 		If the mouse is over a focusable floating window then that
 		window is used.
 
-
 		When using |getchar()| the Vim variables |v:mouse_lnum|,
 		|v:mouse_col| and |v:mouse_winid| also provide these values.
 
