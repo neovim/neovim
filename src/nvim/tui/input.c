@@ -603,9 +603,17 @@ static void handle_raw_buffer(TermInput *input, bool force)
     // Push through libtermkey (translates to "<keycode>" strings, etc.).
     RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
-      // termkey_push_bytes can return (size_t)-1, so it is possible that
-      // `consumed > input->read_stream.buffer->size`, but since tk_getkeys is
-      // called soon, it shouldn't happen.
+      // If the ESC key is pressed continuously, termkey_getkey() may keep
+      // returning TERMKEY_RES_AGAIN and the TermKey buffer may be overflowed.
+      // In such cases, call tk_getkeys() with force = true and let it process
+      // the buffer contents.
+      if (consumed == (size_t)-1) {
+        // Stop the current timer if already running
+        time_watcher_stop(&input->timer_handle);
+        tk_getkeys(input, true);
+        tinput_flush(input, true);
+        consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
+      }
       assert(consumed <= input->read_stream.buffer->size);
       rbuffer_consumed(input->read_stream.buffer, consumed);
       // Process the keys now: there is no guarantee `count` will

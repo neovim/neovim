@@ -875,6 +875,13 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]=])
   end)
+
+  it("does not crash on successive <ESC> inputs #13551", function()
+    command([[call chansend(b:terminal_job_id, repeat("\<ESC>", 257))]])
+    screen:expect_unchanged()
+    command([[call chansend(b:terminal_job_id, ":echo 'alive'\<CR>")]])
+    screen:expect{any='alive'}
+  end)
 end)
 
 describe('TUI', function()
