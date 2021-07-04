@@ -1186,9 +1186,12 @@ static void win_update(win_T *wp, Providers *providers)
 
         getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
         ve_flags = save_ve_flags;
-        ++toc;
-        if (curwin->w_curswant == MAXCOL)
+        toc++;
+        // Highlight to the end of the line, unless 'virtualedit' has
+        // "block".
+        if (curwin->w_curswant == MAXCOL && !(ve_flags & VE_BLOCK)) {
           toc = MAXCOL;
+        }
 
         if (fromc != wp->w_old_cursor_fcol
             || toc != wp->w_old_cursor_lcol) {
