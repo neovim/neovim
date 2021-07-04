@@ -23,7 +23,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Benedikt Böhm http://bb.xnull.de
 - bfredl, http://bfredl.github.io
 - Brandon Smith, http://reardencode.com
-- Brandon Wang, http://brandonwang.me
+- Brandon Wang http://brandonwang.me
 - Brennen Bearnes http://p1k3.com
 - Brock Wilcox (awwaiid) http://thelackthereof.org/
 - Cameron Eagans http://cweagans.net
