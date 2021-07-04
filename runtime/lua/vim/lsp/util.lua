@@ -810,16 +810,16 @@ function M.convert_input_to_markdown_lines(input, contents)
       -- If it's plaintext, then wrap it in a <text></text> block
 
       -- Some servers send input.value as empty, so let's ignore this :(
-      input.value = input.value or ''
+      local value = input.value or ''
 
       if input.kind == "plaintext" then
         -- wrap this in a <text></text> block so that stylize_markdown
         -- can properly process it as plaintext
-        input.value = string.format("<text>\n%s\n</text>", input.value or "")
+        value = string.format("<text>\n%s\n</text>", value)
       end
 
-      -- assert(type(input.value) == 'string')
-      list_extend(contents, split_lines(input.value))
+      -- assert(type(value) == 'string')
+      list_extend(contents, split_lines(value))
     -- MarkupString variation 2
     elseif input.language then
       -- Some servers send input.value as empty, so let's ignore this :(
