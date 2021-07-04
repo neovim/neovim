@@ -864,6 +864,9 @@ au BufNewFile,BufRead *.json-patch			setf json
 " Jupyter Notebook is also json
 au BufNewFile,BufRead *.ipynb				setf json
 
+" JSONC
+au BufNewFile,BufRead *.jsonc			setf jsonc
+
 " Kixtart
 au BufNewFile,BufRead *.kix			setf kix
 

@@ -260,6 +260,7 @@ let s:filename_checks = {
     \ 'jovial': ['file.jov', 'file.j73', 'file.jovial'],
     \ 'jproperties': ['file.properties', 'file.properties_xx', 'file.properties_xx_xx', 'some.properties_xx_xx_file'],
     \ 'json': ['file.json', 'file.jsonp', 'file.json-patch', 'file.webmanifest', 'Pipfile.lock', 'file.ipynb'],
+    \ 'jsonc': ['file.jsonc'],
     \ 'jsp': ['file.jsp'],
     \ 'kconfig': ['Kconfig', 'Kconfig.debug', 'Kconfig.file'],
     \ 'kivy': ['file.kv'],
