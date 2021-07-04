@@ -885,9 +885,10 @@ void handle_swap_exists(bufref_T *old_curbuf)
 {
   cleanup_T cs;
   long old_tw = curbuf->b_p_tw;
-  buf_T *buf;
 
   if (swap_exists_action == SEA_QUIT) {
+    buf_T *buf;
+
     // Reset the error/interrupt/exception state here so that
     // aborting() returns false when closing a buffer.
     enter_cleanup(&cs);
@@ -969,15 +970,15 @@ do_bufdel(
     int forceit
 )
 {
-  int do_current = 0;             // delete current buffer?
-  int deleted = 0;                // number of buffers deleted
   char_u      *errormsg = NULL;   // return value
-  int bnr;                        // buffer number
   char_u      *p;
 
   if (addr_count == 0) {
     (void)do_buffer(command, DOBUF_CURRENT, FORWARD, 0, forceit);
   } else {
+    int do_current = 0;             // delete current buffer?
+    int deleted = 0;                // number of buffers deleted
+    int bnr;                        // buffer number
     if (addr_count == 2) {
       if (*arg) {               // both range and argument is not allowed
         return (char_u *)_(e_trailing);
@@ -2453,7 +2454,6 @@ static char_u *buflist_match(regmatch_T *rmp, buf_T *buf, bool ignore_case)
 static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
 {
   char_u      *match = NULL;
-  char_u      *p;
 
   if (name != NULL) {
     // Ignore case when 'fileignorecase' or the argument is set.
@@ -2462,7 +2462,7 @@ static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
       match = name;
     } else {
       // Replace $(HOME) with '~' and try matching again.
-      p = home_replace_save(NULL, name);
+      char_u *p = home_replace_save(NULL, name);
       if (vim_regexec(rmp, p, (colnr_T)0)) {
         match = name;
       }
@@ -3117,7 +3117,6 @@ fileinfo(
     int dont_truncate
 )
 {
-  char_u      *name;
   int n;
   char_u      *p;
   char_u      *buffer;
@@ -3135,6 +3134,7 @@ fileinfo(
   if (buf_spname(curbuf) != NULL) {
     STRLCPY(p, buf_spname(curbuf), IOSIZE - (p - buffer));
   } else {
+    char_u *name;
     if (!fullname && curbuf->b_fname != NULL) {
       name = curbuf->b_fname;
     } else {
@@ -4800,7 +4800,6 @@ do_arg_all(
   bool p_ea_save;
   alist_T     *alist;           // argument list to be used
   buf_T       *buf;
-  tabpage_T   *tpnext;
   int had_tab = cmdmod.tab;
   win_T       *old_curwin, *last_curwin;
   tabpage_T   *old_curtab, *last_curtab;
@@ -4841,7 +4840,7 @@ do_arg_all(
   }
   for (;; ) {
     win_T *wpnext = NULL;
-    tpnext = curtab->tp_next;
+    tabpage_T *tpnext = curtab->tp_next;
     for (win_T *wp = firstwin; wp != NULL; wp = wpnext) {
       int i;
       wpnext = wp->w_next;
@@ -5063,11 +5062,9 @@ void ex_buffer_all(exarg_T *eap)
   int split_ret = OK;
   bool p_ea_save;
   int open_wins = 0;
-  int r;
   long count;                   // Maximum number of windows to open.
   int all;                      // When true also load inactive buffers.
   int had_tab = cmdmod.tab;
-  tabpage_T   *tpnext;
 
   if (eap->addr_count == 0) {   // make as many windows as possible
     count = 9999;
@@ -5091,7 +5088,7 @@ void ex_buffer_all(exarg_T *eap)
     goto_tabpage_tp(first_tabpage, true, true);
   }
   for (;; ) {
-    tpnext = curtab->tp_next;
+    tabpage_T *tpnext = curtab->tp_next;
     for (wp = firstwin; wp != NULL; wp = wpnext) {
       wpnext = wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
@@ -5219,8 +5216,8 @@ void ex_buffer_all(exarg_T *eap)
    * Close superfluous windows.
    */
   for (wp = lastwin; open_wins > count; ) {
-    r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-         || autowrite(wp->w_buffer, false) == OK);
+    int r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
+             || autowrite(wp->w_buffer, false) == OK);
     if (!win_valid(wp)) {
       // BufWrite Autocommands made the window invalid, start over
       wp = lastwin;
