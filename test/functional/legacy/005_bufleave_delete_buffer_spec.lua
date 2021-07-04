@@ -1,7 +1,7 @@
 -- Test for autocommand that deletes the current buffer on BufLeave event.
 -- Also test deleting the last buffer, should give a new, empty buffer.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, expect = helpers.command, helpers.expect
 local poke_eventloop = helpers.poke_eventloop
@@ -11,49 +11,49 @@ describe('test5', function()
 
   -- luacheck: ignore 621 (Indentation)
   it('is working', function()
-    insert([[
+    insert [[
       start of test file Xxx
       vim: set noai :
       	this is a test
       	this is a test
       	this is a test
       	this is a test
-      end of test file Xxx]])
+      end of test file Xxx]]
 
-    command('w! Xxx0')
-    command('au BufLeave Xxx bwipe')
-    command('/start of')
+    command 'w! Xxx0'
+    command 'au BufLeave Xxx bwipe'
+    command '/start of'
 
     -- Write test file Xxx.
-    command('.,/end of/w! Xxx')
+    command '.,/end of/w! Xxx'
 
     -- Split to Xxx.
-    command('sp Xxx')
+    command 'sp Xxx'
 
     -- Delete buffer Xxx, now we're back here.
-    command('bwipe')
-    feed('G?this is a<cr>')
-    feed('othis is some more text<esc>')
+    command 'bwipe'
+    feed 'G?this is a<cr>'
+    feed 'othis is some more text<esc>'
     poke_eventloop()
 
     -- Append some text to this file.
 
     -- Write current file contents.
-    command('?start?,$yank A')
+    command '?start?,$yank A'
 
     -- Delete current buffer, get an empty one.
-    command('bwipe!')
+    command 'bwipe!'
     -- Append an extra line to the output register.
-    feed('ithis is another test line<esc>:yank A<cr>')
+    feed 'ithis is another test line<esc>:yank A<cr>'
     poke_eventloop()
 
     -- Output results
-    command('%d')
-    command('0put a')
-    command('$d')
+    command '%d'
+    command '0put a'
+    command '$d'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       start of test file Xxx
       vim: set noai :
       	this is a test
@@ -62,11 +62,11 @@ describe('test5', function()
       	this is a test
       this is some more text
       end of test file Xxx
-      this is another test line]])
+      this is another test line]]
   end)
 
   teardown(function()
-    os.remove('Xxx')
-    os.remove('Xxx0')
+    os.remove 'Xxx'
+    os.remove 'Xxx0'
   end)
 end)

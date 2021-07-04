@@ -1,5 +1,5 @@
-local lfs = require('lfs')
-local helpers = require('test.unit.helpers')(after_each)
+local lfs = require 'lfs'
+local helpers = require 'test.unit.helpers'(after_each)
 local itp = helpers.gen_itp(it)
 
 local eq = helpers.eq

@@ -1,4 +1,4 @@
-local helpers = require('test.unit.helpers')(after_each)
+local helpers = require 'test.unit.helpers'(after_each)
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
@@ -6,9 +6,13 @@ local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
 
-local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval/typval.h',
-                       './src/nvim/globals.h', './src/nvim/memory.h',
-                       './src/nvim/message.h')
+local decode = cimport(
+  './src/nvim/eval/decode.h',
+  './src/nvim/eval/typval.h',
+  './src/nvim/globals.h',
+  './src/nvim/memory.h',
+  './src/nvim/message.h'
+)
 
 describe('json_decode_string()', function()
   local char = function(c)
@@ -16,7 +20,7 @@ describe('json_decode_string()', function()
   end
 
   itp('does not overflow when running with `n…`, `t…`, `f…`', function()
-    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    local rettv = ffi.new('typval_T', { v_type = decode.VAR_UNKNOWN })
     decode.emsg_silent = 1
     -- This will not crash, but if `len` argument will be ignored it will parse
     -- `null` as `null` and if not it will parse `null` as `n`.
@@ -43,18 +47,18 @@ describe('json_decode_string()', function()
   end)
 
   itp('does not overflow and crash when running with `n`, `t`, `f`', function()
-    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    local rettv = ffi.new('typval_T', { v_type = decode.VAR_UNKNOWN })
     decode.emsg_silent = 1
-    eq(0, decode.json_decode_string(char('n'), 1, rettv))
+    eq(0, decode.json_decode_string(char 'n', 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
-    eq(0, decode.json_decode_string(char('t'), 1, rettv))
+    eq(0, decode.json_decode_string(char 't', 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
-    eq(0, decode.json_decode_string(char('f'), 1, rettv))
+    eq(0, decode.json_decode_string(char 'f', 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)
 
   itp('does not overflow when running with `"…`', function()
-    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    local rettv = ffi.new('typval_T', { v_type = decode.VAR_UNKNOWN })
     decode.emsg_silent = 1
     eq(0, decode.json_decode_string('"t"', 2, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
@@ -63,7 +67,7 @@ describe('json_decode_string()', function()
   end)
 
   local check_failure = function(s, len, msg)
-    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    local rettv = ffi.new('typval_T', { v_type = decode.VAR_UNKNOWN })
     eq(0, decode.json_decode_string(s, len, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
     neq(nil, decode.last_msg_hist)
@@ -71,11 +75,10 @@ describe('json_decode_string()', function()
   end
 
   itp('does not overflow in error messages', function()
-    collectgarbage('restart')
+    collectgarbage 'restart'
     check_failure(']test', 1, 'E474: No container to close: ]')
     check_failure('[}test', 2, 'E474: Closing list with curly bracket: }')
-    check_failure('{]test', 2,
-                  'E474: Closing dictionary with square bracket: ]')
+    check_failure('{]test', 2, 'E474: Closing dictionary with square bracket: ]')
     check_failure('[1,]test', 4, 'E474: Trailing comma: ]')
     check_failure('{"1":}test', 6, 'E474: Expected value after colon: }')
     check_failure('{"1"}test', 5, 'E474: Expected value: }')
@@ -93,16 +96,16 @@ describe('json_decode_string()', function()
     check_failure('ttest', 1, 'E474: Expected true: t')
     check_failure('ftest', 1, 'E474: Expected false: f')
     check_failure('"\\test', 2, 'E474: Unfinished escape sequence: "\\')
-    check_failure('"\\u"test', 4,
-                  'E474: Unfinished unicode escape sequence: "\\u"')
-    check_failure('"\\uXXXX"est', 8,
-                  'E474: Expected four hex digits after \\u: \\uXXXX"')
+    check_failure('"\\u"test', 4, 'E474: Unfinished unicode escape sequence: "\\u"')
+    check_failure('"\\uXXXX"est', 8, 'E474: Expected four hex digits after \\u: \\uXXXX"')
     check_failure('"\\?"test', 4, 'E474: Unknown escape sequence: \\?"')
-    check_failure(
-        '"\t"test', 3,
-        'E474: ASCII control characters cannot be present inside string: \t"')
+    check_failure('"\t"test', 3, 'E474: ASCII control characters cannot be present inside string: \t"')
     check_failure('"\194"test', 3, 'E474: Only UTF-8 strings allowed: \194"')
-    check_failure('"\252\144\128\128\128\128"test', 8, 'E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"')
+    check_failure(
+      '"\252\144\128\128\128\128"test',
+      8,
+      'E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"'
+    )
     check_failure('"test', 1, 'E474: Expected string end: "')
     check_failure('-test', 1, 'E474: Missing number after minus sign: -')
     check_failure('-1.test', 3, 'E474: Missing number after decimal dot: -1.')
@@ -117,9 +120,9 @@ describe('json_decode_string()', function()
   end)
 
   itp('does not overflow and crash when running with `"`', function()
-    local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
+    local rettv = ffi.new('typval_T', { v_type = decode.VAR_UNKNOWN })
     decode.emsg_silent = 1
-    eq(0, decode.json_decode_string(char('"'), 1, rettv))
+    eq(0, decode.json_decode_string(char '"', 1, rettv))
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)
 end)

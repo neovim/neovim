@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local source, clear = helpers.source, helpers.clear
 local eq, nvim = helpers.eq, helpers.meths
 
@@ -6,7 +6,7 @@ describe('undolevel', function()
   setup(clear)
 
   it('is working', function()
-    source([[
+    source [[
       func FillBuffer()
         for i in range(1,13)
           put=i
@@ -55,8 +55,8 @@ describe('undolevel', function()
       endfunc
 
       call Test_global_local_undolevels()
-    ]])
+    ]]
 
-    eq({}, nvim.get_vvar('errors'))
+    eq({}, nvim.get_vvar 'errors')
   end)
 end)

@@ -1,7 +1,7 @@
 -- Specs for :cd, :tcd, :lcd and getcwd()
 
-local lfs = require('lfs')
-local helpers = require('test.functional.helpers')(after_each)
+local lfs = require 'lfs'
+local helpers = require 'test.functional.helpers'(after_each)
 
 local eq = helpers.eq
 local call = helpers.call
@@ -18,18 +18,30 @@ local directories = {
 }
 
 -- Shorthand writing to get the current working directory
-local  cwd = function(...) return call('getcwd', ...) end  -- effective working dir
-local wcwd = function() return cwd(0) end  -- window dir
-local tcwd = function() return cwd(-1, 0) end  -- tab dir
+local cwd = function(...)
+  return call('getcwd', ...)
+end -- effective working dir
+local wcwd = function()
+  return cwd(0)
+end -- window dir
+local tcwd = function()
+  return cwd(-1, 0)
+end -- tab dir
 
 -- Same, except these tell us if there is a working directory at all
-local  lwd = function(...) return call('haslocaldir', ...) end  -- effective working dir
-local wlwd = function() return lwd(0) end  -- window dir
-local tlwd = function() return lwd(-1,  0) end  -- tab dir
+local lwd = function(...)
+  return call('haslocaldir', ...)
+end -- effective working dir
+local wlwd = function()
+  return lwd(0)
+end -- window dir
+local tlwd = function()
+  return lwd(-1, 0)
+end -- tab dir
 --local glwd = function() return eval('haslocaldir(-1, -1)') end  -- global dir
 
 -- Test both the `cd` and `chdir` variants
-for _, cmd in ipairs {'cd', 'chdir'} do
+for _, cmd in ipairs { 'cd', 'chdir' } do
   describe(':' .. cmd, function()
     before_each(function()
       clear()
@@ -48,8 +60,8 @@ for _, cmd in ipairs {'cd', 'chdir'} do
     describe('using explicit scope', function()
       it('for window', function()
         local globalDir = directories.start
-        local globalwin = call('winnr')
-        local tabnr = call('tabpagenr')
+        local globalwin = call 'winnr'
+        local tabnr = call 'tabpagenr'
 
         -- Everything matches globalDir to start
         eq(globalDir, cwd(globalwin))
@@ -57,8 +69,8 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(0, lwd(globalwin))
         eq(0, lwd(globalwin, tabnr))
 
-        command('bot split')
-        local localwin = call('winnr')
+        command 'bot split'
+        local localwin = call 'winnr'
         -- Initial window is still using globalDir
         eq(globalDir, cwd(localwin))
         eq(globalDir, cwd(localwin, tabnr))
@@ -79,7 +91,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(1, lwd(localwin))
         eq(1, lwd(localwin, tabnr))
 
-        command('tabnew')
+        command 'tabnew'
         -- From new tab page, original window reports global dir
         eq(globalDir, cwd(globalwin, tabnr))
         eq(0, lwd(globalwin, tabnr))
@@ -91,7 +103,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
 
       it('for tab page', function()
         local globalDir = directories.start
-        local globaltab = call('tabpagenr')
+        local globaltab = call 'tabpagenr'
 
         -- Everything matches globalDir to start
         eq(globalDir, cwd(-1, 0))
@@ -99,9 +111,9 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(0, lwd(-1, 0))
         eq(0, lwd(-1, globaltab))
 
-        command('tabnew')
+        command 'tabnew'
         command('silent t' .. cmd .. ' ' .. directories.tab)
-        local localtab = call('tabpagenr')
+        local localtab = call 'tabpagenr'
 
         -- From local tab page, original tab reports globalDir
         eq(globalDir, cwd(-1, globaltab))
@@ -113,7 +125,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(1, lwd(-1, 0))
         eq(1, lwd(-1, localtab))
 
-        command('tabnext')
+        command 'tabnext'
         -- From original tab page, local reports as such
         eq(globalDir .. pathsep .. directories.tab, cwd(-1, localtab))
         eq(1, lwd(-1, localtab))
@@ -144,18 +156,18 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         local globalDir = directories.start
 
         -- Create a new tab and change directory
-        command('tabnew')
+        command 'tabnew'
         command('silent t' .. cmd .. ' ' .. directories.tab)
         eq(globalDir .. pathsep .. directories.tab, tcwd())
 
         -- Create a new tab and verify it has inherited the directory
-        command('tabnew')
+        command 'tabnew'
         eq(globalDir .. pathsep .. directories.tab, tcwd())
 
         -- Change tab and change back, verify that directories are correct
-        command('tabnext')
+        command 'tabnext'
         eq(globalDir, tcwd())
-        command('tabprevious')
+        command 'tabprevious'
         eq(globalDir .. pathsep .. directories.tab, tcwd())
       end)
     end)
@@ -163,25 +175,25 @@ for _, cmd in ipairs {'cd', 'chdir'} do
     it('works', function()
       local globalDir = directories.start
       -- Create a new tab first and verify that is has the same working dir
-      command('tabnew')
+      command 'tabnew'
       eq(globalDir, cwd())
-      eq(globalDir, tcwd())  -- has no tab-local directory
+      eq(globalDir, tcwd()) -- has no tab-local directory
       eq(0, tlwd())
-      eq(globalDir, wcwd())  -- has no window-local directory
+      eq(globalDir, wcwd()) -- has no window-local directory
       eq(0, wlwd())
 
       -- Change tab-local working directory and verify it is different
       command('silent t' .. cmd .. ' ' .. directories.tab)
       eq(globalDir .. pathsep .. directories.tab, cwd())
-      eq(cwd(), tcwd())  -- working directory maches tab directory
+      eq(cwd(), tcwd()) -- working directory maches tab directory
       eq(1, tlwd())
-      eq(cwd(), wcwd())  -- still no window-directory
+      eq(cwd(), wcwd()) -- still no window-directory
       eq(0, wlwd())
 
       -- Create a new window in this tab to test `:lcd`
-      command('new')
-      eq(1, tlwd())  -- Still tab-local working directory
-      eq(0, wlwd())  -- Still no window-local working directory
+      command 'new'
+      eq(1, tlwd()) -- Still tab-local working directory
+      eq(0, wlwd()) -- Still no window-local working directory
       eq(globalDir .. pathsep .. directories.tab, cwd())
       command('silent l' .. cmd .. ' ../' .. directories.window)
       eq(globalDir .. pathsep .. directories.window, cwd())
@@ -189,46 +201,46 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(1, wlwd())
 
       -- Verify the first window still has the tab local directory
-      command('wincmd w')
-      eq(globalDir .. pathsep .. directories.tab,  cwd())
+      command 'wincmd w'
+      eq(globalDir .. pathsep .. directories.tab, cwd())
       eq(globalDir .. pathsep .. directories.tab, tcwd())
-      eq(0, wlwd())  -- No window-local directory
+      eq(0, wlwd()) -- No window-local directory
 
       -- Change back to initial tab and verify working directory has stayed
-      command('tabnext')
-      eq(globalDir, cwd() )
+      command 'tabnext'
+      eq(globalDir, cwd())
       eq(0, tlwd())
       eq(0, wlwd())
 
       -- Verify global changes don't affect local ones
       command('silent ' .. cmd .. ' ' .. directories.global)
       eq(globalDir .. pathsep .. directories.global, cwd())
-      command('tabnext')
-      eq(globalDir .. pathsep .. directories.tab,  cwd())
+      command 'tabnext'
+      eq(globalDir .. pathsep .. directories.tab, cwd())
       eq(globalDir .. pathsep .. directories.tab, tcwd())
-      eq(0, wlwd())  -- Still no window-local directory in this window
+      eq(0, wlwd()) -- Still no window-local directory in this window
 
       -- Unless the global change happened in a tab with local directory
       command('silent ' .. cmd .. ' ..')
-      eq(globalDir, cwd() )
-      eq(0 , tlwd())
-      eq(0 , wlwd())
+      eq(globalDir, cwd())
+      eq(0, tlwd())
+      eq(0, wlwd())
       -- Which also affects the first tab
-      command('tabnext')
+      command 'tabnext'
       eq(globalDir, cwd())
 
       -- But not in a window with its own local directory
-      command('tabnext | wincmd w')
-      eq(globalDir .. pathsep .. directories.window, cwd() )
-      eq(0 , tlwd())
+      command 'tabnext | wincmd w'
+      eq(globalDir .. pathsep .. directories.window, cwd())
+      eq(0, tlwd())
       eq(globalDir .. pathsep .. directories.window, wcwd())
     end)
   end)
 end
 
 -- Test legal parameters for 'getcwd' and 'haslocaldir'
-for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
-  describe(cmd..'()', function()
+for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
+  describe(cmd .. '()', function()
     before_each(function()
       clear()
     end)
@@ -268,7 +280,7 @@ for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
   end)
 end
 
-describe("getcwd()", function ()
+describe('getcwd()', function()
   before_each(function()
     clear()
     lfs.mkdir(directories.global)
@@ -278,23 +290,21 @@ describe("getcwd()", function ()
     helpers.rmdir(directories.global)
   end)
 
-  it("returns empty string if working directory does not exist", function()
+  it('returns empty string if working directory does not exist', function()
     if helpers.iswin() then
       return
     end
-    command("cd "..directories.global)
-    command("call delete('../"..directories.global.."', 'd')")
-    eq("", helpers.eval("getcwd()"))
+    command('cd ' .. directories.global)
+    command("call delete('../" .. directories.global .. "', 'd')")
+    eq('', helpers.eval 'getcwd()')
   end)
 
   it("works with 'autochdir' after local directory was set (#9892)", function()
     local curdir = cwd()
     command('lcd ' .. directories.global)
-    command('lcd -')
-    command('set autochdir')
+    command 'lcd -'
+    command 'set autochdir'
     command('edit ' .. directories.global .. '/foo')
     eq(curdir .. pathsep .. directories.global, cwd())
   end)
 end)
-
-

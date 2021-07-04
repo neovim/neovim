@@ -1,5 +1,5 @@
-local lfs = require('lfs')
-local helpers = require('test.functional.helpers')(after_each)
+local lfs = require 'lfs'
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
@@ -31,20 +31,19 @@ describe(':mksession', function()
     -- should restore it as such.
 
     -- Create two windows showing the same :terminal buffer.
-    command('terminal')
-    command('split')
-    command('terminal')
-    command('split')
-    command('mksession '..session_file)
+    command 'terminal'
+    command 'split'
+    command 'terminal'
+    command 'split'
+    command('mksession ' .. session_file)
 
     -- Create a new test instance of Nvim.
-    command('qall!')
+    command 'qall!'
     clear()
     -- Restore session.
-    command('source '..session_file)
+    command('source ' .. session_file)
 
-    eq({3,3,2},
-      {funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3)})
+    eq({ 3, 3, 2 }, { funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3) })
   end)
 
   it('restores tab-local working directories', function()
@@ -53,10 +52,10 @@ describe(':mksession', function()
 
     -- :mksession does not save empty tabs, so create some buffers.
     command('edit ' .. tmpfile_base .. '1')
-    command('tabnew')
+    command 'tabnew'
     command('edit ' .. tmpfile_base .. '2')
     command('tcd ' .. tab_dir)
-    command('tabfirst')
+    command 'tabfirst'
     command('mksession ' .. session_file)
 
     -- Create a new test instance of Nvim.
@@ -64,10 +63,10 @@ describe(':mksession', function()
 
     command('source ' .. session_file)
     -- First tab should have the original working directory.
-    command('tabnext 1')
+    command 'tabnext 1'
     eq(cwd_dir, funcs.getcwd())
     -- Second tab should have the tab-local working directory.
-    command('tabnext 2')
+    command 'tabnext 2'
     eq(cwd_dir .. get_pathsep() .. tab_dir, funcs.getcwd())
   end)
 
@@ -78,9 +77,9 @@ describe(':mksession', function()
 
     command('edit ' .. tmpfile_base .. '1')
     command('tcd ' .. tab_dir)
-    command('tabnew')
+    command 'tabnew'
     command('edit ' .. cwd_dir .. get_pathsep() .. tmpfile_base .. '2')
-    command('tabfirst')
+    command 'tabfirst'
     command('mksession ' .. session_path)
 
     -- Create a new test instance of Nvim.
@@ -88,29 +87,29 @@ describe(':mksession', function()
 
     -- Use :silent to avoid press-enter prompt due to long path
     command('silent source ' .. session_path)
-    command('tabnext 1')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', funcs.expand('%:p'))
-    command('tabnext 2')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
+    command 'tabnext 1'
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', funcs.expand '%:p')
+    command 'tabnext 2'
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand '%:p')
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
     local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    cwd_dir = cwd_dir:gsub([[\]], '/')  -- :mksession always uses unix slashes.
-    local session_path = cwd_dir..'/'..session_file
+    cwd_dir = cwd_dir:gsub([[\]], '/') -- :mksession always uses unix slashes.
+    local session_path = cwd_dir .. '/' .. session_file
 
-    command('cd '..tab_dir)
-    command('terminal echo $PWD')
-    command('cd '..cwd_dir)
-    command('mksession '..session_path)
-    command('qall!')
+    command('cd ' .. tab_dir)
+    command 'terminal echo $PWD'
+    command('cd ' .. cwd_dir)
+    command('mksession ' .. session_path)
+    command 'qall!'
 
     -- Create a new test instance of Nvim.
     clear()
-    command('silent source '..session_path)
+    command('silent source ' .. session_path)
 
-    local expected_cwd = cwd_dir..'/'..tab_dir
-    matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
-    command('qall!')
+    local expected_cwd = cwd_dir .. '/' .. tab_dir
+    matches('^term://' .. pesc(expected_cwd) .. '//%d+:', funcs.expand '%')
+    command 'qall!'
   end)
 end)

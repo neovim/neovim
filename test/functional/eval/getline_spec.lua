@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local call = helpers.call
 local clear = helpers.clear
@@ -8,11 +8,11 @@ local expect = helpers.expect
 describe('getline()', function()
   before_each(function()
     clear()
-    call('setline', 1, {'a', 'b', 'c'})
-    expect([[
+    call('setline', 1, { 'a', 'b', 'c' })
+    expect [[
       a
       b
-      c]])
+      c]]
   end)
 
   it('returns empty string for invalid line', function()
@@ -33,7 +33,7 @@ describe('getline()', function()
   end)
 
   it('returns value of valid range', function()
-    eq({'a', 'b'}, call('getline', 1, 2))
-    eq({'a', 'b', 'c'}, call('getline', 1, 4))
+    eq({ 'a', 'b' }, call('getline', 1, 2))
+    eq({ 'a', 'b', 'c' }, call('getline', 1, 4))
   end)
 end)

@@ -5,13 +5,17 @@ local F = {}
 --@param a
 --@param b
 function F.if_nil(a, b)
-  if a == nil then return b end
+  if a == nil then
+    return b
+  end
   return a
 end
 
 -- Use in combination with pcall
 function F.ok_or_nil(status, ...)
-  if not status then return end
+  if not status then
+    return
+  end
   return ...
 end
 
@@ -26,6 +30,5 @@ function F.nil_wrap(fn)
     return F.npcall(fn, ...)
   end
 end
-
 
 return F

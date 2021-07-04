@@ -1,6 +1,6 @@
 -- Test for user command counts
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, source, expect = helpers.clear, helpers.source, helpers.expect
 local feed_command = helpers.feed_command
 
@@ -10,9 +10,9 @@ describe('command_count', function()
     -- It is relevant for the test to load a file initially.  If this is
     -- emulated with :arg the buffer count is wrong as nvim creates an empty
     -- buffer if it was started without a filename.
-    clear('test_command_count.in')
+    clear 'test_command_count.in'
 
-    source([[
+    source [[
       let g:tmpname = tempname()
       call mkdir(g:tmpname)
       execute "cd ".g:tmpname
@@ -86,38 +86,38 @@ describe('command_count', function()
       call add(g:lines, '')
       %argd
       arga a b c d
-      ]])
+      ]]
     -- This can not be in the source() call as it will produce errors.
-    feed_command([[let v:errmsg = '']])
-    feed_command('5argu')
-    feed_command([[call add(g:lines, '5argu ' . v:errmsg)]])
-    feed_command('$argu')
-    feed_command([[call add(g:lines, '4argu ' . expand('%:t'))]])
-    feed_command([[let v:errmsg = '']])
-    feed_command('1argu')
-    feed_command([[call add(g:lines, '1argu ' . expand('%:t'))]])
-    feed_command([[let v:errmsg = '']])
-    feed_command('100b')
-    feed_command([[call add(g:lines, '100b ' . v:errmsg)]])
-    feed_command('split')
-    feed_command('split')
-    feed_command('split')
-    feed_command('split')
-    feed_command([[let v:errmsg = '']])
-    feed_command('0close')
-    feed_command([[call add(g:lines, '0close ' . v:errmsg)]])
-    feed_command('$wincmd w')
-    feed_command('$close')
-    feed_command([[call add(g:lines, '$close ' . winnr())]])
-    feed_command([[let v:errmsg = '']])
-    feed_command('$+close')
-    feed_command([[call add(g:lines, '$+close ' . v:errmsg)]])
-    feed_command('$tabe')
-    feed_command([[call add(g:lines, '$tabe ' . tabpagenr())]])
-    feed_command([[let v:errmsg = '']])
-    feed_command('$+tabe')
-    feed_command([[call add(g:lines, '$+tabe ' . v:errmsg)]])
-    source([[
+    feed_command [[let v:errmsg = '']]
+    feed_command '5argu'
+    feed_command [[call add(g:lines, '5argu ' . v:errmsg)]]
+    feed_command '$argu'
+    feed_command [[call add(g:lines, '4argu ' . expand('%:t'))]]
+    feed_command [[let v:errmsg = '']]
+    feed_command '1argu'
+    feed_command [[call add(g:lines, '1argu ' . expand('%:t'))]]
+    feed_command [[let v:errmsg = '']]
+    feed_command '100b'
+    feed_command [[call add(g:lines, '100b ' . v:errmsg)]]
+    feed_command 'split'
+    feed_command 'split'
+    feed_command 'split'
+    feed_command 'split'
+    feed_command [[let v:errmsg = '']]
+    feed_command '0close'
+    feed_command [[call add(g:lines, '0close ' . v:errmsg)]]
+    feed_command '$wincmd w'
+    feed_command '$close'
+    feed_command [[call add(g:lines, '$close ' . winnr())]]
+    feed_command [[let v:errmsg = '']]
+    feed_command '$+close'
+    feed_command [[call add(g:lines, '$+close ' . v:errmsg)]]
+    feed_command '$tabe'
+    feed_command [[call add(g:lines, '$tabe ' . tabpagenr())]]
+    feed_command [[let v:errmsg = '']]
+    feed_command '$+tabe'
+    feed_command [[call add(g:lines, '$+tabe ' . v:errmsg)]]
+    source [[
       only!
       e x
       0tabm
@@ -193,10 +193,10 @@ describe('command_count', function()
       call add(g:lines, 'tabdo:' . tabpages)
       e! test.out
       call append('$', g:lines)
-    ]])
+    ]]
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       RangeArguments 2 4
       RangeArguments 1 5
       RangeArgumentsAll 1 5
@@ -234,11 +234,11 @@ describe('command_count', function()
       windo: 2 3 4
       bufdo: 2 3 4 5 6 7 8 9 10 15
       bufdo: 4 5 6 7
-      tabdo: 2 3 4]])
+      tabdo: 2 3 4]]
 
-    source([[
+    source [[
       cd ..
       call delete(g:tmpname, 'rf')
-    ]])
+    ]]
   end)
 end)

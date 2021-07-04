@@ -1,5 +1,5 @@
-local helpers = require('test.functional.helpers')(after_each)
-local Screen = require('test.functional.ui.screen')
+local helpers = require 'test.functional.helpers'(after_each)
+local Screen = require 'test.functional.ui.screen'
 local clear, command = helpers.clear, helpers.command
 local eval = helpers.eval
 local eq = helpers.eq
@@ -16,86 +16,85 @@ describe("'fillchars'", function()
     screen:attach()
   end)
 
-  local function shouldfail(val,errval)
+  local function shouldfail(val, errval)
     errval = errval or val
-    eq('Vim(set):E474: Invalid argument: fillchars='..errval,
-       exc_exec('set fillchars='..val))
+    eq('Vim(set):E474: Invalid argument: fillchars=' .. errval, exc_exec('set fillchars=' .. val))
   end
 
   describe('"eob" flag', function()
     it("uses '~' by default", function()
-      eq('', eval('&fillchars'))
-      screen:expect([[
+      eq('', eval '&fillchars')
+      screen:expect [[
         ^                         |
         ~                        |
         ~                        |
         ~                        |
                                  |
-      ]])
+      ]]
     end)
     it('supports whitespace', function()
-      screen:expect([[
+      screen:expect [[
         ^                         |
         ~                        |
         ~                        |
         ~                        |
                                  |
-      ]])
-      command('set fillchars=eob:\\ ')
-      screen:expect([[
+      ]]
+      command 'set fillchars=eob:\\ '
+      screen:expect [[
         ^                         |
                                  |
                                  |
                                  |
                                  |
-      ]])
+      ]]
     end)
     it('supports multibyte char', function()
-      command('set fillchars=eob:ñ')
-      screen:expect([[
+      command 'set fillchars=eob:ñ'
+      screen:expect [[
         ^                         |
         ñ                        |
         ñ                        |
         ñ                        |
                                  |
-      ]])
+      ]]
     end)
     it('handles invalid values', function()
-      shouldfail('eob:') -- empty string
-      shouldfail('eob:馬') -- doublewidth char
-      shouldfail('eob:å̲') -- composing chars
-      shouldfail('eob:xy') -- two ascii chars
+      shouldfail 'eob:'
+      shouldfail 'eob:馬'
+      shouldfail 'eob:å̲'
+      shouldfail 'eob:xy'
       shouldfail('eob:\255', 'eob:<ff>') -- invalid UTF-8
     end)
     it('has global value', function()
       screen:try_resize(50, 5)
-      insert("foo\nbar")
-      command('set laststatus=0')
-      command('1,2fold')
-      command('vsplit')
-      command('set fillchars=fold:x')
-      screen:expect([[
+      insert 'foo\nbar'
+      command 'set laststatus=0'
+      command '1,2fold'
+      command 'vsplit'
+      command 'set fillchars=fold:x'
+      screen:expect [[
         ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
         ~                        │~                       |
         ~                        │~                       |
         ~                        │~                       |
                                                           |
-      ]])
+      ]]
     end)
     it('has local window value', function()
       screen:try_resize(50, 5)
-      insert("foo\nbar")
-      command('set laststatus=0')
-      command('1,2fold')
-      command('vsplit')
-      command('setl fillchars=fold:x')
-      screen:expect([[
+      insert 'foo\nbar'
+      command 'set laststatus=0'
+      command '1,2fold'
+      command 'vsplit'
+      command 'setl fillchars=fold:x'
+      screen:expect [[
         ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
         ~                        │~                       |
         ~                        │~                       |
         ~                        │~                       |
                                                           |
-      ]])
+      ]]
     end)
   end)
 end)
@@ -110,30 +109,30 @@ describe("'listchars'", function()
   end)
 
   it('has global value', function()
-    feed('i<tab><tab><tab><esc>')
-    command('set list laststatus=0')
-    command('vsplit')
-    command('set listchars=tab:<->')
-    screen:expect([[
+    feed 'i<tab><tab><tab><esc>'
+    command 'set list laststatus=0'
+    command 'vsplit'
+    command 'set listchars=tab:<->'
+    screen:expect [[
       <------><------>^<------> │<------><------><------>|
       ~                        │~                       |
       ~                        │~                       |
       ~                        │~                       |
                                                         |
-    ]])
+    ]]
   end)
   it('has value local to window', function()
-    feed('i<tab><tab><tab><esc>')
-    command('set list laststatus=0')
-    command('setl listchars=tab:<->')
-    command('vsplit')
-    command('setl listchars<')
-    screen:expect([[
+    feed 'i<tab><tab><tab><esc>'
+    command 'set list laststatus=0'
+    command 'setl listchars=tab:<->'
+    command 'vsplit'
+    command 'setl listchars<'
+    screen:expect [[
       >       >       ^>        │<------><------><------>|
       ~                        │~                       |
       ~                        │~                       |
       ~                        │~                       |
                                                         |
-    ]])
+    ]]
   end)
 end)

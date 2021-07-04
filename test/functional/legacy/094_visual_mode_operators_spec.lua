@@ -4,13 +4,13 @@
 -- followed by an operator and those executed via Operator-pending mode. Also
 -- part of the test are mappings, counts, and repetition with the . command.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 -- Vim script user functions needed for some of the test cases.
 local function source_user_functions()
-  source([[
+  source [[
     function MoveToCap()
       call search('\u', 'W')
     endfunction
@@ -21,28 +21,28 @@ local function source_user_functions()
       call setpos("'>", [0, line2, col2, 0])
       normal! gv
     endfunction
-  ]])
+  ]]
 end
 
 local function put_abc()
-  source([[
+  source [[
     $put ='a'
     $put ='b'
-    $put ='c']])
+    $put ='c']]
 end
 
 local function put_aaabbbccc()
-  source([[
+  source [[
     $put ='aaa'
     $put ='bbb'
-    $put ='ccc']])
+    $put ='ccc']]
 end
 
 local function define_select_mode_maps()
-  source([[
+  source [[
     snoremap <lt>End> <End>
     snoremap <lt>Down> <Down>
-    snoremap <lt>Del> <Del>]])
+    snoremap <lt>Del> <Del>]]
 end
 
 describe('Visual mode and operator', function()
@@ -52,7 +52,7 @@ describe('Visual mode and operator', function()
   end)
 
   it('simple change in Visual mode', function()
-    insert([[
+    insert [[
       apple banana cherry
 
       line 1 line 1
@@ -65,22 +65,22 @@ describe('Visual mode and operator', function()
       xxxxxxxxxxxxx
       xxxxxxxxxxxxx
       xxxxxxxxxxxxx
-      xxxxxxxxxxxxx]])
+      xxxxxxxxxxxxx]]
 
     -- Exercise characterwise Visual mode plus operator, with count and repeat.
-    feed_command('/^apple')
-    feed('lvld.l3vd.')
+    feed_command '/^apple'
+    feed 'lvld.l3vd.'
 
     -- Same in linewise Visual mode.
-    feed_command('/^line 1')
-    feed('Vcnewline<esc>j.j2Vd.')
+    feed_command '/^line 1'
+    feed 'Vcnewline<esc>j.j2Vd.'
 
     -- Same in blockwise Visual mode.
-    feed_command('/^xxxx')
-    feed('<c-v>jlc  <esc>l.l2<c-v>c----<esc>l.')
+    feed_command '/^xxxx'
+    feed '<c-v>jlc  <esc>l.l2<c-v>c----<esc>l.'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       a y
 
       newline
@@ -89,69 +89,69 @@ describe('Visual mode and operator', function()
           --------x
           --------x
       xxxx--------x
-      xxxx--------x]])
+      xxxx--------x]]
   end)
 
   it('Visual mode mapping', function()
-    insert([[
+    insert [[
       KiwiRaspberryDateWatermelonPeach
-      JambuRambutanBananaTangerineMango]])
+      JambuRambutanBananaTangerineMango]]
 
     -- Set up Visual mode mappings.
-    feed_command('vnoremap W /\\u/s-1<CR>')
-    feed_command('vnoremap iW :<C-U>call SelectInCaps()<CR>')
+    feed_command 'vnoremap W /\\u/s-1<CR>'
+    feed_command 'vnoremap iW :<C-U>call SelectInCaps()<CR>'
 
     -- Do a simple change using the simple vmap, also with count and repeat.
-    feed_command('/^Kiwi')
-    feed('vWcNo<esc>l.fD2vd.')
+    feed_command '/^Kiwi'
+    feed 'vWcNo<esc>l.fD2vd.'
 
     -- Same, using the vmap that maps to an Ex command.
-    feed_command('/^Jambu')
-    feed('llviWc-<esc>l.l2vdl.')
+    feed_command '/^Jambu'
+    feed 'llviWc-<esc>l.l2vdl.'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       NoNoberryach
-      --ago]])
+      --ago]]
   end)
 
   it('Operator-pending mode mapping', function()
-    insert([[
+    insert [[
       PineappleQuinceLoganberryOrangeGrapefruitKiwiZ
       JuniperDurianZ
-      LemonNectarineZ]])
+      LemonNectarineZ]]
 
     -- Set up Operator-pending mode mappings.
-    feed_command('onoremap W /\\u/<CR>')
-    feed_command('onoremap <Leader>W :<C-U>call MoveToCap()<CR>')
-    feed_command('onoremap iW :<C-U>call SelectInCaps()<CR>')
+    feed_command 'onoremap W /\\u/<CR>'
+    feed_command 'onoremap <Leader>W :<C-U>call MoveToCap()<CR>'
+    feed_command 'onoremap iW :<C-U>call SelectInCaps()<CR>'
 
     -- Do a simple change using the simple omap, also with count and repeat.
-    feed_command('/^Pineapple')
-    feed('cW-<esc>l.l2.l.')
+    feed_command '/^Pineapple'
+    feed 'cW-<esc>l.l2.l.'
 
     -- Same, using the omap that maps to an Ex command to move the cursor.
-    feed_command('/^Juniper')
-    feed('g?\\WfD.')
+    feed_command '/^Juniper'
+    feed 'g?\\WfD.'
 
     -- Same, using the omap that uses Ex and Visual mode (custom text object).
-    feed_command('/^Lemon')
-    feed('yiWPlciWNew<esc>fr.')
+    feed_command '/^Lemon'
+    feed 'yiWPlciWNew<esc>fr.'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       ----Z
       WhavcreQhevnaZ
-      LemonNewNewZ]])
+      LemonNewNewZ]]
   end)
 
   -- Vim patch 7.3.879 addressed a bug where typing ":" (the start of an Ex
   -- command) in Operator-pending mode couldn't be aborted with Escape, the
   -- change operation implied by the operator was always executed.
   it('patch 7.3.879', function()
-    insert([[
+    insert [[
       zzzz
-      zzzz]])
+      zzzz]]
 
     -- Start a change operation consisting of operator plus Ex command, like
     -- "dV:..." etc., then either
@@ -159,69 +159,69 @@ describe('Visual mode and operator', function()
     --   changed, taking into account the v/V/<c-v> modifier given; or
     -- - abort the operation by pressing Escape: no change to the buffer is
     --   carried out.
-    feed_command('/^zzzz')
-    feed([[dV:<cr>dv:<cr>:set noma | let v:errmsg = ''<cr>]])
-    feed([[d:<cr>:set ma | put = v:errmsg =~# '^E21' ? 'ok' : 'failed'<cr>]])
-    feed([[dv:<esc>dV:<esc>:set noma | let v:errmsg = ''<cr>]])
-    feed([[d:<esc>:set ma | put = v:errmsg =~# '^E21' ? 'failed' : 'ok'<cr>]])
+    feed_command '/^zzzz'
+    feed [[dV:<cr>dv:<cr>:set noma | let v:errmsg = ''<cr>]]
+    feed [[d:<cr>:set ma | put = v:errmsg =~# '^E21' ? 'ok' : 'failed'<cr>]]
+    feed [[dv:<esc>dV:<esc>:set noma | let v:errmsg = ''<cr>]]
+    feed [[d:<esc>:set ma | put = v:errmsg =~# '^E21' ? 'failed' : 'ok'<cr>]]
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       zzz
       ok
-      ok]])
+      ok]]
   end)
 
   describe('characterwise visual mode:', function()
     it('replace last line', function()
-      source([[
+      source [[
         $put ='a'
-        let @" = 'x']])
-      feed('v$p')
+        let @" = 'x']]
+      feed 'v$p'
 
-      expect([[
+      expect [[
 
-        x]])
+        x]]
     end)
 
     it('delete middle line', function()
       put_abc()
-      feed('kkv$d')
+      feed 'kkv$d'
 
-      expect([[
+      expect [[
 
         b
-        c]])
+        c]]
     end)
 
     it('delete middle two line', function()
       put_abc()
-      feed('kkvj$d')
+      feed 'kkvj$d'
 
-      expect([[
+      expect [[
 
-        c]])
+        c]]
     end)
 
     it('delete last line', function()
       put_abc()
-      feed('v$d')
+      feed 'v$d'
 
-      expect([[
+      expect [[
 
         a
         b
-        ]])
+        ]]
     end)
 
     it('delete last two line', function()
       put_abc()
-      feed('kvj$d')
+      feed 'kvj$d'
 
-      expect([[
+      expect [[
 
         a
-        ]])
+        ]]
     end)
   end)
 
@@ -232,42 +232,42 @@ describe('Visual mode and operator', function()
 
     it('delete middle line', function()
       put_abc()
-      feed('kkgh<End><Del>')
+      feed 'kkgh<End><Del>'
 
-      expect([[
+      expect [[
 
         b
-        c]])
+        c]]
     end)
 
     it('delete middle two line', function()
       put_abc()
-      feed('kkgh<Down><End><Del>')
+      feed 'kkgh<Down><End><Del>'
 
-      expect([[
+      expect [[
 
-        c]])
+        c]]
     end)
 
     it('delete last line', function()
       put_abc()
-      feed('gh<End><Del>')
+      feed 'gh<End><Del>'
 
-      expect([[
+      expect [[
 
         a
         b
-        ]])
+        ]]
     end)
 
     it('delete last two line', function()
       put_abc()
-      feed('kgh<Down><End><Del>')
+      feed 'kgh<Down><End><Del>'
 
-      expect([[
+      expect [[
 
         a
-        ]])
+        ]]
     end)
   end)
 
@@ -278,122 +278,122 @@ describe('Visual mode and operator', function()
 
     it('delete middle line', function()
       put_abc()
-      feed(' kkgH<Del> ')
+      feed ' kkgH<Del> '
 
-      expect([[
+      expect [[
 
         b
-        c]])
+        c]]
     end)
 
     it('delete middle two line', function()
       put_abc()
-      feed('kkgH<Down><Del>')
+      feed 'kkgH<Down><Del>'
 
-      expect([[
+      expect [[
 
-        c]])
+        c]]
     end)
 
     it('delete last line', function()
       put_abc()
-      feed('gH<Del>')
+      feed 'gH<Del>'
 
-      expect([[
+      expect [[
 
         a
-        b]])
+        b]]
     end)
 
     it('delete last two line', function()
       put_abc()
-      feed('kgH<Down><Del>')
+      feed 'kgH<Down><Del>'
 
-      expect([[
+      expect [[
 
-        a]])
+        a]]
     end)
   end)
 
   describe('v_p:', function()
     it('replace last character with line register at middle line', function()
       put_aaabbbccc()
-      feed_command('-2yank')
-      feed('k$vp')
+      feed_command '-2yank'
+      feed 'k$vp'
 
-      expect([[
+      expect [[
 
         aaa
         bb
         aaa
 
-        ccc]])
+        ccc]]
     end)
 
     it('replace last character with line register at middle line selecting newline', function()
       put_aaabbbccc()
-      feed_command('-2yank')
-      feed('k$v$p')
+      feed_command '-2yank'
+      feed 'k$v$p'
 
-      expect([[
+      expect [[
 
         aaa
         bb
         aaa
-        ccc]])
+        ccc]]
     end)
 
     it('replace last character with line register at last line', function()
       put_aaabbbccc()
-      feed_command('-2yank')
-      feed('$vp')
+      feed_command '-2yank'
+      feed '$vp'
 
-      expect([[
+      expect [[
 
         aaa
         bbb
         cc
         aaa
-        ]])
+        ]]
     end)
 
     it('replace last character with line register at last line selecting newline', function()
       put_aaabbbccc()
-      feed_command('-2yank')
-      feed('$v$p')
+      feed_command '-2yank'
+      feed '$v$p'
 
-      expect([[
+      expect [[
 
         aaa
         bbb
         cc
         aaa
-        ]])
+        ]]
     end)
   end)
 
   -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('gv in exclusive select mode after operation', function()
-    source([[
+    source [[
       $put ='zzz '
       $put ='Ã¤Ã '
-      set selection=exclusive]])
-    feed('kv3lyjv3lpgvcxxx<Esc>')
+      set selection=exclusive]]
+    feed 'kv3lyjv3lpgvcxxx<Esc>'
 
-    expect([[
+    expect [[
 
       zzz 
-      xxx ]])
+      xxx ]]
   end)
 
   it('gv in exclusive select mode without operation', function()
-    source([[
+    source [[
       $put ='zzz '
-      set selection=exclusive]])
-    feed('0v3l<Esc>gvcxxx<Esc>')
+      set selection=exclusive]]
+    feed '0v3l<Esc>gvcxxx<Esc>'
 
-    expect([[
+    expect [[
 
-      xxx ]])
+      xxx ]]
   end)
 end)

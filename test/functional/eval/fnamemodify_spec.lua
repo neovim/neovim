@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local iswin = helpers.iswin
@@ -20,7 +20,7 @@ describe('fnamemodify()', function()
   before_each(clear)
 
   teardown(function()
-    os.remove('Xtest-fnamemodify.txt')
+    os.remove 'Xtest-fnamemodify.txt'
   end)
 
   it('handles the root path', function()
@@ -30,8 +30,8 @@ describe('fnamemodify()', function()
     if iswin() then
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
-      command('set shellslash')
-      root = string.sub(root, 1, -2)..'/'
+      command 'set shellslash'
+      root = string.sub(root, 1, -2) .. '/'
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       eq(root, fnamemodify([[/]], ':p:h'))
@@ -44,7 +44,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles examples from ":help filename-modifiers"', function()
-    local filename = "src/version.c"
+    local filename = 'src/version.c'
     local cwd = getcwd()
 
     eq_slashconvert(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
@@ -70,7 +70,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles advanced examples from ":help filename-modifiers"', function()
-    local filename = "src/version.c.gz"
+    local filename = 'src/version.c.gz'
 
     eq('gz', fnamemodify(filename, ':e'))
     eq('c.gz', fnamemodify(filename, ':e:e'))

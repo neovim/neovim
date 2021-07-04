@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
@@ -52,13 +52,13 @@ describe('printf()', function()
     -- zero-fill modifier is ignored when used with left-align
     -- force-sign and add-blank are ignored
     -- use-grouping-characters modifier is ignored always
-    eq('0b00011   ', funcs.printf('% \'+#0-10.5b', 3))
+    eq('0b00011   ', funcs.printf("% '+#0-10.5b", 3))
   end)
   it('errors out when %b modifier is used for a list', function()
-    eq('Vim(call):E745: Using a List as a Number', exc_exec('call printf("%b", [])'))
+    eq('Vim(call):E745: Using a List as a Number', exc_exec 'call printf("%b", [])')
   end)
   it('errors out when %b modifier is used for a float', function()
-    eq('Vim(call):E805: Using a Float as a Number', exc_exec('call printf("%b", 3.1415926535)'))
+    eq('Vim(call):E805: Using a Float as a Number', exc_exec 'call printf("%b", 3.1415926535)')
   end)
   it('works with %p correctly', function()
     local null_ret = nil
@@ -68,9 +68,9 @@ describe('printf()', function()
     meths.set_var('__args', {})
     local function check_printf(expr, is_null)
       eq(0, exc_exec('call add(__args, ' .. expr .. ')'))
-      eq(0, exc_exec('let __result = printf("%p", __args[-1])'))
-      local id_ret = eval('id(__args[-1])')
-      eq(id_ret, meths.get_var('__result'))
+      eq(0, exc_exec 'let __result = printf("%p", __args[-1])')
+      local id_ret = eval 'id(__args[-1])'
+      eq(id_ret, meths.get_var '__result')
       if is_null then
         if null_ret then
           eq(null_ret, id_ret)
@@ -81,12 +81,12 @@ describe('printf()', function()
         eq(nil, seen_rets[id_ret])
         seen_rets[id_ret] = expr
       end
-      meths.del_var('__result')
+      meths.del_var '__result'
     end
     check_printf('v:_null_list', true)
     check_printf('v:_null_dict', true)
-    check_printf('[]')
-    check_printf('{}')
-    check_printf('function("tr", ["a"])')
+    check_printf '[]'
+    check_printf '{}'
+    check_printf 'function("tr", ["a"])'
   end)
 end)

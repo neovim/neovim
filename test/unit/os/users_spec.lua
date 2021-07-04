@@ -1,4 +1,4 @@
-local helpers = require('test.unit.helpers')(after_each)
+local helpers = require 'test.unit.helpers'(after_each)
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
@@ -12,7 +12,7 @@ local FAIL = helpers.FAIL
 local users = cimport('./src/nvim/os/os.h', 'unistd.h')
 
 local function garray_new()
-  return ffi.new('garray_T[1]')
+  return ffi.new 'garray_T[1]'
 end
 
 local function garray_get_len(array)
@@ -25,7 +25,7 @@ end
 
 describe('users function', function()
   -- will probably not work on windows
-  local current_username = os.getenv('USER')
+  local current_username = os.getenv 'USER'
 
   describe('os_get_usernames', function()
     itp('returns FAIL if called with NULL', function()
@@ -50,7 +50,7 @@ describe('users function', function()
 
   describe('os_get_user_name', function()
     itp('should write the username into the buffer and return OK', function()
-      local name_out = ffi.new('char[100]')
+      local name_out = ffi.new 'char[100]'
       eq(OK, users.os_get_user_name(name_out, 100))
       eq(current_username, ffi.string(name_out))
     end)
@@ -58,14 +58,14 @@ describe('users function', function()
 
   describe('os_get_uname', function()
     itp('should write the username into the buffer and return OK', function()
-      local name_out = ffi.new('char[100]')
+      local name_out = ffi.new 'char[100]'
       local user_id = lib.getuid()
       eq(OK, users.os_get_uname(user_id, name_out, 100))
       eq(current_username, ffi.string(name_out))
     end)
 
     itp('should FAIL if the userid is not found', function()
-      local name_out = ffi.new('char[100]')
+      local name_out = ffi.new 'char[100]'
       -- hoping nobody has this uid
       local user_id = 2342
       eq(FAIL, users.os_get_uname(user_id, name_out, 100))
@@ -79,12 +79,12 @@ describe('users function', function()
     end)
 
     itp('should return $HOME for the current user', function()
-      local home = os.getenv('HOME')
+      local home = os.getenv 'HOME'
       eq(home, ffi.string((users.os_get_user_directory(current_username))))
     end)
 
     itp('should return NULL if the user is not found', function()
-      eq(NULL, users.os_get_user_directory('neovim_user_not_found_test'))
+      eq(NULL, users.os_get_user_directory 'neovim_user_not_found_test')
     end)
   end)
 end)

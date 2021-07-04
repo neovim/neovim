@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
@@ -49,16 +49,19 @@ describe('vim.lsp.diagnostic', function()
       end
     ]]
 
-    fake_uri = "file://fake/uri"
+    fake_uri = 'file://fake/uri'
 
-    exec_lua([[
+    exec_lua(
+      [[
       fake_uri = ...
       diagnostic_bufnr = vim.uri_to_bufnr(fake_uri)
       local lines = {"1st line of text", "2nd line of text", "wow", "cool", "more", "lines"}
       vim.fn.bufload(diagnostic_bufnr)
       vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, 1, false, lines)
       return diagnostic_bufnr
-    ]], fake_uri)
+    ]],
+      fake_uri
+    )
   end)
 
   after_each(function()
@@ -87,11 +90,15 @@ describe('vim.lsp.diagnostic', function()
         eq('Diagnostic #1', result[1][1].message)
       end)
       it('Can convert diagnostic to quickfix items format', function()
-        local bufnr = exec_lua([[
+        local bufnr = exec_lua(
+          [[
           local fake_uri = ...
           return vim.uri_to_bufnr(fake_uri)
-        ]], fake_uri)
-        local result = exec_lua([[
+        ]],
+          fake_uri
+        )
+        local result = exec_lua(
+          [[
           local bufnr = ...
           vim.lsp.diagnostic.save(
             {
@@ -100,38 +107,45 @@ describe('vim.lsp.diagnostic', function()
             }, bufnr, 1
           )
           return vim.lsp.util.diagnostics_to_items(vim.lsp.diagnostic.get_all())
-        ]], bufnr)
+        ]],
+          bufnr
+        )
         local expected = {
           {
             bufnr = bufnr,
             col = 2,
             lnum = 2,
             text = 'Diagnostic #1',
-            type = 'E'
+            type = 'E',
           },
           {
             bufnr = bufnr,
             col = 2,
             lnum = 3,
             text = 'Diagnostic #2',
-            type = 'E'
+            type = 'E',
           },
         }
         eq(expected, result)
       end)
       it('should be able to save and count a single client error', function()
-        eq(1, exec_lua [[
+        eq(
+          1,
+          exec_lua [[
           vim.lsp.diagnostic.save(
             {
               make_error('Diagnostic #1', 1, 1, 1, 1),
             }, 0, 1
           )
           return vim.lsp.diagnostic.get_count(0, "Error", 1)
-        ]])
+        ]]
+        )
       end)
 
       it('should be able to save and count from two clients', function()
-        eq(2, exec_lua [[
+        eq(
+          2,
+          exec_lua [[
           vim.lsp.diagnostic.save(
             {
               make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -139,11 +153,14 @@ describe('vim.lsp.diagnostic', function()
             }, 0, 1
           )
           return vim.lsp.diagnostic.get_count(0, "Error", 1)
-        ]])
+        ]]
+        )
       end)
 
       it('should be able to save and count from multiple clients', function()
-        eq({1, 1, 2}, exec_lua [[
+        eq(
+          { 1, 1, 2 },
+          exec_lua [[
           vim.lsp.diagnostic.save(
             {
               make_error('Diagnostic From Server 1', 1, 1, 1, 1),
@@ -162,11 +179,14 @@ describe('vim.lsp.diagnostic', function()
             -- All servers
             vim.lsp.diagnostic.get_count(0, "Error", nil),
           }
-        ]])
+        ]]
+        )
       end)
 
       it('should be able to save and count from multiple clients with respect to severity', function()
-        eq({3, 0, 3}, exec_lua [[
+        eq(
+          { 3, 0, 3 },
+          exec_lua [[
           vim.lsp.diagnostic.save(
             {
               make_error('Diagnostic From Server 1:1', 1, 1, 1, 1),
@@ -187,7 +207,8 @@ describe('vim.lsp.diagnostic', function()
             -- All servers
             vim.lsp.diagnostic.get_count(0, "Error", nil),
           }
-        ]])
+        ]]
+        )
       end)
       it('should handle one server clearing highlights while the other still has highlights', function()
         -- 1 Error (1)
@@ -195,8 +216,10 @@ describe('vim.lsp.diagnostic', function()
         -- 1 Warning (2) + 1 Warning (1)
         -- 2 highlights and 2 underlines (since error)
         -- 1 highlight + 1 underline
-        local all_highlights = {1, 1, 2, 4, 2}
-        eq(all_highlights, exec_lua [[
+        local all_highlights = { 1, 1, 2, 4, 2 }
+        eq(
+          all_highlights,
+          exec_lua [[
           local server_1_diags = {
             make_error("Error 1", 1, 1, 1, 5),
             make_warning("Warning on Server 1", 2, 1, 2, 5),
@@ -214,10 +237,13 @@ describe('vim.lsp.diagnostic', function()
             count_of_extmarks_for_client(diagnostic_bufnr, 1),
             count_of_extmarks_for_client(diagnostic_bufnr, 2),
           }
-        ]])
+        ]]
+        )
 
         -- Clear diagnostics from server 1, and make sure we have the right amount of stuff for client 2
-        eq({1, 1, 2, 0, 2}, exec_lua [[
+        eq(
+          { 1, 1, 2, 0, 2 },
+          exec_lua [[
           vim.lsp.diagnostic.clear(diagnostic_bufnr, 1)
           return {
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
@@ -226,10 +252,13 @@ describe('vim.lsp.diagnostic', function()
             count_of_extmarks_for_client(diagnostic_bufnr, 1),
             count_of_extmarks_for_client(diagnostic_bufnr, 2),
           }
-        ]])
+        ]]
+        )
 
         -- Show diagnostics from server 1 again
-        eq(all_highlights, exec_lua([[
+        eq(
+          all_highlights,
+          exec_lua [[
           vim.lsp.diagnostic.display(nil, diagnostic_bufnr, 1)
           return {
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
@@ -238,7 +267,8 @@ describe('vim.lsp.diagnostic', function()
             count_of_extmarks_for_client(diagnostic_bufnr, 1),
             count_of_extmarks_for_client(diagnostic_bufnr, 2),
           }
-        ]]))
+        ]]
+        )
       end)
 
       describe('reset', function()
@@ -248,8 +278,10 @@ describe('vim.lsp.diagnostic', function()
           -- 1 Warning (2) + 1 Warning (1)
           -- 2 highlights and 2 underlines (since error)
           -- 1 highlight + 1 underline
-          local all_highlights = {1, 1, 2, 4, 2}
-          eq(all_highlights, exec_lua [[
+          local all_highlights = { 1, 1, 2, 4, 2 }
+          eq(
+            all_highlights,
+            exec_lua [[
             local server_1_diags = {
               make_error("Error 1", 1, 1, 1, 5),
               make_warning("Warning on Server 1", 2, 1, 2, 5),
@@ -267,13 +299,16 @@ describe('vim.lsp.diagnostic', function()
               count_of_extmarks_for_client(diagnostic_bufnr, 1),
               count_of_extmarks_for_client(diagnostic_bufnr, 2),
             }
-          ]])
+          ]]
+          )
 
           -- Reset diagnostics from server 1
-          exec_lua([[ vim.lsp.diagnostic.reset(1, { [ diagnostic_bufnr ] = { [ 1 ] = true ; [ 2 ] = true } } )]])
+          exec_lua [[ vim.lsp.diagnostic.reset(1, { [ diagnostic_bufnr ] = { [ 1 ] = true ; [ 2 ] = true } } )]]
 
           -- Make sure we have the right diagnostic count
-          eq({0, 1, 1, 0, 2} , exec_lua [[
+          eq(
+            { 0, 1, 1, 0, 2 },
+            exec_lua [[
             local diagnostic_count = {}
             vim.wait(100, function () diagnostic_count = {
               vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
@@ -283,13 +318,16 @@ describe('vim.lsp.diagnostic', function()
               count_of_extmarks_for_client(diagnostic_bufnr, 2),
             } end )
             return diagnostic_count
-          ]])
+          ]]
+          )
 
           -- Reset diagnostics from server 2
-          exec_lua([[ vim.lsp.diagnostic.reset(2, { [ diagnostic_bufnr ] = { [ 1 ] = true ; [ 2 ] = true } } )]])
+          exec_lua [[ vim.lsp.diagnostic.reset(2, { [ diagnostic_bufnr ] = { [ 1 ] = true ; [ 2 ] = true } } )]]
 
           -- Make sure we have the right diagnostic count
-          eq({0, 0, 0, 0, 0}, exec_lua [[
+          eq(
+            { 0, 0, 0, 0, 0 },
+            exec_lua [[
             local diagnostic_count = {}
             vim.wait(100, function () diagnostic_count = {
               vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
@@ -299,14 +337,16 @@ describe('vim.lsp.diagnostic', function()
               count_of_extmarks_for_client(diagnostic_bufnr, 2),
             } end )
             return diagnostic_count
-          ]])
-
-          end)
+          ]]
+          )
         end)
+      end)
 
       describe('get_next_diagnostic_pos', function()
         it('can find the next pos with only one client', function()
-          eq({1, 1}, exec_lua [[
+          eq(
+            { 1, 1 },
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -314,11 +354,14 @@ describe('vim.lsp.diagnostic', function()
             )
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             return vim.lsp.diagnostic.get_next_pos()
-          ]])
+          ]]
+          )
         end)
 
         it('can find next pos with two errors', function()
-          eq({4, 4}, exec_lua [[
+          eq(
+            { 4, 4 },
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -328,11 +371,14 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {3, 1})
             return vim.lsp.diagnostic.get_next_pos { client_id = 1 }
-          ]])
+          ]]
+          )
         end)
 
         it('can cycle when position is past error', function()
-          eq({1, 1}, exec_lua [[
+          eq(
+            { 1, 1 },
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -341,11 +387,14 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {3, 1})
             return vim.lsp.diagnostic.get_next_pos { client_id = 1 }
-          ]])
+          ]]
+          )
         end)
 
         it('will not cycle when wrap is off', function()
-          eq(false, exec_lua [[
+          eq(
+            false,
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -354,11 +403,14 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {3, 1})
             return vim.lsp.diagnostic.get_next_pos { client_id = 1, wrap = false }
-          ]])
+          ]]
+          )
         end)
 
         it('can cycle even from the last line', function()
-          eq({4, 4}, exec_lua [[
+          eq(
+            { 4, 4 },
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #2', 4, 4, 4, 4),
@@ -367,13 +419,16 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {vim.api.nvim_buf_line_count(0), 1})
             return vim.lsp.diagnostic.get_prev_pos { client_id =  1 }
-          ]])
+          ]]
+          )
         end)
       end)
 
       describe('get_prev_diagnostic_pos', function()
         it('can find the prev pos with only one client', function()
-          eq({1, 1}, exec_lua [[
+          eq(
+            { 1, 1 },
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -382,11 +437,14 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {3, 1})
             return vim.lsp.diagnostic.get_prev_pos()
-          ]])
+          ]]
+          )
         end)
 
         it('can find prev pos with two errors', function()
-          eq({1, 1}, exec_lua [[
+          eq(
+            { 1, 1 },
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #1', 1, 1, 1, 1),
@@ -396,11 +454,14 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {3, 1})
             return vim.lsp.diagnostic.get_prev_pos { client_id = 1 }
-          ]])
+          ]]
+          )
         end)
 
         it('can cycle when position is past error', function()
-          eq({4, 4}, exec_lua [[
+          eq(
+            { 4, 4 },
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #2', 4, 4, 4, 4),
@@ -409,11 +470,14 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {3, 1})
             return vim.lsp.diagnostic.get_prev_pos { client_id = 1 }
-          ]])
+          ]]
+          )
         end)
 
         it('respects wrap parameter', function()
-          eq(false, exec_lua [[
+          eq(
+            false,
+            exec_lua [[
             vim.lsp.diagnostic.save(
               {
                 make_error('Diagnostic #2', 4, 4, 4, 4),
@@ -422,19 +486,22 @@ describe('vim.lsp.diagnostic', function()
             vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
             vim.api.nvim_win_set_cursor(0, {3, 1})
             return vim.lsp.diagnostic.get_prev_pos { client_id = 1, wrap = false}
-          ]])
+          ]]
+          )
         end)
       end)
     end)
   end)
 
-  describe("vim.lsp.diagnostic.get_line_diagnostics", function()
+  describe('vim.lsp.diagnostic.get_line_diagnostics', function()
     it('should return an empty table when no diagnostics are present', function()
       eq({}, exec_lua [[return vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)]])
     end)
 
     it('should return all diagnostics when no severity is supplied', function()
-      eq(2, exec_lua [[
+      eq(
+        2,
+        exec_lua [[
         vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
           uri = fake_uri,
           diagnostics = {
@@ -445,11 +512,14 @@ describe('vim.lsp.diagnostic', function()
         }, 1)
 
         return #vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)
-      ]])
+      ]]
+      )
     end)
 
     it('should return only requested diagnostics when severity_limit is supplied', function()
-      eq(2, exec_lua [[
+      eq(
+        2,
+        exec_lua [[
         vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
           uri = fake_uri,
           diagnostics = {
@@ -461,11 +531,12 @@ describe('vim.lsp.diagnostic', function()
         }, 1)
 
         return #vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1, { severity_limit = "Warning" })
-      ]])
+      ]]
+      )
     end)
   end)
 
-  describe("vim.lsp.diagnostic.on_publish_diagnostics", function()
+  describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
     it('can use functions for config values', function()
       exec_lua [[
         vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
@@ -502,8 +573,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('can perform updates after insert_leave', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim("input", "o")
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim('input', 'o')
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
 
       -- Save the diagnostics
       exec_lua [[
@@ -519,12 +590,12 @@ describe('vim.lsp.diagnostic', function()
       ]]
 
       -- No diagnostics displayed yet.
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(0, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
 
-      nvim("input", "<esc>")
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim('input', '<esc>')
+      eq({ mode = 'n', blocking = false }, nvim 'get_mode')
 
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(2, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
@@ -532,8 +603,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('does not perform updates when not needed', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim("input", "o")
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim('input', 'o')
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
 
       -- Save the diagnostics
       exec_lua [[
@@ -561,24 +632,24 @@ describe('vim.lsp.diagnostic', function()
       ]]
 
       -- No diagnostics displayed yet.
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(0, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
       eq(0, exec_lua [[return DisplayCount]])
 
-      nvim("input", "<esc>")
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim('input', '<esc>')
+      eq({ mode = 'n', blocking = false }, nvim 'get_mode')
 
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(2, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
       eq(1, exec_lua [[return DisplayCount]])
 
       -- Go in and out of insert mode one more time.
-      nvim("input", "o")
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim('input', 'o')
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
 
-      nvim("input", "<esc>")
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim('input', '<esc>')
+      eq({ mode = 'n', blocking = false }, nvim 'get_mode')
 
       -- Should not have set the virtual text again.
       eq(1, exec_lua [[return DisplayCount]])
@@ -586,8 +657,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('never sets virtual text, in combination with insert leave', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim("input", "o")
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim('input', 'o')
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
 
       -- Save the diagnostics
       exec_lua [[
@@ -615,24 +686,24 @@ describe('vim.lsp.diagnostic', function()
       ]]
 
       -- No diagnostics displayed yet.
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(0, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
       eq(0, exec_lua [[return DisplayCount]])
 
-      nvim("input", "<esc>")
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim('input', '<esc>')
+      eq({ mode = 'n', blocking = false }, nvim 'get_mode')
 
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(1, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
       eq(0, exec_lua [[return DisplayCount]])
 
       -- Go in and out of insert mode one more time.
-      nvim("input", "o")
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim('input', 'o')
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
 
-      nvim("input", "<esc>")
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim('input', '<esc>')
+      eq({ mode = 'n', blocking = false }, nvim 'get_mode')
 
       -- Should not have set the virtual text still.
       eq(0, exec_lua [[return DisplayCount]])
@@ -640,8 +711,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('can perform updates while in insert mode, if desired', function()
       exec_lua [[vim.api.nvim_set_current_buf(diagnostic_bufnr)]]
-      nvim("input", "o")
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim('input', 'o')
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
 
       -- Save the diagnostics
       exec_lua [[
@@ -657,12 +728,12 @@ describe('vim.lsp.diagnostic', function()
       ]]
 
       -- Diagnostics are displayed, because the user wanted them that way!
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      eq({ mode = 'i', blocking = false }, nvim 'get_mode')
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(2, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
 
-      nvim("input", "<esc>")
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim('input', '<esc>')
+      eq({ mode = 'n', blocking = false }, nvim 'get_mode')
 
       eq(1, exec_lua [[return vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1)]])
       eq(2, exec_lua [[return count_of_extmarks_for_client(diagnostic_bufnr, 1)]])
@@ -670,7 +741,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('allows configuring the virtual text via vim.lsp.with', function()
       local expected_spacing = 10
-      local extmarks = exec_lua([[
+      local extmarks = exec_lua(
+        [[
         PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
           virtual_text = {
             spacing = ...,
@@ -692,7 +764,9 @@ describe('vim.lsp.diagnostic', function()
           -1,
           { details = true }
         )
-      ]], expected_spacing)
+      ]],
+        expected_spacing
+      )
 
       local virt_text = extmarks[1][4].virt_text
       local spacing = virt_text[1][1]
@@ -700,10 +774,10 @@ describe('vim.lsp.diagnostic', function()
       eq(expected_spacing, #spacing)
     end)
 
-
     it('allows configuring the virtual text via vim.lsp.with using a function', function()
       local expected_spacing = 10
-      local extmarks = exec_lua([[
+      local extmarks = exec_lua(
+        [[
         spacing = ...
 
         PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
@@ -729,7 +803,9 @@ describe('vim.lsp.diagnostic', function()
           -1,
           { details = true }
         )
-      ]], expected_spacing)
+      ]],
+        expected_spacing
+      )
 
       local virt_text = extmarks[1][4].virt_text
       local spacing = virt_text[1][1]
@@ -739,7 +815,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('allows filtering via severity limit', function()
       local get_extmark_count_with_severity = function(severity_limit)
-        return exec_lua([[
+        return exec_lua(
+          [[
           PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
             underline = false,
             virtual_text = {
@@ -756,15 +833,17 @@ describe('vim.lsp.diagnostic', function()
           )
 
           return count_of_extmarks_for_client(diagnostic_bufnr, 1)
-        ]], severity_limit)
+        ]],
+          severity_limit
+        )
       end
 
       -- No messages with Error or higher
-      eq(0, get_extmark_count_with_severity("Error"))
+      eq(0, get_extmark_count_with_severity 'Error')
 
       -- But now we don't filter it
-      eq(1, get_extmark_count_with_severity("Warning"))
-      eq(1, get_extmark_count_with_severity("Hint"))
+      eq(1, get_extmark_count_with_severity 'Warning')
+      eq(1, get_extmark_count_with_severity 'Hint')
     end)
   end)
 
@@ -773,7 +852,9 @@ describe('vim.lsp.diagnostic', function()
       -- Two lines:
       --    Diagnostic:
       --    1. <msg>
-      eq(2, exec_lua [[
+      eq(
+        2,
+        exec_lua [[
         local buffer = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
           "testing";
@@ -793,13 +874,16 @@ describe('vim.lsp.diagnostic', function()
         vim.lsp.diagnostic.save(diagnostics, buffer, 1)
         local popup_bufnr, winnr = vim.lsp.diagnostic.show_line_diagnostics()
         return #vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
-      ]])
+      ]]
+      )
     end)
 
     it('creates floating window and returns popup bufnr and winnr without header, if requested', function()
       -- One line (since no header):
       --    1. <msg>
-      eq(1, exec_lua [[
+      eq(
+        1,
+        exec_lua [[
         local buffer = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_buf_set_lines(buffer, 0, -1, false, {
           "testing";
@@ -819,7 +903,8 @@ describe('vim.lsp.diagnostic', function()
         vim.lsp.diagnostic.save(diagnostics, buffer, 1)
         local popup_bufnr, winnr = vim.lsp.diagnostic.show_line_diagnostics { show_header = false }
         return #vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
-      ]])
+      ]]
+      )
     end)
   end)
 
@@ -848,13 +933,16 @@ describe('vim.lsp.diagnostic', function()
         -- return vim.fn.sign_getplaced()
       ]]
 
-      nvim("input", "o")
-      nvim("input", "<esc>")
+      nvim('input', 'o')
+      nvim('input', '<esc>')
 
       -- TODO(tjdevries): Find a way to get the signs to display in the test...
-      eq(nil, exec_lua [[
+      eq(
+        nil,
+        exec_lua [[
         return im.fn.sign_getplaced()[1].signs
-      ]])
+      ]]
+      )
     end)
   end)
 

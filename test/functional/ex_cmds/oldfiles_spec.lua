@@ -1,5 +1,5 @@
-local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local Screen = require 'test.functional.ui.screen'
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear = helpers.clear
 local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_command
@@ -10,9 +10,15 @@ local eval = helpers.eval
 local shada_file = 'Xtest.shada'
 
 local function _clear()
-  clear{args={'-i', shada_file, -- Need shada for these tests.
-              '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'},
-        args_rm={'-i', '--cmd'}}
+  clear {
+    args = {
+      '-i',
+      shada_file, -- Need shada for these tests.
+      '--cmd',
+      'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler',
+    },
+    args_rm = { '-i', '--cmd' },
+  }
 end
 
 describe(':oldfiles', function()
@@ -29,34 +35,34 @@ describe(':oldfiles', function()
   it('shows most recently used files', function()
     local screen = Screen.new(100, 5)
     screen:attach()
-    feed_command("set display-=msgsep")
-    feed_command('edit testfile1')
-    feed_command('edit testfile2')
-    feed_command('wshada')
-    feed_command('rshada!')
-    local oldfiles = helpers.meths.get_vvar('oldfiles')
-    feed_command('oldfiles')
+    feed_command 'set display-=msgsep'
+    feed_command 'edit testfile1'
+    feed_command 'edit testfile2'
+    feed_command 'wshada'
+    feed_command 'rshada!'
+    local oldfiles = helpers.meths.get_vvar 'oldfiles'
+    feed_command 'oldfiles'
     screen:expect([[
       testfile2                                                                                           |
-      1: ]].. add_padding(oldfiles[1]) ..[[ |
-      2: ]].. add_padding(oldfiles[2]) ..[[ |
+      1: ]] .. add_padding(oldfiles[1]) .. [[ |
+      2: ]] .. add_padding(oldfiles[2]) .. [[ |
                                                                                                           |
       Press ENTER or type command to continue^                                                             |
     ]])
   end)
 
   it('can be filtered with :filter', function()
-    feed_command('edit file_one.txt')
+    feed_command 'edit file_one.txt'
     local file1 = buf.get_name()
-    feed_command('edit file_two.txt')
+    feed_command 'edit file_two.txt'
     local file2 = buf.get_name()
-    feed_command('edit another.txt')
+    feed_command 'edit another.txt'
     local another = buf.get_name()
-    feed_command('wshada')
-    feed_command('rshada!')
+    feed_command 'wshada'
+    feed_command 'rshada!'
 
     local function get_oldfiles(cmd)
-      local t = eval([[split(execute(']]..cmd..[['), "\n")]])
+      local t = eval([[split(execute(']] .. cmd .. [['), "\n")]])
       for i, _ in ipairs(t) do
         t[i] = t[i]:gsub('^%d+:%s+', '')
       end
@@ -64,17 +70,17 @@ describe(':oldfiles', function()
       return t
     end
 
-    local oldfiles = get_oldfiles('oldfiles')
-    eq({another, file1, file2}, oldfiles)
+    local oldfiles = get_oldfiles 'oldfiles'
+    eq({ another, file1, file2 }, oldfiles)
 
-    oldfiles = get_oldfiles('filter file_ oldfiles')
-    eq({file1, file2}, oldfiles)
+    oldfiles = get_oldfiles 'filter file_ oldfiles'
+    eq({ file1, file2 }, oldfiles)
 
-    oldfiles = get_oldfiles('filter /another/ oldfiles')
-    eq({another}, oldfiles)
+    oldfiles = get_oldfiles 'filter /another/ oldfiles'
+    eq({ another }, oldfiles)
 
-    oldfiles = get_oldfiles('filter! file_ oldfiles')
-    eq({another}, oldfiles)
+    oldfiles = get_oldfiles 'filter! file_ oldfiles'
+    eq({ another }, oldfiles)
   end)
 end)
 
@@ -85,26 +91,26 @@ describe(':browse oldfiles', function()
 
   before_each(function()
     _clear()
-    feed_command('edit testfile1')
+    feed_command 'edit testfile1'
     filename = buf.get_name()
-    feed_command('edit testfile2')
+    feed_command 'edit testfile2'
     filename2 = buf.get_name()
-    feed_command('wshada')
+    feed_command 'wshada'
     poke_eventloop()
     _clear()
 
     -- Ensure nvim is out of "Press ENTER..." prompt.
-    feed('<cr>')
+    feed '<cr>'
 
     -- Ensure v:oldfiles isn't busted.  Since things happen so fast,
     -- the ordering of v:oldfiles is unstable (it uses qsort() under-the-hood).
     -- Let's verify the contents and the length of v:oldfiles before moving on.
-    oldfiles = helpers.meths.get_vvar('oldfiles')
+    oldfiles = helpers.meths.get_vvar 'oldfiles'
     eq(2, #oldfiles)
     ok(filename == oldfiles[1] or filename == oldfiles[2])
     ok(filename2 == oldfiles[1] or filename2 == oldfiles[2])
 
-    feed_command('browse oldfiles')
+    feed_command 'browse oldfiles'
   end)
 
   after_each(function()
@@ -112,17 +118,17 @@ describe(':browse oldfiles', function()
   end)
 
   it('provides a prompt and edits the chosen file', function()
-    feed('2<cr>')
+    feed '2<cr>'
     eq(oldfiles[2], buf.get_name())
   end)
 
   it('provides a prompt and does nothing on <cr>', function()
-    feed('<cr>')
+    feed '<cr>'
     eq('', buf.get_name())
   end)
 
   it('provides a prompt and does nothing if choice is out-of-bounds', function()
-    feed('3<cr>')
+    feed '3<cr>'
     eq('', buf.get_name())
   end)
 end)

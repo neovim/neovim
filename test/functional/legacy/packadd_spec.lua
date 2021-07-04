@@ -1,19 +1,19 @@
 -- Tests for 'packpath' and :packadd
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, source, command = helpers.clear, helpers.source, helpers.command
 local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
 local feed = helpers.feed
 
 local function expected_empty()
-  eq({}, nvim.get_vvar('errors'))
+  eq({}, nvim.get_vvar 'errors')
 end
 
 describe('packadd', function()
   before_each(function()
     clear()
 
-    source([=[
+    source [=[
       func Escape(s)
         return escape(a:s, '\~')
       endfunc
@@ -347,115 +347,115 @@ describe('packadd', function()
         runtime! ALL extra/bar.vim
         call assert_equal('runstartopt', g:sequence)
       endfunc
-    ]=])
-    call('SetUp')
+    ]=]
+    call 'SetUp'
   end)
 
   after_each(function()
-    call('TearDown')
+    call 'TearDown'
   end)
 
   it('is working', function()
-    call('Test_packadd')
+    call 'Test_packadd'
     expected_empty()
   end)
 
   it('works with packadd!', function()
-    call('Test_packadd_noload')
+    call 'Test_packadd_noload'
     expected_empty()
   end)
 
   it('works with symlinks', function()
-    call('Test_packadd_symlink_dir')
+    call 'Test_packadd_symlink_dir'
     expected_empty()
   end)
 
   it('works with :packloadall', function()
-    call('Test_packloadall')
+    call 'Test_packloadall'
     expected_empty()
   end)
 
   it('works with helptags', function()
-    call('Test_helptags')
+    call 'Test_helptags'
     expected_empty()
   end)
 
   it('works with colorschemes', function()
-    call('Test_colorscheme')
+    call 'Test_colorscheme'
     expected_empty()
   end)
 
   it('works with :runtime [what]', function()
-    call('Test_runtime')
+    call 'Test_runtime'
     expected_empty()
   end)
 
   it('loads packages from "start" directory', function()
-    call('Test_packadd_start')
+    call 'Test_packadd_start'
     expected_empty()
   end)
 
   describe('command line completion', function()
-    local Screen = require('test.functional.ui.screen')
+    local Screen = require 'test.functional.ui.screen'
     local screen
 
     before_each(function()
       screen = Screen.new(30, 5)
       screen:attach()
-      screen:set_default_attr_ids({
-        [0] = {bold=true, foreground=Screen.colors.Blue},
+      screen:set_default_attr_ids {
+        [0] = { bold = true, foreground = Screen.colors.Blue },
         [1] = {
           foreground = Screen.colors.Black,
           background = Screen.colors.Yellow,
         },
-        [2] = {bold = true, reverse = true}
-      })
+        [2] = { bold = true, reverse = true },
+      }
 
-      command([[let optdir1 = &packpath . '/pack/mine/opt']])
-      command([[let optdir2 = &packpath . '/pack/candidate/opt']])
-      command([[call mkdir(optdir1 . '/pluginA', 'p')]])
-      command([[call mkdir(optdir1 . '/pluginC', 'p')]])
-      command([[call mkdir(optdir2 . '/pluginB', 'p')]])
-      command([[call mkdir(optdir2 . '/pluginC', 'p')]])
+      command [[let optdir1 = &packpath . '/pack/mine/opt']]
+      command [[let optdir2 = &packpath . '/pack/candidate/opt']]
+      command [[call mkdir(optdir1 . '/pluginA', 'p')]]
+      command [[call mkdir(optdir1 . '/pluginC', 'p')]]
+      command [[call mkdir(optdir2 . '/pluginB', 'p')]]
+      command [[call mkdir(optdir2 . '/pluginC', 'p')]]
     end)
 
     it('works', function()
-      feed(':packadd <Tab>')
-      screen:expect([=[
+      feed ':packadd <Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {1:pluginA}{2:  pluginB  pluginC     }|
         :packadd pluginA^              |
-      ]=])
-      feed('<Tab>')
-      screen:expect([=[
+      ]=]
+      feed '<Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {2:pluginA  }{1:pluginB}{2:  pluginC     }|
         :packadd pluginB^              |
-      ]=])
-      feed('<Tab>')
-      screen:expect([=[
+      ]=]
+      feed '<Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {2:pluginA  pluginB  }{1:pluginC}{2:     }|
         :packadd pluginC^              |
-      ]=])
-      feed('<Tab>')
-      screen:expect([=[
+      ]=]
+      feed '<Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {2:pluginA  pluginB  pluginC     }|
         :packadd ^                     |
-      ]=])
+      ]=]
     end)
 
     it('works for colorschemes', function()
-      source([[
+      source [[
         let colordirrun = &packpath . '/runtime/colors'
         let colordirstart = &packpath . '/pack/mine/start/foo/colors'
         let colordiropt = &packpath . '/pack/mine/opt/bar/colors'
@@ -465,40 +465,40 @@ describe('packadd', function()
         call writefile(['let g:found_one = 1'], colordirrun . '/one.vim')
         call writefile(['let g:found_two = 1'], colordirstart . '/two.vim')
         call writefile(['let g:found_three = 1'], colordiropt . '/three.vim')
-        exe 'set rtp=' . &packpath . '/runtime']])
+        exe 'set rtp=' . &packpath . '/runtime']]
 
-      feed(':colorscheme <Tab>')
-      screen:expect([=[
+      feed ':colorscheme <Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {1:one}{2:  three  two               }|
         :colorscheme one^              |
-      ]=])
-      feed('<Tab>')
-      screen:expect([=[
+      ]=]
+      feed '<Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {2:one  }{1:three}{2:  two               }|
         :colorscheme three^            |
-      ]=])
-      feed('<Tab>')
-      screen:expect([=[
+      ]=]
+      feed '<Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {2:one  three  }{1:two}{2:               }|
         :colorscheme two^              |
-      ]=])
-      feed('<Tab>')
-      screen:expect([=[
+      ]=]
+      feed '<Tab>'
+      screen:expect [=[
                                       |
         {0:~                             }|
         {0:~                             }|
         {2:one  three  two               }|
         :colorscheme ^                 |
-      ]=])
+      ]=]
     end)
   end)
 end)

@@ -86,6 +86,13 @@ jobs:
         if: ${{ success() }}
         run: ./ci/before_cache.sh
 
+      - name: Style Lint
+        uses: JohnnyMorganz/stylua-action@1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # CLI arguments
+          args: --check ./runtime
+
   windows:
     runs-on: windows-2016
     if: github.event.pull_request.draft == false

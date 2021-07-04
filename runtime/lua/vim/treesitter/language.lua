@@ -22,13 +22,15 @@ function M.require_language(lang, path, silent)
       end
 
       -- TODO(bfredl): help tag?
-      error("no parser for '"..lang.."' language, see :help treesitter-parsers")
+      error("no parser for '" .. lang .. "' language, see :help treesitter-parsers")
     end
     path = paths[1]
   end
 
   if silent then
-    return pcall(function() vim._ts_add_language(path, lang) end)
+    return pcall(function()
+      vim._ts_add_language(path, lang)
+    end)
   else
     vim._ts_add_language(path, lang)
   end

@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local call = helpers.call
 local clear = helpers.clear
 local command = helpers.command
@@ -19,44 +19,43 @@ end)
 
 describe('wait()', function()
   it('waits and returns 0 when condition is satisfied', function()
-    source([[
+    source [[
     let g:_awake = 0
     call timer_start(100, { -> nvim_command('let g:_awake = 1') })
-    ]])
-    eq(0, eval('g:_awake'))
-    eq(0, eval('wait(1500, { -> g:_awake })'))
-    eq(1, eval('g:_awake'))
+    ]]
+    eq(0, eval 'g:_awake')
+    eq(0, eval 'wait(1500, { -> g:_awake })')
+    eq(1, eval 'g:_awake')
 
-    eq(0, eval('wait(0, 1)'))
+    eq(0, eval 'wait(0, 1)')
   end)
 
   it('returns -1 on timeout', function()
-    eq(-1, eval('wait(0, 0)'))
-    eq(-1, eval('wait(50, 0)'))
+    eq(-1, eval 'wait(0, 0)')
+    eq(-1, eval 'wait(50, 0)')
   end)
 
   it('returns -2 when interrupted', function()
-    feed_command('call rpcnotify(g:channel, "ready") | '..
-                 'call rpcnotify(g:channel, "wait", wait(-1, 0))')
-    eq({'notification', 'ready', {}}, next_msg())
-    feed('<c-c>')
-    eq({'notification', 'wait', {-2}}, next_msg())
+    feed_command('call rpcnotify(g:channel, "ready") | ' .. 'call rpcnotify(g:channel, "wait", wait(-1, 0))')
+    eq({ 'notification', 'ready', {} }, next_msg())
+    feed '<c-c>'
+    eq({ 'notification', 'wait', { -2 } }, next_msg())
   end)
 
   it('returns -3 on error', function()
-    command('silent! let ret = wait(-1, "error")')
-    eq(-3, eval('ret'))
-    command('let ret = 0 | silent! let ret = wait(-1, { -> error })')
-    eq(-3, eval('ret'))
+    command 'silent! let ret = wait(-1, "error")'
+    eq(-3, eval 'ret')
+    command 'let ret = 0 | silent! let ret = wait(-1, { -> error })'
+    eq(-3, eval 'ret')
   end)
 
   it('evaluates the condition on given interval', function()
-    source([[
+    source [[
     function Count()
       let g:counter += 1
       return g:counter
     endfunction
-    ]])
+    ]]
 
     -- XXX: flaky (#11137)
     helpers.retry(nil, nil, function()

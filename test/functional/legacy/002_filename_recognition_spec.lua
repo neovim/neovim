@@ -1,7 +1,7 @@
 -- Test if URLs are recognized as filenames by commands such as "gf". Here
 -- we'll use `expand("<cfile>")` since "gf" would need to open the file.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect = helpers.feed_command, helpers.expect
 
@@ -10,11 +10,11 @@ describe('filename recognition', function()
 
   it('is working', function()
     -- insert some lines containing URLs
-    insert([[
+    insert [[
       first test for URL://machine.name/tmp/vimtest2a and other text
       second test for URL://machine.name/tmp/vimtest2b. And other text
       third test for URL:\\machine.name\vimtest2c and other text
-      fourth test for URL:\\machine.name\tmp\vimtest2d, and other text]])
+      fourth test for URL:\\machine.name\tmp\vimtest2d, and other text]]
 
     -- Go to the first URL and append it to the beginning
     feed_command('/^first', '/tmp', 'call append(0, expand("<cfile>"))')
@@ -25,18 +25,18 @@ describe('filename recognition', function()
 
     -- Repeat for the remaining URLs. This time, the 'isfname' option must be
     -- set to allow '\' in filenames
-    feed_command('set isf=@,48-57,/,.,-,_,+,,,$,:,~,\\')
+    feed_command 'set isf=@,48-57,/,.,-,_,+,,,$,:,~,\\'
     feed_command('/^third', '/name', 'call append(2, expand("<cfile>"))')
     feed_command('/^fourth', '/URL', 'call append(3, expand("<cfile>"))')
 
     -- Delete the initial text, which now starts at line 5
-    feed('5GdG')
+    feed '5GdG'
 
     -- The buffer should now contain:
-    expect([[
+    expect [[
       URL://machine.name/tmp/vimtest2a
       URL://machine.name/tmp/vimtest2b
       URL:\\machine.name\vimtest2c
-      URL:\\machine.name\tmp\vimtest2d]])
+      URL:\\machine.name\tmp\vimtest2d]]
   end)
 end)

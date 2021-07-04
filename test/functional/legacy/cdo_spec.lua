@@ -1,23 +1,23 @@
 -- Tests for the :cdo, :cfdo, :ldo and :lfdo commands
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local nvim, clear = helpers.meths, helpers.clear
 local call, feed = helpers.call, helpers.feed
 local source, eq = helpers.source, helpers.eq
 
 local function expected_empty()
-  eq({}, nvim.get_vvar('errors'))
+  eq({}, nvim.get_vvar 'errors')
 end
 
 describe('cdo', function()
   before_each(function()
     clear()
 
-    call('writefile', {'Line1', 'Line2', 'Line3'}, 'Xtestfile1')
-    call('writefile', {'Line1', 'Line2', 'Line3'}, 'Xtestfile2')
-    call('writefile', {'Line1', 'Line2', 'Line3'}, 'Xtestfile3')
+    call('writefile', { 'Line1', 'Line2', 'Line3' }, 'Xtestfile1')
+    call('writefile', { 'Line1', 'Line2', 'Line3' }, 'Xtestfile2')
+    call('writefile', { 'Line1', 'Line2', 'Line3' }, 'Xtestfile3')
 
-    source([=[
+    source [=[
       " Returns the current line in '<filename> <linenum>L <column>C' format
       function GetRuler()
         return expand('%') . ' ' . line('.') . 'L' . ' ' . col('.') . 'C'
@@ -191,36 +191,36 @@ describe('cdo', function()
         call assert_equal(['Xtestfile2 2L 5C'], l)
 
       endfunction
-    ]=])
+    ]=]
   end)
 
   after_each(function()
-    os.remove('Xtestfile1')
-    os.remove('Xtestfile2')
-    os.remove('Xtestfile3')
+    os.remove 'Xtestfile1'
+    os.remove 'Xtestfile2'
+    os.remove 'Xtestfile3'
   end)
 
   it('works for :cdo', function()
     -- call('XdoTests', 'c')
-    feed(":call XdoTests('c')<CR><C-l>")
+    feed ":call XdoTests('c')<CR><C-l>"
     expected_empty()
   end)
 
   it('works for :cfdo', function()
     -- call('XfdoTests', 'c')
-    feed(":call XfdoTests('c')<CR><C-l>")
+    feed ":call XfdoTests('c')<CR><C-l>"
     expected_empty()
   end)
 
   it('works for :ldo', function()
     -- call('XdoTests', 'l')
-    feed(":call XdoTests('l')<CR><C-l>")
+    feed ":call XdoTests('l')<CR><C-l>"
     expected_empty()
   end)
 
   it('works for :lfdo', function()
     -- call('XfdoTests', 'l')
-    feed(":call XfdoTests('l')<CR><C-l>")
+    feed ":call XfdoTests('l')<CR><C-l>"
     expected_empty()
   end)
 end)

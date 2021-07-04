@@ -1,6 +1,6 @@
 -- Tests for sha256() function.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, expect = helpers.clear, helpers.expect
 
@@ -8,9 +8,9 @@ describe('sha256()', function()
   setup(clear)
 
   it('is working', function()
-    insert("start:")
+    insert 'start:'
 
-    source([[
+    source [[
       let testcase='test for empty string: '
       if sha256("") ==# 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
        let res='ok'
@@ -50,15 +50,15 @@ describe('sha256()', function()
        let res='ng'
       endif
       $put =testcase.res
-    ]])
+    ]]
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       start:
       test for empty string: ok
       test for 1 char: ok
       test for 3 chars: ok
       test for contains meta char: ok
-      test for contains non-ascii char: ok]])
+      test for contains non-ascii char: ok]]
   end)
 end)

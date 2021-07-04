@@ -1,127 +1,125 @@
 -- Tests for tab pages
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, insert, source, clear, command, expect, eval, eq =
-  helpers.feed, helpers.insert, helpers.source, helpers.clear,
-  helpers.command, helpers.expect, helpers.eval, helpers.eq
+  helpers.feed, helpers.insert, helpers.source, helpers.clear, helpers.command, helpers.expect, helpers.eval, helpers.eq
 local exc_exec = helpers.exc_exec
 
 describe('tab pages', function()
   before_each(clear)
 
   it('can be opened and closed', function()
-    command('tabnew')
-    eq(2, eval('tabpagenr()'))
-    command('quit')
-    eq(1, eval('tabpagenr()'))
+    command 'tabnew'
+    eq(2, eval 'tabpagenr()')
+    command 'quit'
+    eq(1, eval 'tabpagenr()')
   end)
 
   it('can be iterated with :tabdo', function()
-    source([[
+    source [[
       0tabnew
       1tabnew
       $tabnew
       tabdo call append(line('$'), 'this is tab page ' . tabpagenr())
       tabclose! 2
       tabrewind
-    ]])
-    eq('this is tab page 1', eval("getline('$')"))
-    command('tablast')
-    eq('this is tab page 4', eval("getline('$')"))
+    ]]
+    eq('this is tab page 1', eval "getline('$')")
+    command 'tablast'
+    eq('this is tab page 4', eval "getline('$')")
   end)
 
   it('have local variables accasible with settabvar()/gettabvar()', function()
     -- Test for settabvar() and gettabvar() functions. Open a new tab page and
     -- set 3 variables to a number, string and a list. Verify that the
     -- variables are correctly set.
-    source([[
+    source [[
       tabnew
       tabfirst
       call settabvar(2, 'val_num', 100)
       call settabvar(2, 'val_str', 'SetTabVar test')
       call settabvar(2, 'val_list', ['red', 'blue', 'green'])
-    ]])
+    ]]
 
-    eq(100, eval('gettabvar(2, "val_num")'))
-    eq('SetTabVar test', eval('gettabvar(2, "val_str")'))
-    eq({'red', 'blue', 'green'}, eval('gettabvar(2, "val_list")'))
-    command('tabnext 2')
-    eq(100, eval('t:val_num'))
-    eq('SetTabVar test', eval('t:val_str'))
-    eq({'red', 'blue', 'green'}, eval('t:val_list'))
+    eq(100, eval 'gettabvar(2, "val_num")')
+    eq('SetTabVar test', eval 'gettabvar(2, "val_str")')
+    eq({ 'red', 'blue', 'green' }, eval 'gettabvar(2, "val_list")')
+    command 'tabnext 2'
+    eq(100, eval 't:val_num')
+    eq('SetTabVar test', eval 't:val_str')
+    eq({ 'red', 'blue', 'green' }, eval 't:val_list')
   end)
 
   it('work together with the drop feature and loaded buffers', function()
     -- Test for ":tab drop exist-file" to keep current window.
-    command('sp test1')
-    command('tab drop test1')
-    eq(1, eval('tabpagenr("$")'))
-    eq(2, eval('winnr("$")'))
-    eq(1, eval('winnr()'))
+    command 'sp test1'
+    command 'tab drop test1'
+    eq(1, eval 'tabpagenr("$")')
+    eq(2, eval 'winnr("$")')
+    eq(1, eval 'winnr()')
   end)
 
   it('work together with the drop feature and new files', function()
     -- Test for ":tab drop new-file" to keep current window of tabpage 1.
-    command('split')
-    command('tab drop newfile')
-    eq(2, eval('tabpagenr("$")'))
-    eq(2, eval('tabpagewinnr(1, "$")'))
-    eq(1, eval('tabpagewinnr(1)'))
+    command 'split'
+    command 'tab drop newfile'
+    eq(2, eval 'tabpagenr("$")')
+    eq(2, eval 'tabpagewinnr(1, "$")')
+    eq(1, eval 'tabpagewinnr(1)')
   end)
 
   it('work together with the drop feature and multi loaded buffers', function()
     -- Test for ":tab drop multi-opend-file" to keep current tabpage and
     -- window.
-    command('new test1')
-    command('tabnew')
-    command('new test1')
-    command('tab drop test1')
-    eq(2, eval('tabpagenr()'))
-    eq(2, eval('tabpagewinnr(2, "$")'))
-    eq(1, eval('tabpagewinnr(2)'))
+    command 'new test1'
+    command 'tabnew'
+    command 'new test1'
+    command 'tab drop test1'
+    eq(2, eval 'tabpagenr()')
+    eq(2, eval 'tabpagewinnr(2, "$")')
+    eq(1, eval 'tabpagewinnr(2)')
   end)
 
   it('can be navigated with :tabmove', function()
-    command('lang C')
-    command('for i in range(9) | tabnew | endfor')
-    feed('1gt')
-    eq(1, eval('tabpagenr()'))
-    command('tabmove 5')
-    eq(5, eval('tabpagenr()'))
-    command('.tabmove')
-    eq(5, eval('tabpagenr()'))
-    command('tabmove -')
-    eq(4, eval('tabpagenr()'))
-    command('tabmove +')
-    eq(5, eval('tabpagenr()'))
-    command('tabmove -2')
-    eq(3, eval('tabpagenr()'))
-    command('tabmove +4')
-    eq(7, eval('tabpagenr()'))
-    command('tabmove')
-    eq(10, eval('tabpagenr()'))
-    command('0tabmove')
-    eq(1, eval('tabpagenr()'))
-    command('$tabmove')
-    eq(10, eval('tabpagenr()'))
-    command('tabmove 0')
-    eq(1, eval('tabpagenr()'))
-    command('tabmove $')
-    eq(10, eval('tabpagenr()'))
-    command('3tabmove')
-    eq(4, eval('tabpagenr()'))
-    command('7tabmove 5')
-    eq(5, eval('tabpagenr()'))
-    command('let a="No error caught."')
-    eq('Vim(tabmove):E474: Invalid argument: tabmove foo',
-       exc_exec('tabmove foo'))
+    command 'lang C'
+    command 'for i in range(9) | tabnew | endfor'
+    feed '1gt'
+    eq(1, eval 'tabpagenr()')
+    command 'tabmove 5'
+    eq(5, eval 'tabpagenr()')
+    command '.tabmove'
+    eq(5, eval 'tabpagenr()')
+    command 'tabmove -'
+    eq(4, eval 'tabpagenr()')
+    command 'tabmove +'
+    eq(5, eval 'tabpagenr()')
+    command 'tabmove -2'
+    eq(3, eval 'tabpagenr()')
+    command 'tabmove +4'
+    eq(7, eval 'tabpagenr()')
+    command 'tabmove'
+    eq(10, eval 'tabpagenr()')
+    command '0tabmove'
+    eq(1, eval 'tabpagenr()')
+    command '$tabmove'
+    eq(10, eval 'tabpagenr()')
+    command 'tabmove 0'
+    eq(1, eval 'tabpagenr()')
+    command 'tabmove $'
+    eq(10, eval 'tabpagenr()')
+    command '3tabmove'
+    eq(4, eval 'tabpagenr()')
+    command '7tabmove 5'
+    eq(5, eval 'tabpagenr()')
+    command 'let a="No error caught."'
+    eq('Vim(tabmove):E474: Invalid argument: tabmove foo', exc_exec 'tabmove foo')
   end)
 
   it('can trigger certain autocommands', function()
-    insert('Results:')
+    insert 'Results:'
 
     -- Test autocommands.
-    source([[
+    source [[
       tabonly!
       let g:r=[]
       command -nargs=1 -bar C :call add(g:r, '=== '.<q-args>.' ===')|<args>
@@ -170,10 +168,10 @@ describe('tab pages', function()
       endfunction
       call Test()
       $ put =g:r
-    ]])
+    ]]
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       Results:
       === tab split ===
       WinLeave
@@ -233,7 +231,7 @@ describe('tab pages', function()
       TabEnter
       === tabnext 2 ===
       === tabclose 3 ===
-      2/2]])
-      eq(2, eval("tabpagenr('$')"))
+      2/2]]
+    eq(2, eval "tabpagenr('$')")
   end)
 end)

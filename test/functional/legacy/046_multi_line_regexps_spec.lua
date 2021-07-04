@@ -1,7 +1,7 @@
 -- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests for multi-line regexps with ":s"
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local expect = helpers.expect
 
@@ -9,7 +9,7 @@ describe('multi-line regexp', function()
   setup(clear)
 
   it('is working', function()
-    insert([[
+    insert [[
       1 aa
       bb
       cc
@@ -23,18 +23,18 @@ describe('multi-line regexp', function()
       9d
       6 e7
       77f
-      xxxxx]])
+      xxxxx]]
 
     -- Test if replacing a line break works with a back reference
-    feed([[:/^1/,/^2/s/\n\(.\)/ \1/<cr>]])
+    feed [[:/^1/,/^2/s/\n\(.\)/ \1/<cr>]]
 
     -- Test if inserting a line break works with a back reference
-    feed([[:/^3/,/^4/s/\(.\)$/\r\1/<cr>]])
+    feed [[:/^3/,/^4/s/\(.\)$/\r\1/<cr>]]
 
     -- Test if replacing a line break with another line break works
-    feed([[:/^5/,/^6/s/\(\_d\{3}\)/x\1x/<cr>]])
+    feed [[:/^5/,/^6/s/\(\_d\{3}\)/x\1x/<cr>]]
 
-    expect([[
+    expect [[
       1 aa bb cc 2 dd ee
       3 e
       f
@@ -47,6 +47,6 @@ describe('multi-line regexp', function()
       9xd
       6 ex7
       7x7f
-      xxxxx]])
+      xxxxx]]
   end)
 end)

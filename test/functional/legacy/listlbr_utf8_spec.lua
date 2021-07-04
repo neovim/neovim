@@ -1,6 +1,6 @@
 -- Test for linebreak and list option in utf-8 mode
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local source = helpers.source
 local feed = helpers.feed
 local clear, expect = helpers.clear, helpers.expect
@@ -11,7 +11,7 @@ describe('linebreak', function()
   -- luacheck: ignore 621 (Indentation)
   -- luacheck: ignore 613 (Trailing whitespaces in a string)
   it('is working', function()
-    source([[
+    source [[
       set wildchar=^E
       10new
       vsp
@@ -98,9 +98,9 @@ describe('linebreak', function()
       nnoremap <expr> GG ":let attr += ['".screenattr(screenrow(),screencol())."']\n"
       $
       norm! zt0
-    ]])
-    feed('GGlGGlGGlGGlGGlGGlGGlGGlGGlGGl')
-    source([[
+    ]]
+    feed 'GGlGGlGGlGGlGGlGGlGGlGGlGGlGGl'
+    source [[
       call append('$', ['ScreenAttributes for test6:'])
       if attr[0] != attr[1] && attr[1] != attr[3] && attr[3] != attr[5]
          call append('$', "Attribut 0 and 1 and 3 and 5 are different!")
@@ -110,9 +110,9 @@ describe('linebreak', function()
       set cpo&vim linebreak selection=exclusive
       let g:test ="Test 8: set linebreak with visual block mode and v_b_A and selection=exclusive and multibyte char"
       $put =g:test
-    ]])
-    feed("Golong line: <Esc>40afoobar <Esc>aTARGETÃ' at end<Esc>")
-    source([[
+    ]]
+    feed "Golong line: <Esc>40afoobar <Esc>aTARGETÃ' at end<Esc>"
+    source [[
       exe "norm! $3B\<C-v>eAx\<Esc>"
       "
       let g:test ="Test 9: a multibyte sign and colorcolumn"
@@ -122,21 +122,21 @@ describe('linebreak', function()
       $put ='a b c'
       $put ='a b c'
       set list nolinebreak cc=3
-    ]])
-    feed(':sign define foo text=<C-v>uff0b<CR>')
-    source([[
+    ]]
+    feed ':sign define foo text=<C-v>uff0b<CR>'
+    source [[
       sign place 1 name=foo line=50 buffer=2
       norm! 2kztj
       let line1=line('.')
-    ]])
-    feed('0GGlGGlGGlGGl')
-    source([[
+    ]]
+    feed '0GGlGGlGGlGGl'
+    source [[
       let line2=line('.')
       let attr2=attr
       let attr=[]
-    ]])
-    feed('0GGlGGlGGlGGl')
-    source([[
+    ]]
+    feed '0GGlGGlGGlGGl'
+    source [[
       redraw!
       let line=ScreenChar(winwidth(0),3)
       call DoRecordScreen()
@@ -146,10 +146,10 @@ describe('linebreak', function()
       else
          call append('$', "Screen attributes are the same!")
       endif
-    ]])
+    ]]
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
 
       	abcdef hijklmn	pqrstuvwxyz 1060ABCDEFGHIJKLMNOP 
 
@@ -206,6 +206,6 @@ describe('linebreak', function()
         ¶                                     
       ＋a b c¶                                
         a b c¶                                
-      Screen attributes are the same!]])
+      Screen attributes are the same!]]
   end)
 end)

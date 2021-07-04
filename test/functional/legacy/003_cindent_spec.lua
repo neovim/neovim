@@ -4,7 +4,7 @@
 -- There are 50+ test command blocks (the stuff between STARTTEST and ENDTEST)
 -- in the original test. These have been converted to "it" test cases here.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, insert = helpers.feed, helpers.insert
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
@@ -22,7 +22,7 @@ describe('cindent', function()
   before_each(clear)
 
   it('1 is working', function()
-    insert_([=[
+    insert_ [=[
 
       /* start of AUTO matically checked vim: set ts=4 : */
       {
@@ -979,12 +979,12 @@ describe('cindent', function()
       }
 
       /* end of AUTO */
-      ]=])
+      ]=]
 
-    feed_command('/start of AUTO')
-    feed('=/end of AUTO<cr>')
+    feed_command '/start of AUTO'
+    feed '=/end of AUTO<cr>'
 
-    expect([=[
+    expect [=[
 
       /* start of AUTO matically checked vim: set ts=4 : */
       {
@@ -1941,11 +1941,11 @@ describe('cindent', function()
       }
 
       /* end of AUTO */
-      ]=])
+      ]=]
   end)
 
   it('2 is working', function()
-    insert_([=[
+    insert_ [=[
 
       {
 
@@ -1955,14 +1955,14 @@ describe('cindent', function()
        */
       	/* insert " about life, the universe, and the rest" after "serious" */
       }
-      ]=])
+      ]=]
 
-    feed_command('set tw=0 noai fo=croq')
-    feed_command('let &wm = &columns - 20')
-    feed_command('/serious/e')
-    feed('a about life, the universe, and the rest<esc>')
+    feed_command 'set tw=0 noai fo=croq'
+    feed_command 'let &wm = &columns - 20'
+    feed_command '/serious/e'
+    feed 'a about life, the universe, and the rest<esc>'
 
-    expect([=[
+    expect [=[
 
       {
 
@@ -1975,11 +1975,11 @@ describe('cindent', function()
        */
       	/* insert " about life, the universe, and the rest" after "serious" */
       }
-      ]=])
+      ]=]
   end)
 
   it('3 is working', function()
-    insert_([=[
+    insert_ [=[
 
       {
       	/*
@@ -1996,16 +1996,16 @@ describe('cindent', function()
       		/* how about
       		                this one */
       }
-      ]=])
+      ]=]
 
-    feed_command('set nocin')
-    feed_command('/comments')
-    feed('joabout life<esc>/happens<cr>')
-    feed('jothere<esc>/below<cr>')
-    feed('oline<esc>/this<cr>')
-    feed('Ohello<esc>')
+    feed_command 'set nocin'
+    feed_command '/comments'
+    feed 'joabout life<esc>/happens<cr>'
+    feed 'jothere<esc>/below<cr>'
+    feed 'oline<esc>/this<cr>'
+    feed 'Ohello<esc>'
 
-    expect([=[
+    expect [=[
 
       {
       	/*
@@ -2026,34 +2026,34 @@ describe('cindent', function()
       hello
       		                this one */
       }
-      ]=])
+      ]=]
   end)
 
   it('4 is working', function()
-    insert_([=[
+    insert_ [=[
 
       {
           var = this + that + vec[0] * vec[0]
       				      + vec[1] * vec[1]
       					  + vec2[2] * vec[2];
       }
-      ]=])
-    feed_command('set cin')
-    feed_command('/vec2')
-    feed('==<cr>')
+      ]=]
+    feed_command 'set cin'
+    feed_command '/vec2'
+    feed '==<cr>'
 
-    expect([=[
+    expect [=[
 
       {
           var = this + that + vec[0] * vec[0]
       				      + vec[1] * vec[1]
       					  + vec2[2] * vec[2];
       }
-      ]=])
+      ]=]
   end)
 
   it('5 is working', function()
-    insert_([=[
+    insert_ [=[
 
       {
       		asdf asdflkajds f;
@@ -2069,15 +2069,15 @@ describe('cindent', function()
       		}
       	testing2;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cin')
-    feed_command('set cino=}4')
-    feed_command('/testing1')
-    feed('k2==/testing2<cr>')
-    feed('k2==<cr>')
+    feed_command 'set cin'
+    feed_command 'set cino=}4'
+    feed_command '/testing1'
+    feed 'k2==/testing2<cr>'
+    feed 'k2==<cr>'
 
-    expect([=[
+    expect [=[
 
       {
       		asdf asdflkajds f;
@@ -2093,11 +2093,11 @@ describe('cindent', function()
       		}
       	testing2;
       }
-      ]=])
+      ]=]
   end)
 
   it('6 is working', function()
-    insert_([=[
+    insert_ [=[
 
       main ( int first_par, /*
                              * Comment for
@@ -2120,14 +2120,14 @@ describe('cindent', function()
               );
 
       }
-      ]=])
+      ]=]
 
-    feed_command('set cin')
-    feed_command('set cino=(0,)20')
-    feed_command('/main')
-    feed('=][<cr>')
+    feed_command 'set cin'
+    feed_command 'set cino=(0,)20'
+    feed_command '/main'
+    feed '=][<cr>'
 
-    expect([=[
+    expect [=[
 
       main ( int first_par, /*
       					   * Comment for
@@ -2150,11 +2150,11 @@ describe('cindent', function()
       		);
 
       }
-      ]=])
+      ]=]
   end)
 
   it('7 is working', function()
-    insert_([=[
+    insert_ [=[
 
       main(void)
       {
@@ -2166,14 +2166,14 @@ describe('cindent', function()
       		bar();
       	}
       }
-      ]=])
+      ]=]
 
-    feed_command('set cin')
-    feed_command('set cino=es,n0s')
-    feed_command('/main')
-    feed('=][<cr>')
+    feed_command 'set cin'
+    feed_command 'set cino=es,n0s'
+    feed_command '/main'
+    feed '=][<cr>'
 
-    expect([=[
+    expect [=[
 
       main(void)
       {
@@ -2185,11 +2185,11 @@ describe('cindent', function()
       		bar();
       	}
       }
-      ]=])
+      ]=]
   end)
 
   it('8 is working', function()
-    insert_([=[
+    insert_ [=[
 
       {
       	do
@@ -2204,13 +2204,13 @@ describe('cindent', function()
       	} while ();
       			cmd;		/* this should go under the } */
       }
-      ]=])
+      ]=]
 
-    feed_command('set cin')
-    feed_command('set cino=')
-    feed(']]=][<cr>')
+    feed_command 'set cin'
+    feed_command 'set cino='
+    feed ']]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       {
       	do
@@ -2225,11 +2225,11 @@ describe('cindent', function()
       	} while ();
       	cmd;		/* this should go under the } */
       }
-      ]=])
+      ]=]
   end)
 
   it('9 is working', function()
-    insert_([=[
+    insert_ [=[
 
       void f()
       {
@@ -2242,11 +2242,11 @@ describe('cindent', function()
 
           n();
       }
-      ]=])
+      ]=]
 
-    feed(']]=][<cr>')
+    feed ']]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2259,7 +2259,7 @@ describe('cindent', function()
 
       	n();
       }
-      ]=])
+      ]=]
   end)
 
   it('10 is working', function()
@@ -2269,7 +2269,7 @@ describe('cindent', function()
     -- bracket in "set cino={s,e-s". This bracket actually affects the outcome
     -- of the test: without it the curly bracket under "void f()" would not be
     -- indented properly. And that's why we've had to add one explicitly.
-    insert_([=[
+    insert_ [=[
       { <= THIS IS THE CURLY BRACKET EXPLAINED IN THE COMMENT.
 
       void f()
@@ -2282,12 +2282,12 @@ describe('cindent', function()
           }
       		n();	/* should be under the if () */
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino={s,e-s')
-    feed(']]=][<cr>')
+    feed_command 'set cino={s,e-s'
+    feed ']]=][<cr>'
 
-    expect([=[
+    expect [=[
       { <= THIS IS THE CURLY BRACKET EXPLAINED IN THE COMMENT.
 
       void f()
@@ -2300,11 +2300,11 @@ describe('cindent', function()
       		}
       	n();	/* should be under the if () */
       }
-      ]=])
+      ]=]
   end)
 
   it('11 is working', function()
-    insert_([=[
+    insert_ [=[
 
       void bar(void)
       {
@@ -2338,12 +2338,12 @@ describe('cindent', function()
       	d = 4;
       	}
       /* foo */
-      ]=])
+      ]=]
 
-    feed_command('set cino={s,fs')
-    feed(']]=/ foo<cr>')
+    feed_command 'set cino={s,fs'
+    feed ']]=/ foo<cr>'
 
-    expect([=[
+    expect [=[
 
       void bar(void)
       	{
@@ -2377,11 +2377,11 @@ describe('cindent', function()
       	d = 4;
       	}
       /* foo */
-      ]=])
+      ]=]
   end)
 
   it('12 is working', function()
-    insert_([=[
+    insert_ [=[
 
       a()
       {
@@ -2392,13 +2392,13 @@ describe('cindent', function()
           if ( a )
             a;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=')
-    feed_command('/while')
-    feed('ohere<esc>')
+    feed_command 'set cino='
+    feed_command '/while'
+    feed 'ohere<esc>'
 
-    expect([=[
+    expect [=[
 
       a()
       {
@@ -2410,11 +2410,11 @@ describe('cindent', function()
           if ( a )
             a;
       }
-      ]=])
+      ]=]
   end)
 
   it('13 is working', function()
-    insert_([=[
+    insert_ [=[
 
       a()
       {
@@ -2422,13 +2422,13 @@ describe('cindent', function()
                   /* hmm */
                   // comment
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino= com=')
-    feed_command('/comment')
-    feed('olabel2: b();<cr>label3 /* post */:<cr>/* pre */ label4:<cr>f(/*com*/);<cr>if (/*com*/)<cr>cmd();<esc>')
+    feed_command 'set cino= com='
+    feed_command '/comment'
+    feed 'olabel2: b();<cr>label3 /* post */:<cr>/* pre */ label4:<cr>f(/*com*/);<cr>if (/*com*/)<cr>cmd();<esc>'
 
-    expect([=[
+    expect [=[
 
       a()
       {
@@ -2442,11 +2442,11 @@ describe('cindent', function()
       		if (/*com*/)
       			cmd();
       }
-      ]=])
+      ]=]
   end)
 
   it('14 is working', function()
-    insert_([=[
+    insert_ [=[
 
       /*
         * A simple comment
@@ -2455,13 +2455,13 @@ describe('cindent', function()
       /*
         ** A different comment
          */
-      ]=])
+      ]=]
 
-    feed_command('set comments& comments^=s:/*,m:**,ex:*/')
-    feed_command('/simple')
-    feed('=5j<cr>')
+    feed_command 'set comments& comments^=s:/*,m:**,ex:*/'
+    feed_command '/simple'
+    feed '=5j<cr>'
 
-    expect([=[
+    expect [=[
 
       /*
        * A simple comment
@@ -2470,11 +2470,11 @@ describe('cindent', function()
       /*
       ** A different comment
       */
-      ]=])
+      ]=]
   end)
 
   it('15 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2484,13 +2484,13 @@ describe('cindent', function()
         A comment.
       *********/
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=c0')
-    feed_command('set comments& comments-=s1:/* comments^=s0:/*')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=c0'
+    feed_command 'set comments& comments-=s1:/* comments^=s0:/*'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2499,11 +2499,11 @@ describe('cindent', function()
       	  A comment.
       	*********/
       }
-      ]=])
+      ]=]
   end)
 
   it('16 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2513,13 +2513,13 @@ describe('cindent', function()
         A comment.
       *********/
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=c0,C1')
-    feed_command('set comments& comments-=s1:/* comments^=s0:/*')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=c0,C1'
+    feed_command 'set comments& comments-=s1:/* comments^=s0:/*'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2528,11 +2528,11 @@ describe('cindent', function()
       	A comment.
       	*********/
       }
-      ]=])
+      ]=]
   end)
 
   it('17 is working', function()
-    insert_([=[
+    insert_ [=[
 
       void f()
       {
@@ -2542,12 +2542,12 @@ describe('cindent', function()
       	c3
       	) && c4;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=')
-    feed(']]=][<cr>')
+    feed_command 'set cino='
+    feed ']]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2557,11 +2557,11 @@ describe('cindent', function()
       		 c3
       		) && c4;
       }
-      ]=])
+      ]=]
   end)
 
   it('18 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2572,12 +2572,12 @@ describe('cindent', function()
       	c3
       	) && c4;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(s')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(s'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2587,11 +2587,11 @@ describe('cindent', function()
       		 c3
       		) && c4;
       }
-      ]=])
+      ]=]
   end)
 
   it('19 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2602,12 +2602,12 @@ describe('cindent', function()
       	c3
       	) && c4;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(s,U1  ')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(s,U1  '
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2617,11 +2617,11 @@ describe('cindent', function()
       			c3
       		) && c4;
       }
-      ]=])
+      ]=]
   end)
 
   it('20 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2631,12 +2631,12 @@ describe('cindent', function()
       	|| c3))
       	foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(0')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(0'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2645,11 +2645,11 @@ describe('cindent', function()
       				  || c3))
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('21 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2659,12 +2659,12 @@ describe('cindent', function()
       	|| c3))
       	foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(0,w1  ')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(0,w1  '
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2673,11 +2673,11 @@ describe('cindent', function()
       			|| c3))
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('22 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2691,12 +2691,12 @@ describe('cindent', function()
       	)
       	foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(s')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(s'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2709,11 +2709,11 @@ describe('cindent', function()
       	   )
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('23 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2727,12 +2727,12 @@ describe('cindent', function()
       	)
       	foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(s,m1  ')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(s,m1  '
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2745,11 +2745,11 @@ describe('cindent', function()
       	)
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('24 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2764,12 +2764,12 @@ describe('cindent', function()
       			break;
       	}
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=b1')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=b1'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2783,11 +2783,11 @@ describe('cindent', function()
       		break;
       	}
       }
-      ]=])
+      ]=]
   end)
 
   it('25 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2803,12 +2803,12 @@ describe('cindent', function()
       	ment
       	);
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(0,W5')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(0,W5'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2823,11 +2823,11 @@ describe('cindent', function()
       			 ment
       			);
       }
-      ]=])
+      ]=]
   end)
 
   it('26 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2836,12 +2836,12 @@ describe('cindent', function()
       		// comment 1
       	// comment 2
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=/6')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=/6'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2849,11 +2849,11 @@ describe('cindent', function()
       		  // comment 1
       		  // comment 2
       }
-      ]=])
+      ]=]
   end)
 
   it('27 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void f()
@@ -2862,13 +2862,13 @@ describe('cindent', function()
       	   // comment 1
       	// comment 2
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=')
-    feed('2kdd]]/comment 1/+1<cr>')
-    feed('==<cr>')
+    feed_command 'set cino='
+    feed '2kdd]]/comment 1/+1<cr>'
+    feed '==<cr>'
 
-    expect([=[
+    expect [=[
 
       void f()
       {
@@ -2876,11 +2876,11 @@ describe('cindent', function()
       	   // comment 1
       	   // comment 2
       }
-      ]=])
+      ]=]
   end)
 
   it('28 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       class CAbc
@@ -2892,12 +2892,12 @@ describe('cindent', function()
       protected:
          void testfall();
       };
-      ]=])
+      ]=]
 
-    feed_command('set cino=g0')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=g0'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       class CAbc
       {
@@ -2908,11 +2908,11 @@ describe('cindent', function()
       protected:
       	void testfall();
       };
-      ]=])
+      ]=]
   end)
 
   it('29 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       class Foo : public Bar
@@ -2923,12 +2923,12 @@ describe('cindent', function()
       int arg2,
       int arg3) = 0;
       };
-      ]=])
+      ]=]
 
-    feed_command('set cino=(0,gs,hs')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(0,gs,hs'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       class Foo : public Bar
       {
@@ -2938,11 +2938,11 @@ describe('cindent', function()
       							 int arg2,
       							 int arg3) = 0;
       };
-      ]=])
+      ]=]
   end)
 
   it('30 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       	void
@@ -2953,12 +2953,12 @@ describe('cindent', function()
       	} else
       		asdf;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=+20')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=+20'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       	void
       foo()
@@ -2968,11 +2968,11 @@ describe('cindent', function()
       	} else
       		asdf;
       }
-      ]=])
+      ]=]
   end)
 
   it('31 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       {
@@ -3011,12 +3011,12 @@ describe('cindent', function()
                asdasdf
                );
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(0,W2s')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=(0,W2s'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       {
       	averylongfunctionnamelongfunctionnameaverylongfunctionname()->asd(
@@ -3054,11 +3054,11 @@ describe('cindent', function()
       			asdasdf
       			);
       }
-      ]=])
+      ]=]
   end)
 
   it('32 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       int main ()
@@ -3068,12 +3068,12 @@ describe('cindent', function()
       			)
       		foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=M1')
-    feed('2kdd]]=][<cr>')
+    feed_command 'set cino=M1'
+    feed '2kdd]]=][<cr>'
 
-    expect([=[
+    expect [=[
 
       int main ()
       {
@@ -3082,11 +3082,11 @@ describe('cindent', function()
       			)
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('33 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(int a
@@ -3097,12 +3097,12 @@ describe('cindent', function()
       		 )
       {
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(0,ts')
-    feed('2kdd2j=][<cr>')
+    feed_command 'set cino=(0,ts'
+    feed '2kdd2j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(int a
       #if defined(FOO)
@@ -3112,11 +3112,11 @@ describe('cindent', function()
       		 )
       {
       }
-      ]=])
+      ]=]
   end)
 
   it('34 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
 
@@ -3129,12 +3129,12 @@ describe('cindent', function()
       		 )
       {
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=(0')
-    feed('2kdd2j=][<cr>')
+    feed_command 'set cino=(0'
+    feed '2kdd2j=][<cr>'
 
-    expect([=[
+    expect [=[
 
 
       	void
@@ -3146,11 +3146,11 @@ describe('cindent', function()
       	)
       {
       }
-      ]=])
+      ]=]
   end)
 
   it('35 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3223,12 +3223,12 @@ describe('cindent', function()
       		int a)
       {
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino&')
-    feed('2kdd2j=7][<cr>')
+    feed_command 'set cino&'
+    feed '2kdd2j=7][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3300,11 +3300,11 @@ describe('cindent', function()
       		int a)
       {
       }
-      ]=])
+      ]=]
   end)
 
   it('36 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3330,13 +3330,13 @@ describe('cindent', function()
       break;
       	}
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino&')
-    feed_command('set cino+=l1')
-    feed('2kdd2j=][<cr>')
+    feed_command 'set cino&'
+    feed_command 'set cino+=l1'
+    feed '2kdd2j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3361,11 +3361,11 @@ describe('cindent', function()
       			break;
       	}
       }
-      ]=])
+      ]=]
   end)
 
   it('37 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3375,12 +3375,12 @@ describe('cindent', function()
       	<< ") :"
       	<< "c";
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino&')
-    feed('2kdd2j=][<cr>')
+    feed_command 'set cino&'
+    feed '2kdd2j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3389,11 +3389,11 @@ describe('cindent', function()
       		<< ") :"
       		<< "c";
       }
-      ]=])
+      ]=]
   end)
 
   it('38 is working', function()
-    insert_([=[
+    insert_ [=[
 
       void func(void)
       {
@@ -3401,12 +3401,12 @@ describe('cindent', function()
       	 * This is a comment.
       	 */
       }
-      ]=])
+      ]=]
 
-    feed_command('set com=s1:/*,m:*,ex:*/')
-    feed(']]3jofoo();<esc>')
+    feed_command 'set com=s1:/*,m:*,ex:*/'
+    feed ']]3jofoo();<esc>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3415,11 +3415,11 @@ describe('cindent', function()
       	 */
       	foo();
       }
-      ]=])
+      ]=]
   end)
 
   it('39 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3431,12 +3431,12 @@ describe('cindent', function()
       			foo(0);
       baz();
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino&')
-    feed('2kdd2j=][<cr>')
+    feed_command 'set cino&'
+    feed '2kdd2j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3447,11 +3447,11 @@ describe('cindent', function()
       			foo(0);
       	baz();
       }
-      ]=])
+      ]=]
   end)
 
   it('40 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3479,12 +3479,12 @@ describe('cindent', function()
       	|| c3))
       	foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=k2s,(0')
-    feed('2kdd3j=][<cr>')
+    feed_command 'set cino=k2s,(0'
+    feed '2kdd3j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3511,11 +3511,11 @@ describe('cindent', function()
       				   || c3))
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('41 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3543,12 +3543,12 @@ describe('cindent', function()
       	|| c3))
       	foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=k2s,(s')
-    feed('2kdd3j=][<cr>')
+    feed_command 'set cino=k2s,(s'
+    feed '2kdd3j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3575,11 +3575,11 @@ describe('cindent', function()
       			|| c3))
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('42 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3608,12 +3608,12 @@ describe('cindent', function()
       	c3
       	) && c4;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=k2s,(s,U1')
-    feed('2kdd3j=][<cr>')
+    feed_command 'set cino=k2s,(s,U1'
+    feed '2kdd3j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3641,11 +3641,11 @@ describe('cindent', function()
       			c3
       		) && c4;
       }
-      ]=])
+      ]=]
   end)
 
   it('43 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3679,12 +3679,12 @@ describe('cindent', function()
       	a_short_line(argument,
       	argument);
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=k2s,(0,W4')
-    feed('2kdd3j=][<cr>')
+    feed_command 'set cino=k2s,(0,W4'
+    feed '2kdd3j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3717,11 +3717,11 @@ describe('cindent', function()
       	a_short_line(argument,
       				 argument);
       }
-      ]=])
+      ]=]
   end)
 
   it('44 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3744,12 +3744,12 @@ describe('cindent', function()
       	|| c3))
       	printf("foo\n");
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=k2s,u2')
-    feed('2kdd3j=][<cr>')
+    feed_command 'set cino=k2s,u2'
+    feed '2kdd3j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3771,11 +3771,11 @@ describe('cindent', function()
       			  || c3))
       		printf("foo\n");
       }
-      ]=])
+      ]=]
   end)
 
   it('45 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3807,12 +3807,12 @@ describe('cindent', function()
       	|| c3))
       	foo;
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=k2s,(0,w1')
-    feed('2kdd3j=][<cr>')
+    feed_command 'set cino=k2s,(0,w1'
+    feed '2kdd3j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3843,11 +3843,11 @@ describe('cindent', function()
       			 || c3))
       		foo;
       }
-      ]=])
+      ]=]
   end)
 
   it('46 is working', function()
-    insert_([=[
+    insert_ [=[
 
 
       void func(void)
@@ -3866,12 +3866,12 @@ describe('cindent', function()
       	{
       	}
       }
-      ]=])
+      ]=]
 
-    feed_command('set cino=k2,(s')
-    feed('2kdd3j=][<cr>')
+    feed_command 'set cino=k2,(s'
+    feed '2kdd3j=][<cr>'
 
-    expect([=[
+    expect [=[
 
       void func(void)
       {
@@ -3889,11 +3889,11 @@ describe('cindent', function()
       	{
       	}
       }
-      ]=])
+      ]=]
   end)
 
   it('47 is working', function()
-    insert_([=[
+    insert_ [=[
 
       NAMESPACESTART
       /* valid namespaces with normal indent */
@@ -3978,13 +3978,13 @@ describe('cindent', function()
         111111111111111111;
       }
       NAMESPACEEND
-      ]=])
+      ]=]
 
-    feed_command('set cino=N-s')
-    feed_command('/^NAMESPACESTART')
-    feed('=/^NAMESPACEEND<cr>')
+    feed_command 'set cino=N-s'
+    feed_command '/^NAMESPACESTART'
+    feed '=/^NAMESPACEEND<cr>'
 
-    expect([=[
+    expect [=[
 
       NAMESPACESTART
       /* valid namespaces with normal indent */
@@ -4069,11 +4069,11 @@ describe('cindent', function()
       	111111111111111111;
       }
       NAMESPACEEND
-      ]=])
+      ]=]
   end)
 
   it('48 is working', function()
-    insert_([=[
+    insert_ [=[
 
       JSSTART
       var bar = {
@@ -4089,13 +4089,13 @@ describe('cindent', function()
       }
       }
       JSEND
-      ]=])
+      ]=]
 
-    feed_command('set cino=j1,J1')
-    feed_command('/^JSSTART')
-    feed('=/^JSEND<cr>')
+    feed_command 'set cino=j1,J1'
+    feed_command '/^JSSTART'
+    feed '=/^JSEND<cr>'
 
-    expect([=[
+    expect [=[
 
       JSSTART
       var bar = {
@@ -4111,11 +4111,11 @@ describe('cindent', function()
       	}
       }
       JSEND
-      ]=])
+      ]=]
   end)
 
   it('49 is working', function()
-    insert_([=[
+    insert_ [=[
 
       JSSTART
       var foo = [
@@ -4124,13 +4124,13 @@ describe('cindent', function()
       3
       ];
       JSEND
-      ]=])
+      ]=]
 
-    feed_command('set cino=j1,J1')
-    feed_command('/^JSSTART')
-    feed('=/^JSEND<cr>')
+    feed_command 'set cino=j1,J1'
+    feed_command '/^JSSTART'
+    feed '=/^JSEND<cr>'
 
-    expect([=[
+    expect [=[
 
       JSSTART
       var foo = [
@@ -4139,11 +4139,11 @@ describe('cindent', function()
       	3
       ];
       JSEND
-      ]=])
+      ]=]
   end)
 
   it('50 is working', function()
-    insert_([=[
+    insert_ [=[
 
       JSSTART
       function bar() {
@@ -4154,13 +4154,13 @@ describe('cindent', function()
       ];
       }
       JSEND
-      ]=])
+      ]=]
 
-    feed_command('set cino=j1,J1')
-    feed_command('/^JSSTART')
-    feed('=/^JSEND<cr>')
+    feed_command 'set cino=j1,J1'
+    feed_command '/^JSSTART'
+    feed '=/^JSEND<cr>'
 
-    expect([=[
+    expect [=[
 
       JSSTART
       function bar() {
@@ -4171,11 +4171,11 @@ describe('cindent', function()
       	];
       }
       JSEND
-      ]=])
+      ]=]
   end)
 
   it('51 is working', function()
-    insert_([=[
+    insert_ [=[
 
       JSSTART
       (function($){
@@ -4237,13 +4237,13 @@ describe('cindent', function()
 
       })(jQuery);
       JSEND
-      ]=])
+      ]=]
 
-    feed_command('set cino=j1,J1')
-    feed_command('/^JSSTART')
-    feed('=/^JSEND<cr>')
+    feed_command 'set cino=j1,J1'
+    feed_command '/^JSSTART'
+    feed '=/^JSEND<cr>'
 
-    expect([=[
+    expect [=[
 
       JSSTART
       (function($){
@@ -4305,11 +4305,11 @@ describe('cindent', function()
 
       })(jQuery);
       JSEND
-      ]=])
+      ]=]
   end)
 
   it('52 is working', function()
-    insert_([=[
+    insert_ [=[
 
       JSSTART
       function init(options) {
@@ -4327,13 +4327,13 @@ describe('cindent', function()
       }, options||{}));
       }
       JSEND
-      ]=])
+      ]=]
 
-    feed_command('set cino=j1,J1')
-    feed_command('/^JSSTART')
-    feed('=/^JSEND<cr>')
+    feed_command 'set cino=j1,J1'
+    feed_command '/^JSSTART'
+    feed '=/^JSEND<cr>'
 
-    expect([=[
+    expect [=[
 
       JSSTART
       function init(options) {
@@ -4351,11 +4351,11 @@ describe('cindent', function()
       	}, options||{}));
       }
       JSEND
-      ]=])
+      ]=]
   end)
 
   it('53 is working', function()
-    insert_([=[
+    insert_ [=[
 
       JSSTART
       (function($){
@@ -4375,13 +4375,13 @@ describe('cindent', function()
       }
       })(jQuery);
       JSEND
-      ]=])
+      ]=]
 
-    feed_command('set cino=j1,J1')
-    feed_command('/^JSSTART')
-    feed('=/^JSEND<cr>')
+    feed_command 'set cino=j1,J1'
+    feed_command '/^JSSTART'
+    feed '=/^JSEND<cr>'
 
-    expect([=[
+    expect [=[
 
       JSSTART
       (function($){
@@ -4401,11 +4401,11 @@ describe('cindent', function()
       	}
       })(jQuery);
       JSEND
-      ]=])
+      ]=]
   end)
 
   it('javascript indent / vim-patch 7.4.670', function()
-    insert_([=[
+    insert_ [=[
 
       JSSTART
       // Results of JavaScript indent
@@ -4558,14 +4558,14 @@ describe('cindent', function()
       h,
       i;
       JSEND
-      ]=])
+      ]=]
 
     -- :set cino=j1,J1,+2
-    feed_command('set cino=j1,J1,+2')
-    feed_command('/^JSSTART')
-    feed('=/^JSEND<cr>')
+    feed_command 'set cino=j1,J1,+2'
+    feed_command '/^JSSTART'
+    feed '=/^JSEND<cr>'
 
-    expect([=[
+    expect [=[
 
       JSSTART
       // Results of JavaScript indent
@@ -4718,11 +4718,11 @@ describe('cindent', function()
       	h,
       	i;
       JSEND
-      ]=])
+      ]=]
   end)
 
   it('line continuations in macros / vim-patch 8.0.0148', function()
-    insert_([=[
+    insert_ [=[
       /* start of define */
       {
       }
@@ -4734,13 +4734,13 @@ describe('cindent', function()
       1 + \
       2 + \
       4
-      /* end of define */]=])
+      /* end of define */]=]
 
-    feed_command('set cino&')
-    feed_command('/start of define')
-    feed('=/end of define<cr>')
+    feed_command 'set cino&'
+    feed_command '/start of define'
+    feed '=/end of define<cr>'
 
-    expect([=[
+    expect [=[
       /* start of define */
       {
       }
@@ -4752,23 +4752,23 @@ describe('cindent', function()
       	1 + \
       	2 + \
       	4
-      /* end of define */]=])
+      /* end of define */]=]
   end)
 
   it('* immediately follows comment / vim-patch 8.0.1291', function()
-    insert_([=[
+    insert_ [=[
       {
         a = second/*bug*/*line;
-      }]=])
+      }]=]
 
-    feed_command('set cin cino&')
-    feed_command('/a = second')
-    feed('ox')
+    feed_command 'set cin cino&'
+    feed_command '/a = second'
+    feed 'ox'
 
-    expect([=[
+    expect [=[
       {
         a = second/*bug*/*line;
         x
-      }]=])
+      }]=]
   end)
 end)

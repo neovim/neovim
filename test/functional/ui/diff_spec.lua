@@ -1,5 +1,5 @@
-local helpers = require('test.functional.helpers')(after_each)
-local Screen = require('test.functional.ui.screen')
+local helpers = require 'test.functional.helpers'(after_each)
+local Screen = require 'test.functional.ui.screen'
 
 local feed = helpers.feed
 local clear = helpers.clear
@@ -14,7 +14,7 @@ describe('Diff mode screen', function()
   local screen
 
   local reread = function()
-    feed(':e<cr><c-w>w:e<cr><c-w>w')
+    feed ':e<cr><c-w>w:e<cr><c-w>w'
   end
 
   setup(function()
@@ -32,31 +32,31 @@ describe('Diff mode screen', function()
     clear()
     feed(':e ' .. fname_2 .. '<cr>')
     feed(':vnew ' .. fname .. '<cr>')
-    feed(':diffthis<cr>')
-    feed('<c-w>w:diffthis<cr><c-w>w')
+    feed ':diffthis<cr>'
+    feed '<c-w>w:diffthis<cr><c-w>w'
 
     screen = Screen.new(40, 16)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-      [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-      [3] = {reverse = true},
-      [4] = {background = Screen.colors.LightBlue},
-      [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-      [6] = {bold = true, foreground = Screen.colors.Blue1},
-      [7] = {bold = true, reverse = true},
-      [8] = {bold = true, background = Screen.colors.Red},
-      [9] = {background = Screen.colors.LightMagenta},
-    })
+    screen:set_default_attr_ids {
+      [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+      [2] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { reverse = true },
+      [4] = { background = Screen.colors.LightBlue },
+      [5] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+      [6] = { bold = true, foreground = Screen.colors.Blue1 },
+      [7] = { bold = true, reverse = true },
+      [8] = { bold = true, background = Screen.colors.Red },
+      [9] = { background = Screen.colors.LightMagenta },
+    }
   end)
 
   it('Add a line in beginning of file 2', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
-    feed(':set diffopt=filler<cr>')
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:  }{2:------------------}{3:│}{1:  }{4:0                }|
       {1:  }^1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
@@ -73,10 +73,10 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(':set diffopt+=internal<cr>')
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:  }{2:------------------}{3:│}{1:  }{4:0                }|
       {1:  }^1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
@@ -93,16 +93,16 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   it('Add a line in beginning of file 1', function()
-    write_file(fname, "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
-    feed(":set diffopt=filler<cr>")
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:  }{4:^0                 }{3:│}{1:  }{2:-----------------}|
       {1:  }1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
@@ -119,10 +119,10 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(":set diffopt+=internal<cr>")
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:  }{4:^0                 }{3:│}{1:  }{2:-----------------}|
       {1:  }1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
@@ -139,16 +139,16 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   it('Add a line at the end of file 2', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
     reread()
 
-    feed(":set diffopt=filler<cr>")
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
       {1:  }6                 {3:│}{1:  }6                |
@@ -165,10 +165,10 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(":set diffopt+=internal<cr>")
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
       {1:  }6                 {3:│}{1:  }6                |
@@ -185,16 +185,16 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   it('Add a line at the end of file 1', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
-    feed(":set diffopt=filler<cr>")
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
       {1:  }6                 {3:│}{1:  }6                |
@@ -211,10 +211,10 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(":set diffopt+=internal<cr>")
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:+ }{5:^+--  4 lines: 1···}{3:│}{1:+ }{5:+--  4 lines: 1··}|
       {1:  }5                 {3:│}{1:  }5                |
       {1:  }6                 {3:│}{1:  }6                |
@@ -231,16 +231,16 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   it('Add a line in the middle of file 2, remove on at the end of file 1', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
-    feed(':set diffopt=filler<cr>')
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:  }^1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
       {1:  }3                 {3:│}{1:  }3                |
@@ -257,10 +257,10 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(':set diffopt+=internal<cr>')
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:  }^1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
       {1:  }3                 {3:│}{1:  }3                |
@@ -277,16 +277,16 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   it('Add a line in the middle of file 1, remove on at the end of file 2', function()
-    write_file(fname, "1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", false)
+    write_file(fname, '1\n2\n3\n4\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n', false)
     reread()
 
-    feed(':set diffopt=filler<cr>')
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:  }^1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
       {1:  }3                 {3:│}{1:  }3                |
@@ -303,10 +303,10 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(':set diffopt+=internal<cr>')
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:  }^1                 {3:│}{1:  }1                |
       {1:  }2                 {3:│}{1:  }2                |
       {1:  }3                 {3:│}{1:  }3                |
@@ -323,7 +323,7 @@ describe('Diff mode screen', function()
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   describe('normal/patience/histogram diff algorithm', function()
@@ -385,8 +385,8 @@ int main(int argc, char **argv)
 
     it('diffopt=+algorithm:myers', function()
       reread()
-      feed(':set diffopt=internal,filler<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler<cr>'
+      screen:expect [[
         {1:  }^#include <stdio.h>{3:│}{1:  }#include <stdio.h|
         {1:  }                  {3:│}{1:  }                 |
         {1:  }{8:// Frobs foo heart}{3:│}{1:  }{8:int fib(int n)}{9:   }|
@@ -403,10 +403,10 @@ int main(int argc, char **argv)
         {1:  }                  {3:│}{1:  }                 |
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler            |
-      ]])
+      ]]
 
-      feed('G')
-      screen:expect([[
+      feed 'G'
+      screen:expect [[
         {1:  }{2:------------------}{3:│}{1:  }{4:int frobnitz(int }|
         {1:  }{                 {3:│}{1:  }{                |
         {1:  }{9:    i}{8:f(n > 1)}{9:     }{3:│}{1:  }{9:    i}{8:nt i;}{9:       }|
@@ -423,13 +423,13 @@ int main(int argc, char **argv)
         {1:  }^}                 {3:│}{1:  }}                |
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler            |
-      ]])
+      ]]
     end)
 
     it('diffopt+=algorithm:patience', function()
       reread()
-      feed(':set diffopt=internal,filler,algorithm:patience<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,algorithm:patience<cr>'
+      screen:expect [[
         {1:  }^#include <stdio.h>{3:│}{1:  }#include <stdio.h|
         {1:  }                  {3:│}{1:  }                 |
         {1:  }{2:------------------}{3:│}{1:  }{4:int fib(int n)   }|
@@ -446,10 +446,10 @@ int main(int argc, char **argv)
         {1:  }{                 {3:│}{1:  }{                |
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
                                                 |
-      ]])
+      ]]
 
-      feed('G')
-      screen:expect([[
+      feed 'G'
+      screen:expect [[
         {1:  }                  {3:│}{1:  }                 |
         {1:  }{4:int fact(int n)   }{3:│}{1:  }{2:-----------------}|
         {1:  }{4:{                 }{3:│}{1:  }{2:-----------------}|
@@ -466,13 +466,13 @@ int main(int argc, char **argv)
         {1:  }^}                 {3:│}{1:  }}                |
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
                                                 |
-      ]])
+      ]]
     end)
 
     it('diffopt+=algorithm:histogram', function()
       reread()
-      feed(':set diffopt=internal,filler,algorithm:histogram<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,algorithm:histogram<cr>'
+      screen:expect [[
         {1:  }^#include <stdio.h>{3:│}{1:  }#include <stdio.h|
         {1:  }                  {3:│}{1:  }                 |
         {1:  }{2:------------------}{3:│}{1:  }{4:int fib(int n)   }|
@@ -489,10 +489,10 @@ int main(int argc, char **argv)
         {1:  }{                 {3:│}{1:  }{                |
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
                                                 |
-      ]])
+      ]]
 
-      feed('G')
-      screen:expect([[
+      feed 'G'
+      screen:expect [[
         {1:  }                  {3:│}{1:  }                 |
         {1:  }{4:int fact(int n)   }{3:│}{1:  }{2:-----------------}|
         {1:  }{4:{                 }{3:│}{1:  }{2:-----------------}|
@@ -509,7 +509,7 @@ int main(int argc, char **argv)
         {1:  }^}                 {3:│}{1:  }}                |
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
                                                 |
-      ]])
+      ]]
     end)
   end)
 
@@ -533,13 +533,13 @@ int main(int argc, char **argv)
       v.finalize
     end]]
       write_file(fname_2, f2, false)
-      feed(':diffupdate!<cr>')
+      feed ':diffupdate!<cr>'
     end)
 
     it('internal', function()
       reread()
-      feed(":set diffopt=internal,filler<cr>")
-      screen:expect([[
+      feed ':set diffopt=internal,filler<cr>'
+      screen:expect [[
         {1:  }^def finalize(value{3:│}{1:  }def finalize(valu|
         {1:  }                  {3:│}{1:  }                 |
         {1:  }  values.each do |{3:│}{1:  }  values.each do |
@@ -556,13 +556,13 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler            |
-      ]])
+      ]]
     end)
 
     it('indent-heuristic', function()
       reread()
-      feed(':set diffopt=internal,filler,indent-heuristic<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,indent-heuristic<cr>'
+      screen:expect [[
         {1:  }^def finalize(value{3:│}{1:  }def finalize(valu|
         {1:  }                  {3:│}{1:  }                 |
         {1:  }{2:------------------}{3:│}{1:  }{4:  values.each do }|
@@ -579,14 +579,14 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
                                                 |
-      ]])
+      ]]
     end)
 
     it('indent-heuristic random order', function()
       reread()
-      feed(':set diffopt=internal,filler,indent-heuristic,algorithm:patience<cr>')
-      feed(':<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,indent-heuristic,algorithm:patience<cr>'
+      feed ':<cr>'
+      screen:expect [[
         {1:  }^def finalize(value{3:│}{1:  }def finalize(valu|
         {1:  }                  {3:│}{1:  }                 |
         {1:  }{2:------------------}{3:│}{1:  }{4:  values.each do }|
@@ -603,17 +603,17 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :                                       |
-      ]])
+      ]]
     end)
   end)
 
   it('Diff the same file', function()
-    write_file(fname, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
-    write_file(fname_2, "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n", false)
+    write_file(fname, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
+    write_file(fname_2, '1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n', false)
     reread()
 
-    feed(':set diffopt=filler<cr>')
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:+ }{5:^+-- 10 lines: 1···}{3:│}{1:+ }{5:+-- 10 lines: 1··}|
       {6:~                   }{3:│}{6:~                  }|
       {6:~                   }{3:│}{6:~                  }|
@@ -630,10 +630,10 @@ int main(int argc, char **argv)
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(':set diffopt+=internal<cr>')
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:+ }{5:^+-- 10 lines: 1···}{3:│}{1:+ }{5:+-- 10 lines: 1··}|
       {6:~                   }{3:│}{6:~                  }|
       {6:~                   }{3:│}{6:~                  }|
@@ -650,16 +650,16 @@ int main(int argc, char **argv)
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   it('Diff an empty file', function()
-    write_file(fname, "", false)
-    write_file(fname_2, "", false)
+    write_file(fname, '', false)
+    write_file(fname_2, '', false)
     reread()
 
-    feed(':set diffopt=filler<cr>')
-    screen:expect([[
+    feed ':set diffopt=filler<cr>'
+    screen:expect [[
       {1:- }^                  {3:│}{1:- }                 |
       {6:~                   }{3:│}{6:~                  }|
       {6:~                   }{3:│}{6:~                  }|
@@ -676,10 +676,10 @@ int main(int argc, char **argv)
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
-    ]])
+    ]]
 
-    feed(':set diffopt+=internal<cr>')
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:- }^                  {3:│}{1:- }                 |
       {6:~                   }{3:│}{6:~                  }|
       {6:~                   }{3:│}{6:~                  }|
@@ -696,16 +696,16 @@ int main(int argc, char **argv)
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   it('diffopt+=icase', function()
-    write_file(fname, "a\nb\ncd\n", false)
-    write_file(fname_2, "A\nb\ncDe\n", false)
+    write_file(fname, 'a\nb\ncd\n', false)
+    write_file(fname_2, 'A\nb\ncDe\n', false)
     reread()
 
-    feed(':set diffopt=filler,icase<cr>')
-    screen:expect([[
+    feed ':set diffopt=filler,icase<cr>'
+    screen:expect [[
       {1:  }^a                 {3:│}{1:  }A                |
       {1:  }b                 {3:│}{1:  }b                |
       {1:  }{9:cd                }{3:│}{1:  }{9:cD}{8:e}{9:              }|
@@ -722,10 +722,10 @@ int main(int argc, char **argv)
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt=filler,icase               |
-    ]])
+    ]]
 
-    feed(':set diffopt+=internal<cr>')
-    screen:expect([[
+    feed ':set diffopt+=internal<cr>'
+    screen:expect [[
       {1:  }^a                 {3:│}{1:  }A                |
       {1:  }b                 {3:│}{1:  }b                |
       {1:  }{9:cd                }{3:│}{1:  }{9:cD}{8:e}{9:              }|
@@ -742,7 +742,7 @@ int main(int argc, char **argv)
       {6:~                   }{3:│}{6:~                  }|
       {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
-    ]])
+    ]]
   end)
 
   describe('diffopt+=iwhite', function()
@@ -751,13 +751,13 @@ int main(int argc, char **argv)
       write_file(fname, f1, false)
       local f2 = 'int main()\n{\n   if (0)\n   {\n      printf("Hello, World!");\n      return 0;\n   }\n}\n'
       write_file(fname_2, f2, false)
-      feed(':diffupdate!<cr>')
+      feed ':diffupdate!<cr>'
     end)
 
     it('external', function()
       reread()
-      feed(':set diffopt=filler,iwhite<cr>')
-      screen:expect([[
+      feed ':set diffopt=filler,iwhite<cr>'
+      screen:expect [[
         {1:  }^int main()        {3:│}{1:  }int main()       |
         {1:  }{                 {3:│}{1:  }{                |
         {1:  }{2:------------------}{3:│}{1:  }{4:   if (0)        }|
@@ -774,13 +774,13 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :set diffopt=filler,iwhite              |
-      ]])
+      ]]
     end)
 
     it('internal', function()
       reread()
-      feed(':set diffopt=filler,iwhite,internal<cr>')
-      screen:expect([[
+      feed ':set diffopt=filler,iwhite,internal<cr>'
+      screen:expect [[
         {1:  }^int main()        {3:│}{1:  }int main()       |
         {1:  }{                 {3:│}{1:  }{                |
         {1:  }{2:------------------}{3:│}{1:  }{4:   if (0)        }|
@@ -797,7 +797,7 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :set diffopt=filler,iwhite,internal     |
-      ]])
+      ]]
     end)
   end)
 
@@ -805,13 +805,13 @@ int main(int argc, char **argv)
     setup(function()
       write_file(fname, 'a\n\n \ncd\nef\nxxx\n', false)
       write_file(fname_2, 'a\ncd\n\nef\nyyy\n', false)
-      feed(':diffupdate!<cr>')
+      feed ':diffupdate!<cr>'
     end)
 
     it('generic', function()
       reread()
-      feed(':set diffopt=internal,filler,iblank<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,iblank<cr>'
+      screen:expect [[
         {1:  }^a                 {3:│}{1:  }a                |
         {1:  }{4:                  }{3:│}{1:  }{2:-----------------}|
         {1:  }{4:                  }{3:│}{1:  }{2:-----------------}|
@@ -828,14 +828,14 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler,iblank     |
-      ]])
+      ]]
     end)
 
     it('diffopt+=iwhite', function()
       reread()
-      feed(':set diffopt=internal,filler,iblank,iwhite<cr>')
-      feed(':<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,iblank,iwhite<cr>'
+      feed ':<cr>'
+      screen:expect [[
         {1:  }^a                 {3:│}{1:  }a                |
         {1:  }                  {3:│}{1:  }cd               |
         {1:  }                  {3:│}{1:  }                 |
@@ -852,14 +852,14 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :                                       |
-      ]])
+      ]]
     end)
 
     it('diffopt+=iwhiteall', function()
       reread()
-      feed(':set diffopt=internal,filler,iblank,iwhiteall<cr>')
-      feed(':<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,iblank,iwhiteall<cr>'
+      feed ':<cr>'
+      screen:expect [[
         {1:  }^a                 {3:│}{1:  }a                |
         {1:  }                  {3:│}{1:  }cd               |
         {1:  }                  {3:│}{1:  }                 |
@@ -876,14 +876,14 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :                                       |
-      ]])
+      ]]
     end)
 
     it('diffopt+=iwhiteeol', function()
       reread()
-      feed(':set diffopt=internal,filler,iblank,iwhiteeol<cr>')
-      feed(':<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,iblank,iwhiteeol<cr>'
+      feed ':<cr>'
+      screen:expect [[
         {1:  }^a                 {3:│}{1:  }a                |
         {1:  }                  {3:│}{1:  }cd               |
         {1:  }                  {3:│}{1:  }                 |
@@ -900,7 +900,7 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :                                       |
-      ]])
+      ]]
     end)
   end)
 
@@ -908,14 +908,14 @@ int main(int argc, char **argv)
     setup(function()
       write_file(fname, 'a \nx\ncd\nef\nxx  xx\nfoo\nbar\n', false)
       write_file(fname_2, 'a\nx\nc d\n ef\nxx xx\nfoo\n\nbar\n', false)
-      feed(':diffupdate!<cr>')
+      feed ':diffupdate!<cr>'
     end)
 
     it('diffopt+=iwhiteeol', function()
       reread()
-      feed(':set diffopt=internal,filler,iwhiteeol<cr>')
-      feed(':<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,iwhiteeol<cr>'
+      feed ':<cr>'
+      screen:expect [[
         {1:  }^a                 {3:│}{1:  }a                |
         {1:  }x                 {3:│}{1:  }x                |
         {1:  }{9:cd                }{3:│}{1:  }{9:c}{8: }{9:d              }|
@@ -932,14 +932,14 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :                                       |
-      ]])
+      ]]
     end)
 
     it('diffopt+=iwhiteall', function()
       reread()
-      feed(':set diffopt=internal,filler,iwhiteall<cr>')
-      feed(':<cr>')
-      screen:expect([[
+      feed ':set diffopt=internal,filler,iwhiteall<cr>'
+      feed ':<cr>'
+      screen:expect [[
         {1:  }^a                 {3:│}{1:  }a                |
         {1:  }x                 {3:│}{1:  }x                |
         {1:  }cd                {3:│}{1:  }c d              |
@@ -956,7 +956,7 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
         :                                       |
-      ]])
+      ]]
     end)
   end)
 end)
@@ -966,43 +966,44 @@ it('win_update redraws lines properly', function()
   clear()
   screen = Screen.new(50, 10)
   screen:attach()
-  screen:set_default_attr_ids({
-    [1] = {bold = true, foreground = Screen.colors.Blue1},
-    [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-    [3] = {background = Screen.colors.Red, foreground = Screen.colors.Grey100, special = Screen.colors.Yellow},
-    [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    [5] = {special = Screen.colors.Yellow},
-    [6] = {special = Screen.colors.Yellow, bold = true, foreground = Screen.colors.SeaGreen4},
-    [7] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey100},
-    [8] = {foreground = Screen.colors.Gray90, background = Screen.colors.Grey100},
-    [9] = {foreground = tonumber('0x00000c'), background = Screen.colors.Grey100},
-    [10] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0xe5e5ff')},
-    [11] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0x2b8452')},
-    [12] = {bold = true, reverse = true},
-    [13] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-    [14] = {reverse = true},
-    [15] = {background = Screen.colors.LightBlue},
-    [16] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-    [17] = {bold = true, background = Screen.colors.Red},
-    [18] = {background = Screen.colors.LightMagenta},
-  })
+  screen:set_default_attr_ids {
+    [1] = { bold = true, foreground = Screen.colors.Blue1 },
+    [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+    [3] = { background = Screen.colors.Red, foreground = Screen.colors.Grey100, special = Screen.colors.Yellow },
+    [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    [5] = { special = Screen.colors.Yellow },
+    [6] = { special = Screen.colors.Yellow, bold = true, foreground = Screen.colors.SeaGreen4 },
+    [7] = { foreground = Screen.colors.Grey0, background = Screen.colors.Grey100 },
+    [8] = { foreground = Screen.colors.Gray90, background = Screen.colors.Grey100 },
+    [9] = { foreground = tonumber '0x00000c', background = Screen.colors.Grey100 },
+    [10] = { background = Screen.colors.Grey100, bold = true, foreground = tonumber '0xe5e5ff' },
+    [11] = { background = Screen.colors.Grey100, bold = true, foreground = tonumber '0x2b8452' },
+    [12] = { bold = true, reverse = true },
+    [13] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+    [14] = { reverse = true },
+    [15] = { background = Screen.colors.LightBlue },
+    [16] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+    [17] = { bold = true, background = Screen.colors.Red },
+    [18] = { background = Screen.colors.LightMagenta },
+  }
 
-  insert([[
+  insert [[
   1
 
 
   2
   1a
-  ]])
-  command("vnew left")
-  insert([[
+  ]]
+  command 'vnew left'
+  insert [[
   2
   2a
   2b
-  ]])
-  command("windo diffthis")
-  command("windo 1")
-  screen:expect{grid=[[
+  ]]
+  command 'windo diffthis'
+  command 'windo 1'
+  screen:expect {
+    grid = [[
     {13:  }{16:-----------------------}{14:│}{13:  }{15:^1                     }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:                      }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:                      }|
@@ -1013,13 +1014,15 @@ it('win_update redraws lines properly', function()
     {1:~                        }{14:│}{1:~                       }|
     {14:left [+]                  }{12:[No Name] [+]           }|
                                                       |
-  ]]}
-  feed('<C-e>')
-  feed('<C-e>')
-  feed('<C-y>')
-  feed('<C-y>')
-  feed('<C-y>')
-  screen:expect{grid=[[
+  ]],
+  }
+  feed '<C-e>'
+  feed '<C-e>'
+  feed '<C-y>'
+  feed '<C-y>'
+  feed '<C-y>'
+  screen:expect {
+    grid = [[
     {13:  }{16:-----------------------}{14:│}{13:  }{15:1                     }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:                      }|
     {13:  }{16:-----------------------}{14:│}{13:  }{15:^                      }|
@@ -1030,36 +1033,37 @@ it('win_update redraws lines properly', function()
     {1:~                        }{14:│}{1:~                       }|
     {14:left [+]                  }{12:[No Name] [+]           }|
                                                       |
-  ]]}
+  ]],
+  }
 end)
 
 it('diff updates line numbers below filler lines', function()
   clear()
   local screen = Screen.new(40, 14)
   screen:attach()
-  screen:set_default_attr_ids({
-    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-    [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-    [3] = {reverse = true},
-    [4] = {background = Screen.colors.LightBlue},
-    [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-    [6] = {bold = true, foreground = Screen.colors.Blue1},
-    [7] = {bold = true, reverse = true},
-    [8] = {bold = true, background = Screen.colors.Red},
-    [9] = {background = Screen.colors.LightMagenta},
-    [10] = {bold = true, foreground = Screen.colors.Brown},
-    [11] = {foreground = Screen.colors.Brown},
-    [12] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
-    [13] = {background = Screen.colors.Gray90};
-  })
-  source([[
+  screen:set_default_attr_ids {
+    [1] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray },
+    [2] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+    [3] = { reverse = true },
+    [4] = { background = Screen.colors.LightBlue },
+    [5] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+    [6] = { bold = true, foreground = Screen.colors.Blue1 },
+    [7] = { bold = true, reverse = true },
+    [8] = { bold = true, background = Screen.colors.Red },
+    [9] = { background = Screen.colors.LightMagenta },
+    [10] = { bold = true, foreground = Screen.colors.Brown },
+    [11] = { foreground = Screen.colors.Brown },
+    [12] = { foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red },
+    [13] = { background = Screen.colors.Gray90 },
+  }
+  source [[
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
     windo diffthis
     setlocal number rnu foldcolumn=0
-  ]])
-  screen:expect([[
+  ]]
+  screen:expect [[
     {1:  }a                {3:│}{10:1   }^a               |
     {1:  }a                {3:│}{11:  1 }a               |
     {1:  }a                {3:│}{11:  2 }a               |
@@ -1074,9 +1078,9 @@ it('diff updates line numbers below filler lines', function()
     {6:~                  }{3:│}{6:~                   }|
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
-  ]])
-  feed('j')
-  screen:expect([[
+  ]]
+  feed 'j'
+  screen:expect [[
     {1:  }a                {3:│}{11:  1 }a               |
     {1:  }a                {3:│}{10:2   }^a               |
     {1:  }a                {3:│}{11:  1 }a               |
@@ -1091,9 +1095,9 @@ it('diff updates line numbers below filler lines', function()
     {6:~                  }{3:│}{6:~                   }|
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
-  ]])
-  feed('j')
-  screen:expect([[
+  ]]
+  feed 'j'
+  screen:expect [[
     {1:  }a                {3:│}{11:  2 }a               |
     {1:  }a                {3:│}{11:  1 }a               |
     {1:  }a                {3:│}{10:3   }^a               |
@@ -1108,10 +1112,11 @@ it('diff updates line numbers below filler lines', function()
     {6:~                  }{3:│}{6:~                   }|
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
-  ]])
-  command("set signcolumn number tgc cursorline")
-  command("hi CursorLineNr guibg=red")
-  screen:expect{grid=[[
+  ]]
+  command 'set signcolumn number tgc cursorline'
+  command 'hi CursorLineNr guibg=red'
+  screen:expect {
+    grid = [[
     {1:  }a                {3:│}{11:  2 }a               |
     {1:  }a                {3:│}{11:  1 }a               |
     {1:  }a                {3:│}{12:3   }{13:^a               }|
@@ -1126,5 +1131,6 @@ it('diff updates line numbers below filler lines', function()
     {6:~                  }{3:│}{6:~                   }|
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
       signcolumn=auto                       |
-  ]]}
+  ]],
+  }
 end)

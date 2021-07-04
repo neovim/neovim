@@ -1,8 +1,8 @@
 -- To run this test:
 --    TEST_FILE=test/functional/example_spec.lua make functionaltest
 
-local helpers = require('test.functional.helpers')(after_each)
-local Screen = require('test.functional.ui.screen')
+local helpers = require 'test.functional.helpers'(after_each)
+local Screen = require 'test.functional.ui.screen'
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
@@ -12,29 +12,29 @@ describe('example', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(20,5)
+    screen = Screen.new(20, 5)
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {bold=true, foreground=Screen.colors.Brown}
-    } )
+    screen:set_default_attr_ids {
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { bold = true, foreground = Screen.colors.Brown },
+    }
   end)
 
   it('screen test', function()
     -- Do some stuff.
-    feed('iline1<cr>line2<esc>')
+    feed 'iline1<cr>line2<esc>'
 
     -- For debugging only: prints the current screen.
     -- screen:snapshot_util()
 
     -- Assert the expected state.
-    screen:expect([[
+    screen:expect [[
       line1               |
       line^2               |
       {0:~                   }|
       {0:~                   }|
                           |
-    ]])
+    ]]
   end)
 
   it('override UI event-handler', function()
@@ -47,7 +47,7 @@ describe('example', function()
     -- For this example, we enable `ext_tabline`:
     screen:detach()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ext_tabline=true})
+    screen:attach { rgb = true, ext_tabline = true }
 
     -- From ":help ui" we find that `tabline_update` receives `curtab` and
     -- `tabs` objects. So we declare the UI handler like this:
@@ -57,16 +57,17 @@ describe('example', function()
     end
 
     -- Create a tabpage...
-    command('tabedit foo')
+    command 'tabedit foo'
 
     -- Use screen:expect{condition=…} to check the result.
-    screen:expect{condition=function()
-      eq({ id = 2 }, event_curtab)
-      eq({
-          {tab = { id = 1 }, name = '[No Name]'},
-          {tab = { id = 2 }, name = 'foo'},
-        },
-        event_tabs)
-    end}
+    screen:expect {
+      condition = function()
+        eq({ id = 2 }, event_curtab)
+        eq({
+          { tab = { id = 1 }, name = '[No Name]' },
+          { tab = { id = 2 }, name = 'foo' },
+        }, event_tabs)
+      end,
+    }
   end)
 end)

@@ -1,9 +1,9 @@
 -- Tests for :sort command.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
-local insert, command, clear, expect, eq, poke_eventloop = helpers.insert,
-  helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.poke_eventloop
+local insert, command, clear, expect, eq, poke_eventloop =
+  helpers.insert, helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.poke_eventloop
 local exc_exec = helpers.exc_exec
 
 describe(':sort', function()
@@ -28,8 +28,8 @@ describe(':sort', function()
   it('alphabetical', function()
     insert(text)
     poke_eventloop()
-    command('sort')
-    expect([[
+    command 'sort'
+    expect [[
 
        123b
       a
@@ -44,11 +44,11 @@ describe(':sort', function()
       b321b
       b322b
       c123d
-      c321d]])
+      c321d]]
   end)
 
   it('numerical', function()
-    insert([[
+    insert [[
       abc
       ab
       a321
@@ -66,10 +66,10 @@ describe(':sort', function()
       b322b
       b321
       b321b
-      ]])
+      ]]
     poke_eventloop()
-    command('sort n')
-    expect([[
+    command 'sort n'
+    expect [[
       abc
       ab
       a
@@ -87,14 +87,14 @@ describe(':sort', function()
       c321d
       b321
       b321b
-      b322b]])
+      b322b]]
   end)
 
   it('hexadecimal', function()
     insert(text)
     poke_eventloop()
-    command('sort x')
-    expect([[
+    command 'sort x'
+    expect [[
 
       a
       ab
@@ -109,14 +109,14 @@ describe(':sort', function()
       b321b
       b322b
       c123d
-      c321d]])
+      c321d]]
   end)
 
   it('alphabetical, unique', function()
     insert(text)
     poke_eventloop()
-    command('sort u')
-    expect([[
+    command 'sort u'
+    expect [[
 
        123b
       a
@@ -130,14 +130,14 @@ describe(':sort', function()
       b321b
       b322b
       c123d
-      c321d]])
+      c321d]]
   end)
 
   it('alphabetical, reverse', function()
     insert(text)
     poke_eventloop()
-    command('sort!')
-    expect([[
+    command 'sort!'
+    expect [[
       c321d
       c123d
       b322b
@@ -152,14 +152,14 @@ describe(':sort', function()
       a122
       a
        123b
-      ]])
+      ]]
   end)
 
   it('numerical, reverse', function()
     insert(text)
     poke_eventloop()
-    command('sort! n')
-    expect([[
+    command 'sort! n'
+    expect [[
       b322b
       b321b
       b321
@@ -174,14 +174,14 @@ describe(':sort', function()
 
       a
       ab
-      abc]])
+      abc]]
   end)
 
   it('unique, reverse', function()
     insert(text)
     poke_eventloop()
-    command('sort! u')
-    expect([[
+    command 'sort! u'
+    expect [[
       c321d
       c123d
       b322b
@@ -195,14 +195,14 @@ describe(':sort', function()
       a122
       a
        123b
-      ]])
+      ]]
   end)
 
   it('octal', function()
     insert(text)
     poke_eventloop()
-    command('sort o')
-    expect([[
+    command 'sort o'
+    expect [[
       abc
       ab
       a
@@ -217,14 +217,14 @@ describe(':sort', function()
       c321d
       b321
       b321b
-      b322b]])
+      b322b]]
   end)
 
   it('reverse, hexadecimal', function()
     insert(text)
     poke_eventloop()
-    command('sort! x')
-    expect([[
+    command 'sort! x'
+    expect [[
       c321d
       c123d
       b322b
@@ -239,14 +239,14 @@ describe(':sort', function()
       abc
       ab
       a
-      ]])
+      ]]
   end)
 
   it('alphabetical, skip first character', function()
     insert(text)
     poke_eventloop()
-    command('sort/./')
-    expect([[
+    command 'sort/./'
+    expect [[
       a
 
       a122
@@ -261,14 +261,14 @@ describe(':sort', function()
       c321d
       b322b
       ab
-      abc]])
+      abc]]
   end)
 
   it('alphabetical, skip first 2 characters', function()
     insert(text)
     poke_eventloop()
-    command('sort/../')
-    expect([[
+    command 'sort/../'
+    expect [[
       ab
       a
 
@@ -283,14 +283,14 @@ describe(':sort', function()
       b123
        123b
       c123d
-      abc]])
+      abc]]
   end)
 
   it('alphabetical, unique, skip first 2 characters', function()
     insert(text)
     poke_eventloop()
-    command('sort/../u')
-    expect([[
+    command 'sort/../u'
+    expect [[
       ab
       a
 
@@ -304,14 +304,14 @@ describe(':sort', function()
       b123
        123b
       c123d
-      abc]])
+      abc]]
   end)
 
   it('numerical, skip first character', function()
     insert(text)
     poke_eventloop()
-    command('sort/./n')
-    expect([[
+    command 'sort/./n'
+    expect [[
       abc
       ab
       a
@@ -326,14 +326,14 @@ describe(':sort', function()
       c321d
       b321
       b321b
-      b322b]])
+      b322b]]
   end)
 
   it('alphabetical, sort on first character', function()
     insert(text)
     poke_eventloop()
-    command('sort/./r')
-    expect([[
+    command 'sort/./r'
+    expect [[
 
        123b
       abc
@@ -348,14 +348,14 @@ describe(':sort', function()
       b321
       b321b
       c123d
-      c321d]])
+      c321d]]
   end)
 
   it('alphabetical, sort on first 2 characters', function()
     insert(text)
     poke_eventloop()
-    command('sort/../r')
-    expect([[
+    command 'sort/../r'
+    expect [[
       a
 
        123b
@@ -370,14 +370,14 @@ describe(':sort', function()
       b321
       b321b
       c123d
-      c321d]])
+      c321d]]
   end)
 
   it('numerical, sort on first character', function()
     insert(text)
     poke_eventloop()
-    command('sort/./rn')
-    expect([[
+    command 'sort/./rn'
+    expect [[
       abc
       ab
       a
@@ -392,14 +392,14 @@ describe(':sort', function()
       b322b
       b321
       b321b
-      ]])
+      ]]
   end)
 
   it('alphabetical, skip past first digit', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d/]])
-    expect([[
+    command [[sort/\d/]]
+    expect [[
       abc
       ab
       a
@@ -414,14 +414,14 @@ describe(':sort', function()
       a123
       b123
        123b
-      c123d]])
+      c123d]]
   end)
 
   it('alphabetical, sort on first digit', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d/r]])
-    expect([[
+    command [[sort/\d/r]]
+    expect [[
       abc
       ab
       a
@@ -436,14 +436,14 @@ describe(':sort', function()
       c321d
       b322b
       b321
-      b321b]])
+      b321b]]
   end)
 
   it('numerical, skip past first digit', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d/n]])
-    expect([[
+    command [[sort/\d/n]]
+    expect [[
       abc
       ab
       a
@@ -458,14 +458,14 @@ describe(':sort', function()
       a123
       b123
       c123d
-       123b]])
+       123b]]
   end)
 
   it('numerical, sort on first digit', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d/rn]])
-    expect([[
+    command [[sort/\d/rn]]
+    expect [[
       abc
       ab
       a
@@ -480,14 +480,14 @@ describe(':sort', function()
       c321d
       b322b
       b321
-      b321b]])
+      b321b]]
   end)
 
   it('alphabetical, skip past first 2 digits', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d\d/]])
-    expect([[
+    command [[sort/\d\d/]]
+    expect [[
       abc
       ab
       a
@@ -502,14 +502,14 @@ describe(':sort', function()
       a123
       b123
        123b
-      c123d]])
+      c123d]]
   end)
 
   it('numerical, skip past first 2 digits', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d\d/n]])
-    expect([[
+    command [[sort/\d\d/n]]
+    expect [[
       abc
       ab
       a
@@ -524,14 +524,14 @@ describe(':sort', function()
       a123
       b123
       c123d
-       123b]])
+       123b]]
   end)
 
   it('hexadecimal, skip past first 2 digits', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d\d/x]])
-    expect([[
+    command [[sort/\d\d/x]]
+    expect [[
       abc
       ab
       a
@@ -546,14 +546,14 @@ describe(':sort', function()
       c321d
       b322b
        123b
-      c123d]])
+      c123d]]
   end)
 
   it('alpha, on first 2 digits', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d\d/r]])
-    expect([[
+    command [[sort/\d\d/r]]
+    expect [[
       abc
       ab
       a
@@ -568,14 +568,14 @@ describe(':sort', function()
       c321d
       b322b
       b321
-      b321b]])
+      b321b]]
   end)
 
   it('numeric, on first 2 digits', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d\d/rn]])
-    expect([[
+    command [[sort/\d\d/rn]]
+    expect [[
       abc
       ab
       a
@@ -590,14 +590,14 @@ describe(':sort', function()
       c321d
       b322b
       b321
-      b321b]])
+      b321b]]
   end)
 
   it('hexadecimal, on first 2 digits', function()
     insert(text)
     poke_eventloop()
-    command([[sort/\d\d/rx]])
-    expect([[
+    command [[sort/\d\d/rx]]
+    expect [[
       abc
       ab
       a
@@ -612,18 +612,18 @@ describe(':sort', function()
       c321d
       b322b
       b321
-      b321b]])
+      b321b]]
   end)
 
   it('fails with wrong arguments', function()
     insert(text)
     -- This should fail with "E474: Invalid argument".
-    eq('Vim(sort):E474: Invalid argument', exc_exec('sort no'))
+    eq('Vim(sort):E474: Invalid argument', exc_exec 'sort no')
     expect(text)
   end)
 
   it('binary', function()
-    insert([[
+    insert [[
       0b111000
       0b101100
       0b101001
@@ -637,10 +637,10 @@ describe(':sort', function()
       0b101010
       0b100010
       0b100100
-      0b100010]])
+      0b100010]]
     poke_eventloop()
-    command([[sort b]])
-    expect([[
+    command [[sort b]]
+    expect [[
       0b000000
       0b001000
       0b010000
@@ -654,11 +654,11 @@ describe(':sort', function()
       0b101001
       0b101010
       0b101100
-      0b111000]])
+      0b111000]]
   end)
 
   it('binary with leading characters', function()
-    insert([[
+    insert [[
       0b100010
       0b010000
        0b101001
@@ -672,10 +672,10 @@ describe(':sort', function()
       ab0b100000
       0b101010
       0b000000
-      b0b111000]])
+      b0b111000]]
     poke_eventloop()
-    command([[sort b]])
-    expect([[
+    command [[sort b]]
+    expect [[
       0b000000
       a0b001000
       0b010000
@@ -689,25 +689,25 @@ describe(':sort', function()
       a0b101001
       0b101010
       b0b101100
-      b0b111000]])
+      b0b111000]]
   end)
 
   it('float', function()
-    insert([[
+    insert [[
       1.234
       0.88
       123.456
       1.15e-6
       -1.1e3
-      -1.01e3]])
+      -1.01e3]]
     poke_eventloop()
-    command([[sort f]])
-    expect([[
+    command [[sort f]]
+    expect [[
       -1.1e3
       -1.01e3
       1.15e-6
       0.88
       1.234
-      123.456]])
+      123.456]]
   end)
 end)

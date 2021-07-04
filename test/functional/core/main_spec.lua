@@ -1,6 +1,6 @@
-local lfs = require('lfs')
-local helpers = require('test.functional.helpers')(after_each)
-local Screen = require('test.functional.ui.screen')
+local lfs = require 'lfs'
+local helpers = require 'test.functional.helpers'(after_each)
+local Screen = require 'test.functional.ui.screen'
 
 local eq = helpers.eq
 local feed = helpers.feed
@@ -27,37 +27,67 @@ describe('Command-line option', function()
     end)
     it('treats - as stdin', function()
       eq(nil, lfs.attributes(fname))
-      funcs.system(
-        {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
-         '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-         '-s', '-', fname},
-        {':call setline(1, "42")', ':wqall!', ''})
-      eq(0, eval('v:shell_error'))
+      funcs.system({
+        nvim_prog_abs(),
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '--cmd',
+        'set noswapfile shortmess+=IFW fileformats=unix',
+        '-s',
+        '-',
+        fname,
+      }, {
+        ':call setline(1, "42")',
+        ':wqall!',
+        '',
+      })
+      eq(0, eval 'v:shell_error')
       local attrs = lfs.attributes(fname)
-      eq(#('42\n'), attrs.size)
+      eq(#'42\n', attrs.size)
     end)
     it('does not expand $VAR', function()
       eq(nil, lfs.attributes(fname))
-      eq(true, not not dollar_fname:find('%$%w+'))
+      eq(true, not not dollar_fname:find '%$%w+')
       write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
-      funcs.system(
-        {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
-         '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-         '-s', dollar_fname, fname})
-      eq(0, eval('v:shell_error'))
+      funcs.system {
+        nvim_prog_abs(),
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '--cmd',
+        'set noswapfile shortmess+=IFW fileformats=unix',
+        '-s',
+        dollar_fname,
+        fname,
+      }
+      eq(0, eval 'v:shell_error')
       local attrs = lfs.attributes(fname)
-      eq(#('100500\n'), attrs.size)
+      eq(#'100500\n', attrs.size)
     end)
     it('does not crash after reading from stdin in non-headless mode', function()
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win32(pending) then
+        return
+      end
       local screen = Screen.new(40, 8)
       screen:attach()
-      funcs.termopen({
-        nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE',
-         '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-         '-s', '-'
-      })
-      screen:expect([[
+      funcs.termopen {
+        nvim_prog_abs(),
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--cmd',
+        'set noswapfile shortmess+=IFW fileformats=unix',
+        '-s',
+        '-',
+      }
+      screen:expect(
+        [[
         ^                                        |
         {1:~                                       }|
         {1:~                                       }|
@@ -66,12 +96,14 @@ describe('Command-line option', function()
         {2:[No Name]             0,0-1          All}|
                                                 |
                                                 |
-      ]], {
-        [1] = {foreground = tonumber('0x4040ff'), fg_indexed=true},
-        [2] = {bold = true, reverse = true}
-      })
-      feed('i:cq<CR>')
-      screen:expect([[
+      ]],
+        {
+          [1] = { foreground = tonumber '0x4040ff', fg_indexed = true },
+          [2] = { bold = true, reverse = true },
+        }
+      )
+      feed 'i:cq<CR>'
+      screen:expect [[
                                                 |
         [Process exited 1]                      |
                                                 |
@@ -80,7 +112,7 @@ describe('Command-line option', function()
                                                 |
                                                 |
         -- TERMINAL --                          |
-      ]])
+      ]]
       --[=[ Example of incorrect output:
       screen:expect([[
         ^nvim: /var/tmp/portage/dev-libs/libuv-1.|
@@ -96,25 +128,48 @@ describe('Command-line option', function()
     end)
     it('errors out when trying to use nonexistent file with -s', function()
       eq(
-        'Cannot open for reading: "'..nonexistent_fname..'": no such file or directory\n',
-        funcs.system(
-          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
-           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-           '--cmd', 'language C',
-           '-s', nonexistent_fname}))
-      eq(2, eval('v:shell_error'))
+        'Cannot open for reading: "' .. nonexistent_fname .. '": no such file or directory\n',
+        funcs.system {
+          nvim_prog_abs(),
+          '-u',
+          'NONE',
+          '-i',
+          'NONE',
+          '--headless',
+          '--cmd',
+          'set noswapfile shortmess+=IFW fileformats=unix',
+          '--cmd',
+          'language C',
+          '-s',
+          nonexistent_fname,
+        }
+      )
+      eq(2, eval 'v:shell_error')
     end)
     it('errors out when trying to use -s twice', function()
       write_file(fname, ':call setline(1, "1")\n:wqall!\n')
       write_file(dollar_fname, ':call setline(1, "2")\n:wqall!\n')
       eq(
-        'Attempt to open script file again: "-s '..dollar_fname..'"\n',
-        funcs.system(
-          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
-           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-           '--cmd', 'language C',
-           '-s', fname, '-s', dollar_fname, fname_2}))
-      eq(2, eval('v:shell_error'))
+        'Attempt to open script file again: "-s ' .. dollar_fname .. '"\n',
+        funcs.system {
+          nvim_prog_abs(),
+          '-u',
+          'NONE',
+          '-i',
+          'NONE',
+          '--headless',
+          '--cmd',
+          'set noswapfile shortmess+=IFW fileformats=unix',
+          '--cmd',
+          'language C',
+          '-s',
+          fname,
+          '-s',
+          dollar_fname,
+          fname_2,
+        }
+      )
+      eq(2, eval 'v:shell_error')
       eq(nil, lfs.attributes(fname_2))
     end)
   end)

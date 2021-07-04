@@ -1,6 +1,6 @@
 -- Tests for spell checking with 'encoding' set to "utf-8".
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 local write_file, call = helpers.write_file, helpers.call
@@ -13,8 +13,10 @@ end
 describe("spell checking with 'encoding' set to utf-8", function()
   setup(function()
     clear()
-    feed_command("syntax off")
-    write_latin1('Xtest1.aff',[[
+    feed_command 'syntax off'
+    write_latin1(
+      'Xtest1.aff',
+      [[
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
 
@@ -61,8 +63,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
       MAP cç
       MAP yÿý
       MAP sß
-      ]])
-    write_latin1('Xtest1.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest1.dic',
+      [[
       123456
       test/NO
       # comment
@@ -74,8 +79,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
       the end
       deol
       déôr
-      ]])
-    write_latin1('Xtest2.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest2.aff',
+      [[
       SET ISO8859-1
 
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
@@ -120,22 +128,31 @@ describe("spell checking with 'encoding' set to utf-8", function()
       MAP cç
       MAP yÿý
       MAP sß
-      ]])
-    write_latin1('Xtest3.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest3.aff',
+      [[
       SET ISO8859-1
 
       COMPOUNDMIN 3
       COMPOUNDRULE m*
       NEEDCOMPOUND x
-      ]])
-    write_latin1('Xtest3.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest3.dic',
+      [[
       1234
       foo/m
       bar/mx
       mï/m
       la/mx
-      ]])
-    write_latin1('Xtest4.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest4.aff',
+      [[
       SET ISO8859-1
 
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
@@ -181,8 +198,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
       PFX P N 1
       PFX P 0 nou .
-      ]])
-    write_latin1('Xtest4.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest4.dic',
+      [[
       1234
       word/mP
       util/am
@@ -191,8 +211,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bork/mp
       start/s
       end/e
-      ]])
-    write_latin1('Xtest5.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest5.aff',
+      [[
       SET ISO8859-1
 
       FLAG long
@@ -218,16 +241,22 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
       PFX yy Y 1
       PFX yy 0 nou .
-      ]])
-    write_latin1('Xtest5.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest5.dic',
+      [[
       1234
       foo/a1aé!!
       bar/zz13ee
       start/ss
       end/eeyy
       middle/mmxx
-      ]])
-    write_latin1('Xtest6.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest6.aff',
+      [[
       SET ISO8859-1
 
       FLAG caplong
@@ -251,16 +280,22 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
       PFX Zz Y 1
       PFX Zz 0 pre/p .
-      ]])
-    write_latin1('Xtest6.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest6.dic',
+      [[
       1234
       mee/A1AéA!
       bar/ZzN3Ee
       lead/s
       end/Ee
       middle/MmXx
-      ]])
-    write_latin1('Xtest7.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest7.aff',
+      [[
       SET ISO8859-1
 
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
@@ -287,34 +322,52 @@ describe("spell checking with 'encoding' set to utf-8", function()
 
       PFX 17 Y 1
       PFX 17 0 pre/432 .
-      ]])
-    write_latin1('Xtest7.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest7.dic',
+      [[
       1234
       mee/391,111,9999
       bar/17,61003,123
       lead/2
       tail/123
       middle/77,1
-      ]])
-    write_latin1('Xtest8.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest8.aff',
+      [[
       SET ISO8859-1
 
       NOSPLITSUGS
-      ]])
-    write_latin1('Xtest8.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest8.dic',
+      [[
       1234
       foo
       bar
       faabar
-      ]])
-    write_latin1('Xtest9.aff', [[
-      ]])
-    write_latin1('Xtest9.dic', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest9.aff',
+      [[
+      ]]
+    )
+    write_latin1(
+      'Xtest9.dic',
+      [[
       1234
       foo
       bar
-      ]])
-    write_latin1('Xtest-sal.aff', [[
+      ]]
+    )
+    write_latin1(
+      'Xtest-sal.aff',
+      [[
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
 
@@ -466,39 +519,43 @@ describe("spell checking with 'encoding' set to utf-8", function()
       SAL Y(AEIOU)-            Y
       SAL ZZ-                  _
       SAL Z                    S
-      ]])
-    write_file('Xtest.utf-8.add', [[
+      ]]
+    )
+    write_file(
+      'Xtest.utf-8.add',
+      [[
       /regions=usgbnz
       elequint/2
       elekwint/3
-      ]])
+      ]]
+    )
   end)
 
   teardown(function()
-    os.remove('Xtest-sal.aff')
-    os.remove('Xtest.aff')
-    os.remove('Xtest.dic')
-    os.remove('Xtest.utf-8.add')
-    os.remove('Xtest.utf-8.add.spl')
-    os.remove('Xtest.utf-8.spl')
-    os.remove('Xtest.utf-8.sug')
-    os.remove('Xtest1.aff')
-    os.remove('Xtest1.dic')
-    os.remove('Xtest2.aff')
-    os.remove('Xtest3.aff')
-    os.remove('Xtest3.dic')
-    os.remove('Xtest4.aff')
-    os.remove('Xtest4.dic')
-    os.remove('Xtest5.aff')
-    os.remove('Xtest5.dic')
-    os.remove('Xtest6.aff')
-    os.remove('Xtest6.dic')
-    os.remove('Xtest7.aff')
-    os.remove('Xtest7.dic')
-    os.remove('Xtest8.aff')
-    os.remove('Xtest8.dic')
-    os.remove('Xtest9.aff')
-    os.remove('Xtest9.dic')
+    os.remove 'Xtest-sal.aff'
+    os.remove 'Xtest.aff'
+    os.remove 'Xtest.dic'
+    os.remove 'Xtest.utf-8.add'
+    os.remove 'Xtest.utf-8.add.spl'
+    os.remove 'Xtest.utf-8.spl'
+    os.remove 'Xtest.utf-8.sug'
+    os.remove 'Xtest1.aff'
+    os.remove 'Xtest1.dic'
+    os.remove 'Xtest2.aff'
+    os.remove 'Xtest3.aff'
+    os.remove 'Xtest3.dic'
+    os.remove 'Xtest4.aff'
+    os.remove 'Xtest4.dic'
+    os.remove 'Xtest5.aff'
+    os.remove 'Xtest5.dic'
+    os.remove 'Xtest6.aff'
+    os.remove 'Xtest6.dic'
+    os.remove 'Xtest7.aff'
+    os.remove 'Xtest7.dic'
+    os.remove 'Xtest8.aff'
+    os.remove 'Xtest8.dic'
+    os.remove 'Xtest9.aff'
+    os.remove 'Xtest9.dic'
   end)
 
   -- Function to test .aff/.dic with list of good and bad words.  This was a
@@ -506,11 +563,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
   local function test_one(aff, dic)
     -- Generate a .spl file from a .dic and .aff file.
     if helpers.iswin() then
-      os.execute('copy /y Xtest'..aff..'.aff Xtest.aff')
-      os.execute('copy /y Xtest'..dic..'.dic Xtest.dic')
+      os.execute('copy /y Xtest' .. aff .. '.aff Xtest.aff')
+      os.execute('copy /y Xtest' .. dic .. '.dic Xtest.dic')
     else
-      os.execute('cp -f Xtest'..aff..'.aff Xtest.aff')
-      os.execute('cp -f Xtest'..dic..'.dic Xtest.dic')
+      os.execute('cp -f Xtest' .. aff .. '.aff Xtest.aff')
+      os.execute('cp -f Xtest' .. dic .. '.dic Xtest.dic')
     end
     source([[
       set spellfile=
@@ -521,7 +578,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
         quit
       endfunction
       $put =''
-      $put ='test ]]..aff..'-'..dic..[['
+      $put ='test ]] .. aff .. '-' .. dic .. [['
       mkspell! Xtest Xtest
       "  Use that spell file.
       set spl=Xtest.utf-8.spl spell
@@ -530,7 +587,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       $put
       $put ='-------'
       "  Find all bad words and suggestions for them.
-      1;/^]]..aff..[[good:
+      1;/^]] .. aff .. [[good:
       normal 0f:]s
       let prevbad = ''
       while 1
@@ -549,69 +606,69 @@ describe("spell checking with 'encoding' set to utf-8", function()
   end
 
   it('part 1-1', function()
-    insert([[
+    insert [[
       1good: wrong OK puts. Test the end
       bad:  inputs comment ok Ok. test déôl end the
       badend
 
       test2:
       elequint test elekwint test elekwent asdf
-      ]])
+      ]]
     test_one(1, 1)
-    feed_command([[$put =soundfold('goobledygoook')]])
-    feed_command([[$put =soundfold('kóopërÿnôven')]])
-    feed_command([[$put =soundfold('oeverloos gezwets edale')]])
+    feed_command [[$put =soundfold('goobledygoook')]]
+    feed_command [[$put =soundfold('kóopërÿnôven')]]
+    feed_command [[$put =soundfold('oeverloos gezwets edale')]]
     -- And now with SAL instead of SOFO items; test automatic reloading.
     if helpers.iswin() then
-      os.execute('copy /y Xtest-sal.aff Xtest.aff')
+      os.execute 'copy /y Xtest-sal.aff Xtest.aff'
     else
-      os.execute('cp -f Xtest-sal.aff Xtest.aff')
+      os.execute 'cp -f Xtest-sal.aff Xtest.aff'
     end
-    feed_command('mkspell! Xtest Xtest')
-    feed_command([[$put =soundfold('goobledygoook')]])
-    feed_command([[$put =soundfold('kóopërÿnôven')]])
-    feed_command([[$put =soundfold('oeverloos gezwets edale')]])
+    feed_command 'mkspell! Xtest Xtest'
+    feed_command [[$put =soundfold('goobledygoook')]]
+    feed_command [[$put =soundfold('kóopërÿnôven')]]
+    feed_command [[$put =soundfold('oeverloos gezwets edale')]]
     -- Also use an addition file.
-    feed_command('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
-    feed_command('set spellfile=Xtest.utf-8.add')
-    feed_command('/^test2:')
-    feed(']s')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed_command('set spl=Xtest_us.utf-8.spl')
-    feed_command('/^test2:')
-    feed(']smm')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed('`m]s')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed_command('set spl=Xtest_gb.utf-8.spl')
-    feed_command('/^test2:')
-    feed(']smm')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed('`m]s')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed_command('set spl=Xtest_nz.utf-8.spl')
-    feed_command('/^test2:')
-    feed(']smm')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed('`m]s')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed_command('set spl=Xtest_ca.utf-8.spl')
-    feed_command('/^test2:')
-    feed(']smm')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed('`m]s')
-    feed_command('let [str, a] = spellbadword()')
-    feed_command('$put =str')
-    feed_command('1,/^test 1-1/-1d')
-    expect([[
+    feed_command 'mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add'
+    feed_command 'set spellfile=Xtest.utf-8.add'
+    feed_command '/^test2:'
+    feed ']s'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed_command 'set spl=Xtest_us.utf-8.spl'
+    feed_command '/^test2:'
+    feed ']smm'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed '`m]s'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed_command 'set spl=Xtest_gb.utf-8.spl'
+    feed_command '/^test2:'
+    feed ']smm'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed '`m]s'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed_command 'set spl=Xtest_nz.utf-8.spl'
+    feed_command '/^test2:'
+    feed ']smm'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed '`m]s'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed_command 'set spl=Xtest_ca.utf-8.spl'
+    feed_command '/^test2:'
+    feed ']smm'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed '`m]s'
+    feed_command 'let [str, a] = spellbadword()'
+    feed_command '$put =str'
+    feed_command '1,/^test 1-1/-1d'
+    expect [[
       test 1-1
       # file: Xtest.utf-8.spl
       Comment
@@ -663,19 +720,19 @@ describe("spell checking with 'encoding' set to utf-8", function()
       elequint
       elekwent
       elequint
-      elekwint]])
+      elekwint]]
   end)
 
   it('part 2-1', function()
-    insert([[
+    insert [[
       2good: puts
       bad: inputs comment ok Ok end the. test déôl
       badend
-      ]])
+      ]]
     -- Postponed prefixes.
     test_one(2, 1)
-    feed_command('1,/^test 2-1/-1d')
-    expect([=[
+    feed_command '1,/^test 2-1/-1d'
+    expect [=[
       test 2-1
       # file: Xtest.utf-8.spl
       Comment
@@ -712,20 +769,20 @@ describe("spell checking with 'encoding' set to utf-8", function()
       test
       ['Test', 'testn', 'testen']
       déôl
-      ['deol', 'déôr', 'test']]=])
+      ['deol', 'déôr', 'test']]=]
   end)
 
   it('part 3-3', function()
-    insert([[
+    insert [[
       Test rules for compounding.
 
       3good: foo mï foobar foofoobar barfoo barbarfoo
       bad: bar la foomï barmï mïfoo mïbar mïmï lala mïla lamï foola labar
       badend
-      ]])
+      ]]
     test_one(3, 3)
-    feed_command('1,/^test 3-3/-1d')
-    expect([=[
+    feed_command '1,/^test 3-3/-1d'
+    expect [=[
       test 3-3
       # file: Xtest.utf-8.spl
       foo
@@ -756,11 +813,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
       foola
       ['foo', 'foobar', 'foofoo']
       labar
-      ['barbar', 'foobar']]=])
+      ['barbar', 'foobar']]=]
   end)
 
   it('part 4-4', function()
-    insert([[
+    insert [[
       Tests for compounding.
 
       4good: word util bork prebork start end wordutil wordutils pro-ok
@@ -775,10 +832,10 @@ describe("spell checking with 'encoding' set to utf-8", function()
         startwordwordwordwordend borkpreborkpreborkbork
         utilsbork  startnouword
       badend
-      ]])
+      ]]
     test_one(4, 4)
-    feed_command('1,/^test 4-4/-1d')
-    expect([=[
+    feed_command '1,/^test 4-4/-1d'
+    expect [=[
       test 4-4
       # file: Xtest.utf-8.spl
       bork
@@ -824,11 +881,11 @@ describe("spell checking with 'encoding' set to utf-8", function()
       utilsbork
       ['utilbork', 'utils bork', 'util bork']
       startnouword
-      ['start nouword', 'startword', 'startborkword']]=])
+      ['start nouword', 'startword', 'startborkword']]=]
   end)
 
   it('part 5-5', function()
-    insert([[
+    insert [[
       Test affix flags with two characters
 
       5good: fooa1 fooaé bar prebar barbork prebarbork  startprebar
@@ -836,10 +893,10 @@ describe("spell checking with 'encoding' set to utf-8", function()
       bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
             startprobar startnouend
       badend
-      ]])
+      ]]
     test_one(5, 5)
-    feed_command('1,/^test 5-5/-1d')
-    expect([=[
+    feed_command '1,/^test 5-5/-1d'
+    expect [=[
       test 5-5
       # file: Xtest.utf-8.spl
       bar
@@ -873,20 +930,20 @@ describe("spell checking with 'encoding' set to utf-8", function()
       startprobar
       ['startprebar', 'start prebar', 'startbar']
       startnouend
-      ['start nouend', 'startend']]=])
+      ['start nouend', 'startend']]=]
   end)
 
   it('part 6-6', function()
-    insert([[
+    insert [[
       6good: meea1 meeaé bar prebar barbork prebarbork  leadprebar
             lead end leadend  leadmiddleend
       bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
             leadprobar
       badend
-      ]])
+      ]]
     test_one(6, 6)
-    feed_command('1,/^test 6-6/-1d')
-    expect([=[
+    feed_command '1,/^test 6-6/-1d'
+    expect [=[
       test 6-6
       # file: Xtest.utf-8.spl
       bar
@@ -917,22 +974,22 @@ describe("spell checking with 'encoding' set to utf-8", function()
       endlead
       ['end lead', 'lead', 'end end']
       leadprobar
-      ['leadprebar', 'lead prebar', 'leadbar']]=])
+      ['leadprebar', 'lead prebar', 'leadbar']]=]
   end)
 
   it('part 7-7', function()
-    insert([[
+    insert [[
       7good: meea1 meeaé bar prebar barmeat prebarmeat  leadprebar
             lead tail leadtail  leadmiddletail
       bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
             leadprobar
       badend
-      ]])
+      ]]
     -- Compound words.
     test_one(7, 7)
     -- Assert buffer contents.
-    feed_command('1,/^test 7-7/-1d')
-    expect([=[
+    feed_command '1,/^test 7-7/-1d'
+    expect [=[
       test 7-7
       # file: Xtest.utf-8.spl
       bar
@@ -963,20 +1020,20 @@ describe("spell checking with 'encoding' set to utf-8", function()
       taillead
       ['tail lead', 'tail']
       leadprobar
-      ['leadprebar', 'lead prebar', 'leadbar']]=])
+      ['leadprebar', 'lead prebar', 'leadbar']]=]
   end)
 
   it('part 8-8', function()
-    insert([[
+    insert [[
       8good: foo bar faabar
       bad: foobar barfoo
       badend
-      ]])
+      ]]
     -- NOSPLITSUGS
     test_one(8, 8)
     -- Assert buffer contents.
-    feed_command('1,/^test 8-8/-1d')
-    expect([=[
+    feed_command '1,/^test 8-8/-1d'
+    expect [=[
       test 8-8
       # file: Xtest.utf-8.spl
       bar
@@ -988,23 +1045,23 @@ describe("spell checking with 'encoding' set to utf-8", function()
       foobar
       ['faabar', 'foo bar', 'bar']
       barfoo
-      ['bar foo', 'bar', 'foo']]=])
+      ['bar foo', 'bar', 'foo']]=]
   end)
 
   it('part 9-9', function()
-    insert([[
+    insert [[
       9good: 0b1011 0777 1234 0x01ff
       badend
-      ]])
+      ]]
     -- NOSPLITSUGS
     test_one(9, 9)
     -- Assert buffer contents.
-    feed_command('1,/^test 9-9/-1d')
-    expect([=[
+    feed_command '1,/^test 9-9/-1d'
+    expect [=[
       test 9-9
       # file: Xtest.utf-8.spl
       bar
       foo
-      -------]=])
+      -------]=]
   end)
 end)

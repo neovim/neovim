@@ -1,6 +1,6 @@
 -- Test for visual mode not being reset causing E315 error.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, source = helpers.feed, helpers.source
 local clear, expect = helpers.clear, helpers.expect
 
@@ -10,7 +10,7 @@ describe('E315 error', function()
   it('is working', function()
     -- At this point there is no visual selection because :call reset it.
     -- Let's restore the selection:
-    source([[
+    source [[
       let g:msg="Everything's fine."
       function! TriggerTheProblem()
           normal gv
@@ -26,22 +26,22 @@ describe('E315 error', function()
       enew
       setl buftype=nofile
       call append(line('$'), 'Delete this line.')
-    ]])
+    ]]
 
     -- NOTE: this has to be done by a call to a function because executing
     -- :del the ex-way will require the colon operator which resets the
     -- visual mode thus preventing the problem:
-    feed('GV:call TriggerTheProblem()<cr>')
+    feed 'GV:call TriggerTheProblem()<cr>'
 
-    source([[
+    source [[
       %del _
       call append(line('$'), g:msg)
       brewind
-    ]])
+    ]]
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
 
-      Everything's fine.]])
+      Everything's fine.]]
   end)
 end)

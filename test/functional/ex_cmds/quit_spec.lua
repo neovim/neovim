@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear = helpers.clear
 
 describe(':qa', function()
@@ -11,4 +11,3 @@ describe(':qa', function()
     -- errors
   end)
 end)
-

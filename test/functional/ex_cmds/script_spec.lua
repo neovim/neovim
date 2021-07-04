@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local eq = helpers.eq
 local neq = helpers.neq
@@ -17,29 +17,48 @@ describe('script_get-based command', function()
   local function test_garbage_exec(cmd, check_neq)
     describe(cmd, function()
       it('works correctly when skipping oneline variant', function()
-        eq(true, pcall(source, (dedent([[
+        eq(
+          true,
+          pcall(
+            source,
+            (dedent [[
           if 0
             %s %s
           endif
-        ]])):format(cmd, garbage)))
+        ]]):format(cmd, garbage)
+          )
+        )
         eq('', meths.exec('messages', true))
         if check_neq then
-          neq(0, exc_exec(dedent([[
+          neq(
+            0,
+            exc_exec(dedent [[
             %s %s
-          ]])):format(cmd, garbage))
+          ]]):format(cmd, garbage)
+          )
         end
       end)
       it('works correctly when skipping HEREdoc variant', function()
-        eq(true, pcall(source, (dedent([[
+        eq(
+          true,
+          pcall(
+            source,
+            (dedent [[
           if 0
           %s << EOF
           %s
           EOF
           endif
-        ]])):format(cmd, garbage)))
+        ]]):format(cmd, garbage)
+          )
+        )
         eq('', meths.exec('messages', true))
         if check_neq then
-          eq(true, pcall(source, (dedent([[
+          eq(
+            true,
+            pcall(
+              source,
+              (dedent [[
             let g:exc = 0
             try
             %s << EOF
@@ -48,8 +67,10 @@ describe('script_get-based command', function()
             catch
             let g:exc = v:exception
             endtry
-          ]])):format(cmd, garbage)))
-          neq(0, meths.get_var('exc'))
+          ]]):format(cmd, garbage)
+            )
+          )
+          neq(0, meths.get_var 'exc')
         end
       end)
     end)
@@ -61,9 +82,9 @@ describe('script_get-based command', function()
   test_garbage_exec('lua', true)
 
   -- Provider-based scripts
-  test_garbage_exec('ruby', not missing_provider('ruby'))
-  test_garbage_exec('python', not missing_provider('python'))
-  test_garbage_exec('python3', not missing_provider('python3'))
+  test_garbage_exec('ruby', not missing_provider 'ruby')
+  test_garbage_exec('python', not missing_provider 'python')
+  test_garbage_exec('python3', not missing_provider 'python3')
 
   -- Missing scripts
   test_garbage_exec('tcl', false)

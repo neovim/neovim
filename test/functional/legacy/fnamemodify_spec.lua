@@ -1,18 +1,18 @@
 -- Test filename modifiers.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, source = helpers.clear, helpers.source
 local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
 
 local function expected_empty()
-  eq({}, nvim.get_vvar('errors'))
+  eq({}, nvim.get_vvar 'errors')
 end
 
 describe('filename modifiers', function()
   before_each(function()
     clear()
 
-    source([=[
+    source [=[
       func Test_fnamemodify()
         if has('win32')
           set shellslash
@@ -66,16 +66,16 @@ describe('filename modifiers', function()
         call assert_equal("", expand('%:S'))
         quit
       endfunc
-    ]=])
+    ]=]
   end)
 
   it('is working', function()
-    call('Test_fnamemodify')
+    call 'Test_fnamemodify'
     expected_empty()
   end)
 
   it('works for :S in an unnamed buffer', function()
-    call('Test_expand')
+    call 'Test_expand'
     expected_empty()
   end)
 end)

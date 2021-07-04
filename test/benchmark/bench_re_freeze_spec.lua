@@ -1,6 +1,6 @@
 -- Test for benchmarking RE engine.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, command = helpers.clear, helpers.command
 
@@ -10,8 +10,7 @@ local result_file = 'benchmark.out'
 local sample_file = 'test/benchmark/samples/re.freeze.txt'
 
 -- Vim script code that does both the work and the benchmarking of that work.
-local measure_cmd =
-    [[call Measure(%d, ']] .. sample_file .. [[', '\s\+\%%#\@<!$', '+5')]]
+local measure_cmd = [[call Measure(%d, ']] .. sample_file .. [[', '\s\+\%%#\@<!$', '+5')]]
 local measure_script = [[
     func! Measure(re, file, pattern, arg)
       let sstart=reltime()
@@ -30,7 +29,7 @@ describe('regexp search', function()
   setup(function()
     clear()
     source(measure_script)
-    insert('" Benchmark_results:')
+    insert '" Benchmark_results:'
     command('write! ' .. result_file)
   end)
 
@@ -47,18 +46,18 @@ describe('regexp search', function()
   it('is working with regexpengine=0', function()
     local regexpengine = 0
     command(string.format(measure_cmd, regexpengine))
-    command('write')
+    command 'write'
   end)
 
   it('is working with regexpengine=1', function()
     local regexpengine = 1
     command(string.format(measure_cmd, regexpengine))
-    command('write')
+    command 'write'
   end)
 
   it('is working with regexpengine=2', function()
     local regexpengine = 2
     command(string.format(measure_cmd, regexpengine))
-    command('write')
+    command 'write'
   end)
 end)

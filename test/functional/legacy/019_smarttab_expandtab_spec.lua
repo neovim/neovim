@@ -1,7 +1,7 @@
 -- Tests for "r<Tab>" with 'smarttab' and 'expandtab' set/not set.
 -- Also test that dv_ works correctly
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, insert = helpers.feed, helpers.insert
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
@@ -10,7 +10,7 @@ describe([[performing "r<Tab>" with 'smarttab' and 'expandtab' set/not set, and 
 
   -- luacheck: ignore 621 (Indentation)
   it('is working', function()
-    insert([[
+    insert [[
       start text
       		some test text
       test text
@@ -18,31 +18,31 @@ describe([[performing "r<Tab>" with 'smarttab' and 'expandtab' set/not set, and 
           a cde
           f ghi
       test text
-        Second line beginning with whitespace]])
+        Second line beginning with whitespace]]
 
-    feed_command('set smarttab expandtab ts=8 sw=4')
+    feed_command 'set smarttab expandtab ts=8 sw=4'
     -- Make sure that backspace works, no matter what termcap is used.
-    feed_command('set t_kD=x7f t_kb=x08')
+    feed_command 'set t_kD=x7f t_kb=x08'
 
-    feed_command('/some')
-    feed('r	')
-    feed_command('set noexpandtab')
-    feed_command('/other')
-    feed('r	<cr>')
+    feed_command '/some'
+    feed 'r	'
+    feed_command 'set noexpandtab'
+    feed_command '/other'
+    feed 'r	<cr>'
     -- Test replacing with Tabs and then backspacing to undo it.
-    feed('0wR			<bs><bs><bs><esc><cr>')
+    feed '0wR			<bs><bs><bs><esc><cr>'
     -- Test replacing with Tabs.
-    feed('0wR			<esc><cr>')
+    feed '0wR			<esc><cr>'
     -- Test that copyindent works with expandtab set.
-    feed_command('set expandtab smartindent copyindent ts=8 sw=8 sts=8')
-    feed('o{<cr>x<esc>')
-    feed_command('set nosol')
-    feed_command('/Second line/')
+    feed_command 'set expandtab smartindent copyindent ts=8 sw=8 sts=8'
+    feed 'o{<cr>x<esc>'
+    feed_command 'set nosol'
+    feed_command '/Second line/'
     -- Test "dv_"
-    feed('fwdv_')
+    feed 'fwdv_'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       start text
       		    ome test text
       test text
@@ -52,6 +52,6 @@ describe([[performing "r<Tab>" with 'smarttab' and 'expandtab' set/not set, and 
       test text
       {
               x
-        with whitespace]])
+        with whitespace]]
   end)
 end)

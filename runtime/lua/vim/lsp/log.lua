@@ -14,15 +14,15 @@ log.levels = vim.deepcopy(vim.log.levels)
 
 -- Default log level is warn.
 local current_log_level = log.levels.WARN
-local log_date_format = "%FT%H:%M:%S%z"
+local log_date_format = '%FT%H:%M:%S%z'
 
 do
-  local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
+  local path_sep = vim.loop.os_uname().sysname == 'Windows' and '\\' or '/'
   --@private
   local function path_join(...)
-    return table.concat(vim.tbl_flatten{...}, path_sep)
+    return table.concat(vim.tbl_flatten { ... }, path_sep)
   end
-  local logfilename = path_join(vim.fn.stdpath('cache'), 'lsp.log')
+  local logfilename = path_join(vim.fn.stdpath 'cache', 'lsp.log')
 
   --- Returns the log filename.
   --@returns (string) log filename
@@ -30,10 +30,10 @@ do
     return logfilename
   end
 
-  vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
-  local logfile = assert(io.open(logfilename, "a+"))
+  vim.fn.mkdir(vim.fn.stdpath 'cache', 'p')
+  local logfile = assert(io.open(logfilename, 'a+'))
   -- Start message for logging
-  logfile:write(string.format("[ START ] %s ] LSP logging initiated\n", os.date(log_date_format)))
+  logfile:write(string.format('[ START ] %s ] LSP logging initiated\n', os.date(log_date_format)))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
@@ -52,21 +52,25 @@ do
     --
     -- This way you can avoid string allocations if the log level isn't high enough.
     log[level:lower()] = function(...)
-      local argc = select("#", ...)
-      if levelnr < current_log_level then return false end
-      if argc == 0 then return true end
-      local info = debug.getinfo(2, "Sl")
-      local fileinfo = string.format("%s:%s", info.short_src, info.currentline)
-      local parts = { table.concat({"[", level, "]", os.date(log_date_format), "]", fileinfo, "]"}, " ") }
+      local argc = select('#', ...)
+      if levelnr < current_log_level then
+        return false
+      end
+      if argc == 0 then
+        return true
+      end
+      local info = debug.getinfo(2, 'Sl')
+      local fileinfo = string.format('%s:%s', info.short_src, info.currentline)
+      local parts = { table.concat({ '[', level, ']', os.date(log_date_format), ']', fileinfo, ']' }, ' ') }
       for i = 1, argc do
         local arg = select(i, ...)
         if arg == nil then
-          table.insert(parts, "nil")
+          table.insert(parts, 'nil')
         else
-          table.insert(parts, vim.inspect(arg, {newline=''}))
+          table.insert(parts, vim.inspect(arg, { newline = '' }))
         end
       end
-      logfile:write(table.concat(parts, '\t'), "\n")
+      logfile:write(table.concat(parts, '\t'), '\n')
       logfile:flush()
     end
   end
@@ -80,10 +84,10 @@ vim.tbl_add_reverse_lookup(log.levels)
 --@param level (string or number) One of `vim.lsp.log.levels`
 function log.set_level(level)
   if type(level) == 'string' then
-    current_log_level = assert(log.levels[level:upper()], string.format("Invalid log level: %q", level))
+    current_log_level = assert(log.levels[level:upper()], string.format('Invalid log level: %q', level))
   else
-    assert(type(level) == 'number', "level must be a number or string")
-    assert(log.levels[level], string.format("Invalid log level: %d", level))
+    assert(type(level) == 'number', 'level must be a number or string')
+    assert(log.levels[level], string.format('Invalid log level: %d', level))
     current_log_level = level
   end
 end

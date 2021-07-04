@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local poke_eventloop = helpers.poke_eventloop
 local clear = helpers.clear
@@ -10,22 +10,22 @@ describe('search_mbyte', function()
   before_each(clear)
 
   it("search('multi-byte char', 'bce')", function()
-    insert([=[
+    insert [=[
       Results:
 
       Test bce:
-      Ａ]=])
+      Ａ]=]
     poke_eventloop()
 
-    command('/^Test bce:/+1')
-    command([[$put =search('Ａ', 'bce', line('.'))]])
+    command '/^Test bce:/+1'
+    command [[$put =search('Ａ', 'bce', line('.'))]]
 
     -- Assert buffer contents.
-    expect([=[
+    expect [=[
       Results:
 
       Test bce:
       Ａ
-      4]=])
+      4]=]
   end)
 end)

@@ -1,7 +1,7 @@
 -- Tests for adjusting window and contents
 
-local helpers = require('test.functional.helpers')(after_each)
-local Screen = require('test.functional.ui.screen')
+local helpers = require 'test.functional.helpers'(after_each)
+local Screen = require 'test.functional.ui.screen'
 
 local poke_eventloop = helpers.poke_eventloop
 local clear = helpers.clear
@@ -15,12 +15,12 @@ describe('107', function()
     local screen = Screen.new()
     screen:attach()
 
-    insert('start:')
+    insert 'start:'
     poke_eventloop()
-    command('new')
-    command('call setline(1, range(1,256))')
-    command('let r=[]')
-    command([[
+    command 'new'
+    command 'call setline(1, range(1,256))'
+    command 'let r=[]'
+    command [[
       func! GetScreenStr(row)
          let str = ""
          for c in range(1,3)
@@ -28,24 +28,24 @@ describe('107', function()
          endfor
          return str
       endfunc
-    ]])
-    command([[exe ":norm! \<C-W>t\<C-W>=1Gzt\<C-W>w\<C-W>+"]])
-    command('let s3=GetScreenStr(1)')
-    command('wincmd p')
-    command('call add(r, [line("w0"), s3])')
-    command([[exe ":norm! \<C-W>t\<C-W>=50Gzt\<C-W>w\<C-W>+"]])
-    command('let s3=GetScreenStr(1)')
-    command('wincmd p')
-    command('call add(r, [line("w0"), s3])')
-    command([[exe ":norm! \<C-W>t\<C-W>=59Gzt\<C-W>w\<C-W>+"]])
-    command('let s3=GetScreenStr(1)')
-    command(':wincmd p')
-    command('call add(r, [line("w0"), s3])')
-    command('bwipeout!')
-    command('$put=r')
-    command('call garbagecollect(1)')
+    ]]
+    command [[exe ":norm! \<C-W>t\<C-W>=1Gzt\<C-W>w\<C-W>+"]]
+    command 'let s3=GetScreenStr(1)'
+    command 'wincmd p'
+    command 'call add(r, [line("w0"), s3])'
+    command [[exe ":norm! \<C-W>t\<C-W>=50Gzt\<C-W>w\<C-W>+"]]
+    command 'let s3=GetScreenStr(1)'
+    command 'wincmd p'
+    command 'call add(r, [line("w0"), s3])'
+    command [[exe ":norm! \<C-W>t\<C-W>=59Gzt\<C-W>w\<C-W>+"]]
+    command 'let s3=GetScreenStr(1)'
+    command ':wincmd p'
+    command 'call add(r, [line("w0"), s3])'
+    command 'bwipeout!'
+    command '$put=r'
+    command 'call garbagecollect(1)'
 
-    screen:expect([[
+    screen:expect [[
       start:                                               |
       [1, '1  ']                                           |
       [50, '50 ']                                          |
@@ -60,6 +60,6 @@ describe('107', function()
       ~                                                    |
       ~                                                    |
       3 more lines                                         |
-    ]])
+    ]]
   end)
 end)

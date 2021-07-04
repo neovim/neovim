@@ -1,6 +1,6 @@
 -- Test server -> client RPC scenarios. Note: unlike `rpcnotify`, to evaluate
 -- `rpcrequest` calls we need the client event loop to be running.
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
@@ -21,7 +21,7 @@ describe('server -> client', function()
   end)
 
   it('handles unexpected closed stream while preparing RPC response', function()
-    source([[
+    source [[
       let g:_nvim_args = [v:progpath, '--embed', '--headless', '-n', '-u', 'NONE', '-i', 'NONE', ]
       let ch1 = jobstart(g:_nvim_args, {'rpc': v:true})
       let child1_ch = rpcrequest(ch1, "nvim_get_api_info")[0]
@@ -32,22 +32,22 @@ describe('server -> client', function()
       call rpcnotify(ch2, 'nvim_eval', 'rpcrequest('.child2_ch.', "nvim_get_api_info")')
 
       call jobstop(ch1)
-    ]])
-    eq(2, eval("1+1"))  -- Still alive?
+    ]]
+    eq(2, eval '1+1') -- Still alive?
   end)
 
   describe('simple call', function()
     it('works', function()
       local function on_setup()
-        eq({4, 5, 6}, eval('rpcrequest('..cid..', "scall", 1, 2, 3)'))
+        eq({ 4, 5, 6 }, eval('rpcrequest(' .. cid .. ', "scall", 1, 2, 3)'))
         stop()
       end
 
       local function on_request(method, args)
         eq('scall', method)
-        eq({1, 2, 3}, args)
+        eq({ 1, 2, 3 }, args)
         nvim('command', 'let g:result = [4, 5, 6]')
-        return eval('g:result')
+        return eval 'g:result'
       end
       run(on_request, nil, on_setup)
     end)
@@ -60,14 +60,14 @@ describe('server -> client', function()
     -- elements following the empty string.
     it('works', function()
       local function on_setup()
-        eq({1, 2, '', 3, 'asdf'}, eval('rpcrequest('..cid..', "nstring")'))
+        eq({ 1, 2, '', 3, 'asdf' }, eval('rpcrequest(' .. cid .. ', "nstring")'))
         stop()
       end
 
       local function on_request()
         -- No need to evaluate the args, we are only interested in
         -- a response that contains an array with an empty string.
-        return {1, 2, '', 3, 'asdf'}
+        return { 1, 2, '', 3, 'asdf' }
       end
       run(on_request, nil, on_setup)
     end)
@@ -80,7 +80,7 @@ describe('server -> client', function()
         nvim('set_var', 'result2', 0)
         nvim('set_var', 'result3', 0)
         nvim('set_var', 'result4', 0)
-        nvim('command', 'let g:result1 = rpcrequest('..cid..', "rcall", 2)')
+        nvim('command', 'let g:result1 = rpcrequest(' .. cid .. ', "rcall", 2)')
         eq(4, nvim('get_var', 'result1'))
         eq(8, nvim('get_var', 'result2'))
         eq(16, nvim('get_var', 'result3'))
@@ -94,11 +94,11 @@ describe('server -> client', function()
         if n <= 16 then
           local cmd
           if n == 4 then
-            cmd = 'let g:result2 = rpcrequest('..cid..', "rcall", '..n..')'
+            cmd = 'let g:result2 = rpcrequest(' .. cid .. ', "rcall", ' .. n .. ')'
           elseif n == 8 then
-            cmd = 'let g:result3 = rpcrequest('..cid..', "rcall", '..n..')'
+            cmd = 'let g:result3 = rpcrequest(' .. cid .. ', "rcall", ' .. n .. ')'
           elseif n == 16 then
-            cmd = 'let g:result4 = rpcrequest('..cid..', "rcall", '..n..')'
+            cmd = 'let g:result4 = rpcrequest(' .. cid .. ', "rcall", ' .. n .. ')'
           end
           nvim('command', cmd)
         end
@@ -112,18 +112,18 @@ describe('server -> client', function()
     it('does not delay notifications during pending request', function()
       local received = false
       local function on_setup()
-        eq("retval", funcs.rpcrequest(cid, "doit"))
+        eq('retval', funcs.rpcrequest(cid, 'doit'))
         stop()
       end
       local function on_request(method)
-        if method == "doit" then
-          funcs.rpcnotify(cid, "headsup")
-          eq(true,received)
-          return "retval"
+        if method == 'doit' then
+          funcs.rpcnotify(cid, 'headsup')
+          eq(true, received)
+          return 'retval'
         end
       end
       local function on_notification(method)
-        if method == "headsup" then
+        if method == 'headsup' then
           received = true
         end
       end
@@ -147,28 +147,28 @@ describe('server -> client', function()
     -- of nvim's request stack).
     pending('will close connection if not properly synchronized', function()
       local function on_setup()
-        eq('notified!', eval('rpcrequest('..cid..', "notify")'))
+        eq('notified!', eval('rpcrequest(' .. cid .. ', "notify")'))
       end
 
       local function on_request(method)
-        if method == "notify" then
-          eq(1, eval('rpcnotify('..cid..', "notification")'))
+        if method == 'notify' then
+          eq(1, eval('rpcnotify(' .. cid .. ', "notification")'))
           return 'notified!'
-        elseif method == "nested" then
+        elseif method == 'nested' then
           -- do some busywork, so the first request will return
           -- before this one
           for _ = 1, 5 do
-            eq(2, eval("1+1"))
+            eq(2, eval '1+1')
           end
-          eq(1, eval('rpcnotify('..cid..', "nested_done")'))
+          eq(1, eval('rpcnotify(' .. cid .. ', "nested_done")'))
           return 'done!'
         end
       end
 
       local function on_notification(method)
-        if method == "notification" then
-          eq('done!', eval('rpcrequest('..cid..', "nested")'))
-        elseif method == "nested_done" then
+        if method == 'notification' then
+          eq('done!', eval('rpcrequest(' .. cid .. ', "nested")'))
+        elseif method == 'nested_done' then
           ok(false, 'this should never have been sent')
         end
       end
@@ -180,18 +180,24 @@ describe('server -> client', function()
   end)
 
   describe('recursive (child) nvim client', function()
-    if helpers.isCI('travis') and helpers.is_os('mac') then
+    if helpers.isCI 'travis' and helpers.is_os 'mac' then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]", function() end)
+      pending('[Hangs on Travis macOS. #5002]', function() end)
       return
     end
 
     before_each(function()
-      command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed', '--headless'])")
-      neq(0, eval('vim'))
+      command(
+        "let vim = rpcstart('"
+          .. nvim_prog
+          .. "', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed', '--headless'])"
+      )
+      neq(0, eval 'vim')
     end)
 
-    after_each(function() command('call rpcstop(vim)') end)
+    after_each(function()
+      command 'call rpcstop(vim)'
+    end)
 
     it('can send/receive notifications and make requests', function()
       nvim('command', "call rpcnotify(vim, 'vim_set_current_line', 'SOME TEXT')")
@@ -199,29 +205,31 @@ describe('server -> client', function()
       -- Wait for the notification to complete.
       nvim('command', "call rpcrequest(vim, 'vim_eval', '0')")
 
-      eq('SOME TEXT', eval("rpcrequest(vim, 'vim_get_current_line')"))
+      eq('SOME TEXT', eval "rpcrequest(vim, 'vim_get_current_line')")
     end)
 
     it('can communicate buffers, tabpages, and windows', function()
-      eq({1}, eval("rpcrequest(vim, 'nvim_list_tabpages')"))
+      eq({ 1 }, eval "rpcrequest(vim, 'nvim_list_tabpages')")
       -- Window IDs start at 1000 (LOWEST_WIN_ID in vim.h)
-      eq({1000}, eval("rpcrequest(vim, 'nvim_list_wins')"))
+      eq({ 1000 }, eval "rpcrequest(vim, 'nvim_list_wins')")
 
       local buf = eval("rpcrequest(vim, 'nvim_list_bufs')")[1]
       eq(1, buf)
 
-      eval("rpcnotify(vim, 'buffer_set_line', "..buf..", 0, 'SOME TEXT')")
-      nvim('command', "call rpcrequest(vim, 'vim_eval', '0')")  -- wait
+      eval("rpcnotify(vim, 'buffer_set_line', " .. buf .. ", 0, 'SOME TEXT')")
+      nvim('command', "call rpcrequest(vim, 'vim_eval', '0')") -- wait
 
-      eq('SOME TEXT', eval("rpcrequest(vim, 'buffer_get_line', "..buf..", 0)"))
+      eq('SOME TEXT', eval("rpcrequest(vim, 'buffer_get_line', " .. buf .. ', 0)'))
 
       -- Call get_lines(buf, range [0,0], strict_indexing)
-      eq({'SOME TEXT'}, eval("rpcrequest(vim, 'buffer_get_lines', "..buf..", 0, 1, 1)"))
+      eq({ 'SOME TEXT' }, eval("rpcrequest(vim, 'buffer_get_lines', " .. buf .. ', 0, 1, 1)'))
     end)
 
     it('returns an error if the request failed', function()
-      eq("Vim:Error invoking 'does-not-exist' on channel 3:\nInvalid method: does-not-exist",
-         pcall_err(eval, "rpcrequest(vim, 'does-not-exist')"))
+      eq(
+        "Vim:Error invoking 'does-not-exist' on channel 3:\nInvalid method: does-not-exist",
+        pcall_err(eval, "rpcrequest(vim, 'does-not-exist')")
+      )
     end)
   end)
 
@@ -230,7 +238,7 @@ describe('server -> client', function()
     before_each(function()
       local channel = nvim('get_api_info')[1]
       nvim('set_var', 'channel', channel)
-      source([[
+      source [[
         function! s:OnEvent(id, data, event)
           call rpcnotify(g:channel, a:event, 0, a:data)
         endfunction
@@ -240,14 +248,14 @@ describe('server -> client', function()
         \ 'user': 0,
         \ 'rpc': v:true
         \ }
-      ]])
-      meths.set_var("args", {
+      ]]
+      meths.set_var('args', {
         helpers.test_lua_prg,
         'test/functional/api/rpc_fixture.lua',
         package.path,
         package.cpath,
       })
-      jobid = eval("jobstart(g:args, g:job_opts)")
+      jobid = eval 'jobstart(g:args, g:job_opts)'
       neq(0, jobid)
     end)
 
@@ -255,7 +263,9 @@ describe('server -> client', function()
       pcall(funcs.jobstop, jobid)
     end)
 
-    if helpers.pending_win32(pending) then return end
+    if helpers.pending_win32(pending) then
+      return
+    end
 
     it('rpc and text stderr can be combined', function()
       local status, rv = pcall(funcs.rpcrequest, jobid, 'poll')
@@ -263,25 +273,25 @@ describe('server -> client', function()
         error(string.format('missing nvim Lua module? (%s)', rv))
       end
       eq('ok', rv)
-      funcs.rpcnotify(jobid, "ping")
-      eq({'notification', 'pong', {}}, next_msg())
-      eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
-      eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_msg())
-      pcall(funcs.rpcrequest, jobid, "exit")
-      eq({'notification', 'stderr', {0, {''}}}, next_msg())
-      eq({'notification', 'exit', {0, 0}}, next_msg())
+      funcs.rpcnotify(jobid, 'ping')
+      eq({ 'notification', 'pong', {} }, next_msg())
+      eq('done!', funcs.rpcrequest(jobid, 'write_stderr', 'fluff\n'))
+      eq({ 'notification', 'stderr', { 0, { 'fluff', '' } } }, next_msg())
+      pcall(funcs.rpcrequest, jobid, 'exit')
+      eq({ 'notification', 'stderr', { 0, { '' } } }, next_msg())
+      eq({ 'notification', 'exit', { 0, 0 } }, next_msg())
     end)
   end)
 
   describe('connecting to another (peer) nvim', function()
-    local nvim_argv = merge_args(helpers.nvim_argv, {'--headless'})
+    local nvim_argv = merge_args(helpers.nvim_argv, { '--headless' })
     local function connect_test(server, mode, address)
       local serverpid = funcs.getpid()
       local client = spawn(nvim_argv)
       set_session(client, true)
       local clientpid = funcs.getpid()
       neq(serverpid, clientpid)
-      local id = funcs.sockconnect(mode, address, {rpc=true})
+      local id = funcs.sockconnect(mode, address, { rpc = true })
       ok(id > 0)
 
       funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
@@ -307,7 +317,7 @@ describe('server -> client', function()
       local server = spawn(nvim_argv)
       set_session(server)
       local address = funcs.serverlist()[1]
-      local first = string.sub(address,1,1)
+      local first = string.sub(address, 1, 1)
       ok(first == '/' or first == '\\')
       connect_test(server, 'pipe', address)
     end)
@@ -315,11 +325,11 @@ describe('server -> client', function()
     it('via ipv4 address', function()
       local server = spawn(nvim_argv)
       set_session(server)
-      local status, address = pcall(funcs.serverstart, "127.0.0.1:")
+      local status, address = pcall(funcs.serverstart, '127.0.0.1:')
       if not status then
-        pending('no ipv4 stack')
+        pending 'no ipv4 stack'
       end
-      eq('127.0.0.1:', string.sub(address,1,10))
+      eq('127.0.0.1:', string.sub(address, 1, 10))
       connect_test(server, 'tcp', address)
     end)
 
@@ -328,17 +338,17 @@ describe('server -> client', function()
       set_session(server)
       local status, address = pcall(funcs.serverstart, '::1:')
       if not status then
-        pending('no ipv6 stack')
+        pending 'no ipv6 stack'
       end
-      eq('::1:', string.sub(address,1,4))
+      eq('::1:', string.sub(address, 1, 4))
       connect_test(server, 'tcp', address)
     end)
 
     it('via hostname', function()
       local server = spawn(nvim_argv)
       set_session(server)
-      local address = funcs.serverstart("localhost:")
-      eq('localhost:', string.sub(address,1,10))
+      local address = funcs.serverstart 'localhost:'
+      eq('localhost:', string.sub(address, 1, 10))
       connect_test(server, 'tcp', address)
     end)
   end)
@@ -346,15 +356,15 @@ describe('server -> client', function()
   describe('connecting to its own pipe address', function()
     it('does not deadlock', function()
       local address = funcs.serverlist()[1]
-      local first = string.sub(address,1,1)
+      local first = string.sub(address, 1, 1)
       ok(first == '/' or first == '\\')
       local serverpid = funcs.getpid()
 
-      local id = funcs.sockconnect('pipe', address, {rpc=true})
+      local id = funcs.sockconnect('pipe', address, { rpc = true })
 
       funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
       eq('hello', meths.get_current_line())
-      eq(serverpid, funcs.rpcrequest(id, "nvim_eval", "getpid()"))
+      eq(serverpid, funcs.rpcrequest(id, 'nvim_eval', 'getpid()'))
 
       eq(id, funcs.rpcrequest(id, 'nvim_get_api_info')[1])
     end)

@@ -1,6 +1,6 @@
 -- Tests for nested function.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, insert = helpers.clear, helpers.insert
 local command, expect, source = helpers.command, helpers.expect, helpers.source
 
@@ -8,10 +8,10 @@ describe('test_nested_function', function()
   setup(clear)
 
   it('is working', function()
-    insert([[
-      result:]])
+    insert [[
+      result:]]
 
-    source([[
+    source [[
       :fu! NestedFunc()
       :  fu! Func1()
       :    $put ='Func1'
@@ -35,16 +35,16 @@ describe('test_nested_function', function()
       :    $put ='s:func5'
       :  endfunction
       :  call s:{fn}()
-      :endfunction]])
-    command('call NestedFunc()')
+      :endfunction]]
+    command 'call NestedFunc()'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       result:
       Func1
       s:func2
       s:_func3
       Func4
-      s:func5]])
+      s:func5]]
   end)
 end)

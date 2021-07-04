@@ -1,7 +1,7 @@
-mpack = require('mpack')
+mpack = require 'mpack'
 
 if arg[1] == '--help' then
-  print('Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim')
+  print 'Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim'
   os.exit(0)
 end
 
@@ -16,16 +16,16 @@ local syn_fd = io.open(syntax_file, 'w')
 lld.line_length = 0
 local function w(s)
   syn_fd:write(s)
-  if s:find('\n') then
+  if s:find '\n' then
     lld.line_length = #(s:gsub('.*\n', ''))
   else
     lld.line_length = lld.line_length + #s
   end
 end
 
-local options = require('options')
-local auevents = require('auevents')
-local ex_cmds = require('ex_cmds')
+local options = require 'options'
+local auevents = require 'auevents'
+local ex_cmds = require 'ex_cmds'
 
 local function cmd_kw(prev_cmd, cmd)
   if not prev_cmd then
@@ -46,10 +46,7 @@ end
 -- Exclude these from the vimCommand keyword list, they are handled specially
 -- in syntax/vim.vim (vimAugroupKey, vimAutoCmd). #9327
 local function is_autocmd_cmd(cmd)
-  return (cmd == 'augroup'
-          or cmd == 'autocmd'
-          or cmd == 'doautocmd'
-          or cmd == 'doautoall')
+  return (cmd == 'augroup' or cmd == 'autocmd' or cmd == 'doautocmd' or cmd == 'doautoall')
 end
 
 vimcmd_start = 'syn keyword vimCommand contained '
@@ -60,7 +57,7 @@ for _, cmd_desc in ipairs(ex_cmds.cmds) do
     w('\n' .. vimcmd_start)
   end
   local cmd = cmd_desc.command
-  if cmd:match('%w') and cmd ~= 'z' and not is_autocmd_cmd(cmd) then
+  if cmd:match '%w' and cmd ~= 'z' and not is_autocmd_cmd(cmd) then
     w(' ' .. cmd_kw(prev_cmd, cmd))
   end
   prev_cmd = cmd
@@ -89,7 +86,7 @@ for _, opt_desc in ipairs(options.options) do
   end
 end
 
-w('\n\nsyn case ignore')
+w '\n\nsyn case ignore'
 local vimau_start = 'syn keyword vimAutoEvent contained '
 w('\n\n' .. vimau_start)
 
@@ -120,10 +117,10 @@ for au, _ in pairs(auevents.nvim_specific) do
   w(' ' .. au)
 end
 
-w('\n\nsyn case match')
+w '\n\nsyn case match'
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
-funcs = mpack.unpack(io.open(funcs_file):read("*all"))
+funcs = mpack.unpack(io.open(funcs_file):read '*all')
 local started = 0
 for name, def in pairs(funcs) do
   if name then
@@ -134,5 +131,5 @@ for name, def in pairs(funcs) do
   end
 end
 
-w('\n')
+w '\n'
 syn_fd:close()

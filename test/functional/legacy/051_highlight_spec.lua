@@ -1,7 +1,7 @@
 -- Tests for ":highlight".
 
-local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
+local Screen = require 'test.functional.ui.screen'
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local expect = helpers.expect
 local eq = helpers.eq
@@ -16,12 +16,12 @@ describe(':highlight', function()
     local screen = Screen.new(35, 10)
     screen:attach()
     -- Basic test if ":highlight" doesn't crash
-    feed_command('set more')
-    feed(':highlight<CR>')
+    feed_command 'set more'
+    feed ':highlight<CR>'
     -- FIXME(tarruda): We need to be sure the prompt is displayed before
     -- continuing, or risk a race condition where some of the following input
     -- is discarded resulting in test failure
-    screen:expect([[
+    screen:expect [[
       :highlight                         |
       SpecialKey     xxx ctermfg=4       |
                          guifg=Blue      |
@@ -32,44 +32,43 @@ describe(':highlight', function()
       TermCursorNC   xxx cleared         |
       NonText        xxx ctermfg=12      |
       -- More --^                         |
-    ]])
-    feed('q')
+    ]]
+    feed 'q'
     poke_eventloop() -- wait until we're back to normal
-    feed_command('hi Search')
-    feed_command('hi Normal')
+    feed_command 'hi Search'
+    feed_command 'hi Normal'
 
     -- Test setting colors.
     -- Test clearing one color and all doesn't generate error or warning
-    feed_command('hi NewGroup cterm=italic ctermfg=DarkBlue ctermbg=Grey gui=NONE guifg=#00ff00 guibg=Cyan')
-    feed_command('hi Group2 cterm=NONE')
-    feed_command('hi Group3 cterm=bold')
-    feed_command('redir! @a')
-    feed_command('hi NewGroup')
-    feed_command('hi Group2')
-    feed_command('hi Group3')
-    feed_command('hi clear NewGroup')
-    feed_command('hi NewGroup')
-    feed_command('hi Group2')
-    feed_command('hi Group2 NONE')
-    feed_command('hi Group2')
-    feed_command('hi clear')
-    feed_command('hi Group3')
-    feed('<cr>')
-    eq('Vim(highlight):E475: Invalid argument: cterm=\'asdf',
-       exc_exec([[hi Crash cterm='asdf]]))
-    feed_command('redir END')
+    feed_command 'hi NewGroup cterm=italic ctermfg=DarkBlue ctermbg=Grey gui=NONE guifg=#00ff00 guibg=Cyan'
+    feed_command 'hi Group2 cterm=NONE'
+    feed_command 'hi Group3 cterm=bold'
+    feed_command 'redir! @a'
+    feed_command 'hi NewGroup'
+    feed_command 'hi Group2'
+    feed_command 'hi Group3'
+    feed_command 'hi clear NewGroup'
+    feed_command 'hi NewGroup'
+    feed_command 'hi Group2'
+    feed_command 'hi Group2 NONE'
+    feed_command 'hi Group2'
+    feed_command 'hi clear'
+    feed_command 'hi Group3'
+    feed '<cr>'
+    eq("Vim(highlight):E475: Invalid argument: cterm='asdf", exc_exec [[hi Crash cterm='asdf]])
+    feed_command 'redir END'
 
     -- Filter ctermfg and ctermbg, the numbers depend on the terminal
-    feed_command('0put a')
-    feed_command([[%s/ctermfg=\d*/ctermfg=2/]])
-    feed_command([[%s/ctermbg=\d*/ctermbg=3/]])
+    feed_command '0put a'
+    feed_command [[%s/ctermfg=\d*/ctermfg=2/]]
+    feed_command [[%s/ctermbg=\d*/ctermbg=3/]]
 
     -- Fix the fileformat
-    feed_command('set ff&')
-    feed_command('$d')
+    feed_command 'set ff&'
+    feed_command '$d'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
 
 
       NewGroup       xxx cterm=italic
@@ -91,6 +90,6 @@ describe(':highlight', function()
       Group2         xxx cleared
 
 
-      Group3         xxx cleared]])
+      Group3         xxx cleared]]
   end)
 end)

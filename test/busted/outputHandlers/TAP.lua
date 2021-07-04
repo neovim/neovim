@@ -1,6 +1,6 @@
 -- Extends the upstream TAP handler, to display the log with suiteEnd.
 
-local global_helpers = require('test.helpers')
+local global_helpers = require 'test.helpers'
 
 return function(options)
   local busted = require 'busted'

@@ -1,6 +1,6 @@
 -- Test for expanding file names
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local eq = helpers.eq
 local call = helpers.call
 local nvim = helpers.meths
@@ -8,21 +8,21 @@ local clear = helpers.clear
 local source = helpers.source
 
 local function expected_empty()
-  eq({}, nvim.get_vvar('errors'))
+  eq({}, nvim.get_vvar 'errors')
 end
 
 describe('expand file name', function()
   after_each(function()
-    helpers.rmdir('Xdir1')
-    helpers.rmdir('Xdir2')
-    helpers.rmdir('Xdir3')
-    helpers.rmdir('Xdir4')
+    helpers.rmdir 'Xdir1'
+    helpers.rmdir 'Xdir2'
+    helpers.rmdir 'Xdir3'
+    helpers.rmdir 'Xdir4'
   end)
 
   before_each(function()
     clear()
 
-    source([[
+    source [[
       func Test_with_directories()
         call mkdir('Xdir1')
         call mkdir('Xdir2')
@@ -104,26 +104,26 @@ describe('expand file name', function()
         call assert_fails('call expandcmd("make %")', 'E499:')
         close
       endfunc
-    ]])
+    ]]
   end)
 
   it('works with directories', function()
-    call('Test_with_directories')
+    call 'Test_with_directories'
     expected_empty()
   end)
 
   it('works with tilde', function()
-    call('Test_with_tilde')
+    call 'Test_with_tilde'
     expected_empty()
   end)
 
   it('does not expand tilde if it is a filename', function()
-    call('Test_expand_tilde_filename')
+    call 'Test_expand_tilde_filename'
     expected_empty()
   end)
 
   it('works with expandcmd()', function()
-    call('Test_expandcmd')
+    call 'Test_expandcmd'
     expected_empty()
   end)
 end)

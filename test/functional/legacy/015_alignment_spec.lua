@@ -2,7 +2,7 @@
 -- Also test formatting a paragraph.
 -- Also test undo after ":%s" and formatting.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, insert = helpers.feed, helpers.insert
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
@@ -11,7 +11,7 @@ describe('alignment', function()
 
   -- luacheck: ignore 621 (Indentation)
   it('is working', function()
-    insert([[
+    insert [[
       	test for :left
       	  a		a
       	    fa		a
@@ -123,27 +123,27 @@ describe('alignment', function()
 
       aa aa aa aa
       bb bb bb bb
-      cc cc cc cc]])
+      cc cc cc cc]]
 
-    feed_command('set tw=65')
+    feed_command 'set tw=65'
 
-    feed([[:/^\s*test for :left/,/^\s*test for :center/ left<cr>]])
-    feed([[:/^\s*test for :center/,/^\s*test for :right/ center<cr>]])
-    feed([[:/^\s*test for :right/,/^xxx/-1 right<cr>]])
+    feed [[:/^\s*test for :left/,/^\s*test for :center/ left<cr>]]
+    feed [[:/^\s*test for :center/,/^\s*test for :right/ center<cr>]]
+    feed [[:/^\s*test for :right/,/^xxx/-1 right<cr>]]
 
-    feed_command('set fo+=tcroql tw=72')
+    feed_command 'set fo+=tcroql tw=72'
 
-    feed('/xxxxxxxx$<cr>')
-    feed('0gq6kk<cr>')
+    feed '/xxxxxxxx$<cr>'
+    feed '0gq6kk<cr>'
 
     -- Undo/redo here to make the next undo only work on the following changes.
-    feed('u<cr>')
-    feed_command('map gg :.,.+2s/^/x/<CR>kk:set tw=3<CR>gqq')
-    feed_command('/^aa')
-    feed('ggu<cr>')
+    feed 'u<cr>'
+    feed_command 'map gg :.,.+2s/^/x/<CR>kk:set tw=3<CR>gqq'
+    feed_command '/^aa'
+    feed 'ggu<cr>'
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       test for :left
       a		a
       fa		a
@@ -254,6 +254,6 @@ describe('alignment', function()
 
       aa aa aa aa
       bb bb bb bb
-      cc cc cc cc]])
+      cc cc cc cc]]
   end)
 end)

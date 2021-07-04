@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local command = helpers.command
 local meths = helpers.meths
@@ -13,7 +13,9 @@ local min_dur = 8
 local len = 131072
 
 describe('List support code', function()
-  if not pending('does not actually allows interrupting with just got_int', function() end) then return end
+  if not pending('does not actually allows interrupting with just got_int', function() end) then
+    return
+  end
   -- The following tests are confirmed to work with os_breakcheck() just before
   -- `if (got_int) {break;}` in tv_list_copy and list_join_inner() and not to
   -- work without.
@@ -26,7 +28,7 @@ describe('List support code', function()
         let bl = range(%u)
         let dur = reltimestr(reltime(rt))
       ]]):format(len))
-      dur = tonumber(meths.get_var('dur'))
+      dur = tonumber(meths.get_var 'dur')
       if dur >= min_dur then
         -- print(('Using len %u, dur %g'):format(len, dur))
         break
@@ -36,23 +38,23 @@ describe('List support code', function()
     end
   end)
   it('allows interrupting copy', function()
-    feed(':let t_rt = reltime()<CR>:let t_bl = copy(bl)<CR>')
+    feed ':let t_rt = reltime()<CR>:let t_bl = copy(bl)<CR>'
     sleep(min_dur / 16 * 1000)
-    feed('<C-c>')
+    feed '<C-c>'
     poke_eventloop()
-    command('let t_dur = reltimestr(reltime(t_rt))')
-    local t_dur = tonumber(meths.get_var('t_dur'))
+    command 'let t_dur = reltimestr(reltime(t_rt))'
+    local t_dur = tonumber(meths.get_var 't_dur')
     if t_dur >= dur / 8 then
       eq(nil, ('Took too long to cancel: %g >= %g'):format(t_dur, dur / 8))
     end
   end)
   it('allows interrupting join', function()
-    feed(':let t_rt = reltime()<CR>:let t_j = join(bl)<CR>')
+    feed ':let t_rt = reltime()<CR>:let t_j = join(bl)<CR>'
     sleep(min_dur / 16 * 1000)
-    feed('<C-c>')
+    feed '<C-c>'
     poke_eventloop()
-    command('let t_dur = reltimestr(reltime(t_rt))')
-    local t_dur = tonumber(meths.get_var('t_dur'))
+    command 'let t_dur = reltimestr(reltime(t_rt))'
+    local t_dur = tonumber(meths.get_var 't_dur')
     print(('t_dur: %g'):format(t_dur))
     if t_dur >= dur / 8 then
       eq(nil, ('Took too long to cancel: %g >= %g'):format(t_dur, dur / 8))

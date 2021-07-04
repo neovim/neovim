@@ -1,6 +1,6 @@
-local Screen = require('test.functional.ui.screen')
-local helpers = require('test.functional.helpers')(after_each)
-local thelpers = require('test.functional.terminal.helpers')
+local Screen = require 'test.functional.ui.screen'
+local helpers = require 'test.functional.helpers'(after_each)
+local thelpers = require 'test.functional.terminal.helpers'
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.feed_command
 local iswin = helpers.iswin
@@ -25,11 +25,11 @@ describe(':terminal scrollback', function()
     before_each(function()
       local lines = {}
       for i = 1, 30 do
-        table.insert(lines, 'line'..tostring(i))
+        table.insert(lines, 'line' .. tostring(i))
       end
       table.insert(lines, '')
       feed_data(lines)
-      screen:expect([[
+      screen:expect [[
         line26                        |
         line27                        |
         line28                        |
@@ -37,12 +37,12 @@ describe(':terminal scrollback', function()
         line30                        |
         {1: }                             |
         {3:-- TERMINAL --}                |
-      ]])
+      ]]
     end)
 
     it('will delete extra lines at the top', function()
-      feed('<c-\\><c-n>gg')
-      screen:expect([[
+      feed '<c-\\><c-n>gg'
+      screen:expect [[
         ^line16                        |
         line17                        |
         line18                        |
@@ -50,14 +50,14 @@ describe(':terminal scrollback', function()
         line20                        |
         line21                        |
                                       |
-      ]])
+      ]]
     end)
   end)
 
   describe('with cursor at last row', function()
     before_each(function()
-      feed_data({'line1', 'line2', 'line3', 'line4', ''})
-      screen:expect([[
+      feed_data { 'line1', 'line2', 'line3', 'line4', '' }
+      screen:expect [[
         tty ready                     |
         line1                         |
         line2                         |
@@ -65,14 +65,16 @@ describe(':terminal scrollback', function()
         line4                         |
         {1: }                             |
         {3:-- TERMINAL --}                |
-      ]])
+      ]]
     end)
 
     describe('and 1 line is printed', function()
-      before_each(function() feed_data({'line5', ''}) end)
+      before_each(function()
+        feed_data { 'line5', '' }
+      end)
 
       it('will hide the top line', function()
-        screen:expect([[
+        screen:expect [[
           line1                         |
           line2                         |
           line3                         |
@@ -80,15 +82,17 @@ describe(':terminal scrollback', function()
           line5                         |
           {1: }                             |
           {3:-- TERMINAL --}                |
-        ]])
-        eq(7, curbuf('line_count'))
+        ]]
+        eq(7, curbuf 'line_count')
       end)
 
       describe('and then 3 more lines are printed', function()
-        before_each(function() feed_data({'line6', 'line7', 'line8'}) end)
+        before_each(function()
+          feed_data { 'line6', 'line7', 'line8' }
+        end)
 
         it('will hide the top 4 lines', function()
-          screen:expect([[
+          screen:expect [[
             line3                         |
             line4                         |
             line5                         |
@@ -96,10 +100,10 @@ describe(':terminal scrollback', function()
             line7                         |
             line8{1: }                        |
             {3:-- TERMINAL --}                |
-          ]])
+          ]]
 
-          feed('<c-\\><c-n>6k')
-          screen:expect([[
+          feed '<c-\\><c-n>6k'
+          screen:expect [[
             ^line2                         |
             line3                         |
             line4                         |
@@ -107,10 +111,10 @@ describe(':terminal scrollback', function()
             line6                         |
             line7                         |
                                           |
-          ]])
+          ]]
 
-          feed('gg')
-          screen:expect([[
+          feed 'gg'
+          screen:expect [[
             ^tty ready                     |
             line1                         |
             line2                         |
@@ -118,10 +122,10 @@ describe(':terminal scrollback', function()
             line4                         |
             line5                         |
                                           |
-          ]])
+          ]]
 
-          feed('G')
-          screen:expect([[
+          feed 'G'
+          screen:expect [[
             line3                         |
             line4                         |
             line5                         |
@@ -129,25 +133,26 @@ describe(':terminal scrollback', function()
             line7                         |
             ^line8{2: }                        |
                                           |
-          ]])
+          ]]
         end)
       end)
     end)
 
-
     describe('and height decreased by 1', function()
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win32(pending) then
+        return
+      end
       local function will_hide_top_line()
-        feed([[<C-\><C-N>]])
+        feed [[<C-\><C-N>]]
         screen:try_resize(screen._width - 2, screen._height - 1)
-        screen:expect([[
+        screen:expect [[
           line2                       |
           line3                       |
           line4                       |
           rows: 5, cols: 28           |
           {2:^ }                           |
                                       |
-        ]])
+        ]]
       end
 
       it('will hide top line', will_hide_top_line)
@@ -159,20 +164,20 @@ describe(':terminal scrollback', function()
         end)
 
         it('will hide the top 3 lines', function()
-          screen:expect([[
+          screen:expect [[
             rows: 5, cols: 28         |
             rows: 3, cols: 26         |
             {2:^ }                         |
                                       |
-          ]])
-          eq(8, curbuf('line_count'))
-          feed([[3k]])
-          screen:expect([[
+          ]]
+          eq(8, curbuf 'line_count')
+          feed [[3k]]
+          screen:expect [[
             ^line4                     |
             rows: 5, cols: 28         |
             rows: 3, cols: 26         |
                                       |
-          ]])
+          ]]
         end)
       end)
     end)
@@ -182,7 +187,9 @@ describe(':terminal scrollback', function()
     -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
     --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
     --      See also: https://github.com/rprichard/winpty/issues/110
-    if helpers.pending_win32(pending) then return end
+    if helpers.pending_win32(pending) then
+      return
+    end
 
     describe('and the height is decreased by 2', function()
       before_each(function()
@@ -190,14 +197,14 @@ describe(':terminal scrollback', function()
       end)
 
       local function will_delete_last_two_lines()
-        screen:expect([[
+        screen:expect [[
           tty ready                     |
           rows: 4, cols: 30             |
           {1: }                             |
                                         |
           {3:-- TERMINAL --}                |
-        ]])
-        eq(4, curbuf('line_count'))
+        ]]
+        eq(4, curbuf 'line_count')
       end
 
       it('will delete the last two empty lines', will_delete_last_two_lines)
@@ -209,27 +216,27 @@ describe(':terminal scrollback', function()
         end)
 
         it('will delete the last line and hide the first', function()
-          screen:expect([[
+          screen:expect [[
             rows: 4, cols: 30             |
             rows: 3, cols: 30             |
             {1: }                             |
             {3:-- TERMINAL --}                |
-          ]])
-          eq(4, curbuf('line_count'))
-          feed('<c-\\><c-n>gg')
-          screen:expect([[
+          ]]
+          eq(4, curbuf 'line_count')
+          feed '<c-\\><c-n>gg'
+          screen:expect [[
             ^tty ready                     |
             rows: 4, cols: 30             |
             rows: 3, cols: 30             |
                                           |
-          ]])
-          feed('a')
-          screen:expect([[
+          ]]
+          feed 'a'
+          screen:expect [[
             rows: 4, cols: 30             |
             rows: 3, cols: 30             |
             {1: }                             |
             {3:-- TERMINAL --}                |
-          ]])
+          ]]
         end)
       end)
     end)
@@ -237,8 +244,8 @@ describe(':terminal scrollback', function()
 
   describe('with 4 lines hidden in the scrollback', function()
     before_each(function()
-      feed_data({'line1', 'line2', 'line3', 'line4', ''})
-      screen:expect([[
+      feed_data { 'line1', 'line2', 'line3', 'line4', '' }
+      screen:expect [[
         tty ready                     |
         line1                         |
         line2                         |
@@ -246,31 +253,33 @@ describe(':terminal scrollback', function()
         line4                         |
         {1: }                             |
         {3:-- TERMINAL --}                |
-      ]])
+      ]]
       screen:try_resize(screen._width, screen._height - 3)
-      screen:expect([[
+      screen:expect [[
         line4                         |
         rows: 3, cols: 30             |
         {1: }                             |
         {3:-- TERMINAL --}                |
-      ]])
-      eq(7, curbuf('line_count'))
+      ]]
+      eq(7, curbuf 'line_count')
     end)
 
     describe('and the height is increased by 1', function()
       -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
       --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
       --      See also: https://github.com/rprichard/winpty/issues/110
-      if helpers.pending_win32(pending) then return end
+      if helpers.pending_win32(pending) then
+        return
+      end
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
-        screen:expect([[
+        screen:expect [[
           line4                         |
           rows: 3, cols: 30             |
           rows: 4, cols: 30             |
           {1: }                             |
           {3:-- TERMINAL --}                |
-        ]])
+        ]]
       end
 
       it('will pop 1 line and then push it back', pop_then_push)
@@ -278,12 +287,12 @@ describe(':terminal scrollback', function()
       describe('and then by 3', function()
         before_each(function()
           pop_then_push()
-          eq(8, curbuf('line_count'))
+          eq(8, curbuf 'line_count')
           screen:try_resize(screen._width, screen._height + 3)
         end)
 
         local function pop3_then_push1()
-          screen:expect([[
+          screen:expect [[
             line2                         |
             line3                         |
             line4                         |
@@ -292,10 +301,10 @@ describe(':terminal scrollback', function()
             rows: 7, cols: 30             |
             {1: }                             |
             {3:-- TERMINAL --}                |
-          ]])
-          eq(9, curbuf('line_count'))
-          feed('<c-\\><c-n>gg')
-          screen:expect([[
+          ]]
+          eq(9, curbuf 'line_count')
+          feed '<c-\\><c-n>gg'
+          screen:expect [[
             ^tty ready                     |
             line1                         |
             line2                         |
@@ -304,7 +313,7 @@ describe(':terminal scrollback', function()
             rows: 3, cols: 30             |
             rows: 4, cols: 30             |
                                           |
-          ]])
+          ]]
         end
 
         it('will pop 3 lines and then push one back', pop3_then_push1)
@@ -312,12 +321,12 @@ describe(':terminal scrollback', function()
         describe('and then by 4', function()
           before_each(function()
             pop3_then_push1()
-            feed('Gi')
+            feed 'Gi'
             screen:try_resize(screen._width, screen._height + 4)
           end)
 
           it('will show all lines and leave a blank one at the end', function()
-            screen:expect([[
+            screen:expect [[
               tty ready                     |
               line1                         |
               line2                         |
@@ -330,10 +339,10 @@ describe(':terminal scrollback', function()
               {1: }                             |
                                             |
               {3:-- TERMINAL --}                |
-            ]])
+            ]]
             -- since there's an empty line after the cursor, the buffer line
             -- count equals the terminal screen height
-            eq(11, curbuf('line_count'))
+            eq(11, curbuf 'line_count')
           end)
         end)
       end)
@@ -345,10 +354,10 @@ describe(':terminal prints more lines than the screen height and exits', functio
   it('will push extra lines to scrollback', function()
     clear()
     local screen = Screen.new(30, 7)
-    screen:attach({rgb=false})
-    feed_command('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
+    screen:attach { rgb = false }
+    feed_command('call termopen(["' .. nvim_dir .. '/tty-test", "10"]) | startinsert')
     poke_eventloop()
-    screen:expect([[
+    screen:expect [[
       line6                         |
       line7                         |
       line8                         |
@@ -356,10 +365,10 @@ describe(':terminal prints more lines than the screen height and exits', functio
                                     |
       [Process exited 0]            |
       -- TERMINAL --                |
-    ]])
-    feed('<cr>')
+    ]]
+    feed '<cr>'
     -- closes the buffer correctly after pressing a key
-    screen:expect([[
+    screen:expect [[
       ^                              |
       ~                             |
       ~                             |
@@ -367,7 +376,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
       ~                             |
       ~                             |
                                     |
-    ]])
+    ]]
   end)
 end)
 
@@ -378,15 +387,15 @@ describe("'scrollback' option", function()
 
   local function set_fake_shell()
     -- shell-test.c is a fake shell that prints its arguments and exits.
-    nvim('set_option', 'shell', nvim_dir..'/shell-test')
+    nvim('set_option', 'shell', nvim_dir .. '/shell-test')
     nvim('set_option', 'shellcmdflag', 'EXE')
   end
 
   local function expect_lines(expected, epsilon)
     local ep = epsilon and epsilon or 0
-    local actual = eval("line('$')")
+    local actual = eval "line('$')"
     if expected > actual + ep and expected < actual - ep then
-      error('expected (+/- '..ep..'): '..expected..', actual: '..tostring(actual))
+      error('expected (+/- ' .. ep .. '): ' .. expected .. ', actual: ' .. tostring(actual))
     end
   end
 
@@ -399,42 +408,51 @@ describe("'scrollback' option", function()
     end
 
     curbufmeths.set_option('scrollback', 0)
-    feed_data(nvim_dir..'/shell-test REP 31 line'..(iswin() and '\r' or '\n'))
-    screen:expect{any='30: line                      '}
-    retry(nil, nil, function() expect_lines(7) end)
+    feed_data(nvim_dir .. '/shell-test REP 31 line' .. (iswin() and '\r' or '\n'))
+    screen:expect { any = '30: line                      ' }
+    retry(nil, nil, function()
+      expect_lines(7)
+    end)
   end)
 
   it('deletes lines (only) if necessary', function()
     local screen
     if iswin() then
-      command([[let $PROMPT='$$']])
+      command [[let $PROMPT='$$']]
       screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
     else
-      command('let $PS1 = "$"')
+      command 'let $PS1 = "$"'
       screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 
     curbufmeths.set_option('scrollback', 200)
 
     -- Wait for prompt.
-    screen:expect{any='%$'}
+    screen:expect { any = '%$' }
 
-    feed_data(nvim_dir.."/shell-test REP 31 line"..(iswin() and '\r' or '\n'))
-    screen:expect{any='30: line                      '}
+    feed_data(nvim_dir .. '/shell-test REP 31 line' .. (iswin() and '\r' or '\n'))
+    screen:expect { any = '30: line                      ' }
 
-    retry(nil, nil, function() expect_lines(33, 2) end)
+    retry(nil, nil, function()
+      expect_lines(33, 2)
+    end)
     curbufmeths.set_option('scrollback', 10)
     poke_eventloop()
-    retry(nil, nil, function() expect_lines(16) end)
+    retry(nil, nil, function()
+      expect_lines(16)
+    end)
     curbufmeths.set_option('scrollback', 10000)
-    retry(nil, nil, function() expect_lines(16) end)
+    retry(nil, nil, function()
+      expect_lines(16)
+    end)
     -- Terminal job data is received asynchronously, may happen before the
     -- 'scrollback' option is synchronized with the internal sb_buffer.
-    command('sleep 100m')
+    command 'sleep 100m'
 
-    feed_data(nvim_dir.."/shell-test REP 41 line"..(iswin() and '\r' or '\n'))
+    feed_data(nvim_dir .. '/shell-test REP 41 line' .. (iswin() and '\r' or '\n'))
     if iswin() then
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         37: line                      |
         38: line                      |
         39: line                      |
@@ -442,9 +460,11 @@ describe("'scrollback' option", function()
                                       |
         ${1: }                            |
         {3:-- TERMINAL --}                |
-      ]]}
+      ]],
+      }
     else
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         36: line                      |
         37: line                      |
         38: line                      |
@@ -452,78 +472,76 @@ describe("'scrollback' option", function()
         40: line                      |
         {MATCH:.*}|
         {3:-- TERMINAL --}                |
-      ]]}
+      ]],
+      }
     end
     expect_lines(58)
 
     -- Verify off-screen state
-    eq((iswin() and '36: line' or '35: line'), eval("getline(line('w0') - 1)"))
-    eq((iswin() and '27: line' or '26: line'), eval("getline(line('w0') - 10)"))
+    eq((iswin() and '36: line' or '35: line'), eval "getline(line('w0') - 1)")
+    eq((iswin() and '27: line' or '26: line'), eval "getline(line('w0') - 10)")
   end)
 
   it('defaults to 10000 in :terminal buffers', function()
     set_fake_shell()
-    command('terminal')
-    eq(10000, curbufmeths.get_option('scrollback'))
+    command 'terminal'
+    eq(10000, curbufmeths.get_option 'scrollback')
   end)
 
   it('error if set to invalid value', function()
-    eq('Vim(set):E474: Invalid argument: scrollback=-2',
-      pcall_err(command, 'set scrollback=-2'))
-    eq('Vim(set):E474: Invalid argument: scrollback=100001',
-      pcall_err(command, 'set scrollback=100001'))
+    eq('Vim(set):E474: Invalid argument: scrollback=-2', pcall_err(command, 'set scrollback=-2'))
+    eq('Vim(set):E474: Invalid argument: scrollback=100001', pcall_err(command, 'set scrollback=100001'))
   end)
 
   it('defaults to -1 on normal buffers', function()
-    command('new')
-    eq(-1, curbufmeths.get_option('scrollback'))
+    command 'new'
+    eq(-1, curbufmeths.get_option 'scrollback')
   end)
 
   it(':setlocal in a :terminal buffer', function()
     set_fake_shell()
 
     -- _Global_ scrollback=-1 defaults :terminal to 10_000.
-    command('setglobal scrollback=-1')
-    command('terminal')
-    eq(10000, curbufmeths.get_option('scrollback'))
+    command 'setglobal scrollback=-1'
+    command 'terminal'
+    eq(10000, curbufmeths.get_option 'scrollback')
 
     -- _Local_ scrollback=-1 in :terminal forces the _maximum_.
-    command('setlocal scrollback=-1')
-    retry(nil, nil, function()  -- Fixup happens on refresh, not immediately.
-      eq(100000, curbufmeths.get_option('scrollback'))
+    command 'setlocal scrollback=-1'
+    retry(nil, nil, function() -- Fixup happens on refresh, not immediately.
+      eq(100000, curbufmeths.get_option 'scrollback')
     end)
 
     -- _Local_ scrollback=-1 during TermOpen forces the maximum. #9605
-    command('setglobal scrollback=-1')
-    command('autocmd TermOpen * setlocal scrollback=-1')
-    command('terminal')
-    eq(100000, curbufmeths.get_option('scrollback'))
+    command 'setglobal scrollback=-1'
+    command 'autocmd TermOpen * setlocal scrollback=-1'
+    command 'terminal'
+    eq(100000, curbufmeths.get_option 'scrollback')
   end)
 
   it(':setlocal in a normal buffer', function()
-    command('new')
+    command 'new'
     -- :setlocal to -1.
-    command('setlocal scrollback=-1')
-    eq(-1, curbufmeths.get_option('scrollback'))
+    command 'setlocal scrollback=-1'
+    eq(-1, curbufmeths.get_option 'scrollback')
     -- :setlocal to anything except -1. Currently, this just has no effect.
-    command('setlocal scrollback=42')
-    eq(42, curbufmeths.get_option('scrollback'))
+    command 'setlocal scrollback=42'
+    eq(42, curbufmeths.get_option 'scrollback')
   end)
 
   it(':set updates local value and global default', function()
     set_fake_shell()
-    command('set scrollback=42')                  -- set global value
-    eq(42, curbufmeths.get_option('scrollback'))
-    command('terminal')
-    eq(42, curbufmeths.get_option('scrollback'))  -- inherits global default
-    command('setlocal scrollback=99')
-    eq(99, curbufmeths.get_option('scrollback'))
-    command('set scrollback<')                    -- reset to global default
-    eq(42, curbufmeths.get_option('scrollback'))
-    command('setglobal scrollback=734')           -- new global default
-    eq(42, curbufmeths.get_option('scrollback'))  -- local value did not change
-    command('terminal')
-    eq(734, curbufmeths.get_option('scrollback'))
+    command 'set scrollback=42'
+    eq(42, curbufmeths.get_option 'scrollback')
+    command 'terminal'
+    eq(42, curbufmeths.get_option 'scrollback') -- inherits global default
+    command 'setlocal scrollback=99'
+    eq(99, curbufmeths.get_option 'scrollback')
+    command 'set scrollback<'
+    eq(42, curbufmeths.get_option 'scrollback')
+    command 'setglobal scrollback=734'
+    eq(42, curbufmeths.get_option 'scrollback') -- local value did not change
+    command 'terminal'
+    eq(734, curbufmeths.get_option 'scrollback')
   end)
-
 end)

@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local command = helpers.command
 local feed_command = helpers.feed_command
@@ -19,29 +19,29 @@ describe('v:exiting', function()
   end)
 
   it('defaults to v:null', function()
-    eq(1, eval('v:exiting is v:null'))
+    eq(1, eval 'v:exiting is v:null')
   end)
 
   it('is 0 on normal exit', function()
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
-      command('quit')
+      command('autocmd VimLeavePre * call rpcrequest(' .. cid .. ', "")')
+      command('autocmd VimLeave    * call rpcrequest(' .. cid .. ', "")')
+      command 'quit'
     end
     local function on_request()
-      eq(0, eval('v:exiting'))
+      eq(0, eval 'v:exiting')
       return ''
     end
     run(on_request, nil, on_setup)
   end)
   it('is 0 on exit from ex-mode involving try-catch', function()
     local function on_setup()
-      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
-      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
-      feed_command('call feedkey("Q")','try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
+      command('autocmd VimLeavePre * call rpcrequest(' .. cid .. ', "")')
+      command('autocmd VimLeave    * call rpcrequest(' .. cid .. ', "")')
+      feed_command('call feedkey("Q")', 'try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
     end
     local function on_request()
-      eq(0, eval('v:exiting'))
+      eq(0, eval 'v:exiting')
       return ''
     end
     run(on_request, nil, on_setup)
@@ -53,10 +53,10 @@ describe(':cquit', function()
     if redir_msg then
       eq('\n' .. redir_msg, redir_exec(cmdline))
       poke_eventloop()
-      eq(2, eval("1+1"))  -- Still alive?
+      eq(2, eval '1+1') -- Still alive?
     else
-      funcs.system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline})
-      eq(exit_code, eval('v:shell_error'))
+      funcs.system { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline }
+      eq(exit_code, eval 'v:shell_error')
     end
   end
 

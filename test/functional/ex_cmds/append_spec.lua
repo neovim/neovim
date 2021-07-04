@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local eq = helpers.eq
 local feed = helpers.feed
@@ -25,8 +25,7 @@ local cmdtest = function(cmd, prep, ret1)
     -- Used to crash because this invokes history processing which uses
     -- hist_char2type which after fdb68e35e4c729c7ed097d8ade1da29e5b3f4b31
     -- crashed.
-    it(cmd .. 's' .. prep .. ' the current line by default when feeding',
-    function()
+    it(cmd .. 's' .. prep .. ' the current line by default when feeding', function()
       feed(':' .. cmd .. '\nabc\ndef\n.\n')
       eq(ret1, buffer_contents())
     end)
@@ -37,13 +36,13 @@ local cmdtest = function(cmd, prep, ret1)
       feed(':' .. cmd .. '<CR>abc<CR>def<C-f>')
       eq({ 'def' }, buffer_contents())
       eq(hisline, funcs.histget(':', -2))
-      eq(cmd, funcs.histget(':'))
+      eq(cmd, funcs.histget ':')
       -- Test that command-line window was launched
-      eq('nofile', curbufmeths.get_option('buftype'))
+      eq('nofile', curbufmeths.get_option 'buftype')
       eq('n', funcs.mode(1))
-      feed('<CR>')
+      feed '<CR>'
       eq('c', funcs.mode(1))
-      feed('.<CR>')
+      feed '.<CR>'
       eq('n', funcs.mode(1))
       eq(ret1, buffer_contents())
     end)

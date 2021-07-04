@@ -1,6 +1,6 @@
 -- Tests for List and Dictionary types.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, source = helpers.feed, helpers.source
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
@@ -8,7 +8,7 @@ describe('list and dictionary types', function()
   before_each(clear)
 
   it('creating list directly with different types', function()
-    source([[
+    source [[
       lang C
       let l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
       $put =string(l)
@@ -18,17 +18,17 @@ describe('list and dictionary types', function()
         $put =string(l[-5])
       catch
         $put =v:exception[:14]
-      endtry]])
-    expect([[
+      endtry]]
+    expect [[
 
       [1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
       {'a': 1}
       1
-      Vim(put):E684: ]])
+      Vim(put):E684: ]]
   end)
 
   it('list slices', function()
-    source([[
+    source [[
       lang C
       " The list from the first test repeated after splitting the tests.
       let l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
@@ -36,18 +36,18 @@ describe('list and dictionary types', function()
       $put =string(l[1:])
       $put =string(l[:-2])
       $put =string(l[0:8])
-      $put =string(l[8:-1])]])
-    expect([=[
+      $put =string(l[8:-1])]]
+    expect [=[
 
       [1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
       ['as''d', [1, 2, function('strlen')], {'a': 1}]
       [1, 'as''d', [1, 2, function('strlen')]]
       [1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
-      []]=])
+      []]=]
   end)
 
   it('list identity', function()
-    source([[
+    source [[
       lang C
       " The list from the first test repeated after splitting the tests.
       let l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
@@ -58,12 +58,12 @@ describe('list and dictionary types', function()
 	        \ (l is lx) . (l isnot lx)
       catch
 	      $put =v:exception
-      endtry]])
-    expect('\n101101')
+      endtry]]
+    expect '\n101101'
   end)
 
   it('creating dictionary directly with different types', function()
-    source([[
+    source [[
       lang C
       let d = {001: 'asd', 'b': [1, 2, function('strlen')], -1: {'a': 1},}
       $put =string(d) . d.1
@@ -82,8 +82,8 @@ describe('list and dictionary types', function()
       endtry
       $put =string(d)
       call filter(d, 'v:key =~ ''[ac391]''')
-      $put =string(d)]])
-    expect([[
+      $put =string(d)]]
+    expect [[
 
       {'1': 'asd', 'b': [1, 2, function('strlen')], '-1': {'a': 1}}asd
       ['-1', '1', 'b']
@@ -93,11 +93,11 @@ describe('list and dictionary types', function()
       -1:{'a': 1}
       Vim(call):E737: 3
       {'c': 'ccc', '1': 99, 'b': [1, 2, function('strlen')], '3': 33, '-1': {'a': 1}}
-      {'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}]])
+      {'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}]]
   end)
 
   it('dictionary identity', function()
-    source([[
+    source [[
       lang C
       " The dict from the first test repeated after splitting the tests.
       let d = {'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}
@@ -108,12 +108,12 @@ describe('list and dictionary types', function()
 	        \ (d isnot dx)
       catch
 	      $put =v:exception
-      endtry]])
-    expect('\n101101')
+      endtry]]
+    expect '\n101101'
   end)
 
   it('removing items with :unlet', function()
-    source([[
+    source [[
       lang C
       " The list from the first test repeated after splitting the tests.
       let l = [1, 'as''d', [1, 2, function("strlen")], {'a': 1},]
@@ -132,51 +132,51 @@ describe('list and dictionary types', function()
 
       unlet d.c
       unlet d[-1]
-      $put =string(d)]])
-    expect([[
+      $put =string(d)]]
+    expect [[
 
       [1, 'as''d', {'a': 1}]
       [4]
-      {'1': 99, '3': 33}]])
+      {'1': 99, '3': 33}]]
   end)
 
   it("removing items out of range: silently skip items that don't exist", function()
     -- We can not use source() here as we want to ignore all errors.
-    feed_command('lang C')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[2:1]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[2:2]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[2:3]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[2:4]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[2:5]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[-1:2]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[-2:2]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[-3:2]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[-4:2]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[-5:2]')
-    feed_command('$put =string(l)')
-    feed_command('let l = [0, 1, 2, 3]')
-    feed_command('unlet l[-6:2]')
-    feed_command('$put =string(l)')
-    expect([=[
+    feed_command 'lang C'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[2:1]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[2:2]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[2:3]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[2:4]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[2:5]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[-1:2]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[-2:2]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[-3:2]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[-4:2]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[-5:2]'
+    feed_command '$put =string(l)'
+    feed_command 'let l = [0, 1, 2, 3]'
+    feed_command 'unlet l[-6:2]'
+    feed_command '$put =string(l)'
+    expect [=[
 
       [0, 1, 2, 3]
       [0, 1, 3]
@@ -188,12 +188,12 @@ describe('list and dictionary types', function()
       [0, 3]
       [3]
       [3]
-      [3]]=])
+      [3]]=]
   end)
 
   -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('assignment to a list', function()
-    source([[
+    source [[
       let l = [0, 1, 2, 3]
       let [va, vb] = l[2:3]
       $put =va
@@ -207,19 +207,19 @@ describe('list and dictionary types', function()
 	      let [va, vb] = l[1:1]
       catch
 	      $put =v:exception[:14]
-      endtry]])
-    expect([[
+      endtry]]
+    expect [[
 
       2
       3
       Vim(let):E687: 
-      Vim(let):E688: ]])
+      Vim(let):E688: ]]
   end)
 
   it('manipulating a big dictionary', function()
     -- Manipulating a big Dictionary (hashtable.c has a border of 1000
     -- entries).
-    source([[
+    source [[
       let d = {}
       for i in range(1500)
 	      let d[i] = 3000 - i
@@ -256,18 +256,18 @@ describe('list and dictionary types', function()
 	      let i += 2
       endwhile
       " Must be almost empty now.
-      $put =string(d)]])
-    expect([[
+      $put =string(d)]]
+    expect [[
 
       3000 2900 2001 1600 1501
       Vim(let):E716: "1500"
       NONE 2999
       33=999
-      {'33': 999}]])
+      {'33': 999}]]
   end)
 
   it('dictionary function', function()
-    source([[
+    source [[
       let dict = {}
       func dict.func(a) dict
 	      $put =a:a . len(self.data)
@@ -276,41 +276,41 @@ describe('list and dictionary types', function()
       call dict.func("len: ")
       let x = dict.func("again: ")
       let Fn = dict.func
-      call Fn('xxx')]])
-    expect([[
+      call Fn('xxx')]]
+    expect [[
 
       len: 3
       again: 3
-      xxx3]])
+      xxx3]]
   end)
 
   it('Function in script-local List or Dict', function()
-    source([[
+    source [[
       let g:dict = {}
       function g:dict.func() dict
 	      $put ='g:dict.func'.self.foo[1].self.foo[0]('asdf')
       endfunc
       let g:dict.foo = ['-', 2, 3]
       call insert(g:dict.foo, function('strlen'))
-      call g:dict.func()]])
-    expect('\ng:dict.func-4')
+      call g:dict.func()]]
+    expect '\ng:dict.func-4'
   end)
 
   it("remove func from dict that's being called (works)", function()
-    source([[
+    source [[
       let d = {1:1}
       func d.func(a)
 	      return "a:". a:a
       endfunc
-      $put =d.func(string(remove(d, 'func')))]])
+      $put =d.func(string(remove(d, 'func')))]]
     -- The function number changed from 3 to 1 because we split the test.
     -- There were two other functions in the old test before this.
-    expect("\na:function('1')")
+    expect "\na:function('1')"
   end)
 
   it('deepcopy() dict that refers to itself', function()
     -- Nasty: deepcopy() dict that refers to itself (fails when noref used).
-    source([[
+    source [[
       let d = {1:1, 2:2}
       let l = [4, d, 6]
       let d[3] = l
@@ -323,15 +323,15 @@ describe('list and dictionary types', function()
       let l2 = [0, l, l, 3]
       let l[1] = l2
       let l3 = deepcopy(l2)
-      $put ='same list: ' . (l3[1] is l3[2])]])
-    expect([[
+      $put ='same list: ' . (l3[1] is l3[2])]]
+    expect [[
 
       Vim(let):E698: 
-      same list: 1]])
+      same list: 1]]
   end)
 
   it('locked variables (part 1)', function()
-    source([=[
+    source [=[
       let l = []
       for depth in range(5)
 	      $put ='depth is ' . depth
@@ -393,8 +393,8 @@ describe('list and dictionary types', function()
 	        endtry
 	        $put =ps
 	      endfor
-      endfor]=])
-    expect([[
+      endfor]=]
+    expect [[
 
       depth is 0
       0000-000
@@ -430,13 +430,13 @@ describe('list and dictionary types', function()
       0011-011
       FFpFFpp
       0000-000
-      ppppppp]])
+      ppppppp]]
   end)
 
   -- TODO In the original test the 5th line of this source() call was used.
   -- But now the test only passes if I comment it.
   it('unletting locked variables', function()
-    source([=[
+    source [=[
       let l = []
       for depth in range(5)
         $put ='depth is ' . depth
@@ -498,8 +498,8 @@ describe('list and dictionary types', function()
           endtry
           $put =ps
         endfor
-      endfor]=])
-    expect([[
+      endfor]=]
+    expect [[
 
       depth is 0
       0000-000
@@ -535,11 +535,11 @@ describe('list and dictionary types', function()
       0011-011
       FppFppp
       0000-000
-      ppppppp]])
+      ppppppp]]
   end)
 
   it('locked variables and :unlet or list / dict functions', function()
-    source([[
+    source [[
       $put ='Locks and commands or functions:'
 
       $put ='No :unlet after lock on dict:'
@@ -645,9 +645,9 @@ describe('list and dictionary types', function()
       catch
         $put =v:exception[:14]
       endtry
-      $put =string(l)]])
+      $put =string(l)]]
 
-    expect([=[
+    expect [=[
 
       Locks and commands or functions:
       No :unlet after lock on dict:
@@ -673,7 +673,7 @@ describe('list and dictionary types', function()
       Vim(unlet):E741: 
       No :let += of locked list variable:
       Vim(let):E741: 
-      ['a', 'b', 3]]=])
+      ['a', 'b', 3]]=]
   end)
 
   it('locked variables (part 2)', function()
@@ -690,33 +690,34 @@ describe('list and dictionary types', function()
       'let l[0:1] = [0, 1]',
       '$put =string(l)',
       'let l[1:2] = [0, 1]',
-      '$put =string(l)')
-    expect([=[
+      '$put =string(l)'
+    )
+    expect [=[
 
       [1, 2, 3, 4]
       [1, 2, 3, 4]
       [1, 2, 3, 4]
       [1, 2, 3, 4]
-      [1, 2, 3, 4]]=])
+      [1, 2, 3, 4]]=]
   end)
 
   it(':lockvar/islocked() triggering script autoloading.', function()
-    source([[           
+    source [[           
       set rtp+=test/functional/fixtures
       lockvar g:footest#x
       unlockvar g:footest#x
       $put ='locked g:footest#x:'.islocked('g:footest#x')
       $put ='exists g:footest#x:'.exists('g:footest#x')
-      $put ='g:footest#x: '.g:footest#x]])
-    expect([[
+      $put ='g:footest#x: '.g:footest#x]]
+    expect [[
 
       locked g:footest#x:-1
       exists g:footest#x:0
-      g:footest#x: 1]])
+      g:footest#x: 1]]
   end)
 
   it('a:000 function argument', function()
-    source([[
+    source [[
       function Test(...)
         " First the tests that should fail.
         try
@@ -749,19 +750,19 @@ describe('list and dictionary types', function()
         catch
           $put ='caught ' . v:exception
         endtry
-      endfunction]])
-    feed_command('call Test(1, 2, [3, 4], {5: 6})')
-    expect([=[
+      endfunction]]
+    feed_command 'call Test(1, 2, [3, 4], {5: 6})'
+    expect [=[
 
       caught a:000
       caught a:000[0]
       caught a:000[2]
       caught a:000[3]
-      [1, 2, [3, 9, 5, 6], {'a': 12, '5': 8}]]=])
+      [1, 2, [3, 9, 5, 6], {'a': 12, '5': 8}]]=]
   end)
 
   it('reverse(), sort(), uniq()', function()
-    source([=[
+    source [=[
       let l = ['-0', 'A11', 2, 2, 'xaaa', 4, 'foo', 'foo6', 'foo',
 	      \ [0, 1, 2], 'x8', [0, 1, 2], 1.5]
       $put =string(uniq(copy(l)))
@@ -778,8 +779,8 @@ describe('list and dictionary types', function()
 	      \ 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
       $put =string(sort(copy(l), 1))
       $put =string(sort(copy(l), 'i'))
-      $put =string(sort(copy(l)))]=])
-    expect([=[
+      $put =string(sort(copy(l)))]=]
+    expect [=[
 
       ['-0', 'A11', 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5]
       [1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0']
@@ -791,11 +792,11 @@ describe('list and dictionary types', function()
       [-1, 'one', 'two', 'three', 'four', 1.0e-15, 0.22, 7, 9, 12, 18, 22, 255]
       ['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}]
       ['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}]
-      ['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}]]=])
+      ['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}]]=]
   end)
 
   it('splitting a string to a list', function()
-    source([[
+    source [[
       $put =string(split('  aa  bb '))
       $put =string(split('  aa  bb  ', '\W\+', 0))
       $put =string(split('  aa  bb  ', '\W\+', 1))
@@ -804,8 +805,8 @@ describe('list and dictionary types', function()
       $put =string(split(':aa::bb:', ':', 1))
       $put =string(split('aa,,bb, cc,', ',\s*', 1))
       $put =string(split('abc', '\zs'))
-      $put =string(split('abc', '\zs', 1))]])
-    expect([=[
+      $put =string(split('abc', '\zs', 1))]]
+    expect [=[
 
       ['aa', 'bb']
       ['aa', 'bb']
@@ -815,28 +816,28 @@ describe('list and dictionary types', function()
       ['', 'aa', '', 'bb', '']
       ['aa', '', 'bb', 'cc', '']
       ['a', 'b', 'c']
-      ['', 'a', '', 'b', '', 'c', '']]=])
+      ['', 'a', '', 'b', '', 'c', '']]=]
   end)
 
   it('compare recursively linked list and dict', function()
-    source([[
+    source [[
       let l = [1, 2, 3, 4]
       let d = {'1': 1, '2': l, '3': 3}
       let l[1] = d
       $put =(l == l)
       $put =(d == d)
       $put =(l != deepcopy(l))
-      $put =(d != deepcopy(d))]])
-    expect([[
+      $put =(d != deepcopy(d))]]
+    expect [[
 
       1
       1
       0
-      0]])
+      0]]
   end)
 
   it('compare complex recursively linked list and dict', function()
-    source([[
+    source [[
       let l = []
       call add(l, l)
       let dict4 = {"l": l}
@@ -844,35 +845,35 @@ describe('list and dictionary types', function()
       let lcopy = deepcopy(l)
       let dict4copy = deepcopy(dict4)
       $put =(l == lcopy)
-      $put =(dict4 == dict4copy)]])
-    expect([[
+      $put =(dict4 == dict4copy)]]
+    expect [[
 
       1
-      1]])
+      1]]
   end)
 
   it('pass the same list to extend()', function()
-    source([[
+    source [[
       let l = [1, 2, 3, 4, 5]
       call extend(l, l)
-      $put =string(l)]])
-    expect([=[
+      $put =string(l)]]
+    expect [=[
 
-      [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]]=])
+      [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]]=]
   end)
 
   it('pass the same dict to extend()', function()
-    source([[
+    source [[
       let d = { 'a': {'b': 'B'}}
       call extend(d, d)
-      $put =string(d)]])
-    expect([[
+      $put =string(d)]]
+    expect [[
 
-      {'a': {'b': 'B'}}]])
+      {'a': {'b': 'B'}}]]
   end)
 
   it('pass the same dict to extend() with "error"', function()
-    source([[
+    source [[
       " Copy dict from previous test.
       let d = { 'a': {'b': 'B'}}
       try
@@ -880,44 +881,44 @@ describe('list and dictionary types', function()
       catch
 	      $put =v:exception[:15] . v:exception[-1:-1]
       endtry
-      $put =string(d)]])
-    expect([[
+      $put =string(d)]]
+    expect [[
 
       Vim(call):E737: a
-      {'a': {'b': 'B'}}]])
+      {'a': {'b': 'B'}}]]
   end)
 
   it('test for range assign', function()
-    source([[
+    source [[
       let l = [0]
       let l[:] = [1, 2]
-      $put =string(l)]])
-    expect([=[
+      $put =string(l)]]
+    expect [=[
 
-      [1, 2]]=])
+      [1, 2]]=]
   end)
 
   it('vim patch 7.3.637', function()
-    feed_command('let a = "No error caught"')
-    feed_command('try')
-    feed_command('  foldopen')
-    feed_command('catch')
-    feed_command("  let a = matchstr(v:exception,'^[^ ]*')")
-    feed_command('endtry')
-    feed('o<C-R>=a<CR><esc>')
-    feed_command('lang C')
-    feed_command('redir => a')
+    feed_command 'let a = "No error caught"'
+    feed_command 'try'
+    feed_command '  foldopen'
+    feed_command 'catch'
+    feed_command "  let a = matchstr(v:exception,'^[^ ]*')"
+    feed_command 'endtry'
+    feed 'o<C-R>=a<CR><esc>'
+    feed_command 'lang C'
+    feed_command 'redir => a'
     -- The test failes if this is not in one line.
-    feed_command("try|foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry")
-    feed_command('redir END')
-    feed('o<C-R>=a<CR><esc>')
-    expect([[
+    feed_command "try|foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry"
+    feed_command 'redir END'
+    feed 'o<C-R>=a<CR><esc>'
+    expect [[
 
       Vim(foldopen):E490:
 
 
       Error detected while processing :
       E492: Not an editor command: foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry
-      ]])
+      ]]
   end)
 end)

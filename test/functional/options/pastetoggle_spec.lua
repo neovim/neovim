@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear = helpers.clear
 local feed = helpers.feed
@@ -11,30 +11,29 @@ local expect = helpers.expect
 describe("'pastetoggle' option", function()
   before_each(function()
     clear()
-    command('set nopaste')
+    command 'set nopaste'
   end)
 
   it("toggles 'paste'", function()
-    command('set pastetoggle=a')
-    eq(0, eval('&paste'))
-    feed('a')
+    command 'set pastetoggle=a'
+    eq(0, eval '&paste')
+    feed 'a'
     -- Need another key so that the vgetorpeek() function returns.
-    feed('j')
-    eq(1, eval('&paste'))
+    feed 'j'
+    eq(1, eval '&paste')
   end)
 
-
   it('does not wait for timeout', function()
-    command('set pastetoggle=abc')
-    command('set ttimeoutlen=9999999')
-    eq(0, eval('&paste'))
+    command 'set pastetoggle=abc'
+    command 'set ttimeoutlen=9999999'
+    eq(0, eval '&paste')
     -- n.b. need <esc> to return from vgetorpeek()
-    feed('abc<esc>')
-    eq(1, eval('&paste'))
-    feed('ab')
+    feed 'abc<esc>'
+    eq(1, eval '&paste')
+    feed 'ab'
     sleep(10)
-    feed('c<esc>')
-    expect('bc')
-    eq(1, eval('&paste'))
+    feed 'c<esc>'
+    expect 'bc'
+    eq(1, eval '&paste')
   end)
 end)

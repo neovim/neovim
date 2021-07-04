@@ -1,12 +1,18 @@
 local pretty = require 'pl.pretty'
-local global_helpers = require('test.helpers')
+local global_helpers = require 'test.helpers'
 
 local colors
 
-local isWindows = package.config:sub(1,1) == '\\'
+local isWindows = package.config:sub(1, 1) == '\\'
 
 if isWindows then
-  colors = setmetatable({}, {__index = function() return function(s) return s end end})
+  colors = setmetatable({}, {
+    __index = function()
+      return function(s)
+        return s
+      end
+    end,
+  })
 else
   colors = require 'term.colors'
 end
@@ -16,50 +22,74 @@ return function(options)
   local handler = require 'busted.outputHandlers.base'()
 
   local c = {
-    succ = function(s) return colors.bright(colors.green(s)) end,
-    skip = function(s) return colors.bright(colors.yellow(s)) end,
-    fail = function(s) return colors.bright(colors.magenta(s)) end,
-    errr = function(s) return colors.bright(colors.red(s)) end,
+    succ = function(s)
+      return colors.bright(colors.green(s))
+    end,
+    skip = function(s)
+      return colors.bright(colors.yellow(s))
+    end,
+    fail = function(s)
+      return colors.bright(colors.magenta(s))
+    end,
+    errr = function(s)
+      return colors.bright(colors.red(s))
+    end,
     test = tostring,
     file = colors.cyan,
     time = colors.dim,
     note = colors.yellow,
-    sect = function(s) return colors.green(colors.dim(s)) end,
+    sect = function(s)
+      return colors.green(colors.dim(s))
+    end,
     nmbr = colors.bright,
   }
 
   local repeatSuiteString = '\nRepeating all tests (run %d of %d) . . .\n\n'
-  local randomizeString  = c.note('Note: Randomizing test order with a seed of %d.\n')
-  local globalSetup      = c.sect('[----------]') .. ' Global test environment setup.\n'
-  local fileStartString  = c.sect('[----------]') .. ' Running tests from ' .. c.file('%s') .. '\n'
-  local runString        = c.sect('[ RUN      ]') .. ' ' .. c.test('%s') .. ': '
-  local successString    = c.succ('OK')   .. '\n'
-  local skippedString    = c.skip('SKIP') .. '\n'
-  local failureString    = c.fail('FAIL') .. '\n'
-  local errorString      = c.errr('ERR')  .. '\n'
-  local fileEndString    = c.sect('[----------]') .. ' '.. c.nmbr('%d') .. ' %s from ' .. c.file('%s') .. ' ' .. c.time('(%.2f ms total)') .. '\n\n'
-  local globalTeardown   = c.sect('[----------]') .. ' Global test environment teardown.\n'
-  local suiteEndString   = c.sect('[==========]') .. ' ' .. c.nmbr('%d') .. ' %s from ' .. c.nmbr('%d') .. ' test %s ran. ' .. c.time('(%.2f ms total)') .. '\n'
-  local successStatus    = c.succ('[  PASSED  ]') .. ' ' .. c.nmbr('%d') .. ' %s.\n'
-  local timeString       = c.time('%.2f ms')
+  local randomizeString = c.note 'Note: Randomizing test order with a seed of %d.\n'
+  local globalSetup = c.sect '[----------]' .. ' Global test environment setup.\n'
+  local fileStartString = c.sect '[----------]' .. ' Running tests from ' .. c.file '%s' .. '\n'
+  local runString = c.sect '[ RUN      ]' .. ' ' .. c.test '%s' .. ': '
+  local successString = c.succ 'OK' .. '\n'
+  local skippedString = c.skip 'SKIP' .. '\n'
+  local failureString = c.fail 'FAIL' .. '\n'
+  local errorString = c.errr 'ERR' .. '\n'
+  local fileEndString = c.sect '[----------]'
+    .. ' '
+    .. c.nmbr '%d'
+    .. ' %s from '
+    .. c.file '%s'
+    .. ' '
+    .. c.time '(%.2f ms total)'
+    .. '\n\n'
+  local globalTeardown = c.sect '[----------]' .. ' Global test environment teardown.\n'
+  local suiteEndString = c.sect '[==========]'
+    .. ' '
+    .. c.nmbr '%d'
+    .. ' %s from '
+    .. c.nmbr '%d'
+    .. ' test %s ran. '
+    .. c.time '(%.2f ms total)'
+    .. '\n'
+  local successStatus = c.succ '[  PASSED  ]' .. ' ' .. c.nmbr '%d' .. ' %s.\n'
+  local timeString = c.time '%.2f ms'
 
   local summaryStrings = {
     skipped = {
-      header = c.skip('[ SKIPPED  ]') .. ' ' .. c.nmbr('%d') .. ' %s, listed below:\n',
-      test   = c.skip('[ SKIPPED  ]') .. ' %s\n',
-      footer = ' ' .. c.nmbr('%d') .. ' SKIPPED %s\n',
+      header = c.skip '[ SKIPPED  ]' .. ' ' .. c.nmbr '%d' .. ' %s, listed below:\n',
+      test = c.skip '[ SKIPPED  ]' .. ' %s\n',
+      footer = ' ' .. c.nmbr '%d' .. ' SKIPPED %s\n',
     },
 
     failure = {
-      header = c.fail('[  FAILED  ]') .. ' ' .. c.nmbr('%d') .. ' %s, listed below:\n',
-      test   = c.fail('[  FAILED  ]') .. ' %s\n',
-      footer = ' ' .. c.nmbr('%d') .. ' FAILED %s\n',
+      header = c.fail '[  FAILED  ]' .. ' ' .. c.nmbr '%d' .. ' %s, listed below:\n',
+      test = c.fail '[  FAILED  ]' .. ' %s\n',
+      footer = ' ' .. c.nmbr '%d' .. ' FAILED %s\n',
     },
 
     error = {
-      header = c.errr('[  ERROR   ]') .. ' ' .. c.nmbr('%d') .. ' %s, listed below:\n',
-      test   = c.errr('[  ERROR   ]') .. ' %s\n',
-      footer = ' ' .. c.nmbr('%d') .. ' %s\n',
+      header = c.errr '[  ERROR   ]' .. ' ' .. c.nmbr '%d' .. ' %s, listed below:\n',
+      test = c.errr '[  ERROR   ]' .. ' %s\n',
+      footer = ' ' .. c.nmbr '%d' .. ' %s\n',
     },
   }
 
@@ -105,8 +135,7 @@ return function(options)
   local getFileLine = function(element)
     local fileline = ''
     if element.trace or element.trace.short_src then
-      fileline = colors.cyan(element.trace.short_src) .. ' @ ' ..
-                 colors.cyan(element.trace.currentline) .. ': '
+      fileline = colors.cyan(element.trace.short_src) .. ' @ ' .. colors.cyan(element.trace.currentline) .. ': '
     end
     return fileline
   end
@@ -187,7 +216,7 @@ return function(options)
     if tbl.duration then
       return tbl.duration * 1000
     else
-      return tonumber('nan')
+      return tonumber 'nan'
     end
   end
 
@@ -250,7 +279,7 @@ return function(options)
       errorCount = errorCount + 1
       string = errorString .. failureDescription(handler.errors[#handler.errors])
     else
-      string = "unexpected test status! ("..status..")"
+      string = 'unexpected test status! (' .. status .. ')'
     end
     write_status(element, string)
 

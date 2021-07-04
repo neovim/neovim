@@ -3,18 +3,18 @@
 -- restored. We need about 10000 lines of 100 characters to get two levels of
 -- pointer blocks.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local clear, expect, source = helpers.clear, helpers.expect, helpers.source
 
 describe('78', function()
   setup(clear)
   teardown(function()
-    os.remove(".Xtest.swp")
-    os.remove(".Xtest.swo")
+    os.remove '.Xtest.swp'
+    os.remove '.Xtest.swo'
   end)
 
   it('is working', function()
-    source([=[
+    source [=[
       set directory=. swapfile fileformat=unix undolevels=-1
       e! Xtest
       let text = "\tabcdefghijklmnoparstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnoparstuvwxyz0123456789"
@@ -68,11 +68,11 @@ describe('78', function()
       endwhile
       q!
       call append(line('$'), 'recovery end')
-    ]=])
+    ]=]
 
-    expect([[
+    expect [[
       recovery start
 
-      recovery end]])
+      recovery end]]
   end)
 end)

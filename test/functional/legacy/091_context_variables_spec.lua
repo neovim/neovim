@@ -1,6 +1,6 @@
 -- Tests for getbufvar(), getwinvar(), gettabvar() and gettabwinvar().
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, expect = helpers.clear, helpers.expect
 
@@ -8,11 +8,11 @@ describe('context variables', function()
   setup(clear)
 
   it('is working', function()
-    insert("start:")
+    insert 'start:'
 
     -- Test for getbufvar().
     -- Use strings to test for memory leaks.
-    source([[
+    source [[
       function Getbufscope(buf, ...)
         let ret = call('getbufvar', [a:buf, ''] + a:000)
         if type(ret) == type({})
@@ -39,10 +39,10 @@ describe('context variables', function()
       unlet def_num
       $put =string(getbufvar(1, '&autoindent'))
       $put =string(getbufvar(1, '&autoindent', 1))
-    ]])
+    ]]
 
     -- Open new window with forced option values.
-    source([[
+    source [[
       set fileformats=unix,dos
       new ++ff=dos ++bin ++enc=iso-8859-2
       let otherff = getbufvar(bufnr('%'), '&fileformat')
@@ -53,10 +53,10 @@ describe('context variables', function()
       $put =string(otherbin)
       $put =otherfenc
       unlet otherff otherbin otherfenc
-    ]])
+    ]]
 
     -- Test for getwinvar().
-    source([[
+    source [[
       let w:var_str = "Dance"
       let def_str = "Chance"
       $put =string(getwinvar(1, 'var_str'))
@@ -72,10 +72,10 @@ describe('context variables', function()
       $put =string(getwinvar(1, '&nu'))
       $put =string(getwinvar(1, '&nu',  1))
       unlet def_str
-    ]])
+    ]]
 
     -- Test for gettabvar().
-    source([[
+    source [[
       tabnew
       tabnew
       let t:var_list = [1, 2, 3]
@@ -96,10 +96,10 @@ describe('context variables', function()
       $put =string(gettabvar(3, '&nu', def_list))
       unlet def_list
       tabonly
-    ]])
+    ]]
 
     -- Test for gettabwinvar().
-    source([[
+    source [[
       tabnew
       tabnew
       tabprev
@@ -131,10 +131,10 @@ describe('context variables', function()
       $put =string(gettabwinvar(2, 3, '&nux'))
       $put =string(gettabwinvar(2, 3, '&nux', 1))
       tabonly
-    ]])
+    ]]
 
     -- Assert buffer contents.
-    expect([[
+    expect [[
       start:
       'abcd'
       'abcd'
@@ -184,6 +184,6 @@ describe('context variables', function()
       ''
       {'dict2': 'newval'}
       ''
-      1]])
+      1]]
   end)
 end)

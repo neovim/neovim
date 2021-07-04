@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local exc_exec = helpers.exc_exec
 local command = helpers.command
 local funcs = helpers.funcs
@@ -12,7 +12,7 @@ describe('Special values', function()
   before_each(clear)
 
   it('do not cause error when freed', function()
-    command([[
+    command [[
       function Test()
         try
           return v:true
@@ -20,8 +20,8 @@ describe('Special values', function()
           return 'something else'
         endtry
       endfunction
-    ]])
-    eq(0, exc_exec('call Test()'))
+    ]]
+    eq(0, exc_exec 'call Test()')
   end)
 
   it('work with empty()', function()
@@ -37,97 +37,97 @@ describe('Special values', function()
   end)
 
   it('work with is/isnot properly', function()
-    eq(1, eval('v:null is v:null'))
-    eq(0, eval('v:null is v:true'))
-    eq(0, eval('v:null is v:false'))
-    eq(1, eval('v:true is v:true'))
-    eq(0, eval('v:true is v:false'))
-    eq(1, eval('v:false is v:false'))
+    eq(1, eval 'v:null is v:null')
+    eq(0, eval 'v:null is v:true')
+    eq(0, eval 'v:null is v:false')
+    eq(1, eval 'v:true is v:true')
+    eq(0, eval 'v:true is v:false')
+    eq(1, eval 'v:false is v:false')
 
-    eq(0, eval('v:null  is 0'))
-    eq(0, eval('v:true  is 0'))
-    eq(0, eval('v:false is 0'))
+    eq(0, eval 'v:null  is 0')
+    eq(0, eval 'v:true  is 0')
+    eq(0, eval 'v:false is 0')
 
-    eq(0, eval('v:null  is 1'))
-    eq(0, eval('v:true  is 1'))
-    eq(0, eval('v:false is 1'))
+    eq(0, eval 'v:null  is 1')
+    eq(0, eval 'v:true  is 1')
+    eq(0, eval 'v:false is 1')
 
-    eq(0, eval('v:null  is ""'))
-    eq(0, eval('v:true  is ""'))
-    eq(0, eval('v:false is ""'))
+    eq(0, eval 'v:null  is ""')
+    eq(0, eval 'v:true  is ""')
+    eq(0, eval 'v:false is ""')
 
-    eq(0, eval('v:null  is "null"'))
-    eq(0, eval('v:true  is "true"'))
-    eq(0, eval('v:false is "false"'))
+    eq(0, eval 'v:null  is "null"')
+    eq(0, eval 'v:true  is "true"')
+    eq(0, eval 'v:false is "false"')
 
-    eq(0, eval('v:null  is []'))
-    eq(0, eval('v:true  is []'))
-    eq(0, eval('v:false is []'))
+    eq(0, eval 'v:null  is []')
+    eq(0, eval 'v:true  is []')
+    eq(0, eval 'v:false is []')
 
-    eq(0, eval('v:null isnot v:null'))
-    eq(1, eval('v:null isnot v:true'))
-    eq(1, eval('v:null isnot v:false'))
-    eq(0, eval('v:true isnot v:true'))
-    eq(1, eval('v:true isnot v:false'))
-    eq(0, eval('v:false isnot v:false'))
+    eq(0, eval 'v:null isnot v:null')
+    eq(1, eval 'v:null isnot v:true')
+    eq(1, eval 'v:null isnot v:false')
+    eq(0, eval 'v:true isnot v:true')
+    eq(1, eval 'v:true isnot v:false')
+    eq(0, eval 'v:false isnot v:false')
 
-    eq(1, eval('v:null  isnot 0'))
-    eq(1, eval('v:true  isnot 0'))
-    eq(1, eval('v:false isnot 0'))
+    eq(1, eval 'v:null  isnot 0')
+    eq(1, eval 'v:true  isnot 0')
+    eq(1, eval 'v:false isnot 0')
 
-    eq(1, eval('v:null  isnot 1'))
-    eq(1, eval('v:true  isnot 1'))
-    eq(1, eval('v:false isnot 1'))
+    eq(1, eval 'v:null  isnot 1')
+    eq(1, eval 'v:true  isnot 1')
+    eq(1, eval 'v:false isnot 1')
 
-    eq(1, eval('v:null  isnot ""'))
-    eq(1, eval('v:true  isnot ""'))
-    eq(1, eval('v:false isnot ""'))
+    eq(1, eval 'v:null  isnot ""')
+    eq(1, eval 'v:true  isnot ""')
+    eq(1, eval 'v:false isnot ""')
 
-    eq(1, eval('v:null  isnot "null"'))
-    eq(1, eval('v:true  isnot "true"'))
-    eq(1, eval('v:false isnot "false"'))
+    eq(1, eval 'v:null  isnot "null"')
+    eq(1, eval 'v:true  isnot "true"')
+    eq(1, eval 'v:false isnot "false"')
 
-    eq(1, eval('v:null  isnot []'))
-    eq(1, eval('v:true  isnot []'))
-    eq(1, eval('v:false isnot []'))
+    eq(1, eval 'v:null  isnot []')
+    eq(1, eval 'v:true  isnot []')
+    eq(1, eval 'v:false isnot []')
   end)
 
   it('work with +/-/* properly', function()
-    eq(1, eval('0 + v:true'))
-    eq(0, eval('0 + v:null'))
-    eq(0, eval('0 + v:false'))
+    eq(1, eval '0 + v:true')
+    eq(0, eval '0 + v:null')
+    eq(0, eval '0 + v:false')
 
-    eq(-1, eval('0 - v:true'))
-    eq( 0, eval('0 - v:null'))
-    eq( 0, eval('0 - v:false'))
+    eq(-1, eval '0 - v:true')
+    eq(0, eval '0 - v:null')
+    eq(0, eval '0 - v:false')
 
-    eq(1, eval('1 * v:true'))
-    eq(0, eval('1 * v:null'))
-    eq(0, eval('1 * v:false'))
+    eq(1, eval '1 * v:true')
+    eq(0, eval '1 * v:null')
+    eq(0, eval '1 * v:false')
   end)
 
   it('does not work with +=/-=/.=', function()
     meths.set_var('true', true)
     meths.set_var('false', false)
-    command('let null = v:null')
+    command 'let null = v:null'
 
-    eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let true  += 1'))
-    eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let false += 1'))
-    eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let null  += 1'))
+    eq('Vim(let):E734: Wrong variable type for +=', exc_exec 'let true  += 1')
+    eq('Vim(let):E734: Wrong variable type for +=', exc_exec 'let false += 1')
+    eq('Vim(let):E734: Wrong variable type for +=', exc_exec 'let null  += 1')
 
-    eq('Vim(let):E734: Wrong variable type for -=', exc_exec('let true  -= 1'))
-    eq('Vim(let):E734: Wrong variable type for -=', exc_exec('let false -= 1'))
-    eq('Vim(let):E734: Wrong variable type for -=', exc_exec('let null  -= 1'))
+    eq('Vim(let):E734: Wrong variable type for -=', exc_exec 'let true  -= 1')
+    eq('Vim(let):E734: Wrong variable type for -=', exc_exec 'let false -= 1')
+    eq('Vim(let):E734: Wrong variable type for -=', exc_exec 'let null  -= 1')
 
-    eq('Vim(let):E734: Wrong variable type for .=', exc_exec('let true  .= 1'))
-    eq('Vim(let):E734: Wrong variable type for .=', exc_exec('let false .= 1'))
-    eq('Vim(let):E734: Wrong variable type for .=', exc_exec('let null  .= 1'))
+    eq('Vim(let):E734: Wrong variable type for .=', exc_exec 'let true  .= 1')
+    eq('Vim(let):E734: Wrong variable type for .=', exc_exec 'let false .= 1')
+    eq('Vim(let):E734: Wrong variable type for .=', exc_exec 'let null  .= 1')
   end)
 
   it('work with . (concat) properly', function()
-    eq("true", eval('"" . v:true'))
-    eq("null", eval('"" . v:null'))
-    eq("false", eval('"" . v:false'))
+    eq('true', eval '"" . v:true')
+    eq('null', eval '"" . v:null')
+    eq('false', eval '"" . v:false')
   end)
 
   it('work with type()', function()
@@ -147,9 +147,9 @@ describe('Special values', function()
   end)
 
   it('fails in index', function()
-    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:true[0]'))
-    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:false[0]'))
-    eq('Vim(echo):E909: Cannot index a special variable', exc_exec('echo v:null[0]'))
+    eq('Vim(echo):E909: Cannot index a special variable', exc_exec 'echo v:true[0]')
+    eq('Vim(echo):E909: Cannot index a special variable', exc_exec 'echo v:false[0]')
+    eq('Vim(echo):E909: Cannot index a special variable', exc_exec 'echo v:null[0]')
   end)
 
   it('is accepted by assert_true and assert_false', function()
@@ -166,25 +166,25 @@ describe('Special values', function()
       'Expected False but got v:null',
       'Expected True but got v:false',
       'Expected True but got v:null',
-    }, meths.get_vvar('errors'))
+    }, meths.get_vvar 'errors')
   end)
 
   describe('compat', function()
     it('v:count is distinct from count', function()
-      command('let count = []') -- v:count is readonly
-      eq(1, eval('count is# g:["count"]'))
+      command 'let count = []'
+      eq(1, eval 'count is# g:["count"]')
     end)
     it('v:errmsg is distinct from errmsg', function()
-      command('let errmsg = 1')
-      eq(1, eval('errmsg is# g:["errmsg"]'))
+      command 'let errmsg = 1'
+      eq(1, eval 'errmsg is# g:["errmsg"]')
     end)
     it('v:shell_error is distinct from shell_error', function()
-      command('let shell_error = []') -- v:shell_error is readonly
-      eq(1, eval('shell_error is# g:["shell_error"]'))
+      command 'let shell_error = []'
+      eq(1, eval 'shell_error is# g:["shell_error"]')
     end)
     it('v:this_session is distinct from this_session', function()
-      command('let this_session = []')
-      eq(1, eval('this_session is# g:["this_session"]'))
+      command 'let this_session = []'
+      eq(1, eval 'this_session is# g:["this_session"]')
     end)
   end)
 end)

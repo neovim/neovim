@@ -1,7 +1,7 @@
 -- Tests for case-insensitive UTF-8 comparisons (utf_strnicmp() in mbyte.c)
 -- Also test "g~ap".
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local feed, source = helpers.feed, helpers.source
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
@@ -9,8 +9,8 @@ describe('case-insensitive string comparison in UTF-8', function()
   setup(clear)
 
   it('is working', function()
-    feed('ggdG<cr>')
-    source([[
+    feed 'ggdG<cr>'
+    source [[
       function! Ch(a, op, b, expected)
         if eval(printf('"%s" %s "%s"', a:a, a:op, a:b)) != a:expected
           call append(line('$'), printf('"%s" %s "%s" should return %d', a:a, a:op, a:b, a:expected))
@@ -103,21 +103,21 @@ describe('case-insensitive string comparison in UTF-8', function()
         call LT(printf('xYz\xc2\x%.2XUvW', n), printf('XyZ\xc2\x%.2XuVw', n))
       endfor
       call append(0, printf('%d checks passed', b:passed))
-    ]])
+    ]]
 
     -- Test that g~ap changes one paragraph only.
-    feed_command('new')
-    feed('iabcd<cr><cr>defg<esc>gg0g~ap')
-    feed_command('let lns = getline(1,3)')
-    feed_command('q!')
-    feed_command([[call append(line('$'), lns)]])
+    feed_command 'new'
+    feed 'iabcd<cr><cr>defg<esc>gg0g~ap'
+    feed_command 'let lns = getline(1,3)'
+    feed_command 'q!'
+    feed_command [[call append(line('$'), lns)]]
 
     -- Assert buffer contents.
-    expect([=[
+    expect [=[
       3732 checks passed
 
       ABCD
 
-      defg]=])
+      defg]=]
   end)
 end)

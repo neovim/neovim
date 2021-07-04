@@ -1,12 +1,12 @@
-local helpers = require('test.unit.helpers')(after_each)
-local assert = require('luassert')
+local helpers = require 'test.unit.helpers'(after_each)
+local assert = require 'luassert'
 
 local itp = helpers.gen_itp(it)
 
 local sc = helpers.sc
 
 -- All of the below tests must fail. Check how exactly they fail.
-if os.getenv('NVIM_TEST_RUN_TESTTEST') ~= '1' then
+if os.getenv 'NVIM_TEST_RUN_TESTTEST' ~= '1' then
   return
 end
 describe('test code', function()

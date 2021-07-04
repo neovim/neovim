@@ -1,5 +1,5 @@
-local lfs = require('lfs')
-local helpers = require('test.functional.helpers')(after_each)
+local lfs = require 'lfs'
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
@@ -29,24 +29,23 @@ describe(':mkview', function()
 
   it('viewoption curdir restores local current directory', function()
     local cwd_dir = funcs.getcwd()
-    local set_view_dir_command = 'set viewdir=' .. cwd_dir ..
-          get_pathsep() .. view_dir
+    local set_view_dir_command = 'set viewdir=' .. cwd_dir .. get_pathsep() .. view_dir
 
     -- By default the local current directory should save
     command(set_view_dir_command)
     command('edit ' .. tmp_file_base .. '1')
     command('lcd ' .. local_dir)
-    command('mkview')
+    command 'mkview'
 
     -- Create a new instance of Nvim to remove the 'lcd'
     clear()
 
     -- Disable saving the local current directory for the second view
     command(set_view_dir_command)
-    command('set viewoptions-=curdir')
+    command 'set viewoptions-=curdir'
     command('edit ' .. tmp_file_base .. '2')
     command('lcd ' .. local_dir)
-    command('mkview')
+    command 'mkview'
 
     -- Create a new instance of Nvim to test saved 'lcd' option
     clear()
@@ -54,14 +53,13 @@ describe(':mkview', function()
 
     -- Load the view without a saved local current directory
     command('edit ' .. tmp_file_base .. '2')
-    command('loadview')
+    command 'loadview'
     -- The view's current directory should not have changed
     eq(cwd_dir, funcs.getcwd())
     -- Load the view with a saved local current directory
     command('edit ' .. tmp_file_base .. '1')
-    command('loadview')
+    command 'loadview'
     -- The view's local directory should have been saved
     eq(cwd_dir .. get_pathsep() .. local_dir, funcs.getcwd())
   end)
-
 end)

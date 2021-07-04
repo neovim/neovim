@@ -1,4 +1,4 @@
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
@@ -10,18 +10,18 @@ describe(':help', function()
 
   it('window closed makes cursor return to a valid win/buf #9773', function()
     helpers.add_builddir_to_rtp()
-    command('help help')
+    command 'help help'
     eq(1001, funcs.win_getid())
-    command('quit')
+    command 'quit'
     eq(1000, funcs.win_getid())
 
-    command('autocmd WinNew * wincmd p')
+    command 'autocmd WinNew * wincmd p'
 
-    command('help help')
+    command 'help help'
     -- Window 1002 is opened, but the autocmd switches back to 1000 and
     -- creates the help buffer there instead.
     eq(1000, funcs.win_getid())
-    command('quit')
+    command 'quit'
     -- Before #9773, Nvim would crash on quitting the help window.
     eq(1002, funcs.win_getid())
   end)

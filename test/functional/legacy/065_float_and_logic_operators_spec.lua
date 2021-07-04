@@ -1,6 +1,6 @@
 -- Test for floating point and logical operators.
 
-local helpers = require('test.functional.helpers')(after_each)
+local helpers = require 'test.functional.helpers'(after_each)
 local insert, source = helpers.insert, helpers.source
 local clear, expect = helpers.clear, helpers.expect
 
@@ -8,10 +8,10 @@ describe('floating point and logical operators', function()
   setup(clear)
 
   it('is working', function()
-    insert([=[
-      Results of test65:]=])
+    insert [=[
+      Results of test65:]=]
 
-    source([[
+    source [[
       $put =printf('%f', 123.456)
       $put =printf('%e', 123.456)
       $put =printf('%g', 123.456)
@@ -94,10 +94,10 @@ describe('floating point and logical operators', function()
       $put =and(invert(16), 65535)
       $put =and(invert(128), 65535)
       silent! $put =invert(1.0)
-    ]])
+    ]]
 
     -- Assert buffer contents.
-    expect([=[
+    expect [=[
       Results of test65:
       123.456000
       1.234560e+02
@@ -170,6 +170,6 @@ describe('floating point and logical operators', function()
       65408
       65519
       65407
-      0]=])
+      0]=]
   end)
 end)

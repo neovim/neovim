@@ -1,6 +1,5 @@
-local helpers = require('test.functional.helpers')(after_each)
-local clear, meths, funcs, eq =
-  helpers.clear, helpers.meths, helpers.funcs, helpers.eq
+local helpers = require 'test.functional.helpers'(after_each)
+local clear, meths, funcs, eq = helpers.clear, helpers.meths, helpers.funcs, helpers.eq
 
 describe('history support code', function()
   before_each(clear)
@@ -9,7 +8,7 @@ describe('history support code', function()
     -- Regression test: check absence of the memory leak when clearing start of
     -- the history using ex_getln.c/clr_history().
     eq(1, funcs.histadd(':', 'foo'))
-    eq(1, funcs.histdel(':'))
+    eq(1, funcs.histdel ':')
     eq('', funcs.histget(':', -1))
   end)
 
@@ -18,7 +17,7 @@ describe('history support code', function()
     -- the history using ex_getln.c/clr_history().
     meths.set_option('history', 1)
     eq(1, funcs.histadd(':', 'foo'))
-    eq(1, funcs.histdel(':'))
+    eq(1, funcs.histdel ':')
     eq('', funcs.histget(':', -1))
   end)
 
@@ -30,7 +29,7 @@ describe('history support code', function()
     eq(1, funcs.histadd(':', 'bar'))
     eq(1, funcs.histadd(':', 'baz'))
     eq(1, funcs.histdel(':', -2))
-    eq(1, funcs.histdel(':'))
+    eq(1, funcs.histdel ':')
     eq('', funcs.histget(':', -1))
   end)
 end)
