@@ -192,7 +192,7 @@ static void au_del_cmd(AutoCmd *ac)
 /// This is only done when not executing autocommands.
 static void au_cleanup(void)
 {
-  AutoPat *ap, **prev_ap;
+  AutoPat *ap;
   event_T event;
 
   if (autocmd_busy || !au_need_clean) {
@@ -203,7 +203,7 @@ static void au_cleanup(void)
   for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
        event = (event_T)((int)event + 1)) {
     // Loop over all autocommand patterns.
-    prev_ap = &(first_autopat[(int)event]);
+    AutoPat **prev_ap = &(first_autopat[(int)event]);
     for (ap = *prev_ap; ap != NULL; ap = *prev_ap) {
       bool has_cmd = false;
 
@@ -423,13 +423,12 @@ static event_T event_name2nr(const char_u *start, char_u **end)
 {
   const char_u *p;
   int i;
-  int len;
 
   // the event name ends with end of line, '|', a blank or a comma
   for (p = start; *p && !ascii_iswhite(*p) && *p != ',' && *p != '|'; p++) {
   }
   for (i = 0; event_names[i].name != NULL; i++) {
-    len = (int)event_names[i].len;
+    int len = (int)event_names[i].len;
     if (len == p - start && STRNICMP(event_names[i].name, start, len) == 0) {
       break;
     }
@@ -734,7 +733,6 @@ void do_autocmd(char_u *arg_in, int forceit)
 // Returns the group ID or AUGROUP_ALL.
 static int au_get_grouparg(char_u **argp)
 {
-  char_u *group_name;
   char_u *p;
   char_u *arg = *argp;
   int group = AUGROUP_ALL;
@@ -742,7 +740,7 @@ static int au_get_grouparg(char_u **argp)
   for (p = arg; *p && !ascii_iswhite(*p) && *p != '|'; p++) {
   }
   if (p > arg) {
-    group_name = vim_strnsave(arg, (size_t)(p - arg));
+    char_u *group_name = vim_strnsave(arg, (size_t)(p - arg));
     group = au_find_group(group_name);
     if (group == AUGROUP_ERROR) {
       group = AUGROUP_ALL;  // no match, use all groups
