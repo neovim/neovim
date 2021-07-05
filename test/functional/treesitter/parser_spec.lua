@@ -227,6 +227,43 @@ void ui_refresh(void)
     }, res)
   end)
 
+  it('supports getting text of multiline node', function()
+    if pending_c_parser(pending) then return end
+    insert(test_text)
+    local res = exec_lua([[
+      local parser = vim.treesitter.get_parser(0, "c")
+      local tree = parser:parse()[1]
+      return vim.treesitter.get_node_text(tree:root(), 0)
+    ]])
+    eq(test_text, res)
+
+    local res2 = exec_lua([[
+      local parser = vim.treesitter.get_parser(0, "c")
+      local root = parser:parse()[1]:root()
+      return vim.treesitter.get_node_text(root:child(0):child(0), 0)
+    ]])
+    eq('void', res2)
+  end)
+
+  it('support getting text where start of node is past EOF', function()
+    local text = [[
+def run
+  a = <<~E
+end]]
+    insert(text)
+    local result = exec_lua([[
+      local fake_node = {}
+      function fake_node:start()
+        return 3, 0, 23
+      end
+      function fake_node:end_()
+        return 3, 0, 23
+      end
+      return vim.treesitter.get_node_text(fake_node, 0) == nil
+    ]])
+    eq(true, result)
+  end)
+
   it('can match special regex characters like \\ * + ( with `vim-match?`', function()
     insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
 
