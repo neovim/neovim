@@ -104,6 +104,20 @@ void ui_refresh(void)
   }
 }]]
 
+  it('get_parser() changes the language of the parser', function()
+    local res = exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c")
+      return parser:lang()
+    ]])
+    eq("c", res)
+
+    local ok, err = unpack(exec_lua([[
+       return {pcall(vim.treesitter.get_parser, 0, "cpp")}
+    ]]))
+    assert(not ok)
+    assert(string.find(err, "no parser for 'cpp' language", 1, true))
+  end)
+
   it('allows to iterate over nodes children', function()
     insert(test_text);
 

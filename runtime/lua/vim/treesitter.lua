@@ -6,6 +6,7 @@ local LanguageTree = require'vim.treesitter.languagetree'
 -- TODO(bfredl): currently we retain parsers for the lifetime of the buffer.
 -- Consider use weak references to release parser if all plugins are done with
 -- it.
+-- Table of buffer number to a table of language -> parser.
 local parsers = {}
 
 local M = vim.tbl_extend("error", query, language)
@@ -51,8 +52,8 @@ function M._create_parser(bufnr, lang, opts)
 
   ---@private
   local function detach_cb(_, ...)
-    if parsers[bufnr] == self then
-      parsers[bufnr] = nil
+    if parsers[bufnr] and parsers[bufnr][lang] == self then
+      parsers[bufnr][lang] = nil
     end
     self:_on_detach(...)
   end
@@ -85,17 +86,20 @@ function M.get_parser(bufnr, lang, opts)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  if lang == nil then
+  if not lang then
     lang = a.nvim_buf_get_option(bufnr, "filetype")
   end
 
-  if parsers[bufnr] == nil then
-    parsers[bufnr] = M._create_parser(bufnr, lang, opts)
+  local parser = parsers[bufnr] and parsers[bufnr][lang]
+  if not parser then
+    parser = M._create_parser(bufnr, lang, opts)
+    parsers[bufnr] = parsers[bufnr] or {}
+    parsers[bufnr][lang] = parser
   end
 
-  parsers[bufnr]:register_cbs(opts.buf_attach_cbs)
+  parser:register_cbs(opts.buf_attach_cbs)
 
-  return parsers[bufnr]
+  return parser
 end
 
 --- Gets a string parser
