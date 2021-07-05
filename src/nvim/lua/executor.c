@@ -247,6 +247,21 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult,
   return retval;
 }
 
+#ifdef WIN32
+static int nlua_luv_spawn(lua_State *lstate)
+{
+  size_t s_len;
+  const char *cmd = luaL_checklstring(lstate, 1, &s_len);
+  char *abspath;
+  if (s_len != 0 && os_can_exe(cmd, &abspath, true)) {
+    lua_pushstring(lstate, abspath);
+    lua_replace(lstate, 1);
+    xfree(abspath);
+  }
+  return (lua_tocfunction(lstate, lua_upvalueindex(1)))(lstate);
+}
+#endif
+
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
@@ -486,6 +501,13 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   luaopen_luv(lstate);
   lua_pushvalue(lstate, -1);
   lua_setfield(lstate, -3, "loop");
+
+#ifdef WIN32
+  // replace luv.spawn with a wrapper.
+  lua_getfield(lstate, -1, "spawn");
+  lua_pushcclosure(lstate, nlua_luv_spawn, 1);
+  lua_setfield(lstate, -2, "spawn");
+#endif
 
   // package.loaded.luv = vim.loop
   // otherwise luv will be reinitialized when require'luv'
