@@ -845,7 +845,7 @@ end
 ---
 --@param signature_help Response of `textDocument/SignatureHelp`
 --@param ft optional filetype that will be use as the `lang` for the label markdown code block
---@returns list of lines of converted markdown.
+--@returns list of lines of converted markdown and label's highligh range if exists.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   if not signature_help.signatures then
@@ -874,6 +874,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   if signature.documentation then
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
+  local label_highlight
   if signature.parameters and #signature.parameters > 0 then
     local active_parameter = signature_help.activeParameter or 0
     -- If the activeParameter is not inside the valid range, then clip it.
@@ -900,13 +901,24 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
         documentation?: string | MarkupContent;
       }
       --]=]
-      -- TODO highlight parameter
+      if parameter.label then
+        local label_type = type(parameter.label)
+        if label_type == "string" then
+          local l, r = string.find(signature.label, parameter.label, 1, true)
+          if l and r then
+            label_highlight = {l-1, r}
+          end
+        elseif label_type == "table" then
+          local l, r = unpack(parameter.label)
+          label_highlight = {l, r}
+        end
+      end
       if parameter.documentation then
         M.convert_input_to_markdown_lines(parameter.documentation, contents)
       end
     end
   end
-  return contents
+  return contents, label_highlight
 end
 
 --- Creates a table with sensible default options for a floating window. The

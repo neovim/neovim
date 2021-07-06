@@ -328,6 +328,8 @@ M['textDocument/implementation'] = location_handler
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.api.nvim_open_win()|
+---     - param_highlight: (default='Underlined')
+---         - Add highlight to the selected parameter
 function M.signature_help(_, method, result, _, bufnr, config)
   config = config or {}
   config.focus_id = method
@@ -338,13 +340,18 @@ function M.signature_help(_, method, result, _, bufnr, config)
     return
   end
   local ft = api.nvim_buf_get_option(bufnr, 'filetype')
-  local lines = util.convert_signature_help_to_markdown_lines(result, ft)
+  local lines, label_highlight = util.convert_signature_help_to_markdown_lines(result, ft)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
     print('No signature help available')
     return
   end
-  return util.open_floating_preview(lines, "markdown", config)
+  local float_bufnr, float_winnr = util.open_floating_preview(lines, "markdown", config)
+  if label_highlight then
+    api.nvim_buf_add_highlight(float_bufnr, -1, config.param_highlight or 'Underlined', 0, label_highlight[1], label_highlight[2])
+  end
+
+  return float_bufnr, float_winnr
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
