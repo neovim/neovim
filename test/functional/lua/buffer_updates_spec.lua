@@ -349,7 +349,12 @@ describe('lua: nvim_buf_attach on_bytes', function()
       end
 
       local text = meths.buf_get_lines(0, 0, -1, true)
-      local bytes = table.concat(text, '\n') .. '\n'
+      local bytes = table.concat(text, '\n')
+      if #text ~= 1 or #bytes ~= 0 then
+        -- Not empty buffer.
+        -- Append '\n' only if buffer is not empty, see nvim_buf_get_lines().
+        bytes = bytes .. '\n'
+      end
 
       eq(string.len(bytes), string.len(shadowbytes), '\non_bytes: total bytecount of buffer is wrong')
       for i = 1, string.len(shadowbytes) do
@@ -1033,6 +1038,48 @@ describe('lua: nvim_buf_attach on_bytes', function()
         { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 8, 0, 0, 0 };
       }
     end)
+
+    local function do_test_issue_12861(mode)
+      if not mode then mode = "" end
+      it("#12861 lockmarks " .. mode .. " %delete _", function()
+        local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+        command(mode .. " %delete _")
+        check_events {
+          { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 0, 0, 0 };
+        }
+      end)
+
+      it("#12861 lockmarks " .. mode .. " append()", function()
+        local check_events = setup_eventcheck(verify)
+
+        command(mode .. " call append(0, 'CCC')")
+        check_events {
+          { "test1", "bytes", 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 4 };
+        }
+
+        command(mode .. " call append(1, 'BBBB')")
+        check_events {
+          { "test1", "bytes", 1, 3, 1, 0, 4, 0, 0, 0, 1, 0, 5 };
+        }
+
+        command(mode .. " call append(2, '')")
+        check_events {
+          { "test1", "bytes", 1, 4, 2, 0, 9, 0, 0, 0, 1, 0, 1 };
+        }
+
+        command(mode .. " $delete _")
+        check_events {
+          { "test1", "bytes", 1, 5, 3, 0, 10, 1, 0, 1, 0, 0, 0 };
+        }
+
+        eq("CCCBBBB", table.concat(meths.buf_get_lines(0, 0, -1, true), ""))
+      end)
+    end
+
+    do_test_issue_12861()
+    do_test_issue_12861 "lockmarks"
+
 
     teardown(function()
       os.remove "Xtest-reload"
