@@ -1790,7 +1790,7 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
     }
     for (size_t i = 0; i < size; i++) {
       Object iytem = arr.items[i];
-      String string = NULL_STRING;
+      String string;
       int hl_id = 0;
       if (iytem.type == kObjectTypeArray) {
         Array iarr = iytem.data.array;
