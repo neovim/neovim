@@ -350,7 +350,6 @@ int u_savecommon(buf_T *buf,
     // warning for a read-only file before making the change, so that the
     // FileChangedRO event can replace the buffer with a read-write version
     // (e.g., obtained from a source control system).
-    // TODO(vigoux): change_warning is tricky because of curbuf_lock...
     if (buf == curbuf) {
       change_warning(buf, 0);
     }
