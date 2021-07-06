@@ -315,25 +315,48 @@ end
 do
   local validate = vim.validate
 
-  local function make_dict_accessor(scope)
+  local function make_dict_accessor(get, set, del, hasParam)
     validate {
-      scope = {scope, 's'};
+      get = {get, 'f'};
+      set = {set, 'f'};
+      del = {del, 'f'};
     }
     local mt = {}
-    function mt:__newindex(k, v)
-      return vim._setvar(scope, 0, k, v)
-    end
-    function mt:__index(k)
-      return vim._getvar(scope, 0, k)
+    if hasParam then
+      function mt:__newindex(k, v)
+        if v == nil then
+          pcall(del, 0, k)
+        else
+          pcall(set, 0, k, v)
+        end
+      end
+      function mt:__index(k)
+        local success, res = pcall(get, 0, k)
+        if success then return res end
+        return nil
+      end
+    else
+      function mt:__newindex(k, v)
+        if v == nil then
+          pcall(del, k)
+        else
+          pcall(set, k, v)
+        end
+      end
+      function mt:__index(k)
+        local success, res = pcall(get, k)
+        if success then return res end
+        return nil
+      end
     end
     return setmetatable({}, mt)
   end
 
-  vim.g = make_dict_accessor('g')
-  vim.v = make_dict_accessor('v')
-  vim.b = make_dict_accessor('b')
-  vim.w = make_dict_accessor('w')
-  vim.t = make_dict_accessor('t')
+  vim.g = make_dict_accessor(vim.api.nvim_get_var, vim.api.nvim_set_var, vim.api.nvim_del_var, false)
+  vim.v = make_dict_accessor(vim.api.nvim_get_vvar, vim.api.nvim_set_vvar, function() end, false)
+  vim.b = make_dict_accessor(vim.api.nvim_buf_get_var, vim.api.nvim_buf_set_var, vim.api.nvim_buf_del_var, true)
+  vim.w = make_dict_accessor(vim.api.nvim_win_get_var, vim.api.nvim_win_set_var, vim.api.nvim_win_del_var, true)
+  vim.t = make_dict_accessor(vim.api.nvim_tabpage_get_var, vim.api.nvim_tabpage_set_var, vim.api.nvim_tabpage_del_var, true)
 end
 
 --- Get a table of lines with start, end columns for a region marked by two points
