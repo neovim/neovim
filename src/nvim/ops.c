@@ -954,7 +954,7 @@ static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
 
 /*
  * Stuff string "p" into yank register "regname" as a single line (append if
- * uppercase). "p" must have been alloced.
+ * uppercase). "p" must have been allocated.
  *
  * return FAIL for failure, OK otherwise
  */
@@ -1066,7 +1066,7 @@ do_execreg(
     if (reg->y_array == NULL)
       return FAIL;
 
-    // Disallow remaping for ":@r".
+    // Disallow remapping for ":@r".
     int remap = colon ? REMAP_NONE : REMAP_YES;
 
     /*

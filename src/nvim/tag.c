@@ -3291,7 +3291,7 @@ static void tagstack_clear(win_T *wp)
 }
 
 // Remove the oldest entry from the tag stack and shift the rest of
-// the entires to free up the top of the stack.
+// the entries to free up the top of the stack.
 static void tagstack_shift(win_T *wp)
 {
   taggy_T *tagstack = wp->w_tagstack;

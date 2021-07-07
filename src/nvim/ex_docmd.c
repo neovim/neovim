@@ -97,7 +97,7 @@ static garray_T ucmds = {0, 0, sizeof(ucmd_T), 4, NULL};
 #define USER_CMD(i) (&((ucmd_T *)(ucmds.ga_data))[i])
 #define USER_CMD_GA(gap, i) (&((ucmd_T *)((gap)->ga_data))[i])
 
-/* Wether a command index indicates a user command. */
+// Whether a command index indicates a user command.
 # define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
 
 /* Struct for storing a line inside a while/for loop */
@@ -2956,12 +2956,13 @@ const char * set_one_cmd_context(
     }
   }
 
-  /*
-   * If the cursor is touching the command, and it ends in an alpha-numeric
-   * character, complete the command name.
-   */
-  if (*p == NUL && ASCII_ISALNUM(p[-1]))
+  //
+  // If the cursor is touching the command, and it ends in an alphanumeric
+  // character, complete the command name.
+  //
+  if (*p == NUL && ASCII_ISALNUM(p[-1])) {
     return NULL;
+  }
 
   if (ea.cmdidx == CMD_SIZE) {
     if (*cmd == 's' && vim_strchr((const char_u *)"cgriI", cmd[1]) != NULL) {

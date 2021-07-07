@@ -8151,7 +8151,7 @@ void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
 ///
 /// @param[in]  idx  Index of variable to set.
 /// @param[in]  val  Value to set to. Will be copied.
-/// @param[in]  len  Legth of that value or -1 in which case strlen() will be
+/// @param[in]  len  Length of that value or -1 in which case strlen() will be
 ///                  used.
 void set_vim_var_string(const VimVarIndex idx, const char *const val,
                         const ptrdiff_t len)
@@ -8957,7 +8957,7 @@ static void set_var_const(const char *name, const size_t name_len,
           const char *const val = tv_get_string(tv);
 
           // Careful: when assigning to v:errmsg and tv_get_string()
-          // causes an error message the variable will alrady be set.
+          // causes an error message the variable will already be set.
           if (v->di_tv.vval.v_string == NULL) {
             v->di_tv.vval.v_string = (char_u *)xstrdup(val);
           }

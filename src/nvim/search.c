@@ -4451,7 +4451,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos,
     // Unfortunately, there is no STRNICMP function.
     // XXX: above comment should be "no MB_STRCMP function" ?
     if (!(chgtick == buf_get_changedtick(curbuf)
-          && lastpat != NULL  // supress clang/NULL passed as nonnull parameter
+          && lastpat != NULL  // suppress clang/NULL passed as nonnull parameter
           && STRNICMP(lastpat, spats[last_idx].pat, STRLEN(lastpat)) == 0
           && STRLEN(lastpat) == STRLEN(spats[last_idx].pat)
           && equalpos(lastpos, *cursor_pos)

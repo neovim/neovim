@@ -108,7 +108,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
 
-  // Can't set a mark in a non-existant buffer.
+  // Can't set a mark in a non-existent buffer.
   buf_T *buf = buflist_findnr(fnum);
   if (buf == NULL) {
     return FAIL;

@@ -75,7 +75,7 @@ For Comment) and `[RDY]` (Ready).
 
 ### Commit messages
 
-Follow the [convential commits guidelines][conventional_commits] to *make reviews easier* and to make
+Follow the [conventional commits guidelines][conventional_commits] to *make reviews easier* and to make
 the VCS/git logs more valuable. The general structure of a commit message is as follows:
 
 ```

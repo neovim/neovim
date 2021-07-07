@@ -250,7 +250,7 @@ void time_start(const char *message)
     return;
   }
 
-  // intialize the global variables
+  // initialize the global variables
   g_prev_time = g_start_time = profile_start();
 
   fprintf(time_fd, "\n\ntimes in msec\n");

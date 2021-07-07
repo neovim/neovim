@@ -55,7 +55,7 @@ enum ListLenSpecials {
 #define VARNUMBER_MAX INT64_MAX
 #define UVARNUMBER_MAX UINT64_MAX
 
-/// Mimimal possible value of varnumber_T variable
+/// Minimal possible value of varnumber_T variable
 #define VARNUMBER_MIN INT64_MIN
 
 /// %d printf format specifier for varnumber_T
@@ -322,7 +322,7 @@ struct ufunc {
   int          uf_prof_initialized;
   // Managing cfuncs
   cfunc_T      uf_cb;            ///< C function extension callback
-  cfunc_free_T uf_cb_free;       ///< C function extesion free callback
+  cfunc_free_T uf_cb_free;       ///< C function extension free callback
   void        *uf_cb_state;      ///< State of C function extension.
   // Profiling the function as a whole.
   int          uf_tm_count;      ///< nr of calls

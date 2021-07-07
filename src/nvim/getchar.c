@@ -2413,7 +2413,7 @@ static int vgetorpeek(bool advance)
  *	1. a scriptfile
  *	2. the keyboard
  *
- *  As much characters as we can get (upto 'maxlen') are put in "buf" and
+ *  As much characters as we can get (up to 'maxlen') are put in "buf" and
  *  NUL terminated (buffer length must be 'maxlen' + 1).
  *  Minimum for "maxlen" is 3!!!!
  *

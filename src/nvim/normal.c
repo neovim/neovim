@@ -6554,9 +6554,9 @@ static void n_start_visual_mode(int c)
   VIsual_mode = c;
   VIsual_active = true;
   VIsual_reselect = true;
-  /* Corner case: the 0 position in a tab may change when going into
-   * virtualedit.  Recalculate curwin->w_cursor to avoid bad hilighting.
-   */
+  // Corner case: the 0 position in a tab may change when going into
+  // virtualedit.  Recalculate curwin->w_cursor to avoid bad highlighting.
+  //
   if (c == Ctrl_V && (ve_flags & VE_BLOCK) && gchar_cursor() == TAB) {
     validate_virtcol();
     coladvance(curwin->w_virtcol);

@@ -141,7 +141,7 @@ EXTERN int cmdline_row;
 EXTERN int redraw_cmdline INIT(= false);          // cmdline must be redrawn
 EXTERN int clear_cmdline INIT(= false);           // cmdline must be cleared
 EXTERN int mode_displayed INIT(= false);          // mode is being displayed
-EXTERN int cmdline_star INIT(= false);            // cmdline is crypted
+EXTERN int cmdline_star INIT(= false);            // cmdline is encrypted
 EXTERN int redrawing_cmdline INIT(= false);       // cmdline is being redrawn
 EXTERN int cmdline_was_last_drawn INIT(= false);  // cmdline was last drawn
 

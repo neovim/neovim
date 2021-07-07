@@ -1869,7 +1869,7 @@ int diff_check(win_T *wp, linenr_T lnum)
 /// @param  idx1  first entry in diff "dp"
 /// @param  idx2  second entry in diff "dp"
 ///
-/// @return true if two entires are equal.
+/// @return true if two entries are equal.
 static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {

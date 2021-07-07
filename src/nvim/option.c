@@ -1174,10 +1174,10 @@ int do_set(
         }
       }
 
-      /*
-       * allow '=' and ':' as MSDOS command.com allows only one
-       * '=' character per "set" command line. grrr. (jw)
-       */
+      //
+      // allow '=' and ':' as MS-DOS command.com allows only one
+      // '=' character per "set" command line. grrr. (jw)
+      //
       if (nextchar == '?'
           || (prefix == 1
               && vim_strchr((char_u *)"=:&<", nextchar) == NULL
@@ -2719,7 +2719,7 @@ ambw_end:
                : opt_idx);
     // Update free_oldval now that we have the opt_idx for 'shada', otherwise
     // there would be a disconnect between the check for P_ALLOCED at the start
-    // of the function and the set of P_ALLOCED at the end of the fuction.
+    // of the function and the set of P_ALLOCED at the end of the function.
     free_oldval = (options[opt_idx].flags & P_ALLOCED);
     for (s = p_shada; *s; ) {
       // Check it's a valid character
@@ -5363,7 +5363,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
       home_replace(NULL, *valuep, buf, size, false);
 
       // If the option value is longer than MAXPATHL, we need to append
-      // earch comma separated part of the option sperately, so that it
+      // search comma separated part of the option separately, so that it
       // can be expanded when read back.
       if (size >= MAXPATHL && (flags & P_COMMA) != 0
           && vim_strchr(*valuep, ',') != NULL) {
