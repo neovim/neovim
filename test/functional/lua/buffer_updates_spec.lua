@@ -1039,9 +1039,9 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
-    local function do_test_issue_12861(mode)
+    local function test_lockmarks(mode)
       if not mode then mode = "" end
-      it("#12861 lockmarks " .. mode .. " %delete _", function()
+      it("test_lockmarks " .. mode .. " %delete _", function()
         local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
 
         command(mode .. " %delete _")
@@ -1050,7 +1050,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         }
       end)
 
-      it("#12861 lockmarks " .. mode .. " append()", function()
+      it("test_lockmarks " .. mode .. " append()", function()
         local check_events = setup_eventcheck(verify)
 
         command(mode .. " call append(0, 'CCC')")
@@ -1073,12 +1073,12 @@ describe('lua: nvim_buf_attach on_bytes', function()
           { "test1", "bytes", 1, 5, 3, 0, 10, 1, 0, 1, 0, 0, 0 };
         }
 
-        eq("CCCBBBB", table.concat(meths.buf_get_lines(0, 0, -1, true), ""))
+        eq("CCC|BBBB|", table.concat(meths.buf_get_lines(0, 0, -1, true), "|"))
       end)
     end
 
-    do_test_issue_12861()
-    do_test_issue_12861 "lockmarks"
+    test_lockmarks()
+    test_lockmarks "lockmarks"
 
 
     teardown(function()
