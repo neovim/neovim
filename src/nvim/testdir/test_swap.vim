@@ -319,6 +319,7 @@ func Test_swap_prompt_splitwin()
   let buf = RunVimInTerminal('', {'rows': 20})
   call term_sendkeys(buf, ":set nomore\n")
   call term_sendkeys(buf, ":set noruler\n")
+
   call term_sendkeys(buf, ":split Xfile1\n")
   call term_wait(buf)
   call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: $', term_getline(buf, 20))})
@@ -330,8 +331,19 @@ func Test_swap_prompt_splitwin()
   call term_wait(buf)
   call WaitForAssert({-> assert_match('^1$', term_getline(buf, 20))})
   call StopVimInTerminal(buf)
+
+  " This caused Vim to crash when typing "q".
+  " TODO: it does not actually reproduce the crash.
+  call writefile(['au BufAdd * set virtualedit=all'], 'Xvimrc')
+
+  let buf = RunVimInTerminal('-u Xvimrc Xfile1', {'rows': 20, 'wait_for_ruler': 0})
+  call TermWait(buf)
+  call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort:', term_getline(buf, 20))})
+  call term_sendkeys(buf, "q")
+
   %bwipe!
   call delete('Xfile1')
+  call delete('Xvimrc')
 endfunc
 
 func Test_swap_symlink()

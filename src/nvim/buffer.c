@@ -901,7 +901,10 @@ void handle_swap_exists(bufref_T *old_curbuf)
     if (old_curbuf == NULL
         || !bufref_valid(old_curbuf)
         || old_curbuf->br_buf == curbuf) {
+      // Block autocommands here because curwin->w_buffer is NULL.
+      block_autocmds();
       buf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+      unblock_autocmds();
     } else {
       buf = old_curbuf->br_buf;
     }
@@ -1783,7 +1786,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
     buf->b_vars = tv_dict_alloc();
-    buf->b_signcols_max = -1;
+    buf->b_signcols_valid = false;
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
     buf_init_changedtick(buf);
   }
@@ -5544,16 +5547,16 @@ bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 
 int buf_signcols(buf_T *buf)
 {
-    if (buf->b_signcols_max == -1) {
+    if (!buf->b_signcols_valid) {
         sign_entry_T *sign;  // a sign in the sign list
-        buf->b_signcols_max = 0;
+        int signcols = 0;
         int linesum = 0;
         linenr_T curline = 0;
 
         FOR_ALL_SIGNS_IN_BUF(buf, sign) {
           if (sign->se_lnum > curline) {
-            if (linesum > buf->b_signcols_max) {
-              buf->b_signcols_max = linesum;
+            if (linesum > signcols) {
+              signcols = linesum;
             }
             curline = sign->se_lnum;
             linesum = 0;
@@ -5562,15 +5565,17 @@ int buf_signcols(buf_T *buf)
             linesum++;
           }
         }
-        if (linesum > buf->b_signcols_max) {
-          buf->b_signcols_max = linesum;
+        if (linesum > signcols) {
+          signcols = linesum;
         }
 
         // Check if we need to redraw
-        if (buf->b_signcols_max != buf->b_signcols) {
-            buf->b_signcols = buf->b_signcols_max;
+        if (signcols != buf->b_signcols) {
+            buf->b_signcols = signcols;
             redraw_buf_later(buf, NOT_VALID);
         }
+
+        buf->b_signcols_valid = true;
     }
 
     return buf->b_signcols;
