@@ -103,7 +103,7 @@ typedef struct {
 // the preview window
 typedef struct {
   kvec_t(SubResult) subresults;
-  linenr_T lines_needed;  // lines neede in the preview window
+  linenr_T lines_needed;  // lines needed in the preview window
 } PreviewLines;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -4819,7 +4819,7 @@ char_u *check_help_lang(char_u *arg)
  * Return a heuristic indicating how well the given string matches.  The
  * smaller the number, the better the match.  This is the order of priorities,
  * from best match to worst match:
- *	- Match with least alpha-numeric characters is better.
+ *	- Match with least alphanumeric characters is better.
  *	- Match with least total characters is better.
  *	- Match towards the start is better.
  *	- Match starting with "+" is worse (feature instead of command)

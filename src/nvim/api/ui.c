@@ -158,7 +158,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   }
 
   if (ui->ui_ext[kUIMessages]) {
-    // This uses attribute indicies, so ext_linegrid is needed.
+    // This uses attribute indices, so ext_linegrid is needed.
     ui->ui_ext[kUILinegrid] = true;
     // Cmdline uses the messages area, so it should be externalized too.
     ui->ui_ext[kUICmdline] = true;

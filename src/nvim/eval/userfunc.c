@@ -3029,13 +3029,13 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
     current_funccal->returned = false;
   }
 
-  /*
-   * Cleanup (and inactivate) conditionals, but stop when a try conditional
-   * not in its finally clause (which then is to be executed next) is found.
-   * In this case, make the ":return" pending for execution at the ":endtry".
-   * Otherwise, return normally.
-   */
-  idx = cleanup_conditionals(eap->cstack, 0, TRUE);
+  //
+  // Cleanup (and deactivate) conditionals, but stop when a try conditional
+  // not in its finally clause (which then is to be executed next) is found.
+  // In this case, make the ":return" pending for execution at the ":endtry".
+  // Otherwise, return normally.
+  //
+  idx = cleanup_conditionals(eap->cstack, 0, true);
   if (idx >= 0) {
     cstack->cs_pending[idx] = CSTP_RETURN;
 

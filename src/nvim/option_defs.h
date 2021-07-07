@@ -740,11 +740,11 @@ EXTERN long p_wd;               // 'writedelay'
 EXTERN int p_force_on;          ///< options that cannot be turned off.
 EXTERN int p_force_off;         ///< options that cannot be turned on.
 
-/*
- * "indir" values for buffer-local opions.
- * These need to be defined globally, so that the BV_COUNT can be used with
- * b_p_scriptID[].
- */
+//
+// "indir" values for buffer-local options.
+// These need to be defined globally, so that the BV_COUNT can be used with
+// b_p_scriptID[].
+//
 enum {
   BV_AI = 0
   , BV_AR

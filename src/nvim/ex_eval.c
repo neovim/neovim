@@ -210,7 +210,7 @@ bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
    * not skipped.  Errors in those commands may affect what of the subsequent
    * commands are regarded part of catch and finally clauses.  Catching the
    * exception would then cause execution of commands not intended by the
-   * user, who wouldn't even get aware of the problem.  Therefor, discard the
+   * user, who wouldn't even get aware of the problem.  Therefore, discard the
    * exception currently being thrown to prevent it from being caught.  Just
    * execute finally clauses and terminate.
    */
@@ -1022,7 +1022,7 @@ void ex_continue(exarg_T *eap)
   else {
     /* Try to find the matching ":while".  This might stop at a try
      * conditional not in its finally clause (which is then to be executed
-     * next).  Therefor, inactivate all conditionals except the ":while"
+     * next).  Therefore, deactivate all conditionals except the ":while"
      * itself (if reached). */
     idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, FALSE);
     assert(idx >= 0);
@@ -1051,14 +1051,14 @@ void ex_break(exarg_T *eap)
   int idx;
   cstack_T *const cstack = eap->cstack;
 
-  if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0)
+  if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = (char_u *)N_("E587: :break without :while or :for");
-  else {
-    /* Inactivate conditionals until the matching ":while" or a try
-     * conditional not in its finally clause (which is then to be
-     * executed next) is found.  In the latter case, make the ":break"
-     * pending for execution at the ":endtry". */
-    idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, TRUE);
+  } else {
+    // Deactivate conditionals until the matching ":while" or a try
+    // conditional not in its finally clause (which is then to be
+    // executed next) is found.  In the latter case, make the ":break"
+    // pending for execution at the ":endtry". */
+    idx = cleanup_conditionals(cstack, CSF_WHILE | CSF_FOR, true);
     if (idx >= 0 && !(cstack->cs_flags[idx] & (CSF_WHILE | CSF_FOR))) {
       cstack->cs_pending[idx] = CSTP_BREAK;
       report_make_pending(CSTP_BREAK, NULL);
@@ -1179,15 +1179,15 @@ void do_throw(cstack_T *cstack)
   int idx;
   int inactivate_try = FALSE;
 
-  /*
-   * Cleanup and inactivate up to the next surrounding try conditional that
-   * is not in its finally clause.  Normally, do not inactivate the try
-   * conditional itself, so that its ACTIVE flag can be tested below.  But
-   * if a previous error or interrupt has not been converted to an exception,
-   * inactivate the try conditional, too, as if the conversion had been done,
-   * and reset the did_emsg or got_int flag, so this won't happen again at
-   * the next surrounding try conditional.
-   */
+  //
+  // Cleanup and deactivate up to the next surrounding try conditional that
+  // is not in its finally clause.  Normally, do not deactivate the try
+  // conditional itself, so that its ACTIVE flag can be tested below.  But
+  // if a previous error or interrupt has not been converted to an exception,
+  // deactivate the try conditional, too, as if the conversion had been done,
+  // and reset the did_emsg or got_int flag, so this won't happen again at
+  // the next surrounding try conditional.
+  //
 #ifndef THROW_ON_ERROR_TRUE
   if (did_emsg && !THROW_ON_ERROR) {
     inactivate_try = TRUE;

@@ -836,7 +836,7 @@ int tv_list_join(garray_T *const gap, list_T *const l, const char *const sep)
   return retval;
 }
 
-/// Chech whether two lists are equal
+/// Check whether two lists are equal
 ///
 /// @param[in]  l1  First list to compare.
 /// @param[in]  l2  Second list to compare.

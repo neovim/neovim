@@ -6127,7 +6127,7 @@ static const char *highlight_init_dark[] = {
 };
 
 const char *const highlight_init_cmdline[] = {
-  // XXX When modifying a list modify it in both valid and invalid halfs.
+  // XXX When modifying a list modify it in both valid and invalid halves.
   // TODO(ZyX-I): merge valid and invalid groups via a macros.
 
   // NvimInternalError should appear only when highlighter has a bug.

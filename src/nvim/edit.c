@@ -2453,7 +2453,7 @@ static int ins_compl_add(char_u *const str, int len,
 ///
 /// @param  match  completion match
 /// @param  str    character string to check
-/// @param  len    lenth of "str"
+/// @param  len    length of "str"
 static bool ins_compl_equal(compl_T *match, char_u *str, size_t len)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
@@ -8024,7 +8024,7 @@ static void ins_bs_one(colnr_T *vcolp)
 
 /// Handle Backspace, delete-word and delete-line in Insert mode.
 ///
-/// @param          c                 charcter that was typed
+/// @param          c                 character that was typed
 /// @param          mode              backspace mode to use
 /// @param[in,out]  inserted_space_p  whether a space was the last
 //                                    character inserted
@@ -8251,7 +8251,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         ins_bs_one(&vcol);
       }
     } else {
-      // Delete upto starting point, start of line or previous word.
+      // Delete up to starting point, start of line or previous word.
       int prev_cclass = 0;
 
       int cclass = mb_get_class(get_cursor_pos_ptr());

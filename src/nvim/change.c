@@ -1732,7 +1732,7 @@ int open_line(
   }
   if (did_append) {
     changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
-    // bail out and just get the final lenght of the line we just manipulated
+    // bail out and just get the final length of the line we just manipulated
     bcount_t extra = (bcount_t)STRLEN(ml_get(curwin->w_cursor.lnum));
     extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, 0,
                    0, 0, 0, 1, 0, 1+extra, kExtmarkUndo);

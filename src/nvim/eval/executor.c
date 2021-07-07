@@ -16,7 +16,7 @@ static char *e_letwrong = N_("E734: Wrong variable type for %s=");
 
 char *e_listidx = N_("E684: list index out of range: %" PRId64);
 
-/// Hanle tv1 += tv2, -=, *=, /=,  %=, .=
+/// Handle tv1 += tv2, -=, *=, /=,  %=, .=
 ///
 /// @param[in,out]  tv1  First operand, modified typval.
 /// @param[in]  tv2  Second operand.

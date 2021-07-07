@@ -1025,7 +1025,7 @@ static void tui_mouse_on(UI *ui)
   if (!data->mouse_enabled) {
 #ifdef WIN32
     // Windows versions with vtp(ENABLE_VIRTUAL_TERMINAL_PROCESSING) and
-    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse traking of
+    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse tracking of
     // libuv. For this reason, vtp (vterm) state of libuv is temporarily
     // disabled because the control sequence needs to be processed by libuv
     // instead of Windows vtp.
@@ -1048,7 +1048,7 @@ static void tui_mouse_off(UI *ui)
   if (data->mouse_enabled) {
 #ifdef WIN32
     // Windows versions with vtp(ENABLE_VIRTUAL_TERMINAL_PROCESSING) and
-    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse traking of
+    // no vti(ENABLE_VIRTUAL_TERMINAL_INPUT) will need to use mouse tracking of
     // libuv. For this reason, vtp (vterm) state of libuv is temporarily
     // disabled because the control sequence needs to be processed by libuv
     // instead of Windows vtp.

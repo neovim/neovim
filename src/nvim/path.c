@@ -383,7 +383,7 @@ int path_fnamencmp(const char *const fname1, const char *const fname2,
 ///
 /// @param[in]  fname1  First fname to append to.
 /// @param[in]  len1    Length of fname1.
-/// @param[in]  fname2  Secord part of the file name.
+/// @param[in]  fname2  Second part of the file name.
 /// @param[in]  len2    Length of fname2.
 /// @param[in]  sep     If true and fname1 does not end with a path separator,
 ///                     add a path separator before fname2.
