@@ -53,8 +53,14 @@ describe('URI methods', function()
 
   describe('uri to filepath', function()
     describe('decode Unix file path', function()
-      it('file path includes only ascii charactors', function()
+      it('file path includes only ascii characters', function()
         exec_lua("uri = 'file:///Foo/Bar/Baz.txt'")
+
+        eq('/Foo/Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
+      end)
+
+      it('local file path without hostname', function()
+        exec_lua("uri = 'file:/Foo/Bar/Baz.txt'")
 
         eq('/Foo/Bar/Baz.txt', exec_lua("return vim.uri_to_fname(uri)"))
       end)
@@ -79,6 +85,15 @@ describe('URI methods', function()
       it('file path includes only ascii charactors', function()
         local test_case = [[
         local uri = 'file:///C:/Foo/Bar/Baz.txt'
+        return vim.uri_to_fname(uri)
+        ]]
+
+        eq('C:\\Foo\\Bar\\Baz.txt', exec_lua(test_case))
+      end)
+
+      it('local file path without hostname', function()
+        local test_case = [[
+        local uri = 'file:/C:/Foo/Bar/Baz.txt'
         return vim.uri_to_fname(uri)
         ]]
 
