@@ -8957,7 +8957,7 @@ static void set_var_const(const char *name, const size_t name_len,
           const char *const val = tv_get_string(tv);
 
           // Careful: when assigning to v:errmsg and tv_get_string()
-          // causes an error message the variable will alrady be set.
+          // causes an error message the variable will already be set.
           if (v->di_tv.vval.v_string == NULL) {
             v->di_tv.vval.v_string = (char_u *)xstrdup(val);
           }
