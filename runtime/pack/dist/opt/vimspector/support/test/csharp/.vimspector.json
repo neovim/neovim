@@ -1,0 +1,21 @@
+{
+    "configurations": {
+      "launch - netcoredbg": {
+        "adapter": "netcoredbg",
+        "configuration": {
+          "request": "launch",
+          "program": "${workspaceRoot}/bin/Debug/netcoreapp2.2/csharp.dll",
+          "args": [],
+          "stopAtEntry": true
+        }
+      },
+      "launch - mono": {
+        "adapter": "vscode-mono-debug",
+        "configuration": {
+          "request": "launch",
+          "program": "${workspaceRoot}/Program.exe"
+        }
+      }
+    }
+}
+

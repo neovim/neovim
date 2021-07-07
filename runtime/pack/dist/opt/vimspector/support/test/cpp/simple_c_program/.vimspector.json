@@ -1,0 +1,38 @@
+{
+  "adapters": {
+      "cppdbg": {
+        "name": "cppdbg",
+        "command": [ "$HOME/.vscode/extensions/ms-vscode.cpptools-0.20.1/debugAdapters/OpenDebugAD7" ],
+        "attach": {
+          "pidProperty": "processId",
+          "pidSelect": "ask"
+        }
+      }
+  },
+  "configurations": {
+    "simple_c_program - Launch": {
+      "adapter": "cppdbg",
+      "configuration": {
+        "name": "ms Launch",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/test",
+        "args": [],
+        "cwd": "${workspaceRoot}",
+        "environment": [],
+        "MIMode": "lldb",
+        "stopAtEntry": true
+      }
+    },
+    "simple_c_program - Attach": {
+      "adapter": "cppdbg",
+      "configuration": {
+        "name": "(lldb) Attach",
+        "type": "cppdbg",
+        "request": "attach",
+        "program": "${workspaceRoot}/test",
+        "MIMode": "lldb"
+      }
+    }
+  }
+}

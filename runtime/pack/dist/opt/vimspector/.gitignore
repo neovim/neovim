@@ -1,0 +1,17 @@
+*.un~
+*.sw[op]
+__pycache__
+.vscode
+tests/*.res
+tests/messages
+tests/debuglog
+test.log
+gadgets/
+package/
+*.pyc
+*.dSYM
+README.md.orig.*
+README.md.toc.*
+.DS_Store
+*.vimspector.log
+support/test/csharp/*.exe*

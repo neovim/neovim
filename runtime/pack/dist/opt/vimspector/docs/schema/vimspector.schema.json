@@ -1,0 +1,256 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://puremourning.github.io/vimspector/schema/vimspector.schema.json",
+  "definitions": {
+    "variables": {
+      "description": "A mappoing of name/value pairs to set variables to be used elsewhere in the definition, or a list of such mappings.",
+      "properties": {
+        "variables": {
+          "oneOf": [
+            { "$ref": "#/definitions/variables-mapping" },
+            { "$ref": "#/definitions/variables-list" }
+          ]
+        }
+      }
+    },
+    "variables-list": {
+      "type": "array",
+      "description": "A list of variable mappings. This can be useful where variable definitions rely on each other. By using a list, you can control the sequence in which variables are defined.",
+      "items": { "$ref": "#/definitions/variables-mapping" }
+    },
+    "variables-mapping": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": [ "shell" ],
+            "properties": {
+              "shell": {
+                "type": [ "array", "string" ],
+                "description": "Command to run. If it's a string, it's split using Python's shelex splitting. Can contain other variable references."
+              },
+              "cwd": { "type": "string" },
+              "env": { "type": "object" }
+            }
+          }
+        ]
+      }
+    },
+    "adapter-common": {
+      "allOf": [
+        { "$ref": "#/definitions/variables" },
+        { "$ref": "#/definitions/adapter-remote" },
+        { "$ref": "#/definitions/adapter-attach" },
+        {
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Passed to the adapter in the initialization request. Some adapters are particularly picky about what value goes here. Usually it can be omitted and Vimspector will send a generic value"
+            },
+            "configuration": {
+              "type": "object",
+              "description": "Base debug configuration. Can be used to set default values for all debug configurations. When reading individual debug configurations from 'configurations', those configurations are merged with this object. Definitions in the debug configuration override anything in this object. Typical usage for this is to set the 'type' parameter, which some debug adapters are very picky about, or to set e.g. the path to an underlying debugger."
+            }
+          }
+        }
+      ]
+    },
+    "adapter-attach": {
+      "properties": {
+        "attach": {
+          "type": "object",
+          "required": [ "pidSelect" ],
+          "properties": {
+            "pidSelect": {
+              "enum": [ "ask", "none" ]
+            },
+            "pidProperty": {
+              "type": "string",
+              "description": "The launch config property which the PID should be injected into. Required when 'pidSelect' is 'ask'."
+            }
+          }
+        }
+      }
+    },
+    "adapter-remote": {
+      "properties": {
+        "remote": {
+          "type": "object",
+          "required": [ "host" ],
+          "description": "Configures how Vimspector will marshal remote debugging requests. When remote debugging, Vimspector will ssh to 'account'@'host' and run 'pidCommand', 'attachCommands', 'runCommands', etc. based on the 'remote-command' option in the debug configuration. If 'remote-command' is 'launch', it runs 'runCommand(s)', otherwise (it's 'attach') vimspector runs 'pidCommand', followed by 'attachCommand(s)'.Then it starts up the debug adapter with the debug configuration as normal. Usually this is configured with an 'attach' request (whether we remotely 'launched' or not). Once the initialization exchange is complete, Vimspector runs the optional 'initCompleteCommand' which can be used to force the application to break, e.g. by sending it SIGINT. This is required on some platforms which have buggy gdbservers (for example)",
+          "properties": {
+            "account": {
+              "type": "string",
+              "description": "Remote account name used when ssh'ing. Defaults to the current user account."
+            },
+            "host": {
+              "type": "string",
+              "description": "Name of the remote host to connect to (via passwordless SSH). "
+            },
+            "pidCommand": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Required for remote-attach. Remote command to execute to return the PID to attach to."
+            },
+            "initCompleteCommand": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "For remote-attach. Remote command to execute after initialization of the debug adapter. Can be used to work around buggy attach behaviour on certain platforms (advanced usage). Can contain the special token %PID% which is replaced with the PID returned by 'pidCommand'"
+            },
+            "attachCommands": {
+              "type": [ "array" ],
+              "items": { "type": "array", "items": { "type": "string" } },
+              "description": "For remote-attach. List of commands to execute remotely to set up the attach. Can contain the special token %PID% which is replaced with the PID returned by the remote 'pidCommand'."
+            },
+            "attachCommand": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "A single command to execute for remote-attach. Like attachCommands but for a single command. If attachCommands is supplied, this is not used."
+            },
+            "runCommands": {
+              "type": [ "array" ],
+              "items": { "type": "array", "items": { "type": "string" } },
+              "description": "For remote-launch. List of commands to execute remotely to set up the launch. An entry in the array can be the special token '%CMD%' which is replaced with the evaluated 'remote-cmdLine' value in the debug configuration. This is useful to parameterize launcging remotely under something like gdbserver."
+            },
+            "runCommand": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "A single command to execute for remote-launch. Like runCommands but for a single command."
+            }
+          }
+        }
+      }
+    },
+    "adapter": {
+      "oneOf": [
+        {
+          "allOf": [
+            { "$ref": "#/definitions/adapter-common" },
+            {
+              "required": [ "port" ],
+              "properties": {
+                "port": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": [ "ask" ]
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ],
+                  "description": "If supplied, indicates that a socket connection should be made to this port on 'localhost'. If the value is 'ask', then the user is asked to enter the port number to connect to."
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/definitions/adapter-common" },
+            {
+              "required": [ "command" ],
+              "properties": {
+                "command": {
+                  "type": [ "string", "array" ],
+                  "description": "Command line to execute the debug adapter.",
+                  "items": { "type": "string" }
+                },
+                "env": {
+                  "type": "object",
+                  "description": "Name/value pairs to set in the environment when starting the adapter."
+                },
+                "cwd": {
+                  "type": "string",
+                  "description": "Directory from which to start the adapter. Defaults to the working directory of the window on launch"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "required": [ "configurations" ],
+  "properties": {
+    "adapters": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/adapter" }
+    },
+    "configurations": {
+      "type": "object",
+      "additionalProperties": {
+        "allOf": [
+          { "$ref": "#/definitions/variables" },
+          {
+            "type": "object",
+            "properties": {
+              "adapter": {
+                "description": "Adapter configuration to use for this debug session",
+                "oneOf": [
+                  { "$ref": "#/definitions/adapter" },
+                  {
+                    "type": "string",
+                    "description": "Name of an adapter in the 'adapters' mapping"
+                  }
+                ]
+              },
+              "remote-request": {
+                "enum": [ "launch", "attach" ],
+                "description": "When the 'remote' block is defined in the adapter configuration, this can be used to override the actual action taken (remotely). Usually the actual 'configuration' will contain 'request' of 'attach', but in order to remotely 'launch' the process (e.g. under gdbserver or equivalent), use remote-attach set to 'launch'"
+              },
+              "remote-cmdLine": {
+                "type": [ "string", "array" ],
+                "description": "Defines the value of the special token %CMD% in remote-launch 'runCommand(s)'. The value is inserted into the command line where an entry matching '%CMD%' is found in 'runCommand(s)' command array."
+              },
+              "configuration": {
+                "type": "object",
+                "required": [ "request" ],
+                "properties": {
+                  "request": {
+                    "enum": [ "launch", "attach" ],
+                    "description": "Type of session - launch process or attach to process"
+                  }
+                },
+                "additionalProperties": {
+                  "description": "Additional properties are passed to the debug adapter in the 'launch' or 'attach' request and are specific to the debug adapter."
+                }
+              },
+              "breakpoints": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "$comment": "TBA: Not supported yet"
+                  },
+                  "function": {
+                    "$comment": "TBA: Not supported yet"
+                  },
+                  "exception": {
+                    "type": "object",
+                    "description": "Exception breakpoints configuration, mapping the server's exception filter to enabled/disable/default flag",
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "boolean",
+                          "description": "true = enable, false = disable"
+                        },
+                        {
+                          "type": "string",
+                          "enum": [ "Y", "N", "" ],
+                          "description": "Y = enable, N = disable, '' = default"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

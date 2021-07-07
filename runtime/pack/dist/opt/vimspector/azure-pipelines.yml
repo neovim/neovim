@@ -1,0 +1,144 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+stages:
+- stage: Build
+  jobs:
+  - job: 'PythonLint'
+    displayName: "Python Lint"
+    pool:
+      vmImage: 'ubuntu-16.04'
+    container: 'puremourning/vimspector:test'
+    steps:
+     - bash: pip3 install -r dev_requirements.txt
+       displayName: "Install requirements"
+
+     - bash: $HOME/.local/bin/flake8 python3/
+       displayName: "Run flake8"
+
+  - job: 'Vimscript'
+    displayName: "Vimscript Lint"
+    pool:
+      vmImage: 'ubuntu-16.04'
+    container: 'puremourning/vimspector:test'
+    steps:
+     - bash: pip3 install -r dev_requirements.txt
+       displayName: "Install requirements"
+
+     - bash: $HOME/.local/bin/vint autoload/ plugin/
+       displayName: "Run vint"
+
+  - job: 'linux'
+    pool:
+      vmImage: 'ubuntu-16.04'
+    container:
+      image: 'puremourning/vimspector:test'
+      options: --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
+    steps:
+    - bash: |
+        eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+        go get -u github.com/go-delve/delve/cmd/dlv
+      displayName: 'Install Delve for Go'
+
+    - task: CacheBeta@0
+      inputs:
+        key: v1 | gadgets | $(Agent.OS) | install_gadget.py
+        path: gadgets/linux/download
+      displayName: Cache gadgets
+
+    - bash: python3 install_gadget.py --all
+      displayName: 'Install gadgets - python3'
+
+    - bash: vim --version
+      displayName: 'Print vim version information'
+
+    - bash: |
+        eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+        export GOPATH=$HOME/go
+        ./run_tests
+      displayName: 'Run the tests'
+      env:
+        VIMSPECTOR_MIMODE: gdb
+
+    - bash: ./make_package linux $(Build.SourceVersion)
+      displayName: 'Package'
+
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'package-linux'
+        targetPath: 'package/linux-$(Build.SourceVersion).tar.gz'
+
+  - job: 'macos'
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - bash: |
+        brew unlink node@6
+        brew install macvim node@10
+        brew link --force --overwrite node@10
+      displayName: 'Install vim and node'
+
+    - bash: go get -u github.com/go-delve/delve/cmd/dlv
+      displayName: 'Install Delve for Go'
+
+    - task: CacheBeta@0
+      inputs:
+        key: v1 | gadgets | $(Agent.OS) | install_gadget.py
+        path: gadgets/macos/download
+      displayName: Cache gadgets
+
+    - bash: python3 install_gadget.py --all
+      displayName: 'Install gadgets - python3'
+
+    - bash: vim --version
+      displayName: 'Print vim version information'
+
+    - bash: ./run_tests
+      displayName: 'Run the tests'
+      env:
+        VIMSPECTOR_MIMODE: lldb
+
+    - bash: ./make_package macos $(Build.SourceVersion)
+      displayName: 'Package'
+
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'package-macos'
+        targetPath: 'package/macos-$(Build.SourceVersion).tar.gz'
+
+- stage: "Publish"
+  dependsOn:
+  - "Build"
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - job: 'Publish'
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+    - task: DownloadPipelineArtifact@0
+      inputs:
+        artifactName: 'package-linux'
+        targetPath: $(Build.ArtifactStagingDirectory)
+    - task: DownloadPipelineArtifact@0
+      inputs:
+        artifactName: 'package-macos'
+        targetPath: $(Build.ArtifactStagingDirectory)
+    - task: GitHubRelease@0
+      inputs:
+        gitHubConnection: puremourning
+        repositoryName: '$(Build.Repository.Name)'
+        action: 'create' # Options: create, edit, delete
+        target: '$(Build.SourceVersion)' # Required when action == Create || Action == Edit
+        tagSource: 'manual' # Required when action == Create# Options: auto, manual
+        tag: "$(Build.BuildId)"
+        #title: # Optional
+        #releaseNotesSource: 'file' # Optional. Options: file, input
+        #releaseNotesFile: # Optional
+        #releaseNotes: # Optional
+        #assets: '$(Build.ArtifactStagingDirectory)/*' # Optional
+        #assetUploadMode: 'delete' # Optional. Options: delete, replace
+        #isDraft: false # Optional
+        isPreRelease: true # Optional
+        #addChangeLog: true # Optional

@@ -1,0 +1,30 @@
+pull_request_rules:
+  - name: Merge owner PR when all checks passed
+    conditions:
+      - author=puremourning
+      - base=master
+      - status-success=code-review/reviewable
+      - status-success=puremourning.vimspector # Azure pipeline
+
+      - "#changes-requested-reviews-by=0"
+
+    actions: &merge-actions
+      merge:
+        method: merge
+        strict: smart
+      delete_head_branch: {}
+
+  - name: Merge PR when all checks passed
+    conditions:
+      - author!=puremourning
+      - base=master
+      - status-success=code-review/reviewable
+      - status-success=puremourning.vimspector # Azure pipeline
+      - approved-reviews-by=puremourning
+
+      - "#approved-reviews-by>=1"
+      - "#changes-requested-reviews-by=0"
+    actions:
+      <<: *merge-actions
+      comment:
+        message: Thanks for sending a PR!

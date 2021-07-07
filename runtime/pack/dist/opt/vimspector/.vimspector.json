@@ -1,0 +1,139 @@
+{
+  "adapters": {
+      "lldb-mi": {
+        "name": "lldb-mi",
+        "command": [
+          "node",
+          "$HOME/.vscode/extensions/webfreak.debug-0.22.0/out/src/lldb.js"
+        ]
+      },
+      "cppdbg": {
+        "name": "cppdbg",
+        "command": [ "$HOME/.vscode/extensions/ms-vscode.cpptools-0.20.1/debugAdapters/OpenDebugAD7" ],
+        "attach": {
+          "pidProperty": "processId",
+          "pidSelect": "ask"
+        }
+      },
+      "python": {
+        "name": "python",
+        "command": [
+          "node",
+          "$HOME/.vscode/extensions/ms-python.python-2018.4.0/out/client/debugger/Main.js"
+        ]
+      },
+      "bashdb": {
+        "name": "bashdb",
+        "command": [
+          "node",
+          "$HOME/.vscode/extensions/rogalmic.bash-debug-0.2.0/out/bashDebug.js"
+        ]
+      },
+      "lldb": {
+        "name": "lldb",
+        "command": [
+          "lldb",
+          "-b",
+          "-O",
+          "command script import '$HOME/.vscode/extensions/vadimcn.vscode-lldb-0.8.7/adapter'",
+          "-O",
+          "script adapter.main.run_stdio_session()"
+        ]
+      }
+  },
+  "configurations": {
+    "simple_c_program - lldb-mi Launch": {
+      "adapter": "lldb-mi",
+      "configuration": {
+        "request": "launch",
+        "target": "support/test/cpp/simple_c_program/test",
+        "args": [],
+        "cwd": ".",
+        "lldbmipath": "$HOME/.vscode/extensions/ms-vscode.cpptools-0.20.1/debugAdapters/lldb/bin/lldb-mi",
+        "trace": true,
+        "logFilePath": "$HOME/.vimspector.protocol.log"
+      }
+    },
+    "simple_c_progra - ms Launch": {
+      "adapter": "cppdbg",
+      "configuration": {
+        "name": "ms Launch",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/support/test/cpp/simple_c_program/test",
+        "args": [],
+        "cwd": "$HOME",
+        "environment": [],
+        "externalConsole": true,
+        "MIMode": "lldb"
+      }
+    },
+    "simple_python - launch": {
+      "adapter": "python",
+      "configuration": {
+        "name": "Python: Current File",
+        "type": "python",
+        "request": "launch",
+        "cwd": "${workspaceRoot}/support/test/python/simple_python",
+        "stopOnEntry": true,
+        "console": "externalTerminal",
+        "debugOptions": [],
+        "program": "${workspaceRoot}/support/test/python/simple_python/main.py"
+      }
+    },
+    "simple_c_program - MS Attach": {
+      "adapter": "cppdbg",
+      "configuration": {
+        "name": "(lldb) Attach",
+        "type": "cppdbg",
+        "request": "attach",
+        "program": "${workspaceRoot}/support/test/cpp/simple_c_program/test",
+        "MIMode": "lldb"
+      }
+    },
+    "bashdb": {
+      "adapter": "bashdb",
+      "configuration": {
+        "type": "bashdb",
+        "request": "launch",
+        "name": "Bash-Debug (simplest configuration)",
+        "program": "$HOME/.vim/bundle/YouCompleteMe/install.sh",
+        "args": [],
+        "cwd": "$HOME/.vim/bundle/YouCompleteMe",
+        "pathBash": "bash",
+        "pathBashdb": "bashdb",
+        "pathCat": "cat",
+        "pathMkfifo": "mkfifo",
+        "pathPkill": "pkill",
+        "showDebugOutput": true,
+        "trace": true
+      }
+    },
+    "lldb launch": {
+      "adapter": "lldb",
+      "configuration": {
+        "type": "lldb",
+        "request": "launch",
+        "name": "LLDB: Launch",
+        "program": "$HOME/Development/vim/src/vim",
+        "args": [],
+        "cwd": "$HOME/Development/vim"
+      }
+    },
+    "racerd": {
+      "adapter": "lldb",
+      "configuration": {
+        "type": "lldb",
+        "request": "launch",
+        "name": "LLDB: Launch",
+        "program": "$HOME/.vim/bundle/YouCompleteMe/third_party/ycmd/third_party/racerd/target/debug/racerd",
+        "args": [
+          "serve",
+          "--port=12345",
+          "--secret-file=secretfile"
+        ],
+        "cwd": "$HOME/.vim/bundle/YouCompleteMe/third_party/ycmd"
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+runtime defaults.vim
+let g:vimspector_enable_mappings='HUMAN'
+set signcolumn=yes
+set rtp+=$HOME/vimspector
+filetype plugin indent on
