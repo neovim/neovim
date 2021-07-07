@@ -964,7 +964,7 @@ int vim_vsnprintf_typval(
                       break;
                     }
                   }
-                  str_arg_l = precision = (size_t)(p1 - (char_u *)str_arg);
+                  str_arg_l = (size_t)(p1 - (char_u *)str_arg);
                 }
               }
               break;
