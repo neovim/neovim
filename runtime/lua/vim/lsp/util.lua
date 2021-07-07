@@ -856,6 +856,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   --=== 0`. Whenever possible implementors should make an active decision about
   --the active signature and shouldn't rely on a default value.
   local contents = {}
+  local active_hl
   local active_signature = signature_help.activeSignature or 0
   -- If the activeSignature is not inside the valid range, then clip it.
   if active_signature >= #signature_help.signatures then
@@ -875,7 +876,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
-    local active_parameter = signature_help.activeParameter or 0
+    local active_parameter = (signature.activeParameter or signature_help.activeParameter or 0)
     -- If the activeParameter is not inside the valid range, then clip it.
     if active_parameter >= #signature.parameters then
       active_parameter = 0
@@ -900,13 +901,20 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
         documentation?: string | MarkupContent;
       }
       --]=]
-      -- TODO highlight parameter
+      if parameter.label then
+        if type(parameter.label) == "table" then
+          active_hl = parameter.label
+        else
+          local i = signature.label:find(parameter.label)
+          if i then active_hl = {i - 1, i + #parameter.label - 1} end
+        end
+      end
       if parameter.documentation then
         M.convert_input_to_markdown_lines(parameter.documentation, contents)
       end
     end
   end
-  return contents
+  return contents, active_hl
 end
 
 --- Creates a table with sensible default options for a floating window. The
