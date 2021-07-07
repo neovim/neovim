@@ -203,8 +203,10 @@ local bufnr_and_client_cacher_mt = {
 -- Diagnostic Saving & Caching {{{
 local _diagnostic_cleanup = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache = setmetatable({}, bufnr_and_client_cacher_mt)
+local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_lines = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_counts = setmetatable({}, bufnr_and_client_cacher_mt)
+local diagnostic_attached_buffers = {}
 
 local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
 
@@ -826,6 +828,7 @@ function M.clear(bufnr, client_id, diagnostic_ns, sign_ns)
 
   diagnostic_ns = diagnostic_ns or M._get_diagnostic_namespace(client_id)
   sign_ns = sign_ns or M._get_sign_namespace(client_id)
+  diagnostic_cache_extmarks[bufnr][client_id] = {}
 
   assert(bufnr, "bufnr is required")
   assert(diagnostic_ns, "Need diagnostic_ns, got nil")
@@ -1038,6 +1041,53 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
   M.display(diagnostics, bufnr, client_id, config)
 end
 
+-- restores the extmarks set by M.display
+-- @private
+local function restore_extmarks(bufnr)
+  local lcount = api.nvim_buf_line_count(bufnr)
+  for client_id, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
+    local ns = M._get_diagnostic_namespace(client_id)
+    local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+    local found = {}
+    for _, extmark in ipairs(extmarks_current) do
+      -- HACK: the missing extmarks seem to still exist, but at the line after the last
+      if extmark[2] < lcount then
+        found[extmark[1]] = true
+      end
+    end
+    for _, extmark in ipairs(extmarks) do
+      if not found[extmark[1]] then
+        local opts = extmark[4]
+        opts.id = extmark[1]
+        -- HACK: end_row should be end_line
+        if opts.end_row then
+          opts.end_line = opts.end_row
+          opts.end_row = nil
+        end
+        pcall(api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
+      end
+    end
+  end
+end
+
+-- caches the extmarks set by M.display
+-- @private
+local function save_extmarks(bufnr, client_id)
+  bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+  if not diagnostic_attached_buffers[bufnr] then
+    api.nvim_buf_attach(bufnr, false, {
+      on_lines = function()
+        restore_extmarks(bufnr)
+      end,
+      on_detach = function()
+        diagnostic_cache_extmarks[bufnr] = nil
+      end})
+    diagnostic_attached_buffers[bufnr] = true
+  end
+  local ns = M._get_diagnostic_namespace(client_id)
+  diagnostic_cache_extmarks[bufnr][client_id] = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+end
+
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
@@ -1108,7 +1158,11 @@ function M.display(diagnostics, bufnr, client_id, config)
   if signs_opts then
     M.set_signs(diagnostics, bufnr, client_id, nil, signs_opts)
   end
+
+  -- cache extmarks
+  save_extmarks(bufnr, client_id)
 end
+
 -- }}}
 -- Diagnostic User Functions {{{
 
