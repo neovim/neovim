@@ -49,7 +49,7 @@ describe('vim.lsp.diagnostic', function()
       end
     ]]
 
-    fake_uri = "file://fake/uri"
+    fake_uri = "file:///fake/uri"
 
     exec_lua([[
       fake_uri = ...
