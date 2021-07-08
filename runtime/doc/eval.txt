@@ -5122,7 +5122,7 @@ getmousepos()						*getmousepos()*
 		are zero.
 
 		When the position is after the text then "column" is the
-		length of the text in bytes.
+		length of the text in bytes plus one.
 
 		If the mouse is over a focusable floating window then that
 		window is used.
