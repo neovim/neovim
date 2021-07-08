@@ -3173,11 +3173,8 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
   if (!uhp) {
     // Undo is normally invoked in change code, which already has swapped
     // curbuf.
-    buf_T *save_curbuf = curbuf;
-    curbuf = buf;
     // Args are tricky: this means replace empty range by empty range..
     u_savecommon(curbuf, 0, 1, 1, true);
-    curbuf = save_curbuf;
 
     uhp = buf->b_u_curhead;
     if (!uhp) {
@@ -3186,7 +3183,6 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
         abort();
       }
     }
-    curbuf = save_curbuf;
   }
   return uhp;
 }
