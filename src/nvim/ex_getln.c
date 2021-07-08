@@ -2412,8 +2412,8 @@ char_u * get_text_locked_msg(void) {
   }
 }
 
-/// Check if "curbuf_lock" or "allbuf_lock" is set and return TRUE when it is
-/// and give an error message.
+/// Check if "curbuf->b_ro_locked" or "allbuf_lock" is set and
+/// return TRUE when it is and give an error message.
 int curbuf_locked(void)
 {
   if (curbuf->b_ro_locked > 0) {

@@ -2965,7 +2965,7 @@ func Test_cclose_in_autocmd()
   " call test_override('starting', 0)
 endfunc
 
-" Check that ":file" without an argument is possible even when "curbuf_lock"
+" Check that ":file" without an argument is possible even when curbuf is locked
 " is set.
 func Test_file_from_copen()
   " Works without argument.

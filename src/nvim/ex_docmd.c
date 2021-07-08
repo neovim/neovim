@@ -1518,7 +1518,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       goto doend;
     }
 
-    // Disallow editing another buffer when "curbuf_lock" is set.
+    // Disallow editing another buffer when "curbuf->b_ro_locked" is set.
     // Do allow ":checktime" (it is postponed).
     // Do allow ":edit" (check for an argument later).
     // Do allow ":file" with no arguments (check for an argument later).
@@ -1601,7 +1601,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   else
     ea.arg = skipwhite(p);
 
-  // ":file" cannot be run with an argument when "curbuf_lock" is set
+  // ":file" cannot be run with an argument when "curbuf->b_ro_locked" is set
   if (ea.cmdidx == CMD_file && *ea.arg != NUL && curbuf_locked()) {
     goto doend;
   }
@@ -7344,16 +7344,18 @@ do_exedit(
         old_curwin == NULL ? curwin : NULL);
   } else if ((eap->cmdidx != CMD_split && eap->cmdidx != CMD_vsplit)
              || *eap->arg != NUL) {
-    /* Can't edit another file when "curbuf_lock" is set.  Only ":edit"
-     * can bring us here, others are stopped earlier. */
-    if (*eap->arg != NUL && curbuf_locked())
+    // Can't edit another file when "curbuf->b_ro_lockec" is set.  Only ":edit"
+    // can bring us here, others are stopped earlier.
+    if (*eap->arg != NUL && curbuf_locked()) {
       return;
+    }
     n = readonlymode;
-    if (eap->cmdidx == CMD_view || eap->cmdidx == CMD_sview)
-      readonlymode = TRUE;
-    else if (eap->cmdidx == CMD_enew)
-      readonlymode = FALSE;         /* 'readonly' doesn't make sense in an
-                                       empty buffer */
+    if (eap->cmdidx == CMD_view || eap->cmdidx == CMD_sview) {
+      readonlymode = true;
+    } else if (eap->cmdidx == CMD_enew) {
+      readonlymode = false;  // 'readonly' doesn't make sense
+                             // in an empty buffer
+    }
     if (eap->cmdidx != CMD_balt && eap->cmdidx != CMD_badd) {
       setpcmark();
     }
