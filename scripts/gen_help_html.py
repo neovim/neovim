@@ -33,6 +33,7 @@ import re
 import urllib.parse
 import datetime
 import sys
+import argparse
 from itertools import chain
 
 HEAD = """\
@@ -355,23 +356,24 @@ def slurp(filename):
             return f.read(), 'latin-1'
 
 
-def usage():
-    return "usage: " + sys.argv[0] + " IN_DIR OUT_DIR [BASENAMES...]"
-
-
 def main():
-    if len(sys.argv) < 3:
-        sys.exit(usage())
+    parser = argparse.ArgumentParser(description='Converts Vim/Nvim :help files to HTML.')
+    parser.add_argument('indir', help='input directory')
+    parser.add_argument('outdir', help='output directory')
+    parser.add_argument('basename', nargs='*', default=[])
+    args = parser.parse_args()
 
-    in_dir = sys.argv[1]
-    out_dir = sys.argv[2]
-    basenames = sys.argv[3:]
+    in_dir = args.indir
+    out_dir = args.outdir
+    basenames = args.basename
 
     print("Processing tags...")
     h2h = VimH2H(slurp(os.path.join(in_dir, 'tags'))[0], is_web_version=False)
 
     if len(basenames) == 0:
         basenames = os.listdir(in_dir)
+    print(basenames)
+    sys.exit(0)
 
     for basename in basenames:
         if os.path.splitext(basename)[1] != '.txt' and basename != 'tags':
