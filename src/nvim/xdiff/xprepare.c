@@ -182,7 +182,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		goto abort;
 
 	if (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF)
-		hbits = hsize = 0;
+		hbits = 0;
 	else {
 		hbits = xdl_hashbits((unsigned int) narec);
 		hsize = 1 << hbits;
