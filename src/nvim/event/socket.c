@@ -172,18 +172,10 @@ void socket_watcher_close(SocketWatcher *watcher, socket_close_cb cb)
   uv_close(STRUCT_CAST(uv_handle_t, watcher->stream), close_cb);
 }
 
-static void connection_event(void **argv)
-{
-  SocketWatcher *watcher = argv[0];
-  int status = (int)(uintptr_t)(argv[1]);
-  watcher->cb(watcher, status, watcher->data);
-}
-
 static void connection_cb(uv_stream_t *handle, int status)
 {
   SocketWatcher *watcher = handle->data;
-  CREATE_EVENT(watcher->events, connection_event, 2, watcher,
-      (void *)(uintptr_t)status);
+  watcher->cb(watcher, status, watcher->data);
 }
 
 static void close_cb(uv_handle_t *handle)
