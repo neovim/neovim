@@ -1042,16 +1042,17 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
 end
 
 -- restores the extmarks set by M.display
+--- @param last number last line that was changed
 -- @private
-local function restore_extmarks(bufnr)
-  local lcount = api.nvim_buf_line_count(bufnr)
+local function restore_extmarks(bufnr, last)
   for client_id, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
     local ns = M._get_diagnostic_namespace(client_id)
     local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
     local found = {}
     for _, extmark in ipairs(extmarks_current) do
-      -- HACK: the missing extmarks seem to still exist, but at the line after the last
-      if extmark[2] < lcount then
+      -- nvim_buf_set_lines will move any extmark to the line after the last
+      -- nvim_buf_set_text will move any extmark to the last line
+      if extmark[2] ~= last + 1 then
         found[extmark[1]] = true
       end
     end
@@ -1076,8 +1077,8 @@ local function save_extmarks(bufnr, client_id)
   bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
   if not diagnostic_attached_buffers[bufnr] then
     api.nvim_buf_attach(bufnr, false, {
-      on_lines = function()
-        restore_extmarks(bufnr)
+      on_lines = function(_, _, _, _, _, last)
+        restore_extmarks(bufnr, last -  1)
       end,
       on_detach = function()
         diagnostic_cache_extmarks[bufnr] = nil
