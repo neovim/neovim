@@ -568,9 +568,7 @@ with ".".  Vim does not recognize a comment (starting with '"') after the
 			option is empty (this is the default), use the
 			internal formatting function |C-indenting| and
 			|'lisp'|.  But when 'indentexpr' is not empty, it will
-			be used instead |indent-expression|.  When Vim was
-			compiled without internal formatting then the "indent"
-			program is used as a last resort.
+			be used instead |indent-expression|.
 
 							*==*
 ==			Filter [count] lines like with ={motion}.
@@ -1011,9 +1009,7 @@ inside of strings can change!  Also see 'softtabstop' option. >
 			with `zp`.  (for {Visual} see |Visual-mode|)
 
 							*:y* *:yank* *E850*
-:[range]y[ank] [x]	Yank [range] lines [into register x]. Yanking to the
-			"* or "+ registers is possible only when the
-			|+clipboard| feature is included.
+:[range]y[ank] [x]	Yank [range] lines [into register x].
 
 :[range]y[ank] [x] {count}
 			Yank {count} lines, starting with last line number
@@ -1802,8 +1798,7 @@ found here: |sort()|, |uniq()|.
 			With [f] sorting is done on the Float in the line.
 			The value of Float is determined similar to passing
 			the text (after or inside a {pattern} match) to
-			str2float() function. This option is available only
-			if Vim was compiled with Floating point support.
+			str2float() function.
 
 			With [x] sorting is done on the first hexadecimal
 			number in the line (after or inside a {pattern}

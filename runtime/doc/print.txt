@@ -103,10 +103,9 @@ will use the "latin1" print character encoding file.
 
 When 'encoding' is set to a multibyte encoding, Vim will try to convert
 characters to the printing encoding for printing (if 'printencoding' is empty
-then the conversion will be to latin1).  Conversion to a printing encoding
-other than latin1 will require Vim to be compiled with the |+iconv| feature.
-If no conversion is possible then printing will fail.  Any characters that
-cannot be converted will be replaced with upside down question marks.
+then the conversion will be to latin1). If no conversion is possible then
+printing will fail.  Any characters that cannot be converted will be replaced
+with upside down question marks.
 
 Two print character encoding files are provided to support default Mac and
 HPUX character encodings and are used by default on these platforms. Code page
@@ -176,9 +175,7 @@ the font.  When omitted, the point size is 10.
 'printheader' 'pheader'  string  (default "%<%f%h%m%=Page %N")
 			 global
 This defines the format of the header produced in |:hardcopy| output.  The
-option is defined in the same way as the 'statusline' option.  If Vim has not
-been compiled with the |+statusline| feature, this option has no effect and a
-simple default header is used, which shows the page number.  The same simple
+option is defined in the same way as the 'statusline' option.  The same simple
 header is used when this option is empty.
 
 							*pmbcs-option*

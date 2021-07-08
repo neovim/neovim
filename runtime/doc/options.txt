@@ -2138,8 +2138,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global or local to buffer |global-local|
 	External program to use for "=" command.  When this option is empty
 	the internal formatting functions are used; either 'lisp', 'cindent'
-	or 'indentexpr'.  When Vim was compiled without internal formatting,
-	the "indent" program is used.
+	or 'indentexpr'.
 	Environment variables are expanded |:set_env|.  See |option-backslash|
 	about including spaces and backslashes.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -7093,8 +7092,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Allows writing to any file with no need for "!" override.
 
 			     *'writebackup'* *'wb'* *'nowritebackup'* *'nowb'*
-'writebackup' 'wb'	boolean	(default on with |+writebackup| feature, off
-					otherwise)
+'writebackup' 'wb'	boolean	(default on)
 			global
 	Make a backup before overwriting a file.  The backup is removed after
 	the file was successfully written, unless the 'backup' option is
