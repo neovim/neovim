@@ -1633,7 +1633,7 @@ progress_handler({_}, {_}, {params}, {client_id})
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 
                                            *vim.lsp.handlers.signature_help()*
-signature_help({_}, {method}, {result}, {_}, {bufnr}, {config})
+signature_help({_}, {method}, {result}, {client_id}, {bufnr}, {config})
                 Parameters: ~
                     {config}  table Configuration table.
                               • border: (default=nil)
@@ -1776,7 +1776,7 @@ convert_input_to_markdown_lines({input}, {contents})
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 
                      *vim.lsp.util.convert_signature_help_to_markdown_lines()*
-convert_signature_help_to_markdown_lines({signature_help}, {ft})
+convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
                 Converts `textDocument/SignatureHelp` response to markdown
                 lines.
 
@@ -1785,6 +1785,9 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft})
                     {ft}              optional filetype that will be use as
                                       the `lang` for the label markdown code
                                       block
+                    {triggers}        optional list of trigger characters from
+                                      the lsp server. used to better determine
+                                      parameter offsets
 
                 Return: ~
                     list of lines of converted markdown.
