@@ -115,14 +115,14 @@ function LanguageTree:parse()
       parser:set_included_ranges(ranges)
 
       local tree, tree_changes = parser:parse(old_tree, self._source)
-      self:_do_callback('changedtree', tree_changes, tree)
+      self:_do_callback('changedtree', tree_changes, tree, self._lang)
 
       table.insert(self._trees, tree)
       vim.list_extend(changes, tree_changes)
     end
   else
     local tree, tree_changes = parser:parse(old_trees[1], self._source)
-    self:_do_callback('changedtree', tree_changes, tree)
+    self:_do_callback('changedtree', tree_changes, tree, self._lang)
 
     table.insert(self._trees, tree)
     vim.list_extend(changes, tree_changes)
