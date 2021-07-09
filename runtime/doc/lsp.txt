@@ -1427,6 +1427,11 @@ reset({client_id}, {buffer_client_map})           *vim.lsp.diagnostic.reset()*
                     {buffer_client_map}  table map of buffers to active
                                          clients
 
+                                       *vim.lsp.diagnostic.restore_extmarks()*
+restore_extmarks({bufnr}, {last})
+                Parameters: ~
+                    {last}  number last line that was changed
+
 save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
                 Save diagnostics to the current buffer.
 
@@ -1437,6 +1442,10 @@ save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
                     {diagnostics}  Diagnostic []
                     {bufnr}        number
                     {client_id}    number
+
+                                          *vim.lsp.diagnostic.save_extmarks()*
+save_extmarks({bufnr}, {client_id})
+                TODO: Documentation
 
 set_loclist({opts})                         *vim.lsp.diagnostic.set_loclist()*
                 Sets the location list
@@ -1632,7 +1641,9 @@ signature_help({_}, {method}, {result}, {_}, {bufnr}, {config})
                                 • See |vim.api.nvim_open_win()|
 
                 See also: ~
-                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_typeDefinition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation|lsp-handler| for the method "textDocument/signatureHelp">
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_typeDefinition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation|lsp-handler| for the method "textDocument/signatureHelp"
+                    The active parameter is highlighted with
+                    |hl-LspSignatureActiveParameter|>
 
                  vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
                    vim.lsp.handlers.signature_help, {
@@ -1842,6 +1853,9 @@ get_lines({uri}, {rows})                            *vim.lsp.util.get_lines()*
 
                 Return: ~
                     table<number string> a table mapping rows to lines
+
+get_markdown_fences()                     *vim.lsp.util.get_markdown_fences()*
+                TODO: Documentation
 
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
