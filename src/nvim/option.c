@@ -3837,22 +3837,19 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
     // any changes in between.
     if (curbuf->b_p_udf || p_udf) {
       char_u hash[UNDO_HASH_SIZE];
-      buf_T       *save_curbuf = curbuf;
 
       FOR_ALL_BUFFERS(bp) {
-        curbuf = bp;
         // When 'undofile' is set globally: for every buffer, otherwise
         // only for the current buffer: Try to read in the undofile,
         // if one exists, the buffer wasn't changed and the buffer was
         // loaded
-        if ((curbuf == save_curbuf
+        if ((curbuf == bp
              || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
-            && !curbufIsChanged() && curbuf->b_ml.ml_mfp != NULL) {
-          u_compute_hash(hash);
-          u_read_undo(NULL, hash, curbuf->b_fname);
+            && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
+          u_compute_hash(bp, hash);
+          u_read_undo(NULL, hash, bp->b_fname);
         }
       }
-      curbuf = save_curbuf;
     }
   } else if ((int *)varp == &curbuf->b_p_ro) {
     // when 'readonly' is reset globally, also reset readonlymode
