@@ -115,6 +115,8 @@ jobs:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages:
             - *common-apt-packages
+            # DEBUG
+            - lcov
             - gcc-9
     - name: gcc-functionaltest-lua
       os: linux
