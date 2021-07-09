@@ -4967,13 +4967,10 @@ int buf_check_timestamp(buf_T *buf)
     buf_reload(buf, orig_mode);
     if (buf->b_p_udf && buf->b_ffname != NULL) {
       char_u hash[UNDO_HASH_SIZE];
-      buf_T           *save_curbuf = curbuf;
 
-      /* Any existing undo file is unusable, write it now. */
-      curbuf = buf;
-      u_compute_hash(hash);
-      u_write_undo(NULL, FALSE, buf, hash);
-      curbuf = save_curbuf;
+      // Any existing undo file is unusable, write it now.
+      u_compute_hash(buf, hash);
+      u_write_undo(NULL, false, buf, hash);
     }
   }
 

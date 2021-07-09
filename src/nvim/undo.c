@@ -631,18 +631,20 @@ int u_savecommon(buf_T *buf,
 
 static char_u e_not_open[] = N_("E828: Cannot open undo file for writing: %s");
 
-/*
- * Compute the hash for the current buffer text into hash[UNDO_HASH_SIZE].
- */
-void u_compute_hash(char_u *hash)
+/// Compute the hash for a buffer text into hash[UNDO_HASH_SIZE].
+///
+/// @param[in] buf The buffer used to compute the hash
+/// @param[in] hash Array of size UNDO_HASH_SIZE in which to store the value of
+///                 the hash
+void u_compute_hash(buf_T *buf, char_u *hash)
 {
   context_sha256_T ctx;
   linenr_T lnum;
   char_u              *p;
 
   sha256_start(&ctx);
-  for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
-    p = ml_get(lnum);
+  for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
+    p = ml_get_buf(buf, lnum, false);
     sha256_update(&ctx, p, (uint32_t)(STRLEN(p) + 1));
   }
   sha256_finish(&ctx, hash);
