@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include "nvim/buffer.h"
 #include "nvim/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
@@ -735,7 +736,7 @@ static int pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bt[2] == 'f')
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
-          while (!BUFEMPTY()) {
+          while (!buf_is_empty(curbuf)) {
             ml_delete((linenr_T)1, false);
           }
         } else {

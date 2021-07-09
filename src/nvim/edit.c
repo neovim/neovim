@@ -467,7 +467,7 @@ static void insert_enter(InsertState *s)
   }
 
   if (!p_im && did_restart_edit == 0) {
-    change_warning(s->i == 0 ? 0 : s->i + 1);
+    change_warning(curbuf, s->i == 0 ? 0 : s->i + 1);
   }
 
   ui_cursor_shape();            // may show different cursor shape
@@ -8047,7 +8047,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   // can't backup past first character in buffer
   // can't backup past starting point unless 'backspace' > 1
   // can backup to a previous line if 'backspace' == 0
-  if (BUFEMPTY()
+  if (buf_is_empty(curbuf)
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)

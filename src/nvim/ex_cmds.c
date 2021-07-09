@@ -2607,7 +2607,7 @@ int do_ecmd(
         && (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur)) {
       // Sync first so that this is a separate undo-able action.
       u_sync(false);
-      if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
+      if (u_savecommon(curbuf, 0, curbuf->b_ml.ml_line_count + 1, 0, true)
           == FAIL) {
         xfree(new_name);
         goto theend;
@@ -5159,9 +5159,9 @@ void fix_help_buffer(void)
 
   // Set filetype to "help".
   if (STRCMP(curbuf->b_p_ft, "help") != 0) {
-    curbuf_lock++;
+    curbuf->b_ro_locked++;
     set_option_value("ft", 0L, "help", OPT_LOCAL);
-    curbuf_lock--;
+    curbuf->b_ro_locked--;
   }
 
   if (!syntax_present(curwin)) {

@@ -508,9 +508,6 @@ EXTERN int secure INIT(= false);
 /// allowed.
 EXTERN int textlock INIT(= 0);
 
-/// Non-zero when the current buffer can't be changed.  Used for FileChangedRO.
-EXTERN int curbuf_lock INIT(= 0);
-
 /// Non-zero when no buffer name can be changed, no buffer can be deleted and
 /// current directory can't be changed. Used for SwapExists et al.
 EXTERN int allbuf_lock INIT(= 0);

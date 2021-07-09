@@ -525,6 +525,8 @@ struct file_buffer {
   int b_flags;                  // various BF_ flags
   int b_locked;                 // Buffer is being closed or referenced, don't
                                 // let autocommands wipe it out.
+  int b_ro_locked;              // Non-zero when the buffer can't be changed.
+                                // Used for FileChangedRO
 
   //
   // b_ffname   has the full path of the file (NULL for no name).

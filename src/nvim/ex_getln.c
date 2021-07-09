@@ -2412,13 +2412,11 @@ char_u * get_text_locked_msg(void) {
   }
 }
 
-/*
- * Check if "curbuf_lock" or "allbuf_lock" is set and return TRUE when it is
- * and give an error message.
- */
+/// Check if "curbuf->b_ro_locked" or "allbuf_lock" is set and
+/// return TRUE when it is and give an error message.
 int curbuf_locked(void)
 {
-  if (curbuf_lock > 0) {
+  if (curbuf->b_ro_locked > 0) {
     EMSG(_("E788: Not allowed to edit another buffer now"));
     return TRUE;
   }
@@ -6513,7 +6511,7 @@ static int open_cmdwin(void)
   curwin->w_p_fen = false;
 
   // Don't allow switching to another buffer.
-  curbuf_lock++;
+  curbuf->b_ro_locked++;
 
   // Showing the prompt may have set need_wait_return, reset it.
   need_wait_return = false;
@@ -6526,7 +6524,7 @@ static int open_cmdwin(void)
     }
     set_option_value("ft", 0L, "vim", OPT_LOCAL);
   }
-  curbuf_lock--;
+  curbuf->b_ro_locked--;
 
   // Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
   // sets 'textwidth' to 78).

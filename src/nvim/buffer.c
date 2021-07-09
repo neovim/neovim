@@ -55,7 +55,6 @@
 #include "nvim/mark.h"
 #include "nvim/extmark.h"
 #include "nvim/mbyte.h"
-#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
@@ -139,7 +138,7 @@ read_buffer(
   if (read_stdin) {
     // Set or reset 'modified' before executing autocommands, so that
     // it can be changed there.
-    if (!readonlymode && !BUFEMPTY()) {
+    if (!readonlymode && !buf_is_empty(curbuf)) {
       changed();
     } else if (retval != FAIL) {
       unchanged(curbuf, false, true);
@@ -1921,7 +1920,7 @@ bool curbuf_reusable(void)
   return (curbuf != NULL
           && curbuf->b_ffname == NULL
           && curbuf->b_nwindows <= 1
-          && (curbuf->b_ml.ml_mfp == NULL || BUFEMPTY())
+          && (curbuf->b_ml.ml_mfp == NULL || buf_is_empty(curbuf))
           && !bt_quickfix(curbuf)
           && !curbufIsChanged());
 }
@@ -2061,7 +2060,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
     if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
-        && !BUFEMPTY()) {
+        && !buf_is_empty(curbuf)) {
       if (swb_flags & SWB_NEWTAB) {
         tabpage_new();
       } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
@@ -4951,7 +4950,7 @@ do_arg_all(
   win_enter(lastwin, false);
   // ":tab drop file" should re-use an empty window to avoid "--remote-tab"
   // leaving an empty tab page when executed locally.
-  if (keep_tabs && BUFEMPTY() && curbuf->b_nwindows == 1
+  if (keep_tabs && buf_is_empty(curbuf) && curbuf->b_nwindows == 1
       && curbuf->b_ffname == NULL && !curbuf->b_changed) {
     use_firstwin = true;
     tab_drop_empty_window = true;
@@ -5696,3 +5695,4 @@ void buf_open_scratch(handle_T bufnr, char *bufname)
   set_option_value("swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
 }
+
