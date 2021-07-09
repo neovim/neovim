@@ -6,23 +6,12 @@ if(POLICY CMP0012)
   cmake_policy(SET CMP0012 NEW)
 endif()
 
-set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
-set(ENV{NVIM_RPLUGIN_MANIFEST} ${BUILD_DIR}/Xtest_rplugin_manifest)
-set(ENV{XDG_CONFIG_HOME} ${BUILD_DIR}/Xtest_xdg/config)
-set(ENV{XDG_DATA_HOME} ${BUILD_DIR}/Xtest_xdg/share)
-
-if(NOT DEFINED ENV{NVIM_LOG_FILE})
-  set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/.nvimlog)
-endif()
-
-if(NVIM_PRG)
-  set(ENV{NVIM_PRG} "${NVIM_PRG}")
-endif()
-
-if(DEFINED ENV{TEST_FILE})
-  set(TEST_PATH "$ENV{TEST_FILE}")
-else()
-  set(TEST_PATH "${TEST_DIR}/${TEST_TYPE}")
+if(NOT DEFINED TEST_PATH)
+  if(DEFINED ENV{TEST_FILE})
+    set(TEST_PATH "$ENV{TEST_FILE}")
+  else()
+    set(TEST_PATH "${TEST_DIR}/${TEST_TYPE}")
+  endif()
 endif()
 
 # Force $TEST_PATH to workdir-relative path ("test/…").
@@ -30,7 +19,26 @@ if(IS_ABSOLUTE ${TEST_PATH})
   file(RELATIVE_PATH TEST_PATH "${WORKING_DIR}" "${TEST_PATH}")
 endif()
 
+# TMPDIR: use relative test path (for parallel test runs / isolation).
+set(TEST_SCRATCH_DIR "${BUILD_DIR}/Xtest_tmpdir/${TEST_PATH}")
+set(ENV{TMPDIR} "${TEST_SCRATCH_DIR}/tmp")
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
+
+set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
+set(ENV{NVIM_RPLUGIN_MANIFEST} ${TEST_SCRATCH_DIR}/Xtest_rplugin_manifest)
+set(ENV{XDG_CONFIG_HOME} ${TEST_SCRATCH_DIR}/Xtest_xdg/config)
+set(ENV{XDG_DATA_HOME} ${TEST_SCRATCH_DIR}/Xtest_xdg/share)
+
+if(NOT DEFINED ENV{NVIM_LOG_FILE})
+  set(ENV{NVIM_LOG_FILE} ${TEST_SCRATCH_DIR}/.nvimlog)
+endif()
+
+if(NVIM_PRG)
+  set(ENV{NVIM_PRG} "${NVIM_PRG}")
+endif()
+
 if(BUSTED_OUTPUT_TYPE STREQUAL junit)
+  # XXX: used by QuickBuild?  Can it go into subdir?
   set(EXTRA_ARGS OUTPUT_FILE ${BUILD_DIR}/${TEST_TYPE}test-junit.xml)
 endif()
 
@@ -44,10 +52,6 @@ endif()
 if(DEFINED ENV{TEST_FILTER} AND NOT "$ENV{TEST_FILTER}" STREQUAL "")
   list(APPEND BUSTED_ARGS --filter $ENV{TEST_FILTER})
 endif()
-
-# TMPDIR: use relative test path (for parallel test runs / isolation).
-set(ENV{TMPDIR} "${BUILD_DIR}/Xtest_tmpdir/${TEST_PATH}")
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 
 set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
 execute_process(
@@ -63,8 +67,7 @@ execute_process(
   RESULT_VARIABLE res
   ${EXTRA_ARGS})
 
-file(GLOB RM_FILES ${BUILD_DIR}/Xtest_*)
-file(REMOVE_RECURSE ${RM_FILES})
+file(REMOVE_RECURSE ${TEST_SCRATCH_DIR})
 
 if(NOT res EQUAL 0)
   message(STATUS "Tests exited non-zero: ${res}")
