@@ -845,9 +845,10 @@ end
 ---
 --@param signature_help Response of `textDocument/SignatureHelp`
 --@param ft optional filetype that will be use as the `lang` for the label markdown code block
+--@param triggers optional list of trigger characters from the lsp server. used to better determine parameter offsets
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help, ft)
+function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers)
   if not signature_help.signatures then
     return
   end
@@ -877,10 +878,16 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   end
   if signature.parameters and #signature.parameters > 0 then
     local active_parameter = (signature.activeParameter or signature_help.activeParameter or 0)
-    -- If the activeParameter is not inside the valid range, then clip it.
-    if active_parameter >= #signature.parameters then
-      active_parameter = 0
+    if active_parameter < 0
+      then active_parameter = 0
     end
+
+    -- If the activeParameter is > #parameters, then set it to the last
+    -- NOTE: this is not fully according to the spec, but a client-side interpretation
+    if active_parameter >= #signature.parameters then
+      active_parameter = #signature.parameters - 1
+    end
+
     local parameter = signature.parameters[active_parameter + 1]
     if parameter then
       --[=[
@@ -905,8 +912,23 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
         if type(parameter.label) == "table" then
           active_hl = parameter.label
         else
-          local i = signature.label:find(parameter.label)
-          if i then active_hl = {i - 1, i + #parameter.label - 1} end
+          local offset = 1
+          -- try to set the initial offset to the first found trigger character
+          for _, t in ipairs(triggers or {}) do
+            local trigger_offset = signature.label:find(t, 1, true)
+            if trigger_offset and (offset == 1 or trigger_offset < offset) then
+              offset = trigger_offset
+            end
+          end
+          for p, param in pairs(signature.parameters) do
+            offset = signature.label:find(param.label, offset, true)
+            if not offset then break end
+            if p == active_parameter + 1 then
+              active_hl = {offset - 1, offset + #parameter.label - 1}
+              break
+            end
+            offset = offset + #param.label + 1
+          end
         end
       end
       if parameter.documentation then
