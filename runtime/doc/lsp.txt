@@ -528,6 +528,9 @@ LspCodeLens
    Used to color the virtual text of the codelens. See
    |nvim_buf_set_virtual_text()|.
 
+LspCodeLensSeparator                                 *hl-LspCodeLensSeparator*
+   Used to color the seperator between two or more code lens.
+
                                                      *lsp-highlight-signature*
 
 Highlight groups related to |vim.lsp.handlers.signature_help()|.
