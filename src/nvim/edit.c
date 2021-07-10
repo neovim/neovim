@@ -773,17 +773,18 @@ static int insert_execute(VimState *state, int key)
   }
 
   if (cindent_on()
-      && ctrl_x_mode == 0) {
+      && ctrl_x_mode == CTRL_X_NORMAL) {
+    s->line_is_white = inindent(0);
     // A key name preceded by a bang means this key is not to be
     // inserted.  Skip ahead to the re-indenting below.
-    // A key name preceded by a star means that indenting has to be
-    // done before inserting the key.
-    s->line_is_white = inindent(0);
-    if (in_cinkeys(s->c, '!', s->line_is_white)) {
-      insert_do_cindent(s);
+    if (in_cinkeys(s->c, '!', s->line_is_white)
+        && stop_arrow() == OK) {
+      do_c_expr_indent();
       return 1;  // continue
     }
 
+    // A key name preceded by a star means that indenting has to be
+    // done before inserting the key.
     if (can_cindent && in_cinkeys(s->c, '*', s->line_is_white)
         && stop_arrow() == OK) {
       do_c_expr_indent();
@@ -7260,7 +7261,7 @@ void fix_indent(void) {
 /// Check that "cinkeys" contains the key "keytyped",
 /// when == '*': Only if key is preceded with '*' (indent before insert)
 /// when == '!': Only if key is preceded with '!' (don't insert)
-/// when == ' ': Only if key is not preceded with '*' (indent afterwards)
+/// when == ' ': Only if key is not preceded with '*' or '!' (indent afterwards)
 ///
 /// "keytyped" can have a few special values:
 /// KEY_OPEN_FORW :
@@ -7297,7 +7298,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     switch (when) {
     case '*': try_match = (*look == '*'); break;
     case '!': try_match = (*look == '!'); break;
-    default: try_match = (*look != '*'); break;
+    default: try_match = (*look != '*') && (*look != '!'); break;
     }
     if (*look == '*' || *look == '!') {
       look++;
