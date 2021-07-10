@@ -112,7 +112,7 @@ describe('API: buffer events:', function()
                                            'original line 6'}, false})
 
     -- add one line to the middle of the file, several times
-    command('normal! ggYjjp')
+    command('normal! ggyyjjp')
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 3, 3, {'original line 4'}, false})
     command('normal! p')
@@ -123,7 +123,7 @@ describe('API: buffer events:', function()
     expectn('nvim_buf_lines_event', {b, tick, 5, 5, {'original line 4'}, false})
 
     -- add multiple lines to the middle of the file
-    command('normal! gg4Yjjp')
+    command('normal! gg4yyjjp')
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 3, 3, {'original line 4',
                                            'original line 5',
@@ -131,12 +131,12 @@ describe('API: buffer events:', function()
                                            'original line 4'}, false})
 
     -- add one line to the end of the file
-    command('normal! ggYGp')
+    command('normal! ggyyGp')
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 17, 17, {'original line 4'}, false})
 
     -- add one line to the end of the file, several times
-    command('normal! ggYGppp')
+    command('normal! ggyyGppp')
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 18, 18, {'original line 4'}, false})
     tick = tick + 1
@@ -145,7 +145,7 @@ describe('API: buffer events:', function()
     expectn('nvim_buf_lines_event', {b, tick, 20, 20, {'original line 4'}, false})
 
     -- add several lines to the end of the file, several times
-    command('normal! gg4YGp')
+    command('normal! gg4yyGp')
     command('normal! Gp')
     command('normal! Gp')
     local firstfour = {'original line 4',
