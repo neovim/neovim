@@ -119,7 +119,7 @@ function M.display(lenses, bufnr, client_id)
       local text = lens.command and lens.command.title or 'Unresolved lens ...'
       table.insert(chunks, {text, 'LspCodeLens' })
       if j < num_line_lenses then
-        table.insert(chunks, {' | ', 'LspCodeLens' })
+        table.insert(chunks, {' | ', 'LspCodeLensSeparator' })
       end
     end
     if #chunks > 0 then
