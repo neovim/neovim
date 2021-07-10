@@ -17,7 +17,7 @@ local current_log_level = log.levels.WARN
 local log_date_format = "%FT%H:%M:%S%z"
 
 do
-  local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
+  local path_sep = vim.loop.os_uname().version:match("Windows") and "\\" or "/"
   --@private
   local function path_join(...)
     return table.concat(vim.tbl_flatten{...}, path_sep)
