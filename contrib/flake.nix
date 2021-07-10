@@ -106,7 +106,7 @@
                 clang-tools # for clangd to find the correct headers
               ];
 
-              shellHook = ''
+              shellHook = oa.shellHook + ''
                 export NVIM_PYTHON_LOG_LEVEL=DEBUG
                 export NVIM_LOG_FILE=/tmp/nvim.log
 
@@ -118,6 +118,10 @@
                 # when running the functionaltests
                 mkdir -p outputs/out/share/nvim/syntax
                 touch outputs/out/share/nvim/syntax/syntax.vim
+
+                # for treesitter functionaltests
+                mkdir -p runtime/parser
+                cp -f ${pkgs.tree-sitter.builtGrammars.tree-sitter-c}/parser runtime/parser/c.so
               '';
             });
     });
