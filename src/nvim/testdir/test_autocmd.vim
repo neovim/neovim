@@ -1955,7 +1955,7 @@ func Test_autocmd_sigusr1()
 
   let g:sigusr1_passed = 0
   au Signal SIGUSR1 let g:sigusr1_passed = 1
-  call system('/bin/kill -s usr1 ' . getpid())
+  call system('kill -s usr1 ' . getpid())
   call WaitForAssert({-> assert_true(g:sigusr1_passed)})
 
   au! Signal
