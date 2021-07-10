@@ -7,7 +7,7 @@
 #include "auto/config.h"
 #include "nvim/macros.h"
 
-// USDT probes. Example invokation:
+// USDT probes. Example invocation:
 //     NVIM_PROBE(nvim_foo_bar, 1, string.data);
 #if defined(HAVE_SYS_SDT_H)
 #include <sys/sdt.h> // NOLINT

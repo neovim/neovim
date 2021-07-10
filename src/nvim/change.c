@@ -40,18 +40,18 @@
 /// "col" is the column for the message; non-zero when in insert mode and
 /// 'showmode' is on.
 /// Careful: may trigger autocommands that reload the buffer.
-void change_warning(int col)
+void change_warning(buf_T *buf, int col)
 {
   static char *w_readonly = N_("W10: Warning: Changing a readonly file");
 
-  if (curbuf->b_did_warn == false
+  if (buf->b_did_warn == false
       && curbufIsChanged() == 0
       && !autocmd_busy
-      && curbuf->b_p_ro) {
-    curbuf_lock++;
-    apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, false, curbuf);
-    curbuf_lock--;
-    if (!curbuf->b_p_ro) {
+      && buf->b_p_ro) {
+    buf->b_ro_locked++;
+    apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, false, buf);
+    buf->b_ro_locked--;
+    if (!buf->b_p_ro) {
         return;
     }
     // Do what msg() does, but with a column offset if the warning should
@@ -70,7 +70,7 @@ void change_warning(int col)
       ui_flush();
       os_delay(1002L, true);  // give the user time to think about it
     }
-    curbuf->b_did_warn = true;
+    buf->b_did_warn = true;
     redraw_cmdline = false;  // don't redraw and erase the message
     if (msg_row < Rows - 1) {
         showmode();
@@ -91,7 +91,7 @@ void changed(void)
 
     // Give a warning about changing a read-only file.  This may also
     // check-out the file, thus change "curbuf"!
-    change_warning(0);
+    change_warning(curbuf, 0);
 
     // Create a swap file if that is wanted.
     // Don't do this for "nofile" and "nowrite" buffer types.
@@ -1732,7 +1732,7 @@ int open_line(
   }
   if (did_append) {
     changed_lines(curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
-    // bail out and just get the final lenght of the line we just manipulated
+    // bail out and just get the final length of the line we just manipulated
     bcount_t extra = (bcount_t)STRLEN(ml_get(curwin->w_cursor.lnum));
     extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, 0,
                    0, 0, 0, 1, 0, 1+extra, kExtmarkUndo);

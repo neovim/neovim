@@ -880,7 +880,7 @@ void set_init_3(void)
     xfree(p);
   }
 
-  if (BUFEMPTY()) {
+  if (buf_is_empty(curbuf)) {
     int idx_ffs = findoption_len(S_LEN("ffs"));
 
     // Apply the first entry of 'fileformats' to the initial buffer.
@@ -1174,10 +1174,10 @@ int do_set(
         }
       }
 
-      /*
-       * allow '=' and ':' as MSDOS command.com allows only one
-       * '=' character per "set" command line. grrr. (jw)
-       */
+      //
+      // allow '=' and ':' as MS-DOS command.com allows only one
+      // '=' character per "set" command line. grrr. (jw)
+      //
       if (nextchar == '?'
           || (prefix == 1
               && vim_strchr((char_u *)"=:&<", nextchar) == NULL
@@ -2719,7 +2719,7 @@ ambw_end:
                : opt_idx);
     // Update free_oldval now that we have the opt_idx for 'shada', otherwise
     // there would be a disconnect between the check for P_ALLOCED at the start
-    // of the function and the set of P_ALLOCED at the end of the fuction.
+    // of the function and the set of P_ALLOCED at the end of the function.
     free_oldval = (options[opt_idx].flags & P_ALLOCED);
     for (s = p_shada; *s; ) {
       // Check it's a valid character
@@ -3837,22 +3837,19 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
     // any changes in between.
     if (curbuf->b_p_udf || p_udf) {
       char_u hash[UNDO_HASH_SIZE];
-      buf_T       *save_curbuf = curbuf;
 
       FOR_ALL_BUFFERS(bp) {
-        curbuf = bp;
         // When 'undofile' is set globally: for every buffer, otherwise
         // only for the current buffer: Try to read in the undofile,
         // if one exists, the buffer wasn't changed and the buffer was
         // loaded
-        if ((curbuf == save_curbuf
+        if ((curbuf == bp
              || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
-            && !curbufIsChanged() && curbuf->b_ml.ml_mfp != NULL) {
-          u_compute_hash(hash);
-          u_read_undo(NULL, hash, curbuf->b_fname);
+            && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
+          u_compute_hash(bp, hash);
+          u_read_undo(NULL, hash, bp->b_fname);
         }
       }
-      curbuf = save_curbuf;
     }
   } else if ((int *)varp == &curbuf->b_p_ro) {
     // when 'readonly' is reset globally, also reset readonlymode
@@ -5363,7 +5360,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
       home_replace(NULL, *valuep, buf, size, false);
 
       // If the option value is longer than MAXPATHL, we need to append
-      // earch comma separated part of the option sperately, so that it
+      // search comma separated part of the option separately, so that it
       // can be expanded when read back.
       if (size >= MAXPATHL && (flags & P_COMMA) != 0
           && vim_strchr(*valuep, ',') != NULL) {

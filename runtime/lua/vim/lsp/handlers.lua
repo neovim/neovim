@@ -316,6 +316,7 @@ M['textDocument/typeDefinition'] = location_handler
 M['textDocument/implementation'] = location_handler
 
 --- |lsp-handler| for the method "textDocument/signatureHelp"
+--- The active parameter is highlighted with |hl-LspSignatureActiveParameter|
 --- <pre>
 --- vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
 ---   vim.lsp.handlers.signature_help, {
@@ -328,23 +329,33 @@ M['textDocument/implementation'] = location_handler
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.api.nvim_open_win()|
-function M.signature_help(_, method, result, _, bufnr, config)
+function M.signature_help(_, method, result, client_id, bufnr, config)
   config = config or {}
   config.focus_id = method
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
-    print('No signature help available')
+    if config.silent ~= true then
+      print('No signature help available')
+    end
     return
   end
+  local client = vim.lsp.get_client_by_id(client_id)
+  local triggers = client.resolved_capabilities.signature_help_trigger_characters
   local ft = api.nvim_buf_get_option(bufnr, 'filetype')
-  local lines = util.convert_signature_help_to_markdown_lines(result, ft)
+  local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
-    print('No signature help available')
+    if config.silent ~= true then
+      print('No signature help available')
+    end
     return
   end
-  return util.open_floating_preview(lines, "markdown", config)
+  local fbuf, fwin = util.open_floating_preview(lines, "markdown", config)
+  if hl then
+    api.nvim_buf_add_highlight(fbuf, -1, "LspSignatureActiveParameter", 0, unpack(hl))
+  end
+  return fbuf, fwin
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp

@@ -903,11 +903,9 @@ OBSCURE
 Profiling						*profile* *profiling*
 
 Profiling means that Vim measures the time that is spent on executing
-functions and/or scripts.  The |+profile| feature is required for this.
-It is only included when Vim was compiled with "huge" features.
+functions and/or scripts.
 
-You can also use the |reltime()| function to measure time.  This only requires
-the |+reltime| feature, which is present more often.
+You can also use the |reltime()| function to measure time.
 
 For profiling syntax highlighting see |:syntime|.
 

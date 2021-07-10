@@ -104,7 +104,7 @@ conpty_t *os_conpty_init(char **in_name, char **out_name,
   HRESULT hr;
   hr = pCreatePseudoConsole(size, in_read, out_write, 0, &conpty_object->pty);
   if (FAILED(hr)) {
-    emsg = "create psudo console failed";
+    emsg = "create pseudo console failed";
     goto failed;
   }
 

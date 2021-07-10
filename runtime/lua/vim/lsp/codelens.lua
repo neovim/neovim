@@ -111,12 +111,16 @@ function M.display(lenses, bufnr, client_id)
   local ns = namespaces[client_id]
   local num_lines = api.nvim_buf_line_count(bufnr)
   for i = 0, num_lines do
-    local line_lenses = lenses_by_lnum[i]
+    local line_lenses = lenses_by_lnum[i] or {}
     api.nvim_buf_clear_namespace(bufnr, ns, i, i + 1)
     local chunks = {}
-    for _, lens in pairs(line_lenses or {}) do
+    local num_line_lenses = #line_lenses
+    for j, lens in ipairs(line_lenses) do
       local text = lens.command and lens.command.title or 'Unresolved lens ...'
       table.insert(chunks, {text, 'LspCodeLens' })
+      if j < num_line_lenses then
+        table.insert(chunks, {' | ', 'LspCodeLensSeparator' })
+      end
     end
     if #chunks > 0 then
       api.nvim_buf_set_virtual_text(bufnr, ns, i, chunks, {})

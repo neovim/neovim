@@ -699,8 +699,7 @@ tag		char	      note action in Normal mode	~
 
 tag		char	      note action in Normal mode	~
 ------------------------------------------------------------------------------
-|g_CTRL-A|	g CTRL-A	   only when compiled with MEM_PROFILE
-				   defined: dump a memory profile
+|g_CTRL-A|	g CTRL-A	   dump a memory profile
 |g_CTRL-G|	g CTRL-G	   show information about current cursor
 				   position
 |g_CTRL-H|	g CTRL-H	   start Select block mode

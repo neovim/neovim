@@ -86,7 +86,7 @@ struct ScreenGrid {
   int zindex;
 
   // Below is state owned by the compositor. Should generally not be set/read
-  // outside this module, except for specific compatibilty hacks
+  // outside this module, except for specific compatibility hacks
 
   // position of the grid on the composed screen.
   int comp_row;

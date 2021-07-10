@@ -1104,7 +1104,7 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
                     intermediate mouse positions will be ignored. It should be
                     used to implement real-time mouse input in a GUI. The
                     deprecated pseudokey form ("<LeftMouse><col,row>") of
-                    |nvim_input()| has the same limitiation.
+                    |nvim_input()| has the same limitation.
 
                 Attributes: ~
                     {fast}
@@ -1183,7 +1183,7 @@ nvim_notify({msg}, {log_level}, {opts})                        *nvim_notify()*
                 Notify the user with a message
 
                 Relays the call to vim.notify . By default forwards your
-                message in the echo area but can be overriden to trigger
+                message in the echo area but can be overridden to trigger
                 desktop notifications.
 
                 Parameters: ~
@@ -1197,7 +1197,7 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
                 By default (and currently the only option) the terminal will
                 not be connected to an external process. Instead, input send
                 on the channel will be echoed directly by the terminal. This
-                is useful to disply ANSI terminal sequences returned as part
+                is useful to display ANSI terminal sequences returned as part
                 of a rpc message, or similar.
 
                 Note: to directly initiate the terminal using the right size,
@@ -1419,8 +1419,9 @@ nvim_parse_expression({expr}, {flags}, {highlight})
 
                       • "len": Amount of bytes successfully parsed. With flags
                         equal to "" that should be equal to the length of expr
-                        string. (“Sucessfully parsed” here means “participated
-                        in AST creation”, not “till the first error”.)
+                        string. (“Successfully parsed” here means
+                        “participated in AST creation”, not “till the first
+                        error”.)
                       • "ast": AST, either nil or a dictionary with these
                         keys:
                         • "type": node type, one of the value names from
@@ -1681,7 +1682,7 @@ nvim_set_decoration_provider({ns_id}, {opts})
                 Note: this function should not be called often. Rather, the
                 callbacks themselves can be used to throttle unneeded
                 callbacks. the `on_start` callback can return `false` to
-                disable the provider until the next redraw. Similarily, return
+                disable the provider until the next redraw. Similarly, return
                 `false` in `on_win` will skip the `on_lines` calls for that
                 window (but any extmarks set in `on_win` will still be used).
                 A plugin managing multiple sources of decoration should
@@ -1721,7 +1722,7 @@ nvim_set_hl({ns_id}, {name}, {val})                            *nvim_set_hl()*
                 Parameters: ~
                     {ns_id}  number of namespace for this highlight
                     {name}   highlight group name, like ErrorMsg
-                    {val}    highlight definiton map, like
+                    {val}    highlight definition map, like
                              |nvim_get_hl_by_name|. in addition the following
                              keys are also recognized: `default` : don't
                              override existing definition, like `hi default`

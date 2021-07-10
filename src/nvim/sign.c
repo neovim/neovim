@@ -143,7 +143,7 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
     group = HI2SG(hi);
   }
 
-  // Search for the next usuable sign identifier
+  // Search for the next usable sign identifier
   while (!found) {
     if (group == NULL) {
       id = next_sign_id++;    // global group

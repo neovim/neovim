@@ -103,7 +103,7 @@ typedef struct {
 // the preview window
 typedef struct {
   kvec_t(SubResult) subresults;
-  linenr_T lines_needed;  // lines neede in the preview window
+  linenr_T lines_needed;  // lines needed in the preview window
 } PreviewLines;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -2607,7 +2607,7 @@ int do_ecmd(
         && (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur)) {
       // Sync first so that this is a separate undo-able action.
       u_sync(false);
-      if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
+      if (u_savecommon(curbuf, 0, curbuf->b_ml.ml_line_count + 1, 0, true)
           == FAIL) {
         xfree(new_name);
         goto theend;
@@ -4819,7 +4819,7 @@ char_u *check_help_lang(char_u *arg)
  * Return a heuristic indicating how well the given string matches.  The
  * smaller the number, the better the match.  This is the order of priorities,
  * from best match to worst match:
- *	- Match with least alpha-numeric characters is better.
+ *	- Match with least alphanumeric characters is better.
  *	- Match with least total characters is better.
  *	- Match towards the start is better.
  *	- Match starting with "+" is worse (feature instead of command)
@@ -5159,9 +5159,9 @@ void fix_help_buffer(void)
 
   // Set filetype to "help".
   if (STRCMP(curbuf->b_p_ft, "help") != 0) {
-    curbuf_lock++;
+    curbuf->b_ro_locked++;
     set_option_value("ft", 0L, "help", OPT_LOCAL);
-    curbuf_lock--;
+    curbuf->b_ro_locked--;
   }
 
   if (!syntax_present(curwin)) {

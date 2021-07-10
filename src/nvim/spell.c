@@ -6672,7 +6672,7 @@ void ex_spelldump(exarg_T *eap)
   set_option_value("spl",  dummy, (char *)spl, OPT_LOCAL);
   xfree(spl);
 
-  if (!BUFEMPTY()) {
+  if (!buf_is_empty(curbuf)) {
     return;
   }
 

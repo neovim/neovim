@@ -1078,10 +1078,11 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  /* Check for undo allowed here, because if something was already inserted
-   * the line was already saved for undo and this check isn't done. */
-  if (!undo_allowed())
+  // Check for undo allowed here, because if something was already inserted
+  // the line was already saved for undo and this check isn't done.
+  if (!undo_allowed(curbuf)) {
     return;
+  }
 
   if (argvars[1].v_type != VAR_LIST) {
     EMSG(_(e_invarg));

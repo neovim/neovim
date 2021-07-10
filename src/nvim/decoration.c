@@ -30,7 +30,7 @@ void decor_init(void)
 /// @param src_id src_id to use or 0 to use a new src_id group,
 ///               or -1 for ungrouped highlight.
 /// @param hl_id Highlight group id
-/// @param pos_start Cursor position to start the hightlighting at
+/// @param pos_start Cursor position to start the highlighting at
 /// @param pos_end Cursor position to end the highlighting at
 /// @param offset Move the whole highlighting this many columns to the right
 void bufhl_add_hl_pos_offset(buf_T *buf,

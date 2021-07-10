@@ -384,7 +384,7 @@ static int parser_parse(lua_State *L)
   // Sometimes parsing fails (timeout, or wrong parser ABI)
   // In those case, just return an error.
   if (!new_tree) {
-    return luaL_error(L, "An error occured when parsing.");
+    return luaL_error(L, "An error occurred when parsing.");
   }
 
   // The new tree will be pushed to the stack, without copy, owwership is now to

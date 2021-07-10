@@ -270,7 +270,7 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 /// On some systems case in a file name does not matter, on others it does.
 ///
 /// @note Does not account for maximum name lengths and things like "../dir",
-///       thus it is not 100% accurate. OS may also use different algorythm for
+///       thus it is not 100% accurate. OS may also use different algorithm for
 ///       case-insensitive comparison.
 ///
 /// @param[in]  x  First file name to compare.

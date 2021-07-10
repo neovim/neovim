@@ -3501,7 +3501,7 @@ void do_finish(exarg_T *eap, int reanimate)
                                             eap->cookie))->finished = false;
   }
 
-  // Cleanup (and inactivate) conditionals, but stop when a try conditional
+  // Cleanup (and deactivate) conditionals, but stop when a try conditional
   // not in its finally clause (which then is to be executed next) is found.
   // In this case, make the ":finish" pending for execution at the ":endtry".
   // Otherwise, finish normally.

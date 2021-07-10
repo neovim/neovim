@@ -97,7 +97,7 @@ static garray_T ucmds = {0, 0, sizeof(ucmd_T), 4, NULL};
 #define USER_CMD(i) (&((ucmd_T *)(ucmds.ga_data))[i])
 #define USER_CMD_GA(gap, i) (&((ucmd_T *)((gap)->ga_data))[i])
 
-/* Wether a command index indicates a user command. */
+// Whether a command index indicates a user command.
 # define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
 
 /* Struct for storing a line inside a while/for loop */
@@ -1518,7 +1518,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       goto doend;
     }
 
-    // Disallow editing another buffer when "curbuf_lock" is set.
+    // Disallow editing another buffer when "curbuf->b_ro_locked" is set.
     // Do allow ":checktime" (it is postponed).
     // Do allow ":edit" (check for an argument later).
     // Do allow ":file" with no arguments (check for an argument later).
@@ -1601,7 +1601,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   else
     ea.arg = skipwhite(p);
 
-  // ":file" cannot be run with an argument when "curbuf_lock" is set
+  // ":file" cannot be run with an argument when "curbuf->b_ro_locked" is set
   if (ea.cmdidx == CMD_file && *ea.arg != NUL && curbuf_locked()) {
     goto doend;
   }
@@ -2956,12 +2956,13 @@ const char * set_one_cmd_context(
     }
   }
 
-  /*
-   * If the cursor is touching the command, and it ends in an alpha-numeric
-   * character, complete the command name.
-   */
-  if (*p == NUL && ASCII_ISALNUM(p[-1]))
+  //
+  // If the cursor is touching the command, and it ends in an alphanumeric
+  // character, complete the command name.
+  //
+  if (*p == NUL && ASCII_ISALNUM(p[-1])) {
     return NULL;
+  }
 
   if (ea.cmdidx == CMD_SIZE) {
     if (*cmd == 's' && vim_strchr((const char_u *)"cgriI", cmd[1]) != NULL) {
@@ -7344,16 +7345,18 @@ do_exedit(
         old_curwin == NULL ? curwin : NULL);
   } else if ((eap->cmdidx != CMD_split && eap->cmdidx != CMD_vsplit)
              || *eap->arg != NUL) {
-    /* Can't edit another file when "curbuf_lock" is set.  Only ":edit"
-     * can bring us here, others are stopped earlier. */
-    if (*eap->arg != NUL && curbuf_locked())
+    // Can't edit another file when "curbuf->b_ro_lockec" is set.  Only ":edit"
+    // can bring us here, others are stopped earlier.
+    if (*eap->arg != NUL && curbuf_locked()) {
       return;
+    }
     n = readonlymode;
-    if (eap->cmdidx == CMD_view || eap->cmdidx == CMD_sview)
-      readonlymode = TRUE;
-    else if (eap->cmdidx == CMD_enew)
-      readonlymode = FALSE;         /* 'readonly' doesn't make sense in an
-                                       empty buffer */
+    if (eap->cmdidx == CMD_view || eap->cmdidx == CMD_sview) {
+      readonlymode = true;
+    } else if (eap->cmdidx == CMD_enew) {
+      readonlymode = false;  // 'readonly' doesn't make sense
+                             // in an empty buffer
+    }
     if (eap->cmdidx != CMD_balt && eap->cmdidx != CMD_badd) {
       setpcmark();
     }
@@ -8007,16 +8010,16 @@ static void ex_wundo(exarg_T *eap)
 {
   char_u hash[UNDO_HASH_SIZE];
 
-  u_compute_hash(hash);
-  u_write_undo((char *) eap->arg, eap->forceit, curbuf, hash);
+  u_compute_hash(curbuf, hash);
+  u_write_undo((char *)eap->arg, eap->forceit, curbuf, hash);
 }
 
 static void ex_rundo(exarg_T *eap)
 {
   char_u hash[UNDO_HASH_SIZE];
 
-  u_compute_hash(hash);
-  u_read_undo((char *) eap->arg, hash, NULL);
+  u_compute_hash(curbuf, hash);
+  u_read_undo((char *)eap->arg, hash, NULL);
 }
 
 /// ":redo".
