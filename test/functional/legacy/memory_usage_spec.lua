@@ -168,6 +168,9 @@ describe('memory usage', function()
   end)
 
   it('releases memory when closing windows when folds exist', function()
+    if helpers.is_os('mac') then
+      pending('macOS memory compression causes flakiness')
+    end
     local pid = eval('getpid()')
     source([[
       new
