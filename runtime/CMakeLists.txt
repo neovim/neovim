@@ -126,6 +126,8 @@ endforeach()
 
 file(GLOB_RECURSE RUNTIME_FILES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  colors/README.txt  # referenced in ':help :colorscheme'
+  indent/README.txt  # referenced in ':help indent-expression'
   rgb.txt
   *.vim *.lua *.dict *.py *.rb *.ps *.spl *.tutor *.tutor.json)
 
