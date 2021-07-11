@@ -2403,7 +2403,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
   case PRT_RESOURCE_TYPE_ENCODING:
   case PRT_RESOURCE_TYPE_CMAP:
     prt_dsc_resources("BeginResource", prt_resource_types[resource->type],
-        (char *)resource->title);
+                      (char *)resource->title);
     break;
   default:
     return FALSE;
