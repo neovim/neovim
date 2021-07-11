@@ -85,7 +85,7 @@ function highlight.on_yank(opts)
   highlight.range(bufnr, yank_ns, higroup, pos1, pos2, event.regtype, event.inclusive)
 
   vim.defer_fn(
-    function() api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1) end,
+    function() pcall(api.nvim_buf_clear_namespace, bufnr, yank_ns, 0, -1) end,
     timeout
   )
 end
