@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a problem in Nvim
 title: ''
-labels: bug
+labels: '0.kind: bug'
 
 ---
 
@@ -11,7 +11,7 @@ labels: bug
 - `nvim --version`:
 - Operating system/version:
 - Terminal name/version:
-- `$TERM`:
+- `echo $TERM`:
 
 <!--
 If this report is about different behaviour between Nvim and Vim, make sure to
