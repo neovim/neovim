@@ -158,7 +158,9 @@ function! s:clipboard.get(reg) abort
   end
 
   let clipboard_data = s:try_cmd(s:paste[a:reg])
-  if match(&clipboard, '\v(unnamed|unnamedplus)') >= 0 && get(s:selections[a:reg].data, 0, []) ==# clipboard_data
+  if match(&clipboard, '\v(unnamed|unnamedplus)') >= 0
+        \ && type(clipboard_data) == v:t_list
+        \ && get(s:selections[a:reg].data, 0, []) ==# clipboard_data
     " When system clipboard return is same as our cache return the cache
     " as it contains regtype information
     return s:selections[a:reg].data
