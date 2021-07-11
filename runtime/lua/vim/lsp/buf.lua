@@ -126,7 +126,7 @@ local function select_client(method)
 
   if #clients > 1 then
     local choices = {}
-    for k,v in ipairs(clients) do
+    for k,v in pairs(clients) do
       table.insert(choices, string.format("%d %s", k, v.name))
     end
     local user_choice = vim.fn.confirm(
@@ -204,9 +204,9 @@ function M.formatting_seq_sync(options, timeout_ms, order)
   local clients = vim.tbl_values(vim.lsp.buf_get_clients());
 
   -- sort the clients according to `order`
-  for _, client_name in ipairs(order or {}) do
+  for _, client_name in pairs(order or {}) do
     -- if the client exists, move to the end of the list
-    for i, client in ipairs(clients) do
+    for i, client in pairs(clients) do
       if client.name == client_name then
         table.insert(clients, table.remove(clients, i))
         break
@@ -215,7 +215,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
   end
 
   -- loop through the clients and make synchronous formatting requests
-  for _, client in ipairs(clients) do
+  for _, client in pairs(clients) do
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
       local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
@@ -286,7 +286,7 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
     return call_hierarchy_items[1]
   end
   local items = {}
-  for i, item in ipairs(call_hierarchy_items) do
+  for i, item in pairs(call_hierarchy_items) do
     local entry = item.detail or item.name
     table.insert(items, string.format("%d. %s", i, entry))
   end
@@ -328,8 +328,8 @@ end
 ---
 function M.list_workspace_folders()
   local workspace_folders = {}
-  for _, client in ipairs(vim.lsp.buf_get_clients()) do
-    for _, folder in ipairs(client.workspaceFolders) do
+  for _, client in pairs(vim.lsp.buf_get_clients()) do
+    for _, folder in pairs(client.workspaceFolders) do
       table.insert(workspace_folders, folder.name)
     end
   end
@@ -347,9 +347,9 @@ function M.add_workspace_folder(workspace_folder)
     return
   end
   local params = util.make_workspace_params({{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}}, {{}})
-  for _, client in ipairs(vim.lsp.buf_get_clients()) do
+  for _, client in pairs(vim.lsp.buf_get_clients()) do
     local found = false
-    for _, folder in ipairs(client.workspaceFolders) do
+    for _, folder in pairs(client.workspaceFolders) do
       if folder.name == workspace_folder then
         found = true
         print(workspace_folder, "is already part of this workspace")
@@ -371,8 +371,8 @@ function M.remove_workspace_folder(workspace_folder)
   vim.api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   local params = util.make_workspace_params({{}}, {{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}})
-  for _, client in ipairs(vim.lsp.buf_get_clients()) do
-    for idx, folder in ipairs(client.workspaceFolders) do
+  for _, client in pairs(vim.lsp.buf_get_clients()) do
+    for idx, folder in pairs(client.workspaceFolders) do
       if folder.name == workspace_folder then
         vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
         client.workspaceFolders[idx] = nil
