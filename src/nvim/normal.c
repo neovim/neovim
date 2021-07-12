@@ -1215,7 +1215,8 @@ static void normal_check_window_scrolled(NormalState *s)
 static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
-  if (!finish_op && (has_event(EVENT_CURSORMOVED) || curwin->w_p_cole > 0)
+  if (!finish_op
+      && (has_event(EVENT_CURSORMOVED) || curwin->w_p_cole > 0)
       && !equalpos(curwin->w_last_cursormoved, curwin->w_cursor)) {
     if (has_event(EVENT_CURSORMOVED)) {
       apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
