@@ -5182,7 +5182,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool pty = false;
   bool clear_env = false;
   bool overlapped = false;
-  ChannelStdinMode stdin = kChannelStdinPipe;
+  ChannelStdinMode stdin_mode = kChannelStdinPipe;
   CallbackReader on_stdout = CALLBACK_READER_INIT,
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
@@ -5200,7 +5200,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     char *s = tv_dict_get_string(job_opts, "stdin", false);
     if (s) {
       if (!strncmp(s, "null", NUMBUFLEN)) {
-        stdin = kChannelStdinNull;
+        stdin_mode = kChannelStdinNull;
       } else if (!strncmp(s, "pipe", NUMBUFLEN)) {
         // Nothing to do, default value
       } else {
@@ -5264,7 +5264,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   env = create_environment(job_env, clear_env, pty, term_name);
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, overlapped, detach, stdin, cwd, width,
+                                    rpc, overlapped, detach, stdin_mode, cwd, width,
                                     height, env, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
@@ -10863,11 +10863,11 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const bool rpc = false;
   const bool overlapped = false;
   const bool detach = false;
-  ChannelStdinMode stdin = kChannelStdinPipe;
+  ChannelStdinMode stdin_mode = kChannelStdinPipe;
   uint16_t term_width = MAX(0, curwin->w_width_inner - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
-                                    pty, rpc, overlapped, detach, stdin, cwd,
-                                    term_width, curwin->w_height_inner,
+                                    pty, rpc, overlapped, detach, stdin_mode,
+                                    cwd, term_width, curwin->w_height_inner,
                                     env, &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
     return;
