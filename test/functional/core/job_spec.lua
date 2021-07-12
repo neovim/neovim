@@ -348,6 +348,12 @@ describe('jobs', function()
     eq(false, pcall(function()
       nvim('command', 'call jobsend(j, ["some data"])')
     end))
+
+    command("let g:job_opts.stdin = 'null'")
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    eq(false, pcall(function()
+      nvim('command', 'call jobsend(j, ["some data"])')
+    end))
   end)
 
   it('disallows jobsend on a non-existent job', function()
