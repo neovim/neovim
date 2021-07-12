@@ -18,10 +18,8 @@ local function err_message(...)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-M['workspace/executeCommand'] = function(err, _)
-  if err then
-    error("Could not execute code action: "..err.message)
-  end
+M['workspace/executeCommand'] = function()
+  -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
 
 -- @msg of type ProgressParams
@@ -158,13 +156,12 @@ M['workspace/applyEdit'] = function(_, _, workspace_edit)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
-M['workspace/configuration'] = function(err, _, params, client_id)
+M['workspace/configuration'] = function(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
     err_message("LSP[id=", client_id, "] client has shut down after sending the message")
     return
   end
-  if err then error(vim.inspect(err)) end
   if not params.items then
     return {}
   end
@@ -191,30 +188,33 @@ M['textDocument/codeLens'] = function(...)
   return require('vim.lsp.codelens').on_codelens(...)
 end
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = function(_, _, result)
-  if not result then return end
-  util.set_qflist(util.locations_to_items(result))
-  api.nvim_command("copen")
-end
+
 
 --@private
---- Prints given list of symbols to the quickfix list.
---@param _ (not used)
---@param _ (not used)
---@param result (list of Symbols) LSP method name
---@param result (table) result of LSP method; a location or a list of locations.
----(`textDocument/definition` can return `Location` or `Location[]`
-local symbol_handler = function(_, _, result, _, bufnr)
-  if not result or vim.tbl_isempty(result) then return end
-
-  util.set_qflist(util.symbols_to_items(result, bufnr))
-  api.nvim_command("copen")
+--- Return a function that converts LSP responses to quickfix items and opens the qflist
+--
+--@param map_result function `((resp, bufnr) -> list)` to convert the response
+--@param entity name of the resource used in a `not found` error message
+local function response_to_qflist(map_result, entity)
+  return function(_, _, result, _, bufnr)
+    if not result or vim.tbl_isempty(result) then
+      vim.notify('No ' .. entity .. ' found')
+    else
+      util.set_qflist(map_result(result, bufnr))
+      api.nvim_command("copen")
+    end
+  end
 end
+
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
+M['textDocument/references'] = response_to_qflist(util.locations_to_items, 'references')
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M['textDocument/documentSymbol'] = symbol_handler
+M['textDocument/documentSymbol'] = response_to_qflist(util.symbols_to_items, 'document symbols')
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-M['workspace/symbol'] = symbol_handler
+M['workspace/symbol'] = response_to_qflist(util.symbols_to_items, 'symbols')
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
 M['textDocument/rename'] = function(_, _, result)
@@ -447,7 +447,12 @@ for k, fn in pairs(M) do
     })
 
     if err then
-      return err_message(tostring(err))
+      -- LSP spec:
+      -- interface ResponseError:
+      --  code: integer;
+      --  message: string;
+      --  data?: string | number | boolean | array | object | null;
+      return err_message(tostring(err.code) .. ': ' .. err.message)
     end
 
     return fn(err, method, params, client_id, bufnr, config)
