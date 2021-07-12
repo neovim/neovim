@@ -2195,4 +2195,14 @@ describe('API', function()
       ]]}
     end)
   end)
+
+  describe('nvim_get_helptags', function()
+    it('allows to list all helptags', function()
+      assert(#meths.get_helptags("") > 1)
+    end)
+
+    it('allows to search for a specific helptag', function()
+      eq("$VIMRUNTIME@en", meths.get_helptags("$VIMRUNTIME")[1])
+    end)
+  end)
 end)
