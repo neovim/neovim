@@ -2154,6 +2154,38 @@ static void win_equal_rec(
   }
 }
 
+/// When leaving a prompt window stop Insert mode and perhaps restart
+/// it when entering that window again.
+/// @param win window to leave
+static void leaving_window(win_T *win) {
+  win->w_buffer->b_prompt_insert = restart_edit;
+  // unshow mode later
+  if (restart_edit != 0 && mode_displayed) {
+    clear_cmdline = TRUE;
+  }
+  restart_edit = NUL;
+
+  // When leaving the window (or closing the window) was done from a
+  // callback we need to break out of the Insert mode loop.
+  if (State & INSERT) {
+    stop_insert_mode = true;
+    if (bt_prompt(win->w_buffer) && win->w_buffer->b_prompt_insert == NUL) {
+      win->w_buffer->b_prompt_insert = 'A';
+    }
+  }
+}
+
+/// When switching to a prompt buffer that was in Insert mode, don't stop
+/// Insert mode, it may have been set in leaving_window().
+/// @param win window to enter insert mode in
+static void entering_window(win_T *win) {
+  if (bt_prompt(win->w_buffer) && win->w_buffer->b_prompt_insert != NUL) {
+    stop_insert_mode = FALSE;
+  }
+  // When entering the prompt window may restart Insert mode.
+  restart_edit = win->w_buffer->b_prompt_insert;
+}
+
 /// Closes all windows for buffer `buf`.
 ///
 /// @param keep_curwin don't close `curwin`
@@ -2202,6 +2234,7 @@ void close_windows(buf_T *buf, int keep_curwin)
   if (h != tabline_height()) {
     shell_new_rows();
   }
+  entering_window(curwin);
 }
 
 /// Check that current window is the last one.
@@ -2357,6 +2390,8 @@ int win_close(win_T *win, bool free_buf)
   }
 
   if (win == curwin) {
+
+    leaving_window(curwin);
     /*
      * Guess which window is going to be the new current window.
      * This may change because of the autocommands (sigh).
@@ -2545,6 +2580,8 @@ int win_close(win_T *win, bool free_buf)
    * remove the status line.
    */
   last_status(FALSE);
+
+  entering_window(curwin);
 
   /* After closing the help window, try restoring the window layout from
    * before it was opened. */
@@ -3849,6 +3886,8 @@ leave_tabpage (
 {
   tabpage_T   *tp = curtab;
 
+  leaving_window(curwin);
+
   reset_VIsual_and_resel();     /* stop Visual mode */
   if (trigger_leave_autocmds) {
     if (new_curbuf != curbuf) {
@@ -4357,6 +4396,10 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
 
   if (wp == curwin && !curwin_invalid)          /* nothing to do */
     return;
+
+  if (!curwin_invalid) {
+    leaving_window(curwin);
+  }
 
   if (!curwin_invalid && trigger_leave_autocmds) {
     /*
