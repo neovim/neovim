@@ -5264,8 +5264,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   env = create_environment(job_env, clear_env, pty, term_name);
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, overlapped, detach, stdin_mode, cwd, width,
-                                    height, env, &rettv->vval.v_number);
+                                    rpc, overlapped, detach, stdin_mode, cwd,
+                                    width, height, env, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
