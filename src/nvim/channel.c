@@ -289,9 +289,9 @@ static void close_cb(Stream *stream, void *data)
 ///                  `on_stdout` is ignored
 /// @param[in]  detach  True if the job should not be killed when nvim exits,
 ///                     ignored if `pty` is true
-/// @param[in]  stdin  Stdin mode. Either kChannelStdinPipe to open a channel
-///                    for stdin or kChannelStdinNull to leave stdin
-///                    disconnected.
+/// @param[in]  stdin_mode  Stdin mode. Either kChannelStdinPipe to open a
+///                         channel for stdin or kChannelStdinNull to leave
+///                         stdin disconnected.
 /// @param[in]  cwd  Initial working directory for the job.  Nvim's working
 ///                  directory if `cwd` is NULL
 /// @param[in]  pty_width  Width of the pty, ignored if `pty` is false
@@ -305,7 +305,7 @@ static void close_cb(Stream *stream, void *data)
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
                            bool pty, bool rpc, bool overlapped, bool detach,
-                           ChannelStdinMode stdin, const char *cwd,
+                           ChannelStdinMode stdin_mode, const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
                            dict_T *env, varnumber_T *status_out)
 {
@@ -357,7 +357,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     has_err = callback_reader_set(chan->on_stderr);
   }
 
-  switch (stdin) {
+  switch (stdin_mode) {
   case kChannelStdinPipe:
     has_in = true;
     break;
