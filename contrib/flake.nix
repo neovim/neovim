@@ -109,6 +109,7 @@
               shellHook = oa.shellHook + ''
                 export NVIM_PYTHON_LOG_LEVEL=DEBUG
                 export NVIM_LOG_FILE=/tmp/nvim.log
+                export ASAN_SYMBOLIZER_PATH=${pkgs.llvm_11}/bin/llvm-symbolizer
 
                 # ASAN_OPTIONS=detect_leaks=1
                 export ASAN_OPTIONS="log_path=./test.log:abort_on_error=1"
