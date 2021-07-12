@@ -904,6 +904,13 @@ return function(after_each)
             error(msg[3][2])
           end
         end
+
+        if session.child_exit then  -- requires newer neovim-lua-client (WIP).
+          if session.child_exit ~= 0 or session.child_signal ~= 0 then
+            busted.fail(string.format("child exited non-zero (exitcode=%d, signal=%d)",
+              session.child_exit, session.child_signal))
+          end
+        end
       end
     end)
   end
