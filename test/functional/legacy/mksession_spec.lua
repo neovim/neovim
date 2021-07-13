@@ -12,7 +12,7 @@ describe('mksession', function()
   end)
 
   it('supports "skiprtp" value', function()
-    command('set sessionoptions&vi')
+    command('set sessionoptions+=options')
     command('set rtp+=$HOME')
     command('set pp+=$HOME')
     command('mksession! Xtest_mks.out')
