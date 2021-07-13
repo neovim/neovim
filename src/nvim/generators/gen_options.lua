@@ -70,7 +70,6 @@ local get_flags = function(o)
     {'nodefault'},
     {'no_mkrc'},
     {'vi_def'},
-    {'vim'},
     {'secure'},
     {'gettext'},
     {'noglob'},

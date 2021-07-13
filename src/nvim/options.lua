@@ -10,7 +10,7 @@
 --    secure=nil, gettext=nil, noglob=nil, normal_fname_chars=nil,
 --    pri_mkrc=nil, deny_in_modelines=nil, normal_dname_chars=nil,
 --    modelineexpr=nil,
---    expand=nil, nodefault=nil, no_mkrc=nil, vi_def=true, vim=true,
+--    expand=nil, nodefault=nil, no_mkrc=nil, vi_def=true,
 --    alloced=nil,
 --    save_pv_indir=nil,
 --    redraw={'curswant'},
@@ -65,7 +65,6 @@ return {
       short_desc=N_("Arabic as a default second language"),
       type='bool', scope={'window'},
       vi_def=true,
-      vim=true,
       redraw={'curswant'},
       defaults={if_true={vi=false}}
     },
@@ -74,7 +73,6 @@ return {
       short_desc=N_("do shaping for Arabic characters"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       redraw={'all_windows', 'ui_option'},
 
       varname='p_arshape',
@@ -85,7 +83,6 @@ return {
       short_desc=N_("allow CTRL-_ in Insert and Command-line mode"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_ari',
       defaults={if_true={vi=false}}
     },
@@ -140,7 +137,6 @@ return {
       full_name='background', abbreviation='bg',
       short_desc=N_("\"dark\" or \"light\", used for highlight colors"),
       type='string', scope={'global'},
-      vim=true,
       redraw={'all_windows'},
       varname='p_bg',
       defaults={if_true={vi="light",vim="dark"}}
@@ -150,7 +146,6 @@ return {
       short_desc=N_("how backspace works at start of line"),
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
-      vim=true,
       varname='p_bs',
       defaults={if_true={vi="", vim="indent,eol,start"}}
     },
@@ -159,7 +154,6 @@ return {
       short_desc=N_("keep backup file after overwriting a file"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_bk',
       defaults={if_true={vi=false}}
     },
@@ -168,7 +162,6 @@ return {
       short_desc=N_("make backup as a copy, don't rename the file"),
       type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
-      vim=true,
       varname='p_bkc',
       defaults={
         condition='UNIX',
@@ -247,7 +240,6 @@ return {
       short_desc=N_("wrapped line repeats indent"),
       type='bool', scope={'window'},
       vi_def=true,
-      vim=true,
       redraw={'current_window'},
       defaults={if_true={vi=false}}
     },
@@ -347,7 +339,6 @@ return {
       short_desc=N_("do C program indenting"),
       type='bool', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_cin',
       defaults={if_true={vi=false}}
     },
@@ -506,7 +497,6 @@ return {
       full_name='completeslash', abbreviation='csl',
       type='string', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_csl',
       enable_if='BACKSLASH_IN_FILENAME',
       defaults={if_true={vi=""}}
@@ -524,7 +514,6 @@ return {
       short_desc=N_("make 'autoindent' use existing indent structure"),
       type='bool', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_ci',
       defaults={if_true={vi=false}}
     },
@@ -532,7 +521,6 @@ return {
       full_name='cpoptions', abbreviation='cpo',
       short_desc=N_("flags for Vi-compatible behavior"),
       type='string', list='flags', scope={'global'},
-      vim=true,
       redraw={'all_windows'},
       varname='p_cpo',
       defaults={if_true={vi=macros('CPO_VI'), vim=macros('CPO_VIM')}}
@@ -542,7 +530,6 @@ return {
       short_desc=N_("how many components of the path to show"),
       type='number', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_cspc',
       defaults={if_true={vi=0}}
     },
@@ -570,7 +557,6 @@ return {
       short_desc=N_("Use cscope.out path basename as prefix"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_csre',
       defaults={if_true={vi=0}}
     },
@@ -579,7 +565,6 @@ return {
       short_desc=N_("use cscope for tag commands"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_cst',
       defaults={if_true={vi=0}}
     },
@@ -588,7 +573,6 @@ return {
       short_desc=N_("determines \":cstag\" search order"),
       type='number', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_csto',
       defaults={if_true={vi=0}}
     },
@@ -597,7 +581,6 @@ return {
       short_desc=N_("give messages when adding a cscope database"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_csverbose',
       defaults={if_true={vi=1}}
     },
@@ -648,7 +631,6 @@ return {
       short_desc=N_("delete combining characters on their own"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_deco',
       defaults={if_true={vi=false}}
     },
@@ -698,7 +680,6 @@ return {
       short_desc=N_("enable the entering of digraphs in Insert mode"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_dg',
       defaults={if_true={vi=false}}
     },
@@ -718,7 +699,6 @@ return {
       short_desc=N_("list of flags for how to display text"),
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
-      vim=true,
       redraw={'all_windows'},
       varname='p_dy',
       defaults={if_true={vi="", vim="lastline,msgsep"}}
@@ -827,7 +807,6 @@ return {
       short_desc=N_("use spaces when <Tab> is inserted"),
       type='bool', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_et',
       defaults={if_true={vi=false}}
     },
@@ -876,7 +855,6 @@ return {
       short_desc=N_("automatically detected values for 'fileformat'"),
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
-      vim=true,
       varname='p_ffs',
       defaults={if_true={vi=macros('DFLT_FFS_VI'), vim=macros('DFLT_FFS_VIM')}}
     },
@@ -956,7 +934,6 @@ return {
       short_desc=N_("expression used when 'foldmethod' is \"expr\""),
       type='string', scope={'window'},
       vi_def=true,
-      vim=true,
       modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
@@ -967,7 +944,6 @@ return {
       short_desc=N_("ignore lines when 'foldmethod' is \"indent\""),
       type='string', scope={'window'},
       vi_def=true,
-      vim=true,
       alloced=true,
       redraw={'current_window'},
       defaults={if_true={vi="#"}}
@@ -995,7 +971,6 @@ return {
       type='string', list='onecomma', scope={'window'},
       deny_duplicates=true,
       vi_def=true,
-      vim=true,
       alloced=true,
       redraw={'current_window'},
       defaults={if_true={vi="{{{,}}}"}}
@@ -1005,7 +980,6 @@ return {
       short_desc=N_("folding type"),
       type='string', scope={'window'},
       vi_def=true,
-      vim=true,
       alloced=true,
       redraw={'current_window'},
       defaults={if_true={vi="manual"}}
@@ -1041,7 +1015,6 @@ return {
       short_desc=N_("expression used to display for a closed fold"),
       type='string', scope={'window'},
       vi_def=true,
-      vim=true,
       modelineexpr=true,
       alloced=true,
       redraw={'current_window'},
@@ -1052,7 +1025,6 @@ return {
       short_desc=N_("expression used with \"gq\" command"),
       type='string', scope={'buffer'},
       vi_def=true,
-      vim=true,
       modelineexpr=true,
       alloced=true,
       varname='p_fex',
@@ -1062,7 +1034,6 @@ return {
       full_name='formatoptions', abbreviation='fo',
       short_desc=N_("how automatic formatting is to be done"),
       type='string', list='flags', scope={'buffer'},
-      vim=true,
       alloced=true,
       varname='p_fo',
       defaults={if_true={vi=macros('DFLT_FO_VI'), vim=macros('DFLT_FO_VIM')}}
@@ -1100,7 +1071,6 @@ return {
       short_desc=N_("the \":substitute\" flag 'g' is default on"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_gd',
       defaults={if_true={vi=false}}
     },
@@ -1231,7 +1201,6 @@ return {
       full_name='history', abbreviation='hi',
       short_desc=N_("number of command-lines that are remembered"),
       type='number', scope={'global'},
-      vim=true,
       varname='p_hi',
       defaults={if_true={vi=0, vim=10000}}
     },
@@ -1240,7 +1209,6 @@ return {
       short_desc=N_("Hebrew keyboard mapping"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_hkmap',
       defaults={if_true={vi=false}}
     },
@@ -1249,7 +1217,6 @@ return {
       short_desc=N_("phonetic Hebrew keyboard mapping"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_hkmapp',
       defaults={if_true={vi=false}}
     },
@@ -1257,7 +1224,6 @@ return {
       full_name='hlsearch', abbreviation='hls',
       short_desc=N_("highlight matches with last search pattern"),
       type='bool', scope={'global'},
-      vim=true,
       redraw={'all_windows'},
       varname='p_hls',
       defaults={if_true={vi=false, vim=true}}
@@ -1355,7 +1321,6 @@ return {
       full_name='incsearch', abbreviation='is',
       short_desc=N_("highlight match while typing search pattern"),
       type='bool', scope={'global'},
-      vim=true,
       varname='p_is',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -1364,7 +1329,6 @@ return {
       short_desc=N_("expression used to obtain the indent of a line"),
       type='string', scope={'buffer'},
       vi_def=true,
-      vim=true,
       modelineexpr=true,
       alloced=true,
       varname='p_inde',
@@ -1393,7 +1357,6 @@ return {
       short_desc=N_("start the edit of a file in Insert mode"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_im',
       defaults={if_true={vi=false}}
     },
@@ -1430,7 +1393,6 @@ return {
       short_desc=N_("characters included in keywords"),
       type='string', list='comma', scope={'buffer'},
       deny_duplicates=true,
-      vim=true,
       alloced=true,
       varname='p_isk',
       defaults={if_true={vi="@,48-57,_", vim="@,48-57,_,192-255"}}
@@ -1451,7 +1413,6 @@ return {
       short_desc=N_("two spaces after a period with a join command"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_js',
       defaults={if_true={vi=true}}
     },
@@ -1461,7 +1422,6 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_jop',
-      vim=true,
       defaults={if_true={vim=''}}
     },
     {
@@ -1534,7 +1494,6 @@ return {
       full_name='laststatus', abbreviation='ls',
       short_desc=N_("tells when last window has status lines"),
       type='number', scope={'global'},
-      vim=true,
       redraw={'all_windows'},
       varname='p_ls',
       defaults={if_true={vi=1,vim=2}}
@@ -1604,7 +1563,6 @@ return {
       short_desc=N_("characters for displaying in list mode"),
       type='string', list='onecomma', scope={'global', 'window'},
       deny_duplicates=true,
-      vim=true,
       alloced=true,
       redraw={'current_window'},
       varname='p_lcs',
@@ -1726,7 +1684,6 @@ return {
       full_name='modeline', abbreviation='ml',
       short_desc=N_("recognize modelines at start or end of file"),
       type='bool', scope={'buffer'},
-      vim=true,
       varname='p_ml',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -1770,7 +1727,6 @@ return {
       full_name='more',
       short_desc=N_("listings when the whole screen is filled"),
       type='bool', scope={'global'},
-      vim=true,
       varname='p_more',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -1843,7 +1799,6 @@ return {
       full_name='numberwidth', abbreviation='nuw',
       short_desc=N_("number of columns used for the line number"),
       type='number', scope={'window'},
-      vim=true,
       redraw={'current_window'},
       defaults={if_true={vi=8, vim=4}}
     },
@@ -1943,7 +1898,6 @@ return {
       short_desc=N_("preserve the indent structure when reindenting"),
       type='bool', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_pi',
       defaults={if_true={vi=false}}
     },
@@ -2153,7 +2107,6 @@ return {
       short_desc=N_("inserting characters will work backwards"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_ri',
       defaults={if_true={vi=false}}
     },
@@ -2179,7 +2132,6 @@ return {
       short_desc=N_("show cursor line and column in the status line"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       redraw={'statuslines'},
       varname='p_ru',
       defaults={if_true={vi=true}}
@@ -2237,7 +2189,6 @@ return {
       short_desc=N_("minimum number of lines to scroll"),
       type='number', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_sj',
       defaults={if_true={vi=1}}
     },
@@ -2246,7 +2197,6 @@ return {
       short_desc=N_("minimum nr. of lines above and below cursor"),
       type='number', scope={'global', 'window'},
       vi_def=true,
-      vim=true,
       redraw={'all_windows'},
       varname='p_so',
       defaults={if_true={vi=0}}
@@ -2299,7 +2249,6 @@ return {
       short_desc=N_("options for |:mksession|"),
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
-      vim=true,
       varname='p_ssop',
       defaults={if_true={
         vi="blank,buffers,curdir,folds,help,options,tabpages,winsize",
@@ -2431,7 +2380,6 @@ return {
       short_desc=N_("round indent to multiple of shiftwidth"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_sr',
       defaults={if_true={vi=false}}
     },
@@ -2447,7 +2395,6 @@ return {
       full_name='shortmess', abbreviation='shm',
       short_desc=N_("list of flags, reduce length of messages"),
       type='string', list='flags', scope={'global'},
-      vim=true,
       varname='p_shm',
       defaults={if_true={vi="S", vim="filnxtToOF"}}
     },
@@ -2464,7 +2411,6 @@ return {
       full_name='showcmd', abbreviation='sc',
       short_desc=N_("show (partial) command in status line"),
       type='bool', scope={'global'},
-      vim=true,
       varname='p_sc',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -2488,7 +2434,6 @@ return {
       full_name='showmode', abbreviation='smd',
       short_desc=N_("message on status line to show current mode"),
       type='bool', scope={'global'},
-      vim=true,
       varname='p_smd',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -2514,7 +2459,6 @@ return {
       short_desc=N_("min. nr. of columns to left and right of cursor"),
       type='number', scope={'global', 'window'},
       vi_def=true,
-      vim=true,
       redraw={'all_windows'},
       varname='p_siso',
       defaults={if_true={vi=0}}
@@ -2533,7 +2477,6 @@ return {
       short_desc=N_("no ignore case when pattern has uppercase"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_scs',
       defaults={if_true={vi=false}}
     },
@@ -2542,7 +2485,6 @@ return {
       short_desc=N_("smart autoindenting for C programs"),
       type='bool', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_si',
       defaults={if_true={vi=false}}
     },
@@ -2550,7 +2492,6 @@ return {
       full_name='smarttab', abbreviation='sta',
       short_desc=N_("use 'shiftwidth' when inserting <Tab>"),
       type='bool', scope={'global'},
-      vim=true,
       varname='p_sta',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -2559,7 +2500,6 @@ return {
       short_desc=N_("number of spaces that <Tab> uses while editing"),
       type='number', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_sts',
       defaults={if_true={vi=0}}
     },
@@ -2723,7 +2663,6 @@ return {
       full_name='tagfunc', abbreviation='tfu',
       short_desc=N_("function used to perform tag searches"),
       type='string', scope={'buffer'},
-      vim=true,
       vi_def=true,
       varname='p_tfu',
       defaults={if_true={vi=""}}
@@ -2742,7 +2681,6 @@ return {
       full_name='tabpagemax', abbreviation='tpm',
       short_desc=N_("maximum number of tab pages for |-p| and \"tab all\""),
       type='number', scope={'global'},
-      vim=true,
       varname='p_tpm',
       defaults={if_true={vi=10, vim=50}}
     },
@@ -2767,7 +2705,6 @@ return {
       full_name='tagcase', abbreviation='tc',
       short_desc=N_("how to handle case when searching in tags files"),
       type='string', scope={'global', 'buffer'},
-      vim=true,
       varname='p_tc',
       defaults={if_true={vi="followic", vim="followic"}}
     },
@@ -2783,7 +2720,6 @@ return {
       full_name='tagrelative', abbreviation='tr',
       short_desc=N_("file names in tag file are relative"),
       type='bool', scope={'global'},
-      vim=true,
       varname='p_tr',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -2833,7 +2769,6 @@ return {
       full_name='termpastefilter', abbreviation='tpf',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
-      vim=true,
       varname='p_tpf',
       defaults={if_true={vi="", vim="BS,HT,ESC,DEL"}}
     },
@@ -2850,7 +2785,6 @@ return {
       short_desc=N_("maximum width of text that is being inserted"),
       type='number', scope={'buffer'},
       vi_def=true,
-      vim=true,
       redraw={'current_buffer'},
       varname='p_tw',
       defaults={if_true={vi=0}}
@@ -2871,7 +2805,6 @@ return {
       short_desc=N_("tilde command \"~\" behaves like an operator"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_to',
       defaults={if_true={vi=false}}
     },
@@ -2931,7 +2864,6 @@ return {
       short_desc=N_("out on mappings"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       redraw={'ui_option'},
       varname='p_ttimeout',
       defaults={if_true={vi=true}}
@@ -2970,7 +2902,6 @@ return {
       short_desc=N_("save undo information in a file"),
       type='bool', scope={'buffer'},
       vi_def=true,
-      vim=true,
       varname='p_udf',
       defaults={if_true={vi=false}}
     },
@@ -3078,7 +3009,6 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      vim=true,
       redraw={'curswant'},
       varname='p_ve',
       defaults={if_true={vi="", vim=""}}
@@ -3103,7 +3033,6 @@ return {
       full_name='whichwrap', abbreviation='ww',
       short_desc=N_("allow specified keys to cross line boundaries"),
       type='string', list='flagscomma', scope={'global'},
-      vim=true,
       varname='p_ww',
       defaults={if_true={vi="", vim="b,s"}}
     },
@@ -3111,7 +3040,6 @@ return {
       full_name='wildchar', abbreviation='wc',
       short_desc=N_("command-line character for wildcard expansion"),
       type='number', scope={'global'},
-      vim=true,
       varname='p_wc',
       defaults={if_true={vi=imacros('Ctrl_E'), vim=imacros('TAB')}}
     },
@@ -3144,7 +3072,6 @@ return {
       full_name='wildmenu', abbreviation='wmnu',
       short_desc=N_("use menu for command line completion"),
       type='bool', scope={'global'},
-      vim=true,
       varname='p_wmnu',
       defaults={if_true={vi=false, vim=true}}
     },
@@ -3153,7 +3080,6 @@ return {
       short_desc=N_("mode for 'wildchar' command-line expansion"),
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=false,
-      vim=true,
       varname='p_wim',
       defaults={if_true={vi="", vim="full"}}
     },
@@ -3162,7 +3088,6 @@ return {
       short_desc=N_("specifies how command line completion is done"),
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
-      vim=true,
       varname='p_wop',
       defaults={if_true={vi='', vim='pum,tagfile'}}
     },
@@ -3292,7 +3217,6 @@ return {
       short_desc=N_("make a backup before overwriting a file"),
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
       varname='p_wb',
       defaults={if_true={vi=true}}
     },

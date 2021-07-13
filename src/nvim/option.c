@@ -233,7 +233,6 @@ typedef struct vimoption {
 #define P_WAS_SET       0x100U   // option has been set/reset
 #define P_NO_MKRC       0x200U   // don't include in :mkvimrc output
 #define P_VI_DEF        0x400U   // Use Vi default for Vim
-#define P_VIM           0x800U   // Vim option
 
 // when option changed, what to display:
 #define P_RSTAT         0x1000U  ///< redraw status lines
