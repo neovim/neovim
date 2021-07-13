@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, meths = helpers.clear, helpers.meths
 local eq = helpers.eq
+local feed = helpers.feed
 local command = helpers.command
 
 describe('ui/cursor', function()
@@ -317,6 +318,37 @@ describe('ui/cursor', function()
         end
       end
     end)
+  end)
+
+  it("updates cursor position when entering insert mode #13916", function()
+    helpers.insert([[foobarfoobarfoobar]])
+    -- move to end of line
+    feed("$")
+
+    command("set conceallevel=1")
+    command("set concealcursor=ni")
+    command("set conceallevel=1")
+
+    command("syn match Foo /foobar/ conceal cchar=&")
+
+    screen:expect([[
+  &&&^                      |
+  ~                        |
+  ~                        |
+  ~                        |
+                           |
+    ]])
+
+    feed("i")
+    -- cursor should stay in place, not jump to column 16
+
+    screen:expect([[
+  &&&^                      |
+  ~                        |
+  ~                        |
+  ~                        |
+  -- INSERT --             |
+    ]])
   end)
 
 end)

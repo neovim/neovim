@@ -1425,10 +1425,9 @@ static void ins_redraw(
     bool ready                  // not busy with something
 )
 {
-  bool conceal_cursor_moved = false;
-
-  if (char_avail())
+  if (char_avail()) {
     return;
+  }
 
   // Trigger CursorMoved if the cursor moved.  Not when the popup menu is
   // visible, the command might delete it.
@@ -1448,7 +1447,6 @@ static void ins_redraw(
       update_curswant();
       ins_apply_autocmds(EVENT_CURSORMOVEDI);
     }
-    conceal_cursor_moved = true;
     curwin->w_last_cursormoved = curwin->w_cursor;
   }
 
@@ -1504,8 +1502,7 @@ static void ins_redraw(
     curbuf->b_changed_invalid = false;
   }
 
-  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)
-      && conceal_cursor_moved) {
+  if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
