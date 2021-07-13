@@ -5637,6 +5637,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 			      before invoking `on_stderr`. |channel-buffered|
 		  stdout_buffered: (boolean) Collect data until EOF (stream
 			      closed) before invoking `on_stdout`. |channel-buffered|
+		  stdin:      (string) Either "pipe" (default) to connect the
+			      job's stdin to a channel or "null" to disconnect
+			      stdin.
 		  width:      (number) Width of the `pty` terminal.
 
 		{opts} is passed as |self| dictionary to the callback; the
