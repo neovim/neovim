@@ -109,7 +109,10 @@ CONFIG = {
         # Section helptag.
         'helptag_fmt': lambda name: f'*api-{name.lower()}*',
         # Per-function helptag.
-        'fn_helptag_fmt': lambda fstem, name: f'*{name}()*',
+        'fn_helptag_fmt': lambda fstem, name: [
+            f'*{name}()*',
+            f'*vim.api.{name}()*',
+        ],
         # Module name overrides (for Lua).
         'module_override': {},
         # Append the docs for these modules, do not start a new section.
@@ -136,7 +139,7 @@ CONFIG = {
         },
         'section_fmt': lambda name: f'Lua module: {name.lower()}',
         'helptag_fmt': lambda name: f'*lua-{name.lower()}*',
-        'fn_helptag_fmt': lambda fstem, name: f'*{fstem}.{name}()*',
+        'fn_helptag_fmt': lambda fstem, name: [f'*{fstem}.{name}()*'],
         'module_override': {
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
@@ -176,14 +179,14 @@ CONFIG = {
             '*lsp-core*'
             if name.lower() == 'lsp'
             else f'*lsp-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name: (
+        'fn_helptag_fmt': lambda fstem, name: [
             f'*vim.lsp.{name}()*'
             if fstem == 'lsp' and name != 'client'
             else (
                 '*vim.lsp.client*'
                 # HACK. TODO(justinmk): class/structure support in lua2dox
                 if 'lsp.client' == f'{fstem}.{name}'
-                else f'*vim.lsp.{fstem}.{name}()*')),
+                else f'*vim.lsp.{fstem}.{name}()*')],
         'module_override': {},
         'append_only': [],
     },
@@ -214,18 +217,18 @@ CONFIG = {
             '*lua-treesitter-core*'
             if name.lower() == 'treesitter'
             else f'*treesitter-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name: (
+        'fn_helptag_fmt': lambda fstem, name: [
             f'*{name}()*'
             if name != 'new'
-            else f'*{fstem}.{name}()*'),
-        # 'fn_helptag_fmt': lambda fstem, name: (
+            else f'*{fstem}.{name}()*'],
+        # 'fn_helptag_fmt': lambda fstem, name: [
         #     f'*vim.treesitter.{name}()*'
         #     if fstem == 'treesitter'
         #     else (
         #         '*vim.lsp.client*'
         #         # HACK. TODO(justinmk): class/structure support in lua2dox
         #         if 'lsp.client' == f'{fstem}.{name}'
-        #         else f'*vim.lsp.{fstem}.{name}()*')),
+        #         else f'*vim.lsp.{fstem}.{name}()*')],
         'module_override': {},
         'append_only': [],
     }
@@ -754,12 +757,13 @@ def extract_from_xml(filename, target, width):
             if '.' in compoundname:
                 fstem = compoundname.split('.')[0]
                 fstem = CONFIG[target]['module_override'].get(fstem, fstem)
-            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name)
+            vimtags = CONFIG[target]['fn_helptag_fmt'](fstem, name)
 
         prefix = '%s(' % name
         suffix = '%s)' % ', '.join('{%s}' % a[1] for a in params
                                    if a[0] not in ('void', 'Error'))
 
+        extra_tags = ''
         if not fmt_vimhelp:
             c_decl = '%s %s(%s);' % (return_type, name, ', '.join(c_args))
             signature = prefix + suffix
@@ -768,7 +772,8 @@ def extract_from_xml(filename, target, width):
                                                          ',\n'.join(c_args)),
                                      '    ')
 
-            # Minimum 8 chars between signature and vimtag
+            # Minimum 8 chars between signature and primary vimtag
+            vimtag, *tags = vimtags
             lhs = (width - 8) - len(vimtag)
 
             if len(prefix) + len(suffix) > lhs:
@@ -778,6 +783,9 @@ def extract_from_xml(filename, target, width):
             else:
                 signature = prefix + suffix
                 signature += vimtag.rjust(width - len(signature))
+
+            if tags:
+                extra_tags = '\n'.join(each.rjust(width) for each in tags)
 
         paras = []
         brief_desc = find_first(member, 'briefdescription')
@@ -797,6 +805,7 @@ def extract_from_xml(filename, target, width):
         fn = {
             'annotations': list(annotations),
             'signature': signature,
+            'alt_helptags': extra_tags,
             'parameters': params,
             'parameters_doc': collections.OrderedDict(),
             'doc': [],
@@ -871,6 +880,8 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
             doc += '\n<'
 
         func_doc = fn['signature'] + '\n'
+        if fn['alt_helptags']:
+            func_doc += fn['alt_helptags'] + '\n'
         func_doc += textwrap.indent(clean_lines(doc), ' ' * 16)
 
         # Verbatim handling.
