@@ -1977,7 +1977,7 @@ Array nvim_get_api_info(uint64_t channel_id)
 
   assert(channel_id <= INT64_MAX);
   ADD(rv, INTEGER_OBJ((int64_t)channel_id));
-  ADD(rv, DICTIONARY_OBJ(api_metadata()));
+  ADD(rv, DICTIONARY_OBJ(api_metadata(false)));
 
   return rv;
 }
@@ -3001,4 +3001,33 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   return;
 error:
   decor_provider_clear(p);
+}
+
+/// @param opts Optional parameters; only valid key is the `docs` boolean.
+///
+/// @returns |api-metadata| map (Dictionary) with an optional additional `docs`
+///          key containing function documentation as a map (Dictionary) of the
+///          form { "nvim_win_set_option": {...}, "nvim_win_get_option": {...}, ... }
+Dictionary nvim_get_api(Dictionary opts, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_FAST
+{
+  bool docs = false;
+  for (size_t i = 0; i < opts.size; i++) {
+    KeyValuePair *key_and_val = &opts.items[i];
+    char* optname = key_and_val->key.data;
+
+    if (!strequal(optname, "docs")) {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", optname);
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+
+    if (key_and_val->value.type != kObjectTypeBoolean) {
+      api_set_error(err, kErrorTypeValidation, "gave non-boolean value for opt: %s", optname);
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+
+    docs = key_and_val->value.data.boolean;
+  }
+
+  return api_metadata(docs);
 }

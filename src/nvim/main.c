@@ -846,7 +846,7 @@ static void command_line_scan(mparm_T *parmp)
               EMSG(_(e_outofmem));
             }
 
-            Object md = DICTIONARY_OBJ(api_metadata());
+            Object md = DICTIONARY_OBJ(api_metadata(false));
             msgpack_rpc_from_object(md, p);
 
             msgpack_packer_free(p);
