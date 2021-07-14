@@ -1630,6 +1630,25 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 ==============================================================================
 Lua module: vim.lsp.handlers                                    *lsp-handlers*
 
+                                                    *vim.lsp.handlers.hover()*
+hover({_}, {method}, {result}, {_}, {_}, {config})
+                Parameters: ~
+                    {config}  table Configuration table.
+                              • border: (default=nil)
+                                • Add borders to the floating window
+                                • See |vim.api.nvim_open_win()|
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion|lsp-handler| for the method "textDocument/hover">
+
+                 vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+                   vim.lsp.handlers.hover, {
+                     -- Use a sharp border with `FloatBorder` highlights
+                     border = "single"
+                   }
+                 )
+<
+
                                          *vim.lsp.handlers.progress_handler()*
 progress_handler({_}, {_}, {params}, {client_id})
                 See also: ~
