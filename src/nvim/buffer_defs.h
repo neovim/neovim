@@ -186,6 +186,8 @@ typedef struct {
 # define w_p_fdl_save w_onebuf_opt.wo_fdl_save
   char_u      *wo_fdm;
 # define w_p_fdm w_onebuf_opt.wo_fdm    // 'foldmethod'
+  int wo_fdr;
+#define w_p_fdr w_onebuf_opt.wo_fdr    // 'foldreloadslow'
   char_u      *wo_fdm_save;
 # define w_p_fdm_save w_onebuf_opt.wo_fdm_save  // 'fdm' saved for diff mode
   long wo_fml;

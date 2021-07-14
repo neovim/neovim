@@ -846,9 +846,14 @@ void foldUpdate(win_T *wp, linenr_T top, linenr_T bot)
 /// Updates folds when leaving insert-mode.
 void foldUpdateAfterInsert(void)
 {
-  if (foldmethodIsManual(curwin)  // foldmethod=manual: No need to update.
-      // These foldmethods are too slow, do not auto-update on insert-leave.
-      || foldmethodIsSyntax(curwin) || foldmethodIsExpr(curwin)) {
+  // foldmethod=manual: No need to update.
+  if (foldmethodIsManual(curwin)) {
+    return;
+  }
+
+  // foldmethod=syntax and foldmethod=expr are too slow to update
+  // unless a user has opted into it with foldreloadslow
+  if (!curwin->w_onebuf_opt.wo_fdr && (foldmethodIsSyntax(curwin) || foldmethodIsExpr(curwin))) {
     return;
   }
 
