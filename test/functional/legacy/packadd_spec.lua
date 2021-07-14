@@ -20,6 +20,9 @@ describe('packadd', function()
 
       func SetUp()
         let s:topdir = expand(getcwd() . '/Xdir')
+        if isdirectory(s:topdir)
+          call delete(s:topdir, 'rf')
+        endif
         exe 'set packpath=' . s:topdir
         let s:plugdir = expand(s:topdir . '/pack/mine/opt/mytest')
       endfunc

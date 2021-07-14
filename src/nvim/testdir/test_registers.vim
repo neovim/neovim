@@ -43,6 +43,10 @@ func Test_yank_shows_register()
 endfunc
 
 func Test_display_registers()
+    " Disable clipboard
+    let save_clipboard = get(g:, 'clipboard', {})
+    let g:clipboard = {}
+
     e file1
     e file2
     call setline(1, ['foo', 'bar'])
@@ -78,6 +82,7 @@ func Test_display_registers()
           \ .         '  c  ":   ls', a)
 
     bwipe!
+    let g:clipboard = save_clipboard
 endfunc
 
 func Test_recording_status_in_ex_line()
