@@ -14,6 +14,7 @@ local retry = helpers.retry
 local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
+local matches = helpers.matches
 
 -- Use these to get access to a coroutine so that I can run async tests and use
 -- yield.
@@ -267,7 +268,7 @@ describe('LSP', function()
         return
       end
       local expected_handlers = {
-        {NIL, "shutdown", {}, 1, NIL};
+        {NIL, "shutdown", {}, 1, NIL, NIL, NIL};
         {NIL, "test", {}, 1};
       }
       test_rpc_server {
@@ -2108,6 +2109,45 @@ describe('LSP', function()
       } }
 
       eq(expected, qflist)
+    end)
+  end)
+
+  describe('vim.lsp.buf.code_action', function()
+    it('Calls client side command if available', function()
+      eq(1, exec_lua [[
+        local dummy_calls = 0
+        vim.lsp.commands.dummy = function()
+          dummy_calls = dummy_calls + 1
+        end
+        local actions = {
+          {
+            title = 'Dummy command',
+            command = 'dummy',
+          },
+        }
+        -- inputlist would require input and block the test;
+        vim.fn.inputlist = function()
+          return 1
+        end
+        local params = {}
+        local handler = require'vim.lsp.handlers'['textDocument/codeAction']
+        handler(nil, 'textDocument/codeAction', actions, nil, nil, nil, params)
+        return dummy_calls
+      ]])
+    end)
+  end)
+  describe('vim.lsp.commands', function()
+    it('Accepts only string keys', function()
+      matches(
+        '.*The key for commands in `vim.lsp.commands` must be a string',
+        pcall_err(exec_lua, 'vim.lsp.commands[1] = function() end')
+      )
+    end)
+    it('Accepts only function values', function()
+      matches(
+        '.*Command added to `vim.lsp.commands` must be a function',
+        pcall_err(exec_lua, 'vim.lsp.commands.dummy = 10')
+      )
     end)
   end)
 end)

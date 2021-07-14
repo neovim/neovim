@@ -108,7 +108,7 @@ M['client/registerCapability'] = function(_, _, _, client_id)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
-M['textDocument/codeAction'] = function(_, _, actions)
+M['textDocument/codeAction'] = function(_, _, actions, _, _, _, params)
   if actions == nil or vim.tbl_isempty(actions) then
     print("No code actions available")
     return
@@ -125,19 +125,28 @@ M['textDocument/codeAction'] = function(_, _, actions)
   if choice < 1 or choice > #actions then
     return
   end
-  local action_chosen = actions[choice]
-  -- textDocument/codeAction can return either Command[] or CodeAction[].
-  -- If it is a CodeAction, it can have either an edit, a command or both.
-  -- Edits should be executed first
-  if action_chosen.edit or type(action_chosen.command) == "table" then
-    if action_chosen.edit then
-      util.apply_workspace_edit(action_chosen.edit)
-    end
-    if type(action_chosen.command) == "table" then
-      buf.execute_command(action_chosen.command)
-    end
+  local action = actions[choice]
+  -- textDocument/codeAction can return either Command[] or CodeAction[]
+  --
+  -- CodeAction
+  --  ...
+  --  edit?: WorkspaceEdit    -- <- must be applied before command
+  --  command?: Command
+  --
+  -- Command:
+  --  title: string
+  --  command: string
+  --  arguments?: any[]
+  --
+  if action.edit then
+    util.apply_workspace_edit(action.edit)
+  end
+  local command = type(action.command) == 'table' and action.command or action
+  local fn = vim.lsp.commands[command.command]
+  if fn then
+    fn(command, params)
   else
-    buf.execute_command(action_chosen)
+    buf.execute_command(command)
   end
 end
 
@@ -441,9 +450,9 @@ end
 
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
-  M[k] = function(err, method, params, client_id, bufnr, config)
+  M[k] = function(err, method, result, client_id, bufnr, config, params)
     local _ = log.debug() and log.debug('default_handler', method, {
-      params = params, client_id = client_id, err = err, bufnr = bufnr, config = config
+      result = result, client_id = client_id, err = err, bufnr = bufnr, config = config, params = params
     })
 
     if err then
@@ -455,7 +464,7 @@ for k, fn in pairs(M) do
       return err_message(tostring(err.code) .. ': ' .. err.message)
     end
 
-    return fn(err, method, params, client_id, bufnr, config)
+    return fn(err, method, result, client_id, bufnr, config, params)
   end
 end
 

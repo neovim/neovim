@@ -894,7 +894,7 @@ function lsp.start_client(config)
 
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
-      handler(err, method, result, client_id, bufnr)
+      handler(err, method, result, client_id, bufnr, nil, params)
     end)
   end
 
@@ -1496,8 +1496,8 @@ end
 --@param handler (function) See |lsp-handler|
 --@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
-  return function(err, method, params, client_id, bufnr, config)
-    return handler(err, method, params, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config))
+  return function(err, method, result, client_id, bufnr, config, params)
+    return handler(err, method, result, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config), params)
   end
 end
 
@@ -1534,6 +1534,36 @@ end
 
 -- Define the LspDiagnostics signs if they're not defined already.
 require('vim.lsp.diagnostic')._define_default_signs_and_highlights()
+
+
+--- Registry for client side code action commands.
+---
+--- This is an extension point for plugins to handle custom commands which are
+--- not part of the core language server protocol specification.
+---
+--- The codeAction response contains commands which are either executed with a
+--- function from this registry, or via `vim.lsp.buf.execute_command` if there is
+--- no entry for a given command.
+---
+--- This is a table where the key must be a command name and the value must be
+--- function with two arguments.
+---
+--- The first argument to the function will be the `Command`:
+--    Command
+--      title: String
+--      command: String
+--      arguments?: any[]
+--
+--- The second argument are the params which were sent as payload with the
+--- original codeAction request.
+lsp.commands = setmetatable({}, {
+  __newindex = function(tbl, key, value)
+    assert(type(key) == 'string', "The key for commands in `vim.lsp.commands` must be a string")
+    assert(type(value) == 'function', "Command added to `vim.lsp.commands` must be a function")
+    rawset(tbl, key, value)
+  end;
+})
+
 
 return lsp
 -- vim:sw=2 ts=2 et
