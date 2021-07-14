@@ -169,7 +169,7 @@ a tree, using a simple to write lisp-like format. See
 https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax for more
 information on how to write queries.
 
-Note: The perdicates listed in the web page above differ from those Neovim
+Note: The predicates listed in the web page above differ from those Neovim
 supports. See |lua-treesitter-predicates| for a complete list of predicates
 supported by Neovim.
 
