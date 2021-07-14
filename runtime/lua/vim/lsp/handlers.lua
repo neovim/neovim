@@ -223,15 +223,15 @@ M['textDocument/rename'] = function(_, _, result)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
-M['textDocument/rangeFormatting'] = function(_, _, result)
+M['textDocument/rangeFormatting'] = function(_, _, result, _, bufnr)
   if not result then return end
-  util.apply_text_edits(result)
+  util.apply_text_edits(result, bufnr)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
-M['textDocument/formatting'] = function(_, _, result)
+M['textDocument/formatting'] = function(_, _, result, _, bufnr)
   if not result then return end
-  util.apply_text_edits(result)
+  util.apply_text_edits(result, bufnr)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
