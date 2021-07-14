@@ -69,8 +69,6 @@ local get_flags = function(o)
     {'alloced'},
     {'nodefault'},
     {'no_mkrc'},
-    {'vi_def'},
-    {'vim'},
     {'secure'},
     {'gettext'},
     {'noglob'},
@@ -120,8 +118,11 @@ local get_value = function(v)
   return '(char_u *) ' .. value_dumpers[type(v)](v)
 end
 
-local get_defaults = function(d)
-  return ('{' .. get_value(d.vi) .. ', ' .. get_value(d.vim) .. '}')
+local get_defaults = function(d,n)
+  if (d.vi == nil and d.vim == nil) or (d.vi ~= nil and d.vim ~= nil) then
+    error("option '"..n.."' should have one and only one default value")
+  end
+  return get_value(d.vim or d.vi)
 end
 
 local defines = {}
@@ -170,11 +171,11 @@ local dump_option = function(i, o)
     if o.defaults.condition then
       w(get_cond(o.defaults.condition))
     end
-    w('    .def_val=' .. get_defaults(o.defaults.if_true))
+    w('    .def_val=' .. get_defaults(o.defaults.if_true, o.full_name))
     if o.defaults.condition then
       if o.defaults.if_false then
         w('#else')
-        w('    .def_val=' .. get_defaults(o.defaults.if_false))
+        w('    .def_val=' .. get_defaults(o.defaults.if_false, o.full_name))
       end
       w('#endif')
     end
