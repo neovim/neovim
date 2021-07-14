@@ -7,7 +7,7 @@
 static inline bool arabic_char(int c)
 {
     // return c >= a_HAMZA && c <= a_MINI_ALEF;
-    return c >= 0x0621 && c <= 0x0670;
+    return c >= 0x0621 && c <= 0x06cc;
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -91,6 +91,13 @@
 #define a_THOUSANDS                     0x066c
 #define a_STAR                          0x066d
 #define a_MINI_ALEF                     0x0670
+
+#define a_PEH                           0x067e
+#define a_TCHEH                         0x0686
+#define a_JEH                           0x0698
+#define a_FKAF                          0x06a9
+#define a_GAF                           0x06af
+#define a_FYEH                          0x06cc
 // Rest of 8859-6 does not relate to Arabic
 
 // Arabic Presentation Form-B (subset of 10646; FE70 - FEFF)
@@ -244,6 +251,28 @@
 
 #define a_BYTE_ORDER_MARK               0xfeff
 
+#define a_s_PEH                         0xfb56
+#define a_f_PEH                         0xfb57
+#define a_i_PEH                         0xfb58
+#define a_m_PEH                         0xfb59
+#define a_s_TCHEH                       0xfb7a
+#define a_f_TCHEH                       0xfb7b
+#define a_i_TCHEH                       0xfb7c
+#define a_m_TCHEH                       0xfb7d
+#define a_s_JEH                         0xfb8a
+#define a_f_JEH                         0xfb8b
+#define a_s_FKAF                        0xfb8e
+#define a_f_FKAF                        0xfb8f
+#define a_i_FKAF                        0xfb90
+#define a_m_FKAF                        0xfb91
+#define a_s_GAF                         0xfb92
+#define a_f_GAF                         0xfb93
+#define a_i_GAF                         0xfb94
+#define a_m_GAF                         0xfb95
+#define a_s_FYEH                        0xfbfc
+#define a_f_FYEH                        0xfbfd
+#define a_i_FYEH                        0xfbfe
+#define a_m_FYEH                        0xfbff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "arabic.c.generated.h"
@@ -290,6 +319,13 @@ static bool A_is_a(int cur_c)
     case a_WAW:
     case a_ALEF_MAKSURA:
     case a_YEH:
+
+    case a_PEH:
+    case a_TCHEH:
+    case a_JEH:
+    case a_FKAF:
+    case a_GAF:
+    case a_FYEH:
       return true;
   }
 
@@ -336,6 +372,13 @@ static bool A_is_s(int cur_c)
     case a_s_WAW:
     case a_s_ALEF_MAKSURA:
     case a_s_YEH:
+
+    case a_s_PEH:
+    case a_s_TCHEH:
+    case a_s_JEH:
+    case a_s_FKAF:
+    case a_s_GAF:
+    case a_s_FYEH:
       return true;
   }
 
@@ -385,6 +428,13 @@ static bool A_is_f(int cur_c)
     case a_f_LAM_ALEF_HAMZA_ABOVE:
     case a_f_LAM_ALEF_HAMZA_BELOW:
     case a_f_LAM_ALEF:
+
+    case a_f_PEH:
+    case a_f_TCHEH:
+    case a_f_JEH:
+    case a_f_FKAF:
+    case a_f_GAF:
+    case a_f_FYEH:
       return true;
   }
   return false;
@@ -431,6 +481,13 @@ static int chg_c_a2s(int cur_c)
     case a_NOON: return a_s_NOON;
     case a_HEH: return a_s_HEH;
     case a_YEH: return a_s_YEH;
+
+    case a_PEH: return a_s_PEH;
+    case a_TCHEH: return a_s_TCHEH;
+    case a_JEH: return a_s_JEH;
+    case a_FKAF: return a_s_FKAF;
+    case a_GAF: return a_s_GAF;
+    case a_FYEH: return a_s_FYEH;
   }
   return 0;
 }
@@ -476,6 +533,12 @@ static int chg_c_a2i(int cur_c)
     case a_NOON: return a_i_NOON;
     case a_HEH: return a_i_HEH;
     case a_YEH: return a_i_YEH;
+
+    case a_PEH: return a_i_PEH;
+    case a_TCHEH: return a_i_TCHEH;
+    case a_FKAF: return a_i_FKAF;
+    case a_GAF: return a_i_GAF;
+    case a_FYEH: return a_i_FYEH;
   }
   return 0;
 }
@@ -521,6 +584,13 @@ static int chg_c_a2m(int cur_c)
     case a_WAW: return a_f_WAW;  // exception
     case a_ALEF_MAKSURA: return a_f_ALEF_MAKSURA;    // exception
     case a_YEH: return a_m_YEH;
+
+    case a_PEH: return a_m_PEH;
+    case a_TCHEH: return a_m_TCHEH;
+    case a_JEH: return a_f_JEH;  // exception
+    case a_FKAF: return a_m_FKAF;
+    case a_GAF: return a_m_GAF;
+    case a_FYEH: return a_m_FYEH;
   }
   return 0;
 }
@@ -575,6 +645,13 @@ static int chg_c_a2f(int cur_c)
     case a_WAW: return a_f_WAW;
     case a_ALEF_MAKSURA: return a_f_ALEF_MAKSURA;
     case a_YEH: return a_f_YEH;
+
+    case a_PEH: return a_f_PEH;
+    case a_TCHEH: return a_f_TCHEH;
+    case a_JEH: return a_f_JEH;
+    case a_FKAF: return a_f_FKAF;
+    case a_GAF: return a_f_GAF;
+    case a_FYEH: return a_f_FYEH;
   }
   return 0;
 }
@@ -632,6 +709,7 @@ static int chg_c_f2m(int cur_c)
     case a_f_ZAIN:
     case a_f_WAW:
     case a_f_ALEF_MAKSURA:
+    case a_f_JEH:
       return cur_c;
     case a_f_BEH: return a_m_BEH;
     case a_f_TEH: return a_m_TEH;
@@ -655,6 +733,12 @@ static int chg_c_f2m(int cur_c)
     case a_f_NOON: return a_m_NOON;
     case a_f_HEH: return a_m_HEH;
     case a_f_YEH: return a_m_YEH;
+
+    case a_f_PEH: return a_m_PEH;
+    case a_f_TCHEH: return a_m_TCHEH;
+    case a_f_FKAF: return a_m_FKAF;
+    case a_f_GAF: return a_m_GAF;
+    case a_f_FYEH: return a_m_FYEH;
     // NOTE: these encodings are multi-positional, no ?
     //   case a_f_LAM_ALEF_MADDA_ABOVE:
     //   case a_f_LAM_ALEF_HAMZA_ABOVE:
@@ -817,7 +901,12 @@ static bool A_is_iso(int c)
 {
   return ((c >= a_HAMZA && c <= a_GHAIN)
           || (c >= a_TATWEEL && c <= a_HAMZA_BELOW)
-          || c == a_MINI_ALEF);
+          || c == a_MINI_ALEF
+          || c == a_PEH
+          || c == a_JEH
+          || c == a_FKAF
+          || c == a_GAF
+          || c == a_FYEH);
 }
 
 // A_is_formb returns true if 'c' is an Arabic 10646-1 FormB character.
@@ -827,7 +916,12 @@ static bool A_is_formb(int c)
   return ((c >= a_s_FATHATAN && c <= a_s_DAMMATAN)
           || c == a_s_KASRATAN
           || (c >= a_s_FATHA && c <= a_f_LAM_ALEF)
-          || c == a_BYTE_ORDER_MARK);
+          || c == a_BYTE_ORDER_MARK
+          || c == a_s_PEH
+          || c == a_s_JEH
+          || c == a_s_FKAF
+          || c == a_s_GAF
+          || c == a_s_FYEH);
 }
 
 // A_is_ok returns true if 'c' is an Arabic 10646 (8859-6 or Form-B).
