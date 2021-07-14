@@ -16,10 +16,6 @@
 #define VALID_PATH              1
 #define VALID_HEAD              2
 
-/* Values for exmode_active (0 is no exmode) */
-#define EXMODE_NORMAL           1
-#define EXMODE_VIM              2
-
 // Structure used to save the current state.  Used when executing Normal mode
 // commands while in any other mode.
 typedef struct {

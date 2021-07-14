@@ -2230,14 +2230,17 @@ static int vgetorpeek(bool advance)
             timedout = true;
             continue;
           }
-          /* When 'insertmode' is set, ESC just beeps in Insert
-           * mode.  Use CTRL-L to make edit() return.
-           * For the command line only CTRL-C always breaks it.
-           * For the cmdline window: Alternate between ESC and
-           * CTRL-C: ESC for most situations and CTRL-C to close the
-           * cmdline window. */
+          // When 'insertmode' is set, ESC just beeps in Insert
+          // mode.  Use CTRL-L to make edit() return.
+          // In Ex-mode \n is compatible with original Vim behaviour.
+          // For the command line only CTRL-C always breaks it.
+          // For the cmdline window: Alternate between ESC and
+          // CTRL-C: ESC for most situations and CTRL-C to close the
+          // cmdline window.
           if (p_im && (State & INSERT))
             c = Ctrl_L;
+          else if (exmode_active)
+            c = '\n';
           else if ((State & CMDLINE)
                    || (cmdwin_type > 0 && tc == ESC)
                    )

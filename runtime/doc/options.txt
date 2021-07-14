@@ -4539,11 +4539,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	List of items that control the format of the output of |:hardcopy|.
 	See |popt-option|.
 
-						*'prompt'* *'noprompt'*
-'prompt'		boolean	(default on)
-			global
-	When on a ":" prompt is used in Ex mode.
-
 						*'pumblend'* *'pb'*
 'pumblend' 'pb'		number	(default 0)
 			global

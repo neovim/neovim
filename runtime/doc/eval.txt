@@ -6358,8 +6358,7 @@ mode([expr])	Return a string that indicates the current mode.
 		   Rv	    Virtual Replace |gR|
 		   Rx	    Replace mode |i_CTRL-X| completion
 		   c	    Command-line editing
-		   cv	    Vim Ex mode |gQ|
-		   ce	    Normal Ex mode |Q|
+		   cv	    Vim Ex mode |Q| or |gQ|
 		   r	    Hit-enter prompt
 		   rm	    The -- more -- prompt
 		   r?	    |:confirm| query of some sort

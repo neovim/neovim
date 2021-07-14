@@ -1325,8 +1325,7 @@ void msg_start(void)
   } else if (msg_didout) {                // start message on next line
     msg_putchar('\n');
     did_return = TRUE;
-    if (exmode_active != EXMODE_NORMAL)
-      cmdline_row = msg_row;
+    cmdline_row = msg_row;
   }
   if (!msg_didany || lines_left < 0)
     msg_starthere();

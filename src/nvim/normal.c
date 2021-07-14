@@ -1188,7 +1188,7 @@ static void normal_check_interrupt(NormalState *s)
         && s->previous_got_int) {
       // Typed two CTRL-C in a row: go back to ex mode as if "Q" was
       // used and keep "got_int" set, so that it aborts ":g".
-      exmode_active = EXMODE_NORMAL;
+      exmode_active = true;
       State = NORMAL;
     } else if (!global_busy || !exmode_active) {
       if (!quit_more) {
@@ -1398,7 +1398,7 @@ static int normal_check(VimState *state)
     if (s->noexmode) {
       return 0;
     }
-    do_exmode(exmode_active == EXMODE_VIM);
+    do_exmode();
     return -1;
   }
 
@@ -4652,7 +4652,7 @@ static void nv_exmode(cmdarg_T *cap)
   if (VIsual_active) {
     vim_beep(BO_EX);
   } else if (!checkclearop(cap->oap)) {
-    do_exmode(false);
+    do_exmode();
   }
 }
 
@@ -7102,7 +7102,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     }
 
     if (!checkclearopq(oap))
-      do_exmode(true);
+      do_exmode();
     break;
 
   case ',':

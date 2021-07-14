@@ -171,12 +171,10 @@ char *get_mode(void)
         buf[1] = 'x';
       }
     }
-  } else if ((State & CMDLINE) || exmode_active) {
+  } else if (State & CMDLINE) {
     buf[0] = 'c';
-    if (exmode_active == EXMODE_VIM) {
+    if (exmode_active) {
       buf[1] = 'v';
-    } else if (exmode_active == EXMODE_NORMAL) {
-      buf[1] = 'e';
     }
   } else if (State & TERM_FOCUS) {
     buf[0] = 't';

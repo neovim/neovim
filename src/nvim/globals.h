@@ -239,7 +239,6 @@ EXTERN int did_wait_return INIT(= false);   // wait_return() was used and
 EXTERN int need_maketitle INIT(= true);     // call maketitle() soon
 
 EXTERN int quit_more INIT(= false);         // 'q' hit at "--more--" msg
-EXTERN int ex_keep_indent INIT(= false);    // getexmodeline(): keep indent
 EXTERN int vgetc_busy INIT(= 0);            // when inside vgetc() then > 0
 
 EXTERN int didset_vim INIT(= false);         // did set $VIM ourselves
@@ -621,7 +620,7 @@ EXTERN long opcount INIT(= 0);          // count for pending operator
 EXTERN int motion_force INIT(=0);       // motion force for pending operator
 
 // Ex Mode (Q) state
-EXTERN int exmode_active INIT(= 0);     // Zero, EXMODE_NORMAL or EXMODE_VIM.
+EXTERN bool exmode_active INIT(= false);// true if (improved) Ex mode is active
 EXTERN int ex_no_reprint INIT(=false);  // No need to print after z or p.
 
 EXTERN int reg_recording INIT(= 0);     // register for recording  or zero
