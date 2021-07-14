@@ -314,6 +314,9 @@ int main(int argc, char **argv)
   init_highlight(true, false);  // Default highlight groups.
   TIME_MSG("init highlight");
 
+  init_default_mappings();  // Default highlight groups.
+  TIME_MSG("init default mappings");
+
   // Set the break level after the terminal is initialized.
   debug_break_level = params.use_debug_break_level;
 
@@ -565,6 +568,11 @@ int main(int argc, char **argv)
   xfree(argv);
 #endif
   return 0;
+}
+
+void init_default_mappings(void)
+{
+  add_map((char_u *)"Y y$", NORMAL | VISUAL);
 }
 
 void os_exit(int r)
