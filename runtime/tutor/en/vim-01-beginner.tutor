@@ -491,8 +491,9 @@ NOTE: You may see the cursor position in the lower right corner of the
  4. To search for a phrase in the backward direction, use [?](?) instead
     of `/`{normal}.
 
- 5. To go back to where you came from press `<C-o>`{normal} (keep `<Ctrl>`{normal}    pressed down while pressing the letter `o`{normal}). Repeat to go back
-    further. `<C-i>`{normal} goes forward.
+ 5. To go back to where you came from press `<C-o>`{normal}.
+    (keep `<Ctrl>`{normal} pressed down while pressing the letter `o`{normal}).
+    Repeat to go back further. `<C-i>`{normal} goes forward.
 
 "errroor" is not the way to spell error; errroor is an error.
 
@@ -669,7 +670,8 @@ NOTE: If you were to exit Vim and start it again with `nvim TEST`, the file
 
     before you press `<Enter>`{normal}.
 
- 5. Vim will write the selected lines to the file TEST. Use `:!ls`{vim} to see    it. Do not remove it yet! We will use it in the next lesson.
+ 5. Vim will write the selected lines to the file TEST. Use `:!ls`{vim} to see it.
+    Do not remove it yet! We will use it in the next lesson.
 
 NOTE: Pressing [v](v) starts [Visual selection](visual-mode). You can move
       the cursor around to make the selection bigger or smaller. Then you can

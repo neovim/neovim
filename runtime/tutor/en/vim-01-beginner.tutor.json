@@ -30,16 +30,16 @@
     "412": "This line has a few words that need changing using the change operator.",
     "432": "The end of this line needs to be corrected using the `c$` command.",
     "433": "The end of this line needs to be corrected using the `c$` command.",
-    "497": -1,
+    "498": -1,
     "516": -1,
     "541": "Usually the best time to see the flowers is in the spring.",
-    "735": -1,
-    "740": -1,
-    "759": "This line will allow you to practice appending text to a line.",
-    "760": "This line will allow you to practice appending text to a line.",
-    "780": "Adding 123 to 456 gives you 579.",
-    "781": "Adding 123 to 456 gives you 579.",
-    "807": "a) This is the first item.",
-    "808": "b) This is the second item."
+    "737": -1,
+    "742": -1,
+    "761": "This line will allow you to practice appending text to a line.",
+    "762": "This line will allow you to practice appending text to a line.",
+    "782": "Adding 123 to 456 gives you 579.",
+    "783": "Adding 123 to 456 gives you 579.",
+    "809": "a) This is the first item.",
+    "810": "b) This is the second item."
   }
 }
