@@ -1306,6 +1306,7 @@ completion can be enabled:
 	-complete=highlight	highlight groups
 	-complete=history	:history suboptions
 	-complete=locale	locale names (as output of locale -a)
+	-complete=lua		Lua expression
 	-complete=mapclear	buffer argument
 	-complete=mapping	mapping name
 	-complete=menu		menus
