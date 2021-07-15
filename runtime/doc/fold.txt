@@ -170,7 +170,7 @@ When 'scrollbind' is also set, Vim will attempt to keep the same folds open in
 other diff windows, so that the same text is visible.
 
 
-MARKER						*fold-marker*
+MARKER						*fold-marker* *{{{* *}}}*
 
 Markers in the text tell where folds start and end.  This allows you to
 precisely specify the folds.  This will allow deleting and putting a fold,
