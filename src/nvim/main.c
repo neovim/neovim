@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -226,6 +227,8 @@ int main(int argc, char **argv)
     argv[i] = buf;
   }
 #endif
+  os_unsetenv("VIM");
+  os_unsetenv("VIMRUNTIME");
 
   argv0 = argv[0];
 
