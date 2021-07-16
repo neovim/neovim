@@ -1332,12 +1332,12 @@ describe('lua stdlib', function()
 
       it('should work for key-value pair options', function()
         local listchars = exec_lua [[
-          vim.opt.listchars = "tab:>~,space:_"
+          vim.opt.listchars = "tab:> ,space:_"
           return vim.opt.listchars:get()
         ]]
 
         eq({
-          tab = ">~",
+          tab = "> ",
           space = "_",
         }, listchars)
       end)

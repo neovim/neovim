@@ -23,8 +23,8 @@ typedef kvec_t(ExtmarkUndoObject) extmark_undo_vec_t;
 
 typedef enum {
   kExtmarkNOOP,        // Extmarks shouldn't be moved
-  kExtmarkUndo,        // Operation should be reversable/undoable
-  kExtmarkNoUndo,      // Operation should not be reversable
+  kExtmarkUndo,        // Operation should be reversible/undoable
+  kExtmarkNoUndo,      // Operation should not be reversible
   kExtmarkUndoNoRedo,  // Operation should be undoable, but not redoable
 } ExtmarkOp;
 

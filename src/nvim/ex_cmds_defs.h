@@ -58,7 +58,7 @@
 #define EX_SBOXOK        0x40000  // allowed in the sandbox
 #define EX_CMDWIN        0x80000  // allowed in cmdline window; when missing
                                   // disallows editing another buffer when
-                                  // curbuf_lock is set
+                                  // current buffer is locked
 #define EX_MODIFY       0x100000  // forbidden in non-'modifiable' buffer
 #define EX_FLAGS        0x200000  // allow flags after count in argument
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed

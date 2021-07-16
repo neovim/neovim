@@ -3252,8 +3252,7 @@ count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 cscope_connection([{num} , {dbpath} [, {prepend}]])
 		Checks for the existence of a |cscope| connection.  If no
 		parameters are specified, then the function returns:
-			0, if cscope was not available (not compiled in), or
-			   if there are no cscope connections;
+			0, if there are no cscope connections;
 			1, if there is at least one cscope connection.
 
 		If parameters are specified, then the value of {num}
@@ -5299,9 +5298,6 @@ iconv({expr}, {from}, {to})				*iconv()*
 		are replaced with "?".
 		The encoding names are whatever the iconv() library function
 		can accept, see ":!man 3 iconv".
-		Most conversions require Vim to be compiled with the |+iconv|
-		feature.  Otherwise only UTF-8 to latin1 conversion and back
-		can be done.
 		Note that Vim uses UTF-8 for all Unicode encodings, conversion
 		from/to UCS-2 is automatically changed to use UTF-8.  You
 		cannot use UCS-2 in a string anyway, because of the NUL bytes.
@@ -5641,6 +5637,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 			      before invoking `on_stderr`. |channel-buffered|
 		  stdout_buffered: (boolean) Collect data until EOF (stream
 			      closed) before invoking `on_stdout`. |channel-buffered|
+		  stdin:      (string) Either "pipe" (default) to connect the
+			      job's stdin to a channel or "null" to disconnect
+			      stdin.
 		  width:      (number) Width of the `pty` terminal.
 
 		{opts} is passed as |self| dictionary to the callback; the
@@ -5830,8 +5829,7 @@ lispindent({lnum})					*lispindent()*
 		indenting rules, as with 'lisp'.
 		The indent is counted in spaces, the value of 'tabstop' is
 		relevant.  {lnum} is used just like in |getline()|.
-		When {lnum} is invalid or Vim was not compiled the
-		|+lispindent| feature, -1 is returned.
+		When {lnum} is invalid, -1 is returned.
 
 list2str({list} [, {utf8}])				*list2str()*
 		Convert each number in {list} to a character string can
@@ -7150,7 +7148,6 @@ rubyeval({expr})					*rubyeval()*
 		Hashes are represented as Vim |Dictionary| type.
 		Other objects are represented as strings resulted from their
 		"Object#to_s" method.
-		{only available when compiled with the |+ruby| feature}
 
 screenattr({row}, {col})					*screenattr()*
 		Like |screenchar()|, but return the attribute.  This is a rather
@@ -9139,8 +9136,6 @@ undofile({name})					*undofile()*
 		If {name} is empty undofile() returns an empty string, since a
 		buffer without a file name will not write an undo file.
 		Useful in combination with |:wundo| and |:rundo|.
-		When compiled without the |+persistent_undo| option this always
-		returns an empty string.
 
 undotree()						*undotree()*
 		Return the current state of the undo tree in a dictionary with

@@ -407,20 +407,18 @@ accordingly.  Vim proceeds in this order:
 	proceeding to load user configuration.
 
 4. Load user config (execute Ex commands from files, environment, …).
-	An environment variable (e.g. $VIMINIT) is read as one Ex command
-	line, where multiple commands must be separated with '|' or <NL>.
+	$VIMINIT environment variable is read as one Ex command line (separate
+	multiple commands with '|' or <NL>).
 					*config* *init.vim* *init.lua* *vimrc* *exrc*
-	A file that contains initialization commands is generically called
-	a "vimrc" or config file.  It can be a Vimscript or Lua file named
-	"init.vim" or "init.lua" respectively.  It is an error to use both at
-	the same time.  Each line in a "init.vim" is executed as an Ex command
-	line.  See also |vimrc-intro| and |base-directories|.
+	A file containing initialization commands is generically called
+	a "vimrc" or config file.  It can be either Vimscript ("init.vim") or
+	Lua ("init.lua"), but not both. *E5422*
+	See also |vimrc-intro| and |base-directories|.
 
 	The config file is located at:
-		Unix		~/.config/nvim/init.vim (or init.lua)
-		Windows		~/AppData/Local/nvim/init.vim (or init.lua)
-	or if |$XDG_CONFIG_HOME| is defined:
-				$XDG_CONFIG_HOME/nvim/init.vim (or init.lua)
+	Unix			~/.config/nvim/init.vim		(or init.lua)
+	Windows			~/AppData/Local/nvim/init.vim	(or init.lua)
+	|$XDG_CONFIG_HOME|	$XDG_CONFIG_HOME/nvim/init.vim	(or init.lua)
 
 	If Nvim was started with "-u {file}" then {file} is used as the config
 	and all initializations until 5. are skipped. $MYVIMRC is not set.
@@ -470,14 +468,11 @@ accordingly.  Vim proceeds in this order:
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
 		:runtime! plugin/**/*.lua
-<	The result is that all directories in the 'runtimepath' option will be
-	searched for the "plugin" sub-directory and all files ending in ".vim"
-	and ".lua" will be sourced (in alphabetical order per directory),
-	also in subdirectories. First all the "*.vim" files will be sourced and
-	then all the "*.lua" files will be sourced. If two files with same
-	name but different extensions exists they will be treated in same
-	manner. For example when both "foo.vim" and "foo.lua" exists then
-	first "foo.vim" will be sourced then "foo.lua" will be sourced.
+<	The result is that all directories in 'runtimepath' will be searched
+	for the "plugin" sub-directory and all files ending in ".vim" or
+	".lua" will be sourced (in alphabetical order per directory),
+	also in subdirectories. First "*.vim" are sourced, then "*.lua" files.
+
 	However, directories in 'runtimepath' ending in "after" are skipped
 	here and only loaded after packages, see below.
 	Loading plugins won't be done when:
@@ -485,7 +480,6 @@ accordingly.  Vim proceeds in this order:
 	- The |--noplugin| command line argument is used.
 	- The |--clean| command line argument is used.
 	- The "-u NONE" command line argument is used |-u|.
-	- When Vim was compiled without the |+eval| feature.
 	Note that using "-c 'set noloadplugins'" doesn't work, because the
 	commands from the command line have not been executed yet.  You can
 	use "--cmd 'set noloadplugins'" or "--cmd 'set loadplugins'" |--cmd|.

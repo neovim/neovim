@@ -1147,14 +1147,14 @@ describe('LSP', function()
           make_edit(0, 0, 0, 3, "First ↥ 🤦 🦄")
         },
         textDocument = {
-          uri = "file://fake/uri";
+          uri = "file:///fake/uri";
           version = editVersion
         }
       }
     end
     before_each(function()
       target_bufnr = exec_lua [[
-        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri")
         local lines = {"1st line of text", "2nd line of 语text"}
         vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         return bufnr
@@ -1234,7 +1234,7 @@ describe('LSP', function()
           make_edit(row, 0, row, 1000, new_line)
         },
         textDocument = {
-          uri = "file://fake/uri";
+          uri = "file:///fake/uri";
           version = editVersion
         }
       }
@@ -1252,7 +1252,7 @@ describe('LSP', function()
 
     before_each(function()
       local ret = exec_lua [[
-        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri")
         local lines = {
           "Original Line #1",
           "Original Line #2"
@@ -1532,19 +1532,19 @@ describe('LSP', function()
     it('Convert Location[] to items', function()
       local expected = {
         {
-          filename = 'fake/uri',
+          filename = '/fake/uri',
           lnum = 1,
           col = 3,
           text = 'testing'
         },
       }
       local actual = exec_lua [[
-        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri")
         local lines = {"testing", "123"}
         vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         local locations = {
           {
-            uri = 'file://fake/uri',
+            uri = 'file:///fake/uri',
             range = {
               start = { line = 0, character = 2 },
               ['end'] = { line = 0, character = 3 },
@@ -1558,14 +1558,14 @@ describe('LSP', function()
     it('Convert LocationLink[] to items', function()
       local expected = {
         {
-          filename = 'fake/uri',
+          filename = '/fake/uri',
           lnum = 1,
           col = 3,
           text = 'testing'
         },
       }
       local actual = exec_lua [[
-        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri")
         local lines = {"testing", "123"}
         vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         local locations = {
@@ -1779,14 +1779,14 @@ describe('LSP', function()
         local expected = {
           {
             col = 1,
-            filename = 'test_a',
+            filename = '/test_a',
             kind = 'File',
             lnum = 2,
             text = '[File] TestA'
           },
           {
             col = 1,
-            filename = 'test_b',
+            filename = '/test_b',
             kind = 'Module',
             lnum = 4,
             text = '[Module] TestB'
@@ -1809,7 +1809,7 @@ describe('LSP', function()
                     line = 2
                   }
                 },
-                uri = "file://test_a"
+                uri = "file:///test_a"
               },
               contanerName = "TestAContainer"
             },
@@ -1828,7 +1828,7 @@ describe('LSP', function()
                     line = 4
                   }
                 },
-                uri = "file://test_b"
+                uri = "file:///test_b"
               },
               contanerName = "TestBContainer"
             }
@@ -1867,7 +1867,7 @@ describe('LSP', function()
 
     before_each(function()
       target_bufnr = exec_lua [[
-        local bufnr = vim.uri_to_bufnr("file://fake/uri")
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri")
         local lines = {"1st line of text", "å å ɧ 汉语 ↥ 🤦 🦄"}
         vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
         return bufnr
@@ -1876,7 +1876,7 @@ describe('LSP', function()
 
     local location = function(start_line, start_char, end_line, end_char)
       return {
-        uri = "file://fake/uri",
+        uri = "file:///fake/uri",
         range = {
           start = { line = start_line, character = start_char },
           ["end"] = { line = end_line, character = end_char },
@@ -1901,7 +1901,7 @@ describe('LSP', function()
 
     it('jumps to a LocationLink', function()
       local pos = jump({
-          targetUri = "file://fake/uri",
+          targetUri = "file:///fake/uri",
           targetSelectionRange = {
             start = { line = 0, character = 4 },
             ["end"] = { line = 0, character = 4 },

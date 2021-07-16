@@ -494,7 +494,6 @@ local convert_value_to_lua = (function()
       for _, key_value_str in ipairs(comma_split) do
         local key, value = unpack(vim.split(key_value_str, ":"))
         key = vim.trim(key)
-        value = vim.trim(value)
 
         result[key] = value
       end

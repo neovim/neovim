@@ -217,7 +217,7 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///
 /// @param ns_id number of namespace for this highlight
 /// @param name highlight group name, like ErrorMsg
-/// @param val highlight definiton map, like |nvim_get_hl_by_name|.
+/// @param val highlight definition map, like |nvim_get_hl_by_name|.
 ///            in addition the following keys are also recognized:
 ///              `default`: don't override existing definition,
 ///                         like `hi default`
@@ -384,7 +384,7 @@ Integer nvim_input(String keys)
 ///       by calling it multiple times in a loop: the intermediate mouse
 ///       positions will be ignored. It should be used to implement real-time
 ///       mouse input in a GUI. The deprecated pseudokey form
-///       ("<LeftMouse><col,row>") of |nvim_input()| has the same limitiation.
+///       ("<LeftMouse><col,row>") of |nvim_input()| has the same limitation.
 ///
 /// @param button Mouse button: one of "left", "right", "middle", "wheel".
 /// @param action For ordinary buttons, one of "press", "drag", "release".
@@ -558,7 +558,7 @@ Object nvim_exec_lua(String code, Array args, Error *err)
 /// Notify the user with a message
 ///
 /// Relays the call to vim.notify . By default forwards your message in the
-/// echo area but can be overriden to trigger desktop notifications.
+/// echo area but can be overridden to trigger desktop notifications.
 ///
 /// @param msg        Message to display to the user
 /// @param log_level  The log level
@@ -1260,7 +1260,7 @@ fail:
 ///
 /// By default (and currently the only option) the terminal will not be
 /// connected to an external process. Instead, input send on the channel
-/// will be echoed directly by the terminal. This is useful to disply
+/// will be echoed directly by the terminal. This is useful to display
 /// ANSI terminal sequences returned as part of a rpc message, or similar.
 ///
 /// Note: to directly initiate the terminal using the right size, display the
@@ -1290,7 +1290,7 @@ Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
   TerminalOptions topts;
   Channel *chan = channel_alloc(kChannelStreamInternal);
   topts.data = chan;
-  // NB: overriden in terminal_check_size if a window is already
+  // NB: overridden in terminal_check_size if a window is already
   // displaying the buffer
   topts.width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0);
   topts.height = (uint16_t)curwin->w_height_inner;
@@ -2237,7 +2237,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///          - "arg": String, error message argument.
 ///        - "len": Amount of bytes successfully parsed. With flags equal to ""
 ///                 that should be equal to the length of expr string.
-///                 (“Sucessfully parsed” here means “participated in AST
+///                 (“Successfully parsed” here means “participated in AST
 ///                  creation”, not “till the first error”.)
 ///        - "ast": AST, either nil or a dictionary with these keys:
 ///          - "type": node type, one of the value names from ExprASTNodeType
@@ -2925,7 +2925,7 @@ void nvim__screenshot(String path)
 /// Note: this function should not be called often. Rather, the callbacks
 /// themselves can be used to throttle unneeded callbacks. the `on_start`
 /// callback can return `false` to disable the provider until the next redraw.
-/// Similarily, return `false` in `on_win` will skip the `on_lines` calls
+/// Similarly, return `false` in `on_win` will skip the `on_lines` calls
 /// for that window (but any extmarks set in `on_win` will still be used).
 /// A plugin managing multiple sources of decoration should ideally only set
 /// one provider, and merge the sources internally. You can use multiple `ns_id`

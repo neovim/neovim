@@ -513,13 +513,15 @@ end
 function module.set_shell_powershell()
   local shell = iswin() and 'powershell' or 'pwsh'
   assert(module.has_powershell())
-  local cmd = 'Remove-Item -Force '..table.concat(iswin()
+  local set_encoding = '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
+  local cmd = set_encoding..'Remove-Item -Force '..table.concat(iswin()
     and {'alias:cat', 'alias:echo', 'alias:sleep'}
     or  {'alias:echo'}, ',')..';'
   module.source([[
     let &shell = ']]..shell..[['
-    set shellquote= shellpipe=\| shellxquote=
-    let &shellredir = '| Out-File -Encoding UTF8'
+    set shellquote= shellxquote=
+    let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+    let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
     let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ]]..cmd..[['
   ]])
 end
@@ -878,9 +880,11 @@ function module.os_kill(pid)
     or  'kill -9 '..pid..' > /dev/null'))
 end
 
--- Create directories with non exsisting intermidiate directories
+-- Create folder with non existing parents
 function module.mkdir_p(path)
-  return module.meths.call_function('mkdir', {path, 'p'})
+  return os.execute((iswin()
+    and 'mkdir '..path
+    or 'mkdir -p '..path))
 end
 
 module = global_helpers.tbl_extend('error', module, global_helpers)

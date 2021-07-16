@@ -49,7 +49,7 @@ struct mtnode_s {
   int32_t n;
   int32_t level;
   // TODO(bfredl): we could consider having a only-sometimes-valid
-  // index into parent for faster "chached" lookup.
+  // index into parent for faster "cached" lookup.
   mtnode_t *parent;
   mtkey_t key[2 * MT_BRANCH_FACTOR - 1];
   mtnode_t *ptr[];

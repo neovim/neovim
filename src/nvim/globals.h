@@ -141,7 +141,7 @@ EXTERN int cmdline_row;
 EXTERN int redraw_cmdline INIT(= false);          // cmdline must be redrawn
 EXTERN int clear_cmdline INIT(= false);           // cmdline must be cleared
 EXTERN int mode_displayed INIT(= false);          // mode is being displayed
-EXTERN int cmdline_star INIT(= false);            // cmdline is crypted
+EXTERN int cmdline_star INIT(= false);            // cmdline is encrypted
 EXTERN int redrawing_cmdline INIT(= false);       // cmdline is being redrawn
 EXTERN int cmdline_was_last_drawn INIT(= false);  // cmdline was last drawn
 
@@ -507,9 +507,6 @@ EXTERN int secure INIT(= false);
 /// Non-zero when changing text and jumping to another window/buffer is not
 /// allowed.
 EXTERN int textlock INIT(= 0);
-
-/// Non-zero when the current buffer can't be changed.  Used for FileChangedRO.
-EXTERN int curbuf_lock INIT(= 0);
 
 /// Non-zero when no buffer name can be changed, no buffer can be deleted and
 /// current directory can't be changed. Used for SwapExists et al.

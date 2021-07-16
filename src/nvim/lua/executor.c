@@ -144,12 +144,12 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
-/// convert byte index to UTF-32 and UTF-16 indicies
+/// convert byte index to UTF-32 and UTF-16 indices
 ///
 /// Expects a string and an optional index. If no index is supplied, the length
 /// of the string is returned.
 ///
-/// Returns two values: the UTF-32 and UTF-16 indicies.
+/// Returns two values: the UTF-32 and UTF-16 indices.
 static int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   size_t s1_len;
@@ -173,7 +173,7 @@ static int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 2;
 }
 
-/// convert UTF-32 or UTF-16 indicies to byte index.
+/// convert UTF-32 or UTF-16 indices to byte index.
 ///
 /// Expects up to three args: string, index and use_utf16.
 /// If use_utf16 is not supplied it defaults to false (use UTF-32)
@@ -234,7 +234,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult,
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
                    1, xstrdup(error));
-    lua_pop(lstate, 1);  // error mesage
+    lua_pop(lstate, 1);  // error message
     retval = -status;
   } else {  // LUA_OK
     if (nresult == LUA_MULTRET) {
@@ -585,7 +585,7 @@ static lua_State *global_lstate = NULL;
 
 /// Enter lua interpreter
 ///
-/// Calls nlua_init() if needed. Is responsible for pre-lua call initalization
+/// Calls nlua_init() if needed. Is responsible for pre-lua call initialization
 /// like updating `package.[c]path` with directories derived from &runtimepath.
 ///
 /// @return Interpreter instance to use. Will either be initialized now or

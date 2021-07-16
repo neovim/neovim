@@ -793,7 +793,7 @@ bool arabic_maycombine(int two)
   return false;
 }
 
-// A_firstc_laa returns first character of LAA combination if it ex.ists
+// A_firstc_laa returns first character of LAA combination if it exists
 // in: "c" base character
 // in: "c1" first composing character
 static int A_firstc_laa(int c, int c1)

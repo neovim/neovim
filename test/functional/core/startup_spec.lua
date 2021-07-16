@@ -443,10 +443,7 @@ describe('user config init', function()
   before_each(function()
     rmdir(xhome)
 
-    -- TODO, make mkdir_p helper
-    mkdir(xhome)
-    mkdir(xconfig)
-    mkdir(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xconfig .. pathsep .. 'nvim')
 
     write_file(init_lua_path, [[
       vim.g.lua_rc = 1
@@ -490,7 +487,7 @@ describe('user config init', function()
       clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
       feed('<cr>') -- TODO check this, test execution is blocked without it
       eq(1, eval('g:lua_rc'))
-      matches('Conflicting configs', meths.exec('messages', true))
+      matches('^E5422: Conflicting configs', meths.exec('messages', true))
     end)
   end)
 end)

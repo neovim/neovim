@@ -394,7 +394,7 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
     return;
   }
   bool new_float = !win->w_floating;
-  // reuse old values, if not overriden
+  // reuse old values, if not overridden
   FloatConfig fconfig = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
 
   if (!parse_float_config(config, &fconfig, !new_float, false, err)) {
@@ -456,6 +456,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           float_anchor_str[config->anchor])));
       PUT(rv, "row", FLOAT_OBJ(config->row));
       PUT(rv, "col", FLOAT_OBJ(config->col));
+      PUT(rv, "zindex", INTEGER_OBJ(config->zindex));
     }
     if (config->border) {
       Array border = ARRAY_DICT_INIT;

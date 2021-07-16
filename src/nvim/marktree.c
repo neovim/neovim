@@ -905,6 +905,7 @@ continue_same_node:
           refkey(b, enditr->node, enditr->i);
         } else {
           past_right = true; // NOLINT
+          (void)past_right;
           break;
         }
       }

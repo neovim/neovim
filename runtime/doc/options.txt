@@ -2138,8 +2138,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global or local to buffer |global-local|
 	External program to use for "=" command.  When this option is empty
 	the internal formatting functions are used; either 'lisp', 'cindent'
-	or 'indentexpr'.  When Vim was compiled without internal formatting,
-	the "indent" program is used.
+	or 'indentexpr'.
 	Environment variables are expanded |:set_env|.  See |option-backslash|
 	about including spaces and backslashes.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -5238,11 +5237,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that such processing is done after |:set| did its own round of 
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
 							*shell-powershell*
-	To use powershell: >
+	To use PowerShell: >
 		let &shell = has('win32') ? 'powershell' : 'pwsh'
-		set shellquote= shellpipe=\| shellxquote=
-		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
-		set shellredir=\|\ Out-File\ -Encoding\ UTF8
+		let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
+		let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+		let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+		set shellquote= shellxquote=
 
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -7092,8 +7092,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Allows writing to any file with no need for "!" override.
 
 			     *'writebackup'* *'wb'* *'nowritebackup'* *'nowb'*
-'writebackup' 'wb'	boolean	(default on with |+writebackup| feature, off
-					otherwise)
+'writebackup' 'wb'	boolean	(default on)
 			global
 	Make a backup before overwriting a file.  The backup is removed after
 	the file was successfully written, unless the 'backup' option is

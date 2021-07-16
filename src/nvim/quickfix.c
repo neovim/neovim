@@ -2421,7 +2421,7 @@ static qfline_T *get_nth_entry(qf_list_T *qfl, int errornr, int *new_qfidx)
   return qf_ptr;
 }
 
-/// Get a entry specied by 'errornr' and 'dir' from the current
+/// Get a entry specified by 'errornr' and 'dir' from the current
 /// quickfix/location list. 'errornr' specifies the index of the entry and 'dir'
 /// specifies the direction (FORWARD/BACKWARD/FORWARD_FILE/BACKWARD_FILE).
 /// Returns a pointer to the entry and the index of the new entry is stored in
@@ -4180,7 +4180,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
     // Set the 'filetype' to "qf" each time after filling the buffer.  This
     // resembles reading a file into a buffer, it's more logical when using
     // autocommands.
-    curbuf_lock++;
+    curbuf->b_ro_locked++;
     set_option_value("ft", 0L, "qf", OPT_LOCAL);
     curbuf->b_p_ma = false;
 
@@ -4190,7 +4190,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last,
     apply_autocmds(EVENT_BUFWINENTER, (char_u *)"quickfix", NULL,
                    false, curbuf);
     keep_filetype = false;
-    curbuf_lock--;
+    curbuf->b_ro_locked--;
 
     // make sure it will be redrawn
     redraw_curbuf_later(NOT_VALID);
@@ -4807,7 +4807,7 @@ static qfline_T *qf_find_entry_after_pos(
   FUNC_ATTR_NONNULL_ALL
 {
   if (qf_entry_after_pos(qfp, pos, linewise)) {
-    // First entry is after postion 'pos'
+    // First entry is after position 'pos'
     return qfp;
   }
 
@@ -5744,7 +5744,7 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
   }
 }
 
-/// Copy the specified quickfix entry items into a new dict and appened the dict
+/// Copy the specified quickfix entry items into a new dict and append the dict
 /// to 'list'.  Returns OK on success.
 static int get_qfline_items(qfline_T *qfp, list_T *list)
 {
@@ -6000,7 +6000,7 @@ static int qf_getprop_qfidx(qf_info_T *qi, dict_T *what)
   if ((di = tv_dict_find(what, S_LEN("id"))) != NULL) {
     // Look for a list with the specified id
     if (di->di_tv.v_type == VAR_NUMBER) {
-      // For zero, use the current list or the list specifed by 'nr'
+      // For zero, use the current list or the list specified by 'nr'
       if (di->di_tv.vval.v_number != 0) {
         qf_idx = qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
       }

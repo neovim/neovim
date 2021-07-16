@@ -172,42 +172,34 @@ Using Vim scripts					*using-scripts*
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
-:so[urce] {file}	Runs vim or lua {file}
+:so[urce] {file}	Runs |Ex| commands or Lua code (".lua" files) read
+			from {file}.
 			Triggers the |SourcePre| autocommand.
-
-			Note: Only files ending with `.lua` is sourced as
-			lua file. Anything else is assumed to be vimscript.
 							*:source!*
-:so[urce]! {file}	Read Vim commands from {file}.  These are commands
-			that are executed from Normal mode, like you type
-			them.
-			When used after |:global|, |:argdo|, |:windo|,
-			|:bufdo|, in a loop or when another command follows
-			the display won't be updated while executing the
-			commands.
+:so[urce]! {file}	Runs |Normal-mode| commands read from {file}. When
+			used after |:global|, |:argdo|, |:windo|, |:bufdo|, in
+			a loop or when another command follows the display
+			won't be updated while executing the commands.
 			Cannot be used in the |sandbox|.
 
 							*:ru* *:runtime*
 :ru[ntime][!] [where] {file} ..
-			Source vim/lua {file} in each directory given by
-			'runtimepath' and/or 'packpath'. The vim files are
-			executed in same mannar as |:source| and lua files
-			similarly as |:luafile|. There is no error
-			for non-existing files.
+			Sources |Ex| commands or Lua code (".lua" files) read
+			from {file} (a relative path) in each directory given
+			by 'runtimepath' and/or 'packpath'.
+			Ignores non-existing files.
 
 			Example: >
 				:runtime syntax/c.vim
+				:runtime syntax/c.lua
 
-<			There can be multiple {file} arguments, separated by
-			spaces.  Each {file} is searched for in the first
+<			There can be multiple space-separated {file}
+			arguments. Each {file} is searched for in the first
 			directory from 'runtimepath', then in the second
-			directory, etc.  Use a backslash to include a space
-			inside {file} (although it's better not to use spaces
-			in file names, it causes trouble).
+			directory, etc.
 
 			When [!] is included, all found files are sourced.
-			When it is not included only the first found file is
-			sourced.
+			Else only the first found file is sourced.
 
 			When [where] is omitted only 'runtimepath' is used.
 			Other values:
@@ -911,11 +903,9 @@ OBSCURE
 Profiling						*profile* *profiling*
 
 Profiling means that Vim measures the time that is spent on executing
-functions and/or scripts.  The |+profile| feature is required for this.
-It is only included when Vim was compiled with "huge" features.
+functions and/or scripts.
 
-You can also use the |reltime()| function to measure time.  This only requires
-the |+reltime| feature, which is present more often.
+You can also use the |reltime()| function to measure time.
 
 For profiling syntax highlighting see |:syntime|.
 

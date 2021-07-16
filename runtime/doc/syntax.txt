@@ -371,9 +371,6 @@ the desired value, or restored to their default by removing the variable using
 Remarks:
 - Some truly ancient browsers may not show the background colors.
 - From most browsers you can also print the file (in color)!
-- The latest TOhtml may actually work with older versions of Vim, but some
-  features such as conceal support will not function, and the colors may be
-  incorrect for an old Vim without GUI support compiled in.
 
 Here is an example how to run the script over all .c and .h files from a
 Unix shell: >
@@ -4745,8 +4742,7 @@ in their own color.
 			This is basically the same as >
 				:echo g:colors_name
 <			In case g:colors_name has not been defined :colo will
-			output "default".  When compiled without the |+eval|
-			feature it will output "unknown".
+			output "default".
 
 :colo[rscheme] {name}	Load color scheme {name}.  This searches 'runtimepath'
 			for the file "colors/{name}.(vim|lua)".  The first one that
@@ -5403,9 +5399,6 @@ This is aimed at authors of a syntax file.
 If your syntax causes redrawing to be slow, here are a few hints on making it
 faster.  To see slowness switch on some features that usually interfere, such
 as 'relativenumber' and |folding|.
-
-Note: this is only available when compiled with the |+profile| feature.
-You many need to build Vim with "huge" features.
 
 To find out what patterns are consuming most time, get an overview with this
 sequence: >

@@ -4687,7 +4687,7 @@ check_timestamps(
   }
 
   if (!stuff_empty() || global_busy || !typebuf_typed()
-      || autocmd_busy || curbuf_lock > 0 || allbuf_lock > 0
+      || autocmd_busy || curbuf->b_ro_locked > 0 || allbuf_lock > 0
       ) {
     need_check_timestamps = true;               // check later
   } else {
@@ -4967,13 +4967,10 @@ int buf_check_timestamp(buf_T *buf)
     buf_reload(buf, orig_mode);
     if (buf->b_p_udf && buf->b_ffname != NULL) {
       char_u hash[UNDO_HASH_SIZE];
-      buf_T           *save_curbuf = curbuf;
 
-      /* Any existing undo file is unusable, write it now. */
-      curbuf = buf;
-      u_compute_hash(hash);
-      u_write_undo(NULL, FALSE, buf, hash);
-      curbuf = save_curbuf;
+      // Any existing undo file is unusable, write it now.
+      u_compute_hash(buf, hash);
+      u_write_undo(NULL, false, buf, hash);
     }
   }
 
@@ -5015,10 +5012,10 @@ void buf_reload(buf_T *buf, int orig_mode)
   old_topline = curwin->w_topline;
 
   if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
-    /* Save all the text, so that the reload can be undone.
-     * Sync first so that this is a separate undo-able action. */
-    u_sync(FALSE);
-    saved = u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, TRUE);
+    // Save all the text, so that the reload can be undone.
+    // Sync first so that this is a separate undo-able action.
+    u_sync(false);
+    saved = u_savecommon(curbuf, 0, curbuf->b_ml.ml_line_count + 1, 0, true);
     flags |= READ_KEEP_UNDO;
   }
 
@@ -5027,7 +5024,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   // buffer contents.  But if reading the file fails we should keep
   // the old contents.  Can't use memory only, the file might be
   // too big.  Use a hidden buffer to move the buffer contents to.
-  if (BUFEMPTY() || saved == FAIL) {
+  if (buf_is_empty(curbuf) || saved == FAIL) {
     savebuf = NULL;
   } else {
     // Allocate a buffer without putting it in the buffer list.
@@ -5060,7 +5057,7 @@ void buf_reload(buf_T *buf, int orig_mode)
       if (savebuf != NULL && bufref_valid(&bufref) && buf == curbuf) {
         // Put the text back from the save buffer.  First
         // delete any lines that readfile() added.
-        while (!BUFEMPTY()) {
+        while (!buf_is_empty(curbuf)) {
           if (ml_delete(buf->b_ml.ml_line_count, false) == FAIL) {
             break;
           }

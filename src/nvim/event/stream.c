@@ -19,7 +19,7 @@
 # include "event/stream.c.generated.h"
 #endif
 
-// For compatbility with libuv < 1.19.0 (tested on 1.18.0)
+// For compatibility with libuv < 1.19.0 (tested on 1.18.0)
 #if UV_VERSION_MINOR < 19
 #define uv_stream_get_write_queue_size(stream) stream->write_queue_size
 #endif

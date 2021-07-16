@@ -34,10 +34,6 @@
 /// LINEEMPTY() - return TRUE if the line is empty
 #define LINEEMPTY(p) (*ml_get(p) == NUL)
 
-/// BUFEMPTY() - return TRUE if the current buffer is empty
-#define BUFEMPTY() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
-                    NUL)
-
 // toupper() and tolower() that use the current locale.
 // Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
 // range 0 - 255.  toupper()/tolower() on some systems can't handle others.
@@ -133,6 +129,8 @@
 /// error. A mechanism to detect many (though not all) of those errors at
 /// compile time is implemented. It works by the second division producing
 /// a division by zero in those cases (-Wdiv-by-zero in GCC).
+///
+/// -V:ARRAY_SIZE:1063
 #define ARRAY_SIZE(arr) \
     ((sizeof(arr)/sizeof((arr)[0])) \
      / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))

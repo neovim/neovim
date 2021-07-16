@@ -156,7 +156,16 @@ function! s:clipboard.get(reg) abort
   elseif s:selections[a:reg].owner > 0
     return s:selections[a:reg].data
   end
-  return s:try_cmd(s:paste[a:reg])
+
+  let clipboard_data = s:try_cmd(s:paste[a:reg])
+  if match(&clipboard, '\v(unnamed|unnamedplus)') >= 0
+        \ && type(clipboard_data) == v:t_list
+        \ && get(s:selections[a:reg].data, 0, []) ==# clipboard_data
+    " When system clipboard return is same as our cache return the cache
+    " as it contains regtype information
+    return s:selections[a:reg].data
+  end
+  return clipboard_data
 endfunction
 
 function! s:clipboard.set(lines, regtype, reg) abort
@@ -175,6 +184,9 @@ function! s:clipboard.set(lines, regtype, reg) abort
 
   if s:cache_enabled == 0
     call s:try_cmd(s:copy[a:reg], a:lines)
+    "Cache it anyway we can compare it later to get regtype of the yank
+    let s:selections[a:reg] = copy(s:selection)
+    let s:selections[a:reg].data = [a:lines, a:regtype]
     return 0
   end
 

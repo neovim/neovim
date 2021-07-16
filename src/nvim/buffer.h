@@ -9,6 +9,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/eval.h"
 #include "nvim/macros.h"
+#include "nvim/memline.h"
 
 // Values for buflist_getfile()
 enum getf_values {
@@ -126,6 +127,12 @@ static inline void buf_inc_changedtick(buf_T *const buf)
 static inline void buf_inc_changedtick(buf_T *const buf)
 {
   buf_set_changedtick(buf, buf_get_changedtick(buf) + 1);
+}
+
+static inline bool buf_is_empty(buf_T *buf)
+{
+  return buf->b_ml.ml_line_count == 1
+    && *ml_get_buf(buf, (linenr_T)1, false) == '\0';
 }
 
 #endif  // NVIM_BUFFER_H

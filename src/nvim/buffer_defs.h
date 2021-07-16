@@ -525,6 +525,8 @@ struct file_buffer {
   int b_flags;                  // various BF_ flags
   int b_locked;                 // Buffer is being closed or referenced, don't
                                 // let autocommands wipe it out.
+  int b_ro_locked;              // Non-zero when the buffer can't be changed.
+                                // Used for FileChangedRO
 
   //
   // b_ffname   has the full path of the file (NULL for no name).
@@ -849,8 +851,8 @@ struct file_buffer {
                                 // may use a different synblock_T.
 
   sign_entry_T *b_signlist;     // list of placed signs
-  int b_signcols_max;           // cached maximum number of sign columns
   int b_signcols;               // last calculated number of sign columns
+  bool b_signcols_valid;        // calculated sign columns is valid
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 

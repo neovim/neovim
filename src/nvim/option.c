@@ -16,8 +16,6 @@
 // - If it's a numeric option, add any necessary bounds checks to
 //   set_num_option().
 // - If it's a list of flags, add some code in do_set(), search for WW_ALL.
-// - When adding an option with expansion (P_EXPAND), but with a different
-//   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
 // - Add documentation! doc/options.txt, and any other related places.
 // - Add an entry in runtime/optwin.vim.
 
@@ -208,12 +206,10 @@ typedef struct vimoption {
                                 // buffer-local option: global value
   idopt_T indir;                // global option: PV_NONE;
                                 // local option: indirect option index
-  char_u      *def_val[2];      // default values for variable (vi and vim)
+  char_u      *def_val;         // default values for variable (neovim!!)
   LastSet last_set;             // script in which the option was last set
 } vimoption_T;
 
-#define VI_DEFAULT  0       // def_val[VI_DEFAULT] is Vi default value
-#define VIM_DEFAULT 1       // def_val[VIM_DEFAULT] is Vim default value
 
 /*
  * Flags
@@ -232,8 +228,6 @@ typedef struct vimoption {
                                  // use free() when assigning new value
 #define P_WAS_SET       0x100U   // option has been set/reset
 #define P_NO_MKRC       0x200U   // don't include in :mkvimrc output
-#define P_VI_DEF        0x400U   // Use Vi default for Vim
-#define P_VIM           0x800U   // Vim option
 
 // when option changed, what to display:
 #define P_RSTAT         0x1000U  ///< redraw status lines
@@ -459,7 +453,7 @@ void set_init_1(bool clean_arg)
         buf[j] = NUL;
         opt_idx = findoption("cdpath");
         if (opt_idx >= 0) {
-          options[opt_idx].def_val[VI_DEFAULT] = buf;
+          options[opt_idx].def_val = buf;
           options[opt_idx].flags |= P_DEF_ALLOCED;
         } else {
           xfree(buf);           // cannot happen
@@ -527,7 +521,7 @@ void set_init_1(bool clean_arg)
   check_win_options(curwin);
   check_options();
 
-  // Set all options to their Vim default
+  // Set all options to their default value
   set_options_default(OPT_FREE);
 
   // set 'laststatus'
@@ -563,15 +557,10 @@ void set_init_1(bool clean_arg)
     if (p != NULL) {
       p = xstrdup(p);
       *(char **)options[opt_idx].var = p;
-      /* VIMEXP
-       * Defaults for all expanded options are currently the same for Vi
-       * and Vim.  When this changes, add some code here!  Also need to
-       * split P_DEF_ALLOCED in two.
-       */
       if (options[opt_idx].flags & P_DEF_ALLOCED) {
-        xfree(options[opt_idx].def_val[VI_DEFAULT]);
+        xfree(options[opt_idx].def_val);
       }
-      options[opt_idx].def_val[VI_DEFAULT] = (char_u *)p;
+      options[opt_idx].def_val = (char_u *)p;
       options[opt_idx].flags |= P_DEF_ALLOCED;
     }
   }
@@ -614,39 +603,34 @@ void set_init_1(bool clean_arg)
 
 /// Set an option to its default value.
 /// This does not take care of side effects!
-static void
-set_option_default(
-    int opt_idx,
-    int opt_flags,              // OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
-    int compatible              // use Vi default value
-)
+///
+/// @param opt_flags OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+static void set_option_default(int opt_idx, int opt_flags)
 {
   char_u      *varp;            // pointer to variable for current option
-  int dvi;                      // index in def_val[]
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
   varp = get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
   uint32_t flags = options[opt_idx].flags;
   if (varp != NULL) {       // skip hidden option, nothing to do for it
-    dvi = ((flags & P_VI_DEF) || compatible) ? VI_DEFAULT : VIM_DEFAULT;
     if (flags & P_STRING) {
       /* Use set_string_option_direct() for local options to handle
        * freeing and allocating the value. */
       if (options[opt_idx].indir != PV_NONE) {
         set_string_option_direct(NULL, opt_idx,
-                                 options[opt_idx].def_val[dvi], opt_flags, 0);
+                                 options[opt_idx].def_val, opt_flags, 0);
       } else {
         if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED)) {
           free_string_option(*(char_u **)(varp));
         }
-        *(char_u **)varp = options[opt_idx].def_val[dvi];
+        *(char_u **)varp = options[opt_idx].def_val;
         options[opt_idx].flags &= ~P_ALLOCED;
       }
     } else if (flags & P_NUM)   {
       if (options[opt_idx].indir == PV_SCROLL) {
         win_comp_scroll(curwin);
       } else {
-        long def_val = (long)options[opt_idx].def_val[dvi];
+        long def_val = (long)options[opt_idx].def_val;
         if ((long *)varp == &curwin->w_p_so
             || (long *)varp == &curwin->w_p_siso) {
           // 'scrolloff' and 'sidescrolloff' local values have a
@@ -662,7 +646,7 @@ set_option_default(
         }
       }
     } else {  // P_BOOL
-      *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
+      *(int *)varp = (int)(intptr_t)options[opt_idx].def_val;
 #ifdef UNIX
       // 'modeline' defaults to off for root
       if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID) {
@@ -692,7 +676,7 @@ set_options_default(
 {
   for (int i = 0; options[i].fullname; i++) {
     if (!(options[i].flags & P_NODEFAULT)) {
-      set_option_default(i, opt_flags, false);
+      set_option_default(i, opt_flags);
     }
   }
 
@@ -716,10 +700,10 @@ static void set_string_default(const char *name, char *val, bool allocated)
   int opt_idx = findoption(name);
   if (opt_idx >= 0) {
     if (options[opt_idx].flags & P_DEF_ALLOCED) {
-      xfree(options[opt_idx].def_val[VI_DEFAULT]);
+      xfree(options[opt_idx].def_val);
     }
 
-    options[opt_idx].def_val[VI_DEFAULT] = allocated
+    options[opt_idx].def_val = allocated
         ? (char_u *)val
         : (char_u *)xstrdup(val);
     options[opt_idx].flags |= P_DEF_ALLOCED;
@@ -766,7 +750,7 @@ void set_number_default(char *name, long val)
 
   opt_idx = findoption(name);
   if (opt_idx >= 0) {
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)(intptr_t)val;
+    options[opt_idx].def_val = (char_u *)(intptr_t)val;
   }
 }
 
@@ -781,7 +765,7 @@ void free_all_options(void)
         free_string_option(*(char_u **)options[i].var);
       }
       if (options[i].flags & P_DEF_ALLOCED) {
-        free_string_option(options[i].def_val[VI_DEFAULT]);
+        free_string_option(options[i].def_val);
       }
     } else if (options[i].var != VAR_WIN && (options[i].flags & P_STRING)) {
       // buffer-local option: free global value
@@ -804,7 +788,7 @@ void set_init_2(bool headless)
   // which results in the actual value computed from the window height.
   idx = findoption("scroll");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
-    set_option_default(idx, OPT_LOCAL, false);
+    set_option_default(idx, OPT_LOCAL);
   }
   comp_col();
 
@@ -850,11 +834,11 @@ void set_init_3(void)
                ) {
       if (do_sp) {
         p_sp = (char_u *)"|& tee";
-        options[idx_sp].def_val[VI_DEFAULT] = p_sp;
+        options[idx_sp].def_val = p_sp;
       }
       if (do_srr) {
         p_srr = (char_u *)">&";
-        options[idx_srr].def_val[VI_DEFAULT] = p_srr;
+        options[idx_srr].def_val = p_srr;
       }
     } else if (fnamecmp(p, "sh") == 0
                || fnamecmp(p, "ksh") == 0
@@ -870,17 +854,17 @@ void set_init_3(void)
       // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = (char_u *)"2>&1| tee";
-        options[idx_sp].def_val[VI_DEFAULT] = p_sp;
+        options[idx_sp].def_val = p_sp;
       }
       if (do_srr) {
         p_srr = (char_u *)">%s 2>&1";
-        options[idx_srr].def_val[VI_DEFAULT] = p_srr;
+        options[idx_srr].def_val = p_srr;
       }
     }
     xfree(p);
   }
 
-  if (BUFEMPTY()) {
+  if (buf_is_empty(curbuf)) {
     int idx_ffs = findoption_len(S_LEN("ffs"));
 
     // Apply the first entry of 'fileformats' to the initial buffer.
@@ -941,12 +925,12 @@ void set_title_defaults(void)
    */
   idx1 = findoption("title");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
-    options[idx1].def_val[VI_DEFAULT] = (char_u *)(intptr_t)0;
+    options[idx1].def_val = (char_u *)(intptr_t)0;
     p_title = 0;
   }
   idx1 = findoption("icon");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
-    options[idx1].def_val[VI_DEFAULT] = (char_u *)(intptr_t)0;
+    options[idx1].def_val = (char_u *)(intptr_t)0;
     p_icon = 0;
   }
 }
@@ -986,7 +970,6 @@ int do_set(
   int adding;                       // "opt+=arg"
   int prepending;                   // "opt^=arg"
   int removing;                     // "opt-=arg"
-  int cp_val = 0;
 
   if (*arg == NUL) {
     showoptions(0, opt_flags);
@@ -1157,13 +1140,10 @@ int do_set(
 
       if (vim_strchr((char_u *)"?=:!&<", nextchar) != NULL) {
         arg += len;
-        cp_val = false;
         if (nextchar == '&' && arg[1] == 'v' && arg[2] == 'i') {
-          if (arg[3] == 'm') {          // "opt&vim": set to Vim default
-            cp_val = false;
+          if (arg[3] == 'm') {  // "opt&vim": set to Vim default
             arg += 3;
-          } else {                    // "opt&vi": set to Vi default
-            cp_val = true;
+          } else {  // "opt&vi": set to Vi default
             arg += 2;
           }
         }
@@ -1174,10 +1154,10 @@ int do_set(
         }
       }
 
-      /*
-       * allow '=' and ':' as MSDOS command.com allows only one
-       * '=' character per "set" command line. grrr. (jw)
-       */
+      //
+      // allow '=' and ':' as MS-DOS command.com allows only one
+      // '=' character per "set" command line. grrr. (jw)
+      //
       if (nextchar == '?'
           || (prefix == 1
               && vim_strchr((char_u *)"=:&<", nextchar) == NULL
@@ -1230,9 +1210,7 @@ int do_set(
           if (nextchar == '!') {
             value = *(int *)(varp) ^ 1;
           } else if (nextchar == '&') {
-            value = (int)(intptr_t)options[opt_idx].def_val[
-                ((flags & P_VI_DEF) || cp_val)
-                ?  VI_DEFAULT : VIM_DEFAULT];
+            value = (int)(intptr_t)options[opt_idx].def_val;
           } else if (nextchar == '<') {
             // For 'autoread' -1 means to use global value.
             if ((int *)varp == &curbuf->b_p_ar
@@ -1277,8 +1255,7 @@ int do_set(
             // other        error
             arg++;
             if (nextchar == '&') {
-              value = (long)(intptr_t)options[opt_idx].def_val[
-                  ((flags & P_VI_DEF) || cp_val) ? VI_DEFAULT : VIM_DEFAULT];
+              value = (long)(intptr_t)options[opt_idx].def_val;
             } else if (nextchar == '<') {
               // For 'undolevels' NO_LOCAL_UNDOLEVEL means to
               // use the global value.
@@ -1355,14 +1332,12 @@ int do_set(
               origval = oldval;
             }
 
-            if (nextchar == '&') {              // set to default val
-              newval = options[opt_idx].def_val[
-                ((flags & P_VI_DEF) || cp_val)
-                ?  VI_DEFAULT : VIM_DEFAULT];
-              /* expand environment variables and ~ (since the
-               * default value was already expanded, only
-               * required when an environment variable was set
-               * later */
+            if (nextchar == '&') {  // set to default val
+              newval = options[opt_idx].def_val;
+              // expand environment variables and ~ (since the
+              // default value was already expanded, only
+              // required when an environment variable was set
+              // later
               new_value_alloced = true;
               if (newval == NULL) {
                 newval = empty_option;
@@ -2719,7 +2694,7 @@ ambw_end:
                : opt_idx);
     // Update free_oldval now that we have the opt_idx for 'shada', otherwise
     // there would be a disconnect between the check for P_ALLOCED at the start
-    // of the function and the set of P_ALLOCED at the end of the fuction.
+    // of the function and the set of P_ALLOCED at the end of the function.
     free_oldval = (options[opt_idx].flags & P_ALLOCED);
     for (s = p_shada; *s; ) {
       // Check it's a valid character
@@ -3837,22 +3812,19 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
     // any changes in between.
     if (curbuf->b_p_udf || p_udf) {
       char_u hash[UNDO_HASH_SIZE];
-      buf_T       *save_curbuf = curbuf;
 
       FOR_ALL_BUFFERS(bp) {
-        curbuf = bp;
         // When 'undofile' is set globally: for every buffer, otherwise
         // only for the current buffer: Try to read in the undofile,
         // if one exists, the buffer wasn't changed and the buffer was
         // loaded
-        if ((curbuf == save_curbuf
+        if ((curbuf == bp
              || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
-            && !curbufIsChanged() && curbuf->b_ml.ml_mfp != NULL) {
-          u_compute_hash(hash);
-          u_read_undo(NULL, hash, curbuf->b_fname);
+            && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
+          u_compute_hash(bp, hash);
+          u_read_undo(NULL, hash, bp->b_fname);
         }
       }
-      curbuf = save_curbuf;
     }
   } else if ((int *)varp == &curbuf->b_p_ro) {
     // when 'readonly' is reset globally, also reset readonlymode
@@ -5094,20 +5066,17 @@ showoptions(
 /// Return true if option "p" has its default value.
 static int optval_default(vimoption_T *p, char_u *varp)
 {
-  int dvi;
-
   if (varp == NULL) {
     return true;            // hidden option is always at default
   }
-  dvi = (p->flags & P_VI_DEF) ? VI_DEFAULT : VIM_DEFAULT;
   if (p->flags & P_NUM) {
-    return *(long *)varp == (long)(intptr_t)p->def_val[dvi];
+    return *(long *)varp == (long)(intptr_t)p->def_val;
   }
   if (p->flags & P_BOOL) {
-    return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
+    return *(int *)varp == (int)(intptr_t)p->def_val;
   }
   // P_STRING
-  return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
+  return STRCMP(*(char_u **)varp, p->def_val) == 0;
 }
 
 /// Send update to UIs with values of UI relevant options
@@ -5363,7 +5332,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name,
       home_replace(NULL, *valuep, buf, size, false);
 
       // If the option value is longer than MAXPATHL, we need to append
-      // earch comma separated part of the option sperately, so that it
+      // search comma separated part of the option separately, so that it
       // can be expanded when read back.
       if (size >= MAXPATHL && (flags & P_COMMA) != 0
           && vim_strchr(*valuep, ',') != NULL) {
@@ -6156,7 +6125,7 @@ void reset_modifiable(void)
   p_ma = false;
   opt_idx = findoption("ma");
   if (opt_idx >= 0) {
-    options[opt_idx].def_val[VI_DEFAULT] = false;
+    options[opt_idx].def_val = false;
   }
 }
 
@@ -6855,7 +6824,7 @@ static void paste_option_changed(void)
 
 /// vimrc_found() - Called when a vimrc or "VIMINIT" has been found.
 ///
-/// Set the values for options that didn't get set yet to the Vim defaults.
+/// Set the values for options that didn't get set yet to the defaults.
 /// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
 void vimrc_found(char_u *fname, char_u *envname)
 {
@@ -7749,8 +7718,7 @@ static Dictionary vimoption2dict(vimoption_T *opt)
     const char *type;
     Object def;
     // TODO(bfredl): do you even nocp?
-    char_u *def_val = opt->def_val[(opt->flags & P_VI_DEF)
-                                   ? VI_DEFAULT : VIM_DEFAULT];
+    char_u *def_val = opt->def_val;
     if (opt->flags & P_STRING) {
       type = "string";
       def = CSTR_TO_OBJ(def_val ? (char *)def_val : "");

@@ -214,7 +214,7 @@ void ui_comp_remove_grid(ScreenGrid *grid)
   grid->comp_index = 0;
 
   // recompose the area under the grid
-  // inefficent when being overlapped: only draw up to grid->comp_index
+  // inefficient when being overlapped: only draw up to grid->comp_index
   ui_comp_compose_grid(grid);
 }
 
@@ -594,7 +594,7 @@ static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row,
       int first_row = MAX((int)row-(scrolled?1:0), 0);
       compose_area(first_row, Rows-delta, 0, Columns);
     } else {
-      // scroll separator togheter with message text
+      // scroll separator together with message text
       int first_row = MAX((int)row-(msg_was_scrolled?1:0), 0);
       ui_composed_call_grid_scroll(1, first_row, Rows, 0, Columns, delta, 0);
       if (scrolled && !msg_was_scrolled && row > 0) {

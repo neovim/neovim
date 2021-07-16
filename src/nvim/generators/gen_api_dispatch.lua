@@ -247,7 +247,7 @@ for i = 1, #functions do
             (j - 1)..'].type == kObjectTypeInteger) {')
           output:write('\n    '..converted..' = (Float)args.items['..(j - 1)..'].data.integer;')
         end
-        -- accept empty lua tables as empty dictionarys
+        -- accept empty lua tables as empty dictionaries
         if rt:match('^Dictionary') then
           output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {') --luacheck: ignore 631
           output:write('\n    '..converted..' = (Dictionary)ARRAY_DICT_INIT;')

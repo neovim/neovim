@@ -810,16 +810,16 @@ function M.convert_input_to_markdown_lines(input, contents)
       -- If it's plaintext, then wrap it in a <text></text> block
 
       -- Some servers send input.value as empty, so let's ignore this :(
-      input.value = input.value or ''
+      local value = input.value or ''
 
       if input.kind == "plaintext" then
         -- wrap this in a <text></text> block so that stylize_markdown
         -- can properly process it as plaintext
-        input.value = string.format("<text>\n%s\n</text>", input.value or "")
+        value = string.format("<text>\n%s\n</text>", value)
       end
 
-      -- assert(type(input.value) == 'string')
-      list_extend(contents, split_lines(input.value))
+      -- assert(type(value) == 'string')
+      list_extend(contents, split_lines(value))
     -- MarkupString variation 2
     elseif input.language then
       -- Some servers send input.value as empty, so let's ignore this :(
@@ -845,9 +845,10 @@ end
 ---
 --@param signature_help Response of `textDocument/SignatureHelp`
 --@param ft optional filetype that will be use as the `lang` for the label markdown code block
+--@param triggers optional list of trigger characters from the lsp server. used to better determine parameter offsets
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help, ft)
+function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers)
   if not signature_help.signatures then
     return
   end
@@ -856,6 +857,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   --=== 0`. Whenever possible implementors should make an active decision about
   --the active signature and shouldn't rely on a default value.
   local contents = {}
+  local active_hl
   local active_signature = signature_help.activeSignature or 0
   -- If the activeSignature is not inside the valid range, then clip it.
   if active_signature >= #signature_help.signatures then
@@ -875,11 +877,17 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
-    local active_parameter = signature_help.activeParameter or 0
-    -- If the activeParameter is not inside the valid range, then clip it.
-    if active_parameter >= #signature.parameters then
-      active_parameter = 0
+    local active_parameter = (signature.activeParameter or signature_help.activeParameter or 0)
+    if active_parameter < 0
+      then active_parameter = 0
     end
+
+    -- If the activeParameter is > #parameters, then set it to the last
+    -- NOTE: this is not fully according to the spec, but a client-side interpretation
+    if active_parameter >= #signature.parameters then
+      active_parameter = #signature.parameters - 1
+    end
+
     local parameter = signature.parameters[active_parameter + 1]
     if parameter then
       --[=[
@@ -900,13 +908,35 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
         documentation?: string | MarkupContent;
       }
       --]=]
-      -- TODO highlight parameter
+      if parameter.label then
+        if type(parameter.label) == "table" then
+          active_hl = parameter.label
+        else
+          local offset = 1
+          -- try to set the initial offset to the first found trigger character
+          for _, t in ipairs(triggers or {}) do
+            local trigger_offset = signature.label:find(t, 1, true)
+            if trigger_offset and (offset == 1 or trigger_offset < offset) then
+              offset = trigger_offset
+            end
+          end
+          for p, param in pairs(signature.parameters) do
+            offset = signature.label:find(param.label, offset, true)
+            if not offset then break end
+            if p == active_parameter + 1 then
+              active_hl = {offset - 1, offset + #parameter.label - 1}
+              break
+            end
+            offset = offset + #param.label + 1
+          end
+        end
+      end
       if parameter.documentation then
         M.convert_input_to_markdown_lines(parameter.documentation, contents)
       end
     end
   end
-  return contents
+  return contents, active_hl
 end
 
 --- Creates a table with sensible default options for a floating window. The
