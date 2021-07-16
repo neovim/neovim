@@ -1276,7 +1276,7 @@ function M.show_position_diagnostics(opts, bufnr, position, client_id)
     table.insert(lines, prefix..message_lines[1])
     table.insert(highlights, {#prefix, hiname})
     for j = 2, #message_lines do
-      table.insert(lines, message_lines[j])
+      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
       table.insert(highlights, {0, hiname})
     end
   end
