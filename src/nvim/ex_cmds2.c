@@ -2635,44 +2635,6 @@ static void cmd_source(char_u *fname, exarg_T *eap)
   }
 }
 
-typedef struct {
-  linenr_T curr_lnum;
-  const linenr_T final_lnum;
-} GetBufferLineCookie;
-
-/// Get one line from the current selection in the buffer.
-/// Called by do_cmdline() when it's called from cmd_source_buffer().
-///
-/// @return pointer to allocated line, or NULL for end-of-file or
-///         some error.
-static char_u *get_buffer_line(int c, void *cookie, int indent, bool do_concat)
-{
-  GetBufferLineCookie *p = cookie;
-  if (p->curr_lnum > p->final_lnum) {
-    return NULL;
-  }
-  char_u *curr_line = ml_get(p->curr_lnum);
-  p->curr_lnum++;
-  return (char_u *)xstrdup((const char *)curr_line);
-}
-
-static void cmd_source_buffer(const exarg_T *eap)
-  FUNC_ATTR_NONNULL_ALL
-{
-  GetBufferLineCookie cookie = {
-      .curr_lnum = eap->line1,
-      .final_lnum = eap->line2,
-  };
-  if (curbuf != NULL && curbuf->b_fname
-      && path_with_extension((const char *)curbuf->b_fname, "lua")) {
-    nlua_source_using_linegetter(get_buffer_line, (void *)&cookie,
-                                 ":source (no file)");
-  } else {
-    source_using_linegetter((void *)&cookie, get_buffer_line,
-                            ":source (no file)");
-  }
-}
-
 /// ":source" and associated commands.
 ///
 /// @return address holding the next breakpoint line for a source cookie
@@ -2768,6 +2730,40 @@ static int source_using_linegetter(void *cookie,
   current_sctx = save_current_sctx;
   restore_funccal();
   return retval;
+}
+
+static void cmd_source_buffer(const exarg_T *eap)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (curbuf == NULL) {
+    return;
+  }
+  garray_T ga;
+  ga_init(&ga, sizeof(char_u), 400);
+  const linenr_T final_lnum = eap->line2;
+  for (linenr_T curr_lnum = eap->line1; curr_lnum <= final_lnum; curr_lnum++) {
+    // Adjust the growsize to the current length to speed up
+    // concatenating many lines.
+    if (ga.ga_len > 400) {
+      ga_set_growsize(&ga, MAX(ga.ga_len, 8000));
+    }
+    ga_concat(&ga, ml_get(curr_lnum));
+    ga_append(&ga, '\n');
+  }
+  ((char_u *)ga.ga_data)[ga.ga_len - 1] = NUL;
+  const GetStrLineCookie cookie = {
+      .buf = ga.ga_data,
+      .offset = 0,
+  };
+  if (curbuf->b_fname
+      && path_with_extension((const char *)curbuf->b_fname, "lua")) {
+    nlua_source_using_linegetter(get_str_line, (void *)&cookie,
+                                 ":source (no file)");
+  } else {
+    source_using_linegetter((void *)&cookie, get_str_line,
+                            ":source (no file)");
+  }
+  ga_clear(&ga);
 }
 
 /// Executes lines in `src` as Ex commands.
