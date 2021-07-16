@@ -378,14 +378,14 @@ end
 
 --- Get the diagnostics by position
 ---
----@param bufnr number The buffer number
----@param position table The (0,0)-indexed position
+---@param bufnr number|nil The buffer number
+---@param position table|nil The (0,0)-indexed position
 ---@param opts table|nil Configuration keys
 ---         - severity: (DiagnosticSeverity, default nil)
 ---             - Only return diagnostics with this severity. Overrides severity_limit
 ---         - severity_limit: (DiagnosticSeverity, default nil)
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
----@param client_id number the client id
+---@param client_id number|nil the client id
 ---@return table Table with map of line number to list of diagnostics.
 --               Structured: { [1] = {...}, [5] = {.... } }
 function M.get_position_diagnostics(bufnr, position, opts, client_id)
@@ -435,14 +435,14 @@ end
 
 --- Get the diagnostics by line
 ---
----@param bufnr number The buffer number
----@param line_nr number The line number
+---@param bufnr number|nil The buffer number
+---@param line_nr number|nil The line number
 ---@param opts table|nil Configuration keys
 ---         - severity: (DiagnosticSeverity, default nil)
 ---             - Only return diagnostics with this severity. Overrides severity_limit
 ---         - severity_limit: (DiagnosticSeverity, default nil)
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
----@param client_id number the client id
+---@param client_id|nil number the client id
 ---@return table Table with map of line number to list of diagnostics.
 --               Structured: { [1] = {...}, [5] = {.... } }
 function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
@@ -1230,7 +1230,7 @@ end
 -- }}}
 -- Diagnostic User Functions {{{
 
---- Open a floating window with the diagnostics from {position}
+--- Open a floating window with the provided diagnostics
 ---
 --- The floating window can be customized with the following highlight groups:
 --- <pre>
@@ -1240,120 +1240,81 @@ end
 --- LspDiagnosticsFloatingHint
 --- </pre>
 ---@param opts table Configuration table
----     - show_header (boolean, default true): Show "Diagnostics:" header.
----@param bufnr number The buffer number
----@param position table The (0,0)-indexed position
+---     - show_header (boolean, default true): Show "Diagnostics:" header
+---     - all opts for |vim.lsp.util.open_floating_preview()| can be used here
+---@param diagnostics table: The diagnostics to display
+---@return table {popup_bufnr, win_id}
+local function show_diagnostics(opts, diagnostics)
+  if vim.tbl_isempty(diagnostics) then return end
+  local lines = {}
+  local highlights = {}
+  local show_header = if_nil(opts.show_header, true)
+  if show_header then
+    table.insert(lines, "Diagnostics:")
+    table.insert(highlights, {0, "Bold"})
+  end
+
+  for i, diagnostic in ipairs(diagnostics) do
+    local prefix = string.format("%d. ", i)
+    local hiname = M._get_floating_severity_highlight_name(diagnostic.severity)
+    assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
+
+    local message_lines = vim.split(diagnostic.message, '\n', true)
+    table.insert(lines, prefix..message_lines[1])
+    table.insert(highlights, {#prefix, hiname})
+    for j = 2, #message_lines do
+      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
+      table.insert(highlights, {0, hiname})
+    end
+  end
+
+  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
+  for i, hi in ipairs(highlights) do
+    local prefixlen, hiname = unpack(hi)
+    -- Start highlight after the prefix
+    api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
+  end
+
+  return popup_bufnr, winnr
+end
+
+--- Open a floating window with the diagnostics from {position}
+
+---@param opts table Configuration table
+---     - all opts for |vim.lsp.diagnostic.get_position_diagnostics()| and
+--           |show_diagnostics()| can be used here
+---@param buf_nr number|nil The buffer number
+---@param position table|nil The (0,0)-indexed position
 ---@param client_id number|nil the client id
 ---@return table {popup_bufnr, win_id}
-function M.show_position_diagnostics(opts, bufnr, position, client_id)
+function M.show_position_diagnostics(opts, buf_nr, position, client_id)
   opts = opts or {}
-
-  local show_header = if_nil(opts.show_header, true)
-
-  bufnr = bufnr or 0
+  opts.focus_id = "position_diagnostics"
   if not position then
     local curr_position = vim.api.nvim_win_get_cursor(0)
     curr_position[1] = curr_position[1] - 1
     position = curr_position
   end
-
-  local lines = {}
-  local highlights = {}
-  if show_header then
-    table.insert(lines, "Diagnostics:")
-    table.insert(highlights, {0, "Bold"})
-  end
-
-  local position_diagnostics = M.get_position_diagnostics(bufnr, position, opts, client_id)
-  if vim.tbl_isempty(position_diagnostics) then return end
-
-  for i, diagnostic in ipairs(position_diagnostics) do
-    local prefix = string.format("%d. ", i)
-    local hiname = M._get_floating_severity_highlight_name(diagnostic.severity)
-    assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
-
-    local message_lines = vim.split(diagnostic.message, '\n', true)
-    table.insert(lines, prefix..message_lines[1])
-    table.insert(highlights, {#prefix, hiname})
-    for j = 2, #message_lines do
-      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
-      table.insert(highlights, {0, hiname})
-    end
-  end
-
-  opts.focus_id = "position_diagnostics"
-  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
-  for i, hi in ipairs(highlights) do
-    local prefixlen, hiname = unpack(hi)
-    -- Start highlight after the prefix
-    api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
-  end
-
-  return popup_bufnr, winnr
+  local position_diagnostics = M.get_position_diagnostics(buf_nr, position, opts, client_id)
+  return show_diagnostics(opts, position_diagnostics)
 end
--- }}}
--- Diagnostic User Functions {{{
 
 --- Open a floating window with the diagnostics from {line_nr}
----
---- The floating window can be customized with the following highlight groups:
---- <pre>
---- LspDiagnosticsFloatingError
---- LspDiagnosticsFloatingWarning
---- LspDiagnosticsFloatingInformation
---- LspDiagnosticsFloatingHint
---- </pre>
+
 ---@param opts table Configuration table
----     - show_header (boolean, default true): Show "Diagnostics:" header.
----     - Plus all the opts for |vim.lsp.diagnostic.get_line_diagnostics()|
----          and |vim.lsp.util.open_floating_preview()| can be used here.
----@param bufnr number The buffer number
----@param line_nr number The line number
+---     - all opts for |vim.lsp.diagnostic.get_line_diagnostics()| and
+--           |show_diagnostics()| can be used here
+---@param buf_nr number|nil The buffer number
+---@param line_nr number|nil The line number
 ---@param client_id number|nil the client id
 ---@return table {popup_bufnr, win_id}
-function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
+function M.show_line_diagnostics(opts, buf_nr, line_nr, client_id)
   opts = opts or {}
-
-  local show_header = if_nil(opts.show_header, true)
-
-  bufnr = bufnr or 0
-  line_nr = line_nr or (vim.api.nvim_win_get_cursor(0)[1] - 1)
-
-  local lines = {}
-  local highlights = {}
-  if show_header then
-    table.insert(lines, "Diagnostics:")
-    table.insert(highlights, {0, "Bold"})
-  end
-
-  local line_diagnostics = M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
-  if vim.tbl_isempty(line_diagnostics) then return end
-
-  for i, diagnostic in ipairs(line_diagnostics) do
-    local prefix = string.format("%d. ", i)
-    local hiname = M._get_floating_severity_highlight_name(diagnostic.severity)
-    assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
-
-    local message_lines = vim.split(diagnostic.message, '\n', true)
-    table.insert(lines, prefix..message_lines[1])
-    table.insert(highlights, {#prefix, hiname})
-    for j = 2, #message_lines do
-      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
-      table.insert(highlights, {0, hiname})
-    end
-  end
-
   opts.focus_id = "line_diagnostics"
-  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
-  for i, hi in ipairs(highlights) do
-    local prefixlen, hiname = unpack(hi)
-    -- Start highlight after the prefix
-    api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
-  end
-
-  return popup_bufnr, winnr
+  line_nr = line_nr or (vim.api.nvim_win_get_cursor(0)[1] - 1)
+  local line_diagnostics = M.get_line_diagnostics(buf_nr, line_nr, opts, client_id)
+  return show_diagnostics(opts, line_diagnostics)
 end
-
 
 --- Clear diagnotics and diagnostic cache
 ---
