@@ -178,6 +178,7 @@ specification. These LSP requests/notifications are defined by default:
     textDocument/definition
     textDocument/documentHighlight
     textDocument/documentSymbol
+    textDocument/foldingRange
     textDocument/formatting
     textDocument/hover
     textDocument/implementation*
@@ -999,6 +1000,22 @@ declaration()                                      *vim.lsp.buf.declaration()*
 definition()                                        *vim.lsp.buf.definition()*
                 Jumps to the definition of the symbol under the cursor.
 
+document_fold()                                  *vim.lsp.buf.document_fold()*
+                Creates |folds| for the current buffer.
+
+                This will also set 'foldmethod' to "expr" and use
+                |vim.lsp.buf.foldexpr()| for 'foldexpr'.
+
+                Note: The folds are not updated automatically after subsequent
+                changes. To update them whenever leaving insert mode, use
+>
+
+    vim.api.nvim_command[[autocmd InsertLeave <buffer> lua vim.lsp.buf.document_fold()]]
+<
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_foldingRange
+
 document_highlight()                        *vim.lsp.buf.document_highlight()*
                 Send request to the server to resolve document highlights for
                 the current text document position. This request can be
@@ -1027,6 +1044,21 @@ execute_command({command})                     *vim.lsp.buf.execute_command()*
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+
+foldexpr({lnum})                                      *vim.lsp.buf.foldexpr()*
+                Returns the fold level for a line in the current buffer as
+                determined by a server.
+
+                Can be used as 'foldexpr', see |fold-expr|.
+
+                Note: To update the folds it is necessary to call
+                |vim.lsp.buf.document_fold()|.
+
+                Parameters: ~
+                    {lnum}  line number |v:lnum|
+
+                Return: ~
+                    fold level
 
 formatting({options})                               *vim.lsp.buf.formatting()*
                 Formats the current buffer.
@@ -1863,6 +1895,16 @@ get_lines({uri}, {rows})                            *vim.lsp.util.get_lines()*
 get_markdown_fences()                     *vim.lsp.util.get_markdown_fences()*
                 TODO: Documentation
 
+get_fold_level({bufnr}, {linenr})              *vim.lsp.util.get_fold_level()*
+                Returns the fold level for a line in a buffer.
+
+                Parameters: ~
+                    {bufnr}   buffer id
+                    {linenr}  line number (1-indexed)
+
+                Return: ~
+                    fold level
+
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
 
@@ -2158,6 +2200,13 @@ try_trim_markdown_code_blocks({lines})
 
                 Return: ~
                     (string) filetype or 'markdown' if it was unchanged.
+
+update_folds({bufnr}, {ranges})                  *vim.lsp.util.update_folds()*
+                Applies a list of fold ranges to a certain buffer.
+
+                Parameters: ~
+                    {bufnr}   buffer id
+                    {ranges}  list of `FoldingRange` objects
 
 
 ==============================================================================
