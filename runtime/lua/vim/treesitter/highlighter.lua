@@ -248,7 +248,7 @@ local function on_line_impl(self, buf, line)
     end
 
     while line >= state.next_row do
-      local capture, node = state.iter()
+      local capture, node, metadata = state.iter()
 
       if capture == nil then break end
 
@@ -260,7 +260,7 @@ local function on_line_impl(self, buf, line)
                                { end_line = end_row, end_col = end_col,
                                  hl_group = hl,
                                  ephemeral = true,
-                                 priority = 100 -- Low but leaves room below
+                                 priority = tonumber(metadata.priority) or 100 -- Low but leaves room below
                                 })
       end
       if start_row > line then
