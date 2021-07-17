@@ -20,6 +20,11 @@ vim.api.nvim_set_option('hlsearch', false)
 vim.bo.expandtab = true
 vim.opt.number = true
 vim.api.nvim_set_keymap('n', '<leader>key', ':echo "test"<cr>', {noremap = true})
+
+vim.api.nvim_exec("augroup test_group\n"
+        .. "autocmd!\n"
+        .. "autocmd FileType c setl cindent\n"
+        .."augroup END\n", false)
 ]])
   exec(':source '..script_file)
 
@@ -57,6 +62,16 @@ nohlsearch
 
 n  \key        * :echo "test"<CR>
 	Last set from %s line 4]],
+       table.concat{current_dir, separator, script_file}), result)
+  end)
+
+  it('Shows last set location when vim.cmd or vim.api.nvim_exec is used', function()
+    local result = exec_capture(':verbose autocmd test_group Filetype c')
+    eq(string.format([[
+--- Autocommands ---
+test_group  FileType
+    c         setl cindent
+	Last set from %s line 6]],
        table.concat{current_dir, separator, script_file}), result)
   end)
 end)

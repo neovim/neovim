@@ -2730,7 +2730,9 @@ static int source_using_linegetter(void *cookie,
   sourcing_lnum = 0;
 
   const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid = SID_STR;
+  if (current_sctx.sc_sid != SID_LUA) {
+    current_sctx.sc_sid = SID_STR;
+  }
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
   funccal_entry_T entry;
