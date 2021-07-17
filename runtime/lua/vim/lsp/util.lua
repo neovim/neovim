@@ -1868,10 +1868,10 @@ function M.get_effective_tabstop(bufnr)
   return (sts > 0 and sts) or (sts < 0 and bo.shiftwidth) or bo.tabstop
 end
 
---- Creates a `FormattingOptions` object for the current buffer and cursor position.
+--- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.
 ---
 --@param options Table with valid `FormattingOptions` entries
---@returns `FormattingOptions object
+--@returns `DocumentFormattingParams` object
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 function M.make_formatting_params(options)
   validate { options = {options, 't', true} }
