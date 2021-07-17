@@ -299,6 +299,15 @@ void terminal_close(Terminal *term, char *msg)
   }
 }
 
+void terminal_check_scbk(Terminal *term)
+{
+  if (term->closed) {
+    return;
+  }
+
+  refresh_terminal(term);
+}
+
 void terminal_check_size(Terminal *term)
 {
   if (term->closed) {
@@ -1376,7 +1385,8 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
 
-      if (following || (wp == curwin && is_focused(term))) {
+      if (following || (wp == curwin && is_focused(term)) || added < 0) {
+        // When added is less than zero, it means scrollback is decreased
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
         set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_height_inner + 1, 1));

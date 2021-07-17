@@ -40,6 +40,8 @@ describe(':terminal', function()
     feed('<c-\\><c-n>')
     feed('k')
     feed_command('2split')
+    screen:sleep(10)
+    feed('gg')
     screen:expect([[
       ^tty ready                                         |
       rows: 5, cols: 50                                 |
@@ -53,6 +55,7 @@ describe(':terminal', function()
       :2split                                           |
     ]])
     feed_command('wincmd p')
+    feed('gg')
     screen:expect([[
       tty ready                                         |
       rows: 5, cols: 50                                 |

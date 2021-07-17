@@ -4361,7 +4361,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     if (curbuf->terminal) {
       // Force the scrollback to take effect.
-      terminal_check_size(curbuf->terminal);
+      terminal_check_scbk(curbuf->terminal);
     }
   } else if (pp == &curwin->w_p_nuw) {
     curwin->w_nrwidth_line_count = 0;
