@@ -253,6 +253,25 @@ void ui_refresh(void)
     eq('void', res2)
   end)
 
+  it('support getting text where start of node is past EOF', function()
+    local text = [[
+def run
+  a = <<~E
+end]]
+    insert(text)
+    local result = exec_lua([[
+      local fake_node = {}
+      function fake_node:start()
+        return 3, 0, 23
+      end
+      function fake_node:end_()
+        return 3, 0, 23
+      end
+      return vim.treesitter.get_node_text(fake_node, 0) == nil
+    ]])
+    eq(true, result)
+  end)
+
   it('can match special regex characters like \\ * + ( with `vim-match?`', function()
     if pending_c_parser(pending) then return end
 
