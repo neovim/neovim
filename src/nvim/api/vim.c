@@ -48,6 +48,7 @@
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
 #include "nvim/os/process.h"
+#include "nvim/os/time.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/ui.h"
@@ -3001,4 +3002,17 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   return;
 error:
   decor_provider_clear(p);
+}
+
+
+/// Get current Unix timestamp with nanosecond precision.
+///
+/// This timer is initialized and then reset each time time_init() function
+/// from os/time.c is called.
+///
+/// @return elapsed nanoseconds since last epoch.
+Integer nvim_get_time_ns(void)
+  FUNC_API_SINCE(7)
+{
+  return (Integer)os_timens();
 }
