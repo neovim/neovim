@@ -2786,6 +2786,9 @@ buf_write(
               != 0) {
             SET_ERRMSG(_("E506: Can't write to backup file "
                          "(add ! to override)"));
+            XFREE_CLEAR(backup);
+            backup = NULL;
+            continue;
           }
 
 #ifdef UNIX
@@ -2796,6 +2799,7 @@ buf_write(
 #ifdef HAVE_ACL
           mch_set_acl(backup, acl);
 #endif
+          SET_ERRMSG(NULL);
           break;
         }
       }

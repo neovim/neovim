@@ -1,8 +1,11 @@
+local lfs = require('lfs')
+local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local neq = global_helpers.neq
 local feed = helpers.feed
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
@@ -12,6 +15,7 @@ local rmdir = helpers.rmdir
 local mkdir = helpers.mkdir
 local sleep = helpers.sleep
 local read_file = helpers.read_file
+local write_file = helpers.write_file
 local trim = helpers.trim
 local currentdir = helpers.funcs.getcwd
 local iswin = helpers.iswin
@@ -111,6 +115,65 @@ describe('fileio', function()
 
     eq('foobar', foobar_contents);
     eq('foo', foo_contents);
+  end)
+
+  it('backup symlinked files #11349', function()
+    clear()
+
+    local initial_content = 'foo'
+    local backup_dir = 'Xtest_backupdir'
+    local sep = helpers.get_pathsep()
+    local link_file_name = 'Xtest_startup_file2'
+    local backup_file_name = link_file_name .. '~'
+
+    write_file('Xtest_startup_file1', initial_content, false)
+    lfs.link('Xtest_startup_file1', link_file_name, true)
+    command('set backup')
+    command('set backupcopy=yes')
+    command('edit ' .. link_file_name)
+    feed('Abar<esc>')
+    command('write')
+
+    -- only for testing Windows
+    command('edit Xtest_startup_file1')
+    feed('Ibaz<esc>')
+    command('write')
+
+    local backup_raw = read_file(backup_file_name)
+    eq('x', {currentdir(), lfs.symlinkattributes(link_file_name), backup_file_name, helpers.funcs.glob('./*')})
+    neq(nil, backup_raw, "Expected backup file to exist but did not")
+    eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
+  end)
+
+
+  it('backup symlinked files in first avialable backupdir #11349', function()
+    clear()
+
+    local initial_content = 'foo'
+    local backup_dir = 'Xtest_backupdir'
+    local sep = helpers.get_pathsep()
+    local link_file_name = 'Xtest_startup_file2'
+    local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
+
+    write_file('Xtest_startup_file1', initial_content, false)
+    lfs.link('Xtest_startup_file1', link_file_name, true)
+    mkdir('Xtest_backupdir')
+    command('set backup')
+    command('set backupcopy=yes')
+    command('set backupdir=.__this_does_not_exist__,' .. backup_dir)
+    command('edit ' .. link_file_name)
+    feed('Abar<esc>')
+    command('write')
+
+    -- only for testing Windows
+    command('edit Xtest_startup_file1')
+    feed('Ibaz<esc>')
+    command('write')
+
+    local backup_raw = read_file(backup_file_name)
+    eq('x', {currentdir(), lfs.symlinkattributes(link_file_name), backup_file_name, helpers.funcs.glob(backup_dir .. '/*')})
+    neq(nil, backup_raw, "Expected backup file to exist but did not")
+    eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
   end)
 
   it('readfile() on multibyte filename #10586', function()
