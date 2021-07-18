@@ -167,7 +167,7 @@ static bool resizing = false;
 
 static char * provider_first_error = NULL;
 
-static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
+static bool provider_invoke(DecorProvider *p, const char *name, LuaRef ref,
                             Array args, bool default_true)
 {
   Error err = ERROR_INIT;
@@ -184,18 +184,35 @@ static bool provider_invoke(NS ns_id, const char *name, LuaRef ref,
   }
 
   if (ERROR_SET(&err)) {
-    const char *ns_name = describe_ns(ns_id);
-    ELOG("error in provider %s:%s: %s", ns_name, name, err.msg);
-    bool verbose_errs = true;  // TODO(bfredl):
-    if (verbose_errs && provider_first_error == NULL) {
-      static char errbuf[IOSIZE];
-      snprintf(errbuf, sizeof errbuf, "%s: %s", ns_name, err.msg);
-      provider_first_error = xstrdup(errbuf);
+    static char errbuf[IOSIZE];
+    const char *ns_name = describe_ns(p->ns_id);
+    snprintf(errbuf, sizeof errbuf,
+             "error in display provider %s:%s: %s", ns_name, name, err.msg);
+    ELOG("%s", errbuf);
+    if (rdb_flags & RDB_PROVIDER) {
+      if (provider_first_error == NULL) {
+        snprintf(errbuf, sizeof errbuf, "%s:%s: %s", ns_name, name, err.msg);
+        provider_first_error = xstrdup(errbuf);
+      }
+    } else {
+      if (!p->did_emsg) {
+        p->did_emsg = true;
+        multiqueue_put(main_loop.events, provider_emsg,
+                       1, (void *)xstrdup(errbuf));
+
+      }
     }
   }
 
   api_free_object(ret);
   return false;
+}
+
+static void provider_emsg(void **argv)
+{
+  char *errmsg = argv[0];
+  emsg((char_u *)errmsg);
+  xfree(errmsg);
 }
 
 /// Redraw a window later, with update_screen(type).
@@ -487,7 +504,7 @@ int update_screen(int type)
       FIXED_TEMP_ARRAY(args, 2);
       args.items[0] = INTEGER_OBJ(display_tick);
       args.items[1] = INTEGER_OBJ(type);
-      active = provider_invoke(p->ns_id, "start", p->redraw_start, args, true);
+      active = provider_invoke(p, "start", p->redraw_start, args, true);
     } else {
       active = true;
     }
@@ -565,7 +582,7 @@ int update_screen(int type)
           if (p && p->redraw_buf != LUA_NOREF) {
             FIXED_TEMP_ARRAY(args, 1);
             args.items[0] = BUFFER_OBJ(buf->handle);
-            provider_invoke(p->ns_id, "buf", p->redraw_buf, args, true);
+            provider_invoke(p, "buf", p->redraw_buf, args, true);
           }
         }
         buf->b_mod_tick_decor = display_tick;
@@ -645,7 +662,7 @@ int update_screen(int type)
     if (p->redraw_end != LUA_NOREF) {
       FIXED_TEMP_ARRAY(args, 1);
       args.items[0] = INTEGER_OBJ(display_tick);
-      provider_invoke(p->ns_id, "end", p->redraw_end, args, true);
+      provider_invoke(p, "end", p->redraw_end, args, true);
     }
   }
   kvi_destroy(providers);
@@ -1319,7 +1336,7 @@ static void win_update(win_T *wp, Providers *providers)
       // TODO(bfredl): we are not using this, but should be first drawn line?
       args.items[2] = INTEGER_OBJ(wp->w_topline-1);
       args.items[3] = INTEGER_OBJ(knownmax);
-      if (provider_invoke(p->ns_id, "win", p->redraw_win, args, true)) {
+      if (provider_invoke(p, "win", p->redraw_win, args, true)) {
         kvi_push(line_providers, p);
       }
     }
@@ -2183,7 +2200,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         args.items[0] = WINDOW_OBJ(wp->handle);
         args.items[1] = BUFFER_OBJ(buf->handle);
         args.items[2] = INTEGER_OBJ(lnum-1);
-        if (provider_invoke(p->ns_id, "line", p->redraw_line, args, true)) {
+        if (provider_invoke(p, "line", p->redraw_line, args, true)) {
           has_decor = true;
         } else {
           // return 'false' or error: skip rest of this window
