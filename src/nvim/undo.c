@@ -323,13 +323,13 @@ static inline void zero_fmark_additional_data(fmark_T *fmarks)
  * "top" is the line above the first changed line.
  * "bot" is the line below the last changed line.
  * "newbot" is the new bottom line.  Use zero when not known.
- * "reload" is TRUE when saving for a buffer reload.
+ * "reload" is true when saving for a buffer reload.
  * Careful: may trigger autocommands that reload the buffer.
  * Returns FAIL when lines could not be saved, OK otherwise.
  */
 int u_savecommon(buf_T *buf,
                  linenr_T top, linenr_T bot,
-                 linenr_T newbot, int reload)
+                 linenr_T newbot, bool reload)
 {
   linenr_T lnum;
   long i;
@@ -363,7 +363,7 @@ int u_savecommon(buf_T *buf,
   }
 
 #ifdef U_DEBUG
-  u_check(FALSE);
+  u_check(false);
 #endif
 
   size = bot - top - 1;
@@ -415,7 +415,7 @@ int u_savecommon(buf_T *buf,
         u_freebranch(buf, uhfree, &old_curhead);
       }
 #ifdef U_DEBUG
-      u_check(TRUE);
+      u_check(true);
 #endif
     }
 
@@ -602,7 +602,7 @@ int u_savecommon(buf_T *buf,
   undo_undoes = false;
 
 #ifdef U_DEBUG
-  u_check(FALSE);
+  u_check(false);
 #endif
   return OK;
 }
@@ -1269,7 +1269,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
 
 #ifdef U_DEBUG
   /* Check there is no problem in undo info before writing. */
-  u_check(FALSE);
+  u_check(false);
 #endif
 
 #ifdef UNIX
@@ -1298,7 +1298,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
   }
 
   /* Undo must be synced. */
-  u_sync(TRUE);
+  u_sync(true);
 
   /*
    * Write the header.
@@ -1647,7 +1647,7 @@ void u_read_undo(char *name, const char_u *hash,
     }
   }
   xfree(uhp_table_used);
-  u_check(TRUE);
+  u_check(true);
 #endif
 
   if (name != NULL) {
@@ -1783,7 +1783,7 @@ void u_undo(int count)
    * be compatible.
    */
   if (curbuf->b_u_synced == false) {
-    u_sync(TRUE);
+    u_sync(true);
     count = 1;
   }
 
@@ -1945,7 +1945,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
 
   /* First make sure the current undoable change is synced. */
   if (curbuf->b_u_synced == false)
-    u_sync(TRUE);
+    u_sync(true);
 
   u_newcount = 0;
   u_oldcount = 0;
@@ -2276,7 +2276,7 @@ static void u_undoredo(int undo, bool do_buf_event)
   block_autocmds();
 
 #ifdef U_DEBUG
-  u_check(FALSE);
+  u_check(false);
 #endif
   old_flags = curhead->uh_flags;
   new_flags = (curbuf->b_changed ? UH_CHANGED : 0)
@@ -2518,7 +2518,7 @@ static void u_undoredo(int undo, bool do_buf_event)
 
   unblock_autocmds();
 #ifdef U_DEBUG
-  u_check(FALSE);
+  u_check(false);
 #endif
 }
 
@@ -2736,7 +2736,7 @@ void ex_undojoin(exarg_T *eap)
 }
 
 /*
- * Called after writing or reloading the file and setting b_changed to FALSE.
+ * Called after writing or reloading the file and setting b_changed to false.
  * Now an undo means that the buffer is modified.
  */
 void u_unchanged(buf_T *buf)
@@ -2765,7 +2765,7 @@ void u_find_first_changed(void)
 
   for (lnum = 1; lnum < curbuf->b_ml.ml_line_count
        && lnum <= uep->ue_size; ++lnum)
-    if (STRCMP(ml_get_buf(curbuf, lnum, FALSE),
+    if (STRCMP(ml_get_buf(curbuf, lnum, false),
             uep->ue_array[lnum - 1]) != 0) {
       clearpos(&(uhp->uh_cursor));
       uhp->uh_cursor.lnum = lnum;

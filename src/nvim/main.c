@@ -474,13 +474,13 @@ int main(int argc, char **argv)
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   }
 
-  apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
   TIME_MSG("BufEnter autocommands");
   setpcmark();
 
   // When started with "-q errorfile" jump to first error now.
   if (params.edit_type == EDIT_QF) {
-    qf_jump(NULL, 0, 0, FALSE);
+    qf_jump(NULL, 0, 0, false);
     TIME_MSG("jump to first error");
   }
 
@@ -492,7 +492,7 @@ int main(int argc, char **argv)
   if (params.diff_mode) {
     // set options in each window for "nvim -d".
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      diff_win_options(wp, TRUE);
+      diff_win_options(wp, true);
     }
   }
 
@@ -691,8 +691,8 @@ void getout(int exitval)
   if (did_emsg
      ) {
     /* give the user a chance to read the (error) message */
-    no_wait_return = FALSE;
-    wait_return(FALSE);
+    no_wait_return = false;
+    wait_return(false);
   }
 
   // Position the cursor again, the autocommands may have moved it
@@ -1424,7 +1424,7 @@ static void handle_quickfix(mparm_T *paramp)
 static void handle_tag(char_u *tagname)
 {
   if (tagname != NULL) {
-    swap_exists_did_quit = FALSE;
+    swap_exists_did_quit = false;
 
     vim_snprintf((char *)IObuff, IOSIZE, "ta %s", tagname);
     do_cmdline_cmd((char *)IObuff);
@@ -1464,7 +1464,7 @@ static void read_stdin(void)
  */
 static void create_windows(mparm_T *parmp)
 {
-  int dorewind;
+  bool dorewind;
   int done = 0;
 
   /*
@@ -1506,7 +1506,7 @@ static void create_windows(mparm_T *parmp)
     // Don't execute Win/Buf Enter/Leave autocommands here
     ++autocmd_no_enter;
     ++autocmd_no_leave;
-    dorewind = TRUE;
+    dorewind = true;
     while (done++ < 1000) {
       if (dorewind) {
         if (parmp->window_layout == WIN_TABS)
@@ -1522,7 +1522,7 @@ static void create_windows(mparm_T *parmp)
           break;
         curwin = curwin->w_next;
       }
-      dorewind = FALSE;
+      dorewind = false;
       curbuf = curwin->w_buffer;
       if (curbuf->b_ml.ml_mfp == NULL) {
         // Set 'foldlevel' to 'foldlevelstart' if it's not negative..
@@ -1531,15 +1531,15 @@ static void create_windows(mparm_T *parmp)
         }
         // When getting the ATTENTION prompt here, use a dialog.
         swap_exists_action = SEA_DIALOG;
-        set_buflisted(TRUE);
+        set_buflisted(true);
 
         /* create memfile, read file */
-        (void)open_buffer(FALSE, NULL, 0);
+        (void)open_buffer(false, NULL, 0);
 
         if (swap_exists_action == SEA_QUIT) {
           if (got_int || only_one_window()) {
             /* abort selected or quit and only one window */
-            did_emsg = FALSE;               /* avoid hit-enter prompt */
+            did_emsg = false;               /* avoid hit-enter prompt */
             getout(1);
           }
           /* We can't close the window, it would disturb what
@@ -1550,7 +1550,7 @@ static void create_windows(mparm_T *parmp)
           swap_exists_action = SEA_NONE;
         } else
           handle_swap_exists(NULL);
-        dorewind = TRUE;                        /* start again */
+        dorewind = true;                        /* start again */
       }
       os_breakcheck();
       if (got_int) {
@@ -1632,7 +1632,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
       curwin->w_arg_idx = arg_idx;
       /* Edit file from arg list, if there is one.  When "Quit" selected
        * at the ATTENTION prompt close the window. */
-      swap_exists_did_quit = FALSE;
+      swap_exists_did_quit = false;
       (void)do_ecmd(0, arg_idx < GARGCOUNT
           ? alist_name(&GARGLIST[arg_idx]) : NULL,
           NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
@@ -1640,7 +1640,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
         /* abort or quit selected */
         if (got_int || only_one_window()) {
           /* abort selected and only one window */
-          did_emsg = FALSE;             /* avoid hit-enter prompt */
+          did_emsg = false;             /* avoid hit-enter prompt */
           getout(1);
         }
         win_close(curwin, true);
@@ -1719,7 +1719,7 @@ static void exe_commands(mparm_T *parmp)
    * pattern on line 1.  But don't move the cursor when an autocommand
    * with g`" was used.
    */
-  msg_scroll = TRUE;
+  msg_scroll = true;
   if (parmp->tagname == NULL && curwin->w_cursor.lnum <= 1)
     curwin->w_cursor.lnum = 0;
   sourcing_name = (char_u *)"command line";
@@ -1737,11 +1737,11 @@ static void exe_commands(mparm_T *parmp)
   }
 
   if (!exmode_active)
-    msg_scroll = FALSE;
+    msg_scroll = false;
 
   /* When started with "-q errorfile" jump to first error again. */
   if (parmp->edit_type == EDIT_QF)
-    qf_jump(NULL, 0, 0, FALSE);
+    qf_jump(NULL, 0, 0, false);
   TIME_MSG("executing command arguments");
 }
 
@@ -1999,10 +1999,10 @@ static void mainerr(const char *errstr, const char *str)
 /// Prints version information for "nvim -v" or "nvim --version".
 static void version(void)
 {
-  info_message = TRUE;  // use mch_msg(), not mch_errmsg()
+  info_message = true;  // use mch_msg(), not mch_errmsg()
   list_version();
   msg_putchar('\n');
-  msg_didout = FALSE;
+  msg_didout = false;
 }
 
 /// Prints help message for "nvim -h" or "nvim --help".

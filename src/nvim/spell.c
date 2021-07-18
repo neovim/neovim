@@ -1399,7 +1399,7 @@ spell_move_to (
   clearpos(&found_pos);
 
   while (!got_int) {
-    line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+    line = ml_get_buf(wp->w_buffer, lnum, false);
 
     len = STRLEN(line);
     if (buflen < len + MAXWLEN + 2) {
@@ -1425,7 +1425,7 @@ spell_move_to (
 
       // Need to get the line again, may have looked at the previous
       // one.
-      line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+      line = ml_get_buf(wp->w_buffer, lnum, false);
     }
 
     // Copy the line into "buf" and append the start of the next line if
@@ -1433,7 +1433,7 @@ spell_move_to (
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count)
       spell_cat_line(buf + STRLEN(buf),
-                     ml_get_buf(wp->w_buffer, lnum + 1, FALSE),
+                     ml_get_buf(wp->w_buffer, lnum + 1, false),
                      MAXWLEN);
     p = buf + skip;
     endp = buf + len;
@@ -1464,7 +1464,7 @@ spell_move_to (
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
-                  FALSE, &can_spell, FALSE);
+                  false, &can_spell, false);
               if (!can_spell)
                 attr = HLF_COUNT;
             } else
@@ -1630,7 +1630,7 @@ static void spell_load_lang(char_u *lang)
 
       if (r == FAIL && *sl.sl_lang != NUL && round == 1
           && apply_autocmds(EVENT_SPELLFILEMISSING, lang,
-              curbuf->b_fname, FALSE, curbuf))
+              curbuf->b_fname, false, curbuf))
         continue;
       break;
     }
@@ -2516,7 +2516,7 @@ buf_T *open_spellbuf(void)
 void close_spellbuf(buf_T *buf)
 {
   if (buf != NULL) {
-    ml_close(buf, TRUE);
+    ml_close(buf, true);
     xfree(buf);
   }
 }
@@ -2770,7 +2770,7 @@ void spell_suggest(int count)
   int limit;
   int selected = count;
   int badlen = 0;
-  int msg_scroll_save = msg_scroll;
+  bool msg_scroll_save = msg_scroll;
   const int wo_spell_save = curwin->w_p_spell;
 
   if (!curwin->w_p_spell) {
@@ -2868,7 +2868,7 @@ void spell_suggest(int count)
     msg_clr_eos();
     msg_putchar('\n');
 
-    msg_scroll = TRUE;
+    msg_scroll = true;
     for (int i = 0; i < sug.su_ga.ga_len; ++i) {
       stp = &SUG(sug.su_ga, i);
 
@@ -2913,7 +2913,7 @@ void spell_suggest(int count)
       msg_putchar('\n');
     }
 
-    cmdmsg_rl = FALSE;
+    cmdmsg_rl = false;
     msg_col = 0;
     // Ask for choice.
     selected = prompt_for_number(&mouse_used);
@@ -3016,7 +3016,7 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
   if (endcol > 0) {
     // Check if sentence ends before the bad word.
     regmatch.regprog = curwin->w_s->b_cap_prog;
-    regmatch.rm_ic = FALSE;
+    regmatch.rm_ic = false;
     p = line + endcol;
     for (;; ) {
       MB_PTR_BACK(line, p);
@@ -3403,7 +3403,7 @@ static void spell_suggest_intern(suginfo_T *su, bool interactive)
   os_breakcheck();
   if (interactive && got_int) {
     (void)vgetc();
-    got_int = FALSE;
+    got_int = false;
   }
 
   if ((sps_flags & SPS_DOUBLE) == 0 && su->su_ga.ga_len != 0) {

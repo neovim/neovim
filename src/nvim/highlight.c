@@ -46,7 +46,7 @@ void highlight_init(void)
                                     .id1 = 0, .id2 = 0 }));
 }
 
-/// @return TRUE if hl table was reset
+/// @return true if hl table was reset
 bool highlight_use_hlstate(void)
 {
   if (hlstate_active) {
@@ -195,7 +195,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
 
     // TODO(bfredl): or "inherit", combine with global value?
     bool fallback = true;
-    int tmp = false;
+    bool tmp = false;
     HlAttrs attrs = HLATTRS_INIT;
     if (ret.type == kObjectTypeDictionary) {
       Dictionary dict = ret.data.dictionary;

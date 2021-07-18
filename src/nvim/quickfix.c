@@ -63,8 +63,8 @@ struct qfline_S {
   char_u      *qf_module;       ///< module name for this error
   char_u      *qf_pattern;      ///< search pattern for the error
   char_u      *qf_text;         ///< description of the error
-  char_u qf_viscol;             ///< set to TRUE if qf_col is screen column
-  char_u qf_cleared;            ///< set to TRUE if line has been deleted
+  char_u qf_viscol;             ///< set to true if qf_col is screen column
+  char_u qf_cleared;            ///< set to true if line has been deleted
   char_u qf_type;               ///< type of the error (mostly 'E'); 1 for
                                 //   :helpgrep
   char_u qf_valid;              ///< valid error message detected
@@ -96,7 +96,7 @@ typedef struct qf_list_S {
   qfline_T    *qf_ptr;          ///< pointer to the current error
   int qf_count;                 ///< number of errors (0 means empty list)
   int qf_index;                 ///< current index in the error list
-  int qf_nonevalid;             ///< TRUE if not a single valid entry found
+  bool qf_nonevalid;            ///< true if not a single valid entry found
   char_u      *qf_title;        ///< title derived from the command that created
                                 ///< the error list or set by setqflist
   typval_T    *qf_ctx;          ///< context set by setqflist/setloclist
@@ -1906,8 +1906,8 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
 /// Get the quickfix/location list stack to use for the specified Ex command.
 /// For a location list command, returns the stack for the current window.  If
 /// the location list is not found, then returns NULL and prints an error
-/// message if 'print_emsg' is TRUE.
-static qf_info_T * qf_cmd_get_stack(exarg_T *eap, int print_emsg)
+/// message if 'print_emsg' is true.
+static qf_info_T * qf_cmd_get_stack(exarg_T *eap, bool print_emsg)
 {
   qf_info_T *qi = &ql_info;
 
@@ -2149,7 +2149,7 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr,
     while (ds_new) {
       xfree((*stackptr)->dirname);
       (*stackptr)->dirname = (char_u *)concat_fnames((char *)ds_new->dirname,
-          (char *)dirbuf, TRUE);
+          (char *)dirbuf, true);
       if (os_isdir((*stackptr)->dirname))
         break;
 
@@ -2248,7 +2248,7 @@ static char_u *qf_guess_filepath(qf_list_T *qfl, char_u *filename)
   fullname = NULL;
   while (ds_ptr) {
     xfree(fullname);
-    fullname = (char_u *)concat_fnames((char *)ds_ptr->dirname, (char *)filename, TRUE);
+    fullname = (char_u *)concat_fnames((char *)ds_ptr->dirname, (char *)filename, true);
 
     if (os_path_exists(fullname)) {
       break;
@@ -2542,7 +2542,7 @@ static win_T *qf_find_win_with_normal_buf(void)
 }
 
 // Go to a window in any tabpage containing the specified file.  Returns true
-// if successfully jumped to the window. Otherwise returns FALSE.
+// if successfully jumped to the window. Otherwise returns false.
 static bool qf_goto_tabwin_with_file(int fnum)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -2907,7 +2907,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin,
 /// the file.
 static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr,
                              int forceit, win_T *oldwin, int *opened_window,
-                             int openfold, int print_message)
+                             int openfold, bool print_message)
 {
   buf_T *old_curbuf;
   linenr_T old_lnum;
@@ -2971,7 +2971,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit,
   unsigned old_swb_flags = swb_flags;
   int opened_window = false;
   win_T *oldwin = curwin;
-  int print_message = true;
+  bool print_message = true;
   const bool old_KeyTyped = KeyTyped;           // getting file may reset it
   int retval = OK;
 
@@ -3418,7 +3418,7 @@ bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount,
           found_one = true;
           if (qfp->qf_lnum >= line1 && qfp->qf_lnum <= line2) {
             if (amount == MAXLNUM)
-              qfp->qf_cleared = TRUE;
+              qfp->qf_cleared = true;
             else
               qfp->qf_lnum += amount;
           } else if (amount_after && qfp->qf_lnum > line2)
@@ -3783,8 +3783,8 @@ linenr_T qf_current_entry(win_T *wp)
 }
 
 // Update the cursor position in the quickfix window to the current error.
-// Return TRUE if there is a quickfix window.
-static int qf_win_pos_update(
+// Return true if there is a quickfix window.
+static bool qf_win_pos_update(
     qf_info_T *qi,
     int old_qf_index               // previous qf_index or zero
 )
@@ -4250,8 +4250,8 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   }
 }
 
-// Return TRUE when using ":vimgrep" for ":grep".
-int grep_internal(cmdidx_T cmdidx)
+// Return true when using ":vimgrep" for ":grep".
+bool grep_internal(cmdidx_T cmdidx)
 {
   return (cmdidx == CMD_grep
           || cmdidx == CMD_lgrep
@@ -4931,7 +4931,7 @@ static void qf_get_nth_below_entry(qfline_T *entry, linenr_T n,
 }
 
 /// Get the nth quickfix entry above the specified entry.  Searches backwards in
-/// the list. If linewise is TRUE, then treat multiple entries on a single line
+/// the list. If linewise is true, then treat multiple entries on a single line
 /// as one.
 static void qf_get_nth_above_entry(qfline_T *entry, linenr_T n,
                                    bool linewise, int *errornr)
@@ -5346,9 +5346,9 @@ void ex_vimgrep(exarg_T *eap)
   qf_list_T   *qfl;
   win_T *wp = NULL;
   buf_T       *buf;
-  int duplicate_name = FALSE;
+  bool duplicate_name = false;
   int using_dummy;
-  int redraw_for_dummy = FALSE;
+  int redraw_for_dummy = false;
   int found_match;
   buf_T       *first_match_buf = NULL;
   time_t seconds = 0;
@@ -5438,8 +5438,8 @@ void ex_vimgrep(exarg_T *eap)
     if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
       // Remember that a buffer with this name already exists.
       duplicate_name = (buf != NULL);
-      using_dummy = TRUE;
-      redraw_for_dummy = TRUE;
+      using_dummy = true;
+      redraw_for_dummy = true;
 
       buf = vgr_load_dummy_buf(fname, dirname_start, dirname_now);
     } else {
@@ -5515,7 +5515,7 @@ void ex_vimgrep(exarg_T *eap)
           // options!
           aucmd_prepbuf(&aco, buf);
           apply_autocmds(EVENT_FILETYPE, buf->b_p_ft,
-              buf->b_fname, TRUE, buf);
+              buf->b_fname, true, buf);
           do_modelines(OPT_NOWIN);
           aucmd_restbuf(&aco);
         }
@@ -5535,7 +5535,7 @@ void ex_vimgrep(exarg_T *eap)
 
   if (au_name != NULL)
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
-        curbuf->b_fname, TRUE, curbuf);
+        curbuf->b_fname, true, curbuf);
 
   // The QuickFixCmdPost autocmd may free the quickfix list. Check the list
   // is still valid.
@@ -5610,7 +5610,7 @@ load_dummy_buffer (
   buf_T       *newbuf;
   bufref_T newbufref;
   bufref_T newbuf_to_wipe;
-  int failed = true;
+  bool failed = true;
   aco_save_T aco;
   int readfile_result;
 
@@ -5649,7 +5649,7 @@ load_dummy_buffer (
     if (readfile_result == OK
         && !got_int
         && !(curbuf->b_flags & BF_NEW)) {
-      failed = FALSE;
+      failed = false;
       if (curbuf != newbuf) {
         // Bloody autocommands changed the buffer!  Can happen when
         // using netrw and editing a remote file.  Use the current
@@ -5717,7 +5717,7 @@ static void wipe_dummy_buffer(buf_T *buf, char_u *dirname_start)
     cleanup_T cs;
 
     // Reset the error/interrupt/exception state here so that aborting()
-    // returns FALSE when wiping out the buffer.  Otherwise it doesn't
+    // returns false when wiping out the buffer.  Otherwise it doesn't
     // work when got_int is set.
     enter_cleanup(&cs);
 

@@ -48,20 +48,20 @@
  *
  * int mch_print_begin(prt_settings_T *settings)
  * Called to start the print job.
- * Return FALSE to abort.
+ * Return false to abort.
  *
  * int mch_print_begin_page(char_u *msg)
  * Called at the start of each page.
  * "msg" indicates the progress of the print job, can be NULL.
- * Return FALSE to abort.
+ * Return false to abort.
  *
  * int mch_print_end_page()
  * Called at the end of each page.
- * Return FALSE to abort.
+ * Return false to abort.
  *
  * int mch_print_blank_page()
  * Called to generate a blank page for collated, duplex, multiple copy
- * document.  Return FALSE to abort.
+ * document.  Return false to abort.
  *
  * void mch_print_end(prt_settings_T *psettings)
  * Called at normal end of print job.
@@ -84,11 +84,11 @@
  *
  * mch_print_start_line(int margin, int page_line)
  * Sets the current position at the start of line "page_line".
- * If margin is TRUE start in the left margin (for header and line number).
+ * If margin is true start in the left margin (for header and line number).
  *
  * int mch_print_text_out(char_u *p, size_t len);
  * Output one character of text p[len] at the current position.
- * Return TRUE if there is no room for another character in the same line.
+ * Return true if there is no room for another character in the same line.
  *
  * Note that the generic code has no idea of margins. The machine code should
  * simply make the page look smaller!  The header and the line numbers are
@@ -98,20 +98,20 @@
 static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
   =
   {
-  {"top",     TRUE, 0, NULL, 0, FALSE},
-  {"bottom",  TRUE, 0, NULL, 0, FALSE},
-  {"left",    TRUE, 0, NULL, 0, FALSE},
-  {"right",   TRUE, 0, NULL, 0, FALSE},
-  {"header",  TRUE, 0, NULL, 0, FALSE},
-  {"syntax",  FALSE, 0, NULL, 0, FALSE},
-  {"number",  FALSE, 0, NULL, 0, FALSE},
-  {"wrap",    FALSE, 0, NULL, 0, FALSE},
-  {"duplex",  FALSE, 0, NULL, 0, FALSE},
-  {"portrait", FALSE, 0, NULL, 0, FALSE},
-  {"paper",   FALSE, 0, NULL, 0, FALSE},
-  {"collate", FALSE, 0, NULL, 0, FALSE},
-  {"jobsplit", FALSE, 0, NULL, 0, FALSE},
-  {"formfeed", FALSE, 0, NULL, 0, FALSE},
+  {"top",     true, 0, NULL, 0, false},
+  {"bottom",  true, 0, NULL, 0, false},
+  {"left",    true, 0, NULL, 0, false},
+  {"right",   true, 0, NULL, 0, false},
+  {"header",  true, 0, NULL, 0, false},
+  {"syntax",  false, 0, NULL, 0, false},
+  {"number",  false, 0, NULL, 0, false},
+  {"wrap",    false, 0, NULL, 0, false},
+  {"duplex",  false, 0, NULL, 0, false},
+  {"portrait", false, 0, NULL, 0, false},
+  {"paper",   false, 0, NULL, 0, false},
+  {"collate", false, 0, NULL, 0, false},
+  {"jobsplit", false, 0, NULL, 0, false},
+  {"formfeed", false, 0, NULL, 0, false},
   }
 ;
 
@@ -150,12 +150,12 @@ static int page_count;
 
 static option_table_T mbfont_opts[OPT_MBFONT_NUM_OPTIONS] =
 {
-  {"c",       FALSE, 0, NULL, 0, FALSE},
-  {"a",       FALSE, 0, NULL, 0, FALSE},
-  {"r",       FALSE, 0, NULL, 0, FALSE},
-  {"b",       FALSE, 0, NULL, 0, FALSE},
-  {"i",       FALSE, 0, NULL, 0, FALSE},
-  {"o",       FALSE, 0, NULL, 0, FALSE},
+  {"c",       false, 0, NULL, 0, false},
+  {"a",       false, 0, NULL, 0, false},
+  {"r",       false, 0, NULL, 0, false},
+  {"b",       false, 0, NULL, 0, false},
+  {"i",       false, 0, NULL, 0, false},
+  {"o",       false, 0, NULL, 0, false},
 };
 
 /*
@@ -332,7 +332,7 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table,
     }
 
     p = colonp + 1;
-    table[idx].present = TRUE;
+    table[idx].present = true;
 
     if (table[idx].hasnum) {
       if (!ascii_isdigit(*p)) {
@@ -486,9 +486,9 @@ int prt_header_height(void)
 }
 
 /*
- * Return TRUE if using a line number for printing.
+ * Return true if using a line number for printing.
  */
-int prt_use_number(void)
+bool prt_use_number(void)
 {
   return printer_opts[OPT_PRINT_NUMBER].present
          && TOLOWER_ASC(printer_opts[OPT_PRINT_NUMBER].string[0]) == 'y';
@@ -530,7 +530,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum,
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
-    int use_sandbox = FALSE;
+    bool use_sandbox = false;
 
     /*
      * Need to (temporarily) set current line number and first/last line
@@ -613,7 +613,7 @@ void ex_hardcopy(exarg_T *eap)
   int jobsplit;
 
   memset(&settings, 0, sizeof(prt_settings_T));
-  settings.has_color = TRUE;
+  settings.has_color = true;
 
   if (*eap->arg == '>') {
     char_u  *errormsg = NULL;
@@ -647,7 +647,7 @@ void ex_hardcopy(exarg_T *eap)
   settings.modec = 'c';
 
   if (!syntax_present(curwin))
-    settings.do_syntax = FALSE;
+    settings.do_syntax = false;
   else if (printer_opts[OPT_PRINT_SYNTAX].present
            && TOLOWER_ASC(printer_opts[OPT_PRINT_SYNTAX].string[0]) != 'a')
     settings.do_syntax =
@@ -838,7 +838,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
 {
   colnr_T col;
   char_u      *line;
-  int need_break = FALSE;
+  bool need_break = false;
   int outputlen;
   int tab_spaces;
   int print_pos;
@@ -850,7 +850,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
     tab_spaces = 0;
     if (!ppos->ff && prt_use_number())
       prt_line_number(psettings, page_line, ppos->file_line);
-    ppos->ff = FALSE;
+    ppos->ff = false;
   } else {
     // left over from wrap halfway through a tab
     print_pos = ppos->print_pos;
@@ -869,7 +869,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
     }
     // syntax highlighting stuff.
     if (psettings->do_syntax) {
-      id = syn_get_id(curwin, ppos->file_line, col, 1, NULL, FALSE);
+      id = syn_get_id(curwin, ppos->file_line, col, 1, NULL, false);
       if (id > 0)
         id = syn_get_final_id(id);
       else
@@ -911,7 +911,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
                && printer_opts[OPT_PRINT_FORMFEED].present
                && TOLOWER_ASC(printer_opts[OPT_PRINT_FORMFEED].string[0])
                == 'y') {
-      ppos->ff = TRUE;
+      ppos->ff = true;
       need_break = 1;
     } else {
       need_break = mch_print_text_out(line + col, (size_t)outputlen);
@@ -1236,7 +1236,7 @@ static struct prt_dsc_comment_S prt_dsc_table[] =
  * Variables for the output PostScript file.
  */
 static FILE *prt_ps_fd;
-static int prt_file_error;
+static bool prt_file_error;
 static char_u *prt_ps_file_name = NULL;
 
 /*
@@ -1285,8 +1285,8 @@ static int prt_bufsiz;
 static int prt_media;
 static int prt_portrait;
 static int prt_num_copies;
-static int prt_duplex;
-static int prt_tumble;
+static bool prt_duplex;
+static bool prt_tumble;
 static int prt_collate;
 
 /*
@@ -1295,7 +1295,7 @@ static int prt_collate;
 static char_u prt_line_buffer[257];
 static garray_T prt_ps_buffer = GA_EMPTY_INIT_VALUE;
 
-static int prt_do_conv;
+static bool prt_do_conv;
 static vimconv_T prt_conv;
 
 static int prt_out_mbyte;
@@ -1312,7 +1312,7 @@ static void prt_write_file_raw_len(char_u *buffer, size_t bytes)
   if (!prt_file_error
       && fwrite(buffer, sizeof(char_u), bytes, prt_ps_fd) != bytes) {
     EMSG(_("E455: Error writing to PostScript output file"));
-    prt_file_error = TRUE;
+    prt_file_error = true;
   }
 }
 
@@ -1946,12 +1946,12 @@ void mch_print_cleanup(void)
 
   if (prt_do_conv) {
     convert_setup(&prt_conv, NULL, NULL);
-    prt_do_conv = FALSE;
+    prt_do_conv = false;
   }
   if (prt_ps_fd != NULL) {
     fclose(prt_ps_fd);
     prt_ps_fd = NULL;
-    prt_file_error = FALSE;
+    prt_file_error = false;
   }
   if (prt_ps_file_name != NULL) {
     XFREE_CLEAR(prt_ps_file_name);
@@ -2063,7 +2063,7 @@ static int prt_get_lpp(void)
   return lpp - prt_header_height();
 }
 
-static int prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_encoding_S **pp_mbenc)
+static bool prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_encoding_S **pp_mbenc)
 {
   int mbenc;
   int enc_len;
@@ -2076,14 +2076,14 @@ static int prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap, 
   for (mbenc = 0; mbenc < p_cmap->num_encodings; mbenc++) {
     if (STRNICMP(p_mbenc->encoding, p_encoding, enc_len) == 0) {
       *pp_mbenc = p_mbenc;
-      return TRUE;
+      return true;
     }
     p_mbenc++;
   }
-  return FALSE;
+  return false;
 }
 
-static int prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_charset_S **pp_mbchar)
+static bool prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap, struct prt_ps_charset_S **pp_mbchar)
 {
   int mbchar;
   int char_len;
@@ -2098,14 +2098,14 @@ static int prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap, st
   for (mbchar = 0; mbchar < p_cmap->num_charsets; mbchar++) {
     if (STRNICMP(p_mbchar->charset, p_charset, char_len) == 0) {
       *pp_mbchar = p_mbchar;
-      return TRUE;
+      return true;
     }
     p_mbchar++;
   }
-  return FALSE;
+  return false;
 }
 
-int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
+bool mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 {
   int i;
   char        *paper_name;
@@ -2166,7 +2166,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
       // Check encoding and character set are compatible
       if ((p_mbenc->needs_charset & p_mbchar->has_charset) == 0) {
         EMSG(_("E673: Incompatible multi-byte encoding and character set."));
-        return FALSE;
+        return false;
       }
 
       // Add charset name if not empty
@@ -2178,7 +2178,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
       // Add custom CMap character set name
       if (*p_pmcs == NUL) {
         EMSG(_("E674: printmbcharset cannot be empty with multi-byte encoding."));
-        return FALSE;
+        return false;
       }
       STRLCPY(prt_cmap, p_pmcs, sizeof(prt_cmap) - 2);
       STRCAT(prt_cmap, "-");
@@ -2194,7 +2194,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
     if (!mbfont_opts[OPT_MBFONT_REGULAR].present) {
       EMSG(_("E675: No default font specified for multi-byte printing."));
-      return FALSE;
+      return false;
     }
 
     // Derive CID font names with fallbacks if not defined
@@ -2235,7 +2235,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
     prt_ps_font = &prt_ps_mb_font;
   } else {
-    prt_use_courier = FALSE;
+    prt_use_courier = false;
     prt_ps_font = &prt_ps_courier_font;
   }
 
@@ -2332,16 +2332,16 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
    * Set up printer duplex and tumble based on Duplex option setting - default
    * is long sided duplex printing (i.e. no tumble).
    */
-  prt_duplex = TRUE;
-  prt_tumble = FALSE;
+  prt_duplex = true;
+  prt_tumble = false;
   psettings->duplex = 1;
   if (printer_opts[OPT_PRINT_DUPLEX].present) {
     if (STRNICMP(printer_opts[OPT_PRINT_DUPLEX].string, "off", 3) == 0) {
-      prt_duplex = FALSE;
+      prt_duplex = false;
       psettings->duplex = 0;
     } else if (STRNICMP(printer_opts[OPT_PRINT_DUPLEX].string, "short", 5)
                == 0)
-      prt_tumble = TRUE;
+      prt_tumble = true;
   }
 
   // For now user abort not supported
@@ -2382,12 +2382,12 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   prt_need_bgcol = false;
   prt_need_underline = false;
 
-  prt_file_error = FALSE;
+  prt_file_error = false;
 
   return OK;
 }
 
-static int prt_add_resource(struct prt_ps_resource_S *resource)
+static bool prt_add_resource(struct prt_ps_resource_S *resource)
 {
   FILE*       fd_resource;
   char_u resource_buffer[512];
@@ -2396,7 +2396,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
   fd_resource = os_fopen((char *)resource->filename, READBIN);
   if (fd_resource == NULL) {
     EMSG2(_("E456: Can't open file \"%s\""), resource->filename);
-    return FALSE;
+    return false;
   }
   switch (resource->type) {
   case PRT_RESOURCE_TYPE_PROCSET:
@@ -2406,7 +2406,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
         (char *)resource->title);
     break;
   default:
-    return FALSE;
+    return false;
   }
 
   prt_dsc_textline("BeginDocument", (char *)resource->filename);
@@ -2418,14 +2418,14 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
       EMSG2(_("E457: Can't read PostScript resource file \"%s\""),
           resource->filename);
       fclose(fd_resource);
-      return FALSE;
+      return false;
     }
     if (bytes_read == 0)
       break;
     prt_write_file_raw_len(resource_buffer, bytes_read);
     if (prt_file_error) {
       fclose(fd_resource);
-      return FALSE;
+      return false;
     }
   }
   fclose(fd_resource);
@@ -2434,10 +2434,10 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
 
   prt_dsc_noarg("EndResource");
 
-  return TRUE;
+  return true;
 }
 
-int mch_print_begin(prt_settings_T *psettings)
+bool mch_print_begin(prt_settings_T *psettings)
 {
   int bbox[4];
   double left;
@@ -2451,7 +2451,7 @@ int mch_print_begin(prt_settings_T *psettings)
   char_u      *p;
   struct prt_ps_resource_S res_cidfont;
   struct prt_ps_resource_S res_cmap;
-  int retval = FALSE;
+  bool retval = false;
 
   /*
    * PS DSC Header comments - no PS code!
@@ -2523,22 +2523,22 @@ int mch_print_begin(prt_settings_T *psettings)
   // Search for external resources VIM supplies
   if (!prt_find_resource("prolog", &res_prolog)) {
     EMSG(_("E456: Can't find PostScript resource file \"prolog.ps\""));
-    return FALSE;
+    return false;
   }
   if (!prt_open_resource(&res_prolog))
-    return FALSE;
+    return false;
   if (!prt_check_resource(&res_prolog, PRT_PROLOG_VERSION))
-    return FALSE;
+    return false;
   if (prt_out_mbyte) {
     // Look for required version of multi-byte printing procset
     if (!prt_find_resource("cidfont", &res_cidfont)) {
       EMSG(_("E456: Can't find PostScript resource file \"cidfont.ps\""));
-      return FALSE;
+      return false;
     }
     if (!prt_open_resource(&res_cidfont))
-      return FALSE;
+      return false;
     if (!prt_check_resource(&res_cidfont, PRT_CID_PROLOG_VERSION))
-      return FALSE;
+      return false;
   }
 
   /* Find an encoding to use for printing.
@@ -2563,12 +2563,12 @@ int mch_print_begin(prt_settings_T *psettings)
         if (!prt_find_resource((char *)p_encoding, &res_encoding)) {
           EMSG2(_("E456: Can't find PostScript resource file \"%s.ps\""),
               p_encoding);
-          return FALSE;
+          return false;
         }
       }
     }
     if (!prt_open_resource(&res_encoding))
-      return FALSE;
+      return false;
     /* For the moment there are no checks on encoding resource files to
      * perform */
   } else {
@@ -2580,10 +2580,10 @@ int mch_print_begin(prt_settings_T *psettings)
       if (!prt_find_resource(prt_ascii_encoding, &res_encoding)) {
         EMSG2(_("E456: Can't find PostScript resource file \"%s.ps\""),
             prt_ascii_encoding);
-        return FALSE;
+        return false;
       }
       if (!prt_open_resource(&res_encoding))
-        return FALSE;
+        return false;
       /* For the moment there are no checks on encoding resource files to
        * perform */
     }
@@ -2605,10 +2605,10 @@ int mch_print_begin(prt_settings_T *psettings)
     if (!prt_find_resource(prt_cmap, &res_cmap)) {
       EMSG2(_("E456: Can't find PostScript resource file \"%s.ps\""),
           prt_cmap);
-      return FALSE;
+      return false;
     }
     if (!prt_open_resource(&res_cmap))
-      return FALSE;
+      return false;
   }
 
   // List resources supplied
@@ -2684,7 +2684,7 @@ int mch_print_begin(prt_settings_T *psettings)
     /* There will be only one Roman font encoding to be included in the PS
      * file. */
     if (!prt_add_resource(&res_encoding))
-      return FALSE;
+      return false;
 
   prt_dsc_noarg("EndProlog");
 
@@ -2877,9 +2877,9 @@ int mch_print_begin_page(char_u *str)
   return !prt_file_error;
 }
 
-int mch_print_blank_page(void)
+bool mch_print_blank_page(void)
 {
-  return mch_print_begin_page(NULL) ? (mch_print_end_page()) : FALSE;
+  return mch_print_begin_page(NULL) ? (mch_print_end_page()) : false;
 }
 
 static double prt_pos_x = 0;

@@ -499,7 +499,7 @@ changed_lines(
 /// When `ff` is true also reset 'fileformat'.
 /// When `always_inc_changedtick` is true b:changedtick is incremented even
 /// when the changed flag was off.
-void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
+void unchanged(buf_T *buf, bool ff, bool always_inc_changedtick)
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
@@ -779,7 +779,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   int movelen = oldlen - col - count + 1;  // includes trailing NUL
   if (movelen <= 1) {
     // If we just took off the last character of a non-blank line, and
-    // fixpos is TRUE, we don't want to end up positioned at the NUL,
+    // fixpos is true, we don't want to end up positioned at the NUL,
     // unless "restart_edit" is set or 'virtualedit' contains "onemore".
     if (col > 0 && fixpos && restart_edit == 0
         && (ve_flags & VE_ONEMORE) == 0
@@ -1201,9 +1201,9 @@ int open_line(
     char_u lead_middle[COM_MAX_LEN];        // middle-comment string
     char_u lead_end[COM_MAX_LEN];           // end-comment string
     char_u  *comment_end = NULL;            // where lead_end has been found
-    int extra_space = false;                // append extra space
+    bool extra_space = false;               // append extra space
     int current_flag;
-    int require_blank = false;              // requires blank after middle
+    bool require_blank = false;             // requires blank after middle
     char_u  *p2;
 
     // If the comment leader has the start, middle or end flag, it may not

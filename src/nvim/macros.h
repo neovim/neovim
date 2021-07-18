@@ -31,7 +31,7 @@
 /// @return `s, sizeof(s) - 1`
 #define S_LEN(s) (s), (sizeof(s) - 1)
 
-/// LINEEMPTY() - return TRUE if the line is empty
+/// LINEEMPTY() - return true if the line is empty
 #define LINEEMPTY(p) (*ml_get(p) == NUL)
 
 // toupper() and tolower() that use the current locale.

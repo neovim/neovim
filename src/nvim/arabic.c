@@ -581,7 +581,7 @@ static int chg_c_a2f(int cur_c)
 
 // Change shape - from Initial to Medial
 // This code is unreachable, because for the relevant characters ARABIC_CHAR()
-// is FALSE;
+// is false;
 #if 0
 static int chg_c_i2m(int cur_c)
 {
