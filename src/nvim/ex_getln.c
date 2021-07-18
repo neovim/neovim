@@ -49,7 +49,6 @@
 #include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
 #include "nvim/regexp.h"

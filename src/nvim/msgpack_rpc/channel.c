@@ -24,7 +24,6 @@
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/eval.h"
-#include "nvim/os_unix.h"
 #include "nvim/message.h"
 #include "nvim/map.h"
 #include "nvim/log.h"

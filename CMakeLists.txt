@@ -499,6 +499,13 @@ if(ENABLE_LIBINTL)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
 endif()
 
+if(NOT WIN32)
+  find_package(LibACL)
+  if (LibACL_FOUND)
+    include_directories(SYSTEM ${LibACL_INCLUDE_DIRS})
+  endif()
+endif()
+
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
 # explicitly to indicate a strong preference for pthread.
 set(CMAKE_THREAD_PREFER_PTHREAD ON)

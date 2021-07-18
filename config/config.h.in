@@ -50,6 +50,8 @@
 #  undef HAVE_SYS_UIO_H
 # endif
 #endif
+#cmakedefine HAVE_SYS_ACL_H
+#cmakedefine HAVE_ACL
 
 #cmakedefine FEAT_TUI
 

@@ -102,7 +102,6 @@
 #include "nvim/memory.h"
 #include "nvim/garray.h"
 #include "nvim/option.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/sha256.h"
 #include "nvim/state.h"
@@ -111,6 +110,8 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/os/acl.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "undo.c.generated.h"
@@ -1178,6 +1179,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
   int perm;
   bool write_ok = false;
   bufinfo_T bi;
+  vim_acl_T acl = NULL;
 
   if (name == NULL) {
     file_name = u_get_undo_file_name((char *) buf->b_ffname, false);
@@ -1204,10 +1206,45 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
     if (perm < 0) {
       perm = 0600;
     }
+    acl = os_get_acl(buf->b_ffname);
   }
 
   // Strip any sticky and executable bits.
   perm = perm & 0666;
+// In cygwin, deleting the execute permission causes the order of the ACL
+// to be incorrect, so do not delete the execute permission.
+#if defined(HAVE_ACL) && !defined(__CYGWIN__) && !defined(WIN32)
+  if (acl != NULL) {
+    acl_entry_t entry;
+    int ret = acl_get_entry(acl, ACL_FIRST_ENTRY, &entry);
+    if (ret == 1) {
+      do {
+        acl_tag_t tag;
+        acl_permset_t permset;
+        if (!acl_get_tag_type(entry, &tag)) {
+          if (tag != ACL_UNDEFINED_TAG
+              && !acl_get_permset(entry, &permset)) {
+            if (!acl_delete_perm(permset, ACL_EXECUTE)) {
+              if (!acl_set_permset(entry, permset)) {
+                ELOG("failed set permset to entry: %s", strerror(errno));
+              }
+            } else {
+              ELOG("failed delete ACL_EXECUTE from permset: %s",
+                   strerror(errno));
+            }
+          } else if (tag != ACL_UNDEFINED_TAG) {
+            ELOG("failed get permset from entry: %s", strerror(errno));
+          }
+        } else {
+          ELOG("failed get tag type from entry: %s", strerror(errno));
+        }
+      } while ((ret = acl_get_entry(acl, ACL_NEXT_ENTRY, &entry)) == 1);
+    }
+    if (ret == -1) {
+      ELOG("failed get entry from acl: %s", strerror(errno));
+    }
+  }
+#endif
 
   /* If the undo file already exists, verify that it actually is an undo
    * file, and delete it. */
@@ -1356,20 +1393,16 @@ write_error:
   if (!write_ok)
     EMSG2(_("E829: write error in undo file: %s"), file_name);
 
-#ifdef HAVE_ACL
   if (buf->b_ffname != NULL) {
-    vim_acl_T acl;
-
-    /* For systems that support ACL: get the ACL from the original file. */
-    acl = mch_get_acl(buf->b_ffname);
-    mch_set_acl((char_u *)file_name, acl);
-    mch_free_acl(acl);
+    // For systems that support ACL: get the ACL from the original file.
+    os_set_acl((char_u *)file_name, acl);
   }
-#endif
 
 theend:
   if (file_name != name)
     xfree(file_name);
+
+  os_free_acl(acl);
 }
 
 /// Loads the undo tree from an undo file.

@@ -61,7 +61,6 @@
 #include "nvim/move.h"
 #include "nvim/mouse.h"
 #include "nvim/normal.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
 #include "nvim/regexp.h"

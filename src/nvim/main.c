@@ -48,7 +48,6 @@
 #include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/os_unix.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"

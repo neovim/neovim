@@ -540,7 +540,6 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/ops.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"

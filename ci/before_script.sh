@@ -27,6 +27,12 @@ ccache -s
 # Reset ccache stats for real results in before_cache.
 ccache --zero-stats
 
+if [[ -n "${BUILD_32BIT}" ]]; then
+  sudo dpkg --add-architecture i386
+  sudo apt-get update -qq
+  sudo apt-get install libacl1-dev:i386 -y
+fi
+
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   # Adds user to a dummy group.
   # That allows to test changing the group of the file by `os_fchown`.
