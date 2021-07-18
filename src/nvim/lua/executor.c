@@ -515,6 +515,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
+  lua_cjson_new(lstate);
+  lua_setfield(lstate, -2, "json");
+
   lua_setglobal(lstate, "vim");
 
   {

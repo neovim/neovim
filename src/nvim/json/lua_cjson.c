@@ -44,6 +44,9 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "nvim/lua/executor.h"
+
+#include "lua_cjson.h"
 #include "strbuf.h"
 #include "fpconv.h"
 
@@ -1464,7 +1467,7 @@ static int json_protect_conversion(lua_State *l)
 }
 
 /* Return cjson module table */
-static int lua_cjson_new(lua_State *l)
+int lua_cjson_new(lua_State *l)
 {
     luaL_Reg reg[] = {
         { "encode", json_encode },
