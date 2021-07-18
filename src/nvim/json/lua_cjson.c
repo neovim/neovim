@@ -82,7 +82,7 @@
 #define DEFAULT_DECODE_INVALID_NUMBERS 1
 #define DEFAULT_ENCODE_KEEP_BUFFER 1
 #define DEFAULT_ENCODE_NUMBER_PRECISION 14
-#define DEFAULT_ENCODE_EMPTY_TABLE_AS_OBJECT 1
+#define DEFAULT_ENCODE_EMPTY_TABLE_AS_OBJECT 0
 #define DEFAULT_DECODE_ARRAY_WITH_ARRAY_MT 0
 #define DEFAULT_ENCODE_ESCAPE_FORWARD_SLASH 1
 
@@ -744,6 +744,7 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
 {
     int len;
     int as_array = 0;
+    int as_empty_dict = 0;
     int has_metatable;
 
     switch (lua_type(l, -1)) {
@@ -766,10 +767,17 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
         has_metatable = lua_getmetatable(l, -1);
 
         if (has_metatable) {
+
+          nlua_pushref(l, nlua_empty_dict_ref);
+          if (lua_rawequal(l, -2, -1)) {
+            as_empty_dict = true;
+          } else {
+            lua_pop(l, 1);
             lua_pushlightuserdata(l, json_lightudata_mask(&json_array));
             lua_rawget(l, LUA_REGISTRYINDEX);
             as_array = lua_rawequal(l, -1, -2);
-            lua_pop(l, 2);
+          }
+          lua_pop(l, 2);
         }
 
         if (as_array) {
@@ -778,7 +786,7 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
         } else {
             len = lua_array_length(l, cfg, json);
 
-            if (len > 0 || (len == 0 && !cfg->encode_empty_table_as_object)) {
+            if (len > 0 || (len == 0 && !cfg->encode_empty_table_as_object && !as_empty_dict)) {
                 json_append_array(l, cfg, current_depth, json, len);
             } else {
                 if (has_metatable) {
@@ -1269,6 +1277,8 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
 
     /* Handle empty objects */
     if (token.type == T_OBJ_END) {
+        nlua_pushref(l, nlua_empty_dict_ref); \
+        lua_setmetatable(l, -2); \
         json_decode_ascend(json);
         return;
     }
