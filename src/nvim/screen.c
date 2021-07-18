@@ -3022,7 +3022,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               if (shl->endcol < tmp_col) {
                 shl->endcol = tmp_col;
               }
-              shl->attr_cur = shl->attr;
+
+              //  Highlight the current search match differently than the rest
+              if (wp->w_cursor.lnum == lnum
+                  && wp->w_cursor.col >= (long)shl->startcol
+                  && wp->w_cursor.col < (long)shl->endcol) {
+                shl->attr_cur = win_hl_attr(wp, HLF_LFM);
+              } else {
+                shl->attr_cur = shl->attr;
+              }
               // Match with the "Conceal" group results in hiding
               // the match.
               if (cur != NULL
