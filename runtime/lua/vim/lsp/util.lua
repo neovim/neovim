@@ -639,6 +639,7 @@ function M._get_completion_item_kind_name(completion_item_kind)
   return protocol.CompletionItemKind[completion_item_kind] or "Unknown"
 end
 
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -673,6 +674,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
     end
 
     local word = get_completion_word(completion_item)
+    -- print(vim.inspect(completion_item))
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
