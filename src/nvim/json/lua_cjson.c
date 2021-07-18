@@ -1526,7 +1526,7 @@ int lua_cjson_new(lua_State *l)
     compat_luaL_setfuncs(l, reg, 1);
 
     /* Set cjson.null */
-    lua_pushlightuserdata(l, NULL);
+    nlua_pushref(l, nlua_nil_ref);
     lua_setfield(l, -2, "null");
 
     /* Set cjson.empty_array_mt */
