@@ -801,12 +801,20 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
         strbuf_append_mem(json, "null", 4);
         break;
     case LUA_TLIGHTUSERDATA:
-        if (lua_touserdata(l, -1) == NULL) {
-            strbuf_append_mem(json, "null", 4);
-        } else if (lua_touserdata(l, -1) == &json_array) {
+        if (lua_touserdata(l, -1) == &json_array) {
             json_append_array(l, cfg, current_depth, json, 0);
         }
         break;
+    case LUA_TUSERDATA:
+        nlua_pushref(l, nlua_nil_ref);
+        bool is_nil = lua_rawequal(l, -2, -1);
+        lua_pop(l, 1);
+        if (is_nil) {
+            strbuf_append_mem(json, "null", 4);
+            break;
+        } else {
+          FALLTHROUGH;
+        }
     default:
         /* Remaining types (LUA_TFUNCTION, LUA_TUSERDATA, LUA_TTHREAD,
          * and LUA_TLIGHTUSERDATA) cannot be serialised */
@@ -1363,9 +1371,7 @@ static void json_process_value(lua_State *l, json_parse_t *json,
         json_parse_array_context(l, json);
         break;;
     case T_NULL:
-        /* In Lua, setting "t[k] = nil" will delete k from the table.
-         * Hence a NULL pointer lightuserdata object is used instead */
-        lua_pushlightuserdata(l, NULL);
+        nlua_pushref(l, nlua_nil_ref);
         break;;
     default:
         json_throw_parse_error(l, json, "value", token);
