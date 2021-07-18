@@ -647,6 +647,37 @@ describe('lua stdlib', function()
     )
   end)
 
+  it("vim.merge", function()
+    eq(exec_lua([[return vim.merge({})]]), {})
+    eq(exec_lua([[return vim.merge(1)]]), 1)
+    eq(exec_lua([[return vim.merge(1, 2)]]), 2)
+    eq(exec_lua([[return vim.merge({ 1 }, 2)]]), 2)
+    eq(exec_lua([[return vim.merge(1, { 2 })]]), { 2 })
+    eq(exec_lua([[return vim.merge({ a = 1 }, { b = 1 })]]), { a = 1, b = 1 })
+    eq(exec_lua([[return vim.merge({ a = 1 }, {})]]), { a = 1 })
+    eq(exec_lua([[return vim.merge({ a = { b = 1 } }, { a = 1 })]]), { a = 1 })
+    eq(exec_lua([[return vim.merge({ a = { b = 1 } }, { a = { c = 1 } })]]), { a = { b = 1, c = 1 } })
+    ok(exec_lua([[
+      local a = vim.merge({ [10] = 'a'}, { [20] = 'b'})
+      return vim.deep_equal(a, {[20] = "b"})
+    ]]), {[20] = 'b'})
+    ok(exec_lua([[
+      local a = vim.merge({ [1] = 'a'}, { [20] = 'b'})
+      return vim.deep_equal(a, {[20] = "b"})
+    ]]), {[20] = 'b'})
+    ok(exec_lua([[
+      local a = vim.merge({ 'a'}, { [20] = 'b'})
+      return vim.deep_equal(a, {[20] = "b"})
+    ]]), {[20] = 'b'})
+    eq(exec_lua([[return vim.merge()]]), NIL)
+    eq(exec_lua([[
+      local a = {x = {a = 1, b = 2}}
+      local b = {x = {a = 2, c = {y = 3}}}
+      local c = {x = {c = 4, d = {y = 4}}}
+      return vim.merge(a, b, c)
+      ]]), {x = {a = 2, b = 2, c = 4, d = {y = 4}}})
+  end)
+
   it('vim.tbl_count', function()
     eq(0, exec_lua [[ return vim.tbl_count({}) ]])
     eq(0, exec_lua [[ return vim.tbl_count(vim.empty_dict()) ]])
