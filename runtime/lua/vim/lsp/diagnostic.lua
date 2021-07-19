@@ -207,6 +207,7 @@ local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_lines = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_counts = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_attached_buffers = {}
+local diagnostic_disabled_buffers = {}
 
 local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
 
@@ -1092,6 +1093,10 @@ end
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
+  if diagnostic_disabled_buffers[bufnr] then
+    return
+  end
+
   config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
     signs = true,
     underline = true,
@@ -1281,6 +1286,43 @@ function M.set_loclist(opts)
   if open_loclist then
     vim.cmd [[lopen]]
   end
+end
+
+--- Disable diagnostics for the given buffer
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+-- Note that when diagnostics are disabled for a buffer, the server will still
+-- send diagnostic information and the client will still process it. The
+-- diagnostics are simply not displayed to the user.
+function M.disable(bufnr)
+  bufnr = get_bufnr(bufnr)
+  diagnostic_disabled_buffers[bufnr] = true
+  M.clear(bufnr)
+end
+
+--- Enable diagnostics for the given buffer
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+function M.enable(bufnr)
+  bufnr = get_bufnr(bufnr)
+  if not diagnostic_disabled_buffers[bufnr] then
+    return
+  end
+
+  diagnostic_disabled_buffers[bufnr] = nil
+
+  -- We need to invoke the publishDiagnostics handler directly instead of just
+  -- calling M.display so that we can preserve any custom configuration options
+  -- the user may have set with vim.lsp.with.
+  vim.lsp.for_each_buffer_client(bufnr, function(client)
+    vim.lsp.handlers["textDocument/publishDiagnostics"](
+      nil,
+      "textDocument/publishDiagnostics",
+      {
+        diagnostics = M.get(bufnr, client.id),
+        uri = vim.uri_from_bufnr(bufnr),
+      },
+      client.id
+    )
+  end)
 end
 -- }}}
 
