@@ -96,6 +96,7 @@ foreach(subdir
         tui
         event
         eval
+        json
         lua
         viml
         viml/parser

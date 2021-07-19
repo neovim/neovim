@@ -40,6 +40,7 @@
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/json/lua_cjson.h"
 
 #include "luv/luv.h"
 
@@ -516,6 +517,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
+
+  lua_cjson_new(lstate);
+  lua_setfield(lstate, -2, "json");
 
   lua_setglobal(lstate, "vim");
 
