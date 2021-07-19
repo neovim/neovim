@@ -4,6 +4,7 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require 'vim.highlight'
+local config = require("vim.lsp.config")
 local uv = vim.loop
 
 local npcall = vim.F.npcall
@@ -951,6 +952,7 @@ function M.make_floating_popup_options(width, height, opts)
     opts = { opts, 't', true };
   }
   opts = opts or {}
+  opts = vim.tbl_deep_extend("force", {}, config.options.floating_preview, opts)
   validate {
     ["opts.offset_x"] = { opts.offset_x, 'n', true };
     ["opts.offset_y"] = { opts.offset_y, 'n', true };
@@ -1101,6 +1103,20 @@ local function get_markdown_fences()
   return fences
 end
 
+-- Generates a table mapping markdown code block lang to vim syntax,
+-- based on M.markdown_fences_syntax & g:markdown_fenced_languages
+-- @return a table of lang -> syntax mappings
+local function get_stylize_markdown_fences()
+  local fences = vim.tbl_extend("force", {}, config.options.stylize_markdown_fences)
+  for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
+    local lang, syntax = fence:match("^(.*)=(.*)$")
+    if lang then
+      fences[lang] = syntax
+    end
+  end
+  return fences
+end
+
 --- Converts markdown into syntax highlighted regions by stripping the code
 --- blocks and converting them into highlighted code.
 --- This will by default insert a blank line separator after those code block
@@ -1227,6 +1243,7 @@ function M.stylize_markdown(bufnr, contents, opts)
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
+  local fences = get_stylize_markdown_fences()
   local idx = 1
   --@private
   -- keep track of syntaxes we already inlcuded.
