@@ -43,7 +43,7 @@ describe(':mksession', function()
     -- Restore session.
     command('source '..session_file)
 
-    eq({3,3,2},
+    eq({2,2,4},
       {funcs.winbufnr(1), funcs.winbufnr(2), funcs.winbufnr(3)})
   end)
 
@@ -91,7 +91,12 @@ describe(':mksession', function()
     command('tabnext 1')
     eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', funcs.expand('%:p'))
     command('tabnext 2')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
+    -- :mksession stores paths using unix slashes, but Nvim doesn't adjust these
+    -- for absolute paths in all cases yet. Absolute paths are used in the
+    -- session file after :tcd, so we need to expect unix slashes here for now
+    -- eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
+    eq(cwd_dir:gsub([[\]], '/') .. '/' .. tmpfile_base .. '2',
+      funcs.expand('%:p'))
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
