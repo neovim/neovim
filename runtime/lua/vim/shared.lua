@@ -200,6 +200,8 @@ function vim.tbl_isempty(t)
   return next(t) == nil
 end
 
+--- we only merge empty tables or tables that are not a list
+--@private
 local function can_merge(v)
   return type(v) == "table" and (vim.tbl_isempty(v) or not vim.tbl_islist(v))
 end
