@@ -603,6 +603,31 @@ describe('lua stdlib', function()
       return vim.tbl_islist(c) and count == 0
     ]]))
 
+    eq(exec_lua([[
+      local a = { a = { b = 1 } }
+      local b = { a = {} }
+      return vim.tbl_deep_extend("force", a, b)
+    ]]), {a = {b = 1}})
+
+    eq(exec_lua([[
+      local a = { a = 123 }
+      local b = { a = { b = 1} }
+      return vim.tbl_deep_extend("force", a, b)
+    ]]), {a = {b = 1}})
+
+    ok(exec_lua([[
+      local a = { a = {[2] = 3} }
+      local b = { a = {[3] = 3} }
+      local c = vim.tbl_deep_extend("force", a, b)
+      return vim.deep_equal(c, {a = {[3] = 3}})
+    ]]))
+
+    eq(exec_lua([[
+      local a = { a = { b = 1} }
+      local b = { a = 123 }
+      return vim.tbl_deep_extend("force", a, b)
+    ]]), {a = 123 })
+
     eq('Error executing lua: vim/shared.lua:0: invalid "behavior": nil',
       pcall_err(exec_lua, [[
         return vim.tbl_deep_extend()
