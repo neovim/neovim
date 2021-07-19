@@ -1801,6 +1801,7 @@ describe('API', function()
           ext_hlstate = false,
           ext_termcolors = false,
           ext_messages = false,
+          ext_windows = screen._options.ext_windows or false,
           height = 4,
           rgb = true,
           override = true,
