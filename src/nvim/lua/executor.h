@@ -18,6 +18,8 @@ EXTERN LuaRef nlua_empty_dict_ref INIT(= LUA_NOREF);
 
 EXTERN int nlua_refcount INIT(= 0);
 
+#define NLUA_EXEC_STATIC(cstr, arg, err) nlua_exec(STATIC_CSTR_AS_STRING(cstr), arg, err)
+
 #define set_api_error(s, err) \
     do { \
       Error *err_ = (err); \

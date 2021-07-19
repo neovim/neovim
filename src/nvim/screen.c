@@ -306,15 +306,6 @@ redrawWinline(
   }
 }
 
-/*
- * update all windows that are editing the current buffer
- */
-void update_curbuf(int type)
-{
-  redraw_curbuf_later(type);
-  update_screen(type);
-}
-
 /// Redraw the parts of the screen that is marked for redraw.
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and
@@ -474,6 +465,8 @@ int update_screen(int type)
 
   ui_comp_set_screen_valid(true);
 
+  ns_hl_fast = -1;
+
   Providers providers;
   kvi_init(providers);
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
@@ -497,8 +490,10 @@ int update_screen(int type)
     }
   }
 
+  win_check_ns_hl(NULL);
   // "start" callback could have changed highlights for global elements
-  if (win_check_ns_hl(NULL)) {
+  // TODO: was??
+  if (false) {
     redraw_cmdline = true;
     redraw_tabline = true;
   }
@@ -612,8 +607,11 @@ int update_screen(int type)
 
   // May need to redraw the popup menu.
   if (pum_drawn() && must_redraw_pum) {
+    win_check_ns_hl(curwin);
     pum_redraw();
   }
+
+  win_check_ns_hl(NULL);
 
   send_grid_resize = false;
 
@@ -1616,7 +1614,7 @@ static void win_update(win_T *wp, Providers *providers)
   wp->w_empty_rows = 0;
   wp->w_filler_rows = 0;
   if (!eof && !didline) {
-    int at_attr = hl_combine_attr(wp->w_hl_attr_normal,
+    int at_attr = hl_combine_attr(wp->w_hl_attr_bg,
                                   win_hl_attr(wp, HLF_AT));
     if (lnum == wp->w_topline) {
       /*
@@ -1821,7 +1819,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
     }
   }
 
-  int attr = hl_combine_attr(wp->w_hl_attr_normal, win_hl_attr(wp, hl));
+  int attr = hl_combine_attr(wp->w_hl_attr_bg, win_hl_attr(wp, hl));
 
   if (wp->w_p_rl) {
     grid_fill(&wp->w_grid, row, endrow, wp->w_wincol, W_ENDCOL(wp) - 1 - n,
@@ -2915,7 +2913,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         && filler_todo <= 0) {
       draw_virt_text(buf, win_col_offset, &col, grid->Columns);
       grid_put_linebuf(grid, row, 0, col, -grid->Columns, wp->w_p_rl, wp,
-                       wp->w_hl_attr_normal, false);
+                       wp->w_hl_attr_bg, false);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
@@ -4093,7 +4091,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
       draw_virt_text(buf, win_col_offset, &col, grid->Columns);
       grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,
-                       wp->w_hl_attr_normal, false);
+                       wp->w_hl_attr_bg, false);
       row++;
 
       /*
@@ -4321,7 +4319,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       int draw_col = col - boguscols;
       draw_virt_text(buf, win_col_offset, &draw_col, grid->Columns);
       grid_put_linebuf(grid, row, 0, draw_col, grid->Columns, wp->w_p_rl,
-                       wp, wp->w_hl_attr_normal, wrap);
+                       wp, wp->w_hl_attr_bg, wrap);
       if (wrap) {
         ScreenGrid *current_grid = grid;
         int current_row = row, dummy_col = 0;  // dummy_col unused

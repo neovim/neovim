@@ -81,6 +81,7 @@
 #endif
 #include "nvim/lua/executor.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
 #include "nvim/quickfix.h"
@@ -3689,11 +3690,31 @@ static char_u *compile_cap_prog(synblock_T *synblock)
 /// Handle setting `winhighlight' in window "wp"
 static bool parse_winhl_opt(win_T *wp)
 {
+  const char *p = (const char *)wp->w_p_winhl;
+  if (wp->w_ns_hl == 0) {
+    wp->w_ns_hl = (int)nvim_create_namespace(NULL_STRING);
+  }
+
+  Error err = ERROR_INIT;
+
+  FIXED_TEMP_ARRAY(args, 2);
+  args.items[0] = INTEGER_OBJ((Integer)wp->w_ns_hl); // NOLINT
+  args.items[1] = STRING_OBJ(cstr_as_string((char *)p));
+  NLUA_EXEC_STATIC("return vim._parse_winhl(...)", args, &err);
+
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    return false;
+  }
+
+  wp->w_hl_needs_update = true;
+  return true;
+
+
   int w_hl_id_normal = 0;
   int w_hl_ids[HLF_COUNT] = { 0 };
   int hlf;
 
-  const char *p = (const char *)wp->w_p_winhl;
   while (*p) {
     char *colon = strchr(p, ':');
     if (!colon) {
@@ -3724,8 +3745,8 @@ static bool parse_winhl_opt(win_T *wp)
   }
 
   wp->w_hl_id_normal = w_hl_id_normal;
-  memcpy(wp->w_hl_ids, w_hl_ids, sizeof(w_hl_ids));
-  wp->w_hl_needs_update = true;
+  // TODO: grugggg
+  //memcpy(wp->w_hl_ids, w_hl_ids, sizeof(w_hl_ids));
   return true;
 }
 

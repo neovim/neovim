@@ -7584,10 +7584,15 @@ static void syn_unadd_group(void)
 /// @see syn_attr2entry
 int syn_id2attr(int hl_id)
 {
-  hl_id = syn_get_final_id(hl_id);
+  return syn_ns_id2attr(-1, hl_id);
+}
+
+int syn_ns_id2attr(int ns_id, int hl_id)
+{
+  hl_id = syn_ns_get_final_id(&ns_id, hl_id);
   struct hl_group *sgp = &HL_TABLE()[hl_id - 1];  // index is ID minus one
 
-  int attr = ns_get_hl(-1, hl_id, false, sgp->sg_set);
+  int attr = ns_get_hl(&ns_id, hl_id, false, sgp->sg_set);
   if (attr >= 0) {
     return attr;
   }
@@ -7595,12 +7600,16 @@ int syn_id2attr(int hl_id)
 }
 
 
-
-
 /*
  * Translate a group ID to the final group ID (following links).
  */
 int syn_get_final_id(int hl_id)
+{
+  int id = curwin->w_ns_hl_active;
+  return syn_ns_get_final_id(&id, hl_id);
+}
+
+int syn_ns_get_final_id(int *ns_id, int hl_id)
 {
   int count;
 
@@ -7617,7 +7626,7 @@ int syn_get_final_id(int hl_id)
     // ACHTUNG: when using "tmp" attribute (no link) the function might be
     // called twice. it needs be smart enough to remember attr only to
     // syn_id2attr time
-    int check = ns_get_hl(-1, hl_id, true, sgp->sg_set);
+    int check = ns_get_hl(ns_id, hl_id, true, sgp->sg_set);
     if (check == 0) {
       return hl_id;  // how dare! it broke the link!
     } else if (check > 0) {
@@ -7634,6 +7643,7 @@ int syn_get_final_id(int hl_id)
 
   return hl_id;
 }
+
 
 /// Refresh the color attributes of all highlight groups.
 void highlight_attr_set_all(void)
@@ -7706,19 +7716,21 @@ void highlight_changed(void)
   need_highlight_changed = FALSE;
 
   /// Translate builtin highlight groups into attributes for quick lookup.
+  /// TODO: be lybill
   for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
     id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
     if (id == 0) {
       abort();
     }
-    int final_id = syn_get_final_id(id);
+    int ns_id = -1;
+    int final_id = syn_ns_get_final_id(&ns_id, id);
     if (hlf == (int)HLF_SNC) {
       id_SNC = final_id;
     } else if (hlf == (int)HLF_S) {
       id_S = final_id;
     }
 
-    highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
+    highlight_attr[hlf] = hl_get_ui_attr(ns_id, hlf, final_id,
                                          hlf == (int)HLF_INACTIVE);
 
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {

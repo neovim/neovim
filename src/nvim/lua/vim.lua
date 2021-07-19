@@ -174,6 +174,19 @@ function vim._os_proc_children(ppid)
   return children
 end
 
+
+function vim._parse_winhl(ns, str)
+  local items = vim.split(str, ',',true)
+  for _,it in ipairs(items) do
+    local fields = vim.split(it,':',true)
+    if #fields == 2 then
+      vim.api.nvim_set_hl(ns, fields[1], {global_link=fields[2]})
+    else
+      error("nööööö: "..it)
+    end
+  end
+end
+
 -- TODO(ZyX-I): Create compatibility layer.
 
 --- Return a human-readable representation of the given object.

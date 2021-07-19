@@ -80,6 +80,7 @@ typedef struct {
   LuaRef redraw_end;
   LuaRef hl_def;
   int hl_valid;
+  bool hl_cached;
 } DecorProvider;
 
 EXTERN kvec_t(DecorProvider) decor_providers INIT(= KV_INITIAL_VALUE);
@@ -89,7 +90,7 @@ EXTERN bool provider_active INIT(= false);
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
                                  { ns_id, false, LUA_NOREF, LUA_NOREF, \
                                    LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, -1 }
+                                   LUA_NOREF, -1, false }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.h.generated.h"

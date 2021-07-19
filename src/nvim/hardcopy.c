@@ -869,11 +869,12 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
     }
     // syntax highlighting stuff.
     if (psettings->do_syntax) {
-      id = syn_get_id(curwin, ppos->file_line, col, 1, NULL, FALSE);
-      if (id > 0)
+      id = syn_get_id(curwin, ppos->file_line, col, 1, NULL, false);
+      if (id > 0) {
         id = syn_get_final_id(id);
-      else
+      } else {
         id = 0;
+      }
       // Get the line again, a multi-line regexp may invalidate it.
       line = ml_get(ppos->file_line);
 
