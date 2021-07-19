@@ -38,7 +38,14 @@ if(WIN32)
     set(LIBVTERM_PATCH_COMMAND
     ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm init
       COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm apply --ignore-whitespace
-        ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Remove-VLAs-for-MSVC.patch)
+        ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Remove-VLAs-for-MSVC.patch
+      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm apply --ignore-whitespace
+      ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Add-user-func.patch)
+  else()
+    set(LIBVTERM_PATCH_COMMAND
+    ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm init
+      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm apply --ignore-whitespace
+      ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Add-user-func.patch)
   endif()
   set(LIBVTERM_CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibvtermCMakeLists.txt
@@ -60,6 +67,8 @@ else()
                                            LDFLAGS+=-static
                                            ${DEFAULT_MAKE_CFLAGS}
                                            install)
+  set(LIBVTERM_PATCH_COMMAND patch -d ${DEPS_BUILD_DIR}/src/libvterm -Np1 --input
+    ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Add-user-func.patch)
 endif()
 
 BuildLibvterm(PATCH_COMMAND ${LIBVTERM_PATCH_COMMAND}
