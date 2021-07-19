@@ -1045,7 +1045,7 @@ static int query_next_capture(lua_State *L)
 
     uint32_t n_pred;
     ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
-    if (n_pred > 0 && capture_index == 0) {
+    if (n_pred > 0) {
       lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
       set_match(L, &match, lua_upvalueindex(2));
       lua_pushinteger(L, match.pattern_index+1);
