@@ -1379,6 +1379,7 @@ end
 ---             - focus_id if a popup with this id is opened, then focus it
 ---             - close_events list of events that closes the floating window
 ---             - focusable (boolean, default true): Make float focusable
+---             - enter (boolean, default false): Directly enter the floating window when it is created
 --@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1391,6 +1392,7 @@ function M.open_floating_preview(contents, syntax, opts)
   opts.wrap = opts.wrap ~= false -- wrapping by default
   opts.stylize_markdown = opts.stylize_markdown ~= false
   opts.close_events = opts.close_events or {"CursorMoved", "CursorMovedI", "BufHidden", "InsertCharPre"}
+  opts.enter = opts.enter == true
 
   local bufnr = api.nvim_get_current_buf()
 
@@ -1446,7 +1448,7 @@ function M.open_floating_preview(contents, syntax, opts)
   local width, height = M._make_floating_popup_size(contents, opts)
 
   local float_option = M.make_floating_popup_options(width, height, opts)
-  local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
+  local floating_winnr = api.nvim_open_win(floating_bufnr, opts.enter, float_option)
   if do_stylize then
     api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
     api.nvim_win_set_option(floating_winnr, 'concealcursor', 'n')
