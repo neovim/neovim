@@ -1199,6 +1199,26 @@ clear({bufnr}, {client_id}, {diagnostic_ns}, {sign_ns})
                                      namespace
                     {sign_ns}        number|nil Associated sign namespace
 
+disable({bufnr}, {client_id})                   *vim.lsp.diagnostic.disable()*
+                Disable diagnostics for the given buffer and client
+
+                Parameters: ~
+                    {bufnr}      (optional, number): Buffer handle, defaults
+                                 to current
+                    {client_id}  (optional, number): Disable diagnostics for
+                                 the given client. The default is to disable
+                                 diagnostics for all attached clients.
+
+enable({bufnr}, {client_id})                     *vim.lsp.diagnostic.enable()*
+                Enable diagnostics for the given buffer and client
+
+                Parameters: ~
+                    {bufnr}      (optional, number): Buffer handle, defaults
+                                 to current
+                    {client_id}  (optional, number): Enable diagnostics for
+                                 the given client. The default is to enable
+                                 diagnostics for all attached clients.
+
 get({bufnr}, {client_id})                           *vim.lsp.diagnostic.get()*
                 Return associated diagnostics for bufnr
 
