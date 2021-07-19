@@ -78,4 +78,14 @@ EXTERN bool au_did_filetype INIT(= false);
 #define AUGROUP_ERROR      -2      // erroneous autocmd group
 #define AUGROUP_ALL        -3      // all autocmd groups
 
+#define BUFLOCAL_PAT_LEN 25
+
+/// Iterates over all the events for auto commands
+#define FOR_ALL_AUEVENTS(event) \
+  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1)) // NOLINT
+
+/// Iterates over all the AutoPats for a particular event
+#define FOR_ALL_AUPATS_IN_EVENT(event, ap) \
+  for (AutoPat *ap = first_autopat[event]; ap != NULL; ap = ap->next) // NOLINT
+
 #endif  // NVIM_AUTOCMD_H

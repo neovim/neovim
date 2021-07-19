@@ -71,7 +71,6 @@ static AutoPatCmd *active_apc_list = NULL;  // stack of active autocommands
 /// List of autocmd group names
 static garray_T augroups = { 0, 0, sizeof(char_u *), 10, NULL };
 #define AUGROUP_NAME(i) (((char **)augroups.ga_data)[i])
-#define BUFLOCAL_PAT_LEN 25
 
 // use get_deleted_augroup() to get this
 static const char *deleted_augroup = NULL;
@@ -251,6 +250,13 @@ static void au_cleanup(void)
   au_need_clean = false;
 }
 
+
+// Get the first AutoPat for a particular event.
+AutoPat *au_get_autopat_for_event(event_T event)
+{
+  return first_autopat[(int)event];
+}
+
 // Called when buffer is freed, to remove/invalidate related buffer-local
 // autocmds.
 void aubuflocal_remove(buf_T *buf)
@@ -287,7 +293,7 @@ void aubuflocal_remove(buf_T *buf)
 
 // Add an autocmd group name.
 // Return its ID.  Returns AUGROUP_ERROR (< 0) for error.
-static int au_new_group(char_u *name)
+int au_new_group(char_u *name)
 {
   int i = au_find_group(name);
   if (i == AUGROUP_ERROR) {  // the group doesn't exist yet, add it.
@@ -348,7 +354,7 @@ static void au_del_group(char_u *name)
 /// @param name augroup name
 ///
 /// @return the ID or AUGROUP_ERROR (< 0) for error.
-static int au_find_group(const char_u *name)
+int au_find_group(const char_u *name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (int i = 0; i < augroups.ga_len; i++) {
@@ -419,7 +425,7 @@ void free_all_autocmds(void)
 // Return the event number for event name "start".
 // Return NUM_EVENTS if the event name was not found.
 // Return a pointer to the next event name in "end".
-static event_T event_name2nr(const char_u *start, char_u **end)
+event_T event_name2nr(const char_u *start, char_u **end)
 {
   const char_u *p;
   int i;
@@ -761,13 +767,13 @@ static int au_get_grouparg(char_u **argp)
 // If *cmd == NUL: show entries.
 // If forceit == true: delete entries.
 // If group is not AUGROUP_ALL: only use this group.
-static int do_autocmd_event(event_T event,
-                            char_u *pat,
-                            bool once,
-                            int nested,
-                            char_u *cmd,
-                            int forceit,
-                            int group)
+int do_autocmd_event(event_T event,
+                     char_u *pat,
+                     bool once,
+                     int nested,
+                     char_u *cmd,
+                     int forceit,
+                     int group)
 {
   AutoPat *ap;
   AutoPat **prev_ap;
@@ -826,6 +832,7 @@ static int do_autocmd_event(event_T event,
     is_buflocal = false;
     buflocal_nr = 0;
 
+    // TODO(autocmd): This should use aupat_is_buflocal
     if (patlen >= 8 && STRNCMP(pat, "<buffer", 7) == 0
         && pat[patlen - 1] == '>') {
       // "<buffer...>": Error will be printed only for addition.
@@ -1376,13 +1383,13 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param eap Ex command arguments
 ///
 /// @return true if some commands were executed.
-static bool apply_autocmds_group(event_T event,
-                                 char_u *fname,
-                                 char_u *fname_io,
-                                 bool force,
-                                 int group,
-                                 buf_T *buf,
-                                 exarg_T *eap)
+bool apply_autocmds_group(event_T event,
+                          char_u *fname,
+                          char_u *fname_io,
+                          bool force,
+                          int group,
+                          buf_T *buf,
+                          exarg_T *eap)
 {
   char_u *sfname = NULL;  // short file name
   char_u *tail;
@@ -2116,4 +2123,58 @@ bool au_exists(const char *const arg) FUNC_ATTR_WARN_UNUSED_RESULT
 theend:
   xfree(arg_save);
   return retval;
+}
+
+// Checks if a pattern is buflocal
+bool aupat_is_buflocal(char_u *pat, int patlen)
+{
+  return patlen >= 8
+    && STRNCMP(pat, "<buffer", 7) == 0
+    && (pat)[patlen - 1] == '>';
+}
+
+int aupat_get_buflocal_nr(char_u *pat, int patlen)
+{
+  assert(aupat_is_buflocal(pat, patlen));
+
+  if (patlen == 8) {
+    // "<buffer>"
+    return curbuf->b_fnum;
+  } else if (patlen > 9 && (pat)[7] == '=') {
+    if (patlen == 13 && STRNICMP(pat, "<buffer=abuf>", 13) == 0) {
+      // "<buffer=abuf>"
+      return autocmd_bufnr;
+    } else if (skipdigits(pat + 8) == pat + patlen - 1) {
+      // "<buffer=123>"
+      return atoi((char *)pat + 8);
+    }
+  }
+
+  return 0;
+}
+
+// normalize buffer pattern
+void aupat_normalize_buflocal_pat(
+    char_u *dest,
+    char_u *pat,
+    int patlen,
+    int buflocal_nr)
+{
+  assert(aupat_is_buflocal(pat, patlen));
+
+  if (buflocal_nr == 0) {
+    buflocal_nr = curbuf->handle;
+  }
+
+  // normalize pat into standard "<buffer>#N" form
+  snprintf(
+      (char *)dest,
+      BUFLOCAL_PAT_LEN,
+      "<buffer=%d>",
+      buflocal_nr);
+}
+
+int autocmd_delete_event(int group, event_T event, char_u *pat)
+{
+  return do_autocmd_event(event, pat, false, false, NULL, true, group);
 }
