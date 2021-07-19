@@ -70,6 +70,7 @@ end
 ---
 --- If needed this will create the parser.
 --- Unconditionnally attach the provided callback
+--- If the language has changed, the tree will be re-created.
 ---
 --- @param bufnr The buffer the parser should be tied to
 --- @param lang The filetype of this parser
@@ -86,7 +87,13 @@ function M.get_parser(bufnr, lang, opts)
     lang = a.nvim_buf_get_option(bufnr, "filetype")
   end
 
-  if parsers[bufnr] == nil then
+  local parser = parsers[bufnr]
+  if parser and parser:lang() ~= lang then
+    parser:destroy()
+    parser = nil
+  end
+
+  if parser == nil then
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
 
