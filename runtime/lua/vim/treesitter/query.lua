@@ -175,7 +175,8 @@ function M.get_node_text(node, source)
   local end_row, end_col, end_byte = node:end_()
 
   if type(source) == "number" then
-    if start_row ~= end_row then
+    local eof_row = vim.api.nvim_buf_line_count(source)
+    if start_row ~= end_row or start_row >= eof_row then
       return nil
     end
     local line = a.nvim_buf_get_lines(source, start_row, start_row+1, true)[1]
