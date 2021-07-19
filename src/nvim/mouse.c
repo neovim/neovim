@@ -721,14 +721,20 @@ int mouse_check_fold(void)
   int click_row = mouse_row;
   int click_col = mouse_col;
   int mouse_char = ' ';
+  int max_row = Rows;
+  int max_col = Columns;
+  int multigrid = ui_has(kUIMultigrid);
 
   win_T *wp;
 
   wp = mouse_find_win(&click_grid, &click_row, &click_col);
+  if (wp && multigrid) {
+    max_row = wp->w_grid_alloc.Rows;
+    max_col = wp->w_grid_alloc.Columns;
+  }
 
-  if (wp && mouse_row >= 0 && mouse_row < Rows
-      && mouse_col >= 0 && mouse_col <= Columns) {
-    int multigrid = ui_has(kUIMultigrid);
+  if (wp && mouse_row >= 0 && mouse_row < max_row
+      && mouse_col >= 0 && mouse_col < max_col) {
     ScreenGrid *gp = multigrid ? &wp->w_grid_alloc : &default_grid;
     int fdc = win_fdccol_count(wp);
     int row = multigrid && mouse_grid == 0 ? click_row : mouse_row;
