@@ -207,7 +207,9 @@ local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_lines = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_counts = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_attached_buffers = {}
-local diagnostic_disabled_buffers = {}
+
+-- Disabled buffers and clients
+local diagnostic_disabled = setmetatable({}, bufnr_and_client_cacher_mt)
 
 local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
 
@@ -1093,7 +1095,7 @@ end
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
-  if diagnostic_disabled_buffers[bufnr] then
+  if diagnostic_disabled[bufnr][client_id] then
     return
   end
 
@@ -1288,41 +1290,55 @@ function M.set_loclist(opts)
   end
 end
 
---- Disable diagnostics for the given buffer
+--- Disable diagnostics for the given buffer and client
 --- @param bufnr (optional, number): Buffer handle, defaults to current
+--- @param client_id (optional, number): Disable diagnostics for the given
+---        client. The default is to disable diagnostics for all attached
+---        clients.
 -- Note that when diagnostics are disabled for a buffer, the server will still
 -- send diagnostic information and the client will still process it. The
 -- diagnostics are simply not displayed to the user.
-function M.disable(bufnr)
-  bufnr = get_bufnr(bufnr)
-  diagnostic_disabled_buffers[bufnr] = true
-  M.clear(bufnr)
+function M.disable(bufnr, client_id)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.disable(bufnr, client.id)
+    end)
+  end
+
+  diagnostic_disabled[bufnr][client_id] = true
+  M.clear(bufnr, client_id)
 end
 
---- Enable diagnostics for the given buffer
+--- Enable diagnostics for the given buffer and client
 --- @param bufnr (optional, number): Buffer handle, defaults to current
-function M.enable(bufnr)
-  bufnr = get_bufnr(bufnr)
-  if not diagnostic_disabled_buffers[bufnr] then
+--- @param client_id (optional, number): Enable diagnostics for the given
+---        client. The default is to enable diagnostics for all attached
+---        clients.
+function M.enable(bufnr, client_id)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.enable(bufnr, client.id)
+    end)
+  end
+
+  if not diagnostic_disabled[bufnr][client_id] then
     return
   end
 
-  diagnostic_disabled_buffers[bufnr] = nil
+  diagnostic_disabled[bufnr][client_id] = nil
 
   -- We need to invoke the publishDiagnostics handler directly instead of just
   -- calling M.display so that we can preserve any custom configuration options
   -- the user may have set with vim.lsp.with.
-  vim.lsp.for_each_buffer_client(bufnr, function(client)
-    vim.lsp.handlers["textDocument/publishDiagnostics"](
-      nil,
-      "textDocument/publishDiagnostics",
-      {
-        diagnostics = M.get(bufnr, client.id),
-        uri = vim.uri_from_bufnr(bufnr),
-      },
-      client.id
-    )
-  end)
+  vim.lsp.handlers["textDocument/publishDiagnostics"](
+    nil,
+    "textDocument/publishDiagnostics",
+    {
+      diagnostics = M.get(bufnr, client_id),
+      uri = vim.uri_from_bufnr(bufnr),
+    },
+    client_id
+  )
 end
 -- }}}
 
