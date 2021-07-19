@@ -252,7 +252,18 @@ function M.rename(new_name)
   -- TODO(ashkan) use prepareRename
   -- * result: [`Range`](#range) \| `{ range: Range, placeholder: string }` \| `null` describing the range of the string to rename and optionally a placeholder text of the string content to be renamed. If `null` is returned then it is deemed that a 'textDocument/rename' request is not valid at the given position.
   local params = util.make_position_params()
-  new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
+  local current_name = vfn.expand('<cword>')
+
+  -- ensure the current name is not bigger than 30% of the window width; if it is, we do not display it in the prompt
+  local winwidth = vfn.winwidth(0)
+  local prompt
+  if vfn.strdisplaywidth(current_name) < winwidth * 0.3 then
+    prompt = string.format("Rename '%s': ", current_name)
+  else
+    prompt = 'Rename: '
+  end
+
+  new_name = new_name or npcall(vfn.input, prompt, current_name)
   if not (new_name and #new_name > 0) then return end
   params.newName = new_name
   request('textDocument/rename', params)
