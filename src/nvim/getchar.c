@@ -2995,6 +2995,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 mp->m_expr = args->expr;
                 mp->m_script_ctx = current_sctx;
                 mp->m_script_ctx.sc_lnum += sourcing_lnum;
+                nlua_set_sctx(&mp->m_script_ctx);
                 did_it = true;
               }
             }
@@ -3071,6 +3072,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   mp->m_expr = args->expr;
   mp->m_script_ctx = current_sctx;
   mp->m_script_ctx.sc_lnum += sourcing_lnum;
+  nlua_set_sctx(&mp->m_script_ctx);
 
   // add the new entry in front of the abbrlist or maphash[] list
   if (is_abbrev) {

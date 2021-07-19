@@ -33,6 +33,19 @@ local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
+-- C code snippets wraping actual api call
+-- /*** API CALL ***/ gets replaced with actual call
+local function_wraps = {
+  nvim_exec = [[
+
+    const sctx_T save_current_sctx = current_sctx;
+    current_sctx.sc_sid = SID_LUA;
+
+/*** API CALL ***/
+    current_sctx = save_current_sctx;
+]],
+}
+
 -- read each input file, parse and append to the api metadata
 for i = 6, #arg do
   local full_path = arg[i]
@@ -466,33 +479,38 @@ local function process_function(fn)
       return lua_error(lstate);
     }
   ]]
-  local return_type
+  local return_type, api_call
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
       return_type = 'Array'
     else
       return_type = fn.return_type
     end
-    write_shifted_output(output, string.format([[
+    api_call = string.format([[
     const %s ret = %s(%s);
     nlua_push_%s(lstate, ret, true);
     api_free_%s(ret);
-  %s
-  %s
-    return 1;
-    ]], fn.return_type, fn.name, cparams, return_type, return_type:lower(),
-        free_at_exit_code, err_throw_code))
+]], fn.return_type, fn.name, cparams, return_type, return_type:lower())
   else
-    write_shifted_output(output, string.format([[
+    api_call = string.format([[
     %s(%s);
-  %s
-  %s
-    return 0;
-    ]], fn.name, cparams, free_at_exit_code, err_throw_code))
+    ]], fn.name, cparams)
   end
-  write_shifted_output(output, [[
+
+  if function_wraps[fn.name] then
+    local replaced_api_call, count = function_wraps[fn.name]:gsub('/*** API CALL ***/', api_call, 1)
+    if count == 1 then
+      api_call = replaced_api_call
+    end
+  end
+
+  write_shifted_output(output, api_call)
+  write_shifted_output(output, string.format([[
+  %s
+  %s
+    return %d;
   }
-  ]])
+]], free_at_exit_code, err_throw_code, (fn.return_type ~= 'void' and 1 or 0)))
 end
 
 for _, fn in ipairs(functions) do

@@ -23,6 +23,7 @@
 #include "nvim/state.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
+#include "nvim/lua/executor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 #include "auevents_name_map.generated.h"
@@ -954,6 +955,7 @@ static int do_autocmd_event(event_T event,
       ac->cmd = vim_strsave(cmd);
       ac->script_ctx = current_sctx;
       ac->script_ctx.sc_lnum += sourcing_lnum;
+      nlua_set_sctx(&ac->script_ctx);
       ac->next = NULL;
       *prev_ac = ac;
       ac->once = once;

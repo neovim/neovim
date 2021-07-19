@@ -34,6 +34,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/event/time.h"
 #include "nvim/event/loop.h"
+#include "nvim/eval/typval.h"
 
 #include "nvim/os/os.h"
 
@@ -1779,3 +1780,58 @@ void nlua_execute_log_keystroke(int c)
 #endif
 }
 
+// Get sctx of current file being sourc3d if doesn't exsist genarate it
+static sctx_T *nlua_get_sourcing_sctx(void)
+{
+  lua_State *const lstate = nlua_enter();
+  sctx_T *retval = (sctx_T *)xmalloc(sizeof(sctx_T));
+  retval->sc_seq = -1;
+  retval->sc_sid = SID_LUA;
+  retval->sc_lnum = -1;
+  lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
+  char *runtime_path = vim_getenv("VIMRUNTIME");
+
+#ifdef WIN32
+  // Why does $VIMRUNTIME have '/' as path separator in windows ?
+  for (int i = 0; runtime_path[i] != '\0'; i++) {
+    if (runtime_path[i] == '/' && !(i > 0 && runtime_path[i-1] == '\\')) {
+      runtime_path[i] = '\\';
+    }
+  }
+#endif
+
+  for (int level = 1; true; level++) {
+    if (lua_getstack(lstate, level, info) != 1) {
+      goto cleanup;
+    }
+    if (lua_getinfo(lstate, "nSl", info) == 0) {
+      goto cleanup;
+    }
+
+    if (info->what[0] == 'C' || info->source[0] != '@'
+        || strstr(info->source, runtime_path) == info->source + 1) {
+      continue;
+    }
+    break;
+  }
+  char *source_path = fix_fname(info->source + 1);
+  get_current_script_id((const char_u *)source_path, retval);
+  retval->sc_lnum = info->currentline;
+  xfree(source_path);
+
+cleanup:
+  xfree(info);
+  xfree(runtime_path);
+  return retval;
+}
+
+// Set lua sctx for verbose output when a lua file is being sourced
+// @param[out] current
+void nlua_set_sctx(sctx_T *current)
+{
+  if (current->sc_sid == SID_LUA) {
+    sctx_T *lua_sctx = nlua_get_sourcing_sctx();
+    *current = *lua_sctx;
+    xfree(lua_sctx);
+  }
+}
