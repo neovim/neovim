@@ -56,7 +56,7 @@ describe('folding', function()
     feed_command('call append("$", foldlevel("."))')
     feed('jo{{ <esc>r{jj') -- writes '{{{' and moves 2 lines bot
     feed_command('call append("$", foldlevel("."))')
-    feed('kYpj')
+    feed('kyypj')
     feed_command('call append("$", foldlevel("."))')
 
     helpers.poke_eventloop()

@@ -986,10 +986,10 @@ inside of strings can change!  Also see 'softtabstop' option. >
 
 							*Y*
 ["x]Y			yank [count] lines [into register x] (synonym for
-			yy, |linewise|).  If you like "Y" to work from the
-			cursor to the end of line (which is more logical,
-			but not Vi-compatible) use ":map Y y$".
-
+			yy, |linewise|). This is the builtin mapping, see
+			|Y-default| for neovim's default mapping.
+							*Y-default*
+["x]Y                   This command maps to "y$". see |nvim-default-mappings|
 							*zy*
 ["x]zy{motion}		Yank {motion} text [into register x].  Only differs
 			from `y` when selecting a block of text, see |v_zy|.

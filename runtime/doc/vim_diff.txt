@@ -73,6 +73,12 @@ the differences.
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
 ==============================================================================
+3. Default Mappings                              *nvim-default-mappings*
+
+- Y is mapped to y$
+
+
+==============================================================================
 3. New Features						       *nvim-features*
 
 MAJOR COMPONENTS ~
