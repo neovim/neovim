@@ -366,11 +366,19 @@ int main(int argc, char **argv)
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
+  // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
+  bool enable_syntax =
+    (params.use_vimrc == NULL || !strequal(params.use_vimrc, "NONE"));
+
+  // Source syncolor.vim to set up default UI highlights
+  if (enable_syntax) {
+    source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
+  }
+
   // Source startup scripts.
   source_startup_scripts(&params);
 
-  // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
-  if (params.use_vimrc == NULL || !strequal(params.use_vimrc, "NONE")) {
+  if (enable_syntax) {
     // Does ":filetype plugin indent on".
     filetype_maybe_enable();
     // Sources syntax/syntax.vim, which calls `:filetype on`.
