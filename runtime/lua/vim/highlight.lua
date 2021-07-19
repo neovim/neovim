@@ -79,8 +79,14 @@ function highlight.on_yank(opts)
   local pos1 = vim.fn.getpos("'[")
   local pos2 = vim.fn.getpos("']")
 
-  pos1 = {pos1[2] - 1, pos1[3] - 1 + pos1[4]}
-  pos2 = {pos2[2] - 1, pos2[3] - 1 + pos2[4]}
+  if event.regtype == 'V' then
+    pos1 = {pos1[2] - 1, pos1[3] - 1}
+    pos2 = {pos2[2] - 1, pos2[3] - 1}
+  else
+    pos1 = {pos1[2] - 1, pos1[3] - 1 + pos1[4]}
+    pos2 = {pos2[2] - 1, pos2[3] - 1 + pos2[4]}
+  end
+
 
   highlight.range(bufnr, yank_ns, higroup, pos1, pos2, event.regtype, event.inclusive)
 
