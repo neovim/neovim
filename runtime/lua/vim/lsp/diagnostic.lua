@@ -359,78 +359,40 @@ end
 ---@param bufnr number
 ---@param client_id number|nil If nil, then return all of the diagnostics.
 ---                            Else, return just the diagnostics associated with the client_id.
-function M.get(bufnr, client_id)
+---@param opts table|nil Configuration keys
+---         - severity: (DiagnosticSeverity, default nil)
+---             - Only return diagnostics with this severity. Overrides severity_limit
+---         - severity_limit: (DiagnosticSeverity, default nil)
+---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---@param predicate function|nil Optional function for filtering diagnostics
+---@param comp      function|nil Optional function for sorting diagnostics
+function M.get(bufnr, client_id, opts, predicate, comp)
+  opts = opts or {}
+  predicate = predicate or function(_) return true end
   if client_id == nil then
     local all_diagnostics = {}
     for iter_client_id, _ in pairs(diagnostic_cache[bufnr]) do
       local iter_diagnostics = M.get(bufnr, iter_client_id)
 
       for _, diagnostic in ipairs(iter_diagnostics) do
-        table.insert(all_diagnostics, diagnostic)
+        if predicate(diagnostic) then
+          table.insert(all_diagnostics, diagnostic)
+        end
       end
+    end
+    if opts.severity then
+      all_diagnostics = filter_to_severity_limit(opts.severity, all_diagnostics)
+    elseif opts.severity_limit then
+      all_diagnostics = filter_by_severity_limit(opts.severity_limit, all_diagnostics)
+    end
+    if comp then
+      table.sort(all_diagnostics, comp)
     end
 
     return all_diagnostics
   end
 
   return diagnostic_cache[bufnr][client_id] or {}
-end
-
---- Get the diagnostics by position
----
----@param bufnr number|nil The buffer number
----@param position table|nil The (0,0)-indexed position
----@param opts table|nil Configuration keys
----         - severity: (DiagnosticSeverity, default nil)
----             - Only return diagnostics with this severity. Overrides severity_limit
----         - severity_limit: (DiagnosticSeverity, default nil)
----             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
----@param client_id number|nil the client id
----@return table Table with map of line number to list of diagnostics.
---               Structured: { [1] = {...}, [5] = {.... } }
-function M.get_position_diagnostics(bufnr, position, opts, client_id)
-  opts = opts or {}
-
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if not position then
-    local curr_position = vim.api.nvim_win_get_cursor(0)
-    curr_position[1] = curr_position[1] - 1
-    position = curr_position
-  end
-
-  local client_get_diags = function(iter_client_id)
-    local line_diags = (diagnostic_cache_lines[bufnr][iter_client_id] or {})[position[1]] or {}
-    local position_diags = {}
-    for _, diag in pairs(line_diags) do
-      if position[2] >= diag.range['start'].character and
-        (position[2] <= diag.range['end'].character or position[1] < diag.range['end'].line) then
-        table.insert(position_diags, diag)
-      end
-    end
-    return position_diags
-  end
-
-  local position_diagnostics
-  if client_id == nil then
-    position_diagnostics = {}
-    for iter_client_id, _ in pairs(diagnostic_cache_lines[bufnr]) do
-      for _, diagnostic in ipairs(client_get_diags(iter_client_id)) do
-        table.insert(position_diagnostics, diagnostic)
-      end
-    end
-  else
-    position_diagnostics = vim.deepcopy(client_get_diags(client_id))
-  end
-
-  if opts.severity then
-    position_diagnostics = filter_to_severity_limit(opts.severity, position_diagnostics)
-  elseif opts.severity_limit then
-    position_diagnostics = filter_by_severity_limit(opts.severity_limit, position_diagnostics)
-  end
-
-  table.sort(position_diagnostics, function(a, b) return a.severity < b.severity end)
-
-  return position_diagnostics
 end
 
 --- Get the diagnostics by line
@@ -1281,21 +1243,27 @@ end
 --- Open a floating window with the diagnostics from {position}
 
 ---@param opts table Configuration table
----     - all opts for |vim.lsp.diagnostic.get_position_diagnostics()| and
---           |show_diagnostics()| can be used here
+---     - all opts for |vim.lsp.diagnostic.get()| and |show_diagnostics()| can
+--        be used here
 ---@param buf_nr number|nil The buffer number
 ---@param position table|nil The (0,0)-indexed position
----@param client_id number|nil the client id
 ---@return table {popup_bufnr, win_id}
-function M.show_position_diagnostics(opts, buf_nr, position, client_id)
+function M.show_position_diagnostics(opts, buf_nr, position)
   opts = opts or {}
   opts.focus_id = "position_diagnostics"
+  buf_nr = buf_nr or vim.api.nvim_get_current_buf()
   if not position then
     local curr_position = vim.api.nvim_win_get_cursor(0)
     curr_position[1] = curr_position[1] - 1
     position = curr_position
   end
-  local position_diagnostics = M.get_position_diagnostics(buf_nr, position, opts, client_id)
+  local predicate = function(diag)
+    return position[1] == diag.range['start'].line and
+    position[2] >= diag.range['start'].character and
+    (position[2] <= diag.range['end'].character or position[1] < diag.range['end'].line)
+  end
+  local comp = function(a, b) return a.severity < b.severity end
+  local position_diagnostics = M.get(buf_nr, nil, opts, predicate, comp)
   return show_diagnostics(opts, position_diagnostics)
 end
 
