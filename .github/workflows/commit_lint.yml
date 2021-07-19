@@ -1,0 +1,13 @@
+name: "Commit Linter"
+on: [pull_request]
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          fetch-depth: 0
+      - run: npm install --save-dev @commitlint/{cli,config-conventional}
+      - run: |
+          echo "module.exports = { extends: ['@commitlint/config-conventional'] };" > commitlint.config.js
+      - run: npx commitlint --from HEAD~1 --to HEAD --verbose
