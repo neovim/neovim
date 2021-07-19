@@ -19,6 +19,8 @@ local nvim = helpers.nvim
 local sleep = helpers.sleep
 local nvim_dir = helpers.nvim_dir
 local assert_alive = helpers.assert_alive
+local reltime = helpers.funcs.reltime
+local reltimefloat = helpers.funcs.reltimefloat
 
 local default_text = [[
   Inc substitution on
@@ -1277,6 +1279,52 @@ describe(":substitute, inccommand=split", function()
       {15:~                             }|
       :echo 'foo'^                   |
     ]])
+  end)
+
+  it("is fast when previewing", function()
+    -- do not disable inccomand if it is slow
+    command("set rdt=999999999")
+    -- Load a big file.
+    feed_command("silent edit! test/functional/fixtures/bigfile_manylines.txt")
+    command("set modifiable")
+
+    --[[
+    -- this is a benchmark, so here's a bit of ceremony
+    command("set inccommand=split")
+    for i = 1,9,1 do
+      feed(":%s/de"..tostring(i-1).."/de"..tostring(i).."/<Esc>")
+    end
+
+    command("set inccommand=")
+    for i = 1,9,1 do
+      command("%s/de"..tostring(i-1).."/de"..tostring(i).."/g")
+    end
+    ]]
+
+    -- now that the caches are warm, we measure full-file substitution vs.
+    -- a preview (which runs 4 times each time)
+    command("set inccommand=split")
+    local before_icm = reltime()
+    for i = 1,9,1 do
+      feed(":%s/de0/de"..tostring(i).."/<Esc>")
+      wait()
+    end
+    local time_icm = reltimefloat(reltime(before_icm))
+
+    --[[
+    command("edit!")
+    command("set inccommand=")
+    local before_subst = reltime()
+    for i = 1,9,1 do
+      command("%s/de"..tostring(i-1).."/de"..tostring(i).."/g")
+    end
+    local time_subst = reltimefloat(reltime(before_subst))
+
+    -- the substitution churns through 10k lines, while the preview only looks
+    -- at 12 (default of previewhight), so the following should hold on any
+    -- system, even with a lot of variation 
+    eq(time_icm, time_subst)
+    ]]
   end)
 
 end)
