@@ -7241,6 +7241,15 @@ bool callback_call(Callback *const callback, const int argcount_in,
     case kCallbackFuncref:
       name = callback->data.funcref;
       partial = NULL;
+      int len = (int)STRLEN(name);
+      if (len >= 6 && !memcmp(name, "v:lua.", 6)) {
+        name += 6;
+        len = check_luafunc_name((const char *)name, false);
+        if (len == 0) {
+          abort();
+        }
+        partial = vvlua_partial;
+      }
       break;
 
     case kCallbackPartial:
