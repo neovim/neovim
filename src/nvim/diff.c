@@ -59,6 +59,7 @@ static bool diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_INTERNAL   0x200   // use internal xdiff algorithm
 #define DIFF_CLOSE_OFF  0x400   // diffoff when closing window
 #define DIFF_FOLLOWWRAP 0x800   // follow the wrap option
+#define DIFF_LINEMATCH  0x1000   // match most similar lines within diff
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF;
 
@@ -453,6 +454,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
         }
       }
       dprev->df_next = dp->df_next;
+      xfree(dp->df_comparisonlines);
       xfree(dp);
       dp = dprev->df_next;
     } else {
@@ -476,6 +478,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 
     if (i == DB_COUNT) {
       diff_T *dnext = dp->df_next;
+      xfree(dp->df_comparisonlines);
       xfree(dp);
       dp = dnext;
 
@@ -512,8 +515,9 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 static diff_T* diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *dnew = xmalloc(sizeof(*dnew));
-
+  dnew->df_redraw = 1;
   dnew->df_next = dp;
+  dnew->df_comparisonlines = NULL;
   if (dprev == NULL) {
     tp->tp_first_diff = dnew;
   } else {
@@ -651,7 +655,7 @@ void diff_redraw(bool dofold)
 
     // A change may have made filler lines invalid, need to take care
     // of that for other windows.
-    int n = diff_check(wp, wp->w_topline);
+    int n = diff_check(wp, wp->w_topline, NULL);
 
     if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
       if (wp->w_topfill > n) {
@@ -1311,7 +1315,7 @@ void ex_diffsplit(exarg_T *eap)
         if (bufref_valid(&old_curbuf)) {
           // Move the cursor position to that of the old window.
           curwin->w_cursor.lnum = diff_get_corresponding_line(
-              old_curbuf.br_buf, old_curwin->w_cursor.lnum);
+              old_curbuf.br_buf, old_curwin, old_curwin->w_cursor.lnum);
         }
       }
       // Now that lines are folded scroll to show the cursor at the same
@@ -1665,6 +1669,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
 
       while (dn != dp->df_next) {
         dpl = dn->df_next;
+        xfree(dn->df_comparisonlines);
         xfree(dn);
         dn = dpl;
       }
@@ -1735,10 +1740,695 @@ void diff_clear(tabpage_T *tp)
   diff_T *next_p;
   for (p = tp->tp_first_diff; p != NULL; p = next_p) {
     next_p = p->df_next;
+    xfree(p->df_comparisonlines);
     xfree(p);
   }
   tp->tp_first_diff = NULL;
 }
+
+///
+/// return true if the options are set to use diff linematch
+///
+bool diff_linematch(diff_T *dp)
+{
+  if (!(diff_flags & DIFF_LINEMATCH)) {
+        return 0;
+  }
+  // are there more than three diff buffers?
+  int diffbuffers = 0;
+  int tsize = 0;
+  for (int i = 0; i < DB_COUNT; i++) {
+    if ( curtab->tp_diffbuf[i] != NULL ) {
+      diffbuffers++;
+      tsize += dp->df_count[i];
+    }
+  }
+  // avoid allocating a huge array because it will lag
+  if (tsize > linematch_lines) {
+    return 0;
+  }
+  if (diffbuffers <= 3) {  // can diff up to 3 buffers
+    return 1;
+  }
+  return 0;
+}
+
+///
+/// Count the number of virtual (filler + non filler) lines between "start" and
+/// "endline" in "win"
+///
+/// @param win
+/// @param start
+/// @param endline
+int count_virtual_lines(win_T *win, linenr_T start, linenr_T endline)
+{
+  int virtual_lines = 0;
+  for (int k = start; k <= endline; k++) {
+    int n = diff_check(win, k, NULL);
+    if (n > 0) {
+        virtual_lines+=n;  // filler lines
+    }
+    virtual_lines++;
+  }
+  return virtual_lines;
+}
+/// in "win" window, move from "lnum" down by the amount "virtual_lines"
+/// and return the number of real lines moved. if a non null pointer is
+/// passed to "line_new_virtualp", it will be set to the number of virtual
+/// lines moved
+///
+/// @param win
+/// @param lnum
+/// @param virtual_lines
+/// @param line_new_virtualp
+int count_virtual_to_real(win_T *win, const linenr_T lnum,
+                          const int virtual_lines, int *line_new_virtualp )
+{
+  int real_offset = 0;
+  int virtual_offset = 0;
+  while (1) {
+    int n = diff_check(win, lnum+real_offset, NULL);
+    virtual_offset++;
+    if (n > 0) {
+        virtual_offset+=n;  // filler lines
+    }
+    if (virtual_offset > virtual_lines) {
+        break;
+    }
+    real_offset++;
+  }
+  if ( line_new_virtualp != NULL ) {
+    (*line_new_virtualp) = virtual_offset;
+  }
+  return real_offset;
+}
+
+/// return the number of matching characters between two strings
+///
+/// @param s1
+/// @param s2
+long count_matched_chars(const char_u *s1, const char_u *s2)
+{
+  long l1 = (long)STRLEN(s1), l2 = (long)STRLEN(s2);
+  if ( diff_flags & DIFF_IWHITE || diff_flags & DIFF_IWHITEALL
+      || diff_flags & DIFF_ICASE ) {
+    bool iwhite = (diff_flags & DIFF_IWHITEALL || diff_flags & DIFF_IWHITE);
+    // the newly processed strings that will be compared
+    char_u *s1_proc = xmalloc(STRLEN(s1) * sizeof(char_u));
+    char_u *s2_proc = xmalloc(STRLEN(s2) * sizeof(char_u));
+    // delete the white space characters,
+    // and/or replace all upper case with lower
+    char_u *strsproc[2] = { s1_proc, s2_proc };
+    const char_u *strsorig[2] = { s1, s2 };
+    long slen[2] = { l1, l2 };
+    for (int k = 0; k < 2; k++) {
+      int d = 0, i = 0;
+      while (d+i < slen[k]) {
+        if ((iwhite)?(strsorig[k][i+d] != ' ' && strsorig[k][i+d] != '\t'):1) {
+          strsproc[k][i] = (diff_flags & DIFF_ICASE)?
+           (tolower(strsorig[k][i+d])):(strsorig[k][i+d]);
+          i++;
+        } else { d++; }
+      }
+      strsproc[k][i] = '\0';
+    }
+    long matching = matching_characters(s1_proc, s2_proc);
+    xfree(s1_proc), xfree(s2_proc);
+    return matching;
+  }
+  // compare strings without changing the white space / case
+  return matching_characters(s1, s2);
+}
+/// helper function for the diff alignment algorithm copy the newly found
+/// optimal path to an index in the tensor for more detailed algorith
+/// description, see "linematch_3buffers" for the current diff hunk "dp",
+/// the "score" and path at index "i","j","k" is updated from the path
+/// from "_i","_j","_k" choice is represented by enum value "choice"
+///
+/// @param dp
+/// @param df_pathmatrix3
+/// @param score
+/// @param i
+/// @param j
+/// @param k
+/// @param _i
+/// @param _j
+/// @param _k
+/// @param choice
+void update_path3(diff_T *dp, diffcomparisonpath3_T ***df_pathmatrix3,
+                  int score, int i, int j, int k, int _i, int _j, int _k,
+                  enum df_path3_choice choice)
+{
+  df_pathmatrix3[i][j][k].df_lev_score = score;
+  for (int __k = 0; __k < df_pathmatrix3[_i][_j][_k].df_path_index; __k++) {
+    df_pathmatrix3[i][j][k].df_path3[__k]=
+      df_pathmatrix3[_i][_j][_k].df_path3[__k]; }
+  df_pathmatrix3[i][j][k].df_path_index =
+    df_pathmatrix3[_i][_j][_k].df_path_index;
+  df_pathmatrix3[i][j][k].df_path3
+    [df_pathmatrix3[i][j][k].df_path_index] = choice;  // this choice
+  df_pathmatrix3[i][j][k].df_path_index++;
+}
+/// helper function for the diff alignment algorithm copy the newly found
+/// optimal path to an index in the tensor for more detailed algorith
+/// description, see "linematch_2buffers" for the current diff hunk "dp",
+/// the "score" and path at index "i","j"is updated from the path from
+/// "_i","_j",choice is represented by enum value "choice"
+///
+/// @param dp
+/// @param df_pathmatrix2
+/// @param score
+/// @param i
+/// @param j
+/// @param _i
+/// @param _j
+/// @param choice
+void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
+                  int score, int i, int j, int _i, int _j,
+                  enum df_path2_choice choice)
+{
+  df_pathmatrix2[i][j].df_lev_score = score;
+  for (int k = 0; k < df_pathmatrix2[_i][_j].df_path_index; k++) {
+    df_pathmatrix2[i][j].df_path2[k]=
+      df_pathmatrix2[_i][_j].df_path2[k]; }
+  df_pathmatrix2[i][j].df_path_index = df_pathmatrix2[_i][_j].df_path_index;
+  df_pathmatrix2[i][j].df_path2
+    [df_pathmatrix2[i][j].df_path_index] = choice;  // this choice
+  df_pathmatrix2[i][j].df_path_index++;
+}
+/// return matching characters between "s1" and "s2"
+/// between string "s1" and "s2".
+/// Consider the case of two strings 'AAACCC' and 'CCCAAA', the
+/// return value from this function will be 3, either to match
+/// the 3 C's, or the 3 A's.
+///
+/// @param s1
+/// @param s2
+long matching_characters(const char_u *s1, const char_u *s2)
+{
+    long s1len = (long)STRLEN(s1), s2len = (long)STRLEN(s2);
+    long *matrix[2];
+    matrix[0] = xmalloc(sizeof(long) * (s2len+1));
+    matrix[1] = xmalloc(sizeof(long) * (s2len+1));
+    bool icur = 1;  // save space by storing only two rows for i axis
+    for (long i = 0; i <= s1len; i++) {
+      icur = !icur;
+      for (long j = 0; j <= s2len; j++) {
+        if (i == 0) {
+          matrix[icur][j] = 0;
+        } else if (j == 0) {
+          matrix[icur][j] = 0;
+        } else {
+          matrix[icur][j] = 0;
+          // skip char in s1
+          if (matrix[!icur][j] > matrix[icur][j]) {
+            matrix[icur][j] = matrix[!icur][j];
+          }
+          // skip char in s2
+          if (matrix[icur][j-1] > matrix[icur][j]) {
+            matrix[icur][j] = matrix[icur][j-1];
+          }
+          // compare char in s1 and s2
+          if ( (s1[i-1] == s2[j-1])
+              && (matrix[!icur][j-1] + 1) > matrix[icur][j] ) {
+            matrix[icur][j] = matrix[!icur][j-1] + 1;
+          }
+        }
+      }
+    }
+    long rvalue = matrix[icur][s2len];
+    xfree(matrix[0]), xfree(matrix[1]);
+    return rvalue;
+}
+/// Helper function for the diff alignment algorithm.
+/// "dp->df_comparisonlines" represents a 2d array. indexed as
+/// [buffer][line number] where the line number index represents the
+/// offset from the start of the diff block indicated by dp->lnum[id]. The
+/// comparison line in the other buffers is initialized to -1. It may
+/// remain as -1 if the line is not compared.
+///
+/// @param dp
+/// @param thisb
+/// @param thisp
+/// @param otherb1
+/// @param otherb2
+void initialize_compareline3(diff_T *dp, int thisb, int thisp,
+                             int otherb1, int otherb2)
+{
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
+                         ].df_compare[otherb1]=-1;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
+                         ].df_compare[otherb2]=-1;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
+                         ].df_newline = false;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_filler = 0;
+}
+/// Helper function for the diff alignment algorithm.
+/// "dp->df_comparisonlines" represents a 2d array. indexed as
+/// [buffer][line number] where the line number index represents the
+/// offset from the start of the diff block indicated by dp->lnum[id]. The
+/// comparison line in the other buffers is initialized to -1. It may
+/// remain as -1 if the line is not compared.
+///
+/// @param dp
+/// @param thisb
+/// @param thisp
+/// @param otherb
+void initialize_compareline2(diff_T *dp, int thisb, int thisp, int otherb)
+{
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
+                         ].df_compare[otherb] = -1;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
+                         ].df_newline = false;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_filler = 0;
+}
+/// the 2d (for two buffers) implementation of the linematch diff
+/// algorithm for aligning the most similar lines when constructing diff
+/// views. For a general description of the algorithm, see
+/// linematch_3buffers
+///
+/// @param dp
+void linematch_2buffers(diff_T *dp)
+{
+  int b0 = dp->df_valid_buffers[0];
+  int b1 = dp->df_valid_buffers[1];
+  diffcomparisonpath2_T **df_pathmatrix2 =
+    // for previous and next row
+    xmalloc( (2) * sizeof( diffcomparisonpath2_T * ));
+  for (int i = 0; i < (2); i++) {
+    df_pathmatrix2[i]=
+      xmalloc((dp->df_count[b1]+1) * sizeof(diffcomparisonpath2_T));
+    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
+      df_pathmatrix2[i][j].df_path2=
+        xmalloc((dp->df_count[b0]+dp->df_count[b1]) *
+                sizeof(enum df_path2_choice));
+    }
+  }
+  bool icur = 1;
+  int score;
+  for (int i = 0; i <= dp->df_count[b0]; i++) {
+    icur=!icur;
+    for (int j = 0; j <= dp->df_count[b1]; j++) {
+      if (i == 0 && j == 0) {
+        df_pathmatrix2[0][0].df_lev_score = 0;
+        df_pathmatrix2[0][0].df_path_index = 0;
+      } else if (i == 0) {
+        score = df_pathmatrix2[0][j-1].df_lev_score;
+        update_path2(dp, df_pathmatrix2, score, 0, j,  // to
+                     0, j-1,  // from
+                     DFPATH2_SKIP1);  // choice
+      } else if (j == 0) {
+        score = df_pathmatrix2[!icur][0].df_lev_score;
+        update_path2(dp, df_pathmatrix2, score, icur, 0,  // to
+                     !icur, 0,  // from
+                     DFPATH2_SKIP0);  // choice
+      } else {
+         df_pathmatrix2[icur][j].df_lev_score = -1;
+        score =
+          df_pathmatrix2[!icur][j-1].df_lev_score+
+          count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+        if (score > df_pathmatrix2[icur][j].df_lev_score) {
+          update_path2(dp, df_pathmatrix2, score, icur, j,
+                       !icur, j-1,  // from
+                       DFPATH2_COMPARE01);  // choice
+        }
+        score = df_pathmatrix2[!icur][j].df_lev_score;
+        if (score > df_pathmatrix2[icur][j].df_lev_score) {
+          update_path2(dp, df_pathmatrix2, score, icur, j,
+                       !icur, j,  // from
+                       DFPATH2_SKIP0);  // choice
+        }
+        score = df_pathmatrix2[icur][j-1].df_lev_score;
+        if (score > df_pathmatrix2[icur][j].df_lev_score) {
+          update_path2(dp, df_pathmatrix2, score, icur, j,
+                       icur, j-1,  // from
+                       DFPATH2_SKIP1);  // choice
+        }
+      }
+    }
+  }
+  int p0 = 0, p1 = 0;  // i, j
+  int maxlines = 0;
+  if (dp->df_count[b0] > maxlines) { maxlines = dp->df_count[b0]; }
+  if (dp->df_count[b1] > maxlines) { maxlines = dp->df_count[b1]; }
+  dp->df_arr_col_size = maxlines+1;
+  dp->df_comparisonlines=
+  xmalloc(DB_COUNT * (dp->df_arr_col_size) * sizeof(df_linecompare_T));
+  initialize_compareline2(dp, b0, p0, b1);
+  initialize_compareline2(dp, b1, p1, b0);
+  for (int i = 0; i < df_pathmatrix2
+       [icur][dp->df_count[b1]].df_path_index; i++) {
+    int p = df_pathmatrix2[icur][dp->df_count[b1]].df_path2[i];
+    if (p == DFPATH2_SKIP0) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_newline = true;
+      p0++;
+      initialize_compareline2(dp, b0, p0, b1);
+    } else if (p == DFPATH2_COMPARE01) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1]=p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0]=p0;
+      p1++, p0++;
+      initialize_compareline2(dp, b0, p0, b1);
+      initialize_compareline2(dp, b1, p1, b0);
+    } else if (p == DFPATH2_SKIP1) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_newline = true;
+      p1++;
+      initialize_compareline2(dp, b1, p1, b0);
+    }
+  }
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
+      xfree(df_pathmatrix2[i][j].df_path2);
+    }
+    xfree(df_pathmatrix2[i]);
+  }
+  xfree(df_pathmatrix2);
+}
+
+/// The 3d case (for 3 buffers) of the algorithm implemented when diffopt
+/// 'linematch' is enabled. The algorithm constructs a 3d tensor to
+/// compare a diff between 3 buffers. The dimmensions of the tensor are
+/// the length of the diff in each buffer plus 1 A path is constructed by
+/// moving from one edge of the cube/3d tensor to the opposite edge.
+/// Motions from one cell of the cube to the next represent decisions. In
+/// a 3d cube, there are a total of 7 decisions that can be made,
+/// represented by the enum df_path3_choice which is defined in
+/// buffer_defs.h a comparison of buffer 0 and 1 represents a motion
+/// toward the opposite edge of the cube with components along the 0 and
+/// 1 axes.  a comparison of buffer 0, 1, and 2 represents a motion
+/// toward the opposite edge of the cube with components along the 0, 1,
+/// and 2 axes. A skip of buffer 0 represents a motion along only the 0
+/// axis. For each action, a point value is awarded, and the path is
+/// saved for reference later, if it is found to have been the optimal
+/// path. The optimal path has the highest score.  The score is
+/// calculated as the summation of the total characters matching between
+/// all of the lines which were compared. The structure of the algorithm
+/// is that of a dynamic programming problem.  We can calculate a point
+/// i,j,k in the cube as a function of i-1, j-1, and k-1. To find the
+/// score and path at point i,j,k, we must determine which path we want
+/// to use, this is done by looking at the possibilities and choosing
+/// the one which results in the local highest score.  The total highest
+/// scored path is, then in the end represented by the cell in the
+/// opposite corner from the start location.  The entire algorithm
+/// consits of populating the 3d cube with the optimal paths from which
+/// it may have came.  However, we cannot apply the general 3d case
+/// before first populating the edges and the surfaces of the cube.
+/// Therefore, there are several sets of if / else statements inside the
+/// main loops which determine which case to evaluate.
+///
+/// Optimizations
+/// As the function to calculate the cell of a tensor at point i,j,k is a
+/// function of the cells at i-1, j-1, k-1, the whole tensor doesn't need
+/// to be stored in memory at once. In the case of the 3d cube, only two
+/// slices (along k and j axis) are stored in memory. For the 2d matrix
+/// (for 2 files), only two rows are stored at a time. The next/previous
+/// slice (or row) is always calculated from the other, and they alternate
+/// at each iteration.
+/// In the 3d case, 3 arrays are populated to memorize the score (matched
+/// characters) of the 3 buffers, so a redundant calculation of the
+/// scores does not occur
+/// @param dp
+void linematch_3buffers(diff_T * dp)
+{
+  int b0 = dp->df_valid_buffers[0];
+  int b1 = dp->df_valid_buffers[1];
+  int b2 = dp->df_valid_buffers[2];
+  diffcomparisonpath3_T ***df_pathmatrix3=
+    xmalloc(sizeof(diffcomparisonpath3_T **) * (2));
+  for (int i = 0; i < (2); i++) {
+    df_pathmatrix3[i] =
+      xmalloc(sizeof(diffcomparisonpath3_T *) * (dp->df_count[b1]+1));
+    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
+      df_pathmatrix3[i][j] =
+        xmalloc(sizeof(diffcomparisonpath3_T) * (dp->df_count[b2]+1));
+      for (int k = 0; k < (dp->df_count[b2]+1); k++) {
+        df_pathmatrix3[i][j][k].df_path3 =
+            xmalloc(
+                (dp->df_count[b0]+dp->df_count[b1]+dp->df_count[b2]) *
+                sizeof(enum df_path3_choice));
+      }
+    }
+  }
+  // memory for avoiding repetitive calculations of score
+  int *mem12 = xmalloc(
+      ((dp->df_count[b1]+1) * (dp->df_count[b2]+1)) * sizeof(int));
+  int *mem01 = xmalloc(
+      ((dp->df_count[b0]+1) * (dp->df_count[b1]+1)) * sizeof(int));
+  int *mem02 = xmalloc(
+      ((dp->df_count[b0]+1) * (dp->df_count[b2]+1)) * sizeof(int));
+  bool icur = 1;
+  int score;
+  for (int i = 0; i <= dp->df_count[b0]; i++) {
+    icur=!icur;
+    for (int j = 0; j <= dp->df_count[b1]; j++) {
+      for (int k = 0; k<= dp->df_count[b2]; k++) {
+        if (i == 0 && j == 0 && k == 0) {
+          df_pathmatrix3[0][0][0].df_lev_score = 0;
+          df_pathmatrix3[0][0][0].df_path_index = 0;
+        } else if (j == 0 && k == 0) {
+         score = df_pathmatrix3[!icur][0][0].df_lev_score;
+         update_path3(
+             dp, df_pathmatrix3, score, icur, 0, 0,
+             !icur, 0, 0,
+             DFPATH3_SKIP0);
+        } else if (i == 0 && k == 0) {
+          score = df_pathmatrix3[0][j-1][0].df_lev_score;
+          update_path3(
+              dp, df_pathmatrix3, score, 0, j, 0,
+              0, j-1, 0,
+              DFPATH3_SKIP1);
+        } else if (i == 0 && j == 0) {
+          score = df_pathmatrix3[0][0][k-1].df_lev_score;
+          update_path3(
+              dp, df_pathmatrix3, score, 0, 0, k,
+              0, 0, k-1,
+              DFPATH3_SKIP2);
+        } else if (k == 0) {
+          df_pathmatrix3[icur][j][k].df_lev_score = -1;
+          long matched_chars = count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          mem01[i * (dp->df_count[b1]+1) + j] = matched_chars;
+          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_chars;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j-1, k,  // from
+                DFPATH3_COMPARE01);  // choice
+          }
+          score = df_pathmatrix3[!icur][j][k].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j, k,  // from
+                DFPATH3_SKIP0);  // choice
+          }
+          score = df_pathmatrix3[icur][j-1][k].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j-1, k,  // from
+                DFPATH3_SKIP1);  // choice
+          }
+        } else if (j == 0) {
+          df_pathmatrix3[icur][j][k].df_lev_score = -1;
+          long matched_chars = count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          mem02[i * (dp->df_count[b2]+1) + k] = matched_chars;
+          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_chars;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j, k-1,  // from
+                DFPATH3_COMPARE02);  // choice
+          }
+          score = df_pathmatrix3[!icur][j][k].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j, k,  // from
+                DFPATH3_SKIP0);  // choice
+          }
+          score = df_pathmatrix3[icur][j][k-1].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j, k-1,  // from
+                DFPATH3_SKIP2);  // choice
+          }
+        } else if ( i == 0 ) {
+          df_pathmatrix3[icur][j][k].df_lev_score = -1;
+          long matched_chars = count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          // store in memory for later
+          mem12[j * (dp->df_count[b2]+1) + k] = matched_chars;
+          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score + matched_chars;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j-1, k-1,  // from
+                DFPATH3_COMPARE12);  // choice
+          }
+          score = df_pathmatrix3[icur][j-1][k].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j-1, k,  // from
+                DFPATH3_SKIP1);  // choice
+          }
+          score = df_pathmatrix3[icur][j][k-1].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j, k-1,  // from
+                DFPATH3_SKIP2);  // choice
+          }
+        } else {
+          df_pathmatrix3[icur][j][k].df_lev_score = -1;
+          long matched_01 = mem01[i * (dp->df_count[b1]+1) + j];
+          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_01;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j-1, k,  // from
+                DFPATH3_COMPARE01);  // choice
+          }
+          long matched_02 = mem02[i * (dp->df_count[b2]+1) + k];
+          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_02;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j, k-1,  // from
+                DFPATH3_COMPARE02);  // choice
+          }
+          long matched_12 = mem12[j * (dp->df_count[b2]+1) + k];
+          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+matched_12;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j-1, k-1,  // from
+                DFPATH3_COMPARE12);  // choice
+          }
+          long matched_012 = matched_01+matched_02+matched_12;
+          // prioritize equally to a 2 line match
+          matched_012 *= 2, matched_012 /= 3;
+          score = df_pathmatrix3[!icur][j-1][k-1].df_lev_score+matched_012;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j-1, k-1,  // from
+                DFPATH3_COMPARE012);  // choice
+          }
+          score = df_pathmatrix3[!icur][j][k].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j, k,  // from
+                DFPATH3_SKIP0);  // choice
+          }
+          score = df_pathmatrix3[icur][j-1][k].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j-1, k,  // from
+                DFPATH3_SKIP1);  // choice
+          }
+          score = df_pathmatrix3[icur][j][k-1].df_lev_score;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                icur, j, k-1,  // from
+                DFPATH3_SKIP2);  // choice
+          }
+        }
+      }
+    }
+  }
+  int p0 = 0, p1 = 0, p2 = 0;  // i, j, k
+  int maxlines = 0;
+  if (dp->df_count[b0] > maxlines) { maxlines = dp->df_count[b0]; }
+  if (dp->df_count[b1] > maxlines) { maxlines = dp->df_count[b1]; }
+  if (dp->df_count[b2] > maxlines) { maxlines = dp->df_count[b2]; }
+  dp->df_arr_col_size = maxlines+1;
+  dp->df_comparisonlines =
+    xmalloc(DB_COUNT *(dp->df_arr_col_size) * sizeof(df_linecompare_T));
+  initialize_compareline3(dp, b0, p0, b1, b2);
+  initialize_compareline3(dp, b1, p1, b0, b2);
+  initialize_compareline3(dp, b2, p2, b0, b1);
+  for (int i = 0; i < df_pathmatrix3
+       [icur][dp->df_count[b1]][dp->df_count[b2]].df_path_index; i++) {
+    int p = df_pathmatrix3
+      [icur][dp->df_count[b1]][dp->df_count[b2]].df_path3[i];
+    if (p == DFPATH3_COMPARE01) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1] = p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
+      p0++, p1++;
+      initialize_compareline3(dp, b0, p0, b1, b2);
+      initialize_compareline3(dp, b1, p1, b0, b2);
+    } else if (p == DFPATH3_COMPARE02) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
+      p0++, p2++;
+      initialize_compareline3(dp, b0, p0, b1, b2);
+      initialize_compareline3(dp, b2, p2, b0, b1);
+    } else if (p == DFPATH3_COMPARE12) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
+      p1++, p2++;
+      initialize_compareline3(dp, b1, p1, b0, b2);
+      initialize_compareline3(dp, b2, p2, b0, b1);
+    } else if (p == DFPATH3_COMPARE012) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1] = p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
+      p0++, p1++, p2++;
+      initialize_compareline3(dp, b0, p0, b1, b2);
+      initialize_compareline3(dp, b1, p1, b0, b2);
+      initialize_compareline3(dp, b2, p2, b0, b1);
+    } else if  (p == DFPATH3_SKIP0) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_newline = true;
+      p0++;
+      initialize_compareline3(dp, b0, p0, b1, b2);
+    } else if (p == DFPATH3_SKIP1) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_newline = true;
+      p1++;
+      initialize_compareline3(dp, b1, p1, b0, b2);
+    } else if (p == DFPATH3_SKIP2) {
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_newline = true;
+      p2++;
+      initialize_compareline3(dp, b2, p2, b0, b1);
+    }
+  }
+  for (int i = 0; i < (2); i++) {
+    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
+      for (int k = 0; k < (dp->df_count[b2]+1); k++) {
+        xfree(df_pathmatrix3[i][j][k].df_path3);
+      }
+      xfree(df_pathmatrix3[i][j]);
+    }
+    xfree(df_pathmatrix3[i]);
+  }
+  xfree(df_pathmatrix3);
+  xfree(mem12), xfree(mem01), xfree(mem02);
+}
+
 
 /// Check diff status for line "lnum" in buffer "buf":
 ///
@@ -1748,12 +2438,19 @@ void diff_clear(tabpage_T *tp)
 /// Returns > 0 for inserting that many filler lines above it (never happens
 /// when 'diffopt' doesn't contain "filler").
 /// This should only be used for windows where 'diff' is set.
+/// When diffopt contains linematch, a changed/added/deleted line
+/// may also have filler lines above it. In such a case, the possibilities
+/// are no longer mutually exclusive. The number of filler lines is
+/// returned from diff_check, and the integer 'linestatus' passed by
+/// pointer is set to -1 to indicate a changed line, and -2 to indicate an
+/// added line
 ///
 /// @param wp
 /// @param lnum
+/// @param linestatus
 ///
 /// @return diff status.
-int diff_check(win_T *wp, linenr_T lnum)
+int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 {
   int idx; // index in tp_diffbuf[] for this buffer
   diff_T *dp;
@@ -1800,6 +2497,39 @@ int diff_check(win_T *wp, linenr_T lnum)
     return 0;
   }
 
+  if (dp->df_redraw && diff_linematch(dp)) {
+    dp->df_valid_buffers_max = 0;
+    for (i = 0; i < DB_COUNT; i++) {
+      if (curtab->tp_diffbuf[i] != NULL) {
+        dp->df_valid_buffers[dp->df_valid_buffers_max] = i;
+        dp->df_valid_buffers_max++;
+      }
+    }
+    if (dp->df_valid_buffers_max == 2) {
+      linematch_2buffers(dp);
+    } else if (dp->df_valid_buffers_max == 3) {
+      linematch_3buffers(dp);
+    }
+    dp->df_redraw = false;
+  }
+  if (diff_linematch(dp)) {
+    long off = lnum - dp->df_lnum[idx];
+    if (off < dp->df_count[idx]) {
+      if (linestatus != NULL&&dp->df_comparisonlines[
+          dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_newline) {
+        *linestatus=-2;   // line was added
+      } else if (linestatus != NULL) { *linestatus=-1; }  // line was changed
+      return (
+          diff_flags&DIFF_FILLER?
+          dp->df_comparisonlines[
+              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_filler:0);
+    } else {
+      return (
+          diff_flags&DIFF_FILLER?
+          dp->df_comparisonlines[
+              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_filler:0);
+    }
+  }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
 
@@ -1989,7 +2719,7 @@ int diff_check_fill(win_T *wp, linenr_T lnum)
   if (!(diff_flags & DIFF_FILLER)) {
     return 0;
   }
-  int n = diff_check(wp, lnum);
+  int n = diff_check(wp, lnum, NULL);
 
   if (n <= 0) {
     return 0;
@@ -2044,6 +2774,31 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     }
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
+    if (diff_linematch(dp)&&(diff_flags&DIFF_FILLER)) {
+      // count the number of virtual lines from top of diff block to top line
+      int virtual_lines_above_from =
+        count_virtual_lines(fromwin,
+                            dp->df_lnum[fromidx],
+                            fromwin->w_topline);
+
+      // subtract existing topfill
+      virtual_lines_above_from-=fromwin->w_topfill;
+      if (virtual_lines_above_from) { virtual_lines_above_from--; }
+
+      // count same amount of virtual lines from top of this window
+      int virtual_offset;
+      int offset = count_virtual_to_real(
+          curwin, dp->df_lnum[toidx],
+          virtual_lines_above_from, &virtual_offset);
+
+      if (fromwin->w_topline >= dp->df_lnum[fromidx]) {
+        towin->w_topline = offset+dp->df_lnum[toidx];
+        towin->w_topfill = virtual_offset-virtual_lines_above_from-1;
+      } else {
+        towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
+      }
+      return;
+    }
     if (lnum >= dp->df_lnum[fromidx]) {
       // Inside a change: compute filler lines. With three or more
       // buffers we need to know the largest count.
@@ -2119,6 +2874,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 int diffopt_changed(void)
 {
   int diff_context_new = 6;
+  int linematch_lines_new = 0;
   int diff_flags_new = 0;
   int diff_foldcolumn_new = 2;
   long diff_algorithm_new = 0;
@@ -2188,6 +2944,10 @@ int diffopt_changed(void)
       } else {
         return FAIL;
       }
+    } else if ((STRNCMP(p, "linematch:", 10) == 0) && ascii_isdigit(p[11])) {
+      p+=10;
+      linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
+      diff_flags_new |= DIFF_LINEMATCH;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -2216,6 +2976,7 @@ int diffopt_changed(void)
 
   diff_flags = diff_flags_new;
   diff_context = diff_context_new == 0 ? 1 : diff_context_new;
+  linematch_lines = linematch_lines_new;
   diff_foldcolumn = diff_foldcolumn_new;
   diff_algorithm = diff_algorithm_new;
 
@@ -2294,12 +3055,21 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
-      if (off >= dp->df_count[i]) {
-        continue;
+      linenr_T comparl;
+      if (diff_linematch(dp)) {
+        comparl = dp->df_comparisonlines[
+            dp->df_arr_col_size * idx +  lnum - dp->df_lnum[idx]].df_compare[i];
+        if (comparl != -1) { comparl+=dp->df_lnum[i]; }
+        if (comparl == -1) { continue; }
+      } else {
+        if (off >= dp->df_count[i]) {
+          continue;
+        }
       }
       added = false;
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
-                            dp->df_lnum[i] + off, false);
+                            (diff_linematch(dp))?
+                            comparl:dp->df_lnum[i] + off, false);
 
       // Search for start of difference
       si_org = si_new = 0;
@@ -2577,11 +3347,12 @@ void ex_diffgetput(exarg_T *eap)
     // the cursor line when there is no difference above the cursor.
     if ((eap->cmdidx == CMD_diffget)
         && (eap->line1 == curbuf->b_ml.ml_line_count)
-        && (diff_check(curwin, eap->line1) == 0)
-        && ((eap->line1 == 1) || (diff_check(curwin, eap->line1 - 1) == 0))) {
-      ++eap->line2;
+        && (diff_check(curwin, eap->line1, NULL) == 0)
+        && ((eap->line1 == 1)
+            || (diff_check(curwin, eap->line1 - 1, NULL) == 0))) {
+      eap->line2++;
     } else if (eap->line1 > 0) {
-      --eap->line1;
+      eap->line1--;
     }
   }
 
@@ -2742,6 +3513,7 @@ void ex_diffgetput(exarg_T *eap)
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.
         diff_fold_update(dfree, idx_to);
+        xfree(dfree->df_comparisonlines);
         xfree(dfree);
       } else {
         // mark_adjust() may have changed the count in a wrong way
@@ -2891,15 +3663,20 @@ int diff_move_to(int dir, long count)
 
 /// Return the line number in the current window that is closest to "lnum1" in
 /// "buf1" in diff mode.
-static linenr_T diff_get_corresponding_line_int(buf_T *buf1, linenr_T lnum1)
+///
+/// @param buf1
+/// @param win1
+/// @param lnum1
+static linenr_T diff_get_corresponding_line_int(buf_T *buf1,
+                                                win_T *win1, linenr_T lnum1)
 {
   int idx1;
   int idx2;
   diff_T *dp;
   int baseline = 0;
 
-  idx1 = diff_buf_idx(buf1);
-  idx2 = diff_buf_idx(curbuf);
+  idx1 = diff_buf_idx(buf1);  // the buffer where the user cursor is
+  idx2 = diff_buf_idx(curbuf);  // the buffer being updated
 
   if ((idx1 == DB_COUNT)
       || (idx2 == DB_COUNT)
@@ -2925,6 +3702,17 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1, linenr_T lnum1)
       // Inside the diffblock
       baseline = lnum1 - dp->df_lnum[idx1];
 
+      if ( diff_linematch(dp) && (diff_flags & DIFF_FILLER) ) {
+        // count the number of virtual lines from top of diff block to cursor
+        int virtual_lines_above_from = count_virtual_lines(
+            win1, dp->df_lnum[idx1], lnum1);
+
+        // count the corresponding real lines in this buffer
+        int offset = count_virtual_to_real(curwin, dp->df_lnum[idx2],
+                                           virtual_lines_above_from, NULL);
+
+        return dp->df_lnum[idx2]+offset-1;
+      }
       if (baseline > dp->df_count[idx2]) {
         baseline = dp->df_count[idx2];
       }
@@ -2954,12 +3742,13 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1, linenr_T lnum1)
 /// Finds the corresponding line in a diff.
 ///
 /// @param buf1
+/// @param win1
 /// @param lnum1
 ///
 /// @return The corresponding line.
-linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1)
+linenr_T diff_get_corresponding_line(buf_T *buf1, win_T *win1, linenr_T lnum1)
 {
-  linenr_T lnum = diff_get_corresponding_line_int(buf1, lnum1);
+  linenr_T lnum = diff_get_corresponding_line_int(buf1, win1, lnum1);
 
   // don't end up past the end of the file
   if (lnum > curbuf->b_ml.ml_line_count) {

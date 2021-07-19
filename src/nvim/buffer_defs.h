@@ -893,25 +893,90 @@ struct file_buffer {
  */
 # define DB_COUNT 8     // up to four buffers can be diff'ed
 
-/*
- * Each diffblock defines where a block of lines starts in each of the buffers
- * and how many lines it occupies in that buffer.  When the lines are missing
- * in the buffer the df_count[] is zero.  This is all counted in
- * buffer lines.
- * There is always at least one unchanged line in between the diffs.
- * Otherwise it would have been included in the diff above or below it.
- * df_lnum[] + df_count[] is the lnum below the change.  When in one buffer
- * lines have been inserted, in the other buffer df_lnum[] is the line below
- * the insertion and df_count[] is zero.  When appending lines at the end of
- * the buffer, df_lnum[] is one beyond the end!
- * This is using a linked list, because the number of differences is expected
- * to be reasonable small.  The list is sorted on lnum.
- */
+
+// choices for comparison with linematch_2buffers
+enum df_path2_choice{
+  DFPATH2_COMPARE01,
+  DFPATH2_SKIP0,
+  DFPATH2_SKIP1,
+};
+// choices for comparison with linematch_3buffers
+enum df_path3_choice{
+  DFPATH3_COMPARE01,
+  DFPATH3_COMPARE02,
+  DFPATH3_COMPARE12,
+  DFPATH3_COMPARE012,
+  DFPATH3_SKIP0,
+  DFPATH3_SKIP1,
+  DFPATH3_SKIP2,
+};
+// contains array of choices chosen while comparing 2 files with
+// linematch_2buffers
+typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
+struct diffcomparisonpath2_S{
+  enum df_path2_choice *df_path2;  // to keep track of this path traveled
+  int df_lev_score;  // to keep track of the total score of this path
+  int df_path_index;  // current index of this path
+};
+
+// contains array of choices chosen while comparing 3 files with
+// linematch_3buffers
+typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
+struct diffcomparisonpath3_S{
+  enum df_path3_choice *df_path3;  // to keep track of this path traveled
+  int df_lev_score;  // to keep track of the total score of this path
+  int df_path_index;  // current index of this path
+};
+// contains the information for how to construct diff views when linematch
+// diffopt is enabled, it is populated after running linematch_3buffers or
+// linematch_2buffers.
+typedef struct df_linecompare_S df_linecompare_T;
+struct df_linecompare_S{
+  bool df_newline;  // is this line skipped in other buffers?
+  int df_filler;  // how many filler lines above this?
+  int df_compare[DB_COUNT];  // which line to compare to in other buffer
+};
+
+// Each diffblock defines where a block of lines starts in each of the buffers
+// and how many lines it occupies in that buffer.  When the lines are missing
+// in the buffer the df_count[] is zero.  This is all counted in
+// buffer lines.
+// There is always at least one unchanged line in between the diffs.
+// Otherwise it would have been included in the diff above or below it.
+// df_lnum[] + df_count[] is the lnum below the change.  When in one buffer
+// lines have been inserted, in the other buffer df_lnum[] is the line below
+// the insertion and df_count[] is zero.  When appending lines at the end of
+// the buffer, df_lnum[] is one beyond the end!
+// This is using a linked list, because the number of differences is expected
+// to be reasonable small.  The list is sorted on lnum.
+
 typedef struct diffblock_S diff_T;
 struct diffblock_S {
   diff_T      *df_next;
   linenr_T df_lnum[DB_COUNT];           // line number in buffer
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
+
+  // diffopt linematch algorithm parameter: marks when the algorithm for diff
+  // alignment has been ran the algorithm will run only when this diff is
+  // scrolled into view, or if it has been changed
+  int df_redraw;
+
+  // diffopt linematch algorithm parameter: mark the current buffer ids to
+  // correlate them with axes of 2d or 3d tensor (0,1, or 2)
+  int df_valid_buffers[DB_COUNT];
+
+  //  diffopt linematch algorithm parameter: count the current buffers
+  //  with diffthis enabled. If it's more than 3, cannot use linematch
+  //  algorithm
+  int df_valid_buffers_max;
+
+  // diffopt linematch algorithm parameter: pointer to a 2d array of
+  // df_linecompare_T, for each diff buffer (axis 0) for each line of that
+  // buffer in the diff (axis 1), contains the information which lines in the
+  // other buffers should this line be compared to, how many filler lines
+  // should be drawn above this line, and is this a new line
+  df_linecompare_T *df_comparisonlines;
+  int df_arr_col_size;  // used for referencing 2d array
 };
 
 #define SNAP_HELP_IDX   0

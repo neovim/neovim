@@ -1983,6 +1983,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 				Use the indent heuristic for the internal
 				diff library.
 
+		linematch:{n}   Align and mark changes between the most
+				similar lines between the buffers. Works for 2
+				or 3 buffer diffs. When the total number of
+				lines in the diff hunk exceeds {n}, the lines
+				will not be aligned because for very large
+				diff hunks there will be a noticeable lag.
+				A reasonable setting is "linematch:60", as
+				this will enable alignment for a 2 buffer diff
+				hunk of 30 lines each, or a 3 buffer diff hunk
+				of 20 lines each.
+
                 algorithm:{text} Use the specified diff algorithm with the
 				internal diff engine. Currently supported
 				algorithms are:

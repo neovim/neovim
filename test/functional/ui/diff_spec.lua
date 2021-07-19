@@ -959,6 +959,182 @@ int main(int argc, char **argv)
       ]])
     end)
   end)
+
+  describe('line matching diff algorithm', function()
+    setup(function()
+      local f1 = [[if __name__ == "__main__":
+    import sys
+    app = QWidgets.QApplication(sys.args)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = UI_MainWindow()
+    ui.setupUI(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())]]
+      write_file(fname, f1, false)
+      local f2 = [[if __name__ == "__main__":
+    import sys
+    comment these things
+    #app = QWidgets.QApplication(sys.args)
+    #MainWindow = QtWidgets.QMainWindow()
+    add a completely different line here
+    #ui = UI_MainWindow()
+    add another new line
+    ui.setupUI(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())]]
+      write_file(fname_2, f2, false)
+    end)
+
+    it('diffopt+=linematch:20', function()
+      reread()
+      feed(':set diffopt=internal,filler<cr>')
+      screen:expect([[
+  {1:  }^if __name__ == "__{3:│}{1:  }if __name__ == "_|
+  {1:  }    import sys    {3:│}{1:  }    import sys   |
+  {1:  }{9:    }{8:app = QWidgets}{3:│}{1:  }{9:    }{8:comment these}|
+  {1:  }{9:    }{8:MainWindow = Q}{3:│}{1:  }{9:    }{8:#app = QWidge}|
+  {1:  }{9:    }{8:ui = UI_}{9:MainWi}{3:│}{1:  }{9:    }{8:#MainWindow =}|
+  {1:  }{2:------------------}{3:│}{1:  }{4:    add a complet}|
+  {1:  }{2:------------------}{3:│}{1:  }{4:    #ui = UI_Main}|
+  {1:  }{2:------------------}{3:│}{1:  }{4:    add another n}|
+  {1:  }    ui.setupUI(Mai{3:│}{1:  }    ui.setupUI(Ma|
+  {1:  }    MainWindow.sho{3:│}{1:  }    MainWindow.sh|
+  {1:  }    sys.exit(app.e{3:│}{1:  }    sys.exit(app.|
+  {6:~                   }{3:│}{6:~                  }|
+  {6:~                   }{3:│}{6:~                  }|
+  {6:~                   }{3:│}{6:~                  }|
+  {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+  :set diffopt=internal,filler            |
+      ]])
+
+      feed('G')
+      feed(':set diffopt+=linematch:20<cr>')
+      screen:expect([[
+        {1:  }if __name__ == "__{3:│}{1:  }if __name__ == "_|
+        {1:  }    import sys    {3:│}{1:  }    import sys   |
+        {1:  }{2:------------------}{3:│}{1:  }{4:    comment these}|
+        {1:  }{9:    app = QWidgets}{3:│}{1:  }{9:    }{8:#}{9:app = QWidge}|
+        {1:  }{9:    MainWindow = Q}{3:│}{1:  }{9:    }{8:#}{9:MainWindow =}|
+        {1:  }{2:------------------}{3:│}{1:  }{4:    add a complet}|
+        {1:  }{9:    ui = UI_MainWi}{3:│}{1:  }{9:    }{8:#}{9:ui = UI_Main}|
+        {1:  }{2:------------------}{3:│}{1:  }{4:    add another n}|
+        {1:  }    ui.setupUI(Mai{3:│}{1:  }    ui.setupUI(Ma|
+        {1:  }    MainWindow.sho{3:│}{1:  }    MainWindow.sh|
+        {1:  }    ^sys.exit(app.e{3:│}{1:  }    sys.exit(app.|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :set diffopt+=linematch:20              |
+      ]])
+    end)
+  end)
+  describe('line matching diff algorithm with icase', function()
+    setup(function()
+      local f1 = [[DDD
+aaa]]
+      write_file(fname, f1, false)
+      local f2 = [[DDD
+AAA
+ccca]]
+      write_file(fname_2, f2, false)
+    end)
+    it('diffopt+=linematch:20,icase', function()
+      reread()
+      feed(':set diffopt=internal,filler,linematch:20<cr>')
+      screen:expect([[
+        {1:  }^DDD               {3:│}{1:  }DDD              |
+        {1:  }{2:------------------}{3:│}{1:  }{4:AAA              }|
+        {1:  }{8:aa}{9:a               }{3:│}{1:  }{8:ccc}{9:a             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+                                                |
+      ]])
+      -- screen:snapshot_util()
+      feed(':set diffopt+=icase<cr>')
+      -- screen:snapshot_util()
+      screen:expect([[
+        {1:  }^DDD               {3:│}{1:  }DDD              |
+        {1:  }aaa               {3:│}{1:  }AAA              |
+        {1:  }{2:------------------}{3:│}{1:  }{4:ccca             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :set diffopt+=icase                     |
+      ]])
+    end)
+  end)
+  describe('line matching diff algorithm with iwhiteall', function()
+    setup(function()
+      local f1 = [[BB
+   AAA]]
+      write_file(fname, f1, false)
+      local f2 = [[BB
+   AAB
+AAAB]]
+      write_file(fname_2, f2, false)
+    end)
+    it('diffopt+=linematch:20,iwhiteall', function()
+      reread()
+      feed(':set diffopt=internal,filler,linematch:20<cr>')
+      screen:expect{grid=[[
+        {1:  }^BB                {3:│}{1:  }BB               |
+        {1:  }{9:   AA}{8:A}{9:            }{3:│}{1:  }{9:   AA}{8:B}{9:           }|
+        {1:  }{2:------------------}{3:│}{1:  }{4:AAAB             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+                                                |
+      ]]}
+      feed(':set diffopt+=iwhiteall<cr>')
+      screen:expect{grid=[[
+        {1:  }^BB                {3:│}{1:  }BB               |
+        {1:  }{2:------------------}{3:│}{1:  }{4:   AAB           }|
+        {1:  }{9:   AAA            }{3:│}{1:  }{9:AAA}{8:B}{9:             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :set diffopt+=iwhiteall                 |
+      ]]}
+    end)
+  end)
 end)
 
 it('win_update redraws lines properly', function()

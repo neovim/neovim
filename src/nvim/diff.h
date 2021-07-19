@@ -6,6 +6,7 @@
 
 // Value set from 'diffopt'.
 EXTERN int diff_context INIT(= 6);  // context for folds
+EXTERN int linematch_lines INIT(= 0);  // number of lines for diff line match
 EXTERN int diff_foldcolumn INIT(= 2);  // 'foldcolumn' for diff mode
 EXTERN bool diff_need_scrollbind INIT(= false);
 
