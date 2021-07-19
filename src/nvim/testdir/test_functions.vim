@@ -1315,7 +1315,15 @@ endfunc
 func Test_getchar()
   call feedkeys('a', '')
   call assert_equal(char2nr('a'), getchar())
+  call assert_equal(0, getchar(0))
+  call assert_equal(0, getchar(1))
 
+  call feedkeys('a', '')
+  call assert_equal('a', getcharstr())
+  call assert_equal('', getcharstr(0))
+  call assert_equal('', getcharstr(1))
+
+  call setline(1, 'xxxx')
   " call test_setmouse(1, 3)
   " let v:mouse_win = 9
   " let v:mouse_winid = 9
@@ -1328,6 +1336,7 @@ func Test_getchar()
   call assert_equal(win_getid(1), v:mouse_winid)
   call assert_equal(1, v:mouse_lnum)
   call assert_equal(3, v:mouse_col)
+  enew!
 endfunc
 
 func Test_libcall_libcallnr()
