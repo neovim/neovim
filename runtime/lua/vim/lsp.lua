@@ -591,7 +591,7 @@ end
 ---
 --@param name (string, default=client-id) Name in log messages.
 --
---@param workspaceFolder (table) List of workspace folders passed to the
+--@param workspace_folders (table) List of workspace folders passed to the
 --- LSP server. See `workspaceFolders` in the LSP spec.
 ---
 --@param get_language_id function(bufnr, filetype) -> language ID as string.
@@ -779,8 +779,8 @@ function lsp.start_client(config)
     }
     local version = vim.version()
 
-    if not config.workspaceFolders then
-      config.workspaceFolders = {{
+    if not config.workspace_folders then
+      config.workspace_folders = {{
         uri = vim.uri_from_fname(config.root_dir);
         name = string.format("%s", config.root_dir);
       }};
@@ -826,7 +826,7 @@ function lsp.start_client(config)
       --  -- workspace folder in the user interface.
       --  name
       -- }
-      workspaceFolders = config.workspaceFolders,
+      workspaceFolders = config.workspace_folders,
     }
     if config.before_init then
       -- TODO(ashkan) handle errors here.
