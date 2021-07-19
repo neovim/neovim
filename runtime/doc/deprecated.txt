@@ -24,8 +24,8 @@ Commands ~
 *:wviminfo*		Deprecated alias to |:wshada| command.
 
 Environment Variables ~
-*$NVIM_LISTEN_ADDRESS*	Deprecated in favor of |--listen|.  If both are given,
-			$NVIM_LISTEN_ADDRESS is ignored.
+*$NVIM_LISTEN_ADDRESS*	Deprecated in favor of |--listen| and |$NVIM|.
+			Ignored if --listen is given.
 
 Events ~
 *BufCreate*		Use |BufAdd| instead.

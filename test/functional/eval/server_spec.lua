@@ -16,12 +16,17 @@ end
 describe('server', function()
   before_each(clear)
 
-  it('serverstart() sets $NVIM_LISTEN_ADDRESS on first invocation', function()
-    -- Unset $NVIM_LISTEN_ADDRESS
-    command('let $NVIM_LISTEN_ADDRESS = ""')
+  it('serverstart() sets $NVIM on first invocation', function()
+    command('unlet $NVIM')
+    command('unlet $NVIM_LISTEN_ADDRESS')
+    eq('', eval('$NVIM'))
+    eq('', eval('$NVIM_LISTEN_ADDRESS'))
 
     local s = eval('serverstart()')
     assert(s ~= nil and s:len() > 0, "serverstart() returned empty")
+    eq(s, eval('$NVIM'))
+    -- TODO(justinmk): clear $NVIM_LISTEN_ADDRESS at startup, scripts should
+    -- use $NVIM instead.
     eq(s, eval('$NVIM_LISTEN_ADDRESS'))
     eq(1, eval("serverstop('"..s.."')"))
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
@@ -55,11 +60,12 @@ describe('server', function()
     eq(1, funcs.serverstop(funcs.serverlist()[1]))
     eq('', meths.get_vvar('servername'))
 
-    -- v:servername will take the next available server.
+    -- v:servername and $NVIM take the next available server.
     local servername = (iswin() and [[\\.\pipe\Xtest-functional-server-pipe]]
                                 or 'Xtest-functional-server-socket')
     funcs.serverstart(servername)
     eq(servername, meths.get_vvar('servername'))
+    eq(servername, eval('$NVIM'))
   end)
 
   it('serverstop() returns false for invalid input', function()

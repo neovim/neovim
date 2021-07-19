@@ -1901,7 +1901,9 @@ v:scrollstart	String describing the script or function that caused the
 					*v:servername* *servername-variable*
 v:servername	Primary listen-address of the current Nvim instance, the first
 		item returned by |serverlist()|.  Can be set by |--listen| or
-		|$NVIM_LISTEN_ADDRESS| at startup. |serverstart()| |serverstop()|
+		|$NVIM_LISTEN_ADDRESS| at startup.  Exposed as *$NVIM* for use
+		in |:terminal|, system(), etc.
+		See also: |serverstart()| |serverstop()|
 		Read-only.
 
 
@@ -7567,7 +7569,8 @@ serverlist()						*serverlist()*
 serverstart([{address}])				*serverstart()*
 		Opens a socket or named pipe at {address} and listens for
 		|RPC| messages. Clients can send |API| commands to the address
-		to control Nvim. Returns the address string.
+		to control Nvim.  Sets |$NVIM| if not already set.  Returns
+		the address string.
 
 		If {address} does not contain a colon ":" it is interpreted as
 		a named pipe or Unix domain socket path.
@@ -7589,14 +7592,12 @@ serverstart([{address}])				*serverstart()*
 		If no address is given, it is equivalent to: >
 			:call serverstart(tempname())
 
-< 		|$NVIM_LISTEN_ADDRESS| is set to {address} if not already set.
-
 serverstop({address})					*serverstop()*
 		Closes the pipe or socket at {address}.
 		Returns TRUE if {address} is valid, else FALSE.
 		If |$NVIM_LISTEN_ADDRESS| is stopped it is unset.
-		If |v:servername| is stopped it is set to the next available
-		address returned by |serverlist()|.
+		If |v:servername| (and |$NVIM|) is stopped it is set to the
+		next available address in |serverlist()|.
 
 setbufline({expr}, {lnum}, {text})			*setbufline()*
 		Set line {lnum} to {text} in buffer {expr}.  This works like

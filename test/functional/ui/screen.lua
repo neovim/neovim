@@ -90,8 +90,6 @@ end
 local Screen = {}
 Screen.__index = Screen
 
-local debug_screen
-
 local default_timeout_factor = 1
 if os.getenv('VALGRIND') then
   default_timeout_factor = default_timeout_factor * 3
@@ -121,18 +119,6 @@ do
   session:close()
   Screen.colors = colors
   Screen.colornames = colornames
-end
-
-function Screen.debug(command)
-  if not command then
-    command = 'pynvim -n -c '
-  end
-  command = command .. request('vim_eval', '$NVIM_LISTEN_ADDRESS')
-  if debug_screen then
-    debug_screen:close()
-  end
-  debug_screen = io.popen(command, 'r')
-  debug_screen:read()
 end
 
 function Screen.new(width, height)
