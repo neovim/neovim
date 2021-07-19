@@ -819,10 +819,7 @@ end
 ---@param diagnostic_ns number|nil Associated diagnostic namespace
 ---@param sign_ns number|nil Associated sign namespace
 function M.clear(bufnr, client_id, diagnostic_ns, sign_ns)
-  validate { bufnr = { bufnr, 'n' } }
-
-  bufnr = (bufnr == 0 and api.nvim_get_current_buf()) or bufnr
-
+  bufnr = get_bufnr(bufnr)
   if client_id == nil then
     return vim.lsp.for_each_buffer_client(bufnr, function(_, iter_client_id, _)
       return M.clear(bufnr, iter_client_id)
