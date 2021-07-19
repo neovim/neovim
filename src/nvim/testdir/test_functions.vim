@@ -1476,4 +1476,122 @@ func Test_default_arg_value()
   call assert_equal('msg', HasDefault())
 endfunc
 
+func Test_getmousepos()
+  tabe
+  insert
+hello
+world!
+.
+  split
+  vsplit
+  let opts = {
+        \   'relative': 'editor',
+        \   'width': 12,
+        \   'height': 8,
+        \   'col': 5,
+        \   'row': 3,
+        \   'anchor': 'NW',
+        \   'style': 'minimal',
+        \   'border': 'single',
+        \   'focusable': 1
+        \ }
+  let float = nvim_open_win(bufnr(), v:false, opts)
+  redraw
+
+  " Test that screenrow and screencol are set properly for all positions.
+  for row in range(&lines)
+    for col in range(&columns)
+      call nvim_input_mouse('left', 'press', '', 0, row, col)
+      let mousepos = getmousepos()
+      call assert_equal(row + 1, mousepos.screenrow)
+      call assert_equal(col + 1, mousepos.screencol)
+      " All other values should be 0 when clicking on the command line.
+      if row ==# &lines - 1
+        call assert_equal(0, mousepos.winid)
+        call assert_equal(0, mousepos.winrow)
+        call assert_equal(0, mousepos.wincol)
+        call assert_equal(0, mousepos.line)
+        call assert_equal(0, mousepos.column)
+      endif
+    endfor
+  endfor
+
+  " Test that mouse position values are properly set for the floating window
+  " with a border. 2 is added to the height and width to account for the
+  " border.
+  for win_row in range(opts.height + 2)
+    for win_col in range(opts.width + 2)
+      let row = win_row + opts.row
+      let col = win_col + opts.col
+      call nvim_input_mouse('left', 'press', '', 0, row, col)
+      let mousepos = getmousepos()
+      call assert_equal(float, mousepos.winid)
+      call assert_equal(win_row + 1, mousepos.winrow)
+      call assert_equal(win_col + 1, mousepos.wincol)
+      let line = 0
+      let column = 0
+      if win_row ># 0 && win_row <# opts.height + 1
+            \ && win_col ># 0 && win_col <# opts.width + 1
+        " Because of border, win_row and win_col don't need to be incremented
+        " by 1.
+        let line = min([win_row, line('$')])
+        let column = min([win_col, len(getline(line)) + 1])
+      endif
+      call assert_equal(line, mousepos.line)
+      call assert_equal(column, mousepos.column)
+    endfor
+  endfor
+
+  " Test that mouse position values are properly set for the floating window,
+  " after removing the border.
+  let opts.border = 'none'
+  call nvim_win_set_config(float, opts)
+  redraw
+  for win_row in range(opts.height)
+    for win_col in range(opts.width)
+      let row = win_row + opts.row
+      let col = win_col + opts.col
+      call nvim_input_mouse('left', 'press', '', 0, row, col)
+      let mousepos = getmousepos()
+      call assert_equal(float, mousepos.winid)
+      call assert_equal(win_row + 1, mousepos.winrow)
+      call assert_equal(win_col + 1, mousepos.wincol)
+      let line = min([win_row + 1, line('$')])
+      let column = min([win_col + 1, len(getline(line)) + 1])
+      call assert_equal(line, mousepos.line)
+      call assert_equal(column, mousepos.column)
+    endfor
+  endfor
+
+  " Test that mouse position values are properly set for ordinary windows.
+  " Set the float to be unfocusable instead of closing, to additionally test
+  " that getmousepos does not consider unfocusable floats. (see discussion in
+  " PR #14937 for details).
+  let opts.focusable = v:false
+  call nvim_win_set_config(float, opts)
+  redraw
+  for nr in range(1, 3)
+    for win_row in range(winheight(nr))
+      for win_col in range(winwidth(nr))
+        let row = win_row + win_screenpos(nr)[0] - 1
+        let col = win_col + win_screenpos(nr)[1] - 1
+        call nvim_input_mouse('left', 'press', '', 0, row, col)
+        let mousepos = getmousepos()
+        call assert_equal(win_getid(nr), mousepos.winid)
+        call assert_equal(win_row + 1, mousepos.winrow)
+        call assert_equal(win_col + 1, mousepos.wincol)
+        let line = min([win_row + 1, line('$')])
+        let column = min([win_col + 1, len(getline(line)) + 1])
+        call assert_equal(line, mousepos.line)
+        call assert_equal(column, mousepos.column)
+      endfor
+    endfor
+  endfor
+
+  tabclose!
+  " Release mouse to prevent interaction with other tests
+  " (Test_put_fails_when_nomodifiable).
+  call nvim_input_mouse('left', 'release', '', 0, 0, 0)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
