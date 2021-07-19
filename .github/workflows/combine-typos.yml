@@ -1,0 +1,48 @@
+name: Combine Typo Pull Requests
+
+on:
+  pull_request:
+    types: [ labeled ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: ${{ github.event.label.name == 'typo' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y python3
+
+    - name: Setup git config
+      run: |
+        git config --global user.name 'marvim'
+        git config --global user.email 'marvim@users.noreply.github.com'
+
+    - run: |
+        pr_number_with_suffix=${GITHUB_REF#refs/pull/}
+        pr_number=${pr_number_with_suffix%/merge}
+        printf 'typo_branch=combine-all-typos/%s\n' "$pr_number" >> $GITHUB_ENV
+
+    - run: |
+        all_pr_urls="$(gh pr list --label "typo" --json url --jq ".[].url")"
+
+        python3 scripts/combine_typos.py "$typo_branch"
+
+        git push --force https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY} "$typo_branch"
+        gh pr create --fill --head "$typo_branch" --title "Mega PR for all typo fixes."
+        gh pr edit --add-label "typo" --body "$all_pr_urls"
