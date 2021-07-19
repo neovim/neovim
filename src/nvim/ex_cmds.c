@@ -2508,7 +2508,8 @@ int do_ecmd(
           if (did_decrement && buf_valid(was_curbuf)) {
             was_curbuf->b_nwindows++;
           }
-          if (win_valid_any_tab(oldwin) && oldwin->w_buffer == NULL) {
+        if (oldwin != NULL  // Avoid bogus clang warning.
+            && win_valid_any_tab(oldwin) && oldwin->w_buffer == NULL) {
             oldwin->w_buffer = was_curbuf;
           }
           auto_buf = true;

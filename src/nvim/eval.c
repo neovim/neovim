@@ -2717,6 +2717,7 @@ static void ex_unletlock(exarg_T *eap, char_u *argstart, int deep,
   do {
     if (*arg == '$') {
       lv.ll_name = (const char *)arg;
+      lv.ll_name_len = strlen(lv.ll_name);
       lv.ll_tv = NULL;
       arg++;
       if (get_env_len((const char_u **)&arg) == 0) {
