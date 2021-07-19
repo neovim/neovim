@@ -592,7 +592,7 @@ end
 --@param name (string, default=client-id) Name in log messages.
 --
 --@param workspace_folders (table) List of workspace folders passed to the
---- LSP server. See `workspaceFolders` in the LSP spec.
+--- language server. See `workspaceFolders` in the LSP spec.
 ---
 --@param get_language_id function(bufnr, filetype) -> language ID as string.
 --- Defaults to the filetype.
