@@ -169,6 +169,14 @@ static inline bool ascii_isbdigit(int c)
   return (c == '0' || c == '1');
 }
 
+/// Checks if `c` is an octal digit, that is, 0-7.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_isodigit(int c)
+{
+  return (c >= '0' && c <= '7');
+}
+
 /// Checks if `c` is a white-space character, that is,
 /// one of \f, \n, \r, \t, \v.
 ///

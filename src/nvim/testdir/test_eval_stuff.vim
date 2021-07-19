@@ -90,6 +90,106 @@ func Test_string_concatenation()
   call assert_equal('ab', a)
 endfunc
 
+" Test fix for issue #4507
+func Test_skip_after_throw()
+  try
+    throw 'something'
+    let x = wincol() || &ts
+  catch /something/
+  endtry
+endfunc
+
+scriptversion 2
+func Test_string_concat_scriptversion2()
+  call assert_true(has('vimscript-2'))
+  let a = 'a'
+  let b = 'b'
+
+  call assert_fails('echo a . b', 'E15:')
+  call assert_fails('let a .= b', 'E985:')
+  call assert_fails('let vers = 1.2.3', 'E15:')
+
+  if has('float')
+    let f = .5
+    call assert_equal(0.5, f)
+  endif
+endfunc
+
+scriptversion 1
+func Test_string_concat_scriptversion1()
+  call assert_true(has('vimscript-1'))
+  let a = 'a'
+  let b = 'b'
+
+  echo a . b
+  let a .= b
+  let vers = 1.2.3
+  call assert_equal('123', vers)
+
+  if has('float')
+    call assert_fails('let f = .5', 'E15:')
+  endif
+endfunc
+
+scriptversion 3
+func Test_vvar_scriptversion3()
+  call assert_true(has('vimscript-3'))
+  call assert_fails('echo version', 'E121:')
+  call assert_false(exists('version'))
+  let version = 1
+  call assert_equal(1, version)
+endfunc
+
+scriptversion 2
+func Test_vvar_scriptversion2()
+  call assert_true(exists('version'))
+  echo version
+  call assert_fails('let version = 1', 'E46:')
+  call assert_equal(v:version, version)
+endfunc
+
+func Test_dict_access_scriptversion2()
+  let l:x = {'foo': 1}
+
+  call assert_false(0 && l:x.foo)
+  call assert_true(1 && l:x.foo)
+endfunc
+
+scriptversion 4
+func Test_vvar_scriptversion4()
+  call assert_true(has('vimscript-4'))
+  call assert_equal(17, 017)
+  call assert_equal(15, 0o17)
+  call assert_equal(15, 0O17)
+  call assert_equal(18, 018)
+  call assert_equal(511, 0o777)
+  call assert_equal(64, 0b1'00'00'00)
+  call assert_equal(1048576, 0x10'00'00)
+  call assert_equal(32768, 0o10'00'00)
+  call assert_equal(1000000, 1'000'000)
+  " Nvim doesn't support method call syntax yet.
+  " call assert_equal("1234", execute("echo 1'234")->trim())
+  " call assert_equal('1  234', execute("echo 1''234")->trim())
+  call assert_equal("1234", trim(execute("echo 1'234")))
+  call assert_equal('1  234', trim(execute("echo 1''234")))
+  call assert_fails("echo 1'''234", 'E115:')
+endfunc
+
+scriptversion 1
+func Test_vvar_scriptversion1()
+  call assert_equal(15, 017)
+  call assert_equal(15, 0o17)
+  call assert_equal(15, 0O17)
+  call assert_equal(18, 018)
+  call assert_equal(511, 0o777)
+endfunc
+
+func Test_scriptversion_fail()
+  call writefile(['scriptversion 9'], 'Xversionscript')
+  call assert_fails('source Xversionscript', 'E999:')
+  call delete('Xversionscript')
+endfunc
+
 func Test_nocatch_restore_silent_emsg()
   silent! try
     throw 1
@@ -109,15 +209,6 @@ func Test_let_errmsg()
   let v:errmsg = ''
   call assert_fails('let v:errmsg = []', 'E730:')
   let v:errmsg = ''
-endfunc
-
-" Test fix for issue #4507
-func Test_skip_after_throw()
-  try
-    throw 'something'
-    let x = wincol() || &ts
-  catch /something/
-  endtry
 endfunc
 
 func Test_number_max_min_size()

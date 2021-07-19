@@ -4328,6 +4328,10 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "user_commands",
     "vartabs",
     "vertsplit",
+    "vimscript-1",
+    "vimscript-2",
+    "vimscript-3",
+    "vimscript-4",
     "virtualedit",
     "visual",
     "visualextra",
@@ -9918,13 +9922,16 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int base = 10;
   varnumber_T n;
-  int what;
+  int what = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     base = tv_get_number(&argvars[1]);
     if (base != 2 && base != 8 && base != 10 && base != 16) {
       EMSG(_(e_invarg));
       return;
+    }
+    if (argvars[2].v_type != VAR_UNKNOWN && tv_get_number(&argvars[2])) {
+      what |= STR2NR_QUOTE;
     }
   }
 
@@ -9935,22 +9942,20 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   switch (base) {
     case 2: {
-      what = STR2NR_BIN | STR2NR_FORCE;
+      what |= STR2NR_BIN | STR2NR_FORCE;
       break;
     }
     case 8: {
-      what = STR2NR_OCT | STR2NR_FORCE;
+      what |= STR2NR_OCT | STR2NR_OOCT | STR2NR_FORCE;
       break;
     }
     case 16: {
-      what = STR2NR_HEX | STR2NR_FORCE;
+      what |= STR2NR_HEX | STR2NR_FORCE;
       break;
     }
-    default: {
-      what = 0;
-    }
   }
-  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0);
+  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0, false);
+  // Text after the number is silently ignored.
   if (isneg) {
     rettv->vval.v_number = -n;
   } else {

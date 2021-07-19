@@ -247,9 +247,9 @@ describe('startup', function()
     [[" -u NONE -i NONE --cmd "set noruler" --cmd "let g:foo = g:bar"')]])
     screen:expect([[
       ^                                                            |
+                                                                  |
       Error detected while processing pre-vimrc command line:     |
       E121: Undefined variable: g:bar                             |
-      E15: Invalid expression: g:bar                              |
       Press ENTER or type command to continue                     |
                                                                   |
     ]])

@@ -653,14 +653,12 @@ describe('clipboard (with fake clipboard.vim)', function()
       '',
       '',
       'E121: Undefined variable: doesnotexist',
-      'E15: Invalid expression: doesnotexist',
     }, 'v'}, eval("g:test_clip['*']"))
     feed_command(':echo "Howdy!"')
     eq({{
       '',
       '',
       'E121: Undefined variable: doesnotexist',
-      'E15: Invalid expression: doesnotexist',
       '',
       'Howdy!',
     }, 'v'}, eval("g:test_clip['*']"))

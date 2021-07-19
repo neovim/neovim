@@ -319,6 +319,18 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			Mark) in utf-8 format Vim will recognize it, no need
 			to use ":scriptencoding utf-8" then.
 
+:scriptv[ersion] {version}		*:scriptv* *:scriptversion*
+								*E999* *E984*
+			Specify the version of Vim for the lines that follow
+			in the same file.  Only applies at the toplevel of
+			sourced scripts, not inside functions.
+
+			If {version} is higher than what the current Vim
+			version supports, E999 will be given.  You either need
+			to rewrite the script to make it work with an older
+			Vim version, or update Vim to a newer version.  See
+			|vimscript-version| for what changed between versions.
+
 						*:scr* *:scriptnames*
 :scr[iptnames]		List all sourced script names, in the order they were
 			first sourced.  The number is used for the script ID

@@ -1386,11 +1386,17 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     argend--;
   }
   expr = skipwhite(argend);
-  if (*expr != '=' && !((vim_strchr((char_u *)"+-*/%.", *expr) != NULL
-                         && expr[1] == '=') || STRNCMP(expr, "..=", 3) == 0)) {
+  const bool concat = expr[0] == '.'
+                      && ((expr[1] == '=' && current_sctx.sc_version < 2)
+                          || (expr[1] == '.' && expr[2] == '='));
+  if (*expr != '='
+      && !((vim_strchr((char_u *)"+-*/%", *expr) != NULL && expr[1] == '=')
+           || concat)) {
     // ":let" without "=": list variables
     if (*arg == '[') {
       EMSG(_(e_invarg));
+    } else if (expr[0] == '.') {
+      EMSG(_("E985: .= is not supported with script version 2"));
     } else if (!ends_excmd(*arg)) {
       // ":let var1 var2"
       arg = (char_u *)list_arg_vars(eap, (const char *)arg, &first);
@@ -1452,21 +1458,18 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
 /*
  * Assign the typevalue "tv" to the variable or variables at "arg_start".
  * Handles both "var" with any type and "[var, var; var]" with a list type.
- * When "nextchars" is not NULL it points to a string with characters that
+ * When "op" is not NULL it points to a string with characters that
  * must appear after the variable(s).  Use "+", "-" or "." for add, subtract
  * or concatenate.
  * Returns OK or FAIL;
  */
-static int
-ex_let_vars(
-    char_u *arg_start,
-    typval_T *tv,
-    int copy,                       // copy values from "tv", don't move
-    int semicolon,                  // from skip_var_list()
-    int var_count,                  // from skip_var_list()
-    int is_const,                   // lock variables for :const
-    char_u *nextchars
-)
+static int ex_let_vars(char_u *arg_start,
+                       typval_T *tv,
+                       int copy,       // copy values from "tv", don't move
+                       int semicolon,  // from skip_var_list()
+                       int var_count,  // from skip_var_list()
+                       int is_const,   // lock variables for :const
+                       char_u *op)
 {
   char_u *arg = arg_start;
   typval_T ltv;
@@ -1475,7 +1478,7 @@ ex_let_vars(
     /*
      * ":let var = expr" or ":for var in list"
      */
-    if (ex_let_one(arg, tv, copy, is_const, nextchars, nextchars) == NULL) {
+    if (ex_let_one(arg, tv, copy, is_const, op, op) == NULL) {
       return FAIL;
     }
     return OK;
@@ -1506,7 +1509,7 @@ ex_let_vars(
   while (*arg != ']') {
     arg = skipwhite(arg + 1);
     arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), true, is_const,
-                     (const char_u *)",;]", nextchars);
+                     (const char_u *)",;]", op);
     if (arg == NULL) {
       return FAIL;
     }
@@ -1528,8 +1531,8 @@ ex_let_vars(
       ltv.vval.v_list = rest_list;
       tv_list_ref(rest_list);
 
-      arg = ex_let_one(skipwhite(arg + 1), &ltv, false, is_const,
-                       (char_u *)"]", nextchars);
+      arg = ex_let_one(skipwhite(arg + 1), &ltv, false, is_const, (char_u *)"]",
+                       op);
       tv_clear(&ltv);
       if (arg == NULL) {
         return FAIL;
@@ -3162,6 +3165,8 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
 {
   int ret;
   char_u      *p;
+  const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
 
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evaluate);
@@ -3171,8 +3176,10 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
     }
     // Report the invalid expression unless the expression evaluation has
     // been cancelled due to an aborting error, an interrupt, or an
-    // exception.
-    if (!aborting()) {
+    // exception, or we already gave a more specific error.
+    // Also check called_emsg for when using assert_fails().
+    if (!aborting() && did_emsg == did_emsg_before
+        && called_emsg == called_emsg_before) {
       emsgf(_(e_invexpr2), arg);
     }
     ret = FAIL;
@@ -3510,7 +3517,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
  * Handle fourth level expression:
  *	+	number addition
  *	-	number subtraction
- *	.	string concatenation
+ *	.	string concatenation (if script version is 1)
  *	..	string concatenation
  *
  * "arg" must point to the first non-white of the expression.
@@ -3537,9 +3544,13 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
    * Repeat computing, until no '+', '-' or '.' is following.
    */
   for (;; ) {
+    // "." is only string concatenation when scriptversion is 1
     op = **arg;
-    if (op != '+' && op != '-' && op != '.')
+    const bool concat
+        = op == '.' && (*(*arg + 1) == '.' || current_sctx.sc_version < 2);
+    if (op != '+' && op != '-' && !concat) {
       break;
+    }
 
     if ((op != '+' || rettv->v_type != VAR_LIST)
         && (op == '.' || rettv->v_type != VAR_FLOAT)) {
@@ -3832,6 +3843,12 @@ static int eval7(
   }
   end_leader = *arg;
 
+  if (**arg == '.' && (!isdigit(*(*arg + 1)) || current_sctx.sc_version < 2)) {
+    EMSG2(_(e_invexpr2), *arg);
+    (*arg)++;
+    return FAIL;
+  }
+
   switch (**arg) {
   // Number constant.
   case '0':
@@ -3844,15 +3861,23 @@ static int eval7(
   case '7':
   case '8':
   case '9':
+  case '.':
   {
-    char_u *p = skipdigits(*arg + 1);
+    char_u *p;
     int get_float = false;
 
     // We accept a float when the format matches
     // "[0-9]\+\.[0-9]\+\([eE][+-]\?[0-9]\+\)\?".  This is very
     // strict to avoid backwards compatibility problems.
+    // With script version 2 and later the leading digit can be
+    // omitted.
     // Don't look for a float after the "." operator, so that
     // ":let vers = 1.2.3" doesn't fail.
+    if (**arg == '.') {
+      p = *arg;
+    } else {
+      p = skipdigits(*arg + 1);
+    }
     if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
       get_float = true;
       p = skipdigits(p + 2);
@@ -3880,7 +3905,15 @@ static int eval7(
         rettv->vval.v_float = f;
       }
     } else {
-      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0);
+      const int what = current_sctx.sc_version >= 4
+                           ? STR2NR_NO_OCT | STR2NR_QUOTE
+                           : STR2NR_ALL;
+      vim_str2nr(*arg, NULL, &len, what, &n, NULL, 0, true);
+      if (len == 0) {
+        EMSG2(_(e_invexpr2), *arg);
+        ret = FAIL;
+        break;
+      }
       *arg += len;
       if (evaluate) {
         rettv->v_type = VAR_NUMBER;
@@ -8445,10 +8478,14 @@ handle_subscript(
     }
   }
 
-
+  // "." is ".name" lookup when we found a dict or when evaluating and
+  // scriptversion is at least 2, where string concatenation is "..".
   while (ret == OK
          && (**arg == '['
-             || (**arg == '.' && rettv->v_type == VAR_DICT)
+             || (**arg == '.'
+                 && (rettv->v_type == VAR_DICT
+                     || (!evaluate && (*arg)[1] != '.'
+                         && current_sctx.sc_version >= 2)))
              || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))
          && !ascii_iswhite(*(*arg - 1))) {
     if (**arg == '(') {
@@ -8638,10 +8675,13 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len,
     }
     *varname = name;
 
-    // "version" is "v:version" in all scopes
-    hi = hash_find_len(&compat_hashtab, name, name_len);
-    if (!HASHITEM_EMPTY(hi)) {
-      return &compat_hashtab;
+    // "version" is "v:version" in all scopes if scriptversion < 3.
+    // Same for a few other variables marked with VV_COMPAT.
+    if (current_sctx.sc_version < 3) {
+      hi = hash_find_len(&compat_hashtab, name, name_len);
+      if (!HASHITEM_EMPTY(hi)) {
+        return &compat_hashtab;
+      }
     }
 
     if (funccal == NULL) {  // global variable
@@ -9275,6 +9315,7 @@ void ex_echo(exarg_T *eap)
   bool atstart = true;
   bool need_clear = true;
   const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
 
   if (eap->skip)
     ++emsg_skip;
@@ -9289,7 +9330,8 @@ void ex_echo(exarg_T *eap)
         // Report the invalid expression unless the expression evaluation
         // has been cancelled due to an aborting error, an interrupt, or an
         // exception.
-        if (!aborting() && did_emsg == did_emsg_before) {
+        if (!aborting() && did_emsg == did_emsg_before
+            && called_emsg == called_emsg_before) {
           EMSG2(_(e_invexpr2), p);
         }
         need_clr_eos = false;

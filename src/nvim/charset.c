@@ -1681,6 +1681,8 @@ bool vim_isblankline(char_u *lbuf)
 /// If "prep" is not NULL, returns a flag to indicate the type of the number:
 ///   0      decimal
 ///   '0'    octal
+///   'O'    octal
+///   'o'    octal
 ///   'B'    bin
 ///   'b'    bin
 ///   'X'    hex
@@ -1692,20 +1694,25 @@ bool vim_isblankline(char_u *lbuf)
 /// If "what" contains STR2NR_OCT recognize octal numbers.
 /// If "what" contains STR2NR_HEX recognize hex numbers.
 /// If "what" contains STR2NR_FORCE always assume bin/oct/hex.
+/// If "what" contains STR2NR_QUOTE ignore embedded single quotes
 /// If maxlen > 0, check at a maximum maxlen chars.
+/// If strict is true, check the number strictly. return *len = 0 if fail.
 ///
 /// @param start
 /// @param prep Returns guessed type of number 0 = decimal, 'x' or 'X' is
-///             hexadecimal, '0' = octal, 'b' or 'B' is binary. When using
-///             STR2NR_FORCE is always zero.
+///             hexadecimal, '0', 'o' or 'O' is octal, 'b' or 'B' is binary.
+///             When using STR2NR_FORCE is always zero.
 /// @param len Returns the detected length of number.
 /// @param what Recognizes what number passed, @see ChStr2NrFlags.
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
+/// @param strict If true, fail if the number has unexpected trailing
+///               alpha-numeric chars: *len is set to 0 and nothing else is
+///               returned.
 void vim_str2nr(const char_u *const start, int *const prep, int *const len,
                 const int what, varnumber_T *const nptr,
-                uvarnumber_T *const unptr, const int maxlen)
+                uvarnumber_T *const unptr, const int maxlen, const bool strict)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *ptr = (const char *)start;
@@ -1715,14 +1722,18 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   const bool negative = (ptr[0] == '-');
   uvarnumber_T un = 0;
 
+  if (len != NULL) {
+    *len = 0;
+  }
+
   if (negative) {
     ptr++;
   }
 
   if (what & STR2NR_FORCE) {
-    // When forcing main consideration is skipping the prefix. Octal and decimal
-    // numbers have no prefixes to skip. pre is not set.
-    switch ((unsigned)what & (~(unsigned)STR2NR_FORCE)) {
+    // When forcing main consideration is skipping the prefix. Decimal numbers
+    // have no prefixes to skip. pre is not set.
+    switch (what & ~(STR2NR_FORCE | STR2NR_QUOTE)) {
       case STR2NR_HEX: {
         if (!STRING_ENDED(ptr + 2)
             && ptr[0] == '0'
@@ -1741,7 +1752,16 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         }
         goto vim_str2nr_bin;
       }
-      case STR2NR_OCT: {
+      // Make STR2NR_OOCT work the same as STR2NR_OCT when forcing.
+      case STR2NR_OCT:
+      case STR2NR_OOCT:
+      case STR2NR_OCT | STR2NR_OOCT: {
+        if (!STRING_ENDED(ptr + 2)
+            && ptr[0] == '0'
+            && (ptr[1] == 'o' || ptr[1] == 'O')
+            && ascii_isodigit(ptr[2])) {
+          ptr += 2;
+        }
         goto vim_str2nr_oct;
       }
       case 0: {
@@ -1751,9 +1771,9 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         abort();
       }
     }
-  } else if ((what & (STR2NR_HEX|STR2NR_OCT|STR2NR_BIN))
-             && !STRING_ENDED(ptr + 1)
-             && ptr[0] == '0' && ptr[1] != '8' && ptr[1] != '9') {
+  } else if ((what & (STR2NR_HEX | STR2NR_OCT | STR2NR_OOCT | STR2NR_BIN))
+             && !STRING_ENDED(ptr + 1) && ptr[0] == '0' && ptr[1] != '8'
+             && ptr[1] != '9') {
     pre = ptr[1];
     // Detect hexadecimal: 0x or 0X followed by hex digit.
     if ((what & STR2NR_HEX)
@@ -1771,10 +1791,18 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       ptr += 2;
       goto vim_str2nr_bin;
     }
-    // Detect octal number: zero followed by octal digits without '8' or '9'.
+    // Detect octal: 0o or 0O followed by octal digits (without '8' or '9').
+    if ((what & STR2NR_OOCT)
+        && !STRING_ENDED(ptr + 2)
+        && (pre == 'O' || pre == 'o')
+        && ascii_isodigit(ptr[2])) {
+      ptr += 2;
+      goto vim_str2nr_oct;
+    }
+    // Detect old octal format (scriptversion < 4): 0 followed by octal digits.
     pre = 0;
     if (!(what & STR2NR_OCT)
-        || !('0' <= ptr[1] && ptr[1] <= '7')) {
+        || !ascii_isodigit(ptr[1])) {
       goto vim_str2nr_dec;
     }
     for (int i = 2; !STRING_ENDED(ptr + i) && ascii_isdigit(ptr[i]); i++) {
@@ -1788,11 +1816,21 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
     goto vim_str2nr_dec;
   }
 
-  // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
+  // Do the conversion manually to avoid sscanf() quirks.
   abort();  // Should’ve used goto earlier.
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
-    while (!STRING_ENDED(ptr) && (cond)) { \
+    while (!STRING_ENDED(ptr)) { \
+      if ((what & STR2NR_QUOTE) && *ptr == '\'') { \
+        ptr++; \
+        if (!STRING_ENDED(ptr) && (cond)) { \
+          continue; \
+        } \
+        ptr--; \
+      } \
+      if (!(cond)) { \
+        break; \
+      } \
       const uvarnumber_T digit = (uvarnumber_T)(conv); \
       /* avoid ubsan error for overflow */ \
       if (un < UVARNUMBER_MAX / base \
@@ -1809,7 +1847,7 @@ vim_str2nr_bin:
   PARSE_NUMBER(2, (*ptr == '0' || *ptr == '1'), (*ptr - '0'));
   goto vim_str2nr_proceed;
 vim_str2nr_oct:
-  PARSE_NUMBER(8, ('0' <= *ptr && *ptr <= '7'), (*ptr - '0'));
+  PARSE_NUMBER(8, (ascii_isodigit(*ptr)), (*ptr - '0'));
   goto vim_str2nr_proceed;
 vim_str2nr_dec:
   PARSE_NUMBER(10, (ascii_isdigit(*ptr)), (*ptr - '0'));
@@ -1820,6 +1858,12 @@ vim_str2nr_hex:
 #undef PARSE_NUMBER
 
 vim_str2nr_proceed:
+  // Check for an alpha-numeric character immediately following, that is
+  // most likely a typo.
+  if (strict && ptr - (const char *)start != maxlen && ASCII_ISALNUM(*ptr)) {
+    return;
+  }
+
   if (prep != NULL) {
     *prep = pre;
   }

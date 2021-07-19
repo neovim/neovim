@@ -2759,6 +2759,7 @@ static int source_using_linegetter(void *cookie,
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
+  current_sctx.sc_version = 1;
   funccal_entry_T entry;
   save_funccal(&entry);
   int retval = do_cmdline(NULL, fgetline, cookie,
@@ -2928,12 +2929,14 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   funccal_entry_T funccalp_entry;
   save_funccal(&funccalp_entry);
 
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_lnum = 0;
+  current_sctx.sc_version = 1;
+
   // Check if this script was sourced before to finds its SID.
   // If it's new, generate a new SID.
   // Always use a new sequence number.
-  const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_seq = ++last_current_SID_seq;
-  current_sctx.sc_lnum = 0;
   FileID file_id;
   bool file_id_ok = os_fileid((char *)fname_exp, &file_id);
   assert(script_items.ga_len >= 0);
@@ -3453,7 +3456,6 @@ void script_line_end(void)
 }
 
 /// ":scriptencoding": Set encoding conversion for a sourced script.
-/// Without the multi-byte feature it's simply ignored.
 void ex_scriptencoding(exarg_T *eap)
 {
   struct source_cookie        *sp;
@@ -3476,6 +3478,24 @@ void ex_scriptencoding(exarg_T *eap)
 
   if (name != eap->arg) {
     xfree(name);
+  }
+}
+
+/// ":scriptversion": Set Vim script version for a sourced script.
+void ex_scriptversion(exarg_T *eap)
+{
+  if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
+    EMSG(_("E984: :scriptversion used outside of a sourced file"));
+    return;
+  }
+
+  const int nr = getdigits_int(&eap->arg, false, 0);
+  if (nr == 0 || *eap->arg != NUL) {
+    EMSG(_(e_invarg));
+  } else if (nr > 4) {
+    EMSG2(_("E999: scriptversion not supported: %d"), nr);
+  } else {
+    current_sctx.sc_version = nr;
   }
 }
 

@@ -2406,6 +2406,12 @@ module.cmds = {
     func='ex_scriptencoding',
   },
   {
+    command='scriptversion',
+    flags=bit.bor(WORD1, TRLBAR, CMDWIN),
+    addr_type='ADDR_NONE',
+    func='ex_scriptversion',
+  },
+  {
     command='scscope',
     flags=bit.bor(EXTRA, NOTRLCOM),
     addr_type='ADDR_NONE',

@@ -5390,6 +5390,7 @@ chk_modeline(
       current_sctx.sc_sid = SID_MODELINE;
       current_sctx.sc_seq = 0;
       current_sctx.sc_lnum = 0;
+      current_sctx.sc_version = 1;
       // Make sure no risky things are executed as a side effect.
       secure = 1;
 

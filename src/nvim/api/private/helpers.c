@@ -405,6 +405,7 @@ void set_option_to(uint64_t channel_id, void *to, int type,
   current_sctx.sc_sid =
     channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
   current_sctx.sc_lnum = 0;
+  current_sctx.sc_version = 1;
   current_channel_id = channel_id;
 
   const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
