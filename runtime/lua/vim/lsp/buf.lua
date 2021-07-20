@@ -9,7 +9,9 @@ local M = {}
 --- Returns nil if {status} is false or nil, otherwise returns the rest of the
 --- arguments.
 local function ok_or_nil(status, ...)
-  if not status then return end
+  if not status then
+    return
+  end
   return ...
 end
 
@@ -40,8 +42,8 @@ end
 --@see |vim.lsp.buf_request()|
 local function request(method, params, handler)
   validate {
-    method = {method, 's'};
-    handler = {handler, 'f', true};
+    method = { method, 's' },
+    handler = { handler, 'f', true },
   }
   return vim.lsp.buf_request(0, method, params, handler)
 end
@@ -51,7 +53,7 @@ end
 ---
 --@returns `true` if server responds.
 function M.server_ready()
-  return not not vim.lsp.buf_notify(0, "window/progress", {})
+  return not not vim.lsp.buf_notify(0, 'window/progress', {})
 end
 
 --- Displays hover information about the symbol under the cursor in a floating
@@ -117,25 +119,24 @@ end
 --
 --@returns The client that the user selected or nil
 local function select_client(method)
-  local clients = vim.tbl_values(vim.lsp.buf_get_clients());
-  clients = vim.tbl_filter(function (client)
+  local clients = vim.tbl_values(vim.lsp.buf_get_clients())
+  clients = vim.tbl_filter(function(client)
     return client.supports_method(method)
   end, clients)
   -- better UX when choices are always in the same order (between restarts)
-  table.sort(clients, function (a, b) return a.name < b.name end)
+  table.sort(clients, function(a, b)
+    return a.name < b.name
+  end)
 
   if #clients > 1 then
     local choices = {}
-    for k,v in pairs(clients) do
-      table.insert(choices, string.format("%d %s", k, v.name))
+    for k, v in pairs(clients) do
+      table.insert(choices, string.format('%d %s', k, v.name))
     end
-    local user_choice = vim.fn.confirm(
-      "Select a language server:",
-      table.concat(choices, "\n"),
-      0,
-      "Question"
-    )
-    if user_choice == 0 then return nil end
+    local user_choice = vim.fn.confirm('Select a language server:', table.concat(choices, '\n'), 0, 'Question')
+    if user_choice == 0 then
+      return nil
+    end
     return clients[user_choice]
   elseif #clients < 1 then
     return nil
@@ -152,11 +153,13 @@ end
 --
 --@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 function M.formatting(options)
-  local client = select_client("textDocument/formatting")
-  if client == nil then return end
+  local client = select_client 'textDocument/formatting'
+  if client == nil then
+    return
+  end
 
   local params = util.make_formatting_params(options)
-  return client.request("textDocument/formatting", params, nil, vim.api.nvim_get_current_buf())
+  return client.request('textDocument/formatting', params, nil, vim.api.nvim_get_current_buf())
 end
 
 --- Performs |vim.lsp.buf.formatting()| synchronously.
@@ -172,15 +175,17 @@ end
 --@param timeout_ms (number) Request timeout
 --@see |vim.lsp.buf.formatting_seq_sync|
 function M.formatting_sync(options, timeout_ms)
-  local client = select_client("textDocument/formatting")
-  if client == nil then return end
+  local client = select_client 'textDocument/formatting'
+  if client == nil then
+    return
+  end
 
   local params = util.make_formatting_params(options)
-  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
+  local result, err = client.request_sync('textDocument/formatting', params, timeout_ms, vim.api.nvim_get_current_buf())
   if result and result.result then
     util.apply_text_edits(result.result)
   elseif err then
-    vim.notify("vim.lsp.buf.formatting_sync: " .. err, vim.log.levels.WARN)
+    vim.notify('vim.lsp.buf.formatting_sync: ' .. err, vim.log.levels.WARN)
   end
 end
 
@@ -201,7 +206,7 @@ end
 ---in the following order: first all clients that are not in the `order` list, then
 ---the remaining clients in the order as they occur in the `order` list.
 function M.formatting_seq_sync(options, timeout_ms, order)
-  local clients = vim.tbl_values(vim.lsp.buf_get_clients());
+  local clients = vim.tbl_values(vim.lsp.buf_get_clients())
 
   -- sort the clients according to `order`
   for _, client_name in pairs(order or {}) do
@@ -218,11 +223,16 @@ function M.formatting_seq_sync(options, timeout_ms, order)
   for _, client in pairs(clients) do
     if client.resolved_capabilities.document_formatting then
       local params = util.make_formatting_params(options)
-      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
+      local result, err = client.request_sync(
+        'textDocument/formatting',
+        params,
+        timeout_ms,
+        vim.api.nvim_get_current_buf()
+      )
       if result and result.result then
         util.apply_text_edits(result.result)
       elseif err then
-        vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
+        vim.notify(string.format('vim.lsp.buf.formatting_seq_sync: (%s) %s', client.name, err), vim.log.levels.WARN)
       end
     end
   end
@@ -236,12 +246,14 @@ end
 --@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
-  local client = select_client("textDocument/rangeFormatting")
-  if client == nil then return end
+  local client = select_client 'textDocument/rangeFormatting'
+  if client == nil then
+    return
+  end
 
   local params = util.make_given_range_params(start_pos, end_pos)
   params.options = util.make_formatting_params(options).options
-  return client.request("textDocument/rangeFormatting", params)
+  return client.request('textDocument/rangeFormatting', params)
 end
 
 --- Renames all references to the symbol under the cursor.
@@ -252,8 +264,10 @@ function M.rename(new_name)
   -- TODO(ashkan) use prepareRename
   -- * result: [`Range`](#range) \| `{ range: Range, placeholder: string }` \| `null` describing the range of the string to rename and optionally a placeholder text of the string content to be renamed. If `null` is returned then it is deemed that a 'textDocument/rename' request is not valid at the given position.
   local params = util.make_position_params()
-  new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
-  if not (new_name and #new_name > 0) then return end
+  new_name = new_name or npcall(vfn.input, 'New Name: ', vfn.expand '<cword>')
+  if not (new_name and #new_name > 0) then
+    return
+  end
   params.newName = new_name
   request('textDocument/rename', params)
 end
@@ -266,7 +280,7 @@ function M.references(context)
   validate { context = { context, 't', true } }
   local params = util.make_position_params()
   params.context = context or {
-    includeDeclaration = true;
+    includeDeclaration = true,
   }
   params[vim.type_idx] = vim.types.dictionary
   request('textDocument/references', params)
@@ -281,14 +295,16 @@ end
 
 --@private
 local function pick_call_hierarchy_item(call_hierarchy_items)
-  if not call_hierarchy_items then return end
+  if not call_hierarchy_items then
+    return
+  end
   if #call_hierarchy_items == 1 then
     return call_hierarchy_items[1]
   end
   local items = {}
   for i, item in pairs(call_hierarchy_items) do
     local entry = item.detail or item.name
-    table.insert(items, string.format("%d. %s", i, entry))
+    table.insert(items, string.format('%d. %s', i, entry))
   end
   local choice = vim.fn.inputlist(items)
   if choice < 1 or choice > #items then
@@ -314,14 +330,14 @@ end
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist|.
 function M.incoming_calls()
-  call_hierarchy('callHierarchy/incomingCalls')
+  call_hierarchy 'callHierarchy/incomingCalls'
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one in the |inputlist|.
 function M.outgoing_calls()
-  call_hierarchy('callHierarchy/outgoingCalls')
+  call_hierarchy 'callHierarchy/outgoingCalls'
 end
 
 --- List workspace folders.
@@ -339,20 +355,25 @@ end
 --- Add the folder at path to the workspace folders. If {path} is
 --- not provided, the user will be prompted for a path using |input()|.
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'), 'dir')
-  vim.api.nvim_command("redraw")
-  if not (workspace_folder and #workspace_folder > 0) then return end
-  if vim.fn.isdirectory(workspace_folder) == 0 then
-    print(workspace_folder, " is not a valid directory")
+  workspace_folder = workspace_folder or npcall(vfn.input, 'Workspace Folder: ', vfn.expand '%:p:h', 'dir')
+  vim.api.nvim_command 'redraw'
+  if not (workspace_folder and #workspace_folder > 0) then
     return
   end
-  local params = util.make_workspace_params({{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}}, {{}})
+  if vim.fn.isdirectory(workspace_folder) == 0 then
+    print(workspace_folder, ' is not a valid directory')
+    return
+  end
+  local params = util.make_workspace_params(
+    { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } },
+    { {} }
+  )
   for _, client in pairs(vim.lsp.buf_get_clients()) do
     local found = false
     for _, folder in pairs(client.workspaceFolders) do
       if folder.name == workspace_folder then
         found = true
-        print(workspace_folder, "is already part of this workspace")
+        print(workspace_folder, 'is already part of this workspace')
         break
       end
     end
@@ -367,10 +388,15 @@ end
 --- {path} is not provided, the user will be prompted for
 --- a path using |input()|.
 function M.remove_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
-  vim.api.nvim_command("redraw")
-  if not (workspace_folder and #workspace_folder > 0) then return end
-  local params = util.make_workspace_params({{}}, {{uri = vim.uri_from_fname(workspace_folder); name = workspace_folder}})
+  workspace_folder = workspace_folder or npcall(vfn.input, 'Workspace Folder: ', vfn.expand '%:p:h')
+  vim.api.nvim_command 'redraw'
+  if not (workspace_folder and #workspace_folder > 0) then
+    return
+  end
+  local params = util.make_workspace_params(
+    { {} },
+    { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
+  )
   for _, client in pairs(vim.lsp.buf_get_clients()) do
     for idx, folder in pairs(client.workspaceFolders) do
       if folder.name == workspace_folder then
@@ -380,7 +406,7 @@ function M.remove_workspace_folder(workspace_folder)
       end
     end
   end
-  print(workspace_folder,  "is not currently part of the workspace")
+  print(workspace_folder, 'is not currently part of the workspace')
 end
 
 --- Lists all symbols in the current workspace in the quickfix window.
@@ -391,8 +417,8 @@ end
 ---
 --@param query (string, optional)
 function M.workspace_symbol(query)
-  query = query or npcall(vfn.input, "Query: ")
-  local params = {query = query}
+  query = query or npcall(vfn.input, 'Query: ')
+  local params = { query = query }
   request('workspace/symbol', params)
 end
 
@@ -472,7 +498,7 @@ end
 function M.execute_command(command)
   validate {
     command = { command.command, 's' },
-    arguments = { command.arguments, 't', true }
+    arguments = { command.arguments, 't', true },
   }
   request('workspace/executeCommand', command)
 end

@@ -2,9 +2,10 @@ local api = vim.api
 local validate = vim.validate
 
 local highlight = vim.highlight
-local log = require('vim.lsp.log')
-local protocol = require('vim.lsp.protocol')
-local util = require('vim.lsp.util')
+local log = require 'vim.lsp.log'
+local protocol = require 'vim.lsp.protocol'
+local util = require 'vim.lsp.util'
+local ui_util = require 'vim.ui.util'
 
 local if_nil = vim.F.if_nil
 
@@ -12,7 +13,9 @@ local if_nil = vim.F.if_nil
 local DiagnosticSeverity = protocol.DiagnosticSeverity
 
 local to_severity = function(severity)
-  if not severity then return nil end
+  if not severity then
+    return nil
+  end
   return type(severity) == 'string' and DiagnosticSeverity[severity] or severity
 end
 
@@ -22,7 +25,9 @@ local filter_to_severity_limit = function(severity, diagnostics)
     return diagnostics
   end
 
-  return vim.tbl_filter(function(t) return t.severity == filter_level end, diagnostics)
+  return vim.tbl_filter(function(t)
+    return t.severity == filter_level
+  end, diagnostics)
 end
 
 local filter_by_severity_limit = function(severity_limit, diagnostics)
@@ -31,18 +36,19 @@ local filter_by_severity_limit = function(severity_limit, diagnostics)
     return diagnostics
   end
 
-  return vim.tbl_filter(function(t) return t.severity <= filter_level end, diagnostics)
+  return vim.tbl_filter(function(t)
+    return t.severity <= filter_level
+  end, diagnostics)
 end
 
 local to_position = function(position, bufnr)
-  vim.validate { position = {position, 't'} }
+  vim.validate { position = { position, 't' } }
 
   return {
     position.line,
-    util._get_line_byte_from_position(bufnr, position)
+    util._get_line_byte_from_position(bufnr, position),
   }
 end
-
 
 ---@brief lsp-diagnostic
 ---
@@ -95,27 +101,27 @@ vim.fn.setreg("*", table.concat(results, '\n'))
 --]]
 
 local diagnostic_severities = {
-  [DiagnosticSeverity.Error]       = { guifg = "Red" };
-  [DiagnosticSeverity.Warning]     = { guifg = "Orange" };
-  [DiagnosticSeverity.Information] = { guifg = "LightBlue" };
-  [DiagnosticSeverity.Hint]        = { guifg = "LightGrey" };
+  [DiagnosticSeverity.Error] = { guifg = 'Red' },
+  [DiagnosticSeverity.Warning] = { guifg = 'Orange' },
+  [DiagnosticSeverity.Information] = { guifg = 'LightBlue' },
+  [DiagnosticSeverity.Hint] = { guifg = 'LightGrey' },
 }
 
 -- Make a map from DiagnosticSeverity -> Highlight Name
 local make_highlight_map = function(base_name)
   local result = {}
   for k, _ in pairs(diagnostic_severities) do
-    result[k] = "LspDiagnostics" .. base_name .. DiagnosticSeverity[k]
+    result[k] = 'LspDiagnostics' .. base_name .. DiagnosticSeverity[k]
   end
 
   return result
 end
 
-local default_highlight_map = make_highlight_map("Default")
-local virtual_text_highlight_map = make_highlight_map("VirtualText")
-local underline_highlight_map = make_highlight_map("Underline")
-local floating_highlight_map = make_highlight_map("Floating")
-local sign_highlight_map = make_highlight_map("Sign")
+local default_highlight_map = make_highlight_map 'Default'
+local virtual_text_highlight_map = make_highlight_map 'VirtualText'
+local underline_highlight_map = make_highlight_map 'Underline'
+local floating_highlight_map = make_highlight_map 'Floating'
+local sign_highlight_map = make_highlight_map 'Sign'
 
 -- }}}
 -- Diagnostic Namespaces {{{
@@ -138,19 +144,18 @@ local get_bufnr = function(bufnr)
   return bufnr
 end
 
-
 --- Create a namespace table, used to track a client's buffer local items
 local _make_namespace_table = function(namespace, api_namespace)
   vim.validate { namespace = { namespace, 's' } }
 
   return setmetatable({
-    [DEFAULT_CLIENT_ID] = api.nvim_create_namespace(namespace)
+    [DEFAULT_CLIENT_ID] = api.nvim_create_namespace(namespace),
   }, {
     __index = function(t, client_id)
       client_id = get_client_id(client_id)
 
       if rawget(t, client_id) == nil then
-        local value = string.format("%s:%s", namespace, client_id)
+        local value = string.format('%s:%s', namespace, client_id)
 
         if api_namespace then
           value = api.nvim_create_namespace(value)
@@ -160,12 +165,12 @@ local _make_namespace_table = function(namespace, api_namespace)
       end
 
       return rawget(t, client_id)
-    end
+    end,
   })
 end
 
-local _diagnostic_namespaces = _make_namespace_table("vim_lsp_diagnostics", true)
-local _sign_namespaces = _make_namespace_table("vim_lsp_signs", false)
+local _diagnostic_namespaces = _make_namespace_table('vim_lsp_diagnostics', true)
+local _sign_namespaces = _make_namespace_table('vim_lsp_signs', false)
 
 --@private
 function M._get_diagnostic_namespace(client_id)
@@ -215,7 +220,9 @@ local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
 ---@param diagnostics Diagnostic[]
 ---@return table<number, Diagnostic[]>
 local _diagnostic_lines = function(diagnostics)
-  if not diagnostics then return end
+  if not diagnostics then
+    return
+  end
 
   local diagnostics_by_line = {}
   for _, diagnostic in ipairs(diagnostics) do
@@ -235,7 +242,9 @@ end
 ---@param diagnostics Diagnostic[]
 ---@return table<DiagnosticSeverity, number>
 local _diagnostic_counts = function(diagnostics)
-  if not diagnostics then return end
+  if not diagnostics then
+    return
+  end
 
   local counts = {}
   for _, diagnostic in pairs(diagnostics) do
@@ -273,12 +282,8 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
     end
     -- Account for servers that place diagnostics on terminating newline
     if buf_line_count > 0 then
-      diagnostic.range.start.line = math.max(math.min(
-        diagnostic.range.start.line, buf_line_count - 1
-      ), 0)
-      diagnostic.range["end"].line = math.max(math.min(
-        diagnostic.range["end"].line, buf_line_count - 1
-      ), 0)
+      diagnostic.range.start.line = math.max(math.min(diagnostic.range.start.line, buf_line_count - 1), 0)
+      diagnostic.range['end'].line = math.max(math.min(diagnostic.range['end'].line, buf_line_count - 1), 0)
     end
   end
 
@@ -286,7 +291,6 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
   diagnostic_cache_lines[bufnr][client_id] = _diagnostic_lines(diagnostics)
   diagnostic_cache_counts[bufnr][client_id] = _diagnostic_counts(diagnostics)
 end
-
 
 --@private
 --- Clear the cached diagnostics
@@ -308,12 +312,14 @@ end
 ---@param client_id number
 function M.save(diagnostics, bufnr, client_id)
   validate {
-    diagnostics = {diagnostics, 't'},
-    bufnr = {bufnr, 'n'},
-    client_id = {client_id, 'n', true},
+    diagnostics = { diagnostics, 't' },
+    bufnr = { bufnr, 'n' },
+    client_id = { client_id, 'n', true },
   }
 
-  if not diagnostics then return end
+  if not diagnostics then
+    return
+  end
 
   bufnr = get_bufnr(bufnr)
   client_id = get_client_id(client_id)
@@ -326,7 +332,7 @@ function M.save(diagnostics, bufnr, client_id)
       on_detach = function(_, b)
         clear_diagnostic_cache(b, client_id)
         _diagnostic_cleanup[b][client_id] = nil
-      end
+      end,
     })
   end
 
@@ -334,7 +340,6 @@ function M.save(diagnostics, bufnr, client_id)
 end
 -- }}}
 -- Diagnostic Retrieval {{{
-
 
 --- Get all diagnostics for clients
 ---
@@ -416,7 +421,9 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
     line_diagnostics = filter_by_severity_limit(opts.severity_limit, line_diagnostics)
   end
 
-  table.sort(line_diagnostics, function(a, b) return a.severity < b.severity end)
+  table.sort(line_diagnostics, function(a, b)
+    return a.severity < b.severity
+  end)
 
   return line_diagnostics
 end
@@ -456,7 +463,6 @@ function M.get_count(bufnr, severity, client_id)
 
   return (diagnostic_cache_counts[bufnr][client_id] or {})[DiagnosticSeverity[severity]] or 0
 end
-
 
 -- }}}
 -- Diagnostic Movements {{{
@@ -524,11 +530,11 @@ local function _iter_diagnostic_move_pos(name, opts, pos)
   local win_id = opts.win_id or vim.api.nvim_get_current_win()
 
   if not pos then
-    print(string.format("%s: No more valid diagnostics to move to.", name))
+    print(string.format('%s: No more valid diagnostics to move to.', name))
     return
   end
 
-  vim.api.nvim_win_set_cursor(win_id, {pos[1] + 1, pos[2]})
+  vim.api.nvim_win_set_cursor(win_id, { pos[1] + 1, pos[2] })
 
   if enable_popup then
     -- This is a bit weird... I'm surprised that we need to wait til the next tick to do this.
@@ -556,20 +562,13 @@ end
 ---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Previous diagnostic position
 function M.get_prev_pos(opts)
-  return _iter_diagnostic_lines_pos(
-    opts,
-    M.get_prev(opts)
-  )
+  return _iter_diagnostic_lines_pos(opts, M.get_prev(opts))
 end
 
 --- Move to the previous diagnostic
 ---@param opts table See |vim.lsp.diagnostic.goto_next()|
 function M.goto_prev(opts)
-  return _iter_diagnostic_move_pos(
-    "DiagnosticPrevious",
-    opts,
-    M.get_prev_pos(opts)
-  )
+  return _iter_diagnostic_move_pos('DiagnosticPrevious', opts, M.get_prev_pos(opts))
 end
 
 --- Get the next diagnostic closest to the cursor_position
@@ -589,10 +588,7 @@ end
 ---@param opts table See |vim.lsp.diagnostic.goto_next()|
 ---@return table Next diagnostic position
 function M.get_next_pos(opts)
-  return _iter_diagnostic_lines_pos(
-    opts,
-    M.get_next(opts)
-  )
+  return _iter_diagnostic_lines_pos(opts, M.get_next(opts))
 end
 
 --- Move to the next diagnostic
@@ -614,11 +610,7 @@ end
 ---         - {win_id}: (number, default 0)
 ---             - Window ID
 function M.goto_next(opts)
-  return _iter_diagnostic_move_pos(
-    "DiagnosticNext",
-    opts,
-    M.get_next_pos(opts)
-  )
+  return _iter_diagnostic_move_pos('DiagnosticNext', opts, M.get_next_pos(opts))
 end
 -- }}}
 -- Diagnostic Setters {{{
@@ -658,21 +650,15 @@ function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
 
   local ok = true
   for _, diagnostic in ipairs(diagnostics) do
-
-    ok = ok and pcall(vim.fn.sign_place,
-      0,
-      sign_ns,
-      sign_highlight_map[diagnostic.severity],
-      bufnr,
-      {
+    ok = ok
+      and pcall(vim.fn.sign_place, 0, sign_ns, sign_highlight_map[diagnostic.severity], bufnr, {
         priority = opts.priority,
-        lnum = diagnostic.range.start.line + 1
-      }
-    )
+        lnum = diagnostic.range.start.line + 1,
+      })
   end
 
   if not ok then
-    log.debug("Failed to place signs:", diagnostics)
+    log.debug('Failed to place signs:', diagnostics)
   end
 end
 
@@ -701,8 +687,8 @@ function M.set_underline(diagnostics, bufnr, client_id, diagnostic_ns, opts)
   diagnostics = filter_by_severity_limit(opts.severity_limit, diagnostics)
 
   for _, diagnostic in ipairs(diagnostics) do
-    local start = diagnostic.range["start"]
-    local finish = diagnostic.range["end"]
+    local start = diagnostic.range['start']
+    local finish = diagnostic.range['end']
     local higroup = underline_highlight_map[diagnostic.severity]
 
     if higroup == nil then
@@ -710,13 +696,7 @@ function M.set_underline(diagnostics, bufnr, client_id, diagnostic_ns, opts)
       higroup = underline_highlight_map[DiagnosticSeverity.Error]
     end
 
-    highlight.range(
-      bufnr,
-      diagnostic_ns,
-      higroup,
-      to_position(start, bufnr),
-      to_position(finish, bufnr)
-    )
+    highlight.range(bufnr, diagnostic_ns, higroup, to_position(start, bufnr), to_position(finish, bufnr))
   end
 end
 
@@ -782,27 +762,24 @@ function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   end
 
   opts = opts or {}
-  local prefix = opts.prefix or "■"
+  local prefix = opts.prefix or '■'
   local spacing = opts.spacing or 4
 
   -- Create a little more space between virtual text and contents
-  local virt_texts = {{string.rep(" ", spacing)}}
+  local virt_texts = { { string.rep(' ', spacing) } }
 
   for i = 1, #line_diags - 1 do
-    table.insert(virt_texts, {prefix, virtual_text_highlight_map[line_diags[i].severity]})
+    table.insert(virt_texts, { prefix, virtual_text_highlight_map[line_diags[i].severity] })
   end
   local last = line_diags[#line_diags]
 
   -- TODO(tjdevries): Allow different servers to be shown first somehow?
   -- TODO(tjdevries): Display server name associated with these?
   if last.message then
-    table.insert(
-      virt_texts,
-      {
-        string.format("%s %s", prefix, last.message:gsub("\r", ""):gsub("\n", "  ")),
-        virtual_text_highlight_map[last.severity]
-      }
-    )
+    table.insert(virt_texts, {
+      string.format('%s %s', prefix, last.message:gsub('\r', ''):gsub('\n', '  ')),
+      virtual_text_highlight_map[last.severity],
+    })
 
     return virt_texts
   end
@@ -830,12 +807,12 @@ function M.clear(bufnr, client_id, diagnostic_ns, sign_ns)
   sign_ns = sign_ns or M._get_sign_namespace(client_id)
   diagnostic_cache_extmarks[bufnr][client_id] = {}
 
-  assert(bufnr, "bufnr is required")
-  assert(diagnostic_ns, "Need diagnostic_ns, got nil")
-  assert(sign_ns, string.format("Need sign_ns, got nil %s", sign_ns))
+  assert(bufnr, 'bufnr is required')
+  assert(diagnostic_ns, 'Need diagnostic_ns, got nil')
+  assert(sign_ns, string.format('Need sign_ns, got nil %s', sign_ns))
 
   -- clear sign group
-  vim.fn.sign_unplace(sign_ns, {buffer=bufnr})
+  vim.fn.sign_unplace(sign_ns, { buffer = bufnr })
 
   -- clear virtual text namespace
   api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
@@ -862,11 +839,11 @@ end
 local registered = {}
 
 local make_augroup_key = function(bufnr, client_id)
-  return string.format("LspDiagnosticInsertLeave:%s:%s", bufnr, client_id)
+  return string.format('LspDiagnosticInsertLeave:%s:%s', bufnr, client_id)
 end
 
 --- Table of autocmd events to fire the update for displaying new diagnostic information
-M.insert_leave_auto_cmds = { "InsertLeave", "CursorHoldI" }
+M.insert_leave_auto_cmds = { 'InsertLeave', 'CursorHoldI' }
 
 --- Used to schedule diagnostic updates upon leaving insert mode.
 ---
@@ -876,23 +853,22 @@ function M._schedule_display(bufnr, client_id, args)
 
   local key = make_augroup_key(bufnr, client_id)
   if not registered[key] then
-    vim.cmd(string.format("augroup %s", key))
-    vim.cmd("  au!")
+    vim.cmd(string.format('augroup %s', key))
+    vim.cmd '  au!'
     vim.cmd(
       string.format(
         [[autocmd %s <buffer=%s> :lua vim.lsp.diagnostic._execute_scheduled_display(%s, %s)]],
-        table.concat(M.insert_leave_auto_cmds, ","),
+        table.concat(M.insert_leave_auto_cmds, ','),
         bufnr,
         bufnr,
         client_id
       )
     )
-    vim.cmd("augroup END")
+    vim.cmd 'augroup END'
 
     registered[key] = true
   end
 end
-
 
 --- Used in tandem with
 ---
@@ -901,9 +877,9 @@ function M._clear_scheduled_display(bufnr, client_id)
   local key = make_augroup_key(bufnr, client_id)
 
   if registered[key] then
-    vim.cmd(string.format("augroup %s", key))
-    vim.cmd("  au!")
-    vim.cmd("augroup END")
+    vim.cmd(string.format('augroup %s', key))
+    vim.cmd '  au!'
+    vim.cmd 'augroup END'
 
     registered[key] = nil
   end
@@ -959,8 +935,8 @@ function M._define_default_signs_and_highlights()
   for severity, underline_highlight_name in pairs(underline_highlight_map) do
     highlight.create(underline_highlight_name, {
       cterm = 'underline',
-      gui   = 'underline',
-      guisp = diagnostic_severities[severity].guifg
+      gui = 'underline',
+      guisp = diagnostic_severities[severity].guifg,
     }, true)
   end
 end
@@ -1019,7 +995,9 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
   local diagnostics = params.diagnostics
 
   if config and if_nil(config.severity_sort, false) then
-    table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
+    table.sort(diagnostics, function(a, b)
+      return a.severity > b.severity
+    end)
   end
 
   -- Always save the diagnostics, even if the buf is not loaded.
@@ -1047,7 +1025,7 @@ end
 local function restore_extmarks(bufnr, last)
   for client_id, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
     local ns = M._get_diagnostic_namespace(client_id)
-    local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+    local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
     local found = {}
     for _, extmark in ipairs(extmarks_current) do
       -- nvim_buf_set_lines will move any extmark to the line after the last
@@ -1078,15 +1056,16 @@ local function save_extmarks(bufnr, client_id)
   if not diagnostic_attached_buffers[bufnr] then
     api.nvim_buf_attach(bufnr, false, {
       on_lines = function(_, _, _, _, _, last)
-        restore_extmarks(bufnr, last -  1)
+        restore_extmarks(bufnr, last - 1)
       end,
       on_detach = function()
         diagnostic_cache_extmarks[bufnr] = nil
-      end})
+      end,
+    })
     diagnostic_attached_buffers[bufnr] = true
   end
   local ns = M._get_diagnostic_namespace(client_id)
-  diagnostic_cache_extmarks[bufnr][client_id] = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+  diagnostic_cache_extmarks[bufnr][client_id] = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
 end
 
 --@private
@@ -1120,7 +1099,7 @@ function M.display(diagnostics, bufnr, client_id, config)
     elseif type(option) == 'table' then
       return option
     else
-      error("Unexpected option type: " .. vim.inspect(option))
+      error('Unexpected option type: ' .. vim.inspect(option))
     end
   end
 
@@ -1139,7 +1118,7 @@ function M.display(diagnostics, bufnr, client_id, config)
 
   diagnostics = diagnostics or M.get(bufnr, client_id)
 
-  vim.api.nvim_command("doautocmd <nomodeline> User LspDiagnosticsChanged")
+  vim.api.nvim_command 'doautocmd <nomodeline> User LspDiagnosticsChanged'
 
   if not diagnostics or vim.tbl_isempty(diagnostics) then
     return
@@ -1195,38 +1174,39 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
   local lines = {}
   local highlights = {}
   if show_header then
-    table.insert(lines, "Diagnostics:")
-    table.insert(highlights, {0, "Bold"})
+    table.insert(lines, 'Diagnostics:')
+    table.insert(highlights, { 0, 'Bold' })
   end
 
   local line_diagnostics = M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
-  if vim.tbl_isempty(line_diagnostics) then return end
+  if vim.tbl_isempty(line_diagnostics) then
+    return
+  end
 
   for i, diagnostic in ipairs(line_diagnostics) do
-    local prefix = string.format("%d. ", i)
+    local prefix = string.format('%d. ', i)
     local hiname = M._get_floating_severity_highlight_name(diagnostic.severity)
     assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
 
     local message_lines = vim.split(diagnostic.message, '\n', true)
-    table.insert(lines, prefix..message_lines[1])
-    table.insert(highlights, {#prefix, hiname})
+    table.insert(lines, prefix .. message_lines[1])
+    table.insert(highlights, { #prefix, hiname })
     for j = 2, #message_lines do
       table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
-      table.insert(highlights, {0, hiname})
+      table.insert(highlights, { 0, hiname })
     end
   end
 
-  opts.focus_id = "line_diagnostics"
-  local popup_bufnr, winnr = util.open_floating_preview(lines, 'plaintext', opts)
+  opts.focus_id = 'line_diagnostics'
+  local popup_bufnr, winnr = ui_util.open_floating_preview(lines, 'plaintext', opts)
   for i, hi in ipairs(highlights) do
     local prefixlen, hiname = unpack(hi)
     -- Start highlight after the prefix
-    api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
+    api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i - 1, prefixlen, -1)
   end
 
   return popup_bufnr, winnr
 end
-
 
 --- Clear diagnotics and diagnostic cache
 ---
@@ -1261,9 +1241,10 @@ function M.set_loclist(opts)
   opts = opts or {}
   local open_loclist = if_nil(opts.open_loclist, true)
   local current_bufnr = api.nvim_get_current_buf()
-  local diags = opts.workspace and M.get_all(opts.client_id) or {
-    [current_bufnr] = M.get(current_bufnr, opts.client_id)
-  }
+  local diags = opts.workspace and M.get_all(opts.client_id)
+    or {
+      [current_bufnr] = M.get(current_bufnr, opts.client_id),
+    }
   local predicate = function(d)
     local severity = to_severity(opts.severity)
     if severity then
