@@ -590,6 +590,10 @@ end
 --- as `initializationOptions`. See `initialize` in the LSP spec.
 ---
 --@param name (string, default=client-id) Name in log messages.
+--
+--@param workspace_folders (table) List of workspace folders passed to the
+--- language server. Defaults to root_dir if not set. See `workspaceFolders` in
+--- the LSP spec
 ---
 --@param get_language_id function(bufnr, filetype) -> language ID as string.
 --- Defaults to the filetype.
@@ -775,6 +779,14 @@ function lsp.start_client(config)
       off = 'off'; messages = 'messages'; verbose = 'verbose';
     }
     local version = vim.version()
+
+    if not config.workspace_folders then
+      config.workspace_folders = {{
+        uri = vim.uri_from_fname(config.root_dir);
+        name = string.format("%s", config.root_dir);
+      }};
+    end
+
     local initialize_params = {
       -- The process Id of the parent process that started the server. Is null if
       -- the process has not been started by another process.  If the parent
@@ -815,10 +827,7 @@ function lsp.start_client(config)
       --  -- workspace folder in the user interface.
       --  name
       -- }
-      workspaceFolders = {{
-        uri = vim.uri_from_fname(config.root_dir);
-        name = string.format("%s", config.root_dir);
-      }};
+      workspaceFolders = config.workspace_folders,
     }
     if config.before_init then
       -- TODO(ashkan) handle errors here.
