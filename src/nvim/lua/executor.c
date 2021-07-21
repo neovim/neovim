@@ -45,6 +45,9 @@
 
 static int in_fast_callback = 0;
 
+// Initialized in nlua_init().
+static lua_State *global_lstate = NULL;
+
 typedef struct {
   Error err;
   String lua_err_str;
@@ -250,7 +253,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult,
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, cb);
   nlua_unref(lstate, cb);
   if (lua_pcall(lstate, 0, 0, 0)) {
@@ -553,14 +556,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 0;
 }
 
-/// Initialize lua interpreter
+/// Initialize global lua interpreter
 ///
-/// Crashes Nvim if initialization fails. Should be called once per lua
-/// interpreter instance.
-///
-/// @return New lua interpreter instance.
-static lua_State *nlua_init(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+/// Crashes Nvim if initialization fails.
+void nlua_init(void)
 {
 #ifdef NLUA_TRACK_REFS
   const char *env = os_getenv("NVIM_LUA_NOTRACK");
@@ -577,28 +576,9 @@ static lua_State *nlua_init(void)
   luaL_openlibs(lstate);
   nlua_state_init(lstate);
 
-  return lstate;
+  global_lstate = lstate;
 }
 
-// only to be used by nlua_enter and nlua_free_all_mem!
-static lua_State *global_lstate = NULL;
-
-/// Enter lua interpreter
-///
-/// Calls nlua_init() if needed. Is responsible for pre-lua call initialization
-/// like updating `package.[c]path` with directories derived from &runtimepath.
-///
-/// @return Interpreter instance to use. Will either be initialized now or
-///         taken from previous initialization.
-static lua_State *nlua_enter(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (global_lstate == NULL) {
-    global_lstate = nlua_init();
-  }
-  lua_State *const lstate = global_lstate;
-  return lstate;
-}
 
 void nlua_free_all_mem(void)
 {
@@ -1043,8 +1023,7 @@ void nlua_unref(lua_State *lstate, LuaRef ref)
 
 void api_free_luaref(LuaRef ref)
 {
-  lua_State *const lstate = nlua_enter();
-  nlua_unref(lstate, ref);
+  nlua_unref(global_lstate, ref);
 }
 
 /// push a value referenced in the registry
@@ -1064,7 +1043,7 @@ LuaRef api_new_luaref(LuaRef original_ref)
     return LUA_NOREF;
   }
 
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, original_ref);
   LuaRef new_ref = nlua_ref(lstate, -1);
   lua_pop(lstate, 1);
@@ -1143,7 +1122,7 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len,
     return;
   }
 
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, name)) {
     nlua_error(lstate, _("E5107: Error loading lua %.*s"));
     return;
@@ -1233,7 +1212,7 @@ int typval_exec_lua_callable(
 /// @return Return value of the execution.
 Object nlua_exec(const String str, const Array args, Error *err)
 {
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
 
   if (luaL_loadbuffer(lstate, str.data, str.size, "<nvim>")) {
     size_t len;
@@ -1270,7 +1249,7 @@ Object nlua_exec(const String str, const Array args, Error *err)
 Object nlua_call_ref(LuaRef ref, const char *name, Array args,
                      bool retval, Error *err)
 {
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, ref);
   int nargs = (int)args.size;
   if (name != NULL) {
@@ -1346,7 +1325,7 @@ void ex_luado(exarg_T *const eap)
   const char *const cmd = (const char *)eap->arg;
   const size_t cmd_len = strlen(cmd);
 
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
 
 #define DOSTART "return function(line, linenr) "
 #define DOEND " end"
@@ -1431,7 +1410,7 @@ void ex_luafile(exarg_T *const eap)
 bool nlua_exec_file(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
 
   if (luaL_loadfile(lstate, path)) {
     nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
@@ -1480,7 +1459,7 @@ int nlua_expand_pat(expand_T *xp,
                     int *num_results,
                     char_u ***results)
 {
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
   int ret = OK;
 
   // [ vim ]
@@ -1690,7 +1669,7 @@ int nlua_CFunction_func_call(
     typval_T *rettv,
     void *state)
 {
-    lua_State *const lstate = nlua_enter();
+    lua_State *const lstate = global_lstate;
     LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
 
     return typval_exec_lua_callable(lstate, funcstate->lua_callable,
@@ -1699,7 +1678,7 @@ int nlua_CFunction_func_call(
 
 void nlua_CFunction_func_free(void *state)
 {
-    lua_State *const lstate = nlua_enter();
+    lua_State *const lstate = global_lstate;
     LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
 
     nlua_unref(lstate, funcstate->lua_callable.func_ref);
@@ -1730,7 +1709,7 @@ char_u *nlua_register_table_as_callable(typval_T *const arg)
     return NULL;
   }
 
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
 
 #ifndef NDEBUG
   int top = lua_gettop(lstate);
@@ -1769,7 +1748,7 @@ void nlua_execute_log_keystroke(int c)
   char_u buf[NUMBUFLEN];
   size_t buf_len = special_to_buf(c, mod_mask, false, buf);
 
-  lua_State *const lstate = nlua_enter();
+  lua_State *const lstate = global_lstate;
 
 #ifndef NDEBUG
   int top = lua_gettop(lstate);

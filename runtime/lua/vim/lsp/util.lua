@@ -990,6 +990,7 @@ function M.make_floating_popup_options(width, height, opts)
     style = 'minimal',
     width = width,
     border = opts.border or default_border,
+    zindex = opts.zindex or 50,
   }
 end
 
