@@ -1373,7 +1373,6 @@ function M.enable(bufnr, client_id)
     },
     client_id
   )
->>>>>>> master
 end
 -- }}}
 
