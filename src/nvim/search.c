@@ -1501,7 +1501,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
   FUNC_ATTR_NONNULL_ALL
 {
   int c = cap->nchar;                   // char to search for
-  Direction dir = cap->arg;             // TRUE for searching forward
+  int dir = cap->arg;                   // true for searching forward
   long count = cap->count1;             // repeat count
   int col;
   char_u              *p;
