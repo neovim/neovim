@@ -362,40 +362,29 @@ end
 ---@param bufnr number
 ---@param client_id number|nil If nil, then return all of the diagnostics.
 ---                            Else, return just the diagnostics associated with the client_id.
----@param opts table|nil Configuration keys
----         - severity: (DiagnosticSeverity, default nil)
----             - Only return diagnostics with this severity. Overrides severity_limit
----         - severity_limit: (DiagnosticSeverity, default nil)
----             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
 ---@param predicate function|nil Optional function for filtering diagnostics
----@param comp      function|nil Optional function for sorting diagnostics
-function M.get(bufnr, client_id, opts, predicate, comp)
-  opts = opts or {}
-  predicate = predicate or function(_) return true end
+function M.get(bufnr, client_id, predicate)
   if client_id == nil then
     local all_diagnostics = {}
     for iter_client_id, _ in pairs(diagnostic_cache[bufnr]) do
-      local iter_diagnostics = M.get(bufnr, iter_client_id)
+      local iter_diagnostics = M.get(bufnr, iter_client_id, predicate)
 
       for _, diagnostic in ipairs(iter_diagnostics) do
-        if predicate(diagnostic) then
-          table.insert(all_diagnostics, diagnostic)
-        end
+        table.insert(all_diagnostics, diagnostic)
       end
-    end
-    if opts.severity then
-      all_diagnostics = filter_to_severity_limit(opts.severity, all_diagnostics)
-    elseif opts.severity_limit then
-      all_diagnostics = filter_by_severity_limit(opts.severity_limit, all_diagnostics)
-    end
-    if comp then
-      table.sort(all_diagnostics, comp)
     end
 
     return all_diagnostics
   end
 
-  return diagnostic_cache[bufnr][client_id] or {}
+  predicate = predicate or function(_) return true end
+  local client_diagnostics = {}
+  for _, diagnostic in ipairs(diagnostic_cache[bufnr][client_id] or {}) do
+    if predicate(diagnostic) then
+      table.insert(client_diagnostics, diagnostic)
+    end
+  end
+  return client_diagnostics
 end
 
 --- Get the diagnostics by line
@@ -1246,9 +1235,12 @@ end
 
 --- Open a floating window with the diagnostics from {position}
 
----@param opts table Configuration table
----     - all opts for |vim.lsp.diagnostic.get()| and |show_diagnostics()| can
---        be used here
+---@param opts table|nil Configuration keys
+---         - severity: (DiagnosticSeverity, default nil)
+---             - Only return diagnostics with this severity. Overrides severity_limit
+---         - severity_limit: (DiagnosticSeverity, default nil)
+---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---         - all opts for |show_diagnostics()| can be used here
 ---@param buf_nr number|nil The buffer number
 ---@param position table|nil The (0,0)-indexed position
 ---@return table {popup_bufnr, win_id}
@@ -1266,8 +1258,13 @@ function M.show_position_diagnostics(opts, buf_nr, position)
     position[2] >= diag.range['start'].character and
     (position[2] <= diag.range['end'].character or position[1] < diag.range['end'].line)
   end
-  local comp = function(a, b) return a.severity < b.severity end
-  local position_diagnostics = M.get(buf_nr, nil, opts, predicate, comp)
+  local position_diagnostics = M.get(buf_nr, nil, predicate)
+  if opts.severity then
+    position_diagnostics = filter_to_severity_limit(opts.severity, position_diagnostics)
+  elseif opts.severity_limit then
+    position_diagnostics = filter_by_severity_limit(opts.severity_limit, position_diagnostics)
+  end
+  table.sort(position_diagnostics, function(a, b) return a.severity < b.severity end)
   return show_diagnostics(opts, position_diagnostics)
 end
 
