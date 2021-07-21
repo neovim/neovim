@@ -2,6 +2,7 @@ local log = require 'vim.lsp.log'
 local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
 local ui_util = require 'vim.ui.util'
+local Popup = require 'vim.ui.popup'
 local vim = vim
 local api = vim.api
 local buf = require 'vim.lsp.buf'
@@ -265,20 +266,27 @@ end
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.api.nvim_open_win()|
+---@return Popup
 function M.hover(_, method, result, _, _, config)
   config = config or {}
   config.focus_id = method
+  config.relative = 'cursor'
+  config.stylize_markdown = true
   if not (result and result.contents) then
     -- return { 'No information available' }
     return
   end
-  local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
+  local markdown_lines = ui_util.convert_input_to_markdown_lines(result.contents)
   markdown_lines = util.trim_empty_lines(markdown_lines)
   if vim.tbl_isempty(markdown_lines) then
     -- return { 'No information available' }
     return
   end
-  return ui_util.open_floating_preview(markdown_lines, 'markdown', config)
+
+  local popup = Popup:create(markdown_lines, config)
+  popup:show()
+
+  return popup
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
@@ -334,6 +342,7 @@ M['textDocument/implementation'] = location_handler
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.api.nvim_open_win()|
+---@return Popup
 function M.signature_help(_, method, result, client_id, bufnr, config)
   config = config or {}
   config.focus_id = method
@@ -356,11 +365,11 @@ function M.signature_help(_, method, result, client_id, bufnr, config)
     end
     return
   end
-  local fbuf, fwin = ui_util.open_floating_preview(lines, 'markdown', config)
+  local popup = Popup:create(lines, 'markdown', config)
   if hl then
-    api.nvim_buf_add_highlight(fbuf, -1, 'LspSignatureActiveParameter', 0, unpack(hl))
+    api.nvim_buf_add_highlight(popup.buf.id, -1, 'LspSignatureActiveParameter', 0, unpack(hl))
   end
-  return fbuf, fwin
+  return popup
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp

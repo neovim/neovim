@@ -1,5 +1,6 @@
 local protocol = require 'vim.lsp.protocol'
-local ui = require 'vim.ui.util'
+local ui_util = require 'vim.ui.util'
+local Popup = require 'vim.ui.popup'
 local vim = vim
 local validate = vim.validate
 local api = vim.api
@@ -765,7 +766,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   end
   vim.list_extend(contents, vim.split(label, '\n', true))
   if signature.documentation then
-    ui.convert_input_to_markdown_lines(signature.documentation, contents)
+    ui_util.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
     local active_parameter = (signature.activeParameter or signature_help.activeParameter or 0)
@@ -868,8 +869,10 @@ end
 ---   - for LocationLink, targetRange is shown (e.g., body of function definition)
 ---
 --@param location a single `Location` or `LocationLink`
+--@param context the number of line to show below the actual location
+--@param opts table of all the options supported by Popup
 --@returns (bufnr,winnr) buffer and window number of floating window or nil
-function M.preview_location(location, opts)
+function M.preview_location(location, context, opts)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
   if uri == nil then
@@ -880,7 +883,7 @@ function M.preview_location(location, opts)
     vim.fn.bufload(bufnr)
   end
   local range = location.targetRange or location.range
-  local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line + 1, false)
+  local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line + context, false)
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
   if syntax == '' then
     -- When no syntax is set, we use filetype as fallback. This might not result
@@ -890,7 +893,12 @@ function M.preview_location(location, opts)
   end
   opts = opts or {}
   opts.focus_id = 'location'
-  return ui.open_floating_preview(contents, syntax, opts)
+  opts.relative = 'cursor'
+
+  local popup = Popup:create(contents, opts)
+  popup:show()
+  popup:set_opt('filetype', syntax, 'buf')
+  return popup
 end
 
 --- Trims empty lines from input and pad top and bottom with empty lines

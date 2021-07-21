@@ -5,7 +5,7 @@ local highlight = vim.highlight
 local log = require 'vim.lsp.log'
 local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
-local ui_util = require 'vim.ui.util'
+local Popup = require 'vim.ui.popup'
 
 local if_nil = vim.F.if_nil
 
@@ -1158,11 +1158,11 @@ end
 ---@param opts table Configuration table
 ---     - show_header (boolean, default true): Show "Diagnostics:" header.
 ---     - Plus all the opts for |vim.lsp.diagnostic.get_line_diagnostics()|
----          and |vim.lsp.util.open_floating_preview()| can be used here.
+---          and |vim.ui.popup| can be used here.
 ---@param bufnr number The buffer number
 ---@param line_nr number The line number
 ---@param client_id number|nil the client id
----@return table {popup_bufnr, win_id}
+---@return Popup
 function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
   opts = opts or {}
 
@@ -1198,14 +1198,16 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
   end
 
   opts.focus_id = 'line_diagnostics'
-  local popup_bufnr, winnr = ui_util.open_floating_preview(lines, 'plaintext', opts)
+  opts.relative = 'cursor'
+  local popup = Popup:create(lines, opts)
+  popup:show()
   for i, hi in ipairs(highlights) do
     local prefixlen, hiname = unpack(hi)
     -- Start highlight after the prefix
-    api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i - 1, prefixlen, -1)
+    api.nvim_buf_add_highlight(popup.buf.id, -1, hiname, i - 1, prefixlen, -1)
   end
 
-  return popup_bufnr, winnr
+  return popup
 end
 
 --- Clear diagnotics and diagnostic cache

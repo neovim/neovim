@@ -3,8 +3,6 @@ local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
 
-local npcall = vim.F.npcall
-
 local M = {}
 
 local default_border = {
@@ -18,12 +16,20 @@ local default_border = {
   { ' ', 'NormalFloat' },
 }
 
+function M.get_val_or_default(val, default)
+  if val ~= nil then
+    return val
+  end
+
+  return default
+end
+
 --@private
 -- Check the border given by opts or the default border for the additional
 -- size it adds to a float.
 --@returns size of border in height and width
 local function get_border_size(opts)
-  local border = opts and opts.border or default_border
+  local border = M.get_val_or_default(opts.border, default_border)
   local height = 0
   local width = 0
 
@@ -137,6 +143,54 @@ function M.convert_input_to_markdown_lines(input, contents)
   return contents
 end
 
+--- Converts the table of conents into one which has the padding applied
+---
+--@param padding   table with numbers, defining the padding
+--                 above/right/below/left of the popup (similar to CSS).
+--                 An empty list uses a padding of 1 all around.  The
+--                 padding goes around the text, inside any border.
+--                 Padding uses the 'wincolor' highlight.
+--                 Example: [1, 2, 1, 3] has 1 line of padding above, 2
+--                 columns on the right, 1 line below and 3 columns on
+--                 the left.
+--@param contents  table with strings of content of each line that has to be
+--                 padded
+--@returns (table) content with padding
+function M.apply_padding_to_content(padding, contents)
+  validate {
+    padding = { padding, 't' },
+  }
+
+  local pad_top, pad_right, pad_below, pad_left
+  if vim.tbl_isempty(padding) then
+    pad_top = 1
+    pad_right = 1
+    pad_below = 1
+    pad_left = 1
+  else
+    pad_top = padding[1] or 0
+    pad_right = padding[2] or 0
+    pad_below = padding[3] or 0
+    pad_left = padding[4] or 0
+  end
+
+  local left_padding = string.rep(' ', pad_left)
+  local right_padding = string.rep(' ', pad_right)
+  for index = 1, #contents do
+    contents[index] = string.format('%s%s%s', left_padding, contents[index], right_padding)
+  end
+
+  for _ = 1, pad_top do
+    table.insert(contents, 1, '')
+  end
+
+  for _ = 1, pad_below do
+    table.insert(contents, '')
+  end
+
+  return contents
+end
+
 --- Creates a table with sensible default options for a floating window. The
 --- table can be passed to |nvim_open_win()|.
 ---
@@ -213,7 +267,7 @@ end
 ---
 --- This method configures the given buffer and returns the lines to set.
 ---
---- If you want to open a popup with fancy markdown, use `open_floating_preview` instead
+--- If you want to open a popup with fancy markdown, use `vim.ui.popup` instead
 ---
 ---@param contents table of lines to show in window
 ---@param opts dictionary with optional fields
@@ -353,7 +407,6 @@ function M.stylize_markdown(bufnr, contents, opts)
     if not langs[lang] then
       -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
       pcall(vim.api.nvim_buf_del_var, bufnr, 'current_syntax')
-      -- TODO(ashkan): better validation before this.
       if not pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft)) then
         return
       end
@@ -372,13 +425,13 @@ function M.stylize_markdown(bufnr, contents, opts)
     local last = 1
     for _, h in ipairs(highlights) do
       if last < h.start then
-        apply_syntax_to_region('lsp_markdown', last, h.start - 1)
+        apply_syntax_to_region('ui_markdown', last, h.start - 1)
       end
       apply_syntax_to_region(h.ft, h.start, h.finish)
       last = h.finish + 1
     end
     if last <= #stripped then
-      apply_syntax_to_region('lsp_markdown', last, #stripped)
+      apply_syntax_to_region('ui_markdown', last, #stripped)
     end
   end)
 
@@ -475,125 +528,6 @@ function M._make_floating_popup_size(contents, opts)
   end
 
   return width, height
-end
-
---@private
-local function find_window_by_var(name, value)
-  for _, win in ipairs(api.nvim_list_wins()) do
-    if npcall(api.nvim_win_get_var, win, name) == value then
-      return win
-    end
-  end
-end
-
---- Shows contents in a floating window.
----
---@param contents table of lines to show in window
---@param syntax string of syntax to set for opened buffer
---@param opts dictionary with optional fields
----             - height    of floating window
----             - width     of floating window
----             - wrap boolean enable wrapping of long lines (defaults to true)
----             - wrap_at   character to wrap at for computing height when wrap is enabled
----             - max_width  maximal width of floating window
----             - max_height maximal height of floating window
----             - pad_left   number of columns to pad contents at left
----             - pad_right  number of columns to pad contents at right
----             - pad_top    number of lines to pad contents at top
----             - pad_bottom number of lines to pad contents at bottom
----             - focus_id if a popup with this id is opened, then focus it
----             - close_events list of events that closes the floating window
----             - focusable (boolean, default true): Make float focusable
----             - enter (boolean, default false): Directly enter the floating window when it is created
---@returns bufnr,winnr buffer and window number of the newly created floating
----preview window
-function M.open_floating_preview(contents, syntax, opts)
-  validate {
-    contents = { contents, 't' },
-    syntax = { syntax, 's', true },
-    opts = { opts, 't', true },
-  }
-  opts = opts or {}
-  opts.wrap = opts.wrap ~= false -- wrapping by default
-  opts.stylize_markdown = opts.stylize_markdown ~= false
-  opts.close_events = opts.close_events or { 'CursorMoved', 'CursorMovedI', 'BufHidden', 'InsertCharPre' }
-  opts.enter = opts.enter == true
-
-  local bufnr = api.nvim_get_current_buf()
-
-  -- check if this popup is focusable and we need to focus
-  if opts.focus_id and opts.focusable ~= false then
-    -- Go back to previous window if we are in a focusable one
-    local current_winnr = api.nvim_get_current_win()
-    if npcall(api.nvim_win_get_var, current_winnr, opts.focus_id) then
-      api.nvim_command 'wincmd p'
-      return bufnr, current_winnr
-    end
-    do
-      local win = find_window_by_var(opts.focus_id, bufnr)
-      if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
-        -- focus and return the existing buf, win
-        api.nvim_set_current_win(win)
-        api.nvim_command 'stopinsert'
-        return api.nvim_win_get_buf(win), win
-      end
-    end
-  end
-
-  -- check if another floating preview already exists for this buffer
-  -- and close it if needed
-  local existing_float = npcall(api.nvim_buf_get_var, bufnr, 'lsp_floating_preview')
-  if existing_float and api.nvim_win_is_valid(existing_float) then
-    api.nvim_win_close(existing_float, true)
-  end
-
-  local floating_bufnr = api.nvim_create_buf(false, true)
-  local do_stylize = syntax == 'markdown' and opts.stylize_markdown
-
-  -- Clean up input: trim empty lines from the end, pad
-  contents = vim.lsp.util._trim(contents, opts)
-
-  if do_stylize then
-    -- applies the syntax and sets the lines to the buffer
-    contents = M.stylize_markdown(floating_bufnr, contents, opts)
-  else
-    if syntax then
-      api.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
-    end
-    api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
-  end
-
-  -- Compute size of float needed to show (wrapped) lines
-  if opts.wrap then
-    opts.wrap_at = opts.wrap_at or api.nvim_win_get_width(0)
-  else
-    opts.wrap_at = nil
-  end
-  local width, height = M._make_floating_popup_size(contents, opts)
-
-  local float_option = M.make_floating_popup_options(width, height, opts)
-  local floating_winnr = api.nvim_open_win(floating_bufnr, opts.enter, float_option)
-  if do_stylize then
-    api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
-    api.nvim_win_set_option(floating_winnr, 'concealcursor', 'n')
-  end
-  -- disable folding
-  api.nvim_win_set_option(floating_winnr, 'foldenable', false)
-  -- soft wrapping
-  api.nvim_win_set_option(floating_winnr, 'wrap', opts.wrap)
-
-  api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
-  api.nvim_buf_set_keymap(floating_bufnr, 'n', 'q', '<cmd>bdelete<cr>', { silent = true, noremap = true })
-  M.close_preview_autocmd(opts.close_events, floating_winnr)
-
-  -- save focus_id
-  if opts.focus_id then
-    api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
-  end
-  api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
-
-  return floating_bufnr, floating_winnr
 end
 
 return M
