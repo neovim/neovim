@@ -7,8 +7,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <lua.h>
-#include <lauxlib.h>
 #include <msgpack.h>
 
 #include "nvim/ascii.h"
@@ -258,6 +256,8 @@ int main(int argc, char **argv)
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
+  nlua_init();
+
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
@@ -340,7 +340,6 @@ int main(int argc, char **argv)
     screenclear();
     TIME_MSG("initialized screen early for UI");
   }
-
 
   // open terminals when opening files that start with term://
 #define PROTO "term://"
