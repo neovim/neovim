@@ -17,6 +17,8 @@ local Popup = {}
 ---             - wrap             boolean enable wrapping of long lines (defaults to true)
 ---             - relative         string of what the popup window position is relative to (defaults to win)
 ---             - position         direction of the popup window relative to the `relative` option (automatically caluculated if relative = 'cursor')
+---             - row              row position in units of "screen cell height", may be fractional
+---             - col              column position in units of "screen cell width", may be fractional
 ---             - zindex           of the window (defaults to 50)
 ---             - padding          table of amounts of padding to apply to content ({top, right, bottom, left}) (defaults to 0)
 ---             - enter            enter the floating window when it is shown (boolean, defaults to false)
@@ -29,6 +31,7 @@ local Popup = {}
 ---             - close_events     list of events that closes the floating window
 ---             - focusable        make the popup focusable (boolean, default to true)
 ---             - stylize_markdown see `vim.ui.util.stylize_markdown` (boolean, defaults to false)
+---             - noautocmd        if true, no buffer related autocmds would run
 function Popup:create(contents, opts)
   setmetatable({}, self)
   self.__index = self
@@ -54,6 +57,8 @@ function Popup:create(contents, opts)
     zindex = util.get_val_or_default(opts.zindex, 50),
     relative = util.get_val_or_default(opts.relative, 'win'),
     position = util.get_val_or_default(opts.position, 'NW'),
+    row = util.get_val_or_default(opts.row, 0),
+    col = util.get_val_or_default(opts.col, 0),
     wrap = util.get_val_or_default(opts.wrap, true),
     close_events = util.get_val_or_default(
       opts.close_events,
@@ -132,11 +137,14 @@ function Popup:show()
     float_options = {
       relative = self.win.relative,
       anchor = self.win.position,
+      row = self.win.row,
+      col = self.win.col,
       height = self.win.height,
       focusable = self.win.focusable,
       style = self.win.style,
       width = self.win.width,
       border = self.win.border,
+      zindex = self.win.zindex,
     }
   end
 
