@@ -955,7 +955,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char_u *arg,
       after_dot = p + 1;
   }
 
-  // ":popup" only uses menues, not entries
+  // ":popup" only uses menus, not entries
   expand_menus = !((*cmd == 't' && cmd[1] == 'e') || *cmd == 'p');
   expand_emenu = (*cmd == 'e');
   if (expand_menus && ascii_iswhite(*p)) {

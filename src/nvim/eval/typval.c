@@ -836,7 +836,7 @@ int tv_list_join(garray_T *const gap, list_T *const l, const char *const sep)
   return retval;
 }
 
-/// Chech whether two lists are equal
+/// Check whether two lists are equal
 ///
 /// @param[in]  l1  First list to compare.
 /// @param[in]  l2  Second list to compare.
@@ -1162,6 +1162,49 @@ void callback_free(Callback *callback)
     }
   }
   callback->type = kCallbackNone;
+  callback->data.funcref = NULL;
+}
+
+/// Copy a callback into a typval_T.
+void callback_put(Callback *cb, typval_T *tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (cb->type) {
+    case kCallbackPartial:
+      tv->v_type = VAR_PARTIAL;
+      tv->vval.v_partial = cb->data.partial;
+      cb->data.partial->pt_refcount++;
+      break;
+    case kCallbackFuncref:
+      tv->v_type = VAR_FUNC;
+      tv->vval.v_string = vim_strsave(cb->data.funcref);
+      func_ref(cb->data.funcref);
+      break;
+    default:
+      tv->v_type = VAR_SPECIAL;
+      tv->vval.v_special = kSpecialVarNull;
+      break;
+  }
+}
+
+// Copy callback from "src" to "dest", incrementing the refcounts.
+void callback_copy(Callback *dest, Callback *src)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dest->type = src->type;
+  switch (src->type) {
+    case kCallbackPartial:
+      dest->data.partial = src->data.partial;
+      dest->data.partial->pt_refcount++;
+      break;
+    case kCallbackFuncref:
+      dest->data.funcref = vim_strsave(src->data.funcref);
+      func_ref(src->data.funcref);
+      break;
+    default:
+      dest->data.funcref = NULL;
+      break;
+  }
 }
 
 /// Remove watcher from a dictionary
@@ -1951,7 +1994,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2,
     } else if (*action == 'f' && di2 != di1) {
       typval_T oldtv;
 
-      if (tv_check_lock(di1->di_tv.v_lock, arg_errmsg, arg_errmsg_len)
+      if (var_check_lock(di1->di_tv.v_lock, arg_errmsg, arg_errmsg_len)
           || var_check_ro(di1->di_flags, arg_errmsg, arg_errmsg_len)) {
         break;
       }
@@ -2582,7 +2625,7 @@ bool tv_islocked(const typval_T *const tv)
 ///
 /// Also gives an error message when typval is locked.
 ///
-/// @param[in]  lock  Lock status.
+/// @param[in]  tv  Typval.
 /// @param[in]  name  Variable name, used in the error message.
 /// @param[in]  name_len  Variable name length. Use #TV_TRANSLATE to translate
 ///                       variable name and compute the length. Use #TV_CSTRING
@@ -2596,9 +2639,36 @@ bool tv_islocked(const typval_T *const tv)
 ///                       gettext.
 ///
 /// @return true if variable is locked, false otherwise.
-bool tv_check_lock(const VarLockStatus lock, const char *name,
+bool tv_check_lock(const typval_T *tv, const char *name,
                    size_t name_len)
   FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  VarLockStatus lock = VAR_UNLOCKED;
+
+  switch (tv->v_type) {
+    // case VAR_BLOB:
+    //   if (tv->vval.v_blob != NULL)
+    //     lock = tv->vval.v_blob->bv_lock;
+    //   break;
+    case VAR_LIST:
+      if (tv->vval.v_list != NULL) {
+        lock = tv->vval.v_list->lv_lock;
+      }
+      break;
+    case VAR_DICT:
+      if (tv->vval.v_dict != NULL) {
+        lock = tv->vval.v_dict->dv_lock;
+      }
+      break;
+    default:
+      break;
+  }
+  return var_check_lock(tv->v_lock, name, name_len)
+    || (lock != VAR_UNLOCKED && var_check_lock(lock, name, name_len));
+}
+
+/// @return true if variable "name" is locked (immutable)
+bool var_check_lock(VarLockStatus lock, const char *name, size_t name_len)
 {
   const char *error_message = NULL;
   switch (lock) {

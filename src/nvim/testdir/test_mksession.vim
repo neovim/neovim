@@ -170,7 +170,7 @@ func Test_mksession_rtp()
     return
   endif
   new
-  set sessionoptions&vi
+  set sessionoptions+=options
   let _rtp=&rtp
   " Make a real long (invalid) runtimepath value,
   " that should exceed PATH_MAX (hopefully)
@@ -290,7 +290,7 @@ endfunc
 if has('extra_search')
 
 func Test_mksession_hlsearch()
-  set sessionoptions&vi
+  set sessionoptions+=options
   set hlsearch
   mksession! Xtest_mks.out
   nohlsearch
@@ -630,7 +630,7 @@ endfunc
 
 " Test for mksession with a named scratch buffer
 func Test_mksession_scratch()
-  set sessionoptions&vi
+  set sessionoptions+=options
   enew | only
   file Xscratch
   set buftype=nofile

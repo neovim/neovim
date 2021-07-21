@@ -19,7 +19,7 @@
 // Marks live in namespaces that allow plugins/users to segregate marks
 // from other users.
 //
-// Deleting marks only happens when explicitly calling extmark_del, deleteing
+// Deleting marks only happens when explicitly calling extmark_del, deleting
 // over a range of marks will only move the marks. Deleting on a mark will
 // leave it in same position unless it is on the EOL of a line.
 //

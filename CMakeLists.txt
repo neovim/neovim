@@ -136,12 +136,12 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 5)
+set(NVIM_VERSION_MINOR 6)
 set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 7)         # Bump this after any API change.
+set(NVIM_API_LEVEL 8)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
@@ -392,6 +392,22 @@ include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
 
 find_package(TreeSitter REQUIRED)
 include_directories(SYSTEM ${TreeSitter_INCLUDE_DIRS})
+
+list(APPEND CMAKE_REQUIRED_INCLUDES "${TreeSitter_INCLUDE_DIRS}")
+list(APPEND CMAKE_REQUIRED_LIBRARIES "${TreeSitter_LIBRARIES}")
+check_c_source_compiles("
+#include <tree_sitter/api.h>
+int
+main(void)
+{
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_set_match_limit(cursor, 32);
+  return 0;
+}
+" TS_HAS_SET_MATCH_LIMIT)
+if(TS_HAS_SET_MATCH_LIMIT)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_TS_HAS_SET_MATCH_LIMIT")
+endif()
 
 # Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)

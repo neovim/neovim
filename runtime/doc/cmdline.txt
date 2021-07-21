@@ -532,7 +532,6 @@ that see the '"' as part of their argument:
     :normal
     :ownsyntax
     :popup
-    :promptfind (and the like)
     :registers
     :return
     :sort
@@ -571,8 +570,6 @@ followed by another Vim command:
     :make
     :normal
     :perlfile
-    :promptfind
-    :promptrepl
     :pyfile
     :python
     :registers

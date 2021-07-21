@@ -506,6 +506,20 @@ describe('clipboard (with fake clipboard.vim)', function()
       feed('p')
       eq('textstar', meths.get_current_line())
     end)
+
+    it('Block paste works currectly', function()
+      insert([[
+        aabbcc
+        ddeeff
+      ]])
+      feed('gg^<C-v>') -- Goto start of top line enter visual block mode
+      feed('3ljy^k') -- yank 4x2 block & goto initial location
+      feed('P') -- Paste it infront
+      expect([[
+        aabbaabbcc
+        ddeeddeeff
+      ]])
+    end)
   end)
 
   describe('clipboard=unnamedplus', function()

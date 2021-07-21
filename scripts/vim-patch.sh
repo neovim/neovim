@@ -14,7 +14,8 @@ fi
 readonly NVIM_SOURCE_DIR="${NVIM_SOURCE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 readonly VIM_SOURCE_DIR_DEFAULT="${NVIM_SOURCE_DIR}/.vim-src"
 readonly VIM_SOURCE_DIR="${VIM_SOURCE_DIR:-${VIM_SOURCE_DIR_DEFAULT}}"
-readonly BASENAME="$(basename "${0}")"
+BASENAME="$(basename "${0}")"
+readonly BASENAME
 readonly BRANCH_PREFIX="vim-"
 
 CREATED_FILES=()
@@ -372,7 +373,7 @@ submit_pr() {
   pr_title="${pr_title// /,}" # Replace spaces with commas.
 
   local pr_message
-  pr_message="$(printf '[RFC] vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
+  pr_message="$(printf 'vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
 
   if [[ $push_first -ne 0 ]]; then
     echo "Pushing to 'origin/${checked_out_branch}'."

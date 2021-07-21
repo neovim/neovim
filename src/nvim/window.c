@@ -4597,6 +4597,18 @@ static win_T *win_alloc(win_T *after, int hidden)
 }
 
 
+// Free one wininfo_T.
+void
+free_wininfo(wininfo_T *wip, buf_T *bp)
+{
+  if (wip->wi_optset) {
+    clear_winopt(&wip->wi_opt);
+    deleteFoldRecurse(bp, &wip->wi_folds);
+  }
+  xfree(wip);
+}
+
+
 /*
  * Remove window 'wp' from the window list and free the structure.
  */
@@ -4647,9 +4659,31 @@ win_free (
   /* Remove the window from the b_wininfo lists, it may happen that the
    * freed memory is re-used for another window. */
   FOR_ALL_BUFFERS(buf) {
-    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next)
-      if (wip->wi_win == wp)
+    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+      if (wip->wi_win == wp) {
+        wininfo_T *wip2;
+
+        // If there already is an entry with "wi_win" set to NULL it
+        // must be removed, it would never be used.
+        for (wip2 = buf->b_wininfo; wip2 != NULL; wip2 = wip2->wi_next) {
+          // `wip2 != wip` to satisfy Coverity. #14884
+          if (wip2 != wip && wip2->wi_win == NULL) {
+            if (wip2->wi_next != NULL) {
+              wip2->wi_next->wi_prev = wip2->wi_prev;
+            }
+            if (wip2->wi_prev == NULL) {
+              buf->b_wininfo = wip2->wi_next;
+            } else {
+              wip2->wi_prev->wi_next = wip2->wi_next;
+            }
+            free_wininfo(wip2, buf);
+            break;
+          }
+        }
+
         wip->wi_win = NULL;
+      }
+    }
   }
 
   clear_matches(wp);

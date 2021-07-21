@@ -313,7 +313,7 @@ void buf_updates_send_splice(
     return;
   }
 
-  // notify each of the active callbakcs
+  // notify each of the active callbacks
   size_t j = 0;
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);

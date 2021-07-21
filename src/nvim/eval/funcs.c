@@ -268,7 +268,8 @@ static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 1;  // Default: failed.
   if (argvars[0].v_type == VAR_LIST) {
     list_T *const l = argvars[0].vval.v_list;
-    if (!tv_check_lock(tv_list_locked(l), N_("add() argument"), TV_TRANSLATE)) {
+    if (!var_check_lock(tv_list_locked(l), N_("add() argument"),
+                        TV_TRANSLATE)) {
       tv_list_append_tv(l, &argvars[1]);
       tv_copy(&argvars[0], rettv);
     }
@@ -1077,10 +1078,11 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  /* Check for undo allowed here, because if something was already inserted
-   * the line was already saved for undo and this check isn't done. */
-  if (!undo_allowed())
+  // Check for undo allowed here, because if something was already inserted
+  // the line was already saved for undo and this check isn't done.
+  if (!undo_allowed(curbuf)) {
     return;
+  }
 
   if (argvars[1].v_type != VAR_LIST) {
     EMSG(_(e_invarg));
@@ -2277,9 +2279,9 @@ static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   list = argvars[0].vval.v_list;
   if (list != NULL
-      && !tv_check_lock(tv_list_locked(list),
-                        N_("flatten() argument"),
-                        TV_TRANSLATE)
+      && !var_check_lock(tv_list_locked(list),
+                         N_("flatten() argument"),
+                         TV_TRANSLATE)
       && tv_list_flatten(list, maxdepth) == OK) {
     tv_copy(&argvars[0], rettv);
   }
@@ -2299,7 +2301,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     list_T *const l1 = argvars[0].vval.v_list;
     list_T *const l2 = argvars[1].vval.v_list;
-    if (!tv_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+    if (!var_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
       listitem_T *item;
       if (argvars[2].v_type != VAR_UNKNOWN) {
         before = (long)tv_get_number_chk(&argvars[2], &error);
@@ -2328,13 +2330,13 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     dict_T *const d1 = argvars[0].vval.v_dict;
     dict_T *const d2 = argvars[1].vval.v_dict;
     if (d1 == NULL) {
-      const bool locked = tv_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
+      const bool locked = var_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
       (void)locked;
       assert(locked == true);
     } else if (d2 == NULL) {
       // Do nothing
       tv_copy(&argvars[0], rettv);
-    } else if (!tv_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+    } else if (!var_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
       const char *action = "force";
       // Check the third argument.
       if (argvars[2].v_type != VAR_UNKNOWN) {
@@ -4845,8 +4847,8 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "insert()");
-  } else if (!tv_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                            N_("insert() argument"), TV_TRANSLATE)) {
+  } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
+                             N_("insert() argument"), TV_TRANSLATE)) {
     long before = 0;
     if (argvars[2].v_type != VAR_UNKNOWN) {
       before = tv_get_number_chk(&argvars[2], &error);
@@ -5180,6 +5182,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool pty = false;
   bool clear_env = false;
   bool overlapped = false;
+  ChannelStdinMode stdin_mode = kChannelStdinPipe;
   CallbackReader on_stdout = CALLBACK_READER_INIT,
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
@@ -5193,6 +5196,17 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     pty = tv_dict_get_number(job_opts, "pty") != 0;
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
     overlapped = tv_dict_get_number(job_opts, "overlapped") != 0;
+
+    char *s = tv_dict_get_string(job_opts, "stdin", false);
+    if (s) {
+      if (!strncmp(s, "null", NUMBUFLEN)) {
+        stdin_mode = kChannelStdinNull;
+      } else if (!strncmp(s, "pipe", NUMBUFLEN)) {
+        // Nothing to do, default value
+      } else {
+        EMSG3(_(e_invargNval), "stdin", s);
+      }
+    }
 
     if (pty && rpc) {
       EMSG2(_(e_invarg2), "job cannot have both 'pty' and 'rpc' options set");
@@ -5250,8 +5264,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   env = create_environment(job_env, clear_env, pty, term_name);
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, overlapped, detach, cwd, width, height,
-                                    env, &rettv->vval.v_number);
+                                    rpc, overlapped, detach, stdin_mode, cwd,
+                                    width, height, env, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -7079,7 +7093,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (argvars[2].v_type != VAR_UNKNOWN) {
       EMSG2(_(e_toomanyarg), "remove()");
     } else if ((d = argvars[0].vval.v_dict) != NULL
-               && !tv_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+               && !var_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE)) {
       const char *key = tv_get_string_chk(&argvars[1]);
       if (key != NULL) {
         di = tv_dict_find(d, key, -1);
@@ -7098,8 +7112,8 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listdictarg), "remove()");
-  } else if (!tv_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                            arg_errmsg, TV_TRANSLATE)) {
+  } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
+                             arg_errmsg, TV_TRANSLATE)) {
     bool error = false;
 
     idx = tv_get_number_chk(&argvars[1], &error);
@@ -7374,8 +7388,8 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   list_T *l;
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "reverse()");
-  } else if (!tv_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                            N_("reverse() argument"), TV_TRANSLATE)) {
+  } else if (!var_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
+                             N_("reverse() argument"), TV_TRANSLATE)) {
     tv_list_reverse(l);
     tv_list_set_ret(rettv, l);
   }
@@ -7731,8 +7745,9 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
-                                    false, true, false, false, NULL, 0, 0,
-                                    NULL, &rettv->vval.v_number);
+                                    false, true, false, false,
+                                    kChannelStdinPipe, NULL, 0, 0, NULL,
+                                    &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -9462,7 +9477,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
   } else {
     list_T *const l = argvars[0].vval.v_list;
-    if (tv_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE)) {
+    if (var_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE)) {
       goto theend;
     }
     tv_list_set_ret(rettv, l);
@@ -10848,10 +10863,11 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const bool rpc = false;
   const bool overlapped = false;
   const bool detach = false;
+  ChannelStdinMode stdin_mode = kChannelStdinPipe;
   uint16_t term_width = MAX(0, curwin->w_width_inner - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
-                                    pty, rpc, overlapped, detach, cwd,
-                                    term_width, curwin->w_height_inner,
+                                    pty, rpc, overlapped, detach, stdin_mode,
+                                    cwd, term_width, curwin->w_height_inner,
                                     env, &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
     return;

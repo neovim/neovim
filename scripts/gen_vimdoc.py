@@ -950,6 +950,8 @@ def main(config, args):
             os.remove(mpack_file)
 
         output_dir = out_dir.format(target=target)
+        log.info("Generating documentation for %s in folder %s",
+                 target, output_dir)
         debug = args.log_level >= logging.DEBUG
         p = subprocess.Popen(
                 ['doxygen', '-'],
@@ -1105,7 +1107,8 @@ def filter_source(filename):
 
 def parse_args():
     targets = ', '.join(CONFIG.keys())
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(
+        description="Generate helpdoc from source code")
     ap.add_argument(
         "--log-level", "-l", choices=LOG_LEVELS.keys(),
         default=logging.getLevelName(logging.ERROR), help="Set log verbosity"
@@ -1159,6 +1162,7 @@ if __name__ == "__main__":
     print("Setting log level to %s" % args.log_level)
     args.log_level = LOG_LEVELS[args.log_level]
     log.setLevel(args.log_level)
+    log.addHandler(logging.StreamHandler())
 
     if len(args.source_filter) > 0:
         filter_source(args.source_filter[0])

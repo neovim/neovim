@@ -1119,7 +1119,7 @@ uint64_t os_fileinfo_blocksize(const FileInfo *file_info)
 ///
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a `FileID` to fill in.
-/// @return `true` on sucess, `false` for failure.
+/// @return `true` on success, `false` for failure.
 bool os_fileid(const char *path, FileID *file_id)
   FUNC_ATTR_NONNULL_ALL
 {

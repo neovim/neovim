@@ -954,7 +954,7 @@ static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
 
 /*
  * Stuff string "p" into yank register "regname" as a single line (append if
- * uppercase). "p" must have been alloced.
+ * uppercase). "p" must have been allocated.
  *
  * return FAIL for failure, OK otherwise
  */
@@ -1066,7 +1066,7 @@ do_execreg(
     if (reg->y_array == NULL)
       return FAIL;
 
-    // Disallow remaping for ":@r".
+    // Disallow remapping for ":@r".
     int remap = colon ? REMAP_NONE : REMAP_YES;
 
     /*
@@ -2719,10 +2719,13 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
 // Copy a block range into a register.
 // If "exclude_trailing_space" is set, do not copy trailing whitespaces.
-static void yank_copy_line(yankreg_T *reg, const struct block_def *bd,
+static void yank_copy_line(yankreg_T *reg, struct block_def *bd,
                            size_t y_idx, bool exclude_trailing_space)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (exclude_trailing_space) {
+    bd->endspaces = 0;
+  }
   int size = bd->startspaces + bd->endspaces + bd->textlen;
   assert(size >= 0);
   char_u *pnew = xmallocz((size_t)size);
@@ -3066,7 +3069,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     }
     // In an empty buffer the empty line is going to be replaced, include
     // it in the saved lines.
-    if ((BUFEMPTY() ? u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL) {
+    if ((buf_is_empty(curbuf) ?
+         u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL) {
       goto end;
     }
     if (dir == FORWARD) {
@@ -3992,6 +3996,7 @@ int do_join(size_t count,
   del_lines((long)count - 1, false);
   curwin->w_cursor.lnum = t;
   curbuf_splice_pending--;
+  curbuf->deleted_bytes2 = 0;
 
   /*
    * Set the cursor column:

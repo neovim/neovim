@@ -219,8 +219,8 @@ the editor.
 
 ["busy_start"]
 ["busy_stop"]
-	Nvim started or stopped being busy, and possibly not responsive to
-	user input. This could be indicated to the user by hiding the cursor.
+	Indicates to the UI that it must stop rendering the cursor. This event
+	is misnamed and does not actually have anything to do with busyness.
 
 ["suspend"]
 	|:suspend| command or |CTRL-Z| mapping is used. A terminal client (or
@@ -631,11 +631,13 @@ Tabline Events							   *ui-tabline*
 
 Activated by the `ext_tabline` |ui-option|.
 
-["tabline_update", curtab, tabs]
+["tabline_update", curtab, tabs, curbuf, buffers]
 	Tabline was updated. UIs should present this data in a custom tabline
-	widget.
-	curtab:	  Current Tabpage
-	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
+	widget. Note: options `curbuf` + `buffers` were added in API7.
+	curtab:   Current Tabpage
+	tabs:     List of Dicts [{ "tab": Tabpage, "name": String }, ...]
+	curbuf:   Current buffer handle.
+	buffers:  List of Dicts [{ "buffer": buffer handle, "name": String}, ...]
 
 ==============================================================================
 Cmdline Events							   *ui-cmdline*

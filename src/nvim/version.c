@@ -13,6 +13,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer.h"
 #include "nvim/iconv.h"
 #include "nvim/version.h"
 #include "nvim/charset.h"
@@ -2190,7 +2191,7 @@ void list_version(void)
 /// Show the intro message when not editing a file.
 void maybe_intro_message(void)
 {
-  if (BUFEMPTY()
+  if (buf_is_empty(curbuf)
       && (curbuf->b_fname == NULL)
       && (firstwin->w_next == NULL)
       && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {

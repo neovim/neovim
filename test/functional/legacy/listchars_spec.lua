@@ -8,7 +8,7 @@ local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers
 describe("'listchars'", function()
   before_each(function()
     clear()
-    feed_command('set listchars&vi')
+    feed_command('set listchars=eol:$')
   end)
 
   -- luacheck: ignore 613 (Trailing whitespace in a string)

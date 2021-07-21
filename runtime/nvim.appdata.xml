@@ -26,6 +26,7 @@
   </screenshots>
 
   <releases>
+    <release date="2021-07-02" version="0.5.0"/>
     <release date="2020-08-04" version="0.4.4"/>
     <release date="2019-11-06" version="0.4.3"/>
     <release date="2019-09-15" version="0.4.2"/>

@@ -20,6 +20,7 @@ Reporting problems
 - Update Neovim to the latest version to see if your problem persists.
 - Disable plugins incrementally, to narrow down the cause of the issue.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
+- Use [ASAN/UBSAN](#clang-sanitizers-asan-and-ubsan) to get detailed errors for segfaults and undefined behavior.
 - [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
 - Check `$NVIM_LOG_FILE`, if it exists.
 - Include `cmake --system-information` for build-related issues.
@@ -74,7 +75,7 @@ For Comment) and `[RDY]` (Ready).
 
 ### Commit messages
 
-Follow the [convential commits guidelines][conventional_commits] to *make reviews easier* and to make
+Follow the [conventional commits guidelines][conventional_commits] to *make reviews easier* and to make
 the VCS/git logs more valuable. The general structure of a commit message is as follows:
 
 ```
@@ -172,7 +173,20 @@ master build. To view the defects, just request access; you will be approved.
   ```
   git log --oneline --no-merges --grep coverity
   ```
+  
+### Clang sanitizers (ASAN and UBSAN)
 
+  ASAN/UBSAN can be used to detect memory errors and other common forms of undefined behavior at runtime in debug builds.
+  To build neovim with sanitizers enabled, use
+  ```
+  rm -rf build && CMAKE_EXTRA_FLAGS="-DCMAKE_C_COMPILER=clang -DCLANG_ASAN_UBSAN=1" make
+  ```
+  When running neovim, use
+  ```
+  UBSAN_OPTIONS=print_stacktrace=1 ASAN_OPTIONS=log_path=/tmp/nvim_asan nvim args...
+  ```
+  If neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.
+  
 
 Coding
 ------

@@ -143,7 +143,7 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
     group = HI2SG(hi);
   }
 
-  // Search for the next usuable sign identifier
+  // Search for the next usable sign identifier
   while (!found) {
     if (group == NULL) {
       id = next_sign_id++;    // global group
@@ -194,7 +194,7 @@ static void insert_sign(
   if (next != NULL) {
     next->se_prev = newsign;
   }
-  buf->b_signcols_max = -1;
+  buf->b_signcols_valid = false;
 
   if (prev == NULL) {
     // When adding first sign need to redraw the windows to create the
@@ -534,7 +534,7 @@ linenr_T buf_delsign(
   sign_entry_T *next;    // the next sign in a b_signlist
   linenr_T lnum;       // line number whose sign was deleted
 
-  buf->b_signcols_max = -1;
+  buf->b_signcols_valid = false;
   lastp = &buf->b_signlist;
   lnum = 0;
   for (sign = buf->b_signlist; sign != NULL; sign = next) {
@@ -668,7 +668,7 @@ void buf_delete_signs(buf_T *buf, char_u *group)
         lastp = &sign->se_next;
       }
     }
-    buf->b_signcols_max = -1;
+    buf->b_signcols_valid = false;
 }
 
 /// List placed signs for "rbuf".  If "rbuf" is NULL do it for all buffers.
@@ -735,7 +735,7 @@ void sign_mark_adjust(
   int is_fixed = 0;
   int signcol = win_signcol_configured(curwin, &is_fixed);
 
-  curbuf->b_signcols_max = -1;
+  curbuf->b_signcols_valid = false;
   lastp = &curbuf->b_signlist;
 
   for (sign = curbuf->b_signlist; sign != NULL; sign = next) {

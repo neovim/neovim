@@ -203,8 +203,13 @@ local bufnr_and_client_cacher_mt = {
 -- Diagnostic Saving & Caching {{{
 local _diagnostic_cleanup = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache = setmetatable({}, bufnr_and_client_cacher_mt)
+local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_lines = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_counts = setmetatable({}, bufnr_and_client_cacher_mt)
+local diagnostic_attached_buffers = {}
+
+-- Disabled buffers and clients
+local diagnostic_disabled = setmetatable({}, bufnr_and_client_cacher_mt)
 
 local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
 
@@ -814,10 +819,7 @@ end
 ---@param diagnostic_ns number|nil Associated diagnostic namespace
 ---@param sign_ns number|nil Associated sign namespace
 function M.clear(bufnr, client_id, diagnostic_ns, sign_ns)
-  validate { bufnr = { bufnr, 'n' } }
-
-  bufnr = (bufnr == 0 and api.nvim_get_current_buf()) or bufnr
-
+  bufnr = get_bufnr(bufnr)
   if client_id == nil then
     return vim.lsp.for_each_buffer_client(bufnr, function(_, iter_client_id, _)
       return M.clear(bufnr, iter_client_id)
@@ -826,6 +828,7 @@ function M.clear(bufnr, client_id, diagnostic_ns, sign_ns)
 
   diagnostic_ns = diagnostic_ns or M._get_diagnostic_namespace(client_id)
   sign_ns = sign_ns or M._get_sign_namespace(client_id)
+  diagnostic_cache_extmarks[bufnr][client_id] = {}
 
   assert(bufnr, "bufnr is required")
   assert(diagnostic_ns, "Need diagnostic_ns, got nil")
@@ -1038,9 +1041,61 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
   M.display(diagnostics, bufnr, client_id, config)
 end
 
+-- restores the extmarks set by M.display
+--- @param last number last line that was changed
+-- @private
+local function restore_extmarks(bufnr, last)
+  for client_id, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
+    local ns = M._get_diagnostic_namespace(client_id)
+    local extmarks_current = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+    local found = {}
+    for _, extmark in ipairs(extmarks_current) do
+      -- nvim_buf_set_lines will move any extmark to the line after the last
+      -- nvim_buf_set_text will move any extmark to the last line
+      if extmark[2] ~= last + 1 then
+        found[extmark[1]] = true
+      end
+    end
+    for _, extmark in ipairs(extmarks) do
+      if not found[extmark[1]] then
+        local opts = extmark[4]
+        opts.id = extmark[1]
+        -- HACK: end_row should be end_line
+        if opts.end_row then
+          opts.end_line = opts.end_row
+          opts.end_row = nil
+        end
+        pcall(api.nvim_buf_set_extmark, bufnr, ns, extmark[2], extmark[3], opts)
+      end
+    end
+  end
+end
+
+-- caches the extmarks set by M.display
+-- @private
+local function save_extmarks(bufnr, client_id)
+  bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+  if not diagnostic_attached_buffers[bufnr] then
+    api.nvim_buf_attach(bufnr, false, {
+      on_lines = function(_, _, _, _, _, last)
+        restore_extmarks(bufnr, last -  1)
+      end,
+      on_detach = function()
+        diagnostic_cache_extmarks[bufnr] = nil
+      end})
+    diagnostic_attached_buffers[bufnr] = true
+  end
+  local ns = M._get_diagnostic_namespace(client_id)
+  diagnostic_cache_extmarks[bufnr][client_id] = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+end
+
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
+  if diagnostic_disabled[bufnr][client_id] then
+    return
+  end
+
   config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
     signs = true,
     underline = true,
@@ -1108,7 +1163,11 @@ function M.display(diagnostics, bufnr, client_id, config)
   if signs_opts then
     M.set_signs(diagnostics, bufnr, client_id, nil, signs_opts)
   end
+
+  -- cache extmarks
+  save_extmarks(bufnr, client_id)
 end
+
 -- }}}
 -- Diagnostic User Functions {{{
 
@@ -1156,7 +1215,7 @@ function M.show_line_diagnostics(opts, bufnr, line_nr, client_id)
     table.insert(lines, prefix..message_lines[1])
     table.insert(highlights, {#prefix, hiname})
     for j = 2, #message_lines do
-      table.insert(lines, message_lines[j])
+      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
       table.insert(highlights, {0, hiname})
     end
   end
@@ -1213,9 +1272,9 @@ local function apply_to_diagnostic_items(item_handler, command, opts)
     if severity then
       return d.severity == severity
     end
-    severity = to_severity(opts.severity_limit)
-    if severity then
-      return d.severity == severity
+    local severity_limit = to_severity(opts.severity_limit)
+    if severity_limit then
+      return d.severity <= severity_limit
     end
     return true
   end
@@ -1228,7 +1287,7 @@ end
 
 --- Sets the quickfix list
 ---@param opts table|nil Configuration table. Keys:
----         - {open_qflist}: (boolean, default true)
+---         - {open}: (boolean, default true)
 ---             - Open quickfix list after set
 ---         - {client_id}: (number)
 ---             - If nil, will consider all clients attached to buffer.
@@ -1241,14 +1300,14 @@ end
 function M.set_qflist(opts)
   opts = opts or {}
   opts.workspace = if_nil(opts.workspace, true)
-  local open_qflist = if_nil(opts.open_qflist, true)
+  local open_qflist = if_nil(opts.open, true)
   local command = open_qflist and [[copen]] or nil
   apply_to_diagnostic_items(util.set_qflist, command, opts)
 end
 
 --- Sets the location list
 ---@param opts table|nil Configuration table. Keys:
----         - {open_loclist}: (boolean, default true)
+---         - {open}: (boolean, default true)
 ---             - Open loclist after set
 ---         - {client_id}: (number)
 ---             - If nil, will consider all clients attached to buffer.
@@ -1260,9 +1319,61 @@ end
 ---             - Set the list with workspace diagnostics
 function M.set_loclist(opts)
   opts = opts or {}
-  local open_loclist = if_nil(opts.open_loclist, true)
+  local open_loclist = if_nil(opts.open, true)
   local command = open_loclist and [[lopen]] or nil
   apply_to_diagnostic_items(util.set_loclist, command, opts)
+end
+
+--- Disable diagnostics for the given buffer and client
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+--- @param client_id (optional, number): Disable diagnostics for the given
+---        client. The default is to disable diagnostics for all attached
+---        clients.
+-- Note that when diagnostics are disabled for a buffer, the server will still
+-- send diagnostic information and the client will still process it. The
+-- diagnostics are simply not displayed to the user.
+function M.disable(bufnr, client_id)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.disable(bufnr, client.id)
+    end)
+  end
+
+  diagnostic_disabled[bufnr][client_id] = true
+  M.clear(bufnr, client_id)
+end
+
+--- Enable diagnostics for the given buffer and client
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+--- @param client_id (optional, number): Enable diagnostics for the given
+---        client. The default is to enable diagnostics for all attached
+---        clients.
+function M.enable(bufnr, client_id)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.enable(bufnr, client.id)
+    end)
+  end
+
+  if not diagnostic_disabled[bufnr][client_id] then
+    return
+  end
+
+  diagnostic_disabled[bufnr][client_id] = nil
+
+  -- We need to invoke the publishDiagnostics handler directly instead of just
+  -- calling M.display so that we can preserve any custom configuration options
+  -- the user may have set with vim.lsp.with.
+  vim.lsp.handlers["textDocument/publishDiagnostics"](
+    nil,
+    "textDocument/publishDiagnostics",
+    {
+      diagnostics = M.get(bufnr, client_id),
+      uri = vim.uri_from_bufnr(bufnr),
+    },
+    client_id
+  )
+>>>>>>> master
 end
 -- }}}
 

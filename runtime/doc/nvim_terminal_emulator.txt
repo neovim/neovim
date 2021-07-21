@@ -324,12 +324,10 @@ This works slightly differently:
   mode with <Esc>, then you can move around in the buffer, copy/paste, etc.
   Go back to editing the gdb command with any command that starts Insert mode,
   such as `a` or `i`.
-- The program being debugged will run in a separate window.  On MS-Windows
-  this is a new console window.  On Unix, if the |+terminal| feature is
-  available a Terminal window will be opened to run the debugged program in.
+- A separate :terminal window will be opened to run the debugged program in.
 
 						*termdebug_use_prompt*
-Prompt mode can be used even when the |+terminal| feature is present with: >
+Prompt mode can be used with: >
 	let g:termdebug_use_prompt = 1
 
 <

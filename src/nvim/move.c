@@ -17,6 +17,7 @@
 #include <stdbool.h>
 
 #include "nvim/ascii.h"
+#include "nvim/buffer.h"
 #include "nvim/move.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -172,7 +173,7 @@ void update_topline(win_T *wp)
   old_topfill = wp->w_topfill;
 
   // If the buffer is empty, always set topline to 1.
-  if (BUFEMPTY()) {             // special case - file is empty
+  if (buf_is_empty(curbuf)) {             // special case - file is empty
     if (wp->w_topline != 1) {
       redraw_later(wp, NOT_VALID);
     }

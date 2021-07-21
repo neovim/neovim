@@ -398,8 +398,8 @@ describe('float window', function()
 
     it('return their configuration', function()
       local buf = meths.create_buf(false, false)
-      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5})
-      local expected = {anchor='NW', col=5, external=false, focusable=true, height=2, relative='editor', row=3, width=20}
+      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5, zindex=60})
+      local expected = {anchor='NW', col=5, external=false, focusable=true, height=2, relative='editor', row=3, width=20, zindex=60}
       eq(expected, meths.win_get_config(win))
 
       eq({relative='', external=false, focusable=true}, meths.win_get_config(0))
@@ -1674,7 +1674,7 @@ describe('float window', function()
         ]]}
       end
       eq({relative='win', width=12, height=1, bufpos={1,32}, anchor='NW',
-          external=false, col=0, row=1, win=firstwin, focusable=true}, meths.win_get_config(win))
+          external=false, col=0, row=1, win=firstwin, focusable=true, zindex=50}, meths.win_get_config(win))
 
       feed('<c-e>')
       if multigrid then

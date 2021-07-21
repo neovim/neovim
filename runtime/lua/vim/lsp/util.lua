@@ -810,16 +810,16 @@ function M.convert_input_to_markdown_lines(input, contents)
       -- If it's plaintext, then wrap it in a <text></text> block
 
       -- Some servers send input.value as empty, so let's ignore this :(
-      input.value = input.value or ''
+      local value = input.value or ''
 
       if input.kind == "plaintext" then
         -- wrap this in a <text></text> block so that stylize_markdown
         -- can properly process it as plaintext
-        input.value = string.format("<text>\n%s\n</text>", input.value or "")
+        value = string.format("<text>\n%s\n</text>", value)
       end
 
-      -- assert(type(input.value) == 'string')
-      list_extend(contents, split_lines(input.value))
+      -- assert(type(value) == 'string')
+      list_extend(contents, split_lines(value))
     -- MarkupString variation 2
     elseif input.language then
       -- Some servers send input.value as empty, so let's ignore this :(
@@ -845,9 +845,10 @@ end
 ---
 --@param signature_help Response of `textDocument/SignatureHelp`
 --@param ft optional filetype that will be use as the `lang` for the label markdown code block
+--@param triggers optional list of trigger characters from the lsp server. used to better determine parameter offsets
 --@returns list of lines of converted markdown.
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-function M.convert_signature_help_to_markdown_lines(signature_help, ft)
+function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers)
   if not signature_help.signatures then
     return
   end
@@ -856,6 +857,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   --=== 0`. Whenever possible implementors should make an active decision about
   --the active signature and shouldn't rely on a default value.
   local contents = {}
+  local active_hl
   local active_signature = signature_help.activeSignature or 0
   -- If the activeSignature is not inside the valid range, then clip it.
   if active_signature >= #signature_help.signatures then
@@ -867,7 +869,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
   end
   local label = signature.label
   if ft then
-    -- wrap inside a code block so fancy_markdown can render it properly
+    -- wrap inside a code block so stylize_markdown can render it properly
     label = ("```%s\n%s\n```"):format(ft, label)
   end
   vim.list_extend(contents, vim.split(label, '\n', true))
@@ -875,11 +877,17 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
-    local active_parameter = signature_help.activeParameter or 0
-    -- If the activeParameter is not inside the valid range, then clip it.
-    if active_parameter >= #signature.parameters then
-      active_parameter = 0
+    local active_parameter = (signature.activeParameter or signature_help.activeParameter or 0)
+    if active_parameter < 0
+      then active_parameter = 0
     end
+
+    -- If the activeParameter is > #parameters, then set it to the last
+    -- NOTE: this is not fully according to the spec, but a client-side interpretation
+    if active_parameter >= #signature.parameters then
+      active_parameter = #signature.parameters - 1
+    end
+
     local parameter = signature.parameters[active_parameter + 1]
     if parameter then
       --[=[
@@ -900,13 +908,35 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft)
         documentation?: string | MarkupContent;
       }
       --]=]
-      -- TODO highlight parameter
+      if parameter.label then
+        if type(parameter.label) == "table" then
+          active_hl = parameter.label
+        else
+          local offset = 1
+          -- try to set the initial offset to the first found trigger character
+          for _, t in ipairs(triggers or {}) do
+            local trigger_offset = signature.label:find(t, 1, true)
+            if trigger_offset and (offset == 1 or trigger_offset < offset) then
+              offset = trigger_offset
+            end
+          end
+          for p, param in pairs(signature.parameters) do
+            offset = signature.label:find(param.label, offset, true)
+            if not offset then break end
+            if p == active_parameter + 1 then
+              active_hl = {offset - 1, offset + #parameter.label - 1}
+              break
+            end
+            offset = offset + #param.label + 1
+          end
+        end
+      end
       if parameter.documentation then
         M.convert_input_to_markdown_lines(parameter.documentation, contents)
       end
     end
   end
-  return contents
+  return contents, active_hl
 end
 
 --- Creates a table with sensible default options for a floating window. The
@@ -960,6 +990,7 @@ function M.make_floating_popup_options(width, height, opts)
     style = 'minimal',
     width = width,
     border = opts.border or default_border,
+    zindex = opts.zindex or 50,
   }
 end
 
@@ -1011,7 +1042,7 @@ function M.preview_location(location, opts)
   local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
   if syntax == "" then
     -- When no syntax is set, we use filetype as fallback. This might not result
-    -- in a valid syntax definition. See also ft detection in fancy_floating_win.
+    -- in a valid syntax definition. See also ft detection in stylize_markdown.
     -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
     syntax = api.nvim_buf_get_option(bufnr, 'filetype')
   end
@@ -1027,53 +1058,6 @@ local function find_window_by_var(name, value)
       return win
     end
   end
-end
-
---- Enters/leaves the focusable window associated with the current buffer via the
---window - variable `unique_name`. If no such window exists, run the function
---{fn}.
----
---@param unique_name (string) Window variable
---@param fn (function) should return create a new window and return a tuple of
----({focusable_buffer_id}, {window_id}). if {focusable_buffer_id} is a valid
----buffer id, the newly created window will be the new focus associated with
----the current buffer via the tag `unique_name`.
---@returns (pbufnr, pwinnr) if `fn()` has created a new window; nil otherwise
----@deprecated please use open_floating_preview directly
-function M.focusable_float(unique_name, fn)
-  vim.notify("focusable_float is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  -- Go back to previous window if we are in a focusable one
-  if npcall(api.nvim_win_get_var, 0, unique_name) then
-    return api.nvim_command("wincmd p")
-  end
-  local bufnr = api.nvim_get_current_buf()
-  do
-    local win = find_window_by_var(unique_name, bufnr)
-    if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
-      api.nvim_set_current_win(win)
-      api.nvim_command("stopinsert")
-      return
-    end
-  end
-  local pbufnr, pwinnr = fn()
-  if pbufnr then
-    api.nvim_win_set_var(pwinnr, unique_name, bufnr)
-    return pbufnr, pwinnr
-  end
-end
-
---- Focuses/unfocuses the floating preview window associated with the current
---- buffer via the window variable `unique_name`. If no such preview window
---- exists, makes a new one.
----
---@param unique_name (string) Window variable
---@param fn (function) The return values of this function will be passed
----directly to |vim.lsp.util.open_floating_preview()|, in the case that a new
----floating window should be created
----@deprecated please use open_floating_preview directly
-function M.focusable_preview(unique_name, fn)
-  vim.notify("focusable_preview is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  return M.open_floating_preview(fn(), {focus_id = unique_name})
 end
 
 --- Trims empty lines from input and pad top and bottom with empty lines
@@ -1103,12 +1087,19 @@ function M._trim(contents, opts)
   return contents
 end
 
-
-
---- @deprecated please use open_floating_preview directly
-function M.fancy_floating_markdown(contents, opts)
-  vim.notify("fancy_floating_markdown is deprecated. Please use open_floating_preview and pass focus_id = [unique_name] instead", vim.log.levels.WARN)
-  return M.open_floating_preview(contents, "markdown", opts)
+-- Generates a table mapping markdown code block lang to vim syntax,
+-- based on g:markdown_fenced_languages
+-- @return a table of lang -> syntax mappings
+-- @private
+local function get_markdown_fences()
+  local fences = {}
+  for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
+    local lang, syntax = fence:match("^(.*)=(.*)$")
+    if lang then
+      fences[lang] = syntax
+    end
+  end
+  return fences
 end
 
 --- Converts markdown into syntax highlighted regions by stripping the code
@@ -1193,7 +1184,7 @@ function M.stylize_markdown(bufnr, contents, opts)
         table.insert(highlights, {
           ft = match.ft;
           start = start + 1;
-          finish = #stripped + 1 - 1;
+          finish = #stripped;
         })
       else
         table.insert(stripped, line)
@@ -1242,11 +1233,13 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- keep track of syntaxes we already inlcuded.
   -- no need to include the same syntax more than once
   local langs = {}
+  local fences = get_markdown_fences()
   local function apply_syntax_to_region(ft, start, finish)
     if ft == "" then
       vim.cmd(string.format("syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend", start, finish + 1))
       return
     end
+    ft = fences[ft] or ft
     local name = ft..idx
     idx = idx + 1
     local lang = "@"..ft:upper()
@@ -1275,7 +1268,7 @@ function M.stylize_markdown(bufnr, contents, opts)
       apply_syntax_to_region(h.ft, h.start, h.finish)
       last = h.finish + 1
     end
-    if last < #stripped then
+    if last <= #stripped then
       apply_syntax_to_region("lsp_markdown", last, #stripped)
     end
   end)
@@ -1876,10 +1869,10 @@ function M.get_effective_tabstop(bufnr)
   return (sts > 0 and sts) or (sts < 0 and bo.shiftwidth) or bo.tabstop
 end
 
---- Creates a `FormattingOptions` object for the current buffer and cursor position.
+--- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.
 ---
 --@param options Table with valid `FormattingOptions` entries
---@returns `FormattingOptions object
+--@returns `DocumentFormattingParams` object
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 function M.make_formatting_params(options)
   validate { options = {options, 't', true} }

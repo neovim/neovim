@@ -1767,7 +1767,7 @@ static bool prt_open_resource(struct prt_ps_resource_S *resource)
       break;
 
     case PRT_DSC_ENDCOMMENTS_TYPE:
-      // Wont find title or resource after this comment, stop searching
+      // Won't find title or resource after this comment, stop searching
       seen_all = true;
       break;
 
@@ -2398,8 +2398,16 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
     EMSG2(_("E456: Can't open file \"%s\""), resource->filename);
     return FALSE;
   }
-  prt_dsc_resources("BeginResource", prt_resource_types[resource->type],
-      (char *)resource->title);
+  switch (resource->type) {
+  case PRT_RESOURCE_TYPE_PROCSET:
+  case PRT_RESOURCE_TYPE_ENCODING:
+  case PRT_RESOURCE_TYPE_CMAP:
+    prt_dsc_resources("BeginResource", prt_resource_types[resource->type],
+        (char *)resource->title);
+    break;
+  default:
+    return FALSE;
+  }
 
   prt_dsc_textline("BeginDocument", (char *)resource->filename);
 

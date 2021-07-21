@@ -691,10 +691,11 @@ function protocol.make_client_capabilities()
       signatureHelp = {
         dynamicRegistration = false;
         signatureInformation = {
+          activeParameterSupport = true;
           documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
-          -- parameterInformation = {
-          --   labelOffsetSupport = false;
-          -- };
+          parameterInformation = {
+            labelOffsetSupport = true;
+          };
         };
       };
       references = {

@@ -68,7 +68,7 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
         <file> [file] ...
 
   The style guidelines this tries to follow are those in
-    http://neovim.io/development-wiki/style-guide/style-guide.xml
+    http://neovim.io/develop/style-guide.xml
 
   Note: This is Google's cpplint.py modified for use with the Neovim project,
   which follows the Google C++ coding convention except with the following

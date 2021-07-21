@@ -103,7 +103,7 @@ typedef struct {
 // the preview window
 typedef struct {
   kvec_t(SubResult) subresults;
-  linenr_T lines_needed;  // lines neede in the preview window
+  linenr_T lines_needed;  // lines needed in the preview window
 } PreviewLines;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -2607,7 +2607,7 @@ int do_ecmd(
         && (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur)) {
       // Sync first so that this is a separate undo-able action.
       u_sync(false);
-      if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
+      if (u_savecommon(curbuf, 0, curbuf->b_ml.ml_line_count + 1, 0, true)
           == FAIL) {
         xfree(new_name);
         goto theend;
@@ -3344,6 +3344,15 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
   return cmd;
 }
 
+static int check_regexp_delim(int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (isalpha(c)) {
+    EMSG(_("E146: Regular expressions can't be delimited by letters"));
+    return FAIL;
+  }
+  return OK;
+}
 
 /// Perform a substitution from line eap->line1 to line eap->line2 using the
 /// command pointed to by eap->arg which should be of the form:
@@ -3408,16 +3417,14 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   /* new pattern and substitution */
   if (eap->cmd[0] == 's' && *cmd != NUL && !ascii_iswhite(*cmd)
       && vim_strchr((char_u *)"0123456789cegriIp|\"", *cmd) == NULL) {
-    /* don't accept alphanumeric for separator */
-    if (isalpha(*cmd)) {
-      EMSG(_("E146: Regular expressions can't be delimited by letters"));
+    // don't accept alphanumeric for separator
+    if (check_regexp_delim(*cmd) == FAIL) {
       return NULL;
     }
-    /*
-     * undocumented vi feature:
-     *  "\/sub/" and "\?sub?" use last used search pattern (almost like
-     *  //sub/r).  "\&sub&" use last substitute pattern (like //sub/).
-     */
+
+    // undocumented vi feature:
+    //  "\/sub/" and "\?sub?" use last used search pattern (almost like
+    //  //sub/r).  "\&sub&" use last substitute pattern (like //sub/).
     if (*cmd == '\\') {
       ++cmd;
       if (vim_strchr((char_u *)"/?&", *cmd) == NULL) {
@@ -4230,6 +4237,8 @@ skip:
     }
   }
 
+  curbuf->deleted_bytes2 = 0;
+
   if (first_line != 0) {
     /* Need to subtract the number of added lines from "last_line" to get
      * the line number before the change (same as adding the number of
@@ -4454,6 +4463,8 @@ void ex_global(exarg_T *eap)
     pat = (char_u *)"";
   } else if (*cmd == NUL) {
     EMSG(_("E148: Regular expression missing from global"));
+    return;
+  } else if (check_regexp_delim(*cmd) == FAIL) {
     return;
   } else {
     delim = *cmd;               /* get the delimiter */
@@ -4773,8 +4784,9 @@ void ex_help(exarg_T *eap)
    * window. */
   if (empty_fnum != 0 && curbuf->b_fnum != empty_fnum) {
     buf = buflist_findnr(empty_fnum);
-    if (buf != NULL && buf->b_nwindows == 0)
-      wipe_buffer(buf, TRUE);
+    if (buf != NULL && buf->b_nwindows == 0) {
+      wipe_buffer(buf, true);
+    }
   }
 
   /* keep the previous alternate file */
@@ -4807,7 +4819,7 @@ char_u *check_help_lang(char_u *arg)
  * Return a heuristic indicating how well the given string matches.  The
  * smaller the number, the better the match.  This is the order of priorities,
  * from best match to worst match:
- *	- Match with least alpha-numeric characters is better.
+ *	- Match with least alphanumeric characters is better.
  *	- Match with least total characters is better.
  *	- Match towards the start is better.
  *	- Match starting with "+" is worse (feature instead of command)
@@ -5147,9 +5159,9 @@ void fix_help_buffer(void)
 
   // Set filetype to "help".
   if (STRCMP(curbuf->b_p_ft, "help") != 0) {
-    curbuf_lock++;
+    curbuf->b_ro_locked++;
     set_option_value("ft", 0L, "help", OPT_LOCAL);
-    curbuf_lock--;
+    curbuf->b_ro_locked--;
   }
 
   if (!syntax_present(curwin)) {

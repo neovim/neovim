@@ -379,7 +379,7 @@ run_analysis() {(
       --sourcetree-root . || true
 
   rm -rf PVS-studio.{xml,err,tsk,html.d}
-  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V011"
+  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V011,V1042"
   plog-converter $plog_args --renderTypes xml       --output PVS-studio.xml
   plog-converter $plog_args --renderTypes errorfile --output PVS-studio.err
   plog-converter $plog_args --renderTypes tasklist  --output PVS-studio.tsk

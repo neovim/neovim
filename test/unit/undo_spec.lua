@@ -38,7 +38,7 @@ child_call_once(function()
   --
   -- compute a hash for this undofile
   buffer_hash = ffi.new('char_u[32]')
-  undo.u_compute_hash(buffer_hash)
+  undo.u_compute_hash(file_buffer, buffer_hash)
 end)
 
 

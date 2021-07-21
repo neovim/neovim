@@ -1186,9 +1186,12 @@ static void win_update(win_T *wp, Providers *providers)
 
         getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
         ve_flags = save_ve_flags;
-        ++toc;
-        if (curwin->w_curswant == MAXCOL)
+        toc++;
+        // Highlight to the end of the line, unless 'virtualedit' has
+        // "block".
+        if (curwin->w_curswant == MAXCOL && !(ve_flags & VE_BLOCK)) {
           toc = MAXCOL;
+        }
 
         if (fromc != wp->w_old_cursor_fcol
             || toc != wp->w_old_cursor_lcol) {
@@ -2003,7 +2006,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   char_u      *line;                  // current line
   char_u      *ptr;                   // current position in "line"
   int row;                            // row in the window, excl w_winrow
-  ScreenGrid *grid = &wp->w_grid;     // grid specfic to the window
+  ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
 
   char_u extra[57];                   // sign, line number and 'fdc' must
                                       // fit in here
@@ -2650,7 +2653,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     off += col;
   }
 
-  // wont highlight after TERM_ATTRS_MAX columns
+  // won't highlight after TERM_ATTRS_MAX columns
   int term_attrs[TERM_ATTRS_MAX] = { 0 };
   if (wp->w_buffer->terminal) {
     terminal_get_line_attributes(wp->w_buffer->terminal, wp, lnum, term_attrs);
@@ -2757,8 +2760,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               }
               if (wp->w_p_rl) {                       // reverse line numbers
                 // like rl_mirror(), but keep the space at the end
-                char_u *p2 = skiptowhite(extra) - 1;
-                for (char_u *p1 = extra; p1 < p2; p1++, p2--) {
+                char_u *p2 = skipwhite(extra);
+                p2 = skiptowhite(p2) - 1;
+                for (char_u *p1 = skipwhite(extra); p1 < p2; p1++, p2--) {
                   const int t = *p1;
                   *p1 = *p2;
                   *p2 = t;
@@ -5526,7 +5530,7 @@ static void win_redr_border(win_T *wp)
   }
 }
 
-// Low-level functions to manipulate invidual character cells on the
+// Low-level functions to manipulate individual character cells on the
 // screen grid.
 
 /// Put a ASCII character in a screen cell.
@@ -6833,7 +6837,7 @@ int showmode(void)
     msg_pos_mode();
     attr = HL_ATTR(HLF_CM);                     // Highlight mode
 
-    // When the screen is too narrow to show the entire mode messsage,
+    // When the screen is too narrow to show the entire mode message,
     // avoid scrolling and truncate instead.
     msg_no_more = true;
     int save_lines_left = lines_left;
@@ -6949,7 +6953,7 @@ int showmode(void)
     msg_clr_cmdline();
   }
 
-  // NB: also handles clearing the showmode if it was emtpy or disabled
+  // NB: also handles clearing the showmode if it was empty or disabled
   msg_ext_flush_showmode();
 
   /* In Visual mode the size of the selected area must be redrawn. */
@@ -7210,7 +7214,24 @@ void ui_ext_tabline_update(void)
 
     ADD(tabs, DICTIONARY_OBJ(tab_info));
   }
-  ui_call_tabline_update(curtab->handle, tabs);
+
+  Array buffers = ARRAY_DICT_INIT;
+  FOR_ALL_BUFFERS(buf) {
+    // Do not include unlisted buffers
+    if (!buf->b_p_bl) {
+      continue;
+    }
+
+    Dictionary buffer_info = ARRAY_DICT_INIT;
+    PUT(buffer_info, "buffer", BUFFER_OBJ(buf->handle));
+
+    get_trans_bufname(buf);
+    PUT(buffer_info, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
+
+    ADD(buffers, DICTIONARY_OBJ(buffer_info));
+  }
+
+  ui_call_tabline_update(curtab->handle, tabs, curbuf->handle, buffers);
 }
 
 /*

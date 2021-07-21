@@ -55,7 +55,6 @@
 #include "nvim/mark.h"
 #include "nvim/extmark.h"
 #include "nvim/mbyte.h"
-#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
@@ -139,7 +138,7 @@ read_buffer(
   if (read_stdin) {
     // Set or reset 'modified' before executing autocommands, so that
     // it can be changed there.
-    if (!readonlymode && !BUFEMPTY()) {
+    if (!readonlymode && !buf_is_empty(curbuf)) {
       changed();
     } else if (retval != FAIL) {
       unchanged(curbuf, false, true);
@@ -840,11 +839,7 @@ static void clear_wininfo(buf_T *buf)
   while (buf->b_wininfo != NULL) {
     wip = buf->b_wininfo;
     buf->b_wininfo = wip->wi_next;
-    if (wip->wi_optset) {
-      clear_winopt(&wip->wi_opt);
-      deleteFoldRecurse(buf, &wip->wi_folds);
-    }
-    xfree(wip);
+    free_wininfo(wip, buf);
   }
 }
 
@@ -905,7 +900,10 @@ void handle_swap_exists(bufref_T *old_curbuf)
     if (old_curbuf == NULL
         || !bufref_valid(old_curbuf)
         || old_curbuf->br_buf == curbuf) {
+      // Block autocommands here because curwin->w_buffer is NULL.
+      block_autocmds();
       buf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+      unblock_autocmds();
     } else {
       buf = old_curbuf->br_buf;
     }
@@ -1493,7 +1491,7 @@ void set_curbuf(buf_T *buf, int action)
   set_bufref(&prevbufref, prevbuf);
   set_bufref(&newbufref, buf);
 
-  // Autocommands may delete the curren buffer and/or the buffer we wan to go
+  // Autocommands may delete the curren buffer and/or the buffer we want to go
   // to.  In those cases don't close the buffer.
   if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
       || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
@@ -1674,7 +1672,7 @@ static int top_file_num = 1;            ///< highest file number
 
 /// Initialize b:changedtick and changedtick_val attribute
 ///
-/// @param[out]  buf  Buffer to intialize for.
+/// @param[out]  buf  Buffer to initialize for.
 static inline void buf_init_changedtick(buf_T *const buf)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
@@ -1787,7 +1785,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
     buf->b_vars = tv_dict_alloc();
-    buf->b_signcols_max = -1;
+    buf->b_signcols_valid = false;
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
     buf_init_changedtick(buf);
   }
@@ -1922,7 +1920,7 @@ bool curbuf_reusable(void)
   return (curbuf != NULL
           && curbuf->b_ffname == NULL
           && curbuf->b_nwindows <= 1
-          && (curbuf->b_ml.ml_mfp == NULL || BUFEMPTY())
+          && (curbuf->b_ml.ml_mfp == NULL || buf_is_empty(curbuf))
           && !bt_quickfix(curbuf)
           && !curbufIsChanged());
 }
@@ -2062,7 +2060,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
     if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
-        && !BUFEMPTY()) {
+        && !buf_is_empty(curbuf)) {
       if (swb_flags & SWB_NEWTAB) {
         tabpage_new();
       } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
@@ -3591,7 +3589,7 @@ int build_stl_str_hl(
 
 
   // Proceed character by character through the statusline format string
-  // fmt_p is the current positon in the input buffer
+  // fmt_p is the current position in the input buffer
   for (char_u *fmt_p = usefmt; *fmt_p; ) {
     if (curitem == (int)stl_items_len) {
         size_t new_len = stl_items_len * 3 / 2;
@@ -4739,7 +4737,7 @@ static bool append_arg_number(win_T *wp, char_u *buf, int buflen, bool add_file)
 // When resolving a link both "*sfname" and "*ffname" will point to the same
 // allocated memory.
 // The "*ffname" and "*sfname" pointer values on call will not be freed.
-// Note that the resulting "*ffname" pointer should be considered not allocaed.
+// Note that the resulting "*ffname" pointer should be considered not allocated.
 void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 {
   if (*ffname == NULL) {  // no file name given, nothing to do
@@ -4952,7 +4950,7 @@ do_arg_all(
   win_enter(lastwin, false);
   // ":tab drop file" should re-use an empty window to avoid "--remote-tab"
   // leaving an empty tab page when executed locally.
-  if (keep_tabs && BUFEMPTY() && curbuf->b_nwindows == 1
+  if (keep_tabs && buf_is_empty(curbuf) && curbuf->b_nwindows == 1
       && curbuf->b_ffname == NULL && !curbuf->b_changed) {
     use_firstwin = true;
     tab_drop_empty_window = true;
@@ -5548,16 +5546,16 @@ bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 
 int buf_signcols(buf_T *buf)
 {
-    if (buf->b_signcols_max == -1) {
+    if (!buf->b_signcols_valid) {
         sign_entry_T *sign;  // a sign in the sign list
-        buf->b_signcols_max = 0;
+        int signcols = 0;
         int linesum = 0;
         linenr_T curline = 0;
 
         FOR_ALL_SIGNS_IN_BUF(buf, sign) {
           if (sign->se_lnum > curline) {
-            if (linesum > buf->b_signcols_max) {
-              buf->b_signcols_max = linesum;
+            if (linesum > signcols) {
+              signcols = linesum;
             }
             curline = sign->se_lnum;
             linesum = 0;
@@ -5566,15 +5564,17 @@ int buf_signcols(buf_T *buf)
             linesum++;
           }
         }
-        if (linesum > buf->b_signcols_max) {
-          buf->b_signcols_max = linesum;
+        if (linesum > signcols) {
+          signcols = linesum;
         }
 
         // Check if we need to redraw
-        if (buf->b_signcols_max != buf->b_signcols) {
-            buf->b_signcols = buf->b_signcols_max;
+        if (signcols != buf->b_signcols) {
+            buf->b_signcols = signcols;
             redraw_buf_later(buf, NOT_VALID);
         }
+
+        buf->b_signcols_valid = true;
     }
 
     return buf->b_signcols;
@@ -5665,7 +5665,7 @@ bool buf_contents_changed(buf_T *buf)
 void
 wipe_buffer(
     buf_T *buf,
-    int aucmd                   // When true trigger autocommands.
+    bool aucmd                  // When true trigger autocommands.
 )
 {
   if (!aucmd) {
@@ -5695,3 +5695,4 @@ void buf_open_scratch(handle_T bufnr, char *bufname)
   set_option_value("swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
 }
+

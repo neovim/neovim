@@ -1489,21 +1489,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     return 0;
   }
 
-  size_t len = 0;
-  if (line < 0 || line > buf->b_ml.ml_line_count) {
-    api_set_error(err, kErrorTypeValidation, "line value outside range");
-    return 0;
-  } else if (line < buf->b_ml.ml_line_count) {
-    len = STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
-  }
-
-  if (col == -1) {
-    col = (Integer)len;
-  } else if (col < -1 || col > (Integer)len) {
-    api_set_error(err, kErrorTypeValidation, "col value outside range");
-    return 0;
-  }
-
   bool ephemeral = false;
 
   uint64_t id = 0;
@@ -1674,6 +1659,22 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     }
   }
 
+  size_t len = 0;
+  if (line < 0 || line > buf->b_ml.ml_line_count) {
+    api_set_error(err, kErrorTypeValidation, "line value outside range");
+    return 0;
+  } else if (line < buf->b_ml.ml_line_count) {
+    len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
+  }
+
+  if (col == -1) {
+    col = (Integer)len;
+  } else if (col < -1 || col > (Integer)len) {
+    api_set_error(err, kErrorTypeValidation, "col value outside range");
+    return 0;
+  }
+
+
   // Only error out if they try to set end_right_gravity without
   // setting end_col or end_line
   if (line2 == -1 && col2 == -1 && end_gravity_set) {
@@ -1684,7 +1685,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
 
   if (col2 >= 0) {
     if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
-      len = STRLEN(ml_get_buf(buf, (linenr_T)line2 + 1, false));
+      len = ephemeral ? MAXCOL : STRLEN(
+          ml_get_buf(buf, (linenr_T)line2 + 1, false));
     } else if (line2 == buf->b_ml.ml_line_count) {
       // We are trying to add an extmark past final newline
       len = 0;

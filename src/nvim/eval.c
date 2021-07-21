@@ -2340,10 +2340,8 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       if (get_var_tv((const char *)lp->ll_name, (int)STRLEN(lp->ll_name),
                      &tv, &di, true, false) == OK) {
         if ((di == NULL
-             || (!var_check_ro(di->di_flags, (const char *)lp->ll_name,
-                               TV_CSTRING)
-                 && !tv_check_lock(di->di_tv.v_lock, (const char *)lp->ll_name,
-                                   TV_CSTRING)))
+             || (!var_check_ro(di->di_flags, lp->ll_name, TV_CSTRING)
+                 && !tv_check_lock(&di->di_tv, lp->ll_name, TV_CSTRING)))
             && eexe_mod_op(&tv, rettv, op) == OK) {
           set_var(lp->ll_name, lp->ll_name_len, &tv, false);
         }
@@ -2353,10 +2351,10 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       set_var_const(lp->ll_name, lp->ll_name_len, rettv, copy, is_const);
     }
     *endp = cc;
-  } else if (tv_check_lock(lp->ll_newkey == NULL
-                           ? lp->ll_tv->v_lock
-                           : lp->ll_tv->vval.v_dict->dv_lock,
-                           (const char *)lp->ll_name, TV_CSTRING)) {
+  } else if (var_check_lock(lp->ll_newkey == NULL
+                            ? lp->ll_tv->v_lock
+                            : lp->ll_tv->vval.v_dict->dv_lock,
+                            lp->ll_name, TV_CSTRING)) {
   } else if (lp->ll_range) {
     listitem_T *ll_li = lp->ll_li;
     int ll_n1 = lp->ll_n1;
@@ -2369,9 +2367,8 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
     // Check whether any of the list items is locked
     for (ri = tv_list_first(rettv->vval.v_list);
          ri != NULL && ll_li != NULL; ) {
-      if (tv_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock,
-                        (const char *)lp->ll_name,
-                        TV_CSTRING)) {
+      if (var_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock, lp->ll_name,
+                         TV_CSTRING)) {
         return;
       }
       ri = TV_LIST_ITEM_NEXT(rettv->vval.v_list, ri);
@@ -2795,13 +2792,13 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, exarg_T *eap,
   } else if ((lp->ll_list != NULL
               // ll_list is not NULL when lvalue is not in a list, NULL lists
               // yield E689.
-              && tv_check_lock(tv_list_locked(lp->ll_list),
-                               (const char *)lp->ll_name,
-                               lp->ll_name_len))
+              && var_check_lock(tv_list_locked(lp->ll_list),
+                                lp->ll_name,
+                                lp->ll_name_len))
              || (lp->ll_dict != NULL
-                 && tv_check_lock(lp->ll_dict->dv_lock,
-                                  (const char *)lp->ll_name,
-                                  lp->ll_name_len))) {
+                 && var_check_lock(lp->ll_dict->dv_lock,
+                                   lp->ll_name,
+                                   lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
     assert(lp->ll_list != NULL);
@@ -2810,9 +2807,9 @@ static int do_unlet_var(lval_T *lp, char_u *name_end, exarg_T *eap,
     listitem_T *last_li = first_li;
     for (;;) {
       listitem_T *const li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
-      if (tv_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
-                        (const char *)lp->ll_name,
-                        lp->ll_name_len)) {
+      if (var_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
+                         lp->ll_name,
+                         lp->ll_name_len)) {
         return false;
       }
       lp->ll_li = li;
@@ -2897,11 +2894,11 @@ int do_unlet(const char *const name, const size_t name_len, const bool forceit)
       dictitem_T *const di = TV_DICT_HI2DI(hi);
       if (var_check_fixed(di->di_flags, (const char *)name, TV_CSTRING)
           || var_check_ro(di->di_flags, (const char *)name, TV_CSTRING)
-          || tv_check_lock(d->dv_lock, (const char *)name, TV_CSTRING)) {
+          || var_check_lock(d->dv_lock, name, TV_CSTRING)) {
         return FAIL;
       }
 
-      if (tv_check_lock(d->dv_lock, (const char *)name, TV_CSTRING)) {
+      if (var_check_lock(d->dv_lock, name, TV_CSTRING)) {
         return FAIL;
       }
 
@@ -5962,14 +5959,14 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
   if (argvars[0].v_type == VAR_LIST) {
     tv_copy(&argvars[0], rettv);
     if ((l = argvars[0].vval.v_list) == NULL
-        || (!map && tv_check_lock(tv_list_locked(l), arg_errmsg,
-                                  TV_TRANSLATE))) {
+        || (!map
+            && var_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else if (argvars[0].v_type == VAR_DICT) {
     tv_copy(&argvars[0], rettv);
     if ((d = argvars[0].vval.v_dict) == NULL
-        || (!map && tv_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
+        || (!map && var_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else {
@@ -6002,7 +5999,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
 
           di = TV_DICT_HI2DI(hi);
           if (map
-              && (tv_check_lock(di->di_tv.v_lock, arg_errmsg, TV_TRANSLATE)
+              && (var_check_lock(di->di_tv.v_lock, arg_errmsg, TV_TRANSLATE)
                   || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE))) {
             break;
           }
@@ -6029,8 +6026,8 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
 
       for (listitem_T *li = tv_list_first(l); li != NULL;) {
         if (map
-            && tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
-                             TV_TRANSLATE)) {
+            && var_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
+                              TV_TRANSLATE)) {
           break;
         }
         vimvars[VV_KEY].vv_nr = idx;
@@ -7200,12 +7197,15 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
     r = FAIL;
   } else if (arg->v_type == VAR_FUNC || arg->v_type == VAR_STRING) {
     char_u *name = arg->vval.v_string;
-    if (name != NULL) {
+    if (name == NULL) {
+      r = FAIL;
+    } else if (*name == NUL) {
+      callback->type = kCallbackNone;
+      callback->data.funcref = NULL;
+    } else {
       func_ref(name);
       callback->data.funcref = vim_strsave(name);
       callback->type = kCallbackFuncref;
-    } else {
-      r = FAIL;
     }
   } else if (nlua_is_table_from_lua(arg)) {
     char_u *name = nlua_register_table_as_callable(arg);
@@ -7216,8 +7216,10 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
     } else {
       r = FAIL;
     }
-  } else if (arg->v_type == VAR_NUMBER && arg->vval.v_number == 0) {
+  } else if (arg->v_type == VAR_SPECIAL
+             || (arg->v_type == VAR_NUMBER && arg->vval.v_number == 0)) {
     callback->type = kCallbackNone;
+    callback->data.funcref = NULL;
   } else {
     r = FAIL;
   }
@@ -7324,14 +7326,7 @@ void add_timer_info(typval_T *rettv, timer_T *timer)
     return;
   }
 
-  if (timer->callback.type == kCallbackPartial) {
-    di->di_tv.v_type = VAR_PARTIAL;
-    di->di_tv.vval.v_partial = timer->callback.data.partial;
-    timer->callback.data.partial->pt_refcount++;
-  } else if (timer->callback.type == kCallbackFuncref) {
-    di->di_tv.v_type = VAR_FUNC;
-    di->di_tv.vval.v_string = vim_strsave(timer->callback.data.funcref);
-  }
+  callback_put(&timer->callback, &di->di_tv);
 }
 
 void add_timer_info_all(typval_T *rettv)
@@ -8156,7 +8151,7 @@ void set_vim_var_special(const VimVarIndex idx, const SpecialVarValue val)
 ///
 /// @param[in]  idx  Index of variable to set.
 /// @param[in]  val  Value to set to. Will be copied.
-/// @param[in]  len  Legth of that value or -1 in which case strlen() will be
+/// @param[in]  len  Length of that value or -1 in which case strlen() will be
 ///                  used.
 void set_vim_var_string(const VimVarIndex idx, const char *const val,
                         const ptrdiff_t len)
@@ -8949,7 +8944,7 @@ static void set_var_const(const char *name, const size_t name_len,
 
     // existing variable, need to clear the value
     if (var_check_ro(v->di_flags, name, name_len)
-        || tv_check_lock(v->di_tv.v_lock, name, name_len)) {
+        || var_check_lock(v->di_tv.v_lock, name, name_len)) {
       return;
     }
 
@@ -8962,7 +8957,7 @@ static void set_var_const(const char *name, const size_t name_len,
           const char *const val = tv_get_string(tv);
 
           // Careful: when assigning to v:errmsg and tv_get_string()
-          // causes an error message the variable will alrady be set.
+          // causes an error message the variable will already be set.
           if (v->di_tv.vval.v_string == NULL) {
             v->di_tv.vval.v_string = (char_u *)xstrdup(val);
           }
