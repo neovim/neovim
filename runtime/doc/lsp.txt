@@ -1470,12 +1470,36 @@ save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
 save_extmarks({bufnr}, {client_id})
                 TODO: Documentation
 
+set_qflist({opts})                         *vim.lsp.diagnostic.set_qflist()*
+                Sets the quickfix list
+
+                Parameters: ~
+                    {opts}  table|nil Configuration table. Keys:
+                            • {open}: (boolean, default true)
+                              • Open quickfix list after set
+
+                            • {client_id}: (number)
+                              • If nil, will consider all clients attached to
+                                buffer.
+
+                            • {severity}: (DiagnosticSeverity)
+                              • Exclusive severity to consider. Overrides
+                                {severity_limit}
+
+                            • {severity_limit}: (DiagnosticSeverity)
+                              • Limit severity of diagnostics found. E.g.
+                                "Warning" means { "Error", "Warning" } will be
+                                valid.
+
+                            • {workspace}: (boolean, default true)
+                              • Set the list with workspace diagnostics
+
 set_loclist({opts})                         *vim.lsp.diagnostic.set_loclist()*
                 Sets the location list
 
                 Parameters: ~
                     {opts}  table|nil Configuration table. Keys:
-                            • {open_loclist}: (boolean, default true)
+                            • {open}: (boolean, default true)
                               • Open loclist after set
 
                             • {client_id}: (number)
