@@ -14,10 +14,8 @@ endif
 " let others know that syntax has been switched on
 let syntax_on = 1
 
-" Set the default highlighting colors.  Use a color scheme if specified.
-if exists("colors_name")
-  exe "colors " . colors_name
-else
+" Set the default highlighting colors
+if !exists("colors_name") && !exists("did_syncolor")
   runtime! syntax/syncolor.vim
 endif
 
