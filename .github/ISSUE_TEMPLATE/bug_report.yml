@@ -1,0 +1,65 @@
+name: Bug Report
+description: Report a problem in Neovim
+labels: [bug]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Before reporting: search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ).
+
+  - type: input
+    attributes:
+      label: "Neovim Version"
+      description: "`nvim --version`:"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Operating system/version:"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Terminal name/version:"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "TERM environment variable"
+      description: "echo `$TERM`:"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: "Installation"
+      description: "How did you install neovim: build from repo / system package manager / appimage / homebrew / snap / chocolatey / other (please specify)?"
+      placeholder: "Arch User Repository (AUR)"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Steps to reproduce"
+      description: |
+        Steps to reproduce using `nvim -u NORC`.
+        If you are reporting build failures, please list the exact sequence of steps including all CMake flags (if any).
+
+  - type: checkboxes
+    attributes:
+      options:
+        - label: "Please check the box if it's possible to reproduce the bug with `nvim --clean` as well"
+
+  - type: input
+    attributes:
+      label: "Vim"
+      description: "Does Vim behave differently when called with `vim -u DEFAULTS`? If yes, which version of Vim are you using (`vim --version`):"
+
+  - type: textarea
+    attributes:
+      label: "Expected behavior"
+  - type: textarea
+    attributes:
+      label: "Actual behavior"
+      description: "A description of the behavior you expected. May optionally include logs, images, or videos."
