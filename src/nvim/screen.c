@@ -2697,7 +2697,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           p_extra = p_extra_free;
           c_extra = NUL;
           c_final = NUL;
-          char_attr = win_hl_attr(wp, HLF_FC);
+          if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+            char_attr = win_hl_attr(wp, HLF_CLF);
+          } else {
+            char_attr = win_hl_attr(wp, HLF_FC);
+          }
         }
       }
 
@@ -2709,7 +2713,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           int count = win_signcol_count(wp);
           if (count > 0) {
               get_sign_display_info(
-                  false, wp, sattrs, row,
+                  false, wp, sattrs, lnum, row,
                   startrow, filler_lines, filler_todo, count,
                   &c_extra, &c_final, extra, sizeof(extra),
                   &p_extra, &n_extra,
@@ -2731,7 +2735,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
               && num_signs > 0) {
             int count = win_signcol_count(wp);
             get_sign_display_info(
-                true, wp, sattrs, row,
+                true, wp, sattrs, lnum, row,
                 startrow, filler_lines, filler_todo, count,
                 &c_extra, &c_final, extra, sizeof(extra),
                 &p_extra, &n_extra,
@@ -4460,6 +4464,7 @@ static void get_sign_display_info(
     bool nrcol,
     win_T *wp,
     sign_attrs_T sattrs[],
+    int lnum,
     int row,
     int startrow,
     int filler_lines,
@@ -4482,7 +4487,11 @@ static void get_sign_display_info(
   if (nrcol) {
     *n_extrap = number_width(wp) + 1;
   } else {
-    *char_attrp = win_hl_attr(wp, HLF_SC);
+    if (wp->w_p_cul && wp->w_cursor.lnum == lnum) {
+      *char_attrp = win_hl_attr(wp, HLF_CLS);
+    } else {
+      *char_attrp = win_hl_attr(wp, HLF_SC);
+    }
     *n_extrap = win_signcol_width(wp);
   }
 
@@ -4522,7 +4531,12 @@ static void get_sign_display_info(
           (*pp_extra)[*n_extrap] = NUL;
         }
       }
-      *char_attrp = sattr->sat_texthl;
+
+      if (wp->w_p_cul && wp->w_cursor.lnum == lnum && sattr->sat_culhl > 0) {
+        *char_attrp = sattr->sat_culhl;
+      } else {
+        *char_attrp = sattr->sat_texthl;
+      }
     }
   }
 

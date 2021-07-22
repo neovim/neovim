@@ -37,6 +37,7 @@ typedef struct sign_attrs_S {
     int     sat_typenr;
     char_u *sat_text;
     int     sat_texthl;
+    int     sat_culhl;
     int     sat_linehl;
     int     sat_numhl;
 } sign_attrs_T;
