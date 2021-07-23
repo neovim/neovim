@@ -6563,7 +6563,7 @@ static int open_cmdwin(void)
   save_cmdline(&save_ccline);
 
   // No Ex mode here!
-  exmode_active = 0;
+  exmode_active = EMStateNone;
 
   State = NORMAL;
   setmouse();

@@ -621,7 +621,14 @@ EXTERN long opcount INIT(= 0);          // count for pending operator
 EXTERN int motion_force INIT(=0);       // motion force for pending operator
 
 // Ex Mode (Q) state
-EXTERN int exmode_active INIT(= 0);     // Zero, EXMODE_NORMAL or EXMODE_VIM.
+// Values for exmode_active (0 is no exmode)
+typedef enum {
+  EMStateNone = 0,
+  EMStateNormal,
+  EMStateVim
+} exmode_state_t;
+
+EXTERN exmode_state_t exmode_active INIT(= EMStateNone);
 EXTERN int ex_no_reprint INIT(=false);  // No need to print after z or p.
 
 EXTERN int reg_recording INIT(= 0);     // register for recording  or zero

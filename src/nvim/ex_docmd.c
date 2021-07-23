@@ -193,10 +193,11 @@ void do_exmode(int improved)
   linenr_T prev_line;
   int changedtick;
 
-  if (improved)
-    exmode_active = EXMODE_VIM;
-  else
-    exmode_active = EXMODE_NORMAL;
+  if (improved) {
+    exmode_active = EMStateVim;
+  } else {
+    exmode_active = EMStateNormal;
+  }
   State = NORMAL;
 
   /* When using ":global /pat/ visual" and then "Q" we return to continue
@@ -212,7 +213,7 @@ void do_exmode(int improved)
   while (exmode_active) {
     /* Check for a ":normal" command and no more characters left. */
     if (ex_normal_busy > 0 && typebuf.tb_len == 0) {
-      exmode_active = 0;
+      exmode_active = EMStateNone;
       break;
     }
     msg_scroll = true;

@@ -2755,9 +2755,10 @@ int do_ecmd(
         curwin->w_set_curswant = TRUE;
       } else
         beginline(BL_SOL | BL_FIX);
-    } else {                  /* no line number, go to last line in Ex mode */
-      if (exmode_active)
+    } else {  // no line number, go to last line in Ex mode
+      if (exmode_active != EMStateNone) {
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      }
       beginline(BL_WHITE | BL_FIX);
     }
   }
@@ -3750,7 +3751,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
            * Loop until 'y', 'n', 'q', CTRL-E or CTRL-Y typed.
            */
           while (subflags.do_ask) {
-            if (exmode_active) {
+            if (exmode_active != EMStateNone) {
               char_u      *resp;
               colnr_T sc, ec;
 

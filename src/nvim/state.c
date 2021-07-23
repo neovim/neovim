@@ -173,9 +173,9 @@ char *get_mode(void)
     }
   } else if ((State & CMDLINE) || exmode_active) {
     buf[0] = 'c';
-    if (exmode_active == EXMODE_VIM) {
+    if (exmode_active == EMStateVim) {
       buf[1] = 'v';
-    } else if (exmode_active == EXMODE_NORMAL) {
+    } else if (exmode_active == EMStateNormal) {
       buf[1] = 'e';
     }
   } else if (State & TERM_FOCUS) {

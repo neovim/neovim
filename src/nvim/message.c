@@ -1324,12 +1324,14 @@ void msg_start(void)
       0;
   } else if (msg_didout) {                // start message on next line
     msg_putchar('\n');
-    did_return = TRUE;
-    if (exmode_active != EXMODE_NORMAL)
+    did_return = true;
+    if (exmode_active != EMStateNormal) {
       cmdline_row = msg_row;
+    }
   }
-  if (!msg_didany || lines_left < 0)
+  if (!msg_didany || lines_left < 0) {
     msg_starthere();
+  }
   if (msg_silent == 0) {
     msg_didout = false;                     // no output on current line yet
   }

@@ -318,7 +318,7 @@ int main(int argc, char **argv)
   debug_break_level = params.use_debug_break_level;
 
   // Read ex-commands if invoked with "-es".
-  if (!params.input_isatty && silent_mode && exmode_active == EXMODE_NORMAL) {
+  if (!params.input_isatty && silent_mode && exmode_active == EMStateNormal) {
     input_start(STDIN_FILENO);
   }
 
@@ -772,7 +772,7 @@ static bool edit_stdin(bool explicit, mparm_T *parmp)
 {
   bool implicit = !headless_mode
     && !embedded_mode
-    && exmode_active != EXMODE_NORMAL  // -E/-Es but not -e/-es.
+    && exmode_active != EMStateNormal  // -E/-Es but not -e/-es.
     && !parmp->input_isatty
     && scriptin[0] == NULL;  // `-s -` was not given.
   return explicit || implicit;
@@ -915,11 +915,11 @@ static void command_line_scan(mparm_T *parmp)
           break;
         }
         case 'e': {  // "-e" Ex mode
-          exmode_active = EXMODE_NORMAL;
+          exmode_active = EMStateNormal;
           break;
         }
         case 'E': {  // "-E" Ex mode
-          exmode_active = EXMODE_VIM;
+          exmode_active = EMStateVim;
           break;
         }
         case 'f': {  // "-f"  GUI: run in foreground.
