@@ -1318,7 +1318,7 @@ function lsp.buf_request_all(bufnr, method, params, callback)
   local cancel, client_request_ids
 
   local set_expected_result_count = once(function()
-    for _ in pairs(client_request_ids) do
+    for _ in pairs(client_request_ids or {}) do
       expected_result_count = expected_result_count + 1
     end
   end)
