@@ -7,8 +7,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <lua.h>
-#include <lauxlib.h>
 #include <msgpack.h>
 
 #include "nvim/ascii.h"
@@ -258,6 +256,8 @@ int main(int argc, char **argv)
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
+  nlua_init();
+
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
@@ -341,7 +341,6 @@ int main(int argc, char **argv)
     TIME_MSG("initialized screen early for UI");
   }
 
-
   // open terminals when opening files that start with term://
 #define PROTO "term://"
   do_cmdline_cmd("augroup nvim_terminal");
@@ -367,11 +366,19 @@ int main(int argc, char **argv)
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
+  // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
+  bool enable_syntax =
+    (params.use_vimrc == NULL || !strequal(params.use_vimrc, "NONE"));
+
+  // Source syncolor.vim to set up default UI highlights
+  if (enable_syntax) {
+    source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
+  }
+
   // Source startup scripts.
   source_startup_scripts(&params);
 
-  // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
-  if (params.use_vimrc == NULL || !strequal(params.use_vimrc, "NONE")) {
+  if (enable_syntax) {
     // Does ":filetype plugin indent on".
     filetype_maybe_enable();
     // Sources syntax/syntax.vim, which calls `:filetype on`.

@@ -208,6 +208,9 @@ local diagnostic_cache_lines = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_cache_counts = setmetatable({}, bufnr_and_client_cacher_mt)
 local diagnostic_attached_buffers = {}
 
+-- Disabled buffers and clients
+local diagnostic_disabled = setmetatable({}, bufnr_and_client_cacher_mt)
+
 local _bufs_waiting_to_update = setmetatable({}, bufnr_and_client_cacher_mt)
 
 --- Store Diagnostic[] by line
@@ -816,10 +819,7 @@ end
 ---@param diagnostic_ns number|nil Associated diagnostic namespace
 ---@param sign_ns number|nil Associated sign namespace
 function M.clear(bufnr, client_id, diagnostic_ns, sign_ns)
-  validate { bufnr = { bufnr, 'n' } }
-
-  bufnr = (bufnr == 0 and api.nvim_get_current_buf()) or bufnr
-
+  bufnr = get_bufnr(bufnr)
   if client_id == nil then
     return vim.lsp.for_each_buffer_client(bufnr, function(_, iter_client_id, _)
       return M.clear(bufnr, iter_client_id)
@@ -1092,6 +1092,10 @@ end
 --@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
+  if diagnostic_disabled[bufnr][client_id] then
+    return
+  end
+
   config = vim.lsp._with_extend('vim.lsp.diagnostic.on_publish_diagnostics', {
     signs = true,
     underline = true,
@@ -1245,10 +1249,10 @@ function M.reset(client_id, buffer_client_map)
   end)
 end
 
---- Sets the location list
+--- Gets diagnostics, converts them to quickfix/location list items, and applies the item_handler callback to the items.
+---@param item_handler function Callback to apply to the diagnostic items
+---@param command string|nil Command to execute after applying the item_handler
 ---@param opts table|nil Configuration table. Keys:
----         - {open_loclist}: (boolean, default true)
----             - Open loclist after set
 ---         - {client_id}: (number)
 ---             - If nil, will consider all clients attached to buffer.
 ---         - {severity}: (DiagnosticSeverity)
@@ -1257,9 +1261,8 @@ end
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
 ---         - {workspace}: (boolean, default false)
 ---             - Set the list with workspace diagnostics
-function M.set_loclist(opts)
+local function apply_to_diagnostic_items(item_handler, command, opts)
   opts = opts or {}
-  local open_loclist = if_nil(opts.open_loclist, true)
   local current_bufnr = api.nvim_get_current_buf()
   local diags = opts.workspace and M.get_all(opts.client_id) or {
     [current_bufnr] = M.get(current_bufnr, opts.client_id)
@@ -1276,11 +1279,100 @@ function M.set_loclist(opts)
     return true
   end
   local items = util.diagnostics_to_items(diags, predicate)
-  local win_id = vim.api.nvim_get_current_win()
-  util.set_loclist(items, win_id)
-  if open_loclist then
-    vim.cmd [[lopen]]
+  item_handler(items)
+  if command then
+    vim.cmd(command)
   end
+end
+
+--- Sets the quickfix list
+---@param opts table|nil Configuration table. Keys:
+---         - {open}: (boolean, default true)
+---             - Open quickfix list after set
+---         - {client_id}: (number)
+---             - If nil, will consider all clients attached to buffer.
+---         - {severity}: (DiagnosticSeverity)
+---             - Exclusive severity to consider. Overrides {severity_limit}
+---         - {severity_limit}: (DiagnosticSeverity)
+---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---         - {workspace}: (boolean, default true)
+---             - Set the list with workspace diagnostics
+function M.set_qflist(opts)
+  opts = opts or {}
+  opts.workspace = if_nil(opts.workspace, true)
+  local open_qflist = if_nil(opts.open, true)
+  local command = open_qflist and [[copen]] or nil
+  apply_to_diagnostic_items(util.set_qflist, command, opts)
+end
+
+--- Sets the location list
+---@param opts table|nil Configuration table. Keys:
+---         - {open}: (boolean, default true)
+---             - Open loclist after set
+---         - {client_id}: (number)
+---             - If nil, will consider all clients attached to buffer.
+---         - {severity}: (DiagnosticSeverity)
+---             - Exclusive severity to consider. Overrides {severity_limit}
+---         - {severity_limit}: (DiagnosticSeverity)
+---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---         - {workspace}: (boolean, default false)
+---             - Set the list with workspace diagnostics
+function M.set_loclist(opts)
+  opts = opts or {}
+  local open_loclist = if_nil(opts.open, true)
+  local command = open_loclist and [[lopen]] or nil
+  apply_to_diagnostic_items(util.set_loclist, command, opts)
+end
+
+--- Disable diagnostics for the given buffer and client
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+--- @param client_id (optional, number): Disable diagnostics for the given
+---        client. The default is to disable diagnostics for all attached
+---        clients.
+-- Note that when diagnostics are disabled for a buffer, the server will still
+-- send diagnostic information and the client will still process it. The
+-- diagnostics are simply not displayed to the user.
+function M.disable(bufnr, client_id)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.disable(bufnr, client.id)
+    end)
+  end
+
+  diagnostic_disabled[bufnr][client_id] = true
+  M.clear(bufnr, client_id)
+end
+
+--- Enable diagnostics for the given buffer and client
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+--- @param client_id (optional, number): Enable diagnostics for the given
+---        client. The default is to enable diagnostics for all attached
+---        clients.
+function M.enable(bufnr, client_id)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.enable(bufnr, client.id)
+    end)
+  end
+
+  if not diagnostic_disabled[bufnr][client_id] then
+    return
+  end
+
+  diagnostic_disabled[bufnr][client_id] = nil
+
+  -- We need to invoke the publishDiagnostics handler directly instead of just
+  -- calling M.display so that we can preserve any custom configuration options
+  -- the user may have set with vim.lsp.with.
+  vim.lsp.handlers["textDocument/publishDiagnostics"](
+    nil,
+    "textDocument/publishDiagnostics",
+    {
+      diagnostics = M.get(bufnr, client_id),
+      uri = vim.uri_from_bufnr(bufnr),
+    },
+    client_id
+  )
 end
 -- }}}
 

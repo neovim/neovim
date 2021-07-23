@@ -1199,6 +1199,26 @@ clear({bufnr}, {client_id}, {diagnostic_ns}, {sign_ns})
                                      namespace
                     {sign_ns}        number|nil Associated sign namespace
 
+disable({bufnr}, {client_id})                   *vim.lsp.diagnostic.disable()*
+                Disable diagnostics for the given buffer and client
+
+                Parameters: ~
+                    {bufnr}      (optional, number): Buffer handle, defaults
+                                 to current
+                    {client_id}  (optional, number): Disable diagnostics for
+                                 the given client. The default is to disable
+                                 diagnostics for all attached clients.
+
+enable({bufnr}, {client_id})                     *vim.lsp.diagnostic.enable()*
+                Enable diagnostics for the given buffer and client
+
+                Parameters: ~
+                    {bufnr}      (optional, number): Buffer handle, defaults
+                                 to current
+                    {client_id}  (optional, number): Enable diagnostics for
+                                 the given client. The default is to enable
+                                 diagnostics for all attached clients.
+
 get({bufnr}, {client_id})                           *vim.lsp.diagnostic.get()*
                 Return associated diagnostics for bufnr
 
@@ -1450,12 +1470,36 @@ save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
 save_extmarks({bufnr}, {client_id})
                 TODO: Documentation
 
+set_qflist({opts})                         *vim.lsp.diagnostic.set_qflist()*
+                Sets the quickfix list
+
+                Parameters: ~
+                    {opts}  table|nil Configuration table. Keys:
+                            • {open}: (boolean, default true)
+                              • Open quickfix list after set
+
+                            • {client_id}: (number)
+                              • If nil, will consider all clients attached to
+                                buffer.
+
+                            • {severity}: (DiagnosticSeverity)
+                              • Exclusive severity to consider. Overrides
+                                {severity_limit}
+
+                            • {severity_limit}: (DiagnosticSeverity)
+                              • Limit severity of diagnostics found. E.g.
+                                "Warning" means { "Error", "Warning" } will be
+                                valid.
+
+                            • {workspace}: (boolean, default true)
+                              • Set the list with workspace diagnostics
+
 set_loclist({opts})                         *vim.lsp.diagnostic.set_loclist()*
                 Sets the location list
 
                 Parameters: ~
                     {opts}  table|nil Configuration table. Keys:
-                            • {open_loclist}: (boolean, default true)
+                            • {open}: (boolean, default true)
                               • Open loclist after set
 
                             • {client_id}: (number)
@@ -1630,23 +1674,29 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 ==============================================================================
 Lua module: vim.lsp.handlers                                    *lsp-handlers*
 
-                                         *vim.lsp.handlers.progress_handler()*
-progress_handler({_}, {_}, {params}, {client_id})
-                See also: ~
-                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+                                                    *vim.lsp.handlers.hover()*
+hover({_}, {method}, {result}, {_}, {_}, {config})
+                |lsp-handler| for the method "textDocument/hover" >
 
-                                           *vim.lsp.handlers.signature_help()*
-signature_help({_}, {method}, {result}, {client_id}, {bufnr}, {config})
+                 vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+                   vim.lsp.handlers.hover, {
+                     -- Use a sharp border with `FloatBorder` highlights
+                     border = "single"
+                   }
+                 )
+<
+
                 Parameters: ~
                     {config}  table Configuration table.
                               • border: (default=nil)
                                 • Add borders to the floating window
                                 • See |vim.api.nvim_open_win()|
 
-                See also: ~
-                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_typeDefinition@seehttps://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation|lsp-handler| for the method "textDocument/signatureHelp"
-                    The active parameter is highlighted with
-                    |hl-LspSignatureActiveParameter|>
+                                           *vim.lsp.handlers.signature_help()*
+signature_help({_}, {method}, {result}, {client_id}, {bufnr}, {config})
+                |lsp-handler| for the method "textDocument/signatureHelp". The
+                active parameter is highlighted with
+                |hl-LspSignatureActiveParameter|. >
 
                  vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
                    vim.lsp.handlers.signature_help, {
@@ -1655,6 +1705,12 @@ signature_help({_}, {method}, {result}, {client_id}, {bufnr}, {config})
                    }
                  )
 <
+
+                Parameters: ~
+                    {config}  table Configuration table.
+                              • border: (default=nil)
+                                • Add borders to the floating window
+                                • See |vim.api.nvim_open_win()|
 
 
 ==============================================================================
@@ -1915,14 +1971,14 @@ make_floating_popup_options({width}, {height}, {opts})
 
                                        *vim.lsp.util.make_formatting_params()*
 make_formatting_params({options})
-                Creates a `FormattingOptions` object for the current buffer
-                and cursor position.
+                Creates a `DocumentFormattingParams` object for the current
+                buffer and cursor position.
 
                 Parameters: ~
                     {options}  Table with valid `FormattingOptions` entries
 
                 Return: ~
-                    `FormattingOptions object
+                    `DocumentFormattingParams` object
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting

@@ -422,6 +422,21 @@ function M.clear_references()
   util.buf_clear_references()
 end
 
+--- Requests code actions from all clients and calls the handler exactly once
+--- with all aggregated results
+--@private
+local function code_action_request(params)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local method = 'textDocument/codeAction'
+  vim.lsp.buf_request_all(bufnr, method, params, function(results)
+    local actions = {}
+    for _, r in pairs(results) do
+      vim.list_extend(actions, r.result or {})
+    end
+    vim.lsp.handlers[method](nil, method, actions, nil, bufnr)
+  end)
+end
+
 --- Selects a code action from the input list that is available at the current
 --- cursor position.
 --
@@ -432,7 +447,7 @@ function M.code_action(context)
   context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
   local params = util.make_range_params()
   params.context = context
-  request('textDocument/codeAction', params)
+  code_action_request(params)
 end
 
 --- Performs |vim.lsp.buf.code_action()| for a given range.
@@ -447,7 +462,7 @@ function M.range_code_action(context, start_pos, end_pos)
   context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
   local params = util.make_given_range_params(start_pos, end_pos)
   params.context = context
-  request('textDocument/codeAction', params)
+  code_action_request(params)
 end
 
 --- Executes an LSP server command.

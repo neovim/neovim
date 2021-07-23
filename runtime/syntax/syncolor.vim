@@ -25,6 +25,8 @@ else
   endif
 endif
 
+let did_syncolor = 1
+
 " Many terminals can only use six different colors (plus black and white).
 " Therefore the number of colors used is kept low. It doesn't look nice with
 " too many colors anyway.

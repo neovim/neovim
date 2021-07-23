@@ -49,7 +49,7 @@ describe('vim.lsp.diagnostic', function()
       end
     ]]
 
-    fake_uri = "file://fake/uri"
+    fake_uri = "file:///fake/uri"
 
     exec_lua([[
       fake_uri = ...
@@ -239,6 +239,38 @@ describe('vim.lsp.diagnostic', function()
             count_of_extmarks_for_client(diagnostic_bufnr, 2),
           }
         ]]))
+      end)
+
+      it('should not display diagnostics when disabled', function()
+        eq({0, 2}, exec_lua [[
+          local server_1_diags = {
+            make_error("Error 1", 1, 1, 1, 5),
+            make_warning("Warning on Server 1", 2, 1, 2, 5),
+          }
+          local server_2_diags = {
+            make_warning("Warning 1", 2, 1, 2, 5),
+          }
+
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_1_diags }, 1)
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_2_diags }, 2)
+
+          vim.lsp.diagnostic.disable(diagnostic_bufnr, 1)
+
+          return {
+            count_of_extmarks_for_client(diagnostic_bufnr, 1),
+            count_of_extmarks_for_client(diagnostic_bufnr, 2),
+          }
+        ]])
+
+        eq({4, 0}, exec_lua [[
+          vim.lsp.diagnostic.enable(diagnostic_bufnr, 1)
+          vim.lsp.diagnostic.disable(diagnostic_bufnr, 2)
+
+          return {
+            count_of_extmarks_for_client(diagnostic_bufnr, 1),
+            count_of_extmarks_for_client(diagnostic_bufnr, 2),
+          }
+        ]])
       end)
 
       describe('reset', function()

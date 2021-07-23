@@ -52,7 +52,7 @@ end
 
 --@private
 local function is_windows_file_uri(uri)
-  return uri:match('^file:///[a-zA-Z]:') ~= nil
+  return uri:match('^file:/+[a-zA-Z]:') ~= nil
 end
 
 --- Get a URI from a file path.
@@ -74,7 +74,7 @@ local function uri_from_fname(path)
   return table.concat(uri_parts)
 end
 
-local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*)://.*'
+local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):.*'
 
 --- Get a URI from a bufnr
 --@param bufnr (number): Buffer number
@@ -100,10 +100,10 @@ local function uri_to_fname(uri)
   uri = uri_decode(uri)
   -- TODO improve this.
   if is_windows_file_uri(uri) then
-    uri = uri:gsub('^file:///', '')
+    uri = uri:gsub('^file:/+', '')
     uri = uri:gsub('/', '\\')
   else
-    uri = uri:gsub('^file://', '')
+    uri = uri:gsub('^file:/+', '/')
   end
   return uri
 end
