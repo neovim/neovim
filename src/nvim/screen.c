@@ -4021,6 +4021,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
         while (wp->w_p_rl ? col >= 0 : col < grid->Columns) {
           int cells = -1;
+          // TODO: integrate this whith the other virt_text impl already
           if (do_virttext && !delay_virttext) {
             if (*s.p == NUL) {
               if (virt_pos < virt_text.size) {
@@ -4424,14 +4425,21 @@ void draw_virt_text(buf_T *buf, int col_off, int *end_col, int max_col)
 
       while (col < max_col) {
         if (!*s.p) {
-          if (virt_pos == kv_size(vt)) {
+          if (virt_pos >= kv_size(vt)) {
             break;
           }
-          s.p = kv_A(vt, virt_pos).text;
-          int hl_id = kv_A(vt, virt_pos).hl_id;
-          virt_attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
-          virt_pos++;
-          continue;
+          virt_attr = 0;
+          do {
+            s.p = kv_A(vt, virt_pos).text;
+            int hl_id = kv_A(vt, virt_pos).hl_id;
+            virt_attr = hl_combine_attr(virt_attr,
+                                        hl_id > 0 ? syn_id2attr(hl_id) : 0);
+            virt_pos++;
+          } while (!s.p && virt_pos < kv_size(vt));
+          // TODO: y w0t m8
+          if (!s.p) {
+            break;
+          }
         }
         int attr;
         bool through = false;

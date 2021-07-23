@@ -1433,8 +1433,14 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
 ///               - virt_text : virtual text to link to this mark.
-///               - virt_text_pos : positioning of virtual text. Possible
-///                                 values:
+///                   A list of [text, highlight] tuples, each representing a
+///                   text chunk with specified highlight. `highlight` element
+///                   can either be a a single highlight group, or an array of
+///                   multiple highlight groups that will be stacked
+///                   (highest priority last). A highlight group can be supplied
+///                   either as a string or as an integer, the latter which
+///                   can be obtained using |nvim_get_hl_id_by_name|.
+///               - virt_text_pos : position of virtual text. Possible values:
 ///                 - "eol": right after eol character (default)
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
