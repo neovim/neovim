@@ -322,6 +322,7 @@ static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
 static char *(p_fdc_values[]) =       { "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL };
+static char *(p_culopt_values[]) =    { "line", "number", "both", NULL };
 
 /// All possible flags for 'shm'.
 static char_u SHM_ALL[] = {
@@ -2410,6 +2411,12 @@ did_set_string_option(
     if (didset_vimruntime) {
       os_setenv("VIMRUNTIME", "", 1);
       didset_vimruntime = false;
+    }
+  } else if (varp == &curwin->w_p_culopt
+             || gvarp == &curwin->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
+    if (**varp == NUL
+        || check_opt_strings(*varp, p_culopt_values, false) != OK) {
+      errmsg = e_invarg;
     }
   } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
     errmsg = check_colorcolumn(curwin);
@@ -5652,6 +5659,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_SPELL:  return (char_u *)&(curwin->w_p_spell);
   case PV_CUC:    return (char_u *)&(curwin->w_p_cuc);
   case PV_CUL:    return (char_u *)&(curwin->w_p_cul);
+  case PV_CULOPT: return (char_u *)&(curwin->w_p_culopt);
   case PV_CC:     return (char_u *)&(curwin->w_p_cc);
   case PV_DIFF:   return (char_u *)&(curwin->w_p_diff);
   case PV_FDC:    return (char_u *)&(curwin->w_p_fdc);
@@ -5799,6 +5807,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_spell = from->wo_spell;
   to->wo_cuc = from->wo_cuc;
   to->wo_cul = from->wo_cul;
+  to->wo_culopt = vim_strsave(from->wo_culopt);
   to->wo_cc = vim_strsave(from->wo_cc);
   to->wo_diff = from->wo_diff;
   to->wo_diff_saved = from->wo_diff_saved;
@@ -5849,6 +5858,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_scl);
   check_string_option(&wop->wo_rlc);
   check_string_option(&wop->wo_stl);
+  check_string_option(&wop->wo_culopt);
   check_string_option(&wop->wo_cc);
   check_string_option(&wop->wo_cocu);
   check_string_option(&wop->wo_briopt);
@@ -5871,6 +5881,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_scl);
   clear_string_option(&wop->wo_rlc);
   clear_string_option(&wop->wo_stl);
+  clear_string_option(&wop->wo_culopt);
   clear_string_option(&wop->wo_cc);
   clear_string_option(&wop->wo_cocu);
   clear_string_option(&wop->wo_briopt);
