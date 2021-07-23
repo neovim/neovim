@@ -2334,8 +2334,9 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                                 inserted (true for right, false for left).
                                 Defaults to false.
                               • priority: a priority value for the highlight
-                                group. For example treesitter highlighting
-                                uses a value of 100.
+                                group. Default: 4096. For example, treesitter
+                                highlighting uses a default value of 100 (see
+                                |lua-treesitter-highlight-priority|).
 
                 Return: ~
                     Id of the created/updated extmark

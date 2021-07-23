@@ -294,6 +294,19 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
     ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
      (eq? @WarningMsg.left @WarningMsg.right))
 <
+Treesitter Highlighting Priority            *lua-treesitter-highlight-priority*
+
+Tree-sitter uses |nvim_buf_set_extmark()| to set highlights with a default 
+priority of 100. This enables plugins to set a highlighting priority lower or
+higher than tree-sitter. It is also possible to change the priority of an
+individual query pattern manually by setting its `"priority"` metadata attribute: >
+
+    (
+      (super_important_node) @ImportantHighlight
+      ; Give the whole query highlight priority higher than the default (100)
+      (set! "priority" 105)
+    )
+<
 
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
