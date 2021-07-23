@@ -1076,11 +1076,6 @@ static void command_line_scan(mparm_T *parmp)
       if (want_argument) {
         argleft--;
         argv++;
-
-        // Check for garbage immediately after the option letter.
-        if (argv[0][argv_idx] != NUL) {
-          mainerr(err_opt_garbage, argv[0]);
-        }
         argv_idx = -1;
 
         if (argleft < 1 && c != 'S') {  // -S has an optional argument
