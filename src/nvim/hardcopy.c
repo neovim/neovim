@@ -2387,7 +2387,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   return OK;
 }
 
-static int prt_add_resource(struct prt_ps_resource_S *resource)
+static bool prt_add_resource(struct prt_ps_resource_S *resource)
 {
   FILE*       fd_resource;
   char_u resource_buffer[512];
@@ -2396,17 +2396,17 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
   fd_resource = os_fopen((char *)resource->filename, READBIN);
   if (fd_resource == NULL) {
     EMSG2(_("E456: Can't open file \"%s\""), resource->filename);
-    return FALSE;
+    return false;
   }
   switch (resource->type) {
   case PRT_RESOURCE_TYPE_PROCSET:
   case PRT_RESOURCE_TYPE_ENCODING:
   case PRT_RESOURCE_TYPE_CMAP:
     prt_dsc_resources("BeginResource", prt_resource_types[resource->type],
-        (char *)resource->title);
+                      (char *)resource->title);
     break;
   default:
-    return FALSE;
+    return false;
   }
 
   prt_dsc_textline("BeginDocument", (char *)resource->filename);
@@ -2418,14 +2418,14 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
       EMSG2(_("E457: Can't read PostScript resource file \"%s\""),
           resource->filename);
       fclose(fd_resource);
-      return FALSE;
+      return false;
     }
     if (bytes_read == 0)
       break;
     prt_write_file_raw_len(resource_buffer, bytes_read);
     if (prt_file_error) {
       fclose(fd_resource);
-      return FALSE;
+      return false;
     }
   }
   fclose(fd_resource);
@@ -2434,7 +2434,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
 
   prt_dsc_noarg("EndResource");
 
-  return TRUE;
+  return true;
 }
 
 int mch_print_begin(prt_settings_T *psettings)
