@@ -107,7 +107,6 @@ static char *argv0 = NULL;
 
 // Error messages
 static const char *err_arg_missing = N_("Argument missing after");
-static const char *err_opt_garbage = N_("Garbage after option argument");
 static const char *err_opt_unknown = N_("Unknown option argument");
 static const char *err_too_many_args = N_("Too many edit arguments");
 static const char *err_extra_cmd =
