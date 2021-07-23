@@ -115,10 +115,10 @@ static void sign_group_unref(char_u *groupname)
   }
 }
 
-/// Returns TRUE if 'sign' is in 'group'.
+/// @return true if 'sign' is in 'group'.
 /// A sign can either be in the global group (sign->group == NULL)
 /// or in a named group. If 'group' is '*', then the sign is part of the group.
-int sign_in_group(sign_entry_T *sign, const char_u *group)
+bool sign_in_group(sign_entry_T *sign, const char_u *group)
 {
     return ((group != NULL && STRCMP(group, "*") == 0)
             || (group == NULL && sign->se_group == NULL)

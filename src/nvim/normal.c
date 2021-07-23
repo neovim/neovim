@@ -1340,7 +1340,7 @@ static int normal_check(VimState *state)
   quit_more = false;
 
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
-  // If there is nothing in the stuff_buffer or do_redraw is TRUE,
+  // If there is nothing in the stuff_buffer or do_redraw is true,
   // update cursor and redraw.
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
@@ -8147,10 +8147,8 @@ static void nv_event(cmdarg_T *cap)
   }
 }
 
-/*
- * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
- */
-static int mouse_model_popup(void)
+/// @return true when 'mousemodel' is set to "popup" or "popup_setpos".
+static bool mouse_model_popup(void)
 {
   return p_mousem[0] == 'p';
 }

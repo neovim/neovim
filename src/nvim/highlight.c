@@ -46,7 +46,7 @@ void highlight_init(void)
                                     .id1 = 0, .id2 = 0 }));
 }
 
-/// @return TRUE if hl table was reset
+/// @return true if hl table was reset
 bool highlight_use_hlstate(void)
 {
   if (hlstate_active) {

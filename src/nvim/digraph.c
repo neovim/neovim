@@ -1502,10 +1502,10 @@ char_u *get_digraph_for_char(int val_arg)
 /// Get a digraph.  Used after typing CTRL-K on the command line or in normal
 /// mode.
 ///
-/// @param cmdline TRUE when called from the cmdline
+/// @param cmdline true when called from the cmdline
 ///
 /// @returns composed character, or NUL when ESC was used.
-int get_digraph(int cmdline)
+int get_digraph(bool cmdline)
 {
   int cc;
   no_mapping++;
