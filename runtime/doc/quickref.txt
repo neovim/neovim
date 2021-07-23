@@ -809,7 +809,6 @@ Short explanation of each option:		*option-list*
 'printmbcharset'  'pmbcs'   CJK character set to be used for :hardcopy
 'printmbfont'	  'pmbfn'   font names to be used for CJK output of :hardcopy
 'printoptions'	  'popt'    controls the format of :hardcopy output
-'prompt'	  'prompt'  enable prompt in Ex mode
 'pumheight'	  'ph'	    maximum height of the popup menu
 'pumwidth'	  'pw'	    minimum width of the popup menu
 'pythondll'		    name of the Python 2 dynamic library
