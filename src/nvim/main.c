@@ -774,29 +774,45 @@ static bool edit_stdin(bool explicit, mparm_T *parmp)
 /// Scan the command line arguments.
 static void command_line_scan(mparm_T *parmp)
 {
-  int argc = parmp->argc;
+	// This function makes use of a trick to parse options.
+	// essencially, it creates a clone of paramp->argv called argv
+	// which is incremented every round of the loop. so now insead
+	// of indexing by parmap->argv[i] you can index by argv[0].
+	//
+	// NOTE: ptr++ == (ptr += size(ptrtype))
+
+	if(parmp->argc < 2) return;
+
+  int argleft = parmp->argc; // number of arguments left to process
   char **argv = parmp->argv;
+
   int argv_idx;                         // index in argv[n][]
   bool had_stdin_file = false;          // found explicit "-" argument
   bool had_minmin = false;              // found "--" argument
+
   int want_argument;                    // option argument with argument
-  int c;
+
+  char c; // the currently processing option
   long n;
 
-  argc--;
-  argv++;
-  argv_idx = 1;  // active option letter is argv[0][argv_idx]
-  while (argc > 0) {
+  do {
+      argleft--;
+      argv++;
+      argv_idx = 1;
+
     // "+" or "+{number}" or "+/{pat}" or "+{command}" argument.
     if (argv[0][0] == '+' && !had_minmin) {
       if (parmp->n_commands >= MAX_ARG_CMDS) {
         mainerr(err_extra_cmd, NULL);
       }
+
       argv_idx = -1;  // skip to next argument
       if (argv[0][1] == NUL) {
-        parmp->commands[parmp->n_commands++] = "$";
+        parmp->commands[parmp->n_commands] = "$";
+				parmp->n_commands++;
       } else {
-        parmp->commands[parmp->n_commands++] = &(argv[0][1]);
+        parmp->commands[parmp->n_commands] = &(argv[0][1]);
+				parmp->n_commands++;
       }
 
     // Optional argument.
@@ -821,7 +837,10 @@ static void command_line_scan(mparm_T *parmp)
           argv_idx = -1;  // skip to next argument
           break;
         }
-        case '-': {  // "--" don't take any more option arguments
+
+				// --long commands
+        case '-': {
+					// "--" don't take any more option arguments
           // "--help" give help message
           // "--version" give version message
           // "--noplugin[s]" skip plugins
@@ -911,10 +930,9 @@ static void command_line_scan(mparm_T *parmp)
           exmode_active = EXMODE_NORMAL;
           break;
         }
-        case 'E': {  // "-E" Ex mode
+        case 'E':  // "-E" Ex mode
           exmode_active = EXMODE_VIM;
           break;
-        }
         case 'f': {  // "-f"  GUI: run in foreground.
           break;
         }
@@ -977,7 +995,7 @@ static void command_line_scan(mparm_T *parmp)
           if (argv[0][argv_idx]) {  // "-q{errorfile}"
             parmp->use_ef = (char_u *)argv[0] + argv_idx;
             argv_idx = -1;
-          } else if (argc > 1) {    // "-q {errorfile}"
+          } else if (argleft > 1) {    // "-q {errorfile}"
             want_argument = true;
           }
           break;
@@ -1071,8 +1089,8 @@ static void command_line_scan(mparm_T *parmp)
           mainerr(err_opt_garbage, argv[0]);
         }
 
-        argc--;
-        if (argc < 1 && c != 'S') {  // -S has an optional argument
+        argleft--;
+        if (argleft < 1 && c != 'S') {  // -S has an optional argument
           mainerr(err_arg_missing, argv[0]);
         }
         argv++;
@@ -1087,13 +1105,13 @@ static void command_line_scan(mparm_T *parmp)
             if (c == 'S') {
               char *a;
 
-              if (argc < 1) {
+              if (argleft < 1) {
                 // "-S" without argument: use default session file name.
                 a = SESSION_FILE;
               } else if (argv[0][0] == '-') {
                 // "-S" followed by another option: use default session file.
                 a = SESSION_FILE;
-                ++argc;
+                ++argleft;
                 --argv;
               } else {
                 a = argv[0];
@@ -1242,11 +1260,8 @@ scripterror:
     // If there are no more letters after the current "-", go to next argument.
     // argv_idx is set to -1 when the current argument is to be skipped.
     if (argv_idx <= 0 || argv[0][argv_idx] == NUL) {
-      argc--;
-      argv++;
-      argv_idx = 1;
     }
-  }
+  } while(argleft > 0 && argv_idx > 1 && argv_idx != 0);
 
   if (embedded_mode && silent_mode) {
     mainerr(_("--embed conflicts with -es/-Es"), NULL);
@@ -1299,10 +1314,8 @@ static void init_startuptime(mparm_T *paramp)
 
 static void check_and_set_isatty(mparm_T *paramp)
 {
-  stdin_isatty
-    = paramp->input_isatty = os_isatty(STDIN_FILENO);
-  stdout_isatty
-    = paramp->output_isatty = os_isatty(STDOUT_FILENO);
+  stdin_isatty = paramp->input_isatty = os_isatty(STDIN_FILENO);
+  stdout_isatty = paramp->output_isatty = os_isatty(STDOUT_FILENO);
   paramp->err_isatty = os_isatty(STDERR_FILENO);
 #ifndef WIN32
   int tty_fd = paramp->input_isatty

@@ -492,9 +492,7 @@ EXTERN int starting INIT(= NO_SCREEN);
 EXTERN bool exiting INIT(= false);
 // internal value of v:dying
 EXTERN int v_dying INIT(= 0);
-// is stdin a terminal?
 EXTERN int stdin_isatty INIT(= true);
-// is stdout a terminal?
 EXTERN int stdout_isatty INIT(= true);
 // true when doing full-screen output, otherwise only writing some messages.
 // volatile because it is used in a signal handler.
