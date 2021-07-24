@@ -5,7 +5,7 @@ if exists('g:loaded_man')
 endif
 let g:loaded_man = 1
 
-command! -bang -bar -range=-1 -complete=customlist,man#complete -nargs=* Man
+command! -bang -bar -addr=other -complete=customlist,man#complete -nargs=* Man
       \ if <bang>0 | call man#init_pager() |
       \ else | call man#open_page(<count>, <q-mods>, <f-args>) | endif
 
