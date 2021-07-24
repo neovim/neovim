@@ -1696,7 +1696,7 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after,
   FUNC_API_SINCE(6)
   FUNC_API_CHECK_TEXTLOCK
 {
-  yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
+  yankreg_T *reg = xcalloc(1, sizeof(yankreg_T));
   if (!prepare_yankreg_from_object(reg, type, lines.size)) {
     api_set_error(err, kErrorTypeValidation, "Invalid type: '%s'", type.data);
     goto cleanup;
