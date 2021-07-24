@@ -1720,7 +1720,9 @@ function M.symbols_to_items(symbols, bufnr)
         })
         if symbol.children then
           for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
-            vim.list_extend(_items, v)
+            for _, s in ipairs(v) do
+              table.insert(_items, s)
+            end
           end
         end
       end
