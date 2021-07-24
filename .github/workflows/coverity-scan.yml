@@ -6,6 +6,7 @@ on:
 
 jobs:
   scan:
+    timeout-minutes: 60
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2

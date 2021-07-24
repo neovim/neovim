@@ -9,6 +9,7 @@ on:
 
 jobs:
   unixish:
+    timeout-minutes: 60
     name: ${{ matrix.os }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
       fail-fast: false
@@ -91,6 +92,7 @@ jobs:
         run: ./ci/before_cache.sh
 
   windows:
+    timeout-minutes: 60
     runs-on: windows-2016
     if: github.event.pull_request.draft == false
     env:

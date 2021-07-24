@@ -3,6 +3,7 @@ on:
 - pull_request_target
 jobs:
   triage:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     permissions:
       contents: read

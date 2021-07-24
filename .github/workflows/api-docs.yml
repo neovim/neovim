@@ -12,6 +12,7 @@ on:
 
 jobs:
   regen-api-docs:
+    timeout-minutes: 60
     runs-on: ubuntu-20.04
     permissions:
       contents: write
