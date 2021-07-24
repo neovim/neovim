@@ -2152,6 +2152,29 @@ nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
                 Return: ~
                     Option value
 
+                                                         *nvim_buf_get_text()*
+nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
+                  {opts})
+                Gets a range from the buffer.
+
+                This differs from |nvim_buf_get_lines()| in that it allows
+                retrieving only portions of a line.
+
+                Indexing is zero-based. Column indices are end-exclusive.
+
+                Prefer |nvim_buf_get_lines()| when retrieving entire lines.
+
+                Parameters: ~
+                    {buffer}     Buffer handle, or 0 for current buffer
+                    {start_row}  First line index
+                    {start_col}  Starting byte offset of first line
+                    {end_row}    Last line index
+                    {end_col}    Ending byte offset of last line (exclusive)
+                    {opts}       Optional parameters. Currently unused.
+
+                Return: ~
+                    Array of lines, or empty array for unloaded buffer.
+
 nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                 Gets a buffer-scoped (b:) variable.
 

@@ -537,6 +537,34 @@ describe('api/buf', function()
     end)
   end)
 
+  describe('nvim_buf_get_text', function()
+    local get_text = curbufmeths.get_text
+
+    it('works', function()
+      insert([[
+      hello foo!
+      text]])
+
+      eq({'hello'}, get_text(0, 0, 0, 5, {}))
+      eq({'hello foo!'}, get_text(0, 0, 0, 42, {}))
+      eq({'foo!'}, get_text(0, 6, 0, 10, {}))
+      eq({'foo!', 'tex'}, get_text(0, 6, 1, 3, {}))
+      eq({'foo!', 'tex'}, get_text(-2, 6, -1, 3, {}))
+      eq({''}, get_text(0, 18, 0, 20, {}))
+      eq({'ext'}, get_text(-1, 1, -1, 4, {}))
+    end)
+
+    it('errors on out-of-range', function()
+      eq(false, pcall(get_text, 2, 0, 3, 0, {}))
+      eq(false, pcall(get_text, 0, 0, 4, 0, {}))
+    end)
+
+    it('errors when start is greater than end', function()
+      eq(false, pcall(get_text, 1, 0, 0, 0, {}))
+      eq(false, pcall(get_text, 0, 1, 0, 0, {}))
+    end)
+  end)
+
   describe('nvim_buf_get_offset', function()
     local get_offset = curbufmeths.get_offset
     it('works', function()
