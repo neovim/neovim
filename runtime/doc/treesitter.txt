@@ -226,6 +226,18 @@ Here is a list of built-in predicates :
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
+						*vim.treesitter.query.add_predicate()*
+vim.treesitter.query.add_predicate({name}, {handler})
+
+This adds a predicate with the name {name} to be used in queries.
+{handler} should be a function whose signature will be : >
+	handler(match, pattern, bufnr, predicate)
+<
+						*vim.treesitter.query.list_predicates()*
+vim.treesitter.query.list_predicates()
+
+This lists the currently available predicates to use in queries.
+
 Treesitter Query Directive				*lua-treesitter-directives*
 
 Treesitter queries can also contain `directives`. Directives store metadata for a node
@@ -248,6 +260,21 @@ Here is a list of built-in directives:
 		offsets applied. The arguments are
 		`({capture_id}, {start_row}, {start_col}, {end_row}, {end_col}, {key?})`
 		The default key is "offset".
+
+					*vim.treesitter.query.add_directive()*
+vim.treesitter.query.add_directive({name}, {handler})
+
+This adds a directive with the name {name} to be used in queries.
+{handler} should be a function whose signature will be : >
+	handler(match, pattern, bufnr, predicate, metadata)
+Handlers can set match level data by setting directly on the metadata object `metadata.key = value`
+Handlers can set node level data by using the capture id on the metadata table
+`metadata[capture_id].key = value`
+
+					*vim.treesitter.query.list_directives()*
+vim.treesitter.query.list_directives()
+
+This lists the currently available directives to use in queries.
 
 Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
 

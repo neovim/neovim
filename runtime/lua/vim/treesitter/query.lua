@@ -351,6 +351,11 @@ function M.add_directive(name, handler, force)
   directive_handlers[name] = handler
 end
 
+--- Returns the list of currently supported directives
+function M.list_directives()
+  return vim.tbl_keys(directive_handlers)
+end
+
 --- Returns the list of currently supported predicates
 function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
