@@ -1123,10 +1123,9 @@ static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
   data->showing_mode = (ModeShape)mode_idx;
 }
 
-static void tui_grid_scroll(UI *ui, Integer g, Integer startrow, Integer endrow,
-                            Integer startcol, Integer endcol,
-                            Integer rows,
-                            Integer cols FUNC_ATTR_UNUSED)  // -V751
+static void tui_grid_scroll(UI *ui, Integer g, Integer startrow,  // -V751
+                            Integer endrow, Integer startcol, Integer endcol,
+                            Integer rows, Integer cols FUNC_ATTR_UNUSED)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
