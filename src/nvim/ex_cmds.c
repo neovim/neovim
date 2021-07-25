@@ -2887,7 +2887,6 @@ void ex_append(exarg_T *eap)
       } else if (lnum > 0)
         indent = get_indent_lnum(lnum);
     }
-    ex_keep_indent = FALSE;
     if (eap->getline == NULL) {
       /* No getline() function, use the lines that follow. This ends
        * when there is no more. */
@@ -2914,10 +2913,6 @@ void ex_append(exarg_T *eap)
     lines_left = Rows - 1;
     if (theline == NULL)
       break;
-
-    /* Using ^ CTRL-D in getexmodeline() makes us repeat the indent. */
-    if (ex_keep_indent)
-      append_indent = indent;
 
     /* Look for the "." after automatic indent. */
     vcol = 0;
@@ -3751,6 +3746,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
            */
           while (subflags.do_ask) {
             if (exmode_active) {
+              char        *prompt;
               char_u      *resp;
               colnr_T sc, ec;
 
@@ -3767,13 +3763,14 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                 sc += numw;
                 ec += numw;
               }
-              msg_start();
-              for (i = 0; i < (long)sc; ++i)
-                msg_putchar(' ');
-              for (; i <= (long)ec; ++i)
-                msg_putchar('^');
 
-              resp = getexmodeline('?', NULL, 0, true);
+              prompt = xmallocz(ec + 1);
+              memset(prompt, ' ', sc);
+              memset(prompt + sc, '^', ec - sc + 1);
+              resp = (char_u *)getcmdline_prompt(NUL, prompt, 0, EXPAND_NOTHING,
+                                                 NULL, CALLBACK_NONE);
+              msg_putchar('\n');
+              xfree(prompt);
               if (resp != NULL) {
                 typed = *resp;
                 xfree(resp);

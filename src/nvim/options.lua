@@ -1800,7 +1800,7 @@ return {
       full_name='prompt',
       short_desc=N_("enable prompt in Ex mode"),
       type='bool', scope={'global'},
-      varname='p_prompt',
+      varname='p_force_on',
       defaults={if_true={vi=true}}
     },
     {
