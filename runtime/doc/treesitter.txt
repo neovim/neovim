@@ -433,8 +433,13 @@ get_query_files({lang}, {query_name}, {is_included})
                     {is_included}  Internal parameter, most of the time left
                                    as `nil`
 
+list_directives()                                          *list_directives()*
+                Return: ~
+                    The list of supported directives.
+
 list_predicates()                                          *list_predicates()*
-                TODO: Documentation
+                Return: ~
+                    The list of supported predicates.
 
 parse_query({lang}, {query})                                   *parse_query()*
                 Parse {query} as a string. (If the query is in a file, the
@@ -514,11 +519,9 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
       for id, node in pairs(match) do
         local name = query.captures[id]
         -- `node` was captured by the `name` capture in the match
-<
->
-    local node_data = metadata[id] -- Node level metadata
-<
->
+
+        local node_data = metadata[id] -- Node level metadata
+
         ... use the info here ...
       end
     end
