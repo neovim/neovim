@@ -353,6 +353,11 @@ char_u *last_search_pattern(void)
   return spats[RE_SEARCH].pat;
 }
 
+void free_last_pat(int idx)
+{
+    XFREE_CLEAR(spats[idx].pat);
+}
+
 /*
  * Return TRUE when case should be ignored for search pattern "pat".
  * Uses the 'ignorecase' and 'smartcase' options.

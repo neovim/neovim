@@ -10905,6 +10905,17 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   channel_create_event(chan, NULL);
 }
 
+// "test_clear_search_pat()"
+// Free the last search and substitute patterns
+static void f_test_clear_search_pat(typval_T *unused,
+                                    typval_T *unused2, FunPtr fptr)
+{
+    free_last_pat(RE_SUBST);
+    free_last_pat(RE_SEARCH);
+    sub_set_replacement((SubReplacementString){ NULL, 0, NULL });
+    free_regexp_prev_sub();
+}
+
 // "test_garbagecollect_now()" function
 static void f_test_garbagecollect_now(typval_T *argvars,
                                       typval_T *rettv, FunPtr fptr)

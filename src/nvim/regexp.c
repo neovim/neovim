@@ -3299,6 +3299,12 @@ void free_regexp_stuff(void)
 
 #endif
 
+// Free the previously used substitute search pattern.
+void free_regexp_prev_sub(void)
+{
+    XFREE_CLEAR(reg_prev_sub);
+}
+
 // Return true if character 'c' is included in 'iskeyword' option for
 // "reg_buf" buffer.
 static bool reg_iswordc(int c)

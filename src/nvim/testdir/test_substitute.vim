@@ -765,4 +765,20 @@ func Test_substitute_skipped_range()
   bwipe!
 endfunc
 
+" Test for command failures when the last substitute pattern is not set.
+func Test_sub_with_no_last_pat()
+  call test_clear_search_pat()
+  call assert_fails('~', 'E33:')
+  call assert_fails('s//abc/g', 'E476:')
+  call assert_fails('s\/bar', 'E476:')
+  call assert_fails('s\&bar&', 'E476:')
+
+  throw "skipped: Nvim removed POSIX-related 'cpoptions' flags"
+  call test_clear_search_pat()
+  let save_cpo = &cpo
+  set cpo+=/
+  call assert_fails('s/abc/%/', 'E33:')
+  let &cpo = save_cpo
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

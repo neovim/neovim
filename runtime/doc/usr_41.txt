@@ -976,6 +976,7 @@ Testing:				    *test-functions*
 	assert_beeps()		assert that a command beeps
 	assert_nobeep()		assert that a command does not cause a beep
 	assert_fails()		assert that a command fails
+	test_clear_search_pat() clears the last used search pattern
 
 Timers:						*timer-functions*
 	timer_start()		create a timer
