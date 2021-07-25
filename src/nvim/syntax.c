@@ -6398,10 +6398,8 @@ void init_highlight(bool both, bool reset)
     }
   }
 
-  /*
-   * If syntax highlighting is enabled load the highlighting for it.
-   */
-  if (get_var_value("g:syntax_on") != NULL) {
+  // syntax colors needs to be reloaded
+  if (get_var_value("g:did_syncolor") != NULL) {
     static int recursive = 0;
 
     if (recursive >= 5) {
