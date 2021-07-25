@@ -562,7 +562,7 @@ end]]
           {5:l}{8:blen}{7:dy}{10:e}{7:text}{10:h}{7:-}{10:_}{7:here}ell, count = unpack(item)  |
           {5:i}{12:c}{11:ombining color} {13:nil} {5:then}                     |
            {11:replacing color}d_cell                        |
-          {5:e}{8:bl}{14:endy}{15:i}{14:text}{15:o}{14:-}{15:o}{14:h}{7:ere}                           |
+          {5:e}{8:bl}{7:endy}{10: }{7:text}{10: }{7:-}{10: }{7:here}                           |
           {5:f}{12:co}{11:mbini}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
            {11:replacing color} line[colpos]                 |
               cell.text = text                          |

@@ -1592,9 +1592,10 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
   }
 }
 
-VirtText parse_virt_text(Array chunks, Error *err)
+VirtText parse_virt_text(Array chunks, Error *err, int *width)
 {
   VirtText virt_text = KV_INITIAL_VALUE;
+  int w = 0;
   for (size_t i = 0; i < chunks.size; i++) {
     if (chunks.items[i].type != kObjectTypeArray) {
       api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
@@ -1635,9 +1636,12 @@ VirtText parse_virt_text(Array chunks, Error *err)
     }
 
     char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+    w += (int)mb_string2cells((char_u *)text);
+
     kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
   }
 
+  *width = w;
   return virt_text;
 
 free_exit:

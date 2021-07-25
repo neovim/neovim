@@ -858,8 +858,8 @@ describe('Buffer highlighting', function()
     it('works with cursorline', function()
       command("set cursorline")
 
-      screen:expect([[
-        {14:^1 + 2 }{15:=}{16: 3}{14:                               }|
+      screen:expect{grid=[[
+        {14:^1 + 2 }{3:=}{2: 3}{14:                               }|
         3 + {11:ERROR:} invalid syntax               |
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
@@ -867,32 +867,32 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
 
       feed('j')
-      screen:expect([[
+      screen:expect{grid=[[
         1 + 2 {3:=}{2: 3}                               |
-        {14:^3 + }{11:ERROR:}{14: invalid syntax               }|
+        {14:^3 + }{11:ERROR:} invalid syntax{14:               }|
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
 
 
       feed('j')
-      screen:expect([[
+      screen:expect{grid=[[
         1 + 2 {3:=}{2: 3}                               |
         3 + {11:ERROR:} invalid syntax               |
         {14:^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
-        {14:, 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s}|
+        {14:, 5, 5, 5, 5, 5, 5,  }Lorem ipsum dolor s|
         x = 4                                   |
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
     end)
 
     it('works with color column', function()
@@ -910,11 +910,11 @@ describe('Buffer highlighting', function()
 
       command("set colorcolumn=9")
       screen:expect{grid=[[
-        ^1 + 2 {3:=}{2: }{17:3}                               |
+        ^1 + 2 {3:=}{2: 3}                               |
         3 + {11:ERROR:} invalid syntax               |
         5, 5, 5,{18: }5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-        x = 4 {12:暗}{19:x}{12:事}                             |
+        x = 4 {12:暗x事}                             |
         {1:~                                       }|
         {1:~                                       }|
                                                 |

@@ -1566,7 +1566,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
                       "virt_text is not an Array");
         goto error;
       }
-      decor.virt_text = parse_virt_text(v->data.array, err);
+      decor.virt_text = parse_virt_text(v->data.array, err,
+                                        &decor.virt_text_width);
       if (ERROR_SET(err)) {
         goto error;
       }
@@ -1949,23 +1950,26 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
   }
 
   uint64_t ns_id = src2ns(&src_id);
+  int width;
 
-  VirtText virt_text = parse_virt_text(chunks, err);
+  VirtText virt_text = parse_virt_text(chunks, err, &width);
   if (ERROR_SET(err)) {
     return 0;
   }
 
 
-  VirtText *existing = decor_find_virttext(buf, (int)line, ns_id);
+  Decoration *existing = decor_find_virttext(buf, (int)line, ns_id);
 
   if (existing) {
-    clear_virttext(existing);
-    *existing = virt_text;
+    clear_virttext(&existing->virt_text);
+    existing->virt_text = virt_text;
+    existing->virt_text_width = width;
     return src_id;
   }
 
   Decoration *decor = xcalloc(1, sizeof(*decor));
   decor->virt_text = virt_text;
+  decor->virt_text_width = width;
 
   extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, true,
               false, kExtmarkNoUndo);
