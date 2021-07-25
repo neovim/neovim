@@ -6347,6 +6347,7 @@ mode([expr])	Return a string that indicates the current mode.
 		   v	    Visual by character
 		   V	    Visual by line
 		   CTRL-V   Visual blockwise
+		   viS	    Visual using |v_CTRL-O| in |Select-mode|
 		   s	    Select by character
 		   S	    Select by line
 		   CTRL-S   Select blockwise

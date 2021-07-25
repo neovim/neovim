@@ -534,6 +534,7 @@ func Test_mode()
   set complete=.
 
   inoremap <F2> <C-R>=Save_mode()<CR>
+  xnoremap <F2> <Cmd>call Save_mode()<CR>
 
   normal! 3G
   exe "normal i\<F2>\<Esc>"
@@ -621,6 +622,10 @@ func Test_mode()
   exe "normal gR\<C-O>:call Save_mode()\<Cr>\<Esc>"
   call assert_equal("n-niV", g:current_modes)
 
+  " v_CTRL-O
+  exe "normal gh\<C-O>\<F2>\<Esc>"
+  call assert_equal("v-viS", g:current_modes)
+
   " How to test operator-pending mode?
 
   call feedkeys("v", 'xt')
@@ -653,6 +658,7 @@ func Test_mode()
 
   bwipe!
   iunmap <F2>
+  xunmap <F2>
   set complete&
 endfunc
 
