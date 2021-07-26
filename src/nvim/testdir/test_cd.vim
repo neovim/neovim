@@ -1,5 +1,7 @@
 " Test for :cd
 
+source shared.vim
+
 func Test_cd_large_path()
   " This used to crash with a heap write overflow.
   call assert_fails('cd ' . repeat('x', 5000), 'E472:')
@@ -40,6 +42,20 @@ func Test_cd_minus()
   call assert_equal(path_dotdot, getcwd())
   cd -
   call assert_equal(path, getcwd())
+
+  " Test for :cd - without a previous directory
+  let lines =<< trim [SCRIPT]
+    call assert_fails('cd -', 'E186:')
+    call assert_fails('call chdir("-")', 'E186:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
 endfunc
 
 func Test_cd_with_cpo_chdir()

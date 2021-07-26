@@ -476,6 +476,13 @@ func Test_map_error()
 
   call assert_fails('mapclear abc', 'E474:')
   call assert_fails('abclear abc', 'E474:')
+
+  " Recursive use of :normal in a map
+  set maxmapdepth=100
+  map gq :normal gq<CR>
+  call assert_fails('normal gq', 'E192:')
+  unmap gq
+  set maxmapdepth&
 endfunc
 
 " Test for <special> key mapping

@@ -46,3 +46,13 @@ func Test_source_sandbox()
   bwipe!
   call delete('Xsourcehello')
 endfunc
+
+" When sourcing a vim script, shebang should be ignored.
+func Test_source_ignore_shebang()
+  call writefile(['#!./xyzabc', 'let g:val=369'], 'Xfile.vim')
+  source Xfile.vim
+  call assert_equal(g:val, 369)
+  call delete('Xfile.vim')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

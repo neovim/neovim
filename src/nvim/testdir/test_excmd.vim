@@ -20,6 +20,7 @@ func Test_range_error()
   call assert_fails(':\/echo 1', 'E481:')
   normal vv
   call assert_fails(":'<,'>echo 1", 'E481:')
+  call assert_fails(":\\xcenter", 'E10:')
 endfunc
 
 func Test_buffers_lastused()
@@ -233,6 +234,38 @@ func Test_confirm_cmd()
 
   call delete('foo')
   call delete('bar')
+endfunc
+
+" Test for the :print command
+func Test_print_cmd()
+  call assert_fails('print', 'E749:')
+endfunc
+
+" Test for the :redir command
+func Test_redir_cmd()
+  call assert_fails('redir @@', 'E475:')
+  call assert_fails('redir abc', 'E475:')
+  if has('unix')
+    call mkdir('Xdir')
+    call assert_fails('redir > Xdir', 'E17:')
+    call delete('Xdir', 'd')
+  endif
+  if !has('bsd')
+    call writefile([], 'Xfile')
+    call setfperm('Xfile', 'r--r--r--')
+    call assert_fails('redir! > Xfile', 'E190:')
+    call delete('Xfile')
+  endif
+endfunc
+
+" Test for the :filetype command
+func Test_filetype_cmd()
+  call assert_fails('filetype abc', 'E475:')
+endfunc
+
+" Test for the :mode command
+func Test_mode_cmd()
+  call assert_fails('mode abc', 'E359:')
 endfunc
 
 func Test_confirm_cmd_cancel()

@@ -98,4 +98,26 @@ func Test_ex_mode_count_overflow()
   call delete('Xexmodescript')
 endfunc
 
+" Test for displaying lines from an empty buffer in Ex mode
+func Test_Ex_emptybuf()
+  new
+  call assert_fails('call feedkeys("Q\<CR>", "xt")', 'E749:')
+  call setline(1, "abc")
+  call assert_fails('call feedkeys("Q\<CR>", "xt")', 'E501:')
+  call assert_fails('call feedkeys("Q%d\<CR>", "xt")', 'E749:')
+  close!
+endfunc
+
+" Test for the :open command
+func Test_open_command()
+  new
+  call setline(1, ['foo foo', 'foo bar', 'foo baz'])
+  call feedkeys("Qopen\<CR>j", 'xt')
+  call assert_equal('foo bar', getline('.'))
+  call feedkeys("Qopen /bar/\<CR>", 'xt')
+  call assert_equal(5, col('.'))
+  call assert_fails('call feedkeys("Qopen /baz/\<CR>", "xt")', 'E479:')
+  close!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
