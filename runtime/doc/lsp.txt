@@ -322,6 +322,18 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
      }
    }
 <
+  Some handlers do not have an explicitly named handler function (such as
+  |on_publish_diagnostics()|). To override these, first create a reference
+  to the existing handler: >
+
+    local on_references = vim.lsp.handlers["textDocument/references"]
+    vim.lsp.handlers["textDocument/references"] = vim.lsp.with(
+      on_references, {
+        -- Use location list instead of quickfix list
+        loclist = true,
+      }
+    )
+<
                                                       *lsp-handler-resolution*
 Handlers can be set by:
 
