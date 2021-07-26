@@ -42,7 +42,7 @@ Developer guidelines
 Pull requests (PRs)
 ---------------------
 
-- To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
+- To avoid duplicate work, create a draft pull request as soon as possible.
 - Your PR must include **test coverage.** See [test/README.md][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
@@ -62,16 +62,31 @@ Pull requests (PRs)
 - During a squash/fixup, use `exec make -C build unittest` between each
   pick/edit/reword.
 
-### Stages: WIP, RFC, RDY
+### Stages: Draft and Ready for review
 
-Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
-For Comment) and `[RDY]` (Ready).
+Pull requests have two stages: Draft and Ready for review.
 
-1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
-   noise to merge commit messages).
-2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
-   is still in flux.
-3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
+1 [Create a Draft PR](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)
+  while you are _not_ requesting feedback as you are still working on
+  the PR.
+2. [Change your PR to ready](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request)
+   when the PR is ready for review.
+
+You can convert the state of your PR back to Draft (or Ready for
+review) at any time. You can also skip the Draft stage if your PR is
+ready for review from the beginning.
+
+Do __not__ add any labels like `[RFC]` or `[WIP]` in the title to
+indicate the state of your PR: this just adds noise. Non-Draft PRs are
+assumed to be open for comments by default; if you want feedback from
+specific people, `@`-ping them in a comment.
+
+### The `RFD` tag
+
+When seeking for comment on a PR, because of the foundational work you
+are making, or because the changes in the PR are subject to debate,
+mark it as `RFD` in the title, to clearly show you want people opinion
+on the changes you make.
 
 ### Commit messages
 
