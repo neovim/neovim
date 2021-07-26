@@ -1168,6 +1168,40 @@ function M.display(diagnostics, bufnr, client_id, config)
   save_extmarks(bufnr, client_id)
 end
 
+--- Redraw diagnostics for the given buffer and client
+---
+--- This calls the "textDocument/publishDiagnostics" handler manually using
+--- the cached diagnostics already received from the server. This can be useful
+--- for redrawing diagnostics after making changes in diagnostics
+--- configuration. |lsp-handler-configuration|
+---
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+--- @param client_id (optional, number): Redraw diagnostics for the given
+---        client. The default is to redraw diagnostics for all attached
+---        clients.
+function M.redraw(bufnr, client_id)
+  bufnr = get_bufnr(bufnr)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.redraw(bufnr, client.id)
+    end)
+  end
+
+  -- We need to invoke the publishDiagnostics handler directly instead of just
+  -- calling M.display so that we can preserve any custom configuration options
+  -- the user may have set with vim.lsp.with.
+  vim.lsp.handlers["textDocument/publishDiagnostics"](
+    nil,
+    "textDocument/publishDiagnostics",
+    {
+      uri = vim.uri_from_bufnr(bufnr),
+      diagnostics = M.get(bufnr, client_id),
+    },
+    client_id,
+    bufnr
+  )
+end
+
 -- }}}
 -- Diagnostic User Functions {{{
 
@@ -1361,18 +1395,7 @@ function M.enable(bufnr, client_id)
 
   diagnostic_disabled[bufnr][client_id] = nil
 
-  -- We need to invoke the publishDiagnostics handler directly instead of just
-  -- calling M.display so that we can preserve any custom configuration options
-  -- the user may have set with vim.lsp.with.
-  vim.lsp.handlers["textDocument/publishDiagnostics"](
-    nil,
-    "textDocument/publishDiagnostics",
-    {
-      diagnostics = M.get(bufnr, client_id),
-      uri = vim.uri_from_bufnr(bufnr),
-    },
-    client_id
-  )
+  M.redraw(bufnr, client_id)
 end
 -- }}}
 
