@@ -575,6 +575,25 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
   return nlua_exec(STATIC_CSTR_AS_STRING("return vim.notify(...)"), args, err);
 }
 
+/// Notify the user with a message
+///
+/// Relays the call to vim.notify . By default forwards your message in the
+/// echo area but can be overridden to trigger desktop notifications.
+///
+/// @param msg        Message to display to the user
+/// @param log_level  The log level
+/// @param opts       Options like 'prompt'
+/// @param[out] err   Error details, if any
+Object nvim_pick(Dictionary entries, Dictionary opts, Error *err)
+  FUNC_API_SINCE(8)
+{
+  FIXED_TEMP_ARRAY(args, 3);
+  args.items[0] = DICTIONARY_OBJ(entries);
+  args.items[1] = DICTIONARY_OBJ(opts);
+
+  return nlua_exec(STATIC_CSTR_AS_STRING("return vim.pick(...)"), args, err);
+}
+
 /// Calls a VimL function.
 ///
 /// @param fn Function name

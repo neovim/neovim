@@ -424,6 +424,14 @@ function vim.notify(msg, log_level, _opts)
   end
 end
 
+vim.ui = {
+  --- Picker
+  --- without a runtime, relies on inputlist()
+  --  see :help nvim_pick
+  pick = function (entries, opts)
+    return vim.fn.inputlist(vim.tbl_values(entries))
+  end
+}
 
 local on_keystroke_callbacks = {}
 
