@@ -62,10 +62,10 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 }
 
 
-// Count the size (in window cells) of the indent in line "ptr", with
-// 'tabstop' at "ts".
-// If @param list is TRUE, count only screen size for tabs.
-int get_indent_str(const char_u *ptr, int ts, int list)
+/// Count the size (in window cells) of the indent in line "ptr", with
+/// 'tabstop' at "ts".
+/// If @param list is true, count only screen size for tabs.
+int get_indent_str(const char_u *ptr, int ts, bool list)
   FUNC_ATTR_NONNULL_ALL
 {
   int count = 0;
@@ -91,9 +91,9 @@ int get_indent_str(const char_u *ptr, int ts, int list)
   return count;
 }
 
-// Count the size (in window cells) of the indent in line "ptr", using
-// variable tabstops.
-// if "list" is true, count only screen size for tabs.
+/// Count the size (in window cells) of the indent in line "ptr", using
+/// variable tabstops.
+/// if "list" is true, count only screen size for tabs.
 int get_indent_str_vtab(const char_u *ptr, long ts, long *vts, bool list)
 {
   int count = 0;

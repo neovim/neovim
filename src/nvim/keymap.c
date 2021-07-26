@@ -543,7 +543,7 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
 
 /// Put the character sequence for "key" with "modifiers" into "dst" and return
 /// the resulting length.
-/// When "keycode" is TRUE prefer key code, e.g. K_DEL instead of DEL.
+/// When "keycode" is true prefer key code, e.g. K_DEL instead of DEL.
 /// The sequence is not NUL terminated.
 /// This is how characters in a string are encoded.
 unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)

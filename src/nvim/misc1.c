@@ -750,8 +750,8 @@ get_number (
       stuffcharReadbuff(':');
       if (!exmode_active)
         cmdline_row = msg_row;
-      skip_redraw = TRUE;           /* skip redraw once */
-      do_redraw = FALSE;
+      skip_redraw = true;           // skip redraw once
+      do_redraw = false;
       break;
     } else if (c == Ctrl_C || c == ESC || c == 'q') {
       n = 0;
