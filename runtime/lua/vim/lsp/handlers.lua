@@ -190,30 +190,41 @@ end
 
 
 --@private
---- Return a function that converts LSP responses to quickfix items and opens the qflist
---
---@param map_result function `((resp, bufnr) -> list)` to convert the response
---@param entity name of the resource used in a `not found` error message
-local function response_to_qflist(map_result, entity)
-  return function(_, _, result, _, bufnr)
+--- Return a function that converts LSP responses to list items and opens the list
+---
+--- The returned function has an optional {config} parameter that accepts a table
+--- with the following keys:
+---
+---   loclist: (boolean) use the location list (default is to use the quickfix list)
+---
+--- @param map_result function `((resp, bufnr) -> list)` to convert the response
+--- @param entity name of the resource used in a `not found` error message
+local function response_to_list(map_result, entity)
+  return function(_, _, result, _, bufnr, config)
     if not result or vim.tbl_isempty(result) then
       vim.notify('No ' .. entity .. ' found')
     else
-      util.set_qflist(map_result(result, bufnr))
-      api.nvim_command("copen")
+      config = config or {}
+      if config.loclist then
+        util.set_loclist(map_result(result, bufnr))
+        api.nvim_command("lopen")
+      else
+        util.set_qflist(map_result(result, bufnr))
+        api.nvim_command("copen")
+      end
     end
   end
 end
 
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = response_to_qflist(util.locations_to_items, 'references')
+M['textDocument/references'] = response_to_list(util.locations_to_items, 'references')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M['textDocument/documentSymbol'] = response_to_qflist(util.symbols_to_items, 'document symbols')
+M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-M['workspace/symbol'] = response_to_qflist(util.symbols_to_items, 'symbols')
+M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
 M['textDocument/rename'] = function(_, _, result)
