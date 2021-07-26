@@ -109,6 +109,7 @@
               shellHook = ''
                 export NVIM_PYTHON_LOG_LEVEL=DEBUG
                 export NVIM_LOG_FILE=/tmp/nvim.log
+                export VIMRUNTIME=$PWD/runtime
 
                 # ASAN_OPTIONS=detect_leaks=1
                 export ASAN_OPTIONS="log_path=./test.log:abort_on_error=1"
