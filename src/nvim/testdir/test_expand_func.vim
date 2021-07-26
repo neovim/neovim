@@ -50,6 +50,15 @@ func Test_expand_sfile()
   delcommand Sfile
 endfunc
 
+func Test_expand()
+  new
+  call assert_equal("",  expand('%:S'))
+  call assert_equal('3', expand('<slnum>'))
+  call assert_equal(['4'], expand('<slnum>', v:false, v:true))
+  " Don't add any line above this, otherwise <slnum> will change.
+  quit
+endfunc
+
 func Test_expand_slnum()
   call assert_equal(6, s:slnum)
   call assert_equal(2, str2nr(expand('<slnum>')))

@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
-local eq, eval, command = helpers.eq, helpers.eval, helpers.command
+local eq, neq, eval, command, exc_exec = helpers.eq, helpers.neq, helpers.eval,
+                                        helpers.command, helpers.exc_exec
 
 describe('Test for delete()', function()
   before_each(clear)
@@ -113,5 +114,17 @@ describe('Test for delete()', function()
     eq(eval("['a', 'b']"), eval("readfile('Xdir4/Xfile')"))
     eq(0, eval("delete('Xdir4/Xfile')"))
     eq(0, eval("delete('Xdir4', 'd')"))
+  end)
+  it('delete errors', function()
+    local err = exc_exec("call delete('''')")
+    -- Expected
+    -- neq(err:find('E474:'), nil)
+    -- Actual
+    eq(0, err)
+    err = exc_exec("call delete(''foo'', 0)")
+    -- Expected
+    -- neq(err:find('E15:'), nil)
+    -- Actual
+    neq(err:find('E116:'), nil)
   end)
 end)
