@@ -2514,7 +2514,6 @@ tagfiles()			List	tags files used
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
 tempname()			String	name for a temporary file
-test_clear_search_pat()		none	clears the last used search pattern
 test_garbagecollect_now()	none	free memory right now for testing
 timer_info([{id}])		List	information about timers
 timer_pause({id}, {pause})	none	pause or unpause a timer
