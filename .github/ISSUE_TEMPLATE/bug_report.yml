@@ -43,13 +43,8 @@ body:
     attributes:
       label: "Steps to reproduce"
       description: |
-        Steps to reproduce using `nvim -u NORC`.
+        Steps to reproduce using `nvim -u NORC` and/or `nvim -u NONE` (please test both).
         If you are reporting build failures, please list the exact sequence of steps including all CMake flags (if any).
-
-  - type: checkboxes
-    attributes:
-      options:
-        - label: "Please check the box if it's possible to reproduce the bug with `nvim --clean` as well"
 
   - type: input
     attributes:
