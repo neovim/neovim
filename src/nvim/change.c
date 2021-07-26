@@ -98,7 +98,7 @@ void changed(void)
     if (curbuf->b_may_swap
         && !bt_dontwrite(curbuf)
         ) {
-      int save_need_wait_return = need_wait_return;
+      bool save_need_wait_return = need_wait_return;
 
       need_wait_return = false;
       ml_open_file(curbuf);

@@ -437,8 +437,8 @@ int update_screen(int type)
           }
         }
       }
-      redraw_cmdline = TRUE;
-      redraw_tabline = TRUE;
+      redraw_cmdline = true;
+      redraw_tabline = true;
     }
     msg_scrolled = 0;
     msg_scrolled_at_flush = 0;
@@ -6786,8 +6786,8 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
 // Show the current mode and ruler.
 //
-// If clear_cmdline is TRUE, clear the rest of the cmdline.
-// If clear_cmdline is FALSE there may be a message there that needs to be
+// If clear_cmdline is true, clear the rest of the cmdline.
+// If clear_cmdline is false there may be a message there that needs to be
 // cleared only if a mode is shown.
 // Return the length of the message (0 if no message).
 int showmode(void)
@@ -6796,7 +6796,6 @@ int showmode(void)
   int length = 0;
   int do_mode;
   int attr;
-  int nwr_save;
   int sub_attr;
 
   if (ui_has(kUIMessages) && clear_cmdline) {
@@ -6818,11 +6817,11 @@ int showmode(void)
     // Call char_avail() only when we are going to show something, because
     // it takes a bit of time.
     if (!redrawing() || (char_avail() && !KeyTyped) || msg_silent != 0) {
-      redraw_cmdline = TRUE;                    /* show mode later */
+      redraw_cmdline = true;                    // show mode later
       return 0;
     }
 
-    nwr_save = need_wait_return;
+    bool nwr_save = need_wait_return;
 
     /* wait a bit before overwriting an important message */
     check_for_delay(FALSE);
@@ -6939,10 +6938,11 @@ int showmode(void)
       need_clear = true;
     }
 
-    mode_displayed = TRUE;
-    if (need_clear || clear_cmdline)
+    mode_displayed = true;
+    if (need_clear || clear_cmdline) {
       msg_clr_eos();
-    msg_didout = FALSE;                 /* overwrite this message */
+    }
+    msg_didout = false;                 // overwrite this message
     length = msg_col;
     msg_col = 0;
     msg_no_more = false;
@@ -7198,7 +7198,7 @@ void draw_tabline(void)
 
   /* Reset the flag here again, in case evaluating 'tabline' causes it to be
    * set. */
-  redraw_tabline = FALSE;
+  redraw_tabline = false;
 }
 
 void ui_ext_tabline_update(void)
