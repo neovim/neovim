@@ -1,6 +1,8 @@
 " Test various aspects of the Vim script language.
 " Most of this was formerly in test49.
 
+source term_util.vim
+
 "-------------------------------------------------------------------------------
 " Test environment							    {{{1
 "-------------------------------------------------------------------------------
