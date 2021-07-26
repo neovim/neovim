@@ -46,7 +46,6 @@ func Test_cd_minus()
   " Test for :cd - without a previous directory
   let lines =<< trim [SCRIPT]
     call assert_fails('cd -', 'E186:')
-    call assert_fails('call chdir("-")', 'E186:')
     call writefile(v:errors, 'Xresult')
     qall!
   [SCRIPT]
