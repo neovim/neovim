@@ -292,8 +292,8 @@ readfile(
    * display the line. */
   ex_no_reprint = TRUE;
 
-  /* don't display the file info for another buffer now */
-  need_fileinfo = FALSE;
+  // don't display the file info for another buffer now
+  need_fileinfo = false;
 
   // For Unix: Use the short file name whenever possible.
   // Avoids problems with networks and when directory names are changed.

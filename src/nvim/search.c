@@ -474,7 +474,7 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
   spats[idx].timestamp = os_time();
   spats[idx].additional_data = NULL;
   spats[idx].magic = magic;
-  spats[idx].no_scs = FALSE;
+  spats[idx].no_scs = false;
   spats[idx].off.dir = '/';
   set_vv_searchforward();
   spats[idx].off.line = FALSE;

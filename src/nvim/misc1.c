@@ -849,7 +849,7 @@ void msgmore(long n)
     }
     if (msg(msg_buf)) {
       set_keep_msg(msg_buf, 0);
-      keep_msg_more = TRUE;
+      keep_msg_more = true;
     }
   }
 }

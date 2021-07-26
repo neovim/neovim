@@ -1922,7 +1922,7 @@ static void f_eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (expr_start != NULL && !aborting()) {
       EMSG2(_(e_invexpr2), expr_start);
     }
-    need_clr_eos = FALSE;
+    need_clr_eos = false;
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   } else if (*s != NUL) {
