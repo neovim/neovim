@@ -832,24 +832,23 @@ void ex_if(exarg_T *eap)
  */
 void ex_endif(exarg_T *eap)
 {
-  did_endif = TRUE;
+  did_endif = true;
   if (eap->cstack->cs_idx < 0
       || (eap->cstack->cs_flags[eap->cstack->cs_idx]
-          & (CSF_WHILE | CSF_FOR | CSF_TRY)))
+          & (CSF_WHILE | CSF_FOR | CSF_TRY))) {
     eap->errmsg = (char_u *)N_("E580: :endif without :if");
-  else {
-    /*
-     * When debugging or a breakpoint was encountered, display the debug
-     * prompt (if not already done).  This shows the user that an ":endif"
-     * is executed when the ":if" or a previous ":elseif" was not TRUE.
-     * Handle a ">quit" debug command as if an interrupt had occurred before
-     * the ":endif".  That is, throw an interrupt exception if appropriate.
-     * Doing this here prevents an exception for a parsing error being
-     * discarded by throwing the interrupt exception later on.
-     */
+  } else {
+    // When debugging or a breakpoint was encountered, display the debug
+    // prompt (if not already done).  This shows the user that an ":endif"
+    // is executed when the ":if" or a previous ":elseif" was not TRUE.
+    // Handle a ">quit" debug command as if an interrupt had occurred before
+    // the ":endif".  That is, throw an interrupt exception if appropriate.
+    // Doing this here prevents an exception for a parsing error being
+    // discarded by throwing the interrupt exception later on.
     if (!(eap->cstack->cs_flags[eap->cstack->cs_idx] & CSF_TRUE)
-        && dbg_check_skipped(eap))
+        && dbg_check_skipped(eap)) {
       (void)do_intthrow(eap->cstack);
+    }
 
     --eap->cstack->cs_idx;
   }
