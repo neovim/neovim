@@ -525,6 +525,25 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_pick', function()
+    it('can select an item', function()
+      local items = {
+        description1 = "value 1",
+        description2 = "value 2",
+      }
+      local opts = {
+        prompt = "Select item"
+      }
+      nvim("pick", "", opts)
+    end)
+
+    it('can be overriden', function()
+      command("lua vim.ui.pick = function(...) return 42 end")
+      eq(42, meths.exec_lua("return vim.ui.pick({1='Hello world', 2='toto'})", {}))
+      nvim("notify", "hello world", 4, {})
+    end)
+  end)
+
   describe('nvim_input', function()
     it("VimL error: does NOT fail, updates v:errmsg", function()
       local status, _ = pcall(nvim, "input", ":call bogus_fn()<CR>")

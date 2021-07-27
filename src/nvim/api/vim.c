@@ -575,13 +575,13 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
   return nlua_exec(STATIC_CSTR_AS_STRING("return vim.notify(...)"), args, err);
 }
 
-/// Notify the user with a message
+/// Let the user select an entry from a list
 ///
-/// Relays the call to vim.notify . By default forwards your message in the
-/// echo area but can be overridden to trigger desktop notifications.
+/// Relays the call to vim.ui.pick. Defaults to inputlist in absence of a loaded
+/// runtime.
 ///
-/// @param msg        Message to display to the user
-/// @param log_level  The log level
+/// @param entries    A dictionary with the displayed line as keys and result as
+///                   values
 /// @param opts       Options like 'prompt'
 /// @param[out] err   Error details, if any
 Object nvim_pick(Dictionary entries, Dictionary opts, Error *err)
@@ -591,7 +591,7 @@ Object nvim_pick(Dictionary entries, Dictionary opts, Error *err)
   args.items[0] = DICTIONARY_OBJ(entries);
   args.items[1] = DICTIONARY_OBJ(opts);
 
-  return nlua_exec(STATIC_CSTR_AS_STRING("return vim.pick(...)"), args, err);
+  return nlua_exec(STATIC_CSTR_AS_STRING("return vim.ui.pick(...)"), args, err);
 }
 
 /// Calls a VimL function.

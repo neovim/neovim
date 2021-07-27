@@ -429,7 +429,17 @@ vim.ui = {
   --- without a runtime, relies on inputlist()
   --  see :help nvim_pick
   pick = function (entries, opts)
-    return vim.fn.inputlist(vim.tbl_values(entries))
+    local descriptions = vim.tbl_keys(entries)
+    if opts.prompt then
+      table.insert(descriptions, opts.prompt)
+    end
+
+    local res = vim.fn.inputlist(descriptions)
+    if res <= 0 then
+      -- the user selected the first entry (=prompt) or cancelled
+      return
+    end
+    return entries[res]
   end
 }
 
