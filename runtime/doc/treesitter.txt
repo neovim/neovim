@@ -169,7 +169,7 @@ a tree, using a simple to write lisp-like format. See
 https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax for more
 information on how to write queries.
 
-Note: The perdicates listed in the web page above differ from those Neovim
+Note: The predicates listed in the web page above differ from those Neovim
 supports. See |lua-treesitter-predicates| for a complete list of predicates
 supported by Neovim.
 
@@ -226,6 +226,18 @@ Here is a list of built-in predicates :
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
+						*vim.treesitter.query.add_predicate()*
+vim.treesitter.query.add_predicate({name}, {handler})
+
+This adds a predicate with the name {name} to be used in queries.
+{handler} should be a function whose signature will be : >
+	handler(match, pattern, bufnr, predicate)
+<
+						*vim.treesitter.query.list_predicates()*
+vim.treesitter.query.list_predicates()
+
+This lists the currently available predicates to use in queries.
+
 Treesitter Query Directive				*lua-treesitter-directives*
 
 Treesitter queries can also contain `directives`. Directives store metadata for a node
@@ -248,6 +260,21 @@ Here is a list of built-in directives:
 		offsets applied. The arguments are
 		`({capture_id}, {start_row}, {start_col}, {end_row}, {end_col}, {key?})`
 		The default key is "offset".
+
+					*vim.treesitter.query.add_directive()*
+vim.treesitter.query.add_directive({name}, {handler})
+
+This adds a directive with the name {name} to be used in queries.
+{handler} should be a function whose signature will be : >
+	handler(match, pattern, bufnr, predicate, metadata)
+Handlers can set match level data by setting directly on the metadata object `metadata.key = value`
+Handlers can set node level data by using the capture id on the metadata table
+`metadata[capture_id].key = value`
+
+					*vim.treesitter.query.list_directives()*
+vim.treesitter.query.list_directives()
+
+This lists the currently available directives to use in queries.
 
 Treesitter syntax highlighting (WIP)			*lua-treesitter-highlight*
 
@@ -293,6 +320,19 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
 
     ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
      (eq? @WarningMsg.left @WarningMsg.right))
+<
+Treesitter Highlighting Priority            *lua-treesitter-highlight-priority*
+
+Tree-sitter uses |nvim_buf_set_extmark()| to set highlights with a default 
+priority of 100. This enables plugins to set a highlighting priority lower or
+higher than tree-sitter. It is also possible to change the priority of an
+individual query pattern manually by setting its `"priority"` metadata attribute: >
+
+    (
+      (super_important_node) @ImportantHighlight
+      ; Give the whole query highlight priority higher than the default (100)
+      (set! "priority" 105)
+    )
 <
 
 ==============================================================================
@@ -393,8 +433,13 @@ get_query_files({lang}, {query_name}, {is_included})
                     {is_included}  Internal parameter, most of the time left
                                    as `nil`
 
+list_directives()                                          *list_directives()*
+                Return: ~
+                    The list of supported directives.
+
 list_predicates()                                          *list_predicates()*
-                TODO: Documentation
+                Return: ~
+                    The list of supported predicates.
 
 parse_query({lang}, {query})                                   *parse_query()*
                 Parse {query} as a string. (If the query is in a file, the

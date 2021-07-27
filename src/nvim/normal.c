@@ -1188,7 +1188,7 @@ static void normal_check_interrupt(NormalState *s)
         && s->previous_got_int) {
       // Typed two CTRL-C in a row: go back to ex mode as if "Q" was
       // used and keep "got_int" set, so that it aborts ":g".
-      exmode_active = EXMODE_NORMAL;
+      exmode_active = true;
       State = NORMAL;
     } else if (!global_busy || !exmode_active) {
       if (!quit_more) {
@@ -1340,7 +1340,7 @@ static int normal_check(VimState *state)
   quit_more = false;
 
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
-  // If there is nothing in the stuff_buffer or do_redraw is TRUE,
+  // If there is nothing in the stuff_buffer or do_redraw is true,
   // update cursor and redraw.
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
@@ -1398,7 +1398,7 @@ static int normal_check(VimState *state)
     if (s->noexmode) {
       return 0;
     }
-    do_exmode(exmode_active == EXMODE_VIM);
+    do_exmode();
     return -1;
   }
 
@@ -4652,7 +4652,7 @@ static void nv_exmode(cmdarg_T *cap)
   if (VIsual_active) {
     vim_beep(BO_EX);
   } else if (!checkclearop(cap->oap)) {
-    do_exmode(false);
+    do_exmode();
   }
 }
 
@@ -7101,8 +7101,9 @@ static void nv_g_cmd(cmdarg_T *cap)
       break;
     }
 
-    if (!checkclearopq(oap))
-      do_exmode(true);
+    if (!checkclearopq(oap)) {
+      do_exmode();
+    }
     break;
 
   case ',':
@@ -8146,10 +8147,8 @@ static void nv_event(cmdarg_T *cap)
   }
 }
 
-/*
- * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
- */
-static int mouse_model_popup(void)
+/// @return true when 'mousemodel' is set to "popup" or "popup_setpos".
+static bool mouse_model_popup(void)
 {
   return p_mousem[0] == 'p';
 }

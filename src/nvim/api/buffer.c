@@ -315,7 +315,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   }
 
   rv.size = (size_t)(end - start);
-  rv.items = xcalloc(sizeof(Object), rv.size);
+  rv.items = xcalloc(rv.size, sizeof(Object));
 
   if (!buf_collect_lines(buf, rv.size, start,
                          (channel_id != VIML_INTERNAL_CALL), &rv, err)) {

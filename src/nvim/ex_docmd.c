@@ -186,17 +186,14 @@ static void restore_dbg_stuff(struct dbg_stuff *dsp)
 }
 
 /// Repeatedly get commands for Ex mode, until the ":vi" command is given.
-void do_exmode(int improved)
+void do_exmode(void)
 {
   int save_msg_scroll;
   int prev_msg_row;
   linenr_T prev_line;
   int changedtick;
 
-  if (improved)
-    exmode_active = EXMODE_VIM;
-  else
-    exmode_active = EXMODE_NORMAL;
+  exmode_active = true;
   State = NORMAL;
 
   /* When using ":global /pat/ visual" and then "Q" we return to continue
@@ -212,7 +209,7 @@ void do_exmode(int improved)
   while (exmode_active) {
     /* Check for a ":normal" command and no more characters left. */
     if (ex_normal_busy > 0 && typebuf.tb_len == 0) {
-      exmode_active = 0;
+      exmode_active = false;
       break;
     }
     msg_scroll = true;
@@ -565,7 +562,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
         && (cstack.cs_looplevel || has_loop_cmd(next_cmdline))) {
       store_loop_line(&lines_ga, next_cmdline);
     }
-    did_endif = FALSE;
+    did_endif = false;
 
     if (count++ == 0) {
       /*
@@ -750,8 +747,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
                * the :endtry to be missed. */
               && (cstack.cs_trylevel == 0 || did_emsg_syntax)
               && used_getline
-              && (getline_equal(fgetline, cookie, getexmodeline)
-                  || getline_equal(fgetline, cookie, getexline)))
+              && getline_equal(fgetline, cookie, getexline))
          && (next_cmdline != NULL
              || cstack.cs_idx >= 0
              || (flags & DOCMD_REPEAT)));
@@ -944,7 +940,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     }
   }
 
-  did_endif = FALSE;    /* in case do_cmdline used recursively */
+  did_endif = false;    // in case do_cmdline used recursively
 
   call_depth--;
   end_batch_changes();
@@ -2056,8 +2052,7 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
 
     // in ex mode, an empty line works like :+
     if (*eap->cmd == NUL && exmode_active
-        && (getline_equal(eap->getline, eap->cookie, getexmodeline)
-            || getline_equal(eap->getline, eap->cookie, getexline))
+        && getline_equal(eap->getline, eap->cookie, getexline)
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
       eap->cmd = (char_u *)"+";
       if (!skip_only) {
@@ -7303,7 +7298,7 @@ do_exedit(
    */
   if (exmode_active && (eap->cmdidx == CMD_visual
                         || eap->cmdidx == CMD_view)) {
-    exmode_active = 0;
+    exmode_active = false;
     ex_pressedreturn = false;
     if (*eap->arg == NUL) {
       /* Special case:  ":global/pat/visual\NLvi-commands" */
@@ -7491,7 +7486,7 @@ static void ex_syncbind(exarg_T *eap)
   curwin = save_curwin;
   curbuf = save_curbuf;
   if (curwin->w_p_scb) {
-    did_syncbind = TRUE;
+    did_syncbind = true;
     checkpcmark();
     if (old_linenr != curwin->w_cursor.lnum) {
       char_u ctrl_o[2];

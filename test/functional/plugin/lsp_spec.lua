@@ -14,6 +14,7 @@ local retry = helpers.retry
 local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
+local isCI = helpers.isCI
 
 -- Use these to get access to a coroutine so that I can run async tests and use
 -- yield.
@@ -262,8 +263,8 @@ describe('LSP', function()
     end)
 
     it('should succeed with manual shutdown', function()
-      if 'openbsd' == helpers.uname() then
-        pending('hangs the build on openbsd #14028, re-enable with freeze timeout #14204')
+      if isCI() then
+        pending('hangs the build on CI #14028, re-enable with freeze timeout #14204')
         return
       end
       local expected_handlers = {

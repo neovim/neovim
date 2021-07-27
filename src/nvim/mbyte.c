@@ -2354,10 +2354,8 @@ int convert_setup(vimconv_T *vcp, char_u *from, char_u *to)
   return convert_setup_ext(vcp, from, true, to, true);
 }
 
-/*
- * As convert_setup(), but only when from_unicode_is_utf8 is TRUE will all
- * "from" unicode charsets be considered utf-8.  Same for "to".
- */
+/// As convert_setup(), but only when from_unicode_is_utf8 is true will all
+/// "from" unicode charsets be considered utf-8.  Same for "to".
 int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,
                       char_u *to, bool to_unicode_is_utf8)
 {
