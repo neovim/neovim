@@ -1318,13 +1318,17 @@ function lsp.buf_request_all(bufnr, method, params, callback)
   local cancel, client_request_ids
 
   local set_expected_result_count = once(function()
-    for _ in pairs(client_request_ids) do
-      expected_result_count = expected_result_count + 1
+    if client_request_ids then
+      for _ in pairs(client_request_ids) do
+        expected_result_count = expected_result_count + 1
+      end
     end
   end)
 
   local function _sync_handler(err, _, result, client_id)
-    request_results[client_id] = { error = err, result = result }
+    if client_id then
+      request_results[client_id] = { error = err, result = result }
+    end
     result_count = result_count + 1
     set_expected_result_count()
 
