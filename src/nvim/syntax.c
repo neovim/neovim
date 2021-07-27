@@ -3417,14 +3417,6 @@ static void syn_cmd_on(exarg_T *eap, int syncing)
 }
 
 /*
- * Handle ":syntax enable" command.
- */
-static void syn_cmd_enable(exarg_T *eap, int syncing)
-{
-  syn_cmd_on(eap, syncing);
-}
-
-/*
  * Handle ":syntax reset" command.
  * It actually resets highlighting, not syntax.
  */
@@ -3471,7 +3463,7 @@ void syn_maybe_enable(void)
     exarg_T ea;
     ea.arg = (char_u *)"";
     ea.skip = false;
-    syn_cmd_enable(&ea, false);
+    syn_cmd_on(&ea, false);
   }
 }
 
@@ -5530,7 +5522,7 @@ static struct subcommand subcommands[] =
   { "clear",     syn_cmd_clear },
   { "cluster",   syn_cmd_cluster },
   { "conceal",   syn_cmd_conceal },
-  { "enable",    syn_cmd_enable },
+  { "enable",    syn_cmd_on },
   { "foldlevel", syn_cmd_foldlevel },
   { "include",   syn_cmd_include },
   { "iskeyword", syn_cmd_iskeyword },
