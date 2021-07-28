@@ -6350,6 +6350,10 @@ mode([expr])	Return a string that indicates the current mode.
 		   s	    Select by character
 		   S	    Select by line
 		   CTRL-S   Select blockwise
+		   vs	    Visual by character using |v_CTRL-O| from
+				Select mode
+		   Vs	    Visual by line using |v_CTRL-O| from Select mode
+		   CTRL-Vs  Visual blockwise using |v_CTRL-O| from Select mode
 		   i	    Insert
 		   ic	    Insert mode completion |compl-generic|
 		   ix	    Insert mode |i_CTRL-X| completion
