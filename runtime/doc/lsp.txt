@@ -600,12 +600,13 @@ buf_request({bufnr}, {method}, {params}, {handler})
                     {handler}  (optional, function) See |lsp-handler|
 
                 Return: ~
-                    2-tuple:
+                    3-tuple:
                     • Map of client-id:request-id pairs for all successful
                       requests.
                     • Function which can be used to cancel all the requests.
                       You could instead iterate all clients and call their
                       `cancel_request()` methods.
+                    • Table of unsupported client IDs.
 
                                                    *vim.lsp.buf_request_all()*
 buf_request_all({bufnr}, {method}, {params}, {callback})

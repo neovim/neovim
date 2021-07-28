@@ -1251,10 +1251,11 @@ nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
 --@param handler (optional, function) See |lsp-handler|
 --  If nil, follows resolution strategy defined in |lsp-handler-configuration|
 --
---@returns 2-tuple:
+--@returns 3-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
 ---  - Function which can be used to cancel all the requests. You could instead
 ---    iterate all clients and call their `cancel_request()` methods.
+---  - Table of unsupported client IDs.
 function lsp.buf_request(bufnr, method, params, handler)
   validate {
     bufnr    = { bufnr, 'n', true };
@@ -1262,6 +1263,7 @@ function lsp.buf_request(bufnr, method, params, handler)
     handler  = { handler, 'f', true };
   }
   local client_request_ids = {}
+  local unsupported_clients = {}
 
   local method_supported = false
   for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
@@ -1274,18 +1276,24 @@ function lsp.buf_request(bufnr, method, params, handler)
       if request_success then
         client_request_ids[client_id] = request_id
       end
+    else
+      table.insert(unsupported_clients, client_id)
     end
   end)
 
-  -- if has client but no clients support the given method, call the callback with the proper
-  -- error message.
+  -- if has clients but no clients support the given method, call the callback once for each unsupported client
+  -- with the proper error message.
   if not tbl_isempty(all_buffer_active_clients[resolve_bufnr(bufnr)] or {}) and not method_supported then
     local unsupported_err = lsp._unsupported_method(method)
     handler = handler or lsp.handlers[method]
     if handler then
-      handler(unsupported_err, method, bufnr)
+      vim.schedule(function()
+        for _, client_id in ipairs(unsupported_clients) do
+          handler(unsupported_err, method, nil, client_id, bufnr)
+        end
+      end)
+      return {}, function() end, unsupported_clients
     end
-    return
   end
 
   local function _cancel_all_requests()
@@ -1295,7 +1303,7 @@ function lsp.buf_request(bufnr, method, params, handler)
     end
   end
 
-  return client_request_ids, _cancel_all_requests
+  return client_request_ids, _cancel_all_requests, unsupported_clients
 end
 
 ---Sends an async request for all active clients attached to the buffer.
