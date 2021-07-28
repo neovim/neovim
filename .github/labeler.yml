@@ -17,33 +17,33 @@
 "dependencies":
   - third-party/**/*
 
-"topic:spell":
+"spell":
   - src/nvim/spell*
 
-"topic:terminal":
+"terminal":
   - src/nvim/terminal.*
 
-"topic:column":
+"column":
   - src/nvim/mark.h
   - src/nvim/mark.c
   - src/nvim/sign*
 
-"topic:folds":
+"folds":
   - src/nvim/fold*
 
-"topic:mouse":
+"mouse":
   - src/nvim/mouse*
 
-"topic:documentation":
+"documentation":
   - runtime/doc/*
 
-"topic:clipboard":
+"clipboard":
   - runtime/autoload/provider/clipboard.vim
 
-"topic:diff":
+"diff":
   - src/nvim/diff.*
 
-"topic:build":
+"build":
   - CMakeLists.txt
   - "**/CMakeLists.txt"
   - "**/*.cmake"
