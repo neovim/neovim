@@ -1707,6 +1707,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
     if (chunk.size == 2) {
       String hl = chunk.items[1].data.string;
       if (hl.size > 0) {
+        // TODO(bfredl): use object_to_hl_id and allow integer
         int hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
         attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
       }
