@@ -33,6 +33,7 @@ func Test_blob_create()
   call assert_fails('let b = 0z.')
   call assert_fails('let b = 0z001122.')
   call assert_fails('call get("", 1)', 'E896:')
+  call assert_equal(0, len(v:_null_blob))
 endfunc
 
 " assignment to a blob
@@ -99,6 +100,7 @@ func Test_blob_get()
   call assert_equal(999, get(b, 5, 999))
   call assert_equal(-1, get(b, -8))
   call assert_equal(999, get(b, -8, 999))
+  call assert_equal(10, get(v:_null_blob, 2, 10))
 
   call assert_equal(0x00, b[0])
   call assert_equal(0x22, b[2])
@@ -248,6 +250,7 @@ func Test_blob_func_remove()
   call assert_fails("call remove(b, 3, 2)", 'E979:')
   call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(b, b)", 'E974:')
+  call assert_fails("call remove(v:_null_blob, 1, 2)", 'E979:')
 endfunc
 
 func Test_blob_read_write()
@@ -304,6 +307,7 @@ func Test_blob_insert()
   call assert_fails('call insert(b, -1)', 'E475:')
   call assert_fails('call insert(b, 257)', 'E475:')
   call assert_fails('call insert(b, 0, [9])', 'E745:')
+  call assert_equal(0, insert(v:_null_blob, 0x33))
 endfunc
 
 func Test_blob_reverse()
@@ -311,6 +315,7 @@ func Test_blob_reverse()
   call assert_equal(0zBEADDE, reverse(0zDEADBE))
   call assert_equal(0zADDE, reverse(0zDEAD))
   call assert_equal(0zDE, reverse(0zDE))
+  call assert_equal(0z, reverse(v:_null_blob))
 endfunc
 
 func Test_blob_lock()

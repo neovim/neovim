@@ -4984,6 +4984,10 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool error = false;
 
   if (argvars[0].v_type == VAR_BLOB) {
+    if (argvars[0].vval.v_blob == NULL) {
+      return;
+    }
+
     long before = 0;
     const int len = tv_blob_len(argvars[0].vval.v_blob);
 
