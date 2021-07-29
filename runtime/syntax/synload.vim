@@ -14,11 +14,6 @@ endif
 " let others know that syntax has been switched on
 let syntax_on = 1
 
-" Set the default highlighting colors
-if !exists("colors_name") && !exists("did_syncolor")
-  runtime! syntax/syncolor.vim
-endif
-
 " Line continuation is used here, remove 'C' from 'cpoptions'
 let s:cpo_save = &cpo
 set cpo&vim

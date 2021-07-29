@@ -3417,16 +3417,6 @@ static void syn_cmd_on(exarg_T *eap, int syncing)
 }
 
 /*
- * Handle ":syntax enable" command.
- */
-static void syn_cmd_enable(exarg_T *eap, int syncing)
-{
-  set_internal_string_var("syntax_cmd", (char_u *)"enable");
-  syn_cmd_onoff(eap, "syntax");
-  do_unlet(S_LEN("g:syntax_cmd"), true);
-}
-
-/*
  * Handle ":syntax reset" command.
  * It actually resets highlighting, not syntax.
  */
@@ -3434,9 +3424,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
 {
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
-    set_internal_string_var("syntax_cmd", (char_u *)"reset");
-    do_cmdline_cmd("runtime! syntax/syncolor.vim");
-    do_unlet(S_LEN("g:syntax_cmd"), true);
+    init_highlight(true, true);
   }
 }
 
@@ -3475,7 +3463,7 @@ void syn_maybe_enable(void)
     exarg_T ea;
     ea.arg = (char_u *)"";
     ea.skip = false;
-    syn_cmd_enable(&ea, false);
+    syn_cmd_on(&ea, false);
   }
 }
 
@@ -5534,7 +5522,7 @@ static struct subcommand subcommands[] =
   { "clear",     syn_cmd_clear },
   { "cluster",   syn_cmd_cluster },
   { "conceal",   syn_cmd_conceal },
-  { "enable",    syn_cmd_enable },
+  { "enable",    syn_cmd_on },
   { "foldlevel", syn_cmd_foldlevel },
   { "include",   syn_cmd_include },
   { "iskeyword", syn_cmd_iskeyword },
@@ -6057,6 +6045,32 @@ static const char *highlight_init_both[] = {
   "RedrawDebugClear ctermbg=Yellow guibg=Yellow",
   "RedrawDebugComposed ctermbg=Green guibg=Green",
   "RedrawDebugRecompose ctermbg=Red guibg=Red",
+  "Error term=reverse cterm=NONE ctermfg=White ctermbg=Red gui=NONE guifg=White guibg=Red",
+  "Todo term=standout cterm=NONE ctermfg=Black ctermbg=Yellow gui=NONE guifg=Blue guibg=Yellow",
+  "default link String Constant",
+  "default link Character Constant",
+  "default link Number Constant",
+  "default link Boolean Constant",
+  "default link Float Number",
+  "default link Function Identifier",
+  "default link Conditional Statement",
+  "default link Repeat Statement",
+  "default link Label Statement",
+  "default link Operator Statement",
+  "default link Keyword Statement",
+  "default link Exception Statement",
+  "default link Include PreProc",
+  "default link Define PreProc",
+  "default link Macro PreProc",
+  "default link PreCondit PreProc",
+  "default link StorageClass Type",
+  "default link Structure Type",
+  "default link Typedef Type",
+  "default link Tag Special",
+  "default link SpecialChar Special",
+  "default link Delimiter Special",
+  "default link SpecialComment Special",
+  "default link Debug Special",
   NULL
 };
 
@@ -6090,6 +6104,15 @@ static const char *highlight_init_light[] = {
   "Title        ctermfg=DarkMagenta gui=bold guifg=Magenta",
   "Visual       guibg=LightGrey",
   "WarningMsg   ctermfg=DarkRed guifg=Red",
+  "Comment      term=bold cterm=NONE ctermfg=DarkBlue ctermbg=NONE gui=NONE guifg=Blue guibg=NONE",
+  "Constant     term=underline cterm=NONE ctermfg=DarkRed ctermbg=NONE gui=NONE guifg=Magenta guibg=NONE",
+  "Special      term=bold cterm=NONE ctermfg=DarkMagenta ctermbg=NONE gui=NONE guifg=#6a5acd guibg=NONE",
+  "Identifier   term=underline cterm=NONE ctermfg=DarkCyan ctermbg=NONE gui=NONE guifg=DarkCyan guibg=NONE",
+  "Statement    term=bold cterm=NONE ctermfg=Brown ctermbg=NONE gui=bold guifg=Brown guibg=NONE",
+  "PreProc      term=underline cterm=NONE ctermfg=DarkMagenta ctermbg=NONE gui=NONE guifg=#6a0dad guibg=NONE",
+  "Type         term=underline cterm=NONE ctermfg=DarkGreen ctermbg=NONE gui=bold guifg=SeaGreen guibg=NONE",
+  "Underlined   term=underline cterm=underline ctermfg=DarkMagenta gui=underline guifg=SlateBlue",
+  "Ignore       term=NONE cterm=NONE ctermfg=white ctermbg=NONE gui=NONE guifg=bg guibg=NONE",
   NULL
 };
 
@@ -6123,6 +6146,15 @@ static const char *highlight_init_dark[] = {
   "Title        ctermfg=LightMagenta gui=bold guifg=Magenta",
   "Visual       guibg=DarkGrey",
   "WarningMsg   ctermfg=LightRed guifg=Red",
+  "Comment      term=bold cterm=NONE ctermfg=Cyan ctermbg=NONE gui=NONE guifg=#80a0ff guibg=NONE",
+  "Constant     term=underline cterm=NONE ctermfg=Magenta ctermbg=NONE gui=NONE guifg=#ffa0a0 guibg=NONE",
+  "Special      term=bold cterm=NONE ctermfg=LightRed ctermbg=NONE gui=NONE guifg=Orange guibg=NONE",
+  "Identifier   term=underline cterm=bold ctermfg=Cyan ctermbg=NONE gui=NONE guifg=#40ffff guibg=NONE",
+  "Statement    term=bold cterm=NONE ctermfg=Yellow ctermbg=NONE gui=bold guifg=#ffff60 guibg=NONE",
+  "PreProc      term=underline cterm=NONE ctermfg=LightBlue ctermbg=NONE gui=NONE guifg=#ff80ff guibg=NONE",
+  "Type         term=underline cterm=NONE ctermfg=LightGreen ctermbg=NONE gui=bold guifg=#60ff60 guibg=NONE",
+  "Underlined   term=underline cterm=underline ctermfg=LightBlue gui=underline guifg=#80a0ff",
+  "Ignore       term=NONE cterm=NONE ctermfg=black ctermbg=NONE gui=NONE guifg=bg guibg=NONE",
   NULL
 };
 
@@ -6398,20 +6430,6 @@ void init_highlight(bool both, bool reset)
     }
   }
 
-  /*
-   * If syntax highlighting is enabled load the highlighting for it.
-   */
-  if (get_var_value("g:syntax_on") != NULL) {
-    static int recursive = 0;
-
-    if (recursive >= 5) {
-      EMSG(_("E679: recursive loop loading syncolor.vim"));
-    } else {
-      recursive++;
-      (void)source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
-      recursive--;
-    }
-  }
   syn_init_cmdline_highlight(false, false);
 }
 

@@ -372,11 +372,6 @@ int main(int argc, char **argv)
 
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (params.use_vimrc == NULL || !strequal(params.use_vimrc, "NONE")) {
-    // Source syncolor.vim to set up default UI highlights if the user didn't
-    // already enable a colorscheme
-    if (!get_var_value("g:colors_name")) {
-      source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
-    }
     // Does ":filetype plugin indent on".
     filetype_maybe_enable();
     // Sources syntax/syntax.vim, which calls `:filetype on`.
