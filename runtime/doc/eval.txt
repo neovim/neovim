@@ -34,7 +34,7 @@ Funcref		A reference to a function |Funcref|.
 		like a Partial.
 		Example: function("Callback", [arg], myDict)
 
-List		An ordered sequence of items |List|.
+List		An ordered sequence of items, see |List| for details.
 		Example: [1, 2, ['a', 'b']]
 
 Dictionary	An associative, unordered array: Each entry has a key and a
@@ -43,7 +43,8 @@ Dictionary	An associative, unordered array: Each entry has a key and a
 			{'blue': "#0000ff", 'red': "#ff0000"}
 			#{blue: "#0000ff", red: "#ff0000"}
 
-Blob		Binary Large Object. Stores any sequence of bytes. *Blob*
+Blob		Binary Large Object. Stores any sequence of bytes.  See |Blob|
+		for details.
 		Example: 0zFF00ED015DAF
 		0z is an empty Blob.
 
@@ -599,7 +600,120 @@ Functions that can be used with a Dictionary: >
 	:call map(dict, '">> " . v:val')  " prepend ">> " to each item
 
 
-1.5 More about variables ~
+1.5 Blobs ~
+						*blob* *Blob* *Blobs* *E978*
+A Blob mostly behaves like a |List| of numbers, where the numbers have an
+8-bit value, from 0 to 255.
+
+
+Blob creation ~
+
+A Blob can be created with a |blob-literal|: >
+	:let b = 0zFF00ED015DAF
+
+A blob can be read from a file with |readfile()| passing the {type} argument
+set to "B", for example: >
+	:let b = readfile('image.png', 'B')
+
+
+Blob index ~
+							*blob-index* *E979*
+A byte in the Blob can be accessed by putting the index in square brackets
+after the Blob.  Indexes are zero-based, thus the first byte has index zero. >
+	:let myblob = 0z00112233
+	:let byte = myblob[0]		" get the first byte: 0x00
+	:let byte = myblob[2]		" get the third byte: 0x22
+
+A negative index is counted from the end.  Index -1 refers to the last byte in
+the Blob, -2 to the last but one byte, etc. >
+	:let last = myblob[-1]		" get the last byte: 0x33
+
+To avoid an error for an invalid index use the |get()| function.  When an item
+is not available it returns -1 or the default value you specify: >
+	:echo get(myblob, idx)
+	:echo get(myblob, idx, 999)
+
+
+Blob concatenation ~
+
+Two blobs can be concatenated with the "+" operator: >
+	:let longblob = myblob + 0z4455
+	:let myblob += 0z6677
+
+To change a blob in-place see |blob-modification| below.
+
+
+Part of a blob ~
+
+A part of the Blob can be obtained by specifying the first and last index,
+separated by a colon in square brackets: >
+	:let myblob = 0z00112233
+	:let shortblob = myblob[2:-1]	" get 0z2233
+
+Omitting the first index is similar to zero.  Omitting the last index is
+similar to -1. >
+	:let endblob = myblob[2:]	" from item 2 to the end: 0z2233
+	:let shortblob = myblob[2:2]	" Blob with one byte: 0z22
+	:let otherblob = myblob[:]	" make a copy of the Blob
+
+If the first index is beyond the last byte of the Blob or the second byte is
+before the first byte, the result is an empty Blob.  There is no error
+message.
+
+If the second index is equal to or greater than the length of the Blob the
+length minus one is used: >
+	:echo myblob[2:8]		" result: 0z2233
+
+
+Blob modification ~
+							*blob-modification*
+To change a specific byte of a blob use |:let| this way: >
+	:let blob[4] = 0x44
+
+When the index is just one beyond the end of the Blob, it is appended. Any
+higher index is an error.
+
+To change a sequence of bytes the [:] notation can be used: >
+	let blob[1:3] = 0z445566
+The length of the replaced bytes must be exactly the same as the value
+provided. *E972*
+
+To change part of a blob you can specify the first and last byte to be
+modified.  The value must at least have the number of bytes in the range: >
+	:let blob[3:5] = [3, 4, 5]
+
+You can also use the functions |add()|, |remove()| and |insert()|.
+
+
+Blob identity ~
+
+Blobs can be compared for equality: >
+	if blob == 0z001122
+And for equal identity: >
+	if blob is otherblob
+<							*blob-identity* *E977*
+When variable "aa" is a Blob and you assign it to another variable "bb", both
+variables refer to the same Blob.  Then the "is" operator returns true.
+
+When making a copy using [:] or |copy()| the values are the same, but the
+identity is different: >
+	:let blob = 0z112233
+	:let blob2 = blob
+	:echo blob == blob2
+<	1 >
+	:echo blob is blob2
+<	1 >
+	:let blob3 = blob[:]
+	:echo blob == blob3
+<	1 >
+	:echo blob is blob3
+<	0
+
+Making a copy of a Blob is done with the |copy()| function.  Using [:] also
+works, as explained above.
+
+
+1.6 More about variables ~
 							*more-variables*
 If you need to know the type of a variable or expression, use the |type()|
 function.
@@ -1191,7 +1305,7 @@ encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
 Note that "\000" and "\x00" force the end of the string.
 
 
-blob-literal				*blob-literal* *E973* *E977* *E978*
+blob-literal				*blob-literal* *E973*
 ------------
 
 Hexadecimal starting with 0z or 0Z, with an arbitrary number of bytes.
@@ -2124,7 +2238,7 @@ USAGE				RESULT	DESCRIPTION	~
 
 abs({expr})			Float or Number  absolute value of {expr}
 acos({expr})			Float	arc cosine of {expr}
-add({list}, {item})		List	append {item} to |List| {list}
+add({object}, {item})		List/Blob   append {item} to {object}
 and({expr}, {expr})		Number  bitwise AND
 api_info()			Dict	api metadata
 append({lnum}, {string})	Number	append {string} below line {lnum}
@@ -2668,13 +2782,14 @@ acos({expr})							*acos()*
 		Can also be used as a |method|: >
 			Compute()->acos()
 
-add({list}, {expr})					*add()*
-		Append the item {expr} to |List| {list}.  Returns the
-		resulting |List|.  Examples: >
+add({object}, {expr})					*add()*
+		Append the item {expr} to |List| or |Blob| {object}.  Returns
+		the resulting |List| or |Blob|.  Examples: >
 			:let alist = add([1, 2, 3], item)
 			:call add(mylist, "woodstock")
 <		Note that when {expr} is a |List| it is appended as a single
 		item.  Use |extend()| to concatenate |Lists|.
+		When {object} is a |Blob| then {expr} must be a number.
 		Use |insert()| to add an item at another position.
 
 		Can also be used as a |method|: >
@@ -3661,9 +3776,13 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
-		A |List| or |Dictionary| is empty when it does not have any
-		items.  A Number is empty when its value is zero.  Special
-		variable is empty when it is |v:false| or |v:null|.
+		- A |List| or |Dictionary| is empty when it does not have any
+		  items.
+		- A |String| is empty when its length is zero.
+		- A |Number| and |Float| are empty when their value is zero.
+		- |v:false| and |v:null| are empty, |v:true| is not.
+		- A |Blob| is empty when its length is zero.
+
 		Can also be used as a |method|: >
 			mylist->empty()
 
@@ -4383,6 +4502,10 @@ get({list}, {idx} [, {default}])			*get()*
 		omitted.
 		Can also be used as a |method|: >
 			mylist->get(idx)
+get({blob}, {idx} [, {default}])
+		Get byte {idx} from |Blob| {blob}.  When this byte is not
+		available return {default}.  Return -1 when {default} is
+		omitted.
 get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
@@ -5573,10 +5696,10 @@ index({object}, {expr} [, {start} [, {ic}]])			*index()*
 		If {object} is a |List| return the lowest index where the item
 		has a value equal to {expr}.  There is no automatic
 		conversion, so the String "4" is different from the Number 4.
-		And the number 4 is different from the Float 4.0.  The value
+		And the Number 4 is different from the Float 4.0.  The value
 		of 'ignorecase' is not used here, case always matters.
 
-		If {object} is |Blob| return the lowest index where the byte
+		If {object} is a |Blob| return the lowest index where the byte
 		value is equal to {expr}.
 
 		If {start} is given then start looking at the item with index
