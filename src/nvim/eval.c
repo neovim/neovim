@@ -2599,15 +2599,16 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
           fi->fi_lw.lw_item = tv_list_first(l);
         }
       } else if (tv.v_type == VAR_BLOB) {
-        blob_T *const b = tv.vval.v_blob;
-        if (b == NULL) {
-          tv_clear(&tv);
-        } else {
-          // No need to increment the refcount, it's already set for
-          // the blob being used in "tv".
-          fi->fi_blob = b;
-          fi->fi_bi = 0;
+        fi->fi_bi = 0;
+        if (tv.vval.v_blob != NULL) {
+          typval_T btv;
+
+          // Make a copy, so that the iteration still works when the
+          // blob is changed.
+          tv_blob_copy(&tv, &btv);
+          fi->fi_blob = btv.vval.v_blob;
         }
+        tv_clear(&tv);
       } else {
         EMSG(_(e_listreq));
         tv_clear(&tv);
@@ -9737,17 +9738,7 @@ int var_item_copy(const vimconv_T *const conv,
     }
     break;
   case VAR_BLOB:
-    to->v_type = VAR_BLOB;
-    if (from->vval.v_blob == NULL) {
-      to->vval.v_blob = NULL;
-    } else {
-      tv_blob_alloc_ret(to);
-      const int len = from->vval.v_blob->bv_ga.ga_len;
-
-      to->vval.v_blob->bv_ga.ga_data
-          = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
-      to->vval.v_blob->bv_ga.ga_len = len;
-    }
+    tv_blob_copy(from, to);
     break;
   case VAR_DICT:
     to->v_type = VAR_DICT;

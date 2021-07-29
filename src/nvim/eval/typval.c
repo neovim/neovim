@@ -2252,6 +2252,30 @@ void tv_blob_alloc_ret(typval_T *const ret_tv)
   tv_blob_set_ret(ret_tv, b);
 }
 
+/// Copy a blob typval to a different typval.
+///
+/// @param[in]  from  Blob object to copy from.
+/// @param[out]  to  Blob object to copy to.
+void tv_blob_copy(typval_T *const from, typval_T *const to)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(from->v_type == VAR_BLOB);
+
+  to->v_type = VAR_BLOB;
+  if (from->vval.v_blob == NULL) {
+    to->vval.v_blob = NULL;
+  } else {
+    tv_blob_alloc_ret(to);
+    const int len = from->vval.v_blob->bv_ga.ga_len;
+
+    if (len > 0) {
+      to->vval.v_blob->bv_ga.ga_data
+          = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
+    }
+    to->vval.v_blob->bv_ga.ga_len = len;
+  }
+}
+
 //{{{3 Clear
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
