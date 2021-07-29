@@ -3217,8 +3217,8 @@ chansend({id}, {data})					*chansend()*
 		written if the write succeeded, 0 otherwise.
 		See |channel-bytes| for more information.
 
-		{data} may be a string, string convertible, or a list.  If
-		{data} is a list, the items will be joined by newlines; any
+		{data} may be a string, string convertible, |Blob|, or a list.
+		If {data} is a list, the items will be joined by newlines; any
 		newlines in an item will be sent as NUL. To send a final
 		newline, include a final empty string. Example: >
 			:call chansend(id, ["abc", "123\n456", ""])

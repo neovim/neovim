@@ -972,7 +972,17 @@ static void f_chansend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   ptrdiff_t input_len = 0;
-  char *input = save_tv_as_string(&argvars[1], &input_len, false);
+  char *input = NULL;
+  if (argvars[1].v_type == VAR_BLOB) {
+    const blob_T *const b = argvars[1].vval.v_blob;
+    input_len = tv_blob_len(b);
+    if (input_len > 0) {
+      input = xmemdup(b->bv_ga.ga_data, input_len);
+    }
+  } else {
+    input = save_tv_as_string(&argvars[1], &input_len, false);
+  }
+
   if (!input) {
     // Either the error has been handled by save_tv_as_string(),
     // or there is no input to send.
