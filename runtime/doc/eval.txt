@@ -2535,7 +2535,7 @@ mkdir({name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode([expr])			String	current editing mode
 msgpackdump({list} [, {type}])	List/Blob  dump objects to msgpack
-msgpackparse({list})		List	parse msgpack to a list of objects
+msgpackparse({data})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
@@ -6843,8 +6843,9 @@ msgpackdump({list} [, {type}])				*msgpackdump()*
 		4. Other strings and |Blob|s are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
-msgpackparse({list})					*msgpackparse()*
-		Convert a |readfile()|-style list to a list of VimL objects.
+msgpackparse({data})					*msgpackparse()*
+		Convert a |readfile()|-style list or a |Blob| to a list of
+		VimL objects.
 		Example: >
 			let fname = expand('~/.config/nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')

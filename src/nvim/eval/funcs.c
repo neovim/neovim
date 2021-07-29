@@ -6530,16 +6530,43 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   msgpack_packer_free(packer);
 }
 
-/// "msgpackparse" function
-static void f_msgpackparse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static int msgpackparse_convert_item(const msgpack_object data,
+                                     const msgpack_unpack_return result,
+                                     list_T *const ret_list,
+                                     const bool fail_if_incomplete)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (argvars[0].v_type != VAR_LIST) {
-    EMSG2(_(e_listarg), "msgpackparse()");
-    return;
+  switch (result) {
+    case MSGPACK_UNPACK_PARSE_ERROR:
+      EMSG2(_(e_invarg2), "Failed to parse msgpack string");
+      return FAIL;
+    case MSGPACK_UNPACK_NOMEM_ERROR:
+      EMSG(_(e_outofmem));
+      return FAIL;
+    case MSGPACK_UNPACK_CONTINUE:
+      if (fail_if_incomplete) {
+        EMSG2(_(e_invarg2), "Incomplete msgpack string");
+        return FAIL;
+      }
+      return NOTDONE;
+    case MSGPACK_UNPACK_SUCCESS: {
+      typval_T tv = { .v_type = VAR_UNKNOWN };
+      if (msgpack_to_vim(data, &tv) == FAIL) {
+        EMSG2(_(e_invarg2), "Failed to convert msgpack string");
+        return FAIL;
+      }
+      tv_list_append_owned_tv(ret_list, tv);
+      return OK;
+    }
+    default:
+      abort();
   }
-  list_T *const ret_list = tv_list_alloc_ret(rettv, kListLenMayKnow);
-  const list_T *const list = argvars[0].vval.v_list;
+}
+
+static void msgpackparse_unpack_list(const list_T *const list,
+                                     list_T *const ret_list)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
   if (tv_list_len(list) == 0) {
     return;
   }
@@ -6558,43 +6585,28 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   do {
     if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
       EMSG(_(e_outofmem));
-      goto f_msgpackparse_exit;
+      goto end;
     }
     size_t read_bytes;
     const int rlret = encode_read_from_list(
         &lrstate, msgpack_unpacker_buffer(unpacker), IOSIZE, &read_bytes);
     if (rlret == FAIL) {
       EMSG2(_(e_invarg2), "List item is not a string");
-      goto f_msgpackparse_exit;
+      goto end;
     }
     msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
     if (read_bytes == 0) {
       break;
     }
     while (unpacker->off < unpacker->used) {
-      const msgpack_unpack_return result = msgpack_unpacker_next(unpacker,
-                                                                 &unpacked);
-      if (result == MSGPACK_UNPACK_PARSE_ERROR) {
-        EMSG2(_(e_invarg2), "Failed to parse msgpack string");
-        goto f_msgpackparse_exit;
-      }
-      if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
-        EMSG(_(e_outofmem));
-        goto f_msgpackparse_exit;
-      }
-      if (result == MSGPACK_UNPACK_SUCCESS) {
-        typval_T tv = { .v_type = VAR_UNKNOWN };
-        if (msgpack_to_vim(unpacked.data, &tv) == FAIL) {
-          EMSG2(_(e_invarg2), "Failed to convert msgpack string");
-          goto f_msgpackparse_exit;
-        }
-        tv_list_append_owned_tv(ret_list, tv);
-      }
-      if (result == MSGPACK_UNPACK_CONTINUE) {
-        if (rlret == OK) {
-          EMSG2(_(e_invarg2), "Incomplete msgpack string");
-        }
+      const msgpack_unpack_return result
+          = msgpack_unpacker_next(unpacker, &unpacked);
+      const int conv_result = msgpackparse_convert_item(unpacked.data, result,
+                                                        ret_list, rlret == OK);
+      if (conv_result == NOTDONE) {
         break;
+      } else if (conv_result == FAIL) {
+        goto end;
       }
     }
     if (rlret == OK) {
@@ -6602,10 +6614,47 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } while (true);
 
-f_msgpackparse_exit:
-  msgpack_unpacked_destroy(&unpacked);
+end:
   msgpack_unpacker_free(unpacker);
-  return;
+  msgpack_unpacked_destroy(&unpacked);
+}
+
+static void msgpackparse_unpack_blob(const blob_T *const blob,
+                                     list_T *const ret_list)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  const int len = tv_blob_len(blob);
+  if (len == 0) {
+    return;
+  }
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  for (size_t offset = 0; offset < (size_t)len;) {
+    const msgpack_unpack_return result
+        = msgpack_unpack_next(&unpacked, blob->bv_ga.ga_data, len, &offset);
+    if (msgpackparse_convert_item(unpacked.data, result, ret_list, true)
+        != OK) {
+      break;
+    }
+  }
+
+  msgpack_unpacked_destroy(&unpacked);
+}
+
+/// "msgpackparse" function
+static void f_msgpackparse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (argvars[0].v_type != VAR_LIST && argvars[0].v_type != VAR_BLOB) {
+    EMSG2(_(e_listblobarg), "msgpackparse()");
+    return;
+  }
+  list_T *const ret_list = tv_list_alloc_ret(rettv, kListLenMayKnow);
+  if (argvars[0].v_type == VAR_LIST) {
+    msgpackparse_unpack_list(argvars[0].vval.v_list, ret_list);
+  } else {
+    msgpackparse_unpack_blob(argvars[0].vval.v_blob, ret_list);
+  }
 }
 
 /*

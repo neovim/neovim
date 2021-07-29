@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
+local funcs = helpers.funcs
 local eval, eq = helpers.eval, helpers.eq
 local command = helpers.command
 local nvim = helpers.nvim
@@ -12,6 +13,7 @@ describe('msgpack*() functions', function()
     it(msg, function()
       nvim('set_var', 'obj', obj)
       eq(obj, eval('msgpackparse(msgpackdump(g:obj))'))
+      eq(obj, eval('msgpackparse(msgpackdump(g:obj, "B"))'))
     end)
   end
 
@@ -390,56 +392,61 @@ describe('msgpack*() functions', function()
   end)
 end)
 
+local blobstr = function(list)
+  local l = {}
+  for i,v in ipairs(list) do
+    l[i] = v:gsub('\n', '\000')
+  end
+  return table.concat(l, '\n')
+end
+
+-- Test msgpackparse() with a readfile()-style list and a blob argument
+local parse_eq = function(expect, list_arg)
+  local blob_expr = '0z' .. blobstr(list_arg):gsub('(.)', function(c)
+    return ('%.2x'):format(c:byte())
+  end)
+  eq(expect, funcs.msgpackparse(list_arg))
+  command('let g:parsed = msgpackparse(' .. blob_expr .. ')')
+  eq(expect, eval('g:parsed'))
+end
+
 describe('msgpackparse() function', function()
   before_each(clear)
 
   it('restores nil as v:null', function()
-    command('let dumped = ["\\xC0"]')
-    command('let parsed = msgpackparse(dumped)')
-    eq('[v:null]', eval('string(parsed)'))
+    parse_eq(eval('[v:null]'), {'\192'})
   end)
 
   it('restores boolean false as v:false', function()
-    command('let dumped = ["\\xC2"]')
-    command('let parsed = msgpackparse(dumped)')
-    eq({false}, eval('parsed'))
+    parse_eq({false}, {'\194'})
   end)
 
   it('restores boolean true as v:true', function()
-    command('let dumped = ["\\xC3"]')
-    command('let parsed = msgpackparse(dumped)')
-    eq({true}, eval('parsed'))
+    parse_eq({true}, {'\195'})
   end)
 
   it('restores FIXSTR as special dict', function()
-    command('let dumped = ["\\xa2ab"]')
-    command('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={'ab'}}}, eval('parsed'))
+    parse_eq({{_TYPE={}, _VAL={'ab'}}}, {'\162ab'})
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.string'))
   end)
 
   it('restores BIN 8 as string', function()
-    command('let dumped = ["\\xC4\\x02ab"]')
-    eq({'ab'}, eval('msgpackparse(dumped)'))
+    parse_eq({'ab'}, {'\196\002ab'})
   end)
 
   it('restores FIXEXT1 as special dictionary', function()
-    command('let dumped = ["\\xD4\\x10", ""]')
-    command('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={0x10, {"", ""}}}}, eval('parsed'))
+    parse_eq({{_TYPE={}, _VAL={0x10, {"", ""}}}}, {'\212\016', ''})
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.ext'))
   end)
 
   it('restores MAP with BIN key as special dictionary', function()
-    command('let dumped = ["\\x81\\xC4\\x01a\\xC4\\n"]')
-    command('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={{'a', ''}}}}, eval('parsed'))
+    parse_eq({{_TYPE={}, _VAL={{'a', ''}}}}, {'\129\196\001a\196\n'})
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
   end)
 
   it('restores MAP with duplicate STR keys as special dictionary', function()
     command('let dumped = ["\\x82\\xA1a\\xC4\\n\\xA1a\\xC4\\n"]')
-    -- FIXME Internal error bug
+    -- FIXME Internal error bug, can't use parse_eq() here
     command('silent! let parsed = msgpackparse(dumped)')
     eq({{_TYPE={}, _VAL={ {{_TYPE={}, _VAL={'a'}}, ''},
                           {{_TYPE={}, _VAL={'a'}}, ''}}} }, eval('parsed'))
@@ -449,9 +456,7 @@ describe('msgpackparse() function', function()
   end)
 
   it('restores MAP with MAP key as special dictionary', function()
-    command('let dumped = ["\\x81\\x80\\xC4\\n"]')
-    command('let parsed = msgpackparse(dumped)')
-    eq({{_TYPE={}, _VAL={{{}, ''}}}}, eval('parsed'))
+    parse_eq({{_TYPE={}, _VAL={{{}, ''}}}}, {'\129\128\196\n'})
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
   end)
 
@@ -476,34 +481,48 @@ describe('msgpackparse() function', function()
   end)
 
   it('fails to parse a string', function()
-    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+    eq('Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
        exc_exec('call msgpackparse("abcdefghijklmnopqrstuvwxyz")'))
   end)
 
   it('fails to parse a number', function()
-    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+    eq('Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
        exc_exec('call msgpackparse(127)'))
   end)
 
   it('fails to parse a dictionary', function()
-    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+    eq('Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
        exc_exec('call msgpackparse({})'))
   end)
 
   it('fails to parse a funcref', function()
-    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+    eq('Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
        exc_exec('call msgpackparse(function("tr"))'))
   end)
 
   it('fails to parse a partial', function()
     command('function T() dict\nendfunction')
-    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+    eq('Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
        exc_exec('call msgpackparse(function("T", [1, 2], {}))'))
   end)
 
   it('fails to parse a float', function()
-    eq('Vim(call):E686: Argument of msgpackparse() must be a List',
+    eq('Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
        exc_exec('call msgpackparse(0.0)'))
+  end)
+
+  it('fails on incomplete msgpack string', function()
+    local expected = 'Vim(call):E475: Invalid argument: Incomplete msgpack string'
+    eq(expected, exc_exec([[call msgpackparse(["\xc4"])]]))
+    eq(expected, exc_exec([[call msgpackparse(["\xca", "\x02\x03"])]]))
+    eq(expected, exc_exec('call msgpackparse(0zc4)'))
+    eq(expected, exc_exec('call msgpackparse(0zca0a0203)'))
+  end)
+
+  it('fails when unable to parse msgpack string', function()
+    local expected = 'Vim(call):E475: Invalid argument: Failed to parse msgpack string'
+    eq(expected, exc_exec([[call msgpackparse(["\xc1"])]]))
+    eq(expected, exc_exec('call msgpackparse(0zc1)'))
   end)
 end)
 
@@ -511,13 +530,8 @@ describe('msgpackdump() function', function()
   before_each(clear)
 
   local dump_eq = function(exp_list, arg_expr)
-    local l = {}
-    for i,v in ipairs(exp_list) do
-      l[i] = v:gsub('\n', '\000')
-    end
-    local exp_blobstr = table.concat(l, '\n')
     eq(exp_list, eval('msgpackdump(' .. arg_expr .. ')'))
-    eq(exp_blobstr, eval('msgpackdump(' .. arg_expr .. ', "B")'))
+    eq(blobstr(exp_list), eval('msgpackdump(' .. arg_expr .. ', "B")'))
   end
 
   it('dumps string as BIN 8', function()
