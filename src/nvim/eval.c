@@ -3799,10 +3799,12 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
         } else {
           n1 = tv_get_number_chk(rettv, &error);
           if (error) {
-            /* This can only happen for "list + non-list".  For
-             * "non-list + ..." or "something - ...", we returned
-             * before evaluating the 2nd operand. */
+            // This can only happen for "list + non-list" or
+            // "blob + non-blob".  For "non-list + ..." or
+            // "something - ...", we returned before evaluating the
+            // 2nd operand.
             tv_clear(rettv);
+            tv_clear(&var2);
             return FAIL;
           }
           if (var2.v_type == VAR_FLOAT)
