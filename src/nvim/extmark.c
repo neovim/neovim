@@ -268,7 +268,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
       }
       ExtmarkNs *my_ns = all_ns ? buf_ns_ref(buf, item.ns_id, false) : ns;
       map_del(uint64_t, uint64_t)(my_ns->map, item.mark_id);
-      map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index, mark.id);
+      map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index, start_id);
       marktree_del_itr(buf->b_marktree, itr, false);
     } else {
       marktree_itr_next(buf->b_marktree, itr);
