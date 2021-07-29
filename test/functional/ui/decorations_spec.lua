@@ -697,4 +697,50 @@ end]]
                                                         |
     ]]}
   end)
+  it('does not crash when deleting a cleared buffer #15212', function()
+    exec_lua [[
+      ns = vim.api.nvim_create_namespace("myplugin")
+      vim.api.nvim_buf_set_extmark(0, ns, 0, 0, {virt_text = {{"a"}}, end_col = 0})
+    ]]
+    screen:expect{grid=[[
+      ^ a                                                |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    exec_lua [[
+      vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      vim.cmd("bdelete")
+    ]]
+    screen:expect{grid=[[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    helpers.assert_alive()
+  end)
 end)
