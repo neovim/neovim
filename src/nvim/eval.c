@@ -6393,7 +6393,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
       return;
     }
   } else {
-    EMSG2(_(e_listdictarg), ermsg);
+    EMSG2(_(e_listdictblobarg), ermsg);
     return;
   }
 
