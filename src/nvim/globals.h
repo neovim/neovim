@@ -524,6 +524,8 @@ EXTERN pos_T VIsual;
 EXTERN int VIsual_active INIT(= false);
 /// Whether Select mode is active.
 EXTERN int VIsual_select INIT(= false);
+/// Restart Select mode when next cmd finished
+EXTERN int restart_VIsual_select INIT(= 0);
 /// Whether to restart the selection after a Select-mode mapping or menu.
 EXTERN int VIsual_reselect;
 /// Type of Visual mode.

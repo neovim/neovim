@@ -92,8 +92,6 @@ static linenr_T resel_VIsual_line_count;        /* number of lines */
 static colnr_T resel_VIsual_vcol;               /* nr of cols or end col */
 static int VIsual_mode_orig = NUL;              /* saved Visual mode */
 
-static int restart_VIsual_select = 0;
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.c.generated.h"

@@ -144,6 +144,9 @@ char *get_mode(void)
       buf[0] = (char)(VIsual_mode + 's' - 'v');
     } else {
       buf[0] = (char)VIsual_mode;
+      if (restart_VIsual_select) {
+        buf[1] = 's';
+      }
     }
   } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
              || State == CONFIRM) {

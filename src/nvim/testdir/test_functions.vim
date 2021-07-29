@@ -534,6 +534,7 @@ func Test_mode()
   set complete=.
 
   inoremap <F2> <C-R>=Save_mode()<CR>
+  xnoremap <F2> <Cmd>call Save_mode()<CR>
 
   normal! 3G
   exe "normal i\<F2>\<Esc>"
@@ -645,6 +646,14 @@ func Test_mode()
   call assert_equal("\<C-S>", mode(1))
   call feedkeys("\<Esc>", 'xt')
 
+  " v_CTRL-O
+  exe "normal gh\<C-O>\<F2>\<Esc>"
+  call assert_equal("v-vs", g:current_modes)
+  exe "normal gH\<C-O>\<F2>\<Esc>"
+  call assert_equal("V-Vs", g:current_modes)
+  exe "normal g\<C-H>\<C-O>\<F2>\<Esc>"
+  call assert_equal("\<C-V>-\<C-V>s", g:current_modes)
+
   call feedkeys(":echo \<C-R>=Save_mode()\<C-U>\<CR>", 'xt')
   call assert_equal('c-c', g:current_modes)
   call feedkeys("gQecho \<C-R>=Save_mode()\<CR>\<CR>vi\<CR>", 'xt')
@@ -653,6 +662,7 @@ func Test_mode()
 
   bwipe!
   iunmap <F2>
+  xunmap <F2>
   set complete&
 endfunc
 
