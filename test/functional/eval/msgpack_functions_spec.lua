@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local funcs = helpers.funcs
 local eval, eq = helpers.eval, helpers.eq
 local command = helpers.command
 local nvim = helpers.nvim
@@ -511,13 +510,22 @@ end)
 describe('msgpackdump() function', function()
   before_each(clear)
 
+  local dump_eq = function(exp_list, arg_expr)
+    local l = {}
+    for i,v in ipairs(exp_list) do
+      l[i] = v:gsub('\n', '\000')
+    end
+    local exp_blobstr = table.concat(l, '\n')
+    eq(exp_list, eval('msgpackdump(' .. arg_expr .. ')'))
+    eq(exp_blobstr, eval('msgpackdump(' .. arg_expr .. ', "B")'))
+  end
+
   it('dumps string as BIN 8', function()
-    nvim('set_var', 'obj', {'Test'})
-    eq({"\196\004Test"}, eval('msgpackdump(obj)'))
+    dump_eq({'\196\004Test'}, '["Test"]')
   end)
 
   it('dumps blob as BIN 8', function()
-    eq({'\196\005Bl\nb!'}, eval('msgpackdump([0z426c006221])'))
+    dump_eq({'\196\005Bl\nb!'}, '[0z426c006221]')
   end)
 
   it('can dump generic mapping with generic mapping keys and values', function()
@@ -525,56 +533,56 @@ describe('msgpackdump() function', function()
     command('let todumpv1 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('let todumpv2 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('call add(todump._VAL, [todumpv1, todumpv2])')
-    eq({'\129\128\128'}, eval('msgpackdump([todump])'))
+    dump_eq({'\129\128\128'}, '[todump]')
   end)
 
   it('can dump v:true', function()
-    eq({'\195'}, funcs.msgpackdump({true}))
+    dump_eq({'\195'}, '[v:true]')
   end)
 
   it('can dump v:false', function()
-    eq({'\194'}, funcs.msgpackdump({false}))
+    dump_eq({'\194'}, '[v:false]')
   end)
 
-  it('can v:null', function()
-    command('let todump = v:null')
+  it('can dump v:null', function()
+    dump_eq({'\192'}, '[v:null]')
   end)
 
   it('can dump special bool mapping (true)', function()
     command('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 1}')
-    eq({'\195'}, eval('msgpackdump([todump])'))
+    dump_eq({'\195'}, '[todump]')
   end)
 
   it('can dump special bool mapping (false)', function()
     command('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 0}')
-    eq({'\194'}, eval('msgpackdump([todump])'))
+    dump_eq({'\194'}, '[todump]')
   end)
 
   it('can dump special nil mapping', function()
     command('let todump = {"_TYPE": v:msgpack_types.nil, "_VAL": 0}')
-    eq({'\192'}, eval('msgpackdump([todump])'))
+    dump_eq({'\192'}, '[todump]')
   end)
 
   it('can dump special ext mapping', function()
     command('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
-    eq({'\212\005', ''}, eval('msgpackdump([todump])'))
+    dump_eq({'\212\005', ''}, '[todump]')
   end)
 
   it('can dump special array mapping', function()
     command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
-    eq({'\146\005\145\196\n'}, eval('msgpackdump([todump])'))
+    dump_eq({'\146\005\145\196\n'}, '[todump]')
   end)
 
   it('can dump special UINT64_MAX mapping', function()
     command('let todump = {"_TYPE": v:msgpack_types.integer}')
     command('let todump._VAL = [1, 3, 0x7FFFFFFF, 0x7FFFFFFF]')
-    eq({'\207\255\255\255\255\255\255\255\255'}, eval('msgpackdump([todump])'))
+    dump_eq({'\207\255\255\255\255\255\255\255\255'}, '[todump]')
   end)
 
   it('can dump special INT64_MIN mapping', function()
     command('let todump = {"_TYPE": v:msgpack_types.integer}')
     command('let todump._VAL = [-1, 2, 0, 0]')
-    eq({'\211\128\n\n\n\n\n\n\n'}, eval('msgpackdump([todump])'))
+    dump_eq({'\211\128\n\n\n\n\n\n\n'}, '[todump]')
   end)
 
   it('fails to dump a function reference', function()
@@ -613,13 +621,13 @@ describe('msgpackdump() function', function()
   it('can dump dict with two same dicts inside', function()
     command('let inter = {}')
     command('let todump = {"a": inter, "b": inter}')
-    eq({"\130\161a\128\161b\128"}, eval('msgpackdump([todump])'))
+    dump_eq({"\130\161a\128\161b\128"}, '[todump]')
   end)
 
   it('can dump list with two same lists inside', function()
     command('let inter = []')
     command('let todump = [inter, inter]')
-    eq({"\146\144\144"}, eval('msgpackdump([todump])'))
+    dump_eq({"\146\144\144"}, '[todump]')
   end)
 
   it('fails to dump a recursive list in a special dict', function()
@@ -670,9 +678,9 @@ describe('msgpackdump() function', function()
        exc_exec('call msgpackdump()'))
   end)
 
-  it('fails when called with two arguments', function()
+  it('fails when called with three arguments', function()
     eq('Vim(call):E118: Too many arguments for function: msgpackdump',
-       exc_exec('call msgpackdump(["", ""], 1)'))
+       exc_exec('call msgpackdump(["", ""], 1, 2)'))
   end)
 
   it('fails to dump a string', function()
@@ -714,9 +722,9 @@ describe('msgpackdump() function', function()
   end)
 
   it('can dump NULL string', function()
-    eq({'\196\n'}, eval('msgpackdump([$XXX_UNEXISTENT_VAR_XXX])'))
-    eq({'\196\n'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.binary, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
-    eq({'\160'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.string, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
+    dump_eq({'\196\n'}, '[$XXX_UNEXISTENT_VAR_XXX]')
+    dump_eq({'\196\n'}, '[{"_TYPE": v:msgpack_types.binary, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}]')
+    dump_eq({'\160'}, '[{"_TYPE": v:msgpack_types.string, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}]')
   end)
 
   it('can dump NULL blob', function()

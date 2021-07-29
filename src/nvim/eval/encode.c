@@ -47,6 +47,14 @@ const char *const encode_special_var_names[] = {
 # include "eval/encode.c.generated.h"
 #endif
 
+/// Msgpack callback for writing to a Blob
+int encode_blob_write(void *const data, const char *const buf, const size_t len)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  ga_concat_len(&((blob_T *)data)->bv_ga, buf, len);
+  return (int)len;
+}
+
 /// Msgpack callback for writing to readfile()-style list
 int encode_list_write(void *const data, const char *const buf, const size_t len)
   FUNC_ATTR_NONNULL_ARG(1)

@@ -2534,7 +2534,7 @@ min({expr})			Number	minimum value of items in {expr}
 mkdir({name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode([expr])			String	current editing mode
-msgpackdump({list})		List	dump a list of objects to msgpack
+msgpackdump({list} [, {type}])	List/Blob  dump objects to msgpack
 msgpackparse({list})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
@@ -6824,11 +6824,15 @@ mode([expr])	Return a string that indicates the current mode.
 		the leading character(s).
 		Also see |visualmode()|.
 
-msgpackdump({list})					*msgpackdump()*
-		Convert a list of VimL objects to msgpack. Returned value is
-		|readfile()|-style list. Example: >
+msgpackdump({list} [, {type}])				*msgpackdump()*
+		Convert a list of VimL objects to msgpack. Returned value is a
+		|readfile()|-style list. When {type} contains "B", a |Blob| is
+		returned instead. Example: >
 			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
-<		This will write the single 0x80 byte to `fname.mpack` file
+<		or, using a |Blob|: >
+			call writefile(msgpackdump([{}], 'B'), 'fname.mpack')
+<
+		This will write the single 0x80 byte to a `fname.mpack` file
 		(dictionary with zero items is represented by 0x80 byte in
 		messagepack).
 

@@ -6506,9 +6506,16 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     EMSG2(_(e_listarg), "msgpackdump()");
     return;
   }
-  list_T *const ret_list = tv_list_alloc_ret(rettv, kListLenMayKnow);
   list_T *const list = argvars[0].vval.v_list;
-  msgpack_packer *lpacker = msgpack_packer_new(ret_list, &encode_list_write);
+  msgpack_packer *packer;
+  if (argvars[1].v_type != VAR_UNKNOWN
+      && strequal(tv_get_string(&argvars[1]), "B")) {
+    tv_blob_alloc_ret(rettv);
+    packer = msgpack_packer_new(rettv->vval.v_blob, &encode_blob_write);
+  } else {
+    packer = msgpack_packer_new(tv_list_alloc_ret(rettv, kListLenMayKnow),
+                                &encode_list_write);
+  }
   const char *const msg = _("msgpackdump() argument, index %i");
   // Assume that translation will not take more then 4 times more space
   char msgbuf[sizeof("msgpackdump() argument, index ") * 4 + NUMBUFLEN];
@@ -6516,11 +6523,11 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   TV_LIST_ITER(list, li, {
     vim_snprintf(msgbuf, sizeof(msgbuf), (char *)msg, idx);
     idx++;
-    if (encode_vim_to_msgpack(lpacker, TV_LIST_ITEM_TV(li), msgbuf) == FAIL) {
+    if (encode_vim_to_msgpack(packer, TV_LIST_ITEM_TV(li), msgbuf) == FAIL) {
       break;
     }
   });
-  msgpack_packer_free(lpacker);
+  msgpack_packer_free(packer);
 }
 
 /// "msgpackparse" function
