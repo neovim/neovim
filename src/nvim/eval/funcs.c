@@ -7334,7 +7334,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         memmove(p + idx, p + idx + 1, (size_t)len - idx - 1);
         b->bv_ga.ga_len--;
       } else {
-        // Remove range of items, return list with values.
+        // Remove range of items, return blob with values.
         end = (long)tv_get_number_chk(&argvars[2], &error);
         if (error) {
           return;
@@ -7356,7 +7356,9 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                 (size_t)(end - idx + 1));
         tv_blob_set_ret(rettv, blob);
 
-        memmove(p + idx, p + end + 1, (size_t)(len - end));
+        if (len - end - 1 > 0) {
+          memmove(p + idx, p + end + 1, (size_t)(len - end - 1));
+        }
         b->bv_ga.ga_len -= end - idx + 1;
       }
     }
