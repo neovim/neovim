@@ -34,19 +34,20 @@ typedef enum {
 
 struct Decoration
 {
-  int hl_id;  // highlight group
   VirtText virt_text;
+  int hl_id;  // highlight group
   VirtTextPos virt_text_pos;
-  bool virt_text_hide;
   HlMode hl_mode;
+  bool virt_text_hide;
   bool hl_eol;
+  bool shared;  // shared decoration, don't free
   // TODO(bfredl): style, signs, etc
   DecorPriority priority;
-  bool shared;  // shared decoration, don't free
   int col;  // fixed col value, like win_col
+  int virt_text_width;  // width of virt_text
 };
-#define DECORATION_INIT { 0, KV_INITIAL_VALUE, kVTEndOfLine, false, \
-                          kHlModeUnknown, false, DECOR_PRIORITY_BASE, false, 0 }
+#define DECORATION_INIT { KV_INITIAL_VALUE, 0, kVTEndOfLine, kHlModeUnknown, \
+                          false, false, false, DECOR_PRIORITY_BASE, 0, 0 }
 
 typedef struct {
   int start_row;
@@ -67,6 +68,8 @@ typedef struct {
   int row;
   int col_until;
   int current;
+
+  int eol_col;
   VirtText *virt_text;
 } DecorState;
 

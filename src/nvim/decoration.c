@@ -119,7 +119,7 @@ void clear_virttext(VirtText *text)
   *text = (VirtText)KV_INITIAL_VALUE;
 }
 
-VirtText *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
+Decoration *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
 {
   MarkTreeIter itr[1] = { 0 };
   marktree_itr_get(buf->b_marktree, row, 0,  itr);
@@ -132,7 +132,7 @@ VirtText *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
                                                        mark.id, false);
     if (item && (ns_id == 0 || ns_id == item->ns_id)
         && item->decor && kv_size(item->decor->virt_text)) {
-      return &item->decor->virt_text;
+      return item->decor;
     }
     marktree_itr_next(buf->b_marktree, itr);
   }
@@ -218,6 +218,7 @@ bool decor_redraw_line(buf_T *buf, int row, DecorState *state)
   }
   state->row = row;
   state->col_until = -1;
+  state->eol_col = -1;
   return true;  // TODO(bfredl): be more precise
 }
 
@@ -229,10 +230,6 @@ static void decor_add(DecorState *state, int start_row, int start_col,
   DecorRange range = { start_row, start_col, end_row, end_col,
                        *decor, attr_id,
                     kv_size(decor->virt_text) && owned, -1 };
-
-  if (decor->virt_text_pos == kVTEndOfLine) {
-    range.win_col = -2;  // handled separately
-  }
 
   kv_pushp(state->active);
   size_t index;
@@ -345,29 +342,22 @@ void decor_redraw_end(DecorState *state)
   state->buf = NULL;
 }
 
-VirtText decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr,
-                          bool *aligned)
+bool decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr, int eol_col)
 {
   decor_redraw_col(buf, MAXCOL, MAXCOL, false, state);
-  VirtText text = VIRTTEXT_EMPTY;
+  state->eol_col = eol_col;
+  bool has_virttext = false;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
     if (item.start_row == state->row && kv_size(item.decor.virt_text)) {
-      if (!kv_size(text) && item.decor.virt_text_pos == kVTEndOfLine) {
-        text = item.decor.virt_text;
-      } else if (item.decor.virt_text_pos == kVTRightAlign
-                 || item.decor.virt_text_pos == kVTWinCol) {
-        *aligned = true;
-      }
+      has_virttext = true;
     }
-
 
     if (item.decor.hl_eol && item.start_row <= state->row) {
       *eol_attr = hl_combine_attr(*eol_attr, item.attr_id);
     }
   }
-
-  return text;
+  return has_virttext;
 }
 
 void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
