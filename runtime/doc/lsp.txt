@@ -1487,6 +1487,22 @@ on_publish_diagnostics({_}, {_}, {params}, {client_id}, {_}, {config})
                                 • Sort diagnostics (and thus signs and virtual
                                   text)
 
+redraw({bufnr}, {client_id})                     *vim.lsp.diagnostic.redraw()*
+                Redraw diagnostics for the given buffer and client
+
+                This calls the "textDocument/publishDiagnostics" handler
+                manually using the cached diagnostics already received from
+                the server. This can be useful for redrawing diagnostics after
+                making changes in diagnostics configuration.
+                |lsp-handler-configuration|
+
+                Parameters: ~
+                    {bufnr}      (optional, number): Buffer handle, defaults
+                                 to current
+                    {client_id}  (optional, number): Redraw diagnostics for
+                                 the given client. The default is to redraw
+                                 diagnostics for all attached clients.
+
 reset({client_id}, {buffer_client_map})           *vim.lsp.diagnostic.reset()*
                 Clear diagnotics and diagnostic cache
 
