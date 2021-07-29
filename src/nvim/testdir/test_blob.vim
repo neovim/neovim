@@ -71,6 +71,10 @@ func Test_blob_assign()
   call assert_fails('let b .= "xx"', 'E734:')
   call assert_fails('let b += "xx"', 'E734:')
   call assert_fails('let b[1:1] .= 0z55', 'E734:')
+
+  let l = [0z12]
+  let m = deepcopy(l)
+  let m[0] = 0z34	" E742 or E741 should not occur.
 endfunc
 
 func Test_blob_get_range()

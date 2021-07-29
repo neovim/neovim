@@ -2262,6 +2262,7 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
   assert(from->v_type == VAR_BLOB);
 
   to->v_type = VAR_BLOB;
+  to->v_lock = VAR_UNLOCKED;
   if (from->vval.v_blob == NULL) {
     to->vval.v_blob = NULL;
   } else {
