@@ -95,6 +95,13 @@ func Test_blob_get()
   call assert_equal(999, get(b, 5, 999))
   call assert_equal(-1, get(b, -8))
   call assert_equal(999, get(b, -8, 999))
+
+  call assert_equal(0x00, b[0])
+  call assert_equal(0x22, b[2])
+  call assert_equal(0x44, b[4])
+  call assert_equal(0x44, b[-1])
+  call assert_fails('echo b[5]', 'E979:')
+  call assert_fails('echo b[-8]', 'E979:')
 endfunc
 
 func Test_blob_to_string()

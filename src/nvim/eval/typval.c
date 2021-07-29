@@ -2266,7 +2266,7 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
     to->vval.v_blob = NULL;
   } else {
     tv_blob_alloc_ret(to);
-    const int len = from->vval.v_blob->bv_ga.ga_len;
+    int len = from->vval.v_blob->bv_ga.ga_len;
 
     if (len > 0) {
       to->vval.v_blob->bv_ga.ga_data

@@ -4647,9 +4647,11 @@ eval_index(
             tv_blob_set_ret(rettv, blob);
           }
         } else {
-          // The resulting variable is a string of a single
-          // character.  If the index is too big or negative the
-          // result is empty.
+          // The resulting variable is a byte value.
+          // If the index is too big or negative that is an error.
+          if (n1 < 0) {
+            n1 = len + n1;
+          }
           if (n1 < len && n1 >= 0) {
             const int v = (int)tv_blob_get(rettv->vval.v_blob, n1);
             tv_clear(rettv);
