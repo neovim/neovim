@@ -1388,6 +1388,7 @@ struct window_S {
   uint32_t w_p_fde_flags;           // flags for 'foldexpr'
   uint32_t w_p_fdt_flags;           // flags for 'foldtext'
   int         *w_p_cc_cols;         // array of columns to highlight or NULL
+  char_u      w_p_culopt_flags;     // flags for cursorline highlighting
   long        w_p_siso;             // 'sidescrolloff' local value
   long        w_p_so;               // 'scrolloff' local value
 

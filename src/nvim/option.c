@@ -322,7 +322,6 @@ static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
 static char *(p_fdc_values[]) =       { "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", NULL };
-static char *(p_culopt_values[]) =    { "line", "number", "both", NULL };
 
 /// All possible flags for 'shm'.
 static char_u SHM_ALL[] = {
@@ -1963,6 +1962,7 @@ static void didset_options(void)
   briopt_check(curwin);
   // initialize the table for 'breakat'.
   fill_breakat_flags();
+  fill_culopt_flags(NULL, curwin);
 }
 
 // More side effects of setting options.
@@ -2414,8 +2414,7 @@ did_set_string_option(
     }
   } else if (varp == &curwin->w_p_culopt
              || gvarp == &curwin->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
-    if (**varp == NUL
-        || check_opt_strings(*varp, p_culopt_values, false) != OK) {
+    if (**varp == NUL || fill_culopt_flags(*varp, curwin) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
@@ -5894,6 +5893,7 @@ void didset_window_options(win_T *wp)
 {
   check_colorcolumn(wp);
   briopt_check(wp);
+  fill_culopt_flags(NULL, wp);
   set_chars_option(wp, &wp->w_p_fcs, true);
   set_chars_option(wp, &wp->w_p_lcs, true);
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
@@ -6899,6 +6899,49 @@ static void fill_breakat_flags(void)
       breakat_flags[*p] = true;
     }
   }
+}
+
+/// fill_culopt_flags() -- called when 'culopt' changes value
+static int fill_culopt_flags(char_u *val, win_T *wp)
+{
+  char_u *p;
+  char_u culopt_flags_new = 0;
+
+  if (val == NULL) {
+    p = wp->w_p_culopt;
+  } else {
+    p = val;
+  }
+  while (*p != NUL) {
+    if (STRNCMP(p, "line", 4) == 0) {
+      p += 4;
+      culopt_flags_new |= CULOPT_LINE;
+    } else if (STRNCMP(p, "both", 4) == 0) {
+      p += 4;
+      culopt_flags_new |= CULOPT_LINE | CULOPT_NBR;
+    } else if (STRNCMP(p, "number", 6) == 0) {
+      p += 6;
+      culopt_flags_new |= CULOPT_NBR;
+    } else if (STRNCMP(p, "screenline", 10) == 0) {
+      p += 10;
+      culopt_flags_new |= CULOPT_SCRLINE;
+    }
+
+    if (*p != ',' && *p != NUL) {
+      return FAIL;
+    }
+    if (*p == ',') {
+      p++;
+    }
+  }
+
+  // Can't have both "line" and "screenline".
+  if ((culopt_flags_new & CULOPT_LINE) && (culopt_flags_new & CULOPT_SCRLINE)) {
+    return FAIL;
+  }
+  wp->w_p_culopt_flags = culopt_flags_new;
+
+  return OK;
 }
 
 /// Check an option that can be a range of string values.

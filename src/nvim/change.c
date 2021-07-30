@@ -292,9 +292,10 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
 
       // Relative numbering may require updating more.  Cursor line
       // highlighting probably needs to be updated if it's below the
-      // change.
+      // change (or is using screenline highlighting).
       if (wp->w_p_rnu
-          || (wp->w_p_cul && lnum <= wp->w_last_cursorline)) {
+          || ((wp->w_p_cul && lnum <= wp->w_last_cursorline)
+              || (wp->w_p_culopt_flags & CULOPT_SCRLINE))) {
         redraw_later(wp, SOME_VALID);
       }
     }
