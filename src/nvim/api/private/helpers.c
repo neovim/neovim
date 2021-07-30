@@ -1603,8 +1603,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
     }
     Array chunk = chunks.items[i].data.array;
     if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString
-        || chunk.size > 2) {
+        || chunk.items[0].type != kObjectTypeString) {
       api_set_error(err, kErrorTypeValidation,
                     "Chunk is not an array with one or two strings");
       goto free_exit;
