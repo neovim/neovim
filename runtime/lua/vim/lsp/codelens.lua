@@ -9,7 +9,7 @@ local active_refreshes = {}
 --- bufnr -> client_id -> lenses
 local lens_cache_by_buf = setmetatable({}, {
   __index = function(t, b)
-    local key = b > 0 and b or api.nvim_get_current_buf()
+    local key = (b and b > 0) and b or api.nvim_get_current_buf()
     return rawget(t, key)
   end
 })
