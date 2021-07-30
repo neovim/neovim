@@ -168,7 +168,6 @@ func Test_swapname()
 endfunc
 
 func Test_swapfile_delete()
-  throw 'skipped: need the "blob" feature for this test'
   autocmd! SwapExists
   function s:swap_exists()
     let v:swapchoice = s:swap_choice

@@ -95,7 +95,6 @@ func Test_rename_copy()
 endfunc
 
 func Test_rename_fails()
-  throw 'skipped: TODO: '
   call writefile(['foo'], 'Xrenamefile')
 
   " Can't rename into a non-existing directory.
