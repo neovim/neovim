@@ -1653,6 +1653,13 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       break;
     }
     case kSDItemVariable: {
+      if (entry.data.global_var.value.v_type == VAR_TYPE_BLOB) {
+        // Strings and Blobs both pack as msgpack BINs; differentiate them by
+        // storing an additional VAR_TYPE_BLOB element alongside Blobs
+        list_T *const list = tv_list_alloc(1);
+        tv_list_append_number(list, VAR_TYPE_BLOB);
+        entry.data.global_var.additional_elements = list;
+      }
       const size_t arr_size = 2 + (size_t)(
           tv_list_len(entry.data.global_var.additional_elements));
       msgpack_pack_array(spacker, arr_size);
@@ -3937,15 +3944,38 @@ shada_read_next_item_start:
       entry->data.global_var.name =
           xmemdupz(unpacked.data.via.array.ptr[0].via.bin.ptr,
                    unpacked.data.via.array.ptr[0].via.bin.size);
-      if (msgpack_to_vim(unpacked.data.via.array.ptr[1],
-                         &(entry->data.global_var.value)) == FAIL) {
+      SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, 2,
+                              entry->data.global_var.additional_elements,
+                              "variable");
+      bool is_blob = false;
+      // A msgpack BIN could be a String or Blob; an additional VAR_TYPE_BLOB
+      // element is stored with Blobs which can be used to differentiate them
+      if (unpacked.data.via.array.ptr[1].type == MSGPACK_OBJECT_BIN) {
+        const listitem_T *type_item
+            = tv_list_first(entry->data.global_var.additional_elements);
+        if (type_item != NULL) {
+          const typval_T *type_tv = TV_LIST_ITEM_TV(type_item);
+          if (type_tv->v_type != VAR_NUMBER
+              || type_tv->vval.v_number != VAR_TYPE_BLOB) {
+            emsgf(_(READERR("variable", "has wrong variable type")),
+                  initial_fpos);
+            goto shada_read_next_item_error;
+          }
+          is_blob = true;
+        }
+      }
+      if (is_blob) {
+        const msgpack_object_bin *const bin
+          = &unpacked.data.via.array.ptr[1].via.bin;
+        blob_T *const blob = tv_blob_alloc();
+        ga_concat_len(&blob->bv_ga, bin->ptr, (size_t)bin->size);
+        tv_blob_set_ret(&entry->data.global_var.value, blob);
+      } else if (msgpack_to_vim(unpacked.data.via.array.ptr[1],
+                                &(entry->data.global_var.value)) == FAIL) {
         emsgf(_(READERR("variable", "has value that cannot "
                         "be converted to the VimL value")), initial_fpos);
         goto shada_read_next_item_error;
       }
-      SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, 2,
-                              entry->data.global_var.additional_elements,
-                              "variable");
       break;
     }
     case kSDItemSubString: {
