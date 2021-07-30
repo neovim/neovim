@@ -2659,7 +2659,10 @@ void tv_copy(const typval_T *const from, typval_T *const to)
 /// @param[out]  tv  Item to (un)lock.
 /// @param[in]  deep  Levels to (un)lock, -1 to (un)lock everything.
 /// @param[in]  lock  True if it is needed to lock an item, false to unlock.
-void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
+/// @param[in]  check_refcount  If true, do not lock a list or dict with a
+///                             reference count larger than 1.
+void tv_item_lock(typval_T *const tv, const int deep, const bool lock,
+                  const bool check_refcount)
   FUNC_ATTR_NONNULL_ALL
 {
   // TODO(ZyX-I): Make this not recursive
@@ -2688,19 +2691,19 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
   switch (tv->v_type) {
     case VAR_BLOB: {
       blob_T *const b = tv->vval.v_blob;
-      if (b != NULL) {
+      if (b != NULL && !(check_refcount && b->bv_refcount > 1)) {
         CHANGE_LOCK(lock, b->bv_lock);
       }
       break;
     }
     case VAR_LIST: {
       list_T *const l = tv->vval.v_list;
-      if (l != NULL) {
+      if (l != NULL && !(check_refcount && l->lv_refcount > 1)) {
         CHANGE_LOCK(lock, l->lv_lock);
         if (deep < 0 || deep > 1) {
           // Recursive: lock/unlock the items the List contains.
           TV_LIST_ITER(l, li, {
-            tv_item_lock(TV_LIST_ITEM_TV(li), deep - 1, lock);
+            tv_item_lock(TV_LIST_ITEM_TV(li), deep - 1, lock, check_refcount);
           });
         }
       }
@@ -2708,12 +2711,12 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
     }
     case VAR_DICT: {
       dict_T *const d = tv->vval.v_dict;
-      if (d != NULL) {
+      if (d != NULL && !(check_refcount && d->dv_refcount > 1)) {
         CHANGE_LOCK(lock, d->dv_lock);
         if (deep < 0 || deep > 1) {
           // recursive: lock/unlock the items the List contains
           TV_DICT_ITER(d, di, {
-            tv_item_lock(&di->di_tv, deep - 1, lock);
+            tv_item_lock(&di->di_tv, deep - 1, lock, check_refcount);
           });
         }
       }

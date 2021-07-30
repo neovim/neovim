@@ -2373,6 +2373,9 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
         EMSG2(_(e_letwrong), op);
         return;
       }
+      if (var_check_lock(lp->ll_blob->bv_lock, lp->ll_name, TV_CSTRING)) {
+        return;
+      }
 
       if (lp->ll_range && rettv->v_type == VAR_BLOB) {
         if (lp->ll_empty2) {
@@ -3082,7 +3085,7 @@ static int do_lock_var(lval_T *lp, char_u *name_end FUNC_ATTR_UNUSED,
         } else {
           di->di_flags &= ~DI_FLAGS_LOCK;
         }
-        tv_item_lock(&di->di_tv, deep, lock);
+        tv_item_lock(&di->di_tv, deep, lock, false);
       }
     }
   } else if (lp->ll_range) {
@@ -3090,16 +3093,16 @@ static int do_lock_var(lval_T *lp, char_u *name_end FUNC_ATTR_UNUSED,
 
     // (un)lock a range of List items.
     while (li != NULL && (lp->ll_empty2 || lp->ll_n2 >= lp->ll_n1)) {
-      tv_item_lock(TV_LIST_ITEM_TV(li), deep, lock);
+      tv_item_lock(TV_LIST_ITEM_TV(li), deep, lock, false);
       li = TV_LIST_ITEM_NEXT(lp->ll_list, li);
       lp->ll_n1++;
     }
   } else if (lp->ll_list != NULL) {
     // (un)lock a List item.
-    tv_item_lock(TV_LIST_ITEM_TV(lp->ll_li), deep, lock);
+    tv_item_lock(TV_LIST_ITEM_TV(lp->ll_li), deep, lock, false);
   } else {
     // (un)lock a Dictionary item.
-    tv_item_lock(&lp->ll_di->di_tv, deep, lock);
+    tv_item_lock(&lp->ll_di->di_tv, deep, lock, false);
   }
 
   return ret;
@@ -9536,7 +9539,10 @@ static void set_var_const(const char *name, const size_t name_len,
   }
 
   if (is_const) {
-    tv_item_lock(&v->di_tv, 1, true);
+    // Like :lockvar! name: lock the value and what it contains, but only
+    // if the reference count is up to one.  That locks only literal
+    // values.
+    tv_item_lock(&v->di_tv, DICT_MAXNEST, true, true);
   }
 }
 

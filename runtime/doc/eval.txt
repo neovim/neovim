@@ -10871,10 +10871,18 @@ text...
 				:const x = 1
 <			is equivalent to: >
 				:let x = 1
-				:lockvar 1 x
+				:lockvar! x
 <			This is useful if you want to make sure the variable
-			is not modified.
-							*E995*
+			is not modified.  If the value is a List or Dictionary
+			literal then the items also cannot be changed: >
+				const ll = [1, 2, 3]
+				let ll[1] = 5  " Error!
+< 			Nested references are not locked: >
+				let lvar = ['a']
+				const lconst = [0, lvar]
+				let lconst[0] = 2  " Error!
+				let lconst[1][0] = 'b'  " OK
+<							*E995*
 			|:const| does not allow to for changing a variable. >
 				:let x = 1
 				:const x = 2  " Error!
