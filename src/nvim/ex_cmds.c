@@ -1635,14 +1635,14 @@ void print_line(linenr_T lnum, int use_number, int list)
 
   msg_start();
   silent_mode = FALSE;
-  info_message = TRUE;          /* use mch_msg(), not mch_errmsg() */
+  info_message = true;  // use mch_msg(), not mch_errmsg()
   print_line_no_prefix(lnum, use_number, list);
   if (save_silent) {
     msg_putchar('\n');
     ui_flush();
     silent_mode = save_silent;
   }
-  info_message = FALSE;
+  info_message = false;
 }
 
 int rename_buffer(char_u *new_fname)
@@ -1892,7 +1892,7 @@ int do_write(exarg_T *eap)
     if (eap->cmdidx == CMD_saveas) {
       if (retval == OK) {
         curbuf->b_p_ro = FALSE;
-        redraw_tabline = TRUE;
+        redraw_tabline = true;
       }
     }
 
@@ -2812,8 +2812,9 @@ int do_ecmd(
     redraw_curbuf_later(NOT_VALID);     // redraw this buffer later
   }
 
-  if (p_im)
-    need_start_insertmode = TRUE;
+  if (p_im) {
+    need_start_insertmode = true;
+  }
 
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
@@ -2879,7 +2880,7 @@ void ex_append(exarg_T *eap)
 
   for (;; ) {
     msg_scroll = TRUE;
-    need_wait_return = FALSE;
+    need_wait_return = false;
     if (curbuf->b_p_ai) {
       if (append_indent >= 0) {
         indent = append_indent;
@@ -2967,8 +2968,8 @@ void ex_append(exarg_T *eap)
   check_cursor_lnum();
   beginline(BL_SOL | BL_FIX);
 
-  need_wait_return = FALSE;     /* don't use wait_return() now */
-  ex_no_reprint = TRUE;
+  need_wait_return = false;     // don't use wait_return() now
+  ex_no_reprint = true;
 }
 
 /*
@@ -3820,8 +3821,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               redraw_later(curwin, SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
-              if (msg_row == Rows - 1)
-                msg_didout = FALSE;                     /* avoid a scroll-up */
+              if (msg_row == Rows - 1) {
+                msg_didout = false;                     // avoid a scroll-up
+              }
               msg_starthere();
               i = msg_scroll;
               msg_scroll = 0;                           /* truncate msg when
@@ -3840,8 +3842,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               typed = plain_vgetc();
               no_mapping--;
 
-              /* clear the question */
-              msg_didout = FALSE;               /* don't scroll up */
+              // clear the question
+              msg_didout = false;               // don't scroll up
               msg_col = 0;
               gotocmdline(true);
               p_lz = save_p_lz;

@@ -3575,9 +3575,10 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
             }
           } else {
             MSG_PUTS("\n");
-            if (msg_silent == 0)
-              /* call wait_return() later */
-              need_wait_return = TRUE;
+            if (msg_silent == 0) {
+              // call wait_return() later
+              need_wait_return = true;
+            }
           }
 
         }

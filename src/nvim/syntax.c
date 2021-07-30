@@ -7741,7 +7741,7 @@ void highlight_changed(void)
   int id_SNC = 0;
   int hlcnt;
 
-  need_highlight_changed = FALSE;
+  need_highlight_changed = false;
 
   /// Translate builtin highlight groups into attributes for quick lookup.
   for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
