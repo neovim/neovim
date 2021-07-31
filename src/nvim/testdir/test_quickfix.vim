@@ -5291,4 +5291,21 @@ func Test_locationlist_open_in_newtab()
   %bwipe!
 endfunc
 
+" Test for win_gettype() in quickfix and location list windows
+func Test_win_gettype()
+  copen
+  call assert_equal("quickfix", win_gettype())
+  let wid = win_getid()
+  wincmd p
+  call assert_equal("quickfix", win_gettype(wid))
+  cclose
+  lexpr ''
+  lopen
+  call assert_equal("loclist", win_gettype())
+  let wid = win_getid()
+  wincmd p
+  call assert_equal("loclist", win_gettype(wid))
+  lclose
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

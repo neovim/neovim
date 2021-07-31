@@ -9323,10 +9323,12 @@ win_gettype([{nr}])					*win_gettype()*
 		Return the type of the window:
 			"autocmd"	autocommand window. Temporary window
 					used to execute autocommands.
-			"popup"		popup window |popup|
-			"preview"	preview window |preview-window|
 			"command"	command-line window |cmdwin|
 			(empty)		normal window
+			"loclist"	|location-list-window|
+			"popup"		popup window |popup|
+			"preview"	preview window |preview-window|
+			"quickfix"	|quickfix-window|
 			"unknown"	window {nr} not found
 
 		When {nr} is omitted return the type of the current window.
