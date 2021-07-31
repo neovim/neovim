@@ -6750,9 +6750,9 @@ msgpackparse({list})					*msgpackparse()*
 			zero byte or if string is a mapping key and mapping is
 			being represented as special dictionary for other
 			reasons.
-		binary	|readfile()|-style list of strings. This value will
-			appear in |msgpackparse()| output if binary string
-			contains zero byte.
+		binary	|String|, or |Blob| if binary string contains zero
+			byte. This value cannot appear in |msgpackparse()|
+			output since blobs were introduced.
 		array	|List|. This value cannot appear in |msgpackparse()|
 			output.
 							*msgpack-special-map*

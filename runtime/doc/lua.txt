@@ -326,7 +326,8 @@ semantically equivalent in Lua to:
     end
 
 Lua nils, numbers, strings, tables and booleans are converted to their
-respective Vimscript types. Conversion of other Lua types is an error.
+respective Vimscript types. If a Lua string contains a NUL byte, it will be
+converted to a |Blob|. Conversion of other Lua types is an error.
 
 The magic global "_A" contains the second argument to luaeval().
 
