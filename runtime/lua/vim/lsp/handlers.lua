@@ -457,12 +457,14 @@ for k, fn in pairs(M) do
     })
 
     if err then
+      local client = vim.lsp.get_client_by_id(client_id)
+      local client_name = client and client.name or string.format("client_id=%d", client_id)
       -- LSP spec:
       -- interface ResponseError:
       --  code: integer;
       --  message: string;
       --  data?: string | number | boolean | array | object | null;
-      return err_message(tostring(err.code) .. ': ' .. err.message)
+      return err_message(client_name .. ': ' .. tostring(err.code) .. ': ' .. err.message)
     end
 
     return fn(err, method, params, client_id, bufnr, config)
