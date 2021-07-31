@@ -1371,7 +1371,9 @@ static void win_update(win_T *wp, Providers *providers)
                         // match in fixed position might need redraw
                         // if lines were inserted or deleted
                         || (wp->w_match_head != NULL
-                            && buf->b_mod_xlines != 0)))))) {
+                            && buf->b_mod_xlines != 0)))))
+        || (wp->w_p_cul && (lnum == wp->w_cursor.lnum
+                            || lnum == wp->w_last_cursorline))) {
       if (lnum == mod_top) {
         top_to_mod = false;
       }
