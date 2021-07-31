@@ -1477,7 +1477,7 @@ function M.open_floating_preview(contents, syntax, opts)
   })
   opts = opts or {}
   opts.wrap = opts.wrap ~= false -- wrapping by default
-  opts.stylize_markdown = opts.stylize_markdown ~= false
+  opts.stylize_markdown = opts.stylize_markdown ~= false and vim.g.syntax_on ~= nil
   opts.focus = opts.focus ~= false
   opts.close_events = opts.close_events or { 'CursorMoved', 'CursorMovedI', 'InsertCharPre' }
 
