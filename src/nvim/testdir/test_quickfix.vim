@@ -5258,4 +5258,37 @@ func Test_qftextfunc_other_loclist()
   %bw!
 endfunc
 
+func Test_locationlist_open_in_newtab()
+  call s:create_test_file('Xqftestfile1')
+  call s:create_test_file('Xqftestfile2')
+  call s:create_test_file('Xqftestfile3')
+
+  %bwipe!
+
+  lgetexpr ['Xqftestfile1:5:Line5',
+		\ 'Xqftestfile2:10:Line10',
+		\ 'Xqftestfile3:16:Line16']
+
+  silent! llast
+  call assert_equal(1, tabpagenr('$'))
+  call assert_equal('Xqftestfile3', bufname())
+
+  set switchbuf=newtab
+
+  silent! lfirst
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal('Xqftestfile1', bufname())
+
+  silent! lnext
+  call assert_equal(3, tabpagenr('$'))
+  call assert_equal('Xqftestfile2', bufname())
+
+  call delete('Xqftestfile1')
+  call delete('Xqftestfile2')
+  call delete('Xqftestfile3')
+  set switchbuf&vim
+
+  %bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
