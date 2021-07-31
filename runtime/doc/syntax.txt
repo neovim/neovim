@@ -5065,7 +5065,8 @@ Substitute	|:substitute| replacement text highlighting
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
 		or 'relativenumber' option is set.
 							*hl-CursorLineNr*
-CursorLineNr	Like LineNr when 'cursorline' or 'relativenumber' is set for
+CursorLineNr	Like LineNr when 'cursorline' is set and 'cursorlineopt' is
+		set to "number" or "both", or 'relativenumber' is set, for
 		the cursor line.
 							*hl-MatchParen*
 MatchParen	The character under the cursor or just before it, if it

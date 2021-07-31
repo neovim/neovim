@@ -1802,11 +1802,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'cursorline'* *'cul'* *'nocursorline'* *'nocul'*
 'cursorline' 'cul'	boolean	(default off)
 			local to window
-	Highlight the screen line of the cursor with CursorLine
-	|hl-CursorLine|.  Useful to easily spot the cursor.  Will make screen
-	redrawing slower.
+	Highlight the text line of the cursor with CursorLine |hl-CursorLine|.
+	Useful to easily spot the cursor.  Will make screen redrawing slower.
 	When Visual mode is active the highlighting isn't used to make it
 	easier to see the selected text.
+
+
+						*'cursorlineopt'* *'culopt'*
+'cursorlineopt' 'culopt' string (default: "both")
+			local to window
+	Settings for how 'cursorline' is displayed.  Valid values:
+	    "line"	Highlight the text line of the cursor with
+			CursorLine |hl-CursorLine|.
+	    "number"	Highlight the line number of the cursor with
+			CursorLineNr |hl-CursorLineNr|.
+	    "both"	Highlight as both "line" and "number" are set.
 
 
 						*'debug'*

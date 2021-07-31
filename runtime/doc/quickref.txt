@@ -659,6 +659,7 @@ Short explanation of each option:		*option-list*
 'cursorbind'	  'crb'     move cursor in window as it moves in other windows
 'cursorcolumn'	  'cuc'	    highlight the screen column of the cursor
 'cursorline'	  'cul'	    highlight the screen line of the cursor
+'cursorlineopt'	  'culopt'  settings for 'cursorline'
 'debug'			    set to "msg" to see all error messages
 'define'	  'def'     pattern to be used to find a macro definition
 'delcombine'	  'deco'    delete combining characters on their own

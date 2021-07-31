@@ -870,6 +870,7 @@ enum {
   , WV_SPELL
   , WV_CUC
   , WV_CUL
+  , WV_CULOPT
   , WV_CC
   , WV_STL
   , WV_WFH

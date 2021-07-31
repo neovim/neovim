@@ -226,6 +226,8 @@ typedef struct {
 # define w_p_cuc w_onebuf_opt.wo_cuc    // 'cursorcolumn'
   int wo_cul;
 # define w_p_cul w_onebuf_opt.wo_cul    // 'cursorline'
+  char_u      *wo_culopt;
+# define w_p_culopt w_onebuf_opt.wo_culopt  // 'cursorlineopt'
   char_u      *wo_cc;
 # define w_p_cc w_onebuf_opt.wo_cc      // 'colorcolumn'
   char_u      *wo_stl;
