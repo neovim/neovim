@@ -52,7 +52,7 @@ func Test_cursorline_highlight1()
     setl nocursorline relativenumber
     redraw
     let attr31 = s:screen_attr(1)
-    call assert_equal(attr21[0:3], attr31[0:3])
+    call assert_equal(attr22[0:3], attr31[0:3])
     call assert_equal(attr11[4:7], attr31[4:7])
 
     call s:close_windows()

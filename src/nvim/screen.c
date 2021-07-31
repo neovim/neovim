@@ -2809,11 +2809,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             if (num_sattr != NULL) {
               // :sign defined with "numhl" highlight.
               char_attr = num_sattr->sat_numhl;
-            } else if ((wp->w_p_cul || wp->w_p_rnu)
+            } else if (wp->w_p_cul
+                       && lnum == wp->w_cursor.lnum
                        && (wp->w_p_culopt_flags & CULOPT_NBR)
                        && (row == startrow
                            || wp->w_p_culopt_flags & CULOPT_LINE)
-                       && lnum == wp->w_cursor.lnum
                        && filler_todo == 0) {
               // When 'cursorline' is set highlight the line number of
               // the current line differently.
