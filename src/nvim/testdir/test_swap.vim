@@ -376,4 +376,8 @@ func Test_swap_symlink()
   call delete('Xswapdir', 'rf')
 endfunc
 
+func Test_no_swap_file()
+  call assert_equal("\nNo swap file", execute('swapname'))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

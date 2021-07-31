@@ -4759,7 +4759,10 @@ getqflist([{what}])					*getqflist()*
 				bufname() to get the name
 			module	module name
 			lnum	line number in the buffer (first line is 1)
+			end_lnum
+				end of line number if the item is multiline
 			col	column number (first column is 1)
+			end_col	end of column number if the item has range
 			vcol	|TRUE|: "col" is visual column
 				|FALSE|: "col" is byte index
 			nr	error number
@@ -9320,10 +9323,12 @@ win_gettype([{nr}])					*win_gettype()*
 		Return the type of the window:
 			"autocmd"	autocommand window. Temporary window
 					used to execute autocommands.
-			"popup"		popup window |popup|
-			"preview"	preview window |preview-window|
 			"command"	command-line window |cmdwin|
 			(empty)		normal window
+			"loclist"	|location-list-window|
+			"popup"		popup window |popup|
+			"preview"	preview window |preview-window|
+			"quickfix"	|quickfix-window|
 			"unknown"	window {nr} not found
 
 		When {nr} is omitted return the type of the current window.
