@@ -157,6 +157,99 @@ describe('Signs', function()
       ]])
     end)
 
+    it('higlights the cursorline sign with culhl', function()
+      feed('ia<cr>b<cr>c<esc>')
+      command('sign define piet text=>> texthl=Search culhl=ErrorMsg')
+      command('sign place 1 line=1 name=piet buffer=1')
+      command('sign place 2 line=2 name=piet buffer=1')
+      command('sign place 3 line=3 name=piet buffer=1')
+      command('set cursorline')
+      screen:expect([[
+        {1:>>}a                                                  |
+        {1:>>}b                                                  |
+        {8:>>}{3:^c                                                  }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      feed('k')
+      screen:expect([[
+        {1:>>}a                                                  |
+        {8:>>}{3:^b                                                  }|
+        {1:>>}c                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      command('set nocursorline')
+      screen:expect([[
+        {1:>>}a                                                  |
+        {1:>>}^b                                                  |
+        {1:>>}c                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      command('set cursorline cursorlineopt=line')
+      screen:expect([[
+        {1:>>}a                                                  |
+        {1:>>}{3:^b                                                  }|
+        {1:>>}c                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      command('set cursorlineopt=number')
+      screen:expect([[
+        {1:>>}a                                                  |
+        {8:>>}^b                                                  |
+        {1:>>}c                                                  |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
+
     it('multiple signs #9295', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       command('set number')
