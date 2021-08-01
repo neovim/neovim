@@ -1006,6 +1006,9 @@ func Test_Executable()
     if catcmd =~ '\<sbin\>' && result =~ '\<bin\>'
       call assert_equal('/' .. substitute(catcmd, '\<sbin\>', 'bin', ''), result)
     else
+      " /bin/cat and /usr/bin/cat may be hard linked, we could get either
+      let result = substitute(result, '/usr/bin/cat', '/bin/cat', '')
+      let catcmd = substitute(catcmd, 'usr/bin/cat', 'bin/cat', '')
       call assert_equal('/' .. catcmd, result)
     endif
     bwipe

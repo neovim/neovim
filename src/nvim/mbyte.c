@@ -73,9 +73,6 @@ struct interval {
 # include "unicode_tables.generated.h"
 #endif
 
-char_u e_loadlib[] = "E370: Could not load library %s";
-char_u e_loadfunc[] = "E448: Could not load library function %s";
-
 // To speed up BYTELEN(); keep a lookup table to quickly get the length in
 // bytes of a UTF-8 character from the first byte of a UTF-8 string.  Bytes
 // which are illegal when used as the first byte have a 1.  The NUL byte has

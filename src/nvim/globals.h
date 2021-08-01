@@ -501,7 +501,7 @@ EXTERN volatile int full_screen INIT(= false);
 
 /// Non-zero when only "safe" commands are allowed, e.g. when sourcing .exrc or
 /// .vimrc in current directory.
-EXTERN int secure INIT(= false);
+EXTERN int secure INIT(= 0);
 
 /// Non-zero when changing text and jumping to another window/buffer is not
 /// allowed.

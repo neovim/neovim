@@ -770,7 +770,7 @@ void free_all_options(void)
       }
     } else if (options[i].var != VAR_WIN && (options[i].flags & P_STRING)) {
       // buffer-local option: free global value
-      free_string_option(*(char_u **)options[i].var);
+      clear_string_option((char_u **)options[i].var);
     }
   }
 }
