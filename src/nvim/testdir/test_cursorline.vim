@@ -110,6 +110,7 @@ endfunc
 func Test_cursorline_screenline()
   CheckScreendump
   CheckOption cursorlineopt
+
   let filename='Xcursorline'
   let lines = []
 
@@ -196,3 +197,53 @@ func Test_cursorline_screenline()
   call StopVimInTerminal(buf)
   call delete(filename)
 endfunc
+
+func Test_cursorline_redraw()
+  CheckScreendump
+  CheckOption cursorlineopt
+
+  let textlines =<< END
+			When the option is a list of flags, {value} must be
+			exactly as they appear in the option.  Remove flags
+			one by one to avoid problems.
+			Also see |:set-args| above.
+
+The {option} arguments to ":set" may be repeated.  For example: >
+	:set ai nosi sw=3 ts=3
+If you make an error in one of the arguments, an error message will be given
+and the following arguments will be ignored.
+
+							*:set-verbose*
+When 'verbose' is non-zero, displaying an option value will also tell where it
+was last set.  Example: >
+	:verbose set shiftwidth cindent?
+<  shiftwidth=4 ~
+	  Last set from modeline line 1 ~
+  cindent ~
+	  Last set from /usr/local/share/vim/vim60/ftplugin/c.vim line 30 ~
+This is only done when specific option values are requested, not for ":verbose
+set all" or ":verbose set" without an argument.
+When the option was set by hand there is no "Last set" message.
+When the option was set while executing a function, user command or
+END
+  call writefile(textlines, 'Xtextfile')
+
+  let script =<< trim END
+      set cursorline scrolloff=2
+      normal 12G
+  END
+  call writefile(script, 'Xscript')
+
+  let buf = RunVimInTerminal('-S Xscript Xtextfile', #{rows: 20, cols: 40})
+  call VerifyScreenDump(buf, 'Test_cursorline_redraw_1', {})
+  call term_sendkeys(buf, "zt")
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<C-U>")
+  call VerifyScreenDump(buf, 'Test_cursorline_redraw_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xscript')
+  call delete('Xtextfile')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

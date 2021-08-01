@@ -1383,10 +1383,12 @@ static void win_update(win_T *wp, Providers *providers)
        * up or down to minimize redrawing.
        * Don't do this when the change continues until the end.
        * Don't scroll when dollar_vcol >= 0, keep the "$".
+       * Don't scroll when redrawing the top, scrolled already above.
        */
       if (lnum == mod_top
           && mod_bot != MAXLNUM
-          && !(dollar_vcol >= 0 && mod_bot == mod_top + 1)) {
+          && !(dollar_vcol >= 0 && mod_bot == mod_top + 1)
+          && row >= top_end) {
         int old_rows = 0;
         int new_rows = 0;
         int xtra_rows;
