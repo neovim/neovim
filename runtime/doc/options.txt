@@ -4497,58 +4497,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set.  It's normally not set directly, but by using one of the commands
 	|:ptag|, |:pedit|, etc.
 
-						*'printdevice'* *'pdev'*
-'printdevice' 'pdev'	string	(default empty)
-			global
-	The name of the printer to be used for |:hardcopy|.
-	See |pdev-option|.
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
-
-						*'printencoding'* *'penc'*
-'printencoding' 'penc'	string	(default empty, except for some systems)
-			global
-	Sets the character encoding used when printing.
-	See |penc-option|.
-
-						*'printexpr'* *'pexpr'*
-'printexpr' 'pexpr'	string	(default: see below)
-			global
-	Expression used to print the PostScript produced with |:hardcopy|.
-	See |pexpr-option|.
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
-
-						*'printfont'* *'pfn'*
-'printfont' 'pfn'	string	(default "courier")
-			global
-	The name of the font that will be used for |:hardcopy|.
-	See |pfn-option|.
-
-						*'printheader'* *'pheader'*
-'printheader' 'pheader'  string  (default "%<%f%h%m%=Page %N")
-			global
-	The format of the header produced in |:hardcopy| output.
-	See |pheader-option|.
-
-						*'printmbcharset'* *'pmbcs'*
-'printmbcharset' 'pmbcs'  string (default "")
-			global
-	The CJK character set to be used for CJK output from |:hardcopy|.
-	See |pmbcs-option|.
-
-						*'printmbfont'* *'pmbfn'*
-'printmbfont' 'pmbfn'	string (default "")
-			global
-	List of font names to be used for CJK output from |:hardcopy|.
-	See |pmbfn-option|.
-
-						*'printoptions'* *'popt'*
-'printoptions' 'popt' string (default "")
-			global
-	List of items that control the format of the output of |:hardcopy|.
-	See |popt-option|.
-
 						*'pumblend'* *'pb'*
 'pumblend' 'pb'		number	(default 0)
 			global
@@ -4840,7 +4788,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  menu.vim	GUI menus |menu.vim|
 	  pack/		packages |:packadd|
 	  plugin/	plugin scripts |write-plugin|
-	  print/	files for printing |postscript-print-encoding|
 	  rplugin/	|remote-plugin| scripts
 	  spell/	spell checking files |spell|
 	  syntax/	syntax files |mysyntaxfile|
@@ -5923,7 +5870,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	o N   Byte number in file of byte under cursor, first byte is 1.
 	      Mnemonic: Offset from start of file (with one added)
 	O N   As above, in hexadecimal.
-	N N   Printer page number.  (Only works in the 'printheader' option.)
 	l N   Line number.
 	L N   Number of lines in buffer.
 	c N   Column number (byte index).
@@ -6204,7 +6150,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|:retab| command, and 'softtabstop' option.
 
 	Note: Setting 'tabstop' to any other value than 8 can make your file
-	appear wrong in many places (e.g., when printing it).
+	appear wrong in many places.
 
 	There are four main ways to use tabs in Vim:
 	1. Always keep 'tabstop' at 8, set 'softtabstop' and 'shiftwidth' to 4
