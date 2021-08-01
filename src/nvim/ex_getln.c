@@ -2267,7 +2267,7 @@ static int command_line_changed(CommandLineState *s)
     close_preview_windows();
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   } else {
-    if (s->xpc.xp_context == EXPAND_NOTHING) {
+    if (s->xpc.xp_context == EXPAND_NOTHING && (KeyTyped || vpeekc() == NUL)) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
   }
