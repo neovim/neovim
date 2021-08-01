@@ -1,0 +1,18 @@
+name: "Commit Linter"
+on: pull_request
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2.3.1
+        with:
+          fetch-depth: 0
+      - run: npm install --save-dev @commitlint/cli
+      - run: |
+          if [[ "$(gh pr view ${{ github.event.pull_request.number }} --json commits --jq '.[][0].messageHeadline')" == vim-patch* ]];then
+            npx commitlint --from HEAD~1 --to HEAD --verbose --help-url https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages --config .github/workflows/commitlint.config_patch.js
+          else
+            npx commitlint --from HEAD~1 --to HEAD --verbose --help-url https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages --config .github/workflows/commitlint.config.js
+          fi

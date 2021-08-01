@@ -86,15 +86,35 @@ the VCS/git logs more valuable. The general structure of a commit message is as 
 [optional footer(s)]
 ```
 
-- **Prefix the commit subject with a _type_:** `doc:`, `test:`
-  `runtime:`, ...
-    - Subject line for commits with only style/lint changes can be a single
-      word: `style` or `lint`.
-- **Add the optional scope following <type> if possible:** `(lsp)`, `(treesitter)`, `(multigrid)`, ...
+- Prefix the commit subject with one of the following _types_:
+    - `build`: all changes related to the build system (involving scripts, configurations or tools) and package dependencies.
+    - `ci`: all changes related to the continuous integration and deployment system - involving scripts, configurations or tools.
+    - `docs`: all documentation changes. This includes both external documentation intended for end users as well as internal documentation intended for developers.
+    - `feat`: new abilities or functionality.
+    - `fix`: a bug fix.
+    - `perf`: performance improvements.
+    - `refactor`: modification of the code base which neither adds a feature nor fixes a bug - such as removing redundant code, simplifying the code, renaming variables, etc.
+    - `revert`: revert previous commits.
+    - `test`: all changes related to tests such as refactoring existing tests or adding new tests.
+    - `vim-patch`: all patches from upstream Vim. The commit messages for patches has [slightly different rules](https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim#pull-requests) as not to interfere with existing scripts.
+    - `chore`: Lastly, if none of the types above fits you may use `chore` as the type.
+
+- Append optional scope to _type_ if possible: `(lsp)`, `(treesitter)` or `(float/windows)`.
+
 - Try to keep the first line under 72 characters.
+
 - A blank line must separate the subject from the description.
-- Breaking changes must be indicated at the very beginning of the footer or body section of a commit. A breaking change must consist of the uppercase text BREAKING CHANGE, followed by a colon, a space, and a description of what has changed about the API.
-- Check your commit message for spelling and grammatical mistakes.
+
+- A breaking API change must be indicated by appending `!` after the type/scope and at the very beginning of the footer with a **BREAKING CHANGE**.
+
+    Example:
+
+    ```
+    refactor(provider)!: drop support for Python 2
+
+    BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
+    ```
+
 - Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
 ### Automated builds (CI)
