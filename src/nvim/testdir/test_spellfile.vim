@@ -210,6 +210,52 @@ func Test_spellfile_CHECKCOMPOUNDPATTERN()
   call delete('XtestCHECKCOMPOUNDPATTERN-utf8.spl')
 endfunc
 
+" Test NOCOMPOUNDSUGS (see :help spell-NOCOMPOUNDSUGS)
+func Test_spellfile_NOCOMPOUNDSUGS()
+  call writefile(['3',
+        \         'one/c',
+        \         'two/c',
+        \         'three/c'], 'XtestNOCOMPOUNDSUGS.dic')
+
+  " pass 0 tests without NOCOMPOUNDSUGS, pass 1 tests with NOCOMPOUNDSUGS
+  for pass in [0, 1]
+    if pass == 0
+      call writefile(['COMPOUNDFLAG c'], 'XtestNOCOMPOUNDSUGS.aff')
+    else
+      call writefile(['NOCOMPOUNDSUGS',
+          \           'COMPOUNDFLAG c'], 'XtestNOCOMPOUNDSUGS.aff')
+    endif
+
+    mkspell! XtestNOCOMPOUNDSUGS-utf8.spl XtestNOCOMPOUNDSUGS
+    set spell spelllang=XtestNOCOMPOUNDSUGS-utf8.spl
+
+    for goodword in ['one', 'two', 'three',
+          \          'oneone', 'onetwo',  'onethree',
+          \          'twoone', 'twotwo', 'twothree',
+          \          'threeone', 'threetwo', 'threethree',
+          \          'onetwothree', 'onethreetwo', 'twothreeone', 'oneoneone']
+      call assert_equal(['', ''], spellbadword(goodword), goodword)
+    endfor
+
+    for badword in ['four', 'onetwox', 'onexone']
+      call assert_equal([badword, 'bad'], spellbadword(badword))
+    endfor
+
+    if pass == 0
+      call assert_equal(['one', 'oneone'], spellsuggest('onne', 2))
+      call assert_equal(['onethree', 'one three'], spellsuggest('onethre', 2))
+    else
+      call assert_equal(['one', 'one one'], spellsuggest('onne', 2))
+      call assert_equal(['one three'], spellsuggest('onethre', 2))
+    endif
+  endfor
+
+  set spell& spelllang&
+  call delete('XtestNOCOMPOUNDSUGS.dic')
+  call delete('XtestNOCOMPOUNDSUGS.aff')
+  call delete('XtestNOCOMPOUNDSUGS-utf8.spl')
+endfunc
+
 " Test COMMON (better suggestions with common words, see :help spell-COMMON)
 func Test_spellfile_COMMON()
   call writefile(['7',
