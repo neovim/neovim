@@ -2697,7 +2697,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           p_extra = p_extra_free;
           c_extra = NUL;
           c_final = NUL;
-          if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+          if (wp->w_p_cul && *wp->w_p_culopt != 'l'
+              && lnum == wp->w_cursor.lnum) {
             char_attr = win_hl_attr(wp, HLF_CLF);
           } else {
             char_attr = win_hl_attr(wp, HLF_FC);
@@ -4487,7 +4488,7 @@ static void get_sign_display_info(
   if (nrcol) {
     *n_extrap = number_width(wp) + 1;
   } else {
-    if (wp->w_p_cul && wp->w_cursor.lnum == lnum) {
+    if (wp->w_p_cul && *wp->w_p_culopt != 'l' && wp->w_cursor.lnum == lnum) {
       *char_attrp = win_hl_attr(wp, HLF_CLS);
     } else {
       *char_attrp = win_hl_attr(wp, HLF_SC);
@@ -4532,7 +4533,8 @@ static void get_sign_display_info(
         }
       }
 
-      if (wp->w_p_cul && wp->w_cursor.lnum == lnum && sattr->sat_culhl > 0) {
+      if (wp->w_p_cul && *wp->w_p_culopt != 'l' && wp->w_cursor.lnum == lnum
+          && sattr->sat_culhl > 0) {
         *char_attrp = sattr->sat_culhl;
       } else {
         *char_attrp = sattr->sat_texthl;

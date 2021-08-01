@@ -33,7 +33,8 @@ struct sign
     int         sn_line_hl;     // highlight ID for line
     int         sn_text_hl;     // highlight ID for text
     int         sn_num_hl;      // highlight ID for line number
-    int         sn_cul_hl;      // highlight ID for text on current line when 'cursorline' is set
+    int         sn_cul_hl;      // highlight ID for text on current line when
+                                // 'cursorline' is set
 };
 
 static sign_T *first_sign = NULL;
