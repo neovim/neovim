@@ -2614,7 +2614,7 @@ void *eval_for_line(const char_u *arg, bool *errp, char_u **nextcmdp, int skip)
         }
         tv_clear(&tv);
       } else {
-        EMSG(_(e_listreq));
+        EMSG(_(e_listblobreq));
         tv_clear(&tv);
       }
     }

@@ -251,6 +251,12 @@ func Test_blob_func_remove()
   call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(b, b)", 'E974:')
   call assert_fails("call remove(v:_null_blob, 1, 2)", 'E979:')
+
+  " Translated from v8.2.3284
+  let b = 0zDEADBEEF
+  lockvar b
+  call assert_fails('call remove(b, 0)', 'E741:')
+  unlockvar b
 endfunc
 
 func Test_blob_read_write()
@@ -308,6 +314,12 @@ func Test_blob_insert()
   call assert_fails('call insert(b, 257)', 'E475:')
   call assert_fails('call insert(b, 0, [9])', 'E745:')
   call assert_equal(0, insert(v:_null_blob, 0x33))
+
+  " Translated from v8.2.3284
+  let b = 0zDEADBEEF
+  lockvar b
+  call assert_fails('call insert(b, 3)', 'E741:')
+  unlockvar b
 endfunc
 
 func Test_blob_reverse()

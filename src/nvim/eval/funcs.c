@@ -4984,12 +4984,16 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool error = false;
 
   if (argvars[0].v_type == VAR_BLOB) {
-    if (argvars[0].vval.v_blob == NULL) {
+    blob_T *const b = argvars[0].vval.v_blob;
+
+    if (b == NULL
+        || var_check_lock(b->bv_lock, N_("insert() argument"),
+                          TV_TRANSLATE)) {
       return;
     }
 
     long before = 0;
-    const int len = tv_blob_len(argvars[0].vval.v_blob);
+    const int len = tv_blob_len(b);
 
     if (argvars[2].v_type != VAR_UNKNOWN) {
       before = (long)tv_get_number_chk(&argvars[2], &error);
@@ -5010,11 +5014,11 @@ static void f_insert(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
 
-    ga_grow(&argvars[0].vval.v_blob->bv_ga, 1);
-    char_u *const p = (char_u *)argvars[0].vval.v_blob->bv_ga.ga_data;
+    ga_grow(&b->bv_ga, 1);
+    char_u *const p = (char_u *)b->bv_ga.ga_data;
     memmove(p + before + 1, p + before, (size_t)len - before);
     *(p + before) = val;
-    argvars[0].vval.v_blob->bv_ga.ga_len++;
+    b->bv_ga.ga_len++;
 
     tv_copy(&argvars[0], rettv);
   } else if (argvars[0].v_type != VAR_LIST) {
@@ -7312,11 +7316,16 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
   } else if (argvars[0].v_type == VAR_BLOB) {
+    blob_T *const b = argvars[0].vval.v_blob;
+
+    if (b != NULL && var_check_lock(b->bv_lock, arg_errmsg, TV_TRANSLATE)) {
+      return;
+    }
+
     bool error = false;
     idx = (long)tv_get_number_chk(&argvars[1], &error);
 
     if (!error) {
-      blob_T *const b = argvars[0].vval.v_blob;
       const int len = tv_blob_len(b);
 
       if (idx < 0) {

@@ -372,8 +372,8 @@ Changing the order of items in a list: >
 
 For loop ~
 
-The |:for| loop executes commands for each item in a list.  A variable is set
-to each item in the list in sequence.  Example: >
+The |:for| loop executes commands for each item in a |List| or |Blob|.
+A variable is set to each item in the sequence.  Example with a List: >
 	:for item in mylist
 	:   call Doit(item)
 	:endfor
@@ -405,6 +405,8 @@ It is also possible to put remaining items in a List variable: >
 	:      echo "remainder: " . string(rest)
 	:   endif
 	:endfor
+
+For a Blob one byte at a time is used.
 
 
 List functions ~
@@ -635,6 +637,16 @@ To avoid an error for an invalid index use the |get()| function.  When an item
 is not available it returns -1 or the default value you specify: >
 	:echo get(myblob, idx)
 	:echo get(myblob, idx, 999)
+
+
+Blob iteration ~
+
+The |:for| loop executes commands for each byte of a Blob.  The loop variable is
+set to each byte in the Blob.  Example: >
+	:for byte in 0z112233
+	:   call Doit(byte)
+	:endfor
+This calls Doit() with 0x11, 0x22 and 0x33.
 
 
 Blob concatenation ~
@@ -10999,27 +11011,33 @@ text...
 			NOTE: The ":append" and ":insert" commands don't work
 			properly inside a ":while" and ":for" loop.
 
-:for {var} in {list}					*:for* *E690* *E732*
+:for {var} in {object}					*:for* *E690* *E732*
 :endfo[r]						*:endfo* *:endfor*
 			Repeat the commands between ":for" and ":endfor" for
-			each item in {list}.  Variable {var} is set to the
-			value of each item.
-			When an error is detected for a command inside the
-			loop, execution continues after the "endfor".
-			Changing {list} inside the loop affects what items are
-			used.  Make a copy if this is unwanted: >
+			each item in {object}.  {object} can be a |List| or
+			a |Blob|.  Variable {var} is set to the value of each
+			item.  When an error is detected for a command inside
+			the loop, execution continues after the "endfor".
+			Changing {object} inside the loop affects what items
+			are used.  Make a copy if this is unwanted: >
 				:for item in copy(mylist)
-<			When not making a copy, Vim stores a reference to the
-			next item in the list, before executing the commands
-			with the current item.  Thus the current item can be
-			removed without effect.  Removing any later item means
-			it will not be found.  Thus the following example
-			works (an inefficient way to make a list empty): >
+<
+			When {object} is a |List| and not making a copy, Vim
+			stores a reference to the next item in the |List|
+			before executing the commands with the current item.
+			Thus the current item can be removed without effect.
+			Removing any later item means it will not be found.
+			Thus the following example works (an inefficient way
+			to make a |List| empty): >
 				for item in mylist
 				   call remove(mylist, 0)
 				endfor
-<			Note that reordering the list (e.g., with sort() or
+<			Note that reordering the |List| (e.g., with sort() or
 			reverse()) may have unexpected effects.
+
+			When {object} is a |Blob|, Vim always makes a copy to
+			iterate over.  Unlike with |List|, modifying the
+			|Blob| does not affect the iteration.
 
 :for [{var1}, {var2}, ...] in {listlist}
 :endfo[r]
