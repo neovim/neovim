@@ -119,7 +119,7 @@ describe('writefile()', function()
     eq('\nE118: Too many arguments for function: writefile',
        redir_exec(('call writefile([], "%s", "b", 1)'):format(fname)))
     for _, arg in ipairs({'0', '0.0', 'function("tr")', '{}', '"test"'}) do
-      eq('\nE475: Invalid argument: writefile()',
+      eq('\nE475: Invalid argument: writefile() first argument must be a List or a Blob',
          redir_exec(('call writefile(%s, "%s", "b")'):format(arg, fname)))
     end
     for _, args in ipairs({'[], %s, "b"', '[], "' .. fname .. '", %s'}) do
