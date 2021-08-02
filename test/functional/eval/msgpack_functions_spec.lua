@@ -517,6 +517,10 @@ describe('msgpackdump() function', function()
     eq({"\196\004Test"}, eval('msgpackdump(obj)'))
   end)
 
+  it('dumps blob as BIN 8', function()
+    eq({'\196\005Bl\nb!'}, eval('msgpackdump([0z426c006221])'))
+  end)
+
   it('can dump generic mapping with generic mapping keys and values', function()
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('let todumpv1 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
@@ -714,6 +718,10 @@ describe('msgpackdump() function', function()
     eq({'\196\n'}, eval('msgpackdump([$XXX_UNEXISTENT_VAR_XXX])'))
     eq({'\196\n'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.binary, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
     eq({'\160'}, eval('msgpackdump([{"_TYPE": v:msgpack_types.string, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}])'))
+  end)
+
+  it('can dump NULL blob', function()
+    eq({'\196\n'}, eval('msgpackdump([v:_null_blob])'))
   end)
 
   it('can dump NULL list', function()

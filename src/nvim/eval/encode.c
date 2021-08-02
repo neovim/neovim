@@ -950,7 +950,13 @@ char *encode_tv2json(typval_T *tv, size_t *len)
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
-    abort() /* TODO(seandewar) */ \
+    do { \
+      const size_t len_ = (size_t)(len); \
+      msgpack_pack_bin(packer, len_); \
+      if (len_ > 0) { \
+        msgpack_pack_bin_body(packer, (blob)->bv_ga.ga_data, len_); \
+      } \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     msgpack_pack_int64(packer, (int64_t)(num))

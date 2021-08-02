@@ -6692,7 +6692,7 @@ msgpackdump({list})					*msgpackdump()*
 		1. |Funcref|s cannot be dumped.
 		2. Containers that reference themselves cannot be dumped.
 		3. Dictionary keys are always dumped as STR strings.
-		4. Other strings are always dumped as BIN strings.
+		4. Other strings and |Blob|s are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
 msgpackparse({list})					*msgpackparse()*
@@ -6706,7 +6706,7 @@ msgpackparse({list})					*msgpackparse()*
 
 		Limitations:
 		1. Mapping ordering is not preserved unless messagepack
-		   mapping is dumped using generic  mapping
+		   mapping is dumped using generic mapping
 		   (|msgpack-special-map|).
 		2. Since the parser aims to preserve all data untouched
 		   (except for 1.) some strings are parsed to
