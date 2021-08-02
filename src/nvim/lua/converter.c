@@ -482,7 +482,12 @@ static bool typval_conv_special = false;
     TYPVAL_ENCODE_CONV_NIL(tv)
 
 #define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
-    abort() /* TODO(seandewar) */ \
+    do { \
+      const blob_T *const blob_ = (blob); \
+      lua_pushlstring(lstate, \
+                      blob_ != NULL ? (const char *)blob_->bv_ga.ga_data : "", \
+                      (size_t)(len)); \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \

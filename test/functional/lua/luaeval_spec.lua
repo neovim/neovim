@@ -458,6 +458,9 @@ describe('v:lua', function()
       function mymod.crashy()
         nonexistent()
       end
+      function mymod.whatis(value)
+        return type(value) .. ": " .. tostring(value)
+      end
       function mymod.omni(findstart, base)
         if findstart == 1 then
           return 5
@@ -476,6 +479,8 @@ describe('v:lua', function()
     eq(true, exec_lua([[return _G.val == vim.NIL]]))
     eq(NIL, eval('v:lua.mymod.noisy("eval")'))
     eq("hey eval", meths.get_current_line())
+    eq("string: abc", eval('v:lua.mymod.whatis(0z616263)'))
+    eq("string: ", eval('v:lua.mymod.whatis(v:_null_blob)'))
 
     eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(eval, 'v:lua.mymod.crashy()'))
