@@ -290,12 +290,20 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
         set_topline(wp, wp->w_topline);
       }
 
-      // Relative numbering may require updating more.  Cursor line
-      // highlighting probably needs to be updated if it's below the
-      // change.
-      if (wp->w_p_rnu
-          || (wp->w_p_cul && lnum <= wp->w_last_cursorline)) {
+      // Relative numbering may require updating more.
+      if (wp->w_p_rnu) {
         redraw_later(wp, SOME_VALID);
+      }
+
+      // Cursor line highlighting probably need to be updated with
+      // "VALID" if it's below the change.
+      // If the cursor line is inside the change we need to redraw more.
+      if (wp->w_p_cul) {
+        if (xtra == 0) {
+          redraw_later(wp, VALID);
+        } else if (lnum <= wp->w_last_cursorline) {
+          redraw_later(wp, SOME_VALID);
+        }
       }
     }
   }

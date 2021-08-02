@@ -1371,7 +1371,9 @@ static void win_update(win_T *wp, Providers *providers)
                         // match in fixed position might need redraw
                         // if lines were inserted or deleted
                         || (wp->w_match_head != NULL
-                            && buf->b_mod_xlines != 0)))))) {
+                            && buf->b_mod_xlines != 0)))))
+        || (wp->w_p_cul && (lnum == wp->w_cursor.lnum
+                            || lnum == wp->w_last_cursorline))) {
       if (lnum == mod_top) {
         top_to_mod = false;
       }
@@ -1381,10 +1383,12 @@ static void win_update(win_T *wp, Providers *providers)
        * up or down to minimize redrawing.
        * Don't do this when the change continues until the end.
        * Don't scroll when dollar_vcol >= 0, keep the "$".
+       * Don't scroll when redrawing the top, scrolled already above.
        */
       if (lnum == mod_top
           && mod_bot != MAXLNUM
-          && !(dollar_vcol >= 0 && mod_bot == mod_top + 1)) {
+          && !(dollar_vcol >= 0 && mod_bot == mod_top + 1)
+          && row >= top_end) {
         int old_rows = 0;
         int new_rows = 0;
         int xtra_rows;
@@ -2090,7 +2094,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   sign_attrs_T sattrs[SIGN_SHOW_MAX];   // attributes for signs
   int num_signs;                        // number of signs for line
   int line_attr = 0;                    // attribute for the whole line
+  int line_attr_save;
   int line_attr_lowprio = 0;            // low-priority attribute for the line
+  int line_attr_lowprio_save;
   matchitem_T *cur;                     // points to the match list
   match_T     *shl;                     // points to search_hl or a match
   bool shl_flag;                        // flag to indicate whether search_hl
@@ -2108,6 +2114,14 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
   char_u buf_fold[FOLD_TEXT_LEN + 1];   // Hold value returned by get_foldtext
 
   bool area_active = false;
+
+  int cul_attr = 0;                     // set when 'cursorline' active
+  // 'cursorlineopt' has "screenline" and cursor is in this line
+  bool cul_screenline = false;
+  // margin columns for the screen line, needed for when 'cursorlineopt'
+  // contains "screenline"
+  int left_curline_col = 0;
+  int right_curline_col = 0;
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
@@ -2360,26 +2374,34 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
   // Cursor line highlighting for 'cursorline' in the current window.
   if (lnum == wp->w_cursor.lnum) {
-    // Do not show the cursor line when Visual mode is active, because it's
-    // not clear what is selected then.
+    // Do not show the cursor line in the text when Visual mode is active,
+    // because it's not clear what is selected then.
     if (wp->w_p_cul && !(wp == curwin && VIsual_active)
-        && *wp->w_p_culopt != 'n') {
-      int cul_attr = win_hl_attr(wp, HLF_CUL);
+        && wp->w_p_culopt_flags != CULOPT_NBR) {
+      cul_screenline = (wp->w_p_wrap
+                        && (wp->w_p_culopt_flags & CULOPT_SCRLINE));
+      cul_attr = win_hl_attr(wp, HLF_CUL);
       HlAttrs ae = syn_attr2entry(cul_attr);
 
       // We make a compromise here (#7383):
       //  * low-priority CursorLine if fg is not set
       //  * high-priority ("same as Vim" priority) CursorLine if fg is set
-      if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
-        line_attr_lowprio = cul_attr;
-      } else {
-        if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
-            && qf_current_entry(wp) == lnum) {
-          line_attr = hl_combine_attr(cul_attr, line_attr);
+      if (!cul_screenline) {
+        if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
+          line_attr_lowprio = cul_attr;
         } else {
-          line_attr = cul_attr;
+          if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
+              && qf_current_entry(wp) == lnum) {
+            line_attr = hl_combine_attr(cul_attr, line_attr);
+          } else {
+            line_attr = cul_attr;
+          }
         }
+      } else {
+        cul_attr = 0;
+        margin_columns_win(wp, &left_curline_col, &right_curline_col);
       }
+      area_highlighting = true;
     }
     // Update w_last_cursorline even if Visual mode is active.
     wp->w_last_cursorline = wp->w_cursor.lnum;
@@ -2402,6 +2424,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
   if (line_attr_lowprio || line_attr) {
     area_highlighting = true;
+  }
+
+  if (cul_screenline) {
+    line_attr_save = line_attr;
+    line_attr_lowprio_save = line_attr_lowprio;
   }
 
   line = ml_get_buf(wp->w_buffer, lnum, FALSE);
@@ -2786,12 +2813,16 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             if (num_sattr != NULL) {
               // :sign defined with "numhl" highlight.
               char_attr = num_sattr->sat_numhl;
-            } else if ((wp->w_p_cul || wp->w_p_rnu)
-                       && *wp->w_p_culopt != 'l'
+            } else if (wp->w_p_cul
                        && lnum == wp->w_cursor.lnum
+                       && (wp->w_p_culopt_flags & CULOPT_NBR)
+                       && (row == startrow
+                           || wp->w_p_culopt_flags & CULOPT_LINE)
                        && filler_todo == 0) {
               // When 'cursorline' is set highlight the line number of
               // the current line differently.
+              // When 'cursorlineopt' has "screenline" only highlight
+              // the line number itself.
               // TODO(vim): Can we use CursorLine instead of CursorLineNr
               // when CursorLineNr isn't set?
               char_attr = win_hl_attr(wp, HLF_CLN);
@@ -2823,9 +2854,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = win_hl_attr(wp, diff_hlf);
-            if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-                && *wp->w_p_culopt != 'n') {
-              char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
+            if (cul_attr) {
+              char_attr = hl_combine_attr(char_attr, cul_attr);
             }
           }
           p_extra = NULL;
@@ -2884,9 +2914,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           if (tocol == vcol)
             tocol += n_extra;
           // Combine 'showbreak' with 'cursorline', prioritizing 'showbreak'.
-          if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-              && *wp->w_p_culopt != 'n') {
-            char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), char_attr);
+          if (cul_attr) {
+            char_attr = hl_combine_attr(cul_attr, char_attr);
           }
         }
       }
@@ -2910,6 +2939,24 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         } else {
           char_attr = 0;
         }
+      }
+    }
+
+    if (cul_screenline) {
+      if (draw_state == WL_LINE
+          && vcol >= left_curline_col
+          && vcol < right_curline_col) {
+        cul_attr = win_hl_attr(wp, HLF_CUL);
+        HlAttrs ae = syn_attr2entry(cul_attr);
+        if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
+          line_attr_lowprio = cul_attr;
+        } else {
+          line_attr = cul_attr;
+        }
+      } else {
+        cul_attr = 0;
+        line_attr = line_attr_save;
+        line_attr_lowprio = line_attr_lowprio_save;
       }
     }
 
@@ -3120,13 +3167,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         }
         line_attr = win_hl_attr(wp, diff_hlf);
         // Overlay CursorLine onto diff-mode highlight.
-        if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-            && *wp->w_p_culopt != 'n') {
+        if (cul_attr) {
           line_attr = 0 != line_attr_lowprio  // Low-priority CursorLine
-            ? hl_combine_attr(hl_combine_attr(win_hl_attr(wp, HLF_CUL),
-                                              line_attr),
+            ? hl_combine_attr(hl_combine_attr(cul_attr, line_attr),
                               hl_get_underline())
-            : hl_combine_attr(line_attr, win_hl_attr(wp, HLF_CUL));
+            : hl_combine_attr(line_attr, cul_attr);
         }
       }
 
@@ -3201,6 +3246,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           mb_l = 1;
           (void)mb_l;
           multi_attr = win_hl_attr(wp, HLF_AT);
+
+          if (cul_attr) {
+            multi_attr = 0 != line_attr_lowprio
+              ? hl_combine_attr(cul_attr, multi_attr)
+              : hl_combine_attr(multi_attr, cul_attr);
+          }
 
           // put the pointer back to output the double-width
           // character at the start of the next line.
@@ -3362,7 +3413,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           ptr = line + v;
 
           if (!attr_pri) {
-            char_attr = syntax_attr;
+            if (cul_attr) {
+              char_attr = 0 != line_attr_lowprio
+                ? hl_combine_attr(cul_attr, syntax_attr)
+                : hl_combine_attr(syntax_attr, cul_attr);
+            } else {
+              char_attr = syntax_attr;
+            }
           } else {
             char_attr = hl_combine_attr(syntax_attr, char_attr);
           }
@@ -3929,9 +3986,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         }
 
         int eol_attr = char_attr;
-        if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-            && *wp->w_p_culopt != 'n') {
-          eol_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), eol_attr);
+        if (cul_attr) {
+          eol_attr = hl_combine_attr(cul_attr, eol_attr);
         }
         linebuf_attr[off] = eol_attr;
         if (wp->w_p_rl) {
@@ -7514,6 +7570,49 @@ int number_width(win_T *wp)
 
   wp->w_nrwidth_width = n;
   return n;
+}
+
+/// Used when 'cursorlineopt' contains "screenline": compute the margins between
+/// which the highlighting is used.
+static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
+{
+  // cache previous calculations depending on w_virtcol
+  static int saved_w_virtcol;
+  static win_T *prev_wp;
+  static int prev_left_col;
+  static int prev_right_col;
+  static int prev_col_off;
+
+  int cur_col_off = win_col_off(wp);
+  int width1;
+  int width2;
+
+  if (saved_w_virtcol == wp->w_virtcol && prev_wp == wp
+      && prev_col_off == cur_col_off) {
+    *right_col = prev_right_col;
+    *left_col = prev_left_col;
+    return;
+  }
+
+  width1 = wp->w_width - cur_col_off;
+  width2 = width1 + win_col_off2(wp);
+
+  *left_col = 0;
+  *right_col = width1;
+
+  if (wp->w_virtcol >= (colnr_T)width1) {
+    *right_col = width1 + ((wp->w_virtcol - width1) / width2 + 1) * width2;
+  }
+  if (wp->w_virtcol >= (colnr_T)width1 && width2 > 0) {
+    *left_col = (wp->w_virtcol - width1) / width2 * width2 + width1;
+  }
+
+  // cache values
+  prev_left_col = *left_col;
+  prev_right_col = *right_col;
+  prev_wp = wp;
+  saved_w_virtcol = wp->w_virtcol;
+  prev_col_off = cur_col_off;
 }
 
 /// Set dimensions of the Nvim application "shell".

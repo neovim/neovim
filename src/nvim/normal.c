@@ -1275,6 +1275,15 @@ static void normal_redraw(NormalState *s)
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
+  // Might need to update for 'cursorline'.
+  // When 'cursorlineopt' is "screenline" need to redraw always.
+  if (curwin->w_p_cul
+      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
+          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
+      && !char_avail()) {
+    redraw_later(curwin, VALID);
+  }
+
   if (VIsual_active) {
     update_curbuf(INVERTED);  // update inverted part
   } else if (must_redraw) {

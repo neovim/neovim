@@ -558,7 +558,8 @@ return {
     {
       full_name='cursorlineopt', abbreviation='culopt',
       short_desc=N_("settings for 'cursorline'"),
-      type='string', scope={'window'},
+      type='string', list='onecomma', scope={'window'},
+      deny_duplicates=true,
       redraw={'current_window_only'},
       defaults={if_true={vi="both"}}
     },

@@ -1057,7 +1057,7 @@ it('diff updates line numbers below filler lines', function()
     vnew
     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
     windo diffthis
-    setlocal number rnu foldcolumn=0
+    setlocal number rnu cursorline cursorlineopt=number foldcolumn=0
   ]])
   screen:expect([[
     {1:  }a                {3:│}{10:1   }^a               |
@@ -1109,7 +1109,7 @@ it('diff updates line numbers below filler lines', function()
     {3:[No Name] [+]       }{7:[No Name] [+]       }|
                                             |
   ]])
-  command("set signcolumn number tgc cursorline")
+  command("set signcolumn number tgc cursorline cursorlineopt=number,line")
   command("hi CursorLineNr guibg=red")
   screen:expect{grid=[[
     {1:  }a                {3:│}{11:  2 }a               |
