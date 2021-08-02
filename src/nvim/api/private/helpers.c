@@ -445,7 +445,14 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     TYPVAL_ENCODE_CONV_NIL(tv)
 
 #define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
-  abort() /* TODO(seandewar) */ \
+    do { \
+      const size_t len_ = (size_t)(len); \
+      const blob_T *const blob_ = (blob); \
+      kvi_push(edata->stack, STRING_OBJ(((String) { \
+        .data = len_ != 0 ? xmemdup(blob_->bv_ga.ga_data, len_) : NULL, \
+        .size = len_ \
+      }))); \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \
