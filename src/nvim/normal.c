@@ -3277,6 +3277,7 @@ static void clearop(oparg_T *oap)
   oap->regname = 0;
   oap->motion_force = NUL;
   oap->use_reg_one = false;
+  motion_force = NUL;
 }
 
 static void clearopbeep(oparg_T *oap)
