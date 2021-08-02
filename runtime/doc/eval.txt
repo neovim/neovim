@@ -6002,6 +6002,7 @@ json_encode({expr})					*json_encode()*
 		surrogate pairs (such strings are not valid UTF-8 strings).
 		Non-printable characters are converted into "\u1234" escapes
 		or special escapes like "\t", other are dumped as-is.
+		|Blob|s are converted to arrays of the individual bytes.
 
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
