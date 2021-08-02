@@ -271,14 +271,13 @@ function vim.deep_equal(a, b)
   if a == b then return true end
   if type(a) ~= type(b) then return false end
   if type(a) == 'table' then
-    -- TODO improve this algorithm's performance.
     for k, v in pairs(a) do
       if not vim.deep_equal(v, b[k]) then
         return false
       end
     end
-    for k, v in pairs(b) do
-      if not vim.deep_equal(v, a[k]) then
+    for k, _ in pairs(b) do
+      if a[k] == nil then
         return false
       end
     end
