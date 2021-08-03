@@ -583,3 +583,45 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
   try_end(err);
   return res;
 }
+
+/// Gets the current viewport of a window
+///
+/// The returned tuple contains (everything is 0-based, end-exclusive):
+/// - Top-most buffer line index
+/// - Left-most column index
+/// - Number of lines renders (height)
+/// - Number of columns rendered (width)
+///
+/// @see |api-indexing|
+///
+/// @param window Window handle, or 0 for current window.
+/// @param opts Options to the function, reserved for future use.
+/// @param[out] Error deailts, if any
+///
+/// @return (row, col, height, width) tuple of the viewport
+///         amount in this window.
+ArrayOf(Integer, 4) nvim_win_get_viewport(
+    Window window,
+    Dictionary opts,
+    Error *err)
+  FUNC_API_SINCE(8)
+{
+  Array rv = ARRAY_DICT_INIT;
+  win_T *win = find_window_by_handle(window, err);
+
+  if (win) {
+    ADD(rv, INTEGER_OBJ(win->w_topline - 1));
+    ADD(rv, INTEGER_OBJ(win->w_leftcol));
+
+    linenr_T botline = win->w_botline;
+    if (buf_is_empty(win->w_buffer)) {
+      botline = 0;
+    } else if (win->w_empty_rows > 0) {
+      botline = win->w_buffer->b_ml.ml_line_count;
+    }
+    ADD(rv, INTEGER_OBJ(botline - win->w_topline + 1));
+    ADD(rv, INTEGER_OBJ(win->w_width - win_col_off(win)));
+  }
+
+  return rv;
+}

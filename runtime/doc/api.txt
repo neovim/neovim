@@ -2565,6 +2565,28 @@ nvim_win_get_var({window}, {name})                        *nvim_win_get_var()*
                 Return: ~
                     Variable value
 
+nvim_win_get_viewport({window}, {opts})              *nvim_win_get_viewport()*
+                Gets the current viewport of a window
+
+                The returned tuple contains (everything is 0-based,
+                end-exclusive):
+                • Top-most buffer line index
+                • Left-most column index
+                • Number of lines renders (height)
+                • Number of columns rendered (width)
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window.
+                    {opts}    Options to the function, reserved for future
+                              use.
+
+                Return: ~
+                    (row, col, height, width) tuple of the viewport amount in
+                    this window.
+
+                See also: ~
+                    |api-indexing|
+
 nvim_win_get_width({window})                            *nvim_win_get_width()*
                 Gets the window width
 

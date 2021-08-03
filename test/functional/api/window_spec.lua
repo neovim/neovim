@@ -433,4 +433,51 @@ describe('API/win', function()
       eq(b, cfg.border)
     end)
   end)
+
+  describe('get_viewport', function()
+
+    it('errors on wrong window handles', function()
+      eq('Invalid window id: 23', pcall_err(meths.win_get_viewport, 23, {}))
+    end)
+
+    local function prepare_win(lines)
+      local buf = meths.create_buf(true, true)
+      meths.buf_set_lines(buf, 0, -1, false, lines)
+
+      local win = meths.open_win(buf, true, {
+        relative='win', row=0, col=0, width=5, height=5, noautocmd=true
+      })
+      meths.set_current_win(win)
+      return function() return meths.win_get_viewport(win, {}) end, win
+    end
+
+    it('works wth empty buffers', function()
+      local get_viewport = prepare_win{}
+      eq({0, 0, 0, 5}, get_viewport())
+    end)
+
+    it('works on non-empty buffers', function()
+      local get_viewport = prepare_win { 'a', 'b', 'c' }
+      eq({0, 0, 3, 5}, get_viewport())
+    end)
+
+    it('follows lines', function()
+      local get_viewport = prepare_win { 'a', 'b', 'c' }
+      feed "<C-E>"
+      eq({1, 0, 2, 5}, get_viewport())
+    end)
+
+    it('follows columns', function()
+      local get_viewport, win = prepare_win { 'aaaaaaaaaaa' }
+      meths.win_set_option(win, 'wrap', false)
+      feed 'zl'
+      eq({0, 1, 1, 5}, get_viewport())
+    end)
+
+    it('handles non-zero margins', function()
+      local get_viewport, win = prepare_win { 'a', 'b', 'c' }
+      meths.win_set_option(win, 'number', true);
+      eq({0, 0, 3, 1}, get_viewport())
+    end)
+  end)
 end)
