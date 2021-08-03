@@ -1620,7 +1620,7 @@ static bool check_prevcol(char_u *linep, int col, int ch, int *prevcol)
   if (prevcol) {
     *prevcol = col;
   }
-  return (col >= 0 && linep[col] == ch) ? true : false;
+  return col >= 0 && linep[col] == ch;
 }
 
 /*
