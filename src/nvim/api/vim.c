@@ -1557,7 +1557,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// Creates a new namespace, or gets an existing one.
 ///
 /// Namespaces are used for buffer highlights and virtual text, see
-/// |nvim_buf_add_highlight()| and |nvim_buf_set_virtual_text()|.
+/// |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
 ///
 /// Namespaces can be named or anonymous. If `name` matches an existing
 /// namespace, the associated id is returned. If `name` is an empty string

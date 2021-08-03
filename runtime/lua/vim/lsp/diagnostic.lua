@@ -766,17 +766,20 @@ function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
     local virt_texts = M.get_virtual_text_chunks_for_line(bufnr, line, line_diagnostics, opts)
 
     if virt_texts then
-      api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
+      api.nvim_buf_set_extmark(bufnr, diagnostic_ns, line, 0, {
+        virt_text = virt_texts,
+      })
     end
   end
 end
 
---- Default function to get text chunks to display using `nvim_buf_set_virtual_text`.
+--- Default function to get text chunks to display using |nvim_buf_set_extmark()|.
 ---@param bufnr number The buffer to display the virtual text in
 ---@param line number The line number to display the virtual text on
 ---@param line_diags Diagnostic[] The diagnostics associated with the line
 ---@param opts table See {opts} from |vim.lsp.diagnostic.set_virtual_text()|
----@return table chunks, as defined by |nvim_buf_set_virtual_text()|
+---@return an array of [text, hl_group] arrays. This can be passed directly to
+---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   assert(bufnr or line)
 

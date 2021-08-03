@@ -661,8 +661,7 @@ nvim_create_namespace({name})                        *nvim_create_namespace()*
                 Creates a new namespace, or gets an existing one.
 
                 Namespaces are used for buffer highlights and virtual text,
-                see |nvim_buf_add_highlight()| and
-                |nvim_buf_set_virtual_text()|.
+                see |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
 
                 Namespaces can be named or anonymous. If `name` matches an
                 existing namespace, the associated id is returned. If `name`

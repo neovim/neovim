@@ -538,7 +538,7 @@ Highlight groups related to |lsp-codelens| functionality.
                                                               *hl-LspCodeLens*
 LspCodeLens
    Used to color the virtual text of the codelens. See
-   |nvim_buf_set_virtual_text()|.
+   |nvim_buf_set_extmark()|.
 
 LspCodeLensSeparator                                 *hl-LspCodeLensSeparator*
    Used to color the seperator between two or more code lens.
@@ -1376,7 +1376,8 @@ get_prev_pos({opts})                       *vim.lsp.diagnostic.get_prev_pos()*
 
                        *vim.lsp.diagnostic.get_virtual_text_chunks_for_line()*
 get_virtual_text_chunks_for_line({bufnr}, {line}, {line_diags}, {opts})
-                Default function to get text chunks to display using `nvim_buf_set_virtual_text` .
+                Default function to get text chunks to display using
+                |nvim_buf_set_extmark()|.
 
                 Parameters: ~
                     {bufnr}       number The buffer to display the virtual
@@ -1388,7 +1389,9 @@ get_virtual_text_chunks_for_line({bufnr}, {line}, {line_diags}, {opts})
                                   |vim.lsp.diagnostic.set_virtual_text()|
 
                 Return: ~
-                    table chunks, as defined by |nvim_buf_set_virtual_text()|
+                    an array of [text, hl_group] arrays. This can be passed
+                    directly to the {virt_text} option of
+                    |nvim_buf_set_extmark()|.
 
 goto_next({opts})                             *vim.lsp.diagnostic.goto_next()*
                 Move to the next diagnostic
