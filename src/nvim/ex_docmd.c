@@ -5514,6 +5514,9 @@ invalid_count:
   return OK;
 }
 
+static char e_complete_used_without_nargs[] = N_(
+    "E1208: -complete used without -nargs");
+
 /*
  * ":command ..."
  */
@@ -5565,10 +5568,10 @@ static void ex_command(exarg_T *eap)
     uc_list(name, end - name);
   } else if (!ASCII_ISUPPER(*name)) {
     EMSG(_("E183: User defined commands must start with an uppercase letter"));
-    return;
   } else if (name_len <= 4 && STRNCMP(name, "Next", name_len) == 0) {
     EMSG(_("E841: Reserved name, cannot be used for user defined command"));
-    return;
+  } else if (compl > 0 && (argt & EX_EXTRA) == 0) {
+    EMSG(_(e_complete_used_without_nargs));
   } else {
     uc_add_command(name, end - name, p, argt, def, flags, compl, compl_arg,
                    addr_type_arg, eap->forceit);
