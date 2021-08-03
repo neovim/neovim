@@ -379,6 +379,27 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
+/// Give an error message  when the buffer is locked or the
+/// screen is being redrawn and the buffer is in a window.
+///
+/// @returns Wether the buffer can be unloaded.
+static int can_unload_buffer(buf_T *buf)
+{
+  int can_unload = !buf->b_locked;
+
+  if (can_unload && updating_screen) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf) {
+        can_unload = false;
+      }
+    }
+  }
+  if (!can_unload) {
+    emsg(_("E937: Attempt to delete a buffer that is in use"));
+  }
+  return can_unload;
+}
+
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -436,8 +457,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
 
   // Disallow deleting the buffer when it is locked (already being closed or
   // halfway a command that relies on it). Unloading is allowed.
-  if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
-    emsg(_("E937: Attempt to delete a buffer that is in use"));
+  if ((del_buf || wipe_buf) && !can_unload_buffer(buf)) {
     return false;
   }
 
@@ -1182,6 +1202,11 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   if (unload) {
     int forward;
     bufref_T bufref;
+
+    if (!can_unload_buffer(buf)) {
+      return FAIL;
+    }
+
     set_bufref(&bufref, buf);
 
     // When unloading or deleting a buffer that's already unloaded and
