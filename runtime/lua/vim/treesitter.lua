@@ -1,4 +1,5 @@
 local a = vim.api
+local config = require'vim.treesitter.config'
 local query = require'vim.treesitter.query'
 local language = require'vim.treesitter.language'
 local LanguageTree = require'vim.treesitter.languagetree'
@@ -26,6 +27,24 @@ setmetatable(M, {
       end
    end
  })
+
+--- Configure treesitter options globally or for a specific lang.
+---
+---@param opts table Configuration table with the following keys:
+---       - query_file_ignore: List of string patterns. If the path of query
+---                            file matches any of the patterns in this list,
+---                            it will be ignored.
+---@param scope number|string|nil Update the opts for the given scope. The opts
+---                               will be updated for specific buffer (number)
+---                               or specific language (string) or any language
+---                               (nil).
+function M.config(opts, scope)
+  if not opts then
+    return config.get(scope)
+  end
+
+  return config.set(opts, scope)
+end
 
 --- Creates a new parser.
 ---
