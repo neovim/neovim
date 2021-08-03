@@ -6,9 +6,9 @@ local M = {}
 ---
 --- Parsers are searched in the `parser` runtime directory.
 ---
---- @param lang The language the parser should parse
---- @param path Optional path the parser is located at
---- @param silent Don't throw an error if language not found
+---@param lang The language the parser should parse
+---@param path Optional path the parser is located at
+---@param silent Don't throw an error if language not found
 function M.require_language(lang, path, silent)
   if vim._ts_has_language(lang) then
     return true
@@ -40,7 +40,7 @@ end
 ---
 --- Inspecting provides some useful informations on the language like node names, ...
 ---
---- @param lang The language.
+---@param lang The language.
 function M.inspect_language(lang)
   M.require_language(lang)
   return vim._ts_inspect_language(lang)

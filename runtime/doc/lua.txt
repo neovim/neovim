@@ -1110,7 +1110,9 @@ make_dict_accessor({scope})                         *vim.make_dict_accessor()*
                 TODO: Documentation
 
 notify({msg}, {log_level}, {_opts})                             *vim.notify()*
-                Notification provider without a runtime, writes to :Messages
+                Notification provider
+
+                Without a runtime, writes to :Messages
 
                 Parameters: ~
                     {msg}        Content of the notification to show to the
@@ -1118,6 +1120,9 @@ notify({msg}, {log_level}, {_opts})                             *vim.notify()*
                     {log_level}  Optional log level
                     {opts}       Dictionary with optional options (timeout,
                                  etc)
+
+                See also: ~
+                    :help nvim_notify
 
 paste({lines}, {phase})                                          *vim.paste()*
                 Paste handler, invoked by |nvim_paste()| when a conforming UI

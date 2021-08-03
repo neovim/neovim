@@ -5,7 +5,7 @@ local util = require 'vim.lsp.util'
 
 local M = {}
 
---@private
+---@private
 --- Returns nil if {status} is false or nil, otherwise returns the rest of the
 --- arguments.
 local function ok_or_nil(status, ...)
@@ -13,31 +13,31 @@ local function ok_or_nil(status, ...)
   return ...
 end
 
---@private
+---@private
 --- Swallows errors.
 ---
---@param fn Function to run
---@param ... Function arguments
---@returns Result of `fn(...)` if there are no errors, otherwise nil.
+---@param fn Function to run
+---@param ... Function arguments
+---@returns Result of `fn(...)` if there are no errors, otherwise nil.
 --- Returns nil if errors occur during {fn}, otherwise returns
 local function npcall(fn, ...)
   return ok_or_nil(pcall(fn, ...))
 end
 
---@private
+---@private
 --- Sends an async request to all active clients attached to the current
 --- buffer.
 ---
---@param method (string) LSP method name
---@param params (optional, table) Parameters to send to the server
---@param handler (optional, functionnil) See |lsp-handler|. Follows |lsp-handler-resolution|
+---@param method (string) LSP method name
+---@param params (optional, table) Parameters to send to the server
+---@param handler (optional, functionnil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
---@returns 2-tuple:
+---@returns 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
 ---  - Function which can be used to cancel all the requests. You could instead
 ---    iterate all clients and call their `cancel_request()` methods.
 ---
---@see |vim.lsp.buf_request()|
+---@see |vim.lsp.buf_request()|
 local function request(method, params, handler)
   validate {
     method = {method, 's'};
@@ -49,7 +49,7 @@ end
 --- Checks whether the language servers attached to the current buffer are
 --- ready.
 ---
---@returns `true` if server responds.
+---@returns `true` if server responds.
 function M.server_ready()
   return not not vim.lsp.buf_notify(0, "window/progress", {})
 end
@@ -62,7 +62,7 @@ function M.hover()
 end
 
 --- Jumps to the declaration of the symbol under the cursor.
---@note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
+---@note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 ---
 function M.declaration()
   local params = util.make_position_params()
@@ -100,22 +100,22 @@ end
 --- Retrieves the completion items at the current cursor position. Can only be
 --- called in Insert mode.
 ---
---@param context (context support not yet implemented) Additional information
+---@param context (context support not yet implemented) Additional information
 --- about the context in which a completion was triggered (how it was triggered,
 --- and by which trigger character, if applicable)
 ---
---@see |vim.lsp.protocol.constants.CompletionTriggerKind|
+---@see |vim.lsp.protocol.constants.CompletionTriggerKind|
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
   return request('textDocument/completion', params)
 end
 
---@private
+---@private
 --- If there is more than one client that supports the given method,
 --- asks the user to select one.
 --
---@returns The client that the user selected or nil
+---@returns The client that the user selected or nil
 local function select_client(method)
   local clients = vim.tbl_values(vim.lsp.buf_get_clients());
   clients = vim.tbl_filter(function (client)
@@ -146,11 +146,11 @@ end
 
 --- Formats the current buffer.
 ---
---@param options (optional, table) Can be used to specify FormattingOptions.
+---@param options (optional, table) Can be used to specify FormattingOptions.
 --- Some unspecified options will be automatically derived from the current
 --- Neovim options.
 --
---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
+---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 function M.formatting(options)
   local client = select_client("textDocument/formatting")
   if client == nil then return end
@@ -168,9 +168,9 @@ end
 --- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()]]
 --- </pre>
 ---
---@param options Table with valid `FormattingOptions` entries
---@param timeout_ms (number) Request timeout
---@see |vim.lsp.buf.formatting_seq_sync|
+---@param options Table with valid `FormattingOptions` entries
+---@param timeout_ms (number) Request timeout
+---@see |vim.lsp.buf.formatting_seq_sync|
 function M.formatting_sync(options, timeout_ms)
   local client = select_client("textDocument/formatting")
   if client == nil then return end
@@ -195,9 +195,9 @@ end
 --- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
 --- </pre>
 ---
---@param options (optional, table) `FormattingOptions` entries
---@param timeout_ms (optional, number) Request timeout
---@param order (optional, table) List of client names. Formatting is requested from clients
+---@param options (optional, table) `FormattingOptions` entries
+---@param timeout_ms (optional, number) Request timeout
+---@param order (optional, table) List of client names. Formatting is requested from clients
 ---in the following order: first all clients that are not in the `order` list, then
 ---the remaining clients in the order as they occur in the `order` list.
 function M.formatting_seq_sync(options, timeout_ms, order)
@@ -230,10 +230,10 @@ end
 
 --- Formats a given range.
 ---
---@param options Table with valid `FormattingOptions` entries.
---@param start_pos ({number, number}, optional) mark-indexed position.
+---@param options Table with valid `FormattingOptions` entries.
+---@param start_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the start of the last visual selection.
---@param end_pos ({number, number}, optional) mark-indexed position.
+---@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
   local client = select_client("textDocument/rangeFormatting")
@@ -246,7 +246,7 @@ end
 
 --- Renames all references to the symbol under the cursor.
 ---
---@param new_name (string) If not provided, the user will be prompted for a new
+---@param new_name (string) If not provided, the user will be prompted for a new
 ---name using |input()|.
 function M.rename(new_name)
   -- TODO(ashkan) use prepareRename
@@ -260,8 +260,8 @@ end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
 ---
---@param context (table) Context for the request
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
+---@param context (table) Context for the request
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 function M.references(context)
   validate { context = { context, 't', true } }
   local params = util.make_position_params()
@@ -279,7 +279,7 @@ function M.document_symbol()
   request('textDocument/documentSymbol', params)
 end
 
---@private
+---@private
 local function pick_call_hierarchy_item(call_hierarchy_items)
   if not call_hierarchy_items then return end
   if #call_hierarchy_items == 1 then
@@ -297,7 +297,7 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   return choice
 end
 
---@private
+---@private
 local function call_hierarchy(method)
   local params = util.make_position_params()
   request('textDocument/prepareCallHierarchy', params, function(err, _, result)
@@ -389,7 +389,7 @@ end
 --- call, the user is prompted to enter a string on the command line. An empty
 --- string means no filtering is done.
 ---
---@param query (string, optional)
+---@param query (string, optional)
 function M.workspace_symbol(query)
   query = query or npcall(vfn.input, "Query: ")
   local params = {query = query}
@@ -424,7 +424,7 @@ end
 
 --- Requests code actions from all clients and calls the handler exactly once
 --- with all aggregated results
---@private
+---@private
 local function code_action_request(params)
   local bufnr = vim.api.nvim_get_current_buf()
   local method = 'textDocument/codeAction'
@@ -439,9 +439,9 @@ end
 
 --- Selects a code action from the input list that is available at the current
 --- cursor position.
---
---@param context: (table, optional) Valid `CodeActionContext` object
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
+---
+---@param context: (table, optional) Valid `CodeActionContext` object
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 function M.code_action(context)
   validate { context = { context, 't', true } }
   context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
@@ -452,10 +452,10 @@ end
 
 --- Performs |vim.lsp.buf.code_action()| for a given range.
 ---
---@param context: (table, optional) Valid `CodeActionContext` object
---@param start_pos ({number, number}, optional) mark-indexed position.
+---@param context: (table, optional) Valid `CodeActionContext` object
+---@param start_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the start of the last visual selection.
---@param end_pos ({number, number}, optional) mark-indexed position.
+---@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_code_action(context, start_pos, end_pos)
   validate { context = { context, 't', true } }
@@ -467,8 +467,8 @@ end
 
 --- Executes an LSP server command.
 ---
---@param command A valid `ExecuteCommandParams` object
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+---@param command A valid `ExecuteCommandParams` object
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 function M.execute_command(command)
   validate {
     command = { command.command, 's' },

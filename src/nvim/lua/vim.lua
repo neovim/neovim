@@ -178,8 +178,8 @@ end
 
 --- Return a human-readable representation of the given object.
 ---
---@see https://github.com/kikito/inspect.lua
---@see https://github.com/mpeterv/vinspect
+---@see https://github.com/kikito/inspect.lua
+---@see https://github.com/mpeterv/vinspect
 local function inspect(object, options)  -- luacheck: no unused
   error(object, options)  -- Stub for gen_vimdoc.py
 end
@@ -203,15 +203,15 @@ do
   --- end)(vim.paste)
   --- </pre>
   ---
-  --@see |paste|
+  ---@see |paste|
   ---
-  --@param lines  |readfile()|-style list of lines to paste. |channel-lines|
-  --@param phase  -1: "non-streaming" paste: the call contains all lines.
+  ---@param lines  |readfile()|-style list of lines to paste. |channel-lines|
+  ---@param phase  -1: "non-streaming" paste: the call contains all lines.
   ---              If paste is "streamed", `phase` indicates the stream state:
   ---                - 1: starts the paste (exactly once)
   ---                - 2: continues the paste (zero or more times)
   ---                - 3: ends the paste (exactly once)
-  --@returns false if client should cancel the paste.
+  ---@returns false if client should cancel the paste.
   function vim.paste(lines, phase)
     local call = vim.api.nvim_call_function
     local now = vim.loop.now()
@@ -279,7 +279,7 @@ function vim.schedule_wrap(cb)
 end
 
 --- <Docs described in |vim.empty_dict()| >
---@private
+---@private
 function vim.empty_dict()
   return setmetatable({}, vim._empty_dict_mt)
 end
@@ -338,12 +338,12 @@ end
 
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
---@param bufnr number of buffer
---@param pos1 (line, column) tuple marking beginning of region
---@param pos2 (line, column) tuple marking end of region
---@param regtype type of selection (:help setreg)
---@param inclusive boolean indicating whether the selection is end-inclusive
---@return region lua table of the form {linenr = {startcol,endcol}}
+---@param bufnr number of buffer
+---@param pos1 (line, column) tuple marking beginning of region
+---@param pos2 (line, column) tuple marking end of region
+---@param regtype type of selection (:help setreg)
+---@param inclusive boolean indicating whether the selection is end-inclusive
+---@return region lua table of the form {linenr = {startcol,endcol}}
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -390,9 +390,9 @@ end
 --- Use to do a one-shot timer that calls `fn`
 --- Note: The {fn} is |schedule_wrap|ped automatically, so API functions are
 --- safe to call.
---@param fn Callback to call once `timeout` expires
---@param timeout Number of milliseconds to wait before calling `fn`
---@return timer luv timer object
+---@param fn Callback to call once `timeout` expires
+---@param timeout Number of milliseconds to wait before calling `fn`
+---@return timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate { fn = { fn, 'c', true}; }
   local timer = vim.loop.new_timer()
@@ -408,11 +408,12 @@ end
 
 
 --- Notification provider
---- without a runtime, writes to :Messages
---  see :help nvim_notify
---@param msg Content of the notification to show to the user
---@param log_level Optional log level
---@param opts Dictionary with optional options (timeout, etc)
+---
+--- Without a runtime, writes to :Messages
+---@see :help nvim_notify
+---@param msg Content of the notification to show to the user
+---@param log_level Optional log level
+---@param opts Dictionary with optional options (timeout, etc)
 function vim.notify(msg, log_level, _opts)
 
   if log_level == vim.log.levels.ERROR then
@@ -429,21 +430,21 @@ local on_keystroke_callbacks = {}
 
 --- Register a lua {fn} with an {id} to be run after every keystroke.
 ---
---@param fn function: Function to call. It should take one argument, which is a string.
+---@param fn function: Function to call. It should take one argument, which is a string.
 ---                   The string will contain the literal keys typed.
 ---                   See |i_CTRL-V|
 ---
 ---                   If {fn} is nil, it removes the callback for the associated {ns_id}
---@param ns_id number? Namespace ID. If not passed or 0, will generate and return a new
+---@param ns_id number? Namespace ID. If not passed or 0, will generate and return a new
 ---                    namespace ID from |nvim_create_namesapce()|
 ---
---@return number Namespace ID associated with {fn}
+---@return number Namespace ID associated with {fn}
 ---
---@note {fn} will be automatically removed if an error occurs while calling.
+---@note {fn} will be automatically removed if an error occurs while calling.
 ---     This is to prevent the annoying situation of every keystroke erroring
 ---     while trying to remove a broken callback.
---@note {fn} will not be cleared from |nvim_buf_clear_namespace()|
---@note {fn} will receive the keystrokes after mappings have been evaluated
+---@note {fn} will not be cleared from |nvim_buf_clear_namespace()|
+---@note {fn} will receive the keystrokes after mappings have been evaluated
 function vim.register_keystroke_callback(fn, ns_id)
   vim.validate {
     fn = { fn, 'c', true},
@@ -459,7 +460,7 @@ function vim.register_keystroke_callback(fn, ns_id)
 end
 
 --- Function that executes the keystroke callbacks.
---@private
+---@private
 function vim._log_keystroke(char)
   local failed_ns_ids = {}
   local failed_messages = {}

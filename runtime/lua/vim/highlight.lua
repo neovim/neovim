@@ -2,7 +2,7 @@ local api = vim.api
 
 local highlight = {}
 
---@private
+---@private
 function highlight.create(higroup, hi_info, default)
   local options = {}
   -- TODO: Add validation
@@ -12,7 +12,7 @@ function highlight.create(higroup, hi_info, default)
   vim.cmd(string.format([[highlight %s %s %s]], default and "default" or "", higroup, table.concat(options, " ")))
 end
 
---@private
+---@private
 function highlight.link(higroup, link_to, force)
   vim.cmd(string.format([[highlight%s link %s %s]], force and "!" or " default", higroup, link_to))
 end
@@ -20,11 +20,11 @@ end
 
 --- Highlight range between two positions
 ---
---@param bufnr number of buffer to apply highlighting to
---@param ns namespace to add highlight to
---@param higroup highlight group to use for highlighting
---@param rtype type of range (:help setreg, default charwise)
---@param inclusive boolean indicating whether the range is end-inclusive (default false)
+---@param bufnr number of buffer to apply highlighting to
+---@param ns namespace to add highlight to
+---@param higroup highlight group to use for highlighting
+---@param rtype type of range (:help setreg, default charwise)
+---@param inclusive boolean indicating whether the range is end-inclusive (default false)
 function highlight.range(bufnr, ns, higroup, start, finish, rtype, inclusive)
   rtype = rtype or 'v'
   inclusive = inclusive or false

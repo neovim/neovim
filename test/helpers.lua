@@ -58,9 +58,9 @@ local check_logs_useless_lines = {
 --- Invokes `fn` and includes the tail of `logfile` in the error message if it
 --- fails.
 ---
---@param logfile  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
---@param fn       Function to invoke
---@param ...      Function arguments
+---@param logfile  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
+---@param fn       Function to invoke
+---@param ...      Function arguments
 local function dumplog(logfile, fn, ...)
   -- module.validate({
   --   logfile={logfile,'s',true},
@@ -102,8 +102,8 @@ end
 
 --- Asserts that `pat` matches one or more lines in the tail of $NVIM_LOG_FILE.
 ---
---@param pat  (string) Lua pattern to search for in the log file.
---@param logfile  (string, default=$NVIM_LOG_FILE) full path to log file.
+---@param pat  (string) Lua pattern to search for in the log file.
+---@param logfile  (string, default=$NVIM_LOG_FILE) full path to log file.
 function module.assert_log(pat, logfile)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local nrlines = 10

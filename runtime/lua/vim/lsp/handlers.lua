@@ -9,9 +9,9 @@ local M = {}
 
 -- FIXME: DOC: Expose in vimdocs
 
---@private
+---@private
 --- Writes to error buffer.
---@param ... (table of strings) Will be concatenated before being written
+---@param ... (table of strings) Will be concatenated before being written
 local function err_message(...)
   vim.notify(table.concat(vim.tbl_flatten{...}), vim.log.levels.ERROR)
   api.nvim_command("redraw")
@@ -22,7 +22,7 @@ M['workspace/executeCommand'] = function()
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
 
---@private
+---@private
 local function progress_handler(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
@@ -189,7 +189,7 @@ end
 
 
 
---@private
+---@private
 --- Return a function that converts LSP responses to list items and opens the list
 ---
 --- The returned function has an optional {config} parameter that accepts a table
@@ -197,8 +197,8 @@ end
 ---
 ---   loclist: (boolean) use the location list (default is to use the quickfix list)
 ---
---- @param map_result function `((resp, bufnr) -> list)` to convert the response
---- @param entity name of the resource used in a `not found` error message
+---@param map_result function `((resp, bufnr) -> list)` to convert the response
+---@param entity name of the resource used in a `not found` error message
 local function response_to_list(map_result, entity)
   return function(_, _, result, _, bufnr, config)
     if not result or vim.tbl_isempty(result) then
@@ -289,11 +289,11 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 M['textDocument/hover'] = M.hover
 
---@private
+---@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
---@param _ (not used)
---@param method (string) LSP method name
---@param result (table) result of LSP method; a location or a list of locations.
+---@param _ (not used)
+---@param method (string) LSP method name
+---@param result (table) result of LSP method; a location or a list of locations.
 ---(`textDocument/definition` can return `Location` or `Location[]`
 local function location_handler(_, method, result)
   if result == nil or vim.tbl_isempty(result) then
@@ -377,13 +377,13 @@ M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
   util.buf_highlight_references(bufnr, result)
 end
 
---@private
+---@private
 ---
 --- Displays call hierarchy in the quickfix window.
 ---
---@param direction `"from"` for incoming calls and `"to"` for outgoing calls
---@returns `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
---@returns `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,
+---@param direction `"from"` for incoming calls and `"to"` for outgoing calls
+---@returns `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
+---@returns `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,
 local make_call_hierarchy_handler = function(direction)
   return function(_, _, result)
     if not result then return end

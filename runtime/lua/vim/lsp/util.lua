@@ -40,10 +40,10 @@ local loclist_type_map = {
 }
 
 
---@private
--- Check the border given by opts or the default border for the additional
--- size it adds to a float.
---@returns size of border in height and width
+---@private
+--- Check the border given by opts or the default border for the additional
+--- size it adds to a float.
+---@returns size of border in height and width
 local function get_border_size(opts)
   local border = opts and opts.border or default_border
   local height = 0
@@ -86,7 +86,7 @@ local function get_border_size(opts)
   return { height = height, width = width }
 end
 
---@private
+---@private
 local function split_lines(value)
   return split(value, '\n', true)
 end
@@ -95,11 +95,11 @@ end
 ---
 --- CAUTION: Changes in-place!
 ---
---@param lines (table) Original list of strings
---@param A (table) Start position; a 2-tuple of {line, col} numbers
---@param B (table) End position; a 2-tuple of {line, col} numbers
---@param new_lines A list of strings to replace the original
---@returns (table) The modified {lines} object
+---@param lines (table) Original list of strings
+---@param A (table) Start position; a 2-tuple of {line, col} numbers
+---@param B (table) End position; a 2-tuple of {line, col} numbers
+---@param new_lines A list of strings to replace the original
+---@returns (table) The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
@@ -133,7 +133,7 @@ function M.set_lines(lines, A, B, new_lines)
   return lines
 end
 
---@private
+---@private
 local function sort_by_key(fn)
   return function(a,b)
     local ka, kb = fn(a), fn(b)
@@ -147,12 +147,12 @@ local function sort_by_key(fn)
     return false
   end
 end
---@private
+---@private
 local edit_sort_key = sort_by_key(function(e)
   return {e.A[1], e.A[2], e.i}
 end)
 
---@private
+---@private
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 --- Returns a zero-indexed column, since set_lines() does the conversion to
 --- 1-indexed
@@ -238,8 +238,8 @@ function M.get_progress_messages()
 end
 
 --- Applies a list of text edits to a buffer.
---@param text_edits (table) list of `TextEdit` objects
---@param buf_nr (number) Buffer id
+---@param text_edits (table) list of `TextEdit` objects
+---@param buf_nr (number) Buffer id
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
@@ -295,11 +295,11 @@ end
 -- function M.glob_to_regex(glob)
 -- end
 
---@private
+---@private
 --- Finds the first line and column of the difference between old and new lines
---@param old_lines table list of lines
---@param new_lines table list of lines
---@returns (int, int) start_line_idx and start_col_idx of range
+---@param old_lines table list of lines
+---@param new_lines table list of lines
+---@returns (int, int) start_line_idx and start_col_idx of range
 local function first_difference(old_lines, new_lines, start_line_idx)
   local line_count = math.min(#old_lines, #new_lines)
   if line_count == 0 then return 1, 1 end
@@ -325,12 +325,12 @@ local function first_difference(old_lines, new_lines, start_line_idx)
 end
 
 
---@private
+---@private
 --- Finds the last line and column of the differences between old and new lines
---@param old_lines table list of lines
---@param new_lines table list of lines
---@param start_char integer First different character idx of range
---@returns (int, int) end_line_idx and end_col_idx of range
+---@param old_lines table list of lines
+---@param new_lines table list of lines
+---@param start_char integer First different character idx of range
+---@returns (int, int) end_line_idx and end_col_idx of range
 local function last_difference(old_lines, new_lines, start_char, end_line_idx)
   local line_count = math.min(#old_lines, #new_lines)
   if line_count == 0 then return 0,0 end
@@ -369,14 +369,14 @@ local function last_difference(old_lines, new_lines, start_char, end_line_idx)
 
 end
 
---@private
+---@private
 --- Get the text of the range defined by start and end line/column
---@param lines table list of lines
---@param start_char integer First different character idx of range
---@param end_char integer Last different character idx of range
---@param start_line integer First different line idx of range
---@param end_line integer Last different line idx of range
---@returns string text extracted from defined region
+---@param lines table list of lines
+---@param start_char integer First different character idx of range
+---@param end_char integer Last different character idx of range
+---@param start_line integer First different line idx of range
+---@param end_line integer Last different line idx of range
+---@returns string text extracted from defined region
 local function extract_text(lines, start_line, start_char, end_line, end_char)
   if start_line == #lines + end_line + 1 then
     if end_line == 0 then return '' end
@@ -396,14 +396,14 @@ local function extract_text(lines, start_line, start_char, end_line, end_char)
   return result
 end
 
---@private
+---@private
 --- Compute the length of the substituted range
---@param lines table list of lines
---@param start_char integer First different character idx of range
---@param end_char integer Last different character idx of range
---@param start_line integer First different line idx of range
---@param end_line integer Last different line idx of range
---@returns (int, int) end_line_idx and end_col_idx of range
+---@param lines table list of lines
+---@param start_char integer First different character idx of range
+---@param end_char integer Last different character idx of range
+---@param start_line integer First different line idx of range
+---@param end_line integer Last different line idx of range
+---@returns (int, int) end_line_idx and end_col_idx of range
 local function compute_length(lines, start_line, start_char, end_line, end_char)
   local adj_end_line = #lines + end_line + 1
   local adj_end_char
@@ -424,12 +424,12 @@ local function compute_length(lines, start_line, start_char, end_line, end_char)
 end
 
 --- Returns the range table for the difference between old and new lines
---@param old_lines table list of lines
---@param new_lines table list of lines
---@param start_line_idx int line to begin search for first difference
---@param end_line_idx int line to begin search for last difference
---@param offset_encoding string encoding requested by language server
---@returns table start_line_idx and start_col_idx of range
+---@param old_lines table list of lines
+---@param new_lines table list of lines
+---@param start_line_idx int line to begin search for first difference
+---@param end_line_idx int line to begin search for last difference
+---@param offset_encoding string encoding requested by language server
+---@returns table start_line_idx and start_col_idx of range
 function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx, offset_encoding)
   local start_line, start_char = first_difference(old_lines, new_lines, start_line_idx)
   local end_line, end_char = last_difference(vim.list_slice(old_lines, start_line, #old_lines),
@@ -469,9 +469,9 @@ end
 --- Can be used to extract the completion items from a
 --- `textDocument/completion` request, which may return one of
 --- `CompletionItem[]`, `CompletionList` or null.
---@param result (table) The result of a `textDocument/completion` request
---@returns (table) List of completion items
---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
+---@param result (table) The result of a `textDocument/completion` request
+---@returns (table) List of completion items
+---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 function M.extract_completion_items(result)
   if type(result) == 'table' and result.items then
     -- result is a `CompletionList`
@@ -515,12 +515,12 @@ function M.apply_text_document_edit(text_document_edit, index)
   M.apply_text_edits(text_document_edit.edits, bufnr)
 end
 
---@private
+---@private
 --- Recursively parses snippets in a completion entry.
 ---
---@param input (string) Snippet text to parse for snippets
---@param inner (bool) Whether this function is being called recursively
---@returns 2-tuple of strings: The first is the parsed result, the second is the
+---@param input (string) Snippet text to parse for snippets
+---@param inner (bool) Whether this function is being called recursively
+---@returns 2-tuple of strings: The first is the parsed result, the second is the
 ---unparsed rest of the input
 local function parse_snippet_rec(input, inner)
   local res = ""
@@ -577,28 +577,28 @@ end
 
 --- Parses snippets in a completion entry.
 ---
---@param input (string) unparsed snippet
---@returns (string) parsed snippet
+---@param input (string) unparsed snippet
+---@returns (string) parsed snippet
 function M.parse_snippet(input)
   local res, _ = parse_snippet_rec(input, false)
 
   return res
 end
 
---@private
+---@private
 --- Sorts by CompletionItem.sortText.
 ---
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+--see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function sort_completion_items(items)
   table.sort(items, function(a, b)
     return (a.sortText or a.label) < (b.sortText or b.label)
   end)
 end
 
---@private
+---@private
 --- Returns text that should be inserted when selecting completion item. The
 --- precedence is as follows: textEdit.newText > insertText > label
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+--see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 local function get_completion_word(item)
   if item.textEdit ~= nil and item.textEdit.newText ~= nil and item.textEdit.newText ~= "" then
     local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
@@ -618,7 +618,7 @@ local function get_completion_word(item)
   return item.label
 end
 
---@private
+---@private
 --- Some language servers return complementary candidates whose prefixes do not
 --- match are also returned. So we exclude completion candidates whose prefix
 --- does not match.
@@ -633,9 +633,9 @@ end
 --- the client must handle it properly even if it receives a value outside the
 --- specification.
 ---
---@param completion_item_kind (`vim.lsp.protocol.completionItemKind`)
---@returns (`vim.lsp.protocol.completionItemKind`)
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+---@param completion_item_kind (`vim.lsp.protocol.completionItemKind`)
+---@returns (`vim.lsp.protocol.completionItemKind`)
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 function M._get_completion_item_kind_name(completion_item_kind)
   return protocol.CompletionItemKind[completion_item_kind] or "Unknown"
 end
@@ -643,12 +643,12 @@ end
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
---@param result The result of a `textDocument/completion` call, e.g. from
+---@param result The result of a `textDocument/completion` call, e.g. from
 ---|vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
 --- `CompletionList` or `null`
---@param prefix (string) the prefix to filter the completion items
---@returns { matches = complete-items table, incomplete = bool }
---@see |complete-items|
+---@param prefix (string) the prefix to filter the completion items
+---@returns { matches = complete-items table, incomplete = bool }
+---@see |complete-items|
 function M.text_document_completion_list_to_complete_items(result, prefix)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
@@ -698,8 +698,8 @@ end
 
 
 --- Rename old_fname to new_fname
---
---@param opts (table)
+---
+---@param opts (table)
 --         overwrite? bool
 --         ignoreIfExists? bool
 function M.rename(old_fname, new_fname, opts)
@@ -754,8 +754,8 @@ end
 
 --- Applies a `WorkspaceEdit`.
 ---
---@param workspace_edit (table) `WorkspaceEdit`
--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
+---@param workspace_edit (table) `WorkspaceEdit`
+--see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit)
   if workspace_edit.documentChanges then
     for idx, change in ipairs(workspace_edit.documentChanges) do
@@ -794,10 +794,10 @@ end
 --- window for `textDocument/hover`, for parsing the result of
 --- `textDocument/signatureHelp`, and potentially others.
 ---
---@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
---@param contents (table, optional, default `{}`) List of strings to extend with converted lines
---@returns {contents}, extended with lines of converted markdown.
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+---@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
+---@param contents (table, optional, default `{}`) List of strings to extend with converted lines
+---@returns {contents}, extended with lines of converted markdown.
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 function M.convert_input_to_markdown_lines(input, contents)
   contents = contents or {}
   -- MarkedString variation 1
@@ -844,11 +844,11 @@ end
 
 --- Converts `textDocument/SignatureHelp` response to markdown lines.
 ---
---@param signature_help Response of `textDocument/SignatureHelp`
---@param ft optional filetype that will be use as the `lang` for the label markdown code block
---@param triggers optional list of trigger characters from the lsp server. used to better determine parameter offsets
---@returns list of lines of converted markdown.
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+---@param signature_help Response of `textDocument/SignatureHelp`
+---@param ft optional filetype that will be use as the `lang` for the label markdown code block
+---@param triggers optional list of trigger characters from the lsp server. used to better determine parameter offsets
+---@returns list of lines of converted markdown.
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers)
   if not signature_help.signatures then
     return
@@ -943,10 +943,10 @@ end
 --- Creates a table with sensible default options for a floating window. The
 --- table can be passed to |nvim_open_win()|.
 ---
---@param width (number) window width (in character cells)
---@param height (number) window height (in character cells)
---@param opts (table, optional)
---@returns (table) Options
+---@param width (number) window width (in character cells)
+---@param height (number) window height (in character cells)
+---@param opts (table, optional)
+---@returns (table) Options
 function M.make_floating_popup_options(width, height, opts)
   validate {
     opts = { opts, 't', true };
@@ -997,8 +997,8 @@ end
 
 --- Jumps to a location.
 ---
---@param location (`Location`|`LocationLink`)
---@returns `true` if the jump succeeded
+---@param location (`Location`|`LocationLink`)
+---@returns `true` if the jump succeeded
 function M.jump_to_location(location)
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
@@ -1028,8 +1028,8 @@ end
 ---   - for Location, range is shown (e.g., function definition)
 ---   - for LocationLink, targetRange is shown (e.g., body of function definition)
 ---
---@param location a single `Location` or `LocationLink`
---@returns (bufnr,winnr) buffer and window number of floating window or nil
+---@param location a single `Location` or `LocationLink`
+---@returns (bufnr,winnr) buffer and window number of floating window or nil
 function M.preview_location(location, opts)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
@@ -1052,7 +1052,7 @@ function M.preview_location(location, opts)
   return M.open_floating_preview(contents, syntax, opts)
 end
 
---@private
+---@private
 local function find_window_by_var(name, value)
   for _, win in ipairs(api.nvim_list_wins()) do
     if npcall(api.nvim_win_get_var, win, name) == value then
@@ -1088,10 +1088,10 @@ function M._trim(contents, opts)
   return contents
 end
 
--- Generates a table mapping markdown code block lang to vim syntax,
--- based on g:markdown_fenced_languages
--- @return a table of lang -> syntax mappings
--- @private
+--- Generates a table mapping markdown code block lang to vim syntax,
+--- based on g:markdown_fenced_languages
+---@return a table of lang -> syntax mappings
+---@private
 local function get_markdown_fences()
   local fences = {}
   for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
@@ -1227,7 +1227,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
   local idx = 1
-  --@private
+  ---@private
   -- keep track of syntaxes we already inlcuded.
   -- no need to include the same syntax more than once
   local langs = {}
@@ -1276,26 +1276,26 @@ end
 
 --- Creates autocommands to close a preview window when events happen.
 ---
---@param events (table) list of events
---@param winnr (number) window id of preview window
---@see |autocmd-events|
+---@param events (table) list of events
+---@param winnr (number) window id of preview window
+---@see |autocmd-events|
 function M.close_preview_autocmd(events, winnr)
   if #events > 0 then
     api.nvim_command("autocmd "..table.concat(events, ',').." <buffer> ++once lua pcall(vim.api.nvim_win_close, "..winnr..", true)")
   end
 end
 
---@internal
+---@internal
 --- Computes size of float needed to show contents (with optional wrapping)
 ---
---@param contents table of lines to show in window
---@param opts dictionary with optional fields
---             - height  of floating window
---             - width   of floating window
---             - wrap_at character to wrap at for computing height
---             - max_width  maximal width of floating window
---             - max_height maximal height of floating window
---@returns width,height size of float
+---@param contents table of lines to show in window
+---@param opts dictionary with optional fields
+---            - height  of floating window
+---            - width   of floating window
+---            - wrap_at character to wrap at for computing height
+---            - max_width  maximal width of floating window
+---            - max_height maximal height of floating window
+---@returns width,height size of float
 function M._make_floating_popup_size(contents, opts)
   validate {
     contents = { contents, 't' };
@@ -1362,9 +1362,9 @@ end
 
 --- Shows contents in a floating window.
 ---
---@param contents table of lines to show in window
---@param syntax string of syntax to set for opened buffer
---@param opts dictionary with optional fields
+---@param contents table of lines to show in window
+---@param syntax string of syntax to set for opened buffer
+---@param opts dictionary with optional fields
 ---             - height    of floating window
 ---             - width     of floating window
 ---             - wrap boolean enable wrapping of long lines (defaults to true)
@@ -1378,7 +1378,7 @@ end
 ---             - focus_id if a popup with this id is opened, then focus it
 ---             - close_events list of events that closes the floating window
 ---             - focusable (boolean, default true): Make float focusable
---@returns bufnr,winnr buffer and window number of the newly created floating
+---@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
   validate {
@@ -1474,7 +1474,7 @@ do --[[ References ]]
 
   --- Removes document highlights from a buffer.
   ---
-  --@param bufnr buffer id
+  ---@param bufnr buffer id
   function M.buf_clear_references(bufnr)
     validate { bufnr = {bufnr, 'n', true} }
     api.nvim_buf_clear_namespace(bufnr, reference_ns, 0, -1)
@@ -1482,8 +1482,8 @@ do --[[ References ]]
 
   --- Shows a list of document highlights for a certain buffer.
   ---
-  --@param bufnr buffer id
-  --@param references List of `DocumentHighlight` objects to highlight
+  ---@param bufnr buffer id
+  ---@param references List of `DocumentHighlight` objects to highlight
   ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references)
     validate { bufnr = {bufnr, 'n', true} }
@@ -1505,24 +1505,24 @@ local position_sort = sort_by_key(function(v)
   return {v.start.line, v.start.character}
 end)
 
--- Gets the zero-indexed line from the given uri.
+--- Gets the zero-indexed line from the given uri.
+---@param uri string uri of the resource to get the line from
+---@param row number zero-indexed line number
+---@return string the line at row in filename
 -- For non-file uris, we load the buffer and get the line.
 -- If a loaded buffer exists, then that is used.
 -- Otherwise we get the line using libuv which is a lot faster than loading the buffer.
---@param uri string uri of the resource to get the line from
---@param row number zero-indexed line number
---@return string the line at row in filename
 function M.get_line(uri, row)
   return M.get_lines(uri, { row })[row]
 end
 
--- Gets the zero-indexed lines from the given uri.
+--- Gets the zero-indexed lines from the given uri.
+---@param uri string uri of the resource to get the lines from
+---@param rows number[] zero-indexed line numbers
+---@return table<number string> a table mapping rows to lines
 -- For non-file uris, we load the buffer and get the lines.
 -- If a loaded buffer exists, then that is used.
 -- Otherwise we get the lines using libuv which is a lot faster than loading the buffer.
---@param uri string uri of the resource to get the lines from
---@param rows number[] zero-indexed line numbers
---@return table<number string> a table mapping rows to lines
 function M.get_lines(uri, rows)
   rows = type(rows) == "table" and rows or { rows }
 
@@ -1590,8 +1590,8 @@ end
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
---@param locations (table) list of `Location`s or `LocationLink`s
---@returns (table) list of items
+---@param locations (table) list of `Location`s or `LocationLink`s
+---@returns (table) list of items
 function M.locations_to_items(locations)
   local items = {}
   local grouped = setmetatable({}, {
@@ -1648,7 +1648,7 @@ end
 --- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
 --- Defaults to current window.
 ---
---@param items (table) list of items
+---@param items (table) list of items
 function M.set_loclist(items, win_id)
   vim.fn.setloclist(win_id or 0, {}, ' ', {
     title = 'Language Server';
@@ -1659,7 +1659,7 @@ end
 --- Fills quickfix list with given list of items.
 --- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
 ---
---@param items (table) list of items
+---@param items (table) list of items
 function M.set_qflist(items)
   vim.fn.setqflist({}, ' ', {
     title = 'Language Server';
@@ -1676,9 +1676,9 @@ end
 
 --- Converts symbols to quickfix list items.
 ---
---@param symbols DocumentSymbol[] or SymbolInformation[]
+---@param symbols DocumentSymbol[] or SymbolInformation[]
 function M.symbols_to_items(symbols, bufnr)
-  --@private
+  ---@private
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do
       if symbol.location then -- SymbolInformation type
@@ -1714,8 +1714,8 @@ function M.symbols_to_items(symbols, bufnr)
 end
 
 --- Removes empty lines from the beginning and end.
---@param lines (table) list of lines to trim
---@returns (table) trimmed list of lines
+---@param lines (table) list of lines to trim
+---@returns (table) trimmed list of lines
 function M.trim_empty_lines(lines)
   local start = 1
   for i = 1, #lines do
@@ -1739,8 +1739,8 @@ end
 ---
 --- CAUTION: Modifies the input in-place!
 ---
---@param lines (table) list of lines
---@returns (string) filetype or 'markdown' if it was unchanged.
+---@param lines (table) list of lines
+---@returns (string) filetype or 'markdown' if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
   local language_id = lines[1]:match("^```(.*)")
   if language_id then
@@ -1763,7 +1763,7 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 local str_utfindex = vim.str_utfindex
---@private
+---@private
 local function make_position_param()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   row = row - 1
@@ -1777,8 +1777,8 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
---@returns `TextDocumentPositionParams` object
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
+---@returns `TextDocumentPositionParams` object
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params()
   return {
     textDocument = M.make_text_document_params();
@@ -1791,7 +1791,7 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
+---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
 function M.make_range_params()
   local position = make_position_param()
@@ -1804,11 +1804,11 @@ end
 --- Using the given range in the current buffer, creates an object that
 --- is similar to |vim.lsp.util.make_range_params()|.
 ---
---@param start_pos ({number, number}, optional) mark-indexed position.
+---@param start_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the start of the last visual selection.
---@param end_pos ({number, number}, optional) mark-indexed position.
+---@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
+---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
 function M.make_given_range_params(start_pos, end_pos)
   validate {
@@ -1844,23 +1844,23 @@ end
 
 --- Creates a `TextDocumentIdentifier` object for the current buffer.
 ---
---@returns `TextDocumentIdentifier`
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
+---@returns `TextDocumentIdentifier`
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 function M.make_text_document_params()
   return { uri = vim.uri_from_bufnr(0) }
 end
 
 --- Create the workspace params
---@param added
---@param removed
+---@param added
+---@param removed
 function M.make_workspace_params(added, removed)
   return { event = { added = added; removed = removed; } }
 end
 --- Returns visual width of tabstop.
 ---
---@see |softtabstop|
---@param bufnr (optional, number): Buffer handle, defaults to current
---@returns (number) tabstop visual width
+---@see |softtabstop|
+---@param bufnr (optional, number): Buffer handle, defaults to current
+---@returns (number) tabstop visual width
 function M.get_effective_tabstop(bufnr)
   validate { bufnr = {bufnr, 'n', true} }
   local bo = bufnr and vim.bo[bufnr] or vim.bo
@@ -1870,9 +1870,9 @@ end
 
 --- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.
 ---
---@param options Table with valid `FormattingOptions` entries
---@returns `DocumentFormattingParams` object
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
+---@param options Table with valid `FormattingOptions` entries
+---@returns `DocumentFormattingParams` object
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 function M.make_formatting_params(options)
   validate { options = {options, 't', true} }
   options = vim.tbl_extend('keep', options or {}, {
@@ -1887,10 +1887,10 @@ end
 
 --- Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
 ---
---@param buf buffer id (0 for current)
---@param row 0-indexed line
---@param col 0-indexed byte offset in line
---@returns (number, number) UTF-32 and UTF-16 index of the character in line {row} column {col} in buffer {buf}
+---@param buf buffer id (0 for current)
+---@param row 0-indexed line
+---@param col 0-indexed byte offset in line
+---@returns (number, number) UTF-32 and UTF-16 index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(bufnr, row, col)
   local uri = vim.uri_from_bufnr(bufnr)
   local line = M.get_line(uri, row)
@@ -1903,9 +1903,9 @@ end
 
 --- Helper function to return nested values in language server settings
 ---
---@param settings a table of language server settings
---@param section  a string indicating the field of the settings table
---@returns (table or string) The value of settings accessed via section
+---@param settings a table of language server settings
+---@param section  a string indicating the field of the settings table
+---@returns (table or string) The value of settings accessed via section
 function M.lookup_section(settings, section)
   for part in vim.gsplit(section, '.', true) do
     settings = settings[part]
@@ -1920,10 +1920,10 @@ end
 --- Convert diagnostics grouped by bufnr to a list of items for use in the
 --- quickfix or location list.
 ---
---@param diagnostics_by_bufnr table bufnr -> Diagnostic[]
---@param predicate an optional function to filter the diagnostics.
---                  If present, only diagnostic items matching will be included.
---@return table (A list of items)
+---@param diagnostics_by_bufnr table bufnr -> Diagnostic[]
+---@param predicate an optional function to filter the diagnostics.
+---                 If present, only diagnostic items matching will be included.
+---@return table (A list of items)
 function M.diagnostics_to_items(diagnostics_by_bufnr, predicate)
   local items = {}
   for bufnr, diagnostics in pairs(diagnostics_by_bufnr or {}) do
