@@ -123,7 +123,7 @@ function M.display(lenses, bufnr, client_id)
       end
     end
     if #chunks > 0 then
-      api.nvim_buf_set_virtual_text(bufnr, ns, i, chunks, {})
+      api.nvim_buf_set_extmark(bufnr, ns, i, 0, { virt_text = chunks })
     end
   end
 end
@@ -179,12 +179,12 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
           -- Eager display to have some sort of incremental feedback
           -- Once all lenses got resolved there will be a full redraw for all lenses
           -- So that multiple lens per line are properly displayed
-          api.nvim_buf_set_virtual_text(
+          api.nvim_buf_set_extmark(
             bufnr,
             ns,
             lens.range.start.line,
-            {{ lens.command.title, 'LspCodeLens' },},
-            {}
+            0,
+            { virt_text = {{ lens.command.title, 'LspCodeLens' }} }
           )
         end
         countdown()
