@@ -3,8 +3,8 @@ local eq, clear, eval, command, nvim, next_msg =
   helpers.eq, helpers.clear, helpers.eval, helpers.command, helpers.nvim,
   helpers.next_msg
 local meths = helpers.meths
-local exec_lua = helpers.exec_lua
-local retry = helpers.retry
+--local exec_lua = helpers.exec_lua
+--local retry = helpers.retry
 
 describe('notify', function()
   local channel
@@ -75,6 +75,7 @@ describe('notify', function()
     eq(2, eval('1+1'))  -- Still alive?
   end)
 
+  --[=[
   it('cancels stale events on channel close', function()
     if helpers.pending_win32(pending) then return end
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
@@ -88,4 +89,5 @@ describe('notify', function()
       exec_lua ([[ return {pcall(vim.rpcrequest, ..., 'nvim_eval', '1+1')}]], catchan))
     retry(nil, 3000, function() eq({}, meths.get_chan_info(catchan)) end) -- cat be dead :(
   end)
+--]=]
 end)
