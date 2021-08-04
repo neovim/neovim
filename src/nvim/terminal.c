@@ -348,11 +348,17 @@ void terminal_close(Terminal **termpp, int status)
 
   if (buf && !is_autocmd_blocked()) {
     save_v_event_T save_v_event;
+    aco_save_T aco;
+
     dict_T *dict = get_v_event(&save_v_event);
     tv_dict_add_nr(dict, S_LEN("status"), status);
     tv_dict_set_keys_readonly(dict);
+    aucmd_prepbuf(&aco, buf);
+
     apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
     restore_v_event(dict, &save_v_event);
+
+    aucmd_restbuf(&aco);
   }
 }
 
