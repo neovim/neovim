@@ -240,6 +240,7 @@ end
 --- Applies a list of text edits to a buffer.
 --@param text_edits (table) list of `TextEdit` objects
 --@param buf_nr (number) Buffer id
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
@@ -1486,6 +1487,7 @@ do --[[ References ]]
   ---
   --@param bufnr buffer id
   --@param references List of `DocumentHighlight` objects to highlight
+  --@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references)
     validate { bufnr = {bufnr, 'n', true} }
     for _, reference in ipairs(references) do
