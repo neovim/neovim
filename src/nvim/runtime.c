@@ -235,7 +235,6 @@ int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
 /// return FAIL when no file could be sourced, OK otherwise.
 int source_runtime(char_u *name, int flags)
 {
-  flags |= (flags & DIP_NORTP) ? 0 : DIP_START;
   return source_in_path(p_rtp, name, flags);
 }
 
