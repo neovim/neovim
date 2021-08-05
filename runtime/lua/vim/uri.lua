@@ -82,7 +82,8 @@ local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):.*'
 local function uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
   local scheme = fname:match(URI_SCHEME_PATTERN)
-  if scheme then
+  -- Windows paths should not be considered URIs
+  if scheme and scheme:len() > 1 then
     return fname
   else
     return uri_from_fname(fname)
