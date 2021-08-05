@@ -579,5 +579,26 @@ function vim.is_callable(f)
   return type(m.__call) == 'function'
 end
 
+--- Create a wrapper around {module} that defers loading until used
+---
+--- Use vim.autoload to create a reference to a module without loading it. The
+--- module will be loaded when it is accessed for the first time.
+---
+--- In many cases, this can be used as a drop-in replacement to `require`.
+---@param module Name of the Lua module to autoload
+function vim.autoload(module)
+  return setmetatable({}, {
+    __index = function(_, k)
+      return require(module)[k]
+    end,
+    __newindex = function(_, k, v)
+      require(module)[k] = v
+    end,
+    __call = function(_, ...)
+      require(module)(...)
+    end,
+  })
+end
+
 return vim
 -- vim:sw=2 ts=2 et
