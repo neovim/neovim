@@ -60,6 +60,13 @@ local function notify(method, params)
   send { method = method, params = params or {} }
 end
 
+local request_id = 1337
+local function request(method, params)
+  assert(type(method) == 'string', "method must be a string")
+  send { method = method, params = params or {}, id = request_id}
+  request_id = request_id + 1
+end
+
 local function expect_notification(method, params, ...)
   local message = read_message()
   assert_eq(method, message.method,
@@ -76,6 +83,13 @@ local function expect_request(method, handler, ...)
       ..., "expect_request", "method")
   local err, result = handler(req.params)
   respond(req.id, err, result)
+end
+
+local function expect_response(id, error, result)
+  local message = read_message()
+  assert_eq(id, message.id, "expect_response", "id")
+  assert_eq(error, message.error, "expect_response", "error")
+  assert_eq(result, message.result, "expect_response", "result")
 end
 
 io.stderr:setvbuf("no")
@@ -369,6 +383,72 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
         };
       })
       expect_notification("finish")
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_on_client_notify()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_notification('test_method', 'test_params')
+      expect_notification('test_method2', 'test_params2')
+    end;
+  }
+end
+
+function tests.check_on_client_request()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_request('test_method', function(_) return nil, "test_result" end)
+      expect_notification('finish')
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_on_client_request_error()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_request('test_method', function(_) return {msg = "test_error"}, nil end)
+      expect_notification('finish')
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_on_server_request()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      request('test_method', 'test_params')
+      expect_response(request_id - 1, nil, vim.NIL)
+      notify('finish_1')
+      expect_notification('finish')
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_on_server_notify()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      notify('test_method', 'test_params')
+      expect_notification('finish')
       notify('finish')
     end;
   }

@@ -312,13 +312,34 @@ end
 --- - {pid} (number) The LSP server's PID.
 --- - {handle} A handle for low-level interaction with the LSP server process
 ---   |vim.loop|.
-local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
+local function start(cmd, cmd_args, dispatchers, _on_server, _on_client, extra_spawn_params, log_prefix)
   local _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
   validate {
     cmd = { cmd, 's' };
     cmd_args = { cmd_args, 't' };
+    _on_server = { _on_server, 'f', true };
+    _on_client = { _on_client, 'f', true };
     dispatchers = { dispatchers, 't', true };
   }
+
+  local on_server = function(type, ...)
+    if _on_server then
+      local status, usererr = pcall(_on_server, type, ...)
+      if not status then
+        local _ = log.error() and log.error(log_prefix, "user on_server failed", { err = usererr })
+        vim.api.nvim_err_writeln(table.concat{log_prefix, ' user on_server failed: ', tostring(usererr)})
+      end
+    end
+  end
+  local on_client = function(type, ...)
+    if _on_client then
+      local status, usererr = pcall(_on_client, type, ...)
+      if not status then
+        local _ = log.error() and log.error(log_prefix, "user on_client failed", { err = usererr })
+        vim.api.nvim_err_writeln(table.concat{log_prefix, ' user on_client failed: ', tostring(usererr)})
+      end
+    end
+  end
 
   if extra_spawn_params and extra_spawn_params.cwd then
       assert(is_dir(extra_spawn_params.cwd), "cwd must be a directory")
@@ -410,11 +431,13 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   --@param params (table): Parameters for the invoked LSP method
   --@returns (bool) `true` if notification could be sent, `false` if not
   local function notify(method, params)
-    return encode_and_send {
+    local result = encode_and_send {
       jsonrpc = "2.0";
       method = method;
       params = params;
     }
+    on_client("notify", method, params)
+    return result
   end
 
   --@private
@@ -449,6 +472,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       method = method;
       params = params;
     }
+    on_client("request", method, message_id, params)
     if result and message_callbacks then
       message_callbacks[message_id] = schedule_wrap(callback)
       return result, message_id
@@ -498,6 +522,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     if type(decoded.method) == 'string' and decoded.id then
       -- Server Request
       decoded.params = convert_NIL(decoded.params)
+
+      on_server("request", decoded.method, decoded.id, decoded.params)
+
       -- Schedule here so that the users functions don't trigger an error and
       -- we can still use the result.
       schedule(function()
@@ -530,6 +557,8 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
+
+      on_server("response", result_id, decoded.error, decoded.result)
 
       -- Do not surface RequestCancelled or ContentModified to users, it is RPC-internal.
       if decoded.error then
@@ -575,6 +604,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     elseif type(decoded.method) == 'string' then
       -- Notification
       decoded.params = convert_NIL(decoded.params)
+
+      on_server("notify", decoded.method, decoded.params)
+
       try_call(client_errors.NOTIFICATION_HANDLER_ERROR,
           dispatchers.notification, decoded.method, decoded.params)
     else

@@ -227,6 +227,8 @@ local function validate_client_config(config)
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
     on_init         = { config.on_init, "f", true };
+    on_server       = { config.on_server, "f", true };
+    on_client       = { config.on_client, "f", true };
     settings        = { config.settings, "t", true };
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
@@ -625,6 +627,21 @@ end
 --@param on_attach Callback (client, bufnr) invoked when client
 --- attaches to a buffer.
 ---
+--@param on_client (function) callback with parameters (type, ...)
+--- which will be invoked immediately after sending a client-to-server request or notification
+--- where `type` and `...` are either
+--- "request" and (method, message_id, parameters)
+--- or "notify" and (method, parameters)
+--- depending on whether this is a request or notification
+---
+--@param on_server (function) callback with parameters (type, ...)
+--- which will be invoked immediately after receiving a server-to-client request, response, or notification
+--- where `type` and `...` are either
+--- "request" and (method, message_id, parameters),
+--- "response" and (result_id, error, result),
+--- or "notify" and (method, parameters)
+--- depending on whether this is a request, response, or notification
+---
 --@param trace:  "off" | "messages" | "verbose" | nil passed directly to the language
 --- server in the initialize request. Invalid/empty values will default to "off"
 --@param flags: A table with flags for the client. The current (experimental) flags are:
@@ -745,10 +762,10 @@ function lsp.start_client(config)
   end
 
   -- Start the RPC client.
-  local rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
+  local rpc = lsp_rpc.start(cmd, cmd_args, dispatch, config.on_server, config.on_client, {
     cwd = config.cmd_cwd;
     env = config.cmd_env;
-  })
+  }, log_prefix)
 
   local client = {
     id = client_id;

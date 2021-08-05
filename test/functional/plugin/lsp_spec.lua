@@ -41,7 +41,7 @@ local function clear_notrace()
 end
 
 
-local function fake_lsp_server_setup(test_name, timeout_ms, options)
+local function fake_lsp_server_setup(test_name, timeout_ms, options, nonserializable_opts)
   exec_lua([=[
     lsp = require('vim.lsp')
     local test_name, fixture_filename, logfile, timeout, options = ...
@@ -69,6 +69,8 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
         vim.rpcrequest(1, "init", result)
         client.config.flags.allow_incremental_sync = options.allow_incremental_sync or false
       end;
+      ]=] .. (nonserializable_opts or "") ..
+      [=[
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
       end;
@@ -79,7 +81,7 @@ end
 local function test_rpc_server(config)
   if config.test_name then
     clear_notrace()
-    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options)
+    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options, config.nonserializable_opts)
   end
   local client = setmetatable({}, {
     __index = function(_, name)
@@ -896,6 +898,231 @@ describe('LSP', function()
           end
           eq(table.remove(expected_handlers), {err, method, params, client_id}, "expected handler")
           if method == 'finish' then
+            client.stop()
+          end
+        end;
+      }
+    end)
+
+    it('should call on_client hook on notify', function()
+      local expected_handlers = {
+      }
+      test_rpc_server {
+        test_name = "check_on_client_notify";
+        nonserializable_opts = [[ on_client = function(type, method, params)
+          vim.lsp._last_on_client_type = type 
+          vim.lsp._last_on_client_method = method 
+          vim.lsp._last_on_client_params = params 
+        end; ]];
+        on_init = function(client)
+          client.notify("test_method", "test_params")
+          eq("notify", exec_lua("return vim.lsp._last_on_client_type"))
+          eq("test_method", exec_lua("return vim.lsp._last_on_client_method"))
+          eq("test_params", exec_lua("return vim.lsp._last_on_client_params"))
+          client.notify("test_method2", "test_params2")
+          eq("notify", exec_lua("return vim.lsp._last_on_client_type"))
+          eq("test_method2", exec_lua("return vim.lsp._last_on_client_method"))
+          eq("test_params2", exec_lua("return vim.lsp._last_on_client_params"))
+          client.stop()
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(...)
+          eq(table.remove(expected_handlers), {...}, "expected handler")
+        end;
+      }
+    end)
+
+    it('should call on_client hook on request', function()
+      local expected_handlers = {
+        {NIL, "finish", {}, 1};
+        {NIL, "test_method", "test_result", 1, NIL};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_on_client_request";
+        nonserializable_opts = [[ on_client = function(type, method, id, params)
+          vim.lsp._last_on_client_type = type 
+          vim.lsp._last_on_client_req_id = id 
+          vim.lsp._last_on_client_method = method 
+          vim.lsp._last_on_client_params = params 
+        end; ]];
+        on_init = function(_client)
+          _client.request("test_method", "test_params")
+          eq("request", exec_lua("return vim.lsp._last_on_client_type"))
+          eq("number", type(exec_lua("return vim.lsp._last_on_client_req_id")))
+          eq("test_method", exec_lua("return vim.lsp._last_on_client_method"))
+          eq("test_params", exec_lua("return vim.lsp._last_on_client_params"))
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "called all handlers", fake_lsp_logfile)
+        end;
+        on_handler = function(err, method, ...)
+          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
+          if method == "test_method" then
+            client.notify("finish")
+          end
+          if method == "finish" then
+            client.stop()
+          end
+        end;
+      }
+    end)
+
+    it('should call on_server hook on request', function()
+      local expected_handlers = {
+        {NIL, "finish", {}, 1};
+        {NIL, "finish_1", {}, 1};
+        {NIL, "test_method", "test_params", 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_on_server_request";
+        nonserializable_opts = [[ on_server = function(type, method, id, params)
+          vim.lsp._last_on_server_type = type 
+          vim.lsp._last_on_server_method = method 
+          vim.lsp._last_on_server_id = id 
+          vim.lsp._last_on_server_params = params 
+        end; ]];
+        on_init = function(_client)
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "called all handlers", fake_lsp_logfile)
+        end;
+        on_handler = function(err, method, ...)
+          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
+          if method == "test_method" then
+            eq("request", exec_lua("return vim.lsp._last_on_server_type"))
+            eq("test_method", exec_lua("return vim.lsp._last_on_server_method"))
+            eq("number", type(exec_lua("return vim.lsp._last_on_server_id")))
+            eq("test_params", exec_lua("return vim.lsp._last_on_server_params"))
+          end
+          if method == "finish_1" then
+            client.notify("finish")
+          end
+          if method == "finish" then
+            client.stop()
+          end
+        end;
+      }
+    end)
+
+    it('should call on_server hook on response', function()
+      local expected_handlers = {
+        {NIL, "finish", {}, 1};
+        {NIL, "test_method", "test_result", 1, NIL};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_on_client_request";
+        nonserializable_opts = [[ on_server = function(type, id, error, result)
+          vim.lsp._last_on_server_type = type 
+          vim.lsp._last_on_server_id = id 
+          vim.lsp._last_on_server_error = error
+          vim.lsp._last_on_server_result = result 
+        end; ]];
+        on_init = function(_client)
+          _client.request("test_method", "test_params")
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "called all handlers", fake_lsp_logfile)
+        end;
+        on_handler = function(err, method, ...)
+          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
+          if method == "test_method" then
+            eq("response", exec_lua("return vim.lsp._last_on_server_type"))
+            eq("number", type(exec_lua("return vim.lsp._last_on_server_id")))
+            eq(NIL, exec_lua("return vim.lsp._last_on_server_error"))
+            eq("test_result", exec_lua("return vim.lsp._last_on_server_result"))
+            client.notify("finish")
+          end
+          if method == "finish" then
+            client.stop()
+          end
+        end;
+      }
+    end)
+
+    it('should call on_server hook on error response', function()
+      local expected_handlers = {
+        {NIL, "finish", {}, 1};
+        {{msg = "test_error"}, "test_method", NIL, 1, NIL};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_on_client_request_error";
+        nonserializable_opts = [[ on_server = function(type, id, error, result)
+          vim.lsp._last_on_server_type = type 
+          vim.lsp._last_on_server_id = id 
+          vim.lsp._last_on_server_error = error
+          vim.lsp._last_on_server_result = result 
+        end; ]];
+        on_init = function(_client)
+          _client.request("test_method", "test_params")
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "called all handlers", fake_lsp_logfile)
+        end;
+        on_handler = function(err, method, ...)
+          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
+          if method == "test_method" then
+            eq("response", exec_lua("return vim.lsp._last_on_server_type"))
+            eq("number", type(exec_lua("return vim.lsp._last_on_server_id")))
+            eq("test_error", exec_lua("return vim.lsp._last_on_server_error").msg)
+            eq(NIL, exec_lua("return vim.lsp._last_on_server_result"))
+            client.notify("finish")
+          end
+          if method == "finish" then
+            client.stop()
+          end
+        end;
+      }
+    end)
+
+    it('should call on_server hook on notify', function()
+      local expected_handlers = {
+        {NIL, "finish", {}, 1};
+        {NIL, "test_method", "test_params", 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_on_server_notify";
+        nonserializable_opts = [[ on_server = function(type, method, params)
+          vim.lsp._last_on_server_type = type 
+          vim.lsp._last_on_server_method = method 
+          vim.lsp._last_on_server_params = params 
+        end; ]];
+        on_init = function(_client)
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "called all handlers", fake_lsp_logfile)
+        end;
+        on_handler = function(err, method, ...)
+          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
+          if method == "test_method" then
+            eq("notify", exec_lua("return vim.lsp._last_on_server_type"))
+            eq("test_method", exec_lua("return vim.lsp._last_on_server_method"))
+            eq("test_params", exec_lua("return vim.lsp._last_on_server_params"))
+            client.notify("finish")
+          end
+          if method == "finish" then
             client.stop()
           end
         end;
