@@ -44,6 +44,7 @@ typedef struct {
   bool evaluate;       ///< actually evaluate expressions
   partial_T *partial;  ///< for extra arguments
   dict_T *selfdict;    ///< Dictionary for "self"
+  typval_T *basetv;    ///< base for base->method()
 } funcexe_T;
 
 #define FUNCEXE_INIT (funcexe_T) { \
@@ -54,6 +55,7 @@ typedef struct {
   .evaluate = false, \
   .partial = NULL, \
   .selfdict = NULL, \
+  .basetv = NULL, \
 }
 
 #define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]

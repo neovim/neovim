@@ -942,6 +942,8 @@ in any order.  E.g., these are all possible:
 	expr9[expr1].name
 	expr9.name[expr1]
 	expr9(expr1, ...)[expr1].name
+	expr9->(expr1, ...)[expr1]
+Evaluation is always from left to right.
 
 
 expr8[expr1]		item of String or |List|	*expr-[]* *E111*
@@ -1043,6 +1045,11 @@ expr8(expr1, ...)	|Funcref| function call
 When expr8 is a |Funcref| type variable, invoke the function it refers to.
 
 
+expr8->name([args])	method call			*method*
+
+For global methods this is the same as: >
+	name(expr8 [, args])
+There can also be methods specifically for the type of "expr8".
 
 							*expr9*
 number
@@ -2603,6 +2610,8 @@ add({list}, {expr})					*add()*
 <		Note that when {expr} is a |List| it is appended as a single
 		item.  Use |extend()| to concatenate |Lists|.
 		Use |insert()| to add an item at another position.
+		Can also be used as a |method|: >
+			mylist->add(val1)->add(val2)
 
 
 and({expr}, {expr})					*and()*
@@ -3215,6 +3224,8 @@ copy({expr})	Make a copy of {expr}.  For Numbers and Strings this isn't
 		changing an item changes the contents of both |Lists|.
 		A |Dictionary| is copied in a similar way as a |List|.
 		Also see |deepcopy()|.
+		Can also be used as a |method|: >
+			mylist->copy()
 
 cos({expr})						*cos()*
 		Return the cosine of {expr}, measured in radians, as a |Float|.
@@ -3249,6 +3260,8 @@ count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		When {comp} is a string then the number of not overlapping
 		occurrences of {expr} is returned. Zero is returned when
 		{expr} is an empty string.
+		Can also be used as a |method|: >
+			mylist->count(val)
 
 							*cscope_connection()*
 cscope_connection([{num} , {dbpath} [, {prepend}]])
@@ -3479,6 +3492,8 @@ empty({expr})						*empty()*
 		A |List| or |Dictionary| is empty when it does not have any
 		items.  A Number is empty when its value is zero.  Special
 		variable is empty when it is |v:false| or |v:null|.
+		Can also be used as a |method|: >
+			mylist->empty()
 
 environ()						*environ()*
 		Return all of environment variables as dictionary. You can
@@ -3794,6 +3809,8 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 		fails.
 		Returns {expr1}.
 
+		Can also be used as a |method|: >
+			mylist->extend(otherlist)
 
 feedkeys({string} [, {mode}])				*feedkeys()*
 		Characters in {string} are queued for processing as if they
@@ -3903,6 +3920,8 @@ filter({expr1}, {expr2})					*filter()*
 		Funcref errors inside a function are ignored, unless it was
 		defined with the "abort" flag.
 
+		Can also be used as a |method|: >
+			mylist->filter(expr2)
 
 finddir({name} [, {path} [, {count}]])				*finddir()*
 		Find directory {name} in {path}.  Supports both downwards and
@@ -4159,6 +4178,8 @@ get({list}, {idx} [, {default}])			*get()*
 		Get item {idx} from |List| {list}.  When this item is not
 		available return {default}.  Return zero when {default} is
 		omitted.
+		Can also be used as a |method|: >
+			mylist->get(idx)
 get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
@@ -5513,6 +5534,9 @@ insert({list}, {item} [, {idx}])			*insert()*
 		Note that when {item} is a |List| it is inserted as a single
 		item.  Use |extend()| to concatenate |Lists|.
 
+		Can also be used as a |method|: >
+			mylist->insert(item)
+
 interrupt()						*interrupt()*
 		Interrupt script execution.  It works more or less like the
 		user typing CTRL-C, most commands won't execute and control
@@ -5580,6 +5604,8 @@ items({dict})						*items()*
 		|List| item is a list with two items: the key of a {dict}
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
+		Can also be used as a |method|: >
+			mydict->items()
 
 isnan({expr})						*isnan()*
 		Return |TRUE| if {expr} is a float with value NaN. >
@@ -5713,6 +5739,9 @@ join({list} [, {sep}])					*join()*
 		converted into a string like with |string()|.
 		The opposite function is |split()|.
 
+		Can also be used as a |method|: >
+			mylist->join()
+
 json_decode({expr})					*json_decode()*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style
 		list as the input, as well as regular string.  May output any
@@ -5743,8 +5772,10 @@ json_encode({expr})					*json_encode()*
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
 		arbitrary order.
+		Can also be used as a |method|: >
+			mydict->keys()
 
-							*len()* *E701*
+<							*len()* *E701*
 len({expr})	The result is a Number, which is the length of the argument.
 		When {expr} is a String or a Number the length in bytes is
 		used, as with |strlen()|.
@@ -5755,7 +5786,10 @@ len({expr})	The result is a Number, which is the length of the argument.
 		|Dictionary| is returned.
 		Otherwise an error is given.
 
-						*libcall()* *E364* *E368*
+		Can also be used as a |method|: >
+			mylist->len()
+
+<						*libcall()* *E364* *E368*
 libcall({libname}, {funcname}, {argument})
 		Call function {funcname} in the run-time library {libname}
 		with single argument {argument}.
@@ -5938,6 +5972,8 @@ map({expr1}, {expr2})					*map()*
 		Funcref errors inside a function are ignored, unless it was
 		defined with the "abort" flag.
 
+		Can also be used as a |method|: >
+			mylist->map(expr2)
 
 maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		When {dict} is omitted or zero: Return the rhs of mapping
@@ -6273,6 +6309,9 @@ max({expr})	Return the maximum value of all items in {expr}.
 		items in {expr} cannot be used as a Number this results in
                 an error.  An empty |List| or |Dictionary| results in zero.
 
+		Can also be used as a |method|: >
+			mylist->max()
+
 menu_get({path}, {modes})				*menu_get()*
 		Returns a |List| of |Dictionaries| describing |menus| (defined
 		by |:menu|, |:amenu|, …), including |hidden-menus|.
@@ -6327,7 +6366,10 @@ min({expr})	Return the minimum value of all items in {expr}.
 		items in {expr} cannot be used as a Number this results in
 		an error.  An empty |List| or |Dictionary| results in zero.
 
-							*mkdir()* *E739*
+		Can also be used as a |method|: >
+			mylist->min()
+
+<							*mkdir()* *E739*
 mkdir({name} [, {path} [, {prot}]])
 		Create directory {name}.
 		If {path} is "p" then intermediate directories are created as
@@ -7085,6 +7127,10 @@ remove({list}, {idx} [, {end}])				*remove()*
 		Example: >
 			:echo "last item: " . remove(mylist, -1)
 			:call remove(mylist, 0, 9)
+
+<		Can also be used as a |method|: >
+			mylist->remove(idx)
+
 remove({dict}, {key})
 		Remove the entry from {dict} with key {key} and return it.
 		Example: >
@@ -7111,6 +7157,8 @@ repeat({expr}, {count})					*repeat()*
 			:let longlist = repeat(['a', 'b'], 3)
 <		Results in ['a', 'b', 'a', 'b', 'a', 'b'].
 
+		Can also be used as a |method|: >
+			mylist->repeat(count)
 
 resolve({filename})					*resolve()* *E655*
 		On MS-Windows, when {filename} is a shortcut (a .lnk file),
@@ -7130,6 +7178,8 @@ reverse({list})	Reverse the order of items in {list} in-place.  Returns
 		{list}.
 		If you want a list to remain unmodified make a copy first: >
 			:let revlist = reverse(copy(mylist))
+<		Can also be used as a |method|: >
+			mylist->reverse()
 
 round({expr})							*round()*
 		Round off {expr} to the nearest integral value and return it
@@ -8209,7 +8259,10 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		on numbers, text strings will sort next to each other, in the
 		same order as they were originally.
 
-		Also see |uniq()|.
+		Can also be used as a |method|: >
+			mylist->sort()
+
+<		Also see |uniq()|.
 
 		Example: >
 			func MyCompare(i1, i2)
@@ -8503,6 +8556,9 @@ string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 		strings and floats though and this is the only official
 		method, use |msgpackdump()| or |json_encode()| if you need to
 		share data with other application.
+
+		Can also be used as a |method|: >
+			mylist->string()
 
 							*strlen()*
 strlen({expr})	The result is a Number, which is the length of the String
@@ -9149,6 +9205,9 @@ type({expr})							*type()*
 <               To check if the v:t_ variables exist use this: >
                         :if exists('v:t_number')
 
+<		Can also be used as a |method|: >
+			mylist->type()
+
 undofile({name})					*undofile()*
 		Return the name of the undo file that would be used for a file
 		with name {name} when writing.  This uses the 'undodir'
@@ -9211,10 +9270,15 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 <		The default compare function uses the string representation of
 		each item.  For the use of {func} and {dict} see |sort()|.
 
+		Can also be used as a |method|: >
+			mylist->uniq()
+
 values({dict})						*values()*
 		Return a |List| with all the values of {dict}.  The |List| is
 		in arbitrary order.
 
+		Can also be used as a |method|: >
+			mydict->values()
 
 virtcol({expr})						*virtcol()*
 		The result is a Number, which is the screen column of the file

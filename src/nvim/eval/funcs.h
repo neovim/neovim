@@ -14,6 +14,7 @@ typedef struct fst {
   char *name;        ///< Name of the function.
   uint8_t min_argc;  ///< Minimal number of arguments.
   uint8_t max_argc;  ///< Maximal number of arguments.
+  uint8_t base_arg;  ///< Method base arg # (1-indexed), or 0 if not a method.
   VimLFunc func;     ///< Function implementation.
   FunPtr data;       ///< Userdata for function implementation.
 } VimLFuncDef;

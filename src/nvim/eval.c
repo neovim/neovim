@@ -3809,6 +3809,7 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
 //  + in front  unary plus (ignored)
 //  trailing []  subscript in String or List
 //  trailing .name entry in Dictionary
+//  trailing ->name()  method call
 //
 // "arg" must point to the first non-white of the expression.
 // "arg" is advanced to the next non-white after the recognized expression.
@@ -4077,6 +4078,63 @@ static int eval7(
     }
   }
 
+  return ret;
+}
+
+/// Evaluate "->method()".
+/// @note "*arg" points to the '-'.
+/// @return FAIL or OK. "*arg" is advanced to after the ')'.
+static int eval_method(char_u **const arg, typval_T *const rettv,
+                       const bool evaluate, const bool verbose)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Skip over the ->.
+  *arg += 2;
+
+  // Locate the method name.
+  const char_u *const name = *arg;
+  size_t len;
+  for (len = 0; ASCII_ISALNUM(name[len]) || name[len] == '_'; len++) {
+  }
+
+  if (len == 0) {
+    if (verbose) {
+      EMSG(_("E260: Missing name after ->"));
+    }
+    return FAIL;
+  }
+
+  // Check for the "(".  Skip over white space after it.
+  if (name[len] != '(') {
+    if (verbose) {
+      EMSG2(_(e_missingparen), name);
+    }
+    return FAIL;
+  }
+  *arg += len;
+
+  typval_T base = *rettv;
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.evaluate = evaluate;
+  funcexe.basetv = &base;
+  rettv->v_type = VAR_UNKNOWN;
+  int ret = get_func_tv(name, len, rettv, arg, &funcexe);
+
+  // Clear the funcref afterwards, so that deleting it while
+  // evaluating the arguments is possible (see test55).
+  if (evaluate) {
+    tv_clear(&base);
+  }
+
+  // Stop the expression evaluation when immediately aborting on
+  // error, or when an interrupt occurred or an exception was thrown
+  // but not caught.
+  if (aborting()) {
+    if (ret == OK) {
+      tv_clear(rettv);
+    }
+    ret = FAIL;
+  }
   return ret;
 }
 
@@ -8420,9 +8478,13 @@ int check_luafunc_name(const char *str, bool paren)
   }
 }
 
-/// Handle expr[expr], expr[expr:expr] subscript and .name lookup.
-/// Also handle function call with Funcref variable: func(expr)
-/// Can all be combined: dict.func(expr)[idx]['func'](expr)
+/// Handle:
+/// - expr[expr], expr[expr:expr] subscript
+/// - ".name" lookup
+/// - function call with Funcref variable: func(expr)
+/// - method call: var->method()
+///
+/// Can all be combined in any order: dict.func(expr)[idx]['func'](expr)->len()
 int
 handle_subscript(
     const char **const arg,
@@ -8456,12 +8518,11 @@ handle_subscript(
     }
   }
 
-
   while (ret == OK
-         && (**arg == '['
-             || (**arg == '.' && rettv->v_type == VAR_DICT)
-             || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))
-         && !ascii_iswhite(*(*arg - 1))) {
+         && (((**arg == '[' || (**arg == '.' && rettv->v_type == VAR_DICT)
+               || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))
+              && !ascii_iswhite(*(*arg - 1)))
+             || (**arg == '-' && (*arg)[1] == '>'))) {
     if (**arg == '(') {
       partial_T *pt = NULL;
       // need to copy the funcref so that we can clear rettv
@@ -8507,6 +8568,11 @@ handle_subscript(
       }
       tv_dict_unref(selfdict);
       selfdict = NULL;
+    } else if (**arg == '-') {
+      if (eval_method((char_u **)arg, rettv, evaluate, verbose) == FAIL) {
+        tv_clear(rettv);
+        ret = FAIL;
+      }
     } else {  // **arg == '[' || **arg == '.'
       tv_dict_unref(selfdict);
       if (rettv->v_type == VAR_DICT) {

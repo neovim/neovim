@@ -1514,7 +1514,10 @@ call_func(
       }
     } else if (fp != NULL || !builtin_function((const char *)rfname, -1)) {
       // User defined function.
-      if (fp == NULL) {
+      if (funcexe->basetv != NULL) {
+        // TODO(seandewar): support User function: base->Method()
+        fp = NULL;
+      } else if (fp == NULL) {
         fp = find_func(rfname);
       }
 
@@ -1560,20 +1563,13 @@ call_func(
           error = ERROR_NONE;
         }
       }
+    } else if (funcexe->basetv != NULL) {
+      // Find the method name in the table, call its implementation.
+      error = call_internal_method(fname, argcount, argvars, rettv,
+                                   funcexe->basetv);
     } else {
       // Find the function name in the table, call its implementation.
-      const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
-      if (fdef != NULL) {
-        if (argcount < fdef->min_argc) {
-          error = ERROR_TOOFEW;
-        } else if (argcount > fdef->max_argc) {
-          error = ERROR_TOOMANY;
-        } else {
-          argvars[argcount].v_type = VAR_UNKNOWN;
-          fdef->func(argvars, rettv, fdef->data);
-          error = ERROR_NONE;
-        }
-      }
+      error = call_internal_func(fname, argcount, argvars, rettv);
     }
     /*
      * The function call (or "FuncUndefined" autocommand sequence) might
@@ -2937,7 +2933,7 @@ void ex_call(exarg_T *eap)
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this.
 
   if (*startarg != '(') {
-    EMSG2(_("E107: Missing parentheses: %s"), eap->arg);
+    EMSG2(_(e_missingparen), eap->arg);
     goto end;
   }
 

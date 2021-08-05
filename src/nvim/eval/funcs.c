@@ -175,6 +175,50 @@ const VimLFuncDef *find_internal_func(const char *const name)
   return find_internal_func_gperf(name, len);
 }
 
+int call_internal_func(const char_u *const fname, const int argcount,
+                       typval_T *const argvars, typval_T *const rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
+  if (fdef == NULL) {
+    return ERROR_UNKNOWN;
+  } else if (argcount < fdef->min_argc) {
+    return ERROR_TOOFEW;
+  } else if (argcount > fdef->max_argc) {
+    return ERROR_TOOMANY;
+  }
+  argvars[argcount].v_type = VAR_UNKNOWN;
+  fdef->func(argvars, rettv, fdef->data);
+  return ERROR_NONE;
+}
+
+/// Invoke a method for base->method().
+int call_internal_method(const char_u *const fname, const int argcount,
+                         typval_T *const argvars, typval_T *const rettv,
+                         typval_T *const basetv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
+  if (fdef == NULL || fdef->base_arg == 0) {
+    return ERROR_UNKNOWN;
+  } else if (argcount + 1 < fdef->min_argc) {
+    return ERROR_TOOFEW;
+  } else if (argcount + 1 > fdef->max_argc) {
+    return ERROR_TOOMANY;
+  }
+
+  typval_T argv[MAX_FUNC_ARGS + 1];
+  const ptrdiff_t base_index = fdef->base_arg - 1;
+  memcpy(argv, argvars, base_index * sizeof(typval_T));
+  argv[base_index] = *basetv;
+  memcpy(argv + base_index + 1, argvars + base_index,
+         (argcount - base_index) * sizeof(typval_T));
+  argv[argcount + 1].v_type = VAR_UNKNOWN;
+
+  fdef->func(argv, rettv, fdef->data);
+  return ERROR_NONE;
+}
+
 /*
  * Return TRUE for a non-zero Number and a non-empty String.
  */
