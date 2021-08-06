@@ -691,8 +691,10 @@ void ex_sort(exarg_T *eap)
                  count, 0, old_count,
                  lnum - eap->line2, 0, new_count, kExtmarkUndo);
 
-  if (change_occurred || deleted != 0) {
-    changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
+  bool modified = change_occurred || deleted != 0;
+  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, modified);
+  if (!modified) {
+    unchanged(curbuf, false, false);
   }
 
   curwin->w_cursor.lnum = eap->line1;
