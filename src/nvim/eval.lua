@@ -7,13 +7,17 @@
 --       arguments.
 -- base  For methods: the argument to use as the base argument (1-indexed):
 --       base->method()
---       Defaults to zero (function cannot be used as a method).
+--       Defaults to BASE_NONE (function cannot be used as a method).
 -- func  Name of the C function which implements the VimL function. Defaults to
 --       `f_{funcname}`.
 
 local varargs = function(nr)
   return {nr}
 end
+
+-- Usable with the base key: use the last function argument as the method base.
+-- Value is from funcs.h file. "BASE_" prefix is omitted.
+local LAST = "BASE_LAST"
 
 return {
   funcs={
@@ -22,15 +26,15 @@ return {
     add={args=2, base=1},
     ['and']={args=2},
     api_info={},
-    append={args=2},
-    appendbufline={args=3},
+    append={args=2, base=LAST},
+    appendbufline={args=3, base=LAST},
     argc={args={0, 1}},
     argidx={},
     arglistid={args={0, 2}},
     argv={args={0, 2}},
     asin={args=1, func="float_op_wrapper", data="&asin"},  -- WJMc
     assert_beeps={args={1}},
-    assert_equal={args={2, 3}},
+    assert_equal={args={2, 3}, base=2},
     assert_equalfile={args={2, 3}},
     assert_exception={args={1, 2}},
     assert_fails={args={1, 3}},
@@ -38,7 +42,7 @@ return {
     assert_inrange={args={3, 4}},
     assert_match={args={2, 3}},
     assert_nobeep={args={1}},
-    assert_notequal={args={2, 3}},
+    assert_notequal={args={2, 3}, base=2},
     assert_notmatch={args={2, 3}},
     assert_report={args=1},
     assert_true={args={1, 2}},
@@ -99,7 +103,7 @@ return {
     empty={args=1, base=1},
     environ={},
     escape={args=2},
-    eval={args=1},
+    eval={args=1, base=1},
     eventhandler={},
     executable={args=1},
     execute={args={1, 2}},

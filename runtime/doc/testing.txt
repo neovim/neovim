@@ -69,7 +69,10 @@ assert_equal({expected}, {actual} [, {msg}])
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Expected 'foo' but got 'bar' ~
 
-							*assert_equalfile()*
+		Can also be used as a |method|: >
+			mylist->assert_equal([1, 2, 3])
+
+<							*assert_equalfile()*
 assert_equalfile({fname-one}, {fname-two})
 		When the files {fname-one} and {fname-two} do not contain
 		exactly the same text an error message is added to |v:errors|.
@@ -145,7 +148,10 @@ assert_notequal({expected}, {actual} [, {msg}])
 		|v:errors| when {expected} and {actual} are equal.
 		Also see |assert-return|.
 
-							*assert_notmatch()*
+		Can also be used as a |method|: >
+			mylist->assert_notequal([1, 2, 3])
+
+<							*assert_notmatch()*
 assert_notmatch({pattern}, {actual} [, {msg}])
 		The opposite of `assert_match()`: add an error message to
 		|v:errors| when {pattern} matches {actual}.

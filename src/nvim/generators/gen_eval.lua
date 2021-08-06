@@ -42,7 +42,7 @@ gperfpipe:write([[
 %language=ANSI-C
 %global-table
 %readonly-tables
-%define initializer-suffix ,0,0,0,NULL,NULL
+%define initializer-suffix ,0,0,BASE_NONE,NULL,NULL
 %define word-array-name functions
 %define hash-function-name hash_internal_func_gperf
 %define lookup-function-name find_internal_func_gperf
@@ -59,7 +59,7 @@ for name, def in pairs(funcs) do
   elseif #args == 1 then
     args[2] = 'MAX_FUNC_ARGS'
   end
-  local base = def.base or 0
+  local base = def.base or "BASE_NONE"
   local func = def.func or ('f_' .. name)
   local data = def.data or "NULL"
   gperfpipe:write(('%s,  %s, %s, %s, &%s, (FunPtr)%s\n')

@@ -199,7 +199,7 @@ int call_internal_method(const char_u *const fname, const int argcount,
   FUNC_ATTR_NONNULL_ALL
 {
   const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
-  if (fdef == NULL || fdef->base_arg == 0) {
+  if (fdef == NULL || fdef->base_arg == BASE_NONE) {
     return ERROR_UNKNOWN;
   } else if (argcount + 1 < fdef->min_argc) {
     return ERROR_TOOFEW;
@@ -208,7 +208,8 @@ int call_internal_method(const char_u *const fname, const int argcount,
   }
 
   typval_T argv[MAX_FUNC_ARGS + 1];
-  const ptrdiff_t base_index = fdef->base_arg - 1;
+  const ptrdiff_t base_index
+      = fdef->base_arg == BASE_LAST ? argcount : fdef->base_arg - 1;
   memcpy(argv, argvars, base_index * sizeof(typval_T));
   argv[base_index] = *basetv;
   memcpy(argv + base_index + 1, argvars + base_index,

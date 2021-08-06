@@ -3,18 +3,23 @@
 func Test_list()
   let l = [1, 2, 3]
   call assert_equal([1, 2, 3, 4], [1, 2, 3]->add(4))
+  eval l->assert_equal(l)
+  eval l->assert_equal(l, 'wrong')
+  eval l->assert_notequal([3, 2, 1])
+  eval l->assert_notequal([3, 2, 1], 'wrong')
   call assert_equal(l, l->copy())
   call assert_equal(1, l->count(2))
   call assert_false(l->empty())
   call assert_true([]->empty())
+  call assert_equal(579, ['123', '+', '456']->join()->eval())
   call assert_equal([1, 2, 3, 4, 5], [1, 2, 3]->extend([4, 5]))
   call assert_equal([1, 3], [1, 2, 3]->filter('v:val != 2'))
   call assert_equal(2, l->get(1))
   call assert_equal(1, l->index(2))
   call assert_equal([0, 1, 2, 3], [1, 2, 3]->insert(0))
-  call assert_fails('let x = l->items()', 'E715:')
+  call assert_fails('eval l->items()', 'E715:')
   call assert_equal('1 2 3', l->join())
-  call assert_fails('let x = l->keys()', 'E715:')
+  call assert_fails('eval l->keys()', 'E715:')
   call assert_equal(3, l->len())
   call assert_equal([2, 3, 4], [1, 2, 3]->map('v:val + 1'))
   call assert_equal(3, l->max())
@@ -26,7 +31,7 @@ func Test_list()
   call assert_equal('[1, 2, 3]', l->string())
   call assert_equal(v:t_list, l->type())
   call assert_equal([1, 2, 3], [1, 1, 2, 3, 3]->uniq())
-  call assert_fails('let x = l->values()', 'E715:')
+  call assert_fails('eval l->values()', 'E715:')
 endfunc
 
 func Test_dict()
@@ -63,6 +68,20 @@ func Test_dict()
   call assert_equal(v:t_dict, d->type())
   call assert_fails('let x = d->uniq()', 'E686:')
   call assert_equal([1, 2, 3], d->values())
+endfunc
+
+func Test_append()
+  new
+  eval ['one', 'two', 'three']->append(1)
+  call assert_equal(['', 'one', 'two', 'three'], getline(1, '$'))
+
+  %del
+  let bnr = bufnr('')
+  wincmd w
+  eval ['one', 'two', 'three']->appendbufline(bnr, 1)
+  call assert_equal(['', 'one', 'two', 'three'], getbufline(bnr, 1, '$'))
+
+  exe 'bwipe! ' .. bnr
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

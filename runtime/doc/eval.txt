@@ -669,12 +669,14 @@ Expression syntax summary, from least to most significant:
 	expr8[expr1 : expr1]	substring of a String or sublist of a |List|
 	expr8.name		entry in a |Dictionary|
 	expr8(expr1, ...)	function call with |Funcref| variable
+	expr8->name(expr1, ...)	|method| call
 
 |expr9|	number			number constant
 	"string"		string constant, backslash is special
 	'string'		string constant, ' is doubled
 	[expr1, ...]		|List|
 	{expr1: expr1, ...}	|Dictionary|
+	#{key: expr1, ...}	|Dictionary|
 	&option			option value
 	(expr1)			nested expression
 	variable		internal variable
@@ -939,10 +941,10 @@ expr8							*expr8*
 -----
 This expression is either |expr9| or a sequence of the alternatives below,
 in any order.  E.g., these are all possible:
-	expr9[expr1].name
-	expr9.name[expr1]
-	expr9(expr1, ...)[expr1].name
-	expr9->(expr1, ...)[expr1]
+	expr8[expr1].name
+	expr8.name[expr1]
+	expr8(expr1, ...)[expr1].name
+	expr8->(expr1, ...)[expr1]
 Evaluation is always from left to right.
 
 
@@ -1047,9 +1049,16 @@ When expr8 is a |Funcref| type variable, invoke the function it refers to.
 
 expr8->name([args])	method call			*method*
 
-For global methods this is the same as: >
+For methods that are also available as global functions this is the same as: >
 	name(expr8 [, args])
 There can also be methods specifically for the type of "expr8".
+
+"->name(" must not contain white space.  There can be white space before "->"
+and after the "(".
+
+This allows for chaining, using the type that the method returns: >
+	mylist->filter(filterexpr)->map(mapexpr)->sort()->join()
+<
 
 							*expr9*
 number
@@ -2637,6 +2646,9 @@ append({lnum}, {text})					*append()*
 			:let failed = append(line('$'), "# THE END")
 			:let failed = append(0, ["Chapter 1", "the beginning"])
 
+<		Can also be used as a |method| after a List: >
+			mylist->append(lnum)
+
 appendbufline({expr}, {lnum}, {text})			*appendbufline()*
 		Like |append()| but append the text in buffer {expr}.
 
@@ -2655,8 +2667,10 @@ appendbufline({expr}, {lnum}, {text})			*appendbufline()*
 		error message is given. Example: >
 			:let failed = appendbufline(13, 0, "# THE START")
 <
-							*argc()*
-argc([{winid}])
+		Can also be used as a |method| after a List: >
+			mylist->appendbufline(buf, lnum)
+
+argc([{winid}])					*argc()*
 		The result is the number of files in the argument list.  See
 		|arglist|.
 		If {winid} is not supplied, the argument list of the current
@@ -3518,6 +3532,9 @@ eval({string})	Evaluate {string} and return the result.  Especially useful to
 		them.  Also works for |Funcref|s that refer to existing
 		functions.
 
+		Can also be used as a |method|: >
+			argv->join()->eval()
+
 eventhandler()						*eventhandler()*
 		Returns 1 when inside an event handler.  That is that Vim got
 		interrupted while waiting for the user to type a character,
@@ -3864,7 +3881,11 @@ filereadable({file})					*filereadable()*
 		expression, which is used as a String.
 		If you don't care about the file being readable you can use
 		|glob()|.
-
+		{file} is used as-is, you may want to expand wildcards first: >
+			echo filereadable('~/.vimrc')
+			0
+			echo filereadable(expand('~/.vimrc'))
+			1
 
 filewritable({file})					*filewritable()*
 		The result is a Number, which is 1 when a file with the
@@ -10006,7 +10027,9 @@ This function can then be called with: >
 The recursiveness of user functions is restricted with the |'maxfuncdepth'|
 option.
 
-It is also possible to use `:eval`.  It does not support a range.
+It is also possible to use `:eval`.  It does not support a range, but does
+allow for method chaining, e.g.: >
+	eval GetList()->Filter()->append('$')
 
 
 AUTOMATICALLY LOADING FUNCTIONS ~
@@ -10749,7 +10772,7 @@ text...
 <
 							*:eval*
 :eval {expr}		Evaluate {expr} and discard the result.  Example: >
-				:eval append(Filter(Getlist()), '$')
+				:eval Getlist()->Filter()->append('$')
 
 <			The expression is supposed to have a side effect,
 			since the resulting value is not used.  In the example
