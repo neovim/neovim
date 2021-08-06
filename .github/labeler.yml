@@ -35,8 +35,7 @@
   - src/nvim/mouse*
 
 "documentation":
-  - runtime/doc/*
-  - CONTRIBUTING.md
+  - all: ["runtime/doc/*"]
 
 "clipboard":
   - runtime/autoload/provider/clipboard.vim
