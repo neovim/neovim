@@ -4134,6 +4134,11 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
         EMSG2(_(e_missingparen), name);
       }
       ret = FAIL;
+    } else if (ascii_iswhite((*arg)[-1])) {
+      if (verbose) {
+        EMSG(_("E274: No white space allowed before parenthesis"));
+      }
+      ret = FAIL;
     } else {
       ret = eval_func(arg, name, len, rettv, evaluate, &base);
     }

@@ -1053,11 +1053,18 @@ For methods that are also available as global functions this is the same as: >
 	name(expr8 [, args])
 There can also be methods specifically for the type of "expr8".
 
-"->name(" must not contain white space.  There can be white space before "->"
-and after the "(".
-
-This allows for chaining, using the type that the method returns: >
+This allows for chaining, passing the value that one method returns to the
+next method: >
 	mylist->filter(filterexpr)->map(mapexpr)->sort()->join()
+<
+							*E274*
+"->name(" must not contain white space.  There can be white space before the
+"->" and after the "(", thus you can split the lines like this: >
+	mylist
+	\ ->filter(filterexpr)
+	\ ->map(mapexpr)
+	\ ->sort()
+	\ ->join()
 <
 
 							*expr9*
