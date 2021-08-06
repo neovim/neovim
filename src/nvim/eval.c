@@ -4186,7 +4186,7 @@ static int eval_lambda(char_u **const arg, typval_T *const rettv,
   typval_T base = *rettv;
   rettv->v_type = VAR_UNKNOWN;
 
-  const int ret = get_lambda_tv(arg, rettv, evaluate);
+  int ret = get_lambda_tv(arg, rettv, evaluate);
   if (ret == NOTDONE) {
     return FAIL;
   } else if (**arg != '(') {
@@ -4198,9 +4198,18 @@ static int eval_lambda(char_u **const arg, typval_T *const rettv,
       }
     }
     tv_clear(rettv);
-    return FAIL;
+    ret = FAIL;
+  } else {
+    ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, NULL);
   }
-  return call_func_rettv(arg, rettv, evaluate, NULL, &base, NULL);
+
+  // Clear the funcref afterwards, so that deleting it while
+  // evaluating the arguments is possible (see test55).
+  if (evaluate) {
+    tv_clear(&base);
+  }
+
+  return ret;
 }
 
 /// Evaluate "->method()".
