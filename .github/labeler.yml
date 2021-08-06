@@ -4,7 +4,7 @@
 
 "lua":
   - runtime/lua/**/*
-  - src/nvim/lua
+  - src/nvim/lua/*
 
 "tui":
   - src/nvim/tui/tui.*
