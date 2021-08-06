@@ -3274,6 +3274,7 @@ count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		When {comp} is a string then the number of not overlapping
 		occurrences of {expr} is returned. Zero is returned when
 		{expr} is an empty string.
+
 		Can also be used as a |method|: >
 			mylist->count(val)
 
@@ -5211,6 +5212,9 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 has_key({dict}, {key})					*has_key()*
 		The result is a Number, which is TRUE if |Dictionary| {dict}
 		has an entry with key {key}.  FALSE otherwise.
+
+		Can also be used as a |method|: >
+			mydict->has_key(key)
 
 haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 		The result is a Number, which is 1 when the tabpage or window
@@ -8376,6 +8380,8 @@ split({expr} [, {pattern} [, {keepempty}]])			*split()*
 			:let items = split(line, ':', 1)
 <		The opposite function is |join()|.
 
+		Can also be used as a |method|: >
+			GetString()->split()
 
 sqrt({expr})						*sqrt()*
 		Return the non-negative square root of Float {expr} as a
@@ -8454,12 +8460,18 @@ str2list({expr} [, {utf8}])				*str2list()*
 		properly: >
 			str2list("á")		returns [97, 769]
 
+<		Can also be used as a |method|: >
+			GetString()->str2list()
+
 str2nr({expr} [, {base}])				*str2nr()*
 		Convert string {expr} to a number.
 		{base} is the conversion base, it can be 2, 8, 10 or 16.
+
 		When {base} is omitted base 10 is used.  This also means that
 		a leading zero doesn't cause octal conversion to be used, as
-		with the default String to Number conversion.
+		with the default String to Number conversion.  Example: >
+			let nr = str2nr('123')
+<
 		When {base} is 16 a leading "0x" or "0X" is ignored.  With a
 		different base the result will be zero. Similarly, when {base}
 		is 8 a leading "0" is ignored, and when {base} is 2 a leading
@@ -8590,6 +8602,9 @@ strlen({expr})	The result is a Number, which is the length of the String
 		|strchars()|.
 		Also see |len()|, |strdisplaywidth()| and |strwidth()|.
 
+		Can also be used as a |method|: >
+			GetString()->strlen()
+
 strpart({src}, {start} [, {len} [, {chars}]])			*strpart()*
 		The result is a String, which is part of {src}, starting from
 		byte {start}, with the byte length {len}.
@@ -8664,6 +8679,9 @@ strtrans({expr})					*strtrans()*
 <		This displays a newline in register a as "^@" instead of
 		starting a new line.
 
+		Can also be used as a |method|: >
+			GetString()->strtrans()
+
 strwidth({expr})					*strwidth()*
 		The result is a Number, which is the number of display cells
 		String {expr} occupies.  A Tab character is counted as one
@@ -8671,6 +8689,9 @@ strwidth({expr})					*strwidth()*
 		When {expr} contains characters with East Asian Width Class
 		Ambiguous, this function's return value depends on 'ambiwidth'.
 		Also see |strlen()|, |strdisplaywidth()| and |strchars()|.
+
+		Can also be used as a |method|: >
+			GetString()->strwidth()
 
 submatch({nr} [, {list}])			*submatch()* *E935*
 		Only for an expression in a |:substitute| command or
@@ -8738,6 +8759,9 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 		matched string and up to nine submatches, like what
 		|submatch()| returns.  Example: >
 		   :echo substitute(s, '%\(\x\x\)', {m -> '0x' . m[1]}, 'g')
+
+<		Can also be used as a |method|: >
+			GetString()->substitute(pat, sub, flags)
 
 swapinfo({fname})					*swapinfo()*
 		The result is a dictionary, which holds information about the
@@ -8823,11 +8847,17 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		cursor): >
 	:echo synIDattr(synIDtrans(synID(line("."), col("."), 1)), "fg")
 <
+		Can also be used as a |method|: >
+	:echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
+
 synIDtrans({synID})					*synIDtrans()*
 		The result is a Number, which is the translated syntax ID of
 		{synID}.  This is the syntax group ID of what is being used to
 		highlight the character.  Highlight links given with
 		":highlight link" are followed.
+
+		Can also be used as a |method|: >
+	:echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
 
 synconcealed({lnum}, {col})				*synconcealed()*
 		The result is a |List| with currently three items:
@@ -8925,6 +8955,8 @@ system({cmd} [, {input}])				*system()* *E677*
 		Unlike ":!cmd" there is no automatic check for changed files.
 		Use |:checktime| to force a check.
 
+		Can also be used as a |method|: >
+			:echo GetCmd()->system()
 
 systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 		Same as |system()|, but returns a |List| with lines (parts of
@@ -8940,6 +8972,8 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 <
 		Returns an empty string on error.
 
+		Can also be used as a |method|: >
+			:echo GetCmd()->systemlist()
 
 tabpagebuflist([{arg}])					*tabpagebuflist()*
 		The result is a |List|, where each item is the number of the

@@ -741,16 +741,16 @@ func Test_diff_hlID()
   diffthis
   redraw
 
-  call assert_equal(synIDattr(diff_hlID(-1, 1), "name"), "")
+  call diff_hlID(-1, 1)->synIDattr("name")->assert_equal("")
 
   call assert_equal(diff_hlID(1, 1), hlID("DiffChange"))
-  call assert_equal(synIDattr(diff_hlID(1, 1), "name"), "DiffChange")
+  call diff_hlID(1, 1)->synIDattr("name")->assert_equal("DiffChange")
   call assert_equal(diff_hlID(1, 2), hlID("DiffText"))
-  call assert_equal(synIDattr(diff_hlID(1, 2), "name"), "DiffText")
-  call assert_equal(synIDattr(diff_hlID(2, 1), "name"), "")
+  call diff_hlID(1, 2)->synIDattr("name")->assert_equal("DiffText")
+  call diff_hlID(2, 1)->synIDattr("name")->assert_equal("")
   call assert_equal(diff_hlID(3, 1), hlID("DiffAdd"))
-  call assert_equal(synIDattr(diff_hlID(3, 1), "name"), "DiffAdd")
-  call assert_equal(synIDattr(diff_hlID(4, 1), "name"), "")
+  call diff_hlID(3, 1)->synIDattr("name")->assert_equal("DiffAdd")
+  call diff_hlID(4, 1)->synIDattr("name")->assert_equal("")
 
   wincmd w
   call assert_equal(diff_hlID(1, 1), hlID("DiffChange"))

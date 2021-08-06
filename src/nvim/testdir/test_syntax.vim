@@ -546,8 +546,8 @@ func Test_synstack_synIDtrans()
   call assert_equal([], synstack(1, 1))
 
   norm f/
-  call assert_equal(['cComment', 'cCommentStart'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
-  call assert_equal(['Comment', 'Comment'],	   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+  eval synstack(line("."), col("."))->map('synIDattr(v:val, "name")')->assert_equal(['cComment', 'cCommentStart'])
+  eval synstack(line("."), col("."))->map('synIDattr(synIDtrans(v:val), "name")')->assert_equal(['Comment', 'Comment'])
 
   norm fA
   call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
