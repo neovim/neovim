@@ -128,4 +128,14 @@ func Test_method_syntax()
   call assert_fails('eval [1, 2, 3]-> sort ()', 'E260:')
 endfunc
 
+func Test_method_lambda()
+  eval "text"->{x -> x .. " extended"}()->assert_equal('text extended')
+  eval "text"->{x, y -> x .. " extended " .. y}('more')->assert_equal('text extended more')
+
+  call assert_fails('eval "text"->{x -> x .. " extended"} ()', 'E274:')
+
+  " todo: lambda accepts more arguments than it consumes
+  " call assert_fails('eval "text"->{x -> x .. " extended"}("more")', 'E99:')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

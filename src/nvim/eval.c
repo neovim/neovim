@@ -65,6 +65,8 @@ static char *e_missbrac = N_("E111: Missing ']'");
 static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_cannot_mod = N_("E995: Cannot modify existing variable");
+static char *e_nowhitespace
+    = N_("E274: No white space allowed before parenthesis");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 
@@ -4100,6 +4102,90 @@ static int eval7(
   return ret;
 }
 
+/// Call the function referred to in "rettv".
+/// @param lua_funcname  If `rettv` refers to a v:lua function, this must point
+///                      to the name of the Lua function to call (after the
+///                      "v:lua." prefix).
+/// @return OK on success, FAIL on failure.
+static int call_func_rettv(char_u **const arg,
+                           typval_T *const rettv,
+                           const bool evaluate,
+                           dict_T *const selfdict,
+                           typval_T *const basetv,
+                           const char_u *const lua_funcname)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  partial_T *pt = NULL;
+  typval_T functv;
+  const char_u *funcname;
+  bool is_lua = false;
+
+  // need to copy the funcref so that we can clear rettv
+  if (evaluate) {
+    functv = *rettv;
+    rettv->v_type = VAR_UNKNOWN;
+
+    // Invoke the function.  Recursive!
+    if (functv.v_type == VAR_PARTIAL) {
+      pt = functv.vval.v_partial;
+      is_lua = is_luafunc(pt);
+      funcname = is_lua ? lua_funcname : partial_name(pt);
+    } else {
+      funcname = functv.vval.v_string;
+    }
+  } else {
+    funcname = (char_u *)"";
+  }
+
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = evaluate;
+  funcexe.partial = pt;
+  funcexe.selfdict = selfdict;
+  funcexe.basetv = basetv;
+  const int ret = get_func_tv(funcname, is_lua ? *arg - funcname : -1, rettv,
+                              (char_u **)arg, &funcexe);
+
+  // Clear the funcref afterwards, so that deleting it while
+  // evaluating the arguments is possible (see test55).
+  if (evaluate) {
+    tv_clear(&functv);
+  }
+
+  return ret;
+}
+
+/// Evaluate "->method()".
+/// @param verbose  if true, give error messages.
+/// @note "*arg" points to the '-'.
+/// @return FAIL or OK. @note "*arg" is advanced to after the ')'.
+static int eval_lambda(char_u **const arg, typval_T *const rettv,
+                       const bool evaluate, const bool verbose)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Skip over the ->.
+  *arg += 2;
+  typval_T base = *rettv;
+  rettv->v_type = VAR_UNKNOWN;
+
+  const int ret = get_lambda_tv(arg, rettv, evaluate);
+  if (ret == NOTDONE) {
+    return FAIL;
+  } else if (**arg != '(') {
+    if (verbose) {
+      if (*skipwhite(*arg) == '(') {
+        EMSG(_(e_nowhitespace));
+      } else {
+        EMSG2(_(e_missingparen), "lambda");
+      }
+    }
+    tv_clear(rettv);
+    return FAIL;
+  }
+  return call_func_rettv(arg, rettv, evaluate, NULL, &base, NULL);
+}
+
 /// Evaluate "->method()".
 /// @note "*arg" points to the '-'.
 /// @return FAIL or OK. "*arg" is advanced to after the ')'.
@@ -4136,7 +4222,7 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
       ret = FAIL;
     } else if (ascii_iswhite((*arg)[-1])) {
       if (verbose) {
-        EMSG(_("E274: No white space allowed before parenthesis"));
+        EMSG(_(e_nowhitespace));
       }
       ret = FAIL;
     } else {
@@ -8509,11 +8595,8 @@ handle_subscript(
 )
 {
   int ret = OK;
-  dict_T      *selfdict = NULL;
-  const char_u *s;
-  typval_T functv;
-  int slen = 0;
-  bool lua = false;
+  dict_T *selfdict = NULL;
+  const char_u *lua_funcname = NULL;
 
   if (tv_is_luafunc(rettv)) {
     if (**arg != '.') {
@@ -8522,14 +8605,13 @@ handle_subscript(
     } else {
       (*arg)++;
 
-      lua = true;
-      s = (char_u *)(*arg);
-      slen = check_luafunc_name(*arg, true);
-      if (slen == 0) {
+      lua_funcname = (char_u *)(*arg);
+      const int len = check_luafunc_name(*arg, true);
+      if (len == 0) {
         tv_clear(rettv);
         ret = FAIL;
       }
-      (*arg) += slen;
+      (*arg) += len;
     }
   }
 
@@ -8539,42 +8621,12 @@ handle_subscript(
               && !ascii_iswhite(*(*arg - 1)))
              || (**arg == '-' && (*arg)[1] == '>'))) {
     if (**arg == '(') {
-      partial_T *pt = NULL;
-      // need to copy the funcref so that we can clear rettv
-      if (evaluate) {
-        functv = *rettv;
-        rettv->v_type = VAR_UNKNOWN;
+      ret = call_func_rettv((char_u **)arg, rettv, evaluate, selfdict, NULL,
+                            lua_funcname);
 
-        // Invoke the function.  Recursive!
-        if (functv.v_type == VAR_PARTIAL) {
-          pt = functv.vval.v_partial;
-          if (!lua) {
-            s = partial_name(pt);
-          }
-        } else {
-          s = functv.vval.v_string;
-        }
-      } else {
-        s = (char_u *)"";
-      }
-
-      funcexe_T funcexe = FUNCEXE_INIT;
-      funcexe.firstline = curwin->w_cursor.lnum;
-      funcexe.lastline = curwin->w_cursor.lnum;
-      funcexe.evaluate = evaluate;
-      funcexe.partial = pt;
-      funcexe.selfdict = selfdict;
-      ret = get_func_tv(s, lua ? slen : -1, rettv, (char_u **)arg, &funcexe);
-
-      // Clear the funcref afterwards, so that deleting it while
-      // evaluating the arguments is possible (see test55).
-      if (evaluate) {
-        tv_clear(&functv);
-      }
-
-      /* Stop the expression evaluation when immediately aborting on
-       * error, or when an interrupt occurred or an exception was thrown
-       * but not caught. */
+      // Stop the expression evaluation when immediately aborting on
+      // error, or when an interrupt occurred or an exception was thrown
+      // but not caught.
       if (aborting()) {
         if (ret == OK) {
           tv_clear(rettv);
@@ -8584,9 +8636,12 @@ handle_subscript(
       tv_dict_unref(selfdict);
       selfdict = NULL;
     } else if (**arg == '-') {
-      if (eval_method((char_u **)arg, rettv, evaluate, verbose) == FAIL) {
-        tv_clear(rettv);
-        ret = FAIL;
+      if ((*arg)[2] == '{') {
+        // expr->{lambda}()
+        ret = eval_lambda((char_u **)arg, rettv, evaluate, verbose);
+      } else {
+        // expr->name()
+        ret = eval_method((char_u **)arg, rettv, evaluate, verbose);
       }
     } else {  // **arg == '[' || **arg == '.'
       tv_dict_unref(selfdict);
