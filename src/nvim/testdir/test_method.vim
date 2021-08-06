@@ -102,8 +102,18 @@ func Test_method_funcref()
   let FuncRef = function('Concat')
   eval 'foo'->FuncRef('bar', 'tail')->assert_equal('foobartail')
 
+  " not enough arguments
+  call assert_fails("eval 'foo'->FuncRef('bar')", 'E119:')
+  " too many arguments
+  call assert_fails("eval 'foo'->FuncRef('bar', 'tail', 'four')", 'E118:')
+
   let Partial = function('Concat', ['two'])
   eval 'one'->Partial('three')->assert_equal('onetwothree')
+
+  " not enough arguments
+  call assert_fails("eval 'one'->Partial()", 'E119:')
+  " too many arguments
+  call assert_fails("eval 'one'->Partial('three', 'four')", 'E118:')
 
   delfunc Concat
 endfunc
