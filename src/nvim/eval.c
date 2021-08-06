@@ -3146,6 +3146,65 @@ static int pattern_match(char_u *pat, char_u *text, bool ic)
   return matches;
 }
 
+/// Handle a name followed by "(".  Both for just "name(arg)" and for
+/// "expr->name(arg)".
+//
+/// @param arg  Points to "(", will be advanced
+/// @param basetv  "expr" for "expr->name(arg)"
+//
+/// @return OK or FAIL.
+static int eval_func(char_u **const arg, char_u *const name, const int name_len,
+                     typval_T *const rettv, const bool evaluate,
+                     typval_T *const basetv)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+{
+  char_u *s = name;
+  int len = name_len;
+
+  if (!evaluate) {
+    check_vars((const char *)s, len);
+  }
+
+  // If "s" is the name of a variable of type VAR_FUNC
+  // use its contents.
+  partial_T *partial;
+  s = deref_func_name((const char *)s, &len, &partial, !evaluate);
+
+  // Need to make a copy, in case evaluating the arguments makes
+  // the name invalid.
+  s = xmemdupz(s, len);
+
+  // Invoke the function.
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = evaluate;
+  funcexe.partial = partial;
+  funcexe.basetv = basetv;
+  int ret = get_func_tv(s, len, rettv, arg, &funcexe);
+
+  xfree(s);
+
+  // If evaluate is false rettv->v_type was not set in
+  // get_func_tv, but it's needed in handle_subscript() to parse
+  // what follows. So set it here.
+  if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
+    rettv->vval.v_string = (char_u *)tv_empty_string;
+    rettv->v_type = VAR_FUNC;
+  }
+
+  // Stop the expression evaluation when immediately
+  // aborting on error, or when an interrupt occurred or
+  // an exception was thrown but not caught.
+  if (evaluate && aborting()) {
+    if (ret == OK) {
+      tv_clear(rettv);
+    }
+    ret = FAIL;
+  }
+  return ret;
+}
+
 // TODO(ZyX-I): move to eval/expressions
 
 /*
@@ -3977,47 +4036,7 @@ static int eval7(
       ret = FAIL;
     } else {
       if (**arg == '(') {               // recursive!
-        partial_T *partial;
-
-        if (!evaluate) {
-          check_vars((const char *)s, len);
-        }
-
-        // If "s" is the name of a variable of type VAR_FUNC
-        // use its contents.
-        s = deref_func_name((const char *)s, &len, &partial, !evaluate);
-
-        // Need to make a copy, in case evaluating the arguments makes
-        // the name invalid.
-        s = xmemdupz(s, len);
-
-        // Invoke the function.
-        funcexe_T funcexe = FUNCEXE_INIT;
-        funcexe.firstline = curwin->w_cursor.lnum;
-        funcexe.lastline = curwin->w_cursor.lnum;
-        funcexe.evaluate = evaluate;
-        funcexe.partial = partial;
-        ret = get_func_tv(s, len, rettv, arg, &funcexe);
-
-        xfree(s);
-
-        // If evaluate is false rettv->v_type was not set in
-        // get_func_tv, but it's needed in handle_subscript() to parse
-        // what follows. So set it here.
-        if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
-          rettv->vval.v_string = (char_u *)tv_empty_string;
-          rettv->v_type = VAR_FUNC;
-        }
-
-        // Stop the expression evaluation when immediately
-        // aborting on error, or when an interrupt occurred or
-        // an exception was thrown but not caught.
-        if (evaluate && aborting()) {
-          if (ret == OK) {
-            tv_clear(rettv);
-          }
-          ret = FAIL;
-        }
+        ret = eval_func(arg, s, len, rettv, evaluate, NULL);
       } else if (evaluate) {
         ret = get_var_tv((const char *)s, len, rettv, NULL, true, false);
       } else {
@@ -4090,37 +4109,35 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
 {
   // Skip over the ->.
   *arg += 2;
+  typval_T base = *rettv;
+  rettv->v_type = VAR_UNKNOWN;
 
   // Locate the method name.
-  const char_u *const name = *arg;
-  size_t len;
-  for (len = 0; eval_isnamec(name[len]); len++) {
+  char_u *name = *arg;
+  char_u *alias;
+
+  const int len
+      = get_name_len((const char **)arg, (char **)&alias, evaluate, true);
+  if (alias != NULL) {
+    name = alias;
   }
 
-  if (len == 0) {
+  int ret;
+  if (len <= 0) {
     if (verbose) {
       EMSG(_("E260: Missing name after ->"));
     }
-    return FAIL;
-  }
-
-  // Check for the "(".  Skip over white space after it.
-  if (name[len] != '(') {
-    if (verbose) {
-      EMSG2(_(e_missingparen), name);
+    ret = FAIL;
+  } else {
+    if (**arg != '(') {
+      if (verbose) {
+        EMSG2(_(e_missingparen), name);
+      }
+      ret = FAIL;
+    } else {
+      ret = eval_func(arg, name, len, rettv, evaluate, &base);
     }
-    return FAIL;
   }
-  *arg += len;
-
-  // TODO(seandewar): if "name" is a function reference, resolve it.
-
-  typval_T base = *rettv;
-  funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.evaluate = evaluate;
-  funcexe.basetv = &base;
-  rettv->v_type = VAR_UNKNOWN;
-  int ret = get_func_tv(name, len, rettv, arg, &funcexe);
 
   // Clear the funcref afterwards, so that deleting it while
   // evaluating the arguments is possible (see test55).
@@ -4128,15 +4145,6 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
     tv_clear(&base);
   }
 
-  // Stop the expression evaluation when immediately aborting on
-  // error, or when an interrupt occurred or an exception was thrown
-  // but not caught.
-  if (aborting()) {
-    if (ret == OK) {
-      tv_clear(rettv);
-    }
-    ret = FAIL;
-  }
   return ret;
 }
 

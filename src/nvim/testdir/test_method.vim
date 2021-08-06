@@ -1,6 +1,6 @@
 " Tests for ->method()
 
-func Test_list()
+func Test_list_method()
   let l = [1, 2, 3]
   call assert_equal([1, 2, 3, 4], [1, 2, 3]->add(4))
   eval l->assert_equal(l)
@@ -34,7 +34,7 @@ func Test_list()
   call assert_fails('eval l->values()', 'E715:')
 endfunc
 
-func Test_dict()
+func Test_dict_method()
   let d = #{one: 1, two: 2, three: 3}
 
   call assert_equal(d, d->copy())
@@ -71,7 +71,7 @@ func Test_dict()
   call assert_equal([1, 2, 3], d->values())
 endfunc
 
-func Test_string()
+func Test_string_method()
   call assert_equal(['1', '2', '3'], '1 2 3'->split())
   call assert_equal([1, 2, 3], '1 2 3'->split()->map({i, v -> str2nr(v)}))
   call assert_equal([65, 66, 67], 'ABC'->str2list())
@@ -81,7 +81,7 @@ func Test_string()
   call assert_equal('axc', 'abc'->substitute('b', 'x', ''))
 endfunc
 
-func Test_append()
+func Test_method_append()
   new
   eval ['one', 'two', 'three']->append(1)
   call assert_equal(['', 'one', 'two', 'three'], getline(1, '$'))
@@ -93,6 +93,19 @@ func Test_append()
   call assert_equal(['', 'one', 'two', 'three'], getbufline(bnr, 1, '$'))
 
   exe 'bwipe! ' .. bnr
+endfunc
+
+func Test_method_funcref()
+  func Concat(one, two, three)
+    return a:one .. a:two .. a:three
+  endfunc
+  let FuncRef = function('Concat')
+  eval 'foo'->FuncRef('bar', 'tail')->assert_equal('foobartail')
+
+  let Partial = function('Concat', ['two'])
+  eval 'one'->Partial('three')->assert_equal('onetwothree')
+
+  delfunc Concat
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
