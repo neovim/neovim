@@ -1447,7 +1447,8 @@ call_func(
   int argcount = argcount_in;
   typval_T *argvars = argvars_in;
   dict_T *selfdict = funcexe->selfdict;
-  typval_T argv[MAX_FUNC_ARGS + 1];  // used when "partial" is not NULL
+  typval_T argv[MAX_FUNC_ARGS + 1];  // used when "partial" or
+                                     // "funcexe->basetv" is not NULL
   int argv_clear = 0;
   partial_T *partial = funcexe->partial;
 
@@ -1514,10 +1515,7 @@ call_func(
       }
     } else if (fp != NULL || !builtin_function((const char *)rfname, -1)) {
       // User defined function.
-      if (funcexe->basetv != NULL) {
-        // TODO(seandewar): support User function: base->Method()
-        fp = NULL;
-      } else if (fp == NULL) {
+      if (fp == NULL) {
         fp = find_func(rfname);
       }
 
@@ -1546,6 +1544,16 @@ call_func(
           argcount = funcexe->argv_func(argcount, argvars, argv_clear,
                                         fp->uf_args.ga_len);
         }
+
+        if (funcexe->basetv != NULL) {
+          // Method call: base->Method()
+          memmove(&argv[1], argvars, sizeof(typval_T) * argcount);
+          argv[0] = *funcexe->basetv;
+          argcount++;
+        } else {
+          memcpy(argv, argvars, sizeof(typval_T) * argcount);
+        }
+
         if (fp->uf_flags & FC_RANGE && funcexe->doesrange != NULL) {
           *funcexe->doesrange = true;
         }
@@ -1557,14 +1565,15 @@ call_func(
           error = ERROR_DICT;
         } else {
           // Call the user function.
-          call_user_func(fp, argcount, argvars, rettv, funcexe->firstline,
+          call_user_func(fp, argcount, argv, rettv, funcexe->firstline,
                          funcexe->lastline,
                          (fp->uf_flags & FC_DICT) ? selfdict : NULL);
           error = ERROR_NONE;
         }
       }
     } else if (funcexe->basetv != NULL) {
-      // Find the method name in the table, call its implementation.
+      // expr->method(): Find the method name in the table, call its
+      // implementation with the base as one of the arguments.
       error = call_internal_method(fname, argcount, argvars, rettv,
                                    funcexe->basetv);
     } else {

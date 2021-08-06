@@ -4031,7 +4031,7 @@ static int eval7(
   *arg = skipwhite(*arg);
 
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
-  // expr(expr).
+  // expr(expr), expr->name(expr)
   if (ret == OK) {
     ret = handle_subscript((const char **)arg, rettv, evaluate, true);
   }
@@ -4094,7 +4094,7 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
   // Locate the method name.
   const char_u *const name = *arg;
   size_t len;
-  for (len = 0; ASCII_ISALNUM(name[len]) || name[len] == '_'; len++) {
+  for (len = 0; eval_isnamec(name[len]); len++) {
   }
 
   if (len == 0) {
@@ -4112,6 +4112,8 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
     return FAIL;
   }
   *arg += len;
+
+  // TODO(seandewar): if "name" is a function reference, resolve it.
 
   typval_T base = *rettv;
   funcexe_T funcexe = FUNCEXE_INIT;
