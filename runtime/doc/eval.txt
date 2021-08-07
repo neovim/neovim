@@ -2929,18 +2929,22 @@ bufwinid({expr})					*bufwinid()*
 <
 		Only deals with the current tab page.
 
+		Can also be used as a |method|: >
+			FindBuffer()->bufwinid()
+
 bufwinnr({expr})					*bufwinnr()*
-		The result is a Number, which is the number of the first
-		window associated with buffer {expr}.  For the use of {expr},
-		see |bufname()| above.  If buffer {expr} doesn't exist or
-		there is no such window, -1 is returned.  Example: >
+		Like |bufwinid()| but return the window number instead of the
+		|window-ID|.
+		If buffer {expr} doesn't exist or there is no such window, -1
+		is returned.  Example: >
 
 	echo "A window containing buffer 1 is " . (bufwinnr(1))
 
 <		The number can be used with |CTRL-W_w| and ":wincmd w"
 		|:wincmd|.
-		Only deals with the current tab page.
 
+		Can also be used as a |method|: >
+			FindBuffer()->bufwinnr()
 
 byte2line({byte})					*byte2line()*
 		Return the line number that contains the character at byte
@@ -9618,6 +9622,9 @@ winbufnr({nr})	The result is a Number, which is the number of the buffer
 		When window {nr} doesn't exist, -1 is returned.
 		Example: >
   :echo "The file in the current window is " . bufname(winbufnr(0))
+<
+		Can also be used as a |method|: >
+			FindWindow()->winbufnr()->bufname()
 <
 							*wincol()*
 wincol()	The result is a Number, which is the virtual column of the

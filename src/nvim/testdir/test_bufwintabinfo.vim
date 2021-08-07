@@ -18,7 +18,7 @@ function Test_getbufwintabinfo()
     let l = getbufinfo('%')
     call assert_equal(bufnr('%'), l[0].bufnr)
     call assert_equal('vim', l[0].variables.editor)
-    call assert_notequal(-1, index(l[0].windows, bufwinid('%')))
+    call assert_notequal(-1, index(l[0].windows, '%'->bufwinid()))
 
     " Test for getbufinfo() with 'bufmodified'
     call assert_equal(0, len(getbufinfo({'bufmodified' : 1})))

@@ -131,11 +131,11 @@ func Test_appendbufline_redraw()
   endif
   let lines =<< trim END
     new foo
-    let winnr=bufwinnr('foo')
-    let buf=bufnr('foo')
+    let winnr = 'foo'->bufwinnr()
+    let buf = bufnr('foo')
     wincmd p
     call appendbufline(buf, '$', range(1,200))
-    exe winnr. 'wincmd w'
+    exe winnr .. 'wincmd w'
     norm! G
     wincmd p
     call deletebufline(buf, 1, '$')

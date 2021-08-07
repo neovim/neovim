@@ -360,6 +360,13 @@ describe('assert function:', function()
       command('call remove(v:errors, 0)')
       expected_empty()
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'also wrong'->assert_report())
+      ]]
+      expected_errors({tmpname .. ' line 1: also wrong'})
+    end)
   end)
 
   -- assert_exception({cmd}, [, {error}])

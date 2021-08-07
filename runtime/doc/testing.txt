@@ -83,6 +83,9 @@ assert_equalfile({fname-one}, {fname-two})
 		When {fname-one} or {fname-two} does not exist the error will
 		mention that.
 
+		Can also be used as a |method|: >
+			GetLog()->assert_equalfile('expected.log')
+
 assert_exception({error} [, {msg}])			*assert_exception()*
 		When v:exception does not contain the string {error} an error
 		message is added to |v:errors|.  Also see |assert-return|.
@@ -172,9 +175,14 @@ assert_notmatch({pattern}, {actual} [, {msg}])
 		Can also be used as a |method|: >
 			getFile()->assert_notmatch('bar.*')
 
+
 assert_report({msg})					*assert_report()*
 		Report a test failure directly, using {msg}.
 		Always returns one.
+
+		Can also be used as a |method|: >
+			GetMessage()->assert_report()
+
 
 assert_true({actual} [, {msg}])				*assert_true()*
 		When {actual} is not true an error message is added to
