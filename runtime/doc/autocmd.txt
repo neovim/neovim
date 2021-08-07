@@ -232,7 +232,7 @@ BufDelete			Before deleting a buffer from the buffer list.
 							*BufEnter*
 BufEnter			After entering a buffer.  Useful for setting
 				options for a file type.  Also executed when
-				starting to edit a buffer, after the
+				starting to edit a buffer.
 				After |BufAdd|.
 				After |BufReadPost|.
 							*BufFilePost*
