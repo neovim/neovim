@@ -49,7 +49,7 @@ body:
   - type: input
     attributes:
       label: "Vim"
-      description: "Does Vim behave differently when called with `vim -u DEFAULTS`? If yes, which version of Vim are you using (`vim --version`):"
+      description: "Does Vim behave differently when called with `vim -u DEFAULTS`? (Please add the specific version, including patch level, of Vim that you tested.)"
 
   - type: textarea
     attributes:
