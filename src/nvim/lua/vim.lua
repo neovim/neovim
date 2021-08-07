@@ -273,8 +273,8 @@ end
 ---@see |vim.in_fast_event()|
 function vim.schedule_wrap(cb)
   return (function (...)
-    local args = {...}
-    vim.schedule(function() cb(unpack(args)) end)
+    local args = vim.F.pack_len(...)
+    vim.schedule(function() cb(vim.F.unpack_len(args)) end)
   end)
 end
 
