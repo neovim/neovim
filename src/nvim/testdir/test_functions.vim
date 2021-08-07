@@ -1473,6 +1473,18 @@ func Test_readdir()
   call delete('Xdir', 'rf')
 endfunc
 
+func Test_call()
+  call assert_equal(3, call('len', [123]))
+  call assert_fails("call call('len', 123)", 'E714:')
+  call assert_equal(0, call('', []))
+
+  function Mylen() dict
+     return len(self.data)
+  endfunction
+  let mydict = {'data': [0, 1, 2, 3], 'len': function("Mylen")}
+  call assert_fails("call call('Mylen', [], 0)", 'E715:')
+endfunc
+
 " Test for the eval() function
 func Test_eval()
   call assert_fails("call eval('5 a')", 'E488:')
