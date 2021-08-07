@@ -1060,7 +1060,14 @@ next method: >
 <
 Example of using a lambda: >
 	GetPercentage->{x -> x * 100}()->printf('%d%%')
-
+<
+When using -> the |expr7| operators will be applied first, thus: >
+	-1.234->string()
+Is equivalent to: >
+	(-1.234)->string()
+And NOT: >
+	-(1.234->string())
+<
 							*E274*
 "->name(" must not contain white space.  There can be white space before the
 "->" and after the "(", thus you can split the lines like this: >
@@ -2609,6 +2616,8 @@ abs({expr})							*abs()*
 			echo abs(-4)
 <			4
 
+		Can also be used as a |method|: >
+			Compute()->abs()
 
 acos({expr})							*acos()*
 		Return the arc cosine of {expr} measured in radians, as a
@@ -2621,6 +2630,8 @@ acos({expr})							*acos()*
 			:echo acos(-0.5)
 <			2.094395
 
+		Can also be used as a |method|: >
+			Compute()->acos()
 
 add({list}, {expr})					*add()*
 		Append the item {expr} to |List| {list}.  Returns the
@@ -2630,9 +2641,9 @@ add({list}, {expr})					*add()*
 <		Note that when {expr} is a |List| it is appended as a single
 		item.  Use |extend()| to concatenate |Lists|.
 		Use |insert()| to add an item at another position.
+
 		Can also be used as a |method|: >
 			mylist->add(val1)->add(val2)
-
 
 and({expr}, {expr})					*and()*
 		Bitwise AND on the two arguments.  The arguments are converted
@@ -2735,6 +2746,9 @@ asin({expr})						*asin()*
 			:echo asin(-0.5)
 <			-0.523599
 
+		Can also be used as a |method|: >
+			Compute()->asin()
+
 
 assert_ functions are documented here: |assert-functions-details|
 
@@ -2749,6 +2763,8 @@ atan({expr})						*atan()*
 			:echo atan(-4.01)
 <			-1.326405
 
+		Can also be used as a |method|: >
+			Compute()->atan()
 
 atan2({expr1}, {expr2})					*atan2()*
 		Return the arc tangent of {expr1} / {expr2}, measured in
@@ -2760,6 +2776,8 @@ atan2({expr1}, {expr2})					*atan2()*
 			:echo atan2(1, -1)
 <			2.356194
 
+		Can also be used as a |method|: >
+			Compute()->atan2(1)
 
 							*browse()*
 browse({save}, {title}, {initdir}, {default})
@@ -2965,6 +2983,9 @@ ceil({expr})							*ceil()*
 <			-5.0  >
 			echo ceil(4.0)
 <			4.0
+
+		Can also be used as a |method|: >
+			Compute()->ceil()
 
 changenr()						*changenr()*
 		Return the number of the most recent change.  This is the same
@@ -3261,6 +3282,8 @@ cos({expr})						*cos()*
 			:echo cos(-4.01)
 <			-0.646043
 
+		Can also be used as a |method|: >
+			Compute()->cos()
 
 cosh({expr})						*cosh()*
 		Return the hyperbolic cosine of {expr} as a |Float| in the range
@@ -3272,6 +3295,8 @@ cosh({expr})						*cosh()*
 			:echo cosh(-0.5)
 <			-1.127626
 
+		Can also be used as a |method|: >
+			Compute()->cosh()
 
 count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		Return the number of times an item with value {expr} appears
@@ -3704,6 +3729,9 @@ exp({expr})						*exp()*
 			:echo exp(-1)
 <			0.367879
 
+		Can also be used as a |method|: >
+			Compute()->exp()
+
 debugbreak({pid})					*debugbreak()*
 		Specifically used to interrupt a program being debugged.  It
 		will cause process {pid} to get a SIGTRAP.  Behavior for other
@@ -4017,6 +4045,8 @@ float2nr({expr})					*float2nr()*
 			echo float2nr(1.0e-100)
 <			0
 
+		Can also be used as a |method|: >
+			Compute()->float2nr()
 
 floor({expr})							*floor()*
 		Return the largest integral value less than or equal to
@@ -4030,6 +4060,8 @@ floor({expr})							*floor()*
 			echo floor(4.0)
 <			4.0
 
+		Can also be used as a |method|: >
+			Compute()->floor()
 
 fmod({expr1}, {expr2})					*fmod()*
 		Return the remainder of {expr1} / {expr2}, even if the
@@ -4045,6 +4077,8 @@ fmod({expr1}, {expr2})					*fmod()*
 			:echo fmod(-12.33, 1.22)
 <			-0.13
 
+		Can also be used as a |method|: >
+			Compute()->fmod(1.22)
 
 fnameescape({string})					*fnameescape()*
 		Escape {string} for use as file name command argument.  All
@@ -5605,6 +5639,9 @@ isinf({expr})						*isinf()*
 			:echo isinf(-1.0 / 0.0)
 <			-1
 
+		Can also be used as a |method|: >
+			Compute()->isinf()
+
 islocked({expr})					*islocked()* *E786*
 		The result is a Number, which is |TRUE| when {expr} is the
 		name of a locked variable.
@@ -5647,6 +5684,9 @@ isnan({expr})						*isnan()*
 		Return |TRUE| if {expr} is a float with value NaN. >
 			echo isnan(0.0 / 0.0)
 <			1
+
+		Can also be used as a |method|: >
+			Compute()->isnan()
 
 jobpid({job})						*jobpid()*
 		Return the PID (process id) of |job-id| {job}.
@@ -5950,6 +5990,8 @@ log({expr})						*log()*
 			:echo log(exp(5))
 <			5.0
 
+		Can also be used as a |method|: >
+			Compute()->log()
 
 log10({expr})						*log10()*
 		Return the logarithm of Float {expr} to base 10 as a |Float|.
@@ -5959,6 +6001,9 @@ log10({expr})						*log10()*
 <			3.0 >
 			:echo log10(0.01)
 <			-2.0
+
+		Can also be used as a |method|: >
+			Compute()->log10()
 
 luaeval({expr}[, {expr}])
 		Evaluate Lua expression {expr} and return its result converted
@@ -6637,6 +6682,9 @@ pow({x}, {y})						*pow()*
 			:echo pow(32, 0.20)
 <			2.0
 
+		Can also be used as a |method|: >
+			Compute()->pow(3)
+
 prevnonblank({lnum})					*prevnonblank()*
 		Return the line number of the first line at or above {lnum}
 		that is not blank.  Example: >
@@ -7233,6 +7281,9 @@ round({expr})							*round()*
 <			5.0 >
 			echo round(-4.5)
 <			-5.0
+
+		Can also be used as a |method|: >
+			Compute()->round()
 
 rpcnotify({channel}, {event}[, {args}...])			*rpcnotify()*
 		Sends {event} to {channel} via |RPC| and returns immediately.
@@ -8210,6 +8261,8 @@ sin({expr})						*sin()*
 			:echo sin(-4.01)
 <			0.763301
 
+		Can also be used as a |method|: >
+			Compute()->sin()
 
 sinh({expr})						*sinh()*
 		Return the hyperbolic sine of {expr} as a |Float| in the range
@@ -8220,6 +8273,9 @@ sinh({expr})						*sinh()*
 <			0.521095 >
 			:echo sinh(-0.9)
 <			-1.026517
+
+		Can also be used as a |method|: >
+			Compute()->sinh()
 
 sockconnect({mode}, {address}, {opts})			 *sockconnect()*
 		Connect a socket to an address. If {mode} is "pipe" then
@@ -8410,6 +8466,8 @@ sqrt({expr})						*sqrt()*
 <			nan
 		"nan" may be different, it depends on system libraries.
 
+		Can also be used as a |method|: >
+			Compute()->sqrt()
 
 stdioopen({opts})			 *stdioopen()*
 		With |--headless| this opens stdin and stdout as a |channel|.
@@ -8461,6 +8519,9 @@ str2float({expr})					*str2float()*
 		12.0.  You can strip out thousands separators with
 		|substitute()|: >
 			let f = str2float(substitute(text, ',', '', 'g'))
+<
+		Can also be used as a |method|: >
+			let f = text->substitute(',', '', 'g')->str2float()
 
 str2list({expr} [, {utf8}])				*str2list()*
 		Return a list containing the number values which represent
@@ -9112,6 +9173,8 @@ tan({expr})						*tan()*
 			:echo tan(-4.01)
 <			-1.181502
 
+		Can also be used as a |method|: >
+			Compute()->tan()
 
 tanh({expr})						*tanh()*
 		Return the hyperbolic tangent of {expr} as a |Float| in the
@@ -9123,6 +9186,8 @@ tanh({expr})						*tanh()*
 			:echo tanh(-1)
 <			-0.761594
 
+		Can also be used as a |method|: >
+			Compute()->tanh()
 
 							*timer_info()*
 timer_info([{id}])
@@ -9248,6 +9313,9 @@ trunc({expr})							*trunc()*
 <			-5.0  >
 			echo trunc(4.0)
 <			4.0
+
+		Can also be used as a |method|: >
+			Compute()->trunc()
 
 type({expr})							*type()*
 		The result is a Number representing the type of {expr}.
