@@ -6653,7 +6653,11 @@ printf({fmt}, {expr1} ...)				*printf()*
 <		May result in:
 			"  99: E42 asdfasdfasdfasdfasdfasdfasdfas" ~
 
-		Often used items are:
+		When used as a |method| the base is passed as the second
+		argument: >
+			Compute()->printf("result: %d")
+
+<		Often used items are:
 		  %s	string
 		  %6S	string right-aligned in 6 display cells
 		  %6s	string right-aligned in 6 bytes

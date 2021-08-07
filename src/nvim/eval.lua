@@ -258,7 +258,7 @@ return {
     pathshorten={args=1},
     pow={args=2},
     prevnonblank={args=1},
-    printf={args=varargs(1)},
+    printf={args=varargs(1), base=2},
     prompt_getprompt={args=1},
     prompt_setcallback={args={2, 2}},
     prompt_setinterrupt={args={2, 2}},

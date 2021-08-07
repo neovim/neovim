@@ -72,13 +72,15 @@ func Test_dict_method()
 endfunc
 
 func Test_string_method()
-  call assert_equal(['1', '2', '3'], '1 2 3'->split())
-  call assert_equal([1, 2, 3], '1 2 3'->split()->map({i, v -> str2nr(v)}))
-  call assert_equal([65, 66, 67], 'ABC'->str2list())
-  call assert_equal(3, 'ABC'->strlen())
-  call assert_equal('a^Mb^[c', "a\rb\ec"->strtrans())
-  call assert_equal(4, "aあb"->strwidth())
-  call assert_equal('axc', 'abc'->substitute('b', 'x', ''))
+  eval '1 2 3'->split()->assert_equal(['1', '2', '3'])
+  eval '1 2 3'->split()->map({i, v -> str2nr(v)})->assert_equal([1, 2, 3])
+  eval 'ABC'->str2list()->assert_equal([65, 66, 67])
+  eval 'ABC'->strlen()->assert_equal(3)
+  eval "a\rb\ec"->strtrans()->assert_equal('a^Mb^[c')
+  eval "aあb"->strwidth()->assert_equal(4)
+  eval 'abc'->substitute('b', 'x', '')->assert_equal('axc')
+
+  eval 'abc'->printf('the %s arg')->assert_equal('the abc arg')
 endfunc
 
 func Test_method_append()
