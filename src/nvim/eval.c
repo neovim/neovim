@@ -1730,7 +1730,9 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         } else {
           // handle d.key, l[idx], f(expr)
           const char *const arg_subsc = arg;
-          if (handle_subscript(&arg, &tv, true, true) == FAIL) {
+          if (handle_subscript(&arg, &tv, true, true, (const char_u *)name,
+                               (const char_u **)&name)
+              == FAIL) {
             error = true;
           } else {
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
@@ -3885,10 +3887,10 @@ static int eval7(
 {
   varnumber_T n;
   int len;
-  char_u      *s;
-  char_u      *start_leader, *end_leader;
+  char_u *s;
+  const char_u *start_leader, *end_leader;
   int ret = OK;
-  char_u      *alias;
+  char_u *alias;
 
   // Initialise variable so that tv_clear() can't mistake this for a
   // string and free a string that isn't there.
@@ -4054,51 +4056,66 @@ static int eval7(
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
   // expr(expr), expr->name(expr)
   if (ret == OK) {
-    ret = handle_subscript((const char **)arg, rettv, evaluate, true);
+    ret = handle_subscript((const char **)arg, rettv, evaluate, true,
+                           start_leader, &end_leader);
   }
 
   // Apply logical NOT and unary '-', from right to left, ignore '+'.
   if (ret == OK && evaluate && end_leader > start_leader) {
-    bool error = false;
-    varnumber_T val = 0;
-    float_T f = 0.0;
+    ret = eval7_leader(rettv, start_leader, &end_leader);
+  }
+  return ret;
+}
 
-    if (rettv->v_type == VAR_FLOAT) {
-      f = rettv->vval.v_float;
-    } else {
-      val = tv_get_number_chk(rettv, &error);
-    }
-    if (error) {
-      tv_clear(rettv);
-      ret = FAIL;
-    } else {
-      while (end_leader > start_leader) {
-        --end_leader;
-        if (*end_leader == '!') {
-          if (rettv->v_type == VAR_FLOAT) {
-            f = !f;
-          } else {
-            val = !val;
-          }
-        } else if (*end_leader == '-') {
-          if (rettv->v_type == VAR_FLOAT) {
-            f = -f;
-          } else {
-            val = -val;
-          }
+/// Apply the leading "!" and "-" before an eval7 expression to "rettv".
+/// Adjusts "end_leaderp" until it is at "start_leader".
+/// @return OK on success, FAIL on failure.
+static int eval7_leader(typval_T *const rettv, const char_u *const start_leader,
+                        const char_u **const end_leaderp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char_u *end_leader = *end_leaderp;
+  int ret = OK;
+  bool error = false;
+  varnumber_T val = 0;
+  float_T f = 0.0;
+
+  if (rettv->v_type == VAR_FLOAT) {
+    f = rettv->vval.v_float;
+  } else {
+    val = tv_get_number_chk(rettv, &error);
+  }
+  if (error) {
+    tv_clear(rettv);
+    ret = FAIL;
+  } else {
+    while (end_leader > start_leader) {
+      end_leader--;
+      if (*end_leader == '!') {
+        if (rettv->v_type == VAR_FLOAT) {
+          f = !f;
+        } else {
+          val = !val;
+        }
+      } else if (*end_leader == '-') {
+        if (rettv->v_type == VAR_FLOAT) {
+          f = -f;
+        } else {
+          val = -val;
         }
       }
-      if (rettv->v_type == VAR_FLOAT) {
-        tv_clear(rettv);
-        rettv->vval.v_float = f;
-      } else {
-        tv_clear(rettv);
-        rettv->v_type = VAR_NUMBER;
-        rettv->vval.v_number = val;
-      }
+    }
+    if (rettv->v_type == VAR_FLOAT) {
+      tv_clear(rettv);
+      rettv->vval.v_float = f;
+    } else {
+      tv_clear(rettv);
+      rettv->v_type = VAR_NUMBER;
+      rettv->vval.v_number = val;
     }
   }
 
+  *end_leaderp = end_leader;
   return ret;
 }
 
@@ -8590,8 +8607,10 @@ int
 handle_subscript(
     const char **const arg,
     typval_T *rettv,
-    int evaluate,                   // do more than finding the end
-    int verbose                    // give error messages
+    int evaluate,                      // do more than finding the end
+    int verbose,                       // give error messages
+    const char_u *const start_leader,  // start of '!' and '-' prefixes
+    const char_u **const end_leaderp   // end of '!' and '-' prefixes
 )
 {
   int ret = OK;
@@ -8636,12 +8655,19 @@ handle_subscript(
       tv_dict_unref(selfdict);
       selfdict = NULL;
     } else if (**arg == '-') {
-      if ((*arg)[2] == '{') {
-        // expr->{lambda}()
-        ret = eval_lambda((char_u **)arg, rettv, evaluate, verbose);
-      } else {
-        // expr->name()
-        ret = eval_method((char_u **)arg, rettv, evaluate, verbose);
+      // Expression "-1.0->method()" applies the leader "-" before
+      // applying ->.
+      if (evaluate && *end_leaderp > start_leader) {
+        ret = eval7_leader(rettv, start_leader, end_leaderp);
+      }
+      if (ret == OK) {
+        if ((*arg)[2] == '{') {
+          // expr->{lambda}()
+          ret = eval_lambda((char_u **)arg, rettv, evaluate, verbose);
+        } else {
+          // expr->name()
+          ret = eval_method((char_u **)arg, rettv, evaluate, verbose);
+        }
       }
     } else {  // **arg == '[' || **arg == '.'
       tv_dict_unref(selfdict);
@@ -10926,7 +10952,9 @@ bool var_exists(const char *var)
     n = get_var_tv(name, len, &tv, NULL, false, true) == OK;
     if (n) {
       // Handle d.key, l[idx], f(expr).
-      n = handle_subscript(&var, &tv, true, false) == OK;
+      n = handle_subscript(&var, &tv, true, false, (const char_u *)name,
+                           (const char_u **)&name)
+          == OK;
       if (n) {
         tv_clear(&tv);
       }

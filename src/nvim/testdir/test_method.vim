@@ -120,6 +120,11 @@ func Test_method_funcref()
   delfunc Concat
 endfunc
 
+func Test_method_float()
+  eval 1.234->string()->assert_equal('1.234')
+  eval -1.234->string()->assert_equal('-1.234')
+endfunc
+
 func Test_method_syntax()
   eval [1, 2, 3]  ->sort( )
   eval [1, 2, 3]  
