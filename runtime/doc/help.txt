@@ -130,6 +130,7 @@ Advanced editing ~
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
 |lua.txt|	Lua API
+|api.txt|	Nvim API via RPC, Lua and VimL
 
 Special issues ~
 |testing.txt|	testing Vim and Vim scripts
