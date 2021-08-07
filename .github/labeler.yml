@@ -49,7 +49,7 @@
   - "**/*.cmake"
 
 "tests":
-  - test/**/*
+  - all: ["test/**/*"]
 
 "ci":
   - .github/labeler.yml
