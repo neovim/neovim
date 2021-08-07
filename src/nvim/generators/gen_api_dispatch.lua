@@ -381,21 +381,26 @@ local lua_c_functions = {}
 
 local function process_function(fn)
   local lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
+  local nparams = #fn.parameters
   write_shifted_output(output, string.format([[
 
   static int %s(lua_State *lstate)
   {
-    Error err = ERROR_INIT;
-    if (lua_gettop(lstate) != %i) {
-      api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
-      goto exit_0;
+    const int nargs = lua_gettop(lstate);
+    if (nargs < %i) {
+      for (int i = 0; i < %i - nargs; i++) {
+        lua_pushnil(lstate);
+      }
+    } else if (nargs > %i) {
+      lua_pop(lstate, nargs - %i);
     }
-  ]], lua_c_function_name, #fn.parameters, #fn.parameters,
-      (#fn.parameters == 1) and '' or 's'))
+  ]], lua_c_function_name, nparams, nparams, nparams, nparams))
   lua_c_functions[#lua_c_functions + 1] = {
     binding=lua_c_function_name,
     api=fn.name
   }
+
+  local has_params = nparams > 0
 
   if not fn.fast then
     write_shifted_output(output, string.format([[
@@ -403,6 +408,12 @@ local function process_function(fn)
       return luaL_error(lstate, e_luv_api_disabled, "%s");
     }
     ]], fn.name))
+  end
+
+  if (fn.can_fail or fn.check_textlock or has_params) then
+    write_shifted_output(output, string.format[[
+    Error err = ERROR_INIT;
+    ]])
   end
 
   if fn.check_textlock then
@@ -455,17 +466,21 @@ local function process_function(fn)
         rev_i, code)
     end
   end
-  local err_throw_code = [[
+  local err_throw_code = ''
 
-  exit_0:
-    if (ERROR_SET(&err)) {
-      luaL_where(lstate, 1);
-      lua_pushstring(lstate, err.msg);
-      api_clear_error(&err);
-      lua_concat(lstate, 2);
-      return lua_error(lstate);
-    }
-  ]]
+  if fn.check_textlock or has_params then
+    err_throw_code = [[
+
+    exit_0:
+      if (ERROR_SET(&err)) {
+        luaL_where(lstate, 1);
+        lua_pushstring(lstate, err.msg);
+        api_clear_error(&err);
+        lua_concat(lstate, 2);
+        return lua_error(lstate);
+      }
+    ]]
+  end
   local return_type
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then

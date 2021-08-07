@@ -161,13 +161,10 @@ describe('luaeval(vim.api.…)', function()
        exc_exec([[call luaeval("vim.api.nvim__id({1, foo=42})")]]))
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua type',
        exc_exec([[call luaeval("vim.api.nvim__id({42, vim.api.nvim__id})")]]))
-    -- Errors in number of arguments
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 1 argument',
-       exc_exec([[call luaeval("vim.api.nvim__id()")]]))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 1 argument',
-       exc_exec([[call luaeval("vim.api.nvim__id(1, 2)")]]))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 2 arguments',
-       exc_exec([[call luaeval("vim.api.nvim_set_var(1, 2, 3)")]]))
+    -- Does not error with incorrect arguments
+    eq(0, exc_exec([[call luaeval("vim.api.nvim__id()")]]))
+    eq(0, exc_exec([[call luaeval("vim.api.nvim__id(1, 2)")]]))
+    eq(0, exc_exec([[call luaeval("vim.api.nvim_set_var('myvar', 2, 3)")]]))
     -- Error in argument types
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua string',
        exc_exec([[call luaeval("vim.api.nvim_set_var(1, 2)")]]))
