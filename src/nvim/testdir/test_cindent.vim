@@ -122,9 +122,9 @@ func Test_cindent_func()
   new
   setlocal cindent
   call setline(1, ['int main(void)', '{', 'return 0;', '}'])
-  call assert_equal(cindent(0), -1)
-  call assert_equal(cindent(3), &sw)
-  call assert_equal(cindent(line('$')+1), -1)
+  call assert_equal(-1, cindent(0))
+  call assert_equal(&sw, 3->cindent())
+  call assert_equal(-1, cindent(line('$')+1))
   bwipe!
 endfunc
 

@@ -1093,7 +1093,7 @@ func Test_col()
   call assert_equal(7, col('$'))
   call assert_equal(4, col("'x"))
   call assert_equal(6, col("'Y"))
-  call assert_equal(2, col([1, 2]))
+  call assert_equal(2, [1, 2]->col())
   call assert_equal(7, col([1, '$']))
 
   call assert_equal(0, col(''))

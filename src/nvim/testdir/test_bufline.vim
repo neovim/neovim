@@ -102,7 +102,7 @@ func Test_deletebufline()
   call assert_equal(0, deletebufline(b, 2, 8))
   call assert_equal(['aaa'], getbufline(b, 1, 2))
   exe "bd!" b
-  call assert_equal(1, deletebufline(b, 1))
+  call assert_equal(1, b->deletebufline(1))
 
   split Xtest
   call setline(1, ['a', 'b', 'c'])

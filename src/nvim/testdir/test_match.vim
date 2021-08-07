@@ -239,7 +239,7 @@ func Test_matchaddpos_otherwin()
         \]
   call assert_equal(expect, savematches)
 
-  call clearmatches(winid)
+  eval winid->clearmatches()
   call assert_equal([], getmatches(winid))
 
   call setmatches(savematches, winid)
