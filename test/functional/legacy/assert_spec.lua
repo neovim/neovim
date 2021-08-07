@@ -26,6 +26,14 @@ describe('assert function:', function()
       call('assert_beeps', 'normal 0')
       expected_errors({'command did not beep: normal 0'})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, 'normal h'->assert_beeps())
+        call assert_equal(1, 'normal 0'->assert_beeps())
+      ]]
+      expected_errors({tmpname .. ' line 2: command did not beep: normal 0'})
+    end)
   end)
 
   -- assert_equal({expected}, {actual}, [, {msg}])
@@ -133,6 +141,14 @@ describe('assert function:', function()
       call('assert_false', {})
       expected_errors({'Expected False but got []'})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, v:false->assert_false())
+        call assert_equal(1, 123->assert_false())
+      ]]
+      expected_errors({tmpname .. ' line 2: Expected False but got 123'})
+    end)
   end)
 
   -- assert_true({actual}, [, {msg}])
@@ -147,6 +163,14 @@ describe('assert function:', function()
     it('should change v:errors when actual is not true', function()
       eq(1, call('assert_true', 1.5))
       expected_errors({'Expected True but got 1.5'})
+    end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, v:true->assert_true())
+        call assert_equal(1, 0->assert_true())
+      ]]
+      expected_errors({tmpname .. ' line 2: Expected True but got 0'})
     end)
   end)
 
@@ -223,6 +247,15 @@ describe('assert function:', function()
       call('assert_match', 'bar.*foo', 'foobar', 'wrong')
       expected_errors({"wrong: Pattern 'bar.*foo' does not match 'foobar'"})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'foobar'->assert_match('bar.*foo', 'wrong'))
+      ]]
+      expected_errors({
+        tmpname .. " line 1: wrong: Pattern 'bar.*foo' does not match 'foobar'"
+      })
+    end)
   end)
 
   -- assert_notmatch({pat}, {text}[, {msg}])
@@ -236,6 +269,13 @@ describe('assert function:', function()
     it('should change v:errors when pat matches text', function()
       call('assert_notmatch', 'foo', 'foobar')
       expected_errors({"Pattern 'foo' does match 'foobar'"})
+    end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'foobar'->assert_notmatch('foo'))
+      ]]
+      expected_errors({tmpname .. " line 1: Pattern 'foo' does match 'foobar'"})
     end)
   end)
 
@@ -267,6 +307,15 @@ describe('assert function:', function()
       eq(1, eval([[assert_fails('echo', '', 'echo command')]]))
       expected_errors({'command did not fail: echo command'})
     end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(1, 'echo'->assert_fails('', 'echo command'))
+      ]]
+      expected_errors({
+        tmpname .. ' line 1: command did not fail: echo command'
+      })
+    end)
   end)
 
   -- assert_inrange({lower}, {upper}, {actual}[, {msg}])
@@ -291,6 +340,15 @@ describe('assert function:', function()
     it('assert_inrange(1, 1) returns E119', function()
       eq('Vim(call):E119: Not enough arguments for function: assert_inrange',
          exc_exec("call assert_inrange(1, 1)"))
+    end)
+
+    it('can be used as a method', function()
+      local tmpname = source [[
+        call assert_equal(0, 5->assert_inrange(5, 7))
+        call assert_equal(0, 7->assert_inrange(5, 7))
+        call assert_equal(1, 8->assert_inrange(5, 7))
+      ]]
+      expected_errors({tmpname .. ' line 3: Expected range 5 - 7, but got 8'})
     end)
   end)
 
