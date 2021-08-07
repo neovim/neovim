@@ -2954,6 +2954,9 @@ byte2line({byte})					*byte2line()*
 		one.
 		Also see |line2byte()|, |go| and |:goto|.
 
+		Can also be used as a |method|: >
+			GetOffset()->byte2line()
+
 byteidx({expr}, {nr})					*byteidx()*
 		Return byte index of the {nr}'th character in the string
 		{expr}.  Use zero for the first character, it then returns
@@ -2976,6 +2979,9 @@ byteidx({expr}, {nr})					*byteidx()*
 		If there are exactly {nr} characters the length of the string
 		in bytes is returned.
 
+		Can also be used as a |method|: >
+			GetName()->byteidx(idx)
+
 byteidxcomp({expr}, {nr})					*byteidxcomp()*
 		Like byteidx(), except that a composing character is counted
 		as a separate character.  Example: >
@@ -2989,6 +2995,9 @@ byteidxcomp({expr}, {nr})					*byteidxcomp()*
 		Only works differently from byteidx() when 'encoding' is set to
 		a Unicode encoding.
 
+		Can also be used as a |method|: >
+			GetName()->byteidxcomp(idx)
+
 call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Call function {func} with the items in |List| {arglist} as
 		arguments.
@@ -2997,6 +3006,9 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Returns the return value of the called function.
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
+
+		Can also be used as a |method|: >
+			GetFunc()->call([arg, arg], dict)
 
 ceil({expr})							*ceil()*
 		Return the smallest integral value greater than or equal to
