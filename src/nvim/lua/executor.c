@@ -279,6 +279,37 @@ static int nlua_schedule(lua_State *const lstate)
   return 0;
 }
 
+/// profile lua block
+///
+/// @param  lstate  Lua interpreter state.
+static int nlua_startup_profile(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *block_name = luaL_checkstring(lstate, 1);
+  if (lua_type(lstate, 2) != LUA_TFUNCTION) {
+    lua_pushliteral(lstate, "vim.schedule: expected function");
+    return lua_error(lstate);
+  }
+
+  // start measuring lua load time if --startuptime was passed and
+  // time_fd was successfully opened afterwards.
+  proftime_T rel_time;
+  proftime_T start_time;
+  if (time_fd != NULL) {
+    time_push(&rel_time, &start_time);
+  }
+  
+  lua_settop(lstate, 2);
+  int status = lua_pcall(lstate, 0, LUA_MULTRET, 0);
+
+  if (time_fd != NULL) {
+    time_msg((char *)block_name, &start_time);
+    time_pop(rel_time);
+  }
+
+  return status ? lua_error(lstate) : lua_gettop(lstate)-1;
+}
+
 static struct luaL_Reg regex_meta[] = {
   { "__gc", regex_gc },
   { "__tostring", regex_tostring },
@@ -447,6 +478,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // schedule
   lua_pushcfunction(lstate, &nlua_schedule);
   lua_setfield(lstate, -2, "schedule");
+  // startup_profile
+  lua_pushcfunction(lstate, &nlua_startup_profile);
+  lua_setfield(lstate, -2, "startup_profile");
   // in_fast_event
   lua_pushcfunction(lstate, &nlua_in_fast_event);
   lua_setfield(lstate, -2, "in_fast_event");
