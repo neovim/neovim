@@ -28,6 +28,7 @@ typedef enum {
   ERROR_OTHER,
   ERROR_BOTH,
   ERROR_DELETED,
+  ERROR_NOTMETHOD,
 } FnameTransError;
 
 /// Used in funcexe_T. Returns the new argcount.

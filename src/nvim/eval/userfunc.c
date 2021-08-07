@@ -1399,6 +1399,9 @@ static void user_func_error(int error, const char_u *name)
     case ERROR_UNKNOWN:
       emsg_funcname(N_("E117: Unknown function: %s"), name);
       break;
+    case ERROR_NOTMETHOD:
+      emsg_funcname(N_("E276: Cannot use function as a method: %s"), name);
+      break;
     case ERROR_DELETED:
       emsg_funcname(N_("E933: Function was deleted: %s"), name);
       break;

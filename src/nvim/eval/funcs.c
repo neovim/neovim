@@ -199,8 +199,10 @@ int call_internal_method(const char_u *const fname, const int argcount,
   FUNC_ATTR_NONNULL_ALL
 {
   const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
-  if (fdef == NULL || fdef->base_arg == BASE_NONE) {
+  if (fdef == NULL) {
     return ERROR_UNKNOWN;
+  } else if (fdef->base_arg == BASE_NONE) {
+    return ERROR_NOTMETHOD;
   } else if (argcount + 1 < fdef->min_argc) {
     return ERROR_TOOFEW;
   } else if (argcount + 1 > fdef->max_argc) {
