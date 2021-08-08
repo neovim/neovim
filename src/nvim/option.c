@@ -7674,6 +7674,12 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
   return ret;
 }
 
+// Get the local or global value of 'showbreak'.
+char_u *get_showbreak_value(win_T *win FUNC_ATTR_UNUSED)
+{
+  return p_sbr;
+}
+
 /// Get window or buffer local options
 dict_T *get_winbuf_options(const int bufopt)
   FUNC_ATTR_WARN_UNUSED_RESULT

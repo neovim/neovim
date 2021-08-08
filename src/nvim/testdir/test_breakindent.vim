@@ -796,6 +796,7 @@ func Test_breakindent20_list()
 	\ ]
   let lines = s:screen_lines2(1, 9, 20)
   call s:compare_lines(expect, lines)
+
   " reset linebreak option
   " Note: it indents by one additional
   " space, because of the leading space.
@@ -812,7 +813,59 @@ func Test_breakindent20_list()
   let lines = s:screen_lines2(1, 6, 20)
   call s:compare_lines(expect, lines)
 
-  call s:close_windows('set breakindent& briopt& linebreak& list& listchars&')
+  " check formatlistpat indent
+  setl briopt=min:5,list:-1
+  setl linebreak list&vim listchars&vim
+  let &l:flp = '^\s*\d\+\.\?[\]:)}\t ]\s*'
+  redraw!
+  let expect = [
+	\ "  1.  Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ "  2.) Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ "  3.] Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ ]
+  let lines = s:screen_lines2(1, 9, 20)
+  call s:compare_lines(expect, lines)
+  " check formatlistpat indent with different list levels
+  let &l:flp = '^\s*\*\+\s\+'
+  redraw!
+  %delete _
+  call setline(1, ['* Congress shall make no law',
+        \ '*** Congress shall make no law',
+        \ '**** Congress shall make no law'])
+  norm! 1gg
+  let expect = [
+	\ "* Congress shall    ",
+	\ "  make no law       ",
+	\ "*** Congress shall  ",
+	\ "    make no law     ",
+	\ "**** Congress shall ",
+	\ "     make no law    ",
+	\ ]
+  let lines = s:screen_lines2(1, 6, 20)
+  call s:compare_lines(expect, lines)
+
+  " check formatlistpat indent with different list level
+  " showbreak and sbr
+  setl briopt=min:5,sbr,list:-1,shift:2
+  setl showbreak=>
+  redraw!
+  let expect = [
+	\ "* Congress shall    ",
+	\ "> make no law       ",
+	\ "*** Congress shall  ",
+	\ ">   make no law     ",
+	\ "**** Congress shall ",
+	\ ">    make no law    ",
+	\ ]
+  let lines = s:screen_lines2(1, 6, 20)
+  call s:compare_lines(expect, lines)
+  call s:close_windows('set breakindent& briopt& linebreak& list& listchars& showbreak&')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
