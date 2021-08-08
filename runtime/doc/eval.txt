@@ -4545,6 +4545,7 @@ getenv({name})						*getenv()*
 		When the variable does not exist |v:null| is returned.  That
 		is different from a variable set to an empty string.
 		See also |expr-env|.
+			getenv('HOME')
 
 getfontname([{name}])					*getfontname()*
 		Without an argument returns the name of the normal font being
@@ -7697,6 +7698,7 @@ setenv({name}, {val})						*setenv()*
 		Set environment variable {name} to {val}.
 		When {val} is |v:null| the environment variable is deleted.
 		See also |expr-env|.
+			setenv('HOME', '/home/myhome')
 
 setfperm({fname}, {mode})				*setfperm()* *chmod*
 		Set the file permissions for {fname} to {mode}.
