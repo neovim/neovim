@@ -1057,7 +1057,7 @@ func Test_filewritable()
   call assert_equal(0, filewritable('Xfilewritable'))
 
   call assert_notequal(0, setfperm('Xfilewritable', 'rw-r-----'))
-  call assert_equal(1, filewritable('Xfilewritable'))
+  call assert_equal(1, 'Xfilewritable'->filewritable())
 
   call assert_equal(0, filewritable('doesnotexist'))
 
@@ -1068,12 +1068,12 @@ endfunc
 func Test_Executable()
   if has('win32')
     call assert_equal(1, executable('notepad'))
-    call assert_equal(1, executable('notepad.exe'))
+    call assert_equal(1, 'notepad.exe'->executable())
     call assert_equal(0, executable('notepad.exe.exe'))
     call assert_equal(0, executable('shell32.dll'))
     call assert_equal(0, executable('win.ini'))
   elseif has('unix')
-    call assert_equal(1, executable('cat'))
+    call assert_equal(1, 'cat'->executable())
     call assert_equal(0, executable('nodogshere'))
 
     " get "cat" path and remove the leading /
@@ -1082,8 +1082,7 @@ func Test_Executable()
     " check that the relative path works in /
     lcd /
     call assert_equal(1, executable(catcmd))
-    " let result = catcmd->exepath()
-    let result = exepath(catcmd)
+    let result = catcmd->exepath()
     " when using chroot looking for sbin/cat can return bin/cat, that is OK
     if catcmd =~ '\<sbin\>' && result =~ '\<bin\>'
       call assert_equal('/' .. substitute(catcmd, '\<sbin\>', 'bin', ''), result)
@@ -1320,7 +1319,7 @@ func Test_func_exists_on_reload()
   call writefile(['func ExistingFunction()', 'echo "yes"', 'endfunc'], 'Xfuncexists')
   call assert_equal(0, exists('*ExistingFunction'))
   source Xfuncexists
-  call assert_equal(1, exists('*ExistingFunction'))
+  call assert_equal(1, '*ExistingFunction'->exists())
   " Redefining a function when reloading a script is OK.
   source Xfuncexists
   call assert_equal(1, exists('*ExistingFunction'))
@@ -1351,7 +1350,7 @@ func Test_func_sandbox()
   sandbox let F = {-> 'hello'}
   call assert_equal('hello', F())
 
-  sandbox let F = {-> execute("normal ix\<Esc>")}
+  sandbox let F = {-> "normal ix\<Esc>"->execute()}
   call assert_fails('call F()', 'E48:')
   unlet F
 

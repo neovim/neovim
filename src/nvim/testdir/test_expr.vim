@@ -147,7 +147,7 @@ function Test_printf_spec_s()
   call assert_equal(string(value), printf('%s', value))
 
   " funcref
-  call assert_equal('printf', printf('%s', function('printf')))
+  call assert_equal('printf', printf('%s', 'printf'->function()))
 
   " partial
   call assert_equal(string(function('printf', ['%s'])), printf('%s', function('printf', ['%s'])))
@@ -477,7 +477,7 @@ func Test_funcref()
   endfunc
   call assert_equal(2, OneByName())
   call assert_equal(1, OneByRef())
-  let OneByRef = funcref('One')
+  let OneByRef = 'One'->funcref()
   call assert_equal(2, OneByRef())
   call assert_fails('echo funcref("{")', 'E475:')
   let OneByRef = funcref("One", repeat(["foo"], 20))

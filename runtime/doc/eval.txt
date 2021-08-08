@@ -3831,6 +3831,9 @@ escape({string}, {chars})				*escape()*
 			c:\\program\ files\\vim
 <		Also see |shellescape()| and |fnameescape()|.
 
+		Can also be used as a |method|: >
+			GetText()->escape(' \')
+<
 							*eval()*
 eval({string})	Evaluate {string} and return the result.  Especially useful to
 		turn the result of |string()| back into the original value.
@@ -3870,6 +3873,9 @@ executable({expr})					*executable()*
 			-1	not implemented on this system
 		|exepath()| can be used to get the full path of an executable.
 
+		Can also be used as a |method|: >
+			GetCommand()->executable()
+
 execute({command} [, {silent}])				*execute()*
 		Execute {command} and capture its output.
 		If {command} is a |String|, returns {command} output.
@@ -3897,11 +3903,17 @@ execute({command} [, {silent}])				*execute()*
 		To execute a command in another window than the current one
 		use `win_execute()`.
 
+		Can also be used as a |method|: >
+			GetCommand()->execute()
+
 exepath({expr})						*exepath()*
 		Returns the full path of {expr} if it is an executable and
 		given as a (partial or full) path or is found in $PATH.
 		Returns empty string otherwise.
 		If {expr} starts with "./" the |current-directory| is used.
+
+		Can also be used as a |method|: >
+			GetCommand()->exepath()
 
 							*exists()*
 exists({expr})	The result is a Number, which is |TRUE| if {expr} is
@@ -3987,6 +3999,9 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 			exists(bufcount)
 <		This doesn't check for existence of the "bufcount" variable,
 		but gets the value of "bufcount", and checks if that exists.
+
+		Can also be used as a |method|: >
+			Varname()->exists()
 
 exp({expr})						*exp()*
 		Return the exponential of {expr} as a |Float| in the range
@@ -4094,6 +4109,9 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 		See |glob()| for finding existing files.  See |system()| for
 		getting the raw output of an external command.
 
+		Can also be used as a |method|: >
+			Getpattern()->expand()
+
 expandcmd({expr})					*expandcmd()*
 		Expand special items in {expr} like what is done for an Ex
 		command such as `:edit`.  This expands special keywords, like
@@ -4101,6 +4119,9 @@ expandcmd({expr})					*expandcmd()*
 		{expr}.  "~user" and "~/path" are only expanded at the start.
 		Returns the expanded string.  Example: >
 			:echo expandcmd('make %<.o')
+
+<		Can also be used as a |method|: >
+			GetCommand()->expandcmd()
 <
 extend({expr1}, {expr2} [, {expr3}])			*extend()*
 		{expr1} and {expr2} must be both |Lists| or both
@@ -4186,6 +4207,9 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 
 		Return value is always 0.
 
+		Can also be used as a |method|: >
+			GetInput()->feedkeys()
+
 filereadable({file})					*filereadable()*
 		The result is a Number, which is |TRUE| when a file with the
 		name {file} exists, and can be read.  If {file} doesn't exist,
@@ -4199,12 +4223,17 @@ filereadable({file})					*filereadable()*
 			echo filereadable(expand('~/.vimrc'))
 			1
 
+<		Can also be used as a |method|: >
+			GetName()->filereadable()
+
 filewritable({file})					*filewritable()*
 		The result is a Number, which is 1 when a file with the
 		name {file} exists, and can be written.  If {file} doesn't
 		exist, or is not writable, the result is 0.  If {file} is a
 		directory, and we can write to it, the result is 2.
 
+		Can also be used as a |method|: >
+			GetName()->filewriteable()
 
 filter({expr1}, {expr2})					*filter()*
 		{expr1} must be a |List|, |Blob|, or a |Dictionary|.
@@ -4275,6 +4304,9 @@ finddir({name} [, {path} [, {count}]])				*finddir()*
 
 		This is quite similar to the ex-command `:find`.
 
+		Can also be used as a |method|: >
+			GetName()->finddir()
+
 findfile({name} [, {path} [, {count}]])				*findfile()*
 		Just like |finddir()|, but find a file instead of a directory.
 		Uses 'suffixesadd'.
@@ -4282,6 +4314,9 @@ findfile({name} [, {path} [, {count}]])				*findfile()*
 			:echo findfile("tags.vim", ".;")
 <		Searches from the directory of the current file upwards until
 		it finds the file "tags.vim".
+
+		Can also be used as a |method|: >
+			GetName()->findfile()
 
 flatten({list} [, {maxdepth}])					*flatten()*
 		Flatten {list} up to {maxdepth} levels.  Without {maxdepth}
@@ -4372,6 +4407,9 @@ fnameescape({string})					*fnameescape()*
 			:exe "edit " . fnameescape(fname)
 <		results in executing: >
 			edit \+some\ str\%nge\|name
+<
+		Can also be used as a |method|: >
+			GetName()->fnameescape()
 
 fnamemodify({fname}, {mods})				*fnamemodify()*
 		Modify file name {fname} according to {mods}.  {mods} is a
@@ -4385,6 +4423,9 @@ fnamemodify({fname}, {mods})				*fnamemodify()*
 		Note: Environment variables don't work in {fname}, use
 		|expand()| first then.
 
+		Can also be used as a |method|: >
+			GetName()->fnamemodify(':p:h')
+
 foldclosed({lnum})					*foldclosed()*
 		The result is a Number.  If the line {lnum} is in a closed
 		fold, the result is the number of the first line in that fold.
@@ -4392,12 +4433,18 @@ foldclosed({lnum})					*foldclosed()*
 		{lnum} is used like with |getline()|.  Thus "." is the current
 		line, "'m" mark m, etc.
 
+		Can also be used as a |method|: >
+			GetLnum()->foldclosed()
+
 foldclosedend({lnum})					*foldclosedend()*
 		The result is a Number.  If the line {lnum} is in a closed
 		fold, the result is the number of the last line in that fold.
 		If the line {lnum} is not in a closed fold, -1 is returned.
 		{lnum} is used like with |getline()|.  Thus "." is the current
 		line, "'m" mark m, etc.
+
+		Can also be used as a |method|: >
+			GetLnum()->foldclosedend()
 
 foldlevel({lnum})					*foldlevel()*
 		The result is a Number, which is the foldlevel of line {lnum}
@@ -4410,6 +4457,9 @@ foldlevel({lnum})					*foldlevel()*
 		previous line is usually available.
 		{lnum} is used like with |getline()|.  Thus "." is the current
 		line, "'m" mark m, etc.
+
+		Can also be used as a |method|: >
+			GetLnum()->foldlevel()
 
 							*foldtext()*
 foldtext()	Returns a String, to be displayed for a closed fold.  This is
@@ -4436,6 +4486,9 @@ foldtextresult({lnum})					*foldtextresult()*
 		line, "'m" mark m, etc.
 		Useful when exporting folded text, e.g., to HTML.
 
+		Can also be used as a |method|: >
+			GetLnum()->foldtextresult()
+<
 							*foreground()*
 foreground()	Move the Vim window to the foreground.  Useful when sent from
 		a client to a Vim server. |remote_send()|
@@ -4454,6 +4507,9 @@ funcref({name} [, {arglist}] [, {dict}])
 		Also for autoloaded functions. {name} cannot be a builtin
 		function.
 
+		Can also be used as a |method|: >
+			GetFuncname()->funcref([arg])
+<
 				       *function()* *E700* *E922* *E923*
 function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
@@ -4503,7 +4559,9 @@ function({name} [, {arglist}] [, {dict}])
 			call Func(500)
 <		Invokes the function as with: >
 			call context.Callback('one', 500)
-
+<
+		Can also be used as a |method|: >
+			GetFuncname()->function([arg])
 
 garbagecollect([{atexit}])				*garbagecollect()*
 		Cleanup unused |Lists| and |Dictionaries| that have circular

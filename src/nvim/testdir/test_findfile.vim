@@ -50,7 +50,7 @@ func Test_findfile()
   set path=.
   call assert_equal('Xdir2/foo',    findfile('foo'))
   call assert_equal('',             findfile('bar'))
-  call assert_equal('Xdir2/foobar', findfile('foobar'))
+  call assert_equal('Xdir2/foobar', 'foobar'->findfile())
 
   " Empty {path} 2nd argument is the same as no 2nd argument.
   call assert_equal('Xdir2/foo', findfile('foo', ''))
@@ -138,7 +138,7 @@ func Test_finddir()
   cd Xdir1
 
   call assert_equal('Xdir2', finddir('Xdir2'))
-  call assert_equal('',      finddir('Xdir3'))
+  call assert_equal('',      'Xdir3'->finddir())
 
   " Files should not be found (findfile() finds them).
   call assert_equal('', finddir('foo'))
