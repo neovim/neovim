@@ -1519,6 +1519,9 @@ au BufNewFile,BufRead *.sbt			setf sbt
 " Scilab
 au BufNewFile,BufRead *.sci,*.sce		setf scilab
 
+" scdoc
+au BufNewFile,BufRead *.scd			setf scdoc
+
 " SCSS
 au BufNewFile,BufRead *.scss			setf scss
 
