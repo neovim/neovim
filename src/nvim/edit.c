@@ -3344,12 +3344,10 @@ static char_u *ins_compl_mode(void)
  */
 static int ins_compl_bs(void)
 {
-  char_u *line;
-  char_u *p;
-
-  line = get_cursor_line_ptr();
-  p = line + curwin->w_cursor.col;
+  char_u *line = get_cursor_line_ptr();
+  char_u *p = line + curwin->w_cursor.col;
   MB_PTR_BACK(line, p);
+  ptrdiff_t p_off = p - line;
 
   // Stop completion when the whole word was deleted.  For Omni completion
   // allow the word to be deleted, we won't match everything.
@@ -3369,8 +3367,12 @@ static int ins_compl_bs(void)
     ins_compl_restart();
   }
 
+  // ins_compl_restart() calls update_screen(0) which may invalidate the pointer
+  // TODO(bfredl): get rid of random update_screen() calls deep inside completion logic
+  line = get_cursor_line_ptr();
+
   xfree(compl_leader);
-  compl_leader = vim_strnsave(line + compl_col, (int)(p - line) - compl_col);
+  compl_leader = vim_strnsave(line + compl_col, (int)p_off - compl_col);
   ins_compl_new_leader();
   if (compl_shown_match != NULL) {
     // Make sure current match is not a hidden item.

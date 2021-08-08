@@ -1627,7 +1627,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
       }
     }
 
-    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+    char *text = transstr(str.size > 0 ? str.data : "", false);  // allocates
     w += (int)mb_string2cells((char_u *)text);
 
     kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));

@@ -310,7 +310,7 @@ void trans_characters(char_u *buf, int bufsize)
 ///
 /// @return number of bytes needed to hold a translation of `s`, NUL byte not
 ///         included.
-size_t transstr_len(const char *const s)
+size_t transstr_len(const char *const s, bool untab)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   const char *p = s;
@@ -331,6 +331,9 @@ size_t transstr_len(const char *const s)
         }
       }
       p += l;
+    } else if (*p == TAB && !untab) {
+      len += 1;
+      p++;
     } else {
       const int b2c_l = byte2cells((uint8_t)(*p++));
       // Illegal byte sequence may occupy up to 4 characters.
@@ -346,9 +349,10 @@ size_t transstr_len(const char *const s)
 /// @param[out]  buf  Buffer to which result should be saved.
 /// @param[in]  len  Buffer length. Resulting string may not occupy more then
 ///                  len - 1 bytes (one for trailing NUL byte).
+/// @param[in]  untab  remove tab characters
 ///
 /// @return length of the resulting string, without the NUL byte.
-size_t transstr_buf(const char *const s, char *const buf, const size_t len)
+size_t transstr_buf(const char *const s, char *const buf, const size_t len, bool untab)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p = s;
@@ -379,6 +383,8 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
         }
       }
       p += l;
+    } else if (*p == TAB && !untab) {
+      *buf_p++ = *p++;
     } else {
       const char *const tb = (const char *)transchar_byte((uint8_t)(*p++));
       const size_t tb_len = strlen(tb);
@@ -401,14 +407,14 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len)
 /// @param[in]  s  String to replace characters from.
 ///
 /// @return [allocated] translated string
-char *transstr(const char *const s)
+char *transstr(const char *const s, bool untab)
   FUNC_ATTR_NONNULL_RET
 {
   // Compute the length of the result, taking account of unprintable
   // multi-byte characters.
-  const size_t len = transstr_len((const char *)s) + 1;
+  const size_t len = transstr_len((const char *)s, untab) + 1;
   char *const buf = xmalloc(len);
-  transstr_buf(s, buf, len);
+  transstr_buf(s, buf, len, untab);
   return buf;
 }
 

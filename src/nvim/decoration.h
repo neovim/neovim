@@ -7,14 +7,6 @@
 
 // actual Decoration data is in extmark_defs.h
 
-typedef struct {
-  char *text;
-  int hl_id;
-} VirtTextChunk;
-
-typedef kvec_t(VirtTextChunk) VirtText;
-#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
-
 typedef uint16_t DecorPriority;
 #define DECOR_PRIORITY_BASE 0x1000
 

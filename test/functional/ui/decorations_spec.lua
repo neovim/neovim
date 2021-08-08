@@ -790,3 +790,511 @@ end]]
     helpers.assert_alive()
   end)
 end)
+
+describe('decorations: virtual lines', function()
+  local screen, ns
+  before_each(function()
+    clear()
+    screen = Screen.new(50, 12)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {bold=true, foreground=Screen.colors.Blue};
+      [2] = {foreground = Screen.colors.Cyan4};
+      [3] = {background = Screen.colors.Yellow1};
+      [4] = {bold = true};
+      [5] = {background = Screen.colors.Yellow, foreground = Screen.colors.Blue};
+      [6] = {foreground = Screen.colors.Blue};
+      [7] = {foreground = Screen.colors.SlateBlue};
+      [8] = {background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue};
+      [9] = {foreground = Screen.colors.Brown};
+    }
+
+    ns = meths.create_namespace 'test'
+  end)
+
+  local example_text = [[
+if (h->n_buckets < new_n_buckets) { // expand
+  khkey_t *new_keys = (khkey_t *)krealloc((void *)h->keys, new_n_buckets * sizeof(khkey_t));
+  h->keys = new_keys;
+  if (kh_is_map && val_size) {
+    char *new_vals = krealloc( h->vals_buf, new_n_buckets * val_size);
+    h->vals_buf = new_vals;
+  }
+}]]
+
+  it('works with one line', function()
+    insert(example_text)
+    feed 'gg'
+    meths.buf_set_extmark(0, ns, 1, 33, {
+      virt_lines={ {{">> ", "NonText"}, {"krealloc", "Identifier"}, {": change the size of an allocation"}}};
+      virt_lines_above=true;
+    })
+
+    screen:expect{grid=[[
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+      {1:>> }{2:krealloc}: change the size of an allocation     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+                                                        |
+    ]]}
+
+    feed '/krealloc<cr>'
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+      {1:>> }{2:krealloc}: change the size of an allocation     |
+        khkey_t *new_keys = (khkey_t *){3:^krealloc}((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+      /krealloc                                         |
+    ]]}
+
+    -- virtual line remains anchored to the extmark
+    feed 'i<cr>'
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)                 |
+      {1:>> }{2:krealloc}: change the size of an allocation     |
+      {3:^krealloc}((void *)h->keys, new_n_buckets * sizeof(k|
+      hkey_t));                                         |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      {4:-- INSERT --}                                      |
+    ]]}
+
+    feed '<esc>3+'
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)                 |
+      {1:>> }{2:krealloc}: change the size of an allocation     |
+      {3:krealloc}((void *)h->keys, new_n_buckets * sizeof(k|
+      hkey_t));                                         |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          ^char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+                                                        |
+    ]]}
+
+    meths.buf_set_extmark(0, ns, 5, 0, {
+      virt_lines = { {{"^^ REVIEW:", "Todo"}, {" new_vals variable seems unneccesary?", "Comment"}} };
+    })
+    -- TODO: what about the cursor??
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)                 |
+      {3:krealloc}((void *)h->keys, new_n_buckets * sizeof(k|
+      hkey_t));                                         |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
+      buck^ets * val_size);                              |
+      {5:^^ REVIEW:}{6: new_vals variable seems unneccesary?}   |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+                                                        |
+    ]]}
+
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)                 |
+      {3:krealloc}((void *)h->keys, new_n_buckets * sizeof(k|
+      hkey_t));                                         |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
+      buck^ets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+                                                        |
+    ]]}
+  end)
+
+
+  it('works with text at the beginning of the buffer', function()
+    insert(example_text)
+    feed 'gg'
+
+    screen:expect{grid=[[
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    meths.buf_set_extmark(0, ns, 0, 0, {
+      virt_lines={
+        {{"refactor(khash): ", "Special"}, {"take size of values as parameter"}};
+        {{"Author: Dev Devsson, "}, {"Tue Aug 31 10:13:37 2021", "Comment"}};
+      };
+      virt_lines_above=true;
+      right_gravity=false;
+    })
+
+    -- placing virt_text on topline does not automatically cause a scroll
+    screen:expect{grid=[[
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+      {1:~                                                 }|
+                                                        |
+    ]], unchanged=true}
+
+    feed '<c-b>'
+    screen:expect{grid=[[
+      {7:refactor(khash): }take size of values as parameter |
+      Author: Dev Devsson, {6:Tue Aug 31 10:13:37 2021}     |
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+                                                        |
+    ]]}
+  end)
+
+  it('works with text et the end of the buffer', function()
+    insert(example_text)
+    feed 'G'
+
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      ^}                                                 |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    local id = meths.buf_set_extmark(0, ns, 7, 0, {
+      virt_lines={{{"Grugg"}}};
+      right_gravity=false;
+    })
+
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      ^}                                                 |
+      Grugg                                             |
+                                                        |
+    ]]}
+
+    meths.buf_del_extmark(0, ns, id)
+    screen:expect{grid=[[
+      if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      ^}                                                 |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('works with a block scrolling up', function()
+    screen:try_resize(30, 7)
+    insert("aa\nbb\ncc\ndd\nee\nff\ngg\nhh")
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 6, 0, {
+      virt_lines={
+        {{"they see me"}};
+        {{"scrolling", "Special"}};
+        {{"they"}};
+        {{"hatin'", "Special"}};
+      };
+    })
+
+    screen:expect{grid=[[
+      ^aa                            |
+      bb                            |
+      cc                            |
+      dd                            |
+      ee                            |
+      ff                            |
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      ^bb                            |
+      cc                            |
+      dd                            |
+      ee                            |
+      ff                            |
+      gg                            |
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      ^cc                            |
+      dd                            |
+      ee                            |
+      ff                            |
+      gg                            |
+      they see me                   |
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      ^dd                            |
+      ee                            |
+      ff                            |
+      gg                            |
+      they see me                   |
+      {7:scrolling}                     |
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      ^ee                            |
+      ff                            |
+      gg                            |
+      they see me                   |
+      {7:scrolling}                     |
+      they                          |
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      ^ff                            |
+      gg                            |
+      they see me                   |
+      {7:scrolling}                     |
+      they                          |
+      {7:hatin'}                        |
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      ^gg                            |
+      they see me                   |
+      {7:scrolling}                     |
+      they                          |
+      {7:hatin'}                        |
+      hh                            |
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      they see me                   |
+      {7:scrolling}                     |
+      they                          |
+      {7:hatin'}                        |
+      ^hh                            |
+      {1:~                             }|
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      {7:scrolling}                     |
+      they                          |
+      {7:hatin'}                        |
+      ^hh                            |
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      they                          |
+      {7:hatin'}                        |
+      ^hh                            |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      {7:hatin'}                        |
+      ^hh                            |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+
+    feed '<c-e>'
+    screen:expect{grid=[[
+      ^hh                            |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+  end)
+
+  it('works with sign and numbercolumns', function()
+    insert(example_text)
+    feed 'gg'
+    command 'set number signcolumn=yes'
+    screen:expect{grid=[[
+      {8:  }{9:  1 }^if (h->n_buckets < new_n_buckets) { // expan|
+      {8:  }{9:    }d                                           |
+      {8:  }{9:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((v|
+      {8:  }{9:    }oid *)h->keys, new_n_buckets * sizeof(khkey_|
+      {8:  }{9:    }t));                                        |
+      {8:  }{9:  3 }  h->keys = new_keys;                       |
+      {8:  }{9:  4 }  if (kh_is_map && val_size) {              |
+      {8:  }{9:  5 }    char *new_vals = krealloc( h->vals_buf, |
+      {8:  }{9:    }new_n_buckets * val_size);                  |
+      {8:  }{9:  6 }    h->vals_buf = new_vals;                 |
+      {8:  }{9:  7 }  }                                         |
+                                                        |
+    ]]}
+
+    meths.buf_set_extmark(0, ns, 2, 0, {
+      virt_lines={
+        {{"Some special", "Special"}};
+        {{"remark about codes", "Comment"}};
+      };
+    })
+
+    screen:expect{grid=[[
+      {8:  }{9:  1 }^if (h->n_buckets < new_n_buckets) { // expan|
+      {8:  }{9:    }d                                           |
+      {8:  }{9:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((v|
+      {8:  }{9:    }oid *)h->keys, new_n_buckets * sizeof(khkey_|
+      {8:  }{9:    }t));                                        |
+      {8:  }{9:  3 }  h->keys = new_keys;                       |
+      {8:  }{9:    }{7:Some special}                                |
+      {8:  }{9:    }{6:remark about codes}                          |
+      {8:  }{9:  4 }  if (kh_is_map && val_size) {              |
+      {8:  }{9:  5 }    char *new_vals = krealloc( h->vals_buf, |
+      {8:  }{9:    }new_n_buckets * val_size);                  |
+                                                        |
+    ]]}
+
+    meths.buf_set_extmark(0, ns, 2, 0, {
+      virt_lines={
+        {{"Some special", "Special"}};
+        {{"remark about codes", "Comment"}};
+      };
+      virt_lines_leftcol=true;
+    })
+    screen:expect{grid=[[
+      {8:  }{9:  1 }^if (h->n_buckets < new_n_buckets) { // expan|
+      {8:  }{9:    }d                                           |
+      {8:  }{9:  2 }  khkey_t *new_keys = (khkey_t *)krealloc((v|
+      {8:  }{9:    }oid *)h->keys, new_n_buckets * sizeof(khkey_|
+      {8:  }{9:    }t));                                        |
+      {8:  }{9:  3 }  h->keys = new_keys;                       |
+      {7:Some special}                                      |
+      {6:remark about codes}                                |
+      {8:  }{9:  4 }  if (kh_is_map && val_size) {              |
+      {8:  }{9:  5 }    char *new_vals = krealloc( h->vals_buf, |
+      {8:  }{9:    }new_n_buckets * val_size);                  |
+                                                        |
+    ]]}
+  end)
+
+
+  it('works with hard tabs', function()
+    insert(example_text)
+    feed 'gg'
+    meths.buf_set_extmark(0, ns, 1, 0, {
+      virt_lines={ {{">>", "NonText"}, {"\tvery\ttabby", "Identifier"}, {"text\twith\ttabs"}}};
+    })
+    screen:expect{grid=[[
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+      {1:>>}{2:      very    tabby}text       with    tabs      |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+                                                        |
+    ]]}
+
+    command 'set tabstop=4'
+    screen:expect{grid=[[
+      ^if (h->n_buckets < new_n_buckets) { // expand     |
+        khkey_t *new_keys = (khkey_t *)krealloc((void *)|
+      h->keys, new_n_buckets * sizeof(khkey_t));        |
+      {1:>>}{2:  very    tabby}text   with    tabs              |
+        h->keys = new_keys;                             |
+        if (kh_is_map && val_size) {                    |
+          char *new_vals = krealloc( h->vals_buf, new_n_|
+      buckets * val_size);                              |
+          h->vals_buf = new_vals;                       |
+        }                                               |
+      }                                                 |
+                                                        |
+    ]]}
+  end)
+
+end)

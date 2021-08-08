@@ -1802,7 +1802,7 @@ static void f_did_filetype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_diff_filler(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = diff_check_fill(curwin, tv_get_lnum(argvars));
+  rettv->vval.v_number = MAX(0, diff_check(curwin, tv_get_lnum(argvars)));
 }
 
 /*
@@ -10801,7 +10801,7 @@ static void f_strridx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_strtrans(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *)transstr(tv_get_string(&argvars[0]));
+  rettv->vval.v_string = (char_u *)transstr(tv_get_string(&argvars[0]), true);
 }
 
 /*

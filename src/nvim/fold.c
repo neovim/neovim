@@ -1875,7 +1875,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldin
         }
       }
       if (*p != NUL) {
-        p = (char_u *)transstr((const char *)text);
+        p = (char_u *)transstr((const char *)text, true);
         xfree(text);
         text = p;
       }

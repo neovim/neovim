@@ -1985,26 +1985,6 @@ static int diff_cmp(char_u *s1, char_u *s2)
   return 0;
 }
 
-/// Return the number of filler lines above "lnum".
-///
-/// @param wp
-/// @param lnum
-///
-/// @return Number of filler lines above lnum
-int diff_check_fill(win_T *wp, linenr_T lnum)
-{
-  // be quick when there are no filler lines
-  if (!(diff_flags & DIFF_FILLER)) {
-    return 0;
-  }
-  int n = diff_check(wp, lnum);
-
-  if (n <= 0) {
-    return 0;
-  }
-  return n;
-}
-
 /// Set the topline of "towin" to match the position in "fromwin", so that they
 /// show the same diff'ed lines.
 ///
@@ -2029,6 +2009,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     ex_diffupdate(NULL);
   }
   towin->w_topfill = 0;
+
 
   // search for a change that includes "lnum" in the list of diffblocks.
   for (dp = curtab->tp_first_diff; dp != NULL; dp = dp->df_next) {
@@ -2253,6 +2234,13 @@ bool diffopt_closeoff(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (diff_flags & DIFF_CLOSE_OFF) != 0;
+}
+
+// Return true if 'diffopt' contains "filler".
+bool diffopt_filler(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (diff_flags & DIFF_FILLER) != 0;
 }
 
 /// Find the difference within a changed line.

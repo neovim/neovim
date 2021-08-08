@@ -65,6 +65,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -820,6 +821,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   uc_clear(&buf->b_ucmds);               // clear local user commands
   buf_delete_signs(buf, (char_u *)"*");  // delete any signs
   extmark_free_all(buf);                 // delete any extmarks
+  clear_virt_lines(buf, -1);
   map_clear_int(buf, MAP_ALL_MODES, true, false);    // clear local mappings
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
@@ -3262,7 +3264,7 @@ void maketitle(void)
         buf_p += MIN(size, SPACE_FOR_FNAME);
       } else {
         buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
-                              buf_p, SPACE_FOR_FNAME + 1);
+                              buf_p, SPACE_FOR_FNAME + 1, true);
       }
 
       switch (bufIsChanged(curbuf)
@@ -3311,7 +3313,7 @@ void maketitle(void)
         // room for the server name.  When there is no room (very long
         // file name) use (...).
         if ((size_t)(buf_p - buf) < SPACE_FOR_DIR) {
-          char *const tbuf = transstr(buf_p);
+          char *const tbuf = transstr(buf_p, true);
           const size_t free_space = SPACE_FOR_DIR - (size_t)(buf_p - buf) + 1;
           const size_t dir_len = xstrlcpy(buf_p, tbuf, free_space);
           buf_p += MIN(dir_len, free_space - 1);
@@ -4657,7 +4659,7 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
   long below;          // number of lines below window
 
   above = wp->w_topline - 1;
-  above += diff_check_fill(wp, wp->w_topline) - wp->w_topfill;
+  above += win_get_fill(wp, wp->w_topline) - wp->w_topfill;
   if (wp->w_topline == 1 && wp->w_topfill >= 1) {
     // All buffer lines are displayed and there is an indication
     // of filler lines, that can be considered seeing all lines.

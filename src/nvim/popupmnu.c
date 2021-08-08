@@ -514,7 +514,7 @@ void pum_redraw(void)
             char_u saved = *p;
 
             *p = NUL;
-            st = (char_u *)transstr((const char *)s);
+            st = (char_u *)transstr((const char *)s, true);
             *p = saved;
 
             if (pum_rl) {

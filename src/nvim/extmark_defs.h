@@ -6,6 +6,16 @@
 
 typedef struct Decoration Decoration;
 
+typedef struct {
+  char *text;
+  int hl_id;
+} VirtTextChunk;
+
+typedef kvec_t(VirtTextChunk) VirtText;
+#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
+typedef kvec_t(VirtText) VirtLines;
+
+
 typedef struct
 {
   uint64_t ns_id;
