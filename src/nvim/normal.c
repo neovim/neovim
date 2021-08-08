@@ -92,8 +92,6 @@ static linenr_T resel_VIsual_line_count;        /* number of lines */
 static colnr_T resel_VIsual_vcol;               /* nr of cols or end col */
 static int VIsual_mode_orig = NUL;              /* saved Visual mode */
 
-static int restart_VIsual_select = 0;
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.c.generated.h"
@@ -1277,6 +1275,15 @@ static void normal_redraw(NormalState *s)
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
+  // Might need to update for 'cursorline'.
+  // When 'cursorlineopt' is "screenline" need to redraw always.
+  if (curwin->w_p_cul
+      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
+          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
+      && !char_avail()) {
+    redraw_later(curwin, VALID);
+  }
+
   if (VIsual_active) {
     update_curbuf(INVERTED);  // update inverted part
   } else if (must_redraw) {
@@ -1340,7 +1347,7 @@ static int normal_check(VimState *state)
   quit_more = false;
 
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
-  // If there is nothing in the stuff_buffer or do_redraw is TRUE,
+  // If there is nothing in the stuff_buffer or do_redraw is true,
   // update cursor and redraw.
   if (skip_redraw || exmode_active) {
     skip_redraw = false;
@@ -8147,10 +8154,8 @@ static void nv_event(cmdarg_T *cap)
   }
 }
 
-/*
- * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
- */
-static int mouse_model_popup(void)
+/// @return true when 'mousemodel' is set to "popup" or "popup_setpos".
+static bool mouse_model_popup(void)
 {
   return p_mousem[0] == 'p';
 }

@@ -372,11 +372,6 @@ int main(int argc, char **argv)
 
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (params.use_vimrc == NULL || !strequal(params.use_vimrc, "NONE")) {
-    // Source syncolor.vim to set up default UI highlights if the user didn't
-    // already enable a colorscheme
-    if (!get_var_value("g:colors_name")) {
-      source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
-    }
     // Does ":filetype plugin indent on".
     filetype_maybe_enable();
     // Sources syntax/syntax.vim, which calls `:filetype on`.
@@ -1430,7 +1425,7 @@ static void handle_quickfix(mparm_T *paramp)
 static void handle_tag(char_u *tagname)
 {
   if (tagname != NULL) {
-    swap_exists_did_quit = FALSE;
+    swap_exists_did_quit = false;
 
     vim_snprintf((char *)IObuff, IOSIZE, "ta %s", tagname);
     do_cmdline_cmd((char *)IObuff);
@@ -1448,7 +1443,7 @@ static void read_stdin(void)
   // When getting the ATTENTION prompt here, use a dialog.
   swap_exists_action = SEA_DIALOG;
   no_wait_return = true;
-  int save_msg_didany = msg_didany;
+  bool save_msg_didany = msg_didany;
   set_buflisted(true);
   // Create memfile and read from stdin.
   (void)open_buffer(true, NULL, 0);
@@ -1638,7 +1633,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
       curwin->w_arg_idx = arg_idx;
       /* Edit file from arg list, if there is one.  When "Quit" selected
        * at the ATTENTION prompt close the window. */
-      swap_exists_did_quit = FALSE;
+      swap_exists_did_quit = false;
       (void)do_ecmd(0, arg_idx < GARGCOUNT
           ? alist_name(&GARGLIST[arg_idx]) : NULL,
           NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
@@ -2005,10 +2000,10 @@ static void mainerr(const char *errstr, const char *str)
 /// Prints version information for "nvim -v" or "nvim --version".
 static void version(void)
 {
-  info_message = TRUE;  // use mch_msg(), not mch_errmsg()
+  info_message = true;  // use mch_msg(), not mch_errmsg()
   list_version();
   msg_putchar('\n');
-  msg_didout = FALSE;
+  msg_didout = false;
 }
 
 /// Prints help message for "nvim -h" or "nvim --help".

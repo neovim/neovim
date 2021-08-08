@@ -54,20 +54,23 @@ struct dir_stack_T {
 // For each error the next struct is allocated and linked in a list.
 typedef struct qfline_S qfline_T;
 struct qfline_S {
-  qfline_T    *qf_next;         ///< pointer to next error in the list
-  qfline_T    *qf_prev;         ///< pointer to previous error in the list
-  linenr_T qf_lnum;             ///< line number where the error occurred
-  int qf_fnum;                  ///< file number for the line
-  int qf_col;                   ///< column where the error occurred
-  int qf_nr;                    ///< error number
-  char_u      *qf_module;       ///< module name for this error
-  char_u      *qf_pattern;      ///< search pattern for the error
-  char_u      *qf_text;         ///< description of the error
-  char_u qf_viscol;             ///< set to TRUE if qf_col is screen column
-  char_u qf_cleared;            ///< set to TRUE if line has been deleted
-  char_u qf_type;               ///< type of the error (mostly 'E'); 1 for
-                                //   :helpgrep
-  char_u qf_valid;              ///< valid error message detected
+  qfline_T *qf_next;      ///< pointer to next error in the list
+  qfline_T *qf_prev;      ///< pointer to previous error in the list
+  linenr_T qf_lnum;       ///< line number where the error occurred
+  linenr_T qf_end_lnum;   ///< line number when the error has range or zero
+
+  int qf_fnum;            ///< file number for the line
+  int qf_col;             ///< column where the error occurred
+  int qf_end_col;         ///< column when the error has range or zero
+  int qf_nr;              ///< error number
+  char_u *qf_module;      ///< module name for this error
+  char_u *qf_pattern;     ///< search pattern for the error
+  char_u *qf_text;        ///< description of the error
+  char_u qf_viscol;       ///< set to TRUE if qf_col and qf_end_col is
+                          //   screen column
+  char_u qf_cleared;      ///< set to TRUE if line has been deleted
+  char_u qf_type;         ///< type of the error (mostly 'E'); 1 for :helpgrep
+  char_u qf_valid;        ///< valid error message detected
 };
 
 // There is a stack of error lists.
@@ -197,7 +200,9 @@ typedef struct {
   char_u *errmsg;
   size_t errmsglen;
   long lnum;
+  long end_lnum;
   int  col;
+  int end_col;
   bool use_viscol;
   char_u *pattern;
   int    enr;
@@ -282,7 +287,9 @@ static int qf_init_process_nextline(qf_list_T *qfl,
                       0,
                       fields->errmsg,
                       fields->lnum,
+                      fields->end_lnum,
                       fields->col,
+                      fields->end_col,
                       fields->use_viscol,
                       fields->pattern,
                       fields->enr,
@@ -1561,7 +1568,9 @@ static int qf_parse_get_fields(char_u *linebuf, size_t linelen, efm_T *fmt_ptr,
     fields->errmsg[0] = NUL;
   }
   fields->lnum = 0;
+  fields->end_lnum = 0;
   fields->col = 0;
+  fields->end_col = 0;
   fields->use_viscol = false;
   fields->enr = -1;
   fields->type = 0;
@@ -1799,7 +1808,9 @@ void check_quickfix_busy(void)
 /// @param  bufnum   buffer number or zero
 /// @param  mesg     message
 /// @param  lnum     line number
+/// @param  end_lnum  line number for end
 /// @param  col      column
+/// @param  end_col  column for end
 /// @param  vis_col  using visual column
 /// @param  pattern  search pattern
 /// @param  nr       error number
@@ -1808,8 +1819,9 @@ void check_quickfix_busy(void)
 ///
 /// @returns QF_OK or QF_FAIL.
 static int qf_add_entry(qf_list_T *qfl, char_u *dir, char_u *fname,
-                        char_u *module, int bufnum, char_u *mesg, long lnum,
-                        int col, char_u vis_col, char_u *pattern, int nr,
+                        char_u *module, int bufnum, char_u *mesg,
+                        long lnum, long end_lnum, int col, int end_col,
+                        char_u vis_col, char_u *pattern, int nr,
                         char_u type, char_u valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
@@ -1828,7 +1840,9 @@ static int qf_add_entry(qf_list_T *qfl, char_u *dir, char_u *fname,
   }
   qfp->qf_text = vim_strsave(mesg);
   qfp->qf_lnum = lnum;
+  qfp->qf_end_lnum = end_lnum;
   qfp->qf_col = col;
+  qfp->qf_end_col = end_col;
   qfp->qf_viscol = vis_col;
   if (pattern == NULL || *pattern == NUL) {
     qfp->qf_pattern = NULL;
@@ -1957,7 +1971,9 @@ static int copy_loclist_entries(const qf_list_T *from_qfl, qf_list_T *to_qfl)
                      0,
                      from_qfp->qf_text,
                      from_qfp->qf_lnum,
+                     from_qfp->qf_end_lnum,
                      from_qfp->qf_col,
+                     from_qfp->qf_end_col,
                      from_qfp->qf_viscol,
                      from_qfp->qf_pattern,
                      from_qfp->qf_nr,
@@ -2998,6 +3014,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit,
   }
 
   qfl->qf_index = qf_index;
+  qfl->qf_ptr = qf_ptr;
   if (qf_win_pos_update(qi, old_qf_index)) {
     // No need to print the error message if it's visible in the error
     // window
@@ -3108,11 +3125,8 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   if (qfp->qf_lnum == 0) {
     IObuff[0] = NUL;
-  } else if (qfp->qf_col == 0) {
-    vim_snprintf((char *)IObuff, IOSIZE, "%" PRIdLINENR, qfp->qf_lnum);
   } else {
-    vim_snprintf((char *)IObuff, IOSIZE, "%" PRIdLINENR " col %d",
-                 qfp->qf_lnum, qfp->qf_col);
+    qf_range_text(qfp, IObuff, IOSIZE);
   }
   vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE, "%s",
                (char *)qf_types(qfp->qf_type, qfp->qf_nr));
@@ -3231,6 +3245,32 @@ static void qf_fmt_text(const char_u *restrict text, char_u *restrict buf,
   }
   buf[i] = NUL;
 }
+
+// Range information from lnum, col, end_lnum, and end_col.
+// Put the result in "buf[bufsize]".
+static void qf_range_text(const qfline_T *qfp, char_u *buf, int bufsize)
+{
+  vim_snprintf((char *)buf, (size_t)bufsize, "%" PRIdLINENR, qfp->qf_lnum);
+  int len = (int)STRLEN(buf);
+
+  if (qfp->qf_end_lnum > 0 && qfp->qf_lnum != qfp->qf_end_lnum) {
+    vim_snprintf((char *)buf + len, (size_t)(bufsize - len),
+                 "-%" PRIdLINENR, qfp->qf_end_lnum);
+    len += (int)STRLEN(buf + len);
+  }
+  if (qfp->qf_col > 0) {
+    vim_snprintf((char *)buf + len, (size_t)(bufsize - len),
+                 " col %d", qfp->qf_col);
+    len += (int)STRLEN(buf + len);
+    if (qfp->qf_end_col > 0 && qfp->qf_col != qfp->qf_end_col) {
+      vim_snprintf((char *)buf + len, (size_t)(bufsize - len),
+                   "-%d", qfp->qf_end_col);
+      len += (int)STRLEN(buf + len);
+    }
+  }
+  buf[len] = NUL;
+}
+
 
 /// Display information (list number, list size and the title) about a
 /// quickfix/location list.
@@ -4005,15 +4045,8 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum,
       IObuff[len++] = '|';
     }
     if (qfp->qf_lnum > 0) {
-      snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), "%" PRId64,
-               (int64_t)qfp->qf_lnum);
+      qf_range_text(qfp, IObuff + len, IOSIZE - len);
       len += (int)STRLEN(IObuff + len);
-
-      if (qfp->qf_col > 0) {
-        snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), " col %d",
-                 qfp->qf_col);
-        len += (int)STRLEN(IObuff + len);
-      }
 
       snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), "%s",
                (char *)qf_types(qfp->qf_type, qfp->qf_nr));
@@ -5263,7 +5296,9 @@ static bool vgr_match_buflines(qf_list_T *qfl, char_u *fname, buf_T *buf,
                        ml_get_buf(buf, regmatch->startpos[0].lnum + lnum,
                                   false),
                        regmatch->startpos[0].lnum + lnum,
+                       regmatch->endpos[0].lnum + lnum,
                        regmatch->startpos[0].col + 1,
+                       regmatch->endpos[0].col + 1,
                        false,  // vis_col
                        NULL,   // search pattern
                        0,      // nr
@@ -5765,7 +5800,11 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
   if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
       || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
           == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("end_lnum"), (varnumber_T)qfp->qf_end_lnum)
+          == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col) == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("end_col"), (varnumber_T)qfp->qf_end_col)
+          == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
           == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
@@ -6263,7 +6302,9 @@ static int qf_add_entry_from_dict(
   char *const module = tv_dict_get_string(d, "module", true);
   int bufnum = (int)tv_dict_get_number(d, "bufnr");
   const long lnum = (long)tv_dict_get_number(d, "lnum");
+  const long end_lnum = (long)tv_dict_get_number(d, "end_lnum");
   const int col = (int)tv_dict_get_number(d, "col");
+  const int end_col = (int)tv_dict_get_number(d, "end_col");
   const char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
   const int nr = (int)tv_dict_get_number(d, "nr");
   const char *const type = tv_dict_get_string(d, "type", false);
@@ -6301,7 +6342,9 @@ static int qf_add_entry_from_dict(
                                   bufnum,
                                   (char_u *)text,
                                   lnum,
+                                  end_lnum,
                                   col,
+                                  end_col,
                                   vcol,      // vis_col
                                   (char_u *)pattern,   // search pattern
                                   nr,
@@ -7035,7 +7078,10 @@ static void hgr_search_file(
                        0,
                        line,
                        lnum,
+                       0,
                        (int)(p_regmatch->startp[0] - line) + 1,  // col
+                       (int)(p_regmatch->endp[0] - line)
+                       + 1,    // end_col
                        false,  // vis_col
                        NULL,   // search pattern
                        0,      // nr

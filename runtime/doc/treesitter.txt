@@ -169,7 +169,7 @@ a tree, using a simple to write lisp-like format. See
 https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax for more
 information on how to write queries.
 
-Note: The perdicates listed in the web page above differ from those Neovim
+Note: The predicates listed in the web page above differ from those Neovim
 supports. See |lua-treesitter-predicates| for a complete list of predicates
 supported by Neovim.
 
@@ -215,9 +215,9 @@ Here is a list of built-in predicates :
 			((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
 <
 	`any-of?`					*ts-predicate-any-of?*
-		Will check if the text is the same as any of the following
+		Will check if the text is the same as any of the following.
 		This is the recommended way to check if the node matches one
-		of many keywords for exemple, as it has been optimized for
+		of many keywords for example, as it has been optimized for
 		this.
 		arguments : >
 			((identifier) @foo (#any-of? @foo "foo" "bar"))
@@ -241,7 +241,7 @@ This lists the currently available predicates to use in queries.
 Treesitter Query Directive				*lua-treesitter-directives*
 
 Treesitter queries can also contain `directives`. Directives store metadata for a node
-or match and perform side effects. for example, the |set!| predicate sets metadata on
+or match and perform side effects. For example, the |set!| predicate sets metadata on
 the match or node : >
 	((identifier) @foo (#set! "type" "parameter"))
 
@@ -433,8 +433,13 @@ get_query_files({lang}, {query_name}, {is_included})
                     {is_included}  Internal parameter, most of the time left
                                    as `nil`
 
+list_directives()                                          *list_directives()*
+                Return: ~
+                    The list of supported directives.
+
 list_predicates()                                          *list_predicates()*
-                TODO: Documentation
+                Return: ~
+                    The list of supported predicates.
 
 parse_query({lang}, {query})                                   *parse_query()*
                 Parse {query} as a string. (If the query is in a file, the

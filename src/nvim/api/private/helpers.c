@@ -1592,9 +1592,10 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
   }
 }
 
-VirtText parse_virt_text(Array chunks, Error *err)
+VirtText parse_virt_text(Array chunks, Error *err, int *width)
 {
   VirtText virt_text = KV_INITIAL_VALUE;
+  int w = 0;
   for (size_t i = 0; i < chunks.size; i++) {
     if (chunks.items[i].type != kObjectTypeArray) {
       api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
@@ -1602,26 +1603,44 @@ VirtText parse_virt_text(Array chunks, Error *err)
     }
     Array chunk = chunks.items[i].data.array;
     if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString
-        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
+        || chunk.items[0].type != kObjectTypeString) {
       api_set_error(err, kErrorTypeValidation,
                     "Chunk is not an array with one or two strings");
       goto free_exit;
     }
 
     String str = chunk.items[0].data.string;
-    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
 
     int hl_id = 0;
     if (chunk.size == 2) {
-      String hl = chunk.items[1].data.string;
-      if (hl.size > 0) {
-        hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+      Object hl = chunk.items[1];
+      if (hl.type == kObjectTypeArray) {
+        Array arr = hl.data.array;
+        for (size_t j = 0; j < arr.size; j++) {
+          hl_id = object_to_hl_id(arr.items[j], "virt_text highlight", err);
+          if (ERROR_SET(err)) {
+            goto free_exit;
+          }
+          if (j < arr.size-1) {
+            kv_push(virt_text, ((VirtTextChunk){ .text = NULL,
+                                                 .hl_id = hl_id }));
+          }
+        }
+      } else {
+        hl_id = object_to_hl_id(hl, "virt_text highlight", err);
+        if (ERROR_SET(err)) {
+          goto free_exit;
+        }
       }
     }
+
+    char *text = transstr(str.size > 0 ? str.data : "");  // allocates
+    w += (int)mb_string2cells((char_u *)text);
+
     kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
   }
 
+  *width = w;
   return virt_text;
 
 free_exit:
@@ -1656,7 +1675,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
     String str = obj.data.string;
     return str.size ? syn_check_group((char_u *)str.data, (int)str.size) : 0;
   } else if (obj.type == kObjectTypeInteger) {
-    return (int)obj.data.integer;
+    return MAX((int)obj.data.integer, 0);
   } else {
     api_set_error(err, kErrorTypeValidation,
                   "%s is not a valid highlight", what);
@@ -1687,6 +1706,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
     if (chunk.size == 2) {
       String hl = chunk.items[1].data.string;
       if (hl.size > 0) {
+        // TODO(bfredl): use object_to_hl_id and allow integer
         int hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
         attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
       }

@@ -2275,8 +2275,8 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
    * Don't trigger autocommands yet, they may use wrong values, so do
    * that below.
    */
-  goto_tabpage_tp(alt_tabpage(), FALSE, TRUE);
-  redraw_tabline = TRUE;
+  goto_tabpage_tp(alt_tabpage(), false, true);
+  redraw_tabline = true;
 
   // save index for tabclosed event
   char_u prev_idx[NUMBUFLEN];
@@ -3834,18 +3834,15 @@ int tabpage_index(tabpage_T *ftp)
   return i;
 }
 
-/*
- * Prepare for leaving the current tab page.
- * When autocommands change "curtab" we don't leave the tab page and return
- * FAIL.
- * Careful: When OK is returned need to get a new tab page very very soon!
- */
-static int 
-leave_tabpage (
-    buf_T *new_curbuf,        /* what is going to be the new curbuf,
-                                          NULL if unknown */
-    int trigger_leave_autocmds
-)
+/// Prepare for leaving the current tab page.
+/// When autocommands change "curtab" we don't leave the tab page and return
+/// FAIL.
+/// Careful: When OK is returned need to get a new tab page very very soon!
+///
+/// @param new_curbuf              what is going to be the new curbuf,
+///                                NULL if unknown.
+/// @param trigger_leave_autocmds  when true trigger *Leave autocommands.
+static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
 {
   tabpage_T   *tp = curtab;
 
@@ -3874,13 +3871,14 @@ leave_tabpage (
   return OK;
 }
 
-/*
- * Start using tab page "tp".
- * Only to be used after leave_tabpage() or freeing the current tab page.
- * Only trigger *Enter autocommands when trigger_enter_autocmds is TRUE.
- * Only trigger *Leave autocommands when trigger_leave_autocmds is TRUE.
- */
-static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_autocmds, int trigger_leave_autocmds)
+/// Start using tab page "tp".
+/// Only to be used after leave_tabpage() or freeing the current tab page.
+///
+/// @param trigger_enter_autocmds  when true trigger *Enter autocommands.
+/// @param trigger_leave_autocmds  when true trigger *Leave autocommands.
+static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf,
+                          bool trigger_enter_autocmds,
+                          bool trigger_leave_autocmds)
 {
   int old_off = tp->tp_firstwin->w_winrow;
   win_T       *next_prevwin = tp->tp_prevwin;
@@ -4023,17 +4021,16 @@ void goto_tabpage(int n)
     }
   }
 
-  goto_tabpage_tp(tp, TRUE, TRUE);
-
+  goto_tabpage_tp(tp, true, true);
 }
 
-/*
- * Go to tabpage "tp".
- * Only trigger *Enter autocommands when trigger_enter_autocmds is TRUE.
- * Only trigger *Leave autocommands when trigger_leave_autocmds is TRUE.
- * Note: doesn't update the GUI tab.
- */
-void goto_tabpage_tp(tabpage_T *tp, int trigger_enter_autocmds, int trigger_leave_autocmds)
+/// Go to tabpage "tp".
+/// Note: doesn't update the GUI tab.
+///
+/// @param trigger_enter_autocmds  when true trigger *Enter autocommands.
+/// @param trigger_leave_autocmds  when true trigger *Leave autocommands.
+void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds,
+                     bool trigger_leave_autocmds)
 {
   /* Don't repeat a message in another tab page. */
   set_keep_msg(NULL, 0);
@@ -4064,7 +4061,7 @@ void goto_tabpage_lastused(void)
  */
 void goto_tabpage_win(tabpage_T *tp, win_T *wp)
 {
-  goto_tabpage_tp(tp, TRUE, TRUE);
+  goto_tabpage_tp(tp, true, true);
   if (curtab == tp && win_valid(wp)) {
     win_enter(wp, true);
   }
@@ -4120,8 +4117,8 @@ void tabpage_move(int nr)
     tp_dst->tp_next = curtab;
   }
 
-  /* Need to redraw the tabline.  Tab page contents doesn't change. */
-  redraw_tabline = TRUE;
+  // Need to redraw the tabline.  Tab page contents doesn't change.
+  redraw_tabline = true;
 }
 
 
@@ -4350,8 +4347,8 @@ void win_enter(win_T *wp, bool undo_sync)
  * been closed and isn't valid.
  */
 static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
-                          int trigger_new_autocmds, int trigger_enter_autocmds,
-                          int trigger_leave_autocmds)
+                          int trigger_new_autocmds, bool trigger_enter_autocmds,
+                          bool trigger_leave_autocmds)
 {
   int other_buffer = FALSE;
 
@@ -4665,6 +4662,7 @@ win_free (
 
         // If there already is an entry with "wi_win" set to NULL it
         // must be removed, it would never be used.
+        // Skip "wip" itself, otherwise Coverity complains.
         for (wip2 = buf->b_wininfo; wip2 != NULL; wip2 = wip2->wi_next) {
           // `wip2 != wip` to satisfy Coverity. #14884
           if (wip2 != wip && wip2->wi_win == NULL) {
@@ -5907,13 +5905,13 @@ void command_height(void)
         grid_fill(&default_grid, cmdline_row, Rows, 0, Columns, ' ', ' ', 0);
       }
       msg_row = cmdline_row;
-      redraw_cmdline = TRUE;
+      redraw_cmdline = true;
       return;
     }
 
     if (msg_row < cmdline_row)
       msg_row = cmdline_row;
-    redraw_cmdline = TRUE;
+    redraw_cmdline = true;
   }
   frame_add_height(frp, (int)(old_p_ch - p_ch));
 
@@ -6434,8 +6432,9 @@ int switch_win_noblock(win_T **save_curwin, tabpage_T **save_curtab,
       curtab = tp;
       firstwin = curtab->tp_firstwin;
       lastwin = curtab->tp_lastwin;
-    } else
-      goto_tabpage_tp(tp, FALSE, FALSE);
+    } else {
+      goto_tabpage_tp(tp, false, false);
+    }
   }
   if (!win_valid(win)) {
     return FAIL;
@@ -6465,8 +6464,9 @@ void restore_win_noblock(win_T *save_curwin, tabpage_T *save_curtab,
       curtab = save_curtab;
       firstwin = curtab->tp_firstwin;
       lastwin = curtab->tp_lastwin;
-    } else
-      goto_tabpage_tp(save_curtab, FALSE, FALSE);
+    } else {
+      goto_tabpage_tp(save_curtab, false, false);
+    }
   }
   if (win_valid(save_curwin)) {
     curwin = save_curwin;

@@ -137,7 +137,7 @@ search_regcomp(
   int magic;
   int i;
 
-  rc_did_emsg = FALSE;
+  rc_did_emsg = false;
   magic = p_magic;
 
   /*
@@ -153,7 +153,7 @@ search_regcomp(
         EMSG(_(e_nopresub));
       else
         EMSG(_(e_noprevre));
-      rc_did_emsg = TRUE;
+      rc_did_emsg = true;
       return FAIL;
     }
     pat = spats[i].pat;
@@ -474,7 +474,7 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
   spats[idx].timestamp = os_time();
   spats[idx].additional_data = NULL;
   spats[idx].magic = magic;
-  spats[idx].no_scs = FALSE;
+  spats[idx].no_scs = false;
   spats[idx].off.dir = '/';
   set_vv_searchforward();
   spats[idx].off.line = FALSE;
@@ -3110,7 +3110,7 @@ current_word(
       inc_cursor();
     if (VIsual_mode == 'V') {
       VIsual_mode = 'v';
-      redraw_cmdline = TRUE;                    /* show mode later */
+      redraw_cmdline = true;                    // show mode later
     }
   } else
     oap->inclusive = inclusive;
@@ -4105,7 +4105,7 @@ bool current_quote(
     }
     if (VIsual_mode == 'V') {
       VIsual_mode = 'v';
-      redraw_cmdline = TRUE;                    /* show mode later */
+      redraw_cmdline = true;                    // show mode later
     }
   } else {
     /* Set inclusive and other oap's flags. */

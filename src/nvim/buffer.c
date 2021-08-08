@@ -540,12 +540,10 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
     del_buf = true;
   }
 
-  /*
-   * Free all things allocated for this buffer.
-   * Also calls the "BufDelete" autocommands when del_buf is TRUE.
-   */
-  /* Remember if we are closing the current buffer.  Restore the number of
-   * windows, so that autocommands in buf_freeall() don't get confused. */
+  // Free all things allocated for this buffer.
+  // Also calls the "BufDelete" autocommands when del_buf is true.
+  // Remember if we are closing the current buffer.  Restore the number of
+  // windows, so that autocommands in buf_freeall() don't get confused.
   bool is_curbuf = (buf == curbuf);
 
   // When closing the current buffer stop Visual mode before freeing
@@ -5046,8 +5044,8 @@ do_arg_all(
   xfree(opened);
 }
 
-// Return TRUE if "buf" is a prompt buffer.
-int bt_prompt(buf_T *buf)
+/// @return true if "buf" is a prompt buffer.
+bool bt_prompt(buf_T *buf)
 {
     return buf != NULL && buf->b_p_bt[0] == 'p';
 }

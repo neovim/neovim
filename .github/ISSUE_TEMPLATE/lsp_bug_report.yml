@@ -47,10 +47,10 @@ body:
   - type: textarea
     attributes:
       label: "Expected behavior"
+      description: "A description of the behavior you expected. May optionally include logs, images, or videos."
   - type: textarea
     attributes:
       label: "Actual behavior"
-      description: "A description of the behavior you expected. May optionally include logs, images, or videos."
 
   - type: markdown
     attributes:

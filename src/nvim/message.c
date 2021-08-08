@@ -79,12 +79,12 @@ static int verbose_did_open = FALSE;
 /*
  * When writing messages to the screen, there are many different situations.
  * A number of variables is used to remember the current state:
- * msg_didany	    TRUE when messages were written since the last time the
+ * msg_didany	    true when messages were written since the last time the
  *		    user reacted to a prompt.
  *		    Reset: After hitting a key for the hit-return prompt,
  *		    hitting <CR> for the command line or input().
  *		    Set: When any message is written to the screen.
- * msg_didout	    TRUE when something was written to the current line.
+ * msg_didout	    true when something was written to the current line.
  *		    Reset: When advancing to the next line, when the current
  *		    text can be overwritten.
  *		    Set: When any message is written to the screen.
@@ -102,7 +102,7 @@ static int verbose_did_open = FALSE;
  *		    work without an extra prompt.
  * lines_left	    Number of lines available for messages before the
  *		    more-prompt is to be given.  -1 when not set.
- * need_wait_return TRUE when the hit-return prompt is needed.
+ * need_wait_return true when the hit-return prompt is needed.
  *		    Reset: After giving the hit-return prompt, when the user
  *		    has answered some other prompt.
  *		    Set: When the ruler or typeahead display is overwritten,
@@ -1097,14 +1097,14 @@ void wait_return(int redraw)
    */
   if (vgetc_busy > 0)
     return;
-  need_wait_return = TRUE;
+  need_wait_return = true;
   if (no_wait_return) {
     if (!exmode_active)
       cmdline_row = msg_row;
     return;
   }
 
-  redir_off = TRUE;             /* don't redirect this message */
+  redir_off = true;             // don't redirect this message
   oldState = State;
   if (quit_more) {
     c = CAR;                    /* just pretend CR was hit */
@@ -1165,11 +1165,11 @@ void wait_return(int redraw)
       if (p_more) {
         if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
             || c == K_UP || c == K_PAGEUP) {
-          if (msg_scrolled > Rows)
-            /* scroll back to show older messages */
+          if (msg_scrolled > Rows) {
+            // scroll back to show older messages
             do_more_prompt(c);
-          else {
-            msg_didout = FALSE;
+          } else {
+            msg_didout = false;
             c = K_IGNORE;
             msg_col =
               cmdmsg_rl ? Columns - 1 :
@@ -1284,7 +1284,7 @@ void set_keep_msg(char_u *s, int attr)
     keep_msg = vim_strsave(s);
   else
     keep_msg = NULL;
-  keep_msg_more = FALSE;
+  keep_msg_more = false;
   keep_msg_attr = attr;
 }
 
@@ -1353,7 +1353,7 @@ void msg_start(void)
 void msg_starthere(void)
 {
   lines_left = cmdline_row;
-  msg_didany = FALSE;
+  msg_didany = false;
 }
 
 void msg_putchar(int c)
@@ -2145,15 +2145,17 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       store_sb_text((char_u **)&sb_str, (char_u *)s, attr, &sb_col, true);
     }
 
-    if (*s == '\n') {               /* go to next line */
-      msg_didout = FALSE;           /* remember that line is empty */
-      if (cmdmsg_rl)
+    if (*s == '\n') {               // go to next line
+      msg_didout = false;           // remember that line is empty
+      if (cmdmsg_rl) {
         msg_col = Columns - 1;
-      else
+      } else {
         msg_col = 0;
-      if (++msg_row >= Rows)        /* safety check */
+      }
+      if (++msg_row >= Rows) {        // safety check
         msg_row = Rows - 1;
-    } else if (*s == '\r') {      /* go to column 0 */
+      }
+    } else if (*s == '\r') {      // go to column 0
       msg_col = 0;
     } else if (*s == '\b') {      /* go to previous char */
       if (msg_col)
@@ -2708,9 +2710,9 @@ static int do_more_prompt(int typed_char)
         /* Since got_int is set all typeahead will be flushed, but we
          * want to keep this ':', remember that in a special way. */
         typeahead_noflush(':');
-        cmdline_row = Rows - 1;                 /* put ':' on this line */
-        skip_redraw = TRUE;                     /* skip redraw once */
-        need_wait_return = FALSE;               /* don't wait in main() */
+        cmdline_row = Rows - 1;                 // put ':' on this line
+        skip_redraw = true;                     // skip redraw once
+        need_wait_return = false;               // don't wait in main()
       }
       FALLTHROUGH;
     case 'q':                   // quit
@@ -2931,7 +2933,7 @@ void repeat_message(void)
       /* Avoid drawing the "hit-enter" prompt below the previous one,
        * overwrite it.  Esp. useful when regaining focus and a
        * FocusGained autocmd exists but didn't draw anything. */
-      msg_didout = FALSE;
+      msg_didout = false;
       msg_col = 0;
       msg_clr_eos();
     }
@@ -3095,8 +3097,8 @@ void msg_check(void)
     return;
   }
   if (msg_row == Rows - 1 && msg_col >= sc_col) {
-    need_wait_return = TRUE;
-    redraw_cmdline = TRUE;
+    need_wait_return = true;
+    redraw_cmdline = true;
   }
 }
 

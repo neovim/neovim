@@ -5,6 +5,7 @@ local eq, clear, eval, command, nvim, next_msg =
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local retry = helpers.retry
+local isCI = helpers.isCI
 
 describe('notify', function()
   local channel
@@ -76,6 +77,10 @@ describe('notify', function()
   end)
 
   it('cancels stale events on channel close', function()
+      if isCI() then
+        pending('Sporadic hangs on CI (c.f., #14083). Skip until it is fixed.')
+        return
+      end
     if helpers.pending_win32(pending) then return end
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     eq({id=catchan, stream='job', mode='rpc', client = {}}, exec_lua ([[

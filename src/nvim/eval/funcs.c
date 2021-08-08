@@ -1922,7 +1922,7 @@ static void f_eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (expr_start != NULL && !aborting()) {
       EMSG2(_(e_invexpr2), expr_start);
     }
-    need_clr_eos = FALSE;
+    need_clr_eos = false;
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   } else if (*s != NUL) {
@@ -3028,10 +3028,9 @@ static void f_getchangelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/*
- * "getchar()" function
- */
-static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+// "getchar()" and "getcharstr()" functions
+static void getchar_common(typval_T *argvars, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
 {
   varnumber_T n;
   bool error = false;
@@ -3098,6 +3097,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       i += utf_char2bytes(n, temp + i);
     }
+    assert(i < 10);
     temp[i++] = NUL;
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = vim_strsave(temp);
@@ -3106,15 +3106,14 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       int row = mouse_row;
       int col = mouse_col;
       int grid = mouse_grid;
-      win_T       *win;
       linenr_T lnum;
       win_T       *wp;
       int winnr = 1;
 
       if (row >= 0 && col >= 0) {
-        /* Find the window at the mouse coordinates and compute the
-         * text position. */
-        win = mouse_find_win(&grid, &row, &col);
+        // Find the window at the mouse coordinates and compute the
+        // text position.
+        win_T *const win = mouse_find_win(&grid, &row, &col);
         if (win == NULL) {
           return;
         }
@@ -3127,6 +3126,32 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         set_vim_var_nr(VV_MOUSE_COL, col + 1);
       }
     }
+  }
+}
+
+// "getchar()" function
+static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  getchar_common(argvars, rettv);
+}
+
+// "getcharstr()" function
+static void f_getcharstr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  getchar_common(argvars, rettv);
+
+  if (rettv->v_type == VAR_NUMBER) {
+    char_u temp[7];   // mbyte-char: 6, NUL: 1
+    const varnumber_T n = rettv->vval.v_number;
+    int i = 0;
+
+    if (n != 0) {
+      i += utf_char2bytes(n, temp);
+    }
+    assert(i < 7);
+    temp[i++] = NUL;
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = vim_strsave(temp);
   }
 }
 
@@ -11367,6 +11392,9 @@ static void f_win_gettype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_string = vim_strsave((char_u *)"popup");
   } else if (wp == curwin && cmdwin_type != 0) {
     rettv->vval.v_string = vim_strsave((char_u *)"command");
+  } else if (bt_quickfix(wp->w_buffer)) {
+    rettv->vval.v_string = vim_strsave((char_u *)(wp->w_llist_ref != NULL ?
+                                                  "loclist" : "quickfix"));
   }
 }
 

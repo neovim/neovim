@@ -88,7 +88,7 @@ typedef struct searchstat
 {
     int     cur;      // current position of found words
     int     cnt;      // total count of found words
-    int     exact_match;    // TRUE if matched exactly on specified position
+    bool    exact_match;    // true if matched exactly on specified position
     int     incomplete;     // 0: search was fully completed
           // 1: recomputing was timed out
           // 2: max count exceeded

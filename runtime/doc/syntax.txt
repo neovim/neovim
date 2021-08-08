@@ -25,10 +25,14 @@ In the User Manual:
 ==============================================================================
 1. Quick start						*:syn-qstart*
 
-						*:syn-enable* *:syntax-enable*
+				*:syn-enable* *:syntax-enable* *:syn-on* *:syntax-on*
 This command switches on syntax highlighting: >
 
 	:syntax enable
+
+Alternatively: >
+
+	:syntax on
 
 What this command actually does is to execute the command >
 	:source $VIMRUNTIME/syntax/syntax.vim
@@ -42,19 +46,11 @@ are in the "/usr/vim/vim82/syntax" directory, set $VIMRUNTIME to
 This command also sources the |menu.vim| script when the GUI is running or
 will start soon.  See |'go-M'| about avoiding that.
 
-							*:syn-on* *:syntax-on*
-The `:syntax enable` command will keep most of your current color settings.
-This allows using `:highlight` commands to set your preferred colors before or
-after using this command.  If you want Vim to overrule your settings with the
-defaults, use: >
-	:syntax on
-<
 					*:hi-normal* *:highlight-normal*
 If you are running in the GUI, you can get white text on a black background
 with: >
 	:highlight Normal guibg=Black guifg=White
 For a color terminal see |:hi-normal-cterm|.
-For setting up your own colors syntax highlighting see |syncolor|.
 
 NOTE: The syntax files on MS-Windows have lines that end in <CR><NL>.
 The files for Unix end in <NL>.  This means you should use the right type of
@@ -276,12 +272,6 @@ located.  This is used here as the variable |$VIMRUNTIME|.
     +-	Clear out any old syntax by sourcing $VIMRUNTIME/syntax/nosyntax.vim
     |
     +-	Source first syntax/synload.vim in 'runtimepath'
-    |	|
-    |	+-  Setup the colors for syntax highlighting.  If a color scheme is
-    |	|   defined it is loaded again with ":colors {name}".  Otherwise
-    |	|   ":runtime! syntax/syncolor.vim" is used.  ":syntax on" overrules
-    |	|   existing colors, ":syntax enable" only sets groups that weren't
-    |	|   set yet.
     |	|
     |	+-  Set up syntax autocmds to load the appropriate syntax file when
     |	|   the 'syntax' option is set. *synload-1*
@@ -5075,7 +5065,8 @@ Substitute	|:substitute| replacement text highlighting
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
 		or 'relativenumber' option is set.
 							*hl-CursorLineNr*
-CursorLineNr	Like LineNr when 'cursorline' or 'relativenumber' is set for
+CursorLineNr	Like LineNr when 'cursorline' is set and 'cursorlineopt' is
+		set to "number" or "both", or 'relativenumber' is set, for
 		the cursor line.
 							*hl-MatchParen*
 MatchParen	The character under the cursor or just before it, if it
@@ -5271,50 +5262,9 @@ back to their Vim default.
 Note that if you are using a color scheme, the colors defined by the color
 scheme for syntax highlighting will be lost.
 
-What this actually does is: >
-
-	let g:syntax_cmd = "reset"
-	runtime! syntax/syncolor.vim
-
-Note that this uses the 'runtimepath' option.
-
-							*syncolor*
-If you want to use different colors for syntax highlighting, you can add a Vim
-script file to set these colors.  Put this file in a directory in
-'runtimepath' which comes after $VIMRUNTIME, so that your settings overrule
-the default colors.  This way these colors will be used after the ":syntax
-reset" command.
-
-For Unix you can use the file ~/.config/nvim/after/syntax/syncolor.vim.
-Example: >
-
-	if &background == "light"
-	  highlight comment ctermfg=darkgreen guifg=darkgreen
-	else
-	  highlight comment ctermfg=green guifg=green
-	endif
-
-								*E679*
-Do make sure this syncolor.vim script does not use a "syntax on", set the
-'background' option or uses a "colorscheme" command, because it results in an
-endless loop.
-
 Note that when a color scheme is used, there might be some confusion whether
 your defined colors are to be used or the colors from the scheme.  This
 depends on the color scheme file.  See |:colorscheme|.
-
-							*syntax_cmd*
-The "syntax_cmd" variable is set to one of these values when the
-syntax/syncolor.vim files are loaded:
-   "on"		":syntax on" command.  Highlight colors are overruled but
-		links are kept
-   "enable"	":syntax enable" command.  Only define colors for groups that
-		don't have highlighting yet.  Use ":syntax default".
-   "reset"	":syntax reset" command or loading a color scheme.  Define all
-		the colors.
-   "skip"	Don't define colors.  Used to skip the default settings when a
-		syncolor.vim file earlier in 'runtimepath' has already set
-		them.
 
 ==============================================================================
 16. Highlighting tags					*tag-highlight*

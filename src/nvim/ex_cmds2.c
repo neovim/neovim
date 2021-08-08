@@ -135,7 +135,7 @@ void do_debug(char_u *cmd)
   const bool save_cmd_silent = cmd_silent;
   int save_msg_silent = msg_silent;
   int save_emsg_silent = emsg_silent;
-  int save_redir_off = redir_off;
+  bool save_redir_off = redir_off;
   tasave_T typeaheadbuf;
   bool typeahead_saved = false;
   int save_ignore_script = 0;

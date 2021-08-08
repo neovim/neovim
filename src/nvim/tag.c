@@ -2611,7 +2611,6 @@ static int jumpto_tag(
     int keep_help             // keep help flag (FALSE for cscope)
 )
 {
-  int save_secure;
   int save_magic;
   bool save_p_ws;
   int save_p_scs, save_p_ic;
@@ -2766,9 +2765,6 @@ static int jumpto_tag(
     curwin->w_set_curswant = true;
     postponed_split = 0;
 
-    save_secure = secure;
-    secure = 1;
-    ++sandbox;
     save_magic = p_magic;
     p_magic = false;            // always execute with 'nomagic'
     // Save value of no_hlsearch, jumping to a tag is not a real search
@@ -2866,21 +2862,26 @@ static int jumpto_tag(
        * of the line.  May need to correct that here. */
       check_cursor();
     } else {
-      curwin->w_cursor.lnum = 1;                /* start command in line 1 */
+      const int save_secure = secure;
+
+      // Setup the sandbox for executing the command from the tags file.
+      secure = 1;
+      sandbox++;
+      curwin->w_cursor.lnum = 1;  // start command in line 1
       do_cmdline_cmd((char *)pbuf);
       retval = OK;
+
+      // When the command has done something that is not allowed make sure
+      // the error message can be seen.
+      if (secure == 2) {
+        wait_return(true);
+      }
+      secure = save_secure;
+      sandbox--;
     }
 
-    /*
-     * When the command has done something that is not allowed make sure
-     * the error message can be seen.
-     */
-    if (secure == 2)
-      wait_return(TRUE);
-    secure = save_secure;
     p_magic = save_magic;
-    --sandbox;
-    /* restore no_hlsearch when keeping the old search pattern */
+    // restore no_hlsearch when keeping the old search pattern
     if (search_options) {
       set_no_hlsearch(save_no_hlsearch);
     }

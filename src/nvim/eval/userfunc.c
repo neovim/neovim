@@ -1902,7 +1902,7 @@ void ex_function(exarg_T *eap)
   char_u      *line_to_free = NULL;
   int c;
   int saved_did_emsg;
-  int saved_wait_return = need_wait_return;
+  bool saved_wait_return = need_wait_return;
   char_u      *name = NULL;
   char_u      *p;
   char_u      *arg;

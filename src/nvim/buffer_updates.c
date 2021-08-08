@@ -50,7 +50,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id,
   if (send_buffer) {
     Array args = ARRAY_DICT_INIT;
     args.size = 6;
-    args.items = xcalloc(sizeof(Object), args.size);
+    args.items = xcalloc(args.size, sizeof(Object));
 
     // the first argument is always the buffer handle
     args.items[0] = BUFFER_OBJ(buf->handle);
@@ -68,7 +68,7 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id,
 
     if (line_count >= 1) {
       linedata.size = line_count;
-      linedata.items = xcalloc(sizeof(Object), line_count);
+      linedata.items = xcalloc(line_count, sizeof(Object));
 
       buf_collect_lines(buf, line_count, 1, true, &linedata, NULL);
     }
@@ -93,7 +93,7 @@ void buf_updates_send_end(buf_T *buf, uint64_t channelid)
 {
     Array args = ARRAY_DICT_INIT;
     args.size = 1;
-    args.items = xcalloc(sizeof(Object), args.size);
+    args.items = xcalloc(args.size, sizeof(Object));
     args.items[0] = BUFFER_OBJ(buf->handle);
     rpc_send_event(channelid, "nvim_buf_detach_event", args);
 }
@@ -211,7 +211,7 @@ void buf_updates_send_changes(buf_T *buf,
     // send through the changes now channel contents now
     Array args = ARRAY_DICT_INIT;
     args.size = 6;
-    args.items = xcalloc(sizeof(Object), args.size);
+    args.items = xcalloc(args.size, sizeof(Object));
 
     // the first argument is always the buffer handle
     args.items[0] = BUFFER_OBJ(buf->handle);
@@ -230,7 +230,7 @@ void buf_updates_send_changes(buf_T *buf,
     if (num_added > 0) {
         STATIC_ASSERT(SIZE_MAX >= MAXLNUM, "size_t smaller than MAXLNUM");
         linedata.size = (size_t)num_added;
-        linedata.items = xcalloc(sizeof(Object), (size_t)num_added);
+        linedata.items = xcalloc((size_t)num_added, sizeof(Object));
         buf_collect_lines(buf, (size_t)num_added, firstline, true, &linedata,
                           NULL);
     }
@@ -394,7 +394,7 @@ void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
 {
     Array args = ARRAY_DICT_INIT;
     args.size = 2;
-    args.items = xcalloc(sizeof(Object), args.size);
+    args.items = xcalloc(args.size, sizeof(Object));
 
     // the first argument is always the buffer handle
     args.items[0] = BUFFER_OBJ(buf->handle);

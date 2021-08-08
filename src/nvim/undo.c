@@ -1018,14 +1018,14 @@ static ExtmarkUndoObject *unserialize_extmark(bufinfo_T *bi, bool *error,
   extup->type = type;
   if (type == kExtmarkSplice) {
     n_elems = (size_t)sizeof(ExtmarkSplice) / sizeof(uint8_t);
-    buf = xcalloc(sizeof(uint8_t), n_elems);
+    buf = xcalloc(n_elems, sizeof(uint8_t));
     if (!undo_read(bi, buf, n_elems)) {
       goto error;
     }
     extup->data.splice = *(ExtmarkSplice *)buf;
   } else if (type == kExtmarkMove) {
     n_elems = (size_t)sizeof(ExtmarkMove) / sizeof(uint8_t);
-    buf = xcalloc(sizeof(uint8_t), n_elems);
+    buf = xcalloc(n_elems, sizeof(uint8_t));
     if (!undo_read(bi, buf, n_elems)) {
       goto error;
     }

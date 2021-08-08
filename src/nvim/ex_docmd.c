@@ -306,13 +306,13 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
                void *cookie, /* argument for fgetline() */
                int flags)
 {
-  char_u      *next_cmdline;            /* next cmd to execute */
-  char_u      *cmdline_copy = NULL;     /* copy of cmd line */
-  int used_getline = FALSE;             /* used "fgetline" to obtain command */
-  static int recursive = 0;             /* recursive depth */
-  int msg_didout_before_start = 0;
-  int count = 0;                        /* line number count */
-  int did_inc = FALSE;                  /* incremented RedrawingDisabled */
+  char_u      *next_cmdline;            // next cmd to execute
+  char_u      *cmdline_copy = NULL;     // copy of cmd line
+  bool used_getline = false;            // used "fgetline" to obtain command
+  static int recursive = 0;             // recursive depth
+  bool msg_didout_before_start = false;
+  int count = 0;                        // line number count
+  int did_inc = FALSE;                  // incremented RedrawingDisabled
   int retval = OK;
   cstack_T cstack = {                   // conditional stack
     .cs_idx = -1,
@@ -532,7 +532,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
         retval = FAIL;
         break;
       }
-      used_getline = TRUE;
+      used_getline = true;
 
       /*
        * Keep the first typed line.  Clear it when more lines are typed.
@@ -562,7 +562,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
         && (cstack.cs_looplevel || has_loop_cmd(next_cmdline))) {
       store_loop_line(&lines_ga, next_cmdline);
     }
-    did_endif = FALSE;
+    did_endif = false;
 
     if (count++ == 0) {
       /*
@@ -573,7 +573,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
        */
       if (!(flags & DOCMD_NOWAIT) && !recursive) {
         msg_didout_before_start = msg_didout;
-        msg_didany = FALSE;         /* no output yet */
+        msg_didany = false;         // no output yet
         msg_start();
         msg_scroll = TRUE;          /* put messages below each other */
         ++no_wait_return;           /* don't wait for return until finished */
@@ -753,7 +753,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
              || (flags & DOCMD_REPEAT)));
 
   xfree(cmdline_copy);
-  did_emsg_syntax = FALSE;
+  did_emsg_syntax = false;
   GA_DEEP_CLEAR(&lines_ga, wcmd_T, FREE_WCMD);
 
   if (cstack.cs_idx >= 0) {
@@ -927,8 +927,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     if (retval == FAIL
         || (did_endif && KeyTyped && !did_emsg)
         ) {
-      need_wait_return = FALSE;
-      msg_didany = FALSE;               /* don't wait when restarting edit */
+      need_wait_return = false;
+      msg_didany = false;               // don't wait when restarting edit
     } else if (need_wait_return) {
       /*
        * The msg_start() above clears msg_didout. The wait_return we do
@@ -940,7 +940,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     }
   }
 
-  did_endif = FALSE;    /* in case do_cmdline used recursively */
+  did_endif = false;    // in case do_cmdline used recursively
 
   call_depth--;
   end_batch_changes();
@@ -6652,9 +6652,10 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
       break;
   }
 
-  redraw_tabline = TRUE;
-  if (h != tabline_height())
+  redraw_tabline = true;
+  if (h != tabline_height()) {
     shell_new_rows();
+  }
 }
 
 /*
@@ -6798,7 +6799,7 @@ static void ex_print(exarg_T *eap)
     beginline(BL_SOL | BL_FIX);
   }
 
-  ex_no_reprint = TRUE;
+  ex_no_reprint = true;
 }
 
 static void ex_goto(exarg_T *eap)
@@ -7314,7 +7315,7 @@ do_exedit(
 
         RedrawingDisabled = 0;
         no_wait_return = 0;
-        need_wait_return = FALSE;
+        need_wait_return = false;
         msg_scroll = 0;
         redraw_all_later(NOT_VALID);
 
@@ -7410,7 +7411,7 @@ do_exedit(
       && !cmdmod.keepalt)
     old_curwin->w_alt_fnum = curbuf->b_fnum;
 
-  ex_no_reprint = TRUE;
+  ex_no_reprint = true;
 }
 
 /// ":gui" and ":gvim" when there is no GUI.
@@ -7486,7 +7487,7 @@ static void ex_syncbind(exarg_T *eap)
   curwin = save_curwin;
   curbuf = save_curbuf;
   if (curwin->w_p_scb) {
-    did_syncbind = TRUE;
+    did_syncbind = true;
     checkpcmark();
     if (old_linenr != curwin->w_cursor.lnum) {
       char_u ctrl_o[2];
@@ -7909,8 +7910,8 @@ void ex_may_print(exarg_T *eap)
 {
   if (eap->flags != 0) {
     print_line(curwin->w_cursor.lnum, (eap->flags & EXFLAG_NR),
-        (eap->flags & EXFLAG_LIST));
-    ex_no_reprint = TRUE;
+               (eap->flags & EXFLAG_LIST));
+    ex_no_reprint = true;
   }
 }
 
@@ -7965,9 +7966,9 @@ static void ex_at(exarg_T *eap)
       == FAIL) {
     beep_flush();
   } else {
-    int save_efr = exec_from_reg;
+    bool save_efr = exec_from_reg;
 
-    exec_from_reg = TRUE;
+    exec_from_reg = true;
 
     /*
      * Execute from the typeahead buffer.
@@ -8131,7 +8132,7 @@ static void ex_redir(exarg_T *eap)
   if (redir_fd != NULL
       || redir_reg || redir_vname
       )
-    redir_off = FALSE;
+    redir_off = false;
 }
 
 /// ":redraw": force redraw
@@ -8158,12 +8159,12 @@ static void ex_redraw(exarg_T *eap)
   RedrawingDisabled = r;
   p_lz = p;
 
-  /* Reset msg_didout, so that a message that's there is overwritten. */
-  msg_didout = FALSE;
+  // Reset msg_didout, so that a message that's there is overwritten.
+  msg_didout = false;
   msg_col = 0;
 
-  /* No need to wait after an intentional redraw. */
-  need_wait_return = FALSE;
+  // No need to wait after an intentional redraw.
+  need_wait_return = false;
 
   ui_flush();
 }
@@ -8346,7 +8347,9 @@ void restore_current_state(save_state_T *sst)
   finish_op = sst->save_finish_op;
   opcount = sst->save_opcount;
   reg_executing = sst->save_reg_executing;
-  msg_didout |= sst->save_msg_didout;  // don't reset msg_didout now
+
+  // don't reset msg_didout now
+  msg_didout |= sst->save_msg_didout;
 
   // Restore the state (needed when called from a function executed for
   // 'indentexpr'). Update the mouse and cursor, they may have changed.

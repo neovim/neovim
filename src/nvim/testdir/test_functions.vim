@@ -534,6 +534,7 @@ func Test_mode()
   set complete=.
 
   inoremap <F2> <C-R>=Save_mode()<CR>
+  xnoremap <F2> <Cmd>call Save_mode()<CR>
 
   normal! 3G
   exe "normal i\<F2>\<Esc>"
@@ -645,6 +646,14 @@ func Test_mode()
   call assert_equal("\<C-S>", mode(1))
   call feedkeys("\<Esc>", 'xt')
 
+  " v_CTRL-O
+  exe "normal gh\<C-O>\<F2>\<Esc>"
+  call assert_equal("v-vs", g:current_modes)
+  exe "normal gH\<C-O>\<F2>\<Esc>"
+  call assert_equal("V-Vs", g:current_modes)
+  exe "normal g\<C-H>\<C-O>\<F2>\<Esc>"
+  call assert_equal("\<C-V>-\<C-V>s", g:current_modes)
+
   call feedkeys(":echo \<C-R>=Save_mode()\<C-U>\<CR>", 'xt')
   call assert_equal('c-c', g:current_modes)
   call feedkeys("gQecho \<C-R>=Save_mode()\<CR>\<CR>vi\<CR>", 'xt')
@@ -653,6 +662,7 @@ func Test_mode()
 
   bwipe!
   iunmap <F2>
+  xunmap <F2>
   set complete&
 endfunc
 
@@ -996,6 +1006,9 @@ func Test_Executable()
     if catcmd =~ '\<sbin\>' && result =~ '\<bin\>'
       call assert_equal('/' .. substitute(catcmd, '\<sbin\>', 'bin', ''), result)
     else
+      " /bin/cat and /usr/bin/cat may be hard linked, we could get either
+      let result = substitute(result, '/usr/bin/cat', '/bin/cat', '')
+      let catcmd = substitute(catcmd, 'usr/bin/cat', 'bin/cat', '')
       call assert_equal('/' .. catcmd, result)
     endif
     bwipe
@@ -1315,7 +1328,15 @@ endfunc
 func Test_getchar()
   call feedkeys('a', '')
   call assert_equal(char2nr('a'), getchar())
+  call assert_equal(0, getchar(0))
+  call assert_equal(0, getchar(1))
 
+  call feedkeys('a', '')
+  call assert_equal('a', getcharstr())
+  call assert_equal('', getcharstr(0))
+  call assert_equal('', getcharstr(1))
+
+  call setline(1, 'xxxx')
   " call test_setmouse(1, 3)
   " let v:mouse_win = 9
   " let v:mouse_winid = 9
@@ -1328,6 +1349,7 @@ func Test_getchar()
   call assert_equal(win_getid(1), v:mouse_winid)
   call assert_equal(1, v:mouse_lnum)
   call assert_equal(3, v:mouse_col)
+  enew!
 endfunc
 
 func Test_libcall_libcallnr()

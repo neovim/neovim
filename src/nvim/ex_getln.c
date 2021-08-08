@@ -2267,7 +2267,7 @@ static int command_line_changed(CommandLineState *s)
     close_preview_windows();
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   } else {
-    if (s->xpc.xp_context == EXPAND_NOTHING) {
+    if (s->xpc.xp_context == EXPAND_NOTHING && (KeyTyped || vpeekc() == NUL)) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
     }
   }
@@ -3455,7 +3455,7 @@ void redrawcmdline(void)
 {
   if (cmd_silent)
     return;
-  need_wait_return = FALSE;
+  need_wait_return = false;
   compute_cmdrow();
   redrawcmd();
   cursorcmd();
@@ -4225,13 +4225,13 @@ static int showmatches(expand_T *xp, int wildmenu)
   }
 
   if (!wildmenu) {
-    msg_didany = FALSE;                 /* lines_left will be set */
-    msg_start();                        /* prepare for paging */
+    msg_didany = false;                 // lines_left will be set
+    msg_start();                        // prepare for paging
     msg_putchar('\n');
     ui_flush();
     cmdline_row = msg_row;
-    msg_didany = FALSE;                 /* lines_left will be set again */
-    msg_start();                        /* prepare for paging */
+    msg_didany = false;                 // lines_left will be set again
+    msg_start();                        // prepare for paging
   }
 
   if (got_int) {
