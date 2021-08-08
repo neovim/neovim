@@ -7426,6 +7426,7 @@ static bool briopt_check(win_T *wp)
   int bri_shift = 0;
   int bri_min = 20;
   bool bri_sbr = false;
+  int bri_list = 0;
 
   char_u *p = wp->w_p_briopt;
   while (*p != NUL)
@@ -7445,6 +7446,9 @@ static bool briopt_check(win_T *wp)
     {
       p += 3;
       bri_sbr = true;
+    } else if (STRNCMP(p, "list:", 5) == 0) {
+      p += 5;
+      bri_list = (int)getdigits(&p, false, 0);
     }
     if (*p != ',' && *p != NUL) {
       return false;
@@ -7457,6 +7461,7 @@ static bool briopt_check(win_T *wp)
   wp->w_briopt_shift = bri_shift;
   wp->w_briopt_min = bri_min;
   wp->w_briopt_sbr = bri_sbr;
+  wp->w_briopt_list  = bri_list;
 
   return true;
 }

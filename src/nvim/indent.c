@@ -432,7 +432,7 @@ int get_number_indent(linenr_T lnum)
 // Return appropriate space number for breakindent, taking influencing
 // parameters into account. Window must be specified, since it is not
 // necessarily always the current one.
-int get_breakindent_win(win_T *wp, const char_u *line)
+int get_breakindent_win(win_T *wp, char_u *line)
   FUNC_ATTR_NONNULL_ALL
 {
   static int prev_indent = 0;  // Cached indent value.
@@ -468,6 +468,22 @@ int get_breakindent_win(win_T *wp, const char_u *line)
   }
   // Add offset for number column, if 'n' is in 'cpoptions'
   bri += win_col_off2(wp);
+
+  // add additional indent for numbered lists
+  if (wp->w_briopt_list > 0) {
+    regmatch_T regmatch = {
+      .regprog = vim_regcomp(curbuf->b_p_flp,
+                             RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
+    };
+
+    if (regmatch.regprog != NULL) {
+      if (vim_regexec(&regmatch, line, 0)) {
+        bri += wp->w_briopt_list;
+      }
+      vim_regfree(regmatch.regprog);
+    }
+  }
+
 
   // never indent past left window margin
   if (bri < 0) {
