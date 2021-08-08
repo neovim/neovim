@@ -1232,7 +1232,7 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
   return rv;
 }
 
-/// Gets the position (0-indexed) of an extmark {id}.
+/// Gets the position (0-indexed) of an extmark.
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
@@ -1321,10 +1321,10 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param start  Start of range, given as 0-indexed (row, col) or valid
-///               extmark id (whose position defines the bound)
-/// @param end  End of range (inclusive), given as 0-indexed (row, col) or
-///             valid extmark id (whose position defines the bound)
+/// @param start  Start of range: a 0-indexed (row, col) or valid extmark id
+/// (whose position defines the bound). |api-indexing|
+/// @param end  End of range (inclusive): a 0-indexed (row, col) or valid
+/// extmark id (whose position defines the bound). |api-indexing|
 /// @param opts  Optional parameters. Keys:
 ///          - limit:  Maximum number of marks to return
 ///          - details Whether to include the details dict
