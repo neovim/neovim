@@ -25,6 +25,12 @@ local filter_to_severity_limit = function(severity, diagnostics)
   return vim.tbl_filter(function(t) return t.severity == filter_level end, diagnostics)
 end
 
+local filter_unnecessary = function(diagnostics)
+  return vim.tbl_filter(function(t)
+    return not vim.tbl_contains(t.tags or {}, protocol.DiagnosticTag.Unnecessary)
+  end, diagnostics)
+end
+
 local filter_by_severity_limit = function(severity_limit, diagnostics)
   local filter_level = to_severity(severity_limit)
   if not filter_level then
@@ -110,6 +116,17 @@ local make_highlight_map = function(base_name)
 
   return result
 end
+
+local diagnostictag_highlight_map = {
+  [protocol.DiagnosticTag.Unnecessary] = {
+    group = "LspDiagnosticsUnnecessary",
+    hi_info = { guifg = "Grey" },
+  },
+  [protocol.DiagnosticTag.Deprecated] = {
+    group = "LspDiagnosticsDeprecated",
+    hi_info = { gui = "strikethrough" },
+  },
+}
 
 local default_highlight_map = make_highlight_map("Default")
 local virtual_text_highlight_map = make_highlight_map("VirtualText")
@@ -644,6 +661,7 @@ end
 ---             - priority: Set the priority of the signs.
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---             - hide_unnecessary: If true, hides signs for unnecessary diagnostics.
 function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
   opts = opts or {}
   sign_ns = sign_ns or M._get_sign_namespace(client_id)
@@ -658,6 +676,9 @@ function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
 
   bufnr = get_bufnr(bufnr)
   diagnostics = filter_by_severity_limit(opts.severity_limit, diagnostics)
+  if opts.hide_unnecessary then
+    diagnostics = filter_unnecessary(diagnostics)
+  end
 
   local ok = true
   for _, diagnostic in ipairs(diagnostics) do
@@ -720,6 +741,19 @@ function M.set_underline(diagnostics, bufnr, client_id, diagnostic_ns, opts)
       to_position(start, bufnr),
       to_position(finish, bufnr)
     )
+
+    for _, tag in pairs(diagnostic.tags or {}) do
+      local hitag = diagnostictag_highlight_map[tag]
+      if hitag ~= nil then
+        highlight.range(
+          bufnr,
+          diagnostic_ns,
+          hitag.group,
+          to_position(start, bufnr),
+          to_position(finish, bufnr)
+        )
+      end
+    end
   end
 end
 
@@ -744,6 +778,7 @@ end
 ---             - spacing (number): Number of spaces to insert before virtual text
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
+---             - hide_unnecessary: If true, hides virtual texts for unnecessary diagnostics.
 function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
   opts = opts or {}
 
@@ -763,6 +798,9 @@ function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
 
   for line, line_diagnostics in pairs(buffer_line_diagnostics) do
     line_diagnostics = filter_by_severity_limit(opts.severity_limit, line_diagnostics)
+    if opts.hide_unnecessary then
+      line_diagnostics = filter_unnecessary(line_diagnostics)
+    end
     local virt_texts = M.get_virtual_text_chunks_for_line(bufnr, line, line_diagnostics, opts)
 
     if virt_texts then
@@ -944,6 +982,10 @@ function M._define_default_signs_and_highlights()
     highlight.link(virtual_text_highlight_map[severity], default_highlight_name, false)
     highlight.link(floating_highlight_map[severity], default_highlight_name, false)
     highlight.link(sign_highlight_map[severity], default_highlight_name, false)
+  end
+
+  for _, value in pairs(diagnostictag_highlight_map) do
+    highlight.create(value.group, value.hi_info, true)
   end
 
   -- Create all signs

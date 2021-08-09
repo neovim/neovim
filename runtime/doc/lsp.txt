@@ -471,6 +471,16 @@ LspDiagnosticsVirtualTextHint
   Used for "Hint" diagnostic virtual text.
   See |vim.lsp.diagnostic.set_virtual_text()|
 
+                                                *hl-LspDiagnosticsUnnecessary*
+LspDiagnosticsUnnecessary
+  Used to style unnecessary diagnostics.
+  See |vim.lsp.diagnostic.set_underline()|
+
+                                                 *hl-LspDiagnosticsDeprecated*
+LspDiagnosticsDeprecated
+  Used to strikethrough deprecated diagnostics.
+  See |vim.lsp.diagnostic.set_underline()|
+
                                              *hl-LspDiagnosticsUnderlineError*
 LspDiagnosticsUnderlineError
   Used to underline "Error" diagnostics.
@@ -1609,6 +1619,9 @@ set_signs({diagnostics}, {bufnr}, {client_id}, {sign_ns}, {opts})
                                      • Limit severity of diagnostics found.
                                        E.g. "Warning" means { "Error",
                                        "Warning" } will be valid.
+                                   • hide_unnecessary (boolean): If true,
+                                     hides the sign for unnecessary
+                                     diagnostics.
 
                                           *vim.lsp.diagnostic.set_underline()*
 set_underline({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
@@ -1664,6 +1677,9 @@ set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
                                        • Limit severity of diagnostics found.
                                          E.g. "Warning" means { "Error",
                                          "Warning" } will be valid.
+                                     • hide_unnecessary (boolean): If true,
+                                       hides the virtual text for unnecessary
+                                       diagnostics.
 
                                   *vim.lsp.diagnostic.show_line_diagnostics()*
 show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
