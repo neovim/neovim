@@ -1771,15 +1771,6 @@ text_document_completion_list_to_complete_items({result}, {prefix})
                 See also: ~
                     |complete-items|
 
-trim_empty_lines({lines})                    *vim.lsp.util.trim_empty_lines()*
-                Removes empty lines from the beginning and end.
-
-                Parameters: ~
-                    {lines}  (table) list of lines to trim
-
-                Return: ~
-                    (table) trimmed list of lines
-
                                 *vim.lsp.util.try_trim_markdown_code_blocks()*
 try_trim_markdown_code_blocks({lines})
                 Accepts markdown lines and tries to reduce them to a filetype

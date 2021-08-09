@@ -489,6 +489,37 @@ function vim.list_slice(list, start, finish)
   return new_list
 end
 
+--- Removes empty elements from the beginning and end of a list-like table.
+---
+--- An element is considered empty if it has length 0 (for strings) or is an empty table.
+---
+---@param list (table) list-like table
+---@returns (table) trimmed list
+function vim.list_trim_empty(list)
+  vim.validate{list={list, "table"}}
+
+  ---@private
+  local function empty(e)
+    return (type(e) == "string" and #e == 0) or (type(e) == "table" and next(e) == nil)
+  end
+
+  local start = 1
+  for i = 1, #list do
+    if list[i] ~= nil and not empty(list[i]) then
+      start = i
+      break
+    end
+  end
+  local finish = 1
+  for i = #list, 1, -1 do
+    if list[i] ~= nil and not empty(list[i]) then
+      finish = i
+      break
+    end
+  end
+  return vim.list_slice(list, start, finish)
+end
+
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
 ---@see https://www.lua.org/pil/20.2.html

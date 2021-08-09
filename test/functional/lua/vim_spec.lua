@@ -316,6 +316,24 @@ describe('lua stdlib', function()
       pcall_err(split, 'string', 'string', 1))
   end)
 
+  it("vim.list_trim_empty", function()
+    local function list_trim_empty(t)
+      return exec_lua([[return vim.list_trim_empty(...)]], t)
+    end
+    eq({"hello", "", "world"}, list_trim_empty({"", "hello", "", "world", "", ""}))
+    eq({"hello", "", "world"}, list_trim_empty({"", "hello", "", "world"}))
+    eq({"hello", "", "world"}, list_trim_empty({"hello", "", "world", "", ""}))
+    eq({"hello", "", "world"}, list_trim_empty({"hello", "", "world"}))
+    eq({1}, list_trim_empty({{}, 1, ""}))
+    eq({{foo = "bar"}, 42}, list_trim_empty({{}, "", nil, {foo = "bar"}, 42, nil, {}}))
+
+    eq(dedent([[
+        Error executing lua: vim/shared.lua:0: list: expected table, got string
+        stack traceback:
+            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
+      pcall_err(list_trim_empty, "string"))
+  end)
+
   it('vim.trim', function()
     local trim = function(s)
       return exec_lua('return vim.trim(...)', s)

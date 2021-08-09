@@ -1705,22 +1705,9 @@ end
 --- Removes empty lines from the beginning and end.
 ---@param lines (table) list of lines to trim
 ---@returns (table) trimmed list of lines
+---@deprecated Prefer vim.list_trim_empty
 function M.trim_empty_lines(lines)
-  local start = 1
-  for i = 1, #lines do
-    if lines[i] ~= nil and #lines[i] > 0 then
-      start = i
-      break
-    end
-  end
-  local finish = 1
-  for i = #lines, 1, -1 do
-    if lines[i] ~= nil and #lines[i] > 0 then
-      finish = i
-      break
-    end
-  end
-  return vim.list_extend({}, lines, start, finish)
+  return vim.list_trim_empty(lines)
 end
 
 --- Accepts markdown lines and tries to reduce them to a filetype if they

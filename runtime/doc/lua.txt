@@ -1529,6 +1529,19 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
                 Return: ~
                     Copy of table sliced from start to finish (inclusive)
 
+list_trim_empty({list})                                *vim.list_trim_empty()*
+                Removes empty elements from the beginning and end of a
+                list-like table.
+
+                An element is considered empty if it has length 0 (for
+                strings) or is an empty table.
+
+                Parameters: ~
+                    {list}  (table) list-like table
+
+                Return: ~
+                    (table) trimmed list
+
 pesc({s})                                                         *vim.pesc()*
                 Escapes magic chars in a Lua pattern.
 
