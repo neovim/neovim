@@ -326,7 +326,7 @@ describe('startup', function()
   end)
 
   it("handles :packadd during startup", function()
-    -- control group: opt/bonus is not availabe by default
+    -- control group: opt/bonus is not available by default
     pack_clear [[
       try
         let g:x = bonus#secret()

@@ -203,7 +203,7 @@ describe('au OptionSet', function()
         expected_combination({'backup', 0, 1, 'local'})
       end)
 
-      it('should trigger if the current buffer is different from the targetted buffer', function()
+      it('should trigger if the current buffer is different from the targeted buffer', function()
         local new_buffer = make_buffer()
         local new_bufnr = buf.get_number(new_buffer)
 
@@ -252,7 +252,7 @@ describe('au OptionSet', function()
         expected_combination({'backup', 0, 1, 'local'})
       end)
 
-      it('should trigger if the current buffer is different from the targetted buffer', function()
+      it('should trigger if the current buffer is different from the targeted buffer', function()
         set_hook('buftype')
 
         local new_buffer = make_buffer()
@@ -278,7 +278,7 @@ describe('au OptionSet', function()
         expected_combination({'backup', 0, 1, 'local'})
       end)
 
-      it('should not trigger if the current window is different from the targetted window', function()
+      it('should not trigger if the current window is different from the targeted window', function()
         set_hook('cursorcolumn')
 
         local new_winnr = get_new_window_number()

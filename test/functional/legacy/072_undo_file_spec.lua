@@ -69,7 +69,7 @@ describe('72', function()
     feed_command('set undofile ul=100')
     feed('uuuuuu:w >>test.out<cr>')
 
-    ---- Open the output to see if it meets the expections
+    ---- Open the output to see if it meets the expectations
     feed_command('e! test.out')
 
     -- Assert buffer contents.

@@ -138,9 +138,9 @@ describe('put command', function()
   end -- create_test_defs() }}}
 
   local function find_cursor_position(expect_string) -- {{{
-    -- There must only be one occurance of the character 'x' in
+    -- There must only be one occurrence of the character 'x' in
     -- expect_string.
-    -- This function removes that occurance, and returns the position that
+    -- This function removes that occurrence, and returns the position that
     -- it was in.
     -- This returns the cursor position that would leave the 'x' in that
     -- place if we feed 'ix<esc>' and the string existed before it.
