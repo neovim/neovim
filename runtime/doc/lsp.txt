@@ -1805,6 +1805,9 @@ apply_text_edits({text_edits}, {bufnr})
                     {text_edits}  (table) list of `TextEdit` objects
                     {buf_nr}      (number) Buffer id
 
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
+
                                          *vim.lsp.util.apply_workspace_edit()*
 apply_workspace_edit({workspace_edit})
                 Applies a `WorkspaceEdit` .
@@ -1832,6 +1835,9 @@ buf_highlight_references({bufnr}, {references})
                     {bufnr}       buffer id
                     {references}  List of `DocumentHighlight` objects to
                                   highlight
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
 
 buf_lines({bufnr})                                  *vim.lsp.util.buf_lines()*
                 TODO: Documentation
