@@ -89,17 +89,19 @@ the VCS/git logs more valuable. The general structure of a commit message is as 
 - Prefix the commit subject with one of the following _types_:
     - `build`: all changes related to the build system (involving scripts, configurations or tools) and package dependencies.
     - `ci`: all changes related to the continuous integration and deployment system - involving scripts, configurations or tools.
-    - `docs`: all documentation changes. This includes both external documentation intended for end users as well as internal documentation intended for developers.
+    - `docs`: all documentation changes. This includes both external documentation for users as well as internal documentation for developers.
     - `feat`: new abilities or functionality.
     - `fix`: a bug fix.
     - `perf`: performance improvements.
-    - `refactor`: modification of the code base which neither adds a feature nor fixes a bug - such as removing redundant code, simplifying the code, renaming variables, etc.
+    - `refactor`: modification of the code base which neither adds a feature nor fixes a bug - such as removing redundant code, simplifying code, renaming variables, etc.
     - `revert`: revert previous commits.
     - `test`: all changes related to tests such as refactoring existing tests or adding new tests.
     - `vim-patch`: all patches from upstream Vim. The commit messages for patches has [slightly different rules](https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim#pull-requests) as not to interfere with existing scripts.
     - `chore`: Lastly, if none of the types above fits you may use `chore` as the type.
 
-- Append optional scope to _type_ if possible: `(lsp)`, `(treesitter)` or `(float/windows)`.
+- Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, ...
+
+- The _description_ shouldn't start with a capital letter or end in a period.
 
 - Try to keep the first line under 72 characters.
 
