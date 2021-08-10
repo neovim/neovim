@@ -1090,8 +1090,9 @@ bool scrolldown(long line_count, int byfold)
         curwin->w_cursor.lnum = 1;
       else
         curwin->w_cursor.lnum = first - 1;
-    } else
-      wrow -= plines(curwin->w_cursor.lnum--);
+    } else {
+      wrow -= plines_win(curwin, curwin->w_cursor.lnum--, true);
+    }
     curwin->w_valid &=
       ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
     moved = true;
@@ -1425,11 +1426,12 @@ void scroll_cursor_top(int min_scroll, int always)
             : plines_nofill(top);
     used += i;
     if (extra + i <= off && bot < curbuf->b_ml.ml_line_count) {
-      if (hasFolding(bot, NULL, &bot))
-        /* count one logical line for a sequence of folded lines */
-        ++used;
-      else
-        used += plines(bot);
+      if (hasFolding(bot, NULL, &bot)) {
+        // count one logical line for a sequence of folded lines
+        used++;
+      } else {
+        used += plines_win(curwin, bot, true);
+      }
     }
     if (used > curwin->w_height_inner) {
       break;
@@ -1809,11 +1811,12 @@ void cursor_correct(void)
   int below = curwin->w_filler_rows; /* screen lines below botline */
   while ((above < above_wanted || below < below_wanted) && topline < botline) {
     if (below < below_wanted && (below <= above || above >= above_wanted)) {
-      if (hasFolding(botline, &botline, NULL))
-        ++below;
-      else
-        below += plines(botline);
-      --botline;
+      if (hasFolding(botline, &botline, NULL)) {
+        below++;
+      } else {
+        below += plines_win(curwin, botline, true);
+      }
+      botline--;
     }
     if (above < above_wanted && (above < below || below >= below_wanted)) {
       if (hasFolding(topline, NULL, &topline))
@@ -2146,12 +2149,12 @@ void halfpage(bool flag, linenr_T Prenum)
       else {
         room += i;
         do {
-          i = plines(curwin->w_botline);
-          if (i > room)
+          i = plines_win(curwin, curwin->w_botline, true);
+          if (i > room) {
             break;
-          (void)hasFolding(curwin->w_botline, NULL,
-              &curwin->w_botline);
-          ++curwin->w_botline;
+          }
+          (void)hasFolding(curwin->w_botline, NULL, &curwin->w_botline);
+          curwin->w_botline++;
           room -= i;
         } while (curwin->w_botline <= curbuf->b_ml.ml_line_count);
       }

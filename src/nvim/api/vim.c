@@ -2301,7 +2301,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       }
     }
   }
-  ParserLine plines[] = {
+  ParserLine parser_lines[] = {
     {
       .data = expr.data,
       .size = expr.size,
@@ -2309,7 +2309,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     },
     { NULL, 0, false },
   };
-  ParserLine *plines_p = plines;
+  ParserLine *plines_p = parser_lines;
   ParserHighlight colors;
   kvi_init(colors);
   ParserHighlight *const colors_p = (highlight ? &colors : NULL);
@@ -2335,7 +2335,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
   ret.items[ret.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("len"),
     .value = INTEGER_OBJ((Integer)(pstate.pos.line == 1
-                                   ? plines[0].size
+                                   ? parser_lines[0].size
                                    : pstate.pos.col)),
   };
   if (east.err.msg != NULL) {

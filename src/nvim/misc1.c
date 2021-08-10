@@ -349,14 +349,6 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   return result;
 }
 
-/*
- * Return the number of window lines occupied by buffer line "lnum".
- */
-int plines(const linenr_T lnum)
-{
-  return plines_win(curwin, lnum, true);
-}
-
 int plines_win(
     win_T *const wp,
     const linenr_T lnum,

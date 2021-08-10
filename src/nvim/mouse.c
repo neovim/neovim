@@ -236,12 +236,14 @@ retnomove:
     if (row < 0) {
       count = 0;
       for (first = true; curwin->w_topline > 1; ) {
-        if (curwin->w_topfill < diff_check(curwin, curwin->w_topline))
-          ++count;
-        else
-          count += plines(curwin->w_topline - 1);
-        if (!first && count > -row)
+        if (curwin->w_topfill < diff_check(curwin, curwin->w_topline)) {
+          count++;
+        } else {
+          count += plines_win(curwin, curwin->w_topline - 1, true);
+        }
+        if (!first && count > -row) {
           break;
+        }
         first = false;
         (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
         if (curwin->w_topfill < diff_check(curwin, curwin->w_topline)) {
@@ -262,7 +264,7 @@ retnomove:
         if (curwin->w_topfill > 0) {
           ++count;
         } else {
-          count += plines(curwin->w_topline);
+          count += plines_win(curwin, curwin->w_topline, true);
         }
 
         if (!first && count > row - curwin->w_height_inner + 1) {
