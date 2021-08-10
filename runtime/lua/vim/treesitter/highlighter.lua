@@ -241,14 +241,14 @@ local function on_line_impl(self, buf, line)
     -- Some injected languages may not have highlight queries.
     if not highlighter_query:query() then return end
 
-    if state.iter == nil then
+    if not state.iter then
       state.iter = highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
     end
 
     while line >= state.next_row do
       local capture, node, metadata = state.iter()
 
-      if capture == nil then break end
+      if not capture then break end
 
       local start_row, start_col, end_row, end_col = node:range()
       local hl = highlighter_query.hl_cache[capture]

@@ -227,6 +227,62 @@ void ui_refresh(void)
     }, res)
   end)
 
+  describe("support quantifications", function()
+
+    local function get_nodes(testquery)
+      insert [[
+// A
+// multiline
+// comment
+]]
+
+      return exec_lua([[
+        cquery = vim.treesitter.parse_query("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for pattern, match in cquery:iter_matches(tree:root()) do
+          -- can't transmit node over RPC. just check the name and range
+          local mrepr = {}
+          for cid,maybe_node in pairs(match) do
+            if type(maybe_node) == "table" then
+              for _,node in pairs(maybe_node) do
+                table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+              end
+            else
+              table.insert(mrepr, {cquery.captures[cid], maybe_node:type(), maybe_node:range()})
+            end
+          end
+          table.insert(res, {pattern, mrepr})
+        end
+        return res
+      ]], testquery)
+    end
+
+    it("for captures", function()
+      local res = get_nodes "((comment)+ @comment)"
+      eq({
+        { 1, {
+          { 'comment', 'comment', 0, 0, 0, 4 },
+          { 'comment', 'comment', 1, 0, 1, 12 },
+          { 'comment', 'comment', 2, 0, 2, 10 } }
+        }
+      }, res)
+    end)
+
+    it("with predicates", function()
+      local res = get_nodes "((comment)+ @comment (#match? @comment \"^//\"))"
+
+      eq({
+        { 1, {
+          { 'comment', 'comment', 0, 0, 0, 4 },
+          { 'comment', 'comment', 1, 0, 1, 12 },
+          { 'comment', 'comment', 2, 0, 2, 10 } }
+        }
+      }, res)
+    end)
+  end)
+
   it('can match special regex characters like \\ * + ( with `vim-match?`', function()
     insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
 

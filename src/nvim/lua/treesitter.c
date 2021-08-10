@@ -992,13 +992,48 @@ static int node_parent(lua_State *L)
   return 1;
 }
 
-/// assumes the match table being on top of the stack
-static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
+/// Pushes @p match onto the stack.
+///
+/// @param match The match to push
+/// @param nr_captures The number of captures in the query, used to preallocate
+///                    the match table.
+/// @param nodeidx The index of a node in the stack, used to push nodes.
+static void push_match(lua_State *L, TSQueryMatch *match,
+                       size_t nr_captures, int nodeidx)
 {
+  // [ ]
+  lua_createtable(L, nr_captures, 2);  // [ match ]
+
   for (int i = 0; i < match->capture_count; i++) {
-    push_node(L, match->captures[i].node, nodeidx);
-    lua_rawseti(L, -2, match->captures[i].index+1);
+    int capture_index = match->captures[i].index+1;
+
+    push_node(L, match->captures[i].node, nodeidx);  // [ match, node ]
+
+    // Now check if there is already a capture here
+    lua_rawgeti(L, -2, capture_index);  // [ match, current, previous ]
+
+    if (lua_isnil(L, -1)) {
+      lua_pop(L, 1);  // [ match, current ]
+      lua_rawseti(L, -2, capture_index);  // [ match ]
+    } else if (!lua_istable(L, -1)) {
+      // Create the table
+      DLOG("Previous node matched, creating a table");
+      lua_createtable(L, 2, 0);  // [ match, current, previous_node, table ]
+      lua_insert(L, -3);  // [ match, table, current, previous_node ]
+      assert(!lua_istable(L, -2));
+      lua_rawseti(L, -3, 1);  // [ match, table, current ]
+      lua_rawseti(L, -2, 2);  // [ match, table ]
+      lua_rawseti(L, -2, capture_index);  // [ match ]
+    } else {
+      // Update the table
+      DLOG("Multiple nodes matched, updating the table");
+      size_t current_size = lua_objlen(L, -1);
+      lua_insert(L, -2);  // [ match, previous_table, current ]
+      lua_rawseti(L, -2, current_size + 1);  // [ match, previous_table ]
+      lua_pop(L, 1);  // [ match ]
+    }
   }
+  // [ match ]
 }
 
 static int query_next_match(lua_State *L)
@@ -1010,8 +1045,8 @@ static int query_next_match(lua_State *L)
   TSQueryMatch match;
   if (ts_query_cursor_next_match(cursor, &match)) {
     lua_pushinteger(L, match.pattern_index+1);  // [index]
-    lua_createtable(L, ts_query_capture_count(query), 2);  // [index, match]
-    set_match(L, &match, lua_upvalueindex(2));
+    push_match(L, &match, ts_query_capture_count(query),
+               lua_upvalueindex(2));  // [ index, match ]
     return 2;
   }
   return 0;
@@ -1046,8 +1081,11 @@ static int query_next_capture(lua_State *L)
     uint32_t n_pred;
     ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
     if (n_pred > 0 && capture_index == 0) {
-      lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
-      set_match(L, &match, lua_upvalueindex(2));
+      push_match(L, &match, ts_query_capture_count(query),
+                 lua_upvalueindex(2));  // [ index, node, match ]
+      lua_pushvalue(L, -1);  // [ index, node, match, match_copy ]
+      lua_replace(L, lua_upvalueindex(4));  // [ index, node, match ]
+
       lua_pushinteger(L, match.pattern_index+1);
       lua_setfield(L, -2, "pattern");
 
