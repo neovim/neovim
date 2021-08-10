@@ -45,16 +45,25 @@ body:
       description: |
         Steps to reproduce using `nvim -u NORC` and/or `nvim -u NONE` (please test both).
         If you are reporting build failures, please list the exact sequence of steps including all CMake flags (if any).
+    validations:
+      required: true
 
   - type: input
     attributes:
       label: "Vim"
       description: "Does Vim behave differently when called with `vim -u DEFAULTS`? (Please add the specific version, including patch level, of Vim that you tested.)"
+    validations:
+      required: true
 
   - type: textarea
     attributes:
       label: "Expected behavior"
       description: "A description of the behavior you expected. May optionally include logs, images, or videos."
+    validations:
+      required: true
+
   - type: textarea
     attributes:
       label: "Actual behavior"
+    validations:
+      required: true
