@@ -19,6 +19,7 @@
 #include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/plines.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"

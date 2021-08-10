@@ -41,6 +41,7 @@
 #include "nvim/option.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
+#include "nvim/plines.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -7201,7 +7202,7 @@ static void replace_do_bs(int limit_col)
       p = get_cursor_pos_ptr();
       ins_len = (int)STRLEN(p) - orig_len;
       vcol = start_vcol;
-      for (i = 0; i < ins_len; ++i) {
+      for (i = 0; i < ins_len; i++) {
         vcol += win_chartabsize(curwin, p + i, vcol);
         i += (*mb_ptr2len)(p) - 1;
       }

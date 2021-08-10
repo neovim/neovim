@@ -13,6 +13,7 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/move.h"
+#include "nvim/plines.h"
 #include "nvim/screen.h"
 #include "nvim/extmark.h"
 #include "nvim/state.h"

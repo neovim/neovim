@@ -621,10 +621,10 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // scanned *up to* `col`, nudging it left or right when concealed characters
   // are encountered.
   //
-  // win_chartabsize() is used to keep track of the virtual column position relative
-  // to the line's bytes.  For example: if col == 9 and the line starts with a
-  // tab that's 8 columns wide, we would want the cursor to be highlighting the
-  // second byte, not the ninth.
+  // win_chartabsize() is used to keep track of the virtual column position
+  // relative to the line's bytes.  For example: if col == 9 and the line
+  // starts with a tab that's 8 columns wide, we would want the cursor to be
+  // highlighting the second byte, not the ninth.
 
   linenr_T lnum = wp->w_cursor.lnum;
   char_u *line = ml_get(lnum);
