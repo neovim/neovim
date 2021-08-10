@@ -735,23 +735,20 @@ int vim_strnsize(char_u *s, int len)
 
 /// Return the number of characters 'c' will take on the screen, taking
 /// into account the size of a tab.
-/// Use a define to make it fast, this is used very often!!!
 /// Also see getvcol() below.
 ///
 /// @param p
 /// @param col
 ///
 /// @return Number of characters.
-#define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
-  if (*(p) == TAB && (!(wp)->w_p_list || wp->w_p_lcs_chars.tab1)) { \
-    return tabstop_padding(col, (buf)->b_p_ts, (buf)->b_p_vts_array); \
-  } else { \
-    return ptr2cells(p); \
-  }
-
 int win_chartabsize(win_T *wp, char_u *p, colnr_T col)
 {
-  RET_WIN_BUF_CHARTABSIZE(wp, wp->w_buffer, p, col)
+  buf_T *buf = wp->w_buffer;
+  if (*p == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
+    return tabstop_padding(col, buf->b_p_ts, buf->b_p_vts_array);
+  } else {
+    return ptr2cells(p);
+  }
 }
 
 /// Return the number of characters the string 's' will take on the screen,
@@ -944,7 +941,7 @@ int lbr_chartabsize(char_u *line, unsigned char *s, colnr_T col)
     if (curwin->w_p_wrap) {
       return win_nolbr_chartabsize(curwin, s, col, NULL);
     }
-    RET_WIN_BUF_CHARTABSIZE(curwin, curbuf, s, col)
+    return win_chartabsize(curwin, s, col);
   }
   return win_lbr_chartabsize(curwin, line == NULL ? s: line, s, col, NULL);
 }
@@ -994,7 +991,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
     if (wp->w_p_wrap) {
       return win_nolbr_chartabsize(wp, s, col, headp);
     }
-    RET_WIN_BUF_CHARTABSIZE(wp, wp->w_buffer, s, col)
+    return win_chartabsize(wp, s, col);
   }
 
   // First get normal size, without 'linebreak'
