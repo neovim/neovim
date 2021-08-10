@@ -1263,7 +1263,6 @@ struct window_S {
   colnr_T w_last_leftcol;           ///< last known value for leftcol
   int w_last_width;                 ///< last known value for width
   int w_last_height;                ///< last known value for height
-  handle_T w_last_buffer;           ///< last known value for buffer
 
   //
   // Layout of the window in the screen.
