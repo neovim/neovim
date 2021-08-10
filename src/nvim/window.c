@@ -676,7 +676,7 @@ void win_set_minimal_style(win_T *wp)
   }
 
   // signcolumn: use 'auto'
-  if (wp->w_p_scl[0] != 'a') {
+  if (wp->w_p_scl[0] != 'a' || STRLEN(wp->w_p_scl) >= 8) {
     xfree(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }
