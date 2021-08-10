@@ -17,6 +17,7 @@
 #include "nvim/vim.h"
 #include "nvim/api/window.h"
 #include "nvim/ascii.h"
+#include "nvim/aucmd.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
 #include "nvim/globals.h"
