@@ -1486,7 +1486,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
-    api_set_error(err, kErrorTypeValidation, "Invalid buffer id");
     return 0;
   }
 
