@@ -828,7 +828,7 @@ void ex_retab(exarg_T *eap)
       }
       if (ptr[col] == NUL)
         break;
-      vcol += chartabsize(ptr + col, (colnr_T)vcol);
+      vcol += win_chartabsize(curwin, ptr + col, (colnr_T)vcol);
       col += utfc_ptr2len(ptr + col);
     }
     if (new_line == NULL)                   /* out of memory */

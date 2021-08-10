@@ -749,12 +749,7 @@ int vim_strnsize(char_u *s, int len)
     return ptr2cells(p); \
   }
 
-int chartabsize(char_u *p, colnr_T col)
-{
-  RET_WIN_BUF_CHARTABSIZE(curwin, curbuf, p, col)
-}
-
-static int win_chartabsize(win_T *wp, char_u *p, colnr_T col)
+int win_chartabsize(win_T *wp, char_u *p, colnr_T col)
 {
   RET_WIN_BUF_CHARTABSIZE(wp, wp->w_buffer, p, col)
 }
@@ -936,7 +931,7 @@ bool vim_isprintc_strict(int c)
   return c > 0 && (g_chartab[c] & CT_PRINT_CHAR);
 }
 
-/// like chartabsize(), but also check for line breaks on the screen
+/// like win_chartabsize(), but also check for line breaks on the screen
 ///
 /// @param line
 /// @param s
