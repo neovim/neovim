@@ -240,6 +240,7 @@ end
 --- Applies a list of text edits to a buffer.
 --@param text_edits (table) list of `TextEdit` objects
 --@param buf_nr (number) Buffer id
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
@@ -972,7 +973,7 @@ function M.make_floating_popup_options(width, height, opts)
     row = -get_border_size(opts).height
   end
 
-  if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
+  if vim.fn.wincol() + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
     anchor = anchor..'W'
     col = 0
   else
@@ -1483,6 +1484,7 @@ do --[[ References ]]
   ---
   --@param bufnr buffer id
   --@param references List of `DocumentHighlight` objects to highlight
+  ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references)
     validate { bufnr = {bufnr, 'n', true} }
     for _, reference in ipairs(references) do

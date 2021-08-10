@@ -16,6 +16,10 @@ func s:screen_lines(lnum, width) abort
   return ScreenLines([a:lnum, a:lnum + 2], a:width)
 endfunc
 
+func s:screen_lines2(lnums, lnume, width) abort
+  return ScreenLines([a:lnums, a:lnume], a:width)
+endfunc
+
 func! s:compare_lines(expect, actual)
   call assert_equal(join(a:expect, "\n"), join(a:actual, "\n"))
 endfunc
@@ -743,6 +747,125 @@ func Test_breakindent20_cpo_n_nextpage()
   call s:compare_lines(expect, lines)
 
   call s:close_windows('set breakindent& briopt& cpo& number&')
+endfunc
+
+func Test_breakindent20_list()
+  call s:test_windows('setl breakindent breakindentopt= linebreak')
+  " default:
+  call setline(1, ['  1.  Congress shall make no law',
+        \ '  2.) Congress shall make no law',
+        \ '  3.] Congress shall make no law'])
+  norm! 1gg
+  redraw!
+  let lines = s:screen_lines2(1, 6, 20)
+  let expect = [
+	\ "  1.  Congress      ",
+	\ "shall make no law   ",
+	\ "  2.) Congress      ",
+	\ "shall make no law   ",
+	\ "  3.] Congress      ",
+	\ "shall make no law   ",
+	\ ]
+  call s:compare_lines(expect, lines)
+  " set mininum indent
+  setl briopt=min:5
+  redraw!
+  let lines = s:screen_lines2(1, 6, 20)
+  let expect = [
+	\ "  1.  Congress      ",
+	\ "  shall make no law ",
+	\ "  2.) Congress      ",
+	\ "  shall make no law ",
+	\ "  3.] Congress      ",
+	\ "  shall make no law ",
+	\ ]
+  call s:compare_lines(expect, lines)
+  " set additional handing indent
+  setl briopt+=list:4
+  redraw!
+  let expect = [
+	\ "  1.  Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ "  2.) Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ "  3.] Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ ]
+  let lines = s:screen_lines2(1, 9, 20)
+  call s:compare_lines(expect, lines)
+
+  " reset linebreak option
+  " Note: it indents by one additional
+  " space, because of the leading space.
+  setl linebreak&vim list listchars=eol:$,space:_
+  redraw!
+  let expect = [
+	\ "__1.__Congress_shall",
+	\ "      _make_no_law$ ",
+	\ "__2.)_Congress_shall",
+	\ "      _make_no_law$ ",
+	\ "__3.]_Congress_shall",
+	\ "      _make_no_law$ ",
+	\ ]
+  let lines = s:screen_lines2(1, 6, 20)
+  call s:compare_lines(expect, lines)
+
+  " check formatlistpat indent
+  setl briopt=min:5,list:-1
+  setl linebreak list&vim listchars&vim
+  let &l:flp = '^\s*\d\+\.\?[\]:)}\t ]\s*'
+  redraw!
+  let expect = [
+	\ "  1.  Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ "  2.) Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ "  3.] Congress      ",
+	\ "      shall make no ",
+	\ "      law           ",
+	\ ]
+  let lines = s:screen_lines2(1, 9, 20)
+  call s:compare_lines(expect, lines)
+  " check formatlistpat indent with different list levels
+  let &l:flp = '^\s*\*\+\s\+'
+  redraw!
+  %delete _
+  call setline(1, ['* Congress shall make no law',
+        \ '*** Congress shall make no law',
+        \ '**** Congress shall make no law'])
+  norm! 1gg
+  let expect = [
+	\ "* Congress shall    ",
+	\ "  make no law       ",
+	\ "*** Congress shall  ",
+	\ "    make no law     ",
+	\ "**** Congress shall ",
+	\ "     make no law    ",
+	\ ]
+  let lines = s:screen_lines2(1, 6, 20)
+  call s:compare_lines(expect, lines)
+
+  " check formatlistpat indent with different list level
+  " showbreak and sbr
+  setl briopt=min:5,sbr,list:-1,shift:2
+  setl showbreak=>
+  redraw!
+  let expect = [
+	\ "* Congress shall    ",
+	\ "> make no law       ",
+	\ "*** Congress shall  ",
+	\ ">   make no law     ",
+	\ "**** Congress shall ",
+	\ ">    make no law    ",
+	\ ]
+  let lines = s:screen_lines2(1, 6, 20)
+  call s:compare_lines(expect, lines)
+  call s:close_windows('set breakindent& briopt& linebreak& list& listchars& showbreak&')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

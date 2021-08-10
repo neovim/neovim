@@ -1408,22 +1408,19 @@ int do_set(
                 *errbuf = NUL;
                 i = getdigits_int(&arg, true, 0);
                 if (i & 1) {
-                  STRCAT(errbuf, "b,");
+                  STRLCAT(errbuf, "b,", sizeof(errbuf));
                 }
                 if (i & 2) {
-                  STRCAT(errbuf, "s,");
+                  STRLCAT(errbuf, "s,", sizeof(errbuf));
                 }
                 if (i & 4) {
-                  STRCAT(errbuf, "h,l,");
+                  STRLCAT(errbuf, "h,l,", sizeof(errbuf));
                 }
                 if (i & 8) {
-                  STRCAT(errbuf, "<,>,");
+                  STRLCAT(errbuf, "<,>,", sizeof(errbuf));
                 }
                 if (i & 16) {
-                  STRCAT(errbuf, "[,],");
-                }
-                if (*errbuf != NUL) {                   // remove trailing ,
-                  errbuf[STRLEN(errbuf) - 1] = NUL;
+                  STRLCAT(errbuf, "[,],", sizeof(errbuf));
                 }
                 save_arg = arg;
                 arg = errbuf;
@@ -7429,6 +7426,7 @@ static bool briopt_check(win_T *wp)
   int bri_shift = 0;
   int bri_min = 20;
   bool bri_sbr = false;
+  int bri_list = 0;
 
   char_u *p = wp->w_p_briopt;
   while (*p != NUL)
@@ -7448,6 +7446,9 @@ static bool briopt_check(win_T *wp)
     {
       p += 3;
       bri_sbr = true;
+    } else if (STRNCMP(p, "list:", 5) == 0) {
+      p += 5;
+      bri_list = (int)getdigits(&p, false, 0);
     }
     if (*p != ',' && *p != NUL) {
       return false;
@@ -7460,6 +7461,7 @@ static bool briopt_check(win_T *wp)
   wp->w_briopt_shift = bri_shift;
   wp->w_briopt_min = bri_min;
   wp->w_briopt_sbr = bri_sbr;
+  wp->w_briopt_list  = bri_list;
 
   return true;
 }
@@ -7670,6 +7672,12 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
   int ret = MAX(minimum, MIN(maximum, needed_signcols));
   assert(ret <= SIGN_SHOW_MAX);
   return ret;
+}
+
+// Get the local or global value of 'showbreak'.
+char_u *get_showbreak_value(win_T *win FUNC_ATTR_UNUSED)
+{
+  return p_sbr;
 }
 
 /// Get window or buffer local options

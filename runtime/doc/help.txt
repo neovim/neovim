@@ -130,6 +130,7 @@ Advanced editing ~
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
 |lua.txt|	Lua API
+|api.txt|	Nvim API via RPC, Lua and VimL
 
 Special issues ~
 |testing.txt|	testing Vim and Vim scripts
@@ -137,14 +138,15 @@ Special issues ~
 |remote.txt|	using Vim as a server or client
 
 Programming language support ~
-|indent.txt|	automatic indenting for C and other languages
-|lsp.txt|	Language Server Protocol (LSP)
-|syntax.txt|	syntax highlighting
-|filetype.txt|	settings done specifically for a type of file
-|quickfix.txt|	commands for a quick edit-compile-fix cycle
-|ft_ada.txt|	Ada (the programming language) support
-|ft_rust.txt|	Filetype plugin for Rust
-|ft_sql.txt|	about the SQL filetype plugin
+|indent.txt|       automatic indenting for C and other languages
+|lsp.txt|          Language Server Protocol (LSP)
+|treesitter.txt|   tree-sitter library for incremental parsing of buffers
+|syntax.txt|       syntax highlighting
+|filetype.txt|     settings done specifically for a type of file
+|quickfix.txt|     commands for a quick edit-compile-fix cycle
+|ft_ada.txt|       Ada (the programming language) support
+|ft_rust.txt|      Filetype plugin for Rust
+|ft_sql.txt|       about the SQL filetype plugin
 
 Language support ~
 |digraph.txt|	list of available digraphs

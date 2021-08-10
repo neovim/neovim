@@ -1038,7 +1038,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 			    continuation (positive).
 		sbr	    Display the 'showbreak' value before applying the
 			    additional indent.
-	The default value for min is 20 and shift is 0.
+		list:{n}    Adds an additional indent for lines that match a
+			    numbered or bulleted list (using the
+			    'formatlistpat' setting).
+		list:-1	    Uses the length of a match with 'formatlistpat'
+			    for indentation.
+	The default value for min is 20, shift and list is 0.
 
 						*'browsedir'* *'bsdir'*
 'browsedir' 'bsdir'	string	(default: "last")
