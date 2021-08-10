@@ -27,6 +27,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/misc1.h"
+#include "nvim/plines.h"
 #include "nvim/option.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"

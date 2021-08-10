@@ -18,6 +18,7 @@
 #include "nvim/diff.h"
 #include "nvim/move.h"
 #include "nvim/misc1.h"
+#include "nvim/plines.h"
 #include "nvim/cursor.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/memline.h"
