@@ -1315,11 +1315,14 @@ function lsp.buf_request_all(bufnr, method, params, callback)
   local request_results = {}
   local result_count = 0
   local expected_result_count = 0
-  local cancel, client_request_ids
+  local cancel, client_request_ids, unsupported_clients
 
   local set_expected_result_count = once(function()
-    for _ in pairs(client_request_ids) do
-      expected_result_count = expected_result_count + 1
+    local successful_request_count = vim.tbl_count(client_request_ids)
+    if successful_request_count > 0 then
+      expected_result_count = successful_request_count
+    else
+      expected_result_count = vim.tbl_count(unsupported_clients)
     end
   end)
 
@@ -1333,7 +1336,7 @@ function lsp.buf_request_all(bufnr, method, params, callback)
     end
   end
 
-  client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
+  client_request_ids, cancel, unsupported_clients = lsp.buf_request(bufnr, method, params, _sync_handler)
 
   return cancel
 end
