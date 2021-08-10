@@ -27,15 +27,6 @@
 #include "nvim/syntax.h"
 #include "nvim/window.h"
 
-#define RETURN_IF_DID_CLOSE(win, expr) \
-    {                                  \
-      winref_T ref = winref_from(win); \
-      expr;                            \
-      if (!winref_valid(&ref)) {       \
-        return;                        \
-      }                                \
-    }
-  
 
 /// Gets the current buffer in a window
 ///
@@ -132,7 +123,9 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
-  RETURN_IF_DID_CLOSE(win, autocmd_check_cursor_moved(win, EVENT_CURSORMOVED));
+  winref_T ref = winref_from(win);
+  autocmd_check_cursor_moved(win, EVENT_CURSORMOVED);
+  if (!winref_valid(&ref)) return;
 
   redraw_later(win, VALID);
 }
@@ -182,7 +175,7 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
   try_end(err);
 
   FOR_ALL_WINDOWS(wp) {
-    RETURN_IF_DID_CLOSE(wp, autocmd_check_window_scrolled(wp));
+    autocmd_check_window_scrolled(wp);
   }
 }
 
@@ -231,7 +224,7 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   try_end(err);
 
   FOR_ALL_WINDOWS(wp) {
-    RETURN_IF_DID_CLOSE(wp, autocmd_check_window_scrolled(wp));
+    autocmd_check_window_scrolled(wp);
   }
 }
 
@@ -439,7 +432,7 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
     didset_window_options(win);
   }
 
-  RETURN_IF_DID_CLOSE(win, autocmd_check_window_scrolled(win));
+  autocmd_check_window_scrolled(win);
 }
 
 /// Gets window configuration.
