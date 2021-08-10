@@ -523,12 +523,14 @@ void nvim_buf_set_lines(uint64_t channel_id,
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
 
-  autocmd_check_text_changed(buf, EVENT_TEXTCHANGED);
-  autocmd_check_buffer_modified(buf);
+  bufref_T bufref = bufref_from(buf);
+  autocmd_check_text_changed(&bufref, EVENT_TEXTCHANGED);
+  autocmd_check_buffer_modified(&bufref);
   FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer == buf) {
-      autocmd_check_cursor_moved(wp, EVENT_CURSORMOVED);
-      autocmd_check_window_scrolled(wp);
+      winref_T winref = winref_from(wp);
+      autocmd_check_cursor_moved(&winref, EVENT_CURSORMOVED);
+      autocmd_check_window_scrolled(&winref);
     }
   }
 
@@ -1942,12 +1944,14 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   Array args = ARRAY_DICT_INIT;
   Object res = nlua_call_ref(fun, NULL, args, true, err);
 
-  autocmd_check_text_changed(buf, EVENT_TEXTCHANGED);
-  autocmd_check_buffer_modified(buf);
+  bufref_T bufref = bufref_from(buf);
+  autocmd_check_text_changed(&bufref, EVENT_TEXTCHANGED);
+  autocmd_check_buffer_modified(&bufref);
   FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer == buf) {
-      autocmd_check_cursor_moved(wp, EVENT_CURSORMOVED);
-      autocmd_check_window_scrolled(wp);
+      winref_T winref = winref_from(wp);
+      autocmd_check_cursor_moved(&winref, EVENT_CURSORMOVED);
+      autocmd_check_window_scrolled(&winref);
     }
   }
 

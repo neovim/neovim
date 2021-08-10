@@ -101,9 +101,16 @@ static void do_autocmd_focusgained(bool gained)
   recursive = false;
 }
 
+
 /// Checks if cursor has moved and triggers autocommand.
-bool autocmd_check_cursor_moved(win_T *win, event_T event)
+bool autocmd_check_cursor_moved(winref_T *winref, event_T event)
 {
+  if (!winref_valid(winref)) {
+    return false;
+  }
+
+  win_T *win = winref->wr_win;
+
   bool has_event_value = has_event(event);
   bool result = false;
 
@@ -139,8 +146,14 @@ bool autocmd_check_cursor_moved(win_T *win, event_T event)
 }
 
 /// Checks if text has changed and triggers autocommand.
-bool autocmd_check_text_changed(buf_T *buf, event_T event)
+bool autocmd_check_text_changed(bufref_T *bufref, event_T event)
 {
+  if (!bufref_valid(bufref)) {
+    return false;
+  }
+
+  buf_T *buf = bufref->br_buf;
+
   bool result = false;
   varnumber_T last_changedtick =
     event == EVENT_TEXTCHANGEDP ?
@@ -181,8 +194,14 @@ bool autocmd_check_text_changed(buf_T *buf, event_T event)
 }
 
 /// Checks if window has scrolled and triggers autocommand.
-bool autocmd_check_window_scrolled(win_T *win)
+bool autocmd_check_window_scrolled(winref_T *winref)
 {
+  if (!winref_valid(winref)) {
+    return false;
+  }
+
+  win_T *win = winref->wr_win;
+
   if (has_event(EVENT_WINSCROLLED) && win_did_scroll(win)) {
     do_autocmd_winscrolled(win);
     return true;
@@ -191,8 +210,14 @@ bool autocmd_check_window_scrolled(win_T *win)
 }
 
 /// Checks if buffer &modified has been modified and triggers autocommand.
-bool autocmd_check_buffer_modified(buf_T *buf)
+bool autocmd_check_buffer_modified(bufref_T *bufref)
 {
+  if (!bufref_valid(bufref)) {
+    return false;
+  }
+
+  buf_T *buf = bufref->br_buf;
+
   // Trigger BufModified if b_modified changed
   if (has_event(EVENT_BUFMODIFIEDSET)
       && buf->b_changed_invalid == true) {

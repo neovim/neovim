@@ -1432,18 +1432,21 @@ static void ins_redraw(
     return;
 
   if (ready) {
+    winref_T winref = winref_from(curwin);
+    bufref_T bufref = bufref_from(curbuf);
+
     // Dont't trigger CursorMovedI when the popup menu is
     // visible, the command might delete it.
     if (!pum_visible()) {
       conceal_cursor_moved =
-        autocmd_check_cursor_moved(curwin, EVENT_CURSORMOVEDI);
+        autocmd_check_cursor_moved(&winref, EVENT_CURSORMOVEDI);
     }
     event_T text_changed_event =
       pum_visible() ? EVENT_TEXTCHANGEDP : EVENT_TEXTCHANGEDI;
 
-    autocmd_check_text_changed(curbuf, text_changed_event);
-    autocmd_check_window_scrolled(curwin);
-    autocmd_check_buffer_modified(curbuf);
+    autocmd_check_text_changed(&bufref, text_changed_event);
+    autocmd_check_window_scrolled(&winref);
+    autocmd_check_buffer_modified(&bufref);
   }
 
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)

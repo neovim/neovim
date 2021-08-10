@@ -1368,7 +1368,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   oldwin->w_pos_changed = true;
 
   FOR_ALL_WINDOWS_IN_TAB(wpp, curtab) {
-    autocmd_check_window_scrolled(wpp);
+    winref_T winref = winref_from(wpp);
+    autocmd_check_window_scrolled(&winref);
   }
 
   return OK;
@@ -2618,7 +2619,8 @@ int win_close(win_T *win, bool free_buf)
   redraw_all_later(NOT_VALID);
 
   FOR_ALL_WINDOWS_IN_TAB(wpp, curtab) {
-    autocmd_check_window_scrolled(wpp);
+    winref_T winref = winref_from(wpp);
+    autocmd_check_window_scrolled(&winref);
   }
 
   return OK;
@@ -2663,7 +2665,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   // autocmd may have freed the window already.
   if (!win_valid_any_tab(win)) {
     FOR_ALL_WINDOWS_IN_TAB(wpp, tp) {
-      autocmd_check_window_scrolled(wpp);
+      winref_T winref = winref_from(wpp);
+      autocmd_check_window_scrolled(&winref);
     }
     return;
   }
@@ -2728,7 +2731,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     free_tabpage(tp);
   } else {
     FOR_ALL_WINDOWS_IN_TAB(wpp, tp) {
-      autocmd_check_window_scrolled(wpp);
+      winref_T winref = winref_from(wpp);
+      autocmd_check_window_scrolled(&winref);
     }
   }
 }

@@ -1316,10 +1316,12 @@ static int normal_check(VimState *state)
     update_topline(curwin);
 
     if (!finish_op) {
-      autocmd_check_cursor_moved(curwin, EVENT_CURSORMOVED);
-      autocmd_check_text_changed(curbuf, EVENT_TEXTCHANGED);
-      autocmd_check_window_scrolled(curwin);
-      autocmd_check_buffer_modified(curbuf);
+      winref_T winref = winref_from(curwin);
+      bufref_T bufref = bufref_from(curbuf);
+      autocmd_check_cursor_moved(&winref, EVENT_CURSORMOVED);
+      autocmd_check_text_changed(&bufref, EVENT_TEXTCHANGED);
+      autocmd_check_window_scrolled(&winref);
+      autocmd_check_buffer_modified(&bufref);
     }
 
     // Updating diffs from changed() does not always work properly,

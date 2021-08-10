@@ -346,6 +346,18 @@ int open_buffer(
   return retval;
 }
 
+/// Creates bufref from "buf"
+///
+/// @param buf    The buffer to reference.
+bufref_T bufref_from(buf_T *buf)
+{
+  bufref_T bufref;
+  bufref.br_buf = buf;
+  bufref.br_fnum = buf == NULL ? 0 : buf->b_fnum;
+  bufref.br_buf_free_count = buf_free_count;
+  return bufref;
+}
+
 /// Store "buf" in "bufref" and set the free count.
 ///
 /// @param bufref Reference to be used for the buffer.

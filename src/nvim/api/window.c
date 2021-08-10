@@ -123,9 +123,8 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
-  winref_T ref = winref_from(win);
-  autocmd_check_cursor_moved(win, EVENT_CURSORMOVED);
-  if (!winref_valid(&ref)) return;
+  winref_T winref = winref_from(win);
+  autocmd_check_cursor_moved(&winref, EVENT_CURSORMOVED);
 
   redraw_later(win, VALID);
 }
@@ -175,7 +174,8 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
   try_end(err);
 
   FOR_ALL_WINDOWS(wp) {
-    autocmd_check_window_scrolled(wp);
+    winref_T winref = winref_from(wp);
+    autocmd_check_window_scrolled(&winref);
   }
 }
 
@@ -224,7 +224,8 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   try_end(err);
 
   FOR_ALL_WINDOWS(wp) {
-    autocmd_check_window_scrolled(wp);
+    winref_T winref = winref_from(wp);
+    autocmd_check_window_scrolled(&winref);
   }
 }
 
@@ -432,7 +433,8 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
     didset_window_options(win);
   }
 
-  autocmd_check_window_scrolled(win);
+  winref_T winref = winref_from(win);
+  autocmd_check_window_scrolled(&winref);
 }
 
 /// Gets window configuration.
