@@ -109,14 +109,11 @@ bool autocmd_check_cursor_moved(win_T *win, event_T event)
 
   if ((has_event_value || win->w_p_cole > 0)
       && !equalpos(win->w_last_cursormoved, win->w_cursor)) {
-
     if (event == EVENT_CURSORMOVED) {
       if (has_event_value) {
         result = apply_autocmds(event, NULL, NULL, false, win->w_buffer);
       }
-    }
-    else {  // event == EVENT_CURSORMOVEDI
-
+    } else {  // event == EVENT_CURSORMOVEDI
       // Need to update the screen first, to make sure syntax
       // highlighting is correct after making a change (e.g., inserting
       // a "(".  The autocommand may also require a redraw, so it's done
@@ -152,13 +149,10 @@ bool autocmd_check_text_changed(buf_T *buf, event_T event)
 
   if (has_event(event)
       && last_changedtick != buf_get_changedtick(buf)) {
-
     if (event == EVENT_TEXTCHANGED) {
       result = apply_autocmds(event, NULL, NULL, false, buf);
       buf->b_last_changedtick = buf_get_changedtick(buf);
-    }
-    else {  // EVENT_TEXTCHANGEDI or EVENT_TEXTCHANGEDP
-
+    } else {  // EVENT_TEXTCHANGEDI or EVENT_TEXTCHANGEDP
       // Trigger TextChanged P or I if changedtick differs.
       // TextChangedI will need to trigger for backwards compatibility,
       // thus use different b_last_changedtick* variables.
@@ -172,14 +166,13 @@ bool autocmd_check_text_changed(buf_T *buf, event_T event)
 
       if (event == EVENT_TEXTCHANGEDI) {
         buf->b_last_changedtick = buf_get_changedtick(buf);
-      }
-      else {  // event == EVENT_TEXTCHANGEDP
+      } else {  // event == EVENT_TEXTCHANGEDP
         buf->b_last_changedtick_pum = buf_get_changedtick(buf);
       }
 
       if (tick != buf_get_changedtick(buf)) {  // see ins_apply_autocmds()
         u_save(curwin->w_cursor.lnum,
-              (linenr_T)(curwin->w_cursor.lnum + 1));
+               (linenr_T)(curwin->w_cursor.lnum + 1));
       }
     }
   }
