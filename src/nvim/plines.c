@@ -32,27 +32,17 @@
 # include "plines.c.generated.h"
 #endif
 
-int plines_win(
-    win_T *const wp,
-    const linenr_T lnum,
-    const bool winheight          // when true limit to window height
-)
+
+/// @param winheight when true limit to window height
+int plines_win(win_T *wp, linenr_T lnum, bool winheight)
 {
-  /* Check for filler lines above this buffer line.  When folded the result
-   * is one line anyway. */
+  // Check for filler lines above this buffer line.  When folded the result
+  // is one line anyway.
   return plines_win_nofill(wp, lnum, winheight) + diff_check_fill(wp, lnum);
 }
 
-int plines_nofill(const linenr_T lnum)
-{
-  return plines_win_nofill(curwin, lnum, true);
-}
-
-int plines_win_nofill(
-    win_T *const wp,
-    const linenr_T lnum,
-    const bool winheight          // when true limit to window height
-)
+/// @param winheight when true limit to window height
+int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
 {
   if (!wp->w_p_wrap) {
     return 1;
@@ -74,19 +64,18 @@ int plines_win_nofill(
   return lines;
 }
 
-/*
- * Return number of window lines physical line "lnum" will occupy in window
- * "wp".  Does not care about folding, 'wrap' or 'diff'.
- */
+/// @Return number of window lines physical line "lnum" will occupy in window
+/// "wp".  Does not care about folding, 'wrap' or 'diff'.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char_u      *s;
   unsigned int col;
   int width;
 
-  s = ml_get_buf(wp->w_buffer, lnum, FALSE);
-  if (*s == NUL)                /* empty line */
+  s = ml_get_buf(wp->w_buffer, lnum, false);
+  if (*s == NUL) {  // empty line
     return 1;
+  }
   col = win_linetabsize(wp, s, MAXCOL);
 
   // If list mode is on, then the '$' at the end of the line may take up one
@@ -95,9 +84,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     col += 1;
   }
 
-  /*
-   * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
-   */
+  // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
   width = wp->w_width_inner - win_col_off(wp);
   if (width <= 0 || col > 32000) {
     return 32000;  // bigger than the number of screen columns
@@ -111,18 +98,17 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   return ((int)col + (width - 1)) / width + 1;
 }
 
-/*
- * Like plines_win(), but only reports the number of physical screen lines
- * used from the start of the line to the given column number.
- */
+/// Like plines_win(), but only reports the number of physical screen lines
+/// used from the start of the line to the given column number.
 int plines_win_col(win_T *wp, linenr_T lnum, long column)
 {
   // Check for filler lines above this buffer line.  When folded the result
   // is one line anyway.
   int lines = diff_check_fill(wp, lnum);
 
-  if (!wp->w_p_wrap)
+  if (!wp->w_p_wrap) {
     return lines + 1;
+  }
 
   if (wp->w_width_inner == 0) {
     return lines + 1;
@@ -154,8 +140,9 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   }
 
   lines += 1;
-  if (col > width)
+  if (col > width) {
     lines += (col - width) / (width + win_col_off2(wp)) + 1;
+  }
   return lines;
 }
 
