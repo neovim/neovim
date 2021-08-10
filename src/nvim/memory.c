@@ -683,7 +683,7 @@ void free_all_mem(void)
   p_acd = false;
   for (buf = firstbuf; buf != NULL; ) {
     bufref_T bufref;
-    set_bufref(&bufref, buf);
+    bufref_set(&bufref, buf);
     nextbuf = buf->b_next;
     close_buffer(NULL, buf, DOBUF_WIPE, false);
     // Didn't work, try next one.

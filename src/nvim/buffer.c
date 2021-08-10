@@ -91,7 +91,7 @@ static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
 
-// Number of times free_buffer() was called.
+// Number of times buffer_free() was called.
 static int buf_free_count = 0;
 
 typedef enum {
@@ -209,7 +209,7 @@ int open_buffer(
 
   // The autocommands in readfile() may change the buffer, but only AFTER
   // reading the file.
-  set_bufref(&old_curbuf, curbuf);
+  bufref_set(&old_curbuf, curbuf);
   modified_was_set = false;
 
   // mark cursor position as being invalid
@@ -350,7 +350,7 @@ int open_buffer(
 ///
 /// @param bufref Reference to be used for the buffer.
 /// @param buf    The buffer to reference.
-void set_bufref(bufref_T *bufref, buf_T *buf)
+void bufref_set(bufref_T *bufref, buf_T *buf)
 {
   bufref->br_buf = buf;
   bufref->br_fnum = buf == NULL ? 0 : buf->b_fnum;
@@ -358,7 +358,7 @@ void set_bufref(bufref_T *bufref, buf_T *buf)
 }
 
 /// Return true if "bufref->br_buf" points to the same buffer as when
-/// set_bufref() was called and it is a valid buffer.
+/// bufref_set() was called and it is a valid buffer.
 /// Only goes through the buffer list if buf_free_count changed.
 /// Also checks if b_fnum is still the same, a :bwipe followed by :new might get
 /// the same allocated memory, but it's a different buffer.
@@ -466,7 +466,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
   }
 
   bufref_T bufref;
-  set_bufref(&bufref, buf);
+  bufref_set(&bufref, buf);
 
   // When the buffer is no longer in a window, trigger BufWinLeave
   if (buf->b_nwindows == 1) {
@@ -620,7 +620,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
     } else {
       buf->b_next->b_prev = buf->b_prev;
     }
-    free_buffer(buf);
+    buffer_free(buf);
   } else {
     if (del_buf) {
       // Free all internal variables and reset option values, to make
@@ -684,7 +684,7 @@ void buf_freeall(buf_T *buf, int flags)
   buf->b_locked++;
 
   bufref_T bufref;
-  set_bufref(&bufref, buf);
+  bufref_set(&bufref, buf);
 
   if ((buf->b_ml.ml_mfp != NULL)
       && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf)
@@ -756,7 +756,7 @@ void buf_freeall(buf_T *buf, int flags)
  * Free a buffer structure and the things it contains related to the buffer
  * itself (not the file, that must have been done already).
  */
-static void free_buffer(buf_T *buf)
+static void buffer_free(buf_T *buf)
 {
   handle_unregister_buffer(buf);
   buf_free_count++;
@@ -848,7 +848,7 @@ static void clear_wininfo(buf_T *buf)
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
   bufref_T old_curbuf;
-  set_bufref(&old_curbuf, curbuf);
+  bufref_set(&old_curbuf, curbuf);
   swap_exists_action = SEA_DIALOG;
 
   (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
@@ -1083,7 +1083,7 @@ static int empty_curbuf(int close_others, int forceit, int action)
   }
 
   bufref_T bufref;
-  set_bufref(&bufref, buf);
+  bufref_set(&bufref, buf);
 
   if (close_others) {
     // Close any other windows on this buffer, then make it empty.
@@ -1212,7 +1212,7 @@ do_buffer(
   if (unload) {
     int forward;
     bufref_T bufref;
-    set_bufref(&bufref, buf);
+    bufref_set(&bufref, buf);
 
     /* When unloading or deleting a buffer that's already unloaded and
      * unlisted: fail silently. */
@@ -1430,7 +1430,7 @@ do_buffer(
   if (action == DOBUF_GOTO && !can_abandon(curbuf, forceit)) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
       bufref_T bufref;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
       dialog_changed(curbuf, false);
       if (!bufref_valid(&bufref)) {
         // Autocommand deleted buffer, oops!
@@ -1487,8 +1487,8 @@ void set_curbuf(buf_T *buf, int action)
   prevbuf = curbuf;
   bufref_T newbufref;
   bufref_T prevbufref;
-  set_bufref(&prevbufref, prevbuf);
-  set_bufref(&newbufref, buf);
+  bufref_set(&prevbufref, prevbuf);
+  bufref_set(&newbufref, buf);
 
   // Autocommands may delete the curren buffer and/or the buffer we want to go
   // to.  In those cases don't close the buffer.
@@ -1741,7 +1741,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
     if ((flags & BLN_LISTED) && !buf->b_p_bl) {
       buf->b_p_bl = true;
       bufref_T bufref;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
       if (!(flags & BLN_DUMMY)) {
         if (apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
             && !bufref_valid(&bufref)) {
@@ -1807,7 +1807,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
     }
     XFREE_CLEAR(buf->b_ffname);
     if (buf != curbuf) {
-      free_buffer(buf);
+      buffer_free(buf);
     }
     return NULL;
   }
@@ -1891,7 +1891,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
     // split the window with re-using the one empty buffer. This may result in
     // unexpectedly losing the empty buffer.
     bufref_T bufref;
-    set_bufref(&bufref, buf);
+    bufref_set(&bufref, buf);
     if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
         && !bufref_valid(&bufref)) {
       return NULL;
@@ -4899,7 +4899,7 @@ do_arg_all(
            * try autowriting. */
           if (!buf_hide(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
             bufref_T bufref;
-            set_bufref(&bufref, buf);
+            bufref_set(&bufref, buf);
             (void)autowrite(buf, false);
             // Check if autocommands removed the window.
             if (!win_valid(wp) || !bufref_valid(&bufref)) {
@@ -5157,7 +5157,7 @@ void ex_buffer_all(exarg_T *eap)
 
     if (wp == NULL && split_ret == OK) {
       bufref_T bufref;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
       // Split the window and put the buffer in it.
       p_ea_save = p_ea;
       p_ea = true;                      // use space from all windows

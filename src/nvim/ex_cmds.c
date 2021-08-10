@@ -2062,7 +2062,7 @@ void do_wqall(exarg_T *eap)
       ++error;
     } else {
       bufref_T bufref;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
       if (buf_write_all(buf, eap->forceit) == FAIL) {
         error++;
       }
@@ -2272,7 +2272,7 @@ int do_ecmd(
   if (eap != NULL)
     command = eap->do_ecmd_cmd;
 
-  set_bufref(&old_curbuf, curbuf);
+  bufref_set(&old_curbuf, curbuf);
 
   if (fnum != 0) {
     if (fnum == curbuf->b_fnum)         /* file is already being edited */
@@ -2396,7 +2396,7 @@ int do_ecmd(
       if (oldwin != NULL) {
         oldwin = curwin;
       }
-      set_bufref(&old_curbuf, curbuf);
+      bufref_set(&old_curbuf, curbuf);
     }
     if (buf == NULL)
       goto theend;
@@ -2406,7 +2406,7 @@ int do_ecmd(
     } else {
       // Existing memfile.
       oldbuf = true;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
       (void)buf_check_timestamp(buf);
       // Check if autocommands made buffer invalid or changed the current
       // buffer.
@@ -2450,7 +2450,7 @@ int do_ecmd(
       if (buf->b_fname != NULL) {
         new_name = vim_strsave(buf->b_fname);
       }
-      set_bufref(&au_new_curbuf, buf);
+      bufref_set(&au_new_curbuf, buf);
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
       cmdwin_type = save_cmdwin_type;
       if (!bufref_valid(&au_new_curbuf)) {
@@ -2600,7 +2600,7 @@ int do_ecmd(
     } else {
       new_name = NULL;
     }
-    set_bufref(&bufref, buf);
+    bufref_set(&bufref, buf);
 
     // If the buffer was used before, store the current contents so that
     // the reload can be undone.  Do not do this if the (empty) buffer is

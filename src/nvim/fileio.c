@@ -2313,7 +2313,7 @@ buf_write(
 
     // Set curwin/curbuf to buf and save a few things.
     aucmd_prepbuf(&aco, buf);
-    set_bufref(&bufref, buf);
+    bufref_set(&bufref, buf);
 
     if (append) {
       if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD,
@@ -4698,7 +4698,7 @@ check_timestamps(
       // Only check buffers in a window.
       if (buf->b_nwindows > 0) {
         bufref_T bufref;
-        set_bufref(&bufref, buf);
+        bufref_set(&bufref, buf);
         const int n = buf_check_timestamp(buf);
         if (didit < n) {
           didit = n;
@@ -4786,7 +4786,7 @@ int buf_check_timestamp(buf_T *buf)
   char        *reason;
 
   bufref_T bufref;
-  set_bufref(&bufref, buf);
+  bufref_set(&bufref, buf);
 
   // If its a terminal, there is no file name, the buffer is not loaded,
   // 'buftype' is set, we are in the middle of a save or being called
@@ -5029,7 +5029,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   } else {
     // Allocate a buffer without putting it in the buffer list.
     savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
-    set_bufref(&bufref, savebuf);
+    bufref_set(&bufref, savebuf);
     if (savebuf != NULL && buf == curbuf) {
       /* Open the memline. */
       curbuf = savebuf;

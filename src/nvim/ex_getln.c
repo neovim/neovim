@@ -6220,7 +6220,7 @@ static int open_cmdwin(void)
     return K_IGNORE;
   }
 
-  set_bufref(&old_curbuf, curbuf);
+  bufref_set(&old_curbuf, curbuf);
 
   // Save current window sizes.
   win_size_save(&winsizes);
@@ -6398,7 +6398,7 @@ static int open_cmdwin(void)
     // Avoid command-line window first character being concealed.
     curwin->w_p_cole = 0;
     wp = curwin;
-    set_bufref(&bufref, curbuf);
+    bufref_set(&bufref, curbuf);
     win_goto(old_curwin);
     if (win_valid(wp) && wp != curwin) {
       win_close(wp, true);

@@ -2128,7 +2128,7 @@ static int qf_get_fnum(qf_list_T *qfl, char_u *directory, char_u *fname )
     xfree(qf_last_bufname);
     buf = buflist_new(bufname, NULL, (linenr_T)0, BLN_NOOPT);
     qf_last_bufname = (bufname == ptr) ? bufname : vim_strsave(bufname);
-    set_bufref(&qf_last_bufref, buf);
+    bufref_set(&qf_last_bufref, buf);
   }
   if (buf == NULL) {
     return 0;
@@ -5654,7 +5654,7 @@ load_dummy_buffer (
   if (newbuf == NULL) {
     return NULL;
   }
-  set_bufref(&newbufref, newbuf);
+  bufref_set(&newbufref, newbuf);
 
   // Init the options.
   buf_copy_options(newbuf, BCO_ENTER | BCO_NOHELP);
@@ -5690,7 +5690,7 @@ load_dummy_buffer (
         // using netrw and editing a remote file.  Use the current
         // buffer instead, delete the dummy one after restoring the
         // window stuff.
-        set_bufref(&newbuf_to_wipe, newbuf);
+        bufref_set(&newbuf_to_wipe, newbuf);
         newbuf = curbuf;
       }
     }

@@ -1307,7 +1307,7 @@ int autowrite(buf_T *buf, int forceit)
       || (!forceit && buf->b_p_ro) || buf->b_ffname == NULL) {
     return FAIL;
   }
-  set_bufref(&bufref, buf);
+  bufref_set(&bufref, buf);
   r = buf_write_all(buf, forceit);
 
   // Writing may succeed but the buffer still changed, e.g., when there is a
@@ -1328,7 +1328,7 @@ void autowrite_all(void)
   FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf) && !buf->b_p_ro && !bt_dontwrite(buf)) {
       bufref_T bufref;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
       (void)buf_write_all(buf, false);
       // an autocommand may have deleted the buffer
       if (!bufref_valid(&bufref)) {
@@ -1344,7 +1344,7 @@ bool check_changed(buf_T *buf, int flags)
 {
   int forceit = (flags & CCGD_FORCEIT);
   bufref_T bufref;
-  set_bufref(&bufref, buf);
+  bufref_set(&bufref, buf);
 
   if (!forceit
       && bufIsChanged(buf)
@@ -1425,7 +1425,7 @@ void dialog_changed(buf_T *buf, bool checkall)
     FOR_ALL_BUFFERS(buf2) {
       if (bufIsChanged(buf2) && (buf2->b_ffname != NULL) && !buf2->b_p_ro) {
         bufref_T bufref;
-        set_bufref(&bufref, buf2);
+        bufref_set(&bufref, buf2);
 
         if (buf2->b_fname != NULL
             && check_overwrite(&ea, buf2, buf2->b_fname,
@@ -1550,7 +1550,7 @@ bool check_changed_any(bool hidden, bool unload)
     }
     if ((!hidden || buf->b_nwindows == 0) && bufIsChanged(buf)) {
       bufref_T bufref;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
 
       // Try auto-writing the buffer.  If this fails but the buffer no
       // longer exists it's not changed, that's OK.
@@ -1596,7 +1596,7 @@ bool check_changed_any(bool hidden, bool unload)
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       if (wp->w_buffer == buf) {
         bufref_T bufref;
-        set_bufref(&bufref, buf);
+        bufref_set(&bufref, buf);
         goto_tabpage_win(tp, wp);
         // Paranoia: did autocmds wipe out the buffer with changes?
         if (!bufref_valid(&bufref)) {

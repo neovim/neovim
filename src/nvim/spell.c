@@ -1999,7 +1999,7 @@ char_u *did_set_spelllang(win_T *wp)
   char_u      *spl_copy;
 
   bufref_T bufref;
-  set_bufref(&bufref, wp->w_buffer);
+  bufref_set(&bufref, wp->w_buffer);
 
   // We don't want to do this recursively.  May happen when a language is
   // not available and the SpellFileMissing autocommand opens a new buffer

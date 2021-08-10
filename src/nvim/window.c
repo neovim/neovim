@@ -68,6 +68,10 @@
 
 static char *m_onlyone = N_("Already only one window");
 
+// Number of times win_free() was called.
+static int win_free_count = 0;
+
+
 /*
  * all CTRL-W window commands are handled here, called from normal_cmd().
  */
@@ -1509,6 +1513,43 @@ bool win_valid_any_tab(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return false;
 }
 
+/// Creates new "winref" from "win"
+///
+/// @param win    The window to reference.
+winref_T winref_from(win_T *win)
+{
+  winref_T winref;
+  winref.wr_win = win;
+  winref.wr_fnum = win == NULL ? 0 : win->handle;
+  winref.wr_win_free_count = win_free_count;
+  return winref;
+}
+
+/// Store "win" in "winref" and set the free count.
+///
+/// @param winref Reference to be used for the window.
+/// @param win    The window to reference.
+void winref_set(winref_T *winref, win_T *win)
+{
+  winref->wr_win = win;
+  winref->wr_fnum = win == NULL ? 0 : win->handle;
+  winref->wr_win_free_count = win_free_count;
+}
+
+/// Return true if "winref->wr_win" points to the same window as when
+/// set_winref() was called and it is a valid window.
+/// Only goes through the window list if win_free_count changed.
+/// Also checks if b_fnum is still the same, a :bwipe followed by :new might get
+/// the same allocated memory, but it's a different window.
+///
+/// @param winref Buffer reference to check for.
+bool winref_valid(winref_T *winref)
+{
+  return winref->wr_win_free_count == win_free_count
+    ? true
+    : win_valid(winref->wr_win) && winref->wr_fnum == winref->wr_win->handle;
+}
+
 /*
  * Return the number of windows.
  */
@@ -2442,7 +2483,7 @@ int win_close(win_T *win, bool free_buf)
    */
   if (win->w_buffer != NULL) {
     bufref_T bufref;
-    set_bufref(&bufref, curbuf);
+    bufref_set(&bufref, curbuf);
     win->w_closing = true;
     close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, true);
     if (win_valid_any_tab(win)) {
@@ -4645,6 +4686,9 @@ win_free (
   wininfo_T   *wip;
 
   handle_unregister_window(wp);
+
+  win_free_count += 1;
+
   clearFolding(wp);
 
   /* reduce the reference count to the argument list. */
@@ -6511,7 +6555,7 @@ void restore_win_noblock(win_T *save_curwin, tabpage_T *save_curtab,
 void switch_buffer(bufref_T *save_curbuf, buf_T *buf)
 {
   block_autocmds();
-  set_bufref(save_curbuf, curbuf);
+  bufref_set(save_curbuf, curbuf);
   curbuf->b_nwindows--;
   curbuf = buf;
   curwin->w_buffer = buf;

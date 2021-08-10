@@ -628,7 +628,7 @@ void getout(int exitval)
         if (buf_get_changedtick(buf) != -1) {
           bufref_T bufref;
 
-          set_bufref(&bufref, buf);
+          bufref_set(&bufref, buf);
           apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname,
                          buf->b_fname, false, buf);
           if (bufref_valid(&bufref)) {
@@ -645,7 +645,7 @@ void getout(int exitval)
     FOR_ALL_BUFFERS(buf) {
       if (buf->b_ml.ml_mfp != NULL) {
         bufref_T bufref;
-        set_bufref(&bufref, buf);
+        bufref_set(&bufref, buf);
         apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf);
         if (!bufref_valid(&bufref)) {
           // Autocmd deleted the buffer.

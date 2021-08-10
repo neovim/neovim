@@ -6527,7 +6527,7 @@ ex_win_close(
   if (need_hide && !buf_hide(buf) && !forceit) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
       bufref_T bufref;
-      set_bufref(&bufref, buf);
+      bufref_set(&bufref, buf);
       dialog_changed(buf, false);
       if (bufref_valid(&bufref) && bufIsChanged(buf)) {
         return;

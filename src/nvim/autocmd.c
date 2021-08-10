@@ -1036,7 +1036,7 @@ void ex_doautoall(exarg_T *eap)
     }
     // Find a window for this buffer and save some values.
     aucmd_prepbuf(&aco, buf);
-    set_bufref(&bufref, buf);
+    bufref_set(&bufref, buf);
 
     // execute the autocommands for this buffer
     retval = do_doautocmd(arg, false, &did_aucmd);
@@ -1163,7 +1163,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   }
   curbuf = buf;
   aco->new_curwin_handle = curwin->handle;
-  set_bufref(&aco->new_curbuf, curbuf);
+  bufref_set(&aco->new_curbuf, curbuf);
 }
 
 /// Cleanup after executing autocommands for a (hidden) buffer.

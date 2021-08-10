@@ -101,6 +101,15 @@ typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
 typedef uint16_t disptick_T;  // display tick type
 
+// Reference to a window that stores the value of buf_free_count.
+// bufref_valid() only needs to check "buf" when the count differs.
+typedef struct {
+  win_T *wr_win;
+  int    wr_fnum;
+  int    wr_win_free_count;
+} winref_T;
+
+
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
 // for struct memfile, bhdr_T, blocknr_T... (it needs buf_T)
