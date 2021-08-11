@@ -2931,3 +2931,106 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Erro
 error:
   decor_provider_clear(p);
 }
+
+/// Deletes a uppercase/file named mark. See |mark-motions|.
+///
+/// @note fails with error if a lowercase or buffer local named mark is used.
+/// @param name       Mark name
+/// @return true if the mark was deleted, else false.
+/// @see |nvim_buf_del_mark()|
+/// @see |nvim_get_mark()|
+Boolean nvim_del_mark(String name, Error *err)
+  FUNC_API_SINCE(8)
+{
+  bool res = false;
+  if (name.size != 1) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Mark name must be a single character");
+    return res;
+  }
+  // Only allow file/uppercase marks
+  // TODO(muniter): Refactor this ASCII_ISUPPER macro to a proper function
+  if (ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data)) {
+    res = set_mark(NULL, name, 0, 0, err);
+  } else {
+    api_set_error(err, kErrorTypeValidation,
+                  "Only file/uppercase marks allowed, invalid mark name: '%c'",
+                  *name.data);
+  }
+  return res;
+}
+
+/// Return a tuple (row, col, buffer, buffername) representing the position of
+/// the uppercase/file named mark. See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @note fails with error if a lowercase or buffer local named mark is used.
+/// @param name       Mark name
+/// @return 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
+/// not set.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_del_mark()|
+Array nvim_get_mark(String name, Error *err)
+  FUNC_API_SINCE(8)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  if (name.size != 1) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Mark name must be a single character");
+    return rv;
+  } else if (!(ASCII_ISUPPER(*name.data) || ascii_isdigit(*name.data))) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Only file/uppercase marks allowed, invalid mark name: '%c'",
+                  *name.data);
+    return rv;
+  }
+
+  xfmark_T mark = get_global_mark(*name.data);
+  pos_T pos = mark.fmark.mark;
+  bool allocated = false;
+  int bufnr;
+  char *filename;
+
+  // Marks are from an open buffer it fnum is non zero
+  if (mark.fmark.fnum != 0) {
+    bufnr = mark.fmark.fnum;
+    filename = (char *)buflist_nr2name(bufnr, true, true);
+    allocated = true;
+  // Marks comes from shada
+  } else {
+    filename = (char *)mark.fname;
+    bufnr = 0;
+  }
+
+  bool exists = filename != NULL;
+  Integer row;
+  Integer col;
+
+  if (!exists || pos.lnum <= 0) {
+    if (allocated) {
+      xfree(filename);
+      allocated = false;
+    }
+    filename = "";
+    bufnr = 0;
+    row = 0;
+    col = 0;
+  } else {
+    row = pos.lnum;
+    col = pos.col;
+  }
+
+  ADD(rv, INTEGER_OBJ(row));
+  ADD(rv, INTEGER_OBJ(col));
+  ADD(rv, INTEGER_OBJ(bufnr));
+  ADD(rv, STRING_OBJ(cstr_to_string(filename)));
+
+  if (allocated) {
+    xfree(filename);
+  }
+
+  return rv;
+}
+

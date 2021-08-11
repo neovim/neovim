@@ -1108,14 +1108,97 @@ Boolean nvim_buf_is_valid(Buffer buffer)
   return ret;
 }
 
-/// Return a tuple (row,col) representing the position of the named mark.
+/// Deletes a named mark in the buffer. See |mark-motions|.
+///
+/// @note only deletes marks set in the buffer, if the mark is not set
+/// in the buffer it will return false.
+/// @param buffer     Buffer to set the mark on
+/// @param name       Mark name
+/// @return true if the mark was deleted, else false.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_del_mark()|
+Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
+  FUNC_API_SINCE(8)
+{
+  bool res = false;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return res;
+  }
+
+  if (name.size != 1) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Mark name must be a single character");
+    return res;
+  }
+
+  pos_T *pos = getmark_buf(buf, *name.data, false);
+
+  // pos point to NULL when there's no mark with name
+  if (pos == NULL) {
+    api_set_error(err, kErrorTypeValidation, "Invalid mark name: '%c'",
+                  *name.data);
+    return res;
+  }
+
+  // pos->lnum is 0 when the mark is not valid in the buffer, or is not set.
+  if (pos->lnum != 0) {
+    // since the mark belongs to the buffer delete it.
+    res = set_mark(buf, name, 0, 0, err);
+  }
+
+  return res;
+}
+
+/// Sets a named mark in the given buffer, all marks are allowed
+/// file/uppercase, visual, last change, etc. See |mark-motions|.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
+///
+/// @note Passing 0 as line deletes the mark
+///
+/// @param buffer     Buffer to set the mark on
+/// @param name       Mark name
+/// @param line       Line number
+/// @param col        Column/row number
+/// @return true if the mark was set, else false.
+/// @see |nvim_buf_del_mark()|
+/// @see |nvim_buf_get_mark()|
+Boolean nvim_buf_set_mark(Buffer buffer, String name,
+                          Integer line, Integer col, Error *err)
+  FUNC_API_SINCE(8)
+{
+  bool res = false;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return res;
+  }
+
+  if (name.size != 1) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Mark name must be a single character");
+    return res;
+  }
+
+  res = set_mark(buf, name, line, col, err);
+
+  return res;
+}
+
+/// Returns a tuple (row,col) representing the position of the named mark. See
+/// |mark-motions|.
 ///
 /// Marks are (1,0)-indexed. |api-indexing|
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Mark name
 /// @param[out] err   Error details, if any
-/// @return (row, col) tuple
+/// @return (row, col) tuple, (0, 0) if the mark is not set, or is an
+/// uppercase/file mark set in another buffer.
+/// @see |nvim_buf_set_mark()|
+/// @see |nvim_buf_del_mark()|
 ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   FUNC_API_SINCE(1)
 {
