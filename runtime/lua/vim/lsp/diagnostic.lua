@@ -490,28 +490,23 @@ local _next_diagnostic = function(position, search_forward, bufnr, opts, client_
     end
     local line_diagnostics = M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
     if line_diagnostics and not vim.tbl_isempty(line_diagnostics) then
+      local sort_diagnostics, is_next
       if search_forward then
-        table.sort(line_diagnostics, function(a, b) return a.range.start.character < b.range.start.character end)
-        if i == 0 then
-          for _, v in pairs(line_diagnostics) do
-            if v.range.start.character > position[2] then
-              return v
-            end
+        sort_diagnostics = function(a, b) return a.range.start.character < b.range.start.character end
+        is_next = function(diagnostic) return diagnostic.range.start.character > position[2] end
+      else
+        sort_diagnostics = function(a, b) return a.range.start.character > b.range.start.character end
+        is_next = function(diagnostic) return diagnostic.range.start.character < position[2] end
+      end
+      table.sort(line_diagnostics, sort_diagnostics)
+      if i == 0 then
+        for _, v in pairs(line_diagnostics) do
+          if is_next(v) then
+            return v
           end
-        else
-          return line_diagnostics[1]
         end
-      else -- search backwards
-        table.sort(line_diagnostics, function(a, b) return a.range.start.character > b.range.start.character end)
-        if i == 0 then
-          for _, v in pairs(line_diagnostics) do
-            if v.range.start.character < position[2] then
-              return v
-            end
-          end
-        else
-          return line_diagnostics[1]
-        end
+      else
+        return line_diagnostics[1]
       end
     end
   end
