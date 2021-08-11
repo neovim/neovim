@@ -1486,6 +1486,23 @@ trim({s})                                                         *vim.trim()*
                 See also: ~
                     https://www.lua.org/pil/20.2.html
 
+uniq({list}, {func})                                              *vim.uniq()*
+                Create a copy of {list} with items removed according to
+                {func}. If {func} is omitted, repeated adjacent items are
+                removed.
+
+                Parameters: ~
+                    {list}  Input list
+                    {func}  Optional comparison function. This function
+                            accepts two parameters (the previous and current
+                            element of the list). If the function returns
+                            `true` the current element is kept in the list.
+                            The default comparison function checks for
+                            equality.
+
+                Return: ~
+                    A new list with items removed according to {func}.
+
 validate({opt})                                               *vim.validate()*
                 Validates a parameter specification (types and values).
 

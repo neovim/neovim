@@ -112,6 +112,29 @@ function vim.split(s,sep,plain)
   return t
 end
 
+--- Create a copy of {list} with items removed according to {func}. If {func}
+--- is omitted, repeated adjacent items are removed.
+---
+---@param list Input list
+---@param func Optional comparison function. This function accepts two
+---            parameters (the previous and current element of the list). If
+---            the function returns `true` the current element is kept in the
+---            list. The default comparison function checks for equality.
+---@returns A new list with items removed according to {func}.
+function vim.uniq(list, func)
+  vim.validate { list = { list, "table" }, func = { func, "function", true } }
+  local last = nil
+  local new = {}
+  func = func or function(a, b) return a ~= b end
+  for _, v in ipairs(list) do
+    if not last or func(last, v) then
+      last = v
+      table.insert(new, v)
+    end
+  end
+  return new
+end
+
 --- Return a list of all keys used in a table.
 --- However, the order of the return table of keys is not guaranteed.
 ---

@@ -288,6 +288,34 @@ describe('lua stdlib', function()
       pcall_err(split, 'string', 'string', 1))
   end)
 
+  it("vim.uniq", function()
+    local uniq = function(list)
+      return exec_lua("return vim.uniq(...)", list)
+    end
+
+    eq({"a", "b", "c"}, uniq({"a", "a", "b", "c", "c", "c"}))
+    eq({"", "x", "", "y", "z", ""}, uniq({"", "x", "x", "", "", "y", "z", "z", ""}))
+    eq({1, 2, 3, 1, 2}, uniq({1, 1, 2, 3, 1, 2}))
+
+    local uniq_func = function(list)
+      return exec_lua("return vim.uniq(..., function(a, b) return a < b end)", list)
+    end
+
+    eq({1, 2, 3, 4, 5}, uniq_func({1, 2, 0, 1, 3, 2, 4, -3, 5, 5}))
+
+    local dedup = function(list)
+      return exec_lua([[
+        local seen = {}
+        return vim.uniq(..., function(last, x)
+          local t = not seen[x] and last ~= x
+          seen[x] = true
+          return t
+        end)]], list)
+    end
+
+    eq({"a", "b", "c", "d"}, dedup({"a", "a", "b", "a", "c", "c", "b", "d", "a", "d"}))
+  end)
+
   it('vim.trim', function()
     local trim = function(s)
       return exec_lua('return vim.trim(...)', s)
