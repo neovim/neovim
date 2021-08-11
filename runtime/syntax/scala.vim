@@ -66,7 +66,7 @@ syn match scalaChar /'\\u[A-Fa-f0-9]\{4}'/ contains=scalaUnicodeChar
 syn match scalaEscapedChar /\\[\\"'ntbrf]/
 syn match scalaUnicodeChar /\\u[A-Fa-f0-9]\{4}/
 hi link scalaChar Character
-hi link scalaEscapedChar Function
+hi link scalaEscapedChar Special
 hi link scalaUnicodeChar Special
 
 syn match scalaOperator "||"
