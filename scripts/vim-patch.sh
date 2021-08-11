@@ -326,12 +326,14 @@ stage_patch() {
   return $ret
 }
 
-hub_pr() {
-  hub pull-request -m "$1"
+gh_pr() {
+  gh pr create --title "$1" --body "$2"
 }
 
 git_hub_pr() {
-  git hub pull new -m "$1"
+  local pr_message
+  pr_message="$(printf '%s\n\n%s\n' "$1" "$2")"
+  git hub pull new -m "${pr_message}"
 }
 
 # shellcheck disable=SC2015
@@ -341,14 +343,14 @@ submit_pr() {
   local push_first
   push_first=1
   local submit_fn
-  if check_executable hub; then
-    submit_fn="hub_pr"
+  if check_executable gh; then
+    submit_fn="gh_pr"
   elif check_executable git-hub; then
     push_first=0
     submit_fn="git_hub_pr"
   else
-    >&2 echo "${BASENAME}: 'hub' or 'git-hub' not found in PATH or not executable."
-    >&2 echo "              Get it here: https://hub.github.com/"
+    >&2 echo "${BASENAME}: 'gh' or 'git-hub' not found in PATH or not executable."
+    >&2 echo "              Get it here: https://cli.github.com/"
     exit 1
   fi
 
@@ -371,9 +373,7 @@ submit_pr() {
   patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[*]}" # Create space-separated string from array.
   pr_title="${pr_title// /,}" # Replace spaces with commas.
-
-  local pr_message
-  pr_message="$(printf 'vim-patch:%s\n\n%s\n' "${pr_title#,}" "${pr_body}")"
+  pr_title="$(printf 'vim-patch:%s' "${pr_title#,}")"
 
   if [[ $push_first -ne 0 ]]; then
     echo "Pushing to 'origin/${checked_out_branch}'."
@@ -385,7 +385,7 @@ submit_pr() {
   fi
 
   echo "Creating pull request."
-  output="$(${submit_fn} "${pr_message}" 2>&1)" &&
+  output="$(${submit_fn} "${pr_title}" "${pr_body}" 2>&1)" &&
     msg_ok "${output}" ||
     (msg_err "${output}"; false)
 

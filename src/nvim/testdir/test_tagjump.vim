@@ -771,15 +771,16 @@ func Test_ltag()
   ltag third
   call assert_equal('Xfoo', bufname(''))
   call assert_equal(3, line('.'))
-  call assert_equal([{'lnum': 3, 'bufnr': bufnr('Xfoo'), 'col': 0,
-        \ 'pattern': '', 'valid': 1, 'vcol': 0, 'nr': 0, 'type': '',
-        \ 'module': '', 'text': 'third'}], getloclist(0))
+  call assert_equal([{'lnum': 3, 'end_lnum': 0, 'bufnr': bufnr('Xfoo'),
+        \ 'col': 0, 'end_col': 0, 'pattern': '', 'valid': 1, 'vcol': 0,
+        \ 'nr': 0, 'type': '', 'module': '', 'text': 'third'}], getloclist(0))
 
   ltag second
   call assert_equal(2, line('.'))
-  call assert_equal([{'lnum': 0, 'bufnr': bufnr('Xfoo'), 'col': 0,
-        \ 'pattern': '^\Vint second() {}\$', 'valid': 1, 'vcol': 0, 'nr': 0,
-        \ 'type': '', 'module': '', 'text': 'second'}], getloclist(0))
+  call assert_equal([{'lnum': 0, 'end_lnum': 0, 'bufnr': bufnr('Xfoo'),
+        \ 'col': 0, 'end_col': 0, 'pattern': '^\Vint second() {}\$',
+        \ 'valid': 1, 'vcol': 0, 'nr': 0, 'type': '', 'module': '',
+        \ 'text': 'second'}], getloclist(0))
 
   call delete('Xtags')
   call delete('Xfoo')

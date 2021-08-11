@@ -176,8 +176,8 @@ describe('Signs', function()
       command('sign place 5 line=3 name=pietWarn buffer=1')
       command('sign place 3 line=3 name=pietError buffer=1')
       screen:expect([[
-        {1:>>}XX{6:  1 }a                                            |
-        XX{1:>>}{6:  2 }b                                            |
+        {1:>>}{8:XX}{6:  1 }a                                            |
+        {8:XX}{1:>>}{6:  2 }b                                            |
         {1:>>}WW{6:  3 }c                                            |
         {2:    }{6:  4 }^                                             |
         {0:~                                                    }|
@@ -194,7 +194,7 @@ describe('Signs', function()
       -- With the default setting, we get the sign with the top id.
       command('set signcolumn=yes:1')
       screen:expect([[
-        XX{6:  1 }a                                              |
+        {8:XX}{6:  1 }a                                              |
         {1:>>}{6:  2 }b                                              |
         WW{6:  3 }c                                              |
         {2:  }{6:  4 }^                                               |
@@ -212,9 +212,9 @@ describe('Signs', function()
       -- "auto:3" accommodates all the signs we defined so far.
       command('set signcolumn=auto:3')
       screen:expect([[
-        {1:>>}XX{2:  }{6:  1 }a                                          |
-        XX{1:>>}{2:  }{6:  2 }b                                          |
-        XX{1:>>}WW{6:  3 }c                                          |
+        {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
+        {8:XX}{1:>>}{2:  }{6:  2 }b                                          |
+        {8:XX}{1:>>}WW{6:  3 }c                                          |
         {2:      }{6:  4 }^                                           |
         {0:~                                                    }|
         {0:~                                                    }|
@@ -230,9 +230,9 @@ describe('Signs', function()
       -- Check "yes:9".
       command('set signcolumn=yes:9')
       screen:expect([[
-        {1:>>}XX{2:              }{6:  1 }a                              |
-        XX{1:>>}{2:              }{6:  2 }b                              |
-        XX{1:>>}WW{2:            }{6:  3 }c                              |
+        {1:>>}{8:XX}{2:              }{6:  1 }a                              |
+        {8:XX}{1:>>}{2:              }{6:  2 }b                              |
+        {8:XX}{1:>>}WW{2:            }{6:  3 }c                              |
         {2:                  }{6:  4 }^                               |
         {0:~                                                    }|
         {0:~                                                    }|
@@ -249,9 +249,9 @@ describe('Signs', function()
       -- a single line (same result as "auto:3").
       command('set signcolumn=auto:4')
       screen:expect{grid=[[
-        {1:>>}XX{2:  }{6:  1 }a                                          |
-        XX{1:>>}{2:  }{6:  2 }b                                          |
-        XX{1:>>}WW{6:  3 }c                                          |
+        {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
+        {8:XX}{1:>>}{2:  }{6:  2 }b                                          |
+        {8:XX}{1:>>}WW{6:  3 }c                                          |
         {2:      }{6:  4 }^                                           |
         {0:~                                                    }|
         {0:~                                                    }|
@@ -267,8 +267,8 @@ describe('Signs', function()
       -- line deletion deletes signs.
       command('2d')
       screen:expect([[
-        {1:>>}XX{2:  }{6:  1 }a                                          |
-        XX{1:>>}WW{6:  2 }^c                                          |
+        {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
+        {8:XX}{1:>>}WW{6:  2 }^c                                          |
         {2:      }{6:  3 }                                           |
         {0:~                                                    }|
         {0:~                                                    }|

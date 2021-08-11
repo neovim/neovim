@@ -92,8 +92,6 @@ static linenr_T resel_VIsual_line_count;        /* number of lines */
 static colnr_T resel_VIsual_vcol;               /* nr of cols or end col */
 static int VIsual_mode_orig = NUL;              /* saved Visual mode */
 
-static int restart_VIsual_select = 0;
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.c.generated.h"
@@ -1275,6 +1273,15 @@ static void normal_redraw(NormalState *s)
   // cursor position.
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
     redrawWinline(curwin, curwin->w_cursor.lnum);
+  }
+
+  // Might need to update for 'cursorline'.
+  // When 'cursorlineopt' is "screenline" need to redraw always.
+  if (curwin->w_p_cul
+      && (curwin->w_last_cursorline != curwin->w_cursor.lnum
+          || (curwin->w_p_culopt_flags & CULOPT_SCRLINE))
+      && !char_avail()) {
+    redraw_later(curwin, VALID);
   }
 
   if (VIsual_active) {

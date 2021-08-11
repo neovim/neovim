@@ -538,7 +538,7 @@ Highlight groups related to |lsp-codelens| functionality.
                                                               *hl-LspCodeLens*
 LspCodeLens
    Used to color the virtual text of the codelens. See
-   |nvim_buf_set_virtual_text()|.
+   |nvim_buf_set_extmark()|.
 
 LspCodeLensSeparator                                 *hl-LspCodeLensSeparator*
    Used to color the seperator between two or more code lens.
@@ -1376,7 +1376,8 @@ get_prev_pos({opts})                       *vim.lsp.diagnostic.get_prev_pos()*
 
                        *vim.lsp.diagnostic.get_virtual_text_chunks_for_line()*
 get_virtual_text_chunks_for_line({bufnr}, {line}, {line_diags}, {opts})
-                Default function to get text chunks to display using `nvim_buf_set_virtual_text` .
+                Default function to get text chunks to display using
+                |nvim_buf_set_extmark()|.
 
                 Parameters: ~
                     {bufnr}       number The buffer to display the virtual
@@ -1388,7 +1389,9 @@ get_virtual_text_chunks_for_line({bufnr}, {line}, {line_diags}, {opts})
                                   |vim.lsp.diagnostic.set_virtual_text()|
 
                 Return: ~
-                    table chunks, as defined by |nvim_buf_set_virtual_text()|
+                    an array of [text, hl_group] arrays. This can be passed
+                    directly to the {virt_text} option of
+                    |nvim_buf_set_extmark()|.
 
 goto_next({opts})                             *vim.lsp.diagnostic.goto_next()*
                 Move to the next diagnostic
@@ -1486,6 +1489,22 @@ on_publish_diagnostics({_}, {_}, {params}, {client_id}, {_}, {config})
                               • severity_sort: (default=false)
                                 • Sort diagnostics (and thus signs and virtual
                                   text)
+
+redraw({bufnr}, {client_id})                     *vim.lsp.diagnostic.redraw()*
+                Redraw diagnostics for the given buffer and client
+
+                This calls the "textDocument/publishDiagnostics" handler
+                manually using the cached diagnostics already received from
+                the server. This can be useful for redrawing diagnostics after
+                making changes in diagnostics configuration.
+                |lsp-handler-configuration|
+
+                Parameters: ~
+                    {bufnr}      (optional, number): Buffer handle, defaults
+                                 to current
+                    {client_id}  (optional, number): Redraw diagnostics for
+                                 the given client. The default is to redraw
+                                 diagnostics for all attached clients.
 
 reset({client_id}, {buffer_client_map})           *vim.lsp.diagnostic.reset()*
                 Clear diagnotics and diagnostic cache
@@ -1786,6 +1805,9 @@ apply_text_edits({text_edits}, {bufnr})
                     {text_edits}  (table) list of `TextEdit` objects
                     {buf_nr}      (number) Buffer id
 
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
+
                                          *vim.lsp.util.apply_workspace_edit()*
 apply_workspace_edit({workspace_edit})
                 Applies a `WorkspaceEdit` .
@@ -1813,6 +1835,9 @@ buf_highlight_references({bufnr}, {references})
                     {bufnr}       buffer id
                     {references}  List of `DocumentHighlight` objects to
                                   highlight
+
+                See also: ~
+                    https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
 
 buf_lines({bufnr})                                  *vim.lsp.util.buf_lines()*
                 TODO: Documentation

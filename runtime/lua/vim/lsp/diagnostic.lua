@@ -780,17 +780,20 @@ function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
     local virt_texts = M.get_virtual_text_chunks_for_line(bufnr, line, line_diagnostics, opts)
 
     if virt_texts then
-      api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
+      api.nvim_buf_set_extmark(bufnr, diagnostic_ns, line, 0, {
+        virt_text = virt_texts,
+      })
     end
   end
 end
 
---- Default function to get text chunks to display using `nvim_buf_set_virtual_text`.
+--- Default function to get text chunks to display using |nvim_buf_set_extmark()|.
 ---@param bufnr number The buffer to display the virtual text in
 ---@param line number The line number to display the virtual text on
 ---@param line_diags Diagnostic[] The diagnostics associated with the line
 ---@param opts table See {opts} from |vim.lsp.diagnostic.set_virtual_text()|
----@return table chunks, as defined by |nvim_buf_set_virtual_text()|
+---@return an array of [text, hl_group] arrays. This can be passed directly to
+---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
   assert(bufnr or line)
 
@@ -1182,6 +1185,40 @@ function M.display(diagnostics, bufnr, client_id, config)
   save_extmarks(bufnr, client_id)
 end
 
+--- Redraw diagnostics for the given buffer and client
+---
+--- This calls the "textDocument/publishDiagnostics" handler manually using
+--- the cached diagnostics already received from the server. This can be useful
+--- for redrawing diagnostics after making changes in diagnostics
+--- configuration. |lsp-handler-configuration|
+---
+--- @param bufnr (optional, number): Buffer handle, defaults to current
+--- @param client_id (optional, number): Redraw diagnostics for the given
+---        client. The default is to redraw diagnostics for all attached
+---        clients.
+function M.redraw(bufnr, client_id)
+  bufnr = get_bufnr(bufnr)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.redraw(bufnr, client.id)
+    end)
+  end
+
+  -- We need to invoke the publishDiagnostics handler directly instead of just
+  -- calling M.display so that we can preserve any custom configuration options
+  -- the user may have set with vim.lsp.with.
+  vim.lsp.handlers["textDocument/publishDiagnostics"](
+    nil,
+    "textDocument/publishDiagnostics",
+    {
+      uri = vim.uri_from_bufnr(bufnr),
+      diagnostics = M.get(bufnr, client_id),
+    },
+    client_id,
+    bufnr
+  )
+end
+
 -- }}}
 -- Diagnostic User Functions {{{
 
@@ -1414,18 +1451,7 @@ function M.enable(bufnr, client_id)
 
   diagnostic_disabled[bufnr][client_id] = nil
 
-  -- We need to invoke the publishDiagnostics handler directly instead of just
-  -- calling M.display so that we can preserve any custom configuration options
-  -- the user may have set with vim.lsp.with.
-  vim.lsp.handlers["textDocument/publishDiagnostics"](
-    nil,
-    "textDocument/publishDiagnostics",
-    {
-      diagnostics = M.get(bufnr, client_id),
-      uri = vim.uri_from_bufnr(bufnr),
-    },
-    client_id
-  )
+  M.redraw(bufnr, client_id)
 end
 -- }}}
 

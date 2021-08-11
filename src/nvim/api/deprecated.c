@@ -12,6 +12,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/lua/executor.h"
+#include "nvim/extmark.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/deprecated.c.generated.h"
@@ -79,6 +80,87 @@ void nvim_buf_clear_highlight(Buffer buffer,
   nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
 }
 
+
+/// Set the virtual text (annotation) for a buffer line.
+///
+/// @deprecated use nvim_buf_set_extmark to use full virtual text
+///             functionality.
+///
+/// The text will be placed after the buffer text. Virtual text will never
+/// cause reflow, rather virtual text will be truncated at the end of the screen
+/// line. The virtual text will begin one cell (|lcs-eol| or space) after the
+/// ordinary text.
+///
+/// Namespaces are used to support batch deletion/updating of virtual text.
+/// To create a namespace, use |nvim_create_namespace()|. Virtual text is
+/// cleared using |nvim_buf_clear_namespace()|. The same `ns_id` can be used for
+/// both virtual text and highlights added by |nvim_buf_add_highlight()|, both
+/// can then be cleared with a single call to |nvim_buf_clear_namespace()|. If
+/// the virtual text never will be cleared by an API call, pass `ns_id = -1`.
+///
+/// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
+/// virtual text, the allocated id is then returned.
+///
+/// @param buffer     Buffer handle, or 0 for current buffer
+/// @param ns_id      Namespace to use or 0 to create a namespace,
+///                   or -1 for a ungrouped annotation
+/// @param line       Line to annotate with virtual text (zero-indexed)
+/// @param chunks     A list of [text, hl_group] arrays, each representing a
+///                   text chunk with specified highlight. `hl_group` element
+///                   can be omitted for no highlight.
+/// @param opts       Optional parameters. Currently not used.
+/// @param[out] err   Error details, if any
+/// @return The ns_id that was used
+Integer nvim_buf_set_virtual_text(Buffer buffer,
+                                  Integer src_id,
+                                  Integer line,
+                                  Array chunks,
+                                  Dictionary opts,
+                                  Error *err)
+  FUNC_API_SINCE(5)
+  FUNC_API_DEPRECATED_SINCE(8)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (line < 0 || line >= MAXLNUM) {
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
+    return 0;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return 0;
+  }
+
+  uint64_t ns_id = src2ns(&src_id);
+  int width;
+
+  VirtText virt_text = parse_virt_text(chunks, err, &width);
+  if (ERROR_SET(err)) {
+    return 0;
+  }
+
+
+  Decoration *existing = decor_find_virttext(buf, (int)line, ns_id);
+
+  if (existing) {
+    clear_virttext(&existing->virt_text);
+    existing->virt_text = virt_text;
+    existing->virt_text_width = width;
+    return src_id;
+  }
+
+  Decoration *decor = xcalloc(1, sizeof(*decor));
+  decor->virt_text = virt_text;
+  decor->virt_text_width = width;
+
+  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, true,
+              false, kExtmarkNoUndo);
+  return src_id;
+}
 
 /// Inserts a sequence of lines to a buffer at a certain index
 ///

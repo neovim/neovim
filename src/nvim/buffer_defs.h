@@ -226,6 +226,8 @@ typedef struct {
 # define w_p_cuc w_onebuf_opt.wo_cuc    // 'cursorcolumn'
   int wo_cul;
 # define w_p_cul w_onebuf_opt.wo_cul    // 'cursorline'
+  char_u      *wo_culopt;
+# define w_p_culopt w_onebuf_opt.wo_culopt  // 'cursorlineopt'
   char_u      *wo_cc;
 # define w_p_cc w_onebuf_opt.wo_cc      // 'colorcolumn'
   char_u      *wo_stl;
@@ -1386,12 +1388,14 @@ struct window_S {
   uint32_t w_p_fde_flags;           // flags for 'foldexpr'
   uint32_t w_p_fdt_flags;           // flags for 'foldtext'
   int         *w_p_cc_cols;         // array of columns to highlight or NULL
+  char_u      w_p_culopt_flags;     // flags for cursorline highlighting
   long        w_p_siso;             // 'sidescrolloff' local value
   long        w_p_so;               // 'scrolloff' local value
 
   int w_briopt_min;                 // minimum width for breakindent
   int w_briopt_shift;               // additional shift for breakindent
   bool w_briopt_sbr;                // sbr in 'briopt'
+  int w_briopt_list;                // additional indent for lists
 
   // transform a pointer to a "onebuf" option into a "allbuf" option
 #define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))

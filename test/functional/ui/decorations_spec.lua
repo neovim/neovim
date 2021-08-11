@@ -562,7 +562,7 @@ end]]
           {5:l}{8:blen}{7:dy}{10:e}{7:text}{10:h}{7:-}{10:_}{7:here}ell, count = unpack(item)  |
           {5:i}{12:c}{11:ombining color} {13:nil} {5:then}                     |
            {11:replacing color}d_cell                        |
-          {5:e}{8:bl}{14:endy}{15:i}{14:text}{15:o}{14:-}{15:o}{14:h}{7:ere}                           |
+          {5:e}{8:bl}{7:endy}{10: }{7:text}{10: }{7:-}{10: }{7:here}                           |
           {5:f}{12:co}{11:mbini}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
            {11:replacing color} line[colpos]                 |
               cell.text = text                          |
@@ -696,5 +696,97 @@ end]]
       {1:~                                                 }|
                                                         |
     ]]}
+  end)
+
+  it('can have virtual text which combines foreground and backround groups', function()
+    screen:set_default_attr_ids {
+      [1] = {bold=true, foreground=Screen.colors.Blue};
+      [2] = {background = tonumber('0x123456'), foreground = tonumber('0xbbbbbb')};
+      [3] = {background = tonumber('0x123456'), foreground = tonumber('0xcccccc')};
+      [4] = {background = tonumber('0x234567'), foreground = tonumber('0xbbbbbb')};
+      [5] = {background = tonumber('0x234567'), foreground = tonumber('0xcccccc')};
+      [6] = {bold = true, foreground = tonumber('0xcccccc'), background = tonumber('0x234567')};
+    }
+
+    exec [[
+      hi BgOne guibg=#123456
+      hi BgTwo guibg=#234567
+      hi FgEin guifg=#bbbbbb
+      hi FgZwei guifg=#cccccc
+      hi VeryBold gui=bold
+    ]]
+
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text={
+      {'a', {'BgOne', 'FgEin'}};
+      {'b', {'BgOne', 'FgZwei'}};
+      {'c', {'BgTwo', 'FgEin'}};
+      {'d', {'BgTwo', 'FgZwei'}};
+      {'X', {'BgTwo', 'FgZwei', 'VeryBold'}};
+    }})
+
+    screen:expect{grid=[[
+      ^ {2:a}{3:b}{4:c}{5:d}{6:X}                                            |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('does not crash when deleting a cleared buffer #15212', function()
+    exec_lua [[
+      ns = vim.api.nvim_create_namespace("myplugin")
+      vim.api.nvim_buf_set_extmark(0, ns, 0, 0, {virt_text = {{"a"}}, end_col = 0})
+    ]]
+    screen:expect{grid=[[
+      ^ a                                                |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    exec_lua [[
+      vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      vim.cmd("bdelete")
+    ]]
+    screen:expect{grid=[[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    helpers.assert_alive()
   end)
 end)

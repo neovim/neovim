@@ -453,15 +453,7 @@ local function text_document_did_open_handler(bufnr, client)
 
   -- Next chance we get, we should re-do the diagnostics
   vim.schedule(function()
-    vim.lsp.handlers["textDocument/publishDiagnostics"](
-      nil,
-      "textDocument/publishDiagnostics",
-      {
-        diagnostics = vim.lsp.diagnostic.get(bufnr, client.id),
-        uri = vim.uri_from_bufnr(bufnr),
-      },
-      client.id
-    )
+    vim.lsp.diagnostic.redraw(bufnr, client.id)
   end)
 end
 

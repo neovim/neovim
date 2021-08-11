@@ -2203,9 +2203,11 @@ getbufline({expr}, {lnum} [, {end}])
 getbufvar({expr}, {varname} [, {def}])
 				any	variable {varname} in buffer {expr}
 getchangelist({expr})		List	list of change list items
-getchar([expr])		Number	get one character from the user
+getchar([expr])			Number or String
+					get one character from the user
 getcharmod()			Number	modifiers for the last typed character
 getcharsearch()			Dict	last character search
+getcharstr([expr])		String	get one character from the user
 getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
 getcmdtype()			String	return current command-line type
@@ -4308,6 +4310,7 @@ getchar([expr])						*getchar()*
 			Return zero otherwise.
 		If [expr] is 1, only check if a character is available, it is
 			not consumed.  Return zero if no character available.
+		If you prefer always getting a string use |getcharstr()|.
 
 		Without [expr] and when [expr] is 0 a whole character or
 		special key is returned.  If it is a single character, the
@@ -4398,6 +4401,20 @@ getcharsearch()						*getcharsearch()*
 			:nnoremap <expr> ; getcharsearch().forward ? ';' : ','
 			:nnoremap <expr> , getcharsearch().forward ? ',' : ';'
 <		Also see |setcharsearch()|.
+
+
+getcharstr([expr])					*getcharstr()*
+		Get a single character from the user or input stream as a
+		string.
+		If [expr] is omitted, wait until a character is available.
+		If [expr] is 0 or false, only get a character when one is
+			available.  Return an empty string otherwise.
+		If [expr] is 1 or true, only check if a character is
+			available, it is not consumed.  Return an empty string
+			if no character is available.
+		Otherwise this works like |getchar()|, except that a number
+		result is converted to a string.
+
 
 getcmdline()						*getcmdline()*
 		Return the current command-line.  Only works when the command
@@ -4742,7 +4759,10 @@ getqflist([{what}])					*getqflist()*
 				bufname() to get the name
 			module	module name
 			lnum	line number in the buffer (first line is 1)
+			end_lnum
+				end of line number if the item is multiline
 			col	column number (first column is 1)
+			end_col	end of column number if the item has range
 			vcol	|TRUE|: "col" is visual column
 				|FALSE|: "col" is byte index
 			nr	error number
@@ -6350,6 +6370,10 @@ mode([expr])	Return a string that indicates the current mode.
 		   s	    Select by character
 		   S	    Select by line
 		   CTRL-S   Select blockwise
+		   vs	    Visual by character using |v_CTRL-O| from
+				Select mode
+		   Vs	    Visual by line using |v_CTRL-O| from Select mode
+		   CTRL-Vs  Visual blockwise using |v_CTRL-O| from Select mode
 		   i	    Insert
 		   ic	    Insert mode completion |compl-generic|
 		   ix	    Insert mode |i_CTRL-X| completion
@@ -9299,10 +9323,12 @@ win_gettype([{nr}])					*win_gettype()*
 		Return the type of the window:
 			"autocmd"	autocommand window. Temporary window
 					used to execute autocommands.
-			"popup"		popup window |popup|
-			"preview"	preview window |preview-window|
 			"command"	command-line window |cmdwin|
 			(empty)		normal window
+			"loclist"	|location-list-window|
+			"popup"		popup window |popup|
+			"preview"	preview window |preview-window|
+			"quickfix"	|quickfix-window|
 			"unknown"	window {nr} not found
 
 		When {nr} is omitted return the type of the current window.

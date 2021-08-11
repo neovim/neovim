@@ -1038,7 +1038,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 			    continuation (positive).
 		sbr	    Display the 'showbreak' value before applying the
 			    additional indent.
-	The default value for min is 20 and shift is 0.
+		list:{n}    Adds an additional indent for lines that match a
+			    numbered or bulleted list (using the
+			    'formatlistpat' setting).
+		list:-1	    Uses the length of a match with 'formatlistpat'
+			    for indentation.
+	The default value for min is 20, shift and list is 0.
 
 						*'browsedir'* *'bsdir'*
 'browsedir' 'bsdir'	string	(default: "last")
@@ -1802,11 +1807,28 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'cursorline'* *'cul'* *'nocursorline'* *'nocul'*
 'cursorline' 'cul'	boolean	(default off)
 			local to window
-	Highlight the screen line of the cursor with CursorLine
-	|hl-CursorLine|.  Useful to easily spot the cursor.  Will make screen
-	redrawing slower.
+	Highlight the text line of the cursor with CursorLine |hl-CursorLine|.
+	Useful to easily spot the cursor.  Will make screen redrawing slower.
 	When Visual mode is active the highlighting isn't used to make it
 	easier to see the selected text.
+
+
+						*'cursorlineopt'* *'culopt'*
+'cursorlineopt' 'culopt' string (default: "number,line")
+			local to window
+	Comma separated list of settings for how 'cursorline' is displayed.
+	Valid values:
+	"line"		Highlight the text line of the cursor with
+			CursorLine |hl-CursorLine|.
+	"screenline"	Highlight only the screen line of the cursor with
+			CursorLine |hl-CursorLine|.
+	"number"	Highlight the line number of the cursor with
+			CursorLineNr |hl-CursorLineNr|.
+
+	Special value:
+	"both"		Alias for the values "line,number".
+
+	"line" and "screenline" cannot be used together.
 
 
 						*'debug'*

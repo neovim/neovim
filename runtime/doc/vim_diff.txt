@@ -358,6 +358,14 @@ Startup:
     - works by default: "-" file is optional
     - works in more cases: |-Es|, file args
 
+Syntax highlighting:
+  syncolor.vim has been removed. Nvim now sets up default highlighting groups
+  automatically for both light and dark backgrounds, regardless of whether or
+  not syntax highlighting is enabled. This means that |:syntax-on| and
+  |:syntax-enable| are now identical. Users who previously used an
+  after/syntax/syncolor.vim file should transition that file into a
+  colorscheme. |:colorscheme|
+
 TUI:
 			*:set-termcap*
   Start Nvim with 'verbose' level 3 to show terminal capabilities: >

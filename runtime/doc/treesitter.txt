@@ -215,9 +215,9 @@ Here is a list of built-in predicates :
 			((identifier) @foo-bar (#contains @foo-bar "foo" "bar"))
 <
 	`any-of?`					*ts-predicate-any-of?*
-		Will check if the text is the same as any of the following
+		Will check if the text is the same as any of the following.
 		This is the recommended way to check if the node matches one
-		of many keywords for exemple, as it has been optimized for
+		of many keywords for example, as it has been optimized for
 		this.
 		arguments : >
 			((identifier) @foo (#any-of? @foo "foo" "bar"))
@@ -241,7 +241,7 @@ This lists the currently available predicates to use in queries.
 Treesitter Query Directive				*lua-treesitter-directives*
 
 Treesitter queries can also contain `directives`. Directives store metadata for a node
-or match and perform side effects. for example, the |set!| predicate sets metadata on
+or match and perform side effects. For example, the |set!| predicate sets metadata on
 the match or node : >
 	((identifier) @foo (#set! "type" "parameter"))
 

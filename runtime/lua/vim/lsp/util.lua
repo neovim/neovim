@@ -240,6 +240,7 @@ end
 --- Applies a list of text edits to a buffer.
 --@param text_edits (table) list of `TextEdit` objects
 --@param buf_nr (number) Buffer id
+---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
   if not api.nvim_buf_is_loaded(bufnr) then
@@ -972,7 +973,7 @@ function M.make_floating_popup_options(width, height, opts)
     row = -get_border_size(opts).height
   end
 
-  if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
+  if vim.fn.wincol() + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
     anchor = anchor..'W'
     col = 0
   else
@@ -1160,6 +1161,8 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- Clean up
   contents = M._trim(contents, opts)
 
+  -- Insert blank line separator after code block?
+  local add_sep = opts.separator == nil and true or opts.separator
   local stripped = {}
   local highlights = {}
   -- keep track of lnums that contain markdown
@@ -1186,9 +1189,24 @@ function M.stylize_markdown(bufnr, contents, opts)
           start = start + 1;
           finish = #stripped;
         })
+        -- add a separator, but not on the last line
+        if add_sep and i < #contents then
+          table.insert(stripped, "---")
+          markdown_lines[#stripped] = true
+        end
       else
-        table.insert(stripped, line)
-        markdown_lines[#stripped] = true
+        -- strip any emty lines or separators prior to this separator in actual markdown
+        if line:match("^---+$") then
+          while markdown_lines[#stripped] and (stripped[#stripped]:match("^%s*$") or stripped[#stripped]:match("^---+$")) do
+            markdown_lines[#stripped] = false
+            table.remove(stripped, #stripped)
+          end
+        end
+        -- add the line if its not an empty line following a separator
+        if not (line:match("^%s*$") and markdown_lines[#stripped] and stripped[#stripped]:match("^---+$")) then
+          table.insert(stripped, line)
+          markdown_lines[#stripped] = true
+        end
         i = i + 1
       end
     end
@@ -1196,7 +1214,7 @@ function M.stylize_markdown(bufnr, contents, opts)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo["wrap"] and api.nvim_win_get_width(0))
-  local width, height = M._make_floating_popup_size(stripped, opts)
+  local width = M._make_floating_popup_size(stripped, opts)
 
   local sep_line = string.rep("─", math.min(width, opts.wrap_at or width))
 
@@ -1205,26 +1223,6 @@ function M.stylize_markdown(bufnr, contents, opts)
       stripped[l] = sep_line
     end
   end
-
-  -- Insert blank line separator after code block
-  local insert_separator = opts.separator
-  if insert_separator == nil then insert_separator = true end
-  if insert_separator then
-    local offset = 0
-    for _, h in ipairs(highlights) do
-      h.start = h.start + offset
-      h.finish = h.finish + offset
-      -- check if a seperator already exists and use that one instead of creating a new one
-      if h.finish + 1 <= #stripped then
-        if stripped[h.finish + 1] ~= sep_line then
-          table.insert(stripped, h.finish + 1, sep_line)
-          offset = offset + 1
-          height = height + 1
-        end
-      end
-    end
-  end
-
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
@@ -1486,6 +1484,7 @@ do --[[ References ]]
   ---
   --@param bufnr buffer id
   --@param references List of `DocumentHighlight` objects to highlight
+  ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#documentHighlight
   function M.buf_highlight_references(bufnr, references)
     validate { bufnr = {bufnr, 'n', true} }
     for _, reference in ipairs(references) do
@@ -1720,14 +1719,14 @@ end
 function M.trim_empty_lines(lines)
   local start = 1
   for i = 1, #lines do
-    if #lines[i] > 0 then
+    if lines[i] ~= nil and #lines[i] > 0 then
       start = i
       break
     end
   end
   local finish = 1
   for i = #lines, 1, -1 do
-    if #lines[i] > 0 then
+    if lines[i] ~= nil and #lines[i] > 0 then
       finish = i
       break
     end

@@ -21,7 +21,7 @@
 typedef struct {
   int save_msg_scroll;
   int save_restart_edit;
-  int save_msg_didout;
+  bool save_msg_didout;
   int save_State;
   int save_insertmode;
   bool save_finish_op;

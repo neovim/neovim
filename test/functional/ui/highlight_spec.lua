@@ -789,7 +789,7 @@ describe("'listchars' highlight", function()
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {background=Screen.colors.Grey90},
       [2] = {foreground=Screen.colors.Red},
-      [3] = {foreground=Screen.colors.Green1},
+      [3] = {foreground=Screen.colors.X11Green, background=Screen.colors.Red1},
     })
     feed_command('highlight clear ModeMsg')
     feed_command('highlight Whitespace guifg=#FF0000')

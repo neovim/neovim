@@ -136,6 +136,7 @@ return {
     getchar={args={0, 1}},
     getcharmod={},
     getcharsearch={},
+    getcharstr={args={0, 1}},
     getcmdline={},
     getcmdpos={},
     getcmdtype={},

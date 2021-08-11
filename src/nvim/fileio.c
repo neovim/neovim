@@ -290,7 +290,7 @@ readfile(
 
   /* After reading a file the cursor line changes but we don't want to
    * display the line. */
-  ex_no_reprint = TRUE;
+  ex_no_reprint = true;
 
   // don't display the file info for another buffer now
   need_fileinfo = false;
@@ -2237,7 +2237,7 @@ buf_write(
 
   /* After writing a file changedtick changes but we don't want to display
    * the line. */
-  ex_no_reprint = TRUE;
+  ex_no_reprint = true;
 
   /*
    * If there is no file name yet, use the one for the written file.
@@ -4241,7 +4241,7 @@ void shorten_fnames(int force)
     mf_fullname(buf->b_ml.ml_mfp);
   }
   status_redraw_all();
-  redraw_tabline = TRUE;
+  redraw_tabline = true;
 }
 
 /// Get new filename ended by given extension.

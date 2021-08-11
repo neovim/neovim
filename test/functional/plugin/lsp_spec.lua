@@ -1954,6 +1954,12 @@ describe('LSP', function()
     end)
   end)
 
+  describe('lsp.util.trim.trim_empty_lines', function()
+    it('properly trims empty lines', function()
+      eq({{"foo", "bar"}}, exec_lua[[ return vim.lsp.util.trim_empty_lines({{ "foo", "bar" },  nil}) ]])
+    end)
+  end)
+
   describe('lsp.util.get_effective_tabstop', function()
     local function test_tabstop(tabsize, softtabstop)
       exec_lua(string.format([[
@@ -2026,7 +2032,9 @@ describe('LSP', function()
       local expected = { {
         bufnr = 2,
         col = 5,
+        end_col = 0,
         lnum = 4,
+        end_lnum = 0,
         module = "",
         nr = 0,
         pattern = "",
@@ -2098,7 +2106,9 @@ describe('LSP', function()
       local expected = { {
         bufnr = 2,
         col = 5,
+        end_col = 0,
         lnum = 4,
+        end_lnum = 0,
         module = "",
         nr = 0,
         pattern = "",
