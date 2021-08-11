@@ -16,15 +16,22 @@ low-risk/isolated tasks:
 Reporting problems
 ------------------
 
+Before opening a new issue:
+
 - [Check the FAQ][wiki-faq].
 - [Search existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
-- [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins incrementally, to narrow down the cause of the issue.
-- [Bisect][git-bisect] Neovim's source code to find the cause of a regression, if you can. This is _extremely_ helpful.
+
+When reporting an issue:
+
+- [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins and remove settings incrementally, to narrow down the cause of the issue.
+- Using this information, prepare a [minimal config](https://github.com/neovim/neovim/blob/master/contrib/minimal.lua) that reproduces the problem with `nvim -u minimal.lua`.
+- Check the logs: `:edit $NVIM_LOG_FILE`.
+- For shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
+- Include `cmake --system-information` for build-related issues.
+- If there issue is a regression (i.e., the problem did not occur in an earlier version), [bisect][git-bisect] Neovim's source code to find exactly when it was introduced. This is _extremely_ helpful.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
 - Use [ASAN/UBSAN](#clang-sanitizers-asan-and-ubsan) to get detailed errors for segfaults and undefined behavior.
-- Check the logs. `:edit $NVIM_LOG_FILE`
-- Include `cmake --system-information` for build-related issues.
 
 Developer guidelines
 --------------------

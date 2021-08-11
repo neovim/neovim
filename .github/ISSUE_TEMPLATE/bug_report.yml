@@ -18,7 +18,7 @@ body:
     attributes:
       label: "Vim (not Nvim) behaves the same?"
       description: "Does `vim -u DEFAULTS` have the same issue? Note the exact Vim version (`8.x.yyyy`)."
-      placeholder: "no, vim 7.3.432"
+      placeholder: "no (vim 8.2.2671)"
     validations:
       required: true
   - type: input
@@ -36,10 +36,9 @@ body:
   - type: input
     attributes:
       label: "$TERM environment variable"
-      placeholder: "echo $TERM"
+      placeholder: "xterm-256color"
     validations:
       required: true
-
   - type: input
     attributes:
       label: "Installation"
@@ -52,20 +51,20 @@ body:
     attributes:
       label: "How to reproduce the issue"
       description: |
-        - Steps to reproduce using `nvim -u NORC` or `nvim -u NONE` (try both).
+        - [Prepare](https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#reporting-problems) a minimal config that reproduces the problem with `nvim -u minimal.lua` and provide it below.
         - For build failures: list the exact steps including CMake flags (if any).
         - For shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
       placeholder: |
-        nvim -u NONE
-        :edit foo
-        yiwp
+        1. `nvim -u minimal.lua` 
+        2. `:edit foo` 
+        3. `yiwp` 
     validations:
       required: true
 
   - type: textarea
     attributes:
       label: "Expected behavior"
-      description: "Describe the behavior you expect. May include logs, images, or videos."
+      description: "Describe the behavior you expect. May include logs (`:edit $NVIM_LOG_FILE`), images, or videos."
     validations:
       required: true
   - type: textarea
@@ -73,3 +72,12 @@ body:
       label: "Actual behavior"
     validations:
       required: true
+
+  - type: textarea
+    attributes:
+      label: "Minimal config"
+      description: "Minimal(!) configuration necessary to reproduce the issue. You can start with the provided [`minimal.lua`](https://github.com/neovim/neovim/blob/master/contrib/minimal.lua). If _absolutely_ necessary, add plugins and config options from your `init.lua` at the indicated lines."
+      render: Lua
+    validations:
+      required: true
+
