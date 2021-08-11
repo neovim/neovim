@@ -1253,12 +1253,12 @@ function M.show_position_diagnostics(opts, buf_nr, position)
     curr_position[1] = curr_position[1] - 1
     position = curr_position
   end
-  local predicate = function(diag)
+  local match_position_predicate = function(diag)
     return position[1] == diag.range['start'].line and
     position[2] >= diag.range['start'].character and
     (position[2] <= diag.range['end'].character or position[1] < diag.range['end'].line)
   end
-  local position_diagnostics = M.get(buf_nr, nil, predicate)
+  local position_diagnostics = M.get(buf_nr, nil, match_position_predicate)
   if opts.severity then
     position_diagnostics = filter_to_severity_limit(opts.severity, position_diagnostics)
   elseif opts.severity_limit then
