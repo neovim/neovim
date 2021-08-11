@@ -2593,7 +2593,7 @@ static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
                                ColoredCmdline *const ret_ccline_colors)
   FUNC_ATTR_NONNULL_ALL
 {
-  ParserLine plines[] = {
+  ParserLine parser_lines[] = {
     {
       .data = (const char *)colored_ccline->cmdbuff,
       .size = STRLEN(colored_ccline->cmdbuff),
@@ -2601,7 +2601,7 @@ static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
     },
     { NULL, 0, false },
   };
-  ParserLine *plines_p = plines;
+  ParserLine *plines_p = parser_lines;
   ParserHighlight colors;
   kvi_init(colors);
   ParserState pstate;
