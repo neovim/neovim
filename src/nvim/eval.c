@@ -4212,7 +4212,7 @@ static int eval_lambda(char_u **const arg, typval_T *const rettv,
   return ret;
 }
 
-/// Evaluate "->method()".
+/// Evaluate "->method()" or "->v:lua.method()".
 /// @note "*arg" points to the '-'.
 /// @return FAIL or OK. "*arg" is advanced to after the ')'.
 static int eval_method(char_u **const arg, typval_T *const rettv,
@@ -4225,19 +4225,30 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
   rettv->v_type = VAR_UNKNOWN;
 
   // Locate the method name.
+  int len;
   char_u *name = *arg;
-  char_u *alias;
-
-  const int len
-      = get_name_len((const char **)arg, (char **)&alias, evaluate, true);
-  if (alias != NULL) {
-    name = alias;
+  char_u *lua_funcname = NULL;
+  if (STRNCMP(name, "v:lua.", 6) == 0) {
+    lua_funcname = name + 6;
+    *arg = (char_u *)skip_luafunc_name((const char *)lua_funcname);
+    *arg = skipwhite(*arg);  // to detect trailing whitespace later
+    len = *arg - lua_funcname;
+  } else {
+    char_u *alias;
+    len = get_name_len((const char **)arg, (char **)&alias, evaluate, true);
+    if (alias != NULL) {
+      name = alias;
+    }
   }
 
   int ret;
   if (len <= 0) {
     if (verbose) {
-      EMSG(_("E260: Missing name after ->"));
+      if (lua_funcname == NULL) {
+        EMSG(_("E260: Missing name after ->"));
+      } else {
+        EMSG2(_(e_invexpr2), name);
+      }
     }
     ret = FAIL;
   } else {
@@ -4251,6 +4262,13 @@ static int eval_method(char_u **const arg, typval_T *const rettv,
         EMSG(_(e_nowhitespace));
       }
       ret = FAIL;
+    } else if (lua_funcname != NULL) {
+      if (evaluate) {
+        rettv->v_type = VAR_PARTIAL;
+        rettv->vval.v_partial = vvlua_partial;
+        rettv->vval.v_partial->pt_refcount++;
+      }
+      ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, lua_funcname);
     } else {
       ret = eval_func(arg, name, len, rettv, evaluate, &base);
     }
@@ -8591,13 +8609,23 @@ static bool tv_is_luafunc(typval_T *tv)
   return tv->v_type == VAR_PARTIAL && is_luafunc(tv->vval.v_partial);
 }
 
-/// check the function name after "v:lua."
-int check_luafunc_name(const char *str, bool paren)
+/// Skips one character past the end of the name of a v:lua function.
+/// @param p  Pointer to the char AFTER the "v:lua." prefix.
+/// @return Pointer to the char one past the end of the function's name.
+const char *skip_luafunc_name(const char *p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *p = str;
   while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.' || *p == '\'') {
     p++;
   }
+  return p;
+}
+
+/// check the function name after "v:lua."
+int check_luafunc_name(const char *const str, const bool paren)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const char *const p = skip_luafunc_name(str);
   if (*p != (paren ? '(' : NUL)) {
     return 0;
   } else {

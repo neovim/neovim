@@ -1423,6 +1423,23 @@ static void user_func_error(int error, const char_u *name)
   }
 }
 
+/// Used by call_func to add a method base (if any) to a function argument list
+/// as the first argument. @see call_func
+static void argv_add_base(typval_T *const basetv, typval_T **const argvars,
+                          int *const argcount, typval_T *const new_argvars,
+                          int *const argv_base)
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4, 5)
+{
+  if (basetv != NULL) {
+    // Method call: base->Method()
+    memmove(&new_argvars[1], *argvars, sizeof(typval_T) * (*argcount));
+    new_argvars[0] = *basetv;
+    (*argcount)++;
+    *argvars = new_argvars;
+    *argv_base = 1;
+  }
+}
+
 /// Call a function with its resolved parameters
 ///
 /// @return FAIL if function cannot be called, else OK (even if an error
@@ -1515,6 +1532,7 @@ call_func(
     if (is_luafunc(partial)) {
       if (len > 0) {
         error = ERROR_NONE;
+        argv_add_base(funcexe->basetv, &argvars, &argcount, argv, &argv_base);
         nlua_typval_call((const char *)funcname, len, argvars, argcount, rettv);
       } else {
         // v:lua was called directly; show its name in the emsg
@@ -1553,14 +1571,7 @@ call_func(
                                         fp->uf_args.ga_len);
         }
 
-        if (funcexe->basetv != NULL) {
-          // Method call: base->Method()
-          memmove(&argv[1], argvars, sizeof(typval_T) * argcount);
-          argv[0] = *funcexe->basetv;
-          argcount++;
-          argvars = argv;
-          argv_base = 1;
-        }
+        argv_add_base(funcexe->basetv, &argvars, &argcount, argv, &argv_base);
 
         if (fp->uf_flags & FC_RANGE && funcexe->doesrange != NULL) {
           *funcexe->doesrange = true;
