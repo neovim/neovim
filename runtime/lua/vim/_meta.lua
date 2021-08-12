@@ -603,6 +603,17 @@ local create_option_metatable = function(set_type)
       return convert_value_to_lua(self._name, self._info, self._value)
     end,
 
+    default = function(self)
+      return convert_value_to_lua(self._name, self._info, self._info.default)
+    end,
+
+    reset = function(self)
+      local value = convert_value_to_vim(self._name, self._info, self._info.default)
+      a.nvim_set_option_value(self._name, value, {scope = scope})
+
+      return self
+    end,
+
     append = function(self, right)
       return self:__add(right):_set()
     end,

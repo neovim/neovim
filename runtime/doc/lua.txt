@@ -1035,6 +1035,14 @@ from within Lua.
         In Lua:
             `vim.opt.listchars = { space = '_', tab = '>~' }`
 
+    You can get an option's default value with >
+
+        vim.opt.wildignore:default()
+<
+    To set an option to its default value |:set-&| use: >
+
+        vim.opt.wildignore:reset()
+<
 
 In any of the above examples, to replicate the behavior |setlocal|, use
 `vim.opt_local`. Additionally, to replicate the behavior of |setglobal|, use
