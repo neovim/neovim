@@ -518,6 +518,7 @@ describe('v:lua', function()
 
     eq("Vim:E15: Invalid expression: v:['lua'].foo()", pcall_err(eval, "v:['lua'].foo()"))
     eq("Vim(call):E461: Illegal variable name: v:['lua']", pcall_err(command, "call v:['lua'].baar()"))
+    eq("Vim:E117: Unknown function: v:lua", pcall_err(eval, "v:lua()"))
 
     eq("Vim(let):E46: Cannot change read-only variable \"v:['lua']\"", pcall_err(command, "let v:['lua'] = 'xx'"))
     eq("Vim(let):E46: Cannot change read-only variable \"v:lua\"", pcall_err(command, "let v:lua = 'xx'"))

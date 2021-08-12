@@ -1516,6 +1516,10 @@ call_func(
       if (len > 0) {
         error = ERROR_NONE;
         nlua_typval_call((const char *)funcname, len, argvars, argcount, rettv);
+      } else {
+        // v:lua was called directly; show its name in the emsg
+        XFREE_CLEAR(name);
+        funcname = (const char_u *)"v:lua";
       }
     } else if (fp != NULL || !builtin_function((const char *)rfname, -1)) {
       // User defined function.
