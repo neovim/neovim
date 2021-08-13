@@ -1273,6 +1273,53 @@ describe('lua stdlib', function()
       eq("", result[8])
     end)
 
+    it('should allow options to be reset to default values', function()
+      local result = exec_lua [[
+        local result = {}
+        table.insert(result, vim.opt.shiftwidth:default())
+        vim.opt.shiftwidth = 42
+        table.insert(result, vim.opt.shiftwidth:get())
+        vim.opt.shiftwidth:reset()
+        table.insert(result, vim.opt.shiftwidth:get())
+        return result
+      ]]
+
+      eq(8, result[1])
+      eq(42, result[2])
+      eq(8, result[3])
+    end)
+
+    it('should allow local options to be set to their global value', function()
+      local result =  exec_lua [[
+        local result = {}
+        vim.opt.shiftwidth = 8
+        vim.opt_local.shiftwidth = 4
+        table.insert(result, vim.opt_local.shiftwidth:get())
+        vim.opt_local.shiftwidth = nil
+        table.insert(result, vim.opt_local.shiftwidth:get())
+        return result
+      ]]
+
+      eq(4, result[1])
+      eq(8, result[2])
+    end)
+
+    it('should allow local options to be cleared', function()
+      local result = exec_lua [[
+        local result = {}
+        table.insert(result, vim.opt.makeprg:get())
+        vim.opt_local.makeprg = "dance"
+        table.insert(result, vim.opt_local.makeprg:get())
+        vim.opt_local.makeprg = nil
+        table.insert(result, vim.opt_local.makeprg:get())
+        return result
+      ]]
+
+      eq("make", result[1])
+      eq("dance", result[2])
+      eq("make", result[3])
+    end)
+
     it('should allow you to retrieve window opts even if they have not been set', function()
       local result = exec_lua [[
         local result = {}
