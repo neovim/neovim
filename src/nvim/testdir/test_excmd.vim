@@ -313,6 +313,42 @@ func Test_confirm_write_ro()
   call delete('Xconfirm_write_ro')
 endfunc
 
+func Test_confirm_write_partial_file()
+  CheckNotGui
+  CheckRunVimInTerminal
+
+  call writefile(['a', 'b', 'c', 'd'], 'Xwrite_partial')
+  call writefile(['set nobackup ff=unix cmdheight=2',
+        \         'edit Xwrite_partial'], 'Xscript')
+  let buf = RunVimInTerminal('-S Xscript', {'rows': 20})
+
+  call term_sendkeys(buf, ":confirm 2,3w\n")
+  call WaitForAssert({-> assert_match('^Write partial file? *$',
+        \            term_getline(buf, 19))}, 1000)
+  call WaitForAssert({-> assert_match('^(Y)es, \[N\]o: *$',
+        \            term_getline(buf, 20))}, 1000)
+  call term_sendkeys(buf, 'N')
+  call WaitForAssert({-> assert_match('.* All$', term_getline(buf, 20))}, 1000)
+  call assert_equal(['a', 'b', 'c', 'd'], readfile('Xwrite_partial'))
+  call delete('Xwrite_partial')
+
+  call term_sendkeys(buf, ":confirm 2,3w\n")
+  call WaitForAssert({-> assert_match('^Write partial file? *$',
+        \            term_getline(buf, 19))}, 1000)
+  call WaitForAssert({-> assert_match('^(Y)es, \[N\]o: *$',
+        \            term_getline(buf, 20))}, 1000)
+  call term_sendkeys(buf, 'Y')
+  call WaitForAssert({-> assert_match('^"Xwrite_partial" \[New\] 2L, 4B written *$',
+        \            term_getline(buf, 19))}, 1000)
+  call WaitForAssert({-> assert_match('^Press ENTER or type command to continue *$',
+        \            term_getline(buf, 20))}, 1000)
+  call assert_equal(['b', 'c'], readfile('Xwrite_partial'))
+
+  call StopVimInTerminal(buf)
+  call delete('Xwrite_partial')
+  call delete('Xscript')
+endfunc
+
 " Test for the :winsize command
 func Test_winsize_cmd()
   call assert_fails('winsize 1', 'E465:')
