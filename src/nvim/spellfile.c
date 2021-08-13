@@ -1371,6 +1371,9 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
 
     gap = &slang->sl_comppat;
     c = get2c(fd);                                      // <comppatcount>
+    if (c < 0) {
+      return SP_TRUNCERROR;
+    }
     todo -= 2;
     ga_init(gap, sizeof(char_u *), c);
     ga_grow(gap, c);
