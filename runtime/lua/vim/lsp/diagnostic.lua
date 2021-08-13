@@ -1304,7 +1304,7 @@ end
 
 ---@param opts table Configuration table
 ---     - all opts for |vim.lsp.diagnostic.get_line_diagnostics()| and
---           |show_diagnostics()| can be used here
+---          |show_diagnostics()| can be used here
 ---@param buf_nr number|nil The buffer number
 ---@param line_nr number|nil The line number
 ---@param client_id number|nil the client id
