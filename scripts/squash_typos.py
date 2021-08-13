@@ -70,8 +70,10 @@ def rebase_onto_pr():
                 "comment",
                 os.environ["PR_NUMBER"],
                 "--body",
-                f"Your edit conflicts with an already scheduled fix ({squash_url}). \
-                        Please wait for an adult to come and help you.",
+                f"Your edit conflicts with an already scheduled fix \
+                ({squash_url}). Please check that batch PR whether your fix is \
+                already included; if not, then please wait until the batch PR \
+                is merged and then rebase your PR on top of master.",
             ]
         )
 
@@ -185,7 +187,7 @@ def main():
             "--head",
             squash_branch,
             "--title",
-            "Dedicated PR for all typo fixes.",
+            "chore: typo fixes (automated)",
         ]
     )
 
