@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question
+    url: https://neovim.discourse.group/
+    about: Please ask and answer questions about Neovim on Discourse.
