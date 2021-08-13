@@ -10361,18 +10361,17 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/*
- * "str2float()" function
- */
+/// "str2float()" function
 static void f_str2float(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  const bool skip_quotes = argvars[1].v_type != VAR_UNKNOWN && tv_get_number(&argvars[1]);
   char_u *p = skipwhite((const char_u *)tv_get_string(&argvars[0]));
   bool isneg = (*p == '-');
 
   if (*p == '+' || *p == '-') {
     p = skipwhite(p + 1);
   }
-  (void)string2float((char *)p, &rettv->vval.v_float);
+  (void)string2float((char *)p, &rettv->vval.v_float, skip_quotes);
   if (isneg) {
     rettv->vval.v_float *= -1;
   }

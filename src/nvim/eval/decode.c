@@ -591,7 +591,7 @@ parse_json_number_check:
   const size_t exp_num_len = (size_t)(p - s);
   if (fracs || exps) {
     // Convert floating-point number
-    const size_t num_len = string2float(s, &tv.vval.v_float);
+    const size_t num_len = string2float(s, &tv.vval.v_float, false);
     if (exp_num_len != num_len) {
       emsgf(_("E685: internal error: while converting number \"%.*s\" "
               "to float string2float consumed %zu bytes in place of %zu"),

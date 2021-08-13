@@ -4092,7 +4092,7 @@ static int eval7(char_u **arg, typval_T *rettv, int evaluate, int want_string)
     if (get_float) {
       float_T f;
 
-      *arg += string2float((char *)*arg, &f);
+      *arg += string2float((char *)(*arg), &f, false);
       if (evaluate) {
         rettv->v_type = VAR_FLOAT;
         rettv->vval.v_float = f;
@@ -5813,9 +5813,10 @@ failret:
 ///
 /// @param[in]  text  String to convert.
 /// @param[out]  ret_value  Location where conversion result is saved.
+/// @param[in]  skip_quotes  Skip past single quotes in the number.
 ///
 /// @return Length of the text that was consumed.
-size_t string2float(const char *const text, float_T *const ret_value)
+size_t string2float(const char *const text, float_T *const ret_value, const bool skip_quotes)
   FUNC_ATTR_NONNULL_ALL
 {
   char *s = NULL;
@@ -5833,6 +5834,27 @@ size_t string2float(const char *const text, float_T *const ret_value)
     *ret_value = NAN;
     return 3;
   }
+  if (skip_quotes && vim_strchr((char_u *)text, '\'') != NULL) {
+    char buf[100];
+    char *p = buf;
+    size_t quotes = 0;
+
+    xstrlcpy(buf, text, 100);
+    for (;;) {
+      // remove single quotes between digits, not in the exponent
+      if (*p == '\'') {
+        quotes++;
+        memmove(p, p + 1, STRLEN(p));
+      }
+      if (!ascii_isdigit(*p)) {
+        break;
+      }
+      p = (char *)skipdigits((const char_u *)p);
+    }
+    *ret_value = strtod(buf, &s);
+    return (size_t)(s - buf) + quotes;
+  }
+
   *ret_value = strtod(text, &s);
   return (size_t)(s - text);
 }
