@@ -860,7 +860,7 @@ const char *const east_node_type_tab[] = {
 ///
 /// @param[in]  ch  Character to convert.
 ///
-/// @return Converted string, stored in a static buffer (overriden after each
+/// @return Converted string, stored in a static buffer (overridden after each
 ///         call).
 static const char *intchar2str(const int ch)
   FUNC_ATTR_WARN_UNUSED_RESULT
