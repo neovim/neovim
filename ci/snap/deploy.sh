@@ -24,7 +24,7 @@ snap_realease_needed() {
 
 trigger_snapcraft_webhook() {
   [[ -n "${PAYLOAD_SIG}" ]] || exit
-  echo "Triggering new snap relase via webhook..."
+  echo "Triggering new snap release via webhook..."
   curl -X POST \
     -H "Content-Type: application/json" \
     -H "X-Hub-Signature: sha1=${PAYLOAD_SIG}" \
