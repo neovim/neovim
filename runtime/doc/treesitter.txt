@@ -88,7 +88,7 @@ tsnode:parent()						*tsnode:parent()*
 
 tsnode:iter_children()					*tsnode:iter_children()*
 	Iterates over all the direct children of {tsnode}, regardless of
-	wether they are named or not.
+	whether they are named or not.
 	Returns the child node plus the eventual field name corresponding to
 	this child node.
 
@@ -183,7 +183,7 @@ to a match.
 Treesitter Query Predicates				*lua-treesitter-predicates*
 
 When writing queries for treesitter, one might use `predicates`, that is,
-special scheme nodes that are evaluted to verify things on a captured node for
+special scheme nodes that are evaluated to verify things on a captured node for
 example, the |eq?| predicate : >
 	((identifier) @foo (#eq? @foo "foo"))
 
@@ -191,7 +191,7 @@ This will only match identifier corresponding to the `"foo"` text.
 Here is a list of built-in predicates :
 
 	`eq?`						*ts-predicate-eq?*
-		This predicate will check text correspondance between nodes or
+		This predicate will check text correspondence between nodes or
 		strings : >
 			((identifier) @foo (#eq? @foo "foo"))
 			((node1) @left (node2) @right (#eq? @left @right))
@@ -341,7 +341,7 @@ Lua module: vim.treesitter                               *lua-treesitter-core*
 get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
                 Gets the parser for this bufnr / ft combination.
 
-                If needed this will create the parser. Unconditionnally attach
+                If needed this will create the parser. Unconditionally attach
                 the provided callback
 
                 Parameters: ~
@@ -368,7 +368,7 @@ Lua module: vim.treesitter.language                      *treesitter-language*
 inspect_language({lang})                                  *inspect_language()*
                 Inspects the provided language.
 
-                Inspecting provides some useful informations on the language
+                Inspecting provides some useful information on the language
                 like node names, ...
 
                 Parameters: ~
@@ -467,7 +467,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 
                 {source} is needed if the query contains predicates, then the
                 caller must ensure to use a freshly parsed tree consistent
-                with the current text of the buffer (if relevent). {start_row}
+                with the current text of the buffer (if relevant). {start_row}
                 and {end_row} can be used to limit matches inside a row range
                 (this is typically used with root node as the node, i e to get
                 syntax highlight matches in the current viewport). When
@@ -491,7 +491,7 @@ Query:iter_captures({self}, {node}, {source}, {start}, {stop})
 
                 Parameters: ~
                     {node}    The node under which the search will occur
-                    {source}  The source buffer or string to exctract text
+                    {source}  The source buffer or string to extract text
                               from
                     {start}   The starting line of the search
                     {stop}    The stopping line of the search (end-exclusive)
@@ -599,7 +599,7 @@ LanguageTree:children({self})                        *LanguageTree:children()*
                     {self}
 
 LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
-                Determines wether This goes down the tree to recursively check childs.
+                Determines whether This goes down the tree to recursively check children.
 
                 Parameters: ~
                     {range}  is contained in this language tree
