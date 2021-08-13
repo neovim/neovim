@@ -7,17 +7,16 @@ This script squashes a PR tagged with the "typo" label into a single, dedicated
 """
 
 import subprocess
+import sys
 import os
-import re
 
 
 def get_authors_and_emails_from_pr():
     """
 
-    For a given PR number, returns all contributing authors and their emails
-    for that PR. This includes co-authors, meaning that if two authors are
-    credited for a single commit, which is possible with GitHub, then both will
-    get credited.
+    Return all contributing authors and their emails for the PR on current branch.
+    This includes co-authors, meaning that if two authors are credited for a
+    single commit, which is possible with GitHub, then both will get credited.
 
     """
 
@@ -33,44 +32,69 @@ def get_authors_and_emails_from_pr():
         text=True,
     ).splitlines()
 
-    return [(author, mail) for author, mail in zip(authors, emails)]
+    authors_and_emails_unique = {
+        (author, mail) for author, mail in zip(authors, emails)
+    }
+
+    return sorted(authors_and_emails_unique)
 
 
-def rebase_onto_pr(pr, squash_branch):
+def rebase_onto_pr():
     """
 
-    Add all commits from PR into current branch. This is done by rebasing
-    current branch onto the PR.
+    Rebase current branch onto the PR.
 
     """
 
     # Check out the pull request.
-    subprocess.call(["gh", "pr", "checkout", pr])
-
-    pr_branch_name = subprocess.check_output(
-        ["git", "branch", "--show-current"], text=True
-    ).strip()
+    subprocess.call(["gh", "pr", "checkout", os.environ["PR_NUMBER"]])
 
     # Change back to the original branch.
-    subprocess.call(["git", "switch", squash_branch])
+    subprocess.call(["git", "switch", "-"])
 
-    # Rebase onto the pull request, aka include the commits in the pull
-    # request in the current branch.
-    subprocess.call(["git", "rebase", pr_branch_name])
+    # Rebase onto the pull request, aka include the commits in the pull request
+    # in the current branch. Abort with error message if rebase fails.
+
+    try:
+        subprocess.check_call(["git", "rebase", "-"])
+    except subprocess.CalledProcessError:
+        subprocess.call(["git", "rebase", "--abort"])
+        squash_url = subprocess.check_output(
+            ["gh", "pr", "view", "--json", "url", "--jq", ".url"], text=True
+        ).strip()
+
+        subprocess.call(
+            [
+                "gh",
+                "pr",
+                "comment",
+                os.environ["PR_NUMBER"],
+                "--body",
+                f"Your edit conflicts with an already scheduled fix \
+                ({squash_url}). Please check that batch PR whether your fix is \
+                already included; if not, then please wait until the batch PR \
+                is merged and then rebase your PR on top of master.",
+            ]
+        )
+
+        sys.exit(
+            f"\n\nERROR: Your edit conflicts with an already scheduled fix \
+{squash_url} \n\n"
+        )
 
 
 def squash_all_commits():
     """
 
-    Squash all commits into a single commit. Credit all authors by name and
-    email.
+    Squash all commits on the PR into a single commit. Credit all authors by
+    name and email.
 
     """
 
-    authors_and_emails = get_authors_and_emails_from_pr()
-    subprocess.call(["git", "reset", "--soft", f"{os.environ['GITHUB_BASE_REF']}"])
+    default_branch = f"{os.environ['GITHUB_BASE_REF']}"
+    subprocess.call(["git", "reset", "--soft", default_branch])
 
-    authors_and_emails = sorted(set(authors_and_emails))
+    authors_and_emails = get_authors_and_emails_from_pr()
     commit_message_coauthors = "\n" + "\n".join(
         [f"Co-authored-by: {i[0]} <{i[1]}>" for i in authors_and_emails]
     )
@@ -80,6 +104,12 @@ def squash_all_commits():
 
 
 def force_push(branch):
+    """
+
+    Like the name implies, force push <branch>.
+
+    """
+
     gh_actor = os.environ["GITHUB_ACTOR"]
     gh_token = os.environ["GITHUB_TOKEN"]
     gh_repo = os.environ["GITHUB_REPOSITORY"]
@@ -94,54 +124,80 @@ def force_push(branch):
     )
 
 
-def main():
-    squash_branch = "marvim/squash-typos"
-    all_pr_urls = ""
+def checkout_branch(branch):
+    """
 
-    pr_number = re.sub(r"\D", "", os.environ["GITHUB_REF"])
+    Create and checkout <branch>. Check if branch exists on remote, if so then
+    sync local branch to remote.
+
+    Return True if remote branch exists, else False.
+
+    """
+
+    # FIXME I'm not sure why the local branch isn't tracking the remote branch
+    # automatically. This works but I'm pretty sure it can be done in a more
+    # "elegant" fashion
 
     show_ref_output = subprocess.check_output(["git", "show-ref"], text=True).strip()
 
-    if squash_branch in show_ref_output:
-        subprocess.call(
-            ["git", "checkout", "-b", squash_branch, f"origin/{squash_branch}"]
-        )
-        squash_branch_exists = True
+    if branch in show_ref_output:
+        subprocess.call(["git", "checkout", "-b", branch, f"origin/{branch}"])
+        return True
 
+    subprocess.call(["git", "checkout", "-b", branch])
+    return False
+
+
+def get_all_pr_urls(squash_branch_exists):
+    """
+
+    Return a list of URLs for the pull requests with the typo fixes. If a
+    squash branch exists then extract the URLs from the body text.
+
+    """
+
+    all_pr_urls = ""
+    if squash_branch_exists:
         all_pr_urls += subprocess.check_output(
             ["gh", "pr", "view", "--json", "body", "--jq", ".body"], text=True
         )
-    else:
-        subprocess.call(["git", "checkout", "-b", squash_branch])
-        squash_branch_exists = False
 
     all_pr_urls += subprocess.check_output(
-        ["gh", "pr", "view", pr_number, "--json", "url", "--jq", ".url"], text=True
+        ["gh", "pr", "view", os.environ["PR_NUMBER"], "--json", "url", "--jq", ".url"],
+        text=True,
     ).strip()
 
-    rebase_onto_pr(pr_number, squash_branch)
+    return all_pr_urls
+
+
+def main():
+    squash_branch = "marvim/squash-typos"
+
+    squash_branch_exists = checkout_branch(squash_branch)
+
+    rebase_onto_pr()
     force_push(squash_branch)
 
-    subprocess.call(["gh", "pr", "close", pr_number])
+    subprocess.call(
+        [
+            "gh",
+            "pr",
+            "create",
+            "--fill",
+            "--head",
+            squash_branch,
+            "--title",
+            "chore: typo fixes (automated)",
+        ]
+    )
 
     squash_all_commits()
     force_push(squash_branch)
 
-    if not squash_branch_exists:
-        subprocess.call(
-            [
-                "gh",
-                "pr",
-                "create",
-                "--fill",
-                "--head",
-                squash_branch,
-                "--title",
-                "Dedicated PR for all typo fixes.",
-            ]
-        )
-
+    all_pr_urls = get_all_pr_urls(squash_branch_exists)
     subprocess.call(["gh", "pr", "edit", "--add-label", "typo", "--body", all_pr_urls])
+
+    subprocess.call(["gh", "pr", "close", os.environ["PR_NUMBER"]])
 
 
 if __name__ == "__main__":

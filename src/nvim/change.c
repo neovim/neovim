@@ -22,6 +22,7 @@
 #include "nvim/misc1.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/plines.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
@@ -593,9 +594,9 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       // cells.  May result in adding spaces to fill a gap.
       colnr_T vcol;
       getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL);
-      colnr_T new_vcol = vcol + chartabsize(buf, vcol);
+      colnr_T new_vcol = vcol + win_chartabsize(curwin, buf, vcol);
       while (oldp[col + oldlen] != NUL && vcol < new_vcol) {
-        vcol += chartabsize(oldp + col + oldlen, vcol);
+        vcol += win_chartabsize(curwin, oldp + col + oldlen, vcol);
         // Don't need to remove a TAB that takes us to the right
         // position.
         if (vcol > new_vcol && oldp[col + oldlen] == TAB) {

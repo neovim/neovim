@@ -45,6 +45,7 @@
 #include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/plines.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
@@ -5122,11 +5123,13 @@ static void nv_scroll(cmdarg_T *cap)
           --n;
           break;
         }
-        used += plines(curwin->w_topline + n);
-        if (used >= half)
+        used += plines_win(curwin, curwin->w_topline + n, true);
+        if (used >= half) {
           break;
-        if (hasFolding(curwin->w_topline + n, NULL, &lnum))
+        }
+        if (hasFolding(curwin->w_topline + n, NULL, &lnum)) {
           n = lnum - curwin->w_topline;
+        }
       }
       if (n > 0 && used > curwin->w_height_inner) {
         n--;
