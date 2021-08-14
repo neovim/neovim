@@ -1348,12 +1348,8 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
   }
 
   if (watched) {
-    if (oldtv.v_type == VAR_UNKNOWN) {
-      tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, NULL);
-    } else {
-      tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
-      tv_clear(&oldtv);
-    }
+    tv_dict_watcher_notify(dict, (char *)v->di_key, &v->di_tv, &oldtv);
+    tv_clear(&oldtv);
   }
 
   if (is_const) {
