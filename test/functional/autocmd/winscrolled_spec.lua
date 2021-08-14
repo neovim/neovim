@@ -116,4 +116,24 @@ describe('WinScrolled', function()
     request('nvim_win_close', eval('g:win'), true)
     eq(3, eval('g:scrolled'))
   end)
+
+  it('is triggered when viewport is changed via an option', function()
+    source([[
+
+      set nowrap
+      call append(0, repeat('x', winwidth(0)))
+      normal! gg$
+
+      botright vsplit foo
+
+      wincmd w
+      let g:win = win_getid()
+      let g:scrolled = 0
+      autocmd WinScrolled <buffer> let g:scrolled += 1
+      wincmd w
+    ]])
+    eq(0, eval('g:scrolled'))
+    request('nvim_win_set_option', eval('g:win'), 'wrap', true)
+    eq(1, eval('g:scrolled'))
+  end)
 end)

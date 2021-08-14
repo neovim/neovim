@@ -46,6 +46,13 @@ local list_flags={
   flagscomma='P_COMMA|P_FLAGLIST',
 }
 
+local autocmd_flags={
+  winscrolled='A_WINSCROLLED',
+  cursormoved='A_CURSORMOVED',
+  bufmodifiedset='A_BUFMODIFIEDSET',
+}
+
+
 local get_flags = function(o)
   local ret = {type_flags[o.type]}
   local add_flag = function(f)
@@ -86,6 +93,28 @@ local get_flags = function(o)
     end
   end
   return ret[1]
+end
+
+local get_autocommands = function(o)
+  local flags = {}
+
+  if o.autocommands == nil then
+    return '0'
+  end
+
+  for _, name in ipairs(o.autocommands) do
+    local flag = autocmd_flags[name]
+    if flag == nil then
+      error('Autocommand flag not found: ' .. name)
+    end
+    table.insert(flags, flag)
+  end
+
+  if #flags == 0 then
+    return '0'
+  end
+
+  return table.concat(flags, '|')
 end
 
 local get_cond
@@ -134,6 +163,7 @@ local dump_option = function(i, o)
     w('    .shortname=' .. cstr(o.abbreviation))
   end
   w('    .flags=' .. get_flags(o))
+  w('    .autocommands=' .. get_autocommands(o))
   if o.enable_if then
     w(get_cond(o.enable_if))
   end

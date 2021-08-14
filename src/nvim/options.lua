@@ -759,6 +759,7 @@ return {
       no_mkrc=true,
       alloced=true,
       redraw={'statuslines', 'current_buffer'},
+      autocommands={'bufmodifiedset'},
       varname='p_fenc',
       defaults={if_true={vi=""}}
     },
@@ -777,6 +778,7 @@ return {
       no_mkrc=true,
       alloced=true,
       redraw={'curswant', 'statuslines'},
+      autocommands={'bufmodifiedset'},
       varname='p_ff',
       defaults={if_true={vi=macros('DFLT_FF')}}
     },
@@ -2877,6 +2879,7 @@ return {
       short_desc=N_("lines wrap and continue on the next line"),
       type='bool', scope={'window'},
       redraw={'current_window'},
+      autocommands={'cursormoved', 'winscrolled'},
       defaults={if_true={vi=true}}
     },
     {

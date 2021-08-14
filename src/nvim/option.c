@@ -30,6 +30,7 @@
 #include "nvim/vim.h"
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
+#include "nvim/aucmd.h"
 #include "nvim/edit.h"
 #include "nvim/option.h"
 #include "nvim/buffer.h"
@@ -200,7 +201,8 @@ static char_u *p_vsts_nopaste;
 typedef struct vimoption {
   char        *fullname;        // full option name
   char        *shortname;       // permissible abbreviation
-  uint32_t flags;               // see below
+  uint32_t    flags;            // see below
+  uint32_t    autocommands;     // see below
   char_u      *var;             // global option: pointer to variable;
                                 // window-local option: VAR_WIN;
                                 // buffer-local option: global value
@@ -258,6 +260,16 @@ typedef struct vimoption {
 #define P_NDNAME       0x20000000U  ///< only normal dir name chars allowed
 #define P_UI_OPTION    0x40000000U  ///< send option to remote ui
 #define P_MLE          0x80000000U  ///< under control of 'modelineexpr'
+
+//
+// Autocommand flags
+// When option is changed, which autocommands should be checked.
+//
+
+#define A_CURSORMOVED    0x1U
+#define A_WINSCROLLED    0x2U
+#define A_BUFMODIFIEDSET 0x4U
+
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -4888,52 +4900,100 @@ char *set_option_value(const char *const name, const long number,
     return NULL;  // Fail silently; many old vimrcs set t_xx options.
   }
 
-  int opt_idx;
-  char_u      *varp;
+  char *error_message = NULL;
+  int opt_idx = findoption(name);
 
-  opt_idx = findoption(name);
   if (opt_idx < 0) {
     EMSG2(_("E355: Unknown option: %s"), name);
-  } else {
-    uint32_t flags = options[opt_idx].flags;
-    // Disallow changing some options in the sandbox
-    if (sandbox > 0 && (flags & P_SECURE)) {
-      EMSG(_(e_sandbox));
-      return NULL;
-    }
-    if (flags & P_STRING) {
-      const char *s = string;
-      if (s == NULL) {
-        s = "";
-      }
-      return set_string_option(opt_idx, s, opt_flags);
-    } else {
-      varp = get_varp_scope(&(options[opt_idx]), opt_flags);
-      if (varp != NULL) {       // hidden option is not changed
-        if (number == 0 && string != NULL) {
-          int idx;
+    return NULL;
+  }
 
-          // Either we are given a string or we are setting option
-          // to zero.
-          for (idx = 0; string[idx] == '0'; idx++) {}
-          if (string[idx] != NUL || idx == 0) {
-            // There's another character after zeros or the string
-            // is empty.  In both cases, we are trying to set a
-            // num option using a string.
-            EMSG3(_("E521: Number required: &%s = '%s'"),
-                  name, string);
-            return NULL;  // do nothing as we hit an error
-          }
+  uint32_t flags = options[opt_idx].flags;
+  // Disallow changing some options in the sandbox
+  if (sandbox > 0 && (flags & P_SECURE)) {
+    EMSG(_(e_sandbox));
+    return NULL;
+  }
+
+  if (flags & P_STRING) {
+    const char *s = string;
+    if (s == NULL) {
+      s = "";
+    }
+    error_message = set_string_option(opt_idx, s, opt_flags);
+    goto after_set;
+  }
+
+  char_u *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
+  if (varp != NULL) {       // hidden option is not changed
+    if (number == 0 && string != NULL) {
+      int idx;
+
+      // Either we are given a string or we are setting option
+      // to zero.
+      for (idx = 0; string[idx] == '0'; idx++) {}
+      if (string[idx] != NUL || idx == 0) {
+        // There's another character after zeros or the string
+        // is empty.  In both cases, we are trying to set a
+        // num option using a string.
+        EMSG3(_("E521: Number required: &%s = '%s'"),
+              name, string);
+        return NULL;  // do nothing as we hit an error
+      }
+    }
+
+    if (flags & P_NUM) {
+      error_message = set_num_option(opt_idx, varp, number, NULL, 0, opt_flags);
+    } else {
+      error_message = set_bool_option(opt_idx, varp, (int)number, opt_flags);
+    }
+    goto after_set;
+  }
+
+after_set:{};
+
+  // Now, run all autocommands that have been triggered.
+  bool is_global = (opt_flags & OPT_GLOBAL) || opt_flags == 0;
+  bool is_window = options[opt_idx].var == VAR_WIN;
+  uint32_t autocommands = options[opt_idx].autocommands;
+
+#define DO_AUTOCMD_CHECK \
+      if (autocommands & A_BUFMODIFIEDSET) { \
+        autocmd_check_buffer_modified(&bufref); \
+      } \
+      if (autocommands & A_CURSORMOVED) { \
+        autocmd_check_cursor_moved(&winref, EVENT_CURSORMOVED); \
+      } \
+      if (autocommands & A_WINSCROLLED) { \
+        autocmd_check_window_scrolled(&winref); \
+      }
+
+  if (autocommands) {
+    if (!is_global) {
+      winref_T winref = winref_from(curwin);
+      bufref_T bufref = bufref_from(curbuf);
+      DO_AUTOCMD_CHECK
+    } else {
+      if (is_window) {
+        FOR_ALL_WINDOWS(wp) {
+          winref_T winref = winref_from(wp);
+          bufref_T bufref = bufref_from(wp->w_buffer);
+          DO_AUTOCMD_CHECK
         }
-        if (flags & P_NUM) {
-          return set_num_option(opt_idx, varp, number, NULL, 0, opt_flags);
-        } else {
-          return set_bool_option(opt_idx, varp, (int)number, opt_flags);
+
+      } else {
+        FOR_ALL_BUFFERS(buf) {
+          winref_T winref = winref_from(curwin);
+          bufref_T bufref = bufref_from(buf);
+          DO_AUTOCMD_CHECK
         }
       }
     }
   }
-  return NULL;
+
+#undef DO_AUTOCMD_CHECK
+
+  return error_message;
 }
 
 // Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
