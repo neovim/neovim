@@ -26,8 +26,8 @@ describe('CursorMoved', function()
     let g:buf = bufnr('%')
     let g:win = win_getid()
     vsplit foo
-    autocmd CursorMoved * let g:cursormoved += 1
     call nvim_buf_set_lines(g:buf, 0, -1, v:true, ['a', 'b', 'c'])
+    autocmd CursorMoved * let g:cursormoved += 1
     call nvim_win_set_cursor(g:win, [3, 0])
     ]])
     eq({'a', 'b', 'c'}, funcs.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
