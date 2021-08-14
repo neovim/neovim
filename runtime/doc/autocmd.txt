@@ -1019,8 +1019,9 @@ WinNew				When a new window was created.  Not done for
 				the first window, when Vim has just started.
 				Before WinEnter.
 							*WinScrolled*
-WinScrolled			After scrolling the viewport of the current
-				window.
+WinScrolled			After the viewport of the current window
+				changes.  Runs once as soon as the
+				autocommand is attached.
 
 
 ==============================================================================

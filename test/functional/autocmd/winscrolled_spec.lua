@@ -58,7 +58,7 @@ describe('WinScrolled', function()
     autocmd WinScrolled * let g:scrolled += 1
     wincmd v
     ]])
-    eq(1, eval('g:scrolled'))
+    eq(2, eval('g:scrolled'))
   end)
 
   it('is triggered through nvim_win_set(width|height)', function()
@@ -98,19 +98,22 @@ describe('WinScrolled', function()
     wincmd l
     wincmd c
     ]])
-    eq(2, eval('g:scrolled'))
+    eq(3, eval('g:scrolled'))
   end)
 
-  it('is triggered when non-currenta window is closed via nvim_win_close', function()
+  it('is triggered when non-current window is closed via nvim_win_close', function()
     source([[
-    vsplit foo
-    let g:scrolled = 0
-    autocmd WinScrolled <buffer> let g:scrolled += 1
-    vsplit bar
-    let g:win = win_getid()
-    wincmd W
+
+      vsplit foo
+      let g:scrolled = 0
+
+      autocmd WinScrolled <buffer> let g:scrolled += 1
+      vsplit bar
+      let g:win = win_getid()
+      wincmd W
+
     ]])
     request('nvim_win_close', eval('g:win'), true)
-    eq(2, eval('g:scrolled'))
+    eq(3, eval('g:scrolled'))
   end)
 end)
