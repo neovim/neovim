@@ -3,6 +3,7 @@ on:
   push:
     branches: '**'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
