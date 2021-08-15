@@ -265,6 +265,8 @@ describe('LSP', function()
       if 'openbsd' == helpers.uname() then
         pending('hangs the build on openbsd #14028, re-enable with freeze timeout #14204')
         return
+      elseif helpers.skip_fragile(pending) then
+        return
       end
       local expected_handlers = {
         {NIL, "shutdown", {}, 1, NIL};
