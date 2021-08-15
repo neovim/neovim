@@ -266,6 +266,8 @@ describe('LSP', function()
       if isCI() then
         pending('hangs the build on CI #14028, re-enable with freeze timeout #14204')
         return
+      elseif helpers.skip_fragile(pending) then
+        return
       end
       local expected_handlers = {
         {NIL, "shutdown", {}, 1, NIL};
