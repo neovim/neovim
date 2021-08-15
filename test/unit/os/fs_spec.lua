@@ -1029,7 +1029,7 @@ describe('fs.c', function()
       itp('returns the correct blocksize of a file', function()
         local path = 'unit-test-directory/test.file'
         -- there is a bug in luafilesystem where
-        -- `lfs.attributes path, 'blksize'` returns the worng value:
+        -- `lfs.attributes path, 'blksize'` returns the wrong value:
         -- https://github.com/keplerproject/luafilesystem/pull/44
         -- using this workaround for now:
         local blksize = lfs.attributes(path).blksize
@@ -1038,7 +1038,7 @@ describe('fs.c', function()
         if blksize then
           eq(blksize, fs.os_fileinfo_blocksize(info))
         else
-          -- luafs dosn't support blksize on windows
+          -- luafs doesn't support blksize on windows
           -- libuv on windows returns a constant value as blocksize
           -- checking for this constant value should be enough
           eq(2048, fs.os_fileinfo_blocksize(info))
