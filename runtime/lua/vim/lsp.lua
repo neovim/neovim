@@ -289,6 +289,7 @@ end
 
 local changetracking = {}
 do
+  --@private
   --- client_id → state
   ---
   ---   state
