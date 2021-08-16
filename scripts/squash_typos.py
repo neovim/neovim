@@ -39,7 +39,7 @@ def get_authors_and_emails_from_pr():
     return sorted(authors_and_emails_unique)
 
 
-def rebase_onto_pr():
+def rebase_squash_branch_onto_pr():
     """
 
     Rebase current branch onto the PR.
@@ -48,6 +48,10 @@ def rebase_onto_pr():
 
     # Check out the pull request.
     subprocess.call(["gh", "pr", "checkout", os.environ["PR_NUMBER"]])
+
+    # Rebase onto master
+    default_branch = f"{os.environ['GITHUB_BASE_REF']}"
+    subprocess.check_call(["git", "rebase", default_branch])
 
     # Change back to the original branch.
     subprocess.call(["git", "switch", "-"])
@@ -81,6 +85,18 @@ def rebase_onto_pr():
             f"\n\nERROR: Your edit conflicts with an already scheduled fix \
 {squash_url} \n\n"
         )
+
+
+def rebase_squash_branch_onto_master():
+    """
+
+    Rebase current branch onto the master i.e. make sure current branch is up
+    to date. Abort on error.
+
+    """
+
+    default_branch = f"{os.environ['GITHUB_BASE_REF']}"
+    subprocess.check_call(["git", "rebase", default_branch])
 
 
 def squash_all_commits():
@@ -175,7 +191,10 @@ def main():
 
     squash_branch_exists = checkout_branch(squash_branch)
 
-    rebase_onto_pr()
+    rebase_squash_branch_onto_master()
+    force_push(squash_branch)
+
+    rebase_squash_branch_onto_pr()
     force_push(squash_branch)
 
     subprocess.call(
