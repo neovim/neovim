@@ -986,9 +986,9 @@ inside of strings can change!  Also see 'softtabstop' option. >
 
 							*Y*
 ["x]Y			yank [count] lines [into register x] (synonym for
-			yy, |linewise|).  If you like "Y" to work from the
-			cursor to the end of line (which is more logical,
-			but not Vi-compatible) use ":map Y y$".
+			yy, |linewise|).
+							*Y-default*
+			Mapped to "y$" by default. |default-mappings|
 
 							*zy*
 ["x]zy{motion}		Yank {motion} text [into register x].  Only differs

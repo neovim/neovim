@@ -397,6 +397,11 @@ void init_normal_cmds(void)
   nv_max_linear = i - 1;
 }
 
+void init_default_mappings(void)
+{
+  add_map((char_u *)"Y y$", NORMAL | VISUAL);
+}
+
 /*
  * Search for a command in the commands table.
  * Returns -1 for invalid command.
