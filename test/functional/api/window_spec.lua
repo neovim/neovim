@@ -1,8 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
-  ok, feed, insert, eval = helpers.clear, helpers.nvim, helpers.curbuf,
+  ok, feed, insert, eval, tabpage = helpers.clear, helpers.nvim, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
-  helpers.neq, helpers.ok, helpers.feed, helpers.insert, helpers.eval
+  helpers.neq, helpers.ok, helpers.feed, helpers.insert, helpers.eval,
+  helpers.tabpage
 local poke_eventloop = helpers.poke_eventloop
 local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
@@ -11,6 +12,7 @@ local NIL = helpers.NIL
 local meths = helpers.meths
 local command = helpers.command
 local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -206,7 +208,7 @@ describe('API/win', function()
     end)
   end)
 
-  describe('{get,set}_option', function()
+  describe('nvim_win_get_option, nvim_win_set_option', function()
     it('works', function()
       curwin('set_option', 'colorcolumn', '4,3')
       eq('4,3', curwin('get_option', 'colorcolumn'))
@@ -223,6 +225,18 @@ describe('API/win', function()
       eq("Failed to get value for option 'statusline'",
         pcall_err(curwin, 'get_option', 'statusline'))
       eq('', eval('&l:statusline')) -- confirm local value was not copied
+    end)
+
+    it('after switching windows #15390', function()
+      nvim('command', 'tabnew')
+      local tab1 = unpack(nvim('list_tabpages'))
+      local win1 = unpack(tabpage('list_wins', tab1))
+      window('set_option', win1, 'statusline', 'window-status')
+      nvim('command', 'split')
+      nvim('command', 'wincmd J')
+      nvim('command', 'wincmd j')
+      eq('window-status', window('get_option', win1, 'statusline'))
+      assert_alive()
     end)
   end)
 
@@ -354,13 +368,13 @@ describe('API/win', function()
       local win = meths.open_win(0, true, {
         relative='editor', row=10, col=10, width=50, height=10
       })
-      local tabpage = eval('tabpagenr()')
+      local tab = eval('tabpagenr()')
       command('tabprevious')
       eq(1, eval('tabpagenr()'))
       meths.win_close(win, false)
 
-      eq(1001, meths.tabpage_get_win(tabpage).id)
-      helpers.assert_alive()
+      eq(1001, meths.tabpage_get_win(tab).id)
+      assert_alive()
     end)
   end)
 
