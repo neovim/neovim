@@ -60,8 +60,8 @@ the differences.
 - 'tags' defaults to "./tags;,tags"
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
-- 'viewoptions' includes "unix,slash"
 - 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
+- 'viewoptions' includes "unix,slash" and removes "options"
 - 'viminfo' includes "!"
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"

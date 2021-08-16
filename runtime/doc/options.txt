@@ -6700,7 +6700,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'viewoptions'* *'vop'*
-'viewoptions' 'vop'	string	(default: "folds,options,cursor,curdir")
+'viewoptions' 'vop'	string	(default: "folds,cursor,curdir")
 			global
 	Changes the effect of the |:mkview| command.  It is a comma separated
 	list of words.  Each word enables saving and restoring something:

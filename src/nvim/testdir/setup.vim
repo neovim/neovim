@@ -21,6 +21,7 @@ set undodir^=.
 set wildoptions=
 set startofline
 set sessionoptions+=options
+set viewoptions+=options
 
 " Unmap Nvim default mappings.
 unmap Y

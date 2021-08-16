@@ -2705,7 +2705,7 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_vop',
-      defaults={if_true={vi="folds,options,cursor,curdir"}}
+      defaults={if_true={vi="folds,cursor,curdir"}}
     },
     {
       -- Alias for "shada".
