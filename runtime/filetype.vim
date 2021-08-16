@@ -534,7 +534,12 @@ au BufNewFile,BufRead *.drac,*.drc,*lvs,*lpe	setf dracula
 au BufNewFile,BufRead *.ds			setf datascript
 
 " dsl
-au BufNewFile,BufRead *.dsl			setf dsl
+au BufNewFile,BufRead *.dsl
+	\ if getline(1) =~ '^<\!' |
+	\   setf dsl |
+	\ else |
+	\   setf structurizr |
+	\ endif
 
 " DTD (Document Type Definition for XML)
 au BufNewFile,BufRead *.dtd			setf dtd
