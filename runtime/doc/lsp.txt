@@ -766,15 +766,6 @@ get_log_path()                                        *vim.lsp.get_log_path()*
                 Return: ~
                     (String) Path to logfile.
 
-init({client}, {bufnr})                                       *vim.lsp.init()*
-                client_id → state
-
-                state pending_change?: function that the timer starts to
-                trigger didChange pending_changes: list of tables with the
-                pending changesets; for incremental_sync only
-                use_incremental_sync: bool buffers?: table (bufnr → lines);
-                for incremental sync only timer?: uv_timer
-
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
                 Implements 'omnifunc' compatible LSP completion.
 
