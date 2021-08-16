@@ -61,7 +61,7 @@ the differences.
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
 - 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
-- 'viewoptions' includes "unix,slash" and removes "options"
+- 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
