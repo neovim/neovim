@@ -399,7 +399,7 @@ void init_normal_cmds(void)
 
 void init_default_mappings(void)
 {
-  add_map((char_u *)"Y y$", NORMAL | VISUAL);
+  add_map((char_u *)"Y y$", NORMAL);
 }
 
 /*
