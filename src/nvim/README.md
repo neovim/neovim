@@ -75,8 +75,108 @@ Logs will be written to `${HOME}/logs/*san.PID` then.
 
 For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
 
-TUI debugging
--------------
+Debug: Performance
+------------------
+
+### Profiling (easy)
+
+For debugging performance bottlenecks in any code, there is a simple (and very
+effective) approach:
+
+1. Run the slow code in a loop.
+2. Break execution ~5 times and save the stacktrace.
+3. The cause of the bottleneck will (almost always) appear in most of the stacktraces.
+
+### Profiling (fancy)
+
+For more advanced profiling, consider `perf` + `flamegraph`.
+
+### USDT profiling (powerful)
+
+Or you can use USDT probes via `NVIM_PROBE` ([#12036](https://github.com/neovim/neovim/pull/12036)).
+
+> USDT is basically a way to define stable probe points in userland binaries.
+> The benefit of bcc is the ability to define logic to go along with the probe
+> points.
+
+Tools:
+- bpftrace provides an awk-like language to the kernel bytecode, BPF.
+- BCC provides a subset of C. Provides more complex logic than bpftrace, but takes a bit more effort.
+
+Example using bpftrace to track slow vim functions, and print out any files
+that were opened during the trace. At the end, it prints a histogram of
+function timing:
+
+    #!/usr/bin/env bpftrace
+
+    BEGIN {
+      @depth = -1;
+    }
+
+    tracepoint:sched:sched_process_fork /@pidmap[args->parent_pid]/ {
+      @pidmap[args->child_pid] = 1;
+    }
+
+    tracepoint:sched:sched_process_exit /@pidmap[args->pid]/ {
+      delete(@pidmap[args->pid]);
+    }
+
+    usdt:build/bin/nvim:neovim:eval__call_func__entry {
+        @pidmap[pid] = 1;
+        @depth++;
+        @funcentry[@depth] = nsecs;
+    }
+
+    usdt:build/bin/nvim:neovim:eval__call_func__return {
+        $func = str(arg0);
+        $msecs = (nsecs - @funcentry[@depth]) / 1000000;
+
+        @time_histo = hist($msecs);
+
+        if ($msecs >= 1000) {
+          printf("%u ms for %s\n", $msecs, $func);
+          print(@files);
+        }
+
+        clear(@files);
+        delete(@funcentry[@depth]);
+        @depth--;
+    }
+
+    tracepoint:syscalls:sys_enter_open,
+    tracepoint:syscalls:sys_enter_openat {
+      if (@pidmap[pid] == 1 && @depth >= 0) {
+        @files[str(args->filename)] = count();
+      }
+    }
+
+    END {
+      clear(@depth);
+    }
+
+    $ sudo bpftrace funcslower.bt
+    1527 ms for Slower
+    @files[/usr/lib/libstdc++.so.6]: 2
+    @files[/etc/fish/config.fish]: 2
+    <snip>
+
+    ^C
+    @time_histo:
+    [0]                71430 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+    [1]                  346 |                                                    |
+    [2, 4)               208 |                                                    |
+    [4, 8)                91 |                                                    |
+    [8, 16)               22 |                                                    |
+    [16, 32)              85 |                                                    |
+    [32, 64)               7 |                                                    |
+    [64, 128)              0 |                                                    |
+    [128, 256)             0 |                                                    |
+    [256, 512)             6 |                                                    |
+    [512, 1K)              1 |                                                    |
+    [1K, 2K)               5 |                                                    |
+
+Debug: TUI
+----------
 
 ### TUI troubleshoot
 

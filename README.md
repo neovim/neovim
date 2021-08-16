@@ -64,7 +64,7 @@ To install to a non-default location:
     make CMAKE_INSTALL_PREFIX=/full/path/
     make install
 
-To inspect the build, these CMake features are useful:
+CMake hints for inspecting the build:
 
 - `cmake --build build --target help` lists all build targets.
 - `build/CMakeCache.txt` (or `cmake -LAH build/`) contains the resolved values of all CMake variables.
