@@ -2390,7 +2390,7 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_swb',
-      defaults={if_true={vi=""}}
+      defaults={if_true={vi="uselast"}}
     },
     {
       full_name='synmaxcol', abbreviation='smc',

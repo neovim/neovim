@@ -6116,7 +6116,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	specify special kinds of buffers.   See |special-buffers|.
 
 						*'switchbuf'* *'swb'*
-'switchbuf' 'swb'	string	(default "")
+'switchbuf' 'swb'	string	(default "uselast")
 			global
 	This option controls the behavior when switching between buffers.
 	Possible values (comma separated list):
