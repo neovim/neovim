@@ -75,7 +75,6 @@ the differences.
 
 Default Mappings:					*default-mappings*
   nnoremap Y y$
-  xnoremap Y y$
 
 ==============================================================================
 3. New Features						       *nvim-features*
