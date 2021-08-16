@@ -22,7 +22,7 @@ set wildoptions=
 set startofline
 set sessionoptions+=options
 
-" Unmap default mappings
+" Unmap Nvim default mappings.
 unmap Y
 unmap <C-L>
 
