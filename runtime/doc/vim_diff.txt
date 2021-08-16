@@ -56,6 +56,7 @@ the differences.
 - 'sidescroll' defaults to 1
 - 'smarttab' is enabled
 - 'startofline' is disabled
+- 'switchbuf' defaults to "uselast"
 - 'tabpagemax' defaults to 50
 - 'tags' defaults to "./tags;,tags"
 - 'ttimeoutlen' defaults to 50

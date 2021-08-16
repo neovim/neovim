@@ -22,6 +22,7 @@ set wildoptions=
 set startofline
 set sessionoptions+=options
 set viewoptions+=options
+set switchbuf=
 
 " Unmap Nvim default mappings.
 unmap Y
