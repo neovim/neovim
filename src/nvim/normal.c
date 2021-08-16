@@ -399,7 +399,8 @@ void init_normal_cmds(void)
 
 void init_default_mappings(void)
 {
-  add_map((char_u *)"Y y$", NORMAL);
+  add_map((char_u *)"Y y$", NORMAL, true);
+  add_map((char_u *)"<C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>", NORMAL, true);
 }
 
 /*

@@ -4357,18 +4357,16 @@ check_map (
 }
 
 
-/*
- * Add a mapping "map" for mode "mode".
- * Need to put string in allocated memory, because do_map() will modify it.
- */
-void add_map(char_u *map, int mode)
+// Add a mapping "map" for mode "mode".
+// Need to put string in allocated memory, because do_map() will modify it.
+void add_map(char_u *map, int mode, bool nore)
 {
   char_u      *s;
   char_u      *cpo_save = p_cpo;
 
   p_cpo = (char_u *)"";         // Allow <> notation
   s = vim_strsave(map);
-  (void)do_map(0, s, mode, FALSE);
+  (void)do_map(nore ? 2 : 0, s, mode, false);
   xfree(s);
   p_cpo = cpo_save;
 }
