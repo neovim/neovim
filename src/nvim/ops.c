@@ -41,6 +41,7 @@
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/state.h"

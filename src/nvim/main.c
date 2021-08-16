@@ -314,6 +314,9 @@ int main(int argc, char **argv)
   init_highlight(true, false);  // Default highlight groups.
   TIME_MSG("init highlight");
 
+  init_default_mappings();  // Default mappings.
+  TIME_MSG("init default mappings");
+
   // Set the break level after the terminal is initialized.
   debug_break_level = params.use_debug_break_level;
 

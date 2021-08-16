@@ -32,6 +32,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
+#include "nvim/plines.h"
 #include "nvim/file_search.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
@@ -682,7 +683,7 @@ void win_set_minimal_style(win_T *wp)
   }
 
   // signcolumn: use 'auto'
-  if (wp->w_p_scl[0] != 'a') {
+  if (wp->w_p_scl[0] != 'a' || STRLEN(wp->w_p_scl) >= 8) {
     xfree(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }

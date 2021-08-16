@@ -101,6 +101,7 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
@@ -1694,7 +1695,7 @@ static void win_update(win_T *wp, Providers *providers)
     /*
      * There is a trick with w_botline.  If we invalidate it on each
      * change that might modify it, this will cause a lot of expensive
-     * calls to plines() in update_topline() each time.  Therefore the
+     * calls to plines_win() in update_topline() each time.  Therefore the
      * value of w_botline is often approximated, and this value is used to
      * compute the value of w_topline.  If the value of w_botline was
      * wrong, check that the value of w_topline is correct (cursor is on
@@ -4119,7 +4120,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
       /*
        * Update w_cline_height and w_cline_folded if the cursor line was
-       * updated (saves a call to plines() later).
+       * updated (saves a call to plines_win() later).
        */
       if (wp == curwin && lnum == curwin->w_cursor.lnum) {
         curwin->w_cline_row = startrow;

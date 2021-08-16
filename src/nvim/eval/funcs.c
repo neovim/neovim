@@ -47,6 +47,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
@@ -1055,8 +1056,10 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (virtual_active() && fp == &curwin->w_cursor) {
         char_u  *p = get_cursor_pos_ptr();
 
-        if (curwin->w_cursor.coladd >= (colnr_T)chartabsize(p,
-                curwin->w_virtcol - curwin->w_cursor.coladd)) {
+        if (curwin->w_cursor.coladd
+            >= (colnr_T)win_chartabsize(curwin, p,
+                                        (curwin->w_virtcol
+                                         - curwin->w_cursor.coladd))) {
           int l;
 
           if (*p != NUL && p[(l = (*mb_ptr2len)(p))] == NUL)

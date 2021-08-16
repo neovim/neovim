@@ -18,6 +18,7 @@
 #include "nvim/diff.h"
 #include "nvim/move.h"
 #include "nvim/misc1.h"
+#include "nvim/plines.h"
 #include "nvim/cursor.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/memline.h"
@@ -236,12 +237,14 @@ retnomove:
     if (row < 0) {
       count = 0;
       for (first = true; curwin->w_topline > 1; ) {
-        if (curwin->w_topfill < diff_check(curwin, curwin->w_topline))
-          ++count;
-        else
-          count += plines(curwin->w_topline - 1);
-        if (!first && count > -row)
+        if (curwin->w_topfill < diff_check(curwin, curwin->w_topline)) {
+          count++;
+        } else {
+          count += plines_win(curwin, curwin->w_topline - 1, true);
+        }
+        if (!first && count > -row) {
           break;
+        }
         first = false;
         (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
         if (curwin->w_topfill < diff_check(curwin, curwin->w_topline)) {
@@ -262,7 +265,7 @@ retnomove:
         if (curwin->w_topfill > 0) {
           ++count;
         } else {
-          count += plines(curwin->w_topline);
+          count += plines_win(curwin, curwin->w_topline, true);
         }
 
         if (!first && count > row - curwin->w_height_inner + 1) {
@@ -522,7 +525,7 @@ static colnr_T scroll_line_len(linenr_T lnum)
   char_u *line = ml_get(lnum);
   if (*line != NUL) {
     for (;;) {
-      int numchar = chartabsize(line, col);
+      int numchar = win_chartabsize(curwin, line, col);
       MB_PTR_ADV(line);
       if (*line == NUL) {    // don't count the last character
         break;
@@ -618,10 +621,10 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // scanned *up to* `col`, nudging it left or right when concealed characters
   // are encountered.
   //
-  // chartabsize() is used to keep track of the virtual column position relative
-  // to the line's bytes.  For example: if col == 9 and the line starts with a
-  // tab that's 8 columns wide, we would want the cursor to be highlighting the
-  // second byte, not the ninth.
+  // win_chartabsize() is used to keep track of the virtual column position
+  // relative to the line's bytes.  For example: if col == 9 and the line
+  // starts with a tab that's 8 columns wide, we would want the cursor to be
+  // highlighting the second byte, not the ninth.
 
   linenr_T lnum = wp->w_cursor.lnum;
   char_u *line = ml_get(lnum);
@@ -645,7 +648,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     // checked for concealed characters.
     vcol = 0;
     while (vcol < offset && *ptr != NUL) {
-      vcol += chartabsize(ptr, vcol);
+      vcol += win_chartabsize(curwin, ptr, vcol);
       ptr += utfc_ptr2len(ptr);
     }
 
@@ -656,7 +659,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   vcol = offset;
   ptr_end = ptr_row_offset;
   while (vcol < col && *ptr_end != NUL) {
-    vcol += chartabsize(ptr_end, vcol);
+    vcol += win_chartabsize(curwin, ptr_end, vcol);
     ptr_end += utfc_ptr2len(ptr_end);
   }
 
@@ -671,7 +674,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
 #define decr() nudge--; ptr_end -= utfc_ptr2len(ptr_end)
 
   while (ptr < ptr_end && *ptr != NUL) {
-    cwidth = chartabsize(ptr, vcol);
+    cwidth = win_chartabsize(curwin, ptr, vcol);
     vcol += cwidth;
     if (cwidth > 1 && *ptr == '\t' && nudge > 0) {
       // A tab will "absorb" any previous adjustments.

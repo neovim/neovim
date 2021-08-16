@@ -41,7 +41,8 @@ module.nvim_set = (
   ..' belloff= wildoptions-=pum noshowcmd noruler nomore redrawdebug=invalid')
 module.nvim_argv = {
   module.nvim_prog, '-u', 'NONE', '-i', 'NONE',
-  '--cmd', module.nvim_set, '--embed'}
+  '--cmd', module.nvim_set,
+  '--cmd', 'unmap Y', '--embed'}
 -- Directory containing nvim.
 module.nvim_dir = module.nvim_prog:gsub("[/\\][^/\\]+$", "")
 if module.nvim_dir == module.nvim_prog then
