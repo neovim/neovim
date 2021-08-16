@@ -14,6 +14,10 @@ Various commands					*various*
 							*CTRL-L*
 CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
+							*CTRL-L-default*
+			By default, also clears search highlighting
+			|:nohlsearch| and updates diffs |:diffupdate|.
+			|default-mappings|
 
 							*:mod* *:mode*
 :mod[e]			Clears and redraws the screen.

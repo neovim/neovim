@@ -6259,8 +6259,8 @@ static int open_cmdwin(void)
   const int histtype = hist_char2type(cmdwin_type);
   if (histtype == HIST_CMD || histtype == HIST_DEBUG) {
     if (p_wc == TAB) {
-      add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT);
-      add_map((char_u *)"<buffer> <Tab> a<C-X><C-V>", NORMAL);
+      add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT, false);
+      add_map((char_u *)"<buffer> <Tab> a<C-X><C-V>", NORMAL, false);
     }
     set_option_value("ft", 0L, "vim", OPT_LOCAL);
   }

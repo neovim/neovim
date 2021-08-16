@@ -21,7 +21,10 @@ set undodir^=.
 set wildoptions=
 set startofline
 set sessionoptions+=options
+
+" Unmap Nvim default mappings.
 unmap Y
+unmap <C-L>
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'

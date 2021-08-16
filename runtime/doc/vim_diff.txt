@@ -74,7 +74,9 @@ the differences.
 
 
 Default Mappings:					*default-mappings*
-  nnoremap Y y$
+
+nnoremap Y y$
+nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
 
 ==============================================================================
 3. New Features						       *nvim-features*
