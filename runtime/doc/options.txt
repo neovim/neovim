@@ -3213,7 +3213,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option to a valid keymap name.
 
 						*'inccommand'* *'icm'*
-'inccommand' 'icm'	string	(default "")
+'inccommand' 'icm'	string	(default "nosplit")
 			global
 
 	"nosplit": Shows the effects of a command incrementally, as you type.
