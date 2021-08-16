@@ -75,9 +75,8 @@ the differences.
 
 Default Mappings:					*default-mappings*
 
-- nnoremap Y y$
-- <C-L> clears search highlights |:nohlsearch| and updates diffs
-  |:diffupdate|
+nnoremap Y y$
+nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
 
 ==============================================================================
 3. New Features						       *nvim-features*
