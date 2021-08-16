@@ -2381,13 +2381,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         && wp->w_p_culopt_flags != CULOPT_NBR) {
       cul_screenline = (wp->w_p_wrap
                         && (wp->w_p_culopt_flags & CULOPT_SCRLINE));
-      cul_attr = win_hl_attr(wp, HLF_CUL);
-      HlAttrs ae = syn_attr2entry(cul_attr);
-
-      // We make a compromise here (#7383):
-      //  * low-priority CursorLine if fg is not set
-      //  * high-priority ("same as Vim" priority) CursorLine if fg is set
       if (!cul_screenline) {
+        cul_attr = win_hl_attr(wp, HLF_CUL);
+        HlAttrs ae = syn_attr2entry(cul_attr);
+        // We make a compromise here (#7383):
+        //  * low-priority CursorLine if fg is not set
+        //  * high-priority ("same as Vim" priority) CursorLine if fg is set
         if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
           line_attr_lowprio = cul_attr;
         } else {
@@ -2399,7 +2398,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
           }
         }
       } else {
-        cul_attr = 0;
         margin_columns_win(wp, &left_curline_col, &right_curline_col);
       }
       area_highlighting = true;
@@ -2700,6 +2698,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
     // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
+      if (cul_screenline) {
+        cul_attr = 0;
+        line_attr = line_attr_save;
+        line_attr_lowprio = line_attr_lowprio_save;
+      }
+
       if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
         draw_state = WL_CMDLINE;
         if (cmdwin_type != 0 && wp == curwin) {
@@ -2855,9 +2859,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = win_hl_attr(wp, diff_hlf);
-            if (cul_attr) {
-              char_attr = hl_combine_attr(char_attr, cul_attr);
-            }
           }
           p_extra = NULL;
           c_extra = ' ';
@@ -2943,21 +2944,20 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       }
     }
 
-    if (cul_screenline) {
-      if (draw_state == WL_LINE
-          && vcol >= left_curline_col
-          && vcol < right_curline_col) {
-        cul_attr = win_hl_attr(wp, HLF_CUL);
-        HlAttrs ae = syn_attr2entry(cul_attr);
-        if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
-          line_attr_lowprio = cul_attr;
+    if (cul_screenline && draw_state == WL_LINE
+        && vcol >= left_curline_col
+        && vcol < right_curline_col) {
+      cul_attr = win_hl_attr(wp, HLF_CUL);
+      HlAttrs ae = syn_attr2entry(cul_attr);
+      if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
+        line_attr_lowprio = cul_attr;
+      } else {
+        if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
+            && qf_current_entry(wp) == lnum) {
+          line_attr = hl_combine_attr(cul_attr, line_attr);
         } else {
           line_attr = cul_attr;
         }
-      } else {
-        cul_attr = 0;
-        line_attr = line_attr_save;
-        line_attr_lowprio = line_attr_lowprio_save;
       }
     }
 
