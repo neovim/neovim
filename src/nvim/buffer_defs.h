@@ -12,8 +12,7 @@ typedef struct file_buffer buf_T; // Forward declaration
 // bufref_valid() only needs to check "buf" when the count differs.
 typedef struct {
   buf_T *br_buf;
-  int    br_fnum;
-  int    br_buf_free_count;
+  int    br_handle;
 } bufref_T;
 
 // for garray_T
@@ -101,12 +100,10 @@ typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
 typedef uint16_t disptick_T;  // display tick type
 
-// Reference to a window that stores the value of buf_free_count.
-// bufref_valid() only needs to check "buf" when the count differs.
+// Reference to a window.
 typedef struct {
   win_T *wr_win;
-  int    wr_fnum;
-  int    wr_win_free_count;
+  int    wr_handle;
 } winref_T;
 
 

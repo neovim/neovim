@@ -2543,8 +2543,7 @@ int do_ecmd(
 
       }
       xfree(new_name);
-      au_new_curbuf.br_buf = NULL;
-      au_new_curbuf.br_buf_free_count = 0;
+      bufref_clear(&au_new_curbuf);
     }
 
     curwin->w_pcmark.lnum = 1;
@@ -2843,8 +2842,7 @@ static void delbuf_msg(char_u *name)
   EMSG2(_("E143: Autocommands unexpectedly deleted new buffer %s"),
       name == NULL ? (char_u *)"" : name);
   xfree(name);
-  au_new_curbuf.br_buf = NULL;
-  au_new_curbuf.br_buf_free_count = 0;
+  bufref_clear(&au_new_curbuf);
 }
 
 static int append_indent = 0;       /* autoindent for first line */

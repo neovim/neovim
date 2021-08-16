@@ -69,9 +69,6 @@
 
 static char *m_onlyone = N_("Already only one window");
 
-// Number of times win_free() was called.
-static int win_free_count = 0;
-
 
 /*
  * all CTRL-W window commands are handled here, called from normal_cmd().
@@ -1522,8 +1519,7 @@ winref_T winref_from(win_T *win)
 {
   winref_T winref;
   winref.wr_win = win;
-  winref.wr_fnum = win == NULL ? 0 : win->handle;
-  winref.wr_win_free_count = win_free_count;
+  winref.wr_handle = win == NULL ? 0 : win->handle;
   return winref;
 }
 
@@ -1534,22 +1530,25 @@ winref_T winref_from(win_T *win)
 void winref_set(winref_T *winref, win_T *win)
 {
   winref->wr_win = win;
-  winref->wr_fnum = win == NULL ? 0 : win->handle;
-  winref->wr_win_free_count = win_free_count;
+  winref->wr_handle = win == NULL ? 0 : win->handle;
+}
+
+/// Clears "winref".
+///
+/// @param winref Reference to be used for the window.
+/// @param win    The window to reference.
+void winref_clear(winref_T *winref)
+{
+  winref->wr_win = NULL;
+  winref->wr_handle = 0;
 }
 
 /// Return true if "winref->wr_win" points to the same window as when
 /// set_winref() was called and it is a valid window.
-/// Only goes through the window list if win_free_count changed.
-/// Also checks if b_fnum is still the same, a :bwipe followed by :new might get
-/// the same allocated memory, but it's a different window.
-///
 /// @param winref Buffer reference to check for.
 bool winref_valid(winref_T *winref)
 {
-  return winref->wr_win_free_count == win_free_count
-    ? true
-    : win_valid(winref->wr_win) && winref->wr_fnum == winref->wr_win->handle;
+  return handle_get_window(winref->wr_handle) != NULL;
 }
 
 /*
@@ -4691,8 +4690,6 @@ win_free (
   wininfo_T   *wip;
 
   handle_unregister_window(wp);
-
-  win_free_count += 1;
 
   clearFolding(wp);
 

@@ -386,7 +386,7 @@ EXTERN int keep_filetype INIT(= false);
 
 // When deleting the current buffer, another one must be loaded.
 // If we know which one is preferred, au_new_curbuf is set to it.
-EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0, 0 });
+EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0 });
 
 // When deleting a buffer/window and autocmd_busy is true, do not free the
 // buffer/window. but link it in the list starting with

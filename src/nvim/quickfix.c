@@ -244,7 +244,7 @@ static char_u *e_no_more_items = (char_u *)N_("E553: No more items");
 // Looking up a buffer can be slow if there are many.  Remember the last one
 // to make this a lot faster if there are multiple matches in the same file.
 static char_u *qf_last_bufname = NULL;
-static bufref_T  qf_last_bufref = { NULL, 0, 0 };
+static bufref_T  qf_last_bufref = { NULL, 0 };
 
 static char *e_current_quickfix_list_was_changed =
   N_("E925: Current quickfix list was changed");

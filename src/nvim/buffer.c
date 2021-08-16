@@ -91,9 +91,6 @@ static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
 
-// Number of times buffer_free() was called.
-static int buf_free_count = 0;
-
 typedef enum {
   kBffClearWinInfo = 1,
   kBffInitChangedtick = 2,
@@ -353,8 +350,7 @@ bufref_T bufref_from(buf_T *buf)
 {
   bufref_T bufref;
   bufref.br_buf = buf;
-  bufref.br_fnum = buf == NULL ? 0 : buf->b_fnum;
-  bufref.br_buf_free_count = buf_free_count;
+  bufref.br_handle = buf == NULL ? 0 : buf->handle;
   return bufref;
 }
 
@@ -365,22 +361,25 @@ bufref_T bufref_from(buf_T *buf)
 void bufref_set(bufref_T *bufref, buf_T *buf)
 {
   bufref->br_buf = buf;
-  bufref->br_fnum = buf == NULL ? 0 : buf->b_fnum;
-  bufref->br_buf_free_count = buf_free_count;
+  bufref->br_handle = buf == NULL ? 0 : buf->handle;
+}
+
+/// Clears "bufref".
+///
+/// @param bufref Reference to be used for the buffer.
+void bufref_clear(bufref_T *bufref)
+{
+  bufref->br_buf = NULL;
+  bufref->br_handle = 0;
 }
 
 /// Return true if "bufref->br_buf" points to the same buffer as when
 /// bufref_set() was called and it is a valid buffer.
-/// Only goes through the buffer list if buf_free_count changed.
-/// Also checks if b_fnum is still the same, a :bwipe followed by :new might get
-/// the same allocated memory, but it's a different buffer.
 ///
 /// @param bufref Buffer reference to check for.
 bool bufref_valid(bufref_T *bufref)
 {
-  return bufref->br_buf_free_count == buf_free_count
-    ? true
-    : buf_valid(bufref->br_buf) && bufref->br_fnum == bufref->br_buf->b_fnum;
+  return handle_get_buffer(bufref->br_handle) != NULL;
 }
 
 /// Check that "buf" points to a valid buffer in the buffer list.
@@ -771,7 +770,6 @@ void buf_freeall(buf_T *buf, int flags)
 static void buffer_free(buf_T *buf)
 {
   handle_unregister_buffer(buf);
-  buf_free_count++;
   // b:changedtick uses an item in buf_T.
   free_buffer_stuff(buf, kBffClearWinInfo);
   if (buf->b_vars->dv_refcount > DO_NOT_FREE_CNT) {
