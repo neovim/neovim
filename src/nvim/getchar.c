@@ -4357,14 +4357,21 @@ check_map (
 }
 
 
-// Add a mapping "map" for mode "mode".
-// Need to put string in allocated memory, because do_map() will modify it.
+/// Add a mapping. Unlike @ref do_map this copies the {map} argument, so
+/// static or read-only strings can be used.
+///
+/// @param map  C-string containing the arguments of the map/abbrev command,
+///             i.e. everything except the initial `:[X][nore]map`.
+/// @param mode  Bitflags representing the mode in which to set the mapping.
+///              See @ref get_map_mode.
+/// @param nore  If true, make a non-recursive mapping.
 void add_map(char_u *map, int mode, bool nore)
 {
   char_u      *s;
   char_u      *cpo_save = p_cpo;
 
   p_cpo = (char_u *)"";         // Allow <> notation
+  // Need to put string in allocated memory, because do_map() will modify it.
   s = vim_strsave(map);
   (void)do_map(nore ? 2 : 0, s, mode, false);
   xfree(s);
