@@ -956,7 +956,7 @@ static int command_line_execute(VimState *state, int key)
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     }
 
-    if (!cmdline_was_last_drawn) {
+    if (!cmdline_was_last_drawn && !ccline.input_fn) {
       redrawcmdline();
     }
     return 1;

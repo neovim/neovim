@@ -857,3 +857,29 @@ describe("cmdline height", function()
     assert_alive()
   end)
 end)
+
+describe("input prompt messages", function()
+  --it("input() messages not cleared when timer fired in CmdlineEnter #", function()
+  it("not cleared when timer is fired in CmdlineEnter #15403", function()
+    clear()
+    local screen = new_screen({rgb=true})
+
+    command('set cmdheight=2')
+    command('autocmd CmdlineEnter * call timer_start(0, {-> 1})')
+    command([[
+      function! Foo() abort
+        echo "hello"
+        call input("world: ")
+      endfunction
+    ]])
+
+    feed(':call Foo()<cr>')
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      hello                    |
+      world: ^                  |
+    ]]}
+  end)
+end)
