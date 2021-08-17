@@ -119,10 +119,10 @@ local get_value = function(v)
 end
 
 local get_defaults = function(d,n)
-  if (d.vi == nil and d.vim == nil) or (d.vi ~= nil and d.vim ~= nil) then
-    error("option '"..n.."' should have one and only one default value")
+  if d == nil then
+    error("option '"..n.."' should have a default value")
   end
-  return get_value(d.vim or d.vi)
+  return get_value(d)
 end
 
 local defines = {}
