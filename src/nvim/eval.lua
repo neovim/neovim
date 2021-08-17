@@ -277,6 +277,7 @@ return {
     readfile={args={1, 3}, base=1},
     reg_executing={},
     reg_recording={},
+    reg_recorded={},
     reltime={args={0, 2}, base=1},
     reltimefloat={args=1, base=1},
     reltimestr={args=1, base=1},

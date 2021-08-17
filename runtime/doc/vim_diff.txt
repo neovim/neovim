@@ -218,6 +218,7 @@ Input/Mappings:
 
 Normal commands:
   |gO| shows a filetype-defined "outline" of the current buffer.
+  |Q|  replays the last recorded macro.
 
 Options:
   'cpoptions'   flags: |cpo-_|

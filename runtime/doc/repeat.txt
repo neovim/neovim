@@ -147,6 +147,9 @@ q			Stops recording.
 							*@@* *E748*
 @@			Repeat the previous @{0-9a-z":*} [count] times.
 
+							*Q*
+Q			Repeat the last recorded register [count] times.
+
 							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an Ex
 			command.  First set cursor at line [addr] (default is
