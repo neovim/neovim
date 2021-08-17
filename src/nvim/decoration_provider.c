@@ -148,15 +148,17 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 /// @param[out] has_decor Set when at least one provider invokes a line callback
 /// @param[out] err       Provider error
 void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor,
-                                 char **err)
+                                 char **err, int leftoffset, int rightoffset)
 {
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
     if (p && p->redraw_line != LUA_NOREF) {
-      MAXSIZE_TEMP_ARRAY(args, 3);
+      MAXSIZE_TEMP_ARRAY(args, 5);
       ADD_C(args, WINDOW_OBJ(wp->handle));
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
+      ADD_C(args, INTEGER_OBJ(leftoffset));
+      ADD_C(args,  INTEGER_OBJ(rightoffset));
       if (decor_provider_invoke(p->ns_id, "line", p->redraw_line, args, true, err)) {
         *has_decor = true;
       } else {

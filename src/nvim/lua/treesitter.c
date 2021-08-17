@@ -1225,7 +1225,11 @@ static int node_rawquery(lua_State *L)
   if (lua_gettop(L) >= 4) {
     uint32_t start = (uint32_t)luaL_checkinteger(L, 4);
     uint32_t end = lua_gettop(L) >= 5 ? (uint32_t)luaL_checkinteger(L, 5) : MAXLNUM;
-    ts_query_cursor_set_point_range(cursor, (TSPoint){ start, 0 }, (TSPoint){ end, 0 });
+    uint32_t start_col = lua_gettop(L) >= 6 ? (uint32_t)luaL_checkinteger(L, 6) : 0;
+    uint32_t end_col = lua_gettop(L) >= 7 ? (uint32_t)luaL_checkinteger(L, 7) : 0;
+    ts_query_cursor_set_point_range(cursor,
+                                    (TSPoint){ start, start_col },
+                                    (TSPoint){ end, end_col });
   }
 
   TSLua_cursor *ud = lua_newuserdata(L, sizeof(*ud));  // [udata]

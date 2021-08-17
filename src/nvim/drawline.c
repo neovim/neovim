@@ -784,9 +784,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
     }
 
+    line = ml_get_buf(buf, lnum, false);
     has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
 
-    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err);
+    int win_lines = plines_win(wp, lnum, true);
+    int leftoffset = wp->w_leftcol + wp->w_skipcol;
+    int rightoffset = leftoffset + win_lines * (wp->w_width - win_col_off(wp));
+    rightoffset = (int)win_linetabsize(wp, lnum, line, rightoffset);
+
+    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err, leftoffset,
+                                rightoffset);
 
     if (*provider_err) {
       provider_err_virt_text(lnum, *provider_err);

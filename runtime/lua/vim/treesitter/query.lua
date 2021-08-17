@@ -610,15 +610,17 @@ end
 ---@private
 ---@param start integer
 ---@param stop integer
+---@param start_col integer
+---@param end_col integer
 ---@param node TSNode
 ---@return integer, integer
-local function value_or_node_range(start, stop, node)
-  if start == nil and stop == nil then
-    local node_start, _, node_stop, _ = node:range()
-    return node_start, node_stop + 1 -- Make stop inclusive
+local function value_or_node_range(start, stop, node, start_col, end_col)
+  if not (start or stop or start_col or end_col)then
+    local node_start, node_start_col, node_stop, node_end_col = node:range()
+    return node_start, node_stop + 1, node_start_col, node_end_col + 1 -- Make stop inclusive
   end
 
-  return start, stop
+  return start, stop, start_col or 0, end_col or 0
 end
 
 --- Iterate over all captures from all matches inside {node}
@@ -645,18 +647,20 @@ end
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to extract text from
----@param start number Starting line for the search
----@param stop number Stopping line for the search (end-exclusive)
+---@param start integer Starting line for the search
+---@param stop integer Stopping line for the search (end-exclusive)
+---@param start_col integer Starting column for the search
+---@param end_col integer Stopping column for the search (end-exclusive)
 ---
 ---@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, start_col, end_col)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
 
-  start, stop = value_or_node_range(start, stop, node)
+  start, stop, start_col, end_col = value_or_node_range(node, start, stop, start_col, end_col)
 
-  local raw_iter = node:_rawquery(self.query, true, start, stop)
+  local raw_iter = node:_rawquery(self.query, true, start, stop, start_col, end_col)
   ---@private
   local function iter()
     local capture, captured_node, match = raw_iter()
@@ -702,16 +706,18 @@ end
 ---@param source (integer|string) Source buffer or string to search
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
+---@param start_col integer Starting column for the search
+---@param end_col integer Stopping column for the search (end-exclusive)
 ---
 ---@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
-function Query:iter_matches(node, source, start, stop)
+function Query:iter_matches(node, source, start, stop, start_col, end_col)
   if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
 
-  start, stop = value_or_node_range(start, stop, node)
+  start, stop, start_col, end_col = value_or_node_range(node, start, stop, start_col, end_col)
 
-  local raw_iter = node:_rawquery(self.query, false, start, stop)
+  local raw_iter = node:_rawquery(self.query, false, start, stop, start_col, end_col)
   ---@cast raw_iter fun(): string, any
   local function iter()
     local pattern, match = raw_iter()

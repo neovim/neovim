@@ -99,13 +99,13 @@ describe('decorations providers', function()
     check_trace {
       { "start", 4 };
       { "win", 1000, 1, 0, 8 };
-      { "line", 1000, 1, 0 };
-      { "line", 1000, 1, 1 };
-      { "line", 1000, 1, 2 };
-      { "line", 1000, 1, 3 };
-      { "line", 1000, 1, 4 };
-      { "line", 1000, 1, 5 };
-      { "line", 1000, 1, 6 };
+      { "line", 1000, 1, 0, 0, 39 };
+      { "line", 1000, 1, 1, 0, 22 };
+      { "line", 1000, 1, 2, 0, 12 };
+      { "line", 1000, 1, 3, 0, 18 };
+      { "line", 1000, 1, 4, 0, 30 };
+      { "line", 1000, 1, 5, 0, 28 };
+      { "line", 1000, 1, 6, 0, 27 };
       { "end", 4 };
     }
 
@@ -124,7 +124,7 @@ describe('decorations providers', function()
       { "start", 5 };
       { "buf", 1 };
       { "win", 1000, 1, 0, 8 };
-      { "line", 1000, 1, 6 };
+      { "line", 1000, 1, 6, 0, 28 };
       { "end", 5 };
     }
   end)
