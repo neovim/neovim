@@ -27,6 +27,8 @@ set switchbuf=
 " Unmap Nvim default mappings.
 unmap Y
 unmap <C-L>
+iunmap <C-U>
+iunmap <C-W>
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'

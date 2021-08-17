@@ -78,6 +78,8 @@ Default Mappings:					*default-mappings*
 
 nnoremap Y y$
 nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
+inoremap <C-U> <C-G>u<C-U>
+inoremap <C-W> <C-G>u<C-W>
 
 ==============================================================================
 3. New Features						       *nvim-features*

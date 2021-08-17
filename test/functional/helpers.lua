@@ -44,6 +44,8 @@ module.nvim_argv = {
   '--cmd', module.nvim_set,
   '--cmd', 'unmap Y',
   '--cmd', 'unmap <C-L>',
+  '--cmd', 'iunmap <C-U>',
+  '--cmd', 'iunmap <C-W>',
   '--embed'}
 
 -- Directory containing nvim.
