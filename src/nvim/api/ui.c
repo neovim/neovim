@@ -39,6 +39,8 @@ typedef struct {
 
 static PMap(uint64_t) *connected_uis = NULL;
 
+static UI *ext_win_ui = NULL;
+
 void remote_ui_init(void)
   FUNC_API_NOEXPORT
 {
@@ -151,6 +153,14 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
       xfree(ui);
       return;
     }
+  }
+
+  if (ui->ui_ext[kUIWindows]) {
+    if (ext_win_ui == NULL) {
+      ui_set_ext_win_channel(channel_id);
+      ext_win_ui = ui;
+    }
+    ui->ui_ext[kUIMultigrid] = true;
   }
 
   if (ui->ui_ext[kUIHlState] || ui->ui_ext[kUIMultigrid]) {

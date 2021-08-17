@@ -217,6 +217,14 @@ function Screen:attach(options, session)
     options.ext_linegrid = true
   end
 
+  if options.ext_windows then
+    options.ext_multigrid = true
+  end
+  if options.ext_multigrid then
+    options.ext_linegrid = true
+    self._multigrid = true
+  end
+
   self._session = session
   self._options = options
   self._clear_attrs = (not options.ext_linegrid) and {} or nil
@@ -637,6 +645,14 @@ function Screen:_redraw(updates)
   return did_flush
 end
 
+function Screen:set_on_event_handler(callback)
+  self._on_event = callback
+end
+
+function Screen:set_on_request_handler(callback)
+  self._on_request = callback
+end
+
 function Screen:_handle_resize(width, height)
   self:_handle_grid_resize(1, width, height)
   self._scroll_region = {
@@ -884,7 +900,7 @@ function Screen:_handle_hl_group_set(name, id)
 end
 
 function Screen:get_hl(val)
-  if self._options.ext_newgrid then
+  if self._options.ext_linegrid then
     return self._attr_table[val][1]
   else
     return val
