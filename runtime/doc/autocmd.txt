@@ -815,6 +815,14 @@ RemoteReply			When a reply from a Vim that functions as
 				Note that even if an autocommand is defined,
 				the reply should be read with |remote_read()|
 				to consume it.
+							*RecordingEnter*
+RecordingEnter			When a macro starts to be recorded.
+				The pattern is the current file name, and
+				|reg_recording()| is the current register that
+				is used.
+							*RecordinLeave*
+RecordingLeave			When the is the end of a macro recording.
+				The pattern is the current file name.
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.

@@ -73,6 +73,8 @@ return {
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
+    'RecordingEnter',         -- when starting to record a macro
+    'RecordingLeave',          -- when stopping to record a macro
     'RemoteReply',            -- upon string reception from a remote vim
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"
@@ -127,6 +129,8 @@ return {
   nvim_specific = {
     BufModifiedSet=true,
     DirChanged=true,
+    RecordingEnter=true,
+    RecordingLeave=true,
     Signal=true,
     TabClosed=true,
     TabNew=true,
