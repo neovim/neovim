@@ -7,6 +7,12 @@ local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
 local command= helpers.command
 local exc_exec = helpers.exc_exec
+local retry = helpers.retry
+local funcs = helpers.funcs
+local pesc = helpers.pesc
+local matches = helpers.matches
+local nvim_dir = helpers.nvim_dir
+local iswin = helpers.iswin
 
 describe(':terminal buffer', function()
   local screen
@@ -255,8 +261,14 @@ describe(':terminal buffer', function()
     command('bdelete!')
   end)
 
-  it('handles wqall', function()
+  it("requires bang (!) to close a running job", function()
+    local cwd = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
+    local ext_pat = iswin() and '%.EXE' or ''
     eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
+    matches('^Vim%(bdelete%):E89: term://'..pesc(cwd)..'//%d+:'..nvim_dir..'/tty%-test'..ext_pat..' will be killed %(add %! to override%)$', exc_exec('bdelete'))
+    command('call jobstop(&channel)')
+    retry(nil, nil, function() assert(0 >= eval('jobwait([&channel], 1000)[0]')) end)
+    command('bdelete')
   end)
 
   it('does not segfault when pasting empty buffer #13955', function()
