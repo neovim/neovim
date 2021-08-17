@@ -1081,7 +1081,7 @@ return {
       short_desc=N_("don't unload buffer when it is |abandon|ed"),
       type='bool', scope={'global'},
       varname='p_hid',
-      defaults={if_true=false}
+      defaults={if_true=true}
     },
     {
       full_name='highlight', abbreviation='hl',

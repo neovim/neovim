@@ -55,6 +55,7 @@ describe(":drop", function()
   end)
 
   it("splits off a new window when a buffer can't be abandoned", function()
+    command("set nohidden")
     feed_command("edit tmp1")
     feed_command("vsplit")
     feed_command("edit tmp2")
