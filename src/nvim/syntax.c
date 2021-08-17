@@ -6028,6 +6028,8 @@ static const char *highlight_init_both[] = {
   "VertSplit    cterm=reverse gui=reverse",
   "WildMenu     ctermbg=Yellow ctermfg=Black guibg=Yellow guifg=Black",
   "default link EndOfBuffer NonText",
+  "default link LineNrAbove LineNr",
+  "default link LineNrBelow LineNr",
   "default link QuickFixLine Search",
   "default link Substitute Search",
   "default link Whitespace NonText",

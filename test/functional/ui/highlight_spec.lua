@@ -1292,6 +1292,75 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
   end)
 end)
 
+describe("'number' and 'relativenumber' highlight", function()
+  before_each(clear)
+
+  it('LineNr, LineNrAbove and LineNrBelow', function()
+    local screen = Screen.new(20,10)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Red},
+      [2] = {foreground = Screen.colors.Blue},
+      [3] = {foreground = Screen.colors.Green},
+    })
+    screen:attach()
+    command('set number relativenumber')
+    command('call setline(1, range(50))')
+    command('highlight LineNr guifg=Red')
+    feed('4j')
+    screen:expect([[
+      {1:  4 }0               |
+      {1:  3 }1               |
+      {1:  2 }2               |
+      {1:  1 }3               |
+      {1:5   }^4               |
+      {1:  1 }5               |
+      {1:  2 }6               |
+      {1:  3 }7               |
+      {1:  4 }8               |
+                          |
+    ]])
+    command('highlight LineNrAbove guifg=Blue')
+    screen:expect([[
+      {2:  4 }0               |
+      {2:  3 }1               |
+      {2:  2 }2               |
+      {2:  1 }3               |
+      {1:5   }^4               |
+      {1:  1 }5               |
+      {1:  2 }6               |
+      {1:  3 }7               |
+      {1:  4 }8               |
+                          |
+    ]])
+    command('highlight LineNrBelow guifg=Green')
+    screen:expect([[
+      {2:  4 }0               |
+      {2:  3 }1               |
+      {2:  2 }2               |
+      {2:  1 }3               |
+      {1:5   }^4               |
+      {3:  1 }5               |
+      {3:  2 }6               |
+      {3:  3 }7               |
+      {3:  4 }8               |
+                          |
+    ]])
+    feed('3j')
+    screen:expect([[
+      {2:  7 }0               |
+      {2:  6 }1               |
+      {2:  5 }2               |
+      {2:  4 }3               |
+      {2:  3 }4               |
+      {2:  2 }5               |
+      {2:  1 }6               |
+      {1:8   }^7               |
+      {3:  1 }8               |
+                          |
+    ]])
+  end)
+end)
+
 describe("'winhighlight' highlight", function()
   local screen
 

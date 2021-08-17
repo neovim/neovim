@@ -5064,10 +5064,15 @@ Substitute	|:substitute| replacement text highlighting
 							*hl-LineNr*
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
 		or 'relativenumber' option is set.
+							*hl-LineNrAbove*
+LineNrAbove	Line number for when the 'relativenumber'
+		option is set, above the cursor line.
+							*hl-LineNrBelow*
+LineNrBelow	Line number for when the 'relativenumber'
+		option is set, below the cursor line.
 							*hl-CursorLineNr*
-CursorLineNr	Like LineNr when 'cursorline' is set and 'cursorlineopt' is
-		set to "number" or "both", or 'relativenumber' is set, for
-		the cursor line.
+CursorLineNr	Like LineNr when 'cursorline' is set and 'cursorlineopt'
+		contains "number" or is "both", for the cursor line.
 							*hl-MatchParen*
 MatchParen	The character under the cursor or just before it, if it
 		is a paired bracket, and its match. |pi_paren.txt|
