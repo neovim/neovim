@@ -3498,7 +3498,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			|jumplist-stack|
 
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
-'joinspaces' 'js'	boolean	(default on)
+'joinspaces' 'js'	boolean	(default off)
 			global
 	Insert two spaces after a '.', '?' and '!' with a join command.
 	Otherwise only one space is inserted.

@@ -35,6 +35,7 @@ endfunc
 
 " Tests for setting the '[,'] marks when joining lines.
 func Test_join_marks()
+  set joinspaces
   enew
   call append(0, [
 	      \ "\t\tO sodales, ludite, vos qui",
@@ -53,6 +54,7 @@ func Test_join_marks()
   call assert_equal([0, 4, 11, 0], getpos("'["))
   call assert_equal([0, 4, 67, 0], getpos("']"))
   enew!
+  set nojoinspaces
 endfunc
 
 " Test for joining lines and marks in them

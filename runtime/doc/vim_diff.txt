@@ -45,6 +45,7 @@ the differences.
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is enabled
 - 'incsearch' is enabled
+- 'joinspaces' is disabled
 - 'langnoremap' is enabled
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)

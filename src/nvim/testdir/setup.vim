@@ -12,6 +12,7 @@ set directory^=.
 set fillchars=vert:\|,fold:-
 set laststatus=1
 set listchars=eol:$
+set joinspaces
 set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
 set nrformats+=octal
 set shortmess-=F
