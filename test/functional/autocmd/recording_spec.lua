@@ -36,4 +36,16 @@ describe('RecordingLeave', function()
     ]]
     eq(1, eval('g:recorded'))
   end)
+
+  it('gives the correct reg_recorded()', function()
+    source_vim [[
+      let g:recorded = ''
+      let g:recording = ''
+      autocmd RecordingLeave * let g:recording = reg_recording()
+      autocmd RecordingLeave * let g:recorded = reg_recorded()
+      execute "normal! qqyyq"
+    ]]
+    eq('', eval 'g:recording')
+    eq('q', eval('g:recorded'))
+  end)
 end)

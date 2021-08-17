@@ -925,6 +925,7 @@ int do_record(int c)
     // Get the recorded key hits.  K_SPECIAL and CSI will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
     // adds the escaping back later.
+    reg_recorded = reg_recording;
     reg_recording = 0;
     if (ui_has(kUIMessages)) {
       showmode();

@@ -236,7 +236,7 @@ static const struct nv_cmd {
   { 'N',       nv_next,        0,                      SEARCH_REV },
   { 'O',       nv_open,        0,                      0 },
   { 'P',       nv_put,         0,                      0 },
-  { 'Q',       nv_exmode,      NV_NCW,                 0 },
+  { 'Q',       nv_regrecorded, 0,                      0 },
   { 'R',       nv_Replace,     0,                      false },
   { 'S',       nv_subst,       NV_KEEPREG,             0 },
   { 'T',       nv_csearch,     NV_NCH_ALW|NV_LANG,     BACKWARD },
@@ -4771,15 +4771,18 @@ dozet:
 /*
  * "Q" command.
  */
-static void nv_exmode(cmdarg_T *cap)
+static void nv_regrecorded(cmdarg_T *cap)
 {
-  /*
-   * Ignore 'Q' in Visual mode, just give a beep.
-   */
-  if (VIsual_active) {
-    vim_beep(BO_EX);
-  } else if (!checkclearop(cap->oap)) {
-    do_exmode();
+  if (checkclearop(cap->oap)) {
+    return;
+  }
+
+  while (cap->count1-- && !got_int) {
+    if (do_execreg(reg_recorded, false, false, false) == false) {
+      clearopbeep(cap->oap);
+      break;
+    }
+    line_breakcheck();
   }
 }
 
