@@ -42,7 +42,7 @@ Developer guidelines
 Pull requests (PRs)
 ---------------------
 
-- To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
+- To avoid duplicate work, create a draft pull request as soon as possible.
 - Your PR must include **test coverage.** See [test/README.md][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
@@ -62,16 +62,22 @@ Pull requests (PRs)
 - During a squash/fixup, use `exec make -C build unittest` between each
   pick/edit/reword.
 
-### Stages: WIP, RFC, RDY
+### Stages: Draft and Ready for review
 
-Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
-For Comment) and `[RDY]` (Ready).
+Pull requests have two stages: Draft and Ready for review.
 
-1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
-   noise to merge commit messages).
-2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
-   is still in flux.
-3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
+1. [Create a Draft PR][pr-draft] while you are _not_ requesting feedback as
+  you are still working on the PR.
+2. [Change your PR to ready][pr-ready] when the PR is ready for review.
+
+You can convert the state of your PR back to Draft (or Ready for review) at any
+time. You can also skip the Draft stage if your PR is ready for review from the
+beginning.
+
+Do __not__ add any labels like `[RFC]` or `[WIP]` in the title to indicate the
+state of your PR: this just adds noise. Non-Draft PRs are assumed to be open
+for comments by default; if you want feedback from specific people, `@`-ping
+them in a comment.
 
 ### Commit messages
 
@@ -284,3 +290,5 @@ as context, use the `-W` argument as well.
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
+[pr-draft]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
+[pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
