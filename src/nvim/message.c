@@ -1983,11 +1983,11 @@ void msg_printf_attr(const int attr, const char *const fmt, ...)
 
   va_list ap;
   va_start(ap, fmt);
-  const size_t len = vim_vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
+  vim_vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
   va_end(ap);
 
   msg_scroll = true;
-  msg_puts_attr_len(msgbuf, (ptrdiff_t)len, attr);
+  msg_puts_attr(msgbuf, attr);
 }
 
 static void msg_ext_emit_chunk(void)
