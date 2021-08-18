@@ -127,6 +127,10 @@ func s:StartDebug_internal(dict)
   let s:pid = 0
   let s:asmwin = 0
 
+  if exists('#User#TermdebugStartPre')
+    doauto <nomodeline> User TermdebugStartPre
+  endif
+
   " Uncomment this line to write logging in "debuglog".
   " call ch_logfile('debuglog', 'w')
 
@@ -172,6 +176,10 @@ func s:StartDebug_internal(dict)
       call s:GotoAsmwinOrCreateIt()
       call win_gotoid(curwinid)
     endif
+  endif
+
+  if exists('#User#TermdebugStartPost')
+    doauto <nomodeline> User TermdebugStartPost
   endif
 endfunc
 

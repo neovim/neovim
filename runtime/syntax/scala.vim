@@ -3,7 +3,8 @@
 " Maintainer:           Derek Wyatt
 " URL:                  https://github.com/derekwyatt/vim-scala
 " License:              Same as Vim
-" Last Change:          20 May 2016
+" Last Change:          2021 Aug 11
+"                       by Jesse Atkinson, PR #8746
 " ----------------------------------------------------------------------------
 
 if !exists('main_syntax')
@@ -66,7 +67,7 @@ syn match scalaChar /'\\u[A-Fa-f0-9]\{4}'/ contains=scalaUnicodeChar
 syn match scalaEscapedChar /\\[\\"'ntbrf]/
 syn match scalaUnicodeChar /\\u[A-Fa-f0-9]\{4}/
 hi link scalaChar Character
-hi link scalaEscapedChar Function
+hi link scalaEscapedChar Special
 hi link scalaUnicodeChar Special
 
 syn match scalaOperator "||"

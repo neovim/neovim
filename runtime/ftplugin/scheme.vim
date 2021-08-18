@@ -1,9 +1,10 @@
 " Vim filetype plugin file
 " Language: Scheme (R7RS)
-" Last Change: 2019 Nov 18
+" Last Change: 2019-11-19
 " Author: Evan Hanson <evhan@foldling.org>
 " Maintainer: Evan Hanson <evhan@foldling.org>
 " Previous Maintainer: Sergey Khorev <sergey.khorev@gmail.com>
+" Repository: https://git.foldling.org/vim-scheme.git
 " URL: https://foldling.org/vim/ftplugin/scheme.vim
 
 if exists('b:did_ftplugin')
@@ -48,7 +49,7 @@ let b:undo_ftplugin = b:undo_ftplugin . ' lispwords<'
 let b:did_scheme_ftplugin = 1
 
 if exists('b:is_chicken') || exists('g:is_chicken')
-  exe 'ru! ftplugin/chicken.vim'
+  runtime! ftplugin/chicken.vim
 endif
 
 unlet b:did_scheme_ftplugin

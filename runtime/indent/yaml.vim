@@ -2,7 +2,7 @@
 " Language:	YAML
 " Maintainer:	Nikolai Pavlov <zyx.vim@gmail.com>
 " Last Update:	Lukas Reineke
-" Last Change:	2021 Jan 19
+" Last Change:	2021 Aug 13
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')

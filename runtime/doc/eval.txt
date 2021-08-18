@@ -1060,7 +1060,8 @@ Floating point numbers can be written in two forms:
 	[-+]{N}.{M}[eE][-+]{exp}
 
 {N} and {M} are numbers.  Both {N} and {M} must be present and can only
-contain digits.
+contain digits, except that in |Vim9| script in {N} single quotes between
+digits are ignored.
 [-+] means there is an optional plus or minus sign.
 {exp} is the exponent, power of 10.
 Only a decimal point is accepted, not a comma.  No matter what the current
@@ -2441,11 +2442,11 @@ shiftwidth([{col}])		Number	effective value of 'shiftwidth'
 sign_define({name} [, {dict}])	Number	define or update a sign
 sign_define({list})		List	define or update a list of signs
 sign_getdefined([{name}])	List	get a list of defined signs
-sign_getplaced([{expr} [, {dict}]])
+sign_getplaced([{buf} [, {dict}]])
 				List	get a list of placed signs
-sign_jump({id}, {group}, {expr})
+sign_jump({id}, {group}, {buf})
 				Number	jump to a sign
-sign_place({id}, {group}, {name}, {expr} [, {dict}])
+sign_place({id}, {group}, {name}, {buf} [, {dict}])
 				Number	place a sign
 sign_placelist({list})		List	place a list of signs
 sign_undefine([{name}])		Number	undefine a sign
@@ -2498,7 +2499,7 @@ submatch({nr} [, {list}])	String or List
 substitute({expr}, {pat}, {sub}, {flags})
 				String	all {pat} in {expr} replaced with {sub}
 swapinfo({fname})		Dict	information about swap file {fname}
-swapname({expr})		String	swap file of buffer {expr}
+swapname({buf})			String	swap file of buffer {buf}
 synID({lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
 synIDattr({synID}, {what} [, {mode}])
 				String	attribute {what} of syntax ID {synID}
@@ -2753,7 +2754,7 @@ browsedir({title}, {initdir})
 		browsing is not possible, an empty string is returned.
 
 bufadd({name})						*bufadd()*
-		Add a buffer to the buffer list with {name}.
+		Add a buffer to the buffer list with String {name}.
 		If a buffer for file {name} already exists, return that buffer
 		number.  Otherwise return the buffer number of the newly
 		created buffer.  When {name} is an empty string then a new
@@ -3067,6 +3068,7 @@ complete({startcol}, {matches})			*complete()* *E785*
 		match.
 		{matches} must be a |List|.  Each |List| item is one match.
 		See |complete-items| for the kind of items that are possible.
+		"longest" in 'completeopt' is ignored.
 		Note that the after calling this function you need to avoid
 		inserting anything that would cause completion to stop.
 		The match can be selected with CTRL-N and CTRL-P as usual with
@@ -3101,8 +3103,8 @@ complete_check()				*complete_check()*
 		Only to be used by the function specified with the
 		'completefunc' option.
 
-							*complete_info()*
-complete_info([{what}])
+
+complete_info([{what}])				*complete_info()*
 		Returns a |Dictionary| with information about Insert mode
 		completion.  See |ins-completion|.
 		The items are:
@@ -3729,7 +3731,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		buffer with no name, results in the current directory, with a
 		'/' added.
 
-		When {expr} does not start with '%', '#' or '<', it is
+		When {string} does not start with '%', '#' or '<', it is
 		expanded like a file name is expanded on the command line.
 		'suffixes' and 'wildignore' are used, unless the optional
 		{nosuf} argument is given and it is |TRUE|.
@@ -4189,8 +4191,8 @@ getbufinfo([{dict}])
 			bufloaded	include only loaded buffers.
 			bufmodified	include only modified buffers.
 
-		Otherwise, {expr} specifies a particular buffer to return
-		information for.  For the use of {expr}, see |bufname()|
+		Otherwise, {buf} specifies a particular buffer to return
+		information for.  For the use of {buf}, see |bufname()|
 		above.  If the buffer is found the returned List has one item.
 		Otherwise the result is an empty list.
 
@@ -4455,9 +4457,9 @@ getcmdwintype()						*getcmdwintype()*
 		when not in the command-line window.
 
 getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
-		Return a list of command-line completion matches. {type}
-		specifies what for.  The following completion types are
-		supported:
+		Return a list of command-line completion matches. The String
+		{type} argument specifies what for.  The following completion
+		types are supported:
 
 		arglist		file names in argument list
 		augroup		autocmd groups
@@ -4550,8 +4552,8 @@ getfontname([{name}])					*getfontname()*
 		Without an argument returns the name of the normal font being
 		used.  Like what is used for the Normal highlight group
 		|hl-Normal|.
-		With an argument a check is done whether {name} is a valid
-		font name.  If not then an empty string is returned.
+		With an argument a check is done whether String {name} is a
+		valid font name.  If not then an empty string is returned.
 		Otherwise the actual font name is returned, or {name} if the
 		GUI does not support obtaining the real name.
 		Only works when the GUI is running, thus not in your vimrc or
@@ -4680,12 +4682,12 @@ getloclist({nr},[, {what}])				*getloclist()*
 			:echo getloclist(5, {'filewinid': 0})
 
 
-getmarklist([{expr}])					*getmarklist()*
-		Without the {expr} argument returns a |List| with information
+getmarklist([{buf}])					*getmarklist()*
+		Without the {buf} argument returns a |List| with information
 		about all the global marks. |mark|
 
-		If the optional {expr} argument is specified, returns the
-		local marks defined in buffer {expr}.  For the use of {expr},
+		If the optional {buf} argument is specified, returns the
+		local marks defined in buffer {buf}.  For the use of {buf},
 		see |bufname()|.
 
 		Each item in the returned List is a |Dict| with the following:
@@ -4850,6 +4852,7 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
 <		When {regname} was not set the result is an empty string.
+		The {regname} argument is a string.
 
 		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)
@@ -5190,6 +5193,7 @@ hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		that contains {what} in somewhere in the rhs (what it is
 		mapped to) and this mapping exists in one of the modes
 		indicated by {mode}.
+		The arguments {what} and {mode} are strings.
 		When {abbr} is there and it is |TRUE| use abbreviations
 		instead of mappings.  Don't forget to specify Insert and/or
 		Command-line mode.
@@ -5310,8 +5314,8 @@ hostname()						*hostname()*
 		which Vim is currently running.  Machine names greater than
 		256 characters long are truncated.
 
-iconv({expr}, {from}, {to})				*iconv()*
-		The result is a String, which is the text {expr} converted
+iconv({string}, {from}, {to})				*iconv()*
+		The result is a String, which is the text {string} converted
 		from encoding {from} to encoding {to}.
 		When the conversion completely fails an empty string is
 		returned.  When some characters could not be converted they
@@ -5548,8 +5552,9 @@ isinf({expr})						*isinf()*
 islocked({expr})					*islocked()* *E786*
 		The result is a Number, which is |TRUE| when {expr} is the
 		name of a locked variable.
-		{expr} must be the name of a variable, |List| item or
-		|Dictionary| entry, not the variable itself!  Example: >
+		The string argument {expr} must be the name of a variable,
+		|List| item or |Dictionary| entry, not the variable itself!
+		Example: >
 			:let alist = [0, ['a', 'b'], 2, 3]
 			:lockvar 1 alist
 			:echo islocked('alist')		" 1
@@ -7014,6 +7019,7 @@ remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 
 remote_foreground({server})				*remote_foreground()*
 		Move the Vim server with the name {server} to the foreground.
+		The {server} argument is a string.
 		This works like: >
 			remote_expr({server}, "foreground()")
 <		Except that on Win32 systems the client does the work, to work
@@ -8640,7 +8646,7 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 		|sub-replace-special|.  For example, to replace something with
 		"\n" (two characters), use "\\\\n" or '\\n'.
 
-		When {pat} does not match in {expr}, {expr} is returned
+		When {pat} does not match in {string}, {string} is returned
 		unmodified.
 
 		Example: >
