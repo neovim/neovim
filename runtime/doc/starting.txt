@@ -406,7 +406,11 @@ accordingly.  Vim proceeds in this order:
 	Nvim started with |--embed| waits for the UI to connect before
 	proceeding to load user configuration.
 
-4. Load user config (execute Ex commands from files, environment, …).
+4. Setup default mappings and autocommands.
+	Default mappings |default-mappings| and autocommands |default-autocmds|
+	are created.
+
+5. Load user config (execute Ex commands from files, environment, …).
 	$VIMINIT environment variable is read as one Ex command line (separate
 	multiple commands with '|' or <NL>).
 					*config* *init.vim* *init.lua* *vimrc* *exrc*
@@ -450,7 +454,7 @@ accordingly.  Vim proceeds in this order:
 	-  The file ".nvimrc"
 	-  The file ".exrc"
 
-5. Enable filetype and indent plugins.
+6. Enable filetype and indent plugins.
 	This does the same as the commands: >
 		:runtime! filetype.vim
 		:runtime! ftplugin.vim
@@ -458,13 +462,13 @@ accordingly.  Vim proceeds in this order:
 <	Skipped if ":filetype … off" was called or if the "-u NONE" command
 	line argument was given.
 
-6. Enable syntax highlighting.
+7. Enable syntax highlighting.
 	This does the same as the command: >
 		:runtime! syntax/syntax.vim
 <	Skipped if ":syntax off" was called or if the "-u NONE" command
 	line argument was given.
 
-7. Load the plugin scripts.					*load-plugins*
+8. Load the plugin scripts.					*load-plugins*
 	This does the same as the command: >
 		:runtime! plugin/**/*.vim
 		:runtime! plugin/**/*.lua
@@ -494,26 +498,26 @@ accordingly.  Vim proceeds in this order:
 	if packages have been found, but that should not add a directory
 	ending in "after".
 
-8. Set 'shellpipe' and 'shellredir'
+9. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the
 	value of the 'shell' option, unless they have been set before.
 	This means that Vim will figure out the values of 'shellpipe' and
 	'shellredir' for you, unless you have set them yourself.
 
-9. Set 'updatecount' to zero, if "-n" command argument used
+10. Set 'updatecount' to zero, if "-n" command argument used
 
-10. Set binary options
+11. Set binary options
 	If the "-b" flag was given to Vim, the options for binary editing will
 	be set now.  See |-b|.
 
-11. Read the ShaDa file
+12. Read the ShaDa file
 	See |shada-file|.
 
-12. Read the quickfix file
+13. Read the quickfix file
 	If the "-q" flag was given to Vim, the quickfix file is read.  If this
 	fails, Vim exits.
 
-13. Open all windows
+14. Open all windows
 	When the |-o| flag was given, windows will be opened (but not
 	displayed yet).
 	When the |-p| flag was given, tab pages will be created (but not
@@ -523,7 +527,7 @@ accordingly.  Vim proceeds in this order:
 	Buffers for all windows will be loaded, without triggering |BufAdd|
 	autocommands.
 
-14. Execute startup commands
+15. Execute startup commands
 	If a "-t" flag was given to Vim, the tag is jumped to.
 	The commands given with the |-c| and |+cmd| arguments are executed.
 	If the 'insertmode' option is set, Insert mode is entered.

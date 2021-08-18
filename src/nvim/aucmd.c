@@ -8,6 +8,7 @@
 #include "nvim/ui.h"
 #include "nvim/aucmd.h"
 #include "nvim/eval.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/buffer.h"
 
@@ -33,6 +34,30 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
   tv_dict_clear(dict);
 
   recursive = false;
+}
+
+void init_default_autocmds(void)
+{
+  // open terminals when opening files that start with term://
+#define PROTO "term://"
+  do_cmdline_cmd("augroup nvim_terminal");
+  do_cmdline_cmd("autocmd!");
+  do_cmdline_cmd("autocmd BufReadCmd " PROTO "* ++nested "
+                 "if !exists('b:term_title')|call termopen("
+                 // Capture the command string
+                 "matchstr(expand(\"<amatch>\"), "
+                 "'\\c\\m" PROTO "\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), "
+                 // capture the working directory
+                 "{'cwd': expand(get(matchlist(expand(\"<amatch>\"), "
+                 "'\\c\\m" PROTO "\\(.\\{-}\\)//'), 1, ''))})"
+                 "|endif");
+  do_cmdline_cmd("augroup END");
+#undef PROTO
+
+  // limit syntax synchronization in the command window
+  do_cmdline_cmd("augroup nvim_cmdwin");
+  do_cmdline_cmd("autocmd! CmdWinEnter [:>] exe 'syntax sync minlines=1 maxlines='..&cmdwinheight");
+  do_cmdline_cmd("augroup END");
 }
 
 static void focusgained_event(void **argv)

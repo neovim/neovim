@@ -76,12 +76,27 @@ the differences.
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
 
-Default Mappings:					*default-mappings*
+Default Mappings ~
+							*default-mappings*
+>
+	nnoremap Y y$
+	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
+	inoremap <C-U> <C-G>u<C-U>
+	inoremap <C-W> <C-G>u<C-W>
+<
+Default Autocommands ~
+							*default-autocmds*
+Default autocommands exist in the following groups. Use ":autocmd! {group}" to
+remove them and ":autocmd {group}" to see how they're defined.
 
-nnoremap Y y$
-nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<CR><C-L>
-inoremap <C-U> <C-G>u<C-U>
-inoremap <C-W> <C-G>u<C-W>
+nvim_terminal:
+- BufReadCmd: New files with a name matching
+              `term://(.{-}//(\d+:)?)?\zs.*` are treated as terminal
+              buffers. |terminal-start|
+
+nvim_cmdwin:
+- CmdWinEnter: Synchronize syntax highlighting within the command
+               window.
 
 ==============================================================================
 3. New Features						       *nvim-features*
