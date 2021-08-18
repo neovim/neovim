@@ -2763,8 +2763,8 @@ int do_ecmd(
     }
   }
 
-  /* Check if cursors in other windows on the same buffer are still valid */
-  check_lnums(FALSE);
+  // Check if cursors in other windows on the same buffer are still valid
+  check_lnums(false);
 
   /*
    * Did not read the file, need to show some info about the file.

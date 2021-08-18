@@ -5090,7 +5090,7 @@ win_redr_status_matches (
           save_p_wmh = p_wmh;
           p_ls = 2;
           p_wmh = 0;
-          last_status(FALSE);
+          last_status(false);
         }
         wild_menu_showing = WM_SHOWN;
       }
