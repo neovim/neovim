@@ -151,7 +151,6 @@ let s:filename_checks = {
     \ 'dosini': ['.editorconfig', '/etc/pacman.conf', '/etc/yum.conf', 'file.ini', 'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', '/etc/yum.repos.d/file', 'any/etc/pacman.conf', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap'],
     \ 'dot': ['file.dot', 'file.gv'],
     \ 'dracula': ['file.drac', 'file.drc', 'filelvs', 'filelpe', 'drac.file', 'lpe', 'lvs', 'some-lpe', 'some-lvs'],
-    \ 'dsl': ['file.dsl'],
     \ 'dtd': ['file.dtd'],
     \ 'dts': ['file.dts', 'file.dtsi'],
     \ 'dune': ['jbuild', 'dune', 'dune-project', 'dune-workspace'],
@@ -806,6 +805,23 @@ func Test_ex_file()
   bwipe!
 
   call delete('Xfile.ex')
+  filetype off
+endfunc
+
+func Test_dsl_file()
+  filetype on
+
+  call writefile(['  <!doctype dsssl-spec ['], 'dslfile.dsl')
+  split dslfile.dsl
+  call assert_equal('dsl', &filetype)
+  bwipe!
+
+  call writefile(['workspace {'], 'dslfile.dsl')
+  split dslfile.dsl
+  call assert_equal('structurizr', &filetype)
+  bwipe!
+
+  call delete('dslfile.dsl')
   filetype off
 endfunc
 
