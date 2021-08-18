@@ -3062,7 +3062,7 @@ expand_tags (
   int i;
   int c;
   int tagnmflag;
-  char_u tagnm[100];
+  char_u tagnm[256];
   tagptrs_T t_p;
   int ret;
 
