@@ -36,6 +36,7 @@
 //
 MAP_DECLS(int, int)
 MAP_DECLS(cstr_t, ptr_t)
+MAP_DECLS(cstr_t, int)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)
 MAP_DECLS(uint64_t, ssize_t)

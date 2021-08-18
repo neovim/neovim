@@ -166,6 +166,7 @@ void early_init(mparm_T *paramp)
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
   highlight_init();
+  syntax_init();
 
 #ifdef WIN32
   OSVERSIONINFO ovi;
