@@ -3372,7 +3372,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
           XFREE_CLEAR(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
         }
       } else {
-        id = syn_namen2id(arg, (int)(arg_end - arg));
+        id = syn_name2id_len(arg, (int)(arg_end - arg));
         if (id == 0) {
           EMSG2(_(e_nogroup), arg);
           break;
@@ -3542,7 +3542,7 @@ syn_cmd_list(
         else
           syn_list_cluster(id - SYNID_CLUSTER);
       } else {
-        int id = syn_namen2id(arg, (int)(arg_end - arg));
+        int id = syn_name2id_len(arg, (int)(arg_end - arg));
         if (id == 0) {
           EMSG2(_(e_nogroup), arg);
         } else {
@@ -6635,7 +6635,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // ":highlight {group-name}": list highlighting for one group.
   if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
-    id = syn_namen2id((const char_u *)line, (int)(name_end - line));
+    id = syn_name2id_len((const char_u *)line, (int)(name_end - line));
     if (id == 0) {
       emsgf(_("E411: highlight group not found: %s"), line);
     } else {
@@ -7470,21 +7470,34 @@ static void set_hl_attr(int idx)
   }
 }
 
+int syn_name2id(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return syn_name2id_len(name, STRLEN(name));
+
+}
+
 /// Lookup a highlight group name and return its ID.
 ///
 /// @param highlight name e.g. 'Cursor', 'Normal'
 /// @return the highlight id, else 0 if \p name does not exist
-int syn_name2id(const char_u *name)
+int syn_name2id_len(const char_u *name, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   int i;
-  char_u name_u[200];
+  char_u name_u[201];
 
-  /* Avoid using stricmp() too much, it's slow on some systems */
-  /* Avoid alloc()/free(), these are slow too.  ID names over 200 chars
-   * don't deserve to be found! */
-  STRLCPY(name_u, name, 200);
+  if (len == 0 || len > 200) {
+    return 0;
+  }
+
+  // Avoid using stricmp() too much, it's slow on some systems */
+  // Avoid alloc()/free(), these are slow too.  ID names over 200 chars
+  // don't deserve to be found!
+  memcpy(name_u, name, len);
+  name_u[len] = '\0';
   vim_strup(name_u);
+  // TODO(bfredl): what is a hash table?
   for (i = highlight_ga.ga_len; --i >= 0; )
     if (HL_TABLE()[i].sg_name_u != NULL
         && STRCMP(name_u, HL_TABLE()[i].sg_name_u) == 0)
@@ -7524,17 +7537,6 @@ char_u *syn_id2name(int id)
   return HL_TABLE()[id - 1].sg_name;
 }
 
-/*
- * Like syn_name2id(), but take a pointer + length argument.
- */
-int syn_namen2id(const char_u *linep, int len)
-{
-  char_u *name = vim_strnsave(linep, len);
-  int id = syn_name2id(name);
-  xfree(name);
-
-  return id;
-}
 
 /// Find highlight group name in the table and return its ID.
 /// If it doesn't exist yet, a new entry is created.
@@ -7543,14 +7545,11 @@ int syn_namen2id(const char_u *linep, int len)
 /// @param len length of \p pp
 ///
 /// @return 0 for failure else the id of the group
-int syn_check_group(const char_u *pp, int len)
+int syn_check_group(const char_u *name, int len)
 {
-  char_u  *name = vim_strnsave(pp, len);
-  int id = syn_name2id(name);
+  int id = syn_name2id_len(name, len);
   if (id == 0) {  // doesn't exist yet
-    id = syn_add_group(name);
-  } else {
-    xfree(name);
+    return syn_add_group(vim_strnsave(name, len));
   }
   return id;
 }
