@@ -6,7 +6,6 @@ local clear = helpers.clear
 local funcs = helpers.funcs
 local command = helpers.command
 local exc_exec = helpers.exc_exec
-local pcall_err = helpers.pcall_err
 
 before_each(clear)
 
@@ -40,13 +39,13 @@ describe('setmatches()', function()
     }}, funcs.getmatches())
   end)
 
-  it('fails with -1 if highlight group is not defined', function()
-    eq('Vim:E28: No such highlight group name: 1',
-      pcall_err(funcs.setmatches, {{group=1, pattern=2, id=3, priority=4}}))
-    eq({}, funcs.getmatches())
-    eq('Vim:E28: No such highlight group name: 1',
-      pcall_err(funcs.setmatches, {{group=1, pos1={2}, pos2={6}, id=3, priority=4, conceal=5}}))
-    eq({}, funcs.getmatches())
+  it('does not fail if highlight group is not defined', function()
+    eq(0, funcs.setmatches{{group=1, pattern=2, id=3, priority=4}})
+    eq({{group='1', pattern='2', id=3, priority=4}},
+       funcs.getmatches())
+    eq(0, funcs.setmatches{{group=1, pos1={2}, pos2={6}, id=3, priority=4, conceal=5}})
+    eq({{group='1', pos1={2}, pos2={6}, id=3, priority=4, conceal='5'}},
+       funcs.getmatches())
   end)
 end)
 
