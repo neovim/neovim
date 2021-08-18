@@ -170,7 +170,7 @@ func Test_tag_symbolic()
   call assert_equal('Xtest.c', expand('%:t'))
   call assert_equal(2, col('.'))
 
-  set hidden&
+  set nohidden
   set tags&
   enew!
   call delete('Xtags')

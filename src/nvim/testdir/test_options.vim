@@ -539,7 +539,7 @@ func Test_copy_winopt()
   call assert_equal(4,&numberwidth)
   bw!
 
-  set hidden&
+  set nohidden
 endfunc
 
 func Test_shortmess_F()
