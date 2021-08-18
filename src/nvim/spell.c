@@ -1399,7 +1399,7 @@ spell_move_to (
   clearpos(&found_pos);
 
   while (!got_int) {
-    line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+    line = ml_get_buf(wp->w_buffer, lnum, false);
 
     len = STRLEN(line);
     if (buflen < len + MAXWLEN + 2) {
@@ -1425,7 +1425,7 @@ spell_move_to (
 
       // Need to get the line again, may have looked at the previous
       // one.
-      line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+      line = ml_get_buf(wp->w_buffer, lnum, false);
     }
 
     // Copy the line into "buf" and append the start of the next line if
@@ -1433,7 +1433,7 @@ spell_move_to (
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count)
       spell_cat_line(buf + STRLEN(buf),
-                     ml_get_buf(wp->w_buffer, lnum + 1, FALSE),
+                     ml_get_buf(wp->w_buffer, lnum + 1, false),
                      MAXWLEN);
     p = buf + skip;
     endp = buf + len;

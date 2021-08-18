@@ -1121,18 +1121,13 @@ static void put_reedit_in_typebuf(int silent)
   }
 }
 
-/*
- * Insert register contents "s" into the typeahead buffer, so that it will be
- * executed again.
- * When "esc" is TRUE it is to be taken literally: Escape CSI characters and
- * no remapping.
- */
-static int put_in_typebuf(
-    char_u *s,
-    bool esc,
-    bool colon,                 // add ':' before the line
-    int silent
-)
+/// Insert register contents "s" into the typeahead buffer, so that it will be
+/// executed again.
+///
+/// @param esc    when true then it is to be taken literally: Escape CSI
+///               characters and no remapping.
+/// @param colon  add ':' before the line
+static int put_in_typebuf(char_u *s, bool esc, bool colon, int silent)
 {
   int retval = OK;
 
@@ -1567,8 +1562,8 @@ int op_delete(oparg_T *oap)
 
       if (oap->line_count > 1) {
         lnum = curwin->w_cursor.lnum;
-        ++curwin->w_cursor.lnum;
-        del_lines(oap->line_count - 1, TRUE);
+        curwin->w_cursor.lnum++;
+        del_lines(oap->line_count - 1, true);
         curwin->w_cursor.lnum = lnum;
       }
       if (u_save_cursor() == FAIL)
@@ -1593,7 +1588,7 @@ int op_delete(oparg_T *oap)
         u_clearline();              // "U" command not possible after "2cc"
       }
     } else {
-      del_lines(oap->line_count, TRUE);
+      del_lines(oap->line_count, true);
       beginline(BL_WHITE | BL_FIX);
       u_clearline();            /* "U" command not possible after "dd" */
     }

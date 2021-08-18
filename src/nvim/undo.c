@@ -2762,13 +2762,13 @@ void u_find_first_changed(void)
     return;
 
   for (lnum = 1; lnum < curbuf->b_ml.ml_line_count
-       && lnum <= uep->ue_size; ++lnum)
-    if (STRCMP(ml_get_buf(curbuf, lnum, FALSE),
-            uep->ue_array[lnum - 1]) != 0) {
+       && lnum <= uep->ue_size; lnum++) {
+    if (STRCMP(ml_get_buf(curbuf, lnum, false), uep->ue_array[lnum - 1]) != 0) {
       clearpos(&(uhp->uh_cursor));
       uhp->uh_cursor.lnum = lnum;
       return;
     }
+  }
   if (curbuf->b_ml.ml_line_count != uep->ue_size) {
     /* lines added or deleted at the end, put the cursor there */
     clearpos(&(uhp->uh_cursor));

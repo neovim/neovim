@@ -1652,8 +1652,8 @@ static void init_prompt(int cmdchar_todo)
   check_cursor();
 }
 
-// Return TRUE if the cursor is in the editable position of the prompt line.
-int prompt_curpos_editable(void)
+/// @return  true if the cursor is in the editable position of the prompt line.
+bool prompt_curpos_editable(void)
 {
     return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
         && curwin->w_cursor.col >= (int)STRLEN(prompt_text());
@@ -8124,8 +8124,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // again when auto-formatting.
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
-          char_u  *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum,
-              TRUE);
+          char_u  *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
           int len;
 
           len = (int)STRLEN(ptr);

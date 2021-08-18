@@ -715,7 +715,7 @@ sortend:
 void ex_retab(exarg_T *eap)
 {
   linenr_T lnum;
-  int got_tab = FALSE;
+  bool got_tab = false;
   long num_spaces = 0;
   long num_tabs;
   long len;
@@ -766,10 +766,11 @@ void ex_retab(exarg_T *eap)
           start_vcol = vcol;
           start_col = col;
         }
-        if (ptr[col] == ' ')
+        if (ptr[col] == ' ') {
           num_spaces++;
-        else
-          got_tab = TRUE;
+        } else {
+          got_tab = true;
+        }
       } else {
         if (got_tab || (eap->forceit && num_spaces > 1)) {
           /* Retabulate this string of white-space */
@@ -824,7 +825,7 @@ void ex_retab(exarg_T *eap)
             col = start_col + len;
           }
         }
-        got_tab = FALSE;
+        got_tab = false;
         num_spaces = 0;
       }
       if (ptr[col] == NUL)
@@ -1386,11 +1387,11 @@ static void do_filter(
        * Adjust '[ and '] (set by buf_write()).
        */
       curwin->w_cursor.lnum = line1;
-      del_lines(linecount, TRUE);
-      curbuf->b_op_start.lnum -= linecount;             /* adjust '[ */
-      curbuf->b_op_end.lnum -= linecount;               /* adjust '] */
-      write_lnum_adjust(-linecount);                    /* adjust last line
-                                                           for next write */
+      del_lines(linecount, true);
+      curbuf->b_op_start.lnum -= linecount;             // adjust '[
+      curbuf->b_op_end.lnum -= linecount;               // adjust ']
+      write_lnum_adjust(-linecount);                    // adjust last line
+                                                        // for next write
       foldUpdate(curwin, curbuf->b_op_start.lnum, curbuf->b_op_end.lnum);
     } else {
       /*
@@ -3835,7 +3836,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = FALSE;
               msg_scroll = i;
-              showruler(TRUE);
+              showruler(true);
               ui_cursor_goto(msg_row, msg_col);
               RedrawingDisabled = temp;
 
@@ -5171,21 +5172,21 @@ void fix_help_buffer(void)
       if (in_example && len > 0 && !ascii_iswhite(line[0])) {
         /* End of example: non-white or '<' in first column. */
         if (line[0] == '<') {
-          /* blank-out a '<' in the first column */
-          line = ml_get_buf(curbuf, lnum, TRUE);
+          // blank-out a '<' in the first column
+          line = ml_get_buf(curbuf, lnum, true);
           line[0] = ' ';
         }
         in_example = false;
       }
       if (!in_example && len > 0) {
         if (line[len - 1] == '>' && (len == 1 || line[len - 2] == ' ')) {
-          /* blank-out a '>' in the last column (start of example) */
-          line = ml_get_buf(curbuf, lnum, TRUE);
+          // blank-out a '>' in the last column (start of example)
+          line = ml_get_buf(curbuf, lnum, true);
           line[len - 1] = ' ';
           in_example = true;
         } else if (line[len - 1] == '~') {
-          /* blank-out a '~' at the end of line (header marker) */
-          line = ml_get_buf(curbuf, lnum, TRUE);
+          // blank-out a '~' at the end of line (header marker)
+          line = ml_get_buf(curbuf, lnum, true);
           line[len - 1] = ' ';
         }
       }
@@ -5204,10 +5205,11 @@ void fix_help_buffer(void)
           && TOLOWER_ASC(fname[7]) == 'x'
           && fname[8] == NUL)
       ) {
-    for (lnum = 1; lnum < curbuf->b_ml.ml_line_count; ++lnum) {
-      line = ml_get_buf(curbuf, lnum, FALSE);
-      if (strstr((char *)line, "*local-additions*") == NULL)
+    for (lnum = 1; lnum < curbuf->b_ml.ml_line_count; lnum++) {
+      line = ml_get_buf(curbuf, lnum, false);
+      if (strstr((char *)line, "*local-additions*") == NULL) {
         continue;
+      }
 
       /* Go through all directories in 'runtimepath', skipping
        * $VIMRUNTIME. */
