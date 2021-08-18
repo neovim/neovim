@@ -698,9 +698,7 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
 {
   Channel *chan = data;
   if (chan->term) {
-    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
-    terminal_close(chan->term, msg);
+    terminal_close(chan->term, status);
   }
 
   // If process did not exit, we only closed the handle of a detached process.

@@ -1641,6 +1641,7 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 					|v:false| if not.
 			changed_window 	Is |v:true| if the the event fired
 					while changing window (or tab) on |DirChanged|.
+			status		Job status or exit code, -1 means "unknown". |TermClose|
 
 					*v:exception* *exception-variable*
 v:exception	The value of the exception most recently caught and not

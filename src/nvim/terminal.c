@@ -260,7 +260,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   return rv;
 }
 
-void terminal_close(Terminal *term, char *msg)
+void terminal_close(Terminal *term, int status)
 {
   if (term->closed) {
     return;
@@ -278,8 +278,8 @@ void terminal_close(Terminal *term, char *msg)
   buf_T *buf = handle_get_buffer(term->buf_handle);
   term->closed = true;
 
-  if (!msg || exiting) {
-    // If no msg was given, this was called by close_buffer(buffer.c).  Or if
+  if (status == -1 || exiting) {
+    // If status is -1, this was called by close_buffer(buffer.c).  Or if
     // exiting, we must inform the buffer the terminal no longer exists so that
     // close_buffer() doesn't call this again.
     term->buf_handle = 0;
@@ -291,11 +291,16 @@ void terminal_close(Terminal *term, char *msg)
       term->opts.close_cb(term->opts.data);
     }
   } else {
+    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
+    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
     terminal_receive(term, msg, strlen(msg));
   }
 
-  if (buf) {
+  if (buf && !is_autocmd_blocked()) {
+    dict_T *dict = get_vim_var_dict(VV_EVENT);
+    tv_dict_add_nr(dict, S_LEN("status"), status);
     apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
+    tv_dict_clear(dict);
   }
 }
 
