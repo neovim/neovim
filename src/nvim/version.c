@@ -39,7 +39,10 @@ NVIM_VERSION_PRERELEASE
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
+// Reproducible builds: omit compile info in Release builds. #15424
+#ifndef NDEBUG
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "version.c.generated.h"
@@ -2143,7 +2146,9 @@ void list_version(void)
   MSG(longVersion);
   MSG(version_buildtype);
   list_lua_version();
+#ifndef NDEBUG
   MSG(version_cflags);
+#endif
 
 #ifdef HAVE_PATHDEF
 
