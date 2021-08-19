@@ -218,7 +218,7 @@ local function validate_client_config(config)
     config = { config, 't' };
   }
   validate {
-    root_dir        = { config.root_dir, is_dir, "directory" };
+    root_dir        = { config.root_dir, optional_validator(is_dir), "directory" };
     handlers        = { config.handlers, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
@@ -548,7 +548,7 @@ end
 ---
 --- The following parameters describe fields in the {config} table.
 ---
---@param root_dir: (required, string) Directory where the LSP server will base
+--@param root_dir: (string) Directory where the LSP server will base
 --- its rootUri on initialization.
 ---
 --@param cmd: (required, string or list treated like |jobstart()|) Base command
@@ -773,7 +773,7 @@ function lsp.start_client(config)
     }
     local version = vim.version()
 
-    if not config.workspace_folders then
+    if config.root_dir and not config.workspace_folders then
       config.workspace_folders = {{
         uri = vim.uri_from_fname(config.root_dir);
         name = string.format("%s", config.root_dir);
@@ -798,7 +798,7 @@ function lsp.start_client(config)
       rootPath = config.root_dir;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = vim.uri_from_fname(config.root_dir);
+      rootUri = config.root_dir and vim.uri_from_fname(config.root_dir);
       -- User provided initialization options.
       initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
