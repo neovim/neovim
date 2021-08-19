@@ -129,13 +129,11 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     -- Will load Xtest.c.
     feed_command('e! foo.c')
     feed_command("au FileAppendPre   *.out  '[,']s/new/NEW/")
-    feed_command('au FileAppendPost  *.out  !cat Xtest.c >>test.out')
+    feed_command('au FileAppendPost  *.out  !cat Xtest.c >test.out')
     -- Append it to the output file.
     feed_command('w>>test.out')
     -- Discard all prompts and messages.
     feed('<C-L>')
-    -- Expect the decompressed file in the buffer.
-    feed_command('e test.out')
     expect([[
       
       /*

@@ -540,7 +540,7 @@ func Test_diffopt_hiddenoff()
 
   bwipe!
   bwipe!
-  set hidden& diffopt&
+  set nohidden diffopt&
 endfunc
 
 func Test_diffoff_hidden()
@@ -577,7 +577,7 @@ func Test_diffoff_hidden()
 
   bwipe!
   bwipe!
-  set hidden& diffopt&
+  set nohidden diffopt&
 endfunc
 
 func Test_setting_cursor()

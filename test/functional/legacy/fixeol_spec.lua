@@ -23,8 +23,6 @@ describe('fixeol', function()
 
   it('is working', function()
     -- First write two test files – with and without trailing EOL.
-    -- Use Unix fileformat for consistency.
-    feed_command('set ff=unix')
     feed_command('enew!')
     feed('awith eol<esc>:w! XXEol<cr>')
     feed_command('enew!')
@@ -40,7 +38,7 @@ describe('fixeol', function()
     feed_command('e! XXNoEol')
     feed('ostays without<esc>:set nofixeol<cr>')
     feed_command('w! XXTestNoEol')
-    feed_command('bwipe XXEol XXNoEol XXTestEol XXTestNoEol')
+    feed_command('bwipe! XXEol XXNoEol XXTestEol XXTestNoEol')
     feed_command('set fixeol')
 
     -- Append "END" to each file so that we can see what the last written char was.

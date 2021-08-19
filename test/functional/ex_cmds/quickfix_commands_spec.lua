@@ -47,6 +47,7 @@ for _, c in ipairs({'l', 'c'}) do
       eq(('%s-2.res'):format(file), funcs.bufname(list[2].bufnr))
 
       -- Run cfile/lfile from a modified buffer
+      command('set nohidden')
       command('enew!')
       curbufmeths.set_lines(1, 1, true, {'Quickfix'})
       eq(('Vim(%s):E37: No write since last change (add ! to override)'):format(

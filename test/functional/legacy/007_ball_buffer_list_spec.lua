@@ -8,6 +8,9 @@ describe(':ball', function()
   setup(clear)
 
   it('is working', function()
+    -- Must disable 'hidden' so that the BufReadPost autocmd is triggered
+    -- when Xxx2 is reloaded
+    feed_command('set nohidden')
     insert([[
       start of test file Xxx
           this is a test
@@ -18,7 +21,7 @@ describe(':ball', function()
     feed('gg')
 
     -- Write test file Xxx1
-    feed('A1:.,/end of/w! Xxx1<cr>')
+    feed('A1<esc>:.,/end of/w! Xxx1<cr>')
     feed_command('sp Xxx1')
     feed_command('close')
 

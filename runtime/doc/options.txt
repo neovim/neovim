@@ -3078,7 +3078,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |help-translated|.
 
 				     *'hidden'* *'hid'* *'nohidden'* *'nohid'*
-'hidden' 'hid'		boolean	(default off)
+'hidden' 'hid'		boolean	(default on)
 			global
 	When off a buffer is unloaded when it is |abandon|ed.  When on a
 	buffer becomes hidden when it is |abandon|ed.  If the buffer is still
@@ -3498,7 +3498,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			|jumplist-stack|
 
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
-'joinspaces' 'js'	boolean	(default on)
+'joinspaces' 'js'	boolean	(default off)
 			global
 	Insert two spaces after a '.', '?' and '!' with a join command.
 	Otherwise only one space is inserted.

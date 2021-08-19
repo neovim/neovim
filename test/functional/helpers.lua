@@ -38,7 +38,7 @@ module.nvim_prog = (
 module.nvim_set = (
   'set shortmess+=IS background=light noswapfile noautoindent startofline'
   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-  ..' belloff= wildoptions-=pum noshowcmd noruler nomore redrawdebug=invalid')
+  ..' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid')
 module.nvim_argv = {
   module.nvim_prog, '-u', 'NONE', '-i', 'NONE',
   '--cmd', module.nvim_set,

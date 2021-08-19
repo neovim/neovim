@@ -69,6 +69,7 @@ describe('ui/ext_tabline', function()
     command("bnext")
 
     local expected_buffers = {
+      {buffer = { id = 1 }, name = '[No Name]'},
       {buffer = { id = 2 }, name = 'another-buffer'},
     }
     screen:expect{grid=[[

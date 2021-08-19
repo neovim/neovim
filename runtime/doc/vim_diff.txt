@@ -41,9 +41,11 @@ the differences.
 - 'fillchars' defaults (in effect) to "vert:│,fold:·,sep:│"
 - 'formatoptions' defaults to "tcqj"
 - 'fsync' is disabled
+- 'hidden' is enabled
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is enabled
 - 'incsearch' is enabled
+- 'joinspaces' is disabled
 - 'langnoremap' is enabled
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
