@@ -819,9 +819,9 @@ start_client({config})                                *vim.lsp.start_client()*
                 table.
 
                 Parameters: ~
-                    {root_dir}           (required, string) Directory where
-                                         the LSP server will base its rootUri
-                                         on initialization.
+                    {root_dir}           (string) Directory where the LSP
+                                         server will base its rootUri on
+                                         initialization.
                     {cmd}                (required, string or list treated
                                          like |jobstart()|) Base command that
                                          initiates the LSP client.
@@ -1258,7 +1258,7 @@ enable({bufnr}, {client_id})                     *vim.lsp.diagnostic.enable()*
                                  the given client. The default is to enable
                                  diagnostics for all attached clients.
 
-get({bufnr}, {client_id})                           *vim.lsp.diagnostic.get()*
+get({bufnr}, {client_id}, {predicate})              *vim.lsp.diagnostic.get()*
                 Return associated diagnostics for bufnr
 
                 Parameters: ~
@@ -1266,6 +1266,8 @@ get({bufnr}, {client_id})                           *vim.lsp.diagnostic.get()*
                     {client_id}  number|nil If nil, then return all of the
                                  diagnostics. Else, return just the
                                  diagnostics associated with the client_id.
+                    {predicate}  function|nil Optional function for filtering
+                                 diagnostics
 
 get_all({client_id})                            *vim.lsp.diagnostic.get_all()*
                 Get all diagnostics for clients
@@ -1310,18 +1312,18 @@ get_line_diagnostics({bufnr}, {line_nr}, {opts}, {client_id})
                 Get the diagnostics by line
 
                 Parameters: ~
-                    {bufnr}      number The buffer number
-                    {line_nr}    number The line number
-                    {opts}       table|nil Configuration keys
-                                 • severity: (DiagnosticSeverity, default nil)
-                                   • Only return diagnostics with this
-                                     severity. Overrides severity_limit
+                    {bufnr}          number|nil The buffer number
+                    {line_nr}        number|nil The line number
+                    {opts}           table|nil Configuration keys
+                                     • severity: (DiagnosticSeverity, default nil)
+                                       • Only return diagnostics with this
+                                         severity. Overrides severity_limit
 
-                                 • severity_limit: (DiagnosticSeverity, default nil)
-                                   • Limit severity of diagnostics found. E.g.
-                                     "Warning" means { "Error", "Warning" }
-                                     will be valid.
-                    {client_id}  number the client id
+                                     • severity_limit: (DiagnosticSeverity, default nil)
+                                       • Limit severity of diagnostics found.
+                                         E.g. "Warning" means { "Error",
+                                         "Warning" } will be valid.
+                    {client_id|nil}  number the client id
 
                 Return: ~
                     table Table with map of line number to list of
@@ -1656,9 +1658,9 @@ set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
                                          E.g. "Warning" means { "Error",
                                          "Warning" } will be valid.
 
-                                  *vim.lsp.diagnostic.show_line_diagnostics()*
-show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
-                Open a floating window with the diagnostics from {line_nr}
+                                       *vim.lsp.diagnostic.show_diagnostics()*
+show_diagnostics({opts}, {diagnostics})
+                Open a floating window with the provided diagnostics
 
                 The floating window can be customized with the following
                 highlight groups: >
@@ -1670,16 +1672,48 @@ show_line_diagnostics({opts}, {bufnr}, {line_nr}, {client_id})
 <
 
                 Parameters: ~
+                    {opts}         table Configuration table
+                                   • show_header (boolean, default true): Show
+                                     "Diagnostics:" header
+                                   • all opts for
+                                     |vim.lsp.util.open_floating_preview()|
+                                     can be used here
+                    {diagnostics}  table: The diagnostics to display
+
+                Return: ~
+                    table {popup_bufnr, win_id}
+
+                                  *vim.lsp.diagnostic.show_line_diagnostics()*
+show_line_diagnostics({opts}, {buf_nr}, {line_nr}, {client_id})
+                Parameters: ~
                     {opts}       table Configuration table
-                                 • show_header (boolean, default true): Show
-                                   "Diagnostics:" header.
-                                 • Plus all the opts for
+                                 • all opts for
                                    |vim.lsp.diagnostic.get_line_diagnostics()|
-                                   and |vim.lsp.util.open_floating_preview()|
-                                   can be used here.
-                    {bufnr}      number The buffer number
-                    {line_nr}    number The line number
+                                   and |show_diagnostics()| can be used here
+                    {buf_nr}     number|nil The buffer number
+                    {line_nr}    number|nil The line number
                     {client_id}  number|nil the client id
+
+                Return: ~
+                    table {popup_bufnr, win_id}
+
+                              *vim.lsp.diagnostic.show_position_diagnostics()*
+show_position_diagnostics({opts}, {buf_nr}, {position})
+                Parameters: ~
+                    {opts}      table|nil Configuration keys
+                                • severity: (DiagnosticSeverity, default nil)
+                                  • Only return diagnostics with this
+                                    severity. Overrides severity_limit
+
+                                • severity_limit: (DiagnosticSeverity, default nil)
+                                  • Limit severity of diagnostics found. E.g.
+                                    "Warning" means { "Error", "Warning" }
+                                    will be valid.
+
+                                • all opts for |show_diagnostics()| can be
+                                  used here
+                    {buf_nr}    number|nil The buffer number
+                    {position}  table|nil The (0,0)-indexed position
 
                 Return: ~
                     table {popup_bufnr, win_id}
