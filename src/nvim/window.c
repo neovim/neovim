@@ -6534,8 +6534,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
       cur = cur->next;
     }
   }
-  if ((hlg_id = syn_name2id((const char_u *)grp)) == 0) {
-    EMSG2(_(e_nogroup), grp);
+  if ((hlg_id = syn_check_group((const char_u *)grp, strlen(grp))) == 0) {
     return -1;
   }
   if (pat != NULL && (regprog = vim_regcomp((char_u *)pat, RE_MAGIC)) == NULL) {

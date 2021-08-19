@@ -53,9 +53,9 @@ static bool did_syntax_onoff = false;
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
 /// the highlight_ga array PLUS ONE.
-struct hl_group {
+typedef struct hl_group {
   char_u      *sg_name;         ///< highlight group name
-  char_u      *sg_name_u;       ///< uppercase of sg_name
+  char        *sg_name_u;       ///< uppercase of sg_name
   bool sg_cleared;              ///< "hi clear" was used
   int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
   int sg_link;                  ///< link to this highlight group ID
@@ -80,7 +80,7 @@ struct hl_group {
   char *sg_rgb_sp_name;         ///< RGB special color name
 
   int sg_blend;                 ///< blend level (0-100 inclusive), -1 if unset
-};
+} HlGroup;
 
 /// \addtogroup SG_SET
 /// @{
@@ -91,6 +91,7 @@ struct hl_group {
 
 // builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
+Map(cstr_t, int) *highlight_unames;
 
 static inline struct hl_group * HL_TABLE(void)
 {
@@ -383,6 +384,11 @@ static int current_line_id = 0;             // unique number for current line
 
 static int syn_time_on = FALSE;
 # define IF_SYN_TIME(p) (p)
+
+void syntax_init(void)
+{
+  highlight_unames = map_new(cstr_t, int)();
+}
 
 // Set the timeout used for syntax highlighting.
 // Use NULL to reset, no timeout.
@@ -3372,7 +3378,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
           XFREE_CLEAR(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
         }
       } else {
-        id = syn_namen2id(arg, (int)(arg_end - arg));
+        id = syn_name2id_len(arg, (int)(arg_end - arg));
         if (id == 0) {
           EMSG2(_(e_nogroup), arg);
           break;
@@ -3542,7 +3548,7 @@ syn_cmd_list(
         else
           syn_list_cluster(id - SYNID_CLUSTER);
       } else {
-        int id = syn_namen2id(arg, (int)(arg_end - arg));
+        int id = syn_name2id_len(arg, (int)(arg_end - arg));
         if (id == 0) {
           EMSG2(_(e_nogroup), arg);
         } else {
@@ -6635,7 +6641,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // ":highlight {group-name}": list highlighting for one group.
   if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
-    id = syn_namen2id((const char_u *)line, (int)(name_end - line));
+    id = syn_name2id_len((const char_u *)line, (int)(name_end - line));
     if (id == 0) {
       emsgf(_("E411: highlight group not found: %s"), line);
     } else {
@@ -7113,6 +7119,7 @@ void free_highlight(void)
     xfree(HL_TABLE()[i].sg_name_u);
   }
   ga_clear(&highlight_ga);
+  map_free(cstr_t, int)(highlight_unames);
 }
 
 #endif
@@ -7470,26 +7477,35 @@ static void set_hl_attr(int idx)
   }
 }
 
+int syn_name2id(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return syn_name2id_len(name, STRLEN(name));
+}
+
 /// Lookup a highlight group name and return its ID.
 ///
 /// @param highlight name e.g. 'Cursor', 'Normal'
 /// @return the highlight id, else 0 if \p name does not exist
-int syn_name2id(const char_u *name)
+int syn_name2id_len(const char_u *name, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  int i;
-  char_u name_u[200];
+  char name_u[201];
 
-  /* Avoid using stricmp() too much, it's slow on some systems */
-  /* Avoid alloc()/free(), these are slow too.  ID names over 200 chars
-   * don't deserve to be found! */
-  STRLCPY(name_u, name, 200);
-  vim_strup(name_u);
-  for (i = highlight_ga.ga_len; --i >= 0; )
-    if (HL_TABLE()[i].sg_name_u != NULL
-        && STRCMP(name_u, HL_TABLE()[i].sg_name_u) == 0)
-      break;
-  return i + 1;
+  if (len == 0 || len > 200) {
+    // ID names over 200 chars don't deserve to be found!
+    return 0;
+  }
+
+  // Avoid using stricmp() too much, it's slow on some systems */
+  // Avoid alloc()/free(), these are slow too.
+  memcpy(name_u, name, len);
+  name_u[len] = '\0';
+  vim_strup((char_u *)name_u);
+
+  // map_get(..., int) returns 0 when no key is present, which is
+  // the expected value for missing highlight group.
+  return map_get(cstr_t, int)(highlight_unames, name_u);
 }
 
 /// Lookup a highlight group name and return its attributes.
@@ -7524,17 +7540,6 @@ char_u *syn_id2name(int id)
   return HL_TABLE()[id - 1].sg_name;
 }
 
-/*
- * Like syn_name2id(), but take a pointer + length argument.
- */
-int syn_namen2id(const char_u *linep, int len)
-{
-  char_u *name = vim_strnsave(linep, len);
-  int id = syn_name2id(name);
-  xfree(name);
-
-  return id;
-}
 
 /// Find highlight group name in the table and return its ID.
 /// If it doesn't exist yet, a new entry is created.
@@ -7543,14 +7548,11 @@ int syn_namen2id(const char_u *linep, int len)
 /// @param len length of \p pp
 ///
 /// @return 0 for failure else the id of the group
-int syn_check_group(const char_u *pp, int len)
+int syn_check_group(const char_u *name, int len)
 {
-  char_u  *name = vim_strnsave(pp, len);
-  int id = syn_name2id(name);
+  int id = syn_name2id_len(name, len);
   if (id == 0) {  // doesn't exist yet
-    id = syn_add_group(name);
-  } else {
-    xfree(name);
+    return syn_add_group(vim_strnsave(name, len));
   }
   return id;
 }
@@ -7593,7 +7595,7 @@ static int syn_add_group(char_u *name)
     return 0;
   }
 
-  char_u *const name_up = vim_strsave_up(name);
+  char *const name_up = (char *)vim_strsave_up(name);
 
   // Append another syntax_highlight entry.
   struct hl_group* hlgp = GA_APPEND_VIA_PTR(struct hl_group, &highlight_ga);
@@ -7605,7 +7607,11 @@ static int syn_add_group(char_u *name)
   hlgp->sg_blend = -1;
   hlgp->sg_name_u = name_up;
 
-  return highlight_ga.ga_len;               /* ID is index plus one */
+  int id = highlight_ga.ga_len;  // ID is index plus one
+
+  map_put(cstr_t, int)(highlight_unames, name_up, id);
+
+  return id;
 }
 
 /// When, just after calling syn_add_group(), an error is discovered, this
@@ -7613,8 +7619,10 @@ static int syn_add_group(char_u *name)
 static void syn_unadd_group(void)
 {
   highlight_ga.ga_len--;
-  xfree(HL_TABLE()[highlight_ga.ga_len].sg_name);
-  xfree(HL_TABLE()[highlight_ga.ga_len].sg_name_u);
+  HlGroup *item = &HL_TABLE()[highlight_ga.ga_len];
+  map_del(cstr_t, int)(highlight_unames, item->sg_name_u);
+  xfree(item->sg_name);
+  xfree(item->sg_name_u);
 }
 
 
