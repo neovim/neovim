@@ -8502,6 +8502,16 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   channel_terminal_open(curbuf, chan);
   channel_create_event(chan, NULL);
+
+  do_cmdline_cmd("augroup nvim_terminal_close");
+  do_cmdline_cmd("autocmd! TermClose <buffer> "
+                 " if !v:event.status |"
+                 "   let info = nvim_get_chan_info(&channel) |"
+                 "   if info.argv ==# [&shell] |"
+                 "     exec 'bdelete! ' .. expand('<abuf>') |"
+                 "   endif |"
+                 " endif");
+  do_cmdline_cmd("augroup END");
 }
 
 /// "timer_info([timer])" function
