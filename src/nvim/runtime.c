@@ -403,8 +403,10 @@ theend:
   return retval;
 }
 
-/// Load scripts in "plugin" and "ftdetect" directories of the package.
-static int load_pack_plugin(char_u *fname)
+/// Load scripts in "plugin" directory of the package.
+/// For opt packages, also load scripts in "ftdetect" (start packages already
+/// load these from filetype.vim)
+static int load_pack_plugin(bool opt, char_u *fname)
 {
   static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
 
@@ -421,7 +423,7 @@ static int load_pack_plugin(char_u *fname)
 
   // If runtime/filetype.vim wasn't loaded yet, the scripts will be
   // found when it loads.
-  if (eval_to_number(cmd) > 0) {
+  if (opt && eval_to_number(cmd) > 0) {
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf((char *)pat, len, ftpat, ffname);
     source_all_matches(pat);
@@ -441,7 +443,7 @@ static int APP_ADD_DIR;
 static int APP_LOAD;
 static int APP_BOTH;
 
-static void add_pack_plugin(char_u *fname, void *cookie)
+static void add_pack_plugin(bool opt, char_u *fname, void *cookie)
 {
   if (cookie != &APP_LOAD) {
     char *buf = xmalloc(MAXPATHL);
@@ -465,17 +467,27 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   }
 
   if (cookie != &APP_ADD_DIR) {
-    load_pack_plugin(fname);
+    load_pack_plugin(opt, fname);
   }
+}
+
+static void add_start_pack_plugin(char_u *fname, void *cookie)
+{
+  add_pack_plugin(false, fname, cookie);
+}
+
+static void add_opt_pack_plugin(char_u *fname, void *cookie)
+{
+  add_pack_plugin(true, fname, cookie);
 }
 
 /// Add all packages in the "start" directory to 'runtimepath'.
 void add_pack_start_dirs(void)
 {
   do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_pack_plugin, &APP_ADD_DIR);
+             add_start_pack_plugin, &APP_ADD_DIR);
   do_in_path(p_pp, (char_u *)"start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_pack_plugin, &APP_ADD_DIR);
+             add_start_pack_plugin, &APP_ADD_DIR);
 }
 
 /// Load plugins from all packages in the "start" directory.
@@ -483,9 +495,9 @@ void load_start_packages(void)
 {
   did_source_packages = true;
   do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_pack_plugin, &APP_LOAD);
+             add_start_pack_plugin, &APP_LOAD);
   do_in_path(p_pp, (char_u *)"start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_pack_plugin, &APP_LOAD);
+             add_start_pack_plugin, &APP_LOAD);
 }
 
 // ":packloadall"
@@ -522,7 +534,8 @@ void ex_packadd(exarg_T *eap)
     res = do_in_path(p_pp, (char_u *)pat,
                      DIP_ALL + DIP_DIR
                      + (round == 2 && res == FAIL ? DIP_ERR : 0),
-                     add_pack_plugin, eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
+                     round == 1 ? add_start_pack_plugin : add_opt_pack_plugin,
+                     eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
     xfree(pat);
   }
 }
