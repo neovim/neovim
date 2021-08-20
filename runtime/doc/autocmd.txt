@@ -914,6 +914,8 @@ TermLeave			After leaving |Terminal-mode|.
 				After TermClose.
 							*TermClose*
 TermClose			When a |terminal| job ends.
+				Sets these |v:event| keys:
+				    status
 							*TermResponse*
 TermResponse			After the response to t_RV is received from
 				the terminal.  The value of |v:termresponse|
