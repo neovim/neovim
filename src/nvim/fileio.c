@@ -2689,6 +2689,15 @@ buf_write(
          * Isolate one directory name, using an entry in 'bdir'.
          */
         (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        if (*dirp == NUL && !os_isdir(IObuff)) {
+          int ret;
+          char *failed_dir;
+          if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
+            EMSG3(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+                  failed_dir, os_strerror(ret));
+            xfree(failed_dir);
+          }
+        }
         p = IObuff + STRLEN(IObuff);
         if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
           // Ends with '//', Use Full path
@@ -2841,6 +2850,15 @@ nobackup:
          * Isolate one directory name and make the backup file name.
          */
         (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        if (*dirp == NUL && !os_isdir(IObuff)) {
+          int ret;
+          char *failed_dir;
+          if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
+            EMSG3(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+                  failed_dir, os_strerror(ret));
+            xfree(failed_dir);
+          }
+        }
         p = IObuff + STRLEN(IObuff);
         if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
           // path ends with '//', use full path
