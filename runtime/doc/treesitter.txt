@@ -86,6 +86,18 @@ Node methods						*lua-treesitter-node*
 tsnode:parent()						*tsnode:parent()*
 	Get the node's immediate parent.
 
+tsnode:next_sibling()					*tsnode:next_sibling()*
+	Get the node's next sibling.
+
+tsnode:prev_sibling()					*tsnode:prev_sibling()*
+	Get the node's previous sibling.
+
+tsnode:next_named_sibling()				*tsnode:next_named_sibling()*
+	Get the node's next named sibling.
+
+tsnode:prev_named_sibling()				*tsnode:prev_named_sibling()*
+	Get the node's previous named sibling.
+
 tsnode:iter_children()					*tsnode:iter_children()*
 	Iterates over all the direct children of {tsnode}, regardless of
 	wether they are named or not.
