@@ -55,13 +55,20 @@ describe('xdiff bindings', function()
 
       eq({{1, 1, 1, 1}}, exec_lua[[
           exp = {}
-          vim.diff(a1, b1, {on_hunk = on_hunk})
+          assert(vim.diff(a1, b1, {on_hunk = on_hunk}) == nil)
           return exp
         ]])
 
       eq({{1, 1, 1, 1}, {3, 1, 3, 2}}, exec_lua[[
           exp = {}
-          vim.diff(a2, b2, {on_hunk = on_hunk})
+          assert(vim.diff(a2, b2, {on_hunk = on_hunk}) == nil)
+          return exp
+        ]])
+
+      -- gives higher precedence to on_hunk over result_type
+      eq({{1, 1, 1, 1}, {3, 1, 3, 2}}, exec_lua[[
+          exp = {}
+          assert(vim.diff(a2, b2, {on_hunk = on_hunk, result_type='indices'}) == nil)
           return exp
         ]])
     end)
@@ -77,11 +84,12 @@ describe('xdiff bindings', function()
 
     it('with hunk_lines', function()
       eq({{1, 1, 1, 1}},
-        exec_lua([[return vim.diff(a1, b1, {hunk_lines = true})]]))
+        exec_lua([[return vim.diff(a1, b1, {result_type = 'indices'})]]))
 
       eq({{1, 1, 1, 1}, {3, 1, 3, 2}},
-        exec_lua([[return vim.diff(a2, b2, {hunk_lines = true})]]))
+        exec_lua([[return vim.diff(a2, b2, {result_type = 'indices'})]]))
     end)
+
   end)
 
   it('can handle bad args', function()
@@ -99,9 +107,6 @@ describe('xdiff bindings', function()
 
     eq([[Error executing lua: [string "<nvim>"]:0: on_hunk is not a function]],
       pcall_err(exec_lua, [[vim.diff('a', 'b', { on_hunk = true })]]))
-
-    eq([[Error executing lua: [string "<nvim>"]:0: on_hunk cannot be used with hunk_lines]],
-      pcall_err(exec_lua, [[vim.diff('a', 'b', { on_hunk = function() return 0 end, hunk_lines = true })]]))
 
   end)
 end)

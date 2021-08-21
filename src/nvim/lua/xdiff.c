@@ -15,9 +15,9 @@
 #include "nvim/api/private/helpers.h"
 
 typedef enum {
-  kNluaXdiffModeStr =  0,
-  kNluaXdiffModeCb,
-  kNluaXdiffModeLines,
+  kNluaXdiffModeUnified =  0,
+  kNluaXdiffModeOnHunkCB,
+  kNluaXdiffModeLocations,
 } NluaXdiffMode;
 
 typedef struct {
@@ -48,8 +48,8 @@ static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
 }
 
 // hunk_func callback used when opts.hunk_lines = true
-static int hunk_lines_cb(long start_a, long count_a,
-                         long start_b, long count_b, void *cb_data)
+static int hunk_locations_cb(long start_a, long count_a,
+                             long start_b, long count_b, void *cb_data)
 {
   // Mimic extra offsets done by xdiff, see:
   // src/nvim/xdiff/xemit.c:284
@@ -79,8 +79,8 @@ static int hunk_lines_cb(long start_a, long count_a,
 }
 
 // hunk_func callback used when opts.on_hunk is given
-static int on_hunk_cb(long start_a, long count_a,
-                      long start_b, long count_b, void *cb_data)
+static int call_on_hunk_cb(long start_a, long count_a,
+                           long start_b, long count_b, void *cb_data)
 {
   // Mimic extra offsets done by xdiff, see:
   // src/nvim/xdiff/xemit.c:284
@@ -155,10 +155,10 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate,
 {
   const DictionaryOf(LuaRef) opts = nlua_pop_Dictionary(lstate, true, err);
 
-  NluaXdiffMode mode = kNluaXdiffModeStr;
+  NluaXdiffMode mode = kNluaXdiffModeUnified;
 
   bool had_on_hunk = false;
-  bool had_hunk_lines = false;
+  bool had_result_type_indices = false;
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
@@ -168,16 +168,16 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate,
       }
       had_on_hunk = true;
       nlua_pushref(lstate, v->data.luaref);
-      mode = kNluaXdiffModeCb;
-      cfg->hunk_func = on_hunk_cb;
-    } else if (strequal("hunk_lines", k.data)) {
-      if (check_xdiff_opt(v->type, kObjectTypeBoolean, "hunk_lines", err)) {
+    } else if (strequal("result_type", k.data)) {
+      if (check_xdiff_opt(v->type, kObjectTypeString, "result_type", err)) {
         goto exit_1;
       }
-      if (v->data.boolean) {
-        had_hunk_lines = true;
-        mode = kNluaXdiffModeLines;
-        cfg->hunk_func = hunk_lines_cb;
+      if (strequal("unified", v->data.string.data)) {
+      } else if (strequal("indices", v->data.string.data)) {
+        had_result_type_indices = true;
+      } else {
+        api_set_error(err, kErrorTypeValidation, "not a valid result_type");
+        goto exit_1;
       }
     } else if (strequal("algorithm", k.data)) {
       if (check_xdiff_opt(v->type, kObjectTypeString, "algorithm", err)) {
@@ -243,9 +243,12 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate,
     }
   }
 
-  if (had_on_hunk && had_hunk_lines) {
-      api_set_error(err, kErrorTypeValidation,
-                    "on_hunk cannot be used with hunk_lines");
+  if (had_on_hunk) {
+      mode = kNluaXdiffModeOnHunkCB;
+      cfg->hunk_func = call_on_hunk_cb;
+  } else if (had_result_type_indices) {
+      mode = kNluaXdiffModeLocations;
+      cfg->hunk_func = hunk_locations_cb;
   }
 
 exit_1:
@@ -271,7 +274,7 @@ int nlua_xdl_diff(lua_State *lstate)
   memset(&params, 0, sizeof(params));
   memset(&ecb   , 0, sizeof(ecb));
 
-  NluaXdiffMode mode = kNluaXdiffModeStr;
+  NluaXdiffMode mode = kNluaXdiffModeUnified;
 
   if (lua_gettop(lstate) == 3) {
     if (lua_type(lstate, 3) != LUA_TTABLE) {
@@ -288,18 +291,18 @@ int nlua_xdl_diff(lua_State *lstate)
   luaL_Buffer buf;
   hunkpriv_t *priv;
   switch (mode) {
-    case kNluaXdiffModeStr:
+    case kNluaXdiffModeUnified:
       luaL_buffinit(lstate, &buf);
       ecb.priv = &buf;
       ecb.outf = write_string;
       break;
-    case kNluaXdiffModeCb:
+    case kNluaXdiffModeOnHunkCB:
       priv = xmalloc(sizeof(*priv));
       priv->lstate = lstate;
       priv->err = &err;
       ecb.priv = priv;
       break;
-    case kNluaXdiffModeLines:
+    case kNluaXdiffModeLocations:
       lua_createtable(lstate, 0, 0);
       ecb.priv = lstate;
       break;
@@ -312,7 +315,7 @@ int nlua_xdl_diff(lua_State *lstate)
     }
   }
 
-  if (mode == kNluaXdiffModeCb) {
+  if (mode == kNluaXdiffModeOnHunkCB) {
     XFREE_CLEAR(priv);
   }
 
@@ -323,10 +326,10 @@ exit_0:
     api_clear_error(&err);
     lua_concat(lstate, 2);
     return lua_error(lstate);
-  } else if (mode == kNluaXdiffModeStr) {
+  } else if (mode == kNluaXdiffModeUnified) {
     luaL_pushresult(&buf);
     return 1;
-  } else if (mode == kNluaXdiffModeLines) {
+  } else if (mode == kNluaXdiffModeLocations) {
     return 1;
   }
   return 0;

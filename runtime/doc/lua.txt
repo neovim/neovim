@@ -1585,7 +1585,9 @@ uri_to_fname({uri})                                       *vim.uri_to_fname()*
 Lua module: diff                                                    *lua-diff*
 
 diff({a}, {b}, {opts})                                            *vim.diff()*
-                Run diff on strings {a} and {b}.
+                Run diff on strings {a} and {b}. Any indices returned by this
+                function, either directly or via callback arguments, are
+                1-based.
 
                 Examples: >
                 vim.diff('a\n', 'b\nc\n')
@@ -1610,13 +1612,15 @@ diff({a}, {b}, {opts})                                            *vim.diff()*
                                negative number to cancel the callback for any
                                remaining hunks.
                                Args:
-                               • `start_a` (integer): Start line of hunk in {a}, 1-based.
+                               • `start_a` (integer): Start line of hunk in {a}.
                                • `count_a` (integer): Hunk size in {a}.
-                               • `start_b` (integer): Start line of hunk in {b}, 1-based.
+                               • `start_b` (integer): Start line of hunk in {b}.
                                • `count_b` (integer): Hunk size in {b}.
-                             • `hunk_lines` (boolean):
-                               Return an array of the hunk locations. Cannot
-                               be used with `on_hunk`.
+                             • `result_type` (string): Form of the returned diff:
+                               • "unified": (default) String in unified format.
+                               • "indices": Array of hunk locations.
+                               Note this option is ignored if `on_hunk` is
+                               used.
                              • `algorithm` (string):
                                Diff algorithm to use. Values:
                                • "myers"      the default algorithm
@@ -1642,9 +1646,6 @@ diff({a}, {b}, {opts})                                            *vim.diff()*
                                diff library.
 
                 Return: ~
-                    String of diff in unified diff format, otherwise:
-                      • nil if {opts.on_hunk} is given.
-                      • Array of hunk locations if {opts.hunk_lines} is
-                        `true`.
+                    See {opts.result_type}. nil if {opts.on_hunk} is given.
 
  vim:tw=78:ts=8:ft=help:norl:
