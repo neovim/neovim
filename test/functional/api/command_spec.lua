@@ -21,7 +21,7 @@ describe('nvim_get_commands', function()
   it('validates input', function()
     eq('builtin=true not implemented', pcall_err(meths.get_commands,
       {builtin=true}))
-    eq('unexpected key: foo', pcall_err(meths.get_commands,
+    eq("Invalid key: 'foo'", pcall_err(meths.get_commands,
       {foo='blah'}))
   end)
 

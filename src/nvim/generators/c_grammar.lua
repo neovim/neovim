@@ -17,7 +17,7 @@ local fill = ws ^ 0
 local c_comment = P('//') * (not_nl ^ 0)
 local c_preproc = P('#') * (not_nl ^ 0)
 local typed_container =
-  (P('ArrayOf(') + P('DictionaryOf(')) * ((any - P(')')) ^ 1) * P(')')
+  (P('ArrayOf(') + P('DictionaryOf(') + P('Dict(')) * ((any - P(')')) ^ 1) * P(')')
 local c_id = (
   typed_container +
   (letter * (alpha ^ 0))

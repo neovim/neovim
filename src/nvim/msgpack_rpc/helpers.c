@@ -15,6 +15,7 @@
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "keysets.generated.h"
 # include "msgpack_rpc/helpers.c.generated.h"
 #endif
 

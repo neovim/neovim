@@ -385,7 +385,7 @@ Boolean nvim_win_is_valid(Window window)
 /// @param      config  Map defining the window configuration,
 ///                     see |nvim_open_win()|
 /// @param[out] err     Error details, if any
-void nvim_win_set_config(Window window, Dictionary config, Error *err)
+void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);

@@ -2544,6 +2544,7 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
                    r'(?<!\bPMap)'
                    r'(?<!\bArrayOf)'
                    r'(?<!\bDictionaryOf)'
+                   r'(?<!\bDict)'
                    r'\((?:const )?(?:struct )?[a-zA-Z_]\w*(?: *\*(?:const)?)*\)'
                    r' +'
                    r'-?(?:\*+|&)?(?:\w+|\+\+|--|\()', cast_line)

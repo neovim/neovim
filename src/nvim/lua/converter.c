@@ -1299,3 +1299,25 @@ void nlua_init_types(lua_State *const lstate)
 
   lua_rawset(lstate, -3);
 }
+
+
+void nlua_pop_keydict(lua_State *L, void *retval, field_hash hashy, Error *err)
+{
+  lua_pushnil(L);  // [dict, nil]
+  while (lua_next(L, -2)) {
+    // [dict, key, value]
+    size_t len;
+    const char *s = lua_tolstring(L, -2, &len);
+    Object *field = hashy(retval, s, len);
+    if (!field) {
+      api_set_error(err, kErrorTypeValidation, "invalid key: %.*s", (int)len, s);
+      lua_pop(L, 3);  // []
+      return;
+    }
+
+    *field = nlua_pop_Object(L, true, err);
+  }
+  // [dict]
+  lua_pop(L, 1);
+  // []
+}
