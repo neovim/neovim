@@ -802,6 +802,7 @@ static void term_close(void *data)
 {
   Channel *chan = data;
   process_stop(&chan->stream.proc);
+  terminal_wipe(chan->term);
   multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 
