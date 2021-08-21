@@ -320,4 +320,15 @@ func Test_number_rightleft()
   bw!
 endfunc
 
+" This used to cause a divide by zero
+func Test_number_no_text_virtual_edit()
+  vnew
+  call setline(1, ['line one', 'line two'])
+  set number virtualedit=all
+  normal w
+  4wincmd |
+  normal j
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -130,7 +130,8 @@ static int coladvance2(
     if (finetune
         && curwin->w_p_wrap
         && curwin->w_width_inner != 0
-        && wcol >= (colnr_T)width) {
+        && wcol >= (colnr_T)width
+        && width > 0) {
       csize = linetabsize(line);
       if (csize > 0)
         csize--;
