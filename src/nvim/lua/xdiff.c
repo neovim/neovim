@@ -289,7 +289,7 @@ int nlua_xdl_diff(lua_State *lstate)
   }
 
   luaL_Buffer buf;
-  hunkpriv_t *priv;
+  hunkpriv_t *priv = NULL;
   switch (mode) {
     case kNluaXdiffModeUnified:
       luaL_buffinit(lstate, &buf);
@@ -315,9 +315,7 @@ int nlua_xdl_diff(lua_State *lstate)
     }
   }
 
-  if (mode == kNluaXdiffModeOnHunkCB) {
-    XFREE_CLEAR(priv);
-  }
+  XFREE_CLEAR(priv);
 
 exit_0:
   if (ERROR_SET(&err)) {
