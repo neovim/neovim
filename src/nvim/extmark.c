@@ -260,7 +260,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
   }
   uint64_t id;
   ssize_t decor_id;
-  map_foreach((&delete_set), id, decor_id, {
+  map_foreach(&delete_set, id, decor_id, {
     mtpos_t pos = marktree_lookup(buf->b_marktree, id, itr);
     assert(itr->node);
     marktree_del_itr(buf->b_marktree, itr, false);

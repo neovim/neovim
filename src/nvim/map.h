@@ -62,8 +62,6 @@ MAP_DECLS(ColorKey, ColorItem)
 #define MAP_INIT { { 0, 0, 0, 0, NULL, NULL, NULL } }
 #define map_init(k, v, map) do { *(map) = (Map(k, v))MAP_INIT; } while (false)
 
-#define map_new(T, U) map_##T##_##U##_new
-#define map_free(T, U) map_##T##_##U##_free
 #define map_destroy(T, U) map_##T##_##U##_destroy
 #define map_get(T, U) map_##T##_##U##_get
 #define map_has(T, U) map_##T##_##U##_has
@@ -75,8 +73,6 @@ MAP_DECLS(ColorKey, ColorItem)
 
 #define map_size(map) ((map)->table.size)
 
-#define pmap_new(T) map_new(T, ptr_t)
-#define pmap_free(T) map_free(T, ptr_t)
 #define pmap_destroy(T) map_destroy(T, ptr_t)
 #define pmap_get(T) map_get(T, ptr_t)
 #define pmap_has(T) map_has(T, ptr_t)
@@ -89,10 +85,10 @@ MAP_DECLS(ColorKey, ColorItem)
 #define pmap_init(k, map) map_init(k, ptr_t, map)
 
 #define map_foreach(map, key, value, block) \
-  kh_foreach(&map->table, key, value, block)
+  kh_foreach(&(map)->table, key, value, block)
 
 #define map_foreach_value(map, value, block) \
-  kh_foreach_value(&map->table, value, block)
+  kh_foreach_value(&(map)->table, value, block)
 
 void pmap_del2(PMap(cstr_t) *map, const char *key);
 
