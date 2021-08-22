@@ -13,12 +13,7 @@
 # include "decoration.c.generated.h"
 #endif
 
-static PMap(uint64_t) *hl_decors;
-
-void decor_init(void)
-{
-  hl_decors = pmap_new(uint64_t)();
-}
+static PMap(uint64_t) hl_decors;
 
 /// Add highlighting to a buffer, bounded by two cursor positions,
 /// with an offset.
@@ -77,7 +72,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf,
 Decoration *decor_hl(int hl_id)
 {
   assert(hl_id > 0);
-  Decoration **dp = (Decoration **)pmap_ref(uint64_t)(hl_decors,
+  Decoration **dp = (Decoration **)pmap_ref(uint64_t)(&hl_decors,
                                                       (uint64_t)hl_id, true);
   if (*dp) {
     return *dp;

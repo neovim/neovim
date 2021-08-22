@@ -126,8 +126,6 @@ void event_init(void)
   signal_init();
   // finish mspgack-rpc initialization
   channel_init();
-  remote_ui_init();
-  api_vim_init();
   terminal_init();
   ui_init();
 }
@@ -161,7 +159,6 @@ void early_init(mparm_T *paramp)
   env_init();
   fs_init();
   handle_init();
-  decor_init();
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
