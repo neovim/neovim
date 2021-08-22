@@ -6,62 +6,64 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before reporting: search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ).
+        _Before reporting:_ search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Read `:help vim-differences` first.
 
   - type: input
     attributes:
-      label: "Neovim Version"
-      description: "`nvim --version`:"
+      label: "Neovim version (`nvim -v`)"
+      placeholder: "0.6.0 commit db1b0ee3b30f"
     validations:
       required: true
   - type: input
     attributes:
-      label: "Operating system/version:"
+      label: "Vim (not Nvim) behaves the same?"
+      description: "Does `vim -u DEFAULTS` have the same issue? Note the exact Vim version (`8.x.yyyy`)."
+      placeholder: "No. Tested Vim 7.3.432"
     validations:
       required: true
   - type: input
     attributes:
-      label: "Terminal name/version:"
+      label: "Operating system/version"
+      placeholder: "macOS 11.5"
     validations:
       required: true
   - type: input
     attributes:
-      label: "TERM environment variable"
-      description: "echo `$TERM`:"
+      label: "Terminal name/version"
+      placeholder: "xterm 3.1"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "`$TERM` environment variable"
+      placeholder: "`echo $TERM`"
     validations:
       required: true
 
   - type: input
     attributes:
       label: "Installation"
-      description: "How did you install neovim: build from repo / system package manager / appimage / homebrew / snap / chocolatey / other (please specify)?"
+      description: "How did you install neovim: build from repo / system package manager / appimage / homebrew / snap / chocolatey / other (describe)?"
       placeholder: "Arch User Repository (AUR)"
     validations:
       required: true
 
   - type: textarea
     attributes:
-      label: "Steps to reproduce"
+      label: "How to reproduce the issue"
       description: |
-        Steps to reproduce using `nvim -u NORC` and/or `nvim -u NONE` (please test both).
-        If you are reporting build failures, please list the exact sequence of steps including all CMake flags (if any).
-    validations:
-      required: true
-
-  - type: input
-    attributes:
-      label: "Vim"
-      description: "Does Vim behave differently when called with `vim -u DEFAULTS`? (Please add the specific version, including patch level, of Vim that you tested.)"
+        Steps to reproduce using `nvim -u NORC` or `nvim -u NONE` (try both).
+        For build failures: list the exact steps including CMake flags (if any).
+        For shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
     validations:
       required: true
 
   - type: textarea
     attributes:
       label: "Expected behavior"
-      description: "A description of the behavior you expected. May optionally include logs, images, or videos."
+      description: "Describe the behavior you expect. May include logs, images, or videos."
     validations:
       required: true
-
   - type: textarea
     attributes:
       label: "Actual behavior"
