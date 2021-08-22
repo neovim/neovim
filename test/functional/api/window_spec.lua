@@ -355,6 +355,7 @@ describe('API/win', function()
       })
       local tabpage = eval('tabpagenr()')
       command('tabprevious')
+      eq(1, eval('tabpagenr()'))
       meths.win_close(win, false)
 
       eq(1000, meths.tabpage_get_win(tabpage))
