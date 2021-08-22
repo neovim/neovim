@@ -347,6 +347,19 @@ describe('API/win', function()
       eq(2, #meths.list_wins())
       eq('', funcs.getcmdwintype())
     end)
+
+    it('does not make tabpage invalid even if close floating window from other tabpage', function()
+      command('tabedit')
+      local win = meths.open_win(0, true, {
+        relative='editor', row=10, col=10, width=50, height=10
+      })
+      local tabpage = eval('tabpagenr()')
+      command('tabprevious')
+      meths.win_close(win, false)
+
+      meths.tabpage_get_win(tabpage)
+      helpers.assert_alive()
+    end)
   end)
 
   describe('hide', function()
