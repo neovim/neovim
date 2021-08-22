@@ -3080,17 +3080,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 				     *'hidden'* *'hid'* *'nohidden'* *'nohid'*
 'hidden' 'hid'		boolean	(default on)
 			global
-	When off a buffer is unloaded when it is |abandon|ed.  When on a
-	buffer becomes hidden when it is |abandon|ed.  If the buffer is still
-	displayed in another window, it does not become hidden, of course.
-	The commands that move through the buffer list sometimes make a buffer
-	hidden although the 'hidden' option is off: When the buffer is
-	modified, 'autowrite' is off or writing is not possible, and the '!'
-	flag was used.  See also |windows.txt|.
-	To only make one buffer hidden use the 'bufhidden' option.
-	This option is set for one command with ":hide {command}" |:hide|.
-	WARNING: It's easy to forget that you have changes in hidden buffers.
-	Think twice when using ":q!" or ":qa!".
+	When off a buffer is unloaded (including loss of undo information)
+	when it is |abandon|ed.  When on a buffer becomes hidden when it is
+	|abandon|ed.  A buffer displayed in another window does not become
+	hidden, of course.
+	Commands that move through the buffer list sometimes hide a buffer
+	although the 'hidden' option is off: when the buffer is modified,
+	'autowrite' is off or writing is not possible, and the '!' flag was
+	used.  See also |windows|.
+	To hide a specific buffer use the 'bufhidden' option.
+	'hidden' is set for one command with ":hide {command}" |:hide|.
 
 						*'history'* *'hi'*
 'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
