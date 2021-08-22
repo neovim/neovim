@@ -265,7 +265,7 @@ static partial_T *vvlua_partial;
 #endif
 
 static uint64_t last_timer_id = 1;
-static PMap(uint64_t) *timers = NULL;
+static PMap(uint64_t) timers = MAP_INIT;
 
 static const char *const msgpack_type_names[] = {
   [kMPNil] = "nil",
@@ -326,7 +326,6 @@ void eval_init(void)
 {
   vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
 
-  timers = pmap_new(uint64_t)();
   struct vimvar   *p;
 
   init_var_dict(&globvardict, &globvars_var, VAR_DEF_SCOPE);
@@ -4883,7 +4882,7 @@ bool garbage_collect(bool testing)
   // Channels
   {
     Channel *data;
-    map_foreach_value(channels, data, {
+    map_foreach_value(&channels, data, {
       set_ref_in_callback_reader(&data->on_data, copyID, NULL, NULL);
       set_ref_in_callback_reader(&data->on_stderr, copyID, NULL, NULL);
       set_ref_in_callback(&data->on_exit, copyID, NULL, NULL);
@@ -4893,7 +4892,7 @@ bool garbage_collect(bool testing)
   // Timers
   {
     timer_T *timer;
-    map_foreach_value(timers, timer, {
+    map_foreach_value(&timers, timer, {
       set_ref_in_callback(&timer->callback, copyID, NULL, NULL);
     })
   }
@@ -7304,7 +7303,7 @@ static bool set_ref_in_callback_reader(CallbackReader *reader, int copyID,
 
 timer_T *find_timer_by_nr(varnumber_T xx)
 {
-    return pmap_get(uint64_t)(timers, xx);
+    return pmap_get(uint64_t)(&timers, xx);
 }
 
 void add_timer_info(typval_T *rettv, timer_T *timer)
@@ -7331,9 +7330,9 @@ void add_timer_info(typval_T *rettv, timer_T *timer)
 
 void add_timer_info_all(typval_T *rettv)
 {
-  tv_list_alloc_ret(rettv, timers->table->n_occupied);
+  tv_list_alloc_ret(rettv, map_size(&timers));
   timer_T *timer;
-  map_foreach_value(timers, timer, {
+  map_foreach_value(&timers, timer, {
     if (!timer->stopped) {
       add_timer_info(rettv, timer);
     }
@@ -7413,7 +7412,7 @@ uint64_t timer_start(const long timeout,
   timer->tw.blockable = true;
   time_watcher_start(&timer->tw, timer_due_cb, timeout, timeout);
 
-  pmap_put(uint64_t)(timers, timer->timer_id, timer);
+  pmap_put(uint64_t)(&timers, timer->timer_id, timer);
   return timer->timer_id;
 }
 
@@ -7435,7 +7434,7 @@ static void timer_close_cb(TimeWatcher *tw, void *data)
   timer_T *timer = (timer_T *)data;
   multiqueue_free(timer->tw.events);
   callback_free(&timer->callback);
-  pmap_del(uint64_t)(timers, timer->timer_id);
+  pmap_del(uint64_t)(&timers, timer->timer_id);
   timer_decref(timer);
 }
 
@@ -7449,7 +7448,7 @@ static void timer_decref(timer_T *timer)
 void timer_stop_all(void)
 {
   timer_T *timer;
-  map_foreach_value(timers, timer, {
+  map_foreach_value(&timers, timer, {
     timer_stop(timer);
   })
 }

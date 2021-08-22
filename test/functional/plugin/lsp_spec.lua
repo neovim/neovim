@@ -266,6 +266,8 @@ describe('LSP', function()
       if isCI() then
         pending('hangs the build on CI #14028, re-enable with freeze timeout #14204')
         return
+      elseif helpers.skip_fragile(pending) then
+        return
       end
       local expected_handlers = {
         {NIL, "shutdown", {}, 1, NIL};
@@ -1951,6 +1953,12 @@ describe('LSP', function()
 
     it('calculates size correctly with wrapping', function()
       eq({15,5}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents,{width = 15, wrap_at = 14})} ]])
+    end)
+  end)
+
+  describe('lsp.util.trim.trim_empty_lines', function()
+    it('properly trims empty lines', function()
+      eq({{"foo", "bar"}}, exec_lua[[ return vim.lsp.util.trim_empty_lines({{ "foo", "bar" },  nil}) ]])
     end)
   end)
 

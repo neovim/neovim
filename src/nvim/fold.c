@@ -29,6 +29,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
+#include "nvim/plines.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
@@ -2960,7 +2961,7 @@ static void foldlevelIndent(fline_T *flp)
   linenr_T lnum = flp->lnum + flp->off;
 
   buf = flp->wp->w_buffer;
-  s = skipwhite(ml_get_buf(buf, lnum, FALSE));
+  s = skipwhite(ml_get_buf(buf, lnum, false));
 
   /* empty line or lines starting with a character in 'foldignore': level
    * depends on surrounding lines */
@@ -3122,7 +3123,7 @@ static void foldlevelMarker(fline_T *flp)
   flp->start = 0;
   flp->lvl_next = flp->lvl;
 
-  s = ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, FALSE);
+  s = ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, false);
   while (*s) {
     if (*s == cstart
         && STRNCMP(s + 1, startmarker, foldstartmarkerlen - 1) == 0) {

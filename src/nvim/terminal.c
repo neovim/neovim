@@ -76,7 +76,6 @@
 #include "nvim/event/time.h"
 #include "nvim/os/input.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/handle.h"
 
 typedef struct terminal_state {
   VimState state;
@@ -153,11 +152,10 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .sb_popline  = term_sb_pop,
 };
 
-static PMap(ptr_t) *invalidated_terminals;
+static PMap(ptr_t) invalidated_terminals = MAP_INIT;
 
 void terminal_init(void)
 {
-  invalidated_terminals = pmap_new(ptr_t)();
   time_watcher_init(&main_loop, &refresh_timer, NULL);
   // refresh_timer_cb will redraw the screen which can call vimscript
   refresh_timer.events = multiqueue_new_child(main_loop.events);
@@ -168,8 +166,10 @@ void terminal_teardown(void)
   time_watcher_stop(&refresh_timer);
   multiqueue_free(refresh_timer.events);
   time_watcher_close(&refresh_timer, NULL);
-  pmap_free(ptr_t)(invalidated_terminals);
-  invalidated_terminals = NULL;
+  pmap_destroy(ptr_t)(&invalidated_terminals);
+  // terminal_destroy might be called after terminal_teardown is invoked
+  // make sure it is in an empty, valid state
+  pmap_init(ptr_t, &invalidated_terminals);
 }
 
 // public API {{{
@@ -260,7 +260,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   return rv;
 }
 
-void terminal_close(Terminal *term, char *msg)
+void terminal_close(Terminal *term, int status)
 {
   if (term->closed) {
     return;
@@ -278,8 +278,8 @@ void terminal_close(Terminal *term, char *msg)
   buf_T *buf = handle_get_buffer(term->buf_handle);
   term->closed = true;
 
-  if (!msg || exiting) {
-    // If no msg was given, this was called by close_buffer(buffer.c).  Or if
+  if (status == -1 || exiting) {
+    // If status is -1, this was called by close_buffer(buffer.c).  Or if
     // exiting, we must inform the buffer the terminal no longer exists so that
     // close_buffer() doesn't call this again.
     term->buf_handle = 0;
@@ -291,11 +291,16 @@ void terminal_close(Terminal *term, char *msg)
       term->opts.close_cb(term->opts.data);
     }
   } else {
+    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
+    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", status);
     terminal_receive(term, msg, strlen(msg));
   }
 
-  if (buf) {
+  if (buf && !is_autocmd_blocked()) {
+    dict_T *dict = get_vim_var_dict(VV_EVENT);
+    tv_dict_add_nr(dict, S_LEN("status"), status);
     apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
+    tv_dict_clear(dict);
   }
 }
 
@@ -521,14 +526,12 @@ void terminal_destroy(Terminal *term)
   }
 
   if (!term->refcount) {
-    // might be destroyed after terminal_teardown is invoked
-    if (invalidated_terminals
-        && pmap_has(ptr_t)(invalidated_terminals, term)) {
+    if (pmap_has(ptr_t)(&invalidated_terminals, term)) {
       // flush any pending changes to the buffer
       block_autocmds();
       refresh_terminal(term);
       unblock_autocmds();
-      pmap_del(ptr_t)(invalidated_terminals, term);
+      pmap_del(ptr_t)(&invalidated_terminals, term);
     }
     for (size_t i = 0; i < term->sb_current; i++) {
       xfree(term->sb_buffer[i]);
@@ -865,7 +868,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
   }
 
   memcpy(sbrow->cells, cells, sizeof(cells[0]) * c);
-  pmap_put(ptr_t)(invalidated_terminals, term, NULL);
+  pmap_put(ptr_t)(&invalidated_terminals, term, NULL);
 
   return 1;
 }
@@ -906,7 +909,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   }
 
   xfree(sbrow);
-  pmap_put(ptr_t)(invalidated_terminals, term, NULL);
+  pmap_put(ptr_t)(&invalidated_terminals, term, NULL);
 
   return 1;
 }
@@ -1208,7 +1211,7 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
     term->invalid_end = MAX(term->invalid_end, end_row);
   }
 
-  pmap_put(ptr_t)(invalidated_terminals, term, NULL);
+  pmap_put(ptr_t)(&invalidated_terminals, term, NULL);
   if (!refresh_pending) {
     time_watcher_start(&refresh_timer, refresh_timer_cb, REFRESH_DELAY, 0);
     refresh_pending = true;
@@ -1250,10 +1253,10 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   void *stub; (void)(stub);
   // don't process autocommands while updating terminal buffers
   block_autocmds();
-  map_foreach(invalidated_terminals, term, stub, {
+  map_foreach(&invalidated_terminals, term, stub, {
     refresh_terminal(term);
   });
-  pmap_clear(ptr_t)(invalidated_terminals);
+  pmap_clear(ptr_t)(&invalidated_terminals);
   unblock_autocmds();
 }
 

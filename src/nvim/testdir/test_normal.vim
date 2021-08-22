@@ -1227,7 +1227,7 @@ func Test_normal23_K()
   set iskeyword-=\|
 
   " Only expect "man" to work on Unix
-  if !has("unix")
+  if !has("unix") || has('nvim')  " Nvim K uses :terminal. #15398
     let &keywordprg = k
     bw!
     return

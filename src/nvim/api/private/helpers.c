@@ -9,7 +9,6 @@
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/api/private/handle.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
@@ -1725,7 +1724,7 @@ const char *describe_ns(NS ns_id)
 {
   String name;
   handle_T id;
-  map_foreach(namespace_ids, name, id, {
+  map_foreach(&namespace_ids, name, id, {
     if ((NS)id == ns_id && name.size) {
       return name.data;
     }

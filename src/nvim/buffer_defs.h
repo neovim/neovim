@@ -863,8 +863,8 @@ struct file_buffer {
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
   MarkTree b_marktree[1];
-  Map(uint64_t, ExtmarkItem) *b_extmark_index;
-  Map(uint64_t, ExtmarkNs) *b_extmark_ns;         // extmark namespaces
+  Map(uint64_t, ExtmarkItem) b_extmark_index[1];
+  Map(uint64_t, ExtmarkNs) b_extmark_ns[1];         // extmark namespaces
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.
@@ -1298,7 +1298,7 @@ struct window_S {
 
   /*
    * w_cline_height is the number of physical lines taken by the buffer line
-   * that the cursor is on.  We use this to avoid extra calls to plines().
+   * that the cursor is on.  We use this to avoid extra calls to plines_win().
    */
   int w_cline_height;               // current size of cursor line
   bool w_cline_folded;              // cursor line is folded

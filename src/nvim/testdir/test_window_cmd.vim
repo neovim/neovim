@@ -608,7 +608,7 @@ func Test_window_prevwin()
   " reset
   q
   call delete('tmp.txt')
-  set hidden&vim autoread&vim
+  set nohidden autoread&vim
   delfunc Fun_RenewFile
 endfunc
 

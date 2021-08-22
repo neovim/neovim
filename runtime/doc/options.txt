@@ -3078,19 +3078,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |help-translated|.
 
 				     *'hidden'* *'hid'* *'nohidden'* *'nohid'*
-'hidden' 'hid'		boolean	(default off)
+'hidden' 'hid'		boolean	(default on)
 			global
-	When off a buffer is unloaded when it is |abandon|ed.  When on a
-	buffer becomes hidden when it is |abandon|ed.  If the buffer is still
-	displayed in another window, it does not become hidden, of course.
-	The commands that move through the buffer list sometimes make a buffer
-	hidden although the 'hidden' option is off: When the buffer is
-	modified, 'autowrite' is off or writing is not possible, and the '!'
-	flag was used.  See also |windows.txt|.
-	To only make one buffer hidden use the 'bufhidden' option.
-	This option is set for one command with ":hide {command}" |:hide|.
-	WARNING: It's easy to forget that you have changes in hidden buffers.
-	Think twice when using ":q!" or ":qa!".
+	When off a buffer is unloaded (including loss of undo information)
+	when it is |abandon|ed.  When on a buffer becomes hidden when it is
+	|abandon|ed.  A buffer displayed in another window does not become
+	hidden, of course.
+	Commands that move through the buffer list sometimes hide a buffer
+	although the 'hidden' option is off: when the buffer is modified,
+	'autowrite' is off or writing is not possible, and the '!' flag was
+	used.  See also |windows|.
+	To hide a specific buffer use the 'bufhidden' option.
+	'hidden' is set for one command with ":hide {command}" |:hide|.
 
 						*'history'* *'hi'*
 'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
@@ -3213,7 +3212,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option to a valid keymap name.
 
 						*'inccommand'* *'icm'*
-'inccommand' 'icm'	string	(default "")
+'inccommand' 'icm'	string	(default "nosplit")
 			global
 
 	"nosplit": Shows the effects of a command incrementally, as you type.
@@ -3498,7 +3497,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			|jumplist-stack|
 
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
-'joinspaces' 'js'	boolean	(default on)
+'joinspaces' 'js'	boolean	(default off)
 			global
 	Insert two spaces after a '.', '?' and '!' with a join command.
 	Otherwise only one space is inserted.
@@ -6116,7 +6115,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	specify special kinds of buffers.   See |special-buffers|.
 
 						*'switchbuf'* *'swb'*
-'switchbuf' 'swb'	string	(default "")
+'switchbuf' 'swb'	string	(default "uselast")
 			global
 	This option controls the behavior when switching between buffers.
 	Possible values (comma separated list):
@@ -6700,7 +6699,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'viewoptions'* *'vop'*
-'viewoptions' 'vop'	string	(default: "folds,options,cursor,curdir")
+'viewoptions' 'vop'	string	(default: "folds,cursor,curdir")
 			global
 	Changes the effect of the |:mkview| command.  It is a comma separated
 	list of words.  Each word enables saving and restoring something:

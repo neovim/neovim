@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, feed =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed
+local eq, clear, eval, feed, retry =
+  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.retry
 
 describe('K', function()
   local test_file = 'K_spec_out'
@@ -31,7 +31,7 @@ describe('K', function()
 
     -- K on the text "K_spec_out" resolves to `!echo fnord >> K_spec_out`.
     feed('i'..test_file..'<ESC>K')
-    feed('<CR>') -- Press ENTER
+    retry(nil, nil, function() eq(1, eval('filereadable("'..test_file..'")')) end)
     eq({'fnord'}, eval("readfile('"..test_file.."')"))
   end)
 

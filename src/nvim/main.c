@@ -78,7 +78,6 @@
 #include "nvim/api/ui.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
@@ -126,8 +125,6 @@ void event_init(void)
   signal_init();
   // finish mspgack-rpc initialization
   channel_init();
-  remote_ui_init();
-  api_vim_init();
   terminal_init();
   ui_init();
 }
@@ -160,8 +157,6 @@ void early_init(mparm_T *paramp)
 {
   env_init();
   fs_init();
-  handle_init();
-  decor_init();
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.
@@ -313,6 +308,9 @@ int main(int argc, char **argv)
 
   init_highlight(true, false);  // Default highlight groups.
   TIME_MSG("init highlight");
+
+  init_default_mappings();  // Default mappings.
+  TIME_MSG("init default mappings");
 
   // Set the break level after the terminal is initialized.
   debug_break_level = params.use_debug_break_level;

@@ -68,12 +68,18 @@ CTRL-A		Insert previously inserted text.
 CTRL-W		Delete the word before the cursor (see |i_backspacing| about
 		joining lines).  See the section "word motions",
 		|word-motions|, for the definition of a word.
+						*i_CTRL-W-default*
+		By default, sets a new undo point before deleting.
+		|default-mappings|
 						*i_CTRL-U*
 CTRL-U		Delete all entered characters before the cursor in the current
 		line.  If there are no newly entered characters and
 		'backspace' is not empty, delete all characters before the
 		cursor in the current line.
 		See |i_backspacing| about joining lines.
+						*i_CTRL-U-default*
+		By default, sets a new undo point before deleting.
+		|default-mappings|
 						*i_CTRL-I* *i_<Tab>* *i_Tab*
 <Tab> or CTRL-I Insert a tab.  If the 'expandtab' option is on, the
 		equivalent number of spaces is inserted (use CTRL-V <Tab> to

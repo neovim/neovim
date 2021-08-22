@@ -1297,8 +1297,8 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
     goto theend;
   }
 
-  /* Undo must be synced. */
-  u_sync(TRUE);
+  // Undo must be synced.
+  u_sync(true);
 
   /*
    * Write the header.
@@ -1783,7 +1783,7 @@ void u_undo(int count)
    * be compatible.
    */
   if (curbuf->b_u_synced == false) {
-    u_sync(TRUE);
+    u_sync(true);
     count = 1;
   }
 
@@ -1943,9 +1943,10 @@ void undo_time(long step, bool sec, bool file, bool absolute)
   bool above = false;
   bool did_undo = true;
 
-  /* First make sure the current undoable change is synced. */
-  if (curbuf->b_u_synced == false)
-    u_sync(TRUE);
+  // First make sure the current undoable change is synced.
+  if (curbuf->b_u_synced == false) {
+    u_sync(true);
+  }
 
   u_newcount = 0;
   u_oldcount = 0;
@@ -2601,13 +2602,10 @@ static void u_undo_end(
       msgbuf);
 }
 
-/*
- * u_sync: stop adding to the current entry list
- */
-void
-u_sync(
-    int force               // Also sync when no_u_sync is set.
-)
+/// u_sync: stop adding to the current entry list
+///
+/// @param force  if true, also sync when no_u_sync is set.
+void u_sync(bool force)
 {
   // Skip it when already synced or syncing is disabled.
   if (curbuf->b_u_synced || (!force && no_u_sync > 0)) {
@@ -2764,13 +2762,13 @@ void u_find_first_changed(void)
     return;
 
   for (lnum = 1; lnum < curbuf->b_ml.ml_line_count
-       && lnum <= uep->ue_size; ++lnum)
-    if (STRCMP(ml_get_buf(curbuf, lnum, FALSE),
-            uep->ue_array[lnum - 1]) != 0) {
+       && lnum <= uep->ue_size; lnum++) {
+    if (STRCMP(ml_get_buf(curbuf, lnum, false), uep->ue_array[lnum - 1]) != 0) {
       clearpos(&(uhp->uh_cursor));
       uhp->uh_cursor.lnum = lnum;
       return;
     }
+  }
   if (curbuf->b_ml.ml_line_count != uep->ue_size) {
     /* lines added or deleted at the end, put the cursor there */
     clearpos(&(uhp->uh_cursor));

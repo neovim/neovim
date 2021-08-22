@@ -307,7 +307,7 @@ func Test_mksession_buffer_count()
   call delete('Xbaz')
   call delete('Xtest_mks.out')
   %bwipe!
-  set hidden&
+  set nohidden
 endfunc
 
 if has('extra_search')

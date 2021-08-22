@@ -14,6 +14,10 @@ Various commands					*various*
 							*CTRL-L*
 CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
+							*CTRL-L-default*
+			By default, also clears search highlighting
+			|:nohlsearch| and updates diffs |:diffupdate|.
+			|default-mappings|
 
 							*:mod* *:mode*
 :mod[e]			Clears and redraws the screen.
@@ -456,20 +460,14 @@ defined while executing a function, user command or autocommand, the script in
 which it was defined is reported.
 
 							*K*
-[count]K       		Run a program to lookup the keyword under the
-			cursor.  The name of the program is given with the
-			'keywordprg' (kp) option (default is "man").  The
-			keyword is formed of letters, numbers and the
-			characters in 'iskeyword'.  The keyword under or
-			right of the cursor is used.  The same can be done
-			with the command >
-				:!{program} {keyword}
+[count]K       		Runs the program given by 'keywordprg' to lookup the
+			|word| (defined by 'iskeyword') under or right of the
+			cursor. Default is "man". Works like this: >
+				:tabnew | terminal {program} {keyword}
 <			Special cases:
 			- If 'keywordprg' begins with ":" it is invoked as
 			  a Vim command with [count].
-			- If 'keywordprg' is empty, the ":help" command is
-			  used.  It's a good idea to include more characters
-			  in 'iskeyword' then, to be able to find more help.
+			- If 'keywordprg' is empty, |:help| is used.
 			- When 'keywordprg' is equal to "man", a [count]
 			  before "K" is inserted after the "man" command and
 			  before the keyword.  For example, using "2K" while

@@ -1,7 +1,7 @@
 name: Squash Typo Pull Requests
 
 on:
-  pull_request:
+  pull_request_target:
     types: labeled
 concurrency:
   group: ${{ github.workflow }} 
@@ -21,7 +21,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-        ref: master
     - uses: actions/setup-python@v2
 
     - name: Setup git config
@@ -30,3 +29,5 @@ jobs:
         git config --global user.email 'marvim@users.noreply.github.com'
 
     - run: python scripts/squash_typos.py
+      env:
+        PR_NUMBER: ${{ github.event.number }}

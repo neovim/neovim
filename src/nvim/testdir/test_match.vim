@@ -157,7 +157,10 @@ func Test_match_error()
 endfunc
 
 func Test_matchadd_error()
-  call assert_fails("call matchadd('GroupDoesNotExist', 'X')", 'E28:')
+  call clearmatches()
+  " Nvim: not an error anymore:
+  call matchadd('GroupDoesNotExist', 'X')
+  call assert_equal([{'group': 'GroupDoesNotExist', 'pattern': 'X', 'priority': 10, 'id': 13}], getmatches())
   call assert_fails("call matchadd('Search', '\\(')", 'E475:')
   call assert_fails("call matchadd('Search', 'XXX', 1, 123, 1)", 'E715:')
   call assert_fails("call matchadd('Error', 'XXX', 1, 3)", 'E798:')

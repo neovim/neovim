@@ -25,22 +25,16 @@ static bool hlstate_active = false;
 
 static kvec_t(HlEntry) attr_entries = KV_INITIAL_VALUE;
 
-static Map(HlEntry, int) *attr_entry_ids;
-static Map(int, int) *combine_attr_entries;
-static Map(int, int) *blend_attr_entries;
-static Map(int, int) *blendthrough_attr_entries;
+static Map(HlEntry, int) attr_entry_ids = MAP_INIT;
+static Map(int, int) combine_attr_entries = MAP_INIT;
+static Map(int, int) blend_attr_entries = MAP_INIT;
+static Map(int, int) blendthrough_attr_entries = MAP_INIT;
 
 /// highlight entries private to a namespace
-static Map(ColorKey, ColorItem) *ns_hl;
+static Map(ColorKey, ColorItem) ns_hl;
 
 void highlight_init(void)
 {
-  attr_entry_ids = map_new(HlEntry, int)();
-  combine_attr_entries = map_new(int, int)();
-  blend_attr_entries = map_new(int, int)();
-  blendthrough_attr_entries = map_new(int, int)();
-  ns_hl = map_new(ColorKey, ColorItem)();
-
   // index 0 is no attribute, add dummy entry:
   kv_push(attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlUnknown,
                                     .id1 = 0, .id2 = 0 }));
@@ -71,7 +65,7 @@ static int get_attr_entry(HlEntry entry)
     entry.id2 = 0;
   }
 
-  int id = map_get(HlEntry, int)(attr_entry_ids, entry);
+  int id = map_get(HlEntry, int)(&attr_entry_ids, entry);
   if (id > 0) {
     return id;
   }
@@ -104,7 +98,7 @@ static int get_attr_entry(HlEntry entry)
   id = (int)next_id;
   kv_push(attr_entries, entry);
 
-  map_put(HlEntry, int)(attr_entry_ids, entry, id);
+  map_put(HlEntry, int)(&attr_entry_ids, entry, id);
 
   Array inspect = hl_inspect(id);
 
@@ -154,7 +148,7 @@ void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
 {
   DecorProvider *p = get_decor_provider(ns_id, true);
   if ((attrs.rgb_ae_attr & HL_DEFAULT)
-      && map_has(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id))) {
+      && map_has(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id))) {
     return;
   }
   int attr_id = link_id > 0 ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
@@ -162,7 +156,7 @@ void ns_hl_def(NS ns_id, int hl_id, HlAttrs attrs, int link_id)
                    .link_id = link_id,
                    .version = p->hl_valid,
                    .is_default = (attrs.rgb_ae_attr & HL_DEFAULT) };
-  map_put(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id), it);
+  map_put(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id), it);
 }
 
 int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
@@ -177,7 +171,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
   }
 
   DecorProvider *p = get_decor_provider(ns_id, true);
-  ColorItem it = map_get(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id));
+  ColorItem it = map_get(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id));
   // TODO(bfredl): map_ref true even this?
   bool valid_cache = it.version >= p->hl_valid;
 
@@ -220,7 +214,7 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
     it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
     it.version = p->hl_valid-tmp;
     it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
-    map_put(ColorKey, ColorItem)(ns_hl, ColorKey(ns_id, hl_id), it);
+    map_put(ColorKey, ColorItem)(&ns_hl, ColorKey(ns_id, hl_id), it);
   }
 
   if (it.is_default && nodefault) {
@@ -395,28 +389,28 @@ void clear_hl_tables(bool reinit)
 {
   if (reinit) {
     kv_size(attr_entries) = 1;
-    map_clear(HlEntry, int)(attr_entry_ids);
-    map_clear(int, int)(combine_attr_entries);
-    map_clear(int, int)(blend_attr_entries);
-    map_clear(int, int)(blendthrough_attr_entries);
+    map_clear(HlEntry, int)(&attr_entry_ids);
+    map_clear(int, int)(&combine_attr_entries);
+    map_clear(int, int)(&blend_attr_entries);
+    map_clear(int, int)(&blendthrough_attr_entries);
     memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
     screen_invalidate_highlights();
   } else {
     kv_destroy(attr_entries);
-    map_free(HlEntry, int)(attr_entry_ids);
-    map_free(int, int)(combine_attr_entries);
-    map_free(int, int)(blend_attr_entries);
-    map_free(int, int)(blendthrough_attr_entries);
-    map_free(ColorKey, ColorItem)(ns_hl);
+    map_destroy(HlEntry, int)(&attr_entry_ids);
+    map_destroy(int, int)(&combine_attr_entries);
+    map_destroy(int, int)(&blend_attr_entries);
+    map_destroy(int, int)(&blendthrough_attr_entries);
+    map_destroy(ColorKey, ColorItem)(&ns_hl);
   }
 }
 
 void hl_invalidate_blends(void)
 {
-  map_clear(int, int)(blend_attr_entries);
-  map_clear(int, int)(blendthrough_attr_entries);
+  map_clear(int, int)(&blend_attr_entries);
+  map_clear(int, int)(&blendthrough_attr_entries);
   highlight_changed();
   update_window_hl(curwin, true);
 }
@@ -437,7 +431,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   // TODO(bfredl): could use a struct for clearer intent.
   int combine_tag = (char_attr << 16) + prim_attr;
-  int id = map_get(int, int)(combine_attr_entries, combine_tag);
+  int id = map_get(int, int)(&combine_attr_entries, combine_tag);
   if (id > 0) {
     return id;
   }
@@ -494,7 +488,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
                                  .id1 = char_attr, .id2 = prim_attr });
   if (id > 0) {
-    map_put(int, int)(combine_attr_entries, combine_tag, id);
+    map_put(int, int)(&combine_attr_entries, combine_tag, id);
   }
 
   return id;
@@ -550,8 +544,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
   int combine_tag = (back_attr << 16) + front_attr;
   Map(int, int) *map = (*through
-                        ? blendthrough_attr_entries
-                        : blend_attr_entries);
+                        ? &blendthrough_attr_entries
+                        : &blend_attr_entries);
   int id = map_get(int, int)(map, combine_tag);
   if (id > 0) {
     return id;

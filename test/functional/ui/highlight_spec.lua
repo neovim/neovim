@@ -912,6 +912,97 @@ describe('CursorLine highlight', function()
     ]])
   end)
 
+  it("'cursorlineopt' screenline", function()
+    local screen = Screen.new(20,5)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.Black, background = Screen.colors.White};
+      [2] = {foreground = Screen.colors.Yellow};
+      [3] = {foreground = Screen.colors.Red, background = Screen.colors.Green};
+      [4] = {foreground = Screen.colors.Green, background = Screen.colors.Red};
+    })
+    screen:attach()
+
+    feed_command('set wrap cursorline cursorlineopt=screenline')
+    feed_command('set showbreak=>>>')
+    feed_command('highlight clear NonText')
+    feed_command('highlight clear CursorLine')
+    feed_command('highlight NonText guifg=Yellow gui=NONE')
+    feed_command('highlight LineNr guifg=Red guibg=Green gui=NONE')
+    feed_command('highlight CursorLine guifg=Black guibg=White gui=NONE')
+    feed_command('highlight CursorLineNr guifg=Green guibg=Red gui=NONE')
+
+    feed('30iø<esc>o<esc>30ia<esc>')
+
+    -- CursorLine should not apply to 'showbreak' when 'cursorlineopt' contains "screenline"
+    screen:expect([[
+      øøøøøøøøøøøøøøøøøøøø|
+      {2:>>>}øøøøøøøøøø       |
+      aaaaaaaaaaaaaaaaaaaa|
+      {2:>>>}{1:aaaaaaaaa^a       }|
+                          |
+    ]])
+    feed('gk')
+    screen:expect([[
+      øøøøøøøøøøøøøøøøøøøø|
+      {2:>>>}øøøøøøøøøø       |
+      {1:aaaaaaaaaaaa^aaaaaaaa}|
+      {2:>>>}aaaaaaaaaa       |
+                          |
+    ]])
+    feed('k')
+    screen:expect([[
+      {1:øøøøøøøøøøøø^øøøøøøøø}|
+      {2:>>>}øøøøøøøøøø       |
+      aaaaaaaaaaaaaaaaaaaa|
+      {2:>>>}aaaaaaaaaa       |
+                          |
+    ]])
+
+    -- CursorLineNr should not apply to line number when 'cursorlineopt' does not contain "number"
+    feed_command('set relativenumber numberwidth=2')
+    screen:expect([[
+      {3:0 }{1:øøøøøøøøøøøø^øøøøøø}|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+
+    -- CursorLineNr should apply to line number when 'cursorlineopt' contains "number"
+    feed_command('set cursorlineopt+=number')
+    screen:expect([[
+      {4:0 }{1:øøøøøøøøøøøø^øøøøøø}|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+    feed('gj')
+    screen:expect([[
+      {4:0 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}{1:øøøøøøøøø^øøø   }|
+      {3:1 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+    feed('gj')
+    screen:expect([[
+      {3:1 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {4:0 }{1:aaaaaaaaaaaa^aaaaaa}|
+      {3:  }{2:>>>}aaaaaaaaaaaa   |
+                          |
+    ]])
+    feed('gj')
+    screen:expect([[
+      {3:1 }øøøøøøøøøøøøøøøøøø|
+      {3:  }{2:>>>}øøøøøøøøøøøø   |
+      {4:0 }aaaaaaaaaaaaaaaaaa|
+      {3:  }{2:>>>}{1:aaaaaaaaa^aaa   }|
+                          |
+    ]])
+  end)
+
   it('always updated. vim-patch:8.1.0849', function()
     local screen = Screen.new(50,5)
     screen:set_default_attr_ids({

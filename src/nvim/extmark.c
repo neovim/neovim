@@ -48,20 +48,7 @@
 #endif
 
 static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
-  if (!buf->b_extmark_ns) {
-    if (!put) {
-      return NULL;
-    }
-    buf->b_extmark_ns = map_new(uint64_t, ExtmarkNs)();
-    buf->b_extmark_index = map_new(uint64_t, ExtmarkItem)();
-  }
-
-  ExtmarkNs *ns = map_ref(uint64_t, ExtmarkNs)(buf->b_extmark_ns, ns_id, put);
-  if (put && ns->map == NULL) {
-    ns->map = map_new(uint64_t, uint64_t)();
-    ns->free_id = 1;
-  }
-  return ns;
+  return map_ref(uint64_t, ExtmarkNs)(buf->b_extmark_ns, ns_id, put);
 }
 
 
@@ -195,7 +182,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
                    int l_row, colnr_T l_col,
                    int u_row, colnr_T u_col)
 {
-  if (!buf->b_extmark_ns) {
+  if (!map_size(buf->b_extmark_ns)) {
     return false;
   }
 
@@ -215,12 +202,9 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
   }
 
   // the value is either zero or the lnum (row+1) if highlight was present.
-  static Map(uint64_t, ssize_t) *delete_set = NULL;
+  static Map(uint64_t, ssize_t) delete_set = MAP_INIT;
   typedef struct { Decoration *decor; int row1; } DecorItem;
   static kvec_t(DecorItem) decors;
-  if (delete_set == NULL) {
-    delete_set = map_new(uint64_t, ssize_t)();
-  }
 
   MarkTreeIter itr[1] = { 0 };
   marktree_itr_get(buf->b_marktree, l_row, l_col, itr);
@@ -231,7 +215,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
         || (mark.row == u_row && mark.col > u_col)) {
       break;
     }
-    ssize_t *del_status = map_ref(uint64_t, ssize_t)(delete_set, mark.id,
+    ssize_t *del_status = map_ref(uint64_t, ssize_t)(&delete_set, mark.id,
                                                      false);
     if (del_status) {
       marktree_del_itr(buf->b_marktree, itr, false);
@@ -240,7 +224,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
         decor_redraw(buf, it.row1, mark.row, it.decor);
         decor_free(it.decor);
       }
-      map_del(uint64_t, ssize_t)(delete_set, mark.id);
+      map_del(uint64_t, ssize_t)(&delete_set, mark.id);
       continue;
     }
 
@@ -261,7 +245,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
           kv_push(decors,
                   ((DecorItem) { .decor = item.decor, .row1 = mark.row }));
         }
-        map_put(uint64_t, ssize_t)(delete_set, other, decor_id);
+        map_put(uint64_t, ssize_t)(&delete_set, other, decor_id);
       } else if (item.decor) {
         decor_redraw(buf, mark.row, mark.row, item.decor);
         decor_free(item.decor);
@@ -276,7 +260,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
   }
   uint64_t id;
   ssize_t decor_id;
-  map_foreach(delete_set, id, decor_id, {
+  map_foreach(&delete_set, id, decor_id, {
     mtpos_t pos = marktree_lookup(buf->b_marktree, id, itr);
     assert(itr->node);
     marktree_del_itr(buf->b_marktree, itr, false);
@@ -286,7 +270,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
       decor_free(it.decor);
     }
   });
-  map_clear(uint64_t, ssize_t)(delete_set);
+  map_clear(uint64_t, ssize_t)(&delete_set);
   kv_size(decors) = 0;
   return marks_cleared;
 }
@@ -383,7 +367,7 @@ ExtmarkInfo extmark_from_id(buf_T *buf, uint64_t ns_id, uint64_t id)
 // free extmarks from the buffer
 void extmark_free_all(buf_T *buf)
 {
-  if (!buf->b_extmark_ns) {
+  if (!map_size(buf->b_extmark_ns)) {
     return;
   }
 
@@ -395,17 +379,17 @@ void extmark_free_all(buf_T *buf)
 
   map_foreach(buf->b_extmark_ns, id, ns, {
     (void)id;
-    map_free(uint64_t, uint64_t)(ns.map);
+    map_destroy(uint64_t, uint64_t)(ns.map);
   });
-  map_free(uint64_t, ExtmarkNs)(buf->b_extmark_ns);
-  buf->b_extmark_ns = NULL;
+  map_destroy(uint64_t, ExtmarkNs)(buf->b_extmark_ns);
+  map_init(uint64_t, ExtmarkNs, buf->b_extmark_ns);
 
   map_foreach(buf->b_extmark_index, id, item, {
     (void)id;
     decor_free(item.decor);
   });
-  map_free(uint64_t, ExtmarkItem)(buf->b_extmark_index);
-  buf->b_extmark_index = NULL;
+  map_destroy(uint64_t, ExtmarkItem)(buf->b_extmark_index);
+  map_init(uint64_t, ExtmarkItem, buf->b_extmark_index);
 }
 
 

@@ -5035,7 +5035,7 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
 
   for (linenr_T lnum = 1; lnum <= wcount; ++lnum) {
     // <sugline>: <sugnr> ... NUL
-    char_u *line = ml_get_buf(spin->si_spellbuf, lnum, FALSE);
+    char_u *line = ml_get_buf(spin->si_spellbuf, lnum, false);
     size_t len = STRLEN(line) + 1;
     if (fwrite(line, len, 1, fd) == 0) {
       EMSG(_(e_write));

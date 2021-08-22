@@ -1719,14 +1719,14 @@ end
 function M.trim_empty_lines(lines)
   local start = 1
   for i = 1, #lines do
-    if #lines[i] > 0 then
+    if lines[i] ~= nil and #lines[i] > 0 then
       start = i
       break
     end
   end
   local finish = 1
   for i = #lines, 1, -1 do
-    if #lines[i] > 0 then
+    if lines[i] ~= nil and #lines[i] > 0 then
       finish = i
       break
     end

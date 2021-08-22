@@ -32,13 +32,9 @@ static uint64_t next_chan_id = CHAN_STDERR+1;
 /// Teardown the module
 void channel_teardown(void)
 {
-  if (!channels) {
-    return;
-  }
-
   Channel *channel;
 
-  map_foreach_value(channels, channel, {
+  map_foreach_value(&channels, channel, {
     channel_close(channel->id, kChannelPartAll, NULL);
   });
 }
@@ -152,7 +148,6 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
 /// Initializes the module
 void channel_init(void)
 {
-  channels = pmap_new(uint64_t)();
   channel_alloc(kChannelStreamStderr);
   rpc_init();
 }
@@ -177,7 +172,7 @@ Channel *channel_alloc(ChannelStreamType type)
   chan->exit_status = -1;
   chan->streamtype = type;
   assert(chan->id <= VARNUMBER_MAX);
-  pmap_put(uint64_t)(channels, chan->id, chan);
+  pmap_put(uint64_t)(&channels, chan->id, chan);
   return chan;
 }
 
@@ -249,7 +244,7 @@ static void free_channel_event(void **argv)
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
 
-  pmap_del(uint64_t)(channels, chan->id);
+  pmap_del(uint64_t)(&channels, chan->id);
   multiqueue_free(chan->events);
   xfree(chan);
 }
@@ -259,7 +254,7 @@ static void channel_destroy_early(Channel *chan)
   if ((chan->id != --next_chan_id)) {
     abort();
   }
-  pmap_del(uint64_t)(channels, chan->id);
+  pmap_del(uint64_t)(&channels, chan->id);
   chan->id = 0;
 
   if ((--chan->refcount != 0)) {
@@ -698,9 +693,7 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
 {
   Channel *chan = data;
   if (chan->term) {
-    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
-    terminal_close(chan->term, msg);
+    terminal_close(chan->term, status);
   }
 
   // If process did not exit, we only closed the handle of a detached process.
@@ -901,7 +894,7 @@ Array channel_all_info(void)
 {
   Channel *channel;
   Array ret = ARRAY_DICT_INIT;
-  map_foreach_value(channels, channel, {
+  map_foreach_value(&channels, channel, {
     ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
   });
   return ret;

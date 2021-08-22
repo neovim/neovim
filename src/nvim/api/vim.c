@@ -58,22 +58,16 @@
 # include "api/vim.c.generated.h"
 #endif
 
-void api_vim_init(void)
-  FUNC_API_NOEXPORT
-{
-  namespace_ids = map_new(String, handle_T)();
-}
-
 void api_vim_free_all_mem(void)
   FUNC_API_NOEXPORT
 {
   String name;
   handle_T id;
-  map_foreach(namespace_ids, name, id, {
+  map_foreach(&namespace_ids, name, id, {
     (void)id;
     xfree(name.data);
   })
-  map_free(String, handle_T)(namespace_ids);
+  map_destroy(String, handle_T)(&namespace_ids);
 }
 
 /// Executes Vimscript (multiline block of Ex-commands), like anonymous
@@ -1568,14 +1562,14 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 Integer nvim_create_namespace(String name)
   FUNC_API_SINCE(5)
 {
-  handle_T id = map_get(String, handle_T)(namespace_ids, name);
+  handle_T id = map_get(String, handle_T)(&namespace_ids, name);
   if (id > 0) {
     return id;
   }
   id = next_namespace_id++;
   if (name.size > 0) {
     String name_alloc = copy_string(name);
-    map_put(String, handle_T)(namespace_ids, name_alloc, id);
+    map_put(String, handle_T)(&namespace_ids, name_alloc, id);
   }
   return (Integer)id;
 }
@@ -1590,7 +1584,7 @@ Dictionary nvim_get_namespaces(void)
   String name;
   handle_T id;
 
-  map_foreach(namespace_ids, name, id, {
+  map_foreach(&namespace_ids, name, id, {
     PUT(retval, name.data, INTEGER_OBJ(id));
   })
 
@@ -2301,7 +2295,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       }
     }
   }
-  ParserLine plines[] = {
+  ParserLine parser_lines[] = {
     {
       .data = expr.data,
       .size = expr.size,
@@ -2309,7 +2303,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     },
     { NULL, 0, false },
   };
-  ParserLine *plines_p = plines;
+  ParserLine *plines_p = parser_lines;
   ParserHighlight colors;
   kvi_init(colors);
   ParserHighlight *const colors_p = (highlight ? &colors : NULL);
@@ -2335,7 +2329,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
   ret.items[ret.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("len"),
     .value = INTEGER_OBJ((Integer)(pstate.pos.line == 1
-                                   ? plines[0].size
+                                   ? parser_lines[0].size
                                    : pstate.pos.col)),
   };
   if (east.err.msg != NULL) {

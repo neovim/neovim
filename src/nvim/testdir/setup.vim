@@ -12,6 +12,7 @@ set directory^=.
 set fillchars=vert:\|,fold:-
 set laststatus=1
 set listchars=eol:$
+set joinspaces
 set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
 set nrformats+=octal
 set shortmess-=F
@@ -21,6 +22,14 @@ set undodir^=.
 set wildoptions=
 set startofline
 set sessionoptions+=options
+set viewoptions+=options
+set switchbuf=
+
+" Unmap Nvim default mappings.
+unmap Y
+unmap <C-L>
+iunmap <C-U>
+iunmap <C-W>
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'

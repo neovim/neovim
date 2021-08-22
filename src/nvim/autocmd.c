@@ -5,7 +5,7 @@
 
 #include "nvim/autocmd.h"
 
-#include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -1150,7 +1150,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
     if (need_append) {
       win_append(lastwin, aucmd_win);
-      handle_register_window(aucmd_win);
+      pmap_put(handle_T)(&window_handles, aucmd_win->handle, aucmd_win);
       win_config_float(aucmd_win, aucmd_win->w_float_config);
     }
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
@@ -1191,7 +1191,7 @@ void aucmd_restbuf(aco_save_T *aco)
   win_found:
 
     win_remove(curwin, NULL);
-    handle_unregister_window(curwin);
+    pmap_del(handle_T)(&window_handles, curwin->handle);
     if (curwin->w_grid_alloc.chars != NULL) {
       ui_comp_remove_grid(&curwin->w_grid_alloc);
       ui_call_win_hide(curwin->w_grid_alloc.handle);
@@ -1724,7 +1724,7 @@ BYPASS_AU:
 void block_autocmds(void)
 {
   // Remember the value of v:termresponse.
-  if (is_autocmd_blocked()) {
+  if (!is_autocmd_blocked()) {
     old_termresponse = get_vim_var_str(VV_TERMRESPONSE);
   }
   autocmd_blocked++;
@@ -1737,7 +1737,7 @@ void unblock_autocmds(void)
   // When v:termresponse was set while autocommands were blocked, trigger
   // the autocommands now.  Esp. useful when executing a shell command
   // during startup (nvim -d).
-  if (is_autocmd_blocked()
+  if (!is_autocmd_blocked()
       && get_vim_var_str(VV_TERMRESPONSE) != old_termresponse) {
     apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, false, curbuf);
   }

@@ -134,6 +134,10 @@ Example: >
   programs can set this by emitting an escape sequence.
 - |'channel'|  Terminal PTY |job-id|.  Can be used with |chansend()| to send
   input to the terminal.
+- The |TermClose| event gives the terminal job exit code in the |v:event|
+  "status" field. For example, this autocmd closes terminal buffers if the job
+  exited without error: >
+    autocmd TermClose * if !v:event.status | exe 'bdelete! '..expand('<abuf>') | endif
 
 Use |jobwait()| to check if the terminal job has finished: >
     let running = jobwait([&channel], 0)[0] == -1

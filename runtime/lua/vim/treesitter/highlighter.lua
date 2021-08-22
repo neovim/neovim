@@ -85,8 +85,10 @@ function TSHighlighterQuery.new(lang, query_string)
         hl = _link_default_highlight_once(lang .. hl, hl)
       end
 
-      rawset(table, capture, hl)
-      return hl
+      local id = a.nvim_get_hl_id_by_name(hl)
+
+      rawset(table, capture, id)
+      return id
     end
   })
 

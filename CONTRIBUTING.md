@@ -11,6 +11,7 @@ low-risk/isolated tasks:
 - Try a [good first issue](../../labels/good-first-issue) or [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
+- [Improve documentation][wiki-contribute-help]
 
 Reporting problems
 ------------------
@@ -18,17 +19,17 @@ Reporting problems
 - [Check the FAQ][wiki-faq].
 - [Search existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
-- Disable plugins incrementally, to narrow down the cause of the issue.
+- [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins incrementally, to narrow down the cause of the issue.
+- [Bisect][git-bisect] Neovim's source code to find the cause of a regression, if you can. This is _extremely_ helpful.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
 - Use [ASAN/UBSAN](#clang-sanitizers-asan-and-ubsan) to get detailed errors for segfaults and undefined behavior.
-- [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
-- Check `$NVIM_LOG_FILE`, if it exists.
+- Check the logs. `:edit $NVIM_LOG_FILE`
 - Include `cmake --system-information` for build-related issues.
 
 Developer guidelines
 --------------------
 
-- Nvim contributors should read `:help dev`.
+- Nvim developers should read `:help dev`.
 - External UI developers should read `:help dev-ui`.
 - API client developers should read `:help dev-api-client`.
 - Nvim developers are _strongly encouraged_ to install `ninja` for faster builds.
@@ -37,13 +38,12 @@ Developer guidelines
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
-- [Improve documentation][wiki-contribute-help]
 
 Pull requests (PRs)
 ---------------------
 
-- To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
-- Your PR must include **test coverage.** See [test/README.md][run-tests].
+- To avoid duplicate work, create a draft pull request.
+- Your PR must include [test coverage][run-tests].
 - Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
 - Use a **rebase workflow** for small PRs.
@@ -62,21 +62,25 @@ Pull requests (PRs)
 - During a squash/fixup, use `exec make -C build unittest` between each
   pick/edit/reword.
 
-### Stages: WIP, RFC, RDY
+### Stages: Draft and Ready for review
 
-Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
-For Comment) and `[RDY]` (Ready).
+Pull requests have two stages: Draft and Ready for review.
 
-1. `[RFC]` is assumed by default, **do not** put "RFC" in the PR title (it adds
-   noise to merge commit messages).
-2. Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
-   is still in flux.
-3. Add `[RDY]` to the PR title if you are _done_ and only waiting on merge.
+1. [Create a Draft PR][pr-draft] while you are _not_ requesting feedback as
+  you are still working on the PR.
+    - You can skip this if your PR is ready for review.
+2. [Change your PR to ready][pr-ready] when the PR is ready for review.
+    - You can convert back to Draft at any time.
+
+Do __not__ add labels like `[RFC]` or `[WIP]` in the title to indicate the
+state of your PR: this just adds noise. Non-Draft PRs are assumed to be open
+for comments; if you want feedback from specific people, `@`-mention them in
+a comment.
 
 ### Commit messages
 
 Follow the [conventional commits guidelines][conventional_commits] to *make reviews easier* and to make
-the VCS/git logs more valuable. The general structure of a commit message is as follows:
+the VCS/git logs more valuable. The general structure of a commit message is:
 
 ```
 <type>([optional scope]): <description>
@@ -86,43 +90,27 @@ the VCS/git logs more valuable. The general structure of a commit message is as 
 [optional footer(s)]
 ```
 
-- Prefix the commit subject with one of the following _types_:
-    - `build`: all changes related to the build system (involving scripts, configurations or tools) and package dependencies.
-    - `ci`: all changes related to the continuous integration and deployment system - involving scripts, configurations or tools.
-    - `docs`: all documentation changes. This includes both external documentation for users as well as internal documentation for developers.
-    - `feat`: new abilities or functionality.
-    - `fix`: a bug fix.
-    - `perf`: performance improvements.
-    - `refactor`: modification of the code base which neither adds a feature nor fixes a bug - such as removing redundant code, simplifying code, renaming variables, etc.
-    - `revert`: revert previous commits.
-    - `test`: all changes related to tests such as refactoring existing tests or adding new tests.
-    - `vim-patch`: all patches from upstream Vim. The commit messages for patches has [slightly different rules](https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim#pull-requests) as not to interfere with existing scripts.
-    - `chore`: Lastly, if none of the types above fits you may use `chore` as the type.
-
-- Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, ...
-
-- The _description_ shouldn't start with a capital letter or end in a period.
-
-- Try to keep the first line under 72 characters.
-
-- A blank line must separate the subject from the description.
-
-- A breaking API change must be indicated by appending `!` after the type/scope and at the very beginning of the footer with a **BREAKING CHANGE**.
-
-    Example:
-
-    ```
-    refactor(provider)!: drop support for Python 2
-
-    BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
-    ```
-
+- Prefix the commit subject with one of these [_types_](https://github.com/commitizen/conventional-commit-types/blob/master/index.json):
+    - `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `test`, `vim-patch`, `chore`
+    - You can **ignore this for "fixup" commits** or any commits you expect to be squashed.
+- Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, …
+- _Description_ shouldn't start with a capital letter or end in a period.
 - Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
+- Try to keep the first line under 72 characters.
+- A blank line must follow the subject.
+- Breaking API changes must be indicated by
+    1. "!" after the type/scope, and
+    2. a "BREAKING CHANGE" footer describing the change.
+       Example:
+       ```
+       refactor(provider)!: drop support for Python 2
+
+       BREAKING CHANGE: refactor to use Python 3 features since Python 2 is no longer supported.
+       ```
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [Travis CI], [sourcehut]
-and [AppVeyor].
+Each pull request must pass the automated builds on [sourcehut] and [GitHub Actions].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
@@ -276,11 +264,12 @@ as context, use the `-W` argument as well.
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [3174]: https://github.com/neovim/neovim/issues/3174
-[Travis CI]: https://travis-ci.org/neovim/neovim
 [sourcehut]: https://builds.sr.ht/~jmk
-[AppVeyor]: https://ci.appveyor.com/project/neovim/neovim
+[GitHub Actions]: https://github.com/neovim/neovim/actions
 [Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
+[pr-draft]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
+[pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request

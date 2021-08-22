@@ -35,12 +35,11 @@
 
 // Because `uv_os_getenv` requires allocating, we must manage a map to maintain
 // the behavior of `os_getenv`.
-static PMap(cstr_t) *envmap;
+static PMap(cstr_t) envmap = MAP_INIT;
 static uv_mutex_t mutex;
 
 void env_init(void)
 {
-  envmap = pmap_new(cstr_t)();
   uv_mutex_init(&mutex);
 }
 
@@ -66,8 +65,8 @@ const char *os_getenv(const char *name)
   }
   uv_mutex_lock(&mutex);
   int r = 0;
-  if (pmap_has(cstr_t)(envmap, name)
-      && !!(e = (char *)pmap_get(cstr_t)(envmap, name))) {
+  if (pmap_has(cstr_t)(&envmap, name)
+      && !!(e = (char *)pmap_get(cstr_t)(&envmap, name))) {
     if (e[0] != '\0') {
       // Found non-empty cached env var.
       // NOTE: This risks incoherence if an in-process library changes the
@@ -75,7 +74,7 @@ const char *os_getenv(const char *name)
       //       that turns out to be a problem, we can just remove this codepath.
       goto end;
     }
-    pmap_del2(envmap, name);
+    pmap_del2(&envmap, name);
   }
   e = xmalloc(size);
   r = uv_os_getenv(name, e, &size);
@@ -88,7 +87,7 @@ const char *os_getenv(const char *name)
     e = NULL;
     goto end;
   }
-  pmap_put(cstr_t)(envmap, xstrdup(name), e);
+  pmap_put(cstr_t)(&envmap, xstrdup(name), e);
 end:
   // Must do this before ELOG, log.c may call os_setenv.
   uv_mutex_unlock(&mutex);
@@ -157,7 +156,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
   assert(r != UV_EINVAL);
   // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
   // could be a previous os_getenv() result.
-  pmap_del2(envmap, name);
+  pmap_del2(&envmap, name);
   // Must do this before ELOG, log.c may call os_setenv.
   uv_mutex_unlock(&mutex);
   if (r != 0) {
@@ -174,7 +173,7 @@ int os_unsetenv(const char *name)
     return -1;
   }
   uv_mutex_lock(&mutex);
-  pmap_del2(envmap, name);
+  pmap_del2(&envmap, name);
   int r = uv_os_unsetenv(name);
   // Must do this before ELOG, log.c may call os_setenv.
   uv_mutex_unlock(&mutex);

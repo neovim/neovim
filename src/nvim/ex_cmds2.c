@@ -1460,7 +1460,7 @@ bool dialog_close_terminal(buf_T *buf)
 
   int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
 
-  return (ret == VIM_YES) ? true : false;
+  return ret == VIM_YES;
 }
 
 /// Return true if the buffer "buf" can be abandoned, either by making it

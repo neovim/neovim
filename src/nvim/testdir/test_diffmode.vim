@@ -540,7 +540,7 @@ func Test_diffopt_hiddenoff()
 
   bwipe!
   bwipe!
-  set hidden& diffopt&
+  set nohidden diffopt&
 endfunc
 
 func Test_diffoff_hidden()
@@ -577,7 +577,7 @@ func Test_diffoff_hidden()
 
   bwipe!
   bwipe!
-  set hidden& diffopt&
+  set nohidden diffopt&
 endfunc
 
 func Test_setting_cursor()
@@ -988,6 +988,37 @@ func Test_diff_with_cursorline()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_diff_cursorline')
+endfunc
+
+func Test_diff_with_cursorline_breakindent()
+  CheckScreendump
+
+  call writefile([
+	\ 'hi CursorLine ctermbg=red ctermfg=white',
+	\ 'set noequalalways wrap diffopt=followwrap cursorline breakindent',
+	\ '50vnew',
+	\ 'call setline(1, ["  ","  ","  ","  "])',
+	\ 'exe "norm 20Afoo\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abar\<Esc>"',
+	\ 'vnew',
+	\ 'call setline(1, ["  ","  ","  ","  "])',
+	\ 'exe "norm 20Abee\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abaz\<Esc>"',
+	\ 'windo diffthis',
+	\ '2wincmd w',
+	\ ], 'Xtest_diff_cursorline_breakindent')
+  let buf = RunVimInTerminal('-S Xtest_diff_cursorline_breakindent', {})
+
+  call term_sendkeys(buf, "gg0")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_01', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_02', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_03', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_with_cul_bri_04', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_diff_cursorline_breakindent')
 endfunc
 
 func Test_diff_with_syntax()

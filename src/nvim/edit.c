@@ -41,6 +41,7 @@
 #include "nvim/option.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
+#include "nvim/plines.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -1651,8 +1652,8 @@ static void init_prompt(int cmdchar_todo)
   check_cursor();
 }
 
-// Return TRUE if the cursor is in the editable position of the prompt line.
-int prompt_curpos_editable(void)
+/// @return  true if the cursor is in the editable position of the prompt line.
+bool prompt_curpos_editable(void)
 {
     return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
         && curwin->w_cursor.col >= (int)STRLEN(prompt_text());
@@ -7187,7 +7188,7 @@ static void replace_do_bs(int limit_col)
       // Get the number of screen cells used by the character we are
       // going to delete.
       getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
-      orig_vcols = chartabsize(get_cursor_pos_ptr(), start_vcol);
+      orig_vcols = win_chartabsize(curwin, get_cursor_pos_ptr(), start_vcol);
     }
     (void)del_char_after_col(limit_col);
     if (l_State & VREPLACE_FLAG) {
@@ -7201,8 +7202,8 @@ static void replace_do_bs(int limit_col)
       p = get_cursor_pos_ptr();
       ins_len = (int)STRLEN(p) - orig_len;
       vcol = start_vcol;
-      for (i = 0; i < ins_len; ++i) {
-        vcol += chartabsize(p + i, vcol);
+      for (i = 0; i < ins_len; i++) {
+        vcol += win_chartabsize(curwin, p + i, vcol);
         i += (*mb_ptr2len)(p) - 1;
       }
       vcol -= start_vcol;
@@ -8123,8 +8124,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // again when auto-formatting.
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
-          char_u  *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum,
-              TRUE);
+          char_u  *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
           int len;
 
           len = (int)STRLEN(ptr);

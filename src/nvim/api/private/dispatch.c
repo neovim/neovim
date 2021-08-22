@@ -21,12 +21,12 @@
 #include "nvim/api/window.h"
 #include "nvim/api/deprecated.h"
 
-static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
+static Map(String, MsgpackRpcRequestHandler) methods = MAP_INIT;
 
 static void msgpack_rpc_add_method_handler(String method,
                                            MsgpackRpcRequestHandler handler)
 {
-  map_put(String, MsgpackRpcRequestHandler)(methods, method, handler);
+  map_put(String, MsgpackRpcRequestHandler)(&methods, method, handler);
 }
 
 /// @param name API method name
@@ -37,7 +37,7 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
 {
   String m = { .data = (char *)name, .size = name_len };
   MsgpackRpcRequestHandler rv =
-    map_get(String, MsgpackRpcRequestHandler)(methods, m);
+    map_get(String, MsgpackRpcRequestHandler)(&methods, m);
 
   if (!rv.fn) {
     api_set_error(error, kErrorTypeException, "Invalid method: %.*s",

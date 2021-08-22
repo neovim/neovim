@@ -45,6 +45,7 @@
 #include "nvim/mouse.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/plines.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
@@ -4930,7 +4931,8 @@ static void nv_ident(cmdarg_T *cap)
         snprintf(buf, buf_size, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
       }
 
-      STRCAT(buf, "! ");
+      do_cmdline_cmd("tabnew");
+      STRCAT(buf, "terminal ");
       if (cap->count0 == 0 && isman_s) {
         STRCAT(buf, "man");
       } else {
@@ -5027,6 +5029,17 @@ static void nv_ident(cmdarg_T *cap)
     g_tag_at_cursor = true;
     do_cmdline_cmd(buf);
     g_tag_at_cursor = false;
+
+    if (cmdchar == 'K' && !kp_ex && !kp_help) {
+      // Start insert mode in terminal buffer
+      restart_edit = 'i';
+
+      add_map((char_u *)"<buffer> <esc> <Cmd>call jobstop(&channel)<CR>", TERM_FOCUS, true);
+      do_cmdline_cmd("autocmd TermClose <buffer> "
+                     " if !v:event.status |"
+                     "   exec 'bdelete! ' .. expand('<abuf>') |"
+                     " endif");
+    }
   }
 
   xfree(buf);
@@ -5122,11 +5135,13 @@ static void nv_scroll(cmdarg_T *cap)
           --n;
           break;
         }
-        used += plines(curwin->w_topline + n);
-        if (used >= half)
+        used += plines_win(curwin, curwin->w_topline + n, true);
+        if (used >= half) {
           break;
-        if (hasFolding(curwin->w_topline + n, NULL, &lnum))
+        }
+        if (hasFolding(curwin->w_topline + n, NULL, &lnum)) {
           n = lnum - curwin->w_topline;
+        }
       }
       if (n > 0 && used > curwin->w_height_inner) {
         n--;

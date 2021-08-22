@@ -91,7 +91,8 @@ describe('cdo', function()
         exe "silent! 4,5" . XdoCmd
         call assert_equal([], l)
 
-        " Run commands from an unsaved buffer
+        " Run commands from an unsaved buffer when 'hidden' is unset
+        set nohidden
         let v:errmsg=''
         let l = []
         enew
@@ -108,6 +109,7 @@ describe('cdo', function()
         if subst_count != 1 || getline('.') != 'xLine1'
           call add(v:errors, 'Abort command on error test failed')
         endif
+        set hidden
 
         let l = []
         exe "2,2" . Xdo . "! call add(l, GetRuler())"

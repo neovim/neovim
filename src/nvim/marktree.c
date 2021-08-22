@@ -250,7 +250,6 @@ void marktree_put_key(MarkTree *b, int row, int col, uint64_t id)
 
   if (!b->root) {
     b->root = (mtnode_t *)xcalloc(1, ILEN);
-    b->id2node = pmap_new(uint64_t)();
     b->n_nodes++;
   }
   mtnode_t *r, *s;
@@ -547,9 +546,9 @@ void marktree_clear(MarkTree *b)
     marktree_free_node(b->root);
     b->root = NULL;
   }
-  if (b->id2node) {
-    pmap_free(uint64_t)(b->id2node);
-    b->id2node = NULL;
+  if (b->id2node->table.keys) {
+    pmap_destroy(uint64_t)(b->id2node);
+    pmap_init(uint64_t, b->id2node);
   }
   b->n_keys = 0;
   b->n_nodes = 0;

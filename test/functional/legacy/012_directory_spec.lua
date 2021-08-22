@@ -80,6 +80,7 @@ describe("'directory' option", function()
     eq({ "Xtest1.swp", "Xtest3" }, ls_dir_sorted("Xtest2"))
 
     meths.set_option('directory', 'Xtest.je')
+    command('bdelete')
     command('edit Xtest2/Xtest3')
     eq(true, curbufmeths.get_option('swapfile'))
     poke_eventloop()

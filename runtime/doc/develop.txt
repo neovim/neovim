@@ -46,7 +46,7 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
   item is easier to find.
 
 
-NVIM IS... HIGH SPEED AND SMALL IN SIZE			*design-speed-size*
+NVIM IS... FAST AND SMALL				*design-speed-size*
 
 Keep Nvim small and fast.
 - Computers are becoming faster and bigger each year.  Vim can grow too, but

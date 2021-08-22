@@ -1911,7 +1911,7 @@ func Test_switchbuf()
   enew | only
   set switchbuf=useopen
   cexpr "Xqftestfile1:1:10"
-  call assert_equal('', &switchbuf)
+  call assert_equal('uselast', &switchbuf)
 
   call delete('Xqftestfile1')
   call delete('Xqftestfile2')

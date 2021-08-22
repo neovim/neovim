@@ -13,7 +13,6 @@
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/handle.h"
 #include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/vim.h"
@@ -40,6 +39,7 @@
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/lua/xdiff.h"
 
 #include "luv/luv.h"
 
@@ -68,7 +68,8 @@ typedef struct {
   }
 
 #if __has_feature(address_sanitizer)
-  PMap(handle_T) *nlua_ref_markers = NULL;
+  static PMap(handle_T) nlua_ref_markers = MAP_INIT;
+  static bool nlua_track_refs = false;
 # define NLUA_TRACK_REFS
 #endif
 
@@ -517,6 +518,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
+  // vim.diff
+  lua_pushcfunction(lstate, &nlua_xdl_diff);
+  lua_setfield(lstate, -2, "diff");
+
   lua_setglobal(lstate, "vim");
 
   {
@@ -564,7 +569,7 @@ void nlua_init(void)
 #ifdef NLUA_TRACK_REFS
   const char *env = os_getenv("NVIM_LUA_NOTRACK");
   if (!env || !*env) {
-    nlua_ref_markers = pmap_new(handle_T)();
+    nlua_track_refs = true;
   }
 #endif
 
@@ -595,10 +600,10 @@ void nlua_free_all_mem(void)
     fprintf(stderr, "%d lua references were leaked!", nlua_refcount);
   }
 
-  if (nlua_ref_markers) {
+  if (nlua_track_refs) {
     // in case there are leaked luarefs, leak the associated memory
     // to get LeakSanitizer stacktraces on exit
-    pmap_free(handle_T)(nlua_ref_markers);
+    pmap_destroy(handle_T)(&nlua_ref_markers);
   }
 #endif
 
@@ -997,9 +1002,9 @@ LuaRef nlua_ref(lua_State *lstate, int index)
   if (ref > 0) {
     nlua_refcount++;
 #ifdef NLUA_TRACK_REFS
-  if (nlua_ref_markers) {
+  if (nlua_track_refs) {
     // dummy allocation to make LeakSanitizer track our luarefs
-    pmap_put(handle_T)(nlua_ref_markers, ref, xmalloc(3));
+    pmap_put(handle_T)(&nlua_ref_markers, ref, xmalloc(3));
   }
 #endif
   }
@@ -1013,8 +1018,8 @@ void nlua_unref(lua_State *lstate, LuaRef ref)
     nlua_refcount--;
 #ifdef NLUA_TRACK_REFS
     // NB: don't remove entry from map to track double-unref
-    if (nlua_ref_markers) {
-      xfree(pmap_get(handle_T)(nlua_ref_markers, ref));
+    if (nlua_track_refs) {
+      xfree(pmap_get(handle_T)(&nlua_ref_markers, ref));
     }
 #endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);
