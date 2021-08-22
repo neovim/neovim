@@ -350,6 +350,7 @@ describe('API/win', function()
 
     it('closing current (float) window of another tabpage #15313', function()
       command('tabedit')
+      eq(2, eval('tabpagenr()'))
       local win = meths.open_win(0, true, {
         relative='editor', row=10, col=10, width=50, height=10
       })
