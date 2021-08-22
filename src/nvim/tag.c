@@ -1371,12 +1371,12 @@ find_tags(
   tagname_T tn;                         /* info for get_tagfname() */
   int first_file;                       /* trying first tag file */
   tagptrs_T tagp;
-  int did_open = FALSE;                 /* did open a tag file */
-  int stop_searching = FALSE;           /* stop when match found or error */
-  int retval = FAIL;                    /* return value */
-  int is_static;                        /* current tag line is static */
-  int is_current;                       /* file name matches */
-  int eof = FALSE;                      /* found end-of-file */
+  bool did_open = false;                // did open a tag file
+  bool stop_searching = false;          // stop when match found or error
+  int retval = FAIL;                    // return value
+  int is_static;                        // current tag line is static
+  int is_current;                       // file name matches
+  bool eof = false;                     // found end-of-file
   char_u      *p;
   char_u      *s;
   int i;
@@ -1429,12 +1429,12 @@ find_tags(
   vimconv_T vimconv;
 
   int findall = (mincount == MAXCOL || mincount == TAG_MANY);
-  /* find all matching tags */
-  int sort_error = FALSE;                       /* tags file not sorted */
-  int linear;                                   /* do a linear search */
-  int sortic = FALSE;                           /* tag file sorted in nocase */
-  int line_error = FALSE;                       /* syntax error */
-  int has_re = (flags & TAG_REGEXP);            /* regexp used */
+  // find all matching tags
+  bool sort_error = false;                      // tags file not sorted
+  int linear;                                   // do a linear search
+  bool sortic = false;                          // tag file sorted in nocase
+  bool line_error = false;                      // syntax error
+  int has_re = (flags & TAG_REGEXP);            // regexp used
   int help_only = (flags & TAG_HELP);
   int name_only = (flags & TAG_NAMES);
   int noic = (flags & TAG_NOIC);
@@ -1621,7 +1621,7 @@ find_tags(
           verbose_leave();
         }
       }
-      did_open = TRUE;      /* remember that we found at least one file */
+      did_open = true;      // remember that we found at least one file
 
       state = TS_START;     /* we're at the start of the file */
 
@@ -1638,13 +1638,13 @@ find_tags(
         if ((flags & TAG_INS_COMP))     /* Double brackets for gcc */
           ins_compl_check_keys(30, false);
         if (got_int || compl_interrupted) {
-          stop_searching = TRUE;
+          stop_searching = true;
           break;
         }
         /* When mincount is TAG_MANY, stop when enough matches have been
          * found (for completion). */
         if (mincount == TAG_MANY && match_count >= TAG_MANY) {
-          stop_searching = TRUE;
+          stop_searching = true;
           retval = OK;
           break;
         }
@@ -1795,7 +1795,7 @@ line_read_in:
             state = TS_BINARY;
           else if (tag_file_sorted == '2') {
             state = TS_BINARY;
-            sortic = TRUE;
+            sortic = true;
             orgpat.regmatch.rm_ic = (p_ic || !noic);
           } else
             state = TS_LINEAR;
@@ -1878,8 +1878,9 @@ parse_line:
             i = (int)tagp.tagname[0];
             if (sortic)
               i = TOUPPER_ASC(tagp.tagname[0]);
-            if (i < search_info.low_char || i > search_info.high_char)
-              sort_error = TRUE;
+            if (i < search_info.low_char || i > search_info.high_char) {
+              sort_error = true;
+            }
 
             /*
              * Compare the current tag with the searched tag.
@@ -1970,7 +1971,7 @@ parse_line:
           i = parse_tag_line(lbuf,
               &tagp);
         if (i == FAIL) {
-          line_error = TRUE;
+          line_error = true;
           break;
         }
 
@@ -2175,7 +2176,7 @@ parse_line:
       tag_file_sorted = NUL;
       if (sort_error) {
         EMSG2(_("E432: Tags file not sorted: %s"), tag_fname);
-        sort_error = FALSE;
+        sort_error = false;
       }
 
       /*
@@ -2183,7 +2184,7 @@ parse_line:
        */
       if (match_count >= mincount) {
         retval = OK;
-        stop_searching = TRUE;
+        stop_searching = true;
       }
 
       if (stop_searching || use_cscope)

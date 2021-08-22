@@ -5734,18 +5734,13 @@ HistoryType get_histtype(const char *const name, const size_t len,
 
 static int last_maptick = -1;           /* last seen maptick */
 
-/*
- * Add the given string to the given history.  If the string is already in the
- * history then it is moved to the front.  "histype" may be one of he HIST_
- * values.
- */
-void 
-add_to_history (
-    int histype,
-    char_u *new_entry,
-    int in_map,                     /* consider maptick when inside a mapping */
-    int sep                        /* separator character used (search hist) */
-)
+/// Add the given string to the given history.  If the string is already in the
+/// history then it is moved to the front.  "histype" may be one of he HIST_
+/// values.
+///
+/// @parma in_map  consider maptick when inside a mapping
+/// @param sep     separator character used (search hist)
+void add_to_history(int histype, char_u *new_entry, int in_map, int sep)
 {
   histentry_T *hisptr;
 

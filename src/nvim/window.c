@@ -2604,7 +2604,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 {
   int dir;
   tabpage_T   *ptp = NULL;
-  int free_tp = FALSE;
+  bool free_tp = false;
 
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.

@@ -382,7 +382,7 @@ error:
  */
 void ml_setname(buf_T *buf)
 {
-  int success = FALSE;
+  bool success = false;
   memfile_T   *mfp;
   char_u      *fname;
   char_u      *dirp;
@@ -418,7 +418,7 @@ void ml_setname(buf_T *buf)
     /* if the file name is the same we don't have to do anything */
     if (fnamecmp(fname, mfp->mf_fname) == 0) {
       xfree(fname);
-      success = TRUE;
+      success = true;
       break;
     }
     /* need to close the swap file before renaming */
@@ -429,7 +429,7 @@ void ml_setname(buf_T *buf)
 
     /* try to rename the swap file */
     if (vim_rename(mfp->mf_fname, fname) == 0) {
-      success = TRUE;
+      success = true;
       mf_free_fnames(mfp);
       mf_set_fnames(mfp, fname);
       ml_upd_block0(buf, UB_SAME_DIR);
@@ -758,12 +758,12 @@ void ml_recover(bool checkext)
   blocknr_T bnum;
   int page_count;
   int len;
-  int directly;
+  bool directly;
   linenr_T lnum;
   char_u      *p;
   int i;
   long error;
-  int cannot_open;
+  bool cannot_open;
   linenr_T line_count;
   bool has_error;
   int idx;
@@ -771,7 +771,7 @@ void ml_recover(bool checkext)
   int txt_start;
   off_T size;
   int called_from_main;
-  int serious_error = TRUE;
+  bool serious_error = true;
   long mtime;
   int attr;
   int orig_file_status = NOTDONE;
@@ -791,10 +791,10 @@ void ml_recover(bool checkext)
       && vim_strchr((char_u *)"abcdefghijklmnopqrstuvw",
                     TOLOWER_ASC(fname[len - 2])) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
-    directly = TRUE;
-    fname_used = vim_strsave(fname);     /* make a copy for mf_open() */
+    directly = true;
+    fname_used = vim_strsave(fname);     // make a copy for mf_open()
   } else {
-    directly = FALSE;
+    directly = false;
 
     /* count the number of matching swap files */
     len = recover_names(fname, FALSE, 0, NULL);
@@ -1018,12 +1018,13 @@ void ml_recover(bool checkext)
   buf->b_ml.ml_stack = NULL;
   buf->b_ml.ml_stack_size = 0;          /* no stack yet */
 
-  if (curbuf->b_ffname == NULL)
-    cannot_open = TRUE;
-  else
-    cannot_open = FALSE;
+  if (curbuf->b_ffname == NULL) {
+    cannot_open = true;
+  } else {
+    cannot_open = false;
+  }
 
-  serious_error = FALSE;
+  serious_error = false;
   for (; !got_int; line_breakcheck()) {
     if (hp != NULL)
       mf_put(mfp, hp, false, false);            /* release previous block */
@@ -1796,7 +1797,7 @@ theend:
  */
 char_u *ml_get(linenr_T lnum)
 {
-  return ml_get_buf(curbuf, lnum, FALSE);
+  return ml_get_buf(curbuf, lnum, false);
 }
 
 /*
@@ -2096,7 +2097,7 @@ static int ml_append_int(
     int total_moved = 0;                    /* init to shut up gcc */
     DATA_BL     *dp_right, *dp_left;
     int stack_idx;
-    int in_left;
+    bool in_left;
     int lineadd;
     blocknr_T bnum_left, bnum_right;
     linenr_T lnum_left, lnum_right;
@@ -2113,22 +2114,22 @@ static int ml_append_int(
      */
     if (db_idx < 0) {           /* left block is new, right block is existing */
       lines_moved = 0;
-      in_left = TRUE;
-      /* space_needed does not change */
-    } else {                  /* left block is existing, right block is new */
+      in_left = true;
+      // space_needed does not change
+    } else {                  // left block is existing, right block is new
       lines_moved = line_count - db_idx - 1;
-      if (lines_moved == 0)
-        in_left = FALSE;                /* put new line in right block */
-                                        /* space_needed does not change */
-      else {
+      if (lines_moved == 0) {
+        in_left = false;                // put new line in right block
+                                        // space_needed does not change
+      } else {
         data_moved = ((dp->db_index[db_idx]) & DB_INDEX_MASK) -
                      dp->db_txt_start;
         total_moved = data_moved + lines_moved * INDEX_SIZE;
         if ((int)dp->db_free + total_moved >= space_needed) {
-          in_left = TRUE;               /* put new line in left block */
+          in_left = true;               // put new line in left block
           space_needed = total_moved;
         } else {
-          in_left = FALSE;                  /* put new line in right block */
+          in_left = false;                  // put new line in right block
           space_needed += total_moved;
         }
       }
@@ -2761,7 +2762,7 @@ static void ml_flush_line(buf_T *buf)
   int start;
   int count;
   int i;
-  static int entered = FALSE;
+  static bool entered = false;
 
   if (buf->b_ml.ml_line_lnum == 0 || buf->b_ml.ml_mfp == NULL)
     return;             /* nothing to do */
@@ -2770,7 +2771,7 @@ static void ml_flush_line(buf_T *buf)
     /* This code doesn't work recursively. */
     if (entered)
       return;
-    entered = TRUE;
+    entered = true;
 
     buf->flush_count++;
 
@@ -2833,7 +2834,7 @@ static void ml_flush_line(buf_T *buf)
     }
     xfree(new_line);
 
-    entered = FALSE;
+    entered = false;
   }
 
   buf->b_ml.ml_line_lnum = 0;
