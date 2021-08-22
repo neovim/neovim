@@ -23,6 +23,7 @@
   \
   Map(T, U) *map_##T##_##U##_new(void); \
   void map_##T##_##U##_free(Map(T, U) *map); \
+  void map_##T##_##U##_destroy(Map(T, U) *map); \
   U map_##T##_##U##_get(Map(T, U) *map, T key); \
   bool map_##T##_##U##_has(Map(T, U) *map, T key); \
   T map_##T##_##U##_key(Map(T, U) *map, T key); \
@@ -58,8 +59,12 @@ MAP_DECLS(String, handle_T)
 
 MAP_DECLS(ColorKey, ColorItem)
 
+#define MAP_INIT { { 0, 0, 0, 0, NULL, NULL, NULL } }
+#define map_init(k, v, map) (*(map) = (Map(k, v))MAP_INIT)
+
 #define map_new(T, U) map_##T##_##U##_new
 #define map_free(T, U) map_##T##_##U##_free
+#define map_destroy(T, U) map_##T##_##U##_destroy
 #define map_get(T, U) map_##T##_##U##_get
 #define map_has(T, U) map_##T##_##U##_has
 #define map_key(T, U) map_##T##_##U##_key

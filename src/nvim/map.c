@@ -67,6 +67,11 @@
     xfree(map); \
   } \
   \
+  void map_##T##_##U##_destroy(Map(T, U) *map) \
+  { \
+    kh_dealloc(T##_##U##_map, &map->table); \
+  } \
+  \
   U map_##T##_##U##_get(Map(T, U) *map, T key) \
   { \
     khiter_t k; \
