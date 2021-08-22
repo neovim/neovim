@@ -24,7 +24,6 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include "nvim/api/private/handle.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
@@ -757,7 +756,7 @@ void buf_freeall(buf_T *buf, int flags)
  */
 static void free_buffer(buf_T *buf)
 {
-  handle_unregister_buffer(buf);
+  pmap_del(handle_T)(&buffer_handles, buf->b_fnum);
   buf_free_count++;
   // b:changedtick uses an item in buf_T.
   free_buffer_stuff(buf, kBffClearWinInfo);
@@ -1841,7 +1840,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum,
     lastbuf = buf;
 
     buf->b_fnum = top_file_num++;
-    handle_register_buffer(buf);
+    pmap_put(handle_T)(&buffer_handles, buf->b_fnum, buf);
     if (top_file_num < 0) {  // wrap around (may cause duplicates)
       EMSG(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0) {

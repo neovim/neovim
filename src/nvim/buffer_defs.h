@@ -863,8 +863,8 @@ struct file_buffer {
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
   MarkTree b_marktree[1];
-  Map(uint64_t, ExtmarkItem) *b_extmark_index;
-  Map(uint64_t, ExtmarkNs) *b_extmark_ns;         // extmark namespaces
+  Map(uint64_t, ExtmarkItem) b_extmark_index[1];
+  Map(uint64_t, ExtmarkNs) b_extmark_ns[1];         // extmark namespaces
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.

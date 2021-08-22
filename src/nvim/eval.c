@@ -7331,7 +7331,7 @@ void add_timer_info(typval_T *rettv, timer_T *timer)
 
 void add_timer_info_all(typval_T *rettv)
 {
-  tv_list_alloc_ret(rettv, timers->table->n_occupied);
+  tv_list_alloc_ret(rettv, map_size(timers));
   timer_T *timer;
   map_foreach_value(timers, timer, {
     if (!timer->stopped) {

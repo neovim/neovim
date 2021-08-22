@@ -91,7 +91,7 @@ typedef struct hl_group {
 
 // builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
-Map(cstr_t, int) *highlight_unames;
+Map(cstr_t, int) highlight_unames = MAP_INIT;
 
 static inline struct hl_group * HL_TABLE(void)
 {
@@ -384,11 +384,6 @@ static int current_line_id = 0;             // unique number for current line
 
 static int syn_time_on = FALSE;
 # define IF_SYN_TIME(p) (p)
-
-void syntax_init(void)
-{
-  highlight_unames = map_new(cstr_t, int)();
-}
 
 // Set the timeout used for syntax highlighting.
 // Use NULL to reset, no timeout.
@@ -7119,7 +7114,7 @@ void free_highlight(void)
     xfree(HL_TABLE()[i].sg_name_u);
   }
   ga_clear(&highlight_ga);
-  map_free(cstr_t, int)(highlight_unames);
+  map_destroy(cstr_t, int)(&highlight_unames);
 }
 
 #endif
@@ -7505,7 +7500,7 @@ int syn_name2id_len(const char_u *name, size_t len)
 
   // map_get(..., int) returns 0 when no key is present, which is
   // the expected value for missing highlight group.
-  return map_get(cstr_t, int)(highlight_unames, name_u);
+  return map_get(cstr_t, int)(&highlight_unames, name_u);
 }
 
 /// Lookup a highlight group name and return its attributes.
@@ -7609,7 +7604,7 @@ static int syn_add_group(char_u *name)
 
   int id = highlight_ga.ga_len;  // ID is index plus one
 
-  map_put(cstr_t, int)(highlight_unames, name_up, id);
+  map_put(cstr_t, int)(&highlight_unames, name_up, id);
 
   return id;
 }
@@ -7620,7 +7615,7 @@ static void syn_unadd_group(void)
 {
   highlight_ga.ga_len--;
   HlGroup *item = &HL_TABLE()[highlight_ga.ga_len];
-  map_del(cstr_t, int)(highlight_unames, item->sg_name_u);
+  map_del(cstr_t, int)(&highlight_unames, item->sg_name_u);
   xfree(item->sg_name);
   xfree(item->sg_name_u);
 }

@@ -6,7 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/map.h"
 
-EXTERN Map(String, handle_T) *namespace_ids INIT(= NULL);
+EXTERN Map(String, handle_T) namespace_ids INIT(= MAP_INIT);
 EXTERN handle_T next_namespace_id INIT(= 1);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

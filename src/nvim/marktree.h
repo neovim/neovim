@@ -63,7 +63,7 @@ typedef struct {
   uint64_t next_id;
   // TODO(bfredl): the pointer to node could be part of the larger
   // Map(uint64_t, ExtmarkItem) essentially;
-  PMap(uint64_t) *id2node;
+  PMap(uint64_t) id2node[1];
 } MarkTree;
 
 
