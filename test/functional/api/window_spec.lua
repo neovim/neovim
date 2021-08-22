@@ -357,7 +357,7 @@ describe('API/win', function()
       command('tabprevious')
       meths.win_close(win, false)
 
-      meths.tabpage_get_win(tabpage)
+      eq(1000, meths.tabpage_get_win(tabpage))
       helpers.assert_alive()
     end)
   end)
