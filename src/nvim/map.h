@@ -77,6 +77,7 @@ MAP_DECLS(ColorKey, ColorItem)
 
 #define pmap_new(T) map_new(T, ptr_t)
 #define pmap_free(T) map_free(T, ptr_t)
+#define pmap_destroy(T) map_destroy(T, ptr_t)
 #define pmap_get(T) map_get(T, ptr_t)
 #define pmap_has(T) map_has(T, ptr_t)
 #define pmap_key(T) map_key(T, ptr_t)
@@ -85,6 +86,7 @@ MAP_DECLS(ColorKey, ColorItem)
 /// @see pmap_del2
 #define pmap_del(T) map_del(T, ptr_t)
 #define pmap_clear(T) map_clear(T, ptr_t)
+#define pmap_init(k, map) map_init(k, ptr_t, map)
 
 #define map_foreach(map, key, value, block) \
   kh_foreach(&map->table, key, value, block)
