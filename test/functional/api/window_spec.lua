@@ -359,7 +359,7 @@ describe('API/win', function()
       eq(1, eval('tabpagenr()'))
       meths.win_close(win, false)
 
-      eq(1000, meths.tabpage_get_win(tabpage))
+      eq(1001, meths.tabpage_get_win(tabpage).id)
       helpers.assert_alive()
     end)
   end)
