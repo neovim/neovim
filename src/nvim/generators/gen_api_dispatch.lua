@@ -321,8 +321,6 @@ end
 output:write([[
 void msgpack_rpc_init_method_table(void)
 {
-  methods = map_new(String, MsgpackRpcRequestHandler)();
-
 ]])
 
 for i = 1, #functions do

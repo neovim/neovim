@@ -54,19 +54,6 @@
   INITIALIZER_DECLARE(T, U, __VA_ARGS__); \
   __KHASH_IMPL(T##_##U##_map,, T, U, 1, T##_hash, T##_eq) \
   \
-  Map(T, U) *map_##T##_##U##_new() \
-  { \
-    Map(T, U) *rv = xcalloc(1, sizeof(Map(T, U))); \
-    /* khash_t table member is zero-initialized */ \
-    return rv; \
-  } \
-  \
-  void map_##T##_##U##_free(Map(T, U) *map) \
-  { \
-    kh_dealloc(T##_##U##_map, &map->table); \
-    xfree(map); \
-  } \
-  \
   void map_##T##_##U##_destroy(Map(T, U) *map) \
   { \
     kh_dealloc(T##_##U##_map, &map->table); \

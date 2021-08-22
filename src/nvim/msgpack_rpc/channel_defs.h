@@ -27,7 +27,7 @@ typedef struct {
 } RequestEvent;
 
 typedef struct {
-  PMap(cstr_t) *subscribed_events;
+  PMap(cstr_t) subscribed_events[1];
   bool closed;
   msgpack_unpacker *unpacker;
   uint32_t next_request_id;
