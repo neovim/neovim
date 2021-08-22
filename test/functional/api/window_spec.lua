@@ -347,6 +347,21 @@ describe('API/win', function()
       eq(2, #meths.list_wins())
       eq('', funcs.getcmdwintype())
     end)
+
+    it('closing current (float) window of another tabpage #15313', function()
+      command('tabedit')
+      eq(2, eval('tabpagenr()'))
+      local win = meths.open_win(0, true, {
+        relative='editor', row=10, col=10, width=50, height=10
+      })
+      local tabpage = eval('tabpagenr()')
+      command('tabprevious')
+      eq(1, eval('tabpagenr()'))
+      meths.win_close(win, false)
+
+      eq(1001, meths.tabpage_get_win(tabpage).id)
+      helpers.assert_alive()
+    end)
   end)
 
   describe('hide', function()

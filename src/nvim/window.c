@@ -2709,7 +2709,11 @@ static win_T *win_free_mem(
   // When deleting the current window of another tab page select a new
   // current window.
   if (tp != NULL && win == tp->tp_curwin) {
-    tp->tp_curwin = wp;
+    if (win_valid(tp->tp_prevwin) && tp->tp_prevwin != win) {
+      tp->tp_curwin = tp->tp_prevwin;
+    } else {
+      tp->tp_curwin = tp->tp_firstwin;
+    }
   }
 
   return wp;
