@@ -191,8 +191,8 @@ definitions.  The |lua-vim| :help is generated from the docstrings.
 
 Docstring format:
 - Lines in the main description start with `---`
-- Special tokens start with `--@` followed by the token name:
-  `--@see`, `--@param`, `--@returns`
+- Special tokens start with `---@` followed by the token name:
+  `---@see`, `---@param`, `---@returns`
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
 - Use `<pre>`  for code samples.
@@ -211,11 +211,11 @@ vim.paste in src/nvim/lua/vim.lua like this: >
     --- end)()
     --- </pre>
     ---
-    --@see |paste|
+    ---@see |paste|
     ---
-    --@param lines  ...
-    --@param phase  ...
-    --@returns false if client should cancel the paste.
+    ---@param lines  ...
+    ---@param phase  ...
+    ---@returns false if client should cancel the paste.
 
 
 LUA							*dev-lua*

@@ -422,7 +422,7 @@ end
 
 -- Builds an argument list for use in clear().
 --
---@see clear() for parameters.
+---@see clear() for parameters.
 function module.new_argv(...)
   local args = {unpack(module.nvim_argv)}
   table.insert(args, '--headless')
@@ -573,7 +573,7 @@ function module.buf_lines(bufnr)
   return module.exec_lua("return vim.api.nvim_buf_get_lines((...), 0, -1, false)", bufnr)
 end
 
---@see buf_lines()
+---@see buf_lines()
 function module.curbuf_contents()
   module.poke_eventloop()  -- Before inspecting the buffer, do whatever.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')

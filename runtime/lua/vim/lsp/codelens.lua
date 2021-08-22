@@ -22,11 +22,11 @@ local namespaces = setmetatable({}, {
   end;
 })
 
---@private
+---@private
 M.__namespaces = namespaces
 
 
---@private
+---@private
 local function execute_lens(lens, bufnr, client_id)
   local line = lens.range.start.line
   api.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
@@ -151,7 +151,7 @@ function M.save(lenses, bufnr, client_id)
 end
 
 
---@private
+---@private
 local function resolve_lenses(lenses, bufnr, client_id, callback)
   lenses = lenses or {}
   local num_lens = vim.tbl_count(lenses)
@@ -160,7 +160,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
     return
   end
 
-  --@private
+  ---@private
   local function countdown()
     num_lens = num_lens - 1
     if num_lens == 0 then

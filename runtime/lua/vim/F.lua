@@ -2,8 +2,8 @@ local F = {}
 
 --- Returns {a} if it is not nil, otherwise returns {b}.
 ---
---@param a
---@param b
+---@param a
+---@param b
 function F.if_nil(a, b)
   if a == nil then return b end
   return a

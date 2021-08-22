@@ -8,7 +8,7 @@ local util = require('vim.lsp.util')
 
 local if_nil = vim.F.if_nil
 
---@class DiagnosticSeverity
+---@class DiagnosticSeverity
 local DiagnosticSeverity = protocol.DiagnosticSeverity
 
 local to_severity = function(severity)
@@ -46,14 +46,14 @@ end
 
 ---@brief lsp-diagnostic
 ---
---@class Diagnostic
---@field range Range
---@field message string
---@field severity DiagnosticSeverity|nil
---@field code number | string
---@field source string
---@field tags DiagnosticTag[]
---@field relatedInformation DiagnosticRelatedInformation[]
+---@class Diagnostic
+---@field range Range
+---@field message string
+---@field severity DiagnosticSeverity|nil
+---@field code number | string
+---@field source string
+---@field tags DiagnosticTag[]
+---@field relatedInformation DiagnosticRelatedInformation[]
 
 local M = {}
 
@@ -167,12 +167,12 @@ end
 local _diagnostic_namespaces = _make_namespace_table("vim_lsp_diagnostics", true)
 local _sign_namespaces = _make_namespace_table("vim_lsp_signs", false)
 
---@private
+---@private
 function M._get_diagnostic_namespace(client_id)
   return _diagnostic_namespaces[client_id]
 end
 
---@private
+---@private
 function M._get_sign_namespace(client_id)
   return _sign_namespaces[client_id]
 end
@@ -255,7 +255,7 @@ local _diagnostic_counts = function(diagnostics)
   return counts
 end
 
---@private
+---@private
 --- Set the different diagnostic cache after `textDocument/publishDiagnostics`
 ---@param diagnostics Diagnostic[]
 ---@param bufnr number
@@ -291,7 +291,7 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
 end
 
 
---@private
+---@private
 --- Clear the cached diagnostics
 ---@param bufnr number
 ---@param client_id number
@@ -512,7 +512,7 @@ local _next_diagnostic = function(position, search_forward, bufnr, opts, client_
   end
 end
 
---@private
+---@private
 --- Helper function to return a position from a diagnostic
 ---
 ---@return table {row, col}
@@ -527,7 +527,7 @@ local function _diagnostic_pos(opts, diagnostic)
   return to_position(diagnostic.range.start, bufnr)
 end
 
---@private
+---@private
 -- Move to the diagnostic position
 local function _diagnostic_move_pos(name, opts, pos)
   opts = opts or {}
@@ -858,7 +858,7 @@ end
 --- Callback scheduled for after leaving insert mode
 ---
 --- Used to handle
---@private
+---@private
 function M._execute_scheduled_display(bufnr, client_id)
   local args = _bufs_waiting_to_update[bufnr][client_id]
   if not args then
@@ -924,20 +924,20 @@ end
 
 -- Diagnostic Private Highlight Utilies {{{
 --- Get the severity highlight name
---@private
+---@private
 function M._get_severity_highlight_name(severity)
   return virtual_text_highlight_map[severity]
 end
 
 --- Get floating severity highlight name
---@private
+---@private
 function M._get_floating_severity_highlight_name(severity)
   return floating_highlight_map[severity]
 end
 
 --- This should be called to update the highlights for the LSP client.
 function M._define_default_signs_and_highlights()
-  --@private
+  ---@private
   local function define_default_sign(name, properties)
     if vim.tbl_isempty(vim.fn.sign_getdefined(name)) then
       vim.fn.sign_define(name, properties)
@@ -1054,8 +1054,8 @@ function M.on_publish_diagnostics(_, _, params, client_id, _, config)
 end
 
 -- restores the extmarks set by M.display
---- @param last number last line that was changed
--- @private
+---@param last number last line that was changed
+---@private
 local function restore_extmarks(bufnr, last)
   for client_id, extmarks in pairs(diagnostic_cache_extmarks[bufnr]) do
     local ns = M._get_diagnostic_namespace(client_id)
@@ -1084,7 +1084,7 @@ local function restore_extmarks(bufnr, last)
 end
 
 -- caches the extmarks set by M.display
--- @private
+---@private
 local function save_extmarks(bufnr, client_id)
   bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
   if not diagnostic_attached_buffers[bufnr] then
@@ -1101,7 +1101,7 @@ local function save_extmarks(bufnr, client_id)
   diagnostic_cache_extmarks[bufnr][client_id] = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
 end
 
---@private
+---@private
 --- Display diagnostics for the buffer, given a configuration.
 function M.display(diagnostics, bufnr, client_id, config)
   if diagnostic_disabled[bufnr][client_id] then
@@ -1187,10 +1187,10 @@ end
 --- for redrawing diagnostics after making changes in diagnostics
 --- configuration. |lsp-handler-configuration|
 ---
---- @param bufnr (optional, number): Buffer handle, defaults to current
---- @param client_id (optional, number): Redraw diagnostics for the given
----        client. The default is to redraw diagnostics for all attached
----        clients.
+---@param bufnr (optional, number): Buffer handle, defaults to current
+---@param client_id (optional, number): Redraw diagnostics for the given
+---       client. The default is to redraw diagnostics for all attached
+---       clients.
 function M.redraw(bufnr, client_id)
   bufnr = get_bufnr(bufnr)
   if not client_id then
@@ -1410,10 +1410,10 @@ function M.set_loclist(opts)
 end
 
 --- Disable diagnostics for the given buffer and client
---- @param bufnr (optional, number): Buffer handle, defaults to current
---- @param client_id (optional, number): Disable diagnostics for the given
----        client. The default is to disable diagnostics for all attached
----        clients.
+---@param bufnr (optional, number): Buffer handle, defaults to current
+---@param client_id (optional, number): Disable diagnostics for the given
+---       client. The default is to disable diagnostics for all attached
+---       clients.
 -- Note that when diagnostics are disabled for a buffer, the server will still
 -- send diagnostic information and the client will still process it. The
 -- diagnostics are simply not displayed to the user.
@@ -1429,10 +1429,10 @@ function M.disable(bufnr, client_id)
 end
 
 --- Enable diagnostics for the given buffer and client
---- @param bufnr (optional, number): Buffer handle, defaults to current
---- @param client_id (optional, number): Enable diagnostics for the given
----        client. The default is to enable diagnostics for all attached
----        clients.
+---@param bufnr (optional, number): Buffer handle, defaults to current
+---@param client_id (optional, number): Enable diagnostics for the given
+---       client. The default is to enable diagnostics for all attached
+---       clients.
 function M.enable(bufnr, client_id)
   if not client_id then
     return vim.lsp.for_each_buffer_client(bufnr, function(client)

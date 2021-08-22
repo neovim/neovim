@@ -28,9 +28,9 @@ setmetatable(M, {
 ---
 --- It is not recommended to use this, use vim.treesitter.get_parser() instead.
 ---
---- @param bufnr The buffer the parser will be tied to
---- @param lang The language of the parser
---- @param opts Options to pass to the created language tree
+---@param bufnr The buffer the parser will be tied to
+---@param lang The language of the parser
+---@param opts Options to pass to the created language tree
 function M._create_parser(bufnr, lang, opts)
   language.require_language(lang)
   if bufnr == 0 then
@@ -71,11 +71,11 @@ end
 --- If needed this will create the parser.
 --- Unconditionnally attach the provided callback
 ---
---- @param bufnr The buffer the parser should be tied to
---- @param lang The filetype of this parser
---- @param opts Options object to pass to the created language tree
+---@param bufnr The buffer the parser should be tied to
+---@param lang The filetype of this parser
+---@param opts Options object to pass to the created language tree
 ---
---- @returns The parser
+---@returns The parser
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
@@ -97,9 +97,9 @@ end
 
 --- Gets a string parser
 ---
---- @param str The string to parse
---- @param lang The language of this string
---- @param opts Options to pass to the created language tree
+---@param str The string to parse
+---@param lang The language of this string
+---@param opts Options to pass to the created language tree
 function M.get_string_parser(str, lang, opts)
   vim.validate {
     str = { str, 'string' },

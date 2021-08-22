@@ -9,12 +9,12 @@ LanguageTree.__index = LanguageTree
 --- The language can contain child languages with in its range,
 --- hence the tree.
 ---
---- @param source Can be a bufnr or a string of text to parse
---- @param lang The language this tree represents
---- @param opts Options table
---- @param opts.injections A table of language to injection query strings.
----                        This is useful for overriding the built-in runtime file
----                        searching for the injection language query per language.
+---@param source Can be a bufnr or a string of text to parse
+---@param lang The language this tree represents
+---@param opts Options table
+---@param opts.injections A table of language to injection query strings.
+---                      This is useful for overriding the built-in runtime file
+---                      searching for the injection language query per language.
 function LanguageTree.new(source, lang, opts)
   language.require_language(lang)
   opts = opts or {}
@@ -171,8 +171,8 @@ end
 
 --- Invokes the callback for each LanguageTree and it's children recursively
 ---
---- @param fn The function to invoke. This is invoked with arguments (tree: LanguageTree, lang: string)
---- @param include_self Whether to include the invoking tree in the results.
+---@param fn The function to invoke. This is invoked with arguments (tree: LanguageTree, lang: string)
+---@param include_self Whether to include the invoking tree in the results.
 function LanguageTree:for_each_child(fn, include_self)
   if include_self then
     fn(self, self._lang)
@@ -187,8 +187,8 @@ end
 ---
 --- Note, this includes the invoking language tree's trees as well.
 ---
---- @param fn The callback to invoke. The callback is invoked with arguments
----           (tree: TSTree, languageTree: LanguageTree)
+---@param fn The callback to invoke. The callback is invoked with arguments
+---         (tree: TSTree, languageTree: LanguageTree)
 function LanguageTree:for_each_tree(fn)
   for _, tree in ipairs(self._trees) do
     fn(tree, self)
@@ -203,7 +203,7 @@ end
 ---
 --- If the language already exists as a child, it will first be removed.
 ---
---- @param lang The language to add.
+---@param lang The language to add.
 function LanguageTree:add_child(lang)
   if self._children[lang] then
     self:remove_child(lang)
@@ -219,7 +219,7 @@ end
 
 --- Removes a child language from this tree.
 ---
---- @param lang The language to remove.
+---@param lang The language to remove.
 function LanguageTree:remove_child(lang)
   local child = self._children[lang]
 
@@ -259,7 +259,7 @@ end
 ---
 --- Note, this call invalidates the tree and requires it to be parsed again.
 ---
---- @param regions A list of regions this tree should manage and parse.
+---@param regions A list of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(regions)
   -- TODO(vigoux): I don't think string parsers are useful for now
   if type(self._source) == "number" then
@@ -299,7 +299,7 @@ end
 ---
 --- TODO: Allow for an offset predicate to tailor the injection range
 ---       instead of using the entire nodes range.
---- @private
+---@private
 function LanguageTree:_get_injections()
   if not self._injection_query then return {} end
 
@@ -449,7 +449,7 @@ function LanguageTree:_on_detach(...)
 end
 
 --- Registers callbacks for the parser
---- @param cbs An `nvim_buf_attach`-like table argument with the following keys :
+---@param cbs An `nvim_buf_attach`-like table argument with the following keys :
 ---  `on_bytes` : see `nvim_buf_attach`, but this will be called _after_ the parsers callback.
 ---  `on_changedtree` : a callback that will be called every time the tree has syntactical changes.
 ---      it will only be passed one argument, that is a table of the ranges (as node ranges) that
@@ -497,7 +497,7 @@ end
 ---
 --- This goes down the tree to recursively check childs.
 ---
---- @param range A range, that is a `{ start_line, start_col, end_line, end_col }` table.
+---@param range A range, that is a `{ start_line, start_col, end_line, end_col }` table.
 function LanguageTree:contains(range)
   for _, tree in pairs(self._trees) do
     if tree_contains(tree, range) then
@@ -510,7 +510,7 @@ end
 
 --- Gets the appropriate language that contains @param range
 ---
---- @param range A text range, see |LanguageTree:contains|
+---@param range A text range, see |LanguageTree:contains|
 function LanguageTree:language_for_range(range)
   for _, child in pairs(self._children) do
     if child:contains(range) then

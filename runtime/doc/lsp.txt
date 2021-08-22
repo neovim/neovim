@@ -1510,11 +1510,6 @@ reset({client_id}, {buffer_client_map})           *vim.lsp.diagnostic.reset()*
                     {buffer_client_map}  table map of buffers to active
                                          clients
 
-                                       *vim.lsp.diagnostic.restore_extmarks()*
-restore_extmarks({bufnr}, {last})
-                Parameters: ~
-                    {last}  number last line that was changed
-
 save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
                 Save diagnostics to the current buffer.
 
@@ -1525,10 +1520,6 @@ save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
                     {diagnostics}  Diagnostic []
                     {bufnr}        number
                     {client_id}    number
-
-                                          *vim.lsp.diagnostic.save_extmarks()*
-save_extmarks({bufnr}, {client_id})
-                TODO: Documentation
 
 set_loclist({opts})                         *vim.lsp.diagnostic.set_loclist()*
                 Sets the location list
@@ -1966,7 +1957,9 @@ diagnostics_to_items({diagnostics_by_bufnr}, {predicate})
                 Parameters: ~
                     {diagnostics_by_bufnr}  table bufnr -> Diagnostic []
                     {predicate}             an optional function to filter the
-                                            diagnostics.
+                                            diagnostics. If present, only
+                                            diagnostic items matching will be
+                                            included.
 
                 Return: ~
                     table (A list of items)
@@ -1999,6 +1992,8 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                     |softtabstop|
 
 get_line({uri}, {row})                               *vim.lsp.util.get_line()*
+                Gets the zero-indexed line from the given uri.
+
                 Parameters: ~
                     {uri}  string uri of the resource to get the line from
                     {row}  number zero-indexed line number
@@ -2007,15 +2002,14 @@ get_line({uri}, {row})                               *vim.lsp.util.get_line()*
                     string the line at row in filename
 
 get_lines({uri}, {rows})                            *vim.lsp.util.get_lines()*
+                Gets the zero-indexed lines from the given uri.
+
                 Parameters: ~
                     {uri}   string uri of the resource to get the lines from
                     {rows}  number[] zero-indexed line numbers
 
                 Return: ~
                     table<number string> a table mapping rows to lines
-
-get_markdown_fences()                     *vim.lsp.util.get_markdown_fences()*
-                TODO: Documentation
 
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
@@ -2197,6 +2191,8 @@ preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
                     or nil
 
 rename({old_fname}, {new_fname}, {opts})               *vim.lsp.util.rename()*
+                Rename old_fname to new_fname
+
                 Parameters: ~
                     {opts}  (table)
 

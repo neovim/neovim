@@ -12,8 +12,8 @@ local vim = vim or {}
 --- same functions as those in the input table. Userdata and threads are not
 --- copied and will throw an error.
 ---
---@param orig Table to copy
---@returns New table of copied keys and (nested) values.
+---@param orig Table to copy
+---@returns New table of copied keys and (nested) values.
 function vim.deepcopy(orig) end  -- luacheck: no unused
 vim.deepcopy = (function()
   local function _id(v)
@@ -52,14 +52,14 @@ end)()
 
 --- Splits a string at each instance of a separator.
 ---
---@see |vim.split()|
---@see https://www.lua.org/pil/20.2.html
---@see http://lua-users.org/wiki/StringLibraryTutorial
+---@see |vim.split()|
+---@see https://www.lua.org/pil/20.2.html
+---@see http://lua-users.org/wiki/StringLibraryTutorial
 ---
---@param s String to split
---@param sep Separator string or pattern
---@param plain If `true` use `sep` literally (passed to String.find)
---@returns Iterator over the split components
+---@param s String to split
+---@param sep Separator string or pattern
+---@param plain If `true` use `sep` literally (passed to String.find)
+---@returns Iterator over the split components
 function vim.gsplit(s, sep, plain)
   vim.validate{s={s,'s'},sep={sep,'s'},plain={plain,'b',true}}
 
@@ -101,12 +101,12 @@ end
 ---  split(x*yz*o, "*", true)  --> {'x','yz','o'}
 --- </pre>
 --
---@see |vim.gsplit()|
+---@see |vim.gsplit()|
 ---
---@param s String to split
---@param sep Separator string or pattern
---@param plain If `true` use `sep` literally (passed to String.find)
---@returns List-like table of the split components.
+---@param s String to split
+---@param sep Separator string or pattern
+---@param plain If `true` use `sep` literally (passed to String.find)
+---@returns List-like table of the split components.
 function vim.split(s,sep,plain)
   local t={} for c in vim.gsplit(s, sep, plain) do table.insert(t,c) end
   return t
@@ -115,10 +115,10 @@ end
 --- Return a list of all keys used in a table.
 --- However, the order of the return table of keys is not guaranteed.
 ---
---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
---@param t Table
---@returns list of keys
+---@param t Table
+---@returns list of keys
 function vim.tbl_keys(t)
   assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
 
@@ -132,8 +132,8 @@ end
 --- Return a list of all values used in a table.
 --- However, the order of the return table of values is not guaranteed.
 ---
---@param t Table
---@returns list of values
+---@param t Table
+---@returns list of values
 function vim.tbl_values(t)
   assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
 
@@ -146,8 +146,8 @@ end
 
 --- Apply a function to all values of a table.
 ---
---@param func function or callable table
---@param t table
+---@param func function or callable table
+---@param t table
 function vim.tbl_map(func, t)
   vim.validate{func={func,'c'},t={t,'t'}}
 
@@ -160,8 +160,8 @@ end
 
 --- Filter a table using a predicate function
 ---
---@param func function or callable table
---@param t table
+---@param func function or callable table
+---@param t table
 function vim.tbl_filter(func, t)
   vim.validate{func={func,'c'},t={t,'t'}}
 
@@ -176,9 +176,9 @@ end
 
 --- Checks if a list-like (vector) table contains `value`.
 ---
---@param t Table to check
---@param value Value to compare
---@returns true if `t` contains `value`
+---@param t Table to check
+---@param value Value to compare
+---@returns true if `t` contains `value`
 function vim.tbl_contains(t, value)
   vim.validate{t={t,'t'}}
 
@@ -192,16 +192,16 @@ end
 
 --- Checks if a table is empty.
 ---
---@see https://github.com/premake/premake-core/blob/master/src/base/table.lua
+---@see https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
---@param t Table to check
+---@param t Table to check
 function vim.tbl_isempty(t)
   assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
   return next(t) == nil
 end
 
 --- we only merge empty tables or tables that are not a list
---@private
+---@private
 local function can_merge(v)
   return type(v) == "table" and (vim.tbl_isempty(v) or not vim.tbl_islist(v))
 end
@@ -242,26 +242,26 @@ end
 
 --- Merges two or more map-like tables.
 ---
---@see |extend()|
+---@see |extend()|
 ---
---@param behavior Decides what to do if a key is found in more than one map:
+---@param behavior Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
---@param ... Two or more map-like tables.
+---@param ... Two or more map-like tables.
 function vim.tbl_extend(behavior, ...)
   return tbl_extend(behavior, false, ...)
 end
 
 --- Merges recursively two or more map-like tables.
 ---
---@see |tbl_extend()|
+---@see |tbl_extend()|
 ---
---@param behavior Decides what to do if a key is found in more than one map:
+---@param behavior Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
---@param ... Two or more map-like tables.
+---@param ... Two or more map-like tables.
 function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
 end
@@ -292,7 +292,7 @@ end
 --- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 --
 --Do note that it *modifies* the input.
---@param o table The table to add the reverse to.
+---@param o table The table to add the reverse to.
 function vim.tbl_add_reverse_lookup(o)
   local keys = vim.tbl_keys(o)
   for _, k in ipairs(keys) do
@@ -309,13 +309,13 @@ end
 ---
 --- NOTE: This mutates dst!
 ---
---@see |vim.tbl_extend()|
+---@see |vim.tbl_extend()|
 ---
---@param dst list which will be modified and appended to.
---@param src list from which values will be inserted.
---@param start Start index on src. defaults to 1
---@param finish Final index on src. defaults to #src
---@returns dst
+---@param dst list which will be modified and appended to.
+---@param src list from which values will be inserted.
+---@param start Start index on src. defaults to 1
+---@param finish Final index on src. defaults to #src
+---@returns dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate {
     dst = {dst, 't'};
@@ -332,10 +332,10 @@ end
 --- Creates a copy of a list-like table such that any nested tables are
 --- "unrolled" and appended to the result.
 ---
---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+---@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
---@param t List-like table
---@returns Flattened copy of the given list-like table.
+---@param t List-like table
+---@returns Flattened copy of the given list-like table.
 function vim.tbl_flatten(t)
   local result = {}
   local function _tbl_flatten(_t)
@@ -359,8 +359,8 @@ end
 --- |vim.empty_dict()| or returned as a dict-like |API| or Vimscript result,
 --- for example from |rpcrequest()| or |vim.fn|.
 ---
---@param t Table
---@returns `true` if array-like table, else `false`.
+---@param t Table
+---@returns `true` if array-like table, else `false`.
 function vim.tbl_islist(t)
   if type(t) ~= 'table' then
     return false
@@ -395,9 +395,9 @@ end
 --- vim.tbl_count({ 1, 2 }) => 2
 --- </pre>
 ---
---@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
---@param t Table
---@returns Number that is the number of the value in table
+---@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
+---@param t Table
+---@returns Number that is the number of the value in table
 function vim.tbl_count(t)
   vim.validate{t={t,'t'}}
 
@@ -408,10 +408,10 @@ end
 
 --- Creates a copy of a table containing only elements from start to end (inclusive)
 ---
---@param list table table
---@param start integer Start range of slice
---@param finish integer End range of slice
---@returns Copy of table sliced from start to finish (inclusive)
+---@param list table table
+---@param start integer Start range of slice
+---@param finish integer End range of slice
+---@returns Copy of table sliced from start to finish (inclusive)
 function vim.list_slice(list, start, finish)
   local new_list = {}
   for i = start or 1, finish or #list do
@@ -422,9 +422,9 @@ end
 
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
---@see https://www.lua.org/pil/20.2.html
---@param s String to trim
---@returns String with whitespace removed from its beginning and end
+---@see https://www.lua.org/pil/20.2.html
+---@param s String to trim
+---@returns String with whitespace removed from its beginning and end
 function vim.trim(s)
   vim.validate{s={s,'s'}}
   return s:match('^%s*(.*%S)') or ''
@@ -432,9 +432,9 @@ end
 
 --- Escapes magic chars in a Lua pattern.
 ---
---@see https://github.com/rxi/lume
---@param s  String to escape
---@returns  %-escaped pattern string
+---@see https://github.com/rxi/lume
+---@param s  String to escape
+---@returns  %-escaped pattern string
 function vim.pesc(s)
   vim.validate{s={s,'s'}}
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
@@ -442,9 +442,9 @@ end
 
 --- Tests if `s` starts with `prefix`.
 ---
---@param s (string) a string
---@param prefix (string) a prefix
---@return (boolean) true if `prefix` is a prefix of s
+---@param s (string) a string
+---@param prefix (string) a prefix
+---@return (boolean) true if `prefix` is a prefix of s
 function vim.startswith(s, prefix)
   vim.validate { s = {s, 's'}; prefix = {prefix, 's'}; }
   return s:sub(1, #prefix) == prefix
@@ -452,9 +452,9 @@ end
 
 --- Tests if `s` ends with `suffix`.
 ---
---@param s (string) a string
---@param suffix (string) a suffix
---@return (boolean) true if `suffix` is a suffix of s
+---@param s (string) a string
+---@param suffix (string) a suffix
+---@return (boolean) true if `suffix` is a suffix of s
 function vim.endswith(s, suffix)
   vim.validate { s = {s, 's'}; suffix = {suffix, 's'}; }
   return #suffix == 0 or s:sub(-#suffix) == suffix
@@ -486,7 +486,7 @@ end
 ---     => error('arg1: expected even number, got 3')
 --- </pre>
 ---
---@param opt Map of parameter names to validations. Each key is a parameter
+---@param opt Map of parameter names to validations. Each key is a parameter
 ---          name; each value is a tuple in one of these forms:
 ---          1. (arg_value, type_name, optional)
 ---             - arg_value: argument value
@@ -570,8 +570,8 @@ do
 end
 --- Returns true if object `f` can be called as a function.
 ---
---@param f Any object
---@return true if `f` is callable, else false
+---@param f Any object
+---@return true if `f` is callable, else false
 function vim.is_callable(f)
   if type(f) == 'function' then return true end
   local m = getmetatable(f)

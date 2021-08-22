@@ -18,14 +18,14 @@ local log_date_format = "%FT%H:%M:%S%z"
 
 do
   local path_sep = vim.loop.os_uname().version:match("Windows") and "\\" or "/"
-  --@private
+  ---@private
   local function path_join(...)
     return table.concat(vim.tbl_flatten{...}, path_sep)
   end
   local logfilename = path_join(vim.fn.stdpath('cache'), 'lsp.log')
 
   --- Returns the log filename.
-  --@returns (string) log filename
+  ---@returns (string) log filename
   function log.get_filename()
     return logfilename
   end
@@ -77,7 +77,7 @@ end
 vim.tbl_add_reverse_lookup(log.levels)
 
 --- Sets the current log level.
---@param level (string or number) One of `vim.lsp.log.levels`
+---@param level (string or number) One of `vim.lsp.log.levels`
 function log.set_level(level)
   if type(level) == 'string' then
     current_log_level = assert(log.levels[level:upper()], string.format("Invalid log level: %q", level))
@@ -89,8 +89,8 @@ function log.set_level(level)
 end
 
 --- Checks whether the level is sufficient for logging.
---@param level number log level
---@returns (bool) true if would log, false if not
+---@param level number log level
+---@returns (bool) true if would log, false if not
 function log.should_log(level)
   return level >= current_log_level
 end
