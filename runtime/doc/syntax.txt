@@ -887,7 +887,7 @@ For Visual Basic use: >
 
 BAAN						    *baan.vim* *baan-syntax*
 
-The baan.vim gives syntax support for BaanC of release BaanIV upto SSA ERP LN
+The baan.vim gives syntax support for BaanC of release BaanIV up to SSA ERP LN
 for both 3 GL and 4 GL programming. Large number of standard defines/constants
 are supported.
 
@@ -1384,11 +1384,17 @@ To select syntax highlighting file for Euphoria, as well as for
 auto-detecting the *.e and *.E file extensions as Euphoria file type,
 add the following line to your startup file: >
 
-	:let filetype_euphoria="euphoria3"
+	:let g:filetype_euphoria = "euphoria3"
 
-	or
+<	or >
 
-	:let filetype_euphoria="euphoria4"
+	:let g:filetype_euphoria = "euphoria4"
+
+Elixir and Euphoria share the *.ex file extension.  If the filetype is 
+specifically set as Euphoria with the g:filetype_euphoria variable, or the
+file is determined to be Euphoria based on keywords in the file, then the
+filetype will be set as Euphoria. Otherwise, the filetype will default to
+Elixir.
 
 
 ERLANG						*erlang.vim* *ft-erlang-syntax*
@@ -1404,6 +1410,22 @@ put the following line in your vimrc: >
 To enable highlighting some special atoms, put this in your vimrc: >
 
       :let g:erlang_highlight_special_atoms = 1
+
+
+ELIXIR						*elixir.vim* *ft-elixir-syntax*
+
+Elixir is a dynamic, functional language for building scalable and maintainable
+applications.
+
+The following file extensions are auto-detected as Elixir file types:
+
+	*.ex, *.exs, *.eex, *.leex, *.lock
+
+Elixir and Euphoria share the *.ex file extension. If the filetype is 
+specifically set as Euphoria with the g:filetype_euphoria variable, or the
+file is determined to be Euphoria based on keywords in the file, then the
+filetype will be set as Euphoria. Otherwise, the filetype will default to
+Elixir.
 
 
 FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
@@ -3385,8 +3407,8 @@ syntax highlighting script handles this with the following logic:
  Tex: Match Check Control~
 
 	Sometimes one actually wants mismatched parentheses, square braces,
-	and or curly braces; for example, \text{(1,10] is a range from but
-	not including 1 to and including 10}.  This wish, of course, conflicts
+	and or curly braces; for example, \text{(1,10]} is a range from but
+	not including 1 to and including 10.  This wish, of course, conflicts
 	with the desire to provide delimiter mismatch detection.  To
 	accommodate these conflicting goals, syntax/tex.vim provides >
 		g:tex_matchcheck = '[({[]'
@@ -4024,7 +4046,7 @@ match in the same position overrules an earlier one).  The "transparent"
 argument makes the "myVim" match use the same highlighting as "myString".  But
 it does not contain anything.  If the "contains=NONE" argument would be left
 out, then "myVim" would use the contains argument from myString and allow
-"myWord" to be contained, which will be highlighted as a Constant.  This
+"myWord" to be contained, which will be highlighted as a Comment.  This
 happens because a contained match doesn't match inside itself in the same
 position, thus the "myVim" match doesn't overrule the "myWord" match here.
 

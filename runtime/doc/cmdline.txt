@@ -153,7 +153,12 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 				too.
 				When the result is a Float it's automatically
 				converted to a String.
-		See |registers| about registers.
+				Note that when you only want to move the
+				cursor and not insert anything, you must make
+				sure the expression evaluates to an empty
+				string.  E.g.: >
+					<C-R><C-R>=setcmdpos(2)[-1]<CR>
+<		See |registers| about registers.
 		Implementation detail: When using the |expression| register
 		and invoking setcmdpos(), this sets the position before
 		inserting the resulting string.  Use CTRL-R CTRL-R to set the
@@ -1067,7 +1072,7 @@ in Normal mode and Insert mode.
 It is possible to use ":", "/" and other commands that use the command-line,
 but it's not possible to open another command-line window then.  There is no
 nesting.
-							*E11*
+							*E11* *E1188*
 The command-line window is not a normal window.  It is not possible to move to
 another window or edit another buffer.  All commands that would do this are
 disabled in the command-line window.  Of course it _is_ possible to execute

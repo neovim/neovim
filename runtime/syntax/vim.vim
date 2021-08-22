@@ -12,7 +12,7 @@
 if exists("b:current_syntax")
   finish
 endif
-let s:keepcpo= &cpo
+let s:keepcpo = &cpo
 set cpo&vim
 
 " vimTodo: contains common special-notices for comments {{{2
@@ -200,7 +200,7 @@ syn keyword vimAugroupKey contained	aug[roup]
 
 " Operators: {{{2
 " =========
-syn cluster	vimOperGroup	contains=vimEnvvar,vimFunc,vimFuncVar,vimOper,vimOperParen,vimNumber,vimString,vimRegister,vimContinue,vim9Comment
+syn cluster	vimOperGroup	contains=vimEnvvar,vimFunc,vimFuncVar,vimOper,vimOperParen,vimNumber,vimString,vimType,vimRegister,vimContinue,vim9Comment
 syn match	vimOper	"\%#=1\(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\|=\)[?#]\{0,2}"	skipwhite nextgroup=vimString,vimSpecFile
 syn match	vimOper	"\(\<is\|\<isnot\)[?#]\{0,2}\>"			skipwhite nextgroup=vimString,vimSpecFile
 syn match	vimOper	"||\|&&\|[-+.!]"				skipwhite nextgroup=vimString,vimSpecFile
@@ -981,6 +981,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimSyntax	vimCommand
  hi def link vimSynType	vimSpecial
  hi def link vimTodo	Todo
+ hi def link vimType	Type
  hi def link vimUnmap	vimMap
  hi def link vimUserAttrbCmpltFunc	Special
  hi def link vimUserAttrbCmplt	vimSpecial

@@ -1053,7 +1053,8 @@ On the second invocation the arguments are:
 
 The function must return a List with the matching words.  These matches
 usually include the "a:base" text.  When there are no matches return an empty
-List.
+List.  Note that the cursor may have moved since the first invocation, the
+text may have been changed.
 
 In order to return more information than the matching words, return a Dict
 that contains the List.  The Dict can have these items:
@@ -1124,7 +1125,7 @@ match to the total list.  These matches should then not appear in the returned
 list!  Call |complete_check()| now and then to allow the user to press a key
 while still searching for matches.  Stop searching when it returns non-zero.
 
-							*E839* *E840*
+							*E840*
 The function is allowed to move the cursor, it is restored afterwards.
 The function is not allowed to move to another window or delete text.
 

@@ -1333,7 +1333,8 @@ Basic items
 	%o		module name (finds a string)
 	%l		line number (finds a number)
 	%c		column number (finds a number representing character
-			column of the error, (1 <tab> == 1 character column))
+			column of the error, byte index, a <tab> is 1
+			character column)
 	%v		virtual column number (finds a number representing
 			screen column of the error (1 <tab> == 8 screen
 			columns))

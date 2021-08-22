@@ -1127,10 +1127,10 @@ flag to avoid lots of errors.
 CIRCUMFIX						*spell-CIRCUMFIX*
 
 The CIRCUMFIX flag means a prefix and suffix must be added at the same time.
-If a prefix has the CIRCUMFIX flag than only suffixes with the CIRCUMFIX flag
+If a prefix has the CIRCUMFIX flag then only suffixes with the CIRCUMFIX flag
 can be added, and the other way around.
-An alternative is to only specify the suffix, and give the that suffix two
-flags: The required prefix and the NEEDAFFIX flag.  |spell-NEEDAFFIX|
+An alternative is to only specify the suffix, and give that suffix two flags:
+the required prefix and the NEEDAFFIX flag.  |spell-NEEDAFFIX|
 
 
 PFXPOSTPONE						*spell-PFXPOSTPONE*

@@ -293,7 +293,7 @@ syn region eighthComment start="\zs\\" end="$" contains=eighthTodo
 " Define the default highlighting.
 if !exists("did_eighth_syntax_inits")
     let did_eighth_syntax_inits=1
-    " The default methods for highlighting. Can be overriden later.
+    " The default methods for highlighting. Can be overridden later.
     hi def link eighthTodo Todo
     hi def link eighthOperators Operator
     hi def link eighthMath Number

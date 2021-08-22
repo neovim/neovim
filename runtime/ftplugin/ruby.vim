@@ -3,7 +3,7 @@
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2019 Nov 06
+" Last Change:		2020 Feb 13
 
 if (exists("b:did_ftplugin"))
   finish
@@ -112,7 +112,7 @@ else
   if !exists('g:ruby_default_path')
     if has("ruby") && has("win32")
       ruby ::VIM::command( 'let g:ruby_default_path = split("%s",",")' % $:.join(%q{,}) )
-    elseif executable('ruby')
+    elseif executable('ruby') && !empty($HOME)
       let g:ruby_default_path = s:query_path($HOME)
     else
       let g:ruby_default_path = map(split($RUBYLIB,':'), 'v:val ==# "." ? "" : v:val')

@@ -52,9 +52,14 @@ or change text.  The following operators are available:
 	|<|	<	shift left
 	|zf|	zf	define a fold
 	|g@|	g@	call function set with the 'operatorfunc' option
-
+						*motion-count-multiplied*
 If the motion includes a count and the operator also had a count before it,
 the two counts are multiplied.  For example: "2d3w" deletes six words.
+						*operator-doubled*
+When doubling the operator it operates on a line.  When using a count, before
+or after the first character, that many lines are operated upon.  Thus `3dd`
+deletes three lines. A count before and after the first character is
+multiplied, thus `2y3y` yanks six lines.
 
 After applying the operator the cursor is mostly left at the start of the text
 that was operated upon.  For example, "yfe" doesn't move the cursor, but "yFe"
@@ -187,9 +192,9 @@ l		or					*l*
 							*$* *<End>* *<kEnd>*
 $  or <End>		To the end of the line.  When a count is given also go
 			[count - 1] lines downward, or as far is possible.
-			|inclusive| motion.  If a count of 2 of larger is
+			|inclusive| motion.  If a count of 2 or larger is
 			given and the cursor is on the last line, that is an
-			error an the cursor doesn't move.
+			error and the cursor doesn't move.
 			In Visual mode the cursor goes to just after the last
 			character in the line.
 			When 'virtualedit' is active, "$" may move the cursor

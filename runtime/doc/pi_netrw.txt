@@ -3808,7 +3808,7 @@ netrw:
 	  Decho.vim is provided as a "vimball"; see |vimball-intro|.  You
 	  should edit the Decho.vba.gz file and source it in: >
 
-	  	vim Decho.vba.gz
+		vim Decho.vba.gz
 		:so %
 		:q
 <

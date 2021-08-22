@@ -1,4 +1,4 @@
-*ps1.txt*  A Windows PowerShell syntax plugin for Vim
+*ft_ps1.txt*  A Windows PowerShell syntax plugin for Vim
 
 Author:  Peter Provost <https://www.github.com/PProvost>
 License: Apache 2.0

@@ -255,7 +255,9 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			ftdetect scripts are loaded, only the matching
 			directories are added to 'runtimepath'.  This is
 			useful in your .vimrc.  The plugins will then be
-			loaded during initialization, see |load-plugins|.
+			loaded during initialization, see |load-plugins| (note
+			that the loading order will be reversed, because each
+			directory is inserted before others).
 			Note that for ftdetect scripts to be loaded
 			you will need to write `filetype plugin indent on`
 			AFTER all `packadd!` commands.
@@ -780,6 +782,16 @@ About the additional commands in debug mode:
   is reset (because it's not clear what you want to repeat).
 - When you want to use the Ex command with the same name, prepend a colon:
   ":cont", ":next", ":finish" (or shorter).
+							*vim9-debug*
+When debugging a compiled :def function, "step" will stop before every
+executed line, not every single instruction.  Thus it works mostly like a not
+compiled function.  Access to local variables is limited you can use: >
+	echo varname
+But not much else.
+When executing a command that is not a specific bytecode instruction but
+executed like a normal Ex command, "step" will stop once in the compiled
+context, where local variables can be inspected, and once just before
+executing the command.
 
 The backtrace shows the hierarchy of function calls, e.g.:
 	>bt ~

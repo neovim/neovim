@@ -70,7 +70,7 @@ o  Invocations
 
 o  Typing backwards					*ins-reverse*
    ----------------
-   In lieu of using full-fledged the 'rightleft' option, one can opt for
+   In lieu of using the full-fledged 'rightleft' option, one can opt for
    reverse insertion.  When the 'revins' (reverse insert) option is set,
    inserting happens backwards.  This can be used to type right-to-left
    text.  When inserting characters the cursor is not moved and the text
