@@ -18,7 +18,7 @@
   KHASH_DECLARE(T##_##U##_map, T, U) \
   \
   typedef struct { \
-    khash_t(T##_##U##_map) *table; \
+    khash_t(T##_##U##_map) table; \
   } Map(T, U); \
   \
   Map(T, U) *map_##T##_##U##_new(void); \
@@ -68,7 +68,7 @@ MAP_DECLS(ColorKey, ColorItem)
 #define map_del(T, U) map_##T##_##U##_del
 #define map_clear(T, U) map_##T##_##U##_clear
 
-#define map_size(map) ((map)->table->size)
+#define map_size(map) ((map)->table.size)
 
 #define pmap_new(T) map_new(T, ptr_t)
 #define pmap_free(T) map_free(T, ptr_t)
@@ -82,10 +82,10 @@ MAP_DECLS(ColorKey, ColorItem)
 #define pmap_clear(T) map_clear(T, ptr_t)
 
 #define map_foreach(map, key, value, block) \
-  kh_foreach(map->table, key, value, block)
+  kh_foreach(&map->table, key, value, block)
 
 #define map_foreach_value(map, value, block) \
-  kh_foreach_value(map->table, value, block)
+  kh_foreach_value(&map->table, value, block)
 
 void pmap_del2(PMap(cstr_t) *map, const char *key);
 
