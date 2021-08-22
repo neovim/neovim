@@ -52,7 +52,6 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/fileio.h"
-#include "nvim/api/private/handle.h"
 
 
 /// Index in scriptin

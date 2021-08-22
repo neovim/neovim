@@ -76,7 +76,6 @@
 #include "nvim/event/time.h"
 #include "nvim/os/input.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/handle.h"
 
 typedef struct terminal_state {
   VimState state;

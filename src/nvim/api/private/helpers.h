@@ -101,6 +101,14 @@
 #define api_free_window(value)
 #define api_free_tabpage(value)
 
+EXTERN PMap(handle_T) buffer_handles INIT(= MAP_INIT);
+EXTERN PMap(handle_T) window_handles INIT(= MAP_INIT);
+EXTERN PMap(handle_T) tabpage_handles INIT(= MAP_INIT);
+
+#define handle_get_buffer(h) pmap_get(handle_T)(&buffer_handles, (h))
+#define handle_get_window(h) pmap_get(handle_T)(&window_handles, (h))
+#define handle_get_tabpage(h) pmap_get(handle_T)(&tabpage_handles, (h))
+
 /// Structure used for saving state for :try
 ///
 /// Used when caller is supposed to be operating when other VimL code is being

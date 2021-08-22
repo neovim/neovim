@@ -78,7 +78,6 @@
 #include "nvim/api/ui.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
@@ -158,7 +157,6 @@ void early_init(mparm_T *paramp)
 {
   env_init();
   fs_init();
-  handle_init();
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
   init_normal_cmds();   // Init the table of Normal mode commands.

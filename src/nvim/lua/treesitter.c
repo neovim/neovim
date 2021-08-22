@@ -18,7 +18,7 @@
 #include "tree_sitter/api.h"
 
 #include "nvim/lua/treesitter.h"
-#include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/memline.h"
 #include "nvim/buffer.h"
 

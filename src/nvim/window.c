@@ -5,7 +5,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "nvim/api/private/handle.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -3601,7 +3600,7 @@ static tabpage_T *alloc_tabpage(void)
   static int last_tp_handle = 0;
   tabpage_T *tp = xcalloc(1, sizeof(tabpage_T));
   tp->handle = ++last_tp_handle;
-  handle_register_tabpage(tp);
+  pmap_put(handle_T)(&tabpage_handles, tp->handle, tp);
 
   // Init t: variables.
   tp->tp_vars = tv_dict_alloc();
@@ -3616,7 +3615,7 @@ void free_tabpage(tabpage_T *tp)
 {
   int idx;
 
-  handle_unregister_tabpage(tp);
+  pmap_del(handle_T)(&tabpage_handles, tp->handle);
   diff_clear(tp);
   for (idx = 0; idx < SNAP_COUNT; ++idx)
     clear_snapshot(tp, idx);
@@ -4545,7 +4544,7 @@ static win_T *win_alloc(win_T *after, bool hidden)
   win_T *new_wp = xcalloc(1, sizeof(win_T));
 
   new_wp->handle = ++last_win_id;
-  handle_register_window(new_wp);
+  pmap_put(handle_T)(&window_handles, new_wp->handle, new_wp);
 
   grid_assign_handle(&new_wp->w_grid_alloc);
 
@@ -4616,7 +4615,7 @@ win_free (
   int i;
   wininfo_T   *wip;
 
-  handle_unregister_window(wp);
+  pmap_del(handle_T)(&window_handles, wp->handle);
   clearFolding(wp);
 
   /* reduce the reference count to the argument list. */

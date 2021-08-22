@@ -11,7 +11,7 @@
 #include <fcntl.h>
 
 #include "nvim/vim.h"
-#include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/fileio.h"
 #include "nvim/buffer.h"
