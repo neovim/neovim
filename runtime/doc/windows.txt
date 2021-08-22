@@ -243,8 +243,7 @@ and 'winminwidth' are relevant.
 :hor[izontal] {cmd}
 		Execute {cmd}.  Currently only makes a difference for
 		`horizontal wincmd =`, which will equalize windows only
-		horizontally, and |:terminal|, which will open a |terminal|
-		buffer in a split window.
+		horizontally.
 
 :lefta[bove] {cmd}				*:lefta* *:leftabove*
 :abo[veleft] {cmd}				*:abo* *:aboveleft*

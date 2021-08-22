@@ -2263,7 +2263,7 @@ describe('API', function()
 
     it('stream=job :terminal channel', function()
       command(':terminal')
-      eq({id=1}, meths.get_current_buf())
+      eq({id=2}, meths.get_current_buf())
       eq(3, meths.get_option_value('channel', {buf=1}))
 
       local info = {
@@ -2271,7 +2271,7 @@ describe('API', function()
         id=3,
         argv={ eval('exepath(&shell)') },
         mode='terminal',
-        buffer = 1,
+        buffer = 2,
         pty='?',
       }
       local event = meths.get_var("opened_event")
@@ -2280,7 +2280,7 @@ describe('API', function()
         neq(nil, string.match(info.pty, "^/dev/"))
       end
       eq({info=info}, event)
-      info.buffer = {id=1}
+      info.buffer = {id=2}
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
       eq(info, meths.get_chan_info(3))
 

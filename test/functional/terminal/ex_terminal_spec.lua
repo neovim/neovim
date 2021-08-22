@@ -18,7 +18,7 @@ describe(':terminal', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 4)
+    screen = Screen.new(50, 10)
     screen:attach({rgb=false})
   end)
 
@@ -39,6 +39,12 @@ describe(':terminal', function()
     end)
     feed_command("messages")
     screen:expect([[
+      0: !terminal_output!                              |
+      1: !terminal_output!                              |
+      2: !terminal_output!                              |
+      3: !terminal_output!                              |
+      <build/bin/shell-test" REP 9999 !terminal_output! |
+                                                        |
       msg1                                              |
       msg2                                              |
       msg3                                              |
@@ -64,7 +70,7 @@ describe(':terminal', function()
     end
     feed([[<C-\><C-N>M]])  -- move cursor away from last line
     poke_eventloop()
-    eq(3, eval("line('$')"))  -- window height
+    eq(4, eval("line('$')"))  -- window height
     eq(2, eval("line('.')"))  -- cursor is in the middle
     feed_command('vsplit')
     eq(2, eval("line('.')"))  -- cursor stays where we put it
@@ -132,8 +138,9 @@ describe(':terminal (with fake shell)', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 4)
+    screen = Screen.new(50, 10)
     screen:attach({rgb=false})
+    nvim('set_option_value', 'statusline', '===', {})
     -- shell-test.c is a fake shell that prints its arguments and exits.
     nvim('set_option_value', 'shell', testprg('shell-test'), {})
     nvim('set_option_value', 'shellcmdflag', 'EXE', {})
@@ -159,6 +166,12 @@ describe(':terminal (with fake shell)', function()
       ^                                                  |
       [Process exited 1]                                |
                                                         |
+                                                        |
+      ===                                               |
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ===                                               |
       :terminal 1                                       |
     ]])
     end)
@@ -169,6 +182,12 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell()
     screen:expect([[
       ^                                                  |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
       ~                                                 |
       ~                                                 |
       E91: 'shell' option is empty                      |
@@ -183,6 +202,12 @@ describe(':terminal (with fake shell)', function()
       ^jeff $                                            |
       [Process exited 0]                                |
                                                         |
+                                                        |
+      ===                                               |
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ===                                               |
       :terminal                                         |
     ]])
   end)
@@ -195,6 +220,12 @@ describe(':terminal (with fake shell)', function()
       ^ready $ echo hi                                   |
                                                         |
       [Process exited 0]                                |
+                                                        |
+      ===                                               |
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ===                                               |
       :terminal echo hi                                 |
     ]])
   end)
@@ -208,6 +239,12 @@ describe(':terminal (with fake shell)', function()
       ^jeff $ echo hi                                    |
                                                         |
       [Process exited 0]                                |
+                                                        |
+      ===                                               |
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ===                                               |
       :terminal echo hi                                 |
     ]])
   end)
@@ -220,6 +257,12 @@ describe(':terminal (with fake shell)', function()
       ^ready $ echo 'hello' \ "world"                    |
                                                         |
       [Process exited 0]                                |
+                                                        |
+      ===                                               |
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ===                                               |
       :terminal echo 'hello' \ "world"                  |
     ]])
   end)
@@ -257,6 +300,12 @@ describe(':terminal (with fake shell)', function()
       ^                                                  |
       [Process exited 1]                                |
                                                         |
+                                                        |
+      ===                                               |
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ===                                               |
       :terminal 1                                       |
     ]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
@@ -278,6 +327,12 @@ describe(':terminal (with fake shell)', function()
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |
       [Process exited 0]                                |
+                                                        |
+      ===                                               |
+                                                        |
+      ~                                                 |
+      ~                                                 |
+      ===                                               |
       :terminal echo "scripts/shadacat.py"              |
     ]])
     end)
@@ -294,7 +349,25 @@ describe(':terminal (with fake shell)', function()
     for _ = 1, 5 do
       source([[
       execute 'edit '.reltimestr(reltime())
-      terminal]])
+      terminal!]])
     end
+  end)
+
+  it('uses the existing window with !', function()
+    feed_command('terminal! 1')
+    retry(nil, 4 * screen.timeout, function()
+      screen:expect([[
+        ^ready $ 1                                         |
+                                                          |
+        [Process exited 0]                                |
+                                                          |
+                                                          |
+                                                          |
+                                                          |
+                                                          |
+                                                          |
+        :terminal! 1                                      |
+      ]])
+    end)
   end)
 end)

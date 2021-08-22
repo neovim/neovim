@@ -1135,9 +1135,9 @@ describe("pty process teardown", function()
     screen:expect([[
       ^                              |
       [Process exited 0]            |
+      <rminal +'!(sleep 300 &)' +qa |
                                     |
-                                    |
-                                    |
+      [No Name]                     |
                                     |
     ]])
   end)

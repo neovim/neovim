@@ -1019,7 +1019,7 @@ describe('TUI', function()
         pending("tty-test complains about not owning the terminal -- actions/runner#241")
     end
     child_exec_lua('vim.o.statusline="^^^^^^^"')
-    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
+    child_exec_lua('vim.cmd({ cmd = "terminal", args = { ... }, bang = true })', testprg('tty-test'))
     feed_data('i')
     screen:expect{grid=[[
       tty ready                                         |
@@ -1563,7 +1563,7 @@ describe('TUI', function()
 
     child_exec_lua('vim.o.statusline="^^^^^^^"')
     child_exec_lua('vim.o.termguicolors=true')
-    child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
+    child_exec_lua('vim.cmd({ cmd = "terminal", args = {...}, bang = true })', testprg('tty-test'))
     screen:expect{grid=[[
       {1:t}ty ready                                         |
                                                         |
@@ -2076,9 +2076,9 @@ describe('TUI FocusGained/FocusLost', function()
 
   it('in terminal-mode', function()
     feed_data(':set shell='..testprg('shell-test')..' shellcmdflag=EXE\n')
-    feed_data(':set noshowmode laststatus=0\n')
+    feed_data(':set noshowmode laststatus=0 statusline=\\ \n')
 
-    feed_data(':terminal zia\n')
+    feed_data(':terminal! zia\n')
     -- Wait for terminal to be ready.
     screen:expect{grid=[[
       {1:r}eady $ zia                                       |
@@ -2086,7 +2086,7 @@ describe('TUI FocusGained/FocusLost', function()
       [Process exited 0]                                |
                                                         |
                                                         |
-      :terminal zia                                     |
+      :terminal! zia                                    |
       {3:-- TERMINAL --}                                    |
     ]]}
 
