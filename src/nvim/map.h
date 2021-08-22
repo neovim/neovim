@@ -46,7 +46,7 @@ MAP_DECLS(uint64_t, uint64_t)
 // NB: this is the only way to define a struct both containing and contained
 // in a map...
 typedef struct ExtmarkNs {  // For namespacing extmarks
-  Map(uint64_t, uint64_t) *map;  // For fast lookup
+  Map(uint64_t, uint64_t) map[1];  // For fast lookup
   uint64_t free_id;         // For automatically assigning id's
 } ExtmarkNs;
 
@@ -60,7 +60,7 @@ MAP_DECLS(String, handle_T)
 MAP_DECLS(ColorKey, ColorItem)
 
 #define MAP_INIT { { 0, 0, 0, 0, NULL, NULL, NULL } }
-#define map_init(k, v, map) (*(map) = (Map(k, v))MAP_INIT)
+#define map_init(k, v, map) do { *(map) = (Map(k, v))MAP_INIT; } while (false)
 
 #define map_new(T, U) map_##T##_##U##_new
 #define map_free(T, U) map_##T##_##U##_free
