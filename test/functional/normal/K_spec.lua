@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, neq, clear, eval, feed, retry =
-  helpers.eq, helpers.neq, helpers.clear, helpers.eval, helpers.feed, helpers.retry
+local eq, clear, eval, feed, retry =
+  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.retry
 
 describe('K', function()
   local test_file = 'K_spec_out'
