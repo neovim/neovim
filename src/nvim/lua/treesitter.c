@@ -80,6 +80,10 @@ static struct luaL_Reg node_meta[] = {
   { "parent", node_parent },
   { "iter_children", node_iter_children },
   { "_rawquery", node_rawquery },
+  { "next_sibling", node_next_sibling },
+  { "prev_sibling", node_prev_sibling },
+  { "next_named_sibling", node_next_named_sibling },
+  { "prev_named_sibling", node_prev_named_sibling },
   { NULL, NULL }
 };
 
@@ -987,6 +991,50 @@ static int node_parent(lua_State *L)
   }
   TSNode parent = ts_node_parent(node);
   push_node(L, parent, 1);
+  return 1;
+}
+
+static int node_next_sibling(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+  TSNode sibling = ts_node_next_sibling(node);
+  push_node(L, sibling, 1);
+  return 1;
+}
+
+static int node_prev_sibling(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+  TSNode sibling = ts_node_prev_sibling(node);
+  push_node(L, sibling, 1);
+  return 1;
+}
+
+static int node_next_named_sibling(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+  TSNode sibling = ts_node_next_named_sibling(node);
+  push_node(L, sibling, 1);
+  return 1;
+}
+
+static int node_prev_named_sibling(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+  TSNode sibling = ts_node_prev_named_sibling(node);
+  push_node(L, sibling, 1);
   return 1;
 }
 
