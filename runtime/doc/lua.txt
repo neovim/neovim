@@ -1167,37 +1167,6 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
                 Return: ~
                     region lua table of the form {linenr = {startcol,endcol}}
 
-                                           *vim.register_keystroke_callback()*
-register_keystroke_callback({fn}, {ns_id})
-                Register a lua {fn} with an {id} to be run after every
-                keystroke.
-
-                If {fn} is nil, it removes the callback for the associated
-                {ns_id}
-                Note:
-                    {fn} will not be cleared from |nvim_buf_clear_namespace()|
-
-                Note:
-                    {fn} will receive the keystrokes after mappings have been
-                    evaluated
-
-                Parameters: ~
-                    {fn}     function: Function to call. It should take one
-                          argument, which is a string. The string will contain
-                          the literal keys typed. See |i_CTRL-V|
-                    {ns_id}  number? Namespace ID. If not passed or 0, will
-                             generate and return a new namespace ID from
-                             |nvim_create_namesapce()|
-
-                Return: ~
-                    number Namespace ID associated with {fn}
-
-                Note:
-                    {fn} will be automatically removed if an error occurs
-                    while calling. This is to prevent the annoying situation
-                    of every keystroke erroring while trying to remove a
-                    broken callback.
-
 schedule_wrap({cb})                                      *vim.schedule_wrap()*
                 Defers callback `cb` until the Nvim API is safe to call.
 

@@ -329,12 +329,12 @@ argument.
 -w{number}	Set the 'window' option to {number}.
 
 							*-w*
--w {scriptout}	All the characters that you type are recorded in the file
-		"scriptout", until you exit Vim.  This is useful if you want
-		to create a script file to be used with "vim -s" or
-		":source!".  When the "scriptout" file already exists, new
-		characters are appended.  See also |complex-repeat|.
-		{scriptout} cannot start with a digit.
+-w {scriptout}	All keys that you type are recorded in the file "scriptout",
+		until you exit Vim.  Useful to create a script file to be used
+		with "vim -s" or ":source!".  Appends to the "scriptout" file
+		if it already exists. {scriptout} cannot start with a digit.
+		See also |vim.on_key()|.
+		See also |complex-repeat|.
 
 							*-W*
 -W {scriptout}	Like -w, but do not append, overwrite an existing file.
