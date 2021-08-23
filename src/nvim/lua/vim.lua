@@ -4,6 +4,7 @@
 --    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
 --       `inspect` and `lpeg` modules.
 --    2. runtime/lua/vim/shared.lua: Code shared between Nvim and tests.
+--       (This will go away if we migrate to nvim as the test-runner.)
 --    3. src/nvim/lua/: Compiled-into Nvim itself.
 --
 -- Guideline: "If in doubt, put it in the runtime".
@@ -426,26 +427,35 @@ function vim.notify(msg, log_level, _opts)
 end
 
 
-local on_keystroke_callbacks = {}
+function vim.register_keystroke_callback()
+  error('vim.register_keystroke_callback is deprecated, instead use: vim.on_key')
+end
 
---- Register a lua {fn} with an {id} to be run after every keystroke.
+local on_key_cbs = {}
+
+--- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
+--- yes every, input key.
 ---
----@param fn function: Function to call. It should take one argument, which is a string.
----                   The string will contain the literal keys typed.
----                   See |i_CTRL-V|
+--- The Nvim command-line option |-w| is related but does not support callbacks
+--- and cannot be toggled dynamically.
 ---
+---@param fn function: Callback function. It should take one string argument.
+---                   On each key press, Nvim passes the key char to fn(). |i_CTRL-V|
 ---                   If {fn} is nil, it removes the callback for the associated {ns_id}
----@param ns_id number? Namespace ID. If not passed or 0, will generate and return a new
----                    namespace ID from |nvim_create_namesapce()|
+---@param ns_id number? Namespace ID. If nil or 0, generates and returns a new
+---                    |nvim_create_namesapce()| id.
 ---
----@return number Namespace ID associated with {fn}
+---@return number Namespace id associated with {fn}. Or count of all callbacks
+---if on_key() is called without arguments.
 ---
----@note {fn} will be automatically removed if an error occurs while calling.
----     This is to prevent the annoying situation of every keystroke erroring
----     while trying to remove a broken callback.
----@note {fn} will not be cleared from |nvim_buf_clear_namespace()|
----@note {fn} will receive the keystrokes after mappings have been evaluated
-function vim.register_keystroke_callback(fn, ns_id)
+---@note {fn} will be removed if an error occurs while calling.
+---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
+---@note {fn} will receive the keys after mappings have been evaluated
+function vim.on_key(fn, ns_id)
+  if fn == nil and ns_id == nil then
+    return #on_key_cbs
+  end
+
   vim.validate {
     fn = { fn, 'c', true},
     ns_id = { ns_id, 'n', true }
@@ -455,20 +465,19 @@ function vim.register_keystroke_callback(fn, ns_id)
     ns_id = vim.api.nvim_create_namespace('')
   end
 
-  on_keystroke_callbacks[ns_id] = fn
+  on_key_cbs[ns_id] = fn
   return ns_id
 end
 
---- Function that executes the keystroke callbacks.
+--- Executes the on_key callbacks.
 ---@private
-function vim._log_keystroke(char)
+function vim._on_key(char)
   local failed_ns_ids = {}
   local failed_messages = {}
-  for k, v in pairs(on_keystroke_callbacks) do
+  for k, v in pairs(on_key_cbs) do
     local ok, err_msg = pcall(v, char)
     if not ok then
-      vim.register_keystroke_callback(nil, k)
-
+      vim.on_key(nil, k)
       table.insert(failed_ns_ids, k)
       table.insert(failed_messages, err_msg)
     end
@@ -476,7 +485,7 @@ function vim._log_keystroke(char)
 
   if failed_ns_ids[1] then
     error(string.format(
-      "Error executing 'on_keystroke' with ns_ids of '%s'\n    With messages: %s",
+      "Error executing 'on_key' with ns_ids '%s'\n    Messages: %s",
       table.concat(failed_ns_ids, ", "),
       table.concat(failed_messages, "\n")))
   end
