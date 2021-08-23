@@ -975,6 +975,13 @@ func Test_fo_a_w()
   exe "normal f4xx"
   call assert_equal(['1 2 5 6 7 ', '8 9'], getline(1, 2))
 
+  " using "cw" leaves cursor in right spot
+  call setline(1, ['Now we g whether that nation, or',
+      \ 'any nation so conceived and,'])
+  set fo=tcqa tw=35
+  exe "normal 2G0cwx\<Esc>"
+  call assert_equal(['Now we g whether that nation, or x', 'nation so conceived and,'], getline(1, 2))
+
   set tw=0
   set fo&
   %bw!

@@ -1725,7 +1725,9 @@ int op_delete(oparg_T *oap)
                      (int)oap->line_count-1, n, deleted_bytes,
                      0, 0, 0, kExtmarkUndo);
     }
-    auto_format(false, true);
+    if (oap->op_type == OP_DELETE) {
+      auto_format(false, true);
+    }
   }
 
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
@@ -2486,6 +2488,7 @@ int op_change(oparg_T *oap)
       xfree(ins_text);
     }
   }
+  auto_format(false, true);
 
   return retval;
 }
