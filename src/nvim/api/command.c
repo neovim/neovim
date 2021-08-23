@@ -110,9 +110,9 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
 
   if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
     if (errormsg != NULL) {
-      api_set_error(err, kErrorTypeException, "Error while parsing command line: %s", errormsg);
+      api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
-      api_set_error(err, kErrorTypeException, "Error while parsing command line");
+      api_set_error(err, kErrorTypeException, "Parsing command-line");
     }
     goto end;
   }

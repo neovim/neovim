@@ -344,7 +344,7 @@ describe('mappings with <Cmd>', function()
       of test text                                                     |
       {1:~                                                                }|*2
       {7:                                                                 }|
-      {2:Error detected while processing :}                                |
+      {2:Error in :}                                                       |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
     ]])
@@ -410,7 +410,7 @@ describe('mappings with <Cmd>', function()
       of test text                                                     |
       {1:~                                                                }|*2
       {7:                                                                 }|
-      {2:Error detected while processing :}                                |
+      {2:Error in :}                                                       |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
     ]])
@@ -433,7 +433,7 @@ describe('mappings with <Cmd>', function()
       of test text                                                     |
       {1:~                                                                }|*2
       {7:                                                                 }|
-      {2:Error detected while processing :}                                |
+      {2:Error in :}                                                       |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
     ]])
@@ -493,7 +493,7 @@ describe('mappings with <Cmd>', function()
       of test text                                                     |
       {1:~                                                                }|*2
       {7:                                                                 }|
-      {2:Error detected while processing :}                                |
+      {2:Error in :}                                                       |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
     ]])
@@ -531,7 +531,7 @@ describe('mappings with <Cmd>', function()
       of test text                                                     |
       {1:~                                                                }|*2
       {7:                                                                 }|
-      {2:Error detected while processing :}                                |
+      {2:Error in :}                                                       |
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
     ]])
@@ -640,7 +640,7 @@ describe('mappings with <Cmd>', function()
       {1:~                                                                }|
       {7:                                                                 }|
       :echo 2                                                          |
-      {2:Error detected while processing :}                                |
+      {2:Error in :}                                                       |
       {2:E605: Exception not caught: very error}                           |
       :echo 2^                                                          |
     ]])
@@ -653,7 +653,7 @@ describe('mappings with <Cmd>', function()
       of test text                                                     |
       {7:                                                                 }|
       :echo 2                                                          |
-      {2:Error detected while processing :}                                |
+      {2:Error in :}                                                       |
       {2:E605: Exception not caught: very error}                           |
       4                                                                |
       {3:Press ENTER or type command to continue}^                          |

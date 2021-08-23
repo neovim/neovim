@@ -189,9 +189,9 @@ describe('luaeval()', function()
     eq("Vim(call):E5100: Cannot convert given Lua table: table should contain either only integer keys or only string keys",
        exc_exec('call luaeval("{1, foo=2}")'))
 
-    startswith("Vim(call):E5107: Error loading lua [string \"luaeval()\"]:",
+    startswith("Vim(call):E5107: Lua: [string \"luaeval()\"]:",
                exc_exec('call luaeval("1, 2, 3")'))
-    startswith("Vim(call):E5108: Error executing lua [string \"luaeval()\"]:",
+    startswith("Vim(call):E5108: Lua: [string \"luaeval()\"]:",
                exc_exec('call luaeval("(nil)()")'))
 
   end)
@@ -428,18 +428,18 @@ describe('luaeval()', function()
 
   it('errors out correctly when doing incorrect things in lua', function()
     -- Conversion errors
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
+    eq('Vim(call):E5108: Lua: [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
        remove_trace(exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: ERROR',
+    eq('Vim(call):E5108: Lua: [string "luaeval()"]:1: ERROR',
        remove_trace(exc_exec([[call luaeval("error('ERROR')")]])))
-    eq('Vim(call):E5108: Error executing lua [NULL]',
+    eq('Vim(call):E5108: Lua: [NULL]',
        remove_trace(exc_exec([[call luaeval("error(nil)")]])))
   end)
 
   it('does not leak memory when called with too long line',
   function()
     local s = ('x'):rep(65536)
-    eq('Vim(call):E5107: Error loading lua [string "luaeval()"]:1: unexpected symbol near \')\'',
+    eq('Vim(call):E5107: Lua: [string "luaeval()"]:1: unexpected symbol near \')\'',
        exc_exec([[call luaeval("(']] .. s ..[[' + )")]]))
     eq(s, fn.luaeval('"' .. s .. '"'))
   end)
@@ -482,7 +482,7 @@ describe('v:lua', function()
     eq("string: abc", eval('v:lua.mymod.whatis(0z616263)'))
     eq("string: ", eval('v:lua.mymod.whatis(v:_null_blob)'))
 
-    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
+    eq("Vim:E5108: Lua: [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(eval, 'v:lua.mymod.crashy()'))
   end)
 
@@ -497,14 +497,14 @@ describe('v:lua', function()
     eq("hey there", api.nvim_get_current_line())
     eq({5, 10, 15, 20}, eval('[[1], [2, 3], [4]]->v:lua.vim.tbl_flatten()->map({_, v -> v * 5})'))
 
-    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
+    eq("Vim:E5108: Lua: [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(eval, '"huh?"->v:lua.mymod.crashy()'))
   end)
 
   it('works in :call', function()
     command(":call v:lua.mymod.noisy('command')")
     eq("hey command", api.nvim_get_current_line())
-    eq("Vim(call):E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
+    eq("Vim(call):E5108: Lua: [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(command, 'call v:lua.mymod.crashy()'))
   end)
 

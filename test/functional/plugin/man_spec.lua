@@ -253,9 +253,7 @@ describe(':Man', function()
     matches('^/.+', actual_file)
     local args = { nvim_prog, '--headless', '+:Man ' .. actual_file, '+q' }
     matches(
-      ('Error detected while processing command line:\r\n' .. 'man.lua: no manual entry for %s'):format(
-        pesc(actual_file)
-      ),
+      ('Error in command line:\r\n' .. 'man.lua: no manual entry for %s'):format(pesc(actual_file)),
       fn.system(args, { '' })
     )
     os.remove(actual_file)

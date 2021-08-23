@@ -41,7 +41,7 @@ local function test_embed(ext_linegrid)
     screen:expect([[
                                                                   |*4
       {102:                                                            }|
-      {9:Error detected while processing pre-vimrc command line:}     |
+      {9:Error in pre-vimrc command line:}                            |
       {9:E121: Undefined variable: invalid}                           |
       {6:Press ENTER or type command to continue}^                     |
     ]])
@@ -62,7 +62,7 @@ local function test_embed(ext_linegrid)
     screen:expect([[
                                                                   |*3
       {102:                                                            }|
-      {9:Error detected while processing pre-vimrc command line:}     |
+      {9:Error in pre-vimrc command line:}                            |
       {9:foo}                                                         |
       {101:bar}                                                         |
       {100:Press ENTER or type command to continue}^                     |
@@ -75,7 +75,7 @@ local function test_embed(ext_linegrid)
       grid = [[
                                                                   |*3
       {102:                                                            }|
-      {9:Error detected while processing pre-vimrc command line:}     |
+      {9:Error in pre-vimrc command line:}                            |
       {9:foo}                                                         |
       {9:bar}                                                         |
       {6:Press ENTER or type command to continue}^                     |

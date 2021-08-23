@@ -872,15 +872,15 @@ describe('decoration_providers', function()
     ]])
     screen:expect([[
       {3:                                                                 }|
-      {9:Error in decoration provider "start" (ns=ns1):}                   |
-      {9:Error executing lua: [string "<nvim>"]:4: Foo}                    |
+      {9:Decoration provider "start" (ns=ns1):}                            |
+      {9:Lua: [string "<nvim>"]:4: Foo}                                    |
       {9:stack traceback:}                                                 |
       {9:        [C]: in function 'error'}                                 |
       {9:        [string "<nvim>"]:4: in function <[string "<nvim>"]:3>}   |
       {6:Press ENTER or type command to continue}^                          |
     ]])
     t.assert_log('Error in decoration provider "start" %(ns=ns1%):', testlog, 100)
-    t.assert_log('Error executing lua: %[string "<nvim>"%]:4: Foo', testlog, 100)
+    t.assert_log('Lua: %[string "<nvim>"%]:4: Foo', testlog, 100)
     n.check_close()
     os.remove(testlog)
   end)

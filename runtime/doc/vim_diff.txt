@@ -560,7 +560,7 @@ Lua interface (|lua.txt|):
   that prints `a` and `b` on separate lines, exactly like
   `:lua print("a\nb")` .
 - `:lua error('TEST')` emits the error: >
-  E5108: Error executing lua: [string "<Vimscript compiled string>"]:1: TEST
+  E5108: Lua: [string "<Vimscript compiled string>"]:1: TEST
 <  whereas Vim emits only "TEST".
 - Lua has direct access to Nvim |API| via `vim.api`.
 - Lua package.path and package.cpath are automatically updated according to

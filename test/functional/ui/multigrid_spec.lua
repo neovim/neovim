@@ -892,7 +892,7 @@ describe('ext_multigrid', function()
                                                            |
       {1:~                                                    }|*4
     ## grid 3
-      {14:Error detected while processing function ErrMsg:}     |
+      {14:Error in function ErrMsg:}                            |
       {19:line    2:}                                           |
       {14:error 0}                                              |
       {14:error 1}                                              |

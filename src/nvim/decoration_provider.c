@@ -34,7 +34,7 @@ static void decor_provider_error(DecorProvider *provider, const char *name, cons
 {
   const char *ns = describe_ns(provider->ns_id, "(UNKNOWN PLUGIN)");
   ELOG("Error in decoration provider \"%s\" (ns=%s):\n%s", name, ns, msg);
-  msg_schedule_semsg_multiline("Error in decoration provider \"%s\" (ns=%s):\n%s", name, ns, msg);
+  msg_schedule_semsg_multiline("Decoration provider \"%s\" (ns=%s):\n%s", name, ns, msg);
 }
 
 // Note we pass in a provider index as this function may cause decor_providers providers to be

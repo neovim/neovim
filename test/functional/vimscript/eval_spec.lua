@@ -193,21 +193,19 @@ describe('uncaught exception', function()
       end
     ]])
     feed(':try\rlua _G.Oops()\rendtry\r')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       {3:                                                                                }|
       :try                                                                            |
       :  lua _G.Oops()                                                                |
       :  endtry                                                                       |
-      {9:Error detected while processing :}                                               |
-      {9:E5108: Error executing lua [string "<nvim>"]:2: oops}                            |
+      {9:Error in :}                                                                      |
+      {9:E5108: Lua: [string "<nvim>"]:2: oops}                                           |
       {9:stack traceback:}                                                                |
       {9:        [C]: in function 'error'}                                                |
       {9:        [string "<nvim>"]:2: in function 'Oops'}                                 |
       {9:        [string ":lua"]:1: in main chunk}                                        |
       {6:Press ENTER or type command to continue}^                                         |
-    ]],
-    }
+    ]])
   end)
 end)
 

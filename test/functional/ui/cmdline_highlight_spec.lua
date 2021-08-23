@@ -686,7 +686,7 @@ describe('Ex commands coloring', function()
       {EOB:~                                       }|*2
       {MSEP:                                        }|
       :#                                      |
-      {ERR:Error detected while processing :}       |
+      {ERR:Error in :}                              |
       {ERR:E605: Exception not caught: 42}          |
       :#^                                      |
     ]])
@@ -696,16 +696,13 @@ describe('Ex commands coloring', function()
       {EOB:~                                       }|
       {MSEP:                                        }|
       :#                                      |
-      {ERR:Error detected while processing :}       |
+      {ERR:Error in :}                              |
       {ERR:E605: Exception not caught: 42}          |
       {ERR:E749: Empty buffer}                      |
       {PE:Press ENTER or type command to continue}^ |
     ]])
     feed('<CR>')
-    eq(
-      'Error detected while processing :\nE605: Exception not caught: 42\nE749: Empty buffer',
-      exec_capture('messages')
-    )
+    eq('Error in :\nE605: Exception not caught: 42\nE749: Empty buffer', exec_capture('messages'))
   end)
   it('errors out when failing to get callback', function()
     api.nvim_set_var('Nvim_color_cmdline', 42)

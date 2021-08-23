@@ -268,7 +268,7 @@ function M.pcall_err_withtrace(fn, ...)
   return (
     errmsg
       :gsub('^%.%.%./testnvim%.lua:0: ', '')
-      :gsub('^Error executing lua:- ', '')
+      :gsub('^Lua:- ', '')
       :gsub('^%[string "<nvim>"%]:0: ', '')
   )
 end

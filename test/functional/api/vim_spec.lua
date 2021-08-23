@@ -768,26 +768,13 @@ describe('API', function()
     end)
 
     it('reports errors', function()
-      eq(
-        [[Error loading lua: [string "<nvim>"]:0: '=' expected near '+']],
-        pcall_err(api.nvim_exec_lua, 'a+*b', {})
-      )
-
-      eq(
-        [[Error loading lua: [string "<nvim>"]:0: unexpected symbol near '1']],
-        pcall_err(api.nvim_exec_lua, '1+2', {})
-      )
-
-      eq(
-        [[Error loading lua: [string "<nvim>"]:0: unexpected symbol]],
-        pcall_err(api.nvim_exec_lua, 'aa=bb\0', {})
-      )
-
+      eq([['=' expected near '+']], pcall_err(api.nvim_exec_lua, 'a+*b', {}))
+      eq([[unexpected symbol near '1']], pcall_err(api.nvim_exec_lua, '1+2', {}))
+      eq([[unexpected symbol]], pcall_err(api.nvim_exec_lua, 'aa=bb\0', {}))
       eq(
         [[attempt to call global 'bork' (a nil value)]],
         pcall_err(api.nvim_exec_lua, 'bork()', {})
       )
-
       eq('did\nthe\nfail', pcall_err(api.nvim_exec_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
@@ -2716,7 +2703,7 @@ describe('API', function()
       eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
 
       eq(
-        "Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
+        "Vim:Invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
         pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)')
       )
       eq(info, eval('rpcrequest(3, "nvim_get_chan_info", 0)'))
@@ -4690,24 +4677,21 @@ describe('API', function()
       }, api.nvim_parse_cmd('MyCommand test it', {}))
     end)
     it('validates command', function()
-      eq('Error while parsing command line', pcall_err(api.nvim_parse_cmd, '', {}))
-      eq('Error while parsing command line', pcall_err(api.nvim_parse_cmd, '" foo', {}))
+      eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '', {}))
+      eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '" foo', {}))
       eq(
-        'Error while parsing command line: E492: Not an editor command: Fubar',
+        'Parsing command-line: E492: Not an editor command: Fubar',
         pcall_err(api.nvim_parse_cmd, 'Fubar', {})
       )
       command('command! Fubar echo foo')
+      eq('Parsing command-line: E477: No ! allowed', pcall_err(api.nvim_parse_cmd, 'Fubar!', {}))
       eq(
-        'Error while parsing command line: E477: No ! allowed',
-        pcall_err(api.nvim_parse_cmd, 'Fubar!', {})
-      )
-      eq(
-        'Error while parsing command line: E481: No range allowed',
+        'Parsing command-line: E481: No range allowed',
         pcall_err(api.nvim_parse_cmd, '4,6Fubar', {})
       )
       command('command! Foobar echo foo')
       eq(
-        'Error while parsing command line: E464: Ambiguous use of user-defined command',
+        'Parsing command-line: E464: Ambiguous use of user-defined command',
         pcall_err(api.nvim_parse_cmd, 'F', {})
       )
     end)
@@ -4725,7 +4709,7 @@ describe('API', function()
         Entering Ex mode.  Type "visual" to go to Normal mode.      |
         :1^                                                          |
       ]])
-      eq('Error while parsing command line', pcall_err(api.nvim_parse_cmd, '', {}))
+      eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '', {}))
       feed('<CR>')
       screen:expect([[
         foo                                                         |
@@ -4794,7 +4778,7 @@ describe('API', function()
     end)
     it('no side-effects (error messages) in pcall() #20339', function()
       eq(
-        { false, 'Error while parsing command line: E16: Invalid range' },
+        { false, 'Parsing command-line: E16: Invalid range' },
         exec_lua([=[return {pcall(vim.api.nvim_parse_cmd, "'<,'>n", {})}]=])
       )
       eq('', eval('v:errmsg'))

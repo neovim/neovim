@@ -6357,10 +6357,10 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       name = get_client_info(chan, "name");
     }
     if (name) {
-      semsg_multiline("rpc_error", "Error invoking '%s' on channel %" PRIu64 " (%s):\n%s",
+      semsg_multiline("rpc_error", "Invoking '%s' on channel %" PRIu64 " (%s):\n%s",
                       method, chan_id, name, err.msg);
     } else {
-      semsg_multiline("rpc_error", "Error invoking '%s' on channel %" PRIu64 ":\n%s",
+      semsg_multiline("rpc_error", "Invoking '%s' on channel %" PRIu64 ":\n%s",
                       method, chan_id, err.msg);
     }
 
