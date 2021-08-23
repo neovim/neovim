@@ -631,7 +631,7 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
                 +b
                 +c
 
-                vim.diff('a\n', 'b\nc\n', {hunk_lines = true})
+                vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
                 -->
                 {
                     {1, 1, 1, 2}
