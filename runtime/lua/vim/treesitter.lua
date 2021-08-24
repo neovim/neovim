@@ -20,6 +20,9 @@ setmetatable(M, {
       elseif k == "language" then
         t[k] = require"vim.treesitter.language"
         return t[k]
+      elseif k == "query" then
+        t[k] = require"vim.treesitter.query"
+        return t[k]
       end
    end
  })
