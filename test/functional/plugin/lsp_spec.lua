@@ -6,6 +6,7 @@ local buf_lines = helpers.buf_lines
 local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local pesc = helpers.pesc
 local insert = helpers.insert
@@ -1935,6 +1936,83 @@ describe('LSP', function()
 
       mark = funcs.nvim_buf_get_mark(target_bufnr, "'")
       eq({ 2, 3 }, mark)
+    end)
+  end)
+
+  describe('lsp.util.make_floating_popup_options', function()
+    before_each(function()
+      exec_lua [[
+        local bufnr = vim.uri_to_bufnr("file:///fake/uri")
+        local winheight = vim.fn.winheight(0)
+        for i = 1, winheight do
+          vim.api.nvim_buf_set_lines(bufnr, 0, 0, false, {''})
+        end
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.api.nvim_win_set_cursor(0, {winheight, 0})
+      ]]
+    end)
+
+    local function popup_row(opts)
+      return exec_lua([[
+        return vim.lsp.util.make_floating_popup_options(...).row
+      ]], 2, 2, opts)
+    end
+
+    local err_pattern = "^Error executing lua: %.%.%./util%.lua:0: invalid floating preview border: .*%. :help vim%.api%.nvim_open_win%(%)$"
+
+    it('calculates default border height correctly', function()
+      eq(0, popup_row())
+    end)
+
+    it('calculates string border height correctly', function()
+      eq(0, popup_row({border = 'none'}))
+      eq(-2, popup_row({border = 'single'}))
+      eq(-2, popup_row({border = 'double'}))
+      eq(-2, popup_row({border = 'rounded'}))
+      eq(-2, popup_row({border = 'solid'}))
+      eq(-1, popup_row({border = 'shadow'}))
+    end)
+
+    it('error on invalid string border', function()
+      matches(err_pattern, pcall_err(popup_row, {border = ''}))
+      matches(err_pattern, pcall_err(popup_row, {border = 'invalid'}))
+    end)
+
+    it('error on invalid array border length', function()
+      matches(err_pattern, pcall_err(popup_row, {border = {}}))
+      matches(err_pattern, pcall_err(popup_row, {border = {'', '', ''}}))
+      matches(err_pattern, pcall_err(popup_row, {border = {'', '', '', '', ''}}))
+    end)
+
+    it('error on invalid array border member type', function()
+      matches(err_pattern, pcall_err(popup_row, {border = {0}}))
+    end)
+
+    it('calculates 8-array border height correctly', function()
+      eq(0, popup_row({border = {'', '', '', '', '', '', '', ''}}))
+      eq(-2, popup_row({border = {'', '~', '', '~', '', '~', '', '~'}}))
+      eq(-1, popup_row({border = {'', '', '', '~', '', '~', '', ''}}))
+      eq(0, popup_row({border = {'', '', '', {'~', 'NormalFloat'}, '', '', '', {'~', 'NormalFloat'}}}))
+      eq(-2, popup_row({border = {'', {'~', 'NormalFloat'}, '', '', '', {'~', 'NormalFloat'}, '', ''}}))
+    end)
+
+    it('calculates 4-array border height correctly', function()
+      eq(0, popup_row({border = {'', '', '', ''}}))
+      eq(-2, popup_row({border = {'', '~', '', '~'}}))
+      eq(0, popup_row({border = {'', '', '', {'~', 'NormalFloat'}}}))
+      eq(-2, popup_row({border = {'', {'~', 'NormalFloat'}, '', ''}}))
+    end)
+
+    it('calculates 2-array border height correctly', function()
+      eq(0, popup_row({border = {'', ''}}))
+      eq(-2, popup_row({border = {'', '~'}}))
+      eq(-2, popup_row({border = {'', {'~', 'NormalFloat'}}}))
+    end)
+
+    it('calculates 1-array border height correctly', function()
+      eq(0, popup_row({border = {''}}))
+      eq(-2, popup_row({border = {'~'}}))
+      eq(-2, popup_row({border = {{'~', 'NormalFloat'}}}))
     end)
   end)
 
