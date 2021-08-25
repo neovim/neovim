@@ -264,6 +264,7 @@ int ml_open(buf_T *buf)
   buf->b_ml.ml_line_lnum = 0;   // no cached line
   buf->b_ml.ml_line_offset = 0;
   buf->b_ml.ml_chunksize = NULL;
+  buf->b_ml.ml_usedchunks = 0;
 
   if (cmdmod.noswapfile) {
     buf->b_p_swf = false;
