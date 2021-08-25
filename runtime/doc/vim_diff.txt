@@ -475,6 +475,7 @@ Highlight groups:
 
 Options:
   'antialias'
+  'backspace' ("indent,eol,start" is always used)
   'bioskey' (MS-DOS)
   'conskey' (MS-DOS)
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)

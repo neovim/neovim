@@ -1374,20 +1374,12 @@ int do_set(
                        && ascii_isdigit(**(char_u **)varp)) {
                 i = getdigits_int((char_u **)varp, true, 0);
                 switch (i) {
-                case 0:
-                  *(char_u **)varp = empty_option;
-                  break;
-                case 1:
-                  *(char_u **)varp = vim_strsave(
-                      (char_u *)"indent,eol");
-                  break;
                 case 2:
                   *(char_u **)varp = vim_strsave(
                       (char_u *)"indent,eol,start");
                   break;
-                case 3:
-                  *(char_u **)varp = vim_strsave(
-                      (char_u *)"indent,eol,nostop");
+                default:
+                  errmsg = e_unsupportedoption;
                   break;
                 }
                 xfree(oldval);
@@ -2961,12 +2953,21 @@ ambw_end:
       }
     }
   } else if (varp == &p_bs) {  // 'backspace'
+    // Only 'indent,eol,start' is allowed
     if (ascii_isdigit(*p_bs)) {
-      if (*p_bs > '3' || p_bs[1] != NUL) {
-        errmsg = e_invarg;
+      if (*p_bs != '2' || p_bs[1] != NUL) {
+        errmsg = e_unsupportedoption;
       }
-    } else if (check_opt_strings(p_bs, p_bs_values, true) != OK) {
-      errmsg = e_invarg;
+    } else {
+      unsigned int flags;
+      if (opt_strings_flags(p_bs, p_bs_values, &flags, true) != OK) {
+        errmsg = e_unsupportedoption;
+      }
+
+      // 0111 is the bit mask for indent,eol,start
+      if (flags != 7) {
+        errmsg = e_unsupportedoption;
+      }
     }
   } else if (varp == &p_bo) {
     if (opt_strings_flags(p_bo, p_bo_values, &bo_flags, true) != OK) {
@@ -7043,19 +7044,9 @@ static int check_opt_wim(void)
 }
 
 /// Check if backspacing over something is allowed.
-/// @param  what  BS_INDENT, BS_EOL, BS_START, or BS_NOSTOP
-bool can_bs(int what)
+bool can_bs(void)
 {
-  if (what == BS_START && bt_prompt(curbuf)) {
-    return false;
-  }
-  switch (*p_bs) {
-    case '3':       return true;
-    case '2':       return what != BS_NOSTOP;
-    case '1':       return what != BS_START;
-    case '0':       return false;
-  }
-  return vim_strchr(p_bs, what) != NULL;
+  return !bt_prompt(curbuf);
 }
 
 /// Save the current values of 'fileformat' and 'fileencoding', so that we know

@@ -3332,7 +3332,7 @@ static int ins_compl_bs(void)
   if ((int)(p - line) - (int)compl_col < 0
       || ((int)(p - line) - (int)compl_col == 0 && ctrl_x_mode != CTRL_X_OMNI)
       || ctrl_x_mode == CTRL_X_EVAL
-      || (!can_bs(BS_START) && (int)(p - line) - (int)compl_col
+      || (!can_bs() && (int)(p - line) - (int)compl_col
           - compl_length < 0)) {
     return K_BS;
   }
@@ -7980,8 +7980,7 @@ static void ins_del(void)
   }
   if (gchar_cursor() == NUL) {          // delete newline
     const int temp = curwin->w_cursor.col;
-    if (!can_bs(BS_EOL)  // only if "eol" included
-        || do_join(2, false, true, false, false) == FAIL) {
+    if (do_join(2, false, true, false, false) == FAIL) {
       vim_beep(BO_BS);
     } else {
       curwin->w_cursor.col = temp;
@@ -8051,13 +8050,10 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   if (buf_is_empty(curbuf)
       || (!revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
-              || (!can_bs(BS_START)
+              || (!can_bs()
                   && (arrow_used
                       || (curwin->w_cursor.lnum == Insstart_orig.lnum
-                          && curwin->w_cursor.col <= Insstart_orig.col)))
-              || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
-                  && curwin->w_cursor.col <= ai_col)
-              || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
+                          && curwin->w_cursor.col <= Insstart_orig.col)))))) {
     vim_beep(BO_BS);
     return false;
   }
@@ -8301,11 +8297,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         if (mode == BACKSPACE_CHAR) {
           break;
         }
-      } while (revins_on
-               || (curwin->w_cursor.col > mincol
-                   && (can_bs(BS_NOSTOP)
-                       || (curwin->w_cursor.lnum != Insstart_orig.lnum
-                           || curwin->w_cursor.col != Insstart_orig.col))));
+      } while (revins_on || curwin->w_cursor.col > mincol);
     }
     did_backspace = true;
   }

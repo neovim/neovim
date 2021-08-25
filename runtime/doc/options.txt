@@ -722,27 +722,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	done with ":syntax on".
 
 							*'backspace'* *'bs'*
-'backspace' 'bs'	string	(default "indent,eol,start")
-			global
-	Influences the working of <BS>, <Del>, CTRL-W and CTRL-U in Insert
-	mode.  This is a list of items, separated by commas.  Each item allows
-	a way to backspace over something:
-	value	effect	~
-	indent	allow backspacing over autoindent
-	eol	allow backspacing over line breaks (join lines)
-	start	allow backspacing over the start of insert; CTRL-W and CTRL-U
-		stop once at the start of insert.
-	nostop	like start, except CTRL-W and CTRL-U do not stop at the start of
-		insert.
-
-	When the value is empty, Vi compatible backspacing is used.
-
-	For backwards compatibility with version 5.4 and earlier:
-	value	effect	~
-	  0	same as ":set backspace=" (Vi compatible)
-	  1	same as ":set backspace=indent,eol"
-	  2	same as ":set backspace=indent,eol,start"
-	  3	same as ":set backspace=indent,eol,nostop"
+'backspace' 'bs'	Removed. |vim-differences|
+	Nvim always behaves as though 'backspace' is set to "indent,eol,start".
 
 				*'backup'* *'bk'* *'nobackup'* *'nobk'*
 'backup' 'bk'		boolean	(default off)
