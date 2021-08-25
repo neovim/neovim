@@ -7,7 +7,6 @@ endif
 let s:did_load = 1
 
 " Align Nvim defaults to Vim.
-set backspace=
 set directory^=.
 set fillchars=vert:\|,fold:-
 set laststatus=1

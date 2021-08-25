@@ -245,8 +245,8 @@ func Test_digraphs_option()
   call Put_Dig_BS("P","=")
   call assert_equal(['Р']+repeat(["₽"],2)+['П'], getline(line('.')-3,line('.')))
   " Not a digraph: this is different from <c-k>!
-  call Put_Dig_BS("a","\<bs>")
-  call Put_Dig_BS("\<bs>","a")
+  call Put_Dig_BS("aa","\<bs>")
+  call Put_Dig_BS("aa\<bs>","a")
   call assert_equal(['','a'], getline(line('.')-1,line('.')))
   " Grave
   call Put_Dig_BS("a","!")

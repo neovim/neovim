@@ -62,7 +62,7 @@ func Test_softtabstop()
   call assert_equal("x   x", getline(1))
 
   call setline(1, 'x       ')
-  set sts=0 sw=0 backspace=start
+  set sts=0 sw=0 "backspace=start
   exe "normal A\<BS>x\<Esc>"
   call assert_equal("x      x", getline(1))
 

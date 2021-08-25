@@ -551,11 +551,13 @@ func Test_completion_respect_bs_option()
   new
   let li = ["aaa", "aaa12345", "aaaabcdef", "aaaABC"]
 
+  if !has('nvim')
   set bs=indent,eol
   call setline(1, li)
   1
   call feedkeys("A\<C-X>\<C-N>\<C-P>\<BS>\<BS>\<BS>\<Esc>", "tx")
   call assert_equal('aaa', getline(1))
+  endif
 
   %d
   set bs=indent,eol,start

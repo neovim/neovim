@@ -264,7 +264,7 @@ action();
   call cursor(2, 1)
   set comments=s1:/*,mb:*,ex:*/,://
   set nojoinspaces fo=j
-  set backspace=eol,start
+  "set backspace=eol,start
 
   .,+3join
   exe "normal j4J\<CR>"
@@ -381,7 +381,7 @@ int i = 7 /* foo *// 3
   set comments+=s1:/*,mb:*,ex:*/,://
   set comments+=s1:>#,mb:#,ex:#<,:<
   set cpoptions-=j joinspaces fo=j
-  set backspace=eol,start
+  "set backspace=eol,start
 
   .,+3join
   exe "normal j4J\<CR>"

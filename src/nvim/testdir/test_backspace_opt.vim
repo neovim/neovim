@@ -1,6 +1,7 @@
 " Tests for 'backspace' settings
 
 func Test_backspace_option()
+  throw 'skipped: Nvim only supports backspace="indent,eol,start" #15484'
   set backspace=
   call assert_equal('', &backspace)
   set backspace=indent
@@ -79,6 +80,11 @@ func Test_backspace_ctrl_u()
   exe "normal Avim3\<C-U>\<Esc>\<CR>"
   iunmap <c-u>
   exe "normal Avim4\<C-U>\<C-U>\<Esc>\<CR>"
+
+  if has('nvim')
+    " Nvim only supports backspace="indent,eol,start" #15484
+    return
+  end
 
   " Test with backspace set to the compatible setting
   set backspace= visualbell

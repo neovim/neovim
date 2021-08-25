@@ -138,7 +138,6 @@ describe('joining lines', function()
     feed_command('/^{/+1')
     feed_command('set comments=s1:/*,mb:*,ex:*/,://')
     feed_command('set nojoinspaces')
-    feed_command('set backspace=eol,start')
 
     -- With 'joinspaces' switched off, join lines using both "J" and :join and
     -- verify that comment leaders are stripped or kept as appropriate.
@@ -196,24 +195,6 @@ describe('joining lines', function()
     feed('Avim3<c-u><esc><cr>')
     feed_command('iunmap <c-u>')
     feed('Avim4<c-u><c-u><esc><cr>')
-
-    -- Test with 'backspace' set to the compatible setting.
-    feed_command('set backspace=')
-    feed('A vim5<esc>A<c-u><c-u><esc><cr>')
-    feed('A vim6<esc>Azwei<c-g>u<c-u><esc><cr>')
-    feed_command('inoremap <c-u> <left><c-u>')
-    feed('A vim7<c-u><c-u><esc><cr>')
-
-    expect([[
-      1 this shouldn't be deleted
-      2 this shouldn't be deleted
-      3 this shouldn't be deleted
-      4 this should be deleted3
-      
-      6 this shouldn't be deleted vim5
-      7 this shouldn't be deleted vim6
-      8 this shouldn't be deleted (not touched yet) vim7
-      ]])
   end)
 
   it("removes comment leaders with 'joinspaces' on", function()
@@ -293,10 +274,9 @@ describe('joining lines', function()
     feed_command([[set comments=sO:*\ -,mO:*\ \ ,exO:*/]])
     feed_command('set comments+=s1:/*,mb:*,ex:*/,://')
     feed_command('set comments+=s1:>#,mb:#,ex:#<,:<')
-    feed_command('set backspace=eol,start')
 
-    -- With 'joinspaces' on (the default setting), again join lines and verify
-    -- that comment leaders are stripped or kept as appropriate.
+    -- With 'joinspaces' on, again join lines and verify that comment leaders
+    -- are stripped or kept as appropriate.
     feed_command('.,+3join')
     feed('j4J<cr>')
     feed_command('.,+8join')

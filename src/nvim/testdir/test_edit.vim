@@ -43,6 +43,7 @@ func Test_edit_01()
   call feedkeys("i\<del>\<esc>", 'tnix')
   call assert_equal([''], getline(1,'$'))
   %d
+  if !has('nvim') " 'backspace' removed in Nvim #15484
   " 5.1) delete linebreak with 'bs' option containing eol
   let _bs=&bs
   set bs=eol
@@ -58,6 +59,7 @@ func Test_edit_01()
   call feedkeys("A\<del>\<esc>", 'tnix')
   call assert_equal(["abc def", "ghi jkl"], getline(1, 2))
   let &bs=_bs
+  endif
   bw!
 endfunc
 

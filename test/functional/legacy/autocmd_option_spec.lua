@@ -188,8 +188,8 @@ describe('au OptionSet', function()
     end)
 
     it('should be called in setting backspace option through :let', function()
-      command('let &bs=""')
-      expected_combination({'backspace', 'indent,eol,start', '', 'global'})
+      command('let &bs="indent,eol,start"')
+      expected_combination({'backspace', 'indent,eol,start', 'indent,eol,start', 'global'})
     end)
 
     describe('being set by setbufvar()', function()
