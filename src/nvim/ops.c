@@ -3444,8 +3444,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
                          (int)y_size-1, lastsize, totsize,
                          kExtmarkUndo);
         } else if (y_type == kMTLineWise && flags & PUT_LINE_SPLIT) {
-          extmark_splice(curbuf, (int)new_cursor.lnum-1, col, 0, 0, 0,
-                         (int)y_size+1, 0, totsize+1, kExtmarkUndo);
+          // Account for last pasted NL + last NL
+          extmark_splice(curbuf, (int)new_cursor.lnum-1, col + 1, 0, 0, 0,
+                         (int)y_size+1, 0, totsize+2, kExtmarkUndo);
         }
       }
 

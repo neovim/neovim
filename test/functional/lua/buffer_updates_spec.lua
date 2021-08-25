@@ -978,6 +978,22 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("visual paste", function()
+      local check_events= setup_eventcheck(verify, { "aaa {", "b", "}" })
+      -- Setting up
+      feed[[jdd]]
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 6, 1, 0, 2, 0, 0, 0 };
+      }
+
+      -- Actually testing
+      feed[[v%p]]
+      check_events {
+        { "test1", "bytes", 1, 8, 0, 4, 4, 1, 1, 3, 0, 0, 0 };
+        { "test1", "bytes", 1, 8, 0, 4, 4, 0, 0, 0, 2, 0, 3 };
+      }
+    end)
+
     it("nvim_buf_set_lines", function()
       local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
 
