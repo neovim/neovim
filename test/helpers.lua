@@ -116,6 +116,23 @@ function module.assert_log(pat, logfile)
     pat, nrlines, logfile, logtail))
 end
 
+local function exists_log(state, arguments, _)
+  local pat = arguments[1]
+  local logfile = arguments[2] or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+  local nrlines = 10
+  local lines = module.read_file_list(logfile, -nrlines) or {}
+  local log_msg = string.format('(last %d lines): %s:\n%s', nrlines, logfile, table.concat(lines, "\n"))
+  for _,line in ipairs(lines) do
+    if line:match(pat) then
+      state.failure_message = string.format('Pattern %q found in log%s', pat, log_msg)
+      return true
+    end
+  end
+  state.failure_message = string.format('Pattern %q not found in log%s', pat, log_msg)
+  return false
+end
+assert:register('assertion', 'exists_log', exists_log)
+
 -- Invokes `fn` and returns the error string (with truncated paths), or raises
 -- an error if `fn` succeeds.
 --
