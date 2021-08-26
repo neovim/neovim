@@ -21,18 +21,34 @@ Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
 be used from Lua code. A good overview of using Lua in neovim is given by
 https://github.com/nanotee/nvim-lua-guide.
 
-Module conflicts are resolved by "last wins".  For example if both of these
-are on 'runtimepath':
-    runtime/lua/foo.lua
-    ~/.config/nvim/lua/foo.lua
-then `require('foo')` loads "~/.config/nvim/lua/foo.lua", and
-"runtime/lua/foo.lua" is not used.  See |lua-require| to understand how Nvim
-finds and loads Lua modules.  The conventions are similar to those of
-Vimscript |plugin|s, with some extra features.  See |lua-require-example| for
-a walkthrough.
+The |:source| and |:runtime| commands can run Lua scripts as well as Vim
+scripts.  Lua modules can be loaded with `require('name')`, which
+conventionally returns a table but can return any value.
+
+See |lua-require| for details on how Nvim finds and loads Lua modules.
+See |lua-require-example| for an example of how to write and use a module.
 
 ==============================================================================
 IMPORTING LUA MODULES                                   *lua-require*
+
+Modules are searched for under the directories specified in 'runtimepath', in
+the order they appear.  For a module `foo`, each directory is searched for
+`lua/foo.lua`, then the entire list is searched again for `lua/foo/init.lua`,
+then paths specified by `package.path` and `package.cpath`.  The first script
+found is run and `require()` returns the value returned by the script if any,
+else `true`.
+
+The return value is cached after the first call to `require()` for each
+module, with subsequent calls returning the cached value without searching for
+or executing any script.  For further details on `require()`, see the Lua
+documentation at https://www.lua.org/manual/5.1/manual.html#pdf-require.
+
+For example, if 'runtimepath' is "foo,bar", `require('mod')` searches these
+paths in order and the first script found is used:
+    foo/lua/mod.lua
+    bar/lua/mod.lua
+    foo/lua/mod/init.lua
+    bar/lua/mod/init.lua
 
                                                         *lua-package-path*
 Nvim automatically adjusts `package.path` and `package.cpath` according to
