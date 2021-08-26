@@ -65,6 +65,7 @@ function! man#open_page(count, mods, ...) abort
   let b:man_sect = sect
 endfunction
 
+" Called when a man:// buffer is opened.
 function! man#read_page(ref) abort
   try
     let [sect, name] = s:extract_sect_and_name_ref(a:ref)
@@ -121,6 +122,15 @@ function! s:system(cmd, ...) abort
   return opts.stdout
 endfunction
 
+function! s:set_options(pager) abort
+  setlocal filetype=man
+  setlocal noswapfile buftype=nofile bufhidden=hide
+  setlocal nomodified readonly nomodifiable
+  if a:pager
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
+  endif
+endfunction
+
 function! s:get_page(path) abort
   " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   " Soft-wrap: ftplugin/man.vim sets wrap/breakindent/….
@@ -134,9 +144,7 @@ function! s:get_page(path) abort
 endfunction
 
 function! s:put_page(page) abort
-  setlocal modifiable
-  setlocal noreadonly
-  setlocal noswapfile
+  setlocal modifiable noreadonly noswapfile
   silent keepjumps %delete _
   silent put =a:page
   while getline(1) =~# '^\s*$'
@@ -148,7 +156,7 @@ function! s:put_page(page) abort
   silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
   1
   lua require("man").highlight_man_page()
-  setlocal filetype=man
+  call s:set_options(v:false)
 endfunction
 
 function! man#show_toc() abort
@@ -397,6 +405,7 @@ function! s:format_candidate(path, psect) abort
   endif
 endfunction
 
+" Called when Nvim is invoked as $MANPAGER.
 function! man#init_pager() abort
   " https://github.com/neovim/neovim/issues/6828
   let og_modifiable = &modifiable
@@ -420,6 +429,7 @@ function! man#init_pager() abort
     execute 'silent file man://'.tolower(fnameescape(ref))
   endif
 
+  call s:set_options(v:true)
   let &l:modifiable = og_modifiable
 endfunction
 
