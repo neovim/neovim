@@ -1877,10 +1877,14 @@ Object nvim_load_context(Dictionary dict)
   return (Object)OBJECT_INIT;
 }
 
-/// Gets the current mode. |mode()|
-/// "blocking" is true if Nvim is waiting for input.
+/// Gets the current mode.
 ///
-/// @returns Dictionary { "mode": String, "blocking": Boolean }
+/// @returns Dictionary with items:
+///   - "mode": |mode()| name
+///   - "blocking": (Boolean) true if Nvim is waiting for input.
+///   - "wintype": Window type name
+///     - "" (empty string): normal window
+///     - "cmdline": |cmdline-window|, see also |getcmdwintype()|
 Dictionary nvim_get_mode(void)
   FUNC_API_SINCE(2) FUNC_API_FAST
 {
@@ -1890,6 +1894,8 @@ Dictionary nvim_get_mode(void)
 
   PUT(rv, "mode", STRING_OBJ(cstr_as_string(modestr)));
   PUT(rv, "blocking", BOOLEAN_OBJ(blocked));
+  PUT(rv, "wintype",
+      STRING_OBJ(cstr_to_string(cmdwin_type == 0 ? "" : "cmdline")));
 
   return rv;
 }
