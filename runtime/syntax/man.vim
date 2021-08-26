@@ -27,11 +27,7 @@ if &filetype != 'man'
   finish
 endif
 
-if !exists('b:man_sect')
-  call man#init_pager()
-endif
-
-if b:man_sect =~# '^[023]'
+if get(b:, 'man_sect', '') =~# '^[023]'
   syntax case match
   syntax include @c $VIMRUNTIME/syntax/c.vim
   syntax match manCFuncDefinition display '\<\h\w*\>\ze\(\s\|\n\)*(' contained
