@@ -548,6 +548,16 @@ func Test_tag_line_toolong()
   call assert_equal('Xsomewhere', expand('%'))
   call assert_equal(3, getcurpos()[1])
 
+  " expansion on command line works with long lines when &wildoptions contains
+  " 'tagfile'
+  set wildoptions=tagfile
+  call writefile([
+	\ 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	file	/^pattern$/;"	f'
+	\ ], 'Xtags')
+  call feedkeys(":tag \<Tab>", 'tx')
+  " Should not crash
+  call assert_true(v:true)
+
   call delete('Xtags')
   call delete('Xsomewhere')
   set tags&
