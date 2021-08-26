@@ -18,7 +18,9 @@ describe('vim.highlight.on_yank', function()
       vim.cmd('bwipeout!')
     ]]
     exec_lua[[vim.wait(10)]]
-    assert.no.exists_log([[vim/highlight.lua:%d+: Invalid buffer id: ]] .. bufnr)
+    local pattern = [[vim/highlight.lua:%d+: Invalid buffer id: ]] .. bufnr
+    local exists = pcall(helpers.assert_log, pattern)
+    assert.is_false(exists, string.format("%q should not be in log", pattern))
   end)
 
 end)
