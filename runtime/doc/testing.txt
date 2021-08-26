@@ -53,6 +53,9 @@ assert_beeps({cmd})					*assert_beeps()*
 		Also see |assert_fails()|, |assert_nobeep()| and
 		|assert-return|.
 
+		Can also be used as a |method|: >
+			GetCmd()->assert_beeps()
+<
 							*assert_equal()*
 assert_equal({expected}, {actual} [, {msg}])
 		When {expected} and {actual} are not equal an error message is
@@ -69,13 +72,19 @@ assert_equal({expected}, {actual} [, {msg}])
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Expected 'foo' but got 'bar' ~
 
-							*assert_equalfile()*
+		Can also be used as a |method|: >
+			mylist->assert_equal([1, 2, 3])
+
+<							*assert_equalfile()*
 assert_equalfile({fname-one}, {fname-two})
 		When the files {fname-one} and {fname-two} do not contain
 		exactly the same text an error message is added to |v:errors|.
 		Also see |assert-return|.
 		When {fname-one} or {fname-two} does not exist the error will
 		mention that.
+
+		Can also be used as a |method|: >
+			GetLog()->assert_equalfile('expected.log')
 
 assert_exception({error} [, {msg}])			*assert_exception()*
 		When v:exception does not contain the string {error} an error
@@ -97,6 +106,9 @@ assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 		Note that beeping is not considered an error, and some failing
 		commands only beep.  Use |assert_beeps()| for those.
 
+		Can also be used as a |method|: >
+			GetCmd()->assert_fails('E99:')
+
 assert_false({actual} [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
 		|v:errors|, like with |assert_equal()|.
@@ -105,6 +117,9 @@ assert_false({actual} [, {msg}])				*assert_false()*
 		number the assert fails.
 		When {msg} is omitted an error in the form
 		"Expected False but got {actual}" is produced.
+
+		Can also be used as a |method|: >
+			GetResult()->assert_false()
 
 assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
 		This asserts number and |Float| values.  When {actual}  is lower
@@ -134,6 +149,9 @@ assert_match({pattern}, {actual} [, {msg}])
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
 
+		Can also be used as a |method|: >
+			getFile()->assert_match('foo.*')
+<
 assert_nobeep({cmd})					*assert_nobeep()*
 		Run {cmd} and add an error message to |v:errors| if it
 		produces a beep or visual bell.
@@ -145,15 +163,26 @@ assert_notequal({expected}, {actual} [, {msg}])
 		|v:errors| when {expected} and {actual} are equal.
 		Also see |assert-return|.
 
-							*assert_notmatch()*
+		Can also be used as a |method|: >
+			mylist->assert_notequal([1, 2, 3])
+
+<							*assert_notmatch()*
 assert_notmatch({pattern}, {actual} [, {msg}])
 		The opposite of `assert_match()`: add an error message to
 		|v:errors| when {pattern} matches {actual}.
 		Also see |assert-return|.
 
+		Can also be used as a |method|: >
+			getFile()->assert_notmatch('bar.*')
+
+
 assert_report({msg})					*assert_report()*
 		Report a test failure directly, using {msg}.
 		Always returns one.
+
+		Can also be used as a |method|: >
+			GetMessage()->assert_report()
+
 
 assert_true({actual} [, {msg}])				*assert_true()*
 		When {actual} is not true an error message is added to
@@ -164,5 +193,8 @@ assert_true({actual} [, {msg}])				*assert_true()*
 		When {msg} is omitted an error in the form "Expected True but
 		got {actual}" is produced.
 
+		Can also be used as a |method|: >
+			GetResult()->assert_true()
+<
 
  vim:tw=78:ts=8:noet:ft=help:norl:

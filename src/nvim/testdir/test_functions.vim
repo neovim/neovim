@@ -852,7 +852,7 @@ func Test_byte2line_line2byte()
 
   set fileformat=mac
   call assert_equal([-1, -1, 1, 1, 2, 2, 2, 3, 3, -1],
-  \                 map(range(-1, 8), 'byte2line(v:val)'))
+  \                 map(range(-1, 8), 'v:val->byte2line()'))
   call assert_equal([-1, -1, 1, 3, 6, 8, -1],
   \                 map(range(-1, 5), 'line2byte(v:val)'))
 
@@ -873,6 +873,34 @@ func Test_byte2line_line2byte()
 
   set endofline& fixendofline& fileformat&
   bw!
+endfunc
+
+func Test_byteidx()
+  let a = '.é.' " one char of two bytes
+  call assert_equal(0, byteidx(a, 0))
+  call assert_equal(0, byteidxcomp(a, 0))
+  call assert_equal(1, byteidx(a, 1))
+  call assert_equal(1, byteidxcomp(a, 1))
+  call assert_equal(3, byteidx(a, 2))
+  call assert_equal(3, byteidxcomp(a, 2))
+  call assert_equal(4, byteidx(a, 3))
+  call assert_equal(4, byteidxcomp(a, 3))
+  call assert_equal(-1, byteidx(a, 4))
+  call assert_equal(-1, byteidxcomp(a, 4))
+
+  let b = '.é.' " normal e with composing char
+  call assert_equal(0, b->byteidx(0))
+  call assert_equal(1, b->byteidx(1))
+  call assert_equal(4, b->byteidx(2))
+  call assert_equal(5, b->byteidx(3))
+  call assert_equal(-1, b->byteidx(4))
+
+  call assert_equal(0, b->byteidxcomp(0))
+  call assert_equal(1, b->byteidxcomp(1))
+  call assert_equal(2, b->byteidxcomp(2))
+  call assert_equal(4, b->byteidxcomp(3))
+  call assert_equal(5, b->byteidxcomp(4))
+  call assert_equal(-1, b->byteidxcomp(5))
 endfunc
 
 " Test for charidx()
@@ -1065,7 +1093,7 @@ func Test_col()
   call assert_equal(7, col('$'))
   call assert_equal(4, col("'x"))
   call assert_equal(6, col("'Y"))
-  call assert_equal(2, col([1, 2]))
+  call assert_equal(2, [1, 2]->col())
   call assert_equal(7, col([1, '$']))
 
   call assert_equal(0, col(''))
@@ -1413,13 +1441,13 @@ func Test_bufadd_bufload()
   call assert_equal([''], getbufline(buf, 1, '$'))
 
   let curbuf = bufnr('')
-  call writefile(['some', 'text'], 'otherName')
-  let buf = bufadd('otherName')
+  call writefile(['some', 'text'], 'XotherName')
+  let buf = 'XotherName'->bufadd()
   call assert_notequal(0, buf)
-  call assert_equal(1, bufexists('otherName'))
+  eval 'XotherName'->bufexists()->assert_equal(1)
   call assert_equal(0, getbufvar(buf, '&buflisted'))
   call assert_equal(0, bufloaded(buf))
-  call bufload(buf)
+  eval buf->bufload()
   call assert_equal(1, bufloaded(buf))
   call assert_equal(['some', 'text'], getbufline(buf, 1, '$'))
   call assert_equal(curbuf, bufnr(''))
@@ -1439,8 +1467,9 @@ func Test_bufadd_bufload()
   call assert_equal(0, bufexists(buf2))
 
   bwipe someName
-  bwipe otherName
+  bwipe XotherName
   call assert_equal(0, bufexists('someName'))
+  call delete('XotherName')
 endfunc
 
 func Test_readdir()
@@ -1471,6 +1500,20 @@ func Test_readdir()
   call assert_equal(1, len(files))
 
   call delete('Xdir', 'rf')
+endfunc
+
+func Test_call()
+  call assert_equal(3, call('len', [123]))
+  call assert_equal(3, 'len'->call([123]))
+  call assert_fails("call call('len', 123)", 'E714:')
+  call assert_equal(0, call('', []))
+
+  function Mylen() dict
+     return len(self.data)
+  endfunction
+  let mydict = {'data': [0, 1, 2, 3], 'len': function("Mylen")}
+  eval mydict.len->call([], mydict)->assert_equal(4)
+  call assert_fails("call call('Mylen', [], 0)", 'E715:')
 endfunc
 
 " Test for the eval() function

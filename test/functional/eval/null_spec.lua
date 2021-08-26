@@ -53,7 +53,7 @@ describe('NULL', function()
 
     -- Correct behaviour
     null_expr_test('can be indexed with error message for empty list', 'L[0]',
-                   'E684: list index out of range: 0\nE15: Invalid expression: L[0]', nil)
+                   'E684: list index out of range: 0', nil)
     null_expr_test('can be splice-indexed', 'L[:]', 0, {})
     null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
     null_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
@@ -68,7 +68,7 @@ describe('NULL', function()
     null_expr_test('can be copied', 'copy(L)', 0, {})
     null_expr_test('can be deepcopied', 'deepcopy(L)', 0, {})
     null_expr_test('does not crash when indexed', 'L[1]',
-                        'E684: list index out of range: 1\nE15: Invalid expression: L[1]', nil)
+                        'E684: list index out of range: 1', nil)
     null_expr_test('does not crash call()', 'call("arglistid", L)', 0, 0)
     null_expr_test('does not crash col()', 'col(L)', 0, 0)
     null_expr_test('does not crash virtcol()', 'virtcol(L)', 0, 0)
@@ -135,7 +135,7 @@ describe('NULL', function()
   end)
   describe('dict', function()
     it('does not crash when indexing NULL dict', function()
-      eq('\nE716: Key not present in Dictionary: "test"\nE15: Invalid expression: v:_null_dict.test',
+      eq('\nE716: Key not present in Dictionary: "test"',
          redir_exec('echo v:_null_dict.test'))
     end)
     null_expr_test('makes extend error out', 'extend(D, {})', 'E742: Cannot change value of extend() argument', 0)

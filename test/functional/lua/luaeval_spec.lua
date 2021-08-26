@@ -481,6 +481,21 @@ describe('v:lua', function()
        pcall_err(eval, 'v:lua.mymod.crashy()'))
   end)
 
+  it('works when called as a method', function()
+    eq(123, eval('110->v:lua.foo(13)'))
+    eq(true, exec_lua([[return _G.val == nil]]))
+
+    eq(321, eval('300->v:lua.foo(21, "boop")'))
+    eq("boop", exec_lua([[return _G.val]]))
+
+    eq(NIL, eval('"there"->v:lua.mymod.noisy()'))
+    eq("hey there", meths.get_current_line())
+    eq({5, 10, 15, 20}, eval('[[1], [2, 3], [4]]->v:lua.vim.tbl_flatten()->map({_, v -> v * 5})'))
+
+    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
+       pcall_err(eval, '"huh?"->v:lua.mymod.crashy()'))
+  end)
+
   it('works in :call', function()
     command(":call v:lua.mymod.noisy('command')")
     eq("hey command", meths.get_current_line())
@@ -518,8 +533,15 @@ describe('v:lua', function()
 
     eq("Vim:E15: Invalid expression: v:['lua'].foo()", pcall_err(eval, "v:['lua'].foo()"))
     eq("Vim(call):E461: Illegal variable name: v:['lua']", pcall_err(command, "call v:['lua'].baar()"))
+    eq("Vim:E117: Unknown function: v:lua", pcall_err(eval, "v:lua()"))
 
     eq("Vim(let):E46: Cannot change read-only variable \"v:['lua']\"", pcall_err(command, "let v:['lua'] = 'xx'"))
     eq("Vim(let):E46: Cannot change read-only variable \"v:lua\"", pcall_err(command, "let v:lua = 'xx'"))
+
+    eq("Vim:E107: Missing parentheses: v:lua.func", pcall_err(eval, "'bad'->v:lua.func"))
+    eq("Vim:E274: No white space allowed before parenthesis", pcall_err(eval, "'bad'->v:lua.func ()"))
+    eq("Vim:E107: Missing parentheses: v:lua", pcall_err(eval, "'bad'->v:lua"))
+    eq("Vim:E117: Unknown function: v:lua", pcall_err(eval, "'bad'->v:lua()"))
+    eq("Vim:E15: Invalid expression: v:lua.()", pcall_err(eval, "'bad'->v:lua.()"))
   end)
 end)

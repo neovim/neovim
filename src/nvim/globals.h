@@ -972,6 +972,7 @@ EXTERN char_u e_write[] INIT(= N_("E80: Error while writing"));
 EXTERN char_u e_zerocount[] INIT(= N_("E939: Positive count required"));
 EXTERN char_u e_usingsid[] INIT(= N_(
     "E81: Using <SID> not in a script context"));
+EXTERN char_u e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
 EXTERN char_u e_maxmempat[] INIT(= N_(
         "E363: pattern uses more memory than 'maxmempattern'"));
 EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));

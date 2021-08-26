@@ -102,7 +102,7 @@ func Test_deletebufline()
   call assert_equal(0, deletebufline(b, 2, 8))
   call assert_equal(['aaa'], getbufline(b, 1, 2))
   exe "bd!" b
-  call assert_equal(1, deletebufline(b, 1))
+  call assert_equal(1, b->deletebufline(1))
 
   split Xtest
   call setline(1, ['a', 'b', 'c'])
@@ -131,11 +131,11 @@ func Test_appendbufline_redraw()
   endif
   let lines =<< trim END
     new foo
-    let winnr=bufwinnr('foo')
-    let buf=bufnr('foo')
+    let winnr = 'foo'->bufwinnr()
+    let buf = bufnr('foo')
     wincmd p
     call appendbufline(buf, '$', range(1,200))
-    exe winnr. 'wincmd w'
+    exe winnr .. 'wincmd w'
     norm! G
     wincmd p
     call deletebufline(buf, 1, '$')

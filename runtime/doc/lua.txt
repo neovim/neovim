@@ -391,6 +391,10 @@ where the args are converted to Lua values. The expression >
 is equivalent to the Lua chunk >
     return somemod.func(...)
 
+The `v:lua` prefix may be used to call Lua functions as |method|s. For
+example: >
+    arg1->v:lua.somemod.func(arg2)
+
 You can use `v:lua` in "func" options like 'tagfunc', 'omnifunc', etc.
 For example consider the following Lua omnifunc handler: >
 

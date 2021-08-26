@@ -37,7 +37,7 @@ function Test_hide()
   " :hide as a command
   hide
   call assert_equal([orig_bname, orig_winnr], [bufname(''), winnr('$')])
-  call assert_equal([1, 1], [buflisted('Xf1'), bufloaded('Xf1')])
+  call assert_equal([1, 1], ['Xf1'->buflisted(), 'Xf1'->bufloaded()])
   bwipeout! Xf1
 
   new Xf1

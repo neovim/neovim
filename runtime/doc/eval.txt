@@ -669,12 +669,14 @@ Expression syntax summary, from least to most significant:
 	expr8[expr1 : expr1]	substring of a String or sublist of a |List|
 	expr8.name		entry in a |Dictionary|
 	expr8(expr1, ...)	function call with |Funcref| variable
+	expr8->name(expr1, ...)	|method| call
 
 |expr9|	number			number constant
 	"string"		string constant, backslash is special
 	'string'		string constant, ' is doubled
 	[expr1, ...]		|List|
 	{expr1: expr1, ...}	|Dictionary|
+	#{key: expr1, ...}	|Dictionary|
 	&option			option value
 	(expr1)			nested expression
 	variable		internal variable
@@ -939,9 +941,11 @@ expr8							*expr8*
 -----
 This expression is either |expr9| or a sequence of the alternatives below,
 in any order.  E.g., these are all possible:
-	expr9[expr1].name
-	expr9.name[expr1]
-	expr9(expr1, ...)[expr1].name
+	expr8[expr1].name
+	expr8.name[expr1]
+	expr8(expr1, ...)[expr1].name
+	expr8->(expr1, ...)[expr1]
+Evaluation is always from left to right.
 
 
 expr8[expr1]		item of String or |List|	*expr-[]* *E111*
@@ -1043,6 +1047,36 @@ expr8(expr1, ...)	|Funcref| function call
 When expr8 is a |Funcref| type variable, invoke the function it refers to.
 
 
+expr8->name([args])	method call			*method* *->*
+expr8->{lambda}([args])
+
+For methods that are also available as global functions this is the same as: >
+	name(expr8 [, args])
+There can also be methods specifically for the type of "expr8".
+
+This allows for chaining, passing the value that one method returns to the
+next method: >
+	mylist->filter(filterexpr)->map(mapexpr)->sort()->join()
+<
+Example of using a lambda: >
+	GetPercentage->{x -> x * 100}()->printf('%d%%')
+<
+When using -> the |expr7| operators will be applied first, thus: >
+	-1.234->string()
+Is equivalent to: >
+	(-1.234)->string()
+And NOT: >
+	-(1.234->string())
+<
+							*E274*
+"->name(" must not contain white space.  There can be white space before the
+"->" and after the "(", thus you can split the lines like this: >
+	mylist
+	\ ->filter(filterexpr)
+	\ ->map(mapexpr)
+	\ ->sort()
+	\ ->join()
+<
 
 							*expr9*
 number
@@ -2583,6 +2617,8 @@ abs({expr})							*abs()*
 			echo abs(-4)
 <			4
 
+		Can also be used as a |method|: >
+			Compute()->abs()
 
 acos({expr})							*acos()*
 		Return the arc cosine of {expr} measured in radians, as a
@@ -2595,6 +2631,8 @@ acos({expr})							*acos()*
 			:echo acos(-0.5)
 <			2.094395
 
+		Can also be used as a |method|: >
+			Compute()->acos()
 
 add({list}, {expr})					*add()*
 		Append the item {expr} to |List| {list}.  Returns the
@@ -2605,12 +2643,16 @@ add({list}, {expr})					*add()*
 		item.  Use |extend()| to concatenate |Lists|.
 		Use |insert()| to add an item at another position.
 
+		Can also be used as a |method|: >
+			mylist->add(val1)->add(val2)
 
 and({expr}, {expr})					*and()*
 		Bitwise AND on the two arguments.  The arguments are converted
 		to a number.  A List, Dict or Float argument causes an error.
 		Example: >
 			:let flag = and(bits, 0x80)
+<		Can also be used as a |method|: >
+			:let flag = bits->and(0x80)
 
 api_info()						*api_info()*
 		Returns Dictionary of |api-metadata|.
@@ -2628,6 +2670,9 @@ append({lnum}, {text})					*append()*
 		0 for success.  Example: >
 			:let failed = append(line('$'), "# THE END")
 			:let failed = append(0, ["Chapter 1", "the beginning"])
+
+<		Can also be used as a |method| after a List: >
+			mylist->append(lnum)
 
 appendbufline({expr}, {lnum}, {text})			*appendbufline()*
 		Like |append()| but append the text in buffer {expr}.
@@ -2647,8 +2692,10 @@ appendbufline({expr}, {lnum}, {text})			*appendbufline()*
 		error message is given. Example: >
 			:let failed = appendbufline(13, 0, "# THE START")
 <
-							*argc()*
-argc([{winid}])
+		Can also be used as a |method| after a List: >
+			mylist->appendbufline(buf, lnum)
+
+argc([{winid}])					*argc()*
 		The result is the number of files in the argument list.  See
 		|arglist|.
 		If {winid} is not supplied, the argument list of the current
@@ -2702,6 +2749,9 @@ asin({expr})						*asin()*
 			:echo asin(-0.5)
 <			-0.523599
 
+		Can also be used as a |method|: >
+			Compute()->asin()
+
 
 assert_ functions are documented here: |assert-functions-details|
 
@@ -2716,6 +2766,8 @@ atan({expr})						*atan()*
 			:echo atan(-4.01)
 <			-1.326405
 
+		Can also be used as a |method|: >
+			Compute()->atan()
 
 atan2({expr1}, {expr2})					*atan2()*
 		Return the arc tangent of {expr1} / {expr2}, measured in
@@ -2727,6 +2779,8 @@ atan2({expr1}, {expr2})					*atan2()*
 			:echo atan2(1, -1)
 <			2.356194
 
+		Can also be used as a |method|: >
+			Compute()->atan2(1)
 
 							*browse()*
 browse({save}, {title}, {initdir}, {default})
@@ -2737,8 +2791,8 @@ browse({save}, {title}, {initdir}, {default})
 		    {title}	title for the requester
 		    {initdir}	directory to start browsing in
 		    {default}	default file name
-		When the "Cancel" button is hit, something went wrong, or
-		browsing is not possible, an empty string is returned.
+		An empty string is returned when the "Cancel" button is hit,
+		something went wrong, or browsing is not possible.
 
 							*browsedir()*
 browsedir({title}, {initdir})
@@ -2760,6 +2814,8 @@ bufadd({name})						*bufadd()*
 		created buffer.  When {name} is an empty string then a new
 		buffer is always created.
 		The buffer will not have' 'buflisted' set.
+<		Can also be used as a |method|: >
+			let bufnr = 'somename'->bufadd()
 
 bufexists({expr})					*bufexists()*
 		The result is a Number, which is |TRUE| if a buffer called
@@ -2783,10 +2839,16 @@ bufexists({expr})					*bufexists()*
 		Use "bufexists(0)" to test for the existence of an alternate
 		file name.
 
+		Can also be used as a |method|: >
+			let exists = 'somename'->bufexists()
+
 buflisted({expr})					*buflisted()*
 		The result is a Number, which is |TRUE| if a buffer called
 		{expr} exists and is listed (has the 'buflisted' option set).
 		The {expr} argument is used like with |bufexists()|.
+
+		Can also be used as a |method|: >
+			let listed = 'somename'->buflisted()
 
 bufload({expr})						*bufload()*
 		Ensure the buffer {expr} is loaded.  When the buffer name
@@ -2797,15 +2859,21 @@ bufload({expr})						*bufload()*
 		there will be no dialog, the buffer will be loaded anyway.
 		The {expr} argument is used like with |bufexists()|.
 
+		Can also be used as a |method|: >
+			eval 'somename'->bufload()
+
 bufloaded({expr})					*bufloaded()*
 		The result is a Number, which is |TRUE| if a buffer called
 		{expr} exists and is loaded (shown in a window or hidden).
 		The {expr} argument is used like with |bufexists()|.
 
+		Can also be used as a |method|: >
+			let loaded = 'somename'->bufloaded()
+
 bufname([{expr}])						*bufname()*
 		The result is the name of a buffer, as it is displayed by the
 		":ls" command.
-+		If {expr} is omitted the current buffer is used.
+		If {expr} is omitted the current buffer is used.
 		If {expr} is a Number, that buffer number's name is given.
 		Number zero is the alternate buffer for the current window.
 		If {expr} is a String, it is used as a |file-pattern| to match
@@ -2824,6 +2892,9 @@ bufname([{expr}])						*bufname()*
 		If the {expr} is a String, but you want to use it as a buffer
 		number, force it to be a Number by adding zero to it: >
 			:echo bufname("3" + 0)
+<		Can also be used as a |method|: >
+			echo bufnr->bufname()
+
 <		If the buffer doesn't exist, or doesn't have a name, an empty
 		string is returned. >
 	bufname("#")		alternate buffer name
@@ -2846,6 +2917,9 @@ bufnr([{expr} [, {create}]])
 		number necessarily exist, because ":bwipeout" may have removed
 		them.  Use bufexists() to test for the existence of a buffer.
 
+		Can also be used as a |method|: >
+			echo bufref->bufnr()
+
 bufwinid({expr})					*bufwinid()*
 		The result is a Number, which is the |window-ID| of the first
 		window associated with buffer {expr}.  For the use of {expr},
@@ -2856,18 +2930,22 @@ bufwinid({expr})					*bufwinid()*
 <
 		Only deals with the current tab page.
 
+		Can also be used as a |method|: >
+			FindBuffer()->bufwinid()
+
 bufwinnr({expr})					*bufwinnr()*
-		The result is a Number, which is the number of the first
-		window associated with buffer {expr}.  For the use of {expr},
-		see |bufname()| above.  If buffer {expr} doesn't exist or
-		there is no such window, -1 is returned.  Example: >
+		Like |bufwinid()| but return the window number instead of the
+		|window-ID|.
+		If buffer {expr} doesn't exist or there is no such window, -1
+		is returned.  Example: >
 
 	echo "A window containing buffer 1 is " . (bufwinnr(1))
 
 <		The number can be used with |CTRL-W_w| and ":wincmd w"
 		|:wincmd|.
-		Only deals with the current tab page.
 
+		Can also be used as a |method|: >
+			FindBuffer()->bufwinnr()
 
 byte2line({byte})					*byte2line()*
 		Return the line number that contains the character at byte
@@ -2876,6 +2954,9 @@ byte2line({byte})					*byte2line()*
 		for the current buffer.  The first character has byte count
 		one.
 		Also see |line2byte()|, |go| and |:goto|.
+
+		Can also be used as a |method|: >
+			GetOffset()->byte2line()
 
 byteidx({expr}, {nr})					*byteidx()*
 		Return byte index of the {nr}'th character in the string
@@ -2899,6 +2980,9 @@ byteidx({expr}, {nr})					*byteidx()*
 		If there are exactly {nr} characters the length of the string
 		in bytes is returned.
 
+		Can also be used as a |method|: >
+			GetName()->byteidx(idx)
+
 byteidxcomp({expr}, {nr})					*byteidxcomp()*
 		Like byteidx(), except that a composing character is counted
 		as a separate character.  Example: >
@@ -2912,6 +2996,9 @@ byteidxcomp({expr}, {nr})					*byteidxcomp()*
 		Only works differently from byteidx() when 'encoding' is set to
 		a Unicode encoding.
 
+		Can also be used as a |method|: >
+			GetName()->byteidxcomp(idx)
+
 call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Call function {func} with the items in |List| {arglist} as
 		arguments.
@@ -2920,6 +3007,9 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 		Returns the return value of the called function.
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
+
+		Can also be used as a |method|: >
+			GetFunc()->call([arg, arg], dict)
 
 ceil({expr})							*ceil()*
 		Return the smallest integral value greater than or equal to
@@ -2932,6 +3022,9 @@ ceil({expr})							*ceil()*
 <			-5.0  >
 			echo ceil(4.0)
 <			4.0
+
+		Can also be used as a |method|: >
+			Compute()->ceil()
 
 changenr()						*changenr()*
 		Return the number of the most recent change.  This is the same
@@ -2982,6 +3075,9 @@ char2nr({expr} [, {utf8}])					*char2nr()*
 		A combining character is a separate character.
 		|nr2char()| does the opposite.
 
+		Can also be used as a |method|: >
+			GetChar()->char2nr()
+
 							*charidx()*
 charidx({string}, {idx} [, {countcc}])
 		Return the character index of the byte at {idx} in {string}.
@@ -3013,12 +3109,18 @@ cindent({lnum})						*cindent()*
 		When {lnum} is invalid -1 is returned.
 		See |C-indenting|.
 
+		Can also be used as a |method|: >
+			GetLnum()->cindent()
+
 clearmatches([{win}])					*clearmatches()*
  		Clears all matches previously defined for the current window
  		by |matchadd()| and the |:match| commands.
 		If {win} is specified, use the window with this number or
 		window ID instead of the current window.
 
+		Can also be used as a |method|: >
+			GetWin()->clearmatches()
+<
 							*col()*
 col({expr})	The result is a Number, which is the byte index of the column
 		position given with {expr}.  The accepted positions are:
@@ -3054,6 +3156,9 @@ col({expr})	The result is a Number, which is the byte index of the column
 				\<C-O>:set ve=all<CR>
 				\<C-O>:echo col(".") . "\n" <Bar>
 				\let &ve = save_ve<CR>
+
+<		Can also be used as a |method|: >
+			GetPos()->col()
 <
 
 complete({startcol}, {matches})			*complete()* *E785*
@@ -3085,6 +3190,10 @@ complete({startcol}, {matches})			*complete()* *E785*
 <		This isn't very useful, but it shows how it works.  Note that
 		an empty string is returned to avoid a zero being inserted.
 
+		Can also be used as a |method|, the second argument is passed
+		in: >
+			GetMatches()->complete(col('.'))
+
 complete_add({expr})				*complete_add()*
 		Add {expr} to the list of matches.  Only to be used by the
 		function specified with the 'completefunc' option.
@@ -3093,6 +3202,9 @@ complete_add({expr})				*complete_add()*
 		the list.
 		See |complete-functions| for an explanation of {expr}.  It is
 		the same as one item in the list that 'omnifunc' would return.
+
+		Can also be used as a |method|: >
+			GetMoreMatches()->complete_add()
 
 complete_check()				*complete_check()*
 		Check for a key typed while looking for completion matches.
@@ -3154,6 +3266,9 @@ complete_info([{what}])
 			call complete_info(['mode'])
 			" Get only 'mode' and 'pum_visible'
 			call complete_info(['mode', 'pum_visible'])
+
+<		Can also be used as a |method|: >
+			GetItems()->complete_info()
 <
 						*confirm()*
 confirm({msg} [, {choices} [, {default} [, {type}]]])
@@ -3207,6 +3322,9 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		don't fit, a vertical layout is used anyway.  For some systems
 		the horizontal layout is always used.
 
+		Can also be used as a |method|in: >
+			BuildMessage()->confirm("&Yes\n&No")
+
 							*copy()*
 copy({expr})	Make a copy of {expr}.  For Numbers and Strings this isn't
 		different from using {expr} directly.
@@ -3216,6 +3334,8 @@ copy({expr})	Make a copy of {expr}.  For Numbers and Strings this isn't
 		changing an item changes the contents of both |Lists|.
 		A |Dictionary| is copied in a similar way as a |List|.
 		Also see |deepcopy()|.
+		Can also be used as a |method|: >
+			mylist->copy()
 
 cos({expr})						*cos()*
 		Return the cosine of {expr}, measured in radians, as a |Float|.
@@ -3226,6 +3346,8 @@ cos({expr})						*cos()*
 			:echo cos(-4.01)
 <			-0.646043
 
+		Can also be used as a |method|: >
+			Compute()->cos()
 
 cosh({expr})						*cosh()*
 		Return the hyperbolic cosine of {expr} as a |Float| in the range
@@ -3237,6 +3359,8 @@ cosh({expr})						*cosh()*
 			:echo cosh(-0.5)
 <			-1.127626
 
+		Can also be used as a |method|: >
+			Compute()->cosh()
 
 count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		Return the number of times an item with value {expr} appears
@@ -3250,6 +3374,9 @@ count({comp}, {expr} [, {ic} [, {start}]])			*count()*
 		When {comp} is a string then the number of not overlapping
 		occurrences of {expr} is returned. Zero is returned when
 		{expr} is an empty string.
+
+		Can also be used as a |method|: >
+			mylist->count(val)
 
 							*cscope_connection()*
 cscope_connection([{num} , {dbpath} [, {prepend}]])
@@ -3346,6 +3473,8 @@ cursor({list})
 		position within a <Tab> or after the last character.
 		Returns 0 when the position could be set, -1 otherwise.
 
+		Can also be used as a |method|: >
+			GetCursorPos()->cursor()
 
 deepcopy({expr}[, {noref}])				*deepcopy()* *E698*
 		Make a copy of {expr}.  For Numbers and Strings this isn't
@@ -3367,6 +3496,9 @@ deepcopy({expr}[, {noref}])				*deepcopy()* *E698*
 		{noref} set to 1 will fail.
 		Also see |copy()|.
 
+		Can also be used as a |method|: >
+			GetObject()->deepcopy()
+
 delete({fname} [, {flags}])					*delete()*
 		Without {flags} or with {flags} empty: Deletes the file by the
 		name {fname}.  This also works when {fname} is a symbolic link.
@@ -3384,6 +3516,9 @@ delete({fname} [, {flags}])					*delete()*
 		operation was successful and -1/true when the deletion failed
 		or partly failed.
 
+		Can also be used as a |method|: >
+			GetName()->delete()
+
 deletebufline({expr}, {first}[, {last}])		*deletebufline()*
 		Delete lines {first} to {last} (inclusive) from buffer {expr}.
 		If {last} is omitted then delete line {first} only.
@@ -3397,6 +3532,9 @@ deletebufline({expr}, {first}[, {last}])		*deletebufline()*
 		{first} and {last} are used like with |setline()|. Note that
 		when using |line()| this refers to the current buffer. Use "$"
 		to refer to the last line in buffer {expr}.
+
+		Can also be used as a |method|: >
+			GetBuffer()->deletebufline(1)
 
 dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 		Adds a watcher to a dictionary. A dictionary watcher is
@@ -3464,6 +3602,9 @@ diff_filler({lnum})					*diff_filler()*
 		line, "'m" mark m, etc.
 		Returns 0 if the current window is not in diff mode.
 
+		Can also be used as a |method|: >
+			GetLnum()->diff_filler()
+
 diff_hlID({lnum}, {col})				*diff_hlID()*
 		Returns the highlight ID for diff mode at line {lnum} column
 		{col} (byte index).  When the current line does not have a
@@ -3475,11 +3616,16 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 		The highlight ID can be used with |synIDattr()| to obtain
 		syntax information about the highlighting.
 
+		Can also be used as a |method|: >
+			GetLnum()->diff_hlID(col)
+
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
 		A |List| or |Dictionary| is empty when it does not have any
 		items.  A Number is empty when its value is zero.  Special
 		variable is empty when it is |v:false| or |v:null|.
+		Can also be used as a |method|: >
+			mylist->empty()
 
 environ()						*environ()*
 		Return all of environment variables as dictionary. You can
@@ -3503,6 +3649,9 @@ eval({string})	Evaluate {string} and return the result.  Especially useful to
 		This works for Numbers, Floats, Strings and composites of
 		them.  Also works for |Funcref|s that refer to existing
 		functions.
+
+		Can also be used as a |method|: >
+			argv->join()->eval()
 
 eventhandler()						*eventhandler()*
 		Returns 1 when inside an event handler.  That is that Vim got
@@ -3661,11 +3810,17 @@ exp({expr})						*exp()*
 			:echo exp(-1)
 <			0.367879
 
+		Can also be used as a |method|: >
+			Compute()->exp()
+
 debugbreak({pid})					*debugbreak()*
 		Specifically used to interrupt a program being debugged.  It
 		will cause process {pid} to get a SIGTRAP.  Behavior for other
 		processes is undefined. See |terminal-debugger|.
 		{Sends a SIGINT to a process {pid} other than MS-Windows}
+
+		Can also be used as a |method|: >
+			GetPid()->debugbreak()
 
 expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		Expand wildcards and the following special keywords in {expr}.
@@ -3795,6 +3950,8 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 		fails.
 		Returns {expr1}.
 
+		Can also be used as a |method|: >
+			mylist->extend(otherlist)
 
 feedkeys({string} [, {mode}])				*feedkeys()*
 		Characters in {string} are queued for processing as if they
@@ -3848,7 +4005,11 @@ filereadable({file})					*filereadable()*
 		expression, which is used as a String.
 		If you don't care about the file being readable you can use
 		|glob()|.
-
+		{file} is used as-is, you may want to expand wildcards first: >
+			echo filereadable('~/.vimrc')
+			0
+			echo filereadable(expand('~/.vimrc'))
+			1
 
 filewritable({file})					*filewritable()*
 		The result is a Number, which is 1 when a file with the
@@ -3904,6 +4065,8 @@ filter({expr1}, {expr2})					*filter()*
 		Funcref errors inside a function are ignored, unless it was
 		defined with the "abort" flag.
 
+		Can also be used as a |method|: >
+			mylist->filter(expr2)
 
 finddir({name} [, {path} [, {count}]])				*finddir()*
 		Find directory {name} in {path}.  Supports both downwards and
@@ -3966,6 +4129,8 @@ float2nr({expr})					*float2nr()*
 			echo float2nr(1.0e-100)
 <			0
 
+		Can also be used as a |method|: >
+			Compute()->float2nr()
 
 floor({expr})							*floor()*
 		Return the largest integral value less than or equal to
@@ -3979,6 +4144,8 @@ floor({expr})							*floor()*
 			echo floor(4.0)
 <			4.0
 
+		Can also be used as a |method|: >
+			Compute()->floor()
 
 fmod({expr1}, {expr2})					*fmod()*
 		Return the remainder of {expr1} / {expr2}, even if the
@@ -3994,6 +4161,8 @@ fmod({expr1}, {expr2})					*fmod()*
 			:echo fmod(-12.33, 1.22)
 <			-0.13
 
+		Can also be used as a |method|: >
+			Compute()->fmod(1.22)
 
 fnameescape({string})					*fnameescape()*
 		Escape {string} for use as file name command argument.  All
@@ -4160,6 +4329,8 @@ get({list}, {idx} [, {default}])			*get()*
 		Get item {idx} from |List| {list}.  When this item is not
 		available return {default}.  Return zero when {default} is
 		omitted.
+		Can also be used as a |method|: >
+			mylist->get(idx)
 get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
@@ -5171,6 +5342,9 @@ has_key({dict}, {key})					*has_key()*
 		The result is a Number, which is TRUE if |Dictionary| {dict}
 		has an entry with key {key}.  FALSE otherwise.
 
+		Can also be used as a |method|: >
+			mydict->has_key(key)
+
 haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 		The result is a Number, which is 1 when the tabpage or window
 		has set a local path via |:tcd| or |:lcd|, otherwise 0.
@@ -5514,6 +5688,9 @@ insert({list}, {item} [, {idx}])			*insert()*
 		Note that when {item} is a |List| it is inserted as a single
 		item.  Use |extend()| to concatenate |Lists|.
 
+		Can also be used as a |method|: >
+			mylist->insert(item)
+
 interrupt()						*interrupt()*
 		Interrupt script execution.  It works more or less like the
 		user typing CTRL-C, most commands won't execute and control
@@ -5531,6 +5708,8 @@ invert({expr})						*invert()*
 		Bitwise invert.  The argument is converted to a number.  A
 		List, Dict or Float argument causes an error.  Example: >
 			:let bits = invert(bits)
+<		Can also be used as a |method|: >
+			:let bits = bits->invert()
 
 isdirectory({directory})				*isdirectory()*
 		The result is a Number, which is |TRUE| when a directory
@@ -5545,6 +5724,9 @@ isinf({expr})						*isinf()*
 <			1 >
 			:echo isinf(-1.0 / 0.0)
 <			-1
+
+		Can also be used as a |method|: >
+			Compute()->isinf()
 
 islocked({expr})					*islocked()* *E786*
 		The result is a Number, which is |TRUE| when {expr} is the
@@ -5581,11 +5763,16 @@ items({dict})						*items()*
 		|List| item is a list with two items: the key of a {dict}
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
+		Can also be used as a |method|: >
+			mydict->items()
 
 isnan({expr})						*isnan()*
 		Return |TRUE| if {expr} is a float with value NaN. >
 			echo isnan(0.0 / 0.0)
 <			1
+
+		Can also be used as a |method|: >
+			Compute()->isnan()
 
 jobpid({job})						*jobpid()*
 		Return the PID (process id) of |job-id| {job}.
@@ -5714,6 +5901,9 @@ join({list} [, {sep}])					*join()*
 		converted into a string like with |string()|.
 		The opposite function is |split()|.
 
+		Can also be used as a |method|: >
+			mylist->join()
+
 json_decode({expr})					*json_decode()*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style
 		list as the input, as well as regular string.  May output any
@@ -5744,8 +5934,10 @@ json_encode({expr})					*json_encode()*
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
 		arbitrary order.
+		Can also be used as a |method|: >
+			mydict->keys()
 
-							*len()* *E701*
+<							*len()* *E701*
 len({expr})	The result is a Number, which is the length of the argument.
 		When {expr} is a String or a Number the length in bytes is
 		used, as with |strlen()|.
@@ -5756,7 +5948,10 @@ len({expr})	The result is a Number, which is the length of the argument.
 		|Dictionary| is returned.
 		Otherwise an error is given.
 
-						*libcall()* *E364* *E368*
+		Can also be used as a |method|: >
+			mylist->len()
+
+<						*libcall()* *E364* *E368*
 libcall({libname}, {funcname}, {argument})
 		Call function {funcname} in the run-time library {libname}
 		with single argument {argument}.
@@ -5881,6 +6076,8 @@ log({expr})						*log()*
 			:echo log(exp(5))
 <			5.0
 
+		Can also be used as a |method|: >
+			Compute()->log()
 
 log10({expr})						*log10()*
 		Return the logarithm of Float {expr} to base 10 as a |Float|.
@@ -5890,6 +6087,9 @@ log10({expr})						*log10()*
 <			3.0 >
 			:echo log10(0.01)
 <			-2.0
+
+		Can also be used as a |method|: >
+			Compute()->log10()
 
 luaeval({expr}[, {expr}])
 		Evaluate Lua expression {expr} and return its result converted
@@ -5939,6 +6139,8 @@ map({expr1}, {expr2})					*map()*
 		Funcref errors inside a function are ignored, unless it was
 		defined with the "abort" flag.
 
+		Can also be used as a |method|: >
+			mylist->map(expr2)
 
 maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		When {dict} is omitted or zero: Return the rhs of mapping
@@ -6274,6 +6476,9 @@ max({expr})	Return the maximum value of all items in {expr}.
 		items in {expr} cannot be used as a Number this results in
                 an error.  An empty |List| or |Dictionary| results in zero.
 
+		Can also be used as a |method|: >
+			mylist->max()
+
 menu_get({path}, {modes})				*menu_get()*
 		Returns a |List| of |Dictionaries| describing |menus| (defined
 		by |:menu|, |:amenu|, …), including |hidden-menus|.
@@ -6328,7 +6533,10 @@ min({expr})	Return the minimum value of all items in {expr}.
 		items in {expr} cannot be used as a Number this results in
 		an error.  An empty |List| or |Dictionary| results in zero.
 
-							*mkdir()* *E739*
+		Can also be used as a |method|: >
+			mylist->min()
+
+<							*mkdir()* *E739*
 mkdir({name} [, {path} [, {prot}]])
 		Create directory {name}.
 		If {path} is "p" then intermediate directories are created as
@@ -6523,7 +6731,8 @@ or({expr}, {expr})					*or()*
 		to a number.  A List, Dict or Float argument causes an error.
 		Example: >
 			:let bits = or(bits, 0x80)
-
+<		Can also be used as a |method|: >
+			:let bits = bits->or(0x80)
 
 pathshorten({expr})					*pathshorten()*
 		Shorten directory names in the path {expr} and return the
@@ -6560,6 +6769,9 @@ pow({x}, {y})						*pow()*
 			:echo pow(32, 0.20)
 <			2.0
 
+		Can also be used as a |method|: >
+			Compute()->pow(3)
+
 prevnonblank({lnum})					*prevnonblank()*
 		Return the line number of the first line at or above {lnum}
 		that is not blank.  Example: >
@@ -6576,7 +6788,11 @@ printf({fmt}, {expr1} ...)				*printf()*
 <		May result in:
 			"  99: E42 asdfasdfasdfasdfasdfasdfasdfas" ~
 
-		Often used items are:
+		When used as a |method| the base is passed as the second
+		argument: >
+			Compute()->printf("result: %d")
+
+<		Often used items are:
 		  %s	string
 		  %6S	string right-aligned in 6 display cells
 		  %6s	string right-aligned in 6 bytes
@@ -7086,6 +7302,10 @@ remove({list}, {idx} [, {end}])				*remove()*
 		Example: >
 			:echo "last item: " . remove(mylist, -1)
 			:call remove(mylist, 0, 9)
+
+<		Can also be used as a |method|: >
+			mylist->remove(idx)
+
 remove({dict}, {key})
 		Remove the entry from {dict} with key {key} and return it.
 		Example: >
@@ -7112,6 +7332,8 @@ repeat({expr}, {count})					*repeat()*
 			:let longlist = repeat(['a', 'b'], 3)
 <		Results in ['a', 'b', 'a', 'b', 'a', 'b'].
 
+		Can also be used as a |method|: >
+			mylist->repeat(count)
 
 resolve({filename})					*resolve()* *E655*
 		On MS-Windows, when {filename} is a shortcut (a .lnk file),
@@ -7131,6 +7353,8 @@ reverse({list})	Reverse the order of items in {list} in-place.  Returns
 		{list}.
 		If you want a list to remain unmodified make a copy first: >
 			:let revlist = reverse(copy(mylist))
+<		Can also be used as a |method|: >
+			mylist->reverse()
 
 round({expr})							*round()*
 		Round off {expr} to the nearest integral value and return it
@@ -7144,6 +7368,9 @@ round({expr})							*round()*
 <			5.0 >
 			echo round(-4.5)
 <			-5.0
+
+		Can also be used as a |method|: >
+			Compute()->round()
 
 rpcnotify({channel}, {event}[, {args}...])			*rpcnotify()*
 		Sends {event} to {channel} via |RPC| and returns immediately.
@@ -8121,6 +8348,8 @@ sin({expr})						*sin()*
 			:echo sin(-4.01)
 <			0.763301
 
+		Can also be used as a |method|: >
+			Compute()->sin()
 
 sinh({expr})						*sinh()*
 		Return the hyperbolic sine of {expr} as a |Float| in the range
@@ -8131,6 +8360,9 @@ sinh({expr})						*sinh()*
 <			0.521095 >
 			:echo sinh(-0.9)
 <			-1.026517
+
+		Can also be used as a |method|: >
+			Compute()->sinh()
 
 sockconnect({mode}, {address}, {opts})			 *sockconnect()*
 		Connect a socket to an address. If {mode} is "pipe" then
@@ -8210,7 +8442,10 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		on numbers, text strings will sort next to each other, in the
 		same order as they were originally.
 
-		Also see |uniq()|.
+		Can also be used as a |method|: >
+			mylist->sort()
+
+<		Also see |uniq()|.
 
 		Example: >
 			func MyCompare(i1, i2)
@@ -8303,6 +8538,8 @@ split({expr} [, {pattern} [, {keepempty}]])			*split()*
 			:let items = split(line, ':', 1)
 <		The opposite function is |join()|.
 
+		Can also be used as a |method|: >
+			GetString()->split()
 
 sqrt({expr})						*sqrt()*
 		Return the non-negative square root of Float {expr} as a
@@ -8316,6 +8553,8 @@ sqrt({expr})						*sqrt()*
 <			nan
 		"nan" may be different, it depends on system libraries.
 
+		Can also be used as a |method|: >
+			Compute()->sqrt()
 
 stdioopen({opts})			 *stdioopen()*
 		With |--headless| this opens stdin and stdout as a |channel|.
@@ -8367,6 +8606,9 @@ str2float({expr})					*str2float()*
 		12.0.  You can strip out thousands separators with
 		|substitute()|: >
 			let f = str2float(substitute(text, ',', '', 'g'))
+<
+		Can also be used as a |method|: >
+			let f = text->substitute(',', '', 'g')->str2float()
 
 str2list({expr} [, {utf8}])				*str2list()*
 		Return a list containing the number values which represent
@@ -8381,12 +8623,18 @@ str2list({expr} [, {utf8}])				*str2list()*
 		properly: >
 			str2list("á")		returns [97, 769]
 
+<		Can also be used as a |method|: >
+			GetString()->str2list()
+
 str2nr({expr} [, {base}])				*str2nr()*
 		Convert string {expr} to a number.
 		{base} is the conversion base, it can be 2, 8, 10 or 16.
+
 		When {base} is omitted base 10 is used.  This also means that
 		a leading zero doesn't cause octal conversion to be used, as
-		with the default String to Number conversion.
+		with the default String to Number conversion.  Example: >
+			let nr = str2nr('123')
+<
 		When {base} is 16 a leading "0x" or "0X" is ignored.  With a
 		different base the result will be zero. Similarly, when {base}
 		is 8 a leading "0" is ignored, and when {base} is 2 a leading
@@ -8505,6 +8753,9 @@ string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 		method, use |msgpackdump()| or |json_encode()| if you need to
 		share data with other application.
 
+		Can also be used as a |method|: >
+			mylist->string()
+
 							*strlen()*
 strlen({expr})	The result is a Number, which is the length of the String
 		{expr} in bytes.
@@ -8513,6 +8764,9 @@ strlen({expr})	The result is a Number, which is the length of the String
 		If you want to count the number of multibyte characters use
 		|strchars()|.
 		Also see |len()|, |strdisplaywidth()| and |strwidth()|.
+
+		Can also be used as a |method|: >
+			GetString()->strlen()
 
 strpart({src}, {start} [, {len} [, {chars}]])			*strpart()*
 		The result is a String, which is part of {src}, starting from
@@ -8588,6 +8842,9 @@ strtrans({expr})					*strtrans()*
 <		This displays a newline in register a as "^@" instead of
 		starting a new line.
 
+		Can also be used as a |method|: >
+			GetString()->strtrans()
+
 strwidth({expr})					*strwidth()*
 		The result is a Number, which is the number of display cells
 		String {expr} occupies.  A Tab character is counted as one
@@ -8595,6 +8852,9 @@ strwidth({expr})					*strwidth()*
 		When {expr} contains characters with East Asian Width Class
 		Ambiguous, this function's return value depends on 'ambiwidth'.
 		Also see |strlen()|, |strdisplaywidth()| and |strchars()|.
+
+		Can also be used as a |method|: >
+			GetString()->strwidth()
 
 submatch({nr} [, {list}])			*submatch()* *E935*
 		Only for an expression in a |:substitute| command or
@@ -8662,6 +8922,9 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 		matched string and up to nine submatches, like what
 		|submatch()| returns.  Example: >
 		   :echo substitute(s, '%\(\x\x\)', {m -> '0x' . m[1]}, 'g')
+
+<		Can also be used as a |method|: >
+			GetString()->substitute(pat, sub, flags)
 
 swapinfo({fname})					*swapinfo()*
 		The result is a dictionary, which holds information about the
@@ -8747,11 +9010,17 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		cursor): >
 	:echo synIDattr(synIDtrans(synID(line("."), col("."), 1)), "fg")
 <
+		Can also be used as a |method|: >
+	:echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
+
 synIDtrans({synID})					*synIDtrans()*
 		The result is a Number, which is the translated syntax ID of
 		{synID}.  This is the syntax group ID of what is being used to
 		highlight the character.  Highlight links given with
 		":highlight link" are followed.
+
+		Can also be used as a |method|: >
+	:echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
 
 synconcealed({lnum}, {col})				*synconcealed()*
 		The result is a |List| with currently three items:
@@ -8849,6 +9118,8 @@ system({cmd} [, {input}])				*system()* *E677*
 		Unlike ":!cmd" there is no automatic check for changed files.
 		Use |:checktime| to force a check.
 
+		Can also be used as a |method|: >
+			:echo GetCmd()->system()
 
 systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 		Same as |system()|, but returns a |List| with lines (parts of
@@ -8864,6 +9135,8 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 <
 		Returns an empty string on error.
 
+		Can also be used as a |method|: >
+			:echo GetCmd()->systemlist()
 
 tabpagebuflist([{arg}])					*tabpagebuflist()*
 		The result is a |List|, where each item is the number of the
@@ -8987,6 +9260,8 @@ tan({expr})						*tan()*
 			:echo tan(-4.01)
 <			-1.181502
 
+		Can also be used as a |method|: >
+			Compute()->tan()
 
 tanh({expr})						*tanh()*
 		Return the hyperbolic tangent of {expr} as a |Float| in the
@@ -8998,6 +9273,8 @@ tanh({expr})						*tanh()*
 			:echo tanh(-1)
 <			-0.761594
 
+		Can also be used as a |method|: >
+			Compute()->tanh()
 
 							*timer_info()*
 timer_info([{id}])
@@ -9124,6 +9401,9 @@ trunc({expr})							*trunc()*
 			echo trunc(4.0)
 <			4.0
 
+		Can also be used as a |method|: >
+			Compute()->trunc()
+
 type({expr})							*type()*
 		The result is a Number representing the type of {expr}.
 		Instead of using the number directly, it is better to use the
@@ -9149,6 +9429,9 @@ type({expr})							*type()*
 			:if myvar is v:null
 <               To check if the v:t_ variables exist use this: >
                         :if exists('v:t_number')
+
+<		Can also be used as a |method|: >
+			mylist->type()
 
 undofile({name})					*undofile()*
 		Return the name of the undo file that would be used for a file
@@ -9212,10 +9495,15 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 <		The default compare function uses the string representation of
 		each item.  For the use of {func} and {dict} see |sort()|.
 
+		Can also be used as a |method|: >
+			mylist->uniq()
+
 values({dict})						*values()*
 		Return a |List| with all the values of {dict}.  The |List| is
 		in arbitrary order.
 
+		Can also be used as a |method|: >
+			mydict->values()
 
 virtcol({expr})						*virtcol()*
 		The result is a Number, which is the screen column of the file
@@ -9392,6 +9680,9 @@ winbufnr({nr})	The result is a Number, which is the number of the buffer
 		When window {nr} doesn't exist, -1 is returned.
 		Example: >
   :echo "The file in the current window is " . bufname(winbufnr(0))
+<
+		Can also be used as a |method|: >
+			FindWindow()->winbufnr()->bufname()
 <
 							*wincol()*
 wincol()	The result is a Number, which is the virtual column of the
@@ -9606,6 +9897,8 @@ xor({expr}, {expr})					*xor()*
 		to a number.  A List, Dict or Float argument causes an error.
 		Example: >
 			:let bits = xor(bits, 0x80)
+<		Can also be used as a |method|: >
+			:let bits = bits->xor(0x80)
 <
 
 
@@ -9943,7 +10236,9 @@ This function can then be called with: >
 The recursiveness of user functions is restricted with the |'maxfuncdepth'|
 option.
 
-It is also possible to use `:eval`.  It does not support a range.
+It is also possible to use `:eval`.  It does not support a range, but does
+allow for method chaining, e.g.: >
+	eval GetList()->Filter()->append('$')
 
 
 AUTOMATICALLY LOADING FUNCTIONS ~
@@ -10686,7 +10981,7 @@ text...
 <
 							*:eval*
 :eval {expr}		Evaluate {expr} and discard the result.  Example: >
-				:eval append(Filter(Getlist()), '$')
+				:eval Getlist()->Filter()->append('$')
 
 <			The expression is supposed to have a side effect,
 			since the resulting value is not used.  In the example

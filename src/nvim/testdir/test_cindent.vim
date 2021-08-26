@@ -118,6 +118,16 @@ b = something();
   bw!
 endfunc
 
+func Test_cindent_func()
+  new
+  setlocal cindent
+  call setline(1, ['int main(void)', '{', 'return 0;', '}'])
+  call assert_equal(-1, cindent(0))
+  call assert_equal(&sw, 3->cindent())
+  call assert_equal(-1, cindent(line('$')+1))
+  bwipe!
+endfunc
+
 " this was going beyond the end of the line.
 func Test_cindent_case()
   new

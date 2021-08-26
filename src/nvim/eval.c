@@ -65,6 +65,8 @@ static char *e_missbrac = N_("E111: Missing ']'");
 static char *e_dictrange = N_("E719: Cannot use [:] with a Dictionary");
 static char *e_illvar = N_("E461: Illegal variable name: %s");
 static char *e_cannot_mod = N_("E995: Cannot modify existing variable");
+static char *e_nowhitespace
+    = N_("E274: No white space allowed before parenthesis");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_lock_unlock = N_("E940: Cannot lock or unlock variable %s");
 
@@ -736,15 +738,15 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv,
                      int argc, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
-  int dummy;
+  funcexe_T funcexe = FUNCEXE_INIT;
 
   if (expr->v_type == VAR_FUNC) {
     const char_u *const s = expr->vval.v_string;
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    if (call_func(s, -1, rettv, argc, argv, NULL,
-                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
+    funcexe.evaluate = true;
+    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
   } else if (expr->v_type == VAR_PARTIAL) {
@@ -753,8 +755,9 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv,
     if (s == NULL || *s == NUL) {
       return FAIL;
     }
-    if (call_func(s, -1, rettv, argc, argv, NULL,
-                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
+    funcexe.evaluate = true;
+    funcexe.partial = partial;
+    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
   } else {
@@ -1050,7 +1053,6 @@ int call_vim_function(
 )
   FUNC_ATTR_NONNULL_ALL
 {
-  int doesrange;
   int ret;
   int len = (int)STRLEN(func);
   partial_T *pt = NULL;
@@ -1066,9 +1068,12 @@ int call_vim_function(
   }
 
   rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
-  ret = call_func(func, len, rettv, argc, argv, NULL,
-                  curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                  &doesrange, true, pt, NULL);
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = true;
+  funcexe.partial = pt;
+  ret = call_func(func, len, rettv, argc, argv, &funcexe);
 
 fail:
   if (ret == FAIL) {
@@ -1724,7 +1729,9 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         } else {
           // handle d.key, l[idx], f(expr)
           const char *const arg_subsc = arg;
-          if (handle_subscript(&arg, &tv, true, true) == FAIL) {
+          if (handle_subscript(&arg, &tv, true, true, (const char_u *)name,
+                               (const char_u **)&name)
+              == FAIL) {
             error = true;
           } else {
             if (arg == arg_subsc && len == 2 && name[1] == ':') {
@@ -3142,6 +3149,65 @@ static int pattern_match(char_u *pat, char_u *text, bool ic)
   return matches;
 }
 
+/// Handle a name followed by "(".  Both for just "name(arg)" and for
+/// "expr->name(arg)".
+//
+/// @param arg  Points to "(", will be advanced
+/// @param basetv  "expr" for "expr->name(arg)"
+//
+/// @return OK or FAIL.
+static int eval_func(char_u **const arg, char_u *const name, const int name_len,
+                     typval_T *const rettv, const bool evaluate,
+                     typval_T *const basetv)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+{
+  char_u *s = name;
+  int len = name_len;
+
+  if (!evaluate) {
+    check_vars((const char *)s, len);
+  }
+
+  // If "s" is the name of a variable of type VAR_FUNC
+  // use its contents.
+  partial_T *partial;
+  s = deref_func_name((const char *)s, &len, &partial, !evaluate);
+
+  // Need to make a copy, in case evaluating the arguments makes
+  // the name invalid.
+  s = xmemdupz(s, len);
+
+  // Invoke the function.
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = evaluate;
+  funcexe.partial = partial;
+  funcexe.basetv = basetv;
+  int ret = get_func_tv(s, len, rettv, arg, &funcexe);
+
+  xfree(s);
+
+  // If evaluate is false rettv->v_type was not set in
+  // get_func_tv, but it's needed in handle_subscript() to parse
+  // what follows. So set it here.
+  if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
+    rettv->vval.v_string = (char_u *)tv_empty_string;
+    rettv->v_type = VAR_FUNC;
+  }
+
+  // Stop the expression evaluation when immediately
+  // aborting on error, or when an interrupt occurred or
+  // an exception was thrown but not caught.
+  if (evaluate && aborting()) {
+    if (ret == OK) {
+      tv_clear(rettv);
+    }
+    ret = FAIL;
+  }
+  return ret;
+}
+
 // TODO(ZyX-I): move to eval/expressions
 
 /*
@@ -3161,6 +3227,8 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
 {
   int ret;
   char_u      *p;
+  const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
 
   p = skipwhite(arg);
   ret = eval1(&p, rettv, evaluate);
@@ -3170,8 +3238,10 @@ int eval0(char_u *arg, typval_T *rettv, char_u **nextcmd, int evaluate)
     }
     // Report the invalid expression unless the expression evaluation has
     // been cancelled due to an aborting error, an interrupt, or an
-    // exception.
-    if (!aborting()) {
+    // exception, or we already gave a more specific error.
+    // Also check called_emsg for when using assert_fails().
+    if (!aborting() && did_emsg == did_emsg_before
+        && called_emsg == called_emsg_before) {
       emsgf(_(e_invexpr2), arg);
     }
     ret = FAIL;
@@ -3801,6 +3871,7 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
 //  + in front  unary plus (ignored)
 //  trailing []  subscript in String or List
 //  trailing .name entry in Dictionary
+//  trailing ->name()  method call
 //
 // "arg" must point to the first non-white of the expression.
 // "arg" is advanced to the next non-white after the recognized expression.
@@ -3815,10 +3886,10 @@ static int eval7(
 {
   varnumber_T n;
   int len;
-  char_u      *s;
-  char_u      *start_leader, *end_leader;
+  char_u *s;
+  const char_u *start_leader, *end_leader;
   int ret = OK;
-  char_u      *alias;
+  char_u *alias;
 
   // Initialise variable so that tv_clear() can't mistake this for a
   // string and free a string that isn't there.
@@ -3968,44 +4039,7 @@ static int eval7(
       ret = FAIL;
     } else {
       if (**arg == '(') {               // recursive!
-        partial_T *partial;
-
-        if (!evaluate) {
-          check_vars((const char *)s, len);
-        }
-
-        // If "s" is the name of a variable of type VAR_FUNC
-        // use its contents.
-        s = deref_func_name((const char *)s, &len, &partial, !evaluate);
-
-        // Need to make a copy, in case evaluating the arguments makes
-        // the name invalid.
-        s = xmemdupz(s, len);
-
-        // Invoke the function.
-        ret = get_func_tv(s, len, rettv, arg,
-                          curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                          &len, evaluate, partial, NULL);
-
-        xfree(s);
-
-        // If evaluate is false rettv->v_type was not set in
-        // get_func_tv, but it's needed in handle_subscript() to parse
-        // what follows. So set it here.
-        if (rettv->v_type == VAR_UNKNOWN && !evaluate && **arg == '(') {
-          rettv->vval.v_string = (char_u *)tv_empty_string;
-          rettv->v_type = VAR_FUNC;
-        }
-
-        // Stop the expression evaluation when immediately
-        // aborting on error, or when an interrupt occurred or
-        // an exception was thrown but not caught.
-        if (evaluate && aborting()) {
-          if (ret == OK) {
-            tv_clear(rettv);
-          }
-          ret = FAIL;
-        }
+        ret = eval_func(arg, s, len, rettv, evaluate, NULL);
       } else if (evaluate) {
         ret = get_var_tv((const char *)s, len, rettv, NULL, true, false);
       } else {
@@ -4019,51 +4053,230 @@ static int eval7(
   *arg = skipwhite(*arg);
 
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
-  // expr(expr).
+  // expr(expr), expr->name(expr)
   if (ret == OK) {
-    ret = handle_subscript((const char **)arg, rettv, evaluate, true);
+    ret = handle_subscript((const char **)arg, rettv, evaluate, true,
+                           start_leader, &end_leader);
   }
 
   // Apply logical NOT and unary '-', from right to left, ignore '+'.
   if (ret == OK && evaluate && end_leader > start_leader) {
-    bool error = false;
-    varnumber_T val = 0;
-    float_T f = 0.0;
+    ret = eval7_leader(rettv, start_leader, &end_leader);
+  }
+  return ret;
+}
 
-    if (rettv->v_type == VAR_FLOAT) {
-      f = rettv->vval.v_float;
-    } else {
-      val = tv_get_number_chk(rettv, &error);
-    }
-    if (error) {
-      tv_clear(rettv);
-      ret = FAIL;
-    } else {
-      while (end_leader > start_leader) {
-        --end_leader;
-        if (*end_leader == '!') {
-          if (rettv->v_type == VAR_FLOAT) {
-            f = !f;
-          } else {
-            val = !val;
-          }
-        } else if (*end_leader == '-') {
-          if (rettv->v_type == VAR_FLOAT) {
-            f = -f;
-          } else {
-            val = -val;
-          }
+/// Apply the leading "!" and "-" before an eval7 expression to "rettv".
+/// Adjusts "end_leaderp" until it is at "start_leader".
+/// @return OK on success, FAIL on failure.
+static int eval7_leader(typval_T *const rettv, const char_u *const start_leader,
+                        const char_u **const end_leaderp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char_u *end_leader = *end_leaderp;
+  int ret = OK;
+  bool error = false;
+  varnumber_T val = 0;
+  float_T f = 0.0;
+
+  if (rettv->v_type == VAR_FLOAT) {
+    f = rettv->vval.v_float;
+  } else {
+    val = tv_get_number_chk(rettv, &error);
+  }
+  if (error) {
+    tv_clear(rettv);
+    ret = FAIL;
+  } else {
+    while (end_leader > start_leader) {
+      end_leader--;
+      if (*end_leader == '!') {
+        if (rettv->v_type == VAR_FLOAT) {
+          f = !f;
+        } else {
+          val = !val;
+        }
+      } else if (*end_leader == '-') {
+        if (rettv->v_type == VAR_FLOAT) {
+          f = -f;
+        } else {
+          val = -val;
         }
       }
-      if (rettv->v_type == VAR_FLOAT) {
-        tv_clear(rettv);
-        rettv->vval.v_float = f;
+    }
+    if (rettv->v_type == VAR_FLOAT) {
+      tv_clear(rettv);
+      rettv->vval.v_float = f;
+    } else {
+      tv_clear(rettv);
+      rettv->v_type = VAR_NUMBER;
+      rettv->vval.v_number = val;
+    }
+  }
+
+  *end_leaderp = end_leader;
+  return ret;
+}
+
+/// Call the function referred to in "rettv".
+/// @param lua_funcname  If `rettv` refers to a v:lua function, this must point
+///                      to the name of the Lua function to call (after the
+///                      "v:lua." prefix).
+/// @return OK on success, FAIL on failure.
+static int call_func_rettv(char_u **const arg,
+                           typval_T *const rettv,
+                           const bool evaluate,
+                           dict_T *const selfdict,
+                           typval_T *const basetv,
+                           const char_u *const lua_funcname)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  partial_T *pt = NULL;
+  typval_T functv;
+  const char_u *funcname;
+  bool is_lua = false;
+
+  // need to copy the funcref so that we can clear rettv
+  if (evaluate) {
+    functv = *rettv;
+    rettv->v_type = VAR_UNKNOWN;
+
+    // Invoke the function.  Recursive!
+    if (functv.v_type == VAR_PARTIAL) {
+      pt = functv.vval.v_partial;
+      is_lua = is_luafunc(pt);
+      funcname = is_lua ? lua_funcname : partial_name(pt);
+    } else {
+      funcname = functv.vval.v_string;
+    }
+  } else {
+    funcname = (char_u *)"";
+  }
+
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = evaluate;
+  funcexe.partial = pt;
+  funcexe.selfdict = selfdict;
+  funcexe.basetv = basetv;
+  const int ret = get_func_tv(funcname, is_lua ? *arg - funcname : -1, rettv,
+                              (char_u **)arg, &funcexe);
+
+  // Clear the funcref afterwards, so that deleting it while
+  // evaluating the arguments is possible (see test55).
+  if (evaluate) {
+    tv_clear(&functv);
+  }
+
+  return ret;
+}
+
+/// Evaluate "->method()".
+/// @param verbose  if true, give error messages.
+/// @note "*arg" points to the '-'.
+/// @return FAIL or OK. @note "*arg" is advanced to after the ')'.
+static int eval_lambda(char_u **const arg, typval_T *const rettv,
+                       const bool evaluate, const bool verbose)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Skip over the ->.
+  *arg += 2;
+  typval_T base = *rettv;
+  rettv->v_type = VAR_UNKNOWN;
+
+  int ret = get_lambda_tv(arg, rettv, evaluate);
+  if (ret == NOTDONE) {
+    return FAIL;
+  } else if (**arg != '(') {
+    if (verbose) {
+      if (*skipwhite(*arg) == '(') {
+        EMSG(_(e_nowhitespace));
       } else {
-        tv_clear(rettv);
-        rettv->v_type = VAR_NUMBER;
-        rettv->vval.v_number = val;
+        EMSG2(_(e_missingparen), "lambda");
       }
     }
+    tv_clear(rettv);
+    ret = FAIL;
+  } else {
+    ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, NULL);
+  }
+
+  // Clear the funcref afterwards, so that deleting it while
+  // evaluating the arguments is possible (see test55).
+  if (evaluate) {
+    tv_clear(&base);
+  }
+
+  return ret;
+}
+
+/// Evaluate "->method()" or "->v:lua.method()".
+/// @note "*arg" points to the '-'.
+/// @return FAIL or OK. "*arg" is advanced to after the ')'.
+static int eval_method(char_u **const arg, typval_T *const rettv,
+                       const bool evaluate, const bool verbose)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Skip over the ->.
+  *arg += 2;
+  typval_T base = *rettv;
+  rettv->v_type = VAR_UNKNOWN;
+
+  // Locate the method name.
+  int len;
+  char_u *name = *arg;
+  char_u *lua_funcname = NULL;
+  if (STRNCMP(name, "v:lua.", 6) == 0) {
+    lua_funcname = name + 6;
+    *arg = (char_u *)skip_luafunc_name((const char *)lua_funcname);
+    *arg = skipwhite(*arg);  // to detect trailing whitespace later
+    len = *arg - lua_funcname;
+  } else {
+    char_u *alias;
+    len = get_name_len((const char **)arg, (char **)&alias, evaluate, true);
+    if (alias != NULL) {
+      name = alias;
+    }
+  }
+
+  int ret;
+  if (len <= 0) {
+    if (verbose) {
+      if (lua_funcname == NULL) {
+        EMSG(_("E260: Missing name after ->"));
+      } else {
+        EMSG2(_(e_invexpr2), name);
+      }
+    }
+    ret = FAIL;
+  } else {
+    if (**arg != '(') {
+      if (verbose) {
+        EMSG2(_(e_missingparen), name);
+      }
+      ret = FAIL;
+    } else if (ascii_iswhite((*arg)[-1])) {
+      if (verbose) {
+        EMSG(_(e_nowhitespace));
+      }
+      ret = FAIL;
+    } else if (lua_funcname != NULL) {
+      if (evaluate) {
+        rettv->v_type = VAR_PARTIAL;
+        rettv->vval.v_partial = vvlua_partial;
+        rettv->vval.v_partial->pt_refcount++;
+      }
+      ret = call_func_rettv(arg, rettv, evaluate, NULL, &base, lua_funcname);
+    } else {
+      ret = eval_func(arg, name, len, rettv, evaluate, &base);
+    }
+  }
+
+  // Clear the funcref afterwards, so that deleting it while
+  // evaluating the arguments is possible (see test55).
+  if (evaluate) {
+    tv_clear(&base);
   }
 
   return ret;
@@ -7255,10 +7468,12 @@ bool callback_call(Callback *const callback, const int argcount_in,
       abort();
   }
 
-  int dummy;
-  return call_func(name, -1, rettv, argcount_in, argvars_in,
-                   NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
-                   true, partial, NULL);
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = true;
+  funcexe.partial = partial;
+  return call_func(name, -1, rettv, argcount_in, argvars_in, &funcexe);
 }
 
 static bool set_ref_in_callback(Callback *callback, int copyID,
@@ -8393,13 +8608,23 @@ static bool tv_is_luafunc(typval_T *tv)
   return tv->v_type == VAR_PARTIAL && is_luafunc(tv->vval.v_partial);
 }
 
-/// check the function name after "v:lua."
-int check_luafunc_name(const char *str, bool paren)
+/// Skips one character past the end of the name of a v:lua function.
+/// @param p  Pointer to the char AFTER the "v:lua." prefix.
+/// @return Pointer to the char one past the end of the function's name.
+const char *skip_luafunc_name(const char *p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *p = str;
   while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.' || *p == '\'') {
     p++;
   }
+  return p;
+}
+
+/// check the function name after "v:lua."
+int check_luafunc_name(const char *const str, const bool paren)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const char *const p = skip_luafunc_name(str);
   if (*p != (paren ? '(' : NUL)) {
     return 0;
   } else {
@@ -8407,24 +8632,26 @@ int check_luafunc_name(const char *str, bool paren)
   }
 }
 
-/// Handle expr[expr], expr[expr:expr] subscript and .name lookup.
-/// Also handle function call with Funcref variable: func(expr)
-/// Can all be combined: dict.func(expr)[idx]['func'](expr)
+/// Handle:
+/// - expr[expr], expr[expr:expr] subscript
+/// - ".name" lookup
+/// - function call with Funcref variable: func(expr)
+/// - method call: var->method()
+///
+/// Can all be combined in any order: dict.func(expr)[idx]['func'](expr)->len()
 int
 handle_subscript(
     const char **const arg,
     typval_T *rettv,
-    int evaluate,                   // do more than finding the end
-    int verbose                    // give error messages
+    int evaluate,                      // do more than finding the end
+    int verbose,                       // give error messages
+    const char_u *const start_leader,  // start of '!' and '-' prefixes
+    const char_u **const end_leaderp   // end of '!' and '-' prefixes
 )
 {
   int ret = OK;
-  dict_T      *selfdict = NULL;
-  const char_u *s;
-  int len;
-  typval_T functv;
-  int slen = 0;
-  bool lua = false;
+  dict_T *selfdict = NULL;
+  const char_u *lua_funcname = NULL;
 
   if (tv_is_luafunc(rettv)) {
     if (**arg != '.') {
@@ -8433,55 +8660,28 @@ handle_subscript(
     } else {
       (*arg)++;
 
-      lua = true;
-      s = (char_u *)(*arg);
-      slen = check_luafunc_name(*arg, true);
-      if (slen == 0) {
+      lua_funcname = (char_u *)(*arg);
+      const int len = check_luafunc_name(*arg, true);
+      if (len == 0) {
         tv_clear(rettv);
         ret = FAIL;
       }
-      (*arg) += slen;
+      (*arg) += len;
     }
   }
 
-
   while (ret == OK
-         && (**arg == '['
-             || (**arg == '.' && rettv->v_type == VAR_DICT)
-             || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))
-         && !ascii_iswhite(*(*arg - 1))) {
+         && (((**arg == '[' || (**arg == '.' && rettv->v_type == VAR_DICT)
+               || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))
+              && !ascii_iswhite(*(*arg - 1)))
+             || (**arg == '-' && (*arg)[1] == '>'))) {
     if (**arg == '(') {
-      partial_T *pt = NULL;
-      // need to copy the funcref so that we can clear rettv
-      if (evaluate) {
-        functv = *rettv;
-        rettv->v_type = VAR_UNKNOWN;
+      ret = call_func_rettv((char_u **)arg, rettv, evaluate, selfdict, NULL,
+                            lua_funcname);
 
-        // Invoke the function.  Recursive!
-        if (functv.v_type == VAR_PARTIAL) {
-          pt = functv.vval.v_partial;
-          if (!lua) {
-            s = partial_name(pt);
-          }
-        } else {
-          s = functv.vval.v_string;
-        }
-      } else {
-        s = (char_u *)"";
-      }
-      ret = get_func_tv(s, lua ? slen : -1, rettv, (char_u **)arg,
-                        curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                        &len, evaluate, pt, selfdict);
-
-      // Clear the funcref afterwards, so that deleting it while
-      // evaluating the arguments is possible (see test55).
-      if (evaluate) {
-        tv_clear(&functv);
-      }
-
-      /* Stop the expression evaluation when immediately aborting on
-       * error, or when an interrupt occurred or an exception was thrown
-       * but not caught. */
+      // Stop the expression evaluation when immediately aborting on
+      // error, or when an interrupt occurred or an exception was thrown
+      // but not caught.
       if (aborting()) {
         if (ret == OK) {
           tv_clear(rettv);
@@ -8490,6 +8690,21 @@ handle_subscript(
       }
       tv_dict_unref(selfdict);
       selfdict = NULL;
+    } else if (**arg == '-') {
+      // Expression "-1.0->method()" applies the leader "-" before
+      // applying ->.
+      if (evaluate && *end_leaderp > start_leader) {
+        ret = eval7_leader(rettv, start_leader, end_leaderp);
+      }
+      if (ret == OK) {
+        if ((*arg)[2] == '{') {
+          // expr->{lambda}()
+          ret = eval_lambda((char_u **)arg, rettv, evaluate, verbose);
+        } else {
+          // expr->name()
+          ret = eval_method((char_u **)arg, rettv, evaluate, verbose);
+        }
+      }
     } else {  // **arg == '[' || **arg == '.'
       tv_dict_unref(selfdict);
       if (rettv->v_type == VAR_DICT) {
@@ -9274,6 +9489,7 @@ void ex_echo(exarg_T *eap)
   bool atstart = true;
   bool need_clear = true;
   const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
 
   if (eap->skip)
     ++emsg_skip;
@@ -9288,7 +9504,8 @@ void ex_echo(exarg_T *eap)
         // Report the invalid expression unless the expression evaluation
         // has been cancelled due to an aborting error, an interrupt, or an
         // exception.
-        if (!aborting() && did_emsg == did_emsg_before) {
+        if (!aborting() && did_emsg == did_emsg_before
+            && called_emsg == called_emsg_before) {
           EMSG2(_(e_invexpr2), p);
         }
         need_clr_eos = false;
@@ -10409,19 +10626,11 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments,
   typval_T rettv = { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
   tv_list_ref(arguments);
 
-  int dummy;
-  (void)call_func((const char_u *)func,
-                  name_len,
-                  &rettv,
-                  2,
-                  argvars,
-                  NULL,
-                  curwin->w_cursor.lnum,
-                  curwin->w_cursor.lnum,
-                  &dummy,
-                  true,
-                  NULL,
-                  NULL);
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.firstline = curwin->w_cursor.lnum;
+  funcexe.lastline = curwin->w_cursor.lnum;
+  funcexe.evaluate = true;
+  (void)call_func((const char_u *)func, name_len, &rettv, 2, argvars, &funcexe);
 
   tv_list_unref(arguments);
   // Restore caller scope information
@@ -10779,7 +10988,9 @@ bool var_exists(const char *var)
     n = get_var_tv(name, len, &tv, NULL, false, true) == OK;
     if (n) {
       // Handle d.key, l[idx], f(expr).
-      n = handle_subscript(&var, &tv, true, false) == OK;
+      n = handle_subscript(&var, &tv, true, false, (const char_u *)name,
+                           (const char_u **)&name)
+          == OK;
       if (n) {
         tv_clear(&tv);
       }
