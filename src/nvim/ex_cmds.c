@@ -2921,11 +2921,12 @@ void ex_append(exarg_T *eap)
     vcol = 0;
     for (p = theline; indent > vcol; ++p) {
       if (*p == ' ')
-        ++vcol;
-      else if (*p == TAB)
+          ++vcol;
+      else if (*p == TAB) {
         vcol += 8 - vcol % 8;
-      else
+      } else {
         break;
+      }
     }
     if ((p[0] == '.' && p[1] == NUL)
         || (!did_undo && u_save(lnum, lnum + 1 + (empty ? 1 : 0))
@@ -2941,7 +2942,7 @@ void ex_append(exarg_T *eap)
     did_undo = true;
     ml_append(lnum, theline, (colnr_T)0, false);
     appended_lines_mark(lnum + (empty ? 1 : 0), 1L);
-
+    redrawWinline(curwin, lnum);
     xfree(theline);
     ++lnum;
 
@@ -2950,11 +2951,11 @@ void ex_append(exarg_T *eap)
       empty = 0;
     }
   }
+
   State = NORMAL;
-
-  if (eap->forceit)
+  if (eap->forceit) {
     curbuf->b_p_ai = !curbuf->b_p_ai;
-
+  }
   /* "start" is set to eap->line2+1 unless that position is invalid (when
    * eap->line2 pointed to the end of the buffer and nothing was appended)
    * "end" is set to lnum when something has been appended, otherwise
