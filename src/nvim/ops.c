@@ -3884,22 +3884,23 @@ int do_join(size_t count,
               || (utf_ptr2char(curr) < 0x100 && !utf_eat_space(endcurr1))
               || (endcurr1 < 0x100 && !utf_eat_space(utf_ptr2char(curr))))
           ) {
-        /* don't add a space if the line is ending in a space */
-        if (endcurr1 == ' ')
+        // don't add a space if the line is ending in a space
+        if (endcurr1 == ' ') {
           endcurr1 = endcurr2;
-        else
-          ++spaces[t];
+        } else {
+          spaces[t]++;
+        }
         // Extra space when 'joinspaces' set and line ends in '.', '?', or '!'.
         if (p_js && (endcurr1 == '.' || endcurr1 == '?' || endcurr1 == '!')) {
-          ++spaces[t];
+          spaces[t]++;
         }
       }
     }
 
     if (t > 0 && curbuf_splice_pending == 0) {
-      colnr_T removed = (int)(curr- curr_start);
+      colnr_T removed = (int)(curr - curr_start);
       extmark_splice(curbuf, (int)curwin->w_cursor.lnum-1, sumsize,
-                     1, removed, removed + 1,
+                     1, removed, removed + 1,  // Newline
                      0, spaces[t], spaces[t],
                      kExtmarkUndo);
     }
@@ -3930,13 +3931,11 @@ int do_join(size_t count,
   cend = newp + sumsize;
   *cend = 0;
 
-  /*
-   * Move affected lines to the new long one.
-   *
-   * Move marks from each deleted line to the joined line, adjusting the
-   * column.  This is not Vi compatible, but Vi deletes the marks, thus that
-   * should not really be a problem.
-   */
+  // Move affected lines to the new long one.
+  //
+  // Move marks from each deleted line to the joined line, adjusting the
+  // column.  This is not Vi compatible, but Vi deletes the marks, thus that
+  // should not really be a problem.
 
   curbuf_splice_pending++;
 
