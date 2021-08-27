@@ -88,7 +88,7 @@ function Test_getbufwintabinfo()
     call assert_equal(2, tablist[1].tabnr)
     call assert_equal('build', tablist[0].variables.space)
     call assert_equal(w2_id, tablist[0].windows[0])
-    call assert_equal([], gettabinfo(3))
+    call assert_equal([], 3->gettabinfo())
 
     tabonly | only
 
@@ -106,7 +106,7 @@ function Test_getbufwintabinfo()
 endfunction
 
 function Test_get_buf_options()
-  let opts = getbufvar(bufnr('%'), '&')
+  let opts = bufnr()->getbufvar('&')
   call assert_equal(v:t_dict, type(opts))
   call assert_equal(8, opts.tabstop)
 endfunc

@@ -39,7 +39,7 @@ func Test_getjumplist()
   " Traverse the jump list and verify the results
   5
   exe "normal \<C-O>"
-  call assert_equal(2, getjumplist(1)[1])
+  call assert_equal(2, 1->getjumplist()[1])
   exe "normal 2\<C-O>"
   call assert_equal(0, getjumplist(1, 1)[1])
   exe "normal 3\<C-I>"
