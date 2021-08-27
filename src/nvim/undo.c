@@ -672,6 +672,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
 #ifdef HAVE_READLINK
   char fname_buf[MAXPATHL];
 #endif
+  char *p;
 
   if (ffname == NULL) {
     return NULL;
@@ -704,6 +705,13 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       memmove(tail + tail_len + 1, ".un~", sizeof(".un~"));
     } else {
       dir_name[dir_len] = NUL;
+
+      // Remove trailing pathseps from directory name
+      p = &dir_name[dir_len - 1];
+      while (vim_ispathsep(*p)) {
+        *p-- = NUL;
+      }
+
       bool has_directory = os_isdir((char_u *)dir_name);
       if (!has_directory && *dirp == NUL && !reading) {
         // Last directory in the list does not exist, create it.
@@ -720,7 +728,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       if (has_directory) {
         if (munged_name == NULL) {
           munged_name = xstrdup(ffname);
-          for (char *p = munged_name; *p != NUL; MB_PTR_ADV(p)) {
+          for (p = munged_name; *p != NUL; MB_PTR_ADV(p)) {
             if (vim_ispathsep(*p)) {
               *p = '%';
             }
