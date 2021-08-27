@@ -4136,13 +4136,15 @@ static int ins_compl_get_exp(pos_T *ini)
           dict_f = DICT_EXACT;
         }
         msg_hist_off = true;  // reset in msg_trunc_attr()
-        vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
-                     ins_buf->b_fname == NULL
-                     ? buf_spname(ins_buf)
-                     : ins_buf->b_sfname == NULL
-                     ? ins_buf->b_fname
-                     : ins_buf->b_sfname);
-        (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+        if (p_verbose >= 5) {
+          vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
+                       ins_buf->b_fname == NULL
+                       ? buf_spname(ins_buf)
+                       : ins_buf->b_sfname == NULL
+                       ? ins_buf->b_fname
+                       : ins_buf->b_sfname);
+          (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+        }
       } else if (*e_cpt == NUL) {
         break;
       } else {
@@ -4164,8 +4166,10 @@ static int ins_compl_get_exp(pos_T *ini)
         } else if (*e_cpt == ']' || *e_cpt == 't') {
           msg_hist_off = true;  // reset in msg_trunc_attr()
           type = CTRL_X_TAGS;
-          vim_snprintf((char *)IObuff, IOSIZE, "%s", _("Scanning tags."));
-          (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+          if (p_verbose >= 5) {
+            vim_snprintf((char *)IObuff, IOSIZE, "%s", _("Scanning tags."));
+            (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+          }
         } else {
           type = -1;
         }
@@ -4725,7 +4729,7 @@ ins_compl_next (
    * Show the file name for the match (if any)
    * Truncate the file name to avoid a wait for return.
    */
-  if (compl_shown_match->cp_fname != NULL) {
+  if (p_verbose >= 5 && compl_shown_match->cp_fname != NULL) {
     char *lead = _("match in file");
     int space = sc_col - vim_strsize((char_u *)lead) - 2;
     char_u  *s;
