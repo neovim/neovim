@@ -289,6 +289,9 @@ static void close_cb(Stream *stream, void *data)
 ///                  `on_stdout` is ignored
 /// @param[in]  detach  True if the job should not be killed when nvim exits,
 ///                     ignored if `pty` is true
+/// @param[in]  stdin_mode  Stdin mode. Either kChannelStdinPipe to open a
+///                         channel for stdin or kChannelStdinNull to leave
+///                         stdin disconnected.
 /// @param[in]  cwd  Initial working directory for the job.  Nvim's working
 ///                  directory if `cwd` is NULL
 /// @param[in]  pty_width  Width of the pty, ignored if `pty` is false
@@ -302,7 +305,7 @@ static void close_cb(Stream *stream, void *data)
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
                            bool pty, bool rpc, bool overlapped, bool detach,
-                           const char *cwd,
+                           ChannelStdinMode stdin_mode, const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
                            dict_T *env, varnumber_T *status_out)
 {
@@ -345,7 +348,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   proc->overlapped = overlapped;
 
   char *cmd = xstrdup(proc->argv[0]);
-  bool has_out, has_err;
+  bool has_in, has_out, has_err;
   if (proc->type == kProcessTypePty) {
     has_out = true;
     has_err = false;
@@ -353,7 +356,17 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     has_out = rpc || callback_reader_set(chan->on_data);
     has_err = callback_reader_set(chan->on_stderr);
   }
-  int status = process_spawn(proc, true, has_out, has_err);
+
+  switch (stdin_mode) {
+  case kChannelStdinPipe:
+    has_in = true;
+    break;
+  case kChannelStdinNull:
+    has_in = false;
+    break;
+  }
+
+  int status = process_spawn(proc, has_in, has_out, has_err);
   if (status) {
     EMSG3(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
@@ -369,7 +382,9 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     tv_dict_free(proc->env);
   }
 
-  wstream_init(&proc->in, 0);
+  if (has_in) {
+    wstream_init(&proc->in, 0);
+  }
   if (has_out) {
     rstream_init(&proc->out, 0);
   }
