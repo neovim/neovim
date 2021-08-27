@@ -56,6 +56,7 @@ func Test_empty()
   endif
 
   call assert_equal(0, empty(function('Test_empty')))
+  call assert_equal(0, empty(function('Test_empty', [0])))
 endfunc
 
 func Test_len()
@@ -999,6 +1000,7 @@ func Test_count()
   call assert_equal(1, count(l, 'a', 0, 1))
   call assert_equal(2, count(l, 'a', 1, 1))
   call assert_fails('call count(l, "a", 0, 10)', 'E684:')
+  call assert_fails('call count(l, "a", [])', 'E745:')
 
   let d = {1: 'a', 2: 'a', 3: 'A', 4: 'b'}
   call assert_equal(2, count(d, 'a'))
@@ -1026,6 +1028,8 @@ func Test_count()
   call assert_equal(2, count("foo", "O", 1))
   call assert_equal(2, count("fooooo", "oo"))
   call assert_equal(0, count("foo", ""))
+
+  call assert_fails('call count(0, 0)', 'E712:')
 endfunc
 
 func Test_changenr()
@@ -1587,6 +1591,14 @@ func Test_call()
   let mydict = {'data': [0, 1, 2, 3], 'len': function("Mylen")}
   eval mydict.len->call([], mydict)->assert_equal(4)
   call assert_fails("call call('Mylen', [], 0)", 'E715:')
+endfunc
+
+func Test_char2nr()
+  call assert_equal(12354, char2nr('あ', 1))
+endfunc
+
+func Test_eventhandler()
+  call assert_equal(0, eventhandler())
 endfunc
 
 " Test for the eval() function

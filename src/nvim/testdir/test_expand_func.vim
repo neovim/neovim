@@ -37,6 +37,15 @@ func Test_expand_sflnum()
   delcommand Flnum
 endfunc
 
+func Test_expand()
+  new
+  call assert_equal("",  expand('%:S'))
+  call assert_equal('3', expand('<slnum>'))
+  call assert_equal(['4'], expand('<slnum>', v:false, v:true))
+  " Don't add any line above this, otherwise <slnum> will change.
+  quit
+endfunc
+
 func Test_expand_sfile()
   call assert_match('test_expand_func\.vim$', s:sfile)
   call assert_match('^function .*\.\.Test_expand_sfile$', expand('<sfile>'))
