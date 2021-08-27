@@ -2812,6 +2812,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             n_extra = number_width(wp) + 1;
             char_attr = win_hl_attr(wp, HLF_N);
 
+            if (wp->w_p_rnu && lnum < wp->w_cursor.lnum) {
+              // Use LineNrAbove
+              char_attr = win_hl_attr(wp, HLF_LNA);
+            }
+            if (wp->w_p_rnu && lnum > wp->w_cursor.lnum) {
+              // Use LineNrBelow
+              char_attr = win_hl_attr(wp, HLF_LNB);
+            }
+
             sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
             if (num_sattr != NULL) {
               // :sign defined with "numhl" highlight.
