@@ -86,9 +86,9 @@ function highlight.on_yank(opts)
 
   vim.defer_fn(
     function()
-      if api.nvim_buf_is_valid(bufnr) then
+      -- if api.nvim_buf_is_valid(bufnr) then
         api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
-      end
+      -- end
     end,
     timeout
   )
