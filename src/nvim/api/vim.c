@@ -298,6 +298,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   bool typed = false;
   bool execute = false;
   bool dangerous = false;
+  bool lowlevel = false;
 
   for (size_t i = 0; i < mode.size; ++i) {
     switch (mode.data[i]) {
@@ -307,6 +308,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
     case 'i': insert = true; break;
     case 'x': execute = true; break;
     case '!': dangerous = true; break;
+    case 'L': lowlevel = true; break;
     }
   }
 
@@ -322,10 +324,14 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   } else {
       keys_esc = keys.data;
   }
-  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-              insert ? 0 : typebuf.tb_len, !typed, false);
-  if (vgetc_busy) {
-    typebuf_was_filled = true;
+  if (lowlevel) {
+    (void)nvim_input(keys);
+  } else {
+    ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+                insert ? 0 : typebuf.tb_len, !typed, false);
+    if (vgetc_busy) {
+      typebuf_was_filled = true;
+    }
   }
 
   if (escape_csi) {
@@ -340,7 +346,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
     if (!dangerous) {
       ex_normal_busy++;
     }
-    exec_normal(true);
+    exec_normal(true, lowlevel);
     if (!dangerous) {
       ex_normal_busy--;
     }
