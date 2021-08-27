@@ -576,11 +576,11 @@ If you want to exclude visual selections from highlighting on yank, use
 vim.highlight.on_yank({opts})                         *vim.highlight.on_yank()*
         Highlights the yanked text. The fields of the optional dict {opts}
         control the highlight:
-          - {higroup} highlight group for yanked region (default `"IncSearch"`)
+          - {higroup} highlight group for yanked region (default |hl-IncSearch|)
           - {timeout} time in ms before highlight is cleared (default `150`)
           - {on_macro} highlight when executing macro (default `false`)
           - {on_visual} highlight when yanking visual selection (default `true`)
-          - {event} event structure (default `vim.v.event`)
+          - {event} event structure (default |v:event|)
 
 vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {rtype}, {inclusive})
                                                        *vim.highlight.range()*

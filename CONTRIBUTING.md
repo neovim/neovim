@@ -29,10 +29,10 @@ Reporting problems
 Developer guidelines
 --------------------
 
-- Nvim developers should read `:help dev`.
-- External UI developers should read `:help dev-ui`.
-- API client developers should read `:help dev-api-client`.
-- Nvim developers are _strongly encouraged_ to install `ninja` for faster builds.
+- Read `:help dev` if you are working on Nvim core.
+- Read `:help dev-ui` if you are developing a UI.
+- Read `:help dev-api-client` if you are developing an API client.
+- Install `ninja` for faster builds of Nvim.
   ```
   sudo apt-get install ninja-build
   make distclean

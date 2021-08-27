@@ -334,7 +334,7 @@ int main(int argc, char **argv)
     // prepare screen now, so external UIs can display messages
     starting = NO_BUFFERS;
     screenclear();
-    TIME_MSG("initialized screen early for UI");
+    TIME_MSG("init screen for UI");
   }
 
   init_default_mappings();  // Default mappings.
