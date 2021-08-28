@@ -62,13 +62,13 @@ function vim._load_package(name)
     return f or error(err)
   end
 
-  local paths = {}
+  paths = {}
   for _,trail in ipairs(vim._so_trails) do
     table.insert(paths, "lua"..trail)
   end
-  local paths = table.concat(paths, " ")
-  local paths = paths:gsub('?', basename) -- so_trails contains a leading slash
-  local found = vim.api.nvim_get_runtime_file(paths, false)
+  paths = table.concat(paths, " ")
+  paths = paths:gsub('?', basename) -- so_trails contains a leading slash
+  found = vim.api.nvim_get_runtime_file(paths, false)
   if #found > 0 then
     -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
     -- a) strip prefix up to and including the first dash, if any
