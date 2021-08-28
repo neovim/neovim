@@ -381,7 +381,7 @@ do
       end
       state.pending_change = function()
         state.pending_change = nil
-        if client.is_stopped() then
+        if client.is_stopped() or not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
         local contentChanges
