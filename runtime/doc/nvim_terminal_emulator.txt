@@ -13,7 +13,7 @@ from the connected program.
 Terminal buffers behave like normal buffers, except:
 - With 'modifiable', lines can be edited but not deleted.
 - 'scrollback' controls how many lines are kept.
-- Output is followed if the cursor is on the last line.
+- Output is followed ("tailed") if cursor is on the last line.
 - 'modified' is the default. You can set 'nomodified' to avoid a warning when
   closing the terminal buffer.
 - 'bufhidden' defaults to "hide".
