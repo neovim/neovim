@@ -1042,12 +1042,13 @@ check_pum:
     if (pum_want.active) {
       if (pum_visible()) {
         insert_do_complete(s);
-        if (pum_want.finish) {
-          // accept the item and stop completion
-          ins_compl_prep(Ctrl_Y);
-        }
       }
       pum_want.active = false;
+    }
+    if (pum_want.finish) {
+      // accept the item and stop completion
+      ins_compl_prep(Ctrl_Y);
+      pum_want.finish = false;
     }
     break;
 
@@ -4757,6 +4758,9 @@ ins_compl_next (
 void pum_ext_select_item(int item, bool insert, bool finish)
 {
   if (!pum_visible() || item < -1 || item >= compl_match_arraysize) {
+    if (compl_started && item == -1) {
+      pum_want.finish = finish;
+    }
     return;
   }
   pum_want.active = true;

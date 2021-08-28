@@ -2844,7 +2844,8 @@ Object nvim_get_proc(Integer pid, Error *err)
 /// ensure the mapping doesn't end completion mode.
 ///
 /// @param item   Index (zero-based) of the item to select. Value of -1 selects
-///               nothing and restores the original text.
+///               nothing and restores the original text. If value is neither
+///               -1 nor a valid index, this API call is silently ignored.
 /// @param insert Whether the selection should be inserted in the buffer.
 /// @param finish Finish the completion and dismiss the popupmenu. Implies
 ///               `insert`.

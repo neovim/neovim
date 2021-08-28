@@ -256,6 +256,22 @@ describe('ui/ext_popupmenu', function()
       {1:~                                                           }|
       {2:-- INSERT --}                                                |
     ]])
+    eq('i', eval('nvim_get_mode().mode'))
+
+    feed('<C-r>=TestComplete()<CR><c-p>aaa')
+    screen:expect([[
+                                                                  |
+      aaa^                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+    eq('ic', eval('nvim_get_mode().mode'))
+    meths.select_popupmenu_item(-1,true,true,{})
+    eq('i', eval('nvim_get_mode().mode'))
 
     command('imap <f1> <cmd>call nvim_select_popupmenu_item(2,v:true,v:false,{})<cr>')
     command('imap <f2> <cmd>call nvim_select_popupmenu_item(-1,v:false,v:false,{})<cr>')
