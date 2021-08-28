@@ -824,12 +824,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup")
+'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup//")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
-	  where this is possible.  The directory must exist, Vim will not
-	  create it for you.
+	  where this is possible.  If none of the directories exist Nvim will
+	  attempt to create the last directory in the list.
 	- Empty means that no backup file will be created ('patchmode' is
 	  impossible!).  Writing may fail because of this.
 	- A directory "." means to put the backup file in the same directory
@@ -6533,17 +6533,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 'ttyfast' 'tf'		Removed. |vim-differences|
 
 						*'undodir'* *'udir'* *E5003*
-'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo")
+'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo//")
 			global
 	List of directory names for undo files, separated with commas.
-	See |'backupdir'| for details of the format.
+	See 'backupdir' for details of the format.
 	"." means using the directory of the file.  The undo file name for
 	"file.txt" is ".file.txt.un~".
 	For other directories the file name is the full path of the edited
 	file, with path separators replaced with "%".
 	When writing: The first directory that exists is used.  "." always
-	works, no directories after "." will be used for writing.  If none of 
-	the directories exist Neovim will attempt to create last directory in 
+	works, no directories after "." will be used for writing.  If none of
+	the directories exist Nvim will attempt to create the last directory in
 	the list.
 	When reading all entries are tried to find an undo file.  The first
 	undo file that exists is used.  When it cannot be read an error is
@@ -6551,6 +6551,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |undo-persistence|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
+
+	Note that unlike 'directory' and 'backupdir', 'undodir' always acts as
+	though the trailing slashes are present (see 'backupdir' for what this
+	means).
 
 				*'undofile'* *'noundofile'* *'udf'* *'noudf'*
 'undofile' 'udf'	boolean	(default off)
@@ -6692,7 +6696,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view")
+'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view//")
 			global
 	Name of the directory where to store files for |:mkview|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for

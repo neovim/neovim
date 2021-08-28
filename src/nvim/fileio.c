@@ -2688,9 +2688,22 @@ buf_write(
         /*
          * Isolate one directory name, using an entry in 'bdir'.
          */
-        (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        p = IObuff + STRLEN(IObuff);
-        if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
+        size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        p = IObuff + dir_len;
+        bool trailing_pathseps = after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2];
+        if (trailing_pathseps) {
+          IObuff[dir_len - 2] = NUL;
+        }
+        if (*dirp == NUL && !os_isdir(IObuff)) {
+          int ret;
+          char *failed_dir;
+          if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
+            EMSG3(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+                  failed_dir, os_strerror(ret));
+            xfree(failed_dir);
+          }
+        }
+        if (trailing_pathseps) {
           // Ends with '//', Use Full path
           if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
               != NULL) {
@@ -2840,9 +2853,22 @@ nobackup:
         /*
          * Isolate one directory name and make the backup file name.
          */
-        (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        p = IObuff + STRLEN(IObuff);
-        if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
+        size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        p = IObuff + dir_len;
+        bool trailing_pathseps = after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2];
+        if (trailing_pathseps) {
+          IObuff[dir_len - 2] = NUL;
+        }
+        if (*dirp == NUL && !os_isdir(IObuff)) {
+          int ret;
+          char *failed_dir;
+          if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
+            EMSG3(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+                  failed_dir, os_strerror(ret));
+            xfree(failed_dir);
+          }
+        }
+        if (trailing_pathseps) {
           // path ends with '//', use full path
           if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
               != NULL) {

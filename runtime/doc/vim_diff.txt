@@ -30,7 +30,7 @@ the differences.
 - 'autoread' is enabled
 - 'background' defaults to "dark" (unless set automatically by the terminal/UI)
 - 'backspace' defaults to "indent,eol,start"
-- 'backupdir' defaults to .,~/.local/share/nvim/backup (|xdg|)
+- 'backupdir' defaults to .,~/.local/share/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
 - 'compatible' is always disabled
 - 'complete' excludes "i"
@@ -63,7 +63,7 @@ the differences.
 - 'tags' defaults to "./tags;,tags"
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
-- 'undodir' defaults to ~/.local/share/nvim/undo (|xdg|), auto-created
+- 'undodir' defaults to ~/.local/share/nvim/undo// (|xdg|), auto-created
 - 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"
 - 'wildmenu' is enabled
