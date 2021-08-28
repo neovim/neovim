@@ -433,7 +433,7 @@ local function code_action_request(params)
     for _, r in pairs(results) do
       vim.list_extend(actions, r.result or {})
     end
-    vim.lsp.handlers[method](nil, method, actions, nil, bufnr)
+    vim.lsp.handlers[method](nil, actions, {bufnr=bufnr, method=method})
   end)
 end
 

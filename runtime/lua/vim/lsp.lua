@@ -678,7 +678,7 @@ function lsp.start_client(config)
     local handler = resolve_handler(method)
     if handler then
       -- Method name is provided here for convenience.
-      handler(nil, method, params, client_id)
+      handler(nil, params, {method=method, client_id=client_id})
     end
   end
 
@@ -692,7 +692,7 @@ function lsp.start_client(config)
     local handler = resolve_handler(method)
     if handler then
       local _ = log.debug() and log.debug("server_request: found handler for", method)
-      return handler(nil, method, params, client_id)
+      return handler(nil, params, {method=method, client_id=client_id})
     end
     local _ = log.debug() and log.debug("server_request: no handler found for", method)
     return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
@@ -896,7 +896,7 @@ function lsp.start_client(config)
 
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
-      handler(err, method, result, client_id, bufnr)
+      handler(err, result, {method=method, client_id=client_id, bufnr=bufnr})
     end)
   end
 
@@ -917,7 +917,7 @@ function lsp.start_client(config)
   ---@see |vim.lsp.buf_request_sync()|
   function client.request_sync(method, params, timeout_ms, bufnr)
     local request_result = nil
-    local function _sync_handler(err, _, result)
+    local function _sync_handler(err, result)
       request_result = { err = err, result = result }
     end
 
@@ -1276,7 +1276,7 @@ function lsp.buf_request(bufnr, method, params, handler)
     local unsupported_err = lsp._unsupported_method(method)
     handler = handler or lsp.handlers[method]
     if handler then
-      handler(unsupported_err, method, bufnr)
+      handler(unsupported_err, nil, {method=method, bufnr=bufnr})
     end
     return
   end
@@ -1316,8 +1316,8 @@ function lsp.buf_request_all(bufnr, method, params, callback)
     end
   end)
 
-  local function _sync_handler(err, _, result, client_id)
-    request_results[client_id] = { error = err, result = result }
+  local function _sync_handler(err, result, ctx)
+    request_results[ctx.client_id] = { error = err, result = result }
     result_count = result_count + 1
     set_expected_result_count()
 
@@ -1423,7 +1423,7 @@ function lsp.omnifunc(findstart, base)
   local params = util.make_position_params()
 
   local items = {}
-  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
+  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result)
     if err or not result or vim.fn.mode() ~= "i" then return end
     local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
@@ -1498,8 +1498,8 @@ end
 ---@param handler (function) See |lsp-handler|
 ---@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
-  return function(err, method, params, client_id, bufnr, config)
-    return handler(err, method, params, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config))
+  return function(err, result, ctx, config)
+    return handler(err, result, ctx, vim.tbl_deep_extend("force", config or {}, override_config))
   end
 end
 
