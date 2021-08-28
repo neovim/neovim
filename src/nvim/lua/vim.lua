@@ -55,29 +55,30 @@ end
 
 function vim._load_package(name)
   local basename = name:gsub('%.', '/')
-  local paths = {"lua/"..basename..".lua", "lua/"..basename.."/init.lua"}
-  for _,path in ipairs(paths) do
-    local found = vim.api.nvim_get_runtime_file(path, false)
-    if #found > 0 then
-      local f, err = loadfile(found[1])
-      return f or error(err)
-    end
+  local paths = "lua/"..basename..".lua lua/"..basename.."/init.lua"
+  local found = vim.api.nvim_get_runtime_file(paths, false)
+  if #found > 0 then
+    local f, err = loadfile(found[1])
+    return f or error(err)
   end
 
+  local paths = {}
   for _,trail in ipairs(vim._so_trails) do
-    local path = "lua"..trail:gsub('?', basename) -- so_trails contains a leading slash
-    local found = vim.api.nvim_get_runtime_file(path, false)
-    if #found > 0 then
-      -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
-      -- a) strip prefix up to and including the first dash, if any
-      -- b) replace all dots by underscores
-      -- c) prepend "luaopen_"
-      -- So "foo-bar.baz" should result in "luaopen_bar_baz"
-      local dash = name:find("-", 1, true)
-      local modname = dash and name:sub(dash + 1) or name
-      local f, err = package.loadlib(found[1], "luaopen_"..modname:gsub("%.", "_"))
-      return f or error(err)
-    end
+    table.insert(paths, "lua"..trail)
+  end
+  local paths = table.concat(paths, " ")
+  local paths = paths:gsub('?', basename) -- so_trails contains a leading slash
+  local found = vim.api.nvim_get_runtime_file(paths, false)
+  if #found > 0 then
+    -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
+    -- a) strip prefix up to and including the first dash, if any
+    -- b) replace all dots by underscores
+    -- c) prepend "luaopen_"
+    -- So "foo-bar.baz" should result in "luaopen_bar_baz"
+    local dash = name:find("-", 1, true)
+    local modname = dash and name:sub(dash + 1) or name
+    local f, err = package.loadlib(found[1], "luaopen_"..modname:gsub("%.", "_"))
+    return f or error(err)
   end
   return nil
 end
