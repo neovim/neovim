@@ -7,6 +7,7 @@ local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
 local command= helpers.command
 local exc_exec = helpers.exc_exec
+local matches = helpers.matches
 
 describe(':terminal buffer', function()
   local screen
@@ -257,6 +258,14 @@ describe(':terminal buffer', function()
 
   it('handles wqall', function()
     eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
+  end)
+
+  it('stops running jobs with :quit', function()
+    -- Open in a new window to avoid terminating the nvim instance
+    command('split')
+    command('terminal')
+    command('set nohidden')
+    command('quit')
   end)
 
   it('does not segfault when pasting empty buffer #13955', function()
