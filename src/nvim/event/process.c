@@ -200,9 +200,9 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   if (proc->refcount == 1) {
     // Job exited, free its resources.
     decref(proc);
-    if (events) {
+    if (proc->events) {
       // the decref call created an exit event, process it now
-      multiqueue_process_events(events);
+      multiqueue_process_events(proc->events);
     }
   } else {
     proc->refcount--;
