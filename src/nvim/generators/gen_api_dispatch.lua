@@ -7,7 +7,7 @@ if arg[1] == '--help' then
   print('      2: dispatch output file (dispatch_wrappers.generated.h)')
   print('      3: functions metadata output file (funcs_metadata.generated.h)')
   print('      4: API metadata output file (api_metadata.mpack)')
-  print('      5: lua C bindings output file (msgpack_lua_c_bindings.generated.c)')
+  print('      5: lua C bindings output file (lua_api_c_bindings.generated.c)')
   print('      rest: C files where API functions are defined')
 end
 assert(#arg >= 4)
@@ -378,7 +378,7 @@ output:write('\n')
 local lua_c_functions = {}
 
 local function process_function(fn)
-  local lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
+  local lua_c_function_name = ('nlua_api_%s'):format(fn.name)
   write_shifted_output(output, string.format([[
 
   static int %s(lua_State *lstate)

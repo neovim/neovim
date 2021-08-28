@@ -37,7 +37,7 @@
 
 /// Helper structure for vim_to_object
 typedef struct {
-  kvec_t(Object) stack;  ///< Object stack.
+  kvec_withinit_t(Object, 2) stack;  ///< Object stack.
 } EncodedData;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -418,28 +418,25 @@ void set_option_to(uint64_t channel_id, void *to, int type,
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
-    kv_push(edata->stack, NIL)
+    kvi_push(edata->stack, NIL)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-    kv_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
+    kvi_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
-    kv_push(edata->stack, INTEGER_OBJ((Integer)(num)))
+    kvi_push(edata->stack, INTEGER_OBJ((Integer)(num)))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    kv_push(edata->stack, FLOAT_OBJ((Float)(flt)))
+    kvi_push(edata->stack, FLOAT_OBJ((Float)(flt)))
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
     do { \
       const size_t len_ = (size_t)(len); \
       const char *const str_ = (const char *)(str); \
       assert(len_ == 0 || str_ != NULL); \
-      kv_push(edata->stack, STRING_OBJ(((String) { \
-        .data = xmemdupz((len_?str_:""), len_), \
-        .size = len_ \
-      }))); \
+      kvi_push(edata->stack, STRING_OBJ(cbuf_to_string((len_?str_:""), len_))); \
     } while (0)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
@@ -458,17 +455,17 @@ void set_option_to(uint64_t channel_id, void *to, int type,
 #define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
-    kv_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
+    kvi_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-    kv_push(edata->stack, \
-            DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
+    kvi_push(edata->stack, \
+             DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
 
 static inline void typval_encode_list_start(EncodedData *const edata,
                                             const size_t len)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
-  kv_push(edata->stack, ARRAY_OBJ(((Array) {
+  kvi_push(edata->stack, ARRAY_OBJ(((Array) {
     .capacity = len,
     .size = 0,
     .items = xmalloc(len * sizeof(*((Object)OBJECT_INIT).data.array.items)),
@@ -510,7 +507,7 @@ static inline void typval_encode_dict_start(EncodedData *const edata,
                                             const size_t len)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
-  kv_push(edata->stack, DICTIONARY_OBJ(((Dictionary) {
+  kvi_push(edata->stack, DICTIONARY_OBJ(((Dictionary) {
     .capacity = len,
     .size = 0,
     .items = xmalloc(len * sizeof(
@@ -618,14 +615,15 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 /// @return The converted value
 Object vim_to_object(typval_T *obj)
 {
-  EncodedData edata = { .stack = KV_INITIAL_VALUE };
+  EncodedData edata;
+  kvi_init(edata.stack);
   const int evo_ret = encode_vim_to_object(&edata, obj,
                                            "vim_to_object argument");
   (void)evo_ret;
   assert(evo_ret == OK);
   Object ret = kv_A(edata.stack, 0);
   assert(kv_size(edata.stack) == 1);
-  kv_destroy(edata.stack);
+  kvi_destroy(edata.stack);
   return ret;
 }
 
