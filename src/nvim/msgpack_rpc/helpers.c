@@ -86,8 +86,9 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
   FUNC_ATTR_NONNULL_ALL
 {
   bool ret = true;
-  kvec_t(MPToAPIObjectStackItem) stack = KV_INITIAL_VALUE;
-  kv_push(stack, ((MPToAPIObjectStackItem) {
+  kvec_withinit_t(MPToAPIObjectStackItem, 2) stack = KV_INITIAL_VALUE;
+  kvi_init(stack);
+  kvi_push(stack, ((MPToAPIObjectStackItem) {
     .mobj = obj,
     .aobj = arg,
     .container = false,
@@ -155,7 +156,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
             const size_t idx = cur.idx;
             cur.idx++;
             kv_last(stack) = cur;
-            kv_push(stack, ((MPToAPIObjectStackItem) {
+            kvi_push(stack, ((MPToAPIObjectStackItem) {
               .mobj = &cur.mobj->via.array.ptr[idx],
               .aobj = &cur.aobj->data.array.items[idx],
               .container = false,
@@ -209,7 +210,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
               }
             }
             if (ret) {
-              kv_push(stack, ((MPToAPIObjectStackItem) {
+              kvi_push(stack, ((MPToAPIObjectStackItem) {
                 .mobj = &cur.mobj->via.map.ptr[idx].val,
                 .aobj = &cur.aobj->data.dictionary.items[idx].value,
                 .container = false,
@@ -265,7 +266,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
       (void)kv_pop(stack);
     }
   }
-  kv_destroy(stack);
+  kvi_destroy(stack);
   return ret;
 }
 
@@ -375,8 +376,9 @@ typedef struct {
 void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
-  kvec_t(APIToMPObjectStackItem) stack = KV_INITIAL_VALUE;
-  kv_push(stack, ((APIToMPObjectStackItem) { &result, false, 0 }));
+  kvec_withinit_t(APIToMPObjectStackItem, 2) stack = KV_INITIAL_VALUE;
+  kvi_init(stack);
+  kvi_push(stack, ((APIToMPObjectStackItem) { &result, false, 0 }));
   while (kv_size(stack)) {
     APIToMPObjectStackItem cur = kv_last(stack);
     STATIC_ASSERT(kObjectTypeWindow == kObjectTypeBuffer + 1
@@ -428,7 +430,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
             const size_t idx = cur.idx;
             cur.idx++;
             kv_last(stack) = cur;
-            kv_push(stack, ((APIToMPObjectStackItem) {
+            kvi_push(stack, ((APIToMPObjectStackItem) {
               .aobj = &cur.aobj->data.array.items[idx],
               .container = false,
             }));
@@ -451,7 +453,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
             kv_last(stack) = cur;
             msgpack_rpc_from_string(cur.aobj->data.dictionary.items[idx].key,
                                     res);
-            kv_push(stack, ((APIToMPObjectStackItem) {
+            kvi_push(stack, ((APIToMPObjectStackItem) {
               .aobj = &cur.aobj->data.dictionary.items[idx].value,
               .container = false,
             }));
@@ -468,7 +470,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
       (void)kv_pop(stack);
     }
   }
-  kv_destroy(stack);
+  kvi_destroy(stack);
 }
 
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)
