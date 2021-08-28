@@ -1,0 +1,11 @@
+# To use this file (requires git 2.23):
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# eval.c: factor out eval/funcs.c #11828
+#   - This is a move/rename. git 2.33 doesn't know how to ignore it.
+#     It is here anyway, (1) in case git improves later, and (2) to
+#     save you the trouble of attempting this.
+6c5bbf07d988ef55e5e8ba8d70b62c1f0885261b
+
+# style / uncrustify
+2d240024acbd68c2d3f82bc72cb12b1a4928c6bf
