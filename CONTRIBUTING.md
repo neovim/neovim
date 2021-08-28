@@ -183,20 +183,21 @@ master build. To view the defects, just request access; you will be approved.
   ```
   git log --oneline --no-merges --grep coverity
   ```
-  
+
 ### Clang sanitizers (ASAN and UBSAN)
 
   ASAN/UBSAN can be used to detect memory errors and other common forms of undefined behavior at runtime in debug builds.
-  To build neovim with sanitizers enabled, use
+
+- To build Neovim with sanitizers enabled, use
   ```
   rm -rf build && CMAKE_EXTRA_FLAGS="-DCMAKE_C_COMPILER=clang -DCLANG_ASAN_UBSAN=1" make
   ```
-  When running neovim, use
+- When running Neovim, use
   ```
   UBSAN_OPTIONS=print_stacktrace=1 ASAN_OPTIONS=log_path=/tmp/nvim_asan nvim args...
   ```
-  If neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.
-  
+- If Neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.
+
 
 Coding
 ------
@@ -226,6 +227,10 @@ operator in Nvim:
 
 ### Navigate
 
+- Set `blame.ignoreRevsFile` to ignore [noise commits](https://github.com/neovim/neovim/commit/2d240024acbd68c2d3f82bc72cb12b1a4928c6bf) in git blame:
+  ```
+  git config blame.ignoreRevsFile .git-blame-ignore-revs
+  ```
 - Use **[universal-ctags](https://github.com/universal-ctags/ctags).**
   ("Exuberant ctags", the typical `ctags` binary provided by your distro, is
   unmaintained and won't recognize many function signatures in Neovim source.)
