@@ -369,33 +369,6 @@ void terminal_check_size(Terminal *term)
   invalidate_terminal(term, -1, -1);
 }
 
-void terminal_wipe(Terminal *term)
-{
-  if (term->buf_handle != 0) {
-    // If the terminal is open in a split AND an alternate file exists AND
-    // that file is not already open in another window, open the alternate
-    // file in the current window
-    bool keep_split = !ONE_WINDOW;
-    if (keep_split) {
-      buf_T *last = handle_get_buffer(curwin->w_alt_fnum);
-      if (last && last->handle != curbuf->handle && last->b_p_bl) {
-        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-          if (wp->w_buffer->handle == last->handle) {
-            keep_split = false;
-            break;
-          }
-        }
-      }
-    }
-
-    if (keep_split) {
-      do_cmdline_cmd("buffer #");
-    } else {
-      do_cmdline_cmd("bwipeout!");
-    }
-  }
-}
-
 void terminal_enter(void)
 {
   buf_T *buf = curbuf;

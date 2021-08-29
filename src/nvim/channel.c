@@ -4,6 +4,7 @@
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
+#include "nvim/buffer.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
@@ -802,7 +803,10 @@ static void term_close(void *data)
 {
   Channel *chan = data;
   process_stop(&chan->stream.proc);
-  terminal_wipe(chan->term);
+  buf_T *buf = handle_get_buffer(terminal_buf(chan->term));
+  if (buf) {
+    buf_close_keepwin(buf, DOBUF_WIPE);
+  }
   multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 

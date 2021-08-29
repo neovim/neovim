@@ -628,6 +628,29 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
   return true;
 }
 
+/// Close a buffer but keep its window open if in a split.
+///
+/// @param buf Buffer pointer
+/// @param action Same as @ref close_buffer
+void buf_close_keepwin(buf_T *buf, int action)
+{
+  buf_T *last = NULL;
+  bool keepwin = false;
+  if (!ONE_WINDOW) {
+    last = handle_get_buffer(curwin->w_alt_fnum);
+    if (last && last->handle != buf->handle && last->b_p_bl) {
+      keepwin = true;
+    }
+  }
+
+  if (keepwin) {
+    set_curbuf(last, DOBUF_GOTO);
+    close_buffer(NULL, buf, action, false);
+  } else {
+    do_buffer(action, DOBUF_FIRST, FORWARD, buf->b_fnum, true);
+  }
+}
+
 /// Make buffer not contain a file.
 void buf_clear_file(buf_T *buf)
 {
