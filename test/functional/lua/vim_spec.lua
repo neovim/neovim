@@ -17,6 +17,7 @@ local matches = helpers.matches
 local source = helpers.source
 local NIL = helpers.NIL
 local retry = helpers.retry
+local next_msg = helpers.next_msg
 
 before_each(clear)
 
@@ -2175,6 +2176,24 @@ describe('lua stdlib', function()
       ]]
 
       eq(false, pcall_result)
+    end)
+  end)
+
+  describe('vim.schedule_wrap', function()
+    it('preserves argument lists', function()
+      exec_lua [[
+        local fun = vim.schedule_wrap(function(kling, klang, klonk)
+          vim.rpcnotify(1, 'mayday_mayday', {a=kling, b=klang, c=klonk})
+        end)
+        fun("BOB", nil, "MIKE")
+      ]]
+      eq({'notification', 'mayday_mayday', {{a='BOB', c='MIKE'}}}, next_msg())
+
+      -- let's gooooo
+      exec_lua [[
+        vim.schedule_wrap(function(...) vim.rpcnotify(1, 'boogalo', select('#', ...)) end)(nil,nil,nil,nil)
+      ]]
+      eq({'notification', 'boogalo', {4}}, next_msg())
     end)
   end)
 
