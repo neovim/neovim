@@ -1439,7 +1439,7 @@ goto_prev({opts})                             *vim.lsp.diagnostic.goto_prev()*
                     {opts}  table See |vim.lsp.diagnostic.goto_next()|
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
-on_publish_diagnostics({_}, {_}, {params}, {client_id}, {_}, {config})
+on_publish_diagnostics({_}, {result}, {ctx}, {config})
                 |lsp-handler| for the method "textDocument/publishDiagnostics"
 
                 Note:
@@ -1737,7 +1737,7 @@ get({bufnr})                                          *vim.lsp.codelens.get()*
                     table ( `CodeLens[]` )
 
                                               *vim.lsp.codelens.on_codelens()*
-on_codelens({err}, {_}, {result}, {client_id}, {bufnr})
+on_codelens({err}, {result}, {ctx}, {_})
                 |lsp-handler| for the method `textDocument/codeLens`
 
 refresh()                                         *vim.lsp.codelens.refresh()*
@@ -1765,8 +1765,7 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 ==============================================================================
 Lua module: vim.lsp.handlers                                    *lsp-handlers*
 
-                                                    *vim.lsp.handlers.hover()*
-hover({_}, {method}, {result}, {_}, {_}, {config})
+hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
                 |lsp-handler| for the method "textDocument/hover" >
 
                  vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
@@ -1784,7 +1783,7 @@ hover({_}, {method}, {result}, {_}, {_}, {config})
                                 • See |vim.api.nvim_open_win()|
 
                                            *vim.lsp.handlers.signature_help()*
-signature_help({_}, {method}, {result}, {client_id}, {bufnr}, {config})
+signature_help({_}, {result}, {ctx}, {config})
                 |lsp-handler| for the method "textDocument/signatureHelp". The
                 active parameter is highlighted with
                 |hl-LspSignatureActiveParameter|. >
