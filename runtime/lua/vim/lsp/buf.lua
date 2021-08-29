@@ -249,13 +249,34 @@ end
 ---@param new_name (string) If not provided, the user will be prompted for a new
 ---name using |input()|.
 function M.rename(new_name)
-  -- TODO(ashkan) use prepareRename
-  -- * result: [`Range`](#range) \| `{ range: Range, placeholder: string }` \| `null` describing the range of the string to rename and optionally a placeholder text of the string content to be renamed. If `null` is returned then it is deemed that a 'textDocument/rename' request is not valid at the given position.
   local params = util.make_position_params()
-  new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
-  if not (new_name and #new_name > 0) then return end
-  params.newName = new_name
-  request('textDocument/rename', params)
+  local function prepare_rename(err, result)
+    if err == nil and result == nil then
+      vim.notify('nothing to rename', vim.log.levels.INFO)
+      return
+    end
+    if result and result.placeholder then
+      new_name = new_name or npcall(vfn.input, "New Name: ", result.placeholder)
+    elseif result and result.start and result['end'] and
+      result.start.line == result['end'].line then
+      local line = vfn.getline(result.start.line+1)
+      local start_char = result.start.character+1
+      local end_char = result['end'].character
+      new_name = new_name or npcall(vfn.input, "New Name: ", string.sub(line, start_char, end_char))
+    else
+      -- fallback to guessing symbol using <cword>
+      --
+      -- this can happen if the language server does not support prepareRename,
+      -- returns an unexpected response, or requests for "default behavior"
+      --
+      -- see https://microsoft.github.io/language-server-protocol/specification#textDocument_prepareRename
+      new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
+    end
+    if not (new_name and #new_name > 0) then return end
+    params.newName = new_name
+    request('textDocument/rename', params)
+  end
+  request('textDocument/prepareRename', params, prepare_rename)
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
