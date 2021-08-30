@@ -20,7 +20,10 @@ pressing [<Esc>](<Esc>) and then [u](u) will undo the latest change.
 This tutorial is interactive, and there are a few things you should know.
 - Type [<Enter>](<Enter>) on links [like this](holy-grail    ) to open the linked help section.
 - Or simply type [K](K) on any word to find its documentation!
-- Sometimes you will be required to modify text like this here
+- Sometimes you will be required to modify text like
+
+    this here
+
 Once you have done the changes correctly, the ✗ sign at the left will change
 to ✓. I imagine you can already see how neat Vim can be. ;)
 Other times, you'll be prompted to run a command (I'll explain this later):
@@ -859,7 +862,6 @@ NOTE: If you want to ignore case for just one search command, use [\c](/\c)
 ~~~ cmd
         :set invic
 ~~~
-
 # Lesson 7.1: GETTING HELP
 
 ** Use the on-line help system. **
@@ -917,7 +919,7 @@ default. To start using more features you have to create a "vimrc" file.
 
  5. Now add a space and the start of an existing file name: `:edit FIL`{vim}
 
- 6. Press `<Tab>`{normal}. Vim will complete the name (FIL -> FILE, if it is unique).
+ 6. Press `<Tab>`{normal}. Vim will complete the name ("FIL" -> "FILE", if it is unique).
 
 NOTE: Completion works for many commands. It is especially useful for `:help`{vim}.
 
