@@ -642,6 +642,4 @@ vim._expand_pat_get_parts = function(lua_string)
   return parts, search_index
 end
 
-pcall(require, 'vim._meta')
-
 return module
