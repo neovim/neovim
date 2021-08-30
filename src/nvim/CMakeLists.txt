@@ -56,6 +56,8 @@ set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 set(LUA_VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
 set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
 set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
+set(LUA_F_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/F.lua)
+set(LUA_META_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_meta.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -325,11 +327,15 @@ add_custom_command(
       ${LUA_VIM_MODULE_SOURCE} vim_module
       ${LUA_SHARED_MODULE_SOURCE} shared_module
       ${LUA_INSPECT_MODULE_SOURCE} inspect_module
+      ${LUA_F_MODULE_SOURCE} lua_F_module
+      ${LUA_META_MODULE_SOURCE} lua_meta_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${LUA_VIM_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
     ${LUA_INSPECT_MODULE_SOURCE}
+    ${LUA_F_MODULE_SOURCE}
+    ${LUA_META_MODULE_SOURCE}
 )
 
 list(APPEND NVIM_GENERATED_SOURCES

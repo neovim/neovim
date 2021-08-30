@@ -544,8 +544,17 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
       return 1;
     }
     // [package, loaded, inspect]
-
     lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
+
+    code = (char *)&lua_F_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/F.lua")
+        || lua_pcall(lstate, 0, 1, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating vim.F module: %.*s"));
+      return 1;
+    }
+    // [package, loaded, module]
+    lua_setfield(lstate, -2, "vim.F");  // [package, loaded]
+
     lua_pop(lstate, 2);  // []
   }
 
@@ -556,6 +565,22 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
       nlua_error(lstate, _("E5106: Error while creating vim module: %.*s"));
       return 1;
     }
+  }
+
+  {
+    lua_getglobal(lstate, "package");  // [package]
+    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
+
+    const char *code = (char *)&lua_meta_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/_meta.lua")
+        || lua_pcall(lstate, 0, 1, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating vim._meta module: %.*s"));
+      return 1;
+    }
+    // [package, loaded, module]
+    lua_setfield(lstate, -2, "vim._meta");  // [package, loaded]
+
+    lua_pop(lstate, 2);  // []
   }
 
   return 0;
