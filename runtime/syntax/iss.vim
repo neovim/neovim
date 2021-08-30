@@ -5,7 +5,7 @@
 " Last Change:          2019 Sep 27
 "
 " Todo:
-"  - The paramter String: is matched as flag string (because of case ignore).
+"  - The parameter String: is matched as flag string (because of case ignore).
 "  - Pascal scripting syntax is not recognized.
 "  - Embedded double quotes confuse string matches. e.g. "asfd""asfa"
 
