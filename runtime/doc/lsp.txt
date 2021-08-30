@@ -1831,12 +1831,6 @@ apply_workspace_edit({workspace_edit})
                 Parameters: ~
                     {workspace_edit}  (table) `WorkspaceEdit`
 
-border_height({id})                             *vim.lsp.util.border_height()*
-                TODO: Documentation
-
-border_width({id})                               *vim.lsp.util.border_width()*
-                TODO: Documentation
-
 buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                 Removes document highlights from a buffer.
 
