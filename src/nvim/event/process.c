@@ -88,7 +88,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
     } else {
       process_close(proc);
     }
-    shell_free_argv(proc->argv);
+    process_free(proc);
     proc->status = -1;
     return status;
   }
@@ -201,7 +201,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
     // Job exited, free its resources.
     decref(proc);
     if (proc->events) {
-      // the decref call created an exit event, process it now
+      // decref() created an exit event, process it now.
       multiqueue_process_events(proc->events);
     }
   } else {
@@ -239,6 +239,15 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
                  KILL_TIMEOUT_MS, 0);
 }
 
+// Frees process-owned resources.
+void process_free(Process *proc) FUNC_ATTR_NONNULL_ALL
+{
+  if (proc->argv != NULL) {
+    shell_free_argv(proc->argv);
+    proc->argv = NULL;
+  }
+}
+
 /// Sends SIGKILL (or SIGTERM..SIGKILL for PTY jobs) to processes that did
 /// not terminate after process_stop().
 static void children_kill_cb(uv_timer_t *handle)
@@ -269,9 +278,12 @@ static void children_kill_cb(uv_timer_t *handle)
 static void process_close_event(void **argv)
 {
   Process *proc = argv[0];
-  shell_free_argv(proc->argv);
-  if (proc->cb) {  // "on_exit" for jobstart(). See channel_job_start().
+  if (proc->cb) {
+    // User (hint: channel_job_start) is responsible for calling
+    // process_free().
     proc->cb(proc, proc->status, proc->data);
+  } else {
+    process_free(proc);
   }
 }
 

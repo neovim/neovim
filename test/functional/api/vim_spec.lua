@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
+local fmt = string.format
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
@@ -1326,10 +1327,10 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_list_chans and nvim_get_chan_info', function()
+  describe('nvim_list_chans, nvim_get_chan_info', function()
     before_each(function()
-      command('autocmd ChanOpen * let g:opened_event = copy(v:event)')
-      command('autocmd ChanInfo * let g:info_event = copy(v:event)')
+      command('autocmd ChanOpen * let g:opened_event = deepcopy(v:event)')
+      command('autocmd ChanInfo * let g:info_event = deepcopy(v:event)')
     end)
     local testinfo = {
       stream = 'stdio',
@@ -1350,7 +1351,7 @@ describe('API', function()
       eq({}, meths.get_chan_info(10))
     end)
 
-    it('works for stdio channel', function()
+    it('stream=stdio channel', function()
       eq({[1]=testinfo,[2]=stderr}, meths.list_chans())
       eq(testinfo, meths.get_chan_info(1))
       eq(stderr, meths.get_chan_info(2))
@@ -1377,11 +1378,13 @@ describe('API', function()
       eq(info, meths.get_chan_info(1))
     end)
 
-    it('works for job channel', function()
+    it('stream=job channel', function()
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
+      local catpath = eval('exepath("cat")')
       local info = {
         stream='job',
         id=3,
+        argv={ catpath },
         mode='rpc',
         client={},
       }
@@ -1394,6 +1397,7 @@ describe('API', function()
       info = {
         stream='job',
         id=3,
+        argv={ catpath },
         mode='rpc',
         client = {
           name='amazing-cat',
@@ -1410,14 +1414,15 @@ describe('API', function()
          pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)'))
     end)
 
-    it('works for :terminal channel', function()
-      command(":terminal")
+    it('stream=job :terminal channel', function()
+      command(':terminal')
       eq({id=1}, meths.get_current_buf())
-      eq(3, meths.buf_get_option(1, "channel"))
+      eq(3, meths.buf_get_option(1, 'channel'))
 
       local info = {
         stream='job',
         id=3,
+        argv={ eval('exepath(&shell)') },
         mode='terminal',
         buffer = 1,
         pty='?',
@@ -1431,6 +1436,38 @@ describe('API', function()
       info.buffer = {id=1}
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
       eq(info, meths.get_chan_info(3))
+
+      -- :terminal with args + running process.
+      command(':exe "terminal" shellescape(v:progpath) "-u NONE -i NONE"')
+      eq(-1, eval('jobwait([&channel], 0)[0]'))  -- Running?
+      local expected2 = {
+        stream = 'job',
+        id = 4,
+        argv = (
+          iswin() and {
+            eval('&shell'),
+            '/s',
+            '/c',
+            fmt('"%s -u NONE -i NONE"', eval('shellescape(v:progpath)')),
+          } or {
+            eval('&shell'),
+            eval('&shellcmdflag'),
+            fmt('%s -u NONE -i NONE', eval('shellescape(v:progpath)')),
+          }
+        ),
+        mode = 'terminal',
+        buffer = 2,
+        pty = '?',
+      }
+      local actual2 = eval('nvim_get_chan_info(&channel)')
+      expected2.pty = actual2.pty
+      eq(expected2, actual2)
+
+      -- :terminal with args + stopped process.
+      eq(1, eval('jobstop(&channel)'))
+      eval('jobwait([&channel], 1000)')  -- Wait.
+      expected2.pty = (iswin() and '?' or '')  -- pty stream was closed.
+      eq(expected2, eval('nvim_get_chan_info(&channel)'))
     end)
   end)
 

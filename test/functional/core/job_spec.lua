@@ -5,6 +5,7 @@ local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim
   helpers.insert, helpers.neq, helpers.next_msg, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
+local assert_alive = helpers.assert_alive
 local command = helpers.command
 local funcs = helpers.funcs
 local os_kill = helpers.os_kill
@@ -870,7 +871,7 @@ describe('jobs', function()
     -- loop tick. This is also prevented by try-block, so feed must be used.
     feed_command("call DoIt()")
     feed('<cr>') -- press RETURN
-    eq(2,eval('1+1'))
+    assert_alive()
   end)
 
   it('jobstop() kills entire process tree #6530', function()
