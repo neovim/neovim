@@ -7,6 +7,7 @@ local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
 local command= helpers.command
 local exc_exec = helpers.exc_exec
+local matches = helpers.matches
 
 describe(':terminal buffer', function()
   local screen
@@ -255,8 +256,23 @@ describe(':terminal buffer', function()
     command('bdelete!')
   end)
 
-  it('handles wqall', function()
+  it('requires bang (!) to close a running job #15402', function()
     eq('Vim(wqall):E948: Job still running', exc_exec('wqall'))
+    for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
+      matches('^Vim%('..cmd:gsub('%%', '')..'%):E89: term://.*tty%-test.* will be killed %(add %! to override%)$',
+        exc_exec(cmd))
+    end
+    command('call jobstop(&channel)')
+    assert(0 >= eval('jobwait([&channel], 1000)[0]'))
+    command('bdelete')
+  end)
+
+  it('stops running jobs with :quit', function()
+    -- Open in a new window to avoid terminating the nvim instance
+    command('split')
+    command('terminal')
+    command('set nohidden')
+    command('quit')
   end)
 
   it('does not segfault when pasting empty buffer #13955', function()

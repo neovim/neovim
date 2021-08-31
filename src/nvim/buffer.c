@@ -1218,8 +1218,8 @@ do_buffer(
       return FAIL;
     }
 
-    if (!forceit && (buf->terminal || bufIsChanged(buf))) {
-      if ((p_confirm || cmdmod.confirm) && p_write && !buf->terminal) {
+    if (!forceit && bufIsChanged(buf)) {
+      if ((p_confirm || cmdmod.confirm) && p_write) {
         dialog_changed(buf, false);
         if (!bufref_valid(&bufref)) {
           // Autocommand deleted buffer, oops! It's not changed now.
@@ -1231,22 +1231,22 @@ do_buffer(
           return FAIL;
         }
       } else {
-        if (buf->terminal) {
-          if (p_confirm || cmdmod.confirm) {
-            if (!dialog_close_terminal(buf)) {
-              return FAIL;
-            }
-          } else {
-            EMSG2(_("E89: %s will be killed (add ! to override)"),
-                  (char *)buf->b_fname);
-            return FAIL;
-          }
-        } else {
-          EMSGN(_("E89: No write since last change for buffer %" PRId64
-                  " (add ! to override)"),
-                buf->b_fnum);
+        EMSGN(_("E89: No write since last change for buffer %" PRId64
+                " (add ! to override)"),
+              buf->b_fnum);
+        return FAIL;
+      }
+    }
+
+    if (!forceit && buf->terminal && terminal_running(buf->terminal)) {
+      if (p_confirm || cmdmod.confirm) {
+        if (!dialog_close_terminal(buf)) {
           return FAIL;
         }
+      } else {
+        EMSG2(_("E89: %s will be killed (add ! to override)"),
+              (char *)buf->b_fname);
+        return FAIL;
       }
     }
 

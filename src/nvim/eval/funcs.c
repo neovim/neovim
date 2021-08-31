@@ -5404,14 +5404,19 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   TV_LIST_ITER_CONST(args, arg, {
     Channel *chan = NULL;
     if (TV_LIST_ITEM_TV(arg)->v_type != VAR_NUMBER
-        || !(chan = find_job(TV_LIST_ITEM_TV(arg)->vval.v_number, false))) {
+        || !(chan = find_channel(TV_LIST_ITEM_TV(arg)->vval.v_number))
+        || chan->streamtype != kChannelStreamProc) {
+      jobs[i] = NULL;  // Invalid job.
+    } else if (process_is_stopped(&chan->stream.proc)) {
+      // Job is stopped but not fully destroyed.
+      // Ensure all callbacks on its event queue are executed. #15402
+      process_wait(&chan->stream.proc, -1, NULL);
       jobs[i] = NULL;  // Invalid job.
     } else {
       jobs[i] = chan;
       channel_incref(chan);
       if (chan->stream.proc.status < 0) {
-        // Process any pending events on the job's queue before temporarily
-        // replacing it.
+        // Flush any events in the job's queue before temporarily replacing it.
         multiqueue_process_events(chan->events);
         multiqueue_replace_parent(chan->events, waiting_jobs);
       }
