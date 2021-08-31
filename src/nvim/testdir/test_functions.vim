@@ -1127,7 +1127,7 @@ endfunc
 
 func Test_hlexists()
   call assert_equal(0, hlexists('does_not_exist'))
-  " call assert_equal(0, hlexists('Number'))
+  " call assert_equal(0, 'Number'->hlexists())
   call assert_equal(0, highlight_exists('does_not_exist'))
   " call assert_equal(0, highlight_exists('Number'))
   syntax on
@@ -1160,7 +1160,7 @@ endfunc
 func Test_inputlist()
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>1\<cr>", 'tx')
   call assert_equal(1, c)
-  call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>2\<cr>", 'tx')
+  call feedkeys(":let c = ['Select color:', '1. red', '2. green', '3. blue']->inputlist()\<cr>2\<cr>", 'tx')
   call assert_equal(2, c)
   call feedkeys(":let c = inputlist(['Select color:', '1. red', '2. green', '3. blue'])\<cr>3\<cr>", 'tx')
   call assert_equal(3, c)
@@ -1413,7 +1413,7 @@ func Test_reg_executing_and_recording()
   let g:regs = []
   func TestFunc() abort
     let g:regs += [reg_executing()]
-    let g:typed = input('?')
+    let g:typed = '?'->input()
     let g:regs += [reg_executing()]
   endfunc
   call feedkeys("@qy\<CR>", 'xt')
@@ -1427,6 +1427,25 @@ func Test_reg_executing_and_recording()
   bwipe!
   delfunc s:save_reg_stat
   unlet s:reg_stat
+endfunc
+
+func Test_inputsecret()
+  map W :call TestFunc()<CR>
+  let @q = "W"
+  let g:typed1 = ''
+  let g:typed2 = ''
+  let g:regs = []
+  func TestFunc() abort
+    let g:typed1 = '?'->inputsecret()
+    let g:typed2 = inputsecret('password: ')
+  endfunc
+  call feedkeys("@qsomething\<CR>else\<CR>", 'xt')
+  call assert_equal("something", g:typed1)
+  call assert_equal("else", g:typed2)
+  delfunc TestFunc
+  unmap W
+  unlet g:typed1
+  unlet g:typed2
 endfunc
 
 func Test_getchar()

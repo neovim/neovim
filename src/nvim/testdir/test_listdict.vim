@@ -573,7 +573,7 @@ func Test_lockvar_script_autoload()
   set rtp+=./sautest
   lockvar g:footest#x
   unlockvar g:footest#x
-  call assert_equal(-1, islocked('g:footest#x'))
+  call assert_equal(-1, 'g:footest#x'->islocked())
   call assert_equal(0, exists('g:footest#x'))
   call assert_equal(1, g:footest#x)
   let &rtp = old_rtp

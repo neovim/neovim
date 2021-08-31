@@ -17,7 +17,7 @@ func GetCwdInfo(win, tab)
     let lflag = haslocaldir(a:win)
   else
     let dirname = fnamemodify(getcwd(a:win, a:tab), mod)
-    let lflag = haslocaldir(a:win, a:tab)
+    let lflag = a:win->haslocaldir(a:tab)
   endif
   return bufname . ' ' . dirname . ' ' . lflag
 endfunc

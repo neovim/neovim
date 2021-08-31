@@ -5763,6 +5763,9 @@ haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 		{winnr} can be the window number or the |window-ID|.
 		If {winnr} is -1 it is ignored, only the tab is resolved.
 
+		Can also be used as a |method|: >
+			GetWinnr()->haslocaldir()
+
 hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		The result is a Number, which is TRUE if there is a mapping
 		that contains {what} in somewhere in the rhs (what it is
@@ -5792,6 +5795,9 @@ hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 <		This installs the mapping to "\ABCdoit" only if there isn't
 		already a mapping to "\ABCdoit".
 
+		Can also be used as a |method|: >
+			GetRHS()->hasmapto()
+
 histadd({history}, {item})				*histadd()*
 		Add the String {item} to the history {history} which can be
 		one of:					*hist-names*
@@ -5812,6 +5818,10 @@ histadd({history}, {item})				*histadd()*
 			:call histadd("input", strftime("%Y %b %d"))
 			:let date=input("Enter date: ")
 <		This function is not available in the |sandbox|.
+
+		Can also be used as a |method|, the base is used for the
+		second argument: >
+			GetPattern()->histadd('search')
 
 histdel({history} [, {item}])				*histdel()*
 		Clear {history}, i.e. delete all its entries.  See |hist-names|
@@ -5844,6 +5854,9 @@ histdel({history} [, {item}])				*histdel()*
 		the "n" command and 'hlsearch': >
 			:call histdel("search", -1)
 			:let @/ = histget("search", -1)
+<
+		Can also be used as a |method|: >
+			GetHistory()->histdel()
 
 histget({history} [, {index}])				*histget()*
 		The result is a String, the entry with Number {index} from
@@ -5860,6 +5873,9 @@ histget({history} [, {index}])				*histget()*
 		the {num}th entry from the output of |:history|. >
 			:command -nargs=1 H execute histget("cmd", 0+<args>)
 <
+		Can also be used as a |method|: >
+			GetHistory()->histget()
+
 histnr({history})					*histnr()*
 		The result is the Number of the current entry in {history}.
 		See |hist-names| for the possible values of {history}.
@@ -5867,6 +5883,9 @@ histnr({history})					*histnr()*
 
 		Example: >
 			:let inp_index = histnr("expr")
+
+<		Can also be used as a |method|: >
+			GetHistory()->histnr()
 <
 hlexists({name})					*hlexists()*
 		The result is a Number, which is TRUE if a highlight group
@@ -5875,6 +5894,9 @@ hlexists({name})					*hlexists()*
 		been defined for it, it may also have been used for a syntax
 		item.
 
+		Can also be used as a |method|: >
+			GetName()->hlexists()
+<
 							*hlID()*
 hlID({name})	The result is a Number, which is the ID of the highlight group
 		with name {name}.  When the highlight group doesn't exist,
@@ -5883,6 +5905,9 @@ hlID({name})	The result is a Number, which is the ID of the highlight group
 		group.  For example, to get the background color of the
 		"Comment" group: >
 	:echo synIDattr(synIDtrans(hlID("Comment")), "bg")
+<
+		Can also be used as a |method|: >
+			GetName()->hlID()
 
 hostname()						*hostname()*
 		The result is a String, which is the name of the machine on
@@ -5901,6 +5926,9 @@ iconv({string}, {from}, {to})				*iconv()*
 		from/to UCS-2 is automatically changed to use UTF-8.  You
 		cannot use UCS-2 in a string anyway, because of the NUL bytes.
 
+		Can also be used as a |method|: >
+			GetText()->iconv('latin1', 'utf-8')
+<
 							*indent()*
 indent({lnum})	The result is a Number, which is indent of line {lnum} in the
 		current buffer.  The indent is counted in spaces, the value
@@ -5908,6 +5936,8 @@ indent({lnum})	The result is a Number, which is indent of line {lnum} in the
 		|getline()|.
 		When {lnum} is invalid -1 is returned.
 
+		Can also be used as a |method|: >
+			GetLnum()->indent()
 
 index({object}, {expr} [, {start} [, {ic}]])			*index()*
 		If {object} is a |List| return the lowest index where the item
@@ -5928,6 +5958,8 @@ index({object}, {expr} [, {start} [, {ic}]])			*index()*
 			:let idx = index(words, "the")
 			:if index(numbers, 123) >= 0
 
+<		Can also be used as a |method|: >
+			GetObject()->index(what)
 
 input({prompt} [, {text} [, {completion}]])		*input()*
 input({opts})
@@ -6040,6 +6072,9 @@ input({opts})
 			:  call inputrestore()
 			:endfunction
 
+<		Can also be used as a |method|: >
+			GetPrompt()->input()
+
 inputlist({textlist})					*inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is
 		displayed, one string per line.  The user will be prompted to
@@ -6056,6 +6091,9 @@ inputlist({textlist})					*inputlist()*
 		Example: >
 			let color = inputlist(['Select color:', '1. red',
 				\ '2. green', '3. blue'])
+
+<		Can also be used as a |method|: >
+			GetChoices()->inputlist()
 
 inputrestore()						*inputrestore()*
 		Restore typeahead that was saved with a previous |inputsave()|.
@@ -6081,6 +6119,9 @@ inputsecret({prompt} [, {text}])			*inputsecret()*
 		The result is a String, which is whatever the user actually
 		typed on the command-line in response to the issued prompt.
 		NOTE: Command-line completion is not supported.
+
+		Can also be used as a |method|: >
+			GetPrompt()->inputsecret()
 
 insert({object}, {item} [, {idx}])			*insert()*
 		When {object} is a |List| or a |Blob| insert {item} at the start
@@ -6128,6 +6169,9 @@ isdirectory({directory})				*isdirectory()*
 		exist, or isn't a directory, the result is |FALSE|.  {directory}
 		is any expression, which is used as a String.
 
+		Can also be used as a |method|: >
+			GetName()->isdirectory()
+
 isinf({expr})						*isinf()*
 		Return 1 if {expr} is a positive infinity, or -1 a negative
 		infinity, otherwise 0. >
@@ -6152,6 +6196,9 @@ islocked({expr})					*islocked()* *E786*
 
 <		When {expr} is a variable that does not exist you get an error
 		message.  Use |exists()| to check for existence.
+
+		Can also be used as a |method|: >
+			GetName()->islocked()
 
 id({expr})						*id()*
 		Returns a |String| which is a unique identifier of the
