@@ -168,7 +168,8 @@ describe('json_decode() function', function()
   end)
 
   it('parses floating-point numbers', function()
-    eq('100000.0', eval('string(json_decode("100000.0"))'))
+    -- Also test method call (->) syntax
+    eq('100000.0', eval('"100000.0"->json_decode()->string()'))
     eq(100000.5, funcs.json_decode('100000.5'))
     eq(-100000.5, funcs.json_decode('-100000.5'))
     eq(-100000.5e50, funcs.json_decode('-100000.5e50'))
@@ -549,11 +550,12 @@ describe('json_encode() function', function()
   end)
 
   it('dumps floats', function()
-    eq('0.0', eval('json_encode(0.0)'))
+    -- Also test method call (->) syntax
+    eq('0.0', eval('0.0->json_encode()'))
     eq('10.5', funcs.json_encode(10.5))
     eq('-10.5', funcs.json_encode(-10.5))
     eq('-1.0e-5', funcs.json_encode(-1e-5))
-    eq('1.0e50', eval('json_encode(1.0e50)'))
+    eq('1.0e50', eval('1.0e50->json_encode()'))
   end)
 
   it('fails to dump NaN and infinite values', function()

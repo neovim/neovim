@@ -1204,7 +1204,7 @@ next method: >
 	mylist->filter(filterexpr)->map(mapexpr)->sort()->join()
 <
 Example of using a lambda: >
-	GetPercentage->{x -> x * 100}()->printf('%d%%')
+	GetPercentage()->{x -> x * 100}()->printf('%d%%')
 <
 When using -> the |expr7| operators will be applied first, thus: >
 	-1.234->string()
@@ -6384,6 +6384,9 @@ json_decode({expr})					*json_decode()*
 		recommended and the only one required to be supported.
 		Non-UTF-8 characters are an error.
 
+		Can also be used as a |method|: >
+			ReadObject()->json_decode()
+
 json_encode({expr})					*json_encode()*
 		Convert {expr} into a JSON string.  Accepts
 		|msgpack-special-dict| as the input.  Will not convert
@@ -6395,6 +6398,9 @@ json_encode({expr})					*json_encode()*
 		Non-printable characters are converted into "\u1234" escapes
 		or special escapes like "\t", other are dumped as-is.
 		|Blob|s are converted to arrays of the individual bytes.
+
+		Can also be used as a |method|: >
+			GetObject()->json_encode()
 
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
@@ -6459,6 +6465,10 @@ libcall({libname}, {funcname}, {argument})
 		object code must be compiled as position-independent ('PIC').
 		Examples: >
 			:echo libcall("libc.so", "getenv", "HOME")
+
+<		Can also be used as a |method|, where the base is passed as
+		the argument to the called function: >
+			GetValue()->libcall("libc.so", "getenv")
 <
 							*libcallnr()*
 libcallnr({libname}, {funcname}, {argument})
@@ -6468,6 +6478,10 @@ libcallnr({libname}, {funcname}, {argument})
 			:echo libcallnr("/usr/lib/libc.so", "getpid", "")
 			:call libcallnr("libc.so", "printf", "Hello World!\n")
 			:call libcallnr("libc.so", "sleep", 10)
+<
+		Can also be used as a |method|, where the base is passed as
+		the argument to the called function: >
+			GetValue()->libcallnr("libc.so", "printf")
 <
 							*line()*
 line({expr})	The result is a Number, which is the line number of the file
@@ -6493,6 +6507,9 @@ line({expr})	The result is a Number, which is the line number of the file
 			line(".")		line number of the cursor
 			line("'t")		line number of mark t
 			line("'" . marker)	line number of mark marker
+<
+		Can also be used as a |method|: >
+			GetValue()->line()
 
 line2byte({lnum})					*line2byte()*
 		Return the byte count from the start of the buffer for line
@@ -6507,12 +6524,18 @@ line2byte({lnum})					*line2byte()*
 		|getline()|.  When {lnum} is invalid -1 is returned.
 		Also see |byte2line()|, |go| and |:goto|.
 
+		Can also be used as a |method|: >
+			GetLnum()->line2byte()
+
 lispindent({lnum})					*lispindent()*
 		Get the amount of indent for line {lnum} according the lisp
 		indenting rules, as with 'lisp'.
 		The indent is counted in spaces, the value of 'tabstop' is
 		relevant.  {lnum} is used just like in |getline()|.
 		When {lnum} is invalid, -1 is returned.
+
+		Can also be used as a |method|: >
+			GetLnum()->lispindent()
 
 list2str({list} [, {utf8}])				*list2str()*
 		Convert each number in {list} to a character string can
@@ -6528,6 +6551,9 @@ list2str({list} [, {utf8}])				*list2str()*
 		With utf-8 composing characters work as expected: >
 			list2str([97, 769])	returns "á"
 <
+		Can also be used as a |method|: >
+			GetList()->list2str()
+
 localtime()						*localtime()*
 		Return the current time, measured as seconds since 1st Jan
 		1970.  See also |strftime()|, |strptime()| and |getftime()|.
@@ -6561,6 +6587,9 @@ log10({expr})						*log10()*
 luaeval({expr}[, {expr}])
 		Evaluate Lua expression {expr} and return its result converted
 		to Vim data structures. See |lua-eval| for more details.
+
+		Can also be used as a |method|: >
+			GetExpr()->luaeval()
 
 map({expr1}, {expr2})					*map()*
 		{expr1} must be a |List|, |Blob| or |Dictionary|.
