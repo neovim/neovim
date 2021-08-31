@@ -316,7 +316,7 @@ func Test_getsettagstack()
   enew | only
   call settagstack(1, {'items' : []})
   call assert_equal(0, gettagstack(1).length)
-  call assert_equal([], gettagstack(1).items)
+  call assert_equal([], 1->gettagstack().items)
   " Error cases
   call assert_equal({}, gettagstack(100))
   call assert_equal(-1, settagstack(100, {'items' : []}))

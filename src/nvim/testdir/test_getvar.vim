@@ -12,8 +12,8 @@ func Test_var()
   let def_str = "Chance"
   call assert_equal('Dance', getwinvar(1, 'var_str'))
   call assert_equal('Dance', getwinvar(1, 'var_str', def_str))
-  call assert_equal({'var_str': 'Dance'}, getwinvar(1, ''))
-  call assert_equal({'var_str': 'Dance'}, getwinvar(1, '', def_str))
+  call assert_equal({'var_str': 'Dance'}, 1->getwinvar(''))
+  call assert_equal({'var_str': 'Dance'}, 1->getwinvar('', def_str))
   unlet w:var_str
   call assert_equal('Chance', getwinvar(1, 'var_str', def_str))
   call assert_equal({}, getwinvar(1, ''))

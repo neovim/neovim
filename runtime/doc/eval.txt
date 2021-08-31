@@ -5477,7 +5477,7 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 			gettabwinvar({tabnr}, {winnr}, '&')
 
 <		Can also be used as a |method|: >
-			GetTabnr()->gettabvar(winnr, varname)
+			GetTabnr()->gettabwinvar(winnr, varname)
 
 gettagstack([{winnr}])					*gettagstack()*
 		The result is a Dict, which is the tag stack of window {winnr}.
@@ -5506,6 +5506,9 @@ gettagstack([{winnr}])					*gettagstack()*
 			tagname		name of the tag
 
 		See |tagstack| for more information about the tag stack.
+
+		Can also be used as a |method|: >
+			GetWinnr()->gettagstack()
 
 getwininfo([{winid}])					*getwininfo()*
 		Returns information about windows as a |List| with Dictionaries.
@@ -5538,6 +5541,9 @@ getwininfo([{winid}])					*getwininfo()*
 			winrow		topmost screen line of the window;
 					"row" from |win_screenpos()|
 
+		Can also be used as a |method|: >
+			GetWinnr()->getwininfo()
+
 getwinpos([{timeout}])					*getwinpos()*
 		The result is a |List| with two numbers, the result of
 		|getwinposx()| and |getwinposy()| combined:
@@ -5558,6 +5564,9 @@ getwinpos([{timeout}])					*getwinpos()*
 			  " Do some work here
 			endwhile
 <
+		Can also be used as a |method|: >
+			GetTimeout()->getwinpos()
+<
 							*getwinposx()*
 getwinposx()	The result is a Number, which is the X coordinate in pixels of
 		the left hand side of the GUI Vim window.  The result will be
@@ -5575,6 +5584,9 @@ getwinvar({winnr}, {varname} [, {def}])				*getwinvar()*
 		Examples: >
 			:let list_is_on = getwinvar(2, '&list')
 			:echo "myvar = " . getwinvar(1, 'myvar')
+
+<		Can also be used as a |method|: >
+			GetWinnr()->getwinvar(varname)
 <
 glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])		*glob()*
 		Expand the file wildcards in {expr}.  See |wildcards| for the
@@ -5612,6 +5624,9 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])		*glob()*
 		See |expand()| for expanding special Vim variables.  See
 		|system()| for getting the raw output of an external command.
 
+		Can also be used as a |method|: >
+			GetExpr()->glob()
+
 glob2regpat({string})					 *glob2regpat()*
 		Convert a file pattern, as used by glob(), into a search
 		pattern.  The result can be used to match with a string that
@@ -5624,7 +5639,9 @@ glob2regpat({string})					 *glob2regpat()*
 		Note that the result depends on the system.  On MS-Windows
 		a backslash usually means a path separator.
 
-								*globpath()*
+		Can also be used as a |method|: >
+			GetExpr()->glob2regpat()
+<								*globpath()*
 globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])
 		Perform glob() for String {expr} on all directories in {path}
 		and concatenate the results.  Example: >
@@ -5660,6 +5677,10 @@ globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])
 <		Upwards search and limiting the depth of "**" is not
 		supported, thus using 'path' will not always work properly.
 
+		Can also be used as a |method|, the base is passed as the
+		second argument: >
+			GetExpr()->globpath(&rtp)
+<
 							*has()*
 has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 		{feature} argument is a feature name like "nvim-0.2.1" or
