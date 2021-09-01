@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Appimage set the ARGV0 environment variable.
+# This causes problems in zsh.
+# To prevent this, we use wrapper script to unset ARGV0 as AppRun.
+# See https://github.com/AppImage/AppImageKit/issues/852
+
+unset ARGV0
+exec "$(dirname "$(readlink  -f "${0}")")/usr/bin/nvim" ${@+"$@"}

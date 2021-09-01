@@ -1,0 +1,72 @@
+# This dockerfile builds Neovim into an AppImage "AppDir".
+#
+# If you run docker build with the `-o <dir>` flag, it will copy the contents of
+# the final stage out to that dir.
+#
+# NOTE: This *does not* export an AppImage, it exports data to create one!
+#
+#       Neovims current AppImage creation toolchain is run via linuxdeploy which
+#       has no Arm64 build and relys on FUSE which may not be run in a docker build
+#       container. You must combine the resulting artifacts afterwards.
+#
+# The exported files are:
+#
+#  - $APP_DIR.AppDir -> the app dir
+#  - nvim.desktop    -> xdg desktop file
+#  - nvim.icon       -> nvim icon
+#  - VERSION         -> text file containing built version
+#
+# Examine the ARG block below for --build-arg options you can pass in.
+
+# Build on the oldest supported images, so we have broader compatibility
+FROM ubuntu:18.04 AS build-stage
+
+# these must be passed in via --build-arg
+ARG CC                # should be gcc-11
+ARG CMAKE_EXTRA_FLAGS # See release.yml for examples
+ARG CMAKE_BUILD_TYPE  # Release, Debug, RelWithDebInfo
+ARG APP_DIR           # probably nvim-<arch>.AppDir
+
+# Don't ask for TZ information and set a sane default TZ
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+# Upgrade to gcc-11 to prevent it from using its builtins (#14150)
+# Add toolchain ppa for gcc-11 backport
+# Add ca-certificates to avoid some downloads failing due to missing ca
+# Set locale, may be impactful and defaults to C in ubuntu docker images
+RUN apt-get update \
+    && apt-get install -y software-properties-common \
+    && add-apt-repository ppa:ubuntu-toolchain-r/test \
+    && apt-get install -y --no-install-recommends \
+          ca-certificates gcc-11 autoconf automake build-essential cmake \
+          gettext gperf libtool-bin locales ninja-build pkg-config unzip curl \
+          git \
+    && rm -rf /var/lib/apt/lists/* \
+    && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+
+# build release
+WORKDIR /neovim
+COPY . .
+
+# For now, we will enforce a clean state before building
+# (these may be copied over via the above step on a user machine,
+# not really in CI)
+RUN rm -rf build/ .deps/
+
+RUN CC=${CC} make CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" \
+                  CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" \
+    && make install \
+    && mkdir /neovim/build/${APP_DIR}/usr/share/metainfo/ \
+    && cp /neovim/runtime/nvim.appdata.xml /neovim/build/${APP_DIR}/usr/share/metainfo/ \
+    && echo $(/neovim/build/bin/nvim --version | head -n 1 | grep -o 'v.*') > /neovim/build/VERSION \
+    && cp /neovim/scripts/app-image-support/AppRun /neovim/build/${APP_DIR}/AppRun \
+    && chmod 755 /neovim/build/${APP_DIR}/AppRun
+
+# copy artifacts out of build image
+FROM scratch AS export-stage
+ARG APP_DIR
+COPY --from=build-stage /neovim/build/${APP_DIR} /${APP_DIR}
+COPY --from=build-stage /neovim/build/VERSION /
+COPY --from=build-stage /neovim/runtime/nvim.desktop /
+COPY --from=build-stage /neovim/runtime/nvim.png /
