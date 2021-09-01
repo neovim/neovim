@@ -35,7 +35,7 @@ endfunc
 
 func Test_pyxeval()
   pyx import sys
-  call assert_match(s:py2pattern, split(pyxeval('sys.version'))[0])
+  call assert_match(s:py2pattern, split('sys.version'->pyxeval())[0])
 endfunc
 
 

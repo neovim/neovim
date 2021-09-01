@@ -7246,6 +7246,9 @@ nextnonblank({lnum})					*nextnonblank()*
 		{lnum} is used like with |getline()|.
 		See also |prevnonblank()|.
 
+		Can also be used as a |method|: >
+			GetLnum()->nextnonblank()
+
 nr2char({expr} [, {utf8}])				*nr2char()*
 		Return a string with a single character, which has the number
 		value {expr}.  Examples: >
@@ -7259,6 +7262,9 @@ nr2char({expr} [, {utf8}])				*nr2char()*
 		nr2char(10), because NULs are represented with newline
 		characters.  nr2char(0) is a real NUL and terminates the
 		string, thus results in an empty string.
+
+		Can also be used as a |method|: >
+			GetNumber()->nr2char()
 
 nvim_...({...})					*E5555* *nvim_...()* *eval-api*
 		Call nvim |api| functions. The type checking of arguments will
@@ -7288,6 +7294,9 @@ pathshorten({path})					*pathshorten()*
 <			~/.c/n/a/file1.vim ~
 		It doesn't matter if the path exists or not.
 
+		Can also be used as a |method|: >
+			GetDirectories()->pathshorten()
+
 perleval({expr})					*perleval()*
 		Evaluate |perl| expression {expr} and return its result
 		converted to Vim data structures.
@@ -7302,6 +7311,9 @@ perleval({expr})					*perleval()*
 		Example: >
 			:echo perleval('[1 .. 4]')
 <			[1, 2, 3, 4]
+
+		Can also be used as a |method|: >
+			GetExpr()->perleval()
 
 pow({x}, {y})						*pow()*
 		Return the power of {x} to the exponent {y} as a |Float|.
@@ -7326,6 +7338,8 @@ prevnonblank({lnum})					*prevnonblank()*
 		{lnum} is used like with |getline()|.
 		Also see |nextnonblank()|.
 
+		Can also be used as a |method|: >
+			GetLnum()->prevnonblank()
 
 printf({fmt}, {expr1} ...)				*printf()*
 		Return a String with {fmt}, where "%" items are replaced by
@@ -7558,6 +7572,9 @@ prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		     endif
 		   endfunc
 
+<		Can also be used as a |method|: >
+			GetBuffer()->prompt_setcallback(callback)
+
 prompt_setinterrupt({buf}, {expr})			*prompt_setinterrupt()*
 		Set a callback for buffer {buf} to {expr}.  When {expr} is an
 		empty string the callback is removed.  This has only effect if
@@ -7567,12 +7584,18 @@ prompt_setinterrupt({buf}, {expr})			*prompt_setinterrupt()*
 		mode.  Without setting a callback Vim will exit Insert mode,
 		as in any buffer.
 
+		Can also be used as a |method|: >
+			GetBuffer()->prompt_setinterrupt(callback)
+
 prompt_setprompt({buf}, {text})				*prompt_setprompt()*
 		Set prompt for buffer {buf} to {text}.  You most likely want
 		{text} to end in a space.
 		The result is only visible if {buf} has 'buftype' set to
 		"prompt".  Example: >
 			call prompt_setprompt(bufnr(''), 'command: ')
+<
+		Can also be used as a |method|: >
+			GetBuffer()->prompt_setprompt('command: ')
 
 pum_getpos()						*pum_getpos()*
 		If the popup menu (see |ins-completion-menu|) is not visible,
@@ -7603,6 +7626,9 @@ py3eval({expr})						*py3eval()*
 		Dictionaries are represented as Vim |Dictionary| type with
 		keys converted to strings.
 
+		Can also be used as a |method|: >
+			GetExpr()->py3eval()
+<
 							*E858* *E859*
 pyeval({expr})						*pyeval()*
 		Evaluate Python expression {expr} and return its result
@@ -7613,12 +7639,18 @@ pyeval({expr})						*pyeval()*
 		Dictionaries are represented as Vim |Dictionary| type,
 		non-string keys result in error.
 
+		Can also be used as a |method|: >
+			GetExpr()->pyeval()
+
 pyxeval({expr})						*pyxeval()*
 		Evaluate Python expression {expr} and return its result
 		converted to Vim data structures.
 		Uses Python 2 or 3, see |python_x| and 'pyxversion'.
 		See also: |pyeval()|, |py3eval()|
 
+		Can also be used as a |method|: >
+			GetExpr()->pyxeval()
+<
 							*E726* *E727*
 range({expr} [, {max} [, {stride}]])				*range()*
 		Returns a |List| with Numbers:
