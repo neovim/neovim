@@ -1725,6 +1725,10 @@ display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
 get({bufnr})                                          *vim.lsp.codelens.get()*
                 Return all lenses for the given buffer
 
+                Parameters: ~
+                    {bufnr}  number Buffer number. 0 can be used for the
+                             current buffer.
+
                 Return: ~
                     table ( `CodeLens[]` )
 
