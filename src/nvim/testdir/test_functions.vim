@@ -295,7 +295,7 @@ func Test_resolve_unix()
   call delete('Xlink')
 
   silent !ln -s -f Xlink2/ Xlink1
-  call assert_equal('Xlink2', resolve('Xlink1'))
+  call assert_equal('Xlink2', 'Xlink1'->resolve())
   call assert_equal('Xlink2/', resolve('Xlink1/'))
   call delete('Xlink1')
 
@@ -1306,7 +1306,7 @@ func Test_func_range_with_edit()
   " is invalid in that buffer.
   call writefile(['just one line'], 'Xfuncrange2')
   new
-  call setline(1, range(10))
+  call setline(1, 10->range())
   write Xfuncrange1
   call assert_fails('5,8call EditAnotherFile()', 'E16:')
 
@@ -1578,7 +1578,7 @@ func Test_readdir()
   call assert_equal(['bar.txt', 'dir', 'foo.txt'], sort(files))
 
   " Only results containing "f"
-  let files = readdir('Xdir', { x -> stridx(x, 'f') !=- 1 })
+  let files = 'Xdir'->readdir({ x -> stridx(x, 'f') !=- 1 })
   call assert_equal(['foo.txt'], sort(files))
 
   " Only .txt files

@@ -2505,7 +2505,7 @@ keys({dict})			List	keys in {dict}
 len({expr})			Number	the length of {expr}
 libcall({lib}, {func}, {arg})	String	call {func} in library {lib} with {arg}
 libcallnr({lib}, {func}, {arg})  Number  idem, but return a Number
-line({expr})			Number	line nr of cursor, last line or mark
+line({expr} [, {winid}])	Number	line nr of cursor, last line or mark
 line2byte({lnum})		Number	byte count of line {lnum}
 lispindent({lnum})		Number	Lisp indent for line {lnum}
 list2str({list} [, {utf8}])	String	turn numbers in {list} into a String
@@ -5780,7 +5780,9 @@ hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		If no matching mapping is found FALSE is returned.
 		The following characters are recognized in {mode}:
 			n	Normal mode
-			v	Visual mode
+			v	Visual and Select mode
+			x	Visual mode
+			s	Select mode
 			o	Operator-pending mode
 			i	Insert mode
 			l	Language-Argument ("r", "f", "t", etc.)
@@ -6483,8 +6485,8 @@ libcallnr({libname}, {funcname}, {argument})
 		the argument to the called function: >
 			GetValue()->libcallnr("libc.so", "printf")
 <
-							*line()*
-line({expr})	The result is a Number, which is the line number of the file
+line({expr} [, {winid}])				*line()*
+		The result is a Number, which is the line number of the file
 		position given with {expr}.  The {expr} argument is a string.
 		The accepted positions are:
 		    .	    the cursor position
@@ -6503,8 +6505,11 @@ line({expr})	The result is a Number, which is the line number of the file
 		then applies to another buffer.
 		To get the column number use |col()|.  To get both use
 		|getpos()|.
+		With the optional {winid} argument the values are obtained for
+		that window instead of the current window.
 		Examples: >
 			line(".")		line number of the cursor
+			line(".", winid)	idem, in window "winid"
 			line("'t")		line number of mark t
 			line("'" . marker)	line number of mark marker
 <
@@ -7670,6 +7675,9 @@ range({expr} [, {max} [, {stride}]])				*range()*
 			range(0)		" []
 			range(2, 0)		" error!
 <
+		Can also be used as a |method|: >
+			GetExpr()->range()
+<
 							*readdir()*
 readdir({directory} [, {expr}])
 		Return a list with file and directory names in {directory}.
@@ -7696,6 +7704,9 @@ readdir({directory} [, {expr}])
 		      \          {x : s:tree(a:dir . '/' . x)} : x})}
                   endfunction
                   echo s:tree(".")
+<
+		Can also be used as a |method|: >
+			GetDirName()->readdir()
 <
 							*readfile()*
 readfile({fname} [, {type} [, {max}]])
@@ -7730,6 +7741,9 @@ readfile({fname} [, {type} [, {max}]])
 		the result is an empty list.
 		Also see |writefile()|.
 
+		Can also be used as a |method|: >
+			GetFileName()->readfile()
+
 reg_executing()						*reg_executing()*
 		Returns the single letter name of the register being executed.
 		Returns an empty string when no register is being executed.
@@ -7757,6 +7771,9 @@ reltime([{start} [, {end}]])				*reltime()*
 		The {start} and {end} arguments must be values returned by
 		reltime().
 
+		Can also be used as a |method|: >
+			GetStart()->reltime()
+<
 		Note: |localtime()| returns the current (non-relative) time.
 
 reltimefloat({time})				*reltimefloat()*
@@ -7769,6 +7786,9 @@ reltimefloat({time})				*reltimefloat()*
 		See the note of reltimestr() about overhead.
 		Also see |profiling|.
 		If there is an error an empty string is returned
+
+		Can also be used as a |method|: >
+			reltime(start)->reltimefloat()
 
 reltimestr({time})				*reltimestr()*
 		Return a String that represents the time value of {time}.
@@ -7784,6 +7804,9 @@ reltimestr({time})				*reltimestr()*
 <		Also see |profiling|.
 		If there is an error an empty string is returned
 
+		Can also be used as a |method|: >
+			reltime(start)->reltimestr()
+<
 							*remote_expr()* *E449*
 remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 		Send the {string} to {server}.  The string is sent as an
@@ -7916,6 +7939,9 @@ rename({from}, {to})					*rename()*
 		NOTE: If {to} exists it is overwritten without warning.
 		This function is not available in the |sandbox|.
 
+		Can also be used as a |method|: >
+			GetOldName()->rename(newname)
+
 repeat({expr}, {count})					*repeat()*
 		Repeat {expr} {count} times and return the concatenated
 		result.  Example: >
@@ -7942,6 +7968,9 @@ resolve({filename})					*resolve()* *E655*
 		current directory (provided the result is still a relative
 		path name) and also keeps a trailing path separator.
 
+		Can also be used as a |method|: >
+			GetName()->resolve()
+<
 							*reverse()*
 reverse({object})
 		Reverse the order of items in {object} in-place.
@@ -7995,6 +8024,9 @@ rubyeval({expr})					*rubyeval()*
 		Hashes are represented as Vim |Dictionary| type.
 		Other objects are represented as strings resulted from their
 		"Object#to_s" method.
+
+		Can also be used as a |method|: >
+			GetRubyExpr()->rubyeval()
 
 screenattr({row}, {col})					*screenattr()*
 		Like |screenchar()|, but return the attribute.  This is a rather
