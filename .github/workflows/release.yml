@@ -120,6 +120,7 @@ jobs:
                  -o $GITHUB_WORKSPACE/build .
       - name: Bundle AppDir into AppImage
         run: |
+          cd build
           # linuxdeploy automates some of the AppDir to AppImage process
           # this may be removable and just use appimagetool
           # we retain it for now to just prepare the appdir
@@ -136,22 +137,22 @@ jobs:
           # this only prepares the app dir for bundling. Possibly deprecated/unneeded.
           # TODO UPDATE_INFORMATION may not be propagated, wrong stage here
           APP=nvim-${{ matrix.arch }} \
-          VERSION=$(cat build/VERSION) \
+          VERSION=$(cat VERSION) \
           UPDATE_INFORMATION="gh-releases-zsync|neovim|neovim|${TAG}|nvim-${{ matrix.arch }}.appimage.zsync" \
-          ./linuxdeploy --appdir build/nvim-${{ matrix.arch }}.AppDir \
-            -d build/nvim.desktop \
-            -i build/nvim.png
+          ./linuxdeploy --appdir nvim-${{ matrix.arch }}.AppDir \
+            -d nvim.desktop \
+            -i nvim.png
 
           # actually build the app image
           ./appimagetool \
             --runtime-files runtime \
-            build/nvim-${{ matrix.arch }}.AppDir \
-            build/nvim-linux-${{ matrix.arch }}.appimage
+            nvim-${{ matrix.arch }}.AppDir \
+            nvim-linux-${{ matrix.arch }}.appimage
       -
         uses: actions/upload-artifact@v2
         with:
           name: nvim-linux-appimage
-          path: nvim-linux-${{ matrix.arch }}.appimage
+          path: build/nvim-linux-${{ matrix.arch }}.appimage
           retention-days: 1
       -
         uses: actions/upload-artifact@v2
