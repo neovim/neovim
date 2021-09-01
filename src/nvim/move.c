@@ -453,13 +453,18 @@ void changed_window_setting_win(win_T *wp)
  */
 void set_topline(win_T *wp, linenr_T lnum)
 {
-  /* go to first of folded lines */
+  linenr_T prev_topline = wp->w_topline;
+
+  // go to first of folded lines
   (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
-  /* Approximate the value of w_botline */
+  // Approximate the value of w_botline
   wp->w_botline += lnum - wp->w_topline;
   wp->w_topline = lnum;
   wp->w_topline_was_set = true;
-  wp->w_topfill = 0;
+  if (lnum != prev_topline) {
+    // Keep the filler lines when the topline didn't change.
+    wp->w_topfill = 0;
+  }
   wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_TOPLINE);
   // Don't set VALID_TOPLINE here, 'scrolloff' needs to be checked.
   redraw_later(wp, VALID);
