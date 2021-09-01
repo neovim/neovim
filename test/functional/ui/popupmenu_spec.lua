@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
 local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local insert = helpers.insert
@@ -9,7 +10,6 @@ local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
-local eval = helpers.eval
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -2211,6 +2211,6 @@ describe('builtin popupmenu', function()
     feed('$i')
     funcs.complete(col - max_len, items)
     feed('<c-y>')
-    eq(2, eval('1+1'))
+    assert_alive()
   end)
 end)

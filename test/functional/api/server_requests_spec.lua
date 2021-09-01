@@ -11,6 +11,7 @@ local meths = helpers.meths
 local spawn, merge_args = helpers.spawn, helpers.merge_args
 local set_session = helpers.set_session
 local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 
 describe('server -> client', function()
   local cid
@@ -33,7 +34,7 @@ describe('server -> client', function()
 
       call jobstop(ch1)
     ]])
-    eq(2, eval("1+1"))  -- Still alive?
+    assert_alive()
   end)
 
   describe('simple call', function()
@@ -158,7 +159,7 @@ describe('server -> client', function()
           -- do some busywork, so the first request will return
           -- before this one
           for _ = 1, 5 do
-            eq(2, eval("1+1"))
+            assert_alive()
           end
           eq(1, eval('rpcnotify('..cid..', "nested_done")'))
           return 'done!'

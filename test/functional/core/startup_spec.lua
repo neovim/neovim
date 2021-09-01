@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local ok = helpers.ok
@@ -231,7 +232,7 @@ describe('startup', function()
 
   it('does not crash if --embed is given twice', function()
     clear{args={'--embed'}}
-    eq(2, eval('1+1'))
+    assert_alive()
   end)
 
   it('does not crash when expanding cdpath during early_init', function()

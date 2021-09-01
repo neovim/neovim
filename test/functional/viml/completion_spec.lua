@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
@@ -870,7 +871,7 @@ describe('completion', function()
       {3:-- Keyword completion (^N^P) }{4:match 1 of 2}                   |
     ]])
 
-    eval('1 + 1')
+    assert_alive()
     -- popupmenu still visible
     screen:expect{grid=[[
       foobar fooegg                                               |

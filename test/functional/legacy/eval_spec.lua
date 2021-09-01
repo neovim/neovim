@@ -1,6 +1,7 @@
 -- Test for various eval features.
 
 local helpers = require('test.functional.helpers')(after_each)
+local assert_alive = helpers.assert_alive
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
@@ -506,7 +507,7 @@ describe('eval', function()
     command("call setreg('0',x)")
 
     -- nvim didn't crash and "0 was emptied
-    eq(2, eval("1+1"))
+    assert_alive()
     eq({}, eval("getreg('0',1,1)"))
 
     -- x is a mutable list

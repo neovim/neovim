@@ -12,6 +12,7 @@ local feed = helpers.feed
 local clear = helpers.clear
 local command = helpers.command
 local meths = helpers.meths
+local assert_alive = helpers.assert_alive
 
 local function expect(contents)
   return eq(contents, helpers.curbuf_contents())
@@ -1381,13 +1382,13 @@ describe('API/extmarks', function()
   end)
 
   it('does not crash with append/delete/undo seqence', function()
-     meths.exec([[
+    meths.exec([[
       let ns = nvim_create_namespace('myplugin')
       call nvim_buf_set_extmark(0, ns, 0, 0, {})
       call append(0, '')
       %delete
       undo]],false)
-    eq(2, meths.eval('1+1')) -- did not crash
+    assert_alive()
   end)
 
   it('works with left and right gravity', function()

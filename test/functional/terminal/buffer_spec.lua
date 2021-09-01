@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
+local assert_alive = helpers.assert_alive
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local poke_eventloop = helpers.poke_eventloop
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
@@ -300,7 +301,7 @@ describe('No heap-buffer-overflow when using', function()
     feed('$')
     -- Let termopen() modify the buffer
     feed_command('call termopen("echo")')
-    eq(2, eval('1+1')) -- check nvim still running
+    assert_alive()
     feed_command('bdelete!')
   end)
 end)
@@ -310,6 +311,6 @@ describe('No heap-buffer-overflow when', function()
     feed_command('set nowrap')
     feed_command('autocmd TermOpen * startinsert')
     feed_command('call feedkeys("4000ai\\<esc>:terminal!\\<cr>")')
-    eq(2, eval('1+1'))
+    assert_alive()
   end)
 end)

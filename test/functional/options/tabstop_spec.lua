@@ -1,9 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local feed = helpers.feed
-local eq = helpers.eq
-local eval = helpers.eval
 
 describe("'tabstop' option", function()
   before_each(function()
@@ -18,6 +17,6 @@ describe("'tabstop' option", function()
     -- Set 'tabstop' to a very high value.
     -- Use feed(), not command(), to provoke crash.
     feed(':set tabstop=3000000000<CR>')
-    eq(2, eval("1+1"))  -- Still alive?
+    assert_alive()
   end)
 end)

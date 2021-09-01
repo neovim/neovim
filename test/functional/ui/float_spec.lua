@@ -5036,7 +5036,7 @@ describe('float window', function()
           ]])
         end
 
-        eq(2, eval('1+1'))
+        assert_alive()
       end)
 
       it("o (:only) non-float", function()

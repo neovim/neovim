@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local assert_alive = helpers.assert_alive
 local nvim_dir = helpers.nvim_dir
 local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
@@ -302,7 +303,7 @@ describe('system()', function()
       if v_errnum then
         eq("E5677:", v_errnum)
       end
-      eq(2, eval("1+1"))  -- Still alive?
+      assert_alive()
     end)
   end)
 
@@ -317,11 +318,11 @@ describe('system()', function()
       if v_errnum then
         eq("E5677:", v_errnum)
       end
-      eq(2, eval("1+1"))  -- Still alive?
+      assert_alive()
     end)
     it('works with an empty string', function()
       eq("test\n", eval('system("echo test", "")'))
-      eq(2, eval("1+1"))  -- Still alive?
+      assert_alive()
     end)
   end)
 

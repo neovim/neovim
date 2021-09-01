@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
@@ -45,7 +46,7 @@ describe('insert-mode Ctrl-O', function()
   it("doesn't cancel Ctrl-O mode when processing event", function()
     feed('iHello World<c-o>')
     eq({mode='niI', blocking=false}, meths.get_mode()) -- fast event
-    eq(2, eval('1+1')) -- causes K_EVENT key
+    assert_alive()  -- causes K_EVENT key
     eq({mode='niI', blocking=false}, meths.get_mode()) -- still in ctrl-o mode
     feed('dd')
     eq({mode='i', blocking=false}, meths.get_mode()) -- left ctrl-o mode
