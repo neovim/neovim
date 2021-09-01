@@ -7618,6 +7618,12 @@ int csh_like_shell(void)
   return strstr((char *)path_tail(p_sh), "csh") != NULL;
 }
 
+/// Return true when 'shell' has "fish" in the tail.
+bool fish_like_shell(void)
+{
+  return strstr((char *)path_tail(p_sh), "fish") != NULL;
+}
+
 /// Return the number of requested sign columns, based on current
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)

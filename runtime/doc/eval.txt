@@ -8290,6 +8290,10 @@ shellescape({string} [, {special}])			*shellescape()*
 		- The <NL> character is escaped (twice if {special} is
 		  a ||non-zero-arg|).
 
+		If 'shell' contains "fish" in the tail, the "\" character will
+		be escaped because in fish it is used as an escape character
+		inside single quotes.
+
 		Example of use with a |:!| command: >
 		    :exe '!dir ' . shellescape(expand('<cfile>'), 1)
 <		This results in a directory listing for the file under the
