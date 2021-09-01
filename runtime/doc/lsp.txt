@@ -1199,34 +1199,6 @@ workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
 ==============================================================================
 Lua module: vim.lsp.diagnostic                                *lsp-diagnostic*
 
-                              *vim.lsp.diagnostic.apply_to_diagnostic_items()*
-apply_to_diagnostic_items({item_handler}, {command}, {opts})
-                Gets diagnostics, converts them to quickfix/location list
-                items, and applies the item_handler callback to the items.
-
-                Parameters: ~
-                    {item_handler}  function Callback to apply to the
-                                    diagnostic items
-                    {command}       string|nil Command to execute after
-                                    applying the item_handler
-                    {opts}          table|nil Configuration table. Keys:
-                                    • {client_id}: (number)
-                                      • If nil, will consider all clients
-                                        attached to buffer.
-
-                                    • {severity}: (DiagnosticSeverity)
-                                      • Exclusive severity to consider.
-                                        Overrides {severity_limit}
-
-                                    • {severity_limit}: (DiagnosticSeverity)
-                                      • Limit severity of diagnostics found.
-                                        E.g. "Warning" means { "Error",
-                                        "Warning" } will be valid.
-
-                                    • {workspace}: (boolean, default false)
-                                      • Set the list with workspace
-                                        diagnostics
-
                                                   *vim.lsp.diagnostic.clear()*
 clear({bufnr}, {client_id}, {diagnostic_ns}, {sign_ns})
                 Clears the currently displayed diagnostics
@@ -1649,31 +1621,6 @@ set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
                                          E.g. "Warning" means { "Error",
                                          "Warning" } will be valid.
 
-                                       *vim.lsp.diagnostic.show_diagnostics()*
-show_diagnostics({opts}, {diagnostics})
-                Open a floating window with the provided diagnostics
-
-                The floating window can be customized with the following
-                highlight groups: >
-
-                 LspDiagnosticsFloatingError
-                 LspDiagnosticsFloatingWarning
-                 LspDiagnosticsFloatingInformation
-                 LspDiagnosticsFloatingHint
-<
-
-                Parameters: ~
-                    {opts}         table Configuration table
-                                   • show_header (boolean, default true): Show
-                                     "Diagnostics:" header
-                                   • all opts for
-                                     |vim.lsp.util.open_floating_preview()|
-                                     can be used here
-                    {diagnostics}  table: The diagnostics to display
-
-                Return: ~
-                    table {popup_bufnr, win_id}
-
                                   *vim.lsp.diagnostic.show_line_diagnostics()*
 show_line_diagnostics({opts}, {buf_nr}, {line_nr}, {client_id})
                 Parameters: ~
@@ -1690,6 +1637,8 @@ show_line_diagnostics({opts}, {buf_nr}, {line_nr}, {client_id})
 
                               *vim.lsp.diagnostic.show_position_diagnostics()*
 show_position_diagnostics({opts}, {buf_nr}, {position})
+                Open a floating window with the diagnostics from {position}
+
                 Parameters: ~
                     {opts}      table|nil Configuration keys
                                 • severity: (DiagnosticSeverity, default nil)
