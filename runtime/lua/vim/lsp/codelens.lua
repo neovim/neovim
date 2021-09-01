@@ -44,9 +44,10 @@ end
 
 --- Return all lenses for the given buffer
 ---
+---@param bufnr number  Buffer number. 0 can be used for the current buffer.
 ---@return table (`CodeLens[]`)
 function M.get(bufnr)
-  local lenses_by_client = lens_cache_by_buf[bufnr]
+  local lenses_by_client = lens_cache_by_buf[bufnr or 0]
   if not lenses_by_client then return {} end
   local lenses = {}
   for _, client_lenses in pairs(lenses_by_client) do
