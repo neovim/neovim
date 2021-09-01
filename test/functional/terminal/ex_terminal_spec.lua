@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
 local clear, poke_eventloop, nvim = helpers.clear, helpers.poke_eventloop, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
 local feed = helpers.feed
@@ -215,7 +216,7 @@ describe(':terminal (with fake shell)', function()
       -- handler), :terminal cleanup is pending on the main-loop.
       -- This write should be ignored (not crash, #5445).
       feed('iiYYYYYYY')
-      eq(2, eval("1+1"))  -- Still alive?
+      assert_alive()
   end)
 
   it('works with findfile()', function()

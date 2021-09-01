@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local assert_alive = helpers.assert_alive
 local eval, command, feed = helpers.eval, helpers.command, helpers.feed
 local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
 local expect, write_file = helpers.expect, helpers.write_file
@@ -116,6 +117,6 @@ describe('python3 provider', function()
     feed_command("exe 'split' tempname()")
     feed_command("bwipeout!")
     feed_command('help help')
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 end)

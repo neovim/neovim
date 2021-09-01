@@ -8,12 +8,12 @@ local helpers = require('test.functional.helpers')(after_each)
 local uname = helpers.uname
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
 local eq = helpers.eq
 local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 local clear = helpers.clear
 local command = helpers.command
-local eval = helpers.eval
 local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
@@ -82,7 +82,7 @@ describe('TUI', function()
     command('call jobresize(b:terminal_job_id, 1, 4)')
     screen:try_resize(57, 17)
     command('call jobresize(b:terminal_job_id, 57, 17)')
-    eq(2, eval("1+1"))  -- Still alive?
+    assert_alive()
   end)
 
   it('accepts resize while pager is active', function()

@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local fmt = string.format
+local assert_alive = helpers.assert_alive
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
@@ -58,7 +59,7 @@ describe('API', function()
     eq({'notification', 'nvim_error_event',
         {error_types.Exception.id, 'Invalid method: nvim_bogus'}}, next_msg())
     -- error didn't close channel.
-    eq(2, eval('1+1'))
+    assert_alive()
   end)
 
   it('failed async request emits nvim_error_event', function()
@@ -68,7 +69,7 @@ describe('API', function()
         {error_types.Exception.id, 'Vim:E492: Not an editor command: bogus'}},
         next_msg())
     -- error didn't close channel.
-    eq(2, eval('1+1'))
+    assert_alive()
   end)
 
   it('does not set CA_COMMAND_BUSY #7254', function()

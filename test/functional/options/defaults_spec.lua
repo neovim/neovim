@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local Screen = require('test.functional.ui.screen')
 
+local assert_alive = helpers.assert_alive
 local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
@@ -510,8 +511,7 @@ describe('stdpath()', function()
     eq(datadir, funcs.fnamemodify(funcs.stdpath('data'), ':t'))
     eq('table', type(funcs.stdpath('config_dirs')))
     eq('table', type(funcs.stdpath('data_dirs')))
-    -- Check for crash. #8393
-    eq(2, eval('1+1'))
+    assert_alive()  -- Check for crash. #8393
   end)
 
   context('returns a String', function()

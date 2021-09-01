@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
 local feed_command = helpers.feed_command
@@ -33,7 +34,7 @@ describe(':terminal', function()
     command('vsplit foo')
     eq(3, eval("winnr('$')"))
     feed('ZQ')  -- Close split, should not crash. #7538
-    eq(2, eval("1+1"))  -- Still alive?
+    assert_alive()
   end)
 
   it('does not change size on WinEnter', function()

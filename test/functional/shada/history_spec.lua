@@ -2,7 +2,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, funcs, meths, nvim_feed, eq =
   helpers.command, helpers.funcs, helpers.meths, helpers.feed, helpers.eq
-local eval = helpers.eval
+local assert_alive = helpers.assert_alive
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
@@ -244,7 +244,7 @@ describe('ShaDa support code', function()
     nvim_command('wshada')
     nvim_command('set shada=\'10,:0')
     nvim_command('wshada')
-    eq(2, eval('1+1')) -- check nvim still running
+    assert_alive()
   end)
 
 end)

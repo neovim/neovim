@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local assert_alive = helpers.assert_alive
 local command = helpers.command
 local feed_command = helpers.feed_command
 local eval = helpers.eval
@@ -53,7 +54,7 @@ describe(':cquit', function()
     if redir_msg then
       eq('\n' .. redir_msg, redir_exec(cmdline))
       poke_eventloop()
-      eq(2, eval("1+1"))  -- Still alive?
+      assert_alive()
     else
       funcs.system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--cmd', cmdline})
       eq(exit_code, eval('v:shell_error'))
