@@ -622,6 +622,8 @@ Completion can be done for:
 12. Spelling suggestions				|i_CTRL-X_s|
 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
 
+Additionally, |i_CTRL-X_CTRL-Z| stops completion without changing the text.
+
 All these, except CTRL-N and CTRL-P, are done in CTRL-X mode.  This is a
 sub-mode of Insert and Replace modes.  You enter CTRL-X mode by typing CTRL-X
 and one of the CTRL-X commands.  You exit CTRL-X mode by typing a key that is
@@ -1020,6 +1022,12 @@ CTRL-P			Find previous match for words that start with the
 	CTRL-X CTRL-P	Further use of CTRL-X CTRL-N or CTRL-X CTRL-P will
 			copy the words following the previous expansion in
 			other contexts unless a double CTRL-X is used.
+
+
+Stop completion						*compl-stop*
+
+							*i_CTRL-X_CTRL-Z*
+CTRL-X CTRL-Z		Stop completion without changing the text.
 
 
 FUNCTIONS FOR FINDING COMPLETIONS			*complete-functions*

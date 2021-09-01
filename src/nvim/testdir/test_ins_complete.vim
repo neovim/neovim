@@ -497,6 +497,133 @@ func Test_ins_compl_tag_sft()
   %bwipe!
 endfunc
 
+" Test for completing special characters
+func Test_complete_special_chars()
+  new
+  call setline(1, 'int .*[-\^$ func float')
+  call feedkeys("oin\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>", 'xt')
+  call assert_equal('int .*[-\^$ func float', getline(2))
+  close!
+endfunc
+
+" Test for completion when text is wrapped across lines.
+func Test_complete_across_line()
+  new
+  call setline(1, ['red green blue', 'one two three'])
+  setlocal textwidth=20
+  exe "normal 2G$a re\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>"
+  call assert_equal(['one two three red', 'green blue one'], getline(2, '$'))
+  close!
+endfunc
+
+" Test for using CTRL-L to add one character when completing matching
+func Test_complete_add_onechar()
+  new
+  call setline(1, ['wool', 'woodwork'])
+  call feedkeys("Gowoo\<C-P>\<C-P>\<C-P>\<C-L>f", 'xt')
+  call assert_equal('woof', getline(3))
+
+  " use 'ignorecase' and backspace to erase characters from the prefix string
+  " and then add letters using CTRL-L
+  %d
+  set ignorecase backspace=2
+  setlocal complete=.
+  call setline(1, ['workhorse', 'workload'])
+  normal Go
+  exe "normal aWOR\<C-P>\<bs>\<bs>\<bs>\<bs>\<bs>\<bs>\<C-L>r\<C-L>\<C-L>"
+  call assert_equal('workh', getline(3))
+  set ignorecase& backspace&
+  close!
+endfunc
+
+" Test insert completion with 'cindent' (adjust the indent)
+func Test_complete_with_cindent()
+  new
+  setlocal cindent
+  call setline(1, ['if (i == 1)', "    j = 2;"])
+  exe "normal Go{\<CR>i\<C-X>\<C-L>\<C-X>\<C-L>\<CR>}"
+  call assert_equal(['{', "\tif (i == 1)", "\t\tj = 2;", '}'], getline(3, '$'))
+
+  %d
+  call setline(1, ['when while', '{', ''])
+  setlocal cinkeys+==while
+  exe "normal Giwh\<C-P> "
+  call assert_equal("\twhile ", getline('$'))
+  close!
+endfunc
+
+" Test for <CTRL-X> <CTRL-V> completion. Complete commands and functions
+func Test_complete_cmdline()
+  new
+  exe "normal icaddb\<C-X>\<C-V>"
+  call assert_equal('caddbuffer', getline(1))
+  exe "normal ocall getqf\<C-X>\<C-V>"
+  call assert_equal('call getqflist(', getline(2))
+  exe "normal oabcxyz(\<C-X>\<C-V>"
+  call assert_equal('abcxyz(', getline(3))
+  com! -buffer TestCommand1 echo 'TestCommand1'
+  com! -buffer TestCommand2 echo 'TestCommand2'
+  write TestCommand1Test
+  write TestCommand2Test
+  " Test repeating <CTRL-X> <CTRL-V> and switching to another CTRL-X mode
+  exe "normal oT\<C-X>\<C-V>\<C-X>\<C-V>\<C-X>\<C-F>\<Esc>"
+  call assert_equal('TestCommand2Test', getline(4))
+  call delete('TestCommand1Test')
+  call delete('TestCommand2Test')
+  delcom TestCommand1
+  delcom TestCommand2
+  close!
+endfunc
+
+" Test for <CTRL-X> <CTRL-Z> stopping completion without changing the match
+func Test_complete_stop()
+  new
+  func Save_mode1()
+    let g:mode1 = mode(1)
+    return ''
+  endfunc
+  func Save_mode2()
+    let g:mode2 = mode(1)
+    return ''
+  endfunc
+  inoremap <F1> <C-R>=Save_mode1()<CR>
+  inoremap <F2> <C-R>=Save_mode2()<CR>
+  call setline(1, ['aaa bbb ccc '])
+  exe "normal A\<C-N>\<C-P>\<F1>\<C-X>\<C-Z>\<F2>\<Esc>"
+  call assert_equal('ic', g:mode1)
+  call assert_equal('i', g:mode2)
+  call assert_equal('aaa bbb ccc ', getline(1))
+  exe "normal A\<C-N>\<Down>\<F1>\<C-X>\<C-Z>\<F2>\<Esc>"
+  call assert_equal('ic', g:mode1)
+  call assert_equal('i', g:mode2)
+  call assert_equal('aaa bbb ccc aaa', getline(1))
+  set completeopt+=noselect
+  exe "normal A \<C-N>\<Down>\<Down>\<C-L>\<C-L>\<F1>\<C-X>\<C-Z>\<F2>\<Esc>"
+  call assert_equal('ic', g:mode1)
+  call assert_equal('i', g:mode2)
+  call assert_equal('aaa bbb ccc aaa bb', getline(1))
+  set completeopt&
+  exe "normal A d\<C-N>\<F1>\<C-X>\<C-Z>\<F2>\<Esc>"
+  call assert_equal('ic', g:mode1)
+  call assert_equal('i', g:mode2)
+  call assert_equal('aaa bbb ccc aaa bb d', getline(1))
+  com! -buffer TestCommand1 echo 'TestCommand1'
+  com! -buffer TestCommand2 echo 'TestCommand2'
+  exe "normal oT\<C-X>\<C-V>\<C-X>\<C-V>\<F1>\<C-X>\<C-Z>\<F2>\<Esc>"
+  call assert_equal('ic', g:mode1)
+  call assert_equal('i', g:mode2)
+  call assert_equal('TestCommand2', getline(2))
+  delcom TestCommand1
+  delcom TestCommand2
+  unlet g:mode1
+  unlet g:mode2
+  iunmap <F1>
+  iunmap <F2>
+  delfunc Save_mode1
+  delfunc Save_mode2
+  close!
+endfunc
+
 " Test to ensure 'Scanning...' messages are not recorded in messages history
 func Test_z1_complete_no_history()
   new
