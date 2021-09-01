@@ -145,7 +145,7 @@ jobs:
 
           # actually build the app image
           ./appimagetool \
-            --runtime-files runtime \
+            --runtime-file runtime \
             nvim-${{ matrix.arch }}.AppDir \
             nvim-linux-${{ matrix.arch }}.appimage
       -
