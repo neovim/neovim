@@ -18,7 +18,7 @@ jobs:
   linux:
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        arch: [x86_64, aarch64]
     runs-on: ubuntu-18.04
     outputs:
       # this metadata is used when constructing the GH release post
@@ -75,7 +75,7 @@ jobs:
   linux-appimage:
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        arch: [x86_64, aarch64]
     runs-on: ubuntu-18.04
     steps:
       -
@@ -87,7 +87,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
         with:
           image: tonistiigi/binfmt:latest
-          platforms: arm64 # Platforms to install (arm64,riscv64,arm ; default all)
+          platforms: aarch64 # Platforms to install (aarch64,riscv64,arm ; default all)
       -
         name: Set up Docker Buildx
         id: buildx
@@ -110,7 +110,7 @@ jobs:
           # This builds nvim and outputs the resulting build dir to build/
           # which we can then feed into linuxdeploy in the next step.
           # Can can't run linuxdeploy in the docker build container because it
-          # has no arm64 binary and also needs access to FUSE.
+          # has no aarch64 binary and also needs access to FUSE.
           docker build --platform linux/${{ matrix.arch }} \
                  --build-arg CC=gcc-11 \
                  --build-arg CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} \
@@ -133,8 +133,10 @@ jobs:
           chmod +x runtime
 
           # linuxdeploy requires these env-var as well as some commandline flags
-          # this only prepares the app dir for bundling
+          # this only prepares the app dir for bundling. Possibly deprecated/unneeded.
+          # TODO UPDATE_INFORMATION may not be propagated, wrong stage here
           APP=nvim-${{ matrix.arch }} \
+          VERSION=$(cat build/VERSION) \
           UPDATE_INFORMATION="gh-releases-zsync|neovim|neovim|${TAG}|nvim-${{ matrix.arch }}.appimage.zsync" \
           ./linuxdeploy --appdir build/nvim-${{ matrix.arch }}.AppDir \
             -d build/nvim.desktop \
@@ -269,12 +271,12 @@ jobs:
           done
       - name: Extract SHA256 checksums for post body
         run: |
-          echo "SHA_LINUX_AMD64=$(cat nvim-linux/nvim-linux-amd64.tar.gz.sha256sum)" >> $GITHUB_ENV
-          echo "SHA_LINUX_AMD64_APPIMAGE=$(cat nvim-linux-appimage/nvim-linux-amd64.appimage.sha256sum)" >> $GITHUB_ENV
-          echo "SHA_LINUX_AMD64_APPIMAGE_ZSYNC=$(cat nvim-linux-appimage/nvim-linux-amd64.appimage.zsync.sha256sum)" >> $GITHUB_ENV
-          echo "SHA_LINUX_ARM64=$(cat nvim-linux/nvim-linux-arm64.tar.gz.sha256sum)" >> $GITHUB_ENV
-          echo "SHA_LINUX_ARM64_APPIMAGE=$(cat nvim-linux-appimage/nvim-linux-arm64.appimage.sha256sum)" >> $GITHUB_ENV
-          echo "SHA_LINUX_ARM64_APPIMAGE_ZSYNC=$(cat nvim-linux-appimage/nvim-linux-arm64.appimage.zsync.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_LINUX_AARCH64=$(cat nvim-linux/nvim-linux-x86_64.tar.gz.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_LINUX_AARCH64_APPIMAGE=$(cat nvim-linux-appimage/nvim-linux-x86_64.appimage.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_LINUX_AARCH64_APPIMAGE_ZSYNC=$(cat nvim-linux-appimage/nvim-linux-x86_64.appimage.zsync.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_LINUX_X86_64=$(cat nvim-linux/nvim-linux-aarch64.tar.gz.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_LINUX_X86_64_APPIMAGE=$(cat nvim-linux-appimage/nvim-linux-aarch64.appimage.sha256sum)" >> $GITHUB_ENV
+          echo "SHA_LINUX_X86_64_APPIMAGE_ZSYNC=$(cat nvim-linux-appimage/nvim-linux-aarch64.appimage.zsync.sha256sum)" >> $GITHUB_ENV
           # echo "SHA_MACOS=$(cat nvim-macos/nvim-macos.tar.gz.sha256sum)" >> $GITHUB_ENV
           # echo "SHA_WIN_32=$(cat nvim-win32/nvim-win32.zip.sha256sum)" >> $GITHUB_ENV
           # echo "SHA_WIN_64=$(cat nvim-win64/nvim-win64.zip.sha256sum)" >> $GITHUB_ENV
@@ -288,18 +290,18 @@ jobs:
           gzip: false
           allow_override: ${{ env.TAG_NAME == 'nightly' }}
           files: |
-            nvim-linux-amd64.tar.gz:./nvim-linux/nvim-linux-amd64.tar.gz
-            nvim-linux-amd64.tar.gz.sha256sum:./nvim-linux/nvim-linux-amd64.tar.gz.sha256sum
-            nvim-linux-amd64.appimage:./nvim-linux-appimage/nvim-linux-amd64.appimage
-            nvim-linux-amd64.appimage.sha256sum:./nvim-linux-appimage/nvim-linux-amd64.appimage.sha256sum
-            nvim-linux-amd64.appimage.zsync:./nvim-linux-appimage/nvim-linux-amd64.appimage.zsync
-            nvim-linux-amd64.appimage.zsync.sha256sum:./nvim-linux-appimage/nvim-linux-amd64.appimage.zsync.sha256sum
-            nvim-linux-arm64.tar.gz:./nvim-linux/nvim-linux-arm64.tar.gz
-            nvim-linux-arm64.tar.gz.sha256sum:./nvim-linux/nvim-linux-arm64.tar.gz.sha256sum
-            nvim-linux-arm64.appimage:./nvim-linux-appimage/nvim-linux-arm64.appimage
-            nvim-linux-arm64.appimage.sha256sum:./nvim-linux-appimage/nvim-linux-arm64.appimage.sha256sum
-            nvim-linux-arm64.appimage.zsync:./nvim-linux-appimage/nvim-linux-arm64.appimage.zsync
-            nvim-linux-arm64.appimage.zsync.sha256sum:./nvim-linux-appimage/nvim-linux-arm64.appimage.zsync.sha256sum
+            nvim-linux-x86_64.tar.gz:./nvim-linux/nvim-linux-x86_64.tar.gz
+            nvim-linux-x86_64.tar.gz.sha256sum:./nvim-linux/nvim-linux-x86_64.tar.gz.sha256sum
+            nvim-linux-x86_64.appimage:./nvim-linux-appimage/nvim-linux-x86_64.appimage
+            nvim-linux-x86_64.appimage.sha256sum:./nvim-linux-appimage/nvim-linux-x86_64.appimage.sha256sum
+            nvim-linux-x86_64.appimage.zsync:./nvim-linux-appimage/nvim-linux-x86_64.appimage.zsync
+            nvim-linux-x86_64.appimage.zsync.sha256sum:./nvim-linux-appimage/nvim-linux-x86_64.appimage.zsync.sha256sum
+            nvim-linux-aarch64.tar.gz:./nvim-linux/nvim-linux-aarch64.tar.gz
+            nvim-linux-aarch64.tar.gz.sha256sum:./nvim-linux/nvim-linux-aarch64.tar.gz.sha256sum
+            nvim-linux-aarch64.appimage:./nvim-linux-appimage/nvim-linux-aarch64.appimage
+            nvim-linux-aarch64.appimage.sha256sum:./nvim-linux-appimage/nvim-linux-aarch64.appimage.sha256sum
+            nvim-linux-aarch64.appimage.zsync:./nvim-linux-appimage/nvim-linux-aarch64.appimage.zsync
+            nvim-linux-aarch64.appimage.zsync.sha256sum:./nvim-linux-appimage/nvim-linux-aarch64.appimage.zsync.sha256sum
             checksums.txt:checksums.txt
           # nvim-macos.tar.gz:./nvim-macos/nvim-macos.tar.gz
           # nvim-macos.tar.gz.sha256sum:./nvim-macos/nvim-macos.tar.gz.sha256sum
@@ -342,12 +344,12 @@ jobs:
             ## SHA256 Checksums
 
             ```
-            ${{ env.SHA_LINUX_AMD64 }}
-            ${{ env.SHA_LINUX_AMD64_APPIMAGE }}
-            ${{ env.SHA_LINUX_AMD64_APPIMAGE_ZSYNC }}
-            ${{ env.SHA_LINUX_ARM64 }}
-            ${{ env.SHA_LINUX_ARM64_APPIMAGE }}
-            ${{ env.SHA_LINUX_ARM64_APPIMAGE_ZSYNC }}
+            ${{ env.SHA_LINUX_AARCH64 }}
+            ${{ env.SHA_LINUX_AARCH64_APPIMAGE }}
+            ${{ env.SHA_LINUX_AARCH64_APPIMAGE_ZSYNC }}
+            ${{ env.SHA_LINUX_X86_64 }}
+            ${{ env.SHA_LINUX_X86_64_APPIMAGE }}
+            ${{ env.SHA_LINUX_X86_64_APPIMAGE_ZSYNC }}
             ${{ env.SHA_MACOS }}
             ${{ env.SHA_WIN_32 }}
             ${{ env.SHA_WIN_64 }}
