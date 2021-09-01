@@ -658,8 +658,8 @@ func Test_mode()
   exe "normal gRabc\<C-X>\<C-L>\<F2>\<Esc>u"
   call assert_equal('R-Rvc', g:current_modes)
 
-  call assert_equal('n', mode(0))
-  call assert_equal('n', mode(1))
+  call assert_equal('n', 0->mode())
+  call assert_equal('n', 1->mode())
 
   " i_CTRL-O
   exe "normal i\<C-O>:call Save_mode()\<Cr>\<Esc>"
@@ -815,7 +815,7 @@ endfunc
 
 func Test_match_func()
   call assert_equal(4,  match('testing', 'ing'))
-  call assert_equal(4,  match('testing', 'ing', 2))
+  call assert_equal(4,  'testing'->match('ing', 2))
   call assert_equal(-1, match('testing', 'ing', 5))
   call assert_equal(-1, match('testing', 'ing', 8))
   call assert_equal(1, match(['vim', 'testing', 'execute'], 'ing'))
@@ -824,7 +824,7 @@ endfunc
 
 func Test_matchend()
   call assert_equal(7,  matchend('testing', 'ing'))
-  call assert_equal(7,  matchend('testing', 'ing', 2))
+  call assert_equal(7,  'testing'->matchend('ing', 2))
   call assert_equal(-1, matchend('testing', 'ing', 5))
   call assert_equal(-1, matchend('testing', 'ing', 8))
   call assert_equal(match(['vim', 'testing', 'execute'], 'ing'), matchend(['vim', 'testing', 'execute'], 'ing'))
@@ -833,13 +833,13 @@ endfunc
 
 func Test_matchlist()
   call assert_equal(['acd', 'a', '', 'c', 'd', '', '', '', '', ''],  matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)'))
-  call assert_equal(['d', '', '', '', 'd', '', '', '', '', ''],  matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2))
+  call assert_equal(['d', '', '', '', 'd', '', '', '', '', ''],  'acd'->matchlist('\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2))
   call assert_equal([],  matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 4))
 endfunc
 
 func Test_matchstr()
   call assert_equal('ing',  matchstr('testing', 'ing'))
-  call assert_equal('ing',  matchstr('testing', 'ing', 2))
+  call assert_equal('ing',  'testing'->matchstr('ing', 2))
   call assert_equal('', matchstr('testing', 'ing', 5))
   call assert_equal('', matchstr('testing', 'ing', 8))
   call assert_equal('testing', matchstr(['vim', 'testing', 'execute'], 'ing'))
@@ -848,7 +848,7 @@ endfunc
 
 func Test_matchstrpos()
   call assert_equal(['ing', 4, 7], matchstrpos('testing', 'ing'))
-  call assert_equal(['ing', 4, 7], matchstrpos('testing', 'ing', 2))
+  call assert_equal(['ing', 4, 7], 'testing'->matchstrpos('ing', 2))
   call assert_equal(['', -1, -1], matchstrpos('testing', 'ing', 5))
   call assert_equal(['', -1, -1], matchstrpos('testing', 'ing', 8))
   call assert_equal(['ing', 1, 4, 7], matchstrpos(['vim', 'testing', 'execute'], 'ing'))

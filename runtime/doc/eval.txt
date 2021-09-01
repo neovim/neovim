@@ -6698,6 +6698,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		mapped, and have it do the original mapping too.  Sketch: >
 			exe 'nnoremap <Tab> ==' . maparg('<Tab>', 'n')
 
+<		Can also be used as a |method|: >
+			GetKey()->maparg('n')
 
 mapcheck({name} [, {mode} [, {abbr}]])			*mapcheck()*
 		Check if there is a mapping that matches with {name} in mode
@@ -6731,6 +6733,9 @@ mapcheck({name} [, {mode} [, {abbr}]])			*mapcheck()*
 	:endif
 <		This avoids adding the "_vv" mapping when there already is a
 		mapping for "_v" or for "_vvv".
+
+		Can also be used as a |method|: >
+			GetKey()->mapcheck('n')
 
 match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		When {expr} is a |List| then this returns the index of the
@@ -6794,6 +6799,9 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		zero matches at the start instead of a number of matches
 		further down in the text.
 
+		Can also be used as a |method|: >
+			GetList()->match('word')
+<
 				*matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
@@ -6849,6 +6857,9 @@ matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		available from |getmatches()|.  All matches can be deleted in
 		one operation by |clearmatches()|.
 
+		Can also be used as a |method|: >
+			GetGroup()->matchadd('TODO')
+<
 							*matchaddpos()*
 matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 		Same as |matchadd()|, but requires a list of positions {pos}
@@ -6887,6 +6898,9 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 <		Matches added by |matchaddpos()| are returned by
 		|getmatches()|.
 
+		Can also be used as a |method|: >
+			GetGroup()->matchaddpos([23, 11])
+
 matcharg({nr})							*matcharg()*
 		Selects the {nr} match item, as set with a |:match|,
 		|:2match| or |:3match| command.
@@ -6899,6 +6913,9 @@ matcharg({nr})							*matcharg()*
 		Highlighting matches using the |:match| commands are limited
 		to three matches. |matchadd()| does not have this limitation.
 
+		Can also be used as a |method|: >
+			GetMatch()->matcharg()
+
 matchdelete({id} [, {win}])		       *matchdelete()* *E802* *E803*
 		Deletes a match with ID {id} previously defined by |matchadd()|
 		or one of the |:match| commands.  Returns 0 if successful,
@@ -6906,6 +6923,9 @@ matchdelete({id} [, {win}])		       *matchdelete()* *E802* *E803*
 		be deleted in one operation by |clearmatches()|.
 		If {win} is specified, use the window with this number or
 		window ID instead of the current window.
+
+		Can also be used as a |method|: >
+			GetMatch()->matchdelete()
 
 matchend({expr}, {pat} [, {start} [, {count}]])			*matchend()*
 		Same as |match()|, but return the index of first character
@@ -6926,6 +6946,9 @@ matchend({expr}, {pat} [, {start} [, {count}]])			*matchend()*
 <		result is "-1".
 		When {expr} is a |List| the result is equal to |match()|.
 
+		Can also be used as a |method|: >
+			GetText()->matchend('word')
+
 matchlist({expr}, {pat} [, {start} [, {count}]])		*matchlist()*
 		Same as |match()|, but return a |List|.  The first item in the
 		list is the matched string, same as what matchstr() would
@@ -6935,6 +6958,9 @@ matchlist({expr}, {pat} [, {start} [, {count}]])		*matchlist()*
 			echo matchlist('acd', '\(a\)\?\(b\)\?\(c\)\?\(.*\)')
 <		Results in: ['acd', 'a', '', 'c', 'd', '', '', '', '', '']
 		When there is no match an empty list is returned.
+
+		Can also be used as a |method|: >
+			GetList()->matchlist('word')
 
 matchstr({expr}, {pat} [, {start} [, {count}]])			*matchstr()*
 		Same as |match()|, but return the matched string.  Example: >
@@ -6948,6 +6974,9 @@ matchstr({expr}, {pat} [, {start} [, {count}]])			*matchstr()*
 <		result is "".
 		When {expr} is a |List| then the matching item is returned.
 		The type isn't changed, it's not necessarily a String.
+
+		Can also be used as a |method|: >
+			GetText()->matchstr('word')
 
 matchstrpos({expr}, {pat} [, {start} [, {count}]])		*matchstrpos()*
 		Same as |matchstr()|, but return the matched string, the start
@@ -6966,6 +6995,9 @@ matchstrpos({expr}, {pat} [, {start} [, {count}]])		*matchstrpos()*
 			:echo matchstrpos([1, '__x'], '\a')
 <		result is ["x", 1, 2, 3].
 		The type isn't changed, it's not necessarily a String.
+
+		Can also be used as a |method|: >
+			GetText()->matchstrpos('word')
 
 							*max()*
 max({expr})	Return the maximum value of all items in {expr}.
@@ -7057,6 +7089,9 @@ mkdir({name} [, {path} [, {prot}]])
 		successful or FALSE if the directory creation failed or partly
 		failed.
 
+		Can also be used as a |method|: >
+			GetName()->mkdir()
+<
 							*mode()*
 mode([expr])	Return a string that indicates the current mode.
 		If [expr] is supplied and it evaluates to a non-zero Number or
@@ -7105,6 +7140,9 @@ mode([expr])	Return a string that indicates the current mode.
 		be added. It's better not to compare the whole string but only
 		the leading character(s).
 		Also see |visualmode()|.
+
+		Can also be used as a |method|: >
+			DoFull()->mode()
 
 msgpackdump({list} [, {type}])				*msgpackdump()*
 		Convert a list of VimL objects to msgpack. Returned value is a

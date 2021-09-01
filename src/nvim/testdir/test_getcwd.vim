@@ -35,7 +35,7 @@ function SetUp()
   " we start from a clean state.
   call delete("Xtopdir", "rf")
   new
-  call mkdir('Xtopdir')
+  eval 'Xtopdir'->mkdir()
   cd Xtopdir
   let g:topdir = getcwd()
   call mkdir('Xdir1')
