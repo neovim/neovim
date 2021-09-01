@@ -121,16 +121,30 @@ jobs:
       - name: Bundle AppDir into AppImage
         run: |
           # linuxdeploy automates some of the AppDir to AppImage process
+          # this may be removable and just use appimagetool
+          # we retain it for now to just prepare the appdir
           curl -Lo linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy
+          # appimagetool allows us to pass --runtime-file to create aarch64 appimages
+          # on an x86 platform
+          curl -Lo appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          curl -Lo runtime https://github.com/AppImage/AppImageKit/releases/download/13/runtime-${{ matrix.arch }}
+          chmod +x runtime
+
           # linuxdeploy requires these env-var as well as some commandline flags
-          OUTPUT=nvim-linux-${{ matrix.arch }}.appimage \
-          ARCH=${{ matrix.arch }} \
+          # this only prepares the app dir for bundling
           APP=nvim-${{ matrix.arch }} \
           UPDATE_INFORMATION="gh-releases-zsync|neovim|neovim|${TAG}|nvim-${{ matrix.arch }}.appimage.zsync" \
           ./linuxdeploy --appdir build/nvim-${{ matrix.arch }}.AppDir \
-            -d build/nvim.desktop -i build/nvim.png \
-            --output appimage
+            -d build/nvim.desktop \
+            -i build/nvim.png
+
+          # actually build the app image
+          ./appimagetool \
+            --runtime-files runtime \
+            build/nvim-${{ matrix.arch }}.AppDir \
+            build/nvim-linux-${{ matrix.arch }}.appimage
       -
         uses: actions/upload-artifact@v2
         with:
