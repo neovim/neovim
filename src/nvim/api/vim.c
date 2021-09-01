@@ -2057,27 +2057,28 @@ void nvim_set_client_info(uint64_t channel_id, String name,
   rpc_set_client_info(channel_id, info);
 }
 
-/// Get information about a channel.
+/// Gets information about a channel.
 ///
 /// @returns Dictionary describing a channel, with these keys:
-///    - "stream"  the stream underlying the channel
+///    - "id"       Channel id.
+///    - "argv"     (optional) Job arguments list.
+///    - "stream"   Stream underlying the channel.
 ///         - "stdio"      stdin and stdout of this Nvim instance
 ///         - "stderr"     stderr of this Nvim instance
 ///         - "socket"     TCP/IP socket or named pipe
-///         - "job"        job with communication over its stdio
-///    -  "mode"    how data received on the channel is interpreted
-///         - "bytes"      send and receive raw bytes
-///         - "terminal"   a |terminal| instance interprets ASCII sequences
-///         - "rpc"        |RPC| communication on the channel is active
-///    -  "pty"     Name of pseudoterminal, if one is used (optional).
-///                 On a POSIX system, this will be a device path like
-///                 /dev/pts/1. Even if the name is unknown, the key will
-///                 still be present to indicate a pty is used. This is
-///                 currently the case when using winpty on windows.
-///    -  "buffer"  buffer with connected |terminal| instance (optional)
-///    -  "client"  information about the client on the other end of the
-///                 RPC channel, if it has added it using
-///                 |nvim_set_client_info()|. (optional)
+///         - "job"        Job with communication over its stdio.
+///    -  "mode"    How data received on the channel is interpreted.
+///         - "bytes"      Send and receive raw bytes.
+///         - "terminal"   |terminal| instance interprets ASCII sequences.
+///         - "rpc"        |RPC| communication on the channel is active.
+///    -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this
+///                 is a device path like "/dev/pts/1". If the name is unknown,
+///                 the key will still be present if a pty is used (e.g. for
+///                 winpty on Windows).
+///    -  "buffer"  (optional) Buffer with connected |terminal| instance.
+///    -  "client"  (optional) Info about the peer (client on the other end of
+///                 the RPC channel), if provided by it via
+///                 |nvim_set_client_info()|.
 ///
 Dictionary nvim_get_chan_info(Integer chan, Error *err)
   FUNC_API_SINCE(4)

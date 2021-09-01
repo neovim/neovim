@@ -240,6 +240,10 @@ static void free_channel_event(void **argv)
     rpc_free(chan);
   }
 
+  if (chan->streamtype == kChannelStreamProc) {
+    process_free(&chan->stream.proc);
+  }
+
   callback_reader_free(&chan->on_data);
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
@@ -847,13 +851,24 @@ Dictionary channel_info(uint64_t id)
 
   const char *stream_desc, *mode_desc;
   switch (chan->streamtype) {
-    case kChannelStreamProc:
+    case kChannelStreamProc: {
       stream_desc = "job";
       if (chan->stream.proc.type == kProcessTypePty) {
         const char *name = pty_process_tty_name(&chan->stream.pty);
         PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
       }
+
+      char **p = chan->stream.proc.argv;
+      Array argv = ARRAY_DICT_INIT;
+      if (p != NULL) {
+        while (*p != NULL) {
+          ADD(argv, STRING_OBJ(cstr_to_string(*p)));
+          p++;
+        }
+      }
+      PUT(info, "argv", ARRAY_OBJ(argv));
       break;
+    }
 
     case kChannelStreamStdio:
        stream_desc = "stdio";

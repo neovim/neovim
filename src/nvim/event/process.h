@@ -26,6 +26,7 @@ struct process {
   char **argv;
   dict_T *env;
   Stream in, out, err;
+  /// Exit handler. If set, user must call process_free().
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
   bool closed, detach, overlapped;
