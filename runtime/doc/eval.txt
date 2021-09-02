@@ -9084,7 +9084,7 @@ system({cmd} [, {input}])				*system()* *E677*
 								*E5677*
 		Note: system() cannot write to or read from backgrounded ("&")
 		shell commands, e.g.: >
-		    :echo system("cat - &", "foo"))
+		    :echo system("cat - &", "foo")
 <		which is equivalent to: >
 		    $ echo foo | bash -c 'cat - &'
 <		The pipes are disconnected (unless overridden by shell
