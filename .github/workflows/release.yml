@@ -130,8 +130,8 @@ jobs:
           # on an x86 platform
           curl -Lo appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
           chmod +x appimagetool
-          curl -Lo runtime https://github.com/AppImage/AppImageKit/releases/download/13/runtime-${{ matrix.arch }}
-          chmod +x runtime
+          curl -Lo appimage-runtime https://github.com/AppImage/AppImageKit/releases/download/13/runtime-${{ matrix.arch }}
+          chmod +x appimage-runtime
 
           # This only prepares the app dir for bundling.
           # Possibly this could be done manually.
@@ -142,7 +142,7 @@ jobs:
           # Actually build the app image
           # TODO Update information arch-var must match the final name used on the release download page!:w
           ./appimagetool \
-            --runtime-file runtime \
+            --runtime-file appimage-runtime \
             --updateinformation "gh-releases-zsync|neovim|neovim|${TAG}|nvim-linux-${{ matrix.arch}}.appimage.zsync" \
             nvim-${{ matrix.arch }}.AppDir \
             nvim-linux-${{ matrix.arch }}.appimage
