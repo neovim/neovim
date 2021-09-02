@@ -14,7 +14,7 @@
 #  - $APP_DIR.AppDir -> the app dir
 #  - nvim.desktop    -> xdg desktop file
 #  - nvim.icon       -> nvim icon
-#  - VERSION         -> text file containing built version
+#  - VERSION         -> text file containing built version TODO can remove? lxdeploy doesnt use it.
 #
 # Examine the ARG block below for --build-arg options you can pass in.
 
