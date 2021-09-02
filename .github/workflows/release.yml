@@ -133,12 +133,8 @@ jobs:
           curl -Lo runtime https://github.com/AppImage/AppImageKit/releases/download/13/runtime-${{ matrix.arch }}
           chmod +x runtime
 
-          # linuxdeploy requires these env-var as well as some commandline flags
-          # this only prepares the app dir for bundling. Possibly deprecated/unneeded.
-          # TODO UPDATE_INFORMATION may not be propagated, wrong stage here
-          APP=nvim-${{ matrix.arch }} \
-          VERSION=$(cat VERSION) \
-          UPDATE_INFORMATION="gh-releases-zsync|neovim|neovim|${TAG}|nvim-linux-${{ matrix.arch }}.appimage.zsync" \
+          # This only prepares the app dir for bundling.
+          # Possibly this could be done manually.
           ./linuxdeploy --appdir nvim-${{ matrix.arch }}.AppDir \
             -d nvim.desktop \
             -i nvim.png
