@@ -60,6 +60,7 @@ jobs:
       -
         name: Output version and release for GH release notes
         id: metadata
+        if: matrix.arch == 'x86_64'
         run: |
           cd $GITHUB_WORKSPACE/build/
           tar xzf nvim-linux-${{ matrix.arch }}.tar.gz
