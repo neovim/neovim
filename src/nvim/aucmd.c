@@ -41,7 +41,6 @@ void init_default_autocmds(void)
   // open terminals when opening files that start with term://
 #define PROTO "term://"
   do_cmdline_cmd("augroup nvim_terminal");
-  do_cmdline_cmd("autocmd!");
   do_cmdline_cmd("autocmd BufReadCmd " PROTO "* ++nested "
                  "if !exists('b:term_title')|call termopen("
                  // Capture the command string
@@ -56,7 +55,7 @@ void init_default_autocmds(void)
 
   // limit syntax synchronization in the command window
   do_cmdline_cmd("augroup nvim_cmdwin");
-  do_cmdline_cmd("autocmd! CmdWinEnter [:>] exe 'syntax sync minlines=1 maxlines='..&cmdwinheight");
+  do_cmdline_cmd("autocmd! CmdwinEnter [:>] syntax sync minlines=1 maxlines=1");
   do_cmdline_cmd("augroup END");
 }
 

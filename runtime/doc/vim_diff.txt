@@ -90,13 +90,10 @@ Default autocommands exist in the following groups. Use ":autocmd! {group}" to
 remove them and ":autocmd {group}" to see how they're defined.
 
 nvim_terminal:
-- BufReadCmd: New files with a name matching
-              `term://(.{-}//(\d+:)?)?\zs.*` are treated as terminal
-              buffers. |terminal-start|
+- BufReadCmd: Treats "term://" buffers as |terminal| buffers. |terminal-start|
 
 nvim_cmdwin:
-- CmdWinEnter: Synchronize syntax highlighting within the command
-               window.
+- CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
 ==============================================================================
 3. New Features						       *nvim-features*
