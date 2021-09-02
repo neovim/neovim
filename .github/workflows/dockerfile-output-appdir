@@ -5,16 +5,19 @@
 #
 # NOTE: This *does not* export an AppImage, it exports data to create one!
 #
-#       Neovims current AppImage creation toolchain is run via linuxdeploy which
-#       has no Arm64 build and relys on FUSE which may not be run in a docker build
-#       container. You must combine the resulting artifacts afterwards.
+#       The AppImage toolchain is provided as AppImages, which rely on FUSE and
+#       have issues/caveats when running inside a docker container. This dockerfile
+#       automates the compilation of Neovim with some specific settings needed for
+#       AppImages, but the actual combination must be done externally.
 #
 # The exported files are:
 #
 #  - $APP_DIR.AppDir -> the app dir
-#  - nvim.desktop    -> xdg desktop file
+#  TODO these could just be put in the root *.AppDir?
+#  - nvim.desktop    -> xdg desktop file 
 #  - nvim.icon       -> nvim icon
-#  - VERSION         -> text file containing built version TODO can remove? lxdeploy doesnt use it.
+#  TODO can remove? lxdeploy doesnt use it.
+#  - VERSION         -> text file containing built version 
 #
 # Examine the ARG block below for --build-arg options you can pass in.
 
