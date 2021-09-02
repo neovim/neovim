@@ -63,7 +63,7 @@ RUN CC=${CC} make CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" \
     && mkdir /neovim/build/${APP_DIR}/usr/share/metainfo/ \
     && cp /neovim/runtime/nvim.appdata.xml /neovim/build/${APP_DIR}/usr/share/metainfo/ \
     && echo $(/neovim/build/bin/nvim --version | head -n 1 | grep -o 'v.*') > /neovim/build/VERSION \
-    && cp /neovim/scripts/app-image-support/AppRun /neovim/build/${APP_DIR}/AppRun \
+    && cp /neovim/scripts/appimage/AppRun /neovim/build/${APP_DIR}/AppRun \
     && chmod 755 /neovim/build/${APP_DIR}/AppRun
 
 # copy artifacts out of build image
