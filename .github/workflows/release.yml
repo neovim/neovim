@@ -116,7 +116,7 @@ jobs:
                  --build-arg CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} \
                  --build-arg CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=nvim-${{ matrix.arch }}.AppDir/usr -DCMAKE_INSTALL_MANDIR=man" \
                  --build-arg APP_DIR=nvim-${{ matrix.arch }}.AppDir \
-                 -f .github/workflows/dockerfile-output-appdir \
+                 -f .github/workflows/dockerfile-output-appimage \
                  -o $GITHUB_WORKSPACE/build .
       - name: Bundle AppDir into AppImage
         run: |
