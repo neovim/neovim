@@ -1437,12 +1437,13 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config, Error *err
   if (enter) {
     win_enter(wp, false);
   }
+  // autocmds in win_enter or win_set_buf below may close the window
+  if (win_valid(wp) && buffer > 0) {
+    win_set_buf(wp->handle, buffer, fconfig.noautocmd, err);
+  }
   if (!win_valid(wp)) {
     api_set_error(err, kErrorTypeException, "Window was closed immediately");
     return 0;
-  }
-  if (buffer > 0) {
-    win_set_buf(wp->handle, buffer, fconfig.noautocmd, err);
   }
 
   if (fconfig.style == kWinStyleMinimal) {
