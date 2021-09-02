@@ -278,6 +278,7 @@ char_u *vim_strsave_shellescape(const char_u *string,
     if (*p == '\\' && fish_like) {
       *d++ = '\\';
       *d++ = *p++;
+      continue;
     }
 
     MB_COPY_CHAR(p, d);
