@@ -163,6 +163,31 @@ _opt_pylint:
 	@command -v flake8 && { $(MAKE) pylint; exit $$?; } \
 		|| echo "SKIP: pylint (flake8 not found)"
 
+commitlint:
+	# Check if latest commit message has the string "vim-patch:" in it. If it
+	# does, assume all commits on current branch are vim-patches. If not, assume
+	# all commits on current branch are non-vim-patches.
+	
+ifneq (,$(findstring vim-patch:, $()$(shell git log -1 --pretty=%B)))
+		# Assume all commits of current PR are vim-patches.
+	npm exec -- commitlint --from $(shell git merge-base master $(shell git branch --show-current)) --verbose --help-url "https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages" --config .github/workflows/commitlint.config_patch.js
+else
+		# Assume no commits of current PR are vim-patches.
+	npm exec -- commitlint --from $(shell git merge-base master $(shell git branch --show-current)) --verbose --help-url "https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages" --config .github/workflows/commitlint.config.js
+endif
+
+# Run commitlint only if commitlint is installed through npm.
+_opt_commitlint:
+	if command -v npm > /dev/null; then \
+		if (npm exec --no -- commitlint -v 2> /dev/null); then \
+			$(MAKE) commitlint; exit $$?; \
+		else \
+			echo "SKIP: commitlint (npm found but not commitlint. Install with \"npx --yes commitlint\".)"; \
+		fi \
+	else \
+		echo "SKIP: commitlint (npm not found)"; \
+	fi
+
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
@@ -205,7 +230,7 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-lint: check-single-includes clint lualint _opt_pylint _opt_shlint
+lint: check-single-includes clint lualint _opt_pylint _opt_shlint _opt_commitlint
 
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
 # Does not work with "Unix Makefiles".
@@ -217,4 +242,4 @@ $(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_CMD) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lualint pylint shlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
+.PHONY: test lualint pylint shlint commitlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix

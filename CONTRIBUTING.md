@@ -215,6 +215,14 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 
     ./src/clint.py src/nvim/ops.c
 
+This step also lints commit messages on current pull request if `commitlint` is
+installed. The easiest way to install it is through `npm` with
+
+    npx --yes commitlint
+
+This will install `commitlint` in the default `npm` cache location, which on
+Linux is most likely under `~/.npm`.
+
 ### Style
 
 The repo includes a `.clang-format` config file which (mostly) matches the
