@@ -239,7 +239,7 @@ param_exclude = (
 annotation_map = {
     'FUNC_API_FAST': '{fast}',
     'FUNC_API_CHECK_TEXTLOCK': 'not allowed when |textlock| is active',
-    'FUNC_API_LUA_ONLY' : 'only allowed for lua'
+    'FUNC_API_LUA_ONLY' : 'only allowed from lua'
 }
 
 
