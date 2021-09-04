@@ -1139,16 +1139,19 @@ int luaopen_mpack(lua_State *L)
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
   luaL_register(L, NULL, unpacker_methods);
+  lua_pop(L, 1);
   /* Packer */
   luaL_newmetatable(L, PACKER_META_NAME);
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
   luaL_register(L, NULL, packer_methods);
+  lua_pop(L, 1);
   /* Session */
   luaL_newmetatable(L, SESSION_META_NAME);
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
   luaL_register(L, NULL, session_methods);
+  lua_pop(L, 1);
   /* NIL */
   /* Check if NIL is already stored in the registry */
   lua_getfield(L, LUA_REGISTRYINDEX, NIL_NAME);
@@ -1166,6 +1169,9 @@ int luaopen_mpack(lua_State *L)
     /* Save NIL on the registry so we can access it easily from other functions */
     lua_setfield(L, LUA_REGISTRYINDEX, NIL_NAME);
   }
+
+  lua_pop(L, 1);
+
   /* module */
   lua_newtable(L);
   luaL_register(L, NULL, mpack_functions);

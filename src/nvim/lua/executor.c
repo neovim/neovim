@@ -33,6 +33,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/event/time.h"
 #include "nvim/event/loop.h"
+#include "mpack/lmpack.h"
 
 #include "nvim/os/os.h"
 
@@ -507,6 +508,21 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setmetatable(lstate, -2);
   nlua_nil_ref = nlua_ref(lstate, -1);
   lua_setfield(lstate, -2, "NIL");
+
+
+  // vim.mpack
+  luaopen_mpack(lstate);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -3, "mpack");
+
+  // package.loaded.mpack = vim.mpack
+  // otherwise luv will be reinitialized when require'mpack'
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_pushvalue(lstate, -3);
+  lua_setfield(lstate, -2, "mpack");
+  lua_pop(lstate, 3);
+
 
   // vim._empty_dict_mt
   lua_createtable(lstate, 0, 0);
