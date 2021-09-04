@@ -8507,7 +8507,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   do_cmdline_cmd("autocmd! TermClose <buffer> "
                  " if !v:event.status |"
                  "   let info = nvim_get_chan_info(&channel) |"
-                 "   if info.argv ==# [&shell] |"
+                 "   if get(info, 'argv', []) ==# [&shell] |"
                  "     exec 'bdelete! ' .. expand('<abuf>') |"
                  "   endif |"
                  " endif");
