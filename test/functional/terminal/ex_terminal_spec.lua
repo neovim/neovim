@@ -137,23 +137,29 @@ describe(':terminal (with fake shell)', function()
     -- shell-test.c is a fake shell that prints its arguments and exits.
     nvim('set_option_value', 'shell', testprg('shell-test'), {})
     nvim('set_option_value', 'shellcmdflag', 'EXE', {})
+    nvim('set_option_value', 'shellxquote', '', {})
   end)
 
   -- Invokes `:terminal {cmd}` using a fake shell (shell-test.c) which prints
-  -- the {cmd} and exits immediately .
+  -- the {cmd} and exits immediately.
+  -- When no argument is given and the exit code is zero, the terminal buffer
+  -- closes automatically.
   local function terminal_with_fake_shell(cmd)
     feed_command("terminal "..(cmd and cmd or ""))
   end
 
   it('with no argument, acts like termopen()', function()
     skip(is_os('win'))
-    terminal_with_fake_shell()
+    -- Use the EXIT subcommand to end the process with a non-zero exit code to
+    -- prevent the buffer from closing automatically
+    nvim('set_option_value', 'shellcmdflag', 'EXIT', {})
+    terminal_with_fake_shell(1)
     retry(nil, 4 * screen.timeout, function()
     screen:expect([[
-      ^ready $                                           |
-      [Process exited 0]                                |
+      ^                                                  |
+      [Process exited 1]                                |
                                                         |
-      :terminal                                         |
+      :terminal 1                                       |
     ]])
     end)
   end)
@@ -245,12 +251,13 @@ describe(':terminal (with fake shell)', function()
 
   it('works with :find', function()
     skip(is_os('win'))
-    terminal_with_fake_shell()
+    nvim('set_option_value', 'shellcmdflag', 'EXIT', {})
+    terminal_with_fake_shell(1)
     screen:expect([[
-      ^ready $                                           |
-      [Process exited 0]                                |
+      ^                                                  |
+      [Process exited 1]                                |
                                                         |
-      :terminal                                         |
+      :terminal 1                                       |
     ]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     feed([[<C-\><C-N>]])

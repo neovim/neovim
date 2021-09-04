@@ -2075,26 +2075,26 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 
   it('in terminal-mode', function()
-    feed_data(':set shell='..testprg('shell-test')..'\n')
+    feed_data(':set shell='..testprg('shell-test')..' shellcmdflag=EXE\n')
     feed_data(':set noshowmode laststatus=0\n')
 
-    feed_data(':terminal\n')
+    feed_data(':terminal zia\n')
     -- Wait for terminal to be ready.
     screen:expect{grid=[[
-      {1:r}eady $                                           |
+      {1:r}eady $ zia                                       |
+                                                        |
       [Process exited 0]                                |
                                                         |
                                                         |
-                                                        |
-      :terminal                                         |
+      :terminal zia                                     |
       {3:-- TERMINAL --}                                    |
     ]]}
 
     feed_data('\027[I')
     screen:expect{grid=[[
-      {1:r}eady $                                           |
-      [Process exited 0]                                |
+      {1:r}eady $ zia                                       |
                                                         |
+      [Process exited 0]                                |
                                                         |
                                                         |
       gained                                            |
@@ -2103,9 +2103,9 @@ describe('TUI FocusGained/FocusLost', function()
 
     feed_data('\027[O')
     screen:expect([[
-      {1:r}eady $                                           |
-      [Process exited 0]                                |
+      {1:r}eady $ zia                                       |
                                                         |
+      [Process exited 0]                                |
                                                         |
                                                         |
       lost                                              |
