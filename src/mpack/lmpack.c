@@ -15,8 +15,6 @@
  * compilation.
  */
 #define LUA_LIB
-/* for snprintf */
-#define _XOPEN_SOURCE 500
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,12 +24,11 @@
 #include <lua.h>
 #include <luaconf.h>
 
-#ifdef MPACK_USE_SYSTEM
-# include <mpack.h>
-#else
-# define MPACK_API static
-# include "mpack-src/src/mpack.c"
-#endif
+#include "nvim/macros.h"
+
+#include "lmpack.h"
+
+#include "rpc.h"
 
 #define UNPACKER_META_NAME "mpack.Unpacker"
 #define PACKER_META_NAME "mpack.Packer"
@@ -713,7 +710,7 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
         node->tok = mpack_pack_nil();
         break;
       }
-    /* Fallthrough */
+      FALLTHROUGH;
     default:
 	  {
 		/* #define FMT */
