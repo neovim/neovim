@@ -34,6 +34,7 @@
 #define PACKER_META_NAME "mpack.Packer"
 #define SESSION_META_NAME "mpack.Session"
 #define NIL_NAME "mpack.NIL"
+#define EMPTY_DICT_NAME "mpack.empty_dict"
 
 /* 
  * TODO(tarruda): When targeting lua 5.3 and being compiled with `long long`
@@ -55,14 +56,14 @@
 typedef struct {
   lua_State *L;
   mpack_parser_t *parser;
-  int reg, ext, unpacking;
+  int reg, ext, unpacking, mtdict;
   char *string_buffer;
 } Unpacker;
 
 typedef struct {
   lua_State *L;
   mpack_parser_t *parser;
-  int reg, ext, root, packing;
+  int reg, ext, root, packing, mtdict;
   int is_bin, is_bin_fn;
 } Packer;
 
@@ -234,7 +235,10 @@ static mpack_uint32_t lmpack_objlen(lua_State *L, int *is_array)
     len++;
   }
 
-  *is_array = isarr && max == len;
+  // when len==0, the caller should guess the type!
+  if (len > 0) {
+    *is_array = isarr && max == len;
+  }
 
 end:
   if ((size_t)-1 > (mpack_uint32_t)-1 && len > (mpack_uint32_t)-1)
@@ -267,6 +271,9 @@ static int lmpack_unpacker_new(lua_State *L)
   rv->reg = luaL_ref(L, LUA_REGISTRYINDEX);
 #endif
   rv->ext = LUA_NOREF;
+
+  lua_getfield(L, LUA_REGISTRYINDEX, EMPTY_DICT_NAME);
+  rv->mtdict = lmpack_ref(L, rv->reg);
 
   if (lua_istable(L, 1)) {
     /* parse options */
@@ -377,6 +384,11 @@ static void lmpack_parse_exit(mpack_parser_t *parser, mpack_node_t *node)
     case MPACK_TOKEN_MAP:
       lmpack_geti(L, unpacker->reg, (int)node->data[0].i);
       lmpack_unref(L, unpacker->reg, (int)node->data[0].i);
+      if (node->key_visited == 0 && node->tok.type == MPACK_TOKEN_MAP) {
+        lmpack_geti(L, unpacker->reg, unpacker->mtdict); // [table, mtdict]
+        lua_setmetatable(L, -2); // [table]
+      }
+
       break;
     default:
       break;
@@ -506,6 +518,9 @@ static int lmpack_packer_new(lua_State *L)
 #endif
   rv->ext = LUA_NOREF;
 
+  lua_getfield(L, LUA_REGISTRYINDEX, EMPTY_DICT_NAME);
+  rv->mtdict = lmpack_ref(L, rv->reg);
+
   if (lua_istable(L, 1)) {
     /* parse options */
     lua_getfield(L, 1, "ext");
@@ -620,11 +635,11 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
       break;
     }
     case LUA_TTABLE: {
-      int is_array;
       mpack_uint32_t len;
       mpack_node_t *n;
 
-      if (packer->ext != LUA_NOREF && lua_getmetatable(L, -1)) {
+      int has_meta = lua_getmetatable(L, -1);
+      if (packer->ext != LUA_NOREF && has_meta) {
         /* check if there's a handler for this metatable */
         lmpack_geti(L, packer->reg, packer->ext);
         lua_pushvalue(L, -2);
@@ -674,11 +689,22 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
            * -2: metatable
            * -3: original table 
            *
-           * We want to leave only the original table since it will be handled
-           * below, so pop 2
+           * We want to leave only the original table and metatable since they
+           * will be handled below, so pop 1
            */
-          lua_pop(L, 2);
+          lua_pop(L, 1);
         }
+      }
+
+      int is_array = 1;
+      if (has_meta) {
+        // stack: [table, metatable]
+        if (packer->mtdict != LUA_NOREF) {
+          lmpack_geti(L, packer->reg, packer->mtdict); // [table, metatable, mtdict]
+          is_array = !lua_rawequal(L, -1, -2);
+          lua_pop(L, 1); // [table, metatable];
+        }
+        lua_pop(L, 1); // [table]
       }
 
       /* check for cycles */
@@ -1031,6 +1057,9 @@ static int lmpack_unpack(lua_State *L)
   unpacker.string_buffer = NULL;
   unpacker.L = L;
 
+  lua_getfield(L, LUA_REGISTRYINDEX, EMPTY_DICT_NAME);
+  unpacker.mtdict = lmpack_ref(L, unpacker.reg);
+
   result = mpack_parse(&parser, &str, &len, lmpack_parse_enter,
       lmpack_parse_exit);
 
@@ -1071,6 +1100,10 @@ static int lmpack_pack(lua_State *L)
   packer.is_bin = 0;
   packer.L = L;
   packer.root = lmpack_ref(L, packer.reg);
+
+  lua_getfield(L, LUA_REGISTRYINDEX, EMPTY_DICT_NAME);
+  packer.mtdict = lmpack_ref(L, packer.reg);
+
 
   luaL_buffinit(L, &buffer);
   b = luaL_prepbuffer(&buffer);

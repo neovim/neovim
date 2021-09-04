@@ -687,6 +687,19 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
                     See {opts.result_type}. nil if {opts.on_hunk} is given.
 
 ------------------------------------------------------------------------------
+VIM.MPACK                                                          *lua-mpack*
+
+The *vim.mpack* module provides packing and unpacking of lua objects to
+msgpack encoded strings. |vim.NIL| and |vim.empty_dict()| are supported.
+
+vim.mpack.pack({obj})					*vim.mpack.pack*
+        Packs a lua object {obj} and returns the msgpack representation as
+        a string
+
+vim.mpack.unpack({str})					*vim.mpack.unpack*
+        Unpacks the msgpack encoded {str} and returns a lua object
+
+------------------------------------------------------------------------------
 VIM							*lua-builtin*
 
 vim.api.{func}({...})					*vim.api*
