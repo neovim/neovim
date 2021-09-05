@@ -422,6 +422,21 @@ function M.clear_references()
   util.buf_clear_references()
 end
 
+--- Requests code actions from all clients and calls the handler exactly once
+--- with all aggregated results
+---@private
+local function code_action_request(params)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local method = 'textDocument/codeAction'
+  vim.lsp.buf_request_all(bufnr, method, params, function(results)
+    local actions = {}
+    for _, r in pairs(results) do
+      vim.list_extend(actions, r.result or {})
+    end
+    vim.lsp.handlers[method](nil, actions, {bufnr=bufnr, method=method})
+  end)
+end
+
 --- Selects a code action from the input list that is available at the current
 --- cursor position.
 --

@@ -1008,15 +1008,16 @@ end
 ---         - Update diagnostics in InsertMode or wait until InsertLeave
 ---     - severity_sort:    (default=false)
 ---         - Sort diagnostics (and thus signs and virtual text)
-function M.on_publish_diagnostics(_, _, params, client_id, _, config)
-  local uri = params.uri
+function M.on_publish_diagnostics(_, result, ctx, config)
+  local client_id = ctx.client_id
+  local uri = result.uri
   local bufnr = vim.uri_to_bufnr(uri)
 
   if not bufnr then
     return
   end
 
-  local diagnostics = params.diagnostics
+  local diagnostics = result.diagnostics
 
   if config and if_nil(config.severity_sort, false) then
     table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
@@ -1164,8 +1165,41 @@ function M.display(diagnostics, bufnr, client_id, config)
   save_extmarks(bufnr, client_id)
 end
 
--- }}}
--- Diagnostic User Functions {{{
+--- Redraw diagnostics for the given buffer and client
+---
+--- This calls the "textDocument/publishDiagnostics" handler manually using
+--- the cached diagnostics already received from the server. This can be useful
+--- for redrawing diagnostics after making changes in diagnostics
+--- configuration. |lsp-handler-configuration|
+---
+---@param bufnr (optional, number): Buffer handle, defaults to current
+---@param client_id (optional, number): Redraw diagnostics for the given
+---       client. The default is to redraw diagnostics for all attached
+---       clients.
+function M.redraw(bufnr, client_id)
+  bufnr = get_bufnr(bufnr)
+  if not client_id then
+    return vim.lsp.for_each_buffer_client(bufnr, function(client)
+      M.redraw(bufnr, client.id)
+    end)
+  end
+
+  -- We need to invoke the publishDiagnostics handler directly instead of just
+  -- calling M.display so that we can preserve any custom configuration options
+  -- the user may have set with vim.lsp.with.
+  vim.lsp.handlers["textDocument/publishDiagnostics"](
+    nil,
+    {
+      uri = vim.uri_from_bufnr(bufnr),
+      diagnostics = M.get(bufnr, client_id),
+    },
+    {
+      method = "textDocument/publishDiagnostics",
+      client_id = client_id,
+      bufnr = bufnr,
+    }
+    )
+  end
 
 --- Open a floating window with the diagnostics from {line_nr}
 ---
