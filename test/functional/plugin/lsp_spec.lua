@@ -1226,7 +1226,7 @@ describe('LSP', function()
           label = nil;
           edit = {};
         }
-        return vim.lsp.handlers['workspace/applyEdit'](nil, nil, apply_edit)
+        return vim.lsp.handlers['workspace/applyEdit'](nil, apply_edit)
       ]])
     end)
   end)
