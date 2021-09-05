@@ -21,6 +21,8 @@ typedef struct foldinfo {
   long fi_lines;
 } foldinfo_T;
 
+#define FOLDINFO_INIT { 0, 0, 0, 0 }
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fold.h.generated.h"
