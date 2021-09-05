@@ -1695,17 +1695,11 @@ static void win_update(win_T *wp, Providers *providers)
       wp->w_botline = buf->b_ml.ml_line_count + 1;
       j = diff_check_fill(wp, wp->w_botline);
       if (j > 0 && !wp->w_botfill) {
-        // display filler lines at the end of the file
-        if (char2cells(wp->w_p_fcs_chars.diff) > 1) {
-          i = '-';
-        } else {
-          i = wp->w_p_fcs_chars.diff;
-        }
-        if (row + j > wp->w_grid.Rows) {
-          j = wp->w_grid.Rows - row;
-        }
-        win_draw_end(wp, i, i, true, row, row + (int)j, HLF_DED);
-        row += j;
+        // Display filler text below last line. win_line() will check
+        // for ml_line_count+1 and only draw filler lines
+        foldinfo_T info = FOLDINFO_INIT;
+        row = win_line(wp, wp->w_botline, row, wp->w_grid.Rows,
+                       false, false, info, &line_providers);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;
@@ -2196,6 +2190,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   row = startrow;
 
   buf_T *buf = wp->w_buffer;
+  bool end_fill = (lnum == buf->b_ml.ml_line_count+1);
 
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
@@ -2263,6 +2258,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
     if (wp->w_p_spell
         && !has_fold
+        && !end_fill
         && *wp->w_s->b_p_spl != NUL
         && !GA_EMPTY(&wp->w_s->b_langp)
         && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
@@ -2466,7 +2462,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     line_attr_lowprio_save = line_attr_lowprio;
   }
 
-  line = ml_get_buf(wp->w_buffer, lnum, false);
+  line = end_fill ? (char_u *)"" : ml_get_buf(wp->w_buffer, lnum, false);
   ptr = line;
 
   if (has_spell && !number_only) {
@@ -2500,7 +2496,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     }
   }
 
-  if (wp->w_p_list && !has_fold) {
+  if (wp->w_p_list && !has_fold && !end_fill) {
     if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.trail
         || wp->w_p_lcs_chars.lead
@@ -2656,7 +2652,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   cur = wp->w_match_head;
   shl_flag = false;
   while ((cur != NULL || !shl_flag) && !number_only
-         && !has_fold) {
+         && !has_fold && !end_fill) {
     if (!shl_flag) {
       shl = &search_hl;
       shl_flag = true;
@@ -4467,7 +4463,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       filler_todo--;
       // When the filler lines are actually below the last line of the
       // file, don't draw the line itself, break here.
-      if (filler_todo == 0 && wp->w_botfill) {
+      if (filler_todo == 0 && (wp->w_botfill || end_fill)) {
         break;
       }
     }
