@@ -205,8 +205,8 @@ describe('vim.lsp.diagnostic', function()
             make_warning("Warning 1", 2, 1, 2, 5),
           }
 
-          vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_1_diags }, 1)
-          vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_2_diags }, 2)
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, { uri = fake_uri, diagnostics = server_1_diags }, {client_id=1})
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, { uri = fake_uri, diagnostics = server_2_diags }, {client_id=2})
           return {
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", 2),
@@ -251,8 +251,8 @@ describe('vim.lsp.diagnostic', function()
             make_warning("Warning 1", 2, 1, 2, 5),
           }
 
-          vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_1_diags }, 1)
-          vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_2_diags }, 2)
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, { uri = fake_uri, diagnostics = server_1_diags }, {client_id=1})
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, { uri = fake_uri, diagnostics = server_2_diags }, {client_id=2})
 
           vim.lsp.diagnostic.disable(diagnostic_bufnr, 1)
 
@@ -290,8 +290,8 @@ describe('vim.lsp.diagnostic', function()
               make_warning("Warning 1", 2, 1, 2, 5),
             }
 
-            vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_1_diags }, 1)
-            vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, { uri = fake_uri, diagnostics = server_2_diags }, 2)
+            vim.lsp.diagnostic.on_publish_diagnostics(nil, { uri = fake_uri, diagnostics = server_1_diags }, {client_id=1})
+            vim.lsp.diagnostic.on_publish_diagnostics(nil, { uri = fake_uri, diagnostics = server_2_diags }, {client_id=2})
             return {
               vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
               vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", 2),
@@ -467,14 +467,14 @@ describe('vim.lsp.diagnostic', function()
 
     it('should return all diagnostics when no severity is supplied', function()
       eq(2, exec_lua [[
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
           uri = fake_uri,
           diagnostics = {
             make_error("Error 1", 1, 1, 1, 5),
             make_warning("Warning on Server 1", 1, 1, 2, 5),
             make_error("Error On Other Line", 2, 1, 1, 5),
           }
-        }, 1)
+        }, {client_id=1})
 
         return #vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)
       ]])
@@ -482,7 +482,7 @@ describe('vim.lsp.diagnostic', function()
 
     it('should return only requested diagnostics when severity_limit is supplied', function()
       eq(2, exec_lua [[
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
           uri = fake_uri,
           diagnostics = {
             make_error("Error 1", 1, 1, 1, 5),
@@ -490,7 +490,7 @@ describe('vim.lsp.diagnostic', function()
             make_information("Ignored information", 1, 1, 2, 5),
             make_error("Error On Other Line", 2, 1, 1, 5),
           }
-        }, 1)
+        }, {client_id=1})
 
         return #vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1, { severity_limit = "Warning" })
       ]])
@@ -502,12 +502,12 @@ describe('vim.lsp.diagnostic', function()
       exec_lua [[
         vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
           virtual_text = function() return true end,
-        })(nil, nil, {
+        })(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
       ]]
 
@@ -519,12 +519,12 @@ describe('vim.lsp.diagnostic', function()
       exec_lua [[
         vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
           virtual_text = function() return false end,
-        })(nil, nil, {
+        })(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
       ]]
 
@@ -541,12 +541,12 @@ describe('vim.lsp.diagnostic', function()
       exec_lua [[
         vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
           update_in_insert = false,
-        })(nil, nil, {
+        })(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
       ]]
 
@@ -583,12 +583,12 @@ describe('vim.lsp.diagnostic', function()
           return SetVirtualTextOriginal(...)
         end
 
-        PublishDiagnostics(nil, nil, {
+        PublishDiagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
       ]]
 
@@ -637,12 +637,12 @@ describe('vim.lsp.diagnostic', function()
           return SetVirtualTextOriginal(...)
         end
 
-        PublishDiagnostics(nil, nil, {
+        PublishDiagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
       ]]
 
@@ -679,12 +679,12 @@ describe('vim.lsp.diagnostic', function()
       exec_lua [[
         vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
           update_in_insert = true,
-        })(nil, nil, {
+        })(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
       ]]
 
@@ -709,12 +709,12 @@ describe('vim.lsp.diagnostic', function()
           },
         })
 
-        PublishDiagnostics(nil, nil, {
+        PublishDiagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
 
         return vim.api.nvim_buf_get_extmarks(
@@ -746,12 +746,12 @@ describe('vim.lsp.diagnostic', function()
           end,
         })
 
-        PublishDiagnostics(nil, nil, {
+        PublishDiagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Delayed Diagnostic', 4, 4, 4, 4),
             }
-          }, 1
+          }, {client_id=1}
         )
 
         return vim.api.nvim_buf_get_extmarks(
@@ -779,12 +779,12 @@ describe('vim.lsp.diagnostic', function()
             },
           })
 
-          PublishDiagnostics(nil, nil, {
+          PublishDiagnostics(nil, {
               uri = fake_uri,
               diagnostics = {
                 make_warning('Delayed Diagnostic', 4, 4, 4, 4),
               }
-            }, 1
+            }, {client_id=1}
           )
 
           return count_of_extmarks_for_client(diagnostic_bufnr, 1)
@@ -870,10 +870,10 @@ describe('vim.lsp.diagnostic', function()
         }
 
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
             uri = fake_uri,
             diagnostics = diagnostics
-          }, 1
+          }, {client_id=1}
         )
 
         vim.lsp.diagnostic.set_signs(diagnostics, diagnostic_bufnr, 1)
@@ -895,13 +895,13 @@ describe('vim.lsp.diagnostic', function()
       local loc_list = exec_lua [[
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
 
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Farther Diagnostic', 4, 4, 4, 4),
               make_error('Lower Diagnostic', 1, 1, 1, 1),
             }
-          }, 1
+          }, {client_id=1}
         )
 
         vim.lsp.diagnostic.set_loclist()
@@ -916,20 +916,20 @@ describe('vim.lsp.diagnostic', function()
       local loc_list = exec_lua [[
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
 
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_error('Lower Diagnostic', 1, 1, 1, 1),
             }
-          }, 1
+          }, {client_id=1}
         )
 
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, nil, {
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
             uri = fake_uri,
             diagnostics = {
               make_warning('Farther Diagnostic', 4, 4, 4, 4),
             }
-          }, 2
+          }, {client_id=2}
         )
 
         vim.lsp.diagnostic.set_loclist()

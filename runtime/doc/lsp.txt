@@ -202,23 +202,28 @@ responses and notifications from LSP servers.
 
 For |lsp-request|, each |lsp-handler| has this signature: >
 
-  function(err, method, result, client_id, bufnr, config)
+  function(err, result, ctx, config)
 <
         Parameters: ~
             {err}       (table|nil)
                             When the language server is unable to complete a
                             request, a table with information about the error
                             is sent. Otherwise, it is `nil`. See |lsp-response|.
-            {method}    (string)
-                            The |lsp-method| name.
             {result}    (Result | Params | nil)
                             When the language server is able to succesfully
                             complete a request, this contains the `result` key
                             of the response. See |lsp-response|.
-            {client_id} (number)
-                            The ID of the |vim.lsp.client|.
-            {bufnr}     (Buffer)
-                            Buffer handle, or 0 for current.
+            {ctx}       (table)
+                            Context describes additional calling state
+                            associated with the handler. It consists of the
+                            following key, value pairs:
+
+                            {method}    (string)
+                                            The |lsp-method| name.
+                            {client_id} (number)
+                                            The ID of the |vim.lsp.client|.
+                            {bufnr}     (Buffer)
+                                           Buffer handle, or 0 for current.
             {config}    (table)
                             Configuration for the handler.
 
@@ -238,21 +243,24 @@ For |lsp-request|, each |lsp-handler| has this signature: >
 
 For |lsp-notification|, each |lsp-handler| has this signature: >
 
-  function(err, method, params, client_id, bufnr, config)
+  function(err, result, ctx, config)
 <
         Parameters: ~
             {err}       (nil)
                             This is always `nil`.
                             See |lsp-notification|
-            {method}    (string)
-                            The |lsp-method| name.
-            {params}    (Params)
+            {result}    (Result)
                             This contains the `params` key of the notification.
                             See |lsp-notification|
-            {client_id} (number)
-                            The ID of the |vim.lsp.client|
-            {bufnr}     (nil)
-                            `nil`, as the server doesn't have an associated buffer.
+            {ctx}       (table)
+                            Context describes additional calling state
+                            associated with the handler. It consists of the
+                            following key, value pairs:
+
+                            {method}    (string)
+                                            The |lsp-method| name.
+                            {client_id} (number)
+                                            The ID of the |vim.lsp.client|.
             {config}    (table)
                             Configuration for the handler.
 
@@ -1403,7 +1411,7 @@ goto_prev({opts})                             *vim.lsp.diagnostic.goto_prev()*
                     {opts}  table See |vim.lsp.diagnostic.goto_next()|
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
-on_publish_diagnostics({_}, {_}, {params}, {client_id}, {_}, {config})
+on_publish_diagnostics({_}, {result}, {ctx}, {config})
                 |lsp-handler| for the method "textDocument/publishDiagnostics"
 
                 Note:
@@ -1682,7 +1690,7 @@ get({bufnr})                                          *vim.lsp.codelens.get()*
                     table ( `CodeLens[]` )
 
                                               *vim.lsp.codelens.on_codelens()*
-on_codelens({err}, {_}, {result}, {client_id}, {bufnr})
+on_codelens({err}, {result}, {ctx}, {_})
                 |lsp-handler| for the method `textDocument/codeLens`
 
 refresh()                                         *vim.lsp.codelens.refresh()*
@@ -1710,8 +1718,7 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 ==============================================================================
 Lua module: vim.lsp.handlers                                    *lsp-handlers*
 
-                                                    *vim.lsp.handlers.hover()*
-hover({_}, {method}, {result}, {_}, {_}, {config})
+hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
                 |lsp-handler| for the method "textDocument/hover" >
 
                  vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
@@ -1729,7 +1736,7 @@ hover({_}, {method}, {result}, {_}, {_}, {config})
                                 • See |vim.api.nvim_open_win()|
 
                                            *vim.lsp.handlers.signature_help()*
-signature_help({_}, {method}, {result}, {client_id}, {bufnr}, {config})
+signature_help({_}, {result}, {ctx}, {config})
                 |lsp-handler| for the method "textDocument/signatureHelp". The
                 active parameter is highlighted with
                 |hl-LspSignatureActiveParameter|. >
