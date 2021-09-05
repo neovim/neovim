@@ -143,8 +143,8 @@ M['textDocument/codeAction'] = function(_, result)
   end
 end
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-M['workspace/applyEdit'] = function(_, _, workspace_edit)
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
+M['workspace/applyEdit'] = function(_, workspace_edit)
   if not workspace_edit then return end
   -- TODO(ashkan) Do something more with label?
   if workspace_edit.label then
