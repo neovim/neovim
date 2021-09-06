@@ -765,8 +765,6 @@ static void win_update(win_T *wp, Providers *providers)
   long j;
   static bool recursive = false;  // being called recursively
   const linenr_T old_botline = wp->w_botline;
-  const int old_wrow = wp->w_wrow;
-  const int old_wcol = wp->w_wcol;
   // Remember what happened to the previous line.
 #define DID_NONE 1      // didn't update a line
 #define DID_LINE 2      // updated a normal line
@@ -1739,49 +1737,16 @@ static void win_update(win_T *wp, Providers *providers)
     wp->w_valid |= VALID_BOTLINE;
     wp->w_viewport_invalid = true;
     if (wp == curwin && wp->w_botline != old_botline && !recursive) {
-      const linenr_T old_topline = wp->w_topline;
-      const int new_wcol = wp->w_wcol;
       recursive = true;
       curwin->w_valid &= ~VALID_TOPLINE;
       update_topline(curwin);  // may invalidate w_botline again
-
-      if (old_wcol != new_wcol
-          && (wp->w_valid & (VALID_WCOL|VALID_WROW))
-          != (VALID_WCOL|VALID_WROW)) {
-        // A win_line() call applied a fix to screen cursor column to
-        // accommodate concealment of cursor line, but in this call to
-        // update_topline() the cursor's row or column got invalidated.
-        // If they are left invalid, setcursor() will recompute them
-        // but there won't be any further win_line() call to re-fix the
-        // column and the cursor will end up misplaced.  So we call
-        // cursor validation now and reapply the fix again (or call
-        // win_line() to do it for us).
-        validate_cursor();
-        if (wp->w_wcol == old_wcol
-            && wp->w_wrow == old_wrow
-            && old_topline == wp->w_topline) {
-          wp->w_wcol = new_wcol;
-        } else {
-          redrawWinline(wp, wp->w_cursor.lnum);
-        }
-      }
-      // New redraw either due to updated topline or due to wcol fix.
-      if (wp->w_redr_type != 0) {
+      if (must_redraw != 0) {
         // Don't update for changes in buffer again.
         i = curbuf->b_mod_set;
         curbuf->b_mod_set = false;
-        j = curbuf->b_mod_xlines;
-        curbuf->b_mod_xlines = 0;
         win_update(curwin, providers);
+        must_redraw = 0;
         curbuf->b_mod_set = i;
-        curbuf->b_mod_xlines = j;
-      }
-      // Other windows might have w_redr_type raised in update_topline().
-      must_redraw = 0;
-      FOR_ALL_WINDOWS_IN_TAB(wwp, curtab) {
-        if (wwp->w_redr_type > must_redraw) {
-          must_redraw = wwp->w_redr_type;
-        }
       }
       recursive = false;
     }
