@@ -474,6 +474,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
     };
 
     if (regmatch.regprog != NULL) {
+      regmatch.rm_ic = false;
       if (vim_regexec(&regmatch, line, 0)) {
         if (wp->w_briopt_list > 0) {
           bri += wp->w_briopt_list;
