@@ -763,7 +763,7 @@ static void win_update(win_T *wp, Providers *providers)
   bool didline = false;         // if true, we finished the last line
   int i;
   long j;
-  static int recursive = FALSE;         /* being called recursively */
+  static bool recursive = false;  // being called recursively
   int old_botline = wp->w_botline;
   // Remember what happened to the previous line.
 #define DID_NONE 1      // didn't update a line
