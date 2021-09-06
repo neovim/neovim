@@ -1754,7 +1754,7 @@ static void win_update(win_T *wp, Providers *providers)
         must_redraw = 0;
         curbuf->b_mod_set = i;
       }
-      recursive = FALSE;
+      recursive = false;
     }
   }
 
