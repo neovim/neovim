@@ -1743,7 +1743,7 @@ static void win_update(win_T *wp, Providers *providers)
     wp->w_valid |= VALID_BOTLINE;
     wp->w_viewport_invalid = true;
     if (wp == curwin && wp->w_botline != old_botline && !recursive) {
-      recursive = TRUE;
+      recursive = true;
       curwin->w_valid &= ~VALID_TOPLINE;
       update_topline(curwin);         /* may invalidate w_botline again */
       if (must_redraw != 0) {
