@@ -4941,15 +4941,15 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
   return 0;
 }
 
-/*
- * Show wildchar matches in the status line.
- * Show at least the "match" item.
- * We start at item 'first_match' in the list and show all matches that fit.
- *
- * If inversion is possible we use it. Else '=' characters are used.
- */
-void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches,          // list of matches
-                             int match, int showtail)
+/// Show wildchar matches in the status line.
+/// Show at least the "match" item.
+/// We start at item 'first_match' in the list and show all matches that fit.
+///
+/// If inversion is possible we use it. Else '=' characters are used.
+///
+/// @param matches  list of matches
+void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, int match,
+                             int showtail)
 {
 #define L_MATCH(m) (showtail ? sm_gettail(matches[m], false) : matches[m])
   int row;
@@ -6018,18 +6018,18 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
   }
 }
 
-/*
- * Search for a next 'hlsearch' or match.
- * Uses shl->buf.
- * Sets shl->lnum and shl->rm contents.
- * Note: Assumes a previous match is always before "lnum", unless
- * shl->lnum is zero.
- * Careful: Any pointers for buffer lines will become invalid.
- */
-static void next_search_hl(win_T *win, match_T *shl,               // points to search_hl or a match
-                           linenr_T lnum, colnr_T mincol,                // minimal column for a match
-                           matchitem_T *cur               // to retrieve match positions if any
-                           )
+/// Search for a next 'hlsearch' or match.
+/// Uses shl->buf.
+/// Sets shl->lnum and shl->rm contents.
+/// Note: Assumes a previous match is always before "lnum", unless
+/// shl->lnum is zero.
+/// Careful: Any pointers for buffer lines will become invalid.
+///
+/// @param shl     points to search_hl or a match
+/// @param mincol  minimal column for a match
+/// @param cur     to retrieve match positions if any
+static void next_search_hl(win_T *win, match_T *shl, linenr_T lnum, colnr_T mincol,
+                           matchitem_T *cur)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   linenr_T l;
@@ -6139,12 +6139,12 @@ static void next_search_hl(win_T *win, match_T *shl,               // points to 
   }
 }
 
-/// If there is a match fill "shl" and return one.
-/// Return zero otherwise.
-static int next_search_hl_pos(match_T *shl,         // points to a match
-                              linenr_T lnum, posmatch_T *posmatch,  // match positions
-                              colnr_T mincol        // minimal column for a match
-                              )
+/// @param shl       points to a match. Fill on match.
+/// @param posmatch  match positions
+/// @param mincol    minimal column for a match
+///
+/// @return one on match, otherwise return zero.
+static int next_search_hl_pos(match_T *shl, linenr_T lnum, posmatch_T *posmatch, colnr_T mincol)
   FUNC_ATTR_NONNULL_ALL
 {
   int i;
@@ -6960,12 +6960,18 @@ int showmode(void)
           switch ((VIsual_select ? 4 : 0)
                   + (VIsual_mode == Ctrl_V) * 2
                   + (VIsual_mode == 'V')) {
-          case 0: p = N_(" VISUAL"); break;
-          case 1: p = N_(" VISUAL LINE"); break;
-          case 2: p = N_(" VISUAL BLOCK"); break;
-          case 4: p = N_(" SELECT"); break;
-          case 5: p = N_(" SELECT LINE"); break;
-          default: p = N_(" SELECT BLOCK"); break;
+          case 0:
+            p = N_(" VISUAL"); break;
+          case 1:
+            p = N_(" VISUAL LINE"); break;
+          case 2:
+            p = N_(" VISUAL BLOCK"); break;
+          case 4:
+            p = N_(" SELECT"); break;
+          case 5:
+            p = N_(" SELECT LINE"); break;
+          default:
+            p = N_(" SELECT BLOCK"); break;
           }
           MSG_PUTS_ATTR(_(p), attr);
         }
