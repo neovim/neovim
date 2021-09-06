@@ -14,6 +14,7 @@ static const char *xdg_env_vars[] = {
   [kXDGConfigHome] = "XDG_CONFIG_HOME",
   [kXDGDataHome] = "XDG_DATA_HOME",
   [kXDGCacheHome] = "XDG_CACHE_HOME",
+  [kXDGStateHome] = "XDG_STATE_HOME",
   [kXDGRuntimeDir] = "XDG_RUNTIME_DIR",
   [kXDGConfigDirs] = "XDG_CONFIG_DIRS",
   [kXDGDataDirs] = "XDG_DATA_DIRS",
@@ -24,6 +25,7 @@ static const char *const xdg_defaults_env_vars[] = {
   [kXDGConfigHome] = "LOCALAPPDATA",
   [kXDGDataHome] = "LOCALAPPDATA",
   [kXDGCacheHome] = "TEMP",
+  [kXDGStateHome] = "LOCALAPPDATA",
   [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
@@ -38,6 +40,7 @@ static const char *const xdg_defaults[] = {
   [kXDGConfigHome] = "~\\AppData\\Local",
   [kXDGDataHome] = "~\\AppData\\Local",
   [kXDGCacheHome] = "~\\AppData\\Local\\Temp",
+  [kXDGStateHome] = "~\\AppData\\Local",
   [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
@@ -45,6 +48,7 @@ static const char *const xdg_defaults[] = {
   [kXDGConfigHome] = "~/.config",
   [kXDGDataHome] = "~/.local/share",
   [kXDGCacheHome] = "~/.cache",
+  [kXDGStateHome] = "~/.local/state",
   [kXDGRuntimeDir] = NULL,
   [kXDGConfigDirs] = "/etc/xdg/",
   [kXDGDataDirs] = "/usr/local/share/:/usr/share/",
@@ -133,15 +137,26 @@ char *stdpaths_user_conf_subpath(const char *fname)
 /// Return subpath of $XDG_DATA_HOME
 ///
 /// @param[in]  fname  New component of the path.
+///
+/// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`
+char *stdpaths_user_data_subpath(const char *fname)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  return concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
+}
+
+/// Return subpath of $XDG_STATE_HOME
+///
+/// @param[in]  fname  New component of the path.
 /// @param[in]  trailing_pathseps  Amount of trailing path separators to add.
 /// @param[in]  escape_commas  If true, all commas will be escaped.
 ///
-/// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`.
-char *stdpaths_user_data_subpath(const char *fname, const size_t trailing_pathseps,
-                                 const bool escape_commas)
+/// @return [allocated] `$XDG_STATE_HOME/nvim/{fname}`.
+char *stdpaths_user_state_subpath(const char *fname, const size_t trailing_pathseps,
+                                  const bool escape_commas)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  char *ret = concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
+  char *ret = concat_fnames_realloc(get_xdg_home(kXDGStateHome), fname, true);
   const size_t len = strlen(ret);
   const size_t numcommas = (escape_commas ? memcnt(ret, ',', len) : 0);
   if (numcommas || trailing_pathseps) {

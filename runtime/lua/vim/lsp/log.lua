@@ -25,12 +25,12 @@ do
   local function path_join(...)
     return table.concat(vim.tbl_flatten({ ... }), path_sep)
   end
-  local logfilename = path_join(vim.fn.stdpath('cache'), 'lsp.log')
+  local logfilename = path_join(vim.fn.stdpath('log'), 'lsp.log')
 
   -- TODO: Ideally the directory should be created in open_logfile(), right
   -- before opening the log file, but open_logfile() can be called from libuv
   -- callbacks, where using fn.mkdir() is not allowed.
-  vim.fn.mkdir(vim.fn.stdpath('cache'), 'p')
+  vim.fn.mkdir(vim.fn.stdpath('log'), 'p')
 
   --- Returns the log filename.
   ---@returns (string) log filename

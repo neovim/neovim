@@ -7465,14 +7465,17 @@ stdpath({what})					*stdpath()* *E6100*
 		directories.
 
 		{what}       Type    Description ~
-		cache        String  Cache directory. Arbitrary temporary
+		cache        String  Cache directory: arbitrary temporary
 		                     storage for plugins, etc.
-		config       String  User configuration directory. The
-		                     |init.vim| is stored here.
-		config_dirs  List    Additional configuration directories.
+		config       String  User configuration directory. |init.vim|
+		                     is stored here.
+		config_dirs  List    Other configuration directories.
 		data         String  User data directory. The |shada-file|
 		                     is stored here.
-		data_dirs    List    Additional data directories.
+		data_dirs    List    Other data directories.
+		log          String  Logs directory (for use by plugins too).
+		state        String  Session state directory: storage for file
+				     drafts, undo history, shada, etc.
 
 		Example: >
 			:echo stdpath("config")

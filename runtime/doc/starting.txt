@@ -367,7 +367,7 @@ argument.
 							*--headless*
 --headless 	Start without UI, and do not wait for `nvim_ui_attach`. The
 		builtin TUI is not used, so stdio works as an arbitrary
-		communication channel. |channel-stdio| 
+		communication channel. |channel-stdio|
 
 		Also useful for scripting (tests) to see messages that would
 		not be printed by |-es|.
@@ -584,7 +584,7 @@ setting can affect the entire editor in ways that are not initially obvious.
 To find the cause of a problem in your config, you must "bisect" it:
 1. Remove or disable half of your |config|.
 2. Restart Nvim.
-3. If the problem still occurs, goto 1. 
+3. If the problem still occurs, goto 1.
 4. If the problem is gone, restore half of the removed lines.
 5. Continue narrowing your config in this way, until you find the setting or
    plugin causing the issue.
@@ -701,7 +701,7 @@ vimrc file.
 These commands will write ":map" and ":set" commands to a file, in such a way
 that when these commands are executed, the current key mappings and options
 will be set to the same values.  The options 'columns', 'endofline',
-'fileformat', 'lines', 'modified', and 'scroll' are not included, because 
+'fileformat', 'lines', 'modified', and 'scroll' are not included, because
 these are terminal or file dependent.
 Note that the options 'binary', 'paste' and 'readonly' are included, this
 might not always be what you want.
@@ -718,7 +718,7 @@ with ":map" and ":set" commands and write the modified file.  First read the
 default vimrc in with a command like ":source ~piet/.vimrc.Cprogs", change
 the settings and then save them in the current directory with ":mkvimrc!".  If
 you want to make this file your default |config|, move it to
-$XDG_CONFIG_HOME/nvim.  You could also use autocommands |autocommand| and/or 
+$XDG_CONFIG_HOME/nvim.  You could also use autocommands |autocommand| and/or
 modelines |modeline|.
 
 						*vimrc-option-example*
@@ -886,7 +886,7 @@ Shada ("shared data") file			*shada* *shada-file*
 
 If you exit Vim and later start it again, you would normally lose a lot of
 information.  The ShaDa file can be used to remember that information, which
-enables you to continue where you left off.  Its name is the abbreviation of 
+enables you to continue where you left off.  Its name is the abbreviation of
 SHAred DAta because it is used for sharing data between Neovim sessions.
 
 This is introduced in section |21.3| of the user manual.
@@ -917,9 +917,9 @@ The |v:oldfiles| variable is filled.  The marks are not read in at startup
 option upon startup.
 
 							*shada-write*
-When Vim exits and 'shada' is non-empty, the info is stored in the ShaDa file 
-(it's actually merged with the existing one, if one exists |shada-merging|).  
-The 'shada' option is a string containing information about what info should 
+When Vim exits and 'shada' is non-empty, the info is stored in the ShaDa file
+(it's actually merged with the existing one, if one exists |shada-merging|).
+The 'shada' option is a string containing information about what info should
 be stored, and contains limits on how much should be stored (see 'shada').
 
 Notes for Unix:
@@ -977,75 +977,75 @@ remembered.
 
 MERGING							*shada-merging*
 
-When writing ShaDa files with |:wshada| without bang or at regular exit 
-information in the existing ShaDa file is merged with information from current 
-Neovim instance.  For this purpose ShaDa files store timestamps associated 
+When writing ShaDa files with |:wshada| without bang or at regular exit
+information in the existing ShaDa file is merged with information from current
+Neovim instance.  For this purpose ShaDa files store timestamps associated
 with ShaDa entries.  Specifically the following is being done:
 
-1. History lines are merged, ordered by timestamp.  Maximum amount of items in 
-   ShaDa file is defined by 'shada' option (|shada-/|, |shada-:|, |shada-@|, 
-   etc: one suboption for each character that represents history name 
+1. History lines are merged, ordered by timestamp.  Maximum amount of items in
+   ShaDa file is defined by 'shada' option (|shada-/|, |shada-:|, |shada-@|,
+   etc: one suboption for each character that represents history name
    (|:history|)).
-2. Local marks and changes for files that were not opened by Neovim are copied 
-   to new ShaDa file. Marks for files that were opened by Neovim are merged, 
+2. Local marks and changes for files that were not opened by Neovim are copied
+   to new ShaDa file. Marks for files that were opened by Neovim are merged,
    changes to files opened by Neovim are ignored. |shada-'|
-3. Jump list is merged: jumps are ordered by timestamp, identical jumps 
+3. Jump list is merged: jumps are ordered by timestamp, identical jumps
    (identical position AND timestamp) are squashed.
-4. Search patterns and substitute strings are not merged: search pattern or 
-   substitute string which has greatest timestamp will be the only one copied 
+4. Search patterns and substitute strings are not merged: search pattern or
+   substitute string which has greatest timestamp will be the only one copied
    to ShaDa file.
-5. For each register entity with greatest timestamp is the only saved. 
+5. For each register entity with greatest timestamp is the only saved.
    |shada-<|
-6. All saved variables are saved from current Neovim instance. Additionally 
-   existing variable values are copied, meaning that the only way to remove 
-   variable from a ShaDa file is either removing it by hand or disabling 
+6. All saved variables are saved from current Neovim instance. Additionally
+   existing variable values are copied, meaning that the only way to remove
+   variable from a ShaDa file is either removing it by hand or disabling
    writing variables completely. |shada-!|
 7. For each global mark entity with greatest timestamp is the only saved.
-8. Buffer list and header are the only entries which are not merged in any 
-   fashion: the only header and buffer list present are the ones from the 
+8. Buffer list and header are the only entries which are not merged in any
+   fashion: the only header and buffer list present are the ones from the
    Neovim instance which was last writing the file. |shada-%|
 
 COMPATIBILITY						*shada-compatibility*
 
 ShaDa files are forward and backward compatible.  This means that
 
-1. Entries which have unknown type (i.e. that hold unidentified data) are 
+1. Entries which have unknown type (i.e. that hold unidentified data) are
    ignored when reading and blindly copied when writing.
-2. Register entries with unknown register name are ignored when reading and 
-   blindly copied when writing. Limitation: only registers that use name with 
+2. Register entries with unknown register name are ignored when reading and
+   blindly copied when writing. Limitation: only registers that use name with
    code in interval [1, 255] are supported. |registers|
-3. Register entries with unknown register type are ignored when reading and 
+3. Register entries with unknown register type are ignored when reading and
    merged as usual when writing. |getregtype()|
-4. Local and global mark entries with unknown mark names are ignored when 
-   reading. When writing global mark entries are blindly copied and local mark 
-   entries are also blindly copied, but only if file they are attached to fits 
-   in the |shada-'| limit. Unknown local mark entry's timestamp is also taken 
-   into account when calculating which files exactly should fit into this 
-   limit. Limitation: only marks that use name with code in interval [1, 255] 
+4. Local and global mark entries with unknown mark names are ignored when
+   reading. When writing global mark entries are blindly copied and local mark
+   entries are also blindly copied, but only if file they are attached to fits
+   in the |shada-'| limit. Unknown local mark entry's timestamp is also taken
+   into account when calculating which files exactly should fit into this
+   limit. Limitation: only marks that use name with code in interval [1, 255]
    are supported. |mark-motions|
-5. History entries with unknown history type are ignored when reading and 
-   blindly copied when writing. Limitation: there can be only up to 256 
+5. History entries with unknown history type are ignored when reading and
+   blindly copied when writing. Limitation: there can be only up to 256
    history types. |history|
-6. Unknown keys found in register, local mark, global mark, change, jump and 
-   search pattern entries are saved internally and dumped when writing. 
+6. Unknown keys found in register, local mark, global mark, change, jump and
+   search pattern entries are saved internally and dumped when writing.
    Entries created during Neovim session never have such additions.
-7. Additional elements found in replacement string and history entries are 
-   saved internally and dumped. Entries created during Neovim session never 
+7. Additional elements found in replacement string and history entries are
+   saved internally and dumped. Entries created during Neovim session never
    have such additions.
-8. Additional elements found in variable entries are simply ignored when 
-   reading. When writing new variables they will be preserved during merging, 
-   but that's all. Variable values dumped from current Neovim session never 
-   have additional elements, even if variables themselves were obtained by 
+8. Additional elements found in variable entries are simply ignored when
+   reading. When writing new variables they will be preserved during merging,
+   but that's all. Variable values dumped from current Neovim session never
+   have additional elements, even if variables themselves were obtained by
    reading ShaDa files.
 
-"Blindly" here means that there will be no attempts to somehow merge them, 
+"Blindly" here means that there will be no attempts to somehow merge them,
 even if other entries (with known name/type/etc) are merged. |shada-merging|
 
 SHADA FILE NAME						*shada-file-name*
 
 - Default name of the |shada| file is:
-      Unix:     "$XDG_DATA_HOME/nvim/shada/main.shada"
-      Windows:  "$XDG_DATA_HOME/nvim-data/shada/main.shada"
+      Unix:     "$XDG_STATE_HOME/nvim/shada/main.shada"
+      Windows:  "$XDG_STATE_HOME/nvim-data/shada/main.shada"
   See also |base-directories|.
 - To choose a different file name you can use:
     - The "n" flag in the 'shada' option.
@@ -1067,55 +1067,55 @@ however that this means everything will be overwritten with information from
 the first Vim, including the command line history, etc.
 
 The ShaDa file itself can be edited by hand too, although we suggest you
-start with an existing one to get the format right.  You need to understand 
-MessagePack (or, more likely, find software that is able to use it) format to 
-do this.  This can be useful in order to create a second file, say 
-"~/.my.shada" which could contain certain settings that you always want when 
-you first start Neovim.  For example, you can preload registers with 
-particular data, or put certain commands in the command line history.  A line 
+start with an existing one to get the format right.  You need to understand
+MessagePack (or, more likely, find software that is able to use it) format to
+do this.  This can be useful in order to create a second file, say
+"~/.my.shada" which could contain certain settings that you always want when
+you first start Neovim.  For example, you can preload registers with
+particular data, or put certain commands in the command line history.  A line
 in your |config| file like >
 	:rshada! ~/.my.shada
-can be used to load this information.  You could even have different ShaDa 
-files for different types of files (e.g., C code) and load them based on the 
-file name, using the ":autocmd" command (see |:autocmd|).  More information on 
+can be used to load this information.  You could even have different ShaDa
+files for different types of files (e.g., C code) and load them based on the
+file name, using the ":autocmd" command (see |:autocmd|).  More information on
 ShaDa file format is contained in |shada-format| section.
 
 					  *E136* *E929* *shada-error-handling*
-Some errors make Neovim leave temporary file named `{basename}.tmp.X` (X is 
-any free letter from `a` to `z`) while normally it will create this file, 
-write to it and then rename `{basename}.tmp.X` to `{basename}`. Such errors 
+Some errors make Neovim leave temporary file named `{basename}.tmp.X` (X is
+any free letter from `a` to `z`) while normally it will create this file,
+write to it and then rename `{basename}.tmp.X` to `{basename}`. Such errors
 include:
 
-- Errors which make Neovim think that read file is not a ShaDa file at all: 
-  non-ShaDa files are not overwritten for safety reasons to avoid accidentally 
-  destroying an unrelated file.  This could happen e.g. when typing "nvim -i 
-  file" in place of "nvim -R file" (yes, somebody did that at least with Vim).  
+- Errors which make Neovim think that read file is not a ShaDa file at all:
+  non-ShaDa files are not overwritten for safety reasons to avoid accidentally
+  destroying an unrelated file.  This could happen e.g. when typing "nvim -i
+  file" in place of "nvim -R file" (yes, somebody did that at least with Vim).
   Such errors are listed at |shada-critical-contents-errors|.
-- If writing to the temporary file failed: e.g. because of the insufficient 
+- If writing to the temporary file failed: e.g. because of the insufficient
   space left.
 - If renaming file failed: e.g. because of insufficient permissions.
-- If target ShaDa file has different from the Neovim instance's owners (user 
-  and group) and changing them failed.  Unix-specific, applies only when 
+- If target ShaDa file has different from the Neovim instance's owners (user
+  and group) and changing them failed.  Unix-specific, applies only when
   Neovim was launched from root.
 
-Do not forget to remove the temporary file or replace the target file with 
-temporary one after getting one of the above errors or all attempts to create 
-a ShaDa file may fail with |E929|.  If you got one of them when using 
-|:wshada| (and not when exiting Neovim: i.e. when you have Neovim session 
+Do not forget to remove the temporary file or replace the target file with
+temporary one after getting one of the above errors or all attempts to create
+a ShaDa file may fail with |E929|.  If you got one of them when using
+|:wshada| (and not when exiting Neovim: i.e. when you have Neovim session
 running) you have additional options:
 
-- First thing which you should consider if you got any error, except failure 
-  to write to the temporary file: remove existing file and replace it with the 
+- First thing which you should consider if you got any error, except failure
+  to write to the temporary file: remove existing file and replace it with the
   temporary file.  Do it even if you have running Neovim instance.
-- Fix the permissions and/or file ownership, free some space and attempt to 
+- Fix the permissions and/or file ownership, free some space and attempt to
   write again.  Do not remove the existing file.
-- Use |:wshada| with bang.  Does not help in case of permission error.  If 
-  target file was actually the ShaDa file some information may be lost in this 
-  case.  To make the matters slightly better use |:rshada| prior to writing, 
-  but this still will loose buffer-local marks and change list entries for any 
+- Use |:wshada| with bang.  Does not help in case of permission error.  If
+  target file was actually the ShaDa file some information may be lost in this
+  case.  To make the matters slightly better use |:rshada| prior to writing,
+  but this still will loose buffer-local marks and change list entries for any
   file which is not opened in the current Neovim instance.
-- Remove the target file from shell and use |:wshada|.  Consequences are not 
-  different from using |:wshada| with bang, but "rm -f" works in some cases 
+- Remove the target file from shell and use |:wshada|.  Consequences are not
+  different from using |:wshada| with bang, but "rm -f" works in some cases
   when you don't have write permissions.
 
 						    *:rsh* *:rshada* *E886*
@@ -1129,13 +1129,13 @@ running) you have additional options:
 			The information in the file is first read in to make
 			a merge between old and new info.  When [!] is used,
 			the old information is not read first, only the
-			internal info is written (also disables safety checks 
-			described in |shada-error-handling|).  If 'shada' is 
+			internal info is written (also disables safety checks
+			described in |shada-error-handling|).  If 'shada' is
 			empty, marks for up to 100 files will be written.
-			When you get error "E929: All .tmp.X files exist, 
-			cannot write ShaDa file!" check that no old temp files 
-			were left behind (e.g. 
-			~/.local/share/nvim/shada/main.shada.tmp*).
+			When you get error "E929: All .tmp.X files exist,
+			cannot write ShaDa file!" check that no old temp files
+			were left behind (e.g.
+			~/.local/state/nvim/shada/main.shada.tmp*).
 
 			Note: Executing :wshada will reset all |'quote| marks.
 
@@ -1158,82 +1158,82 @@ running) you have additional options:
 
 SHADA FILE FORMAT						*shada-format*
 
-ShaDa files are concats of MessagePack entries.  Each entry is a concat of 
+ShaDa files are concats of MessagePack entries.  Each entry is a concat of
 exactly four MessagePack objects:
 
-1. First goes type of the entry.  Object type must be an unsigned integer.  
+1. First goes type of the entry.  Object type must be an unsigned integer.
    Object type must not be equal to zero.
 2. Second goes entry timestamp.  It must also be an unsigned integer.
-3. Third goes the length of the fourth entry.  Unsigned integer as well, used 
+3. Third goes the length of the fourth entry.  Unsigned integer as well, used
    for fast skipping without parsing.
-4. Fourth is actual entry data.  All currently used ShaDa entries use 
-   containers to hold data: either map or array.  All string values in those 
-   containers are either binary (applies to filenames) or UTF-8, yet parser 
+4. Fourth is actual entry data.  All currently used ShaDa entries use
+   containers to hold data: either map or array.  All string values in those
+   containers are either binary (applies to filenames) or UTF-8, yet parser
    needs to expect that invalid bytes may be present in a UTF-8 string.
 
    Exact format depends on the entry type:
 
    Entry type (name)   Entry data ~
-   1 (Header)          Map containing data that describes the generator 
-                       instance that wrote this ShaDa file.  It is ignored 
+   1 (Header)          Map containing data that describes the generator
+                       instance that wrote this ShaDa file.  It is ignored
                        when reading ShaDa files.  Contains the following data:
                        Key        Data ~
-                       generator  Binary, software used to generate ShaDa 
-                                  file. Is equal to "nvim" when ShaDa file was 
+                       generator  Binary, software used to generate ShaDa
+                                  file. Is equal to "nvim" when ShaDa file was
                                   written by Neovim.
                        version    Binary, generator version.
                        encoding   Binary, effective 'encoding' value.
                        max_kbyte  Integer, effective |shada-s| limit value.
                        pid        Integer, instance process ID.
-                       *          It is allowed to have any number of 
+                       *          It is allowed to have any number of
                                   additional keys with any data.
-   2 (SearchPattern)   Map containing data describing last used search or 
-                       substitute pattern.  Normally ShaDa file contains two 
-                       such entries: one with "ss" key set to true (describes 
-                       substitute pattern, see |:substitute|), and one set to 
-                       false (describes search pattern, see 
-                       |search-commands|). "su" key should be true on one of 
-                       the entries.  If key value is equal to default then it 
+   2 (SearchPattern)   Map containing data describing last used search or
+                       substitute pattern.  Normally ShaDa file contains two
+                       such entries: one with "ss" key set to true (describes
+                       substitute pattern, see |:substitute|), and one set to
+                       false (describes search pattern, see
+                       |search-commands|). "su" key should be true on one of
+                       the entries.  If key value is equal to default then it
                        is normally not present.  Keys:
                        Key  Type     Default  Description ~
                        sm   Boolean  true     Effective 'magic' value.
                        sc   Boolean  false    Effective 'smartcase' value.
-                       sl   Boolean  true     True if search pattern comes 
-                                              with a line offset.  See 
+                       sl   Boolean  true     True if search pattern comes
+                                              with a line offset.  See
                                               |search-offset|.
-                       se   Boolean  false    True if |search-offset| 
-                                              requested to place cursor at 
-                                              (relative to) the end of the 
+                       se   Boolean  false    True if |search-offset|
+                                              requested to place cursor at
+                                              (relative to) the end of the
                                               pattern.
                        so   Integer  0        Offset value. |search-offset|
-                       su   Boolean  false    True if current entry was the 
+                       su   Boolean  false    True if current entry was the
                                               last used search pattern.
-                       ss   Boolean  false    True if current entry describes 
+                       ss   Boolean  false    True if current entry describes
                                               |:substitute| pattern.
                        sh   Boolean  false    True if |v:hlsearch| is on.
-                                              With |shada-h| or 'nohlsearch' 
+                                              With |shada-h| or 'nohlsearch'
                                               this key is always false.
                        sp   Binary   N/A      Actual pattern.  Required.
-                       sb   Boolean  false    True if search direction is 
+                       sb   Boolean  false    True if search direction is
                                               backward.
-                       *    any      none     Other keys are allowed for 
-                                              compatibility reasons, see 
+                       *    any      none     Other keys are allowed for
+                                              compatibility reasons, see
                                               |shada-compatibility|.
-   3 (SubString)       Array containing last |:substitute| replacement string.  
-                       Contains single entry: binary, replacement string used.  
-                       More entries are allowed for compatibility reasons, see 
+   3 (SubString)       Array containing last |:substitute| replacement string.
+                       Contains single entry: binary, replacement string used.
+                       More entries are allowed for compatibility reasons, see
                        |shada-compatibility|.
-   4 (HistoryEntry)    Array containing one entry from history.  Should have 
-                       two or three entries.  First one is history type 
-                       (unsigned integer), second is history line (binary), 
-                       third is the separator character (unsigned integer, 
-                       must be in interval [0, 255]).  Third item is only 
-                       valid for search history.  Possible history types are 
-                       listed in |hist-names|, here are the corresponding 
-                       numbers: 0 - cmd, 1 - search, 2 - expr, 3 - input, 
+   4 (HistoryEntry)    Array containing one entry from history.  Should have
+                       two or three entries.  First one is history type
+                       (unsigned integer), second is history line (binary),
+                       third is the separator character (unsigned integer,
+                       must be in interval [0, 255]).  Third item is only
+                       valid for search history.  Possible history types are
+                       listed in |hist-names|, here are the corresponding
+                       numbers: 0 - cmd, 1 - search, 2 - expr, 3 - input,
                        4 - debug.
-   5 (Register)        Map describing one register (|registers|).  If key 
-                       value is equal to default then it is normally not 
+   5 (Register)        Map describing one register (|registers|).  If key
+                       value is equal to default then it is normally not
                        present.  Keys:
                        Key  Type             Def   Description ~
                        rt   UInteger         0     Register type:
@@ -1261,12 +1261,12 @@ exactly four MessagePack objects:
                        *    any              none  Other keys are allowed
                                                    for compatibility reasons,
                                                    see |shada-compatibility|.
-   6 (Variable)        Array containing two items: variable name (binary) and 
-                       variable value (any object).  Values are converted 
-                       using the same code |msgpackparse()| uses when reading, 
-                       |msgpackdump()| when writing, so there may appear 
-                       |msgpack-special-dict|s.  If there are more then two 
-                       entries then the rest are ignored 
+   6 (Variable)        Array containing two items: variable name (binary) and
+                       variable value (any object).  Values are converted
+                       using the same code |msgpackparse()| uses when reading,
+                       |msgpackdump()| when writing, so there may appear
+                       |msgpack-special-dict|s.  If there are more then two
+                       entries then the rest are ignored
                        (|shada-compatibility|).
    7 (GlobalMark)
    8 (Jump)
@@ -1280,57 +1280,57 @@ exactly four MessagePack objects:
 
                        Data contained in the map:
                        Key  Type      Default  Description ~
-                       l    UInteger  1        Position line number.  Must be 
+                       l    UInteger  1        Position line number.  Must be
                                                greater then zero.
                        c    UInteger  0        Position column number.
-                       n    UInteger  34 ('"') Mark name.  Only valid for 
-                                               GlobalMark and LocalMark 
+                       n    UInteger  34 ('"') Mark name.  Only valid for
+                                               GlobalMark and LocalMark
                                                entries.
                        f    Binary    N/A      File name.  Required.
-                       *    any       none     Other keys are allowed for 
-                                               compatibility reasons, see 
+                       *    any       none     Other keys are allowed for
+                                               compatibility reasons, see
                                                |shada-compatibility|.
-   9 (BufferList)      Array containing maps.  Each map in the array 
+   9 (BufferList)      Array containing maps.  Each map in the array
                        represents one buffer.  Possible keys:
                        Key  Type      Default  Description ~
-                       l    UInteger  1        Position line number.  Must be 
+                       l    UInteger  1        Position line number.  Must be
                                                greater then zero.
                        c    UInteger  0        Position column number.
                        f    Binary    N/A      File name.  Required.
-                       *    any       none     Other keys are allowed for 
-                                               compatibility reasons, see 
+                       *    any       none     Other keys are allowed for
+                                               compatibility reasons, see
                                                |shada-compatibility|.
-   * (Unknown)         Any other entry type is allowed for compatibility 
+   * (Unknown)         Any other entry type is allowed for compatibility
                        reasons, see |shada-compatibility|.
 
 								*E575* *E576*
-Errors in ShaDa file may have two types: E575 used for all “logical” errors 
-and E576 used for all “critical” errors.  Critical errors trigger behaviour 
-described in |shada-error-handling| when writing and skipping the rest of the 
+Errors in ShaDa file may have two types: E575 used for all “logical” errors
+and E576 used for all “critical” errors.  Critical errors trigger behaviour
+described in |shada-error-handling| when writing and skipping the rest of the
 file when reading and include:
 					    *shada-critical-contents-errors*
 - Any of first three MessagePack objects being not an unsigned integer.
-- Third object requesting amount of bytes greater then bytes left in the ShaDa 
+- Third object requesting amount of bytes greater then bytes left in the ShaDa
   file.
 - Entry with zero type.  I.e. first object being equal to zero.
 - MessagePack parser failing to parse the entry data.
-- MessagePack parser consuming less or requesting greater bytes then described 
-  in the third object for parsing fourth object.  I.e. when fourth object 
-  either contains more then one MessagePack object or it does not contain 
+- MessagePack parser consuming less or requesting greater bytes then described
+  in the third object for parsing fourth object.  I.e. when fourth object
+  either contains more then one MessagePack object or it does not contain
   complete MessagePack object.
 
 ==============================================================================
 Standard Paths					*standard-path*
 
-Nvim stores configuration, data, and logs in standard locations. Plugins are 
-strongly encouraged to follow this pattern also. Use |stdpath()| to get the 
+Nvim stores configuration, data, and logs in standard locations. Plugins are
+strongly encouraged to follow this pattern also. Use |stdpath()| to get the
 paths.
 
 						*base-directories* *xdg*
 The "base" (root) directories conform to the XDG Base Directory Specification.
 https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-The $XDG_CONFIG_HOME and $XDG_DATA_HOME environment variables are used if they
-exist, otherwise default values (listed below) are used.
+The $XDG_CONFIG_HOME, $XDG_DATA_HOME and $XDG_STATE_HOME environment variables
+are used if they exist, otherwise default values (listed below) are used.
 
 CONFIG DIRECTORY (DEFAULT) ~
                   *$XDG_CONFIG_HOME*            Nvim: stdpath("config")
@@ -1342,6 +1342,11 @@ DATA DIRECTORY (DEFAULT) ~
     Unix:         ~/.local/share              ~/.local/share/nvim
     Windows:      ~/AppData/Local             ~/AppData/Local/nvim-data
 
+STATE DIRECTORY (DEFAULT) ~
+                  *$XDG_STATE_HOME*             Nvim: stdpath("state")
+    Unix:         ~/.local/state              ~/.local/state/nvim
+    Windows:      ~/AppData/Local             ~/AppData/Local/nvim-data
+
 Note: Throughout the user manual these defaults are used as placeholders, e.g.
 "~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
 
@@ -1349,7 +1354,7 @@ LOG FILE					*$NVIM_LOG_FILE*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
 debugging, plugins and RPC clients. >
 	:echo $NVIM_LOG_FILE
-By default, the file is located at stdpath('cache')/log unless that path 
+By default, the file is located at stdpath('log')/log unless that path
 is inaccessible or if $NVIM_LOG_FILE was set before |startup|.
 
 

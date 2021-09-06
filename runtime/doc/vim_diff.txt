@@ -17,7 +17,7 @@ centralized reference of the differences.
 
 - Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for your |config|.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
-- Use `$XDG_DATA_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent
+- Use `$XDG_STATE_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent
   session information.  |shada|
 
 ==============================================================================
@@ -32,12 +32,12 @@ centralized reference of the differences.
 - 'autoread' is enabled
 - 'background' defaults to "dark" (unless set automatically by the terminal/UI)
 - 'backspace' defaults to "indent,eol,start"
-- 'backupdir' defaults to .,~/.local/share/nvim/backup// (|xdg|), auto-created
+- 'backupdir' defaults to .,~/.local/state/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
 - 'compatible' is always disabled
 - 'complete' excludes "i"
 - 'cscopeverbose' is enabled
-- 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
+- 'directory' defaults to ~/.local/state/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline,msgsep"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
 - 'fillchars' defaults (in effect) to "vert:│,fold:·,sep:│"
@@ -65,7 +65,7 @@ centralized reference of the differences.
 - 'tags' defaults to "./tags;,tags"
 - 'ttimeoutlen' defaults to 50
 - 'ttyfast' is always set
-- 'undodir' defaults to ~/.local/share/nvim/undo// (|xdg|), auto-created
+- 'undodir' defaults to ~/.local/state/nvim/undo// (|xdg|), auto-created
 - 'viewoptions' includes "unix,slash", excludes "options"
 - 'viminfo' includes "!"
 - 'wildmenu' is enabled

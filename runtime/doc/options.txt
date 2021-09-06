@@ -841,7 +841,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	again not rename the file.
 
 						*'backupdir'* *'bdir'*
-'backupdir' 'bdir'	string	(default ".,$XDG_DATA_HOME/nvim/backup//")
+'backupdir' 'bdir'	string	(default ".,$XDG_STATE_HOME/nvim/backup//")
 			global
 	List of directories for the backup file, separated with commas.
 	- The backup file will be created in the first directory in the list
@@ -2063,7 +2063,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{char2}.  See |digraphs|.
 
 						*'directory'* *'dir'*
-'directory' 'dir'	string	(default "$XDG_DATA_HOME/nvim/swap//")
+'directory' 'dir'	string	(default "$XDG_STATE_HOME/nvim/swap//")
 			global
 	List of directory names for the swap file, separated with commas.
 
@@ -3502,7 +3502,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	option.  For '@' only characters up to 255 are used.
 	Careful: If you change this option, it might break expanding
 	environment variables.  E.g., when '/' is included and Vim tries to
-	expand "$HOME/.local/share/nvim/shada/main.shada".  Maybe you should 
+	expand "$HOME/.local/state/nvim/shada/main.shada".  Maybe you should
 	change 'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
@@ -4942,9 +4942,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   but are not part of the Nvim distribution. XDG_DATA_DIRS defaults
 	   to /usr/local/share/:/usr/share/, so system administrators are
 	   expected to install site plugins to /usr/share/nvim/site.
-	5. $VIMRUNTIME, for files distributed with Neovim.
+	5. Applications state home directory, for files that contain your
+	   session state (eg. backupdir, viewdir, undodir, etc).
+	   Given by `stdpath("state")`.  |$XDG_STATE_HOME|
+	6. $VIMRUNTIME, for files distributed with Neovim.
 							*after-directory*
-	6, 7, 8, 9. In after/ subdirectories of 1, 2, 3 and 4, with reverse 
+	7, 8, 9, 10. In after/ subdirectories of 1, 2, 3 and 4, with reverse
 	   ordering.  This is for preferences to overrule or add to the 
 	   distributed defaults or system-wide settings (rarely needed).
 
@@ -6623,7 +6626,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'ttyfast' 'tf'		Removed. |vim-differences|
 
 						*'undodir'* *'udir'* *E5003*
-'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo//")
+'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")
 			global
 	List of directory names for undo files, separated with commas.
 	See 'backupdir' for details of the format.
@@ -6786,7 +6789,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	displayed when 'verbosefile' is set.
 
 						*'viewdir'* *'vdir'*
-'viewdir' 'vdir'	string	(default: "$XDG_DATA_HOME/nvim/view//")
+'viewdir' 'vdir'	string	(default: "$XDG_STATE_HOME/nvim/view//")
 			global
 	Name of the directory where to store files for |:mkview|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for

@@ -188,7 +188,7 @@ loading plugins is also skipped.
 Use
 .Ar shada
 instead of the default
-.Pa ~/.local/share/nvim/shada/main.shada .
+.Pa ~/.local/state/nvim/shada/main.shada .
 If
 .Ar shada
 is
@@ -326,7 +326,7 @@ Print version information and exit.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev NVIM_LOG_FILE
-Low-level log file, usually found at ~/.cache/nvim/log.
+Low-level log file, usually found at ~/.local/state/nvim/log.
 :help $NVIM_LOG_FILE
 .It Ev VIM
 Used to locate user files, such as init.vim.
@@ -340,11 +340,19 @@ Path to the user-local configuration directory, see
 Defaults to
 .Pa ~/.config .
 :help xdg
-.It Ev XDG_DATA_HOME
+.It Ev XDG_STATE_HOME
 Like
 .Ev XDG_CONFIG_HOME ,
 but used to store data not generally edited by the user,
 namely swap, backup, and ShaDa files.
+Defaults to
+.Pa ~/.local/state .
+:help xdg
+.It Ev XDG_DATA_HOME
+Like
+.Ev XDG_CONFIG_HOME ,
+but used to store data not generally edited by the user,
+things like runtime files.
 Defaults to
 .Pa ~/.local/share .
 :help xdg
