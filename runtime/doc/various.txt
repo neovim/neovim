@@ -166,9 +166,13 @@ g8			Print the hex values of the bytes used in the
 			If the mark is "=", a line of dashes is printed
 			around the current line.
 
-:[range]z#[+-^.=][count]				*:z#*
-			Like ":z", but number the lines.
-			{not in all versions of Vi, not with these arguments}
+							*:z!*
+:[range]z![+-^.=][count]
+			Like ":z:", but when [count] is not specified, it
+			defaults to the Vim window height minus one.
+
+:[range]z[!]#[+-^.=][count]				*:z#*
+			Like ":z" or ":z!", but number the lines.
 
 							*:=*
 := [flags]		Print the last line number.
