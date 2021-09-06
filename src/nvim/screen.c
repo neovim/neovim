@@ -1747,7 +1747,7 @@ static void win_update(win_T *wp, Providers *providers)
       curwin->w_valid &= ~VALID_TOPLINE;
       update_topline(curwin);  // may invalidate w_botline again
       if (must_redraw != 0) {
-        /* Don't update for changes in buffer again. */
+        // Don't update for changes in buffer again.
         i = curbuf->b_mod_set;
         curbuf->b_mod_set = false;
         win_update(curwin, providers);
