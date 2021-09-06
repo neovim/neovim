@@ -174,7 +174,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
     if lens.command then
       countdown()
     else
-      client.request('codeLens/resolve', lens, function(_, _, result)
+      client.request('codeLens/resolve', lens, function(_, result)
         if result and result.command then
           lens.command = result.command
           -- Eager display to have some sort of incremental feedback
