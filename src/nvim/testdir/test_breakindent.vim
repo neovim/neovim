@@ -871,4 +871,22 @@ func Test_breakindent20_list()
   call s:close_windows('set breakindent& briopt& linebreak& list& listchars& showbreak&')
 endfunc
 
+" The following used to crash Vim. This is fixed by 8.2.3391.
+" This is a regression introduced by 8.2.2903.
+func Test_window_resize_with_linebreak()
+  new
+  53vnew
+  set linebreak
+  set showbreak=>>
+  set breakindent
+  set breakindentopt=shift:4
+  call setline(1, "\naaaaaaaaa\n\na\naaaaa\n¯aaaaaaaaaa\naaaaaaaaaaaa\naaa\n\"a:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa - aaaaaaaa\"\naaaaaaaa\n\"a")
+  redraw!
+  call assert_equal(["    >>aa^@\"a: "], ScreenLines(2, 14))
+  vertical resize 52
+  redraw!
+  call assert_equal(["    >>aaa^@\"a:"], ScreenLines(2, 14))
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
