@@ -764,7 +764,7 @@ static void win_update(win_T *wp, Providers *providers)
   int i;
   long j;
   static bool recursive = false;  // being called recursively
-  int old_botline = wp->w_botline;
+  const linenr_T old_botline = wp->w_botline;
   // Remember what happened to the previous line.
 #define DID_NONE 1      // didn't update a line
 #define DID_LINE 2      // updated a normal line
