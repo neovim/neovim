@@ -1745,7 +1745,7 @@ static void win_update(win_T *wp, Providers *providers)
     if (wp == curwin && wp->w_botline != old_botline && !recursive) {
       recursive = true;
       curwin->w_valid &= ~VALID_TOPLINE;
-      update_topline(curwin);         /* may invalidate w_botline again */
+      update_topline(curwin);  // may invalidate w_botline again
       if (must_redraw != 0) {
         /* Don't update for changes in buffer again. */
         i = curbuf->b_mod_set;
