@@ -292,7 +292,9 @@ Object get_option_from(void *from, int type, String name, Error *err)
     return rv;
   }
 
-  if (flags & SOPT_BOOL) {
+  if (flags & SOPT_UNSET) {
+    api_set_error(err, kErrorTypeException, "Failed to get value for option '%s'", name.data);
+  } else if (flags & SOPT_BOOL) {
     rv.type = kObjectTypeBoolean;
     rv.data.boolean = numval ? true : false;
   } else if (flags & SOPT_NUM) {
