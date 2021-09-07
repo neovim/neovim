@@ -1017,31 +1017,6 @@ describe('LSP', function()
     }
   end
 
-  it('highlight groups', function()
-    eq({
-      'LspDiagnosticsDefaultError',
-      'LspDiagnosticsDefaultHint',
-      'LspDiagnosticsDefaultInformation',
-      'LspDiagnosticsDefaultWarning',
-      'LspDiagnosticsFloatingError',
-      'LspDiagnosticsFloatingHint',
-      'LspDiagnosticsFloatingInformation',
-      'LspDiagnosticsFloatingWarning',
-      'LspDiagnosticsSignError',
-      'LspDiagnosticsSignHint',
-      'LspDiagnosticsSignInformation',
-      'LspDiagnosticsSignWarning',
-      'LspDiagnosticsUnderlineError',
-      'LspDiagnosticsUnderlineHint',
-      'LspDiagnosticsUnderlineInformation',
-      'LspDiagnosticsUnderlineWarning',
-      'LspDiagnosticsVirtualTextError',
-      'LspDiagnosticsVirtualTextHint',
-      'LspDiagnosticsVirtualTextInformation',
-      'LspDiagnosticsVirtualTextWarning',
-    }, exec_lua([[require'vim.lsp'; return vim.fn.getcompletion('Lsp', 'highlight')]]))
-  end)
-
   describe('apply_text_edits', function()
     before_each(function()
       insert(dedent([[

@@ -424,121 +424,6 @@ LspReferenceRead          used for highlighting "read" references
 LspReferenceWrite         used for highlighting "write" references
 
 
-                                                   *lsp-highlight-diagnostics*
-All highlights defined for diagnostics begin with `LspDiagnostics` followed by
-the type of highlight (e.g., `Sign`, `Underline`, etc.) and then the Severity
-of the highlight (e.g. `Error`, `Warning`, etc.)
-
-Sign, underline and virtual text highlights (by default) are linked to their
-corresponding LspDiagnosticsDefault highlight.
-
-For example, the default highlighting for |hl-LspDiagnosticsSignError| is
-linked to |hl-LspDiagnosticsDefaultError|. To change the default (and
-therefore the linked highlights), use the |:highlight| command: >
-
-    highlight LspDiagnosticsDefaultError guifg="BrightRed"
-<
-
-                                               *hl-LspDiagnosticsDefaultError*
-LspDiagnosticsDefaultError
-  Used as the base highlight group.
-  Other LspDiagnostic highlights link to this by default (except Underline)
-
-                                             *hl-LspDiagnosticsDefaultWarning*
-LspDiagnosticsDefaultWarning
-  Used as the base highlight group.
-  Other LspDiagnostic highlights link to this by default (except Underline)
-
-                                         *hl-LspDiagnosticsDefaultInformation*
-LspDiagnosticsDefaultInformation
-  Used as the base highlight group.
-  Other LspDiagnostic highlights link to this by default (except Underline)
-
-                                                *hl-LspDiagnosticsDefaultHint*
-LspDiagnosticsDefaultHint
-  Used as the base highlight group.
-  Other LspDiagnostic highlights link to this by default (except Underline)
-
-                                           *hl-LspDiagnosticsVirtualTextError*
-LspDiagnosticsVirtualTextError
-  Used for "Error" diagnostic virtual text.
-  See |vim.lsp.diagnostic.set_virtual_text()|
-
-                                         *hl-LspDiagnosticsVirtualTextWarning*
-LspDiagnosticsVirtualTextWarning
-  Used for "Warning" diagnostic virtual text.
-  See |vim.lsp.diagnostic.set_virtual_text()|
-
-                                     *hl-LspDiagnosticsVirtualTextInformation*
-LspDiagnosticsVirtualTextInformation
-  Used for "Information" diagnostic virtual text.
-  See |vim.lsp.diagnostic.set_virtual_text()|
-
-                                            *hl-LspDiagnosticsVirtualTextHint*
-LspDiagnosticsVirtualTextHint
-  Used for "Hint" diagnostic virtual text.
-  See |vim.lsp.diagnostic.set_virtual_text()|
-
-                                             *hl-LspDiagnosticsUnderlineError*
-LspDiagnosticsUnderlineError
-  Used to underline "Error" diagnostics.
-  See |vim.lsp.diagnostic.set_underline()|
-
-                                           *hl-LspDiagnosticsUnderlineWarning*
-LspDiagnosticsUnderlineWarning
-  Used to underline "Warning" diagnostics.
-  See |vim.lsp.diagnostic.set_underline()|
-
-                                       *hl-LspDiagnosticsUnderlineInformation*
-LspDiagnosticsUnderlineInformation
-  Used to underline "Information" diagnostics.
-  See |vim.lsp.diagnostic.set_underline()|
-
-                                              *hl-LspDiagnosticsUnderlineHint*
-LspDiagnosticsUnderlineHint
-  Used to underline "Hint" diagnostics.
-  See |vim.lsp.diagnostic.set_underline()|
-
-                                              *hl-LspDiagnosticsFloatingError*
-LspDiagnosticsFloatingError
-  Used to color "Error" diagnostic messages in diagnostics float.
-  See |vim.lsp.diagnostic.show_line_diagnostics()|
-
-                                            *hl-LspDiagnosticsFloatingWarning*
-LspDiagnosticsFloatingWarning
-  Used to color "Warning" diagnostic messages in diagnostics float.
-  See |vim.lsp.diagnostic.show_line_diagnostics()|
-
-                                        *hl-LspDiagnosticsFloatingInformation*
-LspDiagnosticsFloatingInformation
-  Used to color "Information" diagnostic messages in diagnostics float.
-  See |vim.lsp.diagnostic.show_line_diagnostics()|
-
-                                               *hl-LspDiagnosticsFloatingHint*
-LspDiagnosticsFloatingHint
-  Used to color "Hint" diagnostic messages in diagnostics float.
-  See |vim.lsp.diagnostic.show_line_diagnostics()|
-
-                                                  *hl-LspDiagnosticsSignError*
-LspDiagnosticsSignError
-  Used for "Error" signs in sign column.
-  See |vim.lsp.diagnostic.set_signs()|
-
-                                                *hl-LspDiagnosticsSignWarning*
-LspDiagnosticsSignWarning
-  Used for "Warning" signs in sign column.
-  See |vim.lsp.diagnostic.set_signs()|
-
-                                            *hl-LspDiagnosticsSignInformation*
-LspDiagnosticsSignInformation
-  Used for "Information" signs in sign column.
-  See |vim.lsp.diagnostic.set_signs()|
-
-                                                   *hl-LspDiagnosticsSignHint*
-LspDiagnosticsSignHint
-  Used for "Hint" signs in sign column.
-  See |vim.lsp.diagnostic.set_signs()|
-
                                                       *lsp-highlight-codelens*
 
 Highlight groups related to |lsp-codelens| functionality.
@@ -559,13 +444,6 @@ Highlight groups related to |vim.lsp.handlers.signature_help()|.
 LspSignatureActiveParameter
    Used to highlight the active parameter in the signature help. See
    |vim.lsp.handlers.signature_help()|.
-
-==============================================================================
-AUTOCOMMANDS                                                *lsp-autocommands*
-
-                                                       *LspDiagnosticsChanged*
-LspDiagnosticsChanged           After receiving publishDiagnostics server response
-
 
 ==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
@@ -1207,220 +1085,20 @@ workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
 ==============================================================================
 Lua module: vim.lsp.diagnostic                                *lsp-diagnostic*
 
-                                                  *vim.lsp.diagnostic.clear()*
-clear({bufnr}, {client_id}, {diagnostic_ns}, {sign_ns})
-                Clears the currently displayed diagnostics
+get_namespace({client_id})                *vim.lsp.diagnostic.get_namespace()*
+                Get the diagnostic namespace associated with an LSP client
+                |vim.diagnostic|.
 
                 Parameters: ~
-                    {bufnr}          number The buffer number
-                    {client_id}      number the client id
-                    {diagnostic_ns}  number|nil Associated diagnostic
-                                     namespace
-                    {sign_ns}        number|nil Associated sign namespace
-
-disable({bufnr}, {client_id})                   *vim.lsp.diagnostic.disable()*
-                Disable diagnostics for the given buffer and client
-
-                Parameters: ~
-                    {bufnr}      (optional, number): Buffer handle, defaults
-                                 to current
-                    {client_id}  (optional, number): Disable diagnostics for
-                                 the given client. The default is to disable
-                                 diagnostics for all attached clients.
-
-enable({bufnr}, {client_id})                     *vim.lsp.diagnostic.enable()*
-                Enable diagnostics for the given buffer and client
-
-                Parameters: ~
-                    {bufnr}      (optional, number): Buffer handle, defaults
-                                 to current
-                    {client_id}  (optional, number): Enable diagnostics for
-                                 the given client. The default is to enable
-                                 diagnostics for all attached clients.
-
-get({bufnr}, {client_id}, {predicate})              *vim.lsp.diagnostic.get()*
-                Return associated diagnostics for bufnr
-
-                Parameters: ~
-                    {bufnr}      number
-                    {client_id}  number|nil If nil, then return all of the
-                                 diagnostics. Else, return just the
-                                 diagnostics associated with the client_id.
-                    {predicate}  function|nil Optional function for filtering
-                                 diagnostics
-
-get_all({client_id})                            *vim.lsp.diagnostic.get_all()*
-                Get all diagnostics for clients
-
-                Parameters: ~
-                    {client_id}  number Restrict included diagnostics to the
-                                 client If nil, diagnostics of all clients are
-                                 included.
-
-                Return: ~
-                    table with diagnostics grouped by bufnr (bufnr:Diagnostic[])
-
-                                              *vim.lsp.diagnostic.get_count()*
-get_count({bufnr}, {severity}, {client_id})
-                Get the counts for a particular severity
-
-                Useful for showing diagnostic counts in statusline. eg:
->
-
-    function! LspStatus() abort
-      let sl = ''
-      if luaeval('not vim.tbl_isempty(vim.lsp.buf_get_clients(0))')
-        let sl.='%#MyStatuslineLSP#E:'
-        let sl.='%#MyStatuslineLSPErrors#%{luaeval("vim.lsp.diagnostic.get_count(0, [[Error]])")}'
-        let sl.='%#MyStatuslineLSP# W:'
-        let sl.='%#MyStatuslineLSPWarnings#%{luaeval("vim.lsp.diagnostic.get_count(0, [[Warning]])")}'
-      else
-          let sl.='%#MyStatuslineLSPErrors#off'
-      endif
-      return sl
-    endfunction
-    let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus()
-<
-
-                Parameters: ~
-                    {bufnr}      number The buffer number
-                    {severity}   DiagnosticSeverity
-                    {client_id}  number the client id
-
-                                   *vim.lsp.diagnostic.get_line_diagnostics()*
-get_line_diagnostics({bufnr}, {line_nr}, {opts}, {client_id})
-                Get the diagnostics by line
-
-                Parameters: ~
-                    {bufnr}          number|nil The buffer number
-                    {line_nr}        number|nil The line number
-                    {opts}           table|nil Configuration keys
-                                     • severity: (DiagnosticSeverity, default nil)
-                                       • Only return diagnostics with this
-                                         severity. Overrides severity_limit
-
-                                     • severity_limit: (DiagnosticSeverity, default nil)
-                                       • Limit severity of diagnostics found.
-                                         E.g. "Warning" means { "Error",
-                                         "Warning" } will be valid.
-                    {client_id|nil}  number the client id
-
-                Return: ~
-                    table Table with map of line number to list of
-                    diagnostics.
-
-get_next({opts})                               *vim.lsp.diagnostic.get_next()*
-                Get the next diagnostic closest to the cursor_position
-
-                Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
-
-                Return: ~
-                    table Next diagnostic
-
-get_next_pos({opts})                       *vim.lsp.diagnostic.get_next_pos()*
-                Return the pos, {row, col}, for the next diagnostic in the
-                current buffer.
-
-                Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
-
-                Return: ~
-                    table Next diagnostic position
-
-get_prev({opts})                               *vim.lsp.diagnostic.get_prev()*
-                Get the previous diagnostic closest to the cursor_position
-
-                Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
-
-                Return: ~
-                    table Previous diagnostic
-
-get_prev_pos({opts})                       *vim.lsp.diagnostic.get_prev_pos()*
-                Return the pos, {row, col}, for the prev diagnostic in the
-                current buffer.
-
-                Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
-
-                Return: ~
-                    table Previous diagnostic position
-
-                       *vim.lsp.diagnostic.get_virtual_text_chunks_for_line()*
-get_virtual_text_chunks_for_line({bufnr}, {line}, {line_diags}, {opts})
-                Default function to get text chunks to display using
-                |nvim_buf_set_extmark()|.
-
-                Parameters: ~
-                    {bufnr}       number The buffer to display the virtual
-                                  text in
-                    {line}        number The line number to display the
-                                  virtual text on
-                    {line_diags}  Diagnostic [] The diagnostics associated with the line
-                    {opts}        table See {opts} from
-                                  |vim.lsp.diagnostic.set_virtual_text()|
-
-                Return: ~
-                    an array of [text, hl_group] arrays. This can be passed
-                    directly to the {virt_text} option of
-                    |nvim_buf_set_extmark()|.
-
-goto_next({opts})                             *vim.lsp.diagnostic.goto_next()*
-                Move to the next diagnostic
-
-                Parameters: ~
-                    {opts}  table|nil Configuration table. Keys:
-                            • {client_id}: (number)
-                              • If nil, will consider all clients attached to
-                                buffer.
-
-                            • {cursor_position}: (Position, default current
-                              position)
-                              • See |nvim_win_get_cursor()|
-
-                            • {wrap}: (boolean, default true)
-                              • Whether to loop around file or not. Similar to
-                                'wrapscan'
-
-                            • {severity}: (DiagnosticSeverity)
-                              • Exclusive severity to consider. Overrides
-                                {severity_limit}
-
-                            • {severity_limit}: (DiagnosticSeverity)
-                              • Limit severity of diagnostics found. E.g.
-                                "Warning" means { "Error", "Warning" } will be
-                                valid.
-
-                            • {enable_popup}: (boolean, default true)
-                              • Call
-                                |vim.lsp.diagnostic.show_line_diagnostics()|
-                                on jump
-
-                            • {popup_opts}: (table)
-                              • Table to pass as {opts} parameter to
-                                |vim.lsp.diagnostic.show_line_diagnostics()|
-
-                            • {win_id}: (number, default 0)
-                              • Window ID
-
-goto_prev({opts})                             *vim.lsp.diagnostic.goto_prev()*
-                Move to the previous diagnostic
-
-                Parameters: ~
-                    {opts}  table See |vim.lsp.diagnostic.goto_next()|
+                    {client_id}  number The id of the LSP client
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
 on_publish_diagnostics({_}, {result}, {ctx}, {config})
                 |lsp-handler| for the method "textDocument/publishDiagnostics"
 
-                Note:
-                    Each of the configuration options accepts:
-                    • `false` : Disable this feature
-                    • `true` : Enable this feature, use default settings.
-                    • `table` : Enable this feature, use overrides.
-                    • `function`: Function with signature (bufnr, client_id) that
-                      returns any of the above.>
+                See |vim.diagnostic.config()| for configuration options.
+                Handler-specific configuration can be set using
+                |vim.lsp.with()|: >
 
                  vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
                    vim.lsp.diagnostic.on_publish_diagnostics, {
@@ -1442,229 +1120,8 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 <
 
                 Parameters: ~
-                    {config}  table Configuration table.
-                              • underline: (default=true)
-                                • Apply underlines to diagnostics.
-                                • See |vim.lsp.diagnostic.set_underline()|
-
-                              • virtual_text: (default=true)
-                                • Apply virtual text to line endings.
-                                • See |vim.lsp.diagnostic.set_virtual_text()|
-
-                              • signs: (default=true)
-                                • Apply signs for diagnostics.
-                                • See |vim.lsp.diagnostic.set_signs()|
-
-                              • update_in_insert: (default=false)
-                                • Update diagnostics in InsertMode or wait
-                                  until InsertLeave
-
-                              • severity_sort: (default=false)
-                                • Sort diagnostics (and thus signs and virtual
-                                  text)
-
-redraw({bufnr}, {client_id})                     *vim.lsp.diagnostic.redraw()*
-                Redraw diagnostics for the given buffer and client
-
-                This calls the "textDocument/publishDiagnostics" handler
-                manually using the cached diagnostics already received from
-                the server. This can be useful for redrawing diagnostics after
-                making changes in diagnostics configuration.
-                |lsp-handler-configuration|
-
-                Parameters: ~
-                    {bufnr}      (optional, number): Buffer handle, defaults
-                                 to current
-                    {client_id}  (optional, number): Redraw diagnostics for
-                                 the given client. The default is to redraw
-                                 diagnostics for all attached clients.
-
-reset({client_id}, {buffer_client_map})           *vim.lsp.diagnostic.reset()*
-                Clear diagnotics and diagnostic cache
-
-                Handles saving diagnostics from multiple clients in the same
-                buffer.
-
-                Parameters: ~
-                    {client_id}          number
-                    {buffer_client_map}  table map of buffers to active
-                                         clients
-
-save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
-                Save diagnostics to the current buffer.
-
-                Handles saving diagnostics from multiple clients in the same
-                buffer.
-
-                Parameters: ~
-                    {diagnostics}  Diagnostic []
-                    {bufnr}        number
-                    {client_id}    number
-
-set_loclist({opts})                         *vim.lsp.diagnostic.set_loclist()*
-                Sets the location list
-
-                Parameters: ~
-                    {opts}  table|nil Configuration table. Keys:
-                            • {open}: (boolean, default true)
-                              • Open loclist after set
-
-                            • {client_id}: (number)
-                              • If nil, will consider all clients attached to
-                                buffer.
-
-                            • {severity}: (DiagnosticSeverity)
-                              • Exclusive severity to consider. Overrides
-                                {severity_limit}
-
-                            • {severity_limit}: (DiagnosticSeverity)
-                              • Limit severity of diagnostics found. E.g.
-                                "Warning" means { "Error", "Warning" } will be
-                                valid.
-
-                            • {workspace}: (boolean, default false)
-                              • Set the list with workspace diagnostics
-
-set_qflist({opts})                           *vim.lsp.diagnostic.set_qflist()*
-                Sets the quickfix list
-
-                Parameters: ~
-                    {opts}  table|nil Configuration table. Keys:
-                            • {open}: (boolean, default true)
-                              • Open quickfix list after set
-
-                            • {client_id}: (number)
-                              • If nil, will consider all clients attached to
-                                buffer.
-
-                            • {severity}: (DiagnosticSeverity)
-                              • Exclusive severity to consider. Overrides
-                                {severity_limit}
-
-                            • {severity_limit}: (DiagnosticSeverity)
-                              • Limit severity of diagnostics found. E.g.
-                                "Warning" means { "Error", "Warning" } will be
-                                valid.
-
-                            • {workspace}: (boolean, default true)
-                              • Set the list with workspace diagnostics
-
-                                              *vim.lsp.diagnostic.set_signs()*
-set_signs({diagnostics}, {bufnr}, {client_id}, {sign_ns}, {opts})
-                Set signs for given diagnostics
-
-                Sign characters can be customized with the following commands:
->
-
-    sign define LspDiagnosticsSignError text=E texthl=LspDiagnosticsSignError linehl= numhl=
-    sign define LspDiagnosticsSignWarning text=W texthl=LspDiagnosticsSignWarning linehl= numhl=
-    sign define LspDiagnosticsSignInformation text=I texthl=LspDiagnosticsSignInformation linehl= numhl=
-    sign define LspDiagnosticsSignHint text=H texthl=LspDiagnosticsSignHint linehl= numhl=
-<
-
-                Parameters: ~
-                    {diagnostics}  Diagnostic []
-                    {bufnr}        number The buffer number
-                    {client_id}    number the client id
-                    {sign_ns}      number|nil
-                    {opts}         table Configuration for signs. Keys:
-                                   • priority: Set the priority of the signs.
-                                   • severity_limit (DiagnosticSeverity):
-                                     • Limit severity of diagnostics found.
-                                       E.g. "Warning" means { "Error",
-                                       "Warning" } will be valid.
-
-                                          *vim.lsp.diagnostic.set_underline()*
-set_underline({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
-                Set underline for given diagnostics
-
-                Underline highlights can be customized by changing the
-                following |:highlight| groups.
->
-
-    LspDiagnosticsUnderlineError
-    LspDiagnosticsUnderlineWarning
-    LspDiagnosticsUnderlineInformation
-    LspDiagnosticsUnderlineHint
-<
-
-                Parameters: ~
-                    {diagnostics}    Diagnostic []
-                    {bufnr}          number: The buffer number
-                    {client_id}      number: The client id
-                    {diagnostic_ns}  number|nil: The namespace
-                    {opts}           table: Configuration table:
-                                     • severity_limit (DiagnosticSeverity):
-                                       • Limit severity of diagnostics found.
-                                         E.g. "Warning" means { "Error",
-                                         "Warning" } will be valid.
-
-                                       *vim.lsp.diagnostic.set_virtual_text()*
-set_virtual_text({diagnostics}, {bufnr}, {client_id}, {diagnostic_ns}, {opts})
-                Set virtual text given diagnostics
-
-                Virtual text highlights can be customized by changing the
-                following |:highlight| groups.
->
-
-    LspDiagnosticsVirtualTextError
-    LspDiagnosticsVirtualTextWarning
-    LspDiagnosticsVirtualTextInformation
-    LspDiagnosticsVirtualTextHint
-<
-
-                Parameters: ~
-                    {diagnostics}    Diagnostic []
-                    {bufnr}          number
-                    {client_id}      number
-                    {diagnostic_ns}  number
-                    {opts}           table Options on how to display virtual
-                                     text. Keys:
-                                     • prefix (string): Prefix to display
-                                       before virtual text on line
-                                     • spacing (number): Number of spaces to
-                                       insert before virtual text
-                                     • severity_limit (DiagnosticSeverity):
-                                       • Limit severity of diagnostics found.
-                                         E.g. "Warning" means { "Error",
-                                         "Warning" } will be valid.
-
-                                  *vim.lsp.diagnostic.show_line_diagnostics()*
-show_line_diagnostics({opts}, {buf_nr}, {line_nr}, {client_id})
-                Parameters: ~
-                    {opts}       table Configuration table
-                                 • all opts for
-                                   |vim.lsp.diagnostic.get_line_diagnostics()|
-                                   and |show_diagnostics()| can be used here
-                    {buf_nr}     number|nil The buffer number
-                    {line_nr}    number|nil The line number
-                    {client_id}  number|nil the client id
-
-                Return: ~
-                    table {popup_bufnr, win_id}
-
-                              *vim.lsp.diagnostic.show_position_diagnostics()*
-show_position_diagnostics({opts}, {buf_nr}, {position})
-                Open a floating window with the diagnostics from {position}
-
-                Parameters: ~
-                    {opts}      table|nil Configuration keys
-                                • severity: (DiagnosticSeverity, default nil)
-                                  • Only return diagnostics with this
-                                    severity. Overrides severity_limit
-
-                                • severity_limit: (DiagnosticSeverity, default nil)
-                                  • Limit severity of diagnostics found. E.g.
-                                    "Warning" means { "Error", "Warning" }
-                                    will be valid.
-
-                                • all opts for |show_diagnostics()| can be
-                                  used here
-                    {buf_nr}    number|nil The buffer number
-                    {position}  table|nil The (0,0)-indexed position
-
-                Return: ~
-                    table {popup_bufnr, win_id}
+                    {config}  table Configuration table (see
+                              |vim.diagnostic.config()|).
 
 
 ==============================================================================
@@ -1903,21 +1360,6 @@ create_file({change})                             *vim.lsp.util.create_file()*
 delete_file({change})                             *vim.lsp.util.delete_file()*
                 TODO: Documentation
 
-                                         *vim.lsp.util.diagnostics_to_items()*
-diagnostics_to_items({diagnostics_by_bufnr}, {predicate})
-                Convert diagnostics grouped by bufnr to a list of items for
-                use in the quickfix or location list.
-
-                Parameters: ~
-                    {diagnostics_by_bufnr}  table bufnr -> Diagnostic []
-                    {predicate}             an optional function to filter the
-                                            diagnostics. If present, only
-                                            diagnostic items matching will be
-                                            included.
-
-                Return: ~
-                    table (A list of items)
-
                                      *vim.lsp.util.extract_completion_items()*
 extract_completion_items({result})
                 Can be used to extract the completion items from a `textDocument/completion` request, which may return one of `CompletionItem[]` , `CompletionList` or null.
@@ -1981,6 +1423,9 @@ locations_to_items({locations})            *vim.lsp.util.locations_to_items()*
                 Returns the items with the byte position calculated correctly
                 and in sorted order, for display in quickfix and location
                 lists.
+
+                The result can be passed to the {list} argument of
+                |setqflist()| or |setloclist()|.
 
                 Parameters: ~
                     {locations}  (table) list of `Location` s or
@@ -2165,21 +1610,6 @@ set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
 
                 Return: ~
                     (table) The modified {lines} object
-
-set_loclist({items}, {win_id})                    *vim.lsp.util.set_loclist()*
-                Fills target window's location list with given list of items.
-                Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
-                Defaults to current window.
-
-                Parameters: ~
-                    {items}  (table) list of items
-
-set_qflist({items})                                *vim.lsp.util.set_qflist()*
-                Fills quickfix list with given list of items. Can be obtained
-                with e.g. |vim.lsp.util.locations_to_items()|.
-
-                Parameters: ~
-                    {items}  (table) list of items
 
                                              *vim.lsp.util.stylize_markdown()*
 stylize_markdown({bufnr}, {contents}, {opts})

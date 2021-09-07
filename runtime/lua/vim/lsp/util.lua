@@ -31,16 +31,6 @@ local default_border = {
   {" ", "NormalFloat"},
 }
 
-
-local DiagnosticSeverity = protocol.DiagnosticSeverity
-local loclist_type_map = {
-  [DiagnosticSeverity.Error] = 'E',
-  [DiagnosticSeverity.Warning] = 'W',
-  [DiagnosticSeverity.Information] = 'I',
-  [DiagnosticSeverity.Hint] = 'I',
-}
-
-
 ---@private
 --- Check the border given by opts or the default border for the additional
 --- size it adds to a float.
@@ -1543,6 +1533,9 @@ end
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
+--- The result can be passed to the {list} argument of |setqflist()| or
+--- |setloclist()|.
+---
 ---@param locations (table) list of `Location`s or `LocationLink`s
 ---@returns (table) list of items
 function M.locations_to_items(locations)
@@ -1601,6 +1594,8 @@ end
 --- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
 --- Defaults to current window.
 ---
+---@deprecated Use |setloclist()|
+---
 ---@param items (table) list of items
 function M.set_loclist(items, win_id)
   vim.fn.setloclist(win_id or 0, {}, ' ', {
@@ -1611,6 +1606,8 @@ end
 
 --- Fills quickfix list with given list of items.
 --- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
+---
+---@deprecated Use |setqflist()|
 ---
 ---@param items (table) list of items
 function M.set_qflist(items)
@@ -1868,40 +1865,6 @@ function M.lookup_section(settings, section)
   end
   return settings
 end
-
-
---- Convert diagnostics grouped by bufnr to a list of items for use in the
---- quickfix or location list.
----
----@param diagnostics_by_bufnr table bufnr -> Diagnostic[]
----@param predicate an optional function to filter the diagnostics.
----                 If present, only diagnostic items matching will be included.
----@return table (A list of items)
-function M.diagnostics_to_items(diagnostics_by_bufnr, predicate)
-  local items = {}
-  for bufnr, diagnostics in pairs(diagnostics_by_bufnr or {}) do
-    for _, d in pairs(diagnostics) do
-      if not predicate or predicate(d) then
-        table.insert(items, {
-          bufnr = bufnr,
-          lnum = d.range.start.line + 1,
-          col = d.range.start.character + 1,
-          text = d.message,
-          type = loclist_type_map[d.severity or DiagnosticSeverity.Error] or 'E'
-        })
-      end
-    end
-  end
-  table.sort(items, function(a, b)
-    if a.bufnr == b.bufnr then
-      return a.lnum < b.lnum
-    else
-      return a.bufnr < b.bufnr
-    end
-  end)
-  return items
-end
-
 
 M._get_line_byte_from_position = get_line_byte_from_position
 M._warn_once = warn_once

@@ -1534,8 +1534,5 @@ function lsp._with_extend(name, options, user_config)
   return resulting_config
 end
 
--- Define the LspDiagnostics signs if they're not defined already.
-require('vim.lsp.diagnostic')._define_default_signs_and_highlights()
-
 return lsp
 -- vim:sw=2 ts=2 et
