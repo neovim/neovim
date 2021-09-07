@@ -88,6 +88,11 @@ function log.set_level(level)
   end
 end
 
+--- Gets the current log level.
+function log.get_level()
+  return current_log_level
+end
+
 --- Checks whether the level is sufficient for logging.
 ---@param level number log level
 ---@returns (bool) true if would log, false if not
