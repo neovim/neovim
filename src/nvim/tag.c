@@ -175,6 +175,8 @@ do_tag(
   int skip_msg = false;
   char_u *buf_ffname = curbuf->b_ffname;  // name for priority computation
   int use_tfu = 1;
+  bool move_in_tagstack = false;  // for ":pop", CTRL-T, and ":[count]tag"
+  bool old_KeyTyped;
 
   /* remember the matches for the last used tag */
   static int num_matches = 0;
@@ -281,7 +283,7 @@ do_tag(
       }
 
       if (type == DT_POP) {             // go to older position
-        const bool old_KeyTyped = KeyTyped;
+        old_KeyTyped = KeyTyped;
         if ((tagstackidx -= count) < 0) {
           EMSG(_(bottommsg));
           if (tagstackidx + count == 0) {
@@ -297,7 +299,73 @@ do_tag(
           EMSG(_(topmsg));
           goto end_do_tag;
         }
+        // tagstackidx is correct move to the tag
+        move_in_tagstack = true;
+      }
 
+      if (type == DT_TAG
+          || type == DT_LTAG
+          ) {
+        if (g_do_tagpreview != 0) {
+          cur_match = ptag_entry.cur_match;
+          cur_fnum = ptag_entry.cur_fnum;
+        } else {
+          old_KeyTyped = KeyTyped;
+          // ":tag" (no argument): go to newer pattern
+          save_pos = true;              // save the cursor position below
+          if ((tagstackidx += count) >= tagstacklen) {
+            /*
+             * Beyond the last one, just give an error message and
+             * go to the last one.  Don't store the cursor
+             * position.
+             */
+            tagstackidx = tagstacklen - 1;
+            EMSG(_(topmsg));
+            save_pos = false;
+          } else if (tagstackidx < 0)   {       // must have been count == 0
+            EMSG(_(bottommsg));
+            tagstackidx = 0;
+            goto end_do_tag;
+          }
+          move_in_tagstack = true;
+          cur_match = tagstack[tagstackidx].cur_match;
+          cur_fnum = tagstack[tagstackidx].cur_fnum;
+        }
+      } else {                                // go to other matching tag
+        // Save index for when selection is cancelled.
+        prevtagstackidx = tagstackidx;
+
+        if (g_do_tagpreview != 0) {
+          cur_match = ptag_entry.cur_match;
+          cur_fnum = ptag_entry.cur_fnum;
+        } else {
+          if (--tagstackidx < 0)
+            tagstackidx = 0;
+          cur_match = tagstack[tagstackidx].cur_match;
+          cur_fnum = tagstack[tagstackidx].cur_fnum;
+        }
+        switch (type) {
+        case DT_FIRST: cur_match = count - 1; break;
+        case DT_SELECT:
+        case DT_JUMP:
+        case DT_CSCOPE:
+        case DT_LAST:  cur_match = MAXCOL - 1; break;
+        case DT_NEXT:  cur_match += count; break;
+        case DT_PREV:  cur_match -= count; break;
+        }
+        if (cur_match >= MAXCOL)
+          cur_match = MAXCOL - 1;
+        else if (cur_match < 0) {
+          EMSG(_("E425: Cannot go before first matching tag"));
+          skip_msg = true;
+          cur_match = 0;
+          cur_fnum = curbuf->b_fnum;
+        }
+      }
+
+      // handles DT_POP and when :tag was called with a name to move forward in
+      // the tagstack.
+      if (move_in_tagstack) {
         /* Make a copy of the fmark, autocommands may invalidate the
          * tagstack before it's used. */
         saved_fmark = tagstack[tagstackidx].fmark;
@@ -330,65 +398,6 @@ do_tag(
         num_matches = 0;
         tag_freematch();
         goto end_do_tag;
-      }
-
-      if (type == DT_TAG
-          || type == DT_LTAG
-          ) {
-        if (g_do_tagpreview != 0) {
-          cur_match = ptag_entry.cur_match;
-          cur_fnum = ptag_entry.cur_fnum;
-        } else {
-          // ":tag" (no argument): go to newer pattern
-          save_pos = true;              // save the cursor position below
-          if ((tagstackidx += count - 1) >= tagstacklen) {
-            /*
-             * Beyond the last one, just give an error message and
-             * go to the last one.  Don't store the cursor
-             * position.
-             */
-            tagstackidx = tagstacklen - 1;
-            EMSG(_(topmsg));
-            save_pos = false;
-          } else if (tagstackidx < 0)   {       // must have been count == 0
-            EMSG(_(bottommsg));
-            tagstackidx = 0;
-            goto end_do_tag;
-          }
-          cur_match = tagstack[tagstackidx].cur_match;
-          cur_fnum = tagstack[tagstackidx].cur_fnum;
-        }
-        new_tag = true;
-      } else {                                // go to other matching tag
-        // Save index for when selection is cancelled.
-        prevtagstackidx = tagstackidx;
-
-        if (g_do_tagpreview != 0) {
-          cur_match = ptag_entry.cur_match;
-          cur_fnum = ptag_entry.cur_fnum;
-        } else {
-          if (--tagstackidx < 0)
-            tagstackidx = 0;
-          cur_match = tagstack[tagstackidx].cur_match;
-          cur_fnum = tagstack[tagstackidx].cur_fnum;
-        }
-        switch (type) {
-        case DT_FIRST: cur_match = count - 1; break;
-        case DT_SELECT:
-        case DT_JUMP:
-        case DT_CSCOPE:
-        case DT_LAST:  cur_match = MAXCOL - 1; break;
-        case DT_NEXT:  cur_match += count; break;
-        case DT_PREV:  cur_match -= count; break;
-        }
-        if (cur_match >= MAXCOL)
-          cur_match = MAXCOL - 1;
-        else if (cur_match < 0) {
-          EMSG(_("E425: Cannot go before first matching tag"));
-          skip_msg = true;
-          cur_match = 0;
-          cur_fnum = curbuf->b_fnum;
-        }
       }
     }
 
