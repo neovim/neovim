@@ -88,7 +88,7 @@ typedef struct ucmd {
   cmd_addr_T uc_addr_type;      // The command's address type
   sctx_T uc_script_ctx;         // SCTX where the command was defined
   char_u      *uc_compl_arg;    // completion argument if any
-} ucmd_T;
+} __attribute__((aligned(64))) ucmd_T;
 
 #define UC_BUFFER       1       // -buffer: local to current buffer
 
@@ -104,7 +104,7 @@ static garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 typedef struct {
   char_u      *line;            // command line
   linenr_T lnum;                // sourcing_lnum of the line
-} wcmd_T;
+} __attribute__((aligned(16))) wcmd_T;
 
 #define FREE_WCMD(wcmd) xfree((wcmd)->line)
 
@@ -120,7 +120,7 @@ struct loop_cookie {
   // When "repeating" is FALSE use "getline" and "cookie" to get lines
   char_u      *(*getline)(int, void *, int, bool);
   void        *cookie;
-};
+} __attribute__((aligned(32)));
 
 
 // Struct to save a few things while debugging.  Used in do_cmdline() only.
@@ -135,7 +135,7 @@ struct dbg_stuff {
   int need_rethrow;
   int check_cstack;
   except_T    *current_exception;
-};
+} __attribute__((aligned(64)));
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.c.generated.h"
@@ -2802,7 +2802,7 @@ static struct cmdmod {
   char        *name;
   int minlen;
   int has_count;            // :123verbose  :3tab
-} cmdmods[] = {
+} __attribute__((aligned(16))) cmdmods[] = {
   { "aboveleft", 3, false },
   { "belowright", 3, false },
   { "botright", 2, false },
@@ -5250,7 +5250,7 @@ static struct {
   cmd_addr_T expand;
   char *name;
   char *shortname;
-} addr_type_complete[] =
+} __attribute__((packed)) __attribute__((aligned(32))) addr_type_complete[] =
 {
   { ADDR_ARGUMENTS, "arguments", "arg" },
   { ADDR_LINES, "lines", "line" },
@@ -6040,7 +6040,7 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf, ucmd_T *cmd, 
       typedef struct {
         bool *set;
         char *name;
-      } mod_entry_T;
+      } __attribute__((aligned(16))) mod_entry_T;
       static mod_entry_T mod_entries[] = {
         { &cmdmod.browse, "browse" },
         { &cmdmod.confirm, "confirm" },

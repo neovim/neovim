@@ -84,7 +84,7 @@ struct block_def {
   int pre_whitesp_c;            // chars of ws before block
   colnr_T end_char_vcols;       // number of vcols of post-block char
   colnr_T start_char_vcols;       // number of vcols of pre-block char
-};
+} __attribute__((aligned(64)));
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.c.generated.h"

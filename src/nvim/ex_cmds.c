@@ -90,7 +90,7 @@ typedef struct {
   bool do_list;         ///< list last line with subs
   bool do_number;       ///< list last line with line nr
   SubIgnoreType do_ic;  ///< ignore case flag
-} subflags_T;
+} __attribute__((packed)) __attribute__((aligned(16))) subflags_T;
 
 /// Partial result of a substitution during :substitute.
 /// Numbers refer to the buffer _after_ substitution
@@ -98,14 +98,14 @@ typedef struct {
   lpos_T start;  // start of the match
   lpos_T end;    // end of the match
   linenr_T pre_match;  // where to begin showing lines before the match
-} SubResult;
+} __attribute__((aligned(64))) SubResult;
 
 // Collected results of a substitution for showing them in
 // the preview window
 typedef struct {
   kvec_t(SubResult) subresults;
   linenr_T lines_needed;  // lines needed in the preview window
-} PreviewLines;
+} __attribute__((aligned(32))) PreviewLines;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
@@ -381,14 +381,14 @@ typedef struct {
     struct {
       varnumber_T start_col_nr;  ///< starting column number
       varnumber_T end_col_nr;    ///< ending column number
-    } line;
+    } __attribute__((aligned(16))) line;
     struct {
       varnumber_T value;         ///< value if sorting by integer
       bool is_number;            ///< true when line contains a number
-    } num;
+    } __attribute__((aligned(16))) num;
     float_T value_flt;    ///< value if sorting by float
   } st_u;
-} sorti_T;
+} __attribute__((aligned(32))) sorti_T;
 
 static int string_compare(const void *s1, const void *s2) FUNC_ATTR_NONNULL_ALL
 {

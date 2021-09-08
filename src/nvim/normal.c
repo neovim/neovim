@@ -82,7 +82,7 @@ typedef struct normal_state {
   int c;
   int old_col;
   pos_T old_pos;
-} NormalState;
+} __attribute__((packed)) __attribute__((aligned(128))) NormalState;
 
 /*
  * The Visual area is remembered for reselection.
@@ -151,7 +151,7 @@ static const struct nv_cmd {
   nv_func_T cmd_func;           // function for this command
   uint16_t cmd_flags;           // NV_ flags
   short cmd_arg;                // value for ca.arg
-} nv_cmds[] =
+} __attribute__((packed)) __attribute__((aligned(16))) nv_cmds[] =
 {
   { NUL,       nv_error,       0,                      0 },
   { Ctrl_A,    nv_addsub,      0,                      0 },

@@ -147,7 +147,7 @@ typedef struct {
   const char *p;
   int prev_c;  // previous Arabic character
   int prev_c1;  // first composing char for prev_c
-} LineState;
+} __attribute__((aligned(16))) LineState;
 #define LINE_STATE(p) { p, 0, 0 }
 
 /// Whether to call "ui_call_grid_resize" in win_grid_alloc
