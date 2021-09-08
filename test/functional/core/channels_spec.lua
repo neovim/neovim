@@ -59,6 +59,7 @@ describe('channels', function()
   end)
 
   it('can use stdio channel', function()
+    -- also tests some method syntax for stdioopen(), chansend(), chanclose()
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -77,7 +78,7 @@ describe('channels', function()
           quit
         endif
       endfunction
-      let g:x = stdioopen({'on_stdin':'OnEvent'})
+      let g:x = #{on_stdin: 'OnEvent'}->stdioopen()
       call chansend(x, "hello")
     ]])
     command("let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)")
@@ -86,10 +87,10 @@ describe('channels', function()
 
     eq({ "notification", "stdout", {id, { "hello" } } }, next_msg())
 
-    command("call chansend(id, 'howdy')")
+    command("eval id->chansend('howdy')")
     eq({"notification", "stdout", {id, {"[1, ['howdy'], 'stdin']"}}}, next_msg())
 
-    command("call chanclose(id, 'stdin')")
+    command("eval id->chanclose('stdin')")
     expect_twostreams({{"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
                        {'notification', 'stdout', {id, {''}}}},
                       {{"notification", "stderr", {id, {"*dies*"}}},
@@ -184,10 +185,11 @@ describe('channels', function()
     local _, err = pcall(command,"call rpcrequest(id, 'nvim_command', 'call chanclose(v:stderr, \"stdin\")')")
     ok(string.find(err,"E906: invalid stream for channel") ~= nil)
 
-    eq(1, eval("rpcrequest(id, 'nvim_eval', 'chanclose(v:stderr, \"stderr\")')"))
+    -- also test method syntax (->) for rpcrequest() and rpcnotify()
+    eq(1, eval("id->rpcrequest('nvim_eval', 'chanclose(v:stderr, \"stderr\")')"))
     eq({"notification", "stderr", {3, {""}}}, next_msg())
 
-    command("call rpcnotify(id, 'nvim_command', 'quit')")
+    command("eval id->rpcnotify('nvim_command', 'quit')")
     eq({"notification", "exit", {3, 0}}, next_msg())
   end)
 

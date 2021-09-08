@@ -40,12 +40,13 @@ describe('API', function()
       pcall_err(request, ''))
 
     -- Non-RPC: rpcrequest(v:servername) uses internal channel.
+    -- also test method syntax (->) for sockconnect() and rpcrequest()
     matches('Invalid method: … の り 。…$',
       pcall_err(request, 'nvim_eval',
-        [=[rpcrequest(sockconnect('pipe', v:servername, {'rpc':1}), '… の り 。…')]=]))
+        [[v:servername->sockconnect('pipe', #{rpc: 1})->rpcrequest('… の り 。…')]]))
     matches('Invalid method: bogus$',
       pcall_err(request, 'nvim_eval',
-        [=[rpcrequest(sockconnect('pipe', v:servername, {'rpc':1}), 'bogus')]=]))
+        [[v:servername->sockconnect('pipe', #{rpc: 1})->rpcrequest('bogus')]]))
 
     -- XXX: This must be the last one, else next one will fail:
     --      "Packer instance already working. Use another Packer ..."

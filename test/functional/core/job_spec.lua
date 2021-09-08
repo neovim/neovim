@@ -130,7 +130,7 @@ describe('jobs', function()
     else
       nvim('command', [[let j = jobstart('env | grep -i toto=', g:job_opts)]])
     end
-    nvim('command', "call jobwait([j])")
+    nvim('command', "eval [j]->jobwait()")  -- also test method syntax
     nvim('command', "let g:output = Normalize(g:job_opts.stdout)")
     local actual = eval('g:output')
     local expected

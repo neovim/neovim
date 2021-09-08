@@ -3044,6 +3044,9 @@ chanclose({id}[, {stream}])				*chanclose()*
 		For a socket, there is only one stream, and {stream} should be
 		ommited.
 
+		Can also be used as a |method|: >
+			GetChanId()->chanclose()
+
 chansend({id}, {data})					*chansend()*
 		Send data to channel {id}. For a job, it writes it to the
 		stdin of the process. For the stdio channel |channel-stdio|,
@@ -3062,6 +3065,8 @@ chansend({id}, {data})					*chansend()*
 		was created with `"rpc":v:true` then the channel expects RPC
 		messages, use |rpcnotify()| and |rpcrequest()| instead.
 
+		Can also be used as a |method|: >
+			GetChanId()->chansend('hello!')
 
 char2nr({expr} [, {utf8}])					*char2nr()*
 		Return number value of the first char in {expr}.  Examples: >
@@ -5891,8 +5896,8 @@ jobwait({jobs}[, {timeout}])				*jobwait()*
 		Waits for jobs and their |on_exit| handlers to complete.
 
 		{jobs} is a List of |job-id|s to wait for.
-		{timeout} is the maximum waiting time in milliseconds, -1
-		means forever.
+		{timeout} is the maximum waiting time in milliseconds. If
+		omitted or -1, wait forever.
 
 		Timeout of 0 can be used to check the status of a job: >
 			let running = jobwait([{job-id}], 0)[0] == -1
@@ -5907,6 +5912,9 @@ jobwait({jobs}[, {timeout}])				*jobwait()*
 			-1 if the timeout was exceeded
 			-2 if the job was interrupted (by |CTRL-C|)
 			-3 if the job-id is invalid
+
+		Can also be used as a |method|: >
+			:let statuslist = GetJobList()->jobwait()
 
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.
@@ -7404,12 +7412,18 @@ rpcnotify({channel}, {event}[, {args}...])			*rpcnotify()*
 		If {channel} is 0, the event is broadcast to all channels.
 		Example: >
 			:au VimLeave call rpcnotify(0, "leaving")
+<
+		Can also be used as a |method|: >
+			GetChanId()->rpcnotify('ready')
 
 rpcrequest({channel}, {method}[, {args}...])			*rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
 		|RPC| and blocks until a response is received.
 		Example: >
 			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
+<
+		Can also be used as a |method|: >
+			GetChanId()->rpcrequest('func')
 
 rpcstart({prog}[, {argv}])					*rpcstart()*
 		Deprecated. Replace  >
@@ -8391,7 +8405,7 @@ sinh({expr})						*sinh()*
 		Can also be used as a |method|: >
 			Compute()->sinh()
 
-sockconnect({mode}, {address}, {opts})			 *sockconnect()*
+sockconnect({mode}, {address} [, {opts}])		 *sockconnect()*
 		Connect a socket to an address. If {mode} is "pipe" then
 		{address} should be the path of a named pipe. If {mode} is
 		"tcp" then {address} should be of the form "host:port" where
@@ -8403,7 +8417,7 @@ sockconnect({mode}, {address}, {opts})			 *sockconnect()*
 		|rpcrequest()| and |rpcnotify()| to communicate with a RPC
 		socket.
 
-		{opts} is a dictionary with these keys:
+		{opts} is an optional dictionary with these keys:
 		  |on_data| : callback invoked when data was read from socket
 		  data_buffered : read socket data in |channel-buffered| mode.
 		  rpc     : If set, |msgpack-rpc| will be used to communicate
@@ -8411,6 +8425,10 @@ sockconnect({mode}, {address}, {opts})			 *sockconnect()*
 		Returns:
 		  - The channel ID on success (greater than zero)
 		  - 0 on invalid arguments or connection failure.
+
+		When used as a |method| the base is passed as the second
+		argument: >
+			:let chanid = GetAddress()->sockconnect('tcp')
 
 sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		Sort the items in {list} in-place.  Returns {list}.
@@ -8601,6 +8619,8 @@ stdioopen({opts})			 *stdioopen()*
 		  - |channel-id| on success (value is always 1)
 		  - 0 on invalid arguments
 
+		Can also be used as a |method|: >
+			GetOpts()->stdioopen()
 
 stdpath({what})					*stdpath()* *E6100*
 		Returns |standard-path| locations of various default files and
