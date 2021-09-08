@@ -1,0 +1,20 @@
+---
+# Configure clang-tidy for this project.
+#
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  clang-diagnostics-*,
+  cert-*,
+  portability-*,
+  -bugprone-branch-clone,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -bugprone-sizeof-expression
+
+# Turn all the warnings from the checks above into errors.
+WarningsAsErrors: ''
+
+HeaderFilterRegex: "(src/[cjson|klib|mpack|unicode|xdiff]/).*\\.h$"
+...

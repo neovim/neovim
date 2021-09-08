@@ -795,6 +795,15 @@ add_custom_target(
   DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE} lintuncrustify
 )
 
+
+add_custom_target(
+  clang-tidy-full
+  COMMAND
+    clang-tidy -p "${CMAKE_BINARY_DIR}" ${LINT_NVIM_REL_SOURCES}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  DEPENDS ${CLANG_TIDY_BIN} ${LINT_NVIM_SOURCES}
+)
+
 add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_FOR_SOURCES}
   ${NVIM_GENERATED_FOR_HEADERS}
