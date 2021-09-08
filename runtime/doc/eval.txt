@@ -5783,10 +5783,16 @@ isnan({expr})						*isnan()*
 jobpid({job})						*jobpid()*
 		Return the PID (process id) of |job-id| {job}.
 
+		Can also be used as a |method|: >
+			:let pid = GetJobId()->jobpid()
+
 jobresize({job}, {width}, {height})			*jobresize()*
 		Resize the pseudo terminal window of |job-id| {job} to {width}
 		columns and {height} rows.
 		Fails if the job was not started with `"pty":v:true`.
+
+		Can also be used as a |method|: >
+			GetJobId()->jobresize(80, 40)
 
 jobstart({cmd}[, {opts}])				*jobstart()*
 		Spawns {cmd} as a job.
@@ -5807,6 +5813,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 
 		See |job-control| and |RPC|.
 
+		Can also be used as a |method|: >
+			:let jobid = GetCmd()->jobstart(#{stdin: 'null'})
+<
 		NOTE: on Windows if {cmd} is a List:
 		  - cmd[0] must be an executable (not a "built-in"). If it is
 		    in $PATH it can be called by name, without an extension: >
@@ -5874,6 +5883,9 @@ jobstop({id})						*jobstop()*
 
 		Returns 1 for valid job id, 0 for invalid id, including jobs have
 		exited or stopped.
+
+		Can also be used as a |method|: >
+			GetJobId()->jobstop()
 
 jobwait({jobs}[, {timeout}])				*jobwait()*
 		Waits for jobs and their |on_exit| handlers to complete.
@@ -9264,6 +9276,9 @@ termopen({cmd}[, {opts}])			*termopen()*
 		Returns the same values as |jobstart()|.
 
 		See |terminal| for more information.
+
+		Can also be used as a |method|: >
+			:let jobid = GetCmd()->termopen()
 
 test_ functions are documented here: |test-functions-details|
 

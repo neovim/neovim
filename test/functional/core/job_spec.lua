@@ -53,10 +53,11 @@ describe('jobs', function()
   it('must specify env option as a dict', function()
     command("let g:job_opts.env = v:true")
     local _, err = pcall(function()
+      -- also test method syntax (->) for jobstart()
       if iswin() then
-        nvim('command', "let j = jobstart('set', g:job_opts)")
+        nvim('command', "let j = 'set'->jobstart(g:job_opts)")
       else
-        nvim('command', "let j = jobstart('env', g:job_opts)")
+        nvim('command', "let j = 'env'->jobstart(g:job_opts)")
       end
     end)
     ok(string.find(err, "E475: Invalid argument: env") ~= nil)
@@ -271,7 +272,8 @@ describe('jobs', function()
         {'notification', 'stdout', {0, {'xyz', ''}}}
       }
     )
-    nvim('command', "call jobstop(j)")
+    -- also test method syntax (->) for jobstop()
+    nvim('command', "eval j->jobstop()")
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 143}}, next_msg())
   end)
@@ -1026,7 +1028,7 @@ describe('jobs', function()
     it('resizing window', function()
       nvim('command', 'call jobresize(j, 40, 10)')
       eq('rows: 10, cols: 40', next_chunk())
-      nvim('command', 'call jobresize(j, 10, 40)')
+      nvim('command', 'eval j->jobresize(10, 40)')  -- also test method syntax
       eq('rows: 40, cols: 10', next_chunk())
     end)
 
@@ -1052,8 +1054,8 @@ describe('jobs', function()
       local err = exc_exec('call jobpid(j)')
       eq('Vim(call):E900: Invalid channel id', err)
 
-      -- cleanup
-      eq(other_pid, eval('jobpid(' .. other_jobid .. ')'))
+      -- cleanup; also test method syntax (->) for jobpid()
+      eq(other_pid, eval(other_jobid .. '->jobpid()'))
       command('call jobstop(' .. other_jobid .. ')')
     end)
   end)

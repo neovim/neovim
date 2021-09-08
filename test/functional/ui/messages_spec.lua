@@ -1231,7 +1231,7 @@ describe('ui/msg_puts_printf', function()
     os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
 
     cmd = cmd..'"'..nvim_prog..'" -u NONE -i NONE -Es -V1'
-    command([[call termopen(']]..cmd..[[')]])
+    command('eval ' .. cmd .. '->termopen()')  -- also test method syntax
     screen:expect([[
     ^Exモードに入ります. ノー |
     マルモードに戻るには"visu|
