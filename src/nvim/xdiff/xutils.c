@@ -20,11 +20,7 @@
  *
  */
 
-#include <limits.h>
-#include <assert.h>
 #include "xinclude.h"
-
-
 
 
 long xdl_bogosqrt(long n) {
@@ -51,10 +47,10 @@ int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 	mb[1].size = size;
 	if (size > 0 && rec[size - 1] != '\n') {
 		mb[2].ptr = (char *) "\n\\ No newline at end of file\n";
-		mb[2].size = (long)strlen(mb[2].ptr);
+		mb[2].size = strlen(mb[2].ptr);
 		i++;
 	}
-	if (ecb->outf(ecb->priv, mb, i) < 0) {
+	if (ecb->out_line(ecb->priv, mb, i) < 0) {
 
 		return -1;
 	}
@@ -168,7 +164,7 @@ static int ends_with_optional_cr(const char *l, long s, long i)
 		s--;
 	if (s == i)
 		return 1;
-	// do not ignore CR at the end of an incomplete line
+	/* do not ignore CR at the end of an incomplete line */
 	if (complete && s == i + 1 && l[i] == '\r')
 		return 1;
 	return 0;
@@ -208,7 +204,7 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 	} else if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
 		while (i1 < s1 && i2 < s2) {
 			if (XDL_ISSPACE(l1[i1]) && XDL_ISSPACE(l2[i2])) {
-				// Skip matching spaces and try again
+				/* Skip matching spaces and try again */
 				while (i1 < s1 && XDL_ISSPACE(l1[i1]))
 					i1++;
 				while (i2 < s2 && XDL_ISSPACE(l2[i2]))
@@ -224,7 +220,7 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 			i2++;
 		}
 	} else if (flags & XDF_IGNORE_CR_AT_EOL) {
-		// Find the first difference and see how the line ends
+		/* Find the first difference and see how the line ends */
 		while (i1 < s1 && i2 < s2 && l1[i1] == l2[i2]) {
 			i1++;
 			i2++;
@@ -261,7 +257,7 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
 		if (cr_at_eol_only) {
-			// do not ignore CR at the end of an incomplete line
+			/* do not ignore CR at the end of an incomplete line */
 			if (*ptr == '\r' &&
 			    (ptr + 1 < top && ptr[1] == '\n'))
 				continue;
@@ -274,7 +270,7 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 				ptr++;
 			at_eol = (top <= ptr + 1 || ptr[1] == '\n');
 			if (flags & XDF_IGNORE_WHITESPACE)
-				; // already handled
+				; /* already handled */
 			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
 				 && !at_eol) {
 				ha += (ha << 5);
@@ -344,8 +340,9 @@ int xdl_num_out(char *out, long val) {
 	return str - out;
 }
 
-int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
-		      const char *func, long funclen, xdemitcb_t *ecb) {
+static int xdl_format_hunk_hdr(long s1, long c1, long s2, long c2,
+			       const char *func, long funclen,
+			       xdemitcb_t *ecb) {
 	int nb = 0;
 	mmbuffer_t mb;
 	char buf[128];
@@ -387,9 +384,21 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 
 	mb.ptr = buf;
 	mb.size = nb;
-	if (ecb->outf(ecb->priv, &mb, 1) < 0)
+	if (ecb->out_line(ecb->priv, &mb, 1) < 0)
 		return -1;
+	return 0;
+}
 
+int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
+		      const char *func, long funclen,
+		      xdemitcb_t *ecb) {
+	if (!ecb->out_hunk)
+		return xdl_format_hunk_hdr(s1, c1, s2, c2, func, funclen, ecb);
+	if (ecb->out_hunk(ecb->priv,
+			  c1 ? s1 : s1 - 1, c1,
+			  c2 ? s2 : s2 - 1, c2,
+			  func, funclen) < 0)
+		return -1;
 	return 0;
 }
 

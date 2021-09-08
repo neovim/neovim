@@ -61,4 +61,4 @@ int xdl_do_patience_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 int xdl_do_histogram_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		xdfenv_t *env);
 
-#endif // #if !defined(XDIFFI_H)
+#endif /* #if !defined(XDIFFI_H) */

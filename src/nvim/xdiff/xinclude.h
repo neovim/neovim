@@ -40,6 +40,7 @@
 #if !defined(XINCLUDE_H)
 #define XINCLUDE_H
 
+// This effectively re-verts b46054b3746271d23feab0 from git
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +49,10 @@
 #endif
 #include <string.h>
 #include <limits.h>
-
+// This include comes from git, so uncomment it
+#if 0
+#include "git-compat-util.h"
+#endif
 #include "xmacros.h"
 #include "xdiff.h"
 #include "xtypes.h"
@@ -58,4 +62,4 @@
 #include "xemit.h"
 
 
-#endif // #if !defined(XINCLUDE_H)
+#endif /* #if !defined(XINCLUDE_H) */
