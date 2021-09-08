@@ -263,7 +263,7 @@ func s:StartDebug_term(dict)
     endif
 
     for lnum in range(1, 200)
-      if term_getline(s:gdbbuf, lnum) =~ 'startupdone'
+      if get(getbufline(s:gdbbuf, lnum), 0, '') =~ 'startupdone'
     let try_count = 9999
     break
       endif
