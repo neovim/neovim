@@ -2202,4 +2202,90 @@ describe('LSP', function()
       eq(expected, qflist)
     end)
   end)
+
+  describe('vim.lsp.buf.rename', function()
+    for _, test in ipairs({
+      {
+        it = "does not attempt to rename on nil response",
+        name = "prepare_rename_nil",
+        expected_handlers = {
+          {NIL, {}, {method="shutdown", client_id=1}};
+          {NIL, {}, {method="start", client_id=1}};
+        },
+      },
+      {
+        it = "handles prepareRename placeholder response",
+        name = "prepare_rename_placeholder",
+        expected_handlers = {
+          {NIL, {}, {method="shutdown", client_id=1}};
+          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1}};
+          {NIL, {}, {method="start", client_id=1}};
+        },
+        expected_text = "placeholder", -- see fake lsp response
+      },
+      {
+        it = "handles range response",
+        name = "prepare_rename_range",
+        expected_handlers = {
+          {NIL, {}, {method="shutdown", client_id=1}};
+          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1}};
+          {NIL, {}, {method="start", client_id=1}};
+        },
+        expected_text = "line", -- see test case and fake lsp response
+      },
+      {
+        it = "handles error",
+        name = "prepare_rename_error",
+        expected_handlers = {
+          {NIL, {}, {method="shutdown", client_id=1}};
+          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1}};
+          {NIL, {}, {method="start", client_id=1}};
+        },
+        expected_text = "two", -- see test case
+      },
+    }) do
+    it(test.it, function()
+      local client
+      test_rpc_server {
+        test_name = test.name;
+        on_init = function(_client)
+          client = _client
+          eq(true, client.resolved_capabilities().rename)
+        end;
+        on_setup = function()
+          exec_lua([=[
+            local bufnr = vim.api.nvim_get_current_buf()
+            lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+            vim.lsp._stubs = {}
+            vim.fn.input = function(prompt, text)
+              vim.lsp._stubs.input_prompt = prompt
+              vim.lsp._stubs.input_text = text
+              return 'renameto' -- expect this value in fake lsp
+            end
+            vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {'', 'this is line two'})
+            vim.fn.cursor(2, 13) -- the space between "line" and "two"
+          ]=])
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end;
+        on_handler = function(err, result, ctx)
+          eq(table.remove(test.expected_handlers), {err, result, ctx}, "expected handler")
+          if ctx.method == 'start' then
+            exec_lua("vim.lsp.buf.rename()")
+          end
+          if ctx.method == 'shutdown' then
+            if test.expected_text then
+              eq("New Name: ", exec_lua("return vim.lsp._stubs.input_prompt"))
+              eq(test.expected_text, exec_lua("return vim.lsp._stubs.input_text"))
+            end
+            client.stop()
+          end
+        end;
+      }
+    end)
+    end
+  end)
+
 end)

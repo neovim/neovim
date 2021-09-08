@@ -126,6 +126,89 @@ function tests.check_workspace_configuration()
   }
 end
 
+function tests.prepare_rename_nil()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_placeholder()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, {placeholder = 'placeholder'}
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_range()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, {
+          start = { line = 1, character = 8 },
+          ['end'] = { line = 1, character = 12 },
+        }
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_error()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = true,
+      } }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return {}, nil
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
 function tests.basic_check_capabilities()
   skeleton {
     on_init = function(params)
