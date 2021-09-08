@@ -386,7 +386,7 @@ static void shift_block(oparg_T *oap, int amount)
       }
     }
     for (; ascii_iswhite(*bd.textstart); ) {
-      // TODO: is passing bd.textstart for start of the line OK?
+      // TODO(dundar): is passing bd.textstart for start of the line OK?
       incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, (colnr_T)(bd.start_vcol));
       total += incr;
       bd.start_vcol += incr;
@@ -473,7 +473,7 @@ static void shift_block(oparg_T *oap, int amount)
     while (verbatim_copy_width < destination_col) {
       char_u *line = verbatim_copy_end;
 
-      // TODO: is passing verbatim_copy_end for start of the line OK?
+      // TODO(dundar): is passing verbatim_copy_end for start of the line OK?
       incr = lbr_chartabsize(line, verbatim_copy_end, verbatim_copy_width);
       if (verbatim_copy_width + incr > destination_col) {
         break;

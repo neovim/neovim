@@ -5729,7 +5729,7 @@ static void nv_brackets(cmdarg_T *cap)
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   old_pos = curwin->w_cursor;
-  curwin->w_cursor.coladd = 0;              // TODO: don't do this for an error.
+  curwin->w_cursor.coladd = 0;              // TODO(dundar): don't do this for an error.
 
   /*
    * "[f" or "]f" : Edit file under the cursor (same as "gf")

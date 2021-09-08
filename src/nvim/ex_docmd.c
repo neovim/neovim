@@ -8292,7 +8292,7 @@ static void ex_redir(exarg_T *eap)
         redir_vname = 1;
       }
     }
-    // TODO: redirect to a buffer
+    // TODO(dundar): redirect to a buffer
     else {
       EMSG2(_(e_invarg2), eap->arg);
     }

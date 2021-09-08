@@ -3551,7 +3551,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             && !vim_isbreak((int)(*ptr))) {
           int mb_off = utf_head_off(line, ptr - 1);
           char_u *p = ptr - (mb_off + 1);
-          // TODO: is passing p for start of the line OK?
+          // TODO(dundar): is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
           if (c == TAB && n_extra + col > grid->Columns) {
             n_extra = tabstop_padding(vcol, wp->w_buffer->b_p_ts,
