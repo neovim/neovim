@@ -52,9 +52,14 @@ or change text.  The following operators are available:
 	|<|	<	shift left
 	|zf|	zf	define a fold
 	|g@|	g@	call function set with the 'operatorfunc' option
-
+						*motion-count-multiplied*
 If the motion includes a count and the operator also had a count before it,
 the two counts are multiplied.  For example: "2d3w" deletes six words.
+						*operator-doubled*
+When doubling the operator it operates on a line.  When using a count, before
+or after the first character, that many lines are operated upon.  Thus `3dd`
+deletes three lines. A count before and after the first character is
+multiplied, thus `2y3y` yanks six lines.
 
 After applying the operator the cursor is mostly left at the start of the text
 that was operated upon.  For example, "yfe" doesn't move the cursor, but "yFe"
