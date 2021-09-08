@@ -3281,7 +3281,8 @@ void sub_set_replacement(SubReplacementString sub)
 /// @param[in]  save Save pattern to options, history
 ///
 /// @returns true if :substitute can be replaced with a join command
-static bool sub_joining_lines(exarg_T *eap, char_u *pat, char_u *sub, char_u *cmd, bool save)
+static bool sub_joining_lines(exarg_T *eap, char_u *pat, const char_u *sub, const char_u *cmd,
+                              bool save)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4)
 {
   // TODO(vim): find a generic solution to make line-joining operations more

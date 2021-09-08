@@ -1127,7 +1127,7 @@ static int current_tab_nr(tabpage_T *tab)
 
 
 /// Figure out the address type for ":wincmd".
-static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
+static void get_wincmd_addr_type(const char_u *arg, exarg_T *eap)
 {
   switch (*arg) {
   case 'S':
@@ -2529,7 +2529,7 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
 /// @param pp   start of command
 /// @param cmd  name of command
 /// @param len  required length
-int checkforcmd(char_u **pp, char *cmd, int len)
+int checkforcmd(char_u **pp, const char *cmd, int len)
 {
   int i;
 
@@ -8819,7 +8819,7 @@ static void ex_tag(exarg_T *eap)
   ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name);
 }
 
-static void ex_tag_cmd(exarg_T *eap, char_u *name)
+static void ex_tag_cmd(exarg_T *eap, const char_u *name)
 {
   int cmd;
 
@@ -8947,7 +8947,7 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 /// @return          an allocated string if a valid match was found.
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
-char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnump,
+char_u *eval_vars(char_u *src, const char_u *srcstart, size_t *usedlen, linenr_T *lnump,
                   char_u **errormsg, int *escaped)
 {
   int i;
