@@ -2932,7 +2932,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
           find_start_of_word(&VIsual);
           if (*p_sel == 'e' && *get_cursor_pos_ptr() != NUL) {
             curwin->w_cursor.col +=
-              (*mb_ptr2len)(get_cursor_pos_ptr());
+              (mb_ptr2len)(get_cursor_pos_ptr());
           }
           find_end_of_word(&curwin->w_cursor);
         }
@@ -2999,7 +2999,7 @@ static void find_end_of_word(pos_T *pos)
   }
   cclass = get_mouse_class(line + pos->col);
   while (line[pos->col] != NUL) {
-    col = pos->col + (*mb_ptr2len)(line + pos->col);
+    col = pos->col + (mb_ptr2len)(line + pos->col);
     if (get_mouse_class(line + col) != cclass) {
       if (*p_sel == 'e') {
         pos->col = col;
@@ -3438,7 +3438,7 @@ void clear_showcmd(void)
         e = ml_get_pos(&VIsual);
       }
       while ((*p_sel != 'e') ? s <= e : s < e) {
-        l = (*mb_ptr2len)(s);
+        l = (mb_ptr2len)(s);
         if (l == 0) {
           ++bytes;
           ++chars;
@@ -5389,7 +5389,7 @@ static void nv_right(cmdarg_T *cap)
       if (virtual_active()) {
         oneright();
       } else {
-        curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
+        curwin->w_cursor.col += (mb_ptr2len)(get_cursor_pos_ptr());
       }
     }
   }
