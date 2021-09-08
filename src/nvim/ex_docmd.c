@@ -2644,8 +2644,8 @@ static char_u *find_command(exarg_T *eap, int *full)
       const int c1 = eap->cmd[0];
       const int c2 = len == 1 ? NUL : eap->cmd[1];
 
-      if (command_count != (int)CMD_SIZE) {
-        iemsg((char *)_("E943: Command table needs to be updated, run 'make'"));
+      if (command_count != CMD_SIZE) {
+        iemsg(_("E943: Command table needs to be updated, run 'make'"));
         getout(1);
       }
 
@@ -2659,7 +2659,7 @@ static char_u *find_command(exarg_T *eap, int *full)
       eap->cmdidx = CMD_bang;
     }
 
-    for (; (int)eap->cmdidx < (int)CMD_SIZE;
+    for (; (int)eap->cmdidx < CMD_SIZE;
          eap->cmdidx = (cmdidx_T)((int)eap->cmdidx + 1)) {
       if (STRNCMP(cmdnames[(int)eap->cmdidx].cmd_name, (char *)eap->cmd,
                   (size_t)len) == 0) {
@@ -2869,7 +2869,7 @@ int cmd_exists(const char *const name)
   for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
     int j;
     for (j = 0; name[j] != NUL; j++) {
-      if (name[j] != (char)cmdmods[i].name[j]) {
+      if (name[j] != cmdmods[i].name[j]) {
         break;
       }
     }
@@ -2989,7 +2989,7 @@ const char * set_one_cmd_context(expand_T *xp, const char *buff)
       xp->xp_context = EXPAND_UNSUCCESSFUL;
       return NULL;
     }
-    for (ea.cmdidx = (cmdidx_T)0; (int)ea.cmdidx < (int)CMD_SIZE;
+    for (ea.cmdidx = (cmdidx_T)0; (int)ea.cmdidx < CMD_SIZE;
          ea.cmdidx = (cmdidx_T)((int)ea.cmdidx + 1)) {
       if (STRNCMP(cmdnames[(int)ea.cmdidx].cmd_name, cmd, len) == 0) {
         break;
@@ -5144,7 +5144,7 @@ static int check_more(int message, bool forceit)
  */
 char_u *get_command_name(expand_T *xp, int idx)
 {
-  if (idx >= (int)CMD_SIZE) {
+  if (idx >= CMD_SIZE) {
     return get_user_command_name(idx);
   }
   return cmdnames[idx].cmd_name;
@@ -6240,7 +6240,7 @@ static void do_ucmd(exarg_T *eap)
 
 static char_u *get_user_command_name(int idx)
 {
-  return get_user_commands(NULL, idx - (int)CMD_SIZE);
+  return get_user_commands(NULL, idx - CMD_SIZE);
 }
 /*
  * Function given to ExpandGeneric() to obtain the list of user address type names.
