@@ -6118,6 +6118,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'switchbuf' 'swb'	string	(default "uselast")
 			global
 	This option controls the behavior when switching between buffers.
+	Mostly for |quickfix| commands some values are also used for other
+ 	commands, as mentioned below.
 	Possible values (comma separated list):
 	   useopen	If included, jump to the first open window that
 			contains the specified buffer (if there is one).

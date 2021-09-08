@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 May 16
+" Last Change: 2021 May 18
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -181,6 +181,15 @@ func s:CloseBuffers()
   unlet! s:gdbwin
 endfunc
 
+func s:CheckGdbRunning()
+  if nvim_get_chan_info(s:gdb_job_id) == {}
+      echoerr string(g:termdebugger) . ' exited unexpectedly'
+      call s:CloseBuffers()
+      return ''
+  endif
+  return 'ok'
+endfunc
+
 func s:StartDebug_term(dict)
   " Open a terminal window without a job, to run the debugged program in.
   execute s:vertical ? 'vnew' : 'new'
@@ -229,7 +238,7 @@ func s:StartDebug_term(dict)
   let gdb_args = get(a:dict, 'gdb_args', [])
   let proc_args = get(a:dict, 'proc_args', [])
 
-  let cmd = [g:termdebugger, '-quiet', '-tty', pty] + gdb_args
+  let cmd = [g:termdebugger, '-quiet', '-tty', pty, '--eval-command', 'echo startupdone\n'] + gdb_args
   "call ch_log('executing "' . join(cmd) . '"')
   execute 'new'
   let s:gdb_job_id = termopen(cmd, {'on_exit': function('s:EndTermDebug')})
@@ -246,9 +255,28 @@ func s:StartDebug_term(dict)
   let s:gdbbuf = gdb_job_info['buffer']
   let s:gdbwin = win_getid(winnr())
 
-  " Set arguments to be run.  First wait a bit to make detecting gdb a bit
-  " more reliable.
-  sleep 200m
+  " Wait for the "startupdone" message before sending any commands.
+  let try_count = 0
+  while 1
+    if s:CheckGdbRunning() != 'ok'
+      return
+    endif
+
+    for lnum in range(1, 200)
+      if term_getline(s:gdbbuf, lnum) =~ 'startupdone'
+    let try_count = 9999
+    break
+      endif
+    endfor
+    let try_count += 1
+    if try_count > 300
+      " done or give up after five seconds
+      break
+    endif
+    sleep 10m
+  endwhile
+
+  " Set arguments to be run.
   if len(proc_args)
     call chansend(s:gdb_job_id, 'set args ' . join(proc_args) . "\r")
   endif
@@ -260,9 +288,7 @@ func s:StartDebug_term(dict)
   " why the debugger doesn't work.
   let try_count = 0
   while 1
-    if nvim_get_chan_info(s:gdb_job_id) == {}
-      echoerr string(g:termdebugger) . ' exited unexpectedly'
-      call s:CloseBuffers()
+    if s:CheckGdbRunning() != 'ok'
       return
     endif
 
