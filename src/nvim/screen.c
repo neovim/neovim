@@ -869,7 +869,8 @@ static void win_update(win_T *wp, Providers *providers)
       }
     }
     if (mod_top != 0 && hasAnyFolding(wp)) {
-      linenr_T lnumt, lnumb;
+      linenr_T lnumt;
+      linenr_T lnumb;
 
       /*
        * A change in a line can cause lines above it to become folded or
@@ -1131,7 +1132,8 @@ static void win_update(win_T *wp, Providers *providers)
   // check if we are updating or removing the inverted part
   if ((VIsual_active && buf == curwin->w_buffer)
       || (wp->w_old_cursor_lnum != 0 && type != NOT_VALID)) {
-    linenr_T from, to;
+    linenr_T from;
+    linenr_T to;
 
     if (VIsual_active) {
       if (VIsual_mode != wp->w_old_visual_mode || type == INVERTED_ALL) {
@@ -1199,7 +1201,8 @@ static void win_update(win_T *wp, Providers *providers)
        * First compute the actual start and end column.
        */
       if (VIsual_mode == Ctrl_V) {
-        colnr_T fromc, toc;
+        colnr_T fromc;
+        colnr_T toc;
         int save_ve_flags = ve_flags;
 
         if (curwin->w_p_lbr) {
@@ -1870,7 +1873,8 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
   const char_u *p = (char_u *)s->p;
   int cells = utf_ptr2cells(p);
   int c_len = utfc_ptr2len(p);
-  int u8c, u8cc[MAX_MCO];
+  int u8c;
+  int u8cc[MAX_MCO];
   if (cells > maxcells) {
     return -1;
   }
@@ -1887,7 +1891,9 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
   } else {
     if (p_arshape && !p_tbidi && arabic_char(u8c)) {
       // Do Arabic shaping.
-      int pc, pc1, nc;
+      int pc;
+      int pc1;
+      int nc;
       int pcc[MAX_MCO];
       int firstbyte = *p;
 
@@ -2123,14 +2129,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   int right_curline_col = 0;
 
   // draw_state: items that are drawn in sequence:
-#define WL_START        0               // nothing done yet
-#define WL_CMDLINE     WL_START + 1    // cmdline window column
-#define WL_FOLD        WL_CMDLINE + 1  // 'foldcolumn'
-#define WL_SIGN        WL_FOLD + 1     // column for signs
-#define WL_NR           WL_SIGN + 1     // line number
-#define WL_BRI         WL_NR + 1       // 'breakindent'
-#define WL_SBR         WL_BRI + 1       // 'showbreak' or 'diff'
-#define WL_LINE         WL_SBR + 1      // text in the line
+#define WL_START       0                 // nothing done yet
+#define WL_CMDLINE     (WL_START + 1)    // cmdline window column
+#define WL_FOLD        (WL_CMDLINE + 1)  // 'foldcolumn'
+#define WL_SIGN        (WL_FOLD + 1)     // column for signs
+#define WL_NR          (WL_SIGN + 1)     // line number
+#define WL_BRI         (WL_NR + 1)       // 'breakindent'
+#define WL_SBR         (WL_BRI + 1)      // 'showbreak' or 'diff'
+#define WL_LINE        (WL_SBR + 1)      // text in the line
+
   int draw_state = WL_START;            // what to draw next
 
   int syntax_flags    = 0;
@@ -2268,7 +2275,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
     // handle Visual active in this window
     if (VIsual_active && wp->w_buffer == curwin->w_buffer) {
-      pos_T *top, *bot;
+      pos_T *top;
+      pos_T *bot;
 
       if (ltoreq(curwin->w_cursor, VIsual)) {
         // Visual is after curwin->w_cursor
@@ -3365,7 +3373,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         mb_l = 1;
       } else if (p_arshape && !p_tbidi && arabic_char(mb_c)) {
         // Do Arabic shaping.
-        int pc, pc1, nc;
+        int pc;
+        int pc1;
+        int nc;
         int pcc[MAX_MCO];
 
         // The idea of what is the previous and next
@@ -4439,7 +4449,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                        wp, wp->w_hl_attr_normal, wrap);
       if (wrap) {
         ScreenGrid *current_grid = grid;
-        int current_row = row, dummy_col = 0;  // dummy_col unused
+        int current_row = row;
+        int dummy_col = 0;  // dummy_col unused
         screen_adjust_grid(&current_grid, &current_row, &dummy_col);
 
         // Force a redraw of the first column of the next line.
@@ -4644,7 +4655,8 @@ static void get_sign_display_info(bool nrcol, win_T *wp, sign_attrs_T sattrs[], 
         *c_finalp = NUL;
 
         if (nrcol) {
-          int n, width = number_width(wp) - 2;
+          int n;
+          int width = number_width(wp) - 2;
           for (n = 0; n < width; n++) {
             extra[n] = ' ';
           }
@@ -4726,7 +4738,8 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, 
   bool clear_next = false;
   int char_cells;                           // 1: normal char
                                             // 2: occupies two display cells
-  int start_dirty = -1, end_dirty = 0;
+  int start_dirty = -1;
+  int end_dirty = 0;
 
   // TODO(bfredl): check all callsites and eliminate
   // Check for illegal row and col, just in case
@@ -4881,7 +4894,8 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, 
  */
 void rl_mirror(char_u *str)
 {
-  char_u *p1, *p2;
+  char_u      *p1;
+  char_u      *p2;
   int t;
 
   for (p1 = str, p2 = str + STRLEN(str) - 1; p1 < p2; ++p1, --p2) {
@@ -5279,7 +5293,8 @@ static void win_redr_status(win_T *wp)
       p = (char_u *)"<";                // No room for file name!
       len = 1;
     } else {
-      int clen = 0, i;
+      int clen = 0;
+      int i;
 
       // Count total number of display cells.
       clen = (int)mb_string2cells(p);
@@ -5614,7 +5629,8 @@ static void win_redr_border(win_T *wp)
 
 
   int *adj = wp->w_border_adj;
-  int irow = wp->w_height_inner, icol = wp->w_width_inner;
+  int irow = wp->w_height_inner;
+  int icol = wp->w_width_inner;
 
   if (adj[0]) {
     grid_puts_line_start(grid, 0);
@@ -5823,7 +5839,9 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
   int u8cc[MAX_MCO];
   int clear_next_cell = FALSE;
   int prev_c = 0;                       // previous Arabic character
-  int pc, nc, nc1;
+  int pc;
+  int nc;
+  int nc1;
   int pcc[MAX_MCO];
   int need_redraw;
   bool do_flush = false;
@@ -6282,7 +6300,8 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
 {
   schar_T sc;
 
-  int row_off = 0, col_off = 0;
+  int row_off = 0;
+  int col_off = 0;
   screen_adjust_grid(&grid, &row_off, &col_off);
   start_row += row_off;
   end_row += row_off;
@@ -6845,7 +6864,6 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
     ui_call_grid_scroll(grid->handle, row, end, col, col+width, -line_count, 0);
   }
 
-  return;
 }
 
 /// delete lines on the screen and move lines up.
@@ -6896,8 +6914,6 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   if (!grid->throttled) {
     ui_call_grid_scroll(grid->handle, row, end, col, col+width, line_count, 0);
   }
-
-  return;
 }
 
 
@@ -7855,20 +7871,20 @@ void limit_screen_size(void)
 
 void win_new_shellsize(void)
 {
-  static long old_Rows = 0;
-  static long old_Columns = 0;
+  static long old_rows = 0;
+  static long old_columns = 0;
 
-  if (old_Rows != Rows) {
+  if (old_rows != Rows) {
     // If 'window' uses the whole screen, keep it using that.
     // Don't change it when set with "-w size" on the command line.
-    if (p_window == old_Rows - 1 || (old_Rows == 0 && p_window == 0)) {
+    if (p_window == old_rows - 1 || (old_rows == 0 && p_window == 0)) {
       p_window = Rows - 1;
     }
-    old_Rows = Rows;
+    old_rows = Rows;
     shell_new_rows();  // update window sizes
   }
-  if (old_Columns != Columns) {
-    old_Columns = Columns;
+  if (old_columns != Columns) {
+    old_columns = Columns;
     shell_new_columns();  // update window sizes
   }
 }

@@ -47,8 +47,8 @@
 #include "nvim/vim.h"
 
 #ifdef HAVE_BE64TOH
-# define _BSD_SOURCE 1
-# define _DEFAULT_SOURCE 1
+# define BSD_SOURCE 1
+# define DEFAULT_SOURCE 1
 # include ENDIAN_INCLUDE_FILE
 #endif
 
@@ -70,20 +70,20 @@ KHASH_SET_INIT_STR(strset)
 #define find_shada_parameter(...) \
   ((const char *)find_shada_parameter(__VA_ARGS__))
 #define home_replace_save(a, b) \
-  ((char *)home_replace_save(a, (char_u *)b))
+  ((char *)home_replace_save(a, (char_u *)(b)))
 #define home_replace(a, b, c, d, e) \
-  home_replace(a, (char_u *)b, (char_u *)c, d, e)
+  home_replace(a, (char_u *)(b), (char_u *)(c), d, e)
 #define vim_rename(a, b) \
-  (vim_rename((char_u *)a, (char_u *)b))
+  (vim_rename((char_u *)(a), (char_u *)(b)))
 #define mb_strnicmp(a, b, c) \
-  (mb_strnicmp((char_u *)a, (char_u *)b, c))
+  (mb_strnicmp((char_u *)(a), (char_u *)(b), c))
 #define path_try_shorten_fname(b) \
-  ((char *)path_try_shorten_fname((char_u *)b))
+  ((char *)path_try_shorten_fname((char_u *)(b)))
 #define buflist_new(ffname, sfname, ...) \
   (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
-#define os_isdir(f) (os_isdir((char_u *)f))
-#define regtilde(s, m) ((char *)regtilde((char_u *)s, m))
-#define path_tail_with_sep(f) ((char *)path_tail_with_sep((char_u *)f))
+#define os_isdir(f) (os_isdir((char_u *)(f)))
+#define regtilde(s, m) ((char *)regtilde((char_u *)(s), m))
+#define path_tail_with_sep(f) ((char *)path_tail_with_sep((char_u *)(f)))
 
 #define SEARCH_KEY_MAGIC "sm"
 #define SEARCH_KEY_SMARTCASE "sc"
@@ -441,7 +441,7 @@ typedef struct sd_write_def {
     } \
   }
 #define DEFAULT_POS { 1, 0, 0 }
-static const pos_T default_pos = DEFAULT_POS;
+static const pos_T kDefaultPos = DEFAULT_POS;
 static const ShadaEntry sd_default_values[] = {
   [kSDItemMissing] = { .type = kSDItemMissing, .timestamp = 0 },
   DEF_SDE(Header, header, .size = 0),
@@ -532,8 +532,8 @@ static inline void hmll_init(HMLList *const hmll, const size_t size)
 ///
 /// @return `for` cycle header (use `HMLL_FORALL(hmll, cur_entry) {body}`).
 #define HMLL_FORALL(hmll, cur_entry, code) \
-  for (HMLListEntry *cur_entry = (hmll)->first; cur_entry != NULL; \
-       cur_entry = cur_entry->next) { \
+  for (HMLListEntry *(cur_entry) = (hmll)->first; (cur_entry) != NULL; \
+       (cur_entry) = (cur_entry)->next) { \
     code \
   } \
 
@@ -633,8 +633,8 @@ static inline void hmll_insert(HMLList *const hmll, HMLListEntry *hmll_entry, co
 ///
 /// @return `for` cycle header (use `HMLL_FORALL(hmll, cur_entry) {body}`).
 #define HMLL_ITER_BACK(hmll, cur_entry, code) \
-  for (cur_entry = (hmll)->last; cur_entry != NULL; \
-       cur_entry = cur_entry->prev) { \
+  for ((cur_entry) = (hmll)->last; (cur_entry) != NULL; \
+       (cur_entry) = (cur_entry)->prev) { \
     code \
   }
 
@@ -1106,13 +1106,13 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
                     entry, fname_cond, free_func, fin_func, \
                     idxadj_func, afterfree_func) \
   do { \
-    const int jl_len = (int)jumps_size; \
+    const int jl_len = (int)(jumps_size); \
     int i; \
     for (i = jl_len; i > 0; i--) { \
-      const jumps_type jl_entry = jumps[i - 1]; \
-      if (jl_entry.timestamp_attr <= entry.timestamp) { \
-        if (marks_equal(jl_entry.mark_attr, entry.data.filemark.mark) \
-            && fname_cond) { \
+      const jumps_type jl_entry = (jumps)[i - 1]; \
+      if (jl_entry.timestamp_attr <= (entry).timestamp) { \
+        if (marks_equal(jl_entry.mark_attr, (entry).data.filemark.mark) \
+            && (fname_cond)) { \
           i = -1; \
         } \
         break; \
@@ -1120,30 +1120,30 @@ static inline bool marks_equal(const pos_T a, const pos_T b)
     } \
     if (i > 0) { \
       if (jl_len == JUMPLISTSIZE) { \
-        free_func(jumps[0]); \
+        free_func((jumps)[0]); \
         i--; \
         if (i > 0) { \
-          memmove(&jumps[0], &jumps[1], sizeof(jumps[1]) * (size_t)i); \
+          memmove(&(jumps)[0], &(jumps)[1], sizeof((jumps)[1]) * (size_t)i); \
         } \
       } else if (i != jl_len) { \
-        memmove(&jumps[i + 1], &jumps[i], \
-                sizeof(jumps[0]) * (size_t)(jl_len - i)); \
+        memmove(&(jumps)[i + 1], &(jumps)[i], \
+                sizeof((jumps)[0]) * (size_t)(jl_len - i)); \
       } \
     } else if (i == 0) { \
       if (jl_len == JUMPLISTSIZE) { \
         i = -1; \
       } else if (jl_len > 0) { \
-        memmove(&jumps[1], &jumps[0], sizeof(jumps[0]) * (size_t)jl_len); \
+        memmove(&(jumps)[1], &(jumps)[0], sizeof((jumps)[0]) * (size_t)jl_len); \
       } \
     } \
     if (i != -1) { \
-      jumps[i] = fin_func(entry); \
+      (jumps)[i] = fin_func(entry); \
       if (jl_len < JUMPLISTSIZE) { \
-        jumps_size++; \
+        (jumps_size)++; \
       } \
       idxadj_func(i); \
     } else { \
-      shada_free_shada_entry(&entry); \
+      shada_free_shada_entry(&(entry)); \
       afterfree_func(entry); \
     } \
   } while (0)
@@ -1340,7 +1340,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       } else {
 #define SDE_TO_XFMARK(entry) fm
 #define ADJUST_IDX(i) \
-  if (curwin->w_jumplistidx >= i \
+  if (curwin->w_jumplistidx >= (i) \
       && curwin->w_jumplistidx + 1 <= curwin->w_jumplistlen) { \
     curwin->w_jumplistidx++; \
   }
@@ -1589,7 +1589,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
     } \
   } while (0)
 #define CHECK_DEFAULT(entry, attr) \
-  (sd_default_values[entry.type].data.attr == entry.data.attr)
+  (sd_default_values[(entry).type].data.attr == (entry).data.attr)
 #define ONE_IF_NOT_DEFAULT(entry, attr) \
   ((size_t)(!CHECK_DEFAULT(entry, attr)))
   switch (entry.type) {
@@ -1679,7 +1679,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
   do { \
     if (!CHECK_DEFAULT(entry, search_pattern.attr)) { \
       PACK_STATIC_STR(name); \
-      if (sd_default_values[entry.type].data.search_pattern.attr) { \
+      if (sd_default_values[(entry).type].data.search_pattern.attr) { \
         msgpack_pack_false(spacker); \
       } else { \
         msgpack_pack_true(spacker); \
@@ -1782,9 +1782,9 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
       const size_t map_size = (size_t)(
                                        1  // Buffer name
                                        + (size_t)(entry.data.buffer_list.buffers[i].pos.lnum
-                                                  != default_pos.lnum)
+                                                  != kDefaultPos.lnum)
                                        + (size_t)(entry.data.buffer_list.buffers[i].pos.col
-                                                  != default_pos.col)
+                                                  != kDefaultPos.col)
                                        // Additional entries, if any:
                                        + (size_t)(
                                                   entry.data.buffer_list.buffers[i].additional_data
@@ -2260,12 +2260,12 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
       } else {
 #define FREE_POSSIBLY_FREED_SHADA_ENTRY(entry) \
   do { \
-    if (entry.can_free_entry) { \
-      shada_free_shada_entry(&entry.data); \
+    if ((entry).can_free_entry) { \
+      shada_free_shada_entry(&(entry).data); \
     } \
   } while (0)
 #define SDE_TO_PFSDE(entry) \
-  ((PossiblyFreedShadaEntry) { .can_free_entry = true, .data = entry })
+  ((PossiblyFreedShadaEntry) { .can_free_entry = true, .data = (entry) })
 #define AFTERFREE_DUMMY(entry)
 #define DUMMY_IDX_ADJ(i)
         MERGE_JUMPS(filemarks->changes_size, filemarks->changes,
@@ -2617,9 +2617,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
         continue;
       case VAR_DICT: {
         dict_T *di = vartv.vval.v_dict;
-        int copyID = get_copyID();
-        if (!set_ref_in_ht(&di->dv_hashtab, copyID, NULL)
-            && copyID == di->dv_copyID) {
+        int copy_id = get_copyID();
+        if (!set_ref_in_ht(&di->dv_hashtab, copy_id, NULL)
+            && copy_id == di->dv_copyID) {
           tv_clear(&vartv);
           continue;
         }
@@ -2627,9 +2627,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
       }
       case VAR_LIST: {
         list_T *l = vartv.vval.v_list;
-        int copyID = get_copyID();
-        if (!set_ref_in_list(l, copyID, NULL)
-            && copyID == l->lv_copyID) {
+        int copy_id = get_copyID();
+        if (!set_ref_in_list(l, copy_id, NULL)
+            && copy_id == l->lv_copyID) {
           tv_clear(&vartv);
           continue;
         }
@@ -2853,8 +2853,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
 #define PACK_WMS_ARRAY(wms_array) \
   do { \
     for (size_t i_ = 0; i_ < ARRAY_SIZE(wms_array); i_++) { \
-      if (wms_array[i_].data.type != kSDItemMissing) { \
-        if (shada_pack_pfreed_entry(packer, wms_array[i_], max_kbyte) \
+      if ((wms_array)[i_].data.type != kSDItemMissing) { \
+        if (shada_pack_pfreed_entry(packer, (wms_array)[i_], max_kbyte) \
             == kSDWriteFailed) { \
           ret = kSDWriteFailed; \
           goto shada_write_exit; \
@@ -2874,7 +2874,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
   }
 #define PACK_WMS_ENTRY(wms_entry) \
   do { \
-    if (wms_entry.data.type != kSDItemMissing) { \
+    if ((wms_entry).data.type != kSDItemMissing) { \
       if (shada_pack_pfreed_entry(packer, wms_entry, max_kbyte) \
           == kSDWriteFailed) { \
         ret = kSDWriteFailed; \
@@ -3353,15 +3353,15 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
   entry_name " entry at position %" PRIu64 " " \
   error_desc
 #define CHECK_KEY(key, expected) ( \
-                                   key.via.str.size == sizeof(expected) - 1 \
-                                   && STRNCMP(key.via.str.ptr, expected, sizeof(expected) - 1) == 0)
+                                   (key).via.str.size == sizeof(expected) - 1 \
+                                   && STRNCMP((key).via.str.ptr, expected, sizeof(expected) - 1) == 0)
 #define CLEAR_GA_AND_ERROR_OUT(ga) \
   do { \
-    ga_clear(&ga); \
+    ga_clear(&(ga)); \
     goto shada_read_next_item_error; \
   } while (0)
 #define ID(s) s
-#define BINDUP(b) xmemdupz(b.ptr, b.size)
+#define BINDUP(b) xmemdupz((b).ptr, (b).size)
 #define TOINT(s) ((int)(s))
 #define TOLONG(s) ((long)(s))
 #define TOCHAR(s) ((char)(s))
@@ -3374,28 +3374,28 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
       emsgf(_(READERR(entry_name, error_desc)), initial_fpos); \
       CLEAR_GA_AND_ERROR_OUT(ad_ga); \
     } \
-    tgt = proc(obj.via.attr); \
+    (tgt) = proc((obj).via.attr); \
   } while (0)
 #define CHECK_KEY_IS_STR(un, entry_name) \
-  if (un.data.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR) { \
+  if ((un).data.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR) { \
     emsgf(_(READERR(entry_name, "has key which is not a string")), \
           initial_fpos); \
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
-  } else if (un.data.via.map.ptr[i].key.via.str.size == 0) { \
+  } else if ((un).data.via.map.ptr[i].key.via.str.size == 0) { \
     emsgf(_(READERR(entry_name, "has empty key")), initial_fpos); \
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
   }
 #define CHECKED_KEY(un, entry_name, name, error_desc, tgt, condition, attr, \
                     proc) \
   else if (CHECK_KEY(  /* NOLINT(readability/braces) */ \
-                       un.data.via.map.ptr[i].key, name)) { \
+                       (un).data.via.map.ptr[i].key, name)) { \
     CHECKED_ENTRY(condition, "has " name " key value " error_desc, \
-                  entry_name, un.data.via.map.ptr[i].val, \
+                  entry_name, (un).data.via.map.ptr[i].val, \
                   tgt, attr, proc); \
   }
 #define TYPED_KEY(un, entry_name, name, type_name, tgt, objtype, attr, proc) \
   CHECKED_KEY(un, entry_name, name, "which is not " type_name, tgt, \
-              un.data.via.map.ptr[i].val.type == MSGPACK_OBJECT_##objtype, \
+              (un).data.via.map.ptr[i].val.type == MSGPACK_OBJECT_##objtype, \
               attr, proc)
 #define BOOLEAN_KEY(un, entry_name, name, tgt) \
   TYPED_KEY(un, entry_name, name, "a boolean", tgt, BOOLEAN, boolean, ID)
@@ -3406,9 +3406,9 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
             BIN_CONVERTED)
 #define INT_KEY(un, entry_name, name, tgt, proc) \
   CHECKED_KEY(un, entry_name, name, "which is not an integer", tgt, \
-              ((un.data.via.map.ptr[i].val.type \
+              (((un).data.via.map.ptr[i].val.type \
                 == MSGPACK_OBJECT_POSITIVE_INTEGER) \
-               || (un.data.via.map.ptr[i].val.type \
+               || ((un).data.via.map.ptr[i].val.type \
                    == MSGPACK_OBJECT_NEGATIVE_INTEGER)), \
               i64, proc)
 #define INTEGER_KEY(un, entry_name, name, tgt) \
@@ -3419,13 +3419,13 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
   else {  /* NOLINT(readability/braces) */ \
     ga_grow(&ad_ga, 1); \
     memcpy(((char *)ad_ga.ga_data) + ((size_t)ad_ga.ga_len \
-                                      * sizeof(*un.data.via.map.ptr)), \
-           un.data.via.map.ptr + i, \
-           sizeof(*un.data.via.map.ptr)); \
+                                      * sizeof(*(un).data.via.map.ptr)), \
+           (un).data.via.map.ptr + i, \
+           sizeof(*(un).data.via.map.ptr)); \
     ad_ga.ga_len++; \
   }
 #define CONVERTED(str, len) (xmemdupz((str), (len)))
-#define BIN_CONVERTED(b) CONVERTED(b.ptr, b.size)
+#define BIN_CONVERTED(b) CONVERTED((b).ptr, (b).size)
 #define SET_ADDITIONAL_DATA(tgt, name) \
   do { \
     if (ad_ga.ga_len) { \
@@ -3448,7 +3448,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
         tv_clear(&adtv); \
         goto shada_read_next_item_error; \
       } \
-      tgt = adtv.vval.v_dict; \
+      (tgt) = adtv.vval.v_dict; \
     } \
     ga_clear(&ad_ga); \
   } while (0)
@@ -3917,7 +3917,7 @@ shada_read_next_item_start:
                 initial_fpos);
           goto shada_read_next_item_error;
         }
-        entry->data.buffer_list.buffers[i].pos = default_pos;
+        entry->data.buffer_list.buffers[i].pos = kDefaultPos;
         garray_T ad_ga;
         ga_init(&ad_ga, sizeof(*(unpacked_2.data.via.map.ptr)), 1);
         {
