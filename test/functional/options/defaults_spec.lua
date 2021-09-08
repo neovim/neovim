@@ -509,8 +509,9 @@ describe('stdpath()', function()
     eq('nvim', funcs.fnamemodify(funcs.stdpath('cache'), ':t'))
     eq('nvim', funcs.fnamemodify(funcs.stdpath('config'), ':t'))
     eq(datadir, funcs.fnamemodify(funcs.stdpath('data'), ':t'))
-    eq('table', type(funcs.stdpath('config_dirs')))
-    eq('table', type(funcs.stdpath('data_dirs')))
+    -- also test method syntax (->)
+    eq('table', type(eval("'config_dirs'->stdpath()")))
+    eq('table', type(eval("'data_dirs'->stdpath()")))
     assert_alive()  -- Check for crash. #8393
   end)
 

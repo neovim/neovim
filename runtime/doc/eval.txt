@@ -3576,10 +3576,16 @@ dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 		This function can be used by plugins to implement options with
 		validation and parsing logic.
 
+		Can also be used as a |method|: >
+			mydict->dictwatcheradd('*', 'OnDictChanged')
+
 dictwatcherdel({dict}, {pattern}, {callback})		      *dictwatcherdel()*
 		Removes a watcher added  with |dictwatcheradd()|. All three
 		arguments must match the ones passed to |dictwatcheradd()| in
 		order for the watcher to be successfully deleted.
+
+		Can also be used as a |method|: >
+			mydict->dictwatcherdel('*', 'OnDictChanged')
 
 							*did_filetype()*
 did_filetype()	Returns |TRUE| when autocommands are being executed and the
@@ -6400,7 +6406,7 @@ matcharg({nr})							*matcharg()*
 		Highlighting matches using the |:match| commands are limited
 		to three matches. |matchadd()| does not have this limitation.
 
-matchdelete({id} [, {win})		       *matchdelete()* *E802* *E803*
+matchdelete({id} [, {win}])		       *matchdelete()* *E802* *E803*
 		Deletes a match with ID {id} previously defined by |matchadd()|
 		or one of the |:match| commands.  Returns 0 if successful,
 		otherwise -1.  See example for |matchadd()|.  All matches can
@@ -6479,7 +6485,7 @@ max({expr})	Return the maximum value of all items in {expr}.
 		Can also be used as a |method|: >
 			mylist->max()
 
-menu_get({path}, {modes})				*menu_get()*
+menu_get({path} [, {modes}])				*menu_get()*
 		Returns a |List| of |Dictionaries| describing |menus| (defined
 		by |:menu|, |:amenu|, …), including |hidden-menus|.
 
@@ -6524,6 +6530,8 @@ menu_get({path}, {modes})				*menu_get()*
 			  } ]
 			} ]
 <
+		Can also be used as a |method|: >
+			GetMenuPath()->menu_get()
 
 							*min()*
 min({expr})	Return the minimum value of all items in {expr}.
@@ -6620,6 +6628,9 @@ msgpackdump({list})					*msgpackdump()*
 		4. Other strings are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
+		Can also be used as a |method|: >
+			:let dumped = mylist->msgpackdump()
+
 msgpackparse({list})					*msgpackparse()*
 		Convert a |readfile()|-style list to a list of VimL objects.
 		Example: >
@@ -6637,6 +6648,10 @@ msgpackparse({list})					*msgpackparse()*
 		   (except for 1.) some strings are parsed to
 		   |msgpack-special-dict| format which is not convenient to
 		   use.
+
+		Can also be used as a |method|: >
+			:let mylist = dumped->msgpackparse()
+<
 							*msgpack-special-dict*
 		Some messagepack strings may be parsed to special
 		dictionaries. Special dictionaries are dictionaries which
@@ -8591,7 +8606,9 @@ stdpath({what})					*stdpath()* *E6100*
 
 		Example: >
 			:echo stdpath("config")
-
+<
+		Can also be used as a |method|: >
+			:let datadir = 'data'->stdpath()
 
 str2float({expr})					*str2float()*
 		Convert String {expr} to a Float.  This mostly works the same
@@ -9275,7 +9292,7 @@ tanh({expr})						*tanh()*
 
 		Can also be used as a |method|: >
 			Compute()->tanh()
-
+<
 							*timer_info()*
 timer_info([{id}])
 		Return a list with information about timers.

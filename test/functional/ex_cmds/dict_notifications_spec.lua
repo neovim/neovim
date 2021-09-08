@@ -53,6 +53,7 @@ describe('VimL dictionary notifications', function()
         end)
       end
 
+      -- also test method syntax (->) for dictwatcheradd()
       before_each(function()
         source([[
         function! g:Changed(dict, key, value)
@@ -61,15 +62,16 @@ describe('VimL dictionary notifications', function()
           endif
           call rpcnotify(g:channel, 'values', a:key, a:value)
         endfunction
-        call dictwatcheradd(]]..dict_expr..[[, "watched", "g:Changed")
-        call dictwatcheradd(]]..dict_expr..[[, "watched2", "g:Changed")
+        eval ]]..dict_expr..[[->dictwatcheradd("watched", "g:Changed")
+        eval ]]..dict_expr..[[->dictwatcheradd("watched2", "g:Changed")
         ]])
       end)
 
+      -- also test method syntax (->) for dictwatcherdel()
       after_each(function()
         source([[
-        call dictwatcherdel(]]..dict_expr..[[, "watched", "g:Changed")
-        call dictwatcherdel(]]..dict_expr..[[, "watched2", "g:Changed")
+        eval ]]..dict_expr..[[->dictwatcherdel("watched", "g:Changed")
+        eval ]]..dict_expr..[[->dictwatcherdel("watched2", "g:Changed")
         ]])
         update('= "test"')
         update('= "test2"', 'watched2')

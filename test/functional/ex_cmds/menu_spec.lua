@@ -409,7 +409,7 @@ describe('menu_get', function()
     command('nnoremenu &Test.Test8 <NoP>')
     command('nnoremenu &Test.Test9 ""')
 
-    local m = funcs.menu_get("");
+    local m = eval("''->menu_get()")  -- also test method syntax (->)
     local expected = {
       {
         shortcut = "T",

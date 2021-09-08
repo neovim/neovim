@@ -12,7 +12,8 @@ describe('msgpack*() functions', function()
   local obj_test = function(msg, obj)
     it(msg, function()
       nvim('set_var', 'obj', obj)
-      eq(obj, eval('msgpackparse(msgpackdump(g:obj))'))
+      -- also test method syntax (->)
+      eq(obj, eval('g:obj->msgpackdump()->msgpackparse()'))
     end)
   end
 
