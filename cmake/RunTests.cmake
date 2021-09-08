@@ -58,6 +58,7 @@ execute_process(
     --lpath=?.lua
     ${BUSTED_ARGS}
     ${TEST_PATH}
+  TIMEOUT 1200
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err
   RESULT_VARIABLE res
