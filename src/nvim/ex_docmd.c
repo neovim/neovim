@@ -6948,7 +6948,7 @@ static void ex_goto(exarg_T *eap)
  */
 void alist_clear(alist_T *al)
 {
-# define FREE_AENTRY_FNAME(arg) xfree(arg->ae_fname)
+# define FREE_AENTRY_FNAME(arg) xfree((arg)->ae_fname)
   GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
 }
 
