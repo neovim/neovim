@@ -2368,6 +2368,7 @@ matchstr({expr}, {pat}[, {start}[, {count}]])
 matchstrpos({expr}, {pat}[, {start}[, {count}]])
 				List	{count}'th match of {pat} in {expr}
 max({expr})			Number	maximum value of items in {expr}
+menu_get({path} [, {modes}])	List	description of |menus| matched by {path}
 min({expr})			Number	minimum value of items in {expr}
 mkdir({name} [, {path} [, {prot}]])
 				Number	create directory {name}
@@ -5873,8 +5874,8 @@ jobwait({jobs}[, {timeout}])				*jobwait()*
 		Waits for jobs and their |on_exit| handlers to complete.
 
 		{jobs} is a List of |job-id|s to wait for.
-		{timeout} is the maximum waiting time in milliseconds, -1
-		means forever.
+		{timeout} is the maximum waiting time in milliseconds. If
+		omitted or -1, wait forever.
 
 		Timeout of 0 can be used to check the status of a job: >
 			let running = jobwait([{job-id}], 0)[0] == -1
@@ -6400,7 +6401,7 @@ matcharg({nr})							*matcharg()*
 		Highlighting matches using the |:match| commands are limited
 		to three matches. |matchadd()| does not have this limitation.
 
-matchdelete({id} [, {win})		       *matchdelete()* *E802* *E803*
+matchdelete({id} [, {win}])		       *matchdelete()* *E802* *E803*
 		Deletes a match with ID {id} previously defined by |matchadd()|
 		or one of the |:match| commands.  Returns 0 if successful,
 		otherwise -1.  See example for |matchadd()|.  All matches can
@@ -6479,7 +6480,7 @@ max({expr})	Return the maximum value of all items in {expr}.
 		Can also be used as a |method|: >
 			mylist->max()
 
-menu_get({path}, {modes})				*menu_get()*
+menu_get({path} [, {modes}])				*menu_get()*
 		Returns a |List| of |Dictionaries| describing |menus| (defined
 		by |:menu|, |:amenu|, …), including |hidden-menus|.
 
@@ -8364,7 +8365,7 @@ sinh({expr})						*sinh()*
 		Can also be used as a |method|: >
 			Compute()->sinh()
 
-sockconnect({mode}, {address}, {opts})			 *sockconnect()*
+sockconnect({mode}, {address} [, {opts}])		 *sockconnect()*
 		Connect a socket to an address. If {mode} is "pipe" then
 		{address} should be the path of a named pipe. If {mode} is
 		"tcp" then {address} should be of the form "host:port" where
@@ -8376,7 +8377,7 @@ sockconnect({mode}, {address}, {opts})			 *sockconnect()*
 		|rpcrequest()| and |rpcnotify()| to communicate with a RPC
 		socket.
 
-		{opts} is a dictionary with these keys:
+		{opts} is an optional dictionary with these keys:
 		  |on_data| : callback invoked when data was read from socket
 		  data_buffered : read socket data in |channel-buffered| mode.
 		  rpc     : If set, |msgpack-rpc| will be used to communicate
@@ -9275,7 +9276,7 @@ tanh({expr})						*tanh()*
 
 		Can also be used as a |method|: >
 			Compute()->tanh()
-
+<
 							*timer_info()*
 timer_info([{id}])
 		Return a list with information about timers.
