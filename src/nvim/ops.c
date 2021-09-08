@@ -292,7 +292,8 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
 void shift_line(int left, int round, int amount, int call_changed_bytes)
 {
   int count;
-  int i, j;
+  int i;
+  int j;
   int p_sw = (int)get_sw_value_indent(curbuf);
 
   count = get_indent();  // get current indent
@@ -346,7 +347,8 @@ static void shift_block(oparg_T *oap, int amount)
   const long p_ts = curbuf->b_p_ts;
   struct block_def bd;
   int incr;
-  int i = 0, j = 0;
+  int i = 0;
+  int j = 0;
   const int old_p_ri = p_ri;
 
   p_ri = 0;                     // don't want revins in indent
@@ -365,7 +367,9 @@ static void shift_block(oparg_T *oap, int amount)
 
   char_u *const oldp = get_cursor_line_ptr();
 
-  int startcol, oldlen, newlen;
+  int startcol;
+  int oldlen;
+  int newlen;
 
   if (!left) {
     /*
@@ -526,7 +530,8 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
   int spaces = 0;               // non-zero if cutting a TAB
   colnr_T offset;               // pointer along new line
   size_t s_len = STRLEN(s);
-  char_u      *newp, *oldp;     // new, old lines
+  char_u      *newp;
+  char_u      *oldp;     // new, old lines
   linenr_T lnum;                // loop var
   int oldstate = State;
   State = INSERT;               // don't want REPLACE for State
@@ -1418,7 +1423,8 @@ int op_delete(oparg_T *oap)
   int n;
   linenr_T lnum;
   char_u              *ptr;
-  char_u              *newp, *oldp;
+  char_u              *newp;
+  char_u              *oldp;
   struct block_def bd = { 0 };
   linenr_T old_lcount = curbuf->b_ml.ml_line_count;
 
@@ -1786,9 +1792,11 @@ static void replace_character(int c)
  */
 int op_replace(oparg_T *oap, int c)
 {
-  int n, numc;
+  int n;
+  int numc;
   int num_chars;
-  char_u              *newp, *oldp;
+  char_u              *newp;
+  char_u              *oldp;
   colnr_T oldlen;
   struct block_def bd;
   char_u              *after_p = NULL;
@@ -1888,7 +1896,8 @@ int op_replace(oparg_T *oap, int c)
       size_t after_p_len = 0;
       int col = oldlen - bd.textcol - bd.textlen + 1;
       assert(col >= 0);
-      int newrows = 0, newcols = 0;
+      int newrows = 0;
+      int newcols = 0;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
         // strlen(newp) at this point
         int newp_len = bd.textcol + bd.startspaces;
@@ -2179,8 +2188,10 @@ bool swapchar(int op_type, pos_T *pos)
  */
 void op_insert(oparg_T *oap, long count1)
 {
-  long ins_len, pre_textlen = 0;
-  char_u              *firstline, *ins_text;
+  long ins_len;
+  long pre_textlen = 0;
+  char_u              *firstline;
+  char_u              *ins_text;
   colnr_T ind_pre = 0;
   struct block_def bd;
   int i;
@@ -2622,9 +2633,11 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       break;
 
     case kMTCharWise: {
-        colnr_T startcol = 0, endcol = MAXCOL;
+        colnr_T startcol = 0;
+        colnr_T endcol = MAXCOL;
         int is_oneChar = false;
-        colnr_T cs, ce;
+        colnr_T cs;
+        colnr_T ce;
         p = ml_get(lnum);
         bd.startspaces = 0;
         bd.endspaces = 0;
@@ -3612,7 +3625,8 @@ void adjust_cursor_eol(void)
     dec_cursor();
 
     if (ve_flags == VE_ALL) {
-      colnr_T scol, ecol;
+      colnr_T scol;
+      colnr_T ecol;
 
       // Coladd is set to the width of the last character.
       getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol);
@@ -4098,7 +4112,8 @@ theend:
 static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, int leader2_len,
                        char_u *leader2_flags)
 {
-  int idx1 = 0, idx2 = 0;
+  int idx1 = 0;
+  int idx2 = 0;
   char_u  *p;
   char_u  *line1;
   char_u  *line2;
@@ -5417,7 +5432,8 @@ void write_reg_contents_lst(int name, char_u **strings, bool must_append, Motion
     return;
   }
 
-  yankreg_T  *old_y_previous, *reg;
+  yankreg_T  *old_y_previous;
+  yankreg_T  *reg;
   if (!(reg = init_write_reg(name, &old_y_previous, must_append))) {
     return;
   }
@@ -5506,7 +5522,8 @@ void write_reg_contents_ex(int name, const char_u *str, ssize_t len, bool must_a
     return;
   }
 
-  yankreg_T  *old_y_previous, *reg;
+  yankreg_T  *old_y_previous;
+  yankreg_T  *reg;
   if (!(reg = init_write_reg(name, &old_y_previous, must_append))) {
     return;
   }
@@ -5694,7 +5711,8 @@ void cursor_pos_info(dict_T *dict)
   int eol_size;
   varnumber_T last_check = 100000L;
   long line_count_selected = 0;
-  pos_T min_pos, max_pos;
+  pos_T min_pos;
+  pos_T max_pos;
   oparg_T oparg;
   struct block_def bd;
   const int l_VIsual_active = VIsual_active;

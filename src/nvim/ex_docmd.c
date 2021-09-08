@@ -2700,11 +2700,14 @@ static char_u *find_command(exarg_T *eap, int *full)
 static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *complp)
 {
   int len = (int)(p - eap->cmd);
-  int j, k, matchlen = 0;
+  int j;
+  int k;
+  int matchlen = 0;
   ucmd_T      *uc;
   int found = FALSE;
   int possible = FALSE;
-  char_u      *cp, *np;             // Point into typed cmd and test name
+  char_u      *cp;
+  char_u      *np;             // Point into typed cmd and test name
   garray_T    *gap;
   int amb_local = FALSE;            /* Found ambiguous buffer-local command,
                                        only full match global is accepted. */
@@ -5323,7 +5326,8 @@ static char *get_command_complete(int arg)
 
 static void uc_list(char_u *name, size_t name_len)
 {
-  int i, j;
+  int i;
+  int j;
   bool found = false;
   ucmd_T      *cmd;
   uint32_t a;
@@ -6139,7 +6143,8 @@ static void do_ucmd(exarg_T *eap)
   char_u      *start;
   char_u      *end = NULL;
   char_u      *ksp;
-  size_t len, totlen;
+  size_t len;
+  size_t totlen;
 
   size_t split_len = 0;
   char_u      *split_buf = NULL;
@@ -6322,7 +6327,9 @@ char_u *get_user_cmd_complete(expand_T *xp, int idx)
 int parse_addr_type_arg(char_u *value, int vallen, cmd_addr_T *addr_type_arg)
   FUNC_ATTR_NONNULL_ALL
 {
-  int i, a, b;
+  int i;
+  int a;
+  int b;
 
   for (i = 0; addr_type_complete[i].expand != ADDR_NONE; i++) {
     a = (int)STRLEN(addr_type_complete[i].name) == vallen;

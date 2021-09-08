@@ -652,7 +652,8 @@ void ex_sort(exarg_T *eap)
     goto sortend;
   }
 
-  bcount_t old_count = 0, new_count = 0;
+  bcount_t old_count = 0;
+  bcount_t new_count = 0;
 
   // Insert the lines in the sorted order below the last one.
   lnum = eap->line2;
@@ -793,7 +794,8 @@ void ex_retab(exarg_T *eap)
           len = num_spaces = vcol - start_vcol;
           num_tabs = 0;
           if (!curbuf->b_p_et) {
-            int t, s;
+            int t;
+            int s;
 
             tabstop_fromto(start_vcol, vcol,
                            curbuf->b_p_ts, new_vts_array, &t, &s);
@@ -1684,7 +1686,9 @@ void print_line(linenr_T lnum, int use_number, int list)
 
 int rename_buffer(char_u *new_fname)
 {
-  char_u      *fname, *sfname, *xfname;
+  char_u      *fname;
+  char_u      *sfname;
+  char_u      *xfname;
   buf_T       *buf;
 
   buf = curbuf;
@@ -3083,7 +3087,10 @@ void ex_z(exarg_T *eap)
   int64_t     bigness;
   char_u      *kind;
   int minus = 0;
-  linenr_T start, end, curs, i;
+  linenr_T start;
+  linenr_T end;
+  linenr_T curs;
+  linenr_T i;
   int j;
   linenr_T lnum = eap->line2;
 
@@ -3455,7 +3462,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     .do_number = false,
     .do_ic = kSubHonorOptions
   };
-  char_u *pat = NULL, *sub = NULL;  // init for GCC
+  char_u *pat = NULL;
+  char_u *sub = NULL;  // init for GCC
   int delimiter;
   bool has_second_delim = false;
   int sublen;
@@ -3648,7 +3656,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       colnr_T copycol;
       colnr_T matchcol;
       colnr_T prev_matchcol = MAXCOL;
-      char_u      *new_end, *new_start = NULL;
+      char_u      *new_end;
+      char_u      *new_start = NULL;
       char_u      *p1;
       int did_sub = FALSE;
       int lastone;
@@ -3833,7 +3842,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
             if (exmode_active) {
               char        *prompt;
               char_u      *resp;
-              colnr_T sc, ec;
+              colnr_T sc;
+              colnr_T ec;
 
               print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
 
@@ -4112,7 +4122,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
 
           // TODO(bfredl): this has some robustness issues, look into later.
           bcount_t replaced_bytes = 0;
-          lpos_T start = regmatch.startpos[0], end = regmatch.endpos[0];
+          lpos_T start = regmatch.startpos[0];
+          lpos_T end = regmatch.endpos[0];
           for (i = 0; i < nmatch-1; i++) {
             replaced_bytes += STRLEN(ml_get(lnum_start+i)) + 1;
           }
@@ -5499,7 +5510,8 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
   garray_T ga;
   int filecount;
   char_u      **files;
-  char_u      *p1, *p2;
+  char_u      *p1;
+  char_u      *p2;
   char_u      *s;
   TriState utf8 = kNone;
   bool mix = false;             // detected mixed encodings

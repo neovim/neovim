@@ -359,7 +359,8 @@ static int nv_max_linear;
  */
 static int nv_compare(const void *s1, const void *s2)
 {
-  int c1, c2;
+  int c1;
+  int c2;
 
   // The commands are sorted on absolute value.
   c1 = nv_cmds[*(const short *)s1].cmd_char;
@@ -406,7 +407,8 @@ static int find_command(int cmdchar)
 {
   int i;
   int idx;
-  int top, bot;
+  int top;
+  int bot;
   int c;
 
   // A multi-byte character is never a command.
@@ -2265,11 +2267,13 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   bool in_status_line;          // mouse in status line
   static bool in_tab_line = false;   // mouse clicked in tab line
   bool in_sep_line;             // mouse in vertical separator line
-  int c1, c2;
+  int c1;
+  int c2;
   pos_T save_cursor;
   win_T       *old_curwin = curwin;
   static pos_T orig_cursor;
-  colnr_T leftcol, rightcol;
+  colnr_T leftcol;
+  colnr_T rightcol;
   pos_T end_visual;
   long diff;
   int old_active = VIsual_active;
@@ -3390,8 +3394,10 @@ void clear_showcmd(void)
   if (VIsual_active && !char_avail()) {
     int cursor_bot = lt(VIsual, curwin->w_cursor);
     long lines;
-    colnr_T leftcol, rightcol;
-    linenr_T top, bot;
+    colnr_T leftcol;
+    colnr_T rightcol;
+    linenr_T top;
+    linenr_T bot;
 
     // Show the size of the Visual area.
     if (cursor_bot) {
@@ -3418,7 +3424,8 @@ void clear_showcmd(void)
     } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum) {
       snprintf((char *)showcmd_buf, SHOWCMD_BUFLEN, "%" PRId64, (int64_t)lines);
     } else {
-      char_u  *s, *e;
+      char_u  *s;
+      char_u  *e;
       int l;
       int bytes = 0;
       int chars = 0;
@@ -4171,7 +4178,9 @@ static void nv_mousescroll(cmdarg_T *cap)
   win_T *old_curwin = curwin;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int grid, row, col;
+    int grid;
+    int row;
+    int col;
 
     grid = mouse_grid;
     row = mouse_row;
@@ -5697,7 +5706,8 @@ static void nv_csearch(cmdarg_T *cap)
     // Include a Tab for "tx" and for "dfx".
     if (gchar_cursor() == TAB && virtual_active() && cap->arg == FORWARD
         && (t_cmd || cap->oap->op_type != OP_NOP)) {
-      colnr_T scol, ecol;
+      colnr_T scol;
+      colnr_T ecol;
 
       getvcol(curwin, &curwin->w_cursor, &scol, NULL, &ecol);
       curwin->w_cursor.coladd = ecol - scol;
@@ -6295,7 +6305,8 @@ static void nv_replace(cmdarg_T *cap)
 static void v_swap_corners(int cmdchar)
 {
   pos_T old_cursor;
-  colnr_T left, right;
+  colnr_T left;
+  colnr_T right;
 
   if (cmdchar == 'O' && VIsual_mode == Ctrl_V) {
     old_cursor = curwin->w_cursor;

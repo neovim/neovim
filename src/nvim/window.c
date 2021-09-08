@@ -572,9 +572,11 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize, int64_t Pren
 
 void win_set_buf(Window window, Buffer buffer, bool noautocmd, Error *err)
 {
-  win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
+  win_T *win = find_window_by_handle(window, err);
+  win_T *save_curwin = curwin;
   buf_T *buf = find_buffer_by_handle(buffer, err);
-  tabpage_T *tab = win_find_tabpage(win), *save_curtab = curtab;
+  tabpage_T *tab = win_find_tabpage(win);
+  tabpage_T *save_curtab = curtab;
 
   if (!win || !buf) {
     return;
@@ -782,19 +784,24 @@ void ui_ext_win_position(win_T *wp)
   FloatConfig c = wp->w_float_config;
   if (!c.external) {
     ScreenGrid *grid = &default_grid;
-    float row = c.row, col = c.col;
+    float row = c.row;
+    float col = c.col;
     if (c.relative == kFloatRelativeWindow) {
       Error dummy = ERROR_INIT;
       win_T *win = find_window_by_handle(c.window, &dummy);
       if (win) {
         grid = &win->w_grid;
-        int row_off = 0, col_off = 0;
+        int row_off = 0;
+        int col_off = 0;
         screen_adjust_grid(&grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
         if (c.bufpos.lnum >= 0) {
           pos_T pos = { c.bufpos.lnum+1, c.bufpos.col, 0 };
-          int trow, tcol, tcolc, tcole;
+          int trow;
+          int tcol;
+          int tcolc;
+          int tcole;
           textpos2screenpos(win, &pos, &trow, &tcol, &tcolc, &tcole, true);
           row += trow-1;
           col += tcol-1;
@@ -910,7 +917,10 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int available;
   int oldwin_height = 0;
   int layout;
-  frame_T   *frp, *curfrp, *frp2, *prevfrp;
+  frame_T   *frp;
+  frame_T   *curfrp;
+  frame_T   *frp2;
+  frame_T   *prevfrp;
   int before;
   int minheight;
   int wmh1;
@@ -1915,9 +1925,11 @@ void win_equal(win_T *next_curwin, bool current, int dir)
 static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int dir, int col,
                           int row, int width, int height)
 {
-  int n, m;
+  int n;
+  int m;
   int extra_sep = 0;
-  int wincount, totwincount = 0;
+  int wincount;
+  int totwincount = 0;
   frame_T     *fr;
   int next_curwin_size = 0;
   int room = 0;
@@ -2205,7 +2217,8 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
 /// @param keep_curwin don't close `curwin`
 void close_windows(buf_T *buf, int keep_curwin)
 {
-  tabpage_T   *tp, *nexttp;
+  tabpage_T   *tp;
+  tabpage_T   *nexttp;
   int h = tabline_height();
 
   ++RedrawingDisabled;
@@ -2812,7 +2825,9 @@ void win_free_all(void)
 /// @return      a pointer to the window that got the freed up space.
 win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp)
 {
-  frame_T     *frp, *frp2, *frp3;
+  frame_T     *frp;
+  frame_T     *frp2;
+  frame_T     *frp3;
   frame_T     *frp_close = win->w_frame;
   win_T       *wp;
 
@@ -3443,7 +3458,8 @@ static int frame_minheight(frame_T *topfrp, win_T *next_curwin)
 static int frame_minwidth(frame_T *topfrp, win_T *next_curwin)
 {
   frame_T     *frp;
-  int m, n;
+  int m;
+  int n;
 
   if (topfrp->fr_win != NULL) {
     if (topfrp->fr_win == next_curwin) {
@@ -5786,7 +5802,8 @@ void win_new_height(win_T *wp, int height)
 void scroll_to_fraction(win_T *wp, int prev_height)
 {
   linenr_T lnum;
-  int sline, line_size;
+  int sline;
+  int line_size;
   int height = wp->w_height_inner;
 
   // Don't change w_topline in any of these cases:
@@ -7004,7 +7021,8 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
   *tabnr = 0;
   *winnr = 0;
 
-  int tnum = 1, wnum = 1;
+  int tnum = 1;
+  int wnum = 1;
   FOR_ALL_TABS(tp) {
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (wp->handle == id) {
