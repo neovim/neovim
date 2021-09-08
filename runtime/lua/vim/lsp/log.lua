@@ -32,6 +32,17 @@ do
 
   vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
   local logfile = assert(io.open(logfilename, "a+"))
+
+	local log_info = vim.loop.fs_stat(logfilename)
+	if log_info and log_info.size > 1e9 then
+		local warn_msg = string.format(
+			"LSP client log is large (%d MB): %s",
+			log_info.size / (1000 * 1000),
+			logfilename
+		)
+		vim.notify(warn_msg)
+	end
+
   -- Start message for logging
   logfile:write(string.format("[ START ] %s ] LSP logging initiated\n", os.date(log_date_format)))
   for level, levelnr in pairs(log.levels) do
@@ -86,6 +97,11 @@ function log.set_level(level)
     assert(log.levels[level], string.format("Invalid log level: %d", level))
     current_log_level = level
   end
+end
+
+--- Gets the current log level.
+function log.get_level()
+  return current_log_level
 end
 
 --- Checks whether the level is sufficient for logging.
