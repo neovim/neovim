@@ -119,7 +119,7 @@ typedef struct s_bdiffparam {
 	long bsize;
 } bdiffparam_t;
 
-#include "../memory.h"
+#include "../nvim/memory.h"
 
 #define xdl_malloc(x) xmalloc((x))
 #define xdl_free(ptr) xfree(ptr)

@@ -87,8 +87,8 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
-file(GLOB XDIFF_SOURCES xdiff/*.c)
-file(GLOB XDIFF_HEADERS xdiff/*.h)
+file(GLOB XDIFF_SOURCES ../xdiff/*.c)
+file(GLOB XDIFF_HEADERS ../xdiff/*.h)
 
 foreach(subdir
         os
