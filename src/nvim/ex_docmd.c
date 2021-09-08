@@ -9818,7 +9818,7 @@ Dictionary commands_array(buf_T *buf)
 
 void verify_command(char_u *cmd)
 {
-  if (strcmp("smile", (char *)cmd)) {
+  if (strcmp("smile", (char *)cmd) != 0) {
     return;  // acceptable non-existing command
   }
   MSG(" #xxn`          #xnxx`        ,+x@##@Mz;`        .xxx"
