@@ -1,15 +1,9 @@
 local pretty = require 'pl.pretty'
 local global_helpers = require('test.helpers')
 
-local colors
-
-local isWindows = package.config:sub(1,1) == '\\'
-
-if isWindows then
-  colors = setmetatable({}, {__index = function() return function(s) return s end end})
-else
-  colors = require 'term.colors'
-end
+-- Colors are disabled. #15610
+-- To enable: `local colors = require 'term.colors'`
+local colors = setmetatable({}, {__index = function() return function(s) return s end end})
 
 return function(options)
   local busted = require 'busted'
