@@ -4352,19 +4352,21 @@ A jump table for the options with a short description can be found at |Q_op|.
 		- abbreviations are disabled
 		- 'autoindent' is reset
 		- 'expandtab' is reset
-		- 'formatoptions' is used like it is empty
+		- 'hkmap' is reset
 		- 'revins' is reset
 		- 'ruler' is reset
 		- 'showmatch' is reset
-		- 'smartindent' is reset
 		- 'smarttab' is reset
 		- 'softtabstop' is set to 0
 		- 'textwidth' is set to 0
 		- 'wrapmargin' is set to 0
+		- 'varsofttabstop' is made empty
 	These options keep their value, but their effect is disabled:
 		- 'cindent'
+		- 'formatoptions' is used like it is empty
 		- 'indentexpr'
 		- 'lisp'
+		- 'smartindent'
 	NOTE: When you start editing another file while the 'paste' option is
 	on, settings from the modelines or autocommands may change the
 	settings again, causing trouble when pasting text.  You might want to

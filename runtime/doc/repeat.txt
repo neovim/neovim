@@ -782,6 +782,16 @@ About the additional commands in debug mode:
   is reset (because it's not clear what you want to repeat).
 - When you want to use the Ex command with the same name, prepend a colon:
   ":cont", ":next", ":finish" (or shorter).
+							*vim9-debug*
+When debugging a compiled :def function, "step" will stop before every
+executed line, not every ingle nstruction.  Thus it works mostly like a not
+compiled function.  Access to local variables is limited you can use: >
+	echo varname
+But not much else.
+When executing a command that is not a specific bytecode instruction but
+executed like a normal Ex command, "step" will stop once in the compiled
+context, where local variables can be inspected, and once just before
+executing the command.
 
 The backtrace shows the hierarchy of function calls, e.g.:
 	>bt ~

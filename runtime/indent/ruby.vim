@@ -4,6 +4,7 @@
 " Previous Maintainer:	Nikolai Weibull <now at bitwi.se>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
+" Last Change:		2021 Feb 03
 
 " 0. Initialization {{{1
 " =================
