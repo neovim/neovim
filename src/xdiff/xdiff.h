@@ -25,9 +25,9 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // #ifdef __cplusplus
+#endif /* #ifdef __cplusplus */
 
-// xpparm_t.flags
+/* xpparm_t.flags */
 #define XDF_NEED_MINIMAL (1 << 0)
 
 #define XDF_IGNORE_WHITESPACE (1 << 1)
@@ -48,22 +48,23 @@ extern "C" {
 
 #define XDF_INDENT_HEURISTIC (1 << 23)
 
-// xdemitconf_t.flags
+/* xdemitconf_t.flags */
 #define XDL_EMIT_FUNCNAMES (1 << 0)
+#define XDL_EMIT_NO_HUNK_HDR (1 << 1)
 #define XDL_EMIT_FUNCCONTEXT (1 << 2)
 
-// merge simplification levels
+/* merge simplification levels */
 #define XDL_MERGE_MINIMAL 0
 #define XDL_MERGE_EAGER 1
 #define XDL_MERGE_ZEALOUS 2
 #define XDL_MERGE_ZEALOUS_ALNUM 3
 
-// merge favor modes
+/* merge favor modes */
 #define XDL_MERGE_FAVOR_OURS 1
 #define XDL_MERGE_FAVOR_THEIRS 2
 #define XDL_MERGE_FAVOR_UNION 3
 
-// merge output styles
+/* merge output styles */
 #define XDL_MERGE_DIFF3 1
 
 typedef struct s_mmfile {
@@ -79,14 +80,24 @@ typedef struct s_mmbuffer {
 typedef struct s_xpparam {
 	unsigned long flags;
 
-	// See Documentation/diff-options.txt.
+	/* -I<regex> */
+ #if 0  // unused by Vim
+	regex_t **ignore_regex;
+	size_t ignore_regex_nr;
+#endif
+
+	/* See Documentation/diff-options.txt. */
 	char **anchors;
 	size_t anchors_nr;
 } xpparam_t;
 
 typedef struct s_xdemitcb {
 	void *priv;
-	int (*outf)(void *, mmbuffer_t *, int);
+	int (*out_hunk)(void *,
+			long old_begin, long old_nr,
+			long new_begin, long new_nr,
+			const char *func, long funclen);
+	int (*out_line)(void *, mmbuffer_t *, int);
 } xdemitcb_t;
 
 typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long buffer_size, void *priv);
@@ -108,7 +119,7 @@ typedef struct s_bdiffparam {
 	long bsize;
 } bdiffparam_t;
 
-#include "../memory.h"
+#include "../nvim/memory.h"
 
 #define xdl_malloc(x) xmalloc((x))
 #define xdl_free(ptr) xfree(ptr)
@@ -126,9 +137,9 @@ typedef struct s_xmparam {
 	int level;
 	int favor;
 	int style;
-	const char *ancestor;	// label for orig
-	const char *file1;	// label for mf1
-	const char *file2;	// label for mf2
+	const char *ancestor;	/* label for orig */
+	const char *file1;	/* label for mf1 */
+	const char *file2;	/* label for mf2 */
 } xmparam_t;
 
 #define DEFAULT_CONFLICT_MARKER_SIZE 7
@@ -138,6 +149,6 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, mmfile_t *mf2,
 
 #ifdef __cplusplus
 }
-#endif // #ifdef __cplusplus
+#endif /* #ifdef __cplusplus */
 
-#endif // #if !defined(XDIFF_H)
+#endif /* #if !defined(XDIFF_H) */

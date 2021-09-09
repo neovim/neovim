@@ -20,17 +20,48 @@
  *
  */
 
-#if !defined(XEMIT_H)
-#define XEMIT_H
-
-
-typedef int (*emit_func_t)(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
-			   xdemitconf_t const *xecfg);
-
-xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg);
-int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
-		  xdemitconf_t const *xecfg);
+#if !defined(XTYPES_H)
+#define XTYPES_H
 
 
 
-#endif // #if !defined(XEMIT_H)
+typedef struct s_chanode {
+	struct s_chanode *next;
+	long icurr;
+} chanode_t;
+
+typedef struct s_chastore {
+	chanode_t *head, *tail;
+	long isize, nsize;
+	chanode_t *ancur;
+	chanode_t *sncur;
+	long scurr;
+} chastore_t;
+
+typedef struct s_xrecord {
+	struct s_xrecord *next;
+	char const *ptr;
+	long size;
+	unsigned long ha;
+} xrecord_t;
+
+typedef struct s_xdfile {
+	chastore_t rcha;
+	long nrec;
+	unsigned int hbits;
+	xrecord_t **rhash;
+	long dstart, dend;
+	xrecord_t **recs;
+	char *rchg;
+	long *rindex;
+	long nreff;
+	unsigned long *ha;
+} xdfile_t;
+
+typedef struct s_xdfenv {
+	xdfile_t xdf1, xdf2;
+} xdfenv_t;
+
+
+
+#endif /* #if !defined(XTYPES_H) */

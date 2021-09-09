@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
-#include "nvim/xdiff/xdiff.h"
+#include "xdiff/xdiff.h"
 #include "nvim/lua/xdiff.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
@@ -294,7 +294,7 @@ int nlua_xdl_diff(lua_State *lstate)
     case kNluaXdiffModeUnified:
       luaL_buffinit(lstate, &buf);
       ecb.priv = &buf;
-      ecb.outf = write_string;
+      ecb.out_line = write_string;
       break;
     case kNluaXdiffModeOnHunkCB:
       priv = xmalloc(sizeof(*priv));

@@ -1059,7 +1059,7 @@ static int diff_file_internal(diffio_T *diffio)
 
   emit_cfg.ctxlen = 0;  // don't need any diff_context here
   emit_cb.priv = &diffio->dio_diff;
-  emit_cb.outf = xdiff_out;
+  emit_cb.out_line = xdiff_out;
   if (xdl_diff(&diffio->dio_orig.din_mmfile,
                &diffio->dio_new.din_mmfile,
                &param, &emit_cfg, &emit_cb) < 0) {

@@ -51,4 +51,4 @@ do { \
 } while (0)
 
 
-#endif // #if !defined(XMACROS_H)
+#endif /* #if !defined(XMACROS_H) */
