@@ -2220,4 +2220,92 @@ describe('ext_multigrid', function()
       [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38},
     }}
   end)
+
+  it('does not crash when dragging mouse across grid boundary', function()
+    screen:try_resize(48, 8)
+    screen:expect{grid=[[
+    ## grid 1
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {11:[No Name]                                       }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      ^                                                |
+      {1:~                                               }|
+      {1:~                                               }|
+      {1:~                                               }|
+      {1:~                                               }|
+      {1:~                                               }|
+    ## grid 3
+                                                      |
+    ]], win_viewport={
+      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0}
+    }}
+    insert([[
+      Lorem ipsum dolor sit amet, consectetur
+      adipisicing elit, sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua.
+      Ut enim ad minim veniam, quis nostrud
+      exercitation ullamco laboris nisi ut aliquip ex
+      ea commodo consequat. Duis aute irure dolor in
+      reprehenderit in voluptate velit esse cillum
+      dolore eu fugiat nulla pariatur. Excepteur sint
+      occaecat cupidatat non proident, sunt in culpa
+      qui officia deserunt mollit anim id est
+      laborum.]])
+
+    screen:expect{grid=[[
+    ## grid 1
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      ea commodo consequat. Duis aute irure dolor in  |
+      reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+      occaecat cupidatat non proident, sunt in culpa  |
+      qui officia deserunt mollit anim id est         |
+      laborum^.                                        |
+    ## grid 3
+                                                      |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7},
+    }}
+
+    meths.input_mouse('left', 'press', '', 1,5, 1)
+    poke_eventloop()
+    meths.input_mouse('left', 'drag', '', 1, 6, 1)
+
+    screen:expect{grid=[[
+    ## grid 1
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+      occaecat cupidatat non proident, sunt in culpa  |
+      qui officia deserunt mollit anim id est         |
+      l^aborum.                                        |
+      {1:~                                               }|
+    ## grid 3
+      {7:-- VISUAL --}                                    |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 6, botline = 12, curline = 10, curcol = 1},
+    }}
+  end)
 end)
