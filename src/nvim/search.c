@@ -97,7 +97,7 @@ static struct spat saved_spats[2];
 static int saved_spats_last_idx = 0;
 static bool saved_spats_no_hlsearch = false;
 
-static char_u       *mr_pattern = NULL;    // pattern used by search_regcomp()
+static char_u *mr_pattern = NULL;    // pattern used by search_regcomp()
 static bool mr_pattern_alloced = false;    // mr_pattern was allocated
 
 /*
@@ -105,8 +105,8 @@ static bool mr_pattern_alloced = false;    // mr_pattern was allocated
  * been searched already.
  */
 typedef struct SearchedFile {
-  FILE        *fp;              // File pointer
-  char_u      *name;            // Full name of file
+  FILE *fp;              // File pointer
+  char_u *name;            // Full name of file
   linenr_T lnum;                // Line we were up to in file
   int matched;                  // Found a match in this file
 } SearchedFile;
@@ -543,14 +543,13 @@ void last_pat_prog(regmmatch_T *regmatch)
 /// @returns          FAIL (zero) for failure, non-zero for success.
 ///                   the index of the first matching
 ///                   subpattern plus one; one if there was none.
-int searchit(win_T       *win, buf_T       *buf, pos_T       *pos, pos_T       *end_pos,
-             Direction dir, char_u      *pat, long count, int options, int pat_use,
-             searchit_arg_T *extra_arg)
+int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, char_u *pat,
+             long count, int options, int pat_use, searchit_arg_T *extra_arg)
 {
   int found;
   linenr_T lnum;                // no init to shut up Apollo cc
   regmmatch_T regmatch;
-  char_u      *ptr;
+  char_u *ptr;
   colnr_T matchcol;
   lpos_T endpos;
   lpos_T matchpos;
@@ -1033,19 +1032,19 @@ static int first_submatch(regmmatch_T *rp)
 /// @param sia           optional arguments or NULL
 ///
 /// @return              0 for failure, 1 for found, 2 for found and line offset added.
-int do_search(oparg_T         *oap, int dirc, int search_delim, char_u          *pat, long count,
-              int options, searchit_arg_T  *sia)
+int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count, int options,
+              searchit_arg_T *sia)
 {
   pos_T pos;                    // position of the last match
-  char_u          *searchstr;
+  char_u *searchstr;
   struct soffset old_off;
   int retval;                   // Return value
-  char_u          *p;
+  char_u *p;
   long c;
-  char_u          *dircp;
-  char_u          *strcopy = NULL;
-  char_u          *ps;
-  char_u          *msgbuf = NULL;
+  char_u *dircp;
+  char_u *strcopy = NULL;
+  char_u *ps;
+  char_u *msgbuf = NULL;
   size_t          len;
   bool            has_offset = false;
 
@@ -1181,7 +1180,7 @@ int do_search(oparg_T         *oap, int dirc, int search_delim, char_u          
 
     if ((options & SEARCH_ECHO) && messaging() && !msg_silent
         && (!cmd_silent || !shortmess(SHM_SEARCHCOUNT))) {
-      char_u      *trunc;
+      char_u *trunc;
       char_u      off_buf[40];
       size_t      off_len = 0;
 
@@ -1459,8 +1458,8 @@ end_do_search:
 int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
 {
   linenr_T start = 0;
-  char_u      *ptr;
-  char_u      *p;
+  char_u *ptr;
+  char_u *p;
 
   if (buf->b_ml.ml_line_count == 0) {
     return FAIL;
@@ -1534,7 +1533,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
   int dir = cap->arg;                   // true for searching forward
   long count = cap->count1;             // repeat count
   int col;
-  char_u              *p;
+  char_u *p;
   int len;
   bool stop = true;
 
@@ -1763,7 +1762,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   bool backwards = false;               // init for gcc
   bool raw_string = false;              // search for raw string
   bool inquote = false;                 // true when inside quotes
-  char_u      *ptr;
+  char_u *ptr;
   int hash_dir = 0;                     // Direction searched for # things
   int comment_dir = 0;                  // Direction searched for comments
   int traveled = 0;                     // how far we've searched so far
@@ -2363,7 +2362,7 @@ static int check_linecomment(const char_u *line)
 /// @param c  char to show match for
 void showmatch(int c)
 {
-  pos_T       *lpos, save_cursor;
+  pos_T *lpos, save_cursor;
   pos_T mpos;
   colnr_T vcol;
   long *so = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
@@ -2372,7 +2371,7 @@ void showmatch(int c)
   long save_siso;
   int save_state;
   colnr_T save_dollar_vcol;
-  char_u      *p;
+  char_u *p;
 
   /*
    * Only show match for chars in the 'matchpairs' option.
@@ -2656,7 +2655,7 @@ bool findpar(bool *pincl, int dir, long count, int what, int both)
  */
 static int inmacro(char_u *opt, char_u *s)
 {
-  char_u      *macro;
+  char_u *macro;
 
   for (macro = opt; macro[0]; ++macro) {
     /* Accept two characters in the option being equal to two characters
@@ -2685,7 +2684,7 @@ static int inmacro(char_u *opt, char_u *s)
  */
 int startPS(linenr_T lnum, int para, int both)
 {
-  char_u      *s;
+  char_u *s;
 
   s = ml_get(lnum);
   if (*s == para || *s == '\f' || (both && *s == '}')) {
@@ -3386,11 +3385,11 @@ extend:
 int current_block(oparg_T *oap, long count, int include, int what, int other)
 {
   pos_T old_pos;
-  pos_T       *pos = NULL;
+  pos_T *pos = NULL;
   pos_T start_pos;
-  pos_T       *end_pos;
+  pos_T *end_pos;
   pos_T old_start, old_end;
-  char_u      *save_cpo;
+  char_u *save_cpo;
   bool sol = false;                      // '{' at start of line
 
   old_pos = curwin->w_cursor;
@@ -3520,8 +3519,8 @@ int current_block(oparg_T *oap, long count, int include, int what, int other)
 /// @return         true if the cursor is on a "<aaa>" tag.  Ignore "<aaa/>".
 static bool in_html_tag(bool end_tag)
 {
-  char_u      *line = get_cursor_line_ptr();
-  char_u      *p;
+  char_u *line = get_cursor_line_ptr();
+  char_u *p;
   int c;
   int lc = NUL;
   pos_T pos;
@@ -3577,8 +3576,8 @@ int current_tagblock(oparg_T *oap, long count_arg, bool include)
   pos_T start_pos;
   pos_T end_pos;
   pos_T old_start, old_end;
-  char_u      *p;
-  char_u      *cp;
+  char_u *p;
+  char_u *cp;
   int len;
   bool do_include = include;
   bool save_p_ws = p_ws;
@@ -3999,7 +3998,7 @@ static int find_prev_quote(char_u *line, int col_start, int quotechar, char_u *e
 bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *line = get_cursor_line_ptr();
+  char_u *line = get_cursor_line_ptr();
   int col_end;
   int col_start = curwin->w_cursor.col;
   bool inclusive = false;
@@ -4458,7 +4457,7 @@ static int is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direct
  */
 int linewhite(linenr_T lnum)
 {
-  char_u  *p;
+  char_u *p;
 
   p = skipwhite(ml_get(lnum));
   return *p == NUL;
@@ -4467,7 +4466,7 @@ int linewhite(linenr_T lnum)
 // Add the search count "[3/19]" to "msgbuf".
 // See update_search_stat() for other arguments.
 static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool show_top_bot_msg,
-                                char_u  *msgbuf, bool recompute, int maxcount, long timeout)
+                                char_u *msgbuf, bool recompute, int maxcount, long timeout)
 {
   searchstat_T stat;
 
@@ -4544,8 +4543,8 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
   static int      incomplete = 0;
   static int      last_maxcount = SEARCH_STAT_DEF_MAX_COUNT;
   static int      chgtick = 0;
-  static char_u   *lastpat = NULL;
-  static buf_T    *lbuf = NULL;
+  static char_u *lastpat = NULL;
+  static buf_T *lbuf = NULL;
   proftime_T      start;
 
   memset(stat, 0, sizeof(searchstat_T));
@@ -4637,7 +4636,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
 void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   pos_T   pos = curwin->w_cursor;
-  char_u    *pattern = NULL;
+  char_u *pattern = NULL;
   int     maxcount = SEARCH_STAT_DEF_MAX_COUNT;
   long    timeout = SEARCH_STAT_DEF_TIMEOUT;
   bool     recompute = true;
@@ -4650,9 +4649,9 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    dict_T    *dict;
-    dictitem_T  *di;
-    listitem_T  *li;
+    dict_T *dict;
+    dictitem_T *di;
+    listitem_T *li;
     bool error = false;
 
     if (argvars[0].v_type != VAR_DICT || argvars[0].vval.v_dict == NULL) {
@@ -4766,18 +4765,18 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   int max_path_depth = 50;
   long match_count = 1;
 
-  char_u      *pat;
-  char_u      *new_fname;
-  char_u      *curr_fname = curbuf->b_fname;
-  char_u      *prev_fname = NULL;
+  char_u *pat;
+  char_u *new_fname;
+  char_u *curr_fname = curbuf->b_fname;
+  char_u *prev_fname = NULL;
   linenr_T lnum;
   int depth;
   int depth_displayed;                  // For type==CHECK_PATH
   int old_files;
   int already_searched;
-  char_u      *file_line;
-  char_u      *line;
-  char_u      *p;
+  char_u *file_line;
+  char_u *line;
+  char_u *p;
   char_u save_char;
   bool define_matched;
   regmatch_T regmatch;
@@ -4787,10 +4786,10 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   bool did_show = false;
   bool found = false;
   int i;
-  char_u      *already = NULL;
-  char_u      *startp = NULL;
-  char_u      *inc_opt = NULL;
-  win_T       *curwin_save = NULL;
+  char_u *already = NULL;
+  char_u *startp = NULL;
+  char_u *inc_opt = NULL;
+  win_T *curwin_save = NULL;
   const int l_g_do_tagpreview = g_do_tagpreview;
 
   regmatch.regprog = NULL;
@@ -5108,7 +5107,7 @@ search_line:
     if (matched) {
       if (action == ACTION_EXPAND) {
         bool cont_s_ipos = false;
-        char_u  *aux;
+        char_u *aux;
 
         if (depth == -1 && lnum == curwin->w_cursor.lnum) {
           break;
@@ -5373,7 +5372,7 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
                              linenr_T *lnum, long count)
   FUNC_ATTR_NONNULL_ARG(1, 6)
 {
-  char_u  *p;
+  char_u *p;
 
   if (did_show) {
     msg_putchar('\n');          // cursor below last one

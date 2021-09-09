@@ -92,7 +92,7 @@
  */
 struct bw_info {
   int bw_fd;                     // file descriptor
-  char_u      *bw_buf;           // buffer with data to be written
+  char_u *bw_buf;           // buffer with data to be written
   int bw_len;                    // length of data
 #ifdef HAS_BW_FLAGS
   int bw_flags;                  // FIO_ flags
@@ -100,7 +100,7 @@ struct bw_info {
   char_u bw_rest[CONV_RESTLEN];  // not converted bytes
   int bw_restlen;                // nr of bytes in bw_rest[]
   int bw_first;                  // first write call
-  char_u      *bw_conv_buf;      // buffer for writing converted chars
+  char_u *bw_conv_buf;      // buffer for writing converted chars
   int bw_conv_buflen;            // size of bw_conv_buf
   int bw_conv_error;             // set for conversion error
   linenr_T bw_conv_error_lnum;   // first line with error or zero
@@ -188,10 +188,10 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   colnr_T read_buf_col = 0;             // next char to read from this line
   char_u c;
   linenr_T lnum = from;
-  char_u      *ptr = NULL;              // pointer into read buffer
-  char_u      *buffer = NULL;           // read buffer
-  char_u      *new_buffer = NULL;       // init to shut up gcc
-  char_u      *line_start = NULL;       // init to shut up gcc
+  char_u *ptr = NULL;              // pointer into read buffer
+  char_u *buffer = NULL;           // read buffer
+  char_u *new_buffer = NULL;       // init to shut up gcc
+  char_u *line_start = NULL;       // init to shut up gcc
   int wasempty;                         // buffer was empty before reading
   colnr_T len;
   long size = 0;
@@ -227,11 +227,11 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   int bad_char_behavior = BAD_REPLACE;
   /* BAD_KEEP, BAD_DROP or character to
    * replace with */
-  char_u      *tmpname = NULL;          // name of 'charconvert' output file
+  char_u *tmpname = NULL;          // name of 'charconvert' output file
   int fio_flags = 0;
-  char_u      *fenc;                    // fileencoding to use
+  char_u *fenc;                    // fileencoding to use
   bool fenc_alloced;                    // fenc_next is in allocated memory
-  char_u      *fenc_next = NULL;        // next item in 'fencs' or NULL
+  char_u *fenc_next = NULL;        // next item in 'fencs' or NULL
   bool advance_fenc = false;
   long real_size = 0;
 # ifdef HAVE_ICONV
@@ -244,9 +244,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
                                            wasn't possible */
   char_u conv_rest[CONV_RESTLEN];
   int conv_restlen = 0;                 // nr of bytes in conv_rest[]
-  buf_T       *old_curbuf;
-  char_u      *old_b_ffname;
-  char_u      *old_b_fname;
+  buf_T *old_curbuf;
+  char_u *old_b_ffname;
+  char_u *old_b_fname;
   int using_b_ffname;
   int using_b_fname;
   static char *msg_is_a_directory = N_("is a directory");
@@ -1117,7 +1117,7 @@ retry:
               || (!curbuf->b_p_bomb
                   && tmpname == NULL
                   && (*fenc == 'u' || *fenc == NUL)))) {
-        char_u  *ccname;
+        char_u *ccname;
         int blen;
 
         // no BOM detection in a short file or in binary mode
@@ -1173,8 +1173,8 @@ retry:
          * Attempt conversion of the read bytes to 'encoding' using
          * iconv().
          */
-        const char      *fromp;
-        char            *top;
+        const char *fromp;
+        char *top;
         size_t from_size;
         size_t to_size;
 
@@ -1229,8 +1229,8 @@ retry:
 
       if (fio_flags != 0) {
         unsigned int u8c;
-        char_u  *dest;
-        char_u  *tail = NULL;
+        char_u *dest;
+        char_u *tail = NULL;
 
         // Convert Unicode or Latin1 to UTF-8.
         // Go from end to start through the buffer, because the number
@@ -2001,7 +2001,7 @@ bool is_dev_fd_file(char_u *fname)
 /// @param endp     end of more bytes read
 static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, char_u *endp)
 {
-  char_u      *s;
+  char_u *s;
   linenr_T lnum;
 
   lnum = curbuf->b_ml.ml_line_count - linecnt + 1;
@@ -2077,8 +2077,8 @@ void set_forced_fenc(exarg_T *eap)
 static char_u *next_fenc(char_u **pp, bool *alloced)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  char_u      *p;
-  char_u      *r;
+  char_u *p;
+  char_u *r;
 
   *alloced = false;
   if (**pp == NUL) {
@@ -2112,8 +2112,8 @@ static char_u *next_fenc(char_u **pp, bool *alloced)
 ///               Returns NULL if the conversion failed ("*fdp" is not set) .
 static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
 {
-  char_u      *tmpname;
-  char_u      *errmsg = NULL;
+  char_u *tmpname;
+  char_u *errmsg = NULL;
 
   tmpname = vim_tempname();
   if (tmpname == NULL) {
@@ -2192,13 +2192,13 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
               int append, int forceit, int reset_changed, int filtering)
 {
   int fd;
-  char_u          *backup = NULL;
+  char_u *backup = NULL;
   int backup_copy = FALSE;               // copy the original file?
   int dobackup;
-  char_u          *ffname;
-  char_u          *wfname = NULL;       // name of file to write to
-  char_u          *s;
-  char_u          *ptr;
+  char_u *ffname;
+  char_u *wfname = NULL;       // name of file to write to
+  char_u *s;
+  char_u *ptr;
   char_u c;
   int len;
   linenr_T lnum;
@@ -2213,9 +2213,9 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   char *errmsg = NULL;
   int errmsgarg = 0;
   bool errmsg_allocated = false;
-  char_u          *buffer;
+  char_u *buffer;
   char_u smallbuf[SMBUFSIZE];
-  char_u          *backup_ext;
+  char_u *backup_ext;
   int bufsize;
   long perm;                                // file permissions
   int retval = OK;
@@ -2227,7 +2227,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   int prev_got_int = got_int;
   int checking_conversion;
   bool file_readonly = false;               // overwritten file is read-only
-  static char     *err_readonly =
+  static char *err_readonly =
     "is read-only (cannot override: \"W\" in 'cpoptions')";
 #if defined(UNIX)
   int made_writable = FALSE;                // 'w' bit has been set
@@ -2240,8 +2240,8 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   struct bw_info write_info;            // info for buf_write_bytes()
   int converted = FALSE;
   int notconverted = FALSE;
-  char_u          *fenc;                // effective 'fileencoding'
-  char_u          *fenc_tofree = NULL;   // allocated "fenc"
+  char_u *fenc;                // effective 'fileencoding'
+  char_u *fenc_tofree = NULL;   // allocated "fenc"
 #ifdef HAS_BW_FLAGS
   int wb_flags = 0;
 #endif
@@ -2743,9 +2743,9 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
     if (backup_copy) {
       char_u *wp;
       int some_error = false;
-      char_u      *dirp;
-      char_u      *rootname;
-      char_u      *p;
+      char_u *dirp;
+      char_u *rootname;
+      char_u *p;
 
       /*
        * Try to make the backup in each directory in the 'bdir' option.
@@ -2900,9 +2900,9 @@ nobackup:
       }
       SET_ERRMSG(NULL);
     } else {
-      char_u      *dirp;
-      char_u      *p;
-      char_u      *rootname;
+      char_u *dirp;
+      char_u *p;
+      char_u *rootname;
 
       /*
        * Make a backup by renaming the original file.
@@ -3754,7 +3754,7 @@ nofail:
  */
 static int set_rw_fname(char_u *fname, char_u *sfname)
 {
-  buf_T       *buf = curbuf;
+  buf_T *buf = curbuf;
 
   // It's like the unnamed buffer is deleted....
   if (curbuf->b_p_bl) {
@@ -3846,7 +3846,7 @@ static bool msg_add_fileformat(int eol_type)
  */
 void msg_add_lines(int insert_space, long lnum, off_T nchars)
 {
-  char_u  *p;
+  char_u *p;
 
   p = IObuff + STRLEN(IObuff);
 
@@ -3928,7 +3928,7 @@ static bool time_differs(long t1, long t2) FUNC_ATTR_CONST
 static int buf_write_bytes(struct bw_info *ip)
 {
   int wlen;
-  char_u      *buf = ip->bw_buf;        // data to write
+  char_u *buf = ip->bw_buf;        // data to write
   int len = ip->bw_len;                 // length of data
 #ifdef HAS_BW_FLAGS
   int flags = ip->bw_flags;             // extra flags
@@ -3938,7 +3938,7 @@ static int buf_write_bytes(struct bw_info *ip)
    * Skip conversion when writing the BOM.
    */
   if (!(flags & FIO_NOCONVERT)) {
-    char_u          *p;
+    char_u *p;
     unsigned c;
     int n;
 
@@ -4038,9 +4038,9 @@ static int buf_write_bytes(struct bw_info *ip)
 
 # ifdef HAVE_ICONV
     if (ip->bw_iconv_fd != (iconv_t)-1) {
-      const char  *from;
+      const char *from;
       size_t fromlen;
-      char        *to;
+      char *to;
       size_t tolen;
 
       // Convert with iconv().
@@ -4118,7 +4118,7 @@ static int buf_write_bytes(struct bw_info *ip)
 /// @return true for an error, false when it's OK.
 static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *p = *pp;
+  char_u *p = *pp;
   bool error = false;
   int cc;
 
@@ -4261,7 +4261,7 @@ static int get_fio_flags(const char_u *name)
  */
 static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
 {
-  char        *name = NULL;
+  char *name = NULL;
   int len = 2;
 
   if (p[0] == 0xef && p[1] == 0xbb && size >= 3 && p[2] == 0xbf
@@ -4306,7 +4306,7 @@ static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
 static int make_bom(char_u *buf, char_u *name)
 {
   int flags;
-  char_u      *p;
+  char_u *p;
 
   flags = get_fio_flags(name);
 
@@ -4335,7 +4335,7 @@ static int make_bom(char_u *buf, char_u *name)
 /// name.
 void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
 {
-  char_u      *p;
+  char_u *p;
 
   if (buf->b_fname != NULL
       && !bt_nofile(buf)
@@ -4637,8 +4637,8 @@ int vim_rename(const char_u *from, const char_u *to)
   int fd_in;
   int fd_out;
   int n;
-  char        *errmsg = NULL;
-  char        *buffer;
+  char *errmsg = NULL;
+  char *buffer;
   long perm;
 #ifdef HAVE_ACL
   vim_acl_T acl;                // ACL from original file
@@ -4862,10 +4862,10 @@ int check_timestamps(int focus)
  */
 static int move_lines(buf_T *frombuf, buf_T *tobuf)
 {
-  buf_T       *tbuf = curbuf;
+  buf_T *tbuf = curbuf;
   int retval = OK;
   linenr_T lnum;
-  char_u      *p;
+  char_u *p;
 
   // Copy the lines in "frombuf" to "tobuf".
   curbuf = tobuf;
@@ -4907,17 +4907,17 @@ int buf_check_timestamp(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
   int retval = 0;
-  char_u      *path;
-  char        *mesg = NULL;
-  char        *mesg2 = "";
+  char_u *path;
+  char *mesg = NULL;
+  char *mesg2 = "";
   bool helpmesg = false;
   bool reload = false;
   bool can_reload = false;
   uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;
   static bool busy = false;
-  char_u      *s;
-  char        *reason;
+  char_u *s;
+  char *reason;
 
   bufref_T bufref;
   set_bufref(&bufref, buf);
@@ -5126,7 +5126,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   pos_T old_cursor;
   linenr_T old_topline;
   int old_ro = buf->b_p_ro;
-  buf_T       *savebuf;
+  buf_T *savebuf;
   bufref_T bufref;
   int saved = OK;
   aco_save_T aco;
@@ -5278,7 +5278,7 @@ void write_lnum_adjust(linenr_T offset)
 /// unless when it looks like a URL.
 void forward_slash(char_u *fname)
 {
-  char_u      *p;
+  char_u *p;
 
   if (path_with_url((const char *)fname)) {
     return;
@@ -5504,11 +5504,11 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   char_u buf[100];
-  char_u      *tail;
-  char_u      *regpat;
+  char_u *tail;
+  char_u *regpat;
   char allow_dirs;
   bool match;
-  char_u      *p;
+  char_u *p;
 
   tail = path_tail(sfname);
 
@@ -5545,7 +5545,7 @@ char_u * file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *all
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char_u *endp;
-  char_u      *reg_pat;
+  char_u *reg_pat;
   const char_u *p;
   int nested = 0;
   int add_dollar = TRUE;

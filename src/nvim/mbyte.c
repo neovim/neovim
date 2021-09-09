@@ -1578,7 +1578,7 @@ void show_utf8(void)
 {
   int len;
   int rlen = 0;
-  char_u      *line;
+  char_u *line;
   int clen;
   int i;
 
@@ -1889,10 +1889,10 @@ int mb_tail_off(char_u *base, char_u *p)
 void utf_find_illegal(void)
 {
   pos_T pos = curwin->w_cursor;
-  char_u      *p;
+  char_u *p;
   int len;
   vimconv_T vimconv;
-  char_u      *tofree = NULL;
+  char_u *tofree = NULL;
 
   vimconv.vc_type = CONV_NONE;
   if (enc_canon_props(curbuf->b_p_fenc) & ENC_8BIT) {
@@ -2013,7 +2013,7 @@ char_u * mb_prevptr(char_u *line, char_u *p)
  */
 int mb_charlen(char_u *str)
 {
-  char_u      *p = str;
+  char_u *p = str;
   int count;
 
   if (p == NULL) {
@@ -2032,7 +2032,7 @@ int mb_charlen(char_u *str)
  */
 int mb_charlen_len(char_u *str, int len)
 {
-  char_u      *p = str;
+  char_u *p = str;
   int count;
 
   for (count = 0; *p != NUL && p < str + len; count++) {
@@ -2118,7 +2118,7 @@ char_u * enc_skip(char_u *p)
  */
 char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
 {
-  char_u      *p, *s;
+  char_u *p, *s;
   int i;
 
   if (STRCMP(enc, "default") == 0) {
@@ -2279,7 +2279,7 @@ void * my_iconv_open(char_u *to, char_u *from)
   iconv_t fd;
 #define ICONV_TESTLEN 400
   char_u tobuf[ICONV_TESTLEN];
-  char        *p;
+  char *p;
   size_t tolen;
   static WorkingStatus iconv_working = kUnknown;
 
@@ -2321,14 +2321,14 @@ void * my_iconv_open(char_u *to, char_u *from)
 static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen,
                             size_t *unconvlenp, size_t *resultlenp)
 {
-  const char  *from;
+  const char *from;
   size_t fromlen;
-  char        *to;
+  char *to;
   size_t tolen;
   size_t len = 0;
   size_t done = 0;
-  char_u      *result = NULL;
-  char_u      *p;
+  char_u *result = NULL;
+  char_u *p;
   int l;
 
   from = (char *)str;
@@ -2504,8 +2504,8 @@ char_u *string_convert(const vimconv_T *const vcp, char_u *ptr, size_t *lenp)
 char_u * string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp,
                             size_t *unconvlenp)
 {
-  char_u      *retval = NULL;
-  char_u      *d;
+  char_u *retval = NULL;
+  char_u *d;
   int l;
   int c;
 
