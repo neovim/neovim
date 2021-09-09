@@ -767,17 +767,4 @@ new({source}, {lang}, {opts})                             *languagetree.new()*
                                        the injection language query per
                                        language.
 
-
-==============================================================================
-Lua module: vim.treesitter.health                          *treesitter-health*
-
-check_health()                                                *check_health()*
-                TODO: Documentation
-
-list_parsers()                                                *list_parsers()*
-                Lists the parsers currently installed
-
-                Return: ~
-                    A list of parsers
-
  vim:tw=78:ts=8:ft=help:norl:
