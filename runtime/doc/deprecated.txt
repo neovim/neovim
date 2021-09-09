@@ -14,6 +14,7 @@ updated.
 
 API ~
 *nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
+*nvim_buf_set_virtual_text()*	Use |nvim_buf_set_extmark()| instead.
 *nvim_command_output()*		Use |nvim_exec()| instead.
 *nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
 
@@ -54,6 +55,8 @@ Functions ~
 			without stopping the job. Use chanclose(id) to close
 			any socket.
 
+Lua ~
+*vim.register_keystroke_callback()* Use |vim.on_key()| instead.
 
 Modifiers ~
 *cpo-<*

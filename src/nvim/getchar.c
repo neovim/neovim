@@ -1563,8 +1563,8 @@ int vgetc(void)
    */
   may_garbage_collect = false;
 
-  // Exec lua callbacks for on_keystroke
-  nlua_execute_log_keystroke(c);
+  // Execute Lua on_key callbacks.
+  nlua_execute_on_key(c);
 
   return c;
 }
