@@ -125,7 +125,7 @@ Advanced editing ~
 |windows.txt|	commands for using multiple windows and buffers
 |tabpage.txt|	commands for using multiple tab pages
 |spell.txt|	spell checking
-|diff.txt|	working with two to four versions of the same file
+|diff.txt|	working with two to eight versions of the same file
 |autocmd.txt|	automatically executing commands on an event
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
@@ -145,6 +145,8 @@ Programming language support ~
 |filetype.txt|     settings done specifically for a type of file
 |quickfix.txt|     commands for a quick edit-compile-fix cycle
 |ft_ada.txt|       Ada (the programming language) support
+|ft_ps1.txt|       Filetype plugin for Windows PowerShell
+|ft_raku.txt|      Filetype plugin for Raku
 |ft_rust.txt|      Filetype plugin for Rust
 |ft_sql.txt|       about the SQL filetype plugin
 

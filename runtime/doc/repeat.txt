@@ -255,7 +255,9 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			ftdetect scripts are loaded, only the matching
 			directories are added to 'runtimepath'.  This is
 			useful in your .vimrc.  The plugins will then be
-			loaded during initialization, see |load-plugins|.
+			loaded during initialization, see |load-plugins| (note
+			that the loading order will be reversed, because each
+			directory is inserted before others).
 			Note that for ftdetect scripts to be loaded
 			you will need to write `filetype plugin indent on`
 			AFTER all `packadd!` commands.

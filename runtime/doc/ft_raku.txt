@@ -45,7 +45,7 @@ Numbers, subscripts and superscripts are available with 's' and 'S':
 	1s ₁    1S ¹  ~
 	2s ₂    9S ⁹  ~
 
-But some don´t come defined by default. Those are digraph definitions you can
+But some don't come defined by default. Those are digraph definitions you can
 add in your ~/.vimrc file. >
 	exec 'digraph \\ '.char2nr('∖')
 	exec 'digraph \< '.char2nr('≼')
