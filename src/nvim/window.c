@@ -840,14 +840,15 @@ void ui_ext_win_viewport(win_T *wp)
 {
   if ((wp == curwin || ui_has(kUIMultigrid)) && wp->w_viewport_invalid) {
     int botline = wp->w_botline;
-    if (botline == wp->w_buffer->b_ml.ml_line_count+1
-        && wp->w_empty_rows == 0) {
+    int line_count = wp->w_buffer->b_ml.ml_line_count;
+    if (botline == line_count+1 && wp->w_empty_rows == 0) {
       // TODO(bfredl): The might be more cases to consider, like how does this
       // interact with incomplete final line? Diff filler lines?
       botline = wp->w_buffer->b_ml.ml_line_count;
     }
     ui_call_win_viewport(wp->w_grid_alloc.handle, wp->handle, wp->w_topline-1,
-                         botline, wp->w_cursor.lnum-1, wp->w_cursor.col);
+                         botline, wp->w_cursor.lnum-1, wp->w_cursor.col,
+                         line_count);
     wp->w_viewport_invalid = false;
   }
 }
