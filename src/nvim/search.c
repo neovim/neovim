@@ -1010,22 +1010,23 @@ static int first_submatch(regmmatch_T *rp)
 
 /// Highest level string search function.
 /// Search for the 'count'th occurrence of pattern 'pat' in direction 'dirc'
-///    If 'dirc' is 0: use previous dir.
-///    If 'pat' is NULL or empty : use previous string.
-///    If 'options & SEARCH_REV' : go in reverse of previous dir.
-///    If 'options & SEARCH_ECHO': echo the search command and handle options
-///    If 'options & SEARCH_MSG' : may give error message
-///    If 'options & SEARCH_OPT' : interpret optional flags
-///    If 'options & SEARCH_HIS' : put search pattern in history
-///    If 'options & SEARCH_NOOF': don't add offset to position
-///    If 'options & SEARCH_MARK': set previous context mark
-///    If 'options & SEARCH_KEEP': keep previous search pattern
-///    If 'options & SEARCH_START': accept match at curpos itself
-///    If 'options & SEARCH_PEEK': check for typed char, cancel search
 ///
 /// Careful: If spats[0].off.line == TRUE and spats[0].off.off == 0 this
 /// makes the movement linewise without moving the match position.
 ///
+/// @param dirc          if 0: use previous dir.
+/// @param pat           NULL or empty : use previous string.
+/// @param options       if TRUE and
+///                      SEARCH_REV   == TRUE : go in reverse of previous dir.
+///                      SEARCH_ECHO  == TRUE : echo the search command and handle options
+///                      SEARCH_MSG   == TRUE : may give error message
+///                      SEARCH_OPT   == TRUE : interpret optional flags
+///                      SEARCH_HIS   == TRUE : put search pattern in history
+///                      SEARCH_NOOF  == TRUE : don't add offset to position
+///                      SEARCH_MARK  == TRUE : set previous context mark
+///                      SEARCH_KEEP  == TRUE : keep previous search pattern
+///                      SEARCH_START == TRUE : accept match at curpos itself
+///                      SEARCH_PEEK  == TRUE : check for typed char, cancel search
 /// @param oap           can be NULL
 /// @param dirc          '/' or '?'
 /// @param search_delim  delimiter for search, e.g. '%' in s%regex%replacement
