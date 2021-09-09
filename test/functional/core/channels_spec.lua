@@ -12,6 +12,7 @@ local retry = helpers.retry
 local expect_twostreams = helpers.expect_twostreams
 local assert_alive = helpers.assert_alive
 local pcall_err = helpers.pcall_err
+local expect_msg_seq = helpers.expect_msg_seq
 
 describe('channels', function()
   local init = [[
@@ -95,10 +96,28 @@ describe('channels', function()
     eq({"notification", "stdout", {id, {"[1, ['hola'], 'stdin']"}}}, next_msg())
 
     command("call chanclose(id, 'stdin')")
-    expect_twostreams({{"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
-                       {'notification', 'stdout', {id, {''}}}},
-                      {{"notification", "stderr", {id, {"*dies*"}}},
-                       {'notification', 'stderr', {id, {''}}}})
+    expect_msg_seq(
+      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
+        {'notification', 'stdout', {id, {''}}},
+        {"notification", "stderr", {id, {"*dies*"}}},
+        {'notification', 'stderr', {id, {''}}},
+      },
+      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
+        {'notification', 'stdout', {id, {''}}},
+        {'notification', 'stderr', {id, {''}}},
+        {"notification", "stderr", {id, {"*dies*"}}},
+      },
+      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
+        {"notification", "stderr", {id, {"*dies*"}}},
+        {'notification', 'stdout', {id, {''}}},
+        {'notification', 'stderr', {id, {''}}},
+      },
+      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
+        {"notification", "stderr", {id, {"*dies*"}}},
+        {'notification', 'stderr', {id, {''}}},
+        {'notification', 'stdout', {id, {''}}},
+      }
+    )
     eq({"notification", "exit", {3,0}}, next_msg())
   end)
 
