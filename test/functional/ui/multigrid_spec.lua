@@ -2044,7 +2044,7 @@ describe('ext_multigrid', function()
     feed('ifoo\nbar<esc>')
 
     meths.input_mouse('left', 'press', '', 5, 0, 0)
-    wait()
+    poke_eventloop()
     meths.input_mouse('left', 'drag', '', 5, 1, 2)
 
     screen:expect{grid=[[
