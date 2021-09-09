@@ -753,8 +753,7 @@ use another single-byte character.  This is useful if you want to include a
 	:s+/+//+
 
 You can use most characters, but not an alphanumeric character, '\', '"' or
-'|'.  In Vim9 script you should not use '#' because it may be recognized as
-the start of a comment.
+'|'.
 
 For the definition of a pattern, see |pattern|.  In Visual block mode, use
 |/\%V| in the pattern to have the substitute work in the block only.
