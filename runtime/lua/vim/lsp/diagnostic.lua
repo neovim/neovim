@@ -270,18 +270,15 @@ local function set_diagnostic_cache(diagnostics, bufnr, client_id)
   -- client to interpret diagnostics as error, warning, info or hint.
   -- TODO: Replace this with server-specific heuristics to infer severity.
   local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
+  local last_line = vim.api.nvim_buf_get_lines(bufnr, buf_line_count-1, buf_line_count, true)[1]
   for _, diagnostic in ipairs(diagnostics) do
     if diagnostic.severity == nil then
       diagnostic.severity = DiagnosticSeverity.Error
     end
     -- Account for servers that place diagnostics on terminating newline
-    if buf_line_count > 0 then
-      diagnostic.range.start.line = math.max(math.min(
-        diagnostic.range.start.line, buf_line_count - 1
-      ), 0)
-      diagnostic.range["end"].line = math.max(math.min(
-        diagnostic.range["end"].line, buf_line_count - 1
-      ), 0)
+    if buf_line_count > 0 and last_line and diagnostic.range.start.line >= buf_line_count then
+      diagnostic.range.start.line = buf_line_count - 1
+      diagnostic.range.start.character = string.len(last_line) - 1
     end
   end
 
