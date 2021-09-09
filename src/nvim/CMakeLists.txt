@@ -87,8 +87,8 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
-file(GLOB XDIFF_SOURCES ../xdiff/*.c)
-file(GLOB XDIFF_HEADERS ../xdiff/*.h)
+file(GLOB EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c)
+file(GLOB EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h)
 
 foreach(subdir
         os
@@ -171,8 +171,8 @@ foreach(sfile ${CONV_SOURCES})
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
-# xdiff: inlined external project, we don't maintain it. #9306
-list(APPEND CONV_SOURCES ${XDIFF_SOURCES})
+# xdiff, mpack: inlined external project, we don't maintain it. #9306
+list(APPEND CONV_SOURCES ${EXTERNAL_SOURCES})
 
 if(NOT MSVC)
   set_source_files_properties(
@@ -471,7 +471,7 @@ endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
+  ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -602,7 +602,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+  ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -632,7 +632,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+    ${EXTERNAL_SOURCES} ${EXTERNAL_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
