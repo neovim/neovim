@@ -358,11 +358,9 @@ int enc_canon_props(const char_u *name)
   i = enc_canon_search(name);
   if (i >= 0) {
     return enc_canon_table[i].prop;
-  }
-  if (STRNCMP(name, "2byte-", 6) == 0) {
+  } else if (STRNCMP(name, "2byte-", 6) == 0) {
     return ENC_DBCS;
-  }
-  if (STRNCMP(name, "8bit-", 5) == 0 || STRNCMP(name, "iso-8859-", 9) == 0) {
+  } else if (STRNCMP(name, "8bit-", 5) == 0 || STRNCMP(name, "iso-8859-", 9) == 0) {
     return ENC_8BIT;
   }
   return 0;
