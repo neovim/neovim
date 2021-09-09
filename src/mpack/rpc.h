@@ -1,7 +1,7 @@
 #ifndef MPACK_RPC_H
 #define MPACK_RPC_H
 
-#include "core.h"
+#include "mpack_core.h"
 #include "object.h"
 
 #ifndef MPACK_RPC_MAX_REQUESTS

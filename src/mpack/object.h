@@ -1,7 +1,7 @@
 #ifndef MPACK_OBJECT_H
 #define MPACK_OBJECT_H
 
-#include "core.h"
+#include "mpack_core.h"
 #include "conv.h"
 
 #ifndef MPACK_MAX_OBJECT_DEPTH
