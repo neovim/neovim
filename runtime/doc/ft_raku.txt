@@ -1,4 +1,4 @@
-*vim-raku.txt*	The Raku programming language filetype
+*ft_raku.txt*	The Raku programming language filetype
 
                                                       *vim-raku*
 

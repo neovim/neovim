@@ -1384,11 +1384,11 @@ To select syntax highlighting file for Euphoria, as well as for
 auto-detecting the *.e and *.E file extensions as Euphoria file type,
 add the following line to your startup file: >
 
-	:let filetype_euphoria="euphoria3"
+	:let filetype_euphoria = "euphoria3"
 
-	or
+<	or >
 
-	:let filetype_euphoria="euphoria4"
+	:let filetype_euphoria = "euphoria4"
 
 
 ERLANG						*erlang.vim* *ft-erlang-syntax*

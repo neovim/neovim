@@ -747,11 +747,13 @@ For compatibility with Vi these two exceptions are allowed:
 "\/{string}/" and "\?{string}?" do the same as "//{string}/r".
 "\&{string}&" does the same as "//{string}/".
 						*pattern-delimiter* *E146*
-Instead of the '/' which surrounds the pattern and replacement string, you
-can use any other single-byte character, but not an alphanumeric character,
-'\', '"' or '|'.  This is useful if you want to include a '/' in the search
-pattern or replacement string.  Example: >
+Instead of the '/' which surrounds the pattern and replacement string, you can
+use another single-byte character.  This is useful if you want to include a
+'/' in the search pattern or replacement string.  Example: >
 	:s+/+//+
+
+You can use most characters, but not an alphanumeric character, '\', '"' or
+'|'.
 
 For the definition of a pattern, see |pattern|.  In Visual block mode, use
 |/\%V| in the pattern to have the substitute work in the block only.
