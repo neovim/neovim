@@ -49,6 +49,9 @@ endif()
 set(ENV{TMPDIR} "${BUILD_DIR}/Xtest_tmpdir/${TEST_PATH}")
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 
+# HISTFILE: do not write into user's ~/.bash_history
+set(ENV{HISTFILE} "/dev/null")
+
 if(NOT DEFINED ENV{TEST_TIMEOUT} OR "$ENV{TEST_TIMEOUT}" STREQUAL "")
   set(ENV{TEST_TIMEOUT} 1200)
 endif()
