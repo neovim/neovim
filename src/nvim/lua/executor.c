@@ -514,14 +514,18 @@ static lua_State *nlua_thread_acquire_vm(void)
   lua_pushcfunction(lstate, &nlua_is_thread);
   lua_setfield(lstate, -2, "is_thread");
 
-  lua_setglobal(lstate, "vim");
+  // vim.loop
+  luaopen_luv(lstate);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -3, "loop");
 
   lua_getglobal(lstate, "package");
   lua_getfield(lstate, -1, "loaded");
-
-  luaopen_luv(lstate);
+  lua_pushvalue(lstate, -3);
   lua_setfield(lstate, -2, "luv");
-  lua_pop(lstate, 2);
+  lua_pop(lstate, 3);
+
+  lua_setglobal(lstate, "vim");
 
   return lstate;
 }
