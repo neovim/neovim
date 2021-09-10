@@ -1317,7 +1317,17 @@ The lambda expression is also useful for jobs and timers: >
 	Handler called
 	Handler called
 
-Note how execute() is used to execute an Ex command.  That's ugly though.
+Note that it is possible to cause memory to be used and not freed if the
+closure is referenced by the context it depends on: >
+	function Function()
+	   let x = 0
+	   let F = {-> x}
+	 endfunction
+The closure uses "x" from the function scope, and "F" in that same scope
+refers to the closure.  This cycle results in the memory not being freed.
+Recommendation: don't do this.
+
+Notice how execute() is used to execute an Ex command.  That's ugly though.
 
 
 Lambda expressions have internal names like '<lambda>42'.  If you get an error
@@ -1722,7 +1732,8 @@ v:fcs_choice	What should happen after a |FileChangedShell| event was
 		Vim behaves like it is empty, there is no warning message.
 
 					*v:fname* *fname-variable*
-v:fname		The file name set by 'includeexpr'.  Empty otherwise.
+v:fname		When evaluating 'includeexpr': the file name that was
+		detected.  Empty otherwise.
 
 					*v:fname_in* *fname_in-variable*
 v:fname_in	The name of the input file.  Valid while evaluating:
@@ -7456,6 +7467,10 @@ screenpos({winid}, {lnum}, {col})				*screenpos()*
 		The "curscol" value is where the cursor would be placed.  For
 		a Tab it would be the same as "endcol", while for a double
 		width character it would be the same as "col".
+		The |conceal| feature is ignored here, the column numbers are
+ 		as if 'conceallevel' is zero.  You can set the cursor to the
+ 		right position and use |screencol()| to get the value with
+ 		|conceal| taken into account.
 
 screenrow()							*screenrow()*
 		The result is a Number, which is the current screen row of the
