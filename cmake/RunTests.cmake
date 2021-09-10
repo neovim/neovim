@@ -49,6 +49,9 @@ endif()
 set(ENV{TMPDIR} "${BUILD_DIR}/Xtest_tmpdir/${TEST_PATH}")
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 
+# HISTFILE: do not write into user's ~/.bash_history
+set(ENV{HISTFILE} "/dev/null")
+
 set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
 execute_process(
   COMMAND ${BUSTED_PRG} -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
