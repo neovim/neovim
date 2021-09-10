@@ -228,10 +228,6 @@ retnomove:
       redraw_curbuf_later(INVERTED);            // delete the inversion
     }
 
-
-    row -= curwin->w_winrow;
-    col -= curwin->w_wincol;
-
     // When clicking beyond the end of the window, scroll the screen.
     // Scroll by however many rows outside the window we are.
     if (row < 0) {
