@@ -3554,6 +3554,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           char_u *p = ptr - (mb_off + 1);
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
+
+          // We have just drawn the showbreak value, no need to add
+          // space for it again
+          if (vcol == vcol_sbr) {
+            n_extra -= MB_CHARLEN(get_showbreak_value(wp));
+          }
+
           if (c == TAB && n_extra + col > grid->Columns) {
             n_extra = tabstop_padding(vcol, wp->w_buffer->b_p_ts,
                                       wp->w_buffer->b_p_vts_array) - 1;
