@@ -258,6 +258,9 @@ Number; !must be defined to function properly):
 
 - `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
 
+- `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
+  suite run is killed
+
 - `NVIM_PROG`, `NVIM_PRG` (F) (S): override path to Neovim executable (default
   to `build/bin/nvim`).
 
