@@ -3556,9 +3556,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
 
           // We have just drawn the showbreak value, no need to add
-          // space for it again
+          // space for it again.
           if (vcol == vcol_sbr) {
             n_extra -= MB_CHARLEN(get_showbreak_value(wp));
+            if (n_extra < 0) {
+              n_extra = 0;
+            }
           }
 
           if (c == TAB && n_extra + col > grid->Columns) {
