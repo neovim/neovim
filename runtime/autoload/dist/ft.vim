@@ -264,6 +264,13 @@ func dist#ft#ProtoCheck(default)
 endfunc
 
 func dist#ft#FTm()
+  if exists("g:filetype_m")
+    exe "setf " . g:filetype_m
+    return
+  endif
+
+  let octave_block_terminators = '\<end\%(_try_catch\|classdef\|enumeration\|events\|for\|function\|if\|methods\|parfor\|properties\|switch\|while\)\>'
+
   let n = 1
   let saw_comment = 0 " Whether we've seen a multiline comment leader.
   while n < 100
@@ -278,6 +285,13 @@ func dist#ft#FTm()
       setf objc
       return
     endif
+    if line =~ '^\s*\%(#\|%!\|[#%]{\=\s*$\)' ||
+	  \ line =~ '^\s*unwind_protect\>' ||
+	  \ line =~ '\%(^\|;\)\s*' .. octave_block_terminators
+      setf octave
+      return
+    endif
+    " TODO: could be Matlab or Octave
     if line =~ '^\s*%'
       setf matlab
       return
@@ -298,11 +312,8 @@ func dist#ft#FTm()
     " or Murphi based on the comment leader. Assume the former as it is more
     " common.
     setf objc
-  elseif exists("g:filetype_m")
-    " Use user specified default filetype for .m
-    exe "setf " . g:filetype_m
   else
-    " Default is matlab
+    " Default is Matlab
     setf matlab
   endif
 endfunc
