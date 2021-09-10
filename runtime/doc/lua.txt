@@ -1268,7 +1268,17 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
 
 
 deep_equal({a}, {b})                                        *vim.deep_equal()*
-                TODO: Documentation
+                Deep compare values for equality
+
+                Tables are compared recursively unless they both provide the `eq` methamethod.
+                All other types are compared using the equality `==` operator.
+
+                Parameters: ~
+                    {a}  first value
+                    {b}  second value
+
+                Return: ~
+                    `true` if values are equals, else `false` .
 
 deepcopy({orig})                                              *vim.deepcopy()*
                 Returns a deep copy of the given object. Non-table objects are
