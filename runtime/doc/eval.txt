@@ -4707,9 +4707,9 @@ getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
 		|winrestview()| for restoring more state.
 
 getcwd([{winnr}[, {tabnr}]])				*getcwd()*
-		With no arguments the result is a String, which is the name of
-		the current effective working directory. With {winnr} or
-		{tabnr} the working directory of that scope is returned.
+		With no arguments, returns the name of the effective
+		|current-directory|. With {winnr} or {tabnr} the working
+		directory of that scope is returned.
 		Tabs and windows are identified by their respective numbers,
 		0 means current tab or window. Missing argument implies 0.
 		Thus the following are equivalent: >
@@ -9095,7 +9095,7 @@ system({cmd} [, {input}])				*system()* *E677*
 								*E5677*
 		Note: system() cannot write to or read from backgrounded ("&")
 		shell commands, e.g.: >
-		    :echo system("cat - &", "foo"))
+		    :echo system("cat - &", "foo")
 <		which is equivalent to: >
 		    $ echo foo | bash -c 'cat - &'
 <		The pipes are disconnected (unless overridden by shell
