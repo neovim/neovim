@@ -160,6 +160,52 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
   return retval;
 }
 
+static void nlua_luv_thread_error_event(void **argv)
+{
+  char *error = (char *)argv[0];
+  msg_ext_set_kind("lua_error");
+  emsgf_multiline("Error in luv callback, thread:\n%s", error);
+  xfree(error);
+}
+
+static int nlua_luv_thread_cfpcall(lua_State *lstate, int nargs, int nresult,
+                                   int flags)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int retval;
+
+  int top = lua_gettop(lstate);
+  int status = lua_pcall(lstate, nargs, nresult, 0);
+  if (status) {
+    if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
+      // Terminate this thread, as the main thread may be able to continue
+      // execution.
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
+      lua_close(lstate);
+#ifdef WIN32
+    ExitThread(0);
+#else
+    pthread_exit(0);
+#endif
+    }
+    const char *error = lua_tostring(lstate, -1);
+
+    loop_schedule_deferred(&main_loop,
+                           event_create(nlua_luv_thread_error_event, 1,
+                                        xstrdup(error)));
+    lua_pop(lstate, 1);  // error message
+    retval = -status;
+  } else {  // LUA_OK
+    if (nresult == LUA_MULTRET) {
+      nresult = lua_gettop(lstate) - top + nargs + 1;
+    }
+    retval = nresult;
+  }
+
+  return retval;
+}
+
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
@@ -515,6 +561,7 @@ static lua_State *nlua_thread_acquire_vm(void)
   lua_setfield(lstate, -2, "is_thread");
 
   // vim.loop
+  luv_set_callback(lstate, nlua_luv_thread_cfpcall);
   luaopen_luv(lstate);
   lua_pushvalue(lstate, -1);
   lua_setfield(lstate, -3, "loop");
