@@ -1096,8 +1096,9 @@ tag		command		action in Command-line editing mode	~
 ==============================================================================
 5. Terminal mode				*terminal-mode-index*
 
-In a |terminal| buffer all keys except |CTRL-\_CTRL-N| are forwarded to the
-terminal job.  Use CTRL-\_CTRL-N to go to Normal mode.
+In a |terminal| buffer all keys except CTRL-\ are forwarded to the terminal
+job.  If CTRL-\ is pressed, the next key is forwarded unless it is CTRL-N.
+Use |CTRL-\_CTRL-N| to go to Normal mode.
 
 
 You found it, Arthur!				*holy-grail*
