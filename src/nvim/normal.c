@@ -3407,12 +3407,15 @@ void clear_showcmd(void)
     lines = bot - top + 1;
 
     if (VIsual_mode == Ctrl_V) {
-      char_u *saved_sbr = p_sbr;
+      char_u *const saved_sbr = p_sbr;
+      char_u *const saved_w_sbr = curwin->w_p_sbr;
 
       // Make 'sbr' empty for a moment to get the correct size.
       p_sbr = empty_option;
+      curwin->w_p_sbr = empty_option;
       getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
       p_sbr = saved_sbr;
+      curwin->w_p_sbr = saved_w_sbr;
       snprintf((char *)showcmd_buf, SHOWCMD_BUFLEN, "%" PRId64 "x%" PRId64,
                (int64_t)lines, (int64_t)rightcol - leftcol + 1);
     } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum) {
@@ -4141,8 +4144,8 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
      */
     validate_virtcol();
     colnr_T virtcol = curwin->w_virtcol;
-    if (virtcol > (colnr_T)width1 && *p_sbr != NUL) {
-      virtcol -= vim_strsize(p_sbr);
+    if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
+      virtcol -= vim_strsize(get_showbreak_value(curwin));
     }
 
     if (virtcol > curwin->w_curswant

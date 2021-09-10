@@ -5476,7 +5476,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'showbreak'* *'sbr'* *E595*
 'showbreak' 'sbr'	string	(default "")
-			global
+			global or local to window |global-local|
 	String to put at the start of lines that have been wrapped.  Useful
 	values are "> " or "+++ ": >
 		:set showbreak=>\ 
@@ -5490,7 +5490,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that tabs after the showbreak will be displayed differently.
 	If you want the 'showbreak' to appear in between line numbers, add the
 	"n" flag to 'cpoptions'.
-
+	A window-local value overrules a global value.  If the global value is
+	set and you want no value in the current window use NONE: >
+		:setlocal showbreak=NONE
+<
 				     *'showcmd'* *'sc'* *'noshowcmd'* *'nosc'*
 'showcmd' 'sc'		boolean	(Vim default: on, Vi default: off)
 			global

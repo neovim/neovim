@@ -230,6 +230,8 @@ typedef struct {
 # define w_p_culopt w_onebuf_opt.wo_culopt  // 'cursorlineopt'
   char_u      *wo_cc;
 # define w_p_cc w_onebuf_opt.wo_cc      // 'colorcolumn'
+  char_u      *wo_sbr;
+# define w_p_sbr w_onebuf_opt.wo_sbr    // 'showbreak'
   char_u      *wo_stl;
 #define w_p_stl w_onebuf_opt.wo_stl     // 'statusline'
   int wo_scb;

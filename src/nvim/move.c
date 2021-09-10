@@ -788,11 +788,12 @@ void curs_columns(
       wp->w_wcol -= n * width;
       wp->w_wrow += n;
 
-      /* When cursor wraps to first char of next line in Insert
-       * mode, the 'showbreak' string isn't shown, backup to first
-       * column */
-      if (*p_sbr && *get_cursor_pos_ptr() == NUL
-          && wp->w_wcol == (int)vim_strsize(p_sbr)) {
+      // When cursor wraps to first char of next line in Insert
+      // mode, the 'showbreak' string isn't shown, backup to first
+      // column
+      char_u *const sbr = get_showbreak_value(wp);
+      if (*sbr && *get_cursor_pos_ptr() == NUL
+          && wp->w_wcol == (int)vim_strsize(sbr)) {
         wp->w_wcol = 0;
       }
     }

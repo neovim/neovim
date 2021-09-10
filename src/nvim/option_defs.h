@@ -877,6 +877,7 @@ enum {
   , WV_CUL
   , WV_CULOPT
   , WV_CC
+  , WV_SBR
   , WV_STL
   , WV_WFH
   , WV_WFW

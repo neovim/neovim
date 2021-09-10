@@ -263,7 +263,8 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
 /// @return The number of characters taken up on the screen.
 int lbr_chartabsize(char_u *line, unsigned char *s, colnr_T col)
 {
-  if (!curwin->w_p_lbr && (*p_sbr == NUL) && !curwin->w_p_bri) {
+  if (!curwin->w_p_lbr && *get_showbreak_value(curwin) == NUL
+      && !curwin->w_p_bri) {
     if (curwin->w_p_wrap) {
       return win_nolbr_chartabsize(curwin, s, col, NULL);
     }
@@ -314,7 +315,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
   int n;
 
   // No 'linebreak', 'showbreak' and 'breakindent': return quickly.
-  if (!wp->w_p_lbr && !wp->w_p_bri && (*p_sbr == NUL)) {
+  if (!wp->w_p_lbr && !wp->w_p_bri && *get_showbreak_value(wp) == NUL) {
     if (wp->w_p_wrap) {
       return win_nolbr_chartabsize(wp, s, col, headp);
     }
@@ -381,7 +382,8 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
   // Set *headp to the size of what we add.
   added = 0;
 
-  if ((*p_sbr != NUL || wp->w_p_bri) && wp->w_p_wrap && (col != 0)) {
+  char_u *const sbr = get_showbreak_value(wp);
+  if ((*sbr != NUL || wp->w_p_bri) && wp->w_p_wrap && col != 0) {
     colnr_T sbrlen = 0;
     int numberwidth = win_col_off(wp);
 
@@ -394,8 +396,8 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
       if (col >= numberextra && numberextra > 0) {
         col %= numberextra;
       }
-      if (*p_sbr != NUL) {
-        sbrlen = (colnr_T)MB_CHARLEN(p_sbr);
+      if (*sbr != NUL) {
+        sbrlen = (colnr_T)MB_CHARLEN(sbr);
         if (col >= sbrlen) {
           col -= sbrlen;
         }
@@ -410,7 +412,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
     }
 
     if (col == 0 || (col + size + sbrlen > (colnr_T)wp->w_width_inner)) {
-      if (*p_sbr != NUL) {
+      if (*sbr != NUL) {
         if (size + sbrlen + numberwidth > (colnr_T)wp->w_width_inner) {
           // Calculate effective window width.
           int width = (colnr_T)wp->w_width_inner - sbrlen - numberwidth;
@@ -420,13 +422,13 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
           if (width <= 0) {
             width = 1;
           }
-          added += ((size - prev_width) / width) * vim_strsize(p_sbr);
+          added += ((size - prev_width) / width) * vim_strsize(sbr);
           if ((size - prev_width) % width) {
             // Wrapped, add another length of 'sbr'.
-            added += vim_strsize(p_sbr);
+            added += vim_strsize(sbr);
           }
         } else {
-          added += vim_strsize(p_sbr);
+          added += vim_strsize(sbr);
         }
       }
 

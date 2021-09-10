@@ -67,7 +67,8 @@ endfunc
 
 func Test_breakindent02()
   " simple breakindent test with showbreak set
-  call s:test_windows('setl briopt=min:0 sbr=>>')
+  set sbr=>>
+  call s:test_windows('setl briopt=min:0 sbr=')
   let lines = s:screen_lines(line('.'),8)
   let expect = [
 	\ "    abcd",
@@ -127,7 +128,8 @@ endfunc
 
 func Test_breakindent04()
   " breakindent set with min width 18
-  call s:test_windows('setl sbr= briopt=min:18')
+  set sbr=<<<
+  call s:test_windows('setl sbr=NONE briopt=min:18')
   let lines = s:screen_lines(line('.'),8)
   let expect = [
 	\ "    abcd",
@@ -137,6 +139,7 @@ func Test_breakindent04()
   call s:compare_lines(expect, lines)
   " clean up
   call s:close_windows('set sbr=')
+  set sbr=
 endfunc
 
 func Test_breakindent04_vartabs()
@@ -866,6 +869,24 @@ func Test_breakindent20_list()
   let lines = s:screen_lines2(1, 6, 20)
   call s:compare_lines(expect, lines)
   call s:close_windows('set breakindent& briopt& linebreak& list& listchars& showbreak&')
+endfunc
+
+" The following used to crash Vim. This is fixed by 8.2.3391.
+" This is a regression introduced by 8.2.2903.
+func Test_window_resize_with_linebreak()
+  new
+  53vnew
+  set linebreak
+  set showbreak=>>
+  set breakindent
+  set breakindentopt=shift:4
+  call setline(1, "\naaaaaaaaa\n\na\naaaaa\n¯aaaaaaaaaa\naaaaaaaaaaaa\naaa\n\"a:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa - aaaaaaaa\"\naaaaaaaa\n\"a")
+  redraw!
+  call assert_equal(["    >>aa^@\"a: "], ScreenLines(2, 14))
+  vertical resize 52
+  redraw!
+  call assert_equal(["    >>aaa^@\"a:"], ScreenLines(2, 14))
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

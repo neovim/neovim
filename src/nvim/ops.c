@@ -5726,16 +5726,19 @@ void cursor_pos_info(dict_T *dict)
       }
 
       if (l_VIsual_mode == Ctrl_V) {
-        char_u * saved_sbr = p_sbr;
+        char_u *const saved_sbr = p_sbr;
+        char_u *const saved_w_sbr = curwin->w_p_sbr;
 
         // Make 'sbr' empty for a moment to get the correct size.
         p_sbr = empty_option;
+        curwin->w_p_sbr = empty_option;
         oparg.is_VIsual = true;
         oparg.motion_type = kMTBlockWise;
         oparg.op_type = OP_NOP;
         getvcols(curwin, &min_pos, &max_pos,
                  &oparg.start_vcol, &oparg.end_vcol);
         p_sbr = saved_sbr;
+        curwin->w_p_sbr = saved_w_sbr;
         if (curwin->w_curswant == MAXCOL) {
           oparg.end_vcol = MAXCOL;
         }
