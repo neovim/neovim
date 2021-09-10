@@ -1622,7 +1622,7 @@ static bool syn_finish_line(const bool syncing)
   return false;
 }
 
-/// @return  highlight attributes for next character.
+/// Gets highlight attributes for next character.
 /// Must first call syntax_start() once for the line.
 /// "col" is normally 0 for the first use in a line, and increments by one each
 /// time.  It's allowed to skip characters and to stop before the end of the
@@ -1631,6 +1631,8 @@ static bool syn_finish_line(const bool syncing)
 /// done.
 ///
 /// @param keep_state  keep state of char at "col"
+///
+/// @return            highlight attributes for next character.
 int get_syntax_attr(const colnr_T col, bool *const can_spell, const bool keep_state)
 {
   int attr = 0;
