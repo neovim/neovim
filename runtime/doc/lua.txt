@@ -907,7 +907,7 @@ vim.fn.{func}({...})					*vim.fn*
         To call autoload functions, use the syntax: >
             vim.fn['some#function']({...})
 <
-        Unlike vim.api.|nvim_call_function| this converts directly between Vim
+        Unlike vim.api.|nvim_call_function()| this converts directly between Vim
         objects and Lua objects. If the Vim function returns a float, it will
         be represented directly as a Lua number. Empty lists and dictionaries
         both are represented by an empty table.

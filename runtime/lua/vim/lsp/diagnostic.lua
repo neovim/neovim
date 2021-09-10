@@ -449,7 +449,7 @@ end
 ---   endif
 ---   return sl
 --- endfunction
---- let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus()
+--- autocmd BufWinEnter * let &l:statusline = '%#MyStatuslineLSP#LSP '.LspStatus()
 --- </pre>
 ---
 ---@param bufnr number The buffer number
