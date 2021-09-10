@@ -197,7 +197,6 @@ CONFIG = {
             'query.lua',
             'highlighter.lua',
             'languagetree.lua',
-            'health.lua',
         ],
         'files': ' '.join([
             os.path.join(base_dir, 'runtime/lua/vim/treesitter.lua'),
@@ -1131,7 +1130,7 @@ Doxyfile = textwrap.dedent('''
     INPUT_FILTER           = "{filter}"
     EXCLUDE                =
     EXCLUDE_SYMLINKS       = NO
-    EXCLUDE_PATTERNS       = */private/*
+    EXCLUDE_PATTERNS       = */private/* */health.lua
     EXCLUDE_SYMBOLS        =
     EXTENSION_MAPPING      = lua=C
     EXTRACT_PRIVATE        = NO
