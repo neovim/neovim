@@ -398,7 +398,7 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "luv");
   lua_pop(lstate, 3);
 
-  nlua_state_add_stdlib(lstate);
+  nlua_state_add_stdlib(lstate, false);
 
   // vim.is_thread
   lua_pushboolean(lstate, false);
@@ -524,6 +524,8 @@ static lua_State *nlua_thread_acquire_vm(void)
   lua_pushvalue(lstate, -3);
   lua_setfield(lstate, -2, "luv");
   lua_pop(lstate, 3);
+
+  nlua_state_add_stdlib(lstate, true);
 
   lua_setglobal(lstate, "vim");
 
