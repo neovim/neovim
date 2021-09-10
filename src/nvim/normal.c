@@ -618,7 +618,7 @@ static void normal_redraw_mode_message(NormalState *s)
   // If need to redraw, and there is a "keep_msg", redraw before the
   // delay
   if (must_redraw && keep_msg != NULL && !emsg_on_display) {
-    char_u      *kmsg;
+    char_u *kmsg;
 
     kmsg = keep_msg;
     keep_msg = NULL;
@@ -1456,7 +1456,7 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
 // "gui_yank" is true when yanking text for the clipboard.
 void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 {
-  oparg_T     *oap = cap->oap;
+  oparg_T *oap = cap->oap;
   pos_T old_cursor;
   bool empty_region_error;
   int restart_edit_save;
@@ -2267,7 +2267,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   bool in_sep_line;             // mouse in vertical separator line
   int c1, c2;
   pos_T save_cursor;
-  win_T       *old_curwin = curwin;
+  win_T *old_curwin = curwin;
   static pos_T orig_cursor;
   colnr_T leftcol, rightcol;
   pos_T end_visual;
@@ -2886,7 +2886,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
      * A double click selects a word or a block.
      */
     if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
-      pos_T       *pos = NULL;
+      pos_T *pos = NULL;
       int gc;
 
       if (is_click) {
@@ -2961,7 +2961,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
  */
 static void find_start_of_word(pos_T *pos)
 {
-  char_u      *line;
+  char_u *line;
   int cclass;
   int col;
 
@@ -2984,7 +2984,7 @@ static void find_start_of_word(pos_T *pos)
  */
 static void find_end_of_word(pos_T *pos)
 {
-  char_u      *line;
+  char_u *line;
   int cclass;
   int col;
 
@@ -3418,7 +3418,7 @@ void clear_showcmd(void)
     } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum) {
       snprintf((char *)showcmd_buf, SHOWCMD_BUFLEN, "%" PRId64, (int64_t)lines);
     } else {
-      char_u  *s, *e;
+      char_u *s, *e;
       int l;
       int bytes = 0;
       int chars = 0;
@@ -3469,7 +3469,7 @@ void clear_showcmd(void)
  */
 bool add_to_showcmd(int c)
 {
-  char_u      *p;
+  char_u *p;
   int i;
   static int ignore[] =
   {
@@ -3615,10 +3615,10 @@ static void display_showcmd(void)
  */
 void do_check_scrollbind(bool check)
 {
-  static win_T        *old_curwin = NULL;
+  static win_T *old_curwin = NULL;
   static linenr_T old_topline = 0;
   static int old_topfill = 0;
-  static buf_T        *old_buf = NULL;
+  static buf_T *old_buf = NULL;
   static colnr_T old_leftcol = 0;
 
   if (check && curwin->w_p_scb) {
@@ -3673,8 +3673,8 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
 {
   bool want_ver;
   bool want_hor;
-  win_T       *old_curwin = curwin;
-  buf_T       *old_curbuf = curbuf;
+  win_T *old_curwin = curwin;
+  buf_T *old_curbuf = curbuf;
   int old_VIsual_select = VIsual_select;
   int old_VIsual_active = VIsual_active;
   colnr_T tgt_leftcol = curwin->w_leftcol;
@@ -3878,7 +3878,7 @@ static bool is_ident(char_u *line, int offset)
 /// @return           fail when not found.
 bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_arg)
 {
-  char_u      *pat;
+  char_u *pat;
   pos_T old_pos;
   pos_T par_pos;
   pos_T found_pos;
@@ -4699,7 +4699,7 @@ dozet:
   case 'G':     // "zG": add good word to temp word list
   case 'W':     // "zW": add wrong word to temp word list
     {
-      char_u  *ptr = NULL;
+      char_u *ptr = NULL;
       size_t len;
 
       if (checkclearop(cap->oap)) {
@@ -4958,13 +4958,13 @@ void do_nv_ident(int c1, int c2)
  */
 static void nv_ident(cmdarg_T *cap)
 {
-  char_u      *ptr = NULL;
-  char_u      *p;
+  char_u *ptr = NULL;
+  char_u *p;
   size_t n = 0;                 // init for GCC
   int cmdchar;
   bool g_cmd;                   // "g" command
   bool tag_cmd = false;
-  char_u      *aux_ptr;
+  char_u *aux_ptr;
 
   if (cap->cmdchar == 'g') {    // "g*", "g#", "g]" and "gCTRL-]"
     cmdchar = cap->nchar;
@@ -5513,7 +5513,7 @@ static void nv_down(cmdarg_T *cap)
  */
 static void nv_gotofile(cmdarg_T *cap)
 {
-  char_u      *ptr;
+  char_u *ptr;
   linenr_T lnum = -1;
 
   if (text_locked()) {
@@ -5588,7 +5588,7 @@ static void nv_dollar(cmdarg_T *cap)
  */
 static void nv_search(cmdarg_T *cap)
 {
-  oparg_T     *oap = cap->oap;
+  oparg_T *oap = cap->oap;
   pos_T save_cursor = curwin->w_cursor;
 
   if (cap->cmdchar == '?' && cap->oap->op_type == OP_ROT13) {
@@ -5719,7 +5719,7 @@ static void nv_brackets(cmdarg_T *cap)
 {
   pos_T new_pos = { 0, 0, 0 };
   pos_T prev_pos;
-  pos_T       *pos = NULL;          // init for GCC
+  pos_T *pos = NULL;          // init for GCC
   pos_T old_pos;                    // cursor position before command
   int flag;
   long n;
@@ -5749,7 +5749,7 @@ static void nv_brackets(cmdarg_T *cap)
   if (vim_strchr((char_u *)
                  "iI\011dD\004",
                  cap->nchar) != NULL) {
-    char_u  *ptr;
+    char_u *ptr;
     size_t len;
 
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
@@ -5993,7 +5993,7 @@ static void nv_brackets(cmdarg_T *cap)
  */
 static void nv_percent(cmdarg_T *cap)
 {
-  pos_T       *pos;
+  pos_T *pos;
   linenr_T lnum = curwin->w_cursor.lnum;
 
   cap->oap->inclusive = true;
@@ -6135,7 +6135,7 @@ static void nv_kundo(cmdarg_T *cap)
  */
 static void nv_replace(cmdarg_T *cap)
 {
-  char_u      *ptr;
+  char_u *ptr;
   int had_ctrl_v;
 
   if (checkclearop(cap->oap)) {
@@ -6554,7 +6554,7 @@ static void nv_optrans(cmdarg_T *cap)
  */
 static void nv_gomark(cmdarg_T *cap)
 {
-  pos_T       *pos;
+  pos_T *pos;
   int c;
   pos_T old_cursor = curwin->w_cursor;
   const bool old_KeyTyped = KeyTyped;       // getting file may reset it
@@ -6593,7 +6593,7 @@ static void nv_gomark(cmdarg_T *cap)
 // Handle CTRL-O, CTRL-I, "g;", "g,", and "CTRL-Tab" commands.
 static void nv_pcmark(cmdarg_T *cap)
 {
-  pos_T       *pos;
+  pos_T *pos;
   linenr_T lnum = curwin->w_cursor.lnum;
   const bool old_KeyTyped = KeyTyped;       // getting file may reset it
 
@@ -6841,7 +6841,7 @@ static void nv_suspend(cmdarg_T *cap)
  */
 static void nv_g_cmd(cmdarg_T *cap)
 {
-  oparg_T     *oap = cap->oap;
+  oparg_T *oap = cap->oap;
   pos_T tpos;
   int i;
   bool flag = false;
@@ -7076,7 +7076,7 @@ static void nv_g_cmd(cmdarg_T *cap)
                     cap->oap->op_type == OP_NOP) == false) {
       clearopbeep(cap->oap);
     } else {
-      char_u  *ptr = get_cursor_line_ptr();
+      char_u *ptr = get_cursor_line_ptr();
 
       // In Visual mode we may end up after the line.
       if (curwin->w_cursor.col > 0 && ptr[curwin->w_cursor.col] == NUL) {
@@ -7734,7 +7734,7 @@ static void adjust_for_sel(cmdarg_T *cap)
  */
 static bool unadjust_for_sel(void)
 {
-  pos_T       *pp;
+  pos_T *pp;
 
   if (*p_sel == 'e' && !equalpos(VIsual, curwin->w_cursor)) {
     if (lt(VIsual, curwin->w_cursor)) {
@@ -8002,7 +8002,7 @@ static void nv_object(cmdarg_T *cap)
 {
   bool flag;
   bool include;
-  char_u      *mps_save;
+  char_u *mps_save;
 
   if (cap->cmdchar == 'i') {
     include = false;        // "ix" = inner object: exclude white space
