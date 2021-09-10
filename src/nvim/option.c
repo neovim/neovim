@@ -2740,10 +2740,11 @@ ambw_end:
     if (*p_shada && errmsg == NULL && get_shada_parameter('\'') < 0) {
       errmsg = (char_u *)N_("E528: Must specify a ' value");
     }
-  } else if (varp == &p_sbr) {  // 'showbreak'
-    for (s = p_sbr; *s; ) {
+  } else if (gvarp == &p_sbr) {  // 'showbreak'
+    for (s = *varp; *s; ) {
       if (ptr2cells(s) != 1) {
-        errmsg = (char_u *)N_("E595: contains unprintable or wide character");
+        errmsg = (char_u *)N_(
+            "E595: 'showbreak' contains unprintable or wide character");
       }
       MB_PTR_ADV(s);
     }
@@ -5523,6 +5524,9 @@ void unset_global_local_option(char *name, void *from)
     case PV_MP:
       clear_string_option(&buf->b_p_mp);
       break;
+    case PV_SBR:
+      clear_string_option(&((win_T *)from)->w_p_sbr);
+      break;
     case PV_STL:
       clear_string_option(&((win_T *)from)->w_p_stl);
       break;
@@ -5576,6 +5580,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
     case PV_TSR:  return (char_u *)&(curbuf->b_p_tsr);
     case PV_TFU:  return (char_u *)&(curbuf->b_p_tfu);
+    case PV_SBR:  return (char_u *)&(curwin->w_p_sbr);
     case PV_STL:  return (char_u *)&(curwin->w_p_stl);
     case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
     case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
@@ -5635,6 +5640,8 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_gp) : p->var;
   case PV_MP:     return *curbuf->b_p_mp != NUL
            ? (char_u *)&(curbuf->b_p_mp) : p->var;
+  case PV_SBR:    return *curwin->w_p_sbr != NUL
+           ? (char_u *)&(curwin->w_p_sbr) : p->var;
   case PV_STL:    return *curwin->w_p_stl != NUL
            ? (char_u *)&(curwin->w_p_stl) : p->var;
   case PV_UL:     return curbuf->b_p_ul != NO_LOCAL_UNDOLEVEL
@@ -5788,6 +5795,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_nuw = from->wo_nuw;
   to->wo_rl  = from->wo_rl;
   to->wo_rlc = vim_strsave(from->wo_rlc);
+  to->wo_sbr = vim_strsave(from->wo_sbr);
   to->wo_stl = vim_strsave(from->wo_stl);
   to->wo_wrap = from->wo_wrap;
   to->wo_wrap_save = from->wo_wrap_save;
@@ -5851,6 +5859,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fmr);
   check_string_option(&wop->wo_scl);
   check_string_option(&wop->wo_rlc);
+  check_string_option(&wop->wo_sbr);
   check_string_option(&wop->wo_stl);
   check_string_option(&wop->wo_culopt);
   check_string_option(&wop->wo_cc);
@@ -5874,6 +5883,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fmr);
   clear_string_option(&wop->wo_scl);
   clear_string_option(&wop->wo_rlc);
+  clear_string_option(&wop->wo_sbr);
   clear_string_option(&wop->wo_stl);
   clear_string_option(&wop->wo_culopt);
   clear_string_option(&wop->wo_cc);
@@ -7472,6 +7482,22 @@ unsigned int get_bkc_value(buf_T *buf)
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
 }
 
+/// Get the local or global value of 'showbreak'.
+///
+/// @param win  If not NULL, the window to get the local option from; global
+///             otherwise.
+char_u *get_showbreak_value(win_T *const win FUNC_ATTR_UNUSED)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (win->w_p_sbr == NULL || *win->w_p_sbr == NUL) {
+    return p_sbr;
+  }
+  if (STRCMP(win->w_p_sbr, "NONE") == 0) {
+    return empty_option;
+  }
+  return win->w_p_sbr;
+}
+
 /// Return the current end-of-line type: EOL_DOS, EOL_UNIX or EOL_MAC.
 int get_fileformat(const buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
@@ -7670,12 +7696,6 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
   int ret = MAX(minimum, MIN(maximum, needed_signcols));
   assert(ret <= SIGN_SHOW_MAX);
   return ret;
-}
-
-// Get the local or global value of 'showbreak'.
-char_u *get_showbreak_value(win_T *win FUNC_ATTR_UNUSED)
-{
-  return p_sbr;
 }
 
 /// Get window or buffer local options

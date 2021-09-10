@@ -2850,7 +2850,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
 
       if (wp->w_briopt_sbr && draw_state == WL_BRI - 1
-          && n_extra == 0 && *p_sbr != NUL) {
+          && n_extra == 0 && *get_showbreak_value(wp) != NUL) {
         // draw indent after showbreak value
         draw_state = WL_BRI;
       } else if (wp->w_briopt_sbr && draw_state == WL_SBR && n_extra == 0) {
@@ -2909,19 +2909,20 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           }
           char_attr = win_hl_attr(wp, HLF_DED);
         }
-        if (*p_sbr != NUL && need_showbreak) {
+        char_u *const sbr = get_showbreak_value(wp);
+        if (*sbr != NUL && need_showbreak) {
           // Draw 'showbreak' at the start of each broken line.
-          p_extra = p_sbr;
+          p_extra = sbr;
           c_extra = NUL;
           c_final = NUL;
-          n_extra = (int)STRLEN(p_sbr);
+          n_extra = (int)STRLEN(sbr);
           char_attr = win_hl_attr(wp, HLF_AT);
           if (wp->w_skipcol == 0 || !wp->w_p_wrap) {
             need_showbreak = false;
           }
-          vcol_sbr = vcol + MB_CHARLEN(p_sbr);
-          /* Correct end of highlighted area for 'showbreak',
-           * required when 'linebreak' is also set. */
+          vcol_sbr = vcol + MB_CHARLEN(sbr);
+          // Correct end of highlighted area for 'showbreak',
+          // required when 'linebreak' is also set.
           if (tocol == vcol) {
             tocol += n_extra;
           }
@@ -3619,10 +3620,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         if (c == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
           int tab_len = 0;
           long vcol_adjusted = vcol;  // removed showbreak length
+          char_u *const sbr = get_showbreak_value(wp);
+
           // Only adjust the tab_len, when at the first column after the
           // showbreak value was drawn.
-          if (*p_sbr != NUL && vcol == vcol_sbr && wp->w_p_wrap) {
-            vcol_adjusted = vcol - MB_CHARLEN(p_sbr);
+          if (*sbr != NUL && vcol == vcol_sbr && wp->w_p_wrap) {
+            vcol_adjusted = vcol - MB_CHARLEN(sbr);
           }
           // tab amount depends on current column
           tab_len = tabstop_padding(vcol_adjusted,

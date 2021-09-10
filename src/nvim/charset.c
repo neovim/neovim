@@ -941,7 +941,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
   // Also use this when 'list' is set but tabs take their normal size.
   if ((!wp->w_p_list || (wp->w_p_lcs_chars.tab1 != NUL))
       && !wp->w_p_lbr
-      && (*p_sbr == NUL)
+      && *get_showbreak_value(wp) == NUL
       && !wp->w_p_bri ) {
     for (;;) {
       head = 0;

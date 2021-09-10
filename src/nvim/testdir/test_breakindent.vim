@@ -67,7 +67,8 @@ endfunc
 
 func Test_breakindent02()
   " simple breakindent test with showbreak set
-  call s:test_windows('setl briopt=min:0 sbr=>>')
+  set sbr=>>
+  call s:test_windows('setl briopt=min:0 sbr=')
   let lines = s:screen_lines(line('.'),8)
   let expect = [
 	\ "    abcd",
@@ -127,7 +128,8 @@ endfunc
 
 func Test_breakindent04()
   " breakindent set with min width 18
-  call s:test_windows('setl sbr= briopt=min:18')
+  set sbr=<<<
+  call s:test_windows('setl sbr=NONE briopt=min:18')
   let lines = s:screen_lines(line('.'),8)
   let expect = [
 	\ "    abcd",
@@ -137,6 +139,7 @@ func Test_breakindent04()
   call s:compare_lines(expect, lines)
   " clean up
   call s:close_windows('set sbr=')
+  set sbr=
 endfunc
 
 func Test_breakindent04_vartabs()

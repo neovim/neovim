@@ -2175,7 +2175,7 @@ return {
     {
       full_name='showbreak', abbreviation='sbr',
       short_desc=N_("string to use at the start of wrapped lines"),
-      type='string', scope={'global'},
+      type='string', scope={'global', 'window'},
       redraw={'all_windows'},
       varname='p_sbr',
       defaults={if_true=""}
