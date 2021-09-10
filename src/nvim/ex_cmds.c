@@ -329,9 +329,9 @@ void ex_align(exarg_T *eap)
  */
 static int linelen(int *has_tab)
 {
-  char_u  *line;
-  char_u  *first;
-  char_u  *last;
+  char_u *line;
+  char_u *first;
+  char_u *last;
   int save;
   int len;
 
@@ -363,8 +363,8 @@ static int linelen(int *has_tab)
 
 /* Buffer for two lines used during sorting.  They are allocated to
  * contain the longest line being sorted. */
-static char_u   *sortbuf1;
-static char_u   *sortbuf2;
+static char_u *sortbuf1;
+static char_u *sortbuf2;
 
 static int sort_lc;       ///< sort using locale
 static int sort_ic;       ///< ignore case
@@ -461,9 +461,9 @@ void ex_sort(exarg_T *eap)
   long maxlen = 0;
   size_t count = (size_t)(eap->line2 - eap->line1 + 1);
   size_t i;
-  char_u      *p;
-  char_u      *s;
-  char_u      *s2;
+  char_u *p;
+  char_u *s;
+  char_u *s2;
   char_u c;                             // temporary character storage
   bool unique = false;
   long deleted;
@@ -738,8 +738,8 @@ void ex_retab(exarg_T *eap)
   long start_col = 0;                   // For start of white-space string
   long start_vcol = 0;                  // For start of white-space string
   long old_len;
-  char_u      *ptr;
-  char_u      *new_line = (char_u *)1;  // init to non-NULL
+  char_u *ptr;
+  char_u *new_line = (char_u *)1;  // init to non-NULL
   int did_undo;                         // called u_save for current line
   long *new_vts_array = NULL;
   char_u *new_ts_str;  // string value of tab argument
@@ -906,7 +906,7 @@ void ex_retab(exarg_T *eap)
  */
 int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 {
-  char_u      *str;
+  char_u *str;
   linenr_T l;
   linenr_T extra;      // Num lines added before line1
   linenr_T num_lines;  // Num lines moved
@@ -1058,7 +1058,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 {
   linenr_T count;
-  char_u      *p;
+  char_u *p;
 
   count = line2 - line1 + 1;
   curbuf->b_op_start.lnum = n + 1;
@@ -1107,7 +1107,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
   msgmore((long)count);
 }
 
-static char_u   *prevcmd = NULL;        // the previous command
+static char_u *prevcmd = NULL;        // the previous command
 
 #if defined(EXITFREE)
 void free_prev_shellcmd(void)
@@ -1130,9 +1130,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   linenr_T line2 = eap->line2;        // end of range
   char_u *newcmd = NULL;              // the new command
   bool free_newcmd = false;           // need to free() newcmd
-  char_u              *t;
-  char_u              *p;
-  char_u              *trailarg;
+  char_u *t;
+  char_u *p;
+  char_u *trailarg;
   int len;
   int scroll_save = msg_scroll;
 
@@ -1265,13 +1265,13 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
 static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd, bool do_in,
                       bool do_out)
 {
-  char_u      *itmp = NULL;
-  char_u      *otmp = NULL;
+  char_u *itmp = NULL;
+  char_u *otmp = NULL;
   linenr_T linecount;
   linenr_T read_linecount;
   pos_T cursor_save;
-  char_u      *cmd_buf;
-  buf_T       *old_curbuf = curbuf;
+  char_u *cmd_buf;
+  buf_T *old_curbuf = curbuf;
   int shell_flags = 0;
   const int stmp = p_stmp;
 
@@ -1684,8 +1684,8 @@ void print_line(linenr_T lnum, int use_number, int list)
 
 int rename_buffer(char_u *new_fname)
 {
-  char_u      *fname, *sfname, *xfname;
-  buf_T       *buf;
+  char_u *fname, *sfname, *xfname;
+  buf_T *buf;
 
   buf = curbuf;
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, curbuf);
@@ -1795,11 +1795,11 @@ void ex_write(exarg_T *eap)
 int do_write(exarg_T *eap)
 {
   int other;
-  char_u      *fname = NULL;            // init to shut up gcc
-  char_u      *ffname;
+  char_u *fname = NULL;            // init to shut up gcc
+  char_u *ffname;
   int retval = FAIL;
-  char_u      *free_fname = NULL;
-  buf_T       *alt_buf = NULL;
+  char_u *free_fname = NULL;
+  buf_T *alt_buf = NULL;
   int          name_was_missing;
 
   if (not_writing()) {          // check 'write' option
@@ -1879,7 +1879,7 @@ int do_write(exarg_T *eap)
 
   if (check_overwrite(eap, curbuf, fname, ffname, other) == OK) {
     if (eap->cmdidx == CMD_saveas && alt_buf != NULL) {
-      buf_T       *was_curbuf = curbuf;
+      buf_T *was_curbuf = curbuf;
 
       apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, curbuf);
       apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, alt_buf);
@@ -1999,9 +1999,9 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
 
     // For ":w! filename" check that no swap file exists for "filename".
     if (other && !emsg_silent) {
-      char_u      *dir;
-      char_u      *p;
-      char_u      *swapname;
+      char_u *dir;
+      char_u *p;
+      char_u *swapname;
 
       /* We only try the first entry in 'directory', without checking if
        * it's writable.  If the "." directory is not writable the write
@@ -2196,7 +2196,7 @@ int getfile(int fnum, char_u *ffname_arg, char_u *sfname_arg, int setpm, linenr_
   char_u *sfname = sfname_arg;
   int other;
   int retval;
-  char_u      *free_me = NULL;
+  char_u *free_me = NULL;
 
   if (text_locked()) {
     return GETFILE_ERROR;
@@ -2291,20 +2291,20 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
   int oldbuf;                           // TRUE if using existing buffer
   int auto_buf = FALSE;                 /* TRUE if autocommands brought us
                                            into the buffer unexpectedly */
-  char_u      *new_name = NULL;
+  char_u *new_name = NULL;
   int did_set_swapcommand = FALSE;
-  buf_T       *buf;
+  buf_T *buf;
   bufref_T     bufref;
   bufref_T     old_curbuf;
-  char_u      *free_fname = NULL;
+  char_u *free_fname = NULL;
   int retval = FAIL;
   long n;
   pos_T orig_pos;
   linenr_T topline = 0;
   int newcol = -1;
   int solcol = -1;
-  pos_T       *pos;
-  char_u      *command = NULL;
+  pos_T *pos;
+  char_u *command = NULL;
   int did_get_winopts = FALSE;
   int readfile_flags = 0;
   bool did_inc_redrawing_disabled = false;
@@ -2911,11 +2911,11 @@ static int append_indent = 0;       // autoindent for first line
  */
 void ex_append(exarg_T *eap)
 {
-  char_u      *theline;
+  char_u *theline;
   bool did_undo = false;
   linenr_T lnum = eap->line2;
   int indent = 0;
-  char_u      *p;
+  char_u *p;
   int vcol;
   int empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
@@ -3079,9 +3079,9 @@ void ex_change(exarg_T *eap)
 
 void ex_z(exarg_T *eap)
 {
-  char_u      *x;
+  char_u *x;
   int64_t     bigness;
-  char_u      *kind;
+  char_u *kind;
   int minus = 0;
   linenr_T start, end, curs, i;
   int j;
@@ -3648,8 +3648,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       colnr_T copycol;
       colnr_T matchcol;
       colnr_T prev_matchcol = MAXCOL;
-      char_u      *new_end, *new_start = NULL;
-      char_u      *p1;
+      char_u *new_end, *new_start = NULL;
+      char_u *p1;
       int did_sub = FALSE;
       int lastone;
       long nmatch_tl = 0;               // nr of lines matched below lnum
@@ -3831,8 +3831,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
            */
           while (subflags.do_ask) {
             if (exmode_active) {
-              char        *prompt;
-              char_u      *resp;
+              char *prompt;
+              char_u *resp;
               colnr_T sc, ec;
 
               print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
@@ -4513,10 +4513,10 @@ void ex_global(exarg_T *eap)
   linenr_T lnum;                // line number according to old situation
   int ndone = 0;
   int type;                     // first char of cmd: 'v' or 'g'
-  char_u      *cmd;             // command argument
+  char_u *cmd;             // command argument
 
   char_u delim;                 // delimiter, normally '/'
-  char_u      *pat;
+  char_u *pat;
   regmmatch_T regmatch;
   int match;
   int which_pat;
@@ -4726,20 +4726,20 @@ bool prepare_tagpreview(bool undo_sync)
  */
 void ex_help(exarg_T *eap)
 {
-  char_u      *arg;
-  char_u      *tag;
-  FILE        *helpfd;          // file descriptor of help file
+  char_u *arg;
+  char_u *tag;
+  FILE *helpfd;          // file descriptor of help file
   int n;
   int i;
-  win_T       *wp;
+  win_T *wp;
   int num_matches;
-  char_u      **matches;
-  char_u      *p;
+  char_u **matches;
+  char_u *p;
   int empty_fnum = 0;
   int alt_fnum = 0;
-  buf_T       *buf;
+  buf_T *buf;
   int len;
-  char_u      *lang;
+  char_u *lang;
   const bool old_KeyTyped = KeyTyped;
 
   if (eap != NULL) {
@@ -4940,7 +4940,7 @@ char_u *check_help_lang(char_u *arg)
 int help_heuristic(char_u *matched_string, int offset, int wrong_case)
 {
   int num_letters;
-  char_u      *p;
+  char_u *p;
 
   num_letters = 0;
   for (p = matched_string; *p; p++) {
@@ -4982,8 +4982,8 @@ int help_heuristic(char_u *matched_string, int offset, int wrong_case)
  */
 static int help_compare(const void *s1, const void *s2)
 {
-  char    *p1;
-  char    *p2;
+  char *p1;
+  char *p2;
 
   p1 = *(char **)s1 + strlen(*(char **)s1) + 1;
   p2 = *(char **)s2 + strlen(*(char **)s2) + 1;
@@ -5274,7 +5274,7 @@ static void prepare_help_buffer(void)
 void fix_help_buffer(void)
 {
   linenr_T lnum;
-  char_u      *line;
+  char_u *line;
   bool in_example = false;
 
   // Set filetype to "help".
@@ -5338,10 +5338,10 @@ void fix_help_buffer(void)
         if (rt != NULL
             && path_full_compare(rt, NameBuff, false, true) != kEqualFiles) {
           int fcount;
-          char_u      **fnames;
-          char_u      *s;
+          char_u **fnames;
+          char_u *s;
           vimconv_T vc;
-          char_u      *cp;
+          char_u *cp;
 
           // Find all "doc/ *.txt" files in this directory.
           if (!add_pathsep((char *)NameBuff)
@@ -5498,9 +5498,9 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
 {
   garray_T ga;
   int filecount;
-  char_u      **files;
-  char_u      *p1, *p2;
-  char_u      *s;
+  char_u **files;
+  char_u *p1, *p2;
+  char_u *s;
   TriState utf8 = kNone;
   bool mix = false;             // detected mixed encodings
 
@@ -6125,7 +6125,7 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
 /// List v:oldfiles in a nice way.
 void ex_oldfiles(exarg_T *eap)
 {
-  list_T      *l = get_vim_var_list(VV_OLDFILES);
+  list_T *l = get_vim_var_list(VV_OLDFILES);
   long nr = 0;
 
   if (l == NULL) {

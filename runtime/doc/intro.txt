@@ -454,9 +454,10 @@ Ex mode			Like Command-line mode, but after entering a command
 			command line.  |Ex-mode|
 
 							*Terminal-mode*
-Terminal mode		In Terminal mode all input (except |c_CTRL-\_CTRL-N|)
-			is sent to the process running in the current
-			|terminal| buffer.
+Terminal mode		In Terminal mode all input (except CTRL-\) is sent to
+			the process running in the current |terminal| buffer.
+			If CTRL-\ is pressed, the next key is sent unless it
+			is CTRL-N (|CTRL-\_CTRL-N|).
 			If the 'showmode' option is on "-- TERMINAL --" is shown
 			at the bottom of the window.
 

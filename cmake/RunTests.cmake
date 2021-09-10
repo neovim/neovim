@@ -52,6 +52,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 # HISTFILE: do not write into user's ~/.bash_history
 set(ENV{HISTFILE} "/dev/null")
 
+if(NOT DEFINED ENV{TEST_TIMEOUT} OR "$ENV{TEST_TIMEOUT}" STREQUAL "")
+  set(ENV{TEST_TIMEOUT} 1200)
+endif()
+
 set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
 execute_process(
   COMMAND ${BUSTED_PRG} -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
@@ -61,7 +65,7 @@ execute_process(
     --lpath=?.lua
     ${BUSTED_ARGS}
     ${TEST_PATH}
-  TIMEOUT 1200
+  TIMEOUT $ENV{TEST_TIMEOUT}
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err
   RESULT_VARIABLE res
