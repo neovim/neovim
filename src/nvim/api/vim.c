@@ -1955,7 +1955,7 @@ Dictionary nvim__stats(void)
   Dictionary rv = ARRAY_DICT_INIT;
   PUT(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
   PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
-  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_refcount));
+  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_get_global_ref_count()));
   return rv;
 }
 
