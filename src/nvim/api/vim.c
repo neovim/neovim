@@ -275,9 +275,9 @@ static void on_redraw_event(void **argv)
 ///
 /// On execution error: does not fail, but updates v:errmsg.
 ///
-/// If you need to input sequences like <C-o> use |nvim_replace_termcodes| to
-/// replace the termcodes and then pass the resulting string to nvim_feedkeys.
-/// You'll also want to enable escape_csi.
+/// To input sequences like <C-o> use |nvim_replace_termcodes()| (typically
+/// with escape_csi=true) to replace |keycodes|, then pass the result to
+/// nvim_feedkeys().
 ///
 /// Example:
 /// <pre>
