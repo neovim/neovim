@@ -502,6 +502,10 @@ static lua_State *nlua_thread_acquire_vm(void)
   // Add in the lua standard libraries
   luaL_openlibs(lstate);
 
+  // print
+  lua_pushcfunction(lstate, &nlua_print);
+  lua_setglobal(lstate, "print");
+
   // vim
   lua_newtable(lstate);
   // vim.is_therad
@@ -625,9 +629,18 @@ static int nlua_print(lua_State *const lstate)
 #undef PRINT_ERROR
   ga_append(&msg_ga, NUL);
 
-  if (in_fast_callback) {
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  bool is_thread = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+
+  if (is_thread) {
+    loop_schedule_deferred(&main_loop,
+                           event_create(nlua_print_event, 2,
+                                        msg_ga.ga_data,
+                                        (intptr_t)msg_ga.ga_len));
+  } else if (in_fast_callback) {
     multiqueue_put(main_loop.events, nlua_print_event,
-                   2, msg_ga.ga_data, msg_ga.ga_len);
+                   2, msg_ga.ga_data, (intptr_t)msg_ga.ga_len);
   } else {
     nlua_print_event((void *[]){ msg_ga.ga_data,
                                  (void *)(intptr_t)msg_ga.ga_len });
@@ -636,10 +649,12 @@ static int nlua_print(lua_State *const lstate)
 
 nlua_print_error:
   ga_clear(&msg_ga);
+  char *buff = xmalloc(IOSIZE);
   const char *fmt = _("E5114: Error while converting print argument #%i: %.*s");
-  size_t len = (size_t)vim_snprintf((char *)IObuff, IOSIZE, fmt, curargidx,
+  size_t len = (size_t)vim_snprintf(buff, IOSIZE, fmt, curargidx,
                                     (int)errmsg_len, errmsg);
-  lua_pushlstring(lstate, (char *)IObuff, len);
+  lua_pushlstring(lstate, buff, len);
+  xfree(buff);
   return lua_error(lstate);
 }
 
