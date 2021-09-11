@@ -535,6 +535,8 @@ nest, the nested fold is one character right of the fold it's contained in.
 
 A closed fold is indicated with a '+'.
 
+These characters can be changed with the 'fillchars' option.
+
 Where the fold column is too narrow to display all nested folds, digits are
 shown to indicate the nesting level.
 
