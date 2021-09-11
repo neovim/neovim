@@ -165,6 +165,7 @@ func Test_str2nr()
   call assert_equal(256, str2nr("1'0000'0000", 2, 1))
   call assert_equal(262144, str2nr("1'000'000", 8, 1))
   call assert_equal(1000000, str2nr("1'000'000", 10, 1))
+  call assert_equal(1000, str2nr("1'000''000", 10, 1))
   call assert_equal(65536, str2nr("1'00'00", 16, 1))
 
   call assert_equal(0, str2nr('0x10'))
