@@ -25,7 +25,6 @@ Number		A 32 or 64 bit signed number.  |expr-number|
 Float		A floating point number. |floating-point-format| *Float*
 		Examples: 123.456  1.15e-6  -1.1e3
 
-							*E928*
 String		A NUL terminated string of 8-bit unsigned characters (bytes).
 		|expr-string| Examples: "ab\txx\"--"  'x-z''a,c'
 
@@ -1095,7 +1094,8 @@ Floating point numbers can be written in two forms:
 	[-+]{N}.{M}[eE][-+]{exp}
 
 {N} and {M} are numbers.  Both {N} and {M} must be present and can only
-contain digits.
+contain digits, except that in |Vim9| script in {N} single quotes between
+digits are ignored.
 [-+] means there is an optional plus or minus sign.
 {exp} is the exponent, power of 10.
 Only a decimal point is accepted, not a comma.  No matter what the current
@@ -2191,8 +2191,8 @@ cursor({list})			Number	move cursor to position in {list}
 debugbreak({pid})		Number  interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
-deletebufline({expr}, {first}[, {last}])
-				Number	delete lines from buffer {expr}
+deletebufline({buf}, {first}[, {last}])
+				Number	delete lines from buffer {buf}
 dictwatcheradd({dict}, {pattern}, {callback})
 				Start watching a dictionary
 dictwatcherdel({dict}, {pattern}, {callback})
@@ -2244,12 +2244,12 @@ garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
 get({func}, {what})		any	get property of funcref/partial {func}
-getbufinfo([{expr}])		List	information about buffers
-getbufline({expr}, {lnum} [, {end}])
-				List	lines {lnum} to {end} of buffer {expr}
-getbufvar({expr}, {varname} [, {def}])
-				any	variable {varname} in buffer {expr}
-getchangelist({expr})		List	list of change list items
+getbufinfo([{buf}])		List	information about buffers
+getbufline({buf}, {lnum} [, {end}])
+				List	lines {lnum} to {end} of buffer {buf}
+getbufvar({buf}, {varname} [, {def}])
+				any	variable {varname} in buffer {buf}
+getchangelist([{buf}])		List	list of change list items
 getchar([expr])			Number or String
 					get one character from the user
 getcharmod()			Number	modifiers for the last typed character
@@ -2275,7 +2275,7 @@ getline({lnum})			String	line {lnum} of current buffer
 getline({lnum}, {end})		List	lines {lnum} to {end} of current buffer
 getloclist({nr})		List	list of location list items
 getloclist({nr}, {what})	Dict	get specific location list properties
-getmarklist([{expr}])		List	list of global/local marks
+getmarklist([{buf}])		List	list of global/local marks
 getmatches([{win}])		List	list of current matches
 getpid()			Number	process ID of Vim
 getpos({expr})			List	position of cursor, mark, etc.
@@ -2459,7 +2459,7 @@ serverlist()			String	get a list of available servers
 setbufline( {expr}, {lnum}, {line})
 				Number	set line {lnum} to {line} in buffer
 					{expr}
-setbufvar({expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
+setbufvar({buf}, {varname}, {val})	set {varname} in buffer {buf} to {val}
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
 setenv({name}, {val})		none	set environment variable
@@ -2489,11 +2489,11 @@ shiftwidth([{col}])		Number	effective value of 'shiftwidth'
 sign_define({name} [, {dict}])	Number	define or update a sign
 sign_define({list})		List	define or update a list of signs
 sign_getdefined([{name}])	List	get a list of defined signs
-sign_getplaced([{expr} [, {dict}]])
+sign_getplaced([{buf} [, {dict}]])
 				List	get a list of placed signs
-sign_jump({id}, {group}, {expr})
+sign_jump({id}, {group}, {buf})
 				Number	jump to a sign
-sign_place({id}, {group}, {name}, {expr} [, {dict}])
+sign_place({id}, {group}, {name}, {buf} [, {dict}])
 				Number	place a sign
 sign_placelist({list})		List	place a list of signs
 sign_undefine([{name}])		Number	undefine a sign
@@ -2517,7 +2517,7 @@ split({expr} [, {pat} [, {keepempty}]])
 sqrt({expr})			Float	square root of {expr}
 stdioopen({dict})		Number	open stdio in a headless instance.
 stdpath({what})                 String/List  returns the standard path(s) for {what}
-str2float({expr})		Float	convert String to Float
+str2float({expr} [, {quoted}])	Float	convert String to Float
 str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 					ASCII/UTF8 value
 str2nr({expr} [, {base} [, {quoted}]])
@@ -2547,7 +2547,7 @@ submatch({nr} [, {list}])	String or List
 substitute({expr}, {pat}, {sub}, {flags})
 				String	all {pat} in {expr} replaced with {sub}
 swapinfo({fname})		Dict	information about swap file {fname}
-swapname({expr})		String	swap file of buffer {expr}
+swapname({buf})			String	swap file of buffer {buf}
 synID({lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
 synIDattr({synID}, {what} [, {mode}])
 				String	attribute {what} of syntax ID {synID}
@@ -2689,13 +2689,13 @@ append({lnum}, {text})					*append()*
 <		Can also be used as a |method| after a List: >
 			mylist->append(lnum)
 
-appendbufline({expr}, {lnum}, {text})			*appendbufline()*
+appendbufline({buf}, {lnum}, {text})			*appendbufline()*
 		Like |append()| but append the text in buffer {expr}.
 
 		This function works only for loaded buffers. First call
 		|bufload()| if needed.
 
-		For the use of {expr}, see |bufname()|.
+		For the use of {buf}, see |bufname()|.
 
 		{lnum} is used like with |append()|.  Note that using |line()|
 		would use the current buffer, not the one appending to.
@@ -2703,7 +2703,7 @@ appendbufline({expr}, {lnum}, {text})			*appendbufline()*
 
 		On success 0 is returned, on failure 1 is returned.
 
-		If {expr} is not a valid buffer or {lnum} is not valid, an
+		If {buf} is not a valid buffer or {lnum} is not valid, an
 		error message is given. Example: >
 			:let failed = appendbufline(13, 0, "# THE START")
 <
@@ -2823,7 +2823,7 @@ browsedir({title}, {initdir})
 		browsing is not possible, an empty string is returned.
 
 bufadd({name})						*bufadd()*
-		Add a buffer to the buffer list with {name}.
+		Add a buffer to the buffer list with String {name}.
 		If a buffer for file {name} already exists, return that buffer
 		number.  Otherwise return the buffer number of the newly
 		created buffer.  When {name} is an empty string then a new
@@ -2832,13 +2832,13 @@ bufadd({name})						*bufadd()*
 <		Can also be used as a |method|: >
 			let bufnr = 'somename'->bufadd()
 
-bufexists({expr})					*bufexists()*
+bufexists({buf})					*bufexists()*
 		The result is a Number, which is |TRUE| if a buffer called
-		{expr} exists.
-		If the {expr} argument is a number, buffer numbers are used.
+		{buf} exists.
+		If the {buf} argument is a number, buffer numbers are used.
 		Number zero is the alternate buffer for the current window.
 
-		If the {expr} argument is a string it must match a buffer name
+		If the {buf} argument is a string it must match a buffer name
 		exactly.  The name can be:
 		- Relative to the current directory.
 		- A full path.
@@ -2857,42 +2857,42 @@ bufexists({expr})					*bufexists()*
 		Can also be used as a |method|: >
 			let exists = 'somename'->bufexists()
 
-buflisted({expr})					*buflisted()*
+buflisted({buf})					*buflisted()*
 		The result is a Number, which is |TRUE| if a buffer called
-		{expr} exists and is listed (has the 'buflisted' option set).
-		The {expr} argument is used like with |bufexists()|.
+		{buf} exists and is listed (has the 'buflisted' option set).
+		The {buf} argument is used like with |bufexists()|.
 
 		Can also be used as a |method|: >
 			let listed = 'somename'->buflisted()
 
-bufload({expr})						*bufload()*
-		Ensure the buffer {expr} is loaded.  When the buffer name
+bufload({buf})						*bufload()*
+		Ensure the buffer {buf} is loaded.  When the buffer name
 		refers to an existing file then the file is read.  Otherwise
 		the buffer will be empty.  If the buffer was already loaded
 		then there is no change.
 		If there is an existing swap file for the file of the buffer,
 		there will be no dialog, the buffer will be loaded anyway.
-		The {expr} argument is used like with |bufexists()|.
+		The {buf} argument is used like with |bufexists()|.
 
 		Can also be used as a |method|: >
 			eval 'somename'->bufload()
 
-bufloaded({expr})					*bufloaded()*
+bufloaded({buf})					*bufloaded()*
 		The result is a Number, which is |TRUE| if a buffer called
-		{expr} exists and is loaded (shown in a window or hidden).
-		The {expr} argument is used like with |bufexists()|.
+		{buf} exists and is loaded (shown in a window or hidden).
+		The {buf} argument is used like with |bufexists()|.
 
 		Can also be used as a |method|: >
 			let loaded = 'somename'->bufloaded()
 
-bufname([{expr}])						*bufname()*
+bufname([{buf}])						*bufname()*
 		The result is the name of a buffer.  Mostly as it is displayed
 		by the `:ls` command, but not using special names such as
 		"[No Name]".
-		If {expr} is omitted the current buffer is used.
-		If {expr} is a Number, that buffer number's name is given.
+		If {buf} is omitted the current buffer is used.
+		If {buf} is a Number, that buffer number's name is given.
 		Number zero is the alternate buffer for the current window.
-		If {expr} is a String, it is used as a |file-pattern| to match
+		If {buf} is a String, it is used as a |file-pattern| to match
 		with the buffer names.  This is always done like 'magic' is
 		set and 'cpoptions' is empty.  When there is more than one
 		match an empty string is returned.
@@ -2905,7 +2905,7 @@ bufname([{expr}])						*bufname()*
 		Listed buffers are found first.  If there is a single match
 		with a listed buffer, that one is returned.  Next unlisted
 		buffers are searched for.
-		If the {expr} is a String, but you want to use it as a buffer
+		If the {buf} is a String, but you want to use it as a buffer
 		number, force it to be a Number by adding zero to it: >
 			:echo bufname("3" + 0)
 <		Can also be used as a |method|: >
@@ -2919,9 +2919,9 @@ bufname([{expr}])						*bufname()*
 	bufname("file2")	name of buffer where "file2" matches.
 
 							*bufnr()*
-bufnr([{expr} [, {create}]])
+bufnr([{buf} [, {create}]])
 		The result is the number of a buffer, as it is displayed by
-		the `:ls` command.  For the use of {expr}, see |bufname()|
+		the `:ls` command.  For the use of {buf}, see |bufname()|
 		above.
 		If the buffer doesn't exist, -1 is returned.  Or, if the
 		{create} argument is present and TRUE, a new, unlisted,
@@ -2936,10 +2936,10 @@ bufnr([{expr} [, {create}]])
 		Can also be used as a |method|: >
 			echo bufref->bufnr()
 
-bufwinid({expr})					*bufwinid()*
+bufwinid({buf})						*bufwinid()*
 		The result is a Number, which is the |window-ID| of the first
-		window associated with buffer {expr}.  For the use of {expr},
-		see |bufname()| above.  If buffer {expr} doesn't exist or
+		window associated with buffer {buf}.  For the use of {buf},
+		see |bufname()| above.  If buffer {buf} doesn't exist or
 		there is no such window, -1 is returned.  Example: >
 
 	echo "A window containing buffer 1 is " . (bufwinid(1))
@@ -2949,10 +2949,10 @@ bufwinid({expr})					*bufwinid()*
 		Can also be used as a |method|: >
 			FindBuffer()->bufwinid()
 
-bufwinnr({expr})					*bufwinnr()*
+bufwinnr({buf})						*bufwinnr()*
 		Like |bufwinid()| but return the window number instead of the
 		|window-ID|.
-		If buffer {expr} doesn't exist or there is no such window, -1
+		If buffer {buf} doesn't exist or there is no such window, -1
 		is returned.  Example: >
 
 	echo "A window containing buffer 1 is " . (bufwinnr(1))
@@ -2975,7 +2975,7 @@ byte2line({byte})					*byte2line()*
 			GetOffset()->byte2line()
 
 byteidx({expr}, {nr})					*byteidx()*
-		Return byte index of the {nr}'th character in the string
+		Return byte index of the {nr}'th character in the String
 		{expr}.  Use zero for the first character, it then returns
 		zero.
 		If there are no multibyte characters the returned value is
@@ -3079,8 +3079,9 @@ chansend({id}, {data})					*chansend()*
 		messages, use |rpcnotify()| and |rpcrequest()| instead.
 
 
-char2nr({expr} [, {utf8}])					*char2nr()*
-		Return number value of the first char in {expr}.  Examples: >
+char2nr({string} [, {utf8}])					*char2nr()*
+		Return number value of the first char in {string}.
+		Examples: >
 			char2nr(" ")		returns 32
 			char2nr("ABC")		returns 65
 			char2nr("á")		returns 225
@@ -3189,6 +3190,7 @@ complete({startcol}, {matches})			*complete()* *E785*
 		match.
 		{matches} must be a |List|.  Each |List| item is one match.
 		See |complete-items| for the kind of items that are possible.
+		"longest" in 'completeopt' is ignored.
 		Note that the after calling this function you need to avoid
 		inserting anything that would cause completion to stop.
 		The match can be selected with CTRL-N and CTRL-P as usual with
@@ -3230,8 +3232,8 @@ complete_check()				*complete_check()*
 		Only to be used by the function specified with the
 		'completefunc' option.
 
-							*complete_info()*
-complete_info([{what}])
+
+complete_info([{what}])				*complete_info()*
 		Returns a |Dictionary| with information about Insert mode
 		completion.  See |ins-completion|.
 		The items are:
@@ -3310,10 +3312,12 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 <		For the console, the first letter of each choice is used as
 		the default shortcut key.  Case is ignored.
 
-		The optional {default} argument is the number of the choice
-		that is made if the user hits <CR>.  Use 1 to make the first
-		choice the default one.  Use 0 to not set a default.  If
-		{default} is omitted, 1 is used.
+		The optional {type} String argument gives the type of dialog.
+		This is only used for the icon of the GTK, Mac, Motif and
+		Win32 GUI.  It can be one of these values: "Error",
+		"Question", "Info", "Warning" or "Generic".  Only the first
+		character is relevant.  When {type} is omitted, "Generic" is
+		used.
 
 		The optional {type} argument gives the type of dialog.  This
 		is only used for the icon of the Win32 GUI.  It can be one of
@@ -3517,7 +3521,7 @@ deepcopy({expr}[, {noref}])				*deepcopy()* *E698*
 		Can also be used as a |method|: >
 			GetObject()->deepcopy()
 
-delete({fname} [, {flags}])					*delete()*
+delete({fname} [, {flags}])				*delete()*
 		Without {flags} or with {flags} empty: Deletes the file by the
 		name {fname}.  This also works when {fname} is a symbolic link.
 		A symbolic link itself is deleted, not what it points to.
@@ -3537,19 +3541,19 @@ delete({fname} [, {flags}])					*delete()*
 		Can also be used as a |method|: >
 			GetName()->delete()
 
-deletebufline({expr}, {first}[, {last}])		*deletebufline()*
-		Delete lines {first} to {last} (inclusive) from buffer {expr}.
+deletebufline({buf}, {first}[, {last}])		*deletebufline()*
+		Delete lines {first} to {last} (inclusive) from buffer {buf}.
 		If {last} is omitted then delete line {first} only.
 		On success 0 is returned, on failure 1 is returned.
 
 		This function works only for loaded buffers. First call
 		|bufload()| if needed.
 
-		For the use of {expr}, see |bufname()| above.
+		For the use of {buf}, see |bufname()| above.
 
 		{first} and {last} are used like with |setline()|. Note that
 		when using |line()| this refers to the current buffer. Use "$"
-		to refer to the last line in buffer {expr}.
+		to refer to the last line in buffer {buf}.
 
 		Can also be used as a |method|: >
 			GetBuffer()->deletebufline(1)
@@ -3840,21 +3844,21 @@ debugbreak({pid})					*debugbreak()*
 		Can also be used as a |method|: >
 			GetPid()->debugbreak()
 
-expand({expr} [, {nosuf} [, {list}]])				*expand()*
-		Expand wildcards and the following special keywords in {expr}.
-		'wildignorecase' applies.
+expand({string} [, {nosuf} [, {list}]])				*expand()*
+		Expand wildcards and the following special keywords in 
+		{string}.  'wildignorecase' applies.
 
 		If {list} is given and it is |TRUE|, a List will be returned.
 		Otherwise the result is a String and when there are several
 		matches, they are separated by <NL> characters.
 
 		If the expansion fails, the result is an empty string.  A name
-		for a non-existing file is not included, unless {expr} does
+		for a non-existing file is not included, unless {string} does
 		not start with '%', '#' or '<', see below.
 
-		When {expr} starts with '%', '#' or '<', the expansion is done
-		like for the |cmdline-special| variables with their associated
-		modifiers.  Here is a short overview:
+		When {string} starts with '%', '#' or '<', the expansion is
+		done like for the |cmdline-special| variables with their
+		associated modifiers.  Here is a short overview:
 
 			%		current file name
 			#		alternate file name
@@ -3903,7 +3907,7 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		buffer with no name, results in the current directory, with a
 		'/' added.
 
-		When {expr} does not start with '%', '#' or '<', it is
+		When {string} does not start with '%', '#' or '<', it is
 		expanded like a file name is expanded on the command line.
 		'suffixes' and 'wildignore' are used, unless the optional
 		{nosuf} argument is given and it is |TRUE|.
@@ -4374,7 +4378,7 @@ get({func}, {what})
 			"args"	The list with arguments
 
 							*getbufinfo()*
-getbufinfo([{expr}])
+getbufinfo([{buf}])
 getbufinfo([{dict}])
 		Get information about buffers as a List of Dictionaries.
 
@@ -4388,8 +4392,8 @@ getbufinfo([{dict}])
 			bufloaded	include only loaded buffers.
 			bufmodified	include only modified buffers.
 
-		Otherwise, {expr} specifies a particular buffer to return
-		information for.  For the use of {expr}, see |bufname()|
+		Otherwise, {buf} specifies a particular buffer to return
+		information for.  For the use of {buf}, see |bufname()|
 		above.  If the buffer is found the returned List has one item.
 		Otherwise the result is an empty list.
 
@@ -4442,12 +4446,12 @@ getbufinfo([{dict}])
 
 <
 							*getbufline()*
-getbufline({expr}, {lnum} [, {end}])
+getbufline({buf}, {lnum} [, {end}])
 		Return a |List| with the lines starting from {lnum} to {end}
-		(inclusive) in the buffer {expr}.  If {end} is omitted, a
+		(inclusive) in the buffer {buf}.  If {end} is omitted, a
 		|List| with only the line {lnum} is returned.
 
-		For the use of {expr}, see |bufname()| above.
+		For the use of {buf}, see |bufname()| above.
 
 		For {lnum} and {end} "$" can be used for the last line of the
 		buffer.  Otherwise a number must be used.
@@ -4466,10 +4470,11 @@ getbufline({expr}, {lnum} [, {end}])
 		Example: >
 			:let lines = getbufline(bufnr("myfile"), 1, "$")
 
-getbufvar({expr}, {varname} [, {def}])				*getbufvar()*
+getbufvar({buf}, {varname} [, {def}])				*getbufvar()*
 		The result is the value of option or local buffer variable
-		{varname} in buffer {expr}.  Note that the name without "b:"
+		{varname} in buffer {buf}.  Note that the name without "b:"
 		must be used.
+		The {varname} argument is a string.
 		When {varname} is empty returns a |Dictionary| with all the
 		buffer-local variables.
 		When {varname} is equal to "&" returns a |Dictionary| with all
@@ -4479,16 +4484,16 @@ getbufvar({expr}, {varname} [, {def}])				*getbufvar()*
 		This also works for a global or buffer-local option, but it
 		doesn't work for a global variable, window-local variable or
 		window-local option.
-		For the use of {expr}, see |bufname()| above.
+		For the use of {buf}, see |bufname()| above.
 		When the buffer or variable doesn't exist {def} or an empty
 		string is returned, there is no error message.
 		Examples: >
 			:let bufmodified = getbufvar(1, "&mod")
 			:echo "todo myvar = " . getbufvar("todo", "myvar")
 <
-getchangelist({expr})					*getchangelist()*
-		Returns the |changelist| for the buffer {expr}. For the use
-		of {expr}, see |bufname()| above. If buffer {expr} doesn't
+getchangelist({buf})					*getchangelist()*
+		Returns the |changelist| for the buffer {buf}. For the use
+		of {buf}, see |bufname()| above. If buffer {buf} doesn't
 		exist, an empty list is returned.
 
 		The returned list contains two entries: a list with the change
@@ -4498,7 +4503,7 @@ getchangelist({expr})					*getchangelist()*
 			col		column number
 			coladd		column offset for 'virtualedit'
 			lnum		line number
-		If buffer {expr} is the current buffer, then the current
+		If buffer {buf} is the current buffer, then the current
 		position refers to the position in the list. For other
 		buffers, it is set to the length of the list.
 
@@ -4654,9 +4659,9 @@ getcmdwintype()						*getcmdwintype()*
 		when not in the command-line window.
 
 getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
-		Return a list of command-line completion matches. {type}
-		specifies what for.  The following completion types are
-		supported:
+		Return a list of command-line completion matches. The String
+		{type} argument specifies what for.  The following completion
+		types are supported:
 
 		arglist		file names in argument list
 		augroup		autocmd groups
@@ -4740,8 +4745,11 @@ getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 		{winnr} can be the window number or the |window-ID|.
 
 getenv({name})						*getenv()*
-		Return the value of environment variable {name}.
-		When the variable does not exist |v:null| is returned.  That
+		Return the value of environment variable {name}.  The {name}
+		argument is a string, without a leading '$'.  Example: >
+			myHome = getenv('HOME')
+
+<		When the variable does not exist |v:null| is returned.  That
 		is different from a variable set to an empty string.
 		See also |expr-env|.
 
@@ -4749,8 +4757,8 @@ getfontname([{name}])					*getfontname()*
 		Without an argument returns the name of the normal font being
 		used.  Like what is used for the Normal highlight group
 		|hl-Normal|.
-		With an argument a check is done whether {name} is a valid
-		font name.  If not then an empty string is returned.
+		With an argument a check is done whether String {name} is a
+		valid font name.  If not then an empty string is returned.
 		Otherwise the actual font name is returned, or {name} if the
 		GUI does not support obtaining the real name.
 		Only works when the GUI is running, thus not in your vimrc or
@@ -4879,12 +4887,12 @@ getloclist({nr},[, {what}])				*getloclist()*
 			:echo getloclist(5, {'filewinid': 0})
 
 
-getmarklist([{expr}])					*getmarklist()*
-		Without the {expr} argument returns a |List| with information
+getmarklist([{buf}])					*getmarklist()*
+		Without the {buf} argument returns a |List| with information
 		about all the global marks. |mark|
 
-		If the optional {expr} argument is specified, returns the
-		local marks defined in buffer {expr}.  For the use of {expr},
+		If the optional {buf} argument is specified, returns the
+		local marks defined in buffer {buf}.  For the use of {buf},
 		see |bufname()|.
 
 		Each item in the returned List is a |Dict| with the following:
@@ -4926,8 +4934,8 @@ getpid()	Return a Number which is the process ID of the Vim process.
 		This is a unique number, until Vim exits.
 
 							*getpos()*
-getpos({expr})	Get the position for {expr}.  For possible values of {expr}
-		see |line()|.  For getting the cursor position see
+getpos({expr})	Get the position for String {expr}.  For possible values of
+		{expr} see |line()|.  For getting the cursor position see
 		|getcurpos()|.
 		The result is a |List| with four numbers:
 		    [bufnum, lnum, col, off]
@@ -5053,6 +5061,7 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
 <		When {regname} was not set the result is an empty string.
+		The {regname} argument is a string.
 
 		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)
@@ -5078,7 +5087,8 @@ getregtype([{regname}])					*getregtype()*
 		    "<CTRL-V>{width}"	for |blockwise-visual| text
 		    ""			for an empty or unknown register
 		<CTRL-V> is one character with value 0x16.
-		If {regname} is not specified, |v:register| is used.
+		The {regname} argument is a string.  If {regname} is not
+		specified, |v:register| is used.
 
 gettabinfo([{tabnr}])					*gettabinfo()*
 		If {tabnr} is not specified, then information about all the
@@ -5097,8 +5107,8 @@ gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
 		{tabnr}. |t:var|
 		Tabs are numbered starting with one.
-		When {varname} is empty a dictionary with all tab-local
-		variables is returned.
+		The {varname} argument is a string.  When {varname} is empty a
+		dictionary with all tab-local variables is returned.
 		Note that the name without "t:" must be used.
 		When the tab or variable doesn't exist {def} or an empty
 		string is returned, there is no error message.
@@ -5106,8 +5116,8 @@ gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		Get the value of window-local variable {varname} in window
 		{winnr} in tab page {tabnr}.
-		When {varname} is empty a dictionary with all window-local
-		variables is returned.
+		The {varname} argument is a string.  When {varname} is empty a
+ 		dictionary with all window-local variables is returned.
 		When {varname} is equal to "&" get the values of all
 		window-local options in a |Dictionary|.
 		Otherwise, when {varname} starts with "&" get the value of a
@@ -5262,22 +5272,22 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])		*glob()*
 		See |expand()| for expanding special Vim variables.  See
 		|system()| for getting the raw output of an external command.
 
-glob2regpat({expr})					 *glob2regpat()*
+glob2regpat({string})					 *glob2regpat()*
 		Convert a file pattern, as used by glob(), into a search
 		pattern.  The result can be used to match with a string that
 		is a file name.  E.g. >
 			if filename =~ glob2regpat('Make*.mak')
 <		This is equivalent to: >
 			if filename =~ '^Make.*\.mak$'
-<		When {expr} is an empty string the result is "^$", match an
+<		When {string} is an empty string the result is "^$", match an
 		empty string.
 		Note that the result depends on the system.  On MS-Windows
 		a backslash usually means a path separator.
 
 								*globpath()*
 globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])
-		Perform glob() on all directories in {path} and concatenate
-		the results.  Example: >
+		Perform glob() for String {expr} on all directories in {path}
+		and concatenate the results.  Example: >
 			:echo globpath(&rtp, "syntax/c.vim")
 <
 		{path} is a comma-separated list of directory names.  Each
@@ -5371,7 +5381,8 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 
 has_key({dict}, {key})					*has_key()*
 		The result is a Number, which is TRUE if |Dictionary| {dict}
-		has an entry with key {key}.  FALSE otherwise.
+		has an entry with key {key}.  FALSE otherwise. The {key}
+		argument is a string.
 
 		Can also be used as a |method|: >
 			mydict->has_key(key)
@@ -5396,6 +5407,7 @@ hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
 		that contains {what} in somewhere in the rhs (what it is
 		mapped to) and this mapping exists in one of the modes
 		indicated by {mode}.
+		The arguments {what} and {mode} are strings.
 		When {abbr} is there and it is |TRUE| use abbreviations
 		instead of mappings.  Don't forget to specify Insert and/or
 		Command-line mode.
@@ -5516,8 +5528,8 @@ hostname()						*hostname()*
 		which Vim is currently running.  Machine names greater than
 		256 characters long are truncated.
 
-iconv({expr}, {from}, {to})				*iconv()*
-		The result is a String, which is the text {expr} converted
+iconv({string}, {from}, {to})				*iconv()*
+		The result is a String, which is the text {string} converted
 		from encoding {from} to encoding {to}.
 		When the conversion completely fails an empty string is
 		returned.  When some characters could not be converted they
@@ -5762,8 +5774,9 @@ isinf({expr})						*isinf()*
 islocked({expr})					*islocked()* *E786*
 		The result is a Number, which is |TRUE| when {expr} is the
 		name of a locked variable.
-		{expr} must be the name of a variable, |List| item or
-		|Dictionary| entry, not the variable itself!  Example: >
+		The string argument {expr} must be the name of a variable,
+		|List| item or |Dictionary| entry, not the variable itself!
+		Example: >
 			:let alist = [0, ['a', 'b'], 2, 3]
 			:lockvar 1 alist
 			:echo islocked('alist')		" 1
@@ -6036,7 +6049,8 @@ libcallnr({libname}, {funcname}, {argument})
 <
 							*line()*
 line({expr})	The result is a Number, which is the line number of the file
-		position given with {expr}.  The accepted positions are:
+		position given with {expr}.  The {expr} argument is a string.
+		The accepted positions are:
 		    .	    the cursor position
 		    $	    the last line in the current buffer
 		    'x	    position of mark x (if the mark is not set, 0 is
@@ -6767,8 +6781,8 @@ or({expr}, {expr})					*or()*
 <		Can also be used as a |method|: >
 			:let bits = bits->or(0x80)
 
-pathshorten({expr})					*pathshorten()*
-		Shorten directory names in the path {expr} and return the
+pathshorten({path})					*pathshorten()*
+		Shorten directory names in the path {path} and return the
 		result.  The tail, the file name, is kept as-is.  The other
 		components in the path are reduced to single letters.  Leading
 		'~' and '.' characters are kept.  Example: >
@@ -7267,6 +7281,7 @@ remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 
 remote_foreground({server})				*remote_foreground()*
 		Move the Vim server with the name {server} to the foreground.
+		The {server} argument is a string.
 		This works like: >
 			remote_expr({server}, "foreground()")
 <		Except that on Win32 systems the client does the work, to work
@@ -7889,8 +7904,8 @@ serverstop({address})					*serverstop()*
 		If |v:servername| is stopped it is set to the next available
 		address returned by |serverlist()|.
 
-setbufline({expr}, {lnum}, {text})			*setbufline()*
-		Set line {lnum} to {text} in buffer {expr}.  This works like
+setbufline({buf}, {lnum}, {text})			*setbufline()*
+		Set line {lnum} to {text} in buffer {buf}.  This works like
 		|setline()| for the specified buffer.
 
 		This function works only for loaded buffers. First call
@@ -7903,23 +7918,24 @@ setbufline({expr}, {lnum}, {text})			*setbufline()*
 		to set multiple lines.  If the list extends below the last
 		line then those lines are added.
 
-		For the use of {expr}, see |bufname()| above.
+		For the use of {buf}, see |bufname()| above.
 
 		{lnum} is used like with |setline()|.
 		When {lnum} is just below the last line the {text} will be
 		added below the last line.
 		On success 0 is returned, on failure 1 is returned.
 
-		If {expr} is not a valid buffer or {lnum} is not valid, an
+		If {buf} is not a valid buffer or {lnum} is not valid, an
 		error message is given.
 
-setbufvar({expr}, {varname}, {val})			*setbufvar()*
-		Set option or local variable {varname} in buffer {expr} to
+setbufvar({buf}, {varname}, {val})			*setbufvar()*
+		Set option or local variable {varname} in buffer {buf} to
 		{val}.
 		This also works for a global or local window option, but it
 		doesn't work for a global or local window variable.
 		For a local window option the global value is unchanged.
-		For the use of {expr}, see |bufname()| above.
+		For the use of {buf}, see |bufname()| above.
+		The {varname} argument is a string.
 		Note that the variable name without "b:" must be used.
 		Examples: >
 			:call setbufvar(1, "&mod", 1)
@@ -7962,8 +7978,10 @@ setcmdpos({pos})					*setcmdpos()*
 		command line.
 
 setenv({name}, {val})						*setenv()*
-		Set environment variable {name} to {val}.
-		When {val} is |v:null| the environment variable is deleted.
+		Set environment variable {name} to {val}.  Example: >
+			call setenv('HOME', '/home/myhome')
+
+<		When {val} is |v:null| the environment variable is deleted.
 		See also |expr-env|.
 
 setfperm({fname}, {mode})				*setfperm()* *chmod*
@@ -8034,7 +8052,7 @@ setmatches({list} [, {win}])				*setmatches()*
 
 							*setpos()*
 setpos({expr}, {list})
-		Set the position for {expr}.  Possible values:
+		Set the position for String {expr}.  Possible values:
 			.	the cursor
 			'x	mark x
 
@@ -8195,6 +8213,7 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 							*setreg()*
 setreg({regname}, {value} [, {options}])
 		Set the register {regname} to {value}.
+		The {regname} argument is a string.
 
 		{value} may be any value returned by |getreg()|, including
 		a |List|.
@@ -8246,6 +8265,7 @@ setreg({regname}, {value} [, {options}])
 settabvar({tabnr}, {varname}, {val})			*settabvar()*
 		Set tab-local variable {varname} to {val} in tab page {tabnr}.
 		|t:var|
+		The {varname} argument is a string.
 		Note that the variable name without "t:" must be used.
 		Tabs are numbered starting with one.
 		This function is not available in the |sandbox|.
@@ -8491,12 +8511,14 @@ sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 			func MyCompare(i1, i2)
 			   return a:i1 == a:i2 ? 0 : a:i1 > a:i2 ? 1 : -1
 			endfunc
-			let sortedlist = sort(mylist, "MyCompare")
+			eval mylist->sort("MyCompare")
 <		A shorter compare version for this specific simple case, which
 		ignores overflow: >
 			func MyCompare(i1, i2)
 			   return a:i1 - a:i2
 			endfunc
+<		For a simple expression you can use a lambda: >
+			eval mylist->sort({i1, i2 -> i1 - i2})
 <
 							*soundfold()*
 soundfold({word})
@@ -8555,8 +8577,8 @@ spellsuggest({word} [, {max} [, {capital}]])
 		values of 'spelllang' and 'spellsuggest' are used.
 
 
-split({expr} [, {pattern} [, {keepempty}]])			*split()*
-		Make a |List| out of {expr}.  When {pattern} is omitted or
+split({string} [, {pattern} [, {keepempty}]])			*split()*
+		Make a |List| out of {string}.  When {pattern} is omitted or
 		empty each white-separated sequence of characters becomes an
 		item.
 		Otherwise the string is split where {pattern} matches,
@@ -8633,13 +8655,16 @@ stdpath({what})					*stdpath()* *E6100*
 			:echo stdpath("config")
 
 
-str2float({expr})					*str2float()*
-		Convert String {expr} to a Float.  This mostly works the same
-		as when using a floating point number in an expression, see
-		|floating-point-format|.  But it's a bit more permissive.
-		E.g., "1e40" is accepted, while in an expression you need to
-		write "1.0e40".  The hexadecimal form "0x123" is also
-		accepted, but not others, like binary or octal.
+str2float({string} [, {quoted}])				*str2float()*
+ 		Convert String {string} to a Float.  This mostly works the
+ 		same as when using a floating point number in an expression,
+ 		see |floating-point-format|.  But it's a bit more permissive.
+ 		E.g., "1e40" is accepted, while in an expression you need to
+ 		write "1.0e40".  The hexadecimal form "0x123" is also
+ 		accepted, but not others, like binary or octal.
+ 		When {quoted} is present and non-zero then embedded single
+ 		quotes before the dot are ignored, thus "1'000.0" is a
+ 		thousand.
 		Text after the number is silently ignored.
 		The decimal point is always '.', no matter what the locale is
 		set to.  A comma ends the number: "12,345.67" is converted to
@@ -8650,9 +8675,9 @@ str2float({expr})					*str2float()*
 		Can also be used as a |method|: >
 			let f = text->substitute(',', '', 'g')->str2float()
 
-str2list({expr} [, {utf8}])				*str2list()*
+str2list({string} [, {utf8}])				*str2list()*
 		Return a list containing the number values which represent
-		each character in String {expr}.  Examples: >
+		each character in String {string}.  Examples: >
 			str2list(" ")		returns [32]
 			str2list("ABC")		returns [65, 66, 67]
 <		|list2str()| does the opposite.
@@ -8666,8 +8691,8 @@ str2list({expr} [, {utf8}])				*str2list()*
 <		Can also be used as a |method|: >
 			GetString()->str2list()
 
-str2nr({expr} [, {base} [, {quoted}]])				*str2nr()*
-		Convert string {expr} to a number.
+str2nr({string} [, {base}])			*str2nr()*
+		Convert string {string} to a number.
 		{base} is the conversion base, it can be 2, 8, 10 or 16.
 		When {quoted} is present and non-zero then embedded single
 		quotes are ignored, thus "1'000'000" is a million.
@@ -8684,9 +8709,9 @@ str2nr({expr} [, {base} [, {quoted}]])				*str2nr()*
 		Text after the number is silently ignored.
 
 
-strchars({expr} [, {skipcc}])					*strchars()*
+strchars({string} [, {skipcc}])					*strchars()*
 		The result is a Number, which is the number of characters
-		in String {expr}.
+		in String {string}.
 		When {skipcc} is omitted or zero, composing characters are
 		counted separately.
 		When {skipcc} set to 1, Composing characters are ignored.
@@ -8717,16 +8742,16 @@ strcharpart({src}, {start} [, {len}])			*strcharpart()*
 			strcharpart('abc', -1, 2)
 <		results in 'a'.
 
-strdisplaywidth({expr} [, {col}])			*strdisplaywidth()*
+strdisplaywidth({string} [, {col}])			*strdisplaywidth()*
 		The result is a Number, which is the number of display cells
-		String {expr} occupies on the screen when it starts at {col}
+		String {string} occupies on the screen when it starts at {col}
 		(first column is zero).  When {col} is omitted zero is used.
 		Otherwise it is the screen column where to start.  This
 		matters for Tab characters.
 		The option settings of the current window are used.  This
 		matters for anything that's displayed differently, such as
 		'tabstop' and 'display'.
-		When {expr} contains characters with East Asian Width Class
+		When {string} contains characters with East Asian Width Class
 		Ambiguous, this function's return value depends on 'ambiwidth'.
 		Also see |strlen()|, |strwidth()| and |strchars()|.
 
@@ -8798,9 +8823,9 @@ string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 		Can also be used as a |method|: >
 			mylist->string()
 
-							*strlen()*
-strlen({expr})	The result is a Number, which is the length of the String
-		{expr} in bytes.
+strlen({string})						*strlen()*
+		The result is a Number, which is the length of the String
+		{string} in bytes.
 		If the argument is a Number it is first converted to a String.
 		For other types an error is given.
 		If you want to count the number of multibyte characters use
@@ -8876,8 +8901,8 @@ strridx({haystack}, {needle} [, {start}])			*strridx()*
 		When used with a single character it works similar to the C
 		function strrchr().
 
-strtrans({expr})					*strtrans()*
-		The result is a String, which is {expr} with all unprintable
+strtrans({string})					*strtrans()*
+		The result is a String, which is {string} with all unprintable
 		characters translated into printable characters |'isprint'|.
 		Like they are shown in a window.  Example: >
 			echo strtrans(@a)
@@ -8887,11 +8912,11 @@ strtrans({expr})					*strtrans()*
 		Can also be used as a |method|: >
 			GetString()->strtrans()
 
-strwidth({expr})					*strwidth()*
+strwidth({string})					*strwidth()*
 		The result is a Number, which is the number of display cells
-		String {expr} occupies.  A Tab character is counted as one
+		String {string} occupies.  A Tab character is counted as one
 		cell, alternatively use |strdisplaywidth()|.
-		When {expr} contains characters with East Asian Width Class
+		When {string} contains characters with East Asian Width Class
 		Ambiguous, this function's return value depends on 'ambiwidth'.
 		Also see |strlen()|, |strdisplaywidth()| and |strchars()|.
 
@@ -8924,10 +8949,10 @@ submatch({nr} [, {list}])			*submatch()* *E935*
 <		This finds the first number in the line and adds one to it.
 		A line break is included as a newline character.
 
-substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
-		The result is a String, which is a copy of {expr}, in which
+substitute({string}, {pat}, {sub}, {flags})		*substitute()*
+		The result is a String, which is a copy of {string}, in which
 		the first match of {pat} is replaced with {sub}.
-		When {flags} is "g", all matches of {pat} in {expr} are
+		When {flags} is "g", all matches of {pat} in {string} are
 		replaced.  Otherwise {flags} should be "".
 
 		This works like the ":substitute" command (without any flags).
@@ -8943,7 +8968,7 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 		|sub-replace-special|.  For example, to replace something with
 		"\n" (two characters), use "\\\\n" or '\\n'.
 
-		When {pat} does not match in {expr}, {expr} is returned
+		When {pat} does not match in {string}, {string} is returned
 		unmodified.
 
 		Example: >
@@ -8986,12 +9011,12 @@ swapinfo({fname})					*swapinfo()*
 			Not a swap file: does not contain correct block ID
 			Magic number mismatch: Info in first block is invalid
 
-swapname({expr})					*swapname()*
-		The result is the swap file path of the buffer {expr}.
-		For the use of {expr}, see |bufname()| above.
-		If buffer {expr} is the current buffer, the result is equal to
+swapname({buf})						*swapname()*
+		The result is the swap file path of the buffer {buf}.
+		For the use of {buf}, see |bufname()| above.
+		If buffer {buf} is the current buffer, the result is equal to
 		|:swapname| (unless there is no swap file).
-		If buffer {expr} has no swap file, returns an empty string.
+		If buffer {buf} has no swap file, returns an empty string.
 
 synID({lnum}, {col}, {trans})				*synID()*
 		The result is a Number, which is the syntax ID at the position

@@ -177,7 +177,7 @@ assert_notmatch({pattern}, {actual} [, {msg}])
 
 
 assert_report({msg})					*assert_report()*
-		Report a test failure directly, using {msg}.
+		Report a test failure directly, using String {msg}.
 		Always returns one.
 
 		Can also be used as a |method|: >

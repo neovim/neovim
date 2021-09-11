@@ -153,7 +153,12 @@ CTRL-R {register}					*c_CTRL-R* *c_<C-R>*
 				too.
 				When the result is a Float it's automatically
 				converted to a String.
-		See |registers| about registers.
+				Note that when you only want to move the
+				cursor and not insert anything, you must make
+				sure the expression evaluates to an empty
+				string.  E.g.: >
+					<C-R><C-R>=setcmdpos(2)[-1]<CR>
+<		See |registers| about registers.
 		Implementation detail: When using the |expression| register
 		and invoking setcmdpos(), this sets the position before
 		inserting the resulting string.  Use CTRL-R CTRL-R to set the
