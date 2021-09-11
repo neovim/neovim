@@ -119,7 +119,8 @@ void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
   FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
 
 void win_viewport(Integer grid, Window win, Integer topline,
-                  Integer botline, Integer curline, Integer curcol)
+                  Integer botline, Integer curline, Integer curcol,
+                  Integer line_count)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY;
 
 void popupmenu_show(Array items, Integer selected,
