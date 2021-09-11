@@ -674,7 +674,7 @@ function lsp.start_client(config)
   ---@param method (string) LSP method name
   ---@param params (table) The parameters for that method.
   function dispatch.notification(method, params)
-    local _ = log.debug() and log.debug('notification', method, params)
+    local _ = log.trace() and log.trace('notification', method, params)
     local handler = resolve_handler(method)
     if handler then
       -- Method name is provided here for convenience.
@@ -688,13 +688,13 @@ function lsp.start_client(config)
   ---@param method (string) LSP method name
   ---@param params (table) The parameters for that method
   function dispatch.server_request(method, params)
-    local _ = log.debug() and log.debug('server_request', method, params)
+    local _ = log.trace() and log.trace('server_request', method, params)
     local handler = resolve_handler(method)
     if handler then
-      local _ = log.debug() and log.debug("server_request: found handler for", method)
+      local _ = log.trace() and log.trace("server_request: found handler for", method)
       return handler(nil, params, {method=method, client_id=client_id})
     end
-    local _ = log.debug() and log.debug("server_request: no handler found for", method)
+    local _ = log.warn() and log.warn("server_request: no handler found for", method)
     return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end
 
@@ -826,7 +826,7 @@ function lsp.start_client(config)
       -- TODO(ashkan) handle errors here.
       pcall(config.before_init, initialize_params, config)
     end
-    local _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
+    local _ = log.trace() and log.trace(log_prefix, "initialize_params", initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
       assert(result, "server sent empty result")
