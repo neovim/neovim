@@ -1094,8 +1094,7 @@ Floating point numbers can be written in two forms:
 	[-+]{N}.{M}[eE][-+]{exp}
 
 {N} and {M} are numbers.  Both {N} and {M} must be present and can only
-contain digits, except that in |Vim9| script in {N} single quotes between
-digits are ignored.
+contain digits.
 [-+] means there is an optional plus or minus sign.
 {exp} is the exponent, power of 10.
 Only a decimal point is accepted, not a comma.  No matter what the current
@@ -3313,11 +3312,9 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		the default shortcut key.  Case is ignored.
 
 		The optional {type} String argument gives the type of dialog.
-		This is only used for the icon of the GTK, Mac, Motif and
-		Win32 GUI.  It can be one of these values: "Error",
-		"Question", "Info", "Warning" or "Generic".  Only the first
-		character is relevant.  When {type} is omitted, "Generic" is
-		used.
+		It can be one of these values: "Error", "Question", "Info",
+		"Warning" or "Generic".  Only the first character is relevant.
+		When {type} is omitted, "Generic" is used.
 
 		The optional {type} argument gives the type of dialog.  This
 		is only used for the icon of the Win32 GUI.  It can be one of
