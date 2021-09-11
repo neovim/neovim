@@ -1276,9 +1276,9 @@ int do_set(
               }
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
               // Allow negative, octal and hex numbers.
-              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0);
-              if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
-                errmsg = e_invarg;
+              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
+              if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
+                errmsg = (char_u *)N_("E521: Number required after =");
                 goto skip;
               }
             } else {
@@ -7486,7 +7486,7 @@ unsigned int get_bkc_value(buf_T *buf)
 ///
 /// @param win  If not NULL, the window to get the local option from; global
 ///             otherwise.
-char_u *get_showbreak_value(win_T *const win FUNC_ATTR_UNUSED)
+char_u *get_showbreak_value(win_T *const win)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win->w_p_sbr == NULL || *win->w_p_sbr == NUL) {

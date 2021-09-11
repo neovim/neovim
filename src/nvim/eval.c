@@ -1456,21 +1456,18 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
 /*
  * Assign the typevalue "tv" to the variable or variables at "arg_start".
  * Handles both "var" with any type and "[var, var; var]" with a list type.
- * When "nextchars" is not NULL it points to a string with characters that
+ * When "op" is not NULL it points to a string with characters that
  * must appear after the variable(s).  Use "+", "-" or "." for add, subtract
  * or concatenate.
  * Returns OK or FAIL;
  */
-static int
-ex_let_vars(
-    char_u *arg_start,
-    typval_T *tv,
-    int copy,                       // copy values from "tv", don't move
-    int semicolon,                  // from skip_var_list()
-    int var_count,                  // from skip_var_list()
-    int is_const,                   // lock variables for :const
-    char_u *nextchars
-)
+static int ex_let_vars(char_u *arg_start,
+                       typval_T *tv,
+                       int copy,       // copy values from "tv", don't move
+                       int semicolon,  // from skip_var_list()
+                       int var_count,  // from skip_var_list()
+                       int is_const,   // lock variables for :const
+                       char_u *op)
 {
   char_u *arg = arg_start;
   typval_T ltv;
@@ -1479,7 +1476,7 @@ ex_let_vars(
     /*
      * ":let var = expr" or ":for var in list"
      */
-    if (ex_let_one(arg, tv, copy, is_const, nextchars, nextchars) == NULL) {
+    if (ex_let_one(arg, tv, copy, is_const, op, op) == NULL) {
       return FAIL;
     }
     return OK;
@@ -1510,7 +1507,7 @@ ex_let_vars(
   while (*arg != ']') {
     arg = skipwhite(arg + 1);
     arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), true, is_const,
-                     (const char_u *)",;]", nextchars);
+                     (const char_u *)",;]", op);
     if (arg == NULL) {
       return FAIL;
     }
@@ -1532,8 +1529,8 @@ ex_let_vars(
       ltv.vval.v_list = rest_list;
       tv_list_ref(rest_list);
 
-      arg = ex_let_one(skipwhite(arg + 1), &ltv, false, is_const,
-                       (char_u *)"]", nextchars);
+      arg = ex_let_one(skipwhite(arg + 1), &ltv, false, is_const, (char_u *)"]",
+                       op);
       tv_clear(&ltv);
       if (arg == NULL) {
         return FAIL;
@@ -3950,7 +3947,12 @@ static int eval7(
         rettv->vval.v_float = f;
       }
     } else {
-      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0);
+      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
+      if (len == 0) {
+        EMSG2(_(e_invexpr2), *arg);
+        ret = FAIL;
+        break;
+      }
       *arg += len;
       if (evaluate) {
         rettv->v_type = VAR_NUMBER;
@@ -8670,6 +8672,7 @@ handle_subscript(
     }
   }
 
+  // "." is ".name" lookup when we found a dict.
   while (ret == OK
          && (((**arg == '[' || (**arg == '.' && rettv->v_type == VAR_DICT)
                || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))

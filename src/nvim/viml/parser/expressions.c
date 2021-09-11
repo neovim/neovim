@@ -351,7 +351,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         }
         if (exp_start) {
           vim_str2nr(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
-                     (int)(ret.len - exp_start));
+                     (int)(ret.len - exp_start), false);
         }
         if (exp_negative) {
           exp_part += frac_size;
@@ -369,7 +369,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         int len;
         int prep;
         vim_str2nr(pline.data, &prep, &len, STR2NR_ALL, NULL,
-                   &ret.data.num.val.integer, (int)pline.size);
+                   &ret.data.num.val.integer, (int)pline.size, false);
         ret.len = (size_t)len;
         const uint8_t bases[] = {
           [0] = 10,

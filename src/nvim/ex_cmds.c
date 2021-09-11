@@ -609,7 +609,7 @@ void ex_sort(exarg_T *eap)
         } else {
           nrs[lnum - eap->line1].st_u.num.is_number = true;
           vim_str2nr(s, NULL, NULL, sort_what,
-                     &nrs[lnum - eap->line1].st_u.num.value, NULL, 0);
+                     &nrs[lnum - eap->line1].st_u.num.value, NULL, 0, false);
         }
       } else {
         s = skipwhite(p);

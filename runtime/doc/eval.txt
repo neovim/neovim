@@ -20,7 +20,7 @@ There are six types of variables:
 							*Number* *Integer*
 Number		A 32 or 64 bit signed number.  |expr-number|
 		The number of bits is available in |v:numbersize|.
-		Examples:  -123  0x10  0177  0b1011
+		Examples:  -123  0x10  0177  0o177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*
 		Examples: 123.456  1.15e-6  -1.1e3
@@ -54,14 +54,15 @@ the Number.  Examples:
 	Number -1	-->	String "-1" ~
 							*octal*
 Conversion from a String to a Number is done by converting the first digits to
-a number.  Hexadecimal "0xf9", Octal "017", and Binary "0b10" numbers are
-recognized.  If the String doesn't start with digits, the result is zero.
-Examples:
+a number.  Hexadecimal "0xf9", Octal "017" or "0o17", and Binary "0b10"
+numbers are recognized.  If the String doesn't start with digits, the result
+is zero. Examples:
 	String "456"	-->	Number 456 ~
 	String "6bar"	-->	Number 6 ~
 	String "foo"	-->	Number 0 ~
 	String "0xf1"	-->	Number 241 ~
 	String "0100"	-->	Number 64 ~
+	String "0o100"	-->	Number 64 ~
 	String "0b101"	-->	Number 5 ~
 	String "-8"	-->	Number -8 ~
 	String "+8"	-->	Number 0 ~
@@ -1085,7 +1086,7 @@ number			number constant			*expr-number*
 				*hex-number* *octal-number* *binary-number*
 
 Decimal, Hexadecimal (starting with 0x or 0X), Binary (starting with 0b or 0B)
-and Octal (starting with 0).
+and Octal (starting with 0, 0o or 0O).
 
 						*floating-point-format*
 Floating point numbers can be written in two forms:
@@ -2519,7 +2520,8 @@ stdpath({what})                 String/List  returns the standard path(s) for {w
 str2float({expr})		Float	convert String to Float
 str2list({expr} [, {utf8}])	List	convert each character of {expr} to
 					ASCII/UTF8 value
-str2nr({expr} [, {base}])	Number	convert String to Number
+str2nr({expr} [, {base} [, {quoted}]])
+				Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
 strcharpart({str}, {start} [, {len}])
 				String	{len} characters of {str} at
@@ -6572,9 +6574,9 @@ mkdir({name} [, {path} [, {prot}]])
 		If {path} is "p" then intermediate directories are created as
 		necessary.  Otherwise it must be "".
 		If {prot} is given it is used to set the protection bits of
-		the new directory.  The default is 0755 (rwxr-xr-x: r/w for
-		the user readable for others).  Use 0700 to make it unreadable
-		for others.
+		the new directory.  The default is 0o755 (rwxr-xr-x: r/w for
+		the user, readable for others).  Use 0o700 to make it
+		unreadable for others.
 
 		{prot} is applied for all parts of {name}.  Thus if you create
 		/tmp/foo/bar then /tmp/foo will be created with 0700. Example: >
@@ -8664,9 +8666,11 @@ str2list({expr} [, {utf8}])				*str2list()*
 <		Can also be used as a |method|: >
 			GetString()->str2list()
 
-str2nr({expr} [, {base}])				*str2nr()*
+str2nr({expr} [, {base} [, {quoted}]])				*str2nr()*
 		Convert string {expr} to a number.
 		{base} is the conversion base, it can be 2, 8, 10 or 16.
+		When {quoted} is present and non-zero then embedded single
+		quotes are ignored, thus "1'000'000" is a million.
 
 		When {base} is omitted base 10 is used.  This also means that
 		a leading zero doesn't cause octal conversion to be used, as
@@ -8674,9 +8678,9 @@ str2nr({expr} [, {base}])				*str2nr()*
 			let nr = str2nr('123')
 <
 		When {base} is 16 a leading "0x" or "0X" is ignored.  With a
-		different base the result will be zero. Similarly, when {base}
-		is 8 a leading "0" is ignored, and when {base} is 2 a leading
-		"0b" or "0B" is ignored.
+		different base the result will be zero. Similarly, when
+		{base} is 8 a leading "0", "0o" or "0O" is ignored, and when
+		{base} is 2 a leading "0b" or "0B" is ignored.
 		Text after the number is silently ignored.
 
 
@@ -10433,14 +10437,15 @@ This does NOT work: >
 			When the selected range of items is partly past the
 			end of the list, items will be added.
 
-                                            *:let+=* *:let-=* *:letstar=*
-                                            *:let/=* *:let%=* *:let.=* *E734*
+			*:let+=* *:let-=* *:letstar=*
+			*:let/=* *:let%=* *:let.=* *:let..=* *E734*
 :let {var} += {expr1}	Like ":let {var} = {var} + {expr1}".
 :let {var} -= {expr1}	Like ":let {var} = {var} - {expr1}".
 :let {var} *= {expr1}	Like ":let {var} = {var} * {expr1}".
 :let {var} /= {expr1}	Like ":let {var} = {var} / {expr1}".
 :let {var} %= {expr1}	Like ":let {var} = {var} % {expr1}".
 :let {var} .= {expr1}	Like ":let {var} = {var} . {expr1}".
+:let {var} ..= {expr1}	Like ":let {var} = {var} .. {expr1}".
 			These fail if {var} was not set yet and when the type
 			of {var} and {expr1} don't fit the operator.
 
