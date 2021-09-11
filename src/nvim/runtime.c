@@ -168,28 +168,36 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags,
                       DoInRuntimepathCB callback, void *cookie)
 {
   int done = FAIL;
+  if (!(flags & (DIP_NOAFTER | DIP_AFTER))) {
+    done = do_in_path_and_pp(path, name, flags | DIP_NOAFTER, callback, cookie);
+    if (done == OK && !(flags & DIP_ALL)) {
+      return done;
+    }
+    flags |= DIP_AFTER;
+  }
 
   if ((flags & DIP_NORTP) == 0) {
-    done = do_in_path(path, (name && !*name) ? NULL : name, flags, callback, cookie);
+    done |= do_in_path(path, (name && !*name) ? NULL : name, flags, callback, cookie);
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
-    char *start_dir = "pack/*/start/*/%s";  // NOLINT
-    size_t len = STRLEN(start_dir) + STRLEN(name);
-    char_u *s = xmallocz(len);
+    char *start_dir = "pack/*/start/*/%s%s";  // NOLINT
+    size_t len = STRLEN(start_dir) + STRLEN(name) + 6;
+    char_u *s = xmallocz(len);  // TODO(bfredl): get rid of random allocations
+    char *suffix = (flags & DIP_AFTER) ? "after/" : "";
 
-    vim_snprintf((char *)s, len, start_dir, name);
-    done |= do_in_path(p_pp, s, flags, callback, cookie);
+    vim_snprintf((char *)s, len, start_dir, suffix, name);
+    done |= do_in_path(p_pp, s, flags & ~DIP_AFTER, callback, cookie);
 
     xfree(s);
 
     if (done == FAIL || (flags & DIP_ALL)) {
-      start_dir = "start/*/%s";  // NOLINT
-      len = STRLEN(start_dir) + STRLEN(name);
+      start_dir = "start/*/%s%s";  // NOLINT
+      len = STRLEN(start_dir) + STRLEN(name) + 6;
       s = xmallocz(len);
 
-      vim_snprintf((char *)s, len, start_dir, name);
-      done |= do_in_path(p_pp, s, flags, callback, cookie);
+      vim_snprintf((char *)s, len, start_dir, suffix, name);
+      done |= do_in_path(p_pp, s, flags & ~DIP_AFTER, callback, cookie);
 
       xfree(s);
     }

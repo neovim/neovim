@@ -310,7 +310,7 @@ describe('startup', function()
   end)
 
   local function pack_clear(cmd)
-    clear('--cmd', 'set packpath=test/functional/fixtures', '--cmd', cmd)
+    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
   end
 
 
@@ -347,6 +347,16 @@ describe('startup', function()
 
     pack_clear [[ packadd! bonus | lua _G.y = require'bonus'.launch() ]]
     eq('CPE 1704 TKS', exec_lua [[ return _G.y ]])
+  end)
+
+  it("handles the correct order with start packages and after/", function()
+    pack_clear [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]
+    eq({'ordinary', 'FANCY', 'ordinary after', 'FANCY after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with opt packages and after/", function()
+    pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! superspecial\nruntime! filen.lua" ]]
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'SuperSpecial after', 'ordinary after', 'FANCY after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 end)
 
@@ -504,6 +514,7 @@ describe('runtime:', function()
   local xenv = { XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata }
 
   setup(function()
+    rmdir(xhome)
     mkdir_p(xconfig .. pathsep .. 'nvim')
     mkdir_p(xdata)
   end)
@@ -524,7 +535,7 @@ describe('runtime:', function()
     rmdir(plugin_folder_path)
   end)
 
-  it('loads plugin/*.lua from start plugins', function()
+  it('loads plugin/*.lua from start packages', function()
     local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'catagory',
     'start', 'test_plugin'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
@@ -551,6 +562,27 @@ describe('runtime:', function()
     os.remove(profiler_file)
     rmdir(plugin_path)
   end)
+
+  it('loads plugin/*.lua from site packages', function()
+    local nvimdata = iswin() and "nvim-data" or "nvim"
+    local plugin_path = table.concat({xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
+    local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
+    local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
+    local plugin_after_file_path = table.concat({plugin_after_path, 'helloo.lua'}, pathsep)
+
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[table.insert(_G.lista, "unos")]])
+    mkdir_p(plugin_after_path)
+    write_file(plugin_after_file_path, [[table.insert(_G.lista, "dos")]])
+
+    clear{ args_rm={'-u'}, args={'--cmd', 'lua _G.lista = {}'}, env=xenv }
+
+    eq({'unos', 'dos'}, exec_lua "return _G.lista")
+
+    rmdir(plugin_path)
+  end)
+
 
   it('loads ftdetect/*.lua', function()
     local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
