@@ -516,16 +516,26 @@ You would now have these files under ~/.local/share/nvim/site:
 	pack/foo/start/foobar/syntax/some.vim
 	pack/foo/opt/foodebug/plugin/debugger.vim
 
-When Vim starts up, after processing your .vimrc, it scans all directories in
-'packpath' for plugins under the "pack/*/start" directory.  First all those
-directories are added to 'runtimepath'.  Then all the plugins are loaded.
-See |packload-two-steps| for how these two steps can be useful.
+							*runtime-search-path*
+When runtime files are searched for, first all paths in 'runtimepath' are
+searched, then all "pack/*/start/*" dirs are searched. However, package entries
+are not visible in `:set rtp` or `echo &rtp`, as the final concatenated path
+would be too long and get truncated. To list all used directories, use
+|nvim_list_runtime_paths()|. In addition |nvim_get_runtime_file()| can be used
+to query for specific files or sub-folders within the runtime path. For
+instance to list all runtime dirs and packages with lua paths, use >
 
-In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and adds
-"~/.local/share/nvim/site/pack/foo/start/foobar" to 'runtimepath'.
+    :echo nvim_get_runtime_file("lua/", v:true)
+
+<When Vim starts up, after processing your .vimrc, it scans all directories in
+'packpath' for plugins under the "pack/*/start" directory, and all the plugins
+are loaded.
+
+In the example Vim will find "pack/foo/start/foobar/plugin/foo.vim" and load it.
 
 If the "foobar" plugin kicks in and sets the 'filetype' to "some", Vim will
-find the syntax/some.vim file, because its directory is in 'runtimepath'.
+find the syntax/some.vim file, because its directory is in the runtime search
+path.
 
 Vim will also load ftdetect files, if there are any.
 
@@ -536,7 +546,7 @@ is used.
 Loading packages automatically will not happen if loading plugins is disabled,
 see |load-plugins|.
 
-To load packages earlier, so that 'runtimepath' gets updated: >
+To load packages earlier, so that plugin/ files are sourced:
 	:packloadall
 This also works when loading plugins is disabled.  The automatic loading will
 only happen once.
@@ -664,8 +674,8 @@ found automatically.  Your package would have these files:
 <	pack/foo/start/lib/autoload/foolib.vim >
 		func foolib#getit()
 
-This works, because loading packages will first add all found directories to
-'runtimepath' before sourcing the plugins.
+This works, because start packages will be used to look for autoload files,
+when sourcing the plugins.
 
 ==============================================================================
 Debugging scripts					*debug-scripts*

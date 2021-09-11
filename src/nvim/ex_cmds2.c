@@ -1641,10 +1641,10 @@ void ex_compiler(exarg_T *eap)
     do_unlet(S_LEN("b:current_compiler"), true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
-    if (source_in_path(p_rtp, buf, DIP_ALL) == FAIL) {
+    if (source_runtime(buf, DIP_ALL) == FAIL) {
       // Try lua compiler
       snprintf((char *)buf, bufsize, "compiler/%s.lua", eap->arg);
-      if (source_in_path(p_rtp, buf, DIP_ALL) == FAIL) {
+      if (source_runtime(buf, DIP_ALL) == FAIL) {
         EMSG2(_("E666: compiler not supported: %s"), eap->arg);
       }
     }

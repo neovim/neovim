@@ -1352,23 +1352,10 @@ static void load_plugins(void)
     char_u *const plugin_pattern_vim = (char_u *)"plugin/**/*.vim";  // NOLINT
     char_u *const plugin_pattern_lua = (char_u *)"plugin/**/*.lua";  // NOLINT
 
-    // First add all package directories to 'runtimepath', so that their
-    // autoload directories can be found.  Only if not done already with a
-    // :packloadall command.
-    // Make a copy of 'runtimepath', so that source_runtime does not use the
-    // pack directories.
-    if (!did_source_packages) {
-      rtp_copy = vim_strsave(p_rtp);
-      add_pack_start_dirs();
-    }
-
-    source_in_path(rtp_copy == NULL ? p_rtp : rtp_copy,
-                   plugin_pattern_vim,
-                   DIP_ALL | DIP_NOAFTER);
-    source_in_path(rtp_copy == NULL ? p_rtp : rtp_copy,
-                   plugin_pattern_lua,
-                   DIP_ALL | DIP_NOAFTER);
-    TIME_MSG("loading plugins");
+    // don't use source_runtime() yet so we can check for :packloadall below
+    source_in_path(p_rtp, plugin_pattern_vim, DIP_ALL | DIP_NOAFTER);
+    source_in_path(p_rtp, plugin_pattern_lua, DIP_ALL | DIP_NOAFTER);
+    TIME_MSG("loading rtp plugins");
     xfree(rtp_copy);
 
     // Only source "start" packages if not done already with a :packloadall

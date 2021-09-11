@@ -750,47 +750,10 @@ Integer nvim_strwidth(String text, Error *err)
 /// Gets the paths contained in 'runtimepath'.
 ///
 /// @return List of paths
-ArrayOf(String) nvim_list_runtime_paths(void)
+ArrayOf(String) nvim_list_runtime_paths(Error *err)
   FUNC_API_SINCE(1)
 {
-  // TODO(bfredl): this should just work:
-  // return nvim_get_runtime_file(NULL_STRING, true);
-
-  Array rv = ARRAY_DICT_INIT;
-
-  char_u *rtp = p_rtp;
-
-  if (*rtp == NUL) {
-    // No paths
-    return rv;
-  }
-
-  // Count the number of paths in rtp
-  while (*rtp != NUL) {
-    if (*rtp == ',') {
-      rv.size++;
-    }
-    rtp++;
-  }
-  rv.size++;
-
-  // Allocate memory for the copies
-  rv.items = xmalloc(sizeof(*rv.items) * rv.size);
-  // Reset the position
-  rtp = p_rtp;
-  // Start copying
-  for (size_t i = 0; i < rv.size; i++) {
-    rv.items[i].type = kObjectTypeString;
-    rv.items[i].data.string.data = xmalloc(MAXPATHL);
-    // Copy the path from 'runtimepath' to rv.items[i]
-    size_t length = copy_option_part(&rtp,
-                                     (char_u *)rv.items[i].data.string.data,
-                                     MAXPATHL,
-                                     ",");
-    rv.items[i].data.string.size = length;
-  }
-
-  return rv;
+  return nvim_get_runtime_file(NULL_STRING, true, err);
 }
 
 /// Find files in runtime directories
@@ -802,10 +765,6 @@ ArrayOf(String) nvim_list_runtime_paths(void)
 ///
 /// It is not an error to not find any files. An empty array is returned then.
 ///
-/// To find a directory, `name` must end with a forward slash, like
-/// "rplugin/python/". Without the slash it would instead look for an ordinary
-/// file called "rplugin/python".
-///
 /// @param name pattern of files to search for
 /// @param all whether to return all matches or only the first
 /// @return list of absolute paths to the found files
@@ -815,11 +774,7 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
 
-  int flags = DIP_START | (all ? DIP_ALL : 0);
-
-  if (name.size == 0 || name.data[name.size-1] == '/') {
-    flags |= DIP_DIR;
-  }
+  int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
 
   do_in_runtimepath((char_u *)(name.size ? name.data : ""),
                     flags, find_runtime_cb, &rv);

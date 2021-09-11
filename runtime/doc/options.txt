@@ -4328,7 +4328,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'packpath'* *'pp'*
 'packpath' 'pp'		string	(default: see 'runtimepath')
-	Directories used to find packages.  See |packages|.
+	Directories used to find packages.  See |packages| and |rtp-packages|.
 
 
 						*'paragraphs'* *'para'*
@@ -4887,9 +4887,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   ordering.  This is for preferences to overrule or add to the 
 	   distributed defaults or system-wide settings (rarely needed).
 
-	More entries are added when using |packages|.  If it gets very long
-	then `:set rtp` will be truncated, use `:echo &rtp` to see the full
-	string.
+							*rtp-packages*
+	"start" packages will additionally be used to search for runtime files
+	after these, but package entries are not visible in `:set rtp`.
+	See |runtime-search-path| for more information. "opt" packages
+	will be explicitly added to &rtp when |:packadd| is used.
 
 	Note that, unlike 'path', no wildcards like "**" are allowed.  Normal
 	wildcards are allowed, but can significantly slow down searching for
