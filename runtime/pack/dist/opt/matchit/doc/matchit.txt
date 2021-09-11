@@ -4,7 +4,7 @@ For instructions on installing this file, type
 	`:help matchit-install`
 inside Vim.
 
-For Vim version 8.1.  Last change:  2020 Mar 01
+For Vim version 8.1.  Last change:  2021 May 17
 
 
 		  VIM REFERENCE MANUAL    by Benji Fisher et al
@@ -322,7 +322,7 @@ should work (and have the same effect as "foobar:barfoo:endfoobar"), although
 this has not been thoroughly tested.
 
 You can use |zero-width| patterns such as |\@<=| and |\zs|.  (The latter has
-not been thouroughly tested in matchit.vim.)  For example, if the keyword "if"
+not been thoroughly tested in matchit.vim.)  For example, if the keyword "if"
 must occur at the start of the line, with optional white space, you might use
 the pattern "\(^\s*\)\@<=if" so that the cursor will end on the "i" instead of
 at the start of the line.  For another example, if HTML had only one tag then
