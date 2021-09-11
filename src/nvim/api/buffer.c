@@ -1232,7 +1232,7 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
   return rv;
 }
 
-/// Returns position for a given extmark id
+/// Gets the position (0-indexed) of an extmark.
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
@@ -1240,7 +1240,8 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
 /// @param opts  Optional parameters. Keys:
 ///          - details: Whether to include the details dict
 /// @param[out] err   Error details, if any
-/// @return (row, col) tuple or empty list () if extmark id was absent
+/// @return 0-indexed (row, col) tuple or empty list () if extmark id was
+/// absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
                                             Integer id, Dictionary opts,
                                             Error *err)
@@ -1320,10 +1321,10 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param start  Start of range, given as (row, col) or valid extmark id
-///               (whose position defines the bound)
-/// @param end  End of range, given as (row, col) or valid extmark id
-///             (whose position defines the bound)
+/// @param start  Start of range: a 0-indexed (row, col) or valid extmark id
+/// (whose position defines the bound). |api-indexing|
+/// @param end  End of range (inclusive): a 0-indexed (row, col) or valid
+/// extmark id (whose position defines the bound). |api-indexing|
 /// @param opts  Optional parameters. Keys:
 ///          - limit:  Maximum number of marks to return
 ///          - details Whether to include the details dict
@@ -1424,8 +1425,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param line  Line where to place the mark, 0-based
-/// @param col  Column where to place the mark, 0-based
+/// @param line  Line where to place the mark, 0-based. |api-indexing|
+/// @param col  Column where to place the mark, 0-based. |api-indexing|
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
 ///               - end_line : ending line of the mark, 0-based inclusive.

@@ -134,6 +134,14 @@ lines, 0-based columns):
     |nvim_win_get_cursor()|
     |nvim_win_set_cursor()|
 
+Exception: the following API functions use |extmarks| indexing (0-based
+indices, end-inclusive):
+
+    |nvim_buf_del_extmark()|
+    |nvim_buf_get_extmark_by_id()|
+    |nvim_buf_get_extmarks()|
+    |nvim_buf_set_extmark()|
+
 							*api-fast*
 Most API functions are "deferred": they are queued on the main loop and
 processed sequentially with normal input.  So if the editor is waiting for
@@ -436,36 +444,76 @@ Example: create a float with scratch buffer: >
 >
 
 ==============================================================================
-Extended marks						   *api-extended-marks*
+Extended marks					*api-extended-marks* *extmarks*
 
 Extended marks (extmarks) represent buffer annotations that track text changes
-in the buffer. They could be used to represent cursors, folds, misspelled
-words, and anything else that needs to track a logical location in the buffer
-over time.
+in the buffer. They can represent cursors, folds, misspelled words, anything
+that needs to track a logical location in the buffer over time. |api-indexing|
+
+Extmark position works like "bar" cursor: it exists between characters. Thus
+the maximum extmark index on a line is 1 more than the character index: >
+
+     f o o b a r      line contents
+     0 1 2 3 4 5      character positions (0-based)
+    0 1 2 3 4 5 6     extmark positions (0-based)
+
+Extmarks have "forward gravity": if you place the cursor directly on an
+extmark position and enter some text, the extmark migrates forward. >
+
+     f o o|b a r      line (| = cursor)
+          3           extmark
+
+     f o o z|b a r    line (| = cursor)
+            4         extmark (after typing "z")
+
+If an extmark is on the last index of a line and you inputsa newline at that
+point, the extmark will accordingly migrate to the next line: >
+
+     f o o z b a r|   line (| = cursor)
+                  7   extmark
+
+     f o o z b a r    first line
+                      extmarks (none present)
+     |                second line (| = cursor)
+     0                extmark (after typing <CR>)
+
 
 Example:
 
-We will set an extmark at the first row and third column. |api-indexing| is
-zero-indexed, so we use row=0 and column=2. Passing id=0 creates a new mark
-and returns the id: >
+Let's set an extmark at the first row (row=0) and third column (column=2).
+|api-indexing| Passing id=0 creates a new mark and returns the id: >
 
+      01 2345678
+    0 ex|ample..
+<        ^ extmark position
+>
     let g:mark_ns = nvim_create_namespace('myplugin')
-    let g:mark_id = nvim_buf_set_extmark(0, g:mark_ns, 0, 0, 2, {})
+    let g:mark_id = nvim_buf_set_extmark(0, g:mark_ns, 0, 2, {})
+<
+We can get the mark by its id: >
 
-We can get a mark by its id: >
-
-    echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id)
+    echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
     => [0, 2]
 
-We can get all marks in a buffer for our namespace (or by a range): >
+We can get all marks in a buffer by |namespace| (or by a range): >
 
     echo nvim_buf_get_extmarks(0, g:mark_ns, 0, -1, {})
     => [[1, 0, 2]]
 
-Deleting all text surrounding an extmark does not remove the extmark. To
-remove an extmark use |nvim_buf_del_extmark()|.
+Deleting all surrounding text does NOT remove an extmark! To remove extmarks
+use |nvim_buf_del_extmark()|. Deleting "x" in our example: >
 
-Namespaces allow your plugin to manage only its own extmarks, ignoring those
+      0 12345678
+    0 e|ample..
+<       ^ extmark position
+>
+    echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
+    => [0, 1]
+<
+    Note: Extmark "gravity" decides how it will shift after a text edit.
+          See |nvim_buf_set_extmark()|
+
+Namespaces allow any plugin to manage only its own extmarks, ignoring those
 created by another plugin.
 
 Extmark positions changed by an edit will be restored on undo/redo. Creating
@@ -779,10 +827,9 @@ nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
 
                 On execution error: does not fail, but updates v:errmsg.
 
-                If you need to input sequences like <C-o> use
-                |nvim_replace_termcodes| to replace the termcodes and then
-                pass the resulting string to nvim_feedkeys. You'll also want
-                to enable escape_csi.
+                To input sequences like <C-o> use |nvim_replace_termcodes()|
+                (typically with escape_csi=true) to replace the keycodes. Then
+                pass the result to nvim_feedkeys().
 
                 Example: >
                     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
@@ -2072,7 +2119,7 @@ nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
 
                                                 *nvim_buf_get_extmark_by_id()*
 nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
-                Returns position for a given extmark id
+                Gets the position (0-indexed) of an extmark {id}.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -2082,7 +2129,8 @@ nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
                               • details: Whether to include the details dict
 
                 Return: ~
-                    (row, col) tuple or empty list () if extmark id was absent
+                    0-indexed (row, col) tuple or empty list () if extmark id
+                    was absent
 
                                                      *nvim_buf_get_extmarks()*
 nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
@@ -2122,10 +2170,12 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {ns_id}   Namespace id from |nvim_create_namespace()|
-                    {start}   Start of range, given as (row, col) or valid
-                              extmark id (whose position defines the bound)
-                    {end}     End of range, given as (row, col) or valid
-                              extmark id (whose position defines the bound)
+                    {start}   Start of range, given as 0-indexed (row, col) or
+                              valid extmark id (whose position defines the
+                              bound)
+                    {end}     End of range (inclusive), given as 0-indexed
+                              (row, col) or valid extmark id (whose position
+                              defines the bound)
                     {opts}    Optional parameters. Keys:
                               • limit: Maximum number of marks to return
                               • details Whether to include the details dict
