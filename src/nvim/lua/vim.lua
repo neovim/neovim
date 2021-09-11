@@ -433,6 +433,7 @@ function vim.notify(msg, log_level, _opts)
 end
 
 
+---@private
 function vim.register_keystroke_callback()
   error('vim.register_keystroke_callback is deprecated, instead use: vim.on_key')
 end
