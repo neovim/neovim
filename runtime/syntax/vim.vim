@@ -12,7 +12,7 @@
 if exists("b:current_syntax")
   finish
 endif
-let s:keepcpo= &cpo
+let s:keepcpo = &cpo
 set cpo&vim
 
 " vimTodo: contains common special-notices for comments {{{2

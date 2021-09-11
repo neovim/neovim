@@ -2,7 +2,7 @@
 " Language:    Pascal
 " Maintainer:  Neil Carter <n.carter@swansea.ac.uk>
 " Created:     2004 Jul 13
-" Last Change: 2017 Jun 13
+" Last Change: 2021 Jul 01
 "
 " This is version 2.0, a complete rewrite.
 "
@@ -19,6 +19,8 @@ setlocal indentkeys&
 setlocal indentkeys+==end;,==const,==type,==var,==begin,==repeat,==until,==for
 setlocal indentkeys+==program,==function,==procedure,==object,==private
 setlocal indentkeys+==record,==if,==else,==case
+
+let b:undo_indent = "setl indentkeys< indentexpr<"
 
 if exists("*GetPascalIndent")
 	finish

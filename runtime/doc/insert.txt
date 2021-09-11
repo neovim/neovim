@@ -1061,7 +1061,8 @@ On the second invocation the arguments are:
 
 The function must return a List with the matching words.  These matches
 usually include the "a:base" text.  When there are no matches return an empty
-List.
+List.  Note that the cursor may have moved since the first invocation, the
+text may have been changed.
 
 In order to return more information than the matching words, return a Dict
 that contains the List.  The Dict can have these items:
