@@ -6160,8 +6160,7 @@ static void syntime_report(void)
 // When making changes here, also change runtime/colors/default.vim!
 
 static const char *highlight_init_both[] = {
-  "Conceal "
-  "ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
+  "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
   "Cursor       guibg=fg guifg=bg",
   "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
@@ -6193,10 +6192,8 @@ static const char *highlight_init_both[] = {
   "RedrawDebugClear ctermbg=Yellow guibg=Yellow",
   "RedrawDebugComposed ctermbg=Green guibg=Green",
   "RedrawDebugRecompose ctermbg=Red guibg=Red",
-  "Error term=reverse cterm=NONE ctermfg=White ctermbg=Red gui=NONE "
-  "guifg=White guibg=Red",
-  "Todo term=standout cterm=NONE ctermfg=Black ctermbg=Yellow gui=NONE "
-  "guifg=Blue guibg=Yellow",
+  "Error term=reverse cterm=NONE ctermfg=White ctermbg=Red gui=NONE guifg=White guibg=Red",
+  "Todo term=standout cterm=NONE ctermfg=Black ctermbg=Yellow gui=NONE guifg=Blue guibg=Yellow",
   "default link String Constant",
   "default link Character Constant",
   "default link Number Constant",
@@ -6254,24 +6251,15 @@ static const char *highlight_init_light[] = {
   "Title        ctermfg=DarkMagenta gui=bold guifg=Magenta",
   "Visual       guibg=LightGrey",
   "WarningMsg   ctermfg=DarkRed guifg=Red",
-  "Comment      term=bold cterm=NONE ctermfg=DarkBlue ctermbg=NONE "
-  "gui=NONE guifg=Blue guibg=NONE",
-  "Constant     term=underline cterm=NONE ctermfg=DarkRed ctermbg=NONE "
-  "gui=NONE guifg=Magenta guibg=NONE",
-  "Special      term=bold cterm=NONE ctermfg=DarkMagenta ctermbg=NONE "
-  "gui=NONE guifg=#6a5acd guibg=NONE",
-  "Identifier   term=underline cterm=NONE ctermfg=DarkCyan ctermbg=NONE "
-  "gui=NONE guifg=DarkCyan guibg=NONE",
-  "Statement    term=bold cterm=NONE ctermfg=Brown ctermbg=NONE "
-  "gui=bold guifg=Brown guibg=NONE",
-  "PreProc      term=underline cterm=NONE ctermfg=DarkMagenta ctermbg=NONE "
-  "gui=NONE guifg=#6a0dad guibg=NONE",
-  "Type         term=underline cterm=NONE ctermfg=DarkGreen ctermbg=NONE "
-  "gui=bold guifg=SeaGreen guibg=NONE",
-  "Underlined   term=underline cterm=underline ctermfg=DarkMagenta "
-  "gui=underline guifg=SlateBlue",
-  "Ignore       term=NONE cterm=NONE ctermfg=white ctermbg=NONE "
-  "gui=NONE guifg=bg guibg=NONE",
+  "Comment      term=bold cterm=NONE ctermfg=DarkBlue ctermbg=NONE gui=NONE guifg=Blue guibg=NONE",
+  "Constant     term=underline cterm=NONE ctermfg=DarkRed ctermbg=NONE gui=NONE guifg=Magenta guibg=NONE",
+  "Special      term=bold cterm=NONE ctermfg=DarkMagenta ctermbg=NONE gui=NONE guifg=#6a5acd guibg=NONE",
+  "Identifier   term=underline cterm=NONE ctermfg=DarkCyan ctermbg=NONE gui=NONE guifg=DarkCyan guibg=NONE",
+  "Statement    term=bold cterm=NONE ctermfg=Brown ctermbg=NONE gui=bold guifg=Brown guibg=NONE",
+  "PreProc      term=underline cterm=NONE ctermfg=DarkMagenta ctermbg=NONE gui=NONE guifg=#6a0dad guibg=NONE",
+  "Type         term=underline cterm=NONE ctermfg=DarkGreen ctermbg=NONE gui=bold guifg=SeaGreen guibg=NONE",
+  "Underlined   term=underline cterm=underline ctermfg=DarkMagenta gui=underline guifg=SlateBlue",
+  "Ignore       term=NONE cterm=NONE ctermfg=white ctermbg=NONE gui=NONE guifg=bg guibg=NONE",
   NULL
 };
 
@@ -6305,24 +6293,15 @@ static const char *highlight_init_dark[] = {
   "Title        ctermfg=LightMagenta gui=bold guifg=Magenta",
   "Visual       guibg=DarkGrey",
   "WarningMsg   ctermfg=LightRed guifg=Red",
-  "Comment      term=bold cterm=NONE ctermfg=Cyan ctermbg=NONE "
-  "gui=NONE guifg=#80a0ff guibg=NONE",
-  "Constant     term=underline cterm=NONE ctermfg=Magenta ctermbg=NONE "
-  "gui=NONE guifg=#ffa0a0 guibg=NONE",
-  "Special      term=bold cterm=NONE ctermfg=LightRed ctermbg=NONE "
-  "gui=NONE guifg=Orange guibg=NONE",
-  "Identifier   term=underline cterm=bold ctermfg=Cyan ctermbg=NONE "
-  "gui=NONE guifg=#40ffff guibg=NONE",
-  "Statement    term=bold cterm=NONE ctermfg=Yellow ctermbg=NONE "
-  "gui=bold guifg=#ffff60 guibg=NONE",
-  "PreProc      term=underline cterm=NONE ctermfg=LightBlue ctermbg=NONE "
-  "gui=NONE guifg=#ff80ff guibg=NONE",
-  "Type         term=underline cterm=NONE ctermfg=LightGreen ctermbg=NONE "
-  "gui=bold guifg=#60ff60 guibg=NONE",
-  "Underlined   term=underline cterm=underline ctermfg=LightBlue "
-  "gui=underline guifg=#80a0ff",
-  "Ignore       term=NONE cterm=NONE ctermfg=black ctermbg=NONE "
-  "gui=NONE guifg=bg guibg=NONE",
+  "Comment      term=bold cterm=NONE ctermfg=Cyan ctermbg=NONE gui=NONE guifg=#80a0ff guibg=NONE",
+  "Constant     term=underline cterm=NONE ctermfg=Magenta ctermbg=NONE gui=NONE guifg=#ffa0a0 guibg=NONE",
+  "Special      term=bold cterm=NONE ctermfg=LightRed ctermbg=NONE gui=NONE guifg=Orange guibg=NONE",
+  "Identifier   term=underline cterm=bold ctermfg=Cyan ctermbg=NONE gui=NONE guifg=#40ffff guibg=NONE",
+  "Statement    term=bold cterm=NONE ctermfg=Yellow ctermbg=NONE gui=bold guifg=#ffff60 guibg=NONE",
+  "PreProc      term=underline cterm=NONE ctermfg=LightBlue ctermbg=NONE gui=NONE guifg=#ff80ff guibg=NONE",
+  "Type         term=underline cterm=NONE ctermfg=LightGreen ctermbg=NONE gui=bold guifg=#60ff60 guibg=NONE",
+  "Underlined   term=underline cterm=underline ctermfg=LightBlue gui=underline guifg=#80a0ff",
+  "Ignore       term=NONE cterm=NONE ctermfg=black ctermbg=NONE gui=NONE guifg=bg guibg=NONE",
   NULL
 };
 
@@ -6429,12 +6408,9 @@ const char *const highlight_init_cmdline[] = {
   "default link NvimInvalidAssignment NvimInvalid",
   "default link NvimInvalidPlainAssignment NvimInvalidAssignment",
   "default link NvimInvalidAugmentedAssignment NvimInvalidAssignment",
-  "default link NvimInvalidAssignmentWithAddition "
-  "NvimInvalidAugmentedAssignment",
-  "default link NvimInvalidAssignmentWithSubtraction "
-  "NvimInvalidAugmentedAssignment",
-  "default link NvimInvalidAssignmentWithConcatenation "
-  "NvimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignmentWithAddition NvimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignmentWithSubtraction NvimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignmentWithConcatenation NvimInvalidAugmentedAssignment",
 
   "default link NvimInvalidOperator NvimInvalid",
 
