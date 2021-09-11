@@ -400,6 +400,12 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   nlua_state_add_stdlib(lstate);
 
+  // vim.is_thread
+  lua_pushboolean(lstate, false);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  lua_pushcfunction(lstate, &nlua_is_thread);
+  lua_setfield(lstate, -2, "is_thread");
+
   lua_setglobal(lstate, "vim");
 
   {
@@ -484,9 +490,37 @@ void nlua_init(void)
   luaL_openlibs(lstate);
   nlua_state_init(lstate);
 
+  luv_set_thread_cb(nlua_thread_acquire_vm, NULL);
+
   global_lstate = lstate;
 }
 
+static lua_State *nlua_thread_acquire_vm(void)
+{
+  lua_State *lstate = luaL_newstate();
+
+  // Add in the lua standard libraries
+  luaL_openlibs(lstate);
+
+  // vim
+  lua_newtable(lstate);
+  // vim.is_therad
+  lua_pushboolean(lstate, true);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  lua_pushcfunction(lstate, &nlua_is_thread);
+  lua_setfield(lstate, -2, "is_thread");
+
+  lua_setglobal(lstate, "vim");
+
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+
+  luaopen_luv(lstate);
+  lua_setfield(lstate, -2, "luv");
+  lua_pop(lstate, 2);
+
+  return lstate;
+}
 
 void nlua_free_all_mem(void)
 {
@@ -1317,6 +1351,13 @@ cleanup:
   }
 
   return ret;
+}
+
+static int nlua_is_thread(lua_State *lstate)
+{
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+
+  return 1;
 }
 
 // Required functions for lua c functions as VimL callbacks
