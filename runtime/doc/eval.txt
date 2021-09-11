@@ -9139,11 +9139,23 @@ synstack({lnum}, {col})					*synstack()*
 		valid positions.
 
 system({cmd} [, {input}])				*system()* *E677*
-		Get the output of {cmd} as a |string| (use |systemlist()| to
-		get a |List|). {cmd} is treated exactly as in |jobstart()|.
-		Not to be used for interactive commands.
+		Gets the output of {cmd} as a |string| (|systemlist()| returns
+		a |List|) and sets |v:shell_error| to the error code.
+		{cmd} is treated as in |jobstart()|:
+		If {cmd} is a List it runs directly (no 'shell').
+		If {cmd} is a String it runs in the 'shell', like this: >
+		  :call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
 
-		If {input} is a string it is written to a pipe and passed as
+<		Not to be used for interactive commands.
+
+		Result is a String, filtered to avoid platform-specific quirks:
+		- <CR><NL> is replaced with <NL>
+		- NUL characters are replaced with SOH (0x01)
+
+		Example: >
+		    :echo system(['ls', expand('%:h')])
+
+<		If {input} is a string it is written to a pipe and passed as
 		stdin to the command.  The string is written as-is, line
 		separators are not changed.
 		If {input} is a |List| it is written to the pipe as
@@ -9165,29 +9177,12 @@ system({cmd} [, {input}])				*system()* *E677*
 
 		Note: Use |shellescape()| or |::S| with |expand()| or
 		|fnamemodify()| to escape special characters in a command
-		argument.  Newlines in {cmd} may cause the command to fail.
-		The characters in 'shellquote' and 'shellxquote' may also
-		cause trouble.
+		argument. 'shellquote' and 'shellxquote' must be properly
+		configured. Example: >
+		    :echo system('ls '..shellescape(expand('%:h')))
+		    :echo system('ls '..expand('%:h:S'))
 
-		Result is a String.  Example: >
-		    :let files = system("ls " .  shellescape(expand('%:h')))
-		    :let files = system('ls ' . expand('%:h:S'))
-
-<		To make the result more system-independent, the shell output
-		is filtered to replace <CR> with <NL> for Macintosh, and
-		<CR><NL> with <NL> for DOS-like systems.
-		To avoid the string being truncated at a NUL, all NUL
-		characters are replaced with SOH (0x01).
-
-		The command executed is constructed using several options when
-		{cmd} is a string: 'shell' 'shellcmdflag' {cmd}
-
-		The resulting error code can be found in |v:shell_error|.
-
-		Note that any wrong value in the options mentioned above may
-		make the function fail.  It has also been reported to fail
-		when using a security agent application.
-		Unlike ":!cmd" there is no automatic check for changed files.
+<		Unlike ":!cmd" there is no automatic check for changed files.
 		Use |:checktime| to force a check.
 
 		Can also be used as a |method|: >

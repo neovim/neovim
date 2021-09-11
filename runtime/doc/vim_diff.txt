@@ -472,6 +472,7 @@ Compile-time features:
   X11 integration (see |x11-selection|)
 
 Eval:
+  Vim9script
   *js_encode()*
   *js_decode()*
   *v:none* (used by Vim to represent JavaScript "undefined"); use |v:null| instead.

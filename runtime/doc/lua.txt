@@ -301,7 +301,9 @@ arguments separated by " " (space) instead of "\t" (tab).
 							*:luafile*
 :[range]luafile {file}
 			Execute Lua script in {file}.
-			The whole argument is used as a single file name.
+                        The whole argument is used as the filename (like
+                        |:edit|), spaces do not need to be escaped.
+                        Alternatively you can |:source| Lua files.
 
                         Examples:
                         >
@@ -597,13 +599,11 @@ Vim regexes can be used directly from lua. Currently they only allow
 matching within a single line.
 
 vim.regex({re})						*vim.regex()*
+        Parse the Vim regex {re} and return a regex object. Regexes are
+        "magic" and case-insensitive by default, regardless of 'magic' and
+        'ignorecase'.  The can be controlled with flags, see |/magic|.
 
-        Parse the regex {re} and return a regex object. 'magic' and
-        'ignorecase' options are ignored, lua regexes always defaults to magic
-        and ignoring case.  The behavior can be changed with flags in
-        the beginning of the string |/magic|.
-
-Regex objects support the following methods:
+Methods on the regex object:
 
 regex:match_str({str})					*regex:match_str()*
         Match the string against the regex. If the string should match the

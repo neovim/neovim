@@ -10,14 +10,13 @@ General guidelines
 * Write down what was decided
 * Constraints are good
 * Use automation to solve problems
-* Never break the API
+* Never break the API... but sometimes break the UI
 
 Ticket triage
 -------------
 
-In practice we haven't found a meaningful way to forecast more precisely than
-"next" and "after next". That means there are usually one or two (at most)
-planned milestones:
+In practice we haven't found a way to forecast more precisely than "next" and
+"after next". So there are usually one or two (at most) planned milestones:
 
 - Next bugfix-release (1.0.x)
 - Next feature-release (1.x.0)
@@ -25,16 +24,16 @@ planned milestones:
 The forecasting problem might be solved with an explicit priority system (like
 Bram's todo.txt). Meanwhile the Neovim priority system is defined by:
 
-- PRs nearing completion (RDY).
+- PRs nearing completion.
 - Issue labels. E.g. the `+plan` label increases the ticket's priority merely
   for having a plan written down: it is _closer to completion_ than tickets
   without a plan.
 - Comment activity or new information.
 
-Anything that isn't in the next milestone, and doesn't have a RDY PR ... is
+Anything that isn't in the next milestone, and doesn't have a finished PR—is
 just not something you care very much about, by construction. Post-release you
 can review open issues, but chances are your next milestone is already getting
-full :)
+full... :)
 
 Release policy
 --------------
