@@ -2977,7 +2977,6 @@ static const char *const str_errors[] = {
   [VAR_FUNC]=N_(FUNC_ERROR),
   [VAR_LIST]=N_("E730: using List as a String"),
   [VAR_DICT]=N_("E731: using Dictionary as a String"),
-  [VAR_FLOAT]=((const char *)e_float_as_string),
   [VAR_BLOB]=N_("E976: using Blob as a String"),
   [VAR_UNKNOWN]=N_("E908: using an invalid value as a String"),
 };
@@ -3000,12 +2999,12 @@ bool tv_check_str(const typval_T *const tv)
   case VAR_BOOL:
   case VAR_SPECIAL:
   case VAR_STRING:
+  case VAR_FLOAT:
     return true;
   case VAR_PARTIAL:
   case VAR_FUNC:
   case VAR_LIST:
   case VAR_DICT:
-  case VAR_FLOAT:
   case VAR_BLOB:
   case VAR_UNKNOWN:
     EMSG(_(str_errors[tv->v_type]));
@@ -3177,6 +3176,10 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
   case VAR_NUMBER:
     snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);  // -V576
     return buf;
+  case VAR_FLOAT: {
+    vim_snprintf(buf, NUMBUFLEN, "%g", tv->vval.v_float);
+    return buf;
+  }
   case VAR_STRING:
     if (tv->vval.v_string != NULL) {
       return (const char *)tv->vval.v_string;
@@ -3192,7 +3195,6 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
   case VAR_FUNC:
   case VAR_LIST:
   case VAR_DICT:
-  case VAR_FLOAT:
   case VAR_BLOB:
   case VAR_UNKNOWN:
     EMSG(_(str_errors[tv->v_type]));

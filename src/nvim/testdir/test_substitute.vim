@@ -1,5 +1,7 @@
 " Tests for multi-line regexps with ":s".
 
+source check.vim
+
 func Test_multiline_subst()
   enew!
   call append(0, ["1 aa",
@@ -632,6 +634,12 @@ func Test_substitute_partial()
   " 20 arguments plus one is too many
   let Replacer = function('SubReplacer20', repeat(['foo'], 20))
   call assert_fails("call substitute('123', '2', Replacer, 'g')", 'E118')
+endfunc
+
+func Test_substitute_float()
+  CheckFeature float
+
+  call assert_equal('number 1.23', substitute('number ', '$', { -> 1.23 }, ''))
 endfunc
 
 func Test_sub_cmd_9()
