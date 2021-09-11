@@ -238,7 +238,7 @@ func Test_str2float()
   call assert_equal("str2float('nan')", string(str2float('NaN')))
   call assert_equal("str2float('nan')", string(str2float('  nan  ')))
 
-  call assert_fails("call str2float(1.2)", 'E806:')
+  call assert_equal(1.2, str2float(1.2))
   call assert_fails("call str2float([])", 'E730:')
   call assert_fails("call str2float({})", 'E731:')
   call assert_fails("call str2float(function('string'))", 'E729:')

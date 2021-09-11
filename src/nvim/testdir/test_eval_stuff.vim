@@ -133,7 +133,7 @@ func Test_string_concatenation()
   if has('float')
     let a = 'A'
     let b = 1.234
-    call assert_fails('echo a .. b', 'E806:')
+    call assert_equal('A1.234', a .. b)
   endif
 endfunc
 

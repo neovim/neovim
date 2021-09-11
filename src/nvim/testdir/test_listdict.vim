@@ -718,7 +718,7 @@ func Test_listdict_extend()
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'xxx')", 'E475:')
   if has('float')
-    call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E806:')
+    call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E475:')
   endif
   call assert_equal({'a': 'A', 'b': 'B'}, d)
 
@@ -813,6 +813,26 @@ func Test_scope_dict()
 
   " Test for v:
   call s:check_scope_dict('v', v:true)
+endfunc
+
+" List and dict indexing tests
+func Test_listdict_index()
+  call assert_fails('echo function("min")[0]', 'E695:')
+  call assert_fails('echo v:true[0]', 'E909:')
+  let d = {'k' : 10}
+  call assert_fails('echo d.', 'E15:')
+  call assert_fails('echo d[1:2]', 'E719:')
+  call assert_fails("let v = [4, 6][{-> 1}]", 'E729:')
+  call assert_fails("let v = range(5)[2:[]]", 'E730:')
+  call assert_fails("let v = range(5)[2:{-> 2}(]", 'E116:')
+  call assert_fails("let v = range(5)[2:3", 'E111:')
+  let l = [1, 2, 3]
+  call assert_fails("let l[i] = 3", 'E121:')
+  call assert_fails("let l[1.1] = 4", 'E805:')
+  call assert_fails("let l[:i] = [4, 5]", 'E121:')
+  " Needs v8.2.1183; E710 is thrown after E805
+  " call assert_fails("let l[:3.2] = [4, 5]", 'E805:')
+  call assert_fails("let l[:3.2] = [4, 5]", 'E710:')
 endfunc
 
 " Test for a null list

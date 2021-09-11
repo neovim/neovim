@@ -92,14 +92,10 @@ describe('execute()', function()
 
   it('captures errors', function()
     local ret
-    ret = exc_exec('call execute(0.0)')
-    eq('Vim(call):E806: using Float as a String', ret)
     ret = exc_exec('call execute(v:_null_dict)')
     eq('Vim(call):E731: using Dictionary as a String', ret)
     ret = exc_exec('call execute(function("tr"))')
     eq('Vim(call):E729: using Funcref as a String', ret)
-    ret = exc_exec('call execute(["echo 42", 0.0, "echo 44"])')
-    eq('Vim:E806: using Float as a String', ret)
     ret = exc_exec('call execute(["echo 42", v:_null_dict, "echo 44"])')
     eq('Vim:E731: using Dictionary as a String', ret)
     ret = exc_exec('call execute(["echo 42", function("tr"), "echo 44"])')
@@ -321,9 +317,6 @@ describe('execute()', function()
 
     it('propagates errors for "" and "silent"', function()
       local ret
-      ret = exc_exec('call execute(0.0, "")')
-      eq('Vim(call):E806: using Float as a String', ret)
-
       ret = exc_exec('call execute(v:_null_dict, "silent")')
       eq('Vim(call):E731: using Dictionary as a String', ret)
 
