@@ -7486,7 +7486,7 @@ unsigned int get_bkc_value(buf_T *buf)
 ///
 /// @param win  If not NULL, the window to get the local option from; global
 ///             otherwise.
-char_u *get_showbreak_value(win_T *const win FUNC_ATTR_UNUSED)
+char_u *get_showbreak_value(win_T *const win)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win->w_p_sbr == NULL || *win->w_p_sbr == NUL) {
