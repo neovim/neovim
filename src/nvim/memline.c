@@ -3341,11 +3341,11 @@ static int do_swapexists(buf_T *buf, char_u *fname)
   set_vim_var_string(VV_SWAPNAME, (char *) fname, -1);
   set_vim_var_string(VV_SWAPCHOICE, NULL, -1);
 
-  /* Trigger SwapExists autocommands with <afile> set to the file being
-   * edited.  Disallow changing directory here. */
-  ++allbuf_lock;
-  apply_autocmds(EVENT_SWAPEXISTS, buf->b_fname, NULL, FALSE, NULL);
-  --allbuf_lock;
+  // Trigger SwapExists autocommands with <afile> set to the file being
+  // edited.  Disallow changing directory here.
+  allbuf_lock++;
+  apply_autocmds(EVENT_SWAPEXISTS, buf->b_fname, NULL, false, NULL);
+  allbuf_lock--;
 
   set_vim_var_string(VV_SWAPNAME, NULL, -1);
 

@@ -5743,9 +5743,8 @@ void ex_ownsyntax(exarg_T *eap)
     old_value = vim_strsave(old_value);
   }
 
-  /* Apply the "syntax" autocommand event, this finds and loads the syntax
-   * file. */
-  apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, TRUE, curbuf);
+  // Apply the "syntax" autocommand event, this finds and loads the syntax file.
+  apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, true, curbuf);
 
   // Move value of b:current_syntax to w:current_syntax.
   new_value = get_var_value("b:current_syntax");
@@ -6604,7 +6603,7 @@ int load_colors(char_u *name)
     retval = source_runtime(buf, DIP_START + DIP_OPT);
   }
   xfree(buf);
-  apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
+  apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, false, curbuf);
 
   recursive = false;
 

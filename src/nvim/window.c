@@ -755,7 +755,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     api_clear_error(&dummy);
     if (wp->w_float_config.bufpos.lnum >= 0) {
       pos_T pos = { wp->w_float_config.bufpos.lnum + 1,
-        wp->w_float_config.bufpos.col, 0 };
+                    wp->w_float_config.bufpos.col, 0 };
       int trow, tcol, tcolc, tcole;
       textpos2screenpos(wp, &pos, &trow, &tcol, &tcolc, &tcole, true);
       row += trow - 1;
@@ -2459,7 +2459,7 @@ int win_close(win_T *win, bool free_buf)
     if (wp->w_buffer != curbuf) {
       other_buffer = true;
       win->w_closing = true;
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, FALSE, curbuf);
+      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
       if (!win_valid(win)) {
         return FAIL;
       }
@@ -3959,16 +3959,16 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
   reset_VIsual_and_resel();     // stop Visual mode
   if (trigger_leave_autocmds) {
     if (new_curbuf != curbuf) {
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, FALSE, curbuf);
+      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
       if (curtab != tp) {
         return FAIL;
       }
     }
-    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
     if (curtab != tp) {
       return FAIL;
     }
-    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_TABLEAVE, NULL, NULL, false, curbuf);
     if (curtab != tp) {
       return FAIL;
     }
@@ -4044,9 +4044,9 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   /* Apply autocommands after updating the display, when 'rows' and
    * 'columns' have been set correctly. */
   if (trigger_enter_autocmds) {
-    apply_autocmds(EVENT_TABENTER, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
     if (old_curbuf != curbuf) {
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
     }
   }
 
@@ -4472,7 +4472,7 @@ void win_enter(win_T *wp, bool undo_sync)
 static void win_enter_ext(win_T *wp, bool undo_sync, bool curwin_invalid, bool trigger_new_autocmds,
                           bool trigger_enter_autocmds, bool trigger_leave_autocmds)
 {
-  int other_buffer = FALSE;
+  bool other_buffer = false;
 
   if (wp == curwin && !curwin_invalid) {        // nothing to do
     return;
@@ -4483,13 +4483,13 @@ static void win_enter_ext(win_T *wp, bool undo_sync, bool curwin_invalid, bool t
      * Be careful: If autocommands delete the window, return now.
      */
     if (wp->w_buffer != curbuf) {
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, FALSE, curbuf);
-      other_buffer = TRUE;
+      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      other_buffer = true;
       if (!win_valid(wp)) {
         return;
       }
     }
-    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
     if (!win_valid(wp)) {
       return;
     }

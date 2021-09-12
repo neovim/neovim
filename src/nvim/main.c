@@ -459,7 +459,7 @@ int main(int argc, char **argv)
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   }
 
-  apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
   TIME_MSG("BufEnter autocommands");
   setpcmark();
 

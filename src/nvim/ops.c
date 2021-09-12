@@ -4532,7 +4532,7 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
 
   ptr = ml_get(lnum);
   if (do_comments) {
-    *leader_len = get_leader_len(ptr, leader_flags, FALSE, TRUE);
+    *leader_len = get_leader_len(ptr, leader_flags, false, true);
   } else {
     *leader_len = 0;
   }

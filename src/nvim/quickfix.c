@@ -5549,8 +5549,7 @@ void ex_vimgrep(exarg_T *eap)
           // need to be done (again).  But not the window-local
           // options!
           aucmd_prepbuf(&aco, buf);
-          apply_autocmds(EVENT_FILETYPE, buf->b_p_ft,
-              buf->b_fname, TRUE, buf);
+          apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, true, buf);
           do_modelines(OPT_NOWIN);
           aucmd_restbuf(&aco);
         }
@@ -5568,9 +5567,9 @@ void ex_vimgrep(exarg_T *eap)
 
   qf_update_buffer(qi, NULL);
 
-  if (au_name != NULL)
-    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
-        curbuf->b_fname, TRUE, curbuf);
+  if (au_name != NULL) {
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true, curbuf);
+  }
 
   // The QuickFixCmdPost autocmd may free the quickfix list. Check the list
   // is still valid.
