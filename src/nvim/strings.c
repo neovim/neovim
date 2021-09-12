@@ -190,12 +190,17 @@ char_u *vim_strsave_shellescape(const char_u *string,
   char_u      *escaped_string;
   size_t l;
   int csh_like;
+  bool fish_like;
 
   /* Only csh and similar shells expand '!' within single quotes.  For sh and
    * the like we must not put a backslash before it, it will be taken
    * literally.  If do_special is set the '!' will be escaped twice.
    * Csh also needs to have "\n" escaped twice when do_special is set. */
   csh_like = csh_like_shell();
+
+  // Fish shell uses '\' as an escape character within single quotes, so '\'
+  // itself must be escaped to get a literal '\'.
+  fish_like = fish_like_shell();
 
   /* First count the number of extra bytes required. */
   size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
@@ -219,6 +224,9 @@ char_u *vim_strsave_shellescape(const char_u *string,
     if (do_special && find_cmdline_var(p, &l) >= 0) {
       ++length;                         /* insert backslash */
       p += l - 1;
+    }
+    if (*p == '\\' && fish_like) {
+      length++;  // insert backslash
     }
   }
 
@@ -265,6 +273,11 @@ char_u *vim_strsave_shellescape(const char_u *string,
       *d++ = '\\';                    /* insert backslash */
       while (--l != SIZE_MAX)                /* copy the var */
         *d++ = *p++;
+      continue;
+    }
+    if (*p == '\\' && fish_like) {
+      *d++ = '\\';
+      *d++ = *p++;
       continue;
     }
 
