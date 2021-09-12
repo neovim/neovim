@@ -567,6 +567,12 @@ describe('runtime:', function()
 
     clear{ args_rm={'-u'}, args={'--cmd', 'lua _G.lista = {}'}, env=xenv }
 
+    print()
+    print("alpha", eval [[stdpath("data")]])
+    print("beda", eval [[&packpath]])
+    print("oreda", eval [[&rtp]])
+    io.stdout:flush()
+
     eq({'unos', 'dos'}, exec_lua "return _G.lista")
 
     rmdir(plugin_path)
