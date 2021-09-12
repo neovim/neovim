@@ -159,12 +159,13 @@ function without any parentheses. This is most often used to approximate
 ------------------------------------------------------------------------------
 LUA PLUGIN EXAMPLE					*lua-require-example*
 
-The following example plugin adds a command `:MakeCharBlob` which transforms 
-current buffer into a long `unsigned char` array.  Lua contains transformation 
-function in a module `lua/charblob.lua` which is imported in 
-`autoload/charblob.vim` (`require("charblob")`).  Example plugin is supposed 
-to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in 
-this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
+The following example plugin adds a command `:MakeCharBlob` which transforms
+the current buffer into a long `unsigned char` array.  Lua contains a
+transformation function in a module `lua/charblob.lua` which is imported in
+`autoload/charblob.vim` (`require("charblob")`).  The example plugin is
+supposed to be put into any directory from 'runtimepath', e.g.
+`~/.config/nvim` (in this case `lua/charblob.lua` means
+`~/.config/nvim/lua/charblob.lua`).
 
 autoload/charblob.vim: >
 
