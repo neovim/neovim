@@ -439,12 +439,15 @@ describe('user config init', function()
   local xhome = 'Xhome'
   local pathsep = helpers.get_pathsep()
   local xconfig = xhome .. pathsep .. 'Xconfig'
+  local xdata = xhome .. pathsep .. 'Xdata'
   local init_lua_path = table.concat({xconfig, 'nvim', 'init.lua'}, pathsep)
+  local xenv = { XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata }
 
   before_each(function()
     rmdir(xhome)
 
     mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xdata)
 
     write_file(init_lua_path, [[
       vim.g.lua_rc = 1
@@ -456,7 +459,7 @@ describe('user config init', function()
   end)
 
   it('loads init.lua from XDG config home by default', function()
-    clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
+    clear{ args_rm={'-u' }, env=xenv }
 
     eq(1, eval('g:lua_rc'))
     eq(init_lua_path, eval('$MYVIMRC'))
@@ -471,7 +474,7 @@ describe('user config init', function()
     end)
 
     it('loads custom lua config and does not set $MYVIMRC', function()
-      clear{ args={'-u', custom_lua_path }, env={ XDG_CONFIG_HOME=xconfig }}
+      clear{ args={'-u', custom_lua_path }, env=xenv }
       eq(1, eval('g:custom_lua_rc'))
       eq('', eval('$MYVIMRC'))
     end)
@@ -485,7 +488,7 @@ describe('user config init', function()
     end)
 
     it('loads default lua config, but shows an error', function()
-      clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+      clear{ args_rm={'-u'}, env=xenv }
       feed('<cr>') -- TODO check this, test execution is blocked without it
       eq(1, eval('g:lua_rc'))
       matches('^E5422: Conflicting configs', meths.exec('messages', true))
@@ -497,9 +500,12 @@ describe('runtime:', function()
   local xhome = 'Xhome'
   local pathsep = helpers.get_pathsep()
   local xconfig = xhome .. pathsep .. 'Xconfig'
+  local xdata = xhome .. pathsep .. 'Xdata'
+  local xenv = { XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata }
 
   setup(function()
     mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xdata)
   end)
 
   teardown(function()
@@ -512,7 +518,7 @@ describe('runtime:', function()
     mkdir_p(plugin_folder_path)
     write_file(plugin_file_path, [[ vim.g.lua_plugin = 1 ]])
 
-    clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
+    clear{ args_rm={'-u'}, env=xenv }
 
     eq(1, eval('g:lua_plugin'))
     rmdir(plugin_folder_path)
@@ -529,7 +535,7 @@ describe('runtime:', function()
     mkdir_p(plugin_folder_path)
     write_file(plugin_file_path, [[vim.g.lua_plugin = 2]])
 
-    clear{ args_rm={'-u'}, args={'--startuptime', profiler_file}, env={ XDG_CONFIG_HOME=xconfig }}
+    clear{ args_rm={'-u'}, args={'--startuptime', profiler_file}, env=xenv }
 
     eq(2, eval('g:lua_plugin'))
     -- Check if plugin_file_path is listed in :scriptname
@@ -555,6 +561,7 @@ describe('runtime:', function()
     -- TODO(shadmansaleh): Figure out why this test fails without
     --                     setting VIMRUNTIME
     clear{ args_rm={'-u'}, env={XDG_CONFIG_HOME=xconfig,
+                                XDG_DATA_HOME=xdata,
                                 VIMRUNTIME='runtime/'}}
 
     eq(1, eval('g:lua_ftdetect'))
