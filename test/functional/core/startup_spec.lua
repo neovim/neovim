@@ -552,6 +552,27 @@ describe('runtime:', function()
     rmdir(plugin_path)
   end)
 
+  it('loads plugin/*.lua from site packages', function()
+    local plugin_path = table.concat({xdata, 'nvim', 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
+    local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
+    local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
+    local plugin_after_file_path = table.concat({plugin_after_path, 'helloo.lua'}, pathsep)
+    local profiler_file = 'test_startuptime.log'
+
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[table.insert(_G.lista, "unos")]])
+    mkdir_p(plugin_after_path)
+    write_file(plugin_after_file_path, [[table.insert(_G.lista, "dos")]])
+
+    clear{ args_rm={'-u'}, args={'--cmd', 'lua _G.lista = {}'}, env=xenv }
+
+    eq({'unos', 'dos'}, exec_lua "return _G.lista")
+
+    rmdir(plugin_path)
+  end)
+
+
   it('loads ftdetect/*.lua', function()
     local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
     local ftdetect_file = table.concat({ftdetect_folder , 'new-ft.lua'}, pathsep)
