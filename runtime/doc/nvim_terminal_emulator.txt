@@ -321,6 +321,34 @@ Other commands ~
 	     isn't one
 
 
+Events ~
+							*termdebug-events*
+Four autocommands can be used: >
+	au User TermdebugStartPre  echomsg 'debugging starting'
+	au User TermdebugStartPost echomsg 'debugging started'
+	au User TermdebugStopPre   echomsg 'debugging stopping'
+	au User TermdebugStopPost  echomsg 'debugging stopped'
+<
+						*TermdebugStartPre*
+TermdebugStartPre		Before starting debugging.
+				Not triggered if the debugger is already
+				running or |g:termdebugger| cannot be
+				executed.
+						*TermdebugStartPost*
+TermdebugStartPost		After debugging has initialized.
+				If a "!" bang is passed to `:Termdebug` or
+				`:TermdebugCommand` the event is triggered
+				before running the provided command in gdb.
+						*TermdebugStopPre*
+TermdebugStopPre		Before debugging ends, when gdb is terminated,
+				most likely after issuing a "quit" command in
+				the gdb window.
+						*TermdebugStopPost*
+TermdebugStopPost		After debugging has ended, gdb-related windows
+				are closed, debug buffers wiped out and
+				the state before the debugging was restored.
+
+
 Prompt mode ~
 						*termdebug-prompt*
 When on MS-Windows, gdb will run in a buffer with 'buftype' set to "prompt".
