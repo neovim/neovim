@@ -153,6 +153,132 @@ describe('float window', function()
     eq(10, width)
   end)
 
+  it('opened with correct position', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 7,
+        row = 9,
+        relative = 'editor',
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(9, pos[1])
+    eq(7, pos[2])
+  end)
+
+  it('opened with correct position relative to the cursor', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 7,
+        row = 9,
+        relative = 'cursor',
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(9, pos[1])
+    eq(7, pos[2])
+  end)
+
+  it('opened with correct position relative to another window', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local par_opts = {
+        width = 50,
+        height = 50,
+        col = 7,
+        row = 9,
+        relative = 'editor',
+        style = 'minimal'
+      }
+
+      local par_win_id = vim.api.nvim_open_win(bufnr, false, par_opts)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 7,
+        row = 9,
+        relative = 'win',
+        style = 'minimal',
+        win = par_win_id
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(18, pos[1])
+    eq(14, pos[2])
+  end)
+
+
+  it('opened with correct position relative to another relative window', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local root_opts = {
+        width = 50,
+        height = 50,
+        col = 7,
+        row = 9,
+        relative = 'editor',
+        style = 'minimal'
+      }
+
+      local root_win_id = vim.api.nvim_open_win(bufnr, false, root_opts)
+
+      local par_opts = {
+        width = 20,
+        height = 20,
+        col = 2,
+        row = 3,
+        relative = 'win',
+        win = root_win_id,
+        style = 'minimal'
+      }
+
+      local par_win_id = vim.api.nvim_open_win(bufnr, false, par_opts)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 3,
+        row = 2,
+        relative = 'win',
+        win = par_win_id,
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(14, pos[1])
+    eq(12, pos[2])
+  end)
+
+
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()
