@@ -11,7 +11,7 @@ endif
 let b:did_indent = 1
 
 " LifeLines uses cindent without ; line terminator, C functions
-" declarations, C keywords, C++ formating
+" declarations, C keywords, C++ formatting
 setlocal cindent
 setlocal cinwords=""
 setlocal cinoptions+=+0

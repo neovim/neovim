@@ -311,7 +311,7 @@ function! csscomplete#CompleteCSS(findstart, base)
       let values = ["normal", "italic", "oblique", "small-caps", "bold", "bolder", "lighter", "100", "200", "300", "400", "500", "600", "700", "800", "900", "xx-small", "x-small", "small", "medium", "large", "x-large", "xx-large", "larger", "smaller", "sans-serif", "serif", "monospace", "cursive", "fantasy", "caption", "icon", "menu", "message-box", "small-caption", "status-bar"]
     elseif prop =~ '^\%(height\|width\)$'
       let values = ["auto", "border-box", "content-box", "max-content", "min-content", "available", "fit-content"]
-    elseif prop =~ '^\%(left\|rigth\)$'
+    elseif prop =~ '^\%(left\|right\)$'
       let values = ["auto"]
     elseif prop == 'image-rendering'
       let values = ["auto", "crisp-edges", "pixelated"]

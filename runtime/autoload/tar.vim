@@ -778,7 +778,7 @@ fun! tar#Vimuntar(...)
    elseif executable("gzip")
     silent exe "!gzip -d ".shellescape(tartail)
    else
-    echoerr "unable to decompress<".tartail."> on this sytem"
+    echoerr "unable to decompress<".tartail."> on this system"
     if simplify(curdir) != simplify(tarhome)
      " remove decompressed tarball, restore directory
 "     call Decho("delete(".tartail.".tar)")

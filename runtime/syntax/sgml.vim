@@ -174,7 +174,7 @@ syn match   sgmlAbbrEndTag +/+
 " SGML specific
 " abbreviated regions
 "
-" No highlighing, highlighing is done by contained elements.
+" No highlighting, highlighting is done by contained elements.
 "
 " PROVIDES: @sgmlRegionHook
 "
@@ -192,7 +192,7 @@ syn match   sgmlAbbrRegion
 " real (non-empty) elements. We cannot do syntax folding
 " as in xml, because end tags may be optional in sgml depending
 " on the dtd.
-" No highlighing, highlighing is done by contained elements.
+" No highlighting, highlighting is done by contained elements.
 "
 " PROVIDES: @sgmlRegionHook
 "
@@ -225,7 +225,7 @@ syn region   sgmlRegion
 "
 " <tag id="lola"/>
 "
-" TODO use sgmlEmptyTag intead of sgmlTag
+" TODO use sgmlEmptyTag instead of sgmlTag
 syn match    sgmlEmptyRegion
     \ +<[^ /!?>"']\(\_[^"'<>]\|"\_[^"]*"\|'\_[^']*'\)*/>+
     \ contains=sgmlEmptyTag

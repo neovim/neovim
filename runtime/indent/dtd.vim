@@ -119,16 +119,16 @@ function GetDTDIndent()
     " Next comes the content model.  If the token we’ve found isn’t a
     " parenthesis it must be either ANY, EMPTY or some random junk.  Either
     " way, we’re done indenting this element, so set it to that of the first
-    " line so that the terminating “>” winds up having the same indention.
+    " line so that the terminating “>” winds up having the same indentation.
     if token != '('
       return indent
     endif
 
     " Now go through the content model.  We need to keep track of the nesting
     " of parentheses.  As soon as we hit 0 we’re done.  If that happens we must
-    " have a complete content model.  Thus set indention to be the same as that
+    " have a complete content model.  Thus set indentation to be the same as that
     " of the first line so that the terminating “>” winds up having the same
-    " indention.  Otherwise, we’ll indent to the innermost parentheses not yet
+    " indentation.  Otherwise, we’ll indent to the innermost parentheses not yet
     " matched.
     let [indent_of_innermost, end] = s:indent_to_innermost_parentheses(line, end)
     if indent_of_innermost != -1

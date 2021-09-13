@@ -823,8 +823,12 @@ DEFINING BREAKPOINTS
 		Sets a breakpoint, that will break whenever the {expression}
 		evaluates to a different value. Example: >
 			:breakadd expr g:lnum
-
 <		Will break, whenever the global variable lnum changes.
+
+		Errors in evaluation are suppressed, you can use the name of a
+		variable that does not exist yet.  This also means you will
+		not notice anything if the expression has a mistake.
+
 		Note if you watch a |script-variable| this will break
 		when switching scripts, since the script variable is only
 		valid in the script where it has been defined and if that

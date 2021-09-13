@@ -10,7 +10,7 @@
 " BUT, simply mapping each letter of Hangul with sequence of alphabet 1 by 1
 " can fail to combine Hangul jamo (conconants and vowels) right.
 " For example, sequentially pressing `ㅅㅓㅇㅜㄹㄷㅐㅎㅏㄱㅛ` can not only be
-" combined as `서울대학교`, but alse `성ㅜㄹ댛ㅏㄱ교`, which is totally 
+" combined as `서울대학교`, but also `성ㅜㄹ댛ㅏㄱ교`, which is totally 
 " nonsense. 
 " Though combining Hangul is deterministic with law that each letter must be 
 " one of (consonant + vowel) or (consonant + vowel + consonant), there is no

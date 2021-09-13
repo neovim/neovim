@@ -81,7 +81,7 @@ fun! zip#Browse(zipfile)
   " sanity checks
   if !exists("*fnameescape")
    if &verbose > 1
-    echoerr "the zip plugin is not available (your vim doens't support fnameescape())"
+    echoerr "the zip plugin is not available (your vim doesn't support fnameescape())"
    endif
    return
   endif

@@ -219,7 +219,7 @@ function GetAdaIndent()
       " Move indent in twice (next 'when' will move back)
       let ind = ind + 2 * shiftwidth()
    elseif line =~ '^\s*end\s*record\>'
-      " Move indent back to tallying 'type' preceeding the 'record'.
+      " Move indent back to tallying 'type' preceding the 'record'.
       " Allow indent to be equal to 'end record's.
       let ind = s:MainBlockIndent( ind+shiftwidth(), lnum, 'type\>', '' )
    elseif line =~ '\(^\s*new\>.*\)\@<!)\s*[;,]\s*$'

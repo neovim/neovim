@@ -57,7 +57,7 @@ endfunction
 " ======================
 
 " Indtokens are "indentation tokens". See their exact format in the
-" documentaiton of the s:GetTokensFromLine function.
+" documentation of the s:GetTokensFromLine function.
 
 " Purpose:
 "   Calculate the new virtual column after the given segment of a line.
@@ -75,7 +75,7 @@ endfunction
 "   s:CalcVCol("\t'\tx', b", 1, 4, 4)  -> 10
 function! s:CalcVCol(line, first_index, last_index, vcol, tabstop)
 
-  " We copy the relevent segment of the line, otherwise if the line were
+  " We copy the relevant segment of the line, otherwise if the line were
   " e.g. `"\t", term` then the else branch below would consume the `", term`
   " part at once.
   let line = a:line[a:first_index : a:last_index]
@@ -604,7 +604,7 @@ endfunction
 function! s:BeginElementFoundIfEmpty(stack, token, curr_vcol, stored_vcol, sw)
   if empty(a:stack)
     if a:stored_vcol ==# -1
-      call s:Log('    "' . a:token . '" directly preceeds LTI -> return')
+      call s:Log('    "' . a:token . '" directly precedes LTI -> return')
       return [1, a:curr_vcol + a:sw]
     else
       call s:Log('    "' . a:token .
@@ -825,7 +825,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
         if ret | return res | endif
 
         if stored_vcol ==# -1
-          call s:Log('    End of clause directly preceeds LTI -> return')
+          call s:Log('    End of clause directly precedes LTI -> return')
           return 0
         else
           call s:Log('    End of clause (but not end of line) -> return')

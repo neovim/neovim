@@ -4222,7 +4222,7 @@ fun! s:NetrwGetBuffer(islocal,dirname)
   endif
 "  call Decho("  bufnum#".bufnum,'~'.expand("<slnum>"))
 
-  " highjack the current buffer
+  " hijack the current buffer
   "   IF the buffer already has the desired name
   "   AND it is empty
   let curbuf = bufname("%")
@@ -4230,7 +4230,7 @@ fun! s:NetrwGetBuffer(islocal,dirname)
    let curbuf = getcwd()
   endif
 "  call Dredir("ls!","NetrwGetFile (renamed buffer back to remote filename<".rfile."> : expand(%)<".expand("%").">)")
-"  call Decho("deciding if netrw may highjack the current buffer#".bufnr("%")."<".curbuf.">",'~'.expand("<slnum>"))
+"  call Decho("deciding if netrw may hijack the current buffer#".bufnr("%")."<".curbuf.">",'~'.expand("<slnum>"))
 "  call Decho("..dirname<".dirname.">  IF dirname == bufname",'~'.expand("<slnum>"))
 "  call Decho("..curbuf<".curbuf.">",'~'.expand("<slnum>"))
 "  call Decho("..line($)=".line("$")." AND this is 1",'~'.expand("<slnum>"))
@@ -4239,7 +4239,7 @@ fun! s:NetrwGetBuffer(islocal,dirname)
 "   call Dret("s:NetrwGetBuffer 0<cleared buffer> : highjacking buffer#".bufnr("%"))
    return 0
   else  " DEBUG
-"   call Decho("..did NOT highjack buffer",'~'.expand("<slnum>"))
+"   call Decho("..did NOT hijack buffer",'~'.expand("<slnum>"))
   endif
   " Aug 14, 2021: was thinking about looking for a [No Name] buffer here and using it, but that might cause problems
 
@@ -6790,7 +6790,7 @@ fun! s:NetrwMarkFile(islocal,fname)
 
   " sanity check
   if empty(a:fname)
-"   call Dret("s:NetrwMarkFile : emtpy fname")
+"   call Dret("s:NetrwMarkFile : empty fname")
    return
   endif
   let curdir = s:NetrwGetCurdir(a:islocal)

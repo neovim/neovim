@@ -191,7 +191,7 @@ class Completer(object):
                 pass
         if len(arg_text) == 0:
             # The doc string sometimes contains the function signature
-            #  this works for alot of C modules that are part of the
+            #  this works for a lot of C modules that are part of the
             #  standard library
             doc = func_obj.__doc__
             if doc:

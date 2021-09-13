@@ -4094,14 +4094,17 @@ finddir({name} [, {path} [, {count}]])				*finddir()*
 		Find directory {name} in {path}.  Supports both downwards and
 		upwards recursive directory searches.  See |file-searching|
 		for the syntax of {path}.
+
 		Returns the path of the first found match.  When the found
 		directory is below the current directory a relative path is
 		returned.  Otherwise a full path is returned.
 		If {path} is omitted or empty then 'path' is used.
+
 		If the optional {count} is given, find {count}'s occurrence of
 		{name} in {path} instead of the first one.
 		When {count} is negative return all the matches in a |List|.
-		This is quite similar to the ex-command |:find|.
+
+		This is quite similar to the ex-command `:find`.
 
 findfile({name} [, {path} [, {count}]])				*findfile()*
 		Just like |finddir()|, but find a file instead of a directory.

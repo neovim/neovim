@@ -59,7 +59,7 @@ syn region abelSpecifier start='istype' end=';' contains=abelTypeIdChar,abelType
 syn match  abelTypeIdChar "[,']" contained
 syn match  abelTypeIdEnd  ";" contained
 
-" string contstants and special characters within them
+" string constants and special characters within them
 syn match  abelSpecial contained "\\['\\]"
 syn region abelString start=+'+ skip=+\\"+ end=+'+ contains=abelSpecial
 

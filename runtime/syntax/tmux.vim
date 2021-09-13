@@ -8,7 +8,7 @@ if exists("b:current_syntax")
     finish
 endif
 
-" Explicitly change compatiblity options to Vim's defaults because this file
+" Explicitly change compatibility options to Vim's defaults because this file
 " uses line continuations.
 let s:original_cpo = &cpo
 set cpo&vim

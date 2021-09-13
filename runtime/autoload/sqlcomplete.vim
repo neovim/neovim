@@ -17,7 +17,7 @@
 "       and complete it.
 "
 " Version 16.0 (Dec 2015)
-"     - NF: If reseting the cache and table, procedure or view completion
+"     - NF: If resetting the cache and table, procedure or view completion
 "           had been used via dbext, have dbext delete or recreate the 
 "           dictionary so that new objects are picked up for the 
 "           next completion.
@@ -554,7 +554,7 @@ function! sqlcomplete#PreCacheSyntax(...)
         let syn_group_arr = g:omni_sql_precache_syntax_groups
     endif
     " For each group specified in the list, precache all
-    " the sytnax items.
+    " the syntax items.
     if !empty(syn_group_arr)
         for group_name in syn_group_arr
             let syn_items = extend( syn_items, s:SQLCGetSyntaxList(group_name) )
@@ -577,7 +577,7 @@ function! sqlcomplete#ResetCacheSyntax(...)
         let syn_group_arr = g:omni_sql_precache_syntax_groups
     endif
     " For each group specified in the list, precache all
-    " the sytnax items.
+    " the syntax items.
     if !empty(syn_group_arr)
         for group_name in syn_group_arr
             let list_idx = index(s:syn_list, group_name, 0, &ignorecase)
@@ -843,7 +843,7 @@ function! s:SQLCGetColumns(table_name, list_type)
          let curline    = line(".")
          let curcol     = col(".")
 
-         " Do not let searchs wrap
+         " Do not let searches wrap
          setlocal nowrapscan
          " If . was entered, look at the word just before the .
          " We are looking for something like this:
@@ -863,7 +863,7 @@ function! s:SQLCGetColumns(table_name, list_type)
          " Search forward until one of the following:
          "     1.  Another select/update/delete statement
          "     2.  A ; at the end of a line (the delimiter)
-         "     3.  The end of the file (incase no delimiter)
+         "     3.  The end of the file (in case no delimiter)
          " Yank the visually selected text into the "y register.
          exec 'silent! normal! vl/\c\(\<select\>\|\<update\>\|\<delete\>\|;\s*$\|\%$\)'."\n".'"yy'
 
