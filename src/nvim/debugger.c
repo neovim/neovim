@@ -27,6 +27,19 @@ static bool debug_greedy = false;
 static char *debug_oldval = NULL;  // old and newval for debug expressions
 static char *debug_newval = NULL;
 
+/// The list of breakpoints: dbg_breakp.
+/// This is a grow-array of structs.
+struct debuggy {
+  int dbg_nr;                   ///< breakpoint number
+  int dbg_type;                 ///< DBG_FUNC or DBG_FILE or DBG_EXPR
+  char_u *dbg_name;             ///< function, expression or file name
+  regprog_T *dbg_prog;          ///< regexp program
+  linenr_T dbg_lnum;            ///< line number in function or file
+  int dbg_forceit;              ///< ! used
+  typval_T *dbg_val;            ///< last result of watchexpression
+  int dbg_level;                ///< stored nested level for expr
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "debugger.c.generated.h"
 #endif
@@ -429,19 +442,6 @@ bool dbg_check_skipped(exarg_T *eap)
   return false;
 }
 
-/// The list of breakpoints: dbg_breakp.
-/// This is a grow-array of structs.
-struct debuggy {
-  int dbg_nr;                   ///< breakpoint number
-  int dbg_type;                 ///< DBG_FUNC or DBG_FILE or DBG_EXPR
-  char_u *dbg_name;             ///< function, expression or file name
-  regprog_T *dbg_prog;          ///< regexp program
-  linenr_T dbg_lnum;            ///< line number in function or file
-  int dbg_forceit;              ///< ! used
-  typval_T *dbg_val;            ///< last result of watchexpression
-  int dbg_level;                ///< stored nested level for expr
-};
-
 static garray_T dbg_breakp = { 0, 0, sizeof(struct debuggy), 4, NULL };
 #define BREAKP(idx)             (((struct debuggy *)dbg_breakp.ga_data)[idx])
 #define DEBUGGY(gap, idx)       (((struct debuggy *)gap->ga_data)[idx])
@@ -452,6 +452,26 @@ static garray_T prof_ga = { 0, 0, sizeof(struct debuggy), 4, NULL };
 #define DBG_FUNC        1
 #define DBG_FILE        2
 #define DBG_EXPR        3
+
+/// Evaluate the "bp->dbg_name" expression and return the result.
+/// Restore the got_int and called_emsg flags.
+static typval_T *eval_expr_restore(struct debuggy *const bp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const int prev_called_emsg = called_emsg;
+  const int prev_did_emsg = did_emsg;
+
+  got_int = false;
+  typval_T *const tv = eval_expr(bp->dbg_name);
+
+  // Evaluating the expression should not result in breaking the sequence of
+  // commands.
+  got_int = false;
+  called_emsg = prev_called_emsg;
+  did_emsg = prev_did_emsg;
+
+  return tv;
+}
 
 /// Parse the arguments of ":profile", ":breakadd" or ":breakdel" and put them
 /// in the entry just after the last one in dbg_breakp.  Note that "dbg_name"
@@ -515,7 +535,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
     bp->dbg_name = vim_strsave(curbuf->b_ffname);
   } else if (bp->dbg_type == DBG_EXPR) {
     bp->dbg_name = vim_strsave(p);
-    bp->dbg_val = eval_expr(bp->dbg_name);
+    bp->dbg_val = eval_expr_restore(bp);
   } else {
     // Expand the file name in the same way as do_source().  This means
     // doing it twice, so that $DIR/file gets expanded when $DIR is
@@ -771,10 +791,7 @@ debuggy_find(
     } else if (bp->dbg_type == DBG_EXPR) {
       bool line = false;
 
-      prev_got_int = got_int;
-      got_int = false;
-
-      typval_T *tv = eval_expr(bp->dbg_name);
+      typval_T *const tv = eval_expr_restore(bp);
       if (tv != NULL) {
         if (bp->dbg_val == NULL) {
           debug_oldval = typval_tostring(NULL);
@@ -787,7 +804,7 @@ debuggy_find(
             line = true;
             debug_oldval = typval_tostring(bp->dbg_val);
             // Need to evaluate again, typval_compare() overwrites "tv".
-            typval_T *v = eval_expr(bp->dbg_name);
+            typval_T *const v = eval_expr_restore(bp);
             debug_newval = typval_tostring(v);
             tv_free(bp->dbg_val);
             bp->dbg_val = v;
@@ -806,8 +823,6 @@ debuggy_find(
         lnum = after > 0 ? after : 1;
         break;
       }
-
-      got_int |= prev_got_int;
     }
   }
   if (name != fname) {
