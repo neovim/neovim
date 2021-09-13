@@ -554,7 +554,9 @@ describe('runtime:', function()
 
   it('loads plugin/*.lua from site packages', function()
     print()
-    local plugin_path = table.concat({xdata, 'nvim', 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
+    local nvimdata = iswin() and "nvim-data" or "nvim"
+
+    local plugin_path = table.concat({xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)
     local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
