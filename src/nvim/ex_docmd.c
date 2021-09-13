@@ -6431,9 +6431,9 @@ static void ex_colorscheme(exarg_T *eap)
     char_u *expr = vim_strsave((char_u *)"g:colors_name");
     char_u *p = NULL;
 
-    ++emsg_off;
-    p = eval_to_string(expr, NULL, FALSE);
-    --emsg_off;
+    emsg_off++;
+    p = eval_to_string(expr, NULL, false);
+    emsg_off--;
     xfree(expr);
 
     if (p != NULL) {

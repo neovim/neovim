@@ -143,12 +143,10 @@ int hasAnyFolding(win_T *win)
 }
 
 // hasFolding() {{{2
-/*
- * Return TRUE if line "lnum" in the current window is part of a closed
- * fold.
- * When returning TRUE, *firstp and *lastp are set to the first and last
- * lnum of the sequence of folded lines (skipped when NULL).
- */
+/// When returning true, *firstp and *lastp are set to the first and last
+/// lnum of the sequence of folded lines (skipped when NULL).
+///
+/// @return  true if line "lnum" in the current window is part of a closed fold.
 bool hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 {
   return hasFoldingWin(curwin, lnum, firstp, lastp, true, NULL);
@@ -545,11 +543,9 @@ static int checkCloseRec(garray_T *gap, linenr_T lnum, int level)
 }
 
 // foldCreateAllowed() {{{2
-/*
- * Return TRUE if it's allowed to manually create or delete a fold.
- * Give an error message and return FALSE if not.
- */
-int foldManualAllowed(int create)
+/// Return TRUE if it's allowed to manually create or delete a fold.
+/// Give an error message and return FALSE if not.
+int foldManualAllowed(bool create)
 {
   if (foldmethodIsManual(curwin) || foldmethodIsMarker(curwin)) {
     return TRUE;
@@ -1106,12 +1102,11 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
 }
 
 // foldFind() {{{2
-/*
- * Search for line "lnum" in folds of growarray "gap".
- * Set *fpp to the fold struct for the fold that contains "lnum" or
- * the first fold below it (careful: it can be beyond the end of the array!).
- * Returns FALSE when there is no fold that contains "lnum".
- */
+/// Search for line "lnum" in folds of growarray "gap".
+/// Set *fpp to the fold struct for the fold that contains "lnum" or
+/// the first fold below it (careful: it can be beyond the end of the array!).
+///
+/// @return  false when there is no fold that contains "lnum".
 static bool foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
 {
   linenr_T low, high;
@@ -1141,7 +1136,7 @@ static bool foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
     } else {
       // lnum is inside this fold
       *fpp = fp + i;
-      return TRUE;
+      return true;
     }
   }
   *fpp = fp + low;
@@ -1906,8 +1901,8 @@ void foldtext_cleanup(char_u *str)
 {
   char_u *s;
   char_u *p;
-  int did1 = FALSE;
-  int did2 = FALSE;
+  bool did1 = false;
+  bool did2 = false;
 
   // Ignore leading and trailing white space in 'commentstring'.
   char_u *cms_start = skipwhite(curbuf->b_p_cms);
@@ -1960,11 +1955,11 @@ void foldtext_cleanup(char_u *str)
     } else if (cms_end != NULL) {
       if (!did1 && cms_slen > 0 && STRNCMP(s, cms_start, cms_slen) == 0) {
         len = cms_slen;
-        did1 = TRUE;
+        did1 = true;
       } else if (!did2 && cms_elen > 0
                  && STRNCMP(s, cms_end, cms_elen) == 0) {
         len = cms_elen;
-        did2 = TRUE;
+        did2 = true;
       }
     }
     if (len != 0) {
