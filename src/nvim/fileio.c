@@ -134,16 +134,16 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
     msg_scroll = FALSE;
   }
   if (!msg_scroll) {    // wait a bit when overwriting an error msg
-    check_for_delay(FALSE);
+    check_for_delay(false);
   }
   msg_start();
   msg_scroll = msg_scroll_save;
-  msg_scrolled_ign = TRUE;
+  msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
   msg_outtrans_attr(msg_may_trunc(FALSE, IObuff), attr);
   msg_clr_eos();
   ui_flush();
-  msg_scrolled_ign = FALSE;
+  msg_scrolled_ign = false;
 }
 
 
@@ -197,12 +197,12 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   long size = 0;
   uint8_t *p = NULL;
   off_T filesize = 0;
-  int skip_read = false;
+  bool skip_read = false;
   context_sha256_T sha_ctx;
   int read_undo_file = false;
   int split = 0;  // number of split lines
   linenr_T linecnt;
-  int error = FALSE;                    // errors encountered
+  bool error = false;                   // errors encountered
   int ff_error = EOL_UNKNOWN;           // file format with errors
   long linerest = 0;                    // remaining chars in line
   int perm = 0;
@@ -212,7 +212,6 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   int fileformat = 0;                   // end-of-line format
   bool keep_fileformat = false;
   FileInfo file_info;
-  int file_readonly;
   linenr_T skip_count = 0;
   linenr_T read_count = 0;
   int msg_save = msg_scroll;
@@ -236,12 +235,11 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   long real_size = 0;
 # ifdef HAVE_ICONV
   iconv_t iconv_fd = (iconv_t)-1;       // descriptor for iconv() or -1
-  int did_iconv = false;                // TRUE when iconv() failed and trying
+  bool did_iconv = false;               // true when iconv() failed and trying
                                         // 'charconvert' next
 # endif
-  int converted = FALSE;                // TRUE if conversion done
-  int notconverted = FALSE;             /* TRUE if conversion wanted but it
-                                           wasn't possible */
+  bool converted = false;                // true if conversion done
+  bool notconverted = false;             // true if conversion wanted but it wasn't possible
   char_u conv_rest[CONV_RESTLEN];
   int conv_restlen = 0;                 // nr of bytes in conv_rest[]
   buf_T *old_curbuf;
@@ -437,7 +435,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   }
 
   // Check readonly.
-  file_readonly = false;
+  bool file_readonly = false;
   if (!read_buffer && !read_stdin) {
     if (!newfile || readonlymode || !(perm & 0222)
         || !os_file_is_writable((char *)fname)) {
@@ -785,9 +783,9 @@ retry:
     advance_fenc = false;
 
     if (eap != NULL && eap->force_enc != 0) {
-      /* Conversion given with "++cc=" wasn't possible, read
-       * without conversion. */
-      notconverted = TRUE;
+      // Conversion given with "++cc=" wasn't possible, read
+      // without conversion.
+      notconverted = true;
       conv_error = 0;
       if (fenc_alloced) {
         xfree(fenc);
@@ -866,7 +864,7 @@ retry:
           if (fd < 0) {
             // Re-opening the original file failed!
             EMSG(_("E202: Conversion made file unreadable!"));
-            error = TRUE;
+            error = true;
             goto failed;
           }
           goto retry;
@@ -940,7 +938,7 @@ retry:
           }
         }
         if (new_buffer == NULL) {
-          error = TRUE;
+          error = true;
           break;
         }
         if (linerest) {         // copy characters from the previous buffer
@@ -1048,7 +1046,7 @@ retry:
 
         if (size <= 0) {
           if (size < 0) {                           // read error
-            error = TRUE;
+            error = true;
           } else if (conv_restlen > 0) {
             /*
              * Reached end-of-file but some trailing bytes could
@@ -1104,7 +1102,7 @@ retry:
         }
       }
 
-      skip_read = FALSE;
+      skip_read = false;
 
       /*
        * At start of file: Check for BOM.
@@ -1151,7 +1149,7 @@ retry:
             fenc_alloced = false;
           }
           // retry reading without getting new bytes or rewinding
-          skip_read = TRUE;
+          skip_read = true;
           goto retry;
         }
       }
@@ -1579,7 +1577,7 @@ rewind_retry:
             *ptr = NUL;                     // end of line
             len = (colnr_T)(ptr - line_start + 1);
             if (ml_append(lnum, line_start, len, newfile) == FAIL) {
-              error = TRUE;
+              error = true;
               break;
             }
             if (read_undo_file) {
@@ -1587,7 +1585,7 @@ rewind_retry:
             }
             ++lnum;
             if (--read_count == 0) {
-              error = TRUE;                     // break loop
+              error = true;                     // break loop
               line_start = ptr;                 // nothing left to write
               break;
             }
@@ -1635,7 +1633,7 @@ rewind_retry:
               }
             }
             if (ml_append(lnum, line_start, len, newfile) == FAIL) {
-              error = TRUE;
+              error = true;
               break;
             }
             if (read_undo_file) {
@@ -1643,7 +1641,7 @@ rewind_retry:
             }
             ++lnum;
             if (--read_count == 0) {
-              error = TRUE;                         // break loop
+              error = true;                         // break loop
               line_start = ptr;                 // nothing left to write
               break;
             }
@@ -1661,7 +1659,7 @@ rewind_retry:
 failed:
   // not an error, max. number of lines reached
   if (error && read_count == 0) {
-    error = FALSE;
+    error = false;
   }
 
   /*
@@ -1683,7 +1681,7 @@ failed:
     *ptr = NUL;
     len = (colnr_T)(ptr - line_start + 1);
     if (ml_append(lnum, line_start, len, newfile) == FAIL) {
-      error = TRUE;
+      error = true;
     } else {
       if (read_undo_file) {
         sha256_update(&sha_ctx, line_start, len);
@@ -1848,7 +1846,7 @@ failed:
 
       XFREE_CLEAR(keep_msg);
       p = NULL;
-      msg_scrolled_ign = TRUE;
+      msg_scrolled_ign = true;
 
       if (!read_stdin && !read_buffer) {
         p = msg_trunc_attr(IObuff, FALSE, 0);
@@ -1863,7 +1861,7 @@ failed:
         // - When the screen was scrolled but there is no wait-return prompt.
         set_keep_msg(p, 0);
       }
-      msg_scrolled_ign = FALSE;
+      msg_scrolled_ign = false;
     }
 
     // with errors writing the file requires ":w!"
@@ -3758,9 +3756,9 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
 
   // It's like the unnamed buffer is deleted....
   if (curbuf->b_p_bl) {
-    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
   }
-  apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf);
   if (aborting()) {         // autocmds may abort script processing
     return FAIL;
   }
@@ -3775,9 +3773,9 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
   }
 
   // ....and a new named one is created
-  apply_autocmds(EVENT_BUFNEW, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, curbuf);
   if (curbuf->b_p_bl) {
-    apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf);
   }
   if (aborting()) {         // autocmds may abort script processing
     return FAIL;

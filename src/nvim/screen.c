@@ -504,7 +504,7 @@ int update_screen(int type)
   }
 
   if (clear_cmdline) {          // going to clear cmdline (done below)
-    check_for_delay(FALSE);
+    check_for_delay(false);
   }
 
   /* Force redraw when width of 'number' or 'relativenumber' column
@@ -2037,14 +2037,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   int tocol = MAXCOL;                   // end of inverting
   int fromcol_prev = -2;                // start of inverting after cursor
   bool noinvcur = false;                // don't invert the cursor
-  int lnum_in_visual_area = false;
+  bool lnum_in_visual_area = false;
   pos_T pos;
   long v;
 
   int char_attr = 0;                    // attributes for next character
-  int attr_pri = FALSE;                 // char_attr has priority
-  int area_highlighting = FALSE;           /* Visual or incsearch highlighting
-                                              in this line */
+  bool attr_pri = false;                // char_attr has priority
+  bool area_highlighting = false;       // Visual or incsearch highlighting in this line
   int attr = 0;                         // attributes for area highlighting
   int area_attr = 0;                    // attributes desired by highlighting
   int search_attr = 0;                  // attributes desired by 'hlsearch'
@@ -2363,7 +2362,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       diff_hlf = HLF_ADD;               // added line
     }
     filler_lines = 0;
-    area_highlighting = TRUE;
+    area_highlighting = true;
   }
   if (lnum == wp->w_topline) {
     filler_lines = wp->w_topfill;
@@ -2559,7 +2558,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       pos = wp->w_cursor;
       wp->w_cursor.lnum = lnum;
       wp->w_cursor.col = linecol;
-      len = spell_move_to(wp, FORWARD, TRUE, TRUE, &spell_hlf);
+      len = spell_move_to(wp, FORWARD, true, true, &spell_hlf);
 
       // spell_move_to() may call ml_get() and make "line" invalid
       line = ml_get_buf(wp->w_buffer, lnum, false);
@@ -6302,11 +6301,9 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
   }
 }
 
-/*
- * Check if there should be a delay.  Used before clearing or redrawing the
- * screen or the command line.
- */
-void check_for_delay(int check_msg_scroll)
+/// Check if there should be a delay.  Used before clearing or redrawing the
+/// screen or the command line.
+void check_for_delay(bool check_msg_scroll)
 {
   if ((emsg_on_display || (check_msg_scroll && msg_scroll))
       && !did_wait_return
@@ -6490,9 +6487,9 @@ retry:
    * in case applying autocommands always changes Rows or Columns.
    */
   if (starting == 0 && ++retry_count <= 3) {
-    apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, FALSE, curbuf);
-    /* In rare cases, autocommands may have altered Rows or Columns,
-    * jump back to check if we need to allocate the screen again. */
+    apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf);
+    // In rare cases, autocommands may have altered Rows or Columns,
+    // jump back to check if we need to allocate the screen again.
     goto retry;
   }
 
@@ -6877,7 +6874,7 @@ int showmode(void)
     bool nwr_save = need_wait_return;
 
     // wait a bit before overwriting an important message
-    check_for_delay(FALSE);
+    check_for_delay(false);
 
     // if the cmdline is more than one line high, erase top lines
     need_clear = clear_cmdline;

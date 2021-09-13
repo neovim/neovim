@@ -740,7 +740,7 @@ void ex_retab(exarg_T *eap)
   long old_len;
   char_u *ptr;
   char_u *new_line = (char_u *)1;  // init to non-NULL
-  int did_undo;                         // called u_save for current line
+  bool did_undo;                         // called u_save for current line
   long *new_vts_array = NULL;
   char_u *new_ts_str;  // string value of tab argument
 
@@ -772,7 +772,7 @@ void ex_retab(exarg_T *eap)
     ptr = ml_get(lnum);
     col = 0;
     vcol = 0;
-    did_undo = FALSE;
+    did_undo = false;
     for (;; ) {
       if (ascii_iswhite(ptr[col])) {
         if (!got_tab && num_spaces == 0) {
@@ -1240,7 +1240,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     /* Careful: This may recursively call do_bang() again! (because of
      * autocommands) */
     do_filter(line1, line2, eap, newcmd, do_in, do_out);
-    apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
   }
   if (free_newcmd) {
     xfree(newcmd);
@@ -1519,7 +1519,7 @@ void do_shell(char_u *cmd, int flags)
   msg_row = Rows - 1;
   msg_col = 0;
 
-  apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, false, curbuf);
 }
 
 #if !defined(UNIX)
@@ -1688,7 +1688,7 @@ int rename_buffer(char_u *new_fname)
   buf_T *buf;
 
   buf = curbuf;
-  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   // buffer changed, don't change name now
   if (buf != curbuf) {
     return FAIL;
@@ -1722,7 +1722,7 @@ int rename_buffer(char_u *new_fname)
   }
   xfree(fname);
   xfree(sfname);
-  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, curbuf);
+  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
   // Change directories when the 'acd' option is set.
   do_autochdir();
   return OK;
@@ -1881,8 +1881,8 @@ int do_write(exarg_T *eap)
     if (eap->cmdidx == CMD_saveas && alt_buf != NULL) {
       buf_T *was_curbuf = curbuf;
 
-      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, curbuf);
-      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, alt_buf);
+      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, alt_buf);
       if (curbuf != was_curbuf || aborting()) {
         // buffer changed, don't change name now
         retval = FAIL;
@@ -1903,8 +1903,8 @@ int do_write(exarg_T *eap)
       alt_buf->b_sfname = curbuf->b_sfname;
       curbuf->b_sfname = fname;
       buf_name_changed(curbuf);
-      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, curbuf);
-      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, alt_buf);
+      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, alt_buf);
       if (!alt_buf->b_p_bl) {
         alt_buf->b_p_bl = TRUE;
         apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, alt_buf);
@@ -2287,12 +2287,12 @@ theend:
 int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T newlnum, int flags,
             win_T *oldwin)
 {
-  int other_file;                       // TRUE if editing another file
+  bool other_file;                      // true if editing another file
   int oldbuf;                           // TRUE if using existing buffer
-  int auto_buf = FALSE;                 /* TRUE if autocommands brought us
-                                           into the buffer unexpectedly */
+  bool auto_buf = false;                // true if autocommands brought us
+                                        // into the buffer unexpectedly
   char_u *new_name = NULL;
-  int did_set_swapcommand = FALSE;
+  bool did_set_swapcommand = false;
   buf_T *buf;
   bufref_T     bufref;
   bufref_T     old_curbuf;
@@ -2305,7 +2305,7 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
   int solcol = -1;
   pos_T *pos;
   char_u *command = NULL;
-  int did_get_winopts = FALSE;
+  bool did_get_winopts = false;
   int readfile_flags = 0;
   bool did_inc_redrawing_disabled = false;
   long *so_ptr = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
@@ -2320,7 +2320,7 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
     if (fnum == curbuf->b_fnum) {       // file is already being edited
       return OK;                        // nothing to do
     }
-    other_file = TRUE;
+    other_file = true;
   } else {
     // if no short name given, use ffname for short name
     if (sfname == NULL) {
@@ -2338,11 +2338,9 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
     }
 
     if (ffname == NULL) {
-      other_file = TRUE;
-    }
-    // there is no file name
-    else if (*ffname == NUL && curbuf->b_ffname == NULL) {
-      other_file = FALSE;
+      other_file = true;
+    } else if (*ffname == NUL && curbuf->b_ffname == NULL) {  // there is no file name
+      other_file = false;
     } else {
       if (*ffname == NUL) {                 // re-edit with same file name
         ffname = curbuf->b_ffname;
@@ -2397,7 +2395,7 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
       vim_snprintf(p, len, "%" PRId64 "G", (int64_t)newlnum);
     }
     set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-    did_set_swapcommand = TRUE;
+    did_set_swapcommand = true;
     xfree(p);
   }
 
@@ -2584,7 +2582,7 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
          * before, reset the local window options to the global
          * values.  Also restores old folding stuff. */
         get_winopts(curbuf);
-        did_get_winopts = TRUE;
+        did_get_winopts = true;
       }
       xfree(new_name);
       au_new_curbuf.br_buf = NULL;
@@ -2836,17 +2834,17 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
       msg_scroll = FALSE;
     }
     if (!msg_scroll) {          // wait a bit when overwriting an error msg
-      check_for_delay(FALSE);
+      check_for_delay(false);
     }
     msg_start();
     msg_scroll = msg_scroll_save;
-    msg_scrolled_ign = TRUE;
+    msg_scrolled_ign = true;
 
     if (!shortmess(SHM_FILEINFO)) {
       fileinfo(false, true, false);
     }
 
-    msg_scrolled_ign = FALSE;
+    msg_scrolled_ign = false;
   }
 
   curbuf->b_last_used = time(NULL);
@@ -3459,8 +3457,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   int delimiter;
   bool has_second_delim = false;
   int sublen;
-  int got_quit = false;
-  int got_match = false;
+  bool got_quit = false;
+  bool got_match = false;
   int which_pat;
   char_u *cmd = eap->arg;
   linenr_T first_line = 0;  // first changed line
@@ -3650,7 +3648,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       colnr_T prev_matchcol = MAXCOL;
       char_u *new_end, *new_start = NULL;
       char_u *p1;
-      int did_sub = FALSE;
+      bool did_sub = false;
       int lastone;
       long nmatch_tl = 0;               // nr of lines matched below lnum
       int do_again;                     // do it again after joining lines
@@ -3708,7 +3706,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       // At first match, remember current cursor position.
       if (!got_match) {
         setpcmark();
-        got_match = TRUE;
+        got_match = true;
       }
 
       /*
@@ -3798,9 +3796,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
             skip_match = true;
           }
           sub_nsubs++;
-          did_sub = TRUE;
-          /* Skip the substitution, unless an expression is used,
-           * then it is evaluated in the sandbox. */
+          did_sub = true;
+          // Skip the substitution, unless an expression is used,
+          // then it is evaluated in the sandbox.
           if (!(sub[0] == '\\' && sub[1] == '=')) {
             goto skip;
           }
@@ -4435,7 +4433,7 @@ skip:
 ///
 /// @param count_only  used 'n' flag for ":s"
 ///
-/// @return  TRUE if a message was given.
+/// @return            true if a message was given.
 bool do_sub_msg(bool count_only)
 {
   /*
@@ -4683,7 +4681,7 @@ void free_old_sub(void)
 ///
 /// @param undo_sync  sync undo when leaving the window
 ///
-/// @return TRUE when it was created.
+/// @return           true when it was created.
 bool prepare_tagpreview(bool undo_sync)
 {
   /*

@@ -1456,7 +1456,7 @@ static char_u * do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineG
       ++p;
     }
     p = vim_strnsave(ea.cmd, p - ea.cmd);
-    int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, TRUE, NULL);
+    int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
     xfree(p);
     // If the autocommands did something and didn't cause an error, try
     // finding the command again.
@@ -2702,12 +2702,12 @@ static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *
   int len = (int)(p - eap->cmd);
   int j, k, matchlen = 0;
   ucmd_T *uc;
-  int found = FALSE;
-  int possible = FALSE;
+  bool found = false;
+  bool possible = false;
   char_u *cp, *np;             // Point into typed cmd and test name
   garray_T *gap;
-  int amb_local = FALSE;            /* Found ambiguous buffer-local command,
-                                       only full match global is accepted. */
+  bool amb_local = false;            // Found ambiguous buffer-local command,
+                                     // only full match global is accepted.
 
   /*
    * Look for buffer-local user commands first, then global ones.
@@ -2730,7 +2730,7 @@ static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *
           if (gap == &ucmds) {
             return NULL;
           }
-          amb_local = TRUE;
+          amb_local = true;
         }
 
         if (!found || (k == len && *np == NUL)) {
@@ -2739,9 +2739,9 @@ static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *
            * should use instead.
            */
           if (k == len) {
-            found = TRUE;
+            found = true;
           } else {
-            possible = TRUE;
+            possible = true;
           }
 
           if (gap == &ucmds) {
@@ -2768,7 +2768,7 @@ static char_u *find_ucmd(exarg_T *eap, char_u *p, int *full, expand_T *xp, int *
             if (full != NULL) {
               *full = TRUE;
             }
-            amb_local = FALSE;
+            amb_local = false;
             break;
           }
         }
@@ -4511,8 +4511,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
        */
       if (vim_strchr(eap->arg, '$') != NULL
           || vim_strchr(eap->arg, '~') != NULL) {
-        expand_env_esc(eap->arg, NameBuff, MAXPATHL,
-                       TRUE, TRUE, NULL);
+        expand_env_esc(eap->arg, NameBuff, MAXPATHL, true, true, NULL);
         has_wildcards = path_has_wildcard(NameBuff);
         p = NameBuff;
       } else {
@@ -7192,7 +7191,7 @@ void ex_splitview(exarg_T *eap)
     if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab : eap->addr_count == 0
                         ? 0 : (int)eap->line2 + 1, eap->arg) != FAIL) {
       do_exedit(eap, old_curwin);
-      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, FALSE, curbuf);
+      apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
 
       // set the alternate buffer for the window we came from
       if (curwin != old_curwin
@@ -7332,8 +7331,7 @@ static void ex_tabs(exarg_T *eap)
       if (buf_spname(wp->w_buffer) != NULL) {
         STRLCPY(IObuff, buf_spname(wp->w_buffer), IOSIZE);
       } else {
-        home_replace(wp->w_buffer, wp->w_buffer->b_fname,
-                     IObuff, IOSIZE, TRUE);
+        home_replace(wp->w_buffer, wp->w_buffer->b_fname, IObuff, IOSIZE, true);
       }
       msg_outtrans(IObuff);
       ui_flush();                  // output one line at a time
@@ -8689,7 +8687,7 @@ void exec_normal(bool was_typed)
 
 static void ex_checkpath(exarg_T *eap)
 {
-  find_pattern_in_path(NULL, 0, 0, FALSE, FALSE, CHECK_PATH, 1L,
+  find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1L,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
                        (linenr_T)1, (linenr_T)MAXLNUM);
 }
@@ -8706,7 +8704,7 @@ static void ex_psearch(exarg_T *eap)
 
 static void ex_findpat(exarg_T *eap)
 {
-  int whole = TRUE;
+  bool whole = true;
   long n;
   char_u *p;
   int action;
@@ -8951,7 +8949,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
   buf_T *buf;
   int valid = VALID_HEAD | VALID_PATH;  // Assume valid result.
   bool tilde_file = false;
-  int skip_mod = false;
+  bool skip_mod = false;
   char strbuf[30];
 
   *errormsg = NULL;
@@ -9021,7 +9019,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
         if (escaped != NULL) {
           *escaped = TRUE;
         }
-        skip_mod = TRUE;
+        skip_mod = true;
         break;
       }
       s = src + 1;
