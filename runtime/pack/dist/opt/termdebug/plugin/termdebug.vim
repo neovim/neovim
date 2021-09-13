@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2021 Aug 06
+" Last Change: 2021 Aug 23
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -342,6 +342,9 @@ func s:StartDebug_term(dict)
   " Disable pagination, it causes everything to stop at the gdb
   " "Type <return> to continue" prompt.
   call s:SendCommand('set pagination off')
+
+  " Set the filetype, this can be used to add mappings.
+  set filetype=termdebug
 
   call s:StartDebugCommon(a:dict)
 endfunc

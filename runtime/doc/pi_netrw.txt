@@ -54,6 +54,7 @@ Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
       Browsing With A Horizontally Split Window...........|netrw-o|
       Browsing With A New Tab.............................|netrw-t|
       Browsing With A Vertically Split Window.............|netrw-v|
+      Change File Permission..............................|netrw-gp|
       Change Listing Style.(thin wide long tree)..........|netrw-i|
       Changing To A Bookmarked Directory..................|netrw-gb|
       Changing To A Predecessor Directory.................|netrw-u|
@@ -1095,6 +1096,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   gf	Force treatment as file                              |netrw-gf|
 	   gh	Quick hide/unhide of dot-files                       |netrw-gh|
 	   gn	Make top of tree the directory below the cursor      |netrw-gn|
+	   gp	Change local-only file permissions                   |netrw-gp|
 	   i	Cycle between thin, long, wide, and tree listings    |netrw-i|
 	   I	Toggle the displaying of the banner                  |netrw-I|
 	   mb	Bookmark current directory                           |netrw-mb|
@@ -1510,6 +1512,8 @@ Netrw determines which special handler by the following method:
     If g:netrw_browsex_viewer == '-', then netrwFileHandlers#Invoke() will be
     used instead (see |netrw_filehandler|).
 
+    If the viewer you wish to use does not support handling of a remote URL
+    directory, set |g:netrw_browsex_support_remote| to 0.
   * for Windows 32 or 64, the URL and FileProtocolHandler dlls are used.
   * for Gnome (with gnome-open): gnome-open is used.
   * for KDE (with kfmclient)   : kfmclient is used
@@ -2104,8 +2108,8 @@ the two directories the same, use the "cd" map (type cd).  That map will
 set Vim's notion of the current directory to netrw's current browsing
 directory.
 
-|netrw-cd|: This map's name was changed from "c" to cd (see |netrw-cd|).
-          This change was done to allow for |netrw-cb| and |netrw-cB| maps.
+|netrw-cd| : This map's name was changed from "c" to cd (see |netrw-cd|).
+           This change was done to allow for |netrw-cb| and |netrw-cB| maps.
 
 Associated setting variable: |g:netrw_keepdir|
 
@@ -2607,13 +2611,29 @@ your browsing preferences.  (see also: |netrw-settings|)
 				a script/function to handle the given
 				extension.  (see |netrw_filehandler|).
 
+  *g:netrw_browsex_support_remote*
+				specify if the specified viewer supports a
+				remote URL.  (see |netrw-handler|).
+
   *g:netrw_chgperm*		Unix/Linux: "chmod PERM FILENAME"
 				Windows:    "cacls FILENAME /e /p PERM"
 				Used to change access permission for a file.
 
+  *g:netrw_clipboard*		=1
+  				By default, netrw will attempt to insure that
+				the clipboard's values will remain unchanged.
+				However, some users report that they have
+				speed problems with this; consequently, this
+				option, when set to zero,  lets such users
+				prevent netrw from saving and restoring the
+				clipboard (the latter is done only as needed).
+				That means that if the clipboard is changed
+				(inadvertently) by normal netrw operation that
+				it will not be restored to its prior state.
+
   *g:netrw_compress*		="gzip"
-				    Will compress marked files with this
-				    command
+				Will compress marked files with this
+				command
 
   *g:Netrw_corehandler*		Allows one to specify something additional
 				to do when handling <core> files via netrw's
@@ -2639,12 +2659,23 @@ your browsing preferences.  (see also: |netrw-settings|)
 				 =2        cul u-cuc        cul u-cuc
 				 =3        cul u-cuc        cul   cuc
 				 =4        cul   cuc        cul   cuc
+				 =5      U-cul U-cuc      U-cul U-cuc
+				 =6      U-cul U-cuc        cul U-cuc
+				 =7        cul U-cuc        cul U-cuc
+				 =8        cul U-cuc        cul   cuc
 
 				Where
-				  u-cul : user's |'cursorline'|   setting used
-				  u-cuc : user's |'cursorcolumn'| setting used
-				  cul   : |'cursorline'|  locally set
-				  cuc   : |'cursorcolumn'| locally set
+				  u-cul : user's |'cursorline'|   initial setting used
+				  u-cuc : user's |'cursorcolumn'| initial setting used
+				  U-cul : user's |'cursorline'|   current setting used
+				  U-cuc : user's |'cursorcolumn'| current setting used
+				  cul   : |'cursorline'|   will be locally set
+				  cuc   : |'cursorcolumn'| will be locally set
+
+				  The "initial setting" means the values of
+				  the |'cuc'| and |'cul'| settings in effect when
+				  netrw last saw |g:netrw_cursor| >= 5 or when
+				  netrw was initially run.
 
   *g:netrw_decompress*		= { ".gz"  : "gunzip" ,
 				    ".bz2" : "bunzip2" ,
@@ -2654,7 +2685,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				  decompression programs.
 
   *g:netrw_dirhistmax*            =10: controls maximum quantity of past
-                                     history.  May be zero to supppress
+                                     history.  May be zero to suppress
 				     history.
 				     (related: |netrw-qb| |netrw-u| |netrw-U|)
 
@@ -3140,6 +3171,9 @@ OPEN A NEW FILE IN NETRW'S CURRENT DIRECTORY		*netrw-%* {{{2
 To open a new file in netrw's current directory, press "%".  This map
 will query the user for a new filename; an empty file by that name will
 be placed in the netrw's current directory (ie. b:netrw_curdir).
+
+If Lexplore (|netrw-:Lexplore|) is in use, the new file will be generated
+in the |g:netrw_chgwin| window.
 
 Related topics:               |netrw-d|
 
@@ -3808,7 +3842,7 @@ netrw:
 	  Decho.vim is provided as a "vimball"; see |vimball-intro|.  You
 	  should edit the Decho.vba.gz file and source it in: >
 
-		vim Decho.vba.gz
+	  	vim Decho.vba.gz
 		:so %
 		:q
 <
@@ -3876,6 +3910,32 @@ netrw:
 ==============================================================================
 12. History						*netrw-history* {{{1
 
+	v171:	Oct 09, 2020	* included code in s:NetrwOptionsSafe()
+				  to allow |'bh'| to be set to delete when
+				  rather than hide when g:netrw_fastbrowse
+				  was zero.
+				* Installed |g:netrw_clipboard| setting
+				* Installed option bypass for |'guioptions'|
+				  a/A settings
+				* Changed popup_beval() to |popup_atcursor|()
+				  in netrw#ErrorMsg (lacygoill). Apparently
+				  popup_beval doesn't reliably close the
+				  popup when the mouse is moved.
+				* VimEnter() now using win_execute to examine
+				  buffers for an attempt to open a directory.
+				  Avoids issues with popups/terminal from
+				  command line. (lacygoill)
+		Jun 28, 2021	* (zeertzjq) provided a patch for use of
+				  xmap,xno instead of vmap,vno in
+				  netrwPlugin.vim. Avoids entanglement with
+				  select mode.
+		Jul 14, 2021	* Fixed problem addressed by tst976; opening
+				  a file using tree mode, going up a
+				  directory, and opening a file there was
+				  opening the file in the wrong directory.
+		Jul 28, 2021	* (Ingo Karkat) provided a patch fixing an
+				  E488 error with netrwPlugin.vim
+				  (occurred for vim versions < 8.02)
 	v170:	Mar 11, 2020	* (reported by Reiner Herrmann) netrw+tree
 				  would not hide with the ^\..* pattern
 				  correctly.
@@ -3892,7 +3952,7 @@ netrw:
 		Jun 07, 2020	* (reported by Jo Totland) repeatedly invoking
 				  :Lexplore and quitting it left unused
 				  hidden buffers.  Netrw will now set netrw
-				  buffers created by :Lexplore to |bh|=wipe.
+				  buffers created by :Lexplore to |'bh'|=wipe.
 	v169:	Dec 20, 2019	* (reported by amkarthik) that netrw's x
 				  (|netrw-x|) would throw an error when
 				  attempting to open a local directory.

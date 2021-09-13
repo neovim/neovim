@@ -1096,11 +1096,13 @@ The ColdFusion syntax file is based on the HTML syntax file.
 
 CPP						*cpp.vim* *ft-cpp-syntax*
 
-Most of things are same as |ft-c-syntax|.
+Most things are the same as |ft-c-syntax|.
 
 Variable		Highlight ~
 cpp_no_cpp11		don't highlight C++11 standard items
 cpp_no_cpp14		don't highlight C++14 standard items
+cpp_no_cpp17		don't highlight C++17 standard items
+cpp_no_cpp20		don't highlight C++20 standard items
 
 
 CSH						*csh.vim* *ft-csh-syntax*
