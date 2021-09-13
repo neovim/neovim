@@ -62,8 +62,8 @@ function GetConfigIndent()
     let ind = s:GetOffsetOf(line, '\[')
   endif
 
-  " if previous line had an unmatched closing parantheses,
-  " indent to the matching opening parantheses
+  " if previous line had an unmatched closing parentheses,
+  " indent to the matching opening parentheses
   if line =~ '[^(]\+\\\@<!)$'
     call search(')', 'bW')
     let lnum = searchpair('\\\@<!(', '', ')', 'bWn')

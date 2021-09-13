@@ -32,7 +32,7 @@ syn match  CfgComment	"#.*"
 syn match  CfgComment	";.*"
 syn match  CfgComment	"\/\/.*"
 
-" Define the default hightlighting.
+" Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 hi def link CfgOnOff     Label
 hi def link CfgComment	Comment

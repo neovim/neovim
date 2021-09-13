@@ -54,7 +54,7 @@ function! haskellcomplete#Complete(findstart, base)
 
     if b:completingLangExtension
         if a:base ==? ""
-            " Return all posible Lang extensions
+            " Return all possible Lang extensions
             return s:langExtensions
         else
             let l:matches = []
@@ -70,7 +70,7 @@ function! haskellcomplete#Complete(findstart, base)
 
     elseif b:completingOptionsGHC
         if a:base ==? ""
-            " Return all posible GHC options
+            " Return all possible GHC options
             return s:optionsGHC
         else
             let l:matches = []
@@ -86,7 +86,7 @@ function! haskellcomplete#Complete(findstart, base)
 
     elseif b:completingModule
         if a:base ==? ""
-            " Return all posible modules
+            " Return all possible modules
             return s:commonModules
         else
             let l:matches = []

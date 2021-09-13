@@ -371,7 +371,7 @@ endfunction
               endif
             else
               let annot_file_name = ''
-              "(Pierre Vittet: I have commented 4b because this was chrashing
+              "(Pierre Vittet: I have commented 4b because this was crashing
               "my vim (it produced infinite loop))
               "
               " 4b. anarchy : the renamed _build directory may be higher in the hierarchy
@@ -462,8 +462,8 @@ endfunction
 
   "b. 'search' and 'match' work to find the type information
 
-      "In:  - lin1,col1: postion of expression first char
-      "     - lin2,col2: postion of expression last char
+      "In:  - lin1,col1: position of expression first char
+      "     - lin2,col2: position of expression last char
       "Out: - the pattern to be looked for to find the block
       " Must be called in the source buffer (use of line2byte)
     function! s:Block_pattern(lin1,lin2,col1,col2)
@@ -581,7 +581,7 @@ endfunction
       let res = substitute (a:res, "\n", "", "g" )
       "remove double space
       let res =substitute(res , "  ", " ", "g")
-      "remove space at begining of string.
+      "remove space at beginning of string.
       let res = substitute(res, "^ *", "", "g")
       return res
     endfunction

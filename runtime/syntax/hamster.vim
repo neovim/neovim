@@ -9,7 +9,7 @@
 " It allows the use of multiple news- and mailserver and combines them to one
 " mail- and newsserver for the news/mail-client. It load faster than a normal
 " newsreader because many threads can run simultaneous. It contains scorefile
-" for news and mail, a build-in script language, the GUI allows translation to
+" for news and mail, a built-in script language, the GUI allows translation to
 " other languages, it can be used in a network and that's not all features...
 "
 " quit when a syntax file was already loaded

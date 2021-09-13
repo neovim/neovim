@@ -7,7 +7,7 @@
 
 " This is an experiment.  IDL's structure is simple enough to permit a full
 " grammar based approach to rather than using a few heuristics.  The result
-" is large and somewhat repetative but seems to work.
+" is large and somewhat repetitive but seems to work.
 
 " There are some Microsoft extensions to idl files that are here.  Some of
 " them are disabled by defining idl_no_ms_extensions.

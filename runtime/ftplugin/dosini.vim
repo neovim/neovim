@@ -1,5 +1,5 @@
 " Vim filetype plugin file
-" Language:             Configuration File (ini file) for MSDOS/MS Windows
+" Language:             Configuration File (ini file) for MS-DOS/MS Windows
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
 " Latest Revision:      2008-07-09
 

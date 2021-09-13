@@ -6,7 +6,7 @@
 " URL:          http://www.eandem.co.uk/mrw/vim
 "
 " Options Flags:
-" postscr_level                 - language level to use for highligting (1, 2, or 3)
+" postscr_level                 - language level to use for highlighting (1, 2, or 3)
 " postscr_display               - include display PS operators
 " postscr_ghostscript           - include GS extensions
 " postscr_fonts                 - highlight standard font names (a lot for PS 3)
@@ -469,12 +469,12 @@ if postscr_level == 2 || postscr_level == 3
   syn keyword postscrConstant   contained SubsVector UnderlineThickness FamilyName FontBBox CurMID
   syn keyword postscrConstant   contained Weight
 
-" PS2 User paramters
+" PS2 User parameters
   syn keyword postscrConstant   contained MaxFontItem MinFontCompress MaxUPathItem MaxFormItem MaxPatternItem
   syn keyword postscrConstant   contained MaxScreenItem MaxOpStack MaxDictStack MaxExecStack MaxLocalVM
   syn keyword postscrConstant   contained VMReclaim VMThreshold
 
-" PS2 System paramters
+" PS2 System parameters
   syn keyword postscrConstant   contained SystemParamsPassword StartJobPassword BuildTime ByteOrder RealFormat
   syn keyword postscrConstant   contained MaxFontCache CurFontCache MaxOutlineCache CurOutlineCache
   syn keyword postscrConstant   contained MaxUPathCache CurUPathCache MaxFormCache CurFormCache
@@ -504,7 +504,7 @@ if postscr_level == 2 || postscr_level == 3
   syn keyword postscrL2Operator   accuratescreens checkscreen pagemargin pageparams setaccuratescreens setpage
   syn keyword postscrL2Operator   setpagemargin setpageparams
 
-" Misc compatability operators
+" Misc compatibility operators
   syn keyword postscrL2Operator   appletalktype buildtime byteorder checkpassword defaulttimeouts diskonline
   syn keyword postscrL2Operator   diskstatus manualfeed manualfeedtimeout margins mirrorprint pagecount
   syn keyword postscrL2Operator   pagestackorder printername processcolors sethardwareiomode setjobtimeout

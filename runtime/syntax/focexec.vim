@@ -8,7 +8,7 @@
 " this is a very simple syntax file - I will be improving it
 " one thing is how to do computes
 " I don't like that &vars and FUSE() functions highlight to the same color
-" I think some of these things should get different hilights -
+" I think some of these things should get different highlights -
 "  should MODIFY commands look different than TABLE?
 
 " quit when a syntax file was already loaded

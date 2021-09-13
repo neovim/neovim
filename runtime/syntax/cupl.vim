@@ -23,7 +23,7 @@ syn keyword cuplTodo contained TODO XXX FIXME
 " cuplHeaderContents uses default highlighting except for numbers
 syn match cuplHeaderContents ".\+;"me=e-1 contains=cuplNumber contained
 
-" String contstants
+" String constants
 syn region cuplString start=+'+ end=+'+
 syn region cuplString start=+"+ end=+"+
 

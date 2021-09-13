@@ -106,7 +106,7 @@ loadkeymap
 <char-0x005d>	    <char-0x044a>	" CYRILLIC SMALL LETTER HARD SIGN
 <char-0x007d>	    <char-0x042a>	" CYRILLIC CAPITAL LETTER HARD SIGN
 
-"	    ALPHABETIC 2st ROW
+"	    ALPHABETIC 2nd ROW
 
 <char-0x0061>	    <char-0x0444>	" CYRILLIC SMALL LETTER EF
 <char-0x0041>	    <char-0x0424>	" CYRILLIC CAPITAL LETTER EF
@@ -131,7 +131,7 @@ loadkeymap
 <char-0x0027>	    <char-0x044d>	" CYRILLIC SMALL LETTER E
 <char-0x0022>	    <char-0x042d>	" CYRILLIC CAPITAL LETTER E
 
-"	    ALPHABETIC 3st ROW
+"	    ALPHABETIC 3rd ROW
 
 <char-0x007a>	    <char-0x044f>	" CYRILLIC SMALL LETTER YA
 <char-0x005a>	    <char-0x042f>	" CYRILLIC CAPITAL LETTER YA

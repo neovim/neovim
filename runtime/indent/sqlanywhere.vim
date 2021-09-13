@@ -9,7 +9,7 @@
 " Notes:
 "    Indenting keywords are based on Oracle and Sybase Adaptive Server
 "    Anywhere (ASA).  Test indenting was done with ASA stored procedures and
-"    fuctions and Oracle packages which contain stored procedures and
+"    functions and Oracle packages which contain stored procedures and
 "    functions.
 "    This has not been tested against Microsoft SQL Server or
 "    Sybase Adaptive Server Enterprise (ASE) which use the Transact-SQL

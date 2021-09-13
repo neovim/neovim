@@ -1,6 +1,6 @@
 " Vim indent file
 " Language:		JSON
-" Mantainer:		Eli Parra <eli@elzr.com> https://github.com/elzr/vim-json
+" Maintainer:		Eli Parra <eli@elzr.com> https://github.com/elzr/vim-json
 " Last Change:          2020 Aug 30
 "   https://github.com/jakar/vim-json/commit/20b650e22aa750c4ab6a66aa646bdd95d7cd548a#diff-e81fc111b2052e306d126bd9989f7b7c
 " Original Author:	Rogerz Zhang <rogerz.zhang at gmail.com> http://github.com/rogerz/vim-json
