@@ -553,6 +553,7 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from site packages', function()
+    print()
     local plugin_path = table.concat({xdata, 'nvim', 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
     local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
     local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)
@@ -561,8 +562,10 @@ describe('runtime:', function()
     local profiler_file = 'test_startuptime.log'
 
     mkdir_p(plugin_folder_path)
+    print("UNOPATH", plugin_file_path)
     write_file(plugin_file_path, [[table.insert(_G.lista, "unos")]])
     mkdir_p(plugin_after_path)
+    print("DOSPATH", plugin_after_file_path)
     write_file(plugin_after_file_path, [[table.insert(_G.lista, "dos")]])
 
     clear{ args_rm={'-u'}, args={'--cmd', 'lua _G.lista = {}'}, env=xenv }
@@ -571,6 +574,8 @@ describe('runtime:', function()
     print("alpha", eval [[stdpath("data")]])
     print("beda", eval [[&packpath]])
     print("oreda", eval [[&rtp]])
+    print("readit", funcs.filereadable(plugin_file_path))
+    print("alsoit", funcs.filereadable(plugin_after_file_path))
     io.stdout:flush()
 
     eq({'unos', 'dos'}, exec_lua "return _G.lista")
