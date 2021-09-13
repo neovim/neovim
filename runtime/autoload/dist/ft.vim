@@ -269,7 +269,8 @@ func dist#ft#FTm()
     return
   endif
 
-  let octave_block_terminators = '\<end\%(_try_catch\|classdef\|enumeration\|events\|for\|function\|if\|methods\|parfor\|properties\|switch\|while\)\>'
+  " excluding end(for|function|if|switch|while) common to Murphi
+  let octave_block_terminators = '\<end\%(_try_catch\|classdef\|enumeration\|events\|methods\|parfor\|properties\)\>'
 
   let n = 1
   let saw_comment = 0 " Whether we've seen a multiline comment leader.
@@ -285,8 +286,7 @@ func dist#ft#FTm()
       setf objc
       return
     endif
-    if line =~ '^\s*\%(#\|%!\|[#%]{\=\s*$\)' ||
-	  \ line =~ '^\s*unwind_protect\>' ||
+    if line =~ '^\s*\%(#\|%!\)' || line =~ '^\s*unwind_protect\>' ||
 	  \ line =~ '\%(^\|;\)\s*' .. octave_block_terminators
       setf octave
       return
