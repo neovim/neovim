@@ -868,16 +868,6 @@ func Test_m_file()
   call assert_equal('octave', &filetype)
   bwipe!
 
-  call writefile(['#{', 'Octave block comment',  '#}'], 'Xfile.m')
-  split Xfile.m
-  call assert_equal('octave', &filetype)
-  bwipe!
-
-  call writefile(['%{', 'Octave block comment', '%}'], 'Xfile.m')
-  split Xfile.m
-  call assert_equal('octave', &filetype)
-  bwipe!
-
   call writefile(['%!test "Octave test"'], 'Xfile.m')
   split Xfile.m
   call assert_equal('octave', &filetype)
@@ -888,7 +878,7 @@ func Test_m_file()
   call assert_equal('octave', &filetype)
   bwipe!
 
-  call writefile(['function test(); 42; endfunction'], 'Xfile.m')
+  call writefile(['try; 42; end_try_catch'], 'Xfile.m')
   split Xfile.m
   call assert_equal('octave', &filetype)
   bwipe!
@@ -898,6 +888,13 @@ func Test_m_file()
   call writefile(['(* Mathematica comment'], 'Xfile.m')
   split Xfile.m
   call assert_equal('mma', &filetype)
+  bwipe!
+
+  " MATLAB
+
+  call writefile(['% MATLAB line comment'], 'Xfile.m')
+  split Xfile.m
+  call assert_equal('matlab', &filetype)
   bwipe!
 
   " Murphi
