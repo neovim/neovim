@@ -454,22 +454,14 @@ static garray_T prof_ga = { 0, 0, sizeof(struct debuggy), 4, NULL };
 #define DBG_EXPR        3
 
 /// Evaluate the "bp->dbg_name" expression and return the result.
-/// Restore the got_int and called_emsg flags.
-static typval_T *eval_expr_restore(struct debuggy *const bp)
+/// Disables error messages.
+static typval_T *eval_expr_no_emsg(struct debuggy *const bp)
   FUNC_ATTR_NONNULL_ALL
 {
-  const int prev_called_emsg = called_emsg;
-  const int prev_did_emsg = did_emsg;
-
-  got_int = false;
+  // Disable error messages, a bad expression would make Vim unusable.
+  emsg_off++;
   typval_T *const tv = eval_expr(bp->dbg_name);
-
-  // Evaluating the expression should not result in breaking the sequence of
-  // commands.
-  got_int = false;
-  called_emsg = prev_called_emsg;
-  did_emsg = prev_did_emsg;
-
+  emsg_off--;
   return tv;
 }
 
@@ -535,7 +527,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
     bp->dbg_name = vim_strsave(curbuf->b_ffname);
   } else if (bp->dbg_type == DBG_EXPR) {
     bp->dbg_name = vim_strsave(p);
-    bp->dbg_val = eval_expr_restore(bp);
+    bp->dbg_val = eval_expr_no_emsg(bp);
   } else {
     // Expand the file name in the same way as do_source().  This means
     // doing it twice, so that $DIR/file gets expanded when $DIR is
@@ -791,7 +783,7 @@ debuggy_find(
     } else if (bp->dbg_type == DBG_EXPR) {
       bool line = false;
 
-      typval_T *const tv = eval_expr_restore(bp);
+      typval_T *const tv = eval_expr_no_emsg(bp);
       if (tv != NULL) {
         if (bp->dbg_val == NULL) {
           debug_oldval = typval_tostring(NULL);
@@ -804,7 +796,7 @@ debuggy_find(
             line = true;
             debug_oldval = typval_tostring(bp->dbg_val);
             // Need to evaluate again, typval_compare() overwrites "tv".
-            typval_T *const v = eval_expr_restore(bp);
+            typval_T *const v = eval_expr_no_emsg(bp);
             debug_newval = typval_tostring(v);
             tv_free(bp->dbg_val);
             bp->dbg_val = v;

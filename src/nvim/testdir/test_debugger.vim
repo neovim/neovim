@@ -267,9 +267,7 @@ func Test_Debugger()
   call RunDbgCmd(buf, 'breakd func a()', ['E475: Invalid argument: func a()'])
   call RunDbgCmd(buf, 'breakd func a', ['E161: Breakpoint not found: func a'])
   call RunDbgCmd(buf, 'breakd expr', ['E475: Invalid argument: expr'])
-  call RunDbgCmd(buf, 'breakd expr x', [
-	      \ 'E121: Undefined variable: x',
-	      \ 'E161: Breakpoint not found: expr x'])
+  call RunDbgCmd(buf, 'breakd expr x', ['E161: Breakpoint not found: expr x'])
 
   " finish the current function
   call RunDbgCmd(buf, 'finish', [
