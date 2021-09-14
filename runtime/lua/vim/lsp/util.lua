@@ -1,4 +1,5 @@
 local protocol = require 'vim.lsp.protocol'
+local snippet = require 'vim.lsp._snippet'
 local vim = vim
 local validate = vim.validate
 local api = vim.api
@@ -523,74 +524,18 @@ function M.apply_text_document_edit(text_document_edit, index)
   M.apply_text_edits(text_document_edit.edits, bufnr)
 end
 
----@private
---- Recursively parses snippets in a completion entry.
----
----@param input (string) Snippet text to parse for snippets
----@param inner (bool) Whether this function is being called recursively
----@returns 2-tuple of strings: The first is the parsed result, the second is the
----unparsed rest of the input
-local function parse_snippet_rec(input, inner)
-  local res = ""
-
-  local close, closeend = nil, nil
-  if inner then
-    close, closeend = input:find("}", 1, true)
-    while close ~= nil and input:sub(close-1,close-1) == "\\" do
-      close, closeend = input:find("}", closeend+1, true)
-    end
-  end
-
-  local didx = input:find('$',  1, true)
-  if didx == nil and close == nil then
-    return input, ""
-  elseif close ~=nil and (didx == nil or close < didx) then
-    -- No inner placeholders
-    return input:sub(0, close-1), input:sub(closeend+1)
-  end
-
-  res = res .. input:sub(0, didx-1)
-  input = input:sub(didx+1)
-
-  local tabstop, tabstopend = input:find('^%d+')
-  local placeholder, placeholderend = input:find('^{%d+:')
-  local choice, choiceend = input:find('^{%d+|')
-
-  if tabstop then
-    input = input:sub(tabstopend+1)
-  elseif choice then
-    input = input:sub(choiceend+1)
-    close, closeend = input:find("|}", 1, true)
-
-    res = res .. input:sub(0, close-1)
-    input = input:sub(closeend+1)
-  elseif placeholder then
-    -- TODO: add support for variables
-    input = input:sub(placeholderend+1)
-
-    -- placeholders and variables are recursive
-    while input ~= "" do
-      local r, tail = parse_snippet_rec(input, true)
-      r = r:gsub("\\}", "}")
-
-      res = res .. r
-      input = tail
-    end
-  else
-    res = res .. "$"
-  end
-
-  return res, input
-end
-
 --- Parses snippets in a completion entry.
 ---
----@param input (string) unparsed snippet
----@returns (string) parsed snippet
+---@param input string unparsed snippet
+---@returns string parsed snippet
 function M.parse_snippet(input)
-  local res, _ = parse_snippet_rec(input, false)
-
-  return res
+  local ok, parsed = pcall(function()
+    return tostring(snippet.parse(input))
+  end)
+  if not ok then
+    return input
+  end
+  return parsed
 end
 
 ---@private
