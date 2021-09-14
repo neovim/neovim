@@ -3,7 +3,7 @@ local global_helpers = require('test.helpers')
 
 -- Colors are disabled by default. #15610
 local colors = setmetatable({}, {__index = function() return function(s) return s end end})
-if os.getenv "NVIM_COLORS" then
+if os.getenv "TEST_COLORS" then
   colors = require 'term.colors'
 end
 
