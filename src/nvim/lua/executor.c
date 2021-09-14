@@ -346,6 +346,58 @@ static int nlua_wait(lua_State *lstate)
   return 2;
 }
 
+static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  // vim.is_thread
+  lua_pushboolean(lstate, is_thread);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  lua_pushcfunction(lstate, &nlua_is_thread);
+  lua_setfield(lstate, -2, "is_thread");
+}
+
+static void nlua_common_package_init(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  {
+    const char *code = (char *)&shared_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/shared.lua")
+        || nlua_pcall(lstate, 0, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating shared module: %.*s\n"));
+      return;
+    }
+  }
+
+  {
+    lua_getglobal(lstate, "package");  // [package]
+    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
+
+    const char *code = (char *)&inspect_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/inspect.lua")
+        || nlua_pcall(lstate, 0, 1)) {
+      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s\n"));
+      return;
+    }
+
+    // [package, loaded, inspect]
+    lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
+    lua_pop(lstate, 2);  // []
+  }
+
+  {
+    const char *code = (char *)&lua_F_module[0];
+    if (luaL_loadbuffer(lstate, code, sizeof(lua_F_module) - 1, "@vim/F.lua")
+        || nlua_pcall(lstate, 0, 1)) {
+      nlua_error(lstate, _("E5106: Error while creating vim.F module: %.*s\n"));
+      return;
+    }
+    // [package, loaded, module]
+    lua_setfield(lstate, -2, "vim.F");  // [package, loaded]
+
+    lua_pop(lstate, 2);  // []
+  }
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -406,11 +458,7 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_wait);
   lua_setfield(lstate, -2, "wait");
 
-  // vim.is_thread
-  lua_pushboolean(lstate, false);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
-  lua_pushcfunction(lstate, &nlua_is_thread);
-  lua_setfield(lstate, -2, "is_thread");
+  nlua_common_vim_init(lstate, false);
 
   // vim.NIL
   lua_newuserdata(lstate, 0);
@@ -454,39 +502,7 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_setglobal(lstate, "vim");
 
-  {
-    const char *code = (char *)&shared_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(shared_module) - 1, "@vim/shared.lua")
-        || nlua_pcall(lstate, 0, 0)) {
-      nlua_error(lstate, _("E5106: Error while creating shared module: %.*s\n"));
-      return 1;
-    }
-  }
-
-  {
-    lua_getglobal(lstate, "package");  // [package]
-    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
-
-    const char *code = (char *)&inspect_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(inspect_module) - 1, "@vim/inspect.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s\n"));
-      return 1;
-    }
-    // [package, loaded, inspect]
-    lua_setfield(lstate, -2, "vim.inspect");  // [package, loaded]
-
-    code = (char *)&lua_F_module[0];
-    if (luaL_loadbuffer(lstate, code, sizeof(lua_F_module) - 1, "@vim/F.lua")
-        || nlua_pcall(lstate, 0, 1)) {
-      nlua_error(lstate, _("E5106: Error while creating vim.F module: %.*s\n"));
-      return 1;
-    }
-    // [package, loaded, module]
-    lua_setfield(lstate, -2, "vim.F");  // [package, loaded]
-
-    lua_pop(lstate, 2);  // []
-  }
+  nlua_common_package_init(lstate);
 
   {
     const char *code = (char *)&vim_module[0];
@@ -563,11 +579,8 @@ static lua_State *nlua_thread_acquire_vm(void)
 
   // vim
   lua_newtable(lstate);
-  // vim.is_therad
-  lua_pushboolean(lstate, true);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
-  lua_pushcfunction(lstate, &nlua_is_thread);
-  lua_setfield(lstate, -2, "is_thread");
+
+  nlua_common_vim_init(lstate, true);
 
   // vim.NIL
   lua_newuserdata(lstate, 0);
@@ -611,36 +624,14 @@ static lua_State *nlua_thread_acquire_vm(void)
 
   lua_setglobal(lstate, "vim");
 
-  {
-    const char *code = (char *)&shared_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/shared.lua")
-        || lua_pcall(lstate, 0, 0, 0)) {
-      nlua_error(lstate, _("E5106: Error while creating shared module: %.*s"));
-      return lstate;
-    }
-  }
+  nlua_common_package_init(lstate);
 
-  {
-    lua_getglobal(lstate, "package");  // [package]
-    lua_getfield(lstate, -1, "loaded");  // [package, loaded]
-    lua_getglobal(lstate, "vim");
-
-    const char *code = (char *)&inspect_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim/inspect.lua")
-        || lua_pcall(lstate, 0, 1, 0)) {
-      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s"));
-      return lstate;
-    }
-
-    // vim.inspect
-    lua_pushvalue(lstate, -1);
-    lua_setfield(lstate, -3, "inspect");
-
-    // [package, loaded, inspect]
-    lua_setfield(lstate, -3, "vim.inspect");  // [package, loaded]
-
-    lua_pop(lstate, 3);  // []
-  }
+  lua_getglobal(lstate, "vim");
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_getfield(lstate, -1, "vim.inspect");
+  lua_setfield(lstate, -4, "inspect");
+  lua_pop(lstate, 3);
 
   return lstate;
 }
