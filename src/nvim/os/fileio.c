@@ -8,9 +8,9 @@
 /// replacement.
 
 #include <assert.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <fcntl.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include "auto/config.h"
 
@@ -20,13 +20,13 @@
 
 #include <uv.h>
 
-#include "nvim/os/fileio.h"
-#include "nvim/memory.h"
-#include "nvim/os/os.h"
 #include "nvim/globals.h"
-#include "nvim/rbuffer.h"
 #include "nvim/macros.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/os/fileio.h"
+#include "nvim/os/os.h"
+#include "nvim/rbuffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
@@ -44,8 +44,8 @@
 ///                   does not have kFileCreate\*).
 ///
 /// @return Error code, or 0 on success. @see os_strerror()
-int file_open(FileDescriptor *const ret_fp, const char *const fname,
-              const int flags, const int mode)
+int file_open(FileDescriptor *const ret_fp, const char *const fname, const int flags,
+              const int mode)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int os_open_flags = 0;
@@ -99,8 +99,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 ///                    FILE_WRITE_ONLY or FILE_READ_ONLY is required.
 ///
 /// @return Error code (@see os_strerror()) or 0. Currently always returns 0.
-int file_open_fd(FileDescriptor *const ret_fp, const int fd,
-                 const int flags)
+int file_open_fd(FileDescriptor *const ret_fp, const int fd, const int flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   ret_fp->wr = !!(flags & (kFileCreate
@@ -131,8 +130,8 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd,
 ///                   does not have kFileCreate\*).
 ///
 /// @return [allocated] Opened file or NULL in case of error.
-FileDescriptor *file_open_new(int *const error, const char *const fname,
-                              const int flags, const int mode)
+FileDescriptor *file_open_new(int *const error, const char *const fname, const int flags,
+                              const int mode)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
@@ -152,8 +151,7 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 ///                   does not have FILE_CREATE\*).
 ///
 /// @return [allocated] Opened file or NULL in case of error.
-FileDescriptor *file_open_fd_new(int *const error, const int fd,
-                                 const int flags)
+FileDescriptor *file_open_fd_new(int *const error, const int fd, const int flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
@@ -277,8 +275,7 @@ static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
 ///                   bytes.
 ///
 /// @return error_code (< 0) or number of bytes read.
-ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
-                    const size_t size)
+ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf, const size_t size)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(!fp->wr);
@@ -362,8 +359,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
 /// @param[in]  size  Amount of bytes to write.
 ///
 /// @return Number of bytes written or libuv error code (< 0).
-ptrdiff_t file_write(FileDescriptor *const fp, const char *const buf,
-                     const size_t size)
+ptrdiff_t file_write(FileDescriptor *const fp, const char *const buf, const size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(fp->wr);
@@ -392,8 +388,8 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   assert(!fp->wr);
   size_t read_bytes = 0;
   do {
-    const ptrdiff_t new_read_bytes = file_read(
-        fp, skipbuf, MIN(size - read_bytes, sizeof(skipbuf)));
+    const ptrdiff_t new_read_bytes =
+      file_read(fp, skipbuf, MIN(size - read_bytes, sizeof(skipbuf)));
     if (new_read_bytes < 0) {
       return new_read_bytes;
     } else if (new_read_bytes == 0) {

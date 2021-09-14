@@ -2,7 +2,6 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <stdint.h>
-
 #include <uv.h>
 
 #include "nvim/event/loop.h"
@@ -23,8 +22,7 @@ void time_watcher_init(Loop *loop, TimeWatcher *watcher, void *data)
   watcher->blockable = false;
 }
 
-void time_watcher_start(TimeWatcher *watcher, time_cb cb, uint64_t timeout,
-    uint64_t repeat)
+void time_watcher_start(TimeWatcher *watcher, time_cb cb, uint64_t timeout, uint64_t repeat)
   FUNC_ATTR_NONNULL_ALL
 {
   watcher->cb = cb;

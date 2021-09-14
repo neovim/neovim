@@ -2,14 +2,13 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-
 #include <uv.h>
 
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/event/process.h"
-#include "nvim/event/libuv_process.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/os/os.h"
@@ -68,7 +67,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 #ifdef WIN32
     // pipe must be readable for IOCP to work on Windows.
     uvproc->uvstdio[1].flags |= proc->overlapped ?
-      (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
+                                (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
 #endif
     uvproc->uvstdio[1].data.stream = STRUCT_CAST(uv_stream_t,
                                                  &proc->out.uv.pipe);

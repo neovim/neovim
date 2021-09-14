@@ -6,20 +6,20 @@
 #include <assert.h>
 #include <uv.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
-#include "nvim/fileio.h"
-#include "nvim/os/os.h"
-#include "nvim/memory.h"
-#include "nvim/message.h"
-#include "nvim/path.h"
-#include "nvim/macros.h"
-#include "nvim/strings.h"
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
-#include "nvim/version.h"
+#include "nvim/fileio.h"
+#include "nvim/macros.h"
 #include "nvim/map.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/os/os.h"
+#include "nvim/path.h"
+#include "nvim/strings.h"
+#include "nvim/version.h"
+#include "nvim/vim.h"
 
 #ifdef WIN32
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
@@ -206,7 +206,7 @@ size_t os_get_fullenv_size(void)
 # if defined(HAVE__NSGETENVIRON)
   char **environ = *_NSGetEnviron();
 # else
-  extern char         **environ;
+  extern char **environ;
 # endif
 
   while (environ[len] != NULL) {
@@ -219,7 +219,9 @@ size_t os_get_fullenv_size(void)
 
 void os_free_fullenv(char **env)
 {
-  if (!env) { return; }
+  if (!env) {
+    return;
+  }
   for (char **it = env; *it; it++) {
     XFREE_CLEAR(*it);
   }
@@ -262,7 +264,7 @@ void os_copy_fullenv(char **env, size_t env_size)
 # if defined(HAVE__NSGETENVIRON)
   char **environ = *_NSGetEnviron();
 # else
-  extern char         **environ;
+  extern char **environ;
 # endif
 
   for (size_t i = 0; i < env_size && environ[i] != NULL; i++) {
@@ -322,7 +324,7 @@ char *os_getenvname_at_index(size_t index)
 # if defined(HAVE__NSGETENVIRON)
   char **environ = *_NSGetEnviron();
 # else
-  extern char         **environ;
+  extern char **environ;
 # endif
 
   // check if index is inside the environ array
@@ -566,16 +568,12 @@ void expand_env(char_u *src, char_u *dst, int dstlen)
 /// @param esc        Escape spaces in expanded variables
 /// @param one        `srcp` is a single filename
 /// @param prefix     Start again after this (can be NULL)
-void expand_env_esc(char_u *restrict srcp,
-                    char_u *restrict dst,
-                    int dstlen,
-                    bool esc,
-                    bool one,
+void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, bool esc, bool one,
                     char_u *prefix)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  char_u      *tail;
-  char_u      *var;
+  char_u *tail;
+  char_u *var;
   bool copy_char;
   bool mustfree;  // var was allocated, need to free it later
   bool at_start = true;  // at start of a name
@@ -621,7 +619,7 @@ void expand_env_esc(char_u *restrict srcp,
           while (c-- > 0 && *tail != NUL && *tail != '}') {
             *var++ = *tail++;
           }
-        } else // NOLINT
+        } else  // NOLINT
 #endif
         {
           while (c-- > 0 && *tail != NUL && vim_isIDc(*tail)) {
@@ -642,7 +640,7 @@ void expand_env_esc(char_u *restrict srcp,
         var = (char_u *)vim_getenv((char *)dst);
         mustfree = true;
 #if defined(UNIX)
-        }
+      }
 #endif
       } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
@@ -673,7 +671,7 @@ void expand_env_esc(char_u *restrict srcp,
           ExpandInit(&xpc);
           xpc.xp_context = EXPAND_FILES;
           var = ExpandOne(&xpc, dst, NULL,
-              WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
+                          WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
           mustfree = true;
         }
 #else
@@ -687,7 +685,7 @@ void expand_env_esc(char_u *restrict srcp,
       // If 'shellslash' is set change backslashes to forward slashes.
       // Can't use slash_adjust(), p_ssl may be set temporarily.
       if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
-        char_u  *p = vim_strsave(var);
+        char_u *p = vim_strsave(var);
 
         if (mustfree) {
           xfree(var);
@@ -701,7 +699,7 @@ void expand_env_esc(char_u *restrict srcp,
       // If "var" contains white space, escape it with a backslash.
       // Required for ":e ~/tt" when $HOME includes a space.
       if (esc && var != NULL && vim_strpbrk(var, (char_u *)" \t") != NULL) {
-        char_u  *p = vim_strsave_escaped(var, (char_u *)" \t");
+        char_u *p = vim_strsave_escaped(var, (char_u *)" \t");
 
         if (mustfree) {
           xfree(var);
@@ -721,8 +719,9 @@ void expand_env_esc(char_u *restrict srcp,
 #if defined(BACKSLASH_IN_FILENAME)
             && dst[-1] != ':'
 #endif
-            && vim_ispathsep(*tail))
+            && vim_ispathsep(*tail)) {
           ++tail;
+        }
         dst += c;
         src = tail;
         copy_char = false;
@@ -826,14 +825,11 @@ static char *remove_tail(char *path, char *pend, char *dirname)
 /// @param[out]  len   Location where current directory length should be saved.
 ///
 /// @return Next iter argument value or NULL when iteration should stop.
-const void *vim_env_iter(const char delim,
-                         const char *const val,
-                         const void *const iter,
-                         const char **const dir,
-                         size_t *const len)
+const void *vim_env_iter(const char delim, const char *const val, const void *const iter,
+                         const char **const dir, size_t *const len)
   FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *varval = (const char *) iter;
+  const char *varval = (const char *)iter;
   if (varval == NULL) {
     varval = val;
   }
@@ -843,7 +839,7 @@ const void *vim_env_iter(const char delim,
     *len = strlen(varval);
     return NULL;
   } else {
-    *len = (size_t) (dirend - varval);
+    *len = (size_t)(dirend - varval);
     return dirend + 1;
   }
 }
@@ -861,14 +857,11 @@ const void *vim_env_iter(const char delim,
 /// @param[out]  len   Location where current directory length should be saved.
 ///
 /// @return Next iter argument value or NULL when iteration should stop.
-const void *vim_env_iter_rev(const char delim,
-                             const char *const val,
-                             const void *const iter,
-                             const char **const dir,
-                             size_t *const len)
+const void *vim_env_iter_rev(const char delim, const char *const val, const void *const iter,
+                             const char **const dir, size_t *const len)
   FUNC_ATTR_NONNULL_ARG(2, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *varend = (const char *) iter;
+  const char *varend = (const char *)iter;
   if (varend == NULL) {
     varend = val + strlen(val) - 1;
   }
@@ -880,7 +873,7 @@ const void *vim_env_iter_rev(const char delim,
     return NULL;
   } else {
     *dir = colon + 1;
-    *len = (size_t) (varend - colon);
+    *len = (size_t)(varend - colon);
     return colon - 1;
   }
 }
@@ -955,10 +948,9 @@ char *vim_getenv(const char *name)
     // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
       vim_get_prefix_from_exepath(exe_name);
-      if (append_path(
-          exe_name,
-          "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
-          MAXPATHL) == OK) {
+      if (append_path(exe_name,
+                      "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
+                      MAXPATHL) == OK) {
         vim_path = exe_name;  // -V507
       }
     }
@@ -1043,8 +1035,8 @@ char *vim_getenv(const char *name)
 ///                  a list of them.
 ///
 /// @return length of the string put into dst, does not include NUL byte.
-size_t home_replace(const buf_T *const buf, const char_u *src,
-                    char_u *const dst, size_t dstlen, const bool one)
+size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst, size_t dstlen,
+                    const bool one)
   FUNC_ATTR_NONNULL_ARG(3)
 {
   size_t dirlen = 0;
