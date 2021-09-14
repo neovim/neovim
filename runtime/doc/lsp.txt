@@ -1418,6 +1418,9 @@ reset({client_id}, {buffer_client_map})           *vim.lsp.diagnostic.reset()*
                     {buffer_client_map}  table map of buffers to active
                                          clients
 
+restore_extmarks({bufnr})              *vim.lsp.diagnostic.restore_extmarks()*
+                TODO: Documentation
+
 save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
                 Save diagnostics to the current buffer.
 
@@ -1428,6 +1431,10 @@ save({diagnostics}, {bufnr}, {client_id})          *vim.lsp.diagnostic.save()*
                     {diagnostics}  Diagnostic []
                     {bufnr}        number
                     {client_id}    number
+
+                                          *vim.lsp.diagnostic.save_extmarks()*
+save_extmarks({bufnr}, {client_id})
+                TODO: Documentation
 
 set_loclist({opts})                         *vim.lsp.diagnostic.set_loclist()*
                 Sets the location list
@@ -1833,6 +1840,9 @@ get_lines({uri}, {rows})                            *vim.lsp.util.get_lines()*
 
                 Return: ~
                     table<number string> a table mapping rows to lines
+
+get_markdown_fences()                     *vim.lsp.util.get_markdown_fences()*
+                TODO: Documentation
 
 get_progress_messages()                 *vim.lsp.util.get_progress_messages()*
                 TODO: Documentation
