@@ -1221,7 +1221,7 @@ retry:
         // move the linerest to before the converted characters
         line_start = ptr - linerest;
         memmove(line_start, buffer, (size_t)linerest);
-        size = (long)((char_u *)top - ptr);
+        size = ((char_u *)top - ptr);
       }
 # endif
 
@@ -1397,7 +1397,7 @@ retry:
         // move the linerest to before the converted characters
         line_start = dest - linerest;
         memmove(line_start, buffer, (size_t)linerest);
-        size = (long)((ptr + real_size) - dest);
+        size = ((ptr + real_size) - dest);
         ptr = dest;
       } else if (!curbuf->b_p_bin) {
         bool incomplete_tail = false;
@@ -1652,7 +1652,7 @@ rewind_retry:
         }
       }
     }
-    linerest = (long)(ptr - line_start);
+    linerest = (ptr - line_start);
     os_breakcheck();
   }
 

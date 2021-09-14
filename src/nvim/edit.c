@@ -4084,7 +4084,7 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
       flags |= CP_EQUAL;
     }
   } else {
-    word = (const char *)tv_get_string_chk(tv);
+    word = tv_get_string_chk(tv);
     memset(cptext, 0, sizeof(cptext));
   }
   if (word == NULL || (!empty && *word == NUL)) {
@@ -8345,7 +8345,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       getvcol(curwin, &curwin->w_cursor, NULL, NULL, &want_vcol);
       inc_cursor();
       if (p_sta && in_indent) {
-        ts = (int)get_sw_value(curbuf);
+        ts = get_sw_value(curbuf);
         want_vcol = (want_vcol / ts) * ts;
       } else {
         want_vcol = tabstop_start(want_vcol,
@@ -8538,7 +8538,7 @@ static void ins_mousescroll(int dir)
     if (dir == MSCR_DOWN || dir == MSCR_UP) {
       if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
         scroll_redraw(dir,
-                      (long)(curwin->w_botline - curwin->w_topline));
+                      (curwin->w_botline - curwin->w_topline));
       } else {
         scroll_redraw(dir, 3L);
       }
@@ -8852,7 +8852,7 @@ static bool ins_tab(void)
   AppendToRedobuff("\t");
 
   if (p_sta && ind) {  // insert tab in indent, use 'shiftwidth'
-    temp = (int)get_sw_value(curbuf);
+    temp = get_sw_value(curbuf);
     temp -= get_nolist_virtcol() % temp;
   } else if (tabstop_count(curbuf->b_p_vsts_array) > 0
              || curbuf->b_p_sts != 0) {
