@@ -27,8 +27,9 @@ are on 'runtimepath':
     ~/.config/nvim/lua/foo.lua
 then `require('foo')` loads "~/.config/nvim/lua/foo.lua", and
 "runtime/lua/foo.lua" is not used.  See |lua-require| to understand how Nvim
-finds and loads Lua modules.  The conventions are similar to VimL plugins,
-with some extra features.  See |lua-require-example| for a walkthrough.
+finds and loads Lua modules.  The conventions are similar to those of
+Vimscript |plugin|s, with some extra features.  See |lua-require-example| for
+a walkthrough.
 
 ==============================================================================
 IMPORTING LUA MODULES                                   *lua-require*
@@ -325,8 +326,7 @@ semantically equivalent in Lua to:
     end
 
 Lua nils, numbers, strings, tables and booleans are converted to their
-respective VimL types. An error is thrown if conversion of any other Lua types
-is attempted.
+respective Vimscript types. Conversion of other Lua types is an error.
 
 The magic global "_A" contains the second argument to luaeval().
 
@@ -374,10 +374,10 @@ Examples: >
     :  endfunction
     :echo Rand(1,10)
 
-Note: second argument to `luaeval` undergoes VimL to Lua conversion
-("marshalled"), so changes to Lua containers do not affect values in VimL.
-Return value is also always converted. When converting,
-|msgpack-special-dict|s are treated specially.
+Note: second argument to `luaeval` is converted ("marshalled") from Vimscript
+to Lua, so changes to Lua containers do not affect values in Vimscript. Return
+value is also always converted. When converting, |msgpack-special-dict|s are
+treated specially.
 
 ==============================================================================
 Vimscript v:lua interface                               *v:lua-call*
@@ -717,19 +717,19 @@ vim.in_fast_event()                                     *vim.in_fast_event()*
         may be subject to other restrictions such as |textlock|).
 
 vim.NIL                                                             *vim.NIL*
-        Special value used to represent NIL in msgpack-rpc and |v:null| in
-        vimL interaction, and similar cases. Lua `nil` cannot be used as part
-        of a lua table representing a Dictionary or Array, as it is equivalent
-        to a missing value: `{"foo", nil}` is the same as `{"foo"}`
+        Special value representing NIL in |RPC| and |v:null| in Vimscript
+        conversion, and similar cases. Lua `nil` cannot be used as part of
+        a Lua table representing a Dictionary or Array, because it is
+        treated as missing: `{"foo", nil}` is the same as `{"foo"}`.
 
 vim.empty_dict()                                            *vim.empty_dict()*
-        Creates a special table which will be converted to an empty dictionary
-        when converting lua values to vimL or API types. The table is empty,
-        and this property is marked using a metatable. An empty table `{}`
-        without this metatable will default to convert to an array/list.
+        Creates a special empty table (marked with a metatable), which Nvim
+        converts to an empty dictionary when translating Lua values to
+        Vimscript or API types. Nvim by default converts an empty table `{}`
+        without this metatable to an list/array.
 
-        Note: if numeric keys are added to the table, the metatable will be
-        ignored and the dict converted to a list/array anyway.
+        Note: if numeric keys are present in the table, Nvim ignores the
+        metatable marker and converts the dict to a list/array anyway.
 
 vim.rpcnotify({channel}, {method}[, {args}...])             *vim.rpcnotify()*
         Sends {event} to {channel} via |RPC| and returns immediately. If
@@ -963,8 +963,8 @@ vim.env                                                 *vim.env*
                                                             *lua-vim-optlocal*
                                                             *lua-vim-setlocal*
 
-In vimL, there is a succint and simple way to set options. For more
-information, see |set-option|. In Lua, the corresponding method is `vim.opt`.
+In Vimscript, there is an way to set options |set-option|. In Lua, the
+corresponding method is `vim.opt`.
 
 `vim.opt` provides several conveniences for setting and controlling options
 from within Lua.
@@ -972,18 +972,18 @@ from within Lua.
     Examples: ~
 
     To set a boolean toggle:
-        In vimL:
+        In Vimscript:
             `set number`
 
         In Lua:
             `vim.opt.number = true`
 
     To set an array of values:
-        In vimL:
+        In Vimscript:
             `set wildignore=*.o,*.a,__pycache__`
 
         In Lua, there are two ways you can do this now. One is very similar to
-        the vimL way:
+        the Vimscript form:
             `vim.opt.wildignore = '*.o,*.a,__pycache__'`
 
         However, vim.opt also supports a more elegent way of setting
@@ -1016,7 +1016,7 @@ from within Lua.
         vim.opt.wildignore:remove { "node_modules" }
 <
     To set a map of values:
-        In vimL:
+        In Vimscript:
             `set listchars=space:_,tab:>~`
 
         In Lua:
