@@ -1458,8 +1458,8 @@ static void tui_guess_size(UI *ui)
     did_user_set_dimensions = true;
     assert(Columns >= INT_MIN && Columns <= INT_MAX);
     assert(Rows >= INT_MIN && Rows <= INT_MAX);
-    width = (int)Columns;
-    height = (int)Rows;
+    width = Columns;
+    height = Rows;
     goto end;
   }
 
@@ -1934,7 +1934,7 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
 
   // terminfo describes strikethrough modes as rmxx/smxx with respect
   // to the ECMA-48 strikeout/crossed-out attributes.
-  data->unibi_ext.enter_strikethrough_mode = (int)unibi_find_ext_str(ut, "smxx");
+  data->unibi_ext.enter_strikethrough_mode = unibi_find_ext_str(ut, "smxx");
 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding

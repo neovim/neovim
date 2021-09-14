@@ -1353,7 +1353,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
   ui_cursor_goto(Rows - 1, 0);
 
   if (do_out) {
-    if (u_save((linenr_T)(line2), (linenr_T)(line2 + 1)) == FAIL) {
+    if (u_save((line2), (linenr_T)(line2 + 1)) == FAIL) {
       xfree(cmd_buf);
       goto error;
     }
@@ -3068,7 +3068,7 @@ void ex_change(exarg_T *eap)
 
   // make sure the cursor is not beyond the end of the file now
   check_cursor_lnum();
-  deleted_lines_mark(eap->line1, (long)(eap->line2 - lnum));
+  deleted_lines_mark(eap->line1, (eap->line2 - lnum));
 
   // ":append" on the line above the deleted lines.
   eap->line2 = eap->line1;
@@ -4085,7 +4085,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
                                  + copy_len + sublen + 1);
 
           // copy the text up to the part that matched
-          memmove(new_end, sub_firstline + copycol, (size_t)copy_len);
+          memmove(new_end, sub_firstline + copycol, copy_len);
           new_end += copy_len;
 
           // Finally, at this point we can know where the match actually will

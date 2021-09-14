@@ -309,7 +309,7 @@ foldinfo_T fold_info(win_T *win, linenr_T lnum)
   linenr_T last;
 
   if (hasFoldingWin(win, lnum, NULL, &last, false, &info)) {
-    info.fi_lines = (long)(last - lnum + 1);
+    info.fi_lines = (last - lnum + 1);
   } else {
     info.fi_lines = 0;
   }
@@ -2374,14 +2374,14 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
                 // nested folds (with relative line numbers) down.
                 foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
                                       (linenr_T)0, (linenr_T)MAXLNUM,
-                                      (long)(fp->fd_top - firstlnum), 0L);
+                                      (fp->fd_top - firstlnum), 0L);
               } else {
                 // Will move fold down, move nested folds relatively up.
                 foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
                                       (linenr_T)0,
-                                      (long)(firstlnum - fp->fd_top - 1),
+                                      (firstlnum - fp->fd_top - 1),
                                       (linenr_T)MAXLNUM,
-                                      (long)(fp->fd_top - firstlnum));
+                                      (fp->fd_top - firstlnum));
               }
               fp->fd_len += fp->fd_top - firstlnum;
               fp->fd_top = firstlnum;
@@ -2444,7 +2444,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
              * to stop just above startlnum.  */
             fp->fd_len = startlnum - fp->fd_top;
             foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
-                                  (linenr_T)fp->fd_len, (linenr_T)MAXLNUM,
+                                  fp->fd_len, (linenr_T)MAXLNUM,
                                   (linenr_T)MAXLNUM, 0L);
             fold_changed = true;
           }
@@ -2622,8 +2622,8 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
       if (fp2->fd_top < flp->lnum) {
         // Make fold that includes lnum start at lnum.
         foldMarkAdjustRecurse(flp->wp, &fp2->fd_nested,
-                              (linenr_T)0, (long)(flp->lnum - fp2->fd_top - 1),
-                              (linenr_T)MAXLNUM, (long)(fp2->fd_top-flp->lnum));
+                              (linenr_T)0, (flp->lnum - fp2->fd_top - 1),
+                              (linenr_T)MAXLNUM, (fp2->fd_top-flp->lnum));
         fp2->fd_len -= flp->lnum - fp2->fd_top;
         fp2->fd_top = flp->lnum;
         fold_changed = true;
@@ -2767,8 +2767,8 @@ static void foldRemove(win_T *const wp, garray_T *gap, linenr_T top, linenr_T bo
       if (fp->fd_top + fp->fd_len - 1 > bot) {
         // 5: Make fold that includes bot start below bot.
         foldMarkAdjustRecurse(wp, &fp->fd_nested,
-                              (linenr_T)0, (long)(bot - fp->fd_top),
-                              (linenr_T)MAXLNUM, (long)(fp->fd_top - bot - 1));
+                              (linenr_T)0, (bot - fp->fd_top),
+                              (linenr_T)MAXLNUM, (fp->fd_top - bot - 1));
         fp->fd_len -= bot - fp->fd_top + 1;
         fp->fd_top = bot + 1;
         break;

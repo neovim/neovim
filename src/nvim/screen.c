@@ -385,7 +385,7 @@ int update_screen(int type)
       // non-displayed part of msg_grid is considered invalid.
       for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.Rows); i++) {
         grid_clear_line(&msg_grid, msg_grid.line_offset[i],
-                        (int)msg_grid.Columns, false);
+                        msg_grid.Columns, false);
       }
     }
     if (msg_use_msgsep()) {
@@ -2627,7 +2627,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
     shl->is_addpos = false;
-    v = (long)(ptr - line);
+    v = (ptr - line);
     if (cur != NULL) {
       cur->pos.cur = 0;
     }
@@ -3061,7 +3061,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
          * Do this for 'search_hl' and the match list (ordered by
          * priority).
          */
-        v = (long)(ptr - line);
+        v = (ptr - line);
         cur = wp->w_match_head;
         shl_flag = false;
         while (cur != NULL || !shl_flag) {
@@ -3405,7 +3405,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
         /* Get syntax attribute, unless still at the start of the line
          * (double-wide char that doesn't fit). */
-        v = (long)(ptr - line);
+        v = (ptr - line);
         if (has_syntax && v > 0) {
           /* Get the syntax attribute for the character.  If there
            * is an error, disable syntax highlighting. */
@@ -3453,7 +3453,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
          * Only do this when there is no syntax highlighting, the
          * @Spell cluster is not used or the current syntax item
          * contains the @Spell cluster. */
-        v = (long)(ptr - line);
+        v = (ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
           if (!attr_pri) {
@@ -3944,7 +3944,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
     // At end of the text line or just after the last character.
     if (c == NUL && eol_hl_off == 0) {
-      long prevcol = (long)(ptr - line) - 1;
+      long prevcol = (ptr - line) - 1;
 
       // we're not really at that column when skipping some text
       if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
@@ -6597,7 +6597,7 @@ void screenclear(void)
   // blank out the default grid
   for (i = 0; i < default_grid.Rows; i++) {
     grid_clear_line(&default_grid, default_grid.line_offset[i],
-                    (int)default_grid.Columns, true);
+                    default_grid.Columns, true);
     default_grid.line_wraps[i] = false;
   }
 
@@ -6770,7 +6770,7 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
       }
       grid->line_offset[j + line_count] = temp;
       grid->line_wraps[j + line_count] = false;
-      grid_clear_line(grid, temp, (int)grid->Columns, false);
+      grid_clear_line(grid, temp, grid->Columns, false);
     }
   }
 
@@ -6822,7 +6822,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
       }
       grid->line_offset[j - line_count] = temp;
       grid->line_wraps[j - line_count] = false;
-      grid_clear_line(grid, temp, (int)grid->Columns, false);
+      grid_clear_line(grid, temp, grid->Columns, false);
     }
   }
 
@@ -6919,7 +6919,7 @@ int showmode(void)
           }
           if (edit_submode_extra != NULL) {
             MSG_PUTS_ATTR(" ", attr);  // Add a space in between.
-            if ((int)edit_submode_highl < (int)HLF_COUNT) {
+            if ((int)edit_submode_highl < HLF_COUNT) {
               sub_attr = win_hl_attr(curwin, edit_submode_highl);
             } else {
               sub_attr = attr;

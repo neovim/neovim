@@ -7007,7 +7007,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
 
           if (ascii_isdigit(*arg)) {
-            color = atoi((char *)arg);
+            color = atoi(arg);
           } else if (STRICMP(arg, "fg") == 0) {
             if (cterm_normal_fg_color) {
               color = cterm_normal_fg_color - 1;
@@ -7867,20 +7867,20 @@ void highlight_changed(void)
   need_highlight_changed = false;
 
   /// Translate builtin highlight groups into attributes for quick lookup.
-  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+  for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
     id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
     if (id == 0) {
       abort();
     }
     int final_id = syn_get_final_id(id);
-    if (hlf == (int)HLF_SNC) {
+    if (hlf == HLF_SNC) {
       id_SNC = final_id;
-    } else if (hlf == (int)HLF_S) {
+    } else if (hlf == HLF_S) {
       id_S = final_id;
     }
 
     highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
-                                         hlf == (int)HLF_INACTIVE);
+                                         hlf == HLF_INACTIVE);
 
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
       if (hlf == HLF_MSG) {
