@@ -298,15 +298,14 @@ arguments separated by " " (space) instead of "\t" (tab).
                             :luado if bp:match(line) then return "-->\t" .. line end
 <
 
-							*:luafile*
+                                                        *:luafile*
 :[range]luafile {file}
-			Execute Lua script in {file}.
+                        Execute Lua script in {file}.
                         The whole argument is used as the filename (like
                         |:edit|), spaces do not need to be escaped.
                         Alternatively you can |:source| Lua files.
 
-                        Examples:
-                        >
+                        Examples: >
                             :luafile script.lua
                             :luafile %
 <
