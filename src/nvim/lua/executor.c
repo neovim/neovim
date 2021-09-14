@@ -406,6 +406,12 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_wait);
   lua_setfield(lstate, -2, "wait");
 
+  // vim.is_thread
+  lua_pushboolean(lstate, false);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  lua_pushcfunction(lstate, &nlua_is_thread);
+  lua_setfield(lstate, -2, "is_thread");
+
   // vim.NIL
   lua_newuserdata(lstate, 0);
   lua_createtable(lstate, 0, 0);
@@ -445,12 +451,6 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pop(lstate, 3);
 
   nlua_state_add_stdlib(lstate, false);
-
-  // vim.is_thread
-  lua_pushboolean(lstate, false);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
-  lua_pushcfunction(lstate, &nlua_is_thread);
-  lua_setfield(lstate, -2, "is_thread");
 
   lua_setglobal(lstate, "vim");
 
@@ -536,7 +536,7 @@ void nlua_init(void)
   luaL_openlibs(lstate);
   nlua_state_init(lstate);
 
-  luv_set_thread_cb(nlua_thread_acquire_vm, NULL);
+  luv_set_thread_cb(nlua_thread_acquire_vm, nlua_thread_release_vm);
 
   global_lstate = lstate;
 }
@@ -552,6 +552,15 @@ static lua_State *nlua_thread_acquire_vm(void)
   lua_pushcfunction(lstate, &nlua_print);
   lua_setglobal(lstate, "print");
 
+  lua_pushinteger(lstate, 0);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
+
+#if __has_feature(address_sanitizer)
+  PMap(handle_T) *ref_markers = xcalloc(1, sizeof(*ref_markers));
+  lua_pushlightuserdata(lstate, ref_markers);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_markers");
+#endif
+
   // vim
   lua_newtable(lstate);
   // vim.is_therad
@@ -559,6 +568,32 @@ static lua_State *nlua_thread_acquire_vm(void)
   lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
   lua_pushcfunction(lstate, &nlua_is_thread);
   lua_setfield(lstate, -2, "is_thread");
+
+  // vim.NIL
+  lua_newuserdata(lstate, 0);
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, &nlua_nil_tostring);
+  lua_setfield(lstate, -2, "__tostring");
+  lua_setmetatable(lstate, -2);
+  LuaRef *nil_ref = xmalloc(sizeof(*nil_ref));
+  *nil_ref = nlua_ref(lstate, -1);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.NIL");
+  lua_setfield(lstate, -2, "NIL");
+  lua_pushlightuserdata(lstate, nil_ref);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.nil_ref");
+
+  // vim._empty_dict_mt
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
+  lua_setfield(lstate, -2, "__tostring");
+  LuaRef *empty_dict_ref = xmalloc(sizeof(*empty_dict_ref));
+  *empty_dict_ref = nlua_ref(lstate, -1);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
+  lua_setfield(lstate, -2, "_empty_dict_mt");
+  lua_pushlightuserdata(lstate, empty_dict_ref);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.empty_dict_ref");
 
   // vim.loop
   luv_set_callback(lstate, nlua_luv_thread_cfpcall);
@@ -608,6 +643,42 @@ static lua_State *nlua_thread_acquire_vm(void)
   }
 
   return lstate;
+}
+
+static void nlua_thread_release_vm(lua_State *lstate)
+{
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.nil_ref");
+  LuaRef *nil_ref = lua_touserdata(lstate, -1);
+  lua_pop(lstate, 1);
+  nlua_unref(lstate, *nil_ref);
+  XFREE_CLEAR(nil_ref);
+
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.empty_dict_ref");
+  LuaRef *empty_dict_ref = lua_touserdata(lstate, -1);
+  lua_pop(lstate, 1);
+  nlua_unref(lstate, *empty_dict_ref);
+  XFREE_CLEAR(empty_dict_ref);
+
+#ifdef NLUA_TRACK_REFS
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
+  lua_Integer refcount = lua_tointeger(lstate, -1);
+  lua_pop(lstate, 1);
+  if (refcount) {
+    fprintf(stderr, "%d lua references were leaked!", nlua_refcount);
+  }
+
+  if (nlua_track_refs) {
+    // in case there are leaked luarefs, leak the associated memory
+    // to get LeakSanitizer stacktraces on exit
+    lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_markers");
+    PMap(handle_T) *ref_markers = lua_touserdata(lstate, -1);
+    lua_pop(lstate, 1);
+    pmap_destroy(handle_T)(ref_markers);
+    xfree(ref_markers);
+  }
+#endif
+
+  lua_close(lstate);
 }
 
 void nlua_free_all_mem(void)
@@ -713,9 +784,7 @@ static int nlua_print(lua_State *const lstate)
 #undef PRINT_ERROR
   ga_append(&msg_ga, NUL);
 
-  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
-  bool is_thread = lua_toboolean(lstate, -1);
-  lua_pop(lstate, 1);
+  bool is_thread = c_is_thread(lstate);
 
   if (is_thread) {
     loop_schedule_deferred(&main_loop,
@@ -933,11 +1002,18 @@ LuaRef nlua_ref(lua_State *lstate, int index)
   lua_pushvalue(lstate, index);
   LuaRef ref = luaL_ref(lstate, LUA_REGISTRYINDEX);
   if (ref > 0) {
-    nlua_refcount++;
+    nlua_inc_refcount(lstate);
 #ifdef NLUA_TRACK_REFS
     if (nlua_track_refs) {
+      bool is_thread = c_is_thread(lstate);
+      PMap(handle_T) *ref_markers = &nlua_ref_markers;
+      if (is_thread) {
+        lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_markers");
+        ref_markers = lua_touserdata(lstate, -1);
+        lua_pop(lstate, 1);
+      }
       // dummy allocation to make LeakSanitizer track our luarefs
-      pmap_put(handle_T)(&nlua_ref_markers, ref, xmalloc(3));
+      pmap_put(handle_T)(ref_markers, ref, xmalloc(3));
     }
 #endif
   }
@@ -948,14 +1024,60 @@ LuaRef nlua_ref(lua_State *lstate, int index)
 void nlua_unref(lua_State *lstate, LuaRef ref)
 {
   if (ref > 0) {
-    nlua_refcount--;
+    nlua_dec_refcount(lstate);
 #ifdef NLUA_TRACK_REFS
     // NB: don't remove entry from map to track double-unref
     if (nlua_track_refs) {
-      xfree(pmap_get(handle_T)(&nlua_ref_markers, ref));
+      bool is_thread = c_is_thread(lstate);
+      PMap(handle_T) *ref_markers = &nlua_ref_markers;
+      if (is_thread) {
+        lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_markers");
+        ref_markers = lua_touserdata(lstate, -1);
+        lua_pop(lstate, 1);
+      }
+      xfree(pmap_get(handle_T)(ref_markers, ref));
     }
 #endif
     luaL_unref(lstate, LUA_REGISTRYINDEX, ref);
+  }
+}
+
+static bool c_is_thread(lua_State *lstate)
+{
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
+  bool is_thread = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+
+  return is_thread;
+}
+
+static void nlua_inc_refcount(lua_State *lstate)
+{
+  bool is_thread = c_is_thread(lstate);
+  if (is_thread) {
+    lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
+    lua_Integer refcount = lua_tointeger(lstate, -1);
+    lua_pop(lstate, 1);
+    refcount++;
+    lua_pushinteger(lstate, refcount);
+    lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
+  } else {
+    nlua_refcount++;
+  }
+}
+
+static void nlua_dec_refcount(lua_State *lstate)
+{
+  bool is_thread = c_is_thread(lstate);
+  if (is_thread) {
+    lua_getfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
+    lua_Integer refcount = lua_tointeger(lstate, -1);
+    lua_pop(lstate, 1);
+    refcount--;
+    lua_pushinteger(lstate, refcount);
+    lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.refcount");
+  } else {
+    nlua_refcount--;
   }
 }
 
