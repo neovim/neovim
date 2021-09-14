@@ -2,19 +2,19 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+#include "nvim/ascii.h"
+#include "nvim/aucmd.h"
+#include "nvim/charset.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/macros.h"
+#include "nvim/main.h"
+#include "nvim/option.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
 #include "nvim/tui/input.h"
 #include "nvim/vim.h"
-#include "nvim/api/vim.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/ascii.h"
-#include "nvim/charset.h"
-#include "nvim/main.h"
-#include "nvim/macros.h"
-#include "nvim/aucmd.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/option.h"
-#include "nvim/os/os.h"
-#include "nvim/os/input.h"
 #ifdef WIN32
 # include "nvim/os/os_win_console.h"
 #endif
@@ -53,7 +53,7 @@ void tinput_init(TermInput *input, Loop *loop)
   //    ls *.md | xargs nvim
 #ifdef WIN32
   if (!os_isatty(input->in_fd)) {
-      input->in_fd = os_get_conin_fd();
+    input->in_fd = os_get_conin_fd();
   }
 #else
   if (!os_isatty(input->in_fd) && os_isatty(STDERR_FILENO)) {
@@ -279,25 +279,25 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
   }
 
   switch (ev) {
-    case TERMKEY_MOUSE_PRESS:
-      if (button == 4) {
-        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
-      } else if (button == 5) {
-        len += (size_t)snprintf(buf + len, sizeof(buf) - len,
-                                "ScrollWheelDown");
-      } else {
-        len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
-        last_pressed_button = button;
-      }
-      break;
-    case TERMKEY_MOUSE_DRAG:
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
-      break;
-    case TERMKEY_MOUSE_RELEASE:
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
-      break;
-    case TERMKEY_MOUSE_UNKNOWN:
-      abort();
+  case TERMKEY_MOUSE_PRESS:
+    if (button == 4) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
+    } else if (button == 5) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len,
+                              "ScrollWheelDown");
+    } else {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
+      last_pressed_button = button;
+    }
+    break;
+  case TERMKEY_MOUSE_DRAG:
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
+    break;
+  case TERMKEY_MOUSE_RELEASE:
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
+    break;
+  case TERMKEY_MOUSE_UNKNOWN:
+    abort();
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);
@@ -428,7 +428,7 @@ static bool handle_forced_escape(TermInput *input)
     // skip the ESC and NUL and push one <esc> to the input buffer
     size_t rcnt;
     termkey_push_bytes(input->tk, rbuffer_read_ptr(input->read_stream.buffer,
-          &rcnt), 1);
+                                                   &rcnt), 1);
     rbuffer_consumed(input->read_stream.buffer, 2);
     tk_getkeys(input, true);
     return true;
@@ -618,8 +618,7 @@ static void handle_raw_buffer(TermInput *input, bool force)
   } while (rbuffer_size(input->read_stream.buffer));
 }
 
-static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
-                           void *data, bool eof)
+static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data, bool eof)
 {
   TermInput *input = data;
 
@@ -637,7 +636,7 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
     // If 'ttimeout' is not set, start the timer with a timeout of 0 to process
     // the next input.
     long ms = input->ttimeout ?
-      (input->ttimeoutlen >= 0 ? input->ttimeoutlen : 0) : 0;
+              (input->ttimeoutlen >= 0 ? input->ttimeoutlen : 0) : 0;
     // Stop the current timer if already running
     time_watcher_stop(&input->timer_handle);
     time_watcher_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
