@@ -6,16 +6,16 @@
 
 Differences between Nvim and Vim			       *vim-differences*
 
-Nvim differs from Vim in many ways, although editor and VimL features are
-mostly identical.  This document is a complete and centralized reference of
-the differences.
+Nvim differs from Vim in many ways, although editor and Vimscript (not
+Vim9script) features are mostly identical.  This document is a complete and
+centralized reference of the differences.
 
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Configuration					    *nvim-config*
 
-- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for configuration.
+- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for your |config|.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
 - Use `$XDG_DATA_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent
   session information.  |shada|
@@ -78,17 +78,19 @@ the differences.
 MAJOR COMPONENTS ~
 
 API				|API|
-Lua scripting			|lua|
 Job control			|job-control|
-Remote plugins			|remote-plugin|
+LSP framework			|lsp|
+Lua scripting			|lua|
+Parsing engine			|treesitter|
 Providers
   Clipboard			|provider-clipboard|
   Node.js plugins		|provider-nodejs|
   Python plugins		|provider-python|
   Ruby plugins			|provider-ruby|
+Remote plugins			|remote-plugin|
 Shared data			|shada|
-Embedded terminal		|terminal|
-VimL parser			|nvim_parse_expression()|
+Terminal emulator		|terminal|
+Vimscript parser		|nvim_parse_expression()|
 XDG base directories		|xdg|
 
 USER EXPERIENCE  ~
@@ -137,7 +139,7 @@ FEATURES ~
 
 Command-line highlighting:
   The expression prompt (|@=|, |c_CTRL-R_=|, |i_CTRL-R_=|) is highlighted
-  using a built-in VimL expression parser. |expr-highlight|
+  using a built-in Vimscript expression parser. |expr-highlight|
 					*E5408* *E5409*
   |input()|, |inputdialog()| support custom highlighting. |input()-highlight|
 					*g:Nvim_color_cmdline*
@@ -380,7 +382,7 @@ TUI:
 UI/Display:
   |Visual| selection highlights the character at cursor. |visual-use|
 
-VimL (Vim script) compatibility:
+Vimscript compatibility:
   `count` does not alias to |v:count|
   `errmsg` does not alias to |v:errmsg|
   `shell_error` does not alias to |v:shell_error|

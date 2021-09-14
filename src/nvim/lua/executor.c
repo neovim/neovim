@@ -1490,7 +1490,7 @@ int nlua_expand_pat(expand_T *xp,
   lua_getfield(lstate, -1, "_expand_pat");
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
-  // [ vim, vim._log_keystroke, buf ]
+  // [ vim, vim._on_key, buf ]
   lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
 
   if (lua_pcall(lstate, 1, 2, 0) != 0) {
@@ -1764,7 +1764,7 @@ char_u *nlua_register_table_as_callable(typval_T *const arg)
   return name;
 }
 
-void nlua_execute_log_keystroke(int c)
+void nlua_execute_on_key(int c)
 {
   char_u buf[NUMBUFLEN];
   size_t buf_len = special_to_buf(c, mod_mask, false, buf);
@@ -1778,17 +1778,17 @@ void nlua_execute_log_keystroke(int c)
   // [ vim ]
   lua_getglobal(lstate, "vim");
 
-  // [ vim, vim._log_keystroke ]
-  lua_getfield(lstate, -1, "_log_keystroke");
+  // [ vim, vim._on_key]
+  lua_getfield(lstate, -1, "_on_key");
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
-  // [ vim, vim._log_keystroke, buf ]
+  // [ vim, vim._on_key, buf ]
   lua_pushlstring(lstate, (const char *)buf, buf_len);
 
   if (lua_pcall(lstate, 1, 0, 0)) {
     nlua_error(
         lstate,
-        _("Error executing vim.log_keystroke lua callback: %.*s"));
+        _("Error executing  vim.on_key Lua callback: %.*s"));
   }
 
   // [ vim ]

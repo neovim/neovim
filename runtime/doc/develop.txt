@@ -127,14 +127,20 @@ Sometimes a GUI or other application may want to force a provider to
 
 DOCUMENTATION						*dev-doc*
 
-- Do not prefix help tags with "nvim-". Use |vim_diff.txt| to document
-  differences from Vim; no other distinction is necessary.
-- If a Vim feature is removed, delete its help section and move its tag to
-  |vim_diff.txt|.
-- Move deprecated features to |deprecated.txt|.
+- "Just say it". Avoid mushy, colloquial phrasing in all documentation
+  (docstrings, user manual, website materials, newsletters, …). Don't mince
+  words. Personality and flavor, used sparingly, are welcome--but in general,
+  optimize for the reader's time and energy: be "precise yet concise".
+    - Prefer the active voice: "Foo does X", not "X is done by Foo".
+- Vim differences:
+    - Do not prefix help tags with "nvim-". Use |vim_diff.txt| to catalog
+      differences from Vim; no other distinction is necessary.
+    - If a Vim feature is removed, delete its help section and move its tag to
+      |vim_diff.txt|.
+- Mention deprecated features in |deprecated.txt| and delete their old doc.
 - Use consistent language.
-    - "terminal" in a help tag always means "the embedded terminal emulator", not
-      "the user host terminal".
+    - "terminal" in a help tag always means "the embedded terminal emulator",
+      not "the user host terminal".
     - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
       in prose if possible.
 - Docstrings: do not start parameter descriptions with "The" or "A" unless it
@@ -222,13 +228,13 @@ LUA							*dev-lua*
 
 - Keep the core Lua modules |lua-stdlib| simple. Avoid elaborate OOP or
   pseudo-OOP designs. Plugin authors just want functions to call, they don't
-  want to learn a big, fancy inheritance hierarchy. So we should avoid complex
-  objects: tables are usually better.
+  want to learn a big, fancy inheritance hierarchy. Thus avoid specialized
+  objects; tables or values are usually better.
 
 
 API							*dev-api*
 
-Use this template to name new API functions:
+Use this template to name new RPC |API| functions:
     nvim_{thing}_{action}_{arbitrary-qualifiers}
 
 If the function acts on an object then {thing} is the name of that object
@@ -354,6 +360,21 @@ External UIs are expected to implement these common features:
 - Consider the "option_set" |ui-global| event as a hint for other GUI
   behaviors. Various UI-related options ('guifont', 'ambiwidth', …) are
   published in this event. See also "mouse_on", "mouse_off".
+
+
+NAMING							*dev-naming*
+
+Naming is important. Consistent naming in the API and UI helps both users and
+developers discover and intuitively understand related concepts ("families"),
+and reduces cognitive burden. Discoverability encourages code re-use and
+likewise avoids redundant, overlapping mechanisms, which reduces code
+surface-area, and thereby minimizes bugs...
+
+Naming conventions ~
+
+Use the "on_" prefix to name event handlers and also the interface for
+"registering" such handlers (on_key). The dual nature is acceptable to avoid
+a confused collection of naming conventions for these related concepts.
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

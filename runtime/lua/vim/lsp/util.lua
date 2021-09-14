@@ -1,4 +1,5 @@
 local protocol = require 'vim.lsp.protocol'
+local snippet = require 'vim.lsp._snippet'
 local vim = vim
 local validate = vim.validate
 local api = vim.api
@@ -579,9 +580,13 @@ end
 --@param input (string) unparsed snippet
 --@returns (string) parsed snippet
 function M.parse_snippet(input)
-  local res, _ = parse_snippet_rec(input, false)
-
-  return res
+  local ok, parsed = pcall(function()
+    return tostring(snippet.parse(input))
+  end)
+  if not ok then
+    return input
+  end
+  return parsed
 end
 
 --@private
