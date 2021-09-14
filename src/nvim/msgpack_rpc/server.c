@@ -2,24 +2,24 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
+#include "nvim/ascii.h"
+#include "nvim/eval.h"
+#include "nvim/event/socket.h"
+#include "nvim/fileio.h"
+#include "nvim/garray.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
-#include "nvim/event/socket.h"
-#include "nvim/ascii.h"
-#include "nvim/eval.h"
-#include "nvim/garray.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/memory.h"
-#include "nvim/log.h"
-#include "nvim/fileio.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
+#include "nvim/vim.h"
 
 #define MAX_CONNECTIONS 32
 #define LISTEN_ADDRESS_ENV_VAR "NVIM_LISTEN_ADDRESS"
@@ -90,7 +90,7 @@ char *server_address_new(void)
   static uint32_t count = 0;
   char template[ADDRESS_MAX_SIZE];
   snprintf(template, ADDRESS_MAX_SIZE,
-    "\\\\.\\pipe\\nvim-%" PRIu64 "-%" PRIu32, os_get_pid(), count++);
+           "\\\\.\\pipe\\nvim-%" PRIu64 "-%" PRIu32, os_get_pid(), count++);
   return xstrdup(template);
 #else
   return (char *)vim_tempname();
