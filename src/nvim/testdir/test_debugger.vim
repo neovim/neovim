@@ -267,9 +267,7 @@ func Test_Debugger()
   call RunDbgCmd(buf, 'breakd func a()', ['E475: Invalid argument: func a()'])
   call RunDbgCmd(buf, 'breakd func a', ['E161: Breakpoint not found: func a'])
   call RunDbgCmd(buf, 'breakd expr', ['E475: Invalid argument: expr'])
-  call RunDbgCmd(buf, 'breakd expr x', [
-	      \ 'E121: Undefined variable: x',
-	      \ 'E161: Breakpoint not found: expr x'])
+  call RunDbgCmd(buf, 'breakd expr x', ['E161: Breakpoint not found: expr x'])
 
   " finish the current function
   call RunDbgCmd(buf, 'finish', [
@@ -314,9 +312,12 @@ func Test_Debugger()
   call RunDbgCmd(buf, 'enew! | only!')
 
   call StopVimInTerminal(buf)
+endfunc
 
+func Test_Debugger_breakadd()
   " Tests for :breakadd file and :breakadd here
   " Breakpoints should be set before sourcing the file
+  CheckRunVimInTerminal
 
   let lines =<< trim END
 	let var1 = 10
@@ -337,6 +338,10 @@ func Test_Debugger()
   call StopVimInTerminal(buf)
 
   call delete('Xtest.vim')
+  %bw!
+
+  call assert_fails('breakadd here', 'E32:')
+  call assert_fails('breakadd file Xtest.vim /\)/', 'E55:')
 endfunc
 
 func Test_Backtrace_Through_Source()

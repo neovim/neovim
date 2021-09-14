@@ -5,6 +5,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/debugger.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
