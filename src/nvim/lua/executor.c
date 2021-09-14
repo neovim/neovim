@@ -90,7 +90,7 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   lua_pop(lstate, 1);
 }
 
-/// Return version of current neovim build
+/// Gets the version of the current Nvim build.
 ///
 /// @param  lstate  Lua interpreter state.
 static int nlua_nvim_version(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
