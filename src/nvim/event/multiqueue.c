@@ -49,8 +49,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-
-
 #include <uv.h>
 
 #include "nvim/event/multiqueue.h"
@@ -89,7 +87,7 @@ typedef struct {
 # include "event/multiqueue.c.generated.h"
 #endif
 
-static Event NILEVENT = { .handler = NULL, .argv = {NULL} };
+static Event NILEVENT = { .handler = NULL, .argv = { NULL } };
 
 MultiQueue *multiqueue_new_parent(PutCallback put_cb, void *data)
 {
@@ -104,8 +102,7 @@ MultiQueue *multiqueue_new_child(MultiQueue *parent)
   return multiqueue_new(parent, NULL, NULL);
 }
 
-static MultiQueue *multiqueue_new(MultiQueue *parent, PutCallback put_cb,
-                                  void *data)
+static MultiQueue *multiqueue_new(MultiQueue *parent, PutCallback put_cb, void *data)
 {
   MultiQueue *rv = xmalloc(sizeof(MultiQueue));
   QUEUE_INIT(&rv->headtail);

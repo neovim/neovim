@@ -3,20 +3,19 @@
 
 #include <assert.h>
 #include <stdlib.h>
-
 #include <uv.h>
 
-#include "nvim/os/shell.h"
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/process.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/event/process.h"
-#include "nvim/event/libuv_process.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/os/process.h"
 #include "nvim/os/pty_process.h"
-#include "nvim/globals.h"
-#include "nvim/macros.h"
-#include "nvim/log.h"
+#include "nvim/os/shell.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/process.c.generated.h"
@@ -62,14 +61,14 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
 
   int status;
   switch (proc->type) {
-    case kProcessTypeUv:
-      status = libuv_process_spawn((LibuvProcess *)proc);
-      break;
-    case kProcessTypePty:
-      status = pty_process_spawn((PtyProcess *)proc);
-      break;
-    default:
-      abort();
+  case kProcessTypeUv:
+    status = libuv_process_spawn((LibuvProcess *)proc);
+    break;
+  case kProcessTypePty:
+    status = pty_process_spawn((PtyProcess *)proc);
+    break;
+  default:
+    abort();
   }
 
   if (status) {
@@ -139,9 +138,8 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
   }
 
   // Wait until all children exit and all close events are processed.
-  LOOP_PROCESS_EVENTS_UNTIL(
-      loop, loop->events, -1,
-      kl_empty(loop->children) && multiqueue_empty(loop->events));
+  LOOP_PROCESS_EVENTS_UNTIL(loop, loop->events, -1,
+                            kl_empty(loop->children) && multiqueue_empty(loop->events));
   pty_process_teardown(loop);
 }
 
@@ -189,7 +187,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
       // We can only return if all streams/handles are closed and the job
       // exited.
       LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, -1,
-          proc->refcount == 1);
+                                proc->refcount == 1);
     } else {
       LOOP_PROCESS_EVENTS(proc->loop, events, 0);
     }
@@ -222,16 +220,16 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   proc->exit_signal = SIGTERM;
 
   switch (proc->type) {
-    case kProcessTypeUv:
-      os_proc_tree_kill(proc->pid, SIGTERM);
-      break;
-    case kProcessTypePty:
-      // close all streams for pty processes to send SIGHUP to the process
-      process_close_streams(proc);
-      pty_process_close_master((PtyProcess *)proc);
-      break;
-    default:
-      abort();
+  case kProcessTypeUv:
+    os_proc_tree_kill(proc->pid, SIGTERM);
+    break;
+  case kProcessTypePty:
+    // close all streams for pty processes to send SIGHUP to the process
+    process_close_streams(proc);
+    pty_process_close_master((PtyProcess *)proc);
+    break;
+  default:
+    abort();
   }
 
   // (Re)start timer to verify that stopped process(es) died.
@@ -325,14 +323,14 @@ static void process_close(Process *proc)
   }
 
   switch (proc->type) {
-    case kProcessTypeUv:
-      libuv_process_close((LibuvProcess *)proc);
-      break;
-    case kProcessTypePty:
-      pty_process_close((PtyProcess *)proc);
-      break;
-    default:
-      abort();
+  case kProcessTypeUv:
+    libuv_process_close((LibuvProcess *)proc);
+    break;
+  case kProcessTypePty:
+    pty_process_close((PtyProcess *)proc);
+    break;
+  default:
+    abort();
   }
 }
 
@@ -369,7 +367,7 @@ static void flush_stream(Process *proc, Stream *stream)
     // Poll for data and process the generated events.
     loop_poll_events(proc->loop, 0);
     if (stream->events) {
-        multiqueue_process_events(stream->events);
+      multiqueue_process_events(stream->events);
     }
 
     // Stream can be closed if it is empty.

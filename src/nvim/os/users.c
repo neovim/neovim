@@ -6,11 +6,10 @@
 #include <uv.h>
 
 #include "auto/config.h"
-
 #include "nvim/ascii.h"
-#include "nvim/os/os.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
+#include "nvim/os/os.h"
 #include "nvim/strings.h"
 #ifdef HAVE_PWD_H
 # include <pwd.h>

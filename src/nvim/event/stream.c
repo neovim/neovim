@@ -2,15 +2,14 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdbool.h>
-
+#include <stdio.h>
 #include <uv.h>
 
-#include "nvim/log.h"
-#include "nvim/rbuffer.h"
-#include "nvim/macros.h"
 #include "nvim/event/stream.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
+#include "nvim/rbuffer.h"
 #ifdef WIN32
 # include "nvim/os/os_win_console.h"
 #endif
@@ -77,7 +76,7 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
       uv_pipe_open(&stream->uv.pipe, fd);
       stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
 #ifdef WIN32
-      }
+    }
 #endif
     }
   }

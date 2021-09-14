@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 
-#include "nvim/os/stdpaths_defs.h"
-#include "nvim/os/os.h"
-#include "nvim/path.h"
-#include "nvim/memory.h"
 #include "nvim/ascii.h"
+#include "nvim/memory.h"
+#include "nvim/os/os.h"
+#include "nvim/os/stdpaths_defs.h"
+#include "nvim/path.h"
 
 /// Names of the environment variables, mapped to XDGVarType values
 static const char *xdg_env_vars[] = {
@@ -137,8 +137,7 @@ char *stdpaths_user_conf_subpath(const char *fname)
 /// @param[in]  escape_commas  If true, all commas will be escaped.
 ///
 /// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`.
-char *stdpaths_user_data_subpath(const char *fname,
-                                 const size_t trailing_pathseps,
+char *stdpaths_user_data_subpath(const char *fname, const size_t trailing_pathseps,
                                  const bool escape_commas)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
