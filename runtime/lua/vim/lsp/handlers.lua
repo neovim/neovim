@@ -428,7 +428,7 @@ M['window/logMessage'] = function(_, result, ctx, _)
     log.error(message)
   elseif message_type == protocol.MessageType.Warning then
     log.warn(message)
-  elseif message_type == protocol.MessageType.Info then
+  elseif message_type == protocol.MessageType.Info or  message_type == protocol.MessageType.Log then
     log.info(message)
   else
     log.debug(message)
@@ -458,7 +458,7 @@ end
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
   M[k] = function(err, result, ctx, config)
-    local _ = log.debug() and log.debug('default_handler', ctx.method, {
+    local _ = log.trace() and log.trace('default_handler', ctx.method, {
       err = err, result = result, ctx=vim.inspect(ctx), config = config
     })
 

@@ -392,7 +392,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   ---@param payload (table) Converted into a JSON string, see |json_encode()|
   ---@returns true if the payload could be scheduled, false if the main event-loop is in the process of closing.
   local function encode_and_send(payload)
-    local _ = log.debug() and log.debug("rpc.send.payload", payload)
+    local _ = log.debug() and log.debug("rpc.send", payload)
     if handle == nil or handle:is_closing() then return false end
     -- TODO(ashkan) remove this once we have a Lua json_encode
     schedule(function()
@@ -493,7 +493,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       -- on_error(client_errors.INVALID_SERVER_JSON, err)
       return
     end
-    local _ = log.debug() and log.debug("decoded", decoded)
+    local _ = log.debug() and log.debug("rpc.receive", decoded)
 
     if type(decoded.method) == 'string' and decoded.id then
       -- Server Request
