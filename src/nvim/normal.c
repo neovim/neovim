@@ -2474,59 +2474,59 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       c1 = tab_page_click_defs[mouse_col].tabnr;
       switch (tab_page_click_defs[mouse_col].type) {
       case kStlClickDisabled: {
-          break;
-        }
+        break;
+      }
       case kStlClickTabClose: {
-          tabpage_T *tp;
+        tabpage_T *tp;
 
-          // Close the current or specified tab page.
-          if (c1 == 999) {
-            tp = curtab;
-          } else {
-            tp = find_tabpage(c1);
-          }
-          if (tp == curtab) {
-            if (first_tabpage->tp_next != NULL) {
-              tabpage_close(false);
-            }
-          } else if (tp != NULL) {
-            tabpage_close_other(tp, false);
-          }
-          break;
+        // Close the current or specified tab page.
+        if (c1 == 999) {
+          tp = curtab;
+        } else {
+          tp = find_tabpage(c1);
         }
+        if (tp == curtab) {
+          if (first_tabpage->tp_next != NULL) {
+            tabpage_close(false);
+          }
+        } else if (tp != NULL) {
+          tabpage_close_other(tp, false);
+        }
+        break;
+      }
       case kStlClickTabSwitch: {
-          if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
-            // double click opens new page
-            end_visual_mode();
-            tabpage_new();
-            tabpage_move(c1 == 0 ? 9999 : c1 - 1);
-          } else {
-            // Go to specified tab page, or next one if not clicking
-            // on a label.
-            goto_tabpage(c1);
+        if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
+          // double click opens new page
+          end_visual_mode();
+          tabpage_new();
+          tabpage_move(c1 == 0 ? 9999 : c1 - 1);
+        } else {
+          // Go to specified tab page, or next one if not clicking
+          // on a label.
+          goto_tabpage(c1);
 
-            // It's like clicking on the status line of a window.
-            if (curwin != old_curwin) {
-              end_visual_mode();
-            }
+          // It's like clicking on the status line of a window.
+          if (curwin != old_curwin) {
+            end_visual_mode();
           }
-          break;
         }
+        break;
+      }
       case kStlClickFuncRun: {
-          typval_T argv[] = {
-            {
-              .v_lock = VAR_FIXED,
-              .v_type = VAR_NUMBER,
-              .vval = {
-                .v_number = (varnumber_T)tab_page_click_defs[mouse_col].tabnr
-              },
+        typval_T argv[] = {
+          {
+            .v_lock = VAR_FIXED,
+            .v_type = VAR_NUMBER,
+            .vval = {
+              .v_number = (varnumber_T)tab_page_click_defs[mouse_col].tabnr
             },
-            {
-              .v_lock = VAR_FIXED,
-              .v_type = VAR_NUMBER,
-              .vval = {
-                .v_number = (((mod_mask & MOD_MASK_MULTI_CLICK)
-                              == MOD_MASK_4CLICK)
+          },
+          {
+            .v_lock = VAR_FIXED,
+            .v_type = VAR_NUMBER,
+            .vval = {
+              .v_number = (((mod_mask & MOD_MASK_MULTI_CLICK)
+                            == MOD_MASK_4CLICK)
                              ? 4
                              : ((mod_mask & MOD_MASK_MULTI_CLICK)
                                 == MOD_MASK_3CLICK)
@@ -2535,43 +2535,43 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
                                 == MOD_MASK_2CLICK)
                              ? 2
                              : 1)
-              },
             },
-            {
-              .v_lock = VAR_FIXED,
-              .v_type = VAR_STRING,
-              .vval = { .v_string = (char_u *)(which_button == MOUSE_LEFT
+          },
+          {
+            .v_lock = VAR_FIXED,
+            .v_type = VAR_STRING,
+            .vval = { .v_string = (char_u *)(which_button == MOUSE_LEFT
                                                 ? "l"
                                                 : which_button == MOUSE_RIGHT
                                                 ? "r"
                                                 : which_button == MOUSE_MIDDLE
                                                 ? "m"
                                                 : "?") },
+          },
+          {
+            .v_lock = VAR_FIXED,
+            .v_type = VAR_STRING,
+            .vval = {
+              .v_string = (char_u[]) {
+                (char_u)(mod_mask & MOD_MASK_SHIFT ? 's' : ' '),
+                (char_u)(mod_mask & MOD_MASK_CTRL ? 'c' : ' '),
+                (char_u)(mod_mask & MOD_MASK_ALT ? 'a' : ' '),
+                (char_u)(mod_mask & MOD_MASK_META ? 'm' : ' '),
+                NUL
+              }
             },
-            {
-              .v_lock = VAR_FIXED,
-              .v_type = VAR_STRING,
-              .vval = {
-                .v_string = (char_u[]) {
-                  (char_u)(mod_mask & MOD_MASK_SHIFT ? 's' : ' '),
-                  (char_u)(mod_mask & MOD_MASK_CTRL ? 'c' : ' '),
-                  (char_u)(mod_mask & MOD_MASK_ALT ? 'a' : ' '),
-                  (char_u)(mod_mask & MOD_MASK_META ? 'm' : ' '),
-                  NUL
-                }
-              },
-            }
-          };
-          typval_T rettv;
-          funcexe_T funcexe = FUNCEXE_INIT;
-          funcexe.firstline = curwin->w_cursor.lnum;
-          funcexe.lastline = curwin->w_cursor.lnum;
-          funcexe.evaluate = true;
-          (void)call_func((char_u *)tab_page_click_defs[mouse_col].func, -1,
-                          &rettv, ARRAY_SIZE(argv), argv, &funcexe);
-          tv_clear(&rettv);
-          break;
-        }
+          }
+        };
+        typval_T rettv;
+        funcexe_T funcexe = FUNCEXE_INIT;
+        funcexe.firstline = curwin->w_cursor.lnum;
+        funcexe.lastline = curwin->w_cursor.lnum;
+        funcexe.evaluate = true;
+        (void)call_func((char_u *)tab_page_click_defs[mouse_col].func, -1,
+                        &rettv, ARRAY_SIZE(argv), argv, &funcexe);
+        tv_clear(&rettv);
+        break;
+      }
       }
     }
     return true;
@@ -4701,42 +4701,42 @@ dozet:
   case 'w':     // "zw": add wrong word to word list
   case 'G':     // "zG": add good word to temp word list
   case 'W':     // "zW": add wrong word to temp word list
-    {
-      char_u *ptr = NULL;
-      size_t len;
+  {
+    char_u *ptr = NULL;
+    size_t len;
 
-      if (checkclearop(cap->oap)) {
-        break;
-      }
-      if (VIsual_active && !get_visual_text(cap, &ptr, &len)) {
-        return;
-      }
-      if (ptr == NULL) {
-        pos_T pos = curwin->w_cursor;
-
-        /* Find bad word under the cursor.  When 'spell' is
-         * off this fails and find_ident_under_cursor() is
-         * used below. */
-        emsg_off++;
-        len = spell_move_to(curwin, FORWARD, true, true, NULL);
-        emsg_off--;
-        if (len != 0 && curwin->w_cursor.col <= pos.col) {
-          ptr = ml_get_pos(&curwin->w_cursor);
-        }
-        curwin->w_cursor = pos;
-      }
-
-      if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
-        return;
-      }
-      assert(len <= INT_MAX);
-      spell_add_word(ptr, (int)len,
-                     nchar == 'w' || nchar == 'W'
-                   ? SPELL_ADD_BAD : SPELL_ADD_GOOD,
-                     (nchar == 'G' || nchar == 'W') ? 0 : (int)cap->count1,
-                     undo);
+    if (checkclearop(cap->oap)) {
+      break;
     }
-    break;
+    if (VIsual_active && !get_visual_text(cap, &ptr, &len)) {
+      return;
+    }
+    if (ptr == NULL) {
+      pos_T pos = curwin->w_cursor;
+
+      /* Find bad word under the cursor.  When 'spell' is
+       * off this fails and find_ident_under_cursor() is
+       * used below. */
+      emsg_off++;
+      len = spell_move_to(curwin, FORWARD, true, true, NULL);
+      emsg_off--;
+      if (len != 0 && curwin->w_cursor.col <= pos.col) {
+        ptr = ml_get_pos(&curwin->w_cursor);
+      }
+      curwin->w_cursor = pos;
+    }
+
+    if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
+      return;
+    }
+    assert(len <= INT_MAX);
+    spell_add_word(ptr, (int)len,
+                   nchar == 'w' || nchar == 'W'
+                   ? SPELL_ADD_BAD : SPELL_ADD_GOOD,
+                   (nchar == 'G' || nchar == 'W') ? 0 : (int)cap->count1,
+                   undo);
+  }
+  break;
 
   case '=':     // "z=": suggestions for a badly spelled word
     if (!checkclearop(cap->oap)) {
@@ -7055,19 +7055,19 @@ static void nv_g_cmd(cmdarg_T *cap)
     break;
 
   case 'M': {
-      const char_u *const ptr = get_cursor_line_ptr();
+    const char_u *const ptr = get_cursor_line_ptr();
 
-      oap->motion_type = kMTCharWise;
-      oap->inclusive = false;
-      i = (int)mb_string2cells_len(ptr, STRLEN(ptr));
-      if (cap->count0 > 0 && cap->count0 <= 100) {
-        coladvance((colnr_T)(i * cap->count0 / 100));
-      } else {
-        coladvance((colnr_T)(i / 2));
-      }
-      curwin->w_set_curswant = true;
+    oap->motion_type = kMTCharWise;
+    oap->inclusive = false;
+    i = (int)mb_string2cells_len(ptr, STRLEN(ptr));
+    if (cap->count0 > 0 && cap->count0 <= 100) {
+      coladvance((colnr_T)(i * cap->count0 / 100));
+    } else {
+      coladvance((colnr_T)(i / 2));
     }
-    break;
+    curwin->w_set_curswant = true;
+  }
+  break;
 
   case '_':
     /* "g_": to the last non-blank character in the line or <count> lines
@@ -7099,57 +7099,57 @@ static void nv_g_cmd(cmdarg_T *cap)
   case '$':
   case K_END:
   case K_KEND: {
-      int col_off = curwin_col_off();
+    int col_off = curwin_col_off();
 
-      oap->motion_type = kMTCharWise;
-      oap->inclusive = true;
-      if (curwin->w_p_wrap
-          && curwin->w_width_inner != 0) {
-        curwin->w_curswant = MAXCOL;              // so we stay at the end
-        if (cap->count1 == 1) {
-          int width1 = curwin->w_width_inner - col_off;
-          int width2 = width1 + curwin_col_off2();
+    oap->motion_type = kMTCharWise;
+    oap->inclusive = true;
+    if (curwin->w_p_wrap
+        && curwin->w_width_inner != 0) {
+      curwin->w_curswant = MAXCOL;              // so we stay at the end
+      if (cap->count1 == 1) {
+        int width1 = curwin->w_width_inner - col_off;
+        int width2 = width1 + curwin_col_off2();
 
-          validate_virtcol();
-          i = width1 - 1;
-          if (curwin->w_virtcol >= (colnr_T)width1) {
-            i += ((curwin->w_virtcol - width1) / width2 + 1)
-                 * width2;
-          }
-          coladvance((colnr_T)i);
-
-          // Make sure we stick in this column.
-          validate_virtcol();
-          curwin->w_curswant = curwin->w_virtcol;
-          curwin->w_set_curswant = false;
-          if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
-            /*
-             * Check for landing on a character that got split at
-             * the end of the line.  We do not want to advance to
-             * the next screen line.
-             */
-            if (curwin->w_virtcol > (colnr_T)i) {
-              --curwin->w_cursor.col;
-            }
-          }
-        } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false) {
-          clearopbeep(oap);
+        validate_virtcol();
+        i = width1 - 1;
+        if (curwin->w_virtcol >= (colnr_T)width1) {
+          i += ((curwin->w_virtcol - width1) / width2 + 1)
+               * width2;
         }
-      } else {
-        if (cap->count1 > 1) {
-          // if it fails, let the cursor still move to the last char
-          (void)cursor_down(cap->count1 - 1, false);
-        }
-        i = curwin->w_leftcol + curwin->w_width_inner - col_off - 1;
         coladvance((colnr_T)i);
 
         // Make sure we stick in this column.
         validate_virtcol();
         curwin->w_curswant = curwin->w_virtcol;
         curwin->w_set_curswant = false;
+        if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
+          /*
+           * Check for landing on a character that got split at
+           * the end of the line.  We do not want to advance to
+           * the next screen line.
+           */
+          if (curwin->w_virtcol > (colnr_T)i) {
+            --curwin->w_cursor.col;
+          }
+        }
+      } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false) {
+        clearopbeep(oap);
       }
+    } else {
+      if (cap->count1 > 1) {
+        // if it fails, let the cursor still move to the last char
+        (void)cursor_down(cap->count1 - 1, false);
+      }
+      i = curwin->w_leftcol + curwin->w_width_inner - col_off - 1;
+      coladvance((colnr_T)i);
+
+      // Make sure we stick in this column.
+      validate_virtcol();
+      curwin->w_curswant = curwin->w_virtcol;
+      curwin->w_set_curswant = false;
     }
-    break;
+  }
+  break;
 
   /*
    * "g*" and "g#", like "*" and "#" but without using "\<" and "\>"

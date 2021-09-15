@@ -2144,36 +2144,36 @@ int parse_command_modifiers(exarg_T *eap, char_u **errormsg, bool skip_only)
       continue;
 
     case 'f': {  // only accept ":filter {pat} cmd"
-        char_u *reg_pat;
+      char_u *reg_pat;
 
-        if (!checkforcmd(&p, "filter", 4) || *p == NUL || ends_excmd(*p)) {
-          break;
-        }
-        if (*p == '!') {
-          cmdmod.filter_force = true;
-          p = skipwhite(p + 1);
-          if (*p == NUL || ends_excmd(*p)) {
-            break;
-          }
-        }
-        if (skip_only) {
-          p = skip_vimgrep_pat(p, NULL, NULL);
-        } else {
-          // NOTE: This puts a NUL after the pattern.
-          p = skip_vimgrep_pat(p, &reg_pat, NULL);
-        }
-        if (p == NULL || *p == NUL) {
-          break;
-        }
-        if (!skip_only) {
-          cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
-          if (cmdmod.filter_regmatch.regprog == NULL) {
-            break;
-          }
-        }
-        eap->cmd = p;
-        continue;
+      if (!checkforcmd(&p, "filter", 4) || *p == NUL || ends_excmd(*p)) {
+        break;
       }
+      if (*p == '!') {
+        cmdmod.filter_force = true;
+        p = skipwhite(p + 1);
+        if (*p == NUL || ends_excmd(*p)) {
+          break;
+        }
+      }
+      if (skip_only) {
+        p = skip_vimgrep_pat(p, NULL, NULL);
+      } else {
+        // NOTE: This puts a NUL after the pattern.
+        p = skip_vimgrep_pat(p, &reg_pat, NULL);
+      }
+      if (p == NULL || *p == NUL) {
+        break;
+      }
+      if (!skip_only) {
+        cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
+        if (cmdmod.filter_regmatch.regprog == NULL) {
+          break;
+        }
+      }
+      eap->cmd = p;
+      continue;
+    }
 
     // ":hide" and ":hide | cmd" are not modifiers
     case 'h':
@@ -2416,19 +2416,19 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
           eap->line2 = curbuf->b_ml.ml_line_count;
           break;
         case ADDR_LOADED_BUFFERS: {
-            buf_T *buf = firstbuf;
+          buf_T *buf = firstbuf;
 
-            while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
-              buf = buf->b_next;
-            }
-            eap->line1 = buf->b_fnum;
-            buf = lastbuf;
-            while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
-              buf = buf->b_prev;
-            }
-            eap->line2 = buf->b_fnum;
-            break;
+          while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
+            buf = buf->b_next;
           }
+          eap->line1 = buf->b_fnum;
+          buf = lastbuf;
+          while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
+            buf = buf->b_prev;
+          }
+          eap->line2 = buf->b_fnum;
+          break;
+        }
         case ADDR_BUFFERS:
           eap->line1 = firstbuf->b_fnum;
           eap->line2 = lastbuf->b_fnum;
@@ -3387,48 +3387,48 @@ const char * set_one_cmd_context(expand_T *xp, const char *buff)
 
   case CMD_global:
   case CMD_vglobal: {
-      const int delim = (uint8_t)(*arg);  // Get the delimiter.
-      if (delim) {
-        arg++;  // Skip delimiter if there is one.
-      }
+    const int delim = (uint8_t)(*arg);  // Get the delimiter.
+    if (delim) {
+      arg++;  // Skip delimiter if there is one.
+    }
 
-      while (arg[0] != NUL && (uint8_t)arg[0] != delim) {
-        if (arg[0] == '\\' && arg[1] != NUL) {
-          arg++;
-        }
+    while (arg[0] != NUL && (uint8_t)arg[0] != delim) {
+      if (arg[0] == '\\' && arg[1] != NUL) {
         arg++;
       }
-      if (arg[0] != NUL) {
-        return arg + 1;
-      }
-      break;
+      arg++;
     }
+    if (arg[0] != NUL) {
+      return arg + 1;
+    }
+    break;
+  }
   case CMD_and:
   case CMD_substitute: {
-      const int delim = (uint8_t)(*arg);
-      if (delim) {
-        // Skip "from" part.
-        arg++;
-        arg = (const char *)skip_regexp((char_u *)arg, delim, p_magic, NULL);
-      }
-      // Skip "to" part.
-      while (arg[0] != NUL && (uint8_t)arg[0] != delim) {
-        if (arg[0] == '\\' && arg[1] != NUL) {
-          arg++;
-        }
-        arg++;
-      }
-      if (arg[0] != NUL) {  // Skip delimiter.
-        arg++;
-      }
-      while (arg[0] && strchr("|\"#", arg[0]) == NULL) {
-        arg++;
-      }
-      if (arg[0] != NUL) {
-        return arg;
-      }
-      break;
+    const int delim = (uint8_t)(*arg);
+    if (delim) {
+      // Skip "from" part.
+      arg++;
+      arg = (const char *)skip_regexp((char_u *)arg, delim, p_magic, NULL);
     }
+    // Skip "to" part.
+    while (arg[0] != NUL && (uint8_t)arg[0] != delim) {
+      if (arg[0] == '\\' && arg[1] != NUL) {
+        arg++;
+      }
+      arg++;
+    }
+    if (arg[0] != NUL) {  // Skip delimiter.
+      arg++;
+    }
+    while (arg[0] && strchr("|\"#", arg[0]) == NULL) {
+      arg++;
+    }
+    if (arg[0] != NUL) {
+      return arg;
+    }
+    break;
+  }
   case CMD_isearch:
   case CMD_dsearch:
   case CMD_ilist:
@@ -5984,114 +5984,114 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf, ucmd_T *cmd, 
   case ct_LINE2:
   case ct_RANGE:
   case ct_COUNT: {
-      char num_buf[20];
-      long num = (type == ct_LINE1) ? eap->line1 :
-                 (type == ct_LINE2) ? eap->line2 :
-                 (type == ct_RANGE) ? eap->addr_count :
-                 (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
-      size_t num_len;
+    char num_buf[20];
+    long num = (type == ct_LINE1) ? eap->line1 :
+               (type == ct_LINE2) ? eap->line2 :
+               (type == ct_RANGE) ? eap->addr_count :
+               (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
+    size_t num_len;
 
-      sprintf(num_buf, "%" PRId64, (int64_t)num);
-      num_len = STRLEN(num_buf);
-      result = num_len;
+    sprintf(num_buf, "%" PRId64, (int64_t)num);
+    num_len = STRLEN(num_buf);
+    result = num_len;
 
-      if (quote) {
-        result += 2;
-      }
-
-      if (buf != NULL) {
-        if (quote) {
-          *buf++ = '"';
-        }
-        STRCPY(buf, num_buf);
-        buf += num_len;
-        if (quote) {
-          *buf = '"';
-        }
-      }
-
-      break;
+    if (quote) {
+      result += 2;
     }
 
-  case ct_MODS: {
-      result = quote ? 2 : 0;
-      if (buf != NULL) {
-        if (quote) {
-          *buf++ = '"';
-        }
-        *buf = '\0';
+    if (buf != NULL) {
+      if (quote) {
+        *buf++ = '"';
       }
-
-      bool multi_mods = false;
-
-      // :aboveleft and :leftabove
-      if (cmdmod.split & WSP_ABOVE) {
-        result += add_cmd_modifier(buf, "aboveleft", &multi_mods);
-      }
-      // :belowright and :rightbelow
-      if (cmdmod.split & WSP_BELOW) {
-        result += add_cmd_modifier(buf, "belowright", &multi_mods);
-      }
-      // :botright
-      if (cmdmod.split & WSP_BOT) {
-        result += add_cmd_modifier(buf, "botright", &multi_mods);
-      }
-
-      typedef struct {
-        bool *set;
-        char *name;
-      } mod_entry_T;
-      static mod_entry_T mod_entries[] = {
-        { &cmdmod.browse, "browse" },
-        { &cmdmod.confirm, "confirm" },
-        { &cmdmod.hide, "hide" },
-        { &cmdmod.keepalt, "keepalt" },
-        { &cmdmod.keepjumps, "keepjumps" },
-        { &cmdmod.keepmarks, "keepmarks" },
-        { &cmdmod.keeppatterns, "keeppatterns" },
-        { &cmdmod.lockmarks, "lockmarks" },
-        { &cmdmod.noswapfile, "noswapfile" }
-      };
-      // the modifiers that are simple flags
-      for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
-        if (*mod_entries[i].set) {
-          result += add_cmd_modifier(buf, mod_entries[i].name, &multi_mods);
-        }
-      }
-
-      // TODO(vim): How to support :noautocmd?
-      // TODO(vim): How to support :sandbox?
-
-      // :silent
-      if (msg_silent > 0) {
-        result += add_cmd_modifier(buf, emsg_silent > 0 ? "silent!" : "silent",
-                                   &multi_mods);
-      }
-      // :tab
-      if (cmdmod.tab > 0) {
-        result += add_cmd_modifier(buf, "tab", &multi_mods);
-      }
-      // :topleft
-      if (cmdmod.split & WSP_TOP) {
-        result += add_cmd_modifier(buf, "topleft", &multi_mods);
-      }
-
-      // TODO(vim): How to support :unsilent?
-
-      // :verbose
-      if (p_verbose > 0) {
-        result += add_cmd_modifier(buf, "verbose", &multi_mods);
-      }
-      // :vertical
-      if (cmdmod.split & WSP_VERT) {
-        result += add_cmd_modifier(buf, "vertical", &multi_mods);
-      }
-      if (quote && buf != NULL) {
-        buf += result - 2;
+      STRCPY(buf, num_buf);
+      buf += num_len;
+      if (quote) {
         *buf = '"';
       }
-      break;
     }
+
+    break;
+  }
+
+  case ct_MODS: {
+    result = quote ? 2 : 0;
+    if (buf != NULL) {
+      if (quote) {
+        *buf++ = '"';
+      }
+      *buf = '\0';
+    }
+
+    bool multi_mods = false;
+
+    // :aboveleft and :leftabove
+    if (cmdmod.split & WSP_ABOVE) {
+      result += add_cmd_modifier(buf, "aboveleft", &multi_mods);
+    }
+    // :belowright and :rightbelow
+    if (cmdmod.split & WSP_BELOW) {
+      result += add_cmd_modifier(buf, "belowright", &multi_mods);
+    }
+    // :botright
+    if (cmdmod.split & WSP_BOT) {
+      result += add_cmd_modifier(buf, "botright", &multi_mods);
+    }
+
+    typedef struct {
+      bool *set;
+      char *name;
+    } mod_entry_T;
+    static mod_entry_T mod_entries[] = {
+      { &cmdmod.browse, "browse" },
+      { &cmdmod.confirm, "confirm" },
+      { &cmdmod.hide, "hide" },
+      { &cmdmod.keepalt, "keepalt" },
+      { &cmdmod.keepjumps, "keepjumps" },
+      { &cmdmod.keepmarks, "keepmarks" },
+      { &cmdmod.keeppatterns, "keeppatterns" },
+      { &cmdmod.lockmarks, "lockmarks" },
+      { &cmdmod.noswapfile, "noswapfile" }
+    };
+    // the modifiers that are simple flags
+    for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
+      if (*mod_entries[i].set) {
+        result += add_cmd_modifier(buf, mod_entries[i].name, &multi_mods);
+      }
+    }
+
+    // TODO(vim): How to support :noautocmd?
+    // TODO(vim): How to support :sandbox?
+
+    // :silent
+    if (msg_silent > 0) {
+      result += add_cmd_modifier(buf, emsg_silent > 0 ? "silent!" : "silent",
+                                 &multi_mods);
+    }
+    // :tab
+    if (cmdmod.tab > 0) {
+      result += add_cmd_modifier(buf, "tab", &multi_mods);
+    }
+    // :topleft
+    if (cmdmod.split & WSP_TOP) {
+      result += add_cmd_modifier(buf, "topleft", &multi_mods);
+    }
+
+    // TODO(vim): How to support :unsilent?
+
+    // :verbose
+    if (p_verbose > 0) {
+      result += add_cmd_modifier(buf, "verbose", &multi_mods);
+    }
+    // :vertical
+    if (cmdmod.split & WSP_VERT) {
+      result += add_cmd_modifier(buf, "vertical", &multi_mods);
+    }
+    if (quote && buf != NULL) {
+      buf += result - 2;
+      *buf = '"';
+    }
+    break;
+  }
 
   case ct_REGISTER:
     result = eap->regname ? 1 : 0;
