@@ -2635,43 +2635,41 @@ static void cmd_source(char_u *fname, exarg_T *eap)
   }
 }
 
+/// Concatenate VimL line if it starts with a line continuation into a growarray
+/// (excluding the continuation chars and leading whitespace)
+///
+/// @note Growsize of the growarray may be changed to speed up concatenations!
+///
+/// @param ga  the growarray to append to
+/// @param init_growsize  the starting growsize value of the growarray
+/// @param p  pointer to the beginning of the line to consider
+/// @param len  the length of this line
+///
+/// @return true if this line did begin with a continuation (the next line
+///         should also be considered, if it exists); false otherwise
+static bool concat_continued_line(garray_T *const ga, const int init_growsize,
+                                  const char_u *const p, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char_u *const line = skipwhite_len(p, len);
+  len -= (size_t)(line - p);
+  // Skip lines starting with '\" ', concat lines starting with '\'
+  if (len >= 3 && STRNCMP(line, "\"\\ ", 3) == 0) {
+    return true;
+  } else if (len == 0 || line[0] != '\\') {
+    return false;
+  }
+  if (ga->ga_len > init_growsize) {
+    ga_set_growsize(ga, MAX(ga->ga_len, 8000));
+  }
+  ga_concat_len(ga, (const char *)line + 1, len - 1);
+  return true;
+}
+
 typedef struct {
   linenr_T curr_lnum;
   const linenr_T final_lnum;
 } GetBufferLineCookie;
-
-/// Get one line from the current selection in the buffer.
-/// Called by do_cmdline() when it's called from cmd_source_buffer().
-///
-/// @return pointer to allocated line, or NULL for end-of-file or
-///         some error.
-static char_u *get_buffer_line(int c, void *cookie, int indent, bool do_concat)
-{
-  GetBufferLineCookie *p = cookie;
-  if (p->curr_lnum > p->final_lnum) {
-    return NULL;
-  }
-  char_u *curr_line = ml_get(p->curr_lnum);
-  p->curr_lnum++;
-  return (char_u *)xstrdup((const char *)curr_line);
-}
-
-static void cmd_source_buffer(const exarg_T *eap)
-  FUNC_ATTR_NONNULL_ALL
-{
-  GetBufferLineCookie cookie = {
-      .curr_lnum = eap->line1,
-      .final_lnum = eap->line2,
-  };
-  if (curbuf != NULL && curbuf->b_fname
-      && path_with_extension((const char *)curbuf->b_fname, "lua")) {
-    nlua_source_using_linegetter(get_buffer_line, (void *)&cookie,
-                                 ":source (no file)");
-  } else {
-    source_using_linegetter((void *)&cookie, get_buffer_line,
-                            ":source (no file)");
-  }
-}
 
 /// ":source" and associated commands.
 ///
@@ -2725,17 +2723,27 @@ typedef struct {
 static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
 {
   GetStrLineCookie *p = cookie;
-  size_t i = p->offset;
-  if (strlen((char *)p->buf) <= p->offset) {
+  if (STRLEN(p->buf) <= p->offset) {
     return NULL;
   }
-  while (!(p->buf[i] == '\n' || p->buf[i] == '\0')) {
-    i++;
+  const char_u *line = p->buf + p->offset;
+  const char_u *eol = skip_to_newline(line);
+  garray_T ga;
+  ga_init(&ga, sizeof(char_u), 400);
+  ga_concat_len(&ga, (const char *)line, (size_t)(eol - line));
+  if (do_concat && vim_strchr(p_cpo, CPO_CONCAT) == NULL) {
+    while (eol[0] != NUL) {
+      line = eol + 1;
+      const char_u *const next_eol = skip_to_newline(line);
+      if (!concat_continued_line(&ga, 400, line, (size_t)(next_eol - line))) {
+        break;
+      }
+      eol = next_eol;
+    }
   }
-  size_t line_length = i - p->offset;
-  char_u *buf = xmemdupz(p->buf + p->offset, line_length);
-  p->offset = i + 1;
-  return buf;
+  ga_append(&ga, NUL);
+  p->offset = (size_t)(eol - p->buf) + 1;
+  return ga.ga_data;
 }
 
 static int source_using_linegetter(void *cookie,
@@ -2768,6 +2776,40 @@ static int source_using_linegetter(void *cookie,
   current_sctx = save_current_sctx;
   restore_funccal();
   return retval;
+}
+
+static void cmd_source_buffer(const exarg_T *const eap)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (curbuf == NULL) {
+    return;
+  }
+  garray_T ga;
+  ga_init(&ga, sizeof(char_u), 400);
+  const linenr_T final_lnum = eap->line2;
+  // Copy the contents to be executed.
+  for (linenr_T curr_lnum = eap->line1; curr_lnum <= final_lnum; curr_lnum++) {
+    // Adjust growsize to current length to speed up concatenating many lines.
+    if (ga.ga_len > 400) {
+      ga_set_growsize(&ga, MAX(ga.ga_len, 8000));
+    }
+    ga_concat(&ga, ml_get(curr_lnum));
+    ga_append(&ga, NL);
+  }
+  ((char_u *)ga.ga_data)[ga.ga_len - 1] = NUL;
+  const GetStrLineCookie cookie = {
+      .buf = ga.ga_data,
+      .offset = 0,
+  };
+  if (curbuf->b_fname
+      && path_with_extension((const char *)curbuf->b_fname, "lua")) {
+    nlua_source_using_linegetter(get_str_line, (void *)&cookie,
+                                 ":source (no file)");
+  } else {
+    source_using_linegetter((void *)&cookie, get_str_line,
+                            ":source (no file)");
+  }
+  ga_clear(&ga);
 }
 
 /// Executes lines in `src` as Ex commands.
@@ -3227,26 +3269,11 @@ char_u *getsourceline(int c, void *cookie, int indent, bool do_concat)
 
       ga_init(&ga, (int)sizeof(char_u), 400);
       ga_concat(&ga, line);
-      if (*p == '\\') {
-        ga_concat(&ga, p + 1);
-      }
-      for (;; ) {
+      while (sp->nextline != NULL
+             && concat_continued_line(&ga, 400, sp->nextline,
+                                      STRLEN(sp->nextline))) {
         xfree(sp->nextline);
         sp->nextline = get_one_sourceline(sp);
-        if (sp->nextline == NULL) {
-          break;
-        }
-        p = skipwhite(sp->nextline);
-        if (*p == '\\') {
-          // Adjust the growsize to the current length to speed up
-          // concatenating many lines.
-          if (ga.ga_len > 400) {
-            ga_set_growsize(&ga, (ga.ga_len > 8000) ? 8000 : ga.ga_len);
-          }
-          ga_concat(&ga, p + 1);
-        } else if (p[0] != '"' || p[1] != '\\' || p[2] != ' ') {
-          break;
-        }
       }
       ga_append(&ga, NUL);
       xfree(line);
