@@ -47,9 +47,9 @@ static msgpack_sbuffer sbuffer;
   } \
   \
   static void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
-  /* *INDENT-OFF* */ \
+/* uncrustify:indent-off */ \
     FUNC_ATTR_NONNULL_ARG(2) \
-/* *INDENT-ON* */ \
+/* uncrustify:indent-on */ \
   { \
   msgpack_packer pac; \
   msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
