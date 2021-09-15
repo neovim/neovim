@@ -62,7 +62,7 @@ describe(':source', function()
 
   it('does not break if current buffer is modified while sourced', function()
     insert [[
-      bw!
+      bwipeout!
       let a = 123
     ]]
     command('source')
