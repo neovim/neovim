@@ -60,6 +60,15 @@ describe(':source', function()
     eq('Vim(let):E15: Invalid expression: #{', exc_exec("'<,'>source"))
   end)
 
+  it('does not break if current buffer is modified while sourced', function()
+    insert [[
+      bwipeout!
+      let a = 123
+    ]]
+    command('source')
+    eq('123', meths.exec('echo a', true))
+  end)
+
   it('multiline heredoc command', function()
     insert([[
       lua << EOF
