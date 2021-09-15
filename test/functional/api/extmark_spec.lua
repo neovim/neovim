@@ -1606,3 +1606,209 @@ describe('Extmarks buffer api with many marks', function()
     eq({}, get_marks(ns2))
   end)
 end)
+
+describe('API/win_extmark', function()
+  local screen
+  local marks, line1, line2
+  local ns
+
+  before_each(function()
+    -- Initialize some namespaces and insert text into a buffer
+    marks = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+
+    line1 = "non ui-watched line"
+    line2 = "ui-watched line"
+
+    clear()
+
+    insert(line1)
+    feed("o<esc>")
+    insert(line2)
+    ns = request('nvim_create_namespace', "extmark-ui")
+  end)
+
+  it('sends and only sends ui-watched marks to ui', function()
+    screen = Screen.new(20, 4)
+    screen:attach()
+    -- should send this
+    set_extmark(ns, marks[1], 1, 0, { ui_watched = true })
+    -- should not send this
+    set_extmark(ns, marks[2], 0, 0, { ui_watched = false })
+    screen:expect({
+      grid = [[
+      non ui-watched line |
+      ui-watched lin^e     |
+      ~                   |
+                          |
+    ]],
+      extmarks = {
+        [2] = {
+          -- positioned at the end of the 2nd line
+          { {id = 1000}, 1, 1, 1, 16 },
+        }
+      },
+    })
+  end)
+
+  it('sends multiple ui-watched marks to ui', function()
+    screen = Screen.new(20, 4)
+    screen:attach()
+    -- should send all of these
+    set_extmark(ns, marks[1], 1, 0, { ui_watched = true, virt_text_pos = "overlay" })
+    set_extmark(ns, marks[2], 1, 2, { ui_watched = true, virt_text_pos = "overlay" })
+    set_extmark(ns, marks[3], 1, 4, { ui_watched = true, virt_text_pos = "overlay" })
+    set_extmark(ns, marks[4], 1, 6, { ui_watched = true, virt_text_pos = "overlay" })
+    set_extmark(ns, marks[5], 1, 8, { ui_watched = true })
+    screen:expect({
+      grid = [[
+      non ui-watched line |
+      ui-watched lin^e     |
+      ~                   |
+                          |
+    ]],
+      extmarks = {
+        [2] = {
+          -- earlier notifications
+          { {id = 1000}, 1, 1, 1, 0 },
+          { {id = 1000}, 1, 1, 1, 0 }, { {id = 1000}, 1, 2, 1, 2 },
+          { {id = 1000}, 1, 1, 1, 0 }, { {id = 1000}, 1, 2, 1, 2 }, { {id = 1000}, 1, 3, 1, 4 },
+          { {id = 1000}, 1, 1, 1, 0 }, { {id = 1000}, 1, 2, 1, 2 }, { {id = 1000}, 1, 3, 1, 4 }, { {id = 1000}, 1, 4, 1, 6 },
+          -- final
+          --   overlay
+          { {id = 1000}, 1, 1, 1, 0 },
+          { {id = 1000}, 1, 2, 1, 2 },
+          { {id = 1000}, 1, 3, 1, 4 },
+          { {id = 1000}, 1, 4, 1, 6 },
+          --   eol
+          { {id = 1000}, 1, 5, 1, 16 },
+        }
+      },
+    })
+  end)
+
+  it('updates ui-watched marks', function()
+    screen = Screen.new(20, 4)
+    screen:attach()
+    -- should send this
+    set_extmark(ns, marks[1], 1, 0, { ui_watched = true })
+    -- should not send this
+    set_extmark(ns, marks[2], 0, 0, { ui_watched = false })
+    -- make some changes
+    insert(" update")
+    screen:expect({
+      grid = [[
+      non ui-watched line |
+      ui-watched linupdat^e|
+      e                   |
+                          |
+    ]],
+      extmarks = {
+        [2] = {
+          -- positioned at the end of the 2nd line
+          { {id = 1000}, 1, 1, 1, 16 },
+          -- updated and wrapped to 3rd line
+          { {id = 1000}, 1, 1, 2, 2 },
+        }
+      }
+    })
+    feed("<c-e>")
+    screen:expect({
+      grid = [[
+      ui-watched linupdat^e|
+      e                   |
+      ~                   |
+                          |
+    ]],
+      extmarks = {
+        [2] = {
+          -- positioned at the end of the 2nd line
+          { {id = 1000}, 1, 1, 1, 16 },
+          -- updated and wrapped to 3rd line
+          { {id = 1000}, 1, 1, 2, 2 },
+          -- scrolled up one line, should be handled by grid scroll
+        }
+      }
+    })
+  end)
+
+  it('sends ui-watched to splits', function()
+    screen = Screen.new(20, 8)
+    screen:attach({ext_multigrid=true})
+    -- should send this
+    set_extmark(ns, marks[1], 1, 0, { ui_watched = true })
+    -- should not send this
+    set_extmark(ns, marks[2], 0, 0, { ui_watched = false })
+    command('split')
+    screen:expect({
+      grid = [[
+        ## grid 1
+          [4:--------------------]|
+          [4:--------------------]|
+          [4:--------------------]|
+          [No Name] [+]       |
+          [2:--------------------]|
+          [2:--------------------]|
+          [No Name] [+]       |
+          [3:--------------------]|
+        ## grid 2
+          non ui-watched line |
+          ui-watched line     |
+        ## grid 3
+                              |
+        ## grid 4
+          non ui-watched line |
+          ui-watched lin^e     |
+          ~                   |
+    ]],
+      extmarks = {
+        [2] = {
+          -- positioned at the end of the 2nd line
+          { {id = 1000}, 1, 1, 1, 16 },
+          -- updated after split
+          { {id = 1000}, 1, 1, 1, 16 },
+        },
+        [4] = {
+          -- only after split
+          { {id = 1001}, 1, 1, 1, 16 },
+        }
+      }
+    })
+    -- make some changes
+    insert(" update")
+    screen:expect({
+      grid = [[
+        ## grid 1
+          [4:--------------------]|
+          [4:--------------------]|
+          [4:--------------------]|
+          [No Name] [+]       |
+          [2:--------------------]|
+          [2:--------------------]|
+          [No Name] [+]       |
+          [3:--------------------]|
+        ## grid 2
+          non ui-watched line |
+          ui-watched linupd@@@|
+        ## grid 3
+                              |
+        ## grid 4
+          non ui-watched line |
+          ui-watched linupdat^e|
+          e                   |
+    ]],
+      extmarks = {
+        [2] = {
+          -- positioned at the end of the 2nd line
+          { {id = 1000}, 1, 1, 1, 16 },
+          -- updated after split
+          { {id = 1000}, 1, 1, 1, 16 },
+        },
+        [4] = {
+          { {id = 1001}, 1, 1, 1, 16 },
+          -- updated
+          { {id = 1001}, 1, 1, 2, 2 },
+        }
+      }
+    })
+  end)
+end)

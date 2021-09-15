@@ -123,6 +123,10 @@ void win_viewport(Integer grid, Window win, Integer topline,
                   Integer line_count)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY;
 
+void win_extmark(Integer grid, Window win, Integer ns_id, Integer mark_id,
+                 Integer row, Integer col)
+  FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
+
 void popupmenu_show(Array items, Integer selected,
                     Integer row, Integer col, Integer grid)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;

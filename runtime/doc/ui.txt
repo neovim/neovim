@@ -627,6 +627,10 @@ tabs.
 	`botline` is set to one more than the line count of the buffer, if
 	there are filler lines past the end.
 
+["win_extmark", grid, win, ns_id, mark_id, row, col]
+	Updates the position of an extmark which is currently visible in a
+	window. Only emitted if the mark has the `ui_watched` attribute. 
+
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*
 

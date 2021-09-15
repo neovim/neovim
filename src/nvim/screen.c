@@ -67,6 +67,7 @@
 
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/api/vim.h"
 #include "nvim/arabic.h"
 #include "nvim/ascii.h"
@@ -160,6 +161,14 @@ static bool redraw_popupmenu = false;
 static bool msg_grid_invalid = false;
 
 static bool resizing = false;
+
+typedef struct {
+  NS ns_id;
+  uint64_t mark_id;
+  int win_row;
+  int win_col;
+} WinExtmark;
+static kvec_t(WinExtmark) win_extmark_arr INIT(= KV_INITIAL_VALUE);
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -1314,6 +1323,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
   srow = 0;
   lnum = wp->w_topline;  // first line shown in window
 
+  win_extmark_arr.size = 0;
+
   decor_redraw_reset(buf, &decor_state);
 
   DecorProviders line_providers;
@@ -1692,6 +1703,16 @@ static void win_update(win_T *wp, DecorProviders *providers)
   wp->w_old_topfill = wp->w_topfill;
   wp->w_old_botfill = wp->w_botfill;
 
+  // Send win_extmarks if needed
+  if (kv_size(win_extmark_arr) > 0) {
+    for (size_t n = 0; n < kv_size(win_extmark_arr); n++) {
+      ui_call_win_extmark(
+          wp->w_grid_alloc.handle, wp->handle,
+          kv_A(win_extmark_arr, n).ns_id, kv_A(win_extmark_arr, n).mark_id,
+          kv_A(win_extmark_arr, n).win_row, kv_A(win_extmark_arr, n).win_col);
+    }
+  }
+
   if (dollar_vcol == -1) {
     /*
      * There is a trick with w_botline.  If we invalidate it on each
@@ -1964,7 +1985,7 @@ static inline void provider_err_virt_text(linenr_T lnum, char *err)
           ((VirtTextChunk){ .text = provider_err,
                             .hl_id = hl_err }));
   err_decor.virt_text_width = mb_string2cells((char_u *)err);
-  decor_add_ephemeral(lnum - 1, 0, lnum - 1, 0, &err_decor);
+  decor_add_ephemeral(lnum - 1, 0, lnum - 1, 0, &err_decor, 0, 0);
 }
 
 static inline void get_line_number_str(win_T *wp, linenr_T lnum, char_u *buf, size_t buf_len)
@@ -2881,7 +2902,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           && vcol >= (long)wp->w_virtcol)
          || (number_only && draw_state > WL_NR))
         && filler_todo <= 0) {
-      draw_virt_text(buf, win_col_offset, &col, grid->Columns);
+      draw_virt_text(wp, buf, win_col_offset, &col, grid->Columns, row);
       grid_put_linebuf(grid, row, 0, col, -grid->Columns, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       // Pretend we have finished updating the window.  Except when
@@ -3951,7 +3972,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
       }
 
-      draw_virt_text(buf, win_col_offset, &col, grid->Columns);
+      draw_virt_text(wp, buf, win_col_offset, &col, grid->Columns, row);
       grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       row++;
@@ -4195,7 +4216,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                               kHlModeReplace, grid->Columns, offset);
         }
       } else {
-        draw_virt_text(buf, win_col_offset, &draw_col, grid->Columns);
+        draw_virt_text(wp, buf, win_col_offset, &draw_col, grid->Columns, row);
       }
 
       grid_put_linebuf(grid, row, 0, draw_col, grid->Columns, wp->w_p_rl,
@@ -4274,14 +4295,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   return row;
 }
 
-void draw_virt_text(buf_T *buf, int col_off, int *end_col, int max_col)
+void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int max_col, int win_row)
 {
   DecorState *state = &decor_state;
   int right_pos = max_col;
   bool do_eol = state->eol_col > -1;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange *item = &kv_A(state->active, i);
-    if (!(item->start_row == state->row && kv_size(item->decor.virt_text))) {
+    if (!(item->start_row == state->row
+          && (kv_size(item->decor.virt_text) || item->decor.ui_watched))) {
       continue;
     }
     if (item->win_col == -1) {
@@ -4297,9 +4319,17 @@ void draw_virt_text(buf_T *buf, int col_off, int *end_col, int max_col)
     if (item->win_col < 0) {
       continue;
     }
-
-    int col = draw_virt_text_item(buf, item->win_col, item->decor.virt_text,
-                                  item->decor.hl_mode, max_col, item->win_col - col_off);
+    int col;
+    if (item->decor.ui_watched) {
+      // send mark position to UI
+      col = item->win_col;
+      WinExtmark m = { item->ns_id, item->mark_id, win_row, col };
+      kv_push(win_extmark_arr, m);
+    }
+    if (kv_size(item->decor.virt_text)) {
+      col = draw_virt_text_item(buf, item->win_col, item->decor.virt_text,
+                                item->decor.hl_mode, max_col, item->win_col - col_off);
+    }
     item->win_col = -2;  // deactivate
     if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
       state->eol_col = col + 1;
