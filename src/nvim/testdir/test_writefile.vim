@@ -17,6 +17,8 @@ func Test_writefile()
   call assert_equal("morning", l[3])
   call assert_equal("vimmers", l[4])
   call delete(f)
+
+  call assert_fails('call writefile("text", "Xfile")', 'E475: Invalid argument: writefile() first argument must be a List or a Blob')
 endfunc
 
 func Test_writefile_ignore_regexp_error()

@@ -2125,6 +2125,77 @@ void tv_dict_set_keys_readonly(dict_T *const dict)
   });
 }
 
+//{{{1 Blobs
+//{{{2 Alloc/free
+
+/// Allocate an empty blob.
+///
+/// Caller should take care of the reference count.
+///
+/// @return [allocated] new blob.
+blob_T *tv_blob_alloc(void)
+  FUNC_ATTR_NONNULL_RET
+{
+  blob_T *const blob = xcalloc(1, sizeof(blob_T));
+  ga_init(&blob->bv_ga, 1, 100);
+  return blob;
+}
+
+/// Free a blob. Ignores the reference count.
+///
+/// @param[in,out]  b  Blob to free.
+void tv_blob_free(blob_T *const b)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ga_clear(&b->bv_ga);
+  xfree(b);
+}
+
+/// Unreference a blob.
+///
+/// Decrements the reference count and frees blob when it becomes zero.
+///
+/// @param[in,out]  b  Blob to operate on.
+void tv_blob_unref(blob_T *const b)
+{
+  if (b != NULL && --b->bv_refcount <= 0) {
+    tv_blob_free(b);
+  }
+}
+
+//{{{2 Operations on the whole blob
+
+/// Check whether two blobs are equal.
+///
+/// @param[in]  b1  First blob.
+/// @param[in]  b2  Second blob.
+///
+/// @return true if blobs are equal, false otherwise.
+bool tv_blob_equal(const blob_T *const b1, const blob_T *const b2)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const int len1 = tv_blob_len(b1);
+  const int len2 = tv_blob_len(b2);
+
+  // empty and NULL are considered the same
+  if (len1 == 0 && len2 == 0) {
+    return true;
+  }
+  if (b1 == b2) {
+    return true;
+  }
+  if (len1 != len2) {
+    return false;
+  }
+
+  for (int i = 0; i < b1->bv_ga.ga_len; i++) {
+    if (tv_blob_get(b1, i) != tv_blob_get(b2, i)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 //{{{1 Generic typval operations
 //{{{2 Init/alloc/clear
 //{{{3 Alloc
@@ -2169,6 +2240,44 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
   tv_dict_set_ret(ret_tv, d);
 }
 
+/// Allocate an empty blob for a return value.
+///
+/// Also sets reference count.
+///
+/// @param[out]  ret_tv  Structure where blob is saved.
+void tv_blob_alloc_ret(typval_T *const ret_tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  blob_T *const b = tv_blob_alloc();
+  tv_blob_set_ret(ret_tv, b);
+}
+
+/// Copy a blob typval to a different typval.
+///
+/// @param[in]  from  Blob object to copy from.
+/// @param[out]  to  Blob object to copy to.
+void tv_blob_copy(typval_T *const from, typval_T *const to)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(from->v_type == VAR_BLOB);
+
+  to->v_type = VAR_BLOB;
+  to->v_lock = VAR_UNLOCKED;
+  if (from->vval.v_blob == NULL) {
+    to->vval.v_blob = NULL;
+  } else {
+    tv_blob_alloc_ret(to);
+    int len = from->vval.v_blob->bv_ga.ga_len;
+
+    if (len > 0) {
+      to->vval.v_blob->bv_ga.ga_data
+          = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
+    }
+    to->vval.v_blob->bv_ga.ga_len = len;
+    to->vval.v_blob->bv_ga.ga_maxlen = len;
+  }
+}
+
 //{{{3 Clear
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
@@ -2209,6 +2318,13 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
 #define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len)
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type)
+
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    do { \
+      tv_blob_unref(tv->vval.v_blob); \
+      tv->vval.v_blob = NULL; \
+      tv->v_lock = VAR_UNLOCKED; \
+    } while (0)
 
 static inline int _nothing_conv_func_start(typval_T *const tv,
                                            char_u *const fun)
@@ -2392,6 +2508,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
 #undef TYPVAL_ENCODE_CONV_FUNC_START
 #undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS
 #undef TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF
@@ -2447,6 +2564,10 @@ void tv_free(typval_T *tv)
       }
       case VAR_STRING: {
         xfree(tv->vval.v_string);
+        break;
+      }
+      case VAR_BLOB: {
+        tv_blob_unref(tv->vval.v_blob);
         break;
       }
       case VAR_LIST: {
@@ -2509,6 +2630,12 @@ void tv_copy(const typval_T *const from, typval_T *const to)
       }
       break;
     }
+    case VAR_BLOB: {
+      if (from->vval.v_blob != NULL) {
+        to->vval.v_blob->bv_refcount++;
+      }
+      break;
+    }
     case VAR_LIST: {
       tv_list_ref(to->vval.v_list);
       break;
@@ -2533,7 +2660,10 @@ void tv_copy(const typval_T *const from, typval_T *const to)
 /// @param[out]  tv  Item to (un)lock.
 /// @param[in]  deep  Levels to (un)lock, -1 to (un)lock everything.
 /// @param[in]  lock  True if it is needed to lock an item, false to unlock.
-void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
+/// @param[in]  check_refcount  If true, do not lock a list or dict with a
+///                             reference count larger than 1.
+void tv_item_lock(typval_T *const tv, const int deep, const bool lock,
+                  const bool check_refcount)
   FUNC_ATTR_NONNULL_ALL
 {
   // TODO(ZyX-I): Make this not recursive
@@ -2560,14 +2690,21 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
   CHANGE_LOCK(lock, tv->v_lock);
 
   switch (tv->v_type) {
+    case VAR_BLOB: {
+      blob_T *const b = tv->vval.v_blob;
+      if (b != NULL && !(check_refcount && b->bv_refcount > 1)) {
+        CHANGE_LOCK(lock, b->bv_lock);
+      }
+      break;
+    }
     case VAR_LIST: {
       list_T *const l = tv->vval.v_list;
-      if (l != NULL) {
+      if (l != NULL && !(check_refcount && l->lv_refcount > 1)) {
         CHANGE_LOCK(lock, l->lv_lock);
         if (deep < 0 || deep > 1) {
           // Recursive: lock/unlock the items the List contains.
           TV_LIST_ITER(l, li, {
-            tv_item_lock(TV_LIST_ITEM_TV(li), deep - 1, lock);
+            tv_item_lock(TV_LIST_ITEM_TV(li), deep - 1, lock, check_refcount);
           });
         }
       }
@@ -2575,12 +2712,12 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
     }
     case VAR_DICT: {
       dict_T *const d = tv->vval.v_dict;
-      if (d != NULL) {
+      if (d != NULL && !(check_refcount && d->dv_refcount > 1)) {
         CHANGE_LOCK(lock, d->dv_lock);
         if (deep < 0 || deep > 1) {
           // recursive: lock/unlock the items the List contains
           TV_DICT_ITER(d, di, {
-            tv_item_lock(&di->di_tv, deep - 1, lock);
+            tv_item_lock(&di->di_tv, deep - 1, lock, check_refcount);
           });
         }
       }
@@ -2646,10 +2783,11 @@ bool tv_check_lock(const typval_T *tv, const char *name,
   VarLockStatus lock = VAR_UNLOCKED;
 
   switch (tv->v_type) {
-    // case VAR_BLOB:
-    //   if (tv->vval.v_blob != NULL)
-    //     lock = tv->vval.v_blob->bv_lock;
-    //   break;
+    case VAR_BLOB:
+      if (tv->vval.v_blob != NULL) {
+        lock = tv->vval.v_blob->bv_lock;
+      }
+      break;
     case VAR_LIST:
       if (tv->vval.v_list != NULL) {
         lock = tv->vval.v_list->lv_lock;
@@ -2769,6 +2907,9 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
       recursive_cnt--;
       return r;
     }
+    case VAR_BLOB: {
+      return tv_blob_equal(tv1->vval.v_blob, tv2->vval.v_blob);
+    }
     case VAR_NUMBER: {
       return tv1->vval.v_number == tv2->vval.v_number;
     }
@@ -2835,6 +2976,10 @@ bool tv_check_str_or_nr(const typval_T *const tv)
       EMSG(_("E728: Expected a Number or a String, Dictionary found"));
       return false;
     }
+    case VAR_BLOB: {
+      EMSG(_("E974: Expected a Number or a String, Blob found"));
+      return false;
+    }
     case VAR_BOOL: {
       EMSG(_("E5299: Expected a Number or a String, Boolean found"));
       return false;
@@ -2860,6 +3005,7 @@ static const char *const num_errors[] = {
   [VAR_LIST]=N_("E745: Using a List as a Number"),
   [VAR_DICT]=N_("E728: Using a Dictionary as a Number"),
   [VAR_FLOAT]=N_("E805: Using a Float as a Number"),
+  [VAR_BLOB]=N_("E974: Using a Blob as a Number"),
   [VAR_UNKNOWN]=N_("E685: using an invalid value as a Number"),
 };
 
@@ -2888,6 +3034,7 @@ bool tv_check_num(const typval_T *const tv)
     case VAR_LIST:
     case VAR_DICT:
     case VAR_FLOAT:
+    case VAR_BLOB:
     case VAR_UNKNOWN: {
       EMSG(_(num_errors[tv->v_type]));
       return false;
@@ -2905,6 +3052,7 @@ static const char *const str_errors[] = {
   [VAR_LIST]=N_("E730: using List as a String"),
   [VAR_DICT]=N_("E731: using Dictionary as a String"),
   [VAR_FLOAT]=((const char *)e_float_as_string),
+  [VAR_BLOB]=N_("E976: using Blob as a String"),
   [VAR_UNKNOWN]=N_("E908: using an invalid value as a String"),
 };
 
@@ -2933,6 +3081,7 @@ bool tv_check_str(const typval_T *const tv)
     case VAR_LIST:
     case VAR_DICT:
     case VAR_FLOAT:
+    case VAR_BLOB:
     case VAR_UNKNOWN: {
       EMSG(_(str_errors[tv->v_type]));
       return false;
@@ -2980,6 +3129,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
     case VAR_PARTIAL:
     case VAR_LIST:
     case VAR_DICT:
+    case VAR_BLOB:
     case VAR_FLOAT: {
       EMSG(_(num_errors[tv->v_type]));
       break;
@@ -3075,6 +3225,10 @@ float_T tv_get_float(const typval_T *const tv)
       EMSG(_("E907: Using a special value as a Float"));
       break;
     }
+    case VAR_BLOB: {
+      EMSG(_("E975: Using a Blob as a Float"));
+      break;
+    }
     case VAR_UNKNOWN: {
       emsgf(_(e_intern2), "tv_get_float(UNKNOWN)");
       break;
@@ -3134,6 +3288,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
     case VAR_LIST:
     case VAR_DICT:
     case VAR_FLOAT:
+    case VAR_BLOB:
     case VAR_UNKNOWN: {
       EMSG(_(str_errors[tv->v_type]));
       return false;

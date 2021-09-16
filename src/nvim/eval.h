@@ -63,6 +63,7 @@ typedef struct lval_S {
     dict_T *ll_dict;    ///< The Dictionary or NULL.
     dictitem_T *ll_di;  ///< The dictitem or NULL.
     char_u *ll_newkey;  ///< New key for Dict in allocated memory or NULL.
+    blob_T *ll_blob;    ///< The Blob or NULL.
 } lval_T;
 
 /// enum used by var_flavour()
@@ -154,6 +155,7 @@ typedef enum {
     VV_TYPE_DICT,
     VV_TYPE_FLOAT,
     VV_TYPE_BOOL,
+    VV_TYPE_BLOB,
     VV_EVENT,
     VV_ECHOSPACE,
     VV_ARGV,
@@ -165,6 +167,7 @@ typedef enum {
     VV__NULL_STRING,  // String with NULL value. For test purposes only.
     VV__NULL_LIST,  // List with NULL value. For test purposes only.
     VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+    VV__NULL_BLOB,  // Blob with NULL value. For test purposes only.
     VV_LUA,
 } VimVarIndex;
 

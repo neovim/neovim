@@ -1152,6 +1152,10 @@ func Test_type()
     call assert_equal(v:t_float, type(0.0))
     call assert_equal(v:t_bool, type(v:false))
     call assert_equal(v:t_bool, type(v:true))
+    call assert_equal(v:t_string, type(v:_null_string))
+    call assert_equal(v:t_list, type(v:_null_list))
+    call assert_equal(v:t_dict, type(v:_null_dict))
+    call assert_equal(v:t_blob, type(v:_null_blob))
 endfunc
 
 "-------------------------------------------------------------------------------

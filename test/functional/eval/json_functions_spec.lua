@@ -538,6 +538,11 @@ describe('json_encode() function', function()
     eq('"þÿþ"', funcs.json_encode('þÿþ'))
   end)
 
+  it('dumps blobs', function()
+    eq('[]', eval('json_encode(0z)'))
+    eq('[222, 173, 190, 239]', eval('json_encode(0zDEADBEEF)'))
+  end)
+
   it('dumps numbers', function()
     eq('0', funcs.json_encode(0))
     eq('10', funcs.json_encode(10))
@@ -767,6 +772,10 @@ describe('json_encode() function', function()
 
   it('can dump NULL string', function()
     eq('""', eval('json_encode($XXX_UNEXISTENT_VAR_XXX)'))
+  end)
+
+  it('can dump NULL blob', function()
+    eq('[]', eval('json_encode(v:_null_blob)'))
   end)
 
   it('can dump NULL list', function()

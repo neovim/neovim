@@ -14,8 +14,8 @@ Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 1. Variables						*variables*
 
 1.1 Variable types ~
-							*E712*
-There are six types of variables:
+						*E712* *E896* *E897* *E899*
+There are seven types of variables:
 
 							*Number* *Integer*
 Number		A 32 or 64 bit signed number.  |expr-number|
@@ -34,7 +34,7 @@ Funcref		A reference to a function |Funcref|.
 		like a Partial.
 		Example: function("Callback", [arg], myDict)
 
-List		An ordered sequence of items |List|.
+List		An ordered sequence of items, see |List| for details.
 		Example: [1, 2, ['a', 'b']]
 
 Dictionary	An associative, unordered array: Each entry has a key and a
@@ -42,6 +42,11 @@ Dictionary	An associative, unordered array: Each entry has a key and a
 		Examples:
 			{'blue': "#0000ff", 'red': "#ff0000"}
 			#{blue: "#0000ff", red: "#ff0000"}
+
+Blob		Binary Large Object. Stores any sequence of bytes.  See |Blob|
+		for details.
+		Example: 0zFF00ED015DAF
+		0z is an empty Blob.
 
 The Number and String types are converted automatically, depending on how they
 are used.
@@ -97,6 +102,7 @@ Note that " " and "0" are also non-empty strings, thus considered to be TRUE.
 A List, Dictionary or Float is not a Number or String, thus evaluate to FALSE.
 
 				*E745* *E728* *E703* *E729* *E730* *E731*
+				*E974* *E975* *E976*
 |List|, |Dictionary|, |Funcref|, and |Blob| types are not automatically
 converted.
 
@@ -366,8 +372,8 @@ Changing the order of items in a list: >
 
 For loop ~
 
-The |:for| loop executes commands for each item in a list.  A variable is set
-to each item in the list in sequence.  Example: >
+The |:for| loop executes commands for each item in a |List| or |Blob|.
+A variable is set to each item in the sequence.  Example with a List: >
 	:for item in mylist
 	:   call Doit(item)
 	:endfor
@@ -399,6 +405,8 @@ It is also possible to put remaining items in a List variable: >
 	:      echo "remainder: " . string(rest)
 	:   endif
 	:endfor
+
+For a Blob one byte at a time is used.
 
 
 List functions ~
@@ -594,7 +602,137 @@ Functions that can be used with a Dictionary: >
 	:call map(dict, '">> " . v:val')  " prepend ">> " to each item
 
 
-1.5 More about variables ~
+1.5 Blobs ~
+						*blob* *Blob* *Blobs* *E978*
+A Blob is a binary object.  It can be used to read an image from a file and
+send it over a channel, for example.
+
+A Blob mostly behaves like a |List| of numbers, where each number has the
+value of an 8-bit byte, from 0 to 255.
+
+
+Blob creation ~
+
+A Blob can be created with a |blob-literal|: >
+	:let b = 0zFF00ED015DAF
+Dots can be inserted between bytes (pair of hex characters) for readability,
+they don't change the value: >
+	:let b = 0zFF00.ED01.5DAF
+
+A blob can be read from a file with |readfile()| passing the {type} argument
+set to "B", for example: >
+	:let b = readfile('image.png', 'B')
+
+
+Blob index ~
+							*blob-index* *E979*
+A byte in the Blob can be accessed by putting the index in square brackets
+after the Blob.  Indexes are zero-based, thus the first byte has index zero. >
+	:let myblob = 0z00112233
+	:let byte = myblob[0]		" get the first byte: 0x00
+	:let byte = myblob[2]		" get the third byte: 0x22
+
+A negative index is counted from the end.  Index -1 refers to the last byte in
+the Blob, -2 to the last but one byte, etc. >
+	:let last = myblob[-1]		" get the last byte: 0x33
+
+To avoid an error for an invalid index use the |get()| function.  When an item
+is not available it returns -1 or the default value you specify: >
+	:echo get(myblob, idx)
+	:echo get(myblob, idx, 999)
+
+
+Blob iteration ~
+
+The |:for| loop executes commands for each byte of a Blob.  The loop variable is
+set to each byte in the Blob.  Example: >
+	:for byte in 0z112233
+	:   call Doit(byte)
+	:endfor
+This calls Doit() with 0x11, 0x22 and 0x33.
+
+
+Blob concatenation ~
+
+Two blobs can be concatenated with the "+" operator: >
+	:let longblob = myblob + 0z4455
+	:let myblob += 0z6677
+
+To change a blob in-place see |blob-modification| below.
+
+
+Part of a blob ~
+
+A part of the Blob can be obtained by specifying the first and last index,
+separated by a colon in square brackets: >
+	:let myblob = 0z00112233
+	:let shortblob = myblob[1:2]	" get 0z1122
+	:let shortblob = myblob[2:-1]	" get 0z2233
+
+Omitting the first index is similar to zero.  Omitting the last index is
+similar to -1. >
+	:let endblob = myblob[2:]	" from item 2 to the end: 0z2233
+	:let shortblob = myblob[2:2]	" Blob with one byte: 0z22
+	:let otherblob = myblob[:]	" make a copy of the Blob
+
+If the first index is beyond the last byte of the Blob or the second byte is
+before the first byte, the result is an empty Blob.  There is no error
+message.
+
+If the second index is equal to or greater than the length of the Blob the
+length minus one is used: >
+	:echo myblob[2:8]		" result: 0z2233
+
+
+Blob modification ~
+							*blob-modification*
+To change a specific byte of a blob use |:let| this way: >
+	:let blob[4] = 0x44
+
+When the index is just one beyond the end of the Blob, it is appended. Any
+higher index is an error.
+
+To change a sequence of bytes the [:] notation can be used: >
+	let blob[1:3] = 0z445566
+The length of the replaced bytes must be exactly the same as the value
+provided. *E972*
+
+To change part of a blob you can specify the first and last byte to be
+modified.  The value must at least have the number of bytes in the range: >
+	:let blob[3:5] = [3, 4, 5]
+
+You can also use the functions |add()|, |remove()| and |insert()|.
+
+
+Blob identity ~
+
+Blobs can be compared for equality: >
+	if blob == 0z001122
+And for equal identity: >
+	if blob is otherblob
+<							*blob-identity* *E977*
+When variable "aa" is a Blob and you assign it to another variable "bb", both
+variables refer to the same Blob.  Then the "is" operator returns true.
+
+When making a copy using [:] or |copy()| the values are the same, but the
+identity is different: >
+	:let blob = 0z112233
+	:let blob2 = blob
+	:echo blob == blob2
+<	1 >
+	:echo blob is blob2
+<	1 >
+	:let blob3 = blob[:]
+	:echo blob == blob3
+<	1 >
+	:echo blob is blob3
+<	0
+
+Making a copy of a Blob is done with the |copy()| function.  Using [:] also
+works, as explained above.
+
+
+1.6 More about variables ~
 							*more-variables*
 If you need to know the type of a variable or expression, use the |type()|
 function.
@@ -645,8 +783,9 @@ Expression syntax summary, from least to most significant:
 	etc.			As above, append ? for ignoring case, # for
 				matching case
 
-	expr5 is expr5		same |List| instance
-	expr5 isnot expr5	different |List| instance
+	expr5 is expr5		same |List|, |Dictionary| or |Blob| instance
+	expr5 isnot expr5	different |List|, |Dictionary| or |Blob|
+				instance
 
 |expr5|	expr6
 	expr6 +	 expr6 ...	number addition, list or blob concatenation
@@ -817,12 +956,12 @@ Dictionary and arguments, use |get()| to get the function name: >
 	if get(Part1, 'name') == get(Part2, 'name')
 	   " Part1 and Part2 refer to the same function
 
-When using "is" or "isnot" with a |List| or a |Dictionary| this checks if the
-expressions are referring to the same |List| or |Dictionary| instance.  A copy
-of a |List| is different from the original |List|.  When using "is" without
-a |List| or a |Dictionary| it is equivalent to using "equal", using "isnot"
-equivalent to using "not equal".  Except that a different type means the
-values are different: >
+Using "is" or "isnot" with a |List|, |Dictionary| or |Blob| checks whether
+the expressions are referring to the same |List|, |Dictionary| or |Blob|
+instance.  A copy of a |List| is different from the original |List|.  When
+using "is" without a |List|, |Dictionary| or |Blob|, it is equivalent to
+using "equal", using "isnot" is equivalent to using "not equal".  Except that
+a different type means the values are different: >
 	echo 4 == '4'
 	1
 	echo 4 is '4'
@@ -1012,6 +1151,12 @@ just above. Also see |sublist| below.  Examples: >
 	:let l = mylist[4:4]		" List with one item
 	:let l = mylist[:]		" shallow copy of a List
 
+If expr8 is a |Blob| this results in a new |Blob| with the bytes in the
+indexes expr1a and expr1b, inclusive.  Examples: >
+	:let b = 0zDEADBEEF
+	:let bs = b[1:2]		" 0zADBE
+	:let bs = b[]			" copy of 0zDEADBEEF
+
 Using expr8[expr1] or expr8[expr1a : expr1b] on a |Funcref| results in an
 error.
 
@@ -1178,6 +1323,14 @@ Note that "\xff" is stored as the byte 255, which may be invalid in some
 encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
 
 Note that "\000" and "\x00" force the end of the string.
+
+
+blob-literal				*blob-literal* *E973*
+------------
+
+Hexadecimal starting with 0z or 0Z, with an arbitrary number of bytes.
+The sequence must be an even number of hex characters.  Example: >
+	:let b = 0zFF00ED015DAF
 
 
 literal-string						*literal-string* *E115*
@@ -2007,19 +2160,21 @@ v:swapcommand	Normal mode command to be executed after a file has been
 		For ":edit +cmd file" the value is ":cmd\r".
 
 				*v:t_TYPE* *v:t_bool* *t_bool-variable*
-v:t_bool	Value of Boolean type.  Read-only.  See: |type()|
+v:t_bool	Value of |Boolean| type.  Read-only.  See: |type()|
 					*v:t_dict* *t_dict-variable*
-v:t_dict	Value of Dictionary type.  Read-only.  See: |type()|
+v:t_dict	Value of |Dictionary| type.  Read-only.  See: |type()|
 					*v:t_float* *t_float-variable*
-v:t_float	Value of Float type.  Read-only.  See: |type()|
+v:t_float	Value of |Float| type.  Read-only.  See: |type()|
 					*v:t_func* *t_func-variable*
-v:t_func	Value of Funcref type.  Read-only.  See: |type()|
+v:t_func	Value of |Funcref| type.  Read-only.  See: |type()|
 					*v:t_list* *t_list-variable*
-v:t_list	Value of List type.  Read-only.  See: |type()|
+v:t_list	Value of |List| type.  Read-only.  See: |type()|
 					*v:t_number* *t_number-variable*
-v:t_number	Value of Number type.  Read-only.  See: |type()|
+v:t_number	Value of |Number| type.  Read-only.  See: |type()|
 					*v:t_string* *t_string-variable*
-v:t_string	Value of String type.  Read-only.  See: |type()|
+v:t_string	Value of |String| type.  Read-only.  See: |type()|
+					*v:t_blob* *t_blob-variable*
+v:t_blob	Value of |Blob| type.  Read-only.  See: |type()|
 
 				*v:termresponse* *termresponse-variable*
 v:termresponse	The escape sequence returned by the terminal for the DA
@@ -2103,7 +2258,7 @@ USAGE				RESULT	DESCRIPTION	~
 
 abs({expr})			Float or Number  absolute value of {expr}
 acos({expr})			Float	arc cosine of {expr}
-add({list}, {item})		List	append {item} to |List| {list}
+add({object}, {item})		List/Blob   append {item} to {object}
 and({expr}, {expr})		Number  bitwise AND
 api_info()			Dict	api metadata
 append({lnum}, {string})	Number	append {string} below line {lnum}
@@ -2315,8 +2470,8 @@ hlID({name})			Number	syntax ID of highlight group {name}
 hostname()			String	name of the machine Vim is running on
 iconv({expr}, {from}, {to})	String	convert encoding of {expr}
 indent({lnum})			Number	indent of line {lnum}
-index({list}, {expr} [, {start} [, {ic}]])
-				Number	index in {list} where {expr} appears
+index({object}, {expr} [, {start} [, {ic}]])
+				Number	index in {object} where {expr} appears
 input({prompt} [, {text} [, {completion}]])
 				String	get input from the user
 inputlist({textlist})		Number	let the user pick from a choice list
@@ -2324,8 +2479,8 @@ inputrestore()			Number	restore typeahead
 inputsave()			Number	save and clear typeahead
 inputsecret({prompt} [, {text}])
 				String  like input() but hiding the text
-insert({list}, {item} [, {idx}])
-				List	insert {item} in {list} [before {idx}]
+insert({object}, {item} [, {idx}])
+				List	insert {item} in {object} [before {idx}]
 interrupt()			none	interrupt script execution
 invert({expr})			Number  bitwise invert
 isdirectory({directory})	Number	|TRUE| if {directory} is a directory
@@ -2384,8 +2539,8 @@ min({expr})			Number	minimum value of items in {expr}
 mkdir({name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode([expr])			String	current editing mode
-msgpackdump({list})		List	dump a list of objects to msgpack
-msgpackparse({list})		List	parse msgpack to a list of objects
+msgpackdump({list} [, {type}])	List/Blob  dump objects to msgpack
+msgpackparse({data})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
@@ -2407,7 +2562,7 @@ pyxeval({expr})			any	evaluate |python_x| expression
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
 readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
-readfile({fname} [, {binary} [, {max}]])
+readfile({fname} [, {type} [, {max}]])
 				List	get list of lines from file {fname}
 reg_executing()			String	get the executing register name
 reg_recording()			String	get the recording register name
@@ -2424,7 +2579,10 @@ remote_read({serverid} [, {timeout}])
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
 remote_startserver({name})	none	become server {name}
-remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
+remove({list}, {idx} [, {end}])	any/List
+					remove items {idx}-{end} from {list}
+remove({blob}, {idx} [, {end}])	Number/Blob
+					remove bytes {idx}-{end} from {blob}
 remove({dict}, {key})		any	remove entry {key} from {dict}
 rename({from}, {to})		Number	rename (move) file from {from} to {to}
 repeat({expr}, {count})		String	repeat {expr} {count} times
@@ -2612,8 +2770,8 @@ winrestview({dict})		none	restore view of current window
 winsaveview()			Dict	save view of current window
 winwidth({nr})			Number	width of window {nr}
 wordcount()			Dict	get byte/char/word statistics
-writefile({list}, {fname} [, {flags}])
-				Number	write list of lines to file {fname}
+writefile({object}, {fname} [, {flags}])
+				Number	write |Blob| or |List| of lines to file
 xor({expr}, {expr})		Number	bitwise XOR
 
 
@@ -2647,13 +2805,14 @@ acos({expr})							*acos()*
 		Can also be used as a |method|: >
 			Compute()->acos()
 
-add({list}, {expr})					*add()*
-		Append the item {expr} to |List| {list}.  Returns the
-		resulting |List|.  Examples: >
+add({object}, {expr})					*add()*
+		Append the item {expr} to |List| or |Blob| {object}.  Returns
+		the resulting |List| or |Blob|.  Examples: >
 			:let alist = add([1, 2, 3], item)
 			:call add(mylist, "woodstock")
 <		Note that when {expr} is a |List| it is appended as a single
 		item.  Use |extend()| to concatenate |Lists|.
+		When {object} is a |Blob| then {expr} must be a number.
 		Use |insert()| to add an item at another position.
 
 		Can also be used as a |method|: >
@@ -3066,8 +3225,8 @@ chansend({id}, {data})					*chansend()*
 		written if the write succeeded, 0 otherwise.
 		See |channel-bytes| for more information.
 
-		{data} may be a string, string convertible, or a list.  If
-		{data} is a list, the items will be joined by newlines; any
+		{data} may be a string, string convertible, |Blob|, or a list.
+		If {data} is a list, the items will be joined by newlines; any
 		newlines in an item will be sent as NUL. To send a final
 		newline, include a final empty string. Example: >
 			:call chansend(id, ["abc", "123\n456", ""])
@@ -3640,9 +3799,13 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
-		A |List| or |Dictionary| is empty when it does not have any
-		items.  A Number is empty when its value is zero.  Special
-		variable is empty when it is |v:false| or |v:null|.
+		- A |List| or |Dictionary| is empty when it does not have any
+		  items.
+		- A |String| is empty when its length is zero.
+		- A |Number| and |Float| are empty when their value is zero.
+		- |v:false| and |v:null| are empty, |v:true| is not.
+		- A |Blob| is empty when its length is zero.
+
 		Can also be used as a |method|: >
 			mylist->empty()
 
@@ -3665,8 +3828,8 @@ escape({string}, {chars})				*escape()*
 							*eval()*
 eval({string})	Evaluate {string} and return the result.  Especially useful to
 		turn the result of |string()| back into the original value.
-		This works for Numbers, Floats, Strings and composites of
-		them.  Also works for |Funcref|s that refer to existing
+		This works for Numbers, Floats, Strings, Blobs and composites
+		of them.  Also works for |Funcref|s that refer to existing
 		functions.
 
 		Can also be used as a |method|: >
@@ -4081,7 +4244,7 @@ filter({expr1}, {expr2})					*filter()*
 		|Dictionary| to remain unmodified make a copy first: >
 			:let l = filter(copy(mylist), 'v:val =~ "KEEP"')
 
-<		Returns {expr1}, the |List| , |Blob| or |Dictionary| that was
+<		Returns {expr1}, the |List|, |Blob| or |Dictionary| that was
 		filtered.  When an error is encountered while evaluating
 		{expr2} no further items in {expr1} are processed.  When
 		{expr2} is a Funcref errors inside a function are ignored,
@@ -4362,6 +4525,10 @@ get({list}, {idx} [, {default}])			*get()*
 		omitted.
 		Can also be used as a |method|: >
 			mylist->get(idx)
+get({blob}, {idx} [, {default}])
+		Get byte {idx} from |Blob| {blob}.  When this byte is not
+		available return {default}.  Return -1 when {default} is
+		omitted.
 get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
@@ -5548,17 +5715,21 @@ indent({lnum})	The result is a Number, which is indent of line {lnum} in the
 		When {lnum} is invalid -1 is returned.
 
 
-index({list}, {expr} [, {start} [, {ic}]])			*index()*
-		Return the lowest index in |List| {list} where the item has a
-		value equal to {expr}.  There is no automatic conversion, so
-		the String "4" is different from the Number 4.  And the number
-		4 is different from the Float 4.0.  The value of 'ignorecase'
-		is not used here, case always matters.
+index({object}, {expr} [, {start} [, {ic}]])			*index()*
+		If {object} is a |List| return the lowest index where the item
+		has a value equal to {expr}.  There is no automatic
+		conversion, so the String "4" is different from the Number 4.
+		And the Number 4 is different from the Float 4.0.  The value
+		of 'ignorecase' is not used here, case always matters.
+
+		If {object} is a |Blob| return the lowest index where the byte
+		value is equal to {expr}.
+
 		If {start} is given then start looking at the item with index
 		{start} (may be negative for an item relative to the end).
 		When {ic} is given and it is |TRUE|, ignore case.  Otherwise
 		case must match.
-		-1 is returned when {expr} is not found in {list}.
+		-1 is returned when {expr} is not found in {object}.
 		Example: >
 			:let idx = index(words, "the")
 			:if index(numbers, 123) >= 0
@@ -5717,13 +5888,16 @@ inputsecret({prompt} [, {text}])			*inputsecret()*
 		typed on the command-line in response to the issued prompt.
 		NOTE: Command-line completion is not supported.
 
-insert({list}, {item} [, {idx}])			*insert()*
-		Insert {item} at the start of |List| {list}.
+insert({object}, {item} [, {idx}])			*insert()*
+		When {object} is a |List| or a |Blob| insert {item} at the start
+		of it.
+
 		If {idx} is specified insert {item} before the item with index
 		{idx}.  If {idx} is zero it goes before the first item, just
 		like omitting {idx}.  A negative {idx} is also possible, see
 		|list-index|.  -1 inserts just before the last item.
-		Returns the resulting |List|.  Examples: >
+
+		Returns the resulting |List| or |Blob|.  Examples: >
 			:let mylist = insert([2, 3, 5], 1)
 			:call insert(mylist, 4, -1)
 			:call insert(mylist, 6, len(mylist))
@@ -5787,16 +5961,16 @@ islocked({expr})					*islocked()* *E786*
 
 id({expr})						*id()*
 		Returns a |String| which is a unique identifier of the
-		container type (|List|, |Dict| and |Partial|). It is
+		container type (|List|, |Dict|, |Blob| and |Partial|). It is
 		guaranteed that for the mentioned types `id(v1) ==# id(v2)`
 		returns true iff `type(v1) == type(v2) && v1 is v2`.
-		Note that |v:_null_string|, |v:_null_list|, and |v:_null_dict|
-		have the same `id()` with different types because they are
-		internally represented as a NULL pointers.  `id()` returns a
-		hexadecimal representanion of the pointers to the containers
-		(i.e. like `0x994a40`), same as `printf("%p", {expr})`,
-		but it is advised against counting on the exact format of
-		return value.
+		Note that |v:_null_string|, |v:_null_list|, |v:_null_dict| and
+		|v:_null_blob| have the same `id()` with different types
+		because they are internally represented as NULL pointers.
+		`id()` returns a hexadecimal representanion of the pointers to
+		the containers (i.e. like `0x994a40`), same as `printf("%p",
+		{expr})`, but it is advised against counting on the exact
+		format of the return value.
 
 		It is not guaranteed that `id(no_longer_existing_container)`
 		will not be equal to some other `id()`: new containers may
@@ -5806,8 +5980,13 @@ items({dict})						*items()*
 		Return a |List| with all the key-value pairs of {dict}.  Each
 		|List| item is a list with two items: the key of a {dict}
 		entry and the value of this entry.  The |List| is in arbitrary
-		order.
-		Can also be used as a |method|: >
+		order.  Also see |keys()| and |values()|.
+		Example: >
+			for [key, value] in items(mydict)
+			   echo key . ': ' . value
+			endfor
+
+<		Can also be used as a |method|: >
 			mydict->items()
 
 isnan({expr})						*isnan()*
@@ -5974,10 +6153,12 @@ json_encode({expr})					*json_encode()*
 		surrogate pairs (such strings are not valid UTF-8 strings).
 		Non-printable characters are converted into "\u1234" escapes
 		or special escapes like "\t", other are dumped as-is.
+		|Blob|s are converted to arrays of the individual bytes.
 
 keys({dict})						*keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
-		arbitrary order.
+		arbitrary order.  Also see |items()| and |values()|.
+
 		Can also be used as a |method|: >
 			mydict->keys()
 
@@ -6141,12 +6322,14 @@ luaeval({expr}[, {expr}])
 		to Vim data structures. See |lua-eval| for more details.
 
 map({expr1}, {expr2})					*map()*
-		{expr1} must be a |List| or a |Dictionary|.
+		{expr1} must be a |List|, |Blob| or |Dictionary|.
 		Replace each item in {expr1} with the result of evaluating
-		{expr2}. {expr2} must be a |string| or |Funcref|.
+		{expr2}.  For a |Blob| each byte is replaced.
+
+		{expr2} must be a |string| or |Funcref|.
 
 		If {expr2} is a |string|, inside {expr2} |v:val| has the value
-		of the current item. For a |Dictionary| |v:key| has the key
+		of the current item.  For a |Dictionary| |v:key| has the key
 		of the current item and for a |List| |v:key| has the index of
 		the current item.  For a |Blob| |v:key| has the index of the
 		current byte.
@@ -6179,11 +6362,11 @@ map({expr1}, {expr2})					*map()*
 		|Dictionary| to remain unmodified make a copy first: >
 			:let tlist = map(copy(mylist), ' v:val . "\t"')
 
-<		Returns {expr1}, the |List| or |Dictionary| that was filtered.
-		When an error is encountered while evaluating {expr2} no
-		further items in {expr1} are processed. When {expr2} is a
-		Funcref errors inside a function are ignored, unless it was
-		defined with the "abort" flag.
+<		Returns {expr1}, the |List|, |Blob| or |Dictionary| that was
+		filtered.  When an error is encountered while evaluating
+		{expr2} no further items in {expr1} are processed.  When
+		{expr2} is a Funcref errors inside a function are ignored,
+		unless it was defined with the "abort" flag.
 
 		Can also be used as a |method|: >
 			mylist->map(expr2)
@@ -6651,11 +6834,15 @@ mode([expr])	Return a string that indicates the current mode.
 		the leading character(s).
 		Also see |visualmode()|.
 
-msgpackdump({list})					*msgpackdump()*
-		Convert a list of VimL objects to msgpack. Returned value is
-		|readfile()|-style list. Example: >
+msgpackdump({list} [, {type}])				*msgpackdump()*
+		Convert a list of VimL objects to msgpack. Returned value is a
+		|readfile()|-style list. When {type} contains "B", a |Blob| is
+		returned instead. Example: >
 			call writefile(msgpackdump([{}]), 'fname.mpack', 'b')
-<		This will write the single 0x80 byte to `fname.mpack` file
+<		or, using a |Blob|: >
+			call writefile(msgpackdump([{}], 'B'), 'fname.mpack')
+<
+		This will write the single 0x80 byte to a `fname.mpack` file
 		(dictionary with zero items is represented by 0x80 byte in
 		messagepack).
 
@@ -6663,11 +6850,12 @@ msgpackdump({list})					*msgpackdump()*
 		1. |Funcref|s cannot be dumped.
 		2. Containers that reference themselves cannot be dumped.
 		3. Dictionary keys are always dumped as STR strings.
-		4. Other strings are always dumped as BIN strings.
+		4. Other strings and |Blob|s are always dumped as BIN strings.
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
-msgpackparse({list})					*msgpackparse()*
-		Convert a |readfile()|-style list to a list of VimL objects.
+msgpackparse({data})					*msgpackparse()*
+		Convert a |readfile()|-style list or a |Blob| to a list of
+		VimL objects.
 		Example: >
 			let fname = expand('~/.config/nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')
@@ -6677,7 +6865,7 @@ msgpackparse({list})					*msgpackparse()*
 
 		Limitations:
 		1. Mapping ordering is not preserved unless messagepack
-		   mapping is dumped using generic  mapping
+		   mapping is dumped using generic mapping
 		   (|msgpack-special-map|).
 		2. Since the parser aims to preserve all data untouched
 		   (except for 1.) some strings are parsed to
@@ -6721,9 +6909,9 @@ msgpackparse({list})					*msgpackparse()*
 			zero byte or if string is a mapping key and mapping is
 			being represented as special dictionary for other
 			reasons.
-		binary	|readfile()|-style list of strings. This value will
-			appear in |msgpackparse()| output if binary string
-			contains zero byte.
+		binary	|String|, or |Blob| if binary string contains zero
+			byte. This value cannot appear in |msgpackparse()|
+			output since blobs were introduced.
 		array	|List|. This value cannot appear in |msgpackparse()|
 			output.
 							*msgpack-special-map*
@@ -7168,16 +7356,18 @@ readdir({directory} [, {expr}])
                   echo s:tree(".")
 <
 							*readfile()*
-readfile({fname} [, {binary} [, {max}]])
+readfile({fname} [, {type} [, {max}]])
 		Read file {fname} and return a |List|, each line of the file
 		as an item.  Lines are broken at NL characters.  Macintosh
 		files separated with CR will result in a single long line
 		(unless a NL appears somewhere).
 		All NUL characters are replaced with a NL character.
-		When {binary} contains "b" binary mode is used:
+		When {type} contains "b" binary mode is used:
 		- When the last line ends in a NL an extra empty list item is
 		  added.
 		- No CR characters are removed.
+		When {type} contains "B" a |Blob| is returned with the binary
+		data of the file unmodified.
 		Otherwise:
 		- CR characters that appear before a NL are removed.
 		- Whether the last line ends in a NL or not does not matter.
@@ -7357,6 +7547,17 @@ remove({list}, {idx} [, {end}])				*remove()*
 <		Can also be used as a |method|: >
 			mylist->remove(idx)
 
+remove({blob}, {idx} [, {end}])
+		Without {end}: Remove the byte at {idx} from |Blob| {blob} and
+		return the byte.
+		With {end}: Remove bytes from {idx} to {end} (inclusive) and
+		return a |Blob| with these bytes.  When {idx} points to the same
+		byte as {end} a |Blob| with one byte is returned.  When {end}
+		points to a byte before {idx} this is an error.
+		Example: >
+			:echo "last byte: " . remove(myblob, -1)
+			:call remove(mylist, 0, 9)
+
 remove({dict}, {key})
 		Remove the entry from {dict} with key {key} and return it.
 		Example: >
@@ -7400,9 +7601,11 @@ resolve({filename})					*resolve()* *E655*
 		path name) and also keeps a trailing path separator.
 
 							*reverse()*
-reverse({list})	Reverse the order of items in {list} in-place.  Returns
-		{list}.
-		If you want a list to remain unmodified make a copy first: >
+reverse({object})
+		Reverse the order of items in {object} in-place.
+		{object} can be a |List| or a |Blob|.
+		Returns {object}.
+		If you want an object to remain unmodified make a copy first: >
 			:let revlist = reverse(copy(mylist))
 <		Can also be used as a |method|: >
 			mylist->reverse()
@@ -8803,14 +9006,15 @@ stridx({haystack}, {needle} [, {start}])		*stridx()*
 
 							*string()*
 string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
-		Float, String or a composition of them, then the result can be
-		parsed back with |eval()|.
+		Float, String, Blob or a composition of them, then the result
+		can be parsed back with |eval()|.
 			{expr} type	result ~
 			String		'string'
 			Number		123
 			Float		123.123456 or 1.123456e8 or
 					`str2float('inf')`
 			Funcref		`function('name')`
+			Blob		0z00112233.44556677.8899
 			List		[item, item]
 			Dictionary	{key: value, key: value}
 		Note that in String values the ' character is doubled.
@@ -9483,6 +9687,7 @@ type({expr})							*type()*
 			Float:      5 (|v:t_float|)
 			Boolean:    6 (|v:true| and |v:false|)
 			Null:       7 (|v:null|)
+			Blob:      10 (|v:t_blob|)
 		For backward compatibility, this method can be used: >
 			:if type(myvar) == type(0)
 			:if type(myvar) == type("")
@@ -9567,7 +9772,7 @@ uniq({list} [, {func} [, {dict}]])			*uniq()* *E882*
 
 values({dict})						*values()*
 		Return a |List| with all the values of {dict}.  The |List| is
-		in arbitrary order.
+		in arbitrary order.  Also see |items()| and |keys()|.
 
 		Can also be used as a |method|: >
 			mydict->values()
@@ -9927,13 +10132,16 @@ wordcount()						*wordcount()*
 
 
 							*writefile()*
-writefile({list}, {fname} [, {flags}])
-		Write |List| {list} to file {fname}.  Each list item is
-		separated with a NL.  Each list item must be a String or
-		Number.
+writefile({object}, {fname} [, {flags}])
+		When {object} is a |List| write it to file {fname}.  Each list
+		item is separated with a NL.  Each list item must be a String
+		or Number.
 		When {flags} contains "b" then binary mode is used: There will
 		not be a NL after the last list item.  An empty item at the
 		end does cause the last line in the file to end in a NL.
+
+		When {object} is a |Blob| write the bytes to file {fname}
+		unmodified.
 
 		When {flags} contains "a" then append mode is used, lines are
 		appended to the file: >
@@ -10450,7 +10658,10 @@ This does NOT work: >
 			This cannot be used to set a byte in a String.  You
 			can do that like this: >
 				:let var = var[0:2] . 'X' . var[4:]
-<
+<			When {var-name} is a |Blob| then {idx} can be the
+			length of the blob, in which case one byte is
+			appended.
+
 							*E711* *E719*
 :let {var-name}[{idx1}:{idx2}] = {expr1}		*E708* *E709* *E710*
 			Set a sequence of items in a |List| to the result of
@@ -10687,10 +10898,18 @@ text...
 				:const x = 1
 <			is equivalent to: >
 				:let x = 1
-				:lockvar 1 x
+				:lockvar! x
 <			This is useful if you want to make sure the variable
-			is not modified.
-							*E995*
+			is not modified.  If the value is a List or Dictionary
+			literal then the items also cannot be changed: >
+				const ll = [1, 2, 3]
+				let ll[1] = 5  " Error!
+< 			Nested references are not locked: >
+				let lvar = ['a']
+				const lconst = [0, lvar]
+				let lconst[0] = 2  " Error!
+				let lconst[1][0] = 'b'  " OK
+<							*E995*
 			|:const| does not allow to for changing a variable. >
 				:let x = 1
 				:const x = 2  " Error!
@@ -10807,27 +11026,33 @@ text...
 			NOTE: The ":append" and ":insert" commands don't work
 			properly inside a ":while" and ":for" loop.
 
-:for {var} in {list}					*:for* *E690* *E732*
+:for {var} in {object}					*:for* *E690* *E732*
 :endfo[r]						*:endfo* *:endfor*
 			Repeat the commands between ":for" and ":endfor" for
-			each item in {list}.  Variable {var} is set to the
-			value of each item.
-			When an error is detected for a command inside the
-			loop, execution continues after the "endfor".
-			Changing {list} inside the loop affects what items are
-			used.  Make a copy if this is unwanted: >
+			each item in {object}.  {object} can be a |List| or
+			a |Blob|.  Variable {var} is set to the value of each
+			item.  When an error is detected for a command inside
+			the loop, execution continues after the "endfor".
+			Changing {object} inside the loop affects what items
+			are used.  Make a copy if this is unwanted: >
 				:for item in copy(mylist)
-<			When not making a copy, Vim stores a reference to the
-			next item in the list, before executing the commands
-			with the current item.  Thus the current item can be
-			removed without effect.  Removing any later item means
-			it will not be found.  Thus the following example
-			works (an inefficient way to make a list empty): >
+<
+			When {object} is a |List| and not making a copy, Vim
+			stores a reference to the next item in the |List|
+			before executing the commands with the current item.
+			Thus the current item can be removed without effect.
+			Removing any later item means it will not be found.
+			Thus the following example works (an inefficient way
+			to make a |List| empty): >
 				for item in mylist
 				   call remove(mylist, 0)
 				endfor
-<			Note that reordering the list (e.g., with sort() or
+<			Note that reordering the |List| (e.g., with sort() or
 			reverse()) may have unexpected effects.
+
+			When {object} is a |Blob|, Vim always makes a copy to
+			iterate over.  Unlike with |List|, modifying the
+			|Blob| does not affect the iteration.
 
 :for [{var1}, {var2}, ...] in {listlist}
 :endfo[r]

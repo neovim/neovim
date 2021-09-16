@@ -139,7 +139,7 @@ func Test_list_func_remove()
   call assert_fails("call remove(l, 5)", 'E684:')
   call assert_fails("call remove(l, 1, 5)", 'E684:')
   call assert_fails("call remove(l, 3, 2)", 'E16:')
-  call assert_fails("call remove(1, 0)", 'E712:')
+  call assert_fails("call remove(1, 0)", 'E896:')
   call assert_fails("call remove(l, l)", 'E745:')
 endfunc
 
@@ -616,6 +616,8 @@ func Test_reverse_sort_uniq()
   call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
   call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
   call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
+
+  call assert_fails('call reverse("")', 'E899:')
 endfunc
 
 " splitting a string to a List

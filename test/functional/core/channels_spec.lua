@@ -89,6 +89,9 @@ describe('channels', function()
     command("call chansend(id, 'howdy')")
     eq({"notification", "stdout", {id, {"[1, ['howdy'], 'stdin']"}}}, next_msg())
 
+    command("call chansend(id, 0z686f6c61)")
+    eq({"notification", "stdout", {id, {"[1, ['hola'], 'stdin']"}}}, next_msg())
+
     command("call chanclose(id, 'stdin')")
     expect_twostreams({{"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
                        {'notification', 'stdout', {id, {''}}}},
@@ -131,6 +134,8 @@ describe('channels', function()
     command("call chansend(id, 'TEXT\n')")
     expect_twoline(id, "stdout", "TEXT\r", "[1, ['TEXT', ''], 'stdin']")
 
+    command("call chansend(id, 0z426c6f6273210a)")
+    expect_twoline(id, "stdout", "Blobs!\r", "[1, ['Blobs!', ''], 'stdin']")
 
     command("call chansend(id, 'neovan')")
     eq({"notification", "stdout", {id, {"neovan"}}}, next_msg())

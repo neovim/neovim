@@ -481,6 +481,14 @@ static bool typval_conv_special = false;
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
     TYPVAL_ENCODE_CONV_NIL(tv)
 
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    do { \
+      const blob_T *const blob_ = (blob); \
+      lua_pushlstring(lstate, \
+                      blob_ != NULL ? (const char *)blob_->bv_ga.ga_data : "", \
+                      (size_t)(len)); \
+    } while (0)
+
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     do { \
       TYPVAL_ENCODE_CONV_NIL(tv); \
@@ -579,6 +587,7 @@ static bool typval_conv_special = false;
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC_START

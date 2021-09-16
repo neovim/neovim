@@ -47,6 +47,14 @@ const char *const encode_special_var_names[] = {
 # include "eval/encode.c.generated.h"
 #endif
 
+/// Msgpack callback for writing to a Blob
+int encode_blob_write(void *const data, const char *const buf, const size_t len)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  ga_concat_len(&((blob_T *)data)->bv_ga, buf, len);
+  return (int)len;
+}
+
 /// Msgpack callback for writing to readfile()-style list
 int encode_list_write(void *const data, const char *const buf, const size_t len)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -318,6 +326,30 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
     TYPVAL_ENCODE_CONV_STRING(tv, buf, len)
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type)
+
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    do { \
+      const blob_T *const blob_ = (blob); \
+      const int len_ = (len); \
+      if (len_ == 0) { \
+        ga_concat(gap, "0z"); \
+      } else { \
+        /* Allocate space for "0z", the two hex chars per byte, and a */ \
+        /* "." separator after every eight hex chars. */ \
+        /* Example: "0z00112233.44556677.8899" */ \
+        ga_grow(gap, 2 + 2 * len_ + (len_ - 1) / 4); \
+        ga_concat(gap, "0z"); \
+        char numbuf[NUMBUFLEN]; \
+        for (int i_ = 0; i_ < len_; i_++) { \
+          if (i_ > 0 && (i_ & 3) == 0) { \
+            ga_append(gap, '.'); \
+          } \
+          vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "%02X", \
+                       (int)tv_blob_get(blob_, i_)); \
+          ga_concat(gap, numbuf); \
+        } \
+      } \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     do { \
@@ -705,6 +737,28 @@ static inline int convert_to_json_string(garray_T *const gap,
       return FAIL; \
     } while (0)
 
+#undef TYPVAL_ENCODE_CONV_BLOB
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    do { \
+      const blob_T *const blob_ = (blob); \
+      const int len_ = (len); \
+      if (len_ == 0) { \
+        ga_concat(gap, "[]"); \
+      } else { \
+        ga_append(gap, '['); \
+        char numbuf[NUMBUFLEN]; \
+        for (int i_ = 0; i_ < len_; i_++) { \
+          if (i_ > 0) { \
+            ga_concat(gap, ", "); \
+          } \
+          vim_snprintf((char *)numbuf, ARRAY_SIZE(numbuf), "%d", \
+                       (int)tv_blob_get(blob_, i_)); \
+          ga_concat(gap, numbuf); \
+        } \
+        ga_append(gap, ']'); \
+      } \
+    } while (0)
+
 #undef TYPVAL_ENCODE_CONV_FUNC_START
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
     return conv_error(_("E474: Error while dumping %s, %s: " \
@@ -770,6 +824,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC_START
@@ -904,6 +959,15 @@ char *encode_tv2json(typval_T *tv, size_t *len)
       } \
     } while (0)
 
+#define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
+    do { \
+      const size_t len_ = (size_t)(len); \
+      msgpack_pack_bin(packer, len_); \
+      if (len_ > 0) { \
+        msgpack_pack_bin_body(packer, (blob)->bv_ga.ga_data, len_); \
+      } \
+    } while (0)
+
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
     msgpack_pack_int64(packer, (int64_t)(num))
 
@@ -982,6 +1046,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #undef TYPVAL_ENCODE_CONV_STRING
 #undef TYPVAL_ENCODE_CONV_STR_STRING
 #undef TYPVAL_ENCODE_CONV_EXT_STRING
+#undef TYPVAL_ENCODE_CONV_BLOB
 #undef TYPVAL_ENCODE_CONV_NUMBER
 #undef TYPVAL_ENCODE_CONV_FLOAT
 #undef TYPVAL_ENCODE_CONV_FUNC_START

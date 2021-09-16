@@ -83,6 +83,13 @@
 /// @param  len  String length.
 /// @param  type  EXT type.
 
+/// @def TYPVAL_ENCODE_CONV_BLOB
+/// @brief Macros used to convert a blob
+///
+/// @param  tv  Pointer to typval where value is stored. May not be NULL.
+/// @param  blob  Pointer to the blob to convert.
+/// @param  len  Blob length.
+
 /// @def TYPVAL_ENCODE_CONV_FUNC_START
 /// @brief Macros used when starting to convert a funcref or a partial
 ///
@@ -328,6 +335,11 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     }
     case VAR_FLOAT: {
       TYPVAL_ENCODE_CONV_FLOAT(tv, tv->vval.v_float);
+      break;
+    }
+    case VAR_BLOB: {
+      TYPVAL_ENCODE_CONV_BLOB(tv, tv->vval.v_blob,
+                              tv_blob_len(tv->vval.v_blob));
       break;
     }
     case VAR_FUNC: {

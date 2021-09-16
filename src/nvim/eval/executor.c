@@ -38,6 +38,20 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
       case VAR_SPECIAL: {
         break;
       }
+      case VAR_BLOB: {
+       if (*op != '+' || tv2->v_type != VAR_BLOB) {
+         break;
+       }
+       // Blob += Blob
+       if (tv1->vval.v_blob != NULL && tv2->vval.v_blob != NULL) {
+         blob_T *const b1 = tv1->vval.v_blob;
+         blob_T *const b2 = tv2->vval.v_blob;
+         for (int i = 0; i < tv_blob_len(b2); i++) {
+           ga_append(&b1->bv_ga, (char)tv_blob_get(b2, i));
+         }
+       }
+       return OK;
+      }
       case VAR_LIST: {
         if (*op != '+' || tv2->v_type != VAR_LIST) {
           break;

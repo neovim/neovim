@@ -516,6 +516,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
 /// @param data will be consumed
 size_t channel_send(uint64_t id, char *data, size_t len,
                     bool data_owned, const char **error)
+  FUNC_ATTR_NONNULL_ALL
 {
   Channel *chan = find_channel(id);
   size_t written = 0;

@@ -246,14 +246,15 @@ list_T *decode_create_map_special_dict(typval_T *const ret_tv,
 /// Convert char* string to typval_T
 ///
 /// Depending on whether string has (no) NUL bytes, it may use a special
-/// dictionary or decode string to VAR_STRING.
+/// dictionary, VAR_BLOB, or decode string to VAR_STRING.
 ///
 /// @param[in]  s  String to decode.
 /// @param[in]  len  String length.
 /// @param[in]  hasnul  Whether string has NUL byte, not or it was not yet
 ///                     determined.
-/// @param[in]  binary  If true, save special string type as kMPBinary,
-///                     otherwise kMPString.
+/// @param[in]  binary  Determines decode type if string has NUL bytes.
+///                     If true convert string to VAR_BLOB, otherwise to the
+///                     kMPString special type.
 /// @param[in]  s_allocated  If true, then `s` was allocated and can be saved in
 ///                          a returned structure. If it is not saved there, it
 ///                          will be freed.
@@ -269,21 +270,28 @@ typval_T decode_string(const char *const s, const size_t len,
                               ? ((s != NULL) && (memchr(s, NUL, len) != NULL))
                               : (bool)hasnul);
   if (really_hasnul) {
-    list_T *const list = tv_list_alloc(kListLenMayKnow);
-    tv_list_ref(list);
     typval_T tv;
-    create_special_dict(&tv, binary ? kMPBinary : kMPString, ((typval_T) {
-      .v_type = VAR_LIST,
-      .v_lock = VAR_UNLOCKED,
-      .vval = { .v_list = list },
-    }));
-    const int elw_ret = encode_list_write((void *)list, s, len);
-    if (s_allocated) {
-      xfree((void *)s);
-    }
-    if (elw_ret == -1) {
-      tv_clear(&tv);
-      return (typval_T) { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
+    tv.v_lock = VAR_UNLOCKED;
+    if (binary) {
+      tv_blob_alloc_ret(&tv);
+      ga_concat_len(&tv.vval.v_blob->bv_ga, s, len);
+    } else {
+      list_T *const list = tv_list_alloc(kListLenMayKnow);
+      tv_list_ref(list);
+      create_special_dict(&tv, kMPString,
+                          ((typval_T){
+                              .v_type = VAR_LIST,
+                              .v_lock = VAR_UNLOCKED,
+                              .vval = { .v_list = list },
+                          }));
+      const int elw_ret = encode_list_write((void *)list, s, len);
+      if (s_allocated) {
+        xfree((void *)s);
+      }
+      if (elw_ret == -1) {
+        tv_clear(&tv);
+        return (typval_T) { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
+      }
     }
     return tv;
   } else {

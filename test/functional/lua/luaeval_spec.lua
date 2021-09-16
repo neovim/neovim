@@ -63,11 +63,10 @@ describe('luaeval()', function()
       eq('\n[[...@0]]', funcs.execute('echo luaeval("l")'))
     end)
   end)
-  describe('strings', function()
-    it('are successfully converted to special dictionaries', function()
+  describe('strings with NULs', function()
+    it('are successfully converted to blobs', function()
       command([[let s = luaeval('"\0"')]])
-      eq({_TYPE={}, _VAL={'\n'}}, meths.get_var('s'))
-      eq(1, funcs.eval('s._TYPE is v:msgpack_types.binary'))
+      eq('\000', meths.get_var('s'))
     end)
     it('are successfully converted to special dictionaries in table keys',
     function()
@@ -76,13 +75,10 @@ describe('luaeval()', function()
       eq(1, funcs.eval('d._TYPE is v:msgpack_types.map'))
       eq(1, funcs.eval('d._VAL[0][0]._TYPE is v:msgpack_types.string'))
     end)
-    it('are successfully converted to special dictionaries from a list',
+    it('are successfully converted to blobs from a list',
     function()
       command([[let l = luaeval('{"abc", "a\0b", "c\0d", "def"}')]])
-      eq({'abc', {_TYPE={}, _VAL={'a\nb'}}, {_TYPE={}, _VAL={'c\nd'}}, 'def'},
-         meths.get_var('l'))
-      eq(1, funcs.eval('l[1]._TYPE is v:msgpack_types.binary'))
-      eq(1, funcs.eval('l[2]._TYPE is v:msgpack_types.binary'))
+      eq({'abc', 'a\000b', 'c\000d', 'def'}, meths.get_var('l'))
     end)
   end)
 
@@ -100,9 +96,9 @@ describe('luaeval()', function()
     eq(1, eval('type(luaeval("\'test\'"))'))
 
     eq('', funcs.luaeval('""'))
-    eq({_TYPE={}, _VAL={'\n'}}, funcs.luaeval([['\0']]))
-    eq({_TYPE={}, _VAL={'\n', '\n'}}, funcs.luaeval([['\0\n\0']]))
-    eq(1, eval([[luaeval('"\0\n\0"')._TYPE is v:msgpack_types.binary]]))
+    eq('\000', funcs.luaeval([['\0']]))
+    eq('\000\n\000', funcs.luaeval([['\0\n\0']]))
+    eq(10, eval([[type(luaeval("'\\0\\n\\0'"))]]))
 
     eq(true, funcs.luaeval('true'))
     eq(false, funcs.luaeval('false'))
@@ -122,12 +118,11 @@ describe('luaeval()', function()
     local level = 30
     eq(nested_by_level[level].o, funcs.luaeval(nested_by_level[level].s))
 
-    eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, {_TYPE={}, _VAL={'\n', '\n\n'}}}}},
+    eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}},
        funcs.luaeval([[{['\0\n\0']='\0\n\0\0'}]]))
     eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._TYPE is v:msgpack_types.map]]))
     eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._VAL[0][0]._TYPE is v:msgpack_types.string]]))
-    eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._VAL[0][1]._TYPE is v:msgpack_types.binary]]))
-    eq({nested={{_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, {_TYPE={}, _VAL={'\n', '\n\n'}}}}}}},
+    eq({nested={{_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}}}},
        funcs.luaeval([[{nested={{['\0\n\0']='\0\n\0\0'}}}]]))
   end)
 
@@ -175,8 +170,8 @@ describe('luaeval()', function()
   end
 
   it('correctly passes special dictionaries', function()
-    eq({'binary', {'\n', '\n'}}, luaevalarg(sp('binary', '["\\n", "\\n"]')))
-    eq({'binary', {'\n', '\n'}}, luaevalarg(sp('string', '["\\n", "\\n"]')))
+    eq({0, '\000\n\000'}, luaevalarg(sp('binary', '["\\n", "\\n"]')))
+    eq({0, '\000\n\000'}, luaevalarg(sp('string', '["\\n", "\\n"]')))
     eq({0, true}, luaevalarg(sp('boolean', 1)))
     eq({0, false}, luaevalarg(sp('boolean', 0)))
     eq({0, NIL}, luaevalarg(sp('nil', 0)))
@@ -458,6 +453,9 @@ describe('v:lua', function()
       function mymod.crashy()
         nonexistent()
       end
+      function mymod.whatis(value)
+        return type(value) .. ": " .. tostring(value)
+      end
       function mymod.omni(findstart, base)
         if findstart == 1 then
           return 5
@@ -476,6 +474,8 @@ describe('v:lua', function()
     eq(true, exec_lua([[return _G.val == vim.NIL]]))
     eq(NIL, eval('v:lua.mymod.noisy("eval")'))
     eq("hey eval", meths.get_current_line())
+    eq("string: abc", eval('v:lua.mymod.whatis(0z616263)'))
+    eq("string: ", eval('v:lua.mymod.whatis(v:_null_blob)'))
 
     eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:0: attempt to call global 'nonexistent' (a nil value)",
        pcall_err(eval, 'v:lua.mymod.crashy()'))

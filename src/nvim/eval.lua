@@ -250,7 +250,7 @@ return {
     min={args=1, base=1},
     mkdir={args={1, 3}},
     mode={args={0, 1}},
-    msgpackdump={args=1},
+    msgpackdump={args={1, 2}},
     msgpackparse={args=1},
     nextnonblank={args=1},
     nr2char={args={1, 2}},
