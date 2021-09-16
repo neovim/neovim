@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local command = helpers.command
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
@@ -945,31 +944,4 @@ describe('vim.lsp.diagnostic', function()
       assert(loc_list[1].lnum < loc_list[2].lnum)
     end)
   end)
-
-  it('highlight groups', function()
-    command('runtime plugin/diagnostic.vim')
-    eq({
-      'LspDiagnosticsDefaultError',
-      'LspDiagnosticsDefaultHint',
-      'LspDiagnosticsDefaultInformation',
-      'LspDiagnosticsDefaultWarning',
-      'LspDiagnosticsFloatingError',
-      'LspDiagnosticsFloatingHint',
-      'LspDiagnosticsFloatingInformation',
-      'LspDiagnosticsFloatingWarning',
-      'LspDiagnosticsSignError',
-      'LspDiagnosticsSignHint',
-      'LspDiagnosticsSignInformation',
-      'LspDiagnosticsSignWarning',
-      'LspDiagnosticsUnderlineError',
-      'LspDiagnosticsUnderlineHint',
-      'LspDiagnosticsUnderlineInformation',
-      'LspDiagnosticsUnderlineWarning',
-      'LspDiagnosticsVirtualTextError',
-      'LspDiagnosticsVirtualTextHint',
-      'LspDiagnosticsVirtualTextInformation',
-      'LspDiagnosticsVirtualTextWarning',
-    }, exec_lua([[return vim.fn.getcompletion('Lsp', 'highlight')]]))
-  end)
-
 end)
