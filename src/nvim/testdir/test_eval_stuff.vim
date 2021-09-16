@@ -138,6 +138,31 @@ func Test_let_errmsg()
   let v:errmsg = ''
 endfunc
 
+" scriptversion 1
+func Test_string_concat_scriptversion1()
+  call assert_true(has('vimscript-1'))
+  let a = 'a'
+  let b = 'b'
+
+  echo a . b
+  let a .= b
+  let vers = 1.2.3
+  call assert_equal('123', vers)
+
+  if has('float')
+    call assert_fails('let f = .5', 'E15:')
+  endif
+endfunc
+
+" scriptversion 1
+func Test_vvar_scriptversion1()
+  call assert_equal(15, 017)
+  call assert_equal(15, 0o17)
+  call assert_equal(15, 0O17)
+  call assert_equal(18, 018)
+  call assert_equal(511, 0o777)
+endfunc
+
 func Test_number_max_min_size()
   " This will fail on systems without 64 bit number support or when not
   " configured correctly.

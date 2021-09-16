@@ -4403,6 +4403,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "user_commands",
     "vartabs",
     "vertsplit",
+    "vimscript-1",
     "virtualedit",
     "visual",
     "visualextra",
