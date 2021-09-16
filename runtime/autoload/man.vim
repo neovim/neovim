@@ -58,6 +58,7 @@ function! man#open_page(count, mods, ...) abort
     else
       execute 'silent keepalt' a:mods 'stag' l:target
     endif
+    call s:set_options(v:false)
   finally
     call setbufvar(l:buf, '&tagfunc', l:save_tfu)
   endtry
