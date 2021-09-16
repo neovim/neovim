@@ -354,6 +354,49 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
   lua_pushcfunction(lstate, &nlua_is_thread);
   lua_setfield(lstate, -2, "is_thread");
+
+  // vim.NIL
+  lua_newuserdata(lstate, 0);
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, &nlua_nil_tostring);
+  lua_setfield(lstate, -2, "__tostring");
+  lua_setmetatable(lstate, -2);
+  if (!is_thread) {
+    nlua_nil_ref = nlua_ref(lstate, -1);
+  }
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.NIL");
+  lua_setfield(lstate, -2, "NIL");
+
+  // vim._empty_dict_mt
+  lua_createtable(lstate, 0, 0);
+  lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
+  lua_setfield(lstate, -2, "__tostring");
+  if (!is_thread) {
+    nlua_empty_dict_ref = nlua_ref(lstate, -1);
+  }
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
+  lua_setfield(lstate, -2, "_empty_dict_mt");
+
+  // vim.loop
+  if (is_thread) {
+    luv_set_callback(lstate, nlua_luv_thread_cfpcall);
+  } else {
+    luv_set_loop(lstate, &main_loop.uv);
+    luv_set_callback(lstate, nlua_luv_cfpcall);
+  }
+  luaopen_luv(lstate);
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -3, "loop");
+
+  // package.loaded.luv = vim.loop
+  // otherwise luv will be reinitialized when require'luv'
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_pushvalue(lstate, -3);
+  lua_setfield(lstate, -2, "luv");
+  lua_pop(lstate, 3);
 }
 
 static void nlua_common_package_init(lua_State *lstate)
@@ -460,26 +503,6 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   nlua_common_vim_init(lstate, false);
 
-  // vim.NIL
-  lua_newuserdata(lstate, 0);
-  lua_createtable(lstate, 0, 0);
-  lua_pushcfunction(lstate, &nlua_nil_tostring);
-  lua_setfield(lstate, -2, "__tostring");
-  lua_setmetatable(lstate, -2);
-  nlua_nil_ref = nlua_ref(lstate, -1);
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.NIL");
-  lua_setfield(lstate, -2, "NIL");
-
-  // vim._empty_dict_mt
-  lua_createtable(lstate, 0, 0);
-  lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
-  lua_setfield(lstate, -2, "__tostring");
-  nlua_empty_dict_ref = nlua_ref(lstate, -1);
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
-  lua_setfield(lstate, -2, "_empty_dict_mt");
-
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
@@ -576,35 +599,6 @@ static lua_State *nlua_thread_acquire_vm(void)
 
   nlua_common_vim_init(lstate, true);
 
-  // vim.NIL
-  lua_newuserdata(lstate, 0);
-  lua_createtable(lstate, 0, 0);
-  lua_pushcfunction(lstate, &nlua_nil_tostring);
-  lua_setfield(lstate, -2, "__tostring");
-  lua_setmetatable(lstate, -2);
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.NIL");
-  lua_setfield(lstate, -2, "NIL");
-
-  // vim._empty_dict_mt
-  lua_createtable(lstate, 0, 0);
-  lua_pushcfunction(lstate, &nlua_empty_dict_tostring);
-  lua_setfield(lstate, -2, "__tostring");
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, LUA_REGISTRYINDEX, "mpack.empty_dict");
-  lua_setfield(lstate, -2, "_empty_dict_mt");
-
-  // vim.loop
-  luv_set_callback(lstate, nlua_luv_thread_cfpcall);
-  luaopen_luv(lstate);
-  lua_pushvalue(lstate, -1);
-  lua_setfield(lstate, -3, "loop");
-
-  lua_getglobal(lstate, "package");
-  lua_getfield(lstate, -1, "loaded");
-  lua_pushvalue(lstate, -3);
-  lua_setfield(lstate, -2, "luv");
-  lua_pop(lstate, 3);
 
   nlua_state_add_stdlib(lstate, true);
 
