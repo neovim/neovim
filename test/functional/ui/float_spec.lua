@@ -152,6 +152,132 @@ describe('float window', function()
     eq(10, width)
   end)
 
+  it('opened with correct position', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 7,
+        row = 9,
+        relative = 'editor',
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(9, pos[1])
+    eq(7, pos[2])
+  end)
+
+  it('opened with correct position relative to the cursor', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 7,
+        row = 9,
+        relative = 'cursor',
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(9, pos[1])
+    eq(7, pos[2])
+  end)
+
+  it('opened with correct position relative to another window', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local par_opts = {
+        width = 50,
+        height = 50,
+        col = 7,
+        row = 9,
+        relative = 'editor',
+        style = 'minimal'
+      }
+
+      local par_win_id = vim.api.nvim_open_win(bufnr, false, par_opts)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 7,
+        row = 9,
+        relative = 'win',
+        style = 'minimal',
+        win = par_win_id
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(18, pos[1])
+    eq(14, pos[2])
+  end)
+
+
+  it('opened with correct position relative to another relative window', function()
+    local pos = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local root_opts = {
+        width = 50,
+        height = 50,
+        col = 7,
+        row = 9,
+        relative = 'editor',
+        style = 'minimal'
+      }
+
+      local root_win_id = vim.api.nvim_open_win(bufnr, false, root_opts)
+
+      local par_opts = {
+        width = 20,
+        height = 20,
+        col = 2,
+        row = 3,
+        relative = 'win',
+        win = root_win_id,
+        style = 'minimal'
+      }
+
+      local par_win_id = vim.api.nvim_open_win(bufnr, false, par_opts)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 3,
+        row = 2,
+        relative = 'win',
+        win = par_win_id,
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, false, opts)
+
+      return vim.api.nvim_win_get_position(win_id)
+    ]])
+
+    eq(14, pos[1])
+    eq(12, pos[2])
+  end)
+
+
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()
@@ -541,6 +667,134 @@ describe('float window', function()
       --  signcolumn=yes still works if there actually are signs
       command('sign define piet1 text=𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄ texthl=Search')
       command('sign place 1 line=1 name=piet1 buffer=1')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          {19: }{17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{20:  1 }{22:^x}{21:                                }|
+          {19:   }{14:  2 }{22:y}                                |
+          {19:   }{14:  3 }{22: }                                |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{15:x                 }|
+          {19:  }{15:y                 }|
+          {19:  }{15:                  }|
+          {15:                    }|
+        ]], float_pos={[4] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+
+      else
+        screen:expect([[
+          {19: }{17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{20:  1 }{22:^x}{21:                                }|
+          {19:   }{14:  2 }{22:y}                                |
+          {19:   }{14:  3 }{22: }  {17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{15:x                 }          |
+          {0:~         }{19:  }{15:y                 }{0:          }|
+          {0:~         }{19:  }{15:                  }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+                                                  |
+        ]])
+      end
+      command('sign unplace 1 buffer=1')
+
+      local buf = meths.create_buf(false, true)
+      meths.win_set_buf(win, buf)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          {19:   }{20:  1 }{22:^x}{21:                                }|
+          {19:   }{14:  2 }{22:y}                                |
+          {19:   }{14:  3 }{22: }                                |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {15:                    }|
+          {15:                    }|
+          {15:                    }|
+          {15:                    }|
+        ]], float_pos={[4] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+      else
+        screen:expect([[
+          {19:   }{20:  1 }{22:^x}{21:                                }|
+          {19:   }{14:  2 }{22:y}                                |
+          {19:   }{14:  3 }{22: }  {15:                    }          |
+          {0:~         }{15:                    }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+                                                  |
+        ]])
+      end
+    end)
+
+    it("would not break 'minimal' style with signcolumn=auto:[min]-[max]", function()
+      command('set number')
+      command('set signcolumn=auto:1-3')
+      command('set colorcolumn=1')
+      command('set cursorline')
+      command('set foldcolumn=1')
+      command('hi NormalFloat guibg=#333333')
+      feed('ix<cr>y<cr><esc>gg')
+      local win = meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          {19:   }{20:  1 }{22:^x}{21:                                }|
+          {19:   }{14:  2 }{22:y}                                |
+          {19:   }{14:  3 }{22: }                                |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {15:x                   }|
+          {15:y                   }|
+          {15:                    }|
+          {15:                    }|
+        ]], float_pos={[4] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+      else
+        screen:expect{grid=[[
+          {19:   }{20:  1 }{22:^x}{21:                                }|
+          {19:   }{14:  2 }{22:y}                                |
+          {19:   }{14:  3 }{22: }  {15:x                   }          |
+          {0:~         }{15:y                   }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+                                                  |
+        ]]}
+      end
+
+      command('sign define piet1 text=𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄ texthl=Search')
+      command('sign place 1 line=1 name=piet1 buffer=1')
+      --  signcolumn=auto:1-3 still works if there actually are signs
       if multigrid then
         screen:expect{grid=[[
         ## grid 1

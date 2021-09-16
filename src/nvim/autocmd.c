@@ -1724,7 +1724,7 @@ BYPASS_AU:
 void block_autocmds(void)
 {
   // Remember the value of v:termresponse.
-  if (is_autocmd_blocked()) {
+  if (!is_autocmd_blocked()) {
     old_termresponse = get_vim_var_str(VV_TERMRESPONSE);
   }
   autocmd_blocked++;
@@ -1737,7 +1737,7 @@ void unblock_autocmds(void)
   // When v:termresponse was set while autocommands were blocked, trigger
   // the autocommands now.  Esp. useful when executing a shell command
   // during startup (nvim -d).
-  if (is_autocmd_blocked()
+  if (!is_autocmd_blocked()
       && get_vim_var_str(VV_TERMRESPONSE) != old_termresponse) {
     apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, false, curbuf);
   }

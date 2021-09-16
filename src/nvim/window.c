@@ -676,7 +676,7 @@ void win_set_minimal_style(win_T *wp)
   }
 
   // signcolumn: use 'auto'
-  if (wp->w_p_scl[0] != 'a') {
+  if (wp->w_p_scl[0] != 'a' || STRLEN(wp->w_p_scl) >= 8) {
     xfree(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }
@@ -737,6 +737,37 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     redraw_later(wp, NOT_VALID);
   }
 
+  // compute initial position
+  if (wp->w_float_config.relative == kFloatRelativeWindow) {
+    int row = wp->w_float_config.row;
+    int col = wp->w_float_config.col;
+    Error dummy = ERROR_INIT;
+    win_T *parent = find_window_by_handle(wp->w_float_config.window, &dummy);
+    if (parent) {
+      row += parent->w_winrow;
+      col += parent->w_wincol;
+      ScreenGrid *grid = &parent->w_grid;
+      int row_off = 0, col_off = 0;
+      screen_adjust_grid(&grid, &row_off, &col_off);
+      row += row_off;
+      col += col_off;
+    }
+    api_clear_error(&dummy);
+    if (wp->w_float_config.bufpos.lnum >= 0) {
+      pos_T pos = { wp->w_float_config.bufpos.lnum + 1,
+        wp->w_float_config.bufpos.col, 0 };
+      int trow, tcol, tcolc, tcole;
+      textpos2screenpos(wp, &pos, &trow, &tcol, &tcolc, &tcole, true);
+      row += trow - 1;
+      col += tcol - 1;
+    }
+    wp->w_winrow = row;
+    wp->w_wincol = col;
+  } else {
+    wp->w_winrow = fconfig.row;
+    wp->w_wincol = fconfig.col;
+  }
+
   // changing border style while keeping border only requires redrawing border
   if (fconfig.border) {
     wp->w_redr_border = true;
@@ -769,7 +800,6 @@ int win_fdccol_count(win_T *wp)
     return fdc[0] - '0';
   }
 }
-
 
 void ui_ext_win_position(win_T *wp)
 {
@@ -817,6 +847,8 @@ void ui_ext_win_position(win_T *wp)
 
       int comp_row = (int)row - (south ? wp->w_height : 0);
       int comp_col = (int)col - (east ? wp->w_width : 0);
+      comp_row += grid->comp_row;
+      comp_col += grid->comp_col;
       comp_row = MAX(MIN(comp_row, Rows-wp->w_height_outer-1), 0);
       comp_col = MAX(MIN(comp_col, Columns-wp->w_width_outer), 0);
       wp->w_winrow = comp_row;
@@ -2702,7 +2734,11 @@ static win_T *win_free_mem(
   // When deleting the current window of another tab page select a new
   // current window.
   if (tp != NULL && win == tp->tp_curwin) {
-    tp->tp_curwin = wp;
+    if (win_valid(tp->tp_prevwin) && tp->tp_prevwin != win) {
+      tp->tp_curwin = tp->tp_prevwin;
+    } else {
+      tp->tp_curwin = tp->tp_firstwin;
+    }
   }
 
   return wp;
