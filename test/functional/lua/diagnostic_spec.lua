@@ -46,6 +46,17 @@ describe('vim.diagnostic', function()
         }
       end
 
+      function make_hint(msg, x1, y1, x2, y2)
+        return {
+          lnum = x1,
+          col = y1,
+          end_lnum = x2,
+          end_col = y2,
+          message = msg,
+          severity = vim.diagnostic.severity.HINT,
+        }
+      end
+
       function count_diagnostics(bufnr, severity, namespace)
         return #vim.diagnostic.get(bufnr, {severity = severity, namespace = namespace})
       end
@@ -441,14 +452,24 @@ describe('vim.diagnostic', function()
     end)
 
     it('returns only requested diagnostics when severity is supplied', function()
-      eq(2, exec_lua [[
+      eq({2, 3, 2}, exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
           make_warning("Warning on Server 1", 1, 1, 2, 5),
           make_information("Ignored information", 1, 1, 2, 5),
+          make_hint("Here's a hint", 1, 1, 2, 5),
         })
 
-        return #vim.diagnostic.get(diagnostic_bufnr, { severity = {min=vim.diagnostic.severity.WARN} })
+        return {
+          #vim.diagnostic.get(diagnostic_bufnr, { severity = {min=vim.diagnostic.severity.WARN} }),
+          #vim.diagnostic.get(diagnostic_bufnr, { severity = {max=vim.diagnostic.severity.WARN} }),
+          #vim.diagnostic.get(diagnostic_bufnr, {
+            severity = {
+              min=vim.diagnostic.severity.INFO,
+              max=vim.diagnostic.severity.WARN,
+            }
+          }),
+        }
       ]])
     end)
 
