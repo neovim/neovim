@@ -1,48 +1,48 @@
 " :help vim.diagnostic
 
-hi DiagnosticError ctermfg=1 guifg=Red
-hi DiagnosticWarn ctermfg=3 guifg=Orange
-hi DiagnosticInfo ctermfg=4 guifg=LightBlue
-hi DiagnosticHint ctermfg=7 guifg=LightGrey
+hi default DiagnosticError ctermfg=1 guifg=Red
+hi default DiagnosticWarn ctermfg=3 guifg=Orange
+hi default DiagnosticInfo ctermfg=4 guifg=LightBlue
+hi default DiagnosticHint ctermfg=7 guifg=LightGrey
 
-hi DiagnosticUnderlineError cterm=underline gui=underline guisp=Red
-hi DiagnosticUnderlineWarn cterm=underline gui=underline guisp=Orange
-hi DiagnosticUnderlineInfo cterm=underline gui=underline guisp=LightBlue
-hi DiagnosticUnderlineHint cterm=underline gui=underline guisp=LightGrey
+hi default DiagnosticUnderlineError cterm=underline gui=underline guisp=Red
+hi default DiagnosticUnderlineWarn cterm=underline gui=underline guisp=Orange
+hi default DiagnosticUnderlineInfo cterm=underline gui=underline guisp=LightBlue
+hi default DiagnosticUnderlineHint cterm=underline gui=underline guisp=LightGrey
 
-hi link DiagnosticVirtualTextError DiagnosticError
-hi link DiagnosticVirtualTextWarn DiagnosticWarn
-hi link DiagnosticVirtualTextInfo DiagnosticInfo
-hi link DiagnosticVirtualTextHint DiagnosticHint
+hi default link DiagnosticVirtualTextError DiagnosticError
+hi default link DiagnosticVirtualTextWarn DiagnosticWarn
+hi default link DiagnosticVirtualTextInfo DiagnosticInfo
+hi default link DiagnosticVirtualTextHint DiagnosticHint
 
-hi link DiagnosticFloatingError DiagnosticError
-hi link DiagnosticFloatingWarn DiagnosticWarn
-hi link DiagnosticFloatingInfo DiagnosticInfo
-hi link DiagnosticFloatingHint DiagnosticHint
+hi default link DiagnosticFloatingError DiagnosticError
+hi default link DiagnosticFloatingWarn DiagnosticWarn
+hi default link DiagnosticFloatingInfo DiagnosticInfo
+hi default link DiagnosticFloatingHint DiagnosticHint
 
-hi link DiagnosticSignError DiagnosticError
-hi link DiagnosticSignWarn DiagnosticWarn
-hi link DiagnosticSignInfo DiagnosticInfo
-hi link DiagnosticSignHint DiagnosticHint
+hi default link DiagnosticSignError DiagnosticError
+hi default link DiagnosticSignWarn DiagnosticWarn
+hi default link DiagnosticSignInfo DiagnosticInfo
+hi default link DiagnosticSignHint DiagnosticHint
 
 " Link LspDiagnostics for backward compatibility
-hi link LspDiagnosticsDefaultHint DiagnosticHint
-hi link LspDiagnosticsVirtualTextHint DiagnosticVirtualTextHint
-hi link LspDiagnosticsFloatingHint DiagnosticFloatingHint
-hi link LspDiagnosticsSignHint DiagnosticSignHint
-hi link LspDiagnosticsDefaultError DiagnosticError
-hi link LspDiagnosticsVirtualTextError DiagnosticVirtualTextError
-hi link LspDiagnosticsFloatingError DiagnosticFloatingError
-hi link LspDiagnosticsSignError DiagnosticSignError
-hi link LspDiagnosticsDefaultWarning DiagnosticWarn
-hi link LspDiagnosticsVirtualTextWarning DiagnosticVirtualTextWarn
-hi link LspDiagnosticsFloatingWarning DiagnosticFloatingWarn
-hi link LspDiagnosticsSignWarning DiagnosticSignWarn
-hi link LspDiagnosticsDefaultInformation DiagnosticInfo
-hi link LspDiagnosticsVirtualTextInformation DiagnosticVirtualTextInfo
-hi link LspDiagnosticsFloatingInformation DiagnosticFloatingInfo
-hi link LspDiagnosticsSignInformation DiagnosticSignInfo
-hi link LspDiagnosticsUnderlineError DiagnosticUnderlineError
-hi link LspDiagnosticsUnderlineWarning DiagnosticUnderlineWarn
-hi link LspDiagnosticsUnderlineInformation DiagnosticUnderlineInfo
-hi link LspDiagnosticsUnderlineHint DiagnosticUnderlineHint
+hi default link LspDiagnosticsDefaultHint DiagnosticHint
+hi default link LspDiagnosticsVirtualTextHint DiagnosticVirtualTextHint
+hi default link LspDiagnosticsFloatingHint DiagnosticFloatingHint
+hi default link LspDiagnosticsSignHint DiagnosticSignHint
+hi default link LspDiagnosticsDefaultError DiagnosticError
+hi default link LspDiagnosticsVirtualTextError DiagnosticVirtualTextError
+hi default link LspDiagnosticsFloatingError DiagnosticFloatingError
+hi default link LspDiagnosticsSignError DiagnosticSignError
+hi default link LspDiagnosticsDefaultWarning DiagnosticWarn
+hi default link LspDiagnosticsVirtualTextWarning DiagnosticVirtualTextWarn
+hi default link LspDiagnosticsFloatingWarning DiagnosticFloatingWarn
+hi default link LspDiagnosticsSignWarning DiagnosticSignWarn
+hi default link LspDiagnosticsDefaultInformation DiagnosticInfo
+hi default link LspDiagnosticsVirtualTextInformation DiagnosticVirtualTextInfo
+hi default link LspDiagnosticsFloatingInformation DiagnosticFloatingInfo
+hi default link LspDiagnosticsSignInformation DiagnosticSignInfo
+hi default link LspDiagnosticsUnderlineError DiagnosticUnderlineError
+hi default link LspDiagnosticsUnderlineWarning DiagnosticUnderlineWarn
+hi default link LspDiagnosticsUnderlineInformation DiagnosticUnderlineInfo
+hi default link LspDiagnosticsUnderlineHint DiagnosticUnderlineHint
