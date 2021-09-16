@@ -79,6 +79,13 @@ end
 function module.neq(expected, actual, context, logfile)
   return dumplog(logfile, assert.are_not.same, expected, actual, context)
 end
+function module.eq_unordered(expected, actual, context, logfile)
+  expected = shared.deepcopy(expected)
+  actual = shared.deepcopy(actual)
+  table.sort(expected)
+  table.sort(actual)
+  return dumplog(logfile, assert.are.same, expected, actual, context)
+end
 function module.ok(res, msg, logfile)
   return dumplog(logfile, assert.is_true, res, msg)
 end

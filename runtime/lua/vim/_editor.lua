@@ -117,8 +117,6 @@ function vim._os_proc_children(ppid)
   return children
 end
 
--- TODO(ZyX-I): Create compatibility layer.
-
 --- Return a human-readable representation of the given object.
 ---
 ---@see https://github.com/kikito/inspect.lua

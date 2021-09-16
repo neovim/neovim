@@ -142,8 +142,8 @@ end
 -- ignore:      List of ignored event names.
 -- seqs:        List of one or more potential event sequences.
 function module.expect_msg_seq(...)
-  if select('#', ...) < 1 then
-    error('need at least 1 argument')
+  if select('#', ...) ~= 1 then
+    error('expected 1 argument')
   end
   local arg1 = select(1, ...)
   if (arg1['seqs'] and select('#', ...) > 1) or type(arg1) ~= 'table'  then
@@ -184,6 +184,10 @@ function module.expect_msg_seq(...)
         table.insert(actual_seq, msg)
       end
     end
+    expected_seq = global_helpers.deepcopy(expected_seq)
+    actual_seq = global_helpers.deepcopy(actual_seq)
+    table.sort(expected_seq, global_helpers.deep_equal)
+    table.sort(actual_seq, global_helpers.deep_equal)
     local status, result = pcall(eq, expected_seq, actual_seq)
     if status then
       return result

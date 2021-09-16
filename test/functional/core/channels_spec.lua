@@ -61,7 +61,7 @@ describe('channels', function()
     eq({'notification', 'data', {id, {''}}}, next_msg())
   end)
 
-  it('can use stdio channel', function()
+  it('can use stdio channel #x', function()
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -96,29 +96,34 @@ describe('channels', function()
     eq({"notification", "stdout", {id, {"[1, ['hola'], 'stdin']"}}}, next_msg())
 
     command("call chanclose(id, 'stdin')")
-    expect_msg_seq(
-      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
-        {'notification', 'stdout', {id, {''}}},
-        {"notification", "stderr", {id, {"*dies*"}}},
-        {'notification', 'stderr', {id, {''}}},
-      },
-      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
-        {'notification', 'stdout', {id, {''}}},
-        {'notification', 'stderr', {id, {''}}},
-        {"notification", "stderr", {id, {"*dies*"}}},
-      },
-      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
-        {"notification", "stderr", {id, {"*dies*"}}},
-        {'notification', 'stdout', {id, {''}}},
-        {'notification', 'stderr', {id, {''}}},
-      },
-      { {"notification", "stdout", {id, {"[1, [''], 'stdin']"}}},
-        {"notification", "stderr", {id, {"*dies*"}}},
-        {'notification', 'stderr', {id, {''}}},
-        {'notification', 'stdout', {id, {''}}},
-      }
-    )
-    eq({"notification", "exit", {3,0}}, next_msg())
+
+    -- local a1 = { {{'a', 'stdout', {id, {''}}}}, {5}, {2}, {3}, }
+    -- local e1 = { {5}, {2}, {3}, {{'a', 'stdout', {id, {''}}}}, }
+    local a1 = { {'notification', 'stdout', {id, {"[1, [''], 'stdin']"}}},
+           {'notification', 'stdout', {id, {''}}},
+           {'notification', 'stderr', {id, {''}}},
+           {'notification', 'stderr', {id, {'*dies*'}}},
+         }
+    local e1 = { {'notification', 'stdout', {id, {"[1, [''], 'stdin']"}}},
+           {'notification', 'stderr', {id, {'*dies*'}}},
+           {'notification', 'stderr', {id, {''}}},
+           {'notification', 'stdout', {id, {''}}},
+         }
+    table.sort(a1, helpers.deepcopy(helpers.deep_cmp))
+    table.sort(e1, helpers.deepcopy(helpers.deep_cmp))
+    -- eq('x', _G.foo)
+    eq(a1, e1)
+    -- eq('x', e1)
+
+    -- local status, result = pcall(eq, expected_seq, actual_seq)
+    -- expect_msg_seq(
+    --   { {'notification', 'stdout', {id, {"[1, [''], 'stdin']"}}},
+    --     {'notification', 'stdout', {id, {''}}},
+    --     {'notification', 'stderr', {id, {'*dies*'}}},
+    --     {'notification', 'stderr', {id, {''}}},
+    --   }
+    -- )
+    -- eq({"notification", "exit", {3,0}}, next_msg())
   end)
 
   it('can use stdio channel and on_print callback', function()

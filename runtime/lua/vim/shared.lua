@@ -303,9 +303,8 @@ function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
 end
 
---- Deep compare values for equality
+--- Compare objects recursively (or as defined by `eq` metamethods on any objects in the tree).
 ---
---- Tables are compared recursively unless they both provide the `eq` methamethod.
 --- All other types are compared using the equality `==` operator.
 ---@param a first value
 ---@param b second value
@@ -327,6 +326,79 @@ function vim.deep_equal(a, b)
     return true
   end
   return false
+end
+
+_G.foo = {}
+
+--- Compare objects recursively (decided by `eq` metamethods on objects in the tree).
+---
+--- Conforms to the table.sort() contract (for ascending order): `return left < right`.
+---
+--- All other types are compared using the equality `==` operator.
+---@param a first value
+---@param b second value
+---@returns ternary=false: `true` if a<b, else `false`
+---         ternary=true:  0 if values are equal, 1 if a>b or type(a)>type(b), -1 if a<b or type(a)<type(b)
+function vim.deep_cmp(a, b, ternary)
+  -- local af = vim.tbl_flatten(a)
+  -- local bf = vim.tbl_flatten(b)
+  local astr = require'vim.inspect'(a)
+  local bstr = require'vim.inspect'(b)
+  return astr < bstr
+end
+
+-- credit: https://stackoverflow.com/a/25976660
+function vim.deep_cmp2(table1, table2)
+   local avoid_loops = {}
+   local function recurse(t1, t2)
+      -- compare value types
+      if type(t1) ~= type(t2) then return false end
+      -- Base case: compare simple values
+      if type(t1) ~= "table" then return t1 == t2 end
+      -- Now, on to tables.
+      -- First, let's avoid looping forever.
+      if avoid_loops[t1] then return avoid_loops[t1] == t2 end
+      avoid_loops[t1] = t2
+      -- Copy keys from t2
+      local t2keys = {}
+      local t2tablekeys = {}
+      for k, _ in pairs(t2) do
+         if type(k) == "table" then table.insert(t2tablekeys, k) end
+         t2keys[k] = true
+      end
+      -- Let's iterate keys from t1
+      for k1, v1 in pairs(t1) do
+         local v2 = t2[k1]
+         if type(k1) == "table" then
+            -- if key is a table, we need to find an equivalent one.
+            local ok = false
+            for i, tk in ipairs(t2tablekeys) do
+               if table_eq(k1, tk) and recurse(v1, t2[tk]) then
+                  table.remove(t2tablekeys, i)
+                  t2keys[tk] = nil
+                  ok = true
+                  break
+               end
+            end
+            if not ok then return false end
+         else
+            -- t1 has a key which t2 doesn't have, fail.
+            if v2 == nil then return false end
+            t2keys[k1] = nil
+            if not recurse(v1, v2) then return false end
+         end
+      end
+      -- if t2 has a key which t1 doesn't have, fail.
+      if next(t2keys) then return false end
+      return true
+   end
+   return recurse(table1, table2)
+end
+
+
+
+function vim.deepsort(t)
+  return module:DeepSort(t)
 end
 
 --- Add the reverse lookup values to an existing table.
