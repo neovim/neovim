@@ -4,7 +4,6 @@ local command = helpers.command
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
-local retry = helpers.retry
 local nvim = helpers.nvim
 
 describe('vim.lsp.diagnostic', function()
