@@ -2274,6 +2274,7 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
           = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
     }
     to->vval.v_blob->bv_ga.ga_len = len;
+    to->vval.v_blob->bv_ga.ga_maxlen = len;
   }
 }
 
