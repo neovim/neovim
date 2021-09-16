@@ -624,44 +624,14 @@ local next_diagnostic = function(position, search_forward, bufnr, opts, namespac
 end
 
 ---@private
-local function diagnostic_pos(opts, diagnostic)
-  opts = opts or {}
-
-  local win_id = opts.win_id or vim.api.nvim_get_current_win()
-  local bufnr = vim.api.nvim_win_get_buf(win_id)
-
-  if not diagnostic then
-    return false
-  end
-
-  local lnum, col = diagnostic.lnum, diagnostic.col
-  if col > 0 then
-    if not vim.api.nvim_buf_is_loaded(bufnr) then
-      vim.fn.bufload(bufnr)
-    end
-
-    local line = vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
-    if line then
-      local ok, result = pcall(vim.str_byteindex, line, col)
-
-      if ok then
-        col = result
-      end
-    end
-  end
-
-  return {lnum, col}
-end
-
----@private
-local function diagnostic_move_pos(name, opts, pos)
+local function diagnostic_move_pos(opts, pos)
   opts = opts or {}
 
   local enable_popup = vim.F.if_nil(opts.enable_popup, true)
   local win_id = opts.win_id or vim.api.nvim_get_current_win()
 
   if not pos then
-    print(string.format("%s: No more valid diagnostics to move to.", name))
+    vim.api.nvim_echo({"No more valid diagnostics to move to", "WarningMsg"})
     return
   end
 
@@ -694,17 +664,18 @@ end
 ---@param opts table See |vim.diagnostic.goto_next()|
 ---@return table Previous diagnostic position as a (row, col) tuple.
 function M.get_prev_pos(opts)
-  return diagnostic_pos(
-    opts,
-    M.get_prev(opts)
-  )
+  local prev = M.get_prev(opts)
+  if not prev then
+    return false
+  end
+
+  return {prev.lnum, prev.col}
 end
 
 --- Move to the previous diagnostic in the current buffer.
 ---@param opts table See |vim.diagnostic.goto_next()|
 function M.goto_prev(opts)
   return diagnostic_move_pos(
-    "DiagnosticPrevious",
     opts,
     M.get_prev_pos(opts)
   )
@@ -729,10 +700,12 @@ end
 ---@param opts table See |vim.diagnostic.goto_next()|
 ---@return table Next diagnostic position as a (row, col) tuple.
 function M.get_next_pos(opts)
-  return diagnostic_pos(
-    opts,
-    M.get_next(opts)
-  )
+  local next = M.get_next(opts)
+  if not next then
+    return false
+  end
+
+  return {next.lnum, next.col}
 end
 
 --- Move to the next diagnostic.
@@ -750,7 +723,6 @@ end
 ---         - win_id: (number, default 0) Window ID
 function M.goto_next(opts)
   return diagnostic_move_pos(
-    "DiagnosticNext",
     opts,
     M.get_next_pos(opts)
   )
