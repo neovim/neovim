@@ -462,7 +462,7 @@ end
 ---             - priority: Set the priority of the signs.
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
-function M.set_signs(diagnostics, bufnr, client_id, sign_ns, opts)
+function M.set_signs(diagnostics, bufnr, client_id, _, opts)
   local namespace = M.get_namespace(client_id)
   if opts and not opts.severity and opts.severity_limit then
     opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
@@ -494,7 +494,7 @@ end
 ---@param opts table: Configuration table:
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
-function M.set_underline(diagnostics, bufnr, client_id, diagnostic_ns, opts)
+function M.set_underline(diagnostics, bufnr, client_id, _, opts)
   local namespace = M.get_namespace(client_id)
   if opts and not opts.severity and opts.severity_limit then
     opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
@@ -524,7 +524,7 @@ end
 ---             - spacing (number): Number of spaces to insert before virtual text
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
-function M.set_virtual_text(diagnostics, bufnr, client_id, diagnostic_ns, opts)
+function M.set_virtual_text(diagnostics, bufnr, client_id, _, opts)
   local namespace = M.get_namespace(client_id)
   if opts and not opts.severity and opts.severity_limit then
     opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
@@ -542,7 +542,7 @@ end
 ---@param opts table See {opts} from |vim.lsp.diagnostic.set_virtual_text()|
 ---@return an array of [text, hl_group] arrays. This can be passed directly to
 ---        the {virt_text} option of |nvim_buf_set_extmark()|.
-function M.get_virtual_text_chunks_for_line(bufnr, line, line_diags, opts)
+function M.get_virtual_text_chunks_for_line(bufnr, _, line_diags, opts)
   return vim.diagnostic.get_virt_text_chunks(diagnostic_lsp_to_vim(line_diags, bufnr), opts)
 end
 
