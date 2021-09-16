@@ -210,10 +210,16 @@ local function response_to_list(map_result, entity)
     else
       config = config or {}
       if config.loclist then
-        util.set_loclist(map_result(result, ctx.bufnr))
+        vim.fn.setloclist(0, {}, ' ', {
+          title = 'Language Server';
+          items = map_result(result, ctx.bufnr);
+        })
         api.nvim_command("lopen")
       else
-        util.set_qflist(map_result(result, ctx.bufnr))
+        vim.fn.setqflist({}, ' ', {
+          title = 'Language Server';
+          items = map_result(result, ctx.bufnr);
+        })
         api.nvim_command("copen")
       end
     end

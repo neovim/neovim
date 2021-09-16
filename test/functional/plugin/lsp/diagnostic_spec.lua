@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local command = helpers.command
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
@@ -9,7 +10,10 @@ describe('vim.lsp.diagnostic', function()
   local fake_uri
 
   before_each(function()
-    clear()
+    clear {env={
+      NVIM_LUA_NOTRACK="1";
+      VIMRUNTIME=os.getenv"VIMRUNTIME";
+    }}
 
     exec_lua [[
       require('vim.lsp')
@@ -44,7 +48,7 @@ describe('vim.lsp.diagnostic', function()
 
       count_of_extmarks_for_client = function(bufnr, client_id)
         return #vim.api.nvim_buf_get_extmarks(
-          bufnr, vim.lsp.diagnostic._get_diagnostic_namespace(client_id), 0, -1, {}
+          bufnr, vim.lsp.diagnostic.get_namespace(client_id), 0, -1, {}
         )
       end
     ]]
@@ -85,39 +89,6 @@ describe('vim.lsp.diagnostic', function()
         eq(2, #result)
         eq(2, #result[1])
         eq('Diagnostic #1', result[1][1].message)
-      end)
-      it('Can convert diagnostic to quickfix items format', function()
-        local bufnr = exec_lua([[
-          local fake_uri = ...
-          return vim.uri_to_bufnr(fake_uri)
-        ]], fake_uri)
-        local result = exec_lua([[
-          local bufnr = ...
-          vim.lsp.diagnostic.save(
-            {
-              make_error('Diagnostic #1', 1, 1, 1, 1),
-              make_error('Diagnostic #2', 2, 1, 2, 1),
-            }, bufnr, 1
-          )
-          return vim.lsp.util.diagnostics_to_items(vim.lsp.diagnostic.get_all())
-        ]], bufnr)
-        local expected = {
-          {
-            bufnr = bufnr,
-            col = 2,
-            lnum = 2,
-            text = 'Diagnostic #1',
-            type = 'E'
-          },
-          {
-            bufnr = bufnr,
-            col = 2,
-            lnum = 3,
-            text = 'Diagnostic #2',
-            type = 'E'
-          },
-        }
-        eq(expected, result)
       end)
       it('should be able to save and count a single client error', function()
         eq(1, exec_lua [[
@@ -218,7 +189,7 @@ describe('vim.lsp.diagnostic', function()
 
         -- Clear diagnostics from server 1, and make sure we have the right amount of stuff for client 2
         eq({1, 1, 2, 0, 2}, exec_lua [[
-          vim.lsp.diagnostic.clear(diagnostic_bufnr, 1)
+          vim.lsp.diagnostic.disable(diagnostic_bufnr, 1)
           return {
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", 2),
@@ -230,7 +201,7 @@ describe('vim.lsp.diagnostic', function()
 
         -- Show diagnostics from server 1 again
         eq(all_highlights, exec_lua([[
-          vim.lsp.diagnostic.display(nil, diagnostic_bufnr, 1)
+          vim.lsp.diagnostic.enable(diagnostic_bufnr, 1)
           return {
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Error", 1),
             vim.lsp.diagnostic.get_count(diagnostic_bufnr, "Warning", 2),
@@ -575,10 +546,10 @@ describe('vim.lsp.diagnostic', function()
         })
 
         -- Count how many times we call display.
-        SetVirtualTextOriginal = vim.lsp.diagnostic.set_virtual_text
+        SetVirtualTextOriginal = vim.diagnostic._set_virtual_text
 
         DisplayCount = 0
-        vim.lsp.diagnostic.set_virtual_text = function(...)
+        vim.diagnostic._set_virtual_text = function(...)
           DisplayCount = DisplayCount + 1
           return SetVirtualTextOriginal(...)
         end
@@ -719,7 +690,7 @@ describe('vim.lsp.diagnostic', function()
 
         return vim.api.nvim_buf_get_extmarks(
           diagnostic_bufnr,
-          vim.lsp.diagnostic._get_diagnostic_namespace(1),
+          vim.lsp.diagnostic.get_namespace(1),
           0,
           -1,
           { details = true }
@@ -756,7 +727,7 @@ describe('vim.lsp.diagnostic', function()
 
         return vim.api.nvim_buf_get_extmarks(
           diagnostic_bufnr,
-          vim.lsp.diagnostic._get_diagnostic_namespace(1),
+          vim.lsp.diagnostic.get_namespace(1),
           0,
           -1,
           { details = true }
@@ -797,6 +768,40 @@ describe('vim.lsp.diagnostic', function()
       -- But now we don't filter it
       eq(1, get_extmark_count_with_severity("Warning"))
       eq(1, get_extmark_count_with_severity("Hint"))
+    end)
+
+    it('correctly handles UTF-16 offsets', function()
+      local line = "All 💼 and no 🎉 makes Jack a dull 👦"
+      local result = exec_lua([[
+        local line = ...
+        local client_id = vim.lsp.start_client {
+          cmd_env = {
+            NVIM_LUA_NOTRACK = "1";
+          };
+          cmd = {
+            vim.v.progpath, '-es', '-u', 'NONE', '--headless'
+          };
+          offset_encoding = "utf-16";
+        }
+
+        vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, -1, false, {line})
+
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+            uri = fake_uri,
+            diagnostics = {
+              make_error('UTF-16 Diagnostic', 0, 7, 0, 8),
+            }
+          }, {client_id=client_id}
+        )
+
+        local diags = vim.diagnostic.get(diagnostic_bufnr)
+        vim.lsp.stop_client(client_id)
+        vim.lsp._vim_exit_handler()
+        return diags
+      ]], line)
+      eq(1, #result)
+      eq(exec_lua([[return vim.str_byteindex(..., 7, true)]], line), result[1].col)
+      eq(exec_lua([[return vim.str_byteindex(..., 8, true)]], line), result[1].end_col)
     end)
   end)
 
@@ -940,4 +945,31 @@ describe('vim.lsp.diagnostic', function()
       assert(loc_list[1].lnum < loc_list[2].lnum)
     end)
   end)
+
+  it('highlight groups', function()
+    command('runtime plugin/diagnostic.vim')
+    eq({
+      'LspDiagnosticsDefaultError',
+      'LspDiagnosticsDefaultHint',
+      'LspDiagnosticsDefaultInformation',
+      'LspDiagnosticsDefaultWarning',
+      'LspDiagnosticsFloatingError',
+      'LspDiagnosticsFloatingHint',
+      'LspDiagnosticsFloatingInformation',
+      'LspDiagnosticsFloatingWarning',
+      'LspDiagnosticsSignError',
+      'LspDiagnosticsSignHint',
+      'LspDiagnosticsSignInformation',
+      'LspDiagnosticsSignWarning',
+      'LspDiagnosticsUnderlineError',
+      'LspDiagnosticsUnderlineHint',
+      'LspDiagnosticsUnderlineInformation',
+      'LspDiagnosticsUnderlineWarning',
+      'LspDiagnosticsVirtualTextError',
+      'LspDiagnosticsVirtualTextHint',
+      'LspDiagnosticsVirtualTextInformation',
+      'LspDiagnosticsVirtualTextWarning',
+    }, exec_lua([[return vim.fn.getcompletion('Lsp', 'highlight')]]))
+  end)
+
 end)

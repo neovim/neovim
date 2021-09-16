@@ -263,6 +263,8 @@ Number; !must be defined to function properly):
 - `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
   suite run is killed
 
+- `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
+
 - `NVIM_PROG`, `NVIM_PRG` (F) (S): override path to Neovim executable (default
   to `build/bin/nvim`).
 

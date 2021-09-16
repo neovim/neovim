@@ -1,0 +1,48 @@
+" :help vim.diagnostic
+
+hi DiagnosticError ctermfg=1 guifg=Red
+hi DiagnosticWarn ctermfg=3 guifg=Orange
+hi DiagnosticInfo ctermfg=4 guifg=LightBlue
+hi DiagnosticHint ctermfg=7 guifg=LightGrey
+
+hi DiagnosticUnderlineError cterm=underline gui=underline guisp=Red
+hi DiagnosticUnderlineWarn cterm=underline gui=underline guisp=Orange
+hi DiagnosticUnderlineInfo cterm=underline gui=underline guisp=LightBlue
+hi DiagnosticUnderlineHint cterm=underline gui=underline guisp=LightGrey
+
+hi link DiagnosticVirtualTextError DiagnosticError
+hi link DiagnosticVirtualTextWarn DiagnosticWarn
+hi link DiagnosticVirtualTextInfo DiagnosticInfo
+hi link DiagnosticVirtualTextHint DiagnosticHint
+
+hi link DiagnosticFloatingError DiagnosticError
+hi link DiagnosticFloatingWarn DiagnosticWarn
+hi link DiagnosticFloatingInfo DiagnosticInfo
+hi link DiagnosticFloatingHint DiagnosticHint
+
+hi link DiagnosticSignError DiagnosticError
+hi link DiagnosticSignWarn DiagnosticWarn
+hi link DiagnosticSignInfo DiagnosticInfo
+hi link DiagnosticSignHint DiagnosticHint
+
+" Link LspDiagnostics for backward compatibility
+hi link LspDiagnosticsDefaultHint DiagnosticHint
+hi link LspDiagnosticsVirtualTextHint DiagnosticVirtualTextHint
+hi link LspDiagnosticsFloatingHint DiagnosticFloatingHint
+hi link LspDiagnosticsSignHint DiagnosticSignHint
+hi link LspDiagnosticsDefaultError DiagnosticError
+hi link LspDiagnosticsVirtualTextError DiagnosticVirtualTextError
+hi link LspDiagnosticsFloatingError DiagnosticFloatingError
+hi link LspDiagnosticsSignError DiagnosticSignError
+hi link LspDiagnosticsDefaultWarning DiagnosticWarn
+hi link LspDiagnosticsVirtualTextWarning DiagnosticVirtualTextWarn
+hi link LspDiagnosticsFloatingWarning DiagnosticFloatingWarn
+hi link LspDiagnosticsSignWarning DiagnosticSignWarn
+hi link LspDiagnosticsDefaultInformation DiagnosticInfo
+hi link LspDiagnosticsVirtualTextInformation DiagnosticVirtualTextInfo
+hi link LspDiagnosticsFloatingInformation DiagnosticFloatingInfo
+hi link LspDiagnosticsSignInformation DiagnosticSignInfo
+hi link LspDiagnosticsUnderlineError DiagnosticUnderlineError
+hi link LspDiagnosticsUnderlineWarning DiagnosticUnderlineWarn
+hi link LspDiagnosticsUnderlineInformation DiagnosticUnderlineInfo
+hi link LspDiagnosticsUnderlineHint DiagnosticUnderlineHint
