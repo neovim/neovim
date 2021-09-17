@@ -9,7 +9,7 @@ local feed = helpers.feed
 local map = helpers.tbl_map
 local nvim = helpers.nvim
 local parse_context = helpers.parse_context
-local redir_exec = helpers.redir_exec
+local exec_capture = helpers.exec_capture
 local source = helpers.source
 local trim = helpers.trim
 local write_file = helpers.write_file
@@ -163,33 +163,29 @@ describe('context functions', function()
       endfunction
       ]])
 
-      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
-      eq('\nHello, World!'..
+      eq('Hello, World!', exec_capture([[call Greet('World')]]))
+      eq('Hello, World!'..
          '\nHello, One!'..
          '\nHello, Two!'..
          '\nHello, Three!',
-         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+         exec_capture([[call GreetAll('World', 'One', 'Two', 'Three')]]))
 
       call('SaveSFuncs')
       call('DeleteSFuncs')
 
-      eq('\nError detected while processing function Greet:'..
-         '\nline    1:'..
-         '\nE117: Unknown function: s:greet',
-         redir_exec([[call Greet('World')]]))
-      eq('\nError detected while processing function GreetAll:'..
-         '\nline    1:'..
-         '\nE117: Unknown function: s:greet_all',
-         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+      eq('Vim(call):E117: Unknown function: s:greet',
+         pcall_err(command, [[call Greet('World')]]))
+      eq('Vim(call):E117: Unknown function: s:greet_all',
+         pcall_err(command, [[call GreetAll('World', 'One', 'Two', 'Three')]]))
 
       call('RestoreFuncs')
 
-      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
-      eq('\nHello, World!'..
+      eq('Hello, World!', exec_capture([[call Greet('World')]]))
+      eq('Hello, World!'..
          '\nHello, One!'..
          '\nHello, Two!'..
          '\nHello, Three!',
-         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+         exec_capture([[call GreetAll('World', 'One', 'Two', 'Three')]]))
     end)
 
     it('saves and restores functions properly', function()
@@ -206,12 +202,12 @@ describe('context functions', function()
       endfunction
       ]])
 
-      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
-      eq('\nHello, World!'..
+      eq('Hello, World!', exec_capture([[call Greet('World')]]))
+      eq('Hello, World!'..
          '\nHello, One!'..
          '\nHello, Two!'..
          '\nHello, Three!',
-         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+         exec_capture([[call GreetAll('World', 'One', 'Two', 'Three')]]))
 
       call('ctxpush', {'funcs'})
       command('delfunction Greet')
@@ -223,12 +219,12 @@ describe('context functions', function()
 
       call('ctxpop')
 
-      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
-      eq('\nHello, World!'..
+      eq('Hello, World!', exec_capture([[call Greet('World')]]))
+      eq('Hello, World!'..
          '\nHello, One!'..
          '\nHello, Two!'..
          '\nHello, Three!',
-         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+         exec_capture([[call GreetAll('World', 'One', 'Two', 'Three')]]))
     end)
 
     it('errors out when context stack is empty', function()

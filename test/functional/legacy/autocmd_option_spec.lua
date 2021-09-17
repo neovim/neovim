@@ -3,7 +3,7 @@ local nvim = helpers.meths
 local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local curbuf, buf = helpers.curbuf, helpers.bufmeths
 local curwin = helpers.curwin
-local redir_exec = helpers.redir_exec
+local exec_capture = helpers.exec_capture
 local source, command = helpers.source, helpers.command
 
 local function declare_hook_function()
@@ -102,13 +102,13 @@ local function get_new_window_number()
   local old_win = curwin()
   command('botright new')
   local new_win = curwin()
-  local new_winnr = redir_exec('echo winnr()')
+  local new_winnr = exec_capture('echo winnr()')
   command('wincmd p') -- move previous window
 
   neq(old_win, new_win)
   eq(old_win, curwin())
 
-  return new_winnr:gsub('\n', '')
+  return new_winnr
 end
 
 describe('au OptionSet', function()

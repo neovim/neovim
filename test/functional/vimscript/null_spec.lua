@@ -1,13 +1,25 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local curbufmeths = helpers.curbufmeths
-local redir_exec = helpers.redir_exec
 local exc_exec = helpers.exc_exec
 local command = helpers.command
 local clear = helpers.clear
 local meths = helpers.meths
 local funcs = helpers.funcs
 local eq = helpers.eq
+
+local function redir_exec(cmd)
+  meths.set_var('__redir_exec_cmd', cmd)
+  command([[
+    redir => g:__redir_exec_output
+      silent! execute g:__redir_exec_cmd
+    redir END
+  ]])
+  local ret = meths.get_var('__redir_exec_output')
+  meths.del_var('__redir_exec_output')
+  meths.del_var('__redir_exec_cmd')
+  return ret
+end
 
 describe('NULL', function()
   before_each(function()

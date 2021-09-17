@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, funcs, curbufmeths, eq =
   helpers.command, helpers.funcs,
   helpers.curbufmeths, helpers.eq
-local exc_exec, redir_exec = helpers.exc_exec, helpers.redir_exec
+local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear, get_shada_rw =
@@ -910,14 +910,13 @@ describe('ShaDa jumps support code', function()
            .. '\008\007\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'f\161l\002')
     eq(0, exc_exec(sdrcmd()))
     eq('', curbufmeths.get_name())
-    eq('\n'
-       .. ' jump line  col file/text\n'
+    eq(   ' jump line  col file/text\n'
        .. '   5     2    0 ' .. mock_file_path .. 'c\n'
        .. '   4     2    0 ' .. mock_file_path .. 'd\n'
        .. '   3     3    0 ' .. mock_file_path .. 'd\n'
        .. '   2     2    0 ' .. mock_file_path .. 'e\n'
        .. '   1     2    0 ' .. mock_file_path .. 'f\n'
-       .. '>', redir_exec('jumps'))
+       .. '>', exec_capture('jumps'))
   end)
 
   it('merges jumps when writing', function()
@@ -1001,14 +1000,13 @@ describe('ShaDa changes support code', function()
            .. '\011\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\005'
            .. '\011\008\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\004')
     eq(0, exc_exec(sdrcmd()))
-    eq('\n'
-       .. 'change line  col text\n'
+    eq(   'change line  col text\n'
        .. '    5     1    0 0\n'
        .. '    4     2    0 1\n'
        .. '    3     5    0 4\n'
        .. '    2     3    0 2\n'
        .. '    1     4    0 3\n'
-       .. '>', redir_exec('changes'))
+       .. '>', exec_capture('changes'))
   end)
 
   it('merges changes when writing', function()

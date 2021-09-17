@@ -3,7 +3,6 @@ local eq = helpers.eq
 local eval = helpers.eval
 local clear = helpers.clear
 local source = helpers.source
-local redir_exec = helpers.redir_exec
 local exc_exec = helpers.exc_exec
 local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
@@ -15,7 +14,14 @@ describe('execute()', function()
   before_each(clear)
 
   it('captures the same result as :redir', function()
-    eq(redir_exec('messages'), funcs.execute('messages'))
+    command([[
+      echomsg 'foo 1'
+      echomsg 'foo 2'
+      redir => g:__redir_output
+        silent! messages
+      redir END
+    ]])
+    eq(eval('g:__redir_output'), funcs.execute('messages'))
   end)
 
   it('captures the concatenated outputs of a List of commands', function()
