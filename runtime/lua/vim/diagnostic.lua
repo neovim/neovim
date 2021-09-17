@@ -452,7 +452,9 @@ end
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
----                         which signs and virtual text are displayed. Options:
+---                         which signs and virtual text are displayed. When true, higher severities
+---                         are displayed before lower severities (e.g. ERROR is displayed before WARN).
+---                         Options:
 ---                         * reverse: (boolean) Reverse sort order
 ---@param namespace number|nil Update the options for the given namespace. When omitted, update the
 ---                            global diagnostic options.
@@ -998,9 +1000,9 @@ function M.show(namespace, bufnr, diagnostics, opts)
 
   if vim.F.if_nil(opts.severity_sort, false) then
     if type(opts.severity_sort) == "table" and opts.severity_sort.reverse then
-      table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
-    else
       table.sort(diagnostics, function(a, b) return a.severity < b.severity end)
+    else
+      table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
     end
   end
 
