@@ -1,32 +1,40 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
-local eq = helpers.eq
 local expect = helpers.expect
 local funcs = helpers.funcs
+local eq = helpers.eq
 
-describe('insert-mode', function()
+describe('meta-keys #8226 #13042', function()
   before_each(function()
     clear()
   end)
 
-  it('CTRL-@', function()
-    -- Inserts last-inserted text, leaves insert-mode.
+  it('ALT/META, normal-mode', function()
+    -- Unmapped ALT-chords behave as ESC+c
     insert('hello')
-    feed('i<C-@>x')
-    expect('hellhello')
-
-    -- C-Space is the same as C-@.
-    -- CTRL-SPC inserts last-inserted text, leaves insert-mode.
-    feed('i<C-Space>x')
-    expect('hellhellhello')
-
-    -- CTRL-A inserts last inserted text
-    feed('i<C-A>x')
-    expect('hellhellhellhelloxo')
+    feed('0<A-x><M-x>')
+    expect('llo')
+    -- Mapped ALT-chord behaves as mapped.
+    command('nnoremap <M-l> Ameta-l<Esc>')
+    command('nnoremap <A-j> Aalt-j<Esc>')
+    feed('<A-j><M-l>')
+    expect('lloalt-jmeta-l')
   end)
 
-  it('ALT/META #8213', function()
+  it('ALT/META, visual-mode', function()
+    -- Unmapped ALT-chords behave as ESC+c
+    insert('peaches')
+    feed('viw<A-x>viw<M-x>')
+    expect('peach')
+    -- Mapped ALT-chord behaves as mapped.
+    command('vnoremap <M-l> Ameta-l<Esc>')
+    command('vnoremap <A-j> Aalt-j<Esc>')
+    feed('viw<A-j>viw<M-l>')
+    expect('peachalt-jmeta-l')
+  end)
+
+  it('ALT/META insert-mode', function()
     -- Mapped ALT-chord behaves as mapped.
     command('inoremap <M-l> meta-l')
     command('inoremap <A-j> alt-j')

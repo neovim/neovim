@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, eval, eq = helpers.clear, helpers.eval, helpers.eq
 local exc_exec, source = helpers.exc_exec, helpers.source
 
-describe('viml', function()
+describe('vimscript', function()
   before_each(clear)
 
   it('parses `<SID>` with turkish locale', function()
