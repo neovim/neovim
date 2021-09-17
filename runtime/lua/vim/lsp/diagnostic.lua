@@ -265,7 +265,7 @@ function M.get(bufnr, client_id, predicate)
         table.insert(all_diagnostics, diagnostic)
       end
     end)
-    return diagnostic_vim_to_lsp(all_diagnostics)
+    return all_diagnostics
   end
 
   local namespace = M.get_namespace(client_id)
