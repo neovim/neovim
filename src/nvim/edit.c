@@ -4128,6 +4128,8 @@ static int ins_compl_get_exp(pos_T *ini)
   int dict_f = 0;
   bool set_match_pos;
   int l_ctrl_x_mode = ctrl_x_mode;
+  pos_T prev_pos = {0, 0, 0};
+  int looped_around = FALSE;
 
   assert(curbuf != NULL);
 
@@ -4365,6 +4367,7 @@ static int ins_compl_get_exp(pos_T *ini)
       } else if (*e_cpt == '.') {
         p_ws = true;
       }
+      looped_around = FALSE;
       for (;; ) {
         bool cont_s_ipos = false;
 
@@ -4394,6 +4397,27 @@ static int ins_compl_get_exp(pos_T *ini)
                    && first_match_pos.col == last_match_pos.col) {
           found_new_match = FAIL;
         }
+        else if ((compl_direction == FORWARD)
+                && (prev_pos.lnum > pos->lnum
+                    || (prev_pos.lnum == pos->lnum
+                        && prev_pos.col >= pos->col)))
+        {
+            if (looped_around)
+                found_new_match = FAIL;
+           else
+                looped_around = TRUE;
+        }
+        else if ((compl_direction != FORWARD)
+                && (prev_pos.lnum < pos->lnum
+                   || (prev_pos.lnum == pos->lnum
+                        && prev_pos.col <= pos->col)))
+        {
+            if (looped_around)
+                found_new_match = FAIL;
+            else
+                looped_around = TRUE;
+        }
+        prev_pos = *pos;
         if (found_new_match == FAIL) {
           if (ins_buf == curbuf) {
             found_all = true;
