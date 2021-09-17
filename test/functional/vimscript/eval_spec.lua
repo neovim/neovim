@@ -1,3 +1,9 @@
+-- Tests for core Vimscript "eval" behavior.
+--
+-- Tests for the Vimscript |functions| library should live in:
+--    test/functional/vimscript/<funcname>_spec.lua
+--    test/functional/vimscript/functions_spec.lua
+
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
