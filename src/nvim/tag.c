@@ -1467,6 +1467,7 @@ find_tags(
 
   help_save = curbuf->b_help;
   orgpat.pat = pat;
+  orgpat.regmatch.regprog = NULL;
   vimconv.vc_type = CONV_NONE;
 
   /*

@@ -120,7 +120,8 @@ char_u *get_function_name(expand_T *xp, int idx)
   if (intidx < 0) {
     name = get_user_func_name(xp, idx);
     if (name != NULL) {
-      if (*name != '<' && STRNCMP("g:", xp->xp_pattern, 2) == 0) {
+      if (*name != NUL && *name != '<'
+          && STRNCMP("g:", xp->xp_pattern, 2) == 0) {
         return cat_prefix_varname('g', name);
       }
       return name;

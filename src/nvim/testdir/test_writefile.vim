@@ -191,6 +191,14 @@ func Test_saveas()
   close!
   enew | only
   call delete('Xfile')
+
+  " :saveas should detect and set the file type.
+  syntax on
+  saveas! Xsaveas.pl
+  call assert_equal('perl', &filetype)
+  syntax off
+  %bw!
+  call delete('Xsaveas.pl')
 endfunc
 
 func Test_write_errors()
