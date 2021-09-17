@@ -826,7 +826,14 @@ func s:InstallCommands()
   command Winbar call s:InstallWinbar()
 
   if !exists('g:termdebug_map_K') || g:termdebug_map_K
-    let s:k_map_saved = maparg('K', 'n', 0, 1)
+    " let s:k_map_saved = maparg('K', 'n', 0, 1)
+    let s:k_map_saved = {}
+    for map in nvim_get_keymap('n')
+      if map.lhs ==# 'K'
+        let s:k_map_saved = map
+        break
+      endif
+    endfor
     nnoremap K :Evaluate<CR>
   endif
 
@@ -870,7 +877,15 @@ func s:DeleteCommands()
     if empty(s:k_map_saved)
       nunmap K
     else
-      call mapset('n', 0, s:k_map_saved)
+      " call mapset('n', 0, s:k_map_saved)
+      let mode = s:k_map_saved.mode !=# ' ' ? s:k_map_saved.mode : ''
+      call nvim_set_keymap(mode, 'K', s:k_map_saved.rhs, {
+        \ 'expr': s:k_map_saved.expr ? v:true : v:false,
+        \ 'noremap': s:k_map_saved.noremap ? v:true : v:false,
+        \ 'nowait': s:k_map_saved.nowait ? v:true : v:false,
+        \ 'script': s:k_map_saved.script ? v:true : v:false,
+        \ 'silent': s:k_map_saved.silent ? v:true : v:false,
+        \ })
     endif
     unlet s:k_map_saved
   endif
