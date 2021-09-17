@@ -12495,7 +12495,7 @@ Command-line expressions highlighting		*expr-highlight*
 
 Expressions entered by the user in |i_CTRL-R_=|, |c_CTRL-\_e|, |quote=| are
 highlighted by the built-in expressions parser.  It uses highlight groups
-described in the table below, which may be overriden by colorschemes.
+described in the table below, which may be overridden by colorschemes.
 							*hl-NvimInvalid*
 Besides the "Nvim"-prefixed highlight groups described below, there are
 "NvimInvalid"-prefixed highlight groups which have the same meaning but
