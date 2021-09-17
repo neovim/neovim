@@ -6221,23 +6221,19 @@ static void set_clipboard(int name, yankreg_T *reg)
 
   char regtype;
   switch (reg->y_type) {
-  case kMTLineWise: {
+  case kMTLineWise:
     regtype = 'V';
     tv_list_append_string(lines, NULL, 0);
     break;
-  }
-  case kMTCharWise: {
+  case kMTCharWise:
     regtype = 'v';
     break;
-  }
-  case kMTBlockWise: {
+  case kMTBlockWise:
     regtype = 'b';
     tv_list_append_string(lines, NULL, 0);
     break;
-  }
-  case kMTUnknown: {
+  case kMTUnknown:
     abort();
-  }
   }
 
   list_T *args = tv_list_alloc(3);

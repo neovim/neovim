@@ -101,20 +101,17 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
       *cur.aobj = NIL;
     }
     switch (cur.mobj->type) {
-    case MSGPACK_OBJECT_NIL: {
+    case MSGPACK_OBJECT_NIL:
       break;
-    }
-    case MSGPACK_OBJECT_BOOLEAN: {
+    case MSGPACK_OBJECT_BOOLEAN:
       *cur.aobj = BOOLEAN_OBJ(cur.mobj->via.boolean);
       break;
-    }
-    case MSGPACK_OBJECT_NEGATIVE_INTEGER: {
+    case MSGPACK_OBJECT_NEGATIVE_INTEGER:
       STATIC_ASSERT(sizeof(Integer) == sizeof(cur.mobj->via.i64),
                     "Msgpack integer size does not match API integer");
       *cur.aobj = INTEGER_OBJ(cur.mobj->via.i64);
       break;
-    }
-    case MSGPACK_OBJECT_POSITIVE_INTEGER: {
+    case MSGPACK_OBJECT_POSITIVE_INTEGER:
       STATIC_ASSERT(sizeof(Integer) == sizeof(cur.mobj->via.u64),
                     "Msgpack integer size does not match API integer");
       if (cur.mobj->via.u64 > API_INTEGER_MAX) {
@@ -123,7 +120,6 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         *cur.aobj = INTEGER_OBJ((Integer)cur.mobj->via.u64);
       }
       break;
-    }
 #ifdef NVIM_MSGPACK_HAS_FLOAT32
     case MSGPACK_OBJECT_FLOAT32:
     case MSGPACK_OBJECT_FLOAT64:
@@ -205,10 +201,9 @@ case type: { \
 #endif
           case MSGPACK_OBJECT_EXT:
           case MSGPACK_OBJECT_MAP:
-          case MSGPACK_OBJECT_ARRAY: {
+          case MSGPACK_OBJECT_ARRAY:
             ret = false;
             break;
-          }
           }
           if (ret) {
             kvi_push(stack, ((MPToAPIObjectStackItem) {
@@ -231,23 +226,20 @@ case type: { \
       }
       break;
     }
-    case MSGPACK_OBJECT_EXT: {
+    case MSGPACK_OBJECT_EXT:
       switch ((ObjectType)(cur.mobj->via.ext.type + EXT_OBJECT_TYPE_SHIFT)) {
-      case kObjectTypeBuffer: {
+      case kObjectTypeBuffer:
         cur.aobj->type = kObjectTypeBuffer;
         ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.integer);
         break;
-      }
-      case kObjectTypeWindow: {
+      case kObjectTypeWindow:
         cur.aobj->type = kObjectTypeWindow;
         ret = msgpack_rpc_to_window(cur.mobj, &cur.aobj->data.integer);
         break;
-      }
-      case kObjectTypeTabpage: {
+      case kObjectTypeTabpage:
         cur.aobj->type = kObjectTypeTabpage;
         ret = msgpack_rpc_to_tabpage(cur.mobj, &cur.aobj->data.integer);
         break;
-      }
       case kObjectTypeNil:
       case kObjectTypeBoolean:
       case kObjectTypeInteger:
@@ -255,12 +247,10 @@ case type: { \
       case kObjectTypeString:
       case kObjectTypeArray:
       case kObjectTypeDictionary:
-      case kObjectTypeLuaRef: {
+      case kObjectTypeLuaRef:
         break;
       }
-      }
       break;
-    }
 #undef STR_CASE
     }
     if (!cur.container) {
@@ -385,41 +375,33 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
                   "Buffer, window and tabpage enum items are in order");
     switch (cur.aobj->type) {
     case kObjectTypeNil:
-    case kObjectTypeLuaRef: {
+    case kObjectTypeLuaRef:
       // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
       // should only appear when the caller has opted in to handle references,
       // see nlua_pop_Object.
       msgpack_pack_nil(res);
       break;
-    }
-    case kObjectTypeBoolean: {
+    case kObjectTypeBoolean:
       msgpack_rpc_from_boolean(cur.aobj->data.boolean, res);
       break;
-    }
-    case kObjectTypeInteger: {
+    case kObjectTypeInteger:
       msgpack_rpc_from_integer(cur.aobj->data.integer, res);
       break;
-    }
-    case kObjectTypeFloat: {
+    case kObjectTypeFloat:
       msgpack_rpc_from_float(cur.aobj->data.floating, res);
       break;
-    }
-    case kObjectTypeString: {
+    case kObjectTypeString:
       msgpack_rpc_from_string(cur.aobj->data.string, res);
       break;
-    }
-    case kObjectTypeBuffer: {
+    case kObjectTypeBuffer:
       msgpack_rpc_from_buffer(cur.aobj->data.integer, res);
       break;
-    }
-    case kObjectTypeWindow: {
+    case kObjectTypeWindow:
       msgpack_rpc_from_window(cur.aobj->data.integer, res);
       break;
-    }
-    case kObjectTypeTabpage: {
+    case kObjectTypeTabpage:
       msgpack_rpc_from_tabpage(cur.aobj->data.integer, res);
       break;
-    }
     case kObjectTypeArray: {
       const size_t size = cur.aobj->data.array.size;
       if (cur.container) {

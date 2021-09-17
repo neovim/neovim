@@ -2473,9 +2473,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       in_tab_line = true;
       c1 = tab_page_click_defs[mouse_col].tabnr;
       switch (tab_page_click_defs[mouse_col].type) {
-      case kStlClickDisabled: {
+      case kStlClickDisabled:
         break;
-      }
       case kStlClickTabClose: {
         tabpage_T *tp;
 
@@ -2494,7 +2493,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         }
         break;
       }
-      case kStlClickTabSwitch: {
+      case kStlClickTabSwitch:
         if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
           // double click opens new page
           end_visual_mode();
@@ -2511,7 +2510,6 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
           }
         }
         break;
-      }
       case kStlClickFuncRun: {
         typval_T argv[] = {
           {
