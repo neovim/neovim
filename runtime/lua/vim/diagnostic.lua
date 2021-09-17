@@ -136,13 +136,15 @@ local define_default_signs = (function()
     end
 
     for severity, sign_hl_name in pairs(sign_highlight_map) do
-      local severity_name = M.severity[severity]
-      vim.fn.sign_define(sign_hl_name, {
-        text = (severity_name or 'U'):sub(1, 1),
-        texthl = sign_hl_name,
-        linehl = '',
-        numhl = '',
-      })
+      if vim.tbl_isempty(vim.fn.sign_getdefined(sign_hl_name)) then
+        local severity_name = M.severity[severity]
+        vim.fn.sign_define(sign_hl_name, {
+          text = (severity_name or 'U'):sub(1, 1),
+          texthl = sign_hl_name,
+          linehl = '',
+          numhl = '',
+        })
+      end
     end
 
     signs_defined = true
