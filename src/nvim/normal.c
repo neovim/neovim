@@ -8404,13 +8404,13 @@ static void nv_event(cmdarg_T *cap)
   // not safe to perform garbage collection because there could be unreferenced
   // lists or dicts being used.
   may_garbage_collect = false;
-  bool may_restart = (restart_edit != 0);
+  bool may_restart = (restart_edit != 0 || restart_VIsual_select != 0);
   state_handle_k_event();
   finish_op = false;
   if (may_restart) {
     // Tricky: if restart_edit was set before the handler we are in ctrl-o mode,
     // but if not, the event should be allowed to trigger :startinsert.
-    cap->retval |= CA_COMMAND_BUSY;  // don't call edit() now
+    cap->retval |= CA_COMMAND_BUSY;  // don't call edit() or restart Select now
   }
 }
 
