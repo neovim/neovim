@@ -24,25 +24,3 @@ hi default link DiagnosticSignError DiagnosticError
 hi default link DiagnosticSignWarn DiagnosticWarn
 hi default link DiagnosticSignInfo DiagnosticInfo
 hi default link DiagnosticSignHint DiagnosticHint
-
-" Link LspDiagnostics for backward compatibility
-hi default link LspDiagnosticsDefaultHint DiagnosticHint
-hi default link LspDiagnosticsVirtualTextHint DiagnosticVirtualTextHint
-hi default link LspDiagnosticsFloatingHint DiagnosticFloatingHint
-hi default link LspDiagnosticsSignHint DiagnosticSignHint
-hi default link LspDiagnosticsDefaultError DiagnosticError
-hi default link LspDiagnosticsVirtualTextError DiagnosticVirtualTextError
-hi default link LspDiagnosticsFloatingError DiagnosticFloatingError
-hi default link LspDiagnosticsSignError DiagnosticSignError
-hi default link LspDiagnosticsDefaultWarning DiagnosticWarn
-hi default link LspDiagnosticsVirtualTextWarning DiagnosticVirtualTextWarn
-hi default link LspDiagnosticsFloatingWarning DiagnosticFloatingWarn
-hi default link LspDiagnosticsSignWarning DiagnosticSignWarn
-hi default link LspDiagnosticsDefaultInformation DiagnosticInfo
-hi default link LspDiagnosticsVirtualTextInformation DiagnosticVirtualTextInfo
-hi default link LspDiagnosticsFloatingInformation DiagnosticFloatingInfo
-hi default link LspDiagnosticsSignInformation DiagnosticSignInfo
-hi default link LspDiagnosticsUnderlineError DiagnosticUnderlineError
-hi default link LspDiagnosticsUnderlineWarning DiagnosticUnderlineWarn
-hi default link LspDiagnosticsUnderlineInformation DiagnosticUnderlineInfo
-hi default link LspDiagnosticsUnderlineHint DiagnosticUnderlineHint
