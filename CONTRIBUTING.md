@@ -95,7 +95,7 @@ the VCS/git logs more valuable. The general structure of a commit message is:
     - You can **ignore this for "fixup" commits** or any commits you expect to be squashed.
 - Append optional scope to _type_ such as `(lsp)`, `(treesitter)`, `(float)`, …
 - _Description_ shouldn't start with a capital letter or end in a period.
-- Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
+- Use the _imperative mood_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 - Try to keep the first line under 72 characters.
 - A blank line must follow the subject.
 - Breaking API changes must be indicated by
