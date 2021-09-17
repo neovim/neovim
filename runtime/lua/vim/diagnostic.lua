@@ -523,7 +523,7 @@ end
 
 --- Get current diagnostics.
 ---
----@param bufnr number|nil Buffer number to get diagnistics from. Use 0 for
+---@param bufnr number|nil Buffer number to get diagnostics from. Use 0 for
 ---                        current buffer or nil for all buffers.
 ---@param opts table|nil A table with the following keys:
 ---                        - namespace: (number) Limit diagnostics to the given namespace.
@@ -1001,7 +1001,7 @@ end
 --- Open a floating window with the diagnostics at the given position.
 ---
 ---@param opts table|nil Configuration table with the same keys as
----            |vim.lsp.util.open_floatin_preview()| in addition to the following:
+---            |vim.lsp.util.open_floating_preview()| in addition to the following:
 ---            - namespace: (number) Limit diagnostics to the given namespace
 ---            - severity: See |diagnostic-severity|.
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
@@ -1049,7 +1049,7 @@ function M.show_line_diagnostics(opts, bufnr, lnum)
 
   opts = opts or {}
   opts.focus_id = "line_diagnostics"
-  opts.lnum = lnum
+  opts.lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
   local line_diagnostics = M.get(bufnr, opts)
   return show_diagnostics(opts, line_diagnostics)
 end
