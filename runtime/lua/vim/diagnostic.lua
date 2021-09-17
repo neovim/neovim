@@ -862,7 +862,7 @@ end
 ---@param opts table|nil Configuration table with the following keys:
 ---            - prefix: (string) Prefix to display before virtual text on line.
 ---            - spacing: (number) Number of spaces to insert before virtual text.
----@return an array of [text, hl_group] arrays. This can be passed directly to
+---@return array of ({text}, {hl_group}) tuples. This can be passed directly to
 ---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virt_text_chunks(line_diags, opts)
   if #line_diags == 0 then
@@ -1013,7 +1013,7 @@ end
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param position table|nil The (0,0)-indexed position. Defaults to the current cursor position.
----@return A ({popup_bufnr}, {win_id}) tuple
+---@return tuple ({popup_bufnr}, {win_id})
 function M.show_position_diagnostics(opts, bufnr, position)
   vim.validate {
     opts = { opts, 't', true },
@@ -1045,7 +1045,7 @@ end
 ---@param opts table Configuration table. See |vim.diagnostic.show_position_diagnostics()|.
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param lnum number|nil Line number. Defaults to line number of cursor.
----@return A ({popup_bufnr}, {win_id}) tuple
+---@return tuple ({popup_bufnr}, {win_id})
 function M.show_line_diagnostics(opts, bufnr, lnum)
   vim.validate {
     opts = { opts, 't', true },

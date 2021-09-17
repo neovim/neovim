@@ -254,7 +254,7 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                 Get current diagnostics.
 
                 Parameters: ~
-                    {bufnr}  number|nil Buffer number to get diagnistics from.
+                    {bufnr}  number|nil Buffer number to get diagnostics from.
                              Use 0 for current buffer or nil for all buffers.
                     {opts}   table|nil A table with the following keys:
                              • namespace: (number) Limit diagnostics to the
@@ -320,7 +320,7 @@ get_virt_text_chunks({line_diags}, {opts})
                                     insert before virtual text.
 
                 Return: ~
-                    an array of [text, hl_group] arrays. This can be passed
+                    array of ({text}, {hl_group}) tuples. This can be passed
                     directly to the {virt_text} option of
                     |nvim_buf_set_extmark()|.
 
@@ -456,7 +456,7 @@ show_line_diagnostics({opts}, {bufnr}, {lnum})
                              of cursor.
 
                 Return: ~
-                    A ({popup_bufnr}, {win_id}) tuple
+                    tuple ({popup_bufnr}, {win_id})
 
                                   *vim.diagnostic.show_position_diagnostics()*
 show_position_diagnostics({opts}, {bufnr}, {position})
@@ -465,7 +465,7 @@ show_position_diagnostics({opts}, {bufnr}, {position})
 
                 Parameters: ~
                     {opts}      table|nil Configuration table with the same
-                                keys as |vim.lsp.util.open_floatin_preview()|
+                                keys as |vim.lsp.util.open_floating_preview()|
                                 in addition to the following:
                                 • namespace: (number) Limit diagnostics to the
                                   given namespace
@@ -478,6 +478,6 @@ show_position_diagnostics({opts}, {bufnr}, {position})
                                 to the current cursor position.
 
                 Return: ~
-                    A ({popup_bufnr}, {win_id}) tuple
+                    tuple ({popup_bufnr}, {win_id})
 
  vim:tw=78:ts=8:ft=help:norl:
