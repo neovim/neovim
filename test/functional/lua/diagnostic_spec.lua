@@ -35,7 +35,7 @@ describe('vim.diagnostic', function()
         }
       end
 
-      function make_information(msg, x1, y1, x2, y2)
+      function make_info(msg, x1, y1, x2, y2)
         return {
           lnum = x1,
           col = y1,
@@ -456,7 +456,7 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
           make_warning("Warning on Server 1", 1, 1, 2, 5),
-          make_information("Ignored information", 1, 1, 2, 5),
+          make_info("Ignored information", 1, 1, 2, 5),
           make_hint("Here's a hint", 1, 1, 2, 5),
         })
 
@@ -478,7 +478,7 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
           make_warning("Warning on Server 1", 1, 1, 2, 5),
-          make_information("Ignored information", 1, 1, 2, 5),
+          make_info("Ignored information", 1, 1, 2, 5),
           make_error("Error On Other Line", 2, 1, 1, 5),
         })
 
@@ -537,6 +537,47 @@ describe('vim.diagnostic', function()
       -- But now we don't filter it
       eq(1, get_extmark_count_with_severity("WARN"))
       eq(1, get_extmark_count_with_severity("HINT"))
+    end)
+
+    it('allows sorting by severity', function()
+      local result = exec_lua([[
+        vim.diagnostic.config({
+          underline = true,
+          virtual_text = false,
+          severity_sort = false,
+        })
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_warning('Warning', 4, 4, 4, 4),
+          make_error('Error', 4, 4, 4, 4),
+          make_info('Info', 4, 4, 4, 4),
+        })
+
+        local extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+
+        local warn_highlight = extmarks[1][4].hl_group
+
+        vim.diagnostic.config({
+          severity_sort = true,
+        })
+
+        extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+
+        local err_highlight = extmarks[1][4].hl_group
+
+        vim.diagnostic.config({
+          severity_sort = { reverse = true },
+        })
+
+        extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+
+        local info_highlight = extmarks[1][4].hl_group
+
+        return { warn_highlight, err_highlight, info_highlight }
+      ]])
+      eq('DiagnosticUnderlineWarn', result[1])
+      eq('DiagnosticUnderlineError', result[2])
+      eq('DiagnosticUnderlineInfo', result[3])
     end)
   end)
 

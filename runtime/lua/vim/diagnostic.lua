@@ -136,13 +136,15 @@ local define_default_signs = (function()
     end
 
     for severity, sign_hl_name in pairs(sign_highlight_map) do
-      local severity_name = M.severity[severity]
-      vim.fn.sign_define(sign_hl_name, {
-        text = (severity_name or 'U'):sub(1, 1),
-        texthl = sign_hl_name,
-        linehl = '',
-        numhl = '',
-      })
+      if vim.tbl_isempty(vim.fn.sign_getdefined(sign_hl_name)) then
+        local severity_name = M.severity[severity]
+        vim.fn.sign_define(sign_hl_name, {
+          text = (severity_name or 'U'):sub(1, 1),
+          texthl = sign_hl_name,
+          linehl = '',
+          numhl = '',
+        })
+      end
     end
 
     signs_defined = true
@@ -408,7 +410,11 @@ local function set_list(loclist, opts)
   local open = vim.F.if_nil(opts.open, true)
   local title = opts.title or "Diagnostics"
   local winnr = opts.winnr or 0
-  local diagnostics = M.get(loclist and vim.api.nvim_win_get_buf(winnr), opts)
+  local bufnr
+  if loclist then
+    bufnr = vim.api.nvim_win_get_buf(winnr)
+  end
+  local diagnostics = M.get(bufnr, opts)
   local items = diagnostics_to_list_items(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
@@ -434,13 +440,20 @@ end
 ---         - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 ---
 ---@param opts table Configuration table with the following keys:
----       - underline: (default true) Use underline for diagnostics
----       - virtual_text: (default true) Use virtual text for diagnostics
----       - signs: (default true) Use signs for diagnostics
+---       - underline: (default true) Use underline for diagnostics. Options:
+---                    * severity: Only underline diagnostics matching the given severity
+---                    |diagnostic-severity|
+---       - virtual_text: (default true) Use virtual text for diagnostics. Options:
+---                       * severity: Only show virtual text for diagnostics matching the given
+---                       severity |diagnostic-severity|
+---       - signs: (default true) Use signs for diagnostics. Options:
+---                * severity: Only show signs for diagnostics matching the given severity
+---                |diagnostic-severity|
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
----                         which signs and virtual text are displayed
+---                         which signs and virtual text are displayed. Options:
+---                         * reverse: (boolean) Reverse sort order
 ---@param namespace number|nil Update the options for the given namespace. When omitted, update the
 ---                            global diagnostic options.
 function M.config(opts, namespace)
@@ -856,7 +869,7 @@ end
 ---@param opts table|nil Configuration table with the following keys:
 ---            - prefix: (string) Prefix to display before virtual text on line.
 ---            - spacing: (number) Number of spaces to insert before virtual text.
----@return an array of [text, hl_group] arrays. This can be passed directly to
+---@return array of ({text}, {hl_group}) tuples. This can be passed directly to
 ---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virt_text_chunks(line_diags, opts)
   if #line_diags == 0 then
@@ -983,6 +996,14 @@ function M.show(namespace, bufnr, diagnostics, opts)
     end
   end
 
+  if vim.F.if_nil(opts.severity_sort, false) then
+    if type(opts.severity_sort) == "table" and opts.severity_sort.reverse then
+      table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
+    else
+      table.sort(diagnostics, function(a, b) return a.severity < b.severity end)
+    end
+  end
+
   if opts.underline then
     M._set_underline(namespace, bufnr, diagnostics, opts.underline)
   end
@@ -1007,7 +1028,7 @@ end
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param position table|nil The (0,0)-indexed position. Defaults to the current cursor position.
----@return A ({popup_bufnr}, {win_id}) tuple
+---@return tuple ({popup_bufnr}, {win_id})
 function M.show_position_diagnostics(opts, bufnr, position)
   vim.validate {
     opts = { opts, 't', true },
@@ -1039,7 +1060,7 @@ end
 ---@param opts table Configuration table. See |vim.diagnostic.show_position_diagnostics()|.
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param lnum number|nil Line number. Defaults to line number of cursor.
----@return A ({popup_bufnr}, {win_id}) tuple
+---@return tuple ({popup_bufnr}, {win_id})
 function M.show_line_diagnostics(opts, bufnr, lnum)
   vim.validate {
     opts = { opts, 't', true },
