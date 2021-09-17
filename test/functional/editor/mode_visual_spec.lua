@@ -1,3 +1,5 @@
+-- Visual-mode tests.
+
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
@@ -6,10 +8,10 @@ local expect = helpers.expect
 local feed = helpers.feed
 local meths = helpers.meths
 
-describe('select-mode Ctrl-O', function()
+describe('visual-mode', function()
   before_each(clear)
 
-  it("doesn't cancel Ctrl-O mode when processing event", function()
+  it("select-mode Ctrl-O doesn't cancel Ctrl-O mode when processing event #15688", function()
     feed('iHello World<esc>gh<c-o>')
     eq({mode='vs', blocking=false}, meths.get_mode()) -- fast event
     eq(2, eval('1+1'))  -- causes K_EVENT key
@@ -21,3 +23,4 @@ describe('select-mode Ctrl-O', function()
     expect('h') -- selection is the whole line and is replaced
   end)
 end)
+
