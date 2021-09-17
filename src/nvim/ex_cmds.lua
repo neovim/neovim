@@ -3271,7 +3271,7 @@ module.cmds = {
   },
   {
     command='z',
-    flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, FLAGS, TRLBAR, CMDWIN),
+    flags=bit.bor(RANGE, WHOLEFOLD, BANG, EXTRA, FLAGS, TRLBAR, CMDWIN),
     addr_type='ADDR_LINES',
     func='ex_z',
   },

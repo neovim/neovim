@@ -3088,7 +3088,7 @@ void ex_z(exarg_T *eap)
   // Vi compatible: ":z!" uses display height, without a count uses
   // 'scroll'
   if (eap->forceit) {
-    bigness = curwin->w_height_inner;
+    bigness = Rows - 1;
   } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
   } else {

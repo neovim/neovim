@@ -3230,7 +3230,7 @@ const char * set_one_cmd_context(expand_T *xp, const char *buff)
         }
       }
     }
-    // Check for user names
+    // Check for user names.
     if (*xp->xp_pattern == '~') {
       for (p = (const char *)xp->xp_pattern + 1; *p != NUL && *p != '/'; p++) {
       }
