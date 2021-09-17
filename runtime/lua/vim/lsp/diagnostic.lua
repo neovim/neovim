@@ -52,7 +52,7 @@ end
 
 ---@private
 local function line_byte_from_position(lines, lnum, col, offset_encoding)
-  if offset_encoding == "utf-8" then
+  if not lines or offset_encoding == "utf-8" then
     return col
   end
 
@@ -73,7 +73,19 @@ local function get_buf_lines(bufnr)
 
   local filename = vim.api.nvim_buf_get_name(bufnr)
   local f = io.open(filename)
-  local lines = vim.split(f:read("*a"), "\n")
+  if not f then
+    return
+  end
+
+  local content = f:read("*a")
+  if not content then
+    -- Some LSP servers report diagnostics at a directory level, in which case
+    -- io.read() returns nil
+    f:close()
+    return
+  end
+
+  local lines = vim.split(content, "\n")
   f:close()
   return lines
 end
