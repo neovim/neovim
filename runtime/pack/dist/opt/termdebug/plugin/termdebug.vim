@@ -879,7 +879,7 @@ func s:DeleteCommands()
     else
       " call mapset('n', 0, s:k_map_saved)
       let mode = s:k_map_saved.mode !=# ' ' ? s:k_map_saved.mode : ''
-      call nvim_set_keymap('n', 'K', s:k_map_saved.rhs, {
+      call nvim_set_keymap(mode, 'K', s:k_map_saved.rhs, {
         \ 'expr': s:k_map_saved.expr ? v:true : v:false,
         \ 'noremap': s:k_map_saved.noremap ? v:true : v:false,
         \ 'nowait': s:k_map_saved.nowait ? v:true : v:false,
