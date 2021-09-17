@@ -631,7 +631,7 @@ local function diagnostic_move_pos(opts, pos)
   local win_id = opts.win_id or vim.api.nvim_get_current_win()
 
   if not pos then
-    vim.api.nvim_echo({"No more valid diagnostics to move to", "WarningMsg"})
+    vim.api.nvim_echo({{"No more valid diagnostics to move to", "WarningMsg"}}, true, {})
     return
   end
 
