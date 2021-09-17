@@ -5844,21 +5844,21 @@ char_u *get_syntax_name(expand_T *xp, int idx)
   case EXP_SUBCMD:
     return (char_u *)subcommands[idx].name;
   case EXP_CASE: {
-      static char *case_args[] = { "match", "ignore", NULL };
-      return (char_u *)case_args[idx];
-    }
+    static char *case_args[] = { "match", "ignore", NULL };
+    return (char_u *)case_args[idx];
+  }
   case EXP_SPELL: {
-      static char *spell_args[] =
-      { "toplevel", "notoplevel", "default", NULL };
-      return (char_u *)spell_args[idx];
-    }
+    static char *spell_args[] =
+    { "toplevel", "notoplevel", "default", NULL };
+    return (char_u *)spell_args[idx];
+  }
   case EXP_SYNC: {
-      static char *sync_args[] =
-      { "ccomment", "clear", "fromstart",
-        "linebreaks=", "linecont", "lines=", "match",
-        "maxlines=", "minlines=", "region", NULL };
-      return (char_u *)sync_args[idx];
-    }
+    static char *sync_args[] =
+    { "ccomment", "clear", "fromstart",
+      "linebreaks=", "linecont", "lines=", "match",
+      "maxlines=", "minlines=", "region", NULL };
+    return (char_u *)sync_args[idx];
+  }
   }
   return NULL;
 }

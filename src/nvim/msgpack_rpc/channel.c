@@ -1,37 +1,36 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <inttypes.h>
+#include <msgpack.h>
 #include <stdbool.h>
 #include <string.h>
-#include <inttypes.h>
-
 #include <uv.h>
-#include <msgpack.h>
 
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/api/ui.h"
-#include "nvim/channel.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/libuv_process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
-#include "nvim/event/socket.h"
-#include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/memory.h"
+#include "nvim/channel.h"
 #include "nvim/eval.h"
-#include "nvim/os_unix.h"
-#include "nvim/message.h"
-#include "nvim/map.h"
-#include "nvim/log.h"
-#include "nvim/misc1.h"
+#include "nvim/event/libuv_process.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/socket.h"
+#include "nvim/event/wstream.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/map.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/os/input.h"
+#include "nvim/os_unix.h"
 #include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 #define log_client_msg(...)
@@ -102,7 +101,7 @@ bool rpc_send_event(uint64_t id, const char *name, Array args)
 
   if (channel) {
     send_event(channel, name, args);
-  }  else {
+  } else {
     broadcast_event(name, args);
   }
 
@@ -116,10 +115,7 @@ bool rpc_send_event(uint64_t id, const char *name, Array args)
 /// @param args Array with method arguments
 /// @param[out] error True if the return value is an error
 /// @return Whatever the remote method returned
-Object rpc_send_call(uint64_t id,
-                     const char *method_name,
-                     Array args,
-                     Error *err)
+Object rpc_send_call(uint64_t id, const char *method_name, Array args, Error *err)
 {
   Channel *channel = NULL;
 
@@ -206,8 +202,7 @@ void rpc_unsubscribe(uint64_t id, char *event)
   unsubscribe(channel, event);
 }
 
-static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
-                            void *data, bool eof)
+static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data, bool eof)
 {
   Channel *channel = data;
   channel_incref(channel);
@@ -463,10 +458,7 @@ static void send_error(Channel *chan, MessageType type, uint32_t id, char *err)
   api_clear_error(&e);
 }
 
-static void send_request(Channel *channel,
-                         uint32_t id,
-                         const char *name,
-                         Array args)
+static void send_request(Channel *channel, uint32_t id, const char *name, Array args)
 {
   const String method = cstr_as_string((char *)name);
   channel_write(channel, serialize_request(channel->id,
@@ -477,9 +469,7 @@ static void send_request(Channel *channel,
                                            1));
 }
 
-static void send_event(Channel *channel,
-                       const char *name,
-                       Array args)
+static void send_event(Channel *channel, const char *name, Array args)
 {
   const String method = cstr_as_string((char *)name);
   channel_write(channel, serialize_request(channel->id,
@@ -528,9 +518,9 @@ static void unsubscribe(Channel *channel, char *event)
 {
   char *event_string = pmap_get(cstr_t)(&event_strings, event);
   if (!event_string) {
-      WLOG("RPC: ch %" PRIu64 ": tried to unsubscribe unknown event '%s'",
-           channel->id, event);
-      return;
+    WLOG("RPC: ch %" PRIu64 ": tried to unsubscribe unknown event '%s'",
+         channel->id, event);
+    return;
   }
   pmap_del(cstr_t)(channel->rpc.subscribed_events, event_string);
 
@@ -589,10 +579,10 @@ void rpc_free(Channel *channel)
 static bool is_rpc_response(msgpack_object *obj)
 {
   return obj->type == MSGPACK_OBJECT_ARRAY
-      && obj->via.array.size == 4
-      && obj->via.array.ptr[0].type == MSGPACK_OBJECT_POSITIVE_INTEGER
-      && obj->via.array.ptr[0].via.u64 == 1
-      && obj->via.array.ptr[1].type == MSGPACK_OBJECT_POSITIVE_INTEGER;
+         && obj->via.array.size == 4
+         && obj->via.array.ptr[0].type == MSGPACK_OBJECT_POSITIVE_INTEGER
+         && obj->via.array.ptr[0].via.u64 == 1
+         && obj->via.array.ptr[1].type == MSGPACK_OBJECT_POSITIVE_INTEGER;
 }
 
 static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
@@ -634,12 +624,8 @@ static void call_set_error(Channel *channel, char *msg, int loglevel)
   channel_close(channel->id, kChannelPartRpc, NULL);
 }
 
-static WBuffer *serialize_request(uint64_t channel_id,
-                                  uint32_t request_id,
-                                  const String method,
-                                  Array args,
-                                  msgpack_sbuffer *sbuffer,
-                                  size_t refcount)
+static WBuffer *serialize_request(uint64_t channel_id, uint32_t request_id, const String method,
+                                  Array args, msgpack_sbuffer *sbuffer, size_t refcount)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
@@ -654,12 +640,8 @@ static WBuffer *serialize_request(uint64_t channel_id,
   return rv;
 }
 
-static WBuffer *serialize_response(uint64_t channel_id,
-                                   MessageType type,
-                                   uint32_t response_id,
-                                   Error *err,
-                                   Object arg,
-                                   msgpack_sbuffer *sbuffer)
+static WBuffer *serialize_response(uint64_t channel_id, MessageType type, uint32_t response_id,
+                                   Error *err, Object arg, msgpack_sbuffer *sbuffer)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
@@ -733,47 +715,43 @@ static const char *const msgpack_error_messages[] = {
   [MSGPACK_UNPACK_NOMEM_ERROR + MUR_OFF] = "not enough memory",
 };
 
-static void log_server_msg(uint64_t channel_id,
-                           msgpack_sbuffer *packed)
+static void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
   DLOGN("RPC ->ch %" PRIu64 ": ", channel_id);
   const msgpack_unpack_return result =
-      msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
+    msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
   switch (result) {
-    case MSGPACK_UNPACK_SUCCESS: {
-      uint64_t type = unpacked.data.via.array.ptr[0].via.u64;
-      log_lock();
-      FILE *f = open_log_file();
-      fprintf(f, type ? (type == 1 ? RES : NOT) : REQ);
-      log_msg_close(f, unpacked.data);
-      msgpack_unpacked_destroy(&unpacked);
-      break;
-    }
-    case MSGPACK_UNPACK_EXTRA_BYTES:
-    case MSGPACK_UNPACK_CONTINUE:
-    case MSGPACK_UNPACK_PARSE_ERROR:
-    case MSGPACK_UNPACK_NOMEM_ERROR: {
-      log_lock();
-      FILE *f = open_log_file();
-      fprintf(f, ERR);
-      log_msg_close(f, (msgpack_object) {
-          .type = MSGPACK_OBJECT_STR,
-          .via.str = {
-              .ptr = (char *)msgpack_error_messages[result + MUR_OFF],
-              .size = (uint32_t)strlen(
-                  msgpack_error_messages[result + MUR_OFF]),
-          },
+  case MSGPACK_UNPACK_SUCCESS: {
+    uint64_t type = unpacked.data.via.array.ptr[0].via.u64;
+    log_lock();
+    FILE *f = open_log_file();
+    fprintf(f, type ? (type == 1 ? RES : NOT) : REQ);
+    log_msg_close(f, unpacked.data);
+    msgpack_unpacked_destroy(&unpacked);
+    break;
+  }
+  case MSGPACK_UNPACK_EXTRA_BYTES:
+  case MSGPACK_UNPACK_CONTINUE:
+  case MSGPACK_UNPACK_PARSE_ERROR:
+  case MSGPACK_UNPACK_NOMEM_ERROR: {
+    log_lock();
+    FILE *f = open_log_file();
+    fprintf(f, ERR);
+    log_msg_close(f, (msgpack_object) {
+        .type = MSGPACK_OBJECT_STR,
+        .via.str = {
+          .ptr = (char *)msgpack_error_messages[result + MUR_OFF],
+          .size = (uint32_t)strlen(msgpack_error_messages[result + MUR_OFF]),
+        },
       });
-      break;
-    }
+    break;
+  }
   }
 }
 
-static void log_client_msg(uint64_t channel_id,
-                           bool is_request,
-                           msgpack_object msg)
+static void log_client_msg(uint64_t channel_id, bool is_request, msgpack_object msg)
 {
   DLOGN("RPC <-ch %" PRIu64 ": ", channel_id);
   log_lock();

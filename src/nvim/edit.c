@@ -7653,14 +7653,14 @@ int hkmap(int c)
     case ';':
       c = 't'; break;
     default: {
-        static char str[] = "zqbcxlsjphmkwonu ydafe rig";
+      static char str[] = "zqbcxlsjphmkwonu ydafe rig";
 
-        if (c < 'a' || c > 'z') {
-          return c;
-        }
-        c = str[CharOrdLow(c)];
-        break;
+      if (c < 'a' || c > 'z') {
+        return c;
       }
+      c = str[CharOrdLow(c)];
+      break;
+    }
     }
 
     return (int)(CharOrdLow(c) + p_aleph);
