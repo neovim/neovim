@@ -410,7 +410,11 @@ local function set_list(loclist, opts)
   local open = vim.F.if_nil(opts.open, true)
   local title = opts.title or "Diagnostics"
   local winnr = opts.winnr or 0
-  local diagnostics = M.get(loclist and vim.api.nvim_win_get_buf(winnr), opts)
+  local bufnr
+  if loclist then
+    bufnr = vim.api.nvim_win_get_buf(winnr)
+  end
+  local diagnostics = M.get(bufnr, opts)
   local items = diagnostics_to_list_items(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
