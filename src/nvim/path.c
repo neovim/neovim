@@ -1349,11 +1349,11 @@ static int expand_backtick(
   // Create the command: lop off the backticks.
   char_u *cmd = vim_strnsave(pat + 1, STRLEN(pat) - 2);
 
-  if (*cmd == '=')          /* `={expr}`: Expand expression */
-    buffer = eval_to_string(cmd + 1, &p, TRUE);
-  else
-    buffer = get_cmd_output(cmd, NULL,
-        (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
+  if (*cmd == '=') {          // `={expr}`: Expand expression
+    buffer = eval_to_string(cmd + 1, &p, true);
+  } else {
+    buffer = get_cmd_output(cmd, NULL, (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
+  }
   xfree(cmd);
   if (buffer == NULL) {
     return -1;

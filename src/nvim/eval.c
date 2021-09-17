@@ -846,13 +846,13 @@ int skip_expr(char_u **pp)
   return eval1(pp, &rettv, FALSE);
 }
 
-/*
- * Top level evaluation function, returning a string.
- * When "convert" is TRUE convert a List into a sequence of lines and convert
- * a Float to a String.
- * Return pointer to allocated memory, or NULL for failure.
- */
-char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
+/// Top level evaluation function, returning a string.
+///
+/// @param convert  when true convert a List into a sequence of lines and convert
+///                 a Float to a String.
+///
+/// @return         pointer to allocated memory, or NULL for failure.
+char_u *eval_to_string(char_u *arg, char_u **nextcmd, bool convert)
 {
   typval_T tv;
   char *retval;
@@ -8520,7 +8520,7 @@ static char_u *make_expanded_name(const char_u *in_start, char_u *expr_start,
   c1 = *in_end;
   *in_end = NUL;
 
-  temp_result = eval_to_string(expr_start + 1, &nextcmd, FALSE);
+  temp_result = eval_to_string(expr_start + 1, &nextcmd, false);
   if (temp_result != NULL && nextcmd == NULL) {
     retval = xmalloc(STRLEN(temp_result) + (expr_start - in_start)
                      + (in_end - expr_end) + 1);

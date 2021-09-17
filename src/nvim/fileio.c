@@ -5546,7 +5546,7 @@ char_u * file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *all
   char_u *reg_pat;
   const char_u *p;
   int nested = 0;
-  int add_dollar = TRUE;
+  bool add_dollar = true;
 
   if (allow_dirs != NULL) {
     *allow_dirs = FALSE;

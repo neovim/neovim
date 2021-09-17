@@ -765,9 +765,9 @@ char_u *get_expr_line(void)
     return expr_copy;
   }
 
-  ++nested;
-  rv = eval_to_string(expr_copy, NULL, TRUE);
-  --nested;
+  nested++;
+  rv = eval_to_string(expr_copy, NULL, true);
+  nested--;
   xfree(expr_copy);
   return rv;
 }
@@ -1237,16 +1237,14 @@ int insert_reg(int regname, bool literally_arg)
   return retval;
 }
 
-/*
- * Stuff a string into the typeahead buffer, such that edit() will insert it
- * literally ("literally" TRUE) or interpret is as typed characters.
- */
-static void stuffescaped(const char *arg, int literally)
+/// Stuff a string into the typeahead buffer, such that edit() will insert it
+/// literally ("literally" true) or interpret is as typed characters.
+static void stuffescaped(const char *arg, bool literally)
 {
   while (*arg != NUL) {
     // Stuff a sequence of normal ASCII characters, that's fast.  Also
     // stuff K_SPECIAL to get the effect of a special key when "literally"
-    // is TRUE.
+    // is true.
     const char *const start = arg;
     while ((*arg >= ' ' && *arg < DEL) || ((uint8_t)(*arg) == K_SPECIAL
                                            && !literally)) {
@@ -2890,7 +2888,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   int indent;
   int orig_indent = 0;                  // init for gcc
   int indent_diff = 0;                  // init for gcc
-  int first_indent = TRUE;
+  bool first_indent = true;
   int lendiff = 0;
   pos_T old_pos;
   char_u *insert_string = NULL;
@@ -3487,7 +3485,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             } else if (first_indent) {
               indent_diff = orig_indent - get_indent();
               indent = orig_indent;
-              first_indent = FALSE;
+              first_indent = false;
             } else if ((indent = get_indent() + indent_diff) < 0) {
               indent = 0;
             }
