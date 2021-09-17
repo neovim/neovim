@@ -9,6 +9,12 @@ M.severity = {
 
 vim.tbl_add_reverse_lookup(M.severity)
 
+-- Mappings from qflist/loclist error types to severities
+M.severity.E = M.severity.ERROR
+M.severity.W = M.severity.WARN
+M.severity.I = M.severity.INFO
+M.severity.N = M.severity.HINT
+
 local global_diagnostic_options = {
   signs = true,
   underline = true,
@@ -1165,6 +1171,66 @@ function M.enable(bufnr, namespace)
     diagnostic_disabled[bufnr][namespace] = nil
     M.show(namespace, bufnr)
   end
+end
+
+--- Parse a diagnostic from a string.
+---
+--- For example, consider a line of output from a linter:
+--- <pre>
+--- WARNING filename:27:3: Variable 'foo' does not exist
+--- </pre>
+--- This can be parsed into a diagnostic |diagnostic-structure|
+--- with:
+--- <pre>
+--- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+--- local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+--- local groups = {"severity", "lnum", "col", "message"}
+--- vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
+--- </pre>
+---
+---@param str string String to parse diagnostics from.
+---@param pat string Lua pattern with capture groups.
+---@param groups table List of fields in a |diagnostic-structure| to
+---                    associate with captures from {pat}.
+---@param severity_map table A table mapping the severity field from {groups}
+---                          with an item from |vim.diagnostic.severity|.
+---@param defaults table|nil Table of default values for any fields not listed in {groups}.
+---                          When omitted, numeric values default to 0 and "severity" defaults to
+---                          ERROR.
+---@return diagnostic |diagnostic-structure| or `nil` if {pat} fails to match {str}.
+function M.match(str, pat, groups, severity_map, defaults)
+  vim.validate {
+    str = { str, 's' },
+    pat = { pat, 's' },
+    groups = { groups, 't' },
+    severity_map = { severity_map, 't', true },
+    defaults = { defaults, 't', true },
+  }
+
+  severity_map = severity_map or M.severity
+
+  local diagnostic = {}
+  local matches = {string.match(str, pat)}
+  if vim.tbl_isempty(matches) then
+    return
+  end
+
+  for i, match in ipairs(matches) do
+    local field = groups[i]
+    if field == "severity" then
+      match = severity_map[match]
+    elseif field == "lnum" or field == "end_lnum" or field == "col" or field == "end_col" then
+      match = assert(tonumber(match)) - 1
+    end
+    diagnostic[field] = match
+  end
+
+  diagnostic = vim.tbl_extend("keep", diagnostic, defaults or {})
+  diagnostic.severity = diagnostic.severity or M.severity.ERROR
+  diagnostic.col = diagnostic.col or 0
+  diagnostic.end_lnum = diagnostic.end_lnum or diagnostic.lnum
+  diagnostic.end_col = diagnostic.end_col or diagnostic.col
+  return diagnostic
 end
 
 -- }}}

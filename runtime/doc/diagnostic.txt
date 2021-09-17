@@ -384,6 +384,41 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
                     {bufnr}      number|nil Buffer number. Defaults to the
                                  current buffer.
 
+                                                      *vim.diagnostic.match()*
+match({str}, {pat}, {groups}, {severity_map}, {defaults})
+                Parse a diagnostic from a string.
+
+                For example, consider a line of output from a linter: >
+
+                 WARNING filename:27:3: Variable 'foo' does not exist
+
+                < This can be parsed into a diagnostic |diagnostic-structure|
+                with: >
+
+                 local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+                 local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+                 local groups = {"severity", "lnum", "col", "message"}
+                 vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
+<
+
+                Parameters: ~
+                    {str}           string String to parse diagnostics from.
+                    {pat}           string Lua pattern with capture groups.
+                    {groups}        table List of fields in a
+                                    |diagnostic-structure| to associate with
+                                    captures from {pat}.
+                    {severity_map}  table A table mapping the severity field
+                                    from {groups} with an item from
+                                    |vim.diagnostic.severity|.
+                    {defaults}      table|nil Table of default values for any
+                                    fields not listed in {groups}. When
+                                    omitted, numeric values default to 0 and
+                                    "severity" defaults to ERROR.
+
+                Return: ~
+                    diagnostic |diagnostic-structure| or `nil` if {pat} fails
+                    to match {str}.
+
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
                 Remove all diagnostics from the given namespace.
 
