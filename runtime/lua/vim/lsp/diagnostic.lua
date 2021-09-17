@@ -195,10 +195,6 @@ function M.on_publish_diagnostics(_, result, ctx, config)
   local diagnostics = result.diagnostics
 
   if config then
-    if vim.F.if_nil(config.severity_sort, false) then
-      table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
-    end
-
     for _, opt in pairs(config) do
       if type(opt) == 'table' then
         if not opt.severity and opt.severity_limit then

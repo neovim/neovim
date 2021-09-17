@@ -440,13 +440,20 @@ end
 ---         - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 ---
 ---@param opts table Configuration table with the following keys:
----       - underline: (default true) Use underline for diagnostics
----       - virtual_text: (default true) Use virtual text for diagnostics
----       - signs: (default true) Use signs for diagnostics
+---       - underline: (default true) Use underline for diagnostics. Options:
+---                    * severity: Only underline diagnostics matching the given severity
+---                    |diagnostic-severity|
+---       - virtual_text: (default true) Use virtual text for diagnostics. Options:
+---                       * severity: Only show virtual text for diagnostics matching the given
+---                       severity |diagnostic-severity|
+---       - signs: (default true) Use signs for diagnostics. Options:
+---                * severity: Only show signs for diagnostics matching the given severity
+---                |diagnostic-severity|
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
----                         which signs and virtual text are displayed
+---                         which signs and virtual text are displayed. Options:
+---                         * reverse: (boolean) Reverse sort order
 ---@param namespace number|nil Update the options for the given namespace. When omitted, update the
 ---                            global diagnostic options.
 function M.config(opts, namespace)
@@ -986,6 +993,14 @@ function M.show(namespace, bufnr, diagnostics, opts)
     if string.sub(mode.mode, 1, 1) == 'i' then
       schedule_display(namespace, bufnr, opts)
       return
+    end
+  end
+
+  if vim.F.if_nil(opts.severity_sort, false) then
+    if type(opts.severity_sort) == "table" and opts.severity_sort.reverse then
+      table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
+    else
+      table.sort(diagnostics, function(a, b) return a.severity < b.severity end)
     end
   end
 

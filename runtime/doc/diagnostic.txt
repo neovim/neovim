@@ -216,18 +216,31 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                     {opts}       table Configuration table with the following
                                  keys:
                                  • underline: (default true) Use underline for
-                                   diagnostics
+                                   diagnostics. Options:
+                                   • severity: Only underline diagnostics
+                                     matching the given severity
+                                     |diagnostic-severity|
+
                                  • virtual_text: (default true) Use virtual
-                                   text for diagnostics
+                                   text for diagnostics. Options:
+                                   • severity: Only show virtual text for
+                                     diagnostics matching the given severity
+                                     |diagnostic-severity|
+
                                  • signs: (default true) Use signs for
-                                   diagnostics
+                                   diagnostics. Options:
+                                   • severity: Only show signs for diagnostics
+                                     matching the given severity
+                                     |diagnostic-severity|
+
                                  • update_in_insert: (default false) Update
                                    diagnostics in Insert mode (if false,
                                    diagnostics are updated on InsertLeave)
                                  • severity_sort: (default false) Sort
                                    diagnostics by severity. This affects the
                                    order in which signs and virtual text are
-                                   displayed
+                                   displayed. Options:
+                                   • reverse: (boolean) Reverse sort order
                     {namespace}  number|nil Update the options for the given
                                  namespace. When omitted, update the global
                                  diagnostic options.
