@@ -100,10 +100,8 @@ int do_in_path(char_u *path, char_u *name, int flags,
       }
 
       if (name == NULL) {
-        (*callback)(buf, (void *)&cookie);
-        if (!did_one) {
-          did_one = (cookie == NULL);
-        }
+        (*callback)(buf, cookie);
+        did_one = true;
       } else if (buflen + STRLEN(name) + 2 < MAXPATHL) {
         add_pathsep((char *)buf);
         tail = buf + STRLEN(buf);
@@ -122,10 +120,11 @@ int do_in_path(char_u *path, char_u *name, int flags,
             verbose_leave();
           }
 
+          int ew_flags = ((flags & DIP_DIR) ? EW_DIR : EW_FILE)
+                         | (flags & DIP_DIRFILE) ? (EW_DIR|EW_FILE) : 0;
+
           // Expand wildcards, invoke the callback for each match.
-          if (gen_expand_wildcards(1, &buf, &num_files, &files,
-                                   (flags & DIP_DIR) ? EW_DIR : EW_FILE)
-              == OK) {
+          if (gen_expand_wildcards(1, &buf, &num_files, &files, ew_flags) == OK) {
             for (i = 0; i < num_files; i++) {
               (*callback)(files[i], cookie);
               did_one = true;
@@ -169,28 +168,36 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags,
                       DoInRuntimepathCB callback, void *cookie)
 {
   int done = FAIL;
+  if (!(flags & (DIP_NOAFTER | DIP_AFTER))) {
+    done = do_in_path_and_pp(path, name, flags | DIP_NOAFTER, callback, cookie);
+    if (done == OK && !(flags & DIP_ALL)) {
+      return done;
+    }
+    flags |= DIP_AFTER;
+  }
 
   if ((flags & DIP_NORTP) == 0) {
-    done = do_in_path(path, name, flags, callback, cookie);
+    done |= do_in_path(path, (name && !*name) ? NULL : name, flags, callback, cookie);
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
-    char *start_dir = "pack/*/start/*/%s";  // NOLINT
-    size_t len = STRLEN(start_dir) + STRLEN(name);
-    char_u *s = xmallocz(len);
+    char *start_dir = "pack/*/start/*/%s%s";  // NOLINT
+    size_t len = STRLEN(start_dir) + STRLEN(name) + 6;
+    char_u *s = xmallocz(len);  // TODO(bfredl): get rid of random allocations
+    char *suffix = (flags & DIP_AFTER) ? "after/" : "";
 
-    vim_snprintf((char *)s, len, start_dir, name);
-    done = do_in_path(p_pp, s, flags, callback, cookie);
+    vim_snprintf((char *)s, len, start_dir, suffix, name);
+    done |= do_in_path(p_pp, s, flags & ~DIP_AFTER, callback, cookie);
 
     xfree(s);
 
-    if (done == FAIL|| (flags & DIP_ALL)) {
-      start_dir = "start/*/%s";  // NOLINT
-      len = STRLEN(start_dir) + STRLEN(name);
+    if (done == FAIL || (flags & DIP_ALL)) {
+      start_dir = "start/*/%s%s";  // NOLINT
+      len = STRLEN(start_dir) + STRLEN(name) + 6;
       s = xmallocz(len);
 
-      vim_snprintf((char *)s, len, start_dir, name);
-      done = do_in_path(p_pp, s, flags, callback, cookie);
+      vim_snprintf((char *)s, len, start_dir, suffix, name);
+      done |= do_in_path(p_pp, s, flags & ~DIP_AFTER, callback, cookie);
 
       xfree(s);
     }
@@ -202,7 +209,7 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags,
     char_u *s = xmallocz(len);
 
     vim_snprintf((char *)s, len, opt_dir, name);
-    done = do_in_path(p_pp, s, flags, callback, cookie);
+    done |= do_in_path(p_pp, s, flags, callback, cookie);
 
     xfree(s);
 
@@ -212,7 +219,7 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags,
       s = xmallocz(len);
 
       vim_snprintf((char *)s, len, opt_dir, name);
-      done = do_in_path(p_pp, s, flags, callback, cookie);
+      done |= do_in_path(p_pp, s, flags, callback, cookie);
 
       xfree(s);
     }
@@ -222,10 +229,9 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags,
 }
 
 /// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
-int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
-                      void *cookie)
+int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {
-  return do_in_path_and_pp(p_rtp, name, flags, callback, cookie);
+  return do_in_path_and_pp(p_rtp, name, flags | DIP_START, callback, cookie);
 }
 
 /// Source the file "name" from all directories in 'runtimepath'.
@@ -481,15 +487,6 @@ static void add_opt_pack_plugin(char_u *fname, void *cookie)
   add_pack_plugin(true, fname, cookie);
 }
 
-/// Add all packages in the "start" directory to 'runtimepath'.
-void add_pack_start_dirs(void)
-{
-  do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_start_pack_plugin, &APP_ADD_DIR);
-  do_in_path(p_pp, (char_u *)"start/*", DIP_ALL + DIP_DIR,  // NOLINT
-             add_start_pack_plugin, &APP_ADD_DIR);
-}
-
 /// Load plugins from all packages in the "start" directory.
 void load_start_packages(void)
 {
@@ -508,7 +505,6 @@ void ex_packloadall(exarg_T *eap)
     // First do a round to add all directories to 'runtimepath', then load
     // the plugins. This allows for plugins to use an autoload directory
     // of another plugin.
-    add_pack_start_dirs();
     load_start_packages();
   }
 }

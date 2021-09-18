@@ -102,7 +102,7 @@ func Test_pack_in_rtp_when_plugins_run()
   if RunVim(before, after, '')
 
     let lines = filter(readfile('Xtestout'), '!empty(v:val)')
-    call assert_match('Xhere[/\\]pack[/\\]foo[/\\]start[/\\]foobar', get(lines, 0))
+    call assert_match('runtimepath=Xhere', get(lines, 0))
     call assert_match('autoloaded foo', get(lines, 1))
   endif
 
