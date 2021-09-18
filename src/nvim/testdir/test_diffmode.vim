@@ -965,6 +965,30 @@ func Test_diff_screen()
   call delete('XdiffSetup')
 endfunc
 
+func Test_diff_with_scroll_and_change()
+  CheckScreendump
+
+  let lines =<< trim END
+	call setline(1, range(1, 15))
+	vnew
+	call setline(1, range(9, 15))
+	windo diffthis
+	wincmd h
+	exe "normal Gl5\<C-E>"
+  END
+  call writefile(lines, 'Xtest_scroll_change')
+  let buf = RunVimInTerminal('-S Xtest_scroll_change', {})
+
+  call VerifyScreenDump(buf, 'Test_diff_scroll_change_01', {})
+
+  call term_sendkeys(buf, "ax\<Esc>")
+  call VerifyScreenDump(buf, 'Test_diff_scroll_change_02', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_scroll_change')
+endfunc
+
 func Test_diff_with_cursorline()
   CheckScreendump
 

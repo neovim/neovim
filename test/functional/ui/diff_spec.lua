@@ -1128,3 +1128,72 @@ it('diff updates line numbers below filler lines', function()
       signcolumn=auto                       |
   ]]}
 end)
+
+it('Align the filler lines when changing text in diff mode', function()
+  clear()
+  local screen = Screen.new(40, 20)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray};
+    [2] = {background = Screen.colors.LightCyan, foreground = Screen.colors.Blue1, bold = true};
+    [3] = {reverse = true};
+    [4] = {background = Screen.colors.LightBlue};
+    [5] = {background = Screen.colors.LightMagenta};
+    [6] = {background = Screen.colors.Red, bold = true};
+    [7] = {foreground = Screen.colors.Blue1, bold = true};
+    [8] = {reverse = true, bold = true};
+  })
+  source([[
+    call setline(1, range(1, 15))
+    vnew
+    call setline(1, range(9, 15))
+    windo diffthis
+    wincmd h
+    exe "normal Gl5\<C-E>"
+  ]])
+  screen:expect{grid=[[
+    {1:  }{2:------------------}{3:│}{1:  }{4:6                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:7                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:8                }|
+    {1:  }9                 {3:│}{1:  }9                |
+    {1:  }10                {3:│}{1:  }10               |
+    {1:  }11                {3:│}{1:  }11               |
+    {1:  }12                {3:│}{1:  }12               |
+    {1:  }13                {3:│}{1:  }13               |
+    {1:  }14                {3:│}{1:  }14               |
+    {1:- }1^5                {3:│}{1:- }15               |
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {8:[No Name] [+]        }{3:[No Name] [+]      }|
+                                            |
+  ]]}
+  feed('ax<Esc>')
+  screen:expect{grid=[[
+    {1:  }{2:------------------}{3:│}{1:  }{4:6                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:7                }|
+    {1:  }{2:------------------}{3:│}{1:  }{4:8                }|
+    {1:  }9                 {3:│}{1:  }9                |
+    {1:  }10                {3:│}{1:  }10               |
+    {1:  }11                {3:│}{1:  }11               |
+    {1:  }12                {3:│}{1:  }12               |
+    {1:  }13                {3:│}{1:  }13               |
+    {1:  }14                {3:│}{1:  }14               |
+    {1:  }{5:15}{6:^x}{5:               }{3:│}{1:  }{5:15               }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {7:~                   }{3:│}{7:~                  }|
+    {8:[No Name] [+]        }{3:[No Name] [+]      }|
+                                            |
+  ]]}
+end)

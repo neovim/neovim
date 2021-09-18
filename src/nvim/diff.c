@@ -639,12 +639,18 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 /// @param dofold Also recompute the folds
 void diff_redraw(bool dofold)
 {
+  win_T *wp_other = NULL;
+  bool used_max_fill = false;
+
   need_diff_redraw = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (!wp->w_p_diff) {
       continue;
     }
     redraw_later(wp, SOME_VALID);
+    if (wp != curwin) {
+      wp_other = wp;
+    }
     if (dofold && foldmethodIsDiff(wp)) {
       foldUpdateAll(wp);
     }
@@ -658,9 +664,17 @@ void diff_redraw(bool dofold)
         wp->w_topfill = (n < 0 ? 0 : n);
       } else if ((n > 0) && (n > wp->w_topfill)) {
         wp->w_topfill = n;
+        if (wp == curwin) {
+          used_max_fill = true;
+        }
       }
       check_topfill(wp, false);
     }
+  }
+  if (wp_other != NULL && used_max_fill && curwin->w_p_scb) {
+    // The current window was set to used the maximum number of filler
+    // lines, may need to reduce them.
+    diff_set_topline(wp_other, curwin);
   }
 }
 
