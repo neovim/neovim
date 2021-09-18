@@ -1,36 +1,36 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "nvim/lib/queue.h"
-#include "nvim/eval/typval.h"
-#include "nvim/eval/gc.h"
-#include "nvim/eval/executor.h"
-#include "nvim/eval/encode.h"
-#include "nvim/eval/typval_encode.h"
-#include "nvim/eval.h"
-#include "nvim/eval/userfunc.h"
-#include "nvim/lua/executor.h"
-#include "nvim/types.h"
-#include "nvim/assert.h"
-#include "nvim/memory.h"
-#include "nvim/globals.h"
-#include "nvim/hashtab.h"
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/pos.h"
+#include "nvim/assert.h"
 #include "nvim/charset.h"
+#include "nvim/eval.h"
+#include "nvim/eval/encode.h"
+#include "nvim/eval/executor.h"
+#include "nvim/eval/gc.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_encode.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/hashtab.h"
+#include "nvim/lib/queue.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 // TODO(ZyX-I): Move line_breakcheck out of misc1
 #include "nvim/misc1.h"  // For line_breakcheck
 #include "nvim/os/fileio.h"
@@ -71,11 +71,11 @@ void list_write_log(const char *const fname)
       char buf[10 + 1 + ((16 + 3) * 3) + (8 + 2) + 2];
       //       act  :     hex  " c:"      len "[]" "\n\0"
       const ListLogEntry entry = chunk->entries[i];
-      const size_t snp_len = (size_t)snprintf(
-          buf, sizeof(buf),
-          "%-10.10s: l:%016" PRIxPTR "[%08d] 1:%016" PRIxPTR " 2:%016" PRIxPTR
-          "\n",
-          entry.action, entry.l, entry.len, entry.li1, entry.li2);
+      const size_t snp_len = (size_t)snprintf(buf, sizeof(buf),
+                                              "%-10.10s: l:%016" PRIxPTR "[%08d] 1:%016" PRIxPTR " 2:%016" PRIxPTR
+                                              "\n",
+                                              entry.action, entry.l, entry.len, entry.li1,
+                                              entry.li2);
       assert(snp_len + 1 == sizeof(buf));
       const ptrdiff_t fw_ret = file_write(&fp, buf, snp_len);
       if (fw_ret != (ptrdiff_t)snp_len) {
@@ -343,8 +343,7 @@ void tv_list_unref(list_T *const l)
 /// @param[out]  l  List to remove from.
 /// @param[in]  item  First item to remove.
 /// @param[in]  item2  Last item to remove.
-void tv_list_drop_items(list_T *const l, listitem_T *const item,
-                        listitem_T *const item2)
+void tv_list_drop_items(list_T *const l, listitem_T *const item, listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
   list_log(l, item, item2, "drop");
@@ -369,8 +368,7 @@ void tv_list_drop_items(list_T *const l, listitem_T *const item,
 }
 
 /// Like tv_list_drop_items, but also frees all removed items
-void tv_list_remove_items(list_T *const l, listitem_T *const item,
-                          listitem_T *const item2)
+void tv_list_remove_items(list_T *const l, listitem_T *const item, listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
   list_log(l, item, item2, "remove");
@@ -393,9 +391,8 @@ void tv_list_remove_items(list_T *const l, listitem_T *const item,
 /// @param[in]  item2  Last item to move.
 /// @param[out]  tgt_l  List to move to.
 /// @param[in]  cnt  Number of items moved.
-void tv_list_move_items(list_T *const l, listitem_T *const item,
-                        listitem_T *const item2, list_T *const tgt_l,
-                        const int cnt)
+void tv_list_move_items(list_T *const l, listitem_T *const item, listitem_T *const item2,
+                        list_T *const tgt_l, const int cnt)
   FUNC_ATTR_NONNULL_ALL
 {
   list_log(l, item, item2, "move");
@@ -418,8 +415,7 @@ void tv_list_move_items(list_T *const l, listitem_T *const item,
 /// @param[in,out]  ni  Item to insert.
 /// @param[in]  item  Item to insert before. If NULL, inserts at the end of the
 ///                   list.
-void tv_list_insert(list_T *const l, listitem_T *const ni,
-                    listitem_T *const item)
+void tv_list_insert(list_T *const l, listitem_T *const ni, listitem_T *const item)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   if (item == NULL) {
@@ -449,8 +445,7 @@ void tv_list_insert(list_T *const l, listitem_T *const ni,
 ///                     allocated listitem_T and inserted.
 /// @param[in]  item  Item to insert before. If NULL, inserts at the end of the
 ///                   list.
-void tv_list_insert_tv(list_T *const l, typval_T *const tv,
-                       listitem_T *const item)
+void tv_list_insert_tv(list_T *const l, typval_T *const tv, listitem_T *const item)
 {
   listitem_T *const ni = tv_list_item_alloc();
 
@@ -544,8 +539,7 @@ void tv_list_append_dict(list_T *const l, dict_T *const dict)
 /// @param[in]  len  Length of the appended string. May be -1, in this
 ///                  case string is considered to be usual zero-terminated
 ///                  string or NULL “empty” string.
-void tv_list_append_string(list_T *const l, const char *const str,
-                           const ssize_t len)
+void tv_list_append_string(list_T *const l, const char *const str, const ssize_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   tv_list_append_owned_tv(l, (typval_T) {
@@ -601,8 +595,8 @@ void tv_list_append_number(list_T *const l, const varnumber_T n)
 ///
 /// @return Copied list. May be NULL in case original list is NULL or some
 ///         failure happens. The refcount of the new list is set to 1.
-list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig,
-                     const bool deep, const int copyID)
+list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig, const bool deep,
+                     const int copyID)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (orig == NULL) {
@@ -697,8 +691,7 @@ int tv_list_flatten(list_T *list, long maxdepth)
 /// @param[out]  l1  List to extend.
 /// @param[in]  l2  List to extend with.
 /// @param[in]  bef  If not NULL, extends before this item.
-void tv_list_extend(list_T *const l1, list_T *const l2,
-                    listitem_T *const bef)
+void tv_list_extend(list_T *const l1, list_T *const l2, listitem_T *const bef)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   int todo = tv_list_len(l2);
@@ -758,8 +751,8 @@ typedef struct {
 /// @param[in]  join_gap  Garray to keep each list item string.
 ///
 /// @return OK in case of success, FAIL otherwise.
-static int list_join_inner(garray_T *const gap, list_T *const l,
-                           const char *const sep, garray_T *const join_gap)
+static int list_join_inner(garray_T *const gap, list_T *const l, const char *const sep,
+                           garray_T *const join_gap)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t sumlen = 0;
@@ -844,8 +837,7 @@ int tv_list_join(garray_T *const gap, list_T *const l, const char *const sep)
 /// @param[in]  recursive  True when used recursively.
 ///
 /// @return True if lists are equal, false otherwise.
-bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
-                   const bool recursive)
+bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic, const bool recursive)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l1 == l2) {
@@ -915,8 +907,7 @@ void tv_list_reverse(list_T *const l)
 ///               true list will not be modified. Must be initialized to false
 ///               by the caller.
 void tv_list_item_sort(list_T *const l, ListSortItem *const ptrs,
-                       const ListSorter item_compare_func,
-                       bool *errp)
+                       const ListSorter item_compare_func, bool *errp)
   FUNC_ATTR_NONNULL_ARG(3, 4)
 {
   const int len = tv_list_len(l);
@@ -968,7 +959,7 @@ listitem_T *tv_list_find(list_T *const l, int n)
   }
 
   int idx;
-  listitem_T  *item;
+  listitem_T *item;
 
   // When there is a cached index may start search from there.
   if (l->lv_idx_item != NULL) {
@@ -1127,17 +1118,14 @@ bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
     return false;
   }
   switch (cb1->type) {
-    case kCallbackFuncref: {
-      return STRCMP(cb1->data.funcref, cb2->data.funcref) == 0;
-    }
-    case kCallbackPartial: {
-      // FIXME: this is inconsistent with tv_equal but is needed for precision
-      // maybe change dictwatcheradd to return a watcher id instead?
-      return cb1->data.partial == cb2->data.partial;
-    }
-    case kCallbackNone: {
-      return true;
-    }
+  case kCallbackFuncref:
+    return STRCMP(cb1->data.funcref, cb2->data.funcref) == 0;
+  case kCallbackPartial:
+    // FIXME: this is inconsistent with tv_equal but is needed for precision
+    // maybe change dictwatcheradd to return a watcher id instead?
+    return cb1->data.partial == cb2->data.partial;
+  case kCallbackNone:
+    return true;
   }
   abort();
   return false;
@@ -1148,18 +1136,15 @@ void callback_free(Callback *callback)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (callback->type) {
-    case kCallbackFuncref: {
-      func_unref(callback->data.funcref);
-      xfree(callback->data.funcref);
-      break;
-    }
-    case kCallbackPartial: {
-      partial_unref(callback->data.partial);
-      break;
-    }
-    case kCallbackNone: {
-      break;
-    }
+  case kCallbackFuncref:
+    func_unref(callback->data.funcref);
+    xfree(callback->data.funcref);
+    break;
+  case kCallbackPartial:
+    partial_unref(callback->data.partial);
+    break;
+  case kCallbackNone:
+    break;
   }
   callback->type = kCallbackNone;
   callback->data.funcref = NULL;
@@ -1170,20 +1155,20 @@ void callback_put(Callback *cb, typval_T *tv)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (cb->type) {
-    case kCallbackPartial:
-      tv->v_type = VAR_PARTIAL;
-      tv->vval.v_partial = cb->data.partial;
-      cb->data.partial->pt_refcount++;
-      break;
-    case kCallbackFuncref:
-      tv->v_type = VAR_FUNC;
-      tv->vval.v_string = vim_strsave(cb->data.funcref);
-      func_ref(cb->data.funcref);
-      break;
-    default:
-      tv->v_type = VAR_SPECIAL;
-      tv->vval.v_special = kSpecialVarNull;
-      break;
+  case kCallbackPartial:
+    tv->v_type = VAR_PARTIAL;
+    tv->vval.v_partial = cb->data.partial;
+    cb->data.partial->pt_refcount++;
+    break;
+  case kCallbackFuncref:
+    tv->v_type = VAR_FUNC;
+    tv->vval.v_string = vim_strsave(cb->data.funcref);
+    func_ref(cb->data.funcref);
+    break;
+  default:
+    tv->v_type = VAR_SPECIAL;
+    tv->vval.v_special = kSpecialVarNull;
+    break;
   }
 }
 
@@ -1193,17 +1178,17 @@ void callback_copy(Callback *dest, Callback *src)
 {
   dest->type = src->type;
   switch (src->type) {
-    case kCallbackPartial:
-      dest->data.partial = src->data.partial;
-      dest->data.partial->pt_refcount++;
-      break;
-    case kCallbackFuncref:
-      dest->data.funcref = vim_strsave(src->data.funcref);
-      func_ref(src->data.funcref);
-      break;
-    default:
-      dest->data.funcref = NULL;
-      break;
+  case kCallbackPartial:
+    dest->data.partial = src->data.partial;
+    dest->data.partial->pt_refcount++;
+    break;
+  case kCallbackFuncref:
+    dest->data.funcref = vim_strsave(src->data.funcref);
+    func_ref(src->data.funcref);
+    break;
+  default:
+    dest->data.funcref = NULL;
+    break;
   }
 }
 
@@ -1216,8 +1201,7 @@ void callback_copy(Callback *dest, Callback *src)
 ///
 /// @return True on success, false if relevant watcher was not found.
 bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
-                            const size_t key_pattern_len,
-                            Callback callback)
+                            const size_t key_pattern_len, Callback callback)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   if (dict == NULL) {
@@ -1280,8 +1264,8 @@ static bool tv_dict_watcher_matches(DictWatcher *watcher, const char *const key)
 /// @param[in]  key  Key which was modified.
 /// @param[in]  newtv  New key value.
 /// @param[in]  oldtv  Old key value.
-void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
-                            typval_T *const newtv, typval_T *const oldtv)
+void tv_dict_watcher_notify(dict_T *const dict, const char *const key, typval_T *const newtv,
+                            typval_T *const oldtv)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   typval_T argv[3];
@@ -1540,8 +1524,7 @@ void tv_dict_unref(dict_T *const d)
 /// @param[in]  len  Key length. If negative, then strlen(key) is used.
 ///
 /// @return found item or NULL if nothing was found.
-dictitem_T *tv_dict_find(const dict_T *const d, const char *const key,
-                         const ptrdiff_t len)
+dictitem_T *tv_dict_find(const dict_T *const d, const char *const key, const ptrdiff_t len)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (d == NULL) {
@@ -1628,8 +1611,7 @@ char **tv_dict_to_env(dict_T *denv)
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise. If returned value is not NULL, it may
 ///         be allocated depending on `save` argument.
-char *tv_dict_get_string(const dict_T *const d, const char *const key,
-                         const bool save)
+char *tv_dict_get_string(const dict_T *const d, const char *const key, const bool save)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char numbuf[NUMBUFLEN];
@@ -1649,8 +1631,7 @@ char *tv_dict_get_string(const dict_T *const d, const char *const key,
 ///
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise.
-const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
-                                   char *const numbuf)
+const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key, char *const numbuf)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const dictitem_T *const di = tv_dict_find(d, key, -1);
@@ -1672,10 +1653,8 @@ const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
 /// @return `def` when key does not exist,
 ///         NULL in case of type error,
 ///         string item value in case of success.
-const char *tv_dict_get_string_buf_chk(const dict_T *const d,
-                                       const char *const key,
-                                       const ptrdiff_t key_len,
-                                       char *const numbuf,
+const char *tv_dict_get_string_buf_chk(const dict_T *const d, const char *const key,
+                                       const ptrdiff_t key_len, char *const numbuf,
                                        const char *const def)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1695,8 +1674,7 @@ const char *tv_dict_get_string_buf_chk(const dict_T *const d,
 ///                      will be left.
 ///
 /// @return true/false on success/failure.
-bool tv_dict_get_callback(dict_T *const d,
-                          const char *const key, const ptrdiff_t key_len,
+bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_t key_len,
                           Callback *const result)
   FUNC_ATTR_NONNULL_ARG(2, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1743,8 +1721,8 @@ int tv_dict_add(dict_T *const d, dictitem_T *const item)
 /// @param  list  List to add. Will have reference count incremented.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_list(dict_T *const d, const char *const key,
-                     const size_t key_len, list_T *const list)
+int tv_dict_add_list(dict_T *const d, const char *const key, const size_t key_len,
+                     list_T *const list)
   FUNC_ATTR_NONNULL_ALL
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
@@ -1766,15 +1744,14 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
 /// @param[in]  key_len  Key length.
 ///
 /// @return FAIL if out of memory or key already exists.
-int tv_dict_add_tv(dict_T *d, const char *key, const size_t key_len,
-                   typval_T *tv)
+int tv_dict_add_tv(dict_T *d, const char *key, const size_t key_len, typval_T *tv)
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   tv_copy(tv, &item->di_tv);
   if (tv_dict_add(d, item) == FAIL) {
-      tv_dict_item_free(item);
-      return FAIL;
+    tv_dict_item_free(item);
+    return FAIL;
   }
   return OK;
 }
@@ -1787,8 +1764,8 @@ int tv_dict_add_tv(dict_T *d, const char *key, const size_t key_len,
 /// @param  dict  Dictionary to add. Will have reference count incremented.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_dict(dict_T *const d, const char *const key,
-                     const size_t key_len, dict_T *const dict)
+int tv_dict_add_dict(dict_T *const d, const char *const key, const size_t key_len,
+                     dict_T *const dict)
   FUNC_ATTR_NONNULL_ALL
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
@@ -1811,8 +1788,8 @@ int tv_dict_add_dict(dict_T *const d, const char *const key,
 /// @param[in]  nr  Number to add.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_nr(dict_T *const d, const char *const key,
-                   const size_t key_len, const varnumber_T nr)
+int tv_dict_add_nr(dict_T *const d, const char *const key, const size_t key_len,
+                   const varnumber_T nr)
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
@@ -1833,8 +1810,8 @@ int tv_dict_add_nr(dict_T *const d, const char *const key,
 /// @param[in]  nr  Floating point number to add.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_float(dict_T *const d, const char *const key,
-                      const size_t key_len, const float_T nr)
+int tv_dict_add_float(dict_T *const d, const char *const key, const size_t key_len,
+                      const float_T nr)
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
@@ -1855,8 +1832,7 @@ int tv_dict_add_float(dict_T *const d, const char *const key,
 /// @param[in]  val BoolVarValue to add.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_bool(dict_T *const d, const char *const key,
-                     const size_t key_len, BoolVarValue val)
+int tv_dict_add_bool(dict_T *const d, const char *const key, const size_t key_len, BoolVarValue val)
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
@@ -1872,8 +1848,7 @@ int tv_dict_add_bool(dict_T *const d, const char *const key,
 /// Add a string entry to dictionary
 ///
 /// @see tv_dict_add_allocated_str
-int tv_dict_add_str(dict_T *const d,
-                    const char *const key, const size_t key_len,
+int tv_dict_add_str(dict_T *const d, const char *const key, const size_t key_len,
                     const char *const val)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
@@ -1889,8 +1864,7 @@ int tv_dict_add_str(dict_T *const d,
 /// @param[in]  len  Use this many bytes from `val`, or -1 for whole string.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_str_len(dict_T *const d,
-                        const char *const key, const size_t key_len,
+int tv_dict_add_str_len(dict_T *const d, const char *const key, const size_t key_len,
                         const char *const val, int len)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
@@ -1914,8 +1888,7 @@ int tv_dict_add_str_len(dict_T *const d,
 /// @param[in]  val  String to add.
 ///
 /// @return OK in case of success, FAIL when key already exists.
-int tv_dict_add_allocated_str(dict_T *const d,
-                              const char *const key, const size_t key_len,
+int tv_dict_add_allocated_str(dict_T *const d, const char *const key, const size_t key_len,
                               char *const val)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
@@ -1958,8 +1931,7 @@ void tv_dict_clear(dict_T *const d)
 ///                     e*, including "error": duplicate key gives an error.
 ///                     f*, including "force": duplicate d2 keys override d1.
 ///                     other, including "keep": duplicate d2 keys ignored.
-void tv_dict_extend(dict_T *const d1, dict_T *const d2,
-                    const char *const action)
+void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action)
   FUNC_ATTR_NONNULL_ALL
 {
   const bool watched = tv_dict_is_watched(d1);
@@ -2021,8 +1993,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2,
 /// @param[in]  d2  Second dictionary.
 /// @param[in]  ic  True if case is to be ignored.
 /// @param[in]  recursive  True when used recursively.
-bool tv_dict_equal(dict_T *const d1, dict_T *const d2,
-                   const bool ic, const bool recursive)
+bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool recursive)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (d1 == d2) {
@@ -2057,9 +2028,7 @@ bool tv_dict_equal(dict_T *const d1, dict_T *const d2,
 /// @return Copied dictionary. May be NULL in case original dictionary is NULL
 ///         or some failure happens. The refcount of the new dictionary is set
 ///         to 1.
-dict_T *tv_dict_copy(const vimconv_T *const conv,
-                     dict_T *const orig,
-                     const bool deep,
+dict_T *tv_dict_copy(const vimconv_T *const conv, dict_T *const orig, const bool deep,
                      const int copyID)
 {
   if (orig == NULL) {
@@ -2271,7 +2240,7 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
 
     if (len > 0) {
       to->vval.v_blob->bv_ga.ga_data
-          = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
+        = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
     }
     to->vval.v_blob->bv_ga.ga_len = len;
     to->vval.v_blob->bv_ga.ga_maxlen = len;
@@ -2282,52 +2251,51 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
-    do { \
-      tv->vval.v_special = kSpecialVarNull; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+  do { \
+    tv->vval.v_special = kSpecialVarNull; \
+    tv->v_lock = VAR_UNLOCKED; \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-    do { \
-      tv->vval.v_bool = kBoolVarFalse; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+  do { \
+    tv->vval.v_bool = kBoolVarFalse; \
+    tv->v_lock = VAR_UNLOCKED; \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
-    do { \
-      (void)num; \
-      tv->vval.v_number = 0; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+  do { \
+    (void)num; \
+    tv->vval.v_number = 0; \
+    tv->v_lock = VAR_UNLOCKED; \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num)
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    do { \
-      tv->vval.v_float = 0; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+  do { \
+    tv->vval.v_float = 0; \
+    tv->v_lock = VAR_UNLOCKED; \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
-    do { \
-      xfree(buf); \
-      tv->vval.v_string = NULL; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+  do { \
+    xfree(buf); \
+    tv->vval.v_string = NULL; \
+    tv->v_lock = VAR_UNLOCKED; \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len)
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type)
 
 #define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
-    do { \
-      tv_blob_unref(tv->vval.v_blob); \
-      tv->vval.v_blob = NULL; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+  do { \
+    tv_blob_unref(tv->vval.v_blob); \
+    tv->vval.v_blob = NULL; \
+    tv->v_lock = VAR_UNLOCKED; \
+  } while (0)
 
-static inline int _nothing_conv_func_start(typval_T *const tv,
-                                           char_u *const fun)
+static inline int _nothing_conv_func_start(typval_T *const tv, char_u *const fun)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(1)
 {
   tv->v_lock = VAR_UNLOCKED;
@@ -2348,11 +2316,11 @@ static inline int _nothing_conv_func_start(typval_T *const tv,
   return NOTDONE;
 }
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
-    do { \
-      if (_nothing_conv_func_start(tv, fun) != NOTDONE) { \
-        return OK; \
-      } \
-    } while (0)
+  do { \
+    if (_nothing_conv_func_start(tv, fun) != NOTDONE) { \
+      return OK; \
+    } \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
@@ -2380,14 +2348,13 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
 #define TYPVAL_ENCODE_CONV_FUNC_END(tv) _nothing_conv_func_end(tv, copyID)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
-    do { \
-      tv_list_unref(tv->vval.v_list); \
-      tv->vval.v_list = NULL; \
-      tv->v_lock = VAR_UNLOCKED; \
-    } while (0)
+  do { \
+    tv_list_unref(tv->vval.v_list); \
+    tv->vval.v_list = NULL; \
+    tv->v_lock = VAR_UNLOCKED; \
+  } while (0)
 
-static inline void _nothing_conv_empty_dict(typval_T *const tv,
-                                            dict_T **const dictp)
+static inline void _nothing_conv_empty_dict(typval_T *const tv, dict_T **const dictp)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(2)
 {
   tv_dict_unref(*dictp);
@@ -2397,13 +2364,13 @@ static inline void _nothing_conv_empty_dict(typval_T *const tv,
   }
 }
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-    do { \
-      assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
-      _nothing_conv_empty_dict(tv, ((dict_T **)&dict)); \
-    } while (0)
+  do { \
+    assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
+    _nothing_conv_empty_dict(tv, ((dict_T **)&dict)); \
+  } while (0)
 
-static inline int _nothing_conv_real_list_after_start(
-    typval_T *const tv, MPConvStackVal *const mpsv)
+static inline int _nothing_conv_real_list_after_start(typval_T *const tv,
+                                                      MPConvStackVal *const mpsv)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(tv != NULL);
@@ -2419,11 +2386,11 @@ static inline int _nothing_conv_real_list_after_start(
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len)
 
 #define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv) \
-    do { \
-      if (_nothing_conv_real_list_after_start(tv, &mpsv) != NOTDONE) { \
-        goto typval_encode_stop_converting_one_item; \
-      } \
-    } while (0)
+  do { \
+    if (_nothing_conv_real_list_after_start(tv, &mpsv) != NOTDONE) { \
+      goto typval_encode_stop_converting_one_item; \
+    } \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv)
 
@@ -2440,9 +2407,9 @@ static inline void _nothing_conv_list_end(typval_T *const tv)
 }
 #define TYPVAL_ENCODE_CONV_LIST_END(tv) _nothing_conv_list_end(tv)
 
-static inline int _nothing_conv_real_dict_after_start(
-    typval_T *const tv, dict_T **const dictp, const void *const nodictvar,
-    MPConvStackVal *const mpsv)
+static inline int _nothing_conv_real_dict_after_start(typval_T *const tv, dict_T **const dictp,
+                                                      const void *const nodictvar,
+                                                      MPConvStackVal *const mpsv)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (tv != NULL) {
@@ -2459,20 +2426,18 @@ static inline int _nothing_conv_real_dict_after_start(
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len)
 
 #define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv) \
-    do { \
-      if (_nothing_conv_real_dict_after_start( \
-          tv, (dict_T **)&dict, (void *)&TYPVAL_ENCODE_NODICT_VAR, \
-          &mpsv) != NOTDONE) { \
-        goto typval_encode_stop_converting_one_item; \
-      } \
-    } while (0)
+  do { \
+    if (_nothing_conv_real_dict_after_start(tv, (dict_T **)&dict, (void *)&TYPVAL_ENCODE_NODICT_VAR, \
+                                            &mpsv) != NOTDONE) { \
+      goto typval_encode_stop_converting_one_item; \
+    } \
+  } while (0)
 
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(tv, dict)
 #define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
 #define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
 
-static inline void _nothing_conv_dict_end(typval_T *const tv,
-                                          dict_T **const dictp,
+static inline void _nothing_conv_dict_end(typval_T *const tv, dict_T **const dictp,
                                           const void *const nodictvar)
   FUNC_ATTR_ALWAYS_INLINE
 {
@@ -2482,8 +2447,8 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
   }
 }
 #define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
-    _nothing_conv_dict_end(tv, (dict_T **)&dict, \
-                           (void *)&TYPVAL_ENCODE_NODICT_VAR)
+  _nothing_conv_dict_end(tv, (dict_T **)&dict, \
+                         (void *)&TYPVAL_ENCODE_NODICT_VAR)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type)
 
@@ -2554,37 +2519,30 @@ void tv_free(typval_T *tv)
 {
   if (tv != NULL) {
     switch (tv->v_type) {
-      case VAR_PARTIAL: {
-        partial_unref(tv->vval.v_partial);
-        break;
-      }
-      case VAR_FUNC: {
-        func_unref(tv->vval.v_string);
-        FALLTHROUGH;
-      }
-      case VAR_STRING: {
-        xfree(tv->vval.v_string);
-        break;
-      }
-      case VAR_BLOB: {
-        tv_blob_unref(tv->vval.v_blob);
-        break;
-      }
-      case VAR_LIST: {
-        tv_list_unref(tv->vval.v_list);
-        break;
-      }
-      case VAR_DICT: {
-        tv_dict_unref(tv->vval.v_dict);
-        break;
-      }
-      case VAR_BOOL:
-      case VAR_SPECIAL:
-      case VAR_NUMBER:
-      case VAR_FLOAT:
-      case VAR_UNKNOWN: {
-        break;
-      }
+    case VAR_PARTIAL:
+      partial_unref(tv->vval.v_partial);
+      break;
+    case VAR_FUNC:
+      func_unref(tv->vval.v_string);
+      FALLTHROUGH;
+    case VAR_STRING:
+      xfree(tv->vval.v_string);
+      break;
+    case VAR_BLOB:
+      tv_blob_unref(tv->vval.v_blob);
+      break;
+    case VAR_LIST:
+      tv_list_unref(tv->vval.v_list);
+      break;
+    case VAR_DICT:
+      tv_dict_unref(tv->vval.v_dict);
+      break;
+    case VAR_BOOL:
+    case VAR_SPECIAL:
+    case VAR_NUMBER:
+    case VAR_FLOAT:
+    case VAR_UNKNOWN:
+      break;
     }
     xfree(tv);
   }
@@ -2608,48 +2566,41 @@ void tv_copy(const typval_T *const from, typval_T *const to)
   to->v_lock = VAR_UNLOCKED;
   memmove(&to->vval, &from->vval, sizeof(to->vval));
   switch (from->v_type) {
-    case VAR_NUMBER:
-    case VAR_FLOAT:
-    case VAR_BOOL:
-    case VAR_SPECIAL: {
-      break;
-    }
-    case VAR_STRING:
-    case VAR_FUNC: {
-      if (from->vval.v_string != NULL) {
-        to->vval.v_string = vim_strsave(from->vval.v_string);
-        if (from->v_type == VAR_FUNC) {
-          func_ref(to->vval.v_string);
-        }
+  case VAR_NUMBER:
+  case VAR_FLOAT:
+  case VAR_BOOL:
+  case VAR_SPECIAL:
+    break;
+  case VAR_STRING:
+  case VAR_FUNC:
+    if (from->vval.v_string != NULL) {
+      to->vval.v_string = vim_strsave(from->vval.v_string);
+      if (from->v_type == VAR_FUNC) {
+        func_ref(to->vval.v_string);
       }
-      break;
     }
-    case VAR_PARTIAL: {
-      if (to->vval.v_partial != NULL) {
-        to->vval.v_partial->pt_refcount++;
-      }
-      break;
+    break;
+  case VAR_PARTIAL:
+    if (to->vval.v_partial != NULL) {
+      to->vval.v_partial->pt_refcount++;
     }
-    case VAR_BLOB: {
-      if (from->vval.v_blob != NULL) {
-        to->vval.v_blob->bv_refcount++;
-      }
-      break;
+    break;
+  case VAR_BLOB:
+    if (from->vval.v_blob != NULL) {
+      to->vval.v_blob->bv_refcount++;
     }
-    case VAR_LIST: {
-      tv_list_ref(to->vval.v_list);
-      break;
+    break;
+  case VAR_LIST:
+    tv_list_ref(to->vval.v_list);
+    break;
+  case VAR_DICT:
+    if (from->vval.v_dict != NULL) {
+      to->vval.v_dict->dv_refcount++;
     }
-    case VAR_DICT: {
-      if (from->vval.v_dict != NULL) {
-        to->vval.v_dict->dv_refcount++;
-      }
-      break;
-    }
-    case VAR_UNKNOWN: {
-      emsgf(_(e_intern2), "tv_copy(UNKNOWN)");
-      break;
-    }
+    break;
+  case VAR_UNKNOWN:
+    emsgf(_(e_intern2), "tv_copy(UNKNOWN)");
+    break;
   }
 }
 
@@ -2662,8 +2613,7 @@ void tv_copy(const typval_T *const from, typval_T *const to)
 /// @param[in]  lock  True if it is needed to lock an item, false to unlock.
 /// @param[in]  check_refcount  If true, do not lock a list or dict with a
 ///                             reference count larger than 1.
-void tv_item_lock(typval_T *const tv, const int deep, const bool lock,
-                  const bool check_refcount)
+void tv_item_lock(typval_T *const tv, const int deep, const bool lock, const bool check_refcount)
   FUNC_ATTR_NONNULL_ALL
 {
   // TODO(ZyX-I): Make this not recursive
@@ -2690,51 +2640,49 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock,
   CHANGE_LOCK(lock, tv->v_lock);
 
   switch (tv->v_type) {
-    case VAR_BLOB: {
-      blob_T *const b = tv->vval.v_blob;
-      if (b != NULL && !(check_refcount && b->bv_refcount > 1)) {
-        CHANGE_LOCK(lock, b->bv_lock);
-      }
-      break;
+  case VAR_BLOB: {
+    blob_T *const b = tv->vval.v_blob;
+    if (b != NULL && !(check_refcount && b->bv_refcount > 1)) {
+      CHANGE_LOCK(lock, b->bv_lock);
     }
-    case VAR_LIST: {
-      list_T *const l = tv->vval.v_list;
-      if (l != NULL && !(check_refcount && l->lv_refcount > 1)) {
-        CHANGE_LOCK(lock, l->lv_lock);
-        if (deep < 0 || deep > 1) {
-          // Recursive: lock/unlock the items the List contains.
-          TV_LIST_ITER(l, li, {
+    break;
+  }
+  case VAR_LIST: {
+    list_T *const l = tv->vval.v_list;
+    if (l != NULL && !(check_refcount && l->lv_refcount > 1)) {
+      CHANGE_LOCK(lock, l->lv_lock);
+      if (deep < 0 || deep > 1) {
+        // Recursive: lock/unlock the items the List contains.
+        TV_LIST_ITER(l, li, {
             tv_item_lock(TV_LIST_ITEM_TV(li), deep - 1, lock, check_refcount);
           });
-        }
       }
-      break;
     }
-    case VAR_DICT: {
-      dict_T *const d = tv->vval.v_dict;
-      if (d != NULL && !(check_refcount && d->dv_refcount > 1)) {
-        CHANGE_LOCK(lock, d->dv_lock);
-        if (deep < 0 || deep > 1) {
-          // recursive: lock/unlock the items the List contains
-          TV_DICT_ITER(d, di, {
+    break;
+  }
+  case VAR_DICT: {
+    dict_T *const d = tv->vval.v_dict;
+    if (d != NULL && !(check_refcount && d->dv_refcount > 1)) {
+      CHANGE_LOCK(lock, d->dv_lock);
+      if (deep < 0 || deep > 1) {
+        // recursive: lock/unlock the items the List contains
+        TV_DICT_ITER(d, di, {
             tv_item_lock(&di->di_tv, deep - 1, lock, check_refcount);
           });
-        }
       }
-      break;
     }
-    case VAR_NUMBER:
-    case VAR_FLOAT:
-    case VAR_STRING:
-    case VAR_FUNC:
-    case VAR_PARTIAL:
-    case VAR_BOOL:
-    case VAR_SPECIAL: {
-      break;
-    }
-    case VAR_UNKNOWN: {
-      abort();
-    }
+    break;
+  }
+  case VAR_NUMBER:
+  case VAR_FLOAT:
+  case VAR_STRING:
+  case VAR_FUNC:
+  case VAR_PARTIAL:
+  case VAR_BOOL:
+  case VAR_SPECIAL:
+    break;
+  case VAR_UNKNOWN:
+    abort();
   }
 #undef CHANGE_LOCK
   recurse--;
@@ -2776,33 +2724,32 @@ bool tv_islocked(const typval_T *const tv)
 ///                       gettext.
 ///
 /// @return true if variable is locked, false otherwise.
-bool tv_check_lock(const typval_T *tv, const char *name,
-                   size_t name_len)
+bool tv_check_lock(const typval_T *tv, const char *name, size_t name_len)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   VarLockStatus lock = VAR_UNLOCKED;
 
   switch (tv->v_type) {
-    case VAR_BLOB:
-      if (tv->vval.v_blob != NULL) {
-        lock = tv->vval.v_blob->bv_lock;
-      }
-      break;
-    case VAR_LIST:
-      if (tv->vval.v_list != NULL) {
-        lock = tv->vval.v_list->lv_lock;
-      }
-      break;
-    case VAR_DICT:
-      if (tv->vval.v_dict != NULL) {
-        lock = tv->vval.v_dict->dv_lock;
-      }
-      break;
-    default:
-      break;
+  case VAR_BLOB:
+    if (tv->vval.v_blob != NULL) {
+      lock = tv->vval.v_blob->bv_lock;
+    }
+    break;
+  case VAR_LIST:
+    if (tv->vval.v_list != NULL) {
+      lock = tv->vval.v_list->lv_lock;
+    }
+    break;
+  case VAR_DICT:
+    if (tv->vval.v_dict != NULL) {
+      lock = tv->vval.v_dict->dv_lock;
+    }
+    break;
+  default:
+    break;
   }
   return var_check_lock(tv->v_lock, name, name_len)
-    || (lock != VAR_UNLOCKED && var_check_lock(lock, name, name_len));
+         || (lock != VAR_UNLOCKED && var_check_lock(lock, name, name_len));
 }
 
 /// @return true if variable "name" is locked (immutable)
@@ -2810,17 +2757,14 @@ bool var_check_lock(VarLockStatus lock, const char *name, size_t name_len)
 {
   const char *error_message = NULL;
   switch (lock) {
-    case VAR_UNLOCKED: {
-      return false;
-    }
-    case VAR_LOCKED: {
-      error_message = N_("E741: Value is locked: %.*s");
-      break;
-    }
-    case VAR_FIXED: {
-      error_message = N_("E742: Cannot change value of %.*s");
-      break;
-    }
+  case VAR_UNLOCKED:
+    return false;
+  case VAR_LOCKED:
+    error_message = N_("E741: Value is locked: %.*s");
+    break;
+  case VAR_FIXED:
+    error_message = N_("E742: Cannot change value of %.*s");
+    break;
   }
   assert(error_message != NULL);
 
@@ -2856,8 +2800,7 @@ static int tv_equal_recurse_limit;
 /// @param[in]  recursive  True when used recursively.
 ///
 /// @return true if values are equal.
-bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
-              const bool recursive)
+bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const bool recursive)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // TODO(ZyX-I): Make this not recursive
@@ -2882,58 +2825,52 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
   }
 
   switch (tv1->v_type) {
-    case VAR_LIST: {
-      recursive_cnt++;
-      const bool r = tv_list_equal(tv1->vval.v_list, tv2->vval.v_list, ic,
-                                   true);
-      recursive_cnt--;
-      return r;
-    }
-    case VAR_DICT: {
-      recursive_cnt++;
-      const bool r = tv_dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic,
-                                   true);
-      recursive_cnt--;
-      return r;
-    }
-    case VAR_PARTIAL:
-    case VAR_FUNC: {
-      if ((tv1->v_type == VAR_PARTIAL && tv1->vval.v_partial == NULL)
-          || (tv2->v_type == VAR_PARTIAL && tv2->vval.v_partial == NULL)) {
-        return false;
-      }
-      recursive_cnt++;
-      const bool r = func_equal(tv1, tv2, ic);
-      recursive_cnt--;
-      return r;
-    }
-    case VAR_BLOB: {
-      return tv_blob_equal(tv1->vval.v_blob, tv2->vval.v_blob);
-    }
-    case VAR_NUMBER: {
-      return tv1->vval.v_number == tv2->vval.v_number;
-    }
-    case VAR_FLOAT: {
-      return tv1->vval.v_float == tv2->vval.v_float;
-    }
-    case VAR_STRING: {
-      char buf1[NUMBUFLEN];
-      char buf2[NUMBUFLEN];
-      const char *s1 = tv_get_string_buf(tv1, buf1);
-      const char *s2 = tv_get_string_buf(tv2, buf2);
-      return mb_strcmp_ic((bool)ic, s1, s2) == 0;
-    }
-    case VAR_BOOL: {
-      return tv1->vval.v_bool == tv2->vval.v_bool;
-    }
-    case VAR_SPECIAL: {
-      return tv1->vval.v_special == tv2->vval.v_special;
-    }
-    case VAR_UNKNOWN: {
-      // VAR_UNKNOWN can be the result of an invalid expression, let’s say it
-      // does not equal anything, not even self.
+  case VAR_LIST: {
+    recursive_cnt++;
+    const bool r = tv_list_equal(tv1->vval.v_list, tv2->vval.v_list, ic,
+                                 true);
+    recursive_cnt--;
+    return r;
+  }
+  case VAR_DICT: {
+    recursive_cnt++;
+    const bool r = tv_dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic,
+                                 true);
+    recursive_cnt--;
+    return r;
+  }
+  case VAR_PARTIAL:
+  case VAR_FUNC: {
+    if ((tv1->v_type == VAR_PARTIAL && tv1->vval.v_partial == NULL)
+        || (tv2->v_type == VAR_PARTIAL && tv2->vval.v_partial == NULL)) {
       return false;
     }
+    recursive_cnt++;
+    const bool r = func_equal(tv1, tv2, ic);
+    recursive_cnt--;
+    return r;
+  }
+  case VAR_BLOB:
+    return tv_blob_equal(tv1->vval.v_blob, tv2->vval.v_blob);
+  case VAR_NUMBER:
+    return tv1->vval.v_number == tv2->vval.v_number;
+  case VAR_FLOAT:
+    return tv1->vval.v_float == tv2->vval.v_float;
+  case VAR_STRING: {
+    char buf1[NUMBUFLEN];
+    char buf2[NUMBUFLEN];
+    const char *s1 = tv_get_string_buf(tv1, buf1);
+    const char *s2 = tv_get_string_buf(tv2, buf2);
+    return mb_strcmp_ic((bool)ic, s1, s2) == 0;
+  }
+  case VAR_BOOL:
+    return tv1->vval.v_bool == tv2->vval.v_bool;
+  case VAR_SPECIAL:
+    return tv1->vval.v_special == tv2->vval.v_special;
+  case VAR_UNKNOWN:
+    // VAR_UNKNOWN can be the result of an invalid expression, let’s say it
+    // does not equal anything, not even self.
+    return false;
   }
 
   abort();
@@ -2955,43 +2892,34 @@ bool tv_check_str_or_nr(const typval_T *const tv)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   switch (tv->v_type) {
-    case VAR_NUMBER:
-    case VAR_STRING: {
-      return true;
-    }
-    case VAR_FLOAT: {
-      EMSG(_("E805: Expected a Number or a String, Float found"));
-      return false;
-    }
-    case VAR_PARTIAL:
-    case VAR_FUNC: {
-      EMSG(_("E703: Expected a Number or a String, Funcref found"));
-      return false;
-    }
-    case VAR_LIST: {
-      EMSG(_("E745: Expected a Number or a String, List found"));
-      return false;
-    }
-    case VAR_DICT: {
-      EMSG(_("E728: Expected a Number or a String, Dictionary found"));
-      return false;
-    }
-    case VAR_BLOB: {
-      EMSG(_("E974: Expected a Number or a String, Blob found"));
-      return false;
-    }
-    case VAR_BOOL: {
-      EMSG(_("E5299: Expected a Number or a String, Boolean found"));
-      return false;
-    }
-    case VAR_SPECIAL: {
-      EMSG(_("E5300: Expected a Number or a String"));
-      return false;
-    }
-    case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
-      return false;
-    }
+  case VAR_NUMBER:
+  case VAR_STRING:
+    return true;
+  case VAR_FLOAT:
+    EMSG(_("E805: Expected a Number or a String, Float found"));
+    return false;
+  case VAR_PARTIAL:
+  case VAR_FUNC:
+    EMSG(_("E703: Expected a Number or a String, Funcref found"));
+    return false;
+  case VAR_LIST:
+    EMSG(_("E745: Expected a Number or a String, List found"));
+    return false;
+  case VAR_DICT:
+    EMSG(_("E728: Expected a Number or a String, Dictionary found"));
+    return false;
+  case VAR_BLOB:
+    EMSG(_("E974: Expected a Number or a String, Blob found"));
+    return false;
+  case VAR_BOOL:
+    EMSG(_("E5299: Expected a Number or a String, Boolean found"));
+    return false;
+  case VAR_SPECIAL:
+    EMSG(_("E5300: Expected a Number or a String"));
+    return false;
+  case VAR_UNKNOWN:
+    EMSG2(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
+    return false;
   }
   abort();
   return false;
@@ -3023,22 +2951,20 @@ bool tv_check_num(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (tv->v_type) {
-    case VAR_NUMBER:
-    case VAR_BOOL:
-    case VAR_SPECIAL:
-    case VAR_STRING: {
-      return true;
-    }
-    case VAR_FUNC:
-    case VAR_PARTIAL:
-    case VAR_LIST:
-    case VAR_DICT:
-    case VAR_FLOAT:
-    case VAR_BLOB:
-    case VAR_UNKNOWN: {
-      EMSG(_(num_errors[tv->v_type]));
-      return false;
-    }
+  case VAR_NUMBER:
+  case VAR_BOOL:
+  case VAR_SPECIAL:
+  case VAR_STRING:
+    return true;
+  case VAR_FUNC:
+  case VAR_PARTIAL:
+  case VAR_LIST:
+  case VAR_DICT:
+  case VAR_FLOAT:
+  case VAR_BLOB:
+  case VAR_UNKNOWN:
+    EMSG(_(num_errors[tv->v_type]));
+    return false;
   }
   abort();
   return false;
@@ -3070,22 +2996,20 @@ bool tv_check_str(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (tv->v_type) {
-    case VAR_NUMBER:
-    case VAR_BOOL:
-    case VAR_SPECIAL:
-    case VAR_STRING: {
-      return true;
-    }
-    case VAR_PARTIAL:
-    case VAR_FUNC:
-    case VAR_LIST:
-    case VAR_DICT:
-    case VAR_FLOAT:
-    case VAR_BLOB:
-    case VAR_UNKNOWN: {
-      EMSG(_(str_errors[tv->v_type]));
-      return false;
-    }
+  case VAR_NUMBER:
+  case VAR_BOOL:
+  case VAR_SPECIAL:
+  case VAR_STRING:
+    return true;
+  case VAR_PARTIAL:
+  case VAR_FUNC:
+  case VAR_LIST:
+  case VAR_DICT:
+  case VAR_FLOAT:
+  case VAR_BLOB:
+  case VAR_UNKNOWN:
+    EMSG(_(str_errors[tv->v_type]));
+    return false;
   }
   abort();
   return false;
@@ -3125,36 +3049,31 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   switch (tv->v_type) {
-    case VAR_FUNC:
-    case VAR_PARTIAL:
-    case VAR_LIST:
-    case VAR_DICT:
-    case VAR_BLOB:
-    case VAR_FLOAT: {
-      EMSG(_(num_errors[tv->v_type]));
-      break;
+  case VAR_FUNC:
+  case VAR_PARTIAL:
+  case VAR_LIST:
+  case VAR_DICT:
+  case VAR_BLOB:
+  case VAR_FLOAT:
+    EMSG(_(num_errors[tv->v_type]));
+    break;
+  case VAR_NUMBER:
+    return tv->vval.v_number;
+  case VAR_STRING: {
+    varnumber_T n = 0;
+    if (tv->vval.v_string != NULL) {
+      vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0,
+                 false);
     }
-    case VAR_NUMBER: {
-      return tv->vval.v_number;
-    }
-    case VAR_STRING: {
-      varnumber_T n = 0;
-      if (tv->vval.v_string != NULL) {
-        vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0,
-                   false);
-      }
-      return n;
-    }
-    case VAR_BOOL: {
-      return tv->vval.v_bool == kBoolVarTrue ? 1 : 0;
-    }
-    case VAR_SPECIAL: {
-      return 0;
-    }
-    case VAR_UNKNOWN: {
-      emsgf(_(e_intern2), "tv_get_number(UNKNOWN)");
-      break;
-    }
+    return n;
+  }
+  case VAR_BOOL:
+    return tv->vval.v_bool == kBoolVarTrue ? 1 : 0;
+  case VAR_SPECIAL:
+    return 0;
+  case VAR_UNKNOWN:
+    emsgf(_(e_intern2), "tv_get_number(UNKNOWN)");
+    break;
   }
   if (ret_error != NULL) {
     *ret_error = true;
@@ -3194,45 +3113,35 @@ float_T tv_get_float(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (tv->v_type) {
-    case VAR_NUMBER: {
-      return (float_T)(tv->vval.v_number);
-    }
-    case VAR_FLOAT: {
-      return tv->vval.v_float;
-    }
-    case VAR_PARTIAL:
-    case VAR_FUNC: {
-      EMSG(_("E891: Using a Funcref as a Float"));
-      break;
-    }
-    case VAR_STRING: {
-      EMSG(_("E892: Using a String as a Float"));
-      break;
-    }
-    case VAR_LIST: {
-      EMSG(_("E893: Using a List as a Float"));
-      break;
-    }
-    case VAR_DICT: {
-      EMSG(_("E894: Using a Dictionary as a Float"));
-      break;
-    }
-    case VAR_BOOL: {
-      EMSG(_("E362: Using a boolean value as a Float"));
-      break;
-    }
-    case VAR_SPECIAL: {
-      EMSG(_("E907: Using a special value as a Float"));
-      break;
-    }
-    case VAR_BLOB: {
-      EMSG(_("E975: Using a Blob as a Float"));
-      break;
-    }
-    case VAR_UNKNOWN: {
-      emsgf(_(e_intern2), "tv_get_float(UNKNOWN)");
-      break;
-    }
+  case VAR_NUMBER:
+    return (float_T)(tv->vval.v_number);
+  case VAR_FLOAT:
+    return tv->vval.v_float;
+  case VAR_PARTIAL:
+  case VAR_FUNC:
+    EMSG(_("E891: Using a Funcref as a Float"));
+    break;
+  case VAR_STRING:
+    EMSG(_("E892: Using a String as a Float"));
+    break;
+  case VAR_LIST:
+    EMSG(_("E893: Using a List as a Float"));
+    break;
+  case VAR_DICT:
+    EMSG(_("E894: Using a Dictionary as a Float"));
+    break;
+  case VAR_BOOL:
+    EMSG(_("E362: Using a boolean value as a Float"));
+    break;
+  case VAR_SPECIAL:
+    EMSG(_("E907: Using a special value as a Float"));
+    break;
+  case VAR_BLOB:
+    EMSG(_("E975: Using a Blob as a Float"));
+    break;
+  case VAR_UNKNOWN:
+    emsgf(_(e_intern2), "tv_get_float(UNKNOWN)");
+    break;
   }
   return 0;
 }
@@ -3265,34 +3174,29 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (tv->v_type) {
-    case VAR_NUMBER: {
-      snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);  // -V576
-      return buf;
+  case VAR_NUMBER:
+    snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);  // -V576
+    return buf;
+  case VAR_STRING:
+    if (tv->vval.v_string != NULL) {
+      return (const char *)tv->vval.v_string;
     }
-    case VAR_STRING: {
-      if (tv->vval.v_string != NULL) {
-        return (const char *)tv->vval.v_string;
-      }
-      return "";
-    }
-    case VAR_BOOL: {
-      STRCPY(buf, encode_bool_var_names[tv->vval.v_bool]);
-      return buf;
-    }
-    case VAR_SPECIAL: {
-      STRCPY(buf, encode_special_var_names[tv->vval.v_special]);
-      return buf;
-    }
-    case VAR_PARTIAL:
-    case VAR_FUNC:
-    case VAR_LIST:
-    case VAR_DICT:
-    case VAR_FLOAT:
-    case VAR_BLOB:
-    case VAR_UNKNOWN: {
-      EMSG(_(str_errors[tv->v_type]));
-      return false;
-    }
+    return "";
+  case VAR_BOOL:
+    STRCPY(buf, encode_bool_var_names[tv->vval.v_bool]);
+    return buf;
+  case VAR_SPECIAL:
+    STRCPY(buf, encode_special_var_names[tv->vval.v_special]);
+    return buf;
+  case VAR_PARTIAL:
+  case VAR_FUNC:
+  case VAR_LIST:
+  case VAR_DICT:
+  case VAR_FLOAT:
+  case VAR_BLOB:
+  case VAR_UNKNOWN:
+    EMSG(_(str_errors[tv->v_type]));
+    return false;
   }
   return NULL;
 }

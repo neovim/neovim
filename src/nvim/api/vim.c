@@ -3,54 +3,54 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
-#include "nvim/api/vim.h"
-#include "nvim/ascii.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/api/buffer.h"
+#include "nvim/api/deprecated.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
-#include "nvim/api/buffer.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/window.h"
-#include "nvim/api/deprecated.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/lua/executor.h"
-#include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/context.h"
-#include "nvim/file_search.h"
-#include "nvim/highlight.h"
-#include "nvim/window.h"
-#include "nvim/types.h"
-#include "nvim/ex_cmds2.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/screen.h"
-#include "nvim/memline.h"
-#include "nvim/mark.h"
-#include "nvim/memory.h"
-#include "nvim/message.h"
-#include "nvim/popupmnu.h"
+#include "nvim/decoration.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/file_search.h"
 #include "nvim/fileio.h"
+#include "nvim/getchar.h"
+#include "nvim/highlight.h"
+#include "nvim/lua/executor.h"
+#include "nvim/mark.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/state.h"
-#include "nvim/decoration.h"
-#include "nvim/syntax.h"
-#include "nvim/getchar.h"
 #include "nvim/os/input.h"
 #include "nvim/os/process.h"
+#include "nvim/popupmnu.h"
+#include "nvim/screen.h"
+#include "nvim/state.h"
+#include "nvim/syntax.h"
+#include "nvim/types.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
-#include "nvim/ui.h"
+#include "nvim/window.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -301,12 +301,18 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 
   for (size_t i = 0; i < mode.size; ++i) {
     switch (mode.data[i]) {
-    case 'n': remap = false; break;
-    case 'm': remap = true; break;
-    case 't': typed = true; break;
-    case 'i': insert = true; break;
-    case 'x': execute = true; break;
-    case '!': dangerous = true; break;
+    case 'n':
+      remap = false; break;
+    case 'm':
+      remap = true; break;
+    case 't':
+      typed = true; break;
+    case 'i':
+      insert = true; break;
+    case 'x':
+      execute = true; break;
+    case '!':
+      dangerous = true; break;
     }
   }
 
@@ -316,11 +322,11 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 
   char *keys_esc;
   if (escape_csi) {
-      // Need to escape K_SPECIAL and CSI before putting the string in the
-      // typeahead buffer.
-      keys_esc = (char *)vim_strsave_escape_csi((char_u *)keys.data);
+    // Need to escape K_SPECIAL and CSI before putting the string in the
+    // typeahead buffer.
+    keys_esc = (char *)vim_strsave_escape_csi((char_u *)keys.data);
   } else {
-      keys_esc = keys.data;
+    keys_esc = keys.data;
   }
   ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
               insert ? 0 : typebuf.tb_len, !typed, false);
@@ -329,7 +335,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
   }
 
   if (escape_csi) {
-      xfree(keys_esc);
+    xfree(keys_esc);
   }
 
   if (execute) {
@@ -391,8 +397,8 @@ Integer nvim_input(String keys)
 /// @param row Mouse row-position (zero-based, like redraw events)
 /// @param col Mouse column-position (zero-based, like redraw events)
 /// @param[out] err Error details, if any
-void nvim_input_mouse(String button, String action, String modifier,
-                      Integer grid, Integer row, Integer col, Error *err)
+void nvim_input_mouse(String button, String action, String modifier, Integer grid, Integer row,
+                      Integer col, Error *err)
   FUNC_API_SINCE(6) FUNC_API_FAST
 {
   if (button.data == NULL || action.data == NULL) {
@@ -469,8 +475,7 @@ error:
 /// @param special    Replace |keycodes|, e.g. <CR> becomes a "\n" char.
 /// @see replace_termcodes
 /// @see cpoptions
-String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
-                              Boolean special)
+String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
   FUNC_API_SINCE(1)
 {
   if (str.size == 0) {
@@ -499,32 +504,32 @@ Object nvim_eval(String expr, Error *err)
   Object rv = OBJECT_INIT;
 
   TRY_WRAP({
-  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
-  if (!recursive) {
-    force_abort = false;
-    suppress_errthrow = false;
-    current_exception = NULL;
-    // `did_emsg` is set by emsg(), which cancels execution.
-    did_emsg = false;
-  }
-  recursive++;
-  try_start();
-
-  typval_T rettv;
-  int ok = eval0((char_u *)expr.data, &rettv, NULL, true);
-
-  if (!try_end(err)) {
-    if (ok == FAIL) {
-      // Should never happen, try_end() should get the error. #8371
-      api_set_error(err, kErrorTypeException,
-                    "Failed to evaluate expression: '%.*s'", 256, expr.data);
-    } else {
-      rv = vim_to_object(&rettv);
+    // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+    if (!recursive) {
+      force_abort = false;
+      suppress_errthrow = false;
+      current_exception = NULL;
+      // `did_emsg` is set by emsg(), which cancels execution.
+      did_emsg = false;
     }
-  }
+    recursive++;
+    try_start();
 
-  tv_clear(&rettv);
-  recursive--;
+    typval_T rettv;
+    int ok = eval0((char_u *)expr.data, &rettv, NULL, true);
+
+    if (!try_end(err)) {
+      if (ok == FAIL) {
+        // Should never happen, try_end() should get the error. #8371
+        api_set_error(err, kErrorTypeException,
+                      "Failed to evaluate expression: '%.*s'", 256, expr.data);
+      } else {
+        rv = vim_to_object(&rettv);
+      }
+    }
+
+    tv_clear(&rettv);
+    recursive--;
   });
 
   return rv;
@@ -597,31 +602,31 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   }
 
   TRY_WRAP({
-  // Initialize `force_abort`  and `suppress_errthrow` at the top level.
-  if (!recursive) {
-    force_abort = false;
-    suppress_errthrow = false;
-    current_exception = NULL;
-    // `did_emsg` is set by emsg(), which cancels execution.
-    did_emsg = false;
-  }
-  recursive++;
-  try_start();
-  typval_T rettv;
-  funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.firstline = curwin->w_cursor.lnum;
-  funcexe.lastline = curwin->w_cursor.lnum;
-  funcexe.evaluate = true;
-  funcexe.selfdict = self;
-  // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
-  // (see above) to capture abort-causing non-exception errors.
-  (void)call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
-                  vim_args, &funcexe);
-  if (!try_end(err)) {
-    rv = vim_to_object(&rettv);
-  }
-  tv_clear(&rettv);
-  recursive--;
+    // Initialize `force_abort`  and `suppress_errthrow` at the top level.
+    if (!recursive) {
+      force_abort = false;
+      suppress_errthrow = false;
+      current_exception = NULL;
+      // `did_emsg` is set by emsg(), which cancels execution.
+      did_emsg = false;
+    }
+    recursive++;
+    try_start();
+    typval_T rettv;
+    funcexe_T funcexe = FUNCEXE_INIT;
+    funcexe.firstline = curwin->w_cursor.lnum;
+    funcexe.lastline = curwin->w_cursor.lnum;
+    funcexe.evaluate = true;
+    funcexe.selfdict = self;
+    // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
+    // (see above) to capture abort-causing non-exception errors.
+    (void)call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
+                    vim_args, &funcexe);
+    if (!try_end(err)) {
+      rv = vim_to_object(&rettv);
+    }
+    tv_clear(&rettv);
+    recursive--;
   });
 
 free_vim_args:
@@ -663,31 +668,28 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
   typval_T rettv;
   bool mustfree = false;
   switch (dict.type) {
-    case kObjectTypeString: {
-      try_start();
-      if (eval0((char_u *)dict.data.string.data, &rettv, NULL, true) == FAIL) {
-        api_set_error(err, kErrorTypeException,
-                      "Failed to evaluate dict expression");
-      }
-      if (try_end(err)) {
-        return rv;
-      }
-      // Evaluation of the string arg created a new dict or increased the
-      // refcount of a dict. Not necessary for a RPC dict.
-      mustfree = true;
-      break;
+  case kObjectTypeString:
+    try_start();
+    if (eval0((char_u *)dict.data.string.data, &rettv, NULL, true) == FAIL) {
+      api_set_error(err, kErrorTypeException,
+                    "Failed to evaluate dict expression");
     }
-    case kObjectTypeDictionary: {
-      if (!object_to_vim(dict, &rettv, err)) {
-        goto end;
-      }
-      break;
-    }
-    default: {
-      api_set_error(err, kErrorTypeValidation,
-                    "dict argument type must be String or Dictionary");
+    if (try_end(err)) {
       return rv;
     }
+    // Evaluation of the string arg created a new dict or increased the
+    // refcount of a dict. Not necessary for a RPC dict.
+    mustfree = true;
+    break;
+  case kObjectTypeDictionary:
+    if (!object_to_vim(dict, &rettv, err)) {
+      goto end;
+    }
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation,
+                  "dict argument type must be String or Dictionary");
+    return rv;
   }
   dict_T *self_dict = rettv.vval.v_dict;
   if (rettv.v_type != VAR_DICT || !self_dict) {
@@ -1465,8 +1467,7 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
-Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
-                     Error *err)
+Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config, Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_CHECK_TEXTLOCK
 {
@@ -1624,7 +1625,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   bool cancel = false;
 
   if (phase < -1 || phase > 3) {
-    api_set_error(err, kErrorTypeValidation, "Invalid phase: %"PRId64, phase);
+    api_set_error(err, kErrorTypeValidation, "Invalid phase: %" PRId64, phase);
     return false;
   }
   Array args = ARRAY_DICT_INIT;
@@ -1688,8 +1689,7 @@ theend:
 /// @param after  If true insert after cursor (like |p|), or before (like |P|).
 /// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
-void nvim_put(ArrayOf(String) lines, String type, Boolean after,
-              Boolean follow, Error *err)
+void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow, Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_CHECK_TEXTLOCK
 {
@@ -1930,8 +1930,7 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 ///               as keys excluding |<buffer>| but including |noremap|.
 ///               Values are Booleans. Unknown key is an error.
 /// @param[out]   err   Error details, if any.
-void nvim_set_keymap(String mode, String lhs, String rhs,
-                     Dictionary opts, Error *err)
+void nvim_set_keymap(String mode, String lhs, String rhs, Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
   modify_keymap(-1, false, mode, lhs, rhs, opts, err);
@@ -2028,10 +2027,8 @@ Array nvim_get_api_info(uint64_t channel_id)
 ///                  .png or .svg format is preferred.
 ///
 /// @param[out] err Error details, if any
-void nvim_set_client_info(uint64_t channel_id, String name,
-                          Dictionary version, String type,
-                          Dictionary methods, Dictionary attributes,
-                          Error *err)
+void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, String type,
+                          Dictionary methods, Dictionary attributes, Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   Dictionary info = ARRAY_DICT_INIT;
@@ -2159,9 +2156,9 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     Array args = call.items[1].data.array;
 
     MsgpackRpcRequestHandler handler =
-        msgpack_rpc_get_handler_for(name.data,
-                                    name.size,
-                                    &nested_error);
+      msgpack_rpc_get_handler_for(name.data,
+                                  name.size,
+                                  &nested_error);
 
     if (ERROR_SET(&nested_error)) {
       break;
@@ -2277,26 +2274,26 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "svalue": String, value for "SingleQuotedString" and
 ///                    "DoubleQuotedString" nodes.
 /// @param[out] err Error details, if any
-Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
-                                 Error *err)
+Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, Error *err)
   FUNC_API_SINCE(4) FUNC_API_FAST
 {
   int pflags = 0;
   for (size_t i = 0 ; i < flags.size ; i++) {
     switch (flags.data[i]) {
-      case 'm': { pflags |= kExprFlagsMulti; break; }
-      case 'E': { pflags |= kExprFlagsDisallowEOC; break; }
-      case 'l': { pflags |= kExprFlagsParseLet; break; }
-      case NUL: {
-        api_set_error(err, kErrorTypeValidation, "Invalid flag: '\\0' (%u)",
-                      (unsigned)flags.data[i]);
-        return (Dictionary)ARRAY_DICT_INIT;
-      }
-      default: {
-        api_set_error(err, kErrorTypeValidation, "Invalid flag: '%c' (%u)",
-                      flags.data[i], (unsigned)flags.data[i]);
-        return (Dictionary)ARRAY_DICT_INIT;
-      }
+    case 'm':
+      pflags |= kExprFlagsMulti; break;
+    case 'E':
+      pflags |= kExprFlagsDisallowEOC; break;
+    case 'l':
+      pflags |= kExprFlagsParseLet; break;
+    case NUL:
+      api_set_error(err, kErrorTypeValidation, "Invalid flag: '\\0' (%u)",
+                    (unsigned)flags.data[i]);
+      return (Dictionary)ARRAY_DICT_INIT;
+    default:
+      api_set_error(err, kErrorTypeValidation, "Invalid flag: '%c' (%u)",
+                    flags.data[i], (unsigned)flags.data[i]);
+      return (Dictionary)ARRAY_DICT_INIT;
     }
   }
   ParserLine parser_lines[] = {
@@ -2312,15 +2309,14 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
   kvi_init(colors);
   ParserHighlight *const colors_p = (highlight ? &colors : NULL);
   ParserState pstate;
-  viml_parser_init(
-      &pstate, parser_simple_get_line, &plines_p, colors_p);
+  viml_parser_init(&pstate, parser_simple_get_line, &plines_p, colors_p);
   ExprAST east = viml_pexpr_parse(&pstate, pflags);
 
   const size_t ret_size = (
-      2  // "ast", "len"
-      + (size_t)(east.err.msg != NULL)  // "error"
-      + (size_t)highlight  // "highlight"
-      + 0);
+                           2  // "ast", "len"
+                           + (size_t)(east.err.msg != NULL)  // "error"
+                           + (size_t)highlight  // "highlight"
+                           + 0);
   Dictionary ret = {
     .items = xmalloc(ret_size * sizeof(ret.items[0])),
     .size = 0,
@@ -2407,23 +2403,23 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     } else {
       if (cur_item.ret_node_p->type == kObjectTypeNil) {
         const size_t ret_node_items_size = (size_t)(
-            3  // "type", "start" and "len"
-            + (node->children != NULL)  // "children"
-            + (node->type == kExprNodeOption
-               || node->type == kExprNodePlainIdentifier)  // "scope"
-            + (node->type == kExprNodeOption
-               || node->type == kExprNodePlainIdentifier
-               || node->type == kExprNodePlainKey
-               || node->type == kExprNodeEnvironment)  // "ident"
-            + (node->type == kExprNodeRegister)  // "name"
-            + (3  // "cmp_type", "ccs_strategy", "invert"
-               * (node->type == kExprNodeComparison))
-            + (node->type == kExprNodeInteger)  // "ivalue"
-            + (node->type == kExprNodeFloat)  // "fvalue"
-            + (node->type == kExprNodeDoubleQuotedString
-               || node->type == kExprNodeSingleQuotedString)  // "svalue"
-            + (node->type == kExprNodeAssignment)  // "augmentation"
-            + 0);
+                                                    3  // "type", "start" and "len"
+                                                    + (node->children != NULL)  // "children"
+                                                    + (node->type == kExprNodeOption
+                                                       || node->type == kExprNodePlainIdentifier)  // "scope"
+                                                    + (node->type == kExprNodeOption
+                                                       || node->type == kExprNodePlainIdentifier
+                                                       || node->type == kExprNodePlainKey
+                                                       || node->type == kExprNodeEnvironment)  // "ident"
+                                                    + (node->type == kExprNodeRegister)  // "name"
+                                                    + (3  // "cmp_type", "ccs_strategy", "invert"
+                                                       * (node->type == kExprNodeComparison))
+                                                    + (node->type == kExprNodeInteger)  // "ivalue"
+                                                    + (node->type == kExprNodeFloat)  // "fvalue"
+                                                    + (node->type == kExprNodeDoubleQuotedString
+                                                       || node->type == kExprNodeSingleQuotedString)  // "svalue"
+                                                    + (node->type == kExprNodeAssignment)  // "augmentation"
+                                                    + 0);
         Dictionary ret_node = {
           .items = xmalloc(ret_node_items_size * sizeof(ret_node.items[0])),
           .capacity = ret_node_items_size,
@@ -2477,151 +2473,138 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
           .value = INTEGER_OBJ((Integer)node->len),
         };
         switch (node->type) {
-          case kExprNodeDoubleQuotedString:
-          case kExprNodeSingleQuotedString: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("svalue"),
-              .value = STRING_OBJ(((String) {
-                .data = node->data.str.value,
-                .size = node->data.str.size,
-              })),
-            };
-            break;
-          }
-          case kExprNodeOption: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("scope"),
-              .value = INTEGER_OBJ(node->data.opt.scope),
-            };
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("ident"),
-              .value = STRING_OBJ(((String) {
-                .data = xmemdupz(node->data.opt.ident,
-                                 node->data.opt.ident_len),
-                .size = node->data.opt.ident_len,
-              })),
-            };
-            break;
-          }
-          case kExprNodePlainIdentifier: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("scope"),
-              .value = INTEGER_OBJ(node->data.var.scope),
-            };
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("ident"),
-              .value = STRING_OBJ(((String) {
-                .data = xmemdupz(node->data.var.ident,
-                                 node->data.var.ident_len),
-                .size = node->data.var.ident_len,
-              })),
-            };
-            break;
-          }
-          case kExprNodePlainKey: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("ident"),
-              .value = STRING_OBJ(((String) {
-                .data = xmemdupz(node->data.var.ident,
-                                 node->data.var.ident_len),
-                .size = node->data.var.ident_len,
-              })),
-            };
-            break;
-          }
-          case kExprNodeEnvironment: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("ident"),
-              .value = STRING_OBJ(((String) {
-                .data = xmemdupz(node->data.env.ident,
-                                 node->data.env.ident_len),
-                .size = node->data.env.ident_len,
-              })),
-            };
-            break;
-          }
-          case kExprNodeRegister: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("name"),
-              .value = INTEGER_OBJ(node->data.reg.name),
-            };
-            break;
-          }
-          case kExprNodeComparison: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("cmp_type"),
-              .value = STRING_OBJ(cstr_to_string(
-                  eltkn_cmp_type_tab[node->data.cmp.type])),
-            };
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("ccs_strategy"),
-              .value = STRING_OBJ(cstr_to_string(
-                  ccs_tab[node->data.cmp.ccs])),
-            };
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("invert"),
-              .value = BOOLEAN_OBJ(node->data.cmp.inv),
-            };
-            break;
-          }
-          case kExprNodeFloat: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("fvalue"),
-              .value = FLOAT_OBJ(node->data.flt.value),
-            };
-            break;
-          }
-          case kExprNodeInteger: {
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("ivalue"),
-              .value = INTEGER_OBJ((Integer)(
-                  node->data.num.value > API_INTEGER_MAX
+        case kExprNodeDoubleQuotedString:
+        case kExprNodeSingleQuotedString:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("svalue"),
+            .value = STRING_OBJ(((String) {
+              .data = node->data.str.value,
+              .size = node->data.str.size,
+            })),
+          };
+          break;
+        case kExprNodeOption:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("scope"),
+            .value = INTEGER_OBJ(node->data.opt.scope),
+          };
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("ident"),
+            .value = STRING_OBJ(((String) {
+              .data = xmemdupz(node->data.opt.ident,
+                               node->data.opt.ident_len),
+              .size = node->data.opt.ident_len,
+            })),
+          };
+          break;
+        case kExprNodePlainIdentifier:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("scope"),
+            .value = INTEGER_OBJ(node->data.var.scope),
+          };
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("ident"),
+            .value = STRING_OBJ(((String) {
+              .data = xmemdupz(node->data.var.ident,
+                               node->data.var.ident_len),
+              .size = node->data.var.ident_len,
+            })),
+          };
+          break;
+        case kExprNodePlainKey:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("ident"),
+            .value = STRING_OBJ(((String) {
+              .data = xmemdupz(node->data.var.ident,
+                               node->data.var.ident_len),
+              .size = node->data.var.ident_len,
+            })),
+          };
+          break;
+        case kExprNodeEnvironment:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("ident"),
+            .value = STRING_OBJ(((String) {
+              .data = xmemdupz(node->data.env.ident,
+                               node->data.env.ident_len),
+              .size = node->data.env.ident_len,
+            })),
+          };
+          break;
+        case kExprNodeRegister:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("name"),
+            .value = INTEGER_OBJ(node->data.reg.name),
+          };
+          break;
+        case kExprNodeComparison:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("cmp_type"),
+            .value = STRING_OBJ(cstr_to_string(eltkn_cmp_type_tab[node->data.cmp.type])),
+          };
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("ccs_strategy"),
+            .value = STRING_OBJ(cstr_to_string(ccs_tab[node->data.cmp.ccs])),
+          };
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("invert"),
+            .value = BOOLEAN_OBJ(node->data.cmp.inv),
+          };
+          break;
+        case kExprNodeFloat:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("fvalue"),
+            .value = FLOAT_OBJ(node->data.flt.value),
+          };
+          break;
+        case kExprNodeInteger:
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("ivalue"),
+            .value = INTEGER_OBJ((Integer)(
+                                           node->data.num.value > API_INTEGER_MAX
                   ? API_INTEGER_MAX
                   : (Integer)node->data.num.value)),
-            };
-            break;
-          }
-          case kExprNodeAssignment: {
-            const ExprAssignmentType asgn_type = node->data.ass.type;
-            ret_node->items[ret_node->size++] = (KeyValuePair) {
-              .key = STATIC_CSTR_TO_STRING("augmentation"),
-              .value = STRING_OBJ(
-                  asgn_type == kExprAsgnPlain
+          };
+          break;
+        case kExprNodeAssignment: {
+          const ExprAssignmentType asgn_type = node->data.ass.type;
+          ret_node->items[ret_node->size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("augmentation"),
+            .value = STRING_OBJ(asgn_type == kExprAsgnPlain
                   ? (String)STRING_INIT
                   : cstr_to_string(expr_asgn_type_tab[asgn_type])),
-            };
-            break;
-          }
-          case kExprNodeMissing:
-          case kExprNodeOpMissing:
-          case kExprNodeTernary:
-          case kExprNodeTernaryValue:
-          case kExprNodeSubscript:
-          case kExprNodeListLiteral:
-          case kExprNodeUnaryPlus:
-          case kExprNodeBinaryPlus:
-          case kExprNodeNested:
-          case kExprNodeCall:
-          case kExprNodeComplexIdentifier:
-          case kExprNodeUnknownFigure:
-          case kExprNodeLambda:
-          case kExprNodeDictLiteral:
-          case kExprNodeCurlyBracesIdentifier:
-          case kExprNodeComma:
-          case kExprNodeColon:
-          case kExprNodeArrow:
-          case kExprNodeConcat:
-          case kExprNodeConcatOrSubscript:
-          case kExprNodeOr:
-          case kExprNodeAnd:
-          case kExprNodeUnaryMinus:
-          case kExprNodeBinaryMinus:
-          case kExprNodeNot:
-          case kExprNodeMultiplication:
-          case kExprNodeDivision:
-          case kExprNodeMod: {
-            break;
-          }
+          };
+          break;
+        }
+        case kExprNodeMissing:
+        case kExprNodeOpMissing:
+        case kExprNodeTernary:
+        case kExprNodeTernaryValue:
+        case kExprNodeSubscript:
+        case kExprNodeListLiteral:
+        case kExprNodeUnaryPlus:
+        case kExprNodeBinaryPlus:
+        case kExprNodeNested:
+        case kExprNodeCall:
+        case kExprNodeComplexIdentifier:
+        case kExprNodeUnknownFigure:
+        case kExprNodeLambda:
+        case kExprNodeDictLiteral:
+        case kExprNodeCurlyBracesIdentifier:
+        case kExprNodeComma:
+        case kExprNodeColon:
+        case kExprNodeArrow:
+        case kExprNodeConcat:
+        case kExprNodeConcatOrSubscript:
+        case kExprNodeOr:
+        case kExprNodeAnd:
+        case kExprNodeUnaryMinus:
+        case kExprNodeBinaryMinus:
+        case kExprNodeNot:
+        case kExprNodeMultiplication:
+        case kExprNodeDivision:
+        case kExprNodeMod:
+          break;
         }
         assert(cur_item.ret_node_p->data.dictionary.size
                == cur_item.ret_node_p->data.dictionary.capacity);
@@ -2851,8 +2834,8 @@ Object nvim_get_proc(Integer pid, Error *err)
 ///               `insert`.
 /// @param  opts  Optional parameters. Reserved for future use.
 /// @param[out] err Error details, if any
-void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish,
-                                Dictionary opts, Error *err)
+void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Dictionary opts,
+                                Error *err)
   FUNC_API_SINCE(6)
 {
   if (opts.size > 0) {
@@ -2949,8 +2932,7 @@ void nvim__screenshot(String path)
 ///                 ["win", winid, bufnr, row]
 ///             - on_end: called at the end of a redraw cycle
 ///                 ["end", tick]
-void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
-                                  Error *err)
+void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
   DecorProvider *p = get_decor_provider((NS)ns_id, true);

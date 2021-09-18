@@ -1,18 +1,18 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
 
-#include "nvim/api/deprecated.h"
 #include "nvim/api/buffer.h"
-#include "nvim/api/vim.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/api/deprecated.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/lua/executor.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/extmark.h"
+#include "nvim/lua/executor.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/deprecated.c.generated.h"
@@ -69,10 +69,7 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
 ///                   to end of file.
 /// @param[out] err   Error details, if any
-void nvim_buf_clear_highlight(Buffer buffer,
-                              Integer ns_id,
-                              Integer line_start,
-                              Integer line_end,
+void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, Integer line_end,
                               Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(7)
@@ -111,12 +108,8 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// @param opts       Optional parameters. Currently not used.
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
-Integer nvim_buf_set_virtual_text(Buffer buffer,
-                                  Integer src_id,
-                                  Integer line,
-                                  Array chunks,
-                                  Dictionary opts,
-                                  Error *err)
+Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, Array chunks,
+                                  Dictionary opts, Error *err)
   FUNC_API_SINCE(5)
   FUNC_API_DEPRECATED_SINCE(8)
 {
@@ -171,10 +164,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
 ///                   the end of the buffer.
 /// @param lines      Array of lines
 /// @param[out] err   Error details, if any
-void buffer_insert(Buffer buffer,
-                   Integer lnum,
-                   ArrayOf(String) lines,
-                   Error *err)
+void buffer_insert(Buffer buffer, Integer lnum, ArrayOf(String) lines, Error *err)
 {
   // "lnum" will be the index of the line after inserting,
   // no matter if it is negative or not
@@ -268,7 +258,7 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
-  return nvim_buf_get_lines(0, buffer, start , end, false, err);
+  return nvim_buf_get_lines(0, buffer, start, end, false, err);
 }
 
 /// Replaces a line range on the buffer
@@ -286,13 +276,8 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// @param replacement    Array of lines to use as replacement (0-length
 //                        array will delete the line range)
 /// @param[out] err       Error details, if any
-void buffer_set_line_slice(Buffer buffer,
-                           Integer start,
-                           Integer end,
-                           Boolean include_start,
-                           Boolean include_end,
-                           ArrayOf(String) replacement,
-                           Error *err)
+void buffer_set_line_slice(Buffer buffer, Integer start, Integer end, Boolean include_start,
+                           Boolean include_end, ArrayOf(String) replacement, Error *err)
 {
   start = convert_index(start) + !include_start;
   end = convert_index(end) + include_end;
