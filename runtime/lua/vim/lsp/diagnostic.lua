@@ -1,5 +1,3 @@
-local log = require('vim.lsp.log')
-
 ---@brief lsp-diagnostic
 ---
 ---@class Diagnostic
@@ -466,10 +464,7 @@ function M.set_signs(diagnostics, bufnr, client_id, _, opts)
     opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
   end
 
-  local ok = vim.diagnostic._set_signs(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
-  if not ok then
-    log.debug("Failed to place signs:", diagnostics)
-  end
+  vim.diagnostic._set_signs(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
 end
 
 --- Set underline for given diagnostics
