@@ -1073,6 +1073,7 @@ function M.show_line_diagnostics(opts, bufnr, lnum)
   opts = opts or {}
   opts.focus_id = "line_diagnostics"
   opts.lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
+  bufnr = get_bufnr(bufnr)
   local line_diagnostics = M.get(bufnr, opts)
   return show_diagnostics(opts, line_diagnostics)
 end
