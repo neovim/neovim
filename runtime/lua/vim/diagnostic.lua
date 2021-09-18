@@ -392,7 +392,7 @@ local function set_list(loclist, opts)
     bufnr = vim.api.nvim_win_get_buf(winnr)
   end
   local diagnostics = M.get(bufnr, opts)
-  local items = M.tolist(diagnostics)
+  local items = M.toqflist(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
   else
@@ -1211,11 +1211,12 @@ local errlist_type_map = {
   [M.severity.HINT] = 'N',
 }
 
---- Convert a list of diagnostics to a list of quickfix items.
+--- Convert a list of diagnostics to a list of quickfix items that can be
+--- passed to |setqflist()| or |setloclist()|.
 ---
 ---@param diagnostics table List of diagnostics |diagnostic-structure|.
 ---@return array of quickfix list items |setqflist-what|
-function M.tolist(diagnostics)
+function M.toqflist(diagnostics)
   vim.validate { diagnostics = {diagnostics, 't'} }
 
   local list = {}
@@ -1246,7 +1247,7 @@ end
 ---@param list table A list of quickfix items from |getqflist()| or
 ---            |getloclist()|.
 ---@return array of diagnostics |diagnostic-structure|
-function M.fromlist(list)
+function M.fromqflist(list)
   vim.validate { list = {list, 't'} }
 
   local diagnostics = {}
