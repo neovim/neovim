@@ -182,8 +182,8 @@ is the first letter of the severity name (for example, "E" for ERROR). Signs
 can be customized using the following: >
 
 	sign define DiagnosticSignError text=E texthl=DiagnosticSignError linehl= numhl=
-	sign define DiagnosticSignWarning text=W texthl=DiagnosticSignWarning linehl= numhl=
-	sign define DiagnosticSignInformation text=I texthl=DiagnosticSignInformation linehl= numhl=
+	sign define DiagnosticSignWarn text=W texthl=DiagnosticSignWarn linehl= numhl=
+	sign define DiagnosticSignInfo text=I texthl=DiagnosticSignInfo linehl= numhl=
 	sign define DiagnosticSignHint text=H texthl=DiagnosticSignHint linehl= numhl=
 
 ==============================================================================
