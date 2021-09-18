@@ -239,7 +239,9 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                  • severity_sort: (default false) Sort
                                    diagnostics by severity. This affects the
                                    order in which signs and virtual text are
-                                   displayed. Options:
+                                   displayed. When true, higher severities are
+                                   displayed before lower severities (e.g.
+                                   ERROR is displayed before WARN). Options:
                                    • reverse: (boolean) Reverse sort order
                     {namespace}  number|nil Update the options for the given
                                  namespace. When omitted, update the global

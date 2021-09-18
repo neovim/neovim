@@ -540,11 +540,11 @@ describe('vim.diagnostic', function()
     end)
 
     it('allows sorting by severity', function()
-      local result = exec_lua([[
+      exec_lua [[
         vim.diagnostic.config({
-          underline = true,
-          virtual_text = false,
-          severity_sort = false,
+          underline = false,
+          signs = true,
+          virtual_text = true,
         })
 
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
@@ -553,31 +553,41 @@ describe('vim.diagnostic', function()
           make_info('Info', 4, 4, 4, 4),
         })
 
-        local extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+        function get_virt_text_and_signs(severity_sort)
+          vim.diagnostic.config({
+            severity_sort = severity_sort,
+          })
 
-        local warn_highlight = extmarks[1][4].hl_group
+          local virt_text = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})[1][4].virt_text
 
-        vim.diagnostic.config({
-          severity_sort = true,
-        })
+          local virt_texts = {}
+          for i = 2, #virt_text do
+            table.insert(virt_texts, (string.gsub(virt_text[i][2], "DiagnosticVirtualText", "")))
+          end
 
-        extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+          local signs = {}
+          for _, v in ipairs(vim.fn.sign_getplaced(diagnostic_bufnr, {group = "*"})[1].signs) do
+            table.insert(signs, (string.gsub(v.name, "DiagnosticSign", "")))
+          end
 
-        local err_highlight = extmarks[1][4].hl_group
+          return {virt_texts, signs}
+        end
+      ]]
 
-        vim.diagnostic.config({
-          severity_sort = { reverse = true },
-        })
+      local result = exec_lua [[return get_virt_text_and_signs(false)]]
 
-        extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+      -- Virt texts are defined lowest priority to highest, signs from
+      -- highest to lowest
+      eq({'Warn', 'Error', 'Info'}, result[1])
+      eq({'Info', 'Error', 'Warn'}, result[2])
 
-        local info_highlight = extmarks[1][4].hl_group
+      result = exec_lua [[return get_virt_text_and_signs(true)]]
+      eq({'Info', 'Warn', 'Error'}, result[1])
+      eq({'Error', 'Warn', 'Info'}, result[2])
 
-        return { warn_highlight, err_highlight, info_highlight }
-      ]])
-      eq('DiagnosticUnderlineWarn', result[1])
-      eq('DiagnosticUnderlineError', result[2])
-      eq('DiagnosticUnderlineInfo', result[3])
+      result = exec_lua [[return get_virt_text_and_signs({ reverse = true })]]
+      eq({'Error', 'Warn', 'Info'}, result[1])
+      eq({'Info', 'Warn', 'Error'}, result[2])
     end)
   end)
 
