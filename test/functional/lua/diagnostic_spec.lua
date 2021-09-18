@@ -795,6 +795,39 @@ describe('vim.diagnostic', function()
       ]])
     end)
 
+    it('only reports diagnostics from the current buffer when bufnr is omitted #15710', function()
+      eq(2, exec_lua [[
+        local other_bufnr = vim.api.nvim_create_buf(true, false)
+        local buf_1_diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3),
+        }
+        local buf_2_diagnostics = {
+          make_warning("Some warning", 0, 1, 0, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, buf_1_diagnostics)
+        vim.diagnostic.set(other_ns, other_bufnr, buf_2_diagnostics)
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics()
+        return #vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+      ]])
+    end)
+
+    it('allows filtering by namespace', function()
+      eq(2, exec_lua [[
+        local ns_1_diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3),
+        }
+        local ns_2_diagnostics = {
+          make_warning("Some warning", 0, 1, 0, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, ns_1_diagnostics)
+        vim.diagnostic.set(other_ns, diagnostic_bufnr, ns_2_diagnostics)
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics({namespace = diagnostic_ns})
+        return #vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+      ]])
+    end)
+
     it('creates floating window and returns popup bufnr and winnr without header, if requested', function()
       -- One line (since no header):
       --    1. <msg>
