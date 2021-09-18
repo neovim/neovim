@@ -146,10 +146,6 @@ local function sort_by_key(fn)
     return false
   end
 end
----@private
-local edit_sort_key = sort_by_key(function(e)
-  return {e.A[1], e.A[2], e.i}
-end)
 
 ---@private
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
@@ -174,6 +170,7 @@ local function get_line_byte_from_position(bufnr, position)
       if ok then
         return result
       end
+      return math.min(#lines[1], col)
     end
   end
   return col
@@ -237,8 +234,8 @@ function M.get_progress_messages()
 end
 
 --- Applies a list of text edits to a buffer.
----@param text_edits (table) list of `TextEdit` objects
----@param buf_nr (number) Buffer id
+---@param text_edits table list of `TextEdit` objects
+---@param bufnr number Buffer id
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
@@ -246,45 +243,110 @@ function M.apply_text_edits(text_edits, bufnr)
     vim.fn.bufload(bufnr)
   end
   api.nvim_buf_set_option(bufnr, 'buflisted', true)
-  local start_line, finish_line = math.huge, -1
-  local cleaned = {}
-  for i, e in ipairs(text_edits) do
-    -- adjust start and end column for UTF-16 encoding of non-ASCII characters
-    local start_row = e.range.start.line
-    local start_col = get_line_byte_from_position(bufnr, e.range.start)
-    local end_row = e.range["end"].line
-    local end_col = get_line_byte_from_position(bufnr, e.range['end'])
-    start_line = math.min(e.range.start.line, start_line)
-    finish_line = math.max(e.range["end"].line, finish_line)
-    -- TODO(ashkan) sanity check ranges for overlap.
-    table.insert(cleaned, {
-      i = i;
-      A = {start_row; start_col};
-      B = {end_row; end_col};
-      lines = vim.split(e.newText, '\n', true);
+
+  -- Fix reversed range and indexing each text_edits
+  local index = 0
+  text_edits = vim.tbl_map(function(text_edit)
+    index = index + 1
+    text_edit._index = index
+
+    if text_edit.range.start.line > text_edit.range['end'].line or text_edit.range.start.line == text_edit.range['end'].line and text_edit.range.start.character > text_edit.range['end'].character then
+      local start = text_edit.range.start
+      text_edit.range.start = text_edit.range['end']
+      text_edit.range['end'] = start
+    end
+    return text_edit
+  end, text_edits)
+
+  -- Sort text_edits
+  table.sort(text_edits, function(a, b)
+    if a.range.start.line ~= b.range.start.line then
+      return a.range.start.line > b.range.start.line
+    end
+    if a.range.start.character ~= b.range.start.character then
+      return a.range.start.character > b.range.start.character
+    end
+    if a._index ~= b._index then
+      return a._index > b._index
+    end
+  end)
+
+  -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
+  local has_eol_text_edit = false
+  local max = vim.api.nvim_buf_line_count(bufnr)
+  local len = vim.str_utfindex(vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '')
+  text_edits = vim.tbl_map(function(text_edit)
+    if max <= text_edit.range.start.line then
+      text_edit.range.start.line = max - 1
+      text_edit.range.start.character = len
+      text_edit.newText = '\n' .. text_edit.newText
+      has_eol_text_edit = true
+    end
+    if max <= text_edit.range['end'].line then
+      text_edit.range['end'].line = max - 1
+      text_edit.range['end'].character = len
+      has_eol_text_edit = true
+    end
+    return text_edit
+  end, text_edits)
+
+  -- Some LSP servers are depending on the VSCode behavior.
+  -- The VSCode will re-locate the cursor position after applying TextEdit so we also do it.
+  local is_current_buf = vim.api.nvim_get_current_buf() == bufnr
+  local cursor = (function()
+    if not is_current_buf then
+      return {
+        row = -1,
+        col = -1,
+      }
+    end
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    return {
+      row = cursor[1] - 1,
+      col = cursor[2],
+    }
+  end)()
+
+  -- Apply text edits.
+  local is_cursor_fixed = false
+  for _, text_edit in ipairs(text_edits) do
+    local e = {
+      start_row = text_edit.range.start.line,
+      start_col = get_line_byte_from_position(bufnr, text_edit.range.start),
+      end_row = text_edit.range['end'].line,
+      end_col  = get_line_byte_from_position(bufnr, text_edit.range['end']),
+      text = vim.split(text_edit.newText, '\n', true),
+    }
+    vim.api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+
+    local row_count = (e.end_row - e.start_row) + 1
+    if e.end_row < cursor.row then
+      cursor.row = cursor.row + (#e.text - row_count)
+      is_cursor_fixed = true
+    elseif e.end_row == cursor.row and e.end_col <= cursor.col then
+      cursor.row = cursor.row + (#e.text - row_count)
+      cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
+      if #e.text == 1 then
+        cursor.col = cursor.col + e.start_col
+      end
+      is_cursor_fixed = true
+    end
+  end
+
+  if is_cursor_fixed then
+    vim.api.nvim_win_set_cursor(0, {
+      cursor.row + 1,
+      math.min(cursor.col, #(vim.api.nvim_buf_get_lines(bufnr, cursor.row, cursor.row + 1, false)[1] or ''))
     })
   end
 
-  -- Reverse sort the orders so we can apply them without interfering with
-  -- eachother. Also add i as a sort key to mimic a stable sort.
-  table.sort(cleaned, edit_sort_key)
-  local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
-  local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
-  local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) <= finish_line + 1
-  if set_eol and (#lines == 0 or #lines[#lines] ~= 0) then
-    table.insert(lines, '')
+  -- Remove final line if needed
+  local fix_eol = has_eol_text_edit
+  fix_eol = fix_eol and api.nvim_buf_get_option(bufnr, 'fixeol')
+  fix_eol = fix_eol and (vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '') == ''
+  if fix_eol then
+    vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
   end
-
-  for i = #cleaned, 1, -1 do
-    local e = cleaned[i]
-    local A = {e.A[1] - start_line, e.A[2]}
-    local B = {e.B[1] - start_line, e.B[2]}
-    lines = M.set_lines(lines, A, B, e.lines)
-  end
-  if set_eol and #lines[#lines] == 0 then
-    table.remove(lines)
-  end
-  api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
 end
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"

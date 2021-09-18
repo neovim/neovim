@@ -1066,6 +1066,30 @@ describe('LSP', function()
         'å å ɧ 汉语 ↥ 🤦 🦄';
       }, buf_lines(1))
     end)
+    it('applies complex edits (reversed range)', function()
+      local edits = {
+        make_edit(0, 0, 0, 0, {"", "12"});
+        make_edit(0, 0, 0, 0, {"3", "foo"});
+        make_edit(0, 1, 0, 1, {"bar", "123"});
+        make_edit(0, #"First line of text", 0, #"First ", {"guy"});
+        make_edit(1, #'Second', 1, 0, {"baz"});
+        make_edit(2, #"Third", 2, #'Th', {"e next"});
+        make_edit(3, #"Fourth", 3, #'', {"another line of text", "before this"});
+        make_edit(3, #"Fourth line of text", 3, #'Fourth', {"!"});
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+      eq({
+        '';
+        '123';
+        'fooFbar';
+        '123irst guy';
+        'baz line of text';
+        'The next line of text';
+        'another line of text';
+        'before this!';
+        'å å ɧ 汉语 ↥ 🤦 🦄';
+      }, buf_lines(1))
+    end)
     it('applies non-ASCII characters edits', function()
       local edits = {
         make_edit(4, 3, 4, 4, {"ä"});
@@ -1092,6 +1116,86 @@ describe('LSP', function()
         'å å ɧ 汉语 ↥ 🤦 🦄';
         'foobar';
       }, buf_lines(1))
+    end)
+
+    describe('cursor position', function()
+      it('don\'t fix the cursor if the range contains the cursor', function()
+        funcs.nvim_win_set_cursor(0, { 2, 6 })
+        local edits = {
+          make_edit(1, 0, 1, 19, 'Second line of text')
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+          'First line of text';
+          'Second line of text';
+          'Third line of text';
+          'Fourth line of text';
+          'å å ɧ 汉语 ↥ 🤦 🦄';
+        }, buf_lines(1))
+        eq({ 2, 6 }, funcs.nvim_win_get_cursor(0))
+      end)
+
+      it('fix the cursor to the valid column if the content was removed', function()
+        funcs.nvim_win_set_cursor(0, { 2, 6 })
+        local edits = {
+          make_edit(1, 0, 1, 19, '')
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+          'First line of text';
+          '';
+          'Third line of text';
+          'Fourth line of text';
+          'å å ɧ 汉语 ↥ 🤦 🦄';
+        }, buf_lines(1))
+        eq({ 2, 0 }, funcs.nvim_win_get_cursor(0))
+      end)
+
+      it('fix the cursor row', function()
+        funcs.nvim_win_set_cursor(0, { 3, 0 })
+        local edits = {
+          make_edit(1, 0, 2, 0, '')
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+          'First line of text';
+          'Third line of text';
+          'Fourth line of text';
+          'å å ɧ 汉语 ↥ 🤦 🦄';
+        }, buf_lines(1))
+        eq({ 2, 0 }, funcs.nvim_win_get_cursor(0))
+      end)
+
+      it('fix the cursor col', function()
+        funcs.nvim_win_set_cursor(0, { 2, 11 })
+        local edits = {
+          make_edit(1, 7, 1, 11, '')
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+          'First line of text';
+          'Second  of text';
+          'Third line of text';
+          'Fourth line of text';
+          'å å ɧ 汉语 ↥ 🤦 🦄';
+        }, buf_lines(1))
+        eq({ 2, 7 }, funcs.nvim_win_get_cursor(0))
+      end)
+
+      it('fix the cursor row and col', function()
+        funcs.nvim_win_set_cursor(0, { 2, 12 })
+        local edits = {
+          make_edit(0, 11, 1, 12, '')
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+          'First line of text';
+          'Third line of text';
+          'Fourth line of text';
+          'å å ɧ 汉语 ↥ 🤦 🦄';
+        }, buf_lines(1))
+        eq({ 1, 11 }, funcs.nvim_win_get_cursor(0))
+      end)
     end)
 
     describe('with LSP end line after what Vim considers to be the end line', function()
