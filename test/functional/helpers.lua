@@ -880,8 +880,7 @@ function module.mkdir_p(path)
     or 'mkdir -p '..path))
 end
 
-module = global_helpers.tbl_extend('error', module, global_helpers,
-  require('test.deprecated'))
+module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)
   if after_each then

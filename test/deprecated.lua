@@ -3,7 +3,7 @@
 local M = {}
 
 function M.redir_exec()
-  error('redir_exec is deprecated, use nvim_exec() or helpers.exec_capture()')
+  error('redir_exec is deprecated, use nvim_exec() or pcall_err()')
 end
 
 return M
