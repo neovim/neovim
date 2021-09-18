@@ -7,33 +7,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
-#include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/lua/executor.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
-#include "nvim/charset.h"
-#include "nvim/syntax.h"
-#include "nvim/vim.h"
 #include "nvim/buffer.h"
-#include "nvim/window.h"
-#include "nvim/memline.h"
-#include "nvim/memory.h"
+#include "nvim/charset.h"
+#include "nvim/decoration.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
-#include "nvim/map_defs.h"
-#include "nvim/map.h"
 #include "nvim/extmark.h"
-#include "nvim/decoration.h"
+#include "nvim/fileio.h"
+#include "nvim/getchar.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/lua/executor.h"
+#include "nvim/map.h"
+#include "nvim/map_defs.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
-#include "nvim/version.h"
-#include "nvim/lib/kvec.h"
-#include "nvim/getchar.h"
-#include "nvim/fileio.h"
+#include "nvim/syntax.h"
 #include "nvim/ui.h"
+#include "nvim/version.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -41,8 +41,8 @@ typedef struct {
 } EncodedData;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/helpers.c.generated.h"
 # include "api/private/funcs_metadata.generated.h"
+# include "api/private/helpers.c.generated.h"
 # include "api/private/ui_events_metadata.generated.h"
 #endif
 
@@ -210,8 +210,7 @@ dictitem_T *dict_check_writable(dict_T *dict, String key, bool del, Error *err)
 /// @param retval If true the old value will be converted and returned.
 /// @param[out] err Details of an error that may have occurred
 /// @return The old value if `retval` is true and the key was present, else NIL
-Object dict_set_var(dict_T *dict, String key, Object value, bool del,
-                    bool retval, Error *err)
+Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retval, Error *err)
 {
   Object rv = OBJECT_INIT;
   dictitem_T *di = dict_check_writable(dict, key, del, err);
@@ -326,8 +325,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
 /// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
-void set_option_to(uint64_t channel_id, void *to, int type,
-                   String name, Object value, Error *err)
+void set_option_to(uint64_t channel_id, void *to, int type, String name, Object value, Error *err)
 {
   if (name.size == 0) {
     api_set_error(err, kErrorTypeValidation, "Empty option name");
@@ -418,61 +416,60 @@ void set_option_to(uint64_t channel_id, void *to, int type,
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
-    kvi_push(edata->stack, NIL)
+  kvi_push(edata->stack, NIL)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-    kvi_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
+  kvi_push(edata->stack, BOOLEAN_OBJ((Boolean)(num)))
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
-    kvi_push(edata->stack, INTEGER_OBJ((Integer)(num)))
+  kvi_push(edata->stack, INTEGER_OBJ((Integer)(num)))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    kvi_push(edata->stack, FLOAT_OBJ((Float)(flt)))
+  kvi_push(edata->stack, FLOAT_OBJ((Float)(flt)))
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
-    do { \
-      const size_t len_ = (size_t)(len); \
-      const char *const str_ = (const char *)(str); \
-      assert(len_ == 0 || str_ != NULL); \
-      kvi_push(edata->stack, STRING_OBJ(cbuf_to_string((len_?str_:""), len_))); \
-    } while (0)
+  do { \
+    const size_t len_ = (size_t)(len); \
+    const char *const str_ = (const char *)(str); \
+    assert(len_ == 0 || str_ != NULL); \
+    kvi_push(edata->stack, STRING_OBJ(cbuf_to_string((len_?str_:""), len_))); \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
-    TYPVAL_ENCODE_CONV_NIL(tv)
+  TYPVAL_ENCODE_CONV_NIL(tv)
 
 #define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
-    do { \
-      const size_t len_ = (size_t)(len); \
-      const blob_T *const blob_ = (blob); \
-      kvi_push(edata->stack, STRING_OBJ(((String) { \
-        .data = len_ != 0 ? xmemdup(blob_->bv_ga.ga_data, len_) : NULL, \
-        .size = len_ \
-      }))); \
-    } while (0)
+  do { \
+    const size_t len_ = (size_t)(len); \
+    const blob_T *const blob_ = (blob); \
+    kvi_push(edata->stack, STRING_OBJ(((String) { \
+      .data = len_ != 0 ? xmemdup(blob_->bv_ga.ga_data, len_) : NULL, \
+      .size = len_ \
+    }))); \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
-    do { \
-      TYPVAL_ENCODE_CONV_NIL(tv); \
-      goto typval_encode_stop_converting_one_item; \
-    } while (0)
+  do { \
+    TYPVAL_ENCODE_CONV_NIL(tv); \
+    goto typval_encode_stop_converting_one_item; \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
-    kvi_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
+  kvi_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-    kvi_push(edata->stack, \
-             DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
+  kvi_push(edata->stack, \
+           DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
 
-static inline void typval_encode_list_start(EncodedData *const edata,
-                                            const size_t len)
+static inline void typval_encode_list_start(EncodedData *const edata, const size_t len)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   kvi_push(edata->stack, ARRAY_OBJ(((Array) {
@@ -483,7 +480,7 @@ static inline void typval_encode_list_start(EncodedData *const edata,
 }
 
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
-    typval_encode_list_start(edata, (size_t)(len))
+  typval_encode_list_start(edata, (size_t)(len))
 
 #define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
 
@@ -498,7 +495,7 @@ static inline void typval_encode_between_list_items(EncodedData *const edata)
 }
 
 #define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
-    typval_encode_between_list_items(edata)
+  typval_encode_between_list_items(edata)
 
 static inline void typval_encode_list_end(EncodedData *const edata)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
@@ -511,22 +508,21 @@ static inline void typval_encode_list_end(EncodedData *const edata)
 }
 
 #define TYPVAL_ENCODE_CONV_LIST_END(tv) \
-    typval_encode_list_end(edata)
+  typval_encode_list_end(edata)
 
-static inline void typval_encode_dict_start(EncodedData *const edata,
-                                            const size_t len)
+static inline void typval_encode_dict_start(EncodedData *const edata, const size_t len)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   kvi_push(edata->stack, DICTIONARY_OBJ(((Dictionary) {
     .capacity = len,
     .size = 0,
     .items = xmalloc(len * sizeof(
-        *((Object)OBJECT_INIT).data.dictionary.items)),
+                                  *((Object)OBJECT_INIT).data.dictionary.items)),
   })));
 }
 
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
-    typval_encode_dict_start(edata, (size_t)(len))
+  typval_encode_dict_start(edata, (size_t)(len))
 
 #define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv)
 
@@ -541,16 +537,16 @@ static inline void typval_encode_after_key(EncodedData *const edata)
   assert(dict->data.dictionary.size < dict->data.dictionary.capacity);
   if (key.type == kObjectTypeString) {
     dict->data.dictionary.items[dict->data.dictionary.size].key
-        = key.data.string;
+      = key.data.string;
   } else {
     api_free_object(key);
     dict->data.dictionary.items[dict->data.dictionary.size].key
-        = STATIC_CSTR_TO_STRING("__INVALID_KEY__");
+      = STATIC_CSTR_TO_STRING("__INVALID_KEY__");
   }
 }
 
 #define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict) \
-    typval_encode_after_key(edata)
+  typval_encode_after_key(edata)
 
 static inline void typval_encode_between_dict_items(EncodedData *const edata)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
@@ -563,7 +559,7 @@ static inline void typval_encode_between_dict_items(EncodedData *const edata)
 }
 
 #define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
-    typval_encode_between_dict_items(edata)
+  typval_encode_between_dict_items(edata)
 
 static inline void typval_encode_dict_end(EncodedData *const edata)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
@@ -576,10 +572,10 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 }
 
 #define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
-    typval_encode_dict_end(edata)
+  typval_encode_dict_end(edata)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
-    TYPVAL_ENCODE_CONV_NIL(val)
+  TYPVAL_ENCODE_CONV_NIL(val)
 
 #define TYPVAL_ENCODE_SCOPE static
 #define TYPVAL_ENCODE_NAME object
@@ -708,15 +704,15 @@ String cchar_to_string(char c)
 ///         empty String is returned
 String cstr_to_string(const char *str)
 {
-    if (str == NULL) {
-      return (String)STRING_INIT;
-    }
+  if (str == NULL) {
+    return (String)STRING_INIT;
+  }
 
-    size_t len = strlen(str);
-    return (String){
-      .data = xmemdupz(str, len),
-      .size = len,
-    };
+  size_t len = strlen(str);
+  return (String){
+    .data = xmemdupz(str, len),
+    .size = len,
+  };
 }
 
 /// Copies buffer to an allocated String.
@@ -817,8 +813,8 @@ Array string_to_array(const String input, bool crlf)
 /// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
 ///                   buffer, or -1 to signify global behavior ("all buffers")
 /// @param  is_unmap  When true, removes the mapping that matches {lhs}.
-void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
-                   String rhs, Dictionary opts, Error *err)
+void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String rhs,
+                   Dictionary opts, Error *err)
 {
   char *err_msg = NULL;  // the error message to report, if any
   char *err_arg = NULL;  // argument for the error message format string
@@ -916,21 +912,21 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
   }
 
   switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
-    case 0:
-      break;
-    case 1:
-      api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
-      goto fail_and_free;
-    case 2:
-      api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
-      goto fail_and_free;
-    case 5:
-      api_set_error(err, kErrorTypeException,
-                    "E227: mapping already exists for %s", parsed_args.lhs);
-      goto fail_and_free;
-    default:
-      assert(false && "Unrecognized return code!");
-      goto fail_and_free;
+  case 0:
+    break;
+  case 1:
+    api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
+    goto fail_and_free;
+  case 2:
+    api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
+    goto fail_and_free;
+  case 5:
+    api_set_error(err, kErrorTypeException,
+                  "E227: mapping already exists for %s", parsed_args.lhs);
+    goto fail_and_free;
+  default:
+    assert(false && "Unrecognized return code!");
+    goto fail_and_free;
   }  // switch
 
   xfree(lhs_buf);
@@ -986,44 +982,44 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
 
     bool was_valid_opt = false;
     switch (optname[0]) {
-      // note: strncmp up to and including the null terminator, so that
-      // "nowaitFoobar" won't match against "nowait"
+    // note: strncmp up to and including the null terminator, so that
+    // "nowaitFoobar" won't match against "nowait"
 
-      // don't recognize 'buffer' as a key; user shouldn't provide <buffer>
-      // when calling nvim_set_keymap or nvim_buf_set_keymap, since it can be
-      // inferred from which function they called
-      case 'n':
-        if (STRNCMP(optname, "noremap", 8) == 0) {
-          was_valid_opt = true;
-          out->noremap = key_and_val->value.data.boolean;
-        } else if (STRNCMP(optname, "nowait", 7) == 0) {
-          was_valid_opt = true;
-          out->nowait = key_and_val->value.data.boolean;
-        }
-        break;
-      case 's':
-        if (STRNCMP(optname, "silent", 7) == 0) {
-          was_valid_opt = true;
-          out->silent = key_and_val->value.data.boolean;
-        } else if (STRNCMP(optname, "script", 7) == 0) {
-          was_valid_opt = true;
-          out->script = key_and_val->value.data.boolean;
-        }
-        break;
-      case 'e':
-        if (STRNCMP(optname, "expr", 5) == 0) {
-          was_valid_opt = true;
-          out->expr = key_and_val->value.data.boolean;
-        }
-        break;
-      case 'u':
-        if (STRNCMP(optname, "unique", 7) == 0) {
-          was_valid_opt = true;
-          out->unique = key_and_val->value.data.boolean;
-        }
-        break;
-      default:
-        break;
+    // don't recognize 'buffer' as a key; user shouldn't provide <buffer>
+    // when calling nvim_set_keymap or nvim_buf_set_keymap, since it can be
+    // inferred from which function they called
+    case 'n':
+      if (STRNCMP(optname, "noremap", 8) == 0) {
+        was_valid_opt = true;
+        out->noremap = key_and_val->value.data.boolean;
+      } else if (STRNCMP(optname, "nowait", 7) == 0) {
+        was_valid_opt = true;
+        out->nowait = key_and_val->value.data.boolean;
+      }
+      break;
+    case 's':
+      if (STRNCMP(optname, "silent", 7) == 0) {
+        was_valid_opt = true;
+        out->silent = key_and_val->value.data.boolean;
+      } else if (STRNCMP(optname, "script", 7) == 0) {
+        was_valid_opt = true;
+        out->script = key_and_val->value.data.boolean;
+      }
+      break;
+    case 'e':
+      if (STRNCMP(optname, "expr", 5) == 0) {
+        was_valid_opt = true;
+        out->expr = key_and_val->value.data.boolean;
+      }
+      break;
+    case 'u':
+      if (STRNCMP(optname, "unique", 7) == 0) {
+        was_valid_opt = true;
+        out->unique = key_and_val->value.data.boolean;
+      }
+      break;
+    default:
+      break;
     }  // switch
     if (!was_valid_opt) {
       err_msg = "Invalid key: %s";
@@ -1050,8 +1046,7 @@ fail_with_message:
 /// @param[out] l Lines are copied here
 /// @param err[out] Error, if any
 /// @return true unless `err` was set
-bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl,
-                       Array *l, Error *err)
+bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl, Array *l, Error *err)
 {
   for (size_t i = 0; i < n; i++) {
     int64_t lnum = start + (int64_t)i;
@@ -1089,96 +1084,96 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
   tv->v_lock = VAR_UNLOCKED;
 
   switch (obj.type) {
-    case kObjectTypeNil:
-      tv->v_type = VAR_SPECIAL;
-      tv->vval.v_special = kSpecialVarNull;
-      break;
+  case kObjectTypeNil:
+    tv->v_type = VAR_SPECIAL;
+    tv->vval.v_special = kSpecialVarNull;
+    break;
 
-    case kObjectTypeBoolean:
-      tv->v_type = VAR_BOOL;
-      tv->vval.v_bool = obj.data.boolean? kBoolVarTrue: kBoolVarFalse;
-      break;
+  case kObjectTypeBoolean:
+    tv->v_type = VAR_BOOL;
+    tv->vval.v_bool = obj.data.boolean? kBoolVarTrue: kBoolVarFalse;
+    break;
 
-    case kObjectTypeBuffer:
-    case kObjectTypeWindow:
-    case kObjectTypeTabpage:
-    case kObjectTypeInteger:
-      STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
-                    "Integer size must be <= VimL number size");
-      tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = (varnumber_T)obj.data.integer;
-      break;
+  case kObjectTypeBuffer:
+  case kObjectTypeWindow:
+  case kObjectTypeTabpage:
+  case kObjectTypeInteger:
+    STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
+                  "Integer size must be <= VimL number size");
+    tv->v_type = VAR_NUMBER;
+    tv->vval.v_number = (varnumber_T)obj.data.integer;
+    break;
 
-    case kObjectTypeFloat:
-      tv->v_type = VAR_FLOAT;
-      tv->vval.v_float = obj.data.floating;
-      break;
+  case kObjectTypeFloat:
+    tv->v_type = VAR_FLOAT;
+    tv->vval.v_float = obj.data.floating;
+    break;
 
-    case kObjectTypeString:
-      tv->v_type = VAR_STRING;
-      if (obj.data.string.data == NULL) {
-        tv->vval.v_string = NULL;
-      } else {
-        tv->vval.v_string = xmemdupz(obj.data.string.data,
-                                     obj.data.string.size);
-      }
-      break;
-
-    case kObjectTypeArray: {
-      list_T *const list = tv_list_alloc((ptrdiff_t)obj.data.array.size);
-
-      for (uint32_t i = 0; i < obj.data.array.size; i++) {
-        Object item = obj.data.array.items[i];
-        typval_T li_tv;
-
-        if (!object_to_vim(item, &li_tv, err)) {
-          tv_list_free(list);
-          return false;
-        }
-
-        tv_list_append_owned_tv(list, li_tv);
-      }
-      tv_list_ref(list);
-
-      tv->v_type = VAR_LIST;
-      tv->vval.v_list = list;
-      break;
+  case kObjectTypeString:
+    tv->v_type = VAR_STRING;
+    if (obj.data.string.data == NULL) {
+      tv->vval.v_string = NULL;
+    } else {
+      tv->vval.v_string = xmemdupz(obj.data.string.data,
+                                   obj.data.string.size);
     }
+    break;
 
-    case kObjectTypeDictionary: {
-      dict_T *const dict = tv_dict_alloc();
+  case kObjectTypeArray: {
+    list_T *const list = tv_list_alloc((ptrdiff_t)obj.data.array.size);
 
-      for (uint32_t i = 0; i < obj.data.dictionary.size; i++) {
-        KeyValuePair item = obj.data.dictionary.items[i];
-        String key = item.key;
+    for (uint32_t i = 0; i < obj.data.array.size; i++) {
+      Object item = obj.data.array.items[i];
+      typval_T li_tv;
 
-        if (key.size == 0) {
-          api_set_error(err, kErrorTypeValidation,
-                        "Empty dictionary keys aren't allowed");
-          // cleanup
-          tv_dict_free(dict);
-          return false;
-        }
-
-        dictitem_T *const di = tv_dict_item_alloc(key.data);
-
-        if (!object_to_vim(item.value, &di->di_tv, err)) {
-          // cleanup
-          tv_dict_item_free(di);
-          tv_dict_free(dict);
-          return false;
-        }
-
-        tv_dict_add(dict, di);
+      if (!object_to_vim(item, &li_tv, err)) {
+        tv_list_free(list);
+        return false;
       }
-      dict->dv_refcount++;
 
-      tv->v_type = VAR_DICT;
-      tv->vval.v_dict = dict;
-      break;
+      tv_list_append_owned_tv(list, li_tv);
     }
-    default:
-      abort();
+    tv_list_ref(list);
+
+    tv->v_type = VAR_LIST;
+    tv->vval.v_list = list;
+    break;
+  }
+
+  case kObjectTypeDictionary: {
+    dict_T *const dict = tv_dict_alloc();
+
+    for (uint32_t i = 0; i < obj.data.dictionary.size; i++) {
+      KeyValuePair item = obj.data.dictionary.items[i];
+      String key = item.key;
+
+      if (key.size == 0) {
+        api_set_error(err, kErrorTypeValidation,
+                      "Empty dictionary keys aren't allowed");
+        // cleanup
+        tv_dict_free(dict);
+        return false;
+      }
+
+      dictitem_T *const di = tv_dict_item_alloc(key.data);
+
+      if (!object_to_vim(item.value, &di->di_tv, err)) {
+        // cleanup
+        tv_dict_item_free(di);
+        tv_dict_free(dict);
+        return false;
+      }
+
+      tv_dict_add(dict, di);
+    }
+    dict->dv_refcount++;
+
+    tv->v_type = VAR_DICT;
+    tv->vval.v_dict = dict;
+    break;
+  }
+  default:
+    abort();
   }
 
   return true;
@@ -1196,33 +1191,33 @@ void api_free_string(String value)
 void api_free_object(Object value)
 {
   switch (value.type) {
-    case kObjectTypeNil:
-    case kObjectTypeBoolean:
-    case kObjectTypeInteger:
-    case kObjectTypeFloat:
-    case kObjectTypeBuffer:
-    case kObjectTypeWindow:
-    case kObjectTypeTabpage:
-      break;
+  case kObjectTypeNil:
+  case kObjectTypeBoolean:
+  case kObjectTypeInteger:
+  case kObjectTypeFloat:
+  case kObjectTypeBuffer:
+  case kObjectTypeWindow:
+  case kObjectTypeTabpage:
+    break;
 
-    case kObjectTypeString:
-      api_free_string(value.data.string);
-      break;
+  case kObjectTypeString:
+    api_free_string(value.data.string);
+    break;
 
-    case kObjectTypeArray:
-      api_free_array(value.data.array);
-      break;
+  case kObjectTypeArray:
+    api_free_array(value.data.array);
+    break;
 
-    case kObjectTypeDictionary:
-      api_free_dictionary(value.data.dictionary);
-      break;
+  case kObjectTypeDictionary:
+    api_free_dictionary(value.data.dictionary);
+    break;
 
-    case kObjectTypeLuaRef:
-      api_free_luaref(value.data.luaref);
-      break;
+  case kObjectTypeLuaRef:
+    api_free_luaref(value.data.luaref);
+    break;
 
-    default:
-      abort();
+  default:
+    abort();
   }
 }
 
@@ -1385,36 +1380,30 @@ Dictionary copy_dictionary(Dictionary dict)
 Object copy_object(Object obj)
 {
   switch (obj.type) {
-    case kObjectTypeBuffer:
-    case kObjectTypeTabpage:
-    case kObjectTypeWindow:
-    case kObjectTypeNil:
-    case kObjectTypeBoolean:
-    case kObjectTypeInteger:
-    case kObjectTypeFloat:
-      return obj;
+  case kObjectTypeBuffer:
+  case kObjectTypeTabpage:
+  case kObjectTypeWindow:
+  case kObjectTypeNil:
+  case kObjectTypeBoolean:
+  case kObjectTypeInteger:
+  case kObjectTypeFloat:
+    return obj;
 
-    case kObjectTypeString:
-      return STRING_OBJ(copy_string(obj.data.string));
+  case kObjectTypeString:
+    return STRING_OBJ(copy_string(obj.data.string));
 
-    case kObjectTypeArray:
-      return ARRAY_OBJ(copy_array(obj.data.array));
+  case kObjectTypeArray:
+    return ARRAY_OBJ(copy_array(obj.data.array));
 
-    case kObjectTypeDictionary: {
-      return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
-    }
-    default:
-      abort();
+  case kObjectTypeDictionary:
+    return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
+  default:
+    abort();
   }
 }
 
-static void set_option_value_for(char *key,
-                                 int numval,
-                                 char *stringval,
-                                 int opt_flags,
-                                 int opt_type,
-                                 void *from,
-                                 Error *err)
+static void set_option_value_for(char *key, int numval, char *stringval, int opt_flags,
+                                 int opt_type, void *from, Error *err)
 {
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
@@ -1423,29 +1412,28 @@ static void set_option_value_for(char *key,
   try_start();
   switch (opt_type)
   {
-    case SREQ_WIN:
-      if (switch_win(&save_curwin, &save_curtab, (win_T *)from,
-            win_find_tabpage((win_T *)from), false) == FAIL)
-      {
-        if (try_end(err)) {
-          return;
-        }
-        api_set_error(err,
-                      kErrorTypeException,
-                      "Problem while switching windows");
+  case SREQ_WIN:
+    if (switch_win(&save_curwin, &save_curtab, (win_T *)from,
+                   win_find_tabpage((win_T *)from), false) == FAIL) {
+      if (try_end(err)) {
         return;
       }
-      set_option_value_err(key, numval, stringval, opt_flags, err);
-      restore_win(save_curwin, save_curtab, true);
-      break;
-    case SREQ_BUF:
-      aucmd_prepbuf(&aco, (buf_T *)from);
-      set_option_value_err(key, numval, stringval, opt_flags, err);
-      aucmd_restbuf(&aco);
-      break;
-    case SREQ_GLOBAL:
-      set_option_value_err(key, numval, stringval, opt_flags, err);
-      break;
+      api_set_error(err,
+                    kErrorTypeException,
+                    "Problem while switching windows");
+      return;
+    }
+    set_option_value_err(key, numval, stringval, opt_flags, err);
+    restore_win(save_curwin, save_curtab, true);
+    break;
+  case SREQ_BUF:
+    aucmd_prepbuf(&aco, (buf_T *)from);
+    set_option_value_err(key, numval, stringval, opt_flags, err);
+    aucmd_restbuf(&aco);
+    break;
+  case SREQ_GLOBAL:
+    set_option_value_err(key, numval, stringval, opt_flags, err);
+    break;
   }
 
   if (ERROR_SET(err)) {
@@ -1456,11 +1444,7 @@ static void set_option_value_for(char *key,
 }
 
 
-static void set_option_value_err(char *key,
-                                 int numval,
-                                 char *stringval,
-                                 int opt_flags,
-                                 Error *err)
+static void set_option_value_err(char *key, int numval, char *stringval, int opt_flags, Error *err)
 {
   char *errmsg;
 
@@ -1519,8 +1503,7 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
         mapblock_fill_dict(dict, current_maphash, buffer_value, false);
-        ADD(mappings, vim_to_object(
-            (typval_T[]) { { .v_type = VAR_DICT, .vval.v_dict = dict } }));
+        ADD(mappings, vim_to_object((typval_T[]) { { .v_type = VAR_DICT, .vval.v_dict = dict } }));
 
         tv_dict_clear(dict);
       }
@@ -1556,13 +1539,13 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
   if (obj.type == kObjectTypeInteger) {
     Integer id = obj.data.integer;
     if (id == 0) {
-        *row = 0;
-        *col = 0;
-        return true;
+      *row = 0;
+      *col = 0;
+      return true;
     } else if (id == -1) {
-        *row = MAXLNUM;
-        *col = MAXCOL;
-        return true;
+      *row = MAXLNUM;
+      *col = MAXCOL;
+      return true;
     } else if (id < 0) {
       api_set_error(err, kErrorTypeValidation, "Mark id must be positive");
       return false;
@@ -1578,7 +1561,7 @@ bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int
       return false;
     }
 
-  // Check if it is a position
+    // Check if it is a position
   } else if (obj.type == kObjectTypeArray) {
     Array pos = obj.data.array;
     if (pos.size != 2
@@ -1662,8 +1645,7 @@ free_exit:
 /// @param what         The name of the object, used for error message
 /// @param nil_value    What to return if the type is nil.
 /// @param err          Set if there was an error in converting to a bool
-bool api_object_to_bool(Object obj, const char *what,
-                        bool nil_value, Error *err)
+bool api_object_to_bool(Object obj, const char *what, bool nil_value, Error *err)
 {
   if (obj.type == kObjectTypeBoolean) {
     return obj.data.boolean;
@@ -1766,7 +1748,7 @@ static bool parse_float_relative(String relative, FloatRelative *out)
   char *str = relative.data;
   if (striequal(str, "editor")) {
     *out = kFloatRelativeEditor;
-  }  else if (striequal(str, "win")) {
+  } else if (striequal(str, "win")) {
     *out = kFloatRelativeWindow;
   } else if (striequal(str, "cursor")) {
     *out = kFloatRelativeCursor;
@@ -1800,7 +1782,7 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
     { "shadow", { "", "", " ", " ", " ", " ", " ", "" }, true },
     { "rounded", { "╭", "─", "╮", "│", "╯", "─", "╰", "│" }, false },
     { "solid", { " ", " ", " ", " ", " ", " ", " ", " " }, false },
-    { NULL, { { NUL } } , false },
+    { NULL, { { NUL } }, false },
   };
 
   schar_T *chars = fconfig->border_chars;
@@ -1837,7 +1819,6 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
             return;
           }
         }
-
       } else if (iytem.type == kObjectTypeString) {
         string = iytem.data.string;
       } else {
@@ -1896,8 +1877,8 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
   }
 }
 
-bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
-                        bool new_win, Error *err)
+bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf, bool new_win,
+                        Error *err)
 {
   // TODO(bfredl): use a get/has_key interface instead and get rid of extra
   // flags
@@ -1998,13 +1979,13 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
       has_bufpos = true;
     } else if (!strcmp(key, "external")) {
       has_external = fconfig->external
-          = api_object_to_bool(val, "'external' key", false, err);
+                       = api_object_to_bool(val, "'external' key", false, err);
       if (ERROR_SET(err)) {
         return false;
       }
     } else if (!strcmp(key, "focusable")) {
       fconfig->focusable
-          = api_object_to_bool(val, "'focusable' key", true, err);
+        = api_object_to_bool(val, "'focusable' key", true, err);
       if (ERROR_SET(err)) {
         return false;
       }
@@ -2031,13 +2012,13 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
         fconfig->style = kWinStyleUnused;
       } else if (striequal(val.data.string.data, "minimal")) {
         fconfig->style = kWinStyleMinimal;
-      }  else {
+      } else {
         api_set_error(err, kErrorTypeValidation,
                       "Invalid value of 'style' key");
       }
     } else if (strequal(key, "noautocmd") && new_win) {
       fconfig->noautocmd
-          = api_object_to_bool(val, "'noautocmd' key", false, err);
+        = api_object_to_bool(val, "'noautocmd' key", false, err);
       if (ERROR_SET(err)) {
         return false;
       }

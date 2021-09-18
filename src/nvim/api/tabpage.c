@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/api/tabpage.h"
-#include "nvim/api/vim.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/tabpage.h"
+#include "nvim/api/vim.h"
 #include "nvim/memory.h"
 #include "nvim/window.h"
 
@@ -53,7 +53,7 @@ Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_get_value(tab->tp_vars, name, err);
@@ -65,10 +65,7 @@ Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
-void nvim_tabpage_set_var(Tabpage tabpage,
-                          String name,
-                          Object value,
-                          Error *err)
+void nvim_tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);

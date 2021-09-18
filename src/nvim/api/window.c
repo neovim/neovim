@@ -1,25 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/lua/executor.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/vim.h"
 #include "nvim/api/window.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 /// Gets the current buffer in a window
@@ -222,7 +222,7 @@ Object nvim_win_get_var(Window window, String name, Error *err)
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_get_value(win->w_vars, name, err);
@@ -275,7 +275,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return get_option_from(win, SREQ_WIN, name, err);
@@ -289,8 +289,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 /// @param name     Option name
 /// @param value    Option value
 /// @param[out] err Error details, if any
-void nvim_win_set_option(uint64_t channel_id, Window window,
-                         String name, Object value, Error *err)
+void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -452,8 +451,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           PUT(rv, "bufpos", ARRAY_OBJ(pos));
         }
       }
-      PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
-          float_anchor_str[config->anchor])));
+      PUT(rv, "anchor", STRING_OBJ(cstr_to_string(float_anchor_str[config->anchor])));
       PUT(rv, "row", FLOAT_OBJ(config->row));
       PUT(rv, "col", FLOAT_OBJ(config->col));
       PUT(rv, "zindex", INTEGER_OBJ(config->zindex));
@@ -463,8 +461,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       for (size_t i = 0; i < 8; i++) {
         Array tuple = ARRAY_DICT_INIT;
 
-        String s = cstrn_to_string(
-            (const char *)config->border_chars[i], sizeof(schar_T));
+        String s = cstrn_to_string((const char *)config->border_chars[i], sizeof(schar_T));
 
         int hi_id = config->border_hl_ids[i];
         char_u *hi_name = syn_id2name(hi_id);
