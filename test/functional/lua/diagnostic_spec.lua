@@ -14,48 +14,32 @@ describe('vim.diagnostic', function()
     exec_lua [[
       require('vim.diagnostic')
 
-      function make_error(msg, x1, y1, x2, y2)
+      function make_diagnostic(msg, x1, y1, x2, y2, severity, source)
         return {
           lnum = x1,
           col = y1,
           end_lnum = x2,
           end_col = y2,
           message = msg,
-          severity = vim.diagnostic.severity.ERROR,
+          severity = severity,
+          source = source,
         }
       end
 
-      function make_warning(msg, x1, y1, x2, y2)
-        return {
-          lnum = x1,
-          col = y1,
-          end_lnum = x2,
-          end_col = y2,
-          message = msg,
-          severity = vim.diagnostic.severity.WARN,
-        }
+      function make_error(msg, x1, y1, x2, y2, source)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.ERROR, source)
       end
 
-      function make_info(msg, x1, y1, x2, y2)
-        return {
-          lnum = x1,
-          col = y1,
-          end_lnum = x2,
-          end_col = y2,
-          message = msg,
-          severity = vim.diagnostic.severity.INFO,
-        }
+      function make_warning(msg, x1, y1, x2, y2, source)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.WARN, source)
       end
 
-      function make_hint(msg, x1, y1, x2, y2)
-        return {
-          lnum = x1,
-          col = y1,
-          end_lnum = x2,
-          end_col = y2,
-          message = msg,
-          severity = vim.diagnostic.severity.HINT,
-        }
+      function make_info(msg, x1, y1, x2, y2, source)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.INFO, source)
+      end
+
+      function make_hint(msg, x1, y1, x2, y2, source)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.HINT, source)
       end
 
       function count_diagnostics(bufnr, severity, namespace)
@@ -590,6 +574,63 @@ describe('vim.diagnostic', function()
       eq({'Error', 'Warn', 'Info'}, result[1])
       eq({'Info', 'Warn', 'Error'}, result[2])
     end)
+
+    it('can show diagnostic sources in virtual text', function()
+      local result = exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0, 'source x'),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            source = 'always',
+          }
+        })
+
+        local extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]]
+      eq(' source x: Some error', result)
+
+      result = exec_lua [[
+        vim.diagnostic.config({
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            source = 'if_many',
+          }
+        }, diagnostic_ns)
+
+        local extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+        local virt_text = extmarks[1][4].virt_text[2][1]
+        return virt_text
+      ]]
+      eq(' Some error', result)
+
+      result = exec_lua [[
+        local diagnostics = {
+          make_error('Some error', 0, 0, 0, 0, 'source x'),
+          make_error('Another error', 1, 1, 1, 1, 'source y'),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            source = 'if_many',
+          }
+        })
+
+        local extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+        local virt_text = {extmarks[1][4].virt_text[2][1], extmarks[2][4].virt_text[2][1]}
+        return virt_text
+      ]]
+      eq(' source x: Some error', result[1])
+      eq(' source y: Another error', result[2])
+    end)
   end)
 
   describe('set()', function()
@@ -852,6 +893,49 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
         local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics({show_header = false}, diagnostic_bufnr, 5)
         return #vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+      ]])
+    end)
+
+    it('can show diagnostic source', function()
+      exec_lua [[vim.api.nvim_win_set_buf(0, diagnostic_bufnr)]]
+
+      eq({"1. Syntax error"}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3, "source x"),
+        }
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics {
+          show_header = false,
+          source = "if_many",
+        }
+        local lines = vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({"1. source x: Syntax error"}, exec_lua [[
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics {
+          show_header = false,
+          source = "always",
+        }
+        local lines = vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({"1. source x: Syntax error", "2. source y: Another error"}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3, "source x"),
+          make_error("Another error", 0, 1, 0, 3, "source y"),
+        }
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics {
+          show_header = false,
+          source = "if_many",
+        }
+        local lines = vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
       ]])
     end)
   end)

@@ -47,6 +47,7 @@ A diagnostic is a Lua table with the following keys:
 	end_col: The final column of the diagnostic
 	severity: The severity of the diagnostic |vim.diagnostic.severity|
 	message: The diagnostic text
+	source: The source of the diagnostic
 
 Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
 rows and columns). |api-indexing|
@@ -226,6 +227,9 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                    • severity: Only show virtual text for
                                      diagnostics matching the given severity
                                      |diagnostic-severity|
+                                   • source: (string) Include the diagnostic
+                                     source in virtual text. One of "always"
+                                     or "if_many".
 
                                  • signs: (default true) Use signs for
                                    diagnostics. Options:
@@ -532,6 +536,9 @@ show_position_diagnostics({opts}, {bufnr}, {position})
                                 • severity: See |diagnostic-severity|.
                                 • show_header: (boolean, default true) Show
                                   "Diagnostics:" header
+                                • source: (string) Include the diagnostic
+                                  source in the message. One of "always" or
+                                  "if_many".
                     {bufnr}     number|nil Buffer number. Defaults to the
                                 current buffer.
                     {position}  table|nil The (0,0)-indexed position. Defaults

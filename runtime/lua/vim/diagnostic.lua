@@ -48,6 +48,35 @@ local function filter_by_severity(severity, diagnostics)
 end
 
 ---@private
+local function prefix_source(source, diagnostics)
+  vim.validate { source = {source, function(v)
+    return v == "always" or v == "if_many"
+  end, "Invalid value for option 'source'" } }
+
+  if source == "if_many" then
+    local sources = {}
+    for _, d in pairs(diagnostics) do
+      if d.source then
+        sources[d.source] = true
+      end
+    end
+    if #vim.tbl_keys(sources) <= 1 then
+      return diagnostics
+    end
+  end
+
+  return vim.tbl_map(function(d)
+    if not d.source then
+      return d
+    end
+
+    local t = vim.deepcopy(d)
+    t.message = string.format("%s: %s", d.source, d.message)
+    return t
+  end, diagnostics)
+end
+
+---@private
 local function resolve_optional_value(option, namespace, bufnr)
   local enabled_val = {}
 
@@ -336,13 +365,19 @@ end
 ---@param diagnostics table: The diagnostics to display
 ---@return table {popup_bufnr, win_id}
 local function show_diagnostics(opts, diagnostics)
-  if vim.tbl_isempty(diagnostics) then return end
+  if vim.tbl_isempty(diagnostics) then
+    return
+  end
   local lines = {}
   local highlights = {}
   local show_header = vim.F.if_nil(opts.show_header, true)
   if show_header then
     table.insert(lines, "Diagnostics:")
     table.insert(highlights, {0, "Bold"})
+  end
+
+  if opts.source then
+    diagnostics = prefix_source(opts.source, diagnostics)
   end
 
   for i, diagnostic in ipairs(diagnostics) do
@@ -487,6 +522,8 @@ end
 ---       - virtual_text: (default true) Use virtual text for diagnostics. Options:
 ---                       * severity: Only show virtual text for diagnostics matching the given
 ---                       severity |diagnostic-severity|
+---                       * source: (string) Include the diagnostic source in virtual
+---                       text. One of "always" or "if_many".
 ---       - signs: (default true) Use signs for diagnostics. Options:
 ---                * severity: Only show signs for diagnostics matching the given severity
 ---                |diagnostic-severity|
@@ -826,6 +863,10 @@ function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
   bufnr = get_bufnr(bufnr)
   opts = get_resolved_options({ virtual_text = opts }, namespace, bufnr).virtual_text
 
+  if opts and opts.source then
+    diagnostics = prefix_source(opts.source, diagnostics)
+  end
+
   local buffer_line_diagnostics = diagnostic_lines(diagnostics)
   for line, line_diagnostics in pairs(buffer_line_diagnostics) do
     if opts and opts.severity then
@@ -1007,6 +1048,8 @@ end
 ---            - namespace: (number) Limit diagnostics to the given namespace
 ---            - severity: See |diagnostic-severity|.
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
+---            - source: (string) Include the diagnostic source in
+---            the message. One of "always" or "if_many".
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param position table|nil The (0,0)-indexed position. Defaults to the current cursor position.
 ---@return tuple ({popup_bufnr}, {win_id})
