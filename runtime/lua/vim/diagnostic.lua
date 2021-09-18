@@ -381,35 +381,6 @@ local function show_diagnostics(opts, diagnostics)
   return popup_bufnr, winnr
 end
 
-local errlist_type_map = {
-  [M.severity.ERROR] = 'E',
-  [M.severity.WARN] = 'W',
-  [M.severity.INFO] = 'I',
-  [M.severity.HINT] = 'I',
-}
-
----@private
-local function diagnostics_to_list_items(diagnostics)
-  local items = {}
-  for _, d in pairs(diagnostics) do
-    table.insert(items, {
-      bufnr = d.bufnr,
-      lnum = d.lnum + 1,
-      col = d.col + 1,
-      text = d.message,
-      type = errlist_type_map[d.severity or M.severity.ERROR] or 'E'
-    })
-  end
-  table.sort(items, function(a, b)
-    if a.bufnr == b.bufnr then
-      return a.lnum < b.lnum
-    else
-      return a.bufnr < b.bufnr
-    end
-  end)
-  return items
-end
-
 ---@private
 local function set_list(loclist, opts)
   opts = opts or {}
@@ -421,7 +392,7 @@ local function set_list(loclist, opts)
     bufnr = vim.api.nvim_win_get_buf(winnr)
   end
   local diagnostics = M.get(bufnr, opts)
-  local items = diagnostics_to_list_items(diagnostics)
+  local items = M.tolist(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
   else
@@ -1233,7 +1204,73 @@ function M.match(str, pat, groups, severity_map, defaults)
   return diagnostic
 end
 
--- }}}
+local errlist_type_map = {
+  [M.severity.ERROR] = 'E',
+  [M.severity.WARN] = 'W',
+  [M.severity.INFO] = 'I',
+  [M.severity.HINT] = 'N',
+}
 
+--- Convert a list of diagnostics to a list of quickfix items.
+---
+---@param diagnostics table List of diagnostics |diagnostic-structure|.
+---@return array of quickfix list items |setqflist-what|
+function M.tolist(diagnostics)
+  vim.validate { diagnostics = {diagnostics, 't'} }
+
+  local list = {}
+  for _, v in ipairs(diagnostics) do
+    local item = {
+      bufnr = v.bufnr,
+      lnum = v.lnum + 1,
+      col = v.col and (v.col + 1) or nil,
+      end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
+      end_col = v.end_col and (v.end_col + 1) or nil,
+      text = v.message,
+      type = errlist_type_map[v.severity] or 'E',
+    }
+    table.insert(list, item)
+  end
+  table.sort(list, function(a, b)
+    if a.bufnr == b.bufnr then
+      return a.lnum < b.lnum
+    else
+      return a.bufnr < b.bufnr
+    end
+  end)
+  return list
+end
+
+--- Convert a list of quickfix items to a list of diagnostics.
+---
+---@param list table A list of quickfix items from |getqflist()| or
+---            |getloclist()|.
+---@return array of diagnostics |diagnostic-structure|
+function M.fromlist(list)
+  vim.validate { list = {list, 't'} }
+
+  local diagnostics = {}
+  for _, item in ipairs(list) do
+    if item.valid == 1 then
+      local lnum = math.max(0, item.lnum - 1)
+      local col = item.col > 0 and (item.col - 1) or nil
+      local end_lnum = item.end_lnum > 0 and (item.end_lnum - 1) or lnum
+      local end_col = item.end_col > 0 and (item.end_col - 1) or col
+      local severity = item.type ~= "" and M.severity[item.type] or M.severity.ERROR
+      table.insert(diagnostics, {
+        bufnr = item.bufnr,
+        lnum = lnum,
+        col = col,
+        end_lnum = end_lnum,
+        end_col = end_col,
+        severity = severity,
+        message = item.text,
+      })
+    end
+  end
+  return diagnostics
+end
+
+-- }}}
 
 return M

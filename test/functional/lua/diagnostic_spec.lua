@@ -934,4 +934,30 @@ describe('vim.diagnostic', function()
       ]], msg))
     end)
   end)
+
+  describe('tolist() and fromlist()', function()
+    it('works', function()
+      local result = exec_lua [[
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Error 1', 0, 1, 0, 1),
+        make_error('Error 2', 1, 1, 1, 1),
+        make_warning('Warning', 2, 2, 2, 2),
+      })
+
+      local diagnostics = vim.diagnostic.get(diagnostic_bufnr)
+      vim.fn.setqflist(vim.diagnostic.tolist(diagnostics))
+      local list = vim.fn.getqflist()
+      local new_diagnostics = vim.diagnostic.fromlist(list)
+
+      -- Remove namespace since it isn't present in the return value of
+      -- fromlist()
+      for _, v in ipairs(diagnostics) do
+        v.namespace = nil
+      end
+
+      return {diagnostics, new_diagnostics}
+      ]]
+      eq(result[1], result[2])
+    end)
+  end)
 end)

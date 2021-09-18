@@ -265,6 +265,16 @@ enable({bufnr}, {namespace})                         *vim.diagnostic.enable()*
                     {namespace}  number|nil Only enable diagnostics for the
                                  given namespace.
 
+fromlist({list})                                   *vim.diagnostic.fromlist()*
+                Convert a list of quickfix items to a list of diagnostics.
+
+                Parameters: ~
+                    {list}  table A list of quickfix items from |getqflist()|
+                            or |getloclist()|.
+
+                Return: ~
+                    array of diagnostics |diagnostic-structure|
+
 get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                 Get current diagnostics.
 
@@ -529,5 +539,15 @@ show_position_diagnostics({opts}, {bufnr}, {position})
 
                 Return: ~
                     tuple ({popup_bufnr}, {win_id})
+
+tolist({diagnostics})                                *vim.diagnostic.tolist()*
+                Convert a list of diagnostics to a list of quickfix items.
+
+                Parameters: ~
+                    {diagnostics}  table List of diagnostics
+                                   |diagnostic-structure|.
+
+                Return: ~
+                    array of quickfix list items |setqflist-what|
 
  vim:tw=78:ts=8:ft=help:norl:
