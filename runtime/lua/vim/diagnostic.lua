@@ -544,14 +544,16 @@ function M.config(opts, namespace)
 
   if namespace then
     for bufnr, v in pairs(diagnostic_cache) do
-      if v[namespace] then
+      if vim.api.nvim_buf_is_loaded(bufnr) and v[namespace] then
         M.show(namespace, bufnr)
       end
     end
   else
     for bufnr, v in pairs(diagnostic_cache) do
-      for ns in pairs(v) do
-        M.show(ns, bufnr)
+      if vim.api.nvim_buf_is_loaded(bufnr) then
+        for ns in pairs(v) do
+          M.show(ns, bufnr)
+        end
       end
     end
   end
@@ -589,12 +591,10 @@ function M.set(namespace, bufnr, diagnostics, opts)
 
   set_diagnostic_cache(namespace, diagnostics, bufnr)
 
-  if opts then
-    M.config(opts, namespace)
-  end
-
   if vim.api.nvim_buf_is_loaded(bufnr) then
-    M.show(namespace, bufnr)
+    M.show(namespace, bufnr, diagnostics, opts)
+  elseif opts then
+    M.config(opts, namespace)
   end
 
   vim.api.nvim_command("doautocmd <nomodeline> User DiagnosticsChanged")
