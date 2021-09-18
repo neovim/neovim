@@ -88,8 +88,12 @@ local function get_buf_lines(bufnr)
   return lines
 end
 
----@private
-local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
+--- Convert LSP diagnostics Vim API diagnostics.
+---
+---@param diagnostics Diagnostic[]
+---@param bufnr number
+---@param client_id number
+function M.diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
   local offset_encoding = client and client.offset_encoding or "utf-16"
@@ -150,7 +154,7 @@ end
 ---@private
 function M.save(diagnostics, bufnr, client_id)
   local namespace = M.get_namespace(client_id)
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+  vim.diagnostic.set(namespace, bufnr, M.diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
 end
 -- }}}
 
@@ -202,13 +206,13 @@ function M.on_publish_diagnostics(_, result, ctx, config)
     end
   end
 
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), config)
+  vim.diagnostic.set(namespace, bufnr, M.diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), config)
 
   -- Keep old autocmd for back compat. This should eventually be removed.
   vim.api.nvim_command("doautocmd <nomodeline> User LspDiagnosticsChanged")
 end
 
---- Clear diagnotics and diagnostic cache.
+--- Clear diagnostics and diagnostic cache.
 ---
 --- Diagnostic producers should prefer |vim.diagnostic.reset()|. However,
 --- this method signature is still used internally in some parts of the LSP
@@ -453,7 +457,6 @@ end
 ---@param diagnostics Diagnostic[]
 ---@param bufnr number The buffer number
 ---@param client_id number the client id
----@param sign_ns number|nil
 ---@param opts table Configuration for signs. Keys:
 ---             - priority: Set the priority of the signs.
 ---             - severity_limit (DiagnosticSeverity):
@@ -464,7 +467,7 @@ function M.set_signs(diagnostics, bufnr, client_id, _, opts)
     opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
   end
 
-  vim.diagnostic._set_signs(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
+  vim.diagnostic._set_signs(namespace, bufnr, M.diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
 end
 
 --- Set underline for given diagnostics
@@ -474,7 +477,6 @@ end
 ---@param diagnostics Diagnostic[]
 ---@param bufnr number: The buffer number
 ---@param client_id number: The client id
----@param diagnostic_ns number|nil: The namespace
 ---@param opts table: Configuration table:
 ---             - severity_limit (DiagnosticSeverity):
 ---                 - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
@@ -483,7 +485,7 @@ function M.set_underline(diagnostics, bufnr, client_id, _, opts)
   if opts and not opts.severity and opts.severity_limit then
     opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
   end
-  return vim.diagnostic._set_underline(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
+  return vim.diagnostic._set_underline(namespace, bufnr, M.diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
 end
 
 --- Set virtual text given diagnostics
@@ -493,7 +495,6 @@ end
 ---@param diagnostics Diagnostic[]
 ---@param bufnr number
 ---@param client_id number
----@param diagnostic_ns number
 ---@param opts table Options on how to display virtual text. Keys:
 ---             - prefix (string): Prefix to display before virtual text on line
 ---             - spacing (number): Number of spaces to insert before virtual text
@@ -504,7 +505,7 @@ function M.set_virtual_text(diagnostics, bufnr, client_id, _, opts)
   if opts and not opts.severity and opts.severity_limit then
     opts.severity = {min=severity_lsp_to_vim(opts.severity_limit)}
   end
-  return vim.diagnostic._set_virtual_text(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
+  return vim.diagnostic._set_virtual_text(namespace, bufnr, M.diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
 end
 
 --- Default function to get text chunks to display using |nvim_buf_set_extmark()|.
@@ -512,13 +513,12 @@ end
 ---@deprecated Prefer |vim.diagnostic.get_virt_text_chunks()|
 ---
 ---@param bufnr number The buffer to display the virtual text in
----@param line number The line number to display the virtual text on
 ---@param line_diags Diagnostic[] The diagnostics associated with the line
 ---@param opts table See {opts} from |vim.lsp.diagnostic.set_virtual_text()|
 ---@return an array of [text, hl_group] arrays. This can be passed directly to
 ---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virtual_text_chunks_for_line(bufnr, _, line_diags, opts)
-  return vim.diagnostic.get_virt_text_chunks(diagnostic_lsp_to_vim(line_diags, bufnr), opts)
+  return vim.diagnostic.get_virt_text_chunks(M.diagnostic_lsp_to_vim(line_diags, bufnr), opts)
 end
 
 --- Open a floating window with the diagnostics from {position}
@@ -573,8 +573,8 @@ end
 --- for redrawing diagnostics after making changes in diagnostics
 --- configuration. |lsp-handler-configuration|
 ---
----@param bufnr (optional, number): Buffer handle, defaults to current
----@param client_id (optional, number): Redraw diagnostics for the given
+---@param bufnr number|nil: Buffer handle, defaults to current
+---@param client_id number|nil: Redraw diagnostics for the given
 ---       client. The default is to redraw diagnostics for all attached
 ---       clients.
 function M.redraw(bufnr, client_id)
@@ -655,8 +655,8 @@ end
 ---
 ---@deprecated Prefer |vim.diagnostic.disable()|
 ---
----@param bufnr (optional, number): Buffer handle, defaults to current
----@param client_id (optional, number): Disable diagnostics for the given
+---@param bufnr number|nil: Buffer handle, defaults to current
+---@param client_id number|nil: Disable diagnostics for the given
 ---       client. The default is to disable diagnostics for all attached
 ---       clients.
 -- Note that when diagnostics are disabled for a buffer, the server will still
@@ -678,8 +678,8 @@ end
 ---
 ---@deprecated Prefer |vim.diagnostic.enable()|
 ---
----@param bufnr (optional, number): Buffer handle, defaults to current
----@param client_id (optional, number): Enable diagnostics for the given
+---@param bufnr number|nil: Buffer handle, defaults to current
+---@param client_id number|nil: Enable diagnostics for the given
 ---       client. The default is to enable diagnostics for all attached
 ---       clients.
 function M.enable(bufnr, client_id)
