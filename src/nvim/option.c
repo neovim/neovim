@@ -2397,6 +2397,8 @@ static char_u *did_set_string_option(int opt_idx, char_u **varp, bool new_value_
       os_setenv("VIMRUNTIME", "", 1);
       didset_vimruntime = false;
     }
+  } else if (varp == &p_rtp || varp == &p_pp) {  // 'runtimepath' 'packpath'
+    invalidate_search_path();
   } else if (varp == &curwin->w_p_culopt
              || gvarp == &curwin->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
     if (**varp == NUL || fill_culopt_flags(*varp, curwin) != OK) {

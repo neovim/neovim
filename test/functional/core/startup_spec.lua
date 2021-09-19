@@ -351,12 +351,12 @@ describe('startup', function()
 
   it("handles the correct order with start packages and after/", function()
     pack_clear [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]
-    eq({'ordinary', 'FANCY', 'ordinary after', 'FANCY after'}, exec_lua [[ return _G.test_loadorder ]])
+    eq({'ordinary', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 
   it("handles the correct order with opt packages and after/", function()
     pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! superspecial\nruntime! filen.lua" ]]
-    eq({'ordinary', 'SuperSpecial', 'FANCY', 'SuperSpecial after', 'ordinary after', 'FANCY after'}, exec_lua [[ return _G.test_loadorder ]])
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 end)
 

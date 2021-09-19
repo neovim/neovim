@@ -305,18 +305,6 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #include "nvim/buffer_defs.h"    // buffer and windows
 #include "nvim/ex_cmds_defs.h"   // Ex command defines
 
-// Used for flags in do_in_path()
-#define DIP_ALL 0x01    // all matches, not just the first one
-#define DIP_DIR 0x02    // find directories instead of files
-#define DIP_ERR 0x04    // give an error message when none found
-#define DIP_START 0x08  // also use "start" directory in 'packpath'
-#define DIP_OPT 0x10    // also use "opt" directory in 'packpath'
-#define DIP_NORTP 0x20  // do not use 'runtimepath'
-#define DIP_NOAFTER 0x40  // skip "after" directories
-#define DIP_AFTER   0x80  // only use "after" directories
-#define DIP_LUA  0x100    // also use ".lua" files
-#define DIP_DIRFILE 0x200  // find both files and directories
-
 // Lowest number used for window ID. Cannot have this many windows per tab.
 #define LOWEST_WIN_ID 1000
 
