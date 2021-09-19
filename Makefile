@@ -128,7 +128,7 @@ else
 	@# Handle TEST_FILE=test_foo{,.res,.vim}.
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
 endif
-# build oldtest by specifying the relative .vim filename.
+# Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
 src/nvim/testdir/%.vim: phony_force
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
