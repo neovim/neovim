@@ -96,6 +96,7 @@ internally and are no longer exposed as part of the API. Instead, use
 
 LSP Utility Functions ~
 
+*vim.lsp.util.diagnostics_to_items()*	Use |vim.diagnostic.toqflist()| instead.
 *vim.lsp.util.set_qflist()*		Use |setqflist()| instead.
 *vim.lsp.util.set_loclist()*		Use |setloclist()| instead.
 

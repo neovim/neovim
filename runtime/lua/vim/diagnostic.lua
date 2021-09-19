@@ -9,6 +9,12 @@ M.severity = {
 
 vim.tbl_add_reverse_lookup(M.severity)
 
+-- Mappings from qflist/loclist error types to severities
+M.severity.E = M.severity.ERROR
+M.severity.W = M.severity.WARN
+M.severity.I = M.severity.INFO
+M.severity.N = M.severity.HINT
+
 local global_diagnostic_options = {
   signs = true,
   underline = true,
@@ -375,35 +381,6 @@ local function show_diagnostics(opts, diagnostics)
   return popup_bufnr, winnr
 end
 
-local errlist_type_map = {
-  [M.severity.ERROR] = 'E',
-  [M.severity.WARN] = 'W',
-  [M.severity.INFO] = 'I',
-  [M.severity.HINT] = 'I',
-}
-
----@private
-local function diagnostics_to_list_items(diagnostics)
-  local items = {}
-  for _, d in pairs(diagnostics) do
-    table.insert(items, {
-      bufnr = d.bufnr,
-      lnum = d.lnum + 1,
-      col = d.col + 1,
-      text = d.message,
-      type = errlist_type_map[d.severity or M.severity.ERROR] or 'E'
-    })
-  end
-  table.sort(items, function(a, b)
-    if a.bufnr == b.bufnr then
-      return a.lnum < b.lnum
-    else
-      return a.bufnr < b.bufnr
-    end
-  end)
-  return items
-end
-
 ---@private
 local function set_list(loclist, opts)
   opts = opts or {}
@@ -415,7 +392,7 @@ local function set_list(loclist, opts)
     bufnr = vim.api.nvim_win_get_buf(winnr)
   end
   local diagnostics = M.get(bufnr, opts)
-  local items = diagnostics_to_list_items(diagnostics)
+  local items = M.toqflist(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
   else
@@ -1168,7 +1145,134 @@ function M.enable(bufnr, namespace)
   end
 end
 
--- }}}
+--- Parse a diagnostic from a string.
+---
+--- For example, consider a line of output from a linter:
+--- <pre>
+--- WARNING filename:27:3: Variable 'foo' does not exist
+--- </pre>
+--- This can be parsed into a diagnostic |diagnostic-structure|
+--- with:
+--- <pre>
+--- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+--- local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+--- local groups = {"severity", "lnum", "col", "message"}
+--- vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
+--- </pre>
+---
+---@param str string String to parse diagnostics from.
+---@param pat string Lua pattern with capture groups.
+---@param groups table List of fields in a |diagnostic-structure| to
+---                    associate with captures from {pat}.
+---@param severity_map table A table mapping the severity field from {groups}
+---                          with an item from |vim.diagnostic.severity|.
+---@param defaults table|nil Table of default values for any fields not listed in {groups}.
+---                          When omitted, numeric values default to 0 and "severity" defaults to
+---                          ERROR.
+---@return diagnostic |diagnostic-structure| or `nil` if {pat} fails to match {str}.
+function M.match(str, pat, groups, severity_map, defaults)
+  vim.validate {
+    str = { str, 's' },
+    pat = { pat, 's' },
+    groups = { groups, 't' },
+    severity_map = { severity_map, 't', true },
+    defaults = { defaults, 't', true },
+  }
 
+  severity_map = severity_map or M.severity
+
+  local diagnostic = {}
+  local matches = {string.match(str, pat)}
+  if vim.tbl_isempty(matches) then
+    return
+  end
+
+  for i, match in ipairs(matches) do
+    local field = groups[i]
+    if field == "severity" then
+      match = severity_map[match]
+    elseif field == "lnum" or field == "end_lnum" or field == "col" or field == "end_col" then
+      match = assert(tonumber(match)) - 1
+    end
+    diagnostic[field] = match
+  end
+
+  diagnostic = vim.tbl_extend("keep", diagnostic, defaults or {})
+  diagnostic.severity = diagnostic.severity or M.severity.ERROR
+  diagnostic.col = diagnostic.col or 0
+  diagnostic.end_lnum = diagnostic.end_lnum or diagnostic.lnum
+  diagnostic.end_col = diagnostic.end_col or diagnostic.col
+  return diagnostic
+end
+
+local errlist_type_map = {
+  [M.severity.ERROR] = 'E',
+  [M.severity.WARN] = 'W',
+  [M.severity.INFO] = 'I',
+  [M.severity.HINT] = 'N',
+}
+
+--- Convert a list of diagnostics to a list of quickfix items that can be
+--- passed to |setqflist()| or |setloclist()|.
+---
+---@param diagnostics table List of diagnostics |diagnostic-structure|.
+---@return array of quickfix list items |setqflist-what|
+function M.toqflist(diagnostics)
+  vim.validate { diagnostics = {diagnostics, 't'} }
+
+  local list = {}
+  for _, v in ipairs(diagnostics) do
+    local item = {
+      bufnr = v.bufnr,
+      lnum = v.lnum + 1,
+      col = v.col and (v.col + 1) or nil,
+      end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
+      end_col = v.end_col and (v.end_col + 1) or nil,
+      text = v.message,
+      type = errlist_type_map[v.severity] or 'E',
+    }
+    table.insert(list, item)
+  end
+  table.sort(list, function(a, b)
+    if a.bufnr == b.bufnr then
+      return a.lnum < b.lnum
+    else
+      return a.bufnr < b.bufnr
+    end
+  end)
+  return list
+end
+
+--- Convert a list of quickfix items to a list of diagnostics.
+---
+---@param list table A list of quickfix items from |getqflist()| or
+---            |getloclist()|.
+---@return array of diagnostics |diagnostic-structure|
+function M.fromqflist(list)
+  vim.validate { list = {list, 't'} }
+
+  local diagnostics = {}
+  for _, item in ipairs(list) do
+    if item.valid == 1 then
+      local lnum = math.max(0, item.lnum - 1)
+      local col = item.col > 0 and (item.col - 1) or nil
+      local end_lnum = item.end_lnum > 0 and (item.end_lnum - 1) or lnum
+      local end_col = item.end_col > 0 and (item.end_col - 1) or col
+      local severity = item.type ~= "" and M.severity[item.type] or M.severity.ERROR
+      table.insert(diagnostics, {
+        bufnr = item.bufnr,
+        lnum = lnum,
+        col = col,
+        end_lnum = end_lnum,
+        end_col = end_col,
+        severity = severity,
+        message = item.text,
+      })
+    end
+  end
+  return diagnostics
+end
+
+-- }}}
 
 return M

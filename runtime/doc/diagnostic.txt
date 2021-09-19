@@ -182,8 +182,8 @@ is the first letter of the severity name (for example, "E" for ERROR). Signs
 can be customized using the following: >
 
 	sign define DiagnosticSignError text=E texthl=DiagnosticSignError linehl= numhl=
-	sign define DiagnosticSignWarning text=W texthl=DiagnosticSignWarning linehl= numhl=
-	sign define DiagnosticSignInformation text=I texthl=DiagnosticSignInformation linehl= numhl=
+	sign define DiagnosticSignWarn text=W texthl=DiagnosticSignWarn linehl= numhl=
+	sign define DiagnosticSignInfo text=I texthl=DiagnosticSignInfo linehl= numhl=
 	sign define DiagnosticSignHint text=H texthl=DiagnosticSignHint linehl= numhl=
 
 ==============================================================================
@@ -264,6 +264,16 @@ enable({bufnr}, {namespace})                         *vim.diagnostic.enable()*
                                  current buffer.
                     {namespace}  number|nil Only enable diagnostics for the
                                  given namespace.
+
+fromqflist({list})                               *vim.diagnostic.fromqflist()*
+                Convert a list of quickfix items to a list of diagnostics.
+
+                Parameters: ~
+                    {list}  table A list of quickfix items from |getqflist()|
+                            or |getloclist()|.
+
+                Return: ~
+                    array of diagnostics |diagnostic-structure|
 
 get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                 Get current diagnostics.
@@ -384,6 +394,41 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
                     {bufnr}      number|nil Buffer number. Defaults to the
                                  current buffer.
 
+                                                      *vim.diagnostic.match()*
+match({str}, {pat}, {groups}, {severity_map}, {defaults})
+                Parse a diagnostic from a string.
+
+                For example, consider a line of output from a linter: >
+
+                 WARNING filename:27:3: Variable 'foo' does not exist
+
+                < This can be parsed into a diagnostic |diagnostic-structure|
+                with: >
+
+                 local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+                 local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+                 local groups = {"severity", "lnum", "col", "message"}
+                 vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
+<
+
+                Parameters: ~
+                    {str}           string String to parse diagnostics from.
+                    {pat}           string Lua pattern with capture groups.
+                    {groups}        table List of fields in a
+                                    |diagnostic-structure| to associate with
+                                    captures from {pat}.
+                    {severity_map}  table A table mapping the severity field
+                                    from {groups} with an item from
+                                    |vim.diagnostic.severity|.
+                    {defaults}      table|nil Table of default values for any
+                                    fields not listed in {groups}. When
+                                    omitted, numeric values default to 0 and
+                                    "severity" defaults to ERROR.
+
+                Return: ~
+                    diagnostic |diagnostic-structure| or `nil` if {pat} fails
+                    to match {str}.
+
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
                 Remove all diagnostics from the given namespace.
 
@@ -494,5 +539,16 @@ show_position_diagnostics({opts}, {bufnr}, {position})
 
                 Return: ~
                     tuple ({popup_bufnr}, {win_id})
+
+toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
+                Convert a list of diagnostics to a list of quickfix items that
+                can be passed to |setqflist()| or |setloclist()|.
+
+                Parameters: ~
+                    {diagnostics}  table List of diagnostics
+                                   |diagnostic-structure|.
+
+                Return: ~
+                    array of quickfix list items |setqflist-what|
 
  vim:tw=78:ts=8:ft=help:norl:

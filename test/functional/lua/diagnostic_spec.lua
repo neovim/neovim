@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local NIL = helpers.NIL
 local command = helpers.command
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
@@ -910,6 +911,86 @@ describe('vim.diagnostic', function()
       ]]
 
       assert(loc_list[1].lnum < loc_list[2].lnum)
+    end)
+  end)
+
+  describe('match()', function()
+    it('matches a string', function()
+      local msg = "ERROR: george.txt:19:84:Two plus two equals five"
+      local diagnostic = {
+        severity = exec_lua [[return vim.diagnostic.severity.ERROR]],
+        lnum = 18,
+        col = 83,
+        end_lnum = 18,
+        end_col = 83,
+        message = "Two plus two equals five",
+      }
+      eq(diagnostic, exec_lua([[
+        return vim.diagnostic.match(..., "^(%w+): [^:]+:(%d+):(%d+):(.+)$", {"severity", "lnum", "col", "message"})
+      ]], msg))
+    end)
+
+    it('returns nil if the pattern fails to match', function()
+      eq(NIL, exec_lua [[
+        local msg = "The answer to life, the universe, and everything is"
+        return vim.diagnostic.match(msg, "This definitely will not match", {})
+      ]])
+    end)
+
+    it('respects default values', function()
+      local msg = "anna.txt:1:Happy families are all alike"
+      local diagnostic = {
+        severity = exec_lua [[return vim.diagnostic.severity.INFO]],
+        lnum = 0,
+        col = 0,
+        end_lnum = 0,
+        end_col = 0,
+        message = "Happy families are all alike",
+      }
+      eq(diagnostic, exec_lua([[
+        return vim.diagnostic.match(..., "^[^:]+:(%d+):(.+)$", {"lnum", "message"}, nil, {severity = vim.diagnostic.severity.INFO})
+      ]], msg))
+    end)
+
+    it('accepts a severity map', function()
+      local msg = "46:FATAL:Et tu, Brute?"
+      local diagnostic = {
+        severity = exec_lua [[return vim.diagnostic.severity.ERROR]],
+        lnum = 45,
+        col = 0,
+        end_lnum = 45,
+        end_col = 0,
+        message = "Et tu, Brute?",
+      }
+      eq(diagnostic, exec_lua([[
+        return vim.diagnostic.match(..., "^(%d+):(%w+):(.+)$", {"lnum", "severity", "message"}, {FATAL = vim.diagnostic.severity.ERROR})
+      ]], msg))
+    end)
+  end)
+
+  describe('toqflist() and fromqflist()', function()
+    it('works', function()
+      local result = exec_lua [[
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Error 1', 0, 1, 0, 1),
+        make_error('Error 2', 1, 1, 1, 1),
+        make_warning('Warning', 2, 2, 2, 2),
+      })
+
+      local diagnostics = vim.diagnostic.get(diagnostic_bufnr)
+      vim.fn.setqflist(vim.diagnostic.toqflist(diagnostics))
+      local list = vim.fn.getqflist()
+      local new_diagnostics = vim.diagnostic.fromqflist(list)
+
+      -- Remove namespace since it isn't present in the return value of
+      -- fromlist()
+      for _, v in ipairs(diagnostics) do
+        v.namespace = nil
+      end
+
+      return {diagnostics, new_diagnostics}
+      ]]
+      eq(result[1], result[2])
     end)
   end)
 end)
