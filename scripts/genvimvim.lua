@@ -1,4 +1,4 @@
-mpack = require('mpack')
+local mpack = require('mpack')
 
 if arg[1] == '--help' then
   print('Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim')
@@ -52,7 +52,7 @@ local function is_autocmd_cmd(cmd)
           or cmd == 'doautoall')
 end
 
-vimcmd_start = 'syn keyword vimCommand contained '
+local vimcmd_start = 'syn keyword vimCommand contained '
 w(vimcmd_start)
 local prev_cmd = nil
 for _, cmd_desc in ipairs(ex_cmds.cmds) do
@@ -123,9 +123,8 @@ end
 w('\n\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
-funcs = mpack.unpack(io.open(funcs_file, 'rb'):read("*all"))
-local started = 0
-for name, def in pairs(funcs) do
+local funcs = mpack.unpack(io.open(funcs_file, 'rb'):read("*all"))
+for name, _ in pairs(funcs) do
   if name then
     if lld.line_length > 850 then
       w('\n' .. vimfun_start)
