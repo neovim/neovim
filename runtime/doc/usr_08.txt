@@ -401,7 +401,7 @@ Another way to start in diff mode can be done from inside Vim.  Edit the
 "main.c" file, then make a split and show the differences: >
 
 	:edit main.c
-	:vertical diffsplit main.c~ 
+	:vertical diffsplit main.c~
 
 The ":vertical" command is used to make the window split vertically.  If you
 omit this, you will get a horizontal split.

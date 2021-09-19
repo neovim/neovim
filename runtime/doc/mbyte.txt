@@ -22,7 +22,7 @@ Getting started						*mbyte-first*
 This is a summary of the multibyte features in Vim.  If you are lucky it works
 as described and you can start using Vim without much trouble.  If something
 doesn't work you will have to read the rest.  Don't be surprised if it takes
-quite a bit of work and experimenting to make Vim use all the multi-byte
+quite a bit of work and experimenting to make Vim use all the multibyte
 features.  Unfortunately, every system has its own way to deal with multibyte
 languages and it is quite complicated.
 
@@ -85,12 +85,12 @@ You can also set 'guifont' alone, the Nvim GUI will try to find a matching
 
 INPUT
 
-There are several ways to enter multi-byte characters:
+There are several ways to enter multibyte characters:
 - For X11 XIM can be used.  See |XIM|.
 - For MS-Windows IME can be used.  See |IME|.
 - For all systems keymaps can be used.  See |mbyte-keymap|.
 
-The options 'iminsert', 'imsearch' and 'imcmdline' can be used to chose
+The options 'iminsert', 'imsearch' and 'imcmdline' can be used to choose
 the different input methods or disable them temporarily.
 
 ==============================================================================
@@ -103,8 +103,8 @@ in, or just use a certain locale inside Vim.
 
 WHAT IS A LOCALE?					*locale*
 
-There are many of languages in the world.  And there are different cultures
-and environments at least as much as the number of languages.	A linguistic
+There are many languages in the world.  And there are different cultures and
+environments at least as many as the number of languages.  A linguistic
 environment corresponding to an area is called "locale".  This includes
 information about the used language, the charset, collating order for sorting,
 date format, currency format and so on.  For Vim only the language and charset
@@ -198,11 +198,11 @@ encoded with one byte, we call this a single-byte encoding.  The most often
 used one is called "latin1".  This limits the number of characters to 256.
 Some of these are control characters, thus even fewer can be used for text.
 
-When some characters use two or more bytes, we call this a multi-byte
+When some characters use two or more bytes, we call this a multibyte
 encoding.  This allows using much more than 256 characters, which is required
 for most East Asian languages.
 
-Most multi-byte encodings use one byte for the first 127 characters.  These
+Most multibyte encodings use one byte for the first 127 characters.  These
 are equal to ASCII, which makes it easy to exchange plain-ASCII text, no
 matter what language is used.  Thus you might see the right text even when the
 encoding was set wrong.
@@ -400,7 +400,7 @@ is suitable for complex input, such as CJK.
   of the two ways: FrontEnd system and BackEnd system.  In the FrontEnd
   system, input events are snatched by the |IM-server| first, then |IM-server|
   give the application the result of input.  On the other hand, the BackEnd
-  system works reverse order.  MS Windows adopt BackEnd system.  In X, most of
+  system works reverse order.  MS-Windows adopt BackEnd system.  In X, most of
   |IM-server|s adopt FrontEnd system.  The demerit of BackEnd system is the
   large overhead in communication, but it provides safe synchronization with
   no restrictions on applications.
@@ -512,7 +512,7 @@ input_server_name	is your |IM-server| name (check your |IM-server|
 your_input_style	is one of |OverTheSpot|, |OffTheSpot|, |Root|.  See
 			also |xim-input-style|.
 
-*international may not necessary if you use X11R6.
+*international may not be necessary if you use X11R6.
 *.inputMethod and *.preeditType are optional if you use X11R6.
 
 For example, when you are using kinput2 as |IM-server|, >
@@ -921,7 +921,7 @@ not everybody is able to type a composing character.
 ==============================================================================
 Overview of options					*mbyte-options*
 
-These options are relevant for editing multi-byte files.
+These options are relevant for editing multibyte files.
 
 'fileencoding'	Encoding of a file.  When it's different from "utf-8"
 		conversion is done when reading or writing the file.
@@ -941,7 +941,7 @@ These options are relevant for editing multi-byte files.
 
 ==============================================================================
 
-Contributions specifically for the multi-byte features by:
+Contributions specifically for the multibyte features by:
 	Chi-Deok Hwang <hwang@mizi.co.kr>
 	SungHyun Nam <goweol@gmail.com>
 	K.Nagano <nagano@atese.advantest.co.jp>

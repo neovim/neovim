@@ -312,6 +312,8 @@ Other commands ~
  *:Program*    jump to the window with the running program
  *:Source*     jump to the window with the source code, create it if there
 	     isn't one
+ *:Asm*	     jump to the window with the disassembly, create it if there
+	     isn't one
 
 
 Prompt mode ~
@@ -330,6 +332,12 @@ This works slightly differently:
 Prompt mode can be used even when the |+terminal| feature is present with: >
 	let g:termdebug_use_prompt = 1
 
+<
+						*termdebug_disasm_window*
+If you want the Asm window shown by default, set this to 1. Setting to
+any value greater than 1 will set the Asm window height to that value: >
+	let g:termdebug_disasm_window = 15
+<
 
 Communication ~
 						*termdebug-communication*

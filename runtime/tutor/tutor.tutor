@@ -216,7 +216,7 @@ starting with "$".
 ## INTERACTIVE ELEMENTS *interactive*
 
 As visible in this very document, vim-tutor-mode includes some interactive
-elements to provide feedback to the user about his progress. If the text in
+elements to provide feedback to the user about their progress. If the text in
 these elements satisfies some set condition, a ✓ sign will appear in the gutter
 to the left. Otherwise, a ✗ sign is displayed.
 

@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
+local funcs = helpers.funcs
 local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 local meths = helpers.meths
@@ -26,6 +27,7 @@ describe('completion', function()
       [7] = {foreground = Screen.colors.White, background = Screen.colors.Red},
       [8] = {reverse = true},
       [9] = {bold = true, reverse = true},
+      [10] = {foreground = Screen.colors.Grey0, background = Screen.colors.Yellow},
     })
   end)
 
@@ -895,8 +897,47 @@ describe('completion', function()
     ]])
   end)
 
-  describe('from the commandline window', function()
+  describe('lua completion', function()
+    it('expands when there is only one match', function()
+      feed(':lua CURRENT_TESTING_VAR = 1<CR>')
+      feed(':lua CURRENT_TESTING_<TAB>')
+      screen:expect{grid=[[
+                                                                    |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        :lua CURRENT_TESTING_VAR^                                    |
+      ]]}
+    end)
 
+    it('expands when there is only one match', function()
+      feed(':lua CURRENT_TESTING_FOO = 1<CR>')
+      feed(':lua CURRENT_TESTING_BAR = 1<CR>')
+      feed(':lua CURRENT_TESTING_<TAB>')
+      screen:expect{ grid = [[
+                                                                    |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {10:CURRENT_TESTING_BAR}{9:  CURRENT_TESTING_FOO                    }|
+        :lua CURRENT_TESTING_BAR^                                    |
+      ]], unchanged = true }
+    end)
+
+    it('provides completion from `getcompletion()`', function()
+      eq({'vim'}, funcs.getcompletion('vi', 'lua'))
+      eq({'api'}, funcs.getcompletion('vim.ap', 'lua'))
+      eq({'tbl_filter'}, funcs.getcompletion('vim.tbl_fil', 'lua'))
+      eq({'vim'}, funcs.getcompletion('print(vi', 'lua'))
+    end)
+  end)
+
+  describe('from the commandline window', function()
     it('is cleared after CTRL-C', function ()
       feed('q:')
       feed('ifoo faa fee f')

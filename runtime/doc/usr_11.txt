@@ -211,8 +211,11 @@ will automatically delete it:
 - The flag that the file was modified is not set.
 - The process is not running.
 
+You can programmatically deal with this situation with the |FileChangedShell|
+autocommand event.
 
-UNREADABLE SWAP FILE
+
+UNREADABLE SWAP FILE ~
 
 Sometimes the line
 
@@ -253,7 +256,7 @@ O  Open the file readonly.  Use this when you just want to view the file and
 
 E  Edit the file anyway.  Use this with caution!  If the file is being edited
    in another Vim, you might end up with two versions of the file.  Vim will
-   try to warn you when this happens, but better be safe then sorry.
+   try to warn you when this happens, but better be safe than sorry.
 
 R  Recover the file from the swap file.  Use this if you know that the swap
    file contains changes that you want to recover.
@@ -290,7 +293,7 @@ machines.  Therefore, don't rely on Vim always warning you.
 If you really don't want to see this message, you can add the 'A' flag to the
 'shortmess' option.  But it's very unusual that you need this.
 
-For programatic access to the swap file, see |swapinfo()|.
+For programmatic access to the swap file, see |swapinfo()|.
 
 ==============================================================================
 *11.4*	Further reading

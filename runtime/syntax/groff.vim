@@ -1,7 +1,7 @@
 " VIM syntax file
 " Language:	groff
-" Maintainer:	Alejandro López-Valencia <dradul@yahoo.com>
-" URL:		http://dradul.tripod.com/vim
+" Maintainer:	John Marshall <jmarshall@hey.com>
+" Previous Maintainer:	Pedro Alejandro LÃ³pez-Valencia <palopezv@gmail.com>
 " Last Change:	2003-05-08-12:41:13 GMT-5.
 
 " This uses the nroff.vim syntax file.

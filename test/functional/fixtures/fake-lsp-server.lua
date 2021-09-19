@@ -70,11 +70,11 @@ local function expect_notification(method, params, ...)
       ..., "expect_notification", "message")
 end
 
-local function expect_request(method, callback, ...)
+local function expect_request(method, handler, ...)
   local req = read_message()
   assert_eq(method, req.method,
       ..., "expect_request", "method")
-  local err, result = callback(req.params)
+  local err, result = handler(req.params)
   respond(req.id, err, result)
 end
 
@@ -154,6 +154,7 @@ function tests.capabilities_for_client_supports_method()
           hoverProvider = true;
           definitionProvider = false;
           referencesProvider = false;
+          codeLensProvider = { resolveProvider = true; };
         }
       }
     end;
@@ -402,11 +403,11 @@ function tests.basic_check_buffer_open_and_change_incremental()
         contentChanges = {
           {
             range = {
-              start = { line = 1; character = 0; };
-              ["end"] = { line = 2; character = 0; };
+              start = { line = 1; character = 3; };
+              ["end"] = { line = 1; character = 3; };
             };
-            rangeLength = 4;
-            text = "boop\n";
+            rangeLength = 0;
+            text = "boop";
           };
         }
       })
@@ -461,6 +462,23 @@ end
 
 function tests.invalid_header()
   io.stdout:write("Content-length: \r\n")
+end
+
+function tests.decode_nil()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      notify('start')
+      notify("workspace/executeCommand", {
+        arguments = { "EXTRACT_METHOD", {metadata = {field = vim.NIL}}, 3, 0, 6123, vim.NIL },
+        command = "refactor.perform",
+        title = "EXTRACT_METHOD"
+      })
+      notify('finish')
+    end;
+  }
 end
 
 -- Tests will be indexed by TEST_NAME

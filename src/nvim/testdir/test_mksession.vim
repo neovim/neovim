@@ -149,6 +149,21 @@ func Test_mksession_large_winheight()
   call delete('Xtest_mks_winheight.out')
 endfunc
 
+func Test_mksession_zero_winheight()
+  set winminheight=0
+  edit SomeFile
+  split
+  wincmd _
+  mksession! Xtest_mks_zero
+  set winminheight&
+  " let text = readfile('Xtest_mks_zero')->join()
+  let text = join(readfile('Xtest_mks_zero'))
+  call delete('Xtest_mks_zero')
+  close
+  " check there is no divide by zero
+  call assert_notmatch('/ 0[^0-9]', text)
+endfunc
+
 func Test_mksession_rtp()
   if has('win32')
     " TODO: fix problem with backslashes
@@ -291,6 +306,60 @@ endfunc
 
 endif
 
+func Test_mkview_open_folds()
+  enew!
+
+  call append(0, ['a', 'b', 'c'])
+  1,3fold
+  " zR affects 'foldlevel', make sure the option is applied after the folds
+  " have been recreated.
+  normal zR
+  write! Xtestfile
+
+  call assert_equal(-1, foldclosed(1))
+  call assert_equal(-1, foldclosed(2))
+  call assert_equal(-1, foldclosed(3))
+
+  mkview! Xtestview
+  source Xtestview
+
+  call assert_equal(-1, foldclosed(1))
+  call assert_equal(-1, foldclosed(2))
+  call assert_equal(-1, foldclosed(3))
+
+  call delete('Xtestview')
+  call delete('Xtestfile')
+  %bwipe
+endfunc
+
+func Test_mkview_no_balt()
+  edit Xtestfile1
+  edit Xtestfile2
+
+  mkview! Xtestview
+  bdelete Xtestfile1
+
+  source Xtestview
+  call assert_equal(0, buflisted('Xtestfile1'))
+
+  call delete('Xtestview')
+  %bwipe
+endfunc
+
+func Test_mksession_no_balt()
+  edit Xtestfile1
+  edit Xtestfile2
+
+  bdelete Xtestfile1
+  mksession! Xtestview
+
+  source Xtestview
+  call assert_equal(0, buflisted('Xtestfile1'))
+
+  call delete('Xtestview')
+  %bwipe
+endfunc
+
 " Test :mkview with a file argument.
 func Test_mkview_file()
   " Create a view with line number and a fold.
@@ -371,6 +440,58 @@ func Test_mkview_no_file_name()
 
   call delete('Xview')
   %bwipe
+endfunc
+
+func Test_mkview_loadview_jumplist()
+  set viewdir=Xviewdir
+  au BufWinLeave * silent mkview
+  " au BufWinEnter * silent loadview
+
+  edit Xfile1
+  call setline(1, ['a', 'bbbbbbb', 'c'])
+  normal j3l
+  call assert_equal([2, 4], getcurpos()[1:2])
+  write
+
+  edit Xfile2
+  call setline(1, ['d', 'eeeeeee', 'f'])
+  normal j5l
+  call assert_equal([2, 6], getcurpos()[1:2])
+  write
+
+  edit Xfile3
+  call setline(1, ['g', 'h', 'iiiii'])
+  normal jj3l
+  call assert_equal([3, 4], getcurpos()[1:2])
+  write
+
+  " The commented :au above was moved here so that :mkview (on BufWinLeave) can
+  " run before :loadview. This is needed because Nvim's :loadview raises E484 if
+  " the view can't be opened, while Vim's silently fails instead.
+  au BufWinEnter * silent loadview
+
+  edit Xfile1
+  call assert_equal([2, 4], getcurpos()[1:2])
+  edit Xfile2
+  call assert_equal([2, 6], getcurpos()[1:2])
+  edit Xfile3
+  call assert_equal([3, 4], getcurpos()[1:2])
+
+  exe "normal \<C-O>"
+  call assert_equal('Xfile2', expand('%'))
+  call assert_equal([2, 6], getcurpos()[1:2])
+  exe "normal \<C-O>"
+  call assert_equal('Xfile1', expand('%'))
+  call assert_equal([2, 4], getcurpos()[1:2])
+
+  au! BufWinLeave
+  au! BufWinEnter
+  bwipe!
+  call delete('Xviewdir', 'rf')
+  call delete('Xfile1')
+  call delete('Xfile2')
+  call delete('Xfile3')
+  set viewdir&
 endfunc
 
 " A clean session (one empty buffer, one window, and one tab) should not
@@ -574,6 +695,24 @@ func Test_mksession_winpos()
   set sessionoptions&
 endfunc
 
+" Test for mksession without options restores winminheight
+func Test_mksession_winminheight()
+  set sessionoptions-=options
+  split
+  mksession! Xtest_mks.out
+  let found_restore = 0
+  let lines = readfile('Xtest_mks.out')
+  for line in lines
+    if line =~ '= s:save_winmin\(width\|height\)'
+      let found_restore += 1
+    endif
+  endfor
+  call assert_equal(2, found_restore)
+  call delete('Xtest_mks.out')
+  close
+  set sessionoptions&
+endfunc
+
 " Test for mksession with 'compatible' option
 func Test_mksession_compatible()
   throw 'skipped: Nvim does not support "compatible" option'
@@ -661,6 +800,29 @@ func Test_scrolloff()
   call delete('Xtest_mks.out')
   setlocal so& siso&
   set sessionoptions&
+endfunc
+
+func Test_altfile()
+  edit Xone
+  split Xtwo
+  edit Xtwoalt
+  edit #
+  wincmd w
+  edit Xonealt
+  edit #
+  mksession! Xtest_altfile
+  only
+  bwipe Xonealt
+  bwipe Xtwoalt
+  bwipe!
+  source Xtest_altfile
+  call assert_equal('Xone', bufname())
+  call assert_equal('Xonealt', bufname('#'))
+  wincmd w
+  call assert_equal('Xtwo', bufname())
+  call assert_equal('Xtwoalt', bufname('#'))
+  only
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

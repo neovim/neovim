@@ -1,6 +1,6 @@
 " Vim plugin for converting a syntax highlighted file to HTML.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2018 Nov 11
+" Last Change: 2019 Nov 13
 "
 " The core of the code is in $VIMRUNTIME/autoload/tohtml.vim and
 " $VIMRUNTIME/syntax/2html.vim
@@ -8,17 +8,46 @@
 if exists('g:loaded_2html_plugin')
   finish
 endif
-let g:loaded_2html_plugin = 'vim8.1_v1'
+let g:loaded_2html_plugin = 'vim8.1_v2'
 
 "
 " Changelog: {{{
-"   8.1_v1  (this version): Fix Bitbucket issue #6: Don't generate empty script
-"                           tag.
-"                           Fix Bitbucket issue #5: javascript should
-"                           declare variables with "var".
-"                           Fix Bitbucket issue #13: errors thrown sourcing
-"                           2html.vim directly when plugins not loaded.
-"                           Fix Bitbucket issue #16: support 'vartabstop'.
+"   8.1_v2  (this version): - Fix Bitbucket issue #19: fix calculation of tab
+"                             stop position to use in expanding a tab, when that
+"                             tab occurs after a syntax match which in turn
+"                             comes after previously expanded tabs.
+"                           - Set eventignore while splitting a window for the
+"                             destination file to ignore FileType events;
+"                             speeds up processing when the destination file
+"                             already exists and HTML highlight takes too long.
+"                           - Fix Bitbucket issue #20: progress bar could not be
+"                             seen when DiffDelete background color matched
+"                             StatusLine background color. Added TOhtmlProgress
+"                             highlight group for manual user override, but
+"                             calculate it to be visible compared to StatusLine
+"                             by default.
+"                           - Fix Bitbucket issue #1: Remove workaround for old
+"                             browsers which don't support 'ch' CSS unit, since
+"                             all modern browsers, including IE>=9, support it.
+"                           - Fix Bitbucket issue #10: support termguicolors
+"                           - Fix Bitbucket issue #21: default to using
+"                             generated content instead of <input> tags for
+"                             uncopyable text, so that text is correctly
+"                             prevented from being copied in chrome. Use
+"                             g:html_use_input_for_pc option to control the
+"                             method used.
+"                           - Switch to HTML5 to allow using vnu as a validator
+"                             in unit test.
+"                           - Fix fallback sizing of <input> tags for browsers
+"                             without "ch" support.
+"                           - Fix cursor on unselectable diff filler text.
+"   8.1_v1  (Vim 8.1.0528): - Fix Bitbucket issue #6: Don't generate empty
+"                             script tag.
+"                           - Fix Bitbucket issue #5: javascript should
+"                             declare variables with "var".
+"                           - Fix Bitbucket issue #13: errors thrown sourcing
+"                             2html.vim directly when plugins not loaded.
+"                           - Fix Bitbucket issue #16: support 'vartabstop'.
 "
 "   7.4 updates: {{{
 "   7.4_v2  (Vim 7.4.0899): Fix error raised when converting a diff containing

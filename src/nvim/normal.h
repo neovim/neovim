@@ -48,6 +48,8 @@ typedef struct oparg_S {
   colnr_T end_vcol;             // end col for block mode operator
   long prev_opcount;            // ca.opcount saved for K_EVENT
   long prev_count0;             // ca.count0 saved for K_EVENT
+  bool excl_tr_ws;              // exclude trailing whitespace for yank of a
+                                // block
 } oparg_T;
 
 /*

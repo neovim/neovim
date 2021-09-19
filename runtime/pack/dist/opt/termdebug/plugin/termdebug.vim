@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Update: 2018 Jun 3
+" Last Change: 2021 May 16
 "
 " WORK IN PROGRESS - Only the basics work
 " Note: On MS-Windows you need a recent version of gdb.  The one included with
@@ -43,7 +43,7 @@
 "   balloon -> nvim floating window
 "
 " The code for opening the floating window was taken from the beautiful
-" implementation of LanguageClient-Neovim: 
+" implementation of LanguageClient-Neovim:
 " https://github.com/autozimu/LanguageClient-neovim/blob/0ed9b69dca49c415390a8317b19149f97ae093fa/autoload/LanguageClient.vim#L304
 "
 " Neovim terminal also works seamlessly on windows, which is why the ability
@@ -76,8 +76,13 @@ if !exists('g:termdebugger')
 endif
 
 let s:pc_id = 12
-let s:break_id = 13  " breakpoint number is added to this
+let s:asm_id = 13
+let s:break_id = 14  " breakpoint number is added to this
 let s:stopped = 1
+
+let s:parsing_disasm_msg = 0
+let s:asm_lines = []
+let s:asm_addr = ''
 
 " Take a breakpoint number as used by GDB and turn it into an integer.
 " The breakpoint may contain a dot: 123.4 -> 123004
@@ -120,12 +125,17 @@ func s:StartDebug_internal(dict)
 
   let s:ptywin = 0
   let s:pid = 0
+  let s:asmwin = 0
 
   " Uncomment this line to write logging in "debuglog".
   " call ch_logfile('debuglog', 'w')
 
   let s:sourcewin = win_getid(winnr())
-  let s:startsigncolumn = &signcolumn
+
+  " Remember the old value of 'signcolumn' for each buffer that it's set in, so
+  " that we can restore the value for all buffers.
+  let b:save_signcolumn = &signcolumn
+  let s:signcolumn_buflist = [bufnr()]
 
   let s:save_columns = 0
   let s:allleft = 0
@@ -154,6 +164,14 @@ func s:StartDebug_internal(dict)
     call s:StartDebug_prompt(a:dict)
   else
     call s:StartDebug_term(a:dict)
+  endif
+
+  if exists('g:termdebug_disasm_window')
+    if g:termdebug_disasm_window
+      let curwinid = win_getid(winnr())
+      call s:GotoAsmwinOrCreateIt()
+      call win_gotoid(curwinid)
+    endif
   endif
 endfunc
 
@@ -228,7 +246,9 @@ func s:StartDebug_term(dict)
   let s:gdbbuf = gdb_job_info['buffer']
   let s:gdbwin = win_getid(winnr())
 
-  " Set arguments to be run
+  " Set arguments to be run.  First wait a bit to make detecting gdb a bit
+  " more reliable.
+  sleep 200m
   if len(proc_args)
     call chansend(s:gdb_job_id, 'set args ' . join(proc_args) . "\r")
   endif
@@ -278,7 +298,7 @@ func s:StartDebug_term(dict)
     sleep 10m
   endwhile
 
-  " Interpret commands while the target is running.  This should usualy only be
+  " Interpret commands while the target is running.  This should usually only be
   " exec-interrupt, since many commands don't work properly while the target is
   " running.
   call s:SendCommand('-gdb-set mi-async on')
@@ -321,9 +341,9 @@ func s:StartDebug_prompt(dict)
   "call ch_log('executing "' . join(cmd) . '"')
 
   let s:gdbjob = jobstart(cmd, {
-	\ 'on_exit': function('s:EndPromptDebug'),
-	\ 'on_stdout': function('s:GdbOutCallback'),
-	\ })
+    \ 'on_exit': function('s:EndPromptDebug'),
+    \ 'on_stdout': function('s:GdbOutCallback'),
+    \ })
   if s:gdbjob == 0
     echoerr 'invalid argument (or job table is full) while starting gdb job'
     exe 'bwipe! ' . s:ptybuf
@@ -334,7 +354,7 @@ func s:StartDebug_prompt(dict)
     return
   endif
 
-  " Interpret commands while the target is running.  This should usualy only
+  " Interpret commands while the target is running.  This should usually only
   " be exec-interrupt, since many commands don't work properly while the
   " target is running.
   call s:SendCommand('-gdb-set mi-async on')
@@ -538,9 +558,14 @@ func s:DecodeMessage(quotedText)
     if a:quotedText[i] == '\'
       let i += 1
       if a:quotedText[i] == 'n'
-        " drop \n
-        let i += 1
-        continue
+	" drop \n
+	let i += 1
+	continue
+      elseif a:quotedText[i] == 't'
+	" append \t
+	let i += 1
+	let result .= "\t"
+	continue
       endif
     endif
     let result .= a:quotedText[i]
@@ -562,6 +587,15 @@ func s:GetFullname(msg)
   return name
 endfunc
 
+" Extract the "addr" value from a gdb message with addr="0x0001234".
+func s:GetAsmAddr(msg)
+  if a:msg !~ 'addr='
+    return ''
+  endif
+  let addr = s:DecodeMessage(substitute(a:msg, '.*addr=', '', ''))
+  return addr
+endfunc
+
 function s:EndTermDebug(job_id, exit_code, event)
   unlet s:gdbwin
 
@@ -575,8 +609,20 @@ func s:EndDebugCommon()
     exe 'bwipe! ' . s:ptybuf
   endif
 
+  " Restore 'signcolumn' in all buffers for which it was set.
   call win_gotoid(s:sourcewin)
-  let &signcolumn = s:startsigncolumn
+  let was_buf = bufnr()
+  for bufnr in s:signcolumn_buflist
+    if bufexists(bufnr)
+      exe bufnr .. "buf"
+      if exists('b:save_signcolumn')
+	let &signcolumn = b:save_signcolumn
+	unlet b:save_signcolumn
+      endif
+    endif
+  endfor
+  exe was_buf .. "buf"
+
   call s:DeleteCommands()
 
   call win_gotoid(curwinid)
@@ -601,6 +647,66 @@ func s:EndPromptDebug(job_id, exit_code, event)
   "call ch_log("Returning from EndPromptDebug()")
 endfunc
 
+" - CommOutput: disassemble $pc
+" - CommOutput: &"disassemble $pc\n"
+" - CommOutput: ~"Dump of assembler code for function main(int, char**):\n"
+" - CommOutput: ~"   0x0000555556466f69 <+0>:\tpush   rbp\n"
+" ...
+" - CommOutput: ~"   0x0000555556467cd0:\tpop    rbp\n"
+" - CommOutput: ~"   0x0000555556467cd1:\tret    \n"
+" - CommOutput: ~"End of assembler dump.\n"
+" - CommOutput: ^done
+
+" - CommOutput: disassemble $pc
+" - CommOutput: &"disassemble $pc\n"
+" - CommOutput: &"No function contains specified address.\n"
+" - CommOutput: ^error,msg="No function contains specified address."
+func s:HandleDisasmMsg(msg)
+  if a:msg =~ '^\^done'
+    let curwinid = win_getid(winnr())
+    if win_gotoid(s:asmwin)
+      silent normal! gg0"_dG
+      call setline(1, s:asm_lines)
+      set nomodified
+      set filetype=asm
+
+      let lnum = search('^' . s:asm_addr)
+      if lnum != 0
+        exe 'sign unplace ' . s:asm_id
+        exe 'sign place ' . s:asm_id . ' line=' . lnum . ' name=debugPC'
+      endif
+
+      call win_gotoid(curwinid)
+    endif
+
+    let s:parsing_disasm_msg = 0
+    let s:asm_lines = []
+  elseif a:msg =~ '^\^error,msg='
+    if s:parsing_disasm_msg == 1
+      " Disassemble call ran into an error. This can happen when gdb can't
+      " find the function frame address, so let's try to disassemble starting
+      " at current PC
+      call s:SendCommand('disassemble $pc,+100')
+    endif
+    let s:parsing_disasm_msg = 0
+  elseif a:msg =~ '\&\"disassemble \$pc'
+    if a:msg =~ '+100'
+      " This is our second disasm attempt
+      let s:parsing_disasm_msg = 2
+    endif
+  else
+    let value = substitute(a:msg, '^\~\"[ ]*', '', '')
+    let value = substitute(value, '^=>[ ]*', '', '')
+    let value = substitute(value, '\\n\"$', '', '')
+    let value = substitute(value, '', '', '')
+    let value = substitute(value, '\\t', ' ', 'g')
+
+    if value != '' || !empty(s:asm_lines)
+      call add(s:asm_lines, value)
+    endif
+  endif
+endfunc
+
 func s:CommOutput(job_id, msgs, event)
 
   for msg in a:msgs
@@ -608,7 +714,10 @@ func s:CommOutput(job_id, msgs, event)
     if msg[0] == "\n"
       let msg = msg[1:]
     endif
-    if msg != ''
+
+    if s:parsing_disasm_msg
+      call s:HandleDisasmMsg(msg)
+    elseif msg != ''
       if msg =~ '^\(\*stopped\|\*running\|=thread-selected\)'
         call s:HandleCursor(msg)
       elseif msg =~ '^\^done,bkpt=' || msg =~ '^=breakpoint-created,'
@@ -621,9 +730,22 @@ func s:CommOutput(job_id, msgs, event)
         call s:HandleEvaluate(msg)
       elseif msg =~ '^\^error,msg='
         call s:HandleError(msg)
+      elseif msg =~ '^disassemble'
+        let s:parsing_disasm_msg = 1
+        let s:asm_lines = []
       endif
     endif
   endfor
+endfunc
+
+func s:GotoProgram()
+  if has('win32')
+    if executable('powershell')
+      call system(printf('powershell -Command "add-type -AssemblyName microsoft.VisualBasic;[Microsoft.VisualBasic.Interaction]::AppActivate(%d);"', s:pid))
+    endif
+  else
+    call win_gotoid(s:ptywin)
+  endif
 endfunc
 
 " Install commands in the current window to control the debugger.
@@ -631,7 +753,7 @@ func s:InstallCommands()
   let save_cpo = &cpo
   set cpo&vim
 
-  command Break call s:SetBreakpoint()
+  command -nargs=? Break call s:SetBreakpoint(<q-args>)
   command Clear call s:ClearBreakpoint()
   command Step call s:SendCommand('-exec-step')
   command Over call s:SendCommand('-exec-next')
@@ -649,12 +771,15 @@ func s:InstallCommands()
 
   command -range -nargs=* Evaluate call s:Evaluate(<range>, <q-args>)
   command Gdb call win_gotoid(s:gdbwin)
-  command Program call win_gotoid(s:ptywin)
+  command Program call s:GotoProgram()
   command Source call s:GotoSourcewinOrCreateIt()
+  command Asm call s:GotoAsmwinOrCreateIt()
   command Winbar call s:InstallWinbar()
 
-  " TODO: can the K mapping be restored?
-  nnoremap K :Evaluate<CR>
+  if !exists('g:termdebug_map_K') || g:termdebug_map_K
+    let s:k_map_saved = maparg('K', 'n', 0, 1)
+    nnoremap K :Evaluate<CR>
+  endif
 
   let &cpo = save_cpo
 endfunc
@@ -689,9 +814,17 @@ func s:DeleteCommands()
   delcommand Gdb
   delcommand Program
   delcommand Source
+  delcommand Asm
   delcommand Winbar
 
-  nunmap K
+  if exists('s:k_map_saved')
+    if empty(s:k_map_saved)
+      nunmap K
+    else
+      call mapset('n', 0, s:k_map_saved)
+    endif
+    unlet s:k_map_saved
+  endif
 
   exe 'sign unplace ' . s:pc_id
   for [id, entries] in items(s:breakpoints)
@@ -710,7 +843,7 @@ func s:DeleteCommands()
 endfunc
 
 " :Break - Set a breakpoint at the cursor position.
-func s:SetBreakpoint()
+func s:SetBreakpoint(at)
   " Setting a breakpoint may not work while the program is running.
   " Interrupt to make it work.
   let do_continue = 0
@@ -723,9 +856,11 @@ func s:SetBreakpoint()
     endif
     sleep 10m
   endif
+
   " Use the fname:lnum format, older gdb can't handle --source.
-  call s:SendCommand('-break-insert '
-        \ . fnameescape(expand('%:p')) . ':' . line('.'))
+  let at = empty(a:at) ?
+        \ fnameescape(expand('%:p')) . ':' . line('.') : a:at
+  call s:SendCommand('-break-insert ' . at)
   if do_continue
     call s:SendCommand('-exec-continue')
   endif
@@ -740,14 +875,14 @@ func s:ClearBreakpoint()
     let idx = 0
     for id in s:breakpoint_locations[bploc]
       if has_key(s:breakpoints, id)
-        " Assume this always works, the reply is simply "^done".
-        call s:SendCommand('-break-delete ' . id)
-        for subid in keys(s:breakpoints[id])
-          exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
-        endfor
-        unlet s:breakpoints[id]
-        unlet s:breakpoint_locations[bploc][idx]
-        break
+	" Assume this always works, the reply is simply "^done".
+	call s:SendCommand('-break-delete ' . id)
+	for subid in keys(s:breakpoints[id])
+	  exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+	endfor
+	unlet s:breakpoints[id]
+	unlet s:breakpoint_locations[bploc][idx]
+	break
       else
 	let idx += 1
       endif
@@ -963,6 +1098,48 @@ func s:GotoSourcewinOrCreateIt()
   endif
 endfunc
 
+func s:GotoAsmwinOrCreateIt()
+  if !win_gotoid(s:asmwin)
+    if win_gotoid(s:sourcewin)
+      exe 'rightbelow new'
+    else
+      exe 'new'
+    endif
+
+    let s:asmwin = win_getid(winnr())
+
+    setlocal nowrap
+    setlocal number
+    setlocal noswapfile
+    setlocal buftype=nofile
+
+    let asmbuf = bufnr('Termdebug-asm-listing')
+    if asmbuf > 0
+      exe 'buffer' . asmbuf
+    else
+      exe 'file Termdebug-asm-listing'
+    endif
+
+    if exists('g:termdebug_disasm_window')
+      if g:termdebug_disasm_window > 1
+        exe 'resize ' . g:termdebug_disasm_window
+      endif
+    endif
+  endif
+
+  if s:asm_addr != ''
+    let lnum = search('^' . s:asm_addr)
+    if lnum == 0
+      if s:stopped
+        call s:SendCommand('disassemble $pc')
+      endif
+    else
+      exe 'sign unplace ' . s:asm_id
+      exe 'sign place ' . s:asm_id . ' line=' . lnum . ' name=debugPC'
+    endif
+  endif
+endfunc
+
 " Handle stopping and running message from gdb.
 " Will update the sign that shows the current position.
 func s:HandleCursor(msg)
@@ -981,10 +1158,31 @@ func s:HandleCursor(msg)
   else
     let fname = ''
   endif
+
+  if a:msg =~ 'addr='
+    let asm_addr = s:GetAsmAddr(a:msg)
+    if asm_addr != ''
+      let s:asm_addr = asm_addr
+
+      let curwinid = win_getid(winnr())
+      if win_gotoid(s:asmwin)
+        let lnum = search('^' . s:asm_addr)
+        if lnum == 0
+          call s:SendCommand('disassemble $pc')
+        else
+          exe 'sign unplace ' . s:asm_id
+          exe 'sign place ' . s:asm_id . ' line=' . lnum . ' name=debugPC'
+        endif
+
+        call win_gotoid(curwinid)
+      endif
+    endif
+  endif
+
   if a:msg =~ '^\(\*stopped\|=thread-selected\)' && filereadable(fname)
     let lnum = substitute(a:msg, '.*line="\([^"]*\)".*', '\1', '')
     if lnum =~ '^[0-9]*$'
-   call s:GotoSourcewinOrCreateIt()
+      call s:GotoSourcewinOrCreateIt()
       if expand('%:p') != fnamemodify(fname, ':p')
         if &modified
           " TODO: find existing window
@@ -998,6 +1196,10 @@ func s:HandleCursor(msg)
       exe lnum
       exe 'sign unplace ' . s:pc_id
       exe 'sign place ' . s:pc_id . ' line=' . lnum . ' name=debugPC file=' . fname
+      if !exists('b:save_signcolumn')
+	let b:save_signcolumn = &signcolumn
+	call add(s:signcolumn_buflist, bufnr())
+      endif
       setlocal signcolumn=yes
     endif
   elseif !s:stopped || fname != ''
@@ -1074,7 +1276,7 @@ endfunc
 
 func s:PlaceSign(id, subid, entry)
   let nr = printf('%d.%d', a:id, a:subid)
-  exe 'sign place ' . s:Breakpoint2SignNumber(a:id, a:subid) . ' line=' . a:entry['lnum'] . ' name=debugBreakpoint' . nr . ' file=' . a:entry['fname']
+  exe 'sign place ' . s:Breakpoint2SignNumber(a:id, a:subid) . ' line=' . a:entry['lnum'] . ' name=debugBreakpoint' . nr . ' priority=110 file=' . a:entry['fname']
   let a:entry['placed'] = 1
 endfunc
 
@@ -1088,8 +1290,8 @@ func s:HandleBreakpointDelete(msg)
   if has_key(s:breakpoints, id)
     for [subid, entry] in items(s:breakpoints[id])
       if has_key(entry, 'placed')
-        exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
-        unlet entry['placed']
+	exe 'sign unplace ' . s:Breakpoint2SignNumber(id, subid)
+	unlet entry['placed']
       endif
     endfor
     unlet s:breakpoints[id]
@@ -1113,7 +1315,7 @@ func s:BufRead()
   for [id, entries] in items(s:breakpoints)
     for [subid, entry] in items(entries)
       if entry['fname'] == fname
-        call s:PlaceSign(id, subid, entry)
+	call s:PlaceSign(id, subid, entry)
       endif
     endfor
   endfor
@@ -1125,7 +1327,7 @@ func s:BufUnloaded()
   for [id, entries] in items(s:breakpoints)
     for [subid, entry] in items(entries)
       if entry['fname'] == fname
-        let entry['placed'] = 0
+	let entry['placed'] = 0
       endif
     endfor
   endfor

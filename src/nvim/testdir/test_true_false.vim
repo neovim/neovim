@@ -1,5 +1,7 @@
 " Test behavior of boolean-like values.
 
+source check.vim
+
 " Test what is explained at ":help TRUE" and ":help FALSE".
 func Test_if()
   if v:false
@@ -41,7 +43,9 @@ func Test_if()
   call assert_fails('if [1]', 'E745')
   call assert_fails('if {1: 1}', 'E728')
   call assert_fails('if function("string")', 'E703')
-  call assert_fails('if 1.3")', 'E805')
+  if has('float')
+    call assert_fails('if 1.3")', 'E805')
+  endif
 endfunc
 
 function Try_arg_true_false(expr, false_val, true_val)
@@ -113,6 +117,7 @@ func Test_true_false_arg()
 endfunc
 
 function Try_arg_non_zero(expr, false_val, true_val)
+  CheckFeature float
   for v in ['v:false', '0', '[1]', '{2:3}', '3.4'] 
     let r = eval(substitute(a:expr, '%v%', v, ''))
     call assert_equal(a:false_val, r, 'result for ' . v . ' is not ' . a:false_val . ' but ' . r)

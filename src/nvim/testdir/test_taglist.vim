@@ -126,3 +126,99 @@ func Test_tagsfile_without_trailing_newline()
   call delete('Xtags')
   set tags&
 endfunc
+
+" Test for ignoring comments in a tags file
+func Test_tagfile_ignore_comments()
+  call writefile([
+	\ "!_TAG_PROGRAM_NAME	/Test tags generator/",
+	\ "FBar\tXfoo\t2" .. ';"' .. "\textrafield\tf",
+	\ "!_TAG_FILE_FORMAT	2	/extended format/",
+	\ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal(1, len(l))
+  call assert_equal('FBar', l[0].name)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for using an excmd in a tags file to position the cursor (instead of a
+" search pattern or a line number)
+func Test_tagfile_excmd()
+  call writefile([
+	\ "vFoo\tXfoo\tcall cursor(3, 4)" .. '|;"' .. "\tv",
+	\ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal([{
+	      \ 'cmd' : 'call cursor(3, 4)',
+	      \ 'static' : 0,
+	      \ 'name' : 'vFoo',
+	      \ 'kind' : 'v',
+	      \ 'filename' : 'Xfoo'}], l)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for duplicate fields in a tag in a tags file
+func Test_duplicate_field()
+  call writefile([
+	\ "vFoo\tXfoo\t4" .. ';"' .. "\ttypename:int\ttypename:int\tv",
+	\ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal([{
+	      \ 'cmd' : '4',
+	      \ 'static' : 0,
+	      \ 'name' : 'vFoo',
+	      \ 'kind' : 'v',
+	      \ 'typename' : 'int',
+	      \ 'filename' : 'Xfoo'}], l)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for tag address with ;
+func Test_tag_addr_with_semicolon()
+  call writefile([
+	      \ "Func1\tXfoo\t6;/^Func1/" .. ';"' .. "\tf"
+	      \ ], 'Xtags')
+  set tags=Xtags
+
+  let l = taglist('.*')
+  call assert_equal([{
+	      \ 'cmd' : '6;/^Func1/',
+	      \ 'static' : 0,
+	      \ 'name' : 'Func1',
+	      \ 'kind' : 'f',
+	      \ 'filename' : 'Xfoo'}], l)
+
+  set tags&
+  call delete('Xtags')
+endfunc
+
+" Test for format error in a tags file
+func Test_format_error()
+  call writefile(['vFoo-Xfoo-4'], 'Xtags')
+  set tags=Xtags
+
+  let caught_exception = v:false
+  try
+    let l = taglist('.*')
+  catch /E431:/
+    " test succeeded
+    let caught_exception = v:true
+  catch
+    call assert_report('Caught ' . v:exception . ' in ' . v:throwpoint)
+  endtry
+  call assert_true(caught_exception)
+
+  set tags&
+  call delete('Xtags')
+endfunc

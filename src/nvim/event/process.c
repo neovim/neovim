@@ -270,9 +270,6 @@ static void process_close_event(void **argv)
 {
   Process *proc = argv[0];
   shell_free_argv(proc->argv);
-  if (proc->type == kProcessTypePty) {
-    xfree(((PtyProcess *)proc)->term_name);
-  }
   if (proc->cb) {  // "on_exit" for jobstart(). See channel_job_start().
     proc->cb(proc, proc->status, proc->data);
   }

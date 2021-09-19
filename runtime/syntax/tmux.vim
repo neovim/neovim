@@ -1,5 +1,5 @@
 " Language: tmux(1) configuration file
-" Version: 2.9a (git-0d64531f)
+" Version: 3.0 (git-48cbbb87)
 " URL: https://github.com/ericpruitt/tmux.vim/
 " Maintainer: Eric Pruitt <eric.pruitt@gmail.com>
 " License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
@@ -28,6 +28,7 @@ syn match tmuxNumber            /\<\d\+\>/             display
 syn match tmuxFlags             /\s-\a\+/              display
 syn match tmuxVariable          /\w\+=/                display
 syn match tmuxVariableExpansion /\${\=\w\+}\=/         display
+syn match tmuxControl           /%\(if\|elif\|else\|endif\)/
 
 syn region tmuxComment start=/#/ skip=/\\\@<!\\$/ end=/$/ contains=tmuxTodo
 
@@ -43,6 +44,7 @@ hi def link tmuxFormatString      Identifier
 hi def link tmuxAction            Boolean
 hi def link tmuxBoolean           Boolean
 hi def link tmuxCommands          Keyword
+hi def link tmuxControl           Keyword
 hi def link tmuxComment           Comment
 hi def link tmuxKey               Special
 hi def link tmuxNumber            Number
@@ -62,29 +64,29 @@ for s:i in range(0, 255)
 endfor
 
 syn keyword tmuxOptions
-\ buffer-limit command-alias default-terminal escape-time exit-empty
-\ activity-action assume-paste-time base-index bell-action default-command
-\ default-shell default-size destroy-unattached detach-on-destroy
-\ display-panes-active-colour display-panes-colour display-panes-time
-\ display-time exit-unattached focus-events history-file history-limit
-\ key-table lock-after-time lock-command message-command-style message-limit
-\ message-style mouse aggressive-resize allow-rename alternate-screen
-\ automatic-rename automatic-rename-format clock-mode-colour
-\ clock-mode-style main-pane-height main-pane-width mode-keys mode-style
-\ monitor-activity monitor-bell monitor-silence other-pane-height
-\ other-pane-width pane-active-border-style pane-base-index
-\ pane-border-format pane-border-status pane-border-style prefix prefix2
-\ remain-on-exit renumber-windows repeat-time set-clipboard set-titles
-\ set-titles-string silence-action status status-bg status-fg status-format
-\ status-interval status-justify status-keys status-left status-left-length
-\ status-left-style status-position status-right status-right-length
-\ status-right-style status-style synchronize-panes terminal-overrides
-\ update-environment user-keys visual-activity visual-bell visual-silence
-\ window-active-style window-size window-status-activity-style
-\ window-status-bell-style window-status-current-format
-\ window-status-current-style window-status-format window-status-last-style
-\ window-status-separator window-status-style window-style word-separators
-\ wrap-search xterm-keys
+\ backspace buffer-limit command-alias default-terminal escape-time
+\ exit-empty activity-action assume-paste-time base-index bell-action
+\ default-command default-shell default-size destroy-unattached
+\ detach-on-destroy display-panes-active-colour display-panes-colour
+\ display-panes-time display-time exit-unattached focus-events history-file
+\ history-limit key-table lock-after-time lock-command message-command-style
+\ message-limit message-style aggressive-resize allow-rename
+\ alternate-screen automatic-rename automatic-rename-format
+\ clock-mode-colour clock-mode-style main-pane-height main-pane-width
+\ mode-keys mode-style monitor-activity monitor-bell monitor-silence mouse
+\ other-pane-height other-pane-width pane-active-border-style
+\ pane-base-index pane-border-format pane-border-status pane-border-style
+\ prefix prefix2 remain-on-exit renumber-windows repeat-time set-clipboard
+\ set-titles set-titles-string silence-action status status-bg status-fg
+\ status-format status-interval status-justify status-keys status-left
+\ status-left-length status-left-style status-position status-right
+\ status-right-length status-right-style status-style synchronize-panes
+\ terminal-overrides update-environment user-keys visual-activity
+\ visual-bell visual-silence window-active-style window-size
+\ window-status-activity-style window-status-bell-style
+\ window-status-current-format window-status-current-style
+\ window-status-format window-status-last-style window-status-separator
+\ window-status-style window-style word-separators wrap-search xterm-keys
 
 syn keyword tmuxCommands
 \ attach attach-session bind bind-key break-pane breakp capture-pane

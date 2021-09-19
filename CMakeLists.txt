@@ -23,9 +23,23 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
-  set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    # pkg-config 29.2 has a bug on OpenBSD which causes it to drop any paths that
+    # *contain* system include paths. To avoid this, we prefix what would be
+    # "/usr/include" as "/_usr/include".
+    # This check is also performed in the third-party/CMakeLists.txt and in the
+    # else clause following here.
+    # https://github.com/neovim/neovim/pull/14745#issuecomment-860201794
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
 else()
-  set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/_usr" CACHE PATH "Path prefix for finding dependencies")
+  else()
+    set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
+  endif()
   # When running from within CLion or Visual Studio,
   # build bundled dependencies automatically.
   if(NOT EXISTS ${DEPS_PREFIX}
@@ -83,6 +97,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  # Ignore case when comparing filenames on Windows and Mac.
+  set(CASE_INSENSITIVE_FILENAME TRUE)
   # Enable fixing case-insensitive filenames for Windows and Mac.
   set(USE_FNAME_CASE TRUE)
 endif()
@@ -122,12 +138,12 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 5)
 set(NVIM_VERSION_PATCH 0)
-set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
+set(NVIM_VERSION_PRERELEASE "") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 7)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE true)
+set(NVIM_API_PRERELEASE false)
 
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
@@ -376,6 +392,22 @@ include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
 
 find_package(TreeSitter REQUIRED)
 include_directories(SYSTEM ${TreeSitter_INCLUDE_DIRS})
+
+list(APPEND CMAKE_REQUIRED_INCLUDES "${TreeSitter_INCLUDE_DIRS}")
+list(APPEND CMAKE_REQUIRED_LIBRARIES "${TreeSitter_LIBRARIES}")
+check_c_source_compiles("
+#include <tree_sitter/api.h>
+int
+main(void)
+{
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_set_match_limit(cursor, 32);
+  return 0;
+}
+" TS_HAS_SET_MATCH_LIMIT)
+if(TS_HAS_SET_MATCH_LIMIT)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_TS_HAS_SET_MATCH_LIMIT")
+endif()
 
 # Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
@@ -677,3 +709,14 @@ set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_NSIS_MODIFY_PATH ON)
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 include(CPack)
+
+#add uninstall target
+if(NOT TARGET uninstall)
+    configure_file(
+        "cmake/UninstallHelper.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/UninstallHelper.cmake"
+        IMMEDIATE @ONLY)
+
+    add_custom_target(uninstall
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/UninstallHelper.cmake)
+endif()

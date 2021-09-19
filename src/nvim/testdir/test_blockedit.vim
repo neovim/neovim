@@ -1,6 +1,5 @@
 " Test for block inserting
 "
-" TODO: rewrite test39.in into this new style test
 
 func Test_blockinsert_indent()
   new

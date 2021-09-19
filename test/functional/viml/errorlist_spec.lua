@@ -68,4 +68,17 @@ describe('setloclist()', function()
     command('lclose | wincmd w | lopen')
     eq('foo', get_cur_win_var('quickfix_title'))
   end)
+
+  it("doesn't crash when when window is closed in the middle #13721", function()
+    helpers.insert([[
+    hello world]])
+
+    command("vsplit")
+    command("autocmd WinLeave * :call nvim_win_close(0, v:true)")
+
+    command("call setloclist(0, [])")
+    command("lopen")
+
+    helpers.assert_alive()
+  end)
 end)

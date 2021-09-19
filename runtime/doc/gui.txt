@@ -180,19 +180,12 @@ This does require the |+menu| feature enabled at compile time.
 Creating New Menus					*creating-menus*
 
 				*:me*  *:menu*  *:noreme*  *:noremenu*
-				*:am*  *:amenu* *:an*      *:anoremenu*
-				*:nme* *:nmenu* *:nnoreme* *:nnoremenu*
-				*:ome* *:omenu* *:onoreme* *:onoremenu*
-				*:vme* *:vmenu* *:vnoreme* *:vnoremenu*
-				*:xme* *:xmenu* *:xnoreme* *:xnoremenu*
-				*:sme* *:smenu* *:snoreme* *:snoremenu*
-				*:ime* *:imenu* *:inoreme* *:inoremenu*
-				*:cme* *:cmenu* *:cnoreme* *:cnoremenu*
 				*E330* *E327* *E331* *E336* *E333*
 				*E328* *E329* *E337* *E792*
 To create a new menu item, use the ":menu" commands.  They are mostly like
-the ":map" set of commands but the first argument is a menu item name, given
-as a path of menus and submenus with a '.' between them, e.g.: >
+the ":map" set of commands (see |map-modes|), but the first argument is a menu
+item name, given as a path of menus and submenus with a '.' between them,
+e.g.: >
 
    :menu File.Save  :w<CR>
    :inoremenu File.Save  <C-O>:w<CR>
@@ -221,6 +214,7 @@ With the shortcut "F" (while keeping the <Alt> key pressed), and then "O",
 this menu can be used.  The second part is shown as "Open     :e".  The ":e"
 is right aligned, and the "O" is underlined, to indicate it is the shortcut.
 
+					*:am*  *:amenu*  *:an*      *:anoremenu*
 The ":amenu" command can be used to define menu entries for all modes at once.
 To make the command work correctly, a character is automatically inserted for
 some modes:
@@ -253,8 +247,37 @@ expression register: >
 
    :amenu Insert.foobar   "='foobar'<CR>P
 
+The special text <Cmd> begins a "command menu", it executes the command
+directly without changing modes.  Where you might use ":...<CR>" you can
+instead use "<Cmd>...<CR>".  See |<Cmd>| for more info.  Example: >
+	anoremenu File.Next <Cmd>next<CR>
+
 Note that <Esc> in Cmdline mode executes the command, like in a mapping.  This
 is Vi compatible.  Use CTRL-C to quit Cmdline mode.
+
+		*:nme* *:nmenu*  *:nnoreme* *:nnoremenu* *:nunme* *:nunmenu*
+Menu commands starting with "n" work in Normal mode. |mapmode-n|
+
+		*:ome* *:omenu*  *:onoreme* *:onoremenu* *:ounme* *:ounmenu*
+Menu commands starting with "o" work in Operator-pending mode. |mapmode-o|
+
+		*:vme* *:vmenu*  *:vnoreme* *:vnoremenu* *:vunme* *:vunmenu*
+Menu commands starting with "v" work in Visual mode. |mapmode-v|
+
+		*:xme* *:xmenu*  *:xnoreme* *:xnoremenu* *:xunme* *:xunmenu*
+Menu commands starting with "x" work in Visual and Select mode. |mapmode-x|
+
+		*:sme* *:smenu*  *:snoreme* *:snoremenu* *:sunme* *:sunmenu*
+Menu commands starting with "s" work in Select mode. |mapmode-s|
+
+		*:ime* *:imenu*  *:inoreme* *:inoremenu* *:iunme* *:iunmenu*
+Menu commands starting with "i" work in Insert mode. |mapmode-i|
+
+		*:cme* *:cmenu*  *:cnoreme* *:cnoremenu* *:cunme* *:cunmenu*
+Menu commands starting with "c" work in Cmdline mode. |mapmode-c|
+
+		*:tlm* *:tlmenu* *:tln*     *:tlnoremenu* *:tlu*   *:tlunmenu*
+Menu commands starting with "tl" work in Terminal mode. |mapmode-t|
 
 						*:menu-<silent>* *:menu-silent*
 To define a menu which will not be echoed on the command line, add
@@ -431,6 +454,8 @@ Special characters in the list, just before the rhs:
 *	The menu was defined with "nore" to disallow remapping.
 &	The menu was defined with "<script>" to allow remapping script-local
 	mappings only.
+s	The menu was defined with "<silent>" to avoid showing what it is
+	mapped to when triggered.
 -	The menu was disabled.
 
 Note that hitting <Tab> while entering a menu name after a menu command may
@@ -461,13 +486,6 @@ Deleting Menus						*delete-menus*
 
 						*:unme*  *:unmenu*
 						*:aun*   *:aunmenu*
-						*:nunme* *:nunmenu*
-						*:ounme* *:ounmenu*
-						*:vunme* *:vunmenu*
-						*:xunme* *:xunmenu*
-						*:sunme* *:sunmenu*
-						*:iunme* *:iunmenu*
-						*:cunme* *:cunmenu*
 To delete a menu item or a whole submenu, use the unmenu commands, which are
 analogous to the unmap commands.  Eg: >
     :unmenu! Edit.Paste

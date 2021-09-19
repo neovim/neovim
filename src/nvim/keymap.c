@@ -288,6 +288,7 @@ static const struct key_name_entry {
   { K_LEFTDRAG,        "LeftDrag" },
   { K_LEFTRELEASE,     "LeftRelease" },
   { K_LEFTRELEASE_NM,  "LeftReleaseNM" },
+  { K_MOUSEMOVE,       "MouseMove" },
   { K_MIDDLEMOUSE,     "MiddleMouse" },
   { K_MIDDLEDRAG,      "MiddleDrag" },
   { K_MIDDLERELEASE,   "MiddleRelease" },
@@ -317,32 +318,32 @@ static const struct key_name_entry {
 };
 
 static struct mousetable {
-  int pseudo_code;              /* Code for pseudo mouse event */
-  int button;                   /* Which mouse button is it? */
-  int is_click;                 /* Is it a mouse button click event? */
-  int is_drag;                  /* Is it a mouse drag event? */
+  int pseudo_code;            // Code for pseudo mouse event
+  int button;                 // Which mouse button is it?
+  bool is_click;              // Is it a mouse button click event?
+  bool is_drag;               // Is it a mouse drag event?
 } mouse_table[] =
 {
-  {(int)KE_LEFTMOUSE,         MOUSE_LEFT,     TRUE,   FALSE},
-  {(int)KE_LEFTDRAG,          MOUSE_LEFT,     FALSE,  TRUE},
-  {(int)KE_LEFTRELEASE,       MOUSE_LEFT,     FALSE,  FALSE},
-  {(int)KE_MIDDLEMOUSE,       MOUSE_MIDDLE,   TRUE,   FALSE},
-  {(int)KE_MIDDLEDRAG,        MOUSE_MIDDLE,   FALSE,  TRUE},
-  {(int)KE_MIDDLERELEASE,     MOUSE_MIDDLE,   FALSE,  FALSE},
-  {(int)KE_RIGHTMOUSE,        MOUSE_RIGHT,    TRUE,   FALSE},
-  {(int)KE_RIGHTDRAG,         MOUSE_RIGHT,    FALSE,  TRUE},
-  {(int)KE_RIGHTRELEASE,      MOUSE_RIGHT,    FALSE,  FALSE},
-  {(int)KE_X1MOUSE,           MOUSE_X1,       TRUE,   FALSE},
-  {(int)KE_X1DRAG,            MOUSE_X1,       FALSE,  TRUE},
-  {(int)KE_X1RELEASE,         MOUSE_X1,       FALSE,  FALSE},
-  {(int)KE_X2MOUSE,           MOUSE_X2,       TRUE,   FALSE},
-  {(int)KE_X2DRAG,            MOUSE_X2,       FALSE,  TRUE},
-  {(int)KE_X2RELEASE,         MOUSE_X2,       FALSE,  FALSE},
-  /* DRAG without CLICK */
-  {(int)KE_IGNORE,            MOUSE_RELEASE,  FALSE,  TRUE},
-  /* RELEASE without CLICK */
-  {(int)KE_IGNORE,            MOUSE_RELEASE,  FALSE,  FALSE},
-  {0,                         0,              0,      0},
+  { (int)KE_LEFTMOUSE,        MOUSE_LEFT,     true,   false },
+  { (int)KE_LEFTDRAG,         MOUSE_LEFT,     false,  true },
+  { (int)KE_LEFTRELEASE,      MOUSE_LEFT,     false,  false },
+  { (int)KE_MIDDLEMOUSE,      MOUSE_MIDDLE,   true,   false },
+  { (int)KE_MIDDLEDRAG,       MOUSE_MIDDLE,   false,  true },
+  { (int)KE_MIDDLERELEASE,    MOUSE_MIDDLE,   false,  false },
+  { (int)KE_RIGHTMOUSE,       MOUSE_RIGHT,    true,   false },
+  { (int)KE_RIGHTDRAG,        MOUSE_RIGHT,    false,  true },
+  { (int)KE_RIGHTRELEASE,     MOUSE_RIGHT,    false,  false },
+  { (int)KE_X1MOUSE,          MOUSE_X1,       true,   false },
+  { (int)KE_X1DRAG,           MOUSE_X1,       false,  true },
+  { (int)KE_X1RELEASE,        MOUSE_X1,       false,  false },
+  { (int)KE_X2MOUSE,          MOUSE_X2,       true,   false },
+  { (int)KE_X2DRAG,           MOUSE_X2,       false,  true },
+  { (int)KE_X2RELEASE,        MOUSE_X2,       false,  false },
+  // DRAG without CLICK
+  { (int)K_MOUSEMOVE,         MOUSE_RELEASE,  false,  true },
+  // RELEASE without CLICK
+  { (int)KE_IGNORE,           MOUSE_RELEASE,  false,  false },
+  { 0,                        0,              0,      0 },
 };
 
 /// Return the modifier mask bit (#MOD_MASK_*) corresponding to mod name

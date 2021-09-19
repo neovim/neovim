@@ -27,22 +27,31 @@
           });
 
           # a development binary to help debug issues
-          neovim-debug = (neovim.override {
-            stdenv = if pkgs.stdenv.isLinux then pkgs.llvmPackages_latest.stdenv else pkgs.stdenv;
+          neovim-debug = let
+            stdenv = pkgs.stdenvAdapters.keepDebugInfo (if pkgs.stdenv.isLinux then pkgs.llvmPackages_latest.stdenv else pkgs.stdenv);
+          in
+            pkgs.enableDebugging ((neovim.override {
             lua = pkgs.enableDebugging pkgs.luajit;
+            inherit stdenv;
           }).overrideAttrs (oa: {
             cmakeBuildType = "Debug";
             cmakeFlags = oa.cmakeFlags ++ [
               "-DMIN_LOG_LEVEL=0"
             ];
-          });
 
-          # for neovim developers, very slow
+            disallowedReferences = [];
+          }));
+
+          # for neovim developers, builds a slow binary
+          # huge closure size but aims at covering all scripts
           # brings development tools as well
           neovim-developer =
             let
               lib = nixpkgs.lib;
-              pythonEnv = pkgs.python3;
+              pythonEnv = pkgs.python3.withPackages(ps: [
+                ps.msgpack
+                ps.flake8  # for 'make pylint'
+              ]);
               luacheck = pkgs.luaPackages.luacheck;
             in
             (neovim-debug.override ({ doCheck = pkgs.stdenv.isLinux; })).overrideAttrs (oa: {
@@ -51,7 +60,7 @@
                 "-DMIN_LOG_LEVEL=0"
                 "-DENABLE_LTO=OFF"
                 "-DUSE_BUNDLED=OFF"
-              ] ++ pkgs.stdenv.lib.optionals pkgs.stdenv.isLinux [
+              ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
                 # https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
                 # https://clang.llvm.org/docs/AddressSanitizer.html#symbolizing-the-reports
                 "-DCLANG_ASAN_UBSAN=ON"
@@ -61,7 +70,9 @@
                 pythonEnv
                 include-what-you-use # for scripts/check-includes.py
                 jq # jq for scripts/vim-patch.sh -r
-                doxygen
+                shellcheck # for `make shlint`
+                doxygen    # for script/gen_vimdoc.py
+                clang-tools # for clangd to find the correct headers
               ]);
 
               shellHook = oa.shellHook + ''
@@ -97,6 +108,5 @@
         defaultApp = apps.nvim;
 
         devShell = pkgs.neovim-developer;
-      }
-    );
+    });
 }

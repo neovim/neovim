@@ -2806,9 +2806,6 @@ msgstr "vimOption anaithnid"
 msgid "keyboard interrupt"
 msgstr "idirbhriseadh méarchláir"
 
-msgid "vim error"
-msgstr "earráid vim"
-
 msgid "cannot create buffer/window command: object is being deleted"
 msgstr "ní féidir ordú maoláin/fuinneoige a chruthú: réad á scriosadh"
 
@@ -3132,8 +3129,8 @@ msgstr "-W <aschur>\tScríobh gach ordú clóscríofa sa chomhad <aschur>"
 msgid "-x\t\t\tEdit encrypted files"
 msgstr "-x\t\t\tCuir comhaid chriptithe in eagar"
 
-msgid "-display <display>\tConnect vim to this particular X-server"
-msgstr "-display <freastalaí>\tNasc vim leis an bhfreastalaí-X seo"
+msgid "-display <display>\tConnect Vim to this particular X-server"
+msgstr "-display <freastalaí>\tNasc Vim leis an bhfreastalaí-X seo"
 
 msgid "-X\t\t\tDo not connect to X server"
 msgstr "-X\t\t\tNá naisc leis an bhfreastalaí X"
@@ -3215,11 +3212,11 @@ msgstr ""
 "\n"
 "Argóintí ar eolas do gvim (leagan Athena):\n"
 
-msgid "-display <display>\tRun vim on <display>"
-msgstr "-display <scáileán>\tRith vim ar <scáileán>"
+msgid "-display <display>\tRun Vim on <display>"
+msgstr "-display <scáileán>\tRith Vim ar <scáileán>"
 
-msgid "-iconic\t\tStart vim iconified"
-msgstr "-iconic\t\tTosaigh vim sa mhód íoslaghdaithe"
+msgid "-iconic\t\tStart Vim iconified"
+msgstr "-iconic\t\tTosaigh Vim sa mhód íoslaghdaithe"
 
 msgid "-background <color>\tUse <color> for the background (also: -bg)"
 msgstr "-background <dath>\tBain úsáid as <dath> don chúlra (-bg fosta)"
@@ -3270,8 +3267,8 @@ msgstr ""
 "\n"
 "Argóintí ar eolas do gvim (leagan GTK+):\n"
 
-msgid "-display <display>\tRun vim on <display> (also: --display)"
-msgstr "-display <scáileán>\tRith vim ar <scáileán> (fosta: --display)"
+msgid "-display <display>\tRun Vim on <display> (also: --display)"
+msgstr "-display <scáileán>\tRith Vim ar <scáileán> (fosta: --display)"
 
 msgid "--role <role>\tSet a unique role to identify the main window"
 msgstr "--role <ról>\tSocraigh ról sainiúil chun an phríomhfhuinneog a aithint"
@@ -4375,8 +4372,6 @@ msgstr "E538: Gan tacaíocht luiche"
 msgid "E540: Unclosed expression sequence"
 msgstr "E540: Seicheamh gan dúnadh"
 
-msgid "E541: too many items"
-msgstr "E541: an iomarca míreanna"
 
 msgid "E542: unbalanced groups"
 msgstr "E542: grúpaí neamhchothromaithe"
@@ -6408,8 +6403,8 @@ msgstr "E799: Aitheantas neamhbhailí: %ld (ní mór dó a bheith >= 1)"
 msgid "E801: ID already taken: %ld"
 msgstr "E801: Aitheantas in úsáid cheana: %ld"
 
-msgid "List or number required"
-msgstr "Tá gá le liosta nó uimhir"
+msgid "E290: List or number required"
+msgstr "E290: Tá gá le liosta nó uimhir"
 
 #, c-format
 msgid "E802: Invalid ID: %ld (must be greater than or equal to 1)"
@@ -6952,7 +6947,7 @@ msgstr "innéacs liosta as raon"
 
 #. No more suitable format specifications in python-2.3
 #, c-format
-msgid "internal error: failed to get vim list item %d"
+msgid "internal error: failed to get Vim list item %d"
 msgstr "earráid inmheánach: níl aon fháil ar mhír %d sa liosta vim"
 
 msgid "slice step cannot be zero"
@@ -6963,7 +6958,7 @@ msgid "attempt to assign sequence of size greater than %d to extended slice"
 msgstr "iarracht ar sheicheamh níos mó ná %d a shannadh do shlisne fadaithe"
 
 #, c-format
-msgid "internal error: no vim list item %d"
+msgid "internal error: no Vim list item %d"
 msgstr "earráid inmheánach: níl aon mhír %d sa liosta vim"
 
 msgid "internal error: not enough list items"
@@ -7072,19 +7067,19 @@ msgstr "níorbh fhéidir an cód a chur ar siúl"
 msgid "E858: Eval did not return a valid python object"
 msgstr "E858: Ní bhfuarthas réad bailí python ar ais ó Eval"
 
-msgid "E859: Failed to convert returned python object to vim value"
+msgid "E859: Failed to convert returned python object to a Vim value"
 msgstr "E859: Níorbh fhéidir luach vim a dhéanamh as an réad python"
 
 #, c-format
-msgid "unable to convert %s to vim dictionary"
+msgid "unable to convert %s to a Vim dictionary"
 msgstr "ní féidir foclóir vim a dhéanamh as %s"
 
 #, c-format
-msgid "unable to convert %s to vim list"
+msgid "unable to convert %s to a Vim list"
 msgstr "ní féidir liosta vim a dhéanamh as %s"
 
 #, c-format
-msgid "unable to convert %s to vim structure"
+msgid "unable to convert %s to a Vim structure"
 msgstr "ní féidir struchtúr vim a dhéanamh as %s"
 
 msgid "internal error: NULL reference passed"

@@ -101,7 +101,7 @@ If 'printencoding' is empty or Vim cannot find the file then it will use
 encoding file.  If Vim is unable to find a character encoding file then it
 will use the "latin1" print character encoding file.
 
-When 'encoding' is set to a multi-byte encoding, Vim will try to convert
+When 'encoding' is set to a multibyte encoding, Vim will try to convert
 characters to the printing encoding for printing (if 'printencoding' is empty
 then the conversion will be to latin1).  Conversion to a printing encoding
 other than latin1 will require Vim to be compiled with the |+iconv| feature.
@@ -251,7 +251,7 @@ Japanese text you would do the following; >
 	:set printmbcharset=JIS_X_1983
 
 If 'printmbcharset' is not one of the above values then it is assumed to
-specify a custom multi-byte character set and no check will be made that it is
+specify a custom multibyte character set and no check will be made that it is
 compatible with the value for 'printencoding'.  Vim will look for a file
 defining the character set in the "print" directory in 'runtimepath'.
 
@@ -286,7 +286,7 @@ printing of characters in the ASCII code range.
   a:yes			Use ASCII character set for codes in the ASCII
   a:no (default)	code range.
 
-The following is an example of specifying two multi-byte fonts, one for normal
+The following is an example of specifying two multibyte fonts, one for normal
 and italic printing and one for bold and bold-italic printing, and using
 Courier to print codes in the ASCII code range but using the national
 character set: >
@@ -402,10 +402,10 @@ There are currently a number of limitations with PostScript printing:
   possible to get all the characters in an encoding to print by installing a
   new version of the Courier font family.
 
-- Multi-byte support - Currently Vim will try to convert multi-byte characters
+- Multi-byte support - Currently Vim will try to convert multibyte characters
   to the 8-bit encoding specified by 'printencoding' (or latin1 if it is
   empty).  Any characters that are not successfully converted are shown as
-  unknown characters.  Printing will fail if Vim cannot convert the multi-byte
+  unknown characters.  Printing will fail if Vim cannot convert the multibyte
   to the 8-bit encoding.
 
 ==============================================================================
@@ -490,7 +490,7 @@ print ASCII text using the national character set you may see some unexpected
 characters.  If you want true ASCII code printing then you need to configure
 Vim to output ASCII characters for the ASCII code range with 'printmbfont'.
 
-It is possible to define your own multi-byte character set although this
+It is possible to define your own multibyte character set although this
 should not be attempted lightly.  A discussion on the process if beyond the
 scope of these help files.  You can find details on CMap (character map) files
 in the document 'Adobe CMap and CIDFont Files Specification, Version 1.0',
@@ -597,22 +597,15 @@ X11
 
     http://www.cs.wisc.edu/~ghost/gv/
 
-Windows
+MS-Windows
 
 - GSview.  Obtainable from:
 
     http://www.cs.wisc.edu/~ghost/gsview/
 
-DOS
-
-- ps_view.  Obtainable from:
-
-    ftp://ftp.pg.gda.pl/pub/TeX/support/ps_view/
-    ftp://ftp.dante.de/tex-archive/support/ps_view/
-
 Linux
 
-- GSview.  Linux version of the popular Windows previewer.
+- GSview.  Linux version of the popular MS-Windows previewer.
   Obtainable from:
 
     http://www.cs.wisc.edu/~ghost/gsview/

@@ -159,16 +159,28 @@ bool os_char_avail(void)
   return inbuf_poll(0, NULL) == kInputAvail;
 }
 
-// Check for CTRL-C typed by reading all available characters.
+/// Poll for fast events. `got_int` will be set to `true` if CTRL-C was typed.
+///
+/// This invokes a full libuv loop iteration which can be quite costly.
+/// Prefer `line_breakcheck()` if called in a busy inner loop.
+///
+/// Caller must at least check `got_int` before calling this function again.
+/// checking for other low-level input state like `input_available()` might
+/// also be relevant (i e to throttle idle processing when user input is
+/// available)
 void os_breakcheck(void)
 {
+  if (got_int) {
+    return;
+  }
+
   int save_us = updating_screen;
   // We do not want screen_resize() to redraw here.
+  // TODO(bfredl): we are already special casing redraw events, is this
+  // hack still needed?
   updating_screen++;
 
-  if (!got_int) {
-    loop_poll_events(&main_loop, 0);
-  }
+  loop_poll_events(&main_loop, 0);
 
   updating_screen = save_us;
 }

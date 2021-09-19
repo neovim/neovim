@@ -56,10 +56,10 @@ typedef struct lval_S {
     ///< isn't NULL it's the Dict to which to add the item.
     listitem_T *ll_li;  ///< The list item or NULL.
     list_T *ll_list;    ///< The list or NULL.
-    int ll_range;       ///< TRUE when a [i:j] range was used.
+    bool ll_range;      ///< true when a [i:j] range was used.
+    bool ll_empty2;     ///< Second index is empty: [i:].
     long ll_n1;         ///< First index for list.
     long ll_n2;         ///< Second index for list range.
-    int ll_empty2;      ///< Second index is empty: [i:].
     dict_T *ll_dict;    ///< The Dictionary or NULL.
     dictitem_T *ll_di;  ///< The dictitem or NULL.
     char_u *ll_newkey;  ///< New key for Dict in allocated memory or NULL.
@@ -105,7 +105,6 @@ typedef enum {
     VV_DYING,
     VV_EXCEPTION,
     VV_THROWPOINT,
-    VV_STDERR,
     VV_REG,
     VV_CMDBANG,
     VV_INSERTMODE,
@@ -140,13 +139,12 @@ typedef enum {
     VV_OPTION_OLD,
     VV_OPTION_TYPE,
     VV_ERRORS,
-    VV_MSGPACK_TYPES,
-    VV_EVENT,
     VV_FALSE,
     VV_TRUE,
     VV_NULL,
-    VV__NULL_LIST,  // List with NULL value. For test purposes only.
-    VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+    VV_NUMBERMAX,
+    VV_NUMBERMIN,
+    VV_NUMBERSIZE,
     VV_VIM_DID_ENTER,
     VV_TESTING,
     VV_TYPE_NUMBER,
@@ -156,10 +154,18 @@ typedef enum {
     VV_TYPE_DICT,
     VV_TYPE_FLOAT,
     VV_TYPE_BOOL,
+    VV_EVENT,
     VV_ECHOSPACE,
-    VV_EXITING,
-    VV_LUA,
     VV_ARGV,
+    VV_COLLATE,
+    VV_EXITING,
+    // Neovim
+    VV_STDERR,
+    VV_MSGPACK_TYPES,
+    VV__NULL_STRING,  // String with NULL value. For test purposes only.
+    VV__NULL_LIST,  // List with NULL value. For test purposes only.
+    VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+    VV_LUA,
 } VimVarIndex;
 
 /// All recognized msgpack types
@@ -225,6 +231,21 @@ typedef enum
   ASSERT_INRANGE,
   ASSERT_OTHER,
 } assert_type_T;
+
+/// types for expressions.
+typedef enum {
+  EXPR_UNKNOWN = 0,
+  EXPR_EQUAL,         ///< ==
+  EXPR_NEQUAL,        ///< !=
+  EXPR_GREATER,       ///< >
+  EXPR_GEQUAL,        ///< >=
+  EXPR_SMALLER,       ///< <
+  EXPR_SEQUAL,        ///< <=
+  EXPR_MATCH,         ///< =~
+  EXPR_NOMATCH,       ///< !~
+  EXPR_IS,            ///< is
+  EXPR_ISNOT,         ///< isnot
+} exprtype_T;
 
 /// Type for dict_list function
 typedef enum {

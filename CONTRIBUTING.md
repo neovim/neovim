@@ -20,6 +20,7 @@ Reporting problems
 - Update Neovim to the latest version to see if your problem persists.
 - Disable plugins incrementally, to narrow down the cause of the issue.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
+- Use [ASAN/UBSAN](#clang-sanitizers-asan-and-ubsan) to get detailed errors for segfaults and undefined behavior.
 - [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
 - Check `$NVIM_LOG_FILE`, if it exists.
 - Include `cmake --system-information` for build-related issues.
@@ -27,15 +28,16 @@ Reporting problems
 Developer guidelines
 --------------------
 
-- Nvim contributors should read `:help dev`.
-- External UI developers should read `:help dev-ui`.
-- API client developers should read `:help dev-api-client`.
-- Nvim developers are _strongly encouraged_ to install `ninja` for faster builds.
+- Read `:help dev` if you are working on Nvim core.
+- Read `:help dev-ui` if you are developing a UI.
+- Read `:help dev-api-client` if you are developing an API client.
+- Install `ninja` for faster builds of Nvim.
   ```
   sudo apt-get install ninja-build
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
+- [Improve documentation][wiki-contribute-help]
 
 Pull requests (PRs)
 ---------------------
@@ -73,15 +75,26 @@ For Comment) and `[RDY]` (Ready).
 
 ### Commit messages
 
-Follow [commit message hygiene][hygiene] to *make reviews easier* and to make
-the VCS/git logs more valuable.
+Follow the [convential commits guidelines][conventional_commits] to *make reviews easier* and to make
+the VCS/git logs more valuable. The general structure of a commit message is as follows:
 
-- Try to keep the first line under 72 characters.
-- **Prefix the commit subject with a _scope_:** `doc:`, `test:`, `foo.c:`,
+```
+<type>([optional scope]): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+- **Prefix the commit subject with a _type_:** `doc:`, `test:`
   `runtime:`, ...
     - Subject line for commits with only style/lint changes can be a single
       word: `style` or `lint`.
+- **Add the optional scope following <type> if possible:** `(lsp)`, `(treesitter)`, `(multigrid)`, ...
+- Try to keep the first line under 72 characters.
 - A blank line must separate the subject from the description.
+- Breaking changes must be indicated at the very beginning of the footer or body section of a commit. A breaking change must consist of the uppercase text BREAKING CHANGE, followed by a colon, a space, and a description of what has changed about the API.
+- Check your commit message for spelling and grammatical mistakes.
 - Use the _imperative voice_: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
 ### Automated builds (CI)
@@ -160,7 +173,20 @@ master build. To view the defects, just request access; you will be approved.
   ```
   git log --oneline --no-merges --grep coverity
   ```
+  
+### Clang sanitizers (ASAN and UBSAN)
 
+  ASAN/UBSAN can be used to detect memory errors and other common forms of undefined behavior at runtime in debug builds.
+  To build neovim with sanitizers enabled, use
+  ```
+  rm -rf build && CMAKE_EXTRA_FLAGS="-DCMAKE_C_COMPILER=clang -DCLANG_ASAN_UBSAN=1" make
+  ```
+  When running neovim, use
+  ```
+  UBSAN_OPTIONS=print_stacktrace=1 ASAN_OPTIONS=log_path=/tmp/nvim_asan nvim args...
+  ```
+  If neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.
+  
 
 Coding
 ------
@@ -221,7 +247,7 @@ as context, use the `-W` argument as well.
 [github-issues]: https://github.com/neovim/neovim/issues
 [1820]: https://github.com/neovim/neovim/pull/1820
 [hub]: https://hub.github.com/
-[hygiene]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+[conventional_commits]: https://www.conventionalcommits.org
 [style-guide]: http://neovim.io/develop/style-guide.xml
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
@@ -235,3 +261,4 @@ as context, use the `-W` argument as well.
 [Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
+[wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp

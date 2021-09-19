@@ -81,7 +81,7 @@ ex_menu(exarg_T *eap)
                                   // kFalse for "menu disable
   vimmenu_T menuarg;
 
-  modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
+  modes = get_menu_cmd_modes((char *)eap->cmd, eap->forceit, &noremap, &unmenu);
   arg = eap->arg;
 
   for (;; ) {
@@ -912,7 +912,9 @@ static int expand_emenu;                /* TRUE for ":emenu" command */
 /*
  * Work out what to complete when doing command line completion of menu names.
  */
-char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forceit)
+char_u *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char_u *arg,
+                                bool forceit)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u      *after_dot;
   char_u      *p;
@@ -1067,7 +1069,7 @@ char_u *get_menu_names(expand_T *xp, int idx)
 #define TBUFFER_LEN 256
   static char_u tbuffer[TBUFFER_LEN];         /*hack*/
   char_u              *str;
-  static int should_advance = FALSE;
+  static bool should_advance = false;
 
   if (idx == 0) {           /* first call: start at first item */
     menu = expand_menu;
@@ -1087,12 +1089,13 @@ char_u *get_menu_names(expand_T *xp, int idx)
 
   if (menu->modes & expand_modes) {
     if (menu->children != NULL) {
-      if (should_advance)
-        STRLCPY(tbuffer, menu->en_dname, TBUFFER_LEN - 1);
-      else {
-        STRLCPY(tbuffer, menu->dname,  TBUFFER_LEN - 1);
-        if (menu->en_dname == NULL)
-          should_advance = TRUE;
+      if (should_advance) {
+        STRLCPY(tbuffer, menu->en_dname, TBUFFER_LEN);
+      } else {
+        STRLCPY(tbuffer, menu->dname,  TBUFFER_LEN);
+        if (menu->en_dname == NULL) {
+          should_advance = true;
+        }
       }
       /* hack on menu separators:  use a 'magic' char for the separator
        * so that '.' in names gets escaped properly */
@@ -1103,8 +1106,9 @@ char_u *get_menu_names(expand_T *xp, int idx)
         str = menu->en_dname;
       else {
         str = menu->dname;
-        if (menu->en_dname == NULL)
-          should_advance = TRUE;
+        if (menu->en_dname == NULL) {
+          should_advance = true;
+        }
       }
     }
   } else
@@ -1178,7 +1182,7 @@ static bool menu_namecmp(const char_u *const name, const char_u *const mname)
 ///                     to whether the command is an "unmenu" command.
 int
 get_menu_cmd_modes(
-    const char_u * cmd,
+    const char *cmd,
     bool forceit,
     int *noremap,
     int *unmenu

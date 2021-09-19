@@ -104,8 +104,11 @@ for _,f in ipairs(shallowcopy(functions)) do
     elseif startswith(f.name, "nvim_tabpage_") then
       ismethod = true
     end
+    f.remote = f.remote_only or not f.lua_only
+    f.lua = f.lua_only or not f.remote_only
+    f.eval = (not f.lua_only) and (not f.remote_only)
   else
-    f.remote_only = true
+    f.remote = true
     f.since = 0
     f.deprecated_since = 1
   end
@@ -127,7 +130,8 @@ for _,f in ipairs(shallowcopy(functions)) do
       newf.return_type = "Object"
     end
     newf.impl_name = f.name
-    newf.remote_only = true
+    newf.lua = false
+    newf.eval = false
     newf.since = 0
     newf.deprecated_since = 1
     functions[#functions+1] = newf
@@ -192,7 +196,7 @@ end
 -- the real API.
 for i = 1, #functions do
   local fn = functions[i]
-  if fn.impl_name == nil and not fn.lua_only then
+  if fn.impl_name == nil and fn.remote then
     local args = {}
 
     output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
@@ -323,7 +327,7 @@ void msgpack_rpc_init_method_table(void)
 
 for i = 1, #functions do
   local fn = functions[i]
-  if not fn.lua_only then
+  if fn.remote then
       output:write('  msgpack_rpc_add_method_handler('..
                    '(String) {.data = "'..fn.name..'", '..
                    '.size = sizeof("'..fn.name..'") - 1}, '..
@@ -492,7 +496,7 @@ local function process_function(fn)
 end
 
 for _, fn in ipairs(functions) do
-  if not fn.remote_only or fn.name:sub(1, 4) == '_vim' then
+  if fn.lua or fn.name:sub(1, 4) == '_vim' then
     process_function(fn)
   end
 end

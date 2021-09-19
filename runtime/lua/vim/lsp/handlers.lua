@@ -13,20 +13,18 @@ local M = {}
 --- Writes to error buffer.
 --@param ... (table of strings) Will be concatenated before being written
 local function err_message(...)
-  api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+  vim.notify(table.concat(vim.tbl_flatten{...}), vim.log.levels.ERROR)
   api.nvim_command("redraw")
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-M['workspace/executeCommand'] = function(err, _)
-  if err then
-    error("Could not execute code action: "..err.message)
-  end
+M['workspace/executeCommand'] = function()
+  -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
 
 -- @msg of type ProgressParams
 -- Basically a token of type number/string
-local function progress_callback(_, _, params, client_id)
+local function progress_handler(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format("id=%d", client_id)
   if not client then
@@ -62,7 +60,7 @@ local function progress_callback(_, _, params, client_id)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
-M['$/progress'] = progress_callback
+M['$/progress'] = progress_handler
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
 M['window/workDoneProgress/create'] =  function(_, _, params, client_id)
@@ -158,13 +156,12 @@ M['workspace/applyEdit'] = function(_, _, workspace_edit)
 end
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
-M['workspace/configuration'] = function(err, _, params, client_id)
+M['workspace/configuration'] = function(_, _, params, client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
     err_message("LSP[id=", client_id, "] client has shut down after sending the message")
     return
   end
-  if err then error(vim.inspect(err)) end
   if not params.items then
     return {}
   end
@@ -187,32 +184,37 @@ M['textDocument/publishDiagnostics'] = function(...)
   return require('vim.lsp.diagnostic').on_publish_diagnostics(...)
 end
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = function(_, _, result)
-  if not result then return end
-  util.set_qflist(util.locations_to_items(result))
-  api.nvim_command("copen")
-  api.nvim_command("wincmd p")
+M['textDocument/codeLens'] = function(...)
+  return require('vim.lsp.codelens').on_codelens(...)
 end
+
+
 
 --@private
---- Prints given list of symbols to the quickfix list.
---@param _ (not used)
---@param _ (not used)
---@param result (list of Symbols) LSP method name
---@param result (table) result of LSP method; a location or a list of locations.
----(`textDocument/definition` can return `Location` or `Location[]`
-local symbol_handler = function(_, _, result, _, bufnr)
-  if not result or vim.tbl_isempty(result) then return end
-
-  util.set_qflist(util.symbols_to_items(result, bufnr))
-  api.nvim_command("copen")
-  api.nvim_command("wincmd p")
+--- Return a function that converts LSP responses to quickfix items and opens the qflist
+--
+--@param map_result function `((resp, bufnr) -> list)` to convert the response
+--@param entity name of the resource used in a `not found` error message
+local function response_to_qflist(map_result, entity)
+  return function(_, _, result, _, bufnr)
+    if not result or vim.tbl_isempty(result) then
+      vim.notify('No ' .. entity .. ' found')
+    else
+      util.set_qflist(map_result(result, bufnr))
+      api.nvim_command("copen")
+    end
+  end
 end
+
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
+M['textDocument/references'] = response_to_qflist(util.locations_to_items, 'references')
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M['textDocument/documentSymbol'] = symbol_handler
+M['textDocument/documentSymbol'] = response_to_qflist(util.symbols_to_items, 'document symbols')
+
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-M['workspace/symbol'] = symbol_handler
+M['workspace/symbol'] = response_to_qflist(util.symbols_to_items, 'symbols')
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
 M['textDocument/rename'] = function(_, _, result)
@@ -245,26 +247,37 @@ M['textDocument/completion'] = function(_, _, result)
   vim.fn.complete(textMatch+1, matches)
 end
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
-M['textDocument/hover'] = function(_, method, result)
-  util.focusable_float(method, function()
-    if not (result and result.contents) then
-      -- return { 'No information available' }
-      return
-    end
-    local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
-    markdown_lines = util.trim_empty_lines(markdown_lines)
-    if vim.tbl_isempty(markdown_lines) then
-      -- return { 'No information available' }
-      return
-    end
-    local bufnr, winnr = util.fancy_floating_markdown(markdown_lines, {
-      pad_left = 1; pad_right = 1;
-    })
-    util.close_preview_autocmd({"CursorMoved", "BufHidden", "InsertCharPre"}, winnr)
-    return bufnr, winnr
-  end)
+--- |lsp-handler| for the method "textDocument/hover"
+--- <pre>
+--- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+---   vim.lsp.handlers.hover, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single"
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.hover(_, method, result, _, _, config)
+  config = config or {}
+  config.focus_id = method
+  if not (result and result.contents) then
+    -- return { 'No information available' }
+    return
+  end
+  local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
+  markdown_lines = util.trim_empty_lines(markdown_lines)
+  if vim.tbl_isempty(markdown_lines) then
+    -- return { 'No information available' }
+    return
+  end
+  return util.open_floating_preview(markdown_lines, "markdown", config)
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+M['textDocument/hover'] = M.hover
 
 --@private
 --- Jumps to a location. Used as a handler for multiple LSP methods.
@@ -287,7 +300,6 @@ local function location_handler(_, method, result)
     if #result > 1 then
       util.set_qflist(util.locations_to_items(result))
       api.nvim_command("copen")
-      api.nvim_command("wincmd p")
     end
   else
     util.jump_to_location(result)
@@ -303,24 +315,40 @@ M['textDocument/typeDefinition'] = location_handler
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation
 M['textDocument/implementation'] = location_handler
 
---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-M['textDocument/signatureHelp'] = function(_, method, result)
+--- |lsp-handler| for the method "textDocument/signatureHelp"
+--- <pre>
+--- vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+---   vim.lsp.handlers.signature_help, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single"
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - border:     (default=nil)
+---         - Add borders to the floating window
+---         - See |vim.api.nvim_open_win()|
+function M.signature_help(_, method, result, _, bufnr, config)
+  config = config or {}
+  config.focus_id = method
   -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
   -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
   if not (result and result.signatures and result.signatures[1]) then
     print('No signature help available')
     return
   end
-  local lines = util.convert_signature_help_to_markdown_lines(result)
+  local ft = api.nvim_buf_get_option(bufnr, 'filetype')
+  local lines = util.convert_signature_help_to_markdown_lines(result, ft)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
     print('No signature help available')
     return
   end
-  util.focusable_preview(method, function()
-    return lines, util.try_trim_markdown_code_blocks(lines)
-  end)
+  return util.open_floating_preview(lines, "markdown", config)
 end
+
+--@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+M['textDocument/signatureHelp'] = M.signature_help
 
 --@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
 M['textDocument/documentHighlight'] = function(_, _, result, _, bufnr, _)
@@ -352,7 +380,6 @@ local make_call_hierarchy_handler = function(direction)
     end
     util.set_qflist(items)
     api.nvim_command("copen")
-    api.nvim_command("wincmd p")
   end
 end
 
@@ -409,7 +436,12 @@ for k, fn in pairs(M) do
     })
 
     if err then
-      error(tostring(err))
+      -- LSP spec:
+      -- interface ResponseError:
+      --  code: integer;
+      --  message: string;
+      --  data?: string | number | boolean | array | object | null;
+      return err_message(tostring(err.code) .. ': ' .. err.message)
     end
 
     return fn(err, method, params, client_id, bufnr, config)

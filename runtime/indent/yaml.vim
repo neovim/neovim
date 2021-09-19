@@ -1,15 +1,13 @@
 " Vim indent file
-" Language:         YAML
-" Maintainer:       Nikolai Pavlov <zyx.vim@gmail.com>
-" Last Change:	    2017 Jun 13
+" Language:	YAML
+" Maintainer:	Nikolai Pavlov <zyx.vim@gmail.com>
+" Last Update:	Lukas Reineke
+" Last Change:	2021 Jan 19
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
   finish
 endif
-
-let s:save_cpo = &cpo
-set cpo&vim
 
 let b:did_indent = 1
 
@@ -24,12 +22,15 @@ if exists('*GetYAMLIndent')
     finish
 endif
 
+let s:save_cpo = &cpo
+set cpo&vim
+
 function s:FindPrevLessIndentedLine(lnum, ...)
     let prevlnum = prevnonblank(a:lnum-1)
     let curindent = a:0 ? a:1 : indent(a:lnum)
     while           prevlnum
                 \&&  indent(prevlnum) >=  curindent
-                \&& getline(prevlnum) =~# '^\s*#'
+                \&& getline(prevlnum) !~# '^\s*#'
         let prevlnum = prevnonblank(prevlnum-1)
     endwhile
     return prevlnum
@@ -53,7 +54,7 @@ let s:c_ns_anchor_name = s:c_ns_anchor_char.'+'
 let s:c_ns_anchor_property =  '\v\&'.s:c_ns_anchor_name
 
 let s:ns_word_char = '\v[[:alnum:]_\-]'
-let s:ns_tag_char  = '\v%(%\x\x|'.s:ns_word_char.'|[#/;?:@&=+$.~*''()])'
+let s:ns_tag_char  = '\v%('.s:ns_word_char.'|[#/;?:@&=+$.~*''()])'
 let s:c_named_tag_handle     = '\v\!'.s:ns_word_char.'+\!'
 let s:c_secondary_tag_handle = '\v\!\!'
 let s:c_primary_tag_handle   = '\v\!'
@@ -62,7 +63,7 @@ let s:c_tag_handle = '\v%('.s:c_named_tag_handle.
             \            '|'.s:c_primary_tag_handle.')'
 let s:c_ns_shorthand_tag = '\v'.s:c_tag_handle . s:ns_tag_char.'+'
 let s:c_non_specific_tag = '\v\!'
-let s:ns_uri_char  = '\v%(%\x\x|'.s:ns_word_char.'\v|[#/;?:@&=+$,.!~*''()[\]])'
+let s:ns_uri_char  = '\v%('.s:ns_word_char.'\v|[#/;?:@&=+$,.!~*''()[\]])'
 let s:c_verbatim_tag = '\v\!\<'.s:ns_uri_char.'+\>'
 let s:c_ns_tag_property = '\v'.s:c_verbatim_tag.
             \               '\v|'.s:c_ns_shorthand_tag.

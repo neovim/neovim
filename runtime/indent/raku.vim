@@ -1,9 +1,9 @@
 " Vim indent file
 " Language:      Perl 6
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2017 Jun 13
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" Last Change:   2020 Apr 15
 " Contributors:  Andy Lester <andy@petdance.com>
 "                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
@@ -36,7 +36,7 @@ let b:did_indent = 1
 " Is syntax highlighting active ?
 let b:indent_use_syntax = has("syntax")
 
-setlocal indentexpr=GetPerl6Indent()
+setlocal indentexpr=GetRakuIndent()
 
 " we reset it first because the Perl 5 indent file might have been loaded due
 " to a .pl/pm file extension, and indent files don't clean up afterwards
@@ -50,18 +50,13 @@ endif
 let s:cpo_save = &cpo
 set cpo-=C
 
-function! GetPerl6Indent()
+function! GetRakuIndent()
 
     " Get the line to be indented
     let cline = getline(v:lnum)
 
     " Indent POD markers to column 0
     if cline =~ '^\s*=\L\@!'
-        return 0
-    endif
-
-    " Don't reindent coments on first column
-    if cline =~ '^#'
         return 0
     endif
 
@@ -72,7 +67,7 @@ function! GetPerl6Indent()
     endif
 
     " Don't reindent POD and heredocs
-    if csynid =~ "^p6Pod"
+    if csynid =~ "^rakuPod"
         return indent(v:lnum)
     endif
 
@@ -92,7 +87,7 @@ function! GetPerl6Indent()
         let skippin = 2
         while skippin
             let synid = synIDattr(synID(lnum,1,0),"name")
-            if (synid =~ "^p6Pod" || synid =~ "p6Comment")
+            if (synid =~ "^rakuPod" || synid =~ "rakuComment")
                 let lnum = prevnonblank(lnum - 1)
                 if lnum == 0
                     return 0
@@ -107,19 +102,19 @@ function! GetPerl6Indent()
     endif
 
         if line =~ '[<«\[{(]\s*\(#[^)}\]»>]*\)\=$'
-            let ind = ind + shiftwidth()
+            let ind = ind + &sw
         endif
         if cline =~ '^\s*[)}\]»>]'
-            let ind = ind - shiftwidth()
+            let ind = ind - &sw
         endif
 
     " Indent lines that begin with 'or' or 'and'
     if cline =~ '^\s*\(or\|and\)\>'
         if line !~ '^\s*\(or\|and\)\>'
-            let ind = ind + shiftwidth()
+            let ind = ind + &sw
         endif
     elseif line =~ '^\s*\(or\|and\)\>'
-        let ind = ind - shiftwidth()
+        let ind = ind - &sw
     endif
 
     return ind

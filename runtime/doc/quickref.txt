@@ -292,7 +292,7 @@ moving around:
 |i_CTRL-A|	CTRL-A		  insert previously inserted text
 |i_CTRL-@|	CTRL-@		  insert previously inserted text and stop
 				     Insert mode
-|i_CTRL-R|	CTRL-R {0-9a-z%#:.-="}  insert the contents of a register
+|i_CTRL-R|	CTRL-R {register} insert the contents of a register
 
 |i_CTRL-N|	CTRL-N		  insert next match of identifier before the
 				     cursor
@@ -621,7 +621,7 @@ Short explanation of each option:		*option-list*
 'binary'	  'bin'     read/write/edit file in binary mode
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
-'breakindent'	  'bri'     wrapped line repeats indent 
+'breakindent'	  'bri'     wrapped line repeats indent
 'breakindentopt'  'briopt'  settings for 'breakindent'
 'browsedir'	  'bsdir'   which directory to start browsing in
 'bufhidden'	  'bh'	    what to do when buffer is no longer in window
@@ -680,7 +680,7 @@ Short explanation of each option:		*option-list*
 'eventignore'	  'ei'	    autocommand events that are ignored
 'expandtab'	  'et'	    use spaces when <Tab> is inserted
 'exrc'		  'ex'	    read .nvimrc and .exrc in the current directory
-'fileencoding'	  'fenc'    file encoding for multi-byte text
+'fileencoding'	  'fenc'    file encoding for multibyte text
 'fileencodings'   'fencs'   automatically detected character encodings
 'fileformat'	  'ff'	    file format used for file I/O
 'fileformats'	  'ffs'     automatically detected values for 'fileformat'
@@ -869,6 +869,7 @@ Short explanation of each option:		*option-list*
 'spellcapcheck'   'spc'     pattern to locate end of a sentence
 'spellfile'	  'spf'     files where |zg| and |zw| store words
 'spelllang'	  'spl'     language(s) to do spell checking for
+'spelloptions'	  'spo'     options for spell checking
 'spellsuggest'	  'sps'     method(s) used to suggest spelling corrections
 'splitbelow'	  'sb'	    new window from split is below the current one
 'splitright'	  'spr'     new window is put right of the current one
@@ -1014,8 +1015,7 @@ Short explanation of each option:		*option-list*
 				      three digits)
 |c_CTRL-K|	CTRL-K {char1} {char2}
 				   enter digraph (See |Q_di|)
-|c_CTRL-R|	CTRL-R {0-9a-z"%#:-=}
-				   insert the contents of a register
+|c_CTRL-R|	CTRL-R {register}  insert the contents of a register
 
 |c_<Left>|	<Left>/<Right>	   cursor left/right
 |c_<S-Left>|	<S-Left>/<S-Right> cursor one word left/right

@@ -169,7 +169,7 @@
 
 #if NVIM_HAS_ATTRIBUTE(fallthrough) \
     && (!defined(__apple_build_version__) || __apple_build_version__ >= 7000000)
-# define FALLTHROUGH __attribute__((fallthrough))
+# define FALLTHROUGH {} __attribute__((fallthrough))
 #else
 # define FALLTHROUGH
 #endif
@@ -238,5 +238,6 @@
 # define PRAGMA_DIAG_POP
 #endif
 
+#define EMPTY_POS(a) ((a).lnum == 0 && (a).col == 0 && (a).coladd == 0)
 
 #endif  // NVIM_MACROS_H

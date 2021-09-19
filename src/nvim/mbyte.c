@@ -571,11 +571,12 @@ size_t mb_string2cells(const char_u *str)
 /// @param size maximum length of string. It will terminate on earlier NUL.
 /// @return The number of cells occupied by string `str`
 size_t mb_string2cells_len(const char_u *str, size_t size)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t clen = 0;
 
   for (const char_u *p = str; *p != NUL && p < str+size;
-       p += utf_ptr2len_len(p, size+(p-str))) {
+       p += utfc_ptr2len_len(p, size+(p-str))) {
     clen += utf_ptr2cells(p);
   }
 

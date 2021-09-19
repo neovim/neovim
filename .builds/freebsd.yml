@@ -28,7 +28,7 @@ tasks:
     gmake deps
 - build: |
     cd neovim
-    gmake CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+    gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
 - functionaltest: |
     cd neovim
     gmake functionaltest

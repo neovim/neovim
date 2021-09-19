@@ -118,7 +118,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
         return OK;
       }
       case VAR_UNKNOWN: {
-        assert(false);
+        abort();
       }
     }
   }

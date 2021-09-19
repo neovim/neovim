@@ -106,11 +106,14 @@ foobar/?
    set spelllang=Xwords.spl
    call assert_equal(['foobar', 'rare'], spellbadword('foo foobar'))
 
-  " Typo should not be detected without the 'spell' option.
+  " Typo should be detected even without the 'spell' option.
   set spelllang=en_gb nospell
   call assert_equal(['', ''], spellbadword('centre'))
-  call assert_equal(['', ''], spellbadword('My bycycle.'))
-  call assert_equal(['', ''], spellbadword('A sentence. another sentence'))
+  call assert_equal(['bycycle', 'bad'], spellbadword('My bycycle.'))
+  call assert_equal(['another', 'caps'], spellbadword('A sentence. another sentence'))
+
+  set spelllang=
+  call assert_fails("call spellbadword('maxch')", 'E756:')
 
   call delete('Xwords.spl')
   call delete('Xwords')
@@ -172,6 +175,183 @@ func Test_spellreall()
   bwipe!
 endfunc
 
+" Test spellsuggest({word} [, {max} [, {capital}]])
+func Test_spellsuggest()
+  " Verify suggestions are given even when spell checking is not enabled.
+  set nospell
+  call assert_equal(['march', 'March'], spellsuggest('marrch', 2))
+
+  set spell
+
+  " With 1 argument.
+  call assert_equal(['march', 'March'], spellsuggest('marrch')[0:1])
+
+  " With 2 arguments.
+  call assert_equal(['march', 'March'], spellsuggest('marrch', 2))
+
+  " With 3 arguments.
+  call assert_equal(['march'], spellsuggest('marrch', 1, 0))
+  call assert_equal(['March'], spellsuggest('marrch', 1, 1))
+
+  " Test with digits and hyphen.
+  call assert_equal('Carbon-14', spellsuggest('Carbon-15')[0])
+
+  " Comment taken from spellsuggest.c explains the following test cases:
+  "
+  " If there are more UPPER than lower case letters suggest an
+  " ALLCAP word.  Otherwise, if the first letter is UPPER then
+  " suggest ONECAP.  Exception: "ALl" most likely should be "All",
+  " require three upper case letters.
+  call assert_equal(['THIRD', 'third'], spellsuggest('thIRD', 2))
+  call assert_equal(['third', 'THIRD'], spellsuggest('tHIrd', 2))
+  call assert_equal(['Third'], spellsuggest('THird', 1))
+  call assert_equal(['All'],      spellsuggest('ALl', 1))
+
+  call assert_fails("call spellsuggest('maxch', [])", 'E745:')
+  call assert_fails("call spellsuggest('maxch', 2, [])", 'E745:')
+
+  set spelllang=
+  call assert_fails("call spellsuggest('maxch')", 'E756:')
+  set spelllang&
+
+  set spell&
+endfunc
+
+" Test 'spellsuggest' option with methods fast, best and double.
+func Test_spellsuggest_option_methods()
+  set spell
+
+  for e in ['utf-8']
+    exe 'set encoding=' .. e
+
+    set spellsuggest=fast
+    call assert_equal(['Stick', 'Stitch'], spellsuggest('Stich', 2), e)
+
+    " With best or double option, "Stitch" should become the top suggestion
+    " because of better phonetic matching.
+    set spellsuggest=best
+    call assert_equal(['Stitch', 'Stick'], spellsuggest('Stich', 2), e)
+
+    set spellsuggest=double
+    call assert_equal(['Stitch', 'Stick'], spellsuggest('Stich', 2), e)
+  endfor
+
+  set spell& spellsuggest& encoding&
+endfunc
+
+" Test 'spellsuggest' option with value file:{filename}
+func Test_spellsuggest_option_file()
+  set spell spellsuggest=file:Xspellsuggest
+  call writefile(['emacs/vim',
+        \         'theribal/terrible',
+        \         'teribal/terrrible',
+        \         'terribal'],
+        \         'Xspellsuggest')
+
+  call assert_equal(['vim'],      spellsuggest('emacs', 2))
+  call assert_equal(['terrible'], spellsuggest('theribal',2))
+
+  " If the suggestion is misspelled (*terrrible* with 3 r),
+  " it should not be proposed.
+  " The entry for "terribal" should be ignored because of missing slash.
+  call assert_equal([], spellsuggest('teribal', 2))
+  call assert_equal([], spellsuggest('terribal', 2))
+
+  set spell spellsuggest=best,file:Xspellsuggest
+  call assert_equal(['vim', 'Emacs'],       spellsuggest('emacs', 2))
+  call assert_equal(['terrible', 'tribal'], spellsuggest('theribal', 2))
+  call assert_equal(['tribal'],             spellsuggest('teribal', 1))
+  call assert_equal(['tribal'],             spellsuggest('terribal', 1))
+
+  call delete('Xspellsuggest')
+  call assert_fails("call spellsuggest('vim')", "E484: Can't open file Xspellsuggest")
+
+  set spellsuggest& spell&
+endfunc
+
+" Test 'spellsuggest' option with value {number}
+" to limit the number of suggestions
+func Test_spellsuggest_option_number()
+  set spell spellsuggest=2,best
+  new
+
+  " We limited the number of suggestions to 2, so selecting
+  " the 1st and 2nd suggestion should correct the word, but
+  " selecting a 3rd suggestion should do nothing.
+  call setline(1, 'A baord')
+  norm $1z=
+  call assert_equal('A board', getline(1))
+
+  call setline(1, 'A baord')
+  norm $2z=
+  call assert_equal('A bard', getline(1))
+
+  call setline(1, 'A baord')
+  norm $3z=
+  call assert_equal('A baord', getline(1))
+
+  let a = execute('norm $z=')
+  call assert_equal(
+  \    "\n"
+  \ .. "Change \"baord\" to:\n"
+  \ .. " 1 \"board\"\n"
+  \ .. " 2 \"bard\"\n"
+  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+
+  set spell spellsuggest=0
+  call assert_equal("\nSorry, no suggestions", execute('norm $z='))
+
+  " Unlike z=, function spellsuggest(...) should not be affected by the
+  " max number of suggestions (2) set by the 'spellsuggest' option.
+  call assert_equal(['board', 'bard', 'broad'], spellsuggest('baord', 3))
+
+  set spellsuggest& spell&
+  bwipe!
+endfunc
+
+" Test 'spellsuggest' option with value expr:{expr}
+func Test_spellsuggest_option_expr()
+  " A silly 'spellsuggest' function which makes suggestions all uppercase
+  " and makes the score of each suggestion the length of the suggested word.
+  " So shorter suggestions are preferred.
+  func MySuggest()
+    let spellsuggest_save = &spellsuggest
+    set spellsuggest=3,best
+    let result = map(spellsuggest(v:val, 3), "[toupper(v:val), len(v:val)]")
+    let &spellsuggest = spellsuggest_save
+    return result
+  endfunc
+
+  set spell spellsuggest=expr:MySuggest()
+  call assert_equal(['BARD', 'BOARD', 'BROAD'], spellsuggest('baord', 3))
+
+  new
+  call setline(1, 'baord')
+  let a = execute('norm z=')
+  call assert_equal(
+  \    "\n"
+  \ .. "Change \"baord\" to:\n"
+  \ .. " 1 \"BARD\"\n"
+  \ .. " 2 \"BOARD\"\n"
+  \ .. " 3 \"BROAD\"\n"
+  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+
+  " With verbose, z= should show the score i.e. word length with
+  " our SpellSuggest() function.
+  set verbose=1
+  let a = execute('norm z=')
+  call assert_equal(
+  \    "\n"
+  \ .. "Change \"baord\" to:\n"
+  \ .. " 1 \"BARD\"                      (4 - 0)\n"
+  \ .. " 2 \"BOARD\"                     (5 - 0)\n"
+  \ .. " 3 \"BROAD\"                     (5 - 0)\n"
+  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+
+  set spell& spellsuggest& verbose&
+  bwipe!
+endfunc
+
 func Test_spellinfo()
   throw 'skipped: Nvim does not support enc=latin1'
   new
@@ -227,7 +407,7 @@ func Test_zz_basic()
         \ )
 
   call assert_equal("gebletegek", soundfold('goobledygoook'))
-  call assert_equal("kepereneven", soundfold('kóopërÿnôven'))
+  call assert_equal("kepereneven", soundfold('kÃ³opÃ«rÃ¿nÃ´ven'))
   call assert_equal("everles gesvets etele", soundfold('oeverloos gezwets edale'))
 endfunc
 
@@ -408,7 +588,7 @@ func Test_zz_sal_and_addition()
   mkspell! Xtest Xtest
   set spl=Xtest.latin1.spl spell
   call assert_equal('kbltykk', soundfold('goobledygoook'))
-  call assert_equal('kprnfn', soundfold('kóopërÿnôven'))
+  call assert_equal('kprnfn', soundfold('kÃ³opÃ«rÃ¿nÃ´ven'))
   call assert_equal('*fls kswts tl', soundfold('oeverloos gezwets edale'))
 
   "also use an addition file
@@ -458,6 +638,34 @@ func Test_zeq_crash()
   set spell
   call feedkeys('iasdz=:\"', 'tx')
 
+  bwipe!
+endfunc
+
+" Check that z= works even when 'nospell' is set.  This test uses one of the
+" tests in Test_spellsuggest_option_number() just to verify that z= basically
+" works and that "E756: Spell checking is not enabled" is not generated.
+func Test_zeq_nospell()
+  new
+  set nospell spellsuggest=1,best
+  call setline(1, 'A baord')
+  try
+    norm $1z=
+    call assert_equal('A board', getline(1))
+  catch
+    call assert_report("Caught exception: " . v:exception)
+  endtry
+  set spell& spellsuggest&
+  bwipe!
+endfunc
+
+" Check that "E756: Spell checking is not possible" is reported when z= is
+" executed and 'spelllang' is empty.
+func Test_zeq_no_spelllang()
+  new
+  set spelllang= spellsuggest=1,best
+  call setline(1, 'A baord')
+  call assert_fails('normal $1z=', 'E756:')
+  set spelllang& spellsuggest&
   bwipe!
 endfunc
 

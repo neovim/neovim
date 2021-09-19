@@ -749,6 +749,9 @@ function protocol.make_client_capabilities()
       };
       workspaceFolders = true;
       applyEdit = true;
+      workspaceEdit = {
+        resourceOperations = {'rename', 'create', 'delete',},
+      };
     };
     callHierarchy = {
       dynamicRegistration = false;
@@ -938,7 +941,7 @@ function protocol.resolve_capabilities(server_capabilities)
         text_document_did_change = textDocumentSync;
         text_document_will_save = false;
         text_document_will_save_wait_until = false;
-        text_document_save = false;
+        text_document_save = true;
         text_document_save_include_text = false;
       }
     elseif type(textDocumentSync) == 'table' then
@@ -973,6 +976,16 @@ function protocol.resolve_capabilities(server_capabilities)
     general_properties.rename = server_capabilities.renameProvider
   else
     general_properties.rename = true
+  end
+
+  if server_capabilities.codeLensProvider == nil then
+    general_properties.code_lens = false
+    general_properties.code_lens_resolve = false
+  elseif type(server_capabilities.codeLensProvider) == 'table' then
+    general_properties.code_lens = true
+    general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
+  else
+    error("The server sent invalid codeLensProvider")
   end
 
   if server_capabilities.codeActionProvider == nil then

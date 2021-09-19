@@ -22,6 +22,17 @@ func Test_E963()
   call assert_equal(v_o, v:oldfiles)
 endfunc
 
+func Test_for_invalid()
+  call assert_fails("for x in 99", 'E714:')
+  call assert_fails("for x in function('winnr')", 'E714:')
+  call assert_fails("for x in {'a': 9}", 'E714:')
+
+  if 0
+    /1/5/2/s/\n
+  endif
+  redraw
+endfunc
+
 func Test_mkdir_p()
   call mkdir('Xmkdir/nested', 'p')
   call assert_true(isdirectory('Xmkdir/nested'))
@@ -107,6 +118,15 @@ func Test_skip_after_throw()
     let x = wincol() || &ts
   catch /something/
   endtry
+endfunc
+
+func Test_number_max_min_size()
+  " This will fail on systems without 64 bit number support or when not
+  " configured correctly.
+  call assert_equal(64, v:numbersize)
+
+  call assert_true(v:numbermin < -9999999)
+  call assert_true(v:numbermax > 9999999)
 endfunc
 
 func Test_curly_assignment()

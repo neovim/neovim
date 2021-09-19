@@ -27,6 +27,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
 #include "nvim/mark.h"
+#include "nvim/ops.h"
 #include "nvim/extmark.h"
 #include "nvim/decoration.h"
 #include "nvim/fileio.h"
@@ -111,12 +112,34 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///               - byte count of previous contents
 ///               - deleted_codepoints (if `utf_sizes` is true)
 ///               - deleted_codeunits (if `utf_sizes` is true)
+///             - on_bytes: lua callback invoked on change.
+///               This callback receives more granular information about the
+///               change compared to on_lines.
+///               Return `true` to detach.
+///               Args:
+///               - the string "bytes"
+///               - buffer handle
+///               - b:changedtick
+///               - start row of the changed text (zero-indexed)
+///               - start column of the changed text
+///               - byte offset of the changed text (from the start of
+///                   the buffer)
+///               - old end row of the changed text
+///               - old end column of the changed text
+///               - old end byte length of the changed text
+///               - new end row of the changed text
+///               - new end column of the changed text
+///               - new end byte length of the changed text
 ///             - on_changedtick: Lua callback invoked on changedtick
 ///               increment without text change. Args:
 ///               - the string "changedtick"
 ///               - buffer handle
 ///               - b:changedtick
 ///             - on_detach: Lua callback invoked on detach. Args:
+///               - the string "detach"
+///               - buffer handle
+///             - on_reload: Lua callback invoked on reload. The entire buffer
+///                          content should be considered changed. Args:
 ///               - the string "detach"
 ///               - buffer handle
 ///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
@@ -141,50 +164,57 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 
   bool is_lua = (channel_id == LUA_INTERNAL_CALL);
   BufUpdateCallbacks cb = BUF_UPDATE_CALLBACKS_INIT;
+  struct {
+    const char *name;
+    LuaRef *dest;
+  } cbs[] = {
+    { "on_lines", &cb.on_lines },
+    { "on_bytes", &cb.on_bytes },
+    { "on_changedtick", &cb.on_changedtick },
+    { "on_detach", &cb.on_detach },
+    { "on_reload", &cb.on_reload },
+    { NULL, NULL },
+  };
+
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
-    if (is_lua && strequal("on_lines", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
+    bool key_used = false;
+    if (is_lua) {
+      for (size_t j = 0; cbs[j].name; j++) {
+        if (strequal(cbs[j].name, k.data)) {
+          if (v->type != kObjectTypeLuaRef) {
+            api_set_error(err, kErrorTypeValidation,
+                          "%s is not a function", cbs[j].name);
+            goto error;
+          }
+          *(cbs[j].dest) = v->data.luaref;
+          v->data.luaref = LUA_NOREF;
+          key_used = true;
+          break;
+        }
       }
-      cb.on_lines = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_bytes", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
+
+      if (key_used) {
+        continue;
+      } else if (strequal("utf_sizes", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
+          goto error;
+        }
+        cb.utf_sizes = v->data.boolean;
+        key_used = true;
+      } else if (strequal("preview", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "preview must be boolean");
+          goto error;
+        }
+        cb.preview = v->data.boolean;
+        key_used = true;
       }
-      cb.on_bytes = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_changedtick", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      cb.on_changedtick = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("on_detach", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      cb.on_detach = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (is_lua && strequal("utf_sizes", k.data)) {
-      if (v->type != kObjectTypeBoolean) {
-        api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
-        goto error;
-      }
-      cb.utf_sizes = v->data.boolean;
-    } else if (is_lua && strequal("preview", k.data)) {
-      if (v->type != kObjectTypeBoolean) {
-        api_set_error(err, kErrorTypeValidation, "preview must be boolean");
-        goto error;
-      }
-      cb.preview = v->data.boolean;
-    } else {
+    }
+
+    if (!key_used) {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
     }
@@ -193,11 +223,7 @@ Boolean nvim_buf_attach(uint64_t channel_id,
   return buf_updates_register(buf, channel_id, cb, send_buffer);
 
 error:
-  // TODO(bfredl): ASAN build should check that the ref table is empty?
-  api_free_luaref(cb.on_lines);
-  api_free_luaref(cb.on_bytes);
-  api_free_luaref(cb.on_changedtick);
-  api_free_luaref(cb.on_detach);
+  buffer_update_callbacks_free(cb);
   return false;
 }
 
@@ -416,6 +442,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
     goto end;
   }
 
+  bcount_t deleted_bytes = get_region_bytecount(curbuf, start, end, 0, 0);
+
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
   // repeatedly deleting line "start".
@@ -435,6 +463,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
+  bcount_t inserted_bytes = 0;
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
@@ -447,6 +476,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
       api_set_error(err, kErrorTypeException, "Failed to replace line");
       goto end;
     }
+
+    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
     // Mark lines that haven't been passed to the buffer as they need
     // to be freed later
     lines[i] = NULL;
@@ -466,6 +497,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
       goto end;
     }
 
+    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+
     // Same as with replacing, but we also need to free lines
     xfree(lines[i]);
     lines[i] = NULL;
@@ -480,7 +513,11 @@ void nvim_buf_set_lines(uint64_t channel_id,
               (linenr_T)(end - 1),
               MAXLNUM,
               (long)extra,
-              kExtmarkUndo);
+              kExtmarkNOOP);
+
+  extmark_splice(curbuf, (int)start-1, 0, (int)(end-start), 0,
+                 deleted_bytes, (int)new_len, 0, inserted_bytes,
+                 kExtmarkUndo);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
@@ -722,7 +759,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer,
                  kExtmarkUndo);
 
 
-  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row, (long)extra, true);
+  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row + 1,
+                (long)extra, true);
 
   // adjust cursor like an extmark ( i e it was inside last_part_len)
   if (curwin->w_cursor.lnum == end_row && curwin->w_cursor.col > end_col) {
@@ -1200,8 +1238,7 @@ static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param id  Extmark id
 /// @param opts  Optional parameters. Keys:
-///          - limit:  Maximum number of marks to return
-///          - details Whether to include the details dict
+///          - details: Whether to include the details dict
 /// @param[out] err   Error details, if any
 /// @return (row, col) tuple or empty list () if extmark id was absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
@@ -1387,19 +1424,53 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
-/// @param line  Line number where to place the mark
-/// @param col  Column where to place the mark
+/// @param line  Line where to place the mark, 0-based
+/// @param col  Column where to place the mark, 0-based
 /// @param opts  Optional parameters.
 ///               - id : id of the extmark to edit.
 ///               - end_line : ending line of the mark, 0-based inclusive.
-///               - end_col : ending col of the mark, 0-based inclusive.
+///               - end_col : ending col of the mark, 0-based exclusive.
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
 ///               - virt_text : virtual text to link to this mark.
+///               - virt_text_pos : positioning of virtual text. Possible
+///                                 values:
+///                 - "eol": right after eol character (default)
+///                 - "overlay": display over the specified column, without
+///                              shifting the underlying text.
+///                 - "right_align": display right aligned in the window.
+///               - virt_text_win_col : position the virtual text at a fixed
+///                                     window column (starting from the first
+///                                     text column)
+///               - virt_text_hide : hide the virtual text when the background
+///                                  text is selected or hidden due to
+///                                  horizontal scroll 'nowrap'
+///               - hl_mode : control how highlights are combined with the
+///                           highlights of the text. Currently only affects
+///                           virt_text highlights, but might affect `hl_group`
+///                           in later versions.
+///                 - "replace": only show the virt_text color. This is the
+///                              default
+///                 - "combine": combine with background text color
+///                 - "blend": blend with background text color.
+///               - hl_eol : when true, for a multiline highlight covering the
+///                          EOL of a line, continue the highlight for the rest
+///                          of the screen line (just like for diff and
+///                          cursorline highlight).
+///
 ///               - ephemeral : for use with |nvim_set_decoration_provider|
 ///                   callbacks. The mark will only be used for the current
 ///                   redraw cycle, and not be permantently stored in the
 ///                   buffer.
+///               - right_gravity : boolean that indicates the direction
+///                   the extmark will be shifted in when new text is inserted
+///                   (true for right, false for left).  defaults to true.
+///               - end_right_gravity : boolean that indicates the direction
+///                   the extmark end position (if it exists) will be shifted
+///                   in when new text is inserted (true for right, false
+///                   for left). Defaults to false.
+///               - priority: a priority value for the highlight group. For
+///                   example treesitter highlighting uses a value of 100.
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
@@ -1418,28 +1489,17 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     return 0;
   }
 
-  size_t len = 0;
-  if (line < 0 || line > buf->b_ml.ml_line_count) {
-    api_set_error(err, kErrorTypeValidation, "line value outside range");
-    return 0;
-  } else if (line < buf->b_ml.ml_line_count) {
-    len = STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
-  }
-
-  if (col == -1) {
-    col = (Integer)len;
-  } else if (col < -1 || col > (Integer)len) {
-    api_set_error(err, kErrorTypeValidation, "col value outside range");
-    return 0;
-  }
-
   bool ephemeral = false;
 
   uint64_t id = 0;
-  int line2 = -1, hl_id = 0;
-  DecorPriority priority = DECOR_PRIORITY_BASE;
-  colnr_T col2 = 0;
-  VirtText virt_text = KV_INITIAL_VALUE;
+  int line2 = -1;
+  Decoration decor = DECORATION_INIT;
+  colnr_T col2 = -1;
+
+  bool right_gravity = true;
+  bool end_right_gravity = false;
+  bool end_gravity_set = false;
+
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
@@ -1482,12 +1542,12 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
       switch (v->type) {
         case kObjectTypeString:
           hl_group = v->data.string;
-          hl_id = syn_check_group(
+          decor.hl_id = syn_check_group(
               (char_u *)(hl_group.data),
               (int)hl_group.size);
           break;
         case kObjectTypeInteger:
-          hl_id = (int)v->data.integer;
+          decor.hl_id = (int)v->data.integer;
           break;
         default:
           api_set_error(err, kErrorTypeValidation,
@@ -1500,8 +1560,64 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
                       "virt_text is not an Array");
         goto error;
       }
-      virt_text = parse_virt_text(v->data.array, err);
+      decor.virt_text = parse_virt_text(v->data.array, err);
       if (ERROR_SET(err)) {
+        goto error;
+      }
+    } else if (strequal("virt_text_pos", k.data)) {
+      if (v->type != kObjectTypeString) {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_pos is not a String");
+        goto error;
+      }
+      String str = v->data.string;
+      if (strequal("eol", str.data)) {
+        decor.virt_text_pos = kVTEndOfLine;
+      } else if (strequal("overlay", str.data)) {
+        decor.virt_text_pos = kVTOverlay;
+      } else if (strequal("right_align", str.data)) {
+        decor.virt_text_pos = kVTRightAlign;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_pos: invalid value");
+        goto error;
+      }
+    } else if (strequal("virt_text_win_col",  k.data)) {
+      if (v->type != kObjectTypeInteger) {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_win_col is not a Number of the correct size");
+        goto error;
+      }
+
+      decor.col = (int)v->data.integer;
+      decor.virt_text_pos = kVTWinCol;
+    } else if (strequal("virt_text_hide", k.data)) {
+      decor.virt_text_hide = api_object_to_bool(*v,
+                                                "virt_text_hide", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
+    } else if (strequal("hl_eol", k.data)) {
+      decor.hl_eol = api_object_to_bool(*v, "hl_eol", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
+    } else if (strequal("hl_mode", k.data)) {
+      if (v->type != kObjectTypeString) {
+        api_set_error(err, kErrorTypeValidation,
+                      "hl_mode is not a String");
+        goto error;
+      }
+      String str = v->data.string;
+      if (strequal("replace", str.data)) {
+        decor.hl_mode = kHlModeReplace;
+      } else if (strequal("combine", str.data)) {
+        decor.hl_mode = kHlModeCombine;
+      } else if (strequal("blend", str.data)) {
+        decor.hl_mode = kHlModeBlend;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_text_pos: invalid value");
         goto error;
       }
     } else if (strequal("ephemeral", k.data)) {
@@ -1521,16 +1637,56 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
                       "priority is not a valid value");
         goto error;
       }
-      priority = (DecorPriority)v->data.integer;
+      decor.priority = (DecorPriority)v->data.integer;
+    } else if (strequal("right_gravity", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation,
+                      "right_gravity must be a boolean");
+        goto error;
+      }
+      right_gravity = v->data.boolean;
+    } else if (strequal("end_right_gravity", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation,
+                      "end_right_gravity must be a boolean");
+        goto error;
+      }
+      end_right_gravity = v->data.boolean;
+      end_gravity_set = true;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
     }
   }
 
+  size_t len = 0;
+  if (line < 0 || line > buf->b_ml.ml_line_count) {
+    api_set_error(err, kErrorTypeValidation, "line value outside range");
+    return 0;
+  } else if (line < buf->b_ml.ml_line_count) {
+    len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
+  }
+
+  if (col == -1) {
+    col = (Integer)len;
+  } else if (col < -1 || col > (Integer)len) {
+    api_set_error(err, kErrorTypeValidation, "col value outside range");
+    return 0;
+  }
+
+
+  // Only error out if they try to set end_right_gravity without
+  // setting end_col or end_line
+  if (line2 == -1 && col2 == -1 && end_gravity_set) {
+    api_set_error(err, kErrorTypeValidation,
+                  "cannot set end_right_gravity "
+                  "without setting end_line or end_col");
+  }
+
   if (col2 >= 0) {
     if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
-      len = STRLEN(ml_get_buf(buf, (linenr_T)line2 + 1, false));
+      len = ephemeral ? MAXCOL : STRLEN(
+          ml_get_buf(buf, (linenr_T)line2 + 1, false));
     } else if (line2 == buf->b_ml.ml_line_count) {
       // We are trying to add an extmark past final newline
       len = 0;
@@ -1546,39 +1702,48 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id,
     col2 = 0;
   }
 
+  if (decor.virt_text_pos == kVTRightAlign) {
+    decor.col = 0;
+    for (size_t i = 0; i < kv_size(decor.virt_text); i++) {
+      decor.col
+          += (int)mb_string2cells((char_u *)kv_A(decor.virt_text, i).text);
+    }
+  }
+
+
+  Decoration *d = NULL;
+
+  if (ephemeral) {
+    d = &decor;
+  } else if (kv_size(decor.virt_text)
+             || decor.priority != DECOR_PRIORITY_BASE
+             || decor.hl_eol) {
+    // TODO(bfredl): this is a bit sketchy. eventually we should
+    // have predefined decorations for both marks/ephemerals
+    d = xcalloc(1, sizeof(*d));
+    *d = decor;
+  } else if (decor.hl_id) {
+    d = decor_hl(decor.hl_id);
+  }
+
   // TODO(bfredl): synergize these two branches even more
   if (ephemeral && decor_state.buf == buf) {
-    int attr_id = hl_id > 0 ? syn_id2attr(hl_id) : 0;
-    VirtText *vt_allocated = NULL;
-    if (kv_size(virt_text)) {
-      vt_allocated = xmalloc(sizeof *vt_allocated);
-      *vt_allocated = virt_text;
-    }
-    decor_add_ephemeral(attr_id, (int)line, (colnr_T)col,
-                        (int)line2, (colnr_T)col2, priority, vt_allocated);
+    decor_add_ephemeral((int)line, (int)col, line2, col2, &decor);
   } else {
     if (ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
       goto error;
     }
-    Decoration *decor = NULL;
-    if (kv_size(virt_text)) {
-      decor = xcalloc(1, sizeof(*decor));
-      decor->hl_id = hl_id;
-      decor->virt_text = virt_text;
-    } else if (hl_id) {
-      decor = decor_hl(hl_id);
-      decor->priority = priority;
-    }
 
     id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
-                     line2, col2, decor, kExtmarkNoUndo);
+                     line2, col2, d, right_gravity,
+                     end_right_gravity, kExtmarkNoUndo);
   }
 
   return (Integer)id;
 
 error:
-  clear_virttext(&virt_text);
+  clear_virttext(&decor.virt_text);
   return 0;
 }
 
@@ -1639,7 +1804,7 @@ Boolean nvim_buf_del_extmark(Buffer buffer,
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
 Integer nvim_buf_add_highlight(Buffer buffer,
-                               Integer src_id,
+                               Integer ns_id,
                                String hl_group,
                                Integer line,
                                Integer col_start,
@@ -1664,18 +1829,18 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     col_end = MAXCOL;
   }
 
-  uint64_t ns_id = src2ns(&src_id);
+  uint64_t ns = src2ns(&ns_id);
 
   if (!(line < buf->b_ml.ml_line_count)) {
     // safety check, we can't add marks outside the range
-    return src_id;
+    return ns_id;
   }
 
   int hl_id = 0;
   if (hl_group.size > 0) {
     hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
   } else {
-    return src_id;
+    return ns_id;
   }
 
   int end_line = (int)line;
@@ -1684,11 +1849,11 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     end_line++;
   }
 
-  extmark_set(buf, ns_id, 0,
+  extmark_set(buf, ns, 0,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              decor_hl(hl_id), kExtmarkNoUndo);
-  return src_id;
+              decor_hl(hl_id), true, false, kExtmarkNoUndo);
+  return ns_id;
 }
 
 /// Clears namespaced objects (highlights, extmarks, virtual text) from
@@ -1796,7 +1961,8 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
   Decoration *decor = xcalloc(1, sizeof(*decor));
   decor->virt_text = virt_text;
 
-  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, kExtmarkNoUndo);
+  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, true,
+              false, kExtmarkNoUndo);
   return src_id;
 }
 
@@ -1883,7 +2049,6 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
       curwin->w_cursor.lnum += extra;
       check_cursor_col();
     } else if (extra < 0) {
-      curwin->w_cursor.lnum = lo;
       check_cursor();
     } else {
       check_cursor_col();

@@ -174,7 +174,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       case kMPConvPartial: {
         switch (v.data.p.stage) {
           case kMPConvPartialArgs: {
-            assert(false);
+            abort();
             break;
           }
           case kMPConvPartialSelf: {
@@ -237,7 +237,7 @@ bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len,
   char *const buf = xmalloc(len);
   size_t read_bytes;
   if (encode_read_from_list(&lrstate, buf, len, &read_bytes) != OK) {
-    assert(false);
+    abort();
   }
   assert(len == read_bytes);
   *ret_buf = buf;

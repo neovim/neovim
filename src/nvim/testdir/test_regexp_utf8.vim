@@ -542,6 +542,52 @@ func Test_match_start_of_line_combining()
   bwipe!
 endfunc
 
+" Check that [[:upper:]] matches for automatic engine
+func Test_match_char_class_upper()
+  new
+  let _engine=&regexpengine
 
+  " Test 1: [[:upper:]]\{2,\}
+  set regexpengine=0
+  call setline(1, ['05. ПЕСНЯ О ГЕРОЯХ муз. А. Давиденко, М. Коваля и Б. Шехтера ...', '05. PJESNJA O GJEROJAKH mus. A. Davidjenko, M. Kovalja i B. Shjekhtjera ...'])
+  call cursor(1,1)
+  let search_cmd='norm /\<[[:upper:]]\{2,\}\>' .. "\<CR>"
+  exe search_cmd
+  call assert_equal(4, searchcount().total, 'TEST 1')
+  set regexpengine=1
+  exe search_cmd
+  call assert_equal(2, searchcount().total, 'TEST 1')
+  set regexpengine=2
+  exe search_cmd
+  call assert_equal(4, searchcount().total, 'TEST 1')
+
+  " Test 2: [[:upper:]].\+
+  let search_cmd='norm /\<[[:upper:]].\+\>' .. "\<CR>"
+  set regexpengine=0
+  exe search_cmd
+  call assert_equal(2, searchcount().total, 'TEST 2')
+  set regexpengine=1
+  exe search_cmd
+  call assert_equal(1, searchcount().total, 'TEST 2')
+  set regexpengine=2
+  exe search_cmd
+  call assert_equal(2, searchcount().total, 'TEST 2')
+
+  " Test 3: [[:lower:]]\+
+  let search_cmd='norm /\<[[:lower:]]\+\>' .. "\<CR>"
+  set regexpengine=0
+  exe search_cmd
+  call assert_equal(4, searchcount().total, 'TEST 3 lower')
+  set regexpengine=1
+  exe search_cmd
+  call assert_equal(2, searchcount().total, 'TEST 3 lower')
+  set regexpengine=2
+  exe search_cmd
+  call assert_equal(4, searchcount().total, 'TEST 3 lower')
+
+  " clean up
+  let &regexpengine=_engine
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1,12 +1,13 @@
 " Vim syntax file
 " Language:    FreeBasic
-" Maintainer:  Mark Manning <markem@airmail.net>
-" Updated:     10/22/2006
+" Maintainer:  Mark Manning <markem@sim1.us>
+" Updated:     10/9/2019
+" Version:		7.0b
 "
 " Description:
 "
 "	Based originally on the work done by Allan Kelly <Allan.Kelly@ed.ac.uk>
-"	Updated by Mark Manning <markem@airmail.net>
+"	Updated by Mark Manning <markem@sim1.us>
 "	Applied FreeBasic support to the already excellent support
 "	for standard basic syntax (like QB).
 "
@@ -138,7 +139,7 @@ syn keyword	freebasicUserInput		GETJOYSTICK GETKEY GETMOUSE INKEY INPUT MULTIKEY
 "	types of identifiers like functions, basic commands and
 "	such. MEM 9/9/2006
 "
-syn match	freebasicIdentifier		"\<[a-zA-Z_][a-zA-Z0-9_]*\>"
+syn match	freebasicIdentifier			"\<[a-zA-Z_][a-zA-Z0-9_]*\>"
 syn match	freebasicGenericFunction	"\<[a-zA-Z_][a-zA-Z0-9_]*\>\s*("me=e-1,he=e-1
 "
 "	Function list
@@ -154,9 +155,13 @@ syn cluster	freebasicParenGroup	contains=freebasicParenError,freebasicSpecial,fr
 "
 "	Integer number, or floating point number without a dot and with "f".
 "
-syn region	freebasicHex		start="&h" end="\W"
-syn region	freebasicHexError	start="&h\x*[g-zG-Z]" end="\W"
-syn match	freebasicInteger	"\<\d\+\(u\=l\=\|lu\|f\)\>"
+syn region	freebasicHex			start="&h" end="\W"
+syn region	freebasicHexError		start="&h\x*[g-zG-Z]" end="\W"
+syn region	freebasicOctal			start="&o" end="\W"
+syn region	freebasicOctalError		start="&o[0-7]*[89a-zA-Z]" end="\W"
+syn region	freebasicBinary			start="&b" end="\W"
+syn region	freebasicBinaryError	start="&b[01]*[2-9a-zA-Z]" end="\W"
+syn match	freebasicInteger		"\<\d\+\(u\=l\=\|lu\|f\)\>"
 "
 "	Floating point number, with dot, optional exponent
 "
@@ -170,11 +175,11 @@ syn match	freebasicFloat		"\.\d\+\(e[-+]\=\d\+\)\=[fl]\=\>"
 "
 syn match	freebasicFloat		"\<\d\+e[-+]\=\d\+[fl]\=\>"
 "
-"	Hex number
+"	Octal number
 "
 syn case match
-syn match	freebasicOctal		"\<0\o*\>"
-syn match	freebasicOctalError	"\<0\o*[89]"
+syn match	freebasicOctal2			"\<0\o*\>"
+syn match	freebasicOctal2Error	"\<0\o*[89a-zA-Z]"
 "
 "	String and Character contstants
 "
@@ -183,7 +188,7 @@ syn region	freebasicString		start="'" end="'" contains=freebasicSpecial,freebasi
 "
 "	Comments
 "
-syn match	freebasicSpecial	contained "\\."
+syn match	freebasicSpecial	contained "\\\\."
 syn region	freebasicComment	start="^rem" end="$" contains=freebasicSpecial,freebasicTodo
 syn region	freebasicComment	start=":\s*rem" end="$" contains=freebasicSpecial,freebasicTodo
 syn region	freebasicComment	start="\s*'" end="$" contains=freebasicSpecial,freebasicTodo
@@ -197,12 +202,12 @@ syn region	freebasicLineNumber	start="^\d" end="\s"
 "
 "	Create the clusters
 "
-syn cluster	freebasicNumber		contains=freebasicHex,freebasicOctal,freebasicInteger,freebasicFloat
-syn cluster	freebasicError		contains=freebasicHexError,freebasicOctalError
+syn cluster	freebasicNumber		contains=freebasicHex,freebasicOctal,freebasicOctal2,freebasicBinary,freebasicInteger,freebasicFloat
+syn cluster	freebasicError		contains=freebasicHexError,freebasicOctalError,freebasicOctal2,freebasicBinary
 "
 "	Used with OPEN statement
 "
-syn match	freebasicFilenumber	"#\d\+"
+syn match	freebasicFilenumber		"#\d\+"
 syn match	freebasicMathOperator	"[\+\-\=\|\*\/\>\<\%\()[\]]" contains=freebasicParen
 "
 "	The default methods for highlighting.  Can be overridden later

@@ -1,16 +1,18 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, feed_command, nvim = helpers.clear, helpers.feed_command, helpers.nvim
+local clear, feed_command = helpers.clear, helpers.feed_command
 local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
 local command = helpers.command
 local expect = helpers.expect
+local meths = helpers.meths
+local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
 local Screen = require('test.functional.ui.screen')
 
-describe('mappings', function()
-  local cid
+before_each(clear)
 
+describe('mappings', function()
   local add_mapping = function(mapping, send)
-    local cmd = "nnoremap "..mapping.." :call rpcnotify("..cid..", 'mapped', '"
+    local cmd = "nnoremap "..mapping.." :call rpcnotify(1, 'mapped', '"
                 ..send:gsub('<', '<lt>').."')<cr>"
     feed_command(cmd)
   end
@@ -21,8 +23,6 @@ describe('mappings', function()
   end
 
   before_each(function()
-    clear()
-    cid = nvim('get_api_info')[1]
     add_mapping('<C-L>', '<C-L>')
     add_mapping('<C-S-L>', '<C-S-L>')
     add_mapping('<s-up>', '<s-up>')
@@ -115,7 +115,6 @@ describe('mappings', function()
 end)
 
 describe('input utf sequences that contain CSI/K_SPECIAL', function()
-  before_each(clear)
   it('ok', function()
     feed('i…<esc>')
     expect('…')
@@ -129,7 +128,6 @@ describe('input non-printable chars', function()
 
   it("doesn't crash when echoing them back", function()
     write_file("Xtest-overwrite", [[foobar]])
-    clear()
     local screen = Screen.new(60,8)
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
@@ -213,5 +211,29 @@ describe('input non-printable chars', function()
       {1:~                                                           }|
                                                                   |
     ]])
+  end)
+end)
+
+describe("event processing and input", function()
+  it('not blocked by event bursts', function()
+    meths.set_keymap('', '<f2>', "<cmd>lua vim.rpcnotify(1, 'stop') winning = true <cr>", {noremap=true})
+
+    exec_lua [[
+      winning = false
+      burst = vim.schedule_wrap(function(tell)
+        if tell then
+          vim.rpcnotify(1, 'start')
+        end
+        -- Are we winning, son?
+        if not winning then
+          burst(false)
+        end
+      end)
+      burst(true)
+    ]]
+
+    eq({'notification', 'start', {}}, next_msg())
+    feed '<f2>'
+    eq({'notification', 'stop', {}}, next_msg())
   end)
 end)

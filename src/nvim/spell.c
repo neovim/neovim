@@ -112,6 +112,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/undo.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
@@ -440,7 +441,8 @@ size_t spell_check(
     MB_PTR_ADV(mi.mi_fend);
   }
 
-  (void)spell_casefold(ptr, (int)(mi.mi_fend - ptr), mi.mi_fword, MAXWLEN + 1);
+  (void)spell_casefold(wp, ptr, (int)(mi.mi_fend - ptr), mi.mi_fword,
+                       MAXWLEN + 1);
   mi.mi_fwordlen = (int)STRLEN(mi.mi_fword);
 
   if (camel_case) {
@@ -868,10 +870,11 @@ static void find_word(matchinf_T *mip, int mode)
 
           if (slang->sl_compsylmax < MAXWLEN) {
             // "fword" is only needed for checking syllables.
-            if (ptr == mip->mi_word)
-              (void)spell_casefold(ptr, wlen, fword, MAXWLEN);
-            else
+            if (ptr == mip->mi_word) {
+              (void)spell_casefold(mip->mi_win, ptr, wlen, fword, MAXWLEN);
+            } else {
               STRLCPY(fword, ptr, endlen[endidxcnt] + 1);
+            }
           }
           if (!can_compound(slang, fword, mip->mi_compflags))
             continue;
@@ -1314,9 +1317,9 @@ static int fold_more(matchinf_T *mip)
     MB_PTR_ADV(mip->mi_fend);
   }
 
-  (void)spell_casefold(p, (int)(mip->mi_fend - p),
-      mip->mi_fword + mip->mi_fwordlen,
-      MAXWLEN - mip->mi_fwordlen);
+  (void)spell_casefold(mip->mi_win, p, (int)(mip->mi_fend - p),
+                       mip->mi_fword + mip->mi_fwordlen,
+                       MAXWLEN - mip->mi_fwordlen);
   flen = (int)STRLEN(mip->mi_fword + mip->mi_fwordlen);
   mip->mi_fwordlen += flen;
   return flen;
@@ -1340,7 +1343,7 @@ static bool no_spell_checking(win_T *wp)
 {
   if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL
       || GA_EMPTY(&wp->w_s->b_langp)) {
-    EMSG(_("E756: Spell checking is not enabled"));
+    EMSG(_(e_no_spell));
     return true;
   }
   return false;
@@ -1676,6 +1679,7 @@ static void int_wordlist_spl(char_u *fname)
 // Allocate a new slang_T for language "lang".  "lang" can be NULL.
 // Caller must fill "sl_next".
 slang_T *slang_alloc(char_u *lang)
+  FUNC_ATTR_NONNULL_RET
 {
   slang_T *lp = xcalloc(1, sizeof(slang_T));
 
@@ -2653,7 +2657,9 @@ static bool spell_iswordp_w(const int *p, const win_T *wp)
 // Uses the character definitions from the .spl file.
 // When using a multi-byte 'encoding' the length may change!
 // Returns FAIL when something wrong.
-int spell_casefold(char_u *str, int len, char_u *buf, int buflen)
+int spell_casefold(const win_T *wp, char_u *str, int len, char_u *buf,
+                   int buflen)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (len >= buflen) {
     buf[0] = NUL;
@@ -2668,8 +2674,22 @@ int spell_casefold(char_u *str, int len, char_u *buf, int buflen)
       buf[outi] = NUL;
       return FAIL;
     }
-    const int c = mb_cptr2char_adv((const char_u **)&p);
-    outi += utf_char2bytes(SPELL_TOFOLD(c), buf + outi);
+    int c = mb_cptr2char_adv((const char_u **)&p);
+
+    // Exception: greek capital sigma 0x03A3 folds to 0x03C3, except
+    // when it is the last character in a word, then it folds to
+    // 0x03C2.
+    if (c == 0x03a3 || c == 0x03c2) {
+      if (p == str + len || !spell_iswordp(p, wp)) {
+        c = 0x03c2;
+      } else {
+        c = 0x03c3;
+      }
+    } else {
+      c = SPELL_TOFOLD(c);
+    }
+
+    outi += utf_char2bytes(c, buf + outi);
   }
   buf[outi] = NUL;
 
@@ -2751,9 +2771,17 @@ void spell_suggest(int count)
   int selected = count;
   int badlen = 0;
   int msg_scroll_save = msg_scroll;
+  const int wo_spell_save = curwin->w_p_spell;
 
-  if (no_spell_checking(curwin))
+  if (!curwin->w_p_spell) {
+    did_set_spelllang(curwin);
+    curwin->w_p_spell = true;
+  }
+
+  if (*curwin->w_s->b_p_spl == NUL) {
+    EMSG(_(e_no_spell));
     return;
+  }
 
   if (VIsual_active) {
     // Use the Visually selected text as the bad word.  But reject
@@ -2889,8 +2917,14 @@ void spell_suggest(int count)
     msg_col = 0;
     // Ask for choice.
     selected = prompt_for_number(&mouse_used);
-    if (mouse_used)
+
+    if (ui_has(kUIMessages)) {
+      ui_call_msg_clear();
+    }
+
+    if (mouse_used) {
       selected -= lines_left;
+    }
     lines_left = Rows;                  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()
     msg_scroll = msg_scroll_save;
@@ -2940,6 +2974,7 @@ void spell_suggest(int count)
 
   spell_find_cleanup(&sug);
   xfree(line);
+  curwin->w_p_spell = wo_spell_save;
 }
 
 // Check if the word at line "lnum" column "col" is required to start with a
@@ -3028,7 +3063,7 @@ void ex_spellrepall(exarg_T *eap)
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
+    if (do_search(NULL, '/', '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
         || u_save_cursor() == FAIL) {
       break;
     }
@@ -3123,6 +3158,7 @@ spell_find_suggest (
   static bool expr_busy = false;
   int c;
   langp_T     *lp;
+  bool did_intern = false;
 
   // Set the info in "*su".
   memset(su, 0, sizeof(suginfo_T));
@@ -3146,7 +3182,8 @@ spell_find_suggest (
   if (su->su_badlen >= MAXWLEN)
     su->su_badlen = MAXWLEN - 1;        // just in case
   STRLCPY(su->su_badword, su->su_badptr, su->su_badlen + 1);
-  (void)spell_casefold(su->su_badptr, su->su_badlen, su->su_fbadword, MAXWLEN);
+  (void)spell_casefold(curwin, su->su_badptr, su->su_badlen, su->su_fbadword,
+                       MAXWLEN);
 
   // TODO(vim): make this work if the case-folded text is longer than the
   // original text. Currently an illegal byte causes wrong pointer
@@ -3206,14 +3243,16 @@ spell_find_suggest (
         spell_suggest_expr(su, buf + 5);
         expr_busy = false;
       }
-    } else if (STRNCMP(buf, "file:", 5) == 0)
+    } else if (STRNCMP(buf, "file:", 5) == 0) {
       // Use list of suggestions in a file.
       spell_suggest_file(su, buf + 5);
-    else {
-      // Use internal method.
+    } else if (!did_intern) {
+      // Use internal method once.
       spell_suggest_intern(su, interactive);
-      if (sps_flags & SPS_DOUBLE)
+      if (sps_flags & SPS_DOUBLE) {
         do_combine = true;
+      }
+      did_intern = true;
     }
   }
 
@@ -3524,7 +3563,7 @@ static void suggest_try_change(suginfo_T *su)
   STRCPY(fword, su->su_fbadword);
   n = (int)STRLEN(fword);
   p = su->su_badptr + su->su_badlen;
-  (void)spell_casefold(p, (int)STRLEN(p), fword + n, MAXWLEN - n);
+  (void)spell_casefold(curwin, p, (int)STRLEN(p), fword + n, MAXWLEN - n);
 
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
@@ -5076,7 +5115,7 @@ stp_sal_score (
     pbad = badsound;
   else {
     // soundfold the bad word with more characters following
-    (void)spell_casefold(su->su_badptr, stp->st_orglen, fword, MAXWLEN);
+    (void)spell_casefold(curwin, su->su_badptr, stp->st_orglen, fword, MAXWLEN);
 
     // When joining two words the sound often changes a lot.  E.g., "t he"
     // sounds like "t h" while "the" sounds like "@".  Avoid that by
@@ -5731,7 +5770,9 @@ cleanup_suggestions (
         xfree(stp[i].st_word);
       }
       gap->ga_len = keep;
-      return stp[keep - 1].st_score;
+      if (keep >= 1) {
+        return stp[keep - 1].st_score;
+      }
     }
   }
   return maxscore;
@@ -5789,10 +5830,10 @@ void spell_soundfold(slang_T *slang, char_u *inword, bool folded, char_u *res)
     spell_soundfold_sofo(slang, inword, res);
   else {
     // SAL items used.  Requires the word to be case-folded.
-    if (folded)
+    if (folded) {
       word = inword;
-    else {
-      (void)spell_casefold(inword, (int)STRLEN(inword), fword, MAXWLEN);
+    } else {
+      (void)spell_casefold(curwin, inword, (int)STRLEN(inword), fword, MAXWLEN);
       word = fword;
     }
 
@@ -6621,7 +6662,7 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  get_option_value((char_u *)"spl", &dummy, &spl, OPT_LOCAL);
+  get_option_value("spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");

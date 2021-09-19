@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	xmath (a simulation tool)
-" Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Last Change:	Aug 31, 2016
-" Version:	9
+" Version:	10
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_XMATH
 
 " For version 5.x: Clear all syntax items

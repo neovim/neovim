@@ -69,9 +69,10 @@ struct u_header {
 #endif
 };
 
-/* values for uh_flags */
-#define UH_CHANGED  0x01        /* b_changed flag before undo/after redo */
-#define UH_EMPTYBUF 0x02        /* buffer was empty */
+// values for uh_flags
+#define UH_CHANGED  0x01        // b_changed flag before undo/after redo
+#define UH_EMPTYBUF 0x02        // buffer was empty
+#define UH_RELOAD   0x04        // buffer was reloaded
 
 /// Structure passed around between undofile functions.
 typedef struct {

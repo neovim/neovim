@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	Yacc
-" Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
+" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Last Change:	Mar 25, 2019
-" Version:	16
+" Version:	17
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_YACC
 "
 " Options: {{{1

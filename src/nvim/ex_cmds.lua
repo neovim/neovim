@@ -176,6 +176,12 @@ module.cmds = {
     func='ex_edit',
   },
   {
+    command='balt',
+    flags=bit.bor(NEEDARG, FILE1, CMDARG, TRLBAR, CMDWIN),
+    addr_type='ADDR_NONE',
+    func='ex_edit',
+  },
+  {
     command='bdelete',
     flags=bit.bor(BANG, RANGE, BUFNAME, COUNT, EXTRA, TRLBAR),
     addr_type='ADDR_BUFFERS',
@@ -920,6 +926,12 @@ module.cmds = {
     flags=bit.bor(BANG, TRLBAR),
     addr_type='ADDR_NONE',
     func='ex_edit',
+  },
+  {
+    command='eval',
+    flags=bit.bor(EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
+    addr_type='ADDR_NONE',
+    func='ex_eval',
   },
   {
     command='ex',
@@ -2515,8 +2527,8 @@ module.cmds = {
   },
   {
     command='source',
-    flags=bit.bor(BANG, FILE1, TRLBAR, SBOXOK, CMDWIN),
-    addr_type='ADDR_NONE',
+    flags=bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, FILE1, TRLBAR, SBOXOK, CMDWIN),
+    addr_type='ADDR_LINES',
     func='ex_source',
   },
   {
@@ -2554,6 +2566,12 @@ module.cmds = {
     flags=bit.bor(TRLBAR),
     addr_type='ADDR_NONE',
     func='ex_spellrepall',
+  },
+  {
+    command='spellrare',
+    flags=bit.bor(BANG, RANGE, NEEDARG, EXTRA, TRLBAR),
+    addr_type='ADDR_OTHER',
+    func='ex_spell',
   },
   {
     command='spellundo',

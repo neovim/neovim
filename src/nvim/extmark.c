@@ -71,7 +71,8 @@ static ExtmarkNs *buf_ns_ref(buf_T *buf, uint64_t ns_id, bool put) {
 /// @returns the mark id
 uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
                      int row, colnr_T col, int end_row, colnr_T end_col,
-                     Decoration *decor, ExtmarkOp op)
+                     Decoration *decor, bool right_gravity,
+                     bool end_right_gravity, ExtmarkOp op)
 {
   ExtmarkNs *ns = buf_ns_ref(buf, ns_id, true);
   assert(ns != NULL);
@@ -109,10 +110,10 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t id,
 
   if (end_row > -1) {
     mark = marktree_put_pair(buf->b_marktree,
-                             row, col, true,
-                             end_row, end_col, false);
+                             row, col, right_gravity,
+                             end_row, end_col, end_right_gravity);
   } else {
-    mark = marktree_put(buf->b_marktree, row, col, true);
+    mark = marktree_put(buf->b_marktree, row, col, right_gravity);
   }
 
 revised:
@@ -267,7 +268,7 @@ bool extmark_clear(buf_T *buf, uint64_t ns_id,
       }
       ExtmarkNs *my_ns = all_ns ? buf_ns_ref(buf, item.ns_id, false) : ns;
       map_del(uint64_t, uint64_t)(my_ns->map, item.mark_id);
-      map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index, mark.id);
+      map_del(uint64_t, ExtmarkItem)(buf->b_extmark_index, start_id);
       marktree_del_itr(buf->b_marktree, itr, false);
     } else {
       marktree_itr_next(buf->b_marktree, itr);
@@ -701,6 +702,7 @@ void extmark_move_region(
     int new_row, colnr_T new_col, bcount_t new_byte,
     ExtmarkOp undo)
 {
+  curbuf->deleted_bytes2 = 0;
   // TODO(bfredl): this is not synced to the buffer state inside the callback.
   // But unless we make the undo implementation smarter, this is not ensured
   // anyway.

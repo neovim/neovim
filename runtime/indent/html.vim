@@ -1,9 +1,8 @@
 " Vim indent script for HTML
-" Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2019 Mar 20
-" Version:	1.0
+" Last Change:	2021 Jan 26
+" Version:	1.0 "{{{
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
 "		Supports template systems through hooks.
@@ -223,7 +222,7 @@ endfunc "}}}
 call s:AddITags(s:indent_tags, [
     \ 'a', 'abbr', 'acronym', 'address', 'b', 'bdo', 'big',
     \ 'blockquote', 'body', 'button', 'caption', 'center', 'cite', 'code',
-    \ 'colgroup', 'del', 'dfn', 'dir', 'div', 'dl', 'em', 'fieldset', 'font',
+    \ 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt', 'em', 'fieldset', 'font',
     \ 'form', 'frameset', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'html',
     \ 'i', 'iframe', 'ins', 'kbd', 'label', 'legend', 'li',
     \ 'map', 'menu', 'noframes', 'noscript', 'object', 'ol',
@@ -587,7 +586,7 @@ func! s:Alien3()
     return eval(b:hi_js1indent)
   endif
   if b:hi_indent.scripttype == "javascript"
-    return GetJavascriptIndent()
+    return eval(b:hi_js1indent) + GetJavascriptIndent()
   else
     return -1
   endif
@@ -816,7 +815,7 @@ func! s:Alien5()
   let idx = match(prevtext, '^\s*\zs<!--')
   if idx >= 0
     " just below comment start, add a shiftwidth
-    return idx + shiftwidth()
+    return indent(prevlnum) + shiftwidth()
   endif
 
   " Some files add 4 spaces just below a TODO line.  It's difficult to detect
@@ -942,11 +941,11 @@ func! s:InsideTag(foundHtmlString)
       let idx = match(text, '<' . s:tagname . '\s\+\zs\w')
     endif
     if idx == -1
-      " after just "<tag" indent one level more
+      " after just "<tag" indent two levels more
       let idx = match(text, '<' . s:tagname . '$')
       if idx >= 0
-	call cursor(lnum, idx)
-	return virtcol('.') + shiftwidth()
+	call cursor(lnum, idx + 1)
+	return virtcol('.') - 1 + shiftwidth() * 2
       endif
     endif
     if idx > 0

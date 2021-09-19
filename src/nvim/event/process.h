@@ -4,6 +4,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/eval/typval.h"
 
 typedef enum {
   kProcessTypeUv,
@@ -23,7 +24,7 @@ struct process {
   uint64_t stopped_time;  // process_stop() timestamp
   const char *cwd;
   char **argv;
-  char **env;
+  dict_T *env;
   Stream in, out, err;
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;

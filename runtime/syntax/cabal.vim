@@ -4,7 +4,7 @@
 " Maintainer:   Marcin Szamotulski <profunctor@pm.me>
 " Previous Maintainer:	Vincent Berthoux <twinside@gmail.com>
 " File Types:   .cabal
-" Last Change:  15 May 2018
+" Last Change:  21 Nov 2020
 " v1.5: Incorporated changes from
 "       https://github.com/sdiehl/haskell-vim-proto/blob/master/vim/syntax/cabal.vim
 "       Use `syn keyword` instead of `syn match`.
@@ -62,11 +62,12 @@ syn keyword cabalCategory contained
 	\ source-repository
 	\ flag
 	\ custom-setup
+	\ common
 syn match cabalCategoryTitle contained /[^{]*\ze{\?/
 syn match cabalCategoryRegion
 	\ contains=cabalCategory,cabalCategoryTitle
 	\ nextgroup=cabalCategory skipwhite
-	\ /^\c\s*\(contained\|executable\|library\|benchmark\|test-suite\|source-repository\|flag\|custom-setup\)\+\s*\%(.*$\|$\)/
+	\ /^\c\s*\(contained\|executable\|library\|benchmark\|test-suite\|source-repository\|flag\|custom-setup\|common\)\+\s*\%(.*$\|$\)/
 syn keyword cabalTruth true false
 
 " cabalStatementRegion which limits the scope of cabalStatement keywords, this
@@ -76,10 +77,14 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ default-language
 	\ default-extensions
 	\ author
+        \ autogen-modules
+        \ asm-sources
+        \ asm-options
 	\ branch
 	\ bug-reports
 	\ build-depends
 	\ build-tools
+        \ build-tools-depends
 	\ build-type
 	\ buildable
 	\ c-sources
@@ -87,32 +92,46 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ category
 	\ cc-options
 	\ copyright
+        \ cmm-sources
+        \ cmm-options
 	\ cpp-options
+        \ cxx-sources
 	\ data-dir
 	\ data-files
 	\ default
+        \ default-extensions
 	\ description
 	\ executable
 	\ exposed-modules
 	\ exposed
 	\ extensions
-	\ extra-tmp-files
+        \ extra-bundled-libraries
 	\ extra-doc-files
+	\ extra-dynamic-library-flavours
+        \ extra-framework-dirs
+        \ extra-ghci-libraries
 	\ extra-lib-dirs
 	\ extra-libraries
+	\ extra-library-flavours
 	\ extra-source-files
-	\ exta-tmp-files
+	\ extra-tmp-files
 	\ for example
 	\ frameworks
 	\ ghc-options
 	\ ghc-prof-options
 	\ ghc-shared-options
+        \ ghcjs-options
+        \ ghcjs-prof-options
+        \ ghcjs-shared-options
 	\ homepage
+        \ hs-source-dir
 	\ hs-source-dirs
 	\ hugs-options
+	\ import
 	\ include-dirs
 	\ includes
 	\ install-includes
+        \ js-sources
 	\ ld-options
 	\ license
 	\ license-file
@@ -120,10 +139,13 @@ syn keyword cabalStatement contained containedin=cabalStatementRegion
 	\ main-is
 	\ maintainer
 	\ manual
+        \ mixins
 	\ module
 	\ name
 	\ nhc98-options
 	\ other-extensions
+        \ other-language
+        \ other-languages
 	\ other-modules
 	\ package-url
 	\ pkgconfig-depends

@@ -692,6 +692,7 @@ static char_u *regparse;        ///< Input-scan pointer.
 static int prevchr_len;         ///< byte length of previous char
 static int num_complex_braces;  ///< Complex \{...} count
 static int regnpar;             ///< () count.
+static bool wants_nfa;          ///< regex should use NFA engine
 static int regnzpar;            ///< \z() count.
 static int re_has_z;            ///< \z item detected
 static char_u *regcode;         ///< Code-emit pointer, or JUST_CALC_SIZE
@@ -2911,7 +2912,7 @@ static int peekchr(void)
       at_start = false;  // be able to say "/\*ptr"
       regparse++;
       after_slash++;
-      peekchr();
+      (void)peekchr();
       regparse--;
       after_slash--;
       curchr = toggle_Magic(curchr);
@@ -3436,7 +3437,7 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
 }
 
 /// Match a regexp against a string ("line" points to the string) or multiple
-/// lines ("line" is NULL, use reg_getline()).
+/// lines (if "line" is NULL, use reg_getline()).
 /// @return 0 for failure, or number of lines contained in the match.
 static long bt_regexec_both(char_u *line,
                             colnr_T col,      // column to start search
@@ -3754,6 +3755,7 @@ static bool reg_match_visual(void)
   int mode;
   colnr_T start, end;
   colnr_T start2, end2;
+  colnr_T curswant;
 
   // Check if the buffer is the current buffer.
   if (rex.reg_buf != curbuf || VIsual.lnum == 0) {
@@ -3769,6 +3771,7 @@ static bool reg_match_visual(void)
       bot = VIsual;
     }
     mode = VIsual_mode;
+    curswant = wp->w_curswant;
   } else {
     if (lt(curbuf->b_visual.vi_start, curbuf->b_visual.vi_end)) {
       top = curbuf->b_visual.vi_start;
@@ -3778,6 +3781,7 @@ static bool reg_match_visual(void)
       bot = curbuf->b_visual.vi_start;
     }
     mode = curbuf->b_visual.vi_mode;
+    curswant = curbuf->b_visual.vi_curswant;
   }
   lnum = rex.lnum + rex.reg_firstlnum;
   if (lnum < top.lnum || lnum > bot.lnum) {
@@ -3797,8 +3801,9 @@ static bool reg_match_visual(void)
       start = start2;
     if (end2 > end)
       end = end2;
-    if (top.col == MAXCOL || bot.col == MAXCOL)
+    if (top.col == MAXCOL || bot.col == MAXCOL || curswant == MAXCOL) {
       end = MAXCOL;
+    }
     unsigned int cols_u = win_linetabsize(wp, rex.line,
                                           (colnr_T)(rex.input - rex.line));
     assert(cols_u <= MAXCOL);
@@ -3974,17 +3979,25 @@ static bool regmatch(
 
           pos = getmark_buf(rex.reg_buf, mark, false);
           if (pos == NULL                    // mark doesn't exist
-              || pos->lnum <= 0              // mark isn't set in reg_buf
-              || (pos->lnum == rex.lnum + rex.reg_firstlnum
-                  ? (pos->col == (colnr_T)(rex.input - rex.line)
-                     ? (cmp == '<' || cmp == '>')
-                     : (pos->col < (colnr_T)(rex.input - rex.line)
-                        ? cmp != '>'
-                        : cmp != '<'))
-                  : (pos->lnum < rex.lnum + rex.reg_firstlnum
-                     ? cmp != '>'
-                     : cmp != '<'))) {
+              || pos->lnum <= 0) {           // mark isn't set in reg_buf
             status = RA_NOMATCH;
+          } else {
+            const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
+              && pos->col == MAXCOL
+              ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))
+              : pos->col;
+
+            if (pos->lnum == rex.lnum + rex.reg_firstlnum
+                ? (pos_col == (colnr_T)(rex.input - rex.line)
+                   ? (cmp == '<' || cmp == '>')
+                   : (pos_col < (colnr_T)(rex.input - rex.line)
+                      ? cmp != '>'
+                      : cmp != '<'))
+                : (pos->lnum < rex.lnum + rex.reg_firstlnum
+                   ? cmp != '>'
+                   : cmp != '<')) {
+              status = RA_NOMATCH;
+            }
           }
         }
         break;
@@ -5895,7 +5908,7 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
       fprintf(f, " count %" PRId64, (int64_t)OPERAND_MIN(s));
       s += 4;
     } else if (op == RE_LNUM || op == RE_COL || op == RE_VCOL) {
-      /* one int plus comperator */
+      // one int plus comparator
       fprintf(f, " count %" PRId64, (int64_t)OPERAND_MIN(s));
       s += 5;
     }
@@ -6665,6 +6678,10 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
   int len = 0;                  /* init for GCC */
   static char_u *eval_result = NULL;
 
+  // We need to keep track of how many backslashes we escape, so that the byte
+  // counts for `extmark_splice` are correct.
+  int num_escaped = 0;
+
   // Be paranoid...
   if ((source == NULL && expr == NULL) || dest == NULL) {
     EMSG(_(e_null));
@@ -6840,6 +6857,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
           // later.  Used to insert a literal CR.
           default:
             if (backslash) {
+              num_escaped += 1;
               if (copy) {
                 *dst = '\\';
               }
@@ -6979,7 +6997,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
     *dst = NUL;
 
 exit:
-  return (int)((dst - dest) + 1);
+  return (int)((dst - dest) + 1 - num_escaped);
 }
 
 
@@ -7139,6 +7157,7 @@ list_T *reg_submatch_list(int no)
     tv_list_append_string(list, s, (const char *)rsm.sm_match->endp[no] - s);
   }
 
+  tv_list_ref(list);
   return list;
 }
 
@@ -7234,7 +7253,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
   // Check for error compiling regexp with initial engine.
   if (prog == NULL) {
 #ifdef BT_REGEXP_DEBUG_LOG
-    // Debugging log for NFA.
+    // Debugging log for BT engine.
     if (regexp_engine != BACKTRACKING_ENGINE) {
       FILE *f = fopen(BT_REGEXP_DEBUG_LOG_NAME, "a");
       if (f) {
@@ -7251,6 +7270,7 @@ regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
     // But don't try if an error message was given.
     if (regexp_engine == AUTOMATIC_ENGINE && !called_emsg) {
       regexp_engine = BACKTRACKING_ENGINE;
+      report_re_switch(expr);
       prog = bt_regengine.regcomp(expr, re_flags);
     }
   }

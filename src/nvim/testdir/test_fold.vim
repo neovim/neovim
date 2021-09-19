@@ -796,6 +796,26 @@ func Test_fold_delete_first_line()
   set foldmethod&
 endfunc
 
+func Test_undo_fold_deletion()
+  new
+  set fdm=marker
+  let lines =<< trim END
+      " {{{
+      " }}}1
+      " {{{
+  END
+  call setline(1, lines)
+  3d
+  g/"/d
+  undo
+  redo
+  " eval getline(1, '$')->assert_equal([''])
+  eval assert_equal(getline(1, '$'), [''])
+
+  set fdm&vim
+  bwipe!
+endfunc
+
 " this was crashing
 func Test_move_no_folds()
   new
@@ -820,6 +840,46 @@ func Test_fold_create_delete()
   new
   norm zFzFzdzj
   bwipe!
+endfunc
+
+func Test_fold_relative_move()
+  new
+  set fdm=indent sw=2 wrap tw=80
+
+  let longtext = repeat('x', &columns + 1)
+  let content = [ '  foo', '  ' .. longtext, '  baz',
+              \   longtext,
+              \   '  foo', '  ' .. longtext, '  baz'
+              \ ]
+  call append(0, content)
+
+  normal zM
+
+  for lnum in range(1, 3)
+    call cursor(lnum, 1)
+    call assert_true(foldclosed(line('.')))
+    normal gj
+    call assert_equal(2, winline())
+  endfor
+
+  call cursor(2, 1)
+  call assert_true(foldclosed(line('.')))
+  normal 2gj
+  call assert_equal(3, winline())
+
+  for lnum in range(5, 7)
+    call cursor(lnum, 1)
+    call assert_true(foldclosed(line('.')))
+    normal gk
+    call assert_equal(3, winline())
+  endfor
+
+  call cursor(6, 1)
+  call assert_true(foldclosed(line('.')))
+  normal 2gk
+  call assert_equal(2, winline())
+
+  set fdm& sw& wrap& tw&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

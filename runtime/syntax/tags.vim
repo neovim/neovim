@@ -1,7 +1,7 @@
 " Language:		tags
-" Maintainer:	Charles E. Campbell  <NdrOchip@PcampbellAfamily.Mbiz>
+" Maintainer:	Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Last Change:	Oct 26, 2016
-" Version:		7
+" Version:		8
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TAGS
 
 " quit when a syntax file was already loaded

@@ -3,6 +3,8 @@
 " undo-able pieces.  Do that by setting 'undolevels'.
 " Also tests :earlier and :later.
 
+source check.vim
+
 func Test_undotree()
   new
 
@@ -135,7 +137,7 @@ func BackOne(expected)
 endfunc
 
 func Test_undo_del_chars()
-  throw 'skipped: Nvim does not support test_settime()'
+  CheckFunction test_settime
 
   " Setup a buffer without creating undo entries
   new
@@ -330,7 +332,7 @@ func Test_insert_expr()
 endfunc
 
 func Test_undofile_earlier()
-  throw 'skipped: Nvim does not support test_settime()'
+  CheckFunction test_settime
 
   let t0 = localtime() - 43200
   call test_settime(t0)

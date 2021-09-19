@@ -74,9 +74,9 @@ higher.  Pressing "-" does the same thing, without the need to move to the
 You can press <F1> to get help on the things you can do in the netrw file
 browser.  This is what you get: >
 
-    9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help 
+    9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help
 
-    MAPS								 netrw-maps 
+    MAPS								 netrw-maps
      	 <F1>.............Help.......................................|netrw-help|
      	 <cr>.............Browsing...................................|netrw-cr|
      	 <del>............Deleting Files or Directories..............|netrw-delete|
@@ -84,7 +84,7 @@ browser.  This is what you get: >
      	 a................Hiding Files or Directories................|netrw-a|
      	 mb...............Bookmarking a Directory....................|netrw-mb|
      	 gb...............Changing to a Bookmarked Directory.........|netrw-gb|
-     	 c................Make Browsing Directory The Current Dir....|netrw-c|
+     	 cd...............Make Browsing Directory The Current Dir....|netrw-c|
      	 d................Make A New Directory.......................|netrw-d|
      	 D................Deleting Files or Directories..............|netrw-D|
      	 <c-h>............Edit File/Directory Hiding List............|netrw-ctrl-h|
@@ -121,7 +121,7 @@ The following normal-mode commands may be used to control the browser display:
 
 As a sampling of extra normal-mode commands:
 
-	c		Change Vim's notion of the current directory to be
+	cd		Change Vim's notion of the current directory to be
 			the same as the browser directory.  (see
 			|g:netrw_keepdir| to control this, too)
 	R		Rename the file or directory under the cursor; a

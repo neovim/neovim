@@ -54,6 +54,8 @@ Functions ~
 			without stopping the job. Use chanclose(id) to close
 			any socket.
 
+Lua ~
+*vim.register_keystroke_callback()* Use |vim.on_key()| instead.
 
 Modifiers ~
 *cpo-<*

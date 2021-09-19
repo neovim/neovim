@@ -73,7 +73,7 @@ struct multiqueue_item {
 struct multiqueue {
   MultiQueue *parent;
   QUEUE headtail;  // circularly-linked
-  put_callback put_cb;
+  PutCallback put_cb;
   void *data;
   size_t size;
 };
@@ -91,7 +91,7 @@ typedef struct {
 
 static Event NILEVENT = { .handler = NULL, .argv = {NULL} };
 
-MultiQueue *multiqueue_new_parent(put_callback put_cb, void *data)
+MultiQueue *multiqueue_new_parent(PutCallback put_cb, void *data)
 {
   return multiqueue_new(NULL, put_cb, data);
 }
@@ -104,7 +104,7 @@ MultiQueue *multiqueue_new_child(MultiQueue *parent)
   return multiqueue_new(parent, NULL, NULL);
 }
 
-static MultiQueue *multiqueue_new(MultiQueue *parent, put_callback put_cb,
+static MultiQueue *multiqueue_new(MultiQueue *parent, PutCallback put_cb,
                                   void *data)
 {
   MultiQueue *rv = xmalloc(sizeof(MultiQueue));
@@ -119,8 +119,8 @@ static MultiQueue *multiqueue_new(MultiQueue *parent, put_callback put_cb,
 void multiqueue_free(MultiQueue *this)
 {
   assert(this);
-  while (!QUEUE_EMPTY(&this->headtail)) {
-    QUEUE *q = QUEUE_HEAD(&this->headtail);
+  QUEUE *q;
+  QUEUE_FOREACH(q, &this->headtail, {
     MultiQueueItem *item = multiqueue_node_data(q);
     if (this->parent) {
       QUEUE_REMOVE(&item->data.item.parent_item->node);
@@ -128,7 +128,7 @@ void multiqueue_free(MultiQueue *this)
     }
     QUEUE_REMOVE(q);
     xfree(item);
-  }
+  })
 
   xfree(this);
 }

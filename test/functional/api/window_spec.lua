@@ -346,5 +346,106 @@ describe('API/win', function()
       eq(2, #meths.list_wins())
       eq('', funcs.getcmdwintype())
     end)
+
+    it('closing current (float) window of another tabpage #15313', function()
+      command('tabedit')
+      eq(2, eval('tabpagenr()'))
+      local win = meths.open_win(0, true, {
+        relative='editor', row=10, col=10, width=50, height=10
+      })
+      local tabpage = eval('tabpagenr()')
+      command('tabprevious')
+      eq(1, eval('tabpagenr()'))
+      meths.win_close(win, false)
+
+      eq(1001, meths.tabpage_get_win(tabpage).id)
+      helpers.assert_alive()
+    end)
+  end)
+
+  describe('hide', function()
+    it('can hide current window', function()
+      local oldwin = meths.get_current_win()
+      command('split')
+      local newwin = meths.get_current_win()
+      meths.win_hide(newwin)
+      eq({oldwin}, meths.list_wins())
+    end)
+    it('can hide noncurrent window', function()
+      local oldwin = meths.get_current_win()
+      command('split')
+      local newwin = meths.get_current_win()
+      meths.win_hide(oldwin)
+      eq({newwin}, meths.list_wins())
+    end)
+    it('does not close the buffer', function()
+      local oldwin = meths.get_current_win()
+      local oldbuf = meths.get_current_buf()
+      local buf = meths.create_buf(true, false)
+      local newwin = meths.open_win(buf, true, {
+        relative='win', row=3, col=3, width=12, height=3
+      })
+      meths.win_hide(newwin)
+      eq({oldwin}, meths.list_wins())
+      eq({oldbuf, buf}, meths.list_bufs())
+    end)
+    it('deletes the buffer when bufhidden=wipe', function()
+      local oldwin = meths.get_current_win()
+      local oldbuf = meths.get_current_buf()
+      local buf = meths.create_buf(true, false)
+      local newwin = meths.open_win(buf, true, {
+        relative='win', row=3, col=3, width=12, height=3
+      })
+      meths.buf_set_option(buf, 'bufhidden', 'wipe')
+      meths.win_hide(newwin)
+      eq({oldwin}, meths.list_wins())
+      eq({oldbuf}, meths.list_bufs())
+    end)
+  end)
+
+  describe('open_win', function()
+    it('noautocmd option works', function()
+      command('autocmd BufEnter,BufLeave,BufWinEnter * let g:fired = 1')
+      meths.open_win(meths.create_buf(true, true), true, {
+        relative='win', row=3, col=3, width=12, height=3, noautocmd=true
+      })
+      eq(0, funcs.exists('g:fired'))
+      meths.open_win(meths.create_buf(true, true), true, {
+        relative='win', row=3, col=3, width=12, height=3
+      })
+      eq(1, funcs.exists('g:fired'))
+    end)
+  end)
+
+  describe('get_config', function()
+    it('includes border', function()
+      local b = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' }
+      local win = meths.open_win(0, true, {
+         relative='win', row=3, col=3, width=12, height=3,
+         border = b,
+      })
+
+      local cfg = meths.win_get_config(win)
+      eq(b, cfg.border)
+    end)
+    it('includes border with highlight group', function()
+      local b = {
+        {'a', 'Normal'},
+        {'b', 'Special'},
+        {'c', 'String'},
+        {'d', 'Comment'},
+        {'e', 'Visual'},
+        {'f', 'Error'},
+        {'g', 'Constant'},
+        {'h', 'PreProc'},
+      }
+      local win = meths.open_win(0, true, {
+         relative='win', row=3, col=3, width=12, height=3,
+         border = b,
+      })
+
+      local cfg = meths.win_get_config(win)
+      eq(b, cfg.border)
+    end)
   end)
 end)

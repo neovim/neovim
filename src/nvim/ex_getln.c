@@ -69,6 +69,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/lua/executor.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/viml/parser/expressions.h"
 
@@ -274,8 +275,9 @@ static void init_incsearch_state(incsearch_state_T *s)
 
 // Return true when 'incsearch' highlighting is to be done.
 // Sets search_first_line and search_last_line to the address range.
-static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
-                                      int *skiplen, int *patlen)
+static bool do_incsearch_highlighting(int firstc, int *search_delim,
+                                      incsearch_state_T *s, int *skiplen,
+                                      int *patlen)
   FUNC_ATTR_NONNULL_ALL
 {
   char_u *cmd;
@@ -302,6 +304,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
   search_last_line = MAXLNUM;
 
   if (firstc == '/' || firstc == '?') {
+    *search_delim = firstc;
     return true;
   }
   if (firstc != ':') {
@@ -370,6 +373,7 @@ static bool do_incsearch_highlighting(int firstc, incsearch_state_T *s,
 
   p = skipwhite(p);
   delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
+  *search_delim = delim;
   end = skip_regexp(p, delim, p_magic, NULL);
 
   use_last_pat = end == p && *end == delim;
@@ -430,12 +434,14 @@ static void may_do_incsearch_highlighting(int firstc, long count,
   int skiplen, patlen;
   char_u next_char;
   char_u use_last_pat;
+  int search_delim;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
+                                 &patlen)) {
     restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
     return;
@@ -489,7 +495,7 @@ static void may_do_incsearch_highlighting(int firstc, long count,
     ccline.cmdbuff[skiplen + patlen] = NUL;
     memset(&sia, 0, sizeof(sia));
     sia.sa_tm = &tm;
-    found = do_search(NULL, firstc == ':' ? '/' : firstc,
+    found = do_search(NULL, firstc == ':' ? '/' : firstc, search_delim,
                       ccline.cmdbuff + skiplen, count,
                       search_flags, &sia);
     ccline.cmdbuff[skiplen + patlen] = next_char;
@@ -580,13 +586,15 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
   FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen;
+  int search_delim;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
   // Add a character from under the cursor for 'incsearch'
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
+                                 &patlen)) {
     restore_last_search_pattern();
     return FAIL;
   }
@@ -603,7 +611,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
           && !pat_has_uppercase(ccline.cmdbuff + skiplen)) {
         *c = mb_tolower(*c);
       }
-      if (*c == firstc
+      if (*c == search_delim
           || vim_strchr((char_u *)(p_magic ? "\\~^$.*[" : "\\^$"), *c)
           != NULL) {
         // put a backslash before special characters
@@ -774,11 +782,20 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     redrawcmd();
   }
 
-  // redraw the statusline for statuslines that display the current mode
-  // using the mode() function.
+  // Redraw the statusline in case it uses the current mode using the mode()
+  // function.
   if (!cmd_silent && msg_scrolled == 0) {
-    curwin->w_redr_status = true;
-    redraw_statuslines();
+    bool found_one = false;
+
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (*p_stl != NUL || *wp->w_p_stl != NUL) {
+        wp->w_redr_status = true;
+        found_one = true;
+      }
+    }
+    if (found_one) {
+      redraw_statuslines();
+    }
   }
 
   did_emsg = false;
@@ -885,7 +902,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     need_wait_return = false;
   }
 
-  set_string_option_direct((char_u *)"icm", -1, s->save_p_icm, OPT_FREE,
+  set_string_option_direct("icm", -1, s->save_p_icm, OPT_FREE,
                            SID_NONE);
   State = s->save_State;
   setmouse();
@@ -934,7 +951,7 @@ static int command_line_execute(VimState *state, int key)
 
   if (s->c == K_EVENT || s->c == K_COMMAND) {
     if (s->c == K_EVENT) {
-      multiqueue_process_events(main_loop.events);
+      state_handle_k_event();
     } else {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     }
@@ -1464,13 +1481,14 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
                                               bool next_match)
   FUNC_ATTR_NONNULL_ALL
 {
-  int skiplen, patlen;
+  int skiplen, patlen, search_delim;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
+                                 &patlen)) {
     restore_last_search_pattern();
     return OK;
   }
@@ -1488,7 +1506,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count,
   char_u save;
 
 
-  if (firstc == ccline.cmdbuff[skiplen]) {
+  if (search_delim == ccline.cmdbuff[skiplen]) {
     pat = last_search_pattern();
     skiplen = 0;
     patlen = (int)STRLEN(pat);
@@ -1935,6 +1953,7 @@ static int command_line_handle_key(CommandLineState *s)
   case K_X2MOUSE:
   case K_X2DRAG:
   case K_X2RELEASE:
+  case K_MOUSEMOVE:
     return command_line_not_changed(s);
 
 
@@ -3552,6 +3571,7 @@ static void save_cmdline(struct cmdline_info *ccp)
  * Restore ccline after it has been saved with save_cmdline().
  */
 static void restore_cmdline(struct cmdline_info *ccp)
+  FUNC_ATTR_NONNULL_ALL
 {
   ccline = *ccp;
 }
@@ -3561,6 +3581,7 @@ static void restore_cmdline(struct cmdline_info *ccp)
  * passed to restore_cmdline_alloc() later.
  */
 char_u *save_cmdline_alloc(void)
+  FUNC_ATTR_NONNULL_RET
 {
   struct cmdline_info *p = xmalloc(sizeof(struct cmdline_info));
   save_cmdline(p);
@@ -3571,6 +3592,7 @@ char_u *save_cmdline_alloc(void)
  * Restore the command line from the return value of save_cmdline_alloc().
  */
 void restore_cmdline_alloc(char_u *p)
+  FUNC_ATTR_NONNULL_ALL
 {
   restore_cmdline((struct cmdline_info *)p);
   xfree(p);
@@ -3945,6 +3967,12 @@ nextwild (
     p2 = ExpandOne(xp, p1, vim_strnsave(&ccline.cmdbuff[i], xp->xp_pattern_len),
                    use_options, type);
     xfree(p1);
+
+    // xp->xp_pattern might have been modified by ExpandOne (for example,
+    // in lua completion), so recompute the pattern index and length
+    i = (int)(xp->xp_pattern - ccline.cmdbuff);
+    xp->xp_pattern_len = (size_t)ccline.cmdpos - (size_t)i;
+
     // Longest match: make sure it is not shorter, happens with :help.
     if (p2 != NULL && type == WILD_LONGEST) {
       for (j = 0; (size_t)j < xp->xp_pattern_len; j++) {
@@ -3960,7 +3988,7 @@ nextwild (
   }
 
   if (p2 != NULL && !got_int) {
-    difflen = (int)STRLEN(p2) - (int)xp->xp_pattern_len;
+    difflen = (int)STRLEN(p2) - (int)(xp->xp_pattern_len);
     if (ccline.cmdlen + difflen + 4 > ccline.cmdbufflen) {
       realloc_cmdbuff(ccline.cmdlen + difflen + 4);
       xp->xp_pattern = ccline.cmdbuff + i;
@@ -4086,9 +4114,10 @@ ExpandOne (
   }
 
   if (mode == WILD_CANCEL) {
-    ss = vim_strsave(orig_save);
+    ss = vim_strsave(orig_save ? orig_save : (char_u *)"");
   } else if (mode == WILD_APPLY) {
-    ss =  vim_strsave(findex == -1 ? orig_save : xp->xp_files[findex]);
+    ss =  vim_strsave(findex == -1 ? (orig_save ? orig_save : (char_u *)"") :
+                      xp->xp_files[findex]);
   }
 
   /* free old names */
@@ -5077,16 +5106,21 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_BUFFERS)
     return ExpandBufnames(pat, num_file, file, options);
+  if (xp->xp_context == EXPAND_DIFF_BUFFERS) {
+    return ExpandBufnames(pat, num_file, file, options | BUF_DIFF_FILTER);
+  }
   if (xp->xp_context == EXPAND_TAGS
-      || xp->xp_context == EXPAND_TAGS_LISTFILES)
+      || xp->xp_context == EXPAND_TAGS_LISTFILES) {
     return expand_tags(xp->xp_context == EXPAND_TAGS, pat, num_file, file);
+  }
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = { "colors", NULL };
-    return ExpandRTDir(pat, DIP_START + DIP_OPT, num_file, file, directories);
+    return ExpandRTDir(pat, DIP_START + DIP_OPT + DIP_LUA, num_file, file,
+                       directories);
   }
   if (xp->xp_context == EXPAND_COMPILER) {
     char *directories[] = { "compiler", NULL };
-    return ExpandRTDir(pat, 0, num_file, file, directories);
+    return ExpandRTDir(pat, DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_OWNSYNTAX) {
     char *directories[] = { "syntax", NULL };
@@ -5094,7 +5128,7 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_FILETYPE) {
     char *directories[] = { "syntax", "indent", "ftplugin", NULL };
-    return ExpandRTDir(pat, 0, num_file, file, directories);
+    return ExpandRTDir(pat, DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_CHECKHEALTH) {
     char *directories[] = { "autoload/health", NULL };
@@ -5105,6 +5139,22 @@ ExpandFromContext (
   }
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, num_file, file);
+  }
+
+  // When expanding a function name starting with s:, match the <SNR>nr_
+  // prefix.
+  char_u *tofree = NULL;
+  if (xp->xp_context == EXPAND_USER_FUNC && STRNCMP(pat, "^s:", 3) == 0) {
+    const size_t len = STRLEN(pat) + 20;
+
+    tofree = xmalloc(len);
+    snprintf((char *)tofree, len, "^<SNR>\\d\\+_%s", pat + 3);
+    pat = tofree;
+  }
+
+  if (xp->xp_context == EXPAND_LUA) {
+    ILOG("PAT %s", pat);
+    return nlua_expand_pat(xp, pat, num_file, file);
   }
 
   regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
@@ -5180,6 +5230,7 @@ ExpandFromContext (
   }
 
   vim_regfree(regmatch.regprog);
+  xfree(tofree);
 
   return ret;
 }
@@ -5517,6 +5568,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 ///   'packpath'/pack/ * /start/ * /{dirnames}/{pat}.vim
 /// When "flags" has DIP_OPT: search also from 'opt' of 'packpath':
 ///   'packpath'/pack/ * /opt/ * /{dirnames}/{pat}.vim
+/// When "flags" has DIP_LUA: search also performed for .lua files
 /// "dirnames" is an array with one or more directory names.
 static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
                        char *dirnames[])
@@ -5534,6 +5586,10 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
     char_u *s = xmalloc(size);
     snprintf((char *)s, size, "%s/%s*.vim", dirnames[i], pat);
     globpath(p_rtp, s, &ga, 0);
+    if (flags & DIP_LUA) {
+      snprintf((char *)s, size, "%s/%s*.lua", dirnames[i], pat);
+      globpath(p_rtp, s, &ga, 0);
+    }
     xfree(s);
   }
 
@@ -5543,6 +5599,10 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
       char_u *s = xmalloc(size);
       snprintf((char *)s, size, "pack/*/start/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
+      if (flags & DIP_LUA) {
+        snprintf((char *)s, size, "pack/*/start/*/%s/%s*.lua", dirnames[i], pat);  // NOLINT
+        globpath(p_pp, s, &ga, 0);
+      }
       xfree(s);
     }
 
@@ -5551,6 +5611,10 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
       char_u *s = xmalloc(size);
       snprintf((char *)s, size, "start/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
+      if (flags & DIP_LUA) {
+        snprintf((char *)s, size, "start/*/%s/%s*.lua", dirnames[i], pat);  // NOLINT
+        globpath(p_pp, s, &ga, 0);
+      }
       xfree(s);
     }
   }
@@ -5561,6 +5625,10 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
       char_u *s = xmalloc(size);
       snprintf((char *)s, size, "pack/*/opt/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
+      if (flags & DIP_LUA) {
+        snprintf((char *)s, size, "pack/*/opt/*/%s/%s*.lua", dirnames[i], pat);  // NOLINT
+        globpath(p_pp, s, &ga, 0);
+      }
       xfree(s);
     }
 
@@ -5569,6 +5637,10 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
       char_u *s = xmalloc(size);
       snprintf((char *)s, size, "opt/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
+      if (flags & DIP_LUA) {
+        snprintf((char *)s, size, "opt/*/%s/%s*.lua", dirnames[i], pat);  // NOLINT
+        globpath(p_pp, s, &ga, 0);
+      }
       xfree(s);
     }
   }
@@ -5577,7 +5649,9 @@ static int ExpandRTDir(char_u *pat, int flags, int *num_file, char_u ***file,
     char_u *match = ((char_u **)ga.ga_data)[i];
     char_u *s = match;
     char_u *e = s + STRLEN(s);
-    if (e - s > 4 && STRNICMP(e - 4, ".vim", 4) == 0) {
+    if (e - s > 4 && (STRNICMP(e - 4, ".vim", 4) == 0
+                      || ((flags & DIP_LUA)
+                          && STRNICMP(e - 4, ".lua", 4) == 0))) {
       e -= 4;
       for (s = e; s > match; MB_PTR_BACK(match, s)) {
         if (vim_ispathsep(*s)) {
@@ -6372,7 +6446,7 @@ int hist_type2char(int type)
       return '>';
     }
     default: {
-      assert(false);
+      abort();
     }
   }
   return NUL;
@@ -6430,7 +6504,7 @@ static int open_cmdwin(void)
   cmdwin_level = ccline.level;
 
   // Create empty command-line buffer.
-  buf_open_scratch(0, "[Command Line]");
+  buf_open_scratch(0, _("[Command Line]"));
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
   set_option_value("bh", 0L, "wipe", OPT_LOCAL);
   curwin->w_p_rl = cmdmsg_rl;
@@ -6588,11 +6662,13 @@ static int open_cmdwin(void)
     wp = curwin;
     set_bufref(&bufref, curbuf);
     win_goto(old_curwin);
-    win_close(wp, true);
+    if (win_valid(wp) && wp != curwin) {
+      win_close(wp, true);
+    }
 
     // win_close() may have already wiped the buffer when 'bh' is
-    // set to 'wipe'.
-    if (bufref_valid(&bufref)) {
+    // set to 'wipe', autocommands may have closed other windows
+    if (bufref_valid(&bufref) && bufref.br_buf != curbuf) {
       close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false);
     }
 
@@ -6759,6 +6835,6 @@ static void set_search_match(pos_T *t)
   t->col = search_match_endcol;
   if (t->lnum > curbuf->b_ml.ml_line_count) {
     t->lnum = curbuf->b_ml.ml_line_count;
-    coladvance((colnr_T)MAXCOL);
+    coladvance(MAXCOL);
   }
 }

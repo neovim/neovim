@@ -6,16 +6,16 @@
 
 Differences between Nvim and Vim			       *vim-differences*
 
-Nvim differs from Vim in many ways, although editor and VimL features are
-mostly identical.  This document is a complete and centralized reference of
-the differences.
+Nvim differs from Vim in many ways, although editor and Vimscript (not
+Vim9script) features are mostly identical.  This document is a complete and
+centralized reference of the differences.
 
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Configuration					    *nvim-config*
 
-- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for configuration.
+- Use `$XDG_CONFIG_HOME/nvim/init.vim` instead of `.vimrc` for your |config|.
 - Use `$XDG_CONFIG_HOME/nvim` instead of `.vim` to store configuration files.
 - Use `$XDG_DATA_HOME/nvim/shada/main.shada` instead of `.viminfo` for persistent
   session information.  |shada|
@@ -70,23 +70,27 @@ the differences.
 - |matchit| plugin is enabled. To disable it in your config: >
     :let loaded_matchit = 1
 
+- |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
+
 ==============================================================================
 3. New Features						       *nvim-features*
 
 MAJOR COMPONENTS ~
 
 API				|API|
-Lua scripting			|lua|
 Job control			|job-control|
-Remote plugins			|remote-plugin|
+LSP framework			|lsp|
+Lua scripting			|lua|
+Parsing engine			|treesitter|
 Providers
   Clipboard			|provider-clipboard|
   Node.js plugins		|provider-nodejs|
   Python plugins		|provider-python|
   Ruby plugins			|provider-ruby|
+Remote plugins			|remote-plugin|
 Shared data			|shada|
-Embedded terminal		|terminal|
-VimL parser			|nvim_parse_expression()|
+Terminal emulator		|terminal|
+Vimscript parser		|nvim_parse_expression()|
 XDG base directories		|xdg|
 
 USER EXPERIENCE  ~
@@ -135,7 +139,7 @@ FEATURES ~
 
 Command-line highlighting:
   The expression prompt (|@=|, |c_CTRL-R_=|, |i_CTRL-R_=|) is highlighted
-  using a built-in VimL expression parser. |expr-highlight|
+  using a built-in Vimscript expression parser. |expr-highlight|
 					*E5408* *E5409*
   |input()|, |inputdialog()| support custom highlighting. |input()-highlight|
 					*g:Nvim_color_cmdline*
@@ -144,7 +148,6 @@ Command-line highlighting:
   removed in the future).
 
 Commands:
-  |:autocmd| accepts the `++once` flag
   |:checkhealth|
   |:drop| is always available
   |:Man| is available by default, with many improvements such as completion
@@ -157,8 +160,6 @@ Events:
   |TermOpen|
   |UIEnter|
   |UILeave|
-  |VimResume|
-  |VimSuspend|
   |WinClosed|
 
 Functions:
@@ -195,11 +196,9 @@ Options:
   'cpoptions'   flags: |cpo-_|
   'display'     flags: "msgsep" minimizes scrolling when showing messages
   'guicursor'   works in the terminal
-  'fillchars'   flags: "msgsep" (see 'display'), "eob" for |hl-EndOfBuffer|
-                marker, "foldopen", "foldsep", "foldclose"
+  'fillchars'   flags: "msgsep" (see 'display')
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
-  'listchars'   local to window
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'
   'signcolumn'  supports up to 9 dynamic/fixed columns
@@ -383,7 +382,7 @@ TUI:
 UI/Display:
   |Visual| selection highlights the character at cursor. |visual-use|
 
-VimL (Vim script) compatibility:
+Vimscript compatibility:
   `count` does not alias to |v:count|
   `errmsg` does not alias to |v:errmsg|
   `shell_error` does not alias to |v:shell_error|
@@ -424,7 +423,10 @@ Commands:
   :mode (no longer accepts an argument)
   :open
   :Print
+  :promptfind
+  :promptrepl
   :shell
+  :sleep! (does not hide the cursor; same as :sleep)
   :smile
   :tearoff
 
@@ -500,13 +502,23 @@ Test functions:
   test_alloc_fail()
   test_autochdir()
   test_disable_char_avail()
+  test_feedinput()
+  test_garbagecollect_soon
+  test_getvalue()
+  test_ignore_error()
+  test_null_blob()
   test_null_channel()
   test_null_dict()
+  test_null_function()
   test_null_job()
   test_null_list()
   test_null_partial()
   test_null_string()
+  test_option_not_set()
   test_override()
+  test_refcount()
+  test_scrollbar()
+  test_setmouse()
   test_settime()
 
 TUI:

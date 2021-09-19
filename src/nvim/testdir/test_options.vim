@@ -1,5 +1,7 @@
 " Test for options
 
+source check.vim
+
 func Test_whichwrap()
   set whichwrap=b,s
   call assert_equal('b,s', &whichwrap)
@@ -223,11 +225,18 @@ func Test_set_completion()
 
   " Expand files and directories.
   call feedkeys(":set tags=./\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('./samples/ ./sautest/ ./screendump.vim ./setup.vim ./shared.vim', @:)
+  call assert_match('./samples/ ./sautest/ ./screendump.vim ./script_util.vim ./setup.vim ./shared.vim', @:)
 
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
   set tags&
+
+  " Expand values for 'filetype'
+  call feedkeys(":set filetype=sshdconfi\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set filetype=sshdconfig', @:)
+  call feedkeys(":set filetype=a\<C-A>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal('"set filetype=' .. getcompletion('a*', 'filetype')->join(), @:)
+  call assert_equal('"set filetype=' .. join(getcompletion('a*', 'filetype')), @:)
 endfunc
 
 func Test_set_errors()
@@ -330,12 +339,10 @@ func Test_set_ttytype()
     set ttytype=xterm
     call assert_equal('xterm', &ttytype)
     call assert_equal(&ttytype, &term)
-    " "set ttytype=" gives E522 instead of E529
-    " in travis on some builds. Why?  Catch both for now
     try
       set ttytype=
       call assert_report('set ttytype= did not fail')
-    catch /E529\|E522/
+    catch /E529/
     endtry
 
     " Some systems accept any terminal name and return dumb settings,
@@ -440,6 +447,36 @@ func Test_backupskip()
       call assert_true(found, var . ' (' . varvalue . ') not in option bsk: ' . &bsk)
     endif
   endfor
+
+  " Duplicates from environment variables should be filtered out (option has
+  " P_NODUP).  Run this in a separate instance and write v:errors in a file,
+  " so that we see what happens on startup.
+  let after =<< trim [CODE]
+      let bsklist = split(&backupskip, ',')
+      call assert_equal(uniq(copy(bsklist)), bsklist)
+      call writefile(['errors:'] + v:errors, 'Xtestout')
+      qall
+  [CODE]
+  call writefile(after, 'Xafter')
+  " let cmd = GetVimProg() . ' --not-a-term -S Xafter --cmd "set enc=utf8"'
+  let cmd = GetVimProg() . ' -S Xafter --cmd "set enc=utf8"'
+
+  let saveenv = {}
+  for var in ['TMPDIR', 'TMP', 'TEMP']
+    let saveenv[var] = getenv(var)
+    call setenv(var, '/duplicate/path')
+  endfor
+
+  exe 'silent !' . cmd
+  call assert_equal(['errors:'], readfile('Xtestout'))
+
+  " restore environment variables
+  for var in ['TMPDIR', 'TMP', 'TEMP']
+    call setenv(var, saveenv[var])
+  endfor
+
+  call delete('Xtestout')
+  call delete('Xafter')
 
   " Duplicates should be filtered out (option has P_NODUP)
   let backupskip = &backupskip
@@ -592,6 +629,25 @@ func Test_visualbell()
   set belloff=all
 endfunc
 
+" Test for the 'write' option
+func Test_write()
+  new
+  call setline(1, ['L1'])
+  set nowrite
+  call assert_fails('write Xfile', 'E142:')
+  set write
+  close!
+endfunc
+
+" Test for 'buftype' option
+func Test_buftype()
+  new
+  call setline(1, ['L1'])
+  set buftype=nowrite
+  call assert_fails('write', 'E382:')
+  close!
+endfunc
+
 " Test for setting option values using v:false and v:true
 func Test_opt_boolean()
   set number&
@@ -606,6 +662,49 @@ func Test_opt_boolean()
   set number&
 endfunc
 
+func Test_opt_winminheight_term()
+  " See test/functional/legacy/options_spec.lua
+  CheckRunVimInTerminal
+
+  " The tabline should be taken into account.
+  let lines =<< trim END
+    set wmh=0 stal=2
+    below sp | wincmd _
+    below sp | wincmd _
+    below sp | wincmd _
+    below sp
+  END
+  call writefile(lines, 'Xwinminheight')
+  let buf = RunVimInTerminal('-S Xwinminheight', #{rows: 11})
+  call term_sendkeys(buf, ":set wmh=1\n")
+  call WaitForAssert({-> assert_match('E36: Not enough room', term_getline(buf, 11))})
+
+  call StopVimInTerminal(buf)
+  call delete('Xwinminheight')
+endfunc
+
+func Test_opt_winminheight_term_tabs()
+  " See test/functional/legacy/options_spec.lua
+  CheckRunVimInTerminal
+
+  " The tabline should be taken into account.
+  let lines =<< trim END
+    set wmh=0 stal=2
+    split
+    split
+    split
+    split
+    tabnew
+  END
+  call writefile(lines, 'Xwinminheight')
+  let buf = RunVimInTerminal('-S Xwinminheight', #{rows: 11})
+  call term_sendkeys(buf, ":set wmh=1\n")
+  call WaitForAssert({-> assert_match('E36: Not enough room', term_getline(buf, 11))})
+
+  call StopVimInTerminal(buf)
+  call delete('Xwinminheight')
+endfunc
+
 " Test for setting option value containing spaces with isfname+=32
 func Test_isfname_with_options()
   set isfname+=32
@@ -613,6 +712,25 @@ func Test_isfname_with_options()
   call assert_equal(':term help.exe', &keywordprg)
   set isfname&
   setlocal keywordprg&
+endfunc
+
+" Test that resetting laststatus does change scroll option
+func Test_opt_reset_scroll()
+  " See test/functional/legacy/options_spec.lua
+  CheckRunVimInTerminal
+  let vimrc =<< trim [CODE]
+    set scroll=2
+    set laststatus=2
+  [CODE]
+  call writefile(vimrc, 'Xscroll')
+  let buf = RunVimInTerminal('-S Xscroll', {'rows': 16, 'cols': 45})
+  call term_sendkeys(buf, ":verbose set scroll?\n")
+  call WaitForAssert({-> assert_match('Last set.*window size', term_getline(buf, 15))})
+  call assert_match('^\s*scroll=7$', term_getline(buf, 14))
+  call StopVimInTerminal(buf)
+
+  " clean up
+  call delete('Xscroll')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

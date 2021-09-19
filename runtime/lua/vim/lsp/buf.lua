@@ -111,6 +111,39 @@ function M.completion(context)
   return request('textDocument/completion', params)
 end
 
+--@private
+--- If there is more than one client that supports the given method,
+--- asks the user to select one.
+--
+--@returns The client that the user selected or nil
+local function select_client(method)
+  local clients = vim.tbl_values(vim.lsp.buf_get_clients());
+  clients = vim.tbl_filter(function (client)
+    return client.supports_method(method)
+  end, clients)
+  -- better UX when choices are always in the same order (between restarts)
+  table.sort(clients, function (a, b) return a.name < b.name end)
+
+  if #clients > 1 then
+    local choices = {}
+    for k,v in ipairs(clients) do
+      table.insert(choices, string.format("%d %s", k, v.name))
+    end
+    local user_choice = vim.fn.confirm(
+      "Select a language server:",
+      table.concat(choices, "\n"),
+      0,
+      "Question"
+    )
+    if user_choice == 0 then return nil end
+    return clients[user_choice]
+  elseif #clients < 1 then
+    return nil
+  else
+    return clients[1]
+  end
+end
+
 --- Formats the current buffer.
 ---
 --@param options (optional, table) Can be used to specify FormattingOptions.
@@ -119,8 +152,11 @@ end
 --
 --@see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
 function M.formatting(options)
+  local client = select_client("textDocument/formatting")
+  if client == nil then return end
+
   local params = util.make_formatting_params(options)
-  return request('textDocument/formatting', params)
+  return client.request("textDocument/formatting", params, nil, vim.api.nvim_get_current_buf())
 end
 
 --- Performs |vim.lsp.buf.formatting()| synchronously.
@@ -134,14 +170,62 @@ end
 ---
 --@param options Table with valid `FormattingOptions` entries
 --@param timeout_ms (number) Request timeout
+--@see |vim.lsp.buf.formatting_seq_sync|
 function M.formatting_sync(options, timeout_ms)
+  local client = select_client("textDocument/formatting")
+  if client == nil then return end
+
   local params = util.make_formatting_params(options)
-  local result = vim.lsp.buf_request_sync(0, "textDocument/formatting", params, timeout_ms)
-  if not result or vim.tbl_isempty(result) then return end
-  local _, formatting_result = next(result)
-  result = formatting_result.result
-  if not result then return end
-  vim.lsp.util.apply_text_edits(result)
+  local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
+  if result and result.result then
+    util.apply_text_edits(result.result)
+  elseif err then
+    vim.notify("vim.lsp.buf.formatting_sync: " .. err, vim.log.levels.WARN)
+  end
+end
+
+--- Formats the current buffer by sequentially requesting formatting from attached clients.
+---
+--- Useful when multiple clients with formatting capability are attached.
+---
+--- Since it's synchronous, can be used for running on save, to make sure buffer is formatted
+--- prior to being saved. {timeout_ms} is passed on to the |vim.lsp.client| `request_sync` method.
+--- Example:
+--- <pre>
+--- vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
+--- </pre>
+---
+--@param options (optional, table) `FormattingOptions` entries
+--@param timeout_ms (optional, number) Request timeout
+--@param order (optional, table) List of client names. Formatting is requested from clients
+---in the following order: first all clients that are not in the `order` list, then
+---the remaining clients in the order as they occur in the `order` list.
+function M.formatting_seq_sync(options, timeout_ms, order)
+  local clients = vim.tbl_values(vim.lsp.buf_get_clients());
+
+  -- sort the clients according to `order`
+  for _, client_name in ipairs(order or {}) do
+    -- if the client exists, move to the end of the list
+    for i, client in ipairs(clients) do
+      if client.name == client_name then
+        table.insert(clients, table.remove(clients, i))
+        break
+      end
+    end
+  end
+
+  -- loop through the clients and make synchronous formatting requests
+  for _, client in ipairs(clients) do
+    if client.resolved_capabilities.document_formatting then
+      local params = util.make_formatting_params(options)
+      local result, err = client.request_sync("textDocument/formatting", params, timeout_ms, vim.api.nvim_get_current_buf())
+      if result and result.result then
+        util.apply_text_edits(result.result)
+      elseif err then
+        vim.notify(string.format("vim.lsp.buf.formatting_seq_sync: (%s) %s", client.name, err), vim.log.levels.WARN)
+      end
+    end
+  end
 end
 
 --- Formats a given range.
@@ -152,15 +236,12 @@ end
 --@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_formatting(options, start_pos, end_pos)
-  validate { options = {options, 't', true} }
-  local sts = vim.bo.softtabstop;
-  options = vim.tbl_extend('keep', options or {}, {
-    tabSize = (sts > 0 and sts) or (sts < 0 and vim.bo.shiftwidth) or vim.bo.tabstop;
-    insertSpaces = vim.bo.expandtab;
-  })
+  local client = select_client("textDocument/rangeFormatting")
+  if client == nil then return end
+
   local params = util.make_given_range_params(start_pos, end_pos)
-  params.options = options
-  return request('textDocument/rangeFormatting', params)
+  params.options = util.make_formatting_params(options).options
+  return client.request("textDocument/rangeFormatting", params)
 end
 
 --- Renames all references to the symbol under the cursor.
@@ -216,26 +297,31 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   return choice
 end
 
+--@private
+local function call_hierarchy(method)
+  local params = util.make_position_params()
+  request('textDocument/prepareCallHierarchy', params, function(err, _, result)
+    if err then
+      vim.notify(err.message, vim.log.levels.WARN)
+      return
+    end
+    local call_hierarchy_item = pick_call_hierarchy_item(result)
+    vim.lsp.buf_request(0, method, { item = call_hierarchy_item })
+  end)
+end
+
 --- Lists all the call sites of the symbol under the cursor in the
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist|.
 function M.incoming_calls()
-  local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(_, _, result)
-    local call_hierarchy_item = pick_call_hierarchy_item(result)
-    vim.lsp.buf_request(0, 'callHierarchy/incomingCalls', { item = call_hierarchy_item })
-  end)
+  call_hierarchy('callHierarchy/incomingCalls')
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one in the |inputlist|.
 function M.outgoing_calls()
-  local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(_, _, result)
-    local call_hierarchy_item = pick_call_hierarchy_item(result)
-    vim.lsp.buf_request(0, 'callHierarchy/outgoingCalls', { item = call_hierarchy_item })
-  end)
+  call_hierarchy('callHierarchy/outgoingCalls')
 end
 
 --- List workspace folders.
@@ -253,7 +339,7 @@ end
 --- Add the folder at path to the workspace folders. If {path} is
 --- not provided, the user will be prompted for a path using |input()|.
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'))
+  workspace_folder = workspace_folder or npcall(vfn.input, "Workspace Folder: ", vfn.expand('%:p:h'), 'dir')
   vim.api.nvim_command("redraw")
   if not (workspace_folder and #workspace_folder > 0) then return end
   if vim.fn.isdirectory(workspace_folder) == 0 then
@@ -310,15 +396,21 @@ function M.workspace_symbol(query)
   request('workspace/symbol', params)
 end
 
---- Send request to server to resolve document highlights for the
---- current text document position. This request can be associated
---- to key mapping or to events such as `CursorHold`, eg:
+--- Send request to the server to resolve document highlights for the current
+--- text document position. This request can be triggered by a  key mapping or
+--- by events such as `CursorHold`, eg:
 ---
 --- <pre>
 --- vim.api.nvim_command [[autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()]]
 --- vim.api.nvim_command [[autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()]]
 --- vim.api.nvim_command [[autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()]]
 --- </pre>
+---
+--- Note: Usage of |vim.lsp.buf.document_highlight()| requires the following highlight groups
+---       to be defined or you won't be able to see the actual highlights.
+---         |LspReferenceText|
+---         |LspReferenceRead|
+---         |LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
   request('textDocument/documentHighlight', params)

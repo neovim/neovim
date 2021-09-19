@@ -59,7 +59,9 @@ struct hl_group {
   bool sg_cleared;              ///< "hi clear" was used
   int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
   int sg_link;                  ///< link to this highlight group ID
+  int sg_deflink;               ///< default link; restored in highlight_clear()
   int sg_set;                   ///< combination of flags in \ref SG_SET
+  sctx_T sg_deflink_sctx;       ///< script where the default link was set
   sctx_T sg_script_ctx;         ///< script in which the group was last set
   // for terminal UIs
   int sg_cterm;                 ///< "cterm=" highlighting attr
@@ -3419,7 +3421,7 @@ static void syn_cmd_on(exarg_T *eap, int syncing)
  */
 static void syn_cmd_enable(exarg_T *eap, int syncing)
 {
-  set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"enable");
+  set_internal_string_var("syntax_cmd", (char_u *)"enable");
   syn_cmd_onoff(eap, "syntax");
   do_unlet(S_LEN("g:syntax_cmd"), true);
 }
@@ -3432,7 +3434,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
 {
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
-    set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"reset");
+    set_internal_string_var("syntax_cmd", (char_u *)"reset");
     do_cmdline_cmd("runtime! syntax/syncolor.vim");
     do_unlet(S_LEN("g:syntax_cmd"), true);
   }
@@ -3467,13 +3469,13 @@ static void syn_cmd_onoff(exarg_T *eap, char *name)
   }
 }
 
-void syn_maybe_on(void)
+void syn_maybe_enable(void)
 {
   if (!did_syntax_onoff) {
     exarg_T ea;
     ea.arg = (char_u *)"";
     ea.skip = false;
-    syn_cmd_onoff(&ea, "syntax");
+    syn_cmd_enable(&ea, false);
   }
 }
 
@@ -5304,13 +5306,17 @@ get_id_list(
           xfree(name);
           break;
         }
-        if (name[1] == 'A')
-          id = SYNID_ALLBUT;
-        else if (name[1] == 'T')
-          id = SYNID_TOP;
-        else
-          id = SYNID_CONTAINED;
-        id += current_syn_inc_tag;
+        if (name[1] == 'A') {
+          id = SYNID_ALLBUT + current_syn_inc_tag;
+        } else if (name[1] == 'T') {
+          if (curwin->w_s->b_syn_topgrp >= SYNID_CLUSTER) {
+            id = curwin->w_s->b_syn_topgrp;
+          } else {
+            id = SYNID_TOP + current_syn_inc_tag;
+          }
+        } else {
+          id = SYNID_CONTAINED + current_syn_inc_tag;
+        }
       } else if (name[1] == '@')   {
         if (skip) {
           id = -1;
@@ -5614,14 +5620,14 @@ void ex_ownsyntax(exarg_T *eap)
   // Move value of b:current_syntax to w:current_syntax.
   new_value = get_var_value("b:current_syntax");
   if (new_value != NULL) {
-    set_internal_string_var((char_u *)"w:current_syntax", new_value);
+    set_internal_string_var("w:current_syntax", new_value);
   }
 
   // Restore value of b:current_syntax.
   if (old_value == NULL) {
     do_unlet(S_LEN("b:current_syntax"), true);
   } else {
-    set_internal_string_var((char_u *)"b:current_syntax", old_value);
+    set_internal_string_var("b:current_syntax", old_value);
     xfree(old_value);
   }
 }
@@ -6044,6 +6050,9 @@ static const char *highlight_init_both[] = {
   "default link Whitespace NonText",
   "default link MsgSeparator StatusLine",
   "default link NormalFloat Pmenu",
+  "default link FloatBorder VertSplit",
+  "default FloatShadow blend=80 guibg=Black",
+  "default FloatShadowThrough blend=100 guibg=Black",
   "RedrawDebugNormal cterm=reverse gui=reverse",
   "RedrawDebugClear ctermbg=Yellow guibg=Yellow",
   "RedrawDebugComposed ctermbg=Green guibg=Green",
@@ -6429,6 +6438,10 @@ int load_colors(char_u *name)
   apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
   snprintf((char *)buf, buflen, "colors/%s.vim", name);
   retval = source_runtime(buf, DIP_START + DIP_OPT);
+  if (retval == FAIL) {
+    snprintf((char *)buf, buflen, "colors/%s.lua", name);
+    retval = source_runtime(buf, DIP_START + DIP_OPT);
+  }
   xfree(buf);
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
@@ -6601,6 +6614,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     const char *to_end;
     int from_id;
     int to_id;
+    struct hl_group *hlgroup = NULL;
 
     from_end = (const char *)skiptowhite((const char_u *)from_start);
     to_start = (const char *)skipwhite((const char_u *)from_end);
@@ -6627,7 +6641,16 @@ void do_highlight(const char *line, const bool forceit, const bool init)
                               (int)(to_end - to_start));
     }
 
-    if (from_id > 0 && (!init || HL_TABLE()[from_id - 1].sg_set == 0)) {
+    if (from_id > 0) {
+      hlgroup = &HL_TABLE()[from_id - 1];
+      if (dodefault && (forceit || hlgroup->sg_deflink == 0)) {
+        hlgroup->sg_deflink = to_id;
+        hlgroup->sg_deflink_sctx = current_sctx;
+        hlgroup->sg_deflink_sctx.sc_lnum += sourcing_lnum;
+      }
+    }
+
+    if (from_id > 0 && (!init || hlgroup->sg_set == 0)) {
       // Don't allow a link when there already is some highlighting
       // for the group, unless '!' is used
       if (to_id > 0 && !forceit && !init
@@ -6635,17 +6658,16 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         if (sourcing_name == NULL && !dodefault) {
           EMSG(_("E414: group has settings, highlight link ignored"));
         }
-      } else if (HL_TABLE()[from_id - 1].sg_link != to_id
-                 || HL_TABLE()[from_id - 1].sg_script_ctx.sc_sid
-                 != current_sctx.sc_sid
-                 || HL_TABLE()[from_id - 1].sg_cleared) {
+      } else if (hlgroup->sg_link != to_id
+                 || hlgroup->sg_script_ctx.sc_sid != current_sctx.sc_sid
+                 || hlgroup->sg_cleared) {
         if (!init) {
-          HL_TABLE()[from_id - 1].sg_set |= SG_LINK;
+          hlgroup->sg_set |= SG_LINK;
         }
-        HL_TABLE()[from_id - 1].sg_link = to_id;
-        HL_TABLE()[from_id - 1].sg_script_ctx = current_sctx;
-        HL_TABLE()[from_id - 1].sg_script_ctx.sc_lnum += sourcing_lnum;
-        HL_TABLE()[from_id - 1].sg_cleared = false;
+        hlgroup->sg_link = to_id;
+        hlgroup->sg_script_ctx = current_sctx;
+        hlgroup->sg_script_ctx.sc_lnum += sourcing_lnum;
+        hlgroup->sg_cleared = false;
         redraw_all_later(SOME_VALID);
 
         // Only call highlight changed() once after multiple changes
@@ -7076,13 +7098,14 @@ void restore_cterm_colors(void)
  */
 static int hl_has_settings(int idx, int check_link)
 {
-  return HL_TABLE()[idx].sg_attr != 0
-         || HL_TABLE()[idx].sg_cterm_fg != 0
-         || HL_TABLE()[idx].sg_cterm_bg != 0
-         || HL_TABLE()[idx].sg_rgb_fg_name != NULL
-         || HL_TABLE()[idx].sg_rgb_bg_name != NULL
-         || HL_TABLE()[idx].sg_rgb_sp_name != NULL
-         || (check_link && (HL_TABLE()[idx].sg_set & SG_LINK));
+  return HL_TABLE()[idx].sg_cleared == 0
+    && (HL_TABLE()[idx].sg_attr != 0
+        || HL_TABLE()[idx].sg_cterm_fg != 0
+        || HL_TABLE()[idx].sg_cterm_bg != 0
+        || HL_TABLE()[idx].sg_rgb_fg_name != NULL
+        || HL_TABLE()[idx].sg_rgb_bg_name != NULL
+        || HL_TABLE()[idx].sg_rgb_sp_name != NULL
+        || (check_link && (HL_TABLE()[idx].sg_set & SG_LINK)));
 }
 
 /*
@@ -7105,12 +7128,11 @@ static void highlight_clear(int idx)
   XFREE_CLEAR(HL_TABLE()[idx].sg_rgb_bg_name);
   XFREE_CLEAR(HL_TABLE()[idx].sg_rgb_sp_name);
   HL_TABLE()[idx].sg_blend = -1;
-  // Clear the script ID only when there is no link, since that is not
-  // cleared.
-  if (HL_TABLE()[idx].sg_link == 0) {
-    HL_TABLE()[idx].sg_script_ctx.sc_sid = 0;
-    HL_TABLE()[idx].sg_script_ctx.sc_lnum = 0;
-  }
+  // Restore default link and context if they exist. Otherwise clears.
+  HL_TABLE()[idx].sg_link = HL_TABLE()[idx].sg_deflink;
+  // Since we set the default link, set the location to where the default
+  // link was set.
+  HL_TABLE()[idx].sg_script_ctx = HL_TABLE()[idx].sg_deflink_sctx;
 }
 
 

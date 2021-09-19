@@ -17,10 +17,11 @@
 #endif
 
 
-#define DEBUG_LOG_LEVEL 0
-#define INFO_LOG_LEVEL 1
-#define WARN_LOG_LEVEL 2
-#define ERROR_LOG_LEVEL 3
+#define TRACE_LOG_LEVEL 0
+#define DEBUG_LOG_LEVEL 1
+#define INFO_LOG_LEVEL 2
+#define WARN_LOG_LEVEL 3
+#define ERROR_LOG_LEVEL 4
 
 #define DLOG(...)
 #define DLOGN(...)

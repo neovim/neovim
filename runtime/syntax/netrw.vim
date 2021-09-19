@@ -1,7 +1,7 @@
 " Language   : Netrw Listing Syntax
 " Maintainer : Charles E. Campbell
-" Last change: Oct 31, 2016
-" Version    : 20	NOT RELEASED
+" Last change: Nov 07, 2019
+" Version    : 20
 " ---------------------------------------------------------------------
 if exists("b:current_syntax")
  finish
@@ -105,7 +105,7 @@ if !exists("did_drchip_netrwlist_syntax")
 
  " special syntax highlighting (see :he g:netrw_special_syntax)
  hi default link netrwCoreDump	WarningMsg
- hi default link netrwData	DiffChange
+ hi default link netrwData	Folded
  hi default link netrwHdr	netrwPlain
  hi default link netrwLex	netrwPlain
  hi default link netrwLib	DiffChange

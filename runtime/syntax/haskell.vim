@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		Haskell
 " Maintainer:		Haskell Cafe mailinglist <haskell-cafe@haskell.org>
-" Last Change:		2018 Mar 29 by Marcin Szamotulski
+" Last Change:		2020 Oct 4 by Marcin Szamotulski <profunctor@pm.me>
 " Original Author:	John Williams <jrw@pobox.com>
 "
 " Thanks to Ryan Crumley for suggestions and John Meacham for
@@ -38,8 +38,8 @@ if exists("b:current_syntax")
 endif
 
 " (Qualified) identifiers (no default highlighting)
-syn match ConId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[A-Z][a-zA-Z0-9_']*\>" contains=@NoSpell
-syn match VarId "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=\<[a-z][a-zA-Z0-9_']*\>" contains=@NoSpell
+syn match ConId "\(\<[A-Z][a-zA-Z0-9_']*\.\)*\<[A-Z][a-zA-Z0-9_']*\>" contains=@NoSpell
+syn match VarId "\(\<[A-Z][a-zA-Z0-9_']*\.\)*\<[a-z][a-zA-Z0-9_']*\>" contains=@NoSpell
 
 " Infix operators--most punctuation characters and any (qualified) identifier
 " enclosed in `backquotes`. An operator starting with : is a constructor,
@@ -49,8 +49,11 @@ syn match hsConSym "\(\<[A-Z][a-zA-Z0-9_']*\.\)\=:[-!#$%&\*\+./<=>\?@\\^|~:]*"
 syn match hsVarSym "`\(\<[A-Z][a-zA-Z0-9_']*\.\)\=[a-z][a-zA-Z0-9_']*`"
 syn match hsConSym "`\(\<[A-Z][a-zA-Z0-9_']*\.\)\=[A-Z][a-zA-Z0-9_']*`"
 
+" (Non-qualified) identifiers which start with # are labels
+syn match hsLabel "#[a-z][a-zA-Z0-9_']*\>"
+
 " Reserved symbols--cannot be overloaded.
-syn match hsDelimiter  "(\|)\|\[\|\]\|,\|;\|_\|{\|}"
+syn match hsDelimiter  "(\|)\|\[\|\]\|,\|;\|{\|}"
 
 " Strings and constants
 syn match   hsSpecialChar	contained "\\\([0-9]\+\|o[0-7]\+\|x[0-9a-fA-F]\+\|[\"\\'&\\abfnrtv]\|^[A-Z^_\[\\\]]\)"
@@ -62,37 +65,41 @@ syn match   hsCharacter		"^'\([^\\]\|\\[^']\+\|\\'\)'" contains=hsSpecialChar,hs
 syn match   hsNumber		"\v<[0-9]%(_*[0-9])*>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*>|<0[oO]_*%(_*[0-7])*>|<0[bB]_*[01]%(_*[01])*>"
 syn match   hsFloat		"\v<[0-9]%(_*[0-9])*\.[0-9]%(_*[0-9])*%(_*[eE][-+]?[0-9]%(_*[0-9])*)?>|<[0-9]%(_*[0-9])*_*[eE][-+]?[0-9]%(_*[0-9])*>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*\.[0-9a-fA-F]%(_*[0-9a-fA-F])*%(_*[pP][-+]?[0-9]%(_*[0-9])*)?>|<0[xX]_*[0-9a-fA-F]%(_*[0-9a-fA-F])*_*[pP][-+]?[0-9]%(_*[0-9])*>"
 
-" Keyword definitions. These must be patterns instead of keywords
-" because otherwise they would match as keywords at the start of a
-" "literate" comment (see lhs.vim).
-syn match hsModule		"\<module\>"
-syn match hsImport		"\<import\>.*"he=s+6 contains=hsImportMod,hsLineComment,hsBlockComment,@NoSpell
-syn match hsImportMod		contained "\<\(as\|qualified\|hiding\)\>" contains=@NoSpell
-syn match hsInfix		"\<\(infix\|infixl\|infixr\)\>"
-syn match hsStructure		"\<\(class\|data\|deriving\|instance\|default\|where\)\>"
-syn match hsTypedef		"\<\(type\|newtype\)\>"
-syn match hsStatement		"\<\(do\|case\|of\|let\|in\)\>"
-syn match hsConditional		"\<\(if\|then\|else\)\>"
+" Keyword definitions.
+syn keyword hsModule		module
+syn match   hsImportGroup	"\<import\>.*" contains=hsImport,hsImportModuleName,hsImportMod,hsLineComment,hsBlockComment,hsImportList,@NoSpell nextgroup=hsImport
+syn keyword hsImport import contained nextgroup=hsImportModuleName
+syn match   hsImportModuleName '\<[A-Z][A-Za-z.]*' contained
+syn region  hsImportList start='(' skip='([^)]\{-})' end=')' keepend contained contains=ConId,VarId,hsDelimiter,hsBlockComment,hsTypedef,@NoSpell
+
+syn keyword hsImportMod contained as qualified hiding
+syn keyword hsInfix infix infixl infixr
+syn keyword hsStructure class data deriving instance default where
+syn keyword hsTypedef type
+syn keyword hsNewtypedef newtype
+syn keyword hsTypeFam family
+syn keyword hsStatement mdo do case of let in
+syn keyword hsConditional if then else
 
 " Not real keywords, but close.
 if exists("hs_highlight_boolean")
   " Boolean constants from the standard prelude.
-  syn match hsBoolean "\<\(True\|False\)\>"
+  syn keyword hsBoolean True False
 endif
 if exists("hs_highlight_types")
   " Primitive types from the standard prelude and libraries.
-  syn match hsType "\<\(Int\|Integer\|Char\|Bool\|Float\|Double\|IO\|Void\|Addr\|Array\|String\)\>"
+  syn keyword hsType Int Integer Char Bool Float Double IO Void Addr Array String
 endif
 if exists("hs_highlight_more_types")
   " Types from the standard prelude libraries.
-  syn match hsType "\<\(Maybe\|Either\|Ratio\|Complex\|Ordering\|IOError\|IOResult\|ExitCode\)\>"
-  syn match hsMaybe    "\<Nothing\>"
-  syn match hsExitCode "\<\(ExitSuccess\)\>"
-  syn match hsOrdering "\<\(GT\|LT\|EQ\)\>"
+  syn keyword hsType Maybe Either Ratio Complex Ordering IOError IOResult ExitCode
+  syn keyword hsMaybe Nothing
+  syn keyword hsExitCode ExitSuccess
+  syn keyword hsOrdering GT LT EQ
 endif
 if exists("hs_highlight_debug")
   " Debugging functions from the standard prelude.
-  syn match hsDebug "\<\(undefined\|error\|trace\)\>"
+  syn keyword hsDebug undefined error trace
 endif
 
 
@@ -133,12 +140,14 @@ hi def link hsImportMod			  hsImport
 hi def link hsInfix			  PreProc
 hi def link hsStructure			  Structure
 hi def link hsStatement			  Statement
-hi def link hsConditional			  Conditional
-hi def link hsSpecialChar			  SpecialChar
+hi def link hsConditional		  Conditional
+hi def link hsSpecialChar		  SpecialChar
 hi def link hsTypedef			  Typedef
+hi def link hsNewtypedef		  Typedef
 hi def link hsVarSym			  hsOperator
 hi def link hsConSym			  hsOperator
 hi def link hsOperator			  Operator
+hi def link hsTypeFam			  Structure
 if exists("hs_highlight_delimiters")
 " Some people find this highlighting distracting.
 hi def link hsDelimiter			  Delimiter
@@ -160,22 +169,22 @@ hi def link hsMaybe			  hsEnumConst
 hi def link hsOrdering			  hsEnumConst
 hi def link hsEnumConst			  Constant
 hi def link hsDebug			  Debug
+hi def link hsLabel			  Special
 
-hi def link cCppString		hsString
-hi def link cCommentStart		hsComment
-hi def link cCommentError		hsError
-hi def link cCommentStartError	hsError
-hi def link cInclude		Include
-hi def link cPreProc		PreProc
-hi def link cDefine		Macro
-hi def link cIncluded		hsString
-hi def link cError			Error
-hi def link cPreCondit		PreCondit
-hi def link cComment		Comment
-hi def link cCppSkip		cCppOut
-hi def link cCppOut2		cCppOut
-hi def link cCppOut		Comment
-
+hi def link cCppString			  hsString
+hi def link cCommentStart		  hsComment
+hi def link cCommentError		  hsError
+hi def link cCommentStartError		  hsError
+hi def link cInclude			  Include
+hi def link cPreProc			  PreProc
+hi def link cDefine			  Macro
+hi def link cIncluded			  hsString
+hi def link cError			  Error
+hi def link cPreCondit			  PreCondit
+hi def link cComment			  Comment
+hi def link cCppSkip			  cCppOut
+hi def link cCppOut2			  cCppOut
+hi def link cCppOut			  Comment
 
 let b:current_syntax = "haskell"
 

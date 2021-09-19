@@ -180,6 +180,11 @@ EXTERN int compl_cont_status INIT(= 0);
 # define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
                                 // expansion, (eg use complete=.)
 
+EXTERN char_u *edit_submode INIT(= NULL);        // msg for CTRL-X submode
+EXTERN char_u *edit_submode_pre INIT(= NULL);    // prepended to edit_submode
+EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
+EXTERN hlf_T edit_submode_highl;                 // highl. method for extra info
+
 // state for putting characters in the message area
 EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
 EXTERN int msg_col;
@@ -251,7 +256,7 @@ EXTERN linenr_T sourcing_lnum INIT(= 0);    // line number of the source file
 
 EXTERN int ex_nesting_level INIT(= 0);          // nesting level
 EXTERN int debug_break_level INIT(= -1);        // break below this level
-EXTERN int debug_did_msg INIT(= false);         // did "debug mode" message
+EXTERN bool debug_did_msg INIT(= false);        // did "debug mode" message
 EXTERN int debug_tick INIT(= 0);                // breakpoint change count
 EXTERN int debug_backtrace_level INIT(= 0);     // breakpoint backtrace level
 
@@ -328,9 +333,10 @@ EXTERN int garbage_collect_at_exit INIT(= false);
 #define SID_ENV         -4      // for sourcing environment variable
 #define SID_ERROR       -5      // option was reset because of an error
 #define SID_NONE        -6      // don't set scriptID
-#define SID_LUA         -7      // for Lua scripts/chunks
-#define SID_API_CLIENT  -8      // for API clients
-#define SID_STR         -9      // for sourcing a string
+#define SID_WINLAYOUT   -7      // changing window size
+#define SID_LUA         -8      // for Lua scripts/chunks
+#define SID_API_CLIENT  -9      // for API clients
+#define SID_STR         -10     // for sourcing a string
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT(= { 0 COMMA 0 COMMA 0 });
@@ -463,7 +469,7 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
 
 // Iterate through all the signs placed in a buffer
 #define FOR_ALL_SIGNS_IN_BUF(buf, sign) \
-  for (sign = buf->b_signlist; sign != NULL; sign = sign->next)   // NOLINT
+  for (sign = buf->b_signlist; sign != NULL; sign = sign->se_next)   // NOLINT
 
 
 // List of files being edited (global argument list).  curwin->w_alist points
@@ -639,10 +645,6 @@ EXTERN int arrow_used;                  // Normally false, set to true after
                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT(= false);   // put cursor after eol when
                                         // restarting edit after CTRL-O
-EXTERN char_u *edit_submode INIT(= NULL);  // msg for CTRL-X submode
-EXTERN char_u *edit_submode_pre INIT(= NULL);  // prepended to edit_submode
-EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
-EXTERN hlf_T edit_submode_highl;        // highl. method for extra info
 
 EXTERN int no_abbr INIT(= true);        // true when no abbreviations loaded
 
@@ -876,6 +878,7 @@ EXTERN char_u e_invexpr2[] INIT(= N_("E15: Invalid expression: %s"));
 EXTERN char_u e_invrange[] INIT(= N_("E16: Invalid range"));
 EXTERN char_u e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
+EXTERN char_u e_no_spell[] INIT(= N_("E756: Spell checking is not possible"));
 EXTERN char_u e_invchan[] INIT(= N_("E900: Invalid channel id"));
 EXTERN char_u e_invchanjob[] INIT(= N_("E900: Invalid channel id: not a job"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
@@ -985,6 +988,8 @@ EXTERN char_u e_dirnotf[] INIT(= N_(
     "E919: Directory not found in '%s': \"%s\""));
 EXTERN char_u e_au_recursive[] INIT(= N_(
     "E952: Autocommand caused recursive behavior"));
+EXTERN char_u e_autocmd_close[] INIT(= N_(
+    "E813: Cannot close autocmd window"));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
@@ -1009,6 +1014,8 @@ EXTERN char_u e_floatonly[] INIT(=N_(
 EXTERN char_u e_floatexchange[] INIT(=N_(
     "E5602: Cannot exchange or rotate float"));
 
+EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_(
+    "E1155: Cannot define autocommands for ALL events"));
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

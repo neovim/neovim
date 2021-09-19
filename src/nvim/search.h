@@ -6,6 +6,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/normal.h"
 #include "nvim/os/time.h"
@@ -49,6 +50,11 @@
 #define RE_BOTH         2       /* save pat in both patterns */
 #define RE_LAST         2       /* use last used pattern if "pat" is NULL */
 
+// Values for searchcount()
+#define SEARCH_STAT_DEF_TIMEOUT 40L
+#define SEARCH_STAT_DEF_MAX_COUNT 99
+#define SEARCH_STAT_BUF_LEN 12
+
 /// Structure containing offset definition for the last search pattern
 ///
 /// @note Only offset for the last search pattern is used, not for the last
@@ -78,6 +84,16 @@ typedef struct {
     int         sa_wrapped;    ///< search wrapped around
 } searchit_arg_T;
 
+typedef struct searchstat
+{
+    int     cur;      // current position of found words
+    int     cnt;      // total count of found words
+    int     exact_match;    // TRUE if matched exactly on specified position
+    int     incomplete;     // 0: search was fully completed
+          // 1: recomputing was timed out
+          // 2: max count exceeded
+    int     last_maxcount;  // the max count of the last search
+} searchstat_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.h.generated.h"

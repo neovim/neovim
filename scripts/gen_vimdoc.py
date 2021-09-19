@@ -48,6 +48,7 @@ import textwrap
 import subprocess
 import collections
 import msgpack
+import logging
 
 from xml.dom import minidom
 
@@ -57,9 +58,17 @@ if sys.version_info < MIN_PYTHON_VERSION:
     print("requires Python {}.{}+".format(*MIN_PYTHON_VERSION))
     sys.exit(1)
 
-DEBUG = ('DEBUG' in os.environ)
+# DEBUG = ('DEBUG' in os.environ)
 INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
 INCLUDE_DEPRECATED = ('INCLUDE_DEPRECATED' in os.environ)
+
+log = logging.getLogger(__name__)
+
+LOG_LEVELS = {
+    logging.getLevelName(level): level for level in [
+        logging.DEBUG, logging.INFO, logging.ERROR
+    ]
+}
 
 fmt_vimhelp = False  # HACK
 text_width = 78
@@ -145,6 +154,7 @@ CONFIG = {
             'lsp.lua',
             'buf.lua',
             'diagnostic.lua',
+            'codelens.lua',
             'handlers.lua',
             'util.lua',
             'log.lua',
@@ -157,7 +167,7 @@ CONFIG = {
         ]),
         'file_patterns': '*.lua',
         'fn_name_prefix': '',
-        'section_name': {},
+        'section_name': {'lsp.lua': 'lsp'},
         'section_fmt': lambda name: (
             'Lua module: vim.lsp'
             if name.lower() == 'lsp'
@@ -177,6 +187,48 @@ CONFIG = {
         'module_override': {},
         'append_only': [],
     },
+    'treesitter': {
+        'mode': 'lua',
+        'filename': 'treesitter.txt',
+        'section_start_token': '*lua-treesitter-core*',
+        'section_order': [
+            'treesitter.lua',
+            'language.lua',
+            'query.lua',
+            'highlighter.lua',
+            'languagetree.lua',
+            'health.lua',
+        ],
+        'files': ' '.join([
+            os.path.join(base_dir, 'runtime/lua/vim/treesitter.lua'),
+            os.path.join(base_dir, 'runtime/lua/vim/treesitter/'),
+        ]),
+        'file_patterns': '*.lua',
+        'fn_name_prefix': '',
+        'section_name': {},
+        'section_fmt': lambda name: (
+            'Lua module: vim.treesitter'
+            if name.lower() == 'treesitter'
+            else f'Lua module: vim.treesitter.{name.lower()}'),
+        'helptag_fmt': lambda name: (
+            '*lua-treesitter-core*'
+            if name.lower() == 'treesitter'
+            else f'*treesitter-{name.lower()}*'),
+        'fn_helptag_fmt': lambda fstem, name: (
+            f'*{name}()*'
+            if name != 'new'
+            else f'*{fstem}.{name}()*'),
+        # 'fn_helptag_fmt': lambda fstem, name: (
+        #     f'*vim.treesitter.{name}()*'
+        #     if fstem == 'treesitter'
+        #     else (
+        #         '*vim.lsp.client*'
+        #         # HACK. TODO(justinmk): class/structure support in lua2dox
+        #         if 'lsp.client' == f'{fstem}.{name}'
+        #         else f'*vim.lsp.{fstem}.{name}()*')),
+        'module_override': {},
+        'append_only': [],
+    }
 }
 
 param_exclude = (
@@ -657,15 +709,6 @@ def extract_from_xml(filename, target, width):
         annotations = filter(None, map(lambda x: annotation_map.get(x),
                                        annotations.split()))
 
-        if not fmt_vimhelp:
-            pass
-        else:
-            fstem = '?'
-            if '.' in compoundname:
-                fstem = compoundname.split('.')[0]
-                fstem = CONFIG[target]['module_override'].get(fstem, fstem)
-            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name)
-
         params = []
         type_length = 0
 
@@ -686,17 +729,37 @@ def extract_from_xml(filename, target, width):
             if fmt_vimhelp and param_type.endswith('*'):
                 param_type = param_type.strip('* ')
                 param_name = '*' + param_name
+
             type_length = max(type_length, len(param_type))
             params.append((param_type, param_name))
+
+        # Handle Object Oriented style functions here.
+        #   We make sure they have "self" in the parameters,
+        #   and a parent function
+        if return_type.startswith('function') \
+                and len(return_type.split(' ')) >= 2 \
+                and any(x[1] == 'self' for x in params):
+            split_return = return_type.split(' ')
+            name = f'{split_return[1]}:{name}'
 
         c_args = []
         for param_type, param_name in params:
             c_args.append(('    ' if fmt_vimhelp else '') + (
                 '%s %s' % (param_type.ljust(type_length), param_name)).strip())
 
+        if not fmt_vimhelp:
+            pass
+        else:
+            fstem = '?'
+            if '.' in compoundname:
+                fstem = compoundname.split('.')[0]
+                fstem = CONFIG[target]['module_override'].get(fstem, fstem)
+            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name)
+
         prefix = '%s(' % name
         suffix = '%s)' % ', '.join('{%s}' % a[1] for a in params
                                    if a[0] not in ('void', 'Error'))
+
         if not fmt_vimhelp:
             c_decl = '%s %s(%s);' % (return_type, name, ', '.join(c_args))
             signature = prefix + suffix
@@ -726,8 +789,8 @@ def extract_from_xml(filename, target, width):
         if desc:
             for child in desc.childNodes:
                 paras.append(para_as_map(child))
-            if DEBUG:
-                print(textwrap.indent(
+            log.debug(
+                textwrap.indent(
                     re.sub(r'\n\s*\n+', '\n',
                            desc.toprettyxml(indent='  ', newl='\n')), ' ' * 16))
 
@@ -765,7 +828,9 @@ def extract_from_xml(filename, target, width):
 
         xrefs.clear()
 
-    fns = collections.OrderedDict(sorted(fns.items()))
+    fns = collections.OrderedDict(sorted(
+        fns.items(),
+        key=lambda key_item_tuple: key_item_tuple[0].lower()))
     deprecated_fns = collections.OrderedDict(sorted(deprecated_fns.items()))
     return (fns, deprecated_fns)
 
@@ -885,12 +950,13 @@ def main(config, args):
             os.remove(mpack_file)
 
         output_dir = out_dir.format(target=target)
+        debug = args.log_level >= logging.DEBUG
         p = subprocess.Popen(
                 ['doxygen', '-'],
                 stdin=subprocess.PIPE,
                 # silence warnings
                 # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
-                stderr=(subprocess.STDOUT if DEBUG else subprocess.DEVNULL))
+                stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
         p.communicate(
             config.format(
                 input=CONFIG[target]['files'],
@@ -992,6 +1058,7 @@ def main(config, args):
                 title, helptag, section_doc = sections.pop(filename)
             except KeyError:
                 msg(f'warning: empty docs, skipping (target={target}): {filename}')
+                msg(f'    existing docs: {sections.keys()}')
                 continue
             i += 1
             if filename not in CONFIG[target]['append_only']:
@@ -1039,6 +1106,10 @@ def filter_source(filename):
 def parse_args():
     targets = ', '.join(CONFIG.keys())
     ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--log-level", "-l", choices=LOG_LEVELS.keys(),
+        default=logging.getLevelName(logging.ERROR), help="Set log verbosity"
+    )
     ap.add_argument('source_filter', nargs='*',
                     help="Filter source file(s)")
     ap.add_argument('-k', '--keep-tmpfiles', action='store_true',
@@ -1085,6 +1156,10 @@ Doxyfile = textwrap.dedent('''
 
 if __name__ == "__main__":
     args = parse_args()
+    print("Setting log level to %s" % args.log_level)
+    args.log_level = LOG_LEVELS[args.log_level]
+    log.setLevel(args.log_level)
+
     if len(args.source_filter) > 0:
         filter_source(args.source_filter[0])
     else:

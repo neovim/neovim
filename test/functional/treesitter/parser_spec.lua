@@ -10,9 +10,11 @@ local pending_c_parser = helpers.pending_c_parser
 before_each(clear)
 
 describe('treesitter parser API', function()
+  clear()
+  if pending_c_parser(pending) then return end
 
   it('parses buffer', function()
-    if helpers.pending_win32(pending) or pending_c_parser(pending) then return end
+    if helpers.pending_win32(pending) then return end
 
     insert([[
       int main() {
@@ -103,8 +105,6 @@ void ui_refresh(void)
 }]]
 
   it('allows to iterate over nodes children', function()
-    if pending_c_parser(pending) then return end
-
     insert(test_text);
 
     local res = exec_lua([[
@@ -127,8 +127,6 @@ void ui_refresh(void)
   end)
 
   it('allows to get a child by field', function()
-    if pending_c_parser(pending) then return end
-
     insert(test_text);
 
     local res = exec_lua([[
@@ -162,8 +160,6 @@ void ui_refresh(void)
   ]]
 
   it("supports runtime queries", function()
-    if pending_c_parser(pending) then return end
-
     local ret = exec_lua [[
       return require"vim.treesitter.query".get_query("c", "highlights").captures[1]
     ]]
@@ -172,8 +168,6 @@ void ui_refresh(void)
   end)
 
   it('support query and iter by capture', function()
-    if pending_c_parser(pending) then return end
-
     insert(test_text)
 
     local res = exec_lua([[
@@ -203,8 +197,6 @@ void ui_refresh(void)
   end)
 
   it('support query and iter by match', function()
-    if pending_c_parser(pending) then return end
-
     insert(test_text)
 
     local res = exec_lua([[
@@ -235,9 +227,97 @@ void ui_refresh(void)
     }, res)
   end)
 
-  it('allow loading query with escaped quotes and capture them with `lua-match?` and `vim-match?`', function()
-    if pending_c_parser(pending) then return end
+  it('can match special regex characters like \\ * + ( with `vim-match?`', function()
+    insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
 
+    local res = exec_lua([[
+      cquery = vim.treesitter.parse_query("c", '((_) @plus (vim-match? @plus "^\\\\+$"))'..
+                                               '((_) @times (vim-match? @times "^\\\\*$"))'..
+                                               '((_) @paren (vim-match? @paren "^\\\\($"))'..
+                                               '((_) @escape (vim-match? @escape "^\\\\\\\\n$"))'..
+                                               '((_) @string (vim-match? @string "^\\"\\\\\\\\n\\"$"))')
+      parser = vim.treesitter.get_parser(0, "c")
+      tree = parser:parse()[1]
+      res = {}
+      for pattern, match in cquery:iter_matches(tree:root(), 0) do
+        -- can't transmit node over RPC. just check the name and range
+        local mrepr = {}
+        for cid,node in pairs(match) do
+          table.insert(mrepr, {cquery.captures[cid], node:type(), node:range()})
+        end
+        table.insert(res, {pattern, mrepr})
+      end
+      return res
+    ]])
+
+    eq({
+      { 2, { { "times", '*', 0, 4, 0, 5 } } },
+      { 5, { { "string", 'string_literal', 0, 16, 0, 20 } } },
+      { 4, { { "escape", 'escape_sequence', 0, 17, 0, 19 } } },
+      { 3, { { "paren", '(', 0, 22, 0, 23 } } },
+      { 1, { { "plus", '+', 0, 25, 0, 26 } } },
+      { 2, { { "times", '*', 0, 30, 0, 31 } } },
+    }, res)
+  end)
+
+  it('supports builtin query predicate any-of?', function()
+    insert([[
+      #include <stdio.h>
+
+      int main(void) {
+        int i;
+        for(i=1; i<=100; i++) {
+          if(((i%3)||(i%5))== 0)
+            printf("number= %d FizzBuzz\n", i);
+          else if((i%3)==0)
+            printf("number= %d Fizz\n", i);
+          else if((i%5)==0)
+            printf("number= %d Buzz\n", i);
+          else
+            printf("number= %d\n",i);
+        }
+        return 0;
+      }
+    ]])
+    exec_lua([[
+      function get_query_result(query_text)
+        cquery = vim.treesitter.parse_query("c", query_text)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for cid, node in cquery:iter_captures(tree:root(), 0) do
+          -- can't transmit node over RPC. just check the name, range, and text
+          local text = vim.treesitter.get_node_text(node, 0)
+          local range = {node:range()}
+          table.insert(res, {cquery.captures[cid], node:type(), range, text})
+        end
+        return res
+      end
+    ]])
+
+    local res0 = exec_lua([[return get_query_result(...)]],
+      [[((primitive_type) @c-keyword (#any-of? @c-keyword "int" "float"))]])
+    eq({
+      { "c-keyword", "primitive_type", { 2, 2, 2, 5 }, "int" },
+      { "c-keyword", "primitive_type", { 3, 4, 3, 7 }, "int" },
+    }, res0)
+
+    local res1 = exec_lua([[return get_query_result(...)]],
+      [[
+        ((string_literal) @fizzbuzz-strings (#any-of? @fizzbuzz-strings
+          "\"number= %d FizzBuzz\\n\""
+          "\"number= %d Fizz\\n\""
+          "\"number= %d Buzz\\n\""
+        ))
+      ]])
+    eq({
+      { "fizzbuzz-strings", "string_literal", { 6, 15, 6, 38 }, "\"number= %d FizzBuzz\\n\""},
+      { "fizzbuzz-strings", "string_literal", { 8, 15, 8, 34 }, "\"number= %d Fizz\\n\""},
+      { "fizzbuzz-strings", "string_literal", { 10, 15, 10, 34 }, "\"number= %d Buzz\\n\""},
+    }, res1)
+  end)
+
+  it('allow loading query with escaped quotes and capture them with `lua-match?` and `vim-match?`', function()
     insert('char* astring = "Hello World!";')
 
     local res = exec_lua([[
@@ -245,7 +325,7 @@ void ui_refresh(void)
       parser = vim.treesitter.get_parser(0, "c")
       tree = parser:parse()[1]
       res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, 1) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid,node in pairs(match) do
@@ -289,7 +369,7 @@ void ui_refresh(void)
     local query = query.parse_query("c", ...)
 
     local nodes = {}
-    for _, node in query:iter_captures(parser:parse()[1]:root(), 0, 0, 19) do
+    for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
       table.insert(nodes, {node:range()})
     end
 
@@ -308,13 +388,11 @@ void ui_refresh(void)
     return list
     ]]
 
-    eq({ 'contains?', 'eq?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
+    eq({ 'any-of?', 'contains?', 'eq?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
   end)
 
 
   it('allows to set simple ranges', function()
-    if pending_c_parser(pending) then return end
-
     insert(test_text)
 
     local res = exec_lua [[
@@ -356,8 +434,6 @@ void ui_refresh(void)
     eq(range_tbl, { { { 0, 0, 0, 17, 1, 508 } } })
   end)
   it("allows to set complex ranges", function()
-    if pending_c_parser() then return end
-
     insert(test_text)
 
     local res = exec_lua [[
@@ -365,7 +441,7 @@ void ui_refresh(void)
     query = vim.treesitter.parse_query("c", "(declaration) @decl")
 
     local nodes = {}
-    for _, node in query:iter_captures(parser:parse()[1]:root(), 0, 0, 19) do
+    for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
       table.insert(nodes, node)
     end
 
@@ -412,13 +488,36 @@ void ui_refresh(void)
     local nodes = {}
     local query = vim.treesitter.parse_query("c", '((identifier) @id (eq? @id "foo"))')
 
-    for _, node in query:iter_captures(parser:parse()[1]:root(), str, 0, 2) do
+    for _, node in query:iter_captures(parser:parse()[1]:root(), str) do
       table.insert(nodes, { node:range() })
     end
 
     return nodes]], txt)
 
     eq({ {0, 10, 0, 13} }, ret)
+  end)
+
+  it("should use node range when omitted", function()
+    local txt = [[
+      int foo = 42;
+      int bar = 13;
+    ]]
+
+    local ret = exec_lua([[
+    local str = ...
+    local parser = vim.treesitter.get_string_parser(str, "c")
+
+    local nodes = {}
+    local query = vim.treesitter.parse_query("c", '((identifier) @foo)')
+    local first_child = parser:parse()[1]:root():child(1)
+
+    for _, node in query:iter_captures(first_child, str) do
+      table.insert(nodes, { node:range() })
+    end
+
+    return nodes]], txt)
+
+    eq({ {1, 10, 1, 13} }, ret)
   end)
 
   describe("when creating a language tree", function()
@@ -445,7 +544,7 @@ int x = INT_MAX;
       it("should inject a language", function()
         exec_lua([[
         parser = vim.treesitter.get_parser(0, "c", {
-          queries = {
+          injections = {
             c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}})
         ]])
 
@@ -466,9 +565,37 @@ int x = INT_MAX;
       it("should inject a language", function()
         exec_lua([[
         parser = vim.treesitter.get_parser(0, "c", {
-          queries = {
+          injections = {
             c = "(preproc_def (preproc_arg) @c @combined) (preproc_function_def value: (preproc_arg) @c @combined)"}})
         ]])
+
+        eq("table", exec_lua("return type(parser:children().c)"))
+        eq(2, exec_lua("return #parser:children().c:trees()"))
+        eq({
+          {0, 0, 7, 0},   -- root tree
+          {3, 14, 5, 18}, -- VALUE 123
+                          -- VALUE1 123
+                          -- VALUE2 123
+          {1, 26, 2, 68}  -- READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+                          -- READ_STRING_OK(x, y) (char_u *)read_string((x), (size_t)(y))
+        }, get_ranges())
+      end)
+    end)
+
+    describe("when providing parsing information through a directive", function()
+      it("should inject a language", function()
+        exec_lua([=[
+        vim.treesitter.add_directive("inject-clang!", function(match, _, _, pred, metadata)
+          metadata.language = "c"
+          metadata.combined = true
+          metadata.content = pred[2]
+        end)
+
+        parser = vim.treesitter.get_parser(0, "c", {
+          injections = {
+            c = "(preproc_def ((preproc_arg) @_c (#inject-clang! @_c)))" ..
+                "(preproc_function_def value: ((preproc_arg) @_a (#inject-clang! @_a)))"}})
+        ]=])
 
         eq("table", exec_lua("return type(parser:children().c)"))
         eq(2, exec_lua("return #parser:children().c:trees()"))
@@ -487,7 +614,7 @@ int x = INT_MAX;
       it("should shift the range by the directive amount", function()
         exec_lua([[
         parser = vim.treesitter.get_parser(0, "c", {
-          queries = {
+          injections = {
             c = "(preproc_def ((preproc_arg) @c (#offset! @c 0 2 0 -1))) (preproc_function_def value: (preproc_arg) @c)"}})
         ]])
 
@@ -515,7 +642,7 @@ int x = INT_MAX;
     it("should return the correct language tree", function()
       local result = exec_lua([[
       parser = vim.treesitter.get_parser(0, "c", {
-        queries = { c = "(preproc_def (preproc_arg) @c)"}})
+        injections = { c = "(preproc_def (preproc_arg) @c)"}})
 
       local sub_tree = parser:language_for_range({1, 18, 1, 19})
 
@@ -539,7 +666,7 @@ int x = INT_MAX;
         query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! "key" "value"))')
         parser = vim.treesitter.get_parser(0, "c")
 
-        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, 1) do
+        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
           result = metadata.key
         end
 
@@ -548,28 +675,55 @@ int x = INT_MAX;
 
         eq(result, "value")
       end)
-    end)
 
-    describe("when setting for a capture match", function()
-      it("should set/get the data correctly", function()
-        insert([[
-          int x = 3;
-        ]])
+      describe("when setting a key on a capture", function()
+        it("it should create the nested table", function()
+          insert([[
+            int x = 3;
+          ]])
 
-        local result = exec_lua([[
-        local result
+          local result = exec_lua([[
+          local query = require("vim.treesitter.query")
+          local value
 
-        query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! @number "key" "value"))')
-        parser = vim.treesitter.get_parser(0, "c")
+          query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! @number "key" "value"))')
+          parser = vim.treesitter.get_parser(0, "c")
 
-        for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0, 0, 1) do
-          result = metadata[pattern].key
-        end
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
+            for _, nested_tbl in pairs(metadata) do
+              return nested_tbl.key
+            end
+          end
+          ]])
 
-        return result
-        ]])
+          eq(result, "value")
+        end)
 
-        eq(result, "value")
+        it("it should not overwrite the nested table", function()
+          insert([[
+            int x = 3;
+          ]])
+
+          local result = exec_lua([[
+          local query = require("vim.treesitter.query")
+          local result
+
+          query = vim.treesitter.parse_query("c", '((number_literal) @number (#set! @number "key" "value") (#set! @number "key2" "value2"))')
+          parser = vim.treesitter.get_parser(0, "c")
+
+          for pattern, match, metadata in query:iter_matches(parser:parse()[1]:root(), 0) do
+            for _, nested_tbl in pairs(metadata) do
+              return nested_tbl
+            end
+          end
+          ]])
+          local expected = {
+            ["key"] = "value",
+            ["key2"] = "value2",
+          }
+
+          eq(expected, result)
+        end)
       end)
     end)
   end)

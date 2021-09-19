@@ -45,15 +45,15 @@ typedef struct memline {
 
   memfile_T   *ml_mfp;          // pointer to associated memfile
 
+  infoptr_T   *ml_stack;        // stack of pointer blocks (array of IPTRs)
+  int ml_stack_top;             // current top of ml_stack
+  int ml_stack_size;            // total number of entries in ml_stack
+
 #define ML_EMPTY        1       // empty buffer
 #define ML_LINE_DIRTY   2       // cached line was changed and allocated
 #define ML_LOCKED_DIRTY 4       // ml_locked was changed
 #define ML_LOCKED_POS   8       // ml_locked needs positive block number
   int ml_flags;
-
-  infoptr_T   *ml_stack;        // stack of pointer blocks (array of IPTRs)
-  int ml_stack_top;             // current top of ml_stack
-  int ml_stack_size;            // total number of entries in ml_stack
 
   linenr_T ml_line_lnum;        // line number of cached line, 0 if not valid
   char_u      *ml_line_ptr;     // pointer to cached line

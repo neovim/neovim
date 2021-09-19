@@ -26,9 +26,9 @@ start a new line.  One to move the carriage back to the first position
 (carriage return, <CR>), another to move the paper up (line feed, <LF>).
    When computers came out, storage was expensive.  Some people decided that
 they did not need two characters for end-of-line.  The Unix people decided
-they could use <Line Feed> only for end-of-line.  The Apple people
-standardized on <CR>.  The MS-DOS (and Microsoft Windows) folks decided to
-keep the old <CR><LF>.
+they could use <New Line> or <NL> only for end-of-line.  The Apple people
+standardized on <CR>.  The Microsoft Windows folks decided to keep the old
+<CR><NL> (we use <NL> for line feed in the help text).
    This means that if you try to move a file from one system to another, you
 have line-break problems.  The Vim editor automatically recognizes the
 different file formats and handles things properly behind your back.
@@ -53,20 +53,20 @@ which format you have, execute the following command: >
 
 The three names that Vim uses are:
 
-	unix		<LF>
-	dos		<CR><LF>
+	unix		<NL>
+	dos		<CR><NL>
 	mac		<CR>
 
 
 USING THE MAC FORMAT
 
-On Unix, <LF> is used to break a line.  It's not unusual to have a <CR>
+On Unix, <NL> is used to break a line.  It's not unusual to have a <CR>
 character halfway in a line.  Incidentally, this happens quite often in Vi
 (and Vim) scripts.
    On the Macintosh, where <CR> is the line break character, it's possible to
-have a <LF> character halfway in a line.
+have a <NL> character halfway in a line.
    The result is that it's not possible to be 100% sure whether a file
-containing both <CR> and <LF> characters is a Mac or a Unix file.  Therefore,
+containing both <CR> and <NL> characters is a Mac or a Unix file.  Therefore,
 Vim assumes that on Unix you probably won't edit a Mac file, and doesn't check
 for this type of file.  To check for this format anyway, add "mac" to
 'fileformats': >

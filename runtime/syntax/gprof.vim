@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: Syntax for Gprof Output
 " Maintainer: Dominique Pelle <dominique.pelle@gmail.com>
-" Last Change: 2013 Jun 09
+" Last Change: 2021 Apr 08
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -28,7 +28,7 @@ syn match gprofCallGraphTitle "Call graph (explanation follows)"
 syn region gprofCallGraphHeader
   \ start="^granularity: each sample hit covers.*"
   \ end="^\s*index % time\s\+self\s\+children\s\+called\s\+name$"
-syn match gprofCallGraphFunction "\s\+\(\d\+\.\d\+\s\+\)\{3}\([0-9+]\+\)\?\s\+[a-zA-Z_<].*\ze\["
+syn match gprofCallGraphFunction "\<\(\d\+\.\d\+\s\+\)\{3}\([0-9+]\+\)\?\s\+[a-zA-Z_<].*\ze\["
 syn match gprofCallGraphSeparator "^-\+$"
 syn region gprofCallGraphTrailer
   \ start="This table describes the call tree of the program"
@@ -41,7 +41,7 @@ syn region gprofIndex
 
 syn match gprofIndexFunctionTitle "^Index by function name$"
 
-syn match gprofNumbers "^\s\+[0-9 ./+]\+"
+syn match gprofNumbers "^\s*[0-9 ./+]\+"
 syn match gprofFunctionIndex "\[\d\+\]"
 syn match gprofSpecial "<\(spontaneous\|cycle \d\+\)>"
 

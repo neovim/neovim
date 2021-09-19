@@ -2942,9 +2942,9 @@ static void add_fromto(spellinfo_T *spin, garray_T *gap, char_u *from, char_u *t
   char_u word[MAXWLEN];
 
   fromto_T *ftp = GA_APPEND_VIA_PTR(fromto_T, gap);
-  (void)spell_casefold(from, (int)STRLEN(from), word, MAXWLEN);
+  (void)spell_casefold(curwin, from, (int)STRLEN(from), word, MAXWLEN);
   ftp->ft_from = getroom_save(spin, word);
-  (void)spell_casefold(to, (int)STRLEN(to), word, MAXWLEN);
+  (void)spell_casefold(curwin, to, (int)STRLEN(to), word, MAXWLEN);
   ftp->ft_to = getroom_save(spin, word);
 }
 
@@ -3764,7 +3764,7 @@ store_word (
     char_u *word,
     int flags,                      // extra flags, WF_BANNED
     int region,                     // supported region(s)
-    char_u *pfxlist,                // list of prefix IDs or NULL
+    const char_u *pfxlist,          // list of prefix IDs or NULL
     bool need_affix                 // only store word with affix ID
 )
 {
@@ -3772,25 +3772,28 @@ store_word (
   int ct = captype(word, word + len);
   char_u foldword[MAXWLEN];
   int res = OK;
-  char_u      *p;
 
-  (void)spell_casefold(word, len, foldword, MAXWLEN);
-  for (p = pfxlist; res == OK; ++p) {
-    if (!need_affix || (p != NULL && *p != NUL))
+  (void)spell_casefold(curwin, word, len, foldword, MAXWLEN);
+  for (const char_u *p = pfxlist; res == OK; p++) {
+    if (!need_affix || (p != NULL && *p != NUL)) {
       res = tree_add_word(spin, foldword, spin->si_foldroot, ct | flags,
-          region, p == NULL ? 0 : *p);
-    if (p == NULL || *p == NUL)
+                          region, p == NULL ? 0 : *p);
+    }
+    if (p == NULL || *p == NUL) {
       break;
+    }
   }
   ++spin->si_foldwcount;
 
   if (res == OK && (ct == WF_KEEPCAP || (flags & WF_KEEPCAP))) {
-    for (p = pfxlist; res == OK; ++p) {
-      if (!need_affix || (p != NULL && *p != NUL))
+    for (const char_u *p = pfxlist; res == OK; p++) {
+      if (!need_affix || (p != NULL && *p != NUL)) {
         res = tree_add_word(spin, word, spin->si_keeproot, flags,
-            region, p == NULL ? 0 : *p);
-      if (p == NULL || *p == NUL)
+                            region, p == NULL ? 0 : *p);
+      }
+      if (p == NULL || *p == NUL) {
         break;
+      }
     }
     ++spin->si_keepwcount;
   }
@@ -5287,13 +5290,16 @@ static void spell_message(const spellinfo_T *spin, char_u *str)
 }
 
 // ":[count]spellgood  {word}"
-// ":[count]spellwrong  {word}"
+// ":[count]spellwrong {word}"
 // ":[count]spellundo  {word}"
+// ":[count]spellrare  {word}"
 void ex_spell(exarg_T *eap)
 {
-  spell_add_word(eap->arg, (int)STRLEN(eap->arg), eap->cmdidx == CMD_spellwrong,
-      eap->forceit ? 0 : (int)eap->line2,
-      eap->cmdidx == CMD_spellundo);
+  spell_add_word(eap->arg, (int)STRLEN(eap->arg),
+                 eap->cmdidx == CMD_spellwrong ? SPELL_ADD_BAD :
+                 eap->cmdidx == CMD_spellrare ? SPELL_ADD_RARE : SPELL_ADD_GOOD,
+                 eap->forceit ? 0 : (int)eap->line2,
+                 eap->cmdidx == CMD_spellundo);
 }
 
 // Add "word[len]" to 'spellfile' as a good or bad word.
@@ -5301,10 +5307,10 @@ void
 spell_add_word (
     char_u *word,
     int len,
-    int bad,
-    int idx,                   // "zG" and "zW": zero, otherwise index in
-                               // 'spellfile'
-    bool undo                   // true for "zug", "zuG", "zuw" and "zuW"
+    SpellAddType what,        // SPELL_ADD_ values
+    int idx,                  // "zG" and "zW": zero, otherwise index in
+                              // 'spellfile'
+    bool undo                 // true for "zug", "zuG", "zuw" and "zuW"
 )
 {
   FILE        *fd = NULL;
@@ -5361,7 +5367,7 @@ spell_add_word (
     fname = fnamebuf;
   }
 
-  if (bad || undo) {
+  if (what == SPELL_ADD_BAD || undo) {
     // When the word appears as good word we need to remove that one,
     // since its flags sort before the one with WF_BANNED.
     fd = os_fopen((char *)fname, "r");
@@ -5387,7 +5393,8 @@ spell_add_word (
                    len, word, NameBuff);
             }
           }
-          if (fseek(fd, fpos_next, SEEK_SET) <= 0) {
+          if (fseek(fd, fpos_next, SEEK_SET) != 0) {
+            PERROR(_("Seek error in spellfile"));
             break;
           }
         }
@@ -5418,13 +5425,16 @@ spell_add_word (
       }
     }
 
-    if (fd == NULL)
+    if (fd == NULL) {
       EMSG2(_(e_notopen), fname);
-    else {
-      if (bad)
+    } else {
+      if (what == SPELL_ADD_BAD) {
         fprintf(fd, "%.*s/!\n", len, word);
-      else
+      } else if (what == SPELL_ADD_RARE) {
+        fprintf(fd, "%.*s/?\n", len, word);
+      } else {
         fprintf(fd, "%.*s\n", len, word);
+      }
       fclose(fd);
 
       home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);

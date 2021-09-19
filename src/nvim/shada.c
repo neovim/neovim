@@ -765,7 +765,7 @@ static ShaDaReadResult sd_reader_skip(ShaDaReadDef *const sd_reader,
             (uint64_t) offset);
       return kSDReadStatusNotShaDa;
     }
-    assert(false);
+    abort();
   }
   return kSDReadStatusSuccess;
 }
@@ -1224,7 +1224,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       }
       case kSDReadStatusFinished: {
         // Should be handled by the while condition.
-        assert(false);
+        abort();
       }
       case kSDReadStatusNotShaDa:
       case kSDReadStatusReadError: {
@@ -1236,7 +1236,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     }
     switch (cur_entry.type) {
       case kSDItemMissing: {
-        assert(false);
+        abort();
       }
       case kSDItemUnknown: {
         break;
@@ -1628,7 +1628,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
   ((size_t) (!CHECK_DEFAULT(entry, attr)))
   switch (entry.type) {
     case kSDItemMissing: {
-      assert(false);
+      abort();
     }
     case kSDItemUnknown: {
       if (spacker->callback(spacker->data, entry.data.unknown_item.contents,
@@ -1850,7 +1850,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
             break;
           }
           default: {
-            assert(false);
+            abort();
           }
         }
       }
@@ -2147,7 +2147,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDReadStatusFinished: {
         // Should be handled by the while condition.
-        assert(false);
+        abort();
       }
       case kSDReadStatusNotShaDa: {
         ret = kSDWriteReadNotShada;
@@ -2184,7 +2184,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDItemHeader:
       case kSDItemBufferList: {
-        assert(false);
+        abort();
       }
       case kSDItemUnknown: {
         ret = shada_pack_entry(packer, entry, 0);
@@ -4044,7 +4044,7 @@ shada_read_next_item_start:
     }
     case kSDItemMissing:
     case kSDItemUnknown: {
-      assert(false);
+      abort();
     }
   }
   entry->type = (ShadaEntryType) type_u64;

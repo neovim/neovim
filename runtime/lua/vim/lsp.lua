@@ -16,13 +16,11 @@ local validate = vim.validate
 local lsp = {
   protocol = protocol;
 
-  -- TODO(tjdevries): Add in the warning that `callbacks` is no longer supported.
-  -- util.warn_once("vim.lsp.callbacks is deprecated. Use vim.lsp.handlers instead.")
   handlers = default_handlers;
-  callbacks = default_handlers;
 
   buf = require'vim.lsp.buf';
   diagnostic = require'vim.lsp.diagnostic';
+  codelens = require'vim.lsp.codelens';
   util = util;
 
   -- Allow raw RPC access.
@@ -41,11 +39,13 @@ lsp._request_name_to_capability = {
   ['textDocument/declaration'] = 'declaration';
   ['textDocument/typeDefinition'] = 'type_definition';
   ['textDocument/documentSymbol'] = 'document_symbol';
-  ['textDocument/workspaceSymbol'] = 'workspace_symbol';
   ['textDocument/prepareCallHierarchy'] = 'call_hierarchy';
   ['textDocument/rename'] = 'rename';
   ['textDocument/codeAction'] = 'code_action';
+  ['textDocument/codeLens'] = 'code_lens';
+  ['codeLens/resolve'] = 'code_lens_resolve';
   ['workspace/executeCommand'] = 'execute_command';
+  ['workspace/symbol'] = 'workspace_symbol';
   ['textDocument/references'] = 'find_references';
   ['textDocument/rangeFormatting'] = 'document_range_formatting';
   ['textDocument/formatting'] = 'document_formatting';
@@ -120,6 +120,9 @@ end
 local active_clients = {}
 local all_buffer_active_clients = {}
 local uninitialized_clients = {}
+
+-- Tracks all buffers attached to a client.
+local all_client_active_buffers = {}
 
 --@private
 --- Invokes a function for each LSP client attached to the buffer {bufnr}.
@@ -216,8 +219,6 @@ local function validate_client_config(config)
   }
   validate {
     root_dir        = { config.root_dir, is_dir, "directory" };
-    -- TODO(remove-callbacks)
-    callbacks       = { config.callbacks, "t", true };
     handlers        = { config.handlers, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
@@ -230,14 +231,14 @@ local function validate_client_config(config)
     before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
     flags           = { config.flags, "t", true };
+    get_language_id = { config.get_language_id, "f", true };
   }
-
-  -- TODO(remove-callbacks)
-  if config.handlers and config.callbacks then
-    error(debug.traceback(
-      "Unable to configure LSP with both 'config.handlers' and 'config.callbacks'. Use 'config.handlers' exclusively."
-    ))
-  end
+  assert(
+    (not config.flags
+      or not config.flags.debounce_text_changes
+      or type(config.flags.debounce_text_changes) == 'number'),
+    "flags.debounce_text_changes must be nil or a number with the debounce time in milliseconds"
+  )
 
   local cmd, cmd_args = lsp._cmd_parts(config.cmd)
   local offset_encoding = valid_encodings.UTF16
@@ -266,28 +267,202 @@ local function buf_get_full_text(bufnr)
 end
 
 --@private
+--- Memoizes a function. On first run, the function return value is saved and
+--- immediately returned on subsequent runs. If the function returns a multival,
+--- only the first returned value will be memoized and returned. The function will only be run once,
+--- even if it has side-effects.
+---
+--@param fn (function) Function to run
+--@returns (function) Memoized function
+local function once(fn)
+  local value
+  local ran = false
+  return function(...)
+    if not ran then
+      value = fn(...)
+      ran = true
+    end
+    return value
+  end
+end
+
+
+local changetracking = {}
+do
+  --- client_id → state
+  ---
+  ---   state
+  ---     pending_change?: function that the timer starts to trigger didChange
+  ---     pending_changes: list of tables with the pending changesets; for incremental_sync only
+  ---     use_incremental_sync: bool
+  ---     buffers?: table (bufnr → lines); for incremental sync only
+  ---     timer?: uv_timer
+  local state_by_client = {}
+
+  function changetracking.init(client, bufnr)
+    local state = state_by_client[client.id]
+    if not state then
+      state = {
+        pending_changes = {};
+        use_incremental_sync = (
+          if_nil(client.config.flags.allow_incremental_sync, true)
+          and client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.Incremental
+        );
+      }
+      state_by_client[client.id] = state
+    end
+    if not state.use_incremental_sync then
+      return
+    end
+    if not state.buffers then
+      state.buffers = {}
+    end
+    state.buffers[bufnr] = nvim_buf_get_lines(bufnr, 0, -1, true)
+  end
+
+  function changetracking.reset_buf(client, bufnr)
+    local state = state_by_client[client.id]
+    if state then
+      changetracking._reset_timer(state)
+      if state.buffers then
+        state.buffers[bufnr] = nil
+      end
+    end
+  end
+
+  function changetracking.reset(client_id)
+    local state = state_by_client[client_id]
+    if state then
+      state_by_client[client_id] = nil
+      changetracking._reset_timer(state)
+    end
+  end
+
+  function changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+    local incremental_changes = function(client)
+      local cached_buffers = state_by_client[client.id].buffers
+      local lines = nvim_buf_get_lines(bufnr, 0, -1, true)
+      local startline =  math.min(firstline + 1, math.min(#cached_buffers[bufnr], #lines))
+      local endline =  math.min(-(#lines - new_lastline), -1)
+      local incremental_change = vim.lsp.util.compute_diff(
+        cached_buffers[bufnr], lines, startline, endline, client.offset_encoding or 'utf-16')
+      cached_buffers[bufnr] = lines
+      return incremental_change
+    end
+    local full_changes = once(function()
+      return {
+        text = buf_get_full_text(bufnr);
+      };
+    end)
+    local uri = vim.uri_from_bufnr(bufnr)
+    return function(client)
+      if client.resolved_capabilities.text_document_did_change == protocol.TextDocumentSyncKind.None then
+        return
+      end
+      local state = state_by_client[client.id]
+      local debounce = client.config.flags.debounce_text_changes
+      if not debounce then
+        local changes = state.use_incremental_sync and incremental_changes(client) or full_changes()
+        client.notify("textDocument/didChange", {
+          textDocument = {
+            uri = uri;
+            version = changedtick;
+          };
+          contentChanges = { changes, }
+        })
+        return
+      end
+      changetracking._reset_timer(state)
+      if state.use_incremental_sync then
+        -- This must be done immediately and cannot be delayed
+        -- The contents would further change and startline/endline may no longer fit
+        table.insert(state.pending_changes, incremental_changes(client))
+      end
+      state.pending_change = function()
+        state.pending_change = nil
+        if client.is_stopped() then
+          return
+        end
+        local contentChanges
+        if state.use_incremental_sync then
+          contentChanges = state.pending_changes
+          state.pending_changes = {}
+        else
+          contentChanges = { full_changes(), }
+        end
+        client.notify("textDocument/didChange", {
+          textDocument = {
+            uri = uri;
+            version = changedtick;
+          };
+          contentChanges = contentChanges
+        })
+      end
+      state.timer = vim.loop.new_timer()
+      -- Must use schedule_wrap because `full_changes()` calls nvim_buf_get_lines
+      state.timer:start(debounce, 0, vim.schedule_wrap(state.pending_change))
+    end
+  end
+
+  function changetracking._reset_timer(state)
+    if state.timer then
+      state.timer:stop()
+      state.timer:close()
+      state.timer = nil
+    end
+  end
+
+  --- Flushes any outstanding change notification.
+  function changetracking.flush(client)
+    local state = state_by_client[client.id]
+    if state then
+      changetracking._reset_timer(state)
+      if state.pending_change then
+        state.pending_change()
+      end
+    end
+  end
+end
+
+
+--@private
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
 --@param bufnr (Number) Number of the buffer, or 0 for current
 --@param client Client object
 local function text_document_did_open_handler(bufnr, client)
+  changetracking.init(client, bufnr)
   if not client.resolved_capabilities.text_document_open_close then
     return
   end
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
+  local filetype = nvim_buf_get_option(bufnr, 'filetype')
+
   local params = {
     textDocument = {
       version = 0;
       uri = vim.uri_from_bufnr(bufnr);
-      -- TODO make sure our filetypes are compatible with languageId names.
-      languageId = nvim_buf_get_option(bufnr, 'filetype');
+      languageId = client.config.get_language_id(bufnr, filetype);
       text = buf_get_full_text(bufnr);
     }
   }
   client.notify('textDocument/didOpen', params)
   util.buf_versions[bufnr] = params.textDocument.version
+
+  -- Next chance we get, we should re-do the diagnostics
+  vim.schedule(function()
+    vim.lsp.handlers["textDocument/publishDiagnostics"](
+      nil,
+      "textDocument/publishDiagnostics",
+      {
+        diagnostics = vim.lsp.diagnostic.get(bufnr, client.id),
+        uri = vim.uri_from_bufnr(bufnr),
+      },
+      client.id
+    )
+  end)
 end
 
 -- FIXME: DOC: Shouldn't need to use a dummy function
@@ -308,6 +483,13 @@ end
 ---     If {status} is `true`, the function returns {request_id} as the second
 ---     result. You can use this with `client.cancel_request(request_id)`
 ---     to cancel the request.
+---
+---  - request_sync(method, params, timeout_ms, bufnr)
+---     Sends a request to the server and synchronously waits for the response.
+---     This is a wrapper around {client.request}
+---     Returns: { err=err, result=result }, a dictionary, where `err` and `result` come from
+---     the |lsp-handler|. On timeout, cancel or error, returns `(nil, err)` where `err` is a
+---     string describing the failure reason. If the request was unsuccessful returns `nil`.
 ---
 ---  - notify(method, params)
 ---     Sends a notification to an LSP server.
@@ -409,6 +591,9 @@ end
 ---
 --@param name (string, default=client-id) Name in log messages.
 ---
+--@param get_language_id function(bufnr, filetype) -> language ID as string.
+--- Defaults to the filetype.
+---
 --@param offset_encoding (default="utf-16") One of "utf-8", "utf-16",
 --- or "utf-32" which is the encoding that the LSP server expects. Client does
 --- not verify this is correct.
@@ -447,16 +632,10 @@ end
 --@param trace:  "off" | "messages" | "verbose" | nil passed directly to the language
 --- server in the initialize request. Invalid/empty values will default to "off"
 --@param flags: A table with flags for the client. The current (experimental) flags are:
---- - allow_incremental_sync (bool, default false): Allow using on_line callbacks for lsp
----
---- <pre>
---- -- In attach function for the client, you can do:
---- local custom_attach = function(client)
----   if client.config.flags then
----     client.config.flags.allow_incremental_sync = true
----   end
---- end
---- </pre>
+--- - allow_incremental_sync (bool, default true): Allow using incremental sync for buffer edits
+--- - debounce_text_changes (number, default nil): Debounce didChange
+---       notifications to the server by the given number in milliseconds. No debounce
+---       occurs if nil
 ---
 --@returns Client id. |vim.lsp.get_client_by_id()| Note: client may not be
 --- fully initialized. Use `on_init` to do any actions once
@@ -468,10 +647,14 @@ function lsp.start_client(config)
   config.flags = config.flags or {}
   config.settings = config.settings or {}
 
+  -- By default, get_language_id just returns the exact filetype it is passed.
+  --    It is possible to pass in something that will calculate a different filetype,
+  --    to be sent by the client.
+  config.get_language_id = config.get_language_id or function(_, filetype) return filetype end
+
   local client_id = next_client_id()
 
-  -- TODO(remove-callbacks)
-  local handlers = config.handlers or config.callbacks or {}
+  local handlers = config.handlers or {}
   local name = config.name or tostring(client_id)
   local log_prefix = string.format("LSP[%s]", name)
 
@@ -545,19 +728,21 @@ function lsp.start_client(config)
   function dispatch.on_exit(code, signal)
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
-    local active_buffers = {}
-    for bufnr, client_ids in pairs(all_buffer_active_clients) do
-      if client_ids[client_id] then
-        table.insert(active_buffers, bufnr)
-      end
+
+    lsp.diagnostic.reset(client_id, all_buffer_active_clients)
+    changetracking.reset(client_id)
+    all_client_active_buffers[client_id] = nil
+    for _, client_ids in pairs(all_buffer_active_clients) do
       client_ids[client_id] = nil
     end
-    -- Buffer level cleanup
-    vim.schedule(function()
-      for _, bufnr in ipairs(active_buffers) do
-        lsp.diagnostic.clear(bufnr)
-      end
-    end)
+
+    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
+      local msg = string.format("Client %s quit with exit code %s and signal %s", client_id, code, signal)
+      vim.schedule(function()
+        vim.notify(msg, vim.log.levels.WARN)
+      end)
+    end
+
     if config.on_exit then
       pcall(config.on_exit, code, signal, client_id)
     end
@@ -576,8 +761,6 @@ function lsp.start_client(config)
     offset_encoding = offset_encoding;
     config = config;
 
-    -- TODO(remove-callbacks)
-    callbacks = handlers;
     handlers = handlers;
     -- for $/progress report
     messages = { name = name, messages = {}, progress = {}, status = {} }
@@ -706,10 +889,49 @@ function lsp.start_client(config)
       handler = resolve_handler(method)
         or error(string.format("not found: %q request handler for client %q.", method, client.name))
     end
+    -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
+    changetracking.flush(client)
+
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
       handler(err, method, result, client_id, bufnr)
     end)
+  end
+
+  --@private
+  --- Sends a request to the server and synchronously waits for the response.
+  ---
+  --- This is a wrapper around {client.request}
+  ---
+  --@param method (string) LSP method name.
+  --@param params (table) LSP request params.
+  --@param timeout_ms (number, optional, default=1000) Maximum time in
+  ---milliseconds to wait for a result.
+  --@param bufnr (number) Buffer handle (0 for current).
+  --@returns { err=err, result=result }, a dictionary, where `err` and `result` come from the |lsp-handler|.
+  ---On timeout, cancel or error, returns `(nil, err)` where `err` is a
+  ---string describing the failure reason. If the request was unsuccessful
+  ---returns `nil`.
+  --@see |vim.lsp.buf_request_sync()|
+  function client.request_sync(method, params, timeout_ms, bufnr)
+    local request_result = nil
+    local function _sync_handler(err, _, result)
+      request_result = { err = err, result = result }
+    end
+
+    local success, request_id = client.request(method, params, _sync_handler,
+      bufnr)
+    if not success then return nil end
+
+    local wait_result, reason = vim.wait(timeout_ms or 1000, function()
+      return request_result ~= nil
+    end, 10)
+
+    if not wait_result then
+      client.cancel_request(request_id)
+      return nil, wait_result_reason[reason]
+    end
+    return request_result
   end
 
   --@private
@@ -738,7 +960,7 @@ function lsp.start_client(config)
 
   -- Track this so that we can escalate automatically if we've alredy tried a
   -- graceful shutdown
-  local tried_graceful_shutdown = false
+  local graceful_shutdown_failed = false
   --@private
   --- Stops a client, optionally with force.
   ---
@@ -748,15 +970,22 @@ function lsp.start_client(config)
   ---
   --@param force (bool, optional)
   function client.stop(force)
+
+    lsp.diagnostic.reset(client_id, all_buffer_active_clients)
+    changetracking.reset(client_id)
+    all_client_active_buffers[client_id] = nil
+    for _, client_ids in pairs(all_buffer_active_clients) do
+      client_ids[client_id] = nil
+    end
+
     local handle = rpc.handle
     if handle:is_closing() then
       return
     end
-    if force or (not client.initialized) or tried_graceful_shutdown then
+    if force or (not client.initialized) or graceful_shutdown_failed then
       handle:kill(15)
       return
     end
-    tried_graceful_shutdown = true
     -- Sending a signal after a process has exited is acceptable.
     rpc.request('shutdown', nil, function(err, _)
       if err == nil then
@@ -764,6 +993,7 @@ function lsp.start_client(config)
       else
         -- If there was an error in the shutdown request, then term to be safe.
         handle:kill(15)
+        graceful_shutdown_failed = true
       end
     end)
   end
@@ -794,25 +1024,10 @@ function lsp.start_client(config)
 end
 
 --@private
---- Memoizes a function. On first run, the function return value is saved and
---- immediately returned on subsequent runs.
----
---@param fn (function) Function to run
---@returns (function) Memoized function
-local function once(fn)
-  local value
-  return function(...)
-    if not value then value = fn(...) end
-    return value
-  end
-end
-
---@private
 --@fn text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
 --- Notify all attached clients that a buffer has changed.
 local text_document_did_change_handler
 do
-  local encoding_index = { ["utf-8"] = 1; ["utf-16"] = 2; ["utf-32"] = 3; }
   text_document_did_change_handler = function(_, bufnr, changedtick,
       firstline, lastline, new_lastline, old_byte_size, old_utf32_size,
       old_utf16_size)
@@ -827,60 +1042,9 @@ do
     if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
       return
     end
-
     util.buf_versions[bufnr] = changedtick
-    -- Lazy initialize these because clients may not even need them.
-    local incremental_changes = once(function(client)
-      local size_index = encoding_index[client.offset_encoding]
-      local length = select(size_index, old_byte_size, old_utf16_size, old_utf32_size)
-      local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
-
-      -- This is necessary because we are specifying the full line including the
-      -- newline in range. Therefore, we must replace the newline as well.
-      if #lines > 0 then
-       table.insert(lines, '')
-      end
-      return {
-        range = {
-          start = { line = firstline, character = 0 };
-          ["end"] = { line = lastline, character = 0 };
-        };
-        rangeLength = length;
-        text = table.concat(lines, '\n');
-      };
-    end)
-    local full_changes = once(function()
-      return {
-        text = buf_get_full_text(bufnr);
-      };
-    end)
-    local uri = vim.uri_from_bufnr(bufnr)
-    for_each_buffer_client(bufnr, function(client, _client_id)
-      local allow_incremental_sync = if_nil(client.config.flags.allow_incremental_sync, false)
-
-      local text_document_did_change = client.resolved_capabilities.text_document_did_change
-      local changes
-      if text_document_did_change == protocol.TextDocumentSyncKind.None then
-        return
-      --[=[ TODO(ashkan) there seem to be problems with the byte_sizes sent by
-      -- neovim right now so only send the full content for now. In general, we
-      -- can assume that servers *will* support both versions anyway, as there
-      -- is no way to specify the sync capability by the client.
-      -- See https://github.com/palantir/python-language-server/commit/cfd6675bc10d5e8dbc50fc50f90e4a37b7178821#diff-f68667852a14e9f761f6ebf07ba02fc8 for an example of pyls handling both.
-      --]=]
-      elseif not allow_incremental_sync or text_document_did_change == protocol.TextDocumentSyncKind.Full then
-        changes = full_changes(client)
-      elseif text_document_did_change == protocol.TextDocumentSyncKind.Incremental then
-        changes = incremental_changes(client)
-      end
-      client.notify("textDocument/didChange", {
-        textDocument = {
-          uri = uri;
-          version = changedtick;
-        };
-        contentChanges = { changes; }
-      })
-    end)
+    local compute_change_and_notify = changetracking.prepare(bufnr, firstline, new_lastline, changedtick)
+    for_each_buffer_client(bufnr, compute_change_and_notify)
   end
 end
 
@@ -888,9 +1052,7 @@ end
 function lsp._text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
-  local text = once(function()
-    return table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
-  end)
+  local text = once(buf_get_full_text)
   for_each_buffer_client(bufnr, function(client, _client_id)
     if client.resolved_capabilities.text_document_save then
       local included_text
@@ -927,16 +1089,32 @@ function lsp.buf_attach_client(bufnr, client_id)
     all_buffer_active_clients[bufnr] = buffer_client_ids
 
     local uri = vim.uri_from_bufnr(bufnr)
-    nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)", bufnr))
+    local buf_did_save_autocommand = [=[
+      augroup lsp_c_%d_b_%d_did_save
+        au!
+        au BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)
+      augroup END
+    ]=]
+    vim.api.nvim_exec(string.format(buf_did_save_autocommand, client_id, bufnr, bufnr), false)
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler;
-      on_detach = function()
+      on_reload = function()
         local params = { textDocument = { uri = uri; } }
-        for_each_buffer_client(bufnr, function(client, _client_id)
+        for_each_buffer_client(bufnr, function(client, _)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
           end
+          text_document_did_open_handler(bufnr, client)
+        end)
+      end;
+      on_detach = function()
+        local params = { textDocument = { uri = uri; } }
+        for_each_buffer_client(bufnr, function(client, _)
+          if client.resolved_capabilities.text_document_open_close then
+            client.notify('textDocument/didClose', params)
+          end
+          changetracking.reset_buf(client, bufnr)
         end)
         util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil
@@ -947,6 +1125,13 @@ function lsp.buf_attach_client(bufnr, client_id)
       utf_sizes = true;
     })
   end
+
+  if not all_client_active_buffers[client_id] then
+    all_client_active_buffers[client_id] = {}
+  end
+
+  table.insert(all_client_active_buffers[client_id], bufnr)
+
   if buffer_client_ids[client_id] then return end
   -- This is our first time attaching this client to this buffer.
   buffer_client_ids[client_id] = true
@@ -965,7 +1150,7 @@ end
 ---@param bufnr (number) Buffer handle, or 0 for current
 ---@param client_id (number) the client id
 function lsp.buf_is_attached(bufnr, client_id)
-  return (all_buffer_active_clients[bufnr] or {})[client_id] == true
+  return (all_buffer_active_clients[resolve_bufnr(bufnr)] or {})[client_id] == true
 end
 
 --- Gets a client by id, or nil if the id is invalid.
@@ -976,6 +1161,19 @@ end
 --@returns |vim.lsp.client| object, or nil
 function lsp.get_client_by_id(client_id)
   return active_clients[client_id] or uninitialized_clients[client_id]
+end
+
+--- Returns list of buffers attached to client_id.
+--
+--@param client_id client id
+--@returns list of buffer ids
+function lsp.get_buffers_by_client_id(client_id)
+  local active_client_buffers = all_client_active_buffers[client_id]
+  if active_client_buffers then
+    return active_client_buffers
+  else
+    return {}
+  end
 end
 
 --- Stops a client(s).
@@ -1091,42 +1289,77 @@ function lsp.buf_request(bufnr, method, params, handler)
   return client_request_ids, _cancel_all_requests
 end
 
---- Sends a request to a server and waits for the response.
----
---- Calls |vim.lsp.buf_request()| but blocks Nvim while awaiting the result.
---- Parameters are the same as |vim.lsp.buf_request()| but the return result is
---- different. Wait maximum of {timeout_ms} (default 100) ms.
+---Sends an async request for all active clients attached to the buffer.
+---Executes the callback on the combined result.
+---Parameters are the same as |vim.lsp.buf_request()| but the return result and callback are
+---different.
 ---
 --@param bufnr (number) Buffer handle, or 0 for current.
 --@param method (string) LSP method name
 --@param params (optional, table) Parameters to send to the server
---@param timeout_ms (optional, number, default=100) Maximum time in
+--@param callback (function) The callback to call when all requests are finished.
+--  Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
+--  A map of client_id:request_result will be provided to the callback
+--
+--@returns (function) A function that will cancel all requests which is the same as the one returned from `buf_request`.
+function lsp.buf_request_all(bufnr, method, params, callback)
+  local request_results = {}
+  local result_count = 0
+  local expected_result_count = 0
+  local cancel, client_request_ids
+
+  local set_expected_result_count = once(function()
+    for _ in pairs(client_request_ids) do
+      expected_result_count = expected_result_count + 1
+    end
+  end)
+
+  local function _sync_handler(err, _, result, client_id)
+    request_results[client_id] = { error = err, result = result }
+    result_count = result_count + 1
+    set_expected_result_count()
+
+    if result_count >= expected_result_count then
+      callback(request_results)
+    end
+  end
+
+  client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
+
+  return cancel
+end
+
+--- Sends a request to all server and waits for the response of all of them.
+---
+--- Calls |vim.lsp.buf_request_all()| but blocks Nvim while awaiting the result.
+--- Parameters are the same as |vim.lsp.buf_request()| but the return result is
+--- different. Wait maximum of {timeout_ms} (default 1000) ms.
+---
+--@param bufnr (number) Buffer handle, or 0 for current.
+--@param method (string) LSP method name
+--@param params (optional, table) Parameters to send to the server
+--@param timeout_ms (optional, number, default=1000) Maximum time in
 ---      milliseconds to wait for a result.
 ---
 --@returns Map of client_id:request_result. On timeout, cancel or error,
 ---        returns `(nil, err)` where `err` is a string describing the failure
 ---        reason.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
-  local request_results = {}
-  local result_count = 0
-  local function _sync_handler(err, _, result, client_id)
-    request_results[client_id] = { error = err, result = result }
-    result_count = result_count + 1
-  end
-  local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
-  local expected_result_count = 0
-  for _ in pairs(client_request_ids) do
-    expected_result_count = expected_result_count + 1
-  end
+  local request_results
 
-  local wait_result, reason = vim.wait(timeout_ms or 100, function()
-    return result_count >= expected_result_count
+  local cancel = lsp.buf_request_all(bufnr, method, params, function(it)
+    request_results = it
+  end)
+
+  local wait_result, reason = vim.wait(timeout_ms or 1000, function()
+    return request_results ~= nil
   end, 10)
 
   if not wait_result then
     cancel()
     return nil, wait_result_reason[reason]
   end
+
   return request_results
 end
 
@@ -1189,7 +1422,7 @@ function lsp.omnifunc(findstart, base)
 
   local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
-    if err or not result then return end
+    if err or not result or vim.fn.mode() ~= "i" then return end
     local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)

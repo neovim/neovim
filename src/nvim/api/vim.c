@@ -39,6 +39,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/fileio.h"
+#include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
@@ -103,10 +104,14 @@ String nvim_exec(String src, Boolean output, Error *err)
   }
 
   try_start();
-  msg_silent++;
+  if (output) {
+    msg_silent++;
+  }
   do_source_str(src.data, "nvim_exec()");
-  capture_ga = save_capture_ga;
-  msg_silent = save_msg_silent;
+  if (output) {
+    capture_ga = save_capture_ga;
+    msg_silent = save_msg_silent;
+  }
   try_end(err);
 
   if (ERROR_SET(err)) {
@@ -216,6 +221,12 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///            in addition the following keys are also recognized:
 ///              `default`: don't override existing definition,
 ///                         like `hi default`
+///              `ctermfg`: sets foreground of cterm color
+///              `ctermbg`: sets background of cterm color
+///              `cterm`  : cterm attribute map. sets attributed for
+///                         cterm colors. similer to `hi cterm`
+///                         Note: by default cterm attributes are
+///                               same as attributes of gui color
 /// @param[out] err Error details, if any
 ///
 /// TODO: ns_id = 0, should modify :highlight namespace
@@ -241,8 +252,7 @@ void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
 ///
 /// @param ns_id the namespace to activate
 /// @param[out] err Error details, if any
-void nvim_set_hl_ns(Integer ns_id, Error *err)
-  FUNC_API_SINCE(7)
+void nvim__set_hl_ns(Integer ns_id, Error *err)
   FUNC_API_FAST
 {
   if (ns_id >= 0) {
@@ -543,6 +553,26 @@ Object nvim_exec_lua(String code, Array args, Error *err)
   FUNC_API_REMOTE_ONLY
 {
   return nlua_exec(code, args, err);
+}
+
+/// Notify the user with a message
+///
+/// Relays the call to vim.notify . By default forwards your message in the
+/// echo area but can be overriden to trigger desktop notifications.
+///
+/// @param msg        Message to display to the user
+/// @param log_level  The log level
+/// @param opts       Reserved for future use.
+/// @param[out] err   Error details, if any
+Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  FIXED_TEMP_ARRAY(args, 3);
+  args.items[0] = STRING_OBJ(msg);
+  args.items[1] = INTEGER_OBJ(log_level);
+  args.items[2] = DICTIONARY_OBJ(opts);
+
+  return nlua_exec(STATIC_CSTR_AS_STRING("return vim.notify(...)"), args, err);
 }
 
 /// Calls a VimL function.
@@ -954,7 +984,7 @@ Dictionary nvim_get_all_options_info(Error *err)
 /// Resulting dictionary has keys:
 ///     - name: Name of the option (like 'filetype')
 ///     - shortname: Shortened name of the option (like 'ft')
-///     - type: type of option ("string", "integer" or "boolean")
+///     - type: type of option ("string", "number" or "boolean")
 ///     - default: The default value for the option
 ///     - was_set: Whether the option was set.
 ///
@@ -988,6 +1018,48 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
+}
+
+/// Echo a message.
+///
+/// @param chunks  A list of [text, hl_group] arrays, each representing a
+///                text chunk with specified highlight. `hl_group` element
+///                can be omitted for no highlight.
+/// @param history  if true, add to |message-history|.
+/// @param opts  Optional parameters. Reserved for future use.
+void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  HlMessage hl_msg = parse_hl_msg(chunks, err);
+  if (ERROR_SET(err)) {
+    goto error;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    goto error;
+  }
+
+  no_wait_return++;
+  msg_start();
+  msg_clr_eos();
+  bool need_clear = false;
+  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+    HlMessageChunk chunk = kv_A(hl_msg, i);
+    msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
+                       false, &need_clear);
+  }
+  if (history) {
+    msg_ext_set_kind("echomsg");
+    add_hl_msg_hist(hl_msg);
+  } else {
+    msg_ext_set_kind("echo");
+  }
+  no_wait_return--;
+  msg_end();
+
+error:
+  clear_hl_msg(&hl_msg);
 }
 
 /// Writes a message to the Vim output buffer. Does not append "\n", the
@@ -1184,6 +1256,101 @@ fail:
   return 0;
 }
 
+/// Open a terminal instance in a buffer
+///
+/// By default (and currently the only option) the terminal will not be
+/// connected to an external process. Instead, input send on the channel
+/// will be echoed directly by the terminal. This is useful to disply
+/// ANSI terminal sequences returned as part of a rpc message, or similar.
+///
+/// Note: to directly initiate the terminal using the right size, display the
+/// buffer in a configured window before calling this. For instance, for a
+/// floating display, first create an empty buffer using |nvim_create_buf()|,
+/// then display it using |nvim_open_win()|, and then  call this function.
+/// Then |nvim_chan_send()| cal be called immediately to process sequences
+/// in a virtual terminal having the intended size.
+///
+/// @param buffer the buffer to use (expected to be empty)
+/// @param opts   Optional parameters. Reserved for future use.
+/// @param[out] err Error details, if any
+/// @return Channel id, or 0 on error
+Integer nvim_open_term(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(7)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return 0;
+  }
+
+  TerminalOptions topts;
+  Channel *chan = channel_alloc(kChannelStreamInternal);
+  topts.data = chan;
+  // NB: overriden in terminal_check_size if a window is already
+  // displaying the buffer
+  topts.width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0);
+  topts.height = (uint16_t)curwin->w_height_inner;
+  topts.write_cb = term_write;
+  topts.resize_cb = term_resize;
+  topts.close_cb = term_close;
+  Terminal *term = terminal_open(buf, topts);
+  terminal_check_size(term);
+  chan->term = term;
+  channel_incref(chan);
+  return (Integer)chan->id;
+}
+
+static void term_write(char *buf, size_t size, void *data)
+{
+  // TODO(bfredl): lua callback
+}
+
+static void term_resize(uint16_t width, uint16_t height, void *data)
+{
+  // TODO(bfredl): lua callback
+}
+
+static void term_close(void *data)
+{
+  Channel *chan = data;
+  terminal_destroy(chan->term);
+  chan->term = NULL;
+  channel_decref(chan);
+}
+
+
+/// Send data to channel `id`. For a job, it writes it to the
+/// stdin of the process. For the stdio channel |channel-stdio|,
+/// it writes to Nvim's stdout.  For an internal terminal instance
+/// (|nvim_open_term()|) it writes directly to terimal output.
+/// See |channel-bytes| for more information.
+///
+/// This function writes raw data, not RPC messages.  If the channel
+/// was created with `rpc=true` then the channel expects RPC
+/// messages, use |vim.rpcnotify()| and |vim.rpcrequest()| instead.
+///
+/// @param chan id of the channel
+/// @param data data to write. 8-bit clean: can contain NUL bytes.
+/// @param[out] err Error details, if any
+void nvim_chan_send(Integer chan, String data, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY FUNC_API_LUA_ONLY
+{
+  const char *error = NULL;
+  if (!data.size) {
+    return;
+  }
+
+  channel_send((uint64_t)chan, data.data, data.size,
+               false, &error);
+  if (error) {
+    api_set_error(err, kErrorTypeValidation, "%s", error);
+  }
+}
+
 /// Open a new window.
 ///
 /// Currently this is used to open floating and external windows.
@@ -1250,6 +1417,15 @@ fail:
 ///   - `external`: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
+///   - `zindex`: Stacking order. floats with higher `zindex` go on top on
+///               floats with lower indices. Must be larger than zero. The
+///               following screen elements have hard-coded z-indices:
+///       - 100: insert completion popupmenu
+///       - 200: message scrollback
+///       - 250: cmdline completion popupmenu (when wildoptions+=pum)
+///     The default value for floats are 50.  In general, values below 100 are
+///     recommended, unless there is a good reason to overshadow builtin
+///     elements.
 ///   - `style`: Configure the appearance of the window. Currently only takes
 ///       one non-empty value:
 ///       - "minimal"  Nvim will display the window with many UI options
@@ -1261,6 +1437,34 @@ fail:
 ///                    end-of-buffer region is hidden by setting `eob` flag of
 ///                    'fillchars' to a space char, and clearing the
 ///                    |EndOfBuffer| region in 'winhighlight'.
+///   - `border`: Style of (optional) window border. This can either be a string
+///      or an array. The string values are
+///     - "none": No border (default).
+///     - "single": A single line box.
+///     - "double": A double line box.
+///     - "rounded": Like "single", but with rounded corners ("╭" etc.).
+///     - "solid": Adds padding by a single whitespace cell.
+///     - "shadow": A drop shadow effect by blending with the background.
+///     - If it is an array, it should have a length of eight or any divisor of
+///     eight. The array will specifify the eight chars building up the border
+///     in a clockwise fashion starting with the top-left corner. As an
+///     example, the double box style could be specified as
+///       [ "╔", "═" ,"╗", "║", "╝", "═", "╚", "║" ].
+///     If the number of chars are less than eight, they will be repeated. Thus
+///     an ASCII border could be specified as
+///       [ "/", "-", "\\", "|" ],
+///     or all chars the same as
+///       [ "x" ].
+///     An empty string can be used to turn off a specific border, for instance,
+///       [ "", "", "", ">", "", "", "", "<" ]
+///     will only make vertical borders but not horizontal ones.
+///     By default, `FloatBorder` highlight is used, which links to `VertSplit`
+///     when not defined.  It could also be specified by character:
+///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ].
+///   - `noautocmd`: If true then no buffer-related autocommand events such as
+///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
+///                  calling this function.
+///
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
@@ -1270,7 +1474,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
   FUNC_API_CHECK_TEXTLOCK
 {
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
-  if (!parse_float_config(config, &fconfig, false, err)) {
+  if (!parse_float_config(config, &fconfig, false, true, err)) {
     return 0;
   }
   win_T *wp = win_new_float(NULL, fconfig, err);
@@ -1285,7 +1489,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
     return 0;
   }
   if (buffer > 0) {
-    nvim_win_set_buf(wp->handle, buffer, err);
+    win_set_buf(wp->handle, buffer, fconfig.noautocmd, err);
   }
 
   if (fconfig.style == kWinStyleMinimal) {
@@ -1484,8 +1688,8 @@ theend:
 ///              - "c" |charwise| mode
 ///              - "l" |linewise| mode
 ///              - ""  guess by contents, see |setreg()|
-/// @param after  Insert after cursor (like |p|), or before (like |P|).
-/// @param follow  Place cursor at end of inserted text.
+/// @param after  If true insert after cursor (like |p|), or before (like |P|).
+/// @param follow  If true place cursor at end of inserted text.
 /// @param[out] err Error details, if any
 void nvim_put(ArrayOf(String) lines, String type, Boolean after,
               Boolean follow, Error *err)
@@ -2534,6 +2738,7 @@ Dictionary nvim__stats(void)
   Dictionary rv = ARRAY_DICT_INIT;
   PUT(rv, "fsync", INTEGER_OBJ(g_stats.fsync));
   PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
+  PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_refcount));
   return rv;
 }
 
@@ -2676,8 +2881,8 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     g = &pum_grid;
   } else if (grid > 1) {
     win_T *wp = get_win_by_grid_handle((handle_T)grid);
-    if (wp != NULL && wp->w_grid.chars != NULL) {
-      g = &wp->w_grid;
+    if (wp != NULL && wp->w_grid_alloc.chars != NULL) {
+      g = &wp->w_grid_alloc;
     } else {
       api_set_error(err, kErrorTypeValidation,
                     "No grid with the given handle");
@@ -2704,19 +2909,6 @@ void nvim__screenshot(String path)
   FUNC_API_FAST
 {
   ui_call_screenshot(path);
-}
-
-static void clear_provider(DecorProvider *p)
-{
-  if (p == NULL) {
-    return;
-  }
-  NLUA_CLEAR_REF(p->redraw_start);
-  NLUA_CLEAR_REF(p->redraw_buf);
-  NLUA_CLEAR_REF(p->redraw_win);
-  NLUA_CLEAR_REF(p->redraw_line);
-  NLUA_CLEAR_REF(p->redraw_end);
-  p->active = false;
 }
 
 /// Set or change decoration provider for a namespace
@@ -2763,8 +2955,9 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
                                   Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
-  DecorProvider *p = get_provider((NS)ns_id, true);
-  clear_provider(p);
+  DecorProvider *p = get_decor_provider((NS)ns_id, true);
+  assert(p != NULL);
+  decor_provider_clear(p);
 
   // regardless of what happens, it seems good idea to redraw
   redraw_all_later(NOT_VALID);  // TODO(bfredl): too soon?
@@ -2786,7 +2979,7 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
     size_t j;
-    for (j = 0; cbs[j].name; j++) {
+    for (j = 0; cbs[j].name && cbs[j].dest; j++) {
       if (strequal(cbs[j].name, k.data)) {
         if (v->type != kObjectTypeLuaRef) {
           api_set_error(err, kErrorTypeValidation,
@@ -2807,5 +3000,5 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts,
   p->active = true;
   return;
 error:
-  clear_provider(p);
+  decor_provider_clear(p);
 }

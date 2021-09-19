@@ -512,6 +512,12 @@ func Test_normal14_page_eol()
   bw!
 endfunc
 
+" Test for errors with z command
+func Test_normal_z_error()
+  call assert_beeps('normal! z2p')
+  call assert_beeps('normal! zq')
+endfunc
+
 func Test_normal15_z_scroll_vert()
   " basic test for z commands that scroll the window
   call Setup_NewWindow()
@@ -1102,161 +1108,6 @@ func Test_normal18_z_fold()
 
   " clean up
   setl nofoldenable fdm=marker foldlevel=0
-  bw!
-endfunc
-
-func Test_normal19_z_spell()
-  if !has("spell") || !has('syntax')
-    return
-  endif
-  new
-  call append(0, ['1 good', '2 goood', '3 goood'])
-  set spell spellfile=./Xspellfile.add spelllang=en
-  let oldlang=v:lang
-  lang C
-
-  " Test for zg
-  1
-  norm! ]s
-  call assert_equal('2 goood', getline('.'))
-  norm! zg
-  1
-  let a=execute('unsilent :norm! ]s')
-  call assert_equal('1 good', getline('.'))
-  call assert_equal('search hit BOTTOM, continuing at TOP', a[1:])
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('goood', cnt[0])
-
-  " Test for zw
-  2
-  norm! $zw
-  1
-  norm! ]s
-  call assert_equal('2 goood', getline('.'))
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('#oood', cnt[0])
-  call assert_equal('goood/!', cnt[1])
-
-  " Test for zg in visual mode
-  let a=execute('unsilent :norm! V$zg')
-  call assert_equal("Word '2 goood' added to ./Xspellfile.add", a[1:])
-  1
-  norm! ]s
-  call assert_equal('3 goood', getline('.'))
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('2 goood', cnt[2])
-  " Remove "2 good" from spellfile
-  2
-  let a=execute('unsilent norm! V$zw')
-  call assert_equal("Word '2 goood' added to ./Xspellfile.add", a[1:])
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('2 goood/!', cnt[3])
-
-  " Test for zG
-  let a=execute('unsilent norm! V$zG')
-  call assert_match("Word '2 goood' added to .*", a)
-  let fname=matchstr(a, 'to\s\+\zs\f\+$')
-  let fname=Fix_truncated_tmpfile(fname)
-  let cnt=readfile(fname)
-  call assert_equal('2 goood', cnt[0])
-
-  " Test for zW
-  let a=execute('unsilent norm! V$zW')
-  call assert_match("Word '2 goood' added to .*", a)
-  let cnt=readfile(fname)
-  call assert_equal('# goood', cnt[0])
-  call assert_equal('2 goood/!', cnt[1])
-
-  " Test for zuW
-  let a=execute('unsilent norm! V$zuW')
-  call assert_match("Word '2 goood' removed from .*", a)
-  let cnt=readfile(fname)
-  call assert_equal('# goood', cnt[0])
-  call assert_equal('# goood/!', cnt[1])
-
-  " Test for zuG
-  let a=execute('unsilent norm! $zG')
-  call assert_match("Word 'goood' added to .*", a)
-  let cnt=readfile(fname)
-  call assert_equal('# goood', cnt[0])
-  call assert_equal('# goood/!', cnt[1])
-  call assert_equal('goood', cnt[2])
-  let a=execute('unsilent norm! $zuG')
-  let cnt=readfile(fname)
-  call assert_match("Word 'goood' removed from .*", a)
-  call assert_equal('# goood', cnt[0])
-  call assert_equal('# goood/!', cnt[1])
-  call assert_equal('#oood', cnt[2])
-  " word not found in wordlist
-  let a=execute('unsilent norm! V$zuG')
-  let cnt=readfile(fname)
-  call assert_match("", a)
-  call assert_equal('# goood', cnt[0])
-  call assert_equal('# goood/!', cnt[1])
-  call assert_equal('#oood', cnt[2])
-
-  " Test for zug
-  call delete('./Xspellfile.add')
-  2
-  let a=execute('unsilent norm! $zg')
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('goood', cnt[0])
-  let a=execute('unsilent norm! $zug')
-  call assert_match("Word 'goood' removed from \./Xspellfile.add", a)
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('#oood', cnt[0])
-  " word not in wordlist
-  let a=execute('unsilent norm! V$zug')
-  call assert_match('', a)
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('#oood', cnt[0])
-
-  " Test for zuw
-  call delete('./Xspellfile.add')
-  2
-  let a=execute('unsilent norm! Vzw')
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('2 goood/!', cnt[0])
-  let a=execute('unsilent norm! Vzuw')
-  call assert_match("Word '2 goood' removed from \./Xspellfile.add", a)
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('# goood/!', cnt[0])
-  " word not in wordlist
-  let a=execute('unsilent norm! $zug')
-  call assert_match('', a)
-  let cnt=readfile('./Xspellfile.add')
-  call assert_equal('# goood/!', cnt[0])
-
-  " add second entry to spellfile setting
-  set spellfile=./Xspellfile.add,./Xspellfile2.add
-  call delete('./Xspellfile.add')
-  2
-  let a=execute('unsilent norm! $2zg')
-  let cnt=readfile('./Xspellfile2.add')
-  call assert_match("Word 'goood' added to ./Xspellfile2.add", a)
-  call assert_equal('goood', cnt[0])
-
-  " Test for :spellgood!
-  let temp = execute(':spe!0/0')
-  call assert_match('Invalid region', temp)
-  let spellfile = matchstr(temp, 'Invalid region nr in \zs.*\ze line \d: 0')
-  call assert_equal(['# goood', '# goood/!', '#oood', '0/0'], readfile(spellfile))
-  call delete(spellfile)
-
-  " clean up
-  exe "lang" oldlang
-  call delete("./Xspellfile.add")
-  call delete("./Xspellfile2.add")
-  call delete("./Xspellfile.add.spl")
-  call delete("./Xspellfile2.add.spl")
-
-  " zux -> no-op
-  2
-  norm! $zux
-  call assert_equal([], glob('Xspellfile.add',0,1))
-  call assert_equal([], glob('Xspellfile2.add',0,1))
-
-  set spellfile=
   bw!
 endfunc
 
@@ -2877,3 +2728,35 @@ func Test_normal_gk()
   bw!
   set cpoptions& number& numberwidth&
 endfunc
+
+" Some commands like yy, cc, dd, >>, << and !! accept a count after
+" typing the first letter of the command.
+func Test_normal_count_after_operator()
+  new
+  setlocal shiftwidth=4 tabstop=8 autoindent
+  call setline(1, ['one', 'two', 'three', 'four', 'five'])
+  let @a = ''
+  normal! j"ay4y
+  call assert_equal("two\nthree\nfour\nfive\n", @a)
+  normal! 3G>2>
+  call assert_equal(['one', 'two', '    three', '    four', 'five'],
+        \ getline(1, '$'))
+  exe "normal! 3G0c2cred\nblue"
+  call assert_equal(['one', 'two', '    red', '    blue', 'five'],
+        \ getline(1, '$'))
+  exe "normal! gg<8<"
+  call assert_equal(['one', 'two', 'red', 'blue', 'five'],
+        \ getline(1, '$'))
+  exe "normal! ggd3d"
+  call assert_equal(['blue', 'five'], getline(1, '$'))
+  call setline(1, range(1, 4))
+  call feedkeys("gg!3!\<C-B>\"\<CR>", 'xt')
+  call assert_equal('".,.+2!', @:)
+  call feedkeys("gg!1!\<C-B>\"\<CR>", 'xt')
+  call assert_equal('".!', @:)
+  call feedkeys("gg!9!\<C-B>\"\<CR>", 'xt')
+  call assert_equal('".,$!', @:)
+  bw!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

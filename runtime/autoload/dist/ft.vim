@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Mar 08
+" Last Change:	2020 Aug 17
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.
@@ -172,6 +172,17 @@ func dist#ft#FTent()
   setf dtd
 endfunc
 
+func dist#ft#ExCheck()
+  let lines = getline(1, min([line("$"), 100]))
+  if exists('g:filetype_euphoria')
+    exe 'setf ' . g:filetype_euphoria
+  elseif match(lines, '^--\|^ifdef\>\|^include\>') > -1
+    setf euphoria3
+  else
+    setf elixir
+  endif
+endfunc
+
 func dist#ft#EuphoriaCheck()
   if exists('g:filetype_euphoria')
     exe 'setf ' . g:filetype_euphoria
@@ -298,7 +309,7 @@ endfunc
 
 func dist#ft#FTmms()
   let n = 1
-  while n < 10
+  while n < 20
     let line = getline(n)
     if line =~ '^\s*\(%\|//\)' || line =~ '^\*'
       setf mmix
@@ -325,7 +336,7 @@ endfunc
 
 func dist#ft#FTmm()
   let n = 1
-  while n < 10
+  while n < 20
     let line = getline(n)
     if line =~ '^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\)'
       setf objcpp
