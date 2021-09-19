@@ -3580,29 +3580,31 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           }
         }
 
-        // 'list': change char 160 to 'nbsp' and space to 'space'.
-        if (wp->w_p_list) {
-          if ((c == 160 || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
-              && wp->w_p_lcs_chars.nbsp) {
-            c = wp->w_p_lcs_chars.nbsp;
-            mb_c = c;
-            if (utf_char2len(c) > 1) {
-              mb_utf8 = true;
-              u8cc[0] = 0;
-              c = 0xc0;
-            } else {
-              mb_utf8 = false;
-            }
-          } else if (c == ' '
-                     && wp->w_p_lcs_chars.space
-                     && ptr - line >= leadcol
-                     && ptr - line <= trailcol) {
-            c = wp->w_p_lcs_chars.space;
-            if (mb_utf8 == false) {
-              n_attr = 1;
-              extra_attr = win_hl_attr(wp, HLF_0);
-              saved_attr2 = char_attr;  // save current attr
-            }
+        // 'list': Change char 160 to 'nbsp' and space to 'space'.
+        // But not when the character is followed by a composing
+        // character (use mb_l to check that).
+        if (wp->w_p_list
+            && ((((c == 160 && mb_l == 1)
+                  || (mb_utf8
+                      && ((mb_c == 160 && mb_l == 2)
+                          || (mb_c == 0x202f && mb_l == 3))))
+                 && wp->w_p_lcs_chars.nbsp)
+                || (c == ' '
+                    && mb_l == 1
+                    && wp->w_p_lcs_chars.space
+                    && ptr - line >= leadcol
+                    && ptr - line <= trailcol))) {
+          c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
+          n_attr = 1;
+          extra_attr = win_hl_attr(wp, HLF_0);
+          saved_attr2 = char_attr;  // save current attr
+          mb_c = c;
+          if (utf_char2len(c) > 1) {
+            mb_utf8 = true;
+            u8cc[0] = 0;
+            c = 0xc0;
+          } else {
+            mb_utf8 = false;
           }
         }
 
