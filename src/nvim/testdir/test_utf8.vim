@@ -91,7 +91,7 @@ func Test_screenchar_utf8()
   call assert_equal("", screenstring(1, 4))
   call assert_equal("\u3046\u3099", screenstring(1, 5))
 
-  call assert_equal([text . '  '], ScreenLinesUtf8(1, 8))
+  call assert_equal([text . '  '], ScreenLines(1, 8))
 
   bwipe!
 endfunc
