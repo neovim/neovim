@@ -5,22 +5,20 @@
 // NB: this file mostly contains a generic lua interface for tree-sitter
 // trees and nodes, and could be broken out as a reusable lua package
 
+#include <assert.h>
+#include <inttypes.h>
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
-#include <assert.h>
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
-#include "tree_sitter/api.h"
-
-#include "nvim/lua/treesitter.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/memline.h"
 #include "nvim/buffer.h"
+#include "nvim/lua/treesitter.h"
+#include "nvim/memline.h"
+#include "tree_sitter/api.h"
 
 #define TS_META_PARSER "treesitter_parser"
 #define TS_META_TREE "treesitter_tree"
@@ -179,12 +177,11 @@ int tslua_add_language(lua_State *L)
   uint32_t lang_version = ts_language_version(lang);
   if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION
       || lang_version > TREE_SITTER_LANGUAGE_VERSION) {
-    return luaL_error(
-        L,
-        "ABI version mismatch for %s: supported between %d and %d, found %d",
-        path,
-        TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION,
-        TREE_SITTER_LANGUAGE_VERSION, lang_version);
+    return luaL_error(L,
+                      "ABI version mismatch for %s: supported between %d and %d, found %d",
+                      path,
+                      TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION,
+                      TREE_SITTER_LANGUAGE_VERSION, lang_version);
   }
 
   pmap_put(cstr_t)(&langs, xstrdup(lang_name), lang);
@@ -285,8 +282,8 @@ static int parser_tostring(lua_State *L)
   return 1;
 }
 
-static const char *input_cb(void *payload, uint32_t byte_index,
-                            TSPoint position, uint32_t *bytes_read)
+static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position,
+                            uint32_t *bytes_read)
 {
   buf_T *bp  = payload;
 #define BUFSIZE 256
@@ -318,9 +315,7 @@ static const char *input_cb(void *payload, uint32_t byte_index,
 #undef BUFSIZE
 }
 
-static void push_ranges(lua_State *L,
-                        const TSRange *ranges,
-                        const unsigned int length)
+static void push_ranges(lua_State *L, const TSRange *ranges, const unsigned int length)
 {
   lua_createtable(L, length, 0);
   for (size_t i = 0; i < length; i++) {
@@ -361,26 +356,26 @@ static int parser_parse(lua_State *L)
   // This switch is necessary because of the behavior of lua_isstring, that
   // consider numbers as strings...
   switch (lua_type(L, 3)) {
-    case LUA_TSTRING:
-      str = lua_tolstring(L, 3, &len);
-      new_tree = ts_parser_parse_string(*p, old_tree, str, len);
-      break;
+  case LUA_TSTRING:
+    str = lua_tolstring(L, 3, &len);
+    new_tree = ts_parser_parse_string(*p, old_tree, str, len);
+    break;
 
-    case LUA_TNUMBER:
-      bufnr = lua_tointeger(L, 3);
-      buf = handle_get_buffer(bufnr);
+  case LUA_TNUMBER:
+    bufnr = lua_tointeger(L, 3);
+    buf = handle_get_buffer(bufnr);
 
-      if (!buf) {
-        return luaL_error(L, "invalid buffer handle: %d", bufnr);
-      }
+    if (!buf) {
+      return luaL_error(L, "invalid buffer handle: %d", bufnr);
+    }
 
-      input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8 };
-      new_tree = ts_parser_parse(*p, old_tree, input);
+    input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8 };
+    new_tree = ts_parser_parse(*p, old_tree, input);
 
-      break;
+    break;
 
-    default:
-      return luaL_error(L, "invalid argument to parser:parse()");
+  default:
+    return luaL_error(L, "invalid argument to parser:parse()");
   }
 
   // Sometimes parsing fails (timeout, or wrong parser ABI)
@@ -393,8 +388,7 @@ static int parser_parse(lua_State *L)
   // the lua GC.
   // Old tree is still owned by the lua GC.
   uint32_t n_ranges = 0;
-  TSRange *changed = old_tree ?  ts_tree_get_changed_ranges(
-      old_tree, new_tree, &n_ranges) : NULL;
+  TSRange *changed = old_tree ?  ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
 
   push_tree(L, new_tree, false);  // [tree]
 
@@ -504,17 +498,15 @@ static void range_from_lua(lua_State *L, TSRange *range)
   }
   return;
 error:
-  luaL_error(
-      L,
-      "Ranges can only be made from 6 element long tables or nodes.");
+  luaL_error(L,
+             "Ranges can only be made from 6 element long tables or nodes.");
 }
 
 static int parser_set_ranges(lua_State *L)
 {
   if (lua_gettop(L) < 2) {
-    return luaL_error(
-        L,
-        "not enough args to parser:set_included_ranges()");
+    return luaL_error(L,
+                      "not enough args to parser:set_included_ranges()");
   }
 
   TSParser **p = parser_check(L, 1);
@@ -523,9 +515,8 @@ static int parser_set_ranges(lua_State *L)
   }
 
   if (!lua_istable(L, 2)) {
-    return luaL_error(
-        L,
-        "argument for parser:set_included_ranges() should be a table.");
+    return luaL_error(L,
+                      "argument for parser:set_included_ranges() should be a table.");
   }
 
   size_t tbl_len = lua_objlen(L, 2);
@@ -890,9 +881,9 @@ static int node_descendant_for_range(lua_State *L)
     return 0;
   }
   TSPoint start = { (uint32_t)lua_tointeger(L, 2),
-                   (uint32_t)lua_tointeger(L, 3) };
+                    (uint32_t)lua_tointeger(L, 3) };
   TSPoint end = { (uint32_t)lua_tointeger(L, 4),
-                 (uint32_t)lua_tointeger(L, 5) };
+                  (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_descendant_for_point_range(node, start, end);
 
   push_node(L, child, 1);
@@ -906,9 +897,9 @@ static int node_named_descendant_for_range(lua_State *L)
     return 0;
   }
   TSPoint start = { (uint32_t)lua_tointeger(L, 2),
-                   (uint32_t)lua_tointeger(L, 3) };
+                    (uint32_t)lua_tointeger(L, 3) };
   TSPoint end = { (uint32_t)lua_tointeger(L, 4),
-                 (uint32_t)lua_tointeger(L, 5) };
+                  (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_named_descendant_for_point_range(node, start, end);
 
   push_node(L, child, 1);
@@ -917,8 +908,7 @@ static int node_named_descendant_for_range(lua_State *L)
 
 static int node_next_child(lua_State *L)
 {
-  TSTreeCursor *ud = luaL_checkudata(
-      L, lua_upvalueindex(1), TS_META_TREECURSOR);
+  TSTreeCursor *ud = luaL_checkudata(L, lua_upvalueindex(1), TS_META_TREECURSOR);
   if (!ud) {
     return 0;
   }
@@ -939,19 +929,18 @@ static int node_next_child(lua_State *L)
 
   if (ts_tree_cursor_goto_next_sibling(ud)) {
 push:
-      push_node(
-          L,
-          ts_tree_cursor_current_node(ud),
-          lua_upvalueindex(2));  // [node]
+    push_node(L,
+              ts_tree_cursor_current_node(ud),
+              lua_upvalueindex(2));  // [node]
 
-      const char * field = ts_tree_cursor_current_field_name(ud);
+    const char * field = ts_tree_cursor_current_field_name(ud);
 
-      if (field != NULL) {
-        lua_pushstring(L, ts_tree_cursor_current_field_name(ud));
-      } else {
-        lua_pushnil(L);
-      }  // [node, field_name_or_nil]
-      return 2;
+    if (field != NULL) {
+      lua_pushstring(L, ts_tree_cursor_current_field_name(ud));
+    } else {
+      lua_pushnil(L);
+    }  // [node, field_name_or_nil]
+    return 2;
   }
 
 end:
@@ -1200,11 +1189,16 @@ int tslua_parse_query(lua_State *L)
 
 static const char *query_err_string(TSQueryError err) {
   switch (err) {
-    case TSQueryErrorSyntax: return "invalid syntax";
-    case TSQueryErrorNodeType: return "invalid node type";
-    case TSQueryErrorField: return "invalid field";
-    case TSQueryErrorCapture: return "invalid capture";
-    default: return "error";
+  case TSQueryErrorSyntax:
+    return "invalid syntax";
+  case TSQueryErrorNodeType:
+    return "invalid node type";
+  case TSQueryErrorField:
+    return "invalid field";
+  case TSQueryErrorCapture:
+    return "invalid capture";
+  default:
+    return "error";
   }
 }
 

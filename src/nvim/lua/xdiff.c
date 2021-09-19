@@ -1,18 +1,17 @@
+#include <errno.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
-#include <lauxlib.h>
-
-#include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "nvim/vim.h"
-#include "xdiff/xdiff.h"
-#include "nvim/lua/xdiff.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/lua/xdiff.h"
+#include "nvim/vim.h"
+#include "xdiff/xdiff.h"
 
 typedef enum {
   kNluaXdiffModeUnified =  0,
@@ -22,7 +21,7 @@ typedef enum {
 
 typedef struct {
   lua_State *lstate;
-  Error     *err;
+  Error *err;
 } hunkpriv_t;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -48,8 +47,7 @@ static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
 }
 
 // hunk_func callback used when opts.hunk_lines = true
-static int hunk_locations_cb(long start_a, long count_a,
-                             long start_b, long count_b, void *cb_data)
+static int hunk_locations_cb(long start_a, long count_a, long start_b, long count_b, void *cb_data)
 {
   // Mimic extra offsets done by xdiff, see:
   // src/nvim/xdiff/xemit.c:284
@@ -79,8 +77,7 @@ static int hunk_locations_cb(long start_a, long count_a,
 }
 
 // hunk_func callback used when opts.on_hunk is given
-static int call_on_hunk_cb(long start_a, long count_a,
-                           long start_b, long count_b, void *cb_data)
+static int call_on_hunk_cb(long start_a, long count_a, long start_b, long count_b, void *cb_data)
 {
   // Mimic extra offsets done by xdiff, see:
   // src/nvim/xdiff/xemit.c:284
@@ -130,8 +127,7 @@ static mmfile_t get_string_arg(lua_State *lstate, int idx)
 }
 
 // Helper function for validating option types
-static bool check_xdiff_opt(ObjectType actType, ObjectType expType,
-                            const char *name, Error *err)
+static bool check_xdiff_opt(ObjectType actType, ObjectType expType, const char *name, Error *err)
 {
   if (actType != expType) {
     const char * type_str =
@@ -139,7 +135,7 @@ static bool check_xdiff_opt(ObjectType actType, ObjectType expType,
       expType == kObjectTypeInteger ? "integer"  :
       expType == kObjectTypeBoolean ? "boolean"  :
       expType == kObjectTypeLuaRef  ? "function" :
-                                      "NA";
+      "NA";
 
     api_set_error(err, kErrorTypeValidation, "%s is not a %s", name,
                   type_str);
@@ -149,9 +145,8 @@ static bool check_xdiff_opt(ObjectType actType, ObjectType expType,
   return false;
 }
 
-static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate,
-                                           xdemitconf_t *cfg,
-                                           xpparam_t *params, Error *err)
+static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg, xpparam_t *params,
+                                           Error *err)
 {
   const DictionaryOf(LuaRef) opts = nlua_pop_Dictionary(lstate, true, err);
 
@@ -211,13 +206,13 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate,
         const char *name;
         unsigned long value;
       } flags[] = {
-        { "ignore_whitespace"              , XDF_IGNORE_WHITESPACE },
-        { "ignore_whitespace_change"       , XDF_IGNORE_WHITESPACE_CHANGE },
+        { "ignore_whitespace", XDF_IGNORE_WHITESPACE },
+        { "ignore_whitespace_change", XDF_IGNORE_WHITESPACE_CHANGE },
         { "ignore_whitespace_change_at_eol", XDF_IGNORE_WHITESPACE_AT_EOL },
-        { "ignore_cr_at_eol"               , XDF_IGNORE_CR_AT_EOL },
-        { "ignore_blank_lines"             , XDF_IGNORE_BLANK_LINES },
-        { "indent_heuristic"               , XDF_INDENT_HEURISTIC },
-        {  NULL                            , 0 },
+        { "ignore_cr_at_eol", XDF_IGNORE_CR_AT_EOL },
+        { "ignore_blank_lines", XDF_IGNORE_BLANK_LINES },
+        { "indent_heuristic", XDF_INDENT_HEURISTIC },
+        {  NULL, 0 },
       };
       bool key_used = false;
       for (size_t j = 0; flags[j].name; j++) {
@@ -270,9 +265,9 @@ int nlua_xdl_diff(lua_State *lstate)
   xpparam_t    params;
   xdemitcb_t   ecb;
 
-  memset(&cfg   , 0, sizeof(cfg));
+  memset(&cfg, 0, sizeof(cfg));
   memset(&params, 0, sizeof(params));
-  memset(&ecb   , 0, sizeof(ecb));
+  memset(&ecb, 0, sizeof(ecb));
 
   NluaXdiffMode mode = kNluaXdiffModeUnified;
 
@@ -291,21 +286,21 @@ int nlua_xdl_diff(lua_State *lstate)
   luaL_Buffer buf;
   hunkpriv_t *priv = NULL;
   switch (mode) {
-    case kNluaXdiffModeUnified:
-      luaL_buffinit(lstate, &buf);
-      ecb.priv = &buf;
-      ecb.out_line = write_string;
-      break;
-    case kNluaXdiffModeOnHunkCB:
-      priv = xmalloc(sizeof(*priv));
-      priv->lstate = lstate;
-      priv->err = &err;
-      ecb.priv = priv;
-      break;
-    case kNluaXdiffModeLocations:
-      lua_createtable(lstate, 0, 0);
-      ecb.priv = lstate;
-      break;
+  case kNluaXdiffModeUnified:
+    luaL_buffinit(lstate, &buf);
+    ecb.priv = &buf;
+    ecb.out_line = write_string;
+    break;
+  case kNluaXdiffModeOnHunkCB:
+    priv = xmalloc(sizeof(*priv));
+    priv->lstate = lstate;
+    priv->err = &err;
+    ecb.priv = priv;
+    break;
+  case kNluaXdiffModeLocations:
+    lua_createtable(lstate, 0, 0);
+    ecb.priv = lstate;
+    break;
   }
 
   if (xdl_diff(&ma, &mb, &params, &cfg, &ecb) == -1) {

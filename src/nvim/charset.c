@@ -6,14 +6,15 @@
 /// Code related to character sets.
 
 #include <assert.h>
+#include <inttypes.h>
 #include <string.h>
 #include <wctype.h>
-#include <inttypes.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/func_attr.h"
+#include "nvim/garray.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -21,15 +22,14 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/garray.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
+#include "nvim/path.h"
 #include "nvim/plines.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
-#include "nvim/path.h"
-#include "nvim/cursor.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "charset.c.generated.h"
@@ -41,11 +41,11 @@ static bool chartab_initialized = false;
 // b_chartab[] is an array with 256 bits, each bit representing one of the
 // characters 0-255.
 #define SET_CHARTAB(buf, c) \
-    (buf)->b_chartab[(unsigned)(c) >> 6] |= (1ull << ((c) & 0x3f))
+  (buf)->b_chartab[(unsigned)(c) >> 6] |= (1ull << ((c) & 0x3f))
 #define RESET_CHARTAB(buf, c) \
-    (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
+  (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
 #define GET_CHARTAB_TAB(chartab, c) \
-    ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
+  ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 
 // Table used below, see init_chartab() for an explanation
 static char_u g_chartab[256];
@@ -212,7 +212,7 @@ int buf_init_chartab(buf_T *buf, int global)
           if (i == 0) {
             // (re)set ID flag
             if (tilde) {
-              g_chartab[c] &= (uint8_t)~CT_ID_CHAR;
+              g_chartab[c] &= (uint8_t) ~CT_ID_CHAR;
             } else {
               g_chartab[c] |= CT_ID_CHAR;
             }
@@ -224,7 +224,7 @@ int buf_init_chartab(buf_T *buf, int global)
               if (tilde) {
                 g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
                                          + ((dy_flags & DY_UHEX) ? 4 : 2));
-                g_chartab[c] &= (uint8_t)~CT_PRINT_CHAR;
+                g_chartab[c] &= (uint8_t) ~CT_PRINT_CHAR;
               } else {
                 g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK) + 1);
                 g_chartab[c] |= CT_PRINT_CHAR;
@@ -233,7 +233,7 @@ int buf_init_chartab(buf_T *buf, int global)
           } else if (i == 2) {
             // (re)set fname flag
             if (tilde) {
-              g_chartab[c] &= (uint8_t)~CT_FNAME_CHAR;
+              g_chartab[c] &= (uint8_t) ~CT_FNAME_CHAR;
             } else {
               g_chartab[c] |= CT_FNAME_CHAR;
             }
@@ -417,7 +417,7 @@ char *transstr(const char *const s)
 ///
 /// When "buf" is NULL, return an allocated string.
 /// Otherwise, put the result in buf, limited by buflen, and return buf.
-char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
+char_u * str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
@@ -906,12 +906,11 @@ bool in_win_border(win_T *wp, colnr_T vcol)
 /// @param start
 /// @param cursor
 /// @param end
-void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
-             colnr_T *end)
+void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
   colnr_T vcol;
   char_u *ptr;    // points to current char
-  char_u *posptr; // points to char at pos->col
+  char_u *posptr;  // points to char at pos->col
   char_u *line;   // start of the line
   int incr;
   int head;
@@ -1059,8 +1058,7 @@ colnr_T getvcol_nolist(pos_T *posp)
 /// @param start
 /// @param cursor
 /// @param end
-void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
-              colnr_T *end)
+void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
   colnr_T col;
   colnr_T coladd;
@@ -1115,8 +1113,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
 /// @param pos2
 /// @param left
 /// @param right
-void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
-              colnr_T *right)
+void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right)
 {
   colnr_T from1;
   colnr_T from2;
@@ -1212,7 +1209,7 @@ char_u *skipdigits(const char_u *q)
 /// @param q pointer to string
 ///
 /// @return Pointer to the character after the skipped digits.
-const char* skipbin(const char *q)
+const char * skipbin(const char *q)
   FUNC_ATTR_PURE
   FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
@@ -1231,7 +1228,7 @@ const char* skipbin(const char *q)
 ///
 /// @return Pointer to the character after the skipped digits and hex
 ///         characters.
-char_u* skiphex(char_u *q)
+char_u * skiphex(char_u *q)
 {
   char_u *p = q;
   while (ascii_isxdigit(*p)) {
@@ -1246,7 +1243,7 @@ char_u* skiphex(char_u *q)
 /// @param q
 ///
 /// @return Pointer to the digit or (NUL after the string).
-char_u* skiptodigit(char_u *q)
+char_u * skiptodigit(char_u *q)
 {
   char_u *p = q;
   while (*p != NUL && !ascii_isdigit(*p)) {
@@ -1261,7 +1258,7 @@ char_u* skiptodigit(char_u *q)
 /// @param q pointer to string
 ///
 /// @return Pointer to the binary character or (NUL after the string).
-const char* skiptobin(const char *q)
+const char * skiptobin(const char *q)
   FUNC_ATTR_PURE
   FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
@@ -1279,7 +1276,7 @@ const char* skiptobin(const char *q)
 /// @param q
 ///
 /// @return Pointer to the hex character or (NUL after the string).
-char_u* skiptohex(char_u *q)
+char_u * skiptohex(char_u *q)
 {
   char_u *p = q;
   while (*p != NUL && !ascii_isxdigit(*p)) {
@@ -1308,7 +1305,7 @@ char_u *skiptowhite(const char_u *p)
 /// @param p
 ///
 /// @return Pointer to the next whitespace character.
-char_u* skiptowhite_esc(char_u *p) {
+char_u * skiptowhite_esc(char_u *p) {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
       ++p;
@@ -1440,14 +1437,14 @@ bool vim_isblankline(char_u *lbuf)
 /// @param strict If true, fail if the number has unexpected trailing
 ///               alpha-numeric chars: *len is set to 0 and nothing else is
 ///               returned.
-void vim_str2nr(const char_u *const start, int *const prep, int *const len,
-                const int what, varnumber_T *const nptr,
-                uvarnumber_T *const unptr, const int maxlen, const bool strict)
+void vim_str2nr(const char_u *const start, int *const prep, int *const len, const int what,
+                varnumber_T *const nptr, uvarnumber_T *const unptr, const int maxlen,
+                const bool strict)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *ptr = (const char *)start;
 #define STRING_ENDED(ptr) \
-    (!(maxlen == 0 || (int)((ptr) - (const char *)start) < maxlen))
+  (!(maxlen == 0 || (int)((ptr) - (const char *)start) < maxlen))
   int pre = 0;  // default is decimal
   const bool negative = (ptr[0] == '-');
   uvarnumber_T un = 0;
@@ -1464,42 +1461,37 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
     // When forcing main consideration is skipping the prefix. Decimal numbers
     // have no prefixes to skip. pre is not set.
     switch (what & ~(STR2NR_FORCE | STR2NR_QUOTE)) {
-      case STR2NR_HEX: {
-        if (!STRING_ENDED(ptr + 2)
-            && ptr[0] == '0'
-            && (ptr[1] == 'x' || ptr[1] == 'X')
-            && ascii_isxdigit(ptr[2])) {
-          ptr += 2;
-        }
-        goto vim_str2nr_hex;
+    case STR2NR_HEX:
+      if (!STRING_ENDED(ptr + 2)
+          && ptr[0] == '0'
+          && (ptr[1] == 'x' || ptr[1] == 'X')
+          && ascii_isxdigit(ptr[2])) {
+        ptr += 2;
       }
-      case STR2NR_BIN: {
-        if (!STRING_ENDED(ptr + 2)
-            && ptr[0] == '0'
-            && (ptr[1] == 'b' || ptr[1] == 'B')
-            && ascii_isbdigit(ptr[2])) {
-          ptr += 2;
-        }
-        goto vim_str2nr_bin;
+      goto vim_str2nr_hex;
+    case STR2NR_BIN:
+      if (!STRING_ENDED(ptr + 2)
+          && ptr[0] == '0'
+          && (ptr[1] == 'b' || ptr[1] == 'B')
+          && ascii_isbdigit(ptr[2])) {
+        ptr += 2;
       }
-      // Make STR2NR_OOCT work the same as STR2NR_OCT when forcing.
-      case STR2NR_OCT:
-      case STR2NR_OOCT:
-      case STR2NR_OCT | STR2NR_OOCT: {
-        if (!STRING_ENDED(ptr + 2)
-            && ptr[0] == '0'
-            && (ptr[1] == 'o' || ptr[1] == 'O')
-            && ascii_isodigit(ptr[2])) {
-          ptr += 2;
-        }
-        goto vim_str2nr_oct;
+      goto vim_str2nr_bin;
+    // Make STR2NR_OOCT work the same as STR2NR_OCT when forcing.
+    case STR2NR_OCT:
+    case STR2NR_OOCT:
+    case STR2NR_OCT | STR2NR_OOCT:
+      if (!STRING_ENDED(ptr + 2)
+          && ptr[0] == '0'
+          && (ptr[1] == 'o' || ptr[1] == 'O')
+          && ascii_isodigit(ptr[2])) {
+        ptr += 2;
       }
-      case 0: {
-        goto vim_str2nr_dec;
-      }
-      default: {
-        abort();
-      }
+      goto vim_str2nr_oct;
+    case 0:
+      goto vim_str2nr_dec;
+    default:
+      abort();
     }
   } else if ((what & (STR2NR_HEX | STR2NR_OCT | STR2NR_OOCT | STR2NR_BIN))
              && !STRING_ENDED(ptr + 1) && ptr[0] == '0' && ptr[1] != '8'

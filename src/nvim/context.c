@@ -3,13 +3,13 @@
 
 // Context: snapshot of the entire editor state as one big object/map
 
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
-#include "nvim/api/vim.h"
-#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"
