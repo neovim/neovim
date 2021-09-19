@@ -1,3 +1,38 @@
+-- Usage:
+--    nvim -es +'luafile scripts/lintcommit.lua'
+
+local trace = true
+
+-- Print message
+local function p(s)
+  vim.cmd('set verbose=1')
+  vim.api.nvim_echo({{s, ''}}, false, {})
+  vim.cmd('set verbose=0')
+end
+
+local function die()
+  p('')
+  vim.cmd("cquit 1")
+end
+
+-- Executes and returns the output of `cmd`, or nil on failure.
+--
+-- Prints `cmd` if `trace` is enabled.
+local function run(cmd, or_die)
+  if trace then
+    p('run: '..vim.inspect(cmd))
+  end
+  local rv = vim.trim(vim.fn.system(cmd)) or ''
+  if vim.v.shell_error ~= 0 then
+    if or_die then
+      p(rv)
+      die()
+    end
+    return nil
+  end
+  return rv
+end
+
 local function commit_message_is_ok(commit_message)
   local commit_split = vim.split(commit_message, ":")
 
@@ -9,13 +44,13 @@ local function commit_message_is_ok(commit_message)
 
   -- Check that message isn't too long.
   if commit_message:len() > 80 then
-    vim.cmd([[verbose echo "Commit message is too long, a maximum of 80 characters is allowed. Commit message:"]])
+    p([[Commit message is too long, a maximum of 80 characters is allowed.]])
     return false
   end
 
   -- Return false if no colons are detected.
   if vim.tbl_count(commit_split) < 2 then
-    vim.cmd([[verbose echo "Commit message does not include colons. Commit message:"]])
+    p([[Commit message does not include colons.]])
     return false
   end
 
@@ -31,7 +66,7 @@ local function commit_message_is_ok(commit_message)
   local type = vim.split(before_colon, "%(")[1]
   local allowed_types = {"build", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "test", "chore"}
   if not vim.tbl_contains(allowed_types, type) then
-    vim.cmd([[verbose echo "Commit type is not recognized. Allowed types are: build, ci, docs, feat, fix, perf, refactor, revert, test, chore. Commit message:"]])
+    p([[Commit type is not recognized. Allowed types are: build, ci, docs, feat, fix, perf, refactor, revert, test, chore.]])
     return false
   end
 
@@ -39,21 +74,21 @@ local function commit_message_is_ok(commit_message)
   if before_colon:match("%(") then
     local scope = vim.trim(before_colon:match("%((.*)%)"))
     if scope == '' then
-      vim.cmd([[verbose echo "Scope can't be empty. Commit message:"]])
+      p([[Scope can't be empty.]])
       return false
     end
   end
 
   -- Check that description doesn't end with a period
   if vim.endswith(after_colon, ".") then
-      vim.cmd([[verbose echo "Description ends with a period (\".\"). Commit message:"]])
+      p([[Description ends with a period (\".\").]])
     return false
   end
 
   -- Check that description has exactly one whitespace after colon, followed by
   -- a lowercase letter and then any number of letters.
   if not string.match(after_colon, '^ %l%a*') then
-      vim.cmd([[verbose echo "There should be one whitespace after the colon and the first letter should lowercase. Commit message:"]])
+      p([[There should be one whitespace after the colon and the first letter should lowercase.]])
     return false
   end
 
@@ -61,9 +96,12 @@ local function commit_message_is_ok(commit_message)
 end
 
 local function main()
-  local current_branch = vim.trim(vim.fn.system({'git', 'branch', '--show-current'}))
-  local ancestor_commit = vim.trim(vim.fn.system({'git', 'merge-base', 'origin/master', current_branch}))
-  local commits_str = vim.trim(vim.fn.system({'git', 'rev-list', ancestor_commit .. ".." .. current_branch}))
+  local branch = run({'git', 'branch', '--show-current'}, true)
+  local ancestor = run({'git', 'merge-base', 'origin/master', branch})
+  if not ancestor then
+    ancestor = run({'git', 'merge-base', 'upstream/master', branch})
+  end
+  local commits_str = run({'git', 'rev-list', ancestor..'..'..branch}, true)
 
   local commits = {}
   for substring in commits_str:gmatch("%S+") do
@@ -71,13 +109,12 @@ local function main()
   end
 
   for _, commit_hash in ipairs(commits) do
-    local message = vim.trim(vim.fn.system({'git', 'show', '-s', '--format=%s' , commit_hash}))
+    local message = run({'git', 'show', '-s', '--format=%s' , commit_hash})
     if vim.v.shell_error ~= 0 then
-      vim.cmd('verbose echo "Invalid commit-id: ' .. commit_hash .. '"')
+      p('Invalid commit-id: '..commit_hash..'"')
     elseif not commit_message_is_ok(message) then
-      vim.cmd("verbose echo '" .. message:gsub("'","''") .. "'")
-      vim.cmd('verbose echo ""')
-      vim.cmd("cquit 1")
+      p('Invalid commit format: '..message)
+      die()
     end
   end
 end
@@ -121,27 +158,26 @@ local function _test()
     "chore: you're saying this commit message just goes on and on and on and on and on and on for way too long?",
   }
 
-  print("Messages expected to pass:")
+  p('Messages expected to pass:')
 
   for _, message in ipairs(good_messages) do
     if commit_message_is_ok(message) then
-      print("[ PASSED ] :", message)
+      p('[ PASSED ] : '..message)
     else
-      print("[ FAIL ]   :", message)
+      p('[ FAIL ]   : '..message)
     end
   end
 
-  print("Messages expected to fail:")
+  p("Messages expected to fail:")
 
   for _, message in ipairs(bad_messages) do
     if commit_message_is_ok(message) then
-      print("[ PASSED ] :", message)
+      p('[ PASSED ] : '..message)
     else
-      print("[ FAIL ]   :", message)
+      p('[ FAIL ]   : '..message)
     end
   end
 end
 
 -- _test()
-
 main()
