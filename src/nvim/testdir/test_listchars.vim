@@ -140,6 +140,93 @@ func Test_listchars()
 
   call assert_equal(expected, split(execute("%list"), "\n"))
 
+  " Test multispace
+  normal ggdG
+  set listchars=eol:$
+  set listchars+=multispace:yYzZ
+  set list
+
+  call append(0, [
+	      \ '    ffff    ',
+	      \ '  i i     gg',
+	      \ ' h          ',
+	      \ '          j ',
+	      \ '    0  0    ',
+	      \ ])
+
+  let expected = [
+	      \ 'yYzZffffyYzZ$',
+	      \ 'yYi iyYzZygg$',
+	      \ ' hyYzZyYzZyY$',
+	      \ 'yYzZyYzZyYj $',
+	      \ 'yYzZ0yY0yYzZ$',
+              \ '$'
+	      \ ]
+  redraw!
+  for i in range(1, 5)
+    call cursor(i, 1)
+    call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
+  endfor
+
+  call assert_equal(expected, split(execute("%list"), "\n"))
+
+  " the last occurrence of 'multispace:' is used
+  set listchars+=space:x,multispace:XyY
+
+  let expected = [
+	      \ 'XyYXffffXyYX$',
+	      \ 'XyixiXyYXygg$',
+	      \ 'xhXyYXyYXyYX$',
+	      \ 'XyYXyYXyYXjx$',
+	      \ 'XyYX0Xy0XyYX$',
+              \ '$'
+	      \ ]
+  redraw!
+  for i in range(1, 5)
+    call cursor(i, 1)
+    call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
+  endfor
+
+  call assert_equal(expected, split(execute("%list"), "\n"))
+
+  set listchars+=lead:>,trail:<
+
+  let expected = [
+	      \ '>>>>ffff<<<<$',
+	      \ '>>ixiXyYXygg$',
+	      \ '>h<<<<<<<<<<$',
+	      \ '>>>>>>>>>>j<$',
+	      \ '>>>>0Xy0<<<<$',
+              \ '$'
+	      \ ]
+  redraw!
+  for i in range(1, 5)
+    call cursor(i, 1)
+    call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
+  endfor
+
+  call assert_equal(expected, split(execute("%list"), "\n"))
+
+  " removing 'multispace:'
+  set listchars-=multispace:XyY
+  set listchars-=multispace:yYzZ
+
+  let expected = [
+	      \ '>>>>ffff<<<<$',
+	      \ '>>ixixxxxxgg$',
+	      \ '>h<<<<<<<<<<$',
+	      \ '>>>>>>>>>>j<$',
+	      \ '>>>>0xx0<<<<$',
+              \ '$'
+	      \ ]
+  redraw!
+  for i in range(1, 5)
+    call cursor(i, 1)
+    call assert_equal([expected[i - 1]], ScreenLines(i, virtcol('$')))
+  endfor
+
+  call assert_equal(expected, split(execute("%list"), "\n"))
+
   " test nbsp
   normal ggdG
   set listchars=nbsp:X,trail:Y
@@ -189,18 +276,67 @@ func Test_listchars_unicode()
   set encoding=utf-8
   set ff=unix
 
-  set listchars=eol:⇔,space:␣,nbsp:≠,tab:←↔→
+  set listchars=eol:⇔,space:␣,multispace:≡≢≣,nbsp:≠,tab:←↔→
   set list
 
   let nbsp = nr2char(0xa0)
-  call append(0, ["a\tb c" .. nbsp .. "d"])
-  let expected = ['a←↔↔↔↔↔→b␣c≠d⇔']
+  call append(0, ["        a\tb c" .. nbsp .. "d  "])
+  let expected = ['≡≢≣≡≢≣≡≢a←↔↔↔↔↔→b␣c≠d≡≢⇔']
   redraw!
   call cursor(1, 1)
   call assert_equal(expected, ScreenLines(1, virtcol('$')))
+
+  set listchars+=lead:⇨,trail:⇦
+  let expected = ['⇨⇨⇨⇨⇨⇨⇨⇨a←↔↔↔↔↔→b␣c≠d⇦⇦⇔']
+  redraw!
+  call cursor(1, 1)
+  call assert_equal(expected, ScreenLines(1, virtcol('$')))
+
   let &encoding=oldencoding
   enew!
   set listchars& ff&
+endfunction
+
+func Test_listchars_invalid()
+  enew!
+  set ff=unix
+
+  set listchars=eol:$
+  set list
+  set ambiwidth=double
+
+  " No colon
+  call assert_fails('set listchars=x', 'E474:')
+  call assert_fails('set listchars=x', 'E474:')
+  call assert_fails('set listchars=multispace', 'E474:')
+
+  " Too short
+  call assert_fails('set listchars=space:', 'E474:')
+  call assert_fails('set listchars=tab:x', 'E474:')
+  call assert_fails('set listchars=multispace:', 'E474:')
+
+  " One occurrence too short
+  call assert_fails('set listchars=space:,space:x', 'E474:')
+  call assert_fails('set listchars=space:x,space:', 'E474:')
+  call assert_fails('set listchars=tab:x,tab:xx', 'E474:')
+  call assert_fails('set listchars=tab:xx,tab:x', 'E474:')
+  call assert_fails('set listchars=multispace:,multispace:x', 'E474:')
+  call assert_fails('set listchars=multispace:x,multispace:', 'E474:')
+
+  " Too long
+  call assert_fails('set listchars=space:xx', 'E474:')
+  call assert_fails('set listchars=tab:xxxx', 'E474:')
+
+  " Has non-single width character
+  call assert_fails('set listchars=space:·', 'E474:')
+  call assert_fails('set listchars=tab:·x', 'E474:')
+  call assert_fails('set listchars=tab:x·', 'E474:')
+  call assert_fails('set listchars=tab:xx·', 'E474:')
+  call assert_fails('set listchars=multispace:·', 'E474:')
+  call assert_fails('set listchars=multispace:xxx·', 'E474:')
+
+  enew!
+  set ambiwidth& listchars& ff&
 endfunction
 
 " Tests that space characters following composing character won't get replaced

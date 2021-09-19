@@ -3751,16 +3751,25 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*lcs-space*
 	  space:c	Character to show for a space.  When omitted, spaces
 			are left blank.
+							*lcs-multispace*
+	  multispace:c...
+	 		One or more characters to use cyclically to show for
+	 		multiple consecutive spaces.  Overrides the "space"
+			setting, except for single spaces.  When omitted, the
+			"space" setting is used.  For example,
+			`:set listchars=multispace:---+` shows ten consecutive
+			spaces as:
+				---+---+--
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
-			leading spaces are blank.  Overrides the "space"
-			setting for leading spaces.  You can combine it with
-			"tab:", for example: >
+			leading spaces are blank.  Overrides the "space" and
+			"multispace" settings for leading spaces.  You can
+			combine it with "tab:", for example: >
 				:set listchars+=tab:>-,lead:.
 <							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
-			trailing spaces are blank.  Overrides the "space"
-			setting for trailing spaces.
+			trailing spaces are blank.  Overrides the "space" and
+			"multispace" settings for trailing spaces.
 							*lcs-extends*
 	  extends:c	Character to show in the last column, when 'wrap' is
 			off and the line continues beyond the right of the
@@ -3785,7 +3794,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set lcs=tab:>-,eol:<,nbsp:%
 	    :set lcs=extends:>,precedes:<
 <	|hl-NonText| highlighting will be used for "eol", "extends" and
-	"precedes". |hl-Whitespace| for "nbsp", "space", "tab" and "trail".
+	"precedes". |hl-Whitespace| for "nbsp", "space", "tab", "multispace",
+	"lead" and "trail".
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)
