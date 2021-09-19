@@ -3442,8 +3442,8 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
   int c1;
   int c2 = 0;
   int c3 = 0;
-  char_u *last_multispace;  // Last occurrence of "multispace:"
-  int multispace_len = 0;   // Length of lcs-multispace string
+  char_u *last_multispace = NULL;  // Last occurrence of "multispace:"
+  int multispace_len = 0;          // Length of lcs-multispace string
 
   struct chars_tab {
     int     *cp;    ///< char value
