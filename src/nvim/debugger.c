@@ -60,9 +60,9 @@ void do_debug(char_u *cmd)
   int save_ignore_script = 0;
   int save_ex_normal_busy;
   int n;
-  char_u      *cmdline = NULL;
-  char_u      *p;
-  char        *tail = NULL;
+  char_u *cmdline = NULL;
+  char_u *p;
+  char *tail = NULL;
   static int last_cmd = 0;
 #define CMD_CONT        1
 #define CMD_NEXT        2
@@ -145,13 +145,16 @@ void do_debug(char_u *cmd)
       p = skipwhite(cmdline);
       if (*p != NUL) {
         switch (*p) {
-        case 'c': last_cmd = CMD_CONT;
+        case 'c':
+          last_cmd = CMD_CONT;
           tail = "ont";
           break;
-        case 'n': last_cmd = CMD_NEXT;
+        case 'n':
+          last_cmd = CMD_NEXT;
           tail = "ext";
           break;
-        case 's': last_cmd = CMD_STEP;
+        case 's':
+          last_cmd = CMD_STEP;
           tail = "tep";
           break;
         case 'f':
@@ -164,10 +167,12 @@ void do_debug(char_u *cmd)
             tail = "inish";
           }
           break;
-        case 'q': last_cmd = CMD_QUIT;
+        case 'q':
+          last_cmd = CMD_QUIT;
           tail = "uit";
           break;
-        case 'i': last_cmd = CMD_INTERRUPT;
+        case 'i':
+          last_cmd = CMD_INTERRUPT;
           tail = "nterrupt";
           break;
         case 'b':
@@ -190,7 +195,8 @@ void do_debug(char_u *cmd)
           last_cmd = CMD_DOWN;
           tail = "own";
           break;
-        default: last_cmd = 0;
+        default:
+          last_cmd = 0;
         }
         if (last_cmd != 0) {
           // Check that the tail matches.
@@ -366,7 +372,7 @@ void ex_debug(exarg_T *eap)
   debug_break_level = debug_break_level_save;
 }
 
-static char_u   *debug_breakpoint_name = NULL;
+static char_u *debug_breakpoint_name = NULL;
 static linenr_T debug_breakpoint_lnum;
 
 /// When debugging or a breakpoint is set on a skipped command, no debug prompt
@@ -375,7 +381,7 @@ static linenr_T debug_breakpoint_lnum;
 /// a skipped command decides itself that a debug prompt should be displayed, it
 /// can do so by calling dbg_check_skipped().
 static int debug_skipped;
-static char_u   *debug_skipped_name;
+static char_u *debug_skipped_name;
 
 /// Go to debug mode when a breakpoint was encountered or "ex_nesting_level" is
 /// at or below the break level.  But only when the line is actually
@@ -384,7 +390,7 @@ static char_u   *debug_skipped_name;
 /// Called from do_one_cmd() before executing a command.
 void dbg_check_breakpoint(exarg_T *eap)
 {
-  char_u      *p;
+  char_u *p;
 
   debug_skipped = false;
   if (debug_breakpoint_name != NULL) {
@@ -474,8 +480,8 @@ static typval_T *eval_expr_no_emsg(struct debuggy *const bp)
 /// @param gap  either &dbg_breakp or &prof_ga
 static int dbg_parsearg(char_u *arg, garray_T *gap)
 {
-  char_u      *p = arg;
-  char_u      *q;
+  char_u *p = arg;
+  char_u *q;
   struct debuggy *bp;
   bool here = false;
 
@@ -559,7 +565,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
 void ex_breakadd(exarg_T *eap)
 {
   struct debuggy *bp;
-  garray_T    *gap;
+  garray_T *gap;
 
   gap = &dbg_breakp;
   if (eap->cmdidx == CMD_profile) {
@@ -614,7 +620,7 @@ void ex_breakdel(exarg_T *eap)
   int todel = -1;
   bool del_all = false;
   linenr_T best_lnum = 0;
-  garray_T    *gap;
+  garray_T *gap;
 
   gap = &dbg_breakp;
   if (eap->cmdidx == CMD_profdel) {
@@ -712,12 +718,10 @@ void ex_breaklist(exarg_T *eap)
 
 /// Find a breakpoint for a function or sourced file.
 /// Returns line number at which to break; zero when no matching breakpoint.
-linenr_T
-dbg_find_breakpoint(
-    bool file,             // true for a file, false for a function
-    char_u *fname,         // file or function name
-    linenr_T after         // after this line number
-)
+linenr_T dbg_find_breakpoint(bool file,             // true for a file, false for a function
+                             char_u *fname,         // file or function name
+                             linenr_T after         // after this line number
+                             )
 {
   return debuggy_find(file, fname, after, &dbg_breakp, NULL);
 }
@@ -734,18 +738,16 @@ bool has_profiling(bool file, char_u *fname, bool *fp)
 }
 
 /// Common code for dbg_find_breakpoint() and has_profiling().
-static linenr_T
-debuggy_find(
-    bool file,            // true for a file, false for a function
-    char_u *fname,        // file or function name
-    linenr_T after,       // after this line number
-    garray_T *gap,        // either &dbg_breakp or &prof_ga
-    bool *fp              // if not NULL: return forceit
-)
+static linenr_T debuggy_find(bool file,            // true for a file, false for a function
+                             char_u *fname,        // file or function name
+                             linenr_T after,       // after this line number
+                             garray_T *gap,        // either &dbg_breakp or &prof_ga
+                             bool *fp              // if not NULL: return forceit
+                             )
 {
   struct debuggy *bp;
   linenr_T lnum = 0;
-  char_u      *name = fname;
+  char_u *name = fname;
   int prev_got_int;
 
   // Return quickly when there are no breakpoints.
