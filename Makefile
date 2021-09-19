@@ -163,6 +163,13 @@ _opt_pylint:
 	@command -v flake8 && { $(MAKE) pylint; exit $$?; } \
 		|| echo "SKIP: pylint (flake8 not found)"
 
+commitlint:
+	$(realpath build/bin/nvim) --clean -es +"luafile scripts/lintcommit.lua"
+
+_opt_commitlint:
+	@test -x build/bin/nvim && { $(MAKE) commitlint; exit $$?; } \
+		|| echo "SKIP: commitlint (build/bin/nvim not found)"
+
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
@@ -205,7 +212,7 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-lint: check-single-includes clint lualint _opt_pylint _opt_shlint
+lint: check-single-includes clint lualint _opt_pylint _opt_shlint _opt_commitlint
 
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
 # Does not work with "Unix Makefiles".
@@ -217,4 +224,4 @@ $(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_CMD) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lualint pylint shlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
+.PHONY: test lualint pylint shlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix commitlint
