@@ -3558,7 +3558,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
             }
           }
           if (*s == ',' || *s == NUL) {
-            if (round) {
+            if (round > 0) {
               if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
                 wp->w_p_lcs_chars.tab1 = c1;
                 wp->w_p_lcs_chars.tab2 = c2;
@@ -3574,7 +3574,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
       }
 
       if (i == entries) {
-        len = STRLEN("multispace");
+        len = (int)STRLEN("multispace");
         if ((varp == &p_lcs || varp == &wp->w_p_lcs)
             && STRNCMP(p, "multispace", len) == 0
             && p[len] == ':'
