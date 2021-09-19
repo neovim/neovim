@@ -52,6 +52,7 @@ ifeq (,$(BUILD_TOOL))
     else
       # User's version of CMake doesn't support Ninja
       BUILD_TOOL = $(MAKE)
+      BUILD_TYPE := Unix Makefiles
     endif
   else
     BUILD_TOOL = $(MAKE)
