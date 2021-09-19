@@ -2081,6 +2081,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   int change_end = -1;                  // last col of changed area
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
   colnr_T leadcol = 0;                  // start of leading spaces
+  bool in_multispace = false;           // in multiple consecutive spaces
+  int multispace_pos = 0;               // position in lcs-multispace string
   bool need_showbreak = false;          // overlong line, skip first x chars
   sign_attrs_T sattrs[SIGN_SHOW_MAX];   // attributes for signs
   int num_signs;                        // number of signs for line
@@ -2462,6 +2464,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   if (wp->w_p_list && !has_fold && !end_fill) {
     if (wp->w_p_lcs_chars.space
+        || wp->w_p_lcs_chars.multispace != NULL
         || wp->w_p_lcs_chars.trail
         || wp->w_p_lcs_chars.lead
         || wp->w_p_lcs_chars.nbsp) {
@@ -3580,15 +3583,34 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           }
         }
 
-        // 'list': change char 160 to 'nbsp' and space to 'space'.
+        in_multispace = c == ' ' && ((ptr > line + 1 && ptr[-2] == ' ') || *ptr == ' ');
+        if (!in_multispace) {
+          multispace_pos = 0;
+        }
+
+        // 'list': Change char 160 to 'nbsp' and space to 'space'.
+        // But not when the character is followed by a composing
+        // character (use mb_l to check that).
         if (wp->w_p_list
-            && (((c == 160
-                  || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
-                 && curwin->w_p_lcs_chars.nbsp)
-                || (c == ' ' && curwin->w_p_lcs_chars.space
+            && ((((c == 160 && mb_l == 1)
+                  || (mb_utf8
+                      && ((mb_c == 160 && mb_l == 2)
+                          || (mb_c == 0x202f && mb_l == 3))))
+                 && wp->w_p_lcs_chars.nbsp)
+                || (c == ' '
+                    && mb_l == 1
+                    && (wp->w_p_lcs_chars.space
+                        || (in_multispace && wp->w_p_lcs_chars.multispace != NULL))
                     && ptr - line >= leadcol
                     && ptr - line <= trailcol))) {
-          c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
+          if (in_multispace && wp->w_p_lcs_chars.multispace != NULL) {
+            c = wp->w_p_lcs_chars.multispace[multispace_pos++];
+            if (wp->w_p_lcs_chars.multispace[multispace_pos] == NUL) {
+              multispace_pos = 0;
+            }
+          } else {
+            c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
+          }
           n_attr = 1;
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr

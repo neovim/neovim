@@ -1214,6 +1214,7 @@ struct window_S {
     int tab3;                       ///< third tab character
     int lead;
     int trail;
+    int *multispace;
     int conceal;
   } w_p_lcs_chars;
 

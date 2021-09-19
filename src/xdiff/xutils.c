@@ -47,7 +47,7 @@ int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 	mb[1].size = size;
 	if (size > 0 && rec[size - 1] != '\n') {
 		mb[2].ptr = (char *) "\n\\ No newline at end of file\n";
-		mb[2].size = strlen(mb[2].ptr);
+		mb[2].size = (long)strlen(mb[2].ptr);
 		i++;
 	}
 	if (ecb->out_line(ecb->priv, mb, i) < 0) {

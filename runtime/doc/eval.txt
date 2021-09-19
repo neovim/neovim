@@ -2596,9 +2596,11 @@ rpcrequest({channel}, {method}[, {args}...])
 				Sends an |RPC| request to {channel}
 screenattr({row}, {col})	Number	attribute at screen position
 screenchar({row}, {col})	Number	character at screen position
+screenchars({row}, {col})	List	List of characters at screen position
 screencol()			Number	current cursor column
 screenpos({winid}, {lnum}, {col}) Dict	screen row and col of a text character
 screenrow()			Number	current cursor row
+screenstring({row}, {col})	String	characters at screen position
 search({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 				Number	search for {pattern}
 searchcount([{options}])	Dict    Get or update the last search count
@@ -7669,6 +7671,13 @@ screenchar({row}, {col})					*screenchar()*
 		This is mainly to be used for testing.
 		Returns -1 when row or col is out of range.
 
+screenchars({row}, {col})					*screenchars()*
+		The result is a List of Numbers.  The first number is the same
+		as what |screenchar()| returns.  Further numbers are
+		composing characters on top of the base character.
+		This is mainly to be used for testing.
+		Returns an empty List when row or col is out of range.
+
 screencol()							*screencol()*
 		The result is a Number, which is the current screen column of
 		the cursor. The leftmost column has number 1.
@@ -7711,6 +7720,14 @@ screenrow()							*screenrow()*
 		Alternatively you can use |winline()|.
 
 		Note: Same restrictions as with |screencol()|.
+
+screenstring({row}, {col})					*screenstring()*
+		The result is a String that contains the base character and
+		any composing characters at position [row, col] on the screen.
+		This is like |screenchars()| but returning a String with the
+		characters.
+		This is mainly to be used for testing.
+		Returns an empty String when row or col is out of range.
 
 search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 		Search for regexp pattern {pattern}.  The search starts at the

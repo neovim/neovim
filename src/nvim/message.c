@@ -1707,6 +1707,8 @@ void msg_prt_line(char_u *s, int list)
   int n;
   int attr = 0;
   char_u *lead = NULL;
+  bool in_multispace = false;
+  int multispace_pos = 0;
   char_u *trail = NULL;
   int l;
 
@@ -1771,6 +1773,10 @@ void msg_prt_line(char_u *s, int list)
     } else {
       attr = 0;
       c = *s++;
+      in_multispace = c == ' ' && ((col > 0 && s[-2] == ' ') || *s == ' ');
+      if (!in_multispace) {
+        multispace_pos = 0;
+      }
       if (c == TAB && (!list || curwin->w_p_lcs_chars.tab1)) {
         // tab amount depends on current column
         n_extra = tabstop_padding(col,
@@ -1786,11 +1792,11 @@ void msg_prt_line(char_u *s, int list)
               : curwin->w_p_lcs_chars.tab1;
           c_extra = curwin->w_p_lcs_chars.tab2;
           c_final = curwin->w_p_lcs_chars.tab3;
-          attr = HL_ATTR(HLF_8);
+          attr = HL_ATTR(HLF_0);
         }
       } else if (c == 160 && list && curwin->w_p_lcs_chars.nbsp != NUL) {
         c = curwin->w_p_lcs_chars.nbsp;
-        attr = HL_ATTR(HLF_8);
+        attr = HL_ATTR(HLF_0);
       } else if (c == NUL && list && curwin->w_p_lcs_chars.eol != NUL) {
         p_extra = (char_u *)"";
         c_extra = NUL;
@@ -1807,16 +1813,24 @@ void msg_prt_line(char_u *s, int list)
         c = *p_extra++;
         /* Use special coloring to be able to distinguish <hex> from
          * the same in plain text. */
-        attr = HL_ATTR(HLF_8);
-      } else if (c == ' ' && lead != NULL && s <= lead) {
-        c = curwin->w_p_lcs_chars.lead;
-        attr = HL_ATTR(HLF_8);
-      } else if (c == ' ' && trail != NULL && s > trail) {
-        c = curwin->w_p_lcs_chars.trail;
-        attr = HL_ATTR(HLF_8);
-      } else if (c == ' ' && list && curwin->w_p_lcs_chars.space != NUL) {
-        c = curwin->w_p_lcs_chars.space;
-        attr = HL_ATTR(HLF_8);
+        attr = HL_ATTR(HLF_0);
+      } else if (c == ' ') {
+        if (lead != NULL && s <= lead) {
+          c = curwin->w_p_lcs_chars.lead;
+          attr = HL_ATTR(HLF_0);
+        } else if (trail != NULL && s > trail) {
+          c = curwin->w_p_lcs_chars.trail;
+          attr = HL_ATTR(HLF_0);
+        } else if (list && in_multispace && curwin->w_p_lcs_chars.multispace != NULL) {
+          c = curwin->w_p_lcs_chars.multispace[multispace_pos++];
+          if (curwin->w_p_lcs_chars.multispace[multispace_pos] == NUL) {
+            multispace_pos = 0;
+          }
+          attr = HL_ATTR(HLF_0);
+        } else if (list && curwin->w_p_lcs_chars.space != NUL) {
+          c = curwin->w_p_lcs_chars.space;
+          attr = HL_ATTR(HLF_0);
+        }
       }
     }
 

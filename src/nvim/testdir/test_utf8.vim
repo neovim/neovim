@@ -1,5 +1,6 @@
 " Tests for Unicode manipulations
  
+source view_util.vim
 
 " Visual block Insert adjusts for multi-byte char
 func Test_visual_block_insert()
@@ -59,6 +60,40 @@ func Test_getvcol()
   call assert_equal(4, col("']"))
   call assert_equal(2, virtcol("'["))
   call assert_equal(2, virtcol("']"))
+endfunc
+
+func Test_screenchar_utf8()
+  new
+
+  " 1-cell, with composing characters 
+  call setline(1, ["ABC\u0308"])
+  redraw
+  call assert_equal([0x0041], screenchars(1, 1))
+  call assert_equal([0x0042], screenchars(1, 2))
+  call assert_equal([0x0043, 0x0308], screenchars(1, 3))
+  call assert_equal("A", screenstring(1, 1))
+  call assert_equal("B", screenstring(1, 2))
+  call assert_equal("C\u0308", screenstring(1, 3))
+
+  " 2-cells, with composing characters 
+  let text = "\u3042\u3044\u3046\u3099"
+  call setline(1, text)
+  redraw
+  call assert_equal([0x3042], screenchars(1, 1))
+  call assert_equal([0], screenchars(1, 2))
+  call assert_equal([0x3044], screenchars(1, 3))
+  call assert_equal([0], screenchars(1, 4))
+  call assert_equal([0x3046, 0x3099], screenchars(1, 5))
+
+  call assert_equal("\u3042", screenstring(1, 1))
+  call assert_equal("", screenstring(1, 2))
+  call assert_equal("\u3044", screenstring(1, 3))
+  call assert_equal("", screenstring(1, 4))
+  call assert_equal("\u3046\u3099", screenstring(1, 5))
+
+  call assert_equal([text . '  '], ScreenLines(1, 8))
+
+  bwipe!
 endfunc
 
 func Test_list2str_str2list_utf8()
