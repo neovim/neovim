@@ -12,11 +12,11 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
 #ifdef WIN32
-# include "nvim/os/pty_conpty_win.h"
 # include "nvim/os/os_win_console.h"
+# include "nvim/os/pty_conpty_win.h"
 #endif
-#include "nvim/path.h"
 #include "nvim/ascii.h"
+#include "nvim/path.h"
 
 static bool did_stdio = false;
 
@@ -66,7 +66,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
   if (part == kChannelPartRpc || part == kChannelPartAll) {
     close_main = true;
     if (chan->is_rpc) {
-       rpc_close(chan);
+      rpc_close(chan);
     } else if (part == kChannelPartRpc) {
       *error = (const char *)e_invstream;
       return false;
@@ -78,68 +78,68 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
   }
 
   switch (chan->streamtype) {
-    case kChannelStreamSocket:
-      if (!close_main) {
-        *error = (const char *)e_invstream;
-        return false;
-      }
-      stream_may_close(&chan->stream.socket);
-      break;
+  case kChannelStreamSocket:
+    if (!close_main) {
+      *error = (const char *)e_invstream;
+      return false;
+    }
+    stream_may_close(&chan->stream.socket);
+    break;
 
-    case kChannelStreamProc:
-      proc = (Process *)&chan->stream.proc;
-      if (part == kChannelPartStdin || close_main) {
-        stream_may_close(&proc->in);
-      }
-      if (part == kChannelPartStdout || close_main) {
-        stream_may_close(&proc->out);
-      }
-      if (part == kChannelPartStderr || part == kChannelPartAll) {
-        stream_may_close(&proc->err);
-      }
-      if (proc->type == kProcessTypePty && part == kChannelPartAll) {
-        pty_process_close_master(&chan->stream.pty);
-      }
+  case kChannelStreamProc:
+    proc = (Process *)&chan->stream.proc;
+    if (part == kChannelPartStdin || close_main) {
+      stream_may_close(&proc->in);
+    }
+    if (part == kChannelPartStdout || close_main) {
+      stream_may_close(&proc->out);
+    }
+    if (part == kChannelPartStderr || part == kChannelPartAll) {
+      stream_may_close(&proc->err);
+    }
+    if (proc->type == kProcessTypePty && part == kChannelPartAll) {
+      pty_process_close_master(&chan->stream.pty);
+    }
 
-      break;
+    break;
 
-    case kChannelStreamStdio:
-      if (part == kChannelPartStdin || close_main) {
-        stream_may_close(&chan->stream.stdio.in);
-      }
-      if (part == kChannelPartStdout || close_main) {
-        stream_may_close(&chan->stream.stdio.out);
-      }
-      if (part == kChannelPartStderr) {
-        *error = (const char *)e_invstream;
-        return false;
-      }
-      break;
+  case kChannelStreamStdio:
+    if (part == kChannelPartStdin || close_main) {
+      stream_may_close(&chan->stream.stdio.in);
+    }
+    if (part == kChannelPartStdout || close_main) {
+      stream_may_close(&chan->stream.stdio.out);
+    }
+    if (part == kChannelPartStderr) {
+      *error = (const char *)e_invstream;
+      return false;
+    }
+    break;
 
-    case kChannelStreamStderr:
-      if (part != kChannelPartAll && part != kChannelPartStderr) {
-        *error = (const char *)e_invstream;
-        return false;
+  case kChannelStreamStderr:
+    if (part != kChannelPartAll && part != kChannelPartStderr) {
+      *error = (const char *)e_invstream;
+      return false;
+    }
+    if (!chan->stream.err.closed) {
+      chan->stream.err.closed = true;
+      // Don't close on exit, in case late error messages
+      if (!exiting) {
+        fclose(stderr);
       }
-      if (!chan->stream.err.closed) {
-        chan->stream.err.closed = true;
-        // Don't close on exit, in case late error messages
-        if (!exiting) {
-          fclose(stderr);
-        }
-        channel_decref(chan);
-      }
-      break;
+      channel_decref(chan);
+    }
+    break;
 
-    case kChannelStreamInternal:
-      if (!close_main) {
-        *error = (const char *)e_invstream;
-        return false;
-      }
-      break;
+  case kChannelStreamInternal:
+    if (!close_main) {
+      *error = (const char *)e_invstream;
+      return false;
+    }
+    break;
 
-    default:
-      abort();
+  default:
+    abort();
   }
 
   return true;
@@ -301,12 +301,10 @@ static void close_cb(Stream *stream, void *data)
 ///                          < 0 if the job can't start
 ///
 /// @returns [allocated] channel
-Channel *channel_job_start(char **argv, CallbackReader on_stdout,
-                           CallbackReader on_stderr, Callback on_exit,
-                           bool pty, bool rpc, bool overlapped, bool detach,
-                           ChannelStdinMode stdin_mode, const char *cwd,
-                           uint16_t pty_width, uint16_t pty_height,
-                           dict_T *env, varnumber_T *status_out)
+Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader on_stderr,
+                           Callback on_exit, bool pty, bool rpc, bool overlapped, bool detach,
+                           ChannelStdinMode stdin_mode, const char *cwd, uint16_t pty_width,
+                           uint16_t pty_height, dict_T *env, varnumber_T *status_out)
 {
   assert(cwd == NULL || os_isdir_executable(cwd));
 
@@ -409,8 +407,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
 }
 
 
-uint64_t channel_connect(bool tcp, const char *address,
-                         bool rpc, CallbackReader on_output,
+uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader on_output,
                          int timeout, const char **error)
 {
   Channel *channel;
@@ -470,8 +467,7 @@ void channel_from_connection(SocketWatcher *watcher)
 
 /// Creates an API channel from stdin/stdout. This is used when embedding
 /// Neovim
-uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
-                            const char **error)
+uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **error)
   FUNC_ATTR_NONNULL_ALL
 {
   if (!headless_mode && !embedded_mode) {
@@ -514,8 +510,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
 }
 
 /// @param data will be consumed
-size_t channel_send(uint64_t id, char *data, size_t len,
-                    bool data_owned, const char **error)
+size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const char **error)
   FUNC_ATTR_NONNULL_ALL
 {
   Channel *chan = find_channel(id);
@@ -584,22 +579,20 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
   return l;
 }
 
-void on_channel_data(Stream *stream, RBuffer *buf, size_t count,
-                     void *data, bool eof)
+void on_channel_data(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
   on_channel_output(stream, chan, buf, count, eof, &chan->on_data);
 }
 
-void on_job_stderr(Stream *stream, RBuffer *buf, size_t count,
-                   void *data, bool eof)
+void on_job_stderr(Stream *stream, RBuffer *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
   on_channel_output(stream, chan, buf, count, eof, &chan->on_stderr);
 }
 
-static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
-                              size_t count, bool eof, CallbackReader *reader)
+static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf, size_t count, bool eof,
+                              CallbackReader *reader)
 {
   // stub variable, to keep reading consistent with the order of events, only
   // consider the count parameter.
@@ -852,43 +845,43 @@ Dictionary channel_info(uint64_t id)
 
   const char *stream_desc, *mode_desc;
   switch (chan->streamtype) {
-    case kChannelStreamProc: {
-      stream_desc = "job";
-      if (chan->stream.proc.type == kProcessTypePty) {
-        const char *name = pty_process_tty_name(&chan->stream.pty);
-        PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
-      }
-
-      char **p = chan->stream.proc.argv;
-      Array argv = ARRAY_DICT_INIT;
-      if (p != NULL) {
-        while (*p != NULL) {
-          ADD(argv, STRING_OBJ(cstr_to_string(*p)));
-          p++;
-        }
-      }
-      PUT(info, "argv", ARRAY_OBJ(argv));
-      break;
+  case kChannelStreamProc: {
+    stream_desc = "job";
+    if (chan->stream.proc.type == kProcessTypePty) {
+      const char *name = pty_process_tty_name(&chan->stream.pty);
+      PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
     }
 
-    case kChannelStreamStdio:
-       stream_desc = "stdio";
-       break;
+    char **p = chan->stream.proc.argv;
+    Array argv = ARRAY_DICT_INIT;
+    if (p != NULL) {
+      while (*p != NULL) {
+        ADD(argv, STRING_OBJ(cstr_to_string(*p)));
+        p++;
+      }
+    }
+    PUT(info, "argv", ARRAY_OBJ(argv));
+    break;
+  }
 
-    case kChannelStreamStderr:
-       stream_desc = "stderr";
-       break;
+  case kChannelStreamStdio:
+    stream_desc = "stdio";
+    break;
 
-    case kChannelStreamInternal:
-       PUT(info, "internal", BOOLEAN_OBJ(true));
-      FALLTHROUGH;
+  case kChannelStreamStderr:
+    stream_desc = "stderr";
+    break;
 
-    case kChannelStreamSocket:
-      stream_desc = "socket";
-      break;
+  case kChannelStreamInternal:
+    PUT(info, "internal", BOOLEAN_OBJ(true));
+    FALLTHROUGH;
 
-    default:
-      abort();
+  case kChannelStreamSocket:
+    stream_desc = "socket";
+    break;
+
+  default:
+    abort();
   }
   PUT(info, "stream", STRING_OBJ(cstr_to_string(stream_desc)));
 

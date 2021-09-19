@@ -3,15 +3,16 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include "nvim/vim.h"
+
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/ex_getln.h"
-#include "nvim/charset.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cursor_shape.c.generated.h"
@@ -56,10 +57,14 @@ Array mode_style_array(void)
     if (cur->used_for & SHAPE_CURSOR) {
       String shape_str;
       switch (cur->shape) {
-        case SHAPE_BLOCK: shape_str = cstr_to_string("block"); break;
-        case SHAPE_VER: shape_str = cstr_to_string("vertical"); break;
-        case SHAPE_HOR: shape_str = cstr_to_string("horizontal"); break;
-        default: shape_str = cstr_to_string("unknown");
+      case SHAPE_BLOCK:
+        shape_str = cstr_to_string("block"); break;
+      case SHAPE_VER:
+        shape_str = cstr_to_string("vertical"); break;
+      case SHAPE_HOR:
+        shape_str = cstr_to_string("horizontal"); break;
+      default:
+        shape_str = cstr_to_string("unknown");
       }
       PUT(dic, "cursor_shape", STRING_OBJ(shape_str));
       PUT(dic, "cell_percentage", INTEGER_OBJ(cur->percentage));
@@ -90,12 +95,12 @@ Array mode_style_array(void)
 /// @returns error message for an illegal option, NULL otherwise.
 char_u *parse_shape_opt(int what)
 {
-  char_u      *modep;
-  char_u      *colonp;
-  char_u      *commap;
-  char_u      *slashp;
-  char_u      *p = NULL;
-  char_u      *endp;
+  char_u *modep;
+  char_u *colonp;
+  char_u *commap;
+  char_u *slashp;
+  char_u *p = NULL;
+  char_u *endp;
   int idx = 0;                          // init for GCC
   int all_idx;
   int len;
@@ -142,14 +147,18 @@ char_u *parse_shape_opt(int what)
           if (len == 1 && TOLOWER_ASC(modep[0]) == 'a') {
             all_idx = SHAPE_IDX_COUNT - 1;
           } else {
-            for (idx = 0; idx < SHAPE_IDX_COUNT; ++idx)
-              if (STRNICMP(modep, shape_table[idx].name, len) == 0)
+            for (idx = 0; idx < SHAPE_IDX_COUNT; ++idx) {
+              if (STRNICMP(modep, shape_table[idx].name, len) == 0) {
                 break;
+              }
+            }
             if (idx == SHAPE_IDX_COUNT
-                    || (shape_table[idx].used_for & what) == 0)
+                || (shape_table[idx].used_for & what) == 0) {
               return (char_u *)N_("E546: Illegal mode");
-            if (len == 2 && modep[0] == 'v' && modep[1] == 'e')
+            }
+            if (len == 2 && modep[0] == 'v' && modep[1] == 'e') {
               found_ve = true;
+            }
           }
           modep += len + 1;
         }
@@ -158,7 +167,7 @@ char_u *parse_shape_opt(int what)
           idx = all_idx--;
         }
 
-        /* Parse the part after the colon */
+        // Parse the part after the colon
         for (p = colonp + 1; *p && *p != ','; ) {
           {
             /*
@@ -166,20 +175,22 @@ char_u *parse_shape_opt(int what)
              */
             i = *p;
             len = 0;
-            if (STRNICMP(p, "ver", 3) == 0)
+            if (STRNICMP(p, "ver", 3) == 0) {
               len = 3;
-            else if (STRNICMP(p, "hor", 3) == 0)
+            } else if (STRNICMP(p, "hor", 3) == 0) {
               len = 3;
-            else if (STRNICMP(p, "blinkwait", 9) == 0)
+            } else if (STRNICMP(p, "blinkwait", 9) == 0) {
               len = 9;
-            else if (STRNICMP(p, "blinkon", 7) == 0)
+            } else if (STRNICMP(p, "blinkon", 7) == 0) {
               len = 7;
-            else if (STRNICMP(p, "blinkoff", 8) == 0)
+            } else if (STRNICMP(p, "blinkoff", 8) == 0) {
               len = 8;
+            }
             if (len != 0) {
               p += len;
-              if (!ascii_isdigit(*p))
+              if (!ascii_isdigit(*p)) {
                 return (char_u *)N_("E548: digit expected");
+              }
               int n = getdigits_int(&p, false, 0);
               if (len == 3) {               // "ver" or "hor"
                 if (n == 0) {
@@ -194,44 +205,49 @@ char_u *parse_shape_opt(int what)
                   shape_table[idx].percentage = n;
                 }
               } else if (round == 2) {
-                if (len == 9)
+                if (len == 9) {
                   shape_table[idx].blinkwait = n;
-                else if (len == 7)
+                } else if (len == 7) {
                   shape_table[idx].blinkon = n;
-                else
+                } else {
                   shape_table[idx].blinkoff = n;
+                }
               }
             } else if (STRNICMP(p, "block", 5) == 0) {
-              if (round == 2)
+              if (round == 2) {
                 shape_table[idx].shape = SHAPE_BLOCK;
+              }
               p += 5;
-            } else {          /* must be a highlight group name then */
+            } else {          // must be a highlight group name then
               endp = vim_strchr(p, '-');
-              if (commap == NULL) {                       /* last part */
-                if (endp == NULL)
-                  endp = p + STRLEN(p);                  /* find end of part */
+              if (commap == NULL) {                       // last part
+                if (endp == NULL) {
+                  endp = p + STRLEN(p);                  // find end of part
+                }
               } else if (endp > commap || endp == NULL) {
                 endp = commap;
               }
               slashp = vim_strchr(p, '/');
               if (slashp != NULL && slashp < endp) {
-                /* "group/langmap_group" */
+                // "group/langmap_group"
                 i = syn_check_group(p, (int)(slashp - p));
                 p = slashp + 1;
               }
               if (round == 2) {
                 shape_table[idx].id = syn_check_group(p,
-                    (int)(endp - p));
+                                                      (int)(endp - p));
                 shape_table[idx].id_lm = shape_table[idx].id;
-                if (slashp != NULL && slashp < endp)
+                if (slashp != NULL && slashp < endp) {
                   shape_table[idx].id = i;
+                }
               }
               p = endp;
             }
-          }           /* if (what != SHAPE_MOUSE) */
+          }           // if (what != SHAPE_MOUSE)
 
-          if (*p == '-')
+          if (*p == '-') {
             ++p;
+          }
         }
       }
       modep = p;
@@ -241,7 +257,7 @@ char_u *parse_shape_opt(int what)
     }
   }
 
-  /* If the 's' flag is not given, use the 'v' cursor for 's' */
+  // If the 's' flag is not given, use the 'v' cursor for 's'
   if (!found_ve) {
     {
       shape_table[SHAPE_IDX_VE].shape = shape_table[SHAPE_IDX_V].shape;

@@ -1,16 +1,16 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include "nvim/os/os.h"
-#include "nvim/fileio.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/ui.h"
 #include "nvim/aucmd.h"
+#include "nvim/buffer.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
-#include "nvim/buffer.h"
+#include "nvim/fileio.h"
+#include "nvim/main.h"
+#include "nvim/os/os.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "aucmd.c.generated.h"

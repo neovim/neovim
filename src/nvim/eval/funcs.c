@@ -4251,8 +4251,8 @@ static void f_glob(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       options += WILD_ICASE;
     }
     if (rettv->v_type == VAR_STRING) {
-      rettv->vval.v_string = ExpandOne(&xpc, (char_u *)tv_get_string(
-                                       &argvars[0]), NULL, options, WILD_ALL);
+      rettv->vval.v_string = ExpandOne(&xpc, (char_u *)tv_get_string(&argvars[0]), NULL, options,
+                                       WILD_ALL);
     } else {
       ExpandOne(&xpc, (char_u *)tv_get_string(&argvars[0]), NULL, options,
                 WILD_ALL_KEEP);
@@ -6564,8 +6564,8 @@ static void msgpackparse_unpack_list(const list_T *const list, list_T *const ret
       goto end;
     }
     size_t read_bytes;
-    const int rlret = encode_read_from_list(&lrstate, msgpack_unpacker_buffer(
-                                         unpacker), IOSIZE, &read_bytes);
+    const int rlret = encode_read_from_list(&lrstate, msgpack_unpacker_buffer(unpacker), IOSIZE,
+                                            &read_bytes);
     if (rlret == FAIL) {
       EMSG2(_(e_invarg2), "List item is not a string");
       goto end;
@@ -9244,7 +9244,8 @@ static void f_shellescape(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const bool do_special = non_zero_arg(&argvars[1]);
 
   rettv->vval.v_string = vim_strsave_shellescape((const char_u *)tv_get_string(
-                                   &argvars[0]), do_special, do_special);
+                                                                              &argvars[0]), do_special,
+                                                 do_special);
   rettv->v_type = VAR_STRING;
 }
 

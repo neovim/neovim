@@ -3,10 +3,9 @@
 
 // autocmd.c: Autocommand related functions
 
-#include "nvim/autocmd.h"
-
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -326,8 +325,7 @@ static void au_del_group(char_u *name)
          event = (event_T)((int)event + 1)) {
       for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) {
         if (ap->group == i && ap->pat != NULL) {
-          give_warning(
-              (char_u *)_("W19: Deleting augroup that is still in use"), true);
+          give_warning((char_u *)_("W19: Deleting augroup that is still in use"), true);
           in_use = true;
           event = NUM_EVENTS;
           break;
@@ -761,13 +759,8 @@ static int au_get_grouparg(char_u **argp)
 // If *cmd == NUL: show entries.
 // If forceit == true: delete entries.
 // If group is not AUGROUP_ALL: only use this group.
-static int do_autocmd_event(event_T event,
-                            char_u *pat,
-                            bool once,
-                            int nested,
-                            char_u *cmd,
-                            int forceit,
-                            int group)
+static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, char_u *cmd,
+                            int forceit, int group)
 {
   AutoPat *ap;
   AutoPat **prev_ap;
@@ -847,11 +840,10 @@ static int do_autocmd_event(event_T event,
 
     if (is_buflocal) {
       // normalize pat into standard "<buffer>#N" form
-      snprintf(
-          (char *)buflocal_pat,
-          BUFLOCAL_PAT_LEN,
-          "<buffer=%d>",
-          buflocal_nr);
+      snprintf((char *)buflocal_pat,
+               BUFLOCAL_PAT_LEN,
+               "<buffer=%d>",
+               buflocal_nr);
 
       pat = buflocal_pat;                  // can modify pat and patlen
       patlen = (int)STRLEN(buflocal_pat);  //   but not endpat
@@ -889,7 +881,6 @@ static int do_autocmd_event(event_T event,
           } else if (*cmd == NUL) {
             // Show autocmd's for this autopat, or buflocals <buffer=X>
             show_autocmd(ap, event);
-
           } else if (ap->next == NULL) {
             // Add autocmd to this autopat, if it's the last one.
             break;
@@ -967,8 +958,7 @@ static int do_autocmd_event(event_T event,
 
 // Implementation of ":doautocmd [group] event [fname]".
 // Return OK for success, FAIL for failure;
-int do_doautocmd(char_u *arg,
-                 bool do_msg,  // give message for no matching autocmds?
+int do_doautocmd(char_u *arg, bool do_msg,  // give message for no matching autocmds?
                  bool *did_something)
 {
   char_u *fname;
@@ -1188,7 +1178,7 @@ void aucmd_restbuf(aco_save_T *aco)
         }
       }
     }
-  win_found:
+win_found:
 
     win_remove(curwin, NULL);
     pmap_del(handle_T)(&window_handles, curwin->handle);
@@ -1268,11 +1258,7 @@ void aucmd_restbuf(aco_save_T *aco)
 /// @param buf Buffer for <abuf>
 ///
 /// @return true if some commands were executed.
-bool apply_autocmds(event_T event,
-                    char_u *fname,
-                    char_u *fname_io,
-                    bool force,
-                    buf_T *buf)
+bool apply_autocmds(event_T event, char_u *fname, char_u *fname_io, bool force, buf_T *buf)
 {
   return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf,
                               NULL);
@@ -1289,11 +1275,7 @@ bool apply_autocmds(event_T event,
 /// @param exarg Ex command arguments
 ///
 /// @return true if some commands were executed.
-bool apply_autocmds_exarg(event_T event,
-                          char_u *fname,
-                          char_u *fname_io,
-                          bool force,
-                          buf_T *buf,
+bool apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io, bool force, buf_T *buf,
                           exarg_T *eap)
 {
   return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf,
@@ -1313,11 +1295,7 @@ bool apply_autocmds_exarg(event_T event,
 /// @param[in,out] retval caller's retval
 ///
 /// @return true if some autocommands were executed
-bool apply_autocmds_retval(event_T event,
-                           char_u *fname,
-                           char_u *fname_io,
-                           bool force,
-                           buf_T *buf,
+bool apply_autocmds_retval(event_T event, char_u *fname, char_u *fname_io, bool force, buf_T *buf,
                            int *retval)
 {
   if (should_abort(*retval)) {
@@ -1344,8 +1322,7 @@ bool has_event(event_T event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// the current mode.
 bool has_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return has_event(
-      (get_real_state() == NORMAL_BUSY ? EVENT_CURSORHOLD : EVENT_CURSORHOLDI));
+  return has_event((get_real_state() == NORMAL_BUSY ? EVENT_CURSORHOLD : EVENT_CURSORHOLDI));
   // return first_autopat[] != NULL;
 }
 
@@ -1376,13 +1353,8 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param eap Ex command arguments
 ///
 /// @return true if some commands were executed.
-static bool apply_autocmds_group(event_T event,
-                                 char_u *fname,
-                                 char_u *fname_io,
-                                 bool force,
-                                 int group,
-                                 buf_T *buf,
-                                 exarg_T *eap)
+static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io, bool force,
+                                 int group, buf_T *buf, exarg_T *eap)
 {
   char_u *sfname = NULL;  // short file name
   char_u *tail;
@@ -1769,19 +1741,18 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
         && (apc->group == AUGROUP_ALL || apc->group == ap->group)) {
       // execution-condition
       if (ap->buflocal_nr == 0
-          ? match_file_pat(
-              NULL,
-              &ap->reg_prog,
-              apc->fname,
-              apc->sfname,
-              apc->tail,
-              ap->allow_dirs)
+          ? match_file_pat(NULL,
+                           &ap->reg_prog,
+                           apc->fname,
+                           apc->sfname,
+                           apc->tail,
+                           ap->allow_dirs)
           : ap->buflocal_nr == apc->arg_bufnr) {
         const char *const name = event_nr2name(apc->event);
         s = _("%s Autocommands for \"%s\"");
 
         const size_t sourcing_name_len
-            = (STRLEN(s) + strlen(name) + (size_t)ap->patlen + 1);
+          = (STRLEN(s) + strlen(name) + (size_t)ap->patlen + 1);
 
         sourcing_name = xmalloc(sourcing_name_len);
         snprintf((char *)sourcing_name, sourcing_name_len, s, name,
@@ -1885,9 +1856,7 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
 /// @param event event that occurred.
 /// @param sfname filename the event occurred in.
 /// @param buf buffer the file is open in
-bool has_autocmd(event_T event,
-                 char_u *sfname,
-                 buf_T *buf) FUNC_ATTR_WARN_UNUSED_RESULT
+bool has_autocmd(event_T event, char_u *sfname, buf_T *buf) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   AutoPat *ap;
   char_u *fname;
@@ -1910,13 +1879,12 @@ bool has_autocmd(event_T event,
   for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) {
     if (ap->pat != NULL && ap->cmds != NULL
         && (ap->buflocal_nr == 0
-            ? match_file_pat(
-                NULL,
-                &ap->reg_prog,
-                fname,
-                sfname,
-                tail,
-                ap->allow_dirs)
+            ? match_file_pat(NULL,
+                             &ap->reg_prog,
+                             fname,
+                             sfname,
+                             tail,
+                             ap->allow_dirs)
             : buf != NULL && ap->buflocal_nr == buf->b_fnum)) {
       retval = true;
       break;
@@ -1948,11 +1916,8 @@ char_u *get_augroup_name(expand_T *xp, int idx)
   return (char_u *)AUGROUP_NAME(idx);
 }
 
-char_u *set_context_in_autocmd(
-    expand_T *xp,
-    char_u *arg,
-    int doautocmd  // true for :doauto*, false for :autocmd
-)
+char_u *set_context_in_autocmd(expand_T *xp, char_u *arg, int doautocmd  // true for :doauto*, false for :autocmd
+                               )
 {
   char_u *p;
   int group;
