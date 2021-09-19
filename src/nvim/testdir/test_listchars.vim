@@ -181,3 +181,26 @@ func Test_listchars()
   enew!
   set listchars& ff&
 endfunc
+
+func Test_listchars_composing()
+  enew!
+  let oldencoding=&encoding
+  set encoding=utf-8
+  set ff=unix
+  set list
+
+  set listchars=eol:$,space:_
+  call append(0, [
+        \ "  \u3099	 \u309A"
+        \ ])
+  let expected = [
+        \ "_ \u3099^I \u309A$"
+        \ ]
+  redraw!
+  call cursor(1, 1)
+  let got = ScreenLinesUtf8(1, virtcol('$'))
+  bw!
+  call assert_equal(expected, got)
+  let &encoding=oldencoding
+  set listchars& ff&
+endfunction
