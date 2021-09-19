@@ -6,7 +6,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local command = helpers.command
 local exc_exec = helpers.exc_exec
-local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
 local NIL = helpers.NIL
 local source = helpers.source
 
@@ -517,9 +517,8 @@ describe('json_decode() function', function()
 
   it('does not overflow when writing error message about decoding ["", ""]',
   function()
-    eq('\nE474: Attempt to decode a blank string'
-       .. '\nE474: Failed to parse \n',
-       redir_exec('call json_decode(["", ""])'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       pcall_err(command, 'call json_decode(["", ""])'))
   end)
 end)
 

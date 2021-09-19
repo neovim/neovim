@@ -5,11 +5,10 @@ local command = helpers.command
 local meths = helpers.meths
 local eval = helpers.eval
 local exc_exec = helpers.exc_exec
-local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
 local funcs = helpers.funcs
 local NIL = helpers.NIL
 local source = helpers.source
-local dedent = helpers.dedent
 
 describe('string() function', function()
   before_each(clear)
@@ -140,8 +139,8 @@ describe('string() function', function()
         let TestDictRef = function('TestDict', d)
         let d.tdr = TestDictRef
       ]])
-      eq("\nE724: unable to correctly dump variable with self-referencing container\nfunction('TestDict', {'tdr': function('TestDict', {E724@1})})",
-         redir_exec('echo string(d.tdr)'))
+      eq("Vim(echo):E724: unable to correctly dump variable with self-referencing container",
+         pcall_err(command, 'echo string(d.tdr)'))
     end)
 
     it('dumps automatically created partials', function()
@@ -163,11 +162,8 @@ describe('string() function', function()
     it('does not crash or halt when dumping partials with reference cycles in self',
     function()
       meths.set_var('d', {v=true})
-      eq(dedent([[
-
-          E724: unable to correctly dump variable with self-referencing container
-          {'p': function('<SNR>1_Test2', {E724@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]),
-        redir_exec('echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
+      eq([[Vim(echo):E724: unable to correctly dump variable with self-referencing container]],
+        pcall_err(command, 'echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
     end)
 
     it('does not show errors when dumping partials referencing the same dictionary',
@@ -190,11 +186,8 @@ describe('string() function', function()
       -- there was error in dumping partials). Tested explicitly in
       -- test/unit/api/private_helpers_spec.lua.
       eval('add(l, function("Test1", l))')
-      eq(dedent([=[
-
-          E724: unable to correctly dump variable with self-referencing container
-          function('Test1', [[{E724@2}, function('Test1', [{E724@2}])], function('Test1', [[{E724@4}, function('Test1', [{E724@4}])]])])]=]),
-        redir_exec('echo string(function("Test1", l))'))
+      eq([=[Vim(echo):E724: unable to correctly dump variable with self-referencing container]=],
+        pcall_err(command, 'echo string(function("Test1", l))'))
     end)
 
     it('does not crash or halt when dumping partials with reference cycles in self and arguments',
@@ -204,11 +197,8 @@ describe('string() function', function()
       eval('add(l, l)')
       eval('add(l, function("Test1", l))')
       eval('add(l, function("Test1", d))')
-      eq(dedent([=[
-
-          E724: unable to correctly dump variable with self-referencing container
-          {'p': function('<SNR>1_Test2', [[{E724@3}, function('Test1', [{E724@3}]), function('Test1', {E724@0})], function('Test1', [[{E724@5}, function('Test1', [{E724@5}]), function('Test1', {E724@0})]]), function('Test1', {E724@0})], {E724@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]),
-        redir_exec('echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
+      eq([=[Vim(echo):E724: unable to correctly dump variable with self-referencing container]=],
+        pcall_err(command, 'echo string(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
     end)
   end)
 
@@ -235,10 +225,10 @@ describe('string() function', function()
     it('dumps recursive lists despite the error', function()
       meths.set_var('l', {})
       eval('add(l, l)')
-      eq('\nE724: unable to correctly dump variable with self-referencing container\n[{E724@0}]',
-         redir_exec('echo string(l)'))
-      eq('\nE724: unable to correctly dump variable with self-referencing container\n[[{E724@1}]]',
-         redir_exec('echo string([l])'))
+      eq('Vim(echo):E724: unable to correctly dump variable with self-referencing container',
+         pcall_err(command, 'echo string(l)'))
+      eq('Vim(echo):E724: unable to correctly dump variable with self-referencing container',
+         pcall_err(command, 'echo string([l])'))
     end)
   end)
 
@@ -268,10 +258,10 @@ describe('string() function', function()
     it('dumps recursive dictionaries despite the error', function()
       meths.set_var('d', {d=1})
       eval('extend(d, {"d": d})')
-      eq('\nE724: unable to correctly dump variable with self-referencing container\n{\'d\': {E724@0}}',
-         redir_exec('echo string(d)'))
-      eq('\nE724: unable to correctly dump variable with self-referencing container\n{\'out\': {\'d\': {E724@1}}}',
-         redir_exec('echo string({"out": d})'))
+      eq('Vim(echo):E724: unable to correctly dump variable with self-referencing container',
+         pcall_err(command, 'echo string(d)'))
+      eq('Vim(echo):E724: unable to correctly dump variable with self-referencing container',
+         pcall_err(command, 'echo string({"out": d})'))
     end)
   end)
 end)

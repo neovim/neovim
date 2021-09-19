@@ -5,7 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local eval = helpers.eval
 local meths = helpers.meths
-local redir_exec = helpers.redir_exec
+local exec_capture = helpers.exec_capture
 local source = helpers.source
 local nvim_dir = helpers.nvim_dir
 
@@ -14,14 +14,14 @@ before_each(clear)
 describe(':let', function()
   it('correctly lists variables with curly-braces', function()
     meths.set_var('v', {0})
-    eq('\nv                     [0]', redir_exec('let {"v"}'))
+    eq('v                     [0]', exec_capture('let {"v"}'))
   end)
 
   it('correctly lists variables with subscript', function()
     meths.set_var('v', {0})
-    eq('\nv[0]                  #0', redir_exec('let v[0]'))
-    eq('\ng:["v"][0]            #0', redir_exec('let g:["v"][0]'))
-    eq('\n{"g:"}["v"][0]        #0', redir_exec('let {"g:"}["v"][0]'))
+    eq('v[0]                  #0', exec_capture('let v[0]'))
+    eq('g:["v"][0]            #0', exec_capture('let g:["v"][0]'))
+    eq('{"g:"}["v"][0]        #0', exec_capture('let {"g:"}["v"][0]'))
   end)
 
   it(":unlet self-referencing node in a List graph #6070", function()

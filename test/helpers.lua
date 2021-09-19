@@ -810,6 +810,6 @@ function module.read_nvim_log(logfile, ci_rename)
   return log
 end
 
-module = shared.tbl_extend('error', module, Paths, shared)
+module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))
 
 return module

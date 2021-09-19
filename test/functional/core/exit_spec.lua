@@ -8,7 +8,8 @@ local eq = helpers.eq
 local run = helpers.run
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
-local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
+local exec_capture = helpers.exec_capture
 local poke_eventloop = helpers.poke_eventloop
 
 describe('v:exiting', function()
@@ -52,7 +53,7 @@ end)
 describe(':cquit', function()
   local function test_cq(cmdline, exit_code, redir_msg)
     if redir_msg then
-      eq('\n' .. redir_msg, redir_exec(cmdline))
+      eq(redir_msg, pcall_err(function() return exec_capture(cmdline) end))
       poke_eventloop()
       assert_alive()
     else
@@ -86,14 +87,14 @@ describe(':cquit', function()
   end)
 
   it('exits with redir msg for multiple exit codes after :cquit 1 2', function()
-    test_cq('cquit 1 2', nil, 'E488: Trailing characters: cquit 1 2')
+    test_cq('cquit 1 2', nil, 'Vim(cquit):E488: Trailing characters: cquit 1 2')
   end)
 
   it('exits with redir msg for non-number exit code after :cquit X', function()
-    test_cq('cquit X', nil, 'E488: Trailing characters: cquit X')
+    test_cq('cquit X', nil, 'Vim(cquit):E488: Trailing characters: cquit X')
   end)
 
   it('exits with redir msg for negative exit code after :cquit -1', function()
-    test_cq('cquit -1', nil, 'E488: Trailing characters: cquit -1')
+    test_cq('cquit -1', nil, 'Vim(cquit):E488: Trailing characters: cquit -1')
   end)
 end)

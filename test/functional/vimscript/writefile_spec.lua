@@ -8,7 +8,8 @@ local meths = helpers.meths
 local exc_exec = helpers.exc_exec
 local read_file = helpers.read_file
 local write_file = helpers.write_file
-local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
+local command = helpers.command
 
 local fname = 'Xtest-functional-eval-writefile'
 local dname = fname .. '.d'
@@ -106,51 +107,51 @@ describe('writefile()', function()
 
   it('shows correct file name when supplied numbers', function()
     meths.set_current_dir(dname)
-    eq('\nE482: Can\'t open file 2 for writing: illegal operation on a directory',
-       redir_exec(('call writefile([42], %s)'):format(ddname_tail)))
+    eq('Vim(call):E482: Can\'t open file 2 for writing: illegal operation on a directory',
+       pcall_err(command, ('call writefile([42], %s)'):format(ddname_tail)))
   end)
 
   it('errors out with invalid arguments', function()
     write_file(fname, 'TEST')
-    eq('\nE119: Not enough arguments for function: writefile',
-       redir_exec('call writefile()'))
-    eq('\nE119: Not enough arguments for function: writefile',
-       redir_exec('call writefile([])'))
-    eq('\nE118: Too many arguments for function: writefile',
-       redir_exec(('call writefile([], "%s", "b", 1)'):format(fname)))
+    eq('Vim(call):E119: Not enough arguments for function: writefile',
+       pcall_err(command, 'call writefile()'))
+    eq('Vim(call):E119: Not enough arguments for function: writefile',
+       pcall_err(command, 'call writefile([])'))
+    eq('Vim(call):E118: Too many arguments for function: writefile',
+       pcall_err(command, ('call writefile([], "%s", "b", 1)'):format(fname)))
     for _, arg in ipairs({'0', '0.0', 'function("tr")', '{}', '"test"'}) do
-      eq('\nE475: Invalid argument: writefile() first argument must be a List or a Blob',
-         redir_exec(('call writefile(%s, "%s", "b")'):format(arg, fname)))
+      eq('Vim(call):E475: Invalid argument: writefile() first argument must be a List or a Blob',
+         pcall_err(command, ('call writefile(%s, "%s", "b")'):format(arg, fname)))
     end
     for _, args in ipairs({'[], %s, "b"', '[], "' .. fname .. '", %s'}) do
-      eq('\nE806: using Float as a String',
-         redir_exec(('call writefile(%s)'):format(args:format('0.0'))))
-      eq('\nE730: using List as a String',
-         redir_exec(('call writefile(%s)'):format(args:format('[]'))))
-      eq('\nE731: using Dictionary as a String',
-         redir_exec(('call writefile(%s)'):format(args:format('{}'))))
-      eq('\nE729: using Funcref as a String',
-         redir_exec(('call writefile(%s)'):format(args:format('function("tr")'))))
+      eq('Vim(call):E806: using Float as a String',
+         pcall_err(command, ('call writefile(%s)'):format(args:format('0.0'))))
+      eq('Vim(call):E730: using List as a String',
+         pcall_err(command, ('call writefile(%s)'):format(args:format('[]'))))
+      eq('Vim(call):E731: using Dictionary as a String',
+         pcall_err(command, ('call writefile(%s)'):format(args:format('{}'))))
+      eq('Vim(call):E729: using Funcref as a String',
+         pcall_err(command, ('call writefile(%s)'):format(args:format('function("tr")'))))
     end
-    eq('\nE5060: Unknown flag: «»',
-       redir_exec(('call writefile([], "%s", "bs«»")'):format(fname)))
+    eq('Vim(call):E5060: Unknown flag: «»',
+       pcall_err(command, ('call writefile([], "%s", "bs«»")'):format(fname)))
     eq('TEST', read_file(fname))
   end)
 
   it('does not write to file if error in list', function()
     local args = '["tset"] + repeat([%s], 3), "' .. fname .. '"'
-    eq('\nE805: Expected a Number or a String, Float found',
-        redir_exec(('call writefile(%s)'):format(args:format('0.0'))))
+    eq('Vim(call):E805: Expected a Number or a String, Float found',
+        pcall_err(command, ('call writefile(%s)'):format(args:format('0.0'))))
     eq(nil, read_file(fname))
     write_file(fname, 'TEST')
-    eq('\nE745: Expected a Number or a String, List found',
-        redir_exec(('call writefile(%s)'):format(args:format('[]'))))
+    eq('Vim(call):E745: Expected a Number or a String, List found',
+        pcall_err(command, ('call writefile(%s)'):format(args:format('[]'))))
     eq('TEST', read_file(fname))
-    eq('\nE728: Expected a Number or a String, Dictionary found',
-        redir_exec(('call writefile(%s)'):format(args:format('{}'))))
+    eq('Vim(call):E728: Expected a Number or a String, Dictionary found',
+        pcall_err(command, ('call writefile(%s)'):format(args:format('{}'))))
     eq('TEST', read_file(fname))
-    eq('\nE703: Expected a Number or a String, Funcref found',
-        redir_exec(('call writefile(%s)'):format(args:format('function("tr")'))))
+    eq('Vim(call):E703: Expected a Number or a String, Funcref found',
+        pcall_err(command, ('call writefile(%s)'):format(args:format('function("tr")'))))
     eq('TEST', read_file(fname))
   end)
 end)

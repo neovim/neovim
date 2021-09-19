@@ -2,10 +2,9 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
 local clear = helpers.clear
-local meths = helpers.meths
 local command = helpers.command
 local exc_exec = helpers.exc_exec
-local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
 
 before_each(clear)
 
@@ -24,8 +23,7 @@ describe('uniq()', function()
         return (a:a > a:b) - (a:a < a:b)
       endfunction
     ]])
-    eq('\nE745: Using a List as a Number\nE882: Uniq compare function failed',
-       redir_exec('let fl = uniq([0, 0, [], 1, 1], "Cmp")'))
-    eq({0, {}, 1, 1}, meths.get_var('fl'))
+    eq('Vim(let):E745: Using a List as a Number',
+       pcall_err(command, 'let fl = uniq([0, 0, [], 1, 1], "Cmp")'))
   end)
 end)

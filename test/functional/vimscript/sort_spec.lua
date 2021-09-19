@@ -8,7 +8,7 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 local command = helpers.command
 local exc_exec = helpers.exc_exec
-local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
 
 before_each(clear)
 
@@ -50,8 +50,7 @@ describe('sort()', function()
         return (a:a > a:b) - (a:a < a:b)
       endfunction
     ]])
-    eq('\nE745: Using a List as a Number\nE702: Sort compare function failed',
-       redir_exec('let sl = sort([1, 0, [], 3, 2], "Cmp")'))
-    eq({1, 0, {}, 3, 2}, meths.get_var('sl'))
+    eq('Vim(let):E745: Using a List as a Number',
+       pcall_err(command, 'let sl = sort([1, 0, [], 3, 2], "Cmp")'))
   end)
 end)

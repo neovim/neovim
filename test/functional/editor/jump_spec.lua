@@ -5,7 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local funcs = helpers.funcs
 local feed = helpers.feed
-local redir_exec = helpers.redir_exec
+local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
 
 describe('jumplist', function()
@@ -78,7 +78,7 @@ describe("jumpoptions=stack behaves like 'tagstack'", function()
     feed('<C-O>')
     feed('<C-O>')
 
-    eq(   '\n'
+    eq(   ''
        .. ' jump line  col file/text\n'
        .. '   4   102    0 \n'
        .. '   3     1    0 Line 1\n'
@@ -87,11 +87,11 @@ describe("jumpoptions=stack behaves like 'tagstack'", function()
        .. '>  0    30    0 Line 30\n'
        .. '   1    40    0 Line 40\n'
        .. '   2    50    0 Line 50',
-       redir_exec('jumps'))
+       exec_capture('jumps'))
 
     feed('90gg')
 
-    eq(   '\n'
+    eq(   ''
        .. ' jump line  col file/text\n'
        .. '   5   102    0 \n'
        .. '   4     1    0 Line 1\n'
@@ -99,14 +99,14 @@ describe("jumpoptions=stack behaves like 'tagstack'", function()
        .. '   2    20    0 Line 20\n'
        .. '   1    30    0 Line 30\n'
        .. '>',
-       redir_exec('jumps'))
+       exec_capture('jumps'))
   end)
 
   it('does not add the same location twice adjacently', function()
     feed('60gg')
     feed('60gg')
 
-    eq(   '\n'
+    eq(   ''
        .. ' jump line  col file/text\n'
        .. '   7   102    0 \n'
        .. '   6     1    0 Line 1\n'
@@ -116,14 +116,14 @@ describe("jumpoptions=stack behaves like 'tagstack'", function()
        .. '   2    40    0 Line 40\n'
        .. '   1    50    0 Line 50\n'
        .. '>',
-       redir_exec('jumps'))
+       exec_capture('jumps'))
   end)
 
   it('does add the same location twice nonadjacently', function()
     feed('10gg')
     feed('20gg')
 
-    eq(   '\n'
+    eq(   ''
        .. ' jump line  col file/text\n'
        .. '   8   102    0 \n'
        .. '   7     1    0 Line 1\n'
@@ -134,6 +134,6 @@ describe("jumpoptions=stack behaves like 'tagstack'", function()
        .. '   2    50    0 Line 50\n'
        .. '   1    10    0 Line 10\n'
        .. '>',
-       redir_exec('jumps'))
+       exec_capture('jumps'))
   end)
 end)

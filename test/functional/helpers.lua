@@ -785,19 +785,6 @@ function module.exec_lua(code, ...)
   return module.meths.exec_lua(code, {...})
 end
 
-function module.redir_exec(cmd)
-  module.meths.set_var('__redir_exec_cmd', cmd)
-  module.command([[
-    redir => g:__redir_exec_output
-      silent! execute g:__redir_exec_cmd
-    redir END
-  ]])
-  local ret = module.meths.get_var('__redir_exec_output')
-  module.meths.del_var('__redir_exec_output')
-  module.meths.del_var('__redir_exec_cmd')
-  return ret
-end
-
 function module.get_pathsep()
   return iswin() and '\\' or '/'
 end
