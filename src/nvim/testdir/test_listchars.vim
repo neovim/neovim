@@ -146,7 +146,7 @@ func Test_listchars()
   set list
   " Non-breaking space
   let nbsp = nr2char(0xa0)
-  call append(0, [ ">".nbsp."<" ])
+  call append(0, [ ">" .. nbsp .. "<" ])
 
   let expected = '>X< '
 
@@ -193,12 +193,8 @@ func Test_listchars_unicode()
   set list
 
   let nbsp = nr2char(0xa0)
-  call append(0, [
-        \ "a\tb c".nbsp."d"
-        \ ])
-  let expected = [
-        \ 'a←↔↔↔↔↔→b␣c≠d⇔'
-        \ ]
+  call append(0, ["a\tb c" .. nbsp .. "d"])
+  let expected = ['a←↔↔↔↔↔→b␣c≠d⇔']
   redraw!
   call cursor(1, 1)
   call assert_equal(expected, ScreenLines(1, virtcol('$')))
@@ -221,10 +217,10 @@ func Test_listchars_composing()
   let nbsp1 = nr2char(0xa0)
   let nbsp2 = nr2char(0x202f)
   call append(0, [
-        \ "  \u3099\t \u309A".nbsp1.nbsp1."\u0302".nbsp2.nbsp2."\u0302",
+        \ "  \u3099\t \u309A" .. nbsp1 .. nbsp1 .. "\u0302" .. nbsp2 .. nbsp2 .. "\u0302",
         \ ])
   let expected = [
-        \ "_ \u3099^I \u309A=".nbsp1."\u0302=".nbsp2."\u0302$"
+        \ "_ \u3099^I \u309A=" .. nbsp1 .. "\u0302=" .. nbsp2 .. "\u0302$"
         \ ]
   redraw!
   call cursor(1, 1)
