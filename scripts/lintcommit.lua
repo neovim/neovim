@@ -1,7 +1,16 @@
 -- Usage:
---    nvim -es +'luafile scripts/lintcommit.lua'
+--    # verbose
+--    nvim -es +"lua require('scripts.lintcommit').main()"
+--
+--    # silent
+--    nvim -es +"lua require('scripts.lintcommit').main({trace=false})"
+--
+--    # self-test
+--    nvim -es +"lua require('scripts.lintcommit')._test()"
 
-local trace = true
+local M = {}
+
+local _trace = false
 
 -- Print message
 local function p(s)
@@ -19,7 +28,7 @@ end
 --
 -- Prints `cmd` if `trace` is enabled.
 local function run(cmd, or_die)
-  if trace then
+  if _trace then
     p('run: '..vim.inspect(cmd))
   end
   local rv = vim.trim(vim.fn.system(cmd)) or ''
@@ -33,25 +42,25 @@ local function run(cmd, or_die)
   return rv
 end
 
-local function commit_message_is_ok(commit_message)
+-- Returns nil if the given commit message is valid, or returns a string
+-- message explaining why it is invalid.
+local function validate_commit(commit_message)
   local commit_split = vim.split(commit_message, ":")
 
   -- Return true if the type is vim-patch since most of the normal rules don't
   -- apply.
   if commit_split[1] == "vim-patch" then
-    return true
+    return nil
   end
 
   -- Check that message isn't too long.
   if commit_message:len() > 80 then
-    p([[Commit message is too long, a maximum of 80 characters is allowed.]])
-    return false
+    return [[Commit message is too long, a maximum of 80 characters is allowed.]]
   end
 
-  -- Return false if no colons are detected.
+
   if vim.tbl_count(commit_split) < 2 then
-    p([[Commit message does not include colons.]])
-    return false
+    return [[Commit message does not include colons.]]
   end
 
   local before_colon = commit_split[1]
@@ -64,39 +73,41 @@ local function commit_message_is_ok(commit_message)
 
   -- Check if type is correct
   local type = vim.split(before_colon, "%(")[1]
-  local allowed_types = {"build", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "test", "chore"}
+  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'chore', 'vim-patch'}
   if not vim.tbl_contains(allowed_types, type) then
-    p([[Commit type is not recognized. Allowed types are: build, ci, docs, feat, fix, perf, refactor, revert, test, chore.]])
-    return false
+    return string.format(
+      'Invalid commit type "%s". Allowed types are:\n    %s',
+      type,
+      vim.inspect(allowed_types))
   end
 
   -- Check if scope is empty
   if before_colon:match("%(") then
     local scope = vim.trim(before_colon:match("%((.*)%)"))
     if scope == '' then
-      p([[Scope can't be empty.]])
-      return false
+      return [[Scope can't be empty.]]
     end
   end
 
   -- Check that description doesn't end with a period
   if vim.endswith(after_colon, ".") then
-      p([[Description ends with a period (\".\").]])
-    return false
+    return [[Description ends with a period (\".\").]]
   end
 
   -- Check that description has exactly one whitespace after colon, followed by
   -- a lowercase letter and then any number of letters.
   if not string.match(after_colon, '^ %l%a*') then
-      p([[There should be one whitespace after the colon and the first letter should lowercase.]])
-    return false
+    return [[There should be one whitespace after the colon and the first letter should lowercase.]]
   end
 
-  return true
+  return nil
 end
 
-local function main()
+function M.main(opt)
+  _trace = not opt or not not opt.trace
+
   local branch = run({'git', 'branch', '--show-current'}, true)
+  -- TODO(justinmk): check $GITHUB_REF
   local ancestor = run({'git', 'merge-base', 'origin/master', branch})
   if not ancestor then
     ancestor = run({'git', 'merge-base', 'upstream/master', branch})
@@ -108,76 +119,87 @@ local function main()
      table.insert(commits, substring)
   end
 
-  for _, commit_hash in ipairs(commits) do
-    local message = run({'git', 'show', '-s', '--format=%s' , commit_hash})
+  local failed = 0
+  for _, commit_id in ipairs(commits) do
+    local msg = run({'git', 'show', '-s', '--format=%s' , commit_id})
     if vim.v.shell_error ~= 0 then
-      p('Invalid commit-id: '..commit_hash..'"')
-    elseif not commit_message_is_ok(message) then
-      p('Invalid commit format: '..message)
-      die()
+      p('Invalid commit-id: '..commit_id..'"')
+    else
+      local invalid_msg = validate_commit(msg)
+      if invalid_msg then
+        failed = failed + 1
+        p(string.format([[
+Invalid commit message: "%s"
+    Commit: %s
+    %s
+    See also:
+        https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md#commit-messages
+        https://www.conventionalcommits.org/en/v1.0.0/
+]],
+          msg,
+          commit_id,
+          invalid_msg))
+      end
     end
+  end
+
+  if failed > 0 then
+    die()  -- Exit with error.
+  else
+    p('')
   end
 end
 
-local function _test()
-  local good_messages = {
-    "ci: normal message",
-    "build: normal message",
-    "docs: normal message",
-    "feat: normal message",
-    "fix: normal message",
-    "perf: normal message",
-    "refactor: normal message",
-    "revert: normal message",
-    "test: normal message",
-    "chore: normal message",
-    "ci(window): message with scope",
-    "ci!: message with breaking change",
-    "ci(tui)!: message with scope and breaking change",
-    "vim-patch:8.2.3374: Pyret files are not recognized (#15642)",
-    "vim-patch:8.1.1195,8.2.{3417,3419}",
+function M._test()
+  -- message:expected_result
+  local test_cases = {
+    ['ci: normal message'] = true,
+    ['build: normal message'] = true,
+    ['docs: normal message'] = true,
+    ['feat: normal message'] = true,
+    ['fix: normal message'] = true,
+    ['perf: normal message'] = true,
+    ['refactor: normal message'] = true,
+    ['revert: normal message'] = true,
+    ['test: normal message'] = true,
+    ['chore: normal message'] = true,
+    ['ci(window): message with scope'] = true,
+    ['ci!: message with breaking change'] = true,
+    ['ci(tui)!: message with scope and breaking change'] = true,
+    ['vim-patch:8.2.3374: Pyret files are not recognized (#15642)'] = true,
+    ['vim-patch:8.1.1195,8.2.{3417,3419}'] = true,
+    [':no type before colon 1'] = false,
+    [' :no type before colon 2'] = false,
+    ['  :no type before colon 3'] = false,
+    ['ci(empty description):'] = false,
+    ['ci(whitespace as description): '] = false,
+    ['docs(multiple whitespaces as description):   '] = false,
+    ['ci no colon after type'] = false,
+    ['test:  extra space after colon'] = false,
+    ['ci:	tab after colon'] = false,
+    ['ci:no space after colon'] = false,
+    ['ci :extra space before colon'] = false,
+    ['refactor(): empty scope'] = false,
+    ['ci( ): whitespace as scope'] = false,
+    ['chore: period at end of sentence.'] = false,
+    ['ci: Starting sentence capitalized'] = false,
+    ['unknown: using unknown type'] = false,
+    ['chore: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
   }
 
-  local bad_messages = {
-    ":no type before colon 1",
-    " :no type before colon 2",
-    "  :no type before colon 3",
-    "ci(empty description):",
-    "ci(whitespace as description): ",
-    "docs(multiple whitespaces as description):   ",
-    "ci no colon after type",
-    "test:  extra space after colon",
-    "ci:	tab after colon",
-    "ci:no space after colon",
-    "ci :extra space before colon",
-    "refactor(): empty scope",
-    "ci( ): whitespace as scope",
-    "chore: period at end of sentence.",
-    "ci: Starting sentence capitalized",
-    "unknown: using unknown type",
-    "chore: you're saying this commit message just goes on and on and on and on and on and on for way too long?",
-  }
-
-  p('Messages expected to pass:')
-
-  for _, message in ipairs(good_messages) do
-    if commit_message_is_ok(message) then
-      p('[ PASSED ] : '..message)
-    else
-      p('[ FAIL ]   : '..message)
+  local failed = 0
+  for message, expected in pairs(test_cases) do
+    local is_valid = (nil == validate_commit(message))
+    if is_valid ~= expected then
+      failed = failed + 1
+      p(string.format('[ FAIL ]: expected=%s, got=%s\n    input: "%s"', expected, is_valid, message))
     end
   end
 
-  p("Messages expected to fail:")
-
-  for _, message in ipairs(bad_messages) do
-    if commit_message_is_ok(message) then
-      p('[ PASSED ] : '..message)
-    else
-      p('[ FAIL ]   : '..message)
-    end
+  if failed > 0 then
+    die()  -- Exit with error.
   end
+
 end
 
--- _test()
-main()
+return M
