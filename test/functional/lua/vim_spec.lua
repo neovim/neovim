@@ -2026,6 +2026,8 @@ describe('lua stdlib', function()
         -- Would wait ten seconds if results blocked.
         wait_result = vim.wait(10000, function() return vim.g.timer_result end)
 
+        timer:close()
+
         return {
           time = (start_time + 5) > get_time(),
           wait_result = wait_result,
@@ -2044,6 +2046,8 @@ describe('lua stdlib', function()
         end))
 
         wait_result = vim.wait(300, function() return vim.g.timer_result end, nil, true)
+
+        timer:close()
 
         return {
           wait_result = wait_result,
