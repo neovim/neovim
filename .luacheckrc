@@ -25,3 +25,7 @@ ignore = {
 read_globals = {
   "vim",
 }
+
+exclude_files = {
+  'test/functional/fixtures/lua/syntax_error.lua',
+}
