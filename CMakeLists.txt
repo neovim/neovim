@@ -387,7 +387,7 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
-find_package(LibLUV 1.30.0 REQUIRED)
+find_package(LibLUV 1.42.0 REQUIRED)
 include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
 
 find_package(TreeSitter REQUIRED)
