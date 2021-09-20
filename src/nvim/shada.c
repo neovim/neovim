@@ -66,6 +66,29 @@ KHASH_SET_INIT_INT64(bufset)
 KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
 KHASH_SET_INIT_STR(strset)
 
+#define FORMAT_MARK_ENTRY(entry_name, name_fmt, name_fmt_arg) \
+    do { \
+      typval_T ad_tv = { \
+        .v_type = VAR_DICT, \
+        .vval.v_dict = entry.data.filemark.additional_data \
+      }; \
+      size_t ad_len; \
+      char *const ad = encode_tv2string(&ad_tv, &ad_len); \
+      vim_snprintf_add( \
+          S_LEN(ret), \
+          entry_name " {" name_fmt " file=[%zu]\"%.512s\", " \
+          "pos={l=%" PRIdLINENR ",c=%" PRIdCOLNR ",a=%" PRIdCOLNR "}, " \
+          "ad={%p:[%zu]%.64s} }", \
+          name_fmt_arg, \
+          strlen(entry.data.filemark.fname), \
+          entry.data.filemark.fname, \
+          entry.data.filemark.mark.lnum, \
+          entry.data.filemark.mark.col, \
+          entry.data.filemark.mark.coladd, \
+          (void *)entry.data.filemark.additional_data, \
+          ad_len, \
+          ad); \
+    } while (0)
 #define copy_option_part(src, dest, ...) \
     ((char *) copy_option_part((char_u **) src, (char_u *) dest, __VA_ARGS__))
 #define find_shada_parameter(...) \
@@ -2070,29 +2093,6 @@ static const char *shada_format_entry(const ShadaEntry entry)
       vim_snprintf_add(S_LEN(ret), "Variable { TODO }");
       break;
     }
-#define FORMAT_MARK_ENTRY(entry_name, name_fmt, name_fmt_arg) \
-    do { \
-      typval_T ad_tv = { \
-        .v_type = VAR_DICT, \
-        .vval.v_dict = entry.data.filemark.additional_data \
-      }; \
-      size_t ad_len; \
-      char *const ad = encode_tv2string(&ad_tv, &ad_len); \
-      vim_snprintf_add( \
-          S_LEN(ret), \
-          entry_name " {" name_fmt " file=[%zu]\"%.512s\", " \
-          "pos={l=%" PRIdLINENR ",c=%" PRIdCOLNR ",a=%" PRIdCOLNR "}, " \
-          "ad={%p:[%zu]%.64s} }", \
-          name_fmt_arg, \
-          strlen(entry.data.filemark.fname), \
-          entry.data.filemark.fname, \
-          entry.data.filemark.mark.lnum, \
-          entry.data.filemark.mark.col, \
-          entry.data.filemark.mark.coladd, \
-          (void *)entry.data.filemark.additional_data, \
-          ad_len, \
-          ad); \
-    } while (0)
     case kSDItemGlobalMark: {
       FORMAT_MARK_ENTRY("GlobalMark", " name='%c',", entry.data.filemark.name);
       break;
