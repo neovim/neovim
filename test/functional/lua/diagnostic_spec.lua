@@ -631,6 +631,61 @@ describe('vim.diagnostic', function()
       eq(' source x: Some error', result[1])
       eq(' source y: Another error', result[2])
     end)
+
+    it('supports a format function for diagnostic messages', function()
+      local result = exec_lua [[
+        vim.diagnostic.config({
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            format = function(diagnostic)
+              if diagnostic.severity == vim.diagnostic.severity.ERROR then
+                return string.format("🔥 %s", diagnostic.message)
+              end
+              return string.format("👀 %s", diagnostic.message)
+            end,
+          }
+        })
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_warning('Warning', 0, 0, 0, 0),
+          make_error('Error', 1, 0, 1, 0),
+        })
+
+        local extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+        return {extmarks[1][4].virt_text, extmarks[2][4].virt_text}
+      ]]
+      eq(" 👀 Warning", result[1][2][1])
+      eq(" 🔥 Error", result[2][2][1])
+    end)
+
+    it('includes source for formatted diagnostics', function()
+      local result = exec_lua [[
+        vim.diagnostic.config({
+          underline = false,
+          virtual_text = {
+            prefix = '',
+            source = 'always',
+            format = function(diagnostic)
+              if diagnostic.severity == vim.diagnostic.severity.ERROR then
+                return string.format("🔥 %s", diagnostic.message)
+              end
+              return string.format("👀 %s", diagnostic.message)
+            end,
+          }
+        })
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_warning('Warning', 0, 0, 0, 0, 'some_linter'),
+          make_error('Error', 1, 0, 1, 0, 'another_linter'),
+        })
+
+        local extmarks = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, diagnostic_ns, 0, -1, {details = true})
+        return {extmarks[1][4].virt_text, extmarks[2][4].virt_text}
+      ]]
+      eq(" some_linter: 👀 Warning", result[1][2][1])
+      eq(" another_linter: 🔥 Error", result[2][2][1])
+    end)
   end)
 
   describe('set()', function()
