@@ -172,12 +172,11 @@ void free_buff(buffheader_T *buf)
   buf->bh_first.b_next = NULL;
 }
 
-/*
- * Return the contents of a buffer as a single string.
- * K_SPECIAL and CSI in the returned string are escaped.
- */
-static char_u *get_buffcont(buffheader_T *buffer, int dozero  // count == zero is not an error
-                            )
+/// Return the contents of a buffer as a single string.
+/// K_SPECIAL and CSI in the returned string are escaped.
+///
+/// @param dozero  count == zero is not an error
+static char_u *get_buffcont(buffheader_T *buffer, int dozero)
 {
   size_t count = 0;
   char_u *p = NULL;
@@ -1005,17 +1004,16 @@ void ins_char_typebuf(int c)
   (void)ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
 }
 
-/*
- * Return TRUE if the typeahead buffer was changed (while waiting for a
- * character to arrive).  Happens when a message was received from a client or
- * from feedkeys().
- * But check in a more generic way to avoid trouble: When "typebuf.tb_buf"
- * changed it was reallocated and the old pointer can no longer be used.
- * Or "typebuf.tb_off" may have been changed and we would overwrite characters
- * that was just added.
- */
-bool typebuf_changed(int tb_change_cnt              // old value of typebuf.tb_change_cnt
-                     )
+/// Return TRUE if the typeahead buffer was changed (while waiting for a
+/// character to arrive).  Happens when a message was received from a client or
+/// from feedkeys().
+/// But check in a more generic way to avoid trouble: When "typebuf.tb_buf"
+/// changed it was reallocated and the old pointer can no longer be used.
+/// Or "typebuf.tb_off" may have been changed and we would overwrite characters
+/// that was just added.
+///
+/// @param tb_change_cnt  old value of typebuf.tb_change_cnt
+bool typebuf_changed(int tb_change_cnt)
 {
   return tb_change_cnt != 0 && (typebuf.tb_change_cnt != tb_change_cnt
                                 || typebuf_was_filled
@@ -1272,11 +1270,10 @@ void restore_typeahead(tasave_T *tp)
   readbuf2 = tp->save_readbuf2;
 }
 
-/*
- * Open a new script file for the ":source!" command.
- */
-void openscript(char_u *name, bool directly                 // when true execute directly
-                )
+/// Open a new script file for the ":source!" command.
+///
+/// @param directly  when true execute directly
+void openscript(char_u *name, bool directly)
 {
   if (curscript + 1 == NSCRIPT) {
     EMSG(_(e_nesting));
@@ -2463,31 +2460,30 @@ static int vgetorpeek(bool advance)
   return c;
 }
 
-/*
- * inchar() - get one character from
- *      1. a scriptfile
- *      2. the keyboard
- *
- *  As much characters as we can get (up to 'maxlen') are put in "buf" and
- *  NUL terminated (buffer length must be 'maxlen' + 1).
- *  Minimum for "maxlen" is 3!!!!
- *
- *  "tb_change_cnt" is the value of typebuf.tb_change_cnt if "buf" points into
- *  it.  When typebuf.tb_change_cnt changes (e.g., when a message is received
- *  from a remote client) "buf" can no longer be used.  "tb_change_cnt" is 0
- *  otherwise.
- *
- *  If we got an interrupt all input is read until none is available.
- *
- *  If wait_time == 0  there is no waiting for the char.
- *  If wait_time == n  we wait for n msec for a character to arrive.
- *  If wait_time == -1 we wait forever for a character to arrive.
- *
- *  Return the number of obtained characters.
- *  Return -1 when end of input script reached.
- */
-int inchar(char_u *buf, int maxlen, long wait_time                      // milli seconds
-           )
+/// inchar() - get one character from
+///      1. a scriptfile
+///      2. the keyboard
+///
+///  As much characters as we can get (up to 'maxlen') are put in "buf" and
+///  NUL terminated (buffer length must be 'maxlen' + 1).
+///  Minimum for "maxlen" is 3!!!!
+///
+///  "tb_change_cnt" is the value of typebuf.tb_change_cnt if "buf" points into
+///  it.  When typebuf.tb_change_cnt changes (e.g., when a message is received
+///  from a remote client) "buf" can no longer be used.  "tb_change_cnt" is 0
+///  otherwise.
+///
+///  If we got an interrupt all input is read until none is available.
+///
+///  If wait_time == 0  there is no waiting for the char.
+///  If wait_time == n  we wait for n msec for a character to arrive.
+///  If wait_time == -1 we wait forever for a character to arrive.
+///
+///  Return the number of obtained characters.
+///  Return -1 when end of input script reached.
+///
+/// @param wait_time  milli seconds
+int inchar(char_u *buf, int maxlen, long wait_time)
 {
   int len = 0;  // Init for GCC.
   int retesc = false;  // Return ESC with gotint.
@@ -3297,14 +3293,13 @@ void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, int abbr)
                 abbr);
 }
 
-/*
- * Clear all mappings in "mode".
- */
-void map_clear_int(buf_T *buf,         // buffer for local mappings
-                   int mode,           // mode in which to delete
-                   bool local,         // true for buffer-local mappings
-                   bool abbr           // true for abbreviations
-                   )
+/// Clear all mappings in "mode".
+///
+/// @param buf,  buffer for local mappings
+/// @param mode  mode in which to delete
+/// @param local  true for buffer-local mappings
+/// @param abbr  true for abbreviations
+void map_clear_int(buf_T *buf, int mode, bool local, bool abbr)
 {
   mapblock_T *mp, **mpp;
   int hash;
@@ -3405,8 +3400,8 @@ char *map_mode_to_chars(int mode)
   return (char *)mapmode.ga_data;
 }
 
-static void showmap(mapblock_T *mp, bool local                // true for buffer-local map
-                    )
+/// @param local  true for buffer-local map
+static void showmap(mapblock_T *mp, bool local)
 {
   size_t len = 1;
 
@@ -3572,14 +3567,14 @@ static int expand_mapmodes = 0;
 static bool expand_isabbrev = false;
 static bool expand_buffer = false;
 
-/*
- * Work out what to complete when doing command line completion of mapping
- * or abbreviation names.
- */
-char_u *set_context_in_map_cmd(expand_T *xp, char_u *cmd, char_u *arg, bool forceit,                   // true if '!' given
-                               bool isabbrev,                  // true if abbreviation
-                               bool isunmap,                   // true if unmap/unabbrev command
-                               cmdidx_T cmdidx)
+/// Work out what to complete when doing command line completion of mapping
+/// or abbreviation names.
+///
+/// @param forceit  true if '!' given
+/// @param isabbrev  true if abbreviation
+/// @param isunmap  true if unmap/unabbrev command
+char_u *set_context_in_map_cmd(expand_T *xp, char_u *cmd, char_u *arg, bool forceit, bool isabbrev,
+                               bool isunmap, cmdidx_T cmdidx)
 {
   if (forceit && cmdidx != CMD_map && cmdidx != CMD_unmap) {
     xp->xp_context = EXPAND_NOTHING;
@@ -3923,12 +3918,11 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
   return false;
 }
 
-/*
- * Evaluate the RHS of a mapping or abbreviations and take care of escaping
- * special characters.
- */
-static char_u *eval_map_expr(char_u *str, int c                      // NUL or typed character for abbreviation
-                             )
+/// Evaluate the RHS of a mapping or abbreviations and take care of escaping
+/// special characters.
+///
+/// @param c  NUL or typed character for abbreviation
+static char_u *eval_map_expr(char_u *str, int c)
 {
   char_u *res;
   char_u *p;
@@ -4025,12 +4019,11 @@ void vim_unescape_csi(char_u *p)
   *d = NUL;
 }
 
-/*
- * Write map commands for the current mappings to an .exrc file.
- * Return FAIL on error, OK otherwise.
- */
-int makemap(FILE *fd, buf_T *buf           // buffer for local mappings or NULL
-            )
+/// Write map commands for the current mappings to an .exrc file.
+/// Return FAIL on error, OK otherwise.
+///
+/// @param buf  buffer for local mappings or NULL
+int makemap(FILE *fd, buf_T *buf)
 {
   mapblock_T *mp;
   char_u c1, c2, c3;
@@ -4341,17 +4334,17 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
   return OK;
 }
 
-/*
- * Check the string "keys" against the lhs of all mappings.
- * Return pointer to rhs of mapping (mapblock->m_str).
- * NULL when no mapping found.
- */
-char_u *check_map(char_u *keys, int mode, int exact,                      // require exact match
-                  int ign_mod,                    // ignore preceding modifier
-                  int abbr,                       // do abbreviations
-                  mapblock_T **mp_ptr,           // return: pointer to mapblock or NULL
-                  int *local_ptr         // return: buffer-local mapping or NULL
-                  )
+/// Check the string "keys" against the lhs of all mappings.
+/// Return pointer to rhs of mapping (mapblock->m_str).
+/// NULL when no mapping found.
+///
+/// @param exact  require exact match
+/// @param ign_mod  ignore preceding modifier
+/// @param abbr  do abbreviations
+/// @param mp_ptr  return: pointer to mapblock or NULL
+/// @param local_ptr  return: buffer-local mapping or NULL
+char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapblock_T **mp_ptr,
+                  int *local_ptr)
 {
   int len, minlen;
   mapblock_T *mp;
@@ -4427,19 +4420,20 @@ void add_map(char_u *map, int mode, bool nore)
   p_cpo = cpo_save;
 }
 
-// Translate an internal mapping/abbreviation representation into the
-// corresponding external one recognized by :map/:abbrev commands.
-//
-// This function is called when expanding mappings/abbreviations on the
-// command-line.
-//
-// It uses a growarray to build the translation string since the latter can be
-// wider than the original description. The caller has to free the string
-// afterwards.
-//
-// Returns NULL when there is a problem.
-static char_u * translate_mapping(char_u *str, int cpo_flags  // Value of various flags present in &cpo
-                                  )
+/// Translate an internal mapping/abbreviation representation into the
+/// corresponding external one recognized by :map/:abbrev commands.
+///
+/// This function is called when expanding mappings/abbreviations on the
+/// command-line.
+///
+/// It uses a growarray to build the translation string since the latter can be
+/// wider than the original description. The caller has to free the string
+/// afterwards.
+///
+/// @param cpo_flags  Value of various flags present in &cpo
+///
+/// @return  NULL when there is a problem.
+static char_u * translate_mapping(char_u *str, int cpo_flags)
 {
   garray_T ga;
   ga_init(&ga, 1, 40);

@@ -194,62 +194,62 @@ typedef struct ff_search_ctx_T {
 
 static char_u e_pathtoolong[] = N_("E854: path too long for completion");
 
-/*
- * Initialization routine for vim_findfile().
- *
- * Returns the newly allocated search context or NULL if an error occurred.
- *
- * Don't forget to clean up by calling vim_findfile_cleanup() if you are done
- * with the search context.
- *
- * Find the file 'filename' in the directory 'path'.
- * The parameter 'path' may contain wildcards. If so only search 'level'
- * directories deep. The parameter 'level' is the absolute maximum and is
- * not related to restricts given to the '**' wildcard. If 'level' is 100
- * and you use '**200' vim_findfile() will stop after 100 levels.
- *
- * 'filename' cannot contain wildcards!  It is used as-is, no backslashes to
- * escape special characters.
- *
- * If 'stopdirs' is not NULL and nothing is found downward, the search is
- * restarted on the next higher directory level. This is repeated until the
- * start-directory of a search is contained in 'stopdirs'. 'stopdirs' has the
- * format ";*<dirname>*\(;<dirname>\)*;\=$".
- *
- * If the 'path' is relative, the starting dir for the search is either VIM's
- * current dir or if the path starts with "./" the current files dir.
- * If the 'path' is absolute, the starting dir is that part of the path before
- * the first wildcard.
- *
- * Upward search is only done on the starting dir.
- *
- * If 'free_visited' is TRUE the list of already visited files/directories is
- * cleared. Set this to FALSE if you just want to search from another
- * directory, but want to be sure that no directory from a previous search is
- * searched again. This is useful if you search for a file at different places.
- * The list of visited files/dirs can also be cleared with the function
- * vim_findfile_free_visited().
- *
- * Set the parameter 'find_what' to FINDFILE_DIR if you want to search for
- * directories only, FINDFILE_FILE for files only, FINDFILE_BOTH for both.
- *
- * A search context returned by a previous call to vim_findfile_init() can be
- * passed in the parameter "search_ctx_arg".  This context is reused and
- * reinitialized with the new parameters.  The list of already visited
- * directories from this context is only deleted if the parameter
- * "free_visited" is true.  Be aware that the passed "search_ctx_arg" is freed
- * if the reinitialization fails.
- *
- * If you don't have a search context from a previous call "search_ctx_arg"
- * must be NULL.
- *
- * This function silently ignores a few errors, vim_findfile() will have
- * limited functionality then.
- */
+/// Initialization routine for vim_findfile().
+///
+/// Returns the newly allocated search context or NULL if an error occurred.
+///
+/// Don't forget to clean up by calling vim_findfile_cleanup() if you are done
+/// with the search context.
+///
+/// Find the file 'filename' in the directory 'path'.
+/// The parameter 'path' may contain wildcards. If so only search 'level'
+/// directories deep. The parameter 'level' is the absolute maximum and is
+/// not related to restricts given to the '**' wildcard. If 'level' is 100
+/// and you use '**200' vim_findfile() will stop after 100 levels.
+///
+/// 'filename' cannot contain wildcards!  It is used as-is, no backslashes to
+/// escape special characters.
+///
+/// If 'stopdirs' is not NULL and nothing is found downward, the search is
+/// restarted on the next higher directory level. This is repeated until the
+/// start-directory of a search is contained in 'stopdirs'. 'stopdirs' has the
+/// format ";*<dirname>*\(;<dirname>\)*;\=$".
+///
+/// If the 'path' is relative, the starting dir for the search is either VIM's
+/// current dir or if the path starts with "./" the current files dir.
+/// If the 'path' is absolute, the starting dir is that part of the path before
+/// the first wildcard.
+///
+/// Upward search is only done on the starting dir.
+///
+/// If 'free_visited' is TRUE the list of already visited files/directories is
+/// cleared. Set this to FALSE if you just want to search from another
+/// directory, but want to be sure that no directory from a previous search is
+/// searched again. This is useful if you search for a file at different places.
+/// The list of visited files/dirs can also be cleared with the function
+/// vim_findfile_free_visited().
+///
+/// Set the parameter 'find_what' to FINDFILE_DIR if you want to search for
+/// directories only, FINDFILE_FILE for files only, FINDFILE_BOTH for both.
+///
+/// A search context returned by a previous call to vim_findfile_init() can be
+/// passed in the parameter "search_ctx_arg".  This context is reused and
+/// reinitialized with the new parameters.  The list of already visited
+/// directories from this context is only deleted if the parameter
+/// "free_visited" is true.  Be aware that the passed "search_ctx_arg" is freed
+/// if the reinitialization fails.
+///
+/// If you don't have a search context from a previous call "search_ctx_arg"
+/// must be NULL.
+///
+/// This function silently ignores a few errors, vim_findfile() will have
+/// limited functionality then.
+///
+/// @param tagfile  expanding names of tags files
+/// @param rel_fname  file name to use for "."
 void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int level,
-                        int free_visited, int find_what, void *search_ctx_arg, int tagfile,                    // expanding names of tags files
-                        char_u *rel_fname         // file name to use for "."
-                        )
+                        int free_visited, int find_what, void *search_ctx_arg, int tagfile,
+                        char_u *rel_fname)
 {
   char_u *wc_part;
   ff_stack_T *sptr;
@@ -1342,36 +1342,34 @@ static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
   return FALSE;
 }
 
-/*
- * Find the file name "ptr[len]" in the path.  Also finds directory names.
- *
- * On the first call set the parameter 'first' to TRUE to initialize
- * the search.  For repeating calls to FALSE.
- *
- * Repeating calls will return other files called 'ptr[len]' from the path.
- *
- * Only on the first call 'ptr' and 'len' are used.  For repeating calls they
- * don't need valid values.
- *
- * If nothing found on the first call the option FNAME_MESS will issue the
- * message:
- *          'Can't find file "<file>" in path'
- * On repeating calls:
- *          'No more file "<file>" found in path'
- *
- * options:
- * FNAME_MESS       give error message when not found
- *
- * Uses NameBuff[]!
- *
- * Returns an allocated string for the file name.  NULL for error.
- *
- */
-char_u *find_file_in_path(char_u *ptr,               // file name
-                          size_t len,                // length of file name
-                          int options, int first,                      // use count'th matching file name
-                          char_u *rel_fname         // file name searching relative to
-                          )
+/// Find the file name "ptr[len]" in the path.  Also finds directory names.
+///
+/// On the first call set the parameter 'first' to TRUE to initialize
+/// the search.  For repeating calls to FALSE.
+///
+/// Repeating calls will return other files called 'ptr[len]' from the path.
+///
+/// Only on the first call 'ptr' and 'len' are used.  For repeating calls they
+/// don't need valid values.
+///
+/// If nothing found on the first call the option FNAME_MESS will issue the
+/// message:
+///          'Can't find file "<file>" in path'
+/// On repeating calls:
+///          'No more file "<file>" found in path'
+///
+/// options:
+/// FNAME_MESS       give error message when not found
+///
+/// Uses NameBuff[]!
+///
+/// @param ptr  file name
+/// @param len  length of file name
+/// @param first  use count'th matching file name
+/// @param rel_fname  file name searching relative to
+///
+/// @return  an allocated string for the file name.  NULL for error.
+char_u *find_file_in_path(char_u *ptr, size_t len, int options, int first, char_u *rel_fname)
 {
   return find_file_in_path_option(ptr, len, options, first,
                                   (*curbuf->b_p_path == NUL
@@ -1393,34 +1391,35 @@ void free_findfile(void)
 
 #endif
 
-/*
- * Find the directory name "ptr[len]" in the path.
- *
- * options:
- * FNAME_MESS       give error message when not found
- * FNAME_UNESC      unescape backslashes
- *
- * Uses NameBuff[]!
- *
- * Returns an allocated string for the file name.  NULL for error.
- */
-char_u *find_directory_in_path(char_u *ptr,               // file name
-                               size_t len,                // length of file name
-                               int options, char_u *rel_fname         // file name searching relative to
-                               )
+/// Find the directory name "ptr[len]" in the path.
+///
+/// options:
+/// FNAME_MESS       give error message when not found
+/// FNAME_UNESC      unescape backslashes
+///
+/// Uses NameBuff[]!
+///
+/// @param ptr  file name
+/// @param len  length of file name
+/// @param rel_fname  file name searching relative to
+///
+/// @return  an allocated string for the file name.  NULL for error.
+char_u *find_directory_in_path(char_u *ptr, size_t len, int options, char_u *rel_fname)
 {
   return find_file_in_path_option(ptr, len, options, TRUE, p_cdpath,
                                   FINDFILE_DIR, rel_fname, (char_u *)"");
 }
 
-char_u *find_file_in_path_option(char_u *ptr,               // file name
-                                 size_t len,                // length of file name
-                                 int options, int first,                      // use count'th matching file name
-                                 char_u *path_option,       // p_path or p_cdpath
-                                 int find_what,                  // FINDFILE_FILE, _DIR or _BOTH
-                                 char_u *rel_fname,         // file name we are looking relative to.
-                                 char_u *suffixes          // list of suffixes, 'suffixesadd' option
-                                 )
+/// @param ptr  file name
+/// @param len  length of file name
+/// @param first  use count'th matching file name
+/// @param path_option  p_path or p_cdpath
+/// @param find_what  FINDFILE_FILE, _DIR or _BOTH
+/// @param rel_fname  file name we are looking relative to.
+/// @param suffixes  list of suffixes, 'suffixesadd' option
+char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first,
+                                 char_u *path_option, int find_what, char_u *rel_fname,
+                                 char_u *suffixes)
 {
   static char_u *dir;
   static int did_findfile_init = FALSE;

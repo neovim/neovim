@@ -1877,8 +1877,8 @@ static void prt_dsc_ints(char *comment, int count, int *ints)
   prt_write_string("\n");
 }
 
-static void prt_dsc_resources(const char *comment,    // if NULL add to previous
-                              const char *type, const char *string)
+/// @param comment  if NULL add to previous
+static void prt_dsc_resources(const char *comment, const char *type, const char *string)
   FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   if (comment != NULL) {
