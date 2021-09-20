@@ -197,6 +197,7 @@ func Assert_regput(name, result)
   new
   execute "silent normal! o==\n==\e\"" . a:name . "P"
   call assert_equal(a:result, getline(2, line('$')))
+  bwipe!
 endfunc
 
 func Test_setreg_basic()
@@ -298,9 +299,6 @@ func Test_setreg_basic()
   call assert_fails('call setreg("/", ["1", "2"])', 'E883:')
   call assert_fails('call setreg("=", ["1", "2"])', 'E883:')
   call assert_fails('call setreg(1, ["", "", [], ""])', 'E730:')
-endfunc
-
-func Test_setreg_append_NL()
 endfunc
 
 func Test_curly_assignment()
