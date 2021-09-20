@@ -102,7 +102,11 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       end_lnum = _end.line,
       end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
       severity = severity_lsp_to_vim(diagnostic.severity),
-      message = diagnostic.message
+      message = diagnostic.message,
+      code = diagnostic.code,
+      codeDescription = diagnostic.codeDescription,
+      tags = diagnostic.tags,
+      relatedInformation = diagnostic.relatedInformation,
     }
   end, diagnostics)
 end
@@ -123,6 +127,10 @@ local function diagnostic_vim_to_lsp(diagnostics)
       },
       severity = severity_vim_to_lsp(diagnostic.severity),
       message = diagnostic.message,
+      code = diagnostic.code,
+      codeDescription = diagnostic.codeDescription,
+      tags = diagnostic.tags,
+      relatedInformation = diagnostic.relatedInformation,
     }
   end, diagnostics)
 end
