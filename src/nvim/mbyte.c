@@ -1999,7 +1999,7 @@ void mb_check_adjust_col(void *win_)
 /// @param line  start of the string
 ///
 /// @return      a pointer to the character before "*p", if there is one.
-char_u * mb_prevptr(char_u *line, char_u *p)
+char_u *mb_prevptr(char_u *line, char_u *p)
 {
   if (p > line) {
     MB_PTR_BACK(line, p);
@@ -2099,7 +2099,7 @@ const char *mb_unescape(const char **const pp)
 /*
  * Skip the Vim specific head of a 'encoding' name.
  */
-char_u * enc_skip(char_u *p)
+char_u *enc_skip(char_u *p)
 {
   if (STRNCMP(p, "2byte-", 6) == 0) {
     return p + 6;
@@ -2202,7 +2202,7 @@ static int enc_alias_search(char_u *name)
  * Get the canonicalized encoding of the current locale.
  * Returns an allocated string when successful, NULL when not.
  */
-char_u * enc_locale(void)
+char_u *enc_locale(void)
 {
   int i;
   char buf[50];
@@ -2274,7 +2274,7 @@ enc_locale_copy_enc:
  * Returns (void *)-1 if failed.
  * (should return iconv_t, but that causes problems with prototypes).
  */
-void * my_iconv_open(char_u *to, char_u *from)
+void *my_iconv_open(char_u *to, char_u *from)
 {
   iconv_t fd;
 #define ICONV_TESTLEN 400
@@ -2501,8 +2501,8 @@ char_u *string_convert(const vimconv_T *const vcp, char_u *ptr, size_t *lenp)
  * an incomplete sequence at the end it is not converted and "*unconvlenp" is
  * set to the number of remaining bytes.
  */
-char_u * string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp,
-                            size_t *unconvlenp)
+char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp,
+                           size_t *unconvlenp)
 {
   char_u *retval = NULL;
   char_u *d;

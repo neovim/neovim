@@ -7,13 +7,14 @@
 
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/buffer.h"
 #include "nvim/change.h"
-#include "nvim/indent.h"
-#include "nvim/eval.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
-#include "nvim/mark.h"
+#include "nvim/eval.h"
 #include "nvim/extmark.h"
+#include "nvim/indent.h"
+#include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -25,7 +26,6 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
-#include "nvim/buffer.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -444,8 +444,8 @@ int get_breakindent_win(win_T *wp, char_u *line)
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_width_inner
-    - ((wp->w_p_nu || wp->w_p_rnu)
-        && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
+                         - ((wp->w_p_nu || wp->w_p_rnu)
+                            && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
         ? number_width(wp) + 1 : 0);
 
   // used cached indent, unless pointer or 'tabstop' changed
@@ -510,7 +510,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
 // the line.
 int inindent(int extra)
 {
-  char_u      *ptr;
+  char_u *ptr;
   colnr_T col;
 
   for (col = 0, ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr); ++col) {
@@ -533,15 +533,14 @@ int get_expr_indent(void)
   colnr_T save_curswant;
   int save_set_curswant;
   int save_State;
-  int use_sandbox = was_set_insecurely(
-      curwin, (char_u *)"indentexpr", OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(curwin, (char_u *)"indentexpr", OPT_LOCAL);
 
   // Save and restore cursor position and curswant, in case it was changed
   // * via :normal commands.
   save_pos = curwin->w_cursor;
   save_curswant = curwin->w_curswant;
   save_set_curswant = curwin->w_set_curswant;
-  set_vim_var_nr(VV_LNUM, (varnumber_T) curwin->w_cursor.lnum);
+  set_vim_var_nr(VV_LNUM, (varnumber_T)curwin->w_cursor.lnum);
 
   if (use_sandbox) {
     sandbox++;
@@ -722,11 +721,11 @@ int get_lisp_indent(void)
             quotecount = 0;
 
             if (vi_lisp || ((*that != '"') && (*that != '\'')
-                && (*that != '#') && ((*that < '0') || (*that > '9')))) {
+                            && (*that != '#') && ((*that < '0') || (*that > '9')))) {
               while (*that
                      && (!ascii_iswhite(*that) || quotecount || parencount)
                      && (!((*that == '(' || *that == '[')
-                     && !quotecount && !parencount && vi_lisp))) {
+                           && !quotecount && !parencount && vi_lisp))) {
                 if (*that == '"') {
                   quotecount = !quotecount;
                 }

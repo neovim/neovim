@@ -260,7 +260,7 @@ int tslua_push_parser(lua_State *L)
   return 1;
 }
 
-static TSParser ** parser_check(lua_State *L, uint16_t index)
+static TSParser **parser_check(lua_State *L, uint16_t index)
 {
   return luaL_checkudata(L, index, TS_META_PARSER);
 }

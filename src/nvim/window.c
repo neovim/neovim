@@ -7058,13 +7058,13 @@ void win_id2tabwin(typval_T *const argvars, typval_T *const rettv)
   tv_list_append_number(list, winnr);
 }
 
-win_T * win_id2wp(typval_T *argvars)
+win_T *win_id2wp(typval_T *argvars)
 {
   return win_id2wp_tp(argvars, NULL);
 }
 
 // Return the window and tab pointer of window "id".
-win_T * win_id2wp_tp(typval_T *argvars, tabpage_T **tpp)
+win_T *win_id2wp_tp(typval_T *argvars, tabpage_T **tpp)
 {
   int id = tv_get_number(&argvars[0]);
 

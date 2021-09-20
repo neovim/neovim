@@ -1030,7 +1030,7 @@ int getline_equal(LineGetter fgetline, void *cookie, LineGetter func)
 /// getline function.  Otherwise return "cookie".
 ///
 /// @param cookie  argument for fgetline()
-void * getline_cookie(LineGetter fgetline, void *cookie)
+void *getline_cookie(LineGetter fgetline, void *cookie)
 {
   LineGetter gp;
   struct loop_cookie *cp;
@@ -1250,8 +1250,8 @@ static char_u *skip_colon_white(const char_u *p, bool skipleadingwhite)
 /// This function may be called recursively!
 ///
 /// @param cookie  argument for fgetline()
-static char_u * do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGetter fgetline,
-                           void *cookie)
+static char_u *do_one_cmd(char_u **cmdlinep, int flags, cstack_T *cstack, LineGetter fgetline,
+                          void *cookie)
 {
   char_u *p;
   linenr_T lnum;
@@ -2905,7 +2905,7 @@ int cmd_exists(const char *const name)
 /// probably won't change that much -- webb.
 ///
 /// @param buff  buffer for command string
-const char * set_one_cmd_context(expand_T *xp, const char *buff)
+const char *set_one_cmd_context(expand_T *xp, const char *buff)
 {
   size_t len = 0;
   exarg_T ea;

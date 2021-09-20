@@ -119,7 +119,7 @@ void signal_accept_deadly(void)
   rejecting_deadly = false;
 }
 
-static char * signal_name(int signum)
+static char *signal_name(int signum)
 {
   switch (signum) {
 #ifdef SIGPWR

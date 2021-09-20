@@ -3,9 +3,11 @@
 
 // highlight.c: low level code for UI and syntax highlighting
 
-#include "nvim/vim.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/lua/executor.h"
 #include "nvim/map.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
@@ -13,9 +15,7 @@
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/lua/executor.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "highlight.c.generated.h"
@@ -361,19 +361,19 @@ void update_window_hl(win_T *wp, bool invalid)
 int hl_get_underline(void)
 {
   return get_attr_entry((HlEntry){
-      .attr = (HlAttrs){
-          .cterm_ae_attr = (int16_t)HL_UNDERLINE,
-          .cterm_fg_color = 0,
-          .cterm_bg_color = 0,
-          .rgb_ae_attr = (int16_t)HL_UNDERLINE,
-          .rgb_fg_color = -1,
-          .rgb_bg_color = -1,
-          .rgb_sp_color = -1,
-          .hl_blend = -1,
-      },
-      .kind = kHlUI,
-      .id1 = 0,
-      .id2 = 0,
+    .attr = (HlAttrs){
+      .cterm_ae_attr = (int16_t)HL_UNDERLINE,
+      .cterm_fg_color = 0,
+      .cterm_bg_color = 0,
+      .rgb_ae_attr = (int16_t)HL_UNDERLINE,
+      .rgb_fg_color = -1,
+      .rgb_bg_color = -1,
+      .rgb_sp_color = -1,
+      .hl_blend = -1,
+    },
+    .kind = kHlUI,
+    .id1 = 0,
+    .id2 = 0,
   });
 }
 
@@ -648,23 +648,23 @@ static int hl_cterm2rgb_color(int nr)
   };
   static char_u ansi_table[16][4] = {
     //  R    G    B   idx
-    {   0,   0,   0,  1 } ,  // black
-    { 224,   0,   0,  2 } ,  // dark red
-    {   0, 224,   0,  3 } ,  // dark green
-    { 224, 224,   0,  4 } ,  // dark yellow / brown
-    {   0,   0, 224,  5 } ,  // dark blue
-    { 224,   0, 224,  6 } ,  // dark magenta
-    {   0, 224, 224,  7 } ,  // dark cyan
-    { 224, 224, 224,  8 } ,  // light grey
+    {   0,   0,   0,  1 },  // black
+    { 224,   0,   0,  2 },  // dark red
+    {   0, 224,   0,  3 },  // dark green
+    { 224, 224,   0,  4 },  // dark yellow / brown
+    {   0,   0, 224,  5 },  // dark blue
+    { 224,   0, 224,  6 },  // dark magenta
+    {   0, 224, 224,  7 },  // dark cyan
+    { 224, 224, 224,  8 },  // light grey
 
-    { 128, 128, 128,  9 } ,  // dark grey
-    { 255,  64,  64, 10 } ,  // light red
-    {  64, 255,  64, 11 } ,  // light green
-    { 255, 255,  64, 12 } ,  // yellow
-    {  64,  64, 255, 13 } ,  // light blue
-    { 255,  64, 255, 14 } ,  // light magenta
-    {  64, 255, 255, 15 } ,  // light cyan
-    { 255, 255, 255, 16 } ,  // white
+    { 128, 128, 128,  9 },  // dark grey
+    { 255,  64,  64, 10 },  // light red
+    {  64, 255,  64, 11 },  // light green
+    { 255, 255,  64, 12 },  // yellow
+    {  64,  64, 255, 13 },  // light blue
+    { 255,  64, 255, 14 },  // light magenta
+    {  64, 255, 255, 15 },  // light cyan
+    { 255, 255, 255, 16 },  // white
   };
 
   int r = 0;
@@ -790,7 +790,7 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   }
 
   if (ae.hl_blend > -1) {
-      PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
+    PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
   return hl;
@@ -847,7 +847,7 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
                                    err)) {
               cterm_mask |= flags[m].flag;
             }
-          break;
+            break;
           }
         }
       }
@@ -915,9 +915,9 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     hlattrs.rgb_fg_color = fg;
     hlattrs.rgb_sp_color = sp;
     hlattrs.cterm_bg_color =
-        ctermbg == -1 ? cterm_normal_bg_color : ctermbg + 1;
+      ctermbg == -1 ? cterm_normal_bg_color : ctermbg + 1;
     hlattrs.cterm_fg_color =
-        ctermfg == -1 ? cterm_normal_fg_color : ctermfg + 1;
+      ctermfg == -1 ? cterm_normal_fg_color : ctermfg + 1;
     hlattrs.cterm_ae_attr = cterm_mask;
   } else {
     hlattrs.cterm_ae_attr = cterm_mask;
@@ -945,34 +945,34 @@ static void hl_inspect_impl(Array *arr, int attr)
 
   HlEntry e = kv_A(attr_entries, attr);
   switch (e.kind) {
-    case kHlSyntax:
-      PUT(item, "kind", STRING_OBJ(cstr_to_string("syntax")));
-      PUT(item, "hi_name",
-          STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id1))));
-      break;
+  case kHlSyntax:
+    PUT(item, "kind", STRING_OBJ(cstr_to_string("syntax")));
+    PUT(item, "hi_name",
+        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id1))));
+    break;
 
-    case kHlUI:
-      PUT(item, "kind", STRING_OBJ(cstr_to_string("ui")));
-      const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
-      PUT(item, "ui_name", STRING_OBJ(cstr_to_string(ui_name)));
-      PUT(item, "hi_name",
-          STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id2))));
-      break;
+  case kHlUI:
+    PUT(item, "kind", STRING_OBJ(cstr_to_string("ui")));
+    const char *ui_name = (e.id1 == -1) ? "Normal" : hlf_names[e.id1];
+    PUT(item, "ui_name", STRING_OBJ(cstr_to_string(ui_name)));
+    PUT(item, "hi_name",
+        STRING_OBJ(cstr_to_string((char *)syn_id2name(e.id2))));
+    break;
 
-    case kHlTerminal:
-      PUT(item, "kind", STRING_OBJ(cstr_to_string("term")));
-      break;
+  case kHlTerminal:
+    PUT(item, "kind", STRING_OBJ(cstr_to_string("term")));
+    break;
 
-    case kHlCombine:
-    case kHlBlend:
-    case kHlBlendThrough:
-      // attribute combination is associative, so flatten to an array
-      hl_inspect_impl(arr, e.id1);
-      hl_inspect_impl(arr, e.id2);
-      return;
+  case kHlCombine:
+  case kHlBlend:
+  case kHlBlendThrough:
+    // attribute combination is associative, so flatten to an array
+    hl_inspect_impl(arr, e.id1);
+    hl_inspect_impl(arr, e.id2);
+    return;
 
-     case kHlUnknown:
-      return;
+  case kHlUnknown:
+    return;
   }
   PUT(item, "id", INTEGER_OBJ(attr));
   ADD(*arr, DICTIONARY_OBJ(item));

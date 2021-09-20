@@ -2401,7 +2401,7 @@ void text_locked_msg(void)
   EMSG(_(get_text_locked_msg()));
 }
 
-char_u * get_text_locked_msg(void) {
+char_u *get_text_locked_msg(void) {
   if (cmdwin_type != 0) {
     return e_cmdwin;
   } else {
@@ -5218,8 +5218,8 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file, int 
 
 /// Call "user_expand_func()" to invoke a user defined Vim script function and
 /// return the result (either a string, a List or NULL).
-static void * call_user_expand_func(user_expand_func_T user_expand_func, expand_T *xp,
-                                    int *num_file, char_u ***file)
+static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T *xp, int *num_file,
+                                   char_u ***file)
   FUNC_ATTR_NONNULL_ALL
 {
   char_u keep = 0;

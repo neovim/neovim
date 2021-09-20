@@ -5,16 +5,16 @@
 #include <inttypes.h>
 #include <limits.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/keymap.h"
 #include "nvim/charset.h"
-#include "nvim/memory.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/keymap.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/strings.h"
 #include "nvim/mouse.h"
+#include "nvim/strings.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "keymap.c.generated.h"
@@ -51,48 +51,48 @@ static const struct modmasktable {
 
 static char_u modifier_keys_table[] =
 {
-  /*  mod mask	    with modifier		without modifier */
-  MOD_MASK_SHIFT, '&', '9',                   '@', '1',         /* begin */
-  MOD_MASK_SHIFT, '&', '0',                   '@', '2',         /* cancel */
-  MOD_MASK_SHIFT, '*', '1',                   '@', '4',         /* command */
-  MOD_MASK_SHIFT, '*', '2',                   '@', '5',         /* copy */
-  MOD_MASK_SHIFT, '*', '3',                   '@', '6',         /* create */
-  MOD_MASK_SHIFT, '*', '4',                   'k', 'D',         /* delete char */
-  MOD_MASK_SHIFT, '*', '5',                   'k', 'L',         /* delete line */
-  MOD_MASK_SHIFT, '*', '7',                   '@', '7',         /* end */
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_END,    '@', '7',         /* end */
-  MOD_MASK_SHIFT, '*', '9',                   '@', '9',         /* exit */
-  MOD_MASK_SHIFT, '*', '0',                   '@', '0',         /* find */
-  MOD_MASK_SHIFT, '#', '1',                   '%', '1',         /* help */
-  MOD_MASK_SHIFT, '#', '2',                   'k', 'h',         /* home */
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_HOME,   'k', 'h',         /* home */
-  MOD_MASK_SHIFT, '#', '3',                   'k', 'I',         /* insert */
-  MOD_MASK_SHIFT, '#', '4',                   'k', 'l',         /* left arrow */
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_LEFT,   'k', 'l',         /* left arrow */
-  MOD_MASK_SHIFT, '%', 'a',                   '%', '3',         /* message */
-  MOD_MASK_SHIFT, '%', 'b',                   '%', '4',         /* move */
-  MOD_MASK_SHIFT, '%', 'c',                   '%', '5',         /* next */
-  MOD_MASK_SHIFT, '%', 'd',                   '%', '7',         /* options */
-  MOD_MASK_SHIFT, '%', 'e',                   '%', '8',         /* previous */
-  MOD_MASK_SHIFT, '%', 'f',                   '%', '9',         /* print */
-  MOD_MASK_SHIFT, '%', 'g',                   '%', '0',         /* redo */
-  MOD_MASK_SHIFT, '%', 'h',                   '&', '3',         /* replace */
-  MOD_MASK_SHIFT, '%', 'i',                   'k', 'r',         /* right arr. */
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_RIGHT,  'k', 'r',         /* right arr. */
-  MOD_MASK_SHIFT, '%', 'j',                   '&', '5',         /* resume */
-  MOD_MASK_SHIFT, '!', '1',                   '&', '6',         /* save */
-  MOD_MASK_SHIFT, '!', '2',                   '&', '7',         /* suspend */
-  MOD_MASK_SHIFT, '!', '3',                   '&', '8',         /* undo */
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_UP,     'k', 'u',         /* up arrow */
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_DOWN,   'k', 'd',         /* down arrow */
+  //  mod mask      with modifier               without modifier
+  MOD_MASK_SHIFT, '&', '9',                   '@', '1',         // begin
+  MOD_MASK_SHIFT, '&', '0',                   '@', '2',         // cancel
+  MOD_MASK_SHIFT, '*', '1',                   '@', '4',         // command
+  MOD_MASK_SHIFT, '*', '2',                   '@', '5',         // copy
+  MOD_MASK_SHIFT, '*', '3',                   '@', '6',         // create
+  MOD_MASK_SHIFT, '*', '4',                   'k', 'D',         // delete char
+  MOD_MASK_SHIFT, '*', '5',                   'k', 'L',         // delete line
+  MOD_MASK_SHIFT, '*', '7',                   '@', '7',         // end
+  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_END,    '@', '7',         // end
+  MOD_MASK_SHIFT, '*', '9',                   '@', '9',         // exit
+  MOD_MASK_SHIFT, '*', '0',                   '@', '0',         // find
+  MOD_MASK_SHIFT, '#', '1',                   '%', '1',         // help
+  MOD_MASK_SHIFT, '#', '2',                   'k', 'h',         // home
+  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_HOME,   'k', 'h',         // home
+  MOD_MASK_SHIFT, '#', '3',                   'k', 'I',         // insert
+  MOD_MASK_SHIFT, '#', '4',                   'k', 'l',         // left arrow
+  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_LEFT,   'k', 'l',         // left arrow
+  MOD_MASK_SHIFT, '%', 'a',                   '%', '3',         // message
+  MOD_MASK_SHIFT, '%', 'b',                   '%', '4',         // move
+  MOD_MASK_SHIFT, '%', 'c',                   '%', '5',         // next
+  MOD_MASK_SHIFT, '%', 'd',                   '%', '7',         // options
+  MOD_MASK_SHIFT, '%', 'e',                   '%', '8',         // previous
+  MOD_MASK_SHIFT, '%', 'f',                   '%', '9',         // print
+  MOD_MASK_SHIFT, '%', 'g',                   '%', '0',         // redo
+  MOD_MASK_SHIFT, '%', 'h',                   '&', '3',         // replace
+  MOD_MASK_SHIFT, '%', 'i',                   'k', 'r',         // right arr.
+  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_RIGHT,  'k', 'r',         // right arr.
+  MOD_MASK_SHIFT, '%', 'j',                   '&', '5',         // resume
+  MOD_MASK_SHIFT, '!', '1',                   '&', '6',         // save
+  MOD_MASK_SHIFT, '!', '2',                   '&', '7',         // suspend
+  MOD_MASK_SHIFT, '!', '3',                   '&', '8',         // undo
+  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_UP,     'k', 'u',         // up arrow
+  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_DOWN,   'k', 'd',         // down arrow
 
-  /* vt100 F1 */
+  // vt100 F1
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF1,    KS_EXTRA, (int)KE_XF1,
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF2,    KS_EXTRA, (int)KE_XF2,
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF3,    KS_EXTRA, (int)KE_XF3,
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF4,    KS_EXTRA, (int)KE_XF4,
 
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F1,     'k', '1',         /* F1 */
+  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F1,     'k', '1',         // F1
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F2,     'k', '2',
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F3,     'k', '3',
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F4,     'k', '4',
@@ -101,7 +101,7 @@ static char_u modifier_keys_table[] =
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F7,     'k', '7',
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F8,     'k', '8',
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F9,     'k', '9',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F10,    'k', ';',         /* F10 */
+  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F10,    'k', ';',         // F10
 
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F11,    'F', '1',
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F12,    'F', '2',
@@ -133,7 +133,7 @@ static char_u modifier_keys_table[] =
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F36,    'F', 'Q',
   MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F37,    'F', 'R',
 
-  /* TAB pseudo code*/
+  // TAB pseudo code
   MOD_MASK_SHIFT, 'k', 'B',                   KS_EXTRA, (int)KE_TAB,
 
   NUL
@@ -397,22 +397,38 @@ int handle_x_keys(const int key)
   FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (key) {
-    case K_XUP:     return K_UP;
-    case K_XDOWN:   return K_DOWN;
-    case K_XLEFT:   return K_LEFT;
-    case K_XRIGHT:  return K_RIGHT;
-    case K_XHOME:   return K_HOME;
-    case K_ZHOME:   return K_HOME;
-    case K_XEND:    return K_END;
-    case K_ZEND:    return K_END;
-    case K_XF1:     return K_F1;
-    case K_XF2:     return K_F2;
-    case K_XF3:     return K_F3;
-    case K_XF4:     return K_F4;
-    case K_S_XF1:   return K_S_F1;
-    case K_S_XF2:   return K_S_F2;
-    case K_S_XF3:   return K_S_F3;
-    case K_S_XF4:   return K_S_F4;
+  case K_XUP:
+    return K_UP;
+  case K_XDOWN:
+    return K_DOWN;
+  case K_XLEFT:
+    return K_LEFT;
+  case K_XRIGHT:
+    return K_RIGHT;
+  case K_XHOME:
+    return K_HOME;
+  case K_ZHOME:
+    return K_HOME;
+  case K_XEND:
+    return K_END;
+  case K_ZEND:
+    return K_END;
+  case K_XF1:
+    return K_F1;
+  case K_XF2:
+    return K_F2;
+  case K_XF3:
+    return K_F3;
+  case K_XF4:
+    return K_F4;
+  case K_S_XF1:
+    return K_S_F1;
+  case K_S_XF2:
+    return K_S_F2;
+  case K_S_XF3:
+    return K_S_F3;
+  case K_S_XF4:
+    return K_S_F4;
   }
   return key;
 }
@@ -427,31 +443,33 @@ char_u *get_special_key_name(int c, int modifiers)
 
   int i, idx;
   int table_idx;
-  char_u  *s;
+  char_u *s;
 
   string[0] = '<';
   idx = 1;
 
-  /* Key that stands for a normal character. */
-  if (IS_SPECIAL(c) && KEY2TERMCAP0(c) == KS_KEY)
+  // Key that stands for a normal character.
+  if (IS_SPECIAL(c) && KEY2TERMCAP0(c) == KS_KEY) {
     c = KEY2TERMCAP1(c);
+  }
 
   /*
    * Translate shifted special keys into unshifted keys and set modifier.
    * Same for CTRL and ALT modifiers.
    */
   if (IS_SPECIAL(c)) {
-    for (i = 0; modifier_keys_table[i] != 0; i += MOD_KEYS_ENTRY_SIZE)
-      if (       KEY2TERMCAP0(c) == (int)modifier_keys_table[i + 1]
-                 && (int)KEY2TERMCAP1(c) == (int)modifier_keys_table[i + 2]) {
+    for (i = 0; modifier_keys_table[i] != 0; i += MOD_KEYS_ENTRY_SIZE) {
+      if (KEY2TERMCAP0(c) == (int)modifier_keys_table[i + 1]
+          && (int)KEY2TERMCAP1(c) == (int)modifier_keys_table[i + 2]) {
         modifiers |= modifier_keys_table[i];
         c = TERMCAP2KEY(modifier_keys_table[i + 3],
-            modifier_keys_table[i + 4]);
+                        modifier_keys_table[i + 4]);
         break;
       }
+    }
   }
 
-  /* try to find the key in the special key table */
+  // try to find the key in the special key table
   table_idx = find_special_key_in_table(c);
 
   /*
@@ -459,14 +477,13 @@ char_u *get_special_key_name(int c, int modifiers)
    * extract modifiers.
    */
   if (c > 0
-      && (*mb_char2len)(c) == 1
-      ) {
+      && (*mb_char2len)(c) == 1) {
     if (table_idx < 0
         && (!vim_isprintc(c) || (c & 0x7f) == ' ')
         && (c & 0x80)) {
       c &= 0x7f;
       modifiers |= MOD_MASK_ALT;
-      /* try again, to find the un-alted key in the special key table */
+      // try again, to find the un-alted key in the special key table
       table_idx = find_special_key_in_table(c);
     }
     if (table_idx < 0 && !vim_isprintc(c) && c < ' ') {
@@ -475,15 +492,16 @@ char_u *get_special_key_name(int c, int modifiers)
     }
   }
 
-  /* translate the modifier into a string */
-  for (i = 0; mod_mask_table[i].name != 'A'; i++)
+  // translate the modifier into a string
+  for (i = 0; mod_mask_table[i].name != 'A'; i++) {
     if ((modifiers & mod_mask_table[i].mod_mask)
         == mod_mask_table[i].mod_flag) {
       string[idx++] = mod_mask_table[i].name;
       string[idx++] = (char_u)'-';
     }
+  }
 
-  if (table_idx < 0) {          /* unknown special key, may output t_xx */
+  if (table_idx < 0) {          // unknown special key, may output t_xx
     if (IS_SPECIAL(c)) {
       string[idx++] = 't';
       string[idx++] = '_';
@@ -497,16 +515,17 @@ char_u *get_special_key_name(int c, int modifiers)
         string[idx++] = (char_u)c;
       } else {
         s = transchar(c);
-        while (*s)
+        while (*s) {
           string[idx++] = *s++;
+        }
       }
     }
   } else {            // use name of special key
     size_t len = STRLEN(key_names_table[table_idx].name);
 
     if ((int)len + idx + 2 <= MAX_KEY_NAME_LEN) {
-        STRCPY(string + idx, key_names_table[table_idx].name);
-        idx += (int)len;
+      STRCPY(string + idx, key_names_table[table_idx].name);
+      idx += (int)len;
     }
   }
   string[idx++] = '>';
@@ -525,9 +544,8 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @param[in]  in_string  Inside a double quoted string
 ///
 /// @return Number of characters added to dst, zero for no match.
-unsigned int trans_special(const char_u **srcp, const size_t src_len,
-                           char_u *const dst, const bool keycode,
-                           const bool in_string)
+unsigned int trans_special(const char_u **srcp, const size_t src_len, char_u *const dst,
+                           const bool keycode, const bool in_string)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
@@ -582,9 +600,8 @@ unsigned int special_to_buf(int key, int modifiers, bool keycode, char_u *dst)
 /// @param[in]  in_string  In string, double quote is escaped
 ///
 /// @return Key and modifiers or 0 if there is no match.
-int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
-                     const bool keycode, const bool keep_x_key,
-                     const bool in_string)
+int find_special_key(const char_u **srcp, const size_t src_len, int *const modp, const bool keycode,
+                     const bool keep_x_key, const bool in_string)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const char_u *last_dash;
@@ -641,7 +658,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
   if (bp <= end && *bp == '>') {  // found matching '>'
     end_of_name = bp + 1;
 
-    /* Which modifiers are given? */
+    // Which modifiers are given?
     modifiers = 0x0;
     for (bp = src + 1; bp < last_dash; bp++) {
       if (*bp != '-') {
@@ -795,13 +812,14 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 {
   int i;
 
-  for (i = 0; mouse_table[i].pseudo_code; i++)
+  for (i = 0; mouse_table[i].pseudo_code; i++) {
     if (code == mouse_table[i].pseudo_code) {
       *is_click = mouse_table[i].is_click;
       *is_drag = mouse_table[i].is_drag;
       return mouse_table[i].button;
     }
-  return 0;         /* Shouldn't get here */
+  }
+  return 0;         // Shouldn't get here
 }
 
 /// Replace any terminal code strings with the equivalent internal
@@ -829,9 +847,8 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// @return Pointer to an allocated memory in case of success, "from" in case of
 ///         failure. In case of success returned pointer is also saved to
 ///         "bufp".
-char_u *replace_termcodes(const char_u *from, const size_t from_len,
-                          char_u **bufp, const bool from_part, const bool do_lt,
-                          const bool special, int cpo_flags)
+char_u *replace_termcodes(const char_u *from, const size_t from_len, char_u **bufp,
+                          const bool from_part, const bool do_lt, const bool special, int cpo_flags)
   FUNC_ATTR_NONNULL_ALL
 {
   ssize_t i;
@@ -841,7 +858,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
   const char_u *src;
   const char_u *const end = from + from_len - 1;
   int do_backslash;             // backslash is a special character
-  char_u      *result;          // buffer for resulting string
+  char_u *result;          // buffer for resulting string
 
   do_backslash = !(cpo_flags&FLAG_CPO_BSLASH);
 
@@ -897,7 +914,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
     }
 
     if (special) {
-      char_u  *p, *s, len;
+      char_u *p, *s, len;
 
       // Replace <Leader> by the value of "mapleader".
       // Replace <LocalLeader> by the value of "maplocalleader".

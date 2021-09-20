@@ -93,7 +93,7 @@ typedef struct hl_group {
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 Map(cstr_t, int) highlight_unames = MAP_INIT;
 
-static inline struct hl_group * HL_TABLE(void)
+static inline struct hl_group *HL_TABLE(void)
 {
   return ((struct hl_group *)((highlight_ga.ga_data)));
 }
