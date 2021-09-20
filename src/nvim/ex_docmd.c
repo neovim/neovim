@@ -303,6 +303,7 @@ int do_cmdline_cmd(const char *cmd)
 ///   DOCMD_KEYTYPED - Don't reset KeyTyped.
 ///   DOCMD_EXCRESET - Reset the exception environment (used for debugging).
 ///   DOCMD_KEEPLINE - Store first typed line (for repeating with ".").
+///   DOCMD_PREVIEW  - During 'inccommand' preview.
 ///
 /// @return FAIL if cmdline could not be executed, OK otherwise
 int do_cmdline(char_u *cmdline, LineGetter fgetline,
@@ -601,7 +602,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     recursive--;
 
     // Ignore trailing '|'-separated commands in preview-mode ('inccommand').
-    if (State & CMDPREVIEW) {
+    if ((State & CMDPREVIEW) && (flags & DOCMD_PREVIEW)) {
       next_cmdline = NULL;
     }
 
