@@ -529,7 +529,7 @@ end
 ---@return an array of [text, hl_group] arrays. This can be passed directly to
 ---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virtual_text_chunks_for_line(bufnr, _, line_diags, opts)
-  return vim.diagnostic.get_virt_text_chunks(diagnostic_lsp_to_vim(line_diags, bufnr), opts)
+  return vim.diagnostic._get_virt_text_chunks(diagnostic_lsp_to_vim(line_diags, bufnr), opts)
 end
 
 --- Open a floating window with the diagnostics from {position}

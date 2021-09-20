@@ -851,6 +851,8 @@ end
 ---@param opts table|nil Configuration table with the following keys:
 ---            - prefix: (string) Prefix to display before virtual text on line.
 ---            - spacing: (number) Number of spaces to insert before virtual text.
+---            - source: (string) Include the diagnostic source in virtual text. One of "always" or
+---                      "if_many".
 ---@private
 function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
   vim.validate {
@@ -872,7 +874,7 @@ function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
     if opts and opts.severity then
       line_diagnostics = filter_by_severity(opts.severity, line_diagnostics)
     end
-    local virt_texts = M.get_virt_text_chunks(line_diagnostics, opts)
+    local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
 
     if virt_texts then
       vim.api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
@@ -885,13 +887,11 @@ end
 
 --- Get virtual text chunks to display using |nvim_buf_set_extmark()|.
 ---
----@param line_diags table The diagnostics associated with the line.
----@param opts table|nil Configuration table with the following keys:
----            - prefix: (string) Prefix to display before virtual text on line.
----            - spacing: (number) Number of spaces to insert before virtual text.
----@return array of ({text}, {hl_group}) tuples. This can be passed directly to
----        the {virt_text} option of |nvim_buf_set_extmark()|.
-function M.get_virt_text_chunks(line_diags, opts)
+--- Exported for backward compatibility with
+--- vim.lsp.diagnostic.get_virtual_text_chunks_for_line(). When that function is eventually removed,
+--- this can be made local.
+---@private
+function M._get_virt_text_chunks(line_diags, opts)
   if #line_diags == 0 then
     return nil
   end

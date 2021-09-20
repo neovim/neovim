@@ -333,26 +333,6 @@ get_prev_pos({opts})                           *vim.diagnostic.get_prev_pos()*
                 Return: ~
                     table Previous diagnostic position as a (row, col) tuple.
 
-                                       *vim.diagnostic.get_virt_text_chunks()*
-get_virt_text_chunks({line_diags}, {opts})
-                Get virtual text chunks to display using
-                |nvim_buf_set_extmark()|.
-
-                Parameters: ~
-                    {line_diags}  table The diagnostics associated with the
-                                  line.
-                    {opts}        table|nil Configuration table with the
-                                  following keys:
-                                  • prefix: (string) Prefix to display before
-                                    virtual text on line.
-                                  • spacing: (number) Number of spaces to
-                                    insert before virtual text.
-
-                Return: ~
-                    array of ({text}, {hl_group}) tuples. This can be passed
-                    directly to the {virt_text} option of
-                    |nvim_buf_set_extmark()|.
-
 goto_next({opts})                                 *vim.diagnostic.goto_next()*
                 Move to the next diagnostic.
 

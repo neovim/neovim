@@ -75,7 +75,9 @@ For each of the functions below, use the corresponding function in
 *vim.lsp.diagnostic.get_prev()*
 *vim.lsp.diagnostic.get_prev_pos()*
 *vim.lsp.diagnostic.get_virtual_text_chunks_for_line()*
-			Use |vim.diagnostic.get_virt_text_chunks()| instead.
+				No replacement. Use options provided by
+				|vim.diagnostic.config()| to customize
+				virtual text.
 *vim.lsp.diagnostic.goto_next()*
 *vim.lsp.diagnostic.goto_prev()*
 *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
