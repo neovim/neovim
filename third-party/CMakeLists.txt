@@ -149,8 +149,8 @@ if(WIN32)
   set(LIBUV_URL https://github.com/neovim/libuv/archive/b899d12b0d56d217f31222da83f8c398355b69ef.tar.gz)
   set(LIBUV_SHA256 eb7e37b824887e1b31a4e31d1d9bad4c03d8b98532d9cce5f67a3b70495a4b2a)
 else()
-  set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.34.2.tar.gz)
-  set(LIBUV_SHA256 0d9d38558b45c006c1ea4e8529bae64caf8becda570295ea74e3696362aeb7f2)
+  set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.42.0.tar.gz)
+  set(LIBUV_SHA256 371e5419708f6aaeb8656671f89400b92a9bba6443369af1bb70bcd6e4b3c764)
 endif()
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
@@ -175,9 +175,9 @@ set(LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3
 set(LIBVTERM_URL http://www.leonerd.org.uk/code/libvterm/libvterm-0.1.4.tar.gz)
 set(LIBVTERM_SHA256 bc70349e95559c667672fc8c55b9527d9db9ada0fb80a3beda533418d782d3dd)
 
-set(LUV_VERSION 1.40.0-0)
+set(LUV_VERSION 1.42.0-0)
 set(LUV_URL https://github.com/luvit/luv/archive/${LUV_VERSION}.tar.gz)
-set(LUV_SHA256 23167a3d5dbc1e30df1f106ffae0a4c5bd50993da2066dc1f7e1842bb9fb6cd0)
+set(LUV_SHA256 8caee38de2fba0da32abbe96f55244e4a2c67d6cdde161a1935af94bffd5470f)
 
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz)
 set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
