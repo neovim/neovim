@@ -116,42 +116,44 @@ M['textDocument/codeAction'] = function(_, result, ctx)
     return
   end
 
-  local option_strings = {"Code actions:"}
-  for i, action in ipairs(result) do
-    local title = action.title:gsub('\r\n', '\\r\\n')
-    title = title:gsub('\n', '\\n')
-    table.insert(option_strings, string.format("%d. %s", i, title))
-  end
-
-  local choice = vim.fn.inputlist(option_strings)
-  if choice < 1 or choice > #result then
-    return
-  end
-  local action = result[choice]
-  -- textDocument/codeAction can return either Command[] or CodeAction[]
-  --
-  -- CodeAction
-  --  ...
-  --  edit?: WorkspaceEdit    -- <- must be applied before command
-  --  command?: Command
-  --
-  -- Command:
-  --  title: string
-  --  command: string
-  --  arguments?: any[]
-  --
-  if action.edit then
-    util.apply_workspace_edit(action.edit)
-  end
-  if action.command then
-    local command = type(action.command) == 'table' and action.command or action
-    local fn = vim.lsp.commands[command.command]
-    if fn then
-      fn(command, ctx)
-    else
-      buf.execute_command(command)
+  ---@private
+  local function on_user_choice(action)
+    if not action then
+      return
+    end
+    -- textDocument/codeAction can return either Command[] or CodeAction[]
+    --
+    -- CodeAction
+    --  ...
+    --  edit?: WorkspaceEdit    -- <- must be applied before command
+    --  command?: Command
+    --
+    -- Command:
+    --  title: string
+    --  command: string
+    --  arguments?: any[]
+    --
+    if action.edit then
+      util.apply_workspace_edit(action.edit)
+    end
+    if action.command then
+      local command = type(action.command) == 'table' and action.command or action
+      local fn = vim.lsp.commands[command.command]
+      if fn then
+        fn(command, ctx)
+      else
+        buf.execute_command(command)
+      end
     end
   end
+
+  vim.ui.select(result, {
+    prompt = 'Code actions:',
+    format_entry = function(action)
+      local title = action.title:gsub('\r\n', '\\r\\n')
+      return title:gsub('\n', '\\n')
+    end,
+  }, on_user_choice)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
