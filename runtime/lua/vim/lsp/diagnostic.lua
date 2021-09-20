@@ -103,10 +103,14 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
       severity = severity_lsp_to_vim(diagnostic.severity),
       message = diagnostic.message,
-      code = diagnostic.code,
-      codeDescription = diagnostic.codeDescription,
-      tags = diagnostic.tags,
-      relatedInformation = diagnostic.relatedInformation,
+      user_data = {
+        lsp = {
+          code = diagnostic.code,
+          codeDescription = diagnostic.codeDescription,
+          tags = diagnostic.tags,
+          relatedInformation = diagnostic.relatedInformation,
+        },
+      },
     }
   end, diagnostics)
 end
@@ -114,7 +118,7 @@ end
 ---@private
 local function diagnostic_vim_to_lsp(diagnostics)
   return vim.tbl_map(function(diagnostic)
-    return {
+    return vim.tbl_extend("error", {
       range = {
         start = {
           line = diagnostic.lnum,
@@ -127,11 +131,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       },
       severity = severity_vim_to_lsp(diagnostic.severity),
       message = diagnostic.message,
-      code = diagnostic.code,
-      codeDescription = diagnostic.codeDescription,
-      tags = diagnostic.tags,
-      relatedInformation = diagnostic.relatedInformation,
-    }
+    }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end
 
