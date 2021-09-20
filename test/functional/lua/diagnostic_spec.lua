@@ -842,6 +842,18 @@ describe('vim.diagnostic', function()
         return #vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
       ]])
     end)
+
+    it('clamps diagnostic line numbers within the valid range', function()
+      eq(1, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 6, 0, 6, 0),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics({show_header = false}, diagnostic_bufnr, 5)
+        return #vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+      ]])
+    end)
   end)
 
   describe('set_signs()', function()

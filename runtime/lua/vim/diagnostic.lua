@@ -222,26 +222,14 @@ local function diagnostic_lines(diagnostics)
 end
 
 ---@private
-local function set_diagnostic_cache(namespace, diagnostics, bufnr)
-  local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
+local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   for _, diagnostic in ipairs(diagnostics) do
-    if diagnostic.severity == nil then
-      diagnostic.severity = M.severity.ERROR
-    end
-
+    diagnostic.severity = diagnostic.severity and to_severity(diagnostic.severity) or M.severity.ERROR
+    diagnostic.end_lnum = diagnostic.end_lnum or diagnostic.lnum
+    diagnostic.end_col = diagnostic.end_col or diagnostic.col
     diagnostic.namespace = namespace
     diagnostic.bufnr = bufnr
-
-    if buf_line_count > 0 then
-      diagnostic.lnum = math.max(math.min(
-        diagnostic.lnum, buf_line_count - 1
-      ), 0)
-      diagnostic.end_lnum = math.max(math.min(
-        diagnostic.end_lnum, buf_line_count - 1
-      ), 0)
-    end
   end
-
   diagnostic_cache[bufnr][namespace] = diagnostics
 end
 
@@ -404,12 +392,27 @@ local function set_list(loclist, opts)
 end
 
 ---@private
+local function clamp_line_numbers(bufnr, diagnostics)
+  local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
+  if buf_line_count == 0 then
+    return
+  end
+
+  for _, diagnostic in ipairs(diagnostics) do
+    diagnostic.lnum = math.max(math.min(diagnostic.lnum, buf_line_count - 1), 0)
+    diagnostic.end_lnum = math.max(math.min(diagnostic.end_lnum, buf_line_count - 1), 0)
+  end
+end
+
+---@private
 local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   position[1] = position[1] - 1
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  bufnr = get_bufnr(bufnr)
   local wrap = vim.F.if_nil(opts.wrap, true)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
-  opts.namespace = namespace
+  local diagnostics = M.get(bufnr, vim.tbl_extend("keep", opts, {namespace = namespace}))
+  clamp_line_numbers(bufnr, diagnostics)
+  local line_diagnostics = diagnostic_lines(diagnostics)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
     local lnum = position[1] + offset
@@ -419,9 +422,7 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
       end
       lnum = (lnum + line_count) % line_count
     end
-    opts.lnum = lnum
-    local line_diagnostics = M.get(bufnr, opts)
-    if line_diagnostics and not vim.tbl_isempty(line_diagnostics) then
+    if line_diagnostics[lnum] and not vim.tbl_isempty(line_diagnostics[lnum]) then
       local sort_diagnostics, is_next
       if search_forward then
         sort_diagnostics = function(a, b) return a.col < b.col end
@@ -430,15 +431,15 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
         sort_diagnostics = function(a, b) return a.col > b.col end
         is_next = function(diagnostic) return diagnostic.col < position[2] end
       end
-      table.sort(line_diagnostics, sort_diagnostics)
+      table.sort(line_diagnostics[lnum], sort_diagnostics)
       if i == 0 then
-        for _, v in pairs(line_diagnostics) do
+        for _, v in pairs(line_diagnostics[lnum]) do
           if is_next(v) then
             return v
           end
         end
       else
-        return line_diagnostics[1]
+        return line_diagnostics[lnum][1]
       end
     end
   end
@@ -465,7 +466,6 @@ local function diagnostic_move_pos(opts, pos)
     end)
   end
 end
-
 
 -- }}}
 
@@ -566,7 +566,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
     })
   end
 
-  set_diagnostic_cache(namespace, diagnostics, bufnr)
+  set_diagnostic_cache(namespace, bufnr, diagnostics)
 
   if vim.api.nvim_buf_is_loaded(bufnr) then
     M.show(namespace, bufnr, diagnostics, opts)
@@ -983,6 +983,8 @@ function M.show(namespace, bufnr, diagnostics, opts)
     end
   end
 
+  clamp_line_numbers(bufnr, diagnostics)
+
   if opts.underline then
     M._set_underline(namespace, bufnr, diagnostics, opts.underline)
   end
@@ -1029,7 +1031,9 @@ function M.show_position_diagnostics(opts, bufnr, position)
     position[2] >= diag.col and
     (position[2] <= diag.end_col or position[1] < diag.end_lnum)
   end
-  local position_diagnostics = vim.tbl_filter(match_position_predicate, M.get(bufnr, opts))
+  local diagnostics = M.get(bufnr, opts)
+  clamp_line_numbers(bufnr, diagnostics)
+  local position_diagnostics = vim.tbl_filter(match_position_predicate, diagnostics)
   table.sort(position_diagnostics, function(a, b) return a.severity < b.severity end)
   return show_diagnostics(opts, position_diagnostics)
 end
@@ -1049,9 +1053,11 @@ function M.show_line_diagnostics(opts, bufnr, lnum)
 
   opts = opts or {}
   opts.focus_id = "line_diagnostics"
-  opts.lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
   bufnr = get_bufnr(bufnr)
-  local line_diagnostics = M.get(bufnr, opts)
+  local diagnostics = M.get(bufnr, opts)
+  clamp_line_numbers(bufnr, diagnostics)
+  lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
+  local line_diagnostics = diagnostic_lines(diagnostics)[lnum]
   return show_diagnostics(opts, line_diagnostics)
 end
 
