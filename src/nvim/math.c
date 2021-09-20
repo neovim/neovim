@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <math.h>
+
 #include <stdint.h>
 #include <string.h>
 
@@ -21,9 +22,12 @@ int xfpclassify(double d)
   m = 0xfffffffffffffULL & m;
 
   switch (e) {
-    default: return FP_NORMAL;
-    case 0x000: return m ? FP_SUBNORMAL : FP_ZERO;
-    case 0x7ff: return m ? FP_NAN : FP_INFINITE;
+  default:
+    return FP_NORMAL;
+  case 0x000:
+    return m ? FP_SUBNORMAL : FP_ZERO;
+  case 0x7ff:
+    return m ? FP_NAN : FP_INFINITE;
   }
 }
 int xisinf(double d)
