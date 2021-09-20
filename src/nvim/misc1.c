@@ -561,12 +561,11 @@ int get_keystroke(MultiQueue *events)
   return n;
 }
 
-/*
- * Get a number from the user.
- * When "mouse_used" is not NULL allow using the mouse.
- */
-int get_number(int colon,                              // allow colon to abort
-               int *mouse_used)
+/// Get a number from the user.
+/// When "mouse_used" is not NULL allow using the mouse.
+///
+/// @param colon  allow colon to abort
+int get_number(int colon, int *mouse_used)
 {
   int n = 0;
   int c;

@@ -443,14 +443,13 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
   return posp;
 }
 
-/*
- * Search for the next named mark in the current file.
- *
- * Returns pointer to pos_T of the next mark or NULL if no mark is found.
- */
-pos_T *getnextmark(pos_T *startpos,          // where to start
-                   int dir,                // direction for search
-                   int begin_line)
+/// Search for the next named mark in the current file.
+///
+/// @param startpos  where to start
+/// @param dir  direction for search
+///
+/// @return  pointer to pos_T of the next mark or NULL if no mark is found.
+pos_T *getnextmark(pos_T *startpos, int dir, int begin_line)
 {
   int i;
   pos_T *result = NULL;
@@ -701,8 +700,8 @@ void ex_marks(exarg_T *eap)
   show_one_mark(-1, arg, NULL, NULL, false);
 }
 
-static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int current                   // in current file
-                          )
+/// @param current  in current file
+static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int current)
 {
   static bool did_title = false;
   bool mustfree = false;

@@ -551,12 +551,11 @@ static int menu_enable_recurse(vimmenu_T *menu, char_u *name, int modes, int ena
   return OK;
 }
 
-/*
- * Remove the (sub)menu with the given name from the menu hierarchy
- * Called recursively.
- */
-static int remove_menu(vimmenu_T **menup, char_u *name, int modes, bool silent                     // don't give error messages
-                       )
+/// Remove the (sub)menu with the given name from the menu hierarchy
+/// Called recursively.
+///
+/// @param silent  don't give error messages
+static int remove_menu(vimmenu_T **menup, char_u *name, int modes, bool silent)
 {
   vimmenu_T *menu;
   vimmenu_T *child;

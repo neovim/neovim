@@ -1175,11 +1175,10 @@ bool scrollup(long line_count, int byfold)
   return moved;
 }
 
-/*
- * Don't end up with too many filler lines in the window.
- */
-void check_topfill(win_T *wp, bool down              // when true scroll down when not enough space
-                   )
+/// Don't end up with too many filler lines in the window.
+///
+/// @param down  when true scroll down when not enough space
+void check_topfill(win_T *wp, bool down)
 {
   if (wp->w_topfill > 0) {
     int n = plines_win_nofill(wp, wp->w_topline, true);

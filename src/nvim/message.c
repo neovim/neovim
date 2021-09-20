@@ -337,12 +337,11 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   return retval;
 }
 
-/*
- * Truncate a string such that it can be printed without causing a scroll.
- * Returns an allocated string or NULL when no truncating is done.
- */
-char_u *msg_strtrunc(char_u *s, int force                  // always truncate
-                     )
+/// Truncate a string such that it can be printed without causing a scroll.
+/// Returns an allocated string or NULL when no truncating is done.
+///
+/// @param force  always truncate
+char_u *msg_strtrunc(char_u *s, int force)
 {
   char_u *buf = NULL;
   int len;
@@ -1557,9 +1556,10 @@ void msg_make(char_u *arg)
 /// Otherwise characters are not highlighted.
 /// This function is used to show mappings, where we want to see how to type
 /// the character/string -- webb
-int msg_outtrans_special(const char_u *strstart, bool from,              ///< true for LHS of a mapping
-                         int maxlen              ///< screen columns, 0 for unlimeted
-                         )
+///
+/// @param from  true for LHS of a mapping
+/// @param maxlen  screen columns, 0 for unlimeted
+int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
 {
   if (strstart == NULL) {
     return 0;  // Do nothing.
@@ -2415,10 +2415,11 @@ typedef enum {
 static sb_clear_T do_clear_sb_text = SB_CLEAR_NONE;
 
 /// Store part of a printed message for displaying when scrolling back.
-static void store_sb_text(char_u **sb_str,           // start of string
-                          char_u *s,                 // just after string
-                          int attr, int *sb_col, int finish                     // line ends
-                          )
+///
+/// @param sb_str  start of string
+/// @param s  just after string
+/// @param finish  line ends
+static void store_sb_text(char_u **sb_str, char_u *s, int attr, int *sb_col, int finish)
 {
   msgchunk_T *mp;
 
@@ -3387,30 +3388,27 @@ void msg_advance(int col)
   }
 }
 
-/*
- * Used for "confirm()" function, and the :confirm command prefix.
- * Versions which haven't got flexible dialogs yet, and console
- * versions, get this generic handler which uses the command line.
- *
- * type  = one of:
- *         VIM_QUESTION, VIM_INFO, VIM_WARNING, VIM_ERROR or VIM_GENERIC
- * title = title string (can be NULL for default)
- * (neither used in console dialogs at the moment)
- *
- * Format of the "buttons" string:
- * "Button1Name\nButton2Name\nButton3Name"
- * The first button should normally be the default/accept
- * The second button should be the 'Cancel' button
- * Other buttons- use your imagination!
- * A '&' in a button name becomes a shortcut, so each '&' should be before a
- * different letter.
- */
+/// Used for "confirm()" function, and the :confirm command prefix.
+/// Versions which haven't got flexible dialogs yet, and console
+/// versions, get this generic handler which uses the command line.
+///
+/// type  = one of:
+///         VIM_QUESTION, VIM_INFO, VIM_WARNING, VIM_ERROR or VIM_GENERIC
+/// title = title string (can be NULL for default)
+/// (neither used in console dialogs at the moment)
+///
+/// Format of the "buttons" string:
+/// "Button1Name\nButton2Name\nButton3Name"
+/// The first button should normally be the default/accept
+/// The second button should be the 'Cancel' button
+/// Other buttons- use your imagination!
+/// A '&' in a button name becomes a shortcut, so each '&' should be before a
+/// different letter.
+///
+/// @param textfiel  IObuff for inputdialog(), NULL otherwise
+/// @param ex_cmd  when TRUE pressing : accepts default and starts Ex command
 int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfltbutton,
-              char_u *textfield, /* IObuff for inputdialog(), NULL
-                                            otherwise */
-              int ex_cmd       /* when TRUE pressing : accepts default and starts
-                                  Ex command */
-              )
+              char_u *textfield, int ex_cmd)
 {
   int retval = 0;
   char_u *hotkeys;
@@ -3491,12 +3489,11 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
 }
 
 
-/*
- * Copy one character from "*from" to "*to", taking care of multi-byte
- * characters.  Return the length of the character in bytes.
- */
-static int copy_char(const char_u *from, char_u *to, bool lowercase  // make character lower case
-                     )
+/// Copy one character from "*from" to "*to", taking care of multi-byte
+/// characters.  Return the length of the character in bytes.
+///
+/// @param lowercase  make character lower case
+static int copy_char(const char_u *from, char_u *to, bool lowercase)
   FUNC_ATTR_NONNULL_ALL
 {
   if (lowercase) {

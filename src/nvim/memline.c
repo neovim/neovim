@@ -1275,21 +1275,20 @@ theend:
   return;
 }
 
-/*
- * Find the names of swap files in current directory and the directory given
- * with the 'directory' option.
- *
- * Used to:
- * - list the swap files for "vim -r"
- * - count the number of swap files when recovering
- * - list the swap files when recovering
- * - find the name of the n'th swap file when recovering
- */
-int recover_names(char_u *fname,             // base for swap file name
-                  int list,                       // when TRUE, list the swap file names
-                  int nr,                         // when non-zero, return nr'th swap file name
-                  char_u **fname_out        // result when "nr" > 0
-                  )
+/// Find the names of swap files in current directory and the directory given
+/// with the 'directory' option.
+///
+/// Used to:
+/// - list the swap files for "vim -r"
+/// - count the number of swap files when recovering
+/// - list the swap files when recovering
+/// - find the name of the n'th swap file when recovering
+///
+/// @param fname  base for swap file name
+/// @param list  when TRUE, list the swap file names
+/// @param nr  when non-zero, return nr'th swap file name
+/// @param fname_out  result when "nr" > 0
+int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
 {
   int num_names;
   char_u *(names[6]);
@@ -1843,14 +1842,10 @@ char_u *ml_get_pos(const pos_T *pos)
   return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
 }
 
-/*
- * Return a pointer to a line in a specific buffer
- *
- * "will_change": if TRUE mark the buffer dirty (chars in the line will be
- * changed)
- */
-char_u *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change                        // line will be changed
-                   )
+/// Return a pointer to a line in a specific buffer
+///
+/// @param will_change  true mark the buffer dirty (chars in the line will be changed)
+char_u *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
   FUNC_ATTR_NONNULL_ALL
 {
   bhdr_T *hp;
@@ -1931,23 +1926,22 @@ int ml_line_alloced(void)
   return curbuf->b_ml.ml_flags & ML_LINE_DIRTY;
 }
 
-/*
- * Append a line after lnum (may be 0 to insert a line in front of the file).
- * "line" does not need to be allocated, but can't be another line in a
- * buffer, unlocking may make it invalid.
- *
- *   newfile: TRUE when starting to edit a new file, meaning that pe_old_lnum
- *              will be set for recovery
- * Check: The caller of this function should probably also call
- * appended_lines().
- *
- * return FAIL for failure, OK otherwise
- */
-int ml_append(linenr_T lnum,                  // append after this line (can be 0)
-              char_u *line,                   // text of the new line
-              colnr_T len,                    // length of new line, including NUL, or 0
-              bool newfile                    // flag, see above
-              )
+/// Append a line after lnum (may be 0 to insert a line in front of the file).
+/// "line" does not need to be allocated, but can't be another line in a
+/// buffer, unlocking may make it invalid.
+///
+///   newfile: TRUE when starting to edit a new file, meaning that pe_old_lnum
+///              will be set for recovery
+/// Check: The caller of this function should probably also call
+/// appended_lines().
+///
+/// @param lnum  append after this line (can be 0)
+/// @param line  text of the new line
+/// @param len  length of new line, including NUL, or 0
+/// @param newfile  flag, see above
+///
+/// @return  FAIL for failure, OK otherwise
+int ml_append(linenr_T lnum, char_u *line, colnr_T len, bool newfile)
 {
   // When starting up, we might still need to create the memfile
   if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL) {
@@ -1960,15 +1954,14 @@ int ml_append(linenr_T lnum,                  // append after this line (can be 
   return ml_append_int(curbuf, lnum, line, len, newfile, FALSE);
 }
 
-/*
- * Like ml_append() but for an arbitrary buffer.  The buffer must already have
- * a memline.
- */
-int ml_append_buf(buf_T *buf, linenr_T lnum,                  // append after this line (can be 0)
-                  char_u *line,                   // text of the new line
-                  colnr_T len,                    // length of new line, including NUL, or 0
-                  bool newfile                    // flag, see above
-                  )
+/// Like ml_append() but for an arbitrary buffer.  The buffer must already have
+/// a memline.
+///
+/// @param lnum  append after this line (can be 0)
+/// @param line  text of the new line
+/// @param len  length of new line, including NUL, or 0
+/// @param newfile  flag, see above
+int ml_append_buf(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, bool newfile)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (buf->b_ml.ml_mfp == NULL) {
@@ -1981,12 +1974,13 @@ int ml_append_buf(buf_T *buf, linenr_T lnum,                  // append after th
   return ml_append_int(buf, lnum, line, len, newfile, FALSE);
 }
 
-static int ml_append_int(buf_T *buf, linenr_T lnum,                  // append after this line (can be 0)
-                         char_u *line,                   // text of the new line
-                         colnr_T len,                    // length of line, including NUL, or 0
-                         bool newfile,                   // flag, see above
-                         int mark                        // mark the new line
-                         )
+/// @param lnum  append after this line (can be 0)
+/// @param line  text of the new line
+/// @param len  length of line, including NUL, or 0
+/// @param newfile  flag, see above
+/// @param mark  mark the new line
+static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, bool newfile,
+                         int mark)
 {
   int i;
   int line_count;               // number of indexes in current block
@@ -3314,20 +3308,19 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   return s;
 }
 
-/*
- * Get file name to use for swap file or backup file.
- * Use the name of the edited file "fname" and an entry in the 'dir' or 'bdir'
- * option "dname".
- * - If "dname" is ".", return "fname" (swap file in dir of file).
- * - If "dname" starts with "./", insert "dname" in "fname" (swap file
- *   relative to dir of file).
- * - Otherwise, prepend "dname" to the tail of "fname" (swap file in specific
- *   dir).
- *
- * The return value is an allocated string and can be NULL.
- */
-char_u *get_file_in_dir(char_u *fname, char_u *dname         // don't use "dirname", it is a global for Alpha
-                        )
+/// Get file name to use for swap file or backup file.
+/// Use the name of the edited file "fname" and an entry in the 'dir' or 'bdir'
+/// option "dname".
+/// - If "dname" is ".", return "fname" (swap file in dir of file).
+/// - If "dname" starts with "./", insert "dname" in "fname" (swap file
+///   relative to dir of file).
+/// - Otherwise, prepend "dname" to the tail of "fname" (swap file in specific
+///   dir).
+///
+/// The return value is an allocated string and can be NULL.
+///
+/// @param dname  don't use "dirname", it is a global for Alpha
+char_u *get_file_in_dir(char_u *fname, char_u *dname)
 {
   char_u *t;
   char_u *tail;
@@ -3357,12 +3350,11 @@ char_u *get_file_in_dir(char_u *fname, char_u *dname         // don't use "dirna
 }
 
 
-/*
- * Print the ATTENTION message: info about an existing swap file.
- */
-static void attention_message(buf_T *buf,           // buffer being edited
-                              char_u *fname         // swap file name
-                              )
+/// Print the ATTENTION message: info about an existing swap file.
+///
+/// @param buf  buffer being edited
+/// @param fname  swap file name
+static void attention_message(buf_T *buf, char_u *fname)
 {
   assert(buf->b_fname != NULL);
 
@@ -3711,57 +3703,55 @@ static int b0_magic_wrong(ZERO_BL *b0p)
          || b0p->b0_magic_char != B0_MAGIC_CHAR;
 }
 
-/*
- * Compare current file name with file name from swap file.
- * Try to use inode numbers when possible.
- * Return non-zero when files are different.
- *
- * When comparing file names a few things have to be taken into consideration:
- * - When working over a network the full path of a file depends on the host.
- *   We check the inode number if possible.  It is not 100% reliable though,
- *   because the device number cannot be used over a network.
- * - When a file does not exist yet (editing a new file) there is no inode
- *   number.
- * - The file name in a swap file may not be valid on the current host.  The
- *   "~user" form is used whenever possible to avoid this.
- *
- * This is getting complicated, let's make a table:
- *
- *              ino_c  ino_s  fname_c  fname_s  differ =
- *
- * both files exist -> compare inode numbers:
- *              != 0   != 0     X        X      ino_c != ino_s
- *
- * inode number(s) unknown, file names available -> compare file names
- *              == 0    X       OK       OK     fname_c != fname_s
- *               X     == 0     OK       OK     fname_c != fname_s
- *
- * current file doesn't exist, file for swap file exist, file name(s) not
- * available -> probably different
- *              == 0   != 0    FAIL      X      TRUE
- *              == 0   != 0     X       FAIL    TRUE
- *
- * current file exists, inode for swap unknown, file name(s) not
- * available -> probably different
- *              != 0   == 0    FAIL      X      TRUE
- *              != 0   == 0     X       FAIL    TRUE
- *
- * current file doesn't exist, inode for swap unknown, one file name not
- * available -> probably different
- *              == 0   == 0    FAIL      OK     TRUE
- *              == 0   == 0     OK      FAIL    TRUE
- *
- * current file doesn't exist, inode for swap unknown, both file names not
- * available -> compare file names
- *              == 0   == 0    FAIL     FAIL    fname_c != fname_s
- *
- * Only the last 32 bits of the inode will be used. This can't be changed
- * without making the block 0 incompatible with 32 bit versions.
- */
-
-static bool fnamecmp_ino(char_u *fname_c,              // current file name
-                         char_u *fname_s,              // file name from swap file
-                         long ino_block0)
+/// Compare current file name with file name from swap file.
+/// Try to use inode numbers when possible.
+/// Return non-zero when files are different.
+///
+/// When comparing file names a few things have to be taken into consideration:
+/// - When working over a network the full path of a file depends on the host.
+///   We check the inode number if possible.  It is not 100% reliable though,
+///   because the device number cannot be used over a network.
+/// - When a file does not exist yet (editing a new file) there is no inode
+///   number.
+/// - The file name in a swap file may not be valid on the current host.  The
+///   "~user" form is used whenever possible to avoid this.
+///
+/// This is getting complicated, let's make a table:
+///
+///              ino_c  ino_s  fname_c  fname_s  differ =
+///
+/// both files exist -> compare inode numbers:
+///              != 0   != 0     X        X      ino_c != ino_s
+///
+/// inode number(s) unknown, file names available -> compare file names
+///              == 0    X       OK       OK     fname_c != fname_s
+///               X     == 0     OK       OK     fname_c != fname_s
+///
+/// current file doesn't exist, file for swap file exist, file name(s) not
+/// available -> probably different
+///              == 0   != 0    FAIL      X      TRUE
+///              == 0   != 0     X       FAIL    TRUE
+///
+/// current file exists, inode for swap unknown, file name(s) not
+/// available -> probably different
+///              != 0   == 0    FAIL      X      TRUE
+///              != 0   == 0     X       FAIL    TRUE
+///
+/// current file doesn't exist, inode for swap unknown, one file name not
+/// available -> probably different
+///              == 0   == 0    FAIL      OK     TRUE
+///              == 0   == 0     OK      FAIL    TRUE
+///
+/// current file doesn't exist, inode for swap unknown, both file names not
+/// available -> compare file names
+///              == 0   == 0    FAIL     FAIL    fname_c != fname_s
+///
+/// Only the last 32 bits of the inode will be used. This can't be changed
+/// without making the block 0 incompatible with 32 bit versions.
+///
+/// @param fname_c  current file name
+/// @param fname_s  file name from swap file
+static bool fnamecmp_ino(char_u *fname_c, char_u *fname_s, long ino_block0)
 {
   uint64_t ino_c = 0;               // ino of current file
   uint64_t ino_s;                   // ino of file from swap file
