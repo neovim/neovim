@@ -203,7 +203,7 @@ static void register_closure(ufunc_T *fp)
 
 
 /// Get a name for a lambda.  Returned in static memory.
-char_u * get_lambda_name(void)
+char_u *get_lambda_name(void)
 {
   static char_u   name[30];
   static int      lambda_no = 0;

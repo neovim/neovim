@@ -417,7 +417,7 @@ char *transstr(const char *const s)
 ///
 /// When "buf" is NULL, return an allocated string.
 /// Otherwise, put the result in buf, limited by buflen, and return buf.
-char_u * str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
+char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
@@ -1209,7 +1209,7 @@ char_u *skipdigits(const char_u *q)
 /// @param q pointer to string
 ///
 /// @return Pointer to the character after the skipped digits.
-const char * skipbin(const char *q)
+const char *skipbin(const char *q)
   FUNC_ATTR_PURE
   FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
@@ -1228,7 +1228,7 @@ const char * skipbin(const char *q)
 ///
 /// @return Pointer to the character after the skipped digits and hex
 ///         characters.
-char_u * skiphex(char_u *q)
+char_u *skiphex(char_u *q)
 {
   char_u *p = q;
   while (ascii_isxdigit(*p)) {
@@ -1243,7 +1243,7 @@ char_u * skiphex(char_u *q)
 /// @param q
 ///
 /// @return Pointer to the digit or (NUL after the string).
-char_u * skiptodigit(char_u *q)
+char_u *skiptodigit(char_u *q)
 {
   char_u *p = q;
   while (*p != NUL && !ascii_isdigit(*p)) {
@@ -1258,7 +1258,7 @@ char_u * skiptodigit(char_u *q)
 /// @param q pointer to string
 ///
 /// @return Pointer to the binary character or (NUL after the string).
-const char * skiptobin(const char *q)
+const char *skiptobin(const char *q)
   FUNC_ATTR_PURE
   FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
@@ -1276,7 +1276,7 @@ const char * skiptobin(const char *q)
 /// @param q
 ///
 /// @return Pointer to the hex character or (NUL after the string).
-char_u * skiptohex(char_u *q)
+char_u *skiptohex(char_u *q)
 {
   char_u *p = q;
   while (*p != NUL && !ascii_isxdigit(*p)) {
@@ -1305,7 +1305,7 @@ char_u *skiptowhite(const char_u *p)
 /// @param p
 ///
 /// @return Pointer to the next whitespace character.
-char_u * skiptowhite_esc(char_u *p) {
+char_u *skiptowhite_esc(char_u *p) {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
       ++p;

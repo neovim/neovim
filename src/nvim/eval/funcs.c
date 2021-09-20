@@ -803,7 +803,7 @@ buf_T *tv_get_buf_from_arg(typval_T *const tv) FUNC_ATTR_NONNULL_ALL
 
 /// Get the buffer from "arg" and give an error and return NULL if it is not
 /// valid.
-buf_T * get_buf_arg(typval_T *arg)
+buf_T *get_buf_arg(typval_T *arg)
 {
   buf_T *buf;
 
@@ -1081,7 +1081,7 @@ static void f_cindent(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-static win_T * get_optional_window(typval_T *argvars, int idx)
+static win_T *get_optional_window(typval_T *argvars, int idx)
 {
   win_T *win = curwin;
 

@@ -507,7 +507,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
 /// @param dp
 ///
 /// @return The new diff block.
-static diff_T * diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
+static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *dnew = xmalloc(sizeof(*dnew));
 

@@ -3327,7 +3327,7 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
 }
 
 // Return Insert completion mode name string
-static char_u * ins_compl_mode(void)
+static char_u *ins_compl_mode(void)
 {
   if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET || compl_started) {
     return (char_u *)ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];

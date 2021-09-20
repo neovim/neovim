@@ -5538,8 +5538,8 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
 /// @param no_bslash   Don't use a backward slash as pathsep
 ///
 /// @return            NULL on failure.
-char_u * file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allow_dirs,
-                             int no_bslash)
+char_u *file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allow_dirs,
+                            int no_bslash)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char_u *endp;

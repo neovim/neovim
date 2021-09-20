@@ -2938,8 +2938,8 @@ buf_T *setaltfname(char_u *ffname, char_u *sfname, linenr_T lnum)
  * Get alternate file name for current window.
  * Return NULL if there isn't any, and give error message if requested.
  */
-char_u * getaltfname(bool errmsg                   // give error message
-                     )
+char_u *getaltfname(bool errmsg                   // give error message
+                    )
 {
   char_u *fname;
   linenr_T dummy;

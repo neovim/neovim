@@ -1821,7 +1821,7 @@ typedef struct {
 /// @return NULL if OK, an error message for failure.  This only needs to be
 ///         used when setting the option, not later when the value has already
 ///         been checked.
-char_u * keymap_init(void)
+char_u *keymap_init(void)
 {
   curbuf->b_kmap_state &= ~KEYMAP_INIT;
 

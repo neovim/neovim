@@ -4433,7 +4433,7 @@ void add_map(char_u *map, int mode, bool nore)
 /// @param cpo_flags  Value of various flags present in &cpo
 ///
 /// @return  NULL when there is a problem.
-static char_u * translate_mapping(char_u *str, int cpo_flags)
+static char_u *translate_mapping(char_u *str, int cpo_flags)
 {
   garray_T ga;
   ga_init(&ga, 1, 40);
@@ -4504,7 +4504,7 @@ mapblock_T *get_maphash(int index, buf_T *buf)
 }
 
 /// Get command argument for <Cmd> key
-char_u * getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
+char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 {
   garray_T line_ga;
   int c1 = -1, c2;
