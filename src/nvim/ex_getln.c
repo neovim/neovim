@@ -2251,7 +2251,7 @@ static int command_line_changed(CommandLineState *s)
     State |= CMDPREVIEW;
     emsg_silent++;  // Block error reporting as the command may be incomplete
     msg_silent++;   // Block messages, namely ones that prompt
-    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT);
+    do_cmdline(ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT|DOCMD_PREVIEW);
     msg_silent--;   // Unblock messages
     emsg_silent--;  // Unblock error reporting
 
