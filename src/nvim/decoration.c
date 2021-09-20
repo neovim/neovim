@@ -1,13 +1,13 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include "nvim/vim.h"
-#include "nvim/lua/executor.h"
-#include "nvim/extmark.h"
 #include "nvim/decoration.h"
+#include "nvim/extmark.h"
+#include "nvim/highlight.h"
+#include "nvim/lua/executor.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
-#include "nvim/highlight.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.c.generated.h"
@@ -28,11 +28,7 @@ static PMap(uint64_t) hl_decors;
 /// @param pos_start Cursor position to start the highlighting at
 /// @param pos_end Cursor position to end the highlighting at
 /// @param offset Move the whole highlighting this many columns to the right
-void bufhl_add_hl_pos_offset(buf_T *buf,
-                             int src_id,
-                             int hl_id,
-                             lpos_T pos_start,
-                             lpos_T pos_end,
+void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start, lpos_T pos_end,
                              colnr_T offset)
 {
   colnr_T hl_start = 0;
@@ -172,7 +168,7 @@ bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        start_id, false);
     if (!item || !item->decor) {
-    // TODO(bfredl): dedicated flag for being a decoration?
+      // TODO(bfredl): dedicated flag for being a decoration?
       goto next_mark;
     }
     Decoration *decor = item->decor;
@@ -217,14 +213,14 @@ bool decor_redraw_line(buf_T *buf, int row, DecorState *state)
   return true;  // TODO(bfredl): be more precise
 }
 
-static void decor_add(DecorState *state, int start_row, int start_col,
-                      int end_row, int end_col, Decoration *decor, bool owned)
+static void decor_add(DecorState *state, int start_row, int start_col, int end_row, int end_col,
+                      Decoration *decor, bool owned)
 {
   int attr_id = decor->hl_id > 0 ? syn_id2attr(decor->hl_id) : 0;
 
   DecorRange range = { start_row, start_col, end_row, end_col,
                        *decor, attr_id,
-                    kv_size(decor->virt_text) && owned, -1 };
+                       kv_size(decor->virt_text) && owned, -1 };
 
   kv_pushp(state->active);
   size_t index;
@@ -238,8 +234,7 @@ static void decor_add(DecorState *state, int start_row, int start_col,
   kv_A(state->active, index) = range;
 }
 
-int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden,
-                     DecorState *state)
+int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden, DecorState *state)
 {
   if (col <= state->col_until) {
     return state->current;
@@ -257,7 +252,7 @@ int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden,
     }
 
     if ((mark.id&MARKTREE_END_FLAG)) {
-       // TODO(bfredl): check decoration flag
+      // TODO(bfredl): check decoration flag
       goto next_mark;
     }
     mtpos_t endpos = marktree_lookup(buf->b_marktree,
@@ -266,7 +261,7 @@ int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden,
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        mark.id, false);
     if (!item || !item->decor) {
-    // TODO(bfredl): dedicated flag for being a decoration?
+      // TODO(bfredl): dedicated flag for being a decoration?
       goto next_mark;
     }
     Decoration *decor = item->decor;
@@ -355,8 +350,7 @@ bool decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr, int eol_col)
   return has_virttext;
 }
 
-void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
-                         Decoration *decor)
+void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col, Decoration *decor)
 {
   if (end_row == -1) {
     end_row = start_row;
