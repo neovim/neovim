@@ -68,6 +68,12 @@ static bool nlua_track_refs = false;
 # define NLUA_TRACK_REFS
 #endif
 
+typedef enum luv_err_type {
+  kCallback,
+  kThread,
+  kThreadCallback,
+} luv_err_t;
+
 /// Convert lua error into a Vim error message
 ///
 /// @param  lstate  Lua interpreter state.
@@ -120,8 +126,21 @@ static int nlua_nvim_version(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 static void nlua_luv_error_event(void **argv)
 {
   char *error = (char *)argv[0];
+  luv_err_t type = (luv_err_t)(intptr_t)argv[1];
   msg_ext_set_kind("lua_error");
-  semsg_multiline("Error executing luv callback:\n%s", error);
+  switch (type) {
+    case kCallback:
+      semsg_multiline("Error executing luv callback:\n%s", error);
+      break;
+    case kThread:
+      semsg_multiline("Error in luv thread:\n%s", error);
+      break;
+    case kThreadCallback:
+      semsg_multiline("Error in luv callback, thread:\n%s", error);
+      break;
+    default:
+      break;
+  }
   xfree(error);
 }
 
@@ -146,7 +165,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
     const char *error = lua_tostring(lstate, -1);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
-                   1, xstrdup(error));
+                   2, xstrdup(error), (intptr_t)kCallback);
     lua_pop(lstate, 1);  // error message
     retval = -status;
   } else {  // LUA_OK
@@ -160,16 +179,31 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
   return retval;
 }
 
-static void nlua_luv_thread_error_event(void **argv)
+static int nlua_luv_thread_cb_cfpcall(lua_State *lstate, int nargs, int nresult,
+                                      int flags)
 {
-  char *error = (char *)argv[0];
-  msg_ext_set_kind("lua_error");
-  emsgf_multiline("Error in luv callback, thread:\n%s", error);
-  xfree(error);
+  return nlua_luv_thread_common_cfpcall(lstate, nargs, nresult, flags, true);
 }
 
 static int nlua_luv_thread_cfpcall(lua_State *lstate, int nargs, int nresult,
                                    int flags)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return nlua_luv_thread_common_cfpcall(lstate, nargs, nresult, flags, false);
+}
+
+static int nlua_luv_thread_cfcpcall(lua_State *lstate, lua_CFunction func,
+                                    void *ud, int flags)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  lua_pushcfunction(lstate, func);
+  lua_pushlightuserdata(lstate, ud);
+  int retval = nlua_luv_thread_cfpcall(lstate, 1, 0, flags);
+  return retval;
+}
+
+static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nresult,
+                                          int flags, bool is_callback)
   FUNC_ATTR_NONNULL_ALL
 {
   int retval;
@@ -192,8 +226,11 @@ static int nlua_luv_thread_cfpcall(lua_State *lstate, int nargs, int nresult,
     const char *error = lua_tostring(lstate, -1);
 
     loop_schedule_deferred(&main_loop,
-                           event_create(nlua_luv_thread_error_event, 1,
-                                        xstrdup(error)));
+                           event_create(nlua_luv_error_event, 2,
+                                        xstrdup(error),
+                                        is_callback
+                                        ? (intptr_t)kThreadCallback
+                                        : (intptr_t)kThread));
     lua_pop(lstate, 1);  // error message
     retval = -status;
   } else {  // LUA_OK
@@ -381,7 +418,9 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
 
   // vim.loop
   if (is_thread) {
-    luv_set_callback(lstate, nlua_luv_thread_cfpcall);
+    luv_set_callback(lstate, nlua_luv_thread_cb_cfpcall);
+    luv_set_thread(lstate, nlua_luv_thread_cfpcall);
+    luv_set_cthread(lstate, nlua_luv_thread_cfcpcall);
   } else {
     luv_set_loop(lstate, &main_loop.uv);
     luv_set_callback(lstate, nlua_luv_cfpcall);
