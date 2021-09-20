@@ -296,12 +296,13 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
   return retval;
 }
 
-// Write commands to "fd" to restore the view of a window.
-// Caller must make sure 'scrolloff' is zero.
-static int put_view(FILE *fd, win_T *wp, int add_edit,                // add ":edit" command to view
-                    unsigned *flagp,             // vop_flags or ssop_flags
-                    int current_arg_idx          // current argument index of the window, use
-                    )                                // -1 if unknown
+/// Write commands to "fd" to restore the view of a window.
+/// Caller must make sure 'scrolloff' is zero.
+///
+/// @param add_edit  add ":edit" command to view
+/// @param flagp  vop_flags or ssop_flags
+/// @param current_arg_idx  current argument index of the window, use -1 if unknown
+static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int current_arg_idx)
 {
   win_T *save_curwin;
   int f;

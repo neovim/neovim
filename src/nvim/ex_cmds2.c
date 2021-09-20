@@ -362,8 +362,9 @@ static void profile_init(scriptitem_T *si)
 }
 
 /// Save time when starting to invoke another script or function.
-void script_prof_save(proftime_T *tm             // place to store wait time
-                      )
+///
+/// @param tm  place to store wait time
+void script_prof_save(proftime_T *tm)
 {
   scriptitem_T *si;
 

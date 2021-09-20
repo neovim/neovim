@@ -2300,28 +2300,27 @@ static void abandon_cmdline(void)
   redraw_cmdline = true;
 }
 
-/*
- * getcmdline() - accept a command line starting with firstc.
- *
- * firstc == ':'            get ":" command line.
- * firstc == '/' or '?'     get search pattern
- * firstc == '='            get expression
- * firstc == '@'            get text for input() function
- * firstc == '>'            get text for debug mode
- * firstc == NUL            get text for :insert command
- * firstc == -1             like NUL, and break on CTRL-C
- *
- * The line is collected in ccline.cmdbuff, which is reallocated to fit the
- * command line.
- *
- * Careful: getcmdline() can be called recursively!
- *
- * Return pointer to allocated string if there is a commandline, NULL
- * otherwise.
- */
-char_u *getcmdline(int firstc, long count,              // only used for incremental search
-                   int indent,              // indent for inside conditionals
-                   bool do_concat FUNC_ATTR_UNUSED)
+/// getcmdline() - accept a command line starting with firstc.
+///
+/// firstc == ':'            get ":" command line.
+/// firstc == '/' or '?'     get search pattern
+/// firstc == '='            get expression
+/// firstc == '@'            get text for input() function
+/// firstc == '>'            get text for debug mode
+/// firstc == NUL            get text for :insert command
+/// firstc == -1             like NUL, and break on CTRL-C
+///
+/// The line is collected in ccline.cmdbuff, which is reallocated to fit the
+/// command line.
+///
+/// Careful: getcmdline() can be called recursively!
+///
+/// Return pointer to allocated string if there is a commandline, NULL
+/// otherwise.
+///
+/// @param count  only used for incremental search
+/// @param indent  indent for inside conditionals
+char_u *getcmdline(int firstc, long count, int indent, bool do_concat FUNC_ATTR_UNUSED)
 {
   // Be prepared for situations where cmdline can be invoked recursively.
   // That includes cmd mappings, event handlers, as well as update_screen()
@@ -2492,12 +2491,11 @@ static void correct_screencol(int idx, int cells, int *col)
   }
 }
 
-/*
- * Get an Ex command line for the ":" command.
- */
-char_u *getexline(int c,                   // normally ':', NUL for ":append"
-                  void *cookie, int indent,              // indent for inside conditionals
-                  bool do_concat)
+/// Get an Ex command line for the ":" command.
+///
+/// @param c  normally ':', NUL for ":append"
+/// @param indent  indent for inside conditionals
+char_u *getexline(int c, void *cookie, int indent, bool do_concat)
 {
   // When executing a register, remove ':' that's in front of each line.
   if (exec_from_reg && vpeekc() == ':') {
@@ -3659,15 +3657,14 @@ static int sort_func_compare(const void *s1, const void *s2)
   return STRCMP(p1, p2);
 }
 
-/*
- * Return FAIL if this is not an appropriate context in which to do
- * completion of anything, return OK if it is (even if there are no matches).
- * For the caller, this means that the character is just passed through like a
- * normal character (instead of being expanded).  This allows :s/^I^D etc.
- */
-static int nextwild(expand_T *xp, int type, int options,                    // extra options for ExpandOne()
-                    int escape                     // if TRUE, escape the returned matches
-                    )
+/// Return FAIL if this is not an appropriate context in which to do
+/// completion of anything, return OK if it is (even if there are no matches).
+/// For the caller, this means that the character is just passed through like a
+/// normal character (instead of being expanded).  This allows :s/^I^D etc.
+///
+/// @param options  extra options for ExpandOne()
+/// @param escape  if TRUE, escape the returned matches
+static int nextwild(expand_T *xp, int type, int options, int escape)
 {
   int i, j;
   char_u *p1;
@@ -3768,42 +3765,41 @@ static int nextwild(expand_T *xp, int type, int options,                    // e
   return OK;
 }
 
-/*
- * Do wildcard expansion on the string 'str'.
- * Chars that should not be expanded must be preceded with a backslash.
- * Return a pointer to allocated memory containing the new string.
- * Return NULL for failure.
- *
- * "orig" is the originally expanded string, copied to allocated memory.  It
- * should either be kept in orig_save or freed.  When "mode" is WILD_NEXT or
- * WILD_PREV "orig" should be NULL.
- *
- * Results are cached in xp->xp_files and xp->xp_numfiles, except when "mode"
- * is WILD_EXPAND_FREE or WILD_ALL.
- *
- * mode = WILD_FREE:        just free previously expanded matches
- * mode = WILD_EXPAND_FREE: normal expansion, do not keep matches
- * mode = WILD_EXPAND_KEEP: normal expansion, keep matches
- * mode = WILD_NEXT:        use next match in multiple match, wrap to first
- * mode = WILD_PREV:        use previous match in multiple match, wrap to first
- * mode = WILD_ALL:         return all matches concatenated
- * mode = WILD_LONGEST:     return longest matched part
- * mode = WILD_ALL_KEEP:    get all matches, keep matches
- *
- * options = WILD_LIST_NOTFOUND:    list entries without a match
- * options = WILD_HOME_REPLACE:     do home_replace() for buffer names
- * options = WILD_USE_NL:           Use '\n' for WILD_ALL
- * options = WILD_NO_BEEP:          Don't beep for multiple matches
- * options = WILD_ADD_SLASH:        add a slash after directory names
- * options = WILD_KEEP_ALL:         don't remove 'wildignore' entries
- * options = WILD_SILENT:           don't print warning messages
- * options = WILD_ESCAPE:           put backslash before special chars
- * options = WILD_ICASE:            ignore case for files
- *
- * The variables xp->xp_context and xp->xp_backslash must have been set!
- */
-char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig,          // allocated copy of original of expanded string
-                  int options, int mode)
+/// Do wildcard expansion on the string 'str'.
+/// Chars that should not be expanded must be preceded with a backslash.
+/// Return a pointer to allocated memory containing the new string.
+/// Return NULL for failure.
+///
+/// "orig" is the originally expanded string, copied to allocated memory.  It
+/// should either be kept in orig_save or freed.  When "mode" is WILD_NEXT or
+/// WILD_PREV "orig" should be NULL.
+///
+/// Results are cached in xp->xp_files and xp->xp_numfiles, except when "mode"
+/// is WILD_EXPAND_FREE or WILD_ALL.
+///
+/// mode = WILD_FREE:        just free previously expanded matches
+/// mode = WILD_EXPAND_FREE: normal expansion, do not keep matches
+/// mode = WILD_EXPAND_KEEP: normal expansion, keep matches
+/// mode = WILD_NEXT:        use next match in multiple match, wrap to first
+/// mode = WILD_PREV:        use previous match in multiple match, wrap to first
+/// mode = WILD_ALL:         return all matches concatenated
+/// mode = WILD_LONGEST:     return longest matched part
+/// mode = WILD_ALL_KEEP:    get all matches, keep matches
+///
+/// options = WILD_LIST_NOTFOUND:    list entries without a match
+/// options = WILD_HOME_REPLACE:     do home_replace() for buffer names
+/// options = WILD_USE_NL:           Use '\n' for WILD_ALL
+/// options = WILD_NO_BEEP:          Don't beep for multiple matches
+/// options = WILD_ADD_SLASH:        add a slash after directory names
+/// options = WILD_KEEP_ALL:         don't remove 'wildignore' entries
+/// options = WILD_SILENT:           don't print warning messages
+/// options = WILD_ESCAPE:           put backslash before special chars
+/// options = WILD_ICASE:            ignore case for files
+///
+/// The variables xp->xp_context and xp->xp_backslash must have been set!
+///
+/// @param orig  allocated copy of original of expanded string
+char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode)
 {
   char_u *ss = NULL;
   static int findex;
@@ -4625,11 +4621,11 @@ static void set_expand_context(expand_T *xp)
   set_cmd_context(xp, ccline.cmdbuff, ccline.cmdlen, ccline.cmdpos, true);
 }
 
-void set_cmd_context(expand_T *xp, char_u *str,           // start of command line
-                     int len,               // length of command line (excl. NUL)
-                     int col,               // position of cursor
-                     int use_ccline         // use ccline for info
-                     )
+/// @param str  start of command line
+/// @param len  length of command line (excl. NUL)
+/// @param col  position of cursor
+/// @param use_ccline  use ccline for info
+void set_cmd_context(expand_T *xp, char_u *str, int len, int col, int use_ccline)
 {
   char_u old_char = NUL;
 
@@ -4664,22 +4660,21 @@ void set_cmd_context(expand_T *xp, char_u *str,           // start of command li
   str[col] = old_char;
 }
 
-/*
- * Expand the command line "str" from context "xp".
- * "xp" must have been set by set_cmd_context().
- * xp->xp_pattern points into "str", to where the text that is to be expanded
- * starts.
- * Returns EXPAND_UNSUCCESSFUL when there is something illegal before the
- * cursor.
- * Returns EXPAND_NOTHING when there is nothing to expand, might insert the
- * key that triggered expansion literally.
- * Returns EXPAND_OK otherwise.
- */
-int expand_cmdline(expand_T *xp, char_u *str,               // start of command line
-                   int col,                        // position of cursor
-                   int *matchcount,        // return: nr of matches
-                   char_u ***matches         // return: array of pointers to matches
-                   )
+/// Expand the command line "str" from context "xp".
+/// "xp" must have been set by set_cmd_context().
+/// xp->xp_pattern points into "str", to where the text that is to be expanded
+/// starts.
+/// Returns EXPAND_UNSUCCESSFUL when there is something illegal before the
+/// cursor.
+/// Returns EXPAND_NOTHING when there is nothing to expand, might insert the
+/// key that triggered expansion literally.
+/// Returns EXPAND_OK otherwise.
+///
+/// @param str  start of command line
+/// @param col  position of cursor
+/// @param matchcount  return: nr of matches
+/// @param matches  return: array of pointers to matches
+int expand_cmdline(expand_T *xp, char_u *str, int col, int *matchcount, char_u ***matches)
 {
   char_u *file_str = NULL;
   int options = WILD_ADD_SLASH|WILD_SILENT;
@@ -4766,11 +4761,10 @@ static void cleanup_help_tags(int num_file, char_u **file)
 
 typedef char_u *(*ExpandFunc)(expand_T *, int);
 
-/*
- * Do the expansion based on xp->xp_context and "pat".
- */
-static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u ***file, int options              // WILD_ flags
-                             )
+/// Do the expansion based on xp->xp_context and "pat".
+///
+/// @param options  WILD_ flags
+static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u ***file, int options)
 {
   regmatch_T regmatch;
   int ret;
@@ -5015,16 +5009,15 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
   return ret;
 }
 
-/*
- * Expand a list of names.
- *
- * Generic function for command line completion.  It calls a function to
- * obtain strings, one by one.  The strings are matched against a regexp
- * program.  Matching strings are copied into an array, which is returned.
- */
+/// Expand a list of names.
+///
+/// Generic function for command line completion.  It calls a function to
+/// obtain strings, one by one.  The strings are matched against a regexp
+/// program.  Matching strings are copied into an array, which is returned.
+///
+/// @param func  returns a string from the list
 static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file,
-                          CompleteListItemGetter func, // returns a string from the list
-                          int escaped)
+                          CompleteListItemGetter func, int escaped)
 {
   int i;
   size_t count = 0;
@@ -5682,12 +5675,11 @@ static inline void clear_hist_entry(histentry_T *hisptr)
   memset(hisptr, 0, sizeof(*hisptr));
 }
 
-/*
- * Check if command line 'str' is already in history.
- * If 'move_to_front' is TRUE, matching entry is moved to end of history.
- */
-static int in_history(int type, char_u *str, int move_to_front,              // Move the entry to the front if it exists
-                      int sep)
+/// Check if command line 'str' is already in history.
+/// If 'move_to_front' is TRUE, matching entry is moved to end of history.
+///
+/// @param move_to_front  Move the entry to the front if it exists
+static int in_history(int type, char_u *str, int move_to_front, int sep)
 {
   int i;
   int last_i = -1;
