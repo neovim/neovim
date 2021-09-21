@@ -57,6 +57,11 @@ The following new APIs or features were added.
 <
   (or the Vimscript equivalent) to their |config| file.
 
+• Run Lua scripts from your shell using |-l|. >
+      nvim -l foo.lua --arg1 --arg2
+<  Also works with stdin: >
+      echo "print(42)" | nvim -l -
+
 • Added a |vim.lsp.codelens.clear()| function to clear codelenses.
 
 • |vim.inspect_pos()|, |vim.show_pos()| and |:Inspect| allow a user to get or show items

@@ -26,6 +26,7 @@ local write_file = helpers.write_file
 local meths = helpers.meths
 local alter_slashes = helpers.alter_slashes
 local is_os = helpers.is_os
+local dedent = helpers.dedent
 
 local testfile = 'Xtest_startuptime'
 after_each(function()
@@ -47,6 +48,34 @@ describe('startup', function()
       assert_log("require%('vim%._editor'%)", testfile, 100)
     end)
   end)
+
+  it('-D does not hang #12647', function()
+    clear()
+    local screen
+    screen = Screen.new(60, 7)
+    screen:attach()
+    command([[let g:id = termopen('"]]..nvim_prog..
+    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
+    screen:expect([[
+      ^                                                            |
+                                                                  |
+      Entering Debug mode.  Type "cont" to continue.              |
+      nvim_exec()                                                 |
+      cmd: aunmenu *                                              |
+      >                                                           |
+                                                                  |
+    ]])
+    command([[call chansend(g:id, "cont\n")]])
+    screen:expect([[
+      ^                                                            |
+      ~                                                           |
+      ~                                                           |
+      ~                                                           |
+      [No Name]                                                   |
+                                                                  |
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('startup', function()
@@ -58,6 +87,94 @@ describe('startup', function()
     os.remove('Xtest_startup_ttyout')
   end)
 
+  describe('-l Lua', function()
+    local function assert_l_out(expected, args_before, args_after)
+      local args = { nvim_prog, '--clean' }
+      vim.list_extend(args, args_before or {})
+      vim.list_extend(args, { '-l', 'test/functional/fixtures/startup.lua' })
+      vim.list_extend(args, args_after or {})
+      local out = funcs.system(args):gsub('\r\n', '\n')
+      return eq(dedent(expected), out)
+    end
+
+    it('failure modes', function()
+      -- nvim -l <missing file>
+      matches('nvim: Argument missing after: "%-l"', funcs.system({ nvim_prog, '-l' }))
+      eq(1, eval('v:shell_error'))
+    end)
+
+    it('os.exit() sets Nvim exitcode', function()
+      -- nvim -l foo.lua -arg1 -- a b c
+      assert_l_out([[
+          bufs:
+          args: { "-arg1", "--exitcode", "73", "--arg2" }]],
+        {},
+        { '-arg1', "--exitcode", "73", '--arg2' }
+      )
+      eq(73, eval('v:shell_error'))
+    end)
+
+    it('sets _G.arg', function()
+      -- nvim -l foo.lua -arg1 -- a b c
+      assert_l_out([[
+          bufs:
+          args: { "-arg1", "--arg2", "arg3" }]],
+        {},
+        { '-arg1', '--arg2', 'arg3' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim -l foo.lua --
+      assert_l_out([[
+          bufs:
+          args: {}]],
+        {},
+        { '--' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim file1 file2 -l foo.lua -arg1 -- file3 file4
+      assert_l_out([[
+          bufs: file1 file2 file3 file4
+          args: { "-arg1", "arg 2" }]],
+        { 'file1', 'file2', },
+        { '-arg1', 'arg 2', '--', 'file3', 'file4' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim file1 file2 -l foo.lua -arg1 --
+      assert_l_out([[
+          bufs: file1 file2
+          args: { "-arg1" }]],
+        { 'file1', 'file2', },
+        { '-arg1', '--' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim -l foo.lua <vim args>
+      assert_l_out([[
+          bufs:
+          args: { "-c", "set wrap?" }]],
+        {},
+        { '-c', 'set wrap?' }
+      )
+      eq(0, eval('v:shell_error'))
+
+      -- nvim <vim args> -l foo.lua <vim args>
+      assert_l_out(
+        -- luacheck: ignore 611 (Line contains only whitespaces)
+        [[
+            wrap
+          
+          bufs:
+          args: { "-c", "set wrap?" }]],
+        { '-c', 'set wrap?' },
+        { '-c', 'set wrap?' }
+      )
+      eq(0, eval('v:shell_error'))
+    end)
+  end)
+
   it('pipe at both ends: has("ttyin")==0 has("ttyout")==0', function()
     -- system() puts a pipe at both ends.
     local out = funcs.system({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
@@ -66,6 +183,7 @@ describe('startup', function()
                                '+q' })
     eq('0 0', out)
   end)
+
   it('with --embed: has("ttyin")==0 has("ttyout")==0', function()
     local screen = Screen.new(25, 3)
     -- Remote UI connected by --embed.
@@ -77,6 +195,7 @@ describe('startup', function()
       0 0                      |
     ]])
   end)
+
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
     local screen = Screen.new(25, 4)
     screen:attach()
@@ -95,6 +214,7 @@ describe('startup', function()
                                |
     ]])
   end)
+
   it('output to pipe: has("ttyin")==1 has("ttyout")==0', function()
     if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
@@ -111,6 +231,7 @@ describe('startup', function()
          read_file('Xtest_startup_ttyout'))
     end)
   end)
+
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
     if is_os('win') then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
@@ -128,6 +249,7 @@ describe('startup', function()
          read_file('Xtest_startup_ttyout'))
     end)
   end)
+
   it('input from pipe (implicit) #7679', function()
     local screen = Screen.new(25, 4)
     screen:attach()
@@ -147,6 +269,7 @@ describe('startup', function()
                                |
     ]])
   end)
+
   it('input from pipe + file args #7679', function()
     eq('ohyeah\r\n0 0 bufs=3',
        funcs.system({nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '--headless',
@@ -532,32 +655,6 @@ describe('sysinit', function()
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
   end)
 
-  it('fixed hang issue with -D (#12647)', function()
-    local screen
-    screen = Screen.new(60, 7)
-    screen:attach()
-    command([[let g:id = termopen('"]]..nvim_prog..
-    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
-    screen:expect([[
-      ^                                                            |
-      Entering Debug mode.  Type "cont" to continue.              |
-      nvim_exec()                                                 |
-      cmd: aunmenu *                                              |
-      >                                                           |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
-                                                                  |
-    ]])
-    command([[call chansend(g:id, "cont\n")]])
-    screen:expect([[
-      ^                                                            |
-      ~                                                           |
-      ~                                                           |
-      [No Name]                                                   |
-                                                                  |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
-                                                                  |
-    ]])
-  end)
 end)
 
 describe('user config init', function()

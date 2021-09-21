@@ -21,15 +21,19 @@ Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
 which can be used from Lua code (|lua-vimscript| |vim.api|). Together these
 "namespaces" form the Nvim programming interface.
 
-See the |lua-guide| for an introduction to using Lua in Neovim.
+Lua plugins and user config are automatically discovered and loaded, just like
+Vimscript. See |lua-guide| for practical guidance.
 
+You can also run Lua scripts from your shell using the |-l| argument: >
+    nvim -l foo.lua [args...]
+<
                                                                   *lua-compat*
 Lua 5.1 is the permanent interface for Nvim Lua.  Plugins need only consider
 Lua 5.1, not worry about forward-compatibility with future Lua versions.  If
 Nvim ever ships with Lua 5.4+, a Lua 5.1 compatibility shim will be provided
 so that old plugins continue to work transparently.
 
-------------------------------------------------------------------------------
+==============================================================================
 LUA CONCEPTS AND IDIOMS                                         *lua-concepts*
 
 Lua is very simple: this means that, while there are some quirks, once you
@@ -73,25 +77,24 @@ In Lua, any missing arguments are passed as `nil`. Example: >lua
 Furthermore it is not an error if extra parameters are passed, they are just
 discarded.
 
-It is also allowed to omit the parentheses (only) if the function takes
-exactly one string (`"foo"`) or table literal (`{1,2,3}`). The latter is often
-used to approximate the "named parameters" feature of languages like Python
-("kwargs" or "keyword args"). Example: >lua
+                                                                      *kwargs*
+When calling a function, you can omit the parentheses if the function takes
+exactly one string literal (`"foo"`) or table literal (`{1,2,3}`). The latter
+is often used to approximate "named parameters" ("kwargs" or "keyword args")
+as in languages like Python and C#. Example: >lua
     local func_with_opts = function(opts)
         local will_do_foo = opts.foo
         local filename = opts.filename
-
         ...
     end
 
     func_with_opts { foo = true, filename = "hello.world" }
 <
-There is nothing special going on here except that parentheses are treated as
+There's nothing special going on here except that parentheses are treated as
 whitespace. But visually, this small bit of sugar gets reasonably close to
 a "keyword args" interface.
 
 It is of course also valid to call the function with parentheses: >lua
-
     func_with_opts({ foo = true, filename = "hello.world" })
 <
 Nvim tends to prefer the keyword args style.
@@ -100,24 +103,19 @@ Nvim tends to prefer the keyword args style.
 LUA PATTERNS                                                    *lua-patterns*
 
 Lua intentionally does not support regular expressions, instead it has limited
-"patterns" which avoid the performance pitfalls of extended regex.
-|luaref-patterns|
+"patterns" |luaref-patterns| which avoid the performance pitfalls of extended
+regex. Lua scripts can also use Vim regex via |vim.regex()|.
 
-Examples using |string.match()|: >lua
+These examples use |string.match()| to demonstrate Lua patterns: >lua
 
     print(string.match("foo123bar123", "%d+"))
     -- 123
-
     print(string.match("foo123bar123", "[^%d]+"))
     -- foo
-
     print(string.match("foo123bar123", "[abc]+"))
     -- ba
-
     print(string.match("foo.bar", "%.bar"))
     -- .bar
-
-For more complex matching you can use Vim regex from Lua via |vim.regex()|.
 
 ==============================================================================
 IMPORTING LUA MODULES                                  *require()* *lua-require*
@@ -389,7 +387,7 @@ For example consider the following Lua omnifunc handler: >lua
     vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omnifunc')
 
 Note: The module ("mymod" in the above example) must either be a Lua global,
-or use the require syntax as specified above to access it from a package.
+or use require() as shown above to access it from a package.
 
 Note: `v:lua` without a call is not allowed in a Vimscript expression:
 |Funcref|s cannot represent Lua functions. The following are errors: >vim

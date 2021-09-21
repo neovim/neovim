@@ -116,10 +116,7 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
-- If any tests fail, the build will fail.
-  See [test/README.md#running-tests][run-tests] to run tests locally.
-  Passing locally doesn't guarantee passing the CI build, because of the
-  different compilers and platforms tested against.
+- If any tests fail, the build will fail. See [test/README.md#running-tests][run-tests] to run tests locally.
 - CI runs [ASan] and other analyzers.
     - To run valgrind locally: `VALGRIND=1 make test`
     - To run Clang ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"`
@@ -127,6 +124,8 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
   neighbors_, to encourage incrementally updating the legacy style to meet our
   [style](#style). (See [#3174][3174] for background.)
 - CI for FreeBSD runs on [Cirrus CI].
+- To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
+  [ci.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/ci.yml#L205).
 
 ### Clang scan-build
 

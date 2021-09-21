@@ -55,9 +55,17 @@ if sys.version_info < MIN_PYTHON_VERSION:
 doxygen_version = tuple((int(i) for i in subprocess.check_output(["doxygen", "-v"],
                         universal_newlines=True).split()[0].split('.')))
 
+# Until 0.9 is released, need this hacky way to check that "nvim -l foo.lua" works.
+nvim_version = list(line for line in subprocess.check_output(['nvim', '-h'], universal_newlines=True).split('\n')
+                     if '-l ' in line)
+
 if doxygen_version < MIN_DOXYGEN_VERSION:
     print("\nRequires doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
     print("Your doxygen version is {}.{}.{}\n".format(*doxygen_version))
+    sys.exit(1)
+
+if len(nvim_version) == 0:
+    print("\nRequires 'nvim -l' feature, see https://github.com/neovim/neovim/pull/18706")
     sys.exit(1)
 
 # DEBUG = ('DEBUG' in os.environ)
@@ -79,7 +87,7 @@ base_dir = os.path.dirname(os.path.dirname(script_path))
 out_dir = os.path.join(base_dir, 'tmp-{target}-doc')
 filter_cmd = '%s %s' % (sys.executable, script_path)
 msgs = []  # Messages to show on exit.
-lua2dox_filter = os.path.join(base_dir, 'scripts', 'lua2dox_filter')
+lua2dox = os.path.join(base_dir, 'scripts', 'lua2dox.lua')
 
 CONFIG = {
     'api': {
@@ -993,7 +1001,7 @@ def delete_lines_below(filename, tokenstr):
         fp.writelines(lines[0:i])
 
 
-def main(config, args):
+def main(doxygen_config, args):
     """Generates:
 
     1. Vim :help docs
@@ -1021,7 +1029,7 @@ def main(config, args):
                 # runtime/lua/vim/lsp.lua:209: warning: argument 'foo' not found
                 stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
         p.communicate(
-            config.format(
+            doxygen_config.format(
                 input=' '.join(
                     [f'"{file}"' for file in CONFIG[target]['files']]),
                 output=output_dir,
@@ -1108,11 +1116,7 @@ def main(config, args):
                         fn_map_full.update(fn_map)
 
         if len(sections) == 0:
-            if target == 'lua':
-                fail(f'no sections for target: {target} (this usually means'
-                     + ' "luajit" was not found by scripts/lua2dox_filter)')
-            else:
-                fail(f'no sections for target: {target}')
+            fail(f'no sections for target: {target} (look for errors near "Preprocessing" log lines above)')
         if len(sections) > len(CONFIG[target]['section_order']):
             raise RuntimeError(
                 'found new modules "{}"; update the "section_order" map'.format(
@@ -1159,7 +1163,7 @@ def main(config, args):
 def filter_source(filename):
     name, extension = os.path.splitext(filename)
     if extension == '.lua':
-        p = subprocess.run([lua2dox_filter, filename], stdout=subprocess.PIPE)
+        p = subprocess.run(['nvim', '-l', lua2dox, filename], stdout=subprocess.PIPE)
         op = ('?' if 0 != p.returncode else p.stdout.decode('utf-8'))
         print(op)
     else:

@@ -275,13 +275,13 @@ int main(int argc, char **argv)
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
+  // TODO: should we try to keep param scan before this?
+  nlua_init();
+  TIME_MSG("init lua interpreter");
+
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
-
-  nlua_init();
-
-  TIME_MSG("init lua interpreter");
 
   if (embedded_mode) {
     const char *err;
@@ -363,8 +363,7 @@ int main(int argc, char **argv)
   debug_break_level = params.use_debug_break_level;
 
   // Read ex-commands if invoked with "-es".
-  if (!params.input_isatty && !params.input_neverscript
-      && silent_mode && exmode_active) {
+  if (!params.input_isatty && !params.input_istext && silent_mode && exmode_active) {
     input_start(STDIN_FILENO);
   }
 
@@ -409,14 +408,12 @@ int main(int argc, char **argv)
   init_default_autocmds();
   TIME_MSG("init default autocommands");
 
-  bool vimrc_none = params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE");
+  bool vimrc_none = strequal(params.use_vimrc, "NONE");
 
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
   // Allows for setting 'loadplugins' there.
-  if (vimrc_none) {
-    // When using --clean we still want to load plugins
-    p_lpl = params.clean;
-  }
+  // For --clean we still want to load plugins.
+  p_lpl = vimrc_none ? params.clean : p_lpl;
 
   // Execute --cmd arguments.
   exe_pre_commands(&params);
@@ -608,6 +605,11 @@ int main(int argc, char **argv)
   // WORKAROUND(mhi): #3023
   if (cb_flags & CB_UNNAMEDMASK) {
     (void)eval_has_provider("clipboard");
+  }
+
+  if (params.luaf != NULL) {
+    nlua_exec_file(params.luaf);
+    // return 0;
   }
 
   TIME_MSG("before starting main loop");
@@ -962,7 +964,7 @@ static bool edit_stdin(mparm_T *parmp)
 {
   bool implicit = !headless_mode
                   && !(embedded_mode && stdin_fd <= 0)
-                  && (!exmode_active || parmp->input_neverscript)
+                  && (!exmode_active || parmp->input_istext)
                   && !parmp->input_isatty
                   && parmp->scriptin == NULL;  // `-s -` was not given.
   return parmp->had_stdin_file || implicit;
@@ -993,9 +995,9 @@ static void command_line_scan(mparm_T *parmp)
       } else {
         parmp->commands[parmp->n_commands++] = &(argv[0][1]);
       }
-
-      // Optional argument.
     } else if (argv[0][0] == '-' && !had_minmin) {
+      // Optional argument.
+
       want_argument = false;
       char c = argv[0][argv_idx++];
       switch (c) {
@@ -1005,9 +1007,7 @@ static void command_line_scan(mparm_T *parmp)
           silent_mode = true;
           parmp->no_swap_file = true;
         } else {
-          if (parmp->edit_type != EDIT_NONE
-              && parmp->edit_type != EDIT_FILE
-              && parmp->edit_type != EDIT_STDIN) {
+          if (parmp->edit_type > EDIT_STDIN) {
             mainerr(err_too_many_args, argv[0]);
           }
           parmp->had_stdin_file = true;
@@ -1015,7 +1015,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         argv_idx = -1;  // skip to next argument
         break;
-      case '-':    // "--" don't take any more option arguments
+      case '-':    // "--" No more option arguments.
         // "--help" give help message
         // "--version" give version message
         // "--noplugin[s]" skip plugins
@@ -1111,7 +1111,7 @@ static void command_line_scan(mparm_T *parmp)
         break;
       case 'E':    // "-E" Ex mode
         exmode_active = true;
-        parmp->input_neverscript = true;
+        parmp->input_istext = true;
         break;
       case 'f':    // "-f"  GUI: run in foreground.
         break;
@@ -1122,10 +1122,6 @@ static void command_line_scan(mparm_T *parmp)
       case 'H':    // "-H" start in Hebrew mode: rl + hkmap set.
         p_hkmap = true;
         set_option_value_give_err("rl", 1L, NULL, 0);
-        break;
-      case 'l':    // "-l" lisp mode, 'lisp' and 'showmatch' on.
-        set_option_value_give_err("lisp", 1L, NULL, 0);
-        p_sm = true;
         break;
       case 'M':    // "-M"  no changes or writing of files
         reset_modifiable();
@@ -1231,6 +1227,7 @@ static void command_line_scan(mparm_T *parmp)
         FALLTHROUGH;
       case 'S':    // "-S {file}" execute Vim script
       case 'i':    // "-i {shada}" use for ShaDa file
+      case 'l':    // "-l {file}" Lua mode
       case 'u':    // "-u {vimrc}" vim inits file
       case 'U':    // "-U {gvimrc}" gvim inits file
       case 'W':    // "-W {scriptout}" overwrite
@@ -1311,6 +1308,27 @@ static void command_line_scan(mparm_T *parmp)
           set_option_value_give_err("shadafile", 0L, argv[0], 0);
           break;
 
+        case 'l':    // "-l" Lua script: args after "-l".
+          silent_mode = true;
+          p_verbose = 1;
+          parmp->no_swap_file = true;
+          parmp->use_vimrc = parmp->use_vimrc ? parmp->use_vimrc : "NONE";
+          if (p_shadafile == NULL || *p_shadafile == NUL) {
+            set_option_value_give_err("shadafile", 0L, "NONE", 0);
+          }
+          parmp->luaf = argv[0];
+          argc--;
+          argv++;
+          // Lua args after "-l <file>" (upto "--").
+          int l_argc = nlua_set_argv(argv, argc);
+          assert(l_argc >= 0);
+          argc = argc - l_argc;
+          if (argc > 0) {  // Found "--".
+            argv = argv + l_argc;
+            had_minmin = true;
+          }
+          break;
+
         case 's':    // "-s {scriptin}" read from script file
           if (parmp->scriptin != NULL) {
 scripterror:
@@ -1354,9 +1372,7 @@ scripterror:
       argv_idx = -1;  // skip to next argument
 
       // Check for only one type of editing.
-      if (parmp->edit_type != EDIT_NONE
-          && parmp->edit_type != EDIT_FILE
-          && parmp->edit_type != EDIT_STDIN) {
+      if (parmp->edit_type > EDIT_STDIN) {
         mainerr(err_too_many_args, argv[0]);
       }
       parmp->edit_type = EDIT_FILE;
@@ -1421,6 +1437,7 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   paramp->listen_addr = NULL;
   paramp->server_addr = NULL;
   paramp->remote = 0;
+  paramp->luaf = NULL;
 }
 
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
@@ -2154,6 +2171,7 @@ static void usage(void)
   os_msg(_("  +                     Start at end of file\n"));
   os_msg(_("  --cmd <cmd>           Execute <cmd> before any config\n"));
   os_msg(_("  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"));
+  os_msg(_("  -l <script> [args...] Execute Lua <script> (with optional args)\n"));
   os_msg("\n");
   os_msg(_("  -b                    Binary mode\n"));
   os_msg(_("  -d                    Diff mode\n"));

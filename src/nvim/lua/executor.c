@@ -323,6 +323,34 @@ static int nlua_thr_api_nvim__get_runtime(lua_State *lstate)
   return 1;
 }
 
+/// Copies all args into the Lua `arg` global.
+///
+/// Example:
+///     nvim -l foo.lua -- -e "sin=math.sin" script a b
+///
+/// @note `lua` CLI sets _negative_ `arg` indices to the arguments upto "-e".
+///
+/// @see https://www.lua.org/pil/1.4.html
+/// @see https://github.com/premake/premake-core/blob/1c1304637f4f5e50ba8c57aae8d1d80ec3b7aaf2/src/host/premake.c#L563-L594
+///
+/// @returns number of args (stops at "--")
+int nlua_set_argv(char **argv, int argc)
+{
+  lua_State *const L = global_lstate;
+  lua_newtable(L);
+  int i = 0;
+  for (; i < argc; i++) {
+    if (strequal("--", argv[i])) {
+      i--;
+      break;
+    }
+    lua_pushstring(L, argv[i]);
+    lua_rawseti(L, -2, i + 1);
+  }
+  lua_setglobal(L, "arg");
+  return i + 1;
+}
+
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];

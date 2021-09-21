@@ -205,6 +205,8 @@ jobs:
     env:
       CC: ${{ matrix.cc }}
       CI_OS_NAME: ${{ matrix.os }}
+      # TEST_FILE: test/functional/core/startup_spec.lua
+      # TEST_FILTER: foo
     steps:
       - uses: actions/checkout@v3
 
@@ -281,6 +283,8 @@ jobs:
       DEPS_BUILD_DIR: ${{ github.workspace }}/nvim-deps
       CACHE_NVIM_DEPS_DIR: ${{ github.workspace }}/nvim-deps
       DEPS_PREFIX: ${{ github.workspace }}/nvim-deps/usr
+      # TEST_FILE: test/functional/core/startup_spec.lua
+      # TEST_FILTER: foo
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3

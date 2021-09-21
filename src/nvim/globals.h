@@ -515,7 +515,7 @@ EXTERN int allbuf_lock INIT(= 0);
 /// not allowed then.
 EXTERN int sandbox INIT(= 0);
 
-/// Batch-mode: "-es" or "-Es" commandline argument was given.
+/// Batch-mode: "-es", "-Es", "-l" commandline argument was given.
 EXTERN int silent_mode INIT(= false);
 
 /// Start position of active Visual selection.
