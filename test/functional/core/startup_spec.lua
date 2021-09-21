@@ -472,7 +472,7 @@ describe('user config init', function()
     clear{ args_rm={'-u' }, env=xenv }
 
     eq(1, eval('g:lua_rc'))
-    eq(init_lua_path, eval('$MYVIMRC'))
+    eq(funcs.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
   describe 'with explicitly provided config'(function()

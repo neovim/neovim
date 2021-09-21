@@ -1781,23 +1781,23 @@ static bool do_user_initialization(void)
   }
 
   char_u *init_lua_path = (char_u *)stdpaths_user_conf_subpath("init.lua");
+  char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
+
+  // init.lua
   if (os_path_exists(init_lua_path)
       && do_source(init_lua_path, true, DOSO_VIMRC)) {
-    os_setenv("MYVIMRC", (const char *)init_lua_path, 1);
-    char_u *vimrc_path = (char_u *)stdpaths_user_conf_subpath("init.vim");
-
-    if (os_path_exists(vimrc_path)) {
+    if (os_path_exists(user_vimrc)) {
       EMSG3(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
-            vimrc_path);
+            user_vimrc);
     }
 
-    xfree(vimrc_path);
+    xfree(user_vimrc);
     xfree(init_lua_path);
     return false;
   }
   xfree(init_lua_path);
 
-  char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
+  // init.vim
   if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
     do_exrc = p_exrc;
     if (do_exrc) {
@@ -1809,6 +1809,7 @@ static bool do_user_initialization(void)
     return do_exrc;
   }
   xfree(user_vimrc);
+
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
   if (config_dirs != NULL) {
     const void *iter = NULL;
@@ -1839,6 +1840,7 @@ static bool do_user_initialization(void)
     } while (iter != NULL);
     xfree(config_dirs);
   }
+
   if (execute_env("EXINIT") == OK) {
     do_exrc = p_exrc;
     return do_exrc;

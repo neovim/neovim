@@ -2112,7 +2112,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
     verbose_leave();
   }
   if (is_vimrc == DOSO_VIMRC) {
-    vimrc_found(fname_exp, (char_u *)"MYVIMRC");
+    vimrc_found((char *)fname_exp, "MYVIMRC");
   }
 
 #ifdef USE_CRNL

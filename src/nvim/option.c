@@ -6888,15 +6888,15 @@ static void paste_option_changed(void)
 ///
 /// Set the values for options that didn't get set yet to the defaults.
 /// When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
-void vimrc_found(char_u *fname, char_u *envname)
+void vimrc_found(char *fname, char *envname)
 {
   if (fname != NULL && envname != NULL) {
-    char *p = vim_getenv((char *)envname);
+    char *p = vim_getenv(envname);
     if (p == NULL) {
       // Set $MYVIMRC to the first vimrc file found.
-      p = FullName_save((char *)fname, false);
+      p = FullName_save(fname, false);
       if (p != NULL) {
-        os_setenv((char *)envname, p, 1);
+        os_setenv(envname, p, 1);
         xfree(p);
       }
     } else {
