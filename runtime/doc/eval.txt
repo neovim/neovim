@@ -586,7 +586,7 @@ It is not necessary to use the "dict" attribute for a numbered function.
 
 If you get an error for a numbered function, you can find out what it is with
 a trick.  Assuming the function is 42, the command is: >
-	:function {42}
+	:function g:42
 
 
 Functions for Dictionaries ~

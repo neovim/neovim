@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: php PHP 3/4/5/7/8
 " Maintainer: Tyson Andre <tysonandre775@hotmail.com>
-" Last Change: Dec 22, 2020
+" Last Change: Sep 18, 2021
 " URL: https://github.com/TysonAndre/php-vim-syntax
 " Former Maintainers: 
 "         Jason Woofenden <jason@jasonwoof.com>
@@ -13,10 +13,32 @@
 "       than the default colourscheme, because elflord's colours will better
 "       highlight the break-points (Statements) in your code.
 "
+" Note: This embeds a modified copy of the html.vim with (mostly) different symbols,
+" in order to implement php_htmlInStrings=2 can work as expected and correctly parse
+" `<?php $phpStartTag = '<?php';`.
+"
+" Credits for the original version of html.vim prior to modifications
+"
+"   Previous Maintainer Jorge Maldonado Ventura <jorgesumle@freakspot.net>
+"   Previous Maintainer Claudio Fleiner <claudio@fleiner.com>
+"   Repository          https://notabug.org/jorgesumle/vim-html-syntax
+"   Last Change         2021 Mar 02
+"			Included patch #7900 to fix comments
+"			Included patch #7916 to fix a few more things
+"
 " Options:
 "   Set to anything to enable:
 "     php_sql_query           SQL syntax highlighting inside strings
 "     php_htmlInStrings       HTML syntax highlighting inside strings
+" 
+"                             By setting this to 2, this will use a local copy of
+"                             HTML syntax highlighting instead of the official
+"                             HTML syntax highlighting, and properly highlight
+"                             `<?php $startTag = '<?php';`.
+"                             This may become the new default in the future.
+" 
+"                             By setting this to 3 (or any unrecognized value), 
+"                             this will use the official installed top level html syntax highlighting rules.
 "     php_baselib             highlighting baselib functions
 "     php_asp_tags            highlighting ASP-style short tags
 "     php_parent_error_close  highlighting parent error ] or )
@@ -62,6 +84,214 @@ if !exists("main_syntax")
   let main_syntax = 'php'
 endif
 
+" Start of copy of html for embedding in strings with  {{{
+" This is a clone of https://notabug.org/jorgesumle/vim-html-syntax
+" from 2021 Mar 02 with changed symbols and modifications to rules. See the Note in the file header.
+"
+" The default behavior of php_htmlInStrings causes a bug
+" when you're working with code that contains the string literal `'<?php'`.
+" E.g. code that reads php files or generates the contents of php files or 
+" generates snippets to `eval()`.
+" 
+" When php_htmlInStrings was set to any value,
+" it would cause the html syntax rules to be embedded inside of the string
+" contents.
+" 
+" However, php.vim extends html.vim by allowing the php start tag to be
+" included, meaning that this is parsed as `<?php';`, i.e. the start of a
+" new string literal.
+" 
+" Work around that by using a different set of rules that don't allow
+" embedding php in most places (phpInnerHtmlPreProc).
+" 
+" The default behavior may be changed to this in the future for constants other
+" than 2 or 3 if there are no issues.
+"
+" Many, but not all syntax rules were changed from html* to phpInnerHtml*
+if exists("php_htmlInStrings") && php_htmlInStrings==2
+  " mark illegal characters
+  syn match phpInnerHtmlError contained "[<>&]"
+
+  " tags
+  syn region  phpInnerHtmlString   contained start=+"+ end=+"+ contains=phpInnerHtmlSpecialChar,javaScriptExpression,@phpInnerHtmlPreproc
+  syn region  phpInnerHtmlString   contained start=+'+ end=+'+ contains=phpInnerHtmlSpecialChar,javaScriptExpression,@phpInnerHtmlPreproc
+  syn match   phpInnerHtmlValue    contained "=[\t ]*[^'" \t>][^ \t>]*"hs=s+1   contains=javaScriptExpression,@phpInnerHtmlPreproc
+  syn region  phpInnerHtmlEndTag   contained start=+</+      end=+>+ contains=phpInnerHtmlTagN,phpInnerHtmlTagError
+  syn region  phpInnerHtmlTag      contained start=+<[^/]+   end=+>+ fold contains=phpInnerHtmlTagN,phpInnerHtmlString,htmlArg,phpInnerHtmlValue,phpInnerHtmlTagError,phpInnerHtmlEvent,phpInnerHtmlCssDefinition,@phpInnerHtmlPreproc,@phpInnerHtmlArgCluster
+  syn match   phpInnerHtmlTagN     contained +<\s*[-a-zA-Z0-9]\++hs=s+1 contains=htmlTagName,htmlSpecialTagName,@phpInnerHtmlTagNameCluster
+  syn match   phpInnerHtmlTagN     contained +</\s*[-a-zA-Z0-9]\++hs=s+2 contains=htmlTagName,htmlSpecialTagName,@phpInnerHtmlTagNameCluster
+  syn match   phpInnerHtmlTagError contained "[^>]<"ms=s+1
+
+
+  " special characters
+  syn match phpInnerHtmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"
+
+  " Comments (the real ones or the old netscape ones)
+  if exists("html_wrong_comments")
+    syn region phpInnerHtmlComment        start=+<!--+    end=+--\s*>+    contains=@Spell
+  else
+    " The HTML 5.2 syntax 8.2.4.41: bogus comment is parser error; browser skips until next &gt
+    syn region phpInnerHtmlComment        start=+<!+      end=+>+         contains=phpInnerHtmlCommentError keepend
+    " Idem 8.2.4.42,51: Comment starts with <!-- and ends with -->
+    " Idem 8.2.4.43,44: Except <!--> and <!---> are parser errors
+    " Idem 8.2.4.52: dash-dash-bang (--!>) is error ignored by parser, also closes comment
+    syn region phpInnerHtmlComment matchgroup=phpInnerHtmlComment start=+<!--\%(-\?>\)\@!+        end=+--!\?>+    contains=phpInnerHtmlCommentNested,@phpInnerHtmlPreProc,@Spell keepend
+    " Idem 8.2.4.49: nested comment is parser error, except <!--> is all right
+    syn match phpInnerHtmlCommentNested contained "<!-->\@!"
+    syn match phpInnerHtmlCommentError  contained "[^><!]"
+  endif
+  syn region phpInnerHtmlComment  start=+<!DOCTYPE+       end=+>+ keepend
+
+  " server-parsed commands
+  syn region phpInnerHtmlPreProc start=+<!--#+ end=+-->+ contains=phpInnerHtmlPreStmt,phpInnerHtmlPreError,phpInnerHtmlPreAttr
+  syn match phpInnerHtmlPreStmt contained "<!--#\(config\|echo\|exec\|fsize\|flastmod\|include\|printenv\|set\|if\|elif\|else\|endif\|geoguide\)\>"
+  syn match phpInnerHtmlPreError contained "<!--#\S*"ms=s+4
+  syn match phpInnerHtmlPreAttr contained "\w\+=[^"]\S\+" contains=phpInnerHtmlPreProcAttrError,phpInnerHtmlPreProcAttrName
+  syn region phpInnerHtmlPreAttr contained start=+\w\+="+ skip=+\\\\\|\\"+ end=+"+ contains=phpInnerHtmlPreProcAttrName keepend
+  syn match phpInnerHtmlPreProcAttrError contained "\w\+="he=e-1
+  syn match phpInnerHtmlPreProcAttrName contained "\(expr\|errmsg\|sizefmt\|timefmt\|var\|cgi\|cmd\|file\|virtual\|value\)="he=e-1
+
+  if !exists("html_no_rendering")
+    " rendering
+    syn cluster phpInnerHtmlTop contains=@Spell,phpInnerHtmlTag,phpInnerHtmlEndTag,phpInnerHtmlSpecialChar,phpInnerHtmlPreProc,phpInnerHtmlComment,phpInnerHtmlLink,javaScript,@phpInnerHtmlPreproc
+
+    syn region phpInnerHtmlStrike start="<del\>" end="</del\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlStrike start="<strike\>" end="</strike\_s*>"me=s-1 contains=@phpInnerHtmlTop
+
+    syn region phpInnerHtmlBold start="<b\>" end="</b\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlBoldUnderline,phpInnerHtmlBoldItalic
+    syn region phpInnerHtmlBold start="<strong\>" end="</strong\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlBoldUnderline,phpInnerHtmlBoldItalic
+    syn region phpInnerHtmlBoldUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlBoldUnderlineItalic
+    syn region phpInnerHtmlBoldItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlBoldItalicUnderline
+    syn region phpInnerHtmlBoldItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlBoldItalicUnderline
+    syn region phpInnerHtmlBoldUnderlineItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlBoldUnderlineItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlBoldItalicUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlBoldUnderlineItalic
+
+    syn region phpInnerHtmlUnderline start="<u\>" end="</u\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlUnderlineBold,phpInnerHtmlUnderlineItalic
+    syn region phpInnerHtmlUnderlineBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlUnderlineBoldItalic
+    syn region phpInnerHtmlUnderlineBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlUnderlineBoldItalic
+    syn region phpInnerHtmlUnderlineItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlUnderlineItalicBold
+    syn region phpInnerHtmlUnderlineItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlUnderlineItalicBold
+    syn region phpInnerHtmlUnderlineItalicBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlUnderlineItalicBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlUnderlineBoldItalic contained start="<i\>" end="</i\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlUnderlineBoldItalic contained start="<em\>" end="</em\_s*>"me=s-1 contains=@phpInnerHtmlTop
+
+    syn region phpInnerHtmlItalic start="<i\>" end="</i\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlItalicBold,phpInnerHtmlItalicUnderline
+    syn region phpInnerHtmlItalic start="<em\>" end="</em\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlItalicBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlItalicBoldUnderline
+    syn region phpInnerHtmlItalicBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlItalicBoldUnderline
+    syn region phpInnerHtmlItalicBoldUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlItalicUnderline contained start="<u\>" end="</u\_s*>"me=s-1 contains=@phpInnerHtmlTop,phpInnerHtmlItalicUnderlineBold
+    syn region phpInnerHtmlItalicUnderlineBold contained start="<b\>" end="</b\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlItalicUnderlineBold contained start="<strong\>" end="</strong\_s*>"me=s-1 contains=@phpInnerHtmlTop
+
+    syn match phpInnerHtmlLeadingSpace "^\s\+" contained
+    syn region phpInnerHtmlLink start="<a\>\_[^>]*\<href\>" end="</a\_s*>"me=s-1 contains=@Spell,phpInnerHtmlTag,phpInnerHtmlEndTag,phpInnerHtmlSpecialChar,phpInnerHtmlPreProc,phpInnerHtmlComment,phpInnerHtmlLeadingSpace,phpInnerJavaScript,@phpInnerHtmlPreproc
+    syn region phpInnerHtmlH1 start="<h1\>" end="</h1\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlH2 start="<h2\>" end="</h2\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlH3 start="<h3\>" end="</h3\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlH4 start="<h4\>" end="</h4\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlH5 start="<h5\>" end="</h5\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlH6 start="<h6\>" end="</h6\_s*>"me=s-1 contains=@phpInnerHtmlTop
+    syn region phpInnerHtmlHead start="<head\>" end="</head\_s*>"me=s-1 end="<body\>"me=s-1 end="<h[1-6]\>"me=s-1 contains=phpInnerHtmlTag,phpInnerHtmlEndTag,phpInnerHtmlSpecialChar,phpInnerHtmlPreProc,phpInnerHtmlComment,phpInnerHtmlLink,phpInnerHtmlTitle,phpInnerJavaScript,phpInnerCssStyle,@phpInnerHtmlPreproc
+    syn region phpInnerHtmlTitle start="<title\>" end="</title\_s*>"me=s-1 contains=phpInnerHtmlTag,phpInnerHtmlEndTag,phpInnerHtmlSpecialChar,phpInnerHtmlPreProc,phpInnerHtmlComment,phpInnerJavaScript,@phpInnerHtmlPreproc
+  endif
+
+  if main_syntax != 'java' || exists("javascript")
+    " JAVA SCRIPT
+    " For example, $phpVar = '<img onload="foo()" />';
+    syn include @phpInnerHtmlJavaScript syntax/javascript.vim
+    unlet b:current_syntax
+    syn region  phpInnerHtmlScriptTag     contained start=+<script+ end=+>+ fold contains=phpInnerHtmlTagN,phpInnerHtmlString,phpInnerHtmlArg,phpInnerHtmlValue,phpInnerHtmlTagError,phpInnerHtmlEvent
+    hi def link phpInnerHtmlScriptTag phpInnerHtmlTag
+
+    " phpInnerHtml events (i.e. arguments that include phpInnerJavascript commands)
+    if exists("html_extended_events")
+      syn region phpInnerHtmlEvent        contained start=+\<on\a\+\s*=[\t ]*'+ end=+'+ contains=phpInnerHtmlEventSQ
+      syn region phpInnerHtmlEvent        contained start=+\<on\a\+\s*=[\t ]*"+ end=+"+ contains=phpInnerHtmlEventDQ
+    else
+      syn region phpInnerHtmlEvent        contained start=+\<on\a\+\s*=[\t ]*'+ end=+'+ keepend contains=phpInnerHtmlEventSQ
+      syn region phpInnerHtmlEvent        contained start=+\<on\a\+\s*=[\t ]*"+ end=+"+ keepend contains=phpInnerHtmlEventDQ
+    endif
+    syn region phpInnerHtmlEventSQ        contained start=+'+ms=s+1 end=+'+me=s-1 contains=@phpInnerHtmlJavaScript
+    syn region phpInnerHtmlEventDQ        contained start=+"+ms=s+1 end=+"+me=s-1 contains=@phpInnerHtmlJavaScript
+    hi def link phpInnerHtmlEventSQ phpInnerHtmlEvent
+    hi def link phpInnerHtmlEventDQ phpInnerHtmlEvent
+
+    " a phpInnerJavascript expression is used as an arg value
+    " syn region  phpInnerJavaScriptExpression contained start=+&{+ keepend end=+};+ contains=@phpInnerHtmlJavaScript,@phpInnerHtmlPreproc
+  endif
+
+  syn cluster phpInnerHtmlJavaScript      add=@phpInnerHtmlPreproc
+
+  " The default highlighting.
+  " NOTE: For now, this deliberately copies the definitions from html rather than link
+  " to the corresponding html tag name. If html is refactored to rename any 
+  " keywords then html highlighting would unexpectedly be cleared.
+  hi def link phpInnerHtmlTag                     Function
+  hi def link phpInnerHtmlEndTag                  Identifier
+  hi def link phpInnerHtmlArg                     Type
+  hi def link phpInnerHtmlValue                   String
+  hi def link phpInnerHtmlSpecialChar             Special
+
+  if !exists("html_no_rendering")
+    hi def link phpInnerHtmlH1                      Title
+    hi def link phpInnerHtmlH2                      phpInnerHtmlH1
+    hi def link phpInnerHtmlH3                      phpInnerHtmlH2
+    hi def link phpInnerHtmlH4                      phpInnerHtmlH3
+    hi def link phpInnerHtmlH5                      phpInnerHtmlH4
+    hi def link phpInnerHtmlH6                      phpInnerHtmlH5
+    hi def link phpInnerHtmlHead                    PreProc
+    hi def link phpInnerHtmlTitle                   Title
+    hi def link phpInnerHtmlBoldItalicUnderline     phpInnerHtmlBoldUnderlineItalic
+    hi def link phpInnerHtmlUnderlineBold           phpInnerHtmlBoldUnderline
+    hi def link phpInnerHtmlUnderlineItalicBold     phpInnerHtmlBoldUnderlineItalic
+    hi def link phpInnerHtmlUnderlineBoldItalic     phpInnerHtmlBoldUnderlineItalic
+    hi def link phpInnerHtmlItalicUnderline         phpInnerHtmlUnderlineItalic
+    hi def link phpInnerHtmlItalicBold              phpInnerHtmlBoldItalic
+    hi def link phpInnerHtmlItalicBoldUnderline     phpInnerHtmlBoldUnderlineItalic
+    hi def link phpInnerHtmlItalicUnderlineBold     phpInnerHtmlBoldUnderlineItalic
+    hi def link phpInnerHtmlLink                    Underlined
+    hi def link phpInnerHtmlLeadingSpace            None
+    if !exists("html_my_rendering")
+      hi def phpInnerHtmlBold                term=bold cterm=bold gui=bold
+      hi def phpInnerHtmlBoldUnderline       term=bold,underline cterm=bold,underline gui=bold,underline
+      hi def phpInnerHtmlBoldItalic          term=bold,italic cterm=bold,italic gui=bold,italic
+      hi def phpInnerHtmlBoldUnderlineItalic term=bold,italic,underline cterm=bold,italic,underline gui=bold,italic,underline
+      hi def phpInnerHtmlUnderline           term=underline cterm=underline gui=underline
+      hi def phpInnerHtmlUnderlineItalic     term=italic,underline cterm=italic,underline gui=italic,underline
+      hi def phpInnerHtmlItalic              term=italic cterm=italic gui=italic
+      if v:version > 800 || v:version == 800 && has("patch1038")
+          hi def phpInnerHtmlStrike              term=strikethrough cterm=strikethrough gui=strikethrough
+      else
+          hi def phpInnerHtmlStrike              term=underline cterm=underline gui=underline
+      endif
+    endif
+  endif
+
+  hi def link phpInnerHtmlPreStmt            PreProc
+  hi def link phpInnerHtmlPreError           Error
+  hi def link phpInnerHtmlPreProc            PreProc
+  hi def link phpInnerHtmlPreAttr            String
+  hi def link phpInnerHtmlPreProcAttrName    PreProc
+  hi def link phpInnerHtmlPreProcAttrError   Error
+  hi def link phpInnerHtmlString             String
+  hi def link phpInnerHtmlStatement          Statement
+  hi def link phpInnerHtmlComment            Comment
+  hi def link phpInnerHtmlCommentNested      phpInnerHtmlError
+  hi def link phpInnerHtmlCommentError       phpInnerHtmlError
+  hi def link phpInnerHtmlTagError           phpInnerHtmlError
+  hi def link phpInnerHtmlEvent              phpInnerJavaScript
+  hi def link phpInnerHtmlError              Error
+
+  hi def link phpInnerJavaScript             Special
+  hi def link phpInnerJavaScriptExpression   phpInnerJavaScript
+  hi def link phpInnerHtmlCssStyleComment    Comment
+  hi def link phpInnerHtmlCssDefinition      Special
+endif
+
+
 runtime! syntax/html.vim
 unlet b:current_syntax
 
@@ -79,6 +309,8 @@ if exists("php_parentError") && !exists("php_parent_error_open") && !exists("php
   let php_parent_error_open=1
 endif
 
+" End of copy of html syntax for embedding in php strings }}}
+
 syn cluster htmlPreproc add=phpRegion,phpRegionAsp,phpRegionSc
 
 syn include @sqlTop syntax/sql.vim
@@ -90,7 +322,11 @@ if exists( "php_sql_query")
 endif
 
 if exists( "php_htmlInStrings")
-  syn cluster phpAddStrings add=@htmlTop
+  if php_htmlInStrings==2
+    syn cluster phpAddStrings add=@phpInnerHtmlTop
+  else
+    syn cluster phpAddStrings add=@htmlTop
+  endif
 endif
 
 " make sure we can use \ at the beginning of the line to do a continuation
@@ -283,7 +519,7 @@ syn keyword phpStatement return break continue exit goto yield contained
 syn keyword phpKeyword var const contained
 
 " Type
-syn keyword phpType void bool boolean int integer real double float string array object NULL callable iterable mixed contained
+syn keyword phpType void bool boolean int integer real double float string array object NULL callable iterable mixed never contained
 
 " Structure
 syn keyword phpStructure namespace extends implements instanceof parent self contained
@@ -361,7 +597,7 @@ syn match phpFloatError "\%([eE.][0-9._+-]*\.\|__\|_\(\>\|[eE]\)\|\(\>\|[eE]\)_\
 
 " Number
 syn match phpNumber "\%(\.\)\@<!\<\%([1-9]\d*\|0\|0[xX]\(\x_\?\)*\x\)\>\%(\.\)\@!" contained display
-syn match phpNumber "\%(\.\)\@<!\<0\d\+\>\%(\.\)\@!" contained contains=phpOctalError display
+syn match phpNumber "\%(\.\)\@<!\<0\d\+\|0[oO]\d\+\>\%(\.\)\@!" contained contains=phpOctalError display
 syn match phpBinaryError "[2-9]" contained display
 syn match phpNumber "\%(\.\)\@<!\<0[bB]\(\d_\?\)*\d\>\%(\.\)\@!" contained contains=phpBinaryError display
 
@@ -446,7 +682,7 @@ syn cluster phpClTop contains=@phpClFunction,phpFoldFunction,phpFoldClass,phpFol
 " Php Region
 if exists("php_parent_error_open")
   if exists("php_noShortTags")
-    syn region phpRegion matchgroup=Delimiter start="<?php" end="?>" contains=@phpClTop
+    syn region phpRegion matchgroup=Delimiter start="<?\(php\|=\)" end="?>" contains=@phpClTop
   else
     syn region phpRegion matchgroup=Delimiter start="<?\(php\)\=" end="?>" contains=@phpClTop
   endif
@@ -456,7 +692,7 @@ if exists("php_parent_error_open")
   endif
 else
   if exists("php_noShortTags")
-    syn region phpRegion matchgroup=Delimiter start="<?php" end="?>" contains=@phpClTop keepend
+    syn region phpRegion matchgroup=Delimiter start="<?\(php\|=\)" end="?>" contains=@phpClTop keepend
   else
     syn region phpRegion matchgroup=Delimiter start="<?\(php\)\=" end="?>" contains=@phpClTop keepend
   endif
@@ -469,13 +705,13 @@ endif
 " Fold
 if exists("php_folding") && php_folding==1
 " match one line constructs here and skip them at folding
-  syn keyword phpSCKeyword abstract final private protected public static contained
+  syn keyword phpSCKeyword abstract final private protected public static readonly contained
   syn keyword phpFCKeyword function contained
   syn keyword phpDefine fn contained
   syn keyword phpStorageClass global contained
   syn match phpDefine "\(\s\|^\)\(abstract\s\+\|final\s\+\|private\s\+\|protected\s\+\|public\s\+\|static\s\+\)*function\(\s\+.*[;}]\)\@=" contained contains=phpSCKeyword
   syn match phpStructure "\(\s\|^\)\(abstract\s\+\|final\s\+\)*\(trait\|class\)\(\s\+.*}\)\@=" contained
-  syn match phpStructure "\(\s\|^\)interface\(\s\+.*}\)\@=" contained
+  syn match phpStructure "\(\s\|^\)\(interface\|enum\)\(\s\+.*}\)\@=" contained
   syn match phpException "\(\s\|^\)try\(\s\+.*}\)\@=" contained
   syn match phpException "\(\s\|^\)catch\(\s\+.*}\)\@=" contained
   syn match phpException "\(\s\|^\)finally\(\s\+.*}\)\@=" contained
@@ -484,15 +720,15 @@ if exists("php_folding") && php_folding==1
   syn region phpFoldHtmlInside matchgroup=Delimiter start="?>" end="<?\(php\)\=" contained transparent contains=@htmlTop
   syn region phpFoldFunction matchgroup=Storageclass start="^\z(\s*\)\(abstract\s\+\|final\s\+\|private\s\+\|protected\s\+\|public\s\+\|static\s\+\)*function\s\([^};]*$\)\@="rs=e-9 matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldHtmlInside,phpFCKeyword contained transparent fold extend
   syn region phpFoldFunction matchgroup=Define start="^function\s\([^};]*$\)\@=" matchgroup=Delimiter end="^}" contains=@phpClFunction,phpFoldHtmlInside contained transparent fold extend
-  syn region phpFoldClass matchgroup=Structure start="^\z(\s*\)\(abstract\s\+\|final\s\+\)*\(trait\|class\)\s\+\([^}]*$\)\@=" matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldFunction,phpSCKeyword contained transparent fold extend
+  syn region phpFoldClass matchgroup=Structure start="^\z(\s*\)\(abstract\s\+\|final\s\+\)*\(trait\|class\|enum\)\s\+\([^}]*$\)\@=" matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldFunction,phpSCKeyword contained transparent fold extend
   syn region phpFoldInterface matchgroup=Structure start="^\z(\s*\)interface\s\+\([^}]*$\)\@=" matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldFunction contained transparent fold extend
   syn region phpFoldCatch matchgroup=Exception start="^\z(\s*\)catch\s\+\([^}]*$\)\@=" matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldFunction contained transparent fold extend
   syn region phpFoldTry matchgroup=Exception start="^\z(\s*\)try\s\+\([^}]*$\)\@=" matchgroup=Delimiter end="^\z1}" contains=@phpClFunction,phpFoldFunction contained transparent fold extend
 else
   syn keyword phpDefine function fn contained
-  syn keyword phpStructure abstract class trait interface contained
+  syn keyword phpStructure abstract class trait interface enum contained
   syn keyword phpException catch throw try finally contained
-  syn keyword phpStorageClass final global private protected public static contained
+  syn keyword phpStorageClass final global private protected public static readonly contained
   if exists("php_folding") && php_folding==2
     setlocal foldmethod=syntax
     syn region phpFoldHtmlInside matchgroup=Delimiter start="?>" end="<?\(php\)\=" contained transparent contains=@htmlTop
@@ -512,9 +748,9 @@ syntax keyword phpStructure list contained
 syntax keyword phpConditional switch contained
 syntax keyword phpStatement die contained
 
-" Highlighting for PHP5's user-definable magic class methods
+" Highlighting for PHP's user-definable magic class methods
 syntax keyword phpSpecialFunction containedin=ALLBUT,phpComment,phpStringDouble,phpStringSingle,phpIdentifier
-  \ __construct __destruct __call __callStatic __get __set __isset __unset __sleep __wakeup __toString __invoke __set_state __clone __debugInfo
+  \ __construct __destruct __call __callStatic __get __set __isset __unset __sleep __wakeup __toString __invoke __set_state __clone __debugInfo __serialize __unserialize
 " Highlighting for __autoload slightly different from line above
 syntax keyword phpSpecialFunction containedin=ALLBUT,phpComment,phpStringDouble,phpStringSingle,phpIdentifier,phpMethodsVar
   \ __autoload
@@ -638,7 +874,7 @@ endif
 " Sync
 if php_sync_method==-1
   if exists("php_noShortTags")
-    syn sync match phpRegionSync grouphere phpRegion "^\s*<?php\s*$"
+    syn sync match phpRegionSync grouphere phpRegion "^\s*<?\(php\|=\)\s*$"
   else
     syn sync match phpRegionSync grouphere phpRegion "^\s*<?\(php\)\=\s*$"
   endif
@@ -658,7 +894,7 @@ endif
 
 syntax match phpDocCustomTags "@[a-zA-Z]*\(\s\+\|\n\|\r\)" containedin=phpComment
 syntax region phpDocTags start="{@\(example\|id\|internal\|inheritdoc\|link\|source\|toc\|tutorial\)" end="}" containedin=phpComment
-syntax match phpDocTags "@\(abstract\|access\|author\|category\|copyright\|deprecated\|example\|final\|global\|ignore\|internal\|license\|link\|method\|name\|package\|param\|property\|return\|see\|since\|static\|staticvar\|subpackage\|tutorial\|uses\|var\|version\|contributor\|modified\|filename\|description\|filesource\|throws\)\(\s\+\)\?" containedin=phpComment
+syntax match phpDocTags "@\(abstract\|access\|api\|author\|category\|copyright\|deprecated\|example\|final\|global\|ignore\|internal\|license\|link\|method\|name\|package\|param\|property\(-write\|-read\)\?\|return\|see\|since\|source\|static\|staticvar\|subpackage\|tutorial\|uses\|used-by\|var\|version\|contributor\|modified\|filename\|description\|filesource\|throws\)\(\s\+\)\?" containedin=phpComment
 syntax match phpDocTodo "@\(todo\|fixme\|xxx\)\(\s\+\)\?" containedin=phpComment
 
 " Define the default highlighting.
@@ -728,7 +964,6 @@ else
   hi def link phpIdentifier Identifier
   hi def link phpIdentifierSimply Identifier
 endif
-
 
 let b:current_syntax = "php"
 
