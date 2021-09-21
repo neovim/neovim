@@ -48,11 +48,11 @@ endif
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(CMAKE_GENERATOR))
     ifneq ($(shell $(CMAKE_PRG) --help 2>/dev/null | grep Ninja),)
-      BUILD_TOOL := ninja
+      BUILD_TOOL = ninja
     else
       # User's version of CMake doesn't support Ninja
       BUILD_TOOL = $(MAKE)
-      BUILD_TYPE := Unix Makefiles
+      CMAKE_GENERATOR := Unix Makefiles
     endif
   else
     BUILD_TOOL = $(MAKE)
@@ -60,12 +60,12 @@ ifeq (,$(BUILD_TOOL))
 endif
 
 
-# Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j and -n flags.
+# Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j, -l, and -n flags.
 ifeq ($(CMAKE_GENERATOR),Ninja)
   ifneq ($(VERBOSE),)
     BUILD_TOOL += -v
   endif
-  BUILD_TOOL += $(shell printf '%s' '$(MAKEFLAGS)' | grep -o -- '-j[0-9]\+')
+  BUILD_TOOL += $(shell printf '%s' '$(MAKEFLAGS)' | grep -o -- ' *-[jl][0-9]\+ *')
   ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
     BUILD_TOOL += -n
   endif
