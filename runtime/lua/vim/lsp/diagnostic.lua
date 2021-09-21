@@ -109,6 +109,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
           codeDescription = diagnostic.codeDescription,
           tags = diagnostic.tags,
           relatedInformation = diagnostic.relatedInformation,
+          data = diagnostic.data,
         },
       },
     }
