@@ -148,6 +148,23 @@ void nvim_command(String command, Error *err)
   try_end(err);
 }
 
+/// Gets the name of a tempfile.
+///
+/// @see |tempname()|
+///
+/// @param[out] err Error details, if any
+/// @return Tempfile name
+String nvim_tempname(Error *err)
+  FUNC_API_SINCE(8)
+{
+  char_u* tempname = vim_tempname();
+  if (tempname == NULL) {
+    api_set_error(err, kErrorTypeException,
+                  "Unable to create tempdir");
+  }
+  return cstr_as_string((char *)tempname);
+}
+
 /// Gets a highlight definition by name.
 ///
 /// @param name Highlight group name
