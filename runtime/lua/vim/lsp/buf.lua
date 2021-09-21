@@ -321,13 +321,21 @@ end
 ---@private
 local function call_hierarchy(method)
   local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(err, _, result)
+  request('textDocument/prepareCallHierarchy', params, function(err, result, ctx)
     if err then
       vim.notify(err.message, vim.log.levels.WARN)
       return
     end
     local call_hierarchy_item = pick_call_hierarchy_item(result)
-    vim.lsp.buf_request(0, method, { item = call_hierarchy_item })
+    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    if client then
+      client.request(method, { item = call_hierarchy_item }, nil, ctx.bufnr)
+    else
+      vim.notify(string.format(
+        'Client with id=%d disappeared during call hierarchy request', ctx.client_id),
+        vim.log.levels.WARN
+      )
+    end
   end)
 end
 
