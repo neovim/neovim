@@ -544,7 +544,15 @@ end
 ---                       text. One of "always" or "if_many".
 ---                       * format: (function) A function that takes a diagnostic as input and
 ---                                 returns a string. The return value is the text used to display
----                                 the diagnostic.
+---                                 the diagnostic. Example:
+---                       <pre>
+---                       function(diagnostic)
+---                         if diagnostic.severity == vim.diagnostic.severity.ERROR then
+---                           return string.format("E: %s", diagnostic.message)
+---                         end
+---                         return diagnostic.message
+---                       end
+---                       </pre>
 ---       - signs: (default true) Use signs for diagnostics. Options:
 ---                * severity: Only show signs for diagnostics matching the given severity
 ---                |diagnostic-severity|
