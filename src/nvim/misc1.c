@@ -7,37 +7,43 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <string.h>
-#include <limits.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/misc1.h"
+#include "nvim/buffer.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
-#include "nvim/func_attr.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
-#include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/garray.h"
-#include "nvim/move.h"
+#include "nvim/misc1.h"
 #include "nvim/mouse.h"
+#include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
+#include "nvim/os/shell.h"
+#include "nvim/os/signal.h"
+#include "nvim/os/time.h"
 #include "nvim/os_unix.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
@@ -48,14 +54,8 @@
 #include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
-#include "nvim/os/os.h"
-#include "nvim/os/shell.h"
-#include "nvim/os/signal.h"
-#include "nvim/os/input.h"
-#include "nvim/os/time.h"
-#include "nvim/event/stream.h"
-#include "nvim/buffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -73,23 +73,23 @@ static garray_T ga_users = GA_EMPTY_INIT_VALUE;
  * If "include_space" is set, include trailing whitespace while calculating the
  * length.
  */
-int get_leader_len(char_u *line, char_u **flags,
-                   bool backward, bool include_space)
+int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_space)
 {
   int i, j;
   int result;
   int got_com = FALSE;
   int found_one;
-  char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
-  char_u      *string;                  /* pointer to comment string */
-  char_u      *list;
+  char_u part_buf[COM_MAX_LEN];         // buffer for one option part
+  char_u *string;                  // pointer to comment string
+  char_u *list;
   int middle_match_len = 0;
-  char_u      *prev_list;
-  char_u      *saved_flags = NULL;
+  char_u *prev_list;
+  char_u *saved_flags = NULL;
 
   result = i = 0;
-  while (ascii_iswhite(line[i]))      /* leading white space is ignored */
+  while (ascii_iswhite(line[i])) {  // leading white space is ignored
     ++i;
+  }
 
   /*
    * Repeat to match several nested comment strings.
@@ -102,51 +102,60 @@ int get_leader_len(char_u *line, char_u **flags,
     for (list = curbuf->b_p_com; *list; ) {
       /* Get one option part into part_buf[].  Advance "list" to next
        * one.  Put "string" at start of string.  */
-      if (!got_com && flags != NULL)
-        *flags = list;              /* remember where flags started */
+      if (!got_com && flags != NULL) {
+        *flags = list;              // remember where flags started
+      }
       prev_list = list;
       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       string = vim_strchr(part_buf, ':');
-      if (string == NULL)           /* missing ':', ignore this part */
+      if (string == NULL) {         // missing ':', ignore this part
         continue;
-      *string++ = NUL;              /* isolate flags from string */
+      }
+      *string++ = NUL;              // isolate flags from string
 
       /* If we found a middle match previously, use that match when this
        * is not a middle or end. */
       if (middle_match_len != 0
           && vim_strchr(part_buf, COM_MIDDLE) == NULL
-          && vim_strchr(part_buf, COM_END) == NULL)
+          && vim_strchr(part_buf, COM_END) == NULL) {
         break;
+      }
 
       /* When we already found a nested comment, only accept further
        * nested comments. */
-      if (got_com && vim_strchr(part_buf, COM_NEST) == NULL)
+      if (got_com && vim_strchr(part_buf, COM_NEST) == NULL) {
         continue;
+      }
 
-      /* When 'O' flag present and using "O" command skip this one. */
-      if (backward && vim_strchr(part_buf, COM_NOBACK) != NULL)
+      // When 'O' flag present and using "O" command skip this one.
+      if (backward && vim_strchr(part_buf, COM_NOBACK) != NULL) {
         continue;
+      }
 
       /* Line contents and string must match.
        * When string starts with white space, must have some white space
        * (but the amount does not need to match, there might be a mix of
        * TABs and spaces). */
       if (ascii_iswhite(string[0])) {
-        if (i == 0 || !ascii_iswhite(line[i - 1]))
-          continue;            /* missing white space */
-        while (ascii_iswhite(string[0]))
+        if (i == 0 || !ascii_iswhite(line[i - 1])) {
+          continue;            // missing white space
+        }
+        while (ascii_iswhite(string[0])) {
           ++string;
+        }
       }
-      for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
+      for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j) {
         ;
-      if (string[j] != NUL)
-        continue;          /* string doesn't match */
-
+      }
+      if (string[j] != NUL) {
+        continue;          // string doesn't match
+      }
       /* When 'b' flag used, there must be white space or an
        * end-of-line after the string in the line. */
       if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL)
+          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
         continue;
+      }
 
       /* We have found a match, stop searching unless this is a middle
        * comment. The middle comment can be a substring of the end
@@ -160,13 +169,15 @@ int get_leader_len(char_u *line, char_u **flags,
         }
         continue;
       }
-      if (middle_match_len != 0 && j > middle_match_len)
+      if (middle_match_len != 0 && j > middle_match_len) {
         /* Use this match instead of the middle match, since it's a
          * longer thus better match. */
         middle_match_len = 0;
+      }
 
-      if (middle_match_len == 0)
+      if (middle_match_len == 0) {
         i += j;
+      }
       found_one = TRUE;
       break;
     }
@@ -174,29 +185,34 @@ int get_leader_len(char_u *line, char_u **flags,
     if (middle_match_len != 0) {
       /* Use the previously found middle match after failing to find a
        * match with an end. */
-      if (!got_com && flags != NULL)
+      if (!got_com && flags != NULL) {
         *flags = saved_flags;
+      }
       i += middle_match_len;
       found_one = TRUE;
     }
 
-    /* No match found, stop scanning. */
-    if (!found_one)
+    // No match found, stop scanning.
+    if (!found_one) {
       break;
+    }
 
     result = i;
 
-    /* Include any trailing white space. */
-    while (ascii_iswhite(line[i]))
+    // Include any trailing white space.
+    while (ascii_iswhite(line[i])) {
       ++i;
+    }
 
-    if (include_space)
+    if (include_space) {
       result = i;
+    }
 
-    /* If this comment doesn't nest, stop here. */
+    // If this comment doesn't nest, stop here.
     got_com = TRUE;
-    if (vim_strchr(part_buf, COM_NEST) == NULL)
+    if (vim_strchr(part_buf, COM_NEST) == NULL) {
       break;
+    }
   }
   return result;
 }
@@ -213,12 +229,12 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   int result = -1;
   int i, j;
   int lower_check_bound = 0;
-  char_u      *string;
-  char_u      *com_leader;
-  char_u      *com_flags;
-  char_u      *list;
+  char_u *string;
+  char_u *com_leader;
+  char_u *com_flags;
+  char_u *list;
   int found_one;
-  char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
+  char_u part_buf[COM_MAX_LEN];         // buffer for one option part
 
   /*
    * Repeat to match several nested comment strings.
@@ -242,7 +258,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
                                  * happen. */
         continue;
       }
-      *string++ = NUL;          /* Isolate flags from string. */
+      *string++ = NUL;          // Isolate flags from string.
       com_leader = string;
 
       /*
@@ -252,16 +268,19 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * TABs and spaces).
        */
       if (ascii_iswhite(string[0])) {
-        if (i == 0 || !ascii_iswhite(line[i - 1]))
+        if (i == 0 || !ascii_iswhite(line[i - 1])) {
           continue;
+        }
         while (ascii_iswhite(*string)) {
           string++;
         }
       }
-      for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
+      for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j) {
         /* do nothing */;
-      if (string[j] != NUL)
+      }
+      if (string[j] != NUL) {
         continue;
+      }
 
       /*
        * When 'b' flag used, there must be white space or an
@@ -290,23 +309,25 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        */
       found_one = TRUE;
 
-      if (flags)
+      if (flags) {
         *flags = flags_save;
+      }
       com_flags = flags_save;
 
       break;
     }
 
     if (found_one) {
-      char_u part_buf2[COM_MAX_LEN];            /* buffer for one option part */
+      char_u part_buf2[COM_MAX_LEN];            // buffer for one option part
       int len1, len2, off;
 
       result = i;
       /*
        * If this comment nests, continue searching.
        */
-      if (vim_strchr(part_buf, COM_NEST) != NULL)
+      if (vim_strchr(part_buf, COM_NEST) != NULL) {
         continue;
+      }
 
       lower_check_bound = i;
 
@@ -316,31 +337,36 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * the comment leader correctly.
        */
 
-      while (ascii_iswhite(*com_leader))
+      while (ascii_iswhite(*com_leader)) {
         ++com_leader;
+      }
       len1 = (int)STRLEN(com_leader);
 
       for (list = curbuf->b_p_com; *list; ) {
         char_u *flags_save = list;
 
         (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
-        if (flags_save == com_flags)
+        if (flags_save == com_flags) {
           continue;
+        }
         string = vim_strchr(part_buf2, ':');
         ++string;
-        while (ascii_iswhite(*string))
+        while (ascii_iswhite(*string)) {
           ++string;
+        }
         len2 = (int)STRLEN(string);
-        if (len2 == 0)
+        if (len2 == 0) {
           continue;
+        }
 
         /* Now we have to verify whether string ends with a substring
          * beginning the com_leader. */
         for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2; ) {
           --off;
           if (!STRNCMP(string + off, com_leader, len2 - off)) {
-            if (i - off < lower_check_bound)
+            if (i - off < lower_check_bound) {
               lower_check_bound = i - off;
+            }
           }
         }
       }
@@ -361,7 +387,7 @@ int gchar_pos(pos_T *pos)
 
 /*
  * check_status: called when the status bars for the buffer 'buf'
- *		 need to be updated
+ *               need to be updated
  */
 void check_status(buf_T *buf)
 {
@@ -459,7 +485,7 @@ int is_mouse_key(int c)
  */
 int get_keystroke(MultiQueue *events)
 {
-  char_u      *buf = NULL;
+  char_u *buf = NULL;
   int buflen = 150;
   int maxlen;
   int len = 0;
@@ -493,9 +519,9 @@ int get_keystroke(MultiQueue *events)
       n = fix_input_buffer(buf + len, n);
       len += n;
       waited = 0;
-    } else if (len > 0)
-      ++waited;             /* keep track of the waiting time */
-
+    } else if (len > 0) {
+      ++waited;             // keep track of the waiting time
+    }
     if (n > 0) {  // found a termcode: adjust length
       len = n;
     }
@@ -503,19 +529,20 @@ int get_keystroke(MultiQueue *events)
       continue;
     }
 
-    /* Handle modifier and/or special key code. */
+    // Handle modifier and/or special key code.
     n = buf[0];
     if (n == K_SPECIAL) {
       n = TO_SPECIAL(buf[1], buf[2]);
       if (buf[1] == KS_MODIFIER
           || n == K_IGNORE
-          || (is_mouse_key(n) && n != K_LEFTMOUSE)
-          ) {
-        if (buf[1] == KS_MODIFIER)
+          || (is_mouse_key(n) && n != K_LEFTMOUSE)) {
+        if (buf[1] == KS_MODIFIER) {
           mod_mask = buf[2];
+        }
         len -= 3;
-        if (len > 0)
+        if (len > 0) {
           memmove(buf, buf + 3, (size_t)len);
+        }
         continue;
       }
       break;
@@ -534,27 +561,25 @@ int get_keystroke(MultiQueue *events)
   return n;
 }
 
-/*
- * Get a number from the user.
- * When "mouse_used" is not NULL allow using the mouse.
- */
-int 
-get_number (
-    int colon,                              /* allow colon to abort */
-    int *mouse_used
-)
+/// Get a number from the user.
+/// When "mouse_used" is not NULL allow using the mouse.
+///
+/// @param colon  allow colon to abort
+int get_number(int colon, int *mouse_used)
 {
   int n = 0;
   int c;
   int typed = 0;
 
-  if (mouse_used != NULL)
+  if (mouse_used != NULL) {
     *mouse_used = FALSE;
+  }
 
   /* When not printing messages, the user won't know what to type, return a
    * zero (as if CR was hit). */
-  if (msg_silent != 0)
+  if (msg_silent != 0) {
     return 0;
+  }
 
   no_mapping++;
   for (;; ) {
@@ -576,8 +601,9 @@ get_number (
       break;
     } else if (n == 0 && c == ':' && colon) {
       stuffcharReadbuff(':');
-      if (!exmode_active)
+      if (!exmode_active) {
         cmdline_row = msg_row;
+      }
       skip_redraw = true;           // skip redraw once
       do_redraw = false;
       break;
@@ -643,34 +669,39 @@ void msgmore(long n)
 {
   long pn;
 
-  if (global_busy           /* no messages now, wait until global is finished */
-      || !messaging())        /* 'lazyredraw' set, don't do messages now */
+  if (global_busy           // no messages now, wait until global is finished
+      || !messaging()) {      // 'lazyredraw' set, don't do messages now
     return;
+  }
 
   /* We don't want to overwrite another important message, but do overwrite
    * a previous "more lines" or "fewer lines" message, so that "5dd" and
    * then "put" reports the last action. */
-  if (keep_msg != NULL && !keep_msg_more)
+  if (keep_msg != NULL && !keep_msg_more) {
     return;
+  }
 
-  if (n > 0)
+  if (n > 0) {
     pn = n;
-  else
+  } else {
     pn = -n;
+  }
 
   if (pn > p_report) {
     if (pn == 1) {
-      if (n > 0)
+      if (n > 0) {
         STRLCPY(msg_buf, _("1 more line"), MSG_BUF_LEN);
-      else
+      } else {
         STRLCPY(msg_buf, _("1 line less"), MSG_BUF_LEN);
+      }
     } else {
-      if (n > 0)
+      if (n > 0) {
         vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-            _("%" PRId64 " more lines"), (int64_t)pn);
-      else
+                     _("%" PRId64 " more lines"), (int64_t)pn);
+      } else {
         vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-            _("%" PRId64 " fewer lines"), (int64_t)pn);
+                     _("%" PRId64 " fewer lines"), (int64_t)pn);
+      }
     }
     if (got_int) {
       xstrlcat((char *)msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
@@ -752,7 +783,7 @@ static void init_users(void)
   }
 
   lazy_init_done = TRUE;
-  
+
   os_get_usernames(&ga_users);
 }
 
@@ -762,8 +793,9 @@ static void init_users(void)
 char_u *get_users(expand_T *xp, int idx)
 {
   init_users();
-  if (idx < ga_users.ga_len)
+  if (idx < ga_users.ga_len) {
     return ((char_u **)ga_users.ga_data)[idx];
+  }
   return NULL;
 }
 
@@ -780,10 +812,12 @@ int match_user(char_u *name)
 
   init_users();
   for (int i = 0; i < ga_users.ga_len; i++) {
-    if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0)
-      return 2;       /* full match */
-    if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0)
-      result = 1;       /* partial match */
+    if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0) {
+      return 2;       // full match
+    }
+    if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0) {
+      result = 1;       // partial match
+    }
   }
   return result;
 }
@@ -921,8 +955,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 /// @param  ret_len  length of the stdout
 ///
 /// @return an allocated string, or NULL for error.
-char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
-                       size_t *ret_len)
+char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret_len)
 {
   char_u *buffer = NULL;
 
@@ -970,12 +1003,14 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
     EMSG2(_(e_notread), tempname);
     XFREE_CLEAR(buffer);
   } else if (ret_len == NULL) {
-    /* Change NUL into SOH, otherwise the string is truncated. */
-    for (i = 0; i < len; ++i)
-      if (buffer[i] == NUL)
+    // Change NUL into SOH, otherwise the string is truncated.
+    for (i = 0; i < len; ++i) {
+      if (buffer[i] == NUL) {
         buffer[i] = 1;
+      }
+    }
 
-    buffer[len] = NUL;          /* make sure the buffer is terminated */
+    buffer[len] = NUL;          // make sure the buffer is terminated
   } else {
     *ret_len = len;
   }
@@ -991,10 +1026,12 @@ done:
  */
 void FreeWild(int count, char_u **files)
 {
-  if (count <= 0 || files == NULL)
+  if (count <= 0 || files == NULL) {
     return;
-  while (count--)
+  }
+  while (count--) {
     xfree(files[count]);
+  }
   xfree(files);
 }
 

@@ -7,42 +7,42 @@
 
 #include <assert.h>
 #include <inttypes.h>
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
 
-#include "nvim/vim.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
-#include "nvim/message.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
-#include "nvim/ex_eval.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_eval.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/highlight.h"
+#include "nvim/keymap.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/misc1.h"
-#include "nvim/keymap.h"
-#include "nvim/garray.h"
+#include "nvim/mouse.h"
+#include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/normal.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
+#include "nvim/os/time.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/highlight.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
-#include "nvim/mouse.h"
-#include "nvim/os/os.h"
-#include "nvim/os/input.h"
-#include "nvim/os/time.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/vim.h"
 
 /*
  * To be able to scroll back at the "more" and "hit-enter" prompts we need to
@@ -50,24 +50,24 @@
  */
 typedef struct msgchunk_S msgchunk_T;
 struct msgchunk_S {
-  msgchunk_T  *sb_next;
-  msgchunk_T  *sb_prev;
-  char sb_eol;                  /* TRUE when line ends after this text */
-  int sb_msg_col;               /* column in which text starts */
-  int sb_attr;                  /* text attributes */
-  char_u sb_text[1];            /* text to be displayed, actually longer */
+  msgchunk_T *sb_next;
+  msgchunk_T *sb_prev;
+  char sb_eol;                  // TRUE when line ends after this text
+  int sb_msg_col;               // column in which text starts
+  int sb_attr;                  // text attributes
+  char_u sb_text[1];            // text to be displayed, actually longer
 };
 
-/* Magic chars used in confirm dialog strings */
+// Magic chars used in confirm dialog strings
 #define DLG_BUTTON_SEP  '\n'
 #define DLG_HOTKEY_CHAR '&'
 
-static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
+static int confirm_msg_used = FALSE;            // displaying confirm_msg
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.c.generated.h"
 #endif
-static char_u   *confirm_msg = NULL;            /* ":confirm" message */
-static char_u   *confirm_msg_tail;              /* tail of confirm_msg */
+static char_u *confirm_msg = NULL;            // ":confirm" message
+static char_u *confirm_msg_tail;              // tail of confirm_msg
 
 MessageHistoryEntry *first_msg_hist = NULL;
 MessageHistoryEntry *last_msg_hist = NULL;
@@ -79,37 +79,37 @@ static int verbose_did_open = FALSE;
 /*
  * When writing messages to the screen, there are many different situations.
  * A number of variables is used to remember the current state:
- * msg_didany	    true when messages were written since the last time the
- *		    user reacted to a prompt.
- *		    Reset: After hitting a key for the hit-return prompt,
- *		    hitting <CR> for the command line or input().
- *		    Set: When any message is written to the screen.
- * msg_didout	    true when something was written to the current line.
- *		    Reset: When advancing to the next line, when the current
- *		    text can be overwritten.
- *		    Set: When any message is written to the screen.
- * msg_nowait	    No extra delay for the last drawn message.
- *		    Used in normal_cmd() before the mode message is drawn.
+ * msg_didany       true when messages were written since the last time the
+ *                  user reacted to a prompt.
+ *                  Reset: After hitting a key for the hit-return prompt,
+ *                  hitting <CR> for the command line or input().
+ *                  Set: When any message is written to the screen.
+ * msg_didout       true when something was written to the current line.
+ *                  Reset: When advancing to the next line, when the current
+ *                  text can be overwritten.
+ *                  Set: When any message is written to the screen.
+ * msg_nowait       No extra delay for the last drawn message.
+ *                  Used in normal_cmd() before the mode message is drawn.
  * emsg_on_display  There was an error message recently.  Indicates that there
- *		    should be a delay before redrawing.
- * msg_scroll	    The next message should not overwrite the current one.
- * msg_scrolled	    How many lines the screen has been scrolled (because of
- *		    messages).  Used in update_screen() to scroll the screen
- *		    back.  Incremented each time the screen scrolls a line.
+ *                  should be a delay before redrawing.
+ * msg_scroll       The next message should not overwrite the current one.
+ * msg_scrolled     How many lines the screen has been scrolled (because of
+ *                  messages).  Used in update_screen() to scroll the screen
+ *                  back.  Incremented each time the screen scrolls a line.
  * msg_scrolled_ign  TRUE when msg_scrolled is non-zero and msg_puts_attr()
- *		    writes something without scrolling should not make
- *		    need_wait_return to be set.  This is a hack to make ":ts"
- *		    work without an extra prompt.
- * lines_left	    Number of lines available for messages before the
- *		    more-prompt is to be given.  -1 when not set.
+ *                  writes something without scrolling should not make
+ *                  need_wait_return to be set.  This is a hack to make ":ts"
+ *                  work without an extra prompt.
+ * lines_left       Number of lines available for messages before the
+ *                  more-prompt is to be given.  -1 when not set.
  * need_wait_return true when the hit-return prompt is needed.
- *		    Reset: After giving the hit-return prompt, when the user
- *		    has answered some other prompt.
- *		    Set: When the ruler or typeahead display is overwritten,
- *		    scrolling the screen for some message.
- * keep_msg	    Message to be displayed after redrawing the screen, in
- *		    main_loop().
- *		    This is an allocated string or NULL when not used.
+ *                  Reset: After giving the hit-return prompt, when the user
+ *                  has answered some other prompt.
+ *                  Set: When the ruler or typeahead display is overwritten,
+ *                  scrolling the screen for some message.
+ * keep_msg         Message to be displayed after redrawing the screen, in
+ *                  main_loop().
+ *                  This is an allocated string or NULL when not used.
  */
 
 
@@ -231,8 +231,7 @@ int msg_attr(const char *s, const int attr)
 }
 
 /// similar to msg_outtrans_attr, but support newlines and tabs.
-void msg_multiline_attr(const char *s, int attr,
-                        bool check_int, bool *need_clear)
+void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clear)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *next_spec = s;
@@ -287,16 +286,17 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   }
 
   if (attr == 0) {
-    set_vim_var_string(VV_STATUSMSG, (char *) s, -1);
+    set_vim_var_string(VV_STATUSMSG, (char *)s, -1);
   }
 
   /*
    * It is possible that displaying a messages causes a problem (e.g.,
-   * when redrawing the window), which causes another message, etc..	To
+   * when redrawing the window), which causes another message, etc..    To
    * break this loop, limit the recursiveness to 3 levels.
    */
-  if (entered >= 3)
+  if (entered >= 3) {
     return TRUE;
+  }
   ++entered;
 
   /* Add message to history (unless it's a repeated kept message or a
@@ -309,11 +309,12 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
     add_msg_hist((const char *)s, -1, attr, multiline);
   }
 
-  /* Truncate the message if needed. */
+  // Truncate the message if needed.
   msg_start();
   buf = msg_strtrunc(s, FALSE);
-  if (buf != NULL)
+  if (buf != NULL) {
     s = buf;
+  }
 
   bool need_clear = true;
   if (multiline) {
@@ -336,31 +337,28 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   return retval;
 }
 
-/*
- * Truncate a string such that it can be printed without causing a scroll.
- * Returns an allocated string or NULL when no truncating is done.
- */
-char_u *
-msg_strtrunc (
-    char_u *s,
-    int force                  /* always truncate */
-)
+/// Truncate a string such that it can be printed without causing a scroll.
+/// Returns an allocated string or NULL when no truncating is done.
+///
+/// @param force  always truncate
+char_u *msg_strtrunc(char_u *s, int force)
 {
-  char_u      *buf = NULL;
+  char_u *buf = NULL;
   int len;
   int room;
 
-  /* May truncate message to avoid a hit-return prompt */
+  // May truncate message to avoid a hit-return prompt
   if ((!msg_scroll && !need_wait_return && shortmess(SHM_TRUNCALL)
        && !exmode_active && msg_silent == 0 && !ui_has(kUIMessages))
       || force) {
     len = vim_strsize(s);
-    if (msg_scrolled != 0)
-      /* Use all the columns. */
+    if (msg_scrolled != 0) {
+      // Use all the columns.
       room = (int)(Rows - msg_row) * Columns - 1;
-    else
-      /* Use up to 'showcmd' column. */
+    } else {
+      // Use up to 'showcmd' column.
       room = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
+    }
     if (len > room && room > 0) {
       // may have up to 18 bytes per cell (6 per char, up to two
       // composing chars)
@@ -390,10 +388,10 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
   }
   half = room / 2;
 
-  /* First part: Start of the string. */
+  // First part: Start of the string.
   for (e = 0; len < half && e < buflen; ++e) {
     if (s[e] == NUL) {
-      /* text fits without truncating! */
+      // text fits without truncating!
       buf[e] = NUL;
       return;
     }
@@ -497,7 +495,7 @@ int smsg_attr_keep(int attr, char *s, ...)
  * isn't printed each time when it didn't change.
  */
 static int last_sourcing_lnum = 0;
-static char_u   *last_sourcing_name = NULL;
+static char_u *last_sourcing_name = NULL;
 
 /*
  * Reset the last used sourcing name/lnum.  Makes sure it is displayed again
@@ -515,8 +513,9 @@ void reset_last_sourcing(void)
 static int other_sourcing_name(void)
 {
   if (sourcing_name != NULL) {
-    if (last_sourcing_name != NULL)
+    if (last_sourcing_name != NULL) {
       return STRCMP(sourcing_name, last_sourcing_name) != 0;
+    }
     return TRUE;
   }
   return FALSE;
@@ -577,16 +576,17 @@ void msg_source(int attr)
   if (p != NULL) {
     msg_attr(p, HL_ATTR(HLF_N));
     xfree(p);
-    last_sourcing_lnum = sourcing_lnum;      /* only once for each line */
+    last_sourcing_lnum = sourcing_lnum;      // only once for each line
   }
 
-  /* remember the last sourcing name printed, also when it's empty */
+  // remember the last sourcing name printed, also when it's empty
   if (sourcing_name == NULL || other_sourcing_name()) {
     xfree(last_sourcing_name);
-    if (sourcing_name == NULL)
+    if (sourcing_name == NULL) {
       last_sourcing_name = NULL;
-    else
+    } else {
       last_sourcing_name = vim_strsave(sourcing_name);
+    }
   }
   --no_wait_return;
 }
@@ -601,9 +601,9 @@ int emsg_not_now(void)
 {
   if ((emsg_off > 0 && vim_strchr(p_debug, 'm') == NULL
        && vim_strchr(p_debug, 't') == NULL)
-      || emsg_skip > 0
-      )
+      || emsg_skip > 0) {
     return TRUE;
+  }
   return FALSE;
 }
 
@@ -794,9 +794,9 @@ static bool emsgfv(const char *fmt, va_list ap)
 /// detected when fuzzing vim.
 void iemsg(const char *s)
 {
-    emsg((char_u *)s);
+  emsg((char_u *)s);
 #ifdef ABORT_ON_INTERNAL_ERROR
-    abort();
+  abort();
 #endif
 }
 
@@ -805,19 +805,19 @@ void iemsg(const char *s)
 /// detected when fuzzing vim.
 void iemsgf(const char *s, ...)
 {
-    va_list ap;
-    va_start(ap, s);
-    (void)emsgfv(s, ap);
-    va_end(ap);
+  va_list ap;
+  va_start(ap, s);
+  (void)emsgfv(s, ap);
+  va_end(ap);
 #ifdef ABORT_ON_INTERNAL_ERROR
-    abort();
+  abort();
 #endif
 }
 
 /// Give an "Internal error" message.
 void internal_error(char *where)
 {
-    IEMSG2(_(e_intern2), where);
+  IEMSG2(_(e_intern2), where);
 }
 
 static void msg_emsgf_event(void **argv)
@@ -858,8 +858,9 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
   n = msg_attr((const char *)s, attr);
   msg_hist_off = false;
 
-  if (n)
+  if (n) {
     return s;
+  }
   return NULL;
 }
 
@@ -930,18 +931,21 @@ void add_hl_msg_hist(HlMessage hl_msg)
 /// @param[in]  len  Length of s or -1.
 static void add_msg_hist(const char *s, int len, int attr, bool multiline)
 {
-  if (msg_hist_off || msg_silent != 0)
+  if (msg_hist_off || msg_silent != 0) {
     return;
+  }
 
-  /* Don't let the message history get too big */
-  while (msg_hist_len > MAX_MSG_HIST_LEN)
+  // Don't let the message history get too big
+  while (msg_hist_len > MAX_MSG_HIST_LEN) {
     (void)delete_first_msg();
+  }
 
-  /* allocate an entry and add the message at the end of the history */
+  // allocate an entry and add the message at the end of the history
   struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
-  if (len < 0)
+  if (len < 0) {
     len = (int)STRLEN(s);
-  /* remove leading and trailing newlines */
+  }
+  // remove leading and trailing newlines
   while (len > 0 && *s == '\n') {
     ++s;
     --len;
@@ -972,11 +976,12 @@ int delete_first_msg(void)
 {
   struct msg_hist *p;
 
-  if (msg_hist_len <= 0)
+  if (msg_hist_len <= 0) {
     return FAIL;
+  }
   p = first_msg_hist;
   first_msg_hist = p->next;
-  if (first_msg_hist == NULL) {  /* history is becoming empty */
+  if (first_msg_hist == NULL) {  // history is becoming empty
     assert(msg_hist_len == 1);
     last_msg_hist = NULL;
   }
@@ -1078,7 +1083,7 @@ void wait_return(int redraw)
   int oldState;
   int tmpState;
   int had_got_int;
-  FILE        *save_scriptout;
+  FILE *save_scriptout;
 
   if (redraw == true) {
     redraw_all_later(NOT_VALID);
@@ -1086,8 +1091,9 @@ void wait_return(int redraw)
 
   /* If using ":silent cmd", don't wait for a return.  Also don't set
    * need_wait_return to do it later. */
-  if (msg_silent != 0)
+  if (msg_silent != 0) {
     return;
+  }
 
   /*
    * When inside vgetc(), we can't wait for a typed character at all.
@@ -1095,24 +1101,26 @@ void wait_return(int redraw)
    * the end. Adjust cmdline_row to avoid the next message overwriting the
    * last one.
    */
-  if (vgetc_busy > 0)
+  if (vgetc_busy > 0) {
     return;
+  }
   need_wait_return = true;
   if (no_wait_return) {
-    if (!exmode_active)
+    if (!exmode_active) {
       cmdline_row = msg_row;
+    }
     return;
   }
 
   redir_off = true;             // don't redirect this message
   oldState = State;
   if (quit_more) {
-    c = CAR;                    /* just pretend CR was hit */
+    c = CAR;                    // just pretend CR was hit
     quit_more = FALSE;
     got_int = FALSE;
   } else if (exmode_active) {
-    MSG_PUTS(" ");              /* make sure the cursor is on the right line */
-    c = CAR;                    /* no need for a return in ex mode */
+    MSG_PUTS(" ");              // make sure the cursor is on the right line
+    c = CAR;                    // no need for a return in ex mode
     got_int = FALSE;
   } else {
     // Make sure the hit-return prompt is on screen when 'guioptions' was
@@ -1176,7 +1184,7 @@ void wait_return(int redraw)
               0;
           }
           if (quit_more) {
-            c = CAR;                            /* just pretend CR was hit */
+            c = CAR;                            // just pretend CR was hit
             quit_more = FALSE;
             got_int = FALSE;
           } else if (c != K_IGNORE) {
@@ -1185,8 +1193,9 @@ void wait_return(int redraw)
           }
         } else if (msg_scrolled > Rows - 2
                    && (c == 'j' || c == 'd' || c == 'f'
-                       || c == K_DOWN || c == K_PAGEDOWN))
+                       || c == K_DOWN || c == K_PAGEDOWN)) {
           c = K_IGNORE;
+        }
       }
     } while ((had_got_int && c == Ctrl_C)
              || c == K_IGNORE
@@ -1201,9 +1210,9 @@ void wait_return(int redraw)
      * Avoid that the mouse-up event causes visual mode to start.
      */
     if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
-        || c == K_X1MOUSE || c == K_X2MOUSE)
+        || c == K_X1MOUSE || c == K_X2MOUSE) {
       (void)jump_to_mouse(MOUSE_SETPOS, NULL, 0);
-    else if (vim_strchr((char_u *)"\r\n ", c) == NULL && c != Ctrl_C) {
+    } else if (vim_strchr((char_u *)"\r\n ", c) == NULL && c != Ctrl_C) {
       /* Put the character back in the typeahead buffer.  Don't use the
        * stuff buffer, because lmaps wouldn't work. */
       ins_char_typebuf(c);
@@ -1216,8 +1225,9 @@ void wait_return(int redraw)
   // If the user hits ':', '?' or '/' we get a command line from the next
   // line.
   if (c == ':' || c == '?' || c == '/') {
-    if (!exmode_active)
+    if (!exmode_active) {
       cmdline_row = msg_row;
+    }
     skip_redraw = true;  // skip redraw once
     do_redraw = false;
     msg_ext_keep_after_cmdline = true;
@@ -1240,7 +1250,7 @@ void wait_return(int redraw)
     XFREE_CLEAR(keep_msg);          // don't redisplay message, it's too long
   }
 
-  if (tmpState == SETWSIZE) {       /* got resize event while in vgetc() */
+  if (tmpState == SETWSIZE) {       // got resize event while in vgetc()
     ui_refresh();
   } else if (!skip_redraw) {
     if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
@@ -1259,9 +1269,10 @@ static void hit_return_msg(void)
 {
   int save_p_more = p_more;
 
-  p_more = FALSE;       /* don't want see this message when scrolling back */
-  if (msg_didout)       /* start on a new line */
+  p_more = FALSE;       // don't want see this message when scrolling back
+  if (msg_didout) {     // start on a new line
     msg_putchar('\n');
+  }
   msg_ext_set_kind("return_prompt");
   if (got_int) {
     MSG_PUTS(_("Interrupt: "));
@@ -1280,10 +1291,11 @@ static void hit_return_msg(void)
 void set_keep_msg(char_u *s, int attr)
 {
   xfree(keep_msg);
-  if (s != NULL && msg_silent == 0)
+  if (s != NULL && msg_silent == 0) {
     keep_msg = vim_strsave(s);
-  else
+  } else {
     keep_msg = NULL;
+  }
   keep_msg_more = false;
   keep_msg_attr = attr;
 }
@@ -1327,8 +1339,9 @@ void msg_start(void)
     did_return = true;
     cmdline_row = msg_row;
   }
-  if (!msg_didany || lines_left < 0)
+  if (!msg_didany || lines_left < 0) {
     msg_starthere();
+  }
   if (msg_silent == 0) {
     msg_didout = false;                     // no output on current line yet
   }
@@ -1396,7 +1409,7 @@ void msg_home_replace_hl(char_u *fname)
 
 static void msg_home_replace_attr(char_u *fname, int attr)
 {
-  char_u      *name;
+  char_u *name;
 
   name = home_replace_save(NULL, fname);
   msg_outtrans_attr(name, attr);
@@ -1449,7 +1462,7 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
   int mb_l;
   int c;
 
-  /* if MSG_HIST flag set, add message to history */
+  // if MSG_HIST flag set, add message to history
   if (attr & MSG_HIST) {
     add_msg_hist(str, len, attr, false);
     attr &= ~MSG_HIST;
@@ -1518,13 +1531,16 @@ void msg_make(char_u *arg)
   static char_u *str = (char_u *)"eeffoc", *rs = (char_u *)"Plon#dqg#vxjduB";
 
   arg = skipwhite(arg);
-  for (i = 5; *arg && i >= 0; --i)
-    if (*arg++ != str[i])
+  for (i = 5; *arg && i >= 0; --i) {
+    if (*arg++ != str[i]) {
       break;
+    }
+  }
   if (i < 0) {
     msg_putchar('\n');
-    for (i = 0; rs[i]; ++i)
+    for (i = 0; rs[i]; ++i) {
       msg_putchar(rs[i] - 3);
+    }
   }
 }
 
@@ -1540,11 +1556,10 @@ void msg_make(char_u *arg)
 /// Otherwise characters are not highlighted.
 /// This function is used to show mappings, where we want to see how to type
 /// the character/string -- webb
-int msg_outtrans_special(
-    const char_u *strstart,
-    bool from,              ///< true for LHS of a mapping
-    int maxlen              ///< screen columns, 0 for unlimeted
-)
+///
+/// @param from  true for LHS of a mapping
+/// @param maxlen  screen columns, 0 for unlimeted
+int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
 {
   if (strstart == NULL) {
     return 0;  // Do nothing.
@@ -1585,8 +1600,7 @@ int msg_outtrans_special(
 /// @param[in]  replace_lt  Convert `<` into `<lt>`.
 ///
 /// @return [allocated] Converted string.
-char *str2special_save(const char *const str, const bool replace_spaces,
-                       const bool replace_lt)
+char *str2special_save(const char *const str, const bool replace_spaces, const bool replace_lt)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
   FUNC_ATTR_NONNULL_RET
 {
@@ -1611,8 +1625,7 @@ char *str2special_save(const char *const str, const bool replace_spaces,
 /// @return Converted key code, in a static buffer. Buffer is always one and the
 ///         same, so save converted string somewhere before running str2special
 ///         for the second time.
-const char *str2special(const char **const sp, const bool replace_spaces,
-                        const bool replace_lt)
+const char *str2special(const char **const sp, const bool replace_spaces, const bool replace_lt)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static char buf[7];
@@ -1834,8 +1847,9 @@ void msg_prt_line(char_u *s, int list)
       }
     }
 
-    if (c == NUL)
+    if (c == NUL) {
       break;
+    }
 
     msg_putchar_attr(c, attr);
     col++;
@@ -2022,8 +2036,7 @@ static void msg_ext_emit_chunk(void)
  * The display part of msg_puts_attr_len().
  * May be called recursively to display scroll-back text.
  */
-static void msg_puts_display(const char_u *str, int maxlen, int attr,
-                             int recurse)
+static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurse)
 {
   const char_u *s = str;
   const char_u *t_s = str;  // String from "t_s" to "s" is still todo.
@@ -2076,17 +2089,19 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
         t_puts(&t_col, t_s, s, attr);
       }
 
-      /* When no more prompt and no more room, truncate here */
-      if (msg_no_more && lines_left == 0)
+      // When no more prompt and no more room, truncate here
+      if (msg_no_more && lines_left == 0) {
         break;
+      }
 
       // Scroll the screen up one line.
       bool has_last_char = (*s >= ' ' && !cmdmsg_rl);
       msg_scroll_up(!has_last_char);
 
       msg_row = Rows - 2;
-      if (msg_col >= Columns)           /* can happen after screen resize */
+      if (msg_col >= Columns) {         // can happen after screen resize
         msg_col = Columns - 1;
+      }
 
       // Display char in last column before showing more-prompt.
       if (has_last_char) {
@@ -2127,20 +2142,24 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
        * If screen is completely filled and 'more' is set then wait
        * for a character.
        */
-      if (lines_left > 0)
+      if (lines_left > 0) {
         --lines_left;
+      }
       if (p_more && lines_left == 0 && State != HITRETURN
           && !msg_no_more && !exmode_active) {
-        if (do_more_prompt(NUL))
+        if (do_more_prompt(NUL)) {
           s = confirm_msg_tail;
-        if (quit_more)
+        }
+        if (quit_more) {
           return;
+        }
       }
 
       /* When we displayed a char in last column need to check if there
        * is still more. */
-      if (did_last_char)
+      if (did_last_char) {
         continue;
+      }
     }
 
     wrap = *s == '\n'
@@ -2171,10 +2190,11 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       }
     } else if (*s == '\r') {      // go to column 0
       msg_col = 0;
-    } else if (*s == '\b') {      /* go to previous char */
-      if (msg_col)
+    } else if (*s == '\b') {      // go to previous char
+      if (msg_col) {
         --msg_col;
-    } else if (*s == TAB) {       /* translate Tab into spaces */
+      }
+    } else if (*s == TAB) {       // translate Tab into spaces
       do {
         msg_screen_putchar(' ', attr);
       } while (msg_col & 7);
@@ -2198,9 +2218,10 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
           msg_screen_putchar(*s, attr);
         }
       } else {
-        /* postpone this character until later */
-        if (t_col == 0)
+        // postpone this character until later
+        if (t_col == 0) {
           t_s = s;
+        }
         t_col += cw;
         s += l - 1;
       }
@@ -2358,7 +2379,7 @@ void msg_reset_scroll(void)
 static void inc_msg_scrolled(void)
 {
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
-    char *p = (char *) sourcing_name;
+    char *p = (char *)sourcing_name;
     char *tofree = NULL;
 
     // v:scrollstart is empty, set it to the script/function name and line
@@ -2369,7 +2390,7 @@ static void inc_msg_scrolled(void)
       size_t len = strlen(p) + 40;
       tofree = xmalloc(len);
       vim_snprintf(tofree, len, _("%s line %" PRId64),
-                   p, (int64_t) sourcing_lnum);
+                   p, (int64_t)sourcing_lnum);
       p = tofree;
     }
     set_vim_var_string(VV_SCROLLSTART, p, -1);
@@ -2394,15 +2415,13 @@ typedef enum {
 static sb_clear_T do_clear_sb_text = SB_CLEAR_NONE;
 
 /// Store part of a printed message for displaying when scrolling back.
-static void store_sb_text(
-    char_u **sb_str,           // start of string
-    char_u *s,                 // just after string
-    int attr,
-    int *sb_col,
-    int finish                     // line ends
-)
+///
+/// @param sb_str  start of string
+/// @param s  just after string
+/// @param finish  line ends
+static void store_sb_text(char_u **sb_str, char_u *s, int attr, int *sb_col, int finish)
 {
-  msgchunk_T  *mp;
+  msgchunk_T *mp;
 
   if (do_clear_sb_text == SB_CLEAR_ALL
       || do_clear_sb_text == SB_CLEAR_CMDLINE_DONE) {
@@ -2427,8 +2446,9 @@ static void store_sb_text(
       last_msgchunk = mp;
     }
     mp->sb_next = NULL;
-  } else if (finish && last_msgchunk != NULL)
+  } else if (finish && last_msgchunk != NULL) {
     last_msgchunk->sb_eol = TRUE;
+  }
 
   *sb_str = s;
   *sb_col = 0;
@@ -2460,8 +2480,8 @@ void sb_text_end_cmdline(void)
 /// Called when redrawing the screen.
 void clear_sb_text(int all)
 {
-  msgchunk_T  *mp;
-  msgchunk_T  **lastp;
+  msgchunk_T *mp;
+  msgchunk_T **lastp;
 
   if (all) {
     lastp = &last_msgchunk;
@@ -2484,7 +2504,7 @@ void clear_sb_text(int all)
  */
 void show_sb_text(void)
 {
-  msgchunk_T  *mp;
+  msgchunk_T *mp;
 
   /* Only show something if there is more than one line, otherwise it looks
    * weird, typing a command without output results in one line. */
@@ -2504,8 +2524,9 @@ static msgchunk_T *msg_sb_start(msgchunk_T *mps)
 {
   msgchunk_T *mp = mps;
 
-  while (mp != NULL && mp->sb_prev != NULL && !mp->sb_prev->sb_eol)
+  while (mp != NULL && mp->sb_prev != NULL && !mp->sb_prev->sb_eol) {
     mp = mp->sb_prev;
+  }
   return mp;
 }
 
@@ -2514,8 +2535,9 @@ static msgchunk_T *msg_sb_start(msgchunk_T *mps)
  */
 void msg_sb_eol(void)
 {
-  if (last_msgchunk != NULL)
+  if (last_msgchunk != NULL) {
     last_msgchunk->sb_eol = TRUE;
+  }
 }
 
 /*
@@ -2524,18 +2546,20 @@ void msg_sb_eol(void)
  */
 static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
 {
-  msgchunk_T  *mp = smp;
-  char_u      *p;
+  msgchunk_T *mp = smp;
+  char_u *p;
 
   for (;; ) {
     msg_row = row;
     msg_col = mp->sb_msg_col;
     p = mp->sb_text;
-    if (*p == '\n')         /* don't display the line break */
+    if (*p == '\n') {       // don't display the line break
       ++p;
+    }
     msg_puts_display(p, -1, mp->sb_attr, TRUE);
-    if (mp->sb_eol || mp->sb_next == NULL)
+    if (mp->sb_eol || mp->sb_next == NULL) {
       break;
+    }
     mp = mp->sb_next;
   }
 
@@ -2633,8 +2657,8 @@ static int do_more_prompt(int typed_char)
   int retval = FALSE;
   int toscroll;
   bool to_redraw = false;
-  msgchunk_T  *mp_last = NULL;
-  msgchunk_T  *mp;
+  msgchunk_T *mp_last = NULL;
+  msgchunk_T *mp;
   int i;
 
   // If headless mode is enabled and no input is required, this variable
@@ -2651,23 +2675,25 @@ static int do_more_prompt(int typed_char)
   entered = true;
 
   if (typed_char == 'G') {
-    /* "g<": Find first line on the last page. */
+    // "g<": Find first line on the last page.
     mp_last = msg_sb_start(last_msgchunk);
     for (i = 0; i < Rows - 2 && mp_last != NULL
-         && mp_last->sb_prev != NULL; ++i)
+         && mp_last->sb_prev != NULL; ++i) {
       mp_last = msg_sb_start(mp_last->sb_prev);
+    }
   }
 
   State = ASKMORE;
   setmouse();
-  if (typed_char == NUL)
+  if (typed_char == NUL) {
     msg_moremsg(FALSE);
+  }
   for (;; ) {
     /*
      * Get a typed character directly from the user.
      */
     if (used_typed_char != NUL) {
-      c = used_typed_char;              /* was typed at hit-enter prompt */
+      c = used_typed_char;              // was typed at hit-enter prompt
       used_typed_char = NUL;
     } else {
       c = get_keystroke(resize_events);
@@ -2676,50 +2702,50 @@ static int do_more_prompt(int typed_char)
 
     toscroll = 0;
     switch (c) {
-    case BS:                    /* scroll one line back */
+    case BS:                    // scroll one line back
     case K_BS:
     case 'k':
     case K_UP:
       toscroll = -1;
       break;
 
-    case CAR:                   /* one extra line */
+    case CAR:                   // one extra line
     case NL:
     case 'j':
     case K_DOWN:
       toscroll = 1;
       break;
 
-    case 'u':                   /* Up half a page */
+    case 'u':                   // Up half a page
       toscroll = -(Rows / 2);
       break;
 
-    case 'd':                   /* Down half a page */
+    case 'd':                   // Down half a page
       toscroll = Rows / 2;
       break;
 
-    case 'b':                   /* one page back */
+    case 'b':                   // one page back
     case K_PAGEUP:
       toscroll = -(Rows - 1);
       break;
 
-    case ' ':                   /* one extra page */
+    case ' ':                   // one extra page
     case 'f':
     case K_PAGEDOWN:
     case K_LEFTMOUSE:
       toscroll = Rows - 1;
       break;
 
-    case 'g':                   /* all the way back to the start */
+    case 'g':                   // all the way back to the start
       toscroll = -999999;
       break;
 
-    case 'G':                   /* all the way to the end */
+    case 'G':                   // all the way to the end
       toscroll = 999999;
       lines_left = 999999;
       break;
 
-    case ':':                   /* start new command line */
+    case ':':                   // start new command line
       if (!confirm_msg_used) {
         /* Since got_int is set all typeahead will be flushed, but we
          * want to keep this ':', remember that in a special way. */
@@ -2733,7 +2759,7 @@ static int do_more_prompt(int typed_char)
     case Ctrl_C:
     case ESC:
       if (confirm_msg_used) {
-        /* Jump to the choices of the dialog. */
+        // Jump to the choices of the dialog.
         retval = TRUE;
       } else {
         got_int = TRUE;
@@ -2752,7 +2778,7 @@ static int do_more_prompt(int typed_char)
       to_redraw = true;
       break;
 
-    default:                    /* no valid response */
+    default:                    // no valid response
       msg_moremsg(TRUE);
       continue;
     }
@@ -2771,10 +2797,11 @@ static int do_more_prompt(int typed_char)
           mp = NULL;
         }
 
-        /* go to start of line at top of the screen */
+        // go to start of line at top of the screen
         for (i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL;
-             ++i)
+             ++i) {
           mp = msg_sb_start(mp->sb_prev);
+        }
 
         if (mp != NULL && (mp->sb_prev != NULL || to_redraw)) {
           // Find line to be displayed at top
@@ -2783,10 +2810,11 @@ static int do_more_prompt(int typed_char)
               break;
             }
             mp = msg_sb_start(mp->sb_prev);
-            if (mp_last == NULL)
+            if (mp_last == NULL) {
               mp_last = msg_sb_start(last_msgchunk);
-            else
+            } else {
               mp_last = msg_sb_start(mp_last->sb_prev);
+            }
           }
 
           if (toscroll == -1 && !to_redraw) {
@@ -2810,7 +2838,7 @@ static int do_more_prompt(int typed_char)
           toscroll = 0;
         }
       } else {
-        /* First display any text that we scrolled back. */
+        // First display any text that we scrolled back.
         while (toscroll > 0 && mp_last != NULL) {
           if (msg_do_throttle() && !msg_grid.throttled) {
             // Tricky: we redraw at one line higher than usual. Therefore
@@ -2836,7 +2864,7 @@ static int do_more_prompt(int typed_char)
         continue;
       }
 
-      /* display more text, return to caller */
+      // display more text, return to caller
       lines_left = toscroll;
     }
 
@@ -2917,7 +2945,7 @@ static void msg_screen_putchar(int c, int attr)
 void msg_moremsg(int full)
 {
   int attr;
-  char_u      *s = (char_u *)_("-- More --");
+  char_u *s = (char_u *)_("-- More --");
 
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
   grid_puts(&msg_grid_adj, s, Rows - 1, 0, attr);
@@ -2935,13 +2963,13 @@ void msg_moremsg(int full)
 void repeat_message(void)
 {
   if (State == ASKMORE) {
-    msg_moremsg(TRUE);          /* display --more-- message again */
+    msg_moremsg(TRUE);          // display --more-- message again
     msg_row = Rows - 1;
   } else if (State == CONFIRM) {
-    display_confirm_msg();      /* display ":confirm" message again */
+    display_confirm_msg();      // display ":confirm" message again
     msg_row = Rows - 1;
   } else if (State == EXTERNCMD) {
-    ui_cursor_goto(msg_row, msg_col);     /* put cursor back */
+    ui_cursor_goto(msg_row, msg_col);     // put cursor back
   } else if (State == HITRETURN || State == SETWSIZE) {
     if (msg_row == Rows - 1) {
       /* Avoid drawing the "hit-enter" prompt below the previous one,
@@ -2962,8 +2990,9 @@ void repeat_message(void)
  */
 void msg_clr_eos(void)
 {
-  if (msg_silent == 0)
+  if (msg_silent == 0) {
     msg_clr_eos_force();
+  }
 }
 
 /*
@@ -3129,16 +3158,18 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
     return;
   }
 
-  /* Don't do anything for displaying prompts and the like. */
-  if (redir_off)
+  // Don't do anything for displaying prompts and the like.
+  if (redir_off) {
     return;
+  }
 
-  /* If 'verbosefile' is set prepare for writing in that file. */
-  if (*p_vfile != NUL && verbose_fd == NULL)
+  // If 'verbosefile' is set prepare for writing in that file.
+  if (*p_vfile != NUL && verbose_fd == NULL) {
     verbose_open();
+  }
 
   if (redirecting()) {
-    /* If the string doesn't start with CR or NL, go to msg_col */
+    // If the string doesn't start with CR or NL, go to msg_col
     if (*s != '\n' && *s != '\r') {
       while (cur_col < msg_col) {
         if (capture_ga) {
@@ -3190,8 +3221,9 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
       s++;
     }
 
-    if (msg_silent != 0)        /* should update msg_col */
+    if (msg_silent != 0) {      // should update msg_col
       msg_col = cur_col;
+    }
   }
 }
 
@@ -3207,8 +3239,9 @@ int redirecting(void)
  */
 void verbose_enter(void)
 {
-  if (*p_vfile != NUL)
+  if (*p_vfile != NUL) {
     ++msg_silent;
+  }
 }
 
 /*
@@ -3217,9 +3250,11 @@ void verbose_enter(void)
  */
 void verbose_leave(void)
 {
-  if (*p_vfile != NUL)
-    if (--msg_silent < 0)
+  if (*p_vfile != NUL) {
+    if (--msg_silent < 0) {
       msg_silent = 0;
+    }
+  }
 }
 
 /*
@@ -3227,11 +3262,12 @@ void verbose_leave(void)
  */
 void verbose_enter_scroll(void)
 {
-  if (*p_vfile != NUL)
+  if (*p_vfile != NUL) {
     ++msg_silent;
-  else
-    /* always scroll up, don't overwrite */
+  } else {
+    // always scroll up, don't overwrite
     msg_scroll = TRUE;
+  }
 }
 
 /*
@@ -3240,10 +3276,12 @@ void verbose_enter_scroll(void)
 void verbose_leave_scroll(void)
 {
   if (*p_vfile != NUL) {
-    if (--msg_silent < 0)
+    if (--msg_silent < 0) {
       msg_silent = 0;
-  } else
+    }
+  } else {
     cmdline_row = msg_row;
+  }
 }
 
 /*
@@ -3265,7 +3303,7 @@ void verbose_stop(void)
 int verbose_open(void)
 {
   if (verbose_fd == NULL && !verbose_did_open) {
-    /* Only give the error message once. */
+    // Only give the error message once.
     verbose_did_open = TRUE;
 
     verbose_fd = os_fopen((char *)p_vfile, "a");
@@ -3324,8 +3362,8 @@ void give_warning2(char_u *const message, char_u *const a1, bool hl)
  */
 void msg_advance(int col)
 {
-  if (msg_silent != 0) {        /* nothing to advance to */
-    msg_col = col;              /* for redirection, may fill it up later */
+  if (msg_silent != 0) {        // nothing to advance to
+    msg_col = col;              // for redirection, may fill it up later
     return;
   }
   if (ui_has(kUIMessages)) {
@@ -3336,49 +3374,44 @@ void msg_advance(int col)
     }
     return;
   }
-  if (col >= Columns)           /* not enough room */
+  if (col >= Columns) {         // not enough room
     col = Columns - 1;
-  if (cmdmsg_rl)
-    while (msg_col > Columns - col)
+  }
+  if (cmdmsg_rl) {
+    while (msg_col > Columns - col) {
       msg_putchar(' ');
-  else
-    while (msg_col < col)
+    }
+  } else {
+    while (msg_col < col) {
       msg_putchar(' ');
+    }
+  }
 }
 
-/*
- * Used for "confirm()" function, and the :confirm command prefix.
- * Versions which haven't got flexible dialogs yet, and console
- * versions, get this generic handler which uses the command line.
- *
- * type  = one of:
- *	   VIM_QUESTION, VIM_INFO, VIM_WARNING, VIM_ERROR or VIM_GENERIC
- * title = title string (can be NULL for default)
- * (neither used in console dialogs at the moment)
- *
- * Format of the "buttons" string:
- * "Button1Name\nButton2Name\nButton3Name"
- * The first button should normally be the default/accept
- * The second button should be the 'Cancel' button
- * Other buttons- use your imagination!
- * A '&' in a button name becomes a shortcut, so each '&' should be before a
- * different letter.
- */
-int
-do_dialog (
-    int type,
-    char_u *title,
-    char_u *message,
-    char_u *buttons,
-    int dfltbutton,
-    char_u *textfield,          /* IObuff for inputdialog(), NULL
-                                           otherwise */
-    int ex_cmd                 /* when TRUE pressing : accepts default and starts
-                               Ex command */
-)
+/// Used for "confirm()" function, and the :confirm command prefix.
+/// Versions which haven't got flexible dialogs yet, and console
+/// versions, get this generic handler which uses the command line.
+///
+/// type  = one of:
+///         VIM_QUESTION, VIM_INFO, VIM_WARNING, VIM_ERROR or VIM_GENERIC
+/// title = title string (can be NULL for default)
+/// (neither used in console dialogs at the moment)
+///
+/// Format of the "buttons" string:
+/// "Button1Name\nButton2Name\nButton3Name"
+/// The first button should normally be the default/accept
+/// The second button should be the 'Cancel' button
+/// Other buttons- use your imagination!
+/// A '&' in a button name becomes a shortcut, so each '&' should be before a
+/// different letter.
+///
+/// @param textfiel  IObuff for inputdialog(), NULL otherwise
+/// @param ex_cmd  when TRUE pressing : accepts default and starts Ex command
+int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfltbutton,
+              char_u *textfield, int ex_cmd)
 {
   int retval = 0;
-  char_u      *hotkeys;
+  char_u *hotkeys;
   int c;
   int i;
 
@@ -3407,16 +3440,16 @@ do_dialog (
     // Get a typed character directly from the user.
     c = get_keystroke(NULL);
     switch (c) {
-    case CAR:                 /* User accepts default option */
+    case CAR:                 // User accepts default option
     case NL:
       retval = dfltbutton;
       break;
-    case Ctrl_C:              /* User aborts/cancels */
+    case Ctrl_C:              // User aborts/cancels
     case ESC:
       retval = 0;
       break;
-    default:                  /* Could be a hotkey? */
-      if (c < 0) {            /* special keys are ignored here */
+    default:                  // Could be a hotkey?
+      if (c < 0) {            // special keys are ignored here
         continue;
       }
       if (c == ':' && ex_cmd) {
@@ -3435,9 +3468,10 @@ do_dialog (
         i += utfc_ptr2len(hotkeys + i) - 1;
         retval++;
       }
-      if (hotkeys[i])
+      if (hotkeys[i]) {
         break;
-      /* No hotkey match, so keep waiting */
+      }
+      // No hotkey match, so keep waiting
       continue;
     }
     break;
@@ -3455,15 +3489,11 @@ do_dialog (
 }
 
 
-/*
- * Copy one character from "*from" to "*to", taking care of multi-byte
- * characters.  Return the length of the character in bytes.
- */
-static int copy_char(
-    const char_u *from,
-    char_u *to,
-    bool lowercase  // make character lower case
-)
+/// Copy one character from "*from" to "*to", taking care of multi-byte
+/// characters.  Return the length of the character in bytes.
+///
+/// @param lowercase  make character lower case
+static int copy_char(const char_u *from, char_u *to, bool lowercase)
   FUNC_ATTR_NONNULL_ALL
 {
   if (lowercase) {
@@ -3490,9 +3520,7 @@ static int copy_char(
 ///                        corresponding button has a hotkey
 ///
 /// @return Pointer to memory allocated for storing hotkeys
-static char_u * console_dialog_alloc(const char_u *message,
-                                     char_u *buttons,
-                                     bool has_hotkey[])
+static char_u *console_dialog_alloc(const char_u *message, char_u *buttons, bool has_hotkey[])
 {
   int lenhotkey = HOTK_LEN;  // count first button
   has_hotkey[0] = false;
@@ -3521,9 +3549,9 @@ static char_u * console_dialog_alloc(const char_u *message,
   }
 
   len += (int)(STRLEN(message)
-                + 2                          // for the NL's
-                + STRLEN(buttons)
-                + 3);                        // for the ": " and NUL
+               + 2                          // for the NL's
+               + STRLEN(buttons)
+               + 3);                        // for the ": " and NUL
   lenhotkey++;                               // for the NUL
 
   // If no hotkey is specified, first char is used.
@@ -3552,7 +3580,7 @@ static char_u * console_dialog_alloc(const char_u *message,
 static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfltbutton)
   FUNC_ATTR_NONNULL_RET
 {
-  bool has_hotkey[HAS_HOTKEY_LEN] = {false};
+  bool has_hotkey[HAS_HOTKEY_LEN] = { false };
   char_u *hotk = console_dialog_alloc(message, buttons, has_hotkey);
 
   copy_hotkeys_and_msg(message, buttons, dfltbutton, has_hotkey, hotk);
@@ -3569,9 +3597,8 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
 /// @param has_hotkey An element in this array is true if corresponding button
 ///                   has a hotkey
 /// @param[out] hotkeys_ptr Pointer to the memory location where hotkeys will be copied
-static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
-                                 int default_button_idx, const bool has_hotkey[],
-                                 char_u *hotkeys_ptr)
+static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons, int default_button_idx,
+                                 const bool has_hotkey[], char_u *hotkeys_ptr)
 {
   *confirm_msg = '\n';
   STRCPY(confirm_msg + 1, message);
@@ -3611,7 +3638,6 @@ static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
       if (idx < HAS_HOTKEY_LEN - 1 && !has_hotkey[++idx]) {
         first_hotkey = true;
       }
-
     } else if (*r == DLG_HOTKEY_CHAR || first_hotkey) {
       if (*r == DLG_HOTKEY_CHAR) {
         ++r;
@@ -3660,21 +3686,24 @@ void display_confirm_msg(void)
 int vim_dialog_yesno(int type, char_u *title, char_u *message, int dflt)
 {
   if (do_dialog(type,
-          title == NULL ? (char_u *)_("Question") : title,
-          message,
-          (char_u *)_("&Yes\n&No"), dflt, NULL, FALSE) == 1)
+                title == NULL ? (char_u *)_("Question") : title,
+                message,
+                (char_u *)_("&Yes\n&No"), dflt, NULL, FALSE) == 1) {
     return VIM_YES;
+  }
   return VIM_NO;
 }
 
 int vim_dialog_yesnocancel(int type, char_u *title, char_u *message, int dflt)
 {
   switch (do_dialog(type,
-              title == NULL ? (char_u *)_("Question") : title,
-              message,
-              (char_u *)_("&Yes\n&No\n&Cancel"), dflt, NULL, FALSE)) {
-  case 1: return VIM_YES;
-  case 2: return VIM_NO;
+                    title == NULL ? (char_u *)_("Question") : title,
+                    message,
+                    (char_u *)_("&Yes\n&No\n&Cancel"), dflt, NULL, FALSE)) {
+  case 1:
+    return VIM_YES;
+  case 2:
+    return VIM_NO;
   }
   return VIM_CANCEL;
 }
@@ -3682,14 +3711,18 @@ int vim_dialog_yesnocancel(int type, char_u *title, char_u *message, int dflt)
 int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message, int dflt)
 {
   switch (do_dialog(type,
-              title == NULL ? (char_u *)"Question" : title,
-              message,
-              (char_u *)_("&Yes\n&No\nSave &All\n&Discard All\n&Cancel"),
-              dflt, NULL, FALSE)) {
-  case 1: return VIM_YES;
-  case 2: return VIM_NO;
-  case 3: return VIM_ALL;
-  case 4: return VIM_DISCARDALL;
+                    title == NULL ? (char_u *)"Question" : title,
+                    message,
+                    (char_u *)_("&Yes\n&No\nSave &All\n&Discard All\n&Cancel"),
+                    dflt, NULL, FALSE)) {
+  case 1:
+    return VIM_YES;
+  case 2:
+    return VIM_NO;
+  case 3:
+    return VIM_ALL;
+  case 4:
+    return VIM_DISCARDALL;
   }
   return VIM_CANCEL;
 }
