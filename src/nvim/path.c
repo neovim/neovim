@@ -1098,13 +1098,12 @@ const char *gettail_dir(const char *const fname)
 }
 
 
-/*
- * Calls globpath() with 'path' values for the given pattern and stores the
- * result in "gap".
- * Returns the total number of matches.
- */
-static int expand_in_path(garray_T *const gap, char_u *const pattern, const int flags                 // EW_* flags
-                          )
+/// Calls globpath() with 'path' values for the given pattern and stores the
+/// result in "gap".
+/// Returns the total number of matches.
+///
+/// @param flags  EW_* flags
+static int expand_in_path(garray_T *const gap, char_u *const pattern, const int flags)
 {
   garray_T path_ga;
 
@@ -1348,11 +1347,12 @@ static int vim_backtick(char_u *p)
   return *p == '`' && *(p + 1) != NUL && *(p + STRLEN(p) - 1) == '`';
 }
 
-// Expand an item in `backticks` by executing it as a command.
-// Currently only works when pat[] starts and ends with a `.
-// Returns number of file names found, -1 if an error is encountered.
-static int expand_backtick(garray_T *gap, char_u *pat, int flags              // EW_* flags
-                           )
+/// Expand an item in `backticks` by executing it as a command.
+/// Currently only works when pat[] starts and ends with a `.
+/// Returns number of file names found, -1 if an error is encountered.
+///
+/// @param flags  EW_* flags
+static int expand_backtick(garray_T *gap, char_u *pat, int flags)
 {
   char_u *p;
   char_u *buffer;
@@ -1428,15 +1428,16 @@ void slash_adjust(char_u *p)
 }
 #endif
 
-// Add a file to a file list.  Accepted flags:
-// EW_DIR      add directories
-// EW_FILE     add files
-// EW_EXEC     add executable files
-// EW_NOTFOUND add even when it doesn't exist
-// EW_ADDSLASH add slash after directory name
-// EW_ALLLINKS add symlink also when the referred file does not exist
-void addfile(garray_T *gap, char_u *f,         // filename
-             int flags)
+/// Add a file to a file list.  Accepted flags:
+/// EW_DIR      add directories
+/// EW_FILE     add files
+/// EW_EXEC     add executable files
+/// EW_NOTFOUND add even when it doesn't exist
+/// EW_ADDSLASH add slash after directory name
+/// EW_ALLLINKS add symlink also when the referred file does not exist
+///
+/// @param f  filename
+void addfile(garray_T *gap, char_u *f, int flags)
 {
   bool isdir;
   FileInfo file_info;
@@ -1663,12 +1664,11 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
   return res;
 }
 
-/*
- * Return the name of the file ptr[len] in 'path'.
- * Otherwise like file_name_at_cursor().
- */
-char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count, char_u *rel_fname         // file we are searching relative to
-                               )
+/// Return the name of the file ptr[len] in 'path'.
+/// Otherwise like file_name_at_cursor().
+///
+/// @param rel_fname  file we are searching relative to
+char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count, char_u *rel_fname)
 {
   char_u *file_name;
   char_u *tofree = NULL;

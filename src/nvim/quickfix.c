@@ -1060,19 +1060,22 @@ static void qf_cleanup_state(qfstate_T *pstate)
   }
 }
 
-// Read the errorfile "efile" into memory, line by line, building the error
-// list.
-// Alternative: when "efile" is NULL read errors from buffer "buf".
-// Alternative: when "tv" is not NULL get errors from the string or list.
-// Always use 'errorformat' from "buf" if there is a local value.
-// Then "lnumfirst" and "lnumlast" specify the range of lines to use.
-// Set the title of the list to "qf_title".
-// Return -1 for error, number of errors for success.
+/// Read the errorfile "efile" into memory, line by line, building the error
+/// list.
+/// Alternative: when "efile" is NULL read errors from buffer "buf".
+/// Alternative: when "tv" is not NULL get errors from the string or list.
+/// Always use 'errorformat' from "buf" if there is a local value.
+/// Then "lnumfirst" and "lnumlast" specify the range of lines to use.
+/// Set the title of the list to "qf_title".
+///
+/// @param newlist  true: start a new error list
+/// @param lnumfirst  first line number to use
+/// @param lnumlast  last line number to use
+///
+/// @return  -1 for error, number of errors for success.
 static int qf_init_ext(qf_info_T *qi, int qf_idx, const char_u *restrict efile, buf_T *buf,
-                       typval_T *tv, char_u *restrict errorformat, bool newlist,                           // true: start a new error list
-                       linenr_T lnumfirst,                     // first line number to use
-                       linenr_T lnumlast,                      // last line number to use
-                       const char_u *restrict qf_title, char_u *restrict enc)
+                       typval_T *tv, char_u *restrict errorformat, bool newlist, linenr_T lnumfirst,
+                       linenr_T lnumlast, const char_u *restrict qf_title, char_u *restrict enc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   qf_list_T *qfl;
@@ -3778,10 +3781,11 @@ linenr_T qf_current_entry(win_T *wp)
   return qf_get_curlist(qi)->qf_index;
 }
 
-// Update the cursor position in the quickfix window to the current error.
-// Return TRUE if there is a quickfix window.
-static int qf_win_pos_update(qf_info_T *qi, int old_qf_index               // previous qf_index or zero
-                             )
+/// Update the cursor position in the quickfix window to the current error.
+/// Return TRUE if there is a quickfix window.
+///
+/// @param old_qf_index  previous qf_index or zero
+static int qf_win_pos_update(qf_info_T *qi, int old_qf_index)
 {
   win_T *win;
   int qf_index = qf_get_curlist(qi)->qf_index;
@@ -5563,19 +5567,20 @@ static void restore_start_dir(char_u *dirname_start)
   xfree(dirname_now);
 }
 
-// Load file "fname" into a dummy buffer and return the buffer pointer,
-// placing the directory resulting from the buffer load into the
-// "resulting_dir" pointer. "resulting_dir" must be allocated by the caller
-// prior to calling this function. Restores directory to "dirname_start" prior
-// to returning, if autocmds or the 'autochdir' option have changed it.
-//
-// If creating the dummy buffer does not fail, must call unload_dummy_buffer()
-// or wipe_dummy_buffer() later!
-//
-// Returns NULL if it fails.
-static buf_T *load_dummy_buffer(char_u *fname, char_u *dirname_start,      // in: old directory
-                                char_u *resulting_dir       // out: new directory
-                                )
+/// Load file "fname" into a dummy buffer and return the buffer pointer,
+/// placing the directory resulting from the buffer load into the
+/// "resulting_dir" pointer. "resulting_dir" must be allocated by the caller
+/// prior to calling this function. Restores directory to "dirname_start" prior
+/// to returning, if autocmds or the 'autochdir' option have changed it.
+///
+/// If creating the dummy buffer does not fail, must call unload_dummy_buffer()
+/// or wipe_dummy_buffer() later!
+///
+/// @param dirname_start  in: old directory
+/// @param resulting_dir  out: new directory
+///
+/// @return  NULL if it fails.
+static buf_T *load_dummy_buffer(char_u *fname, char_u *dirname_start, char_u *resulting_dir)
 {
   buf_T *newbuf;
   bufref_T newbufref;

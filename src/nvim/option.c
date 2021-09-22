@@ -670,8 +670,9 @@ static void set_option_default(int opt_idx, int opt_flags)
 }
 
 /// Set all options (except terminal options) to their default value.
-static void set_options_default(int opt_flags               // OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
-                                )
+///
+/// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+static void set_options_default(int opt_flags)
 {
   for (int i = 0; options[i].fullname; i++) {
     if (!(options[i].flags & P_NODEFAULT)) {
@@ -931,21 +932,22 @@ void set_title_defaults(void)
   }
 }
 
-// Parse 'arg' for option settings.
-//
-// 'arg' may be IObuff, but only when no errors can be present and option
-// does not need to be expanded with option_expand().
-// "opt_flags":
-// 0 for ":set"
-// OPT_GLOBAL   for ":setglobal"
-// OPT_LOCAL    for ":setlocal" and a modeline
-// OPT_MODELINE for a modeline
-// OPT_WINONLY  to only set window-local options
-// OPT_NOWIN    to skip setting window-local options
-//
-// returns FAIL if an error is detected, OK otherwise
-int do_set(char_u *arg,               // option string (may be written to!)
-           int opt_flags)
+/// Parse 'arg' for option settings.
+///
+/// 'arg' may be IObuff, but only when no errors can be present and option
+/// does not need to be expanded with option_expand().
+/// "opt_flags":
+/// 0 for ":set"
+/// OPT_GLOBAL   for ":setglobal"
+/// OPT_LOCAL    for ":setlocal" and a modeline
+/// OPT_MODELINE for a modeline
+/// OPT_WINONLY  to only set window-local options
+/// OPT_NOWIN    to skip setting window-local options
+///
+/// @param arg  option string (may be written to!)
+///
+/// @return  FAIL if an error is detected, OK otherwise
+int do_set(char_u *arg, int opt_flags)
 {
   int opt_idx;
   char_u *errmsg;
@@ -1712,13 +1714,13 @@ theend:
   return OK;
 }
 
-// Call this when an option has been given a new value through a user command.
-// Sets the P_WAS_SET flag and takes care of the P_INSECURE flag.
-static void did_set_option(int opt_idx, int opt_flags,              // possibly with OPT_MODELINE
-                           int new_value,              // value was replaced completely
-                           int value_checked           // value was checked to be safe, no need to
-                                                       // set P_INSECURE
-                           )
+/// Call this when an option has been given a new value through a user command.
+/// Sets the P_WAS_SET flag and takes care of the P_INSECURE flag.
+///
+/// @param opt_flags  possibly with OPT_MODELINE
+/// @param new_value  value was replaced completely
+/// @param value_checked  value was checked to be safe, no need to set P_INSECURE
+static void did_set_option(int opt_idx, int opt_flags, int new_value, int value_checked)
 {
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -1787,9 +1789,10 @@ static void did_set_title(void)
   }
 }
 
-// set_options_bin -  called when 'bin' changes value.
-void set_options_bin(int oldval, int newval, int opt_flags                  // OPT_LOCAL and/or OPT_GLOBAL
-                     )
+/// set_options_bin -  called when 'bin' changes value.
+///
+/// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
+void set_options_bin(int oldval, int newval, int opt_flags)
 {
   /*
    * The option values that are changed when 'bin' changes are
@@ -2119,13 +2122,15 @@ static void redraw_titles(void)
 
 static int shada_idx = -1;
 
-// Set a string option to a new value (without checking the effect).
-// The string is copied into allocated memory.
-// if ("opt_idx" == -1) "name" is used, otherwise "opt_idx" is used.
-// When "set_sid" is zero set the scriptID to current_sctx.sc_sid.  When
-// "set_sid" is SID_NONE don't set the scriptID.  Otherwise set the scriptID to
-// "set_sid".
-void set_string_option_direct(const char *name, int opt_idx, const char_u *val, int opt_flags,                  // OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+/// Set a string option to a new value (without checking the effect).
+/// The string is copied into allocated memory.
+/// if ("opt_idx" == -1) "name" is used, otherwise "opt_idx" is used.
+/// When "set_sid" is zero set the scriptID to current_sctx.sc_sid.  When
+/// "set_sid" is SID_NONE don't set the scriptID.  Otherwise set the scriptID to
+/// "set_sid".
+///
+/// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+void set_string_option_direct(const char *name, int opt_idx, const char_u *val, int opt_flags,
                               int set_sid)
 {
   char_u *s;
@@ -2186,9 +2191,10 @@ void set_string_option_direct(const char *name, int opt_idx, const char_u *val, 
 }
 
 /// Set global value for string option when it's a local option.
-static void set_string_option_global(int opt_idx,                    // option index
-                                     char_u **varp             // pointer to option variable
-                                     )
+///
+/// @param opt_idx  option index
+/// @param varp  pointer to option variable
+static void set_string_option_global(int opt_idx, char_u **varp)
 {
   char_u **p, *s;
 
@@ -2299,16 +2305,18 @@ static bool valid_spellfile(const char_u *val)
 
 /// Handle string options that need some action to perform when changed.
 /// Returns NULL for success, or an error message for an error.
-static char_u *did_set_string_option(int opt_idx,                       // index in options[] table
-                                     char_u **varp,                     // pointer to the option variable
-                                     bool new_value_alloced,            // new value was allocated
-                                     char_u *oldval,                    // previous value of the option
-                                     char_u *errbuf,                    // buffer for errors, or NULL
-                                     size_t errbuflen,                  // length of errors buffer
-                                     int opt_flags,                     // OPT_LOCAL and/or OPT_GLOBAL
-                                     int *value_checked                 // value was checked to be safe, no
-                                                                        // need to set P_INSECURE
-                                     )
+///
+/// @param opt_idx  index in options[] table
+/// @param varp  pointer to the option variable
+/// @param new_value_alloced  new value was allocated
+/// @param oldval  previous value of the option
+/// @param errbuf  buffer for errors, or NULL
+/// @param errbuflen  length of errors buffer
+/// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
+/// @param value_checked  value was checked to be safe, no need to set P_INSECURE
+static char_u *did_set_string_option(int opt_idx, char_u **varp, bool new_value_alloced,
+                                     char_u *oldval, char_u *errbuf, size_t errbuflen,
+                                     int opt_flags, int *value_checked)
 {
   char_u *errmsg = NULL;
   char_u *s, *p;
@@ -4719,14 +4727,15 @@ static int findoption(const char *const arg)
 
 /// Gets the value for an option.
 ///
+/// @param stringval  NULL when only checking existence
+///
 /// @returns:
 /// Number or Toggle option: 1, *numval gets value.
 ///           String option: 0, *stringval gets allocated string.
 /// Hidden Number or Toggle option: -1.
 ///           hidden String option: -2.
 ///                 unknown option: -3.
-int get_option_value(const char *name, long *numval, char_u **stringval,            ///< NULL when only checking existence
-                     int opt_flags)
+int get_option_value(const char *name, long *numval, char_u **stringval, int opt_flags)
 {
   if (get_tty_option(name, (char **)stringval)) {
     return 0;
@@ -4985,8 +4994,9 @@ static int find_key_option(const char_u *arg, bool has_lt)
 
 /// if 'all' == 0: show changed options
 /// if 'all' == 1: show all normal options
-static void showoptions(int all, int opt_flags                  // OPT_LOCAL and/or OPT_GLOBAL
-                        )
+///
+/// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
+static void showoptions(int all, int opt_flags)
 {
   vimoption_T *p;
   int col;
@@ -5125,8 +5135,9 @@ void ui_refresh_options(void)
 
 /// showoneopt: show the value of one option
 /// must not be called with a hidden option!
-static void showoneopt(vimoption_T *p, int opt_flags                          // OPT_LOCAL or OPT_GLOBAL
-                       )
+///
+/// @param opt_flags  OPT_LOCAL or OPT_GLOBAL
+static void showoneopt(vimoption_T *p, int opt_flags)
 {
   char_u *varp;
   int save_silent = silent_mode;
@@ -6321,8 +6332,8 @@ static int expand_option_idx = -1;
 static char_u expand_option_name[5] = { 't', '_', NUL, NUL, NUL };
 static int expand_option_flags = 0;
 
-void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags                  // OPT_GLOBAL and/or OPT_LOCAL
-                            )
+/// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
+void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
 {
   char_u nextchar;
   uint32_t flags = 0;           // init for GCC
@@ -6613,8 +6624,9 @@ void ExpandOldSetting(int *num_file, char_u ***file)
 
 /// Get the value for the numeric or string option///opp in a nice format into
 /// NameBuff[].  Must not be called with a hidden option!
-static void option_value2string(vimoption_T *opp, int opt_flags                          // OPT_GLOBAL and/or OPT_LOCAL
-                                )
+///
+/// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
+static void option_value2string(vimoption_T *opp, int opt_flags)
 {
   char_u *varp;
 
@@ -7103,10 +7115,10 @@ static int fill_culopt_flags(char_u *val, win_T *wp)
 
 /// Check an option that can be a range of string values.
 ///
-/// Return OK for correct value, FAIL otherwise.
-/// Empty is always OK.
-static int check_opt_strings(char_u *val, char **values, int list                   // when true: accept a list of values
-                             )
+/// @param list  when true: accept a list of values
+///
+/// @return  OK for correct value, FAIL otherwise. Empty is always OK.
+static int check_opt_strings(char_u *val, char **values, int list)
 {
   return opt_strings_flags(val, values, NULL, list);
 }
@@ -7114,12 +7126,12 @@ static int check_opt_strings(char_u *val, char **values, int list               
 /// Handle an option that can be a range of string values.
 /// Set a flag in "*flagp" for each string present.
 ///
-/// Return OK for correct value, FAIL otherwise.
-/// Empty is always OK.
-static int opt_strings_flags(char_u *val,             // new value
-                             char **values,           // array of valid string values
-                             unsigned *flagp, bool list                // when true: accept a list of values
-                             )
+/// @param val  new value
+/// @param values  array of valid string values
+/// @param list  when true: accept a list of values
+///
+/// @return  OK for correct value, FAIL otherwise. Empty is always OK.
+static int opt_strings_flags(char_u *val, char **values, unsigned *flagp, bool list)
 {
   unsigned int new_flags = 0;
 
