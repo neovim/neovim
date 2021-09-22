@@ -103,6 +103,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
       severity = severity_lsp_to_vim(diagnostic.severity),
       message = diagnostic.message,
+      source = diagnostic.source,
       user_data = {
         lsp = {
           code = diagnostic.code,
@@ -132,6 +133,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       },
       severity = severity_vim_to_lsp(diagnostic.severity),
       message = diagnostic.message,
+      source = diagnostic.source,
     }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)
 end
@@ -527,7 +529,7 @@ end
 ---@return an array of [text, hl_group] arrays. This can be passed directly to
 ---        the {virt_text} option of |nvim_buf_set_extmark()|.
 function M.get_virtual_text_chunks_for_line(bufnr, _, line_diags, opts)
-  return vim.diagnostic.get_virt_text_chunks(diagnostic_lsp_to_vim(line_diags, bufnr), opts)
+  return vim.diagnostic._get_virt_text_chunks(diagnostic_lsp_to_vim(line_diags, bufnr), opts)
 end
 
 --- Open a floating window with the diagnostics from {position}

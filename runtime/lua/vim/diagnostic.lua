@@ -48,6 +48,35 @@ local function filter_by_severity(severity, diagnostics)
 end
 
 ---@private
+local function prefix_source(source, diagnostics)
+  vim.validate { source = {source, function(v)
+    return v == "always" or v == "if_many"
+  end, "Invalid value for option 'source'" } }
+
+  if source == "if_many" then
+    local sources = {}
+    for _, d in pairs(diagnostics) do
+      if d.source then
+        sources[d.source] = true
+      end
+    end
+    if #vim.tbl_keys(sources) <= 1 then
+      return diagnostics
+    end
+  end
+
+  return vim.tbl_map(function(d)
+    if not d.source then
+      return d
+    end
+
+    local t = vim.deepcopy(d)
+    t.message = string.format("%s: %s", d.source, d.message)
+    return t
+  end, diagnostics)
+end
+
+---@private
 local function resolve_optional_value(option, namespace, bufnr)
   local enabled_val = {}
 
@@ -336,13 +365,19 @@ end
 ---@param diagnostics table: The diagnostics to display
 ---@return table {popup_bufnr, win_id}
 local function show_diagnostics(opts, diagnostics)
-  if vim.tbl_isempty(diagnostics) then return end
+  if vim.tbl_isempty(diagnostics) then
+    return
+  end
   local lines = {}
   local highlights = {}
   local show_header = vim.F.if_nil(opts.show_header, true)
   if show_header then
     table.insert(lines, "Diagnostics:")
     table.insert(highlights, {0, "Bold"})
+  end
+
+  if opts.source then
+    diagnostics = prefix_source(opts.source, diagnostics)
   end
 
   for i, diagnostic in ipairs(diagnostics) do
@@ -487,6 +522,8 @@ end
 ---       - virtual_text: (default true) Use virtual text for diagnostics. Options:
 ---                       * severity: Only show virtual text for diagnostics matching the given
 ---                       severity |diagnostic-severity|
+---                       * source: (string) Include the diagnostic source in virtual
+---                       text. One of "always" or "if_many".
 ---       - signs: (default true) Use signs for diagnostics. Options:
 ---                * severity: Only show signs for diagnostics matching the given severity
 ---                |diagnostic-severity|
@@ -814,6 +851,8 @@ end
 ---@param opts table|nil Configuration table with the following keys:
 ---            - prefix: (string) Prefix to display before virtual text on line.
 ---            - spacing: (number) Number of spaces to insert before virtual text.
+---            - source: (string) Include the diagnostic source in virtual text. One of "always" or
+---                      "if_many".
 ---@private
 function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
   vim.validate {
@@ -826,12 +865,16 @@ function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
   bufnr = get_bufnr(bufnr)
   opts = get_resolved_options({ virtual_text = opts }, namespace, bufnr).virtual_text
 
+  if opts and opts.source then
+    diagnostics = prefix_source(opts.source, diagnostics)
+  end
+
   local buffer_line_diagnostics = diagnostic_lines(diagnostics)
   for line, line_diagnostics in pairs(buffer_line_diagnostics) do
     if opts and opts.severity then
       line_diagnostics = filter_by_severity(opts.severity, line_diagnostics)
     end
-    local virt_texts = M.get_virt_text_chunks(line_diagnostics, opts)
+    local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts)
 
     if virt_texts then
       vim.api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
@@ -844,13 +887,11 @@ end
 
 --- Get virtual text chunks to display using |nvim_buf_set_extmark()|.
 ---
----@param line_diags table The diagnostics associated with the line.
----@param opts table|nil Configuration table with the following keys:
----            - prefix: (string) Prefix to display before virtual text on line.
----            - spacing: (number) Number of spaces to insert before virtual text.
----@return array of ({text}, {hl_group}) tuples. This can be passed directly to
----        the {virt_text} option of |nvim_buf_set_extmark()|.
-function M.get_virt_text_chunks(line_diags, opts)
+--- Exported for backward compatibility with
+--- vim.lsp.diagnostic.get_virtual_text_chunks_for_line(). When that function is eventually removed,
+--- this can be made local.
+---@private
+function M._get_virt_text_chunks(line_diags, opts)
   if #line_diags == 0 then
     return nil
   end
@@ -1007,6 +1048,8 @@ end
 ---            - namespace: (number) Limit diagnostics to the given namespace
 ---            - severity: See |diagnostic-severity|.
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
+---            - source: (string) Include the diagnostic source in
+---            the message. One of "always" or "if_many".
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param position table|nil The (0,0)-indexed position. Defaults to the current cursor position.
 ---@return tuple ({popup_bufnr}, {win_id})
