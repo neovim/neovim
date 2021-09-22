@@ -230,6 +230,18 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                    • source: (string) Include the diagnostic
                                      source in virtual text. One of "always"
                                      or "if_many".
+                                   • format: (function) A function that takes
+                                     a diagnostic as input and returns a
+                                     string. The return value is the text used
+                                     to display the diagnostic. Example:>
+
+                                       function(diagnostic)
+                                         if diagnostic.severity == vim.diagnostic.severity.ERROR then
+                                           return string.format("E: %s", diagnostic.message)
+                                         end
+                                         return diagnostic.message
+                                       end
+<
 
                                  • signs: (default true) Use signs for
                                    diagnostics. Options:
@@ -519,6 +531,10 @@ show_position_diagnostics({opts}, {bufnr}, {position})
                                 • source: (string) Include the diagnostic
                                   source in the message. One of "always" or
                                   "if_many".
+                                • format: (function) A function that takes a
+                                  diagnostic as input and returns a string.
+                                  The return value is the text used to display
+                                  the diagnostic.
                     {bufnr}     number|nil Buffer number. Defaults to the
                                 current buffer.
                     {position}  table|nil The (0,0)-indexed position. Defaults

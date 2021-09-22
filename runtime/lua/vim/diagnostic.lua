@@ -77,6 +77,20 @@ local function prefix_source(source, diagnostics)
 end
 
 ---@private
+local function reformat_diagnostics(format, diagnostics)
+  vim.validate {
+    format = {format, 'f'},
+    diagnostics = {diagnostics, 't'},
+  }
+
+  local formatted = vim.deepcopy(diagnostics)
+  for _, diagnostic in ipairs(formatted) do
+    diagnostic.message = format(diagnostic)
+  end
+  return formatted
+end
+
+---@private
 local function resolve_optional_value(option, namespace, bufnr)
   local enabled_val = {}
 
@@ -376,6 +390,10 @@ local function show_diagnostics(opts, diagnostics)
     table.insert(highlights, {0, "Bold"})
   end
 
+  if opts.format then
+    diagnostics = reformat_diagnostics(opts.format, diagnostics)
+  end
+
   if opts.source then
     diagnostics = prefix_source(opts.source, diagnostics)
   end
@@ -524,6 +542,17 @@ end
 ---                       severity |diagnostic-severity|
 ---                       * source: (string) Include the diagnostic source in virtual
 ---                       text. One of "always" or "if_many".
+---                       * format: (function) A function that takes a diagnostic as input and
+---                                 returns a string. The return value is the text used to display
+---                                 the diagnostic. Example:
+---                       <pre>
+---                       function(diagnostic)
+---                         if diagnostic.severity == vim.diagnostic.severity.ERROR then
+---                           return string.format("E: %s", diagnostic.message)
+---                         end
+---                         return diagnostic.message
+---                       end
+---                       </pre>
 ---       - signs: (default true) Use signs for diagnostics. Options:
 ---                * severity: Only show signs for diagnostics matching the given severity
 ---                |diagnostic-severity|
@@ -865,6 +894,10 @@ function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
   bufnr = get_bufnr(bufnr)
   opts = get_resolved_options({ virtual_text = opts }, namespace, bufnr).virtual_text
 
+  if opts and opts.format then
+    diagnostics = reformat_diagnostics(opts.format, diagnostics)
+  end
+
   if opts and opts.source then
     diagnostics = prefix_source(opts.source, diagnostics)
   end
@@ -1049,7 +1082,9 @@ end
 ---            - severity: See |diagnostic-severity|.
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
 ---            - source: (string) Include the diagnostic source in
----            the message. One of "always" or "if_many".
+---                      the message. One of "always" or "if_many".
+---            - format: (function) A function that takes a diagnostic as input and returns a
+---                      string. The return value is the text used to display the diagnostic.
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param position table|nil The (0,0)-indexed position. Defaults to the current cursor position.
 ---@return tuple ({popup_bufnr}, {win_id})
