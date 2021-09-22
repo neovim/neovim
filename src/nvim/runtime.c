@@ -5,16 +5,16 @@
 ///
 /// Management of runtime files (including packages)
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
-#include "nvim/option.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/misc1.h"
+#include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/runtime.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "runtime.c.generated.h"
@@ -60,12 +60,11 @@ static void source_callback(char_u *fname, void *cookie)
 /// When "flags" has DIP_ERR: give an error message if there is no match.
 ///
 /// return FAIL when no file could be sourced, OK otherwise.
-int do_in_path(char_u *path, char_u *name, int flags,
-               DoInRuntimepathCB callback, void *cookie)
+int do_in_path(char_u *path, char_u *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {
-  char_u      *tail;
+  char_u *tail;
   int num_files;
-  char_u      **files;
+  char_u **files;
   int i;
   bool did_one = false;
 
@@ -91,7 +90,7 @@ int do_in_path(char_u *path, char_u *name, int flags,
       // Skip after or non-after directories.
       if (flags & (DIP_NOAFTER | DIP_AFTER)) {
         bool is_after = buflen >= 5
-          && STRCMP(buf + buflen - 5, "after") == 0;
+                        && STRCMP(buf + buflen - 5, "after") == 0;
 
         if ((is_after && (flags & DIP_NOAFTER))
             || (!is_after && (flags & DIP_AFTER))) {
@@ -164,8 +163,8 @@ int do_in_path(char_u *path, char_u *name, int flags,
 /// If "name" is NULL calls callback for each entry in "path". Cookie is
 /// passed by reference in this case, setting it to NULL indicates that callback
 /// has done its job.
-int do_in_path_and_pp(char_u *path, char_u *name, int flags,
-                      DoInRuntimepathCB callback, void *cookie)
+int do_in_path_and_pp(char_u *path, char_u *name, int flags, DoInRuntimepathCB callback,
+                      void *cookie)
 {
   int done = FAIL;
   if (!(flags & (DIP_NOAFTER | DIP_AFTER))) {
@@ -564,8 +563,7 @@ static char *strcpy_comma_escaped(char *dest, const char *src, const size_t len)
 ///         (common_suf is present after each new item, single_suf is present
 ///         after half of the new items) and with commas after each item, commas
 ///         inside the values are escaped.
-static inline size_t compute_double_env_sep_len(const char *const val,
-                                                const size_t common_suf_len,
+static inline size_t compute_double_env_sep_len(const char *const val, const size_t common_suf_len,
                                                 const size_t single_suf_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
@@ -608,9 +606,8 @@ static inline size_t compute_double_env_sep_len(const char *const val,
 ///                      Otherwise in reverse.
 ///
 /// @return (dest + appended_characters_length)
-static inline char *add_env_sep_dirs(char *dest, const char *const val,
-                                     const char *const suf1, const size_t len1,
-                                     const char *const suf2, const size_t len2,
+static inline char *add_env_sep_dirs(char *dest, const char *const val, const char *const suf1,
+                                     const size_t len1, const char *const suf2, const size_t len2,
                                      const bool forward)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -669,9 +666,8 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val,
 ///                      Otherwise in reverse.
 ///
 /// @return (dest + appended_characters_length)
-static inline char *add_dir(char *dest, const char *const dir,
-                            const size_t dir_len, const XDGVarType type,
-                            const char *const suf1, const size_t len1,
+static inline char *add_dir(char *dest, const char *const dir, const size_t dir_len,
+                            const XDGVarType type, const char *const suf1, const size_t len1,
                             const char *const suf2, const size_t len2)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {

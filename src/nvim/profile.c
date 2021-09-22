@@ -1,17 +1,16 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <stdio.h>
-#include <math.h>
 #include <assert.h>
+#include <math.h>
+#include <stdio.h>
 
 #include "nvim/assert.h"
-#include "nvim/profile.h"
-#include "nvim/os/time.h"
 #include "nvim/func_attr.h"
-#include "nvim/os/os_defs.h"
-
 #include "nvim/globals.h"  // for the global `time_fd` (startuptime)
+#include "nvim/os/os_defs.h"
+#include "nvim/os/time.h"
+#include "nvim/profile.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.c.generated.h"
@@ -97,7 +96,7 @@ proftime_T profile_divide(proftime_T tm, int count) FUNC_ATTR_CONST
     return profile_zero();
   }
 
-  return (proftime_T) round((double) tm / (double) count);
+  return (proftime_T)round((double)tm / (double)count);
 }
 
 /// Adds time `tm2` to `tm1`.

@@ -6,8 +6,8 @@
 #include <string.h>
 
 #include "nvim/memory.h"
-#include "nvim/vim.h"
 #include "nvim/rbuffer.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "rbuffer.c.generated.h"
@@ -144,7 +144,7 @@ void rbuffer_consumed(RBuffer *buf, size_t count)
 
   buf->read_ptr += count;
   if (buf->read_ptr >= buf->end_ptr) {
-      buf->read_ptr -= rbuffer_capacity(buf);
+    buf->read_ptr -= rbuffer_capacity(buf);
   }
 
   bool was_full = buf->size == rbuffer_capacity(buf);
