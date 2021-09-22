@@ -5560,6 +5560,11 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
     }
   }
 
+  // Without any lines make the register empty.
+  if (y_ptr->y_size + newlines == 0) {
+    XFREE_CLEAR(y_ptr->y_array);
+    return;
+  }
 
   // Grow the register array to hold the pointers to the new lines.
   char_u **pp = xrealloc(y_ptr->y_array,
