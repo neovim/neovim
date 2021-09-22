@@ -224,6 +224,11 @@ For |lsp-request|, each |lsp-handler| has this signature: >
                                             The ID of the |vim.lsp.client|.
                             {bufnr}     (Buffer)
                                            Buffer handle, or 0 for current.
+
+                            {params}    (table|nil)
+                                           The parameters used in the original request
+                                           which resulted in this handler
+                                           call.
             {config}    (table)
                             Configuration for the handler.
 
@@ -233,6 +238,7 @@ For |lsp-request|, each |lsp-handler| has this signature: >
 
                             To configure a particular |lsp-handler|, see:
                                 |lsp-handler-configuration|
+
 
         Returns: ~
             The |lsp-handler| can respond by returning two values: `result, err`

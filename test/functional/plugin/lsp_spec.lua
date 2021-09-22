@@ -2353,6 +2353,10 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
         end;
         on_handler = function(err, result, ctx)
+          -- Don't compare & assert params, they're not relevant for the testcase
+          -- This allows us to be lazy and avoid declaring them
+          ctx.params = nil
+
           eq(table.remove(test.expected_handlers), {err, result, ctx}, "expected handler")
           if ctx.method == 'start' then
             exec_lua("vim.lsp.buf.rename()")
@@ -2370,4 +2374,42 @@ describe('LSP', function()
     end
   end)
 
+  describe('vim.lsp.buf.code_action', function()
+    it('Calls client side command if available', function()
+      eq(1, exec_lua [[
+        local dummy_calls = 0
+        vim.lsp.commands.dummy = function()
+          dummy_calls = dummy_calls + 1
+        end
+        local actions = {
+          {
+            title = 'Dummy command',
+            command = 'dummy',
+          },
+        }
+        -- inputlist would require input and block the test;
+        vim.fn.inputlist = function()
+          return 1
+        end
+        local params = {}
+        local handler = require'vim.lsp.handlers'['textDocument/codeAction']
+        handler(nil, actions, { method = 'textDocument/codeAction', params = params }, nil)
+        return dummy_calls
+      ]])
+    end)
+  end)
+  describe('vim.lsp.commands', function()
+    it('Accepts only string keys', function()
+      matches(
+        '.*The key for commands in `vim.lsp.commands` must be a string',
+        pcall_err(exec_lua, 'vim.lsp.commands[1] = function() end')
+      )
+    end)
+    it('Accepts only function values', function()
+      matches(
+        '.*Command added to `vim.lsp.commands` must be a function',
+        pcall_err(exec_lua, 'vim.lsp.commands.dummy = 10')
+      )
+    end)
+  end)
 end)
