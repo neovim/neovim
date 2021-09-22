@@ -9094,6 +9094,36 @@ static void f_setqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   set_qf_ll_list(NULL, argvars, rettv);
 }
 
+/// Translate a register type string to the yank type and block length
+static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *const block_len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char_u *stropt = *pp;
+  switch (*stropt) {
+    case 'v':
+    case 'c':  // character-wise selection
+      *yank_type = kMTCharWise;
+      break;
+    case 'V':
+    case 'l':  // line-wise selection
+      *yank_type = kMTLineWise;
+      break;
+    case 'b':
+    case Ctrl_V:  // block-wise selection
+      *yank_type = kMTBlockWise;
+      if (ascii_isdigit(stropt[1])) {
+        stropt++;
+        *block_len = getdigits_long(&stropt, false, 0) - 1;
+        stropt--;
+      }
+      break;
+    default:
+      return FAIL;
+  }
+  *pp = stropt;
+  return OK;
+}
+
 /*
  * "setreg()" function
  */
@@ -9122,6 +9152,14 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int pointreg = 0;
   if (argvars[1].v_type == VAR_DICT) {
     dict_T *const d = argvars[1].vval.v_dict;
+
+    if (tv_dict_len(d) == 0) {
+      // Empty dict, clear the register (like setreg(0, []))
+      char_u *lstval[2] = { NULL, NULL };
+      write_reg_contents_lst(regname, lstval, false, kMTUnknown, -1);
+      return;
+    }
+
     dictitem_T *const di = tv_dict_find(d, "regcontents", -1);
     if (di != NULL) {
       regcontents = &di->di_tv;
@@ -9129,21 +9167,11 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     const char *stropt = tv_dict_get_string(d, "regtype", false);
     if (stropt != NULL) {
-      switch (*stropt) {
-        case 'v':  // character-wise selection
-          yank_type = kMTCharWise;
-          break;
-        case 'V':  // line-wise selection
-          yank_type = kMTLineWise;
-          break;
-        case Ctrl_V:  // block-wise selection
-          yank_type = kMTBlockWise;
-          if (ascii_isdigit(stropt[1])) {
-            stropt++;
-            block_len = getdigits_long((char_u **)&stropt, true, 0) - 1;
-            stropt--;
-          }
-          break;
+      const int ret = get_yank_type((char_u **)&stropt, &yank_type, &block_len);
+
+      if (ret == FAIL || *(++stropt) != NUL) {
+        EMSG2(_(e_invargval), "value");
+        return;
       }
     }
 
@@ -9162,6 +9190,11 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool set_unnamed = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
+    if (yank_type != kMTUnknown) {
+      EMSG2(_(e_toomanyarg), "setreg");
+      return;
+    }
+
     const char *stropt = tv_get_string_chk(&argvars[2]);
     if (stropt == NULL) {
       return;  // Type error.
@@ -9172,27 +9205,12 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       case 'A':    // append
         append = true;
         break;
-      case 'v':
-      case 'c':    // character-wise selection
-        yank_type = kMTCharWise;
-        break;
-      case 'V':
-      case 'l':    // line-wise selection
-        yank_type = kMTLineWise;
-        break;
-      case 'b':
-      case Ctrl_V:    // block-wise selection
-        yank_type = kMTBlockWise;
-        if (ascii_isdigit(stropt[1])) {
-          stropt++;
-          block_len = getdigits_long((char_u **)&stropt, true, 0) - 1;
-          stropt--;
-        }
-        break;
       case 'u':
       case '"':    // unnamed register
         set_unnamed = true;
         break;
+      default:
+        get_yank_type((char_u **)&stropt, &yank_type, &block_len);
       }
     }
   }

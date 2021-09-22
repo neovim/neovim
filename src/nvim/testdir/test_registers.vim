@@ -352,6 +352,14 @@ func Test_set_register_dict()
   call assert_equal(['six'], getreginfo('0').regcontents)
   call assert_equal(['six'], getreginfo('"').regcontents)
 
+  let @x = 'one'
+  call setreg('x', {})
+  call assert_equal(1, len(split(execute('reg x'), '\n')))
+
+  call assert_fails("call setreg('0', #{regtype: 'V'}, 'v')", 'E118:')
+  call assert_fails("call setreg('0', #{regtype: 'X'})", 'E475:')
+  call assert_fails("call setreg('0', #{regtype: 'vy'})", 'E475:')
+
   bwipe!
 endfunc
 
