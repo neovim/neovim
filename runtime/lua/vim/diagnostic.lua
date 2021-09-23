@@ -249,7 +249,7 @@ end
 ---@private
 local function diagnostic_lines(diagnostics)
   if not diagnostics then
-    return
+    return {}
   end
 
   local diagnostics_by_line = {}
