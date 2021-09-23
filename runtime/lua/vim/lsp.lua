@@ -830,7 +830,7 @@ function lsp.start_client(config)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
       assert(result, "server sent empty result")
-      rpc.notify('initialized', {[vim.type_idx]=vim.types.dictionary})
+      rpc.notify('initialized', vim.empty_dict())
       client.initialized = true
       uninitialized_clients[client_id] = nil
       client.workspaceFolders = initialize_params.workspaceFolders
