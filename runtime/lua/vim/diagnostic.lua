@@ -379,7 +379,7 @@ end
 ---@param diagnostics table: The diagnostics to display
 ---@return table {popup_bufnr, win_id}
 local function show_diagnostics(opts, diagnostics)
-  if vim.tbl_isempty(diagnostics) then
+  if not diagnostics or vim.tbl_isempty(diagnostics) then
     return
   end
   local lines = {}
