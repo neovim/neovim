@@ -9,8 +9,8 @@ jobs:
       - uses: actions/checkout@v2.3.1
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-          version: nightly
-      - run: make commitlint-ci
+      - run: nvim --clean -es +"lua require('scripts.lintcommit').main({trace=false})"
