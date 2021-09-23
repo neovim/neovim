@@ -46,7 +46,7 @@ Install from package
 Pre-built packages for Windows, macOS, and Linux are found on the
 [Releases](https://github.com/neovim/neovim/releases/) page.
 
-[Managed packages] are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Void Linux], [Gentoo], and more!
+[Managed packages] are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Guix], [Void Linux], [Gentoo], and more!
 
 Install from source
 -------------------
@@ -123,6 +123,7 @@ Apache 2.0 license, except for contributions copied from Vim (identified by the
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
 [Void Linux]: https://voidlinux.org/packages/?arch=x86_64&q=neovim
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
+[Guix]: http://guix.gnu.org/en/packages/neovim-0.4.4/
 [Homebrew]: https://formulae.brew.sh/formula/neovim
 
 <!-- vim: set tw=80: -->
