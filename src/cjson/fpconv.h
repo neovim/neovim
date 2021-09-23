@@ -12,7 +12,7 @@ static inline void fpconv_init()
     /* Do nothing - not required */
 }
 #else
-extern void fpconv_init();
+extern void fpconv_init(void);
 #endif
 
 extern int fpconv_g_fmt(char*, double, int);

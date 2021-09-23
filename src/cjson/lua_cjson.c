@@ -44,6 +44,9 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "nvim/lua/executor.h"
+
+#include "lua_cjson.h"
 #include "strbuf.h"
 #include "fpconv.h"
 
@@ -79,7 +82,7 @@
 #define DEFAULT_DECODE_INVALID_NUMBERS 1
 #define DEFAULT_ENCODE_KEEP_BUFFER 1
 #define DEFAULT_ENCODE_NUMBER_PRECISION 14
-#define DEFAULT_ENCODE_EMPTY_TABLE_AS_OBJECT 1
+#define DEFAULT_ENCODE_EMPTY_TABLE_AS_OBJECT 0
 #define DEFAULT_DECODE_ARRAY_WITH_ARRAY_MT 0
 #define DEFAULT_ENCODE_ESCAPE_FORWARD_SLASH 1
 
@@ -741,6 +744,7 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
 {
     int len;
     int as_array = 0;
+    int as_empty_dict = 0;
     int has_metatable;
 
     switch (lua_type(l, -1)) {
@@ -763,10 +767,17 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
         has_metatable = lua_getmetatable(l, -1);
 
         if (has_metatable) {
+
+          nlua_pushref(l, nlua_empty_dict_ref);
+          if (lua_rawequal(l, -2, -1)) {
+            as_empty_dict = true;
+          } else {
+            lua_pop(l, 1);
             lua_pushlightuserdata(l, json_lightudata_mask(&json_array));
             lua_rawget(l, LUA_REGISTRYINDEX);
             as_array = lua_rawequal(l, -1, -2);
-            lua_pop(l, 2);
+          }
+          lua_pop(l, 2);
         }
 
         if (as_array) {
@@ -775,7 +786,7 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
         } else {
             len = lua_array_length(l, cfg, json);
 
-            if (len > 0 || (len == 0 && !cfg->encode_empty_table_as_object)) {
+            if (len > 0 || (len == 0 && !cfg->encode_empty_table_as_object && !as_empty_dict)) {
                 json_append_array(l, cfg, current_depth, json, len);
             } else {
                 if (has_metatable) {
@@ -798,12 +809,20 @@ static void json_append_data(lua_State *l, json_config_t *cfg,
         strbuf_append_mem(json, "null", 4);
         break;
     case LUA_TLIGHTUSERDATA:
-        if (lua_touserdata(l, -1) == NULL) {
-            strbuf_append_mem(json, "null", 4);
-        } else if (lua_touserdata(l, -1) == &json_array) {
+        if (lua_touserdata(l, -1) == &json_array) {
             json_append_array(l, cfg, current_depth, json, 0);
         }
         break;
+    case LUA_TUSERDATA:
+        nlua_pushref(l, nlua_nil_ref);
+        bool is_nil = lua_rawequal(l, -2, -1);
+        lua_pop(l, 1);
+        if (is_nil) {
+            strbuf_append_mem(json, "null", 4);
+            break;
+        } else {
+          FALLTHROUGH;
+        }
     default:
         /* Remaining types (LUA_TFUNCTION, LUA_TUSERDATA, LUA_TTHREAD,
          * and LUA_TLIGHTUSERDATA) cannot be serialised */
@@ -1258,6 +1277,8 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
 
     /* Handle empty objects */
     if (token.type == T_OBJ_END) {
+        nlua_pushref(l, nlua_empty_dict_ref); \
+        lua_setmetatable(l, -2); \
         json_decode_ascend(json);
         return;
     }
@@ -1360,9 +1381,7 @@ static void json_process_value(lua_State *l, json_parse_t *json,
         json_parse_array_context(l, json);
         break;;
     case T_NULL:
-        /* In Lua, setting "t[k] = nil" will delete k from the table.
-         * Hence a NULL pointer lightuserdata object is used instead */
-        lua_pushlightuserdata(l, NULL);
+        nlua_pushref(l, nlua_nil_ref);
         break;;
     default:
         json_throw_parse_error(l, json, "value", token);
@@ -1464,7 +1483,7 @@ static int json_protect_conversion(lua_State *l)
 }
 
 /* Return cjson module table */
-static int lua_cjson_new(lua_State *l)
+int lua_cjson_new(lua_State *l)
 {
     luaL_Reg reg[] = {
         { "encode", json_encode },
@@ -1517,7 +1536,7 @@ static int lua_cjson_new(lua_State *l)
     compat_luaL_setfuncs(l, reg, 1);
 
     /* Set cjson.null */
-    lua_pushlightuserdata(l, NULL);
+    nlua_pushref(l, nlua_nil_ref);
     lua_setfield(l, -2, "null");
 
     /* Set cjson.empty_array_mt */
