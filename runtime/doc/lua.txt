@@ -928,6 +928,7 @@ Example: >
     vim.g.foo = 5     -- Set the g:foo Vimscript variable.
     print(vim.g.foo)  -- Get and print the g:foo Vimscript variable.
     vim.g.foo = nil   -- Delete (:unlet) the Vimscript variable.
+    vim.b[2].foo = 6  -- Set b:foo for buffer 2
 
 vim.g                                                   *vim.g*
         Global (|g:|) editor variables.
@@ -935,15 +936,18 @@ vim.g                                                   *vim.g*
 
 vim.b                                                   *vim.b*
         Buffer-scoped (|b:|) variables for the current buffer.
-        Invalid or unset key returns `nil`.
+        Invalid or unset key returns `nil`. Can be indexed with
+        an integer to access variables for a specific buffer.
 
 vim.w                                                   *vim.w*
         Window-scoped (|w:|) variables for the current window.
-        Invalid or unset key returns `nil`.
+        Invalid or unset key returns `nil`. Can be indexed with
+        an integer to access variables for a specific window.
 
 vim.t                                                   *vim.t*
         Tabpage-scoped (|t:|) variables for the current tabpage.
-        Invalid or unset key returns `nil`.
+        Invalid or unset key returns `nil`. Can be indexed with
+        an integer to access variables for a specific tabpage.
 
 vim.v                                                   *vim.v*
         |v:| variables.

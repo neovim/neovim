@@ -323,22 +323,25 @@ end
 do
   local validate = vim.validate
 
-  local function make_dict_accessor(scope)
+  local function make_dict_accessor(scope, handle)
     validate {
       scope = {scope, 's'};
     }
     local mt = {}
     function mt:__newindex(k, v)
-      return vim._setvar(scope, 0, k, v)
+      return vim._setvar(scope, handle or 0, k, v)
     end
     function mt:__index(k)
-      return vim._getvar(scope, 0, k)
+      if handle == nil and type(k) == 'number' then
+        return make_dict_accessor(scope, k)
+      end
+      return vim._getvar(scope, handle or 0, k)
     end
     return setmetatable({}, mt)
   end
 
-  vim.g = make_dict_accessor('g')
-  vim.v = make_dict_accessor('v')
+  vim.g = make_dict_accessor('g', false)
+  vim.v = make_dict_accessor('v', false)
   vim.b = make_dict_accessor('b')
   vim.w = make_dict_accessor('w')
   vim.t = make_dict_accessor('t')
