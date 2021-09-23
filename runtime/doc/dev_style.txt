@@ -4,9 +4,11 @@
                             NVIM REFERENCE MANUAL
 
 
-Neovim style guide					*dev-style*
+Nvim style guide                                        *dev-style*
 
-This reference describes the neovim style guide.
+This is style guide for developers working on Nvim's source code.
+
+License: CC-By 3.0 http://creativecommons.org/licenses/by/3.0/
 
                                       Type |gO| to see the table of contents.
 
@@ -27,22 +29,22 @@ but we nonetheless keep things as they are in order to preserve consistency.
 
 
 ==============================================================================
-Header Files						*dev-style-header*
+Header Files                                            *dev-style-header*
 
 
 The #define Guard ~
 
 All header files should have `#define` guards to prevent multiple inclusion.
-The format of the symbol name should be `NEOVIM_<DIRECTORY>_<FILE>_H`.
+The format of the symbol name should be `NVIM_<DIRECTORY>_<FILE>_H`.
 
     In foo/bar.h:
 >
-	#ifndef NEOVIM_FOO_BAR_H
-	#define NEOVIM_FOO_BAR_H
+        #ifndef NVIM_FOO_BAR_H
+        #define NVIM_FOO_BAR_H
 
-	...
+        ...
 
-	#endif  // NEOVIM_FOO_BAR_H
+        #endif  // NVIM_FOO_BAR_H
 <
 
 
@@ -53,9 +55,9 @@ library, other libraries' `.h`, your project's `.h`.
 
     In foo.c order your includes as follows:
 
-	1. C system files.
-	2. Other libraries' `.h` files.
-	3. Your project's `.h` files.
+        1. C system files.
+        2. Other libraries' `.h` files.
+        3. Your project's `.h` files.
 
     Exception: sometimes, system-specific code needs conditional includes.
     Such code can put conditional includes after other includes. Of course,
@@ -74,7 +76,7 @@ represents the size of an array.
 
 
 ==============================================================================
-Scoping							*dev-style-scope*
+Scoping                                                 *dev-style-scope*
 
 Local Variables ~
 
@@ -88,26 +90,31 @@ variable is and what it was initialized to. In particular, initialization
 should be used instead of declaration and assignment, e.g. >
 
     int i;
-    i = f();      // Bad -- initialization separate from declaration.
+    i = f();      // BAD: initialization separate from declaration.
 
-    int j = g();  // Good -- declaration has initialization.
+    int j = g();  // GOOD: declaration has initialization.
 
 
 ==============================================================================
-Neovim-Specific Magic
+Nvim-Specific Magic
 
 clint ~
 
 Use `clint.py` to detect style errors.
 
-`clint.py` is a tool that reads a source file and identifies many style
-errors. It is not perfect, and has both false positives and false negatives,
-but it is still a valuable tool. False positives can be ignored by putting `//
-NOLINT` at the end of the line.
+`src/clint.py` is a Python script that reads a source file and identifies
+style errors. It is not perfect, and has both false positives and false
+negatives, but it is still a valuable tool. False positives can be ignored by
+putting `// NOLINT` at the end of the line.
 
+uncrustify ~
+
+src/uncrustify.cfg is the authority for expected code formatting, for cases
+not covered by clint.py.  We remove checks in clint.py if they are covered by
+uncrustify rules.
 
 ==============================================================================
-Other C Features					*dev-style-features*
+Other C Features                                        *dev-style-features*
 
 
 Variable-Length Arrays and alloca() ~
@@ -204,7 +211,7 @@ Don't use "yoda-conditions". Use at most one assignment per condition. >
     if (1 == x) {
 
     if (x == 1) {  //use this order
-    
+
     if ((x = f()) && (y = g())) {
 
 
@@ -318,7 +325,7 @@ format where a variable of an appropriate C type is not convenient. >
 
 
 ==============================================================================
-Naming							*dev-style-naming*
+Naming                                                  *dev-style-naming*
 
 The most important consistency rules are those that govern naming. The style
 of a name immediately informs us what sort of thing the named entity is: a
@@ -394,20 +401,20 @@ instance: `my_exciting_local_variable`.
 
     For example: >
 
-	string table_name;  // OK - uses underscore.
-	string tablename;   // OK - all lowercase.
+        string table_name;  // OK: uses underscore.
+        string tablename;   // OK: all lowercase.
 
-	string tableName;   // Bad - mixed case.
+        string tableName;   // BAD: mixed case.
 <
 
     Struct Variables ~
 
     Data members in structs should be named like regular variables. >
 
-	struct url_table_properties {
-	  string name;
-	  int num_entries;
-	}
+        struct url_table_properties {
+          string name;
+          int num_entries;
+        }
 <
 
     Global Variables ~
@@ -463,18 +470,16 @@ They're like this: `MY_MACRO_THAT_SCARES_CPP_DEVELOPERS`. >
 
 
 ==============================================================================
-Comments						*dev-style-comments*
+Comments                                                *dev-style-comments*
 
-Though a pain to write, comments are absolutely vital to keeping our code
-readable. The following rules describe what you should comment and where. But
-remember: while comments are very important, the best code is
-self-documenting. Giving sensible names to types and variables is much better
-than using obscure names that you must then explain through comments.
+Comments are vital to keeping our code readable. The following rules describe
+what you should comment and where. But remember: while comments are very
+important, the best code is self-documenting.
 
 When writing your comments, write for your audience: the next contributor who
 will need to understand your code. Be generous — the next one may be you!
 
-Neovim uses Doxygen comments.
+Nvim uses Doxygen comments.
 
 
 Comment Style ~
@@ -492,7 +497,7 @@ Start each file with a description of its contents.
 
     Legal Notice ~
 
-    We have no such thing. These things are in COPYING and only there.
+    We have no such thing. These things are in LICENSE and only there.
 
     File Contents ~
 
@@ -627,9 +632,9 @@ comments are required.
     All global variables should have a comment describing what they are and
     what they are used for. For example: >
 
-	/// The total number of tests cases that we run
-	/// through in this regression test.
-	const int kNumTestCases = 6;
+        /// The total number of tests cases that we run
+        /// through in this regression test.
+        const int kNumTestCases = 6;
 
 
 Implementation Comments ~
@@ -643,11 +648,11 @@ interesting, or important parts of your code.
     line. These end-of-line comments should be separated from the code by 2
     spaces. Example: >
 
-	// If we have enough memory, mmap the data portion too.
-	mmap_budget = max<int64>(0, mmap_budget - index_->length());
-	if (mmap_budget >= data_size_ && !MmapData(mmap_chunk_bytes, mlock)) {
-	  return;  // Error already logged.
-	}
+        // If we have enough memory, mmap the data portion too.
+        mmap_budget = max<int64>(0, mmap_budget - index_->length());
+        if (mmap_budget >= data_size_ && !MmapData(mmap_chunk_bytes, mlock)) {
+          return;  // Error already logged.
+        }
 <
     Note that there are both comments that describe what the code is doing,
     and comments that mention that an error has already been logged when the
@@ -656,13 +661,13 @@ interesting, or important parts of your code.
     If you have several comments on subsequent lines, it can often be more
     readable to line them up: >
 
-	do_something();                      // Comment here so the comments line up.
-	do_something_else_that_is_longer();  // Comment here so there are two spaces between
-					     // the code and the comment.
-	{ // One space before comment when opening a new scope is allowed,
-	  // thus the comment lines up with the following comments and code.
-	  do_something_else();  // Two spaces before line comments normally.
-	}
+        do_something();                      // Comment here so the comments line up.
+        do_something_else_that_is_longer();  // Comment here so there are two spaces between
+                                             // the code and the comment.
+        { // One space before comment when opening a new scope is allowed,
+          // thus the comment lines up with the following comments and code.
+          do_something_else();  // Two spaces before line comments normally.
+        }
 <
 
     NULL, true/false, 1, 2, 3... ~
@@ -672,29 +677,29 @@ interesting, or important parts of your code.
     make your code self-documenting by using constants. For example, compare:
     >
 
-	bool success = calculate_something(interesting_value,
-					   10,
-					   false,
-					   NULL);  // What are these arguments??
+        bool success = calculate_something(interesting_value,
+                                           10,
+                                           false,
+                                           NULL);  // What are these arguments??
 <
 
     versus: >
 
-	bool success = calculate_something(interesting_value,
-					   10,     // Default base value.
-					   false,  // Not the first time we're calling this.
-					   NULL);  // No callback.
+        bool success = calculate_something(interesting_value,
+                                           10,     // Default base value.
+                                           false,  // Not the first time we're calling this.
+                                           NULL);  // No callback.
 <
 
     Or alternatively, constants or self-describing variables: >
 
-	const int kDefaultBaseValue = 10;
-	const bool kFirstTimeCalling = false;
-	Callback *null_callback = NULL;
-	bool success = calculate_something(interesting_value,
-					   kDefaultBaseValue,
-					   kFirstTimeCalling,
-					   null_callback);
+        const int kDefaultBaseValue = 10;
+        const bool kFirstTimeCalling = false;
+        Callback *null_callback = NULL;
+        bool success = calculate_something(interesting_value,
+                                           kDefaultBaseValue,
+                                           kFirstTimeCalling,
+                                           null_callback);
 <
 
     Don'ts ~
@@ -703,9 +708,9 @@ interesting, or important parts of your code.
     person reading the code knows C better than you do, even though he or she
     does not know what you are trying to do: >
 
-	// Now go through the b array and make sure that if i occurs,
-	// the next element is i+1.
-	...        // Geez.  What a useless comment.
+        // Now go through the b array and make sure that if i occurs,
+        // the next element is i+1.
+        ...        // Geez.  What a useless comment.
 
 
 Punctuation, Spelling and Grammar ~
@@ -731,7 +736,7 @@ Use `TODO` comments for code that is temporary, a short-term solution, or
 good-enough but not perfect.
 
 `TODO`s should include the string `TODO` in all caps, followed by the name,
-e-mail address, or other identifier of the person who can best provide context
+email address, or other identifier of the person who can best provide context
 about the problem referenced by the `TODO`. The main purpose is to have a
 consistent `TODO` format that can be searched to find the person who can
 provide more details upon request. A `TODO` is not a commitment that the
@@ -740,8 +745,7 @@ almost always your name that is given. >
 
     // TODO(kl@gmail.com): Use a "*" here for concatenation operator.
     // TODO(Zeke): change this to use relations.
-    
-    
+
 If your `TODO` is of the form "At a future date do something" make sure that
 you either include a very specific date ("Fix by November 2005") or a very
 specific event ("Remove this code when all clients can handle XML
@@ -750,14 +754,14 @@ responses.").
 
 Deprecation Comments ~
 
-Mark deprecated interface points with `DEPRECATED` comments.
+Mark deprecated interface points with `@deprecated` docstring token.
 
 You can mark an interface as deprecated by writing a comment containing the
-word `DEPRECATED` in all caps. The comment goes either before the declaration
+word `@deprecated` in all caps. The comment goes either before the declaration
 of the interface or on the same line as the declaration.
 
-After the word `DEPRECATED`, write your name, e-mail address, or other
-identifier in parentheses.
+After `@deprecated`, write your name, email, or other identifier in
+parentheses.
 
 A deprecation comment must include simple, clear directions for people to fix
 their callsites. In C, you can implement a deprecated function as an inline
@@ -774,7 +778,7 @@ interface point.
 
 
 ==============================================================================
-Formatting						*dev-style-format*
+Formatting                                              *dev-style-format*
 
 Coding style and formatting are pretty arbitrary, but a project is much easier
 to follow if everyone uses the same style. Individuals may not agree with
@@ -831,7 +835,7 @@ Functions look like this: >
 If you have too much text to fit on one line: >
 
     ReturnType really_long_function_name(Type par_name1, Type par_name2,
-					 Type par_name3)
+                                         Type par_name3)
     {
       do_something();
       ...
@@ -840,9 +844,9 @@ If you have too much text to fit on one line: >
 or if you cannot fit even the first parameter (but only then): >
 
     ReturnType really_really_really_long_function_name(
-	Type par_name1,  // 4 space indent
-	Type par_name2,
-	Type par_name3)
+        Type par_name1,  // 4 space indent
+        Type par_name2,
+        Type par_name3)
     {
       do_something();  // 2 space indent
       ...
@@ -877,15 +881,15 @@ multiple lines, with each subsequent line aligned with the first argument. Do
 not add spaces after the open paren or before the close paren: >
 
     bool retval = do_something(averyveryveryverylongargument1,
-			       argument2, argument3);
+                               argument2, argument3);
 
 If the function has many arguments, consider having one per line if this makes
 the code more readable: >
 
     bool retval = do_something(argument1,
-			       argument2,
-			       argument3,
-			       argument4);
+                               argument2,
+                               argument3,
+                               argument4);
 
 Arguments may optionally all be placed on subsequent lines, with one line per
 argument: >
@@ -894,11 +898,11 @@ argument: >
       ...
       ...
       if (...) {
-	do_something(
-	    argument1,  // 4 space indent
-	    argument2,
-	    argument3,
-	    argument4);
+        do_something(
+            argument1,  // 4 space indent
+            argument2,
+            argument3,
+            argument4);
       }
 
 In particular, this should be done if the function signature is so long that
@@ -915,11 +919,11 @@ the `{}` were the parentheses of a function call with that name. If there is
 no name, assume a zero-length name. >
 
     struct my_struct m = {  // Here, you could also break before {.
-	superlongvariablename1,
-	superlongvariablename2,
-	{ short, interior, list },
-	{ interiorwrappinglist,
-	  interiorwrappinglist2 } };
+        superlongvariablename1,
+        superlongvariablename2,
+        { short, interior, list },
+        { interiorwrappinglist,
+          interiorwrappinglist2 } };
 
 
 Conditionals ~
@@ -938,11 +942,9 @@ You must have a space between the `if` and the open parenthesis. You must also
 have a space between the close parenthesis and the curly brace, if you're
 using one. >
 
-    if(condition) {   // Bad - space missing after IF.
-    if (condition){   // Bad - space missing before {.
-    if(condition){    // Doubly bad.
-
-    if (condition) {  // Good - proper space after IF and before {.
+    if(condition) {   // BAD: space missing after IF.
+    if (condition){   // BAD: space missing before {.
+    if (condition) {  // GOOD: proper space after IF and before {.
 
 
 Loops and Switch Statements ~
@@ -957,13 +959,13 @@ execute, simply `assert`: >
 
     switch (var) {
       case 0:    // 2 space indent
-	...      // 4 space indent
-	break;
+        ...      // 4 space indent
+        break;
       case 1:
-	...
-	break;
+        ...
+        break;
       default:
-	assert(false);
+        assert(false);
     }
 
 Empty loop bodies should use `{}` or `continue`, but not a single semicolon. >
@@ -971,10 +973,10 @@ Empty loop bodies should use `{}` or `continue`, but not a single semicolon. >
     while (condition) {
       // Repeat test until it returns false.
     }
-    for (int i = 0; i < kSomeNumber; i++) {}  // Good - empty body.
-    while (condition) continue;  // Good - continue indicates no logic.
+    for (int i = 0; i < kSomeNumber; i++) {}  // GOOD: empty body.
+    while (condition) continue;  // GOOD: continue indicates no logic.
 
-    while (condition);  // Bad - looks like part of do/while loop.
+    while (condition);  // BAD: looks like part of do/while loop.
 
 Pointer Expressions ~
 
@@ -999,8 +1001,8 @@ the variable name: >
 
     char *c;
 
-    char * c;  // Bad - spaces on both sides of *
-    char* c;   // Bad
+    char * c;  // BAD: spaces on both sides of *
+    char* c;   // BAD
 
 
 Boolean Expressions ~
@@ -1009,8 +1011,8 @@ When you have a boolean expression that is longer than the standard line
 length, keep operators at the start of the line. >
 
     if (this_one_thing > this_other_thing
-	&& a_third_thing == a_fourth_thing
-	&& yet_another && last_one) {
+        && a_third_thing == a_fourth_thing
+        && yet_another && last_one) {
       ...
     }
 
@@ -1041,25 +1043,25 @@ Even when preprocessor directives are within the body of indented code, the
 directives should start at the beginning of the line.
 
 Nested directives should add one spaces after the hash mark for each level of
-indentation. >
+indentation. 
 
-    // Good - directives at beginning of line
+    // GOOD: directives at beginning of line >
       if (lopsided_score) {
     #if DISASTER_PENDING      // Correct -- Starts at beginning of line
-	drop_everything();
+        drop_everything();
     # if NOTIFY               // One space after #
-	notify_client();
+        notify_client();
     # endif
     #endif
-	BackToNormal();
+        BackToNormal();
       }
 
-    // Bad - indented directives
+<    // BAD: indented directives >
       if (lopsided_score) {
-	#if DISASTER_PENDING  // Wrong!  The "#if" should be at beginning of line
-	drop_everything();
-	#endif                // Wrong!  Do not indent "#endif"
-	back_to_normal();
+        #if DISASTER_PENDING  // Wrong!  The "#if" should be at beginning of line
+        drop_everything();
+        #endif                // Wrong!  Do not indent "#endif"
+        back_to_normal();
       }
 
 
@@ -1070,64 +1072,64 @@ whitespace at the end of a line.
 
     General ~
 >
-	if (x) {          // Open braces should always have a space before them.
-	  ...
-	}
-	int i = 0;        // Semicolons usually have no space before them.
-	int x[] = { 0 };  // Spaces inside braces for braced-init-list.
+        if (x) {          // Open braces should always have a space before them.
+          ...
+        }
+        int i = 0;        // Semicolons usually have no space before them.
+        int x[] = { 0 };  // Spaces inside braces for braced-init-list.
 <
 
     Variables ~
 >
-	int long_variable = 0;  // Don't align assignments.
-	int i             = 1;
+        int long_variable = 0;  // Don't align assignments.
+        int i             = 1;
 
-	struct my_struct {  // Exception: struct arrays.
-	  const char *boy;
-	  const char *girl;
-	  int pos;
-	} my_variable[] = {
-	  { "Mia",       "Michael", 8  },
-	  { "Elizabeth", "Aiden",   10 },
-	  { "Emma",      "Mason",   2  },
-	};
+        struct my_struct {  // Exception: struct arrays.
+          const char *boy;
+          const char *girl;
+          int pos;
+        } my_variable[] = {
+          { "Mia",       "Michael", 8  },
+          { "Elizabeth", "Aiden",   10 },
+          { "Emma",      "Mason",   2  },
+        };
 <
 
     Macros ~
 >
-	#define FI(x) \  // Don't align \'s in macro definitions.
-	  foo();      \
-	  bar();      \
-	  ...
+        #define FI(x) \  // Don't align \'s in macro definitions.
+          foo();      \
+          bar();      \
+          ...
 <
 
     Loops and Conditionals ~
 >
-	if (b) {              // Space after the keyword in condition.
-	} else {              // Spaces around else.
-	}
-	while (test) {}       // There is usually no space inside parentheses.
-	for (; i < 5; i++) {  // For loops always have a space after the
-	  ...                 // semicolon and no a space before the
-	  ...                 // semicolon.
-	}
-	switch (i) {
-	  case 1:             // No space before colon in a switch case.
-	    ...
-	  case 2: break;      // Space after a colon if there's code after it.
+        if (b) {              // Space after the keyword in condition.
+        } else {              // Spaces around else.
+        }
+        while (test) {}       // There is usually no space inside parentheses.
+        for (; i < 5; i++) {  // For loops always have a space after the
+          ...                 // semicolon and no a space before the
+          ...                 // semicolon.
+        }
+        switch (i) {
+          case 1:             // No space before colon in a switch case.
+            ...
+          case 2: break;      // Space after a colon if there's code after it.
 <
 
     Operators ~
 >
-	x = 0;            // Assignment operators always have spaces around
-			  // them.
-	x = -5;           // No spaces separating unary operators and their
-	x++;              // arguments.
-	if (x && !y)
-	  ...
-	v = w*x + y/z;    // Use spaces to indicate operator precedence.
-	v = w * (x + z);  // Parentheses should have no spaces inside them.
-	i = (int)d;       // No spaces after a cast operator.
+        x = 0;            // Assignment operators always have spaces around
+                          // them.
+        x = -5;           // No spaces separating unary operators and their
+        x++;              // arguments.
+        if (x && !y)
+          ...
+        v = w*x + y/z;    // Use spaces to indicate operator precedence.
+        v = w * (x + z);  // Parentheses should have no spaces inside them.
+        i = (int)d;       // No spaces after a cast operator.
 <
 
 Vertical Whitespace ~
@@ -1149,9 +1151,9 @@ use your judgment. But in general, minimize use of vertical whitespace.
 ==============================================================================
 Parting Words
 
-The style guide is supposed to make the code more readable. If you think you
-have to violate its rules for the sake of clarity, do it! But please add a
-note to your pull request explaining your reasoning.
+The style guide is intended to make the code more readable. If you think you
+must violate its rules for the sake of clarity, do it! But please add a note
+to your pull request explaining your reasoning.
 
 
- vim:tw=78:ts=8:noet:ft=help:norl:
+ vim:tw=78:ts=8:et:ft=help:norl:
