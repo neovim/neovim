@@ -7250,17 +7250,17 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   buf[1] = NUL;
   colnr_T reglen = 0;
   switch (get_reg_type(regname, &reglen)) {
-    case kMTLineWise:
-      buf[0] = 'V';
-      break;
-    case kMTCharWise:
-      buf[0] = 'v';
-      break;
-    case kMTBlockWise:
-      vim_snprintf(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
-      break;
-    case kMTUnknown:
-      abort();
+  case kMTLineWise:
+    buf[0] = 'V';
+    break;
+  case kMTCharWise:
+    buf[0] = 'v';
+    break;
+  case kMTBlockWise:
+    vim_snprintf(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
+    break;
+  case kMTUnknown:
+    abort();
   }
   tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
@@ -9100,25 +9100,25 @@ static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *c
 {
   char_u *stropt = *pp;
   switch (*stropt) {
-    case 'v':
-    case 'c':  // character-wise selection
-      *yank_type = kMTCharWise;
-      break;
-    case 'V':
-    case 'l':  // line-wise selection
-      *yank_type = kMTLineWise;
-      break;
-    case 'b':
-    case Ctrl_V:  // block-wise selection
-      *yank_type = kMTBlockWise;
-      if (ascii_isdigit(stropt[1])) {
-        stropt++;
-        *block_len = getdigits_long(&stropt, false, 0) - 1;
-        stropt--;
-      }
-      break;
-    default:
-      return FAIL;
+  case 'v':
+  case 'c':  // character-wise selection
+    *yank_type = kMTCharWise;
+    break;
+  case 'V':
+  case 'l':  // line-wise selection
+    *yank_type = kMTLineWise;
+    break;
+  case 'b':
+  case Ctrl_V:  // block-wise selection
+    *yank_type = kMTBlockWise;
+    if (ascii_isdigit(stropt[1])) {
+      stropt++;
+      *block_len = getdigits_long(&stropt, false, 0) - 1;
+      stropt--;
+    }
+    break;
+  default:
+    return FAIL;
   }
   *pp = stropt;
   return OK;
