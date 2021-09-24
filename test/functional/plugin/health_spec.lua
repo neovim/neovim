@@ -36,6 +36,7 @@ describe(':checkhealth', function()
     clear()
     eq('nvim', getcompletion('nvim', 'checkhealth')[1])
     eq('provider', getcompletion('prov', 'checkhealth')[1])
+    eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
   end)
 end)
 
