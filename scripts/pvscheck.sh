@@ -373,7 +373,7 @@ run_analysis() {(
     analyze \
       --lic-file PVS-Studio.lic \
       --threads "$(get_jobs_num)" \
-      --exclude-path src/nvim/xdiff \
+      --exclude-path src/xdiff \
       --output-file PVS-studio.log \
       --file build/compile_commands.json \
       --sourcetree-root . || true
