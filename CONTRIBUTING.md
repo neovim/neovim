@@ -222,7 +222,7 @@ The repo includes `src/uncrustify.cfg` config file which matches the
 the following command:
 
 ```bash
-    uncrustify -c src/uncrustify.cfg --replace --no-backup src/nvim/<file-name>
+uncrustify -c src/uncrustify.cfg --replace --no-backup src/nvim/<file-name>
 ```
 
 ### Navigate
