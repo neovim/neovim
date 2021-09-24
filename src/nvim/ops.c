@@ -804,12 +804,6 @@ bool valid_yank_reg(int regname, bool writing)
   return false;
 }
 
-typedef enum {
-  YREG_PASTE,
-  YREG_YANK,
-  YREG_PUT,
-} yreg_mode_t;
-
 /// Return yankreg_T to use, according to the value of `regname`.
 /// Cannot handle the '_' (black hole) register.
 /// Must only be called with a valid register name!
@@ -3650,6 +3644,12 @@ int get_register_name(int num)
   }
 }
 
+/// @return the index of the register "" points to.
+int get_unname_register(void)
+{
+  return y_previous == NULL ? -1 : (int)(y_previous - &y_regs[0]);
+}
+
 /*
  * ":dis" and ":registers": Display the contents of the yank registers.
  */
@@ -5560,6 +5560,11 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
     }
   }
 
+  // Without any lines make the register empty.
+  if (y_ptr->y_size + newlines == 0) {
+    XFREE_CLEAR(y_ptr->y_array);
+    return;
+  }
 
   // Grow the register array to hold the pointers to the new lines.
   char_u **pp = xrealloc(y_ptr->y_array,

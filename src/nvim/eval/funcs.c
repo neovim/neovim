@@ -7218,6 +7218,61 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   fclose(fd);
 }
 
+/// "getreginfo()" function
+static void f_getreginfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  const char *strregname;
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    strregname = tv_get_string_chk(&argvars[0]);
+    if (strregname == NULL) {
+      return;
+    }
+  } else {
+    strregname = (const char *)get_vim_var_str(VV_REG);
+  }
+
+  int regname = (strregname == NULL ? '"' : *strregname);
+  if (regname == 0 || regname == '@') {
+    regname = '"';
+  }
+
+  tv_dict_alloc_ret(rettv);
+  dict_T *const dict = rettv->vval.v_dict;
+
+  list_T *const list = get_reg_contents(regname, kGRegExprSrc | kGRegList);
+  if (list == NULL) {
+    return;
+  }
+  tv_dict_add_list(dict, S_LEN("regcontents"), list);
+
+  char buf[NUMBUFLEN + 2];
+  buf[0] = NUL;
+  buf[1] = NUL;
+  colnr_T reglen = 0;
+  switch (get_reg_type(regname, &reglen)) {
+    case kMTLineWise:
+      buf[0] = 'V';
+      break;
+    case kMTCharWise:
+      buf[0] = 'v';
+      break;
+    case kMTBlockWise:
+      vim_snprintf(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
+      break;
+    case kMTUnknown:
+      abort();
+  }
+  tv_dict_add_str(dict, S_LEN("regtype"), buf);
+
+  buf[0] = get_register_name(get_unname_register());
+  buf[1] = NUL;
+  if (regname == '"') {
+    tv_dict_add_str(dict, S_LEN("points_to"), buf);
+  } else {
+    tv_dict_add_bool(dict, S_LEN("isunnamed"), regname == buf[0] ? kBoolVarTrue : kBoolVarFalse);
+  }
+}
+
 // "reg_executing()" function
 static void f_reg_executing(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -9039,6 +9094,36 @@ static void f_setqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   set_qf_ll_list(NULL, argvars, rettv);
 }
 
+/// Translate a register type string to the yank type and block length
+static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *const block_len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char_u *stropt = *pp;
+  switch (*stropt) {
+    case 'v':
+    case 'c':  // character-wise selection
+      *yank_type = kMTCharWise;
+      break;
+    case 'V':
+    case 'l':  // line-wise selection
+      *yank_type = kMTLineWise;
+      break;
+    case 'b':
+    case Ctrl_V:  // block-wise selection
+      *yank_type = kMTBlockWise;
+      if (ascii_isdigit(stropt[1])) {
+        stropt++;
+        *block_len = getdigits_long(&stropt, false, 0) - 1;
+        stropt--;
+      }
+      break;
+    default:
+      return FAIL;
+  }
+  *pp = stropt;
+  return OK;
+}
+
 /*
  * "setreg()" function
  */
@@ -9063,8 +9148,53 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     regname = '"';
   }
 
+  const typval_T *regcontents = NULL;
+  int pointreg = 0;
+  if (argvars[1].v_type == VAR_DICT) {
+    dict_T *const d = argvars[1].vval.v_dict;
+
+    if (tv_dict_len(d) == 0) {
+      // Empty dict, clear the register (like setreg(0, []))
+      char_u *lstval[2] = { NULL, NULL };
+      write_reg_contents_lst(regname, lstval, false, kMTUnknown, -1);
+      return;
+    }
+
+    dictitem_T *const di = tv_dict_find(d, "regcontents", -1);
+    if (di != NULL) {
+      regcontents = &di->di_tv;
+    }
+
+    const char *stropt = tv_dict_get_string(d, "regtype", false);
+    if (stropt != NULL) {
+      const int ret = get_yank_type((char_u **)&stropt, &yank_type, &block_len);
+
+      if (ret == FAIL || *(++stropt) != NUL) {
+        EMSG2(_(e_invargval), "value");
+        return;
+      }
+    }
+
+    if (regname == '"') {
+      stropt = tv_dict_get_string(d, "points_to", false);
+      if (stropt != NULL) {
+        pointreg = *stropt;
+        regname = pointreg;
+      }
+    } else if (tv_dict_get_number(d, "isunnamed")) {
+      pointreg = regname;
+    }
+  } else {
+    regcontents = &argvars[1];
+  }
+
   bool set_unnamed = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
+    if (yank_type != kMTUnknown) {
+      EMSG2(_(e_toomanyarg), "setreg");
+      return;
+    }
+
     const char *stropt = tv_get_string_chk(&argvars[2]);
     if (stropt == NULL) {
       return;  // Type error.
@@ -9075,33 +9205,18 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       case 'A':    // append
         append = true;
         break;
-      case 'v':
-      case 'c':    // character-wise selection
-        yank_type = kMTCharWise;
-        break;
-      case 'V':
-      case 'l':    // line-wise selection
-        yank_type = kMTLineWise;
-        break;
-      case 'b':
-      case Ctrl_V:    // block-wise selection
-        yank_type = kMTBlockWise;
-        if (ascii_isdigit(stropt[1])) {
-          stropt++;
-          block_len = getdigits_long((char_u **)&stropt, true, 0) - 1;
-          stropt--;
-        }
-        break;
       case 'u':
       case '"':    // unnamed register
         set_unnamed = true;
         break;
+      default:
+        get_yank_type((char_u **)&stropt, &yank_type, &block_len);
       }
     }
   }
 
-  if (argvars[1].v_type == VAR_LIST) {
-    list_T *ll = argvars[1].vval.v_list;
+  if (regcontents != NULL && regcontents->v_type == VAR_LIST) {
+    list_T *const ll = regcontents->vval.v_list;
     // If the list is NULL handle like an empty list.
     const int len = tv_list_len(ll);
 
@@ -9137,13 +9252,16 @@ free_lstval:
       xfree(*--curallocval);
     }
     xfree(lstval);
-  } else {
-    const char *strval = tv_get_string_chk(&argvars[1]);
+  } else if (regcontents != NULL) {
+    const char *const strval = tv_get_string_chk(regcontents);
     if (strval == NULL) {
       return;
     }
     write_reg_contents_ex(regname, (const char_u *)strval, STRLEN(strval),
                           append, yank_type, block_len);
+  }
+  if (pointreg != 0) {
+    get_yank_register(pointreg, YREG_YANK);
   }
   rettv->vval.v_number = 0;
 
