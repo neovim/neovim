@@ -143,12 +143,14 @@ M['textDocument/codeAction'] = function(_, result, ctx)
   if action.edit then
     util.apply_workspace_edit(action.edit)
   end
-  local command = type(action.command) == 'table' and action.command or action
-  local fn = vim.lsp.commands[command.command]
-  if fn then
-    fn(command, ctx)
-  else
-    buf.execute_command(command)
+  if action.command then
+    local command = type(action.command) == 'table' and action.command or action
+    local fn = vim.lsp.commands[command.command]
+    if fn then
+      fn(command, ctx)
+    else
+      buf.execute_command(command)
+    end
   end
 end
 
