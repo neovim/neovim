@@ -101,12 +101,13 @@ local function check_emsg(f, msg)
     saved_last_msg_hist = nil
   end
   local ret = {f()}
+  local last_msg = lib.last_msg_hist ~= nil and ffi.string(lib.last_msg_hist.msg) or nil
   if msg ~= nil then
-    eq(msg, ffi.string(lib.last_msg_hist.msg))
+    eq(msg, last_msg)
     neq(saved_last_msg_hist, lib.last_msg_hist)
   else
     if saved_last_msg_hist ~= lib.last_msg_hist then
-      eq(nil, ffi.string(lib.last_msg_hist.msg))
+      eq(nil, last_msg)
     else
       eq(saved_last_msg_hist, lib.last_msg_hist)
     end
