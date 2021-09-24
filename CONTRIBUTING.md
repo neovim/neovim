@@ -217,13 +217,20 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 
 ### Style
 
-The repo includes a `.clang-format` config file which (mostly) matches the
-[style-guide].  You can use `clang-format` to format code with the `gq`
-operator in Nvim:
-
-    if !empty(findfile('.clang-format', ';'))
-      setlocal formatprg=clang-format\ -style=file
-    endif
+- Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
+  the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
+  ```
+  if !empty(findfile('src/.uncrustify', ';'))
+    setlocal formatprg=uncrustify\ -q\ -c\ src/uncrustify.cfg\ --replace\ --no-backup
+  endif
+  ```
+- There is also `.clang-format` which has drifted from the [style-guide], but
+  is available for reference. To use the Nvim `gq` command with `clang-format`:
+  ```
+  if !empty(findfile('.clang-format', ';'))
+    setlocal formatprg=clang-format\ -style=file
+  endif
+  ```
 
 ### Navigate
 
@@ -263,7 +270,7 @@ as context, use the `-W` argument as well.
 [1820]: https://github.com/neovim/neovim/pull/1820
 [hub]: https://hub.github.com/
 [conventional_commits]: https://www.conventionalcommits.org
-[style-guide]: http://neovim.io/develop/style-guide.xml
+[style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
@@ -278,3 +285,4 @@ as context, use the `-W` argument as well.
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
 [pr-draft]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
+[uncrustify]: https://formulae.brew.sh/formula/uncrustify
