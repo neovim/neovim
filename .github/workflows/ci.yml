@@ -30,6 +30,9 @@ jobs:
           - cc: clang
             runner: macos-10.15
             os: osx
+          - cc: clang
+            runner: macos-11.0
+            os: osx
           - flavor: functionaltest-lua
             cc: gcc
             runner: ubuntu-20.04
