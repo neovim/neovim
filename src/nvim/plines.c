@@ -5,18 +5,17 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <string.h>
-#include <limits.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/plines.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
-#include "nvim/func_attr.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
@@ -24,10 +23,11 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/plines.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
-#include "nvim/buffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "plines.c.generated.h"
@@ -71,7 +71,7 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
 /// "wp".  Does not care about folding, 'wrap' or 'diff'.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
-  char_u      *s;
+  char_u *s;
   unsigned int col;
   int width;
 
@@ -159,8 +159,8 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 /// @param[in]  cache    whether to use the window's cache for folds
 ///
 /// @return the total number of screen lines
-int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp,
-                    bool *const foldedp, const bool cache)
+int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const foldedp,
+                    const bool cache)
 {
   bool folded = hasFoldingWin(wp, lnum, NULL, nextp, cache, NULL);
   if (foldedp) {
@@ -302,8 +302,7 @@ int lbr_chartabsize_adv(char_u *line, char_u **s, colnr_T col)
 /// @param headp
 ///
 /// @return The number of characters taken up on the screen.
-int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
-                        colnr_T col, int *headp)
+int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *headp)
 {
   colnr_T col2;
   colnr_T col_adj = 0;  // col + screen size of tab
@@ -326,7 +325,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
   int size = win_chartabsize(wp, s, col);
   int c = *s;
   if (*s == TAB) {
-      col_adj = size - 1;
+    col_adj = size - 1;
   }
 
   // If 'linebreak' set check at a blank before a non-blank if the line
@@ -343,8 +342,8 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s,
     colmax = (colnr_T)(wp->w_width_inner - numberextra - col_adj);
 
     if (col >= colmax) {
-        colmax += col_adj;
-        n = colmax + win_col_off2(wp);
+      colmax += col_adj;
+      n = colmax + win_col_off2(wp);
 
       if (n > 0) {
         colmax += (((col - colmax) / n) + 1) * n - col_adj;

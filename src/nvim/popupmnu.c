@@ -9,27 +9,27 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "nvim/buffer.h"
-#include "nvim/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
-#include "nvim/eval/typval.h"
-#include "nvim/popupmnu.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/edit.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/popupmnu.h"
 #include "nvim/screen.h"
-#include "nvim/ui_compositor.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
-#include "nvim/memory.h"
-#include "nvim/window.h"
-#include "nvim/edit.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
-static pumitem_T *pum_array = NULL; // items of displayed pum
+static pumitem_T *pum_array = NULL;  // items of displayed pum
 static int pum_size;                // nr of items in "pum_array"
 static int pum_selected;            // index of selected item or -1
 static int pum_first = 0;           // index of top item
@@ -98,8 +98,7 @@ static void pum_compute_size(void)
 ///                      if false, a new item is selected, but the array
 ///                      is the same
 /// @param cmd_startcol only for cmdline mode: column of completed match
-void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
-                 int cmd_startcol)
+void pum_display(pumitem_T *array, int size, int selected, bool array_changed, int cmd_startcol)
 {
   int context_lines;
   int above_row;
@@ -234,7 +233,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         context_lines = 3;
       } else {
         context_lines = curwin->w_cline_row
-          + curwin->w_cline_height - curwin->w_wrow;
+                        + curwin->w_cline_height - curwin->w_wrow;
       }
 
       pum_row = pum_win_row + context_lines;
@@ -488,17 +487,17 @@ void pum_redraw(void)
       s = NULL;
 
       switch (round) {
-        case 1:
-          p = pum_array[idx].pum_text;
-          break;
+      case 1:
+        p = pum_array[idx].pum_text;
+        break;
 
-        case 2:
-          p = pum_array[idx].pum_kind;
-          break;
+      case 2:
+        p = pum_array[idx].pum_kind;
+        break;
 
-        case 3:
-          p = pum_array[idx].pum_extra;
-          break;
+      case 3:
+        p = pum_array[idx].pum_extra;
+        break;
       }
 
       if (p != NULL) {
