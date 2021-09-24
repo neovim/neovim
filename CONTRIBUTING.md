@@ -217,13 +217,13 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 
 ### Style
 
-The repo includes a `.clang-format` config file which (mostly) matches the
-[style-guide].  You can use `clang-format` to format code with the `gq`
-operator in Nvim:
+The repo includes `src/uncrustify.cfg` config file which matches the
+[style-guide].  You can use `uncrustify` to format files under `src/nvim` with
+the following command:
 
-    if !empty(findfile('.clang-format', ';'))
-      setlocal formatprg=clang-format\ -style=file
-    endif
+```bash
+    uncrustify -c src/uncrustify.cfg --replace --no-backup src/nvim/<file-name>
+```
 
 ### Navigate
 
@@ -263,7 +263,7 @@ as context, use the `-W` argument as well.
 [1820]: https://github.com/neovim/neovim/pull/1820
 [hub]: https://hub.github.com/
 [conventional_commits]: https://www.conventionalcommits.org
-[style-guide]: http://neovim.io/develop/style-guide.xml
+[style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
