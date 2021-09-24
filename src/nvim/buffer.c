@@ -3112,12 +3112,13 @@ void fileinfo(int fullname,               // when non-zero print full path
                  (size_t)(IOSIZE - (p - buffer)), true);
   }
 
+  bool dontwrite = bt_dontwrite(curbuf);
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
                    curbufIsChanged()
                    ? (shortmess(SHM_MOD) ?  " [+]" : _(" [Modified]")) : " ",
-                   (curbuf->b_flags & BF_NOTEDITED) && !bt_dontwrite(curbuf)
+                   (curbuf->b_flags & BF_NOTEDITED) && !dontwrite
                    ? _("[Not edited]") : "",
-                   (curbuf->b_flags & BF_NEW) && !bt_dontwrite(curbuf)
+                   (curbuf->b_flags & BF_NEW) && !dontwrite
                    ? new_file_message() : "",
                    (curbuf->b_flags & BF_READERR)
                    ? _("[Read errors]") : "",
