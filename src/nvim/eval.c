@@ -6193,7 +6193,7 @@ int assert_inrange(typval_T *argvars)
       char msg[55];
       vim_snprintf(msg, sizeof(msg),
                    "range %" PRIdVARNUMBER " - %" PRIdVARNUMBER ",",
-                   lower, upper);
+                   lower, upper);  // -V576
       fill_assert_error(&ga, &argvars[3], (char_u *)msg, NULL, &argvars[2],
                         ASSERT_INRANGE);
       assert_error(&ga);
