@@ -461,15 +461,15 @@ void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
 /// When only inserting lines, "lnum" and "lnume" are equal.
 /// Takes care of calling changed() and updating b_mod_*.
 /// Careful: may trigger autocommands that reload the buffer.
-void changed_lines(linenr_T lnum,        // first line with change
-                   colnr_T col,          // column in first line with change
-                   linenr_T lnume,       // line below last changed line
-                   long xtra,            // number of extra lines (negative when deleting)
-                   bool do_buf_event  // some callers like undo/redo call changed_lines()
-                                      // and then increment changedtick *again*. This flag
-                                      // allows these callers to send the nvim_buf_lines_event
-                                      // events after they're done modifying changedtick.
-                   )
+///
+/// @param lnum  first line with change
+/// @param col  column in first line with change
+/// @param lnume  line below last changed line
+/// @param xtra  number of extra lines (negative when deleting)
+/// @param do_buf_event  some callers like undo/redo call changed_lines() and
+/// then increment changedtick *again*. This flag allows these callers to send
+/// the nvim_buf_lines_event events after they're done modifying changedtick.
+void changed_lines(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra, bool do_buf_event)
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
 
@@ -950,9 +950,10 @@ int copy_indent(int size, char_u *src)
 /// "second_line_indent": indent for after ^^D in Insert mode or if flag
 ///                       OPENLINE_COM_LIST
 ///
+/// @param dir  FORWARD or BACKWARD
+///
 /// @return true on success, false on failure
-int open_line(int dir,                        // FORWARD or BACKWARD
-              int flags, int second_line_indent)
+int open_line(int dir, int flags, int second_line_indent)
 {
   char_u *next_line = NULL;       // copy of the next line
   char_u *p_extra = NULL;         // what goes to next line

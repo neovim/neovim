@@ -166,16 +166,19 @@ int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
 
 /// Insert a new sign into the signlist for buffer 'buf' between the 'prev' and
 /// 'next' signs.
-static void insert_sign(buf_T *buf,             // buffer to store sign in
-                        sign_entry_T *prev,       // previous sign entry
-                        sign_entry_T *next,       // next sign entry
-                        int id,                 // sign ID
-                        const char_u *group,    // sign group; NULL for global group
-                        int prio,               // sign priority
-                        linenr_T lnum,          // line number which gets the mark
-                        int typenr,             // typenr of sign we are adding
-                        bool has_text_or_icon   // sign has text or icon
-                        )
+///
+/// @param buf  buffer to store sign in
+/// @param prev  previous sign entry
+/// @param next  next sign entry
+/// @param id  sign ID
+/// @param group  sign group; NULL for global group
+/// @param prio  sign priority
+/// @param lnum  line number which gets the mark
+/// @param typenr  typenr of sign we are adding
+/// @param has_text_or_icon  sign has text or icon
+static void insert_sign(buf_T *buf, sign_entry_T *prev, sign_entry_T *next, int id,
+                        const char_u *group, int prio, linenr_T lnum, int typenr,
+                        bool has_text_or_icon)
 {
   sign_entry_T *newsign = xmalloc(sizeof(sign_entry_T));
   newsign->se_id = id;
@@ -211,15 +214,17 @@ static void insert_sign(buf_T *buf,             // buffer to store sign in
 }
 
 /// Insert a new sign sorted by line number and sign priority.
-static void insert_sign_by_lnum_prio(buf_T *buf,            // buffer to store sign in
-                                     sign_entry_T *prev,      // previous sign entry
-                                     int id,                // sign ID
-                                     const char_u *group,   // sign group; NULL for global group
-                                     int prio,              // sign priority
-                                     linenr_T lnum,         // line number which gets the mark
-                                     int typenr,            // typenr of sign we are adding
-                                     bool has_text_or_icon  // sign has text or icon
-                                     )
+///
+/// @param buf  buffer to store sign in
+/// @param prev  previous sign entry
+/// @param id  sign ID
+/// @param group  sign group; NULL for global group
+/// @param prio  sign priority
+/// @param lnum  line number which gets the mark
+/// @param typenr  typenr of sign we are adding
+/// @param has_text_or_icon  sign has text or icon
+static void insert_sign_by_lnum_prio(buf_T *buf, sign_entry_T *prev, int id, const char_u *group,
+                                     int prio, linenr_T lnum, int typenr, bool has_text_or_icon)
 {
   sign_entry_T *sign;
 
@@ -343,14 +348,16 @@ static void sign_sort_by_prio_on_line(buf_T *buf, sign_entry_T *sign)
 
 
 /// Add the sign into the signlist. Find the right spot to do it though.
-void buf_addsign(buf_T *buf,               // buffer to store sign in
-                 int id,                   // sign ID
-                 const char_u *groupname,  // sign group
-                 int prio,                 // sign priority
-                 linenr_T lnum,            // line number which gets the mark
-                 int typenr,               // typenr of sign we are adding
-                 bool has_text_or_icon     // sign has text or icon
-                 )
+///
+/// @param buf  buffer to store sign in
+/// @param id  sign ID
+/// @param groupname  sign group
+/// @param prio  sign priority
+/// @param lnum  line number which gets the mark
+/// @param typenr  typenr of sign we are adding
+/// @param has_text_or_icon  sign has text or icon
+void buf_addsign(buf_T *buf, int id, const char_u *groupname, int prio, linenr_T lnum, int typenr,
+                 bool has_text_or_icon)
 {
   sign_entry_T *sign;    // a sign in the signlist
   sign_entry_T *prev;    // the previous sign
@@ -388,14 +395,15 @@ void buf_addsign(buf_T *buf,               // buffer to store sign in
                            has_text_or_icon);
 }
 
-// For an existing, placed sign "markId" change the type to "typenr".
-// Returns the line number of the sign, or zero if the sign is not found.
-linenr_T buf_change_sign_type(buf_T *buf,         // buffer to store sign in
-                              int markId,         // sign ID
-                              const char_u *group,      // sign group
-                              int typenr,         // typenr of sign we are adding
-                              int prio            // sign priority
-                              )
+/// For an existing, placed sign "markId" change the type to "typenr".
+/// Returns the line number of the sign, or zero if the sign is not found.
+///
+/// @param buf  buffer to store sign in
+/// @param markId  sign ID
+/// @param group  sign group
+/// @param typenr  typenr of sign we are adding
+/// @param prio  sign priority
+linenr_T buf_change_sign_type(buf_T *buf, int markId, const char_u *group, int typenr, int prio)
 {
   sign_entry_T *sign;  // a sign in the signlist
 
@@ -513,13 +521,15 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
 /// If 'group' is '*', then delete the sign in all the groups. If 'group' is
 /// NULL, then delete the sign in the global group. Otherwise delete the sign in
 /// the specified group.
-/// Returns the line number of the deleted sign. If multiple signs are deleted,
+///
+/// @param buf  buffer sign is stored in
+/// @param atlnum  sign at this line, 0 - at any line
+/// @param id  sign id
+/// @param group  sign group
+///
+/// @return  the line number of the deleted sign. If multiple signs are deleted,
 /// then returns the line number of the last sign deleted.
-linenr_T buf_delsign(buf_T *buf,         // buffer sign is stored in
-                     linenr_T  atlnum,   // sign at this line, 0 - at any line
-                     int id,             // sign id
-                     char_u *group       // sign group
-                     )
+linenr_T buf_delsign(buf_T *buf, linenr_T  atlnum, int id, char_u *group)
 {
   sign_entry_T **lastp;  // pointer to pointer to current sign
   sign_entry_T *sign;    // a sign in a b_signlist
@@ -572,10 +582,11 @@ linenr_T buf_delsign(buf_T *buf,         // buffer sign is stored in
 /// Find the line number of the sign with the requested id in group 'group'. If
 /// the sign does not exist, return 0 as the line number. This will still let
 /// the correct file get loaded.
-int buf_findsign(buf_T *buf,     // buffer to store sign in
-                 int id,         // sign ID
-                 char_u *group   // sign group
-                 )
+///
+/// @param buf  buffer to store sign in
+/// @param id  sign ID
+/// @param group  sign group
+int buf_findsign(buf_T *buf, int id, char_u *group)
 {
   sign_entry_T *sign;  // a sign in the signlist
 
@@ -590,10 +601,11 @@ int buf_findsign(buf_T *buf,     // buffer to store sign in
 
 /// Return the sign at line 'lnum' in buffer 'buf'. Returns NULL if a sign is
 /// not found at the line. If 'groupname' is NULL, searches in the global group.
-static sign_entry_T *buf_getsign_at_line(buf_T *buf,        // buffer whose sign we are searching for
-                                         linenr_T lnum,     // line number of sign
-                                         char_u *groupname  // sign group name
-                                         )
+///
+/// @param buf  buffer whose sign we are searching for
+/// @param lnum  line number of sign
+/// @param groupname  sign group name
+static sign_entry_T *buf_getsign_at_line(buf_T *buf, linenr_T lnum, char_u *groupname)
 {
   sign_entry_T *sign;    // a sign in the signlist
 
@@ -613,10 +625,11 @@ static sign_entry_T *buf_getsign_at_line(buf_T *buf,        // buffer whose sign
 }
 
 /// Return the identifier of the sign at line number 'lnum' in buffer 'buf'.
-int buf_findsign_id(buf_T *buf,         // buffer whose sign we are searching for
-                    linenr_T lnum,      // line number of sign
-                    char_u *groupname   // sign group name
-                    )
+///
+/// @param buf  buffer whose sign we are searching for
+/// @param lnum  line number of sign
+/// @param groupname  sign group name
+int buf_findsign_id(buf_T *buf, linenr_T lnum, char_u *groupname)
 {
   sign_entry_T *sign;   // a sign in the signlist
 
@@ -753,9 +766,10 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
 
 /// Find index of a ":sign" subcmd from its name.
 /// "*end_cmd" must be writable.
-static int sign_cmd_idx(char_u *begin_cmd,     // begin of sign subcmd
-                        char_u *end_cmd        // just after sign subcmd
-                        )
+///
+/// @param begin_cmd  begin of sign subcmd
+/// @param end_cmd  just after sign subcmd
+static int sign_cmd_idx(char_u *begin_cmd, char_u *end_cmd)
 {
   int  idx;
   char_u save = *end_cmd;
