@@ -14,6 +14,7 @@ describe('visual-mode', function()
   it("select-mode Ctrl-O doesn't cancel Ctrl-O mode when processing event #15688", function()
     feed('iHello World<esc>gh<c-o>')
     eq({mode='vs', blocking=false}, meths.get_mode()) -- fast event
+    eq({mode='vs', blocking=false}, meths.get_mode()) -- again #15288
     eq(2, eval('1+1'))  -- causes K_EVENT key
     eq({mode='vs', blocking=false}, meths.get_mode()) -- still in ctrl-o mode
     feed('^')
