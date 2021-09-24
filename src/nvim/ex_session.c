@@ -450,11 +450,11 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
       }
     } else if (fprintf(fd,
                        "let s:l = %" PRIdLINENR " - ((%" PRIdLINENR
-                       " * winheight(0) + %" PRId64 ") / %" PRId64 ")\n",
+                       " * winheight(0) + %d) / %d)\n",
                        wp->w_cursor.lnum,
                        wp->w_cursor.lnum - wp->w_topline,
-                       (int64_t)(wp->w_height_inner / 2),
-                       (int64_t)wp->w_height_inner) < 0) {
+                       (wp->w_height_inner / 2),
+                       wp->w_height_inner) < 0) {
       return FAIL;
     }
     if (fprintf(fd,

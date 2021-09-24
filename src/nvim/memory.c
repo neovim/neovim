@@ -170,6 +170,8 @@ void *xrealloc(void *ptr, size_t size)
 
 /// xmalloc() wrapper that allocates size + 1 bytes and zeroes the last byte
 ///
+/// Commonly used to allocate strings, e.g. `char *s = xmallocz(len)`.
+///
 /// @see {xmalloc}
 /// @param size
 /// @return pointer to allocated space. Never NULL

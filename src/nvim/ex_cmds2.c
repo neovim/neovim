@@ -1950,7 +1950,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
     snprintf((char *)sourcing_name_buf, sizeof(sourcing_name_buf),
              "%s called at %s:%" PRIdLINENR, traceback_name, save_sourcing_name,
              save_sourcing_lnum);
-    sourcing_name = sourcing_name_buf;
+    sourcing_name = sourcing_name_buf;  // -V507 reassigned below, before return.
   }
   sourcing_lnum = 0;
 
