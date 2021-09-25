@@ -10,7 +10,7 @@ on:
 
 jobs:
   unixish:
-    name: ${{ matrix.os }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
+    name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +29,9 @@ jobs:
             os: linux
           - cc: clang
             runner: macos-10.15
+            os: osx
+          - cc: clang
+            runner: macos-11.0
             os: osx
           - flavor: functionaltest-lua
             cc: gcc
@@ -80,7 +83,7 @@ jobs:
           path: |
             ${{ env.CACHE_NVIM_DEPS_DIR }}
             ~/.ccache
-          key: ${{ runner.os }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'third-party/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
+          key: ${{ matrix.runner }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'third-party/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
 
       - name: Build third-party
         run: ./ci/before_script.sh
