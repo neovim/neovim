@@ -762,7 +762,7 @@ bool emsgf_multiline(const char *const fmt, ...)
   va_list ap;
 
 
-  static char  errbuf[MULTILINE_BUFSIZE];
+  static char errbuf[MULTILINE_BUFSIZE];
   if (emsg_not_now()) {
     return true;
   }

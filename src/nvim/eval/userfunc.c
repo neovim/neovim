@@ -68,11 +68,11 @@ void func_init(void)
 static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, int *varargs,
                              garray_T *default_args, bool skip)
 {
-  bool    mustend = false;
+  bool mustend = false;
   char_u *arg = *argp;
   char_u *p = arg;
-  int     c;
-  int     i;
+  int c;
+  int i;
 
   if (newargs != NULL) {
     ga_init(newargs, (int)sizeof(char_u *), 3);
@@ -205,8 +205,8 @@ static void register_closure(ufunc_T *fp)
 /// Get a name for a lambda.  Returned in static memory.
 char_u *get_lambda_name(void)
 {
-  static char_u   name[30];
-  static int      lambda_no = 0;
+  static char_u name[30];
+  static int lambda_no = 0;
 
   snprintf((char *)name, sizeof(name), "<lambda>%d", ++lambda_no);
   return name;
@@ -217,16 +217,16 @@ char_u *get_lambda_name(void)
 /// @return OK or FAIL.  Returns NOTDONE for dict or {expr}.
 int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
 {
-  garray_T   newargs = GA_EMPTY_INIT_VALUE;
+  garray_T newargs = GA_EMPTY_INIT_VALUE;
   garray_T *pnewargs;
   ufunc_T *fp = NULL;
   partial_T *pt = NULL;
-  int        varargs;
-  int        ret;
+  int varargs;
+  int ret;
   char_u *start = skipwhite(*arg + 1);
   char_u *s, *e;
   bool *old_eval_lavars = eval_lavars_used;
-  bool       eval_lavars = false;
+  bool eval_lavars = false;
 
   // First, check if this is a lambda expression. "->" must exists.
   ret = get_function_args(&start, '-', NULL, NULL, NULL, true);

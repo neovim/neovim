@@ -1046,8 +1046,8 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
   char_u *strcopy = NULL;
   char_u *ps;
   char_u *msgbuf = NULL;
-  size_t          len;
-  bool            has_offset = false;
+  size_t len;
+  bool has_offset = false;
 
   /*
    * A line offset is not remembered, this is vi compatible.
@@ -1182,8 +1182,8 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
     if ((options & SEARCH_ECHO) && messaging() && !msg_silent
         && (!cmd_silent || !shortmess(SHM_SEARCHCOUNT))) {
       char_u *trunc;
-      char_u      off_buf[40];
-      size_t      off_len = 0;
+      char_u off_buf[40];
+      size_t off_len = 0;
 
       // Compute msg_row early.
       msg_start();
@@ -2459,7 +2459,7 @@ int findsent(Direction dir, long count)
 {
   pos_T pos, tpos;
   int c;
-  int         (*func)(pos_T *);
+  int (*func)(pos_T *);
   bool noskip = false;              // do not skip blanks
 
   pos = curwin->w_cursor;
@@ -4474,7 +4474,7 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool sh
   update_search_stat(dirc, pos, cursor_pos, &stat, recompute, maxcount,
                      timeout);
   if (stat.cur > 0) {
-    char  t[SEARCH_STAT_BUF_LEN];
+    char t[SEARCH_STAT_BUF_LEN];
 
     if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
       if (stat.incomplete == 1) {
@@ -4534,19 +4534,19 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool sh
 static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchstat_T *stat,
                                bool recompute, int maxcount, long timeout)
 {
-  int             save_ws = p_ws;
-  bool             wraparound = false;
-  pos_T           p = (*pos);
-  static pos_T    lastpos = { 0, 0, 0 };
-  static int      cur = 0;
-  static int      cnt = 0;
-  static bool      exact_match = false;
-  static int      incomplete = 0;
-  static int      last_maxcount = SEARCH_STAT_DEF_MAX_COUNT;
-  static int      chgtick = 0;
+  int save_ws = p_ws;
+  bool wraparound = false;
+  pos_T p = (*pos);
+  static pos_T lastpos = { 0, 0, 0 };
+  static int cur = 0;
+  static int cnt = 0;
+  static bool exact_match = false;
+  static int incomplete = 0;
+  static int last_maxcount = SEARCH_STAT_DEF_MAX_COUNT;
+  static int chgtick = 0;
   static char_u *lastpat = NULL;
   static buf_T *lbuf = NULL;
-  proftime_T      start;
+  proftime_T start;
 
   memset(stat, 0, sizeof(searchstat_T));
 
@@ -4636,12 +4636,12 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
 // "searchcount()" function
 void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  pos_T   pos = curwin->w_cursor;
+  pos_T pos = curwin->w_cursor;
   char_u *pattern = NULL;
-  int     maxcount = SEARCH_STAT_DEF_MAX_COUNT;
-  long    timeout = SEARCH_STAT_DEF_TIMEOUT;
-  bool     recompute = true;
-  searchstat_T  stat;
+  int maxcount = SEARCH_STAT_DEF_MAX_COUNT;
+  long timeout = SEARCH_STAT_DEF_TIMEOUT;
+  bool recompute = true;
+  searchstat_T stat;
 
   tv_dict_alloc_ret(rettv);
 

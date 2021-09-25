@@ -147,7 +147,7 @@ struct compl_S {
   compl_T *cp_prev;
   char_u *cp_str;          // matched text
   char_u *(cp_text[CPT_COUNT]);    // text for the menu
-  typval_T    cp_user_data;
+  typval_T cp_user_data;
   char_u *cp_fname;        // file containing the match, allocated when
                            // cp_flags has CP_FREE_FNAME
   int cp_flags;                 // CP_ values

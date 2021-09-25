@@ -3667,8 +3667,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             n_extra = tab_len;
           } else {
             char_u *p;
-            int    i;
-            int    saved_nextra = n_extra;
+            int i;
+            int saved_nextra = n_extra;
 
             if (vcol_off > 0) {
               // there are characters to conceal

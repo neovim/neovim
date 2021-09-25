@@ -3439,7 +3439,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
   struct chars_tab {
     int *cp;    ///< char value
     char *name;  ///< char id
-    int     def;    ///< default value
+    int def;    ///< default value
   };
   struct chars_tab *tab;
 

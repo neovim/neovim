@@ -5848,8 +5848,8 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   char_u *name;
   char_u *string = NULL;
-  int     len;
-  int     cc;
+  int len;
+  int cc;
 
   ++*arg;
   name = *arg;
@@ -6299,9 +6299,9 @@ int assert_fails(typval_T *argvars)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *const cmd = tv_get_string_chk(&argvars[0]);
-  garray_T    ga;
+  garray_T ga;
   int ret = 0;
-  int         save_trylevel = trylevel;
+  int save_trylevel = trylevel;
 
   // trylevel must be zero for a ":throw" command to be considered failed
   trylevel = 0;
@@ -7345,7 +7345,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
   const char *line = NULL;
   list_T *l = NULL;
   listitem_T *li = NULL;
-  long        added = 0;
+  long added = 0;
   linenr_T append_lnum;
   buf_T *curbuf_save = NULL;
   win_T *curwin_save = NULL;

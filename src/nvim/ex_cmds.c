@@ -1800,7 +1800,7 @@ int do_write(exarg_T *eap)
   int retval = FAIL;
   char_u *free_fname = NULL;
   buf_T *alt_buf = NULL;
-  int          name_was_missing;
+  int name_was_missing;
 
   if (not_writing()) {          // check 'write' option
     return FAIL;
@@ -2294,8 +2294,8 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
   char_u *new_name = NULL;
   bool did_set_swapcommand = false;
   buf_T *buf;
-  bufref_T     bufref;
-  bufref_T     old_curbuf;
+  bufref_T bufref;
+  bufref_T old_curbuf;
   char_u *free_fname = NULL;
   int retval = FAIL;
   long n;
@@ -3078,7 +3078,7 @@ void ex_change(exarg_T *eap)
 void ex_z(exarg_T *eap)
 {
   char_u *x;
-  int64_t     bigness;
+  int64_t bigness;
   char_u *kind;
   int minus = 0;
   linenr_T start, end, curs, i;

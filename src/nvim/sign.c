@@ -26,13 +26,13 @@ typedef struct sign sign_T;
 struct sign
 {
   sign_T *sn_next;       // next sign in list
-  int         sn_typenr;      // type number of sign
+  int sn_typenr;      // type number of sign
   char_u *sn_name;       // name of sign
   char_u *sn_icon;       // name of pixmap
   char_u *sn_text;       // text used instead of pixmap
-  int         sn_line_hl;     // highlight ID for line
-  int         sn_text_hl;     // highlight ID for text
-  int         sn_num_hl;      // highlight ID for line number
+  int sn_line_hl;     // highlight ID for line
+  int sn_text_hl;     // highlight ID for text
+  int sn_num_hl;      // highlight ID for line number
 };
 
 static sign_T *first_sign = NULL;
@@ -73,7 +73,7 @@ void init_signs(void)
 ///
 static signgroup_T *sign_group_ref(const char_u *groupname)
 {
-  hash_T        hash;
+  hash_T hash;
   hashitem_T *hi;
   signgroup_T *group;
 
@@ -529,7 +529,7 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
 ///
 /// @return  the line number of the deleted sign. If multiple signs are deleted,
 /// then returns the line number of the last sign deleted.
-linenr_T buf_delsign(buf_T *buf, linenr_T  atlnum, int id, char_u *group)
+linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
 {
   sign_entry_T **lastp;  // pointer to pointer to current sign
   sign_entry_T *sign;    // a sign in a b_signlist
@@ -678,8 +678,8 @@ void sign_list_placed(buf_T *rbuf, char_u *sign_group)
 {
   buf_T *buf;
   sign_entry_T *sign;
-  char  lbuf[MSG_BUF_LEN];
-  char  group[MSG_BUF_LEN];
+  char lbuf[MSG_BUF_LEN];
+  char group[MSG_BUF_LEN];
 
   MSG_PUTS_TITLE(_("\n--- Signs ---"));
   msg_putchar('\n');
@@ -771,7 +771,7 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
 /// @param end_cmd  just after sign subcmd
 static int sign_cmd_idx(char_u *begin_cmd, char_u *end_cmd)
 {
-  int  idx;
+  int idx;
   char_u save = *end_cmd;
 
   *end_cmd = (char_u)NUL;
@@ -1059,7 +1059,7 @@ int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T atlnum)
     redraw_buf_later(buf, NOT_VALID);
     buf_delete_signs(buf, sign_group);
   } else {
-    linenr_T  lnum;
+    linenr_T lnum;
 
     // Delete only the specified signs
     lnum = buf_delsign(buf, atlnum, sign_id, sign_group);
@@ -1082,7 +1082,7 @@ int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T atlnum)
 /// Unplace the sign at the current cursor line.
 static void sign_unplace_at_cursor(char_u *groupname)
 {
-  int   id = -1;
+  int id = -1;
 
   id = buf_findsign_id(curwin->w_buffer, curwin->w_cursor.lnum, groupname);
   if (id > 0) {
@@ -1178,8 +1178,8 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
 }
 
 /// ":sign place" command
-static void sign_place_cmd(buf_T *buf, linenr_T  lnum, char_u *sign_name, int   id, char_u *group,
-                           int   prio)
+static void sign_place_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id, char_u *group,
+                           int prio)
 {
   if (id <= 0) {
     // List signs placed in a file/buffer
@@ -1211,7 +1211,7 @@ static void sign_place_cmd(buf_T *buf, linenr_T  lnum, char_u *sign_name, int   
 }
 
 /// ":sign unplace" command
-static void sign_unplace_cmd(buf_T *buf, linenr_T  lnum, char_u *sign_name, int   id, char_u *group)
+static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id, char_u *group)
 {
   if (lnum >= 0 || sign_name != NULL || (group != NULL && *group == '\0')) {
     EMSG(_(e_invarg));
@@ -1268,7 +1268,7 @@ static void sign_unplace_cmd(buf_T *buf, linenr_T  lnum, char_u *sign_name, int 
 ///   :sign jump {id} buffer={nr}
 ///   :sign jump {id} group={group} file={fname}
 ///   :sign jump {id} group={group} buffer={nr}
-static void sign_jump_cmd(buf_T *buf, linenr_T  lnum, char_u *sign_name, int   id, char_u *group)
+static void sign_jump_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int id, char_u *group)
 {
   if (sign_name == NULL && group == NULL && id == -1) {
     EMSG(_(e_argreq));
@@ -1290,13 +1290,13 @@ static void sign_jump_cmd(buf_T *buf, linenr_T  lnum, char_u *sign_name, int   i
 /// ":sign jump" commands.
 /// The supported arguments are: line={lnum} name={name} group={group}
 /// priority={prio} and file={fname} or buffer={nr}.
-static int parse_sign_cmd_args(int     cmd, char_u *arg, char_u **sign_name, int *signid,
+static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *signid,
                                char_u **group, int *prio, buf_T **buf, linenr_T *lnum)
 {
   char_u *arg1;
   char_u *name;
   char_u *filename = NULL;
-  int   lnum_arg = false;
+  int lnum_arg = false;
 
   // first arg could be placed sign id
   arg1 = arg;
@@ -1726,7 +1726,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 {
   char_u *end_subcmd;
   char_u *last;
-  int    cmd_idx;
+  int cmd_idx;
   char_u *begin_subcmd_args;
 
   // Default: expand subcommands.

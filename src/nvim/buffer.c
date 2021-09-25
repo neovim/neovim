@@ -103,10 +103,10 @@ typedef enum {
 /// @param read_stdin  read file from stdin, otherwise fifo
 /// @param eap  for forced 'ff' and 'fenc' or NULL
 /// @param flags  extra flags for readfile()
-static int read_buffer(int     read_stdin, exarg_T *eap, int     flags)
+static int read_buffer(int read_stdin, exarg_T *eap, int flags)
 {
-  int       retval = OK;
-  linenr_T  line_count;
+  int retval = OK;
+  linenr_T line_count;
 
   //
   // Read from the buffer which the text is already filled in and append at
@@ -159,7 +159,7 @@ static int read_buffer(int     read_stdin, exarg_T *eap, int     flags)
 int open_buffer(int read_stdin, exarg_T *eap, int flags)
 {
   int retval = OK;
-  bufref_T       old_curbuf;
+  bufref_T old_curbuf;
   long old_tw = curbuf->b_p_tw;
   int read_fifo = false;
 

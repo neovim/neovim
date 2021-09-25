@@ -140,25 +140,25 @@ static unsigned last_prompt_id = 0;
 
 // Struct to store the viewstate during 'incsearch' highlighting.
 typedef struct {
-  colnr_T   vs_curswant;
-  colnr_T   vs_leftcol;
-  linenr_T  vs_topline;
-  int       vs_topfill;
-  linenr_T  vs_botline;
-  int       vs_empty_rows;
+  colnr_T vs_curswant;
+  colnr_T vs_leftcol;
+  linenr_T vs_topline;
+  int vs_topfill;
+  linenr_T vs_botline;
+  int vs_empty_rows;
 } viewstate_T;
 
 // Struct to store the state of 'incsearch' highlighting.
 typedef struct {
-  pos_T       search_start;   // where 'incsearch' starts searching
-  pos_T       save_cursor;
+  pos_T search_start;   // where 'incsearch' starts searching
+  pos_T save_cursor;
   viewstate_T init_viewstate;
   viewstate_T old_viewstate;
-  pos_T       match_start;
-  pos_T       match_end;
-  bool        did_incsearch;
-  bool        incsearch_postponed;
-  int         magic_save;
+  pos_T match_start;
+  pos_T match_end;
+  bool did_incsearch;
+  bool incsearch_postponed;
+  int magic_save;
 } incsearch_state_T;
 
 typedef struct command_line_state {
@@ -178,8 +178,8 @@ typedef struct command_line_state {
   int did_wild_list;                    // did wild_list() recently
   int wim_index;                        // index in wim_flags[]
   int res;
-  int       save_msg_scroll;
-  int       save_State;                 // remember State when called
+  int save_msg_scroll;
+  int save_State;                 // remember State when called
   char_u *save_p_icm;
   int some_key_typed;                   // one of the keys was typed
   // mouse drag and release events are ignored, unless they are
@@ -383,7 +383,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   // Don't do 'hlsearch' highlighting if the pattern matches everything.
   if (!use_last_pat) {
     char_u c = *end;
-    int  empty;
+    int empty;
 
     *end = NUL;
     empty = empty_pattern(p);
@@ -1502,7 +1502,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
   ui_busy_start();
   ui_flush();
 
-  pos_T  t;
+  pos_T t;
   char_u *pat;
   int search_flags = SEARCH_NOOF;
   char_u save;
@@ -5272,7 +5272,7 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
 static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)
 {
   char_u *e;
-  garray_T  ga;
+  garray_T ga;
 
   char_u *const retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp, num_file,
                                                file);
@@ -6250,8 +6250,8 @@ int hist_type2char(int type)
 static int open_cmdwin(void)
 {
   struct cmdline_info save_ccline;
-  bufref_T            old_curbuf;
-  bufref_T            bufref;
+  bufref_T old_curbuf;
+  bufref_T bufref;
   win_T *old_curwin = curwin;
   win_T *wp;
   int i;
