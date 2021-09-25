@@ -794,8 +794,6 @@ end
 ---@param bufnr number Buffer number
 ---@param diagnostics table A list of diagnostic items |diagnostic-structure|. When omitted the
 ---                       current diagnostics in the given buffer are used.
----@param opts table Configuration table with the following keys:
----            - priority: Set the priority of the signs |sign-priority|.
 ---@private
 function M._set_signs(namespace, bufnr, diagnostics, opts)
   vim.validate {
@@ -806,15 +804,32 @@ function M._set_signs(namespace, bufnr, diagnostics, opts)
   }
 
   bufnr = get_bufnr(bufnr)
-  opts = get_resolved_options({ signs = opts }, namespace, bufnr).signs
+  opts = get_resolved_options({ signs = opts }, namespace, bufnr)
 
-  if opts and opts.severity then
-    diagnostics = filter_by_severity(opts.severity, diagnostics)
+  if opts.signs and opts.signs.severity then
+    diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
   end
 
   local ns = get_namespace(namespace)
 
   define_default_signs()
+
+  local get_priority
+  if opts.severity_sort then
+    if type(opts.severity_sort) == "table" and opts.severity_sort.reverse then
+      get_priority = function(severity)
+        return severity - vim.diagnostic.severity.ERROR
+      end
+    else
+      get_priority = function(severity)
+        return vim.diagnostic.severity.HINT - severity
+      end
+    end
+  else
+    get_priority = function()
+      return 0
+    end
+  end
 
   for _, diagnostic in ipairs(diagnostics) do
     vim.fn.sign_place(
@@ -823,7 +838,7 @@ function M._set_signs(namespace, bufnr, diagnostics, opts)
       sign_highlight_map[diagnostic.severity],
       bufnr,
       {
-        priority = opts and opts.priority,
+        priority = 10 + get_priority(diagnostic.severity),
         lnum = diagnostic.lnum + 1
       }
     )
