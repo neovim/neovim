@@ -146,8 +146,8 @@ include(ExternalProject)
 
 if(WIN32)
   # "nvim" branch of https://github.com/neovim/libuv
-  set(LIBUV_URL https://github.com/neovim/libuv/archive/c124607c8893126f2e769c30e03f5d8d665f46a2.tar.gz)
-  set(LIBUV_SHA256 0d54303baba85dc30d099976317abfcf4f4533d9aeb9d629c031a7ca5142bdb5)
+  set(LIBUV_URL https://github.com/clason/libuv/archive/fd70ae175f6d204e8b12018158b22901f8378719.tar.gz)
+  set(LIBUV_SHA256 b331c5c306398f8d62cdf985f93f6ec9973d3cfda285968da230ea609f0a7d9f)
 else()
   set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.42.0.tar.gz)
   set(LIBUV_SHA256 371e5419708f6aaeb8656671f89400b92a9bba6443369af1bb70bcd6e4b3c764)
