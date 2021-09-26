@@ -3226,7 +3226,7 @@ void maketitle(void)
 
   if (p_title) {
     if (p_titlelen > 0) {
-      maxlen = (int)(p_titlelen * Columns / 100);
+      maxlen = (int)(p_titlelen * g_columns / 100);
       if (maxlen < 10) {
         maxlen = 10;
       }
@@ -4823,7 +4823,7 @@ void do_arg_all(int count, int forceit, int keep_tabs)
       wpnext = wp->w_next;
       buf = wp->w_buffer;
       if (buf->b_ffname == NULL
-          || (!keep_tabs && (buf->b_nwindows > 1 || wp->w_width != Columns))) {
+          || (!keep_tabs && (buf->b_nwindows > 1 || wp->w_width != g_columns))) {
         i = opened_len;
       } else {
         // check if the buffer in this window is in the arglist
@@ -5072,9 +5072,9 @@ void ex_buffer_all(exarg_T *eap)
       wpnext = wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
            || ((cmdmod.split & WSP_VERT)
-               ? wp->w_height + wp->w_status_height < Rows - p_ch
+               ? wp->w_height + wp->w_status_height < g_rows - p_ch
                - tabline_height()
-               : wp->w_width != Columns)
+               : wp->w_width != g_columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
           && !(wp->w_closing ||

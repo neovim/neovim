@@ -2229,7 +2229,7 @@ void ex_function(exarg_T *eap)
       line_to_free = theline;
     }
     if (KeyTyped) {
-      lines_left = Rows - 1;
+      lines_left = g_rows - 1;
     }
     if (theline == NULL) {
       EMSG(_("E126: Missing :endfunction"));

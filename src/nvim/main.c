@@ -287,7 +287,7 @@ int main(int argc, char **argv)
 
   full_screen = !silent_mode;
 
-  // Set the default values for the options that use Rows and Columns.
+  // Set the default values for the options that use g_rows and g_columns.
   win_init_size();
   // Set the 'diff' option now, so that it can be checked for in a vimrc
   // file.  There is no buffer yet though.
@@ -295,8 +295,8 @@ int main(int argc, char **argv)
     diff_win_options(firstwin, false);
   }
 
-  assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
-  cmdline_row = (int)(Rows - p_ch);
+  assert(p_ch >= 0 && g_rows >= p_ch && g_rows - p_ch <= INT_MAX);
+  cmdline_row = (int)(g_rows - p_ch);
   msg_row = cmdline_row;
   screenalloc();  // allocate screen buffers
   set_init_2(headless_mode);
@@ -592,7 +592,7 @@ void getout(int exitval)
   set_vim_var_nr(VV_EXITING, exitval);
 
   // Position the cursor on the last screen line, below all the text
-  ui_cursor_goto(Rows - 1, 0);
+  ui_cursor_goto(g_rows - 1, 0);
 
   // Optionally print hashtable efficiency.
   hash_debug_results();
@@ -681,7 +681,7 @@ void getout(int exitval)
   }
 
   // Position the cursor again, the autocommands may have moved it
-  ui_cursor_goto(Rows - 1, 0);
+  ui_cursor_goto(g_rows - 1, 0);
 
   // Apply 'titleold'.
   if (p_title && *p_titleold != NUL) {

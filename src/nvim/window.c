@@ -62,7 +62,7 @@
 
 #define NOWIN           (win_T *)-1     // non-existing window
 
-#define ROWS_AVAIL (Rows - p_ch - tabline_height())
+#define ROWS_AVAIL (g_rows - p_ch - tabline_height())
 
 /// flags for win_enter_ext()
 typedef enum {
@@ -389,7 +389,7 @@ newwindow:
   // set current window height
   case Ctrl__:
   case '_':
-    win_setheight(Prenum ? (int)Prenum : Rows-1);
+    win_setheight(Prenum ? (int)Prenum : g_rows-1);
     break;
 
   // increase current window width
@@ -404,7 +404,7 @@ newwindow:
 
   // set current window width
   case '|':
-    win_setwidth(Prenum != 0 ? (int)Prenum : Columns);
+    win_setwidth(Prenum != 0 ? (int)Prenum : g_columns);
     break;
 
   // jump to tag and split window if tag exists (in preview window)
@@ -731,9 +731,9 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
 
   if (!ui_has(kUIMultigrid)) {
     wp->w_height = MIN(wp->w_height,
-                       Rows - 1 - (wp->w_border_adj[0] + wp->w_border_adj[2]));
+                       g_rows - 1 - (wp->w_border_adj[0] + wp->w_border_adj[2]));
     wp->w_width = MIN(wp->w_width,
-                      Columns - (wp->w_border_adj[1] + wp->w_border_adj[3]));
+                      g_columns - (wp->w_border_adj[1] + wp->w_border_adj[3]));
   }
 
   win_set_inner_size(wp);
@@ -857,8 +857,8 @@ void ui_ext_win_position(win_T *wp)
       int comp_col = (int)col - (east ? wp->w_width : 0);
       comp_row += grid->comp_row;
       comp_col += grid->comp_col;
-      comp_row = MAX(MIN(comp_row, Rows-wp->w_height_outer-1), 0);
-      comp_col = MAX(MIN(comp_col, Columns-wp->w_width_outer), 0);
+      comp_row = MAX(MIN(comp_row, g_rows-wp->w_height_outer-1), 0);
+      comp_col = MAX(MIN(comp_col, g_columns-wp->w_width_outer), 0);
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
       bool valid = (wp->w_redr_type == 0);
@@ -1319,7 +1319,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     // width and column of new window is same as current window
     if (flags & (WSP_TOP | WSP_BOT)) {
       wp->w_wincol = 0;
-      win_new_width(wp, Columns);
+      win_new_width(wp, g_columns);
       wp->w_vsep_width = 0;
     } else {
       wp->w_wincol = oldwin->w_wincol;
@@ -1370,11 +1370,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   status_redraw_all();
 
   if (need_status) {
-    msg_row = Rows - 1;
+    msg_row = g_rows - 1;
     msg_col = sc_col;
     msg_clr_eos_force();        // Old command/ruler may still be there
     comp_col();
-    msg_row = Rows - 1;
+    msg_row = g_rows - 1;
     msg_col = 0;        // put position back at start of line
   }
 
@@ -1925,7 +1925,7 @@ void win_equal(win_T *next_curwin, bool current, int dir)
   }
   win_equal_rec(next_curwin == NULL ? curwin : next_curwin, current,
                 topframe, dir, 0, tabline_height(),
-                Columns, topframe->fr_height);
+                g_columns, topframe->fr_height);
 }
 
 /// Set a frame to a new position and height, spreading the available room
@@ -1975,7 +1975,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
        * frame. */
       n = frame_minwidth(topfr, NOWIN);
       // add one for the rightmost window, it doesn't have a separator
-      if (col + width == Columns) {
+      if (col + width == g_columns) {
         extra_sep = 1;
       } else {
         extra_sep = 0;
@@ -3623,7 +3623,7 @@ void win_alloc_aucmd_win(void)
 {
   Error err = ERROR_INIT;
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
-  fconfig.width = Columns;
+  fconfig.width = g_columns;
   fconfig.height = 5;
   fconfig.focusable = false;
   aucmd_win = win_new_float(NULL, fconfig, &err);
@@ -3662,8 +3662,8 @@ static int win_alloc_firstwin(win_T *oldwin)
 
   new_frame(curwin);
   topframe = curwin->w_frame;
-  topframe->fr_width = Columns;
-  topframe->fr_height = Rows - p_ch;
+  topframe->fr_width = g_columns;
+  topframe->fr_height = g_rows - p_ch;
 
   return OK;
 }
@@ -3689,10 +3689,10 @@ void win_init_size(void)
   firstwin->w_height_inner = firstwin->w_height;
   firstwin->w_height_outer = firstwin->w_height;
   topframe->fr_height = ROWS_AVAIL;
-  firstwin->w_width = Columns;
+  firstwin->w_width = g_columns;
   firstwin->w_width_inner = firstwin->w_width;
   firstwin->w_width_outer = firstwin->w_width;
-  topframe->fr_width = Columns;
+  topframe->fr_width = g_columns;
 }
 
 /*
@@ -3974,8 +3974,8 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
   tp->tp_prevwin = prevwin;
   tp->tp_firstwin = firstwin;
   tp->tp_lastwin = lastwin;
-  tp->tp_old_Rows = Rows;
-  tp->tp_old_Columns = Columns;
+  tp->tp_old_rows = g_rows;
+  tp->tp_old_columns = g_columns;
   firstwin = NULL;
   lastwin = NULL;
   return OK;
@@ -4026,14 +4026,14 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   // When cmdheight is changed in a tab page with '<C-w>-', cmdline_row is
   // changed but p_ch and tp_ch_used are not changed. Thus we also need to
   // check cmdline_row.
-  if ((row < cmdline_row) && (cmdline_row <= Rows - p_ch)) {
+  if ((row < cmdline_row) && (cmdline_row <= g_rows - p_ch)) {
     clear_cmdline = true;
   }
 
-  if (curtab->tp_old_Rows != Rows || (old_off != firstwin->w_winrow)) {
+  if (curtab->tp_old_rows != g_rows || (old_off != firstwin->w_winrow)) {
     shell_new_rows();
   }
-  if (curtab->tp_old_Columns != Columns && starting == 0) {
+  if (curtab->tp_old_columns != g_columns && starting == 0) {
     shell_new_columns();  // update window widths
   }
 
@@ -4689,7 +4689,7 @@ static win_T *win_alloc(win_T *after, bool hidden)
   }
 
   new_wp->w_wincol = 0;
-  new_wp->w_width = Columns;
+  new_wp->w_width = g_columns;
 
   // position the display and the cursor at the top of the file.
   new_wp->w_topline = 1;
@@ -4931,7 +4931,7 @@ static void frame_remove(frame_T *frp)
 
 
 /*
- * Called from win_new_shellsize() after Rows changed.
+ * Called from win_new_shellsize() after g_rows changed.
  * This only does the current tab page, others must be done when made active.
  */
 void shell_new_rows(void)
@@ -4959,7 +4959,7 @@ void shell_new_rows(void)
 }
 
 /*
- * Called from win_new_shellsize() after Columns changed.
+ * Called from win_new_shellsize() after g_columns changed.
  */
 void shell_new_columns(void)
 {
@@ -4969,9 +4969,9 @@ void shell_new_columns(void)
 
   /* First try setting the widths of windows with 'winfixwidth'.  If that
    * doesn't result in the right width, forget about that option. */
-  frame_new_width(topframe, Columns, false, true);
-  if (!frame_check_width(topframe, Columns)) {
-    frame_new_width(topframe, Columns, false, false);
+  frame_new_width(topframe, g_columns, false, true);
+  if (!frame_check_width(topframe, g_columns)) {
+    frame_new_width(topframe, g_columns, false, false);
   }
 
   (void)win_comp_pos();  // recompute w_winrow and w_wincol
@@ -5008,7 +5008,7 @@ void win_size_save(garray_T *gap)
   ga_init(gap, (int)sizeof(int), 1);
   ga_grow(gap, win_count() * 2 + 1);
   // first entry is value of 'lines'
-  ((int *)gap->ga_data)[gap->ga_len++] = Rows;
+  ((int *)gap->ga_data)[gap->ga_len++] = g_rows;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ((int *)gap->ga_data)[gap->ga_len++] =
@@ -5024,7 +5024,7 @@ void win_size_restore(garray_T *gap)
   FUNC_ATTR_NONNULL_ALL
 {
   if (win_count() * 2 + 1 == gap->ga_len
-      && ((int *)gap->ga_data)[0] == Rows) {
+      && ((int *)gap->ga_data)[0] == g_rows) {
     // The order matters, because frames contain other frames, but it's
     // difficult to get right. The easy way out is to do it twice.
     for (int j = 0; j < 2; j++) {
@@ -5153,7 +5153,7 @@ void win_setheight_win(int height, win_T *win)
     // If there is extra space created between the last window and the command
     // line, clear it.
     if (full_screen && msg_scrolled == 0 && row < cmdline_row) {
-      grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
+      grid_fill(&default_grid, row, cmdline_row, 0, g_columns, ' ', ' ', 0);
     }
     cmdline_row = row;
     msg_row = row;
@@ -5232,11 +5232,11 @@ static void frame_setheight(frame_T *curfrp, int height)
           room -= frame_minheight(frp, NULL);
         }
       }
-      if (curfrp->fr_width != Columns) {
+      if (curfrp->fr_width != g_columns) {
         room_cmdline = 0;
       } else {
         win_T *wp = lastwin_nofloating();
-        room_cmdline = Rows - p_ch
+        room_cmdline = g_rows - p_ch
                        - (wp->w_winrow + wp->w_height + wp->w_status_height);
         if (room_cmdline < 0) {
           room_cmdline = 0;
@@ -5246,7 +5246,7 @@ static void frame_setheight(frame_T *curfrp, int height)
       if (height <= room + room_cmdline) {
         break;
       }
-      if (run == 2 || curfrp->fr_width == Columns) {
+      if (run == 2 || curfrp->fr_width == g_columns) {
         height = room + room_cmdline;
         break;
       }
@@ -5510,7 +5510,7 @@ void win_setminheight(void)
 
   // loop until there is a 'winminheight' that is possible
   while (p_wmh > 0) {
-    const int room = Rows - p_ch;
+    const int room = g_rows - p_ch;
     const int needed = min_rows() - 1;  // 1 was added for the cmdline
     if (room >= needed) {
       break;
@@ -5530,7 +5530,7 @@ void win_setminwidth(void)
 
   // loop until there is a 'winminheight' that is possible
   while (p_wmw > 0) {
-    const int room = Columns;
+    const int room = g_columns;
     const int needed = frame_minwidth(topframe, NULL);
     if (room >= needed) {
       break;
@@ -5599,7 +5599,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
   } else {  // drag down
     up = false;
     // Only dragging the last status line can reduce p_ch.
-    room = Rows - cmdline_row;
+    room = g_rows - cmdline_row;
     if (curfr->fr_next == NULL) {
       room -= 1;
     } else {
@@ -5654,12 +5654,12 @@ void win_drag_status_line(win_T *dragwin, int offset)
     }
   }
   row = win_comp_pos();
-  grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
+  grid_fill(&default_grid, row, cmdline_row, 0, g_columns, ' ', ' ', 0);
   if (msg_grid.chars) {
     clear_cmdline = true;
   }
   cmdline_row = row;
-  p_ch = Rows - cmdline_row;
+  p_ch = g_rows - cmdline_row;
   if (p_ch < 1) {
     p_ch = 1;
   }
@@ -6016,7 +6016,7 @@ void command_height(void)
 
   // Find bottom frame with width of screen.
   frp = lastwin_nofloating()->w_frame;
-  while (frp->fr_width != Columns && frp->fr_parent != NULL) {
+  while (frp->fr_width != g_columns && frp->fr_parent != NULL) {
     frp = frp->fr_parent;
   }
 
@@ -6027,7 +6027,7 @@ void command_height(void)
   }
 
   if (starting != NO_SCREEN) {
-    cmdline_row = Rows - p_ch;
+    cmdline_row = g_rows - p_ch;
 
     if (p_ch > old_p_ch) {                  // p_ch got bigger
       while (p_ch > old_p_ch) {
@@ -6035,7 +6035,7 @@ void command_height(void)
           EMSG(_(e_noroom));
           p_ch = old_p_ch;
           curtab->tp_ch_used = p_ch;
-          cmdline_row = Rows - p_ch;
+          cmdline_row = g_rows - p_ch;
           break;
         }
         h = frp->fr_height - frame_minheight(frp, NULL);
@@ -6052,7 +6052,7 @@ void command_height(void)
 
       // clear the lines added to cmdline
       if (full_screen) {
-        grid_fill(&default_grid, cmdline_row, Rows, 0, Columns, ' ', ' ', 0);
+        grid_fill(&default_grid, cmdline_row, g_rows, 0, g_columns, ' ', ' ', 0);
       }
       msg_row = cmdline_row;
       redraw_cmdline = true;

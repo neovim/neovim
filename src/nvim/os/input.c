@@ -328,11 +328,11 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf, unsigned int bu
     if (col >= 0 && row >= 0) {
       // Make sure the mouse position is valid.  Some terminals may
       // return weird values.
-      if (col >= Columns) {
-        col = Columns - 1;
+      if (col >= g_columns) {
+        col = g_columns - 1;
       }
-      if (row >= Rows) {
-        row = Rows - 1;
+      if (row >= g_rows) {
+        row = g_rows - 1;
       }
       mouse_grid = 0;
       mouse_row = row;

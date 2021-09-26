@@ -1224,10 +1224,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
           len = 0;  // adjusted below
         } else if (msg_scrolled != 0 && !cmd_silent) {
           // Use all the columns.
-          len = (Rows - msg_row) * Columns - 1;
+          len = (g_rows - msg_row) * g_columns - 1;
         } else {
           // Use up to 'showcmd' column.
-          len = (Rows - msg_row - 1) * Columns + sc_col - 1;
+          len = (g_rows - msg_row - 1) * g_columns + sc_col - 1;
         }
         if (len < STRLEN(p) + off_len + SEARCH_STAT_BUF_LEN + 3) {
           len = STRLEN(p) + off_len + SEARCH_STAT_BUF_LEN + 3;

@@ -78,17 +78,17 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
                       "exe '%dresize ' . ((&lines * %" PRId64
                       " + %" PRId64 ") / %" PRId64 ")\n",
                       n, (int64_t)wp->w_height,
-                      (int64_t)Rows / 2, (int64_t)Rows) < 0)) {
+                      (int64_t)g_rows / 2, (int64_t)g_rows) < 0)) {
         return FAIL;
       }
 
       // restore width when not full width
-      if (wp->w_width < Columns
+      if (wp->w_width < g_columns
           && (fprintf(fd,
                       "exe 'vert %dresize ' . ((&columns * %" PRId64
                       " + %" PRId64 ") / %" PRId64 ")\n",
-                      n, (int64_t)wp->w_width, (int64_t)Columns / 2,
-                      (int64_t)Columns) < 0)) {
+                      n, (int64_t)wp->w_width, (int64_t)g_columns / 2,
+                      (int64_t)g_columns) < 0)) {
         return FAIL;
       }
     }
@@ -589,7 +589,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   if (ssop_flags & SSOP_RESIZE) {
     // Note: after the restore we still check it worked!
     if (fprintf(fd, "set lines=%" PRId64 " columns=%" PRId64 "\n",
-                (int64_t)Rows, (int64_t)Columns) < 0) {
+                (int64_t)g_rows, (int64_t)g_columns) < 0) {
       return FAIL;
     }
   }

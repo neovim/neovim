@@ -482,8 +482,8 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
     win_T *wp = get_win_by_grid_handle(*gridp);
     if (wp && wp->w_grid_alloc.chars
         && !(wp->w_floating && !wp->w_float_config.focusable)) {
-      *rowp = MIN(*rowp-wp->w_grid.row_offset, wp->w_grid.Rows-1);
-      *colp = MIN(*colp-wp->w_grid.col_offset, wp->w_grid.Columns-1);
+      *rowp = MIN(*rowp-wp->w_grid.row_offset, wp->w_grid.g_rows-1);
+      *colp = MIN(*colp-wp->w_grid.col_offset, wp->w_grid.g_columns-1);
       return wp;
     }
   } else if (*gridp == 0) {
@@ -730,16 +730,16 @@ int mouse_check_fold(void)
   int click_row = mouse_row;
   int click_col = mouse_col;
   int mouse_char = ' ';
-  int max_row = Rows;
-  int max_col = Columns;
+  int max_row = g_rows;
+  int max_col = g_columns;
   int multigrid = ui_has(kUIMultigrid);
 
   win_T *wp;
 
   wp = mouse_find_win(&click_grid, &click_row, &click_col);
   if (wp && multigrid) {
-    max_row = wp->w_grid_alloc.Rows;
-    max_col = wp->w_grid_alloc.Columns;
+    max_row = wp->w_grid_alloc.g_rows;
+    max_col = wp->w_grid_alloc.g_columns;
   }
 
   if (wp && mouse_row >= 0 && mouse_row < max_row

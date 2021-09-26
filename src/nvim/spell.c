@@ -2924,8 +2924,8 @@ void spell_suggest(int count)
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
-  if (sps_limit > (int)Rows - 2) {
-    limit = (int)Rows - 2;
+  if (sps_limit > (int)g_rows - 2) {
+    limit = (int)g_rows- 2;
   } else {
     limit = sps_limit;
   }
@@ -2943,13 +2943,13 @@ void spell_suggest(int count)
     // When 'rightleft' is set the list is drawn right-left.
     cmdmsg_rl = curwin->w_p_rl;
     if (cmdmsg_rl) {
-      msg_col = Columns - 1;
+      msg_col = g_columns - 1;
     }
 
     // List the suggestions.
     msg_start();
-    msg_row = Rows - 1;         // for when 'cmdheight' > 1
-    lines_left = Rows;          // avoid more prompt
+    msg_row = g_rows - 1;         // for when 'cmdheight' > 1
+    lines_left = g_rows;          // avoid more prompt
     vim_snprintf((char *)IObuff, IOSIZE, _("Change \"%.*s\" to:"),
                  sug.su_badlen, sug.su_badptr);
     if (cmdmsg_rl && STRNCMP(IObuff, "Change", 6) == 0) {
@@ -3022,7 +3022,7 @@ void spell_suggest(int count)
     if (mouse_used) {
       selected -= lines_left;
     }
-    lines_left = Rows;                  // avoid more prompt
+    lines_left = g_rows;                  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()
     msg_scroll = msg_scroll_save;
   }

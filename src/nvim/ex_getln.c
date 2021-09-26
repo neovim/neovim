@@ -1709,7 +1709,7 @@ static int command_line_handle_key(CommandLineState *s)
       XFREE_CLEAR(ccline.cmdbuff);        // no commandline to return
       if (!cmd_silent && !ui_has(kUICmdline)) {
         if (cmdmsg_rl) {
-          msg_col = Columns;
+          msg_col = g_columns;
         } else {
           msg_col = 0;
         }
@@ -1858,7 +1858,7 @@ static int command_line_handle_key(CommandLineState *s)
       }
 
       int cells = cmdline_charsize(ccline.cmdpos);
-      if (KeyTyped && ccline.cmdspos + cells >= Columns * Rows) {
+      if (KeyTyped && ccline.cmdspos + cells >= g_columns * g_rows) {
         break;
       }
 
@@ -1931,8 +1931,8 @@ static int command_line_handle_key(CommandLineState *s)
     for (ccline.cmdpos = 0; ccline.cmdpos < ccline.cmdlen;
          ccline.cmdpos++) {
       int cells = cmdline_charsize(ccline.cmdpos);
-      if (mouse_row <= cmdline_row + ccline.cmdspos / Columns
-          && mouse_col < ccline.cmdspos % Columns + cells) {
+      if (mouse_row <= cmdline_row + ccline.cmdspos / g_columns
+          && mouse_col < ccline.cmdspos % g_columns + cells) {
         break;
       }
 
@@ -2456,7 +2456,7 @@ static int cmd_screencol(int bytepos)
 
   int col = cmd_startcol();
   if (KeyTyped) {
-    m = Columns * Rows;
+    m = g_columns * g_rows;
     if (m < 0) {        // overflow, Columns or Rows at weird value
       m = MAXCOL;
     }
@@ -2486,7 +2486,7 @@ static void correct_screencol(int idx, int cells, int *col)
 {
   if (utfc_ptr2len(ccline.cmdbuff + idx) > 1
       && utf_ptr2cells(ccline.cmdbuff + idx) > 1
-      && (*col) % Columns + cells > Columns) {
+      && (*col) % g_columns + cells > g_columns) {
     (*col)++;
   }
 }
@@ -3237,7 +3237,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
       ccline.cmdspos -= i;
       msg_col -= i;
       if (msg_col < 0) {
-        msg_col += Columns;
+        msg_col += g_columns;
         --msg_row;
       }
     }
@@ -3255,7 +3255,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     msg_no_more = FALSE;
   }
   if (KeyTyped) {
-    m = Columns * Rows;
+    m = g_columns * g_rows;
     if (m < 0) {            // overflow, Columns or Rows at weird value
       m = MAXCOL;
     }
@@ -3481,7 +3481,7 @@ static void redrawcmdprompt(void)
   }
   if (ccline.cmdprompt != NULL) {
     msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
-    ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
+    ccline.cmdindent = msg_col + (msg_row - cmdline_row) * g_columns;
     // do the reverse of cmd_startcol()
     if (ccline.cmdfirstc != NUL) {
       ccline.cmdindent--;
@@ -3547,7 +3547,7 @@ void redrawcmd(void)
 void compute_cmdrow(void)
 {
   if (exmode_active || msg_scrolled != 0) {
-    cmdline_row = Rows - 1;
+    cmdline_row = g_rows - 1;
   } else {
     win_T *wp = lastwin_nofloating();
     cmdline_row = wp->w_winrow + wp->w_height
@@ -3571,16 +3571,16 @@ static void cursorcmd(void)
   }
 
   if (cmdmsg_rl) {
-    msg_row = cmdline_row  + (ccline.cmdspos / (Columns - 1));
-    msg_col = Columns - (ccline.cmdspos % (Columns - 1)) - 1;
+    msg_row = cmdline_row  + (ccline.cmdspos / (g_columns - 1));
+    msg_col = g_columns - (ccline.cmdspos % (g_columns - 1)) - 1;
     if (msg_row <= 0) {
-      msg_row = Rows - 1;
+      msg_row = g_rows - 1;
     }
   } else {
-    msg_row = cmdline_row + (ccline.cmdspos / Columns);
-    msg_col = ccline.cmdspos % Columns;
-    if (msg_row >= Rows) {
-      msg_row = Rows - 1;
+    msg_row = cmdline_row + (ccline.cmdspos / g_columns);
+    msg_col = ccline.cmdspos % g_columns;
+    if (msg_row >= g_rows) {
+      msg_row = g_rows - 1;
     }
   }
 
@@ -3601,7 +3601,7 @@ void gotocmdline(bool clr)
   }
   msg_start();
   if (cmdmsg_rl) {
-    msg_col = Columns - 1;
+    msg_col = g_columns - 1;
   } else {
     msg_col = 0;  // always start in column 0
   }
@@ -4279,7 +4279,7 @@ static int showmatches(expand_T *xp, int wildmenu)
     } else {
       // compute the number of columns and lines for the listing
       maxlen += 2;          // two spaces between file names
-      columns = (Columns + 2) / maxlen;
+      columns = (g_columns + 2) / maxlen;
       if (columns < 1) {
         columns = 1;
       }
@@ -6203,9 +6203,9 @@ void ex_history(exarg_T *eap)
           msg_putchar('\n');
           snprintf((char *)IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
                    hist[i].hisnum);
-          if (vim_strsize(hist[i].hisstr) > Columns - 10) {
+          if (vim_strsize(hist[i].hisstr) > g_columns - 10) {
             trunc_string(hist[i].hisstr, IObuff + STRLEN(IObuff),
-                         Columns - 10, IOSIZE - (int)STRLEN(IObuff));
+                         g_columns - 10, IOSIZE - (int)STRLEN(IObuff));
           } else {
             STRCAT(IObuff, hist[i].hisstr);
           }

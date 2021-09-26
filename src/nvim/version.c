@@ -2022,8 +2022,8 @@ static void version_msg_wrap(char_u *s, int wrap)
   int len = (int)vim_strsize(s) + (wrap ? 2 : 0);
 
   if (!got_int
-      && (len < Columns)
-      && (msg_col + len >= Columns)
+      && (len < g_columns)
+      && (msg_col + len >= g_columns)
       && (*s != '\n')) {
     msg_putchar('\n');
   }
@@ -2079,7 +2079,7 @@ void list_in_columns(char_u **items, int size, int current)
   }
   width += 1;
 
-  if (Columns < width) {
+  if (g_columns < width) {
     // Not enough screen columns - show one per line
     for (i = 0; i < item_count; i++) {
       version_msg_wrap(items[i], i == current);
@@ -2092,7 +2092,7 @@ void list_in_columns(char_u **items, int size, int current)
 
   // The rightmost column doesn't need a separator.
   // Sacrifice it to fit in one more column if possible.
-  int ncol = (int)(Columns + 1) / width;
+  int ncol = (int)(g_columns + 1) / width;
   int nrow = item_count / ncol + (item_count % ncol ? 1 : 0);
   int cur_row = 1;
 
@@ -2235,11 +2235,11 @@ void intro_message(int colon)
   size_t lines_size = ARRAY_SIZE(lines);
   assert(lines_size <= LONG_MAX);
 
-  blanklines = Rows - ((long)lines_size - 1l);
+  blanklines = g_rows - ((long)lines_size - 1l);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
-    blanklines -= Rows - topframe->fr_height;
+    blanklines -= g_rows - topframe->fr_height;
   }
 
   if (blanklines < 0) {
@@ -2254,7 +2254,7 @@ void intro_message(int colon)
   // start displaying the message lines after half of the blank lines
   row = blanklines / 2;
 
-  if (((row >= 2) && (Columns >= 50)) || colon) {
+  if (((row >= 2) && (g_columns >= 50)) || colon) {
     for (i = 0; i < (int)ARRAY_SIZE(lines); ++i) {
       p = lines[i];
 
@@ -2296,7 +2296,7 @@ static void do_intro_line(long row, char_u *mesg, int attr)
   // Center the message horizontally.
   col = vim_strsize(mesg);
 
-  col = (Columns - col) / 2;
+  col = (g_columns - col) / 2;
 
   if (col < 0) {
     col = 0;

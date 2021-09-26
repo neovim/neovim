@@ -4979,8 +4979,8 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   msg_start();
-  msg_row = Rows - 1;   // for when 'cmdheight' > 1
-  lines_left = Rows;    // avoid more prompt
+  msg_row = g_rows - 1;   // for when 'cmdheight' > 1
+  lines_left = g_rows;    // avoid more prompt
   msg_scroll = true;
   msg_clr_eos();
 
@@ -8223,8 +8223,8 @@ static void f_screenattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   int row = (int)tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = (int)tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.g_rows
+      || col < 0 || col >= default_grid.g_columns) {
     c = -1;
   } else {
     ScreenGrid *grid = &default_grid;
@@ -8241,8 +8241,8 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   int row = tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.g_rows
+      || col < 0 || col >= default_grid.g_columns) {
     c = -1;
   } else {
     ScreenGrid *grid = &default_grid;
@@ -8257,8 +8257,8 @@ static void f_screenchars(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int row = tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.g_rows
+      || col < 0 || col >= default_grid.g_columns) {
     tv_list_alloc_ret(rettv, 0);
     return;
   }
@@ -8324,8 +8324,8 @@ static void f_screenstring(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   int row = tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.g_rows
+      || col < 0 || col >= default_grid.g_columns) {
     return;
   }
   ScreenGrid *grid = &default_grid;

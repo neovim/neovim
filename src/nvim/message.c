@@ -160,28 +160,28 @@ void msg_grid_validate(void)
 {
   grid_assign_handle(&msg_grid);
   bool should_alloc = msg_use_grid();
-  if (should_alloc && (msg_grid.Rows != Rows || msg_grid.Columns != Columns
+  if (should_alloc && (msg_grid.g_rows != g_rows || msg_grid.g_columns != g_columns
                        || !msg_grid.chars)) {
     // TODO(bfredl): eventually should be set to "invalid". I e all callers
     // will use the grid including clear to EOS if necessary.
-    grid_alloc(&msg_grid, Rows, Columns, false, true);
+    grid_alloc(&msg_grid, g_rows, g_columns, false, true);
     msg_grid.zindex = kZIndexMessages;
 
     xfree(msg_grid.dirty_col);
-    msg_grid.dirty_col = xcalloc(Rows, sizeof(*msg_grid.dirty_col));
+    msg_grid.dirty_col = xcalloc(g_rows, sizeof(*msg_grid.dirty_col));
 
     // Tricky: allow resize while pager is active
-    int pos = msg_scrolled ? msg_grid_pos : Rows - p_ch;
-    ui_comp_put_grid(&msg_grid, pos, 0, msg_grid.Rows, msg_grid.Columns,
+    int pos = msg_scrolled ? msg_grid_pos : g_rows - p_ch;
+    ui_comp_put_grid(&msg_grid, pos, 0, msg_grid.g_rows, msg_grid.g_columns,
                      false, true);
-    ui_call_grid_resize(msg_grid.handle, msg_grid.Columns, msg_grid.Rows);
+    ui_call_grid_resize(msg_grid.handle, msg_grid.g_columns, msg_grid.g_rows);
 
     msg_grid.throttled = false;  // don't throttle in 'cmdheight' area
     msg_scrolled_at_flush = msg_scrolled;
     msg_grid.focusable = false;
     msg_grid_adj.target = &msg_grid;
     if (!msg_scrolled) {
-      msg_grid_set_pos(Rows - p_ch, false);
+      msg_grid_set_pos(g_rows - p_ch, false);
     }
   } else if (!should_alloc && msg_grid.chars) {
     ui_comp_remove_grid(&msg_grid);
@@ -192,8 +192,8 @@ void msg_grid_validate(void)
     msg_grid_adj.row_offset = 0;
     msg_grid_adj.target = &default_grid;
     redraw_cmdline = true;
-  } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != Rows - p_ch) {
-    msg_grid_set_pos(Rows - p_ch, false);
+  } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != g_rows - p_ch) {
+    msg_grid_set_pos(g_rows - p_ch, false);
   }
 
   if (msg_grid.chars && cmdline_row < msg_grid_pos) {
@@ -327,8 +327,8 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   }
   retval = msg_end();
 
-  if (keep && retval && vim_strsize(s) < (int)(Rows - cmdline_row - 1)
-      * Columns + sc_col) {
+  if (keep && retval && vim_strsize(s) < (int)(g_rows - cmdline_row - 1)
+      * g_columns + sc_col) {
     set_keep_msg(s, 0);
   }
 
@@ -354,10 +354,10 @@ char_u *msg_strtrunc(char_u *s, int force)
     len = vim_strsize(s);
     if (msg_scrolled != 0) {
       // Use all the columns.
-      room = (int)(Rows - msg_row) * Columns - 1;
+      room = (int)(g_rows - msg_row) * g_columns - 1;
     } else {
       // Use up to 'showcmd' column.
-      room = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
+      room = (int)(g_rows - msg_row - 1) * g_columns + sc_col - 1;
     }
     if (len > room && room > 0) {
       // may have up to 18 bytes per cell (6 per char, up to two
@@ -873,7 +873,7 @@ char_u *msg_may_trunc(int force, char_u *s)
 {
   int room;
 
-  room = (int)(Rows - cmdline_row - 1) * Columns + sc_col - 1;
+  room = (int)(g_rows - cmdline_row - 1) * g_columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (int)STRLEN(s) - room > 0) {
     int size = vim_strsize(s);
@@ -1173,14 +1173,14 @@ void wait_return(int redraw)
       if (p_more) {
         if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
             || c == K_UP || c == K_PAGEUP) {
-          if (msg_scrolled > Rows) {
+          if (msg_scrolled > g_rows) {
             // scroll back to show older messages
             do_more_prompt(c);
           } else {
             msg_didout = false;
             c = K_IGNORE;
             msg_col =
-              cmdmsg_rl ? Columns - 1 :
+              cmdmsg_rl ? g_columns - 1 :
               0;
           }
           if (quit_more) {
@@ -1191,7 +1191,7 @@ void wait_return(int redraw)
             c = K_IGNORE;
             hit_return_msg();
           }
-        } else if (msg_scrolled > Rows - 2
+        } else if (msg_scrolled > g_rows - 2
                    && (c == 'j' || c == 'd' || c == 'f'
                        || c == K_DOWN || c == K_PAGEDOWN)) {
           c = K_IGNORE;
@@ -1246,7 +1246,7 @@ void wait_return(int redraw)
   lines_left = -1;              // reset lines_left at next msg_start()
   reset_last_sourcing();
   if (keep_msg != NULL && vim_strsize(keep_msg) >=
-      (Rows - cmdline_row - 1) * Columns + sc_col) {
+      (g_rows - cmdline_row - 1) * g_columns + sc_col) {
     XFREE_CLEAR(keep_msg);          // don't redisplay message, it's too long
   }
 
@@ -1332,7 +1332,7 @@ void msg_start(void)
   if (!msg_scroll && full_screen) {     // overwrite last message
     msg_row = cmdline_row;
     msg_col =
-      cmdmsg_rl ? Columns - 1 :
+      cmdmsg_rl ? g_columns - 1 :
       0;
   } else if (msg_didout) {                // start message on next line
     msg_putchar('\n');
@@ -1867,7 +1867,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
   msg_didout = true;            // remember that line is not empty
   cw = utf_ptr2cells(s);
   if (cw > 1
-      && (cmdmsg_rl ? msg_col <= 1 : msg_col == Columns - 1)) {
+      && (cmdmsg_rl ? msg_col <= 1 : msg_col == g_columns - 1)) {
     // Doesn't fit, print a highlighted '>' to fill it up.
     msg_screen_putchar('>', HL_ATTR(HLF_AT));
     return s;
@@ -1877,12 +1877,12 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
-      msg_col = Columns;
+      msg_col = g_columns;
       ++msg_row;
     }
   } else {
     msg_col += cw;
-    if (msg_col >= Columns) {
+    if (msg_col >= g_columns) {
       msg_col = 0;
       ++msg_row;
     }
@@ -1919,7 +1919,7 @@ void msg_puts_long_len_attr(char_u *longstr, int len, int attr)
   int slen = len;
   int room;
 
-  room = Columns - msg_col;
+  room = g_columns - msg_col;
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
     msg_outtrans_len_attr(longstr, slen, attr);
@@ -2070,17 +2070,17 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
     // We are at the end of the screen line when:
     // - When outputting a newline.
     // - When outputting a character in the last column.
-    if (!recurse && msg_row >= Rows - 1
+    if (!recurse && msg_row >= g_rows - 1
         && (*s == '\n' || (cmdmsg_rl
                            ? (msg_col <= 1
                               || (*s == TAB && msg_col <= 7)
                               || (utf_ptr2cells(s) > 1
                                   && msg_col <= 2))
-                           : ((*s != '\r' && msg_col + t_col >= Columns - 1)
+                           : ((*s != '\r' && msg_col + t_col >= g_columns - 1)
                               || (*s == TAB
-                                  && msg_col + t_col >= ((Columns - 1) & ~7))
+                                  && msg_col + t_col >= ((g_columns - 1) & ~7))
                               || (utf_ptr2cells(s) > 1
-                                  && msg_col + t_col >= Columns - 2))))) {
+                                  && msg_col + t_col >= g_columns - 2))))) {
       // The screen is scrolled up when at the last row (some terminals
       // scroll automatically, some don't.  To avoid problems we scroll
       // ourselves).
@@ -2098,9 +2098,9 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
       bool has_last_char = (*s >= ' ' && !cmdmsg_rl);
       msg_scroll_up(!has_last_char);
 
-      msg_row = Rows - 2;
-      if (msg_col >= Columns) {         // can happen after screen resize
-        msg_col = Columns - 1;
+      msg_row = g_rows - 2;
+      if (msg_col >= g_columns) {         // can happen after screen resize
+        msg_col = g_columns - 1;
       }
 
       // Display char in last column before showing more-prompt.
@@ -2163,9 +2163,9 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
     }
 
     wrap = *s == '\n'
-           || msg_col + t_col >= Columns
+           || msg_col + t_col >= g_columns
            || (utf_ptr2cells(s) > 1
-               && msg_col + t_col >= Columns - 1)
+               && msg_col + t_col >= g_columns - 1)
     ;
     if (t_col > 0 && (wrap || *s == '\r' || *s == '\b'
                       || *s == '\t' || *s == BELL)) {
@@ -2181,12 +2181,12 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
     if (*s == '\n') {               // go to next line
       msg_didout = false;           // remember that line is empty
       if (cmdmsg_rl) {
-        msg_col = Columns - 1;
+        msg_col = g_columns - 1;
       } else {
         msg_col = 0;
       }
-      if (++msg_row >= Rows) {        // safety check
-        msg_row = Rows - 1;
+      if (++msg_row >= g_rows) {        // safety check
+        msg_row = g_rows - 1;
       }
     } else if (*s == '\r') {      // go to column 0
       msg_col = 0;
@@ -2211,7 +2211,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
       // When drawing from right to left or when a double-wide character
       // doesn't fit, draw a single character here.  Otherwise collect
       // characters and draw them all at once later.
-      if (cmdmsg_rl || (cw > 1 && msg_col + t_col >= Columns - 1)) {
+      if (cmdmsg_rl || (cw > 1 && msg_col + t_col >= g_columns - 1)) {
         if (l > 1) {
           s = screen_puts_mbyte((char_u *)s, l, attr) - 1;
         } else {
@@ -2281,16 +2281,16 @@ void msg_scroll_up(bool may_throttle)
     if (msg_grid_pos > 0) {
       msg_grid_set_pos(msg_grid_pos-1, true);
     } else {
-      grid_del_lines(&msg_grid, 0, 1, msg_grid.Rows, 0, msg_grid.Columns);
+      grid_del_lines(&msg_grid, 0, 1, msg_grid.g_rows, 0, msg_grid.g_columns);
       memmove(msg_grid.dirty_col, msg_grid.dirty_col+1,
-              (msg_grid.Rows-1) * sizeof(*msg_grid.dirty_col));
-      msg_grid.dirty_col[msg_grid.Rows-1] = 0;
+              (msg_grid.g_rows-1) * sizeof(*msg_grid.dirty_col));
+      msg_grid.dirty_col[msg_grid.g_rows-1] = 0;
     }
   } else {
-    grid_del_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
+    grid_del_lines(&msg_grid_adj, 0, 1, g_rows, 0, g_columns);
   }
 
-  grid_fill(&msg_grid_adj, Rows-1, Rows, 0, Columns, ' ', ' ',
+  grid_fill(&msg_grid_adj, g_rows-1, g_rows, 0, g_columns, ' ', ' ',
             HL_ATTR(HLF_MSG));
 }
 
@@ -2317,7 +2317,7 @@ void msg_scroll_flush(void)
     msg_grid.throttled = false;
     int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
     assert(pos_delta >= 0);
-    int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.Rows);
+    int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.g_rows);
 
     if (pos_delta > 0) {
       ui_ext_msg_set_pos(msg_grid_pos, true);
@@ -2329,13 +2329,13 @@ void msg_scroll_flush(void)
     // TODO(bfredl): msg_grid_pos should be 0 already when starting scrolling
     // but this sometimes fails in "headless" message printing.
     if (to_scroll > 0 && msg_grid_pos == 0) {
-      ui_call_grid_scroll(msg_grid.handle, 0, Rows, 0, Columns, to_scroll, 0);
+      ui_call_grid_scroll(msg_grid.handle, 0, g_rows, 0, g_columns, to_scroll, 0);
     }
 
-    for (int i = MAX(Rows-MAX(delta, 1), 0); i < Rows; i++) {
+    for (int i = MAX(g_rows-MAX(delta, 1), 0); i < g_rows; i++) {
       int row = i-msg_grid_pos;
       assert(row >= 0);
-      ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.Columns,
+      ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.g_columns,
               HL_ATTR(HLF_MSG), false);
       msg_grid.dirty_col[row] = 0;
     }
@@ -2357,13 +2357,13 @@ void msg_reset_scroll(void)
     msg_grid.throttled = false;
     // TODO(bfredl): risk for extra flicker i e with
     // "nvim -o has_swap also_has_swap"
-    msg_grid_set_pos(Rows - p_ch, false);
+    msg_grid_set_pos(g_rows - p_ch, false);
     clear_cmdline = true;
     if (msg_grid.chars) {
       // non-displayed part of msg_grid is considered invalid.
-      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.Rows); i++) {
+      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.g_rows); i++) {
         grid_clear_line(&msg_grid, msg_grid.line_offset[i],
-                        (int)msg_grid.Columns, false);
+                        (int)msg_grid.g_columns, false);
       }
     }
   } else {
@@ -2583,7 +2583,7 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
   if (utf_iscomposing(utf_ptr2char(t_s))) {
     msg_col--;
   }
-  if (msg_col >= Columns) {
+  if (msg_col >= g_columns) {
     msg_col = 0;
     ++msg_row;
   }
@@ -2625,7 +2625,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
     // primitive way to compute the current column
     if (cmdmsg_rl) {
       if (*s == '\r' || *s == '\n') {
-        msg_col = Columns - 1;
+        msg_col = g_columns - 1;
       } else {
         msg_col -= cw;
       }
@@ -2677,7 +2677,7 @@ static int do_more_prompt(int typed_char)
   if (typed_char == 'G') {
     // "g<": Find first line on the last page.
     mp_last = msg_sb_start(last_msgchunk);
-    for (i = 0; i < Rows - 2 && mp_last != NULL
+    for (i = 0; i < g_rows - 2 && mp_last != NULL
          && mp_last->sb_prev != NULL; ++i) {
       mp_last = msg_sb_start(mp_last->sb_prev);
     }
@@ -2717,23 +2717,23 @@ static int do_more_prompt(int typed_char)
       break;
 
     case 'u':                   // Up half a page
-      toscroll = -(Rows / 2);
+      toscroll = -(g_rows / 2);
       break;
 
     case 'd':                   // Down half a page
-      toscroll = Rows / 2;
+      toscroll = g_rows / 2;
       break;
 
     case 'b':                   // one page back
     case K_PAGEUP:
-      toscroll = -(Rows - 1);
+      toscroll = -(g_rows - 1);
       break;
 
     case ' ':                   // one extra page
     case 'f':
     case K_PAGEDOWN:
     case K_LEFTMOUSE:
-      toscroll = Rows - 1;
+      toscroll = g_rows - 1;
       break;
 
     case 'g':                   // all the way back to the start
@@ -2750,7 +2750,7 @@ static int do_more_prompt(int typed_char)
         /* Since got_int is set all typeahead will be flushed, but we
          * want to keep this ':', remember that in a special way. */
         typeahead_noflush(':');
-        cmdline_row = Rows - 1;                 // put ':' on this line
+        cmdline_row = g_rows - 1;                 // put ':' on this line
         skip_redraw = true;                     // skip redraw once
         need_wait_return = false;               // don't wait in main()
       }
@@ -2767,7 +2767,7 @@ static int do_more_prompt(int typed_char)
       }
       /* When there is some more output (wrapping line) display that
        * without another prompt. */
-      lines_left = Rows - 1;
+      lines_left = g_rows - 1;
       break;
 
     case K_EVENT:
@@ -2798,7 +2798,7 @@ static int do_more_prompt(int typed_char)
         }
 
         // go to start of line at top of the screen
-        for (i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL;
+        for (i = 0; i < g_rows - 2 && mp != NULL && mp->sb_prev != NULL;
              ++i) {
           mp = msg_sb_start(mp->sb_prev);
         }
@@ -2818,8 +2818,8 @@ static int do_more_prompt(int typed_char)
           }
 
           if (toscroll == -1 && !to_redraw) {
-            grid_ins_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
-            grid_fill(&msg_grid_adj, 0, 1, 0, Columns, ' ', ' ',
+            grid_ins_lines(&msg_grid_adj, 0, 1, g_rows, 0, g_columns);
+            grid_fill(&msg_grid_adj, 0, 1, 0, g_columns, ' ', ' ',
                       HL_ATTR(HLF_MSG));
             // display line at top
             (void)disp_sb_line(0, mp);
@@ -2827,9 +2827,9 @@ static int do_more_prompt(int typed_char)
             // redisplay all lines
             // TODO(bfredl): this case is not optimized (though only concerns
             // event fragmentization, not unnecessary scroll events).
-            grid_fill(&msg_grid_adj, 0, Rows, 0, Columns, ' ', ' ',
+            grid_fill(&msg_grid_adj, 0, g_rows, 0, g_columns, ' ', ' ',
                       HL_ATTR(HLF_MSG));
-            for (i = 0; mp != NULL && i < Rows - 1; i++) {
+            for (i = 0; mp != NULL && i < g_rows - 1; i++) {
               mp = disp_sb_line(i, mp);
               ++msg_scrolled;
             }
@@ -2849,16 +2849,16 @@ static int do_more_prompt(int typed_char)
           // scroll up, display line at bottom
           msg_scroll_up(true);
           inc_msg_scrolled();
-          grid_fill(&msg_grid_adj, Rows-2, Rows-1, 0, Columns, ' ', ' ',
+          grid_fill(&msg_grid_adj, g_rows-2, g_rows-1, 0, g_columns, ' ', ' ',
                     HL_ATTR(HLF_MSG));
-          mp_last = disp_sb_line(Rows - 2, mp_last);
+          mp_last = disp_sb_line(g_rows - 2, mp_last);
           toscroll--;
         }
       }
 
       if (toscroll <= 0) {
         // displayed the requested text, more prompt again
-        grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ',
+        grid_fill(&msg_grid_adj, g_rows - 1, g_rows, 0, g_columns, ' ', ' ',
                   HL_ATTR(HLF_MSG));
         msg_moremsg(false);
         continue;
@@ -2872,7 +2872,7 @@ static int do_more_prompt(int typed_char)
   }
 
   // clear the --more-- message
-  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ',
+  grid_fill(&msg_grid_adj, g_rows - 1, g_rows, 0, g_columns, ' ', ' ',
             HL_ATTR(HLF_MSG));
   redraw_cmdline = true;
   clear_cmdline = false;
@@ -2881,10 +2881,10 @@ static int do_more_prompt(int typed_char)
   State = oldState;
   setmouse();
   if (quit_more) {
-    msg_row = Rows - 1;
+    msg_row = g_rows - 1;
     msg_col = 0;
   } else if (cmdmsg_rl) {
-    msg_col = Columns - 1;
+    msg_col = g_columns - 1;
   }
 
   entered = false;
@@ -2931,11 +2931,11 @@ static void msg_screen_putchar(int c, int attr)
   grid_putchar(&msg_grid_adj, c, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
-      msg_col = Columns;
+      msg_col = g_columns;
       ++msg_row;
     }
   } else {
-    if (++msg_col >= Columns) {
+    if (++msg_col >= g_columns) {
       msg_col = 0;
       ++msg_row;
     }
@@ -2948,11 +2948,11 @@ void msg_moremsg(int full)
   char_u *s = (char_u *)_("-- More --");
 
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
-  grid_puts(&msg_grid_adj, s, Rows - 1, 0, attr);
+  grid_puts(&msg_grid_adj, s, g_rows - 1, 0, attr);
   if (full) {
     grid_puts(&msg_grid_adj, (char_u *)
               _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-              Rows - 1, vim_strsize(s), attr);
+              g_rows - 1, vim_strsize(s), attr);
   }
 }
 
@@ -2964,14 +2964,14 @@ void repeat_message(void)
 {
   if (State == ASKMORE) {
     msg_moremsg(TRUE);          // display --more-- message again
-    msg_row = Rows - 1;
+    msg_row = g_rows - 1;
   } else if (State == CONFIRM) {
     display_confirm_msg();      // display ":confirm" message again
-    msg_row = Rows - 1;
+    msg_row = g_rows - 1;
   } else if (State == EXTERNCMD) {
     ui_cursor_goto(msg_row, msg_col);     // put cursor back
   } else if (State == HITRETURN || State == SETWSIZE) {
-    if (msg_row == Rows - 1) {
+    if (msg_row == g_rows - 1) {
       /* Avoid drawing the "hit-enter" prompt below the previous one,
        * overwrite it.  Esp. useful when regaining focus and a
        * FocusGained autocmd exists but didn't draw anything. */
@@ -2980,7 +2980,7 @@ void repeat_message(void)
       msg_clr_eos();
     }
     hit_return_msg();
-    msg_row = Rows - 1;
+    msg_row = g_rows - 1;
   }
 }
 
@@ -3006,7 +3006,7 @@ void msg_clr_eos_force(void)
     return;
   }
   int msg_startcol = (cmdmsg_rl) ? 0 : msg_col;
-  int msg_endcol = (cmdmsg_rl) ? msg_col + 1 : Columns;
+  int msg_endcol = (cmdmsg_rl) ? msg_col + 1 : g_columns;
 
   if (msg_grid.chars && msg_row < msg_grid_pos) {
     // TODO(bfredl): ugly, this state should already been validated at this
@@ -3016,11 +3016,11 @@ void msg_clr_eos_force(void)
 
   grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol, ' ',
             ' ', HL_ATTR(HLF_MSG));
-  grid_fill(&msg_grid_adj, msg_row + 1, Rows, 0, Columns, ' ', ' ',
+  grid_fill(&msg_grid_adj, msg_row + 1, g_rows, 0, g_columns, ' ', ' ',
             HL_ATTR(HLF_MSG));
 
   redraw_cmdline = true;  // overwritten the command line
-  if (msg_row < Rows-1 || msg_col == (cmdmsg_rl ? Columns : 0)) {
+  if (msg_row < g_rows-1 || msg_col == (cmdmsg_rl ? g_columns : 0)) {
     clear_cmdline = false;  // command line has been cleared
     mode_displayed = false;  // mode cleared or overwritten
   }
@@ -3139,7 +3139,7 @@ void msg_check(void)
   if (ui_has(kUIMessages)) {
     return;
   }
-  if (msg_row == Rows - 1 && msg_col >= sc_col) {
+  if (msg_row == g_rows - 1 && msg_col >= sc_col) {
     need_wait_return = true;
     redraw_cmdline = true;
   }
@@ -3374,11 +3374,11 @@ void msg_advance(int col)
     }
     return;
   }
-  if (col >= Columns) {         // not enough room
-    col = Columns - 1;
+  if (col >= g_columns) {         // not enough room
+    col = g_columns - 1;
   }
   if (cmdmsg_rl) {
-    while (msg_col > Columns - col) {
+    while (msg_col > g_columns - col) {
       msg_putchar(' ');
     }
   } else {

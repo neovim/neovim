@@ -7329,8 +7329,8 @@ void screenchar_adjust_grid(ScreenGrid **grid, int *row, int *col)
   // have its own buffer, this should just read from it instead.
   msg_scroll_flush();
   if (msg_grid.chars && msg_grid.comp_index > 0 && *row >= msg_grid.comp_row
-      && *row < (msg_grid.Rows + msg_grid.comp_row)
-      && *col < msg_grid.Columns) {
+      && *row < (msg_grid.g_rows + msg_grid.comp_row)
+      && *col < msg_grid.g_columns) {
     *grid = &msg_grid;
     *row -= msg_grid.comp_row;
   }

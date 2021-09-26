@@ -631,7 +631,7 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startc
       remote_ui_highlight_set(ui, (int)clearattr);
       // legacy eol_clear was only ever used with cleared attributes
       // so be on the safe side
-      if (clearattr == 0 && clearcol == Columns) {
+      if (clearattr == 0 && clearcol == g_columns) {
         Array args = ARRAY_DICT_INIT;
         push_call(ui, "eol_clear", args);
       } else {

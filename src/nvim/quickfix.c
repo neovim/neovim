@@ -2457,7 +2457,7 @@ static int jump_to_help_window(qf_info_T *qi, bool newwin, int *opened_window)
     // specified, the current window is vertically split and narrow.
     int flags = WSP_HELP;
     if (cmdmod.split == 0
-        && curwin->w_width != Columns
+        && curwin->w_width != g_columns
         && curwin->w_width < 80) {
       flags |= WSP_TOP;
     }
@@ -3253,7 +3253,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     }
     xstrlcat((char *)buf, title, IOSIZE);
   }
-  trunc_string(buf, buf, Columns - 1, IOSIZE);
+  trunc_string(buf, buf, g_columns - 1, IOSIZE);
   msg(buf);
 }
 
@@ -3662,7 +3662,7 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
 
   // Only set the height when still in the same tab page and there is no
   // window to the side.
-  if (curtab == prevtab && curwin->w_width == Columns) {
+  if (curtab == prevtab && curwin->w_width == g_columns) {
     win_setheight(height);
   }
   curwin->w_p_wfh = true;  // set 'winfixheight'

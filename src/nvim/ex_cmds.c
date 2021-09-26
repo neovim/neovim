@@ -1350,7 +1350,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
 
   // Create the shell command in allocated memory.
   cmd_buf = make_filter_cmd(cmd, itmp, otmp);
-  ui_cursor_goto(Rows - 1, 0);
+  ui_cursor_goto(g_rows - 1, 0);
 
   if (do_out) {
     if (u_save((line2), (linenr_T)(line2 + 1)) == FAIL) {
@@ -1516,7 +1516,7 @@ void do_shell(char_u *cmd, int flags)
 
   // put the message cursor at the end of the screen, avoids wait_return()
   // to overwrite the text that the external command showed
-  msg_row = Rows - 1;
+  msg_row = g_rows - 1;
   msg_col = 0;
 
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, false, curbuf);
@@ -2976,7 +2976,7 @@ void ex_append(exarg_T *eap)
                              NUL, eap->cookie, indent, true);
       State = save_State;
     }
-    lines_left = Rows - 1;
+    lines_left = g_rows - 1;
     if (theline == NULL) {
       break;
     }
@@ -3088,7 +3088,7 @@ void ex_z(exarg_T *eap)
   // Vi compatible: ":z!" uses display height, without a count uses
   // 'scroll'
   if (eap->forceit) {
-    bigness = Rows - 1;
+    bigness = g_rows - 1;
   } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
   } else {
@@ -3189,7 +3189,7 @@ void ex_z(exarg_T *eap)
     if (minus && i == lnum) {
       msg_putchar('\n');
 
-      for (j = 1; j < Columns; j++) {
+      for (j = 1; j < g_columns; j++) {
         msg_putchar('-');
       }
     }
@@ -3199,7 +3199,7 @@ void ex_z(exarg_T *eap)
     if (minus && i == lnum) {
       msg_putchar('\n');
 
-      for (j = 1; j < Columns; j++) {
+      for (j = 1; j < g_columns; j++) {
         msg_putchar('-');
       }
     }
@@ -3903,7 +3903,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
               redraw_later(curwin, SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
-              if (msg_row == Rows - 1) {
+              if (msg_row == g_rows - 1) {
                 msg_didout = false;                     // avoid a scroll-up
               }
               msg_starthere();
@@ -4846,7 +4846,7 @@ void ex_help(exarg_T *eap)
        * specified, the current window is vertically split and
        * narrow. */
       n = WSP_HELP;
-      if (cmdmod.split == 0 && curwin->w_width != Columns
+      if (cmdmod.split == 0 && curwin->w_width != g_columns
           && curwin->w_width < 80) {
         n |= WSP_TOP;
       }

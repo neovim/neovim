@@ -58,7 +58,7 @@ void change_warning(buf_T *buf, int col)
     // Do what msg() does, but with a column offset if the warning should
     // be after the mode message.
     msg_start();
-    if (msg_row == Rows - 1) {
+    if (msg_row == g_rows - 1) {
       msg_col = col;
     }
     msg_source(HL_ATTR(HLF_W));
@@ -73,7 +73,7 @@ void change_warning(buf_T *buf, int col)
     }
     buf->b_did_warn = true;
     redraw_cmdline = false;  // don't redraw and erase the message
-    if (msg_row < Rows - 1) {
+    if (msg_row < g_rows - 1) {
       showmode();
     }
   }

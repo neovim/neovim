@@ -775,7 +775,7 @@ void free_all_options(void)
 #endif
 
 
-/// Initialize the options, part two: After getting Rows and Columns.
+/// Initialize the options, part two: After getting g_rows and g_columns.
 void set_init_2(bool headless)
 {
   // set in set_init_1 but logging is not allowed there
@@ -793,12 +793,12 @@ void set_init_2(bool headless)
 
   /*
    * 'window' is only for backwards compatibility with Vi.
-   * Default is Rows - 1.
+   * Default is g_rows - 1.
    */
   if (!option_was_set("window")) {
-    p_window = Rows - 1;
+    p_window = g_rows - 1;
   }
-  set_number_default("window", Rows - 1);
+  set_number_default("window", g_rows - 1);
   (void)parse_printoptions();      // parse 'printoptions' default value
 }
 
@@ -4142,7 +4142,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
 {
   char_u *errmsg = NULL;
   long old_value = *(long *)varp;
-  long old_Rows = Rows;                 // remember old Rows
+  long old_rows = g_rows;                 // remember old g_rows
   long *pp = (long *)varp;
 
   // Disallow changing some options from secure mode.
@@ -4298,16 +4298,16 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
   // For these options we want to fix some invalid values.
   if (pp == &p_window) {
     if (p_window < 1) {
-      p_window = Rows - 1;
-    } else if (p_window >= Rows) {
-      p_window = Rows - 1;
+      p_window = g_rows - 1;
+    } else if (p_window >= g_rows) {
+      p_window = g_rows - 1;
     }
   } else if (pp == &p_ch) {
     if (ui_has(kUIMessages)) {
       p_ch = 0;
     }
-    if (p_ch > Rows - min_rows() + 1) {
-      p_ch = Rows - min_rows() + 1;
+    if (p_ch > g_rows - min_rows() + 1) {
+      p_ch = g_rows - min_rows() + 1;
     }
   }
 
@@ -4413,7 +4413,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
   }
 
 
-  // Check the (new) bounds for Rows and Columns here.
+  // Check the (new) bounds for g_rows and g_columns here.
   if (p_lines < min_rows() && full_screen) {
     if (errbuf != NULL) {
       vim_snprintf((char *)errbuf, errbuflen,
@@ -4437,7 +4437,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
 
   // If the screen (shell) height has been changed, assume it is the
   // physical screenheight.
-  if (p_lines != Rows || p_columns != Columns) {
+  if (p_lines != g_rows || p_columns != g_columns) {
     // Changing the screen size is not allowed while updating the screen.
     if (updating_screen) {
       *pp = old_value;
@@ -4447,16 +4447,16 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
       // TODO(bfredl): is this branch ever needed?
       // Postpone the resizing; check the size and cmdline position for
       // messages.
-      Rows = (int)p_lines;
-      Columns = (int)p_columns;
+      g_rows = (int)p_lines;
+      g_columns = (int)p_columns;
       check_shellsize();
-      if (cmdline_row > Rows - p_ch && Rows > p_ch) {
-        assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
-        cmdline_row = (int)(Rows - p_ch);
+      if (cmdline_row > g_rows - p_ch && g_rows > p_ch) {
+        assert(p_ch >= 0 && g_rows - p_ch <= INT_MAX);
+        cmdline_row = (int)(g_rows - p_ch);
       }
     }
-    if (p_window >= Rows || !option_was_set("window")) {
-      p_window = Rows - 1;
+    if (p_window >= g_rows || !option_was_set("window")) {
+      p_window = g_rows - 1;
     }
   }
 
@@ -4476,9 +4476,9 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
       curwin->w_p_scr = curwin->w_height;
     }
   }
-  if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
-    if (Rows != old_Rows) {     // Rows changed, just adjust p_sj
-      p_sj = Rows / 2;
+  if ((p_sj < -100 || p_sj >= g_rows) && full_screen) {
+    if (g_rows != old_rows) {     // g_rows changed, just adjust p_sj
+      p_sj = g_rows / 2;
     } else {
       errmsg = e_scroll;
       p_sj = 1;
@@ -5063,11 +5063,11 @@ static void showoptions(int all, int opt_flags)
      * display the items
      */
     if (run == 1) {
-      assert(Columns <= INT_MAX - GAP
-             && Columns + GAP >= INT_MIN + 3
-             && (Columns + GAP - 3) / INC >= INT_MIN
-             && (Columns + GAP - 3) / INC <= INT_MAX);
-      cols = (int)((Columns + GAP - 3) / INC);
+      assert(g_columns <= INT_MAX - GAP
+             && g_columns + GAP >= INT_MIN + 3
+             && (g_columns + GAP - 3) / INC >= INT_MIN
+             && (g_columns + GAP - 3) / INC <= INT_MAX);
+      cols = (int)((g_columns + GAP - 3) / INC);
       if (cols == 0) {
         cols = 1;
       }
@@ -5464,13 +5464,13 @@ void comp_col(void)
     }
   }
   assert(sc_col >= 0
-         && INT_MIN + sc_col <= Columns
-         && Columns - sc_col <= INT_MAX);
-  sc_col = (int)(Columns - sc_col);
+         && INT_MIN + sc_col <= g_columns
+         && g_columns - sc_col <= INT_MAX);
+  sc_col = (int)(g_columns - sc_col);
   assert(ru_col >= 0
-         && INT_MIN + ru_col <= Columns
-         && Columns - ru_col <= INT_MAX);
-  ru_col = (int)(Columns - ru_col);
+         && INT_MIN + ru_col <= g_columns
+         && g_columns - ru_col <= INT_MAX);
+  ru_col = (int)(g_columns - ru_col);
   if (sc_col <= 0) {            // screen too narrow, will become a mess
     sc_col = 1;
   }

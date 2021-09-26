@@ -505,10 +505,10 @@ void syntax_start(win_T *wp, linenr_T lnum)
    * Advance from the sync point or saved state until the current line.
    * Save some entries for syncing with later on.
    */
-  if (syn_block->b_sst_len <= Rows) {
+  if (syn_block->b_sst_len <= g_rows) {
     dist = 999999;
   } else {
-    dist = syn_buf->b_ml.ml_line_count / (syn_block->b_sst_len - Rows) + 1;
+    dist = syn_buf->b_ml.ml_line_count / (syn_block->b_sst_len - g_rows) + 1;
   }
   while (current_lnum < lnum) {
     syn_start_line();
@@ -1066,7 +1066,7 @@ static void syn_stack_alloc(void)
   synstate_T *from;
   synstate_T *sstp;
 
-  len = syn_buf->b_ml.ml_line_count / SST_DIST + Rows * 2;
+  len = syn_buf->b_ml.ml_line_count / SST_DIST + g_rows * 2;
   if (len < SST_MIN_ENTRIES) {
     len = SST_MIN_ENTRIES;
   } else if (len > SST_MAX_ENTRIES) {
@@ -1075,7 +1075,7 @@ static void syn_stack_alloc(void)
   if (syn_block->b_sst_len > len * 2 || syn_block->b_sst_len < len) {
     // Allocate 50% too much, to avoid reallocating too often.
     len = syn_buf->b_ml.ml_line_count;
-    len = (len + len / 2) / SST_DIST + Rows * 2;
+    len = (len + len / 2) / SST_DIST + g_rows * 2;
     if (len < SST_MIN_ENTRIES) {
       len = SST_MIN_ENTRIES;
     } else if (len > SST_MAX_ENTRIES) {
@@ -1207,10 +1207,10 @@ static bool syn_stack_cleanup(void)
   }
 
   // Compute normal distance between non-displayed entries.
-  if (syn_block->b_sst_len <= Rows) {
+  if (syn_block->b_sst_len <= g_rows) {
     dist = 999999;
   } else {
-    dist = syn_buf->b_ml.ml_line_count / (syn_block->b_sst_len - Rows) + 1;
+    dist = syn_buf->b_ml.ml_line_count / (syn_block->b_sst_len - g_rows) + 1;
   }
 
   /*
@@ -3821,8 +3821,8 @@ static void syn_list_cluster(int id)
   if (msg_col >= endcol) {      // output at least one space
     endcol = msg_col + 1;
   }
-  if (Columns <= endcol) {      // avoid hang for tiny window
-    endcol = Columns - 1;
+  if (g_columns <= endcol) {      // avoid hang for tiny window
+    endcol = g_columns - 1;
   }
 
   msg_advance(endcol);
@@ -6138,10 +6138,10 @@ static void syntime_report(void)
 
     msg_advance(69);
     int len;
-    if (Columns < 80) {
+    if (g_columns < 80) {
       len = 20;       // will wrap anyway
     } else {
-      len = Columns - 70;
+      len = g_columns - 70;
     }
     if (len > (int)STRLEN(p->pattern)) {
       len = (int)STRLEN(p->pattern);
@@ -7544,7 +7544,7 @@ static bool syn_list_header(const bool did_header, const int outlen, const int i
   } else if ((ui_has(kUIMessages) || msg_silent) && !force_newline) {
     msg_putchar(' ');
     adjust = false;
-  } else if (msg_col + outlen + 1 >= Columns || force_newline) {
+  } else if (msg_col + outlen + 1 >= g_columns || force_newline) {
     msg_putchar('\n');
     if (got_int) {
       return true;

@@ -707,7 +707,7 @@ print_tag_list(
     if (taglen < 18) {
         taglen = 18;
     }
-    if (taglen > Columns - 25) {
+    if (taglen > g_columns - 25) {
         taglen = MAXCOL;
     }
     if (msg_col == 0) {
@@ -784,7 +784,7 @@ print_tag_list(
                 // print all other extra fields
                 attr = HL_ATTR(HLF_CM);
                 while (*p && *p != '\r' && *p != '\n') {
-                    if (msg_col + ptr2cells(p) >= Columns) {
+                    if (msg_col + ptr2cells(p) >= g_columns) {
                         msg_putchar('\n');
                         if (got_int) {
                             break;
@@ -831,7 +831,7 @@ print_tag_list(
         }
 
         while (p != command_end) {
-            if (msg_col + (*p == TAB ? 1 : ptr2cells(p)) > Columns) {
+            if (msg_col + (*p == TAB ? 1 : ptr2cells(p)) > g_columns) {
                 msg_putchar('\n');
             }
             if (got_int) {

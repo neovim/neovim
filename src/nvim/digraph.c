@@ -1768,7 +1768,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
       }
       *previous = dp->result;
     }
-    if (msg_col > Columns - list_width) {
+    if (msg_col > g_columns - list_width) {
       msg_putchar('\n');
     }
 

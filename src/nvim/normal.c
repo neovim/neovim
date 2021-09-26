@@ -2469,7 +2469,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     // click in a tab selects that tab page
     if (is_click
         && cmdwin_type == 0
-        && mouse_col < Columns) {
+        && mouse_col < g_columns) {
       in_tab_line = true;
       c1 = tab_page_click_defs[mouse_col].tabnr;
       switch (tab_page_click_defs[mouse_col].type) {
@@ -3594,7 +3594,7 @@ static void display_showcmd(void)
   }
 
   msg_grid_validate();
-  int showcmd_row = Rows - 1;
+  int showcmd_row = g_rows - 1;
   grid_puts_line_start(&msg_grid_adj, showcmd_row);
 
   if (!showcmd_is_clear) {

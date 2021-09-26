@@ -223,7 +223,7 @@ void do_exmode(void)
     prev_line = curwin->w_cursor.lnum;
     cmdline_row = msg_row;
     do_cmdline(NULL, getexline, NULL, 0);
-    lines_left = Rows - 1;
+    lines_left = g_rows - 1;
 
     if ((prev_line != curwin->w_cursor.lnum
          || changedtick != buf_get_changedtick(curbuf)) && !ex_no_reprint) {
@@ -234,7 +234,7 @@ void do_exmode(void)
           /* go up one line, to overwrite the ":<CR>" line, so the
            * output doesn't contain empty lines. */
           msg_row = prev_msg_row;
-          if (prev_msg_row == Rows - 1) {
+          if (prev_msg_row == g_rows - 1) {
             msg_row--;
           }
         }
@@ -5466,7 +5466,7 @@ static void uc_list(char_u *name, size_t name_len)
       msg_outtrans(IObuff);
 
       msg_outtrans_special(cmd->uc_rep, false,
-                           name_len == 0 ? Columns - 47 : 0);
+                           name_len == 0 ? g_columns - 47 : 0);
       if (p_verbose > 0) {
         last_set_msg(cmd->uc_script_ctx);
       }
@@ -6864,8 +6864,8 @@ static void ex_stop(exarg_T *eap)
   apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
 
   // TODO(bfredl): the TUI should do this on suspend
-  ui_cursor_goto(Rows - 1, 0);
-  ui_call_grid_scroll(1, 0, Rows, 0, Columns, 1, 0);
+  ui_cursor_goto(g_rows - 1, 0);
+  ui_call_grid_scroll(1, 0, g_rows, 0, g_columns, 1, 0);
   ui_flush();
   ui_call_suspend();  // call machine specific function
 
@@ -7378,14 +7378,14 @@ static void ex_resize(exarg_T *eap)
     if (*eap->arg == '-' || *eap->arg == '+') {
       n += wp->w_width;
     } else if (n == 0 && eap->arg[0] == NUL) {  // default is very wide
-      n = Columns;
+      n = g_columns;
     }
     win_setwidth_win(n, wp);
   } else {
     if (*eap->arg == '-' || *eap->arg == '+') {
       n += wp->w_height;
     } else if (n == 0 && eap->arg[0] == NUL) {  // default is very high
-      n = Rows-1;
+      n = g_rows-1;
     }
     win_setheight_win(n, wp);
   }

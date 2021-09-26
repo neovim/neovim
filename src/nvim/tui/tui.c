@@ -1446,7 +1446,7 @@ static void invalidate(UI *ui, int top, int bot, int left, int right)
   }
 }
 
-/// Tries to get the user's wanted dimensions (columns and rows) for the entire
+/// Tries to get the user's wanted dimensions (g_columns and g_rows) for the entire
 /// application (i.e., the host terminal).
 static void tui_guess_size(UI *ui)
 {
@@ -1454,12 +1454,12 @@ static void tui_guess_size(UI *ui)
   int width = 0, height = 0;
 
   // 1 - look for non-default 'columns' and 'lines' options during startup
-  if (data->is_starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
+  if (data->is_starting && (g_columns != DFLT_COLS || g_rows != DFLT_ROWS)) {
     did_user_set_dimensions = true;
-    assert(Columns >= INT_MIN && Columns <= INT_MAX);
-    assert(Rows >= INT_MIN && Rows <= INT_MAX);
-    width = Columns;
-    height = Rows;
+    assert(g_columns >= INT_MIN && g_columns <= INT_MAX);
+    assert(g_rows >= INT_MIN && g_rows <= INT_MAX);
+    width = g_columns;
+    height = g_rows;
     goto end;
   }
 

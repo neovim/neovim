@@ -1658,7 +1658,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
     assert(buf_len >= 0);
 
     // Print the context only if it fits on the same line.
-    if (msg_col + buf_len >= Columns) {
+    if (msg_col + buf_len >= g_columns) {
       msg_putchar('\n');
     }
     msg_advance(12);

@@ -603,8 +603,8 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
 static void prt_message(char_u *s)
 {
   // TODO(bfredl): delete this
-  grid_fill(&default_grid, Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
-  grid_puts(&default_grid, s, Rows - 1, 0, HL_ATTR(HLF_R));
+  grid_fill(&default_grid, g_rows - 1, g_rows, 0, g_columns, ' ', ' ', 0);
+  grid_puts(&default_grid, s, g_rows - 1, 0, HL_ATTR(HLF_R));
   ui_flush();
 }
 

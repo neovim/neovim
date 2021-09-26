@@ -83,14 +83,14 @@ EXTERN struct nvim_stats_s {
 //                      0          not starting anymore
 
 // Number of Rows and Columns in the screen.
-// Note: Use default_grid.Rows and default_grid.Columns to access items in
+// Note: Use default_grid.g_rows and default_grid.g_columns to access items in
 // default_grid.chars[]. They may have different values when the screen
 // wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
 // up).
 #define DFLT_COLS       80              // default value for 'columns'
 #define DFLT_ROWS       24              // default value for 'lines'
-EXTERN int Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
-EXTERN int Columns INIT(= DFLT_COLS);  // nr of columns in the screen
+EXTERN int g_rows INIT(= DFLT_ROWS);     // nr of rows in the screen
+EXTERN int g_columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
 EXTERN NS ns_hl_active INIT(= 0);         // current ns that defines highlights
 EXTERN bool ns_hl_changed INIT(= false);  // highlight need update

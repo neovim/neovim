@@ -340,7 +340,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
     // With interactive completion, the error message is not printed.
     if (!(flags & EW_SILENT)) {
       msg_putchar('\n');                // clear bottom line quickly
-      cmdline_row = Rows - 1;           // continue on last line
+      cmdline_row = g_rows - 1;           // continue on last line
       MSG(_(e_wildexpand));
       msg_start();                    // don't overwrite this message
     }
