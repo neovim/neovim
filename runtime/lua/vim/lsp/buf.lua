@@ -466,14 +466,24 @@ local function code_action_request(params)
   end)
 end
 
---- Selects a code action from the input list that is available at the current
+--- Selects a code action available at the current
 --- cursor position.
 ---
----@param context: (table, optional) Valid `CodeActionContext` object
+---@param context table|nil `CodeActionContext` of the LSP specification:
+---               - diagnostics: (table|nil)
+---                             LSP `Diagnostic[]`. Inferred from the current
+---                             position if not provided.
+---               - only: (string|nil)
+---                      LSP `CodeActionKind` used to filter the code actions.
+---                      Most language servers support values like `refactor`
+---                      or `quickfix`.
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 function M.code_action(context)
   validate { context = { context, 't', true } }
-  context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  context = context or {}
+  if not context.diagnostics then
+    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+  end
   local params = util.make_range_params()
   params.context = context
   code_action_request(params)
@@ -481,14 +491,25 @@ end
 
 --- Performs |vim.lsp.buf.code_action()| for a given range.
 ---
----@param context: (table, optional) Valid `CodeActionContext` object
+---
+---@param context table|nil `CodeActionContext` of the LSP specification:
+---               - diagnostics: (table|nil)
+---                             LSP `Diagnostic[]`. Inferred from the current
+---                             position if not provided.
+---               - only: (string|nil)
+---                      LSP `CodeActionKind` used to filter the code actions.
+---                      Most language servers support values like `refactor`
+---                      or `quickfix`.
 ---@param start_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the start of the last visual selection.
 ---@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_code_action(context, start_pos, end_pos)
   validate { context = { context, 't', true } }
-  context = context or { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  context = context or {}
+  if not context.diagnostics then
+    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+  end
   local params = util.make_given_range_params(start_pos, end_pos)
   params.context = context
   code_action_request(params)

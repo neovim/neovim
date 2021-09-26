@@ -869,12 +869,17 @@ clear_references()                            *vim.lsp.buf.clear_references()*
                 Removes document highlights from current buffer.
 
 code_action({context})                             *vim.lsp.buf.code_action()*
-                Selects a code action from the input list that is available at
-                the current cursor position.
+                Selects a code action available at the current cursor
+                position.
 
                 Parameters: ~
-                    {context}  (table, optional) Valid `CodeActionContext`
-                               object
+                    {context}  table|nil `CodeActionContext` of the LSP specification:
+                               • diagnostics: (table|nil) LSP`Diagnostic[]` . Inferred from the current position if not
+                                 provided.
+                               • only: (string|nil) LSP `CodeActionKind` used
+                                 to filter the code actions. Most language
+                                 servers support values like `refactor` or
+                                 `quickfix` .
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
@@ -1015,8 +1020,13 @@ range_code_action({context}, {start_pos}, {end_pos})
                 Performs |vim.lsp.buf.code_action()| for a given range.
 
                 Parameters: ~
-                    {context}    (table, optional) Valid `CodeActionContext`
-                                 object
+                    {context}    table|nil `CodeActionContext` of the LSP specification:
+                                 • diagnostics: (table|nil) LSP`Diagnostic[]` . Inferred from the current position if not
+                                   provided.
+                                 • only: (string|nil) LSP `CodeActionKind`
+                                   used to filter the code actions. Most
+                                   language servers support values like
+                                   `refactor` or `quickfix` .
                     {start_pos}  ({number, number}, optional) mark-indexed
                                  position. Defaults to the start of the last
                                  visual selection.
