@@ -237,8 +237,8 @@ describe('lua stdlib', function()
   end)
 
   it("vim.split", function()
-    local split = function(str, sep, plain, trimempty)
-      return exec_lua('return vim.split(...)', str, sep, plain, trimempty)
+    local split = function(str, sep, kwargs)
+      return exec_lua('return vim.split(...)', str, sep, kwargs)
     end
 
     local tests = {
@@ -259,8 +259,11 @@ describe('lua stdlib', function()
     }
 
     for _, t in ipairs(tests) do
-      eq(t[5], split(t[1], t[2], t[3], t[4]))
+      eq(t[5], split(t[1], t[2], {plain=t[3], trimempty=t[4]}))
     end
+
+    -- Test old signature
+    eq({'x', 'yz', 'oo', 'l'}, split("x*yz*oo*l", "*", true))
 
     local loops = {
       { "abc", ".-" },
@@ -285,16 +288,10 @@ describe('lua stdlib', function()
             vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(split, 'string', 1))
     eq(dedent([[
-        Error executing lua: vim/shared.lua:0: plain: expected boolean, got number
+        Error executing lua: vim/shared.lua:0: kwargs: expected table, got number
         stack traceback:
-            vim/shared.lua:0: in function 'gsplit'
             vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(split, 'string', 'string', 1))
-    eq(dedent([[
-        Error executing lua: vim/shared.lua:0: trimempty: expected boolean, got number
-        stack traceback:
-            vim/shared.lua:0: in function <vim/shared.lua:0>]]),
-      pcall_err(split, 'string', 'string', false, 42))
   end)
 
   it('vim.trim', function()
