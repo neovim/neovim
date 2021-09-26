@@ -41,6 +41,8 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   UIBridgeData *rv = xcalloc(1, sizeof(UIBridgeData));
   rv->ui = ui;
   rv->bridge.rgb = ui->rgb;
+  rv->bridge.width = ui->width;
+  rv->bridge.height = ui->height;
   rv->bridge.stop = ui_bridge_stop;
   rv->bridge.grid_resize = ui_bridge_grid_resize;
   rv->bridge.grid_clear = ui_bridge_grid_clear;
