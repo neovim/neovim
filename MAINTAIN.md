@@ -55,6 +55,27 @@ has a major bug:
     - The [nightly job](https://github.com/neovim/bot-ci/blob/master/ci/nightly.sh)
       will update the release assets based on the `stable` tag.
 
+Third-party dependencies
+--------------
+
+The following are the third-party dependencies used in neovim.
+
+Dependencies that are managed in third-party/CMakeLists.txt:
+  - [Klib](https://github.com/attractivechaos/klib)
+  - [Lua](https://www.lua.org/download.html)
+  - [LuaJIT](https://github.com/LuaJIT/LuaJIT)
+  - [Luv](https://github.com/luvit/luv)
+  - [libtermkey](https://github.com/neovim/libtermkey)
+  - [libuv](https://github.com/libuv/libuv)
+  - [libvterm](http://www.leonerd.org.uk/code/libvterm/)
+  - [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
+  - [tree-sitter](https://github.com/tree-sitter/tree-sitter)
+
+Dependencies which must be bumped manually:
+  - [libmpack](https://github.com/libmpack/libmpack)
+  - [xdiff](https://github.com/git/git/tree/master/xdiff)
+  - [lua-cjson](https://github.com/openresty/lua-cjson)
+
 See also
 --------
 
