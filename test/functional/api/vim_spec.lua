@@ -1,9 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local lfs = require('lfs')
 
 local fmt = string.format
-local getcwd = helpers.funcs.getcwd
 local assert_alive = helpers.assert_alive
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
@@ -494,23 +492,23 @@ describe('API', function()
 
     before_each(function()
       clear()
-      lfs.mkdir("testdir")
-      start_dir = getcwd()
+      funcs.mkdir("Xtestdir")
+      start_dir = funcs.getcwd()
     end)
 
     after_each(function()
-      lfs.rmdir("testdir")
+      helpers.rmdir("Xtestdir")
     end)
 
     it('works', function()
-      meths.set_current_dir("testdir")
-      eq(getcwd(), start_dir .. "/testdir")
+      meths.set_current_dir("Xtestdir")
+      eq(funcs.getcwd(), start_dir .. "/Xtestdir")
     end)
 
     it('sets previous directory', function()
-      meths.set_current_dir("testdir")
+      meths.set_current_dir("Xtestdir")
       meths.exec('cd -', false)
-      eq(getcwd(), start_dir)
+      eq(funcs.getcwd(), start_dir)
     end)
   end)
 
