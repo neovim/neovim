@@ -265,7 +265,8 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   (*arg)++;
 
   if (evaluate) {
-    int len, flags = 0;
+    int len;
+    int flags = 0;
     char_u *p;
     garray_T newlines;
 

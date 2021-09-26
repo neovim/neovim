@@ -1123,8 +1123,10 @@ static void tui_grid_scroll(UI *ui, Integer g, Integer startrow,  // -V751
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  int top = (int)startrow, bot = (int)endrow-1;
-  int left = (int)startcol, right = (int)endcol-1;
+  int top = (int)startrow;
+  int bot = (int)endrow-1;
+  int left = (int)startcol;
+  int right = (int)endcol-1;
 
   bool fullwidth = left == 0 && right == ui->width-1;
   data->scroll_region_is_full_screen = fullwidth
@@ -1445,7 +1447,8 @@ static void invalidate(UI *ui, int top, int bot, int left, int right)
 static void tui_guess_size(UI *ui)
 {
   TUIData *data = ui->data;
-  int width = 0, height = 0;
+  int width = 0;
+  int height = 0;
 
   // 1 - look for non-default 'columns' and 'lines' options during startup
   if (data->is_starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {

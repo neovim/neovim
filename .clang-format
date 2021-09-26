@@ -6,7 +6,7 @@ TabWidth: 2
 UseTab: Never
 IndentCaseLabels: true
 BreakBeforeBraces: Linux
-AlignEscapedNewlinesLeft: false
+AlignEscapedNewlines: DontAlign
 AllowShortFunctionsOnASingleLine: false
 AlignTrailingComments: true
 SpacesBeforeTrailingComments: 2
@@ -17,4 +17,5 @@ AllowShortLoopsOnASingleLine: false
 BinPackParameters: false
 BreakBeforeBinaryOperators: true
 BreakBeforeTernaryOperators: true
-ContinuationIndentWidth: 4
+ContinuationIndentWidth: 2
+

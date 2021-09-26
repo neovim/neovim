@@ -54,11 +54,11 @@ typedef struct {
 #endif
 
 #define PUSH_ALL_TYPVALS(lstate, args, argcount, special) \
-  for (int i = 0; i < argcount; i++) { \
-    if (args[i].v_type == VAR_UNKNOWN) { \
+  for (int i = 0; i < (argcount); i++) { \
+    if ((args)[i].v_type == VAR_UNKNOWN) { \
       lua_pushnil(lstate); \
     } else { \
-      nlua_push_typval(lstate, &args[i], special); \
+      nlua_push_typval(lstate, &(args)[i], special); \
     } \
   }
 
@@ -671,7 +671,7 @@ int nlua_call(lua_State *lstate)
   typval_T vim_args[MAX_FUNC_ARGS + 1];
   int i = 0;  // also used for freeing the variables
   for (; i < nargs; i++) {
-    lua_pushvalue(lstate, (int)i+2);
+    lua_pushvalue(lstate, i+2);
     if (!nlua_pop_typval(lstate, &vim_args[i])) {
       api_set_error(&err, kErrorTypeException,
                     "error converting argument %d", i+1);
@@ -736,7 +736,7 @@ static int nlua_rpc(lua_State *lstate, bool request)
   Array args = ARRAY_DICT_INIT;
 
   for (int i = 0; i < nargs; i++) {
-    lua_pushvalue(lstate, (int)i+3);
+    lua_pushvalue(lstate, i+3);
     ADD(args, nlua_pop_Object(lstate, false, &err));
     if (ERROR_SET(&err)) {
       api_free_array(args);

@@ -4250,7 +4250,8 @@ static void f_win_splitmove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   win_T *wp;
   win_T *targetwin;
-  int flags = 0, size = 0;
+  int flags = 0;
+  int size = 0;
 
   wp = find_win_by_nr_or_id(&argvars[0]);
   targetwin = find_win_by_nr_or_id(&argvars[1]);
@@ -5471,8 +5472,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool clear_env = false;
   bool overlapped = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
   dictitem_T *job_env = NULL;
@@ -5535,7 +5536,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  uint16_t width = 0, height = 0;
+  uint16_t width = 0;
+  uint16_t height = 0;
   char *term_name = NULL;
 
   if (pty) {
@@ -8353,7 +8355,9 @@ static void f_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   pos_T pos;
   int row = 0;
-  int scol = 0, ccol = 0, ecol = 0;
+  int scol = 0;
+  int ccol = 0;
+  int ecol = 0;
 
   tv_dict_alloc_ret(rettv);
   dict_T *dict = rettv->vval.v_dict;
@@ -8555,7 +8559,9 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   char_u *save_cpo;
-  char_u *pat, *pat2 = NULL, *pat3 = NULL;
+  char_u *pat;
+  char_u *pat2 = NULL;
+  char_u *pat3 = NULL;
   long retval = 0;
   pos_T pos;
   pos_T firstpos;
@@ -11405,8 +11411,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   dict_T *job_opts = NULL;
   const char *cwd = ".";
@@ -11702,7 +11708,6 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 error:
   semsg(_(e_invarg2), fromstr);
   ga_clear(&ga);
-  return;
 }
 
 // "trim({expr})" function

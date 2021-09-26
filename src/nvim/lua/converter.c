@@ -549,10 +549,10 @@ static bool typval_conv_special = false;
   do { \
     for (size_t backref = kv_size(*mpstack); backref; backref--) { \
       const MPConvStackVal mpval = kv_A(*mpstack, backref - 1); \
-      if (mpval.type == conv_type) { \
-        if (conv_type == kMPConvDict \
-              ? (void *)mpval.data.d.dict == (void *)(val) \
-              : (void *)mpval.data.l.list == (void *)(val)) { \
+      if (mpval.type == (conv_type)) { \
+        if ((conv_type) == kMPConvDict \
+            ? (void *)mpval.data.d.dict == (void *)(val) \
+            : (void *)mpval.data.l.list == (void *)(val)) { \
           lua_pushvalue(lstate, \
                         -((int)((kv_size(*mpstack) - backref + 1) * 2))); \
           break; \
