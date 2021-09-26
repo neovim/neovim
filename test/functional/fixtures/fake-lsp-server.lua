@@ -43,11 +43,11 @@ end
 local function read_message()
   local line = io.read("*l")
   local length = line:lower():match("content%-length:%s*(%d+)")
-  return vim.fn.json_decode(io.read(2 + length):sub(2))
+  return vim.json.decode(io.read(2 + length):sub(2))
 end
 
 local function send(payload)
-  io.stdout:write(format_message_with_content_length(vim.fn.json_encode(payload)))
+  io.stdout:write(format_message_with_content_length(vim.json.encode(payload)))
 end
 
 local function respond(id, err, result)

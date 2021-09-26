@@ -11,7 +11,7 @@ local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedu
 ---@param data (table) Data to encode
 ---@returns (string) Encoded object
 local function json_encode(data)
-  local status, result = pcall(vim.fn.json_encode, data)
+  local status, result = pcall(vim.json.encode, data)
   if status then
     return result
   else
@@ -24,7 +24,7 @@ end
 ---@param data (string) Data to decode
 ---@returns (table) Decoded JSON object
 local function json_decode(data)
-  local status, result = pcall(vim.fn.json_decode, data)
+  local status, result = pcall(vim.json.decode, data)
   if status then
     return result
   else
@@ -394,11 +394,8 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   local function encode_and_send(payload)
     local _ = log.debug() and log.debug("rpc.send", payload)
     if handle == nil or handle:is_closing() then return false end
-    -- TODO(ashkan) remove this once we have a Lua json_encode
-    schedule(function()
-      local encoded = assert(json_encode(payload))
-      stdin:write(format_message_with_content_length(encoded))
-    end)
+    local encoded = assert(json_encode(payload))
+    stdin:write(format_message_with_content_length(encoded))
     return true
   end
 
@@ -582,8 +579,6 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
     end
   end
-  -- TODO(ashkan) remove this once we have a Lua json_decode
-  handle_body = schedule_wrap(handle_body)
 
   local request_parser = coroutine.wrap(request_parser_loop)
   request_parser()
