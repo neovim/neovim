@@ -5637,7 +5637,7 @@ static void ex_command(exarg_T *eap)
   uint32_t argt = 0;
   long def = -1;
   int flags = 0;
-  int     compl = EXPAND_NOTHING;
+  int compl = EXPAND_NOTHING;
   char_u *compl_arg = NULL;
   cmd_addr_T addr_type_arg = ADDR_NONE;
   int has_attr = (eap->arg[0] == '-');

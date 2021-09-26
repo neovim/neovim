@@ -98,13 +98,15 @@ typedef enum {
   kBffInitChangedtick = 2,
 } BufFreeFlags;
 
-// Read data from buffer for retrying.
-static int read_buffer(int     read_stdin,     // read file from stdin, otherwise fifo
-                       exarg_T *eap,           // for forced 'ff' and 'fenc' or NULL
-                       int     flags)          // extra flags for readfile()
+/// Read data from buffer for retrying.
+///
+/// @param read_stdin  read file from stdin, otherwise fifo
+/// @param eap  for forced 'ff' and 'fenc' or NULL
+/// @param flags  extra flags for readfile()
+static int read_buffer(int read_stdin, exarg_T *eap, int flags)
 {
-  int       retval = OK;
-  linenr_T  line_count;
+  int retval = OK;
+  linenr_T line_count;
 
   //
   // Read from the buffer which the text is already filled in and append at
@@ -146,16 +148,18 @@ static int read_buffer(int     read_stdin,     // read file from stdin, otherwis
   return retval;
 }
 
-// Open current buffer, that is: open the memfile and read the file into
-// memory.
-// Return FAIL for failure, OK otherwise.
-int open_buffer(int read_stdin,   // read file from stdin
-                exarg_T *eap,     // for forced 'ff' and 'fenc' or NULL
-                int flags         // extra flags for readfile()
-                )
+/// Open current buffer, that is: open the memfile and read the file into
+/// memory.
+///
+/// @param read_stdin  read file from stdin
+/// @param eap  for forced 'ff' and 'fenc' or NULL
+/// @param flags  extra flags for readfile()
+///
+/// @return  FAIL for failure, OK otherwise.
+int open_buffer(int read_stdin, exarg_T *eap, int flags)
 {
   int retval = OK;
-  bufref_T       old_curbuf;
+  bufref_T old_curbuf;
   long old_tw = curbuf->b_p_tw;
   int read_fifo = false;
 
@@ -939,23 +943,22 @@ void handle_swap_exists(bufref_T *old_curbuf)
   swap_exists_action = SEA_NONE;  // -V519
 }
 
-/*
- * do_bufdel() - delete or unload buffer(s)
- *
- * addr_count == 0: ":bdel" - delete current buffer
- * addr_count == 1: ":N bdel" or ":bdel N [N ..]" - first delete
- *                  buffer "end_bnr", then any other arguments.
- * addr_count == 2: ":N,N bdel" - delete buffers in range
- *
- * command can be DOBUF_UNLOAD (":bunload"), DOBUF_WIPE (":bwipeout") or
- * DOBUF_DEL (":bdel")
- *
- * Returns error message or NULL
- */
-char_u *do_bufdel(int command, char_u *arg,               // pointer to extra arguments
-                  int addr_count, int start_bnr,             // first buffer number in a range
-                  int end_bnr,               // buffer nr or last buffer nr in a range
-                  int forceit)
+/// do_bufdel() - delete or unload buffer(s)
+///
+/// addr_count == 0: ":bdel" - delete current buffer
+/// addr_count == 1: ":N bdel" or ":bdel N [N ..]" - first delete
+///                  buffer "end_bnr", then any other arguments.
+/// addr_count == 2: ":N,N bdel" - delete buffers in range
+///
+/// command can be DOBUF_UNLOAD (":bunload"), DOBUF_WIPE (":bwipeout") or
+/// DOBUF_DEL (":bdel")
+///
+/// @param arg  pointer to extra arguments
+/// @param start_bnr  first buffer number in a range
+/// @param end_bnr  buffer nr or last buffer nr in a range
+///
+/// @return  error message or NULL
+char_u *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int end_bnr, int forceit)
 {
   int do_current = 0;             // delete current buffer?
   int deleted = 0;                // number of buffers deleted
@@ -1097,26 +1100,26 @@ static int empty_curbuf(int close_others, int forceit, int action)
 
   return retval;
 }
-/*
- * Implementation of the commands for the buffer list.
- *
- * action == DOBUF_GOTO     go to specified buffer
- * action == DOBUF_SPLIT    split window and go to specified buffer
- * action == DOBUF_UNLOAD   unload specified buffer(s)
- * action == DOBUF_DEL      delete specified buffer(s) from buffer list
- * action == DOBUF_WIPE     delete specified buffer(s) really
- *
- * start == DOBUF_CURRENT   go to "count" buffer from current buffer
- * start == DOBUF_FIRST     go to "count" buffer from first buffer
- * start == DOBUF_LAST      go to "count" buffer from last buffer
- * start == DOBUF_MOD       go to "count" modified buffer from current buffer
- *
- * Return FAIL or OK.
- */
-int do_buffer(int action, int start, int dir,                        // FORWARD or BACKWARD
-              int count,                      // buffer number or number of buffers
-              int forceit                     // true for :...!
-              )
+
+/// Implementation of the commands for the buffer list.
+///
+/// action == DOBUF_GOTO     go to specified buffer
+/// action == DOBUF_SPLIT    split window and go to specified buffer
+/// action == DOBUF_UNLOAD   unload specified buffer(s)
+/// action == DOBUF_DEL      delete specified buffer(s) from buffer list
+/// action == DOBUF_WIPE     delete specified buffer(s) really
+///
+/// start == DOBUF_CURRENT   go to "count" buffer from current buffer
+/// start == DOBUF_FIRST     go to "count" buffer from first buffer
+/// start == DOBUF_LAST      go to "count" buffer from last buffer
+/// start == DOBUF_MOD       go to "count" modified buffer from current buffer
+///
+/// @param dir  FORWARD or BACKWARD
+/// @param count  buffer number or number of buffers
+/// @param forceit  true for :...!
+///
+/// @return  FAIL or OK.
+int do_buffer(int action, int start, int dir, int count, int forceit)
 {
   buf_T *buf;
   buf_T *bp;
@@ -2154,11 +2157,13 @@ static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id, bool fil
 /// Find file in buffer list by a regexp pattern.
 /// Return fnum of the found buffer.
 /// Return < 0 for error.
-int buflist_findpat(const char_u *pattern, const char_u *pattern_end,  // pointer to first char after pattern
-                    bool unlisted,              // find unlisted buffers
-                    bool diffmode,              // find diff-mode buffers only
-                    bool curtab_only            // find buffers in current tab only
-                    )
+///
+/// @param pattern_end  pointer to first char after pattern
+/// @param unlisted  find unlisted buffers
+/// @param diffmode  find diff-mode buffers only
+/// @param curtab_only  find buffers in current tab only
+int buflist_findpat(const char_u *pattern, const char_u *pattern_end, bool unlisted, bool diffmode,
+                    bool curtab_only)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   int match = -1;
@@ -2466,14 +2471,14 @@ buf_T *buflist_findnr(int nr)
   return handle_get_buffer((handle_T)nr);
 }
 
-/*
- * Get name of file 'n' in the buffer list.
- * When the file has no name an empty string is returned.
- * home_replace() is used to shorten the file name (used for marks).
- * Returns a pointer to allocated memory, of NULL when failed.
- */
-char_u *buflist_nr2name(int n, int fullname, int helptail                   // for help buffers return tail only
-                        )
+/// Get name of file 'n' in the buffer list.
+/// When the file has no name an empty string is returned.
+/// home_replace() is used to shorten the file name (used for marks).
+///
+/// @param helptail  for help buffers return tail only
+///
+/// @return  a pointer to allocated memory, of NULL when failed.
+char_u *buflist_nr2name(int n, int fullname, int helptail)
 {
   buf_T *buf;
 
@@ -2800,13 +2805,14 @@ int buflist_name_nr(int fnum, char_u **fname, linenr_T *lnum)
   return OK;
 }
 
-// Set the file name for "buf" to "ffname_arg", short file name to
-// "sfname_arg".
-// The file name with the full path is also remembered, for when :cd is used.
-// Returns FAIL for failure (file name already in use by other buffer)
-//      OK otherwise.
-int setfname(buf_T *buf, char_u *ffname_arg, char_u *sfname_arg, bool message                  // give message when buffer already exists
-             )
+/// Set the file name for "buf" to "ffname_arg", short file name to
+/// "sfname_arg".
+/// The file name with the full path is also remembered, for when :cd is used.
+///
+/// @param message  give message when buffer already exists
+///
+/// @return  FAIL for failure (file name already in use by other buffer) OK otherwise.
+int setfname(buf_T *buf, char_u *ffname_arg, char_u *sfname_arg, bool message)
 {
   char_u *ffname = ffname_arg;
   char_u *sfname = sfname_arg;
@@ -2934,12 +2940,11 @@ buf_T *setaltfname(char_u *ffname, char_u *sfname, linenr_T lnum)
   return buf;
 }
 
-/*
- * Get alternate file name for current window.
- * Return NULL if there isn't any, and give error message if requested.
- */
-char_u *getaltfname(bool errmsg                   // give error message
-                    )
+/// Get alternate file name for current window.
+/// Return NULL if there isn't any, and give error message if requested.
+///
+/// @param errmsg  give error message
+char_u *getaltfname(bool errmsg)
 {
   char_u *fname;
   linenr_T dummy;
@@ -3078,11 +3083,10 @@ static bool buf_same_file_id(buf_T *buf, FileID *file_id)
   return buf->file_id_valid && os_fileid_equal(&(buf->file_id), file_id);
 }
 
-/*
- * Print info about the current buffer.
- */
-void fileinfo(int fullname,               // when non-zero print full path
-              int shorthelp, int dont_truncate)
+/// Print info about the current buffer.
+///
+/// @param fullname  when non-zero print full path
+void fileinfo(int fullname, int shorthelp, int dont_truncate)
 {
   char_u *name;
   int n;
@@ -4751,12 +4755,11 @@ char_u *alist_name(aentry_T *aep)
   return bp->b_fname;
 }
 
-/*
- * do_arg_all(): Open up to 'count' windows, one for each argument.
- */
-void do_arg_all(int count, int forceit,                  // hide buffers in current windows
-                int keep_tabs                 // keep current tabs, for ":tab drop file"
-                )
+/// do_arg_all(): Open up to 'count' windows, one for each argument.
+///
+/// @param forceit  hide buffers in current windows
+/// @param keep_tabs  keep current tabs, for ":tab drop file"
+void do_arg_all(int count, int forceit, int keep_tabs)
 {
   char_u *opened;          // Array of weight for which args are open:
                            //  0: not opened
@@ -5254,12 +5257,11 @@ void do_modelines(int flags)
   entered--;
 }
 
-/*
- * chk_modeline() - check a single line for a mode string
- * Return FAIL if an error encountered.
- */
-static int chk_modeline(linenr_T lnum, int flags                      // Same as for do_modelines().
-                        )
+/// chk_modeline() - check a single line for a mode string
+/// Return FAIL if an error encountered.
+///
+/// @param flags  Same as for do_modelines().
+static int chk_modeline(linenr_T lnum, int flags)
 {
   char_u *s;
   char_u *e;
@@ -5631,13 +5633,12 @@ bool buf_contents_changed(buf_T *buf)
   return differ;
 }
 
-/*
- * Wipe out a buffer and decrement the last buffer number if it was used for
- * this buffer.  Call this to wipe out a temp buffer that does not contain any
- * marks.
- */
-void wipe_buffer(buf_T *buf, bool aucmd                  // When true trigger autocommands.
-                 )
+/// Wipe out a buffer and decrement the last buffer number if it was used for
+/// this buffer.  Call this to wipe out a temp buffer that does not contain any
+/// marks.
+///
+/// @param aucmd  When true trigger autocommands.
+void wipe_buffer(buf_T *buf, bool aucmd)
 {
   if (!aucmd) {
     // Don't trigger BufDelete autocommands here.

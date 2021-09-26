@@ -992,7 +992,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   if ((local && existing_row) || visible_row) {
     colnr_T off;
     colnr_T col;
-    int     width;
+    int width;
 
     getvcol(wp, pos, &scol, &ccol, &ecol);
 
@@ -1531,10 +1531,10 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   lineoff_T boff;
   int fill_below_window;
   linenr_T old_topline    = curwin->w_topline;
-  int      old_topfill    = curwin->w_topfill;
+  int old_topfill    = curwin->w_topfill;
   linenr_T old_botline    = curwin->w_botline;
-  int      old_valid      = curwin->w_valid;
-  int      old_empty_rows = curwin->w_empty_rows;
+  int old_valid      = curwin->w_valid;
+  int old_empty_rows = curwin->w_empty_rows;
   linenr_T cln            = curwin->w_cursor.lnum;  // Cursor Line Number
   long so = get_scrolloff_value(curwin);
 

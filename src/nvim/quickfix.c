@@ -93,7 +93,7 @@ typedef enum
 /// information and entries can be added later using setqflist()/setloclist().
 typedef struct qf_list_S {
   unsigned qf_id;               ///< Unique identifier for this list
-  qfltype_T   qfl_type;
+  qfltype_T qfl_type;
   qfline_T *qf_start;        ///< pointer to the first error
   qfline_T *qf_last;         ///< pointer to the last error
   qfline_T *qf_ptr;          ///< pointer to the current error
@@ -103,7 +103,7 @@ typedef struct qf_list_S {
   char_u *qf_title;        ///< title derived from the command that created
                            ///< the error list or set by setqflist
   typval_T *qf_ctx;          ///< context set by setqflist/setloclist
-  Callback  qftf_cb;            ///< 'quickfixtextfunc' callback function
+  Callback qftf_cb;            ///< 'quickfixtextfunc' callback function
 
   struct dir_stack_T *qf_dir_stack;
   char_u *qf_directory;
@@ -201,13 +201,13 @@ typedef struct {
   size_t errmsglen;
   long lnum;
   long end_lnum;
-  int  col;
+  int col;
   int end_col;
   bool use_viscol;
   char_u *pattern;
-  int    enr;
+  int enr;
   char_u type;
-  bool   valid;
+  bool valid;
 } qffields_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -244,7 +244,7 @@ static char_u *e_no_more_items = (char_u *)N_("E553: No more items");
 // Looking up a buffer can be slow if there are many.  Remember the last one
 // to make this a lot faster if there are multiple matches in the same file.
 static char_u *qf_last_bufname = NULL;
-static bufref_T  qf_last_bufref = { NULL, 0, 0 };
+static bufref_T qf_last_bufref = { NULL, 0, 0 };
 
 static char *e_current_quickfix_list_was_changed =
   N_("E925: Current quickfix list was changed");
@@ -913,7 +913,7 @@ static int qf_parse_line(qf_list_T *qfl, char_u *linebuf, size_t linelen, efm_T 
                          qffields_T *fields)
 {
   efm_T *fmt_ptr;
-  int    idx = 0;
+  int idx = 0;
   char_u *tail = NULL;
   int status;
 
@@ -3115,8 +3115,8 @@ void qf_list(exarg_T *eap)
   int idx1 = 1;
   int idx2 = -1;
   char_u *arg = eap->arg;
-  int         all = eap->forceit;     // if not :cl!, only show
-                                      // recognised errors
+  int all = eap->forceit;     // if not :cl!, only show
+                              // recognised errors
   qf_info_T *qi;
 
   if ((qi = qf_cmd_get_stack(eap, true)) == NULL) {
@@ -6448,7 +6448,7 @@ static int qf_setprop_items_from_lines(qf_info_T *qi, int qf_idx, const dict_T *
 {
   char_u *errorformat = p_efm;
   dictitem_T *efm_di;
-  int  retval = FAIL;
+  int retval = FAIL;
 
   // Use the user supplied errorformat settings (if present)
   if ((efm_di = tv_dict_find(what, S_LEN("efm"))) != NULL) {
@@ -6491,7 +6491,7 @@ static int qf_setprop_context(qf_list_T *qfl, dictitem_T *di)
 static int qf_setprop_curidx(qf_info_T *qi, qf_list_T *qfl, const dictitem_T *di)
   FUNC_ATTR_NONNULL_ALL
 {
-  int  newidx;
+  int newidx;
 
   // If the specified index is '$', then use the last entry
   if (di->di_tv.v_type == VAR_STRING
@@ -6537,7 +6537,7 @@ static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action, char
 {
   qf_list_T *qfl;
   dictitem_T *di;
-  int  retval = FAIL;
+  int retval = FAIL;
   bool newlist = action == ' ' || qf_stack_empty(qi);
   int qf_idx = qf_setprop_get_qfidx(qi, what, action, &newlist);
   if (qf_idx == INVALID_QFIDX) {  // List not found

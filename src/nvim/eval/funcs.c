@@ -248,7 +248,7 @@ static int non_zero_arg(typval_T *argvars)
 static void float_op_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   float_T f;
-  float_T (*function)(float_T) = (float_T (*)(float_T))fptr;
+  float_T (*function)(float_T) = (float_T (*)(float_T)) fptr;
 
   rettv->v_type = VAR_FLOAT;
   if (tv_get_float_chk(argvars, &f)) {
@@ -2695,13 +2695,13 @@ static void f_foldlevel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  linenr_T    foldstart;
-  linenr_T    foldend;
+  linenr_T foldstart;
+  linenr_T foldend;
   char_u *dashes;
-  linenr_T    lnum;
+  linenr_T lnum;
   char_u *s;
   char_u *r;
-  int         len;
+  int len;
   char *txt;
 
   rettv->v_type = VAR_STRING;
@@ -3310,10 +3310,10 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *pat;
-  expand_T      xpc;
-  bool          filtered = false;
-  int           options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
-                          | WILD_NO_BEEP;
+  expand_T xpc;
+  bool filtered = false;
+  int options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
+                | WILD_NO_BEEP;
 
   if (argvars[1].v_type != VAR_STRING) {
     EMSG2(_(e_invarg2), "type must be a string");
@@ -4113,8 +4113,8 @@ static void f_win_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 //
 static void win_move_into_split(win_T *wp, win_T *targetwin, int size, int flags)
 {
-  int     dir;
-  int     height = wp->w_height;
+  int dir;
+  int height = wp->w_height;
   win_T *oldwin = curwin;
 
   if (wp == targetwin) {
@@ -4153,7 +4153,7 @@ static void f_win_splitmove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   win_T *wp;
   win_T *targetwin;
-  int     flags = 0, size = 0;
+  int flags = 0, size = 0;
 
   wp = find_win_by_nr_or_id(&argvars[0]);
   targetwin = find_win_by_nr_or_id(&argvars[1]);
@@ -5968,7 +5968,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
                             const SomeMatchType type)
 {
   char_u *str = NULL;
-  long        len = 0;
+  long len = 0;
   char_u *expr = NULL;
   regmatch_T regmatch;
   char_u *save_cpo;
@@ -7250,17 +7250,17 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   buf[1] = NUL;
   colnr_T reglen = 0;
   switch (get_reg_type(regname, &reglen)) {
-    case kMTLineWise:
-      buf[0] = 'V';
-      break;
-    case kMTCharWise:
-      buf[0] = 'v';
-      break;
-    case kMTBlockWise:
-      vim_snprintf(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
-      break;
-    case kMTUnknown:
-      abort();
+  case kMTLineWise:
+    buf[0] = 'V';
+    break;
+  case kMTCharWise:
+    buf[0] = 'v';
+    break;
+  case kMTBlockWise:
+    vim_snprintf(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
+    break;
+  case kMTUnknown:
+    abort();
   }
   tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
@@ -9056,7 +9056,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   pos_T pos;
   int fnum;
-  colnr_T     curswant = -1;
+  colnr_T curswant = -1;
 
   rettv->vval.v_number = -1;
   const char *const name = tv_get_string_chk(argvars);
@@ -9100,25 +9100,25 @@ static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *c
 {
   char_u *stropt = *pp;
   switch (*stropt) {
-    case 'v':
-    case 'c':  // character-wise selection
-      *yank_type = kMTCharWise;
-      break;
-    case 'V':
-    case 'l':  // line-wise selection
-      *yank_type = kMTLineWise;
-      break;
-    case 'b':
-    case Ctrl_V:  // block-wise selection
-      *yank_type = kMTBlockWise;
-      if (ascii_isdigit(stropt[1])) {
-        stropt++;
-        *block_len = getdigits_long(&stropt, false, 0) - 1;
-        stropt--;
-      }
-      break;
-    default:
-      return FAIL;
+  case 'v':
+  case 'c':  // character-wise selection
+    *yank_type = kMTCharWise;
+    break;
+  case 'V':
+  case 'l':  // line-wise selection
+    *yank_type = kMTLineWise;
+    break;
+  case 'b':
+  case Ctrl_V:  // block-wise selection
+    *yank_type = kMTBlockWise;
+    if (ascii_isdigit(stropt[1])) {
+      stropt++;
+      *block_len = getdigits_long(&stropt, false, 0) - 1;
+      stropt--;
+    }
+    break;
+  default:
+    return FAIL;
   }
   *pp = stropt;
   return OK;
@@ -9319,7 +9319,7 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   static char *e_invact2 = N_("E962: Invalid action: '%s'");
   win_T *wp;
   dict_T *d;
-  int         action = 'r';
+  int action = 'r';
 
   rettv->vval.v_number = -1;
 

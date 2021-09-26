@@ -265,8 +265,8 @@ int nlua_xdl_diff(lua_State *lstate)
   Error err = ERROR_INIT;
 
   xdemitconf_t cfg;
-  xpparam_t    params;
-  xdemitcb_t   ecb;
+  xpparam_t params;
+  xdemitcb_t ecb;
 
   memset(&cfg, 0, sizeof(cfg));
   memset(&params, 0, sizeof(params));

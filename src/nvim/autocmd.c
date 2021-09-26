@@ -956,10 +956,11 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, c
   return OK;
 }
 
-// Implementation of ":doautocmd [group] event [fname]".
-// Return OK for success, FAIL for failure;
-int do_doautocmd(char_u *arg, bool do_msg,  // give message for no matching autocmds?
-                 bool *did_something)
+/// Implementation of ":doautocmd [group] event [fname]".
+/// Return OK for success, FAIL for failure;
+///
+/// @param do_msg  give message for no matching autocmds?
+int do_doautocmd(char_u *arg, bool do_msg, bool *did_something)
 {
   char_u *fname;
   int nothing_done = true;
@@ -1916,8 +1917,8 @@ char_u *get_augroup_name(expand_T *xp, int idx)
   return (char_u *)AUGROUP_NAME(idx);
 }
 
-char_u *set_context_in_autocmd(expand_T *xp, char_u *arg, int doautocmd  // true for :doauto*, false for :autocmd
-                               )
+/// @param doautocmd  true for :doauto*, false for :autocmd
+char_u *set_context_in_autocmd(expand_T *xp, char_u *arg, int doautocmd)
 {
   char_u *p;
   int group;

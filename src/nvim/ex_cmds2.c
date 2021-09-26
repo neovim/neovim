@@ -317,7 +317,7 @@ static void profile_reset(void)
   }
 
   // Reset functions.
-  size_t      n  = func_hashtab.ht_used;
+  size_t n  = func_hashtab.ht_used;
   hashitem_T *hi = func_hashtab.ht_array;
 
   for (; n > (size_t)0; hi++) {
@@ -1703,8 +1703,8 @@ void init_pyxversion(void)
 static int requires_py_version(char_u *filename)
 {
   FILE *file;
-  int       requires_py_version = 0;
-  int       i, lines;
+  int requires_py_version = 0;
+  int i, lines;
 
   lines = (int)p_mls;
   if (lines < 0) {

@@ -1703,7 +1703,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   regmmatch_T regmatch;
   lpos_T pos;
   reg_extmatch_T *cur_extmatch = NULL;
-  char_u      buf_chartab[32];  // chartab array for syn iskeyword
+  char_u buf_chartab[32];  // chartab array for syn iskeyword
   char_u *line;            // current line.  NOTE: becomes invalid after
                            // looking for a pattern match!
 
@@ -5654,7 +5654,7 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
 
 struct subcommand {
   char *name;                                // subcommand name
-  void    (*func)(exarg_T *, int);              // function to call
+  void (*func)(exarg_T *, int);              // function to call
 };
 
 static struct subcommand subcommands[] =

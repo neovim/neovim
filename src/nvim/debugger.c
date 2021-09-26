@@ -718,10 +718,11 @@ void ex_breaklist(exarg_T *eap)
 
 /// Find a breakpoint for a function or sourced file.
 /// Returns line number at which to break; zero when no matching breakpoint.
-linenr_T dbg_find_breakpoint(bool file,             // true for a file, false for a function
-                             char_u *fname,         // file or function name
-                             linenr_T after         // after this line number
-                             )
+///
+/// @param file  true for a file, false for a function
+/// @param fname  file or function name
+/// @param after  after this line number
+linenr_T dbg_find_breakpoint(bool file, char_u *fname, linenr_T after)
 {
   return debuggy_find(file, fname, after, &dbg_breakp, NULL);
 }
@@ -738,12 +739,13 @@ bool has_profiling(bool file, char_u *fname, bool *fp)
 }
 
 /// Common code for dbg_find_breakpoint() and has_profiling().
-static linenr_T debuggy_find(bool file,            // true for a file, false for a function
-                             char_u *fname,        // file or function name
-                             linenr_T after,       // after this line number
-                             garray_T *gap,        // either &dbg_breakp or &prof_ga
-                             bool *fp              // if not NULL: return forceit
-                             )
+///
+/// @param file  true for a file, false for a function
+/// @param fname  file or function name
+/// @param after  after this line number
+/// @param gap  either &dbg_breakp or &prof_ga
+/// @param fp  if not NULL: return forceit
+static linenr_T debuggy_find(bool file, char_u *fname, linenr_T after, garray_T *gap, bool *fp)
 {
   struct debuggy *bp;
   linenr_T lnum = 0;

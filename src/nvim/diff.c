@@ -73,21 +73,21 @@ static TriState diff_a_works = kNone;
 // used for diff input
 typedef struct {
   char_u *din_fname;   // used for external diff
-  mmfile_t  din_mmfile;  // used for internal diff
+  mmfile_t din_mmfile;  // used for internal diff
 } diffin_T;
 
 // used for diff result
 typedef struct {
   char_u *dout_fname;  // used for external diff
-  garray_T  dout_ga;     // used for internal diff
+  garray_T dout_ga;     // used for internal diff
 } diffout_T;
 
 // two diff inputs and one result
 typedef struct {
-  diffin_T    dio_orig;      // original file input
-  diffin_T    dio_new;       // new file input
-  diffout_T   dio_diff;      // diff result
-  int         dio_internal;  // using internal diff
+  diffin_T dio_orig;      // original file input
+  diffin_T dio_new;       // new file input
+  diffout_T dio_diff;      // diff result
+  int dio_internal;  // using internal diff
 } diffio_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -702,9 +702,9 @@ static void clear_diffout(diffout_T *dout)
 /// @return FAIL for failure.
 static int diff_write_buffer(buf_T *buf, diffin_T *din)
 {
-  linenr_T   lnum;
+  linenr_T lnum;
   char_u *s;
-  long       len = 0;
+  long len = 0;
   char_u *ptr;
 
   // xdiff requires one big block of memory with all the text.
@@ -732,7 +732,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
   for (lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
     for (s = ml_get_buf(buf, lnum, false); *s != NUL; ) {
       if (diff_flags & DIFF_ICASE) {
-        char_u  cbuf[MB_MAXBYTES + 1];
+        char_u cbuf[MB_MAXBYTES + 1];
 
         // xdiff doesn't support ignoring case, fold-case the text.
         int c = PTR2CHAR(s);
@@ -787,10 +787,10 @@ static int diff_write(buf_T *buf, diffin_T *din)
 /// @param dio
 /// @param idx_orig
 /// @param eap   can be NULL
-static void diff_try_update(diffio_T *dio, int     idx_orig, exarg_T *eap)
+static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
 {
   buf_T *buf;
-  int    idx_new;
+  int idx_new;
 
   if (dio->dio_internal) {
     ga_init(&dio->dio_diff.dout_ga, sizeof(char *), 1000);
@@ -928,7 +928,7 @@ void ex_diffupdate(exarg_T *eap)
   }
 
   // Only use the internal method if it did not fail for one of the buffers.
-  diffio_T  diffio;
+  diffio_T diffio;
   memset(&diffio, 0, sizeof(diffio));
   diffio.dio_internal = diff_internal() && !diff_internal_failed();
 
@@ -1044,9 +1044,9 @@ static int check_external_diff(diffio_T *diffio)
 ///
 static int diff_file_internal(diffio_T *diffio)
 {
-  xpparam_t     param;
-  xdemitconf_t    emit_cfg;
-  xdemitcb_t        emit_cb;
+  xpparam_t param;
+  xdemitconf_t emit_cfg;
+  xdemitcb_t emit_cb;
 
   memset(&param, 0, sizeof(param));
   memset(&emit_cfg, 0, sizeof(emit_cfg));
@@ -3033,8 +3033,8 @@ static int parse_diff_ed(char_u *line, linenr_T *lnum_orig, long *count_orig, li
                          long *count_new)
 {
   char_u *p;
-  long    f1, l1, f2, l2;
-  int       difftype;
+  long f1, l1, f2, l2;
+  int difftype;
 
   // The line must be one of three formats:
   // change: {first}[,{last}]c{first}[,{last}]
@@ -3088,7 +3088,7 @@ static int parse_diff_unified(char_u *line, linenr_T *lnum_orig, long *count_ori
                               linenr_T *lnum_new, long *count_new)
 {
   char_u *p;
-  long    oldline, oldcount, newline, newcount;
+  long oldline, oldcount, newline, newcount;
 
   // Parse unified diff hunk header:
   // @@ -oldline,oldcount +newline,newcount @@

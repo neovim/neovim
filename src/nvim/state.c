@@ -3,19 +3,18 @@
 
 #include <assert.h>
 
-#include "nvim/lib/kvec.h"
-
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/state.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/getchar.h"
-#include "nvim/option_defs.h"
-#include "nvim/ui.h"
-#include "nvim/os/input.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/edit.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/getchar.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/input.h"
+#include "nvim/state.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"

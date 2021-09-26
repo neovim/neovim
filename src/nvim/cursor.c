@@ -93,10 +93,10 @@ int coladvance(colnr_T wcol)
   return rc;
 }
 
-static int coladvance2(pos_T *pos, bool addspaces,               // change the text to achieve our goal?
-                       bool finetune,                // change char offset for the exact column
-                       colnr_T wcol_arg              // column to move to (can be negative)
-                       )
+/// @param addspaces  change the text to achieve our goal?
+/// @param finetune  change char offset for the exact column
+/// @param wcol_arg  column to move to (can be negative)
+static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_arg)
 {
   colnr_T wcol = wcol_arg;
   int idx;
