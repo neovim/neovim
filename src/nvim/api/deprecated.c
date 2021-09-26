@@ -150,7 +150,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   decor->virt_text = virt_text;
   decor->virt_text_width = width;
 
-  extmark_set(buf, ns_id, 0, (int)line, 0, -1, -1, decor, true,
+  extmark_set(buf, ns_id, NULL, (int)line, 0, -1, -1, decor, true,
               false, kExtmarkNoUndo);
   return src_id;
 }

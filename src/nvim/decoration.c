@@ -59,7 +59,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
       hl_start = pos_start.col + offset;
       hl_end = pos_end.col + offset;
     }
-    (void)extmark_set(buf, (uint64_t)src_id, 0,
+    (void)extmark_set(buf, (uint64_t)src_id, NULL,
                       (int)lnum-1, hl_start, (int)lnum-1+end_off, hl_end,
                       decor, true, false, kExtmarkNoUndo);
   }
@@ -411,4 +411,36 @@ void decor_free_all_mem(void)
     decor_provider_clear(&kv_A(decor_providers, i));
   }
   kv_destroy(decor_providers);
+}
+
+
+int decor_virtual_lines(win_T *wp, linenr_T lnum)
+{
+  buf_T *buf = wp->w_buffer;
+  if (!buf->b_virt_line_mark) {
+    return 0;
+  }
+  if (buf->b_virt_line_pos < 0) {
+      mtpos_t pos = marktree_lookup(buf->b_marktree, buf->b_virt_line_mark, NULL);
+      if (pos.row < 0) {
+        buf->b_virt_line_mark = 0;
+      }
+      buf->b_virt_line_pos = pos.row + (buf->b_virt_line_above ? 0 : 1);
+  }
+
+  return (lnum-1 == buf->b_virt_line_pos) ? (int)kv_size(buf->b_virt_lines) : 0;
+}
+
+void clear_virt_lines(buf_T *buf, int row)
+{
+  if (row > -1) {
+    redraw_buf_line_later(buf, MIN(buf->b_ml.ml_line_count,
+                                   row+1+(buf->b_virt_line_above?0:1)));
+  }
+  for (size_t i = 0; i < kv_size(buf->b_virt_lines); i++) {
+    clear_virttext(&kv_A(buf->b_virt_lines, i));
+  }
+  kv_destroy(buf->b_virt_lines);  // re-initializes
+  buf->b_virt_line_pos = -1;
+  buf->b_virt_line_mark = 0;
 }

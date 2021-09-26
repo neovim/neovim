@@ -1415,6 +1415,10 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///               - end_col : ending col of the mark, 0-based exclusive.
 ///               - hl_group : name of the highlight group used to highlight
 ///                   this mark.
+///               - hl_eol : when true, for a multiline highlight covering the
+///                          EOL of a line, continue the highlight for the rest
+///                          of the screen line (just like for diff and
+///                          cursorline highlight).
 ///               - virt_text : virtual text to link to this mark.
 ///                   A list of [text, highlight] tuples, each representing a
 ///                   text chunk with specified highlight. `highlight` element
@@ -1442,10 +1446,28 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                              default
 ///                 - "combine": combine with background text color
 ///                 - "blend": blend with background text color.
-///               - hl_eol : when true, for a multiline highlight covering the
-///                          EOL of a line, continue the highlight for the rest
-///                          of the screen line (just like for diff and
-///                          cursorline highlight).
+///
+///               - virt_lines : virtual lines to add next to this mark
+///                   This should be an array over lines, where each line in
+///                   turn is an array over [text, highlight] tuples. In
+///                   general, buffer and window options do not affect the
+///                   display of the text. In particular 'wrap'
+///                   and 'linebreak' options do not take effect, so
+///                   the number of extra screen lines will always match
+///                   the size of the array. However the 'tabstop' buffer
+///                   option is still used for hard tabs. By default lines are
+///                   placed below the buffer line containing the mark.
+///
+///                   Note: currently virtual lines are limited to one block
+///                   per buffer. Thus setting a new mark disables any previous
+///                   `virt_lines` decoration. However plugins should not rely
+///                   on this behaviour, as this limitation is planned to be
+///                   removed.
+///
+///               - virt_lines_above: place virtual lines above instead.
+///               - virt_lines_leftcol: Place extmarks in the leftmost
+///                                     column of the window, bypassing
+///                                     sign and number columns.
 ///
 ///               - ephemeral : for use with |nvim_set_decoration_provider|
 ///                   callbacks. The mark will only be used for the current
@@ -1486,6 +1508,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   bool right_gravity = true;
   bool end_right_gravity = false;
   bool end_gravity_set = false;
+
+  VirtLines virt_lines = KV_INITIAL_VALUE;
+  bool virt_lines_above = false;
+  bool virt_lines_leftcol = false;
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
@@ -1581,6 +1607,36 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     } else if (strequal("virt_text_hide", k.data)) {
       decor.virt_text_hide = api_object_to_bool(*v,
                                                 "virt_text_hide", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
+    } else if (strequal("virt_lines", k.data)) {
+      if (v->type != kObjectTypeArray) {
+        api_set_error(err, kErrorTypeValidation,
+                      "virt_lines is not an Array");
+        goto error;
+      }
+      Array a = v->data.array;
+      for (size_t j = 0; j < a.size; j++) {
+        if (a.items[j].type != kObjectTypeArray) {
+          api_set_error(err, kErrorTypeValidation,
+                        "virt_text_line item is not an Array");
+          goto error;
+        }
+        int dummig;
+        VirtText jtem = parse_virt_text(a.items[j].data.array, err, &dummig);
+        kv_push(virt_lines, jtem);
+        if (ERROR_SET(err)) {
+          goto error;
+        }
+      }
+    } else if (strequal("virt_lines_above", k.data)) {
+      virt_lines_above = api_object_to_bool(*v, "virt_lines_above", false, err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
+    } else if (strequal("virt_lines_leftcol", k.data)) {
+      virt_lines_leftcol = api_object_to_bool(*v, "virt_lines_leftcol", false, err);
       if (ERROR_SET(err)) {
         goto error;
       }
@@ -1721,9 +1777,23 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       goto error;
     }
 
-    id = extmark_set(buf, (uint64_t)ns_id, id, (int)line, (colnr_T)col,
-                     line2, col2, d, right_gravity,
-                     end_right_gravity, kExtmarkNoUndo);
+    if (kv_size(virt_lines) && buf->b_virt_line_mark) {
+      mtpos_t pos = marktree_lookup(buf->b_marktree, buf->b_virt_line_mark, NULL);
+      clear_virt_lines(buf, pos.row);  // handles pos.row == -1
+    }
+
+    uint64_t mark = extmark_set(buf, (uint64_t)ns_id, &id, (int)line, (colnr_T)col,
+                                line2, col2, d, right_gravity,
+                                end_right_gravity, kExtmarkNoUndo);
+
+    if (kv_size(virt_lines)) {
+      buf->b_virt_lines = virt_lines;
+      buf->b_virt_line_mark = mark;
+      buf->b_virt_line_pos = -1;
+      buf->b_virt_line_above = virt_lines_above;
+      buf->b_virt_line_leftcol = virt_lines_leftcol;
+      redraw_buf_line_later(buf, MIN(buf->b_ml.ml_line_count, line+1+(virt_lines_above?0:1)));
+    }
   }
 
   return (Integer)id;
@@ -1827,7 +1897,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
     end_line++;
   }
 
-  extmark_set(buf, ns, 0,
+  extmark_set(buf, ns, NULL,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
               decor_hl(hl_id), true, false, kExtmarkNoUndo);

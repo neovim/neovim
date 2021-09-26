@@ -5261,16 +5261,15 @@ static void nv_scroll(cmdarg_T *cap)
   } else {
     if (cap->cmdchar == 'M') {
       // Don't count filler lines above the window.
-      used -= diff_check_fill(curwin, curwin->w_topline)
+      used -= win_get_fill(curwin, curwin->w_topline)
               - curwin->w_topfill;
       validate_botline(curwin);  // make sure w_empty_rows is valid
       half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half he number of filler lines to be "below this
         // line" and half to be "above the next line".
-        if (n > 0 && used + diff_check_fill(curwin, curwin->w_topline
-                                            + n) / 2 >= half) {
-          --n;
+        if (n > 0 && used + win_get_fill(curwin, curwin->w_topline + n) / 2 >= half) {
+          n--;
           break;
         }
         used += plines_win(curwin, curwin->w_topline + n, true);
