@@ -480,8 +480,10 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 function M.code_action(context)
   validate { context = { context, 't', true } }
-  local diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
-  context = vim.tbl_deep_extend('keep', context or {}, { diagnostics = diagnostics })
+  context = context or {}
+  if not context.diagnostics then
+    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+  end
   local params = util.make_range_params()
   params.context = context
   code_action_request(params)
@@ -504,8 +506,10 @@ end
 ---Defaults to the end of the last visual selection.
 function M.range_code_action(context, start_pos, end_pos)
   validate { context = { context, 't', true } }
-  local diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
-  context = vim.tbl_deep_extend('keep', context or {}, { diagnostics = diagnostics })
+  context = context or {}
+  if not context.diagnostics then
+    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+  end
   local params = util.make_given_range_params(start_pos, end_pos)
   params.context = context
   code_action_request(params)
