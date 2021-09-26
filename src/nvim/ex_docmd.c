@@ -7710,8 +7710,12 @@ void free_cd_dir(void)
 /// Deal with the side effects of changing the current directory.
 ///
 /// @param scope  Scope of the function call (global, tab or window).
-void post_chdir(CdScope scope, bool trigger_dirchanged)
+void post_chdir(CdScope scope, bool trigger_dirchanged, char_u *previous_dir)
 {
+  if (previous_dir != NULL) {
+    prev_dir = vim_strsave(previous_dir);
+  }
+
   // Always overwrite the window-local CWD.
   XFREE_CLEAR(curwin->w_localdir);
 
@@ -7814,7 +7818,7 @@ void ex_cd(exarg_T *eap)
     if (vim_chdir(new_dir)) {
       EMSG(_(e_failed));
     } else {
-      post_chdir(scope, true);
+      post_chdir(scope, true, NULL);
       // Echo the new current directory if the command was typed.
       if (KeyTyped || p_verbose >= 5) {
         ex_pwd(eap);

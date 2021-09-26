@@ -821,7 +821,7 @@ void nvim_set_current_dir(String dir, Error *err)
     return;
   }
 
-  post_chdir(kCdScopeGlobal, true);
+  post_chdir(kCdScopeGlobal, true, (char_u *)string);
   try_end(err);
 }
 
