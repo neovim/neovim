@@ -91,7 +91,7 @@ local function validate_commit(commit_message)
 
   -- Check that description doesn't end with a period
   if vim.endswith(after_colon, ".") then
-    return [[Description ends with a period (\".\").]]
+    return [[Description ends with a period (".").]]
   end
 
   -- Check that description has exactly one whitespace after colon, followed by
