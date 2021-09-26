@@ -130,9 +130,12 @@ local function test_rpc_server(config)
 end
 
 describe('LSP', function()
+  before_each(function()
+    clear_notrace()
+  end)
+
   describe('server_name specified', function()
     before_each(function()
-      clear_notrace()
       -- Run an instance of nvim on the file which contains our "scripts".
       -- Pass TEST_NAME to pick the script.
       local test_name = "basic_init"
@@ -332,7 +335,6 @@ describe('LSP', function()
       }
     end)
     it('workspace/configuration returns NIL per section if client was started without config.settings', function()
-      clear_notrace()
       fake_lsp_server_setup('workspace/configuration no settings')
       eq({ NIL, NIL, }, exec_lua [[
         local result = {

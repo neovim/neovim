@@ -455,12 +455,15 @@ local function text_document_did_open_handler(bufnr, client)
   vim.schedule(function()
     vim.lsp.handlers["textDocument/publishDiagnostics"](
       nil,
-      "textDocument/publishDiagnostics",
       {
         diagnostics = vim.lsp.diagnostic.get(bufnr, client.id),
         uri = vim.uri_from_bufnr(bufnr),
       },
-      client.id
+      {
+        method="textDocument/publishDiagnostics",
+        client_id=client.id,
+        bufnr=bufnr,
+      }
     )
   end)
 end
