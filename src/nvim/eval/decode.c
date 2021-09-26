@@ -415,9 +415,9 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
   bool hasnul = false;
 #define PUT_FST_IN_PAIR(fst_in_pair, str_end) \
   do { \
-    if (fst_in_pair != 0) { \
-      str_end += utf_char2bytes(fst_in_pair, (char_u *)str_end); \
-      fst_in_pair = 0; \
+    if ((fst_in_pair) != 0) { \
+      (str_end) += utf_char2bytes(fst_in_pair, (char_u *)(str_end)); \
+      (fst_in_pair) = 0; \
     } \
   } while (0)
   for (const char *t = s; t < p; t++) {
@@ -461,7 +461,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
       case 'n':
       case 'r':
       case 'f': {
-        static const char escapes[] = {
+        static const char kEscapes[] = {
           ['\\'] = '\\',
           ['/'] = '/',
           ['"'] = '"',
@@ -471,7 +471,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
           ['r'] = CAR,
           ['f'] = FF,
         };
-        *str_end++ = escapes[(int)*t];
+        *str_end++ = kEscapes[(int)*t];
         break;
       }
       default:

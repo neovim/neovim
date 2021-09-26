@@ -224,7 +224,8 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   int varargs;
   int ret;
   char_u *start = skipwhite(*arg + 1);
-  char_u *s, *e;
+  char_u *s;
+  char_u *e;
   bool *old_eval_lavars = eval_lavars_used;
   bool eval_lavars = false;
 
@@ -266,7 +267,8 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   (*arg)++;
 
   if (evaluate) {
-    int len, flags = 0;
+    int len;
+    int flags = 0;
     char_u *p;
     garray_T newlines;
 
@@ -2497,7 +2499,8 @@ void ex_function(exarg_T *eap)
 
   if (fp == NULL) {
     if (fudi.fd_dict == NULL && vim_strchr(name, AUTOLOAD_CHAR) != NULL) {
-      int slen, plen;
+      int slen;
+      int plen;
       char_u *scriptname;
 
       // Check that the autoload name matches the script name.

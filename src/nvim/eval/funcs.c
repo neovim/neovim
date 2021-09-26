@@ -1516,7 +1516,8 @@ static void f_ctxsize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// @returns 0 when the position could be set, -1 otherwise.
 static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  long line, col;
+  long line;
+  long col;
   long coladd = 0;
   bool set_curswant = true;
 
@@ -1816,7 +1817,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   static int fnum = 0;
   static int change_start = 0;
   static int change_end = 0;
-  static hlf_T hlID = (hlf_T)0;
+  static hlf_T hl_id = (hlf_T)0;
   int filler_lines;
   int col;
 
@@ -1833,30 +1834,30 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         change_start = MAXCOL;
         change_end = -1;
         if (diff_find_change(curwin, lnum, &change_start, &change_end)) {
-          hlID = HLF_ADD;               // added line
+          hl_id = HLF_ADD;               // added line
         } else {
-          hlID = HLF_CHD;               // changed line
+          hl_id = HLF_CHD;               // changed line
         }
       } else {
-        hlID = HLF_ADD;         // added line
+        hl_id = HLF_ADD;         // added line
       }
     } else {
-      hlID = (hlf_T)0;
+      hl_id = (hlf_T)0;
     }
     prev_lnum = lnum;
     changedtick = buf_get_changedtick(curbuf);
     fnum = curbuf->b_fnum;
   }
 
-  if (hlID == HLF_CHD || hlID == HLF_TXD) {
+  if (hl_id == HLF_CHD || hl_id == HLF_TXD) {
     col = tv_get_number(&argvars[1]) - 1;  // Ignore type error in {col}.
     if (col >= change_start && col <= change_end) {
-      hlID = HLF_TXD;  // Changed text.
+      hl_id = HLF_TXD;  // Changed text.
     } else {
-      hlID = HLF_CHD;  // Changed line.
+      hl_id = HLF_CHD;  // Changed line.
     }
   }
-  rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (int)(hlID + 1);
+  rettv->vval.v_number = hl_id == (hlf_T)0 ? 0 : (int)(hl_id + 1);
 }
 
 /*
@@ -4206,7 +4207,8 @@ static void f_win_splitmove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   win_T *wp;
   win_T *targetwin;
-  int flags = 0, size = 0;
+  int flags = 0;
+  int size = 0;
 
   wp = find_win_by_nr_or_id(&argvars[0]);
   targetwin = find_win_by_nr_or_id(&argvars[1]);
@@ -4386,7 +4388,7 @@ static void f_glob2regpat(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "has()" function
 static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  static const char *const has_list[] = {
+  static const char *const kHasList[] = {
 #if defined(BSD) && !defined(__APPLE__)
     "bsd",
 #endif
@@ -4514,8 +4516,8 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool n = false;
   const char *const name = tv_get_string(&argvars[0]);
-  for (size_t i = 0; i < ARRAY_SIZE(has_list); i++) {
-    if (STRICMP(name, has_list[i]) == 0) {
+  for (size_t i = 0; i < ARRAY_SIZE(kHasList); i++) {
+    if (STRICMP(name, kHasList[i]) == 0) {
       n = true;
       break;
     }
@@ -5414,8 +5416,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool clear_env = false;
   bool overlapped = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
   dictitem_T *job_env = NULL;
@@ -5478,7 +5480,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  uint16_t width = 0, height = 0;
+  uint16_t width = 0;
+  uint16_t height = 0;
   char *term_name = NULL;
 
   if (pty) {
@@ -7435,7 +7438,8 @@ static void f_reltimestr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   list_T *l;
-  listitem_T *item, *item2;
+  listitem_T *item;
+  listitem_T *item2;
   listitem_T *li;
   long idx;
   long end;
@@ -8049,7 +8053,9 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   sctx_T save_current_sctx;
-  uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
+  uint8_t *save_sourcing_name;
+  uint8_t *save_autocmd_fname;
+  uint8_t *save_autocmd_match;
   linenr_T save_sourcing_lnum;
   int save_autocmd_bufnr;
   funccal_entry_T funccal_entry;
@@ -8290,7 +8296,9 @@ static void f_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   pos_T pos;
   int row = 0;
-  int scol = 0, ccol = 0, ecol = 0;
+  int scol = 0;
+  int ccol = 0;
+  int ecol = 0;
 
   tv_dict_alloc_ret(rettv);
   dict_T *dict = rettv->vval.v_dict;
@@ -8490,7 +8498,9 @@ long do_searchpair(const char *spat,      // start pattern
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   char_u *save_cpo;
-  char_u *pat, *pat2 = NULL, *pat3 = NULL;
+  char_u *pat;
+  char_u *pat2 = NULL;
+  char_u *pat3 = NULL;
   long retval = 0;
   pos_T pos;
   pos_T firstpos;
@@ -9884,7 +9894,8 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
       res = sortinfo->item_compare_ic ? STRICMP(p1, p2): STRCMP(p1, p2);
     }
   } else {
-    double n1, n2;
+    double n1;
+    double n2;
     n1 = strtod(p1, &p1);
     n2 = strtod(p2, &p2);
     res = n1 == n2 ? 0 : n1 > n2 ? 1 : -1;
@@ -9916,7 +9927,8 @@ static int item_compare_not_keeping_zero(const void *s1, const void *s2)
 
 static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 {
-  ListSortItem *si1, *si2;
+  ListSortItem *si1;
+  ListSortItem *si2;
   int res;
   typval_T rettv;
   typval_T argv[3];
@@ -10872,16 +10884,16 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     emsgf(_("E935: invalid submatch number: %d"), no);
     return;
   }
-  int retList = 0;
+  int ret_list = 0;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    retList = tv_get_number_chk(&argvars[1], &error);
+    ret_list = tv_get_number_chk(&argvars[1], &error);
     if (error) {
       return;
     }
   }
 
-  if (retList == 0) {
+  if (ret_list == 0) {
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = reg_submatch(no);
   } else {
@@ -11341,8 +11353,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   dict_T *job_opts = NULL;
   const char *cwd = ".";
@@ -11635,7 +11647,6 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 error:
   EMSG2(_(e_invarg2), fromstr);
   ga_clear(&ga);
-  return;
 }
 
 // "trim({expr})" function

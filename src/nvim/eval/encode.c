@@ -298,8 +298,8 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
-    const char *const buf_ = (const char *)buf; \
-    if (buf == NULL) { \
+    const char *const buf_ = (const char *)(buf); \
+    if ((buf) == NULL) { \
       ga_concat(gap, "''"); \
     } else { \
       const size_t len_ = (len); \
@@ -388,14 +388,14 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len) \
   do { \
-    if (len != 0) { \
+    if ((len) != 0) { \
       ga_concat(gap, ", "); \
     } \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len) \
   do { \
-    if ((ptrdiff_t)len != -1) { \
+    if ((ptrdiff_t)(len) != -1) { \
       ga_concat(gap, ", "); \
     } \
   } while (0)
@@ -457,12 +457,12 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     size_t backref = 0; \
     for (; backref < kv_size(*mpstack); backref++) { \
       const MPConvStackVal mpval = kv_A(*mpstack, backref); \
-      if (mpval.type == conv_type) { \
-        if (conv_type == kMPConvDict) { \
+      if (mpval.type == (conv_type)) { \
+        if ((conv_type) == kMPConvDict) { \
           if ((void *)mpval.data.d.dict == (void *)(val)) { \
             break; \
           } \
-        } else if (conv_type == kMPConvList) { \
+        } else if ((conv_type) == kMPConvList) { \
           if ((void *)mpval.data.l.list == (void *)(val)) { \
             break; \
           } \
@@ -492,19 +492,19 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     size_t backref = 0; \
     for (; backref < kv_size(*mpstack); backref++) { \
       const MPConvStackVal mpval = kv_A(*mpstack, backref); \
-      if (mpval.type == conv_type) { \
-        if (conv_type == kMPConvDict) { \
-          if ((void *)mpval.data.d.dict == (void *)val) { \
+      if (mpval.type == (conv_type)) { \
+        if ((conv_type) == kMPConvDict) { \
+          if ((void *)mpval.data.d.dict == (void *)(val)) { \
             break; \
           } \
-        } else if (conv_type == kMPConvList) { \
-          if ((void *)mpval.data.l.list == (void *)val) { \
+        } else if ((conv_type) == kMPConvList) { \
+          if ((void *)mpval.data.l.list == (void *)(val)) { \
             break; \
           } \
         } \
       } \
     } \
-    if (conv_type == kMPConvDict) { \
+    if ((conv_type) == kMPConvDict) { \
       vim_snprintf(ebuf, ARRAY_SIZE(ebuf), "{...@%zu}", backref); \
     } else { \
       vim_snprintf(ebuf, ARRAY_SIZE(ebuf), "[...@%zu]", backref); \
@@ -577,7 +577,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
   } while (0)
 
 /// Escape sequences used in JSON
-static const char escapes[][3] = {
+static const char kEscapes[][3] = {
   [BS] = "\\b",
   [TAB] = "\\t",
   [NL] = "\\n",
@@ -587,7 +587,7 @@ static const char escapes[][3] = {
   [FF] = "\\f",
 };
 
-static const char xdigits[] = "0123456789ABCDEF";
+static const char kXdigits[] = "0123456789ABCDEF";
 
 /// Convert given string to JSON string
 ///
@@ -614,7 +614,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
     // This is done to make resulting values displayable on screen also not from
     // Neovim.
 #define ENCODE_RAW(ch) \
-  (ch >= 0x20 && utf_printable(ch))
+  ((ch) >= 0x20 && utf_printable(ch))
     for (size_t i = 0; i < utf_len;) {
       const int ch = utf_ptr2char(utf_buf + i);
       const size_t shift = (ch == 0? 1: utf_ptr2len(utf_buf + i));
@@ -669,7 +669,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
       case CAR:
       case '"':
       case '\\':
-        ga_concat_len(gap, escapes[ch], 2);
+        ga_concat_len(gap, kEscapes[ch], 2);
         break;
       default:
         if (ENCODE_RAW(ch)) {
@@ -677,10 +677,10 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
         } else if (ch < SURROGATE_FIRST_CHAR) {
           ga_concat_len(gap, ((const char[]) {
             '\\', 'u',
-            xdigits[(ch >> (4 * 3)) & 0xF],
-            xdigits[(ch >> (4 * 2)) & 0xF],
-            xdigits[(ch >> (4 * 1)) & 0xF],
-            xdigits[(ch >> (4 * 0)) & 0xF],
+            kXdigits[(ch >> (4 * 3)) & 0xF],
+            kXdigits[(ch >> (4 * 2)) & 0xF],
+            kXdigits[(ch >> (4 * 1)) & 0xF],
+            kXdigits[(ch >> (4 * 0)) & 0xF],
           }), sizeof("\\u1234") - 1);
         } else {
           const int tmp = ch - SURROGATE_FIRST_CHAR;
@@ -688,15 +688,15 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
           const int lo = SURROGATE_LO_END + ((tmp >>  0) & ((1 << 10) - 1));
           ga_concat_len(gap, ((const char[]) {
             '\\', 'u',
-            xdigits[(hi >> (4 * 3)) & 0xF],
-            xdigits[(hi >> (4 * 2)) & 0xF],
-            xdigits[(hi >> (4 * 1)) & 0xF],
-            xdigits[(hi >> (4 * 0)) & 0xF],
+            kXdigits[(hi >> (4 * 3)) & 0xF],
+            kXdigits[(hi >> (4 * 2)) & 0xF],
+            kXdigits[(hi >> (4 * 1)) & 0xF],
+            kXdigits[(hi >> (4 * 0)) & 0xF],
             '\\', 'u',
-            xdigits[(lo >> (4 * 3)) & 0xF],
-            xdigits[(lo >> (4 * 2)) & 0xF],
-            xdigits[(lo >> (4 * 1)) & 0xF],
-            xdigits[(lo >> (4 * 0)) & 0xF],
+            kXdigits[(lo >> (4 * 3)) & 0xF],
+            kXdigits[(lo >> (4 * 2)) & 0xF],
+            kXdigits[(lo >> (4 * 1)) & 0xF],
+            kXdigits[(lo >> (4 * 0)) & 0xF],
           }), (sizeof("\\u1234") - 1) * 2);
         }
         break;
@@ -793,7 +793,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #undef TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key) \
   do { \
-    if (!encode_check_json_key(&key)) { \
+    if (!encode_check_json_key(&(key))) { \
       EMSG(_("E474: Invalid key in special dictionary")); \
       goto label; \
     } \
@@ -916,7 +916,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
-    if (buf == NULL) { \
+    if ((buf) == NULL) { \
       msgpack_pack_bin(packer, 0); \
     } else { \
       const size_t len_ = (len); \
@@ -927,7 +927,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len) \
   do { \
-    if (buf == NULL) { \
+    if ((buf) == NULL) { \
       msgpack_pack_str(packer, 0); \
     } else { \
       const size_t len_ = (len); \
@@ -938,11 +938,11 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type) \
   do { \
-    if (buf == NULL) { \
-      msgpack_pack_ext(packer, 0, (int8_t)type); \
+    if ((buf) == NULL) { \
+      msgpack_pack_ext(packer, 0, (int8_t)(type)); \
     } else { \
       const size_t len_ = (len); \
-      msgpack_pack_ext(packer, len_, (int8_t)type); \
+      msgpack_pack_ext(packer, len_, (int8_t)(type)); \
       msgpack_pack_ext_body(packer, buf, len_); \
     } \
   } while (0)
