@@ -806,15 +806,34 @@ function M._set_signs(namespace, bufnr, diagnostics, opts)
   }
 
   bufnr = get_bufnr(bufnr)
-  opts = get_resolved_options({ signs = opts }, namespace, bufnr).signs
+  opts = get_resolved_options({ signs = opts }, namespace, bufnr)
 
-  if opts and opts.severity then
-    diagnostics = filter_by_severity(opts.severity, diagnostics)
+  if opts.signs and opts.signs.severity then
+    diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
   end
 
   local ns = get_namespace(namespace)
 
   define_default_signs()
+
+  -- 10 is the default sign priority when none is explicitly specified
+  local priority = opts.signs and opts.signs.priority or 10
+  local get_priority
+  if opts.severity_sort then
+    if type(opts.severity_sort) == "table" and opts.severity_sort.reverse then
+      get_priority = function(severity)
+        return priority + (severity - vim.diagnostic.severity.ERROR)
+      end
+    else
+      get_priority = function(severity)
+        return priority + (vim.diagnostic.severity.HINT - severity)
+      end
+    end
+  else
+    get_priority = function()
+      return priority
+    end
+  end
 
   for _, diagnostic in ipairs(diagnostics) do
     vim.fn.sign_place(
@@ -823,7 +842,7 @@ function M._set_signs(namespace, bufnr, diagnostics, opts)
       sign_highlight_map[diagnostic.severity],
       bufnr,
       {
-        priority = opts and opts.priority,
+        priority = get_priority(diagnostic.severity),
         lnum = diagnostic.lnum + 1
       }
     )

@@ -187,6 +187,11 @@ can be customized using the following: >
 	sign define DiagnosticSignInfo text=I texthl=DiagnosticSignInfo linehl= numhl=
 	sign define DiagnosticSignHint text=H texthl=DiagnosticSignHint linehl= numhl=
 
+When the "severity_sort" option is set (see |vim.diagnostic.config()|) the
+priority of each sign depends on the severity of the associated diagnostic.
+Otherwise, all signs have the same priority (the value of the "priority"
+option in the "signs" table of |vim.diagnostic.config()| or 10 if unset).
+
 ==============================================================================
 EVENTS							*diagnostic-events*
 
