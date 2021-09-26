@@ -8807,9 +8807,9 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
   char_u *newval = xmalloc(newval_len);
 
   if (eap->force_bin == FORCE_BIN) {
-    sprintf((char *)newval, " ++bin");
+    snprintf((char *)newval, newval_len, " ++bin");
   } else if (eap->force_bin == FORCE_NOBIN) {
-    sprintf((char *)newval, " ++nobin");
+    snprintf((char *)newval, newval_len, " ++nobin");
   } else {
     *newval = NUL;
   }
