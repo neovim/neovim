@@ -32,7 +32,7 @@ describe('vim.lsp.codelens', function()
           command = { title = 'Lens1', command = 'Dummy' }
         },
       }
-      vim.lsp.codelens.on_codelens(nil, 'textDocument/codeLens', lenses, 1, bufnr)
+      vim.lsp.codelens.on_codelens(nil, lenses, {method='textDocument/codeLens', client_id=1, bufnr=bufnr})
     ]], bufnr)
 
     local stored_lenses = exec_lua('return vim.lsp.codelens.get(...)', bufnr)

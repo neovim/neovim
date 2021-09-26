@@ -218,7 +218,7 @@ local function validate_client_config(config)
     config = { config, 't' };
   }
   validate {
-    root_dir        = { config.root_dir, is_dir, "directory" };
+    root_dir        = { config.root_dir, optional_validator(is_dir), "directory" };
     handlers        = { config.handlers, "t", true };
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
@@ -380,7 +380,7 @@ do
       end
       state.pending_change = function()
         state.pending_change = nil
-        if client.is_stopped() then
+        if client.is_stopped() or not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
         local contentChanges
@@ -455,12 +455,15 @@ local function text_document_did_open_handler(bufnr, client)
   vim.schedule(function()
     vim.lsp.handlers["textDocument/publishDiagnostics"](
       nil,
-      "textDocument/publishDiagnostics",
       {
         diagnostics = vim.lsp.diagnostic.get(bufnr, client.id),
         uri = vim.uri_from_bufnr(bufnr),
       },
-      client.id
+      {
+        method="textDocument/publishDiagnostics",
+        client_id=client.id,
+        bufnr=bufnr,
+      }
     )
   end)
 end
@@ -555,7 +558,7 @@ end
 ---
 --- The following parameters describe fields in the {config} table.
 ---
---@param root_dir: (required, string) Directory where the LSP server will base
+--@param root_dir: (string) Directory where the LSP server will base
 --- its rootUri on initialization.
 ---
 --@param cmd: (required, string or list treated like |jobstart()|) Base command
@@ -590,6 +593,10 @@ end
 --- as `initializationOptions`. See `initialize` in the LSP spec.
 ---
 --@param name (string, default=client-id) Name in log messages.
+--
+--@param workspace_folders (table) List of workspace folders passed to the
+--- language server. Defaults to root_dir if not set. See `workspaceFolders` in
+--- the LSP spec
 ---
 --@param get_language_id function(bufnr, filetype) -> language ID as string.
 --- Defaults to the filetype.
@@ -677,11 +684,11 @@ function lsp.start_client(config)
   --@param method (string) LSP method name
   --@param params (table) The parameters for that method.
   function dispatch.notification(method, params)
-    local _ = log.debug() and log.debug('notification', method, params)
+    local _ = log.trace() and log.trace('notification', method, params)
     local handler = resolve_handler(method)
     if handler then
       -- Method name is provided here for convenience.
-      handler(nil, method, params, client_id)
+      handler(nil, params, {method=method, client_id=client_id})
     end
   end
 
@@ -691,13 +698,13 @@ function lsp.start_client(config)
   --@param method (string) LSP method name
   --@param params (table) The parameters for that method
   function dispatch.server_request(method, params)
-    local _ = log.debug() and log.debug('server_request', method, params)
+    local _ = log.trace() and log.trace('server_request', method, params)
     local handler = resolve_handler(method)
     if handler then
-      local _ = log.debug() and log.debug("server_request: found handler for", method)
-      return handler(nil, method, params, client_id)
+      local _ = log.trace() and log.trace("server_request: found handler for", method)
+      return handler(nil, params, {method=method, client_id=client_id})
     end
-    local _ = log.debug() and log.debug("server_request: no handler found for", method)
+    local _ = log.warn() and log.warn("server_request: no handler found for", method)
     return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end
 
@@ -775,6 +782,14 @@ function lsp.start_client(config)
       off = 'off'; messages = 'messages'; verbose = 'verbose';
     }
     local version = vim.version()
+
+    if config.root_dir and not config.workspace_folders then
+      config.workspace_folders = {{
+        uri = vim.uri_from_fname(config.root_dir);
+        name = string.format("%s", config.root_dir);
+      }};
+    end
+
     local initialize_params = {
       -- The process Id of the parent process that started the server. Is null if
       -- the process has not been started by another process.  If the parent
@@ -793,7 +808,7 @@ function lsp.start_client(config)
       rootPath = config.root_dir;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = vim.uri_from_fname(config.root_dir);
+      rootUri = config.root_dir and vim.uri_from_fname(config.root_dir);
       -- User provided initialization options.
       initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
@@ -815,16 +830,13 @@ function lsp.start_client(config)
       --  -- workspace folder in the user interface.
       --  name
       -- }
-      workspaceFolders = {{
-        uri = vim.uri_from_fname(config.root_dir);
-        name = string.format("%s", config.root_dir);
-      }};
+      workspaceFolders = config.workspace_folders,
     }
     if config.before_init then
       -- TODO(ashkan) handle errors here.
       pcall(config.before_init, initialize_params, config)
     end
-    local _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
+    local _ = log.trace() and log.trace(log_prefix, "initialize_params", initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
       assert(result, "server sent empty result")
@@ -894,7 +906,7 @@ function lsp.start_client(config)
 
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
     return rpc.request(method, params, function(err, result)
-      handler(err, method, result, client_id, bufnr)
+      handler(err, result, {method=method, client_id=client_id, bufnr=bufnr})
     end)
   end
 
@@ -915,7 +927,7 @@ function lsp.start_client(config)
   --@see |vim.lsp.buf_request_sync()|
   function client.request_sync(method, params, timeout_ms, bufnr)
     local request_result = nil
-    local function _sync_handler(err, _, result)
+    local function _sync_handler(err, result)
       request_result = { err = err, result = result }
     end
 
@@ -1274,7 +1286,7 @@ function lsp.buf_request(bufnr, method, params, handler)
     local unsupported_err = lsp._unsupported_method(method)
     handler = handler or lsp.handlers[method]
     if handler then
-      handler(unsupported_err, method, bufnr)
+      handler(unsupported_err, nil, {method=method, bufnr=bufnr})
     end
     return
   end
@@ -1314,8 +1326,8 @@ function lsp.buf_request_all(bufnr, method, params, callback)
     end
   end)
 
-  local function _sync_handler(err, _, result, client_id)
-    request_results[client_id] = { error = err, result = result }
+  local function _sync_handler(err, result, ctx)
+    request_results[ctx.client_id] = { error = err, result = result }
     result_count = result_count + 1
     set_expected_result_count()
 
@@ -1421,7 +1433,7 @@ function lsp.omnifunc(findstart, base)
   local params = util.make_position_params()
 
   local items = {}
-  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, _, result)
+  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result)
     if err or not result or vim.fn.mode() ~= "i" then return end
     local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
@@ -1496,8 +1508,8 @@ end
 --@param handler (function) See |lsp-handler|
 --@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
-  return function(err, method, params, client_id, bufnr, config)
-    return handler(err, method, params, client_id, bufnr, vim.tbl_deep_extend("force", config or {}, override_config))
+  return function(err, result, ctx, config)
+    return handler(err, result, ctx, vim.tbl_deep_extend("force", config or {}, override_config))
   end
 end
 

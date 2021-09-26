@@ -169,7 +169,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
     if lens.command then
       countdown()
     else
-      client.request('codeLens/resolve', lens, function(_, _, result)
+      client.request('codeLens/resolve', lens, function(_, result)
         if result and result.command then
           lens.command = result.command
           -- Eager display to have some sort of incremental feedback
@@ -192,17 +192,17 @@ end
 
 --- |lsp-handler| for the method `textDocument/codeLens`
 ---
-function M.on_codelens(err, _, result, client_id, bufnr)
+function M.on_codelens(err, result, ctx, _)
   assert(not err, vim.inspect(err))
 
-  M.save(result, bufnr, client_id)
+  M.save(result, ctx.bufnr, ctx.client_id)
 
   -- Eager display for any resolved (and unresolved) lenses and refresh them
   -- once resolved.
-  M.display(result, bufnr, client_id)
-  resolve_lenses(result, bufnr, client_id, function()
-    M.display(result, bufnr, client_id)
-    active_refreshes[bufnr] = nil
+  M.display(result, ctx.bufnr, ctx.client_id)
+  resolve_lenses(result, ctx.bufnr, ctx.client_id, function()
+    M.display(result, ctx.bufnr, ctx.client_id)
+    active_refreshes[ctx.bufnr] = nil
   end)
 end
 

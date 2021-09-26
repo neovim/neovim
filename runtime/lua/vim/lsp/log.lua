@@ -14,7 +14,8 @@ log.levels = vim.deepcopy(vim.log.levels)
 
 -- Default log level is warn.
 local current_log_level = log.levels.WARN
-local log_date_format = "%FT%H:%M:%S%z"
+local log_date_format = "%F %H:%M:%S"
+local format_func = function(arg) return vim.inspect(arg, {newline=''}) end
 
 do
   local path_sep = vim.loop.os_uname().version:match("Windows") and "\\" or "/"
@@ -33,7 +34,7 @@ do
   vim.fn.mkdir(vim.fn.stdpath('cache'), "p")
   local logfile = assert(io.open(logfilename, "a+"))
   -- Start message for logging
-  logfile:write(string.format("[ START ] %s ] LSP logging initiated\n", os.date(log_date_format)))
+  logfile:write(string.format("[START][%s] LSP logging initiated\n", os.date(log_date_format)))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
@@ -56,14 +57,14 @@ do
       if levelnr < current_log_level then return false end
       if argc == 0 then return true end
       local info = debug.getinfo(2, "Sl")
-      local fileinfo = string.format("%s:%s", info.short_src, info.currentline)
-      local parts = { table.concat({"[", level, "]", os.date(log_date_format), "]", fileinfo, "]"}, " ") }
+      local header = string.format("[%s][%s] ...%s:%s", level, os.date(log_date_format), string.sub(info.short_src, #info.short_src - 15), info.currentline)
+      local parts = { header }
       for i = 1, argc do
         local arg = select(i, ...)
         if arg == nil then
           table.insert(parts, "nil")
         else
-          table.insert(parts, vim.inspect(arg, {newline=''}))
+          table.insert(parts, format_func(arg))
         end
       end
       logfile:write(table.concat(parts, '\t'), "\n")
@@ -86,6 +87,18 @@ function log.set_level(level)
     assert(log.levels[level], string.format("Invalid log level: %d", level))
     current_log_level = level
   end
+end
+
+--- Gets the current log level.
+function log.get_level()
+  return current_log_level
+end
+
+--- Sets formatting function used to format logs
+---@param handle function function to apply to logging arguments, pass vim.inspect for multi-line formatting
+function log.set_format_func(handle)
+  assert(handle == vim.inspect or type(handle) == 'function', "handle must be a function")
+  format_func = handle
 end
 
 --- Checks whether the level is sufficient for logging.
