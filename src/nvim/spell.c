@@ -334,23 +334,24 @@ char *e_format = N_("E759: Format error in spell file");
 static char_u *repl_from = NULL;
 static char_u *repl_to = NULL;
 
-// Main spell-checking function.
-// "ptr" points to a character that could be the start of a word.
-// "*attrp" is set to the highlight index for a badly spelled word.  For a
-// non-word or when it's OK it remains unchanged.
-// This must only be called when 'spelllang' is not empty.
-//
-// "capcol" is used to check for a Capitalised word after the end of a
-// sentence.  If it's zero then perform the check.  Return the column where to
-// check next, or -1 when no sentence end was found.  If it's NULL then don't
-// worry.
-//
-// Returns the length of the word in bytes, also when it's OK, so that the
-// caller can skip over the word.
-size_t spell_check(win_T *wp,                // current window
-                   char_u *ptr, hlf_T *attrp, int *capcol,              // column to check for Capital
-                   bool docount              // count good words
-                   )
+/// Main spell-checking function.
+/// "ptr" points to a character that could be the start of a word.
+/// "*attrp" is set to the highlight index for a badly spelled word.  For a
+/// non-word or when it's OK it remains unchanged.
+/// This must only be called when 'spelllang' is not empty.
+///
+/// "capcol" is used to check for a Capitalised word after the end of a
+/// sentence.  If it's zero then perform the check.  Return the column where to
+/// check next, or -1 when no sentence end was found.  If it's NULL then don't
+/// worry.
+///
+/// @param wp  current window
+/// @param capcol  column to check for Capital
+/// @param docount  count good words
+///
+/// @return  the length of the word in bytes, also when it's OK, so that the
+/// caller can skip over the word.
+size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docount)
 {
   matchinf_T mi;              // Most things are put in "mi" so that it can
                               // be passed to functions quickly.
@@ -1045,13 +1046,14 @@ static void find_word(matchinf_T *mip, int mode)
   }
 }
 
-// Returns true if there is a match between the word ptr[wlen] and
-// CHECKCOMPOUNDPATTERN rules, assuming that we will concatenate with another
-// word.
-// A match means that the first part of CHECKCOMPOUNDPATTERN matches at the
-// end of ptr[wlen] and the second part matches after it.
-static bool match_checkcompoundpattern(char_u *ptr, int wlen, garray_T *gap      // &sl_comppat
-                                       )
+/// Returns true if there is a match between the word ptr[wlen] and
+/// CHECKCOMPOUNDPATTERN rules, assuming that we will concatenate with another
+/// word.
+/// A match means that the first part of CHECKCOMPOUNDPATTERN matches at the
+/// end of ptr[wlen] and the second part matches after it.
+///
+/// @param gap  &sl_comppat
+static bool match_checkcompoundpattern(char_u *ptr, int wlen, garray_T *gap)
 {
   char_u *p;
   int len;
@@ -1182,13 +1184,15 @@ static bool match_compoundrule(slang_T *slang, char_u *compflags)
   return false;
 }
 
-// Return non-zero if the prefix indicated by "arridx" matches with the prefix
-// ID in "flags" for the word "word".
-// The WF_RAREPFX flag is included in the return value for a rare prefix.
-static int valid_word_prefix(int totprefcnt,                 // nr of prefix IDs
-                             int arridx,                     // idx in sl_pidxs[]
-                             int flags, char_u *word, slang_T *slang, bool cond_req                   // only use prefixes with a condition
-                             )
+/// Return non-zero if the prefix indicated by "arridx" matches with the prefix
+/// ID in "flags" for the word "word".
+/// The WF_RAREPFX flag is included in the return value for a rare prefix.
+///
+/// @param totprefcnt  nr of prefix IDs
+/// @param arridx  idx in sl_pidxs[]
+/// @param cond_req  only use prefixes with a condition
+static int valid_word_prefix(int totprefcnt, int arridx, int flags, char_u *word, slang_T *slang,
+                             bool cond_req)
 {
   int prefcnt;
   int pidx;
@@ -1388,17 +1392,18 @@ static bool no_spell_checking(win_T *wp)
   return false;
 }
 
-// Moves to the next spell error.
-// "curline" is false for "[s", "]s", "[S" and "]S".
-// "curline" is true to find word under/after cursor in the same line.
-// For Insert mode completion "dir" is BACKWARD and "curline" is true: move
-// to after badly spelled word before the cursor.
-// Return 0 if not found, length of the badly spelled word otherwise.
-size_t spell_move_to(win_T *wp, int dir,                  // FORWARD or BACKWARD
-                     bool allwords,            // true for "[s"/"]s", false for "[S"/"]S"
-                     bool curline, hlf_T *attrp              // return: attributes of bad word or NULL
-                                                             // (only when "dir" is FORWARD)
-                     )
+/// Moves to the next spell error.
+/// "curline" is false for "[s", "]s", "[S" and "]S".
+/// "curline" is true to find word under/after cursor in the same line.
+/// For Insert mode completion "dir" is BACKWARD and "curline" is true: move
+/// to after badly spelled word before the cursor.
+///
+/// @param dir  FORWARD or BACKWARD
+/// @param allwords  true for "[s"/"]s", false for "[S"/"]S"
+/// @param attrp  return: attributes of bad word or NULL (only when "dir" is FORWARD)
+///
+/// @return  0 if not found, length of the badly spelled word otherwise.
+size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *attrp)
 {
   linenr_T lnum;
   pos_T found_pos;
@@ -1898,9 +1903,10 @@ void count_common_word(slang_T *lp, char_u *word, int len, int count)
   }
 }
 
-// Adjust the score of common words.
-static int score_wordcount_adj(slang_T *slang, int score, char_u *word, bool split                  // word was split, less bonus
-                               )
+/// Adjust the score of common words.
+///
+/// @param split  word was split, less bonus
+static int score_wordcount_adj(slang_T *slang, int score, char_u *word, bool split)
 {
   hashitem_T *hi;
   wordcount_T *wc;
@@ -3193,11 +3199,12 @@ void ex_spellrepall(exarg_T *eap)
   }
 }
 
-// Find spell suggestions for "word".  Return them in the growarray "*gap" as
-// a list of allocated strings.
-void spell_suggest_list(garray_T *gap, char_u *word, int maxcount,                   // maximum nr of suggestions
-                        bool need_cap,                  // 'spellcapcheck' matched
-                        bool interactive)
+/// Find spell suggestions for "word".  Return them in the growarray "*gap" as
+/// a list of allocated strings.
+///
+/// @param maxcount  maximum nr of suggestions
+/// @param need_cap  'spellcapcheck' matched
+void spell_suggest_list(garray_T *gap, char_u *word, int maxcount, bool need_cap, bool interactive)
 {
   suginfo_T sug;
   suggest_T *stp;
@@ -3223,15 +3230,17 @@ void spell_suggest_list(garray_T *gap, char_u *word, int maxcount,              
   spell_find_cleanup(&sug);
 }
 
-// Find spell suggestions for the word at the start of "badptr".
-// Return the suggestions in "su->su_ga".
-// The maximum number of suggestions is "maxcount".
-// Note: does use info for the current window.
-// This is based on the mechanisms of Aspell, but completely reimplemented.
-static void spell_find_suggest(char_u *badptr, int badlen,                     // length of bad word or 0 if unknown
-                               suginfo_T *su, int maxcount, bool banbadword,                 // don't include badword in suggestions
-                               bool need_cap,                  // word should start with capital
-                               bool interactive)
+/// Find spell suggestions for the word at the start of "badptr".
+/// Return the suggestions in "su->su_ga".
+/// The maximum number of suggestions is "maxcount".
+/// Note: does use info for the current window.
+/// This is based on the mechanisms of Aspell, but completely reimplemented.
+///
+/// @param badlen  length of bad word or 0 if unknown
+/// @param banbadword  don't include badword in suggestions
+/// @param need_cap  word should start with capital
+static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int maxcount,
+                               bool banbadword, bool need_cap, bool interactive)
 {
   hlf_T attr = HLF_COUNT;
   char_u buf[MAXPATHL];
@@ -5222,10 +5231,11 @@ static void score_combine(suginfo_T *su)
   su->su_ga = ga;
 }
 
-// For the goodword in "stp" compute the soundalike score compared to the
-// badword.
-static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *badsound          // sound-folded badword
-                         )
+/// For the goodword in "stp" compute the soundalike score compared to the
+/// badword.
+///
+/// @param badsound  sound-folded badword
+static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *badsound)
 {
   char_u *p;
   char_u *pbad;
@@ -5358,10 +5368,11 @@ static void suggest_try_soundalike_finish(void)
   }
 }
 
-// A match with a soundfolded word is found.  Add the good word(s) that
-// produce this soundfolded word.
-static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score,                      // soundfold score
-                              langp_T *lp)
+/// A match with a soundfolded word is found.  Add the good word(s) that
+/// produce this soundfolded word.
+///
+/// @param score  soundfold score
+static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_T *lp)
 {
   slang_T *slang = lp->lp_slang;    // language for sound folding
   int sfwordnr;
@@ -5672,15 +5683,16 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
   return m1 == m2;
 }
 
-// Adds a suggestion to the list of suggestions.
-// For a suggestion that is already in the list the lowest score is remembered.
-static void add_suggestion(suginfo_T *su, garray_T *gap,              // either su_ga or su_sga
-                           const char_u *goodword, int badlenarg,              // len of bad word replaced with "goodword"
-                           int score, int altscore, bool had_bonus,             // value for st_had_bonus
-                           slang_T *slang,             // language for sound folding
-                           bool maxsf                  // su_maxscore applies to soundfold score,
-                                                       // su_sfmaxscore to the total score.
-                           )
+/// Adds a suggestion to the list of suggestions.
+/// For a suggestion that is already in the list the lowest score is remembered.
+///
+/// @param gap  either su_ga or su_sga
+/// @param badlenarg  len of bad word replaced with "goodword"
+/// @param had_bonus  value for st_had_bonus
+/// @param slang  language for sound folding
+/// @param maxsf  su_maxscore applies to soundfold score, su_sfmaxscore to the total score.
+static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword, int badlenarg,
+                           int score, int altscore, bool had_bonus, slang_T *slang, bool maxsf)
 {
   int goodlen;                  // len of goodword changed
   int badlen;                   // len of bad word changed
@@ -5784,10 +5796,11 @@ static void add_suggestion(suginfo_T *su, garray_T *gap,              // either 
   }
 }
 
-// Suggestions may in fact be flagged as errors.  Esp. for banned words and
-// for split words, such as "the the".  Remove these from the list here.
-static void check_suggestions(suginfo_T *su, garray_T *gap                   // either su_ga or su_sga
-                              )
+/// Suggestions may in fact be flagged as errors.  Esp. for banned words and
+/// for split words, such as "the the".  Remove these from the list here.
+///
+/// @param gap  either su_ga or su_sga
+static void check_suggestions(suginfo_T *su, garray_T *gap)
 {
   suggest_T *stp;
   char_u longword[MAXWLEN + 1];
@@ -5890,12 +5903,14 @@ static int sug_compare(const void *s1, const void *s2)
   return n;
 }
 
-// Cleanup the suggestions:
-// - Sort on score.
-// - Remove words that won't be displayed.
-// Returns the maximum score in the list or "maxscore" unmodified.
-static int cleanup_suggestions(garray_T *gap, int maxscore, int keep                       // nr of suggestions to keep
-                               )
+/// Cleanup the suggestions:
+/// - Sort on score.
+/// - Remove words that won't be displayed.
+///
+/// @param keep  nr of suggestions to keep
+///
+/// @return  the maximum score in the list or "maxscore" unmodified.
+static int cleanup_suggestions(garray_T *gap, int maxscore, int keep)
   FUNC_ATTR_NONNULL_ALL
 {
   if (gap->ga_len > 0) {
@@ -6330,13 +6345,14 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   res[l] = NUL;
 }
 
-// Compute a score for two sound-a-like words.
-// This permits up to two inserts/deletes/swaps/etc. to keep things fast.
-// Instead of a generic loop we write out the code.  That keeps it fast by
-// avoiding checks that will not be possible.
-static int soundalike_score(char_u *goodstart,         // sound-folded good word
-                            char_u *badstart          // sound-folded bad word
-                            )
+/// Compute a score for two sound-a-like words.
+/// This permits up to two inserts/deletes/swaps/etc. to keep things fast.
+/// Instead of a generic loop we write out the code.  That keeps it fast by
+/// avoiding checks that will not be possible.
+///
+/// @param goodstart  sound-folded good word
+/// @param badstart  sound-folded bad word
+static int soundalike_score(char_u *goodstart, char_u *badstart)
 {
   char_u *goodsound = goodstart;
   char_u *badsound = badstart;
@@ -6882,15 +6898,16 @@ void ex_spelldump(exarg_T *eap)
   redraw_later(curwin, NOT_VALID);
 }
 
-// Go through all possible words and:
-// 1. When "pat" is NULL: dump a list of all words in the current buffer.
-//      "ic" and "dir" are not used.
-// 2. When "pat" is not NULL: add matching words to insert mode completion.
-void spell_dump_compl(char_u *pat,           // leading part of the word
-                      int ic,                     // ignore case
-                      Direction *dir,        // direction for adding matches
-                      int dumpflags_arg              // DUMPFLAG_*
-                      )
+/// Go through all possible words and:
+/// 1. When "pat" is NULL: dump a list of all words in the current buffer.
+///      "ic" and "dir" are not used.
+/// 2. When "pat" is not NULL: add matching words to insert mode completion.
+///
+/// @param pat  leading part of the word
+/// @param ic  ignore case
+/// @param dir  direction for adding matches
+/// @param dumpflags_arg  DUMPFLAG_*
+void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
 {
   langp_T *lp;
   slang_T *slang;
@@ -7143,13 +7160,16 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
   }
 }
 
-// For ":spelldump": Find matching prefixes for "word".  Prepend each to
-// "word" and append a line to the buffer.
-// When "lnum" is zero add insert mode completion.
-// Return the updated line number.
-static linenr_T dump_prefixes(slang_T *slang, char_u *word,          // case-folded word
-                              char_u *pat, Direction *dir, int dumpflags, int flags,                  // flags with prefix ID
-                              linenr_T startlnum)
+/// For ":spelldump": Find matching prefixes for "word".  Prepend each to
+/// "word" and append a line to the buffer.
+/// When "lnum" is zero add insert mode completion.
+///
+/// @param word  case-folded word
+/// @param flags  flags with prefix ID
+///
+/// @return  the updated line number.
+static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
+                              int dumpflags, int flags, linenr_T startlnum)
 {
   idx_T arridx[MAXWLEN];
   int curi[MAXWLEN];

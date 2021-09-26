@@ -556,19 +556,20 @@ static inline int spell_check_magic_string(FILE *const fd)
   return 0;
 }
 
-// Load one spell file and store the info into a slang_T.
-//
-// This is invoked in three ways:
-// - From spell_load_cb() to load a spell file for the first time.  "lang" is
-//   the language name, "old_lp" is NULL.  Will allocate an slang_T.
-// - To reload a spell file that was changed.  "lang" is NULL and "old_lp"
-//   points to the existing slang_T.
-// - Just after writing a .spl file; it's read back to produce the .sug file.
-//   "old_lp" is NULL and "lang" is NULL.  Will allocate an slang_T.
-//
-// Returns the slang_T the spell file was loaded into.  NULL for error.
-slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool silent                     // no error if file doesn't exist
-                         )
+/// Load one spell file and store the info into a slang_T.
+///
+/// This is invoked in three ways:
+/// - From spell_load_cb() to load a spell file for the first time.  "lang" is
+///   the language name, "old_lp" is NULL.  Will allocate an slang_T.
+/// - To reload a spell file that was changed.  "lang" is NULL and "old_lp"
+///   points to the existing slang_T.
+/// - Just after writing a .spl file; it's read back to produce the .sug file.
+///   "old_lp" is NULL and "lang" is NULL.  Will allocate an slang_T.
+///
+/// @param silent  no error if file doesn't exist
+///
+/// @return  the slang_T the spell file was loaded into.  NULL for error.
+slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool silent)
 {
   FILE *fd;
   char_u *p;
@@ -1654,14 +1655,16 @@ static int *mb_str2wide(char_u *s)
   return res;
 }
 
-// Reads a tree from the .spl or .sug file.
-// Allocates the memory and stores pointers in "bytsp" and "idxsp".
-// This is skipped when the tree has zero length.
-// Returns zero when OK, SP_ value for an error.
+/// Reads a tree from the .spl or .sug file.
+/// Allocates the memory and stores pointers in "bytsp" and "idxsp".
+/// This is skipped when the tree has zero length.
+///
+/// @param prefixtree  true for the prefix tree
+/// @param prefixcnt  when "prefixtree" is true: prefix count
+///
+/// @return  zero when OK, SP_ value for an error.
 static int spell_read_tree(FILE *fd, char_u **bytsp, long *bytsp_len, idx_T **idxsp,
-                           bool prefixtree,               // true for the prefix tree
-                           int prefixcnt                  // when "prefixtree" is true: prefix count
-                           )
+                           bool prefixtree, int prefixcnt)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int idx;
@@ -1699,19 +1702,21 @@ static int spell_read_tree(FILE *fd, char_u **bytsp, long *bytsp_len, idx_T **id
   return 0;
 }
 
-// Read one row of siblings from the spell file and store it in the byte array
-// "byts" and index array "idxs".  Recursively read the children.
-//
-// NOTE: The code here must match put_node()!
-//
-// Returns the index (>= 0) following the siblings.
-// Returns SP_TRUNCERROR if the file is shorter than expected.
-// Returns SP_FORMERROR if there is a format error.
-static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx,                         // size of arrays
-                            idx_T startidx,                     // current index in "byts" and "idxs"
-                            bool prefixtree,                    // true for reading PREFIXTREE
-                            int maxprefcondnr                   // maximum for <prefcondnr>
-                            )
+/// Read one row of siblings from the spell file and store it in the byte array
+/// "byts" and index array "idxs".  Recursively read the children.
+///
+/// NOTE: The code here must match put_node()!
+///
+/// Returns the index (>= 0) following the siblings.
+/// Returns SP_TRUNCERROR if the file is shorter than expected.
+/// Returns SP_FORMERROR if there is a format error.
+///
+/// @param maxidx  size of arrays
+/// @param startidx  current index in "byts" and "idxs"
+/// @param prefixtree  true for reading PREFIXTREE
+/// @param maxprefcondnr  maximum for <prefcondnr>
+static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx_T startidx,
+                            bool prefixtree, int maxprefcondnr)
 {
   int len;
   int i;
@@ -1813,9 +1818,10 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx,    
   return idx;
 }
 
-// Reload the spell file "fname" if it's loaded.
-static void spell_reload_one(char_u *fname, bool added_word                // invoked through "zg"
-                             )
+/// Reload the spell file "fname" if it's loaded.
+///
+/// @param added_word  invoked through "zg"
+static void spell_reload_one(char_u *fname, bool added_word)
 {
   slang_T *slang;
   bool didit = false;
@@ -3401,22 +3407,24 @@ static void get_compflags(afffile_T *affile, char_u *afflist, char_u *store_affl
   store_afflist[cnt] = NUL;
 }
 
-// Apply affixes to a word and store the resulting words.
-// "ht" is the hashtable with affentry_T that need to be applied, either
-// prefixes or suffixes.
-// "xht", when not NULL, is the prefix hashtable, to be used additionally on
-// the resulting words for combining affixes.
-//
-// Returns FAIL when out of memory.
-static int store_aff_word(spellinfo_T *spin,         // spell info
-                          char_u *word,              // basic word start
-                          char_u *afflist,           // list of names of supported affixes
-                          afffile_T *affile, hashtab_T *ht, hashtab_T *xht, int condit,                // CONDIT_SUF et al.
-                          int flags,                 // flags for the word
-                          char_u *pfxlist,           // list of prefix IDs
-                          int pfxlen                 // nr of flags in "pfxlist" for prefixes, rest
-                                                     // is compound flags
-                          )
+/// Apply affixes to a word and store the resulting words.
+/// "ht" is the hashtable with affentry_T that need to be applied, either
+/// prefixes or suffixes.
+/// "xht", when not NULL, is the prefix hashtable, to be used additionally on
+/// the resulting words for combining affixes.
+///
+/// @param spin  spell info
+/// @param word  basic word start
+/// @param afflist  list of names of supported affixes
+/// @param condit  CONDIT_SUF et al.
+/// @param flags  flags for the word
+/// @param pfxlist  list of prefix IDs
+/// @param pfxlen  nr of flags in "pfxlist" for prefixes, rest is compound flags
+///
+/// @return  FAIL when out of memory.
+static int store_aff_word(spellinfo_T *spin, char_u *word, char_u *afflist, afffile_T *affile,
+                          hashtab_T *ht, hashtab_T *xht, int condit, int flags, char_u *pfxlist,
+                          int pfxlen)
 {
   int todo;
   hashitem_T *hi;
@@ -3899,18 +3907,20 @@ static wordnode_T *wordtree_alloc(spellinfo_T *spin)
   return (wordnode_T *)getroom(spin, sizeof(wordnode_T), true);
 }
 
-// Store a word in the tree(s).
-// Always store it in the case-folded tree.  For a keep-case word this is
-// useful when the word can also be used with all caps (no WF_FIXCAP flag) and
-// used to find suggestions.
-// For a keep-case word also store it in the keep-case tree.
-// When "pfxlist" is not NULL store the word for each postponed prefix ID and
-// compound flag.
-static int store_word(spellinfo_T *spin, char_u *word, int flags,                      // extra flags, WF_BANNED
-                      int region,                     // supported region(s)
-                      const char_u *pfxlist,          // list of prefix IDs or NULL
-                      bool need_affix                 // only store word with affix ID
-                      )
+/// Store a word in the tree(s).
+/// Always store it in the case-folded tree.  For a keep-case word this is
+/// useful when the word can also be used with all caps (no WF_FIXCAP flag) and
+/// used to find suggestions.
+/// For a keep-case word also store it in the keep-case tree.
+/// When "pfxlist" is not NULL store the word for each postponed prefix ID and
+/// compound flag.
+///
+/// @param flags  extra flags, wf_banned
+/// @param region  supported region(s)
+/// @param pfxlist  list of prefix ids or null
+/// @param need_affix  only store word with affix id
+static int store_word(spellinfo_T *spin, char_u *word, int flags, int region, const char_u *pfxlist,
+                      bool need_affix)
 {
   int len = (int)STRLEN(word);
   int ct = captype(word, word + len);
@@ -4207,11 +4217,11 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
   }
 }
 
-// Compress a node, its siblings and its children, depth first.
-// Returns the number of compressed nodes.
-static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, long *tot           // total count of nodes before compressing,
-                                                                                                  // incremented while going through the tree
-                          )
+/// Compress a node, its siblings and its children, depth first.
+/// Returns the number of compressed nodes.
+///
+/// @param tot  total count of nodes before compressing, incremented while going through the tree
+static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, long *tot)
   FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T *np;
@@ -4739,19 +4749,20 @@ static void clear_node(wordnode_T *node)
 }
 
 
-// Dump a word tree at node "node".
-//
-// This first writes the list of possible bytes (siblings).  Then for each
-// byte recursively write the children.
-//
-// NOTE: The code here must match the code in read_tree_node(), since
-// assumptions are made about the indexes (so that we don't have to write them
-// in the file).
-//
-// Returns the number of nodes used.
-static int put_node(FILE *fd,                // NULL when only counting
-                    wordnode_T *node, int idx, int regionmask, bool prefixtree                 // true for PREFIXTREE
-                    )
+/// Dump a word tree at node "node".
+///
+/// This first writes the list of possible bytes (siblings).  Then for each
+/// byte recursively write the children.
+///
+/// NOTE: The code here must match the code in read_tree_node(), since
+/// assumptions are made about the indexes (so that we don't have to write them
+/// in the file).
+///
+/// @param fd  NULL when only counting
+/// @param prefixtree  true for PREFIXTREE
+///
+/// @return  the number of nodes used.
+static int put_node(FILE *fd, wordnode_T *node, int idx, int regionmask, bool prefixtree)
 {
   // If "node" is zero the tree is empty.
   if (node == NULL) {
@@ -5071,11 +5082,12 @@ static int sug_maketable(spellinfo_T *spin)
   return res;
 }
 
-// Fill the table for one node and its children.
-// Returns the wordnr at the start of the node.
-// Returns -1 when out of memory.
-static int sug_filltable(spellinfo_T *spin, wordnode_T *node, int startwordnr, garray_T *gap           // place to store line of numbers
-                         )
+/// Fill the table for one node and its children.
+/// Returns the wordnr at the start of the node.
+/// Returns -1 when out of memory.
+///
+/// @param gap  place to store line of numbers
+static int sug_filltable(spellinfo_T *spin, wordnode_T *node, int startwordnr, garray_T *gap)
 {
   wordnode_T *p, *np;
   int wordnr = startwordnr;
@@ -5244,15 +5256,16 @@ theend:
 }
 
 
-// Create a Vim spell file from one or more word lists.
-// "fnames[0]" is the output file name.
-// "fnames[fcount - 1]" is the last input file name.
-// Exception: when "fnames[0]" ends in ".add" it's used as the input file name
-// and ".spl" is appended to make the output file name.
-static void mkspell(int fcount, char_u **fnames, bool ascii,                         // -ascii argument given
-                    bool over_write,                    // overwrite existing output file
-                    bool added_word                     // invoked through "zg"
-                    )
+/// Create a Vim spell file from one or more word lists.
+/// "fnames[0]" is the output file name.
+/// "fnames[fcount - 1]" is the last input file name.
+/// Exception: when "fnames[0]" ends in ".add" it's used as the input file name
+/// and ".spl" is appended to make the output file name.
+///
+/// @param ascii  -ascii argument given
+/// @param over_write  overwrite existing output file
+/// @param added_word  invoked through "zg"
+static void mkspell(int fcount, char_u **fnames, bool ascii, bool over_write, bool added_word)
 {
   char_u *fname = NULL;
   char_u *wfname;
@@ -5495,12 +5508,12 @@ void ex_spell(exarg_T *eap)
                  eap->cmdidx == CMD_spellundo);
 }
 
-// Add "word[len]" to 'spellfile' as a good or bad word.
-void spell_add_word(char_u *word, int len, SpellAddType what,        // SPELL_ADD_ values
-                    int idx,                  // "zG" and "zW": zero, otherwise index in
-                                              // 'spellfile'
-                    bool undo                 // true for "zug", "zuG", "zuw" and "zuW"
-                    )
+/// Add "word[len]" to 'spellfile' as a good or bad word.
+///
+/// @param what  SPELL_ADD_ values
+/// @param idx  "zG" and "zW": zero, otherwise index in 'spellfile'
+/// @param bool  // true for "zug", "zuG", "zuw" and "zuW"
+void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo)
 {
   FILE *fd = NULL;
   buf_T *buf = NULL;
@@ -5722,9 +5735,10 @@ static void init_spellfile(void)
   }
 }
 
-// Set the spell character tables from strings in the .spl file.
-static void set_spell_charflags(char_u *flags, int cnt,                    // length of "flags"
-                                char_u *fol)
+/// Set the spell character tables from strings in the .spl file.
+///
+/// @param cnt  length of "flags"
+static void set_spell_charflags(char_u *flags, int cnt, char_u *fol)
 {
   // We build the new tables here first, so that we can compare with the
   // previous one.
