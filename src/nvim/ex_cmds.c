@@ -5549,8 +5549,9 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
   if (add_help_tags
       || path_full_compare((char_u *)"$VIMRUNTIME/doc",
                            dir, false, true) == kEqualFiles) {
-    s = xmalloc(18 + STRLEN(tagfname));
-    sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
+    size_t s_len = 18 + STRLEN(tagfname);
+    s = xmalloc(s_len);
+    snprintf((char *)s, s_len, "help-tags\t%s\t1\n", tagfname);
     GA_APPEND(char_u *, &ga, s);
   }
 
@@ -5611,10 +5612,11 @@ static void helptags_one(char_u *dir, const char_u *ext, const char_u *tagfname,
               && (vim_strchr((char_u *)" \t\n\r", s[1]) != NULL
                   || s[1] == '\0')) {
             *p2 = '\0';
-            ++p1;
-            s = xmalloc((p2 - p1) + STRLEN(fname) + 2);
+            p1++;
+            size_t s_len= (p2 - p1) + STRLEN(fname) + 2;
+            s = xmalloc(s_len);
             GA_APPEND(char_u *, &ga, s);
-            sprintf((char *)s, "%s\t%s", p1, fname);
+            snprintf((char *)s, s_len, "%s\t%s", p1, fname);
 
             // find next '*'
             p2 = vim_strchr(p2 + 1, '*');
