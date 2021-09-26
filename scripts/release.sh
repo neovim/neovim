@@ -80,8 +80,8 @@ _do_release_commit() {
 _do_bump_commit() {
   $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
   $__sed -i.bk 's/set\((NVIM_VERSION_PATCH) [[:digit:]]/set(\1 ?/' CMakeLists.txt
-  rm CMakeLists.txt.bk
-  rm runtime/nvim.appdata.xml.bk
+  rm -f CMakeLists.txt.bk
+  rm -f runtime/nvim.appdata.xml.bk
   nvim +'/NVIM_VERSION' +1new +'exe "norm! iUpdate version numbers!!!"' \
     -O CMakeLists.txt
 
