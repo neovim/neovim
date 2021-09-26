@@ -1,7 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local lfs = require('lfs')
 
 local fmt = string.format
+local getcwd = helpers.funcs.getcwd
 local assert_alive = helpers.assert_alive
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
@@ -484,6 +486,31 @@ describe('API', function()
         pcall_err(request, 'nvim_call_dict_function', '42', 'f', {1,2}))
       eq('Invalid (empty) function name',
         pcall_err(request, 'nvim_call_dict_function', "{ 'f': '' }", '', {1,2}))
+    end)
+  end)
+
+  describe('nvim_set_current_dir', function()
+    local start_dir
+
+    before_each(function()
+      clear()
+      lfs.mkdir("testdir")
+      start_dir = getcwd()
+    end)
+
+    after_each(function()
+      lfs.rmdir("testdir")
+    end)
+
+    it('works', function()
+      meths.set_current_dir("testdir")
+      eq(getcwd(), start_dir .. "/testdir")
+    end)
+
+    it('sets previous directory', function()
+      meths.set_current_dir("testdir")
+      meths.exec('cd -', false)
+      eq(getcwd(), start_dir)
     end)
   end)
 
