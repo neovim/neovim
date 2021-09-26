@@ -812,17 +812,9 @@ void nvim_set_current_dir(String dir, Error *err)
   memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
 
-  try_start();
-
-  if (vim_chdir((char_u *)string)) {
-    if (!try_end(err)) {
-      api_set_error(err, kErrorTypeException, "Failed to change directory");
-    }
-    return;
-  }
-
-  post_chdir(kCdScopeGlobal, true, (char_u *)string);
-  try_end(err);
+  char_u *cmd = concat_str((const char_u *)"cd ", (const char_u *)string);
+  nvim_exec(cstr_to_string((const char *)cmd), false, err);
+  xfree(cmd);
 }
 
 /// Gets the current line.
