@@ -1136,6 +1136,10 @@ function M.show_line_diagnostics(opts, bufnr, lnum)
   clamp_line_numbers(bufnr, diagnostics)
   lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
   local line_diagnostics = diagnostic_lines(diagnostics)[lnum]
+  if line_diagnostics == nil then
+    vim.api.nvim_echo({{"No valid diagnostics to show", "WarningMsg"}}, true, {})
+    return
+  end
   return show_diagnostics(opts, line_diagnostics)
 end
 
