@@ -199,6 +199,7 @@ The externally maintained libraries used by Neovim are:
   - lua-compat: MIT license
   - tree-sitter: MIT license
   - xdiff: LGPL license
+  - lua-cjson: MIT license
 
 ====
 
