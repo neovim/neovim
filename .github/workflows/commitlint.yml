@@ -12,4 +12,5 @@ jobs:
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
+      - run: git switch master
       - run: nvim --clean -es +"lua require('scripts.lintcommit').main({trace=true})"
