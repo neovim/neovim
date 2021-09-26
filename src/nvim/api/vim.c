@@ -24,6 +24,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_getln.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
@@ -813,7 +814,7 @@ void nvim_set_current_dir(String dir, Error *err)
   string[dir.size] = NUL;
 
   char_u *cmd = concat_str((const char_u *)"cd ", (const char_u *)string);
-  nvim_exec(cstr_to_string((const char *)cmd), false, err);
+  nvim_exec(cstr_to_string(vim_strsave_fnameescape((const char *)cmd, false)), false, err);
   xfree(cmd);
 }
 
