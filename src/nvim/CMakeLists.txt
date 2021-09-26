@@ -87,8 +87,8 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
-file(GLOB EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c)
-file(GLOB EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h)
+file(GLOB EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c)
+file(GLOB EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h)
 
 foreach(subdir
         os
@@ -171,7 +171,7 @@ foreach(sfile ${CONV_SOURCES})
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
-# xdiff, mpack: inlined external project, we don't maintain it. #9306
+# xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
 list(APPEND CONV_SOURCES ${EXTERNAL_SOURCES})
 
 if(NOT MSVC)

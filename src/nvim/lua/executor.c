@@ -40,6 +40,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
+#include "cjson/lua_cjson.h"
 
 static int in_fast_callback = 0;
 
@@ -530,6 +531,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // vim.diff
   lua_pushcfunction(lstate, &nlua_xdl_diff);
   lua_setfield(lstate, -2, "diff");
+
+  lua_cjson_new(lstate);
+  lua_setfield(lstate, -2, "json");
 
   lua_setglobal(lstate, "vim");
 
