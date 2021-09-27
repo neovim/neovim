@@ -21,7 +21,8 @@
 # include "runtime.c.generated.h"
 #endif
 
-static bool search_path_valid = false;
+static bool runtime_search_path_valid = false;
+static int *runtime_search_path_ref = NULL;
 static RuntimeSearchPath runtime_search_path;
 
 /// ":runtime [what] {name}"
@@ -167,7 +168,7 @@ int do_in_path(char_u *path, char_u *name, int flags, DoInRuntimepathCB callback
 /// return FAIL when no file could be sourced, OK otherwise.
 int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {
-  validate_search_path();
+  runtime_search_path_validate();
   char_u      *tail;
   int num_files;
   char_u      **files;
@@ -182,9 +183,18 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
     verbose_leave();
   }
 
-  // Loop over all entries in 'runtimepath'.
-  for (size_t j = 0; j < kv_size(runtime_search_path); j++) {
-    SearchPathItem item = kv_A(runtime_search_path, j);
+  RuntimeSearchPath path = runtime_search_path;
+  int ref = 0;
+  if (runtime_search_path_ref == NULL) {
+    // cached path was unreferenced. keep a ref to
+    // prevent runtime_search_path() to freeing it too early
+    ref++;
+    runtime_search_path_ref = &ref;
+  }
+
+  // Loop over all entries in cached path
+  for (size_t j = 0; j < kv_size(path); j++) {
+    SearchPathItem item = kv_A(path, j);
     size_t buflen = strlen(item.path);
 
     // Skip after or non-after directories.
@@ -243,6 +253,14 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
       verbose_enter();
       smsg(_("not found in runtime path: \"%s\""), name);
       verbose_leave();
+    }
+  }
+
+  if (ref) {
+    if (runtime_search_path_ref == &ref) {
+      runtime_search_path_ref = NULL;
+    } else {
+      runtime_search_path_free(path);
     }
   }
 
@@ -361,7 +379,7 @@ static bool path_is_after(char_u *buf, size_t buflen)
          && STRCMP(buf + buflen - 5, "after") == 0;
 }
 
-RuntimeSearchPath build_runtime_search_path(void)
+RuntimeSearchPath runtime_search_path_build(void)
 {
   kvec_t(String) pack_entries = KV_INITIAL_VALUE;
   Map(String, handle_T) pack_used = MAP_INIT;
@@ -426,21 +444,29 @@ RuntimeSearchPath build_runtime_search_path(void)
   return search_path;
 }
 
-void invalidate_search_path(void)
+void runtime_search_path_invalidate(void)
 {
-  search_path_valid = false;
+  runtime_search_path_valid = false;
 }
 
-void validate_search_path(void)
+void runtime_search_path_free(RuntimeSearchPath path)
 {
-  if (!search_path_valid) {
-    for (size_t j = 0; j < kv_size(runtime_search_path); j++) {
-      SearchPathItem item = kv_A(runtime_search_path, j);
+    for (size_t j = 0; j < kv_size(path); j++) {
+      SearchPathItem item = kv_A(path, j);
       xfree(item.path);
     }
-    kv_destroy(runtime_search_path);
-    runtime_search_path = build_runtime_search_path();
-    search_path_valid = true;
+    kv_destroy(path);
+}
+
+void runtime_search_path_validate(void)
+{
+  if (!runtime_search_path_valid) {
+    if (!runtime_search_path_ref) {
+      runtime_search_path_free(runtime_search_path);
+    }
+    runtime_search_path = runtime_search_path_build();
+    runtime_search_path_valid = true;
+    runtime_search_path_ref = NULL;  // initially unowned
   }
 }
 

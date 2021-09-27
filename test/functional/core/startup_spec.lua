@@ -358,6 +358,12 @@ describe('startup', function()
     pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! superspecial\nruntime! filen.lua" ]]
     eq({'ordinary', 'SuperSpecial', 'FANCY', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
+
+  it("handles the correct order with a package that changes packpath", function()
+    pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! funky\nruntime! filen.lua" ]]
+    eq({'ordinary', 'funky!', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+    eq({'ordinary', 'funky!', 'ordinary after'}, exec_lua [[ return _G.nested_order ]])
+  end)
 end)
 
 describe('sysinit', function()
