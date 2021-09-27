@@ -155,6 +155,7 @@ CONFIG = {
             'buf.lua',
             'diagnostic.lua',
             'codelens.lua',
+            'codeaction.lua',
             'handlers.lua',
             'util.lua',
             'log.lua',

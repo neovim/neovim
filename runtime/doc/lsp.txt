@@ -1189,6 +1189,15 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 
 
 ==============================================================================
+
+Lua module: vim.lsp.codeaction                                *lsp-codeaction*
+
+                                                  *vim.lsp.codeaction.apply()*
+apply({action}, {ctx})
+                Apply edits/commands from a codeAction
+
+
+==============================================================================
 Lua module: vim.lsp.handlers                                    *lsp-handlers*
 
 hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
