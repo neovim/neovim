@@ -224,7 +224,7 @@ Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
 
   - To use the Nvim `gq` command with `uncrustify`:
   ```
-  if !empty(findfile('src/uncrustify.cfg', ';'))
+  if !empty(findfile('src/.uncrustify', ';'))
     setlocal formatprg=uncrustify\ -q\ -c\ src/uncrustify.cfg\ --replace\ --no-backup
   endif
   ```
