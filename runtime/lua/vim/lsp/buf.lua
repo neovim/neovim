@@ -289,7 +289,6 @@ function M.references(context)
   params.context = context or {
     includeDeclaration = true;
   }
-  params[vim.type_idx] = vim.types.dictionary
   request('textDocument/references', params)
 end
 
