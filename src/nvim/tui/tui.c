@@ -1483,7 +1483,7 @@ static void tui_guess_size(UI *ui)
   height = unibi_get_num(data->ut, unibi_lines);
   width = unibi_get_num(data->ut, unibi_columns);
 
-end:
+  end:
   if (width <= 0 || height <= 0) {
     // use the defaults
     width = DFLT_COLS;

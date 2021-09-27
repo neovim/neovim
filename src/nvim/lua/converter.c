@@ -755,7 +755,7 @@ void nlua_push_Array(lua_State *lstate, const Array array, bool special)
   FUNC_ATTR_NONNULL_ALL \
   { \
     lua_pushnumber(lstate, (lua_Number)(item)); \
-}
+  }
 
 GENERATE_INDEX_FUNCTION(Buffer)
 GENERATE_INDEX_FUNCTION(Window)
@@ -1126,9 +1126,9 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
       size_t len;
       const char *s = lua_tolstring(lstate, -1, &len);
       *cur.obj = STRING_OBJ(((String) {
-            .data = xmemdupz(s, len),
-            .size = len,
-          }));
+          .data = xmemdupz(s, len),
+          .size = len,
+        }));
       break;
     }
     case LUA_TNUMBER: {
@@ -1147,10 +1147,10 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
       switch (table_props.type) {
       case kObjectTypeArray:
         *cur.obj = ARRAY_OBJ(((Array) {
-              .items = NULL,
-              .size = 0,
-              .capacity = 0,
-            }));
+            .items = NULL,
+            .size = 0,
+            .capacity = 0,
+          }));
         if (table_props.maxidx != 0) {
           cur.obj->data.array.items =
             xcalloc(table_props.maxidx,
@@ -1162,10 +1162,10 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
         break;
       case kObjectTypeDictionary:
         *cur.obj = DICTIONARY_OBJ(((Dictionary) {
-              .items = NULL,
-              .size = 0,
-              .capacity = 0,
-            }));
+            .items = NULL,
+            .size = 0,
+            .capacity = 0,
+          }));
         if (table_props.string_keys_num != 0) {
           cur.obj->data.dictionary.items =
             xcalloc(table_props.string_keys_num,

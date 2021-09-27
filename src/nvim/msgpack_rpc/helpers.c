@@ -47,17 +47,15 @@ static msgpack_sbuffer sbuffer;
   } \
   \
   static void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
-/* uncrustify:indent-off */ \
     FUNC_ATTR_NONNULL_ARG(2) \
-/* uncrustify:indent-on */ \
   { \
-  msgpack_packer pac; \
-  msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
-  msgpack_pack_int64(&pac, (handle_T)o); \
-  msgpack_pack_ext(res, sbuffer.size, \
-                   kObjectType##t - EXT_OBJECT_TYPE_SHIFT); \
-  msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
-  msgpack_sbuffer_clear(&sbuffer); \
+    msgpack_packer pac; \
+    msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
+    msgpack_pack_int64(&pac, (handle_T)o); \
+    msgpack_pack_ext(res, sbuffer.size, \
+                     kObjectType##t - EXT_OBJECT_TYPE_SHIFT); \
+    msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
+    msgpack_sbuffer_clear(&sbuffer); \
   }
 
 void msgpack_rpc_helpers_init(void)
@@ -90,11 +88,11 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
   kvec_withinit_t(MPToAPIObjectStackItem, 2) stack = KV_INITIAL_VALUE;
   kvi_init(stack);
   kvi_push(stack, ((MPToAPIObjectStackItem) {
-      .mobj = obj,
-      .aobj = arg,
-      .container = false,
-      .idx = 0,
-    }));
+    .mobj = obj,
+    .aobj = arg,
+    .container = false,
+    .idx = 0,
+  }));
   while (ret && kv_size(stack)) {
     MPToAPIObjectStackItem cur = kv_last(stack);
     if (!cur.container) {
@@ -154,19 +152,19 @@ case type: { \
           cur.idx++;
           kv_last(stack) = cur;
           kvi_push(stack, ((MPToAPIObjectStackItem) {
-                .mobj = &cur.mobj->via.array.ptr[idx],
-                .aobj = &cur.aobj->data.array.items[idx],
-                .container = false,
-              }));
+              .mobj = &cur.mobj->via.array.ptr[idx],
+              .aobj = &cur.aobj->data.array.items[idx],
+              .container = false,
+            }));
         }
       } else {
         *cur.aobj = ARRAY_OBJ(((Array) {
-              .size = size,
-              .capacity = size,
-              .items = (size > 0
+            .size = size,
+            .capacity = size,
+            .items = (size > 0
                       ? xcalloc(size, sizeof(*cur.aobj->data.array.items))
                       : NULL),
-            }));
+          }));
         cur.container = true;
         kv_last(stack) = cur;
       }
@@ -207,20 +205,20 @@ case type: { \
           }
           if (ret) {
             kvi_push(stack, ((MPToAPIObjectStackItem) {
-                  .mobj = &cur.mobj->via.map.ptr[idx].val,
-                  .aobj = &cur.aobj->data.dictionary.items[idx].value,
-                  .container = false,
-                }));
+                .mobj = &cur.mobj->via.map.ptr[idx].val,
+                .aobj = &cur.aobj->data.dictionary.items[idx].value,
+                .container = false,
+              }));
           }
         }
       } else {
         *cur.aobj = DICTIONARY_OBJ(((Dictionary) {
-              .size = size,
-              .capacity = size,
-              .items = (size > 0
+            .size = size,
+            .capacity = size,
+            .items = (size > 0
                       ? xcalloc(size, sizeof(*cur.aobj->data.dictionary.items))
                       : NULL),
-            }));
+          }));
         cur.container = true;
         kv_last(stack) = cur;
       }
@@ -412,9 +410,9 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
           cur.idx++;
           kv_last(stack) = cur;
           kvi_push(stack, ((APIToMPObjectStackItem) {
-                .aobj = &cur.aobj->data.array.items[idx],
-                .container = false,
-              }));
+              .aobj = &cur.aobj->data.array.items[idx],
+              .container = false,
+            }));
         }
       } else {
         msgpack_pack_array(res, size);
@@ -435,9 +433,9 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
           msgpack_rpc_from_string(cur.aobj->data.dictionary.items[idx].key,
                                   res);
           kvi_push(stack, ((APIToMPObjectStackItem) {
-                .aobj = &cur.aobj->data.dictionary.items[idx].value,
-                .container = false,
-              }));
+              .aobj = &cur.aobj->data.dictionary.items[idx].value,
+              .container = false,
+            }));
         }
       } else {
         msgpack_pack_map(res, size);
