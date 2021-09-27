@@ -72,6 +72,7 @@ Dependencies which must be bumped manually:
   - [libmpack](https://github.com/libmpack/libmpack)
   - [xdiff](https://github.com/git/git/tree/master/xdiff)
   - [lua-cjson](https://github.com/openresty/lua-cjson)
+  - [Klib](https://github.com/attractivechaos/klib)
 
 See also
 --------
