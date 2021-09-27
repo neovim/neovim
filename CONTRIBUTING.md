@@ -217,13 +217,29 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 
 ### Style
 
-- Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
-  the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
+Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
+  the [style-guide]. 
+
+#### Uncrustify
+
+  - To use the Nvim `gq` command with `uncrustify`:
   ```
-  if !empty(findfile('src/.uncrustify', ';'))
+  if !empty(findfile('src/uncrustify.cfg', ';'))
     setlocal formatprg=uncrustify\ -q\ -c\ src/uncrustify.cfg\ --replace\ --no-backup
   endif
   ```
+  - To use it to lint the files that were changed in the last commit:
+  ```shell
+  make uncrustify
+  ```
+  - To use it to lint and *fix* the files that were changed in the last commit:
+  ```shell
+  make uncrustify-fix
+  ```
+  - It's also possible to use it in a commit-hook, check `bash scripts/run_uncrustify.sh -h`
+
+#### clang-format
+
 - There is also `.clang-format` which has drifted from the [style-guide], but
   is available for reference. To use the Nvim `gq` command with `clang-format`:
   ```
