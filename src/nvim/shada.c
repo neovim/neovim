@@ -3229,9 +3229,9 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
 #ifndef HAVE_BE64TOH
 static inline uint64_t be64toh(uint64_t big_endian_64_bits)
 {
-#ifdef ORDER_BIG_ENDIAN
+# ifdef ORDER_BIG_ENDIAN
   return big_endian_64_bits;
-#else
+# else
   // It may appear that when !defined(ORDER_BIG_ENDIAN) actual order is big
   // endian. This variant is suboptimal, but it works regardless of actual
   // order.
@@ -3241,7 +3241,7 @@ static inline uint64_t be64toh(uint64_t big_endian_64_bits)
     ret |= ((uint64_t)buf[i - 1]) << ((8 - i) * 8);
   }
   return ret;
-#endif
+# endif
 }
 #endif
 

@@ -33,8 +33,8 @@
 #include "nvim/vim.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
-#define log_client_msg(...)
-#define log_server_msg(...)
+# define log_client_msg(...)
+# define log_server_msg(...)
 #endif
 
 static PMap(cstr_t) event_strings = MAP_INIT;
@@ -699,14 +699,14 @@ const char *rpc_client_name(Channel *chan)
 }
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-#define REQ "[request]  "
-#define RES "[response] "
-#define NOT "[notify]   "
-#define ERR "[error]    "
+# define REQ "[request]  "
+# define RES "[response] "
+# define NOT "[notify]   "
+# define ERR "[error]    "
 
 // Cannot define array with negative offsets, so this one is needed to be added
 // to MSGPACK_UNPACK_\* values.
-#define MUR_OFF 2
+# define MUR_OFF 2
 
 static const char *const msgpack_error_messages[] = {
   [MSGPACK_UNPACK_EXTRA_BYTES + MUR_OFF] = "extra bytes found",

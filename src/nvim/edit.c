@@ -5681,7 +5681,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
  * stop and defer processing to the "normal" mechanism.
  * '0' and '^' are special, because they can be followed by CTRL-D.
  */
-# define ISSPECIAL(c)   ((c) < ' ' || (c) >= DEL || (c) == '0' || (c) == '^')
+#define ISSPECIAL(c)   ((c) < ' ' || (c) >= DEL || (c) == '0' || (c) == '^')
 
 #define WHITECHAR(cc) ( \
                         ascii_iswhite(cc) \

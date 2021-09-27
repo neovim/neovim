@@ -348,7 +348,7 @@ struct affentry_S {
   char ae_comppermit;           // COMPOUNDPERMITFLAG found
 };
 
-# define AH_KEY_LEN 17          // 2 x 8 bytes + NUL
+#define AH_KEY_LEN 17          // 2 x 8 bytes + NUL
 
 // Affix header from ".aff" file.  Used for af_pref and af_suff.
 typedef struct affheader_S {
@@ -1913,12 +1913,12 @@ int spell_check_msm(void)
 // readable format, so that we can see what happens when adding a word and/or
 // compressing the tree.
 // Based on code from Olaf Seibert.
-#define PRINTLINESIZE   1000
-#define PRINTWIDTH      6
+# define PRINTLINESIZE   1000
+# define PRINTWIDTH      6
 
-#define PRINTSOME(l, depth, fmt, a1, a2) vim_snprintf(l + depth * PRINTWIDTH, \
-                                                      PRINTLINESIZE - PRINTWIDTH * depth, fmt, a1, \
-                                                      a2)
+# define PRINTSOME(l, depth, fmt, a1, a2) vim_snprintf(l + depth * PRINTWIDTH, \
+                                                       PRINTLINESIZE - PRINTWIDTH * depth, fmt, a1, \
+                                                       a2)
 
 static char line1[PRINTLINESIZE];
 static char line2[PRINTLINESIZE];

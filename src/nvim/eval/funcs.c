@@ -80,16 +80,16 @@ KHASH_MAP_INIT_STR(functions, VimLFuncDef)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/funcs.c.generated.h"
 
-#ifdef _MSC_VER
+# ifdef _MSC_VER
 // This prevents MSVC from replacing the functions with intrinsics,
 // and causing errors when trying to get their addresses in funcs.generated.h
-#pragma function(ceil)
-#pragma function(floor)
-#endif
+#  pragma function(ceil)
+#  pragma function(floor)
+# endif
 
 PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
 PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
-#include "funcs.generated.h"
+# include "funcs.generated.h"
 PRAGMA_DIAG_POP
 PRAGMA_DIAG_POP
 #endif

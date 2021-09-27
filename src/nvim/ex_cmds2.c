@@ -109,7 +109,7 @@ struct source_cookie {
   vimconv_T conv;               ///< type of conversion
 };
 
-#  define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
+#define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds2.c.generated.h"
@@ -2340,7 +2340,7 @@ void ex_scriptnames(exarg_T *eap)
   }
 }
 
-# if defined(BACKSLASH_IN_FILENAME)
+#if defined(BACKSLASH_IN_FILENAME)
 /// Fix slashes in the list of script names for 'shellslash'.
 void scriptnames_slash_adjust(void)
 {
@@ -2351,7 +2351,7 @@ void scriptnames_slash_adjust(void)
   }
 }
 
-# endif
+#endif
 
 /// Get a pointer to a script name.  Used for ":verbose set".
 /// Message appended to "Last set from "
@@ -2388,7 +2388,7 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
   }
 }
 
-# if defined(EXITFREE)
+#if defined(EXITFREE)
 void free_scriptnames(void)
 {
   profile_reset();
@@ -2396,7 +2396,7 @@ void free_scriptnames(void)
 # define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
   GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
 }
-# endif
+#endif
 
 linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
 {
@@ -2786,17 +2786,17 @@ char *get_mess_lang(void)
 {
   char *p;
 
-# ifdef HAVE_GET_LOCALE_VAL
-#  if defined(LC_MESSAGES)
+#ifdef HAVE_GET_LOCALE_VAL
+# if defined(LC_MESSAGES)
   p = get_locale_val(LC_MESSAGES);
-#  else
+# else
   // This is necessary for Win32, where LC_MESSAGES is not defined and $LANG
   // may be set to the LCID number.  LC_COLLATE is the best guess, LC_TIME
   // and LC_MONETARY may be set differently for a Japanese working in the
   // US.
   p = get_locale_val(LC_COLLATE);
-#  endif
-# else
+# endif
+#else
   p = os_getenv("LC_ALL");
   if (!is_valid_mess_lang(p)) {
     p = os_getenv("LC_MESSAGES");
@@ -2804,7 +2804,7 @@ char *get_mess_lang(void)
       p = os_getenv("LANG");
     }
   }
-# endif
+#endif
   return is_valid_mess_lang(p) ? p : NULL;
 }
 
@@ -2842,37 +2842,37 @@ void set_lang_var(void)
 {
   const char *loc;
 
-# ifdef HAVE_GET_LOCALE_VAL
+#ifdef HAVE_GET_LOCALE_VAL
   loc = get_locale_val(LC_CTYPE);
-# else
+#else
   // setlocale() not supported: use the default value
   loc = "C";
-# endif
+#endif
   set_vim_var_string(VV_CTYPE, loc, -1);
 
   // When LC_MESSAGES isn't defined use the value from $LC_MESSAGES, fall
   // back to LC_CTYPE if it's empty.
-# ifdef HAVE_WORKING_LIBINTL
+#ifdef HAVE_WORKING_LIBINTL
   loc = (char *)get_mess_env();
-# elif defined(LC_MESSAGES)
+#elif defined(LC_MESSAGES)
   loc = get_locale_val(LC_MESSAGES);
-# else
+#else
   // In Windows LC_MESSAGES is not defined fallback to LC_CTYPE
   loc = get_locale_val(LC_CTYPE);
-# endif
+#endif
   set_vim_var_string(VV_LANG, loc, -1);
 
-# ifdef HAVE_GET_LOCALE_VAL
+#ifdef HAVE_GET_LOCALE_VAL
   loc = get_locale_val(LC_TIME);
-# endif
+#endif
   set_vim_var_string(VV_LC_TIME, loc, -1);
 
-# ifdef HAVE_GET_LOCALE_VAL
+#ifdef HAVE_GET_LOCALE_VAL
   loc = get_locale_val(LC_COLLATE);
-# else
+#else
   // setlocale() not supported: use the default value
   loc = "C";
-# endif
+#endif
   set_vim_var_string(VV_COLLATE, loc, -1);
 }
 
@@ -2889,11 +2889,11 @@ void ex_language(exarg_T *eap)
   char_u *name;
   int what = LC_ALL;
   char *whatstr = "";
-#ifdef LC_MESSAGES
-# define VIM_LC_MESSAGES LC_MESSAGES
-#else
-# define VIM_LC_MESSAGES 6789
-#endif
+# ifdef LC_MESSAGES
+#  define VIM_LC_MESSAGES LC_MESSAGES
+# else
+#  define VIM_LC_MESSAGES 6789
+# endif
 
   name = eap->arg;
 
@@ -2922,43 +2922,43 @@ void ex_language(exarg_T *eap)
   }
 
   if (*name == NUL) {
-#ifdef HAVE_WORKING_LIBINTL
+# ifdef HAVE_WORKING_LIBINTL
     if (what == VIM_LC_MESSAGES) {
       p = get_mess_env();
     } else {
-#endif
+# endif
     p = (char_u *)setlocale(what, NULL);
-#ifdef HAVE_WORKING_LIBINTL
+# ifdef HAVE_WORKING_LIBINTL
   }
-#endif
+# endif
     if (p == NULL || *p == NUL) {
       p = (char_u *)"Unknown";
     }
     smsg(_("Current %slanguage: \"%s\""), whatstr, p);
   } else {
-#ifndef LC_MESSAGES
+# ifndef LC_MESSAGES
     if (what == VIM_LC_MESSAGES) {
       loc = "";
     } else {
-#endif
+# endif
     loc = setlocale(what, (char *)name);
-#ifdef LC_NUMERIC
+# ifdef LC_NUMERIC
     // Make sure strtod() uses a decimal point, not a comma.
     setlocale(LC_NUMERIC, "C");
-#endif
-#ifndef LC_MESSAGES
+# endif
+# ifndef LC_MESSAGES
   }
-#endif
+# endif
     if (loc == NULL) {
       EMSG2(_("E197: Cannot set language to \"%s\""), name);
     } else {
-#ifdef HAVE_NL_MSG_CAT_CNTR
+# ifdef HAVE_NL_MSG_CAT_CNTR
       // Need to do this for GNU gettext, otherwise cached translations
       // will be used again.
       extern int _nl_msg_cat_cntr;
 
       _nl_msg_cat_cntr++;
-#endif
+# endif
       // Reset $LC_ALL, otherwise it would overrule everything.
       os_setenv("LC_ALL", "", 1);
 
@@ -2987,7 +2987,7 @@ void ex_language(exarg_T *eap)
 
 static char_u **locales = NULL;       // Array of all available locales
 
-#ifndef WIN32
+# ifndef WIN32
 static bool did_init_locales = false;
 
 /// Return an array of strings for all available locales + NULL for the
@@ -3022,20 +3022,20 @@ static char_u **find_locales(void)
   ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return (char_u **)locales_ga.ga_data;
 }
-#endif
+# endif
 
 /// Lazy initialization of all available locales.
 static void init_locales(void)
 {
-#ifndef WIN32
+# ifndef WIN32
   if (!did_init_locales) {
     did_init_locales = true;
     locales = find_locales();
   }
-#endif
+# endif
 }
 
-#  if defined(EXITFREE)
+# if defined(EXITFREE)
 void free_locales(void)
 {
   int i;
@@ -3047,7 +3047,7 @@ void free_locales(void)
   }
 }
 
-#  endif
+# endif
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":language" command.

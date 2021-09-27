@@ -20,7 +20,7 @@
 
 // For compatibility with libuv < 1.19.0 (tested on 1.18.0)
 #if UV_VERSION_MINOR < 19
-#define uv_stream_get_write_queue_size(stream) stream->write_queue_size
+# define uv_stream_get_write_queue_size(stream) stream->write_queue_size
 #endif
 
 /// Sets the stream associated with `fd` to "blocking" mode.

@@ -3372,7 +3372,7 @@ static void may_clear_cmdline(void)
 }
 
 // Routines for displaying a partly typed command
-# define SHOWCMD_BUFLEN SHOWCMD_COLS + 1 + 30
+#define SHOWCMD_BUFLEN SHOWCMD_COLS + 1 + 30
 static char_u showcmd_buf[SHOWCMD_BUFLEN];
 static char_u old_showcmd_buf[SHOWCMD_BUFLEN];    // For push_showcmd()
 static bool showcmd_is_clear = true;

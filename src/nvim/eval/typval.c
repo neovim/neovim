@@ -100,7 +100,7 @@ void list_write_log(const char *const fname)
   }
 }
 
-#ifdef EXITFREE
+# ifdef EXITFREE
 /// Free list log
 void list_free_log(void)
 {
@@ -110,7 +110,7 @@ void list_free_log(void)
     chunk = list_log_first;
   }
 }
-#endif
+# endif
 #endif
 //{{{2 List item
 

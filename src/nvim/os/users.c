@@ -43,7 +43,7 @@ int os_get_usernames(garray_T *users)
   }
   ga_init(users, sizeof(char *), 20);
 
-# if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
+#if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
   {
     struct passwd *pw;
 
@@ -53,7 +53,7 @@ int os_get_usernames(garray_T *users)
     }
     endpwent();
   }
-# elif defined(WIN32)
+#elif defined(WIN32)
   {
     DWORD nusers = 0, ntotal = 0, i;
     PUSER_INFO_0 uinfo;
@@ -73,8 +73,8 @@ int os_get_usernames(garray_T *users)
       NetApiBufferFree(uinfo);
     }
   }
-# endif
-# if defined(HAVE_GETPWNAM)
+#endif
+#if defined(HAVE_GETPWNAM)
   {
     const char *user_env = os_getenv("USER");
 
@@ -104,7 +104,7 @@ int os_get_usernames(garray_T *users)
       }
     }
   }
-# endif
+#endif
 
   return OK;
 }

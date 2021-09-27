@@ -36,11 +36,11 @@
 
 
 #if defined(ARCH_64)
-#define ptr_t_hash(key) uint64_t_hash((uint64_t)key)
-#define ptr_t_eq(a, b) uint64_t_eq((uint64_t)a, (uint64_t)b)
+# define ptr_t_hash(key) uint64_t_hash((uint64_t)key)
+# define ptr_t_eq(a, b) uint64_t_eq((uint64_t)a, (uint64_t)b)
 #elif defined(ARCH_32)
-#define ptr_t_hash(key) uint32_t_hash((uint32_t)key)
-#define ptr_t_eq(a, b) uint32_t_eq((uint32_t)a, (uint32_t)b)
+# define ptr_t_hash(key) uint32_t_hash((uint32_t)key)
+# define ptr_t_eq(a, b) uint32_t_eq((uint32_t)a, (uint32_t)b)
 #endif
 
 #define INITIALIZER(T, U) T##_##U##_initializer

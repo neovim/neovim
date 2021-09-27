@@ -2061,7 +2061,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   bool draw_color_col = false;          // highlight colorcolumn
   int *color_cols = NULL;               // pointer to according columns array
   bool has_spell = false;               // this buffer has spell checking
-# define SPWORDLEN 150
+#define SPWORDLEN 150
   char_u nextline[SPWORDLEN * 2];       // text with start of the next line
   int nextlinecol = 0;                  // column where nextline[] starts
   int nextline_idx = 0;                 /* index in nextline[] where next line
@@ -2124,12 +2124,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   // draw_state: items that are drawn in sequence:
 #define WL_START        0               // nothing done yet
-# define WL_CMDLINE     WL_START + 1    // cmdline window column
-# define WL_FOLD        WL_CMDLINE + 1  // 'foldcolumn'
-# define WL_SIGN        WL_FOLD + 1     // column for signs
+#define WL_CMDLINE     WL_START + 1    // cmdline window column
+#define WL_FOLD        WL_CMDLINE + 1  // 'foldcolumn'
+#define WL_SIGN        WL_FOLD + 1     // column for signs
 #define WL_NR           WL_SIGN + 1     // line number
-# define WL_BRI         WL_NR + 1       // 'breakindent'
-# define WL_SBR         WL_BRI + 1       // 'showbreak' or 'diff'
+#define WL_BRI         WL_NR + 1       // 'breakindent'
+#define WL_SBR         WL_BRI + 1       // 'showbreak' or 'diff'
 #define WL_LINE         WL_SBR + 1      // text in the line
   int draw_state = WL_START;            // what to draw next
 
@@ -2144,8 +2144,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   int did_wcol        = false;
   int match_conc      = 0;              ///< cchar for match functions
   int old_boguscols = 0;
-# define VCOL_HLC (vcol - vcol_off)
-# define FIX_FOR_BOGUSCOLS \
+#define VCOL_HLC (vcol - vcol_off)
+#define FIX_FOR_BOGUSCOLS \
   { \
     n_extra += vcol_off; \
     vcol -= vcol_off; \

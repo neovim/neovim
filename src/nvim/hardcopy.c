@@ -140,13 +140,13 @@ static uint32_t curr_bg;
 static uint32_t curr_fg;
 static int page_count;
 
-# define OPT_MBFONT_USECOURIER  0
-# define OPT_MBFONT_ASCII       1
-# define OPT_MBFONT_REGULAR     2
-# define OPT_MBFONT_BOLD        3
-# define OPT_MBFONT_OBLIQUE     4
-# define OPT_MBFONT_BOLDOBLIQUE 5
-# define OPT_MBFONT_NUM_OPTIONS 6
+#define OPT_MBFONT_USECOURIER  0
+#define OPT_MBFONT_ASCII       1
+#define OPT_MBFONT_REGULAR     2
+#define OPT_MBFONT_BOLD        3
+#define OPT_MBFONT_OBLIQUE     4
+#define OPT_MBFONT_BOLDOBLIQUE 5
+#define OPT_MBFONT_NUM_OPTIONS 6
 
 static option_table_T mbfont_opts[OPT_MBFONT_NUM_OPTIONS] =
 {
