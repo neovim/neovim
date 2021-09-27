@@ -20,9 +20,9 @@ function M.select(items, opts, on_choice)
   }
   opts = opts or {}
   local choices = {opts.prompt or 'Select one of:'}
-  local format_entry = opts.format_entry or tostring
+  local format_item = opts.format_item or tostring
   for i, item in pairs(items) do
-    table.insert(choices, string.format('%d: %s', i, format_entry(item)))
+    table.insert(choices, string.format('%d: %s', i, format_item(item)))
   end
   local choice = vim.fn.inputlist(choices)
   if choice < 1 or choice > #items then
