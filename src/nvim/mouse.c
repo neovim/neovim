@@ -236,6 +236,11 @@ retnomove:
       redraw_curbuf_later(INVERTED);            // delete the inversion
     }
 
+    if (grid == 0) {
+      row -= curwin->w_grid_alloc.comp_row+curwin->w_grid.row_offset;
+      col -= curwin->w_grid_alloc.comp_col+curwin->w_grid.col_offset;
+    }
+
     // When clicking beyond the end of the window, scroll the screen.
     // Scroll by however many rows outside the window we are.
     if (row < 0) {
@@ -476,7 +481,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 {
   if (*gridp == msg_grid.handle) {
-    // rowp += msg_grid_pos;  // PVS: dead store #11612
+    *rowp += msg_grid_pos;
     *gridp = DEFAULT_GRID_HANDLE;
   } else if (*gridp > 1) {
     win_T *wp = get_win_by_grid_handle(*gridp);

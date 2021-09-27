@@ -585,6 +585,69 @@ describe('ui/mouse/input', function()
     ]])
   end)
 
+  it('left drag changes visual selection in split layout', function()
+    screen:try_resize(53,14)
+    command('set mouse=a')
+    command('vsplit')
+    command('wincmd l')
+    command('below split')
+    command('enew')
+    feed('ifoo\nbar<esc>')
+
+    screen:expect{grid=[[
+      testing                   {4:│}testing                   |
+      mouse                     {4:│}mouse                     |
+      support and selection     {4:│}support and selection     |
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│[No Name] [+]             }|
+      {0:~                         }{4:│}foo{0:$}                      |
+      {0:~                         }{4:│}ba^r{0:$}                      |
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {4:[No Name] [+]              }{5:[No Name] [+]             }|
+                                                           |
+    ]]}
+
+    meths.input_mouse('left', 'press', '', 0, 6, 27)
+    screen:expect{grid=[[
+      testing                   {4:│}testing                   |
+      mouse                     {4:│}mouse                     |
+      support and selection     {4:│}support and selection     |
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│[No Name] [+]             }|
+      {0:~                         }{4:│}^foo{0:$}                      |
+      {0:~                         }{4:│}bar{0:$}                      |
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {4:[No Name] [+]              }{5:[No Name] [+]             }|
+                                                           |
+    ]]}
+    meths.input_mouse('left', 'drag', '', 0, 7, 30)
+
+    screen:expect{grid=[[
+      testing                   {4:│}testing                   |
+      mouse                     {4:│}mouse                     |
+      support and selection     {4:│}support and selection     |
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│[No Name] [+]             }|
+      {0:~                         }{4:│}{1:foo}{3:$}                      |
+      {0:~                         }{4:│}{1:bar}{0:^$}                      |
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {0:~                         }{4:│}{0:~                         }|
+      {4:[No Name] [+]              }{5:[No Name] [+]             }|
+      {2:-- VISUAL --}                                         |
+    ]]}
+  end)
+
   it('two clicks will select the word and enter VISUAL', function()
     feed('<LeftMouse><2,2><LeftMouse><2,2>')
     screen:expect([[
