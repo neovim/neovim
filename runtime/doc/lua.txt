@@ -1645,4 +1645,25 @@ uri_to_fname({uri})                                       *vim.uri_to_fname()*
                 Return: ~
                     Filename
 
+
+==============================================================================
+Lua module: ui                                                        *lua-ui*
+
+select({items}, {opts}, {on_choice})                         *vim.ui.select()*
+                Prompts the user to pick a single item from a collection of
+                entries
+
+                Parameters: ~
+                    {items}      table Arbitrary items
+                    {opts}       table Additional options
+                                 • prompt (string|nil) Text of the prompt.
+                                   Defaults to `Select one of:`
+                                 • format_item (function item -> text)
+                                   Function to format an individual item from
+                                   `items` . Defaults to `tostring` .
+                    {on_choice}  function ((item|nil, idx|nil) -> ()) Called
+                                 once the user made a choice. `idx` is the
+                                 1-based index of `item` within `item` . `nil`
+                                 if the user aborted the dialog.
+
  vim:tw=78:ts=8:ft=help:norl:
