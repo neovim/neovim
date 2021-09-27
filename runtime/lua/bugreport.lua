@@ -58,7 +58,7 @@ do
 		SYSTEM_INFO.sysname,
 		SYSTEM_INFO.release,
 		SYSTEM_INFO.version,
-		DISTRO_INFO.PRETTY_NAME or (DISTRO_INFO.NAME .. " " .. DISTRO_INFO.VERSION) or "",
+		DISTRO_INFO.PRETTY_NAME or ((DISTRO_INFO.NAME or "") .. " " .. (DISTRO_INFO.VERSION or "")),
 		SYSTEM_INFO.machine,
 		TERM
 	)
