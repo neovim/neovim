@@ -74,6 +74,9 @@ These dependencies are "vendored" (inlined), we need to update the sources manua
   - [lua-cjson](https://github.com/openresty/lua-cjson)
   - [Klib](https://github.com/attractivechaos/klib)
 
+We also maintain some forks, particularly for Windows, if we are waiting on upstream changes:
+https://github.com/neovim/neovim/wiki/Deps
+
 See also
 --------
 
