@@ -55,6 +55,28 @@ has a major bug:
     - The [nightly job](https://github.com/neovim/bot-ci/blob/master/ci/nightly.sh)
       will update the release assets based on the `stable` tag.
 
+Third-party dependencies
+--------------
+
+These "bundled" dependencies can be updated by bumping their versions in `third-party/CMakeLists.txt`:
+  - [Lua](https://www.lua.org/download.html)
+  - [LuaJIT](https://github.com/LuaJIT/LuaJIT)
+  - [Luv](https://github.com/luvit/luv)
+  - [libtermkey](https://github.com/neovim/libtermkey)
+  - [libuv](https://github.com/libuv/libuv)
+  - [libvterm](http://www.leonerd.org.uk/code/libvterm/)
+  - [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
+  - [tree-sitter](https://github.com/tree-sitter/tree-sitter)
+
+These dependencies are "vendored" (inlined), we need to update the sources manually:
+  - [libmpack](https://github.com/libmpack/libmpack)
+  - [xdiff](https://github.com/git/git/tree/master/xdiff)
+  - [lua-cjson](https://github.com/openresty/lua-cjson)
+  - [Klib](https://github.com/attractivechaos/klib)
+
+We also maintain some forks, particularly for Windows, if we are waiting on upstream changes:
+https://github.com/neovim/neovim/wiki/Deps
+
 See also
 --------
 
