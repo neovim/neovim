@@ -17,7 +17,7 @@ describe('vim.ui', function()
           { name = 'Item 2' },
         }
         local opts = {
-          format_entry = function(entry)
+          format_item = function(entry)
             return entry.name
           end
         }

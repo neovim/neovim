@@ -149,7 +149,7 @@ M['textDocument/codeAction'] = function(_, result, ctx)
 
   vim.ui.select(result, {
     prompt = 'Code actions:',
-    format_entry = function(action)
+    format_item = function(action)
       local title = action.title:gsub('\r\n', '\\r\\n')
       return title:gsub('\n', '\\n')
     end,
