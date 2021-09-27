@@ -68,7 +68,7 @@ These "bundled" dependencies can be updated by bumping their versions in `third-
   - [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
   - [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 
-Dependencies which must be bumped manually:
+These dependencies are "vendored" (inlined), we need to update the sources manually:
   - [libmpack](https://github.com/libmpack/libmpack)
   - [xdiff](https://github.com/git/git/tree/master/xdiff)
   - [lua-cjson](https://github.com/openresty/lua-cjson)
