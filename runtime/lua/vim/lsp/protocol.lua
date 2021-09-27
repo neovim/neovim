@@ -645,6 +645,10 @@ function protocol.make_client_capabilities()
             end)();
           };
         };
+        dataSupport = true;
+        resolveSupport = {
+          properties = { 'edit', }
+        };
       };
       completion = {
         dynamicRegistration = false;
