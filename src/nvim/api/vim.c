@@ -1355,6 +1355,9 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 ///      - "NE" northeast
 ///      - "SW" southwest
 ///      - "SE" southeast
+///      `anchor` doesn't take `border` into consideration.
+///      "S" in "SW" and "SE" actually subtracts `height` from `row`;
+///      "E" in "NE" and "SE" actually subtracts `width` from `col`.
 ///   - `width`: Window width (in character cells). Minimum of 1.
 ///   - `height`: Window height (in character cells). Minimum of 1.
 ///   - `bufpos`: Places float relative to buffer text (only when
