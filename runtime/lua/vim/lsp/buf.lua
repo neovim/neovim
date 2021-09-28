@@ -452,6 +452,15 @@ end
 
 
 ---@private
+--
+--- This is not public because the main extension point is
+--- vim.ui.select which can be overridden independently.
+---
+--- Can't call/use vim.lsp.handlers['textDocument/codeAction'] because it expects
+--- `(err, CodeAction[] | Command[], ctx)`, but we want to aggregate the results
+--- from multiple clients to have 1 single UI prompt for the user, yet we still
+--- need to be able to link a `CodeAction|Command` to the right client for
+--- `codeAction/resolve`
 local function on_code_action_results(results, ctx)
   local action_tuples = {}
   for client_id, result in pairs(results) do
