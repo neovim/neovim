@@ -515,7 +515,7 @@ int var_redir_start(char_u *name, int append)
 
   // Parse the variable name (can be a dict or list entry).
   redir_endp = get_lval(redir_varname, NULL, redir_lval, false, false,
-                                  0, FNE_CHECK_START);
+                        0, FNE_CHECK_START);
   if (redir_endp == NULL || redir_lval->ll_name == NULL
       || *redir_endp != NUL) {
     clear_lval(redir_lval);
@@ -598,7 +598,7 @@ void var_redir_stop(void)
       // Call get_lval() again, if it's inside a Dict or List it may
       // have changed.
       redir_endp = get_lval(redir_varname, NULL, redir_lval,
-                                      false, false, 0, FNE_CHECK_START);
+                            false, false, 0, FNE_CHECK_START);
       if (redir_endp != NULL && redir_lval->ll_name != NULL) {
         set_var_lval(redir_lval, redir_endp, &tv, false, false, ".");
       }

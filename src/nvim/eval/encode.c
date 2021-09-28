@@ -268,8 +268,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
            || TV_LIST_ITEM_TV(state->li)->vval.v_string != NULL);
     for (size_t i = state->offset; i < state->li_length && p < buf_end; i++) {
       assert(TV_LIST_ITEM_TV(state->li)->vval.v_string != NULL);
-      const char ch = (char)(
-                             TV_LIST_ITEM_TV(state->li)->vval.v_string[state->offset++]);
+      const char ch = (char)(TV_LIST_ITEM_TV(state->li)->vval.v_string[state->offset++]);
       *p++ = (char)(ch == (char)NL ? (char)NUL : ch);
     }
     if (p < buf_end) {
