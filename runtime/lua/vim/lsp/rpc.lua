@@ -4,34 +4,6 @@ local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
 
--- TODO replace with a better implementation.
----@private
---- Encodes to JSON.
----
----@param data (table) Data to encode
----@returns (string) Encoded object
-local function json_encode(data)
-  local status, result = pcall(vim.json.encode, data)
-  if status then
-    return result
-  else
-    return nil, result
-  end
-end
----@private
---- Decodes from JSON.
----
----@param data (string) Data to decode
----@returns (table) Decoded JSON object
-local function json_decode(data)
-  local status, result = pcall(vim.json.decode, data)
-  if status then
-    return result
-  else
-    return nil, result
-  end
-end
-
 ---@private
 --- Checks whether a given path exists and is a directory.
 ---@param filename (string) path to check
@@ -389,12 +361,12 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   --- Encodes {payload} into a JSON-RPC message and sends it to the remote
   --- process.
   ---
-  ---@param payload (table) Converted into a JSON string, see |json_encode()|
+  ---@param payload table
   ---@returns true if the payload could be scheduled, false if the main event-loop is in the process of closing.
   local function encode_and_send(payload)
     local _ = log.debug() and log.debug("rpc.send", payload)
     if handle == nil or handle:is_closing() then return false end
-    local encoded = assert(json_encode(payload))
+    local encoded = vim.json.encode(payload)
     stdin:write(format_message_with_content_length(encoded))
     return true
   end
@@ -485,14 +457,15 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   ---@private
   local function handle_body(body)
-    local decoded, err = json_decode(body)
-    if not decoded then
-      -- on_error(client_errors.INVALID_SERVER_JSON, err)
+    local ok, decoded = pcall(vim.json.decode, body)
+    if not ok then
+      on_error(client_errors.INVALID_SERVER_JSON, decoded)
       return
     end
     local _ = log.debug() and log.debug("rpc.receive", decoded)
 
     if type(decoded.method) == 'string' and decoded.id then
+      local err
       -- Server Request
       decoded.params = convert_NIL(decoded.params)
       -- Schedule here so that the users functions don't trigger an error and
