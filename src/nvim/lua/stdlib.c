@@ -501,9 +501,6 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // _setvar
     lua_pushcfunction(lstate, &nlua_setvar);
     lua_setfield(lstate, -2, "_setvar");
-
-    lua_cjson_new(lstate);
-    lua_setfield(lstate, -2, "json");
   }
 
   // vim.mpack
@@ -522,4 +519,8 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   // vim.diff
   lua_pushcfunction(lstate, &nlua_xdl_diff);
   lua_setfield(lstate, -2, "diff");
+
+  // vim.json
+  lua_cjson_new(lstate);
+  lua_setfield(lstate, -2, "json");
 }
