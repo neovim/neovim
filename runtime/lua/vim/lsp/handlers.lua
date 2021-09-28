@@ -3,7 +3,6 @@ local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
 local vim = vim
 local api = vim.api
-local buf = require 'vim.lsp.buf'
 
 local M = {}
 
