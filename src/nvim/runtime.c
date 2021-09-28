@@ -11,6 +11,7 @@
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/lua/executor.h"
 #include "nvim/misc1.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
@@ -157,6 +158,34 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
   return did_one ? OK : FAIL;
 }
 
+RuntimeSearchPath runtime_search_path_get_cached(int *ref)
+  FUNC_ATTR_NONNULL_ALL
+{
+  runtime_search_path_validate();
+
+  *ref = 0;
+  if (runtime_search_path_ref == NULL) {
+    // cached path was unreferenced. keep a ref to
+    // prevent runtime_search_path() to freeing it too early
+    (*ref)++;
+    runtime_search_path_ref = ref;
+  }
+  return runtime_search_path;
+}
+
+void runtime_search_path_unref(RuntimeSearchPath path, int *ref)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (*ref) {
+    if (runtime_search_path_ref == ref) {
+      runtime_search_path_ref = NULL;
+    } else {
+      runtime_search_path_free(path);
+    }
+  }
+}
+
+
 /// Find the file "name" in all directories in "path" and invoke
 /// "callback(fname, cookie)".
 /// "name" can contain wildcards.
@@ -167,7 +196,6 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
 /// return FAIL when no file could be sourced, OK otherwise.
 int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {
-  runtime_search_path_validate();
   char_u *tail;
   int num_files;
   char_u **files;
@@ -182,14 +210,8 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
     verbose_leave();
   }
 
-  RuntimeSearchPath path = runtime_search_path;
-  int ref = 0;
-  if (runtime_search_path_ref == NULL) {
-    // cached path was unreferenced. keep a ref to
-    // prevent runtime_search_path() to freeing it too early
-    ref++;
-    runtime_search_path_ref = &ref;
-  }
+  int ref;
+  RuntimeSearchPath path = runtime_search_path_get_cached(&ref);
 
   // Loop over all entries in cached path
   for (size_t j = 0; j < kv_size(path); j++) {
@@ -206,7 +228,6 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
 
     if (name == NULL) {
       (*callback)((char_u *)item.path, cookie);
-      did_one = true;
     } else if (buflen + STRLEN(name) + 2 < MAXPATHL) {
       STRCPY(buf, item.path);
       add_pathsep((char *)buf);
@@ -255,17 +276,70 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
     }
   }
 
-  if (ref) {
-    if (runtime_search_path_ref == &ref) {
-      runtime_search_path_ref = NULL;
-    } else {
-      runtime_search_path_free(path);
-    }
-  }
-
+  runtime_search_path_unref(path, &ref);
 
   return did_one ? OK : FAIL;
 }
+
+Array runtime_inspect(void)
+{
+  RuntimeSearchPath path = runtime_search_path;
+  Array rv = ARRAY_DICT_INIT;
+
+  for (size_t i = 0; i < kv_size(path); i++) {
+    SearchPathItem *item = &kv_A(path, i);
+    Array entry = ARRAY_DICT_INIT;
+    ADD(entry, STRING_OBJ(cstr_to_string(item->path)));
+    ADD(entry, BOOLEAN_OBJ(item->after));
+    if (item->has_lua != kNone) {
+      ADD(entry, BOOLEAN_OBJ(item->has_lua == kTrue));
+    }
+    ADD(rv, ARRAY_OBJ(entry));
+  }
+  return rv;
+}
+
+ArrayOf(String) runtime_get_named(bool lua, Array pat, bool all)
+{
+  int ref;
+  RuntimeSearchPath path = runtime_search_path_get_cached(&ref);
+  ArrayOf(String) rv = ARRAY_DICT_INIT;
+  static char buf[MAXPATHL];
+
+  for (size_t i = 0; i < kv_size(path); i++) {
+    SearchPathItem *item = &kv_A(path, i);
+    if (lua) {
+      if (item->has_lua == kNone) {
+        size_t size = (size_t)snprintf(buf, sizeof buf, "%s/lua/", item->path);
+        item->has_lua = (size < sizeof buf && os_isdir((char_u *)buf)) ? kTrue : kFalse;
+      }
+      if (item->has_lua == kFalse) {
+        continue;
+      }
+    }
+
+    for (size_t j = 0; j < pat.size; j++) {
+      Object pat_item = pat.items[j];
+      if (pat_item.type == kObjectTypeString) {
+        size_t size = (size_t)snprintf(buf, sizeof buf, "%s/%s",
+                                       item->path, pat_item.data.string.data);
+        if (size < sizeof buf) {
+          if (os_file_is_readable(buf)) {
+            ADD(rv, STRING_OBJ(cstr_to_string(buf)));
+            if (!all) {
+              goto done;
+            }
+          }
+        }
+      }
+    }
+  }
+
+done:
+  runtime_search_path_unref(path, &ref);
+  return rv;
+}
+
 /// Find "name" in "path".  When found, invoke the callback function for
 /// it: callback(fname, "cookie")
 /// When "flags" has DIP_ALL repeat for all matches, otherwise only the first
@@ -338,7 +412,7 @@ static void push_path(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp
   if (h == 0) {
     char *allocated = xstrdup(entry);
     map_put(String, handle_T)(rtp_used, cstr_as_string(allocated), 1);
-    kv_push(*search_path, ((SearchPathItem){ allocated, after }));
+    kv_push(*search_path, ((SearchPathItem){ allocated, after, kNone }));
   }
 }
 
@@ -481,6 +555,13 @@ void runtime_search_path_free(RuntimeSearchPath path)
 
 void runtime_search_path_validate(void)
 {
+  if (!nlua_is_deferred_safe()) {
+    // Cannot rebuild search path in an async context. As a plugin will invoke
+    // itself asynchronously from sync code in the same plugin, the sought
+    // after lua/autoload module will most likely already be in the cached path.
+    // Thus prefer using the stale cache over erroring out in this situation.
+    return;
+  }
   if (!runtime_search_path_valid) {
     if (!runtime_search_path_ref) {
       runtime_search_path_free(runtime_search_path);

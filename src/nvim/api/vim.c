@@ -756,6 +756,11 @@ ArrayOf(String) nvim_list_runtime_paths(Error *err)
   return nvim_get_runtime_file(NULL_STRING, true, err);
 }
 
+Array nvim__runtime_inspect(void)
+{
+  return runtime_inspect();
+}
+
 /// Find files in runtime directories
 ///
 /// 'name' can contain wildcards. For example
@@ -793,6 +798,25 @@ String nvim__get_lib_dir(void)
 {
   return cstr_as_string(get_lib_dir());
 }
+
+/// Find files in runtime directories
+///
+/// @param pat pattern of files to search for
+/// @param all whether to return all matches or only the first
+/// @param options
+///          is_lua: only search lua subdirs
+/// @return list of absolute paths to the found files
+ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, Error *err)
+  FUNC_API_SINCE(8)
+  FUNC_API_FAST
+{
+  bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
+  if (ERROR_SET(err)) {
+    return (Array)ARRAY_DICT_INIT;
+  }
+  return runtime_get_named(is_lua, pat, all);
+}
+
 
 /// Changes the global working directory.
 ///

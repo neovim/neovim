@@ -328,6 +328,15 @@ describe('startup', function()
     eq({9003, '\thowdy'}, exec_lua [[ return { _G.y, _G.z } ]])
   end)
 
+  it("handles require from &packpath in an async handler", function()
+      -- NO! you cannot just speed things up by calling async functions during startup!
+      -- It doesn't make anything actually faster! NOOOO!
+    pack_clear [[ lua require'async_leftpad'('brrrr', 'async_res') ]]
+
+    -- haha, async leftpad go brrrrr
+    eq('\tbrrrr', exec_lua [[ return _G.async_res ]])
+  end)
+
   it("handles :packadd during startup", function()
     -- control group: opt/bonus is not availabe by default
     pack_clear [[

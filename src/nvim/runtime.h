@@ -10,6 +10,7 @@ typedef void (*DoInRuntimepathCB)(char_u *, void *);
 typedef struct {
   char *path;
   bool after;
+  TriState has_lua;
 } SearchPathItem;
 
 typedef kvec_t(SearchPathItem) RuntimeSearchPath;

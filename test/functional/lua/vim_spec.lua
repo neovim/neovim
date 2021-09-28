@@ -2255,7 +2255,7 @@ end)
 
 describe('lua: require("mod") from packages', function()
   before_each(function()
-    command('set rtp+=test/functional/fixtures')
+    command('set rtp+=test/functional/fixtures pp+=test/functional/fixtures')
   end)
 
   it('propagates syntax error', function()
@@ -2265,5 +2265,14 @@ describe('lua: require("mod") from packages', function()
     ]]
 
     matches("unexpected symbol", syntax_error_msg)
+  end)
+
+  it('uses the right order of mod.lua vs mod/init.lua', function()
+    -- lua/fancy_x.lua takes precedence over lua/fancy_x/init.lua
+    eq('I am fancy_x.lua', exec_lua [[ return require'fancy_x' ]])
+    -- but lua/fancy_y/init.lua takes precedence over after/lua/fancy_y.lua
+    eq('I am init.lua of fancy_y!', exec_lua [[ return require'fancy_y' ]])
+    -- safety check: after/lua/fancy_z.lua is still loaded
+    eq('I am fancy_z.lua', exec_lua [[ return require'fancy_z' ]])
   end)
 end)
