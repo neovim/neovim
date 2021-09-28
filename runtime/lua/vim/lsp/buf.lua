@@ -450,6 +450,93 @@ function M.clear_references()
   util.buf_clear_references()
 end
 
+
+---@private
+--
+--- This is not public because the main extension point is
+--- vim.ui.select which can be overridden independently.
+---
+--- Can't call/use vim.lsp.handlers['textDocument/codeAction'] because it expects
+--- `(err, CodeAction[] | Command[], ctx)`, but we want to aggregate the results
+--- from multiple clients to have 1 single UI prompt for the user, yet we still
+--- need to be able to link a `CodeAction|Command` to the right client for
+--- `codeAction/resolve`
+local function on_code_action_results(results, ctx)
+  local action_tuples = {}
+  for client_id, result in pairs(results) do
+    for _, action in pairs(result.result or {}) do
+      table.insert(action_tuples, { client_id, action })
+    end
+  end
+  if #action_tuples == 0 then
+    vim.notify('No code actions available', vim.log.levels.INFO)
+    return
+  end
+
+  ---@private
+  local function apply_action(action, client)
+    if action.edit then
+      util.apply_workspace_edit(action.edit)
+    end
+    if action.command then
+      local command = type(action.command) == 'table' and action.command or action
+      local fn = vim.lsp.commands[command.command]
+      if fn then
+        local enriched_ctx = vim.deepcopy(ctx)
+        enriched_ctx.client_id = client.id
+        fn(command, ctx)
+      else
+        M.execute_command(command)
+      end
+    end
+  end
+
+  ---@private
+  local function on_user_choice(action_tuple)
+    if not action_tuple then
+      return
+    end
+    -- textDocument/codeAction can return either Command[] or CodeAction[]
+    --
+    -- CodeAction
+    --  ...
+    --  edit?: WorkspaceEdit    -- <- must be applied before command
+    --  command?: Command
+    --
+    -- Command:
+    --  title: string
+    --  command: string
+    --  arguments?: any[]
+    --
+    local client = vim.lsp.get_client_by_id(action_tuple[1])
+    local action = action_tuple[2]
+    if not action.edit
+        and client
+        and type(client.resolved_capabilities.code_action) == 'table'
+        and client.resolved_capabilities.code_action.resolveProvider then
+
+      client.request('codeAction/resolve', action, function(err, resolved_action)
+        if err then
+          vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
+          return
+        end
+        apply_action(resolved_action, client)
+      end)
+    else
+      apply_action(action, client)
+    end
+  end
+
+  vim.ui.select(action_tuples, {
+    prompt = 'Code actions:',
+    format_item = function(action_tuple)
+      local title = action_tuple[2].title:gsub('\r\n', '\\r\\n')
+      return title:gsub('\n', '\\n')
+    end,
+  }, on_user_choice)
+end
+
+
 --- Requests code actions from all clients and calls the handler exactly once
 --- with all aggregated results
 ---@private
@@ -457,11 +544,7 @@ local function code_action_request(params)
   local bufnr = vim.api.nvim_get_current_buf()
   local method = 'textDocument/codeAction'
   vim.lsp.buf_request_all(bufnr, method, params, function(results)
-    local actions = {}
-    for _, r in pairs(results) do
-      vim.list_extend(actions, r.result or {})
-    end
-    vim.lsp.handlers[method](nil, actions, {bufnr=bufnr, method=method})
+    on_code_action_results(results, { bufnr = bufnr, method = method, params = params })
   end)
 end
 

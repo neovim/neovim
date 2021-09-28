@@ -564,6 +564,35 @@ function tests.decode_nil()
   }
 end
 
+
+function tests.code_action_with_resolve()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          codeActionProvider = {
+            resolveProvider = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      local cmd = {
+        title = 'Command 1',
+        command = 'dummy1'
+      }
+      expect_request('textDocument/codeAction', function()
+        return nil, { cmd, }
+      end)
+      expect_request('codeAction/resolve', function()
+        return nil, cmd
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
 -- Tests will be indexed by TEST_NAME
 
 local kill_timer = vim.loop.new_timer()

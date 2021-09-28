@@ -3,7 +3,6 @@ local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
 local vim = vim
 local api = vim.api
-local buf = require 'vim.lsp.buf'
 
 local M = {}
 
@@ -107,53 +106,6 @@ M['client/registerCapability'] = function(_, _, ctx)
   local warning = string.format(warning_tpl, client_name)
   log.warn(warning)
   return vim.NIL
-end
-
---see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
-M['textDocument/codeAction'] = function(_, result, ctx)
-  if result == nil or vim.tbl_isempty(result) then
-    print("No code actions available")
-    return
-  end
-
-  ---@private
-  local function on_user_choice(action)
-    if not action then
-      return
-    end
-    -- textDocument/codeAction can return either Command[] or CodeAction[]
-    --
-    -- CodeAction
-    --  ...
-    --  edit?: WorkspaceEdit    -- <- must be applied before command
-    --  command?: Command
-    --
-    -- Command:
-    --  title: string
-    --  command: string
-    --  arguments?: any[]
-    --
-    if action.edit then
-      util.apply_workspace_edit(action.edit)
-    end
-    if action.command then
-      local command = type(action.command) == 'table' and action.command or action
-      local fn = vim.lsp.commands[command.command]
-      if fn then
-        fn(command, ctx)
-      else
-        buf.execute_command(command)
-      end
-    end
-  end
-
-  vim.ui.select(result, {
-    prompt = 'Code actions:',
-    format_item = function(action)
-      local title = action.title:gsub('\r\n', '\\r\\n')
-      return title:gsub('\n', '\\n')
-    end,
-  }, on_user_choice)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
