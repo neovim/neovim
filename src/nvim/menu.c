@@ -64,7 +64,7 @@ static vimmenu_T **get_root_menu(const char_u *const name)
 /// @param eap Ex command arguments
 void ex_menu(exarg_T *eap)
 {
-  char_u *menu_path;
+  char *menu_path;
   int modes;
   char_u *map_to;            // command mapped to the menu entry
   int noremap;
@@ -166,7 +166,7 @@ void ex_menu(exarg_T *eap)
   }
 
 
-  menu_path = arg;
+  menu_path = (char *)arg;
   if (*menu_path == '.') {
     EMSG2(_(e_invarg2), menu_path);
     goto theend;
@@ -178,48 +178,48 @@ void ex_menu(exarg_T *eap)
    * If there is only a menu name, display menus with that name.
    */
   if (*map_to == NUL && !unmenu && enable == kNone) {
-    show_menus(menu_path, modes);
+    show_menus((char_u *)menu_path, modes);
     goto theend;
   } else if (*map_to != NUL && (unmenu || enable != kNone)) {
     EMSG(_(e_trailing));
     goto theend;
   }
 
-  vimmenu_T **root_menu_ptr = get_root_menu(menu_path);
+  vimmenu_T **root_menu_ptr = get_root_menu((char_u *)menu_path);
 
   if (enable != kNone) {
     // Change sensitivity of the menu.
     // For the PopUp menu, remove a menu for each mode separately.
     // Careful: menu_enable_recurse() changes menu_path.
     if (STRCMP(menu_path, "*") == 0) {          // meaning: do all menus
-      menu_path = (char_u *)"";
+      menu_path = "";
     }
 
-    if (menu_is_popup(menu_path)) {
-      for (i = 0; i < MENU_INDEX_TIP; ++i) {
+    if (menu_is_popup((char_u *)menu_path)) {
+      for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
-          p = popup_mode_name(menu_path, i);
+          p = popup_mode_name((char_u *)menu_path, i);
           menu_enable_recurse(*root_menu_ptr, p, MENU_ALL_MODES, enable);
           xfree(p);
         }
       }
     }
-    menu_enable_recurse(*root_menu_ptr, menu_path, modes, enable);
+    menu_enable_recurse(*root_menu_ptr, (char_u *)menu_path, modes, enable);
   } else if (unmenu) {
     /*
      * Delete menu(s).
      */
     if (STRCMP(menu_path, "*") == 0) {          // meaning: remove all menus
-      menu_path = (char_u *)"";
+      menu_path = "";
     }
 
     /*
      * For the PopUp menu, remove a menu for each mode separately.
      */
-    if (menu_is_popup(menu_path)) {
-      for (i = 0; i < MENU_INDEX_TIP; ++i) {
+    if (menu_is_popup((char_u *)menu_path)) {
+      for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
-          p = popup_mode_name(menu_path, i);
+          p = popup_mode_name((char_u *)menu_path, i);
           remove_menu(root_menu_ptr, p, MENU_ALL_MODES, true);
           xfree(p);
         }
@@ -227,7 +227,7 @@ void ex_menu(exarg_T *eap)
     }
 
     // Careful: remove_menu() changes menu_path
-    remove_menu(root_menu_ptr, menu_path, modes, false);
+    remove_menu(root_menu_ptr, (char_u *)menu_path, modes, false);
   } else {
     /*
      * Add menu(s).
@@ -245,15 +245,15 @@ void ex_menu(exarg_T *eap)
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;
     menuarg.silent[0] = silent;
-    add_menu_path(menu_path, &menuarg, pri_tab, map_to);
+    add_menu_path((char_u *)menu_path, &menuarg, pri_tab, map_to);
 
     /*
      * For the PopUp menu, add a menu for each mode separately.
      */
-    if (menu_is_popup(menu_path)) {
-      for (i = 0; i < MENU_INDEX_TIP; ++i) {
+    if (menu_is_popup((char_u *)menu_path)) {
+      for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
-          p = popup_mode_name(menu_path, i);
+          p = popup_mode_name((char_u *)menu_path, i);
           // Include all modes, to make ":amenu" work
           menuarg.modes = modes;
           add_menu_path(p, &menuarg, pri_tab, map_to);
