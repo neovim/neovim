@@ -2376,26 +2376,43 @@ describe('LSP', function()
 
   describe('vim.lsp.buf.code_action', function()
     it('Calls client side command if available', function()
-      eq(1, exec_lua [[
-        local dummy_calls = 0
-        vim.lsp.commands.dummy = function()
-          dummy_calls = dummy_calls + 1
+      local client
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      test_rpc_server {
+        test_name = 'code_action_with_resolve',
+        on_init = function(client_)
+          client = client_
+        end,
+        on_setup = function()
+        end,
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+        end,
+        on_handler = function(err, result, ctx)
+          eq(table.remove(expected_handlers), {err, result, ctx})
+          if ctx.method == 'start' then
+            exec_lua([[
+              vim.lsp.commands['dummy1'] = function(cmd)
+                vim.lsp.commands['dummy2'] = function()
+                end
+              end
+              local bufnr = vim.api.nvim_get_current_buf()
+              vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+              vim.fn.inputlist = function()
+                return 1
+              end
+              vim.lsp.buf.code_action()
+            ]])
+          elseif ctx.method == 'shutdown' then
+            eq('function', exec_lua[[return type(vim.lsp.commands['dummy2'])]])
+            client.stop()
+          end
         end
-        local actions = {
-          {
-            title = 'Dummy command',
-            command = 'dummy',
-          },
-        }
-        -- inputlist would require input and block the test;
-        vim.fn.inputlist = function()
-          return 1
-        end
-        local params = {}
-        local handler = require'vim.lsp.handlers'['textDocument/codeAction']
-        handler(nil, actions, { method = 'textDocument/codeAction', params = params }, nil)
-        return dummy_calls
-      ]])
+      }
     end)
   end)
   describe('vim.lsp.commands', function()

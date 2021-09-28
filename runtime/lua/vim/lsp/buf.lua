@@ -451,6 +451,7 @@ function M.clear_references()
 end
 
 
+---@private
 local function on_code_action_results(results, ctx)
   local action_tuples = {}
   for client_id, result in pairs(results) do
@@ -472,7 +473,7 @@ local function on_code_action_results(results, ctx)
       local command = type(action.command) == 'table' and action.command or action
       local fn = vim.lsp.commands[command.command]
       if fn then
-        local enriched_ctx = vim.deep_copy(ctx)
+        local enriched_ctx = vim.deepcopy(ctx)
         enriched_ctx.client_id = client.id
         fn(command, ctx)
       else
@@ -519,7 +520,7 @@ local function on_code_action_results(results, ctx)
 
   vim.ui.select(action_tuples, {
     prompt = 'Code actions:',
-    format_entry = function(action_tuple)
+    format_item = function(action_tuple)
       local title = action_tuple[2].title:gsub('\r\n', '\\r\\n')
       return title:gsub('\n', '\\n')
     end,
