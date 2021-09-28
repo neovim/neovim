@@ -395,7 +395,7 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
       return;
     }
 
-    stringval = (char *)value.data.string.data;
+    stringval = value.data.string.data;
   }
 
   const sctx_T save_current_sctx = current_sctx;

@@ -1405,7 +1405,7 @@ void u_read_undo(char *name, const char_u *hash,
     FileInfo file_info_orig;
     FileInfo file_info_undo;
     if (os_fileinfo((const char *)orig_name, &file_info_orig)
-        && os_fileinfo((char *)file_name, &file_info_undo)
+        && os_fileinfo(file_name, &file_info_undo)
         && file_info_orig.stat.st_uid != file_info_undo.stat.st_uid
         && file_info_undo.stat.st_uid != getuid()) {
       if (p_verbose > 0) {
@@ -1418,7 +1418,7 @@ void u_read_undo(char *name, const char_u *hash,
     }
 #endif
   } else {
-    file_name = (char *) name;
+    file_name = name;
   }
 
   if (p_verbose > 0) {

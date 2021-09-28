@@ -3260,7 +3260,7 @@ const char *tv_get_string(const typval_T *const tv)
 const char *tv_get_string_buf(const typval_T *const tv, char *const buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const char *const res = (const char *)tv_get_string_buf_chk(tv, buf);
+  const char *const res = tv_get_string_buf_chk(tv, buf);
 
   return res != NULL ? res : "";
 }

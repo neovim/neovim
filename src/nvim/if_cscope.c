@@ -1059,7 +1059,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
     size_t matched = 0;
 
     // read output
-    cs_fill_results((char *)pat, totmatches, nummatches, &matches,
+    cs_fill_results(pat, totmatches, nummatches, &matches,
         &contexts, &matched);
     xfree(nummatches);
     if (matches == NULL)
@@ -1432,7 +1432,7 @@ retry:
    *
    *	<filename> <context> <line number> <pattern>
    */
-  if ((name = strtok((char *)buf, (const char *)" ")) == NULL)
+  if ((name = strtok(buf, (const char *)" ")) == NULL)
     return NULL;
   if ((*context = strtok(NULL, (const char *)" ")) == NULL)
     return NULL;

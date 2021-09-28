@@ -2694,7 +2694,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
         .timestamp = sub.timestamp,
         .data = {
           .sub_string = {
-            .sub = (char *)sub.sub,
+            .sub = sub.sub,
             .additional_elements = sub.additional_elements,
           }
         }
@@ -3092,7 +3092,7 @@ shada_write_file_nomerge: {}
       // overwrite a user’s viminfo file after a "su root", with a
       // viminfo file that the user can't read.
       FileInfo old_info;
-      if (os_fileinfo((char *)fname, &old_info)) {
+      if (os_fileinfo(fname, &old_info)) {
         if (getuid() == ROOT_UID) {
           if (old_info.stat.st_uid != ROOT_UID
               || old_info.stat.st_gid != getgid()) {

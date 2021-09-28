@@ -270,7 +270,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
       assert(TV_LIST_ITEM_TV(state->li)->vval.v_string != NULL);
       const char ch = (char)(
                              TV_LIST_ITEM_TV(state->li)->vval.v_string[state->offset++]);
-      *p++ = (char)((char)ch == (char)NL ? (char)NUL : (char)ch);
+      *p++ = (char)(ch == (char)NL ? (char)NUL : ch);
     }
     if (p < buf_end) {
       state->li = TV_LIST_ITEM_NEXT(state->list, state->li);

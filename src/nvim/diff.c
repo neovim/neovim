@@ -1110,7 +1110,7 @@ static int diff_file(diffio_T *dio)
     // Build the diff command and execute it.  Always use -a, binary
     // differences are of no use.  Ignore errors, diff returns
     // non-zero when differences have been found.
-    vim_snprintf((char *)cmd, len, "diff %s%s%s%s%s%s%s%s %s",
+    vim_snprintf(cmd, len, "diff %s%s%s%s%s%s%s%s %s",
                  diff_a_works == kFalse ? "" : "-a ",
                  "",
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",

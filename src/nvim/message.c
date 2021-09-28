@@ -3191,7 +3191,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
 
     size_t len = maxlen == -1 ? STRLEN(s) : (size_t)maxlen;
     if (capture_ga) {
-      ga_concat_len(capture_ga, (const char *)str, len);
+      ga_concat_len(capture_ga, str, len);
     }
     if (redir_reg) {
       write_reg_contents(redir_reg, s, len, true);
