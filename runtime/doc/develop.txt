@@ -161,6 +161,8 @@ Docstring format:
 - Lines start with `///`
 - Special tokens start with `@` followed by the token name:
   `@note`, `@param`, `@returns`
+- Use the [in], [out], [allocated], [static] conventions for the `@param` and
+  `@returns`.
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
 - Use `<pre>`  for code samples.
