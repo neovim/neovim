@@ -9,6 +9,14 @@ local M = {}
 ---     - format_item (function item -> text)
 ---               Function to format an
 ---               individual item from `items`. Defaults to `tostring`.
+---     - kind (string|nil)
+---               Kind of `items`.
+---               Plugins reimplementing `vim.ui.select` may wish to
+---               display different ui elements depending on the
+---               the structure of `items`, or the context in which
+---               `select` is called. `kind` allows authors
+---               of such plugins to opt into maintaining such
+---               behavior.
 ---@param on_choice function ((item|nil, idx|nil) -> ())
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `item`.
