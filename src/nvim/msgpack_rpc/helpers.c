@@ -189,7 +189,8 @@ case type: { \
       if (0 <= cur.mobj->via.ext.type && cur.mobj->via.ext.type <= EXT_OBJECT_TYPE_MAX) {
         cur.aobj->type = (ObjectType)(cur.mobj->via.ext.type + EXT_OBJECT_TYPE_SHIFT);
         msgpack_object data;
-        msgpack_unpack_return status = msgpack_unpack(cur.mobj->via.ext.ptr, cur.mobj->via.ext.size, NULL, &zone, &data);
+        msgpack_unpack_return status = msgpack_unpack(cur.mobj->via.ext.ptr, cur.mobj->via.ext.size,
+                                                      NULL, &zone, &data);
 
         if (status != MSGPACK_UNPACK_SUCCESS || data.type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
           ret = false;
@@ -304,7 +305,7 @@ static void msgpack_rpc_from_handle(ObjectType type, Integer o, msgpack_packer *
   msgpack_packer pac;
   msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write);
   msgpack_pack_int64(&pac, (handle_T)o);
-  msgpack_pack_ext(res, sbuffer.size, (int8_t)type - EXT_OBJECT_TYPE_SHIFT);
+  msgpack_pack_ext(res, sbuffer.size, (int8_t)(type - EXT_OBJECT_TYPE_SHIFT));
   msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size);
   msgpack_sbuffer_clear(&sbuffer);
 }
