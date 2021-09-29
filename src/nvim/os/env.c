@@ -22,15 +22,15 @@
 #include "nvim/vim.h"
 
 #ifdef WIN32
-#include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+# include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
 #endif
 
 #ifdef HAVE__NSGETENVIRON
-#include <crt_externs.h>
+# include <crt_externs.h>
 #endif
 
 #ifdef HAVE_SYS_UTSNAME_H
-#include <sys/utsname.h>
+# include <sys/utsname.h>
 #endif
 
 // Because `uv_os_getenv` requires allocating, we must manage a map to maintain
@@ -1161,7 +1161,7 @@ char_u *home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
 /// Function given to ExpandGeneric() to obtain an environment variable name.
 char_u *get_env_name(expand_T *xp, int idx)
 {
-# define ENVNAMELEN 100
+#define ENVNAMELEN 100
   // this static buffer is needed to avoid a memory leak in ExpandGeneric
   static char_u name[ENVNAMELEN];
   assert(idx >= 0);

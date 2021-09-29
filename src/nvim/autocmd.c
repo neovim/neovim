@@ -24,8 +24,8 @@
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-#include "auevents_name_map.generated.h"
-#include "autocmd.c.generated.h"
+# include "auevents_name_map.generated.h"
+# include "autocmd.c.generated.h"
 #endif
 
 //

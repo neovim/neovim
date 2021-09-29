@@ -29,7 +29,7 @@
 #include "nvim/strings.h"
 
 #ifdef WIN32
-#include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
+# include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -1226,12 +1226,12 @@ char *os_resolve_shortcut(const char *fname)
         goto shortcut_errorw;
       }
 
-#  if 0  // This makes Vim wait a long time if the target does not exist.
+# if 0  // This makes Vim wait a long time if the target does not exist.
       hr = pslw->lpVtbl->Resolve(pslw, NULL, SLR_NO_UI);
       if (hr != S_OK) {
         goto shortcut_errorw;
       }
-#  endif
+# endif
 
       // Get the path to the link target.
       ZeroMemory(wsz, MAX_PATH * sizeof(wchar_t));
@@ -1262,7 +1262,7 @@ shortcut_end:
   return rfname;
 }
 
-#define is_path_sep(c) ((c) == L'\\' || (c) == L'/')
+# define is_path_sep(c) ((c) == L'\\' || (c) == L'/')
 /// Returns true if the path contains a reparse point (junction or symbolic
 /// link). Otherwise false in returned.
 bool os_is_reparse_point_include(const char *path)

@@ -374,11 +374,11 @@ void set_init_1(bool clean_arg)
    * temp files.
    */
   {
-# ifdef UNIX
+#ifdef UNIX
     static char *(names[4]) = { "", "TMPDIR", "TEMP", "TMP" };
-# else
+#else
     static char *(names[3]) = { "TMPDIR", "TEMP", "TMP" };
-# endif
+#endif
     garray_T ga;
     opt_idx = findoption("backupskip");
 
@@ -386,16 +386,16 @@ void set_init_1(bool clean_arg)
     for (size_t n = 0; n < ARRAY_SIZE(names); n++) {
       bool mustfree = true;
       char *p;
-# ifdef UNIX
+#ifdef UNIX
       if (*names[n] == NUL) {
-#  ifdef __APPLE__
+# ifdef __APPLE__
         p = "/private/tmp";
-#  else
+# else
         p = "/tmp";
-#  endif
+# endif
         mustfree = false;
       } else
-# endif
+#endif
       {
         p = vim_getenv(names[n]);
       }
@@ -5831,10 +5831,10 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_cms);
   case PV_CPT:
     return (char_u *)&(curbuf->b_p_cpt);
-# ifdef BACKSLASH_IN_FILENAME
+#ifdef BACKSLASH_IN_FILENAME
   case PV_CSL:
     return (char_u *)&(curbuf->b_p_csl);
-# endif
+#endif
   case PV_CFU:
     return (char_u *)&(curbuf->b_p_cfu);
   case PV_OFU:
@@ -6179,9 +6179,9 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_inf = p_inf;
       buf->b_p_swf = cmdmod.noswapfile ? false : p_swf;
       buf->b_p_cpt = vim_strsave(p_cpt);
-# ifdef BACKSLASH_IN_FILENAME
+#ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = vim_strsave(p_csl);
-# endif
+#endif
       buf->b_p_cfu = vim_strsave(p_cfu);
       buf->b_p_ofu = vim_strsave(p_ofu);
       buf->b_p_tfu = vim_strsave(p_tfu);

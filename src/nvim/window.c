@@ -62,7 +62,7 @@
 
 #define NOWIN           (win_T *)-1     // non-existing window
 
-# define ROWS_AVAIL (Rows - p_ch - tabline_height())
+#define ROWS_AVAIL (Rows - p_ch - tabline_height())
 
 /// flags for win_enter_ext()
 typedef enum {
@@ -90,7 +90,7 @@ void do_window(int nchar, long Prenum, int xchar)
 
   Prenum1 = Prenum == 0 ? 1 : Prenum;
 
-# define CHECK_CMDWIN \
+#define CHECK_CMDWIN \
   do { \
     if (cmdwin_type != 0) { \
       EMSG(_(e_cmdwin)); \

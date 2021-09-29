@@ -45,5 +45,5 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name, size_t na
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-#include "api/private/dispatch_wrappers.generated.h"
+# include "api/private/dispatch_wrappers.generated.h"
 #endif

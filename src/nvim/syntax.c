@@ -383,7 +383,7 @@ static int current_line_id = 0;            // unique number for current line
 #define CUR_STATE(idx)  ((stateitem_T *)(current_state.ga_data))[idx]
 
 static bool syn_time_on = false;
-# define IF_SYN_TIME(p) (p)
+#define IF_SYN_TIME(p) (p)
 
 // Set the timeout used for syntax highlighting.
 // Use NULL to reset, no timeout.
@@ -578,7 +578,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
 static void clear_syn_state(synstate_T *p)
 {
   if (p->sst_stacksize > SST_FIX_STATES) {
-#   define UNREF_BUFSTATE_EXTMATCH(bs) unref_extmatch((bs)->bs_extmatch)
+#define UNREF_BUFSTATE_EXTMATCH(bs) unref_extmatch((bs)->bs_extmatch)
     GA_DEEP_CLEAR(&(p->sst_union.sst_ga), bufstate_T, UNREF_BUFSTATE_EXTMATCH);
   } else {
     for (int i = 0; i < p->sst_stacksize; i++) {
@@ -592,7 +592,7 @@ static void clear_syn_state(synstate_T *p)
  */
 static void clear_current_state(void)
 {
-# define UNREF_STATEITEM_EXTMATCH(si) unref_extmatch((si)->si_extmatch)
+#define UNREF_STATEITEM_EXTMATCH(si) unref_extmatch((si)->si_extmatch)
   GA_DEEP_CLEAR(&current_state, stateitem_T, UNREF_STATEITEM_EXTMATCH);
 }
 

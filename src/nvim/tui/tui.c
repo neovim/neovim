@@ -59,12 +59,12 @@
 #define LINUXSET1C "\x1b[?1c"
 
 #ifdef NVIM_UNIBI_HAS_VAR_FROM
-#define UNIBI_SET_NUM_VAR(var, num) \
+# define UNIBI_SET_NUM_VAR(var, num) \
   do { \
     (var) = unibi_var_from_num((num)); \
   } while (0)
 #else
-#define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
+# define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
 #endif
 
 typedef struct {
@@ -1483,7 +1483,7 @@ static void tui_guess_size(UI *ui)
   height = unibi_get_num(data->ut, unibi_lines);
   width = unibi_get_num(data->ut, unibi_columns);
 
-end:
+  end:
   if (width <= 0 || height <= 0) {
     // use the defaults
     width = DFLT_COLS;
@@ -2111,14 +2111,14 @@ static void flush_buf(UI *ui)
 static const char *tui_get_stty_erase(void)
 {
   static char stty_erase[2] = { 0 };
-#if defined(HAVE_TERMIOS_H)
+# if defined(HAVE_TERMIOS_H)
   struct termios t;
   if (tcgetattr(input_global_fd(), &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = '\0';
     DLOG("stty/termios:erase=%s", stty_erase);
   }
-#endif
+# endif
   return stty_erase;
 }
 

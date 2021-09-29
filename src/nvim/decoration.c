@@ -37,7 +37,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 
   decor->priority = DECOR_PRIORITY_BASE;
   // TODO(bfredl): if decoration had blocky mode, we could avoid this loop
-  for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum ++) {
+  for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum++) {
     int end_off = 0;
     if (pos_start.lnum < lnum && lnum < pos_end.lnum) {
       // TODO(bfredl): This is quite ad-hoc, but the space between |num| and

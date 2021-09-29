@@ -936,7 +936,7 @@ static const char *intchar2str(const int ch)
 }
 
 #ifdef UNIT_TESTING
-#include <stdio.h>
+# include <stdio.h>
 
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_ast_node(const ExprASTNode *const *const eastnode_p,
@@ -971,14 +971,14 @@ static inline void viml_pexpr_debug_print_token(const ParserState *const pstate,
 {
   fprintf(stderr, "\ntkn: %s\n", viml_pexpr_repr_token(pstate, token, NULL));
 }
-#define PSTACK(msg) \
+# define PSTACK(msg) \
   viml_pexpr_debug_print_ast_stack(&ast_stack, #msg)
-#define PSTACK_P(msg) \
+# define PSTACK_P(msg) \
   viml_pexpr_debug_print_ast_stack(ast_stack, #msg)
-#define PNODE_P(eastnode_p, msg) \
+# define PNODE_P(eastnode_p, msg) \
   viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)eastnode_p, \
                                   (#msg))
-#define PTOKEN(tkn) \
+# define PTOKEN(tkn) \
   viml_pexpr_debug_print_token(pstate, tkn)
 #endif
 

@@ -39,7 +39,7 @@
 #define FC_CFUNC    0x800         // C function extension
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-#include "eval/userfunc.c.generated.h"
+# include "eval/userfunc.c.generated.h"
 #endif
 
 hashtab_T func_hashtab;

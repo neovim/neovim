@@ -157,7 +157,7 @@ static void init_child(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
 #if defined(HAVE__NSGETENVIRON)
-#define environ (*_NSGetEnviron())
+# define environ (*_NSGetEnviron())
 #else
   extern char **environ;
 #endif

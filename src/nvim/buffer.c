@@ -3429,14 +3429,14 @@ void resettitle(void)
   ui_flush();
 }
 
-# if defined(EXITFREE)
+#if defined(EXITFREE)
 void free_titles(void)
 {
   xfree(lasttitle);
   xfree(lasticon);
 }
 
-# endif
+#endif
 
 /// Enumeration specifying the valid numeric bases that can
 /// be used when printing numbers in the status line.

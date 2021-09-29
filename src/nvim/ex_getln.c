@@ -2570,13 +2570,13 @@ static void realloc_cmdbuff(int len)
 
 static char_u *arshape_buf = NULL;
 
-# if defined(EXITFREE)
+#if defined(EXITFREE)
 void free_arshape_buf(void)
 {
   xfree(arshape_buf);
 }
 
-# endif
+#endif
 
 enum { MAX_CB_ERRORS = 1 };
 
@@ -4111,7 +4111,7 @@ char *vim_strsave_fnameescape(const char *const fname, const bool shell FUNC_ATT
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
 #ifdef BACKSLASH_IN_FILENAME
-#define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
+# define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
   char_u buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 
@@ -4125,8 +4125,8 @@ char *vim_strsave_fnameescape(const char *const fname, const bool shell FUNC_ATT
   char *p = (char *)vim_strsave_escaped((const char_u *)fname,
                                         (const char_u *)buf);
 #else
-#define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
-#define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
+# define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
+# define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
   char *p =
     (char *)vim_strsave_escaped((const char_u *)fname, (shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS));
   if (shell && csh_like_shell()) {

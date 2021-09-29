@@ -99,7 +99,7 @@ static garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 #define USER_CMD_GA(gap, i) (&((ucmd_T *)((gap)->ga_data))[i])
 
 // Whether a command index indicates a user command.
-# define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
+#define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
 
 // Struct for storing a line inside a while/for loop
 typedef struct {
@@ -6949,7 +6949,7 @@ static void ex_goto(exarg_T *eap)
  */
 void alist_clear(alist_T *al)
 {
-# define FREE_AENTRY_FNAME(arg) xfree(arg->ae_fname)
+#define FREE_AENTRY_FNAME(arg) xfree(arg->ae_fname)
   GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
 }
 

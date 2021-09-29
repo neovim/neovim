@@ -65,7 +65,7 @@
 
 // For compatibility with libuv < 1.20.0 (tested on 1.18.0)
 #ifndef UV_FS_COPYFILE_FICLONE
-#define UV_FS_COPYFILE_FICLONE 0
+# define UV_FS_COPYFILE_FICLONE 0
 #endif
 
 #define HAS_BW_FLAGS
@@ -105,9 +105,9 @@ struct bw_info {
   int bw_conv_error;             // set for conversion error
   linenr_T bw_conv_error_lnum;   // first line with error or zero
   linenr_T bw_start_lnum;        // line number at start of buffer
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
   iconv_t bw_iconv_fd;           // descriptor for iconv() or -1
-# endif
+#endif
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -233,11 +233,11 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   char_u *fenc_next = NULL;        // next item in 'fencs' or NULL
   bool advance_fenc = false;
   long real_size = 0;
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
   iconv_t iconv_fd = (iconv_t)-1;       // descriptor for iconv() or -1
   bool did_iconv = false;               // true when iconv() failed and trying
                                         // 'charconvert' next
-# endif
+#endif
   bool converted = false;                // true if conversion done
   bool notconverted = false;             // true if conversion wanted but it wasn't possible
   char_u conv_rest[CONV_RESTLEN];
@@ -373,10 +373,10 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     if (perm >= 0 && !S_ISREG(perm)                 // not a regular file ...
         && !S_ISFIFO(perm)                          // ... or fifo
         && !S_ISSOCK(perm)                          // ... or socket
-# ifdef OPEN_CHR_FILES
+#ifdef OPEN_CHR_FILES
         && !(S_ISCHR(perm) && is_dev_fd_file(fname))
         // ... or a character special file named /dev/fd/<n>
-# endif
+#endif
         ) {
       if (S_ISDIR(perm)) {
         filemess(curbuf, fname, (char_u *)_(msg_is_a_directory), 0);
@@ -493,11 +493,11 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     } else {
       filemess(curbuf, sfname, (char_u *)(
                                           (fd == UV_EFBIG) ? _("[File too big]") :
-# if defined(UNIX) && defined(EOVERFLOW)
+#if defined(UNIX) && defined(EOVERFLOW)
                                           // libuv only returns -errno in Unix and in Windows open() does not
                                           // set EOVERFLOW
                                           (fd == -EOVERFLOW) ? _("[File too big]") :
-# endif
+#endif
                                           _("[Permission Denied]")), 0);
       curbuf->b_p_ro = TRUE;                  // must use "w!" now
     }
@@ -768,13 +768,13 @@ retry:
     }
   }
 
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
   if (iconv_fd != (iconv_t)-1) {
     // aborted conversion with iconv(), close the descriptor
     iconv_close(iconv_fd);
     iconv_fd = (iconv_t)-1;
   }
-# endif
+#endif
 
   if (advance_fenc) {
     /*
@@ -833,13 +833,13 @@ retry:
 
 
 
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
     // Try using iconv() if we can't convert internally.
     if (fio_flags == 0
         && !did_iconv) {
       iconv_fd = (iconv_t)my_iconv_open((char_u *)"utf-8", fenc);
     }
-# endif
+#endif
 
     /*
      * Use the 'charconvert' expression when conversion is required
@@ -847,13 +847,13 @@ retry:
      */
     if (fio_flags == 0 && !read_stdin && !read_buffer && *p_ccv != NUL
         && !read_fifo
-#  ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
         && iconv_fd == (iconv_t)-1
-#  endif
+#endif
         ) {
-#  ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
       did_iconv = false;
-#  endif
+#endif
       /* Skip conversion when it's already done (retry for wrong
        * "fileformat"). */
       if (tmpname == NULL) {
@@ -872,9 +872,9 @@ retry:
       }
     } else {
       if (fio_flags == 0
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
           && iconv_fd == (iconv_t)-1
-# endif
+#endif
           ) {
         /* Conversion wanted but we can't.
          * Try the next conversion in 'fileencodings' */
@@ -960,11 +960,11 @@ retry:
          * ucs-4 to utf-8: 4 bytes become up to 6 bytes, size must be
          * multiple of 4 */
         real_size = (int)size;
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
         if (iconv_fd != (iconv_t)-1) {
           size = size / ICONV_MULT;
         } else {
-# endif
+#endif
         if (fio_flags & FIO_LATIN1) {
           size = size / 2;
         } else if (fio_flags & (FIO_UCS2 | FIO_UTF16)) {
@@ -974,9 +974,9 @@ retry:
         } else if (fio_flags == FIO_UCSBOM) {
           size = size / ICONV_MULT;  // worst case
         }
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
       }
-# endif
+#endif
         if (conv_restlen > 0) {
           // Insert unconverted bytes from previous line.
           memmove(ptr, conv_rest, conv_restlen);  // -V614
@@ -1055,9 +1055,9 @@ retry:
 
             // When we did a conversion report an error.
             if (fio_flags != 0
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
                 || iconv_fd != (iconv_t)-1
-# endif
+#endif
                 ) {
               if (can_retry) {
                 goto rewind_retry;
@@ -1081,9 +1081,9 @@ retry:
                * leave the UTF8 checking code to do it, as it
                * works slightly differently. */
               if (bad_char_behavior != BAD_KEEP && (fio_flags != 0
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
                                                     || iconv_fd != (iconv_t)-1
-# endif
+#endif
                                                     )) {
                 while (conv_restlen > 0) {
                   *(--ptr) = bad_char_behavior;
@@ -1091,12 +1091,12 @@ retry:
                 }
               }
               fio_flags = 0;  // don't convert this
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
               if (iconv_fd != (iconv_t)-1) {
                 iconv_close(iconv_fd);
                 iconv_fd = (iconv_t)-1;
               }
-# endif
+#endif
             }
           }
         }
@@ -1165,7 +1165,7 @@ retry:
         break;
       }
 
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
       if (iconv_fd != (iconv_t)-1) {
         /*
          * Attempt conversion of the read bytes to 'encoding' using
@@ -1223,7 +1223,7 @@ retry:
         memmove(line_start, buffer, (size_t)linerest);
         size = ((char_u *)top - ptr);
       }
-# endif
+#endif
 
       if (fio_flags != 0) {
         unsigned int u8c;
@@ -1441,12 +1441,12 @@ retry:
               if (can_retry && !incomplete_tail) {
                 break;
               }
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
               // When we did a conversion report an error.
               if (iconv_fd != (iconv_t)-1 && conv_error == 0) {
                 conv_error = readfile_linenr(linecnt, ptr, p);
               }
-# endif
+#endif
               // Remember the first linenr with an illegal byte
               if (conv_error == 0 && illegal_byte == 0) {
                 illegal_byte = readfile_linenr(linecnt, ptr, p);
@@ -1469,17 +1469,17 @@ retry:
           // Detected a UTF-8 error.
 rewind_retry:
           // Retry reading with another conversion.
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
           if (*p_ccv != NUL && iconv_fd != (iconv_t)-1) {
             // iconv() failed, try 'charconvert'
             did_iconv = true;
           } else {
-# endif
+#endif
           // use next item from 'fileencodings'
           advance_fenc = true;
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
         }
-# endif
+#endif
           file_rewind = true;
           goto retry;
         }
@@ -1700,11 +1700,11 @@ failed:
   if (fenc_alloced) {
     xfree(fenc);
   }
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
   if (iconv_fd != (iconv_t)-1) {
     iconv_close(iconv_fd);
   }
-# endif
+#endif
 
   if (!read_buffer && !read_stdin) {
     close(fd);  // errors are ignored
@@ -2280,9 +2280,9 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   write_info.bw_conv_error = FALSE;
   write_info.bw_conv_error_lnum = 0;
   write_info.bw_restlen = 0;
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
   write_info.bw_iconv_fd = (iconv_t)-1;
-# endif
+#endif
 
   /* After writing a file changedtick changes but we don't want to display
    * the line. */
@@ -2690,7 +2690,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
         if (fd < 0) {           // can't write in directory
           backup_copy = TRUE;
         } else {
-# ifdef UNIX
+#ifdef UNIX
           os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
           if (!os_fileinfo((char *)IObuff, &file_info)
               || file_info.stat.st_uid != file_info_old.stat.st_uid
@@ -2698,7 +2698,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
               || (long)file_info.stat.st_mode != perm) {
             backup_copy = TRUE;
           }
-# endif
+#endif
           /* Close the file before removing it, on MS-Windows we
            * can't delete an open file. */
           close(fd);
@@ -2711,7 +2711,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
      * Break symlinks and/or hardlinks if we've been asked to.
      */
     if ((bkc & BKC_BREAKSYMLINK) || (bkc & BKC_BREAKHARDLINK)) {
-# ifdef UNIX
+#ifdef UNIX
       bool file_info_link_ok = os_fileinfo_link((char *)fname, &file_info);
 
       // Symlinks.
@@ -2728,7 +2728,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
               || os_fileinfo_id_equal(&file_info, &file_info_old))) {
         backup_copy = FALSE;
       }
-# endif
+#endif
     }
 
     // make sure we have a valid backup extension to use
@@ -3085,7 +3085,7 @@ nobackup:
 
 
   if (converted && wb_flags == 0) {
-#  ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
     // Use iconv() conversion when conversion is needed and it's not done
     // internally.
     write_info.bw_iconv_fd = (iconv_t)my_iconv_open(fenc, (char_u *)"utf-8");
@@ -3098,7 +3098,7 @@ nobackup:
       }
       write_info.bw_first = TRUE;
     } else
-#  endif
+#endif
 
     /*
      * When the file needs to be converted with 'charconvert' after
@@ -3114,9 +3114,9 @@ nobackup:
     }
   }
   if (converted && wb_flags == 0
-#  ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
       && write_info.bw_iconv_fd == (iconv_t)-1
-#  endif
+#endif
       && wfname == fname) {
     if (!forceit) {
       SET_ERRMSG(_("E213: Cannot convert (add ! to write without conversion)"));
@@ -3644,12 +3644,12 @@ nofail:
   }
   xfree(fenc_tofree);
   xfree(write_info.bw_conv_buf);
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
   if (write_info.bw_iconv_fd != (iconv_t)-1) {
     iconv_close(write_info.bw_iconv_fd);
     write_info.bw_iconv_fd = (iconv_t)-1;
   }
-# endif
+#endif
 #ifdef HAVE_ACL
   mch_free_acl(acl);
 #endif
@@ -4034,7 +4034,7 @@ static int buf_write_bytes(struct bw_info *ip)
       }
     }
 
-# ifdef HAVE_ICONV
+#ifdef HAVE_ICONV
     if (ip->bw_iconv_fd != (iconv_t)-1) {
       const char *from;
       size_t fromlen;
@@ -4096,7 +4096,7 @@ static int buf_write_bytes(struct bw_info *ip)
       buf = ip->bw_conv_buf;
       len = (int)((char_u *)to - ip->bw_conv_buf);
     }
-# endif
+#endif
   }
 
   if (ip->bw_fd < 0) {
