@@ -1641,7 +1641,7 @@ void no_write_message(void)
       && channel_job_running((uint64_t)curbuf->b_p_channel)) {
     EMSG(_("E948: Job still running (add ! to end the job)"));
   } else {
-    EMSG(_("E37: No write since last change (add ! to override)"));
+    EMSG(_("E37: No write since last change (add ! to ignore)"));
   }
 }
 

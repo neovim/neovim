@@ -331,7 +331,7 @@ describe('API/win', function()
       insert('text')
       command('new')
       local newwin = meths.get_current_win()
-      eq("Vim:E37: No write since last change (add ! to override)",
+      eq("Vim:E37: No write since last change (add ! to ignore)",
          pcall_err(meths.win_close, oldwin,false))
       eq({newwin,oldwin}, meths.list_wins())
     end)

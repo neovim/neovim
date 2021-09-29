@@ -115,7 +115,7 @@ msgstr "E88: No es pot anar més enllà del primer buffer"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr "E89: No s'ha desat el buffer %<PRId64> (afegiu ! per confirmar)"
 
 #. wrap around (may cause duplicates)
@@ -2818,7 +2818,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: No es pot llegir el fitxer %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: No s'han desat els canvis (afegiu ! per confirmar)"
 
 #: ../globals.h:1055

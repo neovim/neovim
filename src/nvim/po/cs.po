@@ -118,7 +118,7 @@ msgstr "E88: Pøed první buffer nelze pøeskoèit"
 #: ../buffer.c:945
 #, fuzzy, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr "E89: Zmìny v bufferu %<PRId64> nebyly ulo¾eny (! pro vynucení)"
 
 #. wrap around (may cause duplicates)
@@ -2871,7 +2871,7 @@ msgstr "Nelze èíst soubor %s"
 
 #: ../globals.h:1054
 #, fuzzy
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Neulo¾ené zmìny (pou¾ijte ! pro vynucení)"
 
 #: ../globals.h:1055

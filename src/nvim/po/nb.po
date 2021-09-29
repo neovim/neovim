@@ -132,7 +132,7 @@ msgstr "E88: Kan ikke gå forbi første buffer"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: Ikke lagret siden forrige forandring av bufferen %<PRId64> (legg til ! "
 "for å overstyre)"
@@ -2802,7 +2802,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Kan ikke lese filen %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Ikke lagret siden forrige forandring (legg til ! for å overstyre)"
 
 #: ../globals.h:1055

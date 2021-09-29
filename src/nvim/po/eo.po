@@ -106,7 +106,7 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Ne eblas iri antaŭ la unuan bufron"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %ld (add ! to ignore)"
 msgstr ""
 "E89: Neniu skribo de post la lasta ŝanĝo de la bufro %ld (aldonu ! por "
 "transpasi)"
@@ -114,7 +114,7 @@ msgstr ""
 msgid "E948: Job still running (add ! to end the job)"
 msgstr "E948: Tasko akoraŭ aktiva (aldonu ! por fini la taskon)"
 
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Neniu skribo de post lasta ŝanĝo (aldonu ! por transpasi)"
 
 msgid "E948: Job still running"

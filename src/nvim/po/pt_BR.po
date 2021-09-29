@@ -2586,7 +2586,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Impossível ler arquivo %s"
 
 #: ../globals.h:1053
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Alterações não foram gravadas (adicione ! para forçar)"
 
 #: ../globals.h:1054
@@ -5124,7 +5124,7 @@ msgstr "E88: Não é possível ir para antes do primeiro buffer"
 #: ../buffer.c:939
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: Alterações no buffer %<PRId64> não foram gravadas (adicione ! para "
 "forçar)"

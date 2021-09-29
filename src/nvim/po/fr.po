@@ -111,14 +111,14 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Impossible d'aller avant le premier tampon"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %ld (add ! to ignore)"
 msgstr ""
 "E89: Le tampon %ld n'a pas été enregistré (ajoutez ! pour passer outre)"
 
 msgid "E948: Job still running (add ! to end the job)"
 msgstr "E948: Tâche en cours d'exécution (ajouter ! pour terminer la tâche)"
 
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Modifications non enregistrées (ajoutez ! pour passer outre)"
 
 msgid "E948: Job still running"

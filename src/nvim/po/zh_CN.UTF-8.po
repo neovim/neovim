@@ -121,7 +121,7 @@ msgstr "E88: 无法切换，已是第一个缓冲区"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr "E89: 缓冲区 %<PRId64> 已修改但尚未保存 (请加 ! 强制执行)"
 
 #. wrap around (may cause duplicates)
@@ -2778,7 +2778,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: 无法读取文件 %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: 已修改但尚未保存 (可用 ! 强制执行)"
 
 #: ../globals.h:1055

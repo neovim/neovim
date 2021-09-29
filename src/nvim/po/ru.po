@@ -115,7 +115,7 @@ msgstr "E88: Это первый буфер"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: Изменения в буфере %<PRId64> не сохранены (добавьте !, чтобы обойти "
 "проверку)"
@@ -2781,7 +2781,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Невозможно прочитать файл %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Изменения не сохранены (добавьте !, чтобы обойти проверку)"
 
 #: ../globals.h:1055

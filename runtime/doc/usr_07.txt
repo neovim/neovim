@@ -33,7 +33,7 @@ You can use any file name instead of "foo.txt".  Vim will close the current
 file and open the new one.  If the current file has unsaved changes, however,
 Vim displays an error message and does not open the new file:
 
-	E37: No write since last change (use ! to override) ~
+	E37: No write since last change (add ! to ignore) ~
 
 	Note:
 	Vim puts an error ID at the start of each error message.  If you do

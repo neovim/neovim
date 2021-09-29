@@ -115,7 +115,7 @@ msgstr "E88: 첫 번째 버퍼입니다"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: 버퍼 %<PRId64>을(를) 마지막으로 고친 뒤 저장하지 않았습니다 (덮어쓰려"
 "면 ! 더하기)"
@@ -2778,7 +2778,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: %s 파일을 읽을 수 없습니다"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: 마지막으로 고친 뒤 저장되지 않았습니다 (무시하려면 ! 더하기)"
 
 #: ../globals.h:1055

@@ -100,7 +100,7 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Ní féidir a dhul roimh an chéad mhaolán"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %ld (add ! to ignore)"
 msgstr ""
 "E89: Athraíodh maolán %ld ach nach bhfuil sé sábháilte ó shin (cuir ! leis "
 "an ordú chun sárú)"
@@ -6653,7 +6653,7 @@ msgstr "E484: Ní féidir comhad %s a oscailt"
 msgid "E485: Can't read file %s"
 msgstr "E485: Ní féidir comhad %s a léamh"
 
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Tá athruithe ann gan sábháil (cuir ! leis an ordú chun sárú)"
 
 msgid "E37: No write since last change"

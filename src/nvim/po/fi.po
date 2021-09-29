@@ -328,7 +328,7 @@ msgstr "E88: Ensimmäisen puskurin ohi ei voi edetä"
 
 #, fuzzy, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: Puskurin %ld muutoksia ei ole tallennettu (lisää komentoon ! "
 "ohittaaksesi)"
@@ -2735,7 +2735,7 @@ msgstr "E484: Ei voi avata tiedostoa %s"
 msgid "E485: Can't read file %s"
 msgstr "E485: Ei voi lukea tiedostoa %s"
 
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr ""
 "E37: Viimeisen muutoksen jälkeen ei ole kirjoitettu (lisää ! ohittaaksesi)"
 

@@ -112,7 +112,7 @@ msgstr "E88: Đây là bộ đệm đầu tiên"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: Thay đổi trong bộ đệm %<PRId64> chưa được ghi lại (thêm ! để thoát ra "
 "bằng mọi giá)"
@@ -2823,7 +2823,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Không đọc được tập tin %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Thay đổi chưa được ghi nhớ (thêm ! để bỏ qua ghi nhớ)"
 
 #: ../globals.h:1055

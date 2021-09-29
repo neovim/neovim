@@ -117,7 +117,7 @@ msgstr "E88: Non posso andare prima del primo buffer"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: Buffer %<PRId64> non salvato dopo modifica (aggiungi ! per eseguire "
 "comunque)"
@@ -2847,7 +2847,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Non riesco a leggere il file %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Non salvato dopo modifica (aggiungi ! per eseguire comunque)"
 
 #: ../globals.h:1055

@@ -147,7 +147,7 @@ msgstr "E88: Kann nicht vor den ersten Puffer gehen"
 #: ../buffer.c:939
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: Puffer %<PRId64> seit der letzten Änderung nicht gesichert (mit ! "
 "erzwingen)"
@@ -2240,7 +2240,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Kann Datei %s nicht lesen"
 
 #: ../globals.h:1053
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Kein Schreibvorgang seit der letzten Änderung (mit ! erzwingen)"
 
 #: ../globals.h:1054

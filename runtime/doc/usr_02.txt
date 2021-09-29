@@ -384,7 +384,7 @@ the editor to quit; and the override command modifier (!).
 away changes.  If you were to just type ":q", Vim would display an error
 message and refuse to exit:
 
-	E37: No write since last change (use ! to override) ~
+	E37: No write since last change (add ! to ignore) ~
 
 By specifying the override, you are in effect telling Vim, "I know that what
 I'm doing looks stupid, but I really want to do this."
@@ -488,7 +488,7 @@ in Insert mode, for instance, use this command: >
 
 If you see an error message that you don't understand, for example:
 
-	E37: No write since last change (use ! to override) ~
+	E37: No write since last change (add ! to ignore) ~
 
 You can use the error ID at the start to find help about it: >
 

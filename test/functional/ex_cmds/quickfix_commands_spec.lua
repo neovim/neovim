@@ -50,7 +50,7 @@ for _, c in ipairs({'l', 'c'}) do
       command('set nohidden')
       command('enew!')
       curbufmeths.set_lines(1, 1, true, {'Quickfix'})
-      eq(('Vim(%s):E37: No write since last change (add ! to override)'):format(
+      eq(('Vim(%s):E37: No write since last change (add ! to ignore)'):format(
           filecmd),
          exc_exec(('%s %s'):format(filecmd, file)))
 

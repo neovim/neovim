@@ -183,14 +183,14 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Не може да се иде испред првог бафера"
 
 #, c-format
-msgid "E89: No write since last change for buffer %d (add ! to override)"
+msgid "E89: No write since last change for buffer %d (add ! to ignore)"
 msgstr ""
 "E89: Од последње измене није било уписа за бафер %d (додајте ! да премостите)"
 
 msgid "E948: Job still running (add ! to end the job)"
 msgstr "E948: Задатак се још извршава (додајте ! да зауставите задатак)"
 
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Није било уписа од последње промене (додајте ! да премостите)"
 
 msgid "E948: Job still running"

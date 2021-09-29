@@ -119,7 +119,7 @@ msgstr "E88: No se pudo regresar antes del primer búfer"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr ""
 "E89: No se guardó el archivo desde el último cambio del búfer %<PRId64> "
 "(añada \"!\" para forzar)"
@@ -2853,7 +2853,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: No se pudo leer el archivo \"%s\""
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr ""
 "E37: No guardó el archivo desde el último cambio (añada \"!\" para forzar)"
 

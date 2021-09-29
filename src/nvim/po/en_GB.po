@@ -124,7 +124,7 @@ msgstr ""
 #: ../buffer.c:945
 #, fuzzy, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr "E508: Cannot read file for backup (add ! to override)"
 
 #. wrap around (may cause duplicates)
@@ -2728,7 +2728,7 @@ msgstr "E485: Cannot read file %s"
 
 #: ../globals.h:1054
 #, fuzzy
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E506: Cannot write to backup file (add ! to override)"
 
 #: ../globals.h:1055

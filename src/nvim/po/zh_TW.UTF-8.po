@@ -149,7 +149,7 @@ msgstr "E88: 無法切換到更前面的緩衝區"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr "E89: 已更改過緩衝區 %<PRId64> 但尚未存檔 (可用 ! 強制執行)"
 
 #. wrap around (may cause duplicates)
@@ -2828,7 +2828,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: 無法讀取檔案 %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: 已更改過檔案但尚未存檔 (可用 ! 強制執行)"
 
 #: ../globals.h:1055

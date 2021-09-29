@@ -114,7 +114,7 @@ msgstr "E88: Pred prvı buffer sa nedá preskoèi"
 #: ../buffer.c:945
 #, c-format
 msgid ""
-"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+"E89: No write since last change for buffer %<PRId64> (add ! to ignore)"
 msgstr "E89: Zmeny v bufferi %<PRId64> neboli uloené (! pre vynútenie)"
 
 #. wrap around (may cause duplicates)
@@ -2792,7 +2792,7 @@ msgid "E485: Can't read file %s"
 msgstr "E485: Nedá sa èíta súbor %s"
 
 #: ../globals.h:1054
-msgid "E37: No write since last change (add ! to override)"
+msgid "E37: No write since last change (add ! to ignore)"
 msgstr "E37: Neuloené zmeny (pouite ! pre vynútenie)"
 
 #: ../globals.h:1055

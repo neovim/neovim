@@ -363,7 +363,7 @@ func XfileTests(cchar)
   enew!
   silent! put ='Quickfix'
   silent! Xfile Xqftestfile1
-  call assert_true(v:errmsg ==# 'E37: No write since last change (add ! to override)')
+  call assert_true(v:errmsg ==# 'E37: No write since last change (add ! to ignore)')
 
   call writefile(['Xtestfile3:900:30:Line 900'], 'Xqftestfile1')
   Xaddfile Xqftestfile1
