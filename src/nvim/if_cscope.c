@@ -171,8 +171,9 @@ void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
 
 /// Find the command, print help if invalid, and then call the corresponding
 /// command function.
-static void do_cscope_general(exarg_T *eap, int make_split             // whether to split window
-                              )
+///
+/// @param make_split  whether to split window
+static void do_cscope_general(exarg_T *eap, int make_split)
 {
   cscmd_T *cmdp;
 
@@ -414,9 +415,10 @@ static void cs_stat_emsg(char *fname)
 /// The common routine to add a new cscope connection.  Called by
 /// cs_add() and cs_reset().  I really don't like to do this, but this
 /// routine uses a number of goto statements.
-static int cs_add_common(char *arg1,         // filename - may contain environment variables
-                         char *arg2,         // prepend path - may contain environment variables
-                         char *flags)
+///
+/// @param arg1  filename - may contain environment variables
+/// @param arg2  prepend path - may contain environment variables
+static int cs_add_common(char *arg1, char *arg2, char *flags)
 {
   char *fname = NULL;
   char *fname2 = NULL;
@@ -545,8 +547,8 @@ static size_t cs_cnt_connections(void)
   return cnt;
 }
 
-static void cs_reading_emsg(size_t idx        // connection index
-                            )
+/// @param idx  connection index
+static void cs_reading_emsg(size_t idx)
 {
   EMSGU(_("E262: error reading cscope connection %" PRIu64), idx);
 }
@@ -1302,9 +1304,10 @@ static int cs_kill(exarg_T *eap)
 
 
 /// Actually kills a specific cscope connection.
-static void cs_kill_execute(size_t i,              // cscope table index
-                            char *cname        // cscope database name
-                            )
+///
+/// @param i  cscope table index
+/// @param cname  cscope database name
+static void cs_kill_execute(size_t i, char *cname)
 {
   if (p_csverbose) {
     msg_clr_eos();
