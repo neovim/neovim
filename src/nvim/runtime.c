@@ -5,8 +5,8 @@
 ///
 /// Management of runtime files (including packages)
 
-#include "nvim/ascii.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
@@ -169,9 +169,9 @@ int do_in_path(char_u *path, char_u *name, int flags, DoInRuntimepathCB callback
 int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {
   runtime_search_path_validate();
-  char_u      *tail;
+  char_u *tail;
   int num_files;
-  char_u      **files;
+  char_u **files;
   int i;
   bool did_one = false;
 
@@ -451,11 +451,11 @@ void runtime_search_path_invalidate(void)
 
 void runtime_search_path_free(RuntimeSearchPath path)
 {
-    for (size_t j = 0; j < kv_size(path); j++) {
-      SearchPathItem item = kv_A(path, j);
-      xfree(item.path);
-    }
-    kv_destroy(path);
+  for (size_t j = 0; j < kv_size(path); j++) {
+    SearchPathItem item = kv_A(path, j);
+    xfree(item.path);
+  }
+  kv_destroy(path);
 }
 
 void runtime_search_path_validate(void)

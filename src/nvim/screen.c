@@ -4545,8 +4545,8 @@ void draw_virt_text(buf_T *buf, int col_off, int *end_col, int max_col)
   }
 }
 
-static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
-                               int max_col, int vcol)
+static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode, int max_col,
+                               int vcol)
 {
   LineState s = LINE_STATE("");
   int virt_attr = 0;
