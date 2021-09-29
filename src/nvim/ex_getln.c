@@ -906,6 +906,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     }
     tl_ret = true;
   }
+  trigger_modechanged();
 
   state_enter(&s->state);
 
@@ -6547,6 +6548,7 @@ static int open_cmdwin(void)
   cmdmsg_rl = save_cmdmsg_rl;
 
   State = save_State;
+  trigger_modechanged();
   setmouse();
 
   return cmdwin_result;

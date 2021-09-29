@@ -69,6 +69,7 @@ return {
     'InsertLeave',            -- just after leaving Insert mode
     'InsertLeavePre',         -- just before leaving Insert mode
     'MenuPopup',              -- just before popup menu is displayed
+    'ModeChanged',            -- after changing the mode
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.

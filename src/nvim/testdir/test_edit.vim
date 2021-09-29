@@ -1644,4 +1644,38 @@ func Test_read_invalid()
   set encoding=utf-8
 endfunc
 
+" Test for ModeChanged pattern
+func Test_mode_changes()
+  let g:count = 0
+  func! DoIt()
+    let g:count += 1
+  endfunc
+  let g:index = 0
+  let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'n', 'V', 'v', 'n']
+  func! TestMode()
+    call assert_equal(g:mode_seq[g:index], get(v:event, "old_mode"))
+    call assert_equal(g:mode_seq[g:index + 1], get(v:event, "new_mode"))
+    call assert_equal(mode(), get(v:event, "new_mode"))
+    let g:index += 1
+  endfunc
+
+  au ModeChanged * :call TestMode()
+  au ModeChanged n:* :call DoIt()
+  call feedkeys("i\<esc>vV\<esc>", 'tnix')
+  call assert_equal(2, g:count)
+
+  au ModeChanged V:v :call DoIt()
+  call feedkeys("Vv\<esc>", 'tnix')
+  call assert_equal(4, g:count)
+
+  call assert_equal(len(g:mode_seq) - 1, g:index)
+
+  au! ModeChanged
+  delfunc TestMode
+  unlet! g:mode_seq
+  unlet! g:index
+  delfunc DoIt
+  unlet! g:count
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

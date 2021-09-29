@@ -136,7 +136,7 @@ int get_real_state(void)
 /// @returns[allocated] mode string
 char *get_mode(void)
 {
-  char *buf = xcalloc(4, sizeof(char));
+  char *buf = xcalloc(MODE_MAX_LENGTH, sizeof(char));
 
   if (VIsual_active) {
     if (VIsual_select) {

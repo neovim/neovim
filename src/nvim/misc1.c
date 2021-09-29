@@ -1059,3 +1059,32 @@ void add_time(char_u *buf, size_t buflen, time_t tt)
                  seconds);
   }
 }
+
+/// Fires a ModeChanged autocmd.
+void trigger_modechanged(void)
+{
+  if (!has_event(EVENT_MODECHANGED)) {
+    return;
+  }
+
+  dict_T *v_event = get_vim_var_dict(VV_EVENT);
+
+  char *mode = get_mode();
+  if (last_mode == NULL) {
+    last_mode = (char *)vim_strsave((char_u *)"n");
+  }
+  tv_dict_add_str(v_event, S_LEN("new_mode"), mode);
+  tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
+
+  char_u *pat_pre = concat_str((char_u *)last_mode, (char_u *)":");
+  char_u *pat = concat_str(pat_pre, (char_u *)mode);
+  xfree(pat_pre);
+
+  apply_autocmds(EVENT_MODECHANGED, pat, NULL, false, curbuf);
+  xfree(last_mode);
+  last_mode = mode;
+
+  xfree(pat);
+  tv_dict_free_contents(v_event);
+  hash_init(&v_event->dv_hashtab);
+}

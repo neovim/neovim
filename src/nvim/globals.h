@@ -727,6 +727,7 @@ EXTERN bool listcmd_busy INIT(= false);     // set when :argdo, :windo or
                                             // :bufdo is executing
 EXTERN bool need_start_insertmode INIT(= false);
 // start insert mode soon
+EXTERN char *last_mode INIT(= NULL);
 EXTERN char_u *last_cmdline INIT(= NULL);      // last command line (for ":)
 EXTERN char_u *repeat_cmdline INIT(= NULL);    // command line for "."
 EXTERN char_u *new_last_cmdline INIT(= NULL);  // new value for last_cmdline

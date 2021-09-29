@@ -72,6 +72,8 @@ enum { NUMBUFLEN = 65, };
 #define TERM_FOCUS      0x2000  // Terminal focus mode
 #define CMDPREVIEW      0x4000  // Showing 'inccommand' command "live" preview.
 
+#define MODE_MAX_LENGTH 4       // max mode length returned in mode()
+
 // all mode bits used for mapping
 #define MAP_ALL_MODES   (0x3f | SELECTMODE | TERM_FOCUS)
 

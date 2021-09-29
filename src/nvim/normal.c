@@ -3050,6 +3050,7 @@ static int get_mouse_class(char_u *p)
 void end_visual_mode(void)
 {
   VIsual_active = false;
+  trigger_modechanged();
   setmouse();
   mouse_dragging = 0;
 
@@ -6680,6 +6681,7 @@ static void nv_visual(cmdarg_T *cap)
                                               //           or char/line mode
       VIsual_mode = cap->cmdchar;
       showmode();
+      trigger_modechanged();
     }
     redraw_curbuf_later(INVERTED);          // update the inversion
   } else {                // start Visual mode
@@ -6782,6 +6784,7 @@ static void n_start_visual_mode(int c)
   VIsual_mode = c;
   VIsual_active = true;
   VIsual_reselect = true;
+  trigger_modechanged();
   // Corner case: the 0 position in a tab may change when going into
   // virtualedit.  Recalculate curwin->w_cursor to avoid bad highlighting.
   //

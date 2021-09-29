@@ -385,6 +385,7 @@ static void insert_enter(InsertState *s)
     State = INSERT;
   }
 
+  trigger_modechanged();
   stop_insert_mode = false;
 
   // Need to recompute the cursor position, it might move when the cursor is
@@ -7965,6 +7966,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
 
 
   State = NORMAL;
+  trigger_modechanged();
   // need to position cursor again (e.g. when on a TAB )
   changed_cline_bef_curs();
 
@@ -8066,6 +8068,7 @@ static void ins_insert(int replaceState)
   } else {
     State = replaceState | (State & LANGMAP);
   }
+  trigger_modechanged();
   AppendCharToRedobuff(K_INS);
   showmode();
   ui_cursor_shape();            // may show different cursor shape
