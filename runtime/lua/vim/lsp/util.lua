@@ -951,6 +951,11 @@ end
 ---@param width (number) window width (in character cells)
 ---@param height (number) window height (in character cells)
 ---@param opts (table, optional)
+---        - offset_x (number) offset to add to `col`
+---        - offset_y (number) offset to add to `row`
+---        - border (string or table) override `border`
+---        - focusable (string or table) override `focusable`
+---        - zindex (string or table) override `zindex`, defaults to 50
 ---@returns (table) Options
 function M.make_floating_popup_options(width, height, opts)
   validate {
@@ -1124,8 +1129,6 @@ end
 ---  - wrap_at   character to wrap at for computing height
 ---  - max_width  maximal width of floating window
 ---  - max_height maximal height of floating window
----  - pad_left   number of columns to pad contents at left
----  - pad_right  number of columns to pad contents at right
 ---  - pad_top    number of lines to pad contents at top
 ---  - pad_bottom number of lines to pad contents at bottom
 ---  - separator insert separator after code block
@@ -1376,8 +1379,6 @@ end
 ---             - wrap_at   character to wrap at for computing height when wrap is enabled
 ---             - max_width  maximal width of floating window
 ---             - max_height maximal height of floating window
----             - pad_left   number of columns to pad contents at left
----             - pad_right  number of columns to pad contents at right
 ---             - pad_top    number of lines to pad contents at top
 ---             - pad_bottom number of lines to pad contents at bottom
 ---             - focus_id if a popup with this id is opened, then focus it
