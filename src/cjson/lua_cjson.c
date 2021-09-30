@@ -171,10 +171,18 @@ typedef struct {
 } json_config_t;
 
 typedef struct {
+    /* convert null in json objects to lua nil instead of vim.NIL */
+    int luanil_object;
+    /* convert null in json arrays to lua nil instead of vim.NIL */
+    int luanil_array;
+} json_options_t;
+
+typedef struct {
     const char *data;
     const char *ptr;
     strbuf_t *tmp;    /* Temporary storage for strings */
     json_config_t *cfg;
+    json_options_t *options;
     int current_depth;
 } json_parse_t;
 
@@ -865,7 +873,7 @@ static int json_encode(lua_State *l)
 /* ===== DECODING ===== */
 
 static void json_process_value(lua_State *l, json_parse_t *json,
-                               json_token_t *token);
+                               json_token_t *token, bool use_luanil);
 
 static int hexdigit2int(char hex)
 {
@@ -1296,7 +1304,7 @@ static void json_parse_object_context(lua_State *l, json_parse_t *json)
 
         /* Fetch value */
         json_next_token(json, &token);
-        json_process_value(l, json, &token);
+        json_process_value(l, json, &token, json->options->luanil_object);
 
         /* Set key = value */
         lua_rawset(l, -3);
@@ -1343,7 +1351,7 @@ static void json_parse_array_context(lua_State *l, json_parse_t *json)
     }
 
     for (i = 1; ; i++) {
-        json_process_value(l, json, &token);
+        json_process_value(l, json, &token, json->options->luanil_array);
         lua_rawseti(l, -2, i);            /* arr[i] = value */
 
         json_next_token(json, &token);
@@ -1362,7 +1370,7 @@ static void json_parse_array_context(lua_State *l, json_parse_t *json)
 
 /* Handle the "value" context */
 static void json_process_value(lua_State *l, json_parse_t *json,
-                               json_token_t *token)
+                               json_token_t *token, bool use_luanil)
 {
     switch (token->type) {
     case T_STRING:
@@ -1381,7 +1389,11 @@ static void json_process_value(lua_State *l, json_parse_t *json,
         json_parse_array_context(l, json);
         break;;
     case T_NULL:
-        nlua_pushref(l, nlua_nil_ref);
+        if (use_luanil) {
+            lua_pushnil(l);
+        } else {
+            nlua_pushref(l, nlua_nil_ref);
+        }
         break;;
     default:
         json_throw_parse_error(l, json, "value", token);
@@ -1392,12 +1404,46 @@ static int json_decode(lua_State *l)
 {
     json_parse_t json;
     json_token_t token;
+    json_options_t options = { .luanil_object = false, .luanil_array = false };
+
+
     size_t json_len;
 
-    luaL_argcheck(l, lua_gettop(l) == 1, 1, "expected 1 argument");
+    switch (lua_gettop(l)) {
+    case 1:
+        break;
+    case 2:
+        luaL_checktype(l, 2, LUA_TTABLE);
+        lua_getfield(l, 2, "luanil");
+
+        /* We only handle the luanil option for now */
+        if (lua_isnil(l, -1)) { 
+            lua_pop(l, 1); 
+            break; 
+        }
+
+        luaL_checktype(l, -1, LUA_TTABLE);
+
+        lua_getfield(l, -1, "object");
+        if (!lua_isnil(l, -1)) {
+            options.luanil_object = true;
+        }
+        lua_pop(l, 1);
+
+        lua_getfield(l, -1, "array");
+        if (!lua_isnil(l, -1)) {
+            options.luanil_array = true;
+        }
+        /* Also pop the luanil table */
+        lua_pop(l, 2);
+        break;
+    default:
+        return luaL_error (l, "expected 1 or 2 arguments");
+    }
 
     json.cfg = json_fetch_config(l);
     json.data = luaL_checklstring(l, 1, &json_len);
+    json.options = &options;
     json.current_depth = 0;
     json.ptr = json.data;
 
@@ -1415,7 +1461,7 @@ static int json_decode(lua_State *l)
     json.tmp = strbuf_new(json_len);
 
     json_next_token(&json, &token);
-    json_process_value(l, &json, &token);
+    json_process_value(l, &json, &token, json.options->luanil_object);
 
     /* Ensure there is no more input left */
     json_next_token(&json, &token);
