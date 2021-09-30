@@ -310,7 +310,8 @@ describe('startup', function()
   end)
 
   local function pack_clear(cmd)
-    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
+    -- add packages after config dir in rtp but before config/after
+    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
   end
 
 
@@ -351,18 +352,18 @@ describe('startup', function()
 
   it("handles the correct order with start packages and after/", function()
     pack_clear [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]
-    eq({'ordinary', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+    eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 
   it("handles the correct order with opt packages and after/", function()
     pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! superspecial\nruntime! filen.lua" ]]
-    eq({'ordinary', 'SuperSpecial', 'FANCY', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'mittel', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 
   it("handles the correct order with a package that changes packpath", function()
     pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! funky\nruntime! filen.lua" ]]
-    eq({'ordinary', 'funky!', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
-    eq({'ordinary', 'funky!', 'ordinary after'}, exec_lua [[ return _G.nested_order ]])
+    eq({'ordinary', 'funky!', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+    eq({'ordinary', 'funky!', 'mittel', 'ordinary after'}, exec_lua [[ return _G.nested_order ]])
   end)
 end)
 
