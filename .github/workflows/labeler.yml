@@ -12,3 +12,19 @@ jobs:
     - uses: actions/labeler@main
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+  type-scope:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v2.3.1
+    - run: gh pr checkout ${{ github.event.pull_request.number }}
+
+      # Extract type and try to add it as a label
+    - run: gh pr edit --add-label "$(echo "${{ github.event.pull_request.title }}" | sed -E 's|([[:alpha:]]+)(\(.*\))?:.*|\1|')" || true
+
+      # Extract scope and try to add it as a label
+    - run: gh pr edit --add-label "$(echo "${{ github.event.pull_request.title }}" | sed -E 's|[[:alpha:]]+\((.+)\):.*|\1|')" || true
