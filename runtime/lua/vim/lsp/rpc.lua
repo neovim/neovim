@@ -17,15 +17,14 @@ local NIL = vim.NIL
 
 ---@private
 local recursive_convert_NIL
-recursive_convert_NIL = function(v, tbl_processed)
+recursive_convert_NIL = function(v)
   if v == NIL then
     return nil
-  elseif not tbl_processed[v] and type(v) == 'table' then
-    tbl_processed[v] = true
+  elseif type(v) == 'table' then
     local inside_list = vim.tbl_islist(v)
     return vim.tbl_map(function(x)
       if not inside_list or (inside_list and type(x) == "table") then
-        return recursive_convert_NIL(x, tbl_processed)
+        return recursive_convert_NIL(x)
       else
         return x
       end
@@ -40,7 +39,7 @@ end
 ---@param v (any) Argument
 ---@returns (any)
 local function convert_NIL(v)
-  return recursive_convert_NIL(v, {})
+  return recursive_convert_NIL(v)
 end
 
 ---@private
