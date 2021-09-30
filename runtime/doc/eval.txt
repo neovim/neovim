@@ -2431,6 +2431,7 @@ getloclist({nr})		List	list of location list items
 getloclist({nr}, {what})	Dict	get specific location list properties
 getmarklist([{buf}])		List	list of global/local marks
 getmatches([{win}])		List	list of current matches
+getmousepos()			Dict	last known mouse position
 getpid()			Number	process ID of Vim
 getpos({expr})			List	position of cursor, mark, etc.
 getqflist()			List	list of quickfix items
@@ -4709,7 +4710,8 @@ getchar([expr])						*getchar()*
 		When the user clicks a mouse button, the mouse event will be
 		returned.  The position can then be found in |v:mouse_col|,
 		|v:mouse_lnum|, |v:mouse_winid| and |v:mouse_win|.
-		Mouse move events will be ignored.
+		|getmousepos()| can also be used.  Mouse move events will be
+		ignored.
 		This example positions the mouse as it would normally happen: >
 			let c = getchar()
 			if c == "\<LeftMouse>" && v:mouse_win > 0
@@ -5099,6 +5101,35 @@ getmatches([{win}])					*getmatches()*
 			'pattern': 'FIXME', 'priority': 10, 'id': 2}] >
 			:unlet m
 <
+getmousepos()						*getmousepos()*
+		Returns a Dictionary with the last known position of the
+		mouse.  This can be used in a mapping for a mouse click.  The
+		items are:
+			screenrow	screen row
+			screencol	screen column
+			winid		Window ID of the click
+			winrow		row inside "winid"
+			wincol		column inside "winid"
+			line		text line inside "winid"
+			column		text column inside "winid"
+		All numbers are 1-based.
+
+		If not over a window, e.g. when in the command line, then only
+		"screenrow" and "screencol" are valid, the others are zero.
+
+		When on the status line below a window or the vertical
+		separater right of a window, the "line" and "column" values
+		are zero.
+
+		When the position is after the text then "column" is the
+		length of the text in bytes plus one.
+
+		If the mouse is over a focusable floating window then that
+		window is used.
+
+		When using |getchar()| the Vim variables |v:mouse_lnum|,
+		|v:mouse_col| and |v:mouse_winid| also provide these values.
+
 							*getpid()*
 getpid()	Return a Number which is the process ID of the Vim process.
 		This is a unique number, until Vim exits.
