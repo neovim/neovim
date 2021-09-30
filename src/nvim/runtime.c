@@ -341,12 +341,12 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, CharVec *after_pat
                               char_u *pack_entry)
 {
   static char_u buf[MAXPATHL], buf2[MAXPATHL];
-  char *start_dir = "/pack/*/start/*/";  // NOLINT
+  char *start_dir = "/pack/*/start/*";  // NOLINT
   if (STRLEN(pack_entry) + STRLEN(start_dir) + 1 < MAXPATHL) {
     xstrlcpy((char *)buf, (char *)pack_entry, MAXPATHL);
     xstrlcpy((char *)buf2, (char *)pack_entry, MAXPATHL);
     xstrlcat((char *)buf, start_dir, sizeof buf);
-    xstrlcat((char *)buf2, "/start/*/", sizeof buf);  // NOLINT
+    xstrlcat((char *)buf2, "/start/*", sizeof buf);  // NOLINT
     int num_files;
     char_u **files;
 
@@ -354,12 +354,12 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, CharVec *after_pat
     if (gen_expand_wildcards(2, pat, &num_files, &files, EW_DIR) == OK) {
       for (int i = 0; i < num_files; i++) {
         push_path(search_path, xstrdup((char *)files[i]), false);
-        size_t after_size = STRLEN(files[i])+6;
+        size_t after_size = STRLEN(files[i])+7;
         char *after = xmallocz(after_size);
         xstrlcpy(after, (char *)files[i], after_size);
-        xstrlcat(after, "after/", after_size);
+        xstrlcat(after, "/after", after_size);
         if (os_isdir((char_u *)after)) {
-          push_path(search_path, after, true);
+          kv_push(*after_path, after);
         } else {
           xfree(after);
         }
@@ -420,7 +420,7 @@ RuntimeSearchPath runtime_search_path_build(void)
   }
 
   for (size_t i = 0; i < kv_size(pack_entries); i++) {
-    handle_T h = map_get(String, handle_T)(&pack_used, cstr_as_string((char *)buf));
+    handle_T h = map_get(String, handle_T)(&pack_used, kv_A(pack_entries, i));
     if (h == 0) {
       expand_pack_entry(&search_path, &after_path, (char_u *)kv_A(pack_entries, i).data);
     }
@@ -439,6 +439,7 @@ RuntimeSearchPath runtime_search_path_build(void)
 
   // strings are not owned
   kv_destroy(pack_entries);
+  kv_destroy(after_path);
   map_destroy(String, handle_T)(&pack_used);
 
   return search_path;
