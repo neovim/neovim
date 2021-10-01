@@ -2019,7 +2019,7 @@ void ex_version(exarg_T *eap)
 /// @param wrap
 static void version_msg_wrap(char_u *s, int wrap)
 {
-  int len = (int)vim_strsize(s) + (wrap ? 2 : 0);
+  int len = vim_strsize(s) + (wrap ? 2 : 0);
 
   if (!got_int
       && (len < Columns)
@@ -2070,7 +2070,7 @@ void list_in_columns(char_u **items, int size, int current)
   // Find the length of the longest item, use that + 1 as the column width.
   int i;
   for (i = 0; size < 0 ? items[i] != NULL : i < size; i++) {
-    int l = (int)vim_strsize(items[i]) + (i == current ? 2 : 0);
+    int l = vim_strsize(items[i]) + (i == current ? 2 : 0);
 
     if (l > width) {
       width = l;

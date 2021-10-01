@@ -199,7 +199,7 @@ static void au_cleanup(void)
   }
 
   // Loop over all events.
-  for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
+  for (event = (event_T)0; (int)event < NUM_EVENTS;
        event = (event_T)((int)event + 1)) {
     // Loop over all autocommand patterns.
     prev_ap = &(first_autopat[(int)event]);
@@ -266,7 +266,7 @@ void aubuflocal_remove(buf_T *buf)
   }
 
   // invalidate buflocals looping through events
-  for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
+  for (event = (event_T)0; (int)event < NUM_EVENTS;
        event = (event_T)((int)event + 1)) {
     // loop over all autocommand patterns
     for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) {
@@ -321,7 +321,7 @@ static void au_del_group(char_u *name)
     AutoPat *ap;
     int in_use = false;
 
-    for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
+    for (event = (event_T)0; (int)event < NUM_EVENTS;
          event = (event_T)((int)event + 1)) {
       for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next) {
         if (ap->group == i && ap->pat != NULL) {
@@ -475,7 +475,7 @@ static char_u *find_end_event(char_u *arg, int have_group)
     pat = arg + 1;
   } else {
     for (pat = arg; *pat && *pat != '|' && !ascii_iswhite(*pat); pat = p) {
-      if ((int)event_name2nr(pat, &p) >= (int)NUM_EVENTS) {
+      if ((int)event_name2nr(pat, &p) >= NUM_EVENTS) {
         if (have_group) {
           EMSG2(_("E216: No such event: %s"), pat);
         } else {
@@ -701,7 +701,7 @@ void do_autocmd(char_u *arg_in, int forceit)
     if (!forceit && *cmd != NUL) {
       EMSG(_(e_cannot_define_autocommands_for_all_events));
     } else {
-      for (event_T event = (event_T)0; event < (int)NUM_EVENTS;
+      for (event_T event = (event_T)0; event < NUM_EVENTS;
            event = (event_T)(event + 1)) {
         if (do_autocmd_event(event, pat, once, nested, cmd, forceit, group)
             == FAIL) {
