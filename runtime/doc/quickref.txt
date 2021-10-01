@@ -489,6 +489,7 @@ In Insert or Command-line mode:
 |q|	      q{a-z}	record typed characters into register {a-z}
 |q|	      q{A-Z}	record typed characters, appended to register {a-z}
 |q|	      q		stop recording
+|Q|	      Q		replay last recorded macro
 |@|	   N  @{a-z}	execute the contents of register {a-z} (N times)
 |@@|	   N  @@	   repeat previous @{a-z} (N times)
 |:@|	   :@{a-z}	execute the contents of register {a-z} as an Ex
@@ -997,7 +998,7 @@ Short explanation of each option:		*option-list*
 |:version|	:ve[rsion]	show version information
 |:normal|	:norm[al][!] {commands}
 				execute Normal mode commands
-|Q|		   Q		switch to "Ex" mode
+|gQ|		   gQ		switch to "Ex" mode
 
 |:redir|	:redir >{file}		redirect messages to {file}
 |:silent|	:silent[!] {command}	execute {command} silently

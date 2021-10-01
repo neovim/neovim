@@ -339,7 +339,6 @@ tag		char	      note action in Normal mode	~
 				   insert text, repeat N times
 |P|		["x]P		2  put the text [from register x] before the
 				   cursor N times
-|Q|		Q		   switch to "Ex" mode
 |R|		R		2  enter replace mode: overtype existing
 				   characters, repeat the entered text N-1
 				   times
@@ -401,6 +400,7 @@ tag		char	      note action in Normal mode	~
 |q|		q{0-9a-zA-Z"}	   record typed characters into named register
 				   {0-9a-zA-Z"} (uppercase to append)
 |q|		q		   (while recording) stops recording
+|Q|		Q		   replay last recorded macro
 |q:|		q:		   edit : command-line in command-line window
 |q/|		q/		   edit / command-line in command-line window
 |q?|		q?		   edit ? command-line in command-line window
