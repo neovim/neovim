@@ -236,7 +236,7 @@ static const struct nv_cmd {
   { 'N',       nv_next,        0,                      SEARCH_REV },
   { 'O',       nv_open,        0,                      0 },
   { 'P',       nv_put,         0,                      0 },
-  { 'Q',       nv_regrecorded, 0,                      0 },
+  { 'Q',       nv_regreplay, 0,                      0 },
   { 'R',       nv_Replace,     0,                      false },
   { 'S',       nv_subst,       NV_KEEPREG,             0 },
   { 'T',       nv_csearch,     NV_NCH_ALW|NV_LANG,     BACKWARD },
@@ -4771,7 +4771,7 @@ dozet:
 /*
  * "Q" command.
  */
-static void nv_regrecorded(cmdarg_T *cap)
+static void nv_regreplay(cmdarg_T *cap)
 {
   if (checkclearop(cap->oap)) {
     return;
