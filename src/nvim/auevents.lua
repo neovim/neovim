@@ -74,7 +74,7 @@ return {
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
     'RecordingEnter',         -- when starting to record a macro
-    'RecordingLeave',          -- when stopping to record a macro
+    'RecordingLeave',         -- just before a macro stops recording
     'RemoteReply',            -- upon string reception from a remote vim
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"
