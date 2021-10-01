@@ -161,7 +161,7 @@ see potential bugs found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
 
 - Use this format for commit messages (where `{id}` is the PVS warning-id)):
   ```
-  PVS/V{id}: {description}
+  fix(PVS/V{id}): {description}
   ```
 - Search the Neovim commit history to find examples:
   ```
@@ -177,7 +177,7 @@ master build. To view the defects, just request access; you will be approved.
 - Use this format for commit messages (where `{id}` is the CID (Coverity ID);
   ([example](https://github.com/neovim/neovim/pull/804))):
   ```
-  coverity/{id}: {description}
+  fix(coverity/{id}): {description}
   ```
 - Search the Neovim commit history to find examples:
   ```
