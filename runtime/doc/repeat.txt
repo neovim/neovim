@@ -149,6 +149,7 @@ q			Stops recording.
 
 							*Q*
 Q			Repeat the last recorded register [count] times.
+			See |reg_recorded()|
 
 							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an Ex
