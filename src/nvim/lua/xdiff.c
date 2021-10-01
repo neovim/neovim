@@ -53,8 +53,8 @@ static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
 static int hunk_locations_cb(long start_a, long count_a, long start_b, long count_b, void *cb_data)
 {
   // Mimic extra offsets done by xdiff, see:
-  // src/nvim/xdiff/xemit.c:284
-  // src/nvim/xdiff/xutils.c:(356,368)
+  // src/xdiff/xemit.c:284
+  // src/xdiff/xutils.c:(356,368)
   if (count_a > 0) {
     start_a += 1;
   }
@@ -83,8 +83,8 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
 static int call_on_hunk_cb(long start_a, long count_a, long start_b, long count_b, void *cb_data)
 {
   // Mimic extra offsets done by xdiff, see:
-  // src/nvim/xdiff/xemit.c:284
-  // src/nvim/xdiff/xutils.c:(356,368)
+  // src/xdiff/xemit.c:284
+  // src/xdiff/xutils.c:(356,368)
   if (count_a > 0) {
     start_a += 1;
   }
