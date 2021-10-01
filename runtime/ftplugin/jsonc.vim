@@ -19,7 +19,7 @@ let s:undo_ftplugin = []
 
 " Set comment (formatting) related options. {{{1
 setlocal commentstring=//%s comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
-call add(s:undo_ftplugin, 'commentstring< comments<')
+call add(s:undo_ftplugin, 'setlocal commentstring< comments<')
 
 " Let Vim know how to disable the plug-in.
 call map(s:undo_ftplugin, "'execute ' . string(v:val)")
