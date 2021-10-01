@@ -925,6 +925,7 @@ int do_record(int c)
     // Get the recorded key hits.  K_SPECIAL and CSI will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
     // adds the escaping back later.
+    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
     reg_recorded = reg_recording;
     reg_recording = 0;
     if (ui_has(kUIMessages)) {
@@ -946,8 +947,6 @@ int do_record(int c)
       retval = stuff_yank(regname, p);
 
       y_previous = old_y_previous;
-
-      apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
     }
   }
   return retval;
