@@ -124,30 +124,29 @@ static int tfu_in_use = false;  // disallow recursive call of tagfunc
 // Used instead of NUL to separate tag fields in the growarrays.
 #define TAG_SEP 0x02
 
-/*
- * Jump to tag; handling of tag commands and tag stack
- *
- * *tag != NUL: ":tag {tag}", jump to new tag, add to tag stack
- *
- * type == DT_TAG:      ":tag [tag]", jump to newer position or same tag again
- * type == DT_HELP:     like DT_TAG, but don't use regexp.
- * type == DT_POP:      ":pop" or CTRL-T, jump to old position
- * type == DT_NEXT:     jump to next match of same tag
- * type == DT_PREV:     jump to previous match of same tag
- * type == DT_FIRST:    jump to first match of same tag
- * type == DT_LAST:     jump to last match of same tag
- * type == DT_SELECT:   ":tselect [tag]", select tag from a list of all matches
- * type == DT_JUMP:     ":tjump [tag]", jump to tag or select tag from a list
- * type == DT_CSCOPE:   use cscope to find the tag
- * type == DT_LTAG:     use location list for displaying tag matches
- * type == DT_FREE:     free cached matches
- *
- * for cscope, returns TRUE if we jumped to tag or aborted, FALSE otherwise
- */
-int do_tag(char_u *tag,               // tag (pattern) to jump to
-           int type, int count, int forceit,                    // :ta with !
-           int verbose                    // print "tag not found" message
-           )
+/// Jump to tag; handling of tag commands and tag stack
+///
+/// *tag != NUL: ":tag {tag}", jump to new tag, add to tag stack
+///
+/// type == DT_TAG:      ":tag [tag]", jump to newer position or same tag again
+/// type == DT_HELP:     like DT_TAG, but don't use regexp.
+/// type == DT_POP:      ":pop" or CTRL-T, jump to old position
+/// type == DT_NEXT:     jump to next match of same tag
+/// type == DT_PREV:     jump to previous match of same tag
+/// type == DT_FIRST:    jump to first match of same tag
+/// type == DT_LAST:     jump to last match of same tag
+/// type == DT_SELECT:   ":tselect [tag]", select tag from a list of all matches
+/// type == DT_JUMP:     ":tjump [tag]", jump to tag or select tag from a list
+/// type == DT_CSCOPE:   use cscope to find the tag
+/// type == DT_LTAG:     use location list for displaying tag matches
+/// type == DT_FREE:     free cached matches
+///
+/// for cscope, returns TRUE if we jumped to tag or aborted, FALSE otherwise
+///
+/// @param tag  tag (pattern) to jump to
+/// @param forceit  :ta with !
+/// @param verbose  print "tag not found" message
+int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -1132,18 +1131,19 @@ static void prepare_pats(pat_T *pats, int has_re)
   }
 }
 
-//
-// Call the user-defined function to generate a list of tags used by
-// find_tags().
-//
-// Return OK if at least 1 tag has been successfully found,
-// NOTDONE if the function returns v:null, and FAIL otherwise.
-//
-static int find_tagfunc_tags(char_u *pat,        // pattern supplied to the user-defined function
-                             garray_T *ga,       // the tags will be placed here
-                             int *match_count,  // here the number of tags found will be placed
-                             int flags,         // flags from find_tags (TAG_*)
-                             char_u *buf_ffname)  // name of buffer for priority
+/// Call the user-defined function to generate a list of tags used by
+/// find_tags().
+///
+/// Return OK if at least 1 tag has been successfully found,
+/// NOTDONE if the function returns v:null, and FAIL otherwise.
+///
+/// @param pat  pattern supplied to the user-defined function
+/// @param ga  the tags will be placed here
+/// @param match_count  here the number of tags found will be placed
+/// @param flags  flags from find_tags (TAG_*)
+/// @param buf_ffname  name of buffer for priority
+static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int flags,
+                             char_u *buf_ffname)
 {
   pos_T save_pos;
   list_T *taglist;
@@ -1335,40 +1335,39 @@ static int find_tagfunc_tags(char_u *pat,        // pattern supplied to the user
   return result;
 }
 
-/*
- * find_tags() - search for tags in tags files
- *
- * Return FAIL if search completely failed (*num_matches will be 0, *matchesp
- * will be NULL), OK otherwise.
- *
- * There is a priority in which type of tag is recognized.
- *
- *  6.  A static or global tag with a full matching tag for the current file.
- *  5.  A global tag with a full matching tag for another file.
- *  4.  A static tag with a full matching tag for another file.
- *  3.  A static or global tag with an ignore-case matching tag for the
- *      current file.
- *  2.  A global tag with an ignore-case matching tag for another file.
- *  1.  A static tag with an ignore-case matching tag for another file.
- *
- * Tags in an emacs-style tags file are always global.
- *
- * flags:
- * TAG_HELP       only search for help tags
- * TAG_NAMES      only return name of tag
- * TAG_REGEXP     use "pat" as a regexp
- * TAG_NOIC       don't always ignore case
- * TAG_KEEP_LANG  keep language
- * TAG_CSCOPE     use cscope results for tags
- * TAG_NO_TAGFUNC do not call the 'tagfunc' function
- */
-int find_tags(char_u *pat,                       // pattern to search for
-              int *num_matches,               // return: number of matches found
-              char_u ***matchesp,                // return: array of matches found
-              int flags, int mincount,      /*  MAXCOL: find all matches
-                                               other: minimal number of matches */
-              char_u *buf_ffname                // name of buffer for priority
-              )
+/// find_tags() - search for tags in tags files
+///
+/// Return FAIL if search completely failed (*num_matches will be 0, *matchesp
+/// will be NULL), OK otherwise.
+///
+/// There is a priority in which type of tag is recognized.
+///
+///  6.  A static or global tag with a full matching tag for the current file.
+///  5.  A global tag with a full matching tag for another file.
+///  4.  A static tag with a full matching tag for another file.
+///  3.  A static or global tag with an ignore-case matching tag for the
+///      current file.
+///  2.  A global tag with an ignore-case matching tag for another file.
+///  1.  A static tag with an ignore-case matching tag for another file.
+///
+/// Tags in an emacs-style tags file are always global.
+///
+/// flags:
+/// TAG_HELP       only search for help tags
+/// TAG_NAMES      only return name of tag
+/// TAG_REGEXP     use "pat" as a regexp
+/// TAG_NOIC       don't always ignore case
+/// TAG_KEEP_LANG  keep language
+/// TAG_CSCOPE     use cscope results for tags
+/// TAG_NO_TAGFUNC do not call the 'tagfunc' function
+///
+/// @param pat  pattern to search for
+/// @param num_matches  return: number of matches found
+/// @param matchesp  return: array of matches found
+/// @param mincount  MAXCOL: find all matches other: minimal number of matches */
+/// @param buf_ffname  name of buffer for priority
+int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int mincount,
+              char_u *buf_ffname)
 {
   FILE *fp;
   char_u *lbuf;                     // line buffer
@@ -2340,16 +2339,15 @@ void free_tag_stuff(void)
 
 #endif
 
-/*
- * Get the next name of a tag file from the tag file list.
- * For help files, use "tags" file only.
- *
- * Return FAIL if no more tag file names, OK otherwise.
- */
-int get_tagfname(tagname_T *tnp,       // holds status info
-                 int first,              // TRUE when first file name is wanted
-                 char_u *buf       // pointer to buffer of MAXPATHL chars
-                 )
+/// Get the next name of a tag file from the tag file list.
+/// For help files, use "tags" file only.
+///
+/// @param tnp  holds status info
+/// @param first  TRUE when first file name is wanted
+/// @param buf  pointer to buffer of MAXPATHL chars
+///
+/// @return  FAIL if no more tag file names, OK otherwise.
+int get_tagfname(tagname_T *tnp, int first, char_u *buf)
 {
   char_u *fname = NULL;
   char_u *r_ptr;
@@ -2469,16 +2467,15 @@ void tagname_free(tagname_T *tnp)
   ga_clear_strings(&tag_fnames);
 }
 
-/*
- * Parse one line from the tags file. Find start/end of tag name, start/end of
- * file name and start of search pattern.
- *
- * If is_etag is TRUE, tagp->fname and tagp->fname_end are not set.
- *
- * Return FAIL if there is a format error in this line, OK otherwise.
- */
-static int parse_tag_line(char_u *lbuf,              // line to be parsed
-                          tagptrs_T *tagp)
+/// Parse one line from the tags file. Find start/end of tag name, start/end of
+/// file name and start of search pattern.
+///
+/// If is_etag is TRUE, tagp->fname and tagp->fname_end are not set.
+///
+/// @param lbuf  line to be parsed
+///
+/// @return  FAIL if there is a format error in this line, OK otherwise.
+static int parse_tag_line(char_u *lbuf, tagptrs_T *tagp)
 {
   char_u *p;
 
@@ -2553,19 +2550,18 @@ static size_t matching_line_len(const char_u *const lbuf)
   return (p - lbuf) + STRLEN(p);
 }
 
-/*
- * Parse a line from a matching tag.  Does not change the line itself.
- *
- * The line that we get looks like this:
- * Emacs tag: <mtt><tag_fname><NUL><ebuf><NUL><lbuf>
- * other tag: <mtt><tag_fname><NUL><NUL><lbuf>
- * without Emacs tags: <mtt><tag_fname><NUL><lbuf>
- *
- * Return OK or FAIL.
- */
-static int parse_match(char_u *lbuf,          // input: matching line
-                       tagptrs_T *tagp          // output: pointers into the line
-                       )
+/// Parse a line from a matching tag.  Does not change the line itself.
+///
+/// The line that we get looks like this:
+/// Emacs tag: <mtt><tag_fname><NUL><ebuf><NUL><lbuf>
+/// other tag: <mtt><tag_fname><NUL><NUL><lbuf>
+/// without Emacs tags: <mtt><tag_fname><NUL><lbuf>
+///
+/// @param lbuf  input: matching line
+/// @param tagp  output: pointers into the line
+///
+/// @return  OK or FAIL.
+static int parse_match(char_u *lbuf, tagptrs_T *tagp)
 {
   int retval;
   char_u *p;
@@ -2653,15 +2649,14 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
   return fullname;
 }
 
-/*
- * Jump to a tag that has been found in one of the tag files
- *
- * returns OK for success, NOTAGFILE when file not found, FAIL otherwise.
- */
-static int jumpto_tag(const char_u *lbuf_arg,   // line from the tags file for this tag
-                      int forceit,              // :ta with !
-                      int keep_help             // keep help flag (FALSE for cscope)
-                      )
+/// Jump to a tag that has been found in one of the tag files
+///
+/// @param lbuf_arg  line from the tags file for this tag
+/// @param forceit  :ta with !
+/// @param keep_help  keep help flag (FALSE for cscope)
+///
+/// @return  OK for success, NOTAGFILE when file not found, FAIL otherwise.
+static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
 {
   int save_magic;
   bool save_p_ws;
@@ -3109,8 +3104,8 @@ static void tagstack_clear_entry(taggy_T *item)
   XFREE_CLEAR(item->user_data);
 }
 
-int expand_tags(int tagnames,                   // expand tag names
-                char_u *pat, int *num_file, char_u ***file)
+/// @param tagnames  expand tag names
+int expand_tags(int tagnames, char_u *pat, int *num_file, char_u ***file)
 {
   int i;
   int extra_flag;
@@ -3167,13 +3162,13 @@ int expand_tags(int tagnames,                   // expand tag names
 }
 
 
-/*
- * Add a tag field to the dictionary "dict".
- * Return OK or FAIL.
- */
-static int add_tag_field(dict_T *dict, const char *field_name, const char_u *start,          // start of the value
-                         const char_u *end             // after the value; can be NULL
-                         )
+/// Add a tag field to the dictionary "dict".
+/// Return OK or FAIL.
+///
+/// @param start  start of the value
+/// @param end  after the value; can be NULL
+static int add_tag_field(dict_T *dict, const char *field_name, const char_u *start,
+                         const char_u *end)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   int len = 0;

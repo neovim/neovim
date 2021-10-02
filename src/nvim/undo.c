@@ -2562,9 +2562,10 @@ static void u_undoredo(int undo, bool do_buf_event)
 /// If we deleted or added lines, report the number of less/more lines.
 /// Otherwise, report the number of changes (this may be incorrect
 /// in some cases, but it's better than nothing).
-static void u_undo_end(bool did_undo,    ///< just did an undo
-                       bool absolute,    ///< used ":undo N"
-                       bool quiet)
+///
+/// @param did_undo  just did an undo
+/// @param absolute  used ":undo N"
+static void u_undo_end(bool did_undo, bool absolute, bool quiet)
 {
   char *msgstr;
   u_header_T *uhp;
@@ -2898,11 +2899,10 @@ static void u_getbot(buf_T *buf)
   buf->b_u_synced = true;
 }
 
-/*
- * Free one header "uhp" and its entry list and adjust the pointers.
- */
-static void u_freeheader(buf_T *buf, u_header_T *uhp, u_header_T **uhpp         // if not NULL reset when freeing this header
-                         )
+/// Free one header "uhp" and its entry list and adjust the pointers.
+///
+/// @param uhpp  if not NULL reset when freeing this header
+static void u_freeheader(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
 {
   u_header_T *uhap;
 
@@ -2935,11 +2935,10 @@ static void u_freeheader(buf_T *buf, u_header_T *uhp, u_header_T **uhpp         
   u_freeentries(buf, uhp, uhpp);
 }
 
-/*
- * Free an alternate branch and any following alternate branches.
- */
-static void u_freebranch(buf_T *buf, u_header_T *uhp, u_header_T **uhpp         // if not NULL reset when freeing this header
-                         )
+/// Free an alternate branch and any following alternate branches.
+///
+/// @param uhpp  if not NULL reset when freeing this header
+static void u_freebranch(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
 {
   u_header_T *tofree, *next;
 
@@ -2967,12 +2966,11 @@ static void u_freebranch(buf_T *buf, u_header_T *uhp, u_header_T **uhpp         
   }
 }
 
-/*
- * Free all the undo entries for one header and the header itself.
- * This means that "uhp" is invalid when returning.
- */
-static void u_freeentries(buf_T *buf, u_header_T *uhp, u_header_T **uhpp         // if not NULL reset when freeing this header
-                          )
+/// Free all the undo entries for one header and the header itself.
+/// This means that "uhp" is invalid when returning.
+///
+/// @param uhpp  if not NULL reset when freeing this header
+static void u_freeentries(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
 {
   u_entry_T *uep, *nuep;
 
