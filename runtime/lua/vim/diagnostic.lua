@@ -556,6 +556,9 @@ end
 ---       - signs: (default true) Use signs for diagnostics. Options:
 ---                * severity: Only show signs for diagnostics matching the given severity
 ---                |diagnostic-severity|
+---                * priority: (number, default 10) Base priority to use for signs. When
+---                {severity_sort} is used, the priority of a sign is adjusted based on
+---                its severity. Otherwise, all signs use the same priority.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
