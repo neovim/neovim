@@ -2427,7 +2427,8 @@ static inline int _nothing_conv_real_dict_after_start(typval_T *const tv, dict_T
 
 #define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv) \
   do { \
-    if (_nothing_conv_real_dict_after_start(tv, (dict_T **)&(dict), (void *)&TYPVAL_ENCODE_NODICT_VAR, \
+    if (_nothing_conv_real_dict_after_start(tv, (dict_T **)&(dict), \
+                                            (void *)&TYPVAL_ENCODE_NODICT_VAR, \
                                             &(mpsv)) != NOTDONE) { \
       goto typval_encode_stop_converting_one_item; \
     } \

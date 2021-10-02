@@ -471,7 +471,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
           ['r'] = CAR,
           ['f'] = FF,
         };
-        *str_end++ = kEscapes[(int)*t];
+        *str_end++ = kEscapes[(int)(*t)];
         break;
       }
       default:
