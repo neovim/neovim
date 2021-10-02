@@ -1306,35 +1306,6 @@ static void set_window_layout(mparm_T *paramp)
   }
 }
 
-/*
- * Read all the plugin files.
- * Only when compiled with +eval, since most plugins need it.
- */
-static void load_plugins(void)
-{
-  if (p_lpl) {
-    char_u *rtp_copy = NULL;
-    char_u *const plugin_pattern_vim = (char_u *)"plugin/**/*.vim";  // NOLINT
-    char_u *const plugin_pattern_lua = (char_u *)"plugin/**/*.lua";  // NOLINT
-
-    // don't use source_runtime() yet so we can check for :packloadall below
-    source_in_path(p_rtp, plugin_pattern_vim, DIP_ALL | DIP_NOAFTER);
-    source_in_path(p_rtp, plugin_pattern_lua, DIP_ALL | DIP_NOAFTER);
-    TIME_MSG("loading rtp plugins");
-    xfree(rtp_copy);
-
-    // Only source "start" packages if not done already with a :packloadall
-    // command.
-    if (!did_source_packages) {
-      load_start_packages();
-    }
-    TIME_MSG("loading packages");
-
-    source_runtime(plugin_pattern_vim, DIP_ALL | DIP_AFTER);
-    source_runtime(plugin_pattern_lua, DIP_ALL | DIP_AFTER);
-    TIME_MSG("loading after plugins");
-  }
-}
 
 /*
  * "-q errorfile": Load the error file now.

@@ -20,6 +20,7 @@ local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
 local iswin = helpers.iswin
+local startswith = helpers.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
 
@@ -355,9 +356,48 @@ describe('startup', function()
     eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 
+  it("handles the correct order with start packages and after/ after startup", function()
+    pack_clear [[ lua _G.test_loadorder = {} ]]
+    command [[ runtime! filen.lua ]]
+    eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with globpath(&rtp, ...)", function()
+    pack_clear [[ set loadplugins | lua _G.test_loadorder = {} ]]
+    command [[
+      for x in globpath(&rtp, "filen.lua",1,1)
+        call v:lua.dofile(x)
+      endfor
+    ]]
+    eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+
+    local rtp = meths.get_option'rtp'
+    ok(startswith(rtp, 'test/functional/fixtures/nvim,test/functional/fixtures/pack/*/start/*,test/functional/fixtures/start/*,test/functional/fixtures,test/functional/fixtures/middle,'), 'rtp='..rtp)
+  end)
+
   it("handles the correct order with opt packages and after/", function()
     pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! superspecial\nruntime! filen.lua" ]]
     eq({'ordinary', 'SuperSpecial', 'FANCY', 'mittel', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with opt packages and after/ after startup", function()
+    pack_clear [[ lua _G.test_loadorder = {} ]]
+    command [[
+      packadd! superspecial
+      runtime! filen.lua
+    ]]
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'mittel', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with opt packages and globpath(&rtp, ...)", function()
+    pack_clear [[ set loadplugins | lua _G.test_loadorder = {} ]]
+    command [[
+      packadd! superspecial
+      for x in globpath(&rtp, "filen.lua",1,1)
+        call v:lua.dofile(x)
+      endfor
+    ]]
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'mittel', 'SuperSpecial after', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 
   it("handles the correct order with a package that changes packpath", function()

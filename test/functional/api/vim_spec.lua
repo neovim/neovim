@@ -12,10 +12,12 @@ local funcs = helpers.funcs
 local iswin = helpers.iswin
 local meths = helpers.meths
 local matches = helpers.matches
+local mkdir_p = helpers.mkdir_p
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
 local parse_context = helpers.parse_context
 local request = helpers.request
+local rmdir = helpers.rmdir
 local source = helpers.source
 local next_msg = helpers.next_msg
 local tmpname = helpers.tmpname
@@ -1574,6 +1576,18 @@ describe('API', function()
   end)
 
   describe('nvim_list_runtime_paths', function()
+    setup(function()
+      local pathsep = helpers.get_pathsep()
+      mkdir_p('Xtest'..pathsep..'a')
+      mkdir_p('Xtest'..pathsep..'b')
+    end)
+    teardown(function()
+      rmdir 'Xtest'
+    end)
+    before_each(function()
+      meths.set_current_dir 'Xtest'
+    end)
+
     it('returns nothing with empty &runtimepath', function()
       meths.set_option('runtimepath', '')
       eq({}, meths.list_runtime_paths())
@@ -1601,8 +1615,7 @@ describe('API', function()
       local long_path = ('/a'):rep(8192)
       meths.set_option('runtimepath', long_path)
       local paths_list = meths.list_runtime_paths()
-      neq({long_path}, paths_list)
-      eq({long_path:sub(1, #(paths_list[1]))}, paths_list)
+      eq({}, paths_list)
     end)
   end)
 
