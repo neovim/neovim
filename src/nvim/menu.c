@@ -64,7 +64,7 @@ static vimmenu_T **get_root_menu(const char_u *const name)
 /// @param eap Ex command arguments
 void ex_menu(exarg_T *eap)
 {
-  char_u *menu_path;
+  char *menu_path;
   int modes;
   char_u *map_to;            // command mapped to the menu entry
   int noremap;
@@ -166,7 +166,7 @@ void ex_menu(exarg_T *eap)
   }
 
 
-  menu_path = arg;
+  menu_path = (char *)arg;
   if (*menu_path == '.') {
     EMSG2(_(e_invarg2), menu_path);
     goto theend;
@@ -178,25 +178,25 @@ void ex_menu(exarg_T *eap)
    * If there is only a menu name, display menus with that name.
    */
   if (*map_to == NUL && !unmenu && enable == kNone) {
-    show_menus(menu_path, modes);
+    show_menus((char_u *)menu_path, modes);
     goto theend;
   } else if (*map_to != NUL && (unmenu || enable != kNone)) {
     EMSG(_(e_trailing));
     goto theend;
   }
 
-  vimmenu_T **root_menu_ptr = get_root_menu(menu_path);
+  vimmenu_T **root_menu_ptr = get_root_menu((char_u *)menu_path);
 
   if (enable != kNone) {
     // Change sensitivity of the menu.
     // For the PopUp menu, remove a menu for each mode separately.
     // Careful: menu_enable_recurse() changes menu_path.
     if (STRCMP(menu_path, "*") == 0) {          // meaning: do all menus
-      menu_path = (char_u *)"";
+      menu_path = "";
     }
 
     if (menu_is_popup(menu_path)) {
-      for (i = 0; i < MENU_INDEX_TIP; ++i) {
+      for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
           menu_enable_recurse(*root_menu_ptr, p, MENU_ALL_MODES, enable);
@@ -204,20 +204,20 @@ void ex_menu(exarg_T *eap)
         }
       }
     }
-    menu_enable_recurse(*root_menu_ptr, menu_path, modes, enable);
+    menu_enable_recurse(*root_menu_ptr, (char_u *)menu_path, modes, enable);
   } else if (unmenu) {
     /*
      * Delete menu(s).
      */
     if (STRCMP(menu_path, "*") == 0) {          // meaning: remove all menus
-      menu_path = (char_u *)"";
+      menu_path = "";
     }
 
     /*
      * For the PopUp menu, remove a menu for each mode separately.
      */
     if (menu_is_popup(menu_path)) {
-      for (i = 0; i < MENU_INDEX_TIP; ++i) {
+      for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
           remove_menu(root_menu_ptr, p, MENU_ALL_MODES, true);
@@ -227,7 +227,7 @@ void ex_menu(exarg_T *eap)
     }
 
     // Careful: remove_menu() changes menu_path
-    remove_menu(root_menu_ptr, menu_path, modes, false);
+    remove_menu(root_menu_ptr, (char_u *)menu_path, modes, false);
   } else {
     /*
      * Add menu(s).
@@ -245,13 +245,13 @@ void ex_menu(exarg_T *eap)
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;
     menuarg.silent[0] = silent;
-    add_menu_path(menu_path, &menuarg, pri_tab, map_to);
+    add_menu_path((char_u *)menu_path, &menuarg, pri_tab, map_to);
 
     /*
      * For the PopUp menu, add a menu for each mode separately.
      */
     if (menu_is_popup(menu_path)) {
-      for (i = 0; i < MENU_INDEX_TIP; ++i) {
+      for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
           // Include all modes, to make ":amenu" work
@@ -1273,12 +1273,12 @@ int get_menu_cmd_modes(const char *cmd, bool forceit, int *noremap, int *unmenu)
  * Modify a menu name starting with "PopUp" to include the mode character.
  * Returns the name in allocated memory.
  */
-static char_u *popup_mode_name(char_u *name, int idx)
+static char_u *popup_mode_name(char *name, int idx)
 {
   size_t len = STRLEN(name);
   assert(len >= 4);
 
-  char_u *p = vim_strnsave(name, len + 1);
+  char_u *p = vim_strnsave((char_u *)name, len + 1);
   memmove(p + 6, p + 5, len - 4);
   p[5] = menu_mode_chars[idx];
 
@@ -1337,14 +1337,14 @@ static char_u *menu_text(const char_u *str, int *mnemonic, char_u **actext)
 bool menu_is_menubar(const char_u *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return !menu_is_popup(name)
+  return !menu_is_popup((char *)name)
          && !menu_is_toolbar(name)
          && !menu_is_winbar(name)
          && *name != MNU_HIDDEN_CHAR;
 }
 
 // Return true if "name" is a popup menu name.
-bool menu_is_popup(const char_u *const name)
+bool menu_is_popup(const char *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return STRNCMP(name, "PopUp", 5) == 0;
@@ -1374,7 +1374,7 @@ int menu_is_separator(char_u *name)
 static int menu_is_hidden(char_u *name)
 {
   return (name[0] == MNU_HIDDEN_CHAR)
-         || (menu_is_popup(name) && name[5] != NUL);
+         || (menu_is_popup((char *)name) && name[5] != NUL);
 }
 
 // Execute "menu".  Use by ":emenu" and the window toolbar.
@@ -1383,25 +1383,25 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   int idx = -1;
-  char_u *mode;
+  char *mode;
 
   // Use the Insert mode entry when returning to Insert mode.
   if (((State & INSERT) || restart_edit) && !current_sctx.sc_sid) {
-    mode = (char_u *)"Insert";
+    mode = "Insert";
     idx = MENU_INDEX_INSERT;
   } else if (State & CMDLINE) {
-    mode = (char_u *)"Command";
+    mode = "Command";
     idx = MENU_INDEX_CMDLINE;
   } else if (get_real_state() & VISUAL) {
     /* Detect real visual mode -- if we are really in visual mode we
      * don't need to do any guesswork to figure out what the selection
      * is. Just execute the visual binding for the menu. */
-    mode = (char_u *)"Visual";
+    mode = "Visual";
     idx = MENU_INDEX_VISUAL;
   } else if (eap != NULL && eap->addr_count) {
     pos_T tpos;
 
-    mode = (char_u *)"Visual";
+    mode = "Visual";
     idx = MENU_INDEX_VISUAL;
 
     /* GEDDES: This is not perfect - but it is a
@@ -1442,7 +1442,7 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
   }
 
   if (idx == -1 || eap == NULL) {
-    mode = (char_u *)"Normal";
+    mode = "Normal";
     idx = MENU_INDEX_NORMAL;
   }
 
