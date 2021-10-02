@@ -445,7 +445,6 @@ static int lmpack_unpacker_unpack_str(lua_State *L, Unpacker *unpacker,
     if (rv == MPACK_NOMEM) {
       unpacker->parser = lmpack_grow_parser(unpacker->parser);
       if (!unpacker->parser) {
-        unpacker->unpacking = 0;
         return luaL_error(L, "failed to grow Unpacker capacity");
       }
     }
@@ -799,7 +798,6 @@ static int lmpack_packer_pack(lua_State *L)
     if (result == MPACK_NOMEM) {
       packer->parser = lmpack_grow_parser(packer->parser);
       if (!packer->parser) {
-        packer->packing = 0;
         return luaL_error(L, "Failed to grow Packer capacity");
       }
     }
