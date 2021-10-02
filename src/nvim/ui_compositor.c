@@ -7,27 +7,27 @@
 // Layer-based compositing: https://en.wikipedia.org/wiki/Digital_compositing
 
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <limits.h>
 
+#include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
+#include "nvim/highlight.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
+#include "nvim/lua/executor.h"
 #include "nvim/main.h"
-#include "nvim/ascii.h"
-#include "nvim/vim.h"
-#include "nvim/ui.h"
-#include "nvim/highlight.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/os/os.h"
 #include "nvim/popupmnu.h"
-#include "nvim/ui_compositor.h"
-#include "nvim/ugrid.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/lua/executor.h"
-#include "nvim/os/os.h"
+#include "nvim/ugrid.h"
+#include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_compositor.c.generated.h"
@@ -123,8 +123,8 @@ bool ui_comp_should_draw(void)
 /// TODO(bfredl): later on the compositor should just use win_float_pos events,
 /// though that will require slight event order adjustment: emit the win_pos
 /// events in the beginning of  update_screen(0), rather than in ui_flush()
-bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
-                      bool valid, bool on_top)
+bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width, bool valid,
+                      bool on_top)
 {
   bool moved;
 
@@ -257,8 +257,7 @@ static void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
   }
 }
 
-static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
-                                     Integer r, Integer c)
+static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle, Integer r, Integer c)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid_handle)) {
     return;
@@ -304,8 +303,7 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
 /// Baseline implementation. This is always correct, but we can sometimes
 /// do something more efficient (where efficiency means smaller deltas to
 /// the downstream UI.)
-static void compose_line(Integer row, Integer startcol, Integer endcol,
-                         LineFlags flags)
+static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlags flags)
 {
   // If rightleft is set, startcol may be -1. In such cases, the assertions
   // will fail because no overlap is found. Adjust startcol to prevent it.
@@ -447,8 +445,8 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
                             (const sattr_T *)attrbuf+skipstart);
 }
 
-static void compose_debug(Integer startrow, Integer endrow, Integer startcol,
-                          Integer endcol, int syn_id, bool delay)
+static void compose_debug(Integer startrow, Integer endrow, Integer startcol, Integer endcol,
+                          int syn_id, bool delay)
 {
   if (!(rdb_flags & RDB_COMPOSITOR)) {
     return;
@@ -479,8 +477,7 @@ static void debug_delay(Integer lines)
 }
 
 
-static void compose_area(Integer startrow, Integer endrow,
-                         Integer startcol, Integer endcol)
+static void compose_area(Integer startrow, Integer endrow, Integer startcol, Integer endcol)
 {
   compose_debug(startrow, endrow, startcol, endcol, dbghl_recompose, true);
   endrow = MIN(endrow, default_grid.Rows);
@@ -505,11 +502,9 @@ void ui_comp_compose_grid(ScreenGrid *grid)
   }
 }
 
-static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
-                             Integer startcol, Integer endcol,
-                             Integer clearcol, Integer clearattr,
-                             LineFlags flags, const schar_T *chunk,
-                             const sattr_T *attrs)
+static void ui_comp_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Integer endcol,
+                             Integer clearcol, Integer clearattr, LineFlags flags,
+                             const schar_T *chunk, const sattr_T *attrs)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
     return;
@@ -529,11 +524,11 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
   // when resizing nvim, a window will be attempted to be drawn on the older
   // and possibly larger global screen size.
   if (row >= default_grid.Rows) {
-    DLOG("compositor: invalid row %"PRId64" on grid %"PRId64, row, grid);
+    DLOG("compositor: invalid row %" PRId64 " on grid %" PRId64, row, grid);
     return;
   }
   if (clearcol > default_grid.Columns) {
-    DLOG("compositor: invalid last column %"PRId64" on grid %"PRId64,
+    DLOG("compositor: invalid last column %" PRId64 " on grid %" PRId64,
          clearcol, grid);
     if (startcol >= default_grid.Columns) {
       return;
@@ -572,8 +567,8 @@ void ui_comp_set_screen_valid(bool valid)
   }
 }
 
-static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row,
-                                Boolean scrolled, String sep_char)
+static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrolled,
+                                String sep_char)
 {
   msg_grid.comp_row = (int)row;
   if (scrolled && row > 0) {
@@ -617,9 +612,8 @@ static bool curgrid_covered_above(int row)
   return kv_size(layers)-(above_msg?1:0) > curgrid->comp_index+1;
 }
 
-static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top,
-                                Integer bot, Integer left, Integer right,
-                                Integer rows, Integer cols)
+static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot, Integer left,
+                                Integer right, Integer rows, Integer cols)
 {
   if (!ui_comp_should_draw() || !ui_comp_set_grid((int)grid)) {
     return;
@@ -653,8 +647,7 @@ static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top,
   }
 }
 
-static void ui_comp_grid_resize(UI *ui, Integer grid,
-                                Integer width, Integer height)
+static void ui_comp_grid_resize(UI *ui, Integer grid, Integer width, Integer height)
 {
   if (grid == 1) {
     ui_composed_call_grid_resize(1, width, height);
