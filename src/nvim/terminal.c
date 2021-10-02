@@ -37,45 +37,44 @@
 // Some code from pangoterm http://www.leonerd.org.uk/code/pangoterm
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
-
+#include <stdint.h>
+#include <stdio.h>
 #include <vterm.h>
 
-#include "nvim/log.h"
-#include "nvim/vim.h"
-#include "nvim/terminal.h"
-#include "nvim/message.h"
-#include "nvim/memory.h"
-#include "nvim/option.h"
-#include "nvim/highlight.h"
-#include "nvim/macros.h"
-#include "nvim/mbyte.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
-#include "nvim/ascii.h"
-#include "nvim/getchar.h"
-#include "nvim/ui.h"
-#include "nvim/syntax.h"
-#include "nvim/screen.h"
-#include "nvim/keymap.h"
 #include "nvim/edit.h"
-#include "nvim/mouse.h"
-#include "nvim/memline.h"
-#include "nvim/map.h"
-#include "nvim/misc1.h"
-#include "nvim/move.h"
-#include "nvim/main.h"
-#include "nvim/state.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/ex_cmds.h"
-#include "nvim/window.h"
-#include "nvim/fileio.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
+#include "nvim/ex_cmds.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/fileio.h"
+#include "nvim/getchar.h"
+#include "nvim/highlight.h"
+#include "nvim/keymap.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
+#include "nvim/main.h"
+#include "nvim/map.h"
+#include "nvim/mbyte.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/mouse.h"
+#include "nvim/move.h"
+#include "nvim/option.h"
 #include "nvim/os/input.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/screen.h"
+#include "nvim/state.h"
+#include "nvim/syntax.h"
+#include "nvim/terminal.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 typedef struct terminal_state {
   VimState state;
@@ -210,7 +209,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   buf->b_p_ma = false;     // 'nomodifiable'
   buf->b_p_ul = -1;        // 'undolevels'
   buf->b_p_scbk =          // 'scrollback' (initialize local from global)
-    (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
+                  (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
   buf->b_p_tw = 0;         // 'textwidth'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
@@ -452,56 +451,56 @@ static int terminal_execute(VimState *state, int key)
   TerminalState *s = (TerminalState *)state;
 
   switch (key) {
-    case K_LEFTMOUSE:
-    case K_LEFTDRAG:
-    case K_LEFTRELEASE:
-    case K_MOUSEMOVE:
-    case K_MIDDLEMOUSE:
-    case K_MIDDLEDRAG:
-    case K_MIDDLERELEASE:
-    case K_RIGHTMOUSE:
-    case K_RIGHTDRAG:
-    case K_RIGHTRELEASE:
-    case K_MOUSEDOWN:
-    case K_MOUSEUP:
-      if (send_mouse_event(s->term, key)) {
-        return 0;
-      }
+  case K_LEFTMOUSE:
+  case K_LEFTDRAG:
+  case K_LEFTRELEASE:
+  case K_MOUSEMOVE:
+  case K_MIDDLEMOUSE:
+  case K_MIDDLEDRAG:
+  case K_MIDDLERELEASE:
+  case K_RIGHTMOUSE:
+  case K_RIGHTDRAG:
+  case K_RIGHTRELEASE:
+  case K_MOUSEDOWN:
+  case K_MOUSEUP:
+    if (send_mouse_event(s->term, key)) {
+      return 0;
+    }
+    break;
+
+  case K_EVENT:
+    // We cannot let an event free the terminal yet. It is still needed.
+    s->term->refcount++;
+    state_handle_k_event();
+    s->term->refcount--;
+    if (s->term->buf_handle == 0) {
+      s->close = true;
+      return 0;
+    }
+    break;
+
+  case K_COMMAND:
+    do_cmdline(NULL, getcmdkeycmd, NULL, 0);
+    break;
+
+  case Ctrl_N:
+    if (s->got_bsl) {
+      return 0;
+    }
+    FALLTHROUGH;
+
+  default:
+    if (key == Ctrl_BSL && !s->got_bsl) {
+      s->got_bsl = true;
       break;
+    }
+    if (s->term->closed) {
+      s->close = true;
+      return 0;
+    }
 
-    case K_EVENT:
-      // We cannot let an event free the terminal yet. It is still needed.
-      s->term->refcount++;
-      state_handle_k_event();
-      s->term->refcount--;
-      if (s->term->buf_handle == 0) {
-        s->close = true;
-        return 0;
-      }
-      break;
-
-    case K_COMMAND:
-      do_cmdline(NULL, getcmdkeycmd, NULL, 0);
-      break;
-
-    case Ctrl_N:
-      if (s->got_bsl) {
-        return 0;
-      }
-      FALLTHROUGH;
-
-    default:
-      if (key == Ctrl_BSL && !s->got_bsl) {
-        s->got_bsl = true;
-        break;
-      }
-      if (s->term->closed) {
-        s->close = true;
-        return 0;
-      }
-
-      s->got_bsl = false;
-      terminal_send_key(s->term, key);
+    s->got_bsl = false;
+    terminal_send_key(s->term, key);
   }
 
   if (curbuf->terminal == NULL) {
@@ -554,30 +553,30 @@ static bool is_filter_char(int c)
 {
   unsigned int flag = 0;
   switch (c) {
-    case 0x08:
-      flag = TPF_BS;
-      break;
-    case 0x09:
-      flag = TPF_HT;
-      break;
-    case 0x0A:
-    case 0x0D:
-      break;
-    case 0x0C:
-      flag = TPF_FF;
-      break;
-    case 0x1b:
-      flag = TPF_ESC;
-      break;
-    case 0x7F:
-      flag = TPF_DEL;
-      break;
-    default:
-      if (c < ' ') {
-        flag = TPF_C0;
-      } else if (c >= 0x80 && c <= 0x9F) {
-        flag = TPF_C1;
-      }
+  case 0x08:
+    flag = TPF_BS;
+    break;
+  case 0x09:
+    flag = TPF_HT;
+    break;
+  case 0x0A:
+  case 0x0D:
+    break;
+  case 0x0C:
+    flag = TPF_FF;
+    break;
+  case 0x1b:
+    flag = TPF_ESC;
+    break;
+  case 0x7F:
+    flag = TPF_DEL;
+    break;
+  default:
+    if (c < ' ') {
+      flag = TPF_C0;
+    } else if (c >= 0x80 && c <= 0x9F) {
+      flag = TPF_C1;
+    }
   }
   return !!(tpf_flags & flag);
 }
@@ -666,8 +665,7 @@ static int get_rgb(VTermState *state, VTermColor color)
 }
 
 
-void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
-                                  int *term_attrs)
+void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *term_attrs)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
@@ -701,12 +699,12 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx-1];
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
-                 | (cell.attrs.italic ? HL_ITALIC : 0)
-                 | (cell.attrs.reverse ? HL_INVERSE : 0)
-                 | (cell.attrs.underline ? HL_UNDERLINE : 0)
-                 | (cell.attrs.strike ? HL_STRIKETHROUGH: 0)
-                 | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
-                 | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
+                   | (cell.attrs.italic ? HL_ITALIC : 0)
+                   | (cell.attrs.reverse ? HL_INVERSE : 0)
+                   | (cell.attrs.underline ? HL_UNDERLINE : 0)
+                   | (cell.attrs.strike ? HL_STRIKETHROUGH: 0)
+                   | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
+                   | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
 
     int attr_id = 0;
 
@@ -757,12 +755,11 @@ static int term_damage(VTermRect rect, void *data)
 static int term_moverect(VTermRect dest, VTermRect src, void *data)
 {
   invalidate_terminal(data, MIN(dest.start_row, src.start_row),
-      MAX(dest.end_row, src.end_row));
+                      MAX(dest.end_row, src.end_row));
   return 1;
 }
 
-static int term_movecursor(VTermPos new, VTermPos old, int visible,
-    void *data)
+static int term_movecursor(VTermPos new, VTermPos old, int visible, void *data)
 {
   Terminal *term = data;
   term->cursor.row = new.row;
@@ -791,26 +788,26 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   Terminal *term = data;
 
   switch (prop) {
-    case VTERM_PROP_ALTSCREEN:
-      break;
+  case VTERM_PROP_ALTSCREEN:
+    break;
 
-    case VTERM_PROP_CURSORVISIBLE:
-      term->cursor.visible = val->boolean;
-      invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
-      break;
+  case VTERM_PROP_CURSORVISIBLE:
+    term->cursor.visible = val->boolean;
+    invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
+    break;
 
-    case VTERM_PROP_TITLE: {
-      buf_T *buf = handle_get_buffer(term->buf_handle);
-      buf_set_term_title(buf, val->string);
-      break;
-    }
+  case VTERM_PROP_TITLE: {
+    buf_T *buf = handle_get_buffer(term->buf_handle);
+    buf_set_term_title(buf, val->string);
+    break;
+  }
 
-    case VTERM_PROP_MOUSE:
-      term->forward_mouse = (bool)val->number;
-      break;
+  case VTERM_PROP_MOUSE:
+    term->forward_mouse = (bool)val->number;
+    break;
 
-    default:
-      return 0;
+  default:
+    return 0;
   }
 
   return 1;
@@ -844,12 +841,11 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
 
     // Make room at the start by shifting to the right.
     memmove(term->sb_buffer + 1, term->sb_buffer,
-        sizeof(term->sb_buffer[0]) * (term->sb_current - 1));
-
+            sizeof(term->sb_buffer[0]) * (term->sb_current - 1));
   } else if (term->sb_current > 0) {
     // Make room at the start by shifting to the right.
     memmove(term->sb_buffer + 1, term->sb_buffer,
-        sizeof(term->sb_buffer[0]) * term->sb_current);
+            sizeof(term->sb_buffer[0]) * term->sb_current);
   }
 
   if (!sbrow) {
@@ -894,7 +890,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   term->sb_current--;
   // Forget the "popped" row by shifting the rest onto it.
   memmove(term->sb_buffer, term->sb_buffer + 1,
-      sizeof(term->sb_buffer[0]) * (term->sb_current));
+          sizeof(term->sb_buffer[0]) * (term->sb_current));
 
   size_t cols_to_copy = (size_t)cols;
   if (cols_to_copy > sbrow->cols) {
@@ -919,35 +915,41 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 
 static void convert_modifiers(int key, VTermModifier *statep)
 {
-  if (mod_mask & MOD_MASK_SHIFT) { *statep |= VTERM_MOD_SHIFT; }
-  if (mod_mask & MOD_MASK_CTRL)  { *statep |= VTERM_MOD_CTRL; }
-  if (mod_mask & MOD_MASK_ALT)   { *statep |= VTERM_MOD_ALT; }
+  if (mod_mask & MOD_MASK_SHIFT) {
+    *statep |= VTERM_MOD_SHIFT;
+  }
+  if (mod_mask & MOD_MASK_CTRL) {
+    *statep |= VTERM_MOD_CTRL;
+  }
+  if (mod_mask & MOD_MASK_ALT) {
+    *statep |= VTERM_MOD_ALT;
+  }
 
   switch (key) {
-    case K_S_TAB:
-    case K_S_UP:
-    case K_S_DOWN:
-    case K_S_LEFT:
-    case K_S_RIGHT:
-    case K_S_F1:
-    case K_S_F2:
-    case K_S_F3:
-    case K_S_F4:
-    case K_S_F5:
-    case K_S_F6:
-    case K_S_F7:
-    case K_S_F8:
-    case K_S_F9:
-    case K_S_F10:
-    case K_S_F11:
-    case K_S_F12:
-      *statep |= VTERM_MOD_SHIFT;
-      break;
+  case K_S_TAB:
+  case K_S_UP:
+  case K_S_DOWN:
+  case K_S_LEFT:
+  case K_S_RIGHT:
+  case K_S_F1:
+  case K_S_F2:
+  case K_S_F3:
+  case K_S_F4:
+  case K_S_F5:
+  case K_S_F6:
+  case K_S_F7:
+  case K_S_F8:
+  case K_S_F9:
+  case K_S_F10:
+  case K_S_F11:
+  case K_S_F12:
+    *statep |= VTERM_MOD_SHIFT;
+    break;
 
-    case K_C_LEFT:
-    case K_C_RIGHT:
-      *statep |= VTERM_MOD_CTRL;
-      break;
+  case K_C_LEFT:
+  case K_C_RIGHT:
+    *statep |= VTERM_MOD_CTRL;
+    break;
   }
 }
 
@@ -956,115 +958,212 @@ static VTermKey convert_key(int key, VTermModifier *statep)
   convert_modifiers(key, statep);
 
   switch (key) {
-    case K_BS:        return VTERM_KEY_BACKSPACE;
-    case K_S_TAB:     FALLTHROUGH;
-    case TAB:         return VTERM_KEY_TAB;
-    case Ctrl_M:      return VTERM_KEY_ENTER;
-    case ESC:         return VTERM_KEY_ESCAPE;
+  case K_BS:
+    return VTERM_KEY_BACKSPACE;
+  case K_S_TAB:
+    FALLTHROUGH;
+  case TAB:
+    return VTERM_KEY_TAB;
+  case Ctrl_M:
+    return VTERM_KEY_ENTER;
+  case ESC:
+    return VTERM_KEY_ESCAPE;
 
-    case K_S_UP:      FALLTHROUGH;
-    case K_UP:        return VTERM_KEY_UP;
-    case K_S_DOWN:    FALLTHROUGH;
-    case K_DOWN:      return VTERM_KEY_DOWN;
-    case K_S_LEFT:    FALLTHROUGH;
-    case K_C_LEFT:    FALLTHROUGH;
-    case K_LEFT:      return VTERM_KEY_LEFT;
-    case K_S_RIGHT:   FALLTHROUGH;
-    case K_C_RIGHT:   FALLTHROUGH;
-    case K_RIGHT:     return VTERM_KEY_RIGHT;
+  case K_S_UP:
+    FALLTHROUGH;
+  case K_UP:
+    return VTERM_KEY_UP;
+  case K_S_DOWN:
+    FALLTHROUGH;
+  case K_DOWN:
+    return VTERM_KEY_DOWN;
+  case K_S_LEFT:
+    FALLTHROUGH;
+  case K_C_LEFT:
+    FALLTHROUGH;
+  case K_LEFT:
+    return VTERM_KEY_LEFT;
+  case K_S_RIGHT:
+    FALLTHROUGH;
+  case K_C_RIGHT:
+    FALLTHROUGH;
+  case K_RIGHT:
+    return VTERM_KEY_RIGHT;
 
-    case K_INS:       return VTERM_KEY_INS;
-    case K_DEL:       return VTERM_KEY_DEL;
-    case K_HOME:      return VTERM_KEY_HOME;
-    case K_END:       return VTERM_KEY_END;
-    case K_PAGEUP:    return VTERM_KEY_PAGEUP;
-    case K_PAGEDOWN:  return VTERM_KEY_PAGEDOWN;
+  case K_INS:
+    return VTERM_KEY_INS;
+  case K_DEL:
+    return VTERM_KEY_DEL;
+  case K_HOME:
+    return VTERM_KEY_HOME;
+  case K_END:
+    return VTERM_KEY_END;
+  case K_PAGEUP:
+    return VTERM_KEY_PAGEUP;
+  case K_PAGEDOWN:
+    return VTERM_KEY_PAGEDOWN;
 
-    case K_K0:        FALLTHROUGH;
-    case K_KINS:      return VTERM_KEY_KP_0;
-    case K_K1:        FALLTHROUGH;
-    case K_KEND:      return VTERM_KEY_KP_1;
-    case K_K2:        FALLTHROUGH;
-    case K_KDOWN:     return VTERM_KEY_KP_2;
-    case K_K3:        FALLTHROUGH;
-    case K_KPAGEDOWN: return VTERM_KEY_KP_3;
-    case K_K4:        FALLTHROUGH;
-    case K_KLEFT:     return VTERM_KEY_KP_4;
-    case K_K5:        FALLTHROUGH;
-    case K_KORIGIN:   return VTERM_KEY_KP_5;
-    case K_K6:        FALLTHROUGH;
-    case K_KRIGHT:    return VTERM_KEY_KP_6;
-    case K_K7:        FALLTHROUGH;
-    case K_KHOME:     return VTERM_KEY_KP_7;
-    case K_K8:        FALLTHROUGH;
-    case K_KUP:       return VTERM_KEY_KP_8;
-    case K_K9:        FALLTHROUGH;
-    case K_KPAGEUP:   return VTERM_KEY_KP_9;
-    case K_KDEL:      FALLTHROUGH;
-    case K_KPOINT:    return VTERM_KEY_KP_PERIOD;
-    case K_KENTER:    return VTERM_KEY_KP_ENTER;
-    case K_KPLUS:     return VTERM_KEY_KP_PLUS;
-    case K_KMINUS:    return VTERM_KEY_KP_MINUS;
-    case K_KMULTIPLY: return VTERM_KEY_KP_MULT;
-    case K_KDIVIDE:   return VTERM_KEY_KP_DIVIDE;
+  case K_K0:
+    FALLTHROUGH;
+  case K_KINS:
+    return VTERM_KEY_KP_0;
+  case K_K1:
+    FALLTHROUGH;
+  case K_KEND:
+    return VTERM_KEY_KP_1;
+  case K_K2:
+    FALLTHROUGH;
+  case K_KDOWN:
+    return VTERM_KEY_KP_2;
+  case K_K3:
+    FALLTHROUGH;
+  case K_KPAGEDOWN:
+    return VTERM_KEY_KP_3;
+  case K_K4:
+    FALLTHROUGH;
+  case K_KLEFT:
+    return VTERM_KEY_KP_4;
+  case K_K5:
+    FALLTHROUGH;
+  case K_KORIGIN:
+    return VTERM_KEY_KP_5;
+  case K_K6:
+    FALLTHROUGH;
+  case K_KRIGHT:
+    return VTERM_KEY_KP_6;
+  case K_K7:
+    FALLTHROUGH;
+  case K_KHOME:
+    return VTERM_KEY_KP_7;
+  case K_K8:
+    FALLTHROUGH;
+  case K_KUP:
+    return VTERM_KEY_KP_8;
+  case K_K9:
+    FALLTHROUGH;
+  case K_KPAGEUP:
+    return VTERM_KEY_KP_9;
+  case K_KDEL:
+    FALLTHROUGH;
+  case K_KPOINT:
+    return VTERM_KEY_KP_PERIOD;
+  case K_KENTER:
+    return VTERM_KEY_KP_ENTER;
+  case K_KPLUS:
+    return VTERM_KEY_KP_PLUS;
+  case K_KMINUS:
+    return VTERM_KEY_KP_MINUS;
+  case K_KMULTIPLY:
+    return VTERM_KEY_KP_MULT;
+  case K_KDIVIDE:
+    return VTERM_KEY_KP_DIVIDE;
 
-    case K_S_F1:      FALLTHROUGH;
-    case K_F1:        return VTERM_KEY_FUNCTION(1);
-    case K_S_F2:      FALLTHROUGH;
-    case K_F2:        return VTERM_KEY_FUNCTION(2);
-    case K_S_F3:      FALLTHROUGH;
-    case K_F3:        return VTERM_KEY_FUNCTION(3);
-    case K_S_F4:      FALLTHROUGH;
-    case K_F4:        return VTERM_KEY_FUNCTION(4);
-    case K_S_F5:      FALLTHROUGH;
-    case K_F5:        return VTERM_KEY_FUNCTION(5);
-    case K_S_F6:      FALLTHROUGH;
-    case K_F6:        return VTERM_KEY_FUNCTION(6);
-    case K_S_F7:      FALLTHROUGH;
-    case K_F7:        return VTERM_KEY_FUNCTION(7);
-    case K_S_F8:      FALLTHROUGH;
-    case K_F8:        return VTERM_KEY_FUNCTION(8);
-    case K_S_F9:      FALLTHROUGH;
-    case K_F9:        return VTERM_KEY_FUNCTION(9);
-    case K_S_F10:     FALLTHROUGH;
-    case K_F10:       return VTERM_KEY_FUNCTION(10);
-    case K_S_F11:     FALLTHROUGH;
-    case K_F11:       return VTERM_KEY_FUNCTION(11);
-    case K_S_F12:     FALLTHROUGH;
-    case K_F12:       return VTERM_KEY_FUNCTION(12);
+  case K_S_F1:
+    FALLTHROUGH;
+  case K_F1:
+    return VTERM_KEY_FUNCTION(1);
+  case K_S_F2:
+    FALLTHROUGH;
+  case K_F2:
+    return VTERM_KEY_FUNCTION(2);
+  case K_S_F3:
+    FALLTHROUGH;
+  case K_F3:
+    return VTERM_KEY_FUNCTION(3);
+  case K_S_F4:
+    FALLTHROUGH;
+  case K_F4:
+    return VTERM_KEY_FUNCTION(4);
+  case K_S_F5:
+    FALLTHROUGH;
+  case K_F5:
+    return VTERM_KEY_FUNCTION(5);
+  case K_S_F6:
+    FALLTHROUGH;
+  case K_F6:
+    return VTERM_KEY_FUNCTION(6);
+  case K_S_F7:
+    FALLTHROUGH;
+  case K_F7:
+    return VTERM_KEY_FUNCTION(7);
+  case K_S_F8:
+    FALLTHROUGH;
+  case K_F8:
+    return VTERM_KEY_FUNCTION(8);
+  case K_S_F9:
+    FALLTHROUGH;
+  case K_F9:
+    return VTERM_KEY_FUNCTION(9);
+  case K_S_F10:
+    FALLTHROUGH;
+  case K_F10:
+    return VTERM_KEY_FUNCTION(10);
+  case K_S_F11:
+    FALLTHROUGH;
+  case K_F11:
+    return VTERM_KEY_FUNCTION(11);
+  case K_S_F12:
+    FALLTHROUGH;
+  case K_F12:
+    return VTERM_KEY_FUNCTION(12);
 
-    case K_F13:       return VTERM_KEY_FUNCTION(13);
-    case K_F14:       return VTERM_KEY_FUNCTION(14);
-    case K_F15:       return VTERM_KEY_FUNCTION(15);
-    case K_F16:       return VTERM_KEY_FUNCTION(16);
-    case K_F17:       return VTERM_KEY_FUNCTION(17);
-    case K_F18:       return VTERM_KEY_FUNCTION(18);
-    case K_F19:       return VTERM_KEY_FUNCTION(19);
-    case K_F20:       return VTERM_KEY_FUNCTION(20);
-    case K_F21:       return VTERM_KEY_FUNCTION(21);
-    case K_F22:       return VTERM_KEY_FUNCTION(22);
-    case K_F23:       return VTERM_KEY_FUNCTION(23);
-    case K_F24:       return VTERM_KEY_FUNCTION(24);
-    case K_F25:       return VTERM_KEY_FUNCTION(25);
-    case K_F26:       return VTERM_KEY_FUNCTION(26);
-    case K_F27:       return VTERM_KEY_FUNCTION(27);
-    case K_F28:       return VTERM_KEY_FUNCTION(28);
-    case K_F29:       return VTERM_KEY_FUNCTION(29);
-    case K_F30:       return VTERM_KEY_FUNCTION(30);
-    case K_F31:       return VTERM_KEY_FUNCTION(31);
-    case K_F32:       return VTERM_KEY_FUNCTION(32);
-    case K_F33:       return VTERM_KEY_FUNCTION(33);
-    case K_F34:       return VTERM_KEY_FUNCTION(34);
-    case K_F35:       return VTERM_KEY_FUNCTION(35);
-    case K_F36:       return VTERM_KEY_FUNCTION(36);
-    case K_F37:       return VTERM_KEY_FUNCTION(37);
+  case K_F13:
+    return VTERM_KEY_FUNCTION(13);
+  case K_F14:
+    return VTERM_KEY_FUNCTION(14);
+  case K_F15:
+    return VTERM_KEY_FUNCTION(15);
+  case K_F16:
+    return VTERM_KEY_FUNCTION(16);
+  case K_F17:
+    return VTERM_KEY_FUNCTION(17);
+  case K_F18:
+    return VTERM_KEY_FUNCTION(18);
+  case K_F19:
+    return VTERM_KEY_FUNCTION(19);
+  case K_F20:
+    return VTERM_KEY_FUNCTION(20);
+  case K_F21:
+    return VTERM_KEY_FUNCTION(21);
+  case K_F22:
+    return VTERM_KEY_FUNCTION(22);
+  case K_F23:
+    return VTERM_KEY_FUNCTION(23);
+  case K_F24:
+    return VTERM_KEY_FUNCTION(24);
+  case K_F25:
+    return VTERM_KEY_FUNCTION(25);
+  case K_F26:
+    return VTERM_KEY_FUNCTION(26);
+  case K_F27:
+    return VTERM_KEY_FUNCTION(27);
+  case K_F28:
+    return VTERM_KEY_FUNCTION(28);
+  case K_F29:
+    return VTERM_KEY_FUNCTION(29);
+  case K_F30:
+    return VTERM_KEY_FUNCTION(30);
+  case K_F31:
+    return VTERM_KEY_FUNCTION(31);
+  case K_F32:
+    return VTERM_KEY_FUNCTION(32);
+  case K_F33:
+    return VTERM_KEY_FUNCTION(33);
+  case K_F34:
+    return VTERM_KEY_FUNCTION(34);
+  case K_F35:
+    return VTERM_KEY_FUNCTION(35);
+  case K_F36:
+    return VTERM_KEY_FUNCTION(36);
+  case K_F37:
+    return VTERM_KEY_FUNCTION(37);
 
-    default:          return VTERM_KEY_NONE;
+  default:
+    return VTERM_KEY_NONE;
   }
 }
 
-static void mouse_action(Terminal *term, int button, int row, int col,
-    bool drag, VTermModifier mod)
+static void mouse_action(Terminal *term, int button, int row, int col, bool drag, VTermModifier mod)
 {
   if (term->pressed_button && (term->pressed_button != button || !drag)) {
     // release the previous button
@@ -1100,16 +1199,26 @@ static bool send_mouse_event(Terminal *term, int c)
     bool drag = false;
 
     switch (c) {
-      case K_LEFTDRAG: drag = true;   FALLTHROUGH;
-      case K_LEFTMOUSE: button = 1; break;
-      case K_MOUSEMOVE: drag = true; button = 0; break;
-      case K_MIDDLEDRAG: drag = true; FALLTHROUGH;
-      case K_MIDDLEMOUSE: button = 2; break;
-      case K_RIGHTDRAG: drag = true;  FALLTHROUGH;
-      case K_RIGHTMOUSE: button = 3; break;
-      case K_MOUSEDOWN: button = 4; break;
-      case K_MOUSEUP: button = 5; break;
-      default: return false;
+    case K_LEFTDRAG:
+      drag = true;   FALLTHROUGH;
+    case K_LEFTMOUSE:
+      button = 1; break;
+    case K_MOUSEMOVE:
+      drag = true; button = 0; break;
+    case K_MIDDLEDRAG:
+      drag = true; FALLTHROUGH;
+    case K_MIDDLEMOUSE:
+      button = 2; break;
+    case K_RIGHTDRAG:
+      drag = true;  FALLTHROUGH;
+    case K_RIGHTMOUSE:
+      button = 3; break;
+    case K_MOUSEDOWN:
+      button = 4; break;
+    case K_MOUSEUP:
+      button = 5; break;
+    default:
+      return false;
     }
 
     mouse_action(term, button, row, col - offset, drag, 0);
@@ -1162,7 +1271,7 @@ static void fetch_row(Terminal *term, int row, int end_col)
     if (cell.chars[0]) {
       for (int i = 0; cell.chars[i]; i++) {
         cell_len += utf_char2bytes((int)cell.chars[i],
-            (uint8_t *)ptr + cell_len);
+                                   (uint8_t *)ptr + cell_len);
       }
     } else {
       *ptr = ' ';
@@ -1181,8 +1290,7 @@ static void fetch_row(Terminal *term, int row, int end_col)
   term->textbuf[line_len] = 0;
 }
 
-static bool fetch_cell(Terminal *term, int row, int col,
-                       VTermScreenCell *cell)
+static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
 {
   if (row < 0) {
     ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
@@ -1197,8 +1305,8 @@ static bool fetch_cell(Terminal *term, int row, int col,
       return false;
     }
   } else {
-    vterm_screen_get_cell(term->vts, (VTermPos){.row = row, .col = col},
-        cell);
+    vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col },
+                          cell);
   }
   return true;
 }

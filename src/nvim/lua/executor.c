@@ -5,6 +5,7 @@
 #include <lua.h>
 #include <lualib.h>
 
+#include "cjson/lua_cjson.h"
 #include "luv/luv.h"
 #include "mpack/lmpack.h"
 #include "nvim/api/private/defs.h"
@@ -40,7 +41,6 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
-#include "cjson/lua_cjson.h"
 
 static int in_fast_callback = 0;
 

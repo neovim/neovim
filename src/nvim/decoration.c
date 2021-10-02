@@ -421,11 +421,11 @@ int decor_virtual_lines(win_T *wp, linenr_T lnum)
     return 0;
   }
   if (buf->b_virt_line_pos < 0) {
-      mtpos_t pos = marktree_lookup(buf->b_marktree, buf->b_virt_line_mark, NULL);
-      if (pos.row < 0) {
-        buf->b_virt_line_mark = 0;
-      }
-      buf->b_virt_line_pos = pos.row + (buf->b_virt_line_above ? 0 : 1);
+    mtpos_t pos = marktree_lookup(buf->b_marktree, buf->b_virt_line_mark, NULL);
+    if (pos.row < 0) {
+      buf->b_virt_line_mark = 0;
+    }
+    buf->b_virt_line_pos = pos.row + (buf->b_virt_line_above ? 0 : 1);
   }
 
   return (lnum-1 == buf->b_virt_line_pos) ? (int)kv_size(buf->b_virt_lines) : 0;
