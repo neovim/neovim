@@ -6835,7 +6835,7 @@ static void ex_hide(exarg_T *eap)
   // ":hide" or ":hide | cmd": hide current window
   if (!eap->skip) {
     if (eap->addr_count == 0) {
-      win_close(curwin, false);  // don't free buffer
+      win_close(curwin, false, eap->forceit);  // don't free buffer
     } else {
       int winnr = 0;
       win_T *win = NULL;
