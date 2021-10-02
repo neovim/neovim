@@ -332,40 +332,56 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags, DoInRuntimepathCB c
   return done;
 }
 
-static void push_path(RuntimeSearchPath *search_path, char *entry, bool after)
+static void push_path(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
+                      char *entry, bool after)
 {
-  kv_push(*search_path, ((SearchPathItem){ entry, after }));
+  handle_T h = map_get(String, handle_T)(rtp_used, cstr_as_string((char *)entry));
+  if (h == 0) {
+    char *allocated = xstrdup(entry);
+    map_put(String, handle_T)(rtp_used, cstr_as_string(allocated), 1);
+    kv_push(*search_path, ((SearchPathItem){ allocated, after }));
+  }
 }
 
-static void expand_pack_entry(RuntimeSearchPath *search_path, CharVec *after_path,
-                              char_u *pack_entry)
+static void expand_rtp_entry(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
+                             char *entry, bool after)
 {
-  static char_u buf[MAXPATHL], buf2[MAXPATHL];
-  char *start_dir = "/pack/*/start/*";  // NOLINT
-  if (STRLEN(pack_entry) + STRLEN(start_dir) + 1 < MAXPATHL) {
-    xstrlcpy((char *)buf, (char *)pack_entry, MAXPATHL);
-    xstrlcpy((char *)buf2, (char *)pack_entry, MAXPATHL);
-    xstrlcat((char *)buf, start_dir, sizeof buf);
-    xstrlcat((char *)buf2, "/start/*", sizeof buf);  // NOLINT
-    int num_files;
-    char_u **files;
+  if (map_get(String, handle_T)(rtp_used, cstr_as_string(entry))) {
+    return;
+  }
 
-    char_u *(pat[]) = { buf, buf2 };
-    if (gen_expand_wildcards(2, pat, &num_files, &files, EW_DIR) == OK) {
-      for (int i = 0; i < num_files; i++) {
-        push_path(search_path, xstrdup((char *)files[i]), false);
-        size_t after_size = STRLEN(files[i])+7;
-        char *after = xmallocz(after_size);
-        xstrlcpy(after, (char *)files[i], after_size);
-        xstrlcat(after, "/after", after_size);
-        if (os_isdir((char_u *)after)) {
-          kv_push(*after_path, after);
-        } else {
-          xfree(after);
-        }
-      }
-      FreeWild(num_files, files);
+  if (!*entry) {
+    push_path(search_path, rtp_used, entry, after);
+  }
+
+  int num_files;
+  char_u **files;
+  char_u *(pat[]) = { (char_u *)entry };
+  if (gen_expand_wildcards(1, pat, &num_files, &files, EW_DIR) == OK) {
+    for (int i = 0; i < num_files; i++) {
+      push_path(search_path, rtp_used, (char *)files[i], after);
     }
+    FreeWild(num_files, files);
+  }
+}
+
+static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
+                              CharVec *after_path, char_u *pack_entry)
+{
+  static char buf[MAXPATHL];
+  char *(start_pat[]) = { "/pack/*/start/*", "/start/*" };  // NOLINT
+  for (int i = 0; i < 2; i++) {
+    if (STRLEN(pack_entry) + STRLEN(start_pat[i]) + 1 > MAXPATHL) {
+      continue;
+    }
+    xstrlcpy(buf, (char *)pack_entry, MAXPATHL);
+    xstrlcat(buf, start_pat[i], sizeof buf);
+    expand_rtp_entry(search_path, rtp_used, buf, false);
+    size_t after_size = STRLEN(buf)+7;
+    char *after = xmallocz(after_size);
+    xstrlcpy(after, buf, after_size);
+    xstrlcat(after, "/after", after_size);
+    kv_push(*after_path, after);
   }
 }
 
@@ -382,8 +398,10 @@ static bool path_is_after(char_u *buf, size_t buflen)
 RuntimeSearchPath runtime_search_path_build(void)
 {
   kvec_t(String) pack_entries = KV_INITIAL_VALUE;
+  // TODO(bfredl): these should just be sets, when Set(String) is do merge to
+  // master.
   Map(String, handle_T) pack_used = MAP_INIT;
-  // TODO(bfredl): add a set of existing rtp entries to not duplicate those
+  Map(String, handle_T) rtp_used = MAP_INIT;
   RuntimeSearchPath search_path = KV_INITIAL_VALUE;
   CharVec after_path = KV_INITIAL_VALUE;
 
@@ -410,37 +428,40 @@ RuntimeSearchPath runtime_search_path_build(void)
       break;
     }
 
-    push_path(&search_path, xstrdup((char *)buf), false);
+    // fact: &rtp entries can contain wild chars
+    expand_rtp_entry(&search_path, &rtp_used, (char *)buf, false);
 
     handle_T *h = map_ref(String, handle_T)(&pack_used, cstr_as_string((char *)buf), false);
     if (h) {
       (*h)++;
-      expand_pack_entry(&search_path, &after_path, buf);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, buf);
     }
   }
 
   for (size_t i = 0; i < kv_size(pack_entries); i++) {
     handle_T h = map_get(String, handle_T)(&pack_used, kv_A(pack_entries, i));
     if (h == 0) {
-      expand_pack_entry(&search_path, &after_path, (char_u *)kv_A(pack_entries, i).data);
+      expand_pack_entry(&search_path, &rtp_used, &after_path, (char_u *)kv_A(pack_entries, i).data);
     }
   }
 
   // "after" packages
   for (size_t i = 0; i < kv_size(after_path); i++) {
-    push_path(&search_path, kv_A(after_path, i), true);
+    expand_rtp_entry(&search_path, &rtp_used, kv_A(after_path, i), true);
+    xfree(kv_A(after_path, i));
   }
 
   // "after" dirs in rtp
   for (; *rtp_entry != NUL;) {
     copy_option_part((char_u **)&rtp_entry, buf, MAXPATHL, ",");
-    push_path(&search_path, xstrdup((char *)buf), path_is_after(buf, STRLEN(buf)));
+    expand_rtp_entry(&search_path, &rtp_used, (char *)buf, path_is_after(buf, STRLEN(buf)));
   }
 
   // strings are not owned
   kv_destroy(pack_entries);
   kv_destroy(after_path);
   map_destroy(String, handle_T)(&pack_used);
+  map_destroy(String, handle_T)(&rtp_used);
 
   return search_path;
 }
@@ -521,7 +542,10 @@ static void source_all_matches(char_u *pat)
 }
 
 /// Add the package directory to 'runtimepath'
-static int add_pack_dir_to_rtp(char_u *fname)
+///
+/// @param fname the package path
+/// @param is_pack whether the added dir is a "pack/*/start/*/" style package
+static int add_pack_dir_to_rtp(char_u *fname, bool is_pack)
 {
   char_u *p4, *p3, *p2, *p1, *p;
   char_u *buf = NULL;
@@ -599,7 +623,7 @@ static int add_pack_dir_to_rtp(char_u *fname)
   // check if rtp/pack/name/start/name/after exists
   afterdir = concat_fnames((char *)fname, "after", true);
   size_t afterlen = 0;
-  if (os_isdir((char_u *)afterdir)) {
+  if (is_pack ? pack_has_entries((char_u *)afterdir) : os_isdir((char_u *)afterdir)) {
     afterlen = strlen(afterdir) + 1;  // add one for comma
   }
 
@@ -720,7 +744,7 @@ static void add_pack_plugin(bool opt, char_u *fname, void *cookie)
     xfree(buf);
     if (!found) {
       // directory is not yet in 'runtimepath', add it
-      if (add_pack_dir_to_rtp(fname) == FAIL) {
+      if (add_pack_dir_to_rtp(fname, false) == FAIL) {
         return;
       }
     }
@@ -741,6 +765,41 @@ static void add_opt_pack_plugin(char_u *fname, void *cookie)
   add_pack_plugin(true, fname, cookie);
 }
 
+
+/// Add all packages in the "start" directory to 'runtimepath'.
+void add_pack_start_dirs(void)
+{
+  do_in_path(p_pp, NULL, DIP_ALL + DIP_DIR, add_pack_start_dir, NULL);
+}
+
+static bool pack_has_entries(char_u *buf)
+{
+  int num_files;
+  char_u **files;
+  char_u *(pat[]) = { (char_u *)buf };
+  if (gen_expand_wildcards(1, pat, &num_files, &files, EW_DIR) == OK) {
+    FreeWild(num_files, files);
+  }
+  return num_files > 0;
+}
+
+static void add_pack_start_dir(char_u *fname, void *cookie)
+{
+  static char_u buf[MAXPATHL];
+  char *(start_pat[]) = { "/start/*", "/pack/*/start/*" };  // NOLINT
+  for (int i = 0; i < 2; i++) {
+    if (STRLEN(fname) + STRLEN(start_pat[i]) + 1 > MAXPATHL) {
+      continue;
+    }
+    xstrlcpy((char *)buf, (char *)fname, MAXPATHL);
+    xstrlcat((char *)buf, start_pat[i], sizeof buf);
+    if (pack_has_entries(buf)) {
+      add_pack_dir_to_rtp(buf, true);
+    }
+  }
+}
+
+
 /// Load plugins from all packages in the "start" directory.
 void load_start_packages(void)
 {
@@ -759,7 +818,40 @@ void ex_packloadall(exarg_T *eap)
     // First do a round to add all directories to 'runtimepath', then load
     // the plugins. This allows for plugins to use an autoload directory
     // of another plugin.
+    add_pack_start_dirs();
     load_start_packages();
+  }
+}
+
+/// Read all the plugin files at startup
+void load_plugins(void)
+{
+  if (p_lpl) {
+    char_u *rtp_copy = p_rtp;
+    char_u *const plugin_pattern_vim = (char_u *)"plugin/**/*.vim";  // NOLINT
+    char_u *const plugin_pattern_lua = (char_u *)"plugin/**/*.lua";  // NOLINT
+
+    if (!did_source_packages) {
+      rtp_copy = vim_strsave(p_rtp);
+      add_pack_start_dirs();
+    }
+
+    // don't use source_runtime() yet so we can check for :packloadall below
+    source_in_path(rtp_copy, plugin_pattern_vim, DIP_ALL | DIP_NOAFTER);
+    source_in_path(rtp_copy, plugin_pattern_lua, DIP_ALL | DIP_NOAFTER);
+    TIME_MSG("loading rtp plugins");
+
+    // Only source "start" packages if not done already with a :packloadall
+    // command.
+    if (!did_source_packages) {
+      xfree(rtp_copy);
+      load_start_packages();
+    }
+    TIME_MSG("loading packages");
+
+    source_runtime(plugin_pattern_vim, DIP_ALL | DIP_AFTER);
+    source_runtime(plugin_pattern_lua, DIP_ALL | DIP_AFTER);
+    TIME_MSG("loading after plugins");
   }
 }
 
