@@ -220,10 +220,11 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 - Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
   the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
   ```
-  if !empty(findfile('src/.uncrustify', ';'))
-    setlocal formatprg=uncrustify\ -q\ -c\ src/uncrustify.cfg\ --replace\ --no-backup
+  if !empty(findfile('src/uncrustify.cfg', ';'))
+    setlocal formatprg=uncrustify\ -q\ -l\ C\ -c\ src/uncrustify.cfg\ --no-backup
   endif
   ```
+  The required version of `uncrustify` is specified in `uncrustify.cfg`.
 - There is also `.clang-format` which has drifted from the [style-guide], but
   is available for reference. To use the Nvim `gq` command with `clang-format`:
   ```
