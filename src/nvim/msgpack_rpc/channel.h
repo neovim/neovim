@@ -5,10 +5,10 @@
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/event/socket.h"
-#include "nvim/event/process.h"
-#include "nvim/vim.h"
 #include "nvim/channel.h"
+#include "nvim/event/process.h"
+#include "nvim/event/socket.h"
+#include "nvim/vim.h"
 
 #define METHOD_MAXLEN 512
 

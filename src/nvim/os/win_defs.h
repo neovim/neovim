@@ -7,11 +7,11 @@
 
 // winsock2.h must be first to avoid incompatibilities
 // with winsock.h (included by windows.h)
-#include <winsock2.h>
-#include <windows.h>
-#include <sys/stat.h>
 #include <io.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <windows.h>
+#include <winsock2.h>
 
 // Windows does not have S_IFLNK but libuv defines it
 // and sets the flag for us when calling uv_fs_stat.

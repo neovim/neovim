@@ -1,10 +1,10 @@
 #ifndef NVIM_EVENT_PROCESS_H
 #define NVIM_EVENT_PROCESS_H
 
+#include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/eval/typval.h"
 
 typedef enum {
   kProcessTypeUv,

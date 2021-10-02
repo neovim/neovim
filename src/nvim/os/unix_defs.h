@@ -1,8 +1,8 @@
 #ifndef NVIM_OS_UNIX_DEFS_H
 #define NVIM_OS_UNIX_DEFS_H
 
-#include <unistd.h>
 #include <sys/param.h>
+#include <unistd.h>
 
 // POSIX.1-2008 says that NAME_MAX should be in here
 #include <limits.h>

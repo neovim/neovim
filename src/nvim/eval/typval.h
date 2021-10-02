@@ -1,23 +1,23 @@
 #ifndef NVIM_EVAL_TYPVAL_H
 #define NVIM_EVAL_TYPVAL_H
 
+#include <assert.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
-#include <stdbool.h>
-#include <assert.h>
 
-#include "nvim/types.h"
-#include "nvim/hashtab.h"
-#include "nvim/garray.h"
-#include "nvim/mbyte.h"
 #include "nvim/func_attr.h"
-#include "nvim/lib/queue.h"
-#include "nvim/profile.h"  // for proftime_T
-#include "nvim/pos.h"      // for linenr_T
+#include "nvim/garray.h"
 #include "nvim/gettext.h"
-#include "nvim/message.h"
+#include "nvim/hashtab.h"
+#include "nvim/lib/queue.h"
 #include "nvim/macros.h"
+#include "nvim/mbyte.h"
+#include "nvim/message.h"
+#include "nvim/pos.h"      // for linenr_T
+#include "nvim/profile.h"  // for proftime_T
+#include "nvim/types.h"
 #ifdef LOG_LIST_ACTIONS
 # include "nvim/memory.h"
 #endif
@@ -156,8 +156,8 @@ typedef enum {
 typedef struct listitem_S listitem_T;
 
 struct listitem_S {
-  listitem_T  *li_next;  ///< Next item in list.
-  listitem_T  *li_prev;  ///< Previous item in list.
+  listitem_T *li_next;  ///< Next item in list.
+  listitem_T *li_prev;  ///< Previous item in list.
   typval_T li_tv;  ///< Item value.
 };
 
@@ -195,25 +195,25 @@ typedef struct {
 } staticList10_T;
 
 #define TV_LIST_STATIC10_INIT { \
-    .sl_list = { \
-      .lv_first = NULL, \
-      .lv_last = NULL, \
-      .lv_refcount = 0, \
-      .lv_len = 0, \
-      .lv_watch = NULL, \
-      .lv_idx_item = NULL, \
-      .lv_lock = VAR_FIXED, \
-      .lv_used_next = NULL, \
-      .lv_used_prev = NULL, \
-    }, \
-  }
+  .sl_list = { \
+  .lv_first = NULL, \
+  .lv_last = NULL, \
+  .lv_refcount = 0, \
+  .lv_len = 0, \
+  .lv_watch = NULL, \
+  .lv_idx_item = NULL, \
+  .lv_lock = VAR_FIXED, \
+  .lv_used_next = NULL, \
+  .lv_used_prev = NULL, \
+  }, \
+}
 
 #define TV_DICTITEM_STRUCT(...) \
-    struct { \
-      typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
-      uint8_t di_flags;  /* Flags. */ \
-      char_u di_key[__VA_ARGS__];  /* Key value. */ \
-    }
+  struct { \
+    typval_T di_tv;  /* Structure that holds scope dictionary itself. */ \
+    uint8_t di_flags;  /* Flags. */ \
+    char_u di_key[__VA_ARGS__];  /* Key value. */ \
+  }
 
 /// Structure to hold a scope dictionary
 ///
@@ -321,40 +321,40 @@ struct funccall_S {
 
 /// Structure to hold info for a user function.
 struct ufunc {
-  int          uf_varargs;       ///< variable nr of arguments
-  int          uf_flags;
-  int          uf_calls;         ///< nr of active calls
-  bool         uf_cleared;       ///< func_clear() was already called
-  garray_T     uf_args;          ///< arguments
-  garray_T     uf_def_args;      ///< default argument expressions
-  garray_T     uf_lines;         ///< function lines
-  int          uf_profiling;     ///< true when func is being profiled
-  int          uf_prof_initialized;
+  int uf_varargs;       ///< variable nr of arguments
+  int uf_flags;
+  int uf_calls;         ///< nr of active calls
+  bool uf_cleared;       ///< func_clear() was already called
+  garray_T uf_args;          ///< arguments
+  garray_T uf_def_args;      ///< default argument expressions
+  garray_T uf_lines;         ///< function lines
+  int uf_profiling;     ///< true when func is being profiled
+  int uf_prof_initialized;
   // Managing cfuncs
-  cfunc_T      uf_cb;            ///< C function extension callback
+  cfunc_T uf_cb;            ///< C function extension callback
   cfunc_free_T uf_cb_free;       ///< C function extension free callback
-  void        *uf_cb_state;      ///< State of C function extension.
+  void *uf_cb_state;      ///< State of C function extension.
   // Profiling the function as a whole.
-  int          uf_tm_count;      ///< nr of calls
-  proftime_T   uf_tm_total;      ///< time spent in function + children
-  proftime_T   uf_tm_self;       ///< time spent in function itself
-  proftime_T   uf_tm_children;   ///< time spent in children this call
+  int uf_tm_count;      ///< nr of calls
+  proftime_T uf_tm_total;      ///< time spent in function + children
+  proftime_T uf_tm_self;       ///< time spent in function itself
+  proftime_T uf_tm_children;   ///< time spent in children this call
   // Profiling the function per line.
-  int         *uf_tml_count;     ///< nr of times line was executed
-  proftime_T  *uf_tml_total;     ///< time spent in a line + children
-  proftime_T  *uf_tml_self;      ///< time spent in a line itself
-  proftime_T   uf_tml_start;     ///< start time for current line
-  proftime_T   uf_tml_children;  ///< time spent in children for this line
-  proftime_T   uf_tml_wait;      ///< start wait time for current line
-  int          uf_tml_idx;       ///< index of line being timed; -1 if none
-  int          uf_tml_execed;    ///< line being timed was executed
-  sctx_T       uf_script_ctx;    ///< SCTX where function was defined,
-                                 ///< used for s: variables
-  int          uf_refcount;      ///< reference count, see func_name_refcount()
-  funccall_T   *uf_scoped;       ///< l: local variables for closure
-  char_u       uf_name[];  ///< Name of function (actual size equals name);
-                           ///< can start with <SNR>123_
-                           ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
+  int *uf_tml_count;     ///< nr of times line was executed
+  proftime_T *uf_tml_total;     ///< time spent in a line + children
+  proftime_T *uf_tml_self;      ///< time spent in a line itself
+  proftime_T uf_tml_start;     ///< start time for current line
+  proftime_T uf_tml_children;  ///< time spent in children for this line
+  proftime_T uf_tml_wait;      ///< start wait time for current line
+  int uf_tml_idx;       ///< index of line being timed; -1 if none
+  int uf_tml_execed;    ///< line being timed was executed
+  sctx_T uf_script_ctx;    ///< SCTX where function was defined,
+                           ///< used for s: variables
+  int uf_refcount;      ///< reference count, see func_name_refcount()
+  funccall_T *uf_scoped;       ///< l: local variables for closure
+  char_u uf_name[];  ///< Name of function (actual size equals name);
+                     ///< can start with <SNR>123_
+                     ///< (<SNR> is K_SPECIAL KS_EXTRA KE_SNR)
 };
 
 struct partial_S {
@@ -452,10 +452,8 @@ static inline void list_log(const list_T *const l,
 /// @param[in]  li1  List item 1.
 /// @param[in]  li2  List item 2, often used for integers and not list items.
 /// @param[in]  action  Logged action.
-static inline void list_log(const list_T *const l,
-                            const listitem_T *const li1,
-                            const listitem_T *const li2,
-                            const char *const action)
+static inline void list_log(const list_T *const l, const listitem_T *const li1,
+                            const listitem_T *const li2, const char *const action)
 {
   ListLog *tgt;
   if (list_log_first == NULL) {
@@ -484,7 +482,7 @@ static inline void list_log(const list_T *const l,
 
 /// Convert a hashitem pointer to a dictitem pointer
 #define TV_DICT_HI2DI(hi) \
-    ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
+  ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
 static inline void tv_list_ref(list_T *const l)
   REAL_FATTR_ALWAYS_INLINE;
@@ -538,8 +536,7 @@ static inline VarLockStatus tv_list_locked(const list_T *const l)
 ///
 /// @param[out]  l  List to modify.
 /// @param[in]  lock  New lock status.
-static inline void tv_list_set_lock(list_T *const l,
-                                    const VarLockStatus lock)
+static inline void tv_list_set_lock(list_T *const l, const VarLockStatus lock)
 {
   if (l == NULL) {
     assert(lock == VAR_FIXED);
@@ -554,8 +551,7 @@ static inline void tv_list_set_lock(list_T *const l,
 ///
 /// @param[out]  l  List to modify.
 /// @param[in]  copyid  New copyID.
-static inline void tv_list_set_copyid(list_T *const l,
-                                      const int copyid)
+static inline void tv_list_set_copyid(list_T *const l, const int copyid)
   FUNC_ATTR_NONNULL_ALL
 {
   l->lv_copyID = copyid;
@@ -793,10 +789,10 @@ static inline void tv_init(typval_T *const tv)
 }
 
 #define TV_INITIAL_VALUE \
-    ((typval_T) { \
-      .v_type = VAR_UNKNOWN, \
-      .v_lock = VAR_UNLOCKED, \
-    })
+  ((typval_T) { \
+    .v_type = VAR_UNKNOWN, \
+    .v_lock = VAR_UNLOCKED, \
+  })
 
 /// Empty string
 ///
@@ -815,16 +811,16 @@ extern bool tv_in_free_unref_items;
 /// @param  li  Name of the variable with current listitem_T entry.
 /// @param  code  Cycle body.
 #define _TV_LIST_ITER_MOD(modifier, l, li, code) \
-    do { \
-      modifier list_T *const l_ = (l); \
-      list_log(l_, NULL, NULL, "iter" #modifier); \
-      if (l_ != NULL) { \
-        for (modifier listitem_T *li = l_->lv_first; \
-             li != NULL; li = li->li_next) { \
-          code \
-        } \
+  do { \
+    modifier list_T *const l_ = (l); \
+    list_log(l_, NULL, NULL, "iter" #modifier); \
+    if (l_ != NULL) { \
+      for (modifier listitem_T *li = l_->lv_first; \
+           li != NULL; li = li->li_next) { \
+        code \
       } \
-    } while (0)
+    } \
+  } while (0)
 
 /// Iterate over a list
 ///
@@ -835,7 +831,7 @@ extern bool tv_in_free_unref_items;
 /// @param  li  Name of the variable with current listitem_T entry.
 /// @param  code  Cycle body.
 #define TV_LIST_ITER(l, li, code) \
-    _TV_LIST_ITER_MOD(, l, li, code)
+  _TV_LIST_ITER_MOD(, l, li, code)
 
 /// Iterate over a list
 ///
@@ -846,7 +842,7 @@ extern bool tv_in_free_unref_items;
 /// @param  li  Name of the variable with current listitem_T entry.
 /// @param  code  Cycle body.
 #define TV_LIST_ITER_CONST(l, li, code) \
-    _TV_LIST_ITER_MOD(const, l, li, code)
+  _TV_LIST_ITER_MOD(const, l, li, code)
 
 // Below macros are macros to avoid duplicating code for functionally identical
 // const and non-const function variants.
@@ -883,14 +879,14 @@ extern bool tv_in_free_unref_items;
 /// @param  di  Name of the variable with current dictitem_T entry.
 /// @param  code  Cycle body.
 #define TV_DICT_ITER(d, di, code) \
-    HASHTAB_ITER(&(d)->dv_hashtab, di##hi_, { \
+  HASHTAB_ITER(&(d)->dv_hashtab, di##hi_, { \
+    { \
+      dictitem_T *const di = TV_DICT_HI2DI(di##hi_); \
       { \
-        dictitem_T *const di = TV_DICT_HI2DI(di##hi_); \
-        { \
-          code \
-        } \
+        code \
       } \
-    })
+    } \
+  })
 
 static inline bool tv_get_float_chk(const typval_T *const tv,
                                     float_T *const ret_f)
@@ -907,8 +903,7 @@ bool emsgf(const char *const fmt, ...);
 /// @param[out]  ret_f  Location where resulting float is stored.
 ///
 /// @return true in case of success, false if tv is not a number or float.
-static inline bool tv_get_float_chk(const typval_T *const tv,
-                                    float_T *const ret_f)
+static inline bool tv_get_float_chk(const typval_T *const tv, float_T *const ret_f)
 {
   if (tv->v_type == VAR_FLOAT) {
     *ret_f = tv->vval.v_float;
