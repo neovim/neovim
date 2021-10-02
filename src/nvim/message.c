@@ -1878,13 +1878,13 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
     msg_col -= cw;
     if (msg_col == 0) {
       msg_col = g_columns;
-      ++msg_row;
+      msg_row++;
     }
   } else {
     msg_col += cw;
     if (msg_col >= g_columns) {
       msg_col = 0;
-      ++msg_row;
+      msg_row++;
     }
   }
   return s + l;
@@ -2165,8 +2165,8 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
     wrap = *s == '\n'
            || msg_col + t_col >= g_columns
            || (utf_ptr2cells(s) > 1
-               && msg_col + t_col >= g_columns - 1)
-    ;
+               && msg_col + t_col >= g_columns - 1);
+
     if (t_col > 0 && (wrap || *s == '\r' || *s == '\b'
                       || *s == '\t' || *s == BELL)) {
       // Output any postponed text.
@@ -2678,7 +2678,7 @@ static int do_more_prompt(int typed_char)
     // "g<": Find first line on the last page.
     mp_last = msg_sb_start(last_msgchunk);
     for (i = 0; i < g_rows - 2 && mp_last != NULL
-         && mp_last->sb_prev != NULL; ++i) {
+         && mp_last->sb_prev != NULL; i++) {
       mp_last = msg_sb_start(mp_last->sb_prev);
     }
   }
@@ -2799,7 +2799,7 @@ static int do_more_prompt(int typed_char)
 
         // go to start of line at top of the screen
         for (i = 0; i < g_rows - 2 && mp != NULL && mp->sb_prev != NULL;
-             ++i) {
+             i++) {
           mp = msg_sb_start(mp->sb_prev);
         }
 
@@ -2831,7 +2831,7 @@ static int do_more_prompt(int typed_char)
                       HL_ATTR(HLF_MSG));
             for (i = 0; mp != NULL && i < g_rows - 1; i++) {
               mp = disp_sb_line(i, mp);
-              ++msg_scrolled;
+              msg_scrolled++;
             }
             to_redraw = false;
           }
@@ -2932,12 +2932,12 @@ static void msg_screen_putchar(int c, int attr)
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
       msg_col = g_columns;
-      ++msg_row;
+      msg_row++;
     }
   } else {
     if (++msg_col >= g_columns) {
       msg_col = 0;
-      ++msg_row;
+      msg_row++;
     }
   }
 }
@@ -2963,7 +2963,7 @@ void msg_moremsg(int full)
 void repeat_message(void)
 {
   if (State == ASKMORE) {
-    msg_moremsg(TRUE);          // display --more-- message again
+    msg_moremsg(true);          // display --more-- message again
     msg_row = g_rows - 1;
   } else if (State == CONFIRM) {
     display_confirm_msg();      // display ":confirm" message again
@@ -3240,7 +3240,7 @@ int redirecting(void)
 void verbose_enter(void)
 {
   if (*p_vfile != NUL) {
-    ++msg_silent;
+    msg_silent++;
   }
 }
 
@@ -3263,7 +3263,7 @@ void verbose_leave(void)
 void verbose_enter_scroll(void)
 {
   if (*p_vfile != NUL) {
-    ++msg_silent;
+    msg_silent++;
   } else {
     // always scroll up, don't overwrite
     msg_scroll = TRUE;
@@ -3433,7 +3433,7 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
    * Since we wait for a keypress, don't make the
    * user press RETURN as well afterwards.
    */
-  ++no_wait_return;
+  no_wait_return++;
   hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   for (;; ) {

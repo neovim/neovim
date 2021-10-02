@@ -2255,7 +2255,7 @@ void intro_message(int colon)
   row = blanklines / 2;
 
   if (((row >= 2) && (g_columns >= 50)) || colon) {
-    for (i = 0; i < (int)ARRAY_SIZE(lines); ++i) {
+    for (i = 0; i < (int)ARRAY_SIZE(lines); i++) {
       p = lines[i];
 
       if (sponsor != 0) {

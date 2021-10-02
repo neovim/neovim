@@ -6863,7 +6863,6 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   if (!grid->throttled) {
     ui_call_grid_scroll(grid->handle, row, end, col, col+width, -line_count, 0);
   }
-
 }
 
 /// delete lines on the screen and move lines up.

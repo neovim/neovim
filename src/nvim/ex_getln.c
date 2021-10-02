@@ -3238,7 +3238,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
       msg_col -= i;
       if (msg_col < 0) {
         msg_col += g_columns;
-        --msg_row;
+        msg_row--;
       }
     }
   }

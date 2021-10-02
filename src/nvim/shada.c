@@ -3354,7 +3354,8 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
   error_desc
 #define CHECK_KEY(key, expected) ( \
                                    (key).via.str.size == sizeof(expected) - 1 \
-                                   && STRNCMP((key).via.str.ptr, expected, sizeof(expected) - 1) == 0)
+                                   && STRNCMP((key).via.str.ptr, expected, \
+                                              sizeof(expected) - 1) == 0)
 #define CLEAR_GA_AND_ERROR_OUT(ga) \
   do { \
     ga_clear(&(ga)); \
