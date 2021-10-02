@@ -646,6 +646,13 @@ function M.set(namespace, bufnr, diagnostics, opts)
   vim.api.nvim_command("doautocmd <nomodeline> User DiagnosticsChanged")
 end
 
+--- Get current diagnostic namespaces.
+---
+---@return table A list of active diagnostic namespaces |vim.diagnostic|.
+function M.get_namespaces()
+  return vim.deepcopy(all_namespaces)
+end
+
 --- Get current diagnostics.
 ---
 ---@param bufnr number|nil Buffer number to get diagnostics from. Use 0 for
