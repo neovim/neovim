@@ -4930,10 +4930,9 @@ static void frame_remove(frame_T *frp)
 }
 
 
-/*
- * Called from win_new_shellsize() after g_rows changed.
- * This only does the current tab page, others must be done when made active.
- */
+
+/// Called from win_new_shellsize() after g_rows changed.
+/// This only does the current tab page, others must be done when made active.
 void shell_new_rows(void)
 {
   int h = (int)ROWS_AVAIL;
@@ -4958,9 +4957,8 @@ void shell_new_rows(void)
   curtab->tp_ch_used = p_ch;
 }
 
-/*
- * Called from win_new_shellsize() after g_columns changed.
- */
+
+/// Called from win_new_shellsize() after g_columns changed.
 void shell_new_columns(void)
 {
   if (firstwin == NULL) {       // not initialized yet

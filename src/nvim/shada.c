@@ -1779,19 +1779,13 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
   case kSDItemBufferList:
     msgpack_pack_array(spacker, entry.data.buffer_list.size);
     for (size_t i = 0; i < entry.data.buffer_list.size; i++) {
-      const size_t map_size = (size_t)(
-                                       1  // Buffer name
-                                       + (size_t)(entry.data.buffer_list.buffers[i].pos.lnum
-                                                  != kDefaultPos.lnum)
-                                       + (size_t)(entry.data.buffer_list.buffers[i].pos.col
-                                                  != kDefaultPos.col)
-                                       // Additional entries, if any:
-                                       + (size_t)(
-                                                  entry.data.buffer_list.buffers[i].additional_data
-                                                  == NULL
-                ? 0
-                : (entry.data.buffer_list.buffers[i].additional_data
-                   ->dv_hashtab.ht_used)));
+      dict_T *additional_data = entry.data.buffer_list.buffers[i].additional_data;
+      const size_t map_size
+        = (size_t)(1  // Buffer name
+                   + (size_t)(entry.data.buffer_list.buffers[i].pos.lnum != kDefaultPos.lnum)
+                   + (size_t)(entry.data.buffer_list.buffers[i].pos.col != kDefaultPos.col)
+                   // Additional entries, if any:
+                   + (size_t)(additional_data == NULL ? 0 : (additional_data->dv_hashtab.ht_used)));
       msgpack_pack_map(spacker, map_size);
       PACK_STATIC_STR(KEY_FILE);
       PACK_BIN(cstr_as_string(entry.data.buffer_list.buffers[i].fname));
@@ -3352,10 +3346,9 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
   RERR "Error while reading ShaDa file: " \
   entry_name " entry at position %" PRIu64 " " \
   error_desc
-#define CHECK_KEY(key, expected) ( \
-                                   (key).via.str.size == sizeof(expected) - 1 \
-                                   && STRNCMP((key).via.str.ptr, expected, \
-                                              sizeof(expected) - 1) == 0)
+#define CHECK_KEY(key, expected) (((key).via.str.size == sizeof(expected) - 1) \
+                                  && STRNCMP((key).via.str.ptr, expected, \
+                                             sizeof(expected) - 1) == 0)
 #define CLEAR_GA_AND_ERROR_OUT(ga) \
   do { \
     ga_clear(&(ga)); \
@@ -3386,13 +3379,12 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
     emsgf(_(READERR(entry_name, "has empty key")), initial_fpos); \
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
   }
-#define CHECKED_KEY(un, entry_name, name, error_desc, tgt, condition, attr, \
-                    proc) \
-  else if (CHECK_KEY(  /* NOLINT(readability/braces) */ \
-                       (un).data.via.map.ptr[i].key, name)) { \
-    CHECKED_ENTRY(condition, "has " name " key value " error_desc, \
-                  entry_name, (un).data.via.map.ptr[i].val, \
-                  tgt, attr, proc); \
+#define CHECKED_KEY(un, entry_name, name, error_desc, tgt, condition, attr, proc) \
+  else if (CHECK_KEY(/* NOLINT(readability/braces) */ \
+                     (un).data.via.map.ptr[i].key, name)) \
+  { \
+    CHECKED_ENTRY(condition, "has " name " key value " error_desc, entry_name, \
+                  (un).data.via.map.ptr[i].val, tgt, attr, proc); \
   }
 #define TYPED_KEY(un, entry_name, name, type_name, tgt, objtype, attr, proc) \
   CHECKED_KEY(un, entry_name, name, "which is not " type_name, tgt, \

@@ -2972,9 +2972,9 @@ void repeat_message(void)
     ui_cursor_goto(msg_row, msg_col);     // put cursor back
   } else if (State == HITRETURN || State == SETWSIZE) {
     if (msg_row == g_rows - 1) {
-      /* Avoid drawing the "hit-enter" prompt below the previous one,
-       * overwrite it.  Esp. useful when regaining focus and a
-       * FocusGained autocmd exists but didn't draw anything. */
+      // Avoid drawing the "hit-enter" prompt below the previous one,
+      // overwrite it.  Esp. useful when regaining focus and a
+      // FocusGained autocmd exists but didn't draw anything.
       msg_didout = false;
       msg_col = 0;
       msg_clr_eos();
