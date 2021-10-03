@@ -514,8 +514,8 @@ int var_redir_start(char_u *name, int append)
   ga_init(&redir_ga, (int)sizeof(char), 500);
 
   // Parse the variable name (can be a dict or list entry).
-  redir_endp = (char_u *)get_lval(redir_varname, NULL, redir_lval, false, false,
-                                  0, FNE_CHECK_START);
+  redir_endp = get_lval(redir_varname, NULL, redir_lval, false, false,
+                        0, FNE_CHECK_START);
   if (redir_endp == NULL || redir_lval->ll_name == NULL
       || *redir_endp != NUL) {
     clear_lval(redir_lval);
@@ -597,8 +597,8 @@ void var_redir_stop(void)
       tv.vval.v_string = redir_ga.ga_data;
       // Call get_lval() again, if it's inside a Dict or List it may
       // have changed.
-      redir_endp = (char_u *)get_lval(redir_varname, NULL, redir_lval,
-                                      false, false, 0, FNE_CHECK_START);
+      redir_endp = get_lval(redir_varname, NULL, redir_lval,
+                            false, false, 0, FNE_CHECK_START);
       if (redir_endp != NULL && redir_lval->ll_name != NULL) {
         set_var_lval(redir_lval, redir_endp, &tv, false, false, ".");
       }
@@ -1711,7 +1711,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
         if (tofree != NULL) {
           name = tofree;
         }
-        if (get_var_tv((const char *)name, len, &tv, NULL, true, false)
+        if (get_var_tv(name, len, &tv, NULL, true, false)
             == FAIL) {
           error = true;
         } else {
@@ -2023,7 +2023,7 @@ char_u *get_lval(char_u *const name, typval_T *const rettv, lval_T *const lp, co
     }
 
     lp->ll_exp_name = (char *)make_expanded_name(name, expr_start, expr_end,
-                                                 (char_u *)p);
+                                                 p);
     lp->ll_name = lp->ll_exp_name;
     if (lp->ll_exp_name == NULL) {
       /* Report an invalid expression in braces, unless the
@@ -2419,7 +2419,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, co
 
       // handle +=, -=, *=, /=, %= and .=
       di = NULL;
-      if (get_var_tv((const char *)lp->ll_name, (int)STRLEN(lp->ll_name),
+      if (get_var_tv(lp->ll_name, (int)STRLEN(lp->ll_name),
                      &tv, &di, true, false) == OK) {
         if ((di == NULL
              || (!var_check_ro(di->di_flags, lp->ll_name, TV_CSTRING)
@@ -3004,12 +3004,12 @@ int do_unlet(const char *const name, const size_t name_len, const bool forceit)
 
     hashitem_T *hi = hash_find(ht, (const char_u *)varname);
     if (HASHITEM_EMPTY(hi)) {
-      hi = find_hi_in_scoped_ht((const char *)name, &ht);
+      hi = find_hi_in_scoped_ht(name, &ht);
     }
     if (hi != NULL && !HASHITEM_EMPTY(hi)) {
       dictitem_T *const di = TV_DICT_HI2DI(hi);
-      if (var_check_fixed(di->di_flags, (const char *)name, TV_CSTRING)
-          || var_check_ro(di->di_flags, (const char *)name, TV_CSTRING)
+      if (var_check_fixed(di->di_flags, name, TV_CSTRING)
+          || var_check_ro(di->di_flags, name, TV_CSTRING)
           || var_check_lock(d->dv_lock, name, TV_CSTRING)) {
         return FAIL;
       }
@@ -3069,7 +3069,7 @@ static int do_lock_var(lval_T *lp, char_u *name_end FUNC_ATTR_UNUSED, exarg_T *e
       ret = FAIL;
     } else {
       // Normal name or expanded name.
-      dictitem_T *const di = find_var((const char *)lp->ll_name, lp->ll_name_len, NULL,
+      dictitem_T *const di = find_var(lp->ll_name, lp->ll_name_len, NULL,
                                       true);
       if (di == NULL) {
         ret = FAIL;
@@ -4348,7 +4348,7 @@ static int call_func_rettv(char_u **const arg, typval_T *const rettv, const bool
   funcexe.selfdict = selfdict;
   funcexe.basetv = basetv;
   const int ret = get_func_tv(funcname, is_lua ? *arg - funcname : -1, rettv,
-                              (char_u **)arg, &funcexe);
+                              arg, &funcexe);
 
   // Clear the funcref afterwards, so that deleting it while
   // evaluating the arguments is possible (see test55).
@@ -9444,7 +9444,7 @@ static void set_var_const(const char *name, const size_t name_len, typval_T *con
 
   // Search in parent scope which is possible to reference from lambda
   if (v == NULL) {
-    v = find_var_in_scoped_ht((const char *)name, name_len, true);
+    v = find_var_in_scoped_ht(name, name_len, true);
   }
 
   if (tv_is_func(*tv) && !var_check_func_name(name, v == NULL)) {
@@ -9654,7 +9654,7 @@ bool var_check_func_name(const char *const name, const bool new_var)
   // Don't allow hiding a function.  When "v" is not NULL we might be
   // assigning another function to the same var, the type is checked
   // below.
-  if (new_var && function_exists((const char *)name, false)) {
+  if (new_var && function_exists(name, false)) {
     EMSG2(_("E705: Variable name conflicts with existing function: %s"),
           name);
     return false;
@@ -11325,7 +11325,7 @@ bool var_exists(const char *var)
 
   // get_name_len() takes care of expanding curly braces
   const char *name = var;
-  const int len = get_name_len((const char **)&var, &tofree, true, false);
+  const int len = get_name_len(&var, &tofree, true, false);
   if (len > 0) {
     typval_T tv;
 

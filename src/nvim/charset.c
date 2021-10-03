@@ -412,7 +412,7 @@ char *transstr(const char *const s, bool untab)
 {
   // Compute the length of the result, taking account of unprintable
   // multi-byte characters.
-  const size_t len = transstr_len((const char *)s, untab) + 1;
+  const size_t len = transstr_len(s, untab) + 1;
   char *const buf = xmalloc(len);
   transstr_buf(s, buf, len, untab);
   return buf;

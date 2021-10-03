@@ -335,7 +335,7 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags, DoInRuntimepathCB c
 static void push_path(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
                       char *entry, bool after)
 {
-  handle_T h = map_get(String, handle_T)(rtp_used, cstr_as_string((char *)entry));
+  handle_T h = map_get(String, handle_T)(rtp_used, cstr_as_string(entry));
   if (h == 0) {
     char *allocated = xstrdup(entry);
     map_put(String, handle_T)(rtp_used, cstr_as_string(allocated), 1);
@@ -776,7 +776,7 @@ static bool pack_has_entries(char_u *buf)
 {
   int num_files;
   char_u **files;
-  char_u *(pat[]) = { (char_u *)buf };
+  char_u *(pat[]) = { buf };
   if (gen_expand_wildcards(1, pat, &num_files, &files, EW_DIR) == OK) {
     FreeWild(num_files, files);
   }

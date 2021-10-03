@@ -6073,7 +6073,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   wordlen = 0;
   for (const char_u *s = inword; *s != NUL; ) {
     const char_u *t = s;
-    c = mb_cptr2char_adv((const char_u **)&s);
+    c = mb_cptr2char_adv(&s);
     if (slang->sl_rem_accents) {
       if (utf_class(c) == 0) {
         if (did_white) {

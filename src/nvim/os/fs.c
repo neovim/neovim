@@ -134,7 +134,7 @@ bool os_isdir(const char_u *name)
 bool os_isdir_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm((const char *)name);
+  int32_t mode = os_getperm(name);
   if (mode < 0) {
     return false;
   }
