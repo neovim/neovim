@@ -15,6 +15,7 @@
 #include "nvim/api/ui.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/window.h"
+#include "nvim/api/win_config.h"
 #include "nvim/log.h"
 #include "nvim/map.h"
 #include "nvim/msgpack_rpc/helpers.h"
