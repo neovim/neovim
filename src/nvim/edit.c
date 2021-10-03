@@ -116,7 +116,7 @@ static char *ctrl_x_msgs[] =
 static char *ctrl_x_mode_names[] = {
   "keyword",
   "ctrl_x",
-  "unknown",          // CTRL_X_SCROLL
+  "scroll",
   "whole_line",
   "files",
   "tags",
@@ -3329,7 +3329,7 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
 // Return Insert completion mode name string
 static char_u *ins_compl_mode(void)
 {
-  if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET || compl_started) {
+  if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET || ctrl_x_mode == CTRL_X_SCROLL ||  compl_started) {
     return (char_u *)ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
   }
   return (char_u *)"";
