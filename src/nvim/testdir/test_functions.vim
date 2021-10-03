@@ -585,6 +585,8 @@ func Test_mode()
   exe "normal iabc\<C-X>\<C-L>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
 
+  exe "normal R\<F2>\<Esc>"
+  call assert_equal('R-R', g:current_modes)
   " R_CTRL-P: Multiple matches
   exe "normal RBa\<C-P>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
@@ -618,6 +620,42 @@ func Test_mode()
   " R_CTRL-X CTRL-L: No match
   exe "normal Rabc\<C-X>\<C-L>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
+
+  exe "normal gR\<F2>\<Esc>"
+  call assert_equal('R-Rv', g:current_modes)
+  " gR_CTRL-P: Multiple matches
+  exe "normal gRBa\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-P: Single match
+  exe "normal gRBro\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-X
+  exe "normal gRBa\<C-X>\<F2>\<Esc>u"
+  call assert_equal('R-Rvx', g:current_modes)
+  " gR_CTRL-X CTRL-P: Multiple matches
+  exe "normal gRBa\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-X CTRL-P: Single match
+  exe "normal gRBro\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-X CTRL-P + CTRL-P: Single match
+  exe "normal gRBro\<C-X>\<C-P>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-X CTRL-L: Multiple matches
+  exe "normal gR\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-X CTRL-L: Single match
+  exe "normal gRBlu\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-P: No match
+  exe "normal gRCom\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-X CTRL-P: No match
+  exe "normal gRCom\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
+  " gR_CTRL-X CTRL-L: No match
+  exe "normal gRabc\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rvc', g:current_modes)
 
   call assert_equal('n', mode(0))
   call assert_equal('n', mode(1))
