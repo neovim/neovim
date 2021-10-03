@@ -853,12 +853,12 @@ void ui_ext_win_position(win_T *wp)
       bool east = c.anchor & kFloatAnchorEast;
       bool south = c.anchor & kFloatAnchorSouth;
 
-      int comp_row = (int)row - (south ? wp->w_height : 0);
-      int comp_col = (int)col - (east ? wp->w_width : 0);
+      int comp_row = (int)row - (south ? wp->w_height_outer : 0);
+      int comp_col = (int)col - (east ? wp->w_width_outer : 0);
       comp_row += grid->comp_row;
       comp_col += grid->comp_col;
-      comp_row = MAX(MIN(comp_row, Rows-wp->w_height_outer-1), 0);
-      comp_col = MAX(MIN(comp_col, Columns-wp->w_width_outer), 0);
+      comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - 1), 0);
+      comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
       bool valid = (wp->w_redr_type == 0);

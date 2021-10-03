@@ -1360,7 +1360,9 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 ///   - `bufpos`: Places float relative to buffer text (only when
 ///               relative="win"). Takes a tuple of zero-indexed [line, column].
 ///               `row` and `col` if given are applied relative to this
-///               position, else they default to `row=1` and `col=0`
+///               position, else they default to:
+///               - `row=1` and `col=0` if `anchor` is "NW" or "NE"
+///               - `row=0` and `col=0` if `anchor` is "SW" or "SE"
 ///               (thus like a tooltip near the buffer text).
 ///   - `row`: Row position in units of "screen cell height", may be fractional.
 ///   - `col`: Column position in units of "screen cell width", may be
