@@ -3419,6 +3419,8 @@ complete_info([{what}])				*complete_info()*
 		   ""		     Not in completion mode
 		   "keyword"	     Keyword completion |i_CTRL-X_CTRL-N|
 		   "ctrl_x"	     Just pressed CTRL-X |i_CTRL-X|
+		   "scroll"	     Scrolling with |i_CTRL-X_CTRL-E| or
+				     |i_CTRL-X_CTRL-Y|
 		   "whole_line"	     Whole lines |i_CTRL-X_CTRL-L|
 		   "files"	     File names |i_CTRL-X_CTRL-F|
 		   "tags"	     Tags |i_CTRL-X_CTRL-]|
