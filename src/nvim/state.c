@@ -161,6 +161,11 @@ char *get_mode(void)
     if (State & VREPLACE_FLAG) {
       buf[0] = 'R';
       buf[1] = 'v';
+      if (ins_compl_active()) {
+        buf[2] = 'c';
+      } else if (ctrl_x_mode_not_defined_yet()) {
+        buf[2] = 'x';
+      }
     } else {
       if (State & REPLACE_FLAG) {
         buf[0] = 'R';

@@ -6865,29 +6865,31 @@ mode([expr])	Return a string that indicates the current mode.
 		   niR	    Normal using |i_CTRL-O| in |Replace-mode|
 		   niV	    Normal using |i_CTRL-O| in |Virtual-Replace-mode|
 		   v	    Visual by character
+		   vs	    Visual by character using |v_CTRL-O| in Select mode
 		   V	    Visual by line
+		   Vs	    Visual by line using |v_CTRL-O| in Select mode
 		   CTRL-V   Visual blockwise
+		   CTRL-Vs  Visual blockwise using |v_CTRL-O| in Select mode
 		   s	    Select by character
 		   S	    Select by line
 		   CTRL-S   Select blockwise
-		   vs	    Visual by character using |v_CTRL-O| from
-				Select mode
-		   Vs	    Visual by line using |v_CTRL-O| from Select mode
-		   CTRL-Vs  Visual blockwise using |v_CTRL-O| from Select mode
 		   i	    Insert
 		   ic	    Insert mode completion |compl-generic|
 		   ix	    Insert mode |i_CTRL-X| completion
 		   R	    Replace |R|
 		   Rc	    Replace mode completion |compl-generic|
-		   Rv	    Virtual Replace |gR|
 		   Rx	    Replace mode |i_CTRL-X| completion
+		   Rv	    Virtual Replace |gR|
+		   Rvc	    Virtual Replace mode completion |compl-generic|
+		   Rvx	    Virtual Replace mode |i_CTRL-X| completion
 		   c	    Command-line editing
 		   cv	    Vim Ex mode |Q| or |gQ|
 		   r	    Hit-enter prompt
 		   rm	    The -- more -- prompt
-		   r?	    |:confirm| query of some sort
+		   r?	    A |:confirm| query of some sort
 		   !	    Shell or external command is executing
 		   t	    Terminal mode: keys go to the job
+
 		This is useful in the 'statusline' option or when used
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
