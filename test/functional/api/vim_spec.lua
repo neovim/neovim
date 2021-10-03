@@ -1119,7 +1119,7 @@ describe('API', function()
 
   describe('nvim_get_context', function()
     it('validates args', function()
-      eq('unexpected key: blah',
+      eq("Invalid key: 'blah'",
         pcall_err(nvim, 'get_context', {blah={}}))
       eq('invalid value for key: types',
         pcall_err(nvim, 'get_context', {types=42}))

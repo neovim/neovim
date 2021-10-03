@@ -152,6 +152,8 @@ for _,f in ipairs(functions) do
     for i,param in ipairs(f.parameters) do
       if param[1] == "DictionaryOf(LuaRef)" then
         param = {"Dictionary", param[2]}
+      elseif startswith(param[1], "Dict(") then
+        param = {"Dictionary", param[2]}
       end
       f_exported.parameters[i] = param
     end
@@ -173,7 +175,10 @@ local output = io.open(dispatch_outputf, 'wb')
 
 local function real_type(type)
   local rv = type
-  if c_grammar.typed_container:match(rv) then
+  local rmatch = string.match(type, "Dict%(([_%w]+)%)")
+  if rmatch then
+    return "KeyDict_"..rmatch
+  elseif c_grammar.typed_container:match(rv) then
     if rv:match('Array') then
       rv = 'Array'
     else
@@ -209,8 +214,9 @@ for i = 1, #functions do
     -- Declare/initialize variables that will hold converted arguments
     for j = 1, #fn.parameters do
       local param = fn.parameters[j]
+      local rt = real_type(param[1])
       local converted = 'arg_'..j
-      output:write('\n  '..param[1]..' '..converted..';')
+      output:write('\n  '..rt..' '..converted..';')
     end
     output:write('\n')
     output:write('\n  if (args.size != '..#fn.parameters..') {')
@@ -225,7 +231,24 @@ for i = 1, #functions do
       param = fn.parameters[j]
       converted = 'arg_'..j
       local rt = real_type(param[1])
-      if rt ~= 'Object' then
+      if rt == 'Object' then
+        output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
+      elseif rt:match('^KeyDict_') then
+        converted = '&' .. converted
+        output:write('\n  if (args.items['..(j - 1)..'].type == kObjectTypeDictionary) {') --luacheck: ignore 631
+        output:write('\n    memset('..converted..', 0, sizeof(*'..converted..'));') -- TODO: neeeee
+        output:write('\n    if (!api_dict_to_keydict('..converted..', '..rt..'_get_field, args.items['..(j - 1)..'].data.dictionary, error)) {')
+        output:write('\n      goto cleanup;')
+        output:write('\n    }')
+          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {') --luacheck: ignore 631
+        output:write('\n    memset('..converted..', 0, sizeof(*'..converted..'));')
+
+        output:write('\n  } else {')
+        output:write('\n    api_set_error(error, kErrorTypeException, \
+          "Wrong type for argument '..j..' when calling '..fn.name..', expecting '..param[1]..'");')
+        output:write('\n    goto cleanup;')
+        output:write('\n  }\n')
+      else
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
           -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
           output:write('\n  if (args.items['..
@@ -257,10 +280,7 @@ for i = 1, #functions do
           "Wrong type for argument '..j..' when calling '..fn.name..', expecting '..param[1]..'");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
-      else
-        output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
       end
-
       args[#args + 1] = converted
     end
 
@@ -423,13 +443,24 @@ local function process_function(fn)
     if param[1] == "DictionaryOf(LuaRef)" then
       extra = "true, "
     end
+    local errshift = 0
+    if string.match(param_type, '^KeyDict_') then
+      write_shifted_output(output, string.format([[
+      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, %s&err);]], param_type, cparam, cparam, param_type, extra))
+      cparam = '&'..cparam
+      errshift = 1 -- free incomplete dict on error
+    else
+      write_shifted_output(output, string.format([[
+      const %s %s = nlua_pop_%s(lstate, %s&err);]], param[1], cparam, param_type, extra))
+    end
+
     write_shifted_output(output, string.format([[
-    const %s %s = nlua_pop_%s(lstate, %s&err);
 
     if (ERROR_SET(&err)) {
       goto exit_%u;
     }
-    ]], param[1], cparam, param_type, extra, #fn.parameters - j))
+
+    ]], #fn.parameters - j + errshift))
     free_code[#free_code + 1] = ('api_free_%s(%s);'):format(
       lc_param_type, cparam)
     cparams = cparam .. ', ' .. cparams
@@ -446,7 +477,7 @@ local function process_function(fn)
   for i = 1, #free_code do
     local rev_i = #free_code - i + 1
     local code = free_code[rev_i]
-    if i == 1 then
+    if i == 1 and not string.match(real_type(fn.parameters[1][1]), '^KeyDict_') then
       free_at_exit_code = free_at_exit_code .. ('\n    %s'):format(code)
     else
       free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(

@@ -19,6 +19,7 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # define ArrayOf(...) Array
 # define DictionaryOf(...) Dictionary
+# define Dict(name) KeyDict_##name
 #endif
 
 // Basic types
@@ -129,5 +130,14 @@ struct key_value_pair {
   Object value;
 };
 
+typedef Object *(*field_hash)(void *retval, const char *str, size_t len);
+typedef struct {
+  char *str;
+  size_t ptr_off;
+} KeySetLink;
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "keysets_defs.generated.h"
+#endif
 
 #endif  // NVIM_API_PRIVATE_DEFS_H

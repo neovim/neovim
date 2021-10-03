@@ -56,6 +56,8 @@ struct map_arguments {
   size_t orig_rhs_len;
 };
 typedef struct map_arguments MapArguments;
+#define MAP_ARGUMENTS_INIT { false, false, false, false, false, false, false, \
+                             { 0 }, 0, NULL, 0, false, NULL, 0 }
 
 #define KEYLEN_PART_KEY -1  // keylen value for incomplete key-code
 #define KEYLEN_PART_MAP -2  // keylen value for incomplete mapping

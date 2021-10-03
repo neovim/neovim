@@ -1424,7 +1424,7 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
-Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config, Error *err)
+Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_CHECK_TEXTLOCK
 {
@@ -1761,24 +1761,15 @@ Dictionary nvim_get_color_map(void)
 /// @param[out]  err  Error details, if any
 ///
 /// @return map of global |context|.
-Dictionary nvim_get_context(Dictionary opts, Error *err)
+Dictionary nvim_get_context(Dict(context) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
   Array types = ARRAY_DICT_INIT;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object v = opts.items[i].value;
-    if (strequal("types", k.data)) {
-      if (v.type != kObjectTypeArray) {
-        api_set_error(err, kErrorTypeValidation, "invalid value for key: %s",
-                      k.data);
-        return (Dictionary)ARRAY_DICT_INIT;
-      }
-      types = v.data.array;
-    } else {
-      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      return (Dictionary)ARRAY_DICT_INIT;
-    }
+  if (opts->types.type == kObjectTypeArray) {
+    types = opts->types.data.array;
+  } else if (opts->types.type != kObjectTypeNil) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: types");
+    return (Dictionary)ARRAY_DICT_INIT;
   }
 
   int int_types = types.size > 0 ? 0 : kCtxAll;
@@ -1888,7 +1879,7 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 ///               as keys excluding |<buffer>| but including |noremap|.
 ///               Values are Booleans. Unknown key is an error.
 /// @param[out]   err   Error details, if any.
-void nvim_set_keymap(String mode, String lhs, String rhs, Dictionary opts, Error *err)
+void nvim_set_keymap(String mode, String lhs, String rhs, Dict(keymap) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
   modify_keymap(-1, false, mode, lhs, rhs, opts, err);
@@ -1914,7 +1905,7 @@ void nvim_del_keymap(String mode, String lhs, Error *err)
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dictionary nvim_get_commands(Dictionary opts, Error *err)
+Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
   FUNC_API_SINCE(4)
 {
   return nvim_buf_get_commands(-1, opts, err);

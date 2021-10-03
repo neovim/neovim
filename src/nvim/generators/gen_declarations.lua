@@ -60,7 +60,7 @@ local right_word = concat(
 )
 local word = branch(
   concat(
-    branch(lit('ArrayOf('), lit('DictionaryOf(')), -- typed container macro
+    branch(lit('ArrayOf('), lit('DictionaryOf('), lit('Dict(')), -- typed container macro
     one_or_more(any_character - lit(')')),
     lit(')')
   ),

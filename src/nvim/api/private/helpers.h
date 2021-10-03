@@ -59,6 +59,9 @@
 #define NIL ((Object)OBJECT_INIT)
 #define NULL_STRING ((String)STRING_INIT)
 
+// currently treat key=vim.NIL as if the key was missing
+#define HAS_KEY(o) ((o).type != kObjectTypeNil)
+
 #define PUT(dict, k, v) \
   kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))
 
@@ -138,6 +141,9 @@ typedef struct {
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "keysets.h.generated.h"
 # include "api/private/helpers.h.generated.h"
 #endif
+
+
 #endif  // NVIM_API_PRIVATE_HELPERS_H
