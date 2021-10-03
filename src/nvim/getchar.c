@@ -1570,7 +1570,7 @@ int vgetc(void)
             // a CSI (0x9B),
             // of a K_SPECIAL - KS_EXTRA - KE_CSI, which is CSI too.
             c = vgetorpeek(true);
-            if (vgetorpeek(true) == (int)KE_CSI && c == KS_EXTRA) {
+            if (vgetorpeek(true) == KE_CSI && c == KS_EXTRA) {
               buf[i] = CSI;
             }
           }
@@ -1946,7 +1946,7 @@ static int vgetorpeek(bool advance)
                       && (mp->m_keys[0] != K_SPECIAL
                           || mp->m_keys[1] != KS_EXTRA
                           || mp->m_keys[2]
-                          != (int)KE_SNR)) {
+                          != KE_SNR)) {
                     continue;
                   }
                   /*
@@ -2228,7 +2228,7 @@ static int vgetorpeek(bool advance)
                   if (!ascii_iswhite(ptr[col])) {
                     curwin->w_wcol = vcol;
                   }
-                  vcol += lbr_chartabsize(ptr, ptr + col, (colnr_T)vcol);
+                  vcol += lbr_chartabsize(ptr, ptr + col, vcol);
                   col += utfc_ptr2len(ptr + col);
                 }
                 curwin->w_wrow = curwin->w_cline_row

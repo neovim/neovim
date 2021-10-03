@@ -117,7 +117,7 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   line_count = curbuf->b_ml.ml_line_count;
   retval = readfile(read_stdin ? NULL : curbuf->b_ffname,
                     read_stdin ? NULL : curbuf->b_fname,
-                    (linenr_T)line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
+                    line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
                     flags | READ_BUFFER);
   if (retval == OK) {
     // Delete the binary lines.

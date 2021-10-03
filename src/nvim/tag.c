@@ -2291,7 +2291,7 @@ findtag_end:
             }
           }
         }
-        matches[match_count++] = (char_u *)mfp;
+        matches[match_count++] = mfp;
       }
     }
 
