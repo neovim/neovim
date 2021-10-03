@@ -872,6 +872,9 @@ au BufNewFile,BufRead *.json-patch			setf json
 " Jupyter Notebook is also json
 au BufNewFile,BufRead *.ipynb				setf json
 
+" Other files that look like json
+au BufNewFile,BufRead .babelrc,.eslintrc,.prettierrc,.firebaserc  setf json
+
 " JSONC
 au BufNewFile,BufRead *.jsonc			setf jsonc
 
