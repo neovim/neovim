@@ -65,25 +65,10 @@ KHASH_SET_INIT_INT64(bufset)
 KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
 KHASH_SET_INIT_STR(strset)
 
-#define copy_option_part(src, dest, ...) \
-  ((char *)copy_option_part((char_u **)src, (char_u *)dest, __VA_ARGS__))
 #define find_shada_parameter(...) \
   ((const char *)find_shada_parameter(__VA_ARGS__))
-#define home_replace_save(a, b) \
-  ((char *)home_replace_save(a, (char_u *)b))
-#define home_replace(a, b, c, d, e) \
-  home_replace(a, (char_u *)b, (char_u *)c, d, e)
-#define vim_rename(a, b) \
-  (vim_rename((char_u *)a, (char_u *)b))
-#define mb_strnicmp(a, b, c) \
-  (mb_strnicmp((char_u *)a, (char_u *)b, c))
 #define path_try_shorten_fname(b) \
   ((char *)path_try_shorten_fname((char_u *)b))
-#define buflist_new(ffname, sfname, ...) \
-  (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
-#define os_isdir(f) (os_isdir((char_u *)f))
-#define regtilde(s, m) ((char *)regtilde((char_u *)s, m))
-#define path_tail_with_sep(f) ((char *)path_tail_with_sep((char_u *)f))
 
 #define SEARCH_KEY_MAGIC "sm"
 #define SEARCH_KEY_SMARTCASE "sc"
@@ -1271,7 +1256,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       // string is close to useless: you can only use it with :& or :~ and
       // that’s all because s//~ is not available until the first call to
       // regtilde. Vim was not calling this for some reason.
-      (void)regtilde(cur_entry.data.sub_string.sub, p_magic);
+      (void)(char *)regtilde((char_u *)cur_entry.data.sub_string.sub, p_magic);
       // Do not free shada entry: its allocated memory was saved above.
       break;
     case kSDItemHistoryEntry:
@@ -1362,8 +1347,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     case kSDItemBufferList:
       for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
         char *const sfname = path_try_shorten_fname(cur_entry.data.buffer_list.buffers[i].fname);
-        buf_T *const buf = buflist_new(cur_entry.data.buffer_list.buffers[i].fname, sfname, 0,
-                                       BLN_LISTED);
+        buf_T *const buf =
+          buflist_new((char_u *)cur_entry.data.buffer_list.buffers[i].fname, (char_u *)sfname, 0,
+                      BLN_LISTED);
         if (buf != NULL) {
           RESET_FMARK(&buf->b_last_cursor,
                       cur_entry.data.buffer_list.buffers[i].pos, 0);
@@ -3037,11 +3023,11 @@ shada_write_file_open: {}
   }
   if (nomerge) {
 shada_write_file_nomerge: {}
-    char *const tail = path_tail_with_sep(fname);
+    char *const tail = (char *)path_tail_with_sep((char_u *)fname);
     if (tail != fname) {
       const char tail_save = *tail;
       *tail = NUL;
-      if (!os_isdir(fname)) {
+      if (!os_isdir((char_u *)fname)) {
         int ret;
         char *failed_dir;
         if ((ret = os_mkdir_recurse(fname, 0700, &failed_dir)) != 0) {
@@ -3116,7 +3102,7 @@ shada_write_file_nomerge: {}
         }
       }
 #endif
-      if (vim_rename(tempname, fname) == -1) {
+      if (vim_rename((char_u *)tempname, (char_u *)fname) == -1) {
         EMSG3(_(RNERR "Can't rename ShaDa file from %s to %s!"),
               tempname, fname);
       } else {
@@ -4015,13 +4001,13 @@ static bool shada_removable(const char *name)
   char part[MAXPATHL + 1];
   bool retval = false;
 
-  char *new_name = home_replace_save(NULL, name);
+  char *new_name = (char *)home_replace_save(NULL, (char_u *)name);
   for (p = (char *)p_shada; *p; ) {
-    (void)copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
+    (void)(char *)copy_option_part((char_u **)&p, (char_u *)part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
-      home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);
+      home_replace(NULL, (char_u *)(part + 1), (char_u *)NameBuff, MAXPATHL, true);
       size_t n = STRLEN(NameBuff);
-      if (mb_strnicmp(NameBuff, new_name, n) == 0) {
+      if (mb_strnicmp((char_u *)NameBuff, (char_u *)new_name, n) == 0) {
         retval = true;
         break;
       }
