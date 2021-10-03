@@ -655,10 +655,17 @@ static int insert_check(VimState *state)
 
 static int insert_execute(VimState *state, int key)
 {
+  InsertState *const s = (InsertState *)state;
+  if (stop_insert_mode) {
+    // Insert mode ended, possibly from a callback.
+    s->count = 0;
+    s->nomove = true;
+    return 0;
+  }
+
   if (key == K_IGNORE || key == K_NOP) {
     return -1;  // get another key
   }
-  InsertState *s = (InsertState *)state;
   s->c = key;
 
   // Don't want K_EVENT with cursorhold for the second key, e.g., after CTRL-V.
@@ -984,6 +991,15 @@ static int insert_handle_key(InsertState *s)
     break;
 
   case Ctrl_W:        // delete word before the cursor
+    if (bt_prompt(curbuf) && (mod_mask & MOD_MASK_SHIFT) == 0) {
+      // In a prompt window CTRL-W is used for window commands.
+      // Use Shift-CTRL-W to delete a word.
+      stuffcharReadbuff(Ctrl_W);
+      restart_edit = 'i';
+      s->nomove = true;
+      s->count = 0;
+      return 0;
+    }
     s->did_backspace = ins_bs(s->c, BACKSPACE_WORD, &s->inserted_space);
     auto_format(false, true);
     break;
@@ -1653,6 +1669,17 @@ static void init_prompt(int cmdchar_todo)
     coladvance(MAXCOL);
     changed_bytes(curbuf->b_ml.ml_line_count, 0);
   }
+
+  // Insert always starts after the prompt, allow editing text after it.
+  if (Insstart_orig.lnum != curwin->w_cursor.lnum || Insstart_orig.col != (colnr_T)STRLEN(prompt)) {
+    Insstart.lnum = curwin->w_cursor.lnum;
+    Insstart.col = STRLEN(prompt);
+    Insstart_orig = Insstart;
+    Insstart_textlen = Insstart.col;
+    Insstart_blank_vcol = MAXCOL;
+    arrow_used = false;
+  }
+
   if (cmdchar_todo == 'A') {
     coladvance(MAXCOL);
   }

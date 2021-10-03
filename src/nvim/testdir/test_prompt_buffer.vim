@@ -145,10 +145,9 @@ func Test_prompt_buffer_edit()
   call assert_beeps("normal! \<C-X>")
   " pressing CTRL-W in the prompt buffer should trigger the window commands
   call assert_equal(1, winnr())
-  " In Nvim, CTRL-W commands aren't usable from insert mode in a prompt buffer
-  " exe "normal A\<C-W>\<C-W>"
-  " call assert_equal(2, winnr())
-  " wincmd w
+  exe "normal A\<C-W>\<C-W>"
+  call assert_equal(2, winnr())
+  wincmd w
   close!
   call assert_equal(0, prompt_setprompt([], ''))
 endfunc
