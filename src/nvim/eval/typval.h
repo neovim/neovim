@@ -81,7 +81,8 @@ typedef struct {
   } data;
   CallbackType type;
 } Callback;
-#define CALLBACK_NONE ((Callback){ .type = kCallbackNone })
+#define CALLBACK_INIT { .type = kCallbackNone }
+#define CALLBACK_NONE ((Callback)CALLBACK_INIT)
 
 /// Structure holding dictionary watcher
 typedef struct dict_watcher {

@@ -100,6 +100,38 @@ describe('channels', function()
     eq({"notification", "exit", {3,0}}, next_msg())
   end)
 
+  it('can use stdio channel and on_print callback', function()
+    source([[
+      let g:job_opts = {
+      \ 'on_stdout': function('OnEvent'),
+      \ 'on_stderr': function('OnEvent'),
+      \ 'on_exit': function('OnEvent'),
+      \ }
+    ]])
+    meths.set_var("nvim_prog", nvim_prog)
+    meths.set_var("code", [[
+      function! OnStdin(id, data, event) dict
+        echo string([a:id, a:data, a:event])
+        if a:data == ['']
+          quit
+        endif
+      endfunction
+      function! OnPrint(text) dict
+        call chansend(g:x, ['OnPrint:' .. a:text])
+      endfunction
+      let g:x = stdioopen({'on_stdin': funcref('OnStdin'), 'on_print':'OnPrint'})
+      call chansend(x, "hello")
+    ]])
+    command("let g:id = jobstart([ g:nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--headless', '--cmd', g:code], g:job_opts)")
+    local id = eval("g:id")
+    ok(id > 0)
+
+    eq({ "notification", "stdout", {id, { "hello" } } }, next_msg())
+
+    command("call chansend(id, 'howdy')")
+    eq({"notification", "stdout", {id, {"OnPrint:[1, ['howdy'], 'stdin']"}}}, next_msg())
+  end)
+
   local function expect_twoline(id, stream, line1, line2, nobr)
     local msg = next_msg()
     local joined = nobr and {line1..line2} or {line1, line2}

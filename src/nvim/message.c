@@ -2647,6 +2647,17 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
   char buf[7];
   char *p;
 
+  if (on_print.type != kCallbackNone) {
+    typval_T argv[1];
+    argv[0].v_type = VAR_STRING;
+    argv[0].v_lock = VAR_UNLOCKED;
+    argv[0].vval.v_string = (char_u *)str;
+    typval_T rettv = TV_INITIAL_VALUE;
+    callback_call(&on_print, 1, argv, &rettv);
+    tv_clear(&rettv);
+    return;
+  }
+
   while ((maxlen < 0 || s - str < maxlen) && *s != NUL) {
     int len = utf_ptr2len((const char_u *)s);
     if (!(silent_mode && p_verbose == 0)) {
