@@ -1669,10 +1669,31 @@ func Test_mode_changes()
   call assert_equal(4, g:count)
   call assert_equal(len(g:mode_seq) - 1, g:index)
 
+  let g:n_to_i = 0
+  au ModeChanged n:i let g:n_to_i += 1
+  let g:n_to_niI = 0
+  au ModeChanged i:niI let g:n_to_niI += 1
+  let g:niI_to_i = 0
+  au ModeChanged niI:i let g:niI_to_i += 1
+  let g:nany_to_i = 0
+  au ModeChanged n*:i let g:nany_to_i += 1
+  let g:i_to_n = 0
+  au ModeChanged i:n let g:i_to_n += 1
+  let g:nori_to_any = 0
+  au ModeChanged [ni]:* let g:nori_to_any += 1
+  let g:i_to_any = 0
+  au ModeChanged i:* let g:i_to_any += 1
   let g:index = 0
   let g:mode_seq = ['n', 'i', 'niI', 'i', 'n']
   call feedkeys("a\<C-O>l\<esc>", 'tnix')
   call assert_equal(len(g:mode_seq) - 1, g:index)
+  call assert_equal(1, g:n_to_i)
+  call assert_equal(1, g:n_to_niI)
+  call assert_equal(1, g:niI_to_i)
+  call assert_equal(2, g:nany_to_i)
+  call assert_equal(1, g:i_to_n)
+  call assert_equal(2, g:i_to_any)
+  call assert_equal(3, g:nori_to_any)
 
   au! ModeChanged
   delfunc TestMode
