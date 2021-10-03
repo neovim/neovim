@@ -874,6 +874,26 @@ describe('vim.diagnostic', function()
         return count_extmarks(diagnostic_bufnr, diagnostic_ns)
       ]])
     end)
+
+    it('sets signs', function()
+      local result = exec_lua [[
+        vim.diagnostic.config({
+          signs = true,
+        })
+
+        local diagnostics = {
+          make_error('Error', 1, 1, 1, 2),
+          make_warning('Warning', 3, 3, 3, 3),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+
+        return vim.fn.sign_getplaced(diagnostic_bufnr, {group = '*'})[1].signs
+      ]]
+
+      eq({2, 'DiagnosticSignError'}, {result[1].lnum, result[1].name})
+      eq({4, 'DiagnosticSignWarn'}, {result[2].lnum, result[2].name})
+    end)
   end)
 
   describe('show_line_diagnostics()', function()
@@ -991,37 +1011,6 @@ describe('vim.diagnostic', function()
         local lines = vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
-      ]])
-    end)
-  end)
-
-  describe('set_signs()', function()
-    -- TODO(tjdevries): Find out why signs are not displayed when set from Lua...??
-    pending('sets signs by default', function()
-      exec_lua [[
-        vim.diagnostic.config({
-          update_in_insert = true,
-          signs = true,
-        })
-
-        local diagnostics = {
-          make_error('Delayed Diagnostic', 1, 1, 1, 2),
-          make_error('Delayed Diagnostic', 3, 3, 3, 3),
-        }
-
-        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
-        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
-
-        vim.diagnostic._set_signs(diagnostic_ns, diagnostic_bufnr, diagnostics)
-        -- return vim.fn.sign_getplaced()
-      ]]
-
-      nvim("input", "o")
-      nvim("input", "<esc>")
-
-      -- TODO(tjdevries): Find a way to get the signs to display in the test...
-      eq(nil, exec_lua [[
-        return im.fn.sign_getplaced()[1].signs
       ]])
     end)
   end)

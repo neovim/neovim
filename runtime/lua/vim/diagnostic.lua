@@ -620,22 +620,21 @@ function M.set(namespace, bufnr, diagnostics, opts)
   }
 
   if vim.tbl_isempty(diagnostics) then
-    return M.reset(namespace, bufnr)
+    clear_diagnostic_cache(namespace, bufnr)
+  else
+    if not diagnostic_cleanup[bufnr][namespace] then
+      diagnostic_cleanup[bufnr][namespace] = true
+
+      -- Clean up our data when the buffer unloads.
+      vim.api.nvim_buf_attach(bufnr, false, {
+        on_detach = function(_, b)
+          clear_diagnostic_cache(b, namespace)
+          diagnostic_cleanup[b][namespace] = nil
+        end
+      })
+    end
+    set_diagnostic_cache(namespace, bufnr, diagnostics)
   end
-
-  if not diagnostic_cleanup[bufnr][namespace] then
-    diagnostic_cleanup[bufnr][namespace] = true
-
-    -- Clean up our data when the buffer unloads.
-    vim.api.nvim_buf_attach(bufnr, false, {
-      on_detach = function(_, b)
-        clear_diagnostic_cache(b, namespace)
-        diagnostic_cleanup[b][namespace] = nil
-      end
-    })
-  end
-
-  set_diagnostic_cache(namespace, bufnr, diagnostics)
 
   if vim.api.nvim_buf_is_loaded(bufnr) then
     M.show(namespace, bufnr, diagnostics, opts)
