@@ -1655,7 +1655,7 @@ func Test_mode_changes()
   func! TestMode()
     call assert_equal(g:mode_seq[g:index], get(v:event, "old_mode"))
     call assert_equal(g:mode_seq[g:index + 1], get(v:event, "new_mode"))
-    call assert_equal(mode(), get(v:event, "new_mode"))
+    call assert_equal(mode(1), get(v:event, "new_mode"))
     let g:index += 1
   endfunc
 
@@ -1667,7 +1667,11 @@ func Test_mode_changes()
   au ModeChanged V:v :call DoIt()
   call feedkeys("Vv\<esc>", 'tnix')
   call assert_equal(4, g:count)
+  call assert_equal(len(g:mode_seq) - 1, g:index)
 
+  let g:index = 0
+  let g:mode_seq = ['n', 'i', 'niI', 'i', 'n']
+  call feedkeys("a\<C-O>l\<esc>", 'tnix')
   call assert_equal(len(g:mode_seq) - 1, g:index)
 
   au! ModeChanged
