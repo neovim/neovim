@@ -109,6 +109,21 @@ describe('float window', function()
     assert_alive()
   end)
 
+  it('closed immediately by autocmd after win_enter #15548', function()
+    eq('Error executing lua: [string "<nvim>"]:0: Window was closed immediately',
+      pcall_err(exec_lua, [[
+        vim.cmd "autocmd BufLeave * ++once quit!"
+        local buf = vim.api.nvim_create_buf(true, true)
+        vim.api.nvim_open_win(buf, true, {
+          relative = "win",
+          row = 0, col = 0,
+          width = 1, height = 1,
+          noautocmd = false,
+        })
+    ]]))
+    assert_alive()
+  end)
+
   it('opened with correct height', function()
     local height = exec_lua([[
       vim.api.nvim_set_option("winheight", 20)
