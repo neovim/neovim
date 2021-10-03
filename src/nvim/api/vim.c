@@ -59,7 +59,6 @@
 #endif
 
 void api_vim_free_all_mem(void)
-  FUNC_API_NOEXPORT
 {
   String name;
   handle_T id;
@@ -264,7 +263,6 @@ void nvim__set_hl_ns(Integer ns_id, Error *err)
 }
 
 static void on_redraw_event(void **argv)
-  FUNC_API_NOEXPORT
 {
   redraw_all_later(NOT_VALID);
 }
