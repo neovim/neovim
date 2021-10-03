@@ -150,4 +150,47 @@ describe('prompt buffer', function()
     ]])
   end)
 
+  it('Insert at start using I', function()
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Prompt]                 |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+    feed("i")
+    feed("hello<BS><BS>")
+    screen:expect([[
+      % hel^                    |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Prompt] [+]             |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+    feed("<Esc>I")
+    feed("ab")
+    screen:expect([[
+      % ab^hel                  |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Prompt] [+]             |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
 end)

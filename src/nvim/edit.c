@@ -1632,6 +1632,17 @@ char_u *prompt_text(void) FUNC_ATTR_WARN_UNUSED_RESULT
   return buf_prompt_text(curbuf);
 }
 
+// Set the insert start position for when using a prompt buffer.
+static void set_insstart(linenr_T lnum, int col)
+{
+  Insstart.lnum = lnum;
+  Insstart.col = col;
+  Insstart_orig = Insstart;
+  Insstart_textlen = Insstart.col;
+  Insstart_blank_vcol = MAXCOL;
+  arrow_used = false;
+}
+
 // Prepare for prompt mode: Make sure the last line has the prompt text.
 // Move the cursor to this line.
 static void init_prompt(int cmdchar_todo)
@@ -1652,10 +1663,17 @@ static void init_prompt(int cmdchar_todo)
     coladvance(MAXCOL);
     changed_bytes(curbuf->b_ml.ml_line_count, 0);
   }
+
+  // Insert always starts after the prompt, allow editing text after it.
+  if (Insstart_orig.lnum != curwin->w_cursor.lnum
+      || Insstart_orig.col != (int)STRLEN(prompt)) {
+    set_insstart(curwin->w_cursor.lnum, (int)STRLEN(prompt));
+  }
+
   if (cmdchar_todo == 'A') {
     coladvance(MAXCOL);
   }
-  if (cmdchar_todo == 'I' || curwin->w_cursor.col <= (int)STRLEN(prompt)) {
+  if (curwin->w_cursor.col <= (int)STRLEN(prompt)) {
     curwin->w_cursor.col = STRLEN(prompt);
   }
   // Make sure the cursor is in a valid position.
