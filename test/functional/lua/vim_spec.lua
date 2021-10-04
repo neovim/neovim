@@ -237,28 +237,33 @@ describe('lua stdlib', function()
   end)
 
   it("vim.split", function()
-    local split = function(str, sep, plain)
-      return exec_lua('return vim.split(...)', str, sep, plain)
+    local split = function(str, sep, kwargs)
+      return exec_lua('return vim.split(...)', str, sep, kwargs)
     end
 
     local tests = {
-      { "a,b", ",", false, { 'a', 'b' } },
-      { ":aa::bb:", ":", false, { '', 'aa', '', 'bb', '' } },
-      { "::ee::ff:", ":", false, { '', '', 'ee', '', 'ff', '' } },
-      { "ab", ".", false, { '', '', '' } },
-      { "a1b2c", "[0-9]", false, { 'a', 'b', 'c' } },
-      { "xy", "", false, { 'x', 'y' } },
-      { "here be dragons", " ", false, { "here", "be", "dragons"} },
-      { "axaby", "ab?", false, { '', 'x', 'y' } },
-      { "f v2v v3v w2w ", "([vw])2%1", false, { 'f ', ' v3v ', ' ' } },
-      { "", "", false, {} },
-      { "", "a", false, { '' } },
-      { "x*yz*oo*l", "*", true, { 'x', 'yz', 'oo', 'l' } },
+      { "a,b", ",", false, false, { 'a', 'b' } },
+      { ":aa::bb:", ":", false, false, { '', 'aa', '', 'bb', '' } },
+      { ":aa::bb:", ":", false, true, { 'aa', '', 'bb' } },
+      { "::ee::ff:", ":", false, false, { '', '', 'ee', '', 'ff', '' } },
+      { "::ee::ff:", ":", false, true, { 'ee', '', 'ff' } },
+      { "ab", ".", false, false, { '', '', '' } },
+      { "a1b2c", "[0-9]", false, false, { 'a', 'b', 'c' } },
+      { "xy", "", false, false, { 'x', 'y' } },
+      { "here be dragons", " ", false, false, { "here", "be", "dragons"} },
+      { "axaby", "ab?", false, false, { '', 'x', 'y' } },
+      { "f v2v v3v w2w ", "([vw])2%1", false, false, { 'f ', ' v3v ', ' ' } },
+      { "", "", false, false, {} },
+      { "", "a", false, false, { '' } },
+      { "x*yz*oo*l", "*", true, false, { 'x', 'yz', 'oo', 'l' } },
     }
 
     for _, t in ipairs(tests) do
-      eq(t[4], split(t[1], t[2], t[3]))
+      eq(t[5], split(t[1], t[2], {plain=t[3], trimempty=t[4]}))
     end
+
+    -- Test old signature
+    eq({'x', 'yz', 'oo', 'l'}, split("x*yz*oo*l", "*", true))
 
     local loops = {
       { "abc", ".-" },
@@ -283,9 +288,8 @@ describe('lua stdlib', function()
             vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(split, 'string', 1))
     eq(dedent([[
-        Error executing lua: vim/shared.lua:0: plain: expected boolean, got number
+        Error executing lua: vim/shared.lua:0: kwargs: expected table, got number
         stack traceback:
-            vim/shared.lua:0: in function 'gsplit'
             vim/shared.lua:0: in function <vim/shared.lua:0>]]),
       pcall_err(split, 'string', 'string', 1))
   end)

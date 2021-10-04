@@ -98,17 +98,53 @@ end
 --- <pre>
 ---  split(":aa::b:", ":")     --> {'','aa','','b',''}
 ---  split("axaby", "ab?")     --> {'','x','y'}
----  split(x*yz*o, "*", true)  --> {'x','yz','o'}
+---  split("x*yz*o", "*", {plain=true})  --> {'x','yz','o'}
+---  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
 --- </pre>
---
+---
 ---@see |vim.gsplit()|
 ---
 ---@param s String to split
 ---@param sep Separator string or pattern
----@param plain If `true` use `sep` literally (passed to String.find)
+---@param kwargs Keyword arguments:
+---       - plain: (boolean) If `true` use `sep` literally (passed to string.find)
+---       - trimempty: (boolean) If `true` remove empty items from the front
+---         and back of the list
 ---@returns List-like table of the split components.
-function vim.split(s,sep,plain)
-  local t={} for c in vim.gsplit(s, sep, plain) do table.insert(t,c) end
+function vim.split(s, sep, kwargs)
+  local plain
+  local trimempty = false
+  if type(kwargs) == 'boolean' then
+    -- Support old signature for backward compatibility
+    plain = kwargs
+  else
+    vim.validate { kwargs = {kwargs, 't', true} }
+    kwargs = kwargs or {}
+    plain = kwargs.plain
+    trimempty = kwargs.trimempty
+  end
+
+  local t = {}
+  local skip = trimempty
+  for c in vim.gsplit(s, sep, plain) do
+    if c ~= "" then
+      skip = false
+    end
+
+    if not skip then
+      table.insert(t, c)
+    end
+  end
+
+  if trimempty then
+    for i = #t, 1, -1 do
+      if t[i] ~= "" then
+        break
+      end
+      table.remove(t, i)
+    end
+  end
+
   return t
 end
 

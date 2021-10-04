@@ -1373,20 +1373,25 @@ pesc({s})                                                         *vim.pesc()*
                 See also: ~
                     https://github.com/rxi/lume
 
-split({s}, {sep}, {plain})                                       *vim.split()*
+split({s}, {sep}, {kwargs})                                      *vim.split()*
                 Splits a string at each instance of a separator.
 
                 Examples: >
-                 split(":aa::b:", ":")     --> {'','aa','','b',''}
-                 split("axaby", "ab?")     --> {'','x','y'}
-                 split(x*yz*o, "*", true)  --> {'x','yz','o'}
+
+                  split(":aa::b:", ":")     --> {'','aa','','b',''}
+                  split("axaby", "ab?")     --> {'','x','y'}
+                  split("x*yz*o", "*", {plain=true})  --> {'x','yz','o'}
+                  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
 <
 
                 Parameters: ~
-                    {s}      String to split
-                    {sep}    Separator string or pattern
-                    {plain}  If `true` use `sep` literally (passed to
-                             String.find)
+                    {s}       String to split
+                    {sep}     Separator string or pattern
+                    {kwargs}  Keyword arguments:
+                              • plain: (boolean) If `true` use `sep` literally
+                                (passed to string.find)
+                              • trimempty: (boolean) If `true` remove empty
+                                items from the front and back of the list
 
                 Return: ~
                     List-like table of the split components.
