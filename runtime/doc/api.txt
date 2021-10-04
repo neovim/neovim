@@ -1251,7 +1251,7 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
                 For instance, for a floating display, first create an empty
                 buffer using |nvim_create_buf()|, then display it using
                 |nvim_open_win()|, and then call this function. Then
-                |nvim_chan_send()| cal be called immediately to process
+                |nvim_chan_send()| can be called immediately to process
                 sequences in a virtual terminal having the intended size.
 
                 Parameters: ~
