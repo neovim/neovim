@@ -94,9 +94,7 @@ argument.
 		- Skips initializations from files and environment variables.
 		- No 'shada' file is read or written.
 		- Excludes user directories from 'runtimepath'
-		- Unlike "-u NONE -i NONE" plugins are still loaded. This
-		  means "--clean" effectively mimics a fresh install of Nvim
-		  with no user configuration.
+		- Loads builtin plugins, unlike "-u NONE -i NONE".
 
 							*--noplugin*
 --noplugin	Skip loading plugins.  Resets the 'loadplugins' option.
