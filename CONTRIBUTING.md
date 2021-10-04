@@ -24,8 +24,9 @@ Before opening a new issue:
 
 When reporting an issue:
 
+- First try to reproduce with `nvim --clean` ("factory defaults").
 - [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins and remove settings incrementally, to narrow down the cause of the issue.
-- Using this information, prepare a [minimal config](https://github.com/neovim/neovim/blob/master/contrib/minimal.lua) that reproduces the problem with `nvim -u minimal.lua`.
+- If the problem involves plugins, preparing a [minimal config](https://github.com/neovim/neovim/blob/master/contrib/minimal.lua) that reproduces the problem with `nvim -u minimal.lua` can be very helpful.
 - Check the logs: `:edit $NVIM_LOG_FILE`.
 - For shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
 - Include `cmake --system-information` for build-related issues.
