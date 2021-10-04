@@ -40,7 +40,6 @@ typedef struct {
 static PMap(uint64_t) connected_uis = MAP_INIT;
 
 void remote_ui_disconnect(uint64_t channel_id)
-  FUNC_API_NOEXPORT
 {
   UI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   if (!ui) {
@@ -57,7 +56,6 @@ void remote_ui_disconnect(uint64_t channel_id)
 
 /// Wait until ui has connected on stdio channel.
 void remote_ui_wait_for_attach(void)
-  FUNC_API_NOEXPORT
 {
   Channel *channel = find_channel(CHAN_STDIO);
   if (!channel) {
@@ -172,6 +170,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
 
 /// @deprecated
 void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enable_rgb, Error *err)
+  FUNC_API_DEPRECATED_SINCE(1)
 {
   Dictionary opts = ARRAY_DICT_INIT;
   PUT(opts, "rgb", BOOLEAN_OBJ(enable_rgb));

@@ -33,6 +33,10 @@ local function_names = {}
 
 local c_grammar = require('generators.c_grammar')
 
+local function startswith(String,Start)
+  return string.sub(String,1,string.len(Start))==Start
+end
+
 -- read each input file, parse and append to the api metadata
 for i = 6, #arg do
   local full_path = arg[i]
@@ -47,7 +51,8 @@ for i = 6, #arg do
   local tmp = c_grammar.grammar:match(input:read('*all'))
   for j = 1, #tmp do
     local fn = tmp[j]
-    if not fn.noexport then
+    local public = startswith(fn.name, "nvim_") or fn.deprecated_since
+    if public and not fn.noexport then
       functions[#functions + 1] = tmp[j]
       function_names[fn.name] = true
       if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
@@ -74,10 +79,6 @@ local function shallowcopy(orig)
     copy[orig_key] = orig_value
   end
   return copy
-end
-
-local function startswith(String,Start)
-  return string.sub(String,1,string.len(Start))==Start
 end
 
 -- Export functions under older deprecated names.
@@ -108,9 +109,10 @@ for _,f in ipairs(shallowcopy(functions)) do
     f.lua = f.lua_only or not f.remote_only
     f.eval = (not f.lua_only) and (not f.remote_only)
   else
+    f.deprecated_since = tonumber(f.deprecated_since)
+    assert(f.deprecated_since == 1)
     f.remote = true
     f.since = 0
-    f.deprecated_since = 1
   end
   f.method = ismethod
   local newname = deprecated_aliases[f.name]
