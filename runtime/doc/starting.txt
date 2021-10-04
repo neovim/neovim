@@ -90,7 +90,7 @@ argument.
 		See |info-message| about capturing the text.
 
 							*--clean*
---clean		Similar to "-u NONE -i NONE":
+--clean		Mimics a fresh install of Nvim:
 		- Skips initializations from files and environment variables.
 		- No 'shada' file is read or written.
 		- Excludes user directories from 'runtimepath'
