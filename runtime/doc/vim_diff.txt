@@ -97,6 +97,9 @@ nvim_terminal:
 nvim_cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
+nvim_diagnostic:
+- ColorScheme: Redefine default diagnostic highlights if a colorscheme clears them.
+
 ==============================================================================
 3. New Features						       *nvim-features*
 
