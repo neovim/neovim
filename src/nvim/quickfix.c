@@ -1823,7 +1823,7 @@ static int qf_add_entry(qf_list_T *qfl, char_u *dir, char_u *fname, char_u *modu
   if (type != 1 && !vim_isprintc(type)) {  // only printable chars allowed
     type = 0;
   }
-  qfp->qf_type = (char_u)type;
+  qfp->qf_type = type;
   qfp->qf_valid = valid;
 
   lastp = &qfl->qf_last;

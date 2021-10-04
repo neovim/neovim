@@ -3037,7 +3037,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
                        line->cmdindent,
                        line->level);
   if (line->special_char) {
-    ui_call_cmdline_special_char(cchar_to_string((char)(line->special_char)),
+    ui_call_cmdline_special_char(cchar_to_string(line->special_char),
                                  line->special_shift,
                                  line->level);
   }
@@ -3135,7 +3135,7 @@ void putcmdline(char c, int shift)
     }
     msg_no_more = false;
   } else if (ccline.redraw_state != kCmdRedrawAll) {
-    ui_call_cmdline_special_char(cchar_to_string((char)(c)), shift,
+    ui_call_cmdline_special_char(cchar_to_string(c), shift,
                                  ccline.level);
   }
   cursorcmd();

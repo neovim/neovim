@@ -523,7 +523,7 @@ void restoreRedobuff(save_redo_T *save_redo)
 void AppendToRedobuff(const char *s)
 {
   if (!block_redo) {
-    add_buff(&redobuff, (const char *)s, -1L);
+    add_buff(&redobuff, s, -1L);
   }
 }
 
@@ -2861,7 +2861,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
   }
 
   char_u *lhs = (char_u *)&args->lhs;
-  char_u *rhs = (char_u *)args->rhs;
+  char_u *rhs = args->rhs;
   char_u *orig_rhs = args->orig_rhs;
 
   // check arguments and translate function keys

@@ -5149,7 +5149,7 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       EMSG(_(e_trailing));
     } else {
       if (lv.ll_tv == NULL) {
-        di = find_var((const char *)lv.ll_name, lv.ll_name_len, NULL, true);
+        di = find_var(lv.ll_name, lv.ll_name_len, NULL, true);
         if (di != NULL) {
           // Consider a variable locked when:
           // 1. the variable itself is locked
@@ -5984,7 +5984,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *const str = (const char *)tv_get_string_chk(&argvars[0]);
+  const char *const str = tv_get_string_chk(&argvars[0]);
   if (str == NULL) {
     return;
   }
@@ -11358,7 +11358,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (new_cwd && *new_cwd != NUL) {
       cwd = new_cwd;
       // The new cwd must be a directory.
-      if (!os_isdir_executable((const char *)cwd)) {
+      if (!os_isdir_executable(cwd)) {
         EMSG2(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
