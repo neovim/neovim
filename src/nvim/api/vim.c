@@ -1219,7 +1219,7 @@ fail:
 /// buffer in a configured window before calling this. For instance, for a
 /// floating display, first create an empty buffer using |nvim_create_buf()|,
 /// then display it using |nvim_open_win()|, and then  call this function.
-/// Then |nvim_chan_send()| cal be called immediately to process sequences
+/// Then |nvim_chan_send()| can be called immediately to process sequences
 /// in a virtual terminal having the intended size.
 ///
 /// @param buffer the buffer to use (expected to be empty)
