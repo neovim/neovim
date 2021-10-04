@@ -57,6 +57,11 @@ void init_default_autocmds(void)
   do_cmdline_cmd("augroup nvim_cmdwin");
   do_cmdline_cmd("autocmd! CmdwinEnter [:>] syntax sync minlines=1 maxlines=1");
   do_cmdline_cmd("augroup END");
+
+  // redefine default diagnostic highlights if a colorscheme clears them
+  do_cmdline_cmd("augroup nvim_diagnostic");
+  do_cmdline_cmd("autocmd! ColorScheme * source $VIMRUNTIME/plugin/diagnostic.vim");
+  do_cmdline_cmd("augroup END");
 }
 
 static void focusgained_event(void **argv)
