@@ -29,7 +29,7 @@ end
 --- buffer.
 ---
 ---@param method (string) LSP method name
----@param params (optional, table) Parameters to send to the server
+---@param gen_params (optional, function number -> table) function return Parameters to send to the server
 ---@param handler (optional, functionnil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
 ---@returns 2-tuple:
@@ -38,12 +38,12 @@ end
 ---    iterate all clients and call their `cancel_request()` methods.
 ---
 ---@see |vim.lsp.buf_request()|
-local function request(method, params, handler)
+local function request(method, gen_params, handler)
   validate {
     method = {method, 's'};
     handler = {handler, 'f', true};
   }
-  return vim.lsp.buf_request(0, method, params, handler)
+  return vim.lsp.buf_request(0, method, gen_params, handler)
 end
 
 --- Checks whether the language servers attached to the current buffer are
@@ -57,44 +57,50 @@ end
 --- Displays hover information about the symbol under the cursor in a floating
 --- window. Calling the function twice will jump into the floating window.
 function M.hover()
-  local params = util.make_position_params()
-  request('textDocument/hover', params)
+  request('textDocument/hover', function (client)
+    return util.make_position_params(client.offset_encoding)
+  end)
 end
 
 --- Jumps to the declaration of the symbol under the cursor.
 ---@note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 ---
 function M.declaration()
-  local params = util.make_position_params()
-  request('textDocument/declaration', params)
+  request('textDocument/declaration', function (client)
+    return util.make_position_params(client.offset_encoding)
+  end)
 end
 
 --- Jumps to the definition of the symbol under the cursor.
 ---
 function M.definition()
-  local params = util.make_position_params()
-  request('textDocument/definition', params)
+  request('textDocument/definition', function (client)
+    return util.make_position_params(client.offset_encoding)
+  end)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 ---
 function M.type_definition()
-  local params = util.make_position_params()
-  request('textDocument/typeDefinition', params)
+  request('textDocument/typeDefinition', function (client)
+    return util.make_position_params(client.offset_encoding)
+  end)
 end
 
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
 function M.implementation()
-  local params = util.make_position_params()
-  request('textDocument/implementation', params)
+  request('textDocument/implementation', function (client)
+    return util.make_position_params(client.offset_encoding)
+  end)
 end
 
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
 function M.signature_help()
-  local params = util.make_position_params()
-  request('textDocument/signatureHelp', params)
+  request('textDocument/signatureHelp', function (client)
+    return util.make_position_params(client.offset_encoding)
+  end)
 end
 
 --- Retrieves the completion items at the current cursor position. Can only be
@@ -106,9 +112,11 @@ end
 ---
 ---@see |vim.lsp.protocol.constants.CompletionTriggerKind|
 function M.completion(context)
-  local params = util.make_position_params()
-  params.context = context
-  return request('textDocument/completion', params)
+  return request('textDocument/completion',
+    function (client)
+      local ret = util.make_position_params(client.offset_encoding)
+      ret.context = context
+    end)
 end
 
 ---@private
@@ -249,7 +257,6 @@ end
 ---@param new_name (string) If not provided, the user will be prompted for a new
 ---name using |input()|.
 function M.rename(new_name)
-  local params = util.make_position_params()
   local function prepare_rename(err, result)
     if err == nil and result == nil then
       vim.notify('nothing to rename', vim.log.levels.INFO)
@@ -273,10 +280,17 @@ function M.rename(new_name)
       new_name = new_name or npcall(vfn.input, "New Name: ", vfn.expand('<cword>'))
     end
     if not (new_name and #new_name > 0) then return end
-    params.newName = new_name
-    request('textDocument/rename', params)
+    request('textDocument/rename', function(client)
+      local ret = util.make_position_params(client.offset_encoding)
+      ret.newName = new_name
+      return ret
+    end)
   end
-  request('textDocument/prepareRename', params, prepare_rename)
+  request('textDocument/prepareRename', function(client)
+    local ret = util.make_position_params(client.offset_encoding)
+      ret.newName = new_name
+      return ret
+    end, prepare_rename)
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
@@ -285,11 +299,12 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 function M.references(context)
   validate { context = { context, 't', true } }
-  local params = util.make_position_params()
-  params.context = context or {
-    includeDeclaration = true;
-  }
-  request('textDocument/references', params)
+  request('textDocument/references', function (client)
+    local ret = util.make_position_params(client.offset_encoding)
+    ret.context = context or {
+      includeDeclaration = true;
+    }
+  end)
 end
 
 --- Lists all symbols in the current buffer in the quickfix window.
@@ -319,8 +334,9 @@ end
 
 ---@private
 local function call_hierarchy(method)
-  local params = util.make_position_params()
-  request('textDocument/prepareCallHierarchy', params, function(err, result, ctx)
+  request('textDocument/prepareCallHierarchy', function(client)
+    return util.make_position_params(client.offset_encoding)
+  end, function(err, result, ctx)
     if err then
       vim.notify(err.message, vim.log.levels.WARN)
       return
@@ -440,8 +456,9 @@ end
 ---         |LspReferenceRead|
 ---         |LspReferenceWrite|
 function M.document_highlight()
-  local params = util.make_position_params()
-  request('textDocument/documentHighlight', params)
+  request('textDocument/documentHighlight', function (client)
+    return util.make_position_params(client.offset_encoding)
+  end)
 end
 
 --- Removes document highlights from current buffer.
@@ -540,10 +557,10 @@ end
 --- Requests code actions from all clients and calls the handler exactly once
 --- with all aggregated results
 ---@private
-local function code_action_request(params)
+local function code_action_request(gen_params)
   local bufnr = vim.api.nvim_get_current_buf()
   local method = 'textDocument/codeAction'
-  vim.lsp.buf_request_all(bufnr, method, params, function(results)
+  vim.lsp.buf_request_all(bufnr, method, gen_params, function(results)
     on_code_action_results(results, { bufnr = bufnr, method = method, params = params })
   end)
 end
@@ -566,9 +583,10 @@ function M.code_action(context)
   if not context.diagnostics then
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
   end
-  local params = util.make_range_params()
-  params.context = context
-  code_action_request(params)
+  code_action_request(function (client)
+    local ret = util.make_range_params(client)
+    ret.context = context
+  end)
 end
 
 --- Performs |vim.lsp.buf.code_action()| for a given range.

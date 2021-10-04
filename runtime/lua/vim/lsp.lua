@@ -1254,7 +1254,7 @@ nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
----@param params (optional, table) Parameters to send to the server
+---@param gen_params (optional, function client -> table) Get parameters to send to the server
 ---@param handler (optional, function) See |lsp-handler|
 --  If nil, follows resolution strategy defined in |lsp-handler-configuration|
 --
@@ -1262,7 +1262,7 @@ nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
 ---  - Map of client-id:request-id pairs for all successful requests.
 ---  - Function which can be used to cancel all the requests. You could instead
 ---    iterate all clients and call their `cancel_request()` methods.
-function lsp.buf_request(bufnr, method, params, handler)
+function lsp.buf_request(bufnr, method, gen_params, handler)
   validate {
     bufnr    = { bufnr, 'n', true };
     method   = { method, 's' };
@@ -1287,6 +1287,7 @@ function lsp.buf_request(bufnr, method, params, handler)
 
   local client_request_ids = {}
   for_each_buffer_client(bufnr, function(client, client_id, resolved_bufnr)
+      local params = gen_params(client)
       local request_success, request_id = client.request(method, params, handler, resolved_bufnr)
       -- This could only fail if the client shut down in the time since we looked
       -- it up and we did the request, which should be rare.
@@ -1312,13 +1313,13 @@ end
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
----@param params (optional, table) Parameters to send to the server
+---@param gen_params (optional, function client -> table) Parameters to send to the server
 ---@param callback (function) The callback to call when all requests are finished.
 --  Unlike `buf_request`, this will collect all the responses from each server instead of handling them.
 --  A map of client_id:request_result will be provided to the callback
 --
 ---@returns (function) A function that will cancel all requests which is the same as the one returned from `buf_request`.
-function lsp.buf_request_all(bufnr, method, params, callback)
+function lsp.buf_request_all(bufnr, method, gen_params, callback)
   local request_results = {}
   local result_count = 0
   local expected_result_count = 0
@@ -1341,7 +1342,7 @@ function lsp.buf_request_all(bufnr, method, params, callback)
     end
   end
 
-  local _, cancel = lsp.buf_request(bufnr, method, params, _sync_handler)
+  local _, cancel = lsp.buf_request(bufnr, method, gen_params, _sync_handler)
 
   return cancel
 end
@@ -1457,10 +1458,10 @@ function lsp.omnifunc(findstart, base)
   -- Get the start position of the current keyword
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
 
-  local params = util.make_position_params()
-
   local items = {}
-  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result, ctx)
+  lsp.buf_request(bufnr, 'textDocument/completion', function(client)
+    return util.make_position_params(client.offset_encoding)
+  end , function(err, result, ctx)
     if err or not result or vim.fn.mode() ~= "i" then return end
 
     -- Completion response items may be relative to a position different than `textMatch`.

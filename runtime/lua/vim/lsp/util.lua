@@ -1780,27 +1780,33 @@ end
 
 local str_utfindex = vim.str_utfindex
 ---@private
-local function make_position_param()
+local function make_position_param(offset_encoding)
   local row, col = unpack(api.nvim_win_get_cursor(0))
   row = row - 1
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
   if not line then
     return { line = 0; character = 0; }
   end
-  -- TODO handle offset_encoding
-  local _
-  _, col = str_utfindex(line, col)
+  if offset_encoding ~= "utf-8" then
+    local col32, col16 = str_utfindex(line, col)
+    if offset_encoding == "utf-16" then
+      col = col16
+    else
+      col = col32
+    end
+  end
   return { line = row; character = col; }
 end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
+---@param offset_encoding string encoding requested by language server
 ---@returns `TextDocumentPositionParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
-function M.make_position_params()
+function M.make_position_params(offset_encoding)
   return {
     textDocument = M.make_text_document_params();
-    position = make_position_param()
+    position = make_position_param(offset_encoding)
   }
 end
 
@@ -1809,10 +1815,11 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
+---@param offset_encoding string encoding requested by language server
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
-function M.make_range_params()
-  local position = make_position_param()
+function M.make_range_params(offset_encoding)
+  local position = make_position_param(offset_encoding)
   return {
     textDocument = M.make_text_document_params(),
     range = { start = position; ["end"] = position; }
