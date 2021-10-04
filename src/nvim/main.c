@@ -345,7 +345,8 @@ int main(int argc, char **argv)
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
   // Allows for setting 'loadplugins' there.
   if (params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE")) {
-    p_lpl = false;
+    // When using --clean we still want to load plugins
+    p_lpl = params.clean;
   }
 
   // Execute --cmd arguments.
