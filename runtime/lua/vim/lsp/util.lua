@@ -1788,7 +1788,9 @@ local function make_position_param()
   if not line then
     return { line = 0; character = 0; }
   end
-  col = str_utfindex(line, col)
+  -- TODO handle offset_encoding
+  local _
+  _, col = str_utfindex(line, col)
   return { line = row; character = col; }
 end
 
