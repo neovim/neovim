@@ -74,6 +74,9 @@ if ($compiler -eq 'MINGW') {
   # Build third-party dependencies
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Sy" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "curl -O https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-headers-git-9.0.0.6306.586baa17b-1-any.pkg.tar.zst" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -U mingw-w64-i686-headers-git-9.0.0.6306.586baa17b-1-any.pkg.tar.zst" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
