@@ -90,10 +90,11 @@ argument.
 		See |info-message| about capturing the text.
 
 							*--clean*
---clean		Equivalent to "-u NONE -i NONE":
+--clean		Mimics a fresh install of Nvim:
 		- Skips initializations from files and environment variables.
 		- No 'shada' file is read or written.
 		- Excludes user directories from 'runtimepath'
+		- Loads builtin plugins, unlike "-u NONE -i NONE".
 
 							*--noplugin*
 --noplugin	Skip loading plugins.  Resets the 'loadplugins' option.
