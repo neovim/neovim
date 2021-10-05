@@ -166,7 +166,7 @@ Docstring format:
 - Use `<pre>`  for code samples.
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
-in src/nvim/api/vim.c like this: >
+in src/nvim/api/win_config.c like this: >
 
     /// Opens a new window.
     /// ...
