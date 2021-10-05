@@ -100,8 +100,10 @@ describe('health.vim', function()
         ]])
     end)
 
-    it("lua plugins", function()
+    it("lua plugins, skips vimscript healthchecks with the same name", function()
       command("checkhealth test_plug")
+      -- Existing file in test/functional/fixtures/lua/test_plug/autoload/health/test_plug.vim
+      -- and the Lua healthcheck is used instead.
       helpers.expect([[
 
         test_plug: require("test_plug.health").check()

@@ -41,8 +41,8 @@ function! health#check(plugin_names) abort
     call setline(1, 'ERROR: No healthchecks found.')
   else
     redraw|echo 'Running healthchecks...'
-    for c in healthchecks
-      let [name, func, type] = c
+    for name in sort(keys(healthchecks))
+      let [func, type] = healthchecks[name]
       let s:output = []
       try
         if func == ''
@@ -176,8 +176,30 @@ function! s:discover_healthchecks() abort
   return s:get_healthcheck('*')
 endfunction
 
-" Returns list of lists [ [{name}, {func}, {type}] ] representing healthchecks
+" Returns Dictionary {name: [func, type], ..} representing healthchecks
 function! s:get_healthcheck(plugin_names) abort
+  let health_list = s:get_healthcheck_list(a:plugin_names)
+  let healthchecks = {}
+  for c in health_list
+    let name = c[0]
+    let existent = get(healthchecks, name, [])
+    " If an entry with the same name exists and is from vim, prefer Lua so
+    " overwrite it.
+    if existent != []
+      if existent[1] == "v"
+        let healthchecks[name] = c[1:] 
+      else
+        continue
+      endif
+    else
+      let healthchecks[name] = c[1:]
+    endif
+  endfor
+  return healthchecks
+endfunction
+
+" Returns list of lists [ [{name}, {func}, {type}] ] representing healthchecks
+function! s:get_healthcheck_list(plugin_names) abort
   let healthchecks = []
   let plugin_names = type('') == type(a:plugin_names)
         \ ? split(a:plugin_names, ' ', v:false)
