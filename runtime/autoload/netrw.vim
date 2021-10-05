@@ -1711,7 +1711,8 @@ fun! s:NetrwOptionsSafe(islocal)
   if &cpo =~ 'a' | call s:NetrwSetSafeSetting("&cpo",substitute(&cpo,'a','','g')) | endif
   if &cpo =~ 'A' | call s:NetrwSetSafeSetting("&cpo",substitute(&cpo,'A','','g')) | endif
   setl fo=nroql2
-  call s:NetrwSetSafeSetting("&go","begmr")
+  " call s:NetrwSetSafeSetting("&go","begmr")
+  if &go =~ '\ca' | call s:NetrwSetSafeSetting("&go",substitute(&go,'\ca','','g')) | endif
   call s:NetrwSetSafeSetting("&l:hid",0)
   call s:NetrwSetSafeSetting("&l:im",0)
   setl isk+=@ isk+=* isk+=/

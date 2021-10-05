@@ -1183,7 +1183,8 @@ If you want to always use ":confirm", set the 'confirm' option.
 			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
 			|:source|, |:update|, |:visual|, |:vsplit|,
 			and |:qall| if 'confirm' is set.
-			{only in Win32 GUI}
+			{only in Win32 GUI, in console `browse edit` works
+			if the FileExplorer autocommand group exists}
 			When ":browse" is not possible you get an error
 			message.  If {command} doesn't support browsing, the
 			{command} is executed without a dialog.

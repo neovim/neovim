@@ -2,6 +2,7 @@
 " Language: MATLAB
 " Maintainer: Axel Forsman <axelsfor@gmail.com>
 " Previous maintainer: Christophe Poucet <christophe.poucet@pandora.be>
+" Last Update: 2021-10-01
 
 " Only load if no other indent file is loaded
 if exists('b:did_indent') | finish | endif
@@ -9,6 +10,7 @@ let b:did_indent = 1
 
 setlocal indentexpr=GetMatlabIndent()
 setlocal indentkeys=!,o,O,e,0=end,0=elseif,0=case,0=otherwise,0=catch,0=function,0=elsei
+let b:undo_indent = "setlocal indentexpr< indentkeys<"
 
 " The value of the Function indenting format in
 " MATLAB Editor/Debugger Language Preferences.

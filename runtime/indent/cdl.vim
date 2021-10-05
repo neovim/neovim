@@ -1,5 +1,6 @@
 " Description:	Comshare Dimension Definition Language (CDL)
-" Author:	Raul Segura Acevedo <raulseguraaceved@netscape.net>
+" Maintainer:	Raul Segura Acevedo <raulseguraaceved@netscape.net> (Invalid email address)
+" 		Doug Kearns <dougkearns@gmail.com>
 " Last Change:	Fri Nov 30 13:35:48  2001 CST
 
 if exists("b:did_indent")

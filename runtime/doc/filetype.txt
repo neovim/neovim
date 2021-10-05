@@ -501,7 +501,7 @@ One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
 
-GPROF
+GPROF							*ft-gprof-plugin*
 
 The gprof filetype plugin defines a mapping <C-]> to jump from a function
 entry in the gprof flat profile or from a function entry in the call graph

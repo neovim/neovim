@@ -3,18 +3,17 @@
 " Filenames:    *.sml *.sig
 " Maintainers:  Markus Mottl            <markus.mottl@gmail.com>
 "               Fabrizio Zeno Cornelli  <zeno@filibusta.crema.unimi.it>
-" Last Change:  2019 Oct 01 - Only spell check strings & comments (Chuan Wei Foo)
+" Last Change:  2021 Oct 04
 "               2015 Aug 31 - Fixed opening of modules (Ramana Kumar)
 "               2006 Oct 23 - Fixed character highlighting bug (MM)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
+  finish
+endif
 
 " Disable spell checking of syntax.
 syn spell notoplevel
-
-  finish
-endif
 
 " SML is case sensitive.
 syn case match

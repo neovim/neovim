@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2021 Sep 21
+" Last Change:	2021 Oct 03
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -2004,14 +2004,15 @@ au BufNewFile,BufRead *.ws[fc]			setf wsh
 " XHTML
 au BufNewFile,BufRead *.xhtml,*.xht		setf xhtml
 
-" X Pixmap (dynamically sets colors, use BufEnter to make it work better)
-au BufEnter *.xpm
+" X Pixmap (dynamically sets colors, this used to trigger on BufEnter to make
+" it work better, but that breaks setting 'filetype' manually)
+au BufNewFile,BufRead *.xpm
 	\ if getline(1) =~ "XPM2" |
 	\   setf xpm2 |
 	\ else |
 	\   setf xpm |
 	\ endif
-au BufEnter *.xpm2				setf xpm2
+au BufNewFile,BufRead *.xpm2			setf xpm2
 
 " XFree86 config
 au BufNewFile,BufRead XF86Config
