@@ -36,7 +36,7 @@ body:
   - type: input
     attributes:
       label: "$TERM environment variable"
-      placeholder: "echo $TERM"
+      placeholder: "xterm-256color"
     validations:
       required: true
 
@@ -52,11 +52,11 @@ body:
     attributes:
       label: "How to reproduce the issue"
       description: |
-        - Steps to reproduce using `nvim -u NORC` or `nvim -u NONE` (try both).
+        - Steps to reproduce using `nvim --clean` ("factory defaults").
         - For build failures: list the exact steps including CMake flags (if any).
         - For shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
       placeholder: |
-        nvim -u NONE
+        nvim --clean
         :edit foo
         yiwp
     validations:

@@ -19,6 +19,7 @@ Reporting problems
 - [Check the FAQ][wiki-faq].
 - [Search existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
+- Try to reproduce with `nvim --clean` ("factory defaults").
 - [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins incrementally, to narrow down the cause of the issue.
 - [Bisect][git-bisect] Neovim's source code to find the cause of a regression, if you can. This is _extremely_ helpful.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
