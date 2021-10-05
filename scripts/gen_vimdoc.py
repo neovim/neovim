@@ -91,6 +91,7 @@ CONFIG = {
             'vim.c',
             'buffer.c',
             'window.c',
+            'win_config.c',
             'tabpage.c',
             'ui.c',
         ],
