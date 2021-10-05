@@ -1109,6 +1109,9 @@ au BufNewFile,BufRead *.mysql			setf mysql
 " Mutt setup files (must be before catch *.rc)
 au BufNewFile,BufRead */etc/Muttrc.d/*		call s:StarSetf('muttrc')
 
+" Tcl Shell RC file
+au BufNewFile,BufRead tclsh.rc			setf tcl
+
 " M$ Resource files
 au BufNewFile,BufRead *.rc,*.rch		setf rc
 
@@ -1804,7 +1807,7 @@ au BufRead,BufNewFile {pending,completed,undo}.data  setf taskdata
 au BufRead,BufNewFile *.task			setf taskedit
 
 " Tcl (JACL too)
-au BufNewFile,BufRead *.tcl,*.tk,*.itcl,*.itk,*.jacl	setf tcl
+au BufNewFile,BufRead *.tcl,*.tm,*.tk,*.itcl,*.itk,*.jacl,.tclshrc,.wishrc	setf tcl
 
 " TealInfo
 au BufNewFile,BufRead *.tli			setf tli
