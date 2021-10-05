@@ -1144,6 +1144,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   if client then
     client._on_attach(bufnr)
   end
+
   return true
 end
 
@@ -1381,6 +1382,30 @@ function lsp.buf_notify(bufnr, method, params)
     if client.rpc.notify(method, params) then resp = true end
   end)
   return resp
+end
+
+
+--- Get the details of the completion item
+function lsp.on_complete_done()
+  local bufnr = resolve_bufnr()
+  local completed_item_var = vim.v.completed_item
+  if
+    completed_item_var and
+    completed_item_var.user_data and
+    completed_item_var.user_data.nvim and
+    completed_item_var.user_data.nvim.lsp and
+    completed_item_var.user_data.nvim.lsp.completion_item
+   then
+    local item = completed_item_var.user_data.nvim.lsp.completion_item
+    lsp.buf_request(bufnr, "completionItem/resolve", item, function(err, _, result)
+      if err or not result then
+        return
+      end
+      if result.additionalTextEdits then
+        util.apply_text_edits(result.additionalTextEdits, bufnr)
+      end
+    end)
+  end
 end
 
 --- Implements 'omnifunc' compatible LSP completion.
