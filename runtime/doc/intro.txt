@@ -55,7 +55,7 @@ Nvim on the interwebs					*internet*
 	Nvim home page:	  https://neovim.io/
 	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
 	Downloads:	  https://github.com/neovim/neovim/releases
-	Vim FAQ:	  https://vimhelp.appspot.com/vim_faq.txt.html
+	Vim FAQ:	  https://vimhelp.org/vim_faq.txt.html
 
 
 			*bugs* *bug-report*
