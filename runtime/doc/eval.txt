@@ -1316,7 +1316,7 @@ A string constant accepts these special characters:
 \<xxx>	Special key named "xxx".  e.g. "\<C-W>" for CTRL-W.  This is for use
 	in mappings, the 0x80 byte is escaped.
 	To use the double quote character it must be escaped: "<M-\">".
-	Don't use <Char-xxxx> to get a utf-8 character, use \uxxxx as
+	Don't use <Char-xxxx> to get a UTF-8 character, use \uxxxx as
 	mentioned above.
 
 Note that "\xff" is stored as the byte 255, which may be invalid in some
@@ -6344,8 +6344,8 @@ list2str({list} [, {utf8}])				*list2str()*
 			join(map(list, {nr, val -> nr2char(val)}), '')
 <		|str2list()| does the opposite.
 
-		When {utf8} is omitted or zero, the current 'encoding' is used.
-		When {utf8} is TRUE, always return UTF-8 characters.
+		UTF-8 encoding is always used, {utf8} option has no effect,
+		and exists only for backwards-compatibility.
 		With UTF-8 composing characters work as expected: >
 			list2str([97, 769])	returns "á"
 <
@@ -7007,8 +7007,7 @@ nr2char({expr} [, {utf8}])				*nr2char()*
 			nr2char(32)		returns " "
 <		Example for "utf-8": >
 			nr2char(300)		returns I with bow character
-<		When {utf8} is TRUE, always return UTF-8 characters.
-		UTF-8 encoding is always used, {utf8} option has no effect,
+<		UTF-8 encoding is always used, {utf8} option has no effect,
 		and exists only for backwards-compatibility.
 		Note that a NUL character in the file is specified with
 		nr2char(10), because NULs are represented with newline
@@ -8973,10 +8972,9 @@ str2list({string} [, {utf8}])				*str2list()*
 			str2list("ABC")		returns [65, 66, 67]
 <		|list2str()| does the opposite.
 
-		When {utf8} is omitted or zero, the current 'encoding' is used.
-		When {utf8} is TRUE, always treat the String as UTF-8
-		characters.  With UTF-8 composing characters are handled
-		properly: >
+		UTF-8 encoding is always used, {utf8} option has no effect,
+		and exists only for backwards-compatibility.
+		With UTF-8 composing characters are handled properly: >
 			str2list("á")		returns [97, 769]
 
 <		Can also be used as a |method|: >
