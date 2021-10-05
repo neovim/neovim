@@ -1,5 +1,7 @@
 " Tests for ->method()
 
+source check.vim
+
 func Test_list_method()
   let l = [1, 2, 3]
   call assert_equal([1, 2, 3, 4], [1, 2, 3]->add(4))
@@ -118,6 +120,7 @@ func Test_method_funcref()
 endfunc
 
 func Test_method_float()
+  CheckFeature float
   eval 1.234->string()->assert_equal('1.234')
   eval -1.234->string()->assert_equal('-1.234')
 endfunc
