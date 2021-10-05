@@ -1,7 +1,7 @@
 local M = {}
 
 --- Performs a healthcheck for LSP
-function M.check_health()
+function M.check()
   local report_info = vim.fn['health#report_info']
   local report_warn = vim.fn['health#report_warn']
 
