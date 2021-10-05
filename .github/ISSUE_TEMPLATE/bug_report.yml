@@ -57,6 +57,8 @@ body:
         - For shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
       placeholder: |
         nvim --clean
+        :edit foo
+        yiwp
     validations:
       required: true
 
