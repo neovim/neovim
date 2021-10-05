@@ -531,9 +531,11 @@ Query:iter_matches({self}, {node}, {source}, {start}, {stop})
       for id, node in pairs(match) do
         local name = query.captures[id]
         -- `node` was captured by the `name` capture in the match
-
-        local node_data = metadata[id] -- Node level metadata
-
+<
+>
+    local node_data = metadata[id] -- Node level metadata
+<
+>
         ... use the info here ...
       end
     end

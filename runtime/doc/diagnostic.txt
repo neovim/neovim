@@ -363,6 +363,13 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                 Return: ~
                     table A list of diagnostic items |diagnostic-structure|.
 
+get_namespaces()                             *vim.diagnostic.get_namespaces()*
+                Get current diagnostic namespaces.
+
+                Return: ~
+                    table A list of active diagnostic namespaces
+                    |vim.diagnostic|.
+
 get_next({opts})                                   *vim.diagnostic.get_next()*
                 Get the next diagnostic closest to the cursor position.
 

@@ -1015,6 +1015,9 @@ outgoing_calls()                                *vim.lsp.buf.outgoing_calls()*
                 cursor in the |quickfix| window. If the symbol can resolve to
                 multiple items, the user can pick one in the |inputlist|.
 
+prepare_rename({err}, {result})                 *vim.lsp.buf.prepare_rename()*
+                TODO: Documentation
+
                                              *vim.lsp.buf.range_code_action()*
 range_code_action({context}, {start_pos}, {end_pos})
                 Performs |vim.lsp.buf.code_action()| for a given range.
@@ -1251,8 +1254,8 @@ apply_text_edits({text_edits}, {bufnr})
                 Applies a list of text edits to a buffer.
 
                 Parameters: ~
-                    {text_edits}  (table) list of `TextEdit` objects
-                    {buf_nr}      (number) Buffer id
+                    {text_edits}  table list of `TextEdit` objects
+                    {bufnr}       number Buffer id
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
@@ -1472,6 +1475,13 @@ make_floating_popup_options({width}, {height}, {opts})
                     {width}   (number) window width (in character cells)
                     {height}  (number) window height (in character cells)
                     {opts}    (table, optional)
+                              • offset_x (number) offset to add to `col`
+                              • offset_y (number) offset to add to `row`
+                              • border (string or table) override `border`
+                              • focusable (string or table) override
+                                `focusable`
+                              • zindex (string or table) override `zindex` ,
+                                defaults to 50
 
                 Return: ~
                     (table) Options
@@ -1562,10 +1572,6 @@ open_floating_preview({contents}, {syntax}, {opts})
                                   height when wrap is enabled
                                 • max_width maximal width of floating window
                                 • max_height maximal height of floating window
-                                • pad_left number of columns to pad contents
-                                  at left
-                                • pad_right number of columns to pad contents
-                                  at right
                                 • pad_top number of lines to pad contents at
                                   top
                                 • pad_bottom number of lines to pad contents
@@ -1585,10 +1591,10 @@ parse_snippet({input})                          *vim.lsp.util.parse_snippet()*
                 Parses snippets in a completion entry.
 
                 Parameters: ~
-                    {input}  (string) unparsed snippet
+                    {input}  string unparsed snippet
 
                 Return: ~
-                    (string) parsed snippet
+                    string parsed snippet
 
 preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
                 Previews a location in a floating window
@@ -1649,10 +1655,6 @@ stylize_markdown({bufnr}, {contents}, {opts})
                                   height
                                 • max_width maximal width of floating window
                                 • max_height maximal height of floating window
-                                • pad_left number of columns to pad contents
-                                  at left
-                                • pad_right number of columns to pad contents
-                                  at right
                                 • pad_top number of lines to pad contents at
                                   top
                                 • pad_bottom number of lines to pad contents
@@ -1718,6 +1720,16 @@ get_filename()                                    *vim.lsp.log.get_filename()*
 
                 Return: ~
                     (string) log filename
+
+get_level()                                          *vim.lsp.log.get_level()*
+                TODO: Documentation
+
+set_format_func({handle})                      *vim.lsp.log.set_format_func()*
+                Sets formatting function used to format logs
+
+                Parameters: ~
+                    {handle}  function function to apply to logging arguments,
+                              pass vim.inspect for multi-line formatting
 
 set_level({level})                                   *vim.lsp.log.set_level()*
                 Sets the current log level.
