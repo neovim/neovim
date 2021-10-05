@@ -888,7 +888,7 @@ Motif.  Use the ":hi Menu font={fontname}" command for this. |:highlight|
 TYPING UTF-8						*utf-8-typing*
 
 If you are using X-Windows, you should find an input method that supports
-utf-8.
+UTF-8.
 
 If your system does not provide support for typing UTF-8, you can use the
 'keymap' feature.  This allows writing a keymap file, which defines a UTF-8
