@@ -1,6 +1,7 @@
 " tcsh.vim: Vim syntax file for tcsh scripts
-" Maintainer:	Gautam Iyer <gi1242@gmail.com>
-" Modified:	Thu 17 Dec 2009 06:05:07 PM EST
+" Maintainer: Doug Kearns <dougkearns@NoSpam.com> where NoSpam=gmail
+" Author: Gautam Iyer <gi1242+vim@NoSpam.com> where NoSpam=gmail
+" Modified: Sun 26 Sep 2021 12:40:55 PM EDT
 "
 " Description: We break up each statement into a "command" and an "end" part.
 " All groups are either a "command" or part of the "end" of a statement (ie

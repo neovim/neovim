@@ -1,8 +1,8 @@
 " Vim indent file
-" Language:	    	Tcl
-" Latest Update:  	Chris Heithoff <chrisheithoff@gmail.com>
+" Language:		Tcl
+" Maintainer:		Chris Heithoff <chrisheithoff@gmail.com>
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2018-12-05
+" Last Change:		24 Sep 2021
 
 if exists("b:did_indent")
   finish
@@ -12,6 +12,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetTclIndent()
 setlocal indentkeys=0{,0},!^F,o,O,0]
 setlocal nosmartindent
+
+let b:undo_indent = "setl inde< indk< si<"
 
 if exists("*GetTclIndent")
   finish

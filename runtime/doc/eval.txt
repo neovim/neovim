@@ -1307,7 +1307,7 @@ A string constant accepts these special characters:
 \U....	same as \u but allows up to 8 hex numbers.
 \b	backspace <BS>
 \e	escape <Esc>
-\f	formfeed <FF>
+\f	formfeed 0x0C
 \n	newline <NL>
 \r	return <CR>
 \t	tab <Tab>
@@ -2313,7 +2313,7 @@ ceil({expr})			Float	round {expr} up
 changenr()			Number	current change number
 chanclose({id}[, {stream}])	Number	Closes a channel or one of its streams
 chansend({id}, {data})		Number	Writes {data} to channel
-char2nr({expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
+char2nr({expr}[, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
 cindent({lnum})		Number	C indent for line {lnum}
@@ -2544,7 +2544,7 @@ mode([expr])			String	current editing mode
 msgpackdump({list} [, {type}])	List/Blob  dump objects to msgpack
 msgpackparse({data})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
-nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
+nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF-8 value {expr}
 nvim_...({args}...)		any	call nvim |api| functions
 or({expr}, {expr})		Number  bitwise OR
 pathshorten({expr})		String	shorten directory names in a path
@@ -2680,7 +2680,7 @@ stdioopen({dict})		Number	open stdio in a headless instance.
 stdpath({what})                 String/List  returns the standard path(s) for {what}
 str2float({expr} [, {quoted}])	Float	convert String to Float
 str2list({expr} [, {utf8}])	List	convert each character of {expr} to
-					ASCII/UTF8 value
+					ASCII/UTF-8 value
 str2nr({expr} [, {base} [, {quoted}]])
 				Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
@@ -6345,8 +6345,8 @@ list2str({list} [, {utf8}])				*list2str()*
 <		|str2list()| does the opposite.
 
 		When {utf8} is omitted or zero, the current 'encoding' is used.
-		With {utf8} is 1, always return utf-8 characters.
-		With utf-8 composing characters work as expected: >
+		When {utf8} is TRUE, always return UTF-8 characters.
+		With UTF-8 composing characters work as expected: >
 			list2str([97, 769])	returns "á"
 <
 localtime()						*localtime()*
@@ -7007,7 +7007,8 @@ nr2char({expr} [, {utf8}])				*nr2char()*
 			nr2char(32)		returns " "
 <		Example for "utf-8": >
 			nr2char(300)		returns I with bow character
-<		UTF-8 encoding is always used, {utf8} option has no effect,
+<		When {utf8} is TRUE, always return UTF-8 characters.
+		UTF-8 encoding is always used, {utf8} option has no effect,
 		and exists only for backwards-compatibility.
 		Note that a NUL character in the file is specified with
 		nr2char(10), because NULs are represented with newline
@@ -8973,8 +8974,8 @@ str2list({string} [, {utf8}])				*str2list()*
 <		|list2str()| does the opposite.
 
 		When {utf8} is omitted or zero, the current 'encoding' is used.
-		With {utf8} set to TRUE, always treat the String as utf-8
-		characters.  With utf-8 composing characters are handled
+		When {utf8} is TRUE, always treat the String as UTF-8
+		characters.  With UTF-8 composing characters are handled
 		properly: >
 			str2list("á")		returns [97, 769]
 
@@ -10987,7 +10988,7 @@ text...
 			literal then the items also cannot be changed: >
 				const ll = [1, 2, 3]
 				let ll[1] = 5  " Error!
-< 			Nested references are not locked: >
+<			Nested references are not locked: >
 				let lvar = ['a']
 				const lconst = [0, lvar]
 				let lconst[0] = 2  " Error!

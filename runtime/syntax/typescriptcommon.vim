@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     TypeScript and TypeScriptReact
 " Maintainer:   Bram Moolenaar, Herrington Darkholme
-" Last Change:	2020 Oct 27
+" Last Change:	2021 Sep 22
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https:github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github
@@ -625,7 +625,8 @@ syntax keyword typescriptReadonlyArrayKeyword readonly
 " extension
 if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName Function Boolean
-  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Error EvalError
+  " use of nextgroup Suggested by Doug Kearns
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName Error EvalError nextgroup=typescriptFuncCallArg
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName InternalError
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName RangeError ReferenceError
   syntax keyword typescriptGlobal containedin=typescriptIdentifierName StopIteration

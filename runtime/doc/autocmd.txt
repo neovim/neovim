@@ -1232,6 +1232,13 @@ Example: >
 This prevents having the autocommands defined twice (e.g., after sourcing the
 vimrc file again).
 
+						*FileExplorer*
+There is one group that is recognized by Vim: FileExplorer.  If this group
+exists Vim assumes that editing a directory is possible and will trigger a
+plugin that lists the files in that directory.  This is used by the |netrw|
+plugin.  This allows you to do: >
+	browse edit
+
 ==============================================================================
 9. Executing autocommands				*autocmd-execute*
 

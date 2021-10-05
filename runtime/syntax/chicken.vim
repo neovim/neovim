@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Scheme (CHICKEN)
-" Last Change: 2021 Jul 30
+" Last Change: 2021 Oct 01
 " Author: Evan Hanson <evhan@foldling.org>
 " Maintainer: Evan Hanson <evhan@foldling.org>
 " Repository: https://git.foldling.org/vim-scheme.git
@@ -37,7 +37,7 @@ if len(s:c)
   syn region c matchgroup=schemeComment start=/#>/ end=/<#/ contains=@c
 endif
 
-# SRFI 26
+" SRFI 26
 syn match schemeSyntax /\(([ \t\n]*\)\@<=\(cut\|cute\)\>/
 
 syn keyword schemeSyntax and-let*
