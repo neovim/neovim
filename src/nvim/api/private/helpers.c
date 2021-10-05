@@ -25,6 +25,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
 #include "nvim/map_defs.h"
+#include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
@@ -1671,3 +1672,42 @@ void api_free_keydict(void *dict, KeySetLink *table)
   }
 }
 
+/// Set a named mark
+/// buffer and mark name must be validated already
+/// @param buffer     Buffer to set the mark on
+/// @param name       Mark name
+/// @param line       Line number
+/// @param col        Column/row number
+/// @return true if the mark was set, else false
+bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
+{
+  buf = buf == NULL ? curbuf : buf;
+  // If line == 0 the marks is being deleted
+  bool res = false;
+  bool deleting = false;
+  if (line == 0) {
+    col = 0;
+    deleting = true;
+  } else {
+    if (col > MAXCOL) {
+      api_set_error(err, kErrorTypeValidation, "Column value outside range");
+      return res;
+    }
+    if (line < 1 || line > buf->b_ml.ml_line_count) {
+      api_set_error(err, kErrorTypeValidation, "Line value outside range");
+      return res;
+    }
+  }
+  pos_T pos = { line, (int)col, (int)col };
+  res = setmark_pos(*name.data, &pos, buf->handle);
+  if (!res) {
+    if (deleting) {
+      api_set_error(err, kErrorTypeException,
+                    "Failed to delete named mark: %c", *name.data);
+    } else {
+      api_set_error(err, kErrorTypeException,
+                    "Failed to set named mark: %c", *name.data);
+    }
+  }
+  return res;
+}

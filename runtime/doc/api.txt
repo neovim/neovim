@@ -130,7 +130,9 @@ end of a range, -1 denotes the last line/column.
 Exception: the following API functions use "mark-like" indexing (1-based
 lines, 0-based columns):
 
+    |nvim_get_mark()|
     |nvim_buf_get_mark()|
+    |nvim_buf_set_mark()|
     |nvim_win_get_cursor()|
     |nvim_win_set_cursor()|
 
@@ -735,6 +737,23 @@ nvim_del_keymap({mode}, {lhs})                             *nvim_del_keymap()*
                 See also: ~
                     |nvim_set_keymap()|
 
+nvim_del_mark({name})                                        *nvim_del_mark()*
+                Deletes a uppercase/file named mark. See |mark-motions|.
+
+                Note:
+                    fails with error if a lowercase or buffer local named mark
+                    is used.
+
+                Parameters: ~
+                    {name}  Mark name
+
+                Return: ~
+                    true if the mark was deleted, else false.
+
+                See also: ~
+                    |nvim_buf_del_mark()|
+                    |nvim_get_mark()|
+
 nvim_del_var({name})                                          *nvim_del_var()*
                 Removes a global (g:) variable.
 
@@ -1007,6 +1026,27 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
                 Return: ~
                     Array of maparg()-like dictionaries describing mappings.
                     The "buffer" key is always zero.
+
+nvim_get_mark({name})                                        *nvim_get_mark()*
+                Return a tuple (row, col, buffer, buffername) representing the
+                position of the uppercase/file named mark. See |mark-motions|.
+
+                Marks are (1,0)-indexed. |api-indexing|
+
+                Note:
+                    fails with error if a lowercase or buffer local named mark
+                    is used.
+
+                Parameters: ~
+                    {name}  Mark name
+
+                Return: ~
+                    4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if
+                    the mark is not set.
+
+                See also: ~
+                    |nvim_buf_set_mark()|
+                    |nvim_del_mark()|
 
 nvim_get_mode()                                              *nvim_get_mode()*
                 Gets the current mode. |mode()| "blocking" is true if Nvim is
@@ -2063,6 +2103,24 @@ nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
                 See also: ~
                     |nvim_del_keymap()|
 
+nvim_buf_del_mark({buffer}, {name})                      *nvim_buf_del_mark()*
+                Deletes a named mark in the buffer. See |mark-motions|.
+
+                Note:
+                    only deletes marks set in the buffer, if the mark is not
+                    set in the buffer it will return false.
+
+                Parameters: ~
+                    {buffer}  Buffer to set the mark on
+                    {name}    Mark name
+
+                Return: ~
+                    true if the mark was deleted, else false.
+
+                See also: ~
+                    |nvim_buf_set_mark()|
+                    |nvim_del_mark()|
+
 nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
                 Removes a buffer-scoped (b:) variable
 
@@ -2217,8 +2275,8 @@ nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
                     Array of lines, or empty array for unloaded buffer.
 
 nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
-                Return a tuple (row,col) representing the position of the
-                named mark.
+                Returns a tuple (row,col) representing the position of the
+                named mark. See |mark-motions|.
 
                 Marks are (1,0)-indexed. |api-indexing|
 
@@ -2227,7 +2285,12 @@ nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
                     {name}    Mark name
 
                 Return: ~
-                    (row, col) tuple
+                    (row, col) tuple, (0, 0) if the mark is not set, or is an
+                    uppercase/file mark set in another buffer.
+
+                See also: ~
+                    |nvim_buf_set_mark()|
+                    |nvim_buf_del_mark()|
 
 nvim_buf_get_name({buffer})                              *nvim_buf_get_name()*
                 Gets the full file name for the buffer
@@ -2434,6 +2497,29 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
                     {strict_indexing}  Whether out-of-bounds should be an
                                        error.
                     {replacement}      Array of lines to use as replacement
+
+                                                         *nvim_buf_set_mark()*
+nvim_buf_set_mark({buffer}, {name}, {line}, {col})
+                Sets a named mark in the given buffer, all marks are allowed
+                file/uppercase, visual, last change, etc. See |mark-motions|.
+
+                Marks are (1,0)-indexed. |api-indexing|
+
+                Note:
+                    Passing 0 as line deletes the mark
+
+                Parameters: ~
+                    {buffer}  Buffer to set the mark on
+                    {name}    Mark name
+                    {line}    Line number
+                    {col}     Column/row number
+
+                Return: ~
+                    true if the mark was set, else false.
+
+                See also: ~
+                    |nvim_buf_del_mark()|
+                    |nvim_buf_get_mark()|
 
 nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
                 Sets the full file name for a buffer

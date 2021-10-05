@@ -1637,6 +1637,15 @@ void get_buf_local_marks(const buf_T *buf, list_T *l)
   add_mark(l, "'>", &buf->b_visual.vi_end, buf->b_fnum, NULL);
 }
 
+/// Get a global mark
+///
+/// @param[in]  Name of named mark
+/// @param[out] Global/file mark
+xfmark_T get_global_mark(char name)
+{
+  return namedfm[mark_global_index(name)];
+}
+
 /// Get information about global marks ('A' to 'Z' and '0' to '9')
 ///
 /// @param[out] l  List to store global marks
