@@ -8,9 +8,9 @@
 // winsock2.h must be first to avoid incompatibilities
 // with winsock.h (included by windows.h)
 
-// uncrustify:indent-off
+// uncrustify:off
 #include <winsock2.h>
-// uncrustify:indent-on
+// uncrustify:on
 #include <io.h>
 #include <stdio.h>
 #include <sys/stat.h>
