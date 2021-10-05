@@ -1206,6 +1206,36 @@ notify({msg}, {log_level}, {_opts})                             *vim.notify()*
                 See also: ~
                     :help nvim_notify
 
+on_key({fn}, {ns_id})                                           *vim.on_key()*
+                Adds Lua function {fn} with namespace id {ns_id} as a listener
+                to every, yes every, input key.
+
+                The Nvim command-line option |-w| is related but does not
+                support callbacks and cannot be toggled dynamically.
+
+                Note:
+                    {fn} will not be cleared by |nvim_buf_clear_namespace()|
+
+                Note:
+                    {fn} will receive the keys after mappings have been
+                    evaluated
+
+                Parameters: ~
+                    {fn}     function: Callback function. It should take one
+                             string argument. On each key press, Nvim passes
+                             the key char to fn(). |i_CTRL-V| If {fn} is nil,
+                             it removes the callback for the associated
+                             {ns_id}
+                    {ns_id}  number? Namespace ID. If nil or 0, generates and
+                             returns a new |nvim_create_namesapce()| id.
+
+                Return: ~
+                    number Namespace id associated with {fn}. Or count of all
+                    callbacks if on_key() is called without arguments.
+
+                Note:
+                    {fn} will be removed if an error occurs while calling.
+
 paste({lines}, {phase})                                          *vim.paste()*
                 Paste handler, invoked by |nvim_paste()| when a conforming UI
                 (such as the |TUI|) pastes text into the editor.
@@ -1268,8 +1298,7 @@ schedule_wrap({cb})                                      *vim.schedule_wrap()*
 deep_equal({a}, {b})                                        *vim.deep_equal()*
                 Deep compare values for equality
 
-                Tables are compared recursively unless they both provide the `eq` methamethod.
-                All other types are compared using the equality `==` operator.
+                Tables are compared recursively unless they both provide the `eq` methamethod. All other types are compared using the equality `==` operator.
 
                 Parameters: ~
                     {a}  first value
@@ -1576,12 +1605,14 @@ validate({opt})                                               *vim.validate()*
 
                   vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
                      => NOP (success)
-
-                  vim.validate{arg1={1, 'table'}}
-                     => error('arg1: expected table, got number')
-
-                  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
-                     => error('arg1: expected even number, got 3')
+<
+>
+    vim.validate{arg1={1, 'table'}}
+       => error('arg1: expected table, got number')
+<
+>
+    vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+       => error('arg1: expected even number, got 3')
 <
 
                 Parameters: ~
