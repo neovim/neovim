@@ -1050,6 +1050,19 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("sends updates on U", function()
+      feed("ggiAAA<cr>BBB")
+      feed("<esc>gg$a CCC")
+
+      local check_events = setup_eventcheck(verify, nil)
+
+      feed("ggU")
+
+      check_events {
+         { "test1", "bytes", 1, 6, 0, 7, 7, 0, 0, 0, 0, 3, 3 };
+      }
+    end)
+
     teardown(function()
       os.remove "Xtest-reload"
       os.remove "Xtest-undofile"
