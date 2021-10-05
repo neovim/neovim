@@ -13,36 +13,6 @@ local function is_dir(filename)
   return stat and stat.type == 'directory' or false
 end
 
-local NIL = vim.NIL
-
----@private
-local recursive_convert_NIL
-recursive_convert_NIL = function(v, tbl_processed)
-  if v == NIL then
-    return nil
-  elseif not tbl_processed[v] and type(v) == 'table' then
-    tbl_processed[v] = true
-    local inside_list = vim.tbl_islist(v)
-    return vim.tbl_map(function(x)
-      if not inside_list or (inside_list and type(x) == "table") then
-        return recursive_convert_NIL(x, tbl_processed)
-      else
-        return x
-      end
-    end, v)
-  end
-
-  return v
-end
-
----@private
---- Returns its argument, but converts `vim.NIL` to Lua `nil`.
----@param v (any) Argument
----@returns (any)
-local function convert_NIL(v)
-  return recursive_convert_NIL(v, {})
-end
-
 ---@private
 --- Merges current process env with the given env and returns the result as
 --- a list of "k=v" strings.
@@ -457,7 +427,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   ---@private
   local function handle_body(body)
-    local ok, decoded = pcall(vim.json.decode, body)
+    local ok, decoded = pcall(vim.json.decode, body, { luanil = { object = true } })
     if not ok then
       on_error(client_errors.INVALID_SERVER_JSON, decoded)
       return
@@ -466,8 +436,6 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
     if type(decoded.method) == 'string' and decoded.id then
       local err
-      -- Server Request
-      decoded.params = convert_NIL(decoded.params)
       -- Schedule here so that the users functions don't trigger an error and
       -- we can still use the result.
       schedule(function()
@@ -494,9 +462,6 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       end)
     -- This works because we are expecting vim.NIL here
     elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
-      -- Server Result
-      decoded.error = convert_NIL(decoded.error)
-      decoded.result = convert_NIL(decoded.result)
 
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
@@ -544,7 +509,6 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       end
     elseif type(decoded.method) == 'string' then
       -- Notification
-      decoded.params = convert_NIL(decoded.params)
       try_call(client_errors.NOTIFICATION_HANDLER_ERROR,
           dispatchers.notification, decoded.method, decoded.params)
     else
