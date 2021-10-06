@@ -814,7 +814,11 @@ void nvim_set_current_dir(String dir, Error *err)
   string[dir.size] = NUL;
 
   char_u *cmd = concat_str((const char_u *)"cd ", (const char_u *)string);
-  nvim_exec(cstr_to_string(vim_strsave_fnameescape((const char *)cmd, false)), false, err);
+  char *escaped = vim_strsave_fnameescape((const char *)cmd, false);
+
+  nvim_exec(cstr_as_string(escaped), false, err);
+
+  xfree(escaped);
   xfree(cmd);
 }
 
