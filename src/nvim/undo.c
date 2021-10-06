@@ -69,8 +69,8 @@
  * All data is allocated and will all be freed when the buffer is unloaded.
  */
 
-/* Uncomment the next line for including the u_check() function.  This warns
- * for errors in the debug information. */
+// Uncomment the next line for including the u_check() function.  This warns
+// for errors in the debug information.
 // #define U_DEBUG 1
 #define UH_MAGIC 0x18dade       // value for uh_magic when in use
 #define UE_MAGIC 0xabc123       // value for ue_magic when in use
@@ -291,8 +291,8 @@ bool undo_allowed(buf_T *buf)
     return false;
   }
 
-  /* Don't allow changes in the buffer while editing the cmdline.  The
-   * caller of getcmdline() may get confused. */
+  // Don't allow changes in the buffer while editing the cmdline.  The
+  // caller of getcmdline() may get confused.
   if (textlock != 0) {
     EMSG(_(e_secure));
     return false;
@@ -1921,8 +1921,8 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
 
       u_undoredo(false, do_buf_event);
 
-      /* Advance for next redo.  Set "newhead" when at the end of the
-       * redoable changes. */
+      // Advance for next redo.  Set "newhead" when at the end of the
+      // redoable changes.
       if (curbuf->b_u_curhead->uh_prev.ptr == NULL) {
         curbuf->b_u_newhead = curbuf->b_u_curhead;
       }
@@ -1967,8 +1967,8 @@ void undo_time(long step, bool sec, bool file, bool absolute)
     u_oldcount = -1;
   }
 
-  /* "target" is the node below which we want to be.
-   * Init "closest" to a value we can't reach. */
+  // "target" is the node below which we want to be.
+  // Init "closest" to a value we can't reach.
   if (absolute) {
     target = step;
     closest = -1;
@@ -1977,9 +1977,9 @@ void undo_time(long step, bool sec, bool file, bool absolute)
       target = (long)(curbuf->b_u_time_cur) + step;
     } else if (dofile) {
       if (step < 0) {
-        /* Going back to a previous write. If there were changes after
-         * the last write, count that as moving one file-write, so
-         * that ":earlier 1f" undoes all changes since the last save. */
+        // Going back to a previous write. If there were changes after
+        // the last write, count that as moving one file-write, so
+        // that ":earlier 1f" undoes all changes since the last save.
         uhp = curbuf->b_u_curhead;
         if (uhp != NULL) {
           uhp = uhp->uh_next.ptr;
@@ -2003,8 +2003,8 @@ void undo_time(long step, bool sec, bool file, bool absolute)
         // Moving forward to a newer write.
         target = curbuf->b_u_save_nr_cur + step;
         if (target > curbuf->b_u_save_nr_last) {
-          /* Go to after last write: after the latest change. Use
-           * the sequence number for that. */
+          // Go to after last write: after the latest change. Use
+          // the sequence number for that.
           target = curbuf->b_u_seq_last + 1;
           dofile = false;
         }
@@ -2072,10 +2072,10 @@ void undo_time(long step, bool sec, bool file, bool absolute)
       }
 
       if (round == 1 && !(dofile && val == 0)) {
-        /* Remember the header that is closest to the target.
-         * It must be at least in the right direction (checked with
-         * "b_u_seq_cur").  When the timestamp is equal find the
-         * highest/lowest sequence number. */
+        // Remember the header that is closest to the target.
+        // It must be at least in the right direction (checked with
+        // "b_u_seq_cur").  When the timestamp is equal find the
+        // highest/lowest sequence number.
         if ((step < 0 ? uhp->uh_seq <= curbuf->b_u_seq_cur
                       : uhp->uh_seq > curbuf->b_u_seq_cur)
             && ((dosec && val == closest)
@@ -2095,8 +2095,8 @@ void undo_time(long step, bool sec, bool file, bool absolute)
         }
       }
 
-      /* Quit searching when we found a match.  But when searching for a
-       * time we need to continue looking for the best uh_seq. */
+      // Quit searching when we found a match.  But when searching for a
+      // time we need to continue looking for the best uh_seq.
       if (target == val && !dosec) {
         target = uhp->uh_seq;
         break;
@@ -2112,12 +2112,11 @@ void undo_time(long step, bool sec, bool file, bool absolute)
                && uhp->uh_alt_next.ptr->uh_walk != nomark
                && uhp->uh_alt_next.ptr->uh_walk != mark) {
         uhp = uhp->uh_alt_next.ptr;
-      }
-      /* go up in the tree if we haven't been there and we are at the
-       * start of alternate branches */
-      else if (uhp->uh_next.ptr != NULL && uhp->uh_alt_prev.ptr == NULL
-               && uhp->uh_next.ptr->uh_walk != nomark
-               && uhp->uh_next.ptr->uh_walk != mark) {
+      } else if (uhp->uh_next.ptr != NULL && uhp->uh_alt_prev.ptr == NULL
+                 // go up in the tree if we haven't been there and we are at the
+                 // start of alternate branches
+                 && uhp->uh_next.ptr->uh_walk != nomark
+                 && uhp->uh_next.ptr->uh_walk != mark) {
         // If still at the start we don't go through this change.
         if (uhp == curbuf->b_u_curhead) {
           uhp->uh_walk = nomark;
@@ -2297,8 +2296,8 @@ static void u_undoredo(int undo, bool do_buf_event)
   bool empty_buffer;                        // buffer became empty
   u_header_T *curhead = curbuf->b_u_curhead;
 
-  /* Don't want autocommands using the undo structures here, they are
-   * invalid till the end. */
+  // Don't want autocommands using the undo structures here, they are
+  // invalid till the end.
   block_autocmds();
 
 #ifdef U_DEBUG
@@ -2549,8 +2548,8 @@ static void u_undoredo(int undo, bool do_buf_event)
     }
   }
 
-  /* The timestamp can be the same for multiple changes, just use the one of
-   * the undone/redone change. */
+  // The timestamp can be the same for multiple changes, just use the one of
+  // the undone/redone change.
   curbuf->b_u_time_cur = curhead->uh_time;
 
   unblock_autocmds();
@@ -2709,12 +2708,11 @@ void ex_undolist(exarg_T *eap)
              && uhp->uh_alt_next.ptr->uh_walk != nomark
              && uhp->uh_alt_next.ptr->uh_walk != mark) {
       uhp = uhp->uh_alt_next.ptr;
-    }
-    /* go up in the tree if we haven't been there and we are at the
-     * start of alternate branches */
-    else if (uhp->uh_next.ptr != NULL && uhp->uh_alt_prev.ptr == NULL
-             && uhp->uh_next.ptr->uh_walk != nomark
-             && uhp->uh_next.ptr->uh_walk != mark) {
+    } else if (uhp->uh_next.ptr != NULL && uhp->uh_alt_prev.ptr == NULL
+               // go up in the tree if we haven't been there and we are at the
+               // start of alternate branches
+               && uhp->uh_next.ptr->uh_walk != nomark
+               && uhp->uh_next.ptr->uh_walk != mark) {
       uhp = uhp->uh_next.ptr;
       --changes;
     } else {
@@ -2906,8 +2904,8 @@ static void u_freeheader(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
 {
   u_header_T *uhap;
 
-  /* When there is an alternate redo list free that branch completely,
-   * because we can never go there. */
+  // When there is an alternate redo list free that branch completely,
+  // because we can never go there.
   if (uhp->uh_alt_next.ptr != NULL) {
     u_freebranch(buf, uhp->uh_alt_next.ptr, uhpp);
   }
@@ -2942,8 +2940,8 @@ static void u_freebranch(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
 {
   u_header_T *tofree, *next;
 
-  /* If this is the top branch we may need to use u_freeheader() to update
-   * all the pointers. */
+  // If this is the top branch we may need to use u_freeheader() to update
+  // all the pointers.
   if (uhp == buf->b_u_oldhead) {
     while (buf->b_u_oldhead != NULL) {
       u_freeheader(buf, buf->b_u_oldhead, uhpp);
