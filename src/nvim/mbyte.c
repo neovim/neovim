@@ -190,9 +190,9 @@ enc_canon_table[] =
 #define IDX_BIG5        29
   { "big5",            ENC_DBCS,               DBCS_CHT },
 
-  /* MS-DOS and MS-Windows codepages are included here, so that they can be
-   * used on Unix too.  Most of them are similar to ISO-8859 encodings, but
-   * not exactly the same. */
+  // MS-DOS and MS-Windows codepages are included here, so that they can be
+  // used on Unix too.  Most of them are similar to ISO-8859 encodings, but
+  // not exactly the same.
 #define IDX_CP437       30
   { "cp437",           ENC_8BIT,               437 },   // like iso-8859-1
 #define IDX_CP737       31
@@ -1066,8 +1066,8 @@ bool utf_printable(int c)
    */
   return iswprint(c);
 #else
-  /* Sorted list of non-overlapping intervals.
-   * 0xd800-0xdfff is reserved for UTF-16, actually illegal. */
+  // Sorted list of non-overlapping intervals.
+  // 0xd800-0xdfff is reserved for UTF-16, actually illegal.
   static struct interval nonprint[] =
   {
     { 0x070f, 0x070f }, { 0x180b, 0x180e }, { 0x200b, 0x200f }, { 0x202a, 0x202e },
@@ -1354,12 +1354,12 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
     return c1 == 0 ? -1 : 1;
   }
 
-  /* Continue with bytewise comparison to produce some result that
-   * would make comparison operations involving this function transitive.
-   *
-   * If only one string had an error, comparison should be made with
-   * folded version of the other string. In this case it is enough
-   * to fold just one character to determine the result of comparison. */
+  // Continue with bytewise comparison to produce some result that
+  // would make comparison operations involving this function transitive.
+  //
+  // If only one string had an error, comparison should be made with
+  // folded version of the other string. In this case it is enough
+  // to fold just one character to determine the result of comparison.
 
   if (c1 != -1 && c2 == -1) {
     n1 = utf_char2bytes(utf_fold(c1), buffer);
@@ -1637,8 +1637,8 @@ int utf_head_off(const char_u *base, const char_u *p)
     while (q > base && (*q & 0xc0) == 0x80) {
       --q;
     }
-    /* Check for illegal sequence. Do allow an illegal byte after where we
-     * started. */
+    // Check for illegal sequence. Do allow an illegal byte after where we
+    // started.
     len = utf8len_tab[*q];
     if (len != (int)(s - q + 1) && len != (int)(p - q + 1)) {
       return 0;
@@ -2335,8 +2335,8 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
   fromlen = slen;
   for (;; ) {
     if (len == 0 || ICONV_ERRNO == ICONV_E2BIG) {
-      /* Allocate enough room for most conversions.  When re-allocating
-       * increase the buffer size. */
+      // Allocate enough room for most conversions.  When re-allocating
+      // increase the buffer size.
       len = len + fromlen * 2 + 40;
       p = xmalloc(len);
       if (done > 0) {
