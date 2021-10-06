@@ -301,7 +301,6 @@ MPACK_API double mpack_unpack_number(mpack_token_t t)
      */
     if (!hi) {
       assert(t.length <= 4);
-      hi = 0;
       lo = (~lo & (((mpack_uint32_t)1 << ((t.length * 8) - 1)) - 1));
     } else {
       hi = ~hi;
