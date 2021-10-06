@@ -682,8 +682,8 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
 
   vcol = offset;
 
-#define incr() nudge++; ptr_end += utfc_ptr2len(ptr_end)
-#define decr() nudge--; ptr_end -= utfc_ptr2len(ptr_end)
+#define INCR() nudge++; ptr_end += utfc_ptr2len(ptr_end)
+#define DECR() nudge--; ptr_end -= utfc_ptr2len(ptr_end)
 
   while (ptr < ptr_end && *ptr != NUL) {
     cwidth = win_chartabsize(curwin, ptr, vcol);
@@ -692,7 +692,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
       // A tab will "absorb" any previous adjustments.
       cwidth = MIN(cwidth, nudge);
       while (cwidth > 0) {
-        decr();
+        DECR();
         cwidth--;
       }
     }
@@ -700,20 +700,20 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
     if (matchid != 0) {
       if (wp->w_p_cole == 3) {
-        incr();
+        INCR();
       } else {
         if (!(row > 0 && ptr == ptr_row_offset)
             && (wp->w_p_cole == 1 || (wp->w_p_cole == 2
                                       && (wp->w_p_lcs_chars.conceal != NUL
                                           || syn_get_sub_char() != NUL)))) {
           // At least one placeholder character will be displayed.
-          decr();
+          DECR();
         }
 
         prev_matchid = matchid;
 
         while (prev_matchid == matchid && *ptr != NUL) {
-          incr();
+          INCR();
           ptr += utfc_ptr2len(ptr);
           matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
         }

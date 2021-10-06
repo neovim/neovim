@@ -65,11 +65,6 @@ KHASH_SET_INIT_INT64(bufset)
 KHASH_MAP_INIT_STR(fnamebufs, buf_T *)
 KHASH_SET_INIT_STR(strset)
 
-#define find_shada_parameter(...) \
-  ((const char *)find_shada_parameter(__VA_ARGS__))
-#define path_try_shorten_fname(b) \
-  ((char *)path_try_shorten_fname((char_u *)b))
-
 #define SEARCH_KEY_MAGIC "sm"
 #define SEARCH_KEY_SMARTCASE "sc"
 #define SEARCH_KEY_HAS_LINE_OFFSET "sl"
@@ -609,20 +604,6 @@ static inline void hmll_insert(HMLList *const hmll, HMLListEntry *hmll_entry, co
   }
 }
 
-/// Iterate over HMLList in backward direction
-///
-/// @param  hmll       Pointer to the list.
-/// @param  cur_entry  Name of the variable to iterate over, must be already
-///                    defined.
-/// @param  code       Code to execute on each iteration.
-///
-/// @return `for` cycle header (use `HMLL_FORALL(hmll, cur_entry) {body}`).
-#define HMLL_ITER_BACK(hmll, cur_entry, code) \
-  for (cur_entry = (hmll)->last; cur_entry != NULL; \
-       cur_entry = cur_entry->prev) { \
-    code \
-  }
-
 /// Free linked list
 ///
 /// @param[in]  hmll  List to free.
@@ -966,11 +947,12 @@ static void hms_insert(HistoryMergerState *const hms_p, const ShadaEntry entry, 
     }
   }
   HMLListEntry *insert_after;
-  HMLL_ITER_BACK(hmll, insert_after, {
+  // Iterate over HMLList in backward direction
+  for (insert_after = hmll->last; insert_after != NULL; insert_after = insert_after->prev) {
     if (insert_after->data.timestamp <= entry.timestamp) {
       break;
     }
-  })
+  }
   hmll_insert(hmll, insert_after, entry, can_free_entry);
 }
 
@@ -1346,7 +1328,8 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
     }
     case kSDItemBufferList:
       for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
-        char *const sfname = path_try_shorten_fname(cur_entry.data.buffer_list.buffers[i].fname);
+        char *const sfname =
+          (char *)path_try_shorten_fname((char_u *)cur_entry.data.buffer_list.buffers[i].fname);
         buf_T *const buf =
           buflist_new((char_u *)cur_entry.data.buffer_list.buffers[i].fname, (char_u *)sfname, 0,
                       BLN_LISTED);
@@ -1488,7 +1471,7 @@ static char *shada_filename(const char *file)
     if (p_shadafile != NULL && *p_shadafile != NUL) {
       file = p_shadafile;
     } else {
-      if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
+      if ((file = (char *)find_shada_parameter('n')) == NULL || *file == NUL) {
         file =  shada_get_default_file();
       }
       // XXX It used to be one level lower, so that whatever is in
@@ -1507,14 +1490,6 @@ static char *shada_filename(const char *file)
   do { \
     msgpack_pack_str(spacker, sizeof(s) - 1); \
     msgpack_pack_str_body(spacker, s, sizeof(s) - 1); \
-  } while (0)
-#define PACK_STRING(s) \
-  do { \
-    const String s_ = (s); \
-    msgpack_pack_str(spacker, s_.size); \
-    if (s_.size) { \
-      msgpack_pack_str_body(spacker, s_.data, s_.size); \
-    } \
   } while (0)
 #define PACK_BIN(s) \
   do { \
@@ -1796,7 +1771,11 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
   case kSDItemHeader:
     msgpack_pack_map(spacker, entry.data.header.size);
     for (size_t i = 0; i < entry.data.header.size; i++) {
-      PACK_STRING(entry.data.header.items[i].key);
+      const String s = entry.data.header.items[i].key;
+      msgpack_pack_str(spacker, s.size);
+      if (s.size) {
+        msgpack_pack_str_body(spacker, s.data, s.size);
+      }
       const Object obj = entry.data.header.items[i].value;
       switch (obj.type) {
       case kObjectTypeString:
@@ -1842,7 +1821,6 @@ shada_pack_entry_error:
   msgpack_sbuffer_destroy(&sbuf);
   return ret;
 }
-#undef PACK_STRING
 
 /// Write single ShaDa entry and free it afterwards
 ///
@@ -2943,7 +2921,6 @@ shada_write_exit:
   return ret;
 }
 
-#undef IGNORE_BUF
 #undef PACK_STATIC_STR
 
 /// Write ShaDa file to a given location
@@ -3410,8 +3387,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
            sizeof(*un.data.via.map.ptr)); \
     ad_ga.ga_len++; \
   }
-#define CONVERTED(str, len) (xmemdupz((str), (len)))
-#define BIN_CONVERTED(b) CONVERTED(b.ptr, b.size)
+#define BIN_CONVERTED(b) (xmemdupz((b.ptr), (b.size)))
 #define SET_ADDITIONAL_DATA(tgt, name) \
   do { \
     if (ad_ga.ga_len) { \
@@ -3968,7 +3944,6 @@ shada_read_next_item_error:
   goto shada_read_next_item_end;
 }
 #undef BIN_CONVERTED
-#undef CONVERTED
 #undef CHECK_KEY
 #undef BOOLEAN_KEY
 #undef CONVERTED_STRING_KEY
