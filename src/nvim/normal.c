@@ -349,8 +349,8 @@ static const struct nv_cmd {
 // Sorted index of commands in nv_cmds[].
 static short nv_cmd_idx[NV_CMDS_SIZE];
 
-/* The highest index for which
- * nv_cmds[idx].cmd_char == nv_cmd_idx[nv_cmds[idx].cmd_char] */
+// The highest index for which
+// nv_cmds[idx].cmd_char == nv_cmd_idx[nv_cmds[idx].cmd_char]
 static int nv_max_linear;
 
 /*
@@ -3623,8 +3623,8 @@ void do_check_scrollbind(bool check)
   static colnr_T old_leftcol = 0;
 
   if (check && curwin->w_p_scb) {
-    /* If a ":syncbind" command was just used, don't scroll, only reset
-     * the values. */
+    // If a ":syncbind" command was just used, don't scroll, only reset
+    // the values.
     if (did_syncbind) {
       did_syncbind = false;
     } else if (curwin == old_curwin) {
@@ -4264,8 +4264,8 @@ void scroll_redraw(int up, long count)
           break;
         }
       }
-      /* Mark w_topline as valid, otherwise the screen jumps back at the
-       * end of the file. */
+      // Mark w_topline as valid, otherwise the screen jumps back at the
+      // end of the file.
       check_cursor_moved(curwin);
       curwin->w_valid |= VALID_TOPLINE;
     }
@@ -4712,9 +4712,9 @@ dozet:
     if (ptr == NULL) {
       pos_T pos = curwin->w_cursor;
 
-      /* Find bad word under the cursor.  When 'spell' is
-       * off this fails and find_ident_under_cursor() is
-       * used below. */
+      // Find bad word under the cursor.  When 'spell' is
+      // off this fails and find_ident_under_cursor() is
+      // used below.
       emsg_off++;
       len = spell_move_to(curwin, FORWARD, true, true, NULL);
       emsg_off--;
@@ -4833,10 +4833,8 @@ static void nv_colon(cmdarg_T *cap)
                && (cap->oap->start.lnum > curbuf->b_ml.ml_line_count
                    || cap->oap->start.col >
                    (colnr_T)STRLEN(ml_get(cap->oap->start.lnum))
-                   || did_emsg
-                   )) {
-      /* The start of the operator has become invalid by the Ex command.
-       */
+                   || did_emsg)) {
+      // The start of the operator has become invalid by the Ex command.
       clearopbeep(cap->oap);
     }
   }
@@ -5667,8 +5665,8 @@ static int normal_search(cmdarg_T *cap, int dir, char_u *pat, int opt, int *wrap
     }
   }
 
-  /* "/$" will put the cursor after the end of the line, may need to
-   * correct that here */
+  // "/$" will put the cursor after the end of the line, may need to
+  // correct that here
   check_cursor();
   return i;
 }
@@ -5848,16 +5846,15 @@ static void nv_brackets(cmdarg_T *cap)
           }
           c = gchar_cursor();
           if (c == '{' || c == '}') {
-            /* Must have found end/start of class: use it.
-             * Or found the place to be at. */
+            // Must have found end/start of class: use it.
+            // Or found the place to be at.
             if ((c == findc && norm) || (n == 1 && !norm)) {
               new_pos = curwin->w_cursor;
               pos = &new_pos;
               n = 0;
-            }
-            /* if no match found at all, we started outside of the
-             * class and we're inside now.  Just go on. */
-            else if (new_pos.lnum == 0) {
+            } else if (new_pos.lnum == 0) {
+              // if no match found at all, we started outside of the
+              // class and we're inside now.  Just go on.
               new_pos = curwin->w_cursor;
               pos = &new_pos;
             }
@@ -6306,8 +6303,8 @@ static void v_swap_corners(int cmdchar)
 
     curwin->w_cursor.lnum = old_cursor.lnum;
     curwin->w_curswant = right;
-    /* 'selection "exclusive" and cursor at right-bottom corner: move it
-     * right one column */
+    // 'selection "exclusive" and cursor at right-bottom corner: move it
+    // right one column
     if (old_cursor.lnum >= VIsual.lnum && *p_sel == 'e') {
       ++curwin->w_curswant;
     }
@@ -6479,8 +6476,8 @@ static void v_visop(cmdarg_T *cap)
 {
   static char_u trans[] = "YyDdCcxdXdAAIIrr";
 
-  /* Uppercase means linewise, except in block mode, then "D" deletes till
-   * the end of the line, and "C" replaces till EOL */
+  // Uppercase means linewise, except in block mode, then "D" deletes till
+  // the end of the line, and "C" replaces till EOL
   if (isupper(cap->cmdchar)) {
     if (VIsual_mode != Ctrl_V) {
       VIsual_mode_orig = VIsual_mode;
@@ -6912,8 +6909,8 @@ static void nv_g_cmd(cmdarg_T *cap)
       VIsual_active = true;
       VIsual_reselect = true;
 
-      /* Set Visual to the start and w_cursor to the end of the Visual
-       * area.  Make sure they are on an existing character. */
+      // Set Visual to the start and w_cursor to the end of the Visual
+      // area.  Make sure they are on an existing character.
       check_cursor();
       VIsual = curwin->w_cursor;
       curwin->w_cursor = tpos;
@@ -6956,10 +6953,9 @@ static void nv_g_cmd(cmdarg_T *cap)
     nv_visual(cap);
     break;
 
-  /* "gn", "gN" visually select next/previous search match
-   * "gn" selects next match
-   * "gN" selects previous match
-   */
+  // "gn", "gN" visually select next/previous search match
+  // "gn" selects next match
+  // "gN" selects previous match
   case 'N':
   case 'n':
     if (!current_search(cap->count1, cap->nchar == 'n')) {
@@ -7033,9 +7029,9 @@ static void nv_g_cmd(cmdarg_T *cap)
     } else {
       i = curwin->w_leftcol;
     }
-    /* Go to the middle of the screen line.  When 'number' or
-     * 'relativenumber' is on and lines are wrapping the middle can be more
-     * to the left. */
+    // Go to the middle of the screen line.  When 'number' or
+    // 'relativenumber' is on and lines are wrapping the middle can be more
+    // to the left.
     if (cap->nchar == 'm') {
       i += (curwin->w_width_inner - curwin_col_off()
             + ((curwin->w_p_wrap && i > 0)
@@ -7683,11 +7679,10 @@ static void nv_wordcmd(cmdarg_T *cap)
  */
 static void adjust_cursor(oparg_T *oap)
 {
-  /* The cursor cannot remain on the NUL when:
-   * - the column is > 0
-   * - not in Visual mode or 'selection' is "o"
-   * - 'virtualedit' is not "all" and not "onemore".
-   */
+  // The cursor cannot remain on the NUL when:
+  // - the column is > 0
+  // - not in Visual mode or 'selection' is "o"
+  // - 'virtualedit' is not "all" and not "onemore".
   if (curwin->w_cursor.col > 0 && gchar_cursor() == NUL
       && (!VIsual_active || *p_sel == 'o')
       && !virtual_active() &&
@@ -7956,8 +7951,8 @@ static void nv_edit(cmdarg_T *cap)
     if (curwin->w_cursor.coladd && cap->cmdchar != 'A') {
       int save_State = State;
 
-      /* Pretend Insert mode here to allow the cursor on the
-       * character past the end of the line */
+      // Pretend Insert mode here to allow the cursor on the
+      // character past the end of the line
       State = INSERT;
       coladvance(getviscol());
       State = save_State;
@@ -7974,9 +7969,9 @@ static void invoke_edit(cmdarg_T *cap, int repl, int cmd, int startln)
 {
   int restart_edit_save = 0;
 
-  /* Complicated: When the user types "a<C-O>a" we don't want to do Insert
-   * mode recursively.  But when doing "a<C-O>." or "a<C-O>rx" we do allow
-   * it. */
+  // Complicated: When the user types "a<C-O>a" we don't want to do Insert
+  // mode recursively.  But when doing "a<C-O>." or "a<C-O>rx" we do allow
+  // it.
   if (repl || !stuff_empty()) {
     restart_edit_save = restart_edit;
   } else {
@@ -8260,8 +8255,8 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
            && curwin->w_cursor.col < curbuf->b_op_start.col)
           || (VIsual_mode == 'V'
               && curwin->w_cursor.lnum < curbuf->b_op_start.lnum)) {
-        /* cursor is at the end of the line or end of file, put
-         * forward. */
+        // cursor is at the end of the line or end of file, put
+        // forward.
         dir = FORWARD;
       }
       // May have been reset in do_put().
@@ -8275,8 +8270,8 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       xfree(savereg);
     }
 
-    /* What to reselect with "gv"?  Selecting the just put text seems to
-     * be the most useful, since the original text was removed. */
+    // What to reselect with "gv"?  Selecting the just put text seems to
+    // be the most useful, since the original text was removed.
     if (was_visual) {
       curbuf->b_visual.vi_start = curbuf->b_op_start;
       curbuf->b_visual.vi_end = curbuf->b_op_end;
