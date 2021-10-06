@@ -269,10 +269,10 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     }
   }
 
-  /* Remember the initial values of curbuf, curbuf->b_ffname and
-   * curbuf->b_fname to detect whether they are altered as a result of
-   * executing nasty autocommands.  Also check if "fname" and "sfname"
-   * point to one of these values. */
+  // Remember the initial values of curbuf, curbuf->b_ffname and
+  // curbuf->b_fname to detect whether they are altered as a result of
+  // executing nasty autocommands.  Also check if "fname" and "sfname"
+  // point to one of these values.
   old_curbuf = curbuf;
   old_b_ffname = curbuf->b_ffname;
   old_b_fname = curbuf->b_fname;
@@ -429,8 +429,8 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
       curbuf->b_orig_mode = 0;
     }
 
-    /* Reset the "new file" flag.  It will be set again below when the
-     * file doesn't exist. */
+    // Reset the "new file" flag.  It will be set again below when the
+    // file doesn't exist.
     curbuf->b_flags &= ~(BF_NEW | BF_NEW_W);
   }
 
@@ -514,8 +514,8 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   }
 
   if (set_options) {
-    /* Don't change 'eol' if reading from buffer as it will already be
-     * correctly set when reading stdin. */
+    // Don't change 'eol' if reading from buffer as it will already be
+    // correctly set when reading stdin.
     if (!read_buffer) {
       curbuf->b_p_eol = TRUE;
       curbuf->b_start_eol = TRUE;
@@ -816,8 +816,8 @@ retry:
   fio_flags = 0;
   converted = need_conversion(fenc);
   if (converted) {
-    /* "ucs-bom" means we need to check the first bytes of the file
-     * for a BOM. */
+    // "ucs-bom" means we need to check the first bytes of the file
+    // for a BOM.
     if (STRCMP(fenc, ENC_UCSBOM) == 0) {
       fio_flags = FIO_UCSBOM;
     } else {
@@ -949,16 +949,16 @@ retry:
         ptr = buffer + linerest;
         line_start = buffer;
 
-        /* May need room to translate into.
-         * For iconv() we don't really know the required space, use a
-         * factor ICONV_MULT.
-         * latin1 to utf-8: 1 byte becomes up to 2 bytes
-         * utf-16 to utf-8: 2 bytes become up to 3 bytes, 4 bytes
-         * become up to 4 bytes, size must be multiple of 2
-         * ucs-2 to utf-8: 2 bytes become up to 3 bytes, size must be
-         * multiple of 2
-         * ucs-4 to utf-8: 4 bytes become up to 6 bytes, size must be
-         * multiple of 4 */
+        // May need room to translate into.
+        // For iconv() we don't really know the required space, use a
+        // factor ICONV_MULT.
+        // latin1 to utf-8: 1 byte becomes up to 2 bytes
+        // utf-16 to utf-8: 2 bytes become up to 3 bytes, 4 bytes
+        // become up to 4 bytes, size must be multiple of 2
+        // ucs-2 to utf-8: 2 bytes become up to 3 bytes, size must be
+        // multiple of 2
+        // ucs-4 to utf-8: 4 bytes become up to 6 bytes, size must be
+        // multiple of 4
         real_size = (int)size;
 #ifdef HAVE_ICONV
         if (iconv_fd != (iconv_t)-1) {
@@ -1000,9 +1000,9 @@ retry:
               p = ml_get(read_buf_lnum) + read_buf_col;
               n = (int)STRLEN(p);
               if ((int)tlen + n + 1 > size) {
-                /* Filled up to "size", append partial line.
-                 * Change NL to NUL to reverse the effect done
-                 * below. */
+                // Filled up to "size", append partial line.
+                // Change NL to NUL to reverse the effect done
+                // below.
                 n = (int)(size - tlen);
                 for (ni = 0; ni < n; ++ni) {
                   if (p[ni] == NL) {
@@ -1026,8 +1026,8 @@ retry:
                 ptr[tlen++] = NL;
                 read_buf_col = 0;
                 if (++read_buf_lnum > from) {
-                  /* When the last line didn't have an
-                   * end-of-line don't add it now either. */
+                  // When the last line didn't have an
+                  // end-of-line don't add it now either.
                   if (!curbuf->b_p_eol) {
                     --tlen;
                   }
@@ -1279,8 +1279,8 @@ retry:
           }
         }
 
-        /* If there is a trailing incomplete sequence move it to
-         * conv_rest[]. */
+        // If there is a trailing incomplete sequence move it to
+        // conv_rest[].
         if (tail != NULL) {
           conv_restlen = (int)((ptr + size) - tail);
           memmove(conv_rest, tail, conv_restlen);
@@ -1320,8 +1320,8 @@ retry:
                 }
               }
 
-              /* found second word of double-word, get the first
-               * word and compute the resulting character */
+              // found second word of double-word, get the first
+              // word and compute the resulting character
               if (fio_flags & FIO_ENDIAN_L) {
                 u16c = (*--p << 8);
                 u16c += *--p;
@@ -1369,9 +1369,9 @@ retry:
               p -= len;
               u8c = utf_ptr2char(p);
               if (len == 0) {
-                /* Not a valid UTF-8 character, retry with
-                 * another fenc when possible, otherwise just
-                 * report the error. */
+                // Not a valid UTF-8 character, retry with
+                // another fenc when possible, otherwise just
+                // report the error.
                 if (can_retry) {
                   goto rewind_retry;
                 }
@@ -1435,9 +1435,9 @@ retry:
               }
             }
             if (l == 1 || l > todo) {
-              /* Illegal byte.  If we can try another encoding
-               * do that, unless at EOF where a truncated
-               * file is more likely than a conversion error. */
+              // Illegal byte.  If we can try another encoding
+              // do that, unless at EOF where a truncated
+              // file is more likely than a conversion error.
               if (can_retry && !incomplete_tail) {
                 break;
               }
@@ -1909,8 +1909,8 @@ failed:
    */
   curbuf->b_no_eol_lnum = read_no_eol_lnum;
 
-  /* When reloading a buffer put the cursor at the first line that is
-   * different. */
+  // When reloading a buffer put the cursor at the first line that is
+  // different.
   if (flags & READ_KEEP_UNDO) {
     u_find_first_changed();
   }
@@ -1929,8 +1929,8 @@ failed:
     int m = msg_scroll;
     int n = msg_scrolled;
 
-    /* Save the fileformat now, otherwise the buffer will be considered
-     * modified if the format/encoding was automatically detected. */
+    // Save the fileformat now, otherwise the buffer will be considered
+    // modified if the format/encoding was automatically detected.
     if (set_options) {
       save_file_ff(curbuf);
     }
@@ -4804,15 +4804,15 @@ int check_timestamps(int focus)
 {
   int didit = 0;
 
-  /* Don't check timestamps while system() or another low-level function may
-   * cause us to lose and gain focus. */
+  // Don't check timestamps while system() or another low-level function may
+  // cause us to lose and gain focus.
   if (no_check_timestamps > 0) {
     return FALSE;
   }
 
-  /* Avoid doing a check twice.  The OK/Reload dialog can cause a focus
-   * event and we would keep on checking if the file is steadily growing.
-   * Do check again after typing something. */
+  // Avoid doing a check twice.  The OK/Reload dialog can cause a focus
+  // event and we would keep on checking if the file is steadily growing.
+  // Do check again after typing something.
   if (focus && did_check_timestamps) {
     need_check_timestamps = TRUE;
     return FALSE;
@@ -5025,8 +5025,8 @@ int buf_check_timestamp(buf_T *buf)
             mesg = _("W16: Warning: Mode of file \"%s\" has changed since editing started");
             mesg2 = _("See \":help W16\" for more info.");
           } else {
-            /* Only timestamp changed, store it to avoid a warning
-             * in check_mtime() later. */
+            // Only timestamp changed, store it to avoid a warning
+            // in check_mtime() later.
             buf->b_mtime_read = buf->b_mtime;
           }
         }
@@ -5623,12 +5623,11 @@ char_u *file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allo
       }
 #ifdef BACKSLASH_IN_FILENAME
       if (!no_bslash) {
-        /* translate:
-         * "\x" to "\\x"  e.g., "dir\file"
-         * "\*" to "\\.*" e.g., "dir\*.c"
-         * "\?" to "\\."  e.g., "dir\??.c"
-         * "\+" to "\+"   e.g., "fileX\+.c"
-         */
+        // translate:
+        // "\x" to "\\x"  e.g., "dir\file"
+        // "\*" to "\\.*" e.g., "dir\*.c"
+        // "\?" to "\\."  e.g., "dir\??.c"
+        // "\+" to "\+"   e.g., "fileX\+.c"
         if ((vim_isfilec(p[1]) || p[1] == '*' || p[1] == '?')
             && p[1] != '+') {
           reg_pat[i++] = '[';
@@ -5642,16 +5641,15 @@ char_u *file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allo
         }
       }
 #endif
-      /* Undo escaping from ExpandEscape():
-       * foo\?bar -> foo?bar
-       * foo\%bar -> foo%bar
-       * foo\,bar -> foo,bar
-       * foo\ bar -> foo bar
-       * Don't unescape \, * and others that are also special in a
-       * regexp.
-       * An escaped { must be unescaped since we use magic not
-       * verymagic.  Use "\\\{n,m\}"" to get "\{n,m}".
-       */
+      // Undo escaping from ExpandEscape():
+      // foo\?bar -> foo?bar
+      // foo\%bar -> foo%bar
+      // foo\,bar -> foo,bar
+      // foo\ bar -> foo bar
+      // Don't unescape \, * and others that are also special in a
+      // regexp.
+      // An escaped { must be unescaped since we use magic not
+      // verymagic.  Use "\\\{n,m\}"" to get "\{n,m}".
       if (*++p == '?'
 #ifdef BACKSLASH_IN_FILENAME
           && no_bslash

@@ -197,8 +197,8 @@ void do_exmode(void)
   exmode_active = true;
   State = NORMAL;
 
-  /* When using ":global /pat/ visual" and then "Q" we return to continue
-   * the :global command. */
+  // When using ":global /pat/ visual" and then "Q" we return to continue
+  // the :global command.
   if (global_busy) {
     return;
   }
@@ -231,8 +231,8 @@ void do_exmode(void)
         EMSG(_(e_emptybuf));
       } else {
         if (ex_pressedreturn) {
-          /* go up one line, to overwrite the ":<CR>" line, so the
-           * output doesn't contain empty lines. */
+          // go up one line, to overwrite the ":<CR>" line, so the
+          // output doesn't contain empty lines.
           msg_row = prev_msg_row;
           if (prev_msg_row == Rows - 1) {
             msg_row--;
@@ -374,8 +374,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     ++ex_nesting_level;
   }
 
-  /* Get the function or script name and the address where the next breakpoint
-   * line and the debug tick for a function or script are stored. */
+  // Get the function or script name and the address where the next breakpoint
+  // line and the debug tick for a function or script are stored.
   if (getline_is_func) {
     fname = func_name(real_cookie);
     breakpoint = func_breakpoint(real_cookie);
@@ -500,11 +500,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     }
 
     if (cstack.cs_looplevel > 0) {
-      /* Inside a while/for loop we need to store the lines and use them
-       * again.  Pass a different "fgetline" function to do_one_cmd()
-       * below, so that it stores lines in or reads them from
-       * "lines_ga".  Makes it possible to define a function inside a
-       * while/for loop. */
+      // Inside a while/for loop we need to store the lines and use them
+      // again.  Pass a different "fgetline" function to do_one_cmd()
+      // below, so that it stores lines in or reads them from
+      // "lines_ga".  Makes it possible to define a function inside a
+      // while/for loop.
       cmd_getline = get_loop_line;
       cmd_cookie = (void *)&cmd_loop_cookie;
       cmd_loop_cookie.lines_gap = &lines_ga;
@@ -612,8 +612,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     }
 
     if (cmd_cookie == (void *)&cmd_loop_cookie) {
-      /* Use "current_line" from "cmd_loop_cookie", it may have been
-       * incremented when defining a function. */
+      // Use "current_line" from "cmd_loop_cookie", it may have been
+      // incremented when defining a function.
       current_line = cmd_loop_cookie.current_line;
     }
 
@@ -671,8 +671,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
           cstack.cs_lflags |= CSL_HAD_LOOP;
           line_breakcheck();                    // check if CTRL-C typed
 
-          /* Check for the next breakpoint at or after the ":while"
-           * or ":for". */
+          // Check for the next breakpoint at or after the ":while"
+          // or ":for".
           if (breakpoint != NULL) {
             *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
                                               fname,
@@ -724,8 +724,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
       cstack.cs_flags[cstack.cs_idx] |= CSF_ACTIVE | CSF_FINALLY;
     }
 
-    /* Update global "trylevel" for recursive calls to do_cmdline() from
-     * within this loop. */
+    // Update global "trylevel" for recursive calls to do_cmdline() from
+    // within this loop.
     trylevel = initial_trylevel + cstack.cs_trylevel;
 
     // If the outermost try conditional (across function calls and sourced
@@ -806,9 +806,9 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline, void *cookie, int flags)
     trylevel = initial_trylevel;
   }
 
-  /* If a missing ":endtry", ":endwhile", ":endfor", or ":endif" or a memory
-   * lack was reported above and the error message is to be converted to an
-   * exception, do this now after rewinding the cstack. */
+  // If a missing ":endtry", ":endwhile", ":endfor", or ":endif" or a memory
+  // lack was reported above and the error message is to be converted to an
+  // exception, do this now after rewinding the cstack.
   do_errthrow(&cstack, getline_equal(fgetline, cookie, get_func_line)
       ? (char_u *)"endfunction" : (char_u *)NULL);
 
@@ -1014,9 +1014,9 @@ int getline_equal(LineGetter fgetline, void *cookie, LineGetter func)
   LineGetter gp;
   struct loop_cookie *cp;
 
-  /* When "fgetline" is "get_loop_line()" use the "cookie" to find the
-   * function that's originally used to obtain the lines.  This may be
-   * nested several levels. */
+  // When "fgetline" is "get_loop_line()" use the "cookie" to find the
+  // function that's originally used to obtain the lines.  This may be
+  // nested several levels.
   gp = fgetline;
   cp = (struct loop_cookie *)cookie;
   while (gp == get_loop_line) {
@@ -1035,9 +1035,9 @@ void *getline_cookie(LineGetter fgetline, void *cookie)
   LineGetter gp;
   struct loop_cookie *cp;
 
-  /* When "fgetline" is "get_loop_line()" use the "cookie" to find the
-   * cookie that's originally used to obtain the lines.  This may be nested
-   * several levels. */
+  // When "fgetline" is "get_loop_line()" use the "cookie" to find the
+  // cookie that's originally used to obtain the lines.  This may be nested
+  // several levels.
   gp = fgetline;
   cp = (struct loop_cookie *)cookie;
   while (gp == get_loop_line) {
@@ -2625,9 +2625,9 @@ static char_u *find_command(exarg_T *eap, int *full)
     }
     len = (int)(p - eap->cmd);
     if (*eap->cmd == 'd' && (p[-1] == 'l' || p[-1] == 'p')) {
-      /* Check for ":dl", ":dell", etc. to ":deletel": that's
-       * :delete with the 'l' flag.  Same for 'p'. */
-      for (i = 0; i < len; ++i) {
+      // Check for ":dl", ":dell", etc. to ":deletel": that's
+      // :delete with the 'l' flag.  Same for 'p'.
+      for (i = 0; i < len; i++) {
         if (eap->cmd[i] != ((char_u *)"delete")[i]) {
           break;
         }
@@ -4435,8 +4435,8 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       continue;
     }
 
-    /* Wildcards won't be expanded below, the replacement is taken
-     * literally.  But do expand "~/file", "~user/file" and "$HOME/file". */
+    // Wildcards won't be expanded below, the replacement is taken
+    // literally.  But do expand "~/file", "~user/file" and "$HOME/file".
     if (vim_strchr(repl, '$') != NULL || vim_strchr(repl, '~') != NULL) {
       char_u *l = repl;
 
@@ -4463,8 +4463,8 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         && !(eap->argt & EX_NOSPC)) {
       char_u *l;
 #ifdef BACKSLASH_IN_FILENAME
-      /* Don't escape a backslash here, because rem_backslash() doesn't
-       * remove it later. */
+      // Don't escape a backslash here, because rem_backslash() doesn't
+      // remove it later.
       static char_u *nobslash = (char_u *)" \t\"|";
 # define ESCAPE_CHARS nobslash
 #else
@@ -7205,8 +7205,8 @@ void ex_splitview(exarg_T *eap)
     }
   } else if (win_split(eap->addr_count > 0 ? (int)eap->line2 : 0,
                        *eap->cmd == 'v' ? WSP_VERT : 0) != FAIL) {
-    /* Reset 'scrollbind' when editing another file, but keep it when
-     * doing ":split" without arguments. */
+    // Reset 'scrollbind' when editing another file, but keep it when
+    // doing ":split" without arguments.
     if (*eap->arg != NUL
         ) {
       RESET_BINDING(curwin);
@@ -7402,8 +7402,8 @@ static void ex_find(exarg_T *eap)
   fname = find_file_in_path(eap->arg, STRLEN(eap->arg),
                             FNAME_MESS, TRUE, curbuf->b_ffname);
   if (eap->addr_count > 0) {
-    /* Repeat finding the file "count" times.  This matters when it
-     * appears several times in the path. */
+    // Repeat finding the file "count" times.  This matters when it
+    // appears several times in the path.
     count = eap->line2;
     while (fname != NULL && --count > 0) {
       xfree(fname);
@@ -7509,8 +7509,8 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
         if (!need_hide || buf_hide(curbuf)) {
           cleanup_T cs;
 
-          /* Reset the error/interrupt/exception state here so that
-           * aborting() returns FALSE when closing a window. */
+          // Reset the error/interrupt/exception state here so that
+          // aborting() returns FALSE when closing a window.
           enter_cleanup(&cs);
           win_close(curwin, !need_hide && !buf_hide(curbuf));
 
@@ -7675,8 +7675,8 @@ static void ex_read(exarg_T *eap)
       }
     } else {
       if (empty && exmode_active) {
-        /* Delete the empty line that remains.  Historically ex does
-         * this but vi doesn't. */
+        // Delete the empty line that remains.  Historically ex does
+        // this but vi doesn't.
         if (eap->line2 == 0) {
           lnum = curbuf->b_ml.ml_line_count;
         } else {
@@ -8298,8 +8298,8 @@ static void ex_redir(exarg_T *eap)
     }
   }
 
-  /* Make sure redirection is not off.  Can happen for cmdline completion
-   * that indirectly invokes a command to catch its output. */
+  // Make sure redirection is not off.  Can happen for cmdline completion
+  // that indirectly invokes a command to catch its output.
   if (redir_fd != NULL
       || redir_reg || redir_vname) {
     redir_off = false;
