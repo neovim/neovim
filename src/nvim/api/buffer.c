@@ -1561,16 +1561,17 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
                              Dict(set_extmark) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
+  Decoration decor = DECORATION_INIT;
+
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
-    return 0;
+    goto error;
   }
 
   if (!ns_initialized((uint64_t)ns_id)) {
     api_set_error(err, kErrorTypeValidation, "Invalid ns_id");
-    return 0;
+    goto error;
   }
-
 
   uint64_t id = 0;
   if (opts->id.type == kObjectTypeInteger && opts->id.data.integer > 0) {
@@ -1607,8 +1608,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     api_set_error(err, kErrorTypeValidation, "end_col is not an integer");
     goto error;
   }
-
-  Decoration decor = DECORATION_INIT;
 
   if (HAS_KEY(opts->hl_group)) {
     decor.hl_id = object_to_hl_id(opts->hl_group, "hl_group", err);
@@ -1741,7 +1740,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (line < 0 || line > buf->b_ml.ml_line_count) {
     api_set_error(err, kErrorTypeValidation, "line value outside range");
-    return 0;
+    goto error;
   } else if (line < buf->b_ml.ml_line_count) {
     len = ephemeral ? MAXCOL : STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
   }
@@ -1750,7 +1749,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     col = (Integer)len;
   } else if (col < -1 || col > (Integer)len) {
     api_set_error(err, kErrorTypeValidation, "col value outside range");
-    return 0;
+    goto error;
   }
 
   if (col2 >= 0) {
