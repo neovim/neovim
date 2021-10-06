@@ -839,14 +839,14 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
             }
           }
 
-          /* With the SEARCH_END option move to the last character
-           * of the match.  Don't do it for an empty match, end
-           * should be same as start then. */
+          // With the SEARCH_END option move to the last character
+          // of the match.  Don't do it for an empty match, end
+          // should be same as start then.
           if ((options & SEARCH_END) && !(options & SEARCH_NOOF)
               && !(matchpos.lnum == endpos.lnum
                    && matchpos.col == endpos.col)) {
-            /* For a match in the first column, set the position
-             * on the NUL in the previous line. */
+            // For a match in the first column, set the position
+            // on the NUL in the previous line.
             pos->lnum = lnum + endpos.lnum;
             pos->col = endpos.col;
             if (endpos.col == 0) {
@@ -1498,8 +1498,8 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
     p = skipwhite(ptr);
     pos->col = (colnr_T)(p - ptr);
 
-    /* when adding lines the matching line may be empty but it is not
-     * ignored because we are interested in the next line -- Acevedo */
+    // when adding lines the matching line may be empty but it is not
+    // ignored because we are interested in the next line -- Acevedo
     if ((compl_cont_status & CONT_ADDING)
         && !(compl_cont_status & CONT_SOL)) {
       if (mb_strcmp_ic((bool)p_ic, (const char *)p, (const char *)pat) == 0) {
@@ -1566,9 +1566,9 @@ int searchc(cmdarg_T *cap, int t_cmd)
     c = *lastc;
     // For multi-byte re-use last lastc_bytes[] and lastc_bytelen.
 
-    /* Force a move of at least one char, so ";" and "," will move the
-     * cursor, even if the cursor is right in front of char we are looking
-     * at. */
+    // Force a move of at least one char, so ";" and "," will move the
+    // cursor, even if the cursor is right in front of char we are looking
+    // at.
     if (vim_strchr(p_cpo, CPO_SCOLON) == NULL && count == 1 && t_cmd) {
       stop = false;
     }
@@ -2084,10 +2084,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           if (linep[pos.col - 1] == 'R'
               && linep[pos.col] == '"'
               && vim_strchr(linep + pos.col + 1, '(') != NULL) {
-            /* Possible start of raw string. Now that we have the
-             * delimiter we can check if it ends before where we
-             * started searching, or before the previously found
-             * raw string start. */
+            // Possible start of raw string. Now that we have the
+            // delimiter we can check if it ends before where we
+            // started searching, or before the previously found
+            // raw string start.
             if (!find_rawstring_end(linep, &pos,
                                     count > 0 ? &match_pos : &curwin->w_cursor)) {
               count++;
@@ -2208,8 +2208,8 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       break;
 
     case '"':
-      /* a quote that is preceded with an odd number of backslashes is
-       * ignored */
+      // a quote that is preceded with an odd number of backslashes is
+      // ignored
       if (do_quotes) {
         int col;
 
@@ -2282,8 +2282,8 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
             bslcnt++;
           }
         }
-        /* Only accept a match when 'M' is in 'cpo' or when escaping
-         * is what we expect. */
+        // Only accept a match when 'M' is in 'cpo' or when escaping
+        // is what we expect.
         if (cpo_bsl || (bslcnt & 1) == match_escaped) {
           if (c == initc) {
             count++;
@@ -3505,8 +3505,8 @@ int current_block(oparg_T *oap, long count, int include, int what, int other)
       // Include the character under the cursor.
       oap->inclusive = true;
     } else {
-      /* End is before the start (no text in between <>, [], etc.): don't
-       * operate on any text. */
+      // End is before the start (no text in between <>, [], etc.): don't
+      // operate on any text.
       curwin->w_cursor = start_pos;
     }
   }
@@ -4044,8 +4044,8 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
   }
 
   if (!vis_empty) {
-    /* Check if the existing selection exactly spans the text inside
-     * quotes. */
+    // Check if the existing selection exactly spans the text inside
+    // quotes.
     if (vis_bef_curs) {
       inside_quotes = VIsual.col > 0
                       && line[VIsual.col - 1] == quotechar
@@ -4072,11 +4072,11 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
   }
 
   if (!vis_empty && line[col_start] == quotechar) {
-    /* Already selecting something and on a quote character.  Find the
-     * next quoted string. */
+    // Already selecting something and on a quote character.  Find the
+    // next quoted string.
     if (vis_bef_curs) {
-      /* Assume we are on a closing quote: move to after the next
-       * opening quote. */
+      // Assume we are on a closing quote: move to after the next
+      // opening quote.
       col_start = find_next_quote(line, col_start + 1, quotechar, NULL);
       if (col_start < 0) {
         goto abort_search;
@@ -4800,8 +4800,8 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   file_line = xmalloc(LSIZE);
 
   if (type != CHECK_PATH && type != FIND_DEFINE
-      /* when CONT_SOL is set compare "ptr" with the beginning of the line
-       * is faster than quote_meta/regcomp/regexec "ptr" -- Acevedo */
+      // when CONT_SOL is set compare "ptr" with the beginning of the line
+      // is faster than quote_meta/regcomp/regexec "ptr" -- Acevedo
       && !(compl_cont_status & CONT_SOL)) {
     pat = xmalloc(len + 5);
     assert(len <= INT_MAX);
@@ -4946,10 +4946,9 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
               // Nothing found, use the rest of the line.
               p = incl_regmatch.endp[0];
               i = (int)STRLEN(p);
-            }
-            /* Avoid checking before the start of the line, can
-             * happen if \zs appears in the regexp. */
-            else if (p > line) {
+            } else if (p > line) {
+              // Avoid checking before the start of the line, can
+              // happen if \zs appears in the regexp.
               if (p[-1] == '"' || p[-1] == '<') {
                 --p;
                 ++i;
@@ -5129,9 +5128,9 @@ search_line:
           // IOSIZE > compl_length, so the STRNCPY works
           STRNCPY(IObuff, aux, i);
 
-          /* Get the next line: when "depth" < 0  from the current
-           * buffer, otherwise from the included file.  Jump to
-           * exit_matched when past the last line. */
+          // Get the next line: when "depth" < 0  from the current
+          // buffer, otherwise from the included file.  Jump to
+          // exit_matched when past the last line.
           if (depth < 0) {
             if (lnum >= end_lnum) {
               goto exit_matched;
@@ -5142,9 +5141,9 @@ search_line:
             goto exit_matched;
           }
 
-          /* we read a line, set "already" to check this "line" later
-           * if depth >= 0 we'll increase files[depth].lnum far
-           * bellow  -- Acevedo */
+          // we read a line, set "already" to check this "line" later
+          // if depth >= 0 we'll increase files[depth].lnum far
+          // bellow  -- Acevedo
           already = aux = p = skipwhite(line);
           p = find_word_start(p);
           p = find_word_end(p);
@@ -5195,8 +5194,8 @@ search_line:
           if (did_show) {
             msg_putchar('\n');                  // cursor below last one
           }
-          if (!got_int) {                       /* don't display if 'q' typed
-                                                    at "--more--" message */
+          if (!got_int) {             // don't display if 'q' typed
+                                      // at "--more--" message
             msg_home_replace_hl(curr_fname);
           }
           prev_fname = curr_fname;
@@ -5209,10 +5208,10 @@ search_line:
                            match_count++);
         }
 
-        /* Set matched flag for this file and all the ones that
-         * include it */
-        for (i = 0; i <= depth; ++i) {
-          files[i].matched = TRUE;
+        // Set matched flag for this file and all the ones that
+        // include it
+        for (i = 0; i <= depth; i++) {
+          files[i].matched = true;
         }
       } else if (--count <= 0) {
         found = true;
