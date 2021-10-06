@@ -181,21 +181,20 @@ function! s:get_healthcheck(plugin_names) abort
   let health_list = s:get_healthcheck_list(a:plugin_names)
   let healthchecks = {}
   for c in health_list
-    let name = c[0]
-    let existent = get(healthchecks, name, [])
-    " If an entry with the same name exists and is from vim, prefer Lua so
-    " overwrite it.
-    if existent != []
-      if existent[1] == "v"
-        let healthchecks[name] = c[1:] 
-      else
-        continue
-      endif
+    let normalized_name = substitute(c[0], '-', '_', 'g')
+    let existent = get(healthchecks, normalized_name, [])
+    " Prefer Lua over vim entries
+    if existent != [] && existent[2] == 'l'
+      continue
     else
-      let healthchecks[name] = c[1:]
+      let healthchecks[normalized_name] = c
     endif
   endfor
-  return healthchecks
+  let output = {}
+  for v in values(healthchecks)
+    let output[v[0]] = v[1:]
+  endfor
+  return output
 endfunction
 
 " Returns list of lists [ [{name}, {func}, {type}] ] representing healthchecks
