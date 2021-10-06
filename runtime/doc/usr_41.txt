@@ -1804,7 +1804,7 @@ First of all you must choose a name for your plugin.  The features provided
 by the plugin should be clear from its name.  And it should be unlikely that
 someone else writes a plugin with the same name but which does something
 different.  And please limit the name to 8 characters, to avoid problems on
-old Windows systems.
+old MS-Windows systems.
 
 A script that corrects typing mistakes could be called "typecorr.vim".  We
 will use it here as an example.

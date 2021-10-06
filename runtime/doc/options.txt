@@ -1409,9 +1409,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option is set it overrules 'shellslash' for completion:
 	- When this option is set to "slash", a forward slash is used for path
 	  completion in insert mode. This is useful when editing HTML tag, or
-	  Makefile with 'noshellslash' on Windows.
+	  Makefile with 'noshellslash' on MS-Windows.
 	- When this option is set to "backslash", backslash is used. This is
-	  useful when editing a batch file with 'shellslash' set on Windows.
+	  useful when editing a batch file with 'shellslash' set on MS-Windows.
 	- When this option is empty, same character is used as for
 	  'shellslash'.
 	For Insert mode completion the buffer-local value is used.  For
