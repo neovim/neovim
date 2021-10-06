@@ -502,7 +502,7 @@ describe('API', function()
 
     it('works', function()
       meths.set_current_dir("Xtestdir")
-      eq(funcs.getcwd(), start_dir .. "/Xtestdir")
+      eq(funcs.getcwd(), start_dir .. helpers.get_pathsep() .. "Xtestdir")
     end)
 
     it('sets previous directory', function()
