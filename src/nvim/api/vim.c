@@ -816,7 +816,12 @@ void nvim_set_current_dir(String dir, Error *err)
   char_u *cmd = concat_str((const char_u *)"cd ", (const char_u *)string);
   char *escaped = vim_strsave_fnameescape((const char *)cmd, false);
 
-  nvim_exec(cstr_as_string(escaped), false, err);
+  Error exec_error = ERROR_INIT;
+  nvim_exec(cstr_as_string(escaped), false, &exec_error);
+
+  if (exec_error.type != kErrorTypeNone) {
+    api_set_error(err, kErrorTypeException, "Failed to change directory");
+  }
 
   xfree(escaped);
   xfree(cmd);
