@@ -151,7 +151,7 @@ describe('autocmd DirChanged', function()
       request('nvim_set_current_dir', '/doesnotexist')
     end)
     eq(false, status)
-    eq('Failed to change directory', string.match(err, ': (.*)'))
+    eq([[Vim(cd):E344: Can't find directory "/doesnotexist" in cdpath]], string.match(err, ': (.*)'))
     eq({cwd=dirs[2], scope='global', changed_window=false}, eval('g:ev'))
   end)
 
