@@ -22,14 +22,28 @@ describe(':terminal buffer', function()
 
   it('terminal-mode forces various options', function()
     feed([[<C-\><C-N>]])
-    command('setlocal cursorline cursorcolumn scrolloff=4 sidescrolloff=7')
-    eq({ 1, 1, 4, 7 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    command('setlocal cursorline cursorlineopt=both cursorcolumn scrolloff=4 sidescrolloff=7')
+    eq({ 'both', 1, 1, 4, 7 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
     eq('n', eval('mode()'))
 
     -- Enter terminal-mode ("insert" mode in :terminal).
     feed('i')
     eq('t', eval('mode()'))
-    eq({ 0, 0, 0, 0 }, eval('[&l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+    eq({ 'number', 1, 0, 0, 0 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
+  end)
+
+  it('terminal-mode does not change cursorlineopt if cursorline is disabled', function()
+    feed([[<C-\><C-N>]])
+    command('setlocal nocursorline cursorlineopt=both')
+    feed('i')
+    eq({ 0, 'both' }, eval('[&l:cursorline, &l:cursorlineopt]'))
+  end)
+
+  it('terminal-mode disables cursorline when cursorlineopt is only set to "line', function()
+    feed([[<C-\><C-N>]])
+    command('setlocal cursorline cursorlineopt=line')
+    feed('i')
+    eq({ 0, 'line' }, eval('[&l:cursorline, &l:cursorlineopt]'))
   end)
 
   describe('when a new file is edited', function()

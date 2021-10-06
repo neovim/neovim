@@ -358,11 +358,21 @@ void terminal_enter(void)
   // Disable these options in terminal-mode. They are nonsense because cursor is
   // placed at end of buffer to "follow" output. #11072
   win_T *save_curwin = curwin;
-  int save_w_p_cul = curwin->w_p_cul;
+  bool save_w_p_cul = curwin->w_p_cul;
+  char_u *save_w_p_culopt = NULL;
+  char_u save_w_p_culopt_flags = curwin->w_p_culopt_flags;
   int save_w_p_cuc = curwin->w_p_cuc;
   long save_w_p_so = curwin->w_p_so;
   long save_w_p_siso = curwin->w_p_siso;
-  curwin->w_p_cul = false;
+  if (curwin->w_p_cul && curwin->w_p_culopt_flags & CULOPT_NBR) {
+    if (strcmp((char *)curwin->w_p_culopt, "number")) {
+      save_w_p_culopt = curwin->w_p_culopt;
+      curwin->w_p_culopt = (char_u *)xstrdup("number");
+    }
+    curwin->w_p_culopt_flags = CULOPT_NBR;
+  } else {
+    curwin->w_p_cul = false;
+  }
   curwin->w_p_cuc = false;
   curwin->w_p_so = 0;
   curwin->w_p_siso = 0;
@@ -386,9 +396,16 @@ void terminal_enter(void)
 
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
+    if (save_w_p_culopt) {
+      xfree(curwin->w_p_culopt);
+      curwin->w_p_culopt = save_w_p_culopt;
+    }
+    curwin->w_p_culopt_flags = save_w_p_culopt_flags;
     curwin->w_p_cuc = save_w_p_cuc;
     curwin->w_p_so = save_w_p_so;
     curwin->w_p_siso = save_w_p_siso;
+  } else if (save_w_p_culopt) {
+    xfree(save_w_p_culopt);
   }
 
   // draw the unfocused cursor

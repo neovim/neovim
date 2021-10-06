@@ -53,7 +53,7 @@ next key is sent unless it is <C-N>. Use <C-\><C-N> to return to normal-mode.
 
 Terminal-mode forces these local options:
 
-    'nocursorline'
+    'cursorlineopt' = number
     'nocursorcolumn'
     'scrolloff' = 0
     'sidescrolloff' = 0
@@ -171,7 +171,7 @@ program window	A terminal window for the executed program.  When "run" is
 
 The current window is used to show the source code.  When gdb pauses the
 source file location will be displayed, if possible.  A sign is used to
-highlight the current position, using highlight group debugPC.	 
+highlight the current position, using highlight group debugPC.
 
 If the buffer in the current window is modified, another window will be opened
 to display the current gdb position.
@@ -222,7 +222,7 @@ Put focus on the gdb window and type: >
 	run
 Vim will start running in the program window. Put focus there and type: >
 	:help gui
-Gdb will run into the ex_help breakpoint.  The source window now shows the 
+Gdb will run into the ex_help breakpoint.  The source window now shows the
 ex_cmds.c file.  A red "1 " marker will appear in the signcolumn where the
 breakpoint was set.  The line where the debugger stopped is highlighted.  You
 can now step through the program.  You will see the highlighting move as the
