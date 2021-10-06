@@ -435,7 +435,7 @@ for k, fn in pairs(M) do
 
     if err then
       local client = vim.lsp.get_client_by_id(ctx.client_id)
-      local client_name = client and client.name or string.format("client_id=%d", ctx.client_id)
+      local client_name = client and client.name or ctx.client_id and string.format("client_id=%d", ctx.client_id) or "unknown"
       -- LSP spec:
       -- interface ResponseError:
       --  code: integer;
