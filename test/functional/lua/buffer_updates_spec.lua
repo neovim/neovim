@@ -349,12 +349,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
       end
 
       local text = meths.buf_get_lines(0, 0, -1, true)
-      local bytes = table.concat(text, '\n')
-      if #text ~= 1 or #bytes ~= 0 then
-        -- Not empty buffer.
-        -- Append '\n' only if buffer is not empty, see nvim_buf_get_lines().
-        bytes = bytes .. '\n'
-      end
+      local bytes = table.concat(text, '\n') .. '\n'
 
       eq(string.len(bytes), string.len(shadowbytes), '\non_bytes: total bytecount of buffer is wrong')
       for i = 1, string.len(shadowbytes) do
@@ -1094,17 +1089,17 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     local function test_lockmarks(mode)
-      if not mode then mode = "" end
-      it("test_lockmarks " .. mode .. " %delete _", function()
+      local description = (mode ~= "") and mode or "(baseline)"
+      it("test_lockmarks " .. description .. " %delete _", function()
         local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
 
         command(mode .. " %delete _")
         check_events {
-          { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 0, 0, 0 };
+          { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 1, 0, 1 };
         }
       end)
 
-      it("test_lockmarks " .. mode .. " append()", function()
+      it("test_lockmarks " .. description .. " append()", function()
         local check_events = setup_eventcheck(verify)
 
         command(mode .. " call append(0, 'CCC')")
@@ -1131,7 +1126,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
       end)
     end
 
-    test_lockmarks()
+    -- check that behavior is identical with and without "lockmarks"
+    test_lockmarks ""
     test_lockmarks "lockmarks"
 
     teardown(function()
