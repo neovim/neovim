@@ -1125,9 +1125,9 @@ bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
     // maybe change dictwatcheradd to return a watcher id instead?
     return cb1->data.partial == cb2->data.partial;
   case kCallbackLuaFunc:
-    return STRCMP(cb1->data.funcref, cb2->data.funcref) == 0 &&
-           cb1->data.partial == cb2->data.partial &&
-           is_luafunc(cb1->data.partial);
+    return STRCMP(cb1->data.funcref, cb2->data.funcref) == 0
+           && cb1->data.partial == cb2->data.partial
+           && is_luafunc(cb1->data.partial);
   case kCallbackNone:
     return true;
   }
