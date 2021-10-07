@@ -30,6 +30,7 @@
 typedef struct {
   TSQueryCursor *cursor;
   int predicated_match;
+  int max_match_id;
 } TSLua_cursor;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -1055,6 +1056,8 @@ static int query_next_match(lua_State *L)
 
 static int query_next_capture(lua_State *L)
 {
+  // Upvalues are:
+  // [ cursor, node, query, current_match ]
   TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
   TSQueryCursor *cursor = ud->cursor;
 
@@ -1078,9 +1081,13 @@ static int query_next_capture(lua_State *L)
     lua_pushinteger(L, capture.index+1);  // [index]
     push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
 
+    // Now check if we need to run the predicates
     uint32_t n_pred;
     ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
-    if (n_pred > 0 && capture_index == 0) {
+
+    if (n_pred > 0 && (ud->max_match_id < (int)match.id)) {
+      ud->max_match_id = match.id;
+
       lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
       set_match(L, &match, lua_upvalueindex(2));
       lua_pushinteger(L, match.pattern_index+1);
@@ -1127,6 +1134,7 @@ static int node_rawquery(lua_State *L)
   TSLua_cursor *ud = lua_newuserdata(L, sizeof(*ud));  // [udata]
   ud->cursor = cursor;
   ud->predicated_match = -1;
+  ud->max_match_id = -1;
 
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_QUERYCURSOR);
   lua_setmetatable(L, -2);  // [udata]
