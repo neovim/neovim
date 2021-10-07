@@ -1392,6 +1392,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 	based expansion (e.g., dictionary |i_CTRL-X_CTRL-K|, included patterns
 	|i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]| and normal expansions).
 
+						*'completefilterfunc'* *'cff'*
+'completefilterfunc' 'cff' string (default: empty)
+			Local to buffer
+	This option specifies a function to be used for filtering insert
+	mode completion entries. The function must have the signature
+
+		function(prefix, entry),
+
+	where "entry" is a completion candidate, "prefix" is the text
+	typed by the user, and return a float in the range [0, 999999).
+	Higher return values indicate more matching, meaning that 
+	the completion candidates with higher scores will be placed
+	higher on the completion popup menu. Return a value of 0 to
+	remove the match from being shown. This function will be called
+	once for every completion item, when the user initiates completion
+	or when typing a key while in completion mode.
+
 						*'completefunc'* *'cfu'*
 'completefunc' 'cfu'	string	(default: empty)
 			local to buffer

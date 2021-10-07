@@ -1966,6 +1966,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_cinw);
   clear_string_option(&buf->b_p_cpt);
   clear_string_option(&buf->b_p_cfu);
+  clear_string_option(&buf->b_p_cff);
   clear_string_option(&buf->b_p_ofu);
   clear_string_option(&buf->b_p_gp);
   clear_string_option(&buf->b_p_mp);

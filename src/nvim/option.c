@@ -137,6 +137,7 @@ static char_u *p_com;
 static char_u *p_cms;
 static char_u *p_cpt;
 static char_u *p_cfu;
+static char_u *p_cff;
 static char_u *p_ofu;
 static char_u *p_tfu;
 static int p_eol;
@@ -2023,6 +2024,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_cinw);
   check_string_option(&buf->b_p_cpt);
   check_string_option(&buf->b_p_cfu);
+  check_string_option(&buf->b_p_cff);
   check_string_option(&buf->b_p_ofu);
   check_string_option(&buf->b_p_keymap);
   check_string_option(&buf->b_p_gp);
@@ -5837,6 +5839,8 @@ static char_u *get_varp(vimoption_T *p)
 #endif
   case PV_CFU:
     return (char_u *)&(curbuf->b_p_cfu);
+  case PV_CFF:
+    return (char_u *)&(curbuf->b_p_cff);
   case PV_OFU:
     return (char_u *)&(curbuf->b_p_ofu);
   case PV_EOL:
@@ -6183,6 +6187,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_csl = vim_strsave(p_csl);
 #endif
       buf->b_p_cfu = vim_strsave(p_cfu);
+      buf->b_p_cff = vim_strsave(p_cff);
       buf->b_p_ofu = vim_strsave(p_ofu);
       buf->b_p_tfu = vim_strsave(p_tfu);
       buf->b_p_sts = p_sts;

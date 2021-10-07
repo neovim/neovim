@@ -48,6 +48,7 @@
 #include "nvim/syntax.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
+#include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
@@ -3097,4 +3098,70 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   PUT(result, "str", CSTR_TO_OBJ((char *)buf));
 
   return result;
+}
+
+///
+/// Set matches and start insert completion: see |complete()|.
+///
+/// @param startcol: Byte offset where the completed text starts.
+///                     Any text between startcol and the current
+///                     cursor col is replaced by the completion.
+/// @param matches: A list of string matches.
+/// @param opts: Dictionary. Possible keys:
+///                 filterfunc: function used for filtering the
+///                     matches. See |completefilterfunc|.
+/// @return The empty string. To prevent this function from inserting
+/// a 0 character into the buffer, wrap nvim_complete around another
+/// function, call it via |luaeval|, or use a <cmd> mapping: see
+/// |complete()| for more details.
+String nvim_complete(Integer startcol,
+                     Array matches,
+                     Dict(completion) *opts,
+                     Error *err)
+  FUNC_API_SINCE(8)
+{
+  typval_T tv;
+
+  if ((State & INSERT) == 0) {
+    api_set_error(err, kErrorTypeException,
+                  "complete() can only be used in Insert mode");
+    goto error;
+  }
+
+  // Check for undo allowed here, because if something was already inserted
+  // the line was already saved for undo and this check isn't done.
+  if (!undo_allowed(curbuf)) {
+      goto error;
+  }
+
+  if (startcol <= 0) {
+      goto error;
+  }
+
+  if (opts->filterfunc.type == kObjectTypeLuaRef) {
+    local_filter_func.type = kFuncTypeLuaRef;
+    local_filter_func.data.func = opts->filterfunc.data.luaref;
+    opts->filterfunc.data.luaref = LUA_NOREF;
+  } else if (opts->filterfunc.type == kObjectTypeString) {
+    local_filter_func.type = kFuncTypeString;
+    local_filter_func.data.name = vim_strsave(
+        (char_u *)opts->filterfunc.data.string.data);
+  } else if (HAS_KEY(opts->filterfunc)) {
+    api_set_error(err, kErrorTypeValidation,
+                  "expected lua function or string");
+    goto error;
+  }
+
+  object_to_vim(ARRAY_OBJ(matches), &tv, err);
+  if ERROR_SET(err) {
+      goto error;
+  }
+
+  set_completion((colnr_T)startcol - 1, tv.vval.v_list);
+
+error:
+  tv_clear(&tv);
+
+  String ret = STRING_INIT;
+  return ret;
 }

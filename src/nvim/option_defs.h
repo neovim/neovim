@@ -776,6 +776,7 @@ enum {
   BV_DICT,
   BV_TSR,
   BV_CSL,
+  BV_CFF,
   BV_CFU,
   BV_DEF,
   BV_INC,
