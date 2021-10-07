@@ -1063,6 +1063,31 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("delete in completely empty buffer", function()
+      local check_events = setup_eventcheck(verify, nil)
+
+      command "delete"
+      check_events { }
+    end)
+
+    it("delete the only line of a buffer", function()
+      local check_events = setup_eventcheck(verify, {"AAA"})
+
+      command "delete"
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 1, 0, 4, 1, 0, 1 };
+      }
+    end)
+
+    it("delete the last line of a buffer with two lines", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
+
+      command "2delete"
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 4, 1, 0, 4, 0, 0, 0 };
+      }
+    end)
+
     teardown(function()
       os.remove "Xtest-reload"
       os.remove "Xtest-undofile"
