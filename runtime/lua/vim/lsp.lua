@@ -773,8 +773,10 @@ function lsp.start_client(config)
     config = config;
 
     handlers = handlers;
+    requests = {};
+
     -- for $/progress report
-    messages = { name = name, messages = {}, progress = {}, status = {} }
+    messages = { name = name, messages = {}, progress = {}, status = {} };
   }
 
   -- Store the uninitialized_clients for cleanup in case we exit before initialize finishes.
@@ -907,11 +909,21 @@ function lsp.start_client(config)
     end
     -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
     changetracking.flush(client)
-
+    bufnr = resolve_bufnr(bufnr)
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, handler, bufnr)
-    return rpc.request(method, params, function(err, result)
+    local success, request_id = rpc.request(method, params, function(err, result)
       handler(err, result, {method=method, client_id=client_id, bufnr=bufnr, params=params})
+    end, function(request_id)
+      client.requests[request_id] = nil
+      nvim_command("doautocmd <nomodeline> User LspRequest")
     end)
+
+    if success then
+      client.requests[request_id] = { type='pending', bufnr=bufnr, method=method }
+      nvim_command("doautocmd <nomodeline> User LspRequest")
+    end
+
+    return success, request_id
   end
 
   ---@private
@@ -971,6 +983,11 @@ function lsp.start_client(config)
   ---@see |vim.lsp.client.notify()|
   function client.cancel_request(id)
     validate{id = {id, 'n'}}
+    local request = client.requests[id]
+    if request and request.type == 'pending' then
+      request.type = 'cancel'
+      nvim_command("doautocmd <nomodeline> User LspRequest")
+    end
     return rpc.notify("$/cancelRequest", { id = id })
   end
 

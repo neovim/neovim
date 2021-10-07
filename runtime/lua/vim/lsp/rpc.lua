@@ -297,6 +297,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   local message_index = 0
   local message_callbacks = {}
+  local notify_reply_callbacks = {}
 
   local handle, pid
   do
@@ -309,8 +310,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       stdout:close()
       stderr:close()
       handle:close()
-      -- Make sure that message_callbacks can be gc'd.
+      -- Make sure that message_callbacks/notify_reply_callbacks can be gc'd.
       message_callbacks = nil
+      notify_reply_callbacks = nil
       dispatchers.on_exit(code, signal)
     end
     local spawn_params = {
@@ -375,10 +377,12 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   ---@param method (string) The invoked LSP method
   ---@param params (table) Parameters for the invoked LSP method
   ---@param callback (function) Callback to invoke
+  ---@param notify_reply_callback (function) Callback to invoke as soon as a request is no longer pending
   ---@returns (bool, number) `(true, message_id)` if request could be sent, `false` if not
-  local function request(method, params, callback)
+  local function request(method, params, callback, notify_reply_callback)
     validate {
       callback = { callback, 'f' };
+      notify_reply_callback = { notify_reply_callback, 'f', true };
     }
     message_index = message_index + 1
     local message_id = message_index
@@ -388,8 +392,15 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       method = method;
       params = params;
     }
-    if result and message_callbacks then
-      message_callbacks[message_id] = schedule_wrap(callback)
+    if result then
+      if message_callbacks then
+        message_callbacks[message_id] = schedule_wrap(callback)
+      else
+        return false
+      end
+      if notify_reply_callback and notify_reply_callbacks then
+        notify_reply_callbacks[message_id] = schedule_wrap(notify_reply_callback)
+      end
       return result, message_id
     else
       return false
@@ -465,6 +476,16 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
+
+      -- Notify the user that a response was received for the request
+      local notify_reply_callback = notify_reply_callbacks and notify_reply_callbacks[result_id]
+      if notify_reply_callback then
+        validate {
+          notify_reply_callback = { notify_reply_callback, 'f' };
+        }
+        notify_reply_callback(result_id)
+        notify_reply_callbacks[result_id] = nil
+      end
 
       -- Do not surface RequestCancelled to users, it is RPC-internal.
       if decoded.error then

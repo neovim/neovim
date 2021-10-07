@@ -275,6 +275,55 @@ function tests.check_forward_content_modified()
   }
 end
 
+function tests.check_pending_request_tracked()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('release')
+        respond(msg.id, nil, {})
+        expect_notification('finish')
+        notify('finish')
+    end;
+  }
+end
+
+function tests.check_cancel_request_tracked()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('$/cancelRequest', {id=msg.id})
+        expect_notification('release')
+        respond(msg.id, {code = -32800}, nil)
+        notify('finish')
+    end;
+  }
+end
+
+function tests.check_tracked_requests_cleared()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('$/cancelRequest', {id=msg.id})
+        expect_notification('release')
+        respond(msg.id, nil, {})
+        expect_notification('finish')
+        notify('finish')
+    end;
+  }
+end
+
 function tests.basic_finish()
   skeleton {
     on_init = function(params)
