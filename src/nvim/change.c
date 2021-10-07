@@ -413,7 +413,11 @@ void deleted_lines(linenr_T lnum, long count)
 /// be triggered to display the cursor.
 void deleted_lines_mark(linenr_T lnum, long count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count,
+  // if we deleted the entire buffer, we need to implicity add a new empty line
+  bool made_empty = (count > 0) && curbuf->b_ml.ml_flags & ML_EMPTY;
+
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM,
+              -count + (made_empty?1:0),
               kExtmarkUndo);
   changed_lines(lnum, 0, lnum + count, -count, true);
 }
