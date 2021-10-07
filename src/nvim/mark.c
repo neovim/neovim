@@ -1036,9 +1036,10 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
     }
 
     sign_mark_adjust(line1, line2, amount, amount_after);
-    if (op != kExtmarkNOOP) {
-      extmark_adjust(curbuf, line1, line2, amount, amount_after, op);
-    }
+  }
+
+  if (op != kExtmarkNOOP) {
+    extmark_adjust(curbuf, line1, line2, amount, amount_after, op);
   }
 
   // previous context mark

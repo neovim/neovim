@@ -1088,6 +1088,48 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    local function test_lockmarks(mode)
+      local description = (mode ~= "") and mode or "(baseline)"
+      it("test_lockmarks " .. description .. " %delete _", function()
+        local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+        command(mode .. " %delete _")
+        check_events {
+          { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 1, 0, 1 };
+        }
+      end)
+
+      it("test_lockmarks " .. description .. " append()", function()
+        local check_events = setup_eventcheck(verify)
+
+        command(mode .. " call append(0, 'CCC')")
+        check_events {
+          { "test1", "bytes", 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 4 };
+        }
+
+        command(mode .. " call append(1, 'BBBB')")
+        check_events {
+          { "test1", "bytes", 1, 3, 1, 0, 4, 0, 0, 0, 1, 0, 5 };
+        }
+
+        command(mode .. " call append(2, '')")
+        check_events {
+          { "test1", "bytes", 1, 4, 2, 0, 9, 0, 0, 0, 1, 0, 1 };
+        }
+
+        command(mode .. " $delete _")
+        check_events {
+          { "test1", "bytes", 1, 5, 3, 0, 10, 1, 0, 1, 0, 0, 0 };
+        }
+
+        eq("CCC|BBBB|", table.concat(meths.buf_get_lines(0, 0, -1, true), "|"))
+      end)
+    end
+
+    -- check that behavior is identical with and without "lockmarks"
+    test_lockmarks ""
+    test_lockmarks "lockmarks"
+
     teardown(function()
       os.remove "Xtest-reload"
       os.remove "Xtest-undofile"
