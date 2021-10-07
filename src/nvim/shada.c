@@ -2401,7 +2401,7 @@ static inline void shada_initialize_registers(WriteMergerState *const wms, int m
         .data = {
           .reg = {
             .contents = (char **)reg.y_array,
-            .contents_size = (size_t)reg.y_size,
+            .contents_size = reg.y_size,
             .type = reg.y_type,
             .width = (size_t)(reg.y_type == kMTBlockWise ? reg.y_width : 0),
             .additional_data = reg.additional_data,

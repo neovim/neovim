@@ -2363,7 +2363,7 @@ void msg_reset_scroll(void)
       // non-displayed part of msg_grid is considered invalid.
       for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.Rows); i++) {
         grid_clear_line(&msg_grid, msg_grid.line_offset[i],
-                        (int)msg_grid.Columns, false);
+                        msg_grid.Columns, false);
       }
     }
   } else {

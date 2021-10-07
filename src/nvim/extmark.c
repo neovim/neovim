@@ -723,7 +723,7 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
 uint64_t src2ns(Integer *src_id)
 {
   if (*src_id == 0) {
-    *src_id = (Integer)nvim_create_namespace((String)STRING_INIT);
+    *src_id = nvim_create_namespace((String)STRING_INIT);
   }
   if (*src_id < 0) {
     return UINT64_MAX;

@@ -2924,8 +2924,8 @@ void spell_suggest(int count)
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
-  if (sps_limit > (int)Rows - 2) {
-    limit = (int)Rows - 2;
+  if (sps_limit > Rows - 2) {
+    limit = Rows - 2;
   } else {
     limit = sps_limit;
   }

@@ -418,7 +418,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
 
   try_start();
   aco_save_T aco;
-  aucmd_prepbuf(&aco, (buf_T *)buf);
+  aucmd_prepbuf(&aco, buf);
 
   if (!MODIFIABLE(buf)) {
     api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
@@ -656,7 +656,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   try_start();
   aco_save_T aco;
-  aucmd_prepbuf(&aco, (buf_T *)buf);
+  aucmd_prepbuf(&aco, buf);
 
   if (!MODIFIABLE(buf)) {
     api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
@@ -1340,7 +1340,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   if (extmark.row < 0) {
     return rv;
   }
-  return extmark_to_array(extmark, false, (bool)details);
+  return extmark_to_array(extmark, false, details);
 }
 
 /// Gets extmarks in "traversal order" from a |charwise| region defined by
@@ -1983,7 +1983,7 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   }
   try_start();
   aco_save_T aco;
-  aucmd_prepbuf(&aco, (buf_T *)buf);
+  aucmd_prepbuf(&aco, buf);
 
   Array args = ARRAY_DICT_INIT;
   Object res = nlua_call_ref(fun, NULL, args, true, err);
