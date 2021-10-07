@@ -15,6 +15,7 @@
 /// buffer/window/tabpage block inside ObjectType enum. This block yet cannot be
 /// split or reordered.
 #define EXT_OBJECT_TYPE_SHIFT kObjectTypeBuffer
+#define EXT_OBJECT_TYPE_MAX (kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/helpers.h.generated.h"

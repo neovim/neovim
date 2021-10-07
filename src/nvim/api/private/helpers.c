@@ -818,13 +818,6 @@ Array string_to_array(const String input, bool crlf)
 void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String rhs,
                    Dict(keymap) *opts, Error *err)
 {
-  char *err_msg = NULL;  // the error message to report, if any
-  char *err_arg = NULL;  // argument for the error message format string
-  ErrorType err_type = kErrorTypeNone;
-
-  char_u *lhs_buf = NULL;
-  char_u *rhs_buf = NULL;
-
   bool global = (buffer == -1);
   if (global) {
     buffer = 0;
@@ -858,17 +851,13 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
                      CPO_TO_CPO_FLAGS, &parsed_args);
 
   if (parsed_args.lhs_len > MAXMAPLEN) {
-    err_msg = "LHS exceeds maximum map length: %s";
-    err_arg = lhs.data;
-    err_type = kErrorTypeValidation;
-    goto fail_with_message;
+    api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
+    goto fail_and_free;
   }
 
   if (mode.size > 1) {
-    err_msg = "Shortname is too long: %s";
-    err_arg = mode.data;
-    err_type = kErrorTypeValidation;
-    goto fail_with_message;
+    api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
+    goto fail_and_free;
   }
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
   char_u *p = (char_u *)((mode.size) ? mode.data : "m");
@@ -880,18 +869,14 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
         && mode.size > 0) {
       // get_map_mode() treats unrecognized mode shortnames as ":map".
       // This is an error unless the given shortname was empty string "".
-      err_msg = "Invalid mode shortname: \"%s\"";
-      err_arg = (char *)p;
-      err_type = kErrorTypeValidation;
-      goto fail_with_message;
+      api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", (char *)p);
+      goto fail_and_free;
     }
   }
 
   if (parsed_args.lhs_len == 0) {
-    err_msg = "Invalid (empty) LHS";
-    err_arg = "";
-    err_type = kErrorTypeValidation;
-    goto fail_with_message;
+    api_set_error(err, kErrorTypeValidation, "Invalid (empty) LHS");
+    goto fail_and_free;
   }
 
   bool is_noremap = parsed_args.noremap;
@@ -904,16 +889,13 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
       // the given RHS was nonempty and not a <Nop>, but was parsed as if it
       // were empty?
       assert(false && "Failed to parse nonempty RHS!");
-      err_msg = "Parsing of nonempty RHS failed: %s";
-      err_arg = rhs.data;
-      err_type = kErrorTypeException;
-      goto fail_with_message;
+      api_set_error(err, kErrorTypeValidation, "Parsing of nonempty RHS failed: %s", rhs.data);
+      goto fail_and_free;
     }
   } else if (is_unmap && parsed_args.rhs_len) {
-    err_msg = "Gave nonempty RHS in unmap command: %s";
-    err_arg = (char *)parsed_args.rhs;
-    err_type = kErrorTypeValidation;
-    goto fail_with_message;
+    api_set_error(err, kErrorTypeValidation,
+                  "Gave nonempty RHS in unmap command: %s", parsed_args.rhs);
+    goto fail_and_free;
   }
 
   // buf_do_map() reads noremap/unmap as its own argument.
@@ -942,19 +924,7 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
     goto fail_and_free;
   }  // switch
 
-  xfree(lhs_buf);
-  xfree(rhs_buf);
-  xfree(parsed_args.rhs);
-  xfree(parsed_args.orig_rhs);
-
-  return;
-
-fail_with_message:
-  api_set_error(err, err_type, err_msg, err_arg);
-
 fail_and_free:
-  xfree(lhs_buf);
-  xfree(rhs_buf);
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
   return;

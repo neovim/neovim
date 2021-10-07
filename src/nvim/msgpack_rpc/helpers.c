@@ -22,52 +22,12 @@
 static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
-#define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
-  static bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
-                                  Integer *const arg) \
-    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
-  { \
-    if (obj->type != MSGPACK_OBJECT_EXT \
-        || obj->via.ext.type + EXT_OBJECT_TYPE_SHIFT != kObjectType##t) { \
-      return false; \
-    } \
-    \
-    msgpack_object data; \
-    msgpack_unpack_return ret = msgpack_unpack(obj->via.ext.ptr, \
-                                               obj->via.ext.size, \
-                                               NULL, \
-                                               &zone, \
-                                               &data); \
-    \
-    if (ret != MSGPACK_UNPACK_SUCCESS) { \
-      return false; \
-    } \
-    \
-    *arg = (handle_T)data.via.i64; \
-    return true; \
-  } \
-  \
-  static void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
-    FUNC_ATTR_NONNULL_ARG(2) \
-  { \
-    msgpack_packer pac; \
-    msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
-    msgpack_pack_int64(&pac, (handle_T)o); \
-    msgpack_pack_ext(res, sbuffer.size, \
-                     kObjectType##t - EXT_OBJECT_TYPE_SHIFT); \
-    msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
-    msgpack_sbuffer_clear(&sbuffer); \
-  }
 
 void msgpack_rpc_helpers_init(void)
 {
   msgpack_zone_init(&zone, 0xfff);
   msgpack_sbuffer_init(&sbuffer);
 }
-
-HANDLE_TYPE_CONVERSION_IMPL(Buffer, buffer)
-HANDLE_TYPE_CONVERSION_IMPL(Window, window)
-HANDLE_TYPE_CONVERSION_IMPL(Tabpage, tabpage)
 
 typedef struct {
   const msgpack_object *mobj;
@@ -226,28 +186,18 @@ case type: { \
       break;
     }
     case MSGPACK_OBJECT_EXT:
-      switch ((ObjectType)(cur.mobj->via.ext.type + EXT_OBJECT_TYPE_SHIFT)) {
-      case kObjectTypeBuffer:
-        cur.aobj->type = kObjectTypeBuffer;
-        ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.integer);
-        break;
-      case kObjectTypeWindow:
-        cur.aobj->type = kObjectTypeWindow;
-        ret = msgpack_rpc_to_window(cur.mobj, &cur.aobj->data.integer);
-        break;
-      case kObjectTypeTabpage:
-        cur.aobj->type = kObjectTypeTabpage;
-        ret = msgpack_rpc_to_tabpage(cur.mobj, &cur.aobj->data.integer);
-        break;
-      case kObjectTypeNil:
-      case kObjectTypeBoolean:
-      case kObjectTypeInteger:
-      case kObjectTypeFloat:
-      case kObjectTypeString:
-      case kObjectTypeArray:
-      case kObjectTypeDictionary:
-      case kObjectTypeLuaRef:
-        break;
+      if (0 <= cur.mobj->via.ext.type && cur.mobj->via.ext.type <= EXT_OBJECT_TYPE_MAX) {
+        cur.aobj->type = (ObjectType)(cur.mobj->via.ext.type + EXT_OBJECT_TYPE_SHIFT);
+        msgpack_object data;
+        msgpack_unpack_return status = msgpack_unpack(cur.mobj->via.ext.ptr, cur.mobj->via.ext.size,
+                                                      NULL, &zone, &data);
+
+        if (status != MSGPACK_UNPACK_SUCCESS || data.type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
+          ret = false;
+          break;
+        }
+        cur.aobj->data.integer = (handle_T)data.via.i64;
+        ret = true;
       }
       break;
 #undef STR_CASE
@@ -349,6 +299,17 @@ void msgpack_rpc_from_string(const String result, msgpack_packer *res)
   }
 }
 
+static void msgpack_rpc_from_handle(ObjectType type, Integer o, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(3)
+{
+  msgpack_packer pac;
+  msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write);
+  msgpack_pack_int64(&pac, (handle_T)o);
+  msgpack_pack_ext(res, sbuffer.size, (int8_t)(type - EXT_OBJECT_TYPE_SHIFT));
+  msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size);
+  msgpack_sbuffer_clear(&sbuffer);
+}
+
 typedef struct {
   const Object *aobj;
   bool container;
@@ -393,13 +354,9 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
       msgpack_rpc_from_string(cur.aobj->data.string, res);
       break;
     case kObjectTypeBuffer:
-      msgpack_rpc_from_buffer(cur.aobj->data.integer, res);
-      break;
     case kObjectTypeWindow:
-      msgpack_rpc_from_window(cur.aobj->data.integer, res);
-      break;
     case kObjectTypeTabpage:
-      msgpack_rpc_from_tabpage(cur.aobj->data.integer, res);
+      msgpack_rpc_from_handle(cur.aobj->type, cur.aobj->data.integer, res);
       break;
     case kObjectTypeArray: {
       const size_t size = cur.aobj->data.array.size;
