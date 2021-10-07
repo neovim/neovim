@@ -401,9 +401,9 @@ local function show_diagnostics(opts, diagnostics)
   local severity_sort = global_diagnostic_options.severity_sort
   if severity_sort then
     if type(severity_sort) == "table" and severity_sort.reverse then
-      table.sort(diagnostics, function(a, b) return a.severity < b.severity end)
-    else
       table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
+    else
+      table.sort(diagnostics, function(a, b) return a.severity < b.severity end)
     end
   end
 
