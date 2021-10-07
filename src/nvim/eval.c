@@ -7662,9 +7662,15 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
       callback->type = kCallbackNone;
       callback->data.funcref = NULL;
     } else {
-      func_ref(name);
-      callback->data.funcref = vim_strsave(name);
-      callback->type = kCallbackFuncref;
+      int len = STRLEN(name);
+      if (len >= 6 && !memcmp(name, "v:lua.",  6)) {
+        callback->type = kCallbackLuaFunc;
+        callback->data.funcref = vim_strsave(name + 6);
+      } else {
+        func_ref(name);
+        callback->data.funcref = vim_strsave(name);
+        callback->type = kCallbackFuncref;
+      }
     }
   } else if (nlua_is_table_from_lua(arg)) {
     char_u *name = nlua_register_table_as_callable(arg);
@@ -7705,6 +7711,11 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   case kCallbackPartial:
     partial = callback->data.partial;
     name = partial_name(partial);
+    break;
+
+  case kCallbackLuaFunc:
+    name = callback->data.funcref;
+    partial = vvlua_partial;
     break;
 
   case kCallbackNone:
