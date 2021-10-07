@@ -624,7 +624,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   if (replacement.size == 1) {
     firstlen += last_part_len;
   }
-  char *first = xmallocz(firstlen), *last = NULL;
+  char *first = xmallocz(firstlen);
+  char *last = NULL;
   memcpy(first, str_at_start, (size_t)start_col);
   memcpy(first+start_col, first_item.data, first_item.size);
   memchrsub(first+start_col, NUL, NL, first_item.size);
@@ -637,7 +638,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     memcpy(last+last_item.size, str_at_end+end_col, last_part_len);
   }
 
-  char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
+  char **lines = xcalloc(new_len, sizeof(char *));
   lines[0] = first;
   new_byte += (bcount_t)(first_item.size);
   for (size_t i = 1; i < new_len-1; i++) {
