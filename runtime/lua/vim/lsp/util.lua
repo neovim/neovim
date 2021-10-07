@@ -152,6 +152,7 @@ end
 --- Returns a zero-indexed column, since set_lines() does the conversion to
 --- 1-indexed
 local function get_line_byte_from_position(bufnr, position)
+  -- TODO handle offset_encoding
   -- LSP's line and characters are 0-indexed
   -- Vim's line and columns are 1-indexed
   local col = position.character
@@ -165,7 +166,7 @@ local function get_line_byte_from_position(bufnr, position)
     local line = position.line
     local lines = api.nvim_buf_get_lines(bufnr, line, line + 1, false)
     if #lines > 0 then
-      local ok, result = pcall(vim.str_byteindex, lines[1], col)
+      local ok, result = pcall(vim.str_byteindex, lines[1], col, true)
 
       if ok then
         return result
@@ -276,7 +277,8 @@ function M.apply_text_edits(text_edits, bufnr)
   -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
   local has_eol_text_edit = false
   local max = vim.api.nvim_buf_line_count(bufnr)
-  local len = vim.str_utfindex(vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '')
+  -- TODO handle offset_encoding
+  local _, len = vim.str_utfindex(vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1] or '')
   text_edits = vim.tbl_map(function(text_edit)
     if max <= text_edit.range.start.line then
       text_edit.range.start.line = max - 1
@@ -1840,11 +1842,14 @@ function M.make_given_range_params(start_pos, end_pos)
   A[1] = A[1] - 1
   B[1] = B[1] - 1
   -- account for encoding.
+  -- TODO handle offset_encoding
   if A[2] > 0 then
-    A = {A[1], M.character_offset(0, A[1], A[2])}
+    local _, char = M.character_offset(0, A[1], A[2])
+    A = {A[1], char}
   end
   if B[2] > 0 then
-    B = {B[1], M.character_offset(0, B[1], B[2])}
+    local _, char = M.character_offset(0, B[1], B[2])
+    B = {B[1], char}
   end
   -- we need to offset the end character position otherwise we loose the last
   -- character of the selection, as LSP end position is exclusive
