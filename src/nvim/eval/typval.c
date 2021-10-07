@@ -2861,7 +2861,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const boo
     char buf2[NUMBUFLEN];
     const char *s1 = tv_get_string_buf(tv1, buf1);
     const char *s2 = tv_get_string_buf(tv2, buf2);
-    return mb_strcmp_ic((bool)ic, s1, s2) == 0;
+    return mb_strcmp_ic(ic, s1, s2) == 0;
   }
   case VAR_BOOL:
     return tv1->vval.v_bool == tv2->vval.v_bool;

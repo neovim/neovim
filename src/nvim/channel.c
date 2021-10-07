@@ -87,7 +87,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
     break;
 
   case kChannelStreamProc:
-    proc = (Process *)&chan->stream.proc;
+    proc = &chan->stream.proc;
     if (part == kChannelPartStdin || close_main) {
       stream_may_close(&proc->in);
     }
@@ -335,7 +335,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
     chan->stream.uv = libuv_process_init(&main_loop, chan);
   }
 
-  Process *proc = (Process *)&chan->stream.proc;
+  Process *proc = &chan->stream.proc;
   proc->argv = argv;
   proc->cb = channel_process_exit_cb;
   proc->events = chan->events;

@@ -837,8 +837,8 @@ bool marktree_splice(MarkTree *b, int start_line, int start_col, int old_extent_
                      int old_extent_col, int new_extent_line, int new_extent_col)
 {
   mtpos_t start = { start_line, start_col };
-  mtpos_t old_extent = { (int)old_extent_line, old_extent_col };
-  mtpos_t new_extent = { (int)new_extent_line, new_extent_col };
+  mtpos_t old_extent = { old_extent_line, old_extent_col };
+  mtpos_t new_extent = { new_extent_line, new_extent_col };
 
   bool may_delete = (old_extent.row != 0 || old_extent.col != 0);
   bool same_line = old_extent.row == 0 && new_extent.row == 0;

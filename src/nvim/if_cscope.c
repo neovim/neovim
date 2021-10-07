@@ -1294,7 +1294,7 @@ static int cs_kill(exarg_T *eap)
         }
       }
     } else {
-      cs_kill_execute((size_t)i, stok);
+      cs_kill_execute(i, stok);
     }
   }
 
@@ -1559,8 +1559,8 @@ static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a, 
   assert(totmatches > 0);
 
   buf = xmalloc(CSREAD_BUFSIZE);
-  matches = xmalloc(sizeof(char *) * (size_t)totmatches);
-  cntxts = xmalloc(sizeof(char *) * (size_t)totmatches);
+  matches = xmalloc(sizeof(char *) * totmatches);
+  cntxts = xmalloc(sizeof(char *) * totmatches);
 
   for (size_t i = 0; i < csinfo_size; i++) {
     if (nummatches_a[i] < 1) {

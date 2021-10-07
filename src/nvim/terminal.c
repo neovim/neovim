@@ -1241,7 +1241,7 @@ static bool send_mouse_event(Terminal *term, int c)
     mouse_action(term, button, row, col - offset, drag, 0);
     size_t len = vterm_output_read(term->vt, term->textbuf,
                                    sizeof(term->textbuf));
-    terminal_send(term, term->textbuf, (size_t)len);
+    terminal_send(term, term->textbuf, len);
     return false;
   }
 

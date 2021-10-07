@@ -625,7 +625,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
 
   // Copy bytes before the cursor.
   if (col > 0) {
-    memmove(newp, oldp, (size_t)col);
+    memmove(newp, oldp, col);
   }
 
   // Copy bytes after the changed character(s).
