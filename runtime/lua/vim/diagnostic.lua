@@ -510,6 +510,9 @@ local function diagnostic_move_pos(opts, pos)
     return
   end
 
+  -- Save position in the window's jumplist
+  vim.api.nvim_win_call(win_id, function() vim.cmd("normal! m'") end)
+
   vim.api.nvim_win_set_cursor(win_id, {pos[1] + 1, pos[2]})
 
   if enable_popup then
