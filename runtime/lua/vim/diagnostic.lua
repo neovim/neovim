@@ -27,7 +27,10 @@ local global_diagnostic_options = {
 
 ---@private
 local function to_severity(severity)
-  return type(severity) == 'string' and M.severity[string.upper(severity)] or severity
+  if type(severity) == 'string' then
+    return assert(M.severity[string.upper(severity)], string.format("Invalid severity: %s", severity))
+  end
+  return severity
 end
 
 ---@private
