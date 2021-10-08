@@ -482,7 +482,7 @@ describe('LSP', function()
 
     it('should not forward RequestCancelled to callback', function()
       local expected_handlers = {
-        {NIL, "finish", {}, 1};
+        {NIL, {}, {method="finish", client_id=1}};
       }
       local client
       test_rpc_server {
@@ -496,17 +496,17 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
           eq(0, #expected_handlers, "did not call expected handler")
         end;
-        on_handler = function(err, method, ...)
-          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
-          if method == 'finish' then client.stop() end
+        on_handler = function(err, _, ctx)
+          eq(table.remove(expected_handlers), {err, {}, ctx}, "expected handler")
+          if ctx.method == 'finish' then client.stop() end
         end;
       }
     end)
 
     it('should forward ContentModified to callback', function()
       local expected_handlers = {
-        {NIL, "finish", {}, 1};
-        {{code = -32801}, "error_code_test", NIL, 1, NIL};
+        {NIL, {}, {method="finish", client_id=1}};
+        {{code = -32801}, NIL, {method = "error_code_test", client_id=1}};
       }
       local client
       test_rpc_server {
@@ -520,10 +520,11 @@ describe('LSP', function()
           eq(0, signal, "exit signal", fake_lsp_logfile)
           eq(0, #expected_handlers, "did not call expected handler")
         end;
-        on_handler = function(err, method, ...)
-          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
-          if method == 'error_code_test' then client.notify("finish") end
-          if method == 'finish' then client.stop() end
+        on_handler = function(err, _, ctx)
+          eq(table.remove(expected_handlers), {err, _, ctx}, "expected handler")
+          -- if ctx.method == 'error_code_test' then client.notify("finish") end
+          if ctx.method ~= 'finish' then client.notify('finish') end
+          if ctx.method == 'finish' then client.stop() end
         end;
       }
     end)
