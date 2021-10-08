@@ -1303,6 +1303,12 @@ void nlua_init_types(lua_State *const lstate)
 
 void nlua_pop_keydict(lua_State *L, void *retval, field_hash hashy, Error *err)
 {
+  if (!lua_istable(L, -1)) {
+    api_set_error(err, kErrorTypeValidation, "Expected lua table");
+    lua_pop(L, -1);
+    return;
+  }
+
   lua_pushnil(L);  // [dict, nil]
   while (lua_next(L, -2)) {
     // [dict, key, value]
