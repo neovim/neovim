@@ -34,7 +34,7 @@ end
 
 --- Prompts the user for input
 ---
----@param opts table Additional options
+---@param opts table Additional options. See |input()|
 ---     - prompt (string|nil)
 ---               Text of the prompt. Defaults to `Input: `.
 ---     - default (string|nil)
@@ -47,8 +47,7 @@ end
 ---               See |:command-completion|
 ---     - highlight (function)
 ---               Function that will be used for highlighting
----               user inputs. See |input()-highlight|
----               for examples.
+---               user inputs.
 ---@param on_confirm function ((input) -> ())
 ---               Called once the user enters the input.
 ---               `input` is what the user typed.
