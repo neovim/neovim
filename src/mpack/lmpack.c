@@ -204,14 +204,14 @@ static void lmpack_pushnil(lua_State *L)
 static mpack_uint32_t lmpack_objlen(lua_State *L, int *is_array)
 {
   size_t len, max;
-  int isarr, type;
+  int isarr;
   lua_Number n;
 #ifndef NDEBUG
   int top = lua_gettop(L);
   assert(top);
 #endif
 
-  if ((type = lua_type(L, -1)) != LUA_TTABLE) {
+  if ((lua_type(L, -1)) != LUA_TTABLE) {
 #if LUA_VERSION_NUM >= 502
     len = lua_rawlen(L, -1);
 #elif LUA_VERSION_NUM == 501
