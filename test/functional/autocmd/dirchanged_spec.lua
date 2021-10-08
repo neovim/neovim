@@ -167,7 +167,7 @@ describe('autocmd DirChanged', function()
       command('tabnext')                -- tab 1
       eq(11, eval('g:cdcount'))          -- same CWD, no DirChanged event
       command('tabprevious')            -- tab 3
-      eq(11, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      eq(12, eval('g:cdcount'))          -- same CWD, no DirChanged event
     end
   end)
 
