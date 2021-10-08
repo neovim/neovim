@@ -6,6 +6,7 @@ local command = h.command
 local eq = h.eq
 local eval = h.eval
 local request = h.request
+local iswin = h.iswin
 
 describe('autocmd DirChanged', function()
   local curdir = string.gsub(lfs.currentdir(), '\\', '/')
@@ -13,6 +14,11 @@ describe('autocmd DirChanged', function()
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir1',
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir2',
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir3',
+  }
+  local win_dirs = {
+    curdir .. '\\Xtest-functional-autocmd-dirchanged.dir1',
+    curdir .. '\\Xtest-functional-autocmd-dirchanged.dir2',
+    curdir .. '\\Xtest-functional-autocmd-dirchanged.dir3',
   }
 
   setup(function()    for _, dir in pairs(dirs) do h.mkdir(dir) end end)
@@ -138,6 +144,31 @@ describe('autocmd DirChanged', function()
     eq(9, eval('g:cdcount'))
     command('tabnext')                  -- tab 2 (has the *same* CWD)
     eq(9, eval('g:cdcount'))            -- same CWD, no DirChanged event
+
+    if iswin() then
+      command('tabnew')                 -- tab 3
+      eq(9, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('tcd '..win_dirs[3])
+      eq(10, eval('g:cdcount'))
+      command('tabnext')                -- tab 1
+      eq(10, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('tabprevious')            -- tab 3
+      eq(10, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('tabprevious')            -- tab 2
+      eq(10, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('tabprevious')            -- tab 1
+      eq(10, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('lcd '..win_dirs[3])      -- window 3
+      eq(11, eval('g:cdcount'))
+      command('tabnext')                -- tab 2
+      eq(11, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('tabnext')                -- tab 3
+      eq(11, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('tabnext')                -- tab 1
+      eq(11, eval('g:cdcount'))          -- same CWD, no DirChanged event
+      command('tabprevious')            -- tab 3
+      eq(11, eval('g:cdcount'))          -- same CWD, no DirChanged event
+    end
   end)
 
   it('is triggered by nvim_set_current_dir()', function()
