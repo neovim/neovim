@@ -156,50 +156,14 @@ M['textDocument/codeLens'] = function(...)
   return require('vim.lsp.codelens').on_codelens(...)
 end
 
-
-
----@private
---- Return a function that converts LSP responses to list items and opens the list
----
---- The returned function has an optional {config} parameter that accepts a table
---- with the following keys:
----
----   loclist: (boolean) use the location list (default is to use the quickfix list)
----
----@param map_result function `((resp, bufnr) -> list)` to convert the response
----@param entity name of the resource used in a `not found` error message
-local function response_to_list(map_result, entity)
-  return function(_,result, ctx, config)
-    if not result or vim.tbl_isempty(result) then
-      vim.notify('No ' .. entity .. ' found')
-    else
-      config = config or {}
-      if config.loclist then
-        vim.fn.setloclist(0, {}, ' ', {
-          title = 'Language Server';
-          items = map_result(result, ctx.bufnr);
-        })
-        api.nvim_command("lopen")
-      else
-        vim.fn.setqflist({}, ' ', {
-          title = 'Language Server';
-          items = map_result(result, ctx.bufnr);
-        })
-        api.nvim_command("copen")
-      end
-    end
-  end
-end
-
-
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M['textDocument/references'] = response_to_list(util.locations_to_items, 'references')
+M['textDocument/references'] = util.response_to_list(util.locations_to_items, 'references')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols')
+M['textDocument/documentSymbol'] = util.response_to_list(util.symbols_to_items, 'document symbols')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols')
+M['workspace/symbol'] = util.response_to_list(util.symbols_to_items, 'symbols')
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
 M['textDocument/rename'] = function(_, result, _)
