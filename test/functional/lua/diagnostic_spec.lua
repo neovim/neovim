@@ -1013,6 +1013,44 @@ describe('vim.diagnostic', function()
         return lines
       ]])
     end)
+
+    it('respects severity_sort', function()
+      exec_lua [[vim.api.nvim_win_set_buf(0, diagnostic_bufnr)]]
+
+      eq({"1. Syntax error", "2. Info", "3. Error", "4. Warning"}, exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 0, 1, 0, 3),
+          make_info('Info', 0, 3, 0, 4),
+          make_error('Error', 0, 2, 0, 2),
+          make_warning('Warning', 0, 0, 0, 1),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+
+        vim.diagnostic.config({severity_sort = false})
+
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics { show_header = false }
+        local lines = vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({"1. Syntax error", "2. Error", "3. Warning", "4. Info"}, exec_lua [[
+        vim.diagnostic.config({severity_sort = true})
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics { show_header = false }
+        local lines = vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+
+      eq({"1. Info", "2. Warning", "3. Error", "4. Syntax error"}, exec_lua [[
+        vim.diagnostic.config({severity_sort = { reverse = true } })
+        local popup_bufnr, winnr = vim.diagnostic.show_line_diagnostics { show_header = false }
+        local lines = vim.api.nvim_buf_get_lines(popup_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
+    end)
   end)
 
   describe('setloclist()', function()
