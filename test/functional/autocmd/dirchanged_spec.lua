@@ -16,9 +16,9 @@ describe('autocmd DirChanged', function()
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir3',
   }
   local win_dirs = {
-    curdir .. '\\Xtest-functional-autocmd-dirchanged.dir1',
-    curdir .. '\\Xtest-functional-autocmd-dirchanged.dir2',
-    curdir .. '\\Xtest-functional-autocmd-dirchanged.dir3',
+    curdir .. '\\XTest-functional-autocmd-dirchaNged.dir1',
+    curdir .. '\\XTest-functional-autocmd-dirchaNged.dir2',
+    curdir .. '\\XTest-functional-autocmd-dirchaNged.dir3',
   }
 
   setup(function()    for _, dir in pairs(dirs) do h.mkdir(dir) end end)
