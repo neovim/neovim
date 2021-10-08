@@ -702,11 +702,11 @@ void ex_sort(exarg_T *eap)
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkNOOP);
   }
 
-  extmark_splice(curbuf, eap->line1-1, 0,
-                 count, 0, old_count,
-                 lnum - eap->line2, 0, new_count, kExtmarkUndo);
-
   if (change_occurred || deleted != 0) {
+    extmark_splice(curbuf, eap->line1-1, 0,
+                   count, 0, old_count,
+                   lnum - eap->line2, 0, new_count, kExtmarkUndo);
+
     changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
   }
 
