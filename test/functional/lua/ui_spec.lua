@@ -43,4 +43,29 @@ describe('vim.ui', function()
       }, result[2])
     end)
   end)
+
+  describe('input', function()
+    it('can input text', function()
+      local result = exec_lua[[
+        local opts = {
+            prompt = 'Input: ',
+        }
+        local input
+        local cb = function(item)
+          input = item
+        end
+        -- input would require input and block the test;
+        local prompt
+        vim.fn.input = function(opts)
+          prompt = opts.prompt
+          return "Inputted text"
+        end
+        vim.ui.input(opts, cb)
+        vim.wait(100, function() return input ~= nil end)
+        return {input, prompt}
+      ]]
+      eq('Inputted text', result[1])
+      eq('Input: ', result[2])
+    end)
+  end)
 end)
