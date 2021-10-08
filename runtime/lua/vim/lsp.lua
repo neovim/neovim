@@ -1383,6 +1383,29 @@ function lsp.buf_notify(bufnr, method, params)
   return resp
 end
 
+
+---@private
+local function adjust_start_col(lnum, line, items, encoding)
+  local min_start_char = nil
+  for _, item in pairs(items) do
+    if item.textEdit and item.textEdit.range.start.line == lnum - 1 then
+      if min_start_char and min_start_char ~= item.textEdit.range.start.character then
+        return nil
+      end
+      min_start_char = item.textEdit.range.start.character
+    end
+  end
+  if min_start_char then
+    if encoding == 'utf-8' then
+      return min_start_char
+    else
+      return vim.str_byteindex(line, min_start_char, encoding == 'utf-16')
+    end
+  else
+    return nil
+  end
+end
+
 --- Implements 'omnifunc' compatible LSP completion.
 ---
 ---@see |complete-functions|
@@ -1418,17 +1441,37 @@ function lsp.omnifunc(findstart, base)
 
   -- Get the start position of the current keyword
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
-  local prefix = line_to_cursor:sub(textMatch+1)
 
   local params = util.make_position_params()
 
   local items = {}
-  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result)
+  lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result, ctx)
     if err or not result or vim.fn.mode() ~= "i" then return end
+
+    -- Completion response items may be relative to a position different than `textMatch`.
+    -- Concrete example, with sumneko/lua-language-server:
+    --
+    -- require('plenary.asy|
+    --         ▲       ▲   ▲
+    --         │       │   └── cursor_pos: 20
+    --         │       └────── textMatch: 17
+    --         └────────────── textEdit.range.start.character: 9
+    --                                 .newText = 'plenary.async'
+    --                  ^^^
+    --                  prefix (We'd remove everything not starting with `asy`,
+    --                  so we'd eliminate the `plenary.async` result
+    --
+    -- `adjust_start_col` is used to prefer the language server boundary.
+    --
+    local client = lsp.get_client_by_id(ctx.client_id)
+    local encoding = client and client.offset_encoding or 'utf-16'
+    local candidates = util.extract_completion_items(result)
+    local startbyte = adjust_start_col(pos[1], line, candidates, encoding) or textMatch
+    local prefix = line:sub(startbyte + 1, pos[2])
     local matches = util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
-    vim.fn.complete(textMatch+1, items)
+    vim.fn.complete(startbyte + 1, items)
   end)
 
   -- Return -2 to signal that we should continue completion so that we can
