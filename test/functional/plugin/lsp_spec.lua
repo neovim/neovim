@@ -480,6 +480,54 @@ describe('LSP', function()
       }
     end)
 
+    it('should not forward RequestCancelled to callback', function()
+      local expected_handlers = {
+        {NIL, "finish", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_forward_request_cancelled";
+        on_init = function(_client)
+          _client.request("error_code_test")
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "did not call expected handler")
+        end;
+        on_handler = function(err, method, ...)
+          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
+          if method == 'finish' then client.stop() end
+        end;
+      }
+    end)
+
+    it('should forward ContentModified to callback', function()
+      local expected_handlers = {
+        {NIL, "finish", {}, 1};
+        {{code = -32801}, "error_code_test", NIL, 1, NIL};
+      }
+      local client
+      test_rpc_server {
+        test_name = "check_forward_content_modified";
+        on_init = function(_client)
+          _client.request("error_code_test")
+          client = _client
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code", fake_lsp_logfile)
+          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, #expected_handlers, "did not call expected handler")
+        end;
+        on_handler = function(err, method, ...)
+          eq(table.remove(expected_handlers), {err, method, ...}, "expected handler")
+          if method == 'error_code_test' then client.notify("finish") end
+          if method == 'finish' then client.stop() end
+        end;
+      }
+    end)
+
     it('should not send didOpen if the buffer closes before init', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};

@@ -466,14 +466,11 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
 
-      -- Do not surface RequestCancelled or ContentModified to users, it is RPC-internal.
+      -- Do not surface RequestCancelled to users, it is RPC-internal.
       if decoded.error then
         local mute_error = false
         if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
           local _ = log.debug() and log.debug("Received cancellation ack", decoded)
-          mute_error = true
-        elseif decoded.error.code == protocol.ErrorCodes.ContentModified then
-          local _ = log.debug() and log.debug("Received content modified ack", decoded)
           mute_error = true
         end
 
