@@ -309,7 +309,6 @@ function M.apply_text_edits(text_edits, bufnr)
   end)()
 
   -- Apply text edits.
-  local is_cursor_fixed = false
   for _, text_edit in ipairs(text_edits) do
     local e = {
       start_row = text_edit.range.start.line,
@@ -333,6 +332,7 @@ function M.apply_text_edits(text_edits, bufnr)
       end
     end
 
+    -- Moving cursor position after every text edit so that final placement is accurate
     vim.api.nvim_win_set_cursor(0, {
       cursor.row + 1,
       math.min(cursor.col, #(vim.api.nvim_buf_get_lines(bufnr, cursor.row, cursor.row + 1, false)[1] or ''))
