@@ -253,7 +253,7 @@ function tests.check_forward_request_cancelled()
     end;
     body = function()
       expect_request("error_code_test", function()
-        return {code = -32800}, nil
+        return {code = -32800}, nil, {method = "error_code_test", client_id=1}
       end)
       notify('finish')
     end;
@@ -267,7 +267,7 @@ function tests.check_forward_content_modified()
     end;
     body = function()
       expect_request("error_code_test", function()
-        return {code = -32801}, nil
+        return {code = -32801}, nil, {method = "error_code_test", client_id=1}
       end)
       expect_notification('finish')
       notify('finish')
