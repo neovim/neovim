@@ -1088,6 +1088,22 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it(":sort lines", function()
+      local check_events = setup_eventcheck(verify, {"CCC", "BBB", "AAA"})
+
+      command "%sort"
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 3, 0, 12 };
+      }
+    end)
+
+    it("handles already sorted lines", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      command "%sort"
+      check_events { }
+    end)
+
     local function test_lockmarks(mode)
       local description = (mode ~= "") and mode or "(baseline)"
       it("test_lockmarks " .. description .. " %delete _", function()
