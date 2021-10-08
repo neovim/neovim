@@ -194,6 +194,10 @@ describe('luaeval(vim.api.…)', function()
        exc_exec([[call luaeval("vim.api.nvim__id_dictionary(1)")]]))
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Unexpected type',
        exc_exec([[call luaeval("vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.array})")]]))
+
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
+       exc_exec([[call luaeval("vim.api.nvim_set_keymap('', '', '', '')")]]))
+
     -- TODO: check for errors with Tabpage argument
     -- TODO: check for errors with Window argument
     -- TODO: check for errors with Buffer argument
