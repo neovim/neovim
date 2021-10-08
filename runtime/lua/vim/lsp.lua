@@ -41,6 +41,7 @@ lsp._request_name_to_capability = {
   ['textDocument/documentSymbol'] = 'document_symbol';
   ['textDocument/prepareCallHierarchy'] = 'call_hierarchy';
   ['textDocument/rename'] = 'rename';
+  ['textDocument/prepareRename'] = 'rename';
   ['textDocument/codeAction'] = 'code_action';
   ['textDocument/codeLens'] = 'code_lens';
   ['codeLens/resolve'] = 'code_lens_resolve';
