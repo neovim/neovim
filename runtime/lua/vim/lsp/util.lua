@@ -323,18 +323,16 @@ function M.apply_text_edits(text_edits, bufnr)
     local row_count = (e.end_row - e.start_row) + 1
     if e.end_row < cursor.row then
       cursor.row = cursor.row + (#e.text - row_count)
-      is_cursor_fixed = true
-    elseif e.end_row == cursor.row and e.end_col <= cursor.col then
-      cursor.row = cursor.row + (#e.text - row_count)
-      cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
+    elseif e.end_row == cursor.row then
+      cursor.row = e.start_row
+      if e.end_col <= cursor.col then
+        cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
+      end
       if #e.text == 1 then
         cursor.col = cursor.col + e.start_col
       end
-      is_cursor_fixed = true
     end
-  end
 
-  if is_cursor_fixed then
     vim.api.nvim_win_set_cursor(0, {
       cursor.row + 1,
       math.min(cursor.col, #(vim.api.nvim_buf_get_lines(bufnr, cursor.row, cursor.row + 1, false)[1] or ''))
