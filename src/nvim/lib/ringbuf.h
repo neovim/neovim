@@ -1,3 +1,5 @@
+// uncrustify:off
+
 /// Macros-based ring buffer implementation.
 ///
 /// Supported functions:
