@@ -2008,7 +2008,7 @@ func Test_user_command_throw_in_function_call()
       catch /my_error/
         let caught = 'yes'
       catch
-        let caught = 'no'
+        let caught = v:exception
       endtry
       call assert_equal('yes', caught)
   END
@@ -2017,6 +2017,32 @@ func Test_user_command_throw_in_function_call()
 
   call delete('XtestThrow')
   unlet g:caught
+endfunc
+
+" Test for using throw in a called function with following endtry    {{{1
+func Test_user_command_function_call_with_endtry()
+  let lines =<< trim END
+      funct s:throw(msg) abort
+        throw a:msg
+      endfunc
+      func s:main() abort
+        try
+          try
+            throw 'err1'
+          catch
+            call s:throw('err2') | endtry
+          catch
+            let s:caught = 'yes'
+        endtry
+      endfunc
+
+      call s:main()
+      call assert_equal('yes', s:caught)
+  END
+  call writefile(lines, 'XtestThrow')
+  source XtestThrow
+
+  call delete('XtestThrow')
 endfunc
 
 
