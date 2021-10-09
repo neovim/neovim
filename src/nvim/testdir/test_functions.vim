@@ -710,6 +710,14 @@ func Test_mode()
   call assert_equal('c-cv', g:current_modes)
   " How to test Ex mode?
 
+  if has('terminal')
+    term
+    call feedkeys("\<C-W>N", 'xt')
+    call assert_equal('n', mode())
+    call assert_equal('nt', mode(1))
+    call feedkeys("aexit\<CR>", 'xt')
+  endif
+
   bwipe!
   iunmap <F2>
   xunmap <F2>

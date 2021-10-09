@@ -111,7 +111,7 @@ describe(':terminal', function()
     command('terminal')
     feed('a<Cmd>wincmd j<CR>')
     eq(2, eval("winnr()"))
-    eq('t', eval('mode()'))
+    eq('t', eval('mode(1)'))
   end)
 
 end)
