@@ -1,15 +1,15 @@
 #ifndef NVIM_MESSAGE_H
 #define NVIM_MESSAGE_H
 
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 
+#include "nvim/api/private/defs.h"
+#include "nvim/grid_defs.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/macros.h"
 #include "nvim/types.h"
-#include "nvim/grid_defs.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/lib/kvec.h"
 
 /*
  * Types of dialogs passed to do_dialog().
@@ -19,7 +19,7 @@
 #define VIM_WARNING     2
 #define VIM_INFO        3
 #define VIM_QUESTION    4
-#define VIM_LAST_TYPE   4       /* sentinel value */
+#define VIM_LAST_TYPE   4       // sentinel value
 
 /*
  * Return values for functions like vim_dialogyesno()
@@ -42,16 +42,16 @@
 #define EMSG(s)                     emsg((char_u *)(s))
 
 /// Like #EMSG, but for messages with one "%s" inside
-#define EMSG2(s, p)                 emsgf((const char *) (s), (p))
+#define EMSG2(s, p)                 emsgf((const char *)(s), (p))
 
 /// Like #EMSG, but for messages with two "%s" inside
-#define EMSG3(s, p, q)              emsgf((const char *) (s), (p), (q))
+#define EMSG3(s, p, q)              emsgf((const char *)(s), (p), (q))
 
 /// Like #EMSG, but for messages with one "%" PRId64 inside
-#define EMSGN(s, n)                 emsgf((const char *) (s), (int64_t)(n))
+#define EMSGN(s, n)                 emsgf((const char *)(s), (int64_t)(n))
 
 /// Like #EMSG, but for messages with one "%" PRIu64 inside
-#define EMSGU(s, n)                 emsgf((const char *) (s), (uint64_t)(n))
+#define EMSGU(s, n)                 emsgf((const char *)(s), (uint64_t)(n))
 
 /// Like #EMSG, but for internal messages
 #define IEMSG(s)                    iemsg((const char *)(s))

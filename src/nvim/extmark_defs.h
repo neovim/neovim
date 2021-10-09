@@ -1,8 +1,8 @@
 #ifndef NVIM_EXTMARK_DEFS_H
 #define NVIM_EXTMARK_DEFS_H
 
-#include "nvim/types.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/types.h"
 
 typedef struct Decoration Decoration;
 

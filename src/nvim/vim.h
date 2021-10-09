@@ -1,8 +1,8 @@
 #ifndef NVIM_VIM_H
 #define NVIM_VIM_H
 
-#include "nvim/types.h"
 #include "nvim/pos.h"  // for linenr_T, MAXCOL, etc...
+#include "nvim/types.h"
 
 // Some defines from the old feature.h
 #define SESSION_FILE "Session.vim"
@@ -30,10 +30,9 @@ enum { NUMBUFLEN = 65 };
 
 #define ROOT_UID 0
 
+#include "nvim/gettext.h"
 #include "nvim/keymap.h"
 #include "nvim/macros.h"
-
-#include "nvim/gettext.h"
 
 // special attribute addition: Put message in history
 #define MSG_HIST                0x1000
@@ -57,8 +56,8 @@ enum { NUMBUFLEN = 65 };
 
 #define REPLACE_FLAG    0x40    // Replace mode flag
 #define REPLACE         (REPLACE_FLAG + INSERT)
-# define VREPLACE_FLAG  0x80    // Virtual-replace mode flag
-# define VREPLACE       (REPLACE_FLAG + VREPLACE_FLAG + INSERT)
+#define VREPLACE_FLAG  0x80    // Virtual-replace mode flag
+#define VREPLACE       (REPLACE_FLAG + VREPLACE_FLAG + INSERT)
 #define LREPLACE        (REPLACE_FLAG + LANGMAP)
 
 #define NORMAL_BUSY     (0x100 + NORMAL)  // Normal mode, busy with a command
@@ -251,7 +250,7 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
 #define STRLCAT(d, s, n)    xstrlcat((char *)(d), (char *)(s), (size_t)(n))
 
-# define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
+#define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
 
 // Character used as separated in autoload function/variable names.
 #define AUTOLOAD_CHAR '#'
@@ -260,7 +259,7 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 
 // Prefer using emsgf(), because perror() may send the output to the wrong
 // destination and mess up the screen.
-#define PERROR(msg) (void) emsgf("%s: %s", msg, strerror(errno))
+#define PERROR(msg) (void)emsgf("%s: %s", msg, strerror(errno))
 
 #define SHOWCMD_COLS 10                 // columns needed by shown command
 
@@ -301,16 +300,16 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 # define mch_msg(str)           printf("%s", (str))
 #endif
 
-#include "nvim/globals.h"        // global variables and messages
 #include "nvim/buffer_defs.h"    // buffer and windows
 #include "nvim/ex_cmds_defs.h"   // Ex command defines
+#include "nvim/globals.h"        // global variables and messages
 
 // Lowest number used for window ID. Cannot have this many windows per tab.
 #define LOWEST_WIN_ID 1000
 
 // BSD is supposed to cover FreeBSD and similar systems.
 #if (defined(BSD) || defined(__FreeBSD_kernel__)) \
-    && (defined(S_ISCHR) || defined(S_IFCHR))
+  && (defined(S_ISCHR) || defined(S_IFCHR))
 # define OPEN_CHR_FILES
 #endif
 

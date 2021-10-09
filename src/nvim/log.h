@@ -1,8 +1,8 @@
 #ifndef NVIM_LOG_H
 #define NVIM_LOG_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "auto/config.h"
 #include "nvim/macros.h"
@@ -10,10 +10,10 @@
 // USDT probes. Example invocation:
 //     NVIM_PROBE(nvim_foo_bar, 1, string.data);
 #if defined(HAVE_SYS_SDT_H)
-#include <sys/sdt.h> // NOLINT
-#define NVIM_PROBE(name, n, ...) STAP_PROBE##n(neovim, name, __VA_ARGS__)
+# include <sys/sdt.h>  // NOLINT
+# define NVIM_PROBE(name, n, ...) STAP_PROBE##n(neovim, name, __VA_ARGS__)
 #else
-#define NVIM_PROBE(name, n, ...)
+# define NVIM_PROBE(name, n, ...)
 #endif
 
 
@@ -33,7 +33,7 @@
 #define ELOGN(...)
 
 #ifndef MIN_LOG_LEVEL
-#  define MIN_LOG_LEVEL INFO_LOG_LEVEL
+# define MIN_LOG_LEVEL INFO_LOG_LEVEL
 #endif
 
 #define LOG(level, ...) logmsg((level), NULL, __func__, __LINE__, true, \

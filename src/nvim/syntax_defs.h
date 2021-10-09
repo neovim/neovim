@@ -3,18 +3,18 @@
 
 #include "nvim/highlight_defs.h"
 
-# define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
-# define SST_MAX_ENTRIES 1000   /* maximal size for state stack array */
-# define SST_FIX_STATES  7      /* size of sst_stack[]. */
-# define SST_DIST        16     /* normal distance between entries */
-# define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
+#define SST_MIN_ENTRIES 150    // minimal size for state stack array
+#define SST_MAX_ENTRIES 1000   // maximal size for state stack array
+#define SST_FIX_STATES  7      // size of sst_stack[].
+#define SST_DIST        16     // normal distance between entries
+#define SST_INVALID    (synstate_T *)-1        // invalid syn_state pointer
 
 typedef struct syn_state synstate_T;
 
 #include "nvim/buffer_defs.h"
 #include "nvim/regexp_defs.h"
 
-/* struct passed to in_id_list() */
+// struct passed to in_id_list()
 struct sp_syn {
   int inc_tag;                  // ":syn include" unique tag
   int16_t id;                   // highlight group ID of item
@@ -27,7 +27,7 @@ struct sp_syn {
 typedef struct keyentry keyentry_T;
 
 struct keyentry {
-  keyentry_T  *ke_next;         // next entry with identical "keyword[]"
+  keyentry_T *ke_next;         // next entry with identical "keyword[]"
   struct sp_syn k_syn;          // struct passed to in_id_list()
   int16_t *next_list;           // ID list for next match (if non-zero)
   int flags;
@@ -39,11 +39,11 @@ struct keyentry {
  * Struct used to store one state of the state stack.
  */
 typedef struct buf_state {
-  int bs_idx;                    /* index of pattern */
-  int bs_flags;                  /* flags for pattern */
-  int bs_seqnr;                  /* stores si_seqnr */
-  int bs_cchar;                  /* stores si_cchar */
-  reg_extmatch_T *bs_extmatch;   /* external matches from start pattern */
+  int bs_idx;                    // index of pattern
+  int bs_flags;                  // flags for pattern
+  int bs_seqnr;                  // stores si_seqnr
+  int bs_cchar;                  // stores si_cchar
+  reg_extmatch_T *bs_extmatch;   // external matches from start pattern
 } bufstate_T;
 
 /*
@@ -51,11 +51,11 @@ typedef struct buf_state {
  * Used by b_sst_array[].
  */
 struct syn_state {
-  synstate_T  *sst_next;        /* next entry in used or free list */
-  linenr_T sst_lnum;            /* line number for this state */
+  synstate_T *sst_next;        // next entry in used or free list
+  linenr_T sst_lnum;            // line number for this state
   union {
-    bufstate_T sst_stack[SST_FIX_STATES];          /* short state stack */
-    garray_T sst_ga;            /* growarray for long state stack */
+    bufstate_T sst_stack[SST_FIX_STATES];          // short state stack
+    garray_T sst_ga;            // growarray for long state stack
   } sst_union;
   int sst_next_flags;           // flags for sst_next_list
   int sst_stacksize;            // number of states on the stack

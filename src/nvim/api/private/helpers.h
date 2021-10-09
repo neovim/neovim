@@ -141,8 +141,8 @@ typedef struct {
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keysets.h.generated.h"
 # include "api/private/helpers.h.generated.h"
+# include "keysets.h.generated.h"
 #endif
 
 

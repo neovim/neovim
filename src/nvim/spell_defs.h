@@ -20,9 +20,9 @@
 // is 8 bytes we could use something smaller, but what?
 typedef int idx_T;
 
-# define SPL_FNAME_TMPL  "%s.%s.spl"
-# define SPL_FNAME_ADD   ".add."
-# define SPL_FNAME_ASCII ".ascii."
+#define SPL_FNAME_TMPL  "%s.%s.spl"
+#define SPL_FNAME_ADD   ".add."
+#define SPL_FNAME_ASCII ".ascii."
 
 // Flags used for a word.  Only the lowest byte can be used, the region byte
 // comes above it.
@@ -71,22 +71,22 @@ typedef int idx_T;
 // si_repsal, sl_rep, and si_sal.  Not for sl_sal!
 // One replacement: from "ft_from" to "ft_to".
 typedef struct fromto_S {
-  char_u      *ft_from;
-  char_u      *ft_to;
+  char_u *ft_from;
+  char_u *ft_to;
 } fromto_T;
 
 // Info from "SAL" entries in ".aff" file used in sl_sal.
 // The info is split for quick processing by spell_soundfold().
 // Note that "sm_oneof" and "sm_rules" point into sm_lead.
 typedef struct salitem_S {
-  char_u      *sm_lead;         // leading letters
+  char_u *sm_lead;         // leading letters
   int sm_leadlen;               // length of "sm_lead"
-  char_u      *sm_oneof;        // letters from () or NULL
-  char_u      *sm_rules;        // rules like ^, $, priority
-  char_u      *sm_to;           // replacement.
-  int         *sm_lead_w;       // wide character copy of "sm_lead"
-  int         *sm_oneof_w;      // wide character copy of "sm_oneof"
-  int         *sm_to_w;         // wide character copy of "sm_to"
+  char_u *sm_oneof;        // letters from () or NULL
+  char_u *sm_rules;        // rules like ^, $, priority
+  char_u *sm_to;           // replacement.
+  int *sm_lead_w;       // wide character copy of "sm_lead"
+  int *sm_oneof_w;      // wide character copy of "sm_oneof"
+  int *sm_to_w;         // wide character copy of "sm_to"
 } salitem_T;
 
 typedef int salfirst_T;
@@ -113,25 +113,25 @@ typedef int salfirst_T;
 typedef struct slang_S slang_T;
 
 struct slang_S {
-  slang_T     *sl_next;         // next language
-  char_u      *sl_name;         // language name "en", "en.rare", "nl", etc.
-  char_u      *sl_fname;        // name of .spl file
+  slang_T *sl_next;         // next language
+  char_u *sl_name;         // language name "en", "en.rare", "nl", etc.
+  char_u *sl_fname;        // name of .spl file
   bool sl_add;                  // true if it's a .add file.
 
-  char_u      *sl_fbyts;        // case-folded word bytes
-  long        sl_fbyts_len;     // length of sl_fbyts
-  idx_T       *sl_fidxs;        // case-folded word indexes
-  char_u      *sl_kbyts;        // keep-case word bytes
-  idx_T       *sl_kidxs;        // keep-case word indexes
-  char_u      *sl_pbyts;        // prefix tree word bytes
-  idx_T       *sl_pidxs;        // prefix tree word indexes
+  char_u *sl_fbyts;        // case-folded word bytes
+  long sl_fbyts_len;     // length of sl_fbyts
+  idx_T *sl_fidxs;        // case-folded word indexes
+  char_u *sl_kbyts;        // keep-case word bytes
+  idx_T *sl_kidxs;        // keep-case word indexes
+  char_u *sl_pbyts;        // prefix tree word bytes
+  idx_T *sl_pidxs;        // prefix tree word indexes
 
-  char_u      *sl_info;         // infotext string or NULL
+  char_u *sl_info;         // infotext string or NULL
 
   char_u sl_regions[MAXREGIONS * 2 + 1];
-                                // table with up to 8 region names plus NUL
+  // table with up to 8 region names plus NUL
 
-  char_u      *sl_midword;      // MIDWORD string or NULL
+  char_u *sl_midword;      // MIDWORD string or NULL
 
   hashtab_T sl_wordcount;       // hashtable with word count, wordcount_T
 
@@ -140,17 +140,17 @@ struct slang_S {
   int sl_compsylmax;            // COMPOUNDSYLMAX (default: MAXWLEN)
   int sl_compoptions;           // COMP_* flags
   garray_T sl_comppat;          // CHECKCOMPOUNDPATTERN items
-  regprog_T   *sl_compprog;     // COMPOUNDRULE turned into a regexp progrm
-                                // (NULL when no compounding)
-  char_u      *sl_comprules;    // all COMPOUNDRULE concatenated (or NULL)
-  char_u      *sl_compstartflags;   // flags for first compound word
-  char_u      *sl_compallflags;   // all flags for compound words
+  regprog_T *sl_compprog;     // COMPOUNDRULE turned into a regexp progrm
+                              // (NULL when no compounding)
+  char_u *sl_comprules;    // all COMPOUNDRULE concatenated (or NULL)
+  char_u *sl_compstartflags;   // flags for first compound word
+  char_u *sl_compallflags;   // all flags for compound words
   bool sl_nobreak;              // When true: no spaces between words
-  char_u      *sl_syllable;     // SYLLABLE repeatable chars or NULL
+  char_u *sl_syllable;     // SYLLABLE repeatable chars or NULL
   garray_T sl_syl_items;        // syllable items
 
   int sl_prefixcnt;             // number of items in "sl_prefprog"
-  regprog_T   **sl_prefprog;    // table with regprogs for prefixes
+  regprog_T **sl_prefprog;    // table with regprogs for prefixes
 
   garray_T sl_rep;              // list of fromto_T entries from REP lines
   int16_t sl_rep_first[256];        // indexes where byte first appears, -1 if
@@ -171,9 +171,9 @@ struct slang_S {
 
   // Info from the .sug file.  Loaded on demand.
   time_t sl_sugtime;            // timestamp for .sug file
-  char_u      *sl_sbyts;        // soundfolded word bytes
-  idx_T       *sl_sidxs;        // soundfolded word indexes
-  buf_T       *sl_sugbuf;       // buffer with word number table
+  char_u *sl_sbyts;        // soundfolded word bytes
+  idx_T *sl_sidxs;        // soundfolded word indexes
+  buf_T *sl_sugbuf;       // buffer with word number table
   bool sl_sugloaded;            // true when .sug file was loaded or failed to
                                 // load
 
@@ -186,9 +186,9 @@ struct slang_S {
 
 // Structure used in "b_langp", filled from 'spelllang'.
 typedef struct langp_S {
-  slang_T     *lp_slang;        // info for this language
-  slang_T     *lp_sallang;      // language used for sound folding or NULL
-  slang_T     *lp_replang;      // language used for REP items or NULL
+  slang_T *lp_slang;        // info for this language
+  slang_T *lp_sallang;      // language used for sound folding or NULL
+  slang_T *lp_replang;      // language used for REP items or NULL
   int lp_region;                // bitmask for region or REGION_ALL
 } langp_T;
 
@@ -268,7 +268,7 @@ typedef struct trystate_S {
 #define SPELL_TOFOLD(c) ((c) >= 128 ? utf_fold(c) : (int)spelltab.st_fold[c])
 
 #define SPELL_TOUPPER(c) ((c) >= 128 ? mb_toupper(c) \
-                          : (int)spelltab.st_upper[c])
+                                     : (int)spelltab.st_upper[c])
 
 #define SPELL_ISUPPER(c) ((c) >= 128 ? mb_isupper(c) : spelltab.st_isu[c])
 

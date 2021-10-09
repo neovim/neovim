@@ -1,23 +1,23 @@
 #ifndef NVIM_GLOBALS_H
 #define NVIM_GLOBALS_H
 
-#include <stdbool.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
-#include "nvim/macros.h"
+#include "nvim/event/loop.h"
 #include "nvim/ex_eval.h"
 #include "nvim/iconv.h"
+#include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/menu.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
-#include "nvim/event/loop.h"
-#include "nvim/os/os_defs.h"
 
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
-# define MSG_BUF_LEN 480                 // length of buffer for small messages
-# define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
+#define MSG_BUF_LEN 480                 // length of buffer for small messages
+#define MSG_BUF_CLEN  (MSG_BUF_LEN / 6)  // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
 
 #ifdef WIN32
@@ -169,16 +169,16 @@ EXTERN bool compl_busy INIT(= false);
 
 // List of flags for method of completion.
 EXTERN int compl_cont_status INIT(= 0);
-# define CONT_ADDING    1       // "normal" or "adding" expansion
-# define CONT_INTRPT   (2 + 4)  // a ^X interrupted the current expansion
-                                // it's set only iff N_ADDS is set
-# define CONT_N_ADDS    4       // next ^X<> will add-new or expand-current
-# define CONT_S_IPOS    8       // next ^X<> will set initial_pos?
-                                // if so, word-wise-expansion will set SOL
-# define CONT_SOL       16      // pattern includes start of line, just for
-                                // word-wise expansion, not set for ^X^L
-# define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
-                                // expansion, (eg use complete=.)
+#define CONT_ADDING    1       // "normal" or "adding" expansion
+#define CONT_INTRPT   (2 + 4)  // a ^X interrupted the current expansion
+                               // it's set only iff N_ADDS is set
+#define CONT_N_ADDS    4       // next ^X<> will add-new or expand-current
+#define CONT_S_IPOS    8       // next ^X<> will set initial_pos?
+                               // if so, word-wise-expansion will set SOL
+#define CONT_SOL       16      // pattern includes start of line, just for
+                               // word-wise expansion, not set for ^X^L
+#define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
+                               // expansion, (eg use complete=.)
 
 EXTERN char_u *edit_submode INIT(= NULL);        // msg for CTRL-X submode
 EXTERN char_u *edit_submode_pre INIT(= NULL);    // prepended to edit_submode
@@ -405,7 +405,7 @@ EXTERN int mouse_dragging INIT(= 0);          // extending Visual area with
                                               // mouse dragging
 
 // The root of the menu hierarchy.
-EXTERN vimmenu_T        *root_menu INIT(= NULL);
+EXTERN vimmenu_T *root_menu INIT(= NULL);
 // While defining the system menu, sys_menu is true.  This avoids
 // overruling of menus that the user already defined.
 EXTERN int sys_menu INIT(= false);
@@ -417,48 +417,48 @@ EXTERN int updating_screen INIT(= 0);
 // All windows are linked in a list. firstwin points to the first entry,
 // lastwin to the last entry (can be the same as firstwin) and curwin to the
 // currently active window.
-EXTERN win_T    *firstwin;              // first window
-EXTERN win_T    *lastwin;               // last window
-EXTERN win_T    *prevwin INIT(= NULL);  // previous window
-# define ONE_WINDOW (firstwin == lastwin)
-# define FOR_ALL_FRAMES(frp, first_frame) \
+EXTERN win_T *firstwin;              // first window
+EXTERN win_T *lastwin;               // last window
+EXTERN win_T *prevwin INIT(= NULL);  // previous window
+#define ONE_WINDOW (firstwin == lastwin)
+#define FOR_ALL_FRAMES(frp, first_frame) \
   for (frp = first_frame; frp != NULL; frp = frp->fr_next)  // NOLINT
 
 // When using this macro "break" only breaks out of the inner loop. Use "goto"
 // to break out of the tabpage loop.
-# define FOR_ALL_TAB_WINDOWS(tp, wp) \
+#define FOR_ALL_TAB_WINDOWS(tp, wp) \
   FOR_ALL_TABS(tp) \
-    FOR_ALL_WINDOWS_IN_TAB(wp, tp)
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp)
 
 // -V:FOR_ALL_WINDOWS_IN_TAB:501
-# define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
+#define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
   for (win_T *wp = ((tp) == curtab) \
               ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
 
-EXTERN win_T    *curwin;        // currently active window
+EXTERN win_T *curwin;        // currently active window
 
-EXTERN win_T    *aucmd_win;     // window used in aucmd_prepbuf()
+EXTERN win_T *aucmd_win;     // window used in aucmd_prepbuf()
 EXTERN int aucmd_win_used INIT(= false);  // aucmd_win is being used
 
 // The window layout is kept in a tree of frames.  topframe points to the top
 // of the tree.
-EXTERN frame_T  *topframe;      // top of the window frame tree
+EXTERN frame_T *topframe;      // top of the window frame tree
 
 // Tab pages are alternative topframes.  "first_tabpage" points to the first
 // one in the list, "curtab" is the current one.
-EXTERN tabpage_T    *first_tabpage;
-EXTERN tabpage_T    *lastused_tabpage;
-EXTERN tabpage_T    *curtab;
+EXTERN tabpage_T *first_tabpage;
+EXTERN tabpage_T *lastused_tabpage;
+EXTERN tabpage_T *curtab;
 EXTERN bool redraw_tabline INIT(= false);  // need to redraw tabline
 
 // Iterates over all tabs in the tab list
-# define FOR_ALL_TABS(tp) for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+#define FOR_ALL_TABS(tp) for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next)
 
 // All buffers are linked in a list. 'firstbuf' points to the first entry,
 // 'lastbuf' to the last entry and 'curbuf' to the currently active buffer.
 EXTERN buf_T    *firstbuf INIT(= NULL);  // first buffer
-EXTERN buf_T    *lastbuf INIT(= NULL);   // last buffer
-EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
+EXTERN buf_T *lastbuf INIT(= NULL);   // last buffer
+EXTERN buf_T *curbuf INIT(= NULL);    // currently active buffer
 
 // Iterates over all buffers in the buffer list.
 #define FOR_ALL_BUFFERS(buf) \
@@ -593,16 +593,16 @@ EXTERN int inhibit_delete_count INIT(= 0);
 // These flags are set based upon 'fileencoding'.
 // The characters are internally stored as UTF-8
 // to avoid trouble with NUL bytes.
-# define DBCS_JPN       932     // japan
-# define DBCS_JPNU      9932    // euc-jp
-# define DBCS_KOR       949     // korea
-# define DBCS_KORU      9949    // euc-kr
-# define DBCS_CHS       936     // chinese
-# define DBCS_CHSU      9936    // euc-cn
-# define DBCS_CHT       950     // taiwan
-# define DBCS_CHTU      9950    // euc-tw
-# define DBCS_2BYTE     1       // 2byte-
-# define DBCS_DEBUG     -1
+#define DBCS_JPN       932     // japan
+#define DBCS_JPNU      9932    // euc-jp
+#define DBCS_KOR       949     // korea
+#define DBCS_KORU      9949    // euc-kr
+#define DBCS_CHS       936     // chinese
+#define DBCS_CHSU      9936    // euc-cn
+#define DBCS_CHT       950     // taiwan
+#define DBCS_CHTU      9950    // euc-tw
+#define DBCS_2BYTE     1       // 2byte-
+#define DBCS_DEBUG     -1
 
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);
@@ -672,9 +672,9 @@ EXTERN char_u NameBuff[MAXPATHL];           ///< Buffer for expanding file names
 EXTERN char_u msg_buf[MSG_BUF_LEN];         ///< Small buffer for messages
 EXTERN char os_buf[                         ///< Buffer for the os/ layer
 #if MAXPATHL > IOSIZE
-MAXPATHL
+                                            MAXPATHL
 #else
-IOSIZE
+                                            IOSIZE
 #endif
 ];
 
@@ -746,7 +746,7 @@ EXTERN bool g_tag_at_cursor INIT(= false);  // whether the tag command comes
 
 EXTERN int replace_offset INIT(= 0);        // offset for replace_push()
 
-EXTERN char_u   *escape_chars INIT(= (char_u *)" \t\\\"|");
+EXTERN char_u *escape_chars INIT(= (char_u *)" \t\\\"|");
 // need backslash in cmd line
 
 EXTERN int keep_help_flag INIT(= false);  // doing :ta from help file
@@ -754,7 +754,7 @@ EXTERN int keep_help_flag INIT(= false);  // doing :ta from help file
 // When a string option is NULL (which only happens in out-of-memory
 // situations), it is set to empty_option, to avoid having to check for NULL
 // everywhere.
-EXTERN char_u   *empty_option INIT(= (char_u *)"");
+EXTERN char_u *empty_option INIT(= (char_u *)"");
 
 EXTERN bool redir_off INIT(= false);        // no redirection for a moment
 EXTERN FILE *redir_fd INIT(= NULL);         // message redirection file
@@ -787,7 +787,7 @@ extern char_u *compiled_sys;
 // When a window has a local directory, the absolute path of the global
 // current directory is stored here (in allocated memory).  If the current
 // directory is not a local directory, globaldir is NULL.
-EXTERN char_u   *globaldir INIT(= NULL);
+EXTERN char_u *globaldir INIT(= NULL);
 
 // Whether 'keymodel' contains "stopsel" and "startsel".
 EXTERN bool km_stopsel INIT(= false);
@@ -810,8 +810,8 @@ EXTERN linenr_T sub_nlines;  // total number of lines changed
 EXTERN char_u wim_flags[4];
 
 // whether titlestring and iconstring contains statusline syntax
-# define STL_IN_ICON    1
-# define STL_IN_TITLE   2
+#define STL_IN_ICON    1
+#define STL_IN_TITLE   2
 EXTERN int stl_syntax INIT(= 0);
 
 // don't use 'hlsearch' temporarily
@@ -846,15 +846,16 @@ EXTERN linenr_T spell_redraw_lnum INIT(= 0);
 // The error messages that can be shared are included here.
 // Excluded are errors that are only used once and debugging messages.
 EXTERN char_u e_abort[] INIT(= N_("E470: Command aborted"));
-EXTERN char_u e_afterinit[] INIT(= N_(
-        "E905: Cannot set this option after startup"));
+EXTERN char_u e_afterinit[] INIT(= N_("E905: Cannot set this option after startup"));
 EXTERN char_u e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char_u e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char_u e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
-EXTERN char_u e_cmdwin[] INIT(= N_(
-        "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
-EXTERN char_u e_curdir[] INIT(= N_(
-        "E12: Command not allowed from exrc/vimrc in current dir or tag search"));
+EXTERN char_u e_cmdwin[] INIT(=
+                                N_(
+                                  "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"));
+EXTERN char_u e_curdir[] INIT(=
+                                N_(
+                                  "E12: Command not allowed from exrc/vimrc in current dir or tag search"));
 EXTERN char_u e_endif[] INIT(= N_("E171: Missing :endif"));
 EXTERN char_u e_endtry[] INIT(= N_("E600: Missing :endtry"));
 EXTERN char_u e_endwhile[] INIT(= N_("E170: Missing :endwhile"));
@@ -869,8 +870,7 @@ EXTERN char_u e_interr[] INIT(= N_("Interrupted"));
 EXTERN char_u e_invarg[] INIT(= N_("E474: Invalid argument"));
 EXTERN char_u e_invarg2[] INIT(= N_("E475: Invalid argument: %s"));
 EXTERN char_u e_invargval[] INIT(= N_("E475: Invalid value for argument %s"));
-EXTERN char_u e_invargNval[] INIT(= N_(
-    "E475: Invalid value for argument %s: %s"));
+EXTERN char_u e_invargNval[] INIT(= N_("E475: Invalid value for argument %s: %s"));
 EXTERN char_u e_duparg2[] INIT(= N_("E983: Duplicate argument: %s"));
 EXTERN char_u e_invexpr2[] INIT(= N_("E15: Invalid expression: %s"));
 EXTERN char_u e_invrange[] INIT(= N_("E16: Invalid range"));
@@ -880,24 +880,21 @@ EXTERN char_u e_no_spell[] INIT(= N_("E756: Spell checking is not possible"));
 EXTERN char_u e_invchan[] INIT(= N_("E900: Invalid channel id"));
 EXTERN char_u e_invchanjob[] INIT(= N_("E900: Invalid channel id: not a job"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
-EXTERN char_u e_jobspawn[] INIT(= N_(
-    "E903: Process failed to start: %s: \"%s\""));
+EXTERN char_u e_jobspawn[] INIT(= N_("E903: Process failed to start: %s: \"%s\""));
 EXTERN char_u e_channotpty[] INIT(= N_("E904: channel is not a pty"));
-EXTERN char_u e_stdiochan2[] INIT(= N_(
-    "E905: Couldn't open stdio channel: %s"));
+EXTERN char_u e_stdiochan2[] INIT(= N_("E905: Couldn't open stdio channel: %s"));
 EXTERN char_u e_invstream[] INIT(= N_("E906: invalid stream for channel"));
-EXTERN char_u e_invstreamrpc[] INIT(= N_(
-    "E906: invalid stream for rpc channel, use 'rpc'"));
-EXTERN char_u e_streamkey[] INIT(= N_(
-    "E5210: dict key '%s' already set for buffered stream in channel %"
-    PRIu64));
+EXTERN char_u e_invstreamrpc[] INIT(= N_("E906: invalid stream for rpc channel, use 'rpc'"));
+EXTERN char_u e_streamkey[] INIT(=
+                                   N_(
+                                     "E5210: dict key '%s' already set for buffered stream in channel %"
+                                     PRIu64));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char e_fsync[] INIT(= N_("E667: Fsync failed: %s"));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));
-EXTERN char_u e_modifiable[] INIT(= N_(
-        "E21: Cannot make changes, 'modifiable' is off"));
+EXTERN char_u e_modifiable[] INIT(= N_("E21: Cannot make changes, 'modifiable' is off"));
 EXTERN char_u e_nesting[] INIT(= N_("E22: Scripts nested too deep"));
 EXTERN char_u e_noalt[] INIT(= N_("E23: No alternate file"));
 EXTERN char_u e_noabbr[] INIT(= N_("E24: No such abbreviation"));
@@ -909,8 +906,7 @@ EXTERN char_u e_nomap[] INIT(= N_("E31: No such mapping"));
 EXTERN char_u e_nomatch[] INIT(= N_("E479: No match"));
 EXTERN char_u e_nomatch2[] INIT(= N_("E480: No match: %s"));
 EXTERN char_u e_noname[] INIT(= N_("E32: No file name"));
-EXTERN char_u e_nopresub[] INIT(= N_(
-        "E33: No previous substitute regular expression"));
+EXTERN char_u e_nopresub[] INIT(= N_("E33: No previous substitute regular expression"));
 EXTERN char_u e_noprev[] INIT(= N_("E34: No previous command"));
 EXTERN char_u e_noprevre[] INIT(= N_("E35: No previous regular expression"));
 EXTERN char_u e_norange[] INIT(= N_("E481: No range allowed"));
@@ -926,36 +922,30 @@ EXTERN char_u e_outofmem[] INIT(= N_("E41: Out of memory!"));
 EXTERN char_u e_patnotf[] INIT(= N_("Pattern not found"));
 EXTERN char_u e_patnotf2[] INIT(= N_("E486: Pattern not found: %s"));
 EXTERN char_u e_positive[] INIT(= N_("E487: Argument must be positive"));
-EXTERN char_u e_prev_dir[] INIT(= N_(
-        "E459: Cannot go back to previous directory"));
+EXTERN char_u e_prev_dir[] INIT(= N_("E459: Cannot go back to previous directory"));
 
 EXTERN char_u e_quickfix[] INIT(= N_("E42: No Errors"));
 EXTERN char_u e_loclist[] INIT(= N_("E776: No location list"));
 EXTERN char_u e_re_damg[] INIT(= N_("E43: Damaged match string"));
 EXTERN char_u e_re_corr[] INIT(= N_("E44: Corrupted regexp program"));
-EXTERN char_u e_readonly[] INIT(= N_(
-    "E45: 'readonly' option is set (add ! to override)"));
-EXTERN char_u e_readonlyvar[] INIT(= N_(
-    "E46: Cannot change read-only variable \"%.*s\""));
+EXTERN char_u e_readonly[] INIT(= N_("E45: 'readonly' option is set (add ! to override)"));
+EXTERN char_u e_readonlyvar[] INIT(= N_("E46: Cannot change read-only variable \"%.*s\""));
 EXTERN char_u e_stringreq[] INIT(= N_("E928: String required"));
 EXTERN char_u e_dictreq[] INIT(= N_("E715: Dictionary required"));
 EXTERN char_u e_blobidx[] INIT(= N_("E979: Blob index out of range: %" PRId64));
 EXTERN char_u e_invalblob[] INIT(= N_("E978: Invalid operation for Blob"));
-EXTERN char_u e_toomanyarg[] INIT(= N_(
-    "E118: Too many arguments for function: %s"));
-EXTERN char_u e_dictkey[] INIT(= N_(
-    "E716: Key not present in Dictionary: \"%s\""));
+EXTERN char_u e_toomanyarg[] INIT(= N_("E118: Too many arguments for function: %s"));
+EXTERN char_u e_dictkey[] INIT(= N_("E716: Key not present in Dictionary: \"%s\""));
 EXTERN char_u e_listreq[] INIT(= N_("E714: List required"));
 EXTERN char_u e_listblobreq[] INIT(= N_("E897: List or Blob required"));
-EXTERN char_u e_listdictarg[] INIT(= N_(
-    "E712: Argument of %s must be a List or Dictionary"));
-EXTERN char_u e_listdictblobarg[] INIT(= N_(
-    "E896: Argument of %s must be a List, Dictionary or Blob"));
+EXTERN char_u e_listdictarg[] INIT(= N_("E712: Argument of %s must be a List or Dictionary"));
+EXTERN char_u e_listdictblobarg[] INIT(=
+                                         N_(
+                                           "E896: Argument of %s must be a List, Dictionary or Blob"));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));
-EXTERN char_u e_screenmode[] INIT(= N_(
-        "E359: Screen mode setting not supported"));
+EXTERN char_u e_screenmode[] INIT(= N_("E359: Screen mode setting not supported"));
 EXTERN char_u e_scroll[] INIT(= N_("E49: Invalid scroll size"));
 EXTERN char_u e_shellempty[] INIT(= N_("E91: 'shell' option is empty"));
 EXTERN char_u e_signdata[] INIT(= N_("E255: Couldn't read in sign data!"));
@@ -969,57 +959,45 @@ EXTERN char_u e_trailing[] INIT(= N_("E488: Trailing characters"));
 EXTERN char_u e_trailing2[] INIT(= N_("E488: Trailing characters: %s"));
 EXTERN char_u e_umark[] INIT(= N_("E78: Unknown mark"));
 EXTERN char_u e_wildexpand[] INIT(= N_("E79: Cannot expand wildcards"));
-EXTERN char_u e_winheight[] INIT(= N_(
-        "E591: 'winheight' cannot be smaller than 'winminheight'"));
-EXTERN char_u e_winwidth[] INIT(= N_(
-        "E592: 'winwidth' cannot be smaller than 'winminwidth'"));
+EXTERN char_u e_winheight[] INIT(= N_("E591: 'winheight' cannot be smaller than 'winminheight'"));
+EXTERN char_u e_winwidth[] INIT(= N_("E592: 'winwidth' cannot be smaller than 'winminwidth'"));
 EXTERN char_u e_write[] INIT(= N_("E80: Error while writing"));
 EXTERN char_u e_zerocount[] INIT(= N_("E939: Positive count required"));
-EXTERN char_u e_usingsid[] INIT(= N_(
-    "E81: Using <SID> not in a script context"));
+EXTERN char_u e_usingsid[] INIT(= N_("E81: Using <SID> not in a script context"));
 EXTERN char_u e_missingparen[] INIT(= N_("E107: Missing parentheses: %s"));
-EXTERN char_u e_maxmempat[] INIT(= N_(
-        "E363: pattern uses more memory than 'maxmempattern'"));
+EXTERN char_u e_maxmempat[] INIT(= N_("E363: pattern uses more memory than 'maxmempattern'"));
 EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));
 EXTERN char_u e_nobufnr[] INIT(= N_("E86: Buffer %" PRId64 " does not exist"));
 
-EXTERN char_u e_invalpat[] INIT(= N_(
-        "E682: Invalid search pattern or delimiter"));
+EXTERN char_u e_invalpat[] INIT(= N_("E682: Invalid search pattern or delimiter"));
 EXTERN char_u e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
 EXTERN char_u e_notset[] INIT(= N_("E764: Option '%s' is not set"));
 EXTERN char_u e_invalidreg[] INIT(= N_("E850: Invalid register name"));
-EXTERN char_u e_dirnotf[] INIT(= N_(
-    "E919: Directory not found in '%s': \"%s\""));
-EXTERN char_u e_au_recursive[] INIT(= N_(
-    "E952: Autocommand caused recursive behavior"));
-EXTERN char_u e_autocmd_close[] INIT(= N_(
-    "E813: Cannot close autocmd window"));
+EXTERN char_u e_dirnotf[] INIT(= N_("E919: Directory not found in '%s': \"%s\""));
+EXTERN char_u e_au_recursive[] INIT(= N_("E952: Autocommand caused recursive behavior"));
+EXTERN char_u e_autocmd_close[] INIT(= N_("E813: Cannot close autocmd window"));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 
-EXTERN char_u e_autocmd_err[] INIT(=N_(
-    "E5500: autocmd has thrown an exception: %s"));
-EXTERN char_u e_cmdmap_err[] INIT(=N_(
-    "E5520: <Cmd> mapping must end with <CR>"));
-EXTERN char_u e_cmdmap_repeated[] INIT(=N_(
-    "E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
-EXTERN char_u e_cmdmap_key[] INIT(=N_(
-    "E5522: <Cmd> mapping must not include %s key"));
+EXTERN char_u e_autocmd_err[] INIT(=N_("E5500: autocmd has thrown an exception: %s"));
+EXTERN char_u e_cmdmap_err[] INIT(=N_("E5520: <Cmd> mapping must end with <CR>"));
+EXTERN char_u e_cmdmap_repeated[] INIT(=
+                                         N_(
+                                          "E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
+EXTERN char_u e_cmdmap_key[] INIT(=N_("E5522: <Cmd> mapping must not include %s key"));
 
-EXTERN char_u e_api_error[] INIT(=N_(
-    "E5555: API call: %s"));
+EXTERN char_u e_api_error[] INIT(=N_("E5555: API call: %s"));
 
-EXTERN char e_luv_api_disabled[] INIT(=N_(
-    "E5560: %s must not be called in a lua loop callback"));
+EXTERN char e_luv_api_disabled[] INIT(=N_("E5560: %s must not be called in a lua loop callback"));
 
 EXTERN char_u e_floatonly[] INIT(=N_(
-    "E5601: Cannot close window, only floating window would remain"));
-EXTERN char_u e_floatexchange[] INIT(=N_(
-    "E5602: Cannot exchange or rotate float"));
+                                    "E5601: Cannot close window, only floating window would remain"));
+EXTERN char_u e_floatexchange[] INIT(=N_("E5602: Cannot exchange or rotate float"));
 
-EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(= N_(
-    "E1155: Cannot define autocommands for ALL events"));
+EXTERN char e_cannot_define_autocommands_for_all_events[] INIT(=
+                                                                 N_(
+                                                                   "E1155: Cannot define autocommands for ALL events"));
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

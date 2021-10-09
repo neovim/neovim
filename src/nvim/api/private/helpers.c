@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stddef.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -831,10 +831,10 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
 #define KEY_TO_BOOL(name) \
-    parsed_args. name = api_object_to_bool(opts-> name, #name, false, err); \
-    if (ERROR_SET(err)) { \
-      goto fail_and_free; \
-    }
+  parsed_args. name = api_object_to_bool(opts-> name, #name, false, err); \
+  if (ERROR_SET(err)) { \
+    goto fail_and_free; \
+  }
 
     KEY_TO_BOOL(nowait);
     KEY_TO_BOOL(noremap);

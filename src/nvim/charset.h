@@ -1,11 +1,11 @@
 #ifndef NVIM_CHARSET_H
 #define NVIM_CHARSET_H
 
-#include "nvim/types.h"
-#include "nvim/pos.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/option_defs.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
 
 /// Return the folded-case equivalent of the given character
 ///
@@ -13,7 +13,7 @@
 ///
 /// @return Folded variant.
 #define CH_FOLD(c) \
-    utf_fold((sizeof(c) == sizeof(char)) \
+  utf_fold((sizeof(c) == sizeof(char)) \
              ?((int)(uint8_t)(c)) \
              :((int)(c)))
 

@@ -1,9 +1,9 @@
 #ifndef NVIM_DECORATION_H
 #define NVIM_DECORATION_H
 
-#include "nvim/pos.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/pos.h"
 
 // actual Decoration data is in extmark_defs.h
 
@@ -82,9 +82,9 @@ EXTERN DecorState decor_state INIT(= { 0 });
 EXTERN bool provider_active INIT(= false);
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-                                 { ns_id, false, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-                                   LUA_NOREF, -1 }
+  { ns_id, false, LUA_NOREF, LUA_NOREF, \
+    LUA_NOREF, LUA_NOREF, LUA_NOREF, \
+    LUA_NOREF, -1 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.h.generated.h"

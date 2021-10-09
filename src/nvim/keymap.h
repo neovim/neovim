@@ -41,31 +41,31 @@
 
 /*
  * NUL cannot be in the input string, therefore it is replaced by
- *	K_SPECIAL   KS_ZERO	KE_FILLER
+ *      K_SPECIAL   KS_ZERO     KE_FILLER
  */
 #define KS_ZERO                 255
 
 /*
  * K_SPECIAL cannot be in the input string, therefore it is replaced by
- *	K_SPECIAL   KS_SPECIAL	KE_FILLER
+ *      K_SPECIAL   KS_SPECIAL  KE_FILLER
  */
 #define KS_SPECIAL              254
 
 /*
  * KS_EXTRA is used for keys that have no termcap name
- *	K_SPECIAL   KS_EXTRA	KE_xxx
+ *      K_SPECIAL   KS_EXTRA    KE_xxx
  */
 #define KS_EXTRA                253
 
 /*
  * KS_MODIFIER is used when a modifier is given for a (special) key
- *	K_SPECIAL   KS_MODIFIER	bitmask
+ *      K_SPECIAL   KS_MODIFIER bitmask
  */
 #define KS_MODIFIER             252
 
 /*
  * These are used for the GUI
- *	K_SPECIAL   KS_xxx	KE_FILLER
+ *      K_SPECIAL   KS_xxx      KE_FILLER
  */
 #define KS_MOUSE                251
 #define KS_MENU                 250
@@ -170,8 +170,8 @@ enum key_extra {
 
   , KE_MOUSE = 43             // mouse event start
 
-  // Symbols for pseudo keys which are translated from the real key symbols
-  // above.
+               // Symbols for pseudo keys which are translated from the real key symbols
+               // above.
   , KE_LEFTMOUSE = 44         // Left mouse button click
   , KE_LEFTDRAG = 45          // Drag with left mouse button down
   , KE_LEFTRELEASE = 46       // Left mouse button release
@@ -187,7 +187,7 @@ enum key_extra {
   , KE_TAB = 54               // unshifted TAB key
   , KE_S_TAB_OLD = 55         // shifted TAB key (no longer used)
 
-  // , KE_SNIFF_UNUSED = 56   // obsolete
+                   // , KE_SNIFF_UNUSED = 56   // obsolete
   , KE_XF1 = 57               // extra vt100 function keys for xterm
   , KE_XF2 = 58
   , KE_XF3 = 59
@@ -209,9 +209,9 @@ enum key_extra {
   , KE_S_XF3 = 73
   , KE_S_XF4 = 74
 
-  // NOTE: The scroll wheel events are inverted: i.e. UP is the same as
-  // moving the actual scroll wheel down, LEFT is the same as moving the
-  // scroll wheel right.
+               // NOTE: The scroll wheel events are inverted: i.e. UP is the same as
+               // moving the actual scroll wheel down, LEFT is the same as moving the
+               // scroll wheel right.
   , KE_MOUSEDOWN = 75         // scroll wheel pseudo-button Down
   , KE_MOUSEUP = 76           // scroll wheel pseudo-button Up
   , KE_MOUSELEFT = 77         // scroll wheel pseudo-button Left
@@ -238,12 +238,12 @@ enum key_extra {
   , KE_X2RELEASE = 94
 
   , KE_DROP = 95              // DnD data is available
-  // , KE_CURSORHOLD = 96     // CursorHold event
+              // , KE_CURSORHOLD = 96     // CursorHold event
   , KE_NOP = 97               // no-op: does nothing
-  // , KE_FOCUSGAINED = 98    // focus gained
-  // , KE_FOCUSLOST = 99      // focus lost
+             // , KE_FOCUSGAINED = 98    // focus gained
+             // , KE_FOCUSLOST = 99      // focus lost
   , KE_MOUSEMOVE = 100        // mouse moved with no button down
-  // , KE_CANCEL = 101        // return from vgetc
+                   // , KE_CANCEL = 101        // return from vgetc
   , KE_EVENT = 102            // event
   , KE_COMMAND = 104          // <Cmd> special key
 };
