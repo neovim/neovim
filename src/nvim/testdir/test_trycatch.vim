@@ -2045,6 +2045,18 @@ func Test_user_command_function_call_with_endtry()
   call delete('XtestThrow')
 endfunc
 
+func ThisWillFail()
+  try
+    if x | endif
+  catch
+    for l in []
+  finally 
+endfunc
+
+func Test_error_in_catch_and_finally()
+  call assert_fails('call ThisWillFail()', ['E121:', 'E600:'])
+endfunc
+
 
 " Modeline								    {{{1
 " vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
