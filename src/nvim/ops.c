@@ -2817,17 +2817,17 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
   }
   tv_list_set_lock(list, VAR_FIXED);
-  tv_dict_add_list(dict, S_LEN("regcontents"), list);
+  (void)tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   // Register type.
   char buf[NUMBUFLEN+2];
   format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
-  tv_dict_add_str(dict, S_LEN("regtype"), buf);
+  (void)tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
   // Name of requested register, or empty string for unnamed operation.
   buf[0] = (char)oap->regname;
   buf[1] = NUL;
-  tv_dict_add_str(dict, S_LEN("regname"), buf);
+  (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
 
   // Motion type: inclusive or exclusive.
   tv_dict_add_bool(dict, S_LEN("inclusive"),
@@ -2836,11 +2836,11 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   // Kind of operation: yank, delete, change).
   buf[0] = (char)get_op_char(oap->op_type);
   buf[1] = NUL;
-  tv_dict_add_str(dict, S_LEN("operator"), buf);
+  (void)tv_dict_add_str(dict, S_LEN("operator"), buf);
 
   // Selection type: visual or not.
-  tv_dict_add_bool(dict, S_LEN("visual"),
-                   oap->is_VIsual ? kBoolVarTrue : kBoolVarFalse);
+  (void)tv_dict_add_bool(dict, S_LEN("visual"),
+                         oap->is_VIsual ? kBoolVarTrue : kBoolVarFalse);
 
   tv_dict_set_keys_readonly(dict);
   textlock++;
