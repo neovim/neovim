@@ -1,8 +1,11 @@
 name: "Commit Linter"
-on: pull_request
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 jobs:
   lint-commits:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
