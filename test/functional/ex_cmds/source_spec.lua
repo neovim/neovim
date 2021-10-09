@@ -25,11 +25,14 @@ describe(':source', function()
       let b = #{
         \ k: "v"
        "\ (o_o)
-        \ }]])
+        \ }
+      let s:s = 0zbeef.cafe
+      let c = s:s]])
 
     command('source')
     eq('2', meths.exec('echo a', true))
     eq("{'k': 'v'}", meths.exec('echo b', true))
+    eq("0zBEEFCAFE", meths.exec('echo c', true))
 
     exec('set cpoptions+=C')
     eq('Vim(let):E15: Invalid expression: #{', exc_exec('source'))
@@ -43,7 +46,11 @@ describe(':source', function()
       let b = #{
        "\ (>_<)
         \ K: "V"
-        \ }]])
+        \ }
+      function! s:C() abort
+        return expand("<SID>") .. "C()"
+      endfunction
+      let D = {-> s:C()}]])
 
     -- Source the 2nd line only
     feed('ggjV')
@@ -55,6 +62,11 @@ describe(':source', function()
     feed_command(':source')
     eq('4', meths.exec('echo a', true))
     eq("{'K': 'V'}", meths.exec('echo b', true))
+    eq("<SNR>3_C()", meths.exec('echo D()', true))
+
+    -- Source last line only
+    feed_command(':$source')
+    eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
 
     exec('set cpoptions+=C')
     eq('Vim(let):E15: Invalid expression: #{', exc_exec("'<,'>source"))

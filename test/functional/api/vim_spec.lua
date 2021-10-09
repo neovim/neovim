@@ -89,7 +89,7 @@ describe('API', function()
 
     it(':verbose set {option}?', function()
       nvim('exec', 'set nowrap', false)
-      eq('nowrap\n\tLast set from anonymous :source',
+      eq('nowrap\n\tLast set from anonymous :source (script id 1)',
         nvim('exec', 'verbose set wrap?', true))
     end)
 
@@ -132,6 +132,29 @@ describe('API', function()
       -- try no spaces before continuations to catch off-by-one error
       nvim('exec', 'let ab = #{\n\\a: 98,\n"\\ b: 2\n\\}', false)
       eq({a = 98}, request('nvim_eval', 'g:ab'))
+
+      -- Script scope (s:)
+      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          function! s:avast_ye_hades(s) abort
+            return a:s .. ' ' .. s:pirate
+          endfunction
+          echo <sid>avast_ye_hades('ahoy!')
+        ]], true))
+
+      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          function! Avast_ye_hades(s) abort
+            return a:s .. ' ' .. s:pirate
+          endfunction
+          echo nvim_exec('echo Avast_ye_hades(''ahoy!'')', 1)
+        ]], true))
+
+      eq('Vim(call):E5555: API call: Vim(echo):E121: Undefined variable: s:pirate',
+        pcall_err(request, 'nvim_exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          call nvim_exec('echo s:pirate', 1)
+        ]], false))
     end)
 
     it('non-ASCII input', function()
