@@ -6581,7 +6581,7 @@ void init_highlight(bool both, bool reset)
    * With 8 colors brown is equal to yellow, need to use black for Search fg
    * to avoid Statement highlighted text disappears.
    * Clear the attributes, needed when changing the t_Co value. */
-  if (t_colors > 8) {
+  if ((bg_colors != 0 ? bg_colors : t_colors) > 8) {
     do_highlight((*p_bg == 'l'
          ? "Visual cterm=NONE ctermbg=LightGrey"
          : "Visual cterm=NONE ctermbg=DarkGrey"), false, true);
@@ -6692,7 +6692,7 @@ int lookup_color(const int idx, const bool foreground, TriState *const boldp)
     return -1;
   }
 
-  if (t_colors == 8) {
+  if (t_colors == 8 || (!foreground && bg_colors == 8)) {
     // t_Co is 8: use the 8 colors table
     color = color_numbers_8[idx];
     if (foreground) {
@@ -7087,7 +7087,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
                 if (color >= 0) {
                   int dark = -1;
 
-                  if (t_colors < 16) {
+                  if ((bg_colors != 0 ? bg_colors : t_colors) < 16) {
                     dark = (color == 0 || color == 4);
                   } else if (color < 16) {
                     // Limit the heuristic to the standard 16 colors

@@ -110,8 +110,7 @@ width of the terminal.
 
 							*tui-colors*
 Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
-including "linux" (whose virtual terminals have had 256-colour support since
-4.8) and anything claiming to be "xterm".  Also when $COLORTERM or $TERM
+including anything claiming to be "xterm" and when $COLORTERM or $TERM
 contain the string "256".
 
 Nvim similarly assumes that any terminal emulator that sets $COLORTERM to any

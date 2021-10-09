@@ -131,6 +131,7 @@ typedef struct {
     int get_bg;
     int set_underline_style;
     int set_underline_color;
+    int bg_colors;
   } unibi_ext;
   char *space_buf;
 } TUIData;
@@ -225,6 +226,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->unibi_ext.get_bg = -1;
   data->unibi_ext.set_underline_color = -1;
+  data->unibi_ext.bg_colors = -1;
   data->out_fd = STDOUT_FILENO;
   data->out_isatty = os_isatty(data->out_fd);
 
@@ -295,6 +297,7 @@ static void terminfo_start(UI *ui)
                                      data->invis, sizeof data->invis);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
+  bg_colors = data->unibi_ext.bg_colors > 0 ? data->unibi_ext.bg_colors : 0;
   // Enter alternate screen, save title, and clear.
   // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(ui, unibi_enter_ca_mode);
@@ -308,6 +311,8 @@ static void terminfo_start(UI *ui)
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
+  // Let highlight know the new color info
+  init_highlight(true, true);
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -1743,6 +1748,14 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
   data->unibi_ext.get_bg = (int)unibi_add_ext_str(ut, "ext.get_bg",
                                                   "\x1b]11;?\x07");
 
+  // Linux does support 256-colour SGR, but it still can only output 16 fg/8 bg colors.
+  if (linuxvt) {
+    unibi_set_num(ut, unibi_max_colors, 16);
+    data->unibi_ext.bg_colors = 8;
+    unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_16);
+    unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_16);
+  }
+
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals
@@ -1751,12 +1764,12 @@ static void patch_terminfo_bugs(TUIData *data, const char *term, const char *col
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
     } else if (konsolev || xterm || gnome || rxvt || st || putty
-               || linuxvt  // Linux 4.8+ supports 256-colour SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
                || tmux
                || (colorterm && strstr(colorterm, "256"))
                || (term && strstr(term, "256"))) {
       unibi_set_num(ut, unibi_max_colors, 256);
+      data->unibi_ext.bg_colors = 0; // To overwrite it in case of linux-256colors
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
     }

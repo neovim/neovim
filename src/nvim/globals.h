@@ -357,6 +357,7 @@ EXTERN int provider_call_nesting INIT(= 0);
 
 
 EXTERN int t_colors INIT(= 256);                // int value of T_CCO
+EXTERN int bg_colors INIT(= 0);                 // override bg color count if > 0
 
 // When highlight_match is true, highlight a match, starting at the cursor
 // position.  Search_match_lines is the number of lines after the match (0 for
