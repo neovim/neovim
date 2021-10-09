@@ -14,9 +14,9 @@
 
 #define CSF_TRY        0x0100  // is a ":try"
 #define CSF_FINALLY    0x0200  // ":finally" has been passed
-#define CSF_THROWN     0x0400  // exception thrown to this try conditional
-#define CSF_CAUGHT     0x0800  // exception caught by this try conditional
-#define CSF_SILENT     0x1000  // "emsg_silent" reset by ":try"
+#define CSF_THROWN     0x0800  // exception thrown to this try conditional
+#define CSF_CAUGHT     0x1000  // exception caught by this try conditional
+#define CSF_SILENT     0x2000  // "emsg_silent" reset by ":try"
 // Note that CSF_ELSE is only used when CSF_TRY and CSF_WHILE are unset
 // (an ":if"), and CSF_SILENT is only used when CSF_TRY is set.
 
