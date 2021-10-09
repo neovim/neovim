@@ -332,8 +332,8 @@ int do_in_path_and_pp(char_u *path, char_u *name, int flags, DoInRuntimepathCB c
   return done;
 }
 
-static void push_path(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used,
-                      char *entry, bool after)
+static void push_path(RuntimeSearchPath *search_path, Map(String, handle_T) *rtp_used, char *entry,
+                      bool after)
 {
   handle_T h = map_get(String, handle_T)(rtp_used, cstr_as_string(entry));
   if (h == 0) {

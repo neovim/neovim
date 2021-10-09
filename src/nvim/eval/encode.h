@@ -1,9 +1,8 @@
 #ifndef NVIM_EVAL_ENCODE_H
 #define NVIM_EVAL_ENCODE_H
 
-#include <stddef.h>
-
 #include <msgpack.h>
+#include <stddef.h>
 
 #include "nvim/eval.h"
 #include "nvim/garray.h"
@@ -49,8 +48,7 @@ static inline ListReaderState encode_init_lrstate(const list_T *const list)
     .offset = 0,
     .li_length = (TV_LIST_ITEM_TV(tv_list_first(list))->vval.v_string == NULL
                   ? 0
-                  : STRLEN(TV_LIST_ITEM_TV(
-                      tv_list_first(list))->vval.v_string)),
+                  : STRLEN(TV_LIST_ITEM_TV(tv_list_first(list))->vval.v_string)),
   };
 }
 

@@ -2,8 +2,8 @@
 #define NVIM_TUI_INPUT_H
 
 #include <stdbool.h>
-
 #include <termkey.h>
+
 #include "nvim/event/stream.h"
 #include "nvim/event/time.h"
 

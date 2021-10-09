@@ -5,14 +5,14 @@
 #ifndef NVIM_EVAL_TYPVAL_ENCODE_H
 #define NVIM_EVAL_TYPVAL_ENCODE_H
 
-#include <stddef.h>
-#include <inttypes.h>
-#include <string.h>
 #include <assert.h>
+#include <inttypes.h>
+#include <stddef.h>
+#include <string.h>
 
-#include "nvim/lib/kvec.h"
 #include "nvim/eval/typval.h"
 #include "nvim/func_attr.h"
+#include "nvim/lib/kvec.h"
 
 /// Type of the stack entry
 typedef enum {
@@ -87,7 +87,7 @@ static inline size_t tv_strlen(const typval_T *const tv)
   assert(tv->v_type == VAR_STRING);
   return (tv->vval.v_string == NULL
           ? 0
-          : strlen((char *) tv->vval.v_string));
+          : strlen((char *)tv->vval.v_string));
 }
 
 /// Code for checking whether container references itself
@@ -100,19 +100,19 @@ static inline size_t tv_strlen(const typval_T *const tv)
 /// @param  conv_type  Type of the conversion, @see MPConvStackValType.
 #define _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val, copyID_attr, copyID, \
                                                conv_type) \
-    do { \
-      const int te_csr_ret = _TYPVAL_ENCODE_CHECK_SELF_REFERENCE( \
-          TYPVAL_ENCODE_FIRST_ARG_NAME, \
-          (val), &(val)->copyID_attr, mpstack, copyID, conv_type, objname); \
-      if (te_csr_ret != NOTDONE) { \
-        return te_csr_ret; \
-      } \
-    } while (0)
+  do { \
+    const int te_csr_ret = _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(TYPVAL_ENCODE_FIRST_ARG_NAME, \
+                                                               (val), &(val)->copyID_attr, mpstack, \
+                                                               copyID, conv_type, objname); \
+    if (te_csr_ret != NOTDONE) { \
+      return te_csr_ret; \
+    } \
+  } while (0)
 
 #define _TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf) \
-    pref##name##suf
+  pref##name##suf
 #define _TYPVAL_ENCODE_FUNC_NAME_INNER(pref, name, suf) \
-    _TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf)
+  _TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf)
 
 /// Construct function name, possibly using macros
 ///
@@ -125,22 +125,22 @@ static inline size_t tv_strlen(const typval_T *const tv)
 ///
 /// @return Concat: pref + #TYPVAL_ENCODE_NAME + suf.
 #define _TYPVAL_ENCODE_FUNC_NAME(pref, suf) \
-    _TYPVAL_ENCODE_FUNC_NAME_INNER(pref, TYPVAL_ENCODE_NAME, suf)
+  _TYPVAL_ENCODE_FUNC_NAME_INNER(pref, TYPVAL_ENCODE_NAME, suf)
 
 /// Self reference checker function name
 #define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE \
-    _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _check_self_reference)
+  _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _check_self_reference)
 
 /// Entry point function name
 #define _TYPVAL_ENCODE_ENCODE \
-    _TYPVAL_ENCODE_FUNC_NAME(encode_vim_to_, )
+  _TYPVAL_ENCODE_FUNC_NAME(encode_vim_to_, )
 
 /// Name of the …convert_one_value function
 #define _TYPVAL_ENCODE_CONVERT_ONE_VALUE \
-    _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _convert_one_value)
+  _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _convert_one_value)
 
 /// Name of the dummy const dict_T *const variable
 #define TYPVAL_ENCODE_NODICT_VAR \
-    _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _nodict_var)
+  _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _nodict_var)
 
 #endif  // NVIM_EVAL_TYPVAL_ENCODE_H

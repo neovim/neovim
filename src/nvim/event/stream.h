@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-
 #include <uv.h>
 
 #include "nvim/event/loop.h"
@@ -18,7 +17,7 @@ typedef struct stream Stream;
 /// @param data User-defined data
 /// @param eof If the stream reached EOF.
 typedef void (*stream_read_cb)(Stream *stream, RBuffer *buf, size_t count,
-    void *data, bool eof);
+                               void *data, bool eof);
 
 /// Type of function called when the Stream has information about a write
 /// request.

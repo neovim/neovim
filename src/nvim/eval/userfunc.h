@@ -8,7 +8,7 @@
 typedef struct {
   dict_T *fd_dict;  ///< Dictionary used.
   char_u *fd_newkey;  ///< New key in "dict" in allocated memory.
-  dictitem_T  *fd_di;  ///< Dictionary item used.
+  dictitem_T *fd_di;  ///< Dictionary item used.
 } funcdict_T;
 
 typedef struct funccal_entry funccal_entry_T;

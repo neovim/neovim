@@ -1,9 +1,8 @@
 #ifndef NVIM_EVAL_DECODE_H
 #define NVIM_EVAL_DECODE_H
 
-#include <stddef.h>
-
 #include <msgpack.h>
+#include <stddef.h>
 
 #include "nvim/eval/typval.h"
 #include "nvim/globals.h"

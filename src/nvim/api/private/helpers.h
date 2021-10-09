@@ -4,12 +4,12 @@
 #include <stdbool.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/vim.h"
-#include "nvim/getchar.h"
-#include "nvim/memory.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_eval.h"
+#include "nvim/getchar.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/memory.h"
+#include "nvim/vim.h"
 
 #define OBJECT_OBJ(o) o
 
@@ -76,7 +76,7 @@
   name.size = fixsize; \
   name.items = name##__items; \
 
-#define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
+#define STATIC_CSTR_AS_STRING(s) ((String) { .data = s, .size = sizeof(s) - 1 })
 
 /// Create a new String instance, putting data in allocated memory
 ///
@@ -137,7 +137,7 @@ typedef struct {
     msg_list = &private_msg_list; \
     private_msg_list = NULL; \
     code \
-    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+      msg_list = saved_msg_list;  /* Restore the exception context. */ \
   } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

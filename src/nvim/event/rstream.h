@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-
 #include <uv.h>
 
 #include "nvim/event/loop.h"

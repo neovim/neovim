@@ -1,15 +1,15 @@
 #ifndef NVIM_API_PRIVATE_DEFS_H
 #define NVIM_API_PRIVATE_DEFS_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/func_attr.h"
 #include "nvim/types.h"
 
-#define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
-#define STRING_INIT {.data = NULL, .size = 0}
+#define ARRAY_DICT_INIT { .size = 0, .capacity = 0, .items = NULL }
+#define STRING_INIT { .data = NULL, .size = 0 }
 #define OBJECT_INIT { .type = kObjectTypeNil }
 #define ERROR_INIT { .type = kErrorTypeNone, .msg = NULL }
 #define REMOTE_TYPE(type) typedef handle_T type
