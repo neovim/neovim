@@ -1272,7 +1272,6 @@ theend:
     apply_autocmds(EVENT_BUFREADPOST, NULL, curbuf->b_fname, FALSE, curbuf);
     apply_autocmds(EVENT_BUFWINENTER, NULL, curbuf->b_fname, FALSE, curbuf);
   }
-  return;
 }
 
 /// Find the names of swap files in current directory and the directory given
@@ -2798,7 +2797,6 @@ void ml_clearmarked(void)
   }
 
   lowest_marked = 0;
-  return;
 }
 
 size_t ml_flush_deleted_bytes(buf_T *buf, size_t *codepoints, size_t *codeunits)

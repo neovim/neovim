@@ -6509,8 +6509,6 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
       break;
     }
   }
-
-  return;
 }
 
 int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)

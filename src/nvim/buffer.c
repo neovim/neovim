@@ -2553,8 +2553,6 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
   if (wip->wi_next) {
     wip->wi_next->wi_prev = wip;
   }
-
-  return;
 }
 
 

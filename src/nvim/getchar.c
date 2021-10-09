@@ -293,7 +293,6 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
     buf->bh_curr->b_next = p;
     buf->bh_curr = p;
   }
-  return;
 }
 
 /*

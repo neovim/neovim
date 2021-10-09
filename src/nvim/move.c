@@ -2104,7 +2104,6 @@ static void get_scroll_overlap(lineoff_T *lp, int dir)
   } else {
     *lp = loff2;        // 2 lines overlap
   }
-  return;
 }
 
 // Scroll 'scroll' lines up or down.
