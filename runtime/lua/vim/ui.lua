@@ -49,7 +49,7 @@ end
 ---               Function that will be used for highlighting
 ---               user inputs.
 ---@param on_confirm function ((input) -> ())
----               Called once the user enters the input.
+---               Called once the user confirms the input.
 ---               `input` is what the user typed.
 function M.input(opts, on_confirm)
   vim.validate {
