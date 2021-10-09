@@ -2046,17 +2046,26 @@ func Test_user_command_function_call_with_endtry()
 endfunc
 
 func ThisWillFail()
-  try
-    if x | endif
-  catch
-    for l in []
-  finally 
+
 endfunc
 
+" This was crashing prior to the fix in 8.2.3478.
 func Test_error_in_catch_and_finally()
-  call assert_fails('call ThisWillFail()', ['E121:', 'E600:'])
-endfunc
+  let lines =<< trim END
+    try
+      echo x
+    catch
+      for l in []
+    finally
+  END
+  call writefile(lines, 'XtestCatchAndFinally')
+  try
+    source XtestCatchAndFinally
+  catch /E600:/
+  endtry
 
+  call delete('XtestCatchAndFinally')
+endfunc
 
 " Modeline								    {{{1
 " vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
