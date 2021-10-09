@@ -1198,12 +1198,12 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   -- Linux kernel terminal emulator:
 
-  it("TERM=linux uses 256 colors", function()
-    assert_term_colors("linux", nil, 256)
+  it("TERM=linux uses 16 colors", function()
+    assert_term_colors("linux", nil, 16)
   end)
 
-  it("TERM=linux-16color uses 256 colors", function()
-    assert_term_colors("linux-16color", nil, 256)
+  it("TERM=linux-16color uses 16 colors", function()
+    assert_term_colors("linux-16color", nil, 16)
   end)
 
   it("TERM=linux-256color uses 256 colors", function()
