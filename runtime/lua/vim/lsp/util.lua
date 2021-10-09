@@ -956,6 +956,7 @@ end
 ---        - border (string or table) override `border`
 ---        - focusable (string or table) override `focusable`
 ---        - zindex (string or table) override `zindex`, defaults to 50
+---        - noautocmd (boolean): override `noautocmd`
 ---@returns (table) Options
 function M.make_floating_popup_options(width, height, opts)
   validate {
@@ -1002,6 +1003,7 @@ function M.make_floating_popup_options(width, height, opts)
     width = width,
     border = opts.border or default_border,
     zindex = opts.zindex or 50,
+    noautocmd = opts.noautocmd,
   }
 end
 
