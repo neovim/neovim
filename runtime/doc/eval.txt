@@ -6864,6 +6864,8 @@ mode([expr])	Return a string that indicates the current mode.
 		   niI	    Normal using |i_CTRL-O| in |Insert-mode|
 		   niR	    Normal using |i_CTRL-O| in |Replace-mode|
 		   niV	    Normal using |i_CTRL-O| in |Virtual-Replace-mode|
+		   nt	    Normal in |terminal-emulator| (insert goes to
+				Terminal mode)
 		   v	    Visual by character
 		   vs	    Visual by character using |v_CTRL-O| in Select mode
 		   V	    Visual by line

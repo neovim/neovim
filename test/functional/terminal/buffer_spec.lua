@@ -24,11 +24,11 @@ describe(':terminal buffer', function()
     feed([[<C-\><C-N>]])
     command('setlocal cursorline cursorlineopt=both cursorcolumn scrolloff=4 sidescrolloff=7')
     eq({ 'both', 1, 1, 4, 7 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
-    eq('n', eval('mode()'))
+    eq('nt', eval('mode(1)'))
 
     -- Enter terminal-mode ("insert" mode in :terminal).
     feed('i')
-    eq('t', eval('mode()'))
+    eq('t', eval('mode(1)'))
     eq({ 'number', 1, 0, 0, 0 }, eval('[&l:cursorlineopt, &l:cursorline, &l:cursorcolumn, &l:scrolloff, &l:sidescrolloff]'))
   end)
 

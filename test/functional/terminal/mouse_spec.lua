@@ -33,16 +33,16 @@ describe(':terminal mouse', function()
 
   describe('when the terminal has focus', function()
     it('will exit focus on mouse-scroll', function()
-      eq('t', eval('mode()'))
+      eq('t', eval('mode(1)'))
       feed('<ScrollWheelUp><0,0>')
-      eq('n', eval('mode()'))
+      eq('nt', eval('mode(1)'))
     end)
 
     it('will exit focus on <C-\\> + mouse-scroll', function()
-      eq('t', eval('mode()'))
+      eq('t', eval('mode(1)'))
       feed('<C-\\>')
       feed('<ScrollWheelUp><0,0>')
-      eq('n', eval('mode()'))
+      eq('nt', eval('mode(1)'))
     end)
 
     describe('with mouse events enabled by the program', function()
@@ -94,7 +94,7 @@ describe(':terminal mouse', function()
         -- When the display area such as a number is clicked, it returns to the
         -- normal mode.
         feed('<LeftMouse><3,0>')
-        eq('n', eval('mode()'))
+        eq('nt', eval('mode(1)'))
         screen:expect([[
           {7: 11 }^line28                                        |
           {7: 12 }line29                                        |

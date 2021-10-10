@@ -195,6 +195,8 @@ char *get_mode(void)
                || restart_edit == 'V') {
       buf[1] = 'i';
       buf[2] = (char)restart_edit;
+    } else if (curbuf->terminal) {
+      buf[1] = 't';
     }
   }
 
