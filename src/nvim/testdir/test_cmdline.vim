@@ -260,7 +260,7 @@ func Test_getcompletion()
   endif
   let groupcount = len(getcompletion('', 'event'))
   call assert_true(groupcount > 0)
-  let matchcount = len(getcompletion('File', 'event'))
+  let matchcount = len('File'->getcompletion('event'))
   call assert_true(matchcount > 0)
   call assert_true(groupcount > matchcount)
 

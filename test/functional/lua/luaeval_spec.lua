@@ -86,14 +86,15 @@ describe('luaeval()', function()
   -- meaningful later.
 
   it('correctly evaluates scalars', function()
+    -- Also test method call (->) syntax
     eq(1, funcs.luaeval('1'))
-    eq(0, eval('type(luaeval("1"))'))
+    eq(0, eval('"1"->luaeval()->type()'))
 
     eq(1.5, funcs.luaeval('1.5'))
-    eq(5, eval('type(luaeval("1.5"))'))
+    eq(5, eval('"1.5"->luaeval()->type()'))
 
     eq("test", funcs.luaeval('"test"'))
-    eq(1, eval('type(luaeval("\'test\'"))'))
+    eq(1, eval('"\'test\'"->luaeval()->type()'))
 
     eq('', funcs.luaeval('""'))
     eq('\000', funcs.luaeval([['\0']]))

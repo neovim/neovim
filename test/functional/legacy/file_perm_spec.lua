@@ -3,7 +3,7 @@ require('os')
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, call, eq = helpers.clear, helpers.call, helpers.eq
-local neq, exc_exec = helpers.neq, helpers.exc_exec
+local neq, exc_exec, eval = helpers.neq, helpers.exc_exec, helpers.eval
 
 describe('Test getting and setting file permissions', function()
   local tempfile = helpers.tmpname()
@@ -14,11 +14,12 @@ describe('Test getting and setting file permissions', function()
   end)
 
   it('file permissions', function()
+    -- eval() is used to test VimL method syntax for setfperm() and getfperm()
     eq('', call('getfperm', tempfile))
-    eq(0, call('setfperm', tempfile, 'r--------'))
+    eq(0, eval("'" .. tempfile .. "'->setfperm('r--------')"))
 
     call('writefile', {'one'}, tempfile)
-    eq(9, call('len', call('getfperm', tempfile)))
+    eq(9, eval("len('" .. tempfile .. "'->getfperm())"))
 
     eq(1, call('setfperm', tempfile, 'rwx------'))
     if helpers.is_os('win') then

@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local eq, eval, command = helpers.eq, helpers.eval, helpers.command
+local exc_exec = helpers.exc_exec
 
 describe('Test for delete()', function()
   before_each(clear)
@@ -38,7 +39,7 @@ describe('Test for delete()', function()
     eq(eval("['a', 'b']"), eval("readfile('Xdir1/Xfile')"))
     eq(1, eval("isdirectory('Xdir1/subdir')"))
     eq(eval("['a', 'b']"), eval("readfile('Xdir1/subdir/Xfile')"))
-    eq(1, eval("isdirectory('Xdir1/empty')"))
+    eq(1, eval("'Xdir1/empty'->isdirectory()"))
     eq(0, eval("delete('Xdir1', 'rf')"))
     eq(0, eval("isdirectory('Xdir1')"))
     eq(-1, eval("delete('Xdir1', 'd')"))
@@ -113,5 +114,11 @@ describe('Test for delete()', function()
     eq(eval("['a', 'b']"), eval("readfile('Xdir4/Xfile')"))
     eq(0, eval("delete('Xdir4/Xfile')"))
     eq(0, eval("delete('Xdir4', 'd')"))
+  end)
+
+  it('gives correct emsgs', function()
+    eq('Vim(call):E474: Invalid argument', exc_exec("call delete('')"))
+    eq('Vim(call):E15: Invalid expression: 0',
+       exc_exec("call delete('foo', 0)"))
   end)
 end)

@@ -10,7 +10,7 @@ func CheckFileTime(doSleep)
   let fl = ['Hello World!']
   for fname in fnames
     call writefile(fl, fname)
-    call add(times, getftime(fname))
+    call add(times, fname->getftime())
     if a:doSleep
       sleep 1
     endif
@@ -19,8 +19,8 @@ func CheckFileTime(doSleep)
   let time_correct = (times[0] <= times[1] && times[1] <= times[2])
   if a:doSleep || time_correct
     call assert_true(time_correct, printf('Expected %s <= %s <= %s', times[0], times[1], times[2]))
-    call assert_equal(strlen(fl[0] . "\n"), getfsize(fnames[0]))
-    call assert_equal('file', getftype(fnames[0]))
+    call assert_equal(strlen(fl[0] . "\n"), fnames[0]->getfsize())
+    call assert_equal('file', fnames[0]->getftype())
     call assert_equal('rw-', getfperm(fnames[0])[0:2])
     let result = 1
   endif

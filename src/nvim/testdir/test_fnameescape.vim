@@ -13,7 +13,7 @@ func Test_fnameescape()
   let fname = 'Xemark!'
   let status = v:false
   try
-    exe "w! " . fnameescape(fname)
+    exe "w! " . fname->fnameescape()
     let status = v:true
   endtry
   call assert_true(status, "ExclamationMark")

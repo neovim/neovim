@@ -635,7 +635,7 @@ function! MSG(enr, emsg)
 	if v:errmsg == ""
 	    Xout "Message missing."
 	else
-	    let v:errmsg = escape(v:errmsg, '"')
+	    let v:errmsg = v:errmsg->escape('"')
 	    Xout "Unexpected message:" v:errmsg
 	endif
     endif

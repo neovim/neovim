@@ -81,7 +81,7 @@ describe('expand file name', function()
         call assert_equal('e Xfile1', expandcmd('e %'))
         edit Xfile2
         edit Xfile1
-        call assert_equal('e Xfile2', expandcmd('e #'))
+        call assert_equal('e Xfile2', 'e #'->expandcmd())
         edit Xfile2
         edit Xfile3
         edit Xfile4

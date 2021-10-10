@@ -12,8 +12,8 @@ func Test_var()
   let def_str = "Chance"
   call assert_equal('Dance', getwinvar(1, 'var_str'))
   call assert_equal('Dance', getwinvar(1, 'var_str', def_str))
-  call assert_equal({'var_str': 'Dance'}, getwinvar(1, ''))
-  call assert_equal({'var_str': 'Dance'}, getwinvar(1, '', def_str))
+  call assert_equal({'var_str': 'Dance'}, 1->getwinvar(''))
+  call assert_equal({'var_str': 'Dance'}, 1->getwinvar('', def_str))
   unlet w:var_str
   call assert_equal('Chance', getwinvar(1, 'var_str', def_str))
   call assert_equal({}, getwinvar(1, ''))
@@ -31,7 +31,7 @@ func Test_var()
   let t:other = 777
   let def_list = [4, 5, 6, 7]
   tabrewind
-  call assert_equal([1, 2, 3], gettabvar(3, 'var_list'))
+  call assert_equal([1, 2, 3], 3->gettabvar('var_list'))
   call assert_equal([1, 2, 3], gettabvar(3, 'var_list', def_list))
   call assert_equal({'var_list': [1, 2, 3], 'other': 777}, gettabvar(3, ''))
   call assert_equal({'var_list': [1, 2, 3], 'other': 777},
@@ -61,7 +61,7 @@ func Test_var()
   let def_dict = {'dict2': 'newval'}
   wincmd b
   tabrewind
-  call assert_equal({'dict': 'tabwin'}, gettabwinvar(2, 3, 'var_dict'))
+  call assert_equal({'dict': 'tabwin'}, 2->gettabwinvar(3, 'var_dict'))
   call assert_equal({'dict': 'tabwin'},
 				\ gettabwinvar(2, 3, 'var_dict', def_dict))
   call assert_equal({'var_dict': {'dict': 'tabwin'}}, gettabwinvar(2, 3, ''))
