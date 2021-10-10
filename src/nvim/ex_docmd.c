@@ -2620,8 +2620,8 @@ static char_u *find_command(exarg_T *eap, int *full)
     }
 
     // check for non-alpha command
-    if (p == eap->cmd && vim_strchr((char_u *)"@!=><&~#", *p) != NULL) {
-      ++p;
+    if (p == eap->cmd && strchr("@!=><&~#", *p) != NULL) {
+      p++;
     }
     len = (int)(p - eap->cmd);
     if (*eap->cmd == 'd' && (p[-1] == 'l' || p[-1] == 'p')) {
@@ -2982,7 +2982,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       }
     }
     // check for non-alpha command
-    if (p == cmd && vim_strchr((const char_u *)"@*!=><&~#", *p) != NULL) {
+    if (p == cmd && strchr("@*!=><&~#", *p) != NULL) {
       p++;
     }
     len = (size_t)(p - cmd);
@@ -3014,7 +3014,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   }
 
   if (ea.cmdidx == CMD_SIZE) {
-    if (*cmd == 's' && vim_strchr((const char_u *)"cgriI", cmd[1]) != NULL) {
+    if (*cmd == 's' && strchr("cgriI", cmd[1]) != NULL) {
       ea.cmdidx = CMD_substitute;
       p = cmd + 1;
     } else if (cmd[0] >= 'A' && cmd[0] <= 'Z') {
@@ -4155,7 +4155,7 @@ error:
  */
 static void get_flags(exarg_T *eap)
 {
-  while (vim_strchr((char_u *)"lp#", *eap->arg) != NULL) {
+  while (strchr("lp#", *eap->arg) != NULL) {
     if (*eap->arg == 'l') {
       eap->flags |= EXFLAG_LIST;
     } else if (*eap->arg == 'p') {
@@ -4417,8 +4417,8 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
      * Quick check if this cannot be the start of a special string.
      * Also removes backslash before '%', '#' and '<'.
      */
-    if (vim_strchr((char_u *)"%#<", *p) == NULL) {
-      ++p;
+    if (strchr("%#<", *p) == NULL) {
+      p++;
       continue;
     }
 
@@ -5871,7 +5871,7 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf, ucmd_T *cmd, 
     ct_NONE
   } type = ct_NONE;
 
-  if ((vim_strchr((char_u *)"qQfF", *p) != NULL) && p[1] == '-') {
+  if ((strchr("qQfF", *p) != NULL) && p[1] == '-') {
     quote = (*p == 'q' || *p == 'Q') ? 1 : 2;
     p += 2;
     l -= 2;
