@@ -554,6 +554,7 @@ let s:filename_checks = {
     \ 'xml': ['/etc/blkid.tab', '/etc/blkid.tab.old', 'file.xmi', 'file.csproj', 'file.csproj.user', 'file.ui', 'file.tpm', '/etc/xdg/menus/file.menu', 'fglrxrc', 'file.xlf', 'file.xliff', 'file.xul', 'file.wsdl', 'file.wpl', 'any/etc/blkid.tab', 'any/etc/blkid.tab.old', 'any/etc/xdg/menus/file.menu'],
     \ 'xmodmap': ['anyXmodmap', 'Xmodmap', 'some-Xmodmap', 'some-xmodmap', 'some-xmodmap-file', 'xmodmap', 'xmodmap-file'],
     \ 'xf86conf': ['xorg.conf', 'xorg.conf-4'],
+    \ 'xpm': ['file.xpm'],
     \ 'xpm2': ['file.xpm2'],
     \ 'xquery': ['file.xq', 'file.xql', 'file.xqm', 'file.xquery', 'file.xqy'],
     \ 'xs': ['file.xs'],
@@ -568,7 +569,6 @@ let s:filename_checks = {
     \ 'zsh': ['.zprofile', '/etc/zprofile', '.zfbfmarks', 'file.zsh', '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file', 'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
     \
     \ 'help': [$VIMRUNTIME . '/doc/help.txt'],
-    \ 'xpm': ['file.xpm'],
     \ }
 
 let s:filename_case_checks = {
@@ -918,4 +918,17 @@ func Test_m_file()
   call delete('Xfile.m')
   filetype off
 endfunc
+
+func Test_xpm_file()
+  filetype on
+
+  call writefile(['this is XPM2'], 'file.xpm')
+  split file.xpm
+  call assert_equal('xpm2', &filetype)
+  bwipe!
+
+  call delete('file.xpm')
+  filetype off
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
