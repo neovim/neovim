@@ -193,6 +193,7 @@ function M.get_progress_messages()
           title = ctx.title or "empty title",
           message = ctx.message,
           percentage = ctx.percentage,
+          done = ctx.done,
           progress = true,
         }
         table.insert(new_messages, new_report)
