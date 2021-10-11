@@ -144,9 +144,13 @@ local function for_each_buffer_client(bufnr, fn, restrict_client_ids)
   end
 
   if restrict_client_ids and #restrict_client_ids > 0 then
-    client_ids = vim.tbl_filter(function(item)
-        return vim.tbl_contains(restrict_client_ids, item)
-      end, vim.tbl_keys(client_ids))
+    local filtered_client_ids = {}
+    for client_id in pairs(client_ids) do
+      if vim.tbl_contains(restrict_client_ids, client_id) then
+        filtered_client_ids[client_id] = true
+      end
+    end
+    client_ids = filtered_client_ids
   end
 
   for client_id in pairs(client_ids) do
