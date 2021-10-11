@@ -3745,7 +3745,7 @@ static bool parse_winhl_opt(win_T *wp)
     char *hi = colon+1;
     char *commap = xstrchrnul(hi, ',');
     int len = (int)(commap-hi);
-    int hl_id = len ? syn_check_group((char_u *)hi, len) : -1;
+    int hl_id = len ? syn_check_group(hi, len) : -1;
 
     if (strncmp("Normal", p, nlen) == 0) {
       w_hl_id_normal = hl_id;

@@ -1609,7 +1609,7 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
 
   const char *p = str;
   while (*p != NUL) {
-    ga_concat(&ga, (const char_u *)str2special(&p, replace_spaces, replace_lt));
+    ga_concat(&ga, str2special(&p, replace_spaces, replace_lt));
   }
   ga_append(&ga, NUL);
   return (char *)ga.ga_data;

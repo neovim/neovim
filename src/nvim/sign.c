@@ -902,7 +902,7 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
 
 /// Define a new sign or update an existing sign
 int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text, char_u *texthl,
-                        char_u *numhl)
+                        char *numhl)
 {
   sign_T *sp_prev;
   sign_T *sp;
@@ -940,11 +940,11 @@ int sign_define_by_name(char_u *name, char_u *icon, char_u *linehl, char_u *text
   }
 
   if (linehl != NULL) {
-    sp->sn_line_hl = syn_check_group(linehl, (int)STRLEN(linehl));
+    sp->sn_line_hl = syn_check_group((char *)linehl, (int)STRLEN(linehl));
   }
 
   if (texthl != NULL) {
-    sp->sn_text_hl = syn_check_group(texthl, (int)STRLEN(texthl));
+    sp->sn_text_hl = syn_check_group((char *)texthl, (int)STRLEN(texthl));
   }
 
   if (numhl != NULL) {
@@ -1167,7 +1167,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
   }
 
   if (!failed) {
-    sign_define_by_name(sign_name, icon, linehl, text, texthl, numhl);
+    sign_define_by_name(sign_name, icon, linehl, text, texthl, (char *)numhl);
   }
 
   xfree(icon);
@@ -1871,7 +1871,7 @@ int sign_define_from_dict(const char *name_arg, dict_T *dict)
   }
 
   if (sign_define_by_name((char_u *)name, (char_u *)icon, (char_u *)linehl,
-                          (char_u *)text, (char_u *)texthl, (char_u *)numhl)
+                          (char_u *)text, (char_u *)texthl, numhl)
       == OK) {
     retval = 0;
   }

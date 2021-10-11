@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stddef.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -831,10 +831,10 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs, String
   MapArguments parsed_args = MAP_ARGUMENTS_INIT;
   if (opts) {
 #define KEY_TO_BOOL(name) \
-    parsed_args. name = api_object_to_bool(opts-> name, #name, false, err); \
-    if (ERROR_SET(err)) { \
-      goto fail_and_free; \
-    }
+  parsed_args. name = api_object_to_bool(opts-> name, #name, false, err); \
+  if (ERROR_SET(err)) { \
+    goto fail_and_free; \
+  }
 
     KEY_TO_BOOL(nowait);
     KEY_TO_BOOL(noremap);
@@ -1559,7 +1559,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
 {
   if (obj.type == kObjectTypeString) {
     String str = obj.data.string;
-    return str.size ? syn_check_group((char_u *)str.data, (int)str.size) : 0;
+    return str.size ? syn_check_group(str.data, (int)str.size) : 0;
   } else if (obj.type == kObjectTypeInteger) {
     return MAX((int)obj.data.integer, 0);
   } else {
@@ -1593,7 +1593,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
       String hl = chunk.items[1].data.string;
       if (hl.size > 0) {
         // TODO(bfredl): use object_to_hl_id and allow integer
-        int hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+        int hl_id = syn_check_group(hl.data, (int)hl.size);
         attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
       }
     }

@@ -1166,8 +1166,7 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
 /// @return true if the mark was set, else false.
 /// @see |nvim_buf_del_mark()|
 /// @see |nvim_buf_get_mark()|
-Boolean nvim_buf_set_mark(Buffer buffer, String name,
-                          Integer line, Integer col, Error *err)
+Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Error *err)
   FUNC_API_SINCE(8)
 {
   bool res = false;
@@ -1578,8 +1577,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   if (opts->id.type == kObjectTypeInteger && opts->id.data.integer > 0) {
     id = (uint64_t)opts->id.data.integer;
   } else if (HAS_KEY(opts->id)) {
-      api_set_error(err, kErrorTypeValidation, "id is not a positive integer");
-      goto error;
+    api_set_error(err, kErrorTypeValidation, "id is not a positive integer");
+    goto error;
   }
 
   int line2 = -1;
@@ -1655,10 +1654,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
 #define OPTION_TO_BOOL(target, name, val) \
-    target = api_object_to_bool(opts-> name, #name, val, err); \
-    if (ERROR_SET(err)) { \
-      goto error; \
-    }
+  target = api_object_to_bool(opts-> name, #name, val, err); \
+  if (ERROR_SET(err)) { \
+    goto error; \
+  }
 
   OPTION_TO_BOOL(decor.virt_text_hide, virt_text_hide, false);
   OPTION_TO_BOOL(decor.hl_eol, hl_eol, false);
@@ -1904,7 +1903,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
 
   int hl_id = 0;
   if (hl_group.size > 0) {
-    hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+    hl_id = syn_check_group(hl_group.data, (int)hl_group.size);
   } else {
     return ns_id;
   }

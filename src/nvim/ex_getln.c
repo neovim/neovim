@@ -6595,7 +6595,7 @@ char *script_get(exarg_T *const eap, size_t *const lenp)
     }
 
     if (!eap->skip) {
-      ga_concat(&ga, (const char_u *)theline);
+      ga_concat(&ga, theline);
       ga_append(&ga, '\n');
     }
     xfree(theline);

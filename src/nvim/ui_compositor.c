@@ -89,10 +89,10 @@ void ui_comp_init(void)
 
 void ui_comp_syn_init(void)
 {
-  dbghl_normal = syn_check_group((char_u *)S_LEN("RedrawDebugNormal"));
-  dbghl_clear = syn_check_group((char_u *)S_LEN("RedrawDebugClear"));
-  dbghl_composed = syn_check_group((char_u *)S_LEN("RedrawDebugComposed"));
-  dbghl_recompose = syn_check_group((char_u *)S_LEN("RedrawDebugRecompose"));
+  dbghl_normal = syn_check_group(S_LEN("RedrawDebugNormal"));
+  dbghl_clear = syn_check_group(S_LEN("RedrawDebugClear"));
+  dbghl_composed = syn_check_group(S_LEN("RedrawDebugComposed"));
+  dbghl_recompose = syn_check_group(S_LEN("RedrawDebugRecompose"));
 }
 
 void ui_comp_attach(UI *ui)

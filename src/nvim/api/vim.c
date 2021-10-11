@@ -195,7 +195,7 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
 Integer nvim_get_hl_id_by_name(String name)
   FUNC_API_SINCE(7)
 {
-  return syn_check_group((const char_u *)name.data, (int)name.size);
+  return syn_check_group(name.data, (int)name.size);
 }
 
 Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
@@ -227,7 +227,7 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 void nvim_set_hl(Integer ns_id, String name, Dictionary val, Error *err)
   FUNC_API_SINCE(7)
 {
-  int hl_id = syn_check_group( (char_u *)(name.data), (int)name.size);
+  int hl_id = syn_check_group(name.data, (int)name.size);
   int link_id = -1;
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);
@@ -2846,7 +2846,7 @@ Array nvim_get_mark(String name, Error *err)
     bufnr = mark.fmark.fnum;
     filename = (char *)buflist_nr2name(bufnr, true, true);
     allocated = true;
-  // Marks comes from shada
+    // Marks comes from shada
   } else {
     filename = (char *)mark.fname;
     bufnr = 0;

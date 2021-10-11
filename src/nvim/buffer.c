@@ -2711,21 +2711,21 @@ void buflist_list(exarg_T *eap)
     const bool job_running = buf->terminal && terminal_running(buf->terminal);
 
     // skip unspecified buffers
-    if ((!buf->b_p_bl && !eap->forceit && !strchr((char *)eap->arg, 'u'))
-        || (strchr((char *)eap->arg, 'u') && buf->b_p_bl)
-        || (strchr((char *)eap->arg, '+')
+    if ((!buf->b_p_bl && !eap->forceit && !vim_strchr(eap->arg, 'u'))
+        || (vim_strchr(eap->arg, 'u') && buf->b_p_bl)
+        || (vim_strchr(eap->arg, '+')
             && ((buf->b_flags & BF_READERR) || !bufIsChanged(buf)))
-        || (strchr((char *)eap->arg, 'a')
+        || (vim_strchr(eap->arg, 'a')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows == 0))
-        || (strchr((char *)eap->arg, 'h')
+        || (vim_strchr(eap->arg, 'h')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows != 0))
-        || (strchr((char *)eap->arg, 'R') && (!is_terminal || !job_running))
-        || (strchr((char *)eap->arg, 'F') && (!is_terminal || job_running))
-        || (strchr((char *)eap->arg, '-') && buf->b_p_ma)
-        || (strchr((char *)eap->arg, '=') && !buf->b_p_ro)
-        || (strchr((char *)eap->arg, 'x') && !(buf->b_flags & BF_READERR))
-        || (strchr((char *)eap->arg, '%') && buf != curbuf)
-        || (strchr((char *)eap->arg, '#')
+        || (vim_strchr(eap->arg, 'R') && (!is_terminal || !job_running))
+        || (vim_strchr(eap->arg, 'F') && (!is_terminal || job_running))
+        || (vim_strchr(eap->arg, '-') && buf->b_p_ma)
+        || (vim_strchr(eap->arg, '=') && !buf->b_p_ro)
+        || (vim_strchr(eap->arg, 'x') && !(buf->b_flags & BF_READERR))
+        || (vim_strchr(eap->arg, '%') && buf != curbuf)
+        || (vim_strchr(eap->arg, '#')
             && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
     }

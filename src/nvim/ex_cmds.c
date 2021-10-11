@@ -4409,7 +4409,7 @@ skip:
         pre_src_id = (int)nvim_create_namespace((String)STRING_INIT);
       }
       if (pre_hl_id == 0) {
-        pre_hl_id = syn_check_group((char_u *)S_LEN("Substitute"));
+        pre_hl_id = syn_check_group(S_LEN("Substitute"));
       }
       curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
       preview_buf = show_sub(eap, old_cursor, &preview_lines,

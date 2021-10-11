@@ -5123,7 +5123,7 @@ static int ins_complete(int c, bool enable_pum)
                     ))) {
           prefix = (char_u *)"";
         }
-        STRCPY((char *)compl_pattern, prefix);
+        STRCPY(compl_pattern, prefix);
         (void)quote_meta(compl_pattern + STRLEN(prefix),
                          line + compl_col, compl_length);
       } else if (--startcol < 0
@@ -5152,13 +5152,13 @@ static int ins_complete(int c, bool enable_pum)
            * xmalloc(7) is enough  -- Acevedo
            */
           compl_pattern = xmalloc(7);
-          STRCPY((char *)compl_pattern, "\\<");
+          STRCPY(compl_pattern, "\\<");
           (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
-          STRCAT((char *)compl_pattern, "\\k");
+          STRCAT(compl_pattern, "\\k");
         } else {
           compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
                                              compl_length) + 2);
-          STRCPY((char *)compl_pattern, "\\<");
+          STRCPY(compl_pattern, "\\<");
           (void)quote_meta(compl_pattern + 2, line + compl_col,
                            compl_length);
         }

@@ -192,13 +192,13 @@ char_u *ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 ///
 /// @param gap
 /// @param s
-void ga_concat(garray_T *gap, const char_u *restrict s)
+void ga_concat(garray_T *gap, const char *restrict s)
 {
   if (s == NULL) {
     return;
   }
 
-  ga_concat_len(gap, (const char *restrict)s, strlen((char *)s));
+  ga_concat_len(gap, s, strlen((char *)s));
 }
 
 /// Concatenate a string to a growarray which contains characters

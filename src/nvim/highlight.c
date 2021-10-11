@@ -306,7 +306,7 @@ void update_window_hl(win_T *wp, bool invalid)
   // syntax group! It needs at least 10 layers of special casing! Noooooo!
   //
   // haha, theme engine go brrr
-  int normality = syn_check_group((const char_u *)S_LEN("Normal"));
+  int normality = syn_check_group(S_LEN("Normal"));
   int ns_attr = ns_get_hl(-1, normality, false, false);
   if (ns_attr > 0) {
     // TODO(bfredl): hantera NormalNC and so on
@@ -890,7 +890,7 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb, int *link_id, Error *err)
     } else if (link_id && strequal(key, "link")) {
       if (val.type == kObjectTypeString) {
         String str = val.data.string;
-        *link_id = syn_check_group((const char_u *)str.data, (int)str.size);
+        *link_id = syn_check_group(str.data, (int)str.size);
       } else if (val.type == kObjectTypeInteger) {
         // TODO(bfredl): validate range?
         *link_id = (int)val.data.integer;
