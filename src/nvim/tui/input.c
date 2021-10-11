@@ -45,8 +45,6 @@ void tinput_init(TermInput *input, Loop *loop)
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
-  uv_mutex_init(&input->key_buffer_mutex);
-  uv_cond_init(&input->key_buffer_cond);
 
   // If stdin is not a pty, switch to stderr. For cases like:
   //    echo q | nvim -es
@@ -88,8 +86,6 @@ void tinput_init(TermInput *input, Loop *loop)
 void tinput_destroy(TermInput *input)
 {
   rbuffer_free(input->key_buffer);
-  uv_mutex_destroy(&input->key_buffer_mutex);
-  uv_cond_destroy(&input->key_buffer_cond);
   time_watcher_close(&input->timer_handle, NULL);
   stream_close(&input->read_stream, NULL, NULL);
   termkey_destroy(input->tk);
@@ -111,36 +107,17 @@ static void tinput_done_event(void **argv)
   input_done();
 }
 
-static void tinput_wait_enqueue(void **argv)
+static void tinput_input_event(void **argv)
 {
-  TermInput *input = argv[0];
-  RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    const String keys = { .data = buf, .size = len };
-    if (input->paste) {
-      String copy = copy_string(keys);
-      multiqueue_put(main_loop.events, tinput_paste_event, 3,
-                     copy.data, copy.size, (intptr_t)input->paste);
-      if (input->paste == 1) {
-        // Paste phase: "continue"
-        input->paste = 2;
-      }
-      rbuffer_consumed(input->key_buffer, len);
-      rbuffer_reset(input->key_buffer);
-    } else {
-      const size_t consumed = input_enqueue(keys);
-      if (consumed) {
-        rbuffer_consumed(input->key_buffer, consumed);
-      }
-      rbuffer_reset(input->key_buffer);
-      if (consumed < len) {
-        break;
-      }
-    }
+  Integer phase = (Integer)(intptr_t)argv[2];
+  if (phase) {
+    multiqueue_put(main_loop.events, tinput_paste_event, 3,
+                   argv[0], argv[1], (intptr_t)phase);
+  } else {
+    const String keys = { .data = argv[0], .size = (size_t)argv[1] };
+    input_enqueue(keys);
+    api_free_string(keys);
   }
-  uv_mutex_lock(&input->key_buffer_mutex);
-  input->waiting = false;
-  uv_cond_signal(&input->key_buffer_cond);
-  uv_mutex_unlock(&input->key_buffer_mutex);
 }
 
 static void tinput_paste_event(void **argv)
@@ -158,18 +135,27 @@ static void tinput_paste_event(void **argv)
   api_free_string(keys);
 }
 
-static void tinput_flush(TermInput *input, bool wait_until_empty)
+static void tinput_flush(TermInput *input)
 {
-  size_t drain_boundary = wait_until_empty ? 0 : 0xff;
-  do {
-    uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule_fast(&main_loop, event_create(tinput_wait_enqueue, 1, input));
-    input->waiting = true;
-    while (input->waiting) {
-      uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
-    }
-    uv_mutex_unlock(&input->key_buffer_mutex);
-  } while (rbuffer_size(input->key_buffer) > drain_boundary);
+  size_t size = rbuffer_size(input->key_buffer);
+  if (size == 0) {
+    return;
+  }
+  char *data = xmalloc(size);
+  char *pos = data;
+  RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
+    memcpy(pos, buf, len);
+    pos += len;
+    rbuffer_consumed(input->key_buffer, len);
+    rbuffer_reset(input->key_buffer);
+  }
+  loop_schedule_fast(&main_loop, event_create(tinput_input_event, 3,
+                                              data, (intptr_t)size,
+                                              (intptr_t)input->paste));
+  if (input->paste == 1) {
+    // Paste phase: "continue"
+    input->paste = 2;
+  }
 }
 
 static void tinput_enqueue(TermInput *input, char *buf, size_t size)
@@ -178,7 +164,7 @@ static void tinput_enqueue(TermInput *input, char *buf, size_t size)
       rbuffer_capacity(input->key_buffer) - 0xff) {
     // don't ever let the buffer get too full or we risk putting incomplete keys
     // into it
-    tinput_flush(input, false);
+    tinput_flush(input);
   }
   rbuffer_write(input->key_buffer, buf, size);
 }
@@ -354,7 +340,7 @@ static void tinput_timer_cb(TimeWatcher *watcher, void *data)
     handle_raw_buffer(input, true);
   }
   tk_getkeys(input, true);
-  tinput_flush(input, true);
+  tinput_flush(input);
 }
 
 /// Handle focus events.
@@ -399,13 +385,13 @@ static HandleState handle_bracketed_paste(TermInput *input)
 
     if (enable) {
       // Flush before starting paste.
-      tinput_flush(input, true);
+      tinput_flush(input);
       // Paste phase: "first-chunk".
       input->paste = 1;
     } else if (input->paste) {
       // Paste phase: "last-chunk".
       input->paste = input->paste == 2 ? 3 : -1;
-      tinput_flush(input, true);
+      tinput_flush(input);
       // Paste phase: "disabled".
       input->paste = 0;
     }
@@ -628,7 +614,7 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_, void *da
   }
 
   handle_raw_buffer(input, false);
-  tinput_flush(input, true);
+  tinput_flush(input);
 
   // An incomplete sequence was found. Leave it in the raw buffer and wait for
   // the next input.

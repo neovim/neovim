@@ -23,8 +23,6 @@ typedef struct term_input {
   Loop *loop;
   Stream read_stream;
   RBuffer *key_buffer;
-  uv_mutex_t key_buffer_mutex;
-  uv_cond_t key_buffer_cond;
 } TermInput;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
