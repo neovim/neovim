@@ -468,7 +468,7 @@ extmark position and enter some text, the extmark migrates forward. >
      f o o z|b a r    line (| = cursor)
             4         extmark (after typing "z")
 
-If an extmark is on the last index of a line and you inputsa newline at that
+If an extmark is on the last index of a line and you input a newline at that
 point, the extmark will accordingly migrate to the next line: >
 
      f o o z b a r|   line (| = cursor)
