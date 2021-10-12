@@ -4423,7 +4423,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
     if (eap->skip) {
       syn_id = -1;
     } else {
-      syn_id = syn_check_group(arg, (int)(group_name_end - arg));
+      syn_id = syn_check_group((char *)arg, (int)(group_name_end - arg));
     }
     if (syn_id != 0) {
       // Allocate a buffer, for removing backslashes in the keyword.
@@ -4560,7 +4560,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
     if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
     } else {
-      if ((syn_id = syn_check_group(arg, (int)(group_name_end - arg))) != 0) {
+      if ((syn_id = syn_check_group((char *)arg, (int)(group_name_end - arg))) != 0) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
         /*
          * Store the pattern in the syn_items list
@@ -4709,7 +4709,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
       if ((p - rest == 4 && STRNCMP(rest, "NONE", 4) == 0) || eap->skip) {
         matchgroup_id = 0;
       } else {
-        matchgroup_id = syn_check_group(rest, (int)(p - rest));
+        matchgroup_id = syn_check_group((char *)rest, (int)(p - rest));
         if (matchgroup_id == 0) {
           illegal = true;
           break;
@@ -4768,7 +4768,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
       rest = NULL;
     } else {
       ga_grow(&(curwin->w_s->b_syn_patterns), pat_count);
-      if ((syn_id = syn_check_group(arg, (int)(group_name_end - arg))) != 0) {
+      if ((syn_id = syn_check_group((char *)arg, (int)(group_name_end - arg))) != 0) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
         /*
          * Store the start/skip/end in the syn_items list
@@ -5264,8 +5264,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
       if (!ends_excmd(*next_arg)) {
         arg_end = skiptowhite(next_arg);
         if (!eap->skip) {
-          curwin->w_s->b_syn_sync_id = syn_check_group(next_arg,
-                                                       (int)(arg_end - next_arg));
+          curwin->w_s->b_syn_sync_id = syn_check_group((char *)next_arg, (int)(arg_end - next_arg));
         }
         next_arg = skipwhite(arg_end);
       } else if (!eap->skip) {
@@ -5447,7 +5446,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
          * Handle full group name.
          */
         if (vim_strpbrk(name + 1, (char_u *)"\\.*^$~[") == NULL) {
-          id = syn_check_group(name + 1, (int)(end - p));
+          id = syn_check_group((char *)(name + 1), (int)(end - p));
         } else {
           // Handle match of regexp with group names.
           *name = '^';
@@ -6813,13 +6812,11 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       return;
     }
 
-    from_id = syn_check_group((const char_u *)from_start,
-                              (int)(from_end - from_start));
+    from_id = syn_check_group(from_start, (int)(from_end - from_start));
     if (strncmp(to_start, "NONE", 4) == 0) {
       to_id = 0;
     } else {
-      to_id = syn_check_group((const char_u *)to_start,
-                              (int)(to_end - to_start));
+      to_id = syn_check_group(to_start, (int)(to_end - to_start));
     }
 
     if (from_id > 0) {
@@ -6880,7 +6877,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
 
   // Find the group name in the table.  If it does not exist yet, add it.
-  id = syn_check_group((const char_u *)line, (int)(name_end - line));
+  id = syn_check_group(line, (int)(name_end - line));
   if (id == 0) {  // Failed (out of memory).
     return;
   }
@@ -7684,11 +7681,11 @@ char_u *syn_id2name(int id)
 /// @param len length of \p pp
 ///
 /// @return 0 for failure else the id of the group
-int syn_check_group(const char_u *name, int len)
+int syn_check_group(const char *name, int len)
 {
-  int id = syn_name2id_len(name, len);
+  int id = syn_name2id_len((char_u *)name, len);
   if (id == 0) {  // doesn't exist yet
-    return syn_add_group(vim_strnsave(name, len));
+    return syn_add_group(vim_strnsave((char_u *)name, len));
   }
   return id;
 }
@@ -7888,7 +7885,7 @@ void highlight_changed(void)
 
   /// Translate builtin highlight groups into attributes for quick lookup.
   for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
-    id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
+    id = syn_check_group(hlf_names[hlf], STRLEN(hlf_names[hlf]));
     if (id == 0) {
       abort();
     }

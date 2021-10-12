@@ -491,7 +491,7 @@ static void f_assert_report(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   garray_T ga;
 
   prepare_assert_error(&ga);
-  ga_concat(&ga, (const char_u *)tv_get_string(&argvars[0]));
+  ga_concat(&ga, tv_get_string(&argvars[0]));
   assert_error(&ga);
   ga_clear(&ga);
   rettv->vval.v_number = 1;
@@ -5909,7 +5909,7 @@ static void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   TV_LIST_ITER_CONST(l, li, {
     buf[utf_char2bytes(tv_get_number(TV_LIST_ITEM_TV(li)), buf)] = NUL;
-    ga_concat(&ga, buf);
+    ga_concat(&ga, (char *)buf);
   });
   ga_append(&ga, NUL);
 
@@ -12012,10 +12012,10 @@ static void f_winrestcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       snprintf((char *)buf, sizeof(buf), "%dresize %d|", winnr,
                wp->w_height);
-      ga_concat(&ga, buf);
+      ga_concat(&ga, (char *)buf);
       snprintf((char *)buf, sizeof(buf), "vert %dresize %d|", winnr,
                wp->w_width);
-      ga_concat(&ga, buf);
+      ga_concat(&ga, (char *)buf);
       winnr++;
     }
   }

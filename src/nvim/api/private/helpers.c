@@ -1559,7 +1559,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
 {
   if (obj.type == kObjectTypeString) {
     String str = obj.data.string;
-    return str.size ? syn_check_group((char_u *)str.data, (int)str.size) : 0;
+    return str.size ? syn_check_group(str.data, (int)str.size) : 0;
   } else if (obj.type == kObjectTypeInteger) {
     return MAX((int)obj.data.integer, 0);
   } else {
@@ -1593,7 +1593,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
       String hl = chunk.items[1].data.string;
       if (hl.size > 0) {
         // TODO(bfredl): use object_to_hl_id and allow integer
-        int hl_id = syn_check_group((char_u *)hl.data, (int)hl.size);
+        int hl_id = syn_check_group(hl.data, (int)hl.size);
         attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
       }
     }

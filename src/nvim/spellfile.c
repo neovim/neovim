@@ -2659,7 +2659,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 
           // We simply concatenate all the MAP strings, separated by
           // slashes.
-          ga_concat(&spin->si_map, items[1]);
+          ga_concat(&spin->si_map, (char *)items[1]);
           ga_append(&spin->si_map, '/');
         }
       }

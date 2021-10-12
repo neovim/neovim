@@ -4470,7 +4470,7 @@ static char_u *translate_mapping(char_u *str, int cpo_flags)
         str += 2;
       }
       if (IS_SPECIAL(c) || modifiers) {         // special key
-        ga_concat(&ga, get_special_key_name(c, modifiers));
+        ga_concat(&ga, (char *)get_special_key_name(c, modifiers));
         continue;         // for (str)
       }
     }
@@ -4564,7 +4564,7 @@ char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       aborted = true;
     } else if (IS_SPECIAL(c1)) {
       if (c1 == K_SNR) {
-        ga_concat(&line_ga, (char_u *)"<SNR>");
+        ga_concat(&line_ga, "<SNR>");
       } else {
         EMSG2(e_cmdmap_key, get_special_key_name(c1, cmod));
         aborted = true;

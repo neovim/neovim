@@ -789,12 +789,12 @@ static int list_join_inner(garray_T *const gap, list_T *const l, const char *con
     if (first) {
       first = false;
     } else {
-      ga_concat(gap, (const char_u *)sep);
+      ga_concat(gap, sep);
     }
     const Join *const p = ((const Join *)join_gap->ga_data) + i;
 
     if (p->s != NULL) {
-      ga_concat(gap, p->s);
+      ga_concat(gap, (char *)p->s);
     }
     line_breakcheck();
   }

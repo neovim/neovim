@@ -1903,7 +1903,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
 
   int hl_id = 0;
   if (hl_group.size > 0) {
-    hl_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+    hl_id = syn_check_group(hl_group.data, (int)hl_group.size);
   } else {
     return ns_id;
   }

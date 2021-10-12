@@ -1168,8 +1168,7 @@ char *mt_inspect_rec(MarkTree *b)
 void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
 {
   static char buf[1024];
-#define GA_PUT(x) ga_concat(ga, (char_u *)(x))
-  GA_PUT("[");
+  ga_concat(ga, "[");
   if (n->level) {
     mt_inspect_node(b, ga, n->ptr[0], off);
   }
@@ -1177,14 +1176,13 @@ void mt_inspect_node(MarkTree *b, garray_T *ga, mtnode_t *n, mtpos_t off)
     mtpos_t p = n->key[i].pos;
     unrelative(off, &p);
     snprintf((char *)buf, sizeof(buf), "%d/%d", p.row, p.col);
-    GA_PUT(buf);
+    ga_concat(ga, buf);
     if (n->level) {
       mt_inspect_node(b, ga, n->ptr[i+1], p);
     } else {
-      GA_PUT(",");
+      ga_concat(ga, ",");
     }
   }
-  GA_PUT("]");
-#undef GA_PUT
+  ga_concat(ga, "]");
 }
 

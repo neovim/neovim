@@ -2208,7 +2208,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
     if (provider_err) {
       Decoration err_decor = DECORATION_INIT;
-      int hl_err = syn_check_group((char_u *)S_LEN("ErrorMsg"));
+      int hl_err = syn_check_group(S_LEN("ErrorMsg"));
       kv_push(err_decor.virt_text,
               ((VirtTextChunk){ .text = provider_err,
                                 .hl_id = hl_err }));

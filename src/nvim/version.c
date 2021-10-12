@@ -2017,9 +2017,9 @@ void ex_version(exarg_T *eap)
 /// When "wrap" is TRUE wrap the string in [].
 /// @param s
 /// @param wrap
-static void version_msg_wrap(char_u *s, int wrap)
+static void version_msg_wrap(char *s, int wrap)
 {
-  int len = vim_strsize(s) + (wrap ? 2 : 0);
+  int len = vim_strsize((char_u *)s) + (wrap ? 2 : 0);
 
   if (!got_int
       && (len < Columns)
@@ -2032,7 +2032,7 @@ static void version_msg_wrap(char_u *s, int wrap)
     if (wrap) {
       msg_puts("[");
     }
-    msg_puts((char *)s);
+    msg_puts(s);
     if (wrap) {
       msg_puts("]");
     }
@@ -2041,7 +2041,7 @@ static void version_msg_wrap(char_u *s, int wrap)
 
 static void version_msg(char *s)
 {
-  version_msg_wrap((char_u *)s, false);
+  version_msg_wrap(s, false);
 }
 
 /// List all features.
@@ -2082,7 +2082,7 @@ void list_in_columns(char_u **items, int size, int current)
   if (Columns < width) {
     // Not enough screen columns - show one per line
     for (i = 0; i < item_count; i++) {
-      version_msg_wrap(items[i], i == current);
+      version_msg_wrap((char *)items[i], i == current);
       if (msg_col > 0 && i < item_count - 1) {
         msg_putchar('\n');
       }

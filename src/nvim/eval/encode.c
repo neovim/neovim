@@ -29,7 +29,6 @@
 #include "nvim/message.h"
 #include "nvim/vim.h"  // For _()
 
-#define ga_concat(a, b) ga_concat(a, (char_u *)b)
 #define utf_ptr2char(b) utf_ptr2char((char_u *)b)
 #define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))
 #define utf_char2len(b) ((size_t)utf_char2len(b))
@@ -142,7 +141,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       char *const key = encode_tv2string(&key_tv, NULL);
       vim_snprintf((char *)IObuff, IOSIZE, key_msg, key);
       xfree(key);
-      ga_concat(&msg_ga, IObuff);
+      ga_concat(&msg_ga, (char *)IObuff);
       break;
     }
     case kMPConvPairs:
@@ -163,7 +162,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
           || (TV_LIST_ITEM_TV(li)->v_type != VAR_LIST
               && tv_list_len(TV_LIST_ITEM_TV(li)->vval.v_list) <= 0)) {
         vim_snprintf((char *)IObuff, IOSIZE, idx_msg, idx);
-        ga_concat(&msg_ga, IObuff);
+        ga_concat(&msg_ga, (char *)IObuff);
       } else {
         assert(li != NULL);
         listitem_T *const first_item =
@@ -173,7 +172,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
         char *const key = encode_tv2echo(&key_tv, NULL);
         vim_snprintf((char *)IObuff, IOSIZE, key_pair_msg, key, idx);
         xfree(key);
-        ga_concat(&msg_ga, IObuff);
+        ga_concat(&msg_ga, (char *)IObuff);
       }
       break;
     }
@@ -193,7 +192,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
     case kMPConvPartialList: {
       const int idx = (int)(v.data.a.arg - v.data.a.argv) - 1;
       vim_snprintf((char *)IObuff, IOSIZE, partial_arg_i_msg, idx);
-      ga_concat(&msg_ga, IObuff);
+      ga_concat(&msg_ga, (char *)IObuff);
       break;
     }
     }
@@ -355,20 +354,20 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     const float_T flt_ = (flt); \
     switch (xfpclassify(flt_)) { \
     case FP_NAN: { \
-      ga_concat(gap, (char_u *)"str2float('nan')"); \
+      ga_concat(gap, "str2float('nan')"); \
       break; \
     } \
     case FP_INFINITE: { \
       if (flt_ < 0) { \
         ga_append(gap, '-'); \
       } \
-      ga_concat(gap, (char_u *)"str2float('inf')"); \
+      ga_concat(gap, "str2float('inf')"); \
       break; \
     } \
     default: { \
       char numbuf[NUMBUFLEN]; \
       vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
-      ga_concat(gap, (char_u *)numbuf); \
+      ga_concat(gap, numbuf); \
     } \
     } \
   } while (0)
@@ -569,7 +568,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     default: { \
       char numbuf[NUMBUFLEN]; \
       vim_snprintf(numbuf, ARRAY_SIZE(numbuf), "%g", flt_); \
-      ga_concat(gap, (char_u *)numbuf); \
+      ga_concat(gap, numbuf); \
       break; \
     } \
     } \
@@ -874,7 +873,7 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
   ga_init(&ga, (int)sizeof(char), 80);
   if (tv->v_type == VAR_STRING || tv->v_type == VAR_FUNC) {
     if (tv->vval.v_string != NULL) {
-      ga_concat(&ga, tv->vval.v_string);
+      ga_concat(&ga, (char *)tv->vval.v_string);
     }
   } else {
     const int eve_ret = encode_vim_to_echo(&ga, tv, N_(":echo argument"));

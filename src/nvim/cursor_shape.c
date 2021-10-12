@@ -230,12 +230,11 @@ char_u *parse_shape_opt(int what)
               slashp = vim_strchr(p, '/');
               if (slashp != NULL && slashp < endp) {
                 // "group/langmap_group"
-                i = syn_check_group(p, (int)(slashp - p));
+                i = syn_check_group((char *)p, (int)(slashp - p));
                 p = slashp + 1;
               }
               if (round == 2) {
-                shape_table[idx].id = syn_check_group(p,
-                                                      (int)(endp - p));
+                shape_table[idx].id = syn_check_group((char *)p, (int)(endp - p));
                 shape_table[idx].id_lm = shape_table[idx].id;
                 if (slashp != NULL && slashp < endp) {
                   shape_table[idx].id = i;

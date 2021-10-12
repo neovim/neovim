@@ -1984,7 +1984,7 @@ static void cmd_source_buffer(const exarg_T *const eap)
     if (ga.ga_len > 400) {
       ga_set_growsize(&ga, MAX(ga.ga_len, 8000));
     }
-    ga_concat(&ga, ml_get(curr_lnum));
+    ga_concat(&ga, (char *)ml_get(curr_lnum));
     ga_append(&ga, NL);
   }
   ((char_u *)ga.ga_data)[ga.ga_len - 1] = NUL;
@@ -2459,7 +2459,7 @@ char_u *getsourceline(int c, void *cookie, int indent, bool do_concat)
       garray_T ga;
 
       ga_init(&ga, (int)sizeof(char_u), 400);
-      ga_concat(&ga, line);
+      ga_concat(&ga, (char *)line);
       while (sp->nextline != NULL
              && concat_continued_line(&ga, 400, sp->nextline,
                                       STRLEN(sp->nextline))) {

@@ -390,7 +390,7 @@ static char_u *debug_skipped_name;
 /// Called from do_one_cmd() before executing a command.
 void dbg_check_breakpoint(exarg_T *eap)
 {
-  char_u *p;
+  char *p;
 
   debug_skipped = false;
   if (debug_breakpoint_name != NULL) {
@@ -399,9 +399,9 @@ void dbg_check_breakpoint(exarg_T *eap)
       if (debug_breakpoint_name[0] == K_SPECIAL
           && debug_breakpoint_name[1] == KS_EXTRA
           && debug_breakpoint_name[2] == KE_SNR) {
-        p = (char_u *)"<SNR>";
+        p = "<SNR>";
       } else {
-        p = (char_u *)"";
+        p = "";
       }
       smsg(_("Breakpoint in \"%s%s\" line %" PRId64),
            p,
