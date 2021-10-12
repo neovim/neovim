@@ -642,7 +642,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
   dict_set_var(&vimvardict, name, value, false, false, err);
 }
 
-/// Gets an option value string.
+/// Gets the global value of an option.
 ///
 /// @param name     Option name
 /// @param[out] err Error details, if any
@@ -651,6 +651,115 @@ Object nvim_get_option(String name, Error *err)
   FUNC_API_SINCE(1)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
+}
+
+/// Gets the value of an option. The behavior of this function matches that of
+/// |:set|: the local value of an option is returned if it exists; otherwise,
+/// the global value is returned. Local values always correspond to the current
+/// buffer or window. To get a buffer-local or window-local option for a
+/// specific buffer or window, use |nvim_buf_get_option()| or
+/// |nvim_win_get_option()|.
+///
+/// @param name      Option name
+/// @param opts      Optional parameters
+///                  - scope: One of 'global' or 'local'. Analagous to
+///                  |:setglobal| and |:setlocal|, respectively.
+/// @param[out] err  Error details, if any
+/// @return          Option value
+Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
+  FUNC_API_SINCE(9)
+{
+  Object rv = OBJECT_INIT;
+
+  int scope = 0;
+  if (opts->scope.type == kObjectTypeString) {
+    if (!strcmp(opts->scope.data.string.data, "local")) {
+      scope = OPT_LOCAL;
+    } else if (!strcmp(opts->scope.data.string.data, "global")) {
+      scope = OPT_GLOBAL;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "invalid scope: must be 'local' or 'global'");
+      goto end;
+    }
+  } else if (HAS_KEY(opts->scope)) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: scope");
+    goto end;
+  }
+
+  long numval = 0;
+  char *stringval = NULL;
+  switch (get_option_value(name.data, &numval, (char_u **)&stringval, scope)) {
+  case 0:
+    rv = STRING_OBJ(cstr_as_string(stringval));
+    break;
+  case 1:
+    rv = INTEGER_OBJ(numval);
+    break;
+  case 2:
+    rv = BOOLEAN_OBJ(!!numval);
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
+    goto end;
+  }
+
+end:
+  return rv;
+}
+
+/// Sets the value of an option. The behavior of this function matches that of
+/// |:set|: for global-local options, both the global and local value are set
+/// unless otherwise specified with {scope}.
+///
+/// @param name      Option name
+/// @param value     New option value
+/// @param opts      Optional parameters
+///                  - scope: One of 'global' or 'local'. Analagous to
+///                  |:setglobal| and |:setlocal|, respectively.
+/// @param[out] err  Error details, if any
+void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error *err)
+  FUNC_API_SINCE(9)
+{
+  int scope = 0;
+  if (opts->scope.type == kObjectTypeString) {
+    if (!strcmp(opts->scope.data.string.data, "local")) {
+      scope = OPT_LOCAL;
+    } else if (!strcmp(opts->scope.data.string.data, "global")) {
+      scope = OPT_GLOBAL;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "invalid scope: must be 'local' or 'global'");
+      return;
+    }
+  } else if (HAS_KEY(opts->scope)) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: scope");
+    return;
+  }
+
+  long numval = 0;
+  char *stringval = NULL;
+
+  switch (value.type) {
+  case kObjectTypeInteger:
+    numval = value.data.integer;
+    break;
+  case kObjectTypeBoolean:
+    numval = value.data.boolean ? 1 : 0;
+    break;
+  case kObjectTypeString:
+    stringval = value.data.string.data;
+    break;
+  case kObjectTypeNil:
+    // Do nothing
+    break;
+  default:
+    api_set_error(err, kErrorTypeValidation, "invalid value for option");
+    return;
+  }
+
+  char *e = set_option_value(name.data, numval, stringval, scope);
+  if (e) {
+    api_set_error(err, kErrorTypeException, "%s", e);
+  }
 }
 
 /// Gets the option information for all options.
@@ -694,7 +803,7 @@ Dictionary nvim_get_option_info(String name, Error *err)
   return get_vimoption(name, err);
 }
 
-/// Sets an option value.
+/// Sets the global value of an option.
 ///
 /// @param channel_id
 /// @param name     Option name

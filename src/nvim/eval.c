@@ -4828,7 +4828,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
     } else if (opt_type == -1) {      // hidden number option
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = 0;
-    } else if (opt_type == 1) {       // number option
+    } else if (opt_type == 1 || opt_type == 2) {  // number or boolean option
       rettv->v_type = VAR_NUMBER;
       rettv->vval.v_number = numval;
     } else {                          // string option

@@ -1240,7 +1240,7 @@ describe('lua stdlib', function()
 
         vim.opt.makeprg = "global-local"
         table.insert(result, vim.api.nvim_get_option('makeprg'))
-        table.insert(result, (pcall(vim.api.nvim_buf_get_option, 0, 'makeprg')))
+        table.insert(result, vim.api.nvim_buf_get_option(0, 'makeprg'))
 
         vim.opt_local.mp = "only-local"
         table.insert(result, vim.api.nvim_get_option('makeprg'))
@@ -1258,7 +1258,7 @@ describe('lua stdlib', function()
 
       -- Set -> global & local
       eq("global-local", result[1])
-      eq(false, result[2])
+      eq("", result[2])
 
       -- Setlocal -> only local
       eq("global-local", result[3])
@@ -1268,9 +1268,9 @@ describe('lua stdlib', function()
       eq("only-global", result[5])
       eq("only-local", result[6])
 
-      -- set -> doesn't override previously set value
+      -- Set -> sets global value and resets local value
       eq("global-local", result[7])
-      eq("only-local", result[8])
+      eq("", result[8])
     end)
 
     it('should allow you to retrieve window opts even if they have not been set', function()

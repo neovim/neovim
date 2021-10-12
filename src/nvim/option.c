@@ -4771,7 +4771,8 @@ static int findoption(const char *const arg)
 /// @param stringval  NULL when only checking existence
 ///
 /// @returns:
-/// Number or Toggle option: 1, *numval gets value.
+///           Toggle option: 2, *numval gets value.
+///           Number option: 1, *numval gets value.
 ///           String option: 0, *stringval gets allocated string.
 /// Hidden Number or Toggle option: -1.
 ///           hidden String option: -2.
@@ -4804,16 +4805,18 @@ int get_option_value(const char *name, long *numval, char_u **stringval, int opt
   }
   if (options[opt_idx].flags & P_NUM) {
     *numval = *(long *)varp;
-  } else {
-    // Special case: 'modified' is b_changed, but we also want to consider
-    // it set when 'ff' or 'fenc' changed.
-    if ((int *)varp == &curbuf->b_changed) {
-      *numval = curbufIsChanged();
-    } else {
-      *numval = (long)*(int *)varp;  // NOLINT(whitespace/cast)
-    }
+    return 1;
   }
-  return 1;
+
+  // Special case: 'modified' is b_changed, but we also want to consider
+  // it set when 'ff' or 'fenc' changed.
+  if ((int *)varp == &curbuf->b_changed) {
+    *numval = curbufIsChanged();
+  } else {
+    *numval = (long)*(int *)varp;  // NOLINT(whitespace/cast)
+  }
+
+  return 2;
 }
 
 // Returns the option attributes and its value. Unlike the above function it
@@ -4909,7 +4912,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
         // only getting a pointer, no need to use aucmd_prepbuf()
         curbuf = (buf_T *)from;
         curwin->w_buffer = curbuf;
-        varp = get_varp(p);
+        varp = get_varp_scope(p, OPT_LOCAL);
         curbuf = save_curbuf;
         curwin->w_buffer = curbuf;
       }
@@ -4917,7 +4920,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
       win_T *save_curwin = curwin;
       curwin = (win_T *)from;
       curbuf = curwin->w_buffer;
-      varp = get_varp(p);
+      varp = get_varp_scope(p, OPT_LOCAL);
       curwin = save_curwin;
       curbuf = curwin->w_buffer;
     }
