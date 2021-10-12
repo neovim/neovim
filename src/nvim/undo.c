@@ -3086,7 +3086,7 @@ void u_undoline(void)
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, true);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum-1, 0, (colnr_T)STRLEN(oldp),
-      (colnr_T)STRLEN(curbuf->b_u_line_ptr), kExtmarkUndo);
+                      (colnr_T)STRLEN(curbuf->b_u_line_ptr), kExtmarkUndo);
   xfree(curbuf->b_u_line_ptr);
   curbuf->b_u_line_ptr = oldp;
 

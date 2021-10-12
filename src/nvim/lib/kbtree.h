@@ -1,3 +1,5 @@
+// uncrustify:off
+
 /*-
  * Copyright 1997-1999, 2001, John-Mark Gurney.
  *           2008-2009, Attractive Chaos <attractor@live.co.uk>

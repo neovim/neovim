@@ -5,11 +5,11 @@
 
 #include <uv.h>
 
-#include "nvim/ui.h"
 #include "nvim/event/defs.h"
+#include "nvim/ui.h"
 
 typedef struct ui_bridge_data UIBridgeData;
-typedef void(*ui_main_fn)(UIBridgeData *bridge, UI *ui);
+typedef void (*ui_main_fn)(UIBridgeData *bridge, UI *ui);
 struct ui_bridge_data {
   UI bridge;  // actual UI passed to ui_attach
   UI *ui;     // UI pointer that will have its callback called in

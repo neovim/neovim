@@ -1,24 +1,24 @@
 #ifndef NVIM_TAG_H
 #define NVIM_TAG_H
 
-#include "nvim/types.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/types.h"
 
 /*
  * Values for do_tag().
  */
-#define DT_TAG          1       /* jump to newer position or same tag again */
-#define DT_POP          2       /* jump to older position */
-#define DT_NEXT         3       /* jump to next match of same tag */
-#define DT_PREV         4       /* jump to previous match of same tag */
-#define DT_FIRST        5       /* jump to first match of same tag */
-#define DT_LAST         6       /* jump to first match of same tag */
-#define DT_SELECT       7       /* jump to selection from list */
-#define DT_HELP         8       /* like DT_TAG, but no wildcards */
-#define DT_JUMP         9       /* jump to new tag or selection from list */
-#define DT_CSCOPE       10      /* cscope find command (like tjump) */
-#define DT_LTAG         11      /* tag using location list */
-#define DT_FREE         99      /* free cached matches */
+#define DT_TAG          1       // jump to newer position or same tag again
+#define DT_POP          2       // jump to older position
+#define DT_NEXT         3       // jump to next match of same tag
+#define DT_PREV         4       // jump to previous match of same tag
+#define DT_FIRST        5       // jump to first match of same tag
+#define DT_LAST         6       // jump to first match of same tag
+#define DT_SELECT       7       // jump to selection from list
+#define DT_HELP         8       // like DT_TAG, but no wildcards
+#define DT_JUMP         9       // jump to new tag or selection from list
+#define DT_CSCOPE       10      // cscope find command (like tjump)
+#define DT_LTAG         11      // tag using location list
+#define DT_FREE         99      // free cached matches
 
 //
 // flags for find_tags().
@@ -40,11 +40,11 @@
  * Structure used for get_tagfname().
  */
 typedef struct {
-  char_u      *tn_tags;         /* value of 'tags' when starting */
-  char_u      *tn_np;           /* current position in tn_tags */
+  char_u *tn_tags;         // value of 'tags' when starting
+  char_u *tn_np;           // current position in tn_tags
   int tn_did_filefind_init;
   int tn_hf_idx;
-  void        *tn_search_ctx;
+  void *tn_search_ctx;
 } tagname_T;
 
 

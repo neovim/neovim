@@ -3,14 +3,14 @@
 
 #include <stdbool.h>
 
-#include "nvim/macros.h"
 #include "nvim/ascii.h"
-#include "nvim/types.h"
-#include "nvim/extmark.h"
 #include "nvim/eval/typval.h"
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/extmark.h"
+#include "nvim/macros.h"
+#include "nvim/normal.h"  // for MotionType and oparg_T
 #include "nvim/os/time.h"
-#include "nvim/normal.h" // for MotionType and oparg_T
-#include "nvim/ex_cmds_defs.h" // for exarg_T
+#include "nvim/types.h"
 
 typedef int (*Indenter)(void);
 

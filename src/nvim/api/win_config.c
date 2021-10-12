@@ -616,7 +616,7 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       fconfig->style = kWinStyleUnused;
     } else if (striequal(config->style.data.string.data, "minimal")) {
       fconfig->style = kWinStyleMinimal;
-    }  else {
+    } else {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'style' key");
     }
   } else if (HAS_KEY(config->style)) {

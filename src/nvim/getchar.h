@@ -1,10 +1,10 @@
 #ifndef NVIM_GETCHAR_H
 #define NVIM_GETCHAR_H
 
-#include "nvim/os/fileio.h"
-#include "nvim/types.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/os/fileio.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 /// Values for "noremap" argument of ins_typebuf()

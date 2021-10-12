@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 
-#include "nvim/map_defs.h"
-#include "nvim/extmark_defs.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/map_defs.h"
 
 #if defined(__NetBSD__)
 # undef uint64_t
@@ -60,7 +60,7 @@ MAP_DECLS(String, handle_T)
 MAP_DECLS(ColorKey, ColorItem)
 
 #define MAP_INIT { { 0, 0, 0, 0, NULL, NULL, NULL } }
-#define map_init(k, v, map) do { *(map) = (Map(k, v))MAP_INIT; } while (false)
+#define map_init(k, v, map) do { *(map) = (Map(k, v)) MAP_INIT; } while (false)
 
 #define map_destroy(T, U) map_##T##_##U##_destroy
 #define map_get(T, U) map_##T##_##U##_get

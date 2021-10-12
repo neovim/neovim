@@ -1,12 +1,12 @@
 #ifndef NVIM_STRINGS_H
 #define NVIM_STRINGS_H
 
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
 
-#include "nvim/types.h"
 #include "nvim/eval/typval.h"
+#include "nvim/types.h"
 
 /// Append string to string and return pointer to the next byte
 ///

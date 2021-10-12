@@ -48,10 +48,10 @@ typedef struct ScreenGrid ScreenGrid;
 struct ScreenGrid {
   handle_T handle;
 
-  schar_T  *chars;
-  sattr_T  *attrs;
+  schar_T *chars;
+  sattr_T *attrs;
   unsigned *line_offset;
-  char_u   *line_wraps;
+  char_u *line_wraps;
 
   // last column that was drawn (not cleared with the default background).
   // only used when "throttled" is set. Not allocated by grid_alloc!

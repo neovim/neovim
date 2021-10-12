@@ -2846,7 +2846,7 @@ Array nvim_get_mark(String name, Error *err)
     bufnr = mark.fmark.fnum;
     filename = (char *)buflist_nr2name(bufnr, true, true);
     allocated = true;
-  // Marks comes from shada
+    // Marks comes from shada
   } else {
     filename = (char *)mark.fname;
     bufnr = 0;

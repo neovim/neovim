@@ -2,13 +2,14 @@
 #define NVIM_NORMAL_H
 
 #include <stdbool.h>
-#include "nvim/pos.h"
-#include "nvim/buffer_defs.h"  // for win_T
 
-/* Values for find_ident_under_cursor() */
-#define FIND_IDENT      1       /* find identifier (word) */
-#define FIND_STRING     2       /* find any string (WORD) */
-#define FIND_EVAL       4       /* include "->", "[]" and "." */
+#include "nvim/buffer_defs.h"  // for win_T
+#include "nvim/pos.h"
+
+// Values for find_ident_under_cursor()
+#define FIND_IDENT      1       // find identifier (word)
+#define FIND_STRING     2       // find any string (WORD)
+#define FIND_EVAL       4       // include "->", "[]" and "."
 
 /// Motion types, used for operators and for yank/delete registers.
 ///
@@ -56,24 +57,24 @@ typedef struct oparg_S {
  * Arguments for Normal mode commands.
  */
 typedef struct cmdarg_S {
-  oparg_T     *oap;             /* Operator arguments */
-  int prechar;                  /* prefix character (optional, always 'g') */
-  int cmdchar;                  /* command character */
-  int nchar;                    /* next command character (optional) */
-  int ncharC1;                  /* first composing character (optional) */
-  int ncharC2;                  /* second composing character (optional) */
-  int extra_char;               /* yet another character (optional) */
-  long opcount;                 /* count before an operator */
-  long count0;                  /* count before command, default 0 */
-  long count1;                  /* count before command, default 1 */
-  int arg;                      /* extra argument from nv_cmds[] */
-  int retval;                   /* return: CA_* values */
-  char_u      *searchbuf;       /* return: pointer to search pattern or NULL */
+  oparg_T *oap;             // Operator arguments
+  int prechar;                  // prefix character (optional, always 'g')
+  int cmdchar;                  // command character
+  int nchar;                    // next command character (optional)
+  int ncharC1;                  // first composing character (optional)
+  int ncharC2;                  // second composing character (optional)
+  int extra_char;               // yet another character (optional)
+  long opcount;                 // count before an operator
+  long count0;                  // count before command, default 0
+  long count1;                  // count before command, default 1
+  int arg;                      // extra argument from nv_cmds[]
+  int retval;                   // return: CA_* values
+  char_u *searchbuf;       // return: pointer to search pattern or NULL
 } cmdarg_T;
 
-/* values for retval: */
-#define CA_COMMAND_BUSY     1   /* skip restarting edit() once */
-#define CA_NO_ADJ_OP_END    2   /* don't adjust operator end */
+// values for retval:
+#define CA_COMMAND_BUSY     1   // skip restarting edit() once
+#define CA_NO_ADJ_OP_END    2   // don't adjust operator end
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

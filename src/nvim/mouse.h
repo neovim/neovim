@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include "nvim/vim.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/vim.h"
 
 // jump_to_mouse() returns one of first four these values, possibly with
 // some of the other three added.

@@ -1,10 +1,10 @@
 #ifndef NVIM_MENU_H
 #define NVIM_MENU_H
 
-#include <stdbool.h> // for bool
+#include <stdbool.h>  // for bool
 
-#include "nvim/types.h" // for char_u and expand_T
-#include "nvim/ex_cmds_defs.h" // for exarg_T
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/types.h"  // for char_u and expand_T
 
 /// @}
 /// note MENU_INDEX_TIP is not a 'real' mode

@@ -1,8 +1,8 @@
 #ifndef NVIM_TERMINAL_H
 #define NVIM_TERMINAL_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct terminal Terminal;

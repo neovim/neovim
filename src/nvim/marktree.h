@@ -2,9 +2,10 @@
 #define NVIM_MARKTREE_H
 
 #include <stdint.h>
-#include "nvim/pos.h"
-#include "nvim/map.h"
+
 #include "nvim/garray.h"
+#include "nvim/map.h"
+#include "nvim/pos.h"
 
 #define MT_MAX_DEPTH 20
 #define MT_BRANCH_FACTOR 10

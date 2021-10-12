@@ -1,21 +1,21 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
-#include "nvim/vim.h"
-#include "nvim/window.h"
-#include "nvim/pos.h"  // for linenr_T
-#include "nvim/ex_cmds_defs.h"  // for exarg_T
-#include "nvim/screen.h"  // for StlClickRecord
-#include "nvim/func_attr.h"
 #include "nvim/eval.h"
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
+#include "nvim/func_attr.h"
 #include "nvim/macros.h"
 #include "nvim/memline.h"
+#include "nvim/pos.h"  // for linenr_T
+#include "nvim/screen.h"  // for StlClickRecord
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 // Values for buflist_getfile()
 enum getf_values {
-  GETF_SETMARK = 0x01, // set pcmark before jumping
-  GETF_ALT     = 0x02, // jumping to alternate file (not buf num)
-  GETF_SWITCH  = 0x04, // respect 'switchbuf' settings when jumping
+  GETF_SETMARK = 0x01,  // set pcmark before jumping
+  GETF_ALT     = 0x02,  // jumping to alternate file (not buf num)
+  GETF_SWITCH  = 0x04,  // respect 'switchbuf' settings when jumping
 };
 
 // Return values of getfile()
@@ -41,26 +41,26 @@ enum bln_values {
 
 // Values for action argument for do_buffer()
 enum dobuf_action_values {
-  DOBUF_GOTO   = 0, // go to specified buffer
-  DOBUF_SPLIT  = 1, // split window and go to specified buffer
-  DOBUF_UNLOAD = 2, // unload specified buffer(s)
-  DOBUF_DEL    = 3, // delete specified buffer(s) from buflist
-  DOBUF_WIPE   = 4, // delete specified buffer(s) really
+  DOBUF_GOTO   = 0,  // go to specified buffer
+  DOBUF_SPLIT  = 1,  // split window and go to specified buffer
+  DOBUF_UNLOAD = 2,  // unload specified buffer(s)
+  DOBUF_DEL    = 3,  // delete specified buffer(s) from buflist
+  DOBUF_WIPE   = 4,  // delete specified buffer(s) really
 };
 
 // Values for start argument for do_buffer()
 enum dobuf_start_values {
-  DOBUF_CURRENT = 0, // "count" buffer from current buffer
-  DOBUF_FIRST   = 1, // "count" buffer from first buffer
-  DOBUF_LAST    = 2, // "count" buffer from last buffer
-  DOBUF_MOD     = 3, // "count" mod. buffer from current buffer
+  DOBUF_CURRENT = 0,  // "count" buffer from current buffer
+  DOBUF_FIRST   = 1,  // "count" buffer from first buffer
+  DOBUF_LAST    = 2,  // "count" buffer from last buffer
+  DOBUF_MOD     = 3,  // "count" mod. buffer from current buffer
 };
 
 // flags for buf_freeall()
 enum bfa_values {
-  BFA_DEL       = 1, // buffer is going to be deleted
-  BFA_WIPE      = 2, // buffer is going to be wiped out
-  BFA_KEEP_UNDO = 4, // do not free undo information
+  BFA_DEL       = 1,  // buffer is going to be deleted
+  BFA_WIPE      = 2,  // buffer is going to be wiped out
+  BFA_KEEP_UNDO = 4,  // do not free undo information
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -75,14 +75,12 @@ static inline void buf_set_changedtick(buf_T *const buf,
 ///
 /// @param[out]  buf  Buffer to set changedtick in.
 /// @param[in]  changedtick  New value.
-static inline void buf_set_changedtick(buf_T *const buf,
-                                       const varnumber_T changedtick)
+static inline void buf_set_changedtick(buf_T *const buf, const varnumber_T changedtick)
 {
   typval_T old_val = buf->changedtick_di.di_tv;
 
 #ifndef NDEBUG
-  dictitem_T *const changedtick_di = tv_dict_find(
-      buf->b_vars, S_LEN("changedtick"));
+  dictitem_T *const changedtick_di = tv_dict_find(buf->b_vars, S_LEN("changedtick"));
   assert(changedtick_di != NULL);
   assert(changedtick_di->di_tv.v_type == VAR_NUMBER);
   assert(changedtick_di->di_tv.v_lock == VAR_FIXED);
@@ -132,7 +130,7 @@ static inline void buf_inc_changedtick(buf_T *const buf)
 static inline bool buf_is_empty(buf_T *buf)
 {
   return buf->b_ml.ml_line_count == 1
-    && *ml_get_buf(buf, (linenr_T)1, false) == '\0';
+         && *ml_get_buf(buf, (linenr_T)1, false) == '\0';
 }
 
 #endif  // NVIM_BUFFER_H

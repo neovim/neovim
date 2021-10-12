@@ -3,8 +3,8 @@
 
 #include <stddef.h>  // for size_t
 
-#include "nvim/types.h"  // for char_u
 #include "nvim/log.h"
+#include "nvim/types.h"  // for char_u
 
 /// Structure used for growing arrays.
 /// This is used to store information that only grows, is deleted all at
@@ -68,6 +68,6 @@ static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
 /// garray.
 ///
 /// @param gap the garray to be freed
-#define GA_DEEP_CLEAR_PTR(gap) GA_DEEP_CLEAR(gap, void*, FREE_PTR_PTR)
+#define GA_DEEP_CLEAR_PTR(gap) GA_DEEP_CLEAR(gap, void *, FREE_PTR_PTR)
 
 #endif  // NVIM_GARRAY_H

@@ -17,22 +17,22 @@ typedef struct {
 } aco_save_T;
 
 typedef struct AutoCmd {
-  char_u          *cmd;                 // Command to be executed (NULL when
-                                        // command has been removed)
+  char_u *cmd;                 // Command to be executed (NULL when
+                               // command has been removed)
   bool once;                            // "One shot": removed after execution
   bool nested;                          // If autocommands nest here
   bool last;                            // last command in list
   sctx_T script_ctx;                    // script context where defined
-  struct AutoCmd  *next;                // Next AutoCmd in list
+  struct AutoCmd *next;                // Next AutoCmd in list
 } AutoCmd;
 
 typedef struct AutoPat {
-  struct AutoPat  *next;                // next AutoPat in AutoPat list; MUST
-                                        // be the first entry
-  char_u          *pat;                 // pattern as typed (NULL when pattern
-                                        // has been removed)
-  regprog_T       *reg_prog;            // compiled regprog for pattern
-  AutoCmd         *cmds;                // list of commands to do
+  struct AutoPat *next;                // next AutoPat in AutoPat list; MUST
+                                       // be the first entry
+  char_u *pat;                 // pattern as typed (NULL when pattern
+                               // has been removed)
+  regprog_T *reg_prog;            // compiled regprog for pattern
+  AutoCmd *cmds;                // list of commands to do
   int group;                            // group ID
   int patlen;                           // strlen() of pat
   int buflocal_nr;                      // !=0 for buffer-local AutoPat
@@ -48,16 +48,16 @@ typedef struct AutoPat {
 /// Struct used to keep status while executing autocommands for an event.
 ///
 typedef struct AutoPatCmd {
-  AutoPat     *curpat;          // next AutoPat to examine
-  AutoCmd     *nextcmd;         // next AutoCmd to execute
+  AutoPat *curpat;          // next AutoPat to examine
+  AutoCmd *nextcmd;         // next AutoCmd to execute
   int group;                    // group being used
-  char_u      *fname;           // fname to match with
-  char_u      *sfname;          // sfname to match with
-  char_u      *tail;            // tail of fname
+  char_u *fname;           // fname to match with
+  char_u *sfname;          // sfname to match with
+  char_u *tail;            // tail of fname
   event_T event;                // current event
   int arg_bufnr;                // initially equal to <abuf>, set to zero when
                                 // buf is deleted
-  struct AutoPatCmd   *next;    // chain of active apc-s for auto-invalidation
+  struct AutoPatCmd *next;    // chain of active apc-s for auto-invalidation
 } AutoPatCmd;
 
 

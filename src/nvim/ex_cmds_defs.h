@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/pos.h"      // for linenr_T
 #include "nvim/normal.h"
+#include "nvim/pos.h"      // for linenr_T
 #include "nvim/regexp_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -83,10 +83,10 @@ typedef enum {
 
 typedef struct exarg exarg_T;
 
-/* behavior for bad character, "++bad=" argument */
-#define BAD_REPLACE     '?'     /* replace it with '?' (default) */
-#define BAD_KEEP        -1      /* leave it */
-#define BAD_DROP        -2      /* erase it */
+// behavior for bad character, "++bad=" argument
+#define BAD_REPLACE     '?'     // replace it with '?' (default)
+#define BAD_KEEP        -1      // leave it
+#define BAD_DROP        -2      // erase it
 
 typedef void (*ex_func_T)(exarg_T *eap);
 
@@ -130,8 +130,8 @@ typedef struct {
   eslist_T *cs_emsg_silent_list;    // saved values of "emsg_silent"
   int cs_lflags;                    // loop flags: CSL_ flags
 } cstack_T;
-# define cs_rettv       cs_pend.csp_rv
-# define cs_exception   cs_pend.csp_ex
+#define cs_rettv       cs_pend.csp_rv
+#define cs_exception   cs_pend.csp_ex
 
 // Flags for the cs_lflags item in cstack_T.
 enum {
@@ -143,10 +143,10 @@ enum {
 
 /// Arguments used for Ex commands.
 struct exarg {
-  char_u      *arg;             ///< argument of the command
-  char_u      *nextcmd;         ///< next command (NULL if none)
-  char_u      *cmd;             ///< the name of the command (except for :make)
-  char_u      **cmdlinep;       ///< pointer to pointer of allocated cmdline
+  char_u *arg;             ///< argument of the command
+  char_u *nextcmd;         ///< next command (NULL if none)
+  char_u *cmd;             ///< the name of the command (except for :make)
+  char_u **cmdlinep;       ///< pointer to pointer of allocated cmdline
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
@@ -156,7 +156,7 @@ struct exarg {
   linenr_T line2;               ///< the second line number or count
   cmd_addr_T addr_type;         ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
-  char_u      *do_ecmd_cmd;     ///< +command arg to be used in edited file
+  char_u *do_ecmd_cmd;     ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
   int append;                   ///< TRUE with ":w >>file" command
   int usefilter;                ///< TRUE with ":w !command" and ":r!command"
@@ -170,7 +170,7 @@ struct exarg {
   int useridx;                  ///< user command index
   char_u *errmsg;               ///< returned error message
   LineGetter getline;           ///< Function used to get the next line
-  void   *cookie;               ///< argument for getline()
+  void *cookie;               ///< argument for getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.
   long verbose_save;            ///< saved value of p_verbose
   int save_msg_silent;          ///< saved value of msg_silent

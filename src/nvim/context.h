@@ -2,6 +2,7 @@
 #define NVIM_CONTEXT_H
 
 #include <msgpack.h>
+
 #include "nvim/api/private/defs.h"
 #include "nvim/lib/kvec.h"
 

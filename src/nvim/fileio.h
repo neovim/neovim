@@ -1,9 +1,9 @@
 #ifndef NVIM_FILEIO_H
 #define NVIM_FILEIO_H
 
+#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/os/os.h"
-#include "nvim/autocmd.h"
 
 // Values for readfile() flags
 #define READ_NEW        0x01    // read a file into a new buffer

@@ -13,7 +13,7 @@
 #define DOCMD_KEEPLINE  0x20      // keep typed line for repeating with "."
 #define DOCMD_PREVIEW   0x40      // during 'inccommand' preview
 
-/* defines for eval_vars() */
+// defines for eval_vars()
 #define VALID_PATH              1
 #define VALID_HEAD              2
 

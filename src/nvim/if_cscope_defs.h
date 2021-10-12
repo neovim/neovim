@@ -13,9 +13,9 @@
 # include <sys/types.h>         // pid_t
 #endif
 
-#include "nvim/os/os_defs.h"
-#include "nvim/os/fs_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/os/fs_defs.h"
+#include "nvim/os/os_defs.h"
 
 #define CSCOPE_SUCCESS          0
 #define CSCOPE_FAILURE          -1
@@ -40,11 +40,11 @@ typedef struct csi {
 #if defined(UNIX)
   pid_t pid;                    // PID of the connected cscope process
 #else
-    DWORD         pid;          // PID of the connected cscope process
-    HANDLE        hProc;        // cscope process handle
-    DWORD         nVolume;      // Volume serial number, instead of st_dev
-    DWORD         nIndexHigh;   // st_ino has no meaning on Windows
-    DWORD         nIndexLow;
+  DWORD pid;          // PID of the connected cscope process
+  HANDLE hProc;        // cscope process handle
+  DWORD nVolume;      // Volume serial number, instead of st_dev
+  DWORD nIndexHigh;   // st_ino has no meaning on Windows
+  DWORD nIndexLow;
 #endif
   FileID file_id;
 

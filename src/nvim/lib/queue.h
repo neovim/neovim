@@ -1,3 +1,5 @@
+// uncrustify:off
+
 // Queue implemented by circularly-linked list.
 //
 // Adapted from libuv. Simpler and more efficient than klist.h for implementing

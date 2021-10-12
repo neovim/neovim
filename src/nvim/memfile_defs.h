@@ -1,12 +1,12 @@
 #ifndef NVIM_MEMFILE_DEFS_H
 #define NVIM_MEMFILE_DEFS_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/types.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 /// A block number.
 ///
