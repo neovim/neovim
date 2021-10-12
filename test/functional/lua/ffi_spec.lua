@@ -10,11 +10,11 @@ describe('ffi.cdef', function()
     it('works', function()
       eq(12, exec_lua[[
         local ffi = require('ffi')
-        
+
         ffi.cdef('int curwin_col_off()')
-        
+
         vim.cmd('set number numberwidth=4 signcolumn=yes:4')
-        
+
         return ffi.C.curwin_col_off()
       ]])
     end)
