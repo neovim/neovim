@@ -710,7 +710,7 @@ function! s:check_perl() abort
 
   let latest_cpan = s:system(latest_cpan_cmd)
   if s:shell_error || empty(latest_cpan)
-    call health#report_error('Failed to run: '. latest_cpan_cmd,
+    call health#report_error('Failed to run: '. join(latest_cpan_cmd, " "),
           \ ["Make sure you're connected to the internet.",
           \  'Are you behind a firewall or proxy?'])
     return
