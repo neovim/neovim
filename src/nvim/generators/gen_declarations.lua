@@ -216,7 +216,16 @@ local footer = [[
 #include "nvim/func_attr.h"
 ]]
 
-local non_static = header
+local non_static = header .. [[
+#ifndef DLLEXPORT
+#  ifdef WIN32
+#    define DLLEXPORT __declspec(dllexport)
+#  else
+#    define DLLEXPORT
+#  endif
+#endif
+]]
+
 local static = header
 
 local filepattern = '^#%a* (%d+) "([^"]-)/?([^"/]+)"'
@@ -269,6 +278,7 @@ while init ~= nil do
       declaration = declaration:gsub(' $', '')
       declaration = declaration:gsub('^ ', '')
       declaration = declaration .. ';'
+
       if os.getenv('NVIM_GEN_DECLARATIONS_LINE_NUMBERS') == '1' then
         declaration = declaration .. ('  // %s/%s:%u'):format(
             curdir, curfile, declline)
@@ -277,6 +287,7 @@ while init ~= nil do
       if declaration:sub(1, 6) == 'static' then
         static = static .. declaration
       else
+        declaration = 'DLLEXPORT ' .. declaration
         non_static = non_static .. declaration
       end
       declendpos = e
