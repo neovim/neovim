@@ -752,91 +752,91 @@ EXTERN int p_force_off;         ///< options that cannot be turned on.
 // b_p_scriptID[].
 //
 enum {
-  BV_AI = 0
-  , BV_AR
-  , BV_BH
-  , BV_BKC
-  , BV_BT
-  , BV_EFM
-  , BV_GP
-  , BV_MP
-  , BV_BIN
-  , BV_BL
-  , BV_BOMB
-  , BV_CHANNEL
-  , BV_CI
-  , BV_CIN
-  , BV_CINK
-  , BV_CINO
-  , BV_CINW
-  , BV_CM
-  , BV_CMS
-  , BV_COM
-  , BV_CPT
-  , BV_DICT
-  , BV_TSR
-  , BV_CSL
-  , BV_CFU
-  , BV_DEF
-  , BV_INC
-  , BV_EOL
-  , BV_FIXEOL
-  , BV_EP
-  , BV_ET
-  , BV_FENC
-  , BV_FP
-  , BV_BEXPR
-  , BV_FEX
-  , BV_FF
-  , BV_FLP
-  , BV_FO
-  , BV_FT
-  , BV_IMI
-  , BV_IMS
-  , BV_INDE
-  , BV_INDK
-  , BV_INEX
-  , BV_INF
-  , BV_ISK
-  , BV_KMAP
-  , BV_KP
-  , BV_LISP
-  , BV_LW
-  , BV_MENC
-  , BV_MA
-  , BV_ML
-  , BV_MOD
-  , BV_MPS
-  , BV_NF
-  , BV_OFU
-  , BV_PATH
-  , BV_PI
-  , BV_QE
-  , BV_RO
-  , BV_SCBK
-  , BV_SI
-  , BV_SMC
-  , BV_SYN
-  , BV_SPC
-  , BV_SPF
-  , BV_SPL
-  , BV_SPO
-  , BV_STS
-  , BV_SUA
-  , BV_SW
-  , BV_SWF
-  , BV_TFU
-  , BV_TAGS
-  , BV_TC
-  , BV_TS
-  , BV_TW
-  , BV_TX
-  , BV_UDF
-  , BV_UL
-  , BV_WM
-  , BV_VSTS
-  , BV_VTS
-  , BV_COUNT        // must be the last one
+  BV_AI = 0,
+  BV_AR,
+  BV_BH,
+  BV_BKC,
+  BV_BT,
+  BV_EFM,
+  BV_GP,
+  BV_MP,
+  BV_BIN,
+  BV_BL,
+  BV_BOMB,
+  BV_CHANNEL,
+  BV_CI,
+  BV_CIN,
+  BV_CINK,
+  BV_CINO,
+  BV_CINW,
+  BV_CM,
+  BV_CMS,
+  BV_COM,
+  BV_CPT,
+  BV_DICT,
+  BV_TSR,
+  BV_CSL,
+  BV_CFU,
+  BV_DEF,
+  BV_INC,
+  BV_EOL,
+  BV_FIXEOL,
+  BV_EP,
+  BV_ET,
+  BV_FENC,
+  BV_FP,
+  BV_BEXPR,
+  BV_FEX,
+  BV_FF,
+  BV_FLP,
+  BV_FO,
+  BV_FT,
+  BV_IMI,
+  BV_IMS,
+  BV_INDE,
+  BV_INDK,
+  BV_INEX,
+  BV_INF,
+  BV_ISK,
+  BV_KMAP,
+  BV_KP,
+  BV_LISP,
+  BV_LW,
+  BV_MENC,
+  BV_MA,
+  BV_ML,
+  BV_MOD,
+  BV_MPS,
+  BV_NF,
+  BV_OFU,
+  BV_PATH,
+  BV_PI,
+  BV_QE,
+  BV_RO,
+  BV_SCBK,
+  BV_SI,
+  BV_SMC,
+  BV_SYN,
+  BV_SPC,
+  BV_SPF,
+  BV_SPL,
+  BV_SPO,
+  BV_STS,
+  BV_SUA,
+  BV_SW,
+  BV_SWF,
+  BV_TFU,
+  BV_TAGS,
+  BV_TC,
+  BV_TS,
+  BV_TW,
+  BV_TX,
+  BV_UDF,
+  BV_UL,
+  BV_WM,
+  BV_VSTS,
+  BV_VTS,
+  BV_COUNT        // must be the last one
 };
 
 /*
@@ -845,51 +845,51 @@ enum {
  * window structure.
  */
 enum {
-  WV_LIST = 0
-  , WV_ARAB
-  , WV_COCU
-  , WV_COLE
-  , WV_CRBIND
-  , WV_BRI
-  , WV_BRIOPT
-  , WV_DIFF
-  , WV_FDC
-  , WV_FEN
-  , WV_FDI
-  , WV_FDL
-  , WV_FDM
-  , WV_FML
-  , WV_FDN
-  , WV_FDE
-  , WV_FDT
-  , WV_FMR
-  , WV_LBR
-  , WV_NU
-  , WV_RNU
-  , WV_NUW
-  , WV_PVW
-  , WV_RL
-  , WV_RLC
-  , WV_SCBIND
-  , WV_SCROLL
-  , WV_SISO
-  , WV_SO
-  , WV_SPELL
-  , WV_CUC
-  , WV_CUL
-  , WV_CULOPT
-  , WV_CC
-  , WV_SBR
-  , WV_STL
-  , WV_WFH
-  , WV_WFW
-  , WV_WRAP
-  , WV_SCL
-  , WV_WINHL
-  , WV_FCS
-  , WV_LCS
-  , WV_WINBL
-  , WV_COUNT        // must be the last one
+  WV_LIST = 0,
+  WV_ARAB,
+  WV_COCU,
+  WV_COLE,
+  WV_CRBIND,
+  WV_BRI,
+  WV_BRIOPT,
+  WV_DIFF,
+  WV_FDC,
+  WV_FEN,
+  WV_FDI,
+  WV_FDL,
+  WV_FDM,
+  WV_FML,
+  WV_FDN,
+  WV_FDE,
+  WV_FDT,
+  WV_FMR,
+  WV_LBR,
+  WV_NU,
+  WV_RNU,
+  WV_NUW,
+  WV_PVW,
+  WV_RL,
+  WV_RLC,
+  WV_SCBIND,
+  WV_SCROLL,
+  WV_SISO,
+  WV_SO,
+  WV_SPELL,
+  WV_CUC,
+  WV_CUL,
+  WV_CULOPT,
+  WV_CC,
+  WV_SBR,
+  WV_STL,
+  WV_WFH,
+  WV_WFW,
+  WV_WRAP,
+  WV_SCL,
+  WV_WINHL,
+  WV_FCS,
+  WV_LCS,
+  WV_WINBL,
+  WV_COUNT        // must be the last one
 };
 
 // Value for b_p_ul indicating the global value must be used.

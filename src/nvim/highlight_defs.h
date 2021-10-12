@@ -49,62 +49,61 @@ typedef struct attr_entry {
 /// Values for index in highlight_attr[].
 /// When making changes, also update hlf_names below!
 typedef enum {
-  HLF_8 = 0         // Meta & special keys listed with ":map", text that is
+  HLF_8 = 0,        // Meta & special keys listed with ":map", text that is
                     // displayed different from what it is
-  , HLF_EOB         // after the last line in the buffer
-  , HLF_TERM        // terminal cursor focused
-  , HLF_TERMNC      // terminal cursor unfocused
-  , HLF_AT          // @ characters at end of screen, characters that
-                    // don't really exist in the text
-  , HLF_D           // directories in CTRL-D listing
-  , HLF_E           // error messages
-  , HLF_I           // incremental search
-  , HLF_L           // last search string
-  , HLF_M           // "--More--" message
-  , HLF_CM          // Mode (e.g., "-- INSERT --")
-  , HLF_N           // line number for ":number" and ":#" commands
-  , HLF_LNA         // LineNrAbove
-  , HLF_LNB         // LineNrBelow
-  , HLF_CLN         // current line number when 'cursorline' is set
-  , HLF_R           // return to continue message and yes/no questions
-  , HLF_S           // status lines
-  , HLF_SNC         // status lines of not-current windows
-  , HLF_C           // column to separate vertically split windows
-  , HLF_T           // Titles for output from ":set all", ":autocmd" etc.
-  , HLF_V           // Visual mode
-  , HLF_VNC         // Visual mode, autoselecting and not clipboard owner
-  , HLF_W           // warning messages
-  , HLF_WM          // Wildmenu highlight
-  , HLF_FL          // Folded line
-  , HLF_FC          // Fold column
-  , HLF_ADD         // Added diff line
-  , HLF_CHD         // Changed diff line
-  , HLF_DED         // Deleted diff line
-  , HLF_TXD         // Text Changed in diff line
-  , HLF_SC          // Sign column
-  , HLF_CONCEAL     // Concealed text
-  , HLF_SPB         // SpellBad
-  , HLF_SPC         // SpellCap
-  , HLF_SPR         // SpellRare
-  , HLF_SPL         // SpellLocal
-  , HLF_PNI         // popup menu normal item
-  , HLF_PSI         // popup menu selected item
-  , HLF_PSB         // popup menu scrollbar
-  , HLF_PST         // popup menu scrollbar thumb
-  , HLF_TP          // tabpage line
-  , HLF_TPS         // tabpage line selected
-  , HLF_TPF         // tabpage line filler
-  , HLF_CUC         // 'cursorcolumn'
-  , HLF_CUL         // 'cursorline'
-  , HLF_MC          // 'colorcolumn'
-  , HLF_QFL         // selected quickfix line
-  , HLF_0           // Whitespace
-  , HLF_INACTIVE    // NormalNC: Normal text in non-current windows
-  , HLF_MSGSEP      // message separator line
-  , HLF_NFLOAT      // Floating window
-  , HLF_MSG         // Message area
-  , HLF_BORDER      // Floating window border
-  , HLF_COUNT       // MUST be the last one
+  HLF_EOB,        // after the last line in the buffer
+  HLF_TERM,       // terminal cursor focused
+  HLF_TERMNC,     // terminal cursor unfocused
+  HLF_AT,          // @ characters at end of screen, characters that don't really exist in the text
+  HLF_D,          // directories in CTRL-D listing
+  HLF_E,          // error messages
+  HLF_I,          // incremental search
+  HLF_L,          // last search string
+  HLF_M,          // "--More--" message
+  HLF_CM,         // Mode (e.g., "-- INSERT --")
+  HLF_N,          // line number for ":number" and ":#" commands
+  HLF_LNA,        // LineNrAbove
+  HLF_LNB,        // LineNrBelow
+  HLF_CLN,        // current line number when 'cursorline' is set
+  HLF_R,          // return to continue message and yes/no questions
+  HLF_S,          // status lines
+  HLF_SNC,        // status lines of not-current windows
+  HLF_C,          // column to separate vertically split windows
+  HLF_T,          // Titles for output from ":set all", ":autocmd" etc.
+  HLF_V,          // Visual mode
+  HLF_VNC,        // Visual mode, autoselecting and not clipboard owner
+  HLF_W,          // warning messages
+  HLF_WM,         // Wildmenu highlight
+  HLF_FL,         // Folded line
+  HLF_FC,         // Fold column
+  HLF_ADD,        // Added diff line
+  HLF_CHD,        // Changed diff line
+  HLF_DED,        // Deleted diff line
+  HLF_TXD,        // Text Changed in diff line
+  HLF_SC,         // Sign column
+  HLF_CONCEAL,    // Concealed text
+  HLF_SPB,        // SpellBad
+  HLF_SPC,        // SpellCap
+  HLF_SPR,        // SpellRare
+  HLF_SPL,        // SpellLocal
+  HLF_PNI,        // popup menu normal item
+  HLF_PSI,        // popup menu selected item
+  HLF_PSB,        // popup menu scrollbar
+  HLF_PST,        // popup menu scrollbar thumb
+  HLF_TP,         // tabpage line
+  HLF_TPS,        // tabpage line selected
+  HLF_TPF,        // tabpage line filler
+  HLF_CUC,        // 'cursorcolumn'
+  HLF_CUL,        // 'cursorline'
+  HLF_MC,         // 'colorcolumn'
+  HLF_QFL,        // selected quickfix line
+  HLF_0,          // Whitespace
+  HLF_INACTIVE,   // NormalNC: Normal text in non-current windows
+  HLF_MSGSEP,     // message separator line
+  HLF_NFLOAT,     // Floating window
+  HLF_MSG,        // Message area
+  HLF_BORDER,     // Floating window border
+  HLF_COUNT       // MUST be the last one
 } hlf_T;
 
 EXTERN const char *hlf_names[] INIT(= {
