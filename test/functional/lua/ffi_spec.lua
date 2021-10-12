@@ -1,3 +1,8 @@
+-- Only run these tests when FFI is available
+if not pcall(require, 'ffi') then
+    return
+end
+
 local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
