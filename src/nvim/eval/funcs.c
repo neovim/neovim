@@ -1963,13 +1963,13 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   os_copy_fullenv(env, env_size);
 
   for (ssize_t i = env_size - 1; i >= 0; i--) {
-    const char * str = env[i];
+    const char *str = env[i];
     const char * const end = strchr(str + (str[0] == '=' ? 1 : 0),
                                     '=');
     assert(end != NULL);
     ptrdiff_t len = end - str;
     assert(len > 0);
-    const char * value = str + len + 1;
+    const char *value = str + len + 1;
 
     char c = env[i][len];
     env[i][len] = NUL;
@@ -5345,7 +5345,7 @@ static const char *required_env_vars[] = {
 static dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, const bool pty,
                                   const char * const pty_term_name)
 {
-  dict_T * env = tv_dict_alloc();
+  dict_T *env = tv_dict_alloc();
 
   if (!clear_env) {
     typval_T temp_env = TV_INITIAL_VALUE;
@@ -9644,7 +9644,7 @@ static void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   // Sign group
-  const char * sign_group_chk = tv_get_string_chk(&argvars[1]);
+  const char *sign_group_chk = tv_get_string_chk(&argvars[1]);
   if (sign_group_chk == NULL) {
     return;
   }

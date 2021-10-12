@@ -376,7 +376,7 @@ static void shift_block(oparg_T *oap, int amount)
      */
     total += bd.pre_whitesp;    // all virtual WS up to & incl a split TAB
     colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
-    char_u * old_textstart = bd.textstart;
+    char_u *old_textstart = bd.textstart;
     if (bd.startspaces) {
       if (utfc_ptr2len(bd.textstart) == 1) {
         bd.textstart++;

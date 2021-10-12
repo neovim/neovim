@@ -62,7 +62,7 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
     start_b += 1;
   }
 
-  lua_State * lstate = (lua_State *)cb_data;
+  lua_State *lstate = (lua_State *)cb_data;
   lua_createtable(lstate, 0, 0);
 
   lua_pushinteger(lstate, start_a);
@@ -93,7 +93,7 @@ static int call_on_hunk_cb(long start_a, long count_a, long start_b, long count_
   }
 
   hunkpriv_t *priv = (hunkpriv_t *)cb_data;
-  lua_State * lstate = priv->lstate;
+  lua_State *lstate = priv->lstate;
   Error *err = priv->err;
   const int fidx = lua_gettop(lstate);
   lua_pushvalue(lstate, fidx);
@@ -133,7 +133,7 @@ static mmfile_t get_string_arg(lua_State *lstate, int idx)
 static bool check_xdiff_opt(ObjectType actType, ObjectType expType, const char *name, Error *err)
 {
   if (actType != expType) {
-    const char * type_str =
+    const char *type_str =
       expType == kObjectTypeString  ? "string"   :
       expType == kObjectTypeInteger ? "integer"  :
       expType == kObjectTypeBoolean ? "boolean"  :

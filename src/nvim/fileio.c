@@ -4684,7 +4684,7 @@ int vim_rename(const char_u *from, const char_u *to)
     }
     STRCPY(tempname, from);
     for (n = 123; n < 99999; n++) {
-      char * tail = (char *)path_tail(tempname);
+      char *tail = (char *)path_tail(tempname);
       snprintf(tail, (MAXPATHL + 1) - (tail - (char *)tempname - 1), "%d", n);
 
       if (!os_path_exists(tempname)) {

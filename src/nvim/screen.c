@@ -166,7 +166,7 @@ static bool resizing = false;
 #endif
 #define SEARCH_HL_PRIORITY 0
 
-static char * provider_err = NULL;
+static char *provider_err = NULL;
 
 static bool provider_invoke(NS ns_id, const char *name, LuaRef ref, Array args, bool default_true)
 {
@@ -2418,7 +2418,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   // If this line has a sign with line highlighting set line_attr.
   // TODO(bfredl, vigoux): this should not take priority over decoration!
-  sign_attrs_T * sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1);
+  sign_attrs_T *sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1);
   if (sattr != NULL) {
     line_attr = sattr->sat_linehl;
   }

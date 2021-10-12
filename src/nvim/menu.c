@@ -1523,7 +1523,7 @@ typedef struct {
 static garray_T menutrans_ga = GA_EMPTY_INIT_VALUE;
 
 #define FREE_MENUTRANS(mt) \
-  menutrans_T * _mt = (mt); \
+  menutrans_T *_mt = (mt); \
   xfree(_mt->from); \
   xfree(_mt->from_noamp); \
   xfree(_mt->to)
@@ -1568,7 +1568,7 @@ void ex_menutranslate(exarg_T *eap)
       menu_translate_tab_and_shift(to);
       menu_unescape_name(from);
       menu_unescape_name(to);
-      menutrans_T * tp = GA_APPEND_VIA_PTR(menutrans_T, &menutrans_ga);
+      menutrans_T *tp = GA_APPEND_VIA_PTR(menutrans_T, &menutrans_ga);
       tp->from = from;
       tp->from_noamp = from_noamp;
       tp->to = to;

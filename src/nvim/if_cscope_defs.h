@@ -26,17 +26,17 @@
 // See ":help cscope-find" for the possible queries.
 
 typedef struct {
-  char *  name;
+  char *name;
   int (*func)(exarg_T *eap);
-  char *  help;
-  char *  usage;
+  char *help;
+  char *usage;
   int cansplit;                 // if supports splitting window
 } cscmd_T;
 
 typedef struct csi {
-  char *          fname;        // cscope db name
-  char *          ppath;        // path to prepend (the -P option)
-  char *          flags;        // additional cscope flags/options (e.g, -p2)
+  char *fname;        // cscope db name
+  char *ppath;        // path to prepend (the -P option)
+  char *flags;        // additional cscope flags/options (e.g, -p2)
 #if defined(UNIX)
   pid_t pid;                    // PID of the connected cscope process
 #else
@@ -48,8 +48,8 @@ typedef struct csi {
 #endif
   FileID file_id;
 
-  FILE *          fr_fp;        // from cscope: FILE.
-  FILE *          to_fp;        // to cscope: FILE.
+  FILE *fr_fp;        // from cscope: FILE.
+  FILE *to_fp;        // to cscope: FILE.
 } csinfo_T;
 
 typedef enum { Add, Find, Help, Kill, Reset, Show } csid_e;

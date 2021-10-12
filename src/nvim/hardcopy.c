@@ -2438,7 +2438,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
 static int prt_add_resource(struct prt_ps_resource_S *resource)
 {
-  FILE *       fd_resource;
+  FILE *fd_resource;
   char_u resource_buffer[512];
   size_t bytes_read;
 

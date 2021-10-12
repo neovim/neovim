@@ -41,7 +41,7 @@
 # include "if_cscope.c.generated.h"
 #endif
 
-static csinfo_T *   csinfo = NULL;
+static csinfo_T *csinfo = NULL;
 static size_t csinfo_size = 0;    // number of items allocated in csinfo[]
 
 static int eap_arg_len;           // length of eap->arg, set in cs_lookup_cmd()
