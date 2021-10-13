@@ -138,16 +138,21 @@ static void tinput_paste_event(void **argv)
 static void tinput_flush(TermInput *input)
 {
   size_t size = rbuffer_size(input->key_buffer);
-  if (size == 0) {
+  bool is_empty_phase3 = (size == 0 && input->paste == 3);
+  if (size == 0 && !is_empty_phase3) {
     return;
   }
-  char *data = xmalloc(size);
-  char *pos = data;
-  RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    memcpy(pos, buf, len);
-    pos += len;
-    rbuffer_consumed(input->key_buffer, len);
-    rbuffer_reset(input->key_buffer);
+  char *data = xmalloc(is_empty_phase3 ? 1 : size);
+  if (is_empty_phase3) {
+    *data = '\0';
+  } else {
+    char *pos = data;
+    RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
+      memcpy(pos, buf, len);
+      pos += len;
+      rbuffer_consumed(input->key_buffer, len);
+      rbuffer_reset(input->key_buffer);
+    }
   }
   loop_schedule_fast(&main_loop, event_create(tinput_input_event, 3,
                                               data, (intptr_t)size,
