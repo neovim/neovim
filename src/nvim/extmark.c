@@ -96,12 +96,14 @@ uint64_t extmark_set(buf_T *buf, uint64_t ns_id, uint64_t *idp, int row, colnr_T
     }
   }
 
+  uint8_t decor_level = (decor != NULL) ? 1 : 0;
+
   if (end_row > -1) {
     mark = marktree_put_pair(buf->b_marktree,
                              row, col, right_gravity,
-                             end_row, end_col, end_right_gravity);
+                             end_row, end_col, end_right_gravity, decor_level);
   } else {
-    mark = marktree_put(buf->b_marktree, row, col, right_gravity);
+    mark = marktree_put(buf->b_marktree, row, col, right_gravity, decor_level);
   }
 
 revised:

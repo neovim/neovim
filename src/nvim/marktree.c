@@ -221,9 +221,11 @@ static inline void marktree_putp_aux(MarkTree *b, mtnode_t *x, mtkey_t k)
   }
 }
 
-uint64_t marktree_put(MarkTree *b, int row, int col, bool right_gravity)
+uint64_t marktree_put(MarkTree *b, int row, int col, bool right_gravity, uint8_t decor_level)
 {
   uint64_t id = (b->next_id+=ID_INCR);
+  assert(decor_level < DECOR_LEVELS);
+  id = id | ((uint64_t)decor_level << DECOR_OFFSET);
   uint64_t keyid = id;
   if (right_gravity) {
     // order all right gravity keys after the left ones, for effortless
@@ -235,9 +237,11 @@ uint64_t marktree_put(MarkTree *b, int row, int col, bool right_gravity)
 }
 
 uint64_t marktree_put_pair(MarkTree *b, int start_row, int start_col, bool start_right, int end_row,
-                           int end_col, bool end_right)
+                           int end_col, bool end_right, uint8_t decor_level)
 {
   uint64_t id = (b->next_id+=ID_INCR)|PAIRED;
+  assert(decor_level < DECOR_LEVELS);
+  id = id | ((uint64_t)decor_level << DECOR_OFFSET);
   uint64_t start_id = id|(start_right?RIGHT_GRAVITY:0);
   uint64_t end_id = id|END_FLAG|(end_right?RIGHT_GRAVITY:0);
   marktree_put_key(b, start_row, start_col, start_id);

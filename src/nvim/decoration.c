@@ -118,6 +118,8 @@ Decoration *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
     mtmark_t mark = marktree_itr_current(itr);
     if (mark.row < 0 || mark.row > row) {
       break;
+    } else if (mt_decor_level(mark.id) < 1) {
+      goto next_mark;
     }
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        mark.id, false);
@@ -125,6 +127,7 @@ Decoration *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
         && item->decor && kv_size(item->decor->virt_text)) {
       return item->decor;
     }
+next_mark:
     marktree_itr_next(buf->b_marktree, itr);
   }
   return NULL;
@@ -158,20 +161,21 @@ bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
     if (mark.row < 0) {  // || mark.row > end_row
       break;
     }
-    if ((mark.row < top_row && mark.id&MARKTREE_END_FLAG)) {
+    if ((mark.row < top_row && mark.id&MARKTREE_END_FLAG)
+        || mt_decor_level(mark.id) < 1) {
       goto next_mark;
     }
-    mtpos_t altpos = marktree_lookup(buf->b_marktree,
-                                     mark.id^MARKTREE_END_FLAG, NULL);
 
     uint64_t start_id = mark.id & ~MARKTREE_END_FLAG;
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        start_id, false);
     if (!item || !item->decor) {
-      // TODO(bfredl): dedicated flag for being a decoration?
       goto next_mark;
     }
     Decoration *decor = item->decor;
+
+    mtpos_t altpos = marktree_lookup(buf->b_marktree,
+                                     mark.id^MARKTREE_END_FLAG, NULL);
 
     if ((!(mark.id&MARKTREE_END_FLAG) && altpos.row < top_row
          && !kv_size(decor->virt_text))
@@ -251,20 +255,19 @@ int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden, DecorState *
       break;
     }
 
-    if ((mark.id&MARKTREE_END_FLAG)) {
-      // TODO(bfredl): check decoration flag
+    if ((mark.id&MARKTREE_END_FLAG) || mt_decor_level(mark.id) < 1) {
       goto next_mark;
     }
-    mtpos_t endpos = marktree_lookup(buf->b_marktree,
-                                     mark.id|MARKTREE_END_FLAG, NULL);
 
     ExtmarkItem *item = map_ref(uint64_t, ExtmarkItem)(buf->b_extmark_index,
                                                        mark.id, false);
     if (!item || !item->decor) {
-      // TODO(bfredl): dedicated flag for being a decoration?
       goto next_mark;
     }
     Decoration *decor = item->decor;
+
+    mtpos_t endpos = marktree_lookup(buf->b_marktree,
+                                     mark.id|MARKTREE_END_FLAG, NULL);
 
     if (endpos.row == -1) {
       endpos.row = mark.row;
