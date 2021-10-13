@@ -8480,20 +8480,22 @@ static void f_searchpairpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_append_number(rettv->vval.v_list, (varnumber_T)col);
 }
 
-/*
- * Search for a start/middle/end thing.
- * Used by searchpair(), see its documentation for the details.
- * Returns 0 or -1 for no match,
- */
-long do_searchpair(const char *spat,      // start pattern
-                   const char *mpat,      // middle pattern
-                   const char *epat,      // end pattern
-                   int dir,               // BACKWARD or FORWARD
-                   const typval_T *skip,  // skip expression
-                   int flags,             // SP_SETPCMARK and other SP_ values
-                   pos_T *match_pos, linenr_T lnum_stop,    // stop at this line if not zero
-                   long time_limit        // stop after this many msec
-                   )
+/// Search for a start/middle/end thing.
+/// Used by searchpair(), see its documentation for the details.
+///
+/// @param spat  start pattern
+/// @param mpat  middle pattern
+/// @param epat  end pattern
+/// @param dir  BACKWARD or FORWARD
+/// @param skip  skip expression
+/// @param flags  SP_SETPCMARK and other SP_ values
+/// @param lnum_stop  stop at this line if not zero
+/// @param time_limit  stop after this many msec
+///
+/// @returns  0 or -1 for no match,
+long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
+                   const typval_T *skip, int flags, pos_T *match_pos, linenr_T lnum_stop,
+                   long time_limit)
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   char_u *save_cpo;
