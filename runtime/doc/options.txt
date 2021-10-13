@@ -6560,6 +6560,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		Removed. |vim-differences|
 
+					        *'tsmatchlimit'* *'tsml'* 
+'tsmatchlimit' 'tsml'
+			integer (default 32)
+			global
+	Maximum number of treesitter nodes matched when a cursor query is
+	executed. Higher values allow for deeper matches at the expense of
+	query execution time. Increasing this value beyond the default may be
+	required for some treesitter plugins to function properly.
+
+	Maxiumum value is 64000. Minimum value is 32.
+
 						*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_DATA_HOME/nvim/undo//")
 			global

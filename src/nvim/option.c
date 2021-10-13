@@ -4204,6 +4204,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char_u *errbu
     if (value < 0) {
       errmsg = e_positive;
     }
+  } else if (pp == &p_tsml) {
+    if (value < 32 || value > 64000) {
+      errmsg = e_invarg;
+    }
   } else if (pp == &p_hi) {
     if (value < 0) {
       errmsg = e_positive;

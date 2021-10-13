@@ -2588,6 +2588,14 @@ return {
       defaults={if_true=""}
     },
     {
+      full_name='tsmatchlimit', abbreviation='tsml',
+      short_desc=N_("maximum number of nodes treesitter matches for each query cursor"),
+      type='number', scope={'global'},
+      redraw={'ui_option'},
+      varname='p_tsml',
+      defaults={if_true=32},
+    },
+    {
       full_name='ttimeout',
       short_desc=N_("out on mappings"),
       type='bool', scope={'global'},
