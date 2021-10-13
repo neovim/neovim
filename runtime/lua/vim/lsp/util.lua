@@ -1385,6 +1385,7 @@ end
 ---             - focus_id if a popup with this id is opened, then focus it
 ---             - close_events list of events that closes the floating window
 ---             - focusable (boolean, default true): Make float focusable
+---             - use_existing (boolean, default false): re-use existing window if it exists
 ---@returns bufnr,winnr buffer and window number of the newly created floating
 ---preview window
 function M.open_floating_preview(contents, syntax, opts)
@@ -1422,11 +1423,21 @@ function M.open_floating_preview(contents, syntax, opts)
   -- check if another floating preview already exists for this buffer
   -- and close it if needed
   local existing_float = npcall(api.nvim_buf_get_var, bufnr, "lsp_floating_preview")
-  if existing_float and api.nvim_win_is_valid(existing_float) then
+  existing_float = api.nvim_win_is_valid(existing_float) and existing_float
+  if existing_float and not opts.use_existing then
     api.nvim_win_close(existing_float, true)
   end
 
-  local floating_bufnr = api.nvim_create_buf(false, true)
+  -- Create or reuse a buffer for the float
+  local floating_bufnr
+  if existing_float and opts.use_existing then
+    floating_bufnr = api.nvim_win_get_buf(existing_float)
+    -- temporarily make the buffer modifiable to reset its content
+    api.nvim_buf_set_option(floating_bufnr, 'modifiable', true)
+  else
+    floating_bufnr = api.nvim_create_buf(false, true)
+  end
+
   local do_stylize = syntax == "markdown" and opts.stylize_markdown
 
 
@@ -1450,9 +1461,17 @@ function M.open_floating_preview(contents, syntax, opts)
     opts.wrap_at = nil
   end
   local width, height = M._make_floating_popup_size(contents, opts)
-
   local float_option = M.make_floating_popup_options(width, height, opts)
-  local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
+
+  -- Configure a new float or re-configure the existing one
+  local floating_winnr
+  if existing_float and opts.use_existing then
+    floating_winnr = existing_float
+    api.nvim_win_set_config(floating_winnr, float_option)
+  else
+    floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
+  end
+
   if do_stylize then
     api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
     api.nvim_win_set_option(floating_winnr, 'concealcursor', 'n')
