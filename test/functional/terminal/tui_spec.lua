@@ -729,6 +729,15 @@ describe('TUI', function()
 
   it('paste: split "start paste" code', function()
     feed_data('i')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
     -- Send split "start paste" sequence.
     feed_data('\027[2')
     feed_data('00~pasted from terminal\027[201~')
@@ -745,6 +754,15 @@ describe('TUI', function()
 
   it('paste: split "stop paste" code', function()
     feed_data('i')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
     -- Send split "stop paste" sequence.
     feed_data('\027[200~pasted from terminal\027[20')
     feed_data('1~')
