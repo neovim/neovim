@@ -54,7 +54,7 @@ int plines_win(win_T *wp, linenr_T lnum, bool winheight)
 /// @return Number of filler lines above lnum
 int win_get_fill(win_T *wp, linenr_T lnum)
 {
-  int virt_lines = decor_virtual_lines(wp, lnum);
+  int virt_lines = decor_virt_lines(wp, lnum, NULL);
 
   // be quick when there are no filler lines
   if (diffopt_filler()) {
@@ -69,7 +69,7 @@ int win_get_fill(win_T *wp, linenr_T lnum)
 
 bool win_may_fill(win_T *wp)
 {
-  return (wp->w_p_diff && diffopt_filler()) || wp->w_buffer->b_virt_line_mark;
+  return (wp->w_p_diff && diffopt_filler()) || wp->w_buffer->b_virt_line_blocks;
 }
 
 /// @param winheight when true limit to window height

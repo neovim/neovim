@@ -94,12 +94,24 @@
     memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
   } while (0)
 
+#define kv_splice(v1, v0) \
+    do { \
+      if ((v1).capacity < (v1).size + (v0).size) { \
+        (v1).capacity = (v1).size + (v0).size; \
+        kv_roundup32((v1).capacity); \
+        kv_resize((v1), (v1).capacity); \
+      } \
+      memcpy((v1).items + (v1).size, (v0).items, sizeof((v1).items[0]) * (v0).size); \
+      (v1).size = (v1).size + (v0).size; \
+    } while (0)
+
 #define kv_pushp(v) \
   ((((v).size == (v).capacity) ? (kv_resize_full(v), 0) : 0), \
    ((v).items + ((v).size++)))
 
 #define kv_push(v, x) \
   (*kv_pushp(v) = (x))
+
 
 #define kv_a(v, i) \
   (*(((v).capacity <= (size_t)(i) \

@@ -901,15 +901,15 @@ if (h->n_buckets < new_n_buckets) { // expand
     screen:expect{grid=[[
       if (h->n_buckets < new_n_buckets) { // expand     |
         khkey_t *new_keys = (khkey_t *)                 |
+      {1:>> }{2:krealloc}: change the size of an allocation     |
       {3:krealloc}((void *)h->keys, new_n_buckets * sizeof(k|
       hkey_t));                                         |
         h->keys = new_keys;                             |
         if (kh_is_map && val_size) {                    |
-          char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
-      buck^ets * val_size);                              |
+          ^char *new_vals = {3:krealloc}( h->vals_buf, new_n_|
+      buckets * val_size);                              |
       {5:^^ REVIEW:}{6: new_vals variable seems unneccesary?}   |
           h->vals_buf = new_vals;                       |
-        }                                               |
                                                         |
     ]]}
 
@@ -1235,6 +1235,7 @@ if (h->n_buckets < new_n_buckets) { // expand
                                                         |
     ]]}
 
+    meths.buf_clear_namespace(0, ns, 0, -1)
     meths.buf_set_extmark(0, ns, 2, 0, {
       virt_lines={
         {{"Some special", "Special"}};

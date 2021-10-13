@@ -247,7 +247,6 @@ Boolean nvim_buf_detach(uint64_t channel_id, Buffer buffer, Error *err)
 }
 
 void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *err)
-  FUNC_API_LUA_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -1531,12 +1530,6 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   option is still used for hard tabs. By default lines are
 ///                   placed below the buffer line containing the mark.
 ///
-///                   Note: currently virtual lines are limited to one block
-///                   per buffer. Thus setting a new mark disables any previous
-///                   `virt_lines` decoration. However plugins should not rely
-///                   on this behaviour, as this limitation is planned to be
-///                   removed.
-///
 ///               - virt_lines_above: place virtual lines above instead.
 ///               - virt_lines_leftcol: Place extmarks in the leftmost
 ///                                     column of the window, bypassing
@@ -1680,9 +1673,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
-  VirtLines virt_lines = KV_INITIAL_VALUE;
-  bool virt_lines_above = false;
   bool virt_lines_leftcol = false;
+  OPTION_TO_BOOL(virt_lines_leftcol, virt_lines_leftcol, false);
 
   if (opts->virt_lines.type == kObjectTypeArray) {
     Array a = opts->virt_lines.data.array;
@@ -1693,7 +1685,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       }
       int dummig;
       VirtText jtem = parse_virt_text(a.items[j].data.array, err, &dummig);
-      kv_push(virt_lines, jtem);
+      kv_push(decor.virt_lines, ((struct virt_line){ jtem, virt_lines_leftcol }));
       if (ERROR_SET(err)) {
         goto error;
       }
@@ -1703,8 +1695,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
-  OPTION_TO_BOOL(virt_lines_above, virt_lines_above, false);
-  OPTION_TO_BOOL(virt_lines_leftcol, virt_lines_leftcol, false);
+
+  OPTION_TO_BOOL(decor.virt_lines_above, virt_lines_above, false);
 
   if (opts->priority.type == kObjectTypeInteger) {
     Integer val = opts->priority.data.integer;
@@ -1774,7 +1766,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (ephemeral) {
     d = &decor;
-  } else if (kv_size(decor.virt_text)
+  } else if (kv_size(decor.virt_text) || kv_size(decor.virt_lines)
              || decor.priority != DECOR_PRIORITY_BASE
              || decor.hl_eol) {
     // TODO(bfredl): this is a bit sketchy. eventually we should
@@ -1794,22 +1786,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       goto error;
     }
 
-    if (kv_size(virt_lines) && buf->b_virt_line_mark) {
-      mtpos_t pos = marktree_lookup(buf->b_marktree, buf->b_virt_line_mark, NULL);
-      clear_virt_lines(buf, pos.row);  // handles pos.row == -1
-    }
+    extmark_set(buf, (uint64_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
+                d, right_gravity, end_right_gravity, kExtmarkNoUndo);
 
-    uint64_t mark = extmark_set(buf, (uint64_t)ns_id, &id, (int)line, (colnr_T)col,
-                                line2, col2, d, right_gravity,
-                                end_right_gravity, kExtmarkNoUndo);
-
-    if (kv_size(virt_lines)) {
-      buf->b_virt_lines = virt_lines;
-      buf->b_virt_line_mark = mark;
-      buf->b_virt_line_pos = -1;
-      buf->b_virt_line_above = virt_lines_above;
-      buf->b_virt_line_leftcol = virt_lines_leftcol;
-      redraw_buf_line_later(buf, MIN(buf->b_ml.ml_line_count, line+1+(virt_lines_above?0:1)));
+    if (kv_size(decor.virt_lines)) {
+      redraw_buf_line_later(buf, MIN(buf->b_ml.ml_line_count, line+1+(decor.virt_lines_above?0:1)));
     }
   }
 
@@ -2013,6 +1994,7 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
   // this exists to debug issues
   PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
   PUT(rv, "dirty_bytes2", INTEGER_OBJ((Integer)buf->deleted_bytes2));
+  PUT(rv, "virt_blocks", INTEGER_OBJ((Integer)buf->b_virt_line_blocks));
 
   u_header_T *uhp = NULL;
   if (buf->b_u_curhead != NULL) {

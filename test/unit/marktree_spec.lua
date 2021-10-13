@@ -97,7 +97,7 @@ describe('marktree', function()
     for i = 1,100 do
       for j = 1,100 do
         local gravitate = (i%2) > 0
-        local id = tonumber(lib.marktree_put(tree, j, i, gravitate))
+        local id = tonumber(lib.marktree_put(tree, j, i, gravitate, 0))
         ok(id > 0)
         eq(nil, shadow[id])
         shadow[id] = {j,i,gravitate}
@@ -191,7 +191,7 @@ describe('marktree', function()
     -- https://github.com/neovim/neovim/pull/14719
     lib.marktree_clear(tree)
     for i = 1,20 do
-      lib.marktree_put(tree, i, i, false)
+      lib.marktree_put(tree, i, i, false, 0)
     end
 
     lib.marktree_itr_get(tree, 10, 10, iter)
