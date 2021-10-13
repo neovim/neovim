@@ -165,10 +165,7 @@ static void tinput_flush(TermInput *input)
 
 static void tinput_enqueue(TermInput *input, char *buf, size_t size)
 {
-  if (rbuffer_size(input->key_buffer) >
-      rbuffer_capacity(input->key_buffer) - 0xff) {
-    // don't ever let the buffer get too full or we risk putting incomplete keys
-    // into it
+  if (rbuffer_space(input->key_buffer) < size) {
     tinput_flush(input);
   }
   rbuffer_write(input->key_buffer, buf, size);
