@@ -712,7 +712,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
     }
     fn = (String) {
       .data = (char *)di->di_tv.vval.v_string,
-      .size = strlen((char *)di->di_tv.vval.v_string),
+      .size = STRLEN(di->di_tv.vval.v_string),
     };
   }
 

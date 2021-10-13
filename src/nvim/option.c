@@ -2072,9 +2072,9 @@ static void check_string_option(char_u **pp)
 /// Return true when option "opt" was set from a modeline or in secure mode.
 /// Return false when it wasn't.
 /// Return -1 for an unknown option.
-int was_set_insecurely(win_T *const wp, char_u *opt, int opt_flags)
+int was_set_insecurely(win_T *const wp, char *opt, int opt_flags)
 {
-  int idx = findoption((const char *)opt);
+  int idx = findoption(opt);
 
   if (idx >= 0) {
     uint32_t *flagp = insecure_flag(wp, idx, opt_flags);
@@ -3288,7 +3288,7 @@ ambw_end:
       if (p > q) {
         vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
                      (int)(p - q), q);
-        source_runtime(fname, DIP_ALL);
+        source_runtime((char *)fname, DIP_ALL);
       }
     }
   }

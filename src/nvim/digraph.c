@@ -1843,12 +1843,12 @@ char_u *keymap_init(void)
     vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
                  curbuf->b_p_keymap, p_enc);
 
-    if (source_runtime((char_u *)buf, 0) == FAIL) {
+    if (source_runtime(buf, 0) == FAIL) {
       // try finding "keymap/'keymap'.vim" in 'runtimepath'
       vim_snprintf(buf, buflen, "keymap/%s.vim",
                    curbuf->b_p_keymap);
 
-      if (source_runtime((char_u *)buf, 0) == FAIL) {
+      if (source_runtime(buf, 0) == FAIL) {
         xfree(buf);
         return (char_u *)N_("E544: Keymap file not found");
       }

@@ -669,7 +669,7 @@ EXTERN bool swap_exists_did_quit INIT(= false);
 
 EXTERN char_u IObuff[IOSIZE];               ///< Buffer for sprintf, I/O, etc.
 EXTERN char_u NameBuff[MAXPATHL];           ///< Buffer for expanding file names
-EXTERN char_u msg_buf[MSG_BUF_LEN];         ///< Small buffer for messages
+EXTERN char msg_buf[MSG_BUF_LEN];           ///< Small buffer for messages
 EXTERN char os_buf[                         ///< Buffer for the os/ layer
 #if MAXPATHL > IOSIZE
                                             MAXPATHL
@@ -982,9 +982,8 @@ EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 
 EXTERN char_u e_autocmd_err[] INIT(=N_("E5500: autocmd has thrown an exception: %s"));
 EXTERN char_u e_cmdmap_err[] INIT(=N_("E5520: <Cmd> mapping must end with <CR>"));
-EXTERN char_u e_cmdmap_repeated[] INIT(=
-                                         N_(
-                                          "E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
+EXTERN char_u
+e_cmdmap_repeated[] INIT(=N_("E5521: <Cmd> mapping must end with <CR> before second <Cmd>"));
 EXTERN char_u e_cmdmap_key[] INIT(=N_("E5522: <Cmd> mapping must not include %s key"));
 
 EXTERN char_u e_api_error[] INIT(=N_("E5555: API call: %s"));

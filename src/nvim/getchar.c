@@ -2660,12 +2660,11 @@ void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len, const
   char_u *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &lhs_buf,
                                        true, true, true, cpo_flags);
   mapargs->lhs_len = STRLEN(replaced);
-  xstrlcpy((char *)mapargs->lhs, (char *)replaced, sizeof(mapargs->lhs));
+  STRLCPY(mapargs->lhs, replaced, sizeof(mapargs->lhs));
 
   mapargs->orig_rhs_len = orig_rhs_len;
   mapargs->orig_rhs = xcalloc(mapargs->orig_rhs_len + 1, sizeof(char_u));
-  xstrlcpy((char *)mapargs->orig_rhs, (char *)orig_rhs,
-           mapargs->orig_rhs_len + 1);
+  STRLCPY(mapargs->orig_rhs, orig_rhs, mapargs->orig_rhs_len + 1);
 
   if (STRICMP(orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
     mapargs->rhs = xcalloc(1, sizeof(char_u));  // single null-char
@@ -2677,7 +2676,7 @@ void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len, const
     mapargs->rhs_len = STRLEN(replaced);
     mapargs->rhs_is_noop = false;
     mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
-    xstrlcpy((char *)mapargs->rhs, (char *)replaced, mapargs->rhs_len + 1);
+    STRLCPY(mapargs->rhs, replaced, mapargs->rhs_len + 1);
   }
 
   xfree(lhs_buf);
@@ -2785,7 +2784,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
   size_t orig_lhs_len = (size_t)(lhs_end - to_parse);
   char_u *lhs_to_replace = xcalloc(orig_lhs_len + 1, sizeof(char_u));
-  xstrlcpy((char *)lhs_to_replace, (char *)to_parse, orig_lhs_len + 1);
+  STRLCPY(lhs_to_replace, to_parse, orig_lhs_len + 1);
 
   size_t orig_rhs_len = STRLEN(rhs_start);
   set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,

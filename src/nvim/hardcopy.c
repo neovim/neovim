@@ -551,7 +551,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
     curwin->w_botline = lnum + 63;
     printer_page_num = pagenum;
 
-    use_sandbox = was_set_insecurely(curwin, (char_u *)"printheader", 0);
+    use_sandbox = was_set_insecurely(curwin, "printheader", 0);
     build_stl_str_hl(curwin, tbuf, (size_t)width + IOSIZE,
                      p_header, use_sandbox,
                      ' ', width, NULL, NULL);

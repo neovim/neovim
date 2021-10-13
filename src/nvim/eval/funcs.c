@@ -4362,7 +4362,7 @@ static void f_globpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     globpath((char_u *)tv_get_string(&argvars[0]), (char_u *)file, &ga, flags);
 
     if (rettv->v_type == VAR_STRING) {
-      rettv->vval.v_string = ga_concat_strings_sep(&ga, "\n");
+      rettv->vval.v_string = (char_u *)ga_concat_strings_sep(&ga, "\n");
     } else {
       tv_list_alloc_ret(rettv, ga.ga_len);
       for (int i = 0; i < ga.ga_len; i++) {

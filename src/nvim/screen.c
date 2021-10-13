@@ -5465,7 +5465,7 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
     fillchar = ' ';
     attr = HL_ATTR(HLF_TPF);
     maxwidth = Columns;
-    use_sandbox = was_set_insecurely(wp, (char_u *)"tabline", 0);
+    use_sandbox = was_set_insecurely(wp, "tabline", 0);
   } else {
     row = W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
@@ -5500,15 +5500,14 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
         attr = HL_ATTR(HLF_MSG);
       }
 
-      use_sandbox = was_set_insecurely(wp, (char_u *)"rulerformat", 0);
+      use_sandbox = was_set_insecurely(wp, "rulerformat", 0);
     } else {
       if (*wp->w_p_stl != NUL) {
         stl = wp->w_p_stl;
       } else {
         stl = p_stl;
       }
-      use_sandbox = was_set_insecurely(wp, (char_u *)"statusline",
-                                       *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
+      use_sandbox = was_set_insecurely(wp, "statusline", *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
 
     col += wp->w_wincol;
