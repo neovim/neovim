@@ -52,33 +52,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 
-
 /// Growarray to store info about already sourced scripts.
-/// Also store the dev/ino, so that we don't have to stat() each
-/// script when going through the list.
-typedef struct scriptitem_S {
-  char_u *sn_name;
-  bool file_id_valid;
-  FileID file_id;
-  bool sn_prof_on;              ///< true when script is/was profiled
-  bool sn_pr_force;             ///< forceit: profile functions in this script
-  proftime_T sn_pr_child;       ///< time set when going into first child
-  int sn_pr_nest;               ///< nesting for sn_pr_child
-  // profiling the script as a whole
-  int sn_pr_count;              ///< nr of times sourced
-  proftime_T sn_pr_total;       ///< time spent in script + children
-  proftime_T sn_pr_self;        ///< time spent in script itself
-  proftime_T sn_pr_start;       ///< time at script start
-  proftime_T sn_pr_children;    ///< time in children after script start
-  // profiling the script per line
-  garray_T sn_prl_ga;           ///< things stored for every line
-  proftime_T sn_prl_start;      ///< start time for current line
-  proftime_T sn_prl_children;   ///< time spent in children for this line
-  proftime_T sn_prl_wait;       ///< wait start time for current line
-  linenr_T sn_prl_idx;          ///< index of line being timed; -1 if none
-  int sn_prl_execed;            ///< line being timed was executed
-} scriptitem_T;
-
 static garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
 #define SCRIPT_ITEM(id) (((scriptitem_T *)script_items.ga_data)[(id) - 1])
 
@@ -1944,7 +1918,7 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
 /// @param  name  File name of the script. NULL for anonymous :source.
 /// @param[out]  sid_out  SID of the new item.
 /// @return pointer to the created script item.
-static scriptitem_T *new_script_item(char_u *const name, scid_T *const sid_out)
+scriptitem_T *new_script_item(char_u *const name, scid_T *const sid_out)
 {
   static scid_T last_current_SID = 0;
   const scid_T sid = ++last_current_SID;
@@ -1978,7 +1952,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   sourcing_lnum = 0;
 
   const sctx_T save_current_sctx = current_sctx;
-  new_script_item(NULL, &current_sctx.sc_sid);
+  current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
   funccal_entry_T entry;
