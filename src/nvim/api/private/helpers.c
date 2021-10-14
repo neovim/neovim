@@ -1681,3 +1681,15 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
   }
   return res;
 }
+
+/// Get default statusline highlight for window
+const char *get_default_stl_hl(win_T *wp)
+{
+  if (wp == NULL) {
+    return "TabLineFill";
+  } else if (wp == curwin) {
+    return "StatusLine";
+  } else {
+    return "StatusLineNC";
+  }
+}

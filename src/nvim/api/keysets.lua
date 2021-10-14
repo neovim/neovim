@@ -51,5 +51,12 @@ return {
   runtime = {
     "is_lua";
   };
+  eval_statusline = {
+    "winid";
+    "maxwidth";
+    "fillchar";
+    "highlights";
+    "use_tabline";
+  };
 }
 
