@@ -1640,10 +1640,10 @@ void ex_compiler(exarg_T *eap)
     do_unlet(S_LEN("b:current_compiler"), true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
-    if (source_runtime(buf, DIP_ALL) == FAIL) {
+    if (source_runtime((char *)buf, DIP_ALL) == FAIL) {
       // Try lua compiler
       snprintf((char *)buf, bufsize, "compiler/%s.lua", eap->arg);
-      if (source_runtime(buf, DIP_ALL) == FAIL) {
+      if (source_runtime((char *)buf, DIP_ALL) == FAIL) {
         EMSG2(_("E666: compiler not supported: %s"), eap->arg);
       }
     }
@@ -1823,7 +1823,7 @@ static void cmd_source(char_u *fname, exarg_T *eap)
                || eap->cstack->cs_idx >= 0);
 
     // ":source" read ex commands
-  } else if (do_source(fname, false, DOSO_NONE) == FAIL) {
+  } else if (do_source((char *)fname, false, DOSO_NONE) == FAIL) {
     EMSG2(_(e_notopen), fname);
   }
 }
@@ -2027,7 +2027,7 @@ int do_source_str(const char *cmd, const char *traceback_name)
 /// @param is_vimrc     DOSO_ value
 ///
 /// @return FAIL if file could not be opened, OK otherwise
-int do_source(char_u *fname, int check_other, int is_vimrc)
+int do_source(char *fname, int check_other, int is_vimrc)
 {
   struct source_cookie cookie;
   char_u *save_sourcing_name;
@@ -2043,7 +2043,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   proftime_T wait_start;
   bool trigger_source_post = false;
 
-  p = expand_env_save(fname);
+  p = expand_env_save((char_u *)fname);
   if (p == NULL) {
     return retval;
   }

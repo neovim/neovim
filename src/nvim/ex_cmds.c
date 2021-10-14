@@ -1439,11 +1439,11 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
 
     if (linecount > p_report) {
       if (do_in) {
-        vim_snprintf((char *)msg_buf, sizeof(msg_buf),
+        vim_snprintf(msg_buf, sizeof(msg_buf),
                      _("%" PRId64 " lines filtered"), (int64_t)linecount);
-        if (msg(msg_buf) && !msg_scroll) {
+        if (msg((char_u *)msg_buf) && !msg_scroll) {
           // save message to display it after redraw
-          set_keep_msg(msg_buf, 0);
+          set_keep_msg((char_u *)msg_buf, 0);
         }
       } else {
         msgmore((long)linecount);
@@ -4451,24 +4451,24 @@ bool do_sub_msg(bool count_only)
       *msg_buf = NUL;
     }
     if (sub_nsubs == 1) {
-      vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
+      vim_snprintf_add(msg_buf, sizeof(msg_buf),
                        "%s", count_only ? _("1 match") : _("1 substitution"));
     } else {
-      vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
+      vim_snprintf_add(msg_buf, sizeof(msg_buf),
                        count_only ? _("%" PRId64 " matches")
                                   : _("%" PRId64 " substitutions"),
                        (int64_t)sub_nsubs);
     }
     if (sub_nlines == 1) {
-      vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
+      vim_snprintf_add(msg_buf, sizeof(msg_buf),
                        "%s", _(" on 1 line"));
     } else {
-      vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
+      vim_snprintf_add(msg_buf, sizeof(msg_buf),
                        _(" on %" PRId64 " lines"), (int64_t)sub_nlines);
     }
-    if (msg(msg_buf)) {
+    if (msg((char_u *)msg_buf)) {
       // save message to display it after redraw
-      set_keep_msg(msg_buf, 0);
+      set_keep_msg((char_u *)msg_buf, 0);
     }
     return true;
   }
@@ -5800,8 +5800,7 @@ void ex_helptags(exarg_T *eap)
   }
 
   if (STRCMP(eap->arg, "ALL") == 0) {
-    do_in_path(p_rtp, (char_u *)"doc", DIP_ALL + DIP_DIR,
-               helptags_cb, &add_help_tags);
+    do_in_path(p_rtp, "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
   } else {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_DIRECTORIES;

@@ -1658,8 +1658,7 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
   set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
   char *res = (char *)eval_to_string_safe(curbuf->b_p_inex, NULL,
-                                          was_set_insecurely(curwin, (char_u *)"includeexpr",
-                                                             OPT_LOCAL));
+                                          was_set_insecurely(curwin, "includeexpr", OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;
 }
@@ -2038,7 +2037,7 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
   }
 
   assert(dir_name != NULL);
-  size_t len = strlen((char *)dir_name);
+  size_t len = STRLEN(dir_name);
 
   // If dir_name is a path head, full_path can always be made relative.
   if (len == (size_t)path_head_length() && is_path_head(dir_name)) {

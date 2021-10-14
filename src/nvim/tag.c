@@ -906,7 +906,7 @@ static int add_llist_tags(char_u *tag, int num_matches, char_u **matches)
     if (len > 128) {
       len = 128;
     }
-    xstrlcpy((char *)tag_name, (const char *)tagp.tagname, len + 1);
+    STRLCPY(tag_name, tagp.tagname, len + 1);
     tag_name[len] = NUL;
 
     // Save the tag file name
@@ -914,7 +914,7 @@ static int add_llist_tags(char_u *tag, int num_matches, char_u **matches)
     if (p == NULL) {
       continue;
     }
-    xstrlcpy((char *)fname, (const char *)p, MAXPATHL);
+    STRLCPY(fname, p, MAXPATHL);
     XFREE_CLEAR(p);
 
     // Get the line number or the search pattern used to locate

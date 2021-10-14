@@ -143,14 +143,14 @@ void ga_remove_duplicate_strings(garray_T *gap)
 /// @param sep
 ///
 /// @returns the concatenated strings
-char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
+char *ga_concat_strings_sep(const garray_T *gap, const char *sep)
   FUNC_ATTR_NONNULL_RET
 {
   const size_t nelem = (size_t)gap->ga_len;
   const char **strings = gap->ga_data;
 
   if (nelem == 0) {
-    return (char_u *)xstrdup("");
+    return xstrdup("");
   }
 
   size_t len = 0;
@@ -169,7 +169,7 @@ char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
   }
   strcpy(s, strings[nelem - 1]);
 
-  return (char_u *)ret;
+  return ret;
 }
 
 /// For a growing array that contains a list of strings: concatenate all the
@@ -180,7 +180,7 @@ char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
 /// @returns the concatenated strings
 char_u *ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 {
-  return ga_concat_strings_sep(gap, ",");
+  return (char_u *)ga_concat_strings_sep(gap, ",");
 }
 
 /// Concatenate a string to a growarray which contains characters.
@@ -198,7 +198,7 @@ void ga_concat(garray_T *gap, const char *restrict s)
     return;
   }
 
-  ga_concat_len(gap, s, strlen((char *)s));
+  ga_concat_len(gap, s, STRLEN(s));
 }
 
 /// Concatenate a string to a growarray which contains characters

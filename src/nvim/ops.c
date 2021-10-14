@@ -4253,7 +4253,7 @@ void op_formatexpr(oparg_T *oap)
 /// @param c  character to be inserted
 int fex_format(linenr_T lnum, long count, int c)
 {
-  int use_sandbox = was_set_insecurely(curwin, (char_u *)"formatexpr", OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(curwin, "formatexpr", OPT_LOCAL);
   int r;
   char_u *fex;
 
@@ -4817,7 +4817,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
       if (change_cnt == 1) {
         MSG(_("1 line changed"));
       } else {
-        smsg((char *)_("%" PRId64 " lines changed"), (int64_t)change_cnt);
+        smsg(_("%" PRId64 " lines changed"), (int64_t)change_cnt);
       }
     }
   }
@@ -6056,7 +6056,7 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
 
 void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
 {
-  if (reg->y_size > 0 && strlen((char *)reg->y_array[reg->y_size-1]) == 0) {
+  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size-1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
     // but otherwise there is no line after the final newline
     if (reg->y_type != kMTCharWise) {
@@ -6121,7 +6121,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
       goto err;
     }
     char_u *regtype = TV_LIST_ITEM_TV(tv_list_last(res))->vval.v_string;
-    if (regtype == NULL || strlen((char *)regtype) > 1) {
+    if (regtype == NULL || STRLEN(regtype) > 1) {
       goto err;
     }
     switch (regtype[0]) {
@@ -6164,7 +6164,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_array[tv_idx++] = (char_u *)xstrdupnul((const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 
-  if (reg->y_size > 0 && strlen((char *)reg->y_array[reg->y_size-1]) == 0) {
+  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size-1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
     // but otherwise there is no line after the final newline
     if (reg->y_type != kMTCharWise) {

@@ -1191,7 +1191,7 @@ int eval_foldexpr(char_u *arg, int *cp)
 {
   typval_T tv;
   varnumber_T retval;
-  int use_sandbox = was_set_insecurely(curwin, (char_u *)"foldexpr", OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(curwin, "foldexpr", OPT_LOCAL);
 
   ++emsg_off;
   if (use_sandbox) {
@@ -10224,7 +10224,7 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
     }
 
     // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
-    if (source_runtime((char_u *)scriptname, 0) == OK) {
+    if (source_runtime(scriptname, 0) == OK) {
       ret = true;
     }
   }

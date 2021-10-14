@@ -696,18 +696,18 @@ void msgmore(long n)
       }
     } else {
       if (n > 0) {
-        vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
+        vim_snprintf(msg_buf, MSG_BUF_LEN,
                      _("%" PRId64 " more lines"), (int64_t)pn);
       } else {
-        vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
+        vim_snprintf(msg_buf, MSG_BUF_LEN,
                      _("%" PRId64 " fewer lines"), (int64_t)pn);
       }
     }
     if (got_int) {
-      xstrlcat((char *)msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
+      xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
     }
-    if (msg(msg_buf)) {
-      set_keep_msg(msg_buf, 0);
+    if (msg((char_u *)msg_buf)) {
+      set_keep_msg((char_u *)msg_buf, 0);
       keep_msg_more = true;
     }
   }

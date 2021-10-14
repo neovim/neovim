@@ -1628,8 +1628,8 @@ static int qf_parse_multiline_pfx(int idx, qf_list_T *qfl, qffields_T *fields)
       return QF_FAIL;
     }
     if (*fields->errmsg) {
-      size_t textlen = strlen((char *)qfprev->qf_text);
-      size_t errlen  = strlen((char *)fields->errmsg);
+      size_t textlen = STRLEN(qfprev->qf_text);
+      size_t errlen  = STRLEN(fields->errmsg);
       qfprev->qf_text = xrealloc(qfprev->qf_text, textlen + errlen + 2);
       qfprev->qf_text[textlen] = '\n';
       STRCPY(qfprev->qf_text + textlen + 1, fields->errmsg);

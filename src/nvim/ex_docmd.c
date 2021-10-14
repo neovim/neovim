@@ -9433,14 +9433,14 @@ static void ex_filetype(exarg_T *eap)
   }
   if (STRCMP(arg, "on") == 0 || STRCMP(arg, "detect") == 0) {
     if (*arg == 'o' || !filetype_detect) {
-      source_runtime((char_u *)FILETYPE_FILE, DIP_ALL);
+      source_runtime(FILETYPE_FILE, DIP_ALL);
       filetype_detect = kTrue;
       if (plugin) {
-        source_runtime((char_u *)FTPLUGIN_FILE, DIP_ALL);
+        source_runtime(FTPLUGIN_FILE, DIP_ALL);
         filetype_plugin = kTrue;
       }
       if (indent) {
-        source_runtime((char_u *)INDENT_FILE, DIP_ALL);
+        source_runtime(INDENT_FILE, DIP_ALL);
         filetype_indent = kTrue;
       }
     }
@@ -9451,15 +9451,15 @@ static void ex_filetype(exarg_T *eap)
   } else if (STRCMP(arg, "off") == 0) {
     if (plugin || indent) {
       if (plugin) {
-        source_runtime((char_u *)FTPLUGOF_FILE, DIP_ALL);
+        source_runtime(FTPLUGOF_FILE, DIP_ALL);
         filetype_plugin = kFalse;
       }
       if (indent) {
-        source_runtime((char_u *)INDOFF_FILE, DIP_ALL);
+        source_runtime(INDOFF_FILE, DIP_ALL);
         filetype_indent = kFalse;
       }
     } else {
-      source_runtime((char_u *)FTOFF_FILE, DIP_ALL);
+      source_runtime(FTOFF_FILE, DIP_ALL);
       filetype_detect = kFalse;
     }
   } else {
@@ -9471,15 +9471,15 @@ static void ex_filetype(exarg_T *eap)
 void filetype_maybe_enable(void)
 {
   if (filetype_detect == kNone) {
-    source_runtime((char_u *)FILETYPE_FILE, true);
+    source_runtime(FILETYPE_FILE, true);
     filetype_detect = kTrue;
   }
   if (filetype_plugin == kNone) {
-    source_runtime((char_u *)FTPLUGIN_FILE, true);
+    source_runtime(FTPLUGIN_FILE, true);
     filetype_plugin = kTrue;
   }
   if (filetype_indent == kNone) {
-    source_runtime((char_u *)INDENT_FILE, true);
+    source_runtime(INDENT_FILE, true);
     filetype_indent = kTrue;
   }
 }

@@ -1700,7 +1700,7 @@ static void do_system_initialization(void)
       memcpy(vimrc, dir, dir_len);
       vimrc[dir_len] = PATHSEP;
       memcpy(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
-      if (do_source((char_u *)vimrc, false, DOSO_NONE) != FAIL) {
+      if (do_source(vimrc, false, DOSO_NONE) != FAIL) {
         xfree(vimrc);
         xfree(config_dirs);
         return;
@@ -1712,7 +1712,7 @@ static void do_system_initialization(void)
 
 #ifdef SYS_VIMRC_FILE
   // Get system wide defaults, if the file name is defined.
-  (void)do_source((char_u *)SYS_VIMRC_FILE, false, DOSO_NONE);
+  (void)do_source(SYS_VIMRC_FILE, false, DOSO_NONE);
 #endif
 }
 
@@ -1741,7 +1741,7 @@ static bool do_user_initialization(void)
 
   // init.lua
   if (os_path_exists(init_lua_path)
-      && do_source(init_lua_path, true, DOSO_VIMRC)) {
+      && do_source((char *)init_lua_path, true, DOSO_VIMRC)) {
     if (os_path_exists(user_vimrc)) {
       EMSG3(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
             user_vimrc);
@@ -1754,7 +1754,7 @@ static bool do_user_initialization(void)
   xfree(init_lua_path);
 
   // init.vim
-  if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
+  if (do_source((char *)user_vimrc, true, DOSO_VIMRC) != FAIL) {
     do_exrc = p_exrc;
     if (do_exrc) {
       do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc,
@@ -1782,7 +1782,7 @@ static bool do_user_initialization(void)
       memmove(vimrc, dir, dir_len);
       vimrc[dir_len] = PATHSEP;
       memmove(vimrc + dir_len + 1, path_tail, sizeof(path_tail));
-      if (do_source((char_u *)vimrc, true, DOSO_VIMRC) != FAIL) {
+      if (do_source(vimrc, true, DOSO_VIMRC) != FAIL) {
         do_exrc = p_exrc;
         if (do_exrc) {
           do_exrc = (path_full_compare((char_u *)VIMRC_FILE, (char_u *)vimrc,
@@ -1814,7 +1814,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
         || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
-      if (do_source((char_u *)parmp->use_vimrc, false, DOSO_NONE) != OK) {
+      if (do_source(parmp->use_vimrc, false, DOSO_NONE) != OK) {
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
       }
     }
@@ -1835,7 +1835,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 #endif
       secure = p_secure;
 
-      if (do_source((char_u *)VIMRC_FILE, true, DOSO_VIMRC) == FAIL) {
+      if (do_source(VIMRC_FILE, true, DOSO_VIMRC) == FAIL) {
 #if defined(UNIX)
         // if ".exrc" is not owned by user set 'secure' mode
         if (!file_owned(EXRC_FILE)) {
@@ -1844,7 +1844,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
           secure = 0;
         }
 #endif
-        (void)do_source((char_u *)EXRC_FILE, false, DOSO_NONE);
+        (void)do_source(EXRC_FILE, false, DOSO_NONE);
       }
     }
     if (secure == 2) {
