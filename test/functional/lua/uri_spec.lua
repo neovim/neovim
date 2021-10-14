@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local write_file = require('test.helpers').write_file
 
 describe('URI methods', function()
   before_each(function()
@@ -156,6 +157,22 @@ describe('URI methods', function()
       end)
     end)
 
+  end)
+
+  describe('uri from bufnr', function()
+    it('Windows paths should not be treated as uris', function()
+      if not helpers.iswin() then return end
+
+      local file = helpers.tmpname()
+      write_file(file, 'Test content')
+        local test_case = string.format([[
+          local file = '%s'
+          return vim.uri_from_bufnr(vim.fn.bufadd(file))
+        ]], file)
+        local expected_uri = 'file:///' .. file:gsub("\\", "/")
+        eq(expected_uri, exec_lua(test_case))
+        os.remove(file)
+    end)
   end)
 
   describe('uri to bufnr', function()
