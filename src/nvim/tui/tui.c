@@ -15,6 +15,8 @@
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
+
+#include "nvim/autocmd.h"
 #include "nvim/ascii.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
@@ -489,7 +491,12 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
   }
 
   tui_guess_size(ui);
+  loop_schedule_deferred(&main_loop, event_create(sigwinch_event, 0));
   ui_schedule_refresh();
+}
+
+static void sigwinch_event(void **arg) {
+  apply_autocmds(EVENT_SIGNAL, (char_u *)"SIGWINCH" , NULL, false, curbuf);
 }
 
 static bool attrs_differ(UI *ui, int id1, int id2, bool rgb)
