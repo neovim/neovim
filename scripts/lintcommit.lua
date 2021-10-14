@@ -106,7 +106,7 @@ end
 function M.main(opt)
   _trace = not opt or not not opt.trace
 
-  local branch = run({'git', 'branch', '--show-current'}, true)
+  local branch = run({'git', 'rev-parse', '--abbrev-ref', 'HEAD'}, true)
   -- TODO(justinmk): check $GITHUB_REF
   local ancestor = run({'git', 'merge-base', 'origin/master', branch})
   if not ancestor then
