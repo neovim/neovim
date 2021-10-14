@@ -3510,7 +3510,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
           xfree(wp->w_p_lcs_chars.multispace);
         }
         if (multispace_len > 0) {
-          wp->w_p_lcs_chars.multispace = xmalloc((size_t)(multispace_len + 1) * sizeof(int));
+          wp->w_p_lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(int));
           wp->w_p_lcs_chars.multispace[multispace_len] = NUL;
         } else {
           wp->w_p_lcs_chars.multispace = NULL;
