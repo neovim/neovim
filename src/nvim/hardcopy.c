@@ -461,10 +461,10 @@ static void prt_line_number(prt_settings_T *const psettings, const int page_line
 
   // Leave two spaces between the number and the text; depends on
   // PRINT_NUMBER_WIDTH.
-  char_u tbuf[20];
-  snprintf((char *)tbuf, sizeof(tbuf), "%6ld", (long)lnum);
+  char tbuf[20];
+  snprintf(tbuf, sizeof(tbuf), "%6ld", (long)lnum);
   for (int i = 0; i < 6; i++) {
-    (void)mch_print_text_out(&tbuf[i], 1);
+    (void)mch_print_text_out((char_u *)(&tbuf[i]), 1);
   }
 
   if (psettings->do_syntax) {
@@ -669,7 +669,7 @@ void ex_hardcopy(exarg_T *eap)
 
   // Syntax highlighting of line numbers.
   if (prt_use_number() && settings.do_syntax) {
-    int id = syn_name2id((char_u *)"LineNr");
+    int id = syn_name2id("LineNr");
     if (id > 0) {
       id = syn_get_final_id(id);
     }
@@ -1310,7 +1310,7 @@ static int prt_collate;
 /*
  * Buffers used when generating PostScript output
  */
-static char_u prt_line_buffer[257];
+static char prt_line_buffer[257];
 static garray_T prt_ps_buffer = GA_EMPTY_INIT_VALUE;
 
 static int prt_do_conv;
@@ -1334,9 +1334,9 @@ static void prt_write_file_raw_len(char_u *buffer, size_t bytes)
   }
 }
 
-static void prt_write_file(char_u *buffer)
+static void prt_write_file(char *buffer)
 {
-  prt_write_file_len(buffer, STRLEN(buffer));
+  prt_write_file_len((char_u *)buffer, STRLEN(buffer));
 }
 
 static void prt_write_file_len(char_u *buffer, size_t bytes)
@@ -1349,7 +1349,7 @@ static void prt_write_file_len(char_u *buffer, size_t bytes)
  */
 static void prt_write_string(char *s)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer), "%s", s);
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%s", s);
   prt_write_file(prt_line_buffer);
 }
 
@@ -1358,7 +1358,7 @@ static void prt_write_string(char *s)
  */
 static void prt_write_int(int i)
 {
-  sprintf((char *)prt_line_buffer, "%d ", i);
+  snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%d ", i);
   prt_write_file(prt_line_buffer);
 }
 
@@ -1367,7 +1367,7 @@ static void prt_write_int(int i)
  */
 static void prt_write_boolean(int b)
 {
-  sprintf((char *)prt_line_buffer, "%s ", (b ? "T" : "F"));
+  snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%s ", (b ? "T" : "F"));
   prt_write_file(prt_line_buffer);
 }
 
@@ -1376,14 +1376,14 @@ static void prt_write_boolean(int b)
  */
 static void prt_def_font(char *new_name, char *encoding, int height, char *font)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "/_%s /VIM-%s /%s ref\n", new_name, encoding, font);
   prt_write_file(prt_line_buffer);
   if (prt_out_mbyte) {
-    sprintf((char *)prt_line_buffer, "/%s %d %f /_%s sffs\n",
-            new_name, height, 500./prt_ps_courier_font.wx, new_name);
+    snprintf(prt_line_buffer, sizeof(prt_line_buffer), "/%s %d %f /_%s sffs\n",
+             new_name, height, 500./prt_ps_courier_font.wx, new_name);
   } else {
-    vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+    vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                  "/%s %d /_%s ffs\n", new_name, height, new_name);
   }
   prt_write_file(prt_line_buffer);
@@ -1394,10 +1394,10 @@ static void prt_def_font(char *new_name, char *encoding, int height, char *font)
  */
 static void prt_def_cidfont(char *new_name, int height, char *cidfont)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "/_%s /%s[/%s] vim_composefont\n", new_name, prt_cmap, cidfont);
   prt_write_file(prt_line_buffer);
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "/%s %d /_%s ffs\n", new_name, height, new_name);
   prt_write_file(prt_line_buffer);
 }
@@ -1407,7 +1407,7 @@ static void prt_def_cidfont(char *new_name, int height, char *cidfont)
  */
 static void prt_dup_cidfont(char *original_name, char *new_name)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "/%s %s d\n", new_name, original_name);
   prt_write_file(prt_line_buffer);
 }
@@ -1444,7 +1444,7 @@ static void prt_write_real(double val, int prec)
 
   prt_real_bits(val, prec, &integer, &fraction);
   // Emit integer part
-  snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer), "%d", integer);
+  snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%d", integer);
   prt_write_file(prt_line_buffer);
   // Only emit fraction if necessary
   if (fraction != 0) {
@@ -1454,11 +1454,11 @@ static void prt_write_real(double val, int prec)
       fraction /= 10;
     }
     // Emit fraction left padded with zeros
-    snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer), ".%0*d",
+    snprintf(prt_line_buffer, sizeof(prt_line_buffer), ".%0*d",
              prec, fraction);
     prt_write_file(prt_line_buffer);
   }
-  sprintf((char *)prt_line_buffer, " ");
+  snprintf(prt_line_buffer, sizeof(prt_line_buffer), " ");
   prt_write_file(prt_line_buffer);
 }
 
@@ -1467,11 +1467,11 @@ static void prt_write_real(double val, int prec)
  */
 static void prt_def_var(char *name, double value, int prec)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "/%s ", name);
   prt_write_file(prt_line_buffer);
   prt_write_real(value, prec);
-  sprintf((char *)prt_line_buffer, "d\n");
+  snprintf(prt_line_buffer, sizeof(prt_line_buffer), "d\n");
   prt_write_file(prt_line_buffer);
 }
 
@@ -1569,8 +1569,8 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   // Look for named resource file in runtimepath
   STRCPY(buffer, "print");
   add_pathsep((char *)buffer);
-  xstrlcat((char *)buffer, name, MAXPATHL);
-  xstrlcat((char *)buffer, ".ps", MAXPATHL);
+  STRLCAT(buffer, name, MAXPATHL);
+  STRLCAT(buffer, ".ps", MAXPATHL);
   resource->filename[0] = NUL;
   retval = (do_in_runtimepath(buffer, 0, prt_resource_name, resource->filename)
             && resource->filename[0] != NUL);
@@ -1833,14 +1833,14 @@ static void prt_dsc_start(void)
 
 static void prt_dsc_noarg(char *comment)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "%%%%%s\n", comment);
   prt_write_file(prt_line_buffer);
 }
 
 static void prt_dsc_textline(char *comment, char *text)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "%%%%%s: %s\n", comment, text);
   prt_write_file(prt_line_buffer);
 }
@@ -1848,7 +1848,7 @@ static void prt_dsc_textline(char *comment, char *text)
 static void prt_dsc_text(char *comment, char *text)
 {
   // TODO(vim): - should scan 'text' for any chars needing escaping!
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "%%%%%s: (%s)\n", comment, text);
   prt_write_file(prt_line_buffer);
 }
@@ -1859,12 +1859,12 @@ static void prt_dsc_ints(char *comment, int count, int *ints)
 {
   int i;
 
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "%%%%%s:", comment);
   prt_write_file(prt_line_buffer);
 
   for (i = 0; i < count; i++) {
-    sprintf((char *)prt_line_buffer, " %d", ints[i]);
+    snprintf(prt_line_buffer, sizeof(prt_line_buffer), " %d", ints[i]);
     prt_write_file(prt_line_buffer);
   }
 
@@ -1876,15 +1876,15 @@ static void prt_dsc_resources(const char *comment, const char *type, const char 
   FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   if (comment != NULL) {
-    vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+    vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                  "%%%%%s: %s", comment, type);
   } else {
-    vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+    vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                  "%%%%+ %s", type);
   }
   prt_write_file(prt_line_buffer);
 
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                " %s\n", string);
   prt_write_file(prt_line_buffer);
 }
@@ -1910,7 +1910,7 @@ static void prt_dsc_requirements(int duplex, int tumble, int collate, int color,
     return;
   }
 
-  sprintf((char *)prt_line_buffer, "%%%%Requirements:");
+  snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%%%%Requirements:");
   prt_write_file(prt_line_buffer);
 
   if (duplex) {
@@ -1928,7 +1928,7 @@ static void prt_dsc_requirements(int duplex, int tumble, int collate, int color,
   if (num_copies > 1) {
     prt_write_string(" numcopies(");
     // Note: no space wanted so don't use prt_write_int()
-    snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer), "%d",
+    snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%d",
              num_copies);
     prt_write_file(prt_line_buffer);
     prt_write_string(")");
@@ -1939,7 +1939,7 @@ static void prt_dsc_requirements(int duplex, int tumble, int collate, int color,
 static void prt_dsc_docmedia(char *paper_name, double width, double height, double weight,
                              char *colour, char *type)
 {
-  vim_snprintf((char *)prt_line_buffer, sizeof(prt_line_buffer),
+  vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
                "%%%%DocumentMedia: %s ", paper_name);
   prt_write_file(prt_line_buffer);
   prt_write_real(width, 2);
@@ -2492,7 +2492,7 @@ int mch_print_begin(prt_settings_T *psettings)
   struct prt_ps_resource_S res_prolog;
   struct prt_ps_resource_S res_encoding;
   char buffer[256];
-  char_u *p_encoding;
+  char *p_encoding;
   char_u *p;
   struct prt_ps_resource_S res_cidfont;
   struct prt_ps_resource_S res_cmap;
@@ -2595,20 +2595,20 @@ int mch_print_begin(prt_settings_T *psettings)
   // that cannot be found then default to "latin1".
   // Note: VIM specific encoding header is always skipped.
   if (!prt_out_mbyte) {
-    p_encoding = enc_skip(p_penc);
+    p_encoding = (char *)enc_skip(p_penc);
     if (*p_encoding == NUL
-        || !prt_find_resource((char *)p_encoding, &res_encoding)) {
+        || !prt_find_resource(p_encoding, &res_encoding)) {
       // 'printencoding' not set or not supported - find alternate
       int props;
 
-      p_encoding = enc_skip(p_enc);
-      props = enc_canon_props(p_encoding);
+      p_encoding = (char *)enc_skip(p_enc);
+      props = enc_canon_props((char_u *)p_encoding);
       if (!(props & ENC_8BIT)
-          || !prt_find_resource((char *)p_encoding, &res_encoding)) {
+          || !prt_find_resource(p_encoding, &res_encoding)) {
         // 8-bit 'encoding' is not supported
         // Use latin1 as default printing encoding
-        p_encoding = (char_u *)"latin1";
-        if (!prt_find_resource((char *)p_encoding, &res_encoding)) {
+        p_encoding = "latin1";
+        if (!prt_find_resource(p_encoding, &res_encoding)) {
           semsg(_("E456: Can't find PostScript resource file \"%s.ps\""),
                 p_encoding);
           return FALSE;
@@ -2621,9 +2621,9 @@ int mch_print_begin(prt_settings_T *psettings)
     // For the moment there are no checks on encoding resource files to
     // perform
   } else {
-    p_encoding = enc_skip(p_penc);
+    p_encoding = (char *)enc_skip(p_penc);
     if (*p_encoding == NUL) {
-      p_encoding = enc_skip(p_enc);
+      p_encoding = (char *)enc_skip(p_enc);
     }
     if (prt_use_courier) {
       // Include ASCII range encoding vector
@@ -2641,9 +2641,9 @@ int mch_print_begin(prt_settings_T *psettings)
   }
 
   prt_conv.vc_type = CONV_NONE;
-  if (!(enc_canon_props(p_enc) & enc_canon_props(p_encoding) & ENC_8BIT)) {
+  if (!(enc_canon_props(p_enc) & enc_canon_props((char_u *)p_encoding) & ENC_8BIT)) {
     // Set up encoding conversion if required
-    if (convert_setup(&prt_conv, p_enc, p_encoding) == FAIL) {
+    if (convert_setup(&prt_conv, p_enc, (char_u *)p_encoding) == FAIL) {
       semsg(_("E620: Unable to convert to print encoding \"%s\""),
             p_encoding);
       return false;
@@ -2766,23 +2766,23 @@ int mch_print_begin(prt_settings_T *psettings)
     // When using Courier for ASCII range when printing multi-byte, need to
     // pick up ASCII encoding to use with it.
     if (prt_use_courier) {
-      p_encoding = (char_u *)prt_ascii_encoding;
+      p_encoding = prt_ascii_encoding;
     }
     prt_dsc_resources("IncludeResource", "font",
                       prt_ps_courier_font.ps_fontname[PRT_PS_FONT_ROMAN]);
-    prt_def_font("F0", (char *)p_encoding, (int)prt_line_height,
+    prt_def_font("F0", p_encoding, (int)prt_line_height,
                  prt_ps_courier_font.ps_fontname[PRT_PS_FONT_ROMAN]);
     prt_dsc_resources("IncludeResource", "font",
                       prt_ps_courier_font.ps_fontname[PRT_PS_FONT_BOLD]);
-    prt_def_font("F1", (char *)p_encoding, (int)prt_line_height,
+    prt_def_font("F1", p_encoding, (int)prt_line_height,
                  prt_ps_courier_font.ps_fontname[PRT_PS_FONT_BOLD]);
     prt_dsc_resources("IncludeResource", "font",
                       prt_ps_courier_font.ps_fontname[PRT_PS_FONT_OBLIQUE]);
-    prt_def_font("F2", (char *)p_encoding, (int)prt_line_height,
+    prt_def_font("F2", p_encoding, (int)prt_line_height,
                  prt_ps_courier_font.ps_fontname[PRT_PS_FONT_OBLIQUE]);
     prt_dsc_resources("IncludeResource", "font",
                       prt_ps_courier_font.ps_fontname[PRT_PS_FONT_BOLDOBLIQUE]);
-    prt_def_font("F3", (char *)p_encoding, (int)prt_line_height,
+    prt_def_font("F3", p_encoding, (int)prt_line_height,
                  prt_ps_courier_font.ps_fontname[PRT_PS_FONT_BOLDOBLIQUE]);
   }
   if (prt_out_mbyte) {
@@ -2865,7 +2865,7 @@ void mch_print_end(prt_settings_T *psettings)
 
   // Write CTRL-D to close serial communication link if used.
   // NOTHING MUST BE WRITTEN AFTER THIS!
-  prt_write_file((char_u *)"\004");
+  prt_write_file("\004");
 
   if (!prt_file_error && psettings->outfile == NULL
       && !got_int && !psettings->user_abort) {

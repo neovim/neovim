@@ -1183,7 +1183,7 @@ static void qf_store_title(qf_list_T *qfl, const char_u *title)
     char_u *p = xmallocz(len);
 
     qfl->qf_title = p;
-    xstrlcpy((char *)p, (const char *)title, len + 1);
+    STRLCPY(p, title, len + 1);
   }
 }
 
@@ -1402,7 +1402,7 @@ static int qf_parse_fmt_s(regmatch_T *rmp, int midx, qffields_T *fields)
     len = CMDBUFFSIZE - 5;
   }
   STRCPY(fields->pattern, "^\\V");
-  xstrlcat((char *)fields->pattern, (char *)rmp->startp[midx], len + 4);
+  STRLCAT(fields->pattern, rmp->startp[midx], len + 4);
   fields->pattern[len + 3] = '\\';
   fields->pattern[len + 4] = '$';
   fields->pattern[len + 5] = NUL;
@@ -1424,7 +1424,7 @@ static int qf_parse_fmt_o(regmatch_T *rmp, int midx, qffields_T *fields)
   if (dsize > CMDBUFFSIZE) {
     dsize = CMDBUFFSIZE;
   }
-  xstrlcat((char *)fields->module, (char *)rmp->startp[midx], dsize);
+  STRLCAT(fields->module, rmp->startp[midx], dsize);
   return QF_OK;
 }
 
@@ -3231,7 +3231,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
       memset(buf + len, ' ', 34 - len);
       buf[34] = NUL;
     }
-    xstrlcat((char *)buf, title, IOSIZE);
+    STRLCAT(buf, title, IOSIZE);
   }
   trunc_string(buf, buf, Columns - 1, IOSIZE);
   msg((char *)buf);

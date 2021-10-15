@@ -872,7 +872,7 @@ static void add_pack_start_dir(char_u *fname, void *cookie)
       continue;
     }
     STRLCPY(buf, fname, MAXPATHL);
-    xstrlcat((char *)buf, start_pat[i], sizeof buf);
+    STRLCAT(buf, start_pat[i], sizeof buf);
     if (pack_has_entries(buf)) {
       add_pack_dir_to_rtp(buf, true);
     }

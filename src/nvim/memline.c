@@ -2564,7 +2564,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
    */
   if (buf->b_ml.ml_line_count == 1) {       // file becomes empty
     if (message) {
-      set_keep_msg((char_u *)_(no_lines_msg), 0);
+      set_keep_msg(_(no_lines_msg), 0);
     }
 
     i = ml_replace((linenr_T)1, (char_u *)"", true);

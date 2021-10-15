@@ -65,7 +65,7 @@ FileComparison path_full_compare(char_u *const s1, char_u *const s2, const bool 
   if (expandenv) {
     expand_env(s1, exp1, MAXPATHL);
   } else {
-    xstrlcpy((char *)exp1, (const char *)s1, MAXPATHL);
+    STRLCPY(exp1, s1, MAXPATHL);
   }
   bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
   bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
@@ -2395,9 +2395,9 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
       if (dir_len + 1 > sizeof(NameBuff)) {
         continue;
       }
-      xstrlcpy((char *)NameBuff, dir, dir_len + 1);
-      xstrlcat((char *)NameBuff, PATHSEPSTR, sizeof(NameBuff));
-      xstrlcat((char *)NameBuff, argv0, sizeof(NameBuff));
+      STRLCPY(NameBuff, dir, dir_len + 1);
+      STRLCAT(NameBuff, PATHSEPSTR, sizeof(NameBuff));
+      STRLCAT(NameBuff, argv0, sizeof(NameBuff));
       if (os_can_exe((char *)NameBuff, NULL, false)) {
         xstrlcpy(buf, (char *)NameBuff, bufsize);
         return;

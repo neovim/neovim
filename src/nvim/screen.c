@@ -3117,7 +3117,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
               // the match.
               if (cur != NULL
                   && shl != &search_hl
-                  && syn_name2id((char_u *)"Conceal") == cur->hlg_id) {
+                  && syn_name2id("Conceal") == cur->hlg_id) {
                 has_match_conc = v == (long)shl->startcol ? 2 : 1;
                 match_conc = cur->conceal_char;
               } else {

@@ -3292,16 +3292,11 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
           dict_T *di = tv_dict_alloc();
 
           tv_list_append_dict(li, di);
-          tv_dict_add_str(di, S_LEN("word"),
-                          (char *)EMPTY_IF_NULL(match->cp_str));
-          tv_dict_add_str(di, S_LEN("abbr"),
-                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
-          tv_dict_add_str(di, S_LEN("menu"),
-                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
-          tv_dict_add_str(di, S_LEN("kind"),
-                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
-          tv_dict_add_str(di, S_LEN("info"),
-                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
+          tv_dict_add_str(di, S_LEN("word"), EMPTY_IF_NULL(match->cp_str));
+          tv_dict_add_str(di, S_LEN("abbr"), EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
+          tv_dict_add_str(di, S_LEN("menu"), EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
+          tv_dict_add_str(di, S_LEN("kind"), EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
+          tv_dict_add_str(di, S_LEN("info"), EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
           if (match->cp_user_data.v_type == VAR_UNKNOWN) {
             tv_dict_add_str(di, S_LEN("user_data"), "");
           } else {
@@ -4635,16 +4630,11 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc_lock(VAR_FIXED);
-  tv_dict_add_str(dict, S_LEN("word"),
-                  (const char *)EMPTY_IF_NULL(match->cp_str));
-  tv_dict_add_str(dict, S_LEN("abbr"),
-                  (const char *)EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
-  tv_dict_add_str(dict, S_LEN("menu"),
-                  (const char *)EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
-  tv_dict_add_str(dict, S_LEN("kind"),
-                  (const char *)EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
-  tv_dict_add_str(dict, S_LEN("info"),
-                  (const char *)EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
+  tv_dict_add_str(dict, S_LEN("word"), EMPTY_IF_NULL(match->cp_str));
+  tv_dict_add_str(dict, S_LEN("abbr"), EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
+  tv_dict_add_str(dict, S_LEN("menu"), EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
+  tv_dict_add_str(dict, S_LEN("kind"), EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
+  tv_dict_add_str(dict, S_LEN("info"), EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
     tv_dict_add_str(dict, S_LEN("user_data"), "");
   } else {

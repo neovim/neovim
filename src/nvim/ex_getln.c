@@ -2697,7 +2697,7 @@ static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
         .attr = 0,
       }));
     }
-    const int id = syn_name2id((const char_u *)chunk.group);
+    const int id = syn_name2id(chunk.group);
     const int attr = (id == 0 ? 0 : syn_id2attr(id));
     kv_push(ret_ccline_colors->colors, ((CmdlineColorChunk) {
       .start = (int)chunk.start.col,
@@ -2899,7 +2899,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     if (group == NULL) {
       goto color_cmdline_error;
     }
-    const int id = syn_name2id((char_u *)group);
+    const int id = syn_name2id(group);
     const int attr = (id == 0 ? 0 : syn_id2attr(id));
     kv_push(ccline_colors->colors, ((CmdlineColorChunk) {
       .start = (int)start,
@@ -4989,13 +4989,13 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
 
   // When expanding a function name starting with s:, match the <SNR>nr_
   // prefix.
-  char_u *tofree = NULL;
+  char *tofree = NULL;
   if (xp->xp_context == EXPAND_USER_FUNC && STRNCMP(pat, "^s:", 3) == 0) {
     const size_t len = STRLEN(pat) + 20;
 
     tofree = xmalloc(len);
-    snprintf((char *)tofree, len, "^<SNR>\\d\\+_%s", pat + 3);
-    pat = tofree;
+    snprintf(tofree, len, "^<SNR>\\d\\+_%s", pat + 3);
+    pat = (char_u *)tofree;
   }
 
   if (xp->xp_context == EXPAND_LUA) {

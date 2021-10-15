@@ -71,7 +71,7 @@ Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
   FUNC_API_SINCE(3)
 {
   Dictionary result = ARRAY_DICT_INIT;
-  int id = syn_name2id((const char_u *)name.data);
+  int id = syn_name2id(name.data);
 
   if (id == 0) {
     api_set_error(err, kErrorTypeException, "Invalid highlight name: %s",

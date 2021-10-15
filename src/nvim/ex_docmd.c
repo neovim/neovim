@@ -2647,7 +2647,7 @@ static char_u *find_command(exarg_T *eap, int *full)
       const int c2 = len == 1 ? NUL : eap->cmd[1];
 
       if (command_count != CMD_SIZE) {
-        iemsg((char *)_("E943: Command table needs to be updated, run 'make'"));
+        iemsg(_("E943: Command table needs to be updated, run 'make'"));
         getout(1);
       }
 
@@ -9130,7 +9130,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
         // postponed to avoid a delay when <afile> is not used.
         result = (char_u *)FullName_save((char *)autocmd_fname, false);
         // Copy into `autocmd_fname`, don't reassign it. #8165
-        xstrlcpy((char *)autocmd_fname, (char *)result, MAXPATHL);
+        STRLCPY(autocmd_fname, result, MAXPATHL);
         xfree(result);
       }
       result = autocmd_fname;

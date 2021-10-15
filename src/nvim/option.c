@@ -2419,7 +2419,7 @@ static char *did_set_string_option(int opt_idx, char_u **varp, bool new_value_al
     }
   } else if (varp == &p_hl) {
     // 'highlight'
-    if (strcmp((char *)(*varp), HIGHLIGHT_INIT) != 0) {
+    if (STRCMP(*varp, HIGHLIGHT_INIT) != 0) {
       errmsg = e_unsupportedoption;
     }
   } else if (varp == &p_jop) {  // 'jumpoptions'

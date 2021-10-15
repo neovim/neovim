@@ -54,7 +54,7 @@
 #define ASCII_ISALNUM(c) (ASCII_ISALPHA(c) || ascii_isdigit(c))
 
 // Returns empty string if it is NULL.
-#define EMPTY_IF_NULL(x) ((x) ? (x) : (char_u *)"")
+#define EMPTY_IF_NULL(x) (char *)((x) ? (x) : (char_u *)"")
 
 // Adjust chars in a language according to 'langmap' option.
 // NOTE that there is no noticeable overhead if 'langmap' is not set.
