@@ -75,13 +75,22 @@ local function uri_from_fname(path)
 end
 
 local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):.*'
+local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9+-.]*):[a-zA-Z]:.*'
 
 --- Get a URI from a bufnr
 ---@param bufnr (number): Buffer number
 ---@return URI
 local function uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
-  local scheme = fname:match(URI_SCHEME_PATTERN)
+  local volume_path = fname:match("^([a-zA-Z]:).*")
+  local is_windows = volume_path ~= nil
+  local scheme
+  if is_windows then
+    fname = fname:gsub("\\", "/")
+    scheme = fname:match(WINDOWS_URI_SCHEME_PATTERN)
+  else
+    scheme = fname:match(URI_SCHEME_PATTERN)
+  end
   if scheme then
     return fname
   else
