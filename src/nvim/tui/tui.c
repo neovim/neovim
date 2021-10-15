@@ -490,6 +490,12 @@ static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
     return;
   }
 
+  // Ask the terminal to send us the background color in case the winch is due
+  // to the terminal changing themes.
+  TUIData *tuidata = ui->data;
+  tuidata->input.waiting_for_bg_response = 5;
+  unibi_out_ext(ui, tuidata->unibi_ext.get_bg);
+
   tui_guess_size(ui);
   loop_schedule_deferred(&main_loop, event_create(sigwinch_event, 0));
   ui_schedule_refresh();
