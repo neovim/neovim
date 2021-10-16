@@ -434,9 +434,8 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
         }
         pos_copy.lnum = -1;             // can't get file
       } else {
-        pos_copy.lnum = 0;      // mark exists, but is not valid in
+        pos_copy.lnum = 0;      // mark exists, but is not valid in current buffer
       }
-      // current buffer
     }
   }
 
