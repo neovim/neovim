@@ -5215,7 +5215,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
       && *num_matches > 0) {
     // Sort the matches found on the heuristic number that is after the
     // tag name.
-    qsort((void *)*matches, (size_t)*num_matches,
+    qsort((void *)(*matches), (size_t)*num_matches,
           sizeof(char_u *), help_compare);
     // Delete more than TAG_MANY to reduce the size of the listing.
     while (*num_matches > TAG_MANY) {
