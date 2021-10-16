@@ -138,7 +138,8 @@ function M.display(lenses, bufnr, client_id)
       end
     end
     if #chunks > 0 then
-      api.nvim_buf_set_extmark(bufnr, ns, i, 0, { virt_text = chunks })
+      api.nvim_buf_set_extmark(bufnr, ns, i, 0, { virt_text = chunks,
+                                                  hl_mode="combine" })
     end
   end
 end
@@ -199,7 +200,8 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
             ns,
             lens.range.start.line,
             0,
-            { virt_text = {{ lens.command.title, 'LspCodeLens' }} }
+            { virt_text = {{ lens.command.title, 'LspCodeLens' }},
+                hl_mode="combine" }
           )
         end
         countdown()
