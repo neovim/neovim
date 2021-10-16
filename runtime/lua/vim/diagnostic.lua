@@ -93,28 +93,6 @@ local function reformat_diagnostics(format, diagnostics)
   return formatted
 end
 
----@private
-local function resolve_optional_value(option, namespace, bufnr)
-  local enabled_val = {}
-
-  if not option then
-    return false
-  elseif option == true then
-    return enabled_val
-  elseif type(option) == 'function' then
-    local val = option(namespace, bufnr)
-    if val == true then
-      return enabled_val
-    else
-      return val
-    end
-  elseif type(option) == 'table' then
-    return option
-  else
-    error("Unexpected option type: " .. vim.inspect(option))
-  end
-end
-
 local all_namespaces = {}
 
 ---@private
@@ -140,12 +118,46 @@ local function get_namespace(ns)
 end
 
 ---@private
+local function enabled_value(option, namespace)
+  local ns = get_namespace(namespace)
+  if type(ns.opts[option]) == "table" then
+    return ns.opts[option]
+  end
+
+  if type(global_diagnostic_options[option]) == "table" then
+    return global_diagnostic_options[option]
+  end
+
+  return {}
+end
+
+---@private
+local function resolve_optional_value(option, value, namespace, bufnr)
+  if not value then
+    return false
+  elseif value == true then
+    return enabled_value(option, namespace)
+  elseif type(value) == 'function' then
+    local val = value(namespace, bufnr)
+    if val == true then
+      return enabled_value(option, namespace)
+    else
+      return val
+    end
+  elseif type(value) == 'table' then
+    return value
+  else
+    error("Unexpected option type: " .. vim.inspect(value))
+  end
+end
+
+---@private
 local function get_resolved_options(opts, namespace, bufnr)
   local ns = get_namespace(namespace)
   local resolved = vim.tbl_extend('keep', opts or {}, ns.opts, global_diagnostic_options)
   for k in pairs(global_diagnostic_options) do
     if resolved[k] ~= nil then
-      resolved[k] = resolve_optional_value(resolved[k], namespace, bufnr)
+      resolved[k] = resolve_optional_value(k, resolved[k], namespace, bufnr)
     end
   end
   return resolved
@@ -653,8 +665,6 @@ function M.set(namespace, bufnr, diagnostics, opts)
 
   if vim.api.nvim_buf_is_loaded(bufnr) then
     M.show(namespace, bufnr, diagnostics, opts)
-  elseif opts then
-    M.config(opts, namespace)
   end
 
   vim.api.nvim_command("doautocmd <nomodeline> User DiagnosticsChanged")
