@@ -554,6 +554,23 @@ end
 --- Configure diagnostic options globally or for a specific diagnostic
 --- namespace.
 ---
+--- Configuration can be specified globally, per-namespace, or ephemerally
+--- (i.e. only for a single call to |vim.diagnostic.set()| or
+--- |vim.diagnostic.show()|). Ephemeral configuration has highest priority,
+--- followed by namespace configuration, and finally global configuration.
+---
+--- For example, if a user enables virtual text globally with
+--- <pre>
+---   vim.diagnostic.config({virt_text = true})
+--- </pre>
+---
+--- and a diagnostic producer sets diagnostics with
+--- <pre>
+---   vim.diagnostic.set(ns, 0, diagnostics, {virt_text = false})
+--- </pre>
+---
+--- then virtual text will not be enabled for those diagnostics.
+---
 ---@note Each of the configuration options below accepts one of the following:
 ---         - `false`: Disable this feature
 ---         - `true`: Enable this feature, use default settings.
@@ -1287,6 +1304,7 @@ end
 --- <pre>
 --- WARNING filename:27:3: Variable 'foo' does not exist
 --- </pre>
+---
 --- This can be parsed into a diagnostic |diagnostic-structure|
 --- with:
 --- <pre>
