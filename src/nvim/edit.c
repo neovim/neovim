@@ -2071,7 +2071,7 @@ static bool check_compl_option(bool dict_opt)
 {
   if (dict_opt
       ? (*curbuf->b_p_dict == NUL && *p_dict == NUL && !curwin->w_p_spell)
-      : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL)) {
+      : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL && *curbuf->b_p_thsfu == NUL)) {
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
     msg_attr((dict_opt
@@ -2544,7 +2544,7 @@ static void ins_compl_longest_match(compl_T *match)
  * Add an array of matches to the list of matches.
  * Frees matches[].
  */
-static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
+static void ins_compl_add_matches(int num_matches, char_u * *matches, int icase)
   FUNC_ATTR_NONNULL_ALL
 {
   int add_r = OK;
@@ -2899,7 +2899,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
   char_u *ptr;
   char_u *buf;
   regmatch_T regmatch;
-  char_u **files;
+  char_u * *files;
   int count;
   int save_p_scs;
   Direction dir = compl_direction;
@@ -2990,7 +2990,7 @@ theend:
   xfree(buf);
 }
 
-static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
+static void ins_compl_files(int count, char_u * *files, int thesaurus, int flags,
                             regmatch_T *regmatch, char_u *buf, Direction *dir)
   FUNC_ATTR_NONNULL_ARG(2, 7)
 {
@@ -3924,6 +3924,20 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
 }
 
 
+/// Get the user-defined completion function name for completion 'type'
+static char_u *get_complete_funcname(int type) {
+  switch (type) {
+  case CTRL_X_FUNCTION:
+    return curbuf->b_p_cfu;
+  case CTRL_X_OMNI:
+    return curbuf->b_p_ofu;
+  case CTRL_X_THESAURUS:
+    return curbuf->b_p_thsfu;
+  default:
+    return (char_u *)"";
+  }
+}
+
 /// Execute user defined complete function 'completefunc' or 'omnifunc', and
 /// get matches in "matches".
 ///
@@ -3940,7 +3954,7 @@ static void expand_by_function(int type, char_u *base)
   const int save_State = State;
 
   assert(curbuf != NULL);
-  funcname = (type == CTRL_X_FUNCTION) ? curbuf->b_p_cfu : curbuf->b_p_ofu;
+  funcname = get_complete_funcname(type);
   if (*funcname == NUL) {
     return;
   }
@@ -4096,7 +4110,15 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     return FAIL;
   }
   return ins_compl_add((char_u *)word, -1, NULL,
-                       (char_u **)cptext, true, &user_data, dir, flags, dup);
+                       (char_u * *)cptext, true, &user_data, dir, flags, dup);
+}
+
+/// Returns TRUE when using a user-defined function for thesaurus completion.
+static int thesaurus_func_complete(int type)
+{
+  return (type == CTRL_X_THESAURUS
+          && curbuf->b_p_thsfu != NULL
+          && *curbuf->b_p_thsfu != NUL);
 }
 
 // Get the next expansion(s), using "compl_pattern".
@@ -4116,7 +4138,7 @@ static int ins_compl_get_exp(pos_T *ini)
   static buf_T *ins_buf = NULL;          // buffer being scanned
 
   pos_T *pos;
-  char_u **matches;
+  char_u * *matches;
   int save_p_scs;
   bool save_p_ws;
   int save_p_ic;
@@ -4272,17 +4294,17 @@ static int ins_compl_get_exp(pos_T *ini)
 
     case CTRL_X_DICTIONARY:
     case CTRL_X_THESAURUS:
-      ins_compl_dictionaries(dict != NULL ? dict
-                                          : (type == CTRL_X_THESAURUS
-             ? (*curbuf->b_p_tsr == NUL
-                ? p_tsr
-                : curbuf->b_p_tsr)
-                : (*curbuf->b_p_dict == NUL
-                ? p_dict
-                : curbuf->b_p_dict)),
-                             compl_pattern,
-                             dict != NULL ? dict_f
-                                          : 0, type == CTRL_X_THESAURUS);
+      if (thesaurus_func_complete(type)) {
+        expand_by_function(type, compl_pattern);
+      } else {
+        ins_compl_dictionaries(dict != NULL ? dict
+                               : (type == CTRL_X_THESAURUS
+                                  ? (*curbuf->b_p_tsr == NUL ? p_tsr : curbuf->b_p_tsr)
+                                  : (*curbuf->b_p_dict ==
+                                     NUL ? p_dict : curbuf->b_p_dict)),
+                               compl_pattern,
+                               dict != NULL ? dict_f : 0, type == CTRL_X_THESAURUS);
+      }
       dict = NULL;
       break;
 
@@ -5095,7 +5117,9 @@ static int ins_complete(int c, bool enable_pum)
     }
 
     // Work out completion pattern and original text -- webb
-    if (ctrl_x_mode == CTRL_X_NORMAL || (ctrl_x_mode & CTRL_X_WANT_IDENT)) {
+    if (ctrl_x_mode == CTRL_X_NORMAL
+        || (ctrl_x_mode & CTRL_X_WANT_IDENT
+            && !thesaurus_func_complete(ctrl_x_mode))) {
       if ((compl_cont_status & CONT_SOL)
           || ctrl_x_mode == CTRL_X_PATH_DEFINES) {
         if (!(compl_cont_status & CONT_ADDING)) {
@@ -5206,22 +5230,18 @@ static int ins_complete(int c, bool enable_pum)
         compl_col = (int)(compl_xp.xp_pattern - compl_pattern);
       }
       compl_length = curs_col - compl_col;
-    } else if (ctrl_x_mode == CTRL_X_FUNCTION || ctrl_x_mode ==
-               CTRL_X_OMNI) {
-      /*
-       * Call user defined function 'completefunc' with "a:findstart"
-       * set to 1 to obtain the length of text to use for completion.
-       */
+    } else if (ctrl_x_mode == CTRL_X_FUNCTION || ctrl_x_mode == CTRL_X_OMNI
+               || thesaurus_func_complete(ctrl_x_mode)) {
+      // Call user defined function 'completefunc' with "a:findstart"
+      // set to 1 to obtain the length of text to use for completion.
       char_u *funcname;
       pos_T pos;
       win_T *curwin_save;
       buf_T *curbuf_save;
       const int save_State = State;
 
-      /* Call 'completefunc' or 'omnifunc' and get pattern length as a
-       * string */
-      funcname = ctrl_x_mode == CTRL_X_FUNCTION
-                 ? curbuf->b_p_cfu : curbuf->b_p_ofu;
+      // Call 'completefunc' or 'omnifunc' and get pattern length as a string
+      funcname = get_complete_funcname(ctrl_x_mode);
       if (*funcname == NUL) {
         EMSG2(_(e_notset), ctrl_x_mode == CTRL_X_FUNCTION
             ? "completefunc" : "omnifunc");

@@ -822,6 +822,12 @@ CTRL-X CTRL-T		Works as CTRL-X CTRL-K, but in a special way.  It uses
 			Other uses include translation between two languages,
 			or grouping API functions by keyword.
 
+			If the 'thesaurusfunc' option is set, then the user
+			specified function is invoked to get the list of
+			completion matches and the 'thesaurus' option is not
+			used. See |complete-functions| for an explanation of
+			how the function is invoked and what it should return.
+
 	CTRL-T	or
 	CTRL-N		Search forward for next matching keyword.  This
 			keyword replaces the previous matching keyword.
@@ -1032,7 +1038,7 @@ CTRL-X CTRL-Z		Stop completion without changing the text.
 
 FUNCTIONS FOR FINDING COMPLETIONS			*complete-functions*
 
-This applies to 'completefunc' and 'omnifunc'.
+This applies to 'completefunc', 'thesaurusfunc' and 'omnifunc'.
 
 The function is called in two different ways:
 - First the function is called to find the start of the text to be completed.

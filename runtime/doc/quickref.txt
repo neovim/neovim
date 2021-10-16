@@ -895,6 +895,7 @@ Short explanation of each option:		*option-list*
 'terse'			    shorten some messages
 'textwidth'	  'tw'	    maximum width of text that is being inserted
 'thesaurus'	  'tsr'     list of thesaurus files for keyword completion
+'thesaurusfunc'	  'tsrfu'   function to be used for thesaurus completion
 'tildeop'	  'top'     tilde command "~" behaves like an operator
 'timeout'	  'to'	    time out on mappings and key codes
 'timeoutlen'	  'tm'	    time out time in milliseconds

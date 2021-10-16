@@ -6459,6 +6459,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	uses another default.
 	Backticks cannot be used in this option for security reasons.
 
+						*'thesaurusfunc'* *'tsrfu'*
+'thesaurusfunc' 'tsrfu'	string	(default: empty)
+			local to buffer
+	This option specifies a function to be used for thesaurus completion
+	with CTRL-X CTRL-T. |i_CTRL-X_CTRL-T|
+	See |complete-functions| for an explanation of how the function is
+	invoked and what it should return.
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
+
 			     *'tildeop'* *'top'* *'notildeop'* *'notop'*
 'tildeop' 'top'		boolean	(default off)
 			global

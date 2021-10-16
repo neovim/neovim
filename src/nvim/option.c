@@ -139,6 +139,7 @@ static char_u *p_cpt;
 static char_u *p_cfu;
 static char_u *p_ofu;
 static char_u *p_tfu;
+static char_u *p_thsfu;
 static int p_eol;
 static int p_fixeol;
 static int p_et;
@@ -5915,6 +5916,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_sw);
   case PV_TFU:
     return (char_u *)&(curbuf->b_p_tfu);
+  case PV_THSFU:
+    return (char_u *)&(curbuf->b_p_thsfu);
   case PV_TS:
     return (char_u *)&(curbuf->b_p_ts);
   case PV_TW:
@@ -6184,6 +6187,7 @@ void buf_copy_options(buf_T *buf, int flags)
 #endif
       buf->b_p_cfu = vim_strsave(p_cfu);
       buf->b_p_ofu = vim_strsave(p_ofu);
+      buf->b_p_thsfu = vim_strsave(p_thsfu);
       buf->b_p_tfu = vim_strsave(p_tfu);
       buf->b_p_sts = p_sts;
       buf->b_p_sts_nopaste = p_sts_nopaste;
