@@ -503,7 +503,7 @@ let s:filename_checks = {
     \ 'tidy': ['.tidyrc', 'tidyrc', 'tidy.conf'],
     \ 'tilde': ['file.t.html'],
     \ 'tli': ['file.tli'],
-    \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf', '.tmux-file.conf', '.tmux.conf', 'tmux-file.conf', 'tmux.conf'],
+    \ 'tmux': ['tmuxfile.conf', '.tmuxfile.conf', '.tmux-file.conf', '.tmux.conf', 'tmux-file.conf', 'tmux.conf', 'tmux.conf.local'],
     \ 'toml': ['file.toml'],
     \ 'tpp': ['file.tpp'],
     \ 'treetop': ['file.treetop'],

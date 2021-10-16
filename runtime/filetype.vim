@@ -2301,6 +2301,9 @@ au BufNewFile,BufRead .tcshrc*	call dist#ft#SetFileTypeShell("tcsh")
 " csh scripts ending in a star
 au BufNewFile,BufRead .login*,.cshrc*  call dist#ft#CSH()
 
+" tmux configuration with arbitrary extension
+au BufNewFile,BufRead {.,}tmux*.conf*		setf tmux
+
 " VHDL
 au BufNewFile,BufRead *.vhdl_[0-9]*		call s:StarSetf('vhdl')
 
