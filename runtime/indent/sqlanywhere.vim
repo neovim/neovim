@@ -1,9 +1,8 @@
 " Vim indent file
 " Language:    SQL
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
-" Last Change By Maintainer: 2017 Jun 13
-" Last Change: by Stephen Wall, #5578, 2020 Jun 07
-" Version:     3.0
+" Last Change: 2021 Oct 11
+" Version:     4.0
 " Download:    http://vim.sourceforge.net/script.php?script_id=495
 
 " Notes:
@@ -21,6 +20,9 @@
 "    it, this can leave the indent hanging to the right one too many.
 "
 " History:
+"    4.0 (Oct 2021)
+"        Added b:undo_indent
+"
 "    3.0 (Dec 2012)
 "        Added cpo check
 "
@@ -56,10 +58,13 @@ setlocal indentkeys+==~end,=~else,=~elseif,=~elsif,0=~when,0=)
 " in the indentkeys is typed
 setlocal indentexpr=GetSQLIndent()
 
+let b:undo_indent = "setl indentexpr< indentkeys<"
+
 " Only define the functions once.
 if exists("*GetSQLIndent")
     finish
 endif
+
 let s:keepcpo= &cpo
 set cpo&vim
 
@@ -68,14 +73,9 @@ set cpo&vim
 " IS is excluded, since it is difficult to determine when the
 " ending block is (especially for procedures/functions).
 let s:SQLBlockStart = '^\s*\%('.
-                \ 'if\>.*\<then\|'.
-                \ 'then\|else\>\|'.
-                \ 'elseif\>.*\<then\|'.
-                \ 'elsif\>.(\<then\|'.
-                \ 'while\>.*\<loop\|'.
-                \ 'for\>.*\<loop\|'.
-                \ 'foreach\>.*\<loop\|'. 
-                \ 'loop\|do\|declare\|begin\|'.
+                \ 'if\|else\|elseif\|elsif\|'.
+                \ 'while\|loop\|do\|for\|'.
+                \ 'begin\|'.
                 \ 'case\|when\|merge\|exception'.
                 \ '\)\>'
 let s:SQLBlockEnd = '^\s*\(end\)\>'

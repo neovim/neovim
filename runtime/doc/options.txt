@@ -5981,13 +5981,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	      return value of expr contains % items they will get expanded.
 	      The expression can contain the } character, the end of
 	      expression is denoted by %}.
-	      The For example: >
+	      For example: >
 		func! Stl_filename() abort
 		    return "%t"
 		endfunc
 <	        `stl=%{Stl_filename()}`   results in `"%t"`
 	        `stl=%{%Stl_filename()%}` results in `"Name of current file"`
-	} -   End of `{%` expression
+	%} -  End of `{%` expression
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.

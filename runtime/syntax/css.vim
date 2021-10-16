@@ -2,12 +2,12 @@
 " Language:     Cascading Style Sheets
 " Previous Contributor List:
 "               Jules Wang      <w.jq0722@gmail.com>
-"               Claudio Fleiner <claudio@fleiner.com> (Maintainer)
+"               Claudio Fleiner <claudio@fleiner.com>
 "               Yeti            (Add full CSS2, HTML4 support)
 "               Nikolai Weibull (Add CSS2 support)
-" URL:          https://github.com/jsit/css.vim
+" URL:          https://github.com/vim-language-dept/css-syntax.vim
 " Maintainer:   Jay Sitter <jay@jaysitter.com>
-" Last Change:  2019 Jul. 29
+" Last Change:  2021 Oct 15
 
 " quit when a syntax file was already loaded
 if !exists("main_syntax")
@@ -23,6 +23,8 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 syn case ignore
+" Add dash to allowed keyword characters.
+syn iskeyword @,48-57,_,192-255,-
 
 " HTML4 tags
 syn keyword cssTagName abbr address area a b base
@@ -32,7 +34,7 @@ syn keyword cssTagName dfn div dl dt em fieldset form
 syn keyword cssTagName h1 h2 h3 h4 h5 h6 head hr html img i
 syn keyword cssTagName iframe input ins isindex kbd label legend li
 syn keyword cssTagName link map menu meta noscript ol optgroup
-syn keyword cssTagName option p param pre q s samp script small
+syn keyword cssTagName option p param picture pre q s samp script small
 syn keyword cssTagName span strong sub sup tbody td
 syn keyword cssTagName textarea tfoot th thead title tr ul u var
 syn keyword cssTagName object svg
@@ -127,7 +129,7 @@ syn region cssURL contained matchgroup=cssFunctionName start="\<\(uri\|url\|loca
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(var\|calc\)\s*(" end=")" contains=cssCustomProp,cssValue.*,cssFunction,cssColor,cssStringQ,cssStringQQ oneline
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgb\|clip\|attr\|counter\|rect\|cubic-bezier\|steps\)\s*(" end=")" oneline  contains=cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgba\|hsl\|hsla\|color-stop\|from\|to\)\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma,cssFunction
-syn region cssFunction contained matchgroup=cssFunctionName start="\<\(linear-\|radial-\)\=\gradient\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunction,cssGradientAttr,cssFunctionComma
+syn region cssFunction contained matchgroup=cssFunctionName start="\<\(linear-\|radial-\|conic-\)\=\gradient\s*(" end=")" oneline  contains=cssColor,cssValueInteger,cssValueNumber,cssValueLength,cssFunction,cssGradientAttr,cssFunctionComma
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(matrix\(3d\)\=\|scale\(3d\|X\|Y\|Z\)\=\|translate\(3d\|X\|Y\|Z\)\=\|skew\(X\|Y\)\=\|rotate\(3d\|X\|Y\|Z\)\=\|perspective\)\s*(" end=")" oneline contains=cssValueInteger,cssValueNumber,cssValueLength,cssValueAngle,cssFunctionComma
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(blur\|brightness\|contrast\|drop-shadow\|grayscale\|hue-rotate\|invert\|opacity\|saturate\|sepia\)\s*(" end=")" oneline contains=cssValueInteger,cssValueNumber,cssValueLength,cssValueAngle,cssFunctionComma
 syn keyword cssGradientAttr contained top bottom left right cover center middle ellipse at
@@ -220,7 +222,7 @@ syn keyword cssFlexibleBoxProp contained order
 syn match cssFlexibleBoxAttr contained "\<\(row\|column\|wrap\)\(-reverse\)\=\>"
 syn keyword cssFlexibleBoxAttr contained nowrap stretch baseline center
 syn match cssFlexibleBoxAttr contained "\<flex\(-\(start\|end\)\)\=\>"
-syn match cssFlexibleBoxAttr contained "\<space\(-\(between\|around\)\)\=\>"
+syn match cssFlexibleBoxAttr contained "\<space\(-\(between\|around\|evenly\)\)\=\>"
 
 " CSS Fonts Module Level 3
 " http://www.w3.org/TR/css-fonts-3/
@@ -234,9 +236,7 @@ syn keyword cssFontAttr contained larger smaller
 syn match cssFontAttr contained "\<\(x\{1,2\}-\)\=\(large\|small\)\>"
 syn match cssFontAttr contained "\<small-\(caps\|caption\)\>"
 " font-family attributes
-syn match cssFontAttr contained "\<\(sans-\)\=serif\>"
-syn keyword cssFontAttr contained Antiqua Arial Black Book Charcoal Comic Courier Dingbats Gadget Geneva Georgia Grande Helvetica Impact Linotype Lucida MS Monaco Neue New Palatino Roboto Roman Symbol Tahoma Times Trebuchet Verdana Webdings Wingdings York Zapf
-syn keyword cssFontAttr contained cursive fantasy monospace
+syn keyword cssFontAttr contained sans-serif serif cursive fantasy monospace
 " font-feature-settings attributes
 syn keyword cssFontAttr contained on off
 " font-stretch attributes
@@ -283,6 +283,7 @@ syn match cssGridProp contained "\<grid\>"
 syn match cssGridProp contained "\<grid-template\(-\(columns\|rows\|areas\)\)\=\>"
 syn match cssGridProp contained "\<grid-\(column\|row\)\(-\(start\|end\|gap\)\)\=\>"
 syn match cssGridProp contained "\<grid-\(area\|gap\)\>"
+syn match cssGridProp contained "\<gap\>"
 syn match cssGridProp contained "\<grid-auto-\(flow\|rows\|columns\)\>"
 
 syn match cssHyerlinkProp contained "\<target\(-\(name\|new\|position\)\)\=\>"
@@ -294,6 +295,10 @@ syn match cssListAttr contained "\<\(decimal\(-leading-zero\)\=\|cjk-ideographic
 syn keyword cssListAttr contained disc circle square hebrew armenian georgian
 syn keyword cssListAttr contained inside outside
 
+" object-fit https://www.w3.org/TR/css-images-3/#the-object-fit
+syn match cssObjectProp contained "\<object-\(fit\|position\)\>"
+syn keyword cssObjectAttr contained fill contain cover scale-down
+
 syn keyword cssPositioningProp contained bottom clear clip display float left
 syn keyword cssPositioningProp contained position right top visibility
 syn match cssPositioningProp contained "\<z-index\>"
@@ -303,7 +308,7 @@ syn keyword cssPositioningAttr contained left right both
 syn match cssPositioningAttr contained "\<list-item\>"
 syn match cssPositioningAttr contained "\<inline\(-\(block\|box\|table\|grid\|flex\)\)\=\>"
 syn match cssPositioningAttr contained "\<flow\(-root\)\=\>"
-syn keyword cssPositioningAttr contained static relative absolute fixed subgrid
+syn keyword cssPositioningAttr contained static relative absolute fixed subgrid sticky
 
 syn keyword cssPrintAttr contained landscape portrait crop cross always
 
@@ -548,6 +553,7 @@ hi def link cssMarqueeProp cssProp
 hi def link cssMultiColumnProp cssProp
 hi def link cssPagedMediaProp cssProp
 hi def link cssPositioningProp cssProp
+hi def link cssObjectProp cssProp
 hi def link cssPrintProp cssProp
 hi def link cssRubyProp cssProp
 hi def link cssSpeechProp cssProp
@@ -581,6 +587,7 @@ hi def link cssMultiColumnAttr cssAttr
 hi def link cssPaddingAttr cssAttr
 hi def link cssPagedMediaAttr cssAttr
 hi def link cssPositioningAttr cssAttr
+hi def link cssObjectAttr cssAttr
 hi def link cssGradientAttr cssAttr
 hi def link cssPrintAttr cssAttr
 hi def link cssRubyAttr cssAttr

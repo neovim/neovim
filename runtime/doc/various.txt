@@ -168,7 +168,7 @@ g8			Print the hex values of the bytes used in the
 
 							*:z!*
 :[range]z![+-^.=][count]
-			Like ":z:", but when [count] is not specified, it
+			Like ":z", but when [count] is not specified, it
 			defaults to the Vim window height minus one.
 
 :[range]z[!]#[+-^.=][count]				*:z#*
