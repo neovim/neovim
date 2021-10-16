@@ -248,7 +248,7 @@ local function is_disabled(namespace, bufnr)
 end
 
 ---@private
-local function diagnostic_lines(diagnostics)
+local function diagnostics_per_lines(diagnostics)
   if not diagnostics then
     return {}
   end
@@ -374,9 +374,16 @@ end
 
 ---@private
 --- Open a floating window with the provided diagnostics
----@param opts table Configuration table
----     - show_header (boolean, default true): Show "Diagnostics:" header
----     - all opts for |vim.util.open_floating_preview()| can be used here
+---@param opts table|nil Configuration table with the same keys as
+---            |vim.lsp.util.open_floating_preview()| in addition to the following:
+---            - namespace: (number) Limit diagnostics to the given namespace.
+---            - severity: See |diagnostic-severity|.
+---            - severity_sort: Defaults to the global value set by |vim.diagnostic.config()|
+---            - show_header: (boolean, default true) Show "Diagnostics:" header
+---            - source: (string) Include the diagnostic source in
+---                      the message. One of "always" or "if_many".
+---            - format: (function) A function that takes a diagnostic as input and returns a
+---                      string. The return value is the text used to display the diagnostic.
 ---@param diagnostics table: The diagnostics to display
 ---@return table {popup_bufnr, win_id}
 local function show_diagnostics(opts, diagnostics)
@@ -399,9 +406,8 @@ local function show_diagnostics(opts, diagnostics)
     diagnostics = prefix_source(opts.source, diagnostics)
   end
 
-  -- Use global setting for severity_sort since 'show_diagnostics' is namespace
-  -- independent
-  local severity_sort = global_diagnostic_options.severity_sort
+  -- Use global setting for severity_sort as a fallback
+  local severity_sort = vim.F.if_nil(opts.severity_sort, global_diagnostic_options.severity_sort)
   if severity_sort then
     if type(severity_sort) == "table" and severity_sort.reverse then
       table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
@@ -477,7 +483,7 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   local diagnostics = M.get(bufnr, vim.tbl_extend("keep", opts, {namespace = namespace}))
   clamp_line_numbers(bufnr, diagnostics)
-  local line_diagnostics = diagnostic_lines(diagnostics)
+  local line_diagnostics = diagnostics_per_lines(diagnostics)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
     local lnum = position[1] + offset
@@ -577,7 +583,7 @@ end
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
----                         which signs and virtual text are displayed. When true, higher severities
+---                         which diagnostics are displayed. When true, higher severities
 ---                         are displayed before lower severities (e.g. ERROR is displayed before WARN).
 ---                         Options:
 ---                         * reverse: (boolean) Reverse sort order
@@ -945,7 +951,7 @@ function M._set_virtual_text(namespace, bufnr, diagnostics, opts)
     diagnostics = prefix_source(opts.source, diagnostics)
   end
 
-  local buffer_line_diagnostics = diagnostic_lines(diagnostics)
+  local buffer_line_diagnostics = diagnostics_per_lines(diagnostics)
   for line, line_diagnostics in pairs(buffer_line_diagnostics) do
     if opts and opts.severity then
       line_diagnostics = filter_by_severity(opts.severity, line_diagnostics)
@@ -1121,8 +1127,9 @@ end
 ---
 ---@param opts table|nil Configuration table with the same keys as
 ---            |vim.lsp.util.open_floating_preview()| in addition to the following:
----            - namespace: (number) Limit diagnostics to the given namespace
+---            - namespace: (number) Limit diagnostics to the given namespace.
 ---            - severity: See |diagnostic-severity|.
+---            - severity_sort: Defaults to the global value set by |vim.diagnostic.config()|
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
 ---            - source: (string) Include the diagnostic source in
 ---                      the message. One of "always" or "if_many".
@@ -1160,7 +1167,16 @@ end
 
 --- Open a floating window with the diagnostics from the given line.
 ---
----@param opts table Configuration table. See |vim.diagnostic.show_position_diagnostics()|.
+---@param opts table|nil Configuration table with the same keys as
+---            |vim.lsp.util.open_floating_preview()| in addition to the following:
+---            - namespace: (number) Limit diagnostics to the given namespace.
+---            - severity: See |diagnostic-severity|.
+---            - severity_sort: Defaults to the global value set by |vim.diagnostic.config()|
+---            - show_header: (boolean, default true) Show "Diagnostics:" header
+---            - source: (string) Include the diagnostic source in
+---                      the message. One of "always" or "if_many".
+---            - format: (function) A function that takes a diagnostic as input and returns a
+---                      string. The return value is the text used to display the diagnostic.
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param lnum number|nil Line number. Defaults to line number of cursor.
 ---@return tuple ({popup_bufnr}, {win_id})
@@ -1174,10 +1190,8 @@ function M.show_line_diagnostics(opts, bufnr, lnum)
   opts = opts or {}
   opts.focus_id = "line_diagnostics"
   bufnr = get_bufnr(bufnr)
-  local diagnostics = M.get(bufnr, opts)
-  clamp_line_numbers(bufnr, diagnostics)
-  lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
-  local line_diagnostics = diagnostic_lines(diagnostics)[lnum]
+  opts.lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
+  local line_diagnostics =  M.get(bufnr, opts)
   return show_diagnostics(opts, line_diagnostics)
 end
 
