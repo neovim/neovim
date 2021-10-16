@@ -557,7 +557,7 @@ end
 ---@note Each of the configuration options below accepts one of the following:
 ---         - `false`: Disable this feature
 ---         - `true`: Enable this feature, use default settings.
----         - `table`: Enable this feature with overrides.
+---         - `table`: Enable this feature with overrides. Use an empty table to use default values.
 ---         - `function`: Function with signature (namespace, bufnr) that returns any of the above.
 ---
 ---@param opts table Configuration table with the following keys:
