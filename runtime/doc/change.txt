@@ -1129,9 +1129,6 @@ a register, a paste on a visual selected area will paste that single line on
 each of the selected lines (thus replacing the blockwise selected region by a
 block of the pasted line).
 
-Use |zP|/|zp| to paste a blockwise yanked register without appending trailing
-spaces.
-
 							*blockwise-register*
 If you use a blockwise Visual mode command to get the text into the register,
 the block of text will be inserted before ("P") or after ("p") the cursor
@@ -1141,6 +1138,9 @@ yanked or deleted.  Vim may replace some <Tab> characters with spaces to make
 this happen.  However, if the width of the block is not a multiple of a <Tab>
 width and the text after the inserted block contains <Tab>s, that text may be
 misaligned.
+
+Use |zP|/|zp| to paste a blockwise yanked register without appending trailing
+spaces.
 
 Note that after a charwise yank command, Vim leaves the cursor on the first
 yanked character that is closest to the start of the buffer.  This means that

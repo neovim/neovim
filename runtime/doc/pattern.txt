@@ -977,7 +977,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 		/.*\%17v
 <	Column 17 is highlighted by 'hlsearch' because there is another match
 	where ".*" matches zero characters.
-<
+
 
 Character classes:
 \i	identifier character (see 'isident' option)	*/\i*

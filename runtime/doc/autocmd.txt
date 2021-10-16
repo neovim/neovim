@@ -630,7 +630,7 @@ FilterReadPre			Before reading a file from a filter command.
 							*FilterWritePost*
 FilterWritePost			After writing a file for a filter command or
 				making a diff with an external diff (see
-				DiffUpdated for internal diff).
+				|DiffUpdated| for internal diff).
 				Vim checks the pattern against the name of
 				the current buffer as with FilterWritePre.
 				Not triggered when 'shelltemp' is off.
@@ -683,23 +683,6 @@ InsertCharPre			When a character is typed in Insert mode,
 
 				Cannot change the text. |textlock|
 				Not triggered when 'paste' is set.
-							*TextYankPost*
-TextYankPost			Just after a |yank| or |deleting| command, but not
-				if the black hole register |quote_| is used nor
-				for |setreg()|. Pattern must be *.
-				Sets these |v:event| keys:
-				    inclusive
-				    operator
-				    regcontents
-				    regname
-				    regtype
-				    visual
-				The `inclusive` flag combined with the |'[|
-				and |']| marks can be used to calculate the
-				precise region of the operation.
-
-				Non-recursive (event cannot trigger itself).
-				Cannot change the text. |textlock|
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
@@ -948,6 +931,23 @@ TextChangedP			After a change was made to the text in the
 				current buffer in Insert mode, only when the
 				popup menu is visible.  Otherwise the same as
 				TextChanged.
+							*TextYankPost*
+TextYankPost			Just after a |yank| or |deleting| command, but not
+				if the black hole register |quote_| is used nor
+				for |setreg()|. Pattern must be *.
+				Sets these |v:event| keys:
+				    inclusive
+				    operator
+				    regcontents
+				    regname
+				    regtype
+				    visual
+				The `inclusive` flag combined with the |'[|
+				and |']| marks can be used to calculate the
+				precise region of the operation.
+
+				Non-recursive (event cannot trigger itself).
+				Cannot change the text. |textlock|
 							*User*
 User				Not executed automatically.  Use |:doautocmd|
 				to trigger this, typically for "custom events"

@@ -208,12 +208,12 @@ describe('health.vim', function()
         ^                                                                        |
         {Heading:foo: }                                                                   |
         {Bar:========================================================================}|
-        {Bullet:  -} {Error:ERROR:} No healthcheck found for "foo" plugin.                       |
+        {Bullet:  -} {Error:ERROR}: No healthcheck found for "foo" plugin.                       |
                                                                                 |
         {Heading:success1: health#success1#check}                                         |
         {Bar:========================================================================}|
         {Heading2:##}{Heading: report 1}                                                             |
-        {Bullet:  -} {Ok:OK:} everything is fine                                              |
+        {Bullet:  -} {Ok:OK}: everything is fine                                              |
                                                                                 |
       ]]}
     end)
