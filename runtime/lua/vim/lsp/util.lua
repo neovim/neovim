@@ -521,7 +521,7 @@ function M.compute_diff(old_lines, new_lines, start_line_idx, end_line_idx, offs
       start = { line = start_line - 1, character = start_char},
       ["end"] = { line = adj_end_line, character = end_char}
     },
-    text = text,
+    text = text = text:gsub("\r", " "),
     rangeLength = length + 1,
   }
 
