@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local meths, curwinmeths, curbufmeths, nvim_command, funcs, eq =
   helpers.meths, helpers.curwinmeths, helpers.curbufmeths, helpers.command,
   helpers.funcs, helpers.eq
+local feed = helpers.feed
 local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture
 local expect_exit = helpers.expect_exit
 
@@ -247,5 +248,27 @@ describe('ShaDa support code', function()
     }
     eq('', funcs.system(argv))
     eq(0, exc_exec('rshada'))
+  end)
+
+  it("updates deleted marks", function()
+    nvim_command("edit " .. testfilename)
+
+    nvim_command("mark A")
+    nvim_command("mark a")
+    -- create a change to set the '.' mark,
+    -- since it can't be set via :mark
+    feed("ggi <esc>")
+    nvim_command("wshada")
+
+    nvim_command("delmarks A")
+    nvim_command("delmarks a")
+    nvim_command("delmarks .")
+
+    nvim_command("wshada")
+    nvim_command("rshada")
+
+    eq("Vim(normal):E20: Mark not set", exc_exec("normal! `A"))
+    eq("Vim(normal):E20: Mark not set", exc_exec("normal! `a"))
+    eq("Vim(normal):E20: Mark not set", exc_exec("normal! `."))
   end)
 end)

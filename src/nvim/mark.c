@@ -52,9 +52,6 @@
  * shada).
  */
 
-/// Global marks (marks with file number or name)
-static xfmark_T namedfm[NGLOBALMARKS];
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mark.c.generated.h"
 #endif
@@ -979,6 +976,7 @@ void ex_delmarks(exarg_T *eap)
         for (i = from; i <= to; ++i) {
           if (lower) {
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
+            curbuf->b_namedm[i - 'a'].timestamp = os_time();
           } else {
             if (digit) {
               n = i - '0' + NMARKS;
@@ -987,17 +985,24 @@ void ex_delmarks(exarg_T *eap)
             }
             namedfm[n].fmark.mark.lnum = 0;
             namedfm[n].fmark.fnum = 0;
+            namedfm[n].fmark.timestamp = os_time();
             XFREE_CLEAR(namedfm[n].fname);
           }
         }
       } else {
         switch (*p) {
         case '"':
-          CLEAR_FMARK(&curbuf->b_last_cursor); break;
+          curbuf->b_last_cursor.timestamp = os_time();
+          CLEAR_FMARK(&curbuf->b_last_cursor);
+          break;
         case '^':
-          CLEAR_FMARK(&curbuf->b_last_insert); break;
+          curbuf->b_last_insert.timestamp = os_time();
+          CLEAR_FMARK(&curbuf->b_last_insert);
+          break;
         case '.':
-          CLEAR_FMARK(&curbuf->b_last_change); break;
+          curbuf->b_last_change.timestamp = os_time();
+          CLEAR_FMARK(&curbuf->b_last_change);
+          break;
         case '[':
           curbuf->b_op_start.lnum    = 0; break;
         case ']':
