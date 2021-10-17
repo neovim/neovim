@@ -104,16 +104,19 @@ describe('autocmd DirChanged', function()
 
     command('split '..dirs[1]..'/foo')
     eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
+    eq('auto', eval('g:amatch'))
 
     command('split '..dirs[2]..'/bar')
     eq({cwd=dirs[2], scope='window', changed_window=false}, eval('g:ev'))
+    eq('auto', eval('g:amatch'))
 
     eq(2, eval('g:cdcount'))
   end)
 
-  it('does not trigger if diretory has not changed', function()
+  it('does not trigger if directory has not changed', function()
     command('lcd '..dirs[1])
     eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
+    eq('window', eval('g:amatch'))
     eq(1, eval('g:cdcount'))
     command('let g:ev = {}')
     command('lcd '..dirs[1])
@@ -143,6 +146,7 @@ describe('autocmd DirChanged', function()
 
     command('cd '..dirs[3])
     eq({cwd=dirs[3], scope='global', changed_window=false}, eval('g:ev'))
+    eq('global', eval('g:amatch'))
     eq(3, eval('g:cdcount'))
     command('let g:ev = {}')
     command('cd '..dirs[3])
@@ -159,6 +163,7 @@ describe('autocmd DirChanged', function()
 
     command('split '..dirs[1]..'/foo')
     eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
+    eq('auto', eval('g:amatch'))
     eq(4, eval('g:cdcount'))
     command('let g:ev = {}')
     command('split '..dirs[1]..'/bar')
@@ -181,6 +186,7 @@ describe('autocmd DirChanged', function()
 
     command('2wincmd w')                -- window 2
     eq({cwd=dirs[2], scope='window', changed_window=true}, eval('g:ev'))
+    eq('window', eval('g:amatch'))
 
     eq(4, eval('g:cdcount'))
     command('tabnew')                   -- tab 2 (tab-local CWD)
