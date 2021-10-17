@@ -1073,6 +1073,8 @@ static void f_chdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = NULL;
 
   if (argvars[0].v_type != VAR_STRING) {
+    // Returning an empty string means it failed.
+    // No error message, for historic reasons.
     return;
   }
 

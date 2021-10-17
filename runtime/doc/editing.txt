@@ -1304,6 +1304,21 @@ exist, the next-higher scope in the hierarchy applies.
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
 			Also see |getcwd()|.
+							*:pwd-verbose*
+			When 'verbose' is non-zero, |:pwd| will also display
+			what scope the current directory was set. Example: >
+
+				" Set by :cd
+				:verbose pwd
+				[global] /path/to/current
+
+				" Set by :lcd
+				:verbose pwd
+				[window] /path/to/current
+
+				" Set by :tcd
+				:verbose pwd
+				[tabpage] /path/to/current
 
 So long as no |:lcd| or |:tcd| command has been used, all windows share the
 same current directory.  Using a command to jump to another window doesn't
