@@ -7811,7 +7811,7 @@ void ex_cd(exarg_T *eap)
       break;
     }
 
-    bool dir_differs = prev_dir == NULL || STRCMP(prev_dir, new_dir) != 0;
+    bool dir_differs = prev_dir == NULL || pathcmp((char *)prev_dir, (char *)new_dir, -1) != 0;
     if (dir_differs && vim_chdir(new_dir)) {
       EMSG(_(e_failed));
     } else {

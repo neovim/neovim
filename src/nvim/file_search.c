@@ -1620,6 +1620,13 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
     abort();
   }
 
+#ifdef BACKSLASH_IN_FILENAME
+  char new_dir_buf[MAXPATHL];
+  STRCPY(new_dir_buf, new_dir);
+  slash_adjust(new_dir_buf);
+  new_dir = new_dir_buf;
+#endif
+
   tv_dict_add_str(dict, S_LEN("scope"), buf);  // -V614
   tv_dict_add_str(dict, S_LEN("cwd"), new_dir);
   tv_dict_add_bool(dict, S_LEN("changed_window"), cause == kCdCauseWindow);
@@ -1659,14 +1666,10 @@ int vim_chdirfile(char_u *fname, CdCause cause)
     NameBuff[0] = NUL;
   }
 
-  if (os_chdir(dir) != 0) {
-    return FAIL;
-  }
-
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust((char_u *)dir);
-#endif
-  if (cause != kCdCauseOther && !strequal(dir, (char *)NameBuff)) {
+  if (cause != kCdCauseOther && pathcmp(dir, (char *)NameBuff, -1) != 0) {
+    if (os_chdir(dir) != 0) {
+      return FAIL;
+    }
     do_autocmd_dirchanged(dir, kCdScopeWindow, cause);
   }
 

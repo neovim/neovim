@@ -23,6 +23,7 @@
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -4540,7 +4541,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
       }
     }
     if (os_chdir(new_dir) == 0) {
-      if (!p_acd && !strequal(new_dir, cwd)) {
+      if (!p_acd && pathcmp(new_dir, cwd, -1) != 0) {
         do_autocmd_dirchanged(new_dir, curwin->w_localdir
                               ? kCdScopeWindow : kCdScopeTab, kCdCauseWindow);
       }
@@ -4550,7 +4551,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
     // Window doesn't have a local directory and we are not in the global
     // directory: Change to the global directory.
     if (os_chdir((char *)globaldir) == 0) {
-      if (!p_acd && !strequal((char *)globaldir, cwd)) {
+      if (!p_acd && pathcmp((char *)globaldir, cwd, -1) != 0) {
         do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow);
       }
     }
