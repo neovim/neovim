@@ -119,8 +119,8 @@ end
 
 ---@private
 local function enabled_value(option, namespace)
-  local ns = get_namespace(namespace)
-  if type(ns.opts[option]) == "table" then
+  local ns = namespace and get_namespace(namespace) or {}
+  if ns.opts and type(ns.opts[option]) == "table" then
     return ns.opts[option]
   end
 
@@ -153,8 +153,8 @@ end
 
 ---@private
 local function get_resolved_options(opts, namespace, bufnr)
-  local ns = get_namespace(namespace)
-  local resolved = vim.tbl_extend('keep', opts or {}, ns.opts, global_diagnostic_options)
+  local ns = namespace and get_namespace(namespace) or {}
+  local resolved = vim.tbl_extend('keep', opts or {}, ns.opts or {}, global_diagnostic_options)
   for k in pairs(global_diagnostic_options) do
     if resolved[k] ~= nil then
       resolved[k] = resolve_optional_value(k, resolved[k], namespace, bufnr)
@@ -354,19 +354,15 @@ local function schedule_display(namespace, bufnr, args)
 
   local key = make_augroup_key(namespace, bufnr)
   if not registered_autocmds[key] then
-    vim.cmd(string.format("augroup %s", key))
-    vim.cmd("  au!")
-    vim.cmd(
-      string.format(
-        [[autocmd %s <buffer=%s> lua vim.diagnostic._execute_scheduled_display(%s, %s)]],
-        table.concat(insert_leave_auto_cmds, ","),
-        bufnr,
-        namespace,
-        bufnr
-      )
-    )
-    vim.cmd("augroup END")
-
+    vim.cmd(string.format([[augroup %s
+      au!
+      autocmd %s <buffer=%s> lua vim.diagnostic._execute_scheduled_display(%s, %s)
+    augroup END]],
+      key,
+      table.concat(insert_leave_auto_cmds, ","),
+      bufnr,
+      namespace,
+      bufnr))
     registered_autocmds[key] = true
   end
 end
@@ -376,74 +372,11 @@ local function clear_scheduled_display(namespace, bufnr)
   local key = make_augroup_key(namespace, bufnr)
 
   if registered_autocmds[key] then
-    vim.cmd(string.format("augroup %s", key))
-    vim.cmd("  au!")
-    vim.cmd("augroup END")
-
+    vim.cmd(string.format([[augroup %s
+      au!
+    augroup END]], key))
     registered_autocmds[key] = nil
   end
-end
-
----@private
---- Open a floating window with the provided diagnostics
----@param opts table Configuration table
----     - show_header (boolean, default true): Show "Diagnostics:" header
----     - all opts for |vim.util.open_floating_preview()| can be used here
----@param diagnostics table: The diagnostics to display
----@return table {popup_bufnr, win_id}
-local function show_diagnostics(opts, diagnostics)
-  if not diagnostics or vim.tbl_isempty(diagnostics) then
-    return
-  end
-  local lines = {}
-  local highlights = {}
-  local show_header = vim.F.if_nil(opts.show_header, true)
-  if show_header then
-    table.insert(lines, "Diagnostics:")
-    table.insert(highlights, {0, "Bold"})
-  end
-
-  if opts.format then
-    diagnostics = reformat_diagnostics(opts.format, diagnostics)
-  end
-
-  if opts.source then
-    diagnostics = prefix_source(opts.source, diagnostics)
-  end
-
-  -- Use global setting for severity_sort since 'show_diagnostics' is namespace
-  -- independent
-  local severity_sort = global_diagnostic_options.severity_sort
-  if severity_sort then
-    if type(severity_sort) == "table" and severity_sort.reverse then
-      table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
-    else
-      table.sort(diagnostics, function(a, b) return a.severity < b.severity end)
-    end
-  end
-
-  for i, diagnostic in ipairs(diagnostics) do
-    local prefix = string.format("%d. ", i)
-    local hiname = floating_highlight_map[diagnostic.severity]
-    assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
-
-    local message_lines = vim.split(diagnostic.message, '\n', true)
-    table.insert(lines, prefix..message_lines[1])
-    table.insert(highlights, {#prefix, hiname})
-    for j = 2, #message_lines do
-      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
-      table.insert(highlights, {0, hiname})
-    end
-  end
-
-  local popup_bufnr, winnr = require('vim.lsp.util').open_floating_preview(lines, 'plaintext', opts)
-  for i, hi in ipairs(highlights) do
-    local prefixlen, hiname = unpack(hi)
-    -- Start highlight after the prefix
-    vim.api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
-  end
-
-  return popup_bufnr, winnr
 end
 
 ---@private
@@ -469,6 +402,7 @@ local function set_list(loclist, opts)
 end
 
 ---@private
+--- To (slightly) improve performance, modifies diagnostics in place.
 local function clamp_line_numbers(bufnr, diagnostics)
   local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
   if buf_line_count == 0 then
@@ -526,7 +460,7 @@ end
 local function diagnostic_move_pos(opts, pos)
   opts = opts or {}
 
-  local enable_popup = vim.F.if_nil(opts.enable_popup, true)
+  local float = vim.F.if_nil(opts.float, true)
   local win_id = opts.win_id or vim.api.nvim_get_current_win()
 
   if not pos then
@@ -539,10 +473,13 @@ local function diagnostic_move_pos(opts, pos)
 
   vim.api.nvim_win_set_cursor(win_id, {pos[1] + 1, pos[2]})
 
-  if enable_popup then
-    -- This is a bit weird... I'm surprised that we need to wait til the next tick to do this.
+  if float then
+    local float_opts = type(float) == "table" and float or {}
     vim.schedule(function()
-      M.show_position_diagnostics(opts.popup_opts, vim.api.nvim_win_get_buf(win_id))
+      M.open_float(
+        vim.api.nvim_win_get_buf(win_id),
+        vim.tbl_extend("keep", float_opts, {scope="cursor"})
+      )
     end)
   end
 end
@@ -561,12 +498,12 @@ end
 ---
 --- For example, if a user enables virtual text globally with
 --- <pre>
----   vim.diagnostic.config({virt_text = true})
+---   vim.diagnostic.config({virtual_text = true})
 --- </pre>
 ---
 --- and a diagnostic producer sets diagnostics with
 --- <pre>
----   vim.diagnostic.set(ns, 0, diagnostics, {virt_text = false})
+---   vim.diagnostic.set(ns, 0, diagnostics, {virtual_text = false})
 --- </pre>
 ---
 --- then virtual text will not be enabled for those diagnostics.
@@ -603,6 +540,13 @@ end
 ---                * priority: (number, default 10) Base priority to use for signs. When
 ---                {severity_sort} is used, the priority of a sign is adjusted based on
 ---                its severity. Otherwise, all signs use the same priority.
+---       - float: Options for floating windows:
+---                  * severity: See |diagnostic-severity|.
+---                  * show_header: (boolean, default true) Show "Diagnostics:" header
+---                  * source: (string) Include the diagnostic source in
+---                            the message. One of "always" or "if_many".
+---                  * format: (function) A function that takes a diagnostic as input and returns a
+---                            string. The return value is the text used to display the diagnostic.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
 ---       - severity_sort: (default false) Sort diagnostics by severity. This affects the order in
@@ -825,10 +769,9 @@ end
 ---                          |nvim_win_get_cursor()|. Defaults to the current cursor position.
 ---         - wrap: (boolean, default true) Whether to loop around file or not. Similar to 'wrapscan'.
 ---         - severity: See |diagnostic-severity|.
----         - enable_popup: (boolean, default true) Call |vim.diagnostic.show_line_diagnostics()|
----                       on jump.
----         - popup_opts: (table) Table to pass as {opts} parameter to
----                     |vim.diagnostic.show_line_diagnostics()|
+---         - float: (boolean or table, default true) If "true", call |vim.diagnostic.open_float()|
+---                    after moving. If a table, pass the table as the {opts} parameter to
+---                    |vim.diagnostic.open_float()|.
 ---         - win_id: (number, default 0) Window ID
 function M.goto_next(opts)
   return diagnostic_move_pos(
@@ -1144,68 +1087,120 @@ function M.show(namespace, bufnr, diagnostics, opts)
   save_extmarks(namespace, bufnr)
 end
 
---- Open a floating window with the diagnostics at the given position.
+--- Show diagnostics in a floating window.
 ---
+---@param bufnr number|nil Buffer number. Defaults to the current buffer.
 ---@param opts table|nil Configuration table with the same keys as
 ---            |vim.lsp.util.open_floating_preview()| in addition to the following:
 ---            - namespace: (number) Limit diagnostics to the given namespace
----            - severity: See |diagnostic-severity|.
----            - show_header: (boolean, default true) Show "Diagnostics:" header
----            - source: (string) Include the diagnostic source in
----                      the message. One of "always" or "if_many".
+---            - scope: (string, default "buffer") Show diagnostics from the whole buffer ("buffer"),
+---                     the current cursor line ("line"), or the current cursor position ("cursor").
+---            - pos: (number or table) If {scope} is "line" or "cursor", use this position rather
+---                   than the cursor position. If a number, interpreted as a line number;
+---                   otherwise, a (row, col) tuple.
+---            - severity_sort: (default false) Sort diagnostics by severity. Overrides the setting
+---                             from |vim.diagnostic.config()|.
+---            - severity: See |diagnostic-severity|. Overrides the setting from
+---                        |vim.diagnostic.config()|.
+---            - show_header: (boolean, default true) Show "Diagnostics:" header. Overrides the
+---                           setting from |vim.diagnostic.config()|.
+---            - source: (string) Include the diagnostic source in the message. One of "always" or
+---                      "if_many". Overrides the setting from |vim.diagnostic.config()|.
 ---            - format: (function) A function that takes a diagnostic as input and returns a
 ---                      string. The return value is the text used to display the diagnostic.
----@param bufnr number|nil Buffer number. Defaults to the current buffer.
----@param position table|nil The (0,0)-indexed position. Defaults to the current cursor position.
----@return tuple ({popup_bufnr}, {win_id})
-function M.show_position_diagnostics(opts, bufnr, position)
+---                      Overrides the setting from |vim.diagnostic.config()|.
+---@return tuple ({float_bufnr}, {win_id})
+function M.open_float(bufnr, opts)
   vim.validate {
-    opts = { opts, 't', true },
     bufnr = { bufnr, 'n', true },
-    position = { position, 't', true },
+    opts = { opts, 't', true },
   }
 
   opts = opts or {}
-
-  opts.focus_id = "position_diagnostics"
   bufnr = get_bufnr(bufnr)
-  if not position then
-    local curr_position = vim.api.nvim_win_get_cursor(0)
-    curr_position[1] = curr_position[1] - 1
-    position = curr_position
+  local scope = opts.scope or "buffer"
+  local lnum, col
+  if scope == "line" or scope == "cursor" then
+    if not opts.pos then
+      local pos = vim.api.nvim_win_get_cursor(0)
+      lnum = pos[1] - 1
+      col = pos[2]
+    elseif type(opts.pos) == "number" then
+      lnum = opts.pos
+    elseif type(opts.pos) == "table" then
+      lnum, col = unpack(opts.pos)
+    else
+      error("Invalid value for option 'pos'")
+    end
+  elseif scope ~= "buffer" then
+    error("Invalid value for option 'scope'")
   end
-  local match_position_predicate = function(diag)
-    return position[1] == diag.lnum and
-    position[2] >= diag.col and
-    (position[2] <= diag.end_col or position[1] < diag.end_lnum)
-  end
+
   local diagnostics = M.get(bufnr, opts)
   clamp_line_numbers(bufnr, diagnostics)
-  local position_diagnostics = vim.tbl_filter(match_position_predicate, diagnostics)
-  return show_diagnostics(opts, position_diagnostics)
-end
 
---- Open a floating window with the diagnostics from the given line.
----
----@param opts table Configuration table. See |vim.diagnostic.show_position_diagnostics()|.
----@param bufnr number|nil Buffer number. Defaults to the current buffer.
----@param lnum number|nil Line number. Defaults to line number of cursor.
----@return tuple ({popup_bufnr}, {win_id})
-function M.show_line_diagnostics(opts, bufnr, lnum)
-  vim.validate {
-    opts = { opts, 't', true },
-    bufnr = { bufnr, 'n', true },
-    lnum = { lnum, 'n', true },
-  }
+  if scope == "line" then
+    diagnostics = vim.tbl_filter(function(d)
+      return d.lnum == lnum
+    end, diagnostics)
+  elseif scope == "cursor" then
+    diagnostics = vim.tbl_filter(function(d)
+        return d.lnum == lnum and d.col <= col and (d.end_col >= col or d.end_lnum > lnum)
+    end, diagnostics)
+  end
 
-  opts = opts or {}
-  opts.focus_id = "line_diagnostics"
-  bufnr = get_bufnr(bufnr)
-  local diagnostics = M.get(bufnr, opts)
-  clamp_line_numbers(bufnr, diagnostics)
-  lnum = lnum or (vim.api.nvim_win_get_cursor(0)[1] - 1)
-  local line_diagnostics = diagnostic_lines(diagnostics)[lnum]
-  return show_diagnostics(opts, line_diagnostics)
+  if vim.tbl_isempty(diagnostics) then
+    return
+  end
+
+  local severity_sort = vim.F.if_nil(opts.severity_sort, global_diagnostic_options.severity_sort)
+  if severity_sort then
+    if type(severity_sort) == "table" and severity_sort.reverse then
+      table.sort(diagnostics, function(a, b) return a.severity > b.severity end)
+    else
+      table.sort(diagnostics, function(a, b) return a.severity < b.severity end)
+    end
+  end
+
+  -- Resolve options with user settings from vim.diagnostic.config
+  opts = get_resolved_options({ float = opts }, nil, bufnr).float
+
+  local lines = {}
+  local highlights = {}
+  local show_header = vim.F.if_nil(opts.show_header, true)
+  if show_header then
+    table.insert(lines, "Diagnostics:")
+    table.insert(highlights, {0, "Bold"})
+  end
+
+  if opts.format then
+    diagnostics = reformat_diagnostics(opts.format, diagnostics)
+  end
+
+  if opts.source then
+    diagnostics = prefix_source(opts.source, diagnostics)
+  end
+
+  for i, diagnostic in ipairs(diagnostics) do
+    local prefix = string.format("%d. ", i)
+    local hiname = floating_highlight_map[diagnostic.severity]
+    local message_lines = vim.split(diagnostic.message, '\n')
+    table.insert(lines, prefix..message_lines[1])
+    table.insert(highlights, {#prefix, hiname})
+    for j = 2, #message_lines do
+      table.insert(lines, string.rep(' ', #prefix) .. message_lines[j])
+      table.insert(highlights, {0, hiname})
+    end
+  end
+
+  local float_bufnr, winnr = require('vim.lsp.util').open_floating_preview(lines, 'plaintext', opts)
+  for i, hi in ipairs(highlights) do
+    local prefixlen, hiname = unpack(hi)
+    -- Start highlight after the prefix
+    vim.api.nvim_buf_add_highlight(float_bufnr, -1, hiname, i-1, prefixlen, -1)
+  end
+
+  return float_bufnr, winnr
 end
 
 --- Remove all diagnostics from the given namespace.
