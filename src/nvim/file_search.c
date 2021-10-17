@@ -54,6 +54,7 @@
 #include "nvim/eval.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
+#include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
@@ -1666,11 +1667,12 @@ int vim_chdirfile(char_u *fname, CdCause cause)
     NameBuff[0] = NUL;
   }
 
-  if (cause != kCdCauseOther && pathcmp(dir, (char *)NameBuff, -1) != 0) {
-    if (os_chdir(dir) != 0) {
-      return FAIL;
+  if (os_chdir(dir) == 0) {
+    if (cause != kCdCauseOther && pathcmp(dir, (char *)NameBuff, -1) != 0) {
+      do_autocmd_dirchanged(dir, kCdScopeWindow, cause);
     }
-    do_autocmd_dirchanged(dir, kCdScopeWindow, cause);
+  } else {
+    return FAIL;
   }
 
   return OK;

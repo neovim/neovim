@@ -7707,6 +7707,21 @@ void free_cd_dir(void)
 
 #endif
 
+// Get the previous directory for the given chdir scope.
+static char_u *get_prevdir(CdScope scope)
+{
+  switch (scope) {
+  case kCdScopeTab:
+    return curtab->tp_prevdir;
+    break;
+  case kCdScopeWindow:
+    return curwin->w_prevdir;
+    break;
+  default:
+    return prev_dir;
+  }
+}
+
 /// Deal with the side effects of changing the current directory.
 ///
 /// @param scope  Scope of the function call (global, tab or window).
@@ -7721,9 +7736,10 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 
   if (scope < kCdScopeGlobal) {
+    char_u *pdir = get_prevdir(scope);
     // If still in global directory, set CWD as the global directory.
-    if (globaldir == NULL && prev_dir != NULL) {
-      globaldir = vim_strsave(prev_dir);
+    if (globaldir == NULL && pdir != NULL) {
+      globaldir = vim_strsave(pdir);
     }
   }
 
@@ -7754,10 +7770,13 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
 }
 
 /// Change directory function used by :cd/:tcd/:lcd Ex commands and the chdir() function.
+/// @param new_dir  The directory to change to.
+/// @param scope    Scope of the function call (global, tab or window).
 /// @return true if the directory is successfully changed.
 bool changedir_func(char_u *new_dir, CdScope scope)
 {
   char_u *tofree;
+  char_u *pdir = NULL;
   bool retval = false;
 
   if (new_dir == NULL || allbuf_locked()) {
@@ -7766,19 +7785,32 @@ bool changedir_func(char_u *new_dir, CdScope scope)
 
   // ":cd -": Change to previous directory
   if (STRCMP(new_dir, "-") == 0) {
-    if (prev_dir == NULL) {
+    pdir = get_prevdir(scope);
+    if (pdir == NULL) {
       EMSG(_("E186: No previous directory"));
       return false;
     }
-    new_dir = prev_dir;
+    new_dir = pdir;
   }
 
-  // Save current directory for next ":cd -"
-  tofree = prev_dir;
+  // Free the previous directory
+  tofree = get_prevdir(scope);
+
   if (os_dirname(NameBuff, MAXPATHL) == OK) {
-    prev_dir = vim_strsave(NameBuff);
+    pdir = vim_strsave(NameBuff);
   } else {
-    prev_dir = NULL;
+    pdir = NULL;
+  }
+
+  switch (scope) {
+  case kCdScopeTab:
+    curtab->tp_prevdir = pdir;
+    break;
+  case kCdScopeWindow:
+    curwin->w_prevdir = pdir;
+    break;
+  default:
+    prev_dir = pdir;
   }
 
 #if defined(UNIX)
@@ -7790,12 +7822,12 @@ bool changedir_func(char_u *new_dir, CdScope scope)
   }
 #endif
 
-  bool dir_differs = prev_dir == NULL || pathcmp((char *)prev_dir, (char *)new_dir, -1) != 0;
-  if (dir_differs && vim_chdir(new_dir)) {
-    EMSG(_(e_failed));
-  } else {
+  if (vim_chdir(new_dir) == 0) {
+    bool dir_differs = pdir == NULL || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
     post_chdir(scope, dir_differs);
     retval = true;
+  } else {
+    EMSG(_(e_failed));
   }
   xfree(tofree);
 

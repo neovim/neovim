@@ -43,6 +43,20 @@ func Test_cd_minus()
   call assert_equal(path_dotdot, getcwd())
   cd -
   call assert_equal(path, getcwd())
+
+  " Test for :cd - without a previous directory
+  let lines =<< trim [SCRIPT]
+    call assert_fails('cd -', 'E186:')
+    call assert_fails('call chdir("-")', 'E186:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
 endfunc
 
 func Test_cd_with_cpo_chdir()
@@ -109,6 +123,69 @@ func Test_chdir_func()
   call assert_equal("", d)
   " Should not crash
   call chdir(d)
+
+  only | tabonly
+  call chdir(topdir)
+  call delete('Xdir', 'rf')
+endfunc
+
+" Test for changing to the previous directory '-'
+func Test_prev_dir()
+  let topdir = getcwd()
+  call mkdir('Xdir/a/b/c', 'p')
+
+  " Create a few tabpages and windows with different directories
+  new | only
+  tabnew | new
+  tabnew
+  tabfirst
+  cd Xdir
+  tabnext | wincmd t
+  tcd a
+  wincmd w
+  lcd b
+  tabnext
+  tcd a/b/c
+
+  " Change to the previous directory twice in all the windows.
+  tabfirst
+  cd - | cd -
+  tabnext | wincmd t
+  tcd - | tcd -
+  wincmd w
+  lcd - | lcd -
+  tabnext
+  tcd - | tcd -
+
+  " Check the directory of all the windows
+  tabfirst
+  call assert_equal('Xdir', fnamemodify(getcwd(), ':t'))
+  tabnext | wincmd t
+  call assert_equal('a', fnamemodify(getcwd(), ':t'))
+  wincmd w
+  call assert_equal('b', fnamemodify(getcwd(), ':t'))
+  tabnext
+  call assert_equal('c', fnamemodify(getcwd(), ':t'))
+
+  " Change to the previous directory using chdir()
+  tabfirst
+  call chdir("-") | call chdir("-")
+  tabnext | wincmd t
+  call chdir("-") | call chdir("-")
+  wincmd w
+  call chdir("-") | call chdir("-")
+  tabnext
+  call chdir("-") | call chdir("-")
+
+  " Check the directory of all the windows
+  tabfirst
+  call assert_equal('Xdir', fnamemodify(getcwd(), ':t'))
+  tabnext | wincmd t
+  call assert_equal('a', fnamemodify(getcwd(), ':t'))
+  wincmd w
+  call assert_equal('b', fnamemodify(getcwd(), ':t'))
+  tabnext
+  call assert_equal('c', fnamemodify(getcwd(), ':t'))
 
   only | tabonly
   call chdir(topdir)

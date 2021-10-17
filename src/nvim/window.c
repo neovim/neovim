@@ -3733,6 +3733,7 @@ void free_tabpage(tabpage_T *tp)
   }
 
   xfree(tp->tp_localdir);
+  xfree(tp->tp_prevdir);
   xfree(tp);
 }
 
@@ -4771,6 +4772,7 @@ static void win_free(win_T *wp, tabpage_T *tp)
   }
 
   xfree(wp->w_localdir);
+  xfree(wp->w_prevdir);
 
   /* Remove the window from the b_wininfo lists, it may happen that the
    * freed memory is re-used for another window. */

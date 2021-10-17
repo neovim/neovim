@@ -953,6 +953,7 @@ struct tabpage_S {
   ScopeDictDictItem tp_winvar;      ///< Variable for "t:" Dictionary.
   dict_T *tp_vars;         ///< Internal variables, local to tab page.
   char_u *tp_localdir;     ///< Absolute path of local cwd or NULL.
+  char_u *tp_prevdir;      ///< Previous directory.
 };
 
 /*
@@ -1381,8 +1382,8 @@ struct window_S {
                                     // out of range!)
   int w_arg_idx_invalid;            // editing another file than w_arg_idx
 
-  char_u *w_localdir;          /* absolute path of local directory or
-                                  NULL */
+  char_u *w_localdir;          // absolute path of local directory or NULL
+  char_u *w_prevdir;           // previous directory
   // Options local to a window.
   // They are local because they influence the layout of the window or
   // depend on the window layout.
