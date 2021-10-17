@@ -48,5 +48,8 @@ return {
     "style";
     "noautocmd";
   };
+  runtime = {
+    "is_lua";
+  };
 }
 

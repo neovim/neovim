@@ -790,7 +790,7 @@ int nlua_call(lua_State *lstate)
   Error err = ERROR_INIT;
   size_t name_len;
   const char_u *name = (const char_u *)luaL_checklstring(lstate, 1, &name_len);
-  if (!nlua_is_deferred_safe(lstate)) {
+  if (!nlua_is_deferred_safe()) {
     return luaL_error(lstate, e_luv_api_disabled, "vimL function");
   }
 
@@ -846,7 +846,7 @@ free_vim_args:
 
 static int nlua_rpcrequest(lua_State *lstate)
 {
-  if (!nlua_is_deferred_safe(lstate)) {
+  if (!nlua_is_deferred_safe()) {
     return luaL_error(lstate, e_luv_api_disabled, "rpcrequest");
   }
   return nlua_rpc(lstate, true);
@@ -1316,7 +1316,7 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Erro
 
 /// check if the current execution context is safe for calling deferred API
 /// methods. Luv callbacks are unsafe as they are called inside the uv loop.
-bool nlua_is_deferred_safe(lua_State *lstate)
+bool nlua_is_deferred_safe(void)
 {
   return in_fast_callback == 0;
 }

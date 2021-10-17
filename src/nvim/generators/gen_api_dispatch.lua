@@ -419,7 +419,7 @@ local function process_function(fn)
 
   if not fn.fast then
     write_shifted_output(output, string.format([[
-    if (!nlua_is_deferred_safe(lstate)) {
+    if (!nlua_is_deferred_safe()) {
       return luaL_error(lstate, e_luv_api_disabled, "%s");
     }
     ]], fn.name))
