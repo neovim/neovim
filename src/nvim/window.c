@@ -23,6 +23,7 @@
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -1462,6 +1463,8 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
   }
   newp->w_localdir = (oldp->w_localdir == NULL)
                      ? NULL : vim_strsave(oldp->w_localdir);
+  newp->w_prevdir = (oldp->w_prevdir == NULL)
+                    ? NULL : vim_strsave(oldp->w_prevdir);
 
   // copy tagstack and folds
   for (i = 0; i < oldp->w_tagstacklen; i++) {
@@ -3732,6 +3735,7 @@ void free_tabpage(tabpage_T *tp)
   }
 
   xfree(tp->tp_localdir);
+  xfree(tp->tp_prevdir);
   xfree(tp);
 }
 
@@ -4540,9 +4544,9 @@ static void win_enter_ext(win_T *const wp, const int flags)
       }
     }
     if (os_chdir(new_dir) == 0) {
-      if (!p_acd && !strequal(new_dir, cwd)) {
+      if (!p_acd && pathcmp(new_dir, cwd, -1) != 0) {
         do_autocmd_dirchanged(new_dir, curwin->w_localdir
-                              ? kCdScopeWindow : kCdScopeTab, true);
+                              ? kCdScopeWindow : kCdScopeTabpage, kCdCauseWindow);
       }
       shorten_fnames(true);
     }
@@ -4550,8 +4554,8 @@ static void win_enter_ext(win_T *const wp, const int flags)
     // Window doesn't have a local directory and we are not in the global
     // directory: Change to the global directory.
     if (os_chdir((char *)globaldir) == 0) {
-      if (!p_acd && !strequal((char *)globaldir, cwd)) {
-        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, true);
+      if (!p_acd && pathcmp((char *)globaldir, cwd, -1) != 0) {
+        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow);
       }
     }
     XFREE_CLEAR(globaldir);
@@ -4770,6 +4774,7 @@ static void win_free(win_T *wp, tabpage_T *tp)
   }
 
   xfree(wp->w_localdir);
+  xfree(wp->w_prevdir);
 
   /* Remove the window from the b_wininfo lists, it may happen that the
    * freed memory is re-used for another window. */

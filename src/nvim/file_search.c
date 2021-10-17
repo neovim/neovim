@@ -54,6 +54,7 @@
 #include "nvim/eval.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
+#include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
@@ -1590,7 +1591,7 @@ theend:
   return file_name;
 }
 
-void do_autocmd_dirchanged(char *new_dir, CdScope scope, bool changed_window)
+void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
 {
   static bool recursive = false;
 
@@ -1609,8 +1610,8 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, bool changed_window)
   case kCdScopeGlobal:
     snprintf(buf, sizeof(buf), "global");
     break;
-  case kCdScopeTab:
-    snprintf(buf, sizeof(buf), "tab");
+  case kCdScopeTabpage:
+    snprintf(buf, sizeof(buf), "tabpage");
     break;
   case kCdScopeWindow:
     snprintf(buf, sizeof(buf), "window");
@@ -1620,10 +1621,29 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, bool changed_window)
     abort();
   }
 
+#ifdef BACKSLASH_IN_FILENAME
+  char new_dir_buf[MAXPATHL];
+  STRCPY(new_dir_buf, new_dir);
+  slash_adjust(new_dir_buf);
+  new_dir = new_dir_buf;
+#endif
+
   tv_dict_add_str(dict, S_LEN("scope"), buf);  // -V614
-  tv_dict_add_str(dict, S_LEN("cwd"),   new_dir);
-  tv_dict_add_bool(dict, S_LEN("changed_window"), changed_window);
+  tv_dict_add_str(dict, S_LEN("cwd"), new_dir);
+  tv_dict_add_bool(dict, S_LEN("changed_window"), cause == kCdCauseWindow);
   tv_dict_set_keys_readonly(dict);
+
+  switch (cause) {
+  case kCdCauseManual:
+  case kCdCauseWindow:
+    break;
+  case kCdCauseAuto:
+    snprintf(buf, sizeof(buf), "auto");
+    break;
+  case kCdCauseOther:
+    // Should never happen.
+    abort();
+  }
 
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
                  curbuf);
@@ -1636,7 +1656,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, bool changed_window)
 /// Change to a file's directory.
 /// Caller must call shorten_fnames()!
 /// @return OK or FAIL
-int vim_chdirfile(char_u *fname)
+int vim_chdirfile(char_u *fname, CdCause cause)
 {
   char dir[MAXPATHL];
 
@@ -1647,15 +1667,12 @@ int vim_chdirfile(char_u *fname)
     NameBuff[0] = NUL;
   }
 
-  if (os_chdir(dir) != 0) {
+  if (os_chdir(dir) == 0) {
+    if (cause != kCdCauseOther && pathcmp(dir, (char *)NameBuff, -1) != 0) {
+      do_autocmd_dirchanged(dir, kCdScopeWindow, cause);
+    }
+  } else {
     return FAIL;
-  }
-
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust((char_u *)dir);
-#endif
-  if (!strequal(dir, (char *)NameBuff)) {
-    do_autocmd_dirchanged(dir, kCdScopeWindow, false);
   }
 
   return OK;

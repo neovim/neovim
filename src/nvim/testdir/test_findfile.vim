@@ -113,7 +113,7 @@ func Test_findfile()
   call assert_match('.*/Xdir1/bar', findfile('bar', '**;', 2))
 
   bwipe!
-  exe 'cd  ' . save_dir
+  call chdir(save_dir)
   call CleanFiles()
   let &path = save_path
   let &shellslash = save_shellslash
@@ -171,7 +171,7 @@ func Test_finddir()
   call assert_match('.*/Xdir1/Xdir2', finddir('Xdir2', '**;', 2))
   call assert_equal('Xdir3',          finddir('Xdir3', '**;', 1))
 
-  exe 'cd  ' . save_dir
+  call chdir(save_dir)
   call CleanFiles()
   let &path = save_path
   let &shellslash = save_shellslash

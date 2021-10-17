@@ -519,11 +519,17 @@ DiffUpdated			After diffs have been updated.  Depending on
 				change or when doing |:diffupdate|.
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
+				The pattern can be:
+					"window"  to trigger on `:lcd`
+					"tabpage" to trigger on `:tcd`
+					"global"  to trigger on `:cd`
+					"auto"    to trigger on 'autochdir'.
 				Sets these |v:event| keys:
 				    cwd:   current working directory
 				    scope: "global", "tab", "window"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
+				<afile> is set to the new directory name.
 				Non-recursive (event cannot trigger itself).
 							*FileAppendCmd*
 FileAppendCmd			Before appending to a file.  Should do the

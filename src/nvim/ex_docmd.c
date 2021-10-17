@@ -7707,6 +7707,21 @@ void free_cd_dir(void)
 
 #endif
 
+// Get the previous directory for the given chdir scope.
+static char_u *get_prevdir(CdScope scope)
+{
+  switch (scope) {
+  case kCdScopeTabpage:
+    return curtab->tp_prevdir;
+    break;
+  case kCdScopeWindow:
+    return curwin->w_prevdir;
+    break;
+  default:
+    return prev_dir;
+  }
+}
+
 /// Deal with the side effects of changing the current directory.
 ///
 /// @param scope  Scope of the function call (global, tab or window).
@@ -7716,14 +7731,15 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   XFREE_CLEAR(curwin->w_localdir);
 
   // Overwrite the tab-local CWD for :cd, :tcd.
-  if (scope >= kCdScopeTab) {
+  if (scope >= kCdScopeTabpage) {
     XFREE_CLEAR(curtab->tp_localdir);
   }
 
   if (scope < kCdScopeGlobal) {
+    char_u *pdir = get_prevdir(scope);
     // If still in global directory, set CWD as the global directory.
-    if (globaldir == NULL && prev_dir != NULL) {
-      globaldir = vim_strsave(prev_dir);
+    if (globaldir == NULL && pdir != NULL) {
+      globaldir = vim_strsave(pdir);
     }
   }
 
@@ -7736,7 +7752,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
     // We are now in the global directory, no need to remember its name.
     XFREE_CLEAR(globaldir);
     break;
-  case kCdScopeTab:
+  case kCdScopeTabpage:
     curtab->tp_localdir = (char_u *)xstrdup(cwd);
     break;
   case kCdScopeWindow:
@@ -7749,59 +7765,92 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   shorten_fnames(true);
 
   if (trigger_dirchanged) {
-    do_autocmd_dirchanged(cwd, scope, false);
+    do_autocmd_dirchanged(cwd, scope, kCdCauseManual);
   }
 }
 
-/// `:cd`, `:tcd`, `:lcd`, `:chdir`, `:tchdir` and `:lchdir`.
+/// Change directory function used by :cd/:tcd/:lcd Ex commands and the chdir() function.
+/// @param new_dir  The directory to change to.
+/// @param scope    Scope of the function call (global, tab or window).
+/// @return true if the directory is successfully changed.
+bool changedir_func(char_u *new_dir, CdScope scope)
+{
+  char_u *tofree;
+  char_u *pdir = NULL;
+  bool retval = false;
+
+  if (new_dir == NULL || allbuf_locked()) {
+    return false;
+  }
+
+  // ":cd -": Change to previous directory
+  if (STRCMP(new_dir, "-") == 0) {
+    pdir = get_prevdir(scope);
+    if (pdir == NULL) {
+      EMSG(_("E186: No previous directory"));
+      return false;
+    }
+    new_dir = pdir;
+  }
+
+  // Free the previous directory
+  tofree = get_prevdir(scope);
+
+  if (os_dirname(NameBuff, MAXPATHL) == OK) {
+    pdir = vim_strsave(NameBuff);
+  } else {
+    pdir = NULL;
+  }
+
+  switch (scope) {
+  case kCdScopeTabpage:
+    curtab->tp_prevdir = pdir;
+    break;
+  case kCdScopeWindow:
+    curwin->w_prevdir = pdir;
+    break;
+  default:
+    prev_dir = pdir;
+  }
+
+#if defined(UNIX)
+  // On Unix ":cd" means: go to home directory.
+  if (*new_dir == NUL) {
+    // Use NameBuff for home directory name.
+    expand_env((char_u *)"$HOME", NameBuff, MAXPATHL);
+    new_dir = NameBuff;
+  }
+#endif
+
+  if (vim_chdir(new_dir) == 0) {
+    bool dir_differs = pdir == NULL || pathcmp((char *)pdir, (char *)new_dir, -1) != 0;
+    post_chdir(scope, dir_differs);
+    retval = true;
+  } else {
+    EMSG(_(e_failed));
+  }
+  xfree(tofree);
+
+  return retval;
+}
+
+/// ":cd", ":tcd", ":lcd", ":chdir", "tchdir" and ":lchdir".
 void ex_cd(exarg_T *eap)
 {
   char_u *new_dir;
-  char_u *tofree;
-
   new_dir = eap->arg;
-#if !defined(UNIX)
+#if !defined(UNIX) && !defined(VMS)
   // for non-UNIX ":cd" means: print current directory
   if (*new_dir == NUL) {
     ex_pwd(NULL);
   } else
 #endif
   {
-    if (allbuf_locked()) {
-      return;
-    }
-
-    // ":cd -": Change to previous directory
-    if (STRCMP(new_dir, "-") == 0) {
-      if (prev_dir == NULL) {
-        EMSG(_("E186: No previous directory"));
-        return;
-      }
-      new_dir = prev_dir;
-    }
-
-    // Save current directory for next ":cd -"
-    tofree = prev_dir;
-    if (os_dirname(NameBuff, MAXPATHL) == OK) {
-      prev_dir = vim_strsave(NameBuff);
-    } else {
-      prev_dir = NULL;
-    }
-
-#if defined(UNIX)
-    // On Unix ":cd" means: go to home directory.
-    if (*new_dir == NUL) {
-      // Use NameBuff for home directory name.
-      expand_env((char_u *)"$HOME", NameBuff, MAXPATHL);
-      new_dir = NameBuff;
-    }
-#endif
-    CdScope scope = kCdScopeGlobal;  // Depends on command invoked
-
+    CdScope scope = kCdScopeGlobal;
     switch (eap->cmdidx) {
     case CMD_tcd:
     case CMD_tchdir:
-      scope = kCdScopeTab;
+      scope = kCdScopeTabpage;
       break;
     case CMD_lcd:
     case CMD_lchdir:
@@ -7810,18 +7859,12 @@ void ex_cd(exarg_T *eap)
     default:
       break;
     }
-
-    if (vim_chdir(new_dir)) {
-      EMSG(_(e_failed));
-    } else {
-      post_chdir(scope, true);
+    if (changedir_func(new_dir, scope)) {
       // Echo the new current directory if the command was typed.
       if (KeyTyped || p_verbose >= 5) {
         ex_pwd(eap);
       }
     }
-
-    xfree(tofree);
   }
 }
 
@@ -7834,7 +7877,17 @@ static void ex_pwd(exarg_T *eap)
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(NameBuff);
 #endif
-    msg(NameBuff);
+    if (p_verbose > 0) {
+      char *context = "global";
+      if (curwin->w_localdir != NULL) {
+        context = "window";
+      } else if (curtab->tp_localdir != NULL) {
+        context = "tabpage";
+      }
+      smsg("[%s] %s", context, (char *)NameBuff);
+    } else {
+      msg(NameBuff);
+    }
   } else {
     EMSG(_("E187: Unknown"));
   }

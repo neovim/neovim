@@ -202,13 +202,27 @@ the other window.  This is called a local directory. >
 	:pwd
 	/home/Bram/VeryLongFileName
 
-So long as no ":lcd" command has been used, all windows share the same current
-directory.  Doing a ":cd" command in one window will also change the current
+So long as no `:lcd` command has been used, all windows share the same current
+directory.  Doing a `:cd` command in one window will also change the current
 directory of the other window.
-   For a window where ":lcd" has been used a different current directory is
-remembered.  Using ":cd" or ":lcd" in other windows will not change it.
-   When using a ":cd" command in a window that uses a different current
+   For a window where `:lcd` has been used a different current directory is
+remembered.  Using `:cd` or `:lcd` in other windows will not change it.
+   When using a `:cd` command in a window that uses a different current
 directory, it will go back to using the shared directory.
+
+
+TAB LOCAL DIRECTORY
+
+When you open a new tab page, it uses the directory of the window in the
+previous tab page from which the new tab page was opened. You can change the
+directory of the current tab page using the `:tcd` command. All the windows in
+a tab page share this directory except for windows with a window-local
+directory. Any new windows opened in this tab page will use this directory as
+the current working directory. Using a `:cd` command in a tab page will not
+change the working directory of tab pages which have a tab local directory.
+When the global working directory is changed using the ":cd" command in a tab
+page, it will also change the current tab page working directory.
+
 
 ==============================================================================
 *22.3*	Finding a file

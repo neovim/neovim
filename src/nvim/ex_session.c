@@ -963,7 +963,7 @@ void ex_mkrc(exarg_T *eap)
           *dirnow = NUL;
         }
         if (*dirnow != NUL && (ssop_flags & SSOP_SESDIR)) {
-          if (vim_chdirfile((char_u *)fname) == OK) {
+          if (vim_chdirfile((char_u *)fname, kCdCauseOther) == OK) {
             shorten_fnames(true);
           }
         } else if (*dirnow != NUL

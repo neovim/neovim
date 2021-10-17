@@ -46,7 +46,7 @@ endfunction
 let g:cwd=getcwd()
 function TearDown()
   q
-  exec "cd " . g:cwd
+  call chdir(g:cwd)
   call delete("Xtopdir", "rf")
 endfunction
 

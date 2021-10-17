@@ -1275,10 +1275,12 @@ exist, the next-higher scope in the hierarchy applies.
 							*:chd* *:chdir*
 :chd[ir][!] [path]	Same as |:cd|.
 
-					*:tc* *:tcd* *E5000* *E5001* *E5002*
-:tc[d][!] {path}        Like |:cd|, but set the current directory for the
-			current tab and window.  The current directory for
-			other tabs and windows is not changed.
+							*:tc* *:tcd*
+:tc[d][!] {path}	Like |:cd|, but only set the directory for the current
+			tab.  The current window will also use this directory.
+			The current directory is not changed for windows in
+			other tabs and for windows in the current tab that
+			have their own window-local directory.
 
 							*:tcd-*
 :tc[d][!] -		Change to the previous current directory (before the
@@ -1302,9 +1304,24 @@ exist, the next-higher scope in the hierarchy applies.
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
 			Also see |getcwd()|.
+							*:pwd-verbose*
+			When 'verbose' is non-zero, |:pwd| will also display
+			what scope the current directory was set. Example: >
 
-So long as no |:tcd| or |:lcd| command has been used, all windows share the
-same "current directory".  Using a command to jump to another window doesn't
+				" Set by :cd
+				:verbose pwd
+				[global] /path/to/current
+
+				" Set by :lcd
+				:verbose pwd
+				[window] /path/to/current
+
+				" Set by :tcd
+				:verbose pwd
+				[tabpage] /path/to/current
+
+So long as no |:lcd| or |:tcd| command has been used, all windows share the
+same current directory.  Using a command to jump to another window doesn't
 change anything for the current directory.
 
 When |:lcd| has been used for a window, the specified directory becomes the
