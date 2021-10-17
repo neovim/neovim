@@ -192,6 +192,15 @@ func Test_prev_dir()
   call delete('Xdir', 'rf')
 endfunc
 
+func Test_lcd_split()
+  let curdir = getcwd()
+  lcd ..
+  split
+  lcd -
+  call assert_equal(curdir, getcwd())
+  quit!
+endfunc
+
 func Test_cd_from_non_existing_dir()
   CheckNotMSWindows
 

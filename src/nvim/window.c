@@ -1463,6 +1463,8 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
   }
   newp->w_localdir = (oldp->w_localdir == NULL)
                      ? NULL : vim_strsave(oldp->w_localdir);
+  newp->w_prevdir = (oldp->w_prevdir == NULL)
+                    ? NULL : vim_strsave(oldp->w_prevdir);
 
   // copy tagstack and folds
   for (i = 0; i < oldp->w_tagstacklen; i++) {
