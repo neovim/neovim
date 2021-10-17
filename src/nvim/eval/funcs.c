@@ -1093,7 +1093,7 @@ static void f_chdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (curwin->w_localdir != NULL) {
     scope = kCdScopeWindow;
   } else if (curtab->tp_localdir != NULL) {
-    scope = kCdScopeTab;
+    scope = kCdScopeTabpage;
   }
 
   if (!changedir_func(argvars[0].vval.v_string, scope)) {
@@ -3445,8 +3445,8 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
   int scope_number[] = {
-    [kCdScopeWindow] = 0,  // Number of window to look at.
-    [kCdScopeTab   ] = 0,  // Number of tab to look at.
+    [kCdScopeWindow ] = 0,  // Number of window to look at.
+    [kCdScopeTabpage] = 0,  // Number of tab to look at.
   };
 
   char_u *cwd  = NULL;  // Current working directory to print
@@ -3489,8 +3489,8 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   // Find the tabpage by number
-  if (scope_number[kCdScopeTab] > 0) {
-    tp = find_tabpage(scope_number[kCdScopeTab]);
+  if (scope_number[kCdScopeTabpage] > 0) {
+    tp = find_tabpage(scope_number[kCdScopeTabpage]);
     if (!tp) {
       EMSG(_("E5000: Cannot find tab number."));
       return;
@@ -3499,7 +3499,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Find the window in `tp` by number, `NULL` if none.
   if (scope_number[kCdScopeWindow] >= 0) {
-    if (scope_number[kCdScopeTab] < 0) {
+    if (scope_number[kCdScopeTabpage] < 0) {
       EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       return;
     }
@@ -3523,7 +3523,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     FALLTHROUGH;
-  case kCdScopeTab:
+  case kCdScopeTabpage:
     assert(tp);
     from = tp->tp_localdir;
     if (from) {
@@ -4652,8 +4652,8 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Numbers of the scope objects (window, tab) we want the working directory
   // of. A `-1` means to skip this scope, a `0` means the current object.
   int scope_number[] = {
-    [kCdScopeWindow] = 0,  // Number of window to look at.
-    [kCdScopeTab   ] = 0,  // Number of tab to look at.
+    [kCdScopeWindow ] = 0,  // Number of window to look at.
+    [kCdScopeTabpage] = 0,  // Number of tab to look at.
   };
 
   tabpage_T *tp  = curtab;  // The tabpage to look at.
@@ -4691,8 +4691,8 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   // Find the tabpage by number
-  if (scope_number[kCdScopeTab] > 0) {
-    tp = find_tabpage(scope_number[kCdScopeTab]);
+  if (scope_number[kCdScopeTabpage] > 0) {
+    tp = find_tabpage(scope_number[kCdScopeTabpage]);
     if (!tp) {
       EMSG(_("E5000: Cannot find tab number."));
       return;
@@ -4701,7 +4701,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Find the window in `tp` by number, `NULL` if none.
   if (scope_number[kCdScopeWindow] >= 0) {
-    if (scope_number[kCdScopeTab] < 0) {
+    if (scope_number[kCdScopeTabpage] < 0) {
       EMSG(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
       return;
     }
@@ -4720,7 +4720,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     assert(win);
     rettv->vval.v_number = win->w_localdir ? 1 : 0;
     break;
-  case kCdScopeTab:
+  case kCdScopeTabpage:
     assert(tp);
     rettv->vval.v_number = tp->tp_localdir ? 1 : 0;
     break;

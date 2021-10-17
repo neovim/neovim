@@ -33,17 +33,20 @@ describe('autocmd DirChanged', function()
     command([[autocmd DirChanged * let g:getcwd    = substitute(g:getcwd,    '\\', '/', 'g')]])
   end)
 
-  it('sets v:event', function()
+  it('sets v:event and <amatch>', function()
     command('lcd '..dirs[1])
     eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
+    eq('window', eval('g:amatch'))
     eq(1, eval('g:cdcount'))
 
     command('tcd '..dirs[2])
-    eq({cwd=dirs[2], scope='tab', changed_window=false}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='tabpage', changed_window=false}, eval('g:ev'))
+    eq('tabpage', eval('g:amatch'))
     eq(2, eval('g:cdcount'))
 
     command('cd '..dirs[3])
     eq({cwd=dirs[3], scope='global', changed_window=false}, eval('g:ev'))
+    eq('global', eval('g:amatch'))
     eq(3, eval('g:cdcount'))
   end)
 
@@ -67,17 +70,6 @@ describe('autocmd DirChanged', function()
     eq(1, eval('g:cdcount'))
     -- autocmd changed to dirs[3], but did NOT trigger another DirChanged.
     eq(dirs[3], eval('getcwd()'))
-  end)
-
-  it('sets <amatch> to CWD "scope"', function()
-    command('lcd '..dirs[1])
-    eq('window', eval('g:amatch'))
-
-    command('tcd '..dirs[2])
-    eq('tab', eval('g:amatch'))
-
-    command('cd '..dirs[3])
-    eq('global', eval('g:amatch'))
   end)
 
   it('does not trigger if :cd fails', function()
@@ -135,7 +127,8 @@ describe('autocmd DirChanged', function()
     end
 
     command('tcd '..dirs[2])
-    eq({cwd=dirs[2], scope='tab', changed_window=false}, eval('g:ev'))
+    eq({cwd=dirs[2], scope='tabpage', changed_window=false}, eval('g:ev'))
+    eq('tabpage', eval('g:amatch'))
     eq(2, eval('g:cdcount'))
     command('let g:ev = {}')
     command('tcd '..dirs[2])
@@ -195,8 +188,10 @@ describe('autocmd DirChanged', function()
     command('tcd '..dirs[3])
     command('tabnext')                  -- tab 1 (no tab-local CWD)
     eq({cwd=dirs[2], scope='window', changed_window=true}, eval('g:ev'))
+    eq('window', eval('g:amatch'))
     command('tabnext')                  -- tab 2
-    eq({cwd=dirs[3], scope='tab', changed_window=true}, eval('g:ev'))
+    eq({cwd=dirs[3], scope='tabpage', changed_window=true}, eval('g:ev'))
+    eq('tabpage', eval('g:amatch'))
     eq(7, eval('g:cdcount'))
 
     command('tabnext')                  -- tab 1

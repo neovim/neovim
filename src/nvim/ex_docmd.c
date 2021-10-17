@@ -7711,7 +7711,7 @@ void free_cd_dir(void)
 static char_u *get_prevdir(CdScope scope)
 {
   switch (scope) {
-  case kCdScopeTab:
+  case kCdScopeTabpage:
     return curtab->tp_prevdir;
     break;
   case kCdScopeWindow:
@@ -7731,7 +7731,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   XFREE_CLEAR(curwin->w_localdir);
 
   // Overwrite the tab-local CWD for :cd, :tcd.
-  if (scope >= kCdScopeTab) {
+  if (scope >= kCdScopeTabpage) {
     XFREE_CLEAR(curtab->tp_localdir);
   }
 
@@ -7752,7 +7752,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
     // We are now in the global directory, no need to remember its name.
     XFREE_CLEAR(globaldir);
     break;
-  case kCdScopeTab:
+  case kCdScopeTabpage:
     curtab->tp_localdir = (char_u *)xstrdup(cwd);
     break;
   case kCdScopeWindow:
@@ -7803,7 +7803,7 @@ bool changedir_func(char_u *new_dir, CdScope scope)
   }
 
   switch (scope) {
-  case kCdScopeTab:
+  case kCdScopeTabpage:
     curtab->tp_prevdir = pdir;
     break;
   case kCdScopeWindow:
@@ -7850,7 +7850,7 @@ void ex_cd(exarg_T *eap)
     switch (eap->cmdidx) {
     case CMD_tcd:
     case CMD_tchdir:
-      scope = kCdScopeTab;
+      scope = kCdScopeTabpage;
       break;
     case CMD_lcd:
     case CMD_lchdir:

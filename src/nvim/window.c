@@ -4546,7 +4546,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
     if (os_chdir(new_dir) == 0) {
       if (!p_acd && pathcmp(new_dir, cwd, -1) != 0) {
         do_autocmd_dirchanged(new_dir, curwin->w_localdir
-                              ? kCdScopeWindow : kCdScopeTab, kCdCauseWindow);
+                              ? kCdScopeWindow : kCdScopeTabpage, kCdCauseWindow);
       }
       shorten_fnames(true);
     }

@@ -1610,8 +1610,8 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause)
   case kCdScopeGlobal:
     snprintf(buf, sizeof(buf), "global");
     break;
-  case kCdScopeTab:
-    snprintf(buf, sizeof(buf), "tab");
+  case kCdScopeTabpage:
+    snprintf(buf, sizeof(buf), "tabpage");
     break;
   case kCdScopeWindow:
     snprintf(buf, sizeof(buf), "window");

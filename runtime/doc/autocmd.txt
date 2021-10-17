@@ -520,10 +520,10 @@ DiffUpdated			After diffs have been updated.  Depending on
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
 				The pattern can be:
-					"window" to trigger on `:lcd`
-					"tab"    to trigger on `:tcd`
-					"global" to trigger on `:cd`
-					"auto"   to trigger on 'autochdir'.
+					"window"  to trigger on `:lcd`
+					"tabpage" to trigger on `:tcd`
+					"global"  to trigger on `:cd`
+					"auto"    to trigger on 'autochdir'.
 				Sets these |v:event| keys:
 				    cwd:   current working directory
 				    scope: "global", "tab", "window"
