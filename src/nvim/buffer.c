@@ -593,9 +593,6 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
     buf->b_nwindows--;
   }
 
-  // Change directories when the 'acd' option is set.
-  do_autochdir();
-
   // Disable buffer-updates for the current buffer.
   // No need to check `unload_buf`: in that case the function returned above.
   buf_updates_unload(buf, false);
@@ -1628,7 +1625,7 @@ void do_autochdir(void)
   if (p_acd) {
     if (starting == 0
         && curbuf->b_ffname != NULL
-        && vim_chdirfile(curbuf->b_ffname) == OK) {
+        && vim_chdirfile(curbuf->b_ffname, kCdCauseAuto) == OK) {
       post_chdir(kCdScopeGlobal, false);
       shorten_fnames(true);
     }

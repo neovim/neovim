@@ -1042,6 +1042,14 @@ typedef enum {
 #define MIN_CD_SCOPE  kCdScopeWindow
 #define MAX_CD_SCOPE  kCdScopeGlobal
 
+/// What caused the current directory to change.
+typedef enum {
+  kCdCauseOther = -1,
+  kCdCauseManual,  ///< Using `:cd`, `:tcd`, `:lcd` or `chdir()`.
+  kCdCauseWindow,  ///< Switching to another window.
+  kCdCauseAuto,    ///< On 'autochdir'.
+} CdCause;
+
 // Only filled for Win32.
 EXTERN char windowsVersion[20] INIT(= { 0 });
 

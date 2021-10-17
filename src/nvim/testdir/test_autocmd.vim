@@ -1328,6 +1328,62 @@ func Test_autocommand_all_events()
   call assert_fails('au * x bwipe', 'E1155:')
 endfunc
 
+function s:Before_test_dirchanged()
+  augroup test_dirchanged
+    autocmd!
+  augroup END
+  let s:li = []
+  let s:dir_this = getcwd()
+  let s:dir_other = s:dir_this . '/foo'
+  call mkdir(s:dir_other)
+endfunc
+
+function s:After_test_dirchanged()
+  exe 'cd' s:dir_this
+  call delete(s:dir_other, 'd')
+  augroup test_dirchanged
+    autocmd!
+  augroup END
+endfunc
+
+function Test_dirchanged_global()
+  call s:Before_test_dirchanged()
+  autocmd test_dirchanged DirChanged global call add(s:li, "cd:")
+  autocmd test_dirchanged DirChanged global call add(s:li, expand("<afile>"))
+  exe 'cd' s:dir_other
+  call assert_equal(["cd:", s:dir_other], s:li)
+  exe 'lcd' s:dir_other
+  call assert_equal(["cd:", s:dir_other], s:li)
+  call s:After_test_dirchanged()
+endfunc
+
+function Test_dirchanged_local()
+  call s:Before_test_dirchanged()
+  autocmd test_dirchanged DirChanged window call add(s:li, "lcd:")
+  autocmd test_dirchanged DirChanged window call add(s:li, expand("<afile>"))
+  exe 'cd' s:dir_other
+  call assert_equal([], s:li)
+  exe 'lcd' s:dir_other
+  call assert_equal(["lcd:", s:dir_other], s:li)
+  call s:After_test_dirchanged()
+endfunc
+
+function Test_dirchanged_auto()
+  call s:Before_test_dirchanged()
+  call test_autochdir()
+  autocmd test_dirchanged DirChanged auto call add(s:li, "auto:")
+  autocmd test_dirchanged DirChanged auto call add(s:li, expand("<afile>"))
+  set acd
+  exe 'cd ..'
+  call assert_equal([], s:li)
+  exe 'edit ' . s:dir_other . '/Xfile'
+  call assert_equal(s:dir_other, getcwd())
+  call assert_equal(["auto:", s:dir_other], s:li)
+  set noacd
+  bwipe!
+  call s:After_test_dirchanged()
+endfunc
+
 " Test TextChangedI and TextChangedP
 " See test/functional/viml/completion_spec.lua'
 func Test_ChangedP()
