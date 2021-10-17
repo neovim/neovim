@@ -473,6 +473,78 @@ describe('vim.diagnostic', function()
   end)
 
   describe('config()', function()
+    it('works with global, namespace, and ephemeral options', function()
+      eq(1, exec_lua [[
+        vim.diagnostic.config({
+          virtual_text = false,
+        })
+
+        vim.diagnostic.config({
+          virtual_text = true,
+          underline = false,
+        }, diagnostic_ns)
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Some Error', 4, 4, 4, 4),
+        })
+
+        return count_extmarks(diagnostic_bufnr, diagnostic_ns)
+      ]])
+
+      eq(1, exec_lua [[
+        vim.diagnostic.config({
+          virtual_text = false,
+        })
+
+        vim.diagnostic.config({
+          virtual_text = false,
+          underline = false,
+        }, diagnostic_ns)
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error('Some Error', 4, 4, 4, 4),
+        }, {virtual_text = true})
+
+        return count_extmarks(diagnostic_bufnr, diagnostic_ns)
+      ]])
+
+      eq(0, exec_lua [[
+        vim.diagnostic.config({
+          virtual_text = false,
+        })
+
+        vim.diagnostic.config({
+          virtual_text = {severity=vim.diagnostic.severity.ERROR},
+          underline = false,
+        }, diagnostic_ns)
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_warning('Some Warning', 4, 4, 4, 4),
+        }, {virtual_text = true})
+
+        return count_extmarks(diagnostic_bufnr, diagnostic_ns)
+      ]])
+
+      eq(1, exec_lua [[
+        vim.diagnostic.config({
+          virtual_text = false,
+        })
+
+        vim.diagnostic.config({
+          virtual_text = {severity=vim.diagnostic.severity.ERROR},
+          underline = false,
+        }, diagnostic_ns)
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_warning('Some Warning', 4, 4, 4, 4),
+        }, {
+          virtual_text = {} -- An empty table uses default values
+        })
+
+        return count_extmarks(diagnostic_bufnr, diagnostic_ns)
+      ]])
+    end)
+
     it('can use functions for config values', function()
       exec_lua [[
         vim.diagnostic.config({

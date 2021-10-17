@@ -254,12 +254,31 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                 Configure diagnostic options globally or for a specific
                 diagnostic namespace.
 
+                Configuration can be specified globally, per-namespace, or
+                ephemerally (i.e. only for a single call to
+                |vim.diagnostic.set()| or |vim.diagnostic.show()|). Ephemeral
+                configuration has highest priority, followed by namespace
+                configuration, and finally global configuration.
+
+                For example, if a user enables virtual text globally with >
+
+                   vim.diagnostic.config({virt_text = true})
+<
+
+                and a diagnostic producer sets diagnostics with >
+
+                   vim.diagnostic.set(ns, 0, diagnostics, {virt_text = false})
+<
+
+                then virtual text will not be enabled for those diagnostics.
+
                 Note:
                     Each of the configuration options below accepts one of the
                     following:
                     • `false` : Disable this feature
                     • `true` : Enable this feature, use default settings.
-                    • `table` : Enable this feature with overrides.
+                    • `table` : Enable this feature with overrides. Use an
+                      empty table to use default values.
                     • `function` : Function with signature (namespace, bufnr)
                       that returns any of the above.
 
@@ -460,8 +479,9 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
                 For example, consider a line of output from a linter: >
 
                  WARNING filename:27:3: Variable 'foo' does not exist
+<
 
-                < This can be parsed into a diagnostic |diagnostic-structure|
+                This can be parsed into a diagnostic |diagnostic-structure|
                 with: >
 
                  local s = "WARNING filename:27:3: Variable 'foo' does not exist"
