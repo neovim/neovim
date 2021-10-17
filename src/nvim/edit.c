@@ -2071,7 +2071,7 @@ static bool check_compl_option(bool dict_opt)
 {
   if (dict_opt
       ? (*curbuf->b_p_dict == NUL && *p_dict == NUL && !curwin->w_p_spell)
-      : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL && *curbuf->b_p_thsfu == NUL)) {
+      : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL && *curbuf->b_p_tsrfu == NUL)) {
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
     msg_attr((dict_opt
@@ -3932,7 +3932,7 @@ static char_u *get_complete_funcname(int type) {
   case CTRL_X_OMNI:
     return curbuf->b_p_ofu;
   case CTRL_X_THESAURUS:
-    return curbuf->b_p_thsfu;
+    return curbuf->b_p_tsrfu;
   default:
     return (char_u *)"";
   }
@@ -4117,8 +4117,8 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
 static int thesaurus_func_complete(int type)
 {
   return (type == CTRL_X_THESAURUS
-          && curbuf->b_p_thsfu != NULL
-          && *curbuf->b_p_thsfu != NUL);
+          && curbuf->b_p_tsrfu != NULL
+          && *curbuf->b_p_tsrfu != NUL);
 }
 
 // Get the next expansion(s), using "compl_pattern".

@@ -5916,7 +5916,7 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curbuf->b_p_sw);
   case PV_TFU:
     return (char_u *)&(curbuf->b_p_tfu);
-  case PV_THSFU:
+  case PV_TSRFU:
     return (char_u *)&(curbuf->b_p_thsfu);
   case PV_TS:
     return (char_u *)&(curbuf->b_p_ts);
