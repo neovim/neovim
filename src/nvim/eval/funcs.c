@@ -28,6 +28,7 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/globals.h"
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -1060,6 +1061,43 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   rettv->vval.v_number = len > 0 ? len - 1 : 0;
+}
+
+// "chdir(dir)" function
+static void f_chdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *cwd;
+  CdScope scope = kCdScopeGlobal;
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  if (argvars[0].v_type != VAR_STRING) {
+    return;
+  }
+
+  // Return the current directory
+  cwd = xmalloc(MAXPATHL);
+  if (cwd != NULL) {
+    if (os_dirname(cwd, MAXPATHL) != FAIL) {
+#ifdef BACKSLASH_IN_FILENAME
+      slash_adjust(cwd);
+#endif
+      rettv->vval.v_string = vim_strsave(cwd);
+    }
+    xfree(cwd);
+  }
+
+  if (curwin->w_localdir != NULL) {
+    scope = kCdScopeWindow;
+  } else if (curtab->tp_localdir != NULL) {
+    scope = kCdScopeTab;
+  }
+
+  if (!changedir_func(argvars[0].vval.v_string, scope)) {
+    // Directory change failed
+    XFREE_CLEAR(rettv->vval.v_string);
+  }
 }
 
 /*

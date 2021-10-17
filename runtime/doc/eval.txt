@@ -2316,6 +2316,7 @@ chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr}[, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
+chdir({dir})			String	change current working directory
 cindent({lnum})		Number	C indent for line {lnum}
 clearmatches([{win}])		none	clear all matches
 col({expr})			Number	column nr of cursor or mark
@@ -2461,6 +2462,7 @@ has({feature})			Number	|TRUE| if feature {feature} supported
 has_key({dict}, {key})		Number	|TRUE| if {dict} has entry {key}
 haslocaldir([{winnr} [, {tabnr}]])
 				Number	|TRUE| if current window executed |:lcd|
+					or |:tcd|
 hasmapto({what} [, {mode} [, {abbr}]])
 				Number	|TRUE| if mapping to {what} exists
 histadd({history}, {item})	String	add an item to a history
@@ -3280,6 +3282,27 @@ charidx({string}, {idx} [, {countcc}])
 			echo charidx('áb́ć', 6, 1)	returns 4
 			echo charidx('áb́ć', 16)		returns -1
 
+chdir({dir})						*chdir()*
+		Change the current working directory to {dir}.  The scope of
+		the directory change depends on the directory of the current
+		window:
+			- If the current window has a window-local directory
+			  (|:lcd|), then changes the window local directory.
+			- Otherwise, if the current tabpage has a local
+			  directory (|:tcd|) then changes the tabpage local
+			  directory.
+			- Otherwise, changes the global directory.
+		If successful, returns the previous working directory.  Pass
+		this to another chdir() to restore the directory.
+		On failure, returns an empty string.
+
+		Example: >
+			let save_dir = chdir(newdir)
+			if save_dir
+			   " ... do some work
+			   call chdir(save_dir)
+			endif
+<
 cindent({lnum})						*cindent()*
 		Get the amount of indent for line {lnum} according the C
 		indenting rules, as with 'cindent'.
@@ -4987,6 +5010,8 @@ getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 			getcwd(0, 0)
 <		If {winnr} is -1 it is ignored, only the tab is resolved.
 		{winnr} can be the window number or the |window-ID|.
+		If both {winnr} and {tabnr} are -1 the global working
+		directory is returned.
 
 		Can also be used as a |method|: >
 			GetWinnr()->getcwd()

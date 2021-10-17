@@ -7753,51 +7753,68 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 }
 
-/// `:cd`, `:tcd`, `:lcd`, `:chdir`, `:tchdir` and `:lchdir`.
+/// Change directory function used by :cd/:tcd/:lcd Ex commands and the chdir() function.
+/// @return true if the directory is successfully changed.
+bool changedir_func(char_u *new_dir, CdScope scope)
+{
+  char_u *tofree;
+  bool retval = false;
+
+  if (allbuf_locked()) {
+    return false;
+  }
+
+  // ":cd -": Change to previous directory
+  if (STRCMP(new_dir, "-") == 0) {
+    if (prev_dir == NULL) {
+      EMSG(_("E186: No previous directory"));
+      return false;
+    }
+    new_dir = prev_dir;
+  }
+
+  // Save current directory for next ":cd -"
+  tofree = prev_dir;
+  if (os_dirname(NameBuff, MAXPATHL) == OK) {
+    prev_dir = vim_strsave(NameBuff);
+  } else {
+    prev_dir = NULL;
+  }
+
+#if defined(UNIX)
+  // On Unix ":cd" means: go to home directory.
+  if (*new_dir == NUL) {
+    // Use NameBuff for home directory name.
+    expand_env((char_u *)"$HOME", NameBuff, MAXPATHL);
+    new_dir = NameBuff;
+  }
+#endif
+
+  bool dir_differs = prev_dir == NULL || pathcmp((char *)prev_dir, (char *)new_dir, -1) != 0;
+  if (dir_differs && vim_chdir(new_dir)) {
+    EMSG(_(e_failed));
+  } else {
+    post_chdir(scope, dir_differs);
+    retval = true;
+  }
+  xfree(tofree);
+
+  return retval;
+}
+
+/// ":cd", ":tcd", ":lcd", ":chdir", "tchdir" and ":lchdir".
 void ex_cd(exarg_T *eap)
 {
   char_u *new_dir;
-  char_u *tofree;
-
   new_dir = eap->arg;
-#if !defined(UNIX)
+#if !defined(UNIX) && !defined(VMS)
   // for non-UNIX ":cd" means: print current directory
   if (*new_dir == NUL) {
     ex_pwd(NULL);
   } else
 #endif
   {
-    if (allbuf_locked()) {
-      return;
-    }
-
-    // ":cd -": Change to previous directory
-    if (STRCMP(new_dir, "-") == 0) {
-      if (prev_dir == NULL) {
-        EMSG(_("E186: No previous directory"));
-        return;
-      }
-      new_dir = prev_dir;
-    }
-
-    // Save current directory for next ":cd -"
-    tofree = prev_dir;
-    if (os_dirname(NameBuff, MAXPATHL) == OK) {
-      prev_dir = vim_strsave(NameBuff);
-    } else {
-      prev_dir = NULL;
-    }
-
-#if defined(UNIX)
-    // On Unix ":cd" means: go to home directory.
-    if (*new_dir == NUL) {
-      // Use NameBuff for home directory name.
-      expand_env((char_u *)"$HOME", NameBuff, MAXPATHL);
-      new_dir = NameBuff;
-    }
-#endif
-    CdScope scope = kCdScopeGlobal;  // Depends on command invoked
-
+    CdScope scope = kCdScopeGlobal;
     switch (eap->cmdidx) {
     case CMD_tcd:
     case CMD_tchdir:
@@ -7810,19 +7827,12 @@ void ex_cd(exarg_T *eap)
     default:
       break;
     }
-
-    bool dir_differs = prev_dir == NULL || pathcmp((char *)prev_dir, (char *)new_dir, -1) != 0;
-    if (dir_differs && vim_chdir(new_dir)) {
-      EMSG(_(e_failed));
-    } else {
-      post_chdir(scope, dir_differs);
+    if (changedir_func(new_dir, scope)) {
       // Echo the new current directory if the command was typed.
       if (KeyTyped || p_verbose >= 5) {
         ex_pwd(eap);
       }
     }
-
-    xfree(tofree);
   }
 }
 
