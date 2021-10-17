@@ -9191,8 +9191,12 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
   } else if (*name == 'l' && funccal != NULL) {  // local variable
     *d = &funccal->l_vars;
   } else if (*name == 's'  // script variable
-             && current_sctx.sc_sid > 0
+             && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_STR)
              && current_sctx.sc_sid <= ga_scripts.ga_len) {
+    // For anonymous scripts without a script item, create one now so script vars can be used
+    if (current_sctx.sc_sid == SID_STR) {
+      new_script_item(NULL, &current_sctx.sc_sid);
+    }
     *d = &SCRIPT_SV(current_sctx.sc_sid)->sv_dict;
   }
 

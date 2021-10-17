@@ -52,33 +52,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 
-
 /// Growarray to store info about already sourced scripts.
-/// Also store the dev/ino, so that we don't have to stat() each
-/// script when going through the list.
-typedef struct scriptitem_S {
-  char_u *sn_name;
-  bool file_id_valid;
-  FileID file_id;
-  bool sn_prof_on;              ///< true when script is/was profiled
-  bool sn_pr_force;             ///< forceit: profile functions in this script
-  proftime_T sn_pr_child;       ///< time set when going into first child
-  int sn_pr_nest;               ///< nesting for sn_pr_child
-  // profiling the script as a whole
-  int sn_pr_count;              ///< nr of times sourced
-  proftime_T sn_pr_total;       ///< time spent in script + children
-  proftime_T sn_pr_self;        ///< time spent in script itself
-  proftime_T sn_pr_start;       ///< time at script start
-  proftime_T sn_pr_children;    ///< time in children after script start
-  // profiling the script per line
-  garray_T sn_prl_ga;           ///< things stored for every line
-  proftime_T sn_prl_start;      ///< start time for current line
-  proftime_T sn_prl_children;   ///< time spent in children for this line
-  proftime_T sn_prl_wait;       ///< wait start time for current line
-  linenr_T sn_prl_idx;          ///< index of line being timed; -1 if none
-  int sn_prl_execed;            ///< line being timed was executed
-} scriptitem_T;
-
 static garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
 #define SCRIPT_ITEM(id) (((scriptitem_T *)script_items.ga_data)[(id) - 1])
 
@@ -1939,6 +1913,29 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
   return ga.ga_data;
 }
 
+/// Create a new script item and allocate script-local vars. @see new_script_vars
+///
+/// @param  name  File name of the script. NULL for anonymous :source.
+/// @param[out]  sid_out  SID of the new item.
+/// @return pointer to the created script item.
+scriptitem_T *new_script_item(char_u *const name, scid_T *const sid_out)
+{
+  static scid_T last_current_SID = 0;
+  const scid_T sid = ++last_current_SID;
+  if (sid_out != NULL) {
+    *sid_out = sid;
+  }
+  ga_grow(&script_items, (int)(sid - script_items.ga_len));
+  while (script_items.ga_len < sid) {
+    script_items.ga_len++;
+    SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
+    SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
+  }
+  SCRIPT_ITEM(sid).sn_name = name;
+  new_script_vars(sid);  // Allocate the local script variables to use for this script.
+  return &SCRIPT_ITEM(sid);
+}
+
 static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
 {
   char_u *save_sourcing_name = sourcing_name;
@@ -2036,7 +2033,6 @@ int do_source(char *fname, int check_other, int is_vimrc)
   char_u *fname_exp;
   char_u *firstline = NULL;
   int retval = FAIL;
-  static scid_T last_current_SID = 0;
   static int last_current_SID_seq = 0;
   int save_debug_break_level = debug_break_level;
   scriptitem_T *si = NULL;
@@ -2183,15 +2179,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
     }
   }
   if (current_sctx.sc_sid == 0) {
-    current_sctx.sc_sid = ++last_current_SID;
-    ga_grow(&script_items, (int)(current_sctx.sc_sid - script_items.ga_len));
-    while (script_items.ga_len < current_sctx.sc_sid) {
-      script_items.ga_len++;
-      SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
-      SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
-    }
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
-    si->sn_name = fname_exp;
+    si = new_script_item(fname_exp, &current_sctx.sc_sid);
     fname_exp = vim_strsave(si->sn_name);  // used for autocmd
     if (file_id_ok) {
       si->file_id_valid = true;
@@ -2199,9 +2187,6 @@ int do_source(char *fname, int check_other, int is_vimrc)
     } else {
       si->file_id_valid = false;
     }
-
-    // Allocate the local script variables to use for this script.
-    new_script_vars(current_sctx.sc_sid);
   }
 
   if (l_do_profiling == PROF_YES) {
@@ -2375,16 +2360,21 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
   case SID_LUA:
     return (char_u *)_("Lua");
   case SID_API_CLIENT:
-    vim_snprintf((char *)IObuff, IOSIZE,
-                 _("API client (channel id %" PRIu64 ")"),
-                 last_set.channel_id);
+    snprintf((char *)IObuff, IOSIZE, _("API client (channel id %" PRIu64 ")"), last_set.channel_id);
     return IObuff;
   case SID_STR:
     return (char_u *)_("anonymous :source");
-  default:
+  default: {
+    char_u *const sname = SCRIPT_ITEM(last_set.script_ctx.sc_sid).sn_name;
+    if (sname == NULL) {
+      snprintf((char *)IObuff, IOSIZE, _("anonymous :source (script id %d)"),
+               last_set.script_ctx.sc_sid);
+      return IObuff;
+    }
+
     *should_free = true;
-    return home_replace_save(NULL,
-                             SCRIPT_ITEM(last_set.script_ctx.sc_sid).sn_name);
+    return home_replace_save(NULL, sname);
+  }
   }
 }
 
