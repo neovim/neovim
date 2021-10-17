@@ -7760,7 +7760,7 @@ bool changedir_func(char_u *new_dir, CdScope scope)
   char_u *tofree;
   bool retval = false;
 
-  if (allbuf_locked()) {
+  if (new_dir == NULL || allbuf_locked()) {
     return false;
   }
 

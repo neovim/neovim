@@ -104,6 +104,8 @@ func Test_chdir_func()
   call assert_fails("call chdir('dir-abcd')", 'E472:')
   silent! let d = chdir("dir_abcd")
   call assert_equal("", d)
+  " Should not crash
+  call chdir(d)
 
   only | tabonly
   call chdir(topdir)
