@@ -7811,10 +7811,11 @@ void ex_cd(exarg_T *eap)
       break;
     }
 
-    if (vim_chdir(new_dir)) {
+    bool dir_differs = prev_dir == NULL || STRCMP(prev_dir, new_dir) != 0;
+    if (dir_differs && vim_chdir(new_dir)) {
       EMSG(_(e_failed));
     } else {
-      post_chdir(scope, true);
+      post_chdir(scope, dir_differs);
       // Echo the new current directory if the command was typed.
       if (KeyTyped || p_verbose >= 5) {
         ex_pwd(eap);

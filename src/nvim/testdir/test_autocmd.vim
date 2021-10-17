@@ -1334,13 +1334,16 @@ function s:Before_test_dirchanged()
   augroup END
   let s:li = []
   let s:dir_this = getcwd()
-  let s:dir_other = s:dir_this . '/foo'
-  call mkdir(s:dir_other)
+  let s:dir_foo = s:dir_this . '/foo'
+  call mkdir(s:dir_foo)
+  let s:dir_bar = s:dir_this . '/bar'
+  call mkdir(s:dir_bar)
 endfunc
 
 function s:After_test_dirchanged()
   exe 'cd' s:dir_this
-  call delete(s:dir_other, 'd')
+  call delete(s:dir_foo, 'd')
+  call delete(s:dir_bar, 'd')
   augroup test_dirchanged
     autocmd!
   augroup END
@@ -1350,10 +1353,12 @@ function Test_dirchanged_global()
   call s:Before_test_dirchanged()
   autocmd test_dirchanged DirChanged global call add(s:li, "cd:")
   autocmd test_dirchanged DirChanged global call add(s:li, expand("<afile>"))
-  exe 'cd' s:dir_other
-  call assert_equal(["cd:", s:dir_other], s:li)
-  exe 'lcd' s:dir_other
-  call assert_equal(["cd:", s:dir_other], s:li)
+  exe 'cd' s:dir_foo
+  call assert_equal(["cd:", s:dir_foo], s:li)
+  exe 'cd' s:dir_foo
+  call assert_equal(["cd:", s:dir_foo], s:li)
+  exe 'lcd' s:dir_bar
+  call assert_equal(["cd:", s:dir_foo], s:li)
   call s:After_test_dirchanged()
 endfunc
 
@@ -1361,10 +1366,12 @@ function Test_dirchanged_local()
   call s:Before_test_dirchanged()
   autocmd test_dirchanged DirChanged window call add(s:li, "lcd:")
   autocmd test_dirchanged DirChanged window call add(s:li, expand("<afile>"))
-  exe 'cd' s:dir_other
+  exe 'cd' s:dir_foo
   call assert_equal([], s:li)
-  exe 'lcd' s:dir_other
-  call assert_equal(["lcd:", s:dir_other], s:li)
+  exe 'lcd' s:dir_bar
+  call assert_equal(["lcd:", s:dir_bar], s:li)
+  exe 'lcd' s:dir_bar
+  call assert_equal(["lcd:", s:dir_bar], s:li)
   call s:After_test_dirchanged()
 endfunc
 
@@ -1379,9 +1386,9 @@ function Test_dirchanged_auto()
   set acd
   exe 'cd ..'
   call assert_equal([], s:li)
-  exe 'edit ' . s:dir_other . '/Xfile'
-  call assert_equal(s:dir_other, getcwd())
-  call assert_equal(["auto:", s:dir_other], s:li)
+  exe 'edit ' . s:dir_foo . '/Xfile'
+  call assert_equal(s:dir_foo, getcwd())
+  call assert_equal(["auto:", s:dir_foo], s:li)
   set noacd
   bwipe!
   call s:After_test_dirchanged()

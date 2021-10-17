@@ -113,6 +113,42 @@ describe('autocmd DirChanged', function()
     eq(2, eval('g:cdcount'))
   end)
 
+  it('does not trigger if diretory has not changed', function()
+    command('lcd '..dirs[1])
+    eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
+    eq(1, eval('g:cdcount'))
+    command('let g:ev = {}')
+    command('lcd '..dirs[1])
+    eq({}, eval('g:ev'))
+    eq(1, eval('g:cdcount'))
+
+    command('tcd '..dirs[2])
+    eq({cwd=dirs[2], scope='tab', changed_window=false}, eval('g:ev'))
+    eq(2, eval('g:cdcount'))
+    command('let g:ev = {}')
+    command('tcd '..dirs[2])
+    eq({}, eval('g:ev'))
+    eq(2, eval('g:cdcount'))
+
+    command('cd '..dirs[3])
+    eq({cwd=dirs[3], scope='global', changed_window=false}, eval('g:ev'))
+    eq(3, eval('g:cdcount'))
+    command('let g:ev = {}')
+    command('cd '..dirs[3])
+    eq({}, eval('g:ev'))
+    eq(3, eval('g:cdcount'))
+
+    command('set autochdir')
+
+    command('split '..dirs[1]..'/foo')
+    eq({cwd=dirs[1], scope='window', changed_window=false}, eval('g:ev'))
+    eq(4, eval('g:cdcount'))
+    command('let g:ev = {}')
+    command('split '..dirs[1]..'/bar')
+    eq({}, eval('g:ev'))
+    eq(4, eval('g:cdcount'))
+  end)
+
   it("is triggered by switching to win/tab with different CWD #6054", function()
     command('lcd '..dirs[3])            -- window 3
     command('split '..dirs[2]..'/foo')  -- window 2
