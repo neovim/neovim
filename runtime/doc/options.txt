@@ -6445,27 +6445,26 @@ A jump table for the options with a short description can be found at |Q_op|.
 'thesaurus' 'tsr'	string	(default "")
 			global or local to buffer |global-local|
 	List of file names, separated by commas, that are used to lookup words
-	for thesaurus completion commands |i_CTRL-X_CTRL-T|.
+	for thesaurus completion commands |i_CTRL-X_CTRL-T|.  See
+	|compl-thesaurus|.
 
-	Each line in the file should contain words with similar meaning,
-	separated by non-keyword characters (white space is preferred).
-	Maximum line length is 510 bytes.
+	This option is not used if 'thesaurusfunc' is set, either for the
+	buffer or globally.
 
 	To include a comma in a file name precede it with a backslash.  Spaces
 	after a comma are ignored, otherwise spaces are included in the file
-	name.  See |option-backslash| about using backslashes.
-	The use of |:set+=| and |:set-=| is preferred when adding or removing
-	directories from the list.  This avoids problems when a future version
-	uses another default.
-	Backticks cannot be used in this option for security reasons.
+	name.  See |option-backslash| about using backslashes.  The use of
+	|:set+=| and |:set-=| is preferred when adding or removing directories
+	from the list.  This avoids problems when a future version uses
+	another default.  Backticks cannot be used in this option for security
+	reasons.
 
 						*'thesaurusfunc'* *'tsrfu'*
 'thesaurusfunc' 'tsrfu'	string	(default: empty)
-			local to buffer
+			global or local to buffer |global-local|
 	This option specifies a function to be used for thesaurus completion
-	with CTRL-X CTRL-T. |i_CTRL-X_CTRL-T|
-	See |complete-functions| for an explanation of how the function is
-	invoked and what it should return.
+	with CTRL-X CTRL-T. |i_CTRL-X_CTRL-T| See |compl-thesaurusfunc|.
+
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 

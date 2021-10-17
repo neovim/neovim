@@ -2538,10 +2538,10 @@ return {
     {
       full_name='thesaurusfunc', abbreviation='tsrfu',
       short_desc=N_("function used for thesaurus completion"),
-      type='string', scope={'buffer'},
+      type='string', scope={'global', 'buffer'},
       secure=true,
       alloced=true,
-      varname='p_thsfu',
+      varname='p_tsrfu',
       defaults={if_true=""}
     },
     {

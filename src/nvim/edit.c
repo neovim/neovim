@@ -2071,7 +2071,8 @@ static bool check_compl_option(bool dict_opt)
 {
   if (dict_opt
       ? (*curbuf->b_p_dict == NUL && *p_dict == NUL && !curwin->w_p_spell)
-      : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL && *curbuf->b_p_tsrfu == NUL)) {
+      : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL
+         && *curbuf->b_p_tsrfu == NUL && *p_tsrfu == NUL)) {
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
     msg_attr((dict_opt
@@ -2544,7 +2545,7 @@ static void ins_compl_longest_match(compl_T *match)
  * Add an array of matches to the list of matches.
  * Frees matches[].
  */
-static void ins_compl_add_matches(int num_matches, char_u * *matches, int icase)
+static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
   FUNC_ATTR_NONNULL_ALL
 {
   int add_r = OK;
@@ -2899,7 +2900,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
   char_u *ptr;
   char_u *buf;
   regmatch_T regmatch;
-  char_u * *files;
+  char_u **files;
   int count;
   int save_p_scs;
   Direction dir = compl_direction;
@@ -2990,7 +2991,7 @@ theend:
   xfree(buf);
 }
 
-static void ins_compl_files(int count, char_u * *files, int thesaurus, int flags,
+static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
                             regmatch_T *regmatch, char_u *buf, Direction *dir)
   FUNC_ATTR_NONNULL_ARG(2, 7)
 {
@@ -3932,7 +3933,7 @@ static char_u *get_complete_funcname(int type) {
   case CTRL_X_OMNI:
     return curbuf->b_p_ofu;
   case CTRL_X_THESAURUS:
-    return curbuf->b_p_tsrfu;
+    return *curbuf->b_p_tsrfu == NUL ? p_tsrfu : curbuf->b_p_tsrfu;
   default:
     return (char_u *)"";
   }
@@ -4110,15 +4111,14 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     return FAIL;
   }
   return ins_compl_add((char_u *)word, -1, NULL,
-                       (char_u * *)cptext, true, &user_data, dir, flags, dup);
+                       (char_u **)cptext, true, &user_data, dir, flags, dup);
 }
 
-/// Returns TRUE when using a user-defined function for thesaurus completion.
-static int thesaurus_func_complete(int type)
+/// Returns true when using a user-defined function for thesaurus completion.
+static bool thesaurus_func_complete(int type)
 {
-  return (type == CTRL_X_THESAURUS
-          && curbuf->b_p_tsrfu != NULL
-          && *curbuf->b_p_tsrfu != NUL);
+  return type == CTRL_X_THESAURUS
+         && (*curbuf->b_p_tsrfu != NUL || *p_tsrfu != NUL);
 }
 
 // Get the next expansion(s), using "compl_pattern".
@@ -4138,7 +4138,7 @@ static int ins_compl_get_exp(pos_T *ini)
   static buf_T *ins_buf = NULL;          // buffer being scanned
 
   pos_T *pos;
-  char_u * *matches;
+  char_u **matches;
   int save_p_scs;
   bool save_p_ws;
   int save_p_ic;

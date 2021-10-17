@@ -698,7 +698,6 @@ struct file_buffer {
 #endif
   char_u *b_p_cfu;              ///< 'completefunc'
   char_u *b_p_ofu;              ///< 'omnifunc'
-  char_u *b_p_tsrfu;            ///< 'thesaurusfunc'
   char_u *b_p_tfu;              ///< 'tagfunc'
   int b_p_eol;                  ///< 'endofline'
   int b_p_fixeol;               ///< 'fixendofline'
@@ -768,6 +767,7 @@ struct file_buffer {
   unsigned b_tc_flags;          ///< flags for 'tagcase'
   char_u *b_p_dict;             ///< 'dictionary' local value
   char_u *b_p_tsr;              ///< 'thesaurus' local value
+  char_u *b_p_tsrfu;            ///< 'thesaurusfunc' local value
   long b_p_ul;                  ///< 'undolevels' local value
   int b_p_udf;                  ///< 'undofile'
   char_u *b_p_lw;               ///< 'lispwords' local value

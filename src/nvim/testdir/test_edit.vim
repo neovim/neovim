@@ -900,16 +900,24 @@ endfunc
 
 func Test_thesaurus_func()
   new
-  set thesaurus=
-  set thesaurusfunc=MyThesaurus
+  set thesaurus=notused
+  set thesaurusfunc=NotUsed
+  setlocal thesaurusfunc=MyThesaurus
   call setline(1, "an ki")
   call cursor(1, 1)
   call feedkeys("A\<c-x>\<c-t>\<c-n>\<cr>\<esc>", 'tnix')
   call assert_equal(['an amiable', ''], getline(1, '$'))
+
+  setlocal thesaurusfunc=NonExistingFunc
+  call assert_fails("normal $a\<C-X>\<C-T>", 'E117:')
+
+  setlocal thesaurusfunc=
   set thesaurusfunc=NonExistingFunc
   call assert_fails("normal $a\<C-X>\<C-T>", 'E117:')
-  set thesaurusfunc&
   %bw!
+
+  set thesaurusfunc=
+  set thesaurus=
 endfunc
 
 func Test_edit_CTRL_U()
