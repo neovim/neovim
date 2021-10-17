@@ -22,7 +22,7 @@ func Test_set_filename()
   bwipe!
   au! DirChanged
   set noacd
-  exe 'cd ' . cwd
+  call chdir(cwd)
   call delete('samples/Xtest')
 endfunc
 
