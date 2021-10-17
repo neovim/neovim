@@ -200,17 +200,17 @@ struct block0 {
  */
 #define b0_flags        b0_fname[B0_FNAME_SIZE_ORG - 2]
 
-/* The lowest two bits contain the fileformat.  Zero means it's not set
- * (compatible with Vim 6.x), otherwise it's EOL_UNIX + 1, EOL_DOS + 1 or
- * EOL_MAC + 1. */
+// The lowest two bits contain the fileformat.  Zero means it's not set
+// (compatible with Vim 6.x), otherwise it's EOL_UNIX + 1, EOL_DOS + 1 or
+// EOL_MAC + 1.
 #define B0_FF_MASK      3
 
-/* Swap file is in directory of edited file.  Used to find the file from
- * different mount points. */
+// Swap file is in directory of edited file.  Used to find the file from
+// different mount points.
 #define B0_SAME_DIR     4
 
-/* The 'fileencoding' is at the end of b0_fname[], with a NUL in front of it.
- * When empty there is only the NUL. */
+// The 'fileencoding' is at the end of b0_fname[], with a NUL in front of it.
+// When empty there is only the NUL.
 #define B0_HAS_FENC     8
 
 #define STACK_INCR      5       // nr of entries added to ml_stack at a time
@@ -524,9 +524,9 @@ void ml_open_file(buf_T *buf)
 
       // Flush block zero, so others can read it
       if (mf_sync(mfp, MFS_ZERO) == OK) {
-        /* Mark all blocks that should be in the swapfile as dirty.
-         * Needed for when the 'swapfile' option was reset, so that
-         * the swap file was deleted, and then on again. */
+        // Mark all blocks that should be in the swapfile as dirty.
+        // Needed for when the 'swapfile' option was reset, so that
+        // the swap file was deleted, and then on again.
         mf_set_dirty(mfp);
         break;
       }
@@ -580,8 +580,8 @@ void ml_close(buf_T *buf, int del_file)
   XFREE_CLEAR(buf->b_ml.ml_chunksize);
   buf->b_ml.ml_mfp = NULL;
 
-  /* Reset the "recovered" flag, give the ATTENTION prompt the next time
-   * this buffer is loaded. */
+  // Reset the "recovered" flag, give the ATTENTION prompt the next time
+  // this buffer is loaded.
   buf->b_flags &= ~BF_RECOVERED;
 }
 
@@ -860,8 +860,8 @@ void ml_recover(bool checkext)
   /*
    * open the memfile from the old swap file
    */
-  p = vim_strsave(fname_used);   /* save "fname_used" for the message:
-                                    mf_open() will consume "fname_used"! */
+  p = vim_strsave(fname_used);  // save "fname_used" for the message:
+                                // mf_open() will consume "fname_used"!
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
   if (mfp == NULL || mfp->mf_fd < 0) {
@@ -1199,8 +1199,8 @@ void ml_recover(bool checkext)
    * Line ml_line_count + 1 in the dummy empty line.
    */
   if (orig_file_status != OK || curbuf->b_ml.ml_line_count != lnum * 2 + 1) {
-    /* Recovering an empty file results in two lines and the first line is
-     * empty.  Don't set the modified flag then. */
+    // Recovering an empty file results in two lines and the first line is
+    // empty.  Don't set the modified flag then.
     if (!(curbuf->b_ml.ml_line_count == 2 && *ml_get(1) == NUL)) {
       changed_internal();
       buf_inc_changedtick(curbuf);
@@ -1305,8 +1305,8 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
 
   if (fname != NULL) {
 #ifdef HAVE_READLINK
-    /* Expand symlink in the file name, because the swap file is created
-     * with the actual file instead of with the symlink. */
+    // Expand symlink in the file name, because the swap file is created
+    // with the actual file instead of with the symlink.
     if (resolve_symlink(fname, fname_buf) == OK) {
       fname_res = fname_buf;
     } else
@@ -1761,9 +1761,9 @@ void ml_preserve(buf_T *buf, int message, bool do_fsync)
     return;
   }
 
-  /* We only want to stop when interrupted here, not when interrupted
-   * before. */
-  got_int = FALSE;
+  // We only want to stop when interrupted here, not when interrupted
+  // before.
+  got_int = false;
 
   ml_flush_line(buf);                               // flush buffered line
   (void)ml_find_line(buf, (linenr_T)0, ML_FLUSH);   // flush locked block
@@ -3222,9 +3222,9 @@ int resolve_symlink(const char_u *fname, char_u *buf)
     ret = readlink((char *)tmp, (char *)buf, MAXPATHL - 1);
     if (ret <= 0) {
       if (errno == EINVAL || errno == ENOENT) {
-        /* Found non-symlink or not existing file, stop here.
-         * When at the first level use the unmodified name, skip the
-         * call to vim_FullName(). */
+        // Found non-symlink or not existing file, stop here.
+        // When at the first level use the unmodified name, skip the
+        // call to vim_FullName().
         if (depth == 1) {
           return FAIL;
         }
@@ -4200,8 +4200,8 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
       size += lnum - 1;
     }
 
-    /* Don't count the last line break if 'noeol' and ('bin' or
-     * 'nofixeol'). */
+    // Don't count the last line break if 'noeol' and ('bin' or
+    // 'nofixeol').
     if ((!buf->b_p_fixeol || buf->b_p_bin) && !buf->b_p_eol
         && lnum > buf->b_ml.ml_line_count) {
       size -= ffdos + 1;

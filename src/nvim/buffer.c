@@ -526,8 +526,8 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
     diff_buf_delete(buf);   // Clear 'diff' for hidden buffer.
   }
 
-  /* Return when a window is displaying the buffer or when it's not
-   * unloaded. */
+  // Return when a window is displaying the buffer or when it's not
+  // unloaded.
   if (buf->b_nwindows > 0 || !unload_buf) {
     return false;
   }
@@ -1591,8 +1591,8 @@ void enter_buffer(buf_T *buf)
     apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, curbuf);
   }
 
-  /* If autocommands did not change the cursor position, restore cursor lnum
-   * and possibly cursor col. */
+  // If autocommands did not change the cursor position, restore cursor lnum
+  // and possibly cursor col.
   if (curwin->w_cursor.lnum == 1 && inindent(0)) {
     buflist_getfpos();
   }
@@ -1754,8 +1754,8 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
   if ((flags & BLN_CURBUF) && curbuf_reusable()) {
     assert(curbuf != NULL);
     buf = curbuf;
-    /* It's like this buffer is deleted.  Watch out for autocommands that
-     * change curbuf!  If that happens, allocate a new buffer anyway. */
+    // It's like this buffer is deleted.  Watch out for autocommands that
+    // change curbuf!  If that happens, allocate a new buffer anyway.
     if (curbuf->b_p_bl) {
       apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
     }
@@ -2257,8 +2257,8 @@ int buflist_findpat(const char_u *pattern, const char_u *pattern_end, bool unlis
         }
       }
 
-      /* Only search for unlisted buffers if there was no match with
-       * a listed buffer. */
+      // Only search for unlisted buffers if there was no match with
+      // a listed buffer.
       if (!unlisted || !find_listed || match != -1) {
         break;
       }
@@ -2893,8 +2893,8 @@ void buf_set_name(int fnum, char_u *name)
     xfree(buf->b_ffname);
     buf->b_ffname = vim_strsave(name);
     buf->b_sfname = NULL;
-    /* Allocate ffname and expand into full path.  Also resolves .lnk
-     * files on Win32. */
+    // Allocate ffname and expand into full path.  Also resolves .lnk
+    // files on Win32.
     fname_expand(buf, &buf->b_ffname, &buf->b_sfname);
     buf->b_fname = buf->b_sfname;
   }
@@ -3166,8 +3166,8 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
   (void)append_arg_number(curwin, buffer, IOSIZE, !shortmess(SHM_FILE));
 
   if (dont_truncate) {
-    /* Temporarily set msg_scroll to avoid the message being truncated.
-     * First call msg_start() to get the message in the right place. */
+    // Temporarily set msg_scroll to avoid the message being truncated.
+    // First call msg_start() to get the message in the right place.
     msg_start();
     n = msg_scroll;
     msg_scroll = true;
@@ -5233,8 +5233,8 @@ void do_modelines(int flags)
     return;
   }
 
-  /* Disallow recursive entry here.  Can happen when executing a modeline
-   * triggers an autocommand, which reloads modelines with a ":do". */
+  // Disallow recursive entry here.  Can happen when executing a modeline
+  // triggers an autocommand, which reloads modelines with a ":do".
   if (entered) {
     return;
   }

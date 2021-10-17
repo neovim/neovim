@@ -230,8 +230,8 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
       if (g_do_tagpreview != 0) {
         if (ptag_entry.tagname != NULL
             && STRCMP(ptag_entry.tagname, tag) == 0) {
-          /* Jumping to same tag: keep the current match, so that
-           * the CursorHold autocommand example works. */
+          // Jumping to same tag: keep the current match, so that
+          // the CursorHold autocommand example works.
           cur_match = ptag_entry.cur_match;
           cur_fnum = ptag_entry.cur_fnum;
         } else {
@@ -407,9 +407,9 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         tagstack[tagstackidx].fmark.fnum = curbuf->b_fnum;
       }
 
-      /* Curwin will change in the call to jumpto_tag() if ":stag" was
-       * used or an autocommand jumps to another window; store value of
-       * tagstackidx now. */
+      // Curwin will change in the call to jumpto_tag() if ":stag" was
+      // used or an autocommand jumps to another window; store value of
+      // tagstackidx now.
       curwin->w_tagstackidx = tagstackidx;
       if (type != DT_SELECT && type != DT_JUMP) {
         curwin->w_tagstack[tagstackidx].cur_match = cur_match;
@@ -418,9 +418,9 @@ int do_tag(char_u *tag, int type, int count, int forceit, int verbose)
     }
   }
 
-  /* When not using the current buffer get the name of buffer "cur_fnum".
-   * Makes sure that the tag order doesn't change when using a remembered
-   * position for "cur_match". */
+  // When not using the current buffer get the name of buffer "cur_fnum".
+  // Makes sure that the tag order doesn't change when using a remembered
+  // position for "cur_match".
   if (cur_fnum != curbuf->b_fnum) {
     buf_T *buf = buflist_findnr(cur_fnum);
 
@@ -1101,8 +1101,8 @@ static void prepare_pats(pat_T *pats, int has_re)
   pats->head = pats->pat;
   pats->headlen = pats->len;
   if (has_re) {
-    /* When the pattern starts with '^' or "\\<", binary searching can be
-     * used (much faster). */
+    // When the pattern starts with '^' or "\\<", binary searching can be
+    // used (much faster).
     if (pats->pat[0] == '^') {
       pats->head = pats->pat + 1;
     } else if (pats->pat[0] == '\\' && pats->pat[1] == '<') {
@@ -1500,8 +1500,8 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
 
   orgpat.len = (int)STRLEN(pat);
   if (curbuf->b_help) {
-    /* When "@ab" is specified use only the "ab" language, otherwise
-     * search all languages. */
+    // When "@ab" is specified use only the "ab" language, otherwise
+    // search all languages.
     if (orgpat.len > 3 && pat[orgpat.len - 3] == '@'
         && ASCII_ISALPHA(pat[orgpat.len - 2])
         && ASCII_ISALPHA(pat[orgpat.len - 1])) {
@@ -1613,9 +1613,9 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
               }
             }
             if (s == NULL || *s == NUL) {
-              /* Language not in 'helplang': use last, prefer English,
-               * unless found already. */
-              ++help_pri;
+              // Language not in 'helplang': use last, prefer English,
+              // unless found already.
+              help_pri++;
               if (STRICMP(help_lang, "en") != 0) {
                 ++help_pri;
               }
@@ -1654,8 +1654,8 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
           stop_searching = true;
           break;
         }
-        /* When mincount is TAG_MANY, stop when enough matches have been
-         * found (for completion). */
+        // When mincount is TAG_MANY, stop when enough matches have been
+        // found (for completion).
         if (mincount == TAG_MANY && match_count >= TAG_MANY) {
           stop_searching = true;
           retval = OK;
@@ -1695,8 +1695,8 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
           vim_fseek(fp, search_info.curr_offset, SEEK_SET);
           eof = vim_fgets(lbuf, lbuf_size, fp);
           if (!eof && search_info.curr_offset != 0) {
-            /* The explicit cast is to work around a bug in gcc 3.4.2
-             * (repeated below). */
+            // The explicit cast is to work around a bug in gcc 3.4.2
+            // (repeated below).
             search_info.curr_offset = vim_ftell(fp);
             if (search_info.curr_offset == search_info.high_offset) {
               // oops, gone a bit too far; try from low offset
@@ -1739,9 +1739,9 @@ line_read_in:
           char_u *conv_line;
           int len;
 
-          /* Convert every line.  Converting the pattern from 'enc' to
-           * the tags file encoding doesn't work, because characters are
-           * not recognized. */
+          // Convert every line.  Converting the pattern from 'enc' to
+          // the tags file encoding doesn't work, because characters are
+          // not recognized.
           conv_line = string_convert(&vimconv, lbuf, NULL);
           if (conv_line != NULL) {
             // Copy or swap lbuf and conv_line.
@@ -1764,13 +1764,12 @@ line_read_in:
          * format, and for "not sorted" flag.
          */
         if (state == TS_START) {
-          /* The header ends when the line sorts below "!_TAG_".  When
-           * case is folded lower case letters sort before "_". */
+          // The header ends when the line sorts below "!_TAG_".  When
+          // case is folded lower case letters sort before "_".
           if (STRNCMP(lbuf, "!_TAG_", 6) <= 0
               || (lbuf[0] == '!' && ASCII_ISLOWER(lbuf[1]))) {
             if (STRNCMP(lbuf, "!_TAG_", 6) != 0) {
-              /* Non-header item before the header, e.g. "!" itself.
-               */
+              // Non-header item before the header, e.g. "!" itself.
               goto parse_line;
             }
 
@@ -1781,10 +1780,9 @@ line_read_in:
               tag_file_sorted = lbuf[18];
             }
             if (STRNCMP(lbuf, "!_TAG_FILE_ENCODING\t", 20) == 0) {
-              /* Prepare to convert every line from the specified
-               * encoding to 'encoding'. */
-              for (p = lbuf + 20; *p > ' ' && *p < 127; ++p) {
-                ;
+              // Prepare to convert every line from the specified
+              // encoding to 'encoding'.
+              for (p = lbuf + 20; *p > ' ' && *p < 127; p++) {
               }
               *p = NUL;
               convert_setup(&vimconv, lbuf + 20, p_enc);
@@ -1820,9 +1818,9 @@ line_read_in:
           }
 
           if (state == TS_BINARY && orgpat.regmatch.rm_ic && !sortic) {
-            /* Binary search won't work for ignoring case, use linear
-             * search. */
-            linear = TRUE;
+            // Binary search won't work for ignoring case, use linear
+            // search.
+            linear = true;
             state = TS_LINEAR;
           }
 
@@ -1927,9 +1925,8 @@ parse_line:
             }
 
             if (tagcmp == 0) {
-              /* We've located the tag, now skip back and search
-               * forward until the first matching tag is found.
-               */
+              // We've located the tag, now skip back and search
+              // forward until the first matching tag is found.
               state = TS_SKIP_BACK;
               search_info.match_offset = search_info.curr_offset;
               continue;
@@ -1966,8 +1963,8 @@ parse_line:
             if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0) {
               state = TS_STEP_FORWARD;
             } else {
-              /* Have to skip back more.  Restore the curr_offset
-               * used, otherwise we get stuck at a long line. */
+              // Have to skip back more.  Restore the curr_offset
+              // used, otherwise we get stuck at a long line.
               search_info.curr_offset = search_info.curr_offset_used;
             }
             continue;

@@ -230,11 +230,10 @@ struct name_list {
 static char *(spo_name_tab[SPO_COUNT]) =
 { "ms=", "me=", "hs=", "he=", "rs=", "re=", "lc=" };
 
-/* The sp_off_flags are computed like this:
- * offset from the start of the matched text: (1 << SPO_XX_OFF)
- * offset from the end   of the matched text: (1 << (SPO_XX_OFF + SPO_COUNT))
- * When both are present, only one is used.
- */
+// The sp_off_flags are computed like this:
+// offset from the start of the matched text: (1 << SPO_XX_OFF)
+// offset from the end   of the matched text: (1 << (SPO_XX_OFF + SPO_COUNT))
+// When both are present, only one is used.
 
 #define SPTYPE_MATCH    1       // match keyword with this group ID
 #define SPTYPE_START    2       // match a regexp, start of item
@@ -345,7 +344,7 @@ static int next_seqnr = 1;              // value to use for si_seqnr
  */
 static int next_match_col;              // column for start of next match
 static lpos_T next_match_m_endpos;      // position for end of next match
-static lpos_T next_match_h_startpos;  // pos. for highl. start of next match
+static lpos_T next_match_h_startpos;    // pos. for highl. start of next match
 static lpos_T next_match_h_endpos;      // pos. for highl. end of next match
 static int next_match_idx;              // index of matched item
 static long next_match_flags;           // flags for next match
@@ -492,8 +491,8 @@ void syntax_start(win_T *wp, linenr_T lnum)
       // First line is always valid, no matter "minlines".
       first_stored = 1;
     } else {
-      /* Need to parse "minlines" lines before state can be considered
-       * valid to store. */
+      // Need to parse "minlines" lines before state can be considered
+      // valid to store.
       first_stored = current_lnum + syn_block->b_syn_sync_minlines;
     }
   } else {
@@ -514,12 +513,12 @@ void syntax_start(win_T *wp, linenr_T lnum)
     (void)syn_finish_line(false);
     current_lnum++;
 
-    /* If we parsed at least "minlines" lines or started at a valid
-     * state, the current state is considered valid. */
+    // If we parsed at least "minlines" lines or started at a valid
+    // state, the current state is considered valid.
     if (current_lnum >= first_stored) {
-      /* Check if the saved state entry is for the current line and is
-       * equal to the current state.  If so, then validate all saved
-       * states that depended on a change before the parsed line. */
+      // Check if the saved state entry is for the current line and is
+      // equal to the current state.  If so, then validate all saved
+      // states that depended on a change before the parsed line.
       if (prev == NULL) {
         prev = syn_stack_find_entry(current_lnum - 1);
       }
@@ -548,19 +547,18 @@ void syntax_start(win_T *wp, linenr_T lnum)
           sp = sp->sst_next;
         }
         load_current_state(prev);
-      }
-      /* Store the state at this line when it's the first one, the line
-       * where we start parsing, or some distance from the previously
-       * saved state.  But only when parsed at least 'minlines'. */
-      else if (prev == NULL
-               || current_lnum == lnum
-               || current_lnum >= prev->sst_lnum + dist) {
+      } else if (prev == NULL
+                 // Store the state at this line when it's the first one, the line
+                 // where we start parsing, or some distance from the previously
+                 // saved state.  But only when parsed at least 'minlines'.
+                 || current_lnum == lnum
+                 || current_lnum >= prev->sst_lnum + dist) {
         prev = store_current_state();
       }
     }
 
-    /* This can take a long time: break when CTRL-C pressed.  The current
-     * state will be wrong then. */
+    // This can take a long time: break when CTRL-C pressed.  The current
+    // state will be wrong then.
     line_breakcheck();
     if (got_int) {
       current_lnum = lnum;
@@ -664,8 +662,8 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
    * 1. Search backwards for the end of a C-style comment.
    */
   if (syn_block->b_syn_sync_flags & SF_CCOMMENT) {
-    /* Need to make syn_buf the current buffer for a moment, to be able to
-     * use find_start_comment(). */
+    // Need to make syn_buf the current buffer for a moment, to be able to
+    // use find_start_comment().
     curwin_save = curwin;
     curwin = wp;
     curbuf_save = curbuf;
@@ -793,9 +791,9 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
               ++current_col;
             }
 
-            /* syn_current_attr() will have skipped the check for
-             * an item that ends here, need to do that now.  Be
-             * careful not to go past the NUL. */
+            // syn_current_attr() will have skipped the check for
+            // an item that ends here, need to do that now.  Be
+            // careful not to go past the NUL.
             prev_current_col = current_col;
             if (syn_getcurline()[current_col] != NUL) {
               ++current_col;
@@ -987,9 +985,8 @@ static void syn_update_ends(bool startofline)
   check_keepend();
 }
 
-/****************************************
- * Handling of the state stack cache.
- */
+/////////////////////////////////////////
+// Handling of the state stack cache.
 
 /*
  * EXPLANATION OF THE SYNTAX STATE STACK CACHE
@@ -1081,8 +1078,8 @@ static void syn_stack_alloc(void)
     }
 
     if (syn_block->b_sst_array != NULL) {
-      /* When shrinking the array, cleanup the existing stack.
-       * Make sure that all valid entries fit in the new array. */
+      // When shrinking the array, cleanup the existing stack.
+      // Make sure that all valid entries fit in the new array.
       while (syn_block->b_sst_len - syn_block->b_sst_freecount + 2 > len
              && syn_stack_cleanup()) {
         ;
@@ -1165,9 +1162,9 @@ static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
         p = np;
         continue;
       }
-      /* This state is below the changed area.  Remember the line
-       * that needs to be parsed before this entry can be made valid
-       * again. */
+      // This state is below the changed area.  Remember the line
+      // that needs to be parsed before this entry can be made valid
+      // again.
       if (p->sst_change_lnum != 0 && p->sst_change_lnum > buf->b_mod_top) {
         if (p->sst_change_lnum + buf->b_mod_xlines > buf->b_mod_top) {
           p->sst_change_lnum += buf->b_mod_xlines;
@@ -1638,8 +1635,8 @@ int get_syntax_attr(const colnr_T col, bool *const can_spell, const bool keep_st
   int attr = 0;
 
   if (can_spell != NULL) {
-    /* Default: Only do spelling when there is no @Spell cluster or when
-     * ":syn spell toplevel" was used. */
+    // Default: Only do spelling when there is no @Spell cluster or when
+    // ":syn spell toplevel" was used.
     *can_spell = syn_block->b_syn_spell == SYNSPL_DEFAULT
                  ? (syn_block->b_spell_cluster_id == 0)
                  : (syn_block->b_syn_spell == SYNSPL_TOP);
@@ -1901,15 +1898,15 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
               syn_add_start_off(&pos, &regmatch,
                                 spp, SPO_MS_OFF, -1);
               if (pos.lnum > current_lnum) {
-                /* must have used end of match in a next line,
-                 * we can't handle that */
+                // must have used end of match in a next line,
+                // we can't handle that
                 spp->sp_startcol = MAXCOL;
                 continue;
               }
               startcol = pos.col;
 
-              /* remember the next column where this pattern
-               * matches in the current line */
+              // remember the next column where this pattern
+              // matches in the current line
               spp->sp_startcol = startcol;
 
               /*
@@ -1999,8 +1996,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
               /*
                * keep the best match so far in next_match_*
                */
-              /* Highlighting must start after startpos and end
-               * before endpos. */
+              // Highlighting must start after startpos and end
+              // before endpos.
               if (hl_startpos.lnum == current_lnum
                   && (int)hl_startpos.col < startcol) {
                 hl_startpos.col = startcol;
@@ -2029,8 +2026,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
         if (next_match_idx >= 0 && next_match_col == (int)current_col) {
           synpat_T *lspp;
 
-          /* When a zero-width item matched which has a nextgroup,
-           * don't push the item but set nextgroup. */
+          // When a zero-width item matched which has a nextgroup,
+          // don't push the item but set nextgroup.
           lspp = &(SYN_ITEMS(syn_block)[next_match_idx]);
           if (next_match_m_endpos.lnum == current_lnum
               && next_match_m_endpos.col == current_col
@@ -2127,8 +2124,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
        * done in the current item.
        */
       if (syn_block->b_spell_cluster_id == 0) {
-        /* There is no @Spell cluster: Do spelling for items without
-         * @NoSpell cluster. */
+        // There is no @Spell cluster: Do spelling for items without
+        // @NoSpell cluster.
         if (syn_block->b_nospell_cluster_id == 0
             || current_trans_id == 0) {
           *can_spell = (syn_block->b_syn_spell != SYNSPL_NOTOP);
@@ -2180,8 +2177,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
       }
     }
   } else if (can_spell != NULL) {
-    /* Default: Only do spelling when there is no @Spell cluster or when
-     * ":syn spell toplevel" was used. */
+    // Default: Only do spelling when there is no @Spell cluster or when
+    // ":syn spell toplevel" was used.
     *can_spell = syn_block->b_syn_spell == SYNSPL_DEFAULT
                  ? (syn_block->b_spell_cluster_id == 0)
                  : (syn_block->b_syn_spell == SYNSPL_TOP);
@@ -2365,8 +2362,8 @@ static void check_state_ends(void)
           current_next_list = NULL;
         }
 
-        /* When the ended item has "extend", another item with
-         * "keepend" now needs to check for its end. */
+        // When the ended item has "extend", another item with
+        // "keepend" now needs to check for its end.
         had_extend = (cur_si->si_flags & HL_EXTEND);
 
         pop_current_state();
@@ -2541,9 +2538,9 @@ static void update_si_end(stateitem_T *sip, int startcol, bool force)
     return;
   }
 
-  /* Don't update when it's already done.  Can be a match of an end pattern
-   * that started in a previous line.  Watch out: can also be a "keepend"
-   * from a containing item. */
+  // Don't update when it's already done.  Can be a match of an end pattern
+  // that started in a previous line.  Watch out: can also be a "keepend"
+  // from a containing item.
   if (!force && sip->si_m_endpos.lnum >= current_lnum) {
     return;
   }
@@ -2822,8 +2819,8 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
       }
       limit_pos(hl_endpos, m_endpos);
 
-      /* now the match ends where the highlighting ends, it is turned
-       * into the matchgroup for the end */
+      // now the match ends where the highlighting ends, it is turned
+      // into the matchgroup for the end
       *m_endpos = *hl_endpos;
     } else {
       *end_idx = 0;
@@ -5570,8 +5567,8 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
   // If ssp has a "containedin" list and "cur_si" is in it, return TRUE.
   if (cur_si != NULL && ssp->cont_in_list != NULL
       && !(cur_si->si_flags & HL_MATCH)) {
-    /* Ignore transparent items without a contains argument.  Double check
-     * that we don't go back past the first one. */
+    // Ignore transparent items without a contains argument.  Double check
+    // that we don't go back past the first one.
     while ((cur_si->si_flags & HL_TRANS_CONT)
            && cur_si > (stateitem_T *)(current_state.ga_data)) {
       --cur_si;
@@ -5635,8 +5632,8 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
     }
     if (item >= SYNID_CLUSTER) {
       scl_list = SYN_CLSTR(syn_block)[item - SYNID_CLUSTER].scl_list;
-      /* restrict recursiveness to 30 to avoid an endless loop for a
-       * cluster that includes itself (indirectly) */
+      // restrict recursiveness to 30 to avoid an endless loop for a
+      // cluster that includes itself (indirectly)
       if (scl_list != NULL && depth < 30) {
         ++depth;
         r = in_id_list(NULL, scl_list, ssp, contained);
@@ -5931,8 +5928,8 @@ int syn_get_sub_char(void)
 int syn_get_stack_item(int i)
 {
   if (i >= current_state.ga_len) {
-    /* Need to invalidate the state, because we didn't properly finish it
-     * for the last character, "keep_state" was TRUE. */
+    // Need to invalidate the state, because we didn't properly finish it
+    // for the last character, "keep_state" was TRUE.
     invalidate_current_state();
     current_col = MAXCOL;
     return -1;

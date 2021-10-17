@@ -374,8 +374,8 @@ nfa_regcomp_start (
   /* A reasonable estimation for maximum size */
   nstate_max = (STRLEN(expr) + 1) * 25;
 
-  /* Some items blow up in size, such as [A-z].  Add more space for that.
-   * When it is still not enough realloc_post_list() will be used. */
+  // Some items blow up in size, such as [A-z].  Add more space for that.
+  // When it is still not enough realloc_post_list() will be used.
   nstate_max += 1000;
 
   /* Size for postfix representation of expr. */
@@ -1426,8 +1426,8 @@ static int nfa_regatom(void)
     }
     break;
 
-    /* Catch \%^ and \%$ regardless of where they appear in the
-     * pattern -- regardless of whether or not it makes sense. */
+    // Catch \%^ and \%$ regardless of where they appear in the
+    // pattern -- regardless of whether or not it makes sense.
     case '^':
       EMIT(NFA_BOF);
       break;
@@ -1468,13 +1468,13 @@ static int nfa_regatom(void)
       EMIT(NFA_OPT_CHARS);
       EMIT(n);
 
-      /* Emit as "\%(\%[abc]\)" to be able to handle
-       * "\%[abc]*" which would cause the empty string to be
-       * matched an unlimited number of times. NFA_NOPEN is
-       * added only once at a position, while NFA_SPLIT is
-       * added multiple times.  This is more efficient than
-       * not allowing NFA_SPLIT multiple times, it is used
-       * a lot. */
+      // Emit as "\%(\%[abc]\)" to be able to handle
+      // "\%[abc]*" which would cause the empty string to be
+      // matched an unlimited number of times. NFA_NOPEN is
+      // added only once at a position, while NFA_SPLIT is
+      // added multiple times.  This is more efficient than
+      // not allowing NFA_SPLIT multiple times, it is used
+      // a lot.
       EMIT(NFA_NOPEN);
       break;
     }
@@ -1884,8 +1884,8 @@ static int nfa_regpiece(void)
   int my_post_start;
   int quest;
 
-  /* Save the current parse state, so that we can use it if <atom>{m,n} is
-   * next. */
+  // Save the current parse state, so that we can use it if <atom>{m,n} is
+  // next.
   save_parse_state(&old_state);
 
   /* store current pos in the postfix form, for \{m,n} involving 0s */
@@ -1969,12 +1969,11 @@ static int nfa_regpiece(void)
     break;
 
   case Magic('{'):
-    /* a{2,5} will expand to 'aaa?a?a?'
-     * a{-1,3} will expand to 'aa??a??', where ?? is the nongreedy
-     * version of '?'
-     * \v(ab){2,3} will expand to '(ab)(ab)(ab)?', where all the
-     * parenthesis have the same id
-     */
+    // a{2,5} will expand to 'aaa?a?a?'
+    // a{-1,3} will expand to 'aa??a??', where ?? is the nongreedy
+    // version of '?'
+    // \v(ab){2,3} will expand to '(ab)(ab)(ab)?', where all the
+    // parenthesis have the same id
 
     greedy = true;
     c2 = peekchr();
@@ -1985,8 +1984,8 @@ static int nfa_regpiece(void)
     if (!read_limits(&minval, &maxval))
       EMSG_RET_FAIL(_("E870: (NFA regexp) Error reading repetition limits"));
 
-    /*  <atom>{0,inf}, <atom>{0,} and <atom>{}  are equivalent to
-     *  <atom>*  */
+    //  <atom>{0,inf}, <atom>{0,} and <atom>{}  are equivalent to
+    //  <atom>*
     if (minval == 0 && maxval == MAX_LIMIT) {
       if (greedy)
         /* \{}, \{0,} */
@@ -3329,10 +3328,10 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
         break;
       }
 
-      /* Allow "NFA_MOPEN" as a valid postfix representation for
-       * the empty regexp "". In this case, the NFA will be
-       * NFA_MOPEN -> NFA_MCLOSE. Note that this also allows
-       * empty groups of parenthesis, and empty mbyte chars */
+      // Allow "NFA_MOPEN" as a valid postfix representation for
+      // the empty regexp "". In this case, the NFA will be
+      // NFA_MOPEN -> NFA_MCLOSE. Note that this also allows
+      // empty groups of parenthesis, and empty mbyte chars
       if (stackp == stack) {
         s = alloc_state(mopen, NULL, NULL);
         if (s == NULL)
@@ -3345,8 +3344,8 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
         break;
       }
 
-      /* At least one node was emitted before NFA_MOPEN, so
-       * at least one node will be between NFA_MOPEN and NFA_MCLOSE */
+      // At least one node was emitted before NFA_MOPEN, so
+      // at least one node will be between NFA_MOPEN and NFA_MCLOSE
       e = POP();
       s = alloc_state(mopen, e.start, NULL);         /* `(' */
       if (s == NULL)
@@ -3503,14 +3502,14 @@ static void nfa_postprocess(nfa_regprog_T *prog)
         int ch_invisible = failure_chance(prog->state[i].out, 0);
         int ch_follows = failure_chance(prog->state[i].out1->out, 0);
 
-        /* Postpone when the invisible match is expensive or has a
-         * lower chance of failing. */
+        // Postpone when the invisible match is expensive or has a
+        // lower chance of failing.
         if (c == NFA_START_INVISIBLE_BEFORE
             || c == NFA_START_INVISIBLE_BEFORE_NEG) {
-          /* "before" matches are very expensive when
-           * unbounded, always prefer what follows then,
-           * unless what follows will always match.
-           * Otherwise strongly prefer what follows. */
+          // "before" matches are very expensive when
+          // unbounded, always prefer what follows then,
+          // unless what follows will always match.
+          // Otherwise strongly prefer what follows.
           if (prog->state[i].val <= 0 && ch_follows > 0) {
             directly = false;
           } else {
@@ -3529,9 +3528,9 @@ static void nfa_postprocess(nfa_regprog_T *prog)
   }
 }
 
-/****************************************************************
-* NFA execution code.
-****************************************************************/
+/////////////////////////////////////////////////////////////////
+// NFA execution code.
+/////////////////////////////////////////////////////////////////
 
 /* Values for done in nfa_pim_T. */
 #define NFA_PIM_UNUSED   0      /* pim not used */
@@ -4197,8 +4196,8 @@ skip_add:
     save_ptr = NULL;
     memset(&save_multipos, 0, sizeof(save_multipos));
 
-    /* Set the position (with "off" added) in the subexpression.  Save
-     * and restore it when it was in use.  Otherwise fill any gap. */
+    // Set the position (with "off" added) in the subexpression.  Save
+    // and restore it when it was in use.  Otherwise fill any gap.
     if (REG_MULTI) {
       if (subidx < sub->in_use) {
         save_multipos = sub->list.multi[subidx];
@@ -4297,8 +4296,8 @@ skip_add:
       sub = &subs->norm;
     }
 
-    /* We don't fill in gaps here, there must have been an MOPEN that
-     * has done that. */
+    // We don't fill in gaps here, there must have been an MOPEN that
+    // has done that.
     save_in_use = sub->in_use;
     if (sub->in_use <= subidx)
       sub->in_use = subidx + 1;

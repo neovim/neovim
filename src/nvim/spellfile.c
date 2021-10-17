@@ -2602,7 +2602,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         upp = vim_strsave(items[1]);
       } else if (is_aff_rule(items, itemcnt, "REP", 2)
                  || is_aff_rule(items, itemcnt, "REPSAL", 2)) {
-        /* Ignore REP/REPSAL count */;
+        // Ignore REP/REPSAL count
         if (!isdigit(*items[1])) {
           smsg(_("Expected REP(SAL) count in %s line %d"),
                fname, lnum);

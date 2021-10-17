@@ -121,8 +121,8 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     return OK;
   }
 
-  /* Allow setting '[ and '] for an autocommand that simulates reading a
-   * file. */
+  // Allow setting '[ and '] for an autocommand that simulates reading a
+  // file.
   if (c == '[') {
     buf->b_op_start = *pos;
     return OK;
@@ -338,8 +338,8 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
 
   posp = NULL;
 
-  /* Check for special key, can't be a mark name and might cause islower()
-   * to crash. */
+  // Check for special key, can't be a mark name and might cause islower()
+  // to crash.
   if (c < 0) {
     return posp;
   }
@@ -434,8 +434,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, bool changefile, int *fnum)
         }
         pos_copy.lnum = -1;             // can't get file
       } else {
-        pos_copy.lnum = 0;              /* mark exists, but is not valid in
-                                           current buffer */
+        pos_copy.lnum = 0;      // mark exists, but is not valid in current buffer
       }
     }
   }
@@ -457,10 +456,10 @@ pos_T *getnextmark(pos_T *startpos, int dir, int begin_line)
 
   pos = *startpos;
 
-  /* When searching backward and leaving the cursor on the first non-blank,
-   * position must be in a previous line.
-   * When searching forward and leaving the cursor on the first non-blank,
-   * position must be in a next line. */
+  // When searching backward and leaving the cursor on the first non-blank,
+  // position must be in a previous line.
+  // When searching forward and leaving the cursor on the first non-blank,
+  // position must be in a next line.
   if (dir == BACKWARD && begin_line) {
     pos.col = 0;
   } else if (dir == FORWARD && begin_line) {
@@ -569,8 +568,8 @@ int check_mark(pos_T *pos)
     return FAIL;
   }
   if (pos->lnum <= 0) {
-    /* lnum is negative if mark is in another file can can't get that
-     * file, error message already give then. */
+    // lnum is negative if mark is in another file can can't get that
+    // file, error message already give then.
     if (pos->lnum == 0) {
       EMSG(_(e_marknotset));
     }
@@ -1058,9 +1057,9 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
    */
   FOR_ALL_TAB_WINDOWS(tab, win) {
     if (!cmdmod.lockmarks) {
-      /* Marks in the jumplist.  When deleting lines, this may create
-       * duplicate marks in the jumplist, they will be removed later. */
-      for (i = 0; i < win->w_jumplistlen; ++i) {
+      // Marks in the jumplist.  When deleting lines, this may create
+      // duplicate marks in the jumplist, they will be removed later.
+      for (i = 0; i < win->w_jumplistlen; i++) {
         if (win->w_jumplist[i].fmark.fnum == fnum) {
           one_adjust_nodel(&(win->w_jumplist[i].fmark.mark.lnum));
         }
@@ -1083,8 +1082,8 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
         one_adjust_nodel(&(win->w_old_visual_lnum));
       }
 
-      /* topline and cursor position for windows with the same buffer
-       * other than the current window */
+      // topline and cursor position for windows with the same buffer
+      // other than the current window
       if (win != curwin) {
         if (win->w_topline >= line1 && win->w_topline <= line2) {
           if (amount == MAXLNUM) {                  // topline is deleted

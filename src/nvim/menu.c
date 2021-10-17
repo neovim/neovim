@@ -343,8 +343,8 @@ static int add_menu_path(const char_u *const menu_path, vimmenu_T *menuarg,
       }
       menup = &menu->next;
 
-      /* Count menus, to find where this one needs to be inserted.
-       * Ignore menus that are not in the menubar (PopUp and Toolbar) */
+      // Count menus, to find where this one needs to be inserted.
+      // Ignore menus that are not in the menubar (PopUp and Toolbar)
       if (parent != NULL || menu_is_menubar(menu->name)) {
         if (menu->priority <= pri_tab[pri_idx]) {
           lower_pri = menup;
@@ -596,8 +596,8 @@ static int remove_menu(vimmenu_T **menup, char_u *name, int modes, bool silent)
         break;
       }
 
-      /* Remove the menu item for the given mode[s].  If the menu item
-       * is no longer valid in ANY mode, delete it */
+      // Remove the menu item for the given mode[s].  If the menu item
+      // is no longer valid in ANY mode, delete it
       menu->modes &= ~modes;
       if (modes & MENU_TIP_MODE) {
         free_menu_string(menu, MENU_INDEX_TIP);

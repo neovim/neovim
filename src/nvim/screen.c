@@ -5164,8 +5164,8 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
   if (row >= 0) {
     if (wild_menu_showing == 0 || wild_menu_showing == WM_LIST) {
       if (msg_scrolled > 0) {
-        /* Put the wildmenu just above the command line.  If there is
-         * no room, scroll the screen one line up. */
+        // Put the wildmenu just above the command line.  If there is
+        // no room, scroll the screen one line up.
         if (cmdline_row == Rows - 1) {
           msg_scroll_up(false);
           msg_scrolled++;
@@ -7031,8 +7031,8 @@ int showmode(void)
         if (VIsual_active) {
           char *p;
 
-          /* Don't concatenate separate words to avoid translation
-           * problems. */
+          // Don't concatenate separate words to avoid translation
+          // problems.
           switch ((VIsual_select ? 4 : 0)
                   + (VIsual_mode == Ctrl_V) * 2
                   + (VIsual_mode == 'V')) {

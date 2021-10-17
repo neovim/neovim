@@ -3005,8 +3005,8 @@ static void ungetchr(void)
   at_start = prev_at_start;
   prev_at_start = false;
 
-  /* Backup regparse, so that it's at the same position as before the
-   * getchr(). */
+  // Backup regparse, so that it's at the same position as before the
+  // getchr().
   regparse -= prevchr_len;
 }
 
@@ -6414,8 +6414,8 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
     int c1, c2, c11, c12;
     int junk;
 
-    /* we have to handle the strcmp ourselves, since it is necessary to
-     * deal with the composing characters by ignoring them: */
+    // we have to handle the strcmp ourselves, since it is necessary to
+    // deal with the composing characters by ignoring them:
     str1 = s1;
     str2 = s2;
     c1 = c2 = 0;
@@ -7186,8 +7186,8 @@ static regengine_T nfa_regengine =
   (char_u *)""
 };
 
-/* Which regexp engine to use? Needed for vim_regcomp().
- * Must match with 'regexpengine'. */
+// Which regexp engine to use? Needed for vim_regcomp().
+// Must match with 'regexpengine'.
 static int regexp_engine = 0;
 
 #ifdef REGEXP_DEBUG

@@ -361,8 +361,8 @@ static int linelen(int *has_tab)
   return len;
 }
 
-/* Buffer for two lines used during sorting.  They are allocated to
- * contain the longest line being sorted. */
+// Buffer for two lines used during sorting.  They are allocated to
+// contain the longest line being sorted.
 static char_u *sortbuf1;
 static char_u *sortbuf2;
 
@@ -404,9 +404,9 @@ static int sort_compare(const void *s1, const void *s2)
   sorti_T l2 = *(sorti_T *)s2;
   int result = 0;
 
-  /* If the user interrupts, there's no way to stop qsort() immediately, but
-   * if we return 0 every time, qsort will assume it's done sorting and
-   * exit. */
+  // If the user interrupts, there's no way to stop qsort() immediately, but
+  // if we return 0 every time, qsort will assume it's done sorting and
+  // exit.
   if (sort_abort) {
     return 0;
   }
@@ -1733,8 +1733,8 @@ int rename_buffer(char_u *new_fname)
  */
 void ex_file(exarg_T *eap)
 {
-  /* ":0file" removes the file name.  Check for illegal uses ":3file",
-   * "0file name", etc. */
+  // ":0file" removes the file name.  Check for illegal uses ":3file",
+  // "0file name", etc.
   if (eap->addr_count > 0
       && (*eap->arg != NUL
           || eap->line2 > 0
@@ -1888,11 +1888,11 @@ int do_write(exarg_T *eap)
         retval = FAIL;
         goto theend;
       }
-      /* Exchange the file names for the current and the alternate
-       * buffer.  This makes it look like we are now editing the buffer
-       * under the new name.  Must be done before buf_write(), because
-       * if there is no file name and 'cpo' contains 'F', it will set
-       * the file name. */
+      // Exchange the file names for the current and the alternate
+      // buffer.  This makes it look like we are now editing the buffer
+      // under the new name.  Must be done before buf_write(), because
+      // if there is no file name and 'cpo' contains 'F', it will set
+      // the file name.
       fname = alt_buf->b_fname;
       alt_buf->b_fname = curbuf->b_fname;
       curbuf->b_fname = fname;
@@ -1923,8 +1923,8 @@ int do_write(exarg_T *eap)
         do_modelines(0);
       }
 
-      /* Autocommands may have changed buffer names, esp. when
-       * 'autochdir' is set. */
+      // Autocommands may have changed buffer names, esp. when
+      // 'autochdir' is set.
       fname = curbuf->b_sfname;
     }
 
@@ -2003,11 +2003,11 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char_u *fname, char_u *ffname, int
       char_u *p;
       char_u *swapname;
 
-      /* We only try the first entry in 'directory', without checking if
-       * it's writable.  If the "." directory is not writable the write
-       * will probably fail anyway.
-       * Use 'shortname' of the current buffer, since there is no buffer
-       * for the written file. */
+      // We only try the first entry in 'directory', without checking if
+      // it's writable.  If the "." directory is not writable the write
+      // will probably fail anyway.
+      // Use 'shortname' of the current buffer, since there is no buffer
+      // for the written file.
       if (*p_dir == NUL) {
         dir = xmalloc(5);
         STRCPY(dir, ".");
@@ -2466,8 +2466,8 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
       }
     }
 
-    /* May jump to last used line number for a loaded buffer or when asked
-     * for explicitly */
+    // May jump to last used line number for a loaded buffer or when asked
+    // for explicitly
     if ((oldbuf && newlnum == ECMD_LASTL) || newlnum == ECMD_LAST) {
       pos = buflist_findfpos(buf);
       newlnum = pos->lnum;
@@ -2577,10 +2577,10 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
           }
         }
 
-        /* May get the window options from the last time this buffer
-         * was in this window (or another window).  If not used
-         * before, reset the local window options to the global
-         * values.  Also restores old folding stuff. */
+        // May get the window options from the last time this buffer
+        // was in this window (or another window).  If not used
+        // before, reset the local window options to the global
+        // values.  Also restores old folding stuff.
         get_winopts(curbuf);
         did_get_winopts = true;
       }
@@ -2621,10 +2621,10 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
     goto theend;
   }
 
-  /* Since we are starting to edit a file, consider the filetype to be
-   * unset.  Helps for when an autocommand changes files and expects syntax
-   * highlighting to work in the other file. */
-  did_filetype = FALSE;
+  // Since we are starting to edit a file, consider the filetype to be
+  // unset.  Helps for when an autocommand changes files and expects syntax
+  // highlighting to work in the other file.
+  did_filetype = false;
 
   /*
    * other_file oldbuf
@@ -2828,8 +2828,8 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
       && !auto_buf) {
     int msg_scroll_save = msg_scroll;
 
-    /* Obey the 'O' flag in 'cpoptions': overwrite any previous file
-     * message. */
+    // Obey the 'O' flag in 'cpoptions': overwrite any previous file
+    // message.
     if (shortmess(SHM_OVERALL) && !exiting && p_verbose == 0) {
       msg_scroll = FALSE;
     }
@@ -2953,8 +2953,8 @@ void ex_append(exarg_T *eap)
       }
     }
     if (eap->getline == NULL) {
-      /* No getline() function, use the lines that follow. This ends
-       * when there is no more. */
+      // No getline() function, use the lines that follow. This ends
+      // when there is no more.
       if (eap->nextcmd == NULL || *eap->nextcmd == NUL) {
         break;
       }
@@ -3750,8 +3750,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           sub_firstline = vim_strsave(ml_get(sub_firstlnum));
         }
 
-        /* Save the line number of the last change for the final
-         * cursor position (just like Vi). */
+        // Save the line number of the last change for the final
+        // cursor position (just like Vi).
         curwin->w_cursor.lnum = lnum;
         do_again = FALSE;
 
@@ -3778,8 +3778,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           goto skip;
         }
 
-        /* Normally we continue searching for a match just after the
-         * previous match. */
+        // Normally we continue searching for a match just after the
+        // previous match.
         matchcol = regmatch.endpos[0].col;
         prev_matchcol = matchcol;
 
@@ -3818,8 +3818,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
             do_check_cursorbind();
           }
 
-          /* When 'cpoptions' contains "u" don't sync undo when
-           * asking for confirmation. */
+          // When 'cpoptions' contains "u" don't sync undo when
+          // asking for confirmation.
           if (vim_strchr(p_cpo, CPO_UNDO) != NULL) {
             ++no_u_sync;
           }
@@ -3970,11 +3970,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           }
 
           if (typed == 'n') {
-            /* For a multi-line match, put matchcol at the NUL at
-             * the end of the line and set nmatch to one, so that
-             * we continue looking for a match on the next line.
-             * Avoids that ":%s/\nB\@=//gc" and ":%s/\n/,\r/gc"
-             * get stuck when pressing 'n'. */
+            // For a multi-line match, put matchcol at the NUL at
+            // the end of the line and set nmatch to one, so that
+            // we continue looking for a match on the next line.
+            // Avoids that ":%s/\nB\@=//gc" and ":%s/\n/,\r/gc"
+            // get stuck when pressing 'n'.
             if (nmatch > 1) {
               matchcol = (colnr_T)STRLEN(sub_firstline);
               skip_match = true;
@@ -3986,8 +3986,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           }
         }
 
-        /* Move the cursor to the start of the match, so that we can
-         * use "\=col("."). */
+        // Move the cursor to the start of the match, so that we can
+        // use "\=col(".").
         curwin->w_cursor.col = regmatch.startpos[0].col;
 
         // When the match included the "$" of the last line it may
@@ -4178,11 +4178,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
         // strings, e.g. :s/$/pat/g or :s/[a-z]* /(&)/g.
         // But ":s/\n/#/" is OK.
 skip:
-        /* We already know that we did the last subst when we are at
-         * the end of the line, except that a pattern like
-         * "bar\|\nfoo" may match at the NUL.  "lnum" can be below
-         * "line2" when there is a \zs in the pattern after a line
-         * break. */
+        // We already know that we did the last subst when we are at
+        // the end of the line, except that a pattern like
+        // "bar\|\nfoo" may match at the NUL.  "lnum" can be below
+        // "line2" when there is a \zs in the pattern after a line
+        // break.
         lastone = (skip_match
                    || got_int
                    || got_quit
@@ -4249,8 +4249,8 @@ skip:
               nmatch_tl = 0;
             }
 
-            /* When asking, undo is saved each time, must also set
-             * changed flag each time. */
+            // When asking, undo is saved each time, must also set
+            // changed flag each time.
             if (subflags.do_ask) {
               changed_bytes(lnum, 0);
             } else {
@@ -4278,9 +4278,9 @@ skip:
            * 5. break if there isn't another match in this line
            */
           if (nmatch <= 0) {
-            /* If the match found didn't start where we were
-             * searching, do the next search in the line where we
-             * found the match. */
+            // If the match found didn't start where we were
+            // searching, do the next search in the line where we
+            // found the match.
             if (nmatch == -1) {
               lnum -= regmatch.startpos[0].lnum;
             }
@@ -4329,9 +4329,9 @@ skip:
   curbuf->deleted_bytes2 = 0;
 
   if (first_line != 0) {
-    /* Need to subtract the number of added lines from "last_line" to get
-     * the line number before the change (same as adding the number of
-     * deleted lines). */
+    // Need to subtract the number of added lines from "last_line" to get
+    // the line number before the change (same as adding the number of
+    // deleted lines).
     i = curbuf->b_ml.ml_line_count - old_line_count;
     changed_lines(first_line, 0, last_line - i, i, false);
 
@@ -4842,9 +4842,9 @@ void ex_help(exarg_T *eap)
       }
       fclose(helpfd);
 
-      /* Split off help window; put it at far top if no position
-       * specified, the current window is vertically split and
-       * narrow. */
+      // Split off help window; put it at far top if no position
+      // specified, the current window is vertically split and
+      // narrow.
       n = WSP_HELP;
       if (cmdmod.split == 0 && curwin->w_width != Columns
           && curwin->w_width < 80) {
@@ -4884,9 +4884,9 @@ void ex_help(exarg_T *eap)
 
   do_tag(tag, DT_HELP, 1, FALSE, TRUE);
 
-  /* Delete the empty buffer if we're not using it.  Careful: autocommands
-   * may have jumped to another window, check that the buffer is not in a
-   * window. */
+  // Delete the empty buffer if we're not using it.  Careful: autocommands
+  // may have jumped to another window, check that the buffer is not in a
+  // window.
   if (empty_fnum != 0 && curbuf->b_fnum != empty_fnum) {
     buf = buflist_findnr(empty_fnum);
     if (buf != NULL && buf->b_nwindows == 0) {
@@ -5057,11 +5057,11 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
   }
 
   if (i < 0) {  // no match in table
-    /* Replace "\S" with "/\\S", etc.  Otherwise every tag is matched.
-     * Also replace "\%^" and "\%(", they match every tag too.
-     * Also "\zs", "\z1", etc.
-     * Also "\@<", "\@=", "\@<=", etc.
-     * And also "\_$" and "\_^". */
+    // Replace "\S" with "/\\S", etc.  Otherwise every tag is matched.
+    // Also replace "\%^" and "\%(", they match every tag too.
+    // Also "\zs", "\z1", etc.
+    // Also "\@<", "\@=", "\@<=", etc.
+    // And also "\_$" and "\_^".
     if (arg[0] == '\\'
         && ((arg[1] != NUL && arg[2] == NUL)
             || (vim_strchr((char_u *)"%_z@", arg[1]) != NULL
@@ -5158,8 +5158,8 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
           *d++ = '\\';
         }
 
-        /* "CTRL-\_" -> "CTRL-\\_" to avoid the special meaning of "\_" in
-         * "CTRL-\_CTRL-N" */
+        // "CTRL-\_" -> "CTRL-\\_" to avoid the special meaning of "\_" in
+        // "CTRL-\_CTRL-N"
         if (STRNICMP(s, "CTRL-\\_", 7) == 0) {
           STRCPY(d, "CTRL-\\\\");
           d += 7;
@@ -5213,9 +5213,9 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
   }
   if (find_tags(IObuff, num_matches, matches, flags, MAXCOL, NULL) == OK
       && *num_matches > 0) {
-    /* Sort the matches found on the heuristic number that is after the
-     * tag name. */
-    qsort((void *)*matches, (size_t)*num_matches,
+    // Sort the matches found on the heuristic number that is after the
+    // tag name.
+    qsort((void *)(*matches), (size_t)(*num_matches),
           sizeof(char_u *), help_compare);
     // Delete more than TAG_MANY to reduce the size of the listing.
     while (*num_matches > TAG_MANY) {

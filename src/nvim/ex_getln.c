@@ -2637,8 +2637,8 @@ static void realloc_cmdbuff(int len)
       && ccline.xpc->xp_context != EXPAND_UNSUCCESSFUL) {
     int i = (int)(ccline.xpc->xp_pattern - p);
 
-    /* If xp_pattern points inside the old cmdbuff it needs to be adjusted
-     * to point into the newly allocated memory. */
+    // If xp_pattern points inside the old cmdbuff it needs to be adjusted
+    // to point into the newly allocated memory.
     if (i >= 0 && i <= ccline.cmdlen) {
       ccline.xpc->xp_pattern = ccline.cmdbuff + i;
     }
@@ -3457,8 +3457,8 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
       return FAIL;
     }
 
-    /* When 'incsearch' is set and CTRL-R CTRL-W used: skip the duplicate
-     * part of the word. */
+    // When 'incsearch' is set and CTRL-R CTRL-W used: skip the duplicate
+    // part of the word.
     p = arg;
     if (p_is && regname == Ctrl_W) {
       char_u *w;
@@ -5976,8 +5976,8 @@ int set_cmdline_pos(int pos)
     return 1;
   }
 
-  /* The position is not set directly but after CTRL-\ e or CTRL-R = has
-   * changed the command line. */
+  // The position is not set directly but after CTRL-\ e or CTRL-R = has
+  // changed the command line.
   if (pos < 0) {
     new_cmdpos = 0;
   } else {
@@ -6471,8 +6471,8 @@ static int open_cmdwin(void)
 
   exmode_active = save_exmode;
 
-  /* Safety check: The old window or buffer was deleted: It's a bug when
-   * this happens! */
+  // Safety check: The old window or buffer was deleted: It's a bug when
+  // this happens!
   if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)) {
     cmdwin_result = Ctrl_C;
     EMSG(_("E199: Active window or buffer deleted"));
@@ -6498,8 +6498,8 @@ static int open_cmdwin(void)
         stuffcharReadbuff(CAR);
       }
     } else if (cmdwin_result == Ctrl_C) {
-      /* :q or :close, don't execute any command
-       * and don't modify the cmd window. */
+      // :q or :close, don't execute any command
+      // and don't modify the cmd window.
       ccline.cmdbuff = NULL;
     } else {
       ccline.cmdbuff = vim_strsave(get_cursor_line_ptr());

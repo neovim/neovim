@@ -583,9 +583,9 @@ void getout(int exitval)
 {
   exiting = true;
 
-  /* When running in Ex mode an error causes us to exit with a non-zero exit
-   * code.  POSIX requires this, although it's not 100% clear from the
-   * standard. */
+  // When running in Ex mode an error causes us to exit with a non-zero exit
+  // code.  POSIX requires this, although it's not 100% clear from the
+  // standard.
   if (exmode_active) {
     exitval += ex_exitval;
   }
