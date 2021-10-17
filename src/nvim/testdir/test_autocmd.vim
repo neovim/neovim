@@ -1369,6 +1369,9 @@ function Test_dirchanged_local()
 endfunc
 
 function Test_dirchanged_auto()
+  if !exists('+autochdir')
+    return
+  endif
   call s:Before_test_dirchanged()
   call test_autochdir()
   autocmd test_dirchanged DirChanged auto call add(s:li, "auto:")
