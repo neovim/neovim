@@ -8817,30 +8817,29 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
              && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_STR
                  || current_sctx.sc_sid == SID_LUA)
              && current_sctx.sc_sid <= ga_scripts.ga_len) {
-    // For anonymous scripts without a script item, create one now so script vars can be used
+    // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
     if (current_sctx.sc_sid == SID_LUA) {
-      // try to resolve lua filename & line no so it can be shown in lastset messages.
+      // Try to resolve Lua file name & line no so it can be shown in LastSet messages.
       nlua_set_sctx(&current_sctx);
       if (current_sctx.sc_sid != SID_LUA) {
-        // Great we have valid location. Now here this out we'll create a new
-        // script context with the name and lineno of this one. why ?
-        // for behavioral consistency. With this different anonymous exec from
-        // same file can't access each others script local stuff. We need to do
-        // this all other cases except this will act like that otherwise.
+        // We have a valid SID associated with a Lua file name.
+        // Create a new SID with the same fname and set it as the current.
+        // This keeps the usual behaviour of disallowing different anonymous execs
+        // in the same file from accessing each others script-local stuff.
         const LastSet last_set = (LastSet){
           .script_ctx = current_sctx,
           .channel_id = LUA_INTERNAL_CALL,
         };
+        // should_free should be true, as the script has a file name.
+        // Because script_new_sid consumes sc_name, we don't call free.
         bool should_free;
-        // should_free is ignored as script_sctx will be resolved to a fnmae
-        // & new_script_item will consume it.
-        char *sc_name = (char *)get_scriptname(last_set, &should_free);
-        new_script_item(sc_name, &current_sctx.sc_sid);
+        char *const sc_name = (char *)get_scriptname(last_set, &should_free);
+        assert(should_free);
+        current_sctx.sc_sid = script_new_sid(sc_name);
       }
     }
     if (current_sctx.sc_sid == SID_STR || current_sctx.sc_sid == SID_LUA) {
-      // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
-      new_script_item(NULL, &current_sctx.sc_sid);
+      current_sctx.sc_sid = script_new_sid(NULL);
     }
     *d = &SCRIPT_SV(current_sctx.sc_sid)->sv_dict;
   }

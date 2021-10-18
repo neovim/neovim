@@ -140,6 +140,10 @@ describe(':source', function()
       a = [=[
         \ 1
        "\ 2]=]
+      vim.cmd [=[
+        let s:a = 3
+        let g:a = expand('<SID>')
+      ]=]
     ]])
 
     command('edit '..test_file)
@@ -147,6 +151,7 @@ describe(':source', function()
 
     eq(12, eval('g:c'))
     eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
+    eq('<SNR>1_', eval('g:a'))
     os.remove(test_file)
   end)
 

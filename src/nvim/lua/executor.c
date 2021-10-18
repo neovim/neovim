@@ -1789,6 +1789,7 @@ void nlua_execute_on_key(int c)
 // Sets the editor "script context" during Lua execution. Used by :verbose.
 // @param[out] current
 void nlua_set_sctx(sctx_T *current)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (p_verbose <= 0 || current->sc_sid != SID_LUA) {
     return;
@@ -1829,7 +1830,7 @@ void nlua_set_sctx(sctx_T *current)
     break;
   }
   char *source_path = fix_fname(info->source + 1);
-  get_current_script_id((char_u *)source_path, current);
+  *current = script_new_sctx(source_path);
   xfree(source_path);
   current->sc_lnum = info->currentline;
   current->sc_seq = -1;

@@ -2,6 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
+local neq = helpers.neq
+local eval = helpers.eval
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
@@ -37,6 +39,7 @@ vim.api.nvim_exec ("\
 function Close_Window() abort\
   wincmd -\
 endfunction\
+let g:sid1 = expand('<SID>')\
 ", false)
 
 local ret = vim.api.nvim_exec ("\
@@ -44,6 +47,7 @@ function! s:return80()\
   return 80\
 endfunction\
 let &tw = s:return80()\
+let g:sid2 = expand('<SID>')\
 ", true)
 ]])
     exec(':source '..script_file)
@@ -137,8 +141,11 @@ test_group  FileType
     local result = exec_capture(':verbose set tw?')
     eq(string.format([[
   textwidth=80
-	Last set from %s line 22]],
+	Last set from %s line 23]],
        script_location), result)
+
+    -- Different anon execs in the same file should have unique SIDs as usual.
+    neq(eval('g:sid1'), eval('g:sid2'))
   end)
 end)
 
