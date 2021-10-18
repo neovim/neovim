@@ -9217,6 +9217,8 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
 
 /// Finds the dict (g:, l:, s:, …) and hashtable used for a variable.
 ///
+/// Assigns SID if s: scope is accessed from Lua or anonymous Vimscript. #15994
+///
 /// @param[in]  name  Variable name, possibly with scope prefix.
 /// @param[in]  name_len  Variable name length.
 /// @param[out]  varname  Will be set to the start of the name without scope
@@ -9304,6 +9306,7 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
       }
     }
     if (current_sctx.sc_sid == SID_STR || current_sctx.sc_sid == SID_LUA) {
+      // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
       new_script_item(NULL, &current_sctx.sc_sid);
     }
     *d = &SCRIPT_SV(current_sctx.sc_sid)->sv_dict;

@@ -182,8 +182,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
 					*:so* *:source* *load-vim-script*
 :[range]so[urce] [file]	Runs |Ex| commands or Lua code (".lua" files) from
-			[file], or from the current buffer if no [file] is
-			given.
+			[file], or current buffer if no [file].
 			Triggers the |SourcePre| autocommand.
 							*:source!*
 :[range]so[urce]! {file}
