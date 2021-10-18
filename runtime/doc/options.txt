@@ -1159,9 +1159,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'cdpath' 'cd'		string	(default: equivalent to $CDPATH or ",,")
 			global
 	This is a list of directories which will be searched when using the
-	|:cd| and |:lcd| commands, provided that the directory being searched
-	for has a relative path, not an absolute part starting with "/", "./"
-	or "../", the 'cdpath' option is not used then.
+	|:cd|, |:tcd| and |:lcd| commands, provided that the directory being
+	searched for has a relative path, not an absolute part starting with
+	"/", "./" or "../", the 'cdpath' option is not used then.
 	The 'cdpath' option's value has the same form and semantics as
 	|'path'|.  Also see |file-searching|.
 	The default value is taken from $CDPATH, with a "," prepended to look
