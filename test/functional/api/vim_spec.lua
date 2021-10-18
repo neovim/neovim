@@ -2367,4 +2367,79 @@ describe('API', function()
       eq({2, 2, buf.id, mark[4]}, mark)
     end)
   end)
+  describe('nvim_eval_statusline', function()
+    it('works', function()
+      eq({
+          str = '%StatusLineStringWithHighlights',
+          width = 31
+        },
+        meths.eval_statusline(
+          '%%StatusLineString%#WarningMsg#WithHighlights',
+          {}))
+    end)
+    it('doesn\'t exceed maxwidth', function()
+      eq({
+          str = 'Should be trun>',
+          width = 15
+        },
+        meths.eval_statusline(
+          'Should be truncated%<',
+          { maxwidth = 15 }))
+    end)
+    describe('highlight parsing', function()
+      it('works', function()
+        eq({
+            str = "TextWithWarningHighlightTextWithUserHighlight",
+            width = 45,
+            highlights = {
+              { start = 0, group = 'WarningMsg' },
+              { start = 24, group = 'User1' }
+            },
+          },
+          meths.eval_statusline(
+            '%#WarningMsg#TextWithWarningHighlight%1*TextWithUserHighlight',
+            { highlights = true }))
+      end)
+      it('works with no highlight', function()
+        eq({
+            str = "TextWithNoHighlight",
+            width = 19,
+            highlights = {
+              { start = 0, group = 'StatusLine' },
+            },
+          },
+          meths.eval_statusline(
+            'TextWithNoHighlight',
+            { highlights = true }))
+      end)
+      it('works with inactive statusline', function()
+        command('split')
+
+        eq({
+            str = 'TextWithNoHighlightTextWithWarningHighlight',
+            width = 43,
+            highlights = {
+              { start = 0, group = 'StatusLineNC' },
+              { start = 19, group = 'WarningMsg' }
+            }
+          },
+          meths.eval_statusline(
+            'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
+            { winid = meths.list_wins()[2].id, highlights = true }))
+      end)
+      it('works with tabline', function()
+        eq({
+            str = 'TextWithNoHighlightTextWithWarningHighlight',
+            width = 43,
+            highlights = {
+              { start = 0, group = 'TabLineFill' },
+              { start = 19, group = 'WarningMsg' }
+            }
+          },
+          meths.eval_statusline(
+            'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
+            { use_tabline = true, highlights = true }))
+      end)
+    end)
+  end)
 end)

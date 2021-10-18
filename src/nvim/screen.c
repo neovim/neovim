@@ -7379,7 +7379,7 @@ void get_trans_bufname(buf_T *buf)
 /*
  * Get the character to use in a status line.  Get its attributes in "*attr".
  */
-static int fillchar_status(int *attr, win_T *wp)
+int fillchar_status(int *attr, win_T *wp)
 {
   int fill;
   bool is_curwin = (wp == curwin);

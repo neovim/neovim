@@ -17,6 +17,7 @@
 #include "nvim/api/window.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/context.h"
 #include "nvim/decoration.h"
 #include "nvim/edit.h"
@@ -2906,3 +2907,165 @@ Array nvim_get_mark(String name, Error *err)
   return rv;
 }
 
+/// Evaluates statusline string.
+///
+/// @param str Statusline string (see 'statusline').
+/// @param opts Optional parameters.
+///           - winid: (number) |window-ID| of the window to use as context for statusline.
+///           - maxwidth: (number) Maximum width of statusline.
+///           - fillchar: (string) Character to fill blank spaces in the statusline (see
+///                                'fillchars').
+///           - highlights: (boolean) Return highlight information.
+///           - use_tabline: (boolean) Evaluate tabline instead of statusline. When |TRUE|, {winid}
+///                                    is ignored.
+///
+/// @param[out] err Error details, if any.
+/// @return Dictionary containing statusline information, with these keys:
+///       - str: (string) Characters that will be displayed on the statusline.
+///       - width: (number) Display width of the statusline.
+///       - highlights: Array containing highlight information of the statusline. Only included when
+///                     the "highlights" key in {opts} is |TRUE|. Each element of the array is a
+///                     |Dictionary| with these keys:
+///           - start: (number) Byte index (0-based) of first character that uses the highlight.
+///           - group: (string) Name of highlight group.
+Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *err)
+  FUNC_API_SINCE(8) FUNC_API_FAST
+{
+  Dictionary result = ARRAY_DICT_INIT;
+
+  Window window = 0;
+  int maxwidth = 0;
+  char fillchar = 0;
+  bool use_tabline = false;
+  bool highlights = false;
+
+  if (HAS_KEY(opts->winid)) {
+    if (opts->winid.type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeValidation, "winid must be an integer");
+      return result;
+    }
+
+    window = (Window)opts->winid.data.integer;
+  }
+
+  if (HAS_KEY(opts->maxwidth)) {
+    if (opts->maxwidth.type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeValidation, "maxwidth must be an integer");
+      return result;
+    }
+
+    maxwidth = (int)opts->maxwidth.data.integer;
+  }
+
+  if (HAS_KEY(opts->fillchar)) {
+    if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size > 1) {
+      api_set_error(err, kErrorTypeValidation, "fillchar must be an ASCII character");
+      return result;
+    }
+
+    fillchar = opts->fillchar.data.string.data[0];
+  }
+
+  if (HAS_KEY(opts->highlights)) {
+    highlights = api_object_to_bool(opts->highlights, "highlights", false, err);
+
+    if (ERROR_SET(err)) {
+      return result;
+    }
+  }
+
+  if (HAS_KEY(opts->use_tabline)) {
+    use_tabline = api_object_to_bool(opts->use_tabline, "use_tabline", false, err);
+
+    if (ERROR_SET(err)) {
+      return result;
+    }
+  }
+
+  win_T *wp, *ewp;
+
+  if (use_tabline) {
+    wp = NULL;
+    ewp = curwin;
+    fillchar = ' ';
+  } else {
+    wp = find_window_by_handle(window, err);
+    ewp = wp;
+
+    if (fillchar == 0) {
+      int attr;
+      fillchar = (char)fillchar_status(&attr, wp);
+    }
+  }
+
+  if (maxwidth == 0) {
+    maxwidth = use_tabline ? Columns : wp->w_width;
+  }
+
+  char buf[MAXPATHL];
+  stl_hlrec_t *hltab;
+  stl_hlrec_t **hltab_ptr = highlights ? &hltab : NULL;
+
+  // Temporarily reset 'cursorbind' to prevent side effects from moving the cursor away and back.
+  int p_crb_save = ewp->w_p_crb;
+  ewp->w_p_crb = false;
+
+  int width = build_stl_str_hl(
+      ewp,
+      (char_u *)buf,
+      sizeof(buf),
+      (char_u *)str.data,
+      false,
+      (char_u)fillchar,
+      maxwidth,
+      hltab_ptr,
+      NULL);
+
+  PUT(result, "width", INTEGER_OBJ(width));
+
+  // Restore original value of 'cursorbind'
+  ewp->w_p_crb = p_crb_save;
+
+  if (highlights) {
+    Array hl_values = ARRAY_DICT_INIT;
+    const char *grpname;
+    char user_group[6];
+
+    // If first character doesn't have a defined highlight,
+    // add the default highlight at the beginning of the highlight list
+    if (hltab->start == NULL || ((char *)hltab->start - buf) != 0) {
+      Dictionary hl_info = ARRAY_DICT_INIT;
+      grpname = get_default_stl_hl(wp);
+
+      PUT(hl_info, "start", INTEGER_OBJ(0));
+      PUT(hl_info, "group", CSTR_TO_OBJ(grpname));
+
+      ADD(hl_values, DICTIONARY_OBJ(hl_info));
+    }
+
+    for (stl_hlrec_t *sp = hltab; sp->start != NULL; sp++) {
+      Dictionary hl_info = ARRAY_DICT_INIT;
+
+      PUT(hl_info, "start", INTEGER_OBJ((char *)sp->start - buf));
+
+      if (sp->userhl == 0) {
+        grpname = get_default_stl_hl(wp);
+      } else if (sp->userhl < 0) {
+        grpname = (char *)syn_id2name(-sp->userhl);
+      } else {
+        snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
+        grpname = user_group;
+      }
+
+      PUT(hl_info, "group", CSTR_TO_OBJ(grpname));
+
+      ADD(hl_values, DICTIONARY_OBJ(hl_info));
+    }
+
+    PUT(result, "highlights", ARRAY_OBJ(hl_values));
+  }
+
+  PUT(result, "str", CSTR_TO_OBJ((char *)buf));
+
+  return result;
+}
