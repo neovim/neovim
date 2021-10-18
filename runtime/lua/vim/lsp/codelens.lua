@@ -97,7 +97,7 @@ function M.run()
         return option.lens.command.title
       end,
     }, function(option)
-      if options then
+      if option then
         execute_lens(option.lens, bufnr, option.client)
       end
     end)
