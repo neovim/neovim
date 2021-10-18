@@ -118,7 +118,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
   if (last_container.container.v_type == VAR_LIST) {
     if (tv_list_len(last_container.container.vval.v_list) != 0
         && !obj.didcomma) {
-      EMSG2(_("E474: Expected comma before list item: %s"), val_location);
+      semsg(_("E474: Expected comma before list item: %s"), val_location);
       tv_clear(&obj.val);
       return FAIL;
     }
@@ -126,7 +126,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
     tv_list_append_owned_tv(last_container.container.vval.v_list, obj.val);
   } else if (last_container.stack_index == kv_size(*stack) - 2) {
     if (!obj.didcolon) {
-      EMSG2(_("E474: Expected colon before dictionary value: %s"),
+      semsg(_("E474: Expected colon before dictionary value: %s"),
             val_location);
       tv_clear(&obj.val);
       return FAIL;
@@ -153,13 +153,13 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
   } else {
     // Object with key only
     if (!obj.is_special_string && obj.val.v_type != VAR_STRING) {
-      EMSG2(_("E474: Expected string key: %s"), *pp);
+      semsg(_("E474: Expected string key: %s"), *pp);
       tv_clear(&obj.val);
       return FAIL;
     } else if (!obj.didcomma
                && (last_container.special_val == NULL
                    && (DICT_LEN(last_container.container.vval.v_dict) != 0))) {
-      EMSG2(_("E474: Expected comma before dictionary key: %s"), val_location);
+      semsg(_("E474: Expected comma before dictionary key: %s"), val_location);
       tv_clear(&obj.val);
       return FAIL;
     }
@@ -330,21 +330,21 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
     if (*p == '\\') {
       p++;
       if (p == e) {
-        emsgf(_("E474: Unfinished escape sequence: %.*s"),
+        semsg(_("E474: Unfinished escape sequence: %.*s"),
               (int)buf_len, buf);
         goto parse_json_string_fail;
       }
       switch (*p) {
       case 'u':
         if (p + 4 >= e) {
-          emsgf(_("E474: Unfinished unicode escape sequence: %.*s"),
+          semsg(_("E474: Unfinished unicode escape sequence: %.*s"),
                 (int)buf_len, buf);
           goto parse_json_string_fail;
         } else if (!ascii_isxdigit(p[1])
                    || !ascii_isxdigit(p[2])
                    || !ascii_isxdigit(p[3])
                    || !ascii_isxdigit(p[4])) {
-          emsgf(_("E474: Expected four hex digits after \\u: %.*s"),
+          semsg(_("E474: Expected four hex digits after \\u: %.*s"),
                 LENP(p - 1, e));
           goto parse_json_string_fail;
         }
@@ -365,14 +365,14 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         p++;
         break;
       default:
-        emsgf(_("E474: Unknown escape sequence: %.*s"), LENP(p - 1, e));
+        semsg(_("E474: Unknown escape sequence: %.*s"), LENP(p - 1, e));
         goto parse_json_string_fail;
       }
     } else {
       uint8_t p_byte = (uint8_t)*p;
       // unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
       if (p_byte < 0x20) {
-        emsgf(_("E474: ASCII control characters cannot be present "
+        semsg(_("E474: ASCII control characters cannot be present "
                 "inside string: %.*s"), LENP(p, e));
         goto parse_json_string_fail;
       }
@@ -385,10 +385,10 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
       // The only exception is U+00C3 which is represented as 0xC3 0x83.
       if (ch >= 0x80 && p_byte == ch
           && !(ch == 0xC3 && p + 1 < e && (uint8_t)p[1] == 0x83)) {
-        emsgf(_("E474: Only UTF-8 strings allowed: %.*s"), LENP(p, e));
+        semsg(_("E474: Only UTF-8 strings allowed: %.*s"), LENP(p, e));
         goto parse_json_string_fail;
       } else if (ch > 0x10FFFF) {
-        emsgf(_("E474: Only UTF-8 code points up to U+10FFFF "
+        semsg(_("E474: Only UTF-8 code points up to U+10FFFF "
                 "are allowed to appear unescaped: %.*s"), LENP(p, e));
         goto parse_json_string_fail;
       }
@@ -399,7 +399,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
     }
   }
   if (p == e || *p != '"') {
-    emsgf(_("E474: Expected string end: %.*s"), (int)buf_len, buf);
+    semsg(_("E474: Expected string end: %.*s"), (int)buf_len, buf);
     goto parse_json_string_fail;
   }
   if (len == 0) {
@@ -546,7 +546,7 @@ static inline int parse_json_number(const char *const buf, const size_t buf_len,
     p++;
   }
   if (p != ints + 1 && *ints == '0') {
-    emsgf(_("E474: Leading zeroes are not allowed: %.*s"), LENP(s, e));
+    semsg(_("E474: Leading zeroes are not allowed: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
   }
   if (p >= e || p == ints) {
@@ -575,13 +575,13 @@ static inline int parse_json_number(const char *const buf, const size_t buf_len,
   }
 parse_json_number_check:
   if (p == ints) {
-    emsgf(_("E474: Missing number after minus sign: %.*s"), LENP(s, e));
+    semsg(_("E474: Missing number after minus sign: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
   } else if (p == fracs || (fracs != NULL && exps_s == fracs + 1)) {
-    emsgf(_("E474: Missing number after decimal dot: %.*s"), LENP(s, e));
+    semsg(_("E474: Missing number after decimal dot: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
   } else if (p == exps) {
-    emsgf(_("E474: Missing exponent: %.*s"), LENP(s, e));
+    semsg(_("E474: Missing exponent: %.*s"), LENP(s, e));
     goto parse_json_number_fail;
   }
   typval_T tv = {
@@ -593,7 +593,7 @@ parse_json_number_check:
     // Convert floating-point number
     const size_t num_len = string2float(s, &tv.vval.v_float);
     if (exp_num_len != num_len) {
-      emsgf(_("E685: internal error: while converting number \"%.*s\" "
+      semsg(_("E685: internal error: while converting number \"%.*s\" "
               "to float string2float consumed %zu bytes in place of %zu"),
             (int)exp_num_len, s, num_len, exp_num_len);
     }
@@ -604,7 +604,7 @@ parse_json_number_check:
     int num_len;
     vim_str2nr((char_u *)s, NULL, &num_len, 0, &nr, NULL, (int)(p - s), true);
     if ((int)exp_num_len != num_len) {
-      emsgf(_("E685: internal error: while converting number \"%.*s\" "
+      semsg(_("E685: internal error: while converting number \"%.*s\" "
               "to integer vim_str2nr consumed %i bytes in place of %zu"),
             (int)exp_num_len, s, num_len, exp_num_len);
     }
@@ -656,7 +656,7 @@ int json_decode_string(const char *const buf, const size_t buf_len, typval_T *co
     p++;
   }
   if (p == e) {
-    EMSG(_("E474: Attempt to decode a blank string"));
+    emsg(_("E474: Attempt to decode a blank string"));
     return FAIL;
   }
   int ret = OK;
@@ -673,26 +673,26 @@ json_decode_string_cycle_start:
     case '}':
     case ']': {
       if (kv_size(container_stack) == 0) {
-        emsgf(_("E474: No container to close: %.*s"), LENP(p, e));
+        semsg(_("E474: No container to close: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       ContainerStackItem last_container = kv_last(container_stack);
       if (*p == '}' && last_container.container.v_type != VAR_DICT) {
-        emsgf(_("E474: Closing list with curly bracket: %.*s"), LENP(p, e));
+        semsg(_("E474: Closing list with curly bracket: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (*p == ']' && last_container.container.v_type != VAR_LIST) {
-        emsgf(_("E474: Closing dictionary with square bracket: %.*s"),
+        semsg(_("E474: Closing dictionary with square bracket: %.*s"),
               LENP(p, e));
         goto json_decode_string_fail;
       } else if (didcomma) {
-        emsgf(_("E474: Trailing comma: %.*s"), LENP(p, e));
+        semsg(_("E474: Trailing comma: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (didcolon) {
-        emsgf(_("E474: Expected value after colon: %.*s"), LENP(p, e));
+        semsg(_("E474: Expected value after colon: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (last_container.stack_index != kv_size(stack) - 1) {
         assert(last_container.stack_index < kv_size(stack) - 1);
-        emsgf(_("E474: Expected value: %.*s"), LENP(p, e));
+        semsg(_("E474: Expected value: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       if (kv_size(stack) == 1) {
@@ -711,19 +711,19 @@ json_decode_string_cycle_start:
     }
     case ',': {
       if (kv_size(container_stack) == 0) {
-        emsgf(_("E474: Comma not inside container: %.*s"), LENP(p, e));
+        semsg(_("E474: Comma not inside container: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       ContainerStackItem last_container = kv_last(container_stack);
       if (didcomma) {
-        emsgf(_("E474: Duplicate comma: %.*s"), LENP(p, e));
+        semsg(_("E474: Duplicate comma: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (didcolon) {
-        emsgf(_("E474: Comma after colon: %.*s"), LENP(p, e));
+        semsg(_("E474: Comma after colon: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (last_container.container.v_type == VAR_DICT
                  && last_container.stack_index != kv_size(stack) - 1) {
-        emsgf(_("E474: Using comma in place of colon: %.*s"), LENP(p, e));
+        semsg(_("E474: Using comma in place of colon: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (last_container.special_val == NULL
                    ? (last_container.container.v_type == VAR_DICT
@@ -731,7 +731,7 @@ json_decode_string_cycle_start:
                       : (tv_list_len(last_container.container.vval.v_list)
                          == 0))
                       : (tv_list_len(last_container.special_val) == 0)) {
-        emsgf(_("E474: Leading comma: %.*s"), LENP(p, e));
+        semsg(_("E474: Leading comma: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       didcomma = true;
@@ -739,21 +739,21 @@ json_decode_string_cycle_start:
     }
     case ':': {
       if (kv_size(container_stack) == 0) {
-        emsgf(_("E474: Colon not inside container: %.*s"), LENP(p, e));
+        semsg(_("E474: Colon not inside container: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       ContainerStackItem last_container = kv_last(container_stack);
       if (last_container.container.v_type != VAR_DICT) {
-        emsgf(_("E474: Using colon not in dictionary: %.*s"), LENP(p, e));
+        semsg(_("E474: Using colon not in dictionary: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (last_container.stack_index != kv_size(stack) - 2) {
-        emsgf(_("E474: Unexpected colon: %.*s"), LENP(p, e));
+        semsg(_("E474: Unexpected colon: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (didcomma) {
-        emsgf(_("E474: Colon after comma: %.*s"), LENP(p, e));
+        semsg(_("E474: Colon after comma: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       } else if (didcolon) {
-        emsgf(_("E474: Duplicate colon: %.*s"), LENP(p, e));
+        semsg(_("E474: Duplicate colon: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       didcolon = true;
@@ -766,7 +766,7 @@ json_decode_string_cycle_start:
       continue;
     case 'n':
       if ((p + 3) >= e || strncmp(p + 1, "ull", 3) != 0) {
-        emsgf(_("E474: Expected null: %.*s"), LENP(p, e));
+        semsg(_("E474: Expected null: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       p += 3;
@@ -778,7 +778,7 @@ json_decode_string_cycle_start:
       break;
     case 't':
       if ((p + 3) >= e || strncmp(p + 1, "rue", 3) != 0) {
-        emsgf(_("E474: Expected true: %.*s"), LENP(p, e));
+        semsg(_("E474: Expected true: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       p += 3;
@@ -790,7 +790,7 @@ json_decode_string_cycle_start:
       break;
     case 'f':
       if ((p + 4) >= e || strncmp(p + 1, "alse", 4) != 0) {
-        emsgf(_("E474: Expected false: %.*s"), LENP(p, e));
+        semsg(_("E474: Expected false: %.*s"), LENP(p, e));
         goto json_decode_string_fail;
       }
       p += 4;
@@ -874,7 +874,7 @@ json_decode_string_cycle_start:
       break;
     }
     default:
-      emsgf(_("E474: Unidentified byte: %.*s"), LENP(p, e));
+      semsg(_("E474: Unidentified byte: %.*s"), LENP(p, e));
       goto json_decode_string_fail;
     }
     didcomma = false;
@@ -893,7 +893,7 @@ json_decode_string_after_cycle:
     case CAR:
       break;
     default:
-      emsgf(_("E474: Trailing characters: %.*s"), LENP(p, e));
+      semsg(_("E474: Trailing characters: %.*s"), LENP(p, e));
       goto json_decode_string_fail;
     }
   }
@@ -901,7 +901,7 @@ json_decode_string_after_cycle:
     *rettv = kv_pop(stack).val;
     goto json_decode_string_ret;
   }
-  emsgf(_("E474: Unexpected end of input: %.*s"), (int)buf_len, buf);
+  semsg(_("E474: Unexpected end of input: %.*s"), (int)buf_len, buf);
 json_decode_string_fail:
   ret = FAIL;
   while (kv_size(stack)) {

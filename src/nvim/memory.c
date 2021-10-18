@@ -510,7 +510,7 @@ void do_outofmem_msg(size_t size)
      * message fails, e.g. when setting v:errmsg. */
     did_outofmem_msg = true;
 
-    EMSGU(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), size);
+    semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
   }
 }
 

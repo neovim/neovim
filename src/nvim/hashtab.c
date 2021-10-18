@@ -281,11 +281,11 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
 
 #ifdef HT_DEBUG
   if (ht->ht_used > ht->ht_filled) {
-    EMSG("hash_may_resize(): more used than filled");
+    emsg("hash_may_resize(): more used than filled");
   }
 
   if (ht->ht_filled >= ht->ht_mask + 1) {
-    EMSG("hash_may_resize(): table completely filled");
+    emsg("hash_may_resize(): table completely filled");
   }
 #endif  // ifdef HT_DEBUG
 

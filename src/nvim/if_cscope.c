@@ -64,7 +64,7 @@ static cscmd_T cs_cmds[] =
 
 static void cs_usage_msg(csid_e x)
 {
-  (void)EMSG2(_("E560: Usage: cs[cope] %s"), cs_cmds[(int)x].usage);
+  (void)semsg(_("E560: Usage: cs[cope] %s"), cs_cmds[(int)x].usage);
 }
 
 
@@ -216,7 +216,7 @@ void ex_cstag(exarg_T *eap)
   int ret = FALSE;
 
   if (*eap->arg == NUL) {
-    (void)EMSG(_("E562: Usage: cstag <ident>"));
+    (void)emsg(_("E562: Usage: cstag <ident>"));
     return;
   }
 
@@ -268,7 +268,7 @@ void ex_cstag(exarg_T *eap)
   }
 
   if (!ret) {
-    (void)EMSG(_("E257: cstag: tag not found"));
+    (void)emsg(_("E257: cstag: tag not found"));
     g_do_tagpreview = 0;
   }
 }
@@ -407,7 +407,7 @@ static void cs_stat_emsg(char *fname)
   char *buf = xmalloc(strlen(stat_emsg) + MAXPATHL + 10);
 
   (void)sprintf(buf, stat_emsg, fname, errno);
-  (void)EMSG(buf);
+  (void)emsg(buf);
   xfree(buf);
 }
 
@@ -489,7 +489,7 @@ staterr:
     i = cs_insert_filelist(fname, ppath, flags, &file_info);
   } else {
     if (p_csverbose) {
-      (void)EMSG2(_("E564: %s is not a directory or a valid cscope database"),
+      (void)semsg(_("E564: %s is not a directory or a valid cscope database"),
                   fname);
     }
     goto add_err;
@@ -550,7 +550,7 @@ static size_t cs_cnt_connections(void)
 /// @param idx  connection index
 static void cs_reading_emsg(size_t idx)
 {
-  EMSGU(_("E262: error reading cscope connection %" PRIu64), idx);
+  semsg(_("E262: error reading cscope connection %" PRIu64), (uint64_t)idx);
 }
 
 #define CSREAD_BUFSIZE  2048
@@ -662,7 +662,7 @@ static char *cs_create_cmd(char *csoption, char *pattern)
     search = 9;
     break;
   default:
-    (void)EMSG(_("E561: unknown cscope search type"));
+    (void)emsg(_("E561: unknown cscope search type"));
     cs_usage_msg(Find);
     return NULL;
   }
@@ -700,7 +700,7 @@ static int cs_create_connection(size_t i)
    */
   to_cs[0] = to_cs[1] = from_cs[0] = from_cs[1] = -1;
   if (pipe(to_cs) < 0 || pipe(from_cs) < 0) {
-    (void)EMSG(_("E566: Could not create cscope pipes"));
+    (void)emsg(_("E566: Could not create cscope pipes"));
 err_closing:
     if (to_cs[0] != -1) {
       (void)close(to_cs[0]);
@@ -719,7 +719,7 @@ err_closing:
 
   switch (csinfo[i].pid = fork()) {
   case -1:
-    (void)EMSG(_("E622: Could not fork for cscope"));
+    (void)emsg(_("E622: Could not fork for cscope"));
     goto err_closing;
   case 0:                               // child: run cscope.
     if (dup2(to_cs[0], STDIN_FILENO) == -1) {
@@ -752,7 +752,7 @@ err_closing:
 
   if (!(pipe_stdin = CreatePipe(&stdin_rd, &stdin_wr, &sa, 0))
       || !(pipe_stdout = CreatePipe(&stdout_rd, &stdout_wr, &sa, 0))) {
-    (void)EMSG(_("E566: Could not create cscope pipes"));
+    (void)emsg(_("E566: Could not create cscope pipes"));
 err_closing:
     if (pipe_stdin) {
       CloseHandle(stdin_rd);
@@ -856,7 +856,7 @@ err_closing:
 
     if (!created) {
       PERROR(_("cs_create_connection exec failed"));
-      (void)EMSG(_("E623: Could not spawn cscope process"));
+      (void)emsg(_("E623: Could not spawn cscope process"));
       goto err_closing;
     }
     // else
@@ -892,7 +892,7 @@ static int cs_find(exarg_T *eap)
   char *opt, *pat;
 
   if (cs_check_for_connections() == FALSE) {
-    (void)EMSG(_("E567: no cscope connections"));
+    (void)emsg(_("E567: no cscope connections"));
     return FALSE;
   }
 
@@ -975,7 +975,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
       char *buf = xmalloc(strlen(nf));
 
       sprintf(buf, nf, *qfpos, *(qfpos-1));
-      (void)EMSG(buf);
+      (void)emsg(buf);
       xfree(buf);
       return FALSE;
     }
@@ -1035,7 +1035,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
 
     buf = xmalloc(strlen(opt) + strlen(pat) + strlen(nf));
     sprintf(buf, nf, opt, pat);
-    (void)EMSG(buf);
+    (void)emsg(buf);
     xfree(buf);
     xfree(nummatches);
     return FALSE;
@@ -1050,7 +1050,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
 
     f = os_fopen((char *)tmp, "w");
     if (f == NULL) {
-      EMSG2(_(e_notopen), tmp);
+      semsg(_(e_notopen), tmp);
     } else {
       cs_file_results(f, nummatches);
       fclose(f);
@@ -1161,7 +1161,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags, FileInfo *f
     if (csinfo[j].fname != NULL
         && os_fileid_equal_fileinfo(&(csinfo[j].file_id), file_info)) {
       if (p_csverbose) {
-        (void)EMSG(_("E568: duplicate cscope database not added"));
+        (void)emsg(_("E568: duplicate cscope database not added"));
       }
       return CSCOPE_FAILURE;
     }
@@ -1267,7 +1267,7 @@ static int cs_kill(exarg_T *eap)
       i = (size_t)num;
     } else {      // All negative values besides -1 are invalid.
       if (p_csverbose) {
-        (void)EMSG2(_("E261: cscope connection %s not found"), stok);
+        (void)semsg(_("E261: cscope connection %s not found"), stok);
       }
       return CSCOPE_FAILURE;
     }
@@ -1283,7 +1283,7 @@ static int cs_kill(exarg_T *eap)
 
   if (!killall && (i >= csinfo_size || csinfo[i].fname == NULL)) {
     if (p_csverbose) {
-      (void)EMSG2(_("E261: cscope connection %s not found"), stok);
+      (void)semsg(_("E261: cscope connection %s not found"), stok);
     }
     return CSCOPE_FAILURE;
   } else {
@@ -1428,7 +1428,7 @@ static char *cs_manage_matches(char **matches, char **contexts, size_t totmatche
     cs_print_tags_priv(mp, cp, cnt);
     break;
   default:      // should not reach here
-    IEMSG(_("E570: fatal error in cs_manage_matches"));
+    iemsg(_("E570: fatal error in cs_manage_matches"));
     return NULL;
   }
 
@@ -1776,7 +1776,7 @@ static int cs_read_prompt(size_t i)
           buf[bufpos - epromptlen] = NUL;
 
           // print message to user
-          (void)EMSG2(cs_emsg, buf);
+          (void)semsg(cs_emsg, buf);
 
           // send RETURN to cscope
           (void)putc('\n', csinfo[i].to_fp);
@@ -1799,7 +1799,7 @@ static int cs_read_prompt(size_t i)
       if (ch == EOF) {
         PERROR("cs_read_prompt EOF");
         if (buf != NULL && buf[0] != NUL) {
-          (void)EMSG2(cs_emsg, buf);
+          (void)semsg(cs_emsg, buf);
         } else if (p_csverbose) {
           cs_reading_emsg(i);           // don't have additional information
         }

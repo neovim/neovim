@@ -319,7 +319,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
 
   if (pty) {
     if (detach) {
-      EMSG2(_(e_invarg2), "terminal/pty job cannot be detached");
+      semsg(_(e_invarg2), "terminal/pty job cannot be detached");
       shell_free_argv(argv);
       if (env) {
         tv_dict_free(env);
@@ -369,7 +369,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
 
   int status = process_spawn(proc, has_in, has_out, has_err);
   if (status) {
-    EMSG3(_(e_jobspawn), os_strerror(status), cmd);
+    semsg(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
     if (proc->env) {
       tv_dict_free(proc->env);
@@ -672,7 +672,7 @@ void channel_reader_callbacks(Channel *chan, CallbackReader *reader)
           tv_dict_add_list(reader->self, reader->type, strlen(reader->type),
                            data);
         } else {
-          EMSG3(_(e_streamkey), reader->type, chan->id);
+          semsg(_(e_streamkey), reader->type, chan->id);
         }
       } else {
         channel_callback_call(chan, reader);

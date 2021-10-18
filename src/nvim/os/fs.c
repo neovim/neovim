@@ -1212,7 +1212,7 @@ char *os_resolve_shortcut(const char *fname)
     wchar_t *p;
     const int r = utf8_to_utf16(fname, -1, &p);
     if (r != 0) {
-      EMSG2("utf8_to_utf16 failed: %d", r);
+      semsg("utf8_to_utf16 failed: %d", r);
     } else if (p != NULL) {
       // Get a pointer to the IPersistFile interface.
       hr = pslw->lpVtbl->QueryInterface(pslw, &IID_IPersistFile, (void **)&ppf);
@@ -1239,7 +1239,7 @@ char *os_resolve_shortcut(const char *fname)
       if (hr == S_OK && wsz[0] != NUL) {
         const int r2 = utf16_to_utf8(wsz, -1, &rfname);
         if (r2 != 0) {
-          EMSG2("utf16_to_utf8 failed: %d", r2);
+          semsg("utf16_to_utf8 failed: %d", r2);
         }
       }
 
@@ -1274,7 +1274,7 @@ bool os_is_reparse_point_include(const char *path)
 
   const int r = utf8_to_utf16(path, -1, &utf16_path);
   if (r != 0) {
-    EMSG2("utf8_to_utf16 failed: %d", r);
+    semsg("utf8_to_utf16 failed: %d", r);
     return false;
   }
 

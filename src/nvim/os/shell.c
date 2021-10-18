@@ -159,7 +159,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
 
   // get a name for the temp file
   if ((tempname = vim_tempname()) == NULL) {
-    EMSG(_(e_notmp));
+    emsg(_(e_notmp));
     return FAIL;
   }
 
@@ -389,7 +389,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
   os_remove((char *)tempname);
   if (readlen != len) {
     // unexpected read error
-    EMSG2(_(e_notread), tempname);
+    semsg(_(e_notread), tempname);
     xfree(tempname);
     xfree(buffer);
     return FAIL;
@@ -1180,7 +1180,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
   if (status) {
     // Can happen if system() tries to send input to a shell command that was
     // backgrounded (:call system("cat - &", "foo")). #3529 #5241
-    msg_schedule_emsgf(_("E5677: Error writing input to shell-command: %s"),
+    msg_schedule_semsg(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
   }
   stream_close(stream, NULL, NULL);

@@ -168,7 +168,7 @@ struct exarg {
   int force_enc;                ///< ++enc= argument (index in cmd[])
   int bad_char;                 ///< BAD_KEEP, BAD_DROP or replacement byte
   int useridx;                  ///< user command index
-  char_u *errmsg;               ///< returned error message
+  char *errmsg;                 ///< returned error message
   LineGetter getline;           ///< Function used to get the next line
   void *cookie;               ///< argument for getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.

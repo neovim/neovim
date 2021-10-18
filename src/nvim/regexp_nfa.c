@@ -1244,11 +1244,11 @@ static int nfa_regatom(void)
     p = vim_strchr(classchars, no_Magic(c));
     if (p == NULL) {
       if (extra == NFA_ADD_NL) {
-        EMSGN(_(e_ill_char_class), c);
+        semsg(_(e_ill_char_class), (int64_t)c);
         rc_did_emsg = true;
         return FAIL;
       }
-      IEMSGN("INTERNAL: Unknown character class char: %" PRId64, c);
+      siemsg("INTERNAL: Unknown character class char: %" PRId64, (int64_t)c);
       return FAIL;
     }
     // When '.' is followed by a composing char ignore the dot, so that
@@ -1286,7 +1286,7 @@ static int nfa_regatom(void)
   case Magic('|'):
   case Magic('&'):
   case Magic(')'):
-    EMSGN(_(e_misplaced), no_Magic(c));  // -V1037
+    semsg(_(e_misplaced), (int64_t)no_Magic(c));  // -V1037
     return FAIL;
 
   case Magic('='):
@@ -1296,7 +1296,7 @@ static int nfa_regatom(void)
   case Magic('*'):
   case Magic('{'):
     // these should follow an atom, not form an atom
-    EMSGN(_(e_misplaced), no_Magic(c));
+    semsg(_(e_misplaced), (int64_t)no_Magic(c));
     return FAIL;
 
   case Magic('~'):
@@ -1306,7 +1306,7 @@ static int nfa_regatom(void)
     // Previous substitute pattern.
     // Generated as "\%(pattern\)".
     if (reg_prev_sub == NULL) {
-      EMSG(_(e_nopresub));
+      emsg(_(e_nopresub));
       return FAIL;
     }
     for (lp = reg_prev_sub; *lp != NUL; MB_CPTR_ADV(lp)) {
@@ -1383,7 +1383,7 @@ static int nfa_regatom(void)
       re_has_z = REX_SET;
       break;
     default:
-      emsgf(_("E867: (NFA) Unknown operator '\\z%c'"),
+      semsg(_("E867: (NFA) Unknown operator '\\z%c'"),
             no_Magic(c));
       return FAIL;
     }
@@ -1489,7 +1489,7 @@ static int nfa_regatom(void)
       while (ascii_isdigit(c)) {
         if (n > (INT32_MAX - (c - '0')) / 10) {
           // overflow.
-          EMSG(_(e_value_too_large));
+          emsg(_(e_value_too_large));
           return FAIL;
         }
         n = n * 10 + (c - '0');
@@ -1516,7 +1516,7 @@ static int nfa_regatom(void)
           limit = INT32_MAX / MB_MAXBYTES;
         }
         if (n >= limit) {
-          EMSG(_(e_value_too_large));
+          emsg(_(e_value_too_large));
           return FAIL;
         }
         EMIT((int)n);
@@ -1529,7 +1529,7 @@ static int nfa_regatom(void)
         break;
       }
     }
-      emsgf(_("E867: (NFA) Unknown operator '\\%%%c'"),
+      semsg(_("E867: (NFA) Unknown operator '\\%%%c'"),
             no_Magic(c));
       return FAIL;
     }
@@ -1955,7 +1955,7 @@ static int nfa_regpiece(void)
       break;
     }
     if (i == 0) {
-      emsgf(_("E869: (NFA) Unknown operator '\\@%c'"), op);
+      semsg(_("E869: (NFA) Unknown operator '\\@%c'"), op);
       return FAIL;
     }
     EMIT(i);
@@ -2752,7 +2752,7 @@ static void st_error(int *postfix, int *end, int *p)
     fclose(df);
   }
 #endif
-  EMSG(_("E874: (NFA) Could not pop the stack!"));
+  emsg(_("E874: (NFA) Could not pop the stack!"));
 }
 
 /*
@@ -4103,7 +4103,7 @@ skip_add:
       const size_t newsize = newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        EMSG(_(e_maxmempat));
+        emsg(_(e_maxmempat));
         depth--;
         return NULL;
       }
@@ -4393,7 +4393,7 @@ static regsubs_T *addstate_here(
       const size_t newsize = newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
-        EMSG(_(e_maxmempat));
+        emsg(_(e_maxmempat));
         return NULL;
       }
       nfa_thread_T *const newl = xmalloc(newsize);
@@ -4522,7 +4522,7 @@ static int check_char_class(int class, int c)
 
   default:
     // should not be here :P
-    IEMSGN(_(e_ill_char_class), class);
+    siemsg(_(e_ill_char_class), (int64_t)class);
     return FAIL;
   }
   return FAIL;
@@ -4799,7 +4799,7 @@ static int recursive_regmatch(
     fprintf(log_fd, "MATCH = %s\n", !result ? "false" : "OK");
     fprintf(log_fd, "****************************\n");
   } else {
-    EMSG(_(e_log_open_failed));
+    emsg(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -5081,7 +5081,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   FILE        *debug = fopen(NFA_REGEXP_DEBUG_LOG, "a");
 
   if (debug == NULL) {
-    EMSG2("(NFA) COULD NOT OPEN %s!", NFA_REGEXP_DEBUG_LOG);
+    semsg("(NFA) COULD NOT OPEN %s!", NFA_REGEXP_DEBUG_LOG);
     return false;
   }
 #endif
@@ -5119,7 +5119,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         abs(start->id), code);
     fprintf(log_fd, "**********************************\n");
   } else {
-    EMSG(_(e_log_open_failed));
+    emsg(_(e_log_open_failed));
     log_fd = stderr;
   }
 #endif
@@ -6145,7 +6145,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 
 #ifdef REGEXP_DEBUG
         if (c < 0) {
-          IEMSGN("INTERNAL: Negative state char: %" PRId64, c);
+          siemsg("INTERNAL: Negative state char: %" PRId64, (int64_t)c);
         }
 #endif
         result = (c == curc);
@@ -6427,7 +6427,7 @@ static long nfa_regtry(nfa_regprog_T *prog,
     fprintf(f, "\n\n");
     fclose(f);
   } else {
-    EMSG("Could not open temporary log file for writing");
+    emsg("Could not open temporary log file for writing");
   }
 #endif
 
@@ -6542,7 +6542,7 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol,
 
   /* Be paranoid... */
   if (prog == NULL || line == NULL) {
-    IEMSG(_(e_null));
+    iemsg(_(e_null));
     goto theend;
   }
 

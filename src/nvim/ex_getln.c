@@ -362,7 +362,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   bool delim_optional = false;
   int delim;
   char_u *end;
-  char_u *dummy;
+  char *dummy;
   exarg_T ea;
   pos_T save_cursor;
   bool use_last_pat;
@@ -2475,10 +2475,10 @@ int text_locked(void)
  */
 void text_locked_msg(void)
 {
-  EMSG(_(get_text_locked_msg()));
+  emsg(_(get_text_locked_msg()));
 }
 
-char_u *get_text_locked_msg(void)
+char *get_text_locked_msg(void)
 {
   if (cmdwin_type != 0) {
     return e_cmdwin;
@@ -2492,7 +2492,7 @@ char_u *get_text_locked_msg(void)
 int curbuf_locked(void)
 {
   if (curbuf->b_ro_locked > 0) {
-    EMSG(_("E788: Not allowed to edit another buffer now"));
+    emsg(_("E788: Not allowed to edit another buffer now"));
     return TRUE;
   }
   return allbuf_locked();
@@ -2505,7 +2505,7 @@ int curbuf_locked(void)
 int allbuf_locked(void)
 {
   if (allbuf_lock > 0) {
-    EMSG(_("E811: Not allowed to change buffer information now"));
+    emsg(_("E811: Not allowed to change buffer information now"));
     return TRUE;
   }
   return FALSE;
@@ -3969,12 +3969,12 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
        * causing the pattern to be added, which has illegal characters.
        */
       if (!(options & WILD_SILENT) && (options & WILD_LIST_NOTFOUND)) {
-        EMSG2(_(e_nomatch2), str);
+        semsg(_(e_nomatch2), str);
       }
 #endif
     } else if (xp->xp_numfiles == 0) {
       if (!(options & WILD_SILENT)) {
-        EMSG2(_(e_nomatch2), str);
+        semsg(_(e_nomatch2), str);
       }
     } else {
       // Escape the matches for use on the command line.
@@ -4012,7 +4012,7 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
            * (and possibly have to hit return to continue!).
            */
           if (!(options & WILD_SILENT)) {
-            EMSG(_(e_toomany));
+            emsg(_(e_toomany));
           } else if (!(options & WILD_NO_BEEP)) {
             beep_flush();
           }
@@ -6238,7 +6238,7 @@ void ex_history(exarg_T *eap)
         histype1 = 0;
         histype2 = HIST_COUNT-1;
       } else {
-        EMSG(_(e_trailing));
+        emsg(_(e_trailing));
         return;
       }
     } else {
@@ -6248,7 +6248,7 @@ void ex_history(exarg_T *eap)
     end = arg;
   }
   if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != NUL) {
-    EMSG(_(e_trailing));
+    emsg(_(e_trailing));
     return;
   }
 
@@ -6475,7 +6475,7 @@ static int open_cmdwin(void)
   // this happens!
   if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)) {
     cmdwin_result = Ctrl_C;
-    EMSG(_("E199: Active window or buffer deleted"));
+    emsg(_("E199: Active window or buffer deleted"));
   } else {
     // autocmds may abort script processing
     if (aborting() && cmdwin_result != K_IGNORE) {

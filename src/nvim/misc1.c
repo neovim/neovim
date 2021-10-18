@@ -920,7 +920,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   }
 
   if (*p_sh == NUL) {
-    EMSG(_(e_shellempty));
+    emsg(_(e_shellempty));
     retval = -1;
   } else {
     // The external command may update a tags file, clear cached tags.
@@ -958,7 +958,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   // get a name for the temp file
   char_u *tempname = vim_tempname();
   if (tempname == NULL) {
-    EMSG(_(e_notmp));
+    emsg(_(e_notmp));
     return NULL;
   }
 
@@ -979,7 +979,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   FILE *fd = os_fopen((char *)tempname, READBIN);
 
   if (fd == NULL) {
-    EMSG2(_(e_notopen), tempname);
+    semsg(_(e_notopen), tempname);
     goto done;
   }
 
@@ -992,7 +992,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   fclose(fd);
   os_remove((char *)tempname);
   if (i != len) {
-    EMSG2(_(e_notread), tempname);
+    semsg(_(e_notread), tempname);
     XFREE_CLEAR(buffer);
   } else if (ret_len == NULL) {
     // Change NUL into SOH, otherwise the string is truncated.

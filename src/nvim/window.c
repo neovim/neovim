@@ -92,7 +92,7 @@ void do_window(int nchar, long Prenum, int xchar)
 #define CHECK_CMDWIN \
   do { \
     if (cmdwin_type != 0) { \
-      EMSG(_(e_cmdwin)); \
+      emsg(_(e_cmdwin)); \
       return; \
     } \
   } while (0)
@@ -133,9 +133,9 @@ void do_window(int nchar, long Prenum, int xchar)
 
     if (buflist_findnr(Prenum == 0 ? curwin->w_alt_fnum : Prenum) == NULL) {
       if (Prenum == 0) {
-        EMSG(_(e_noalt));
+        emsg(_(e_noalt));
       } else {
-        EMSGN(_("E92: Buffer %" PRId64 " not found"), Prenum);
+        semsg(_("E92: Buffer %" PRId64 " not found"), (int64_t)Prenum);
       }
       break;
     }
@@ -199,7 +199,7 @@ newwindow:
       }
     }
     if (wp == NULL) {
-      EMSG(_("E441: There is no preview window"));
+      emsg(_("E441: There is no preview window"));
     } else {
       win_goto(wp);
     }
@@ -550,7 +550,7 @@ wingotofile:
       config.external = true;
       Error err = ERROR_INIT;
       if (!win_new_float(curwin, config, &err)) {
-        EMSG(err.msg);
+        emsg(err.msg);
         api_clear_error(&err);
         beep_flush();
       }
@@ -916,7 +916,7 @@ int win_split(int size, int flags)
   // Add flags from ":vertical", ":topleft" and ":botright".
   flags |= cmdmod.split;
   if ((flags & WSP_TOP) && (flags & WSP_BOT)) {
-    EMSG(_("E442: Can't split topleft and botright at the same time"));
+    emsg(_("E442: Can't split topleft and botright at the same time"));
     return FAIL;
   }
 
@@ -969,7 +969,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   // add a status line when p_ls == 1 and splitting the first window
   if (one_nonfloat() && p_ls == 1 && oldwin->w_status_height == 0) {
     if (oldwin->w_height <= p_wmh && new_in_layout) {
-      EMSG(_(e_noroom));
+      emsg(_(e_noroom));
       return FAIL;
     }
     need_status = STATUS_HEIGHT;
@@ -1018,7 +1018,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       needed += minwidth;
     }
     if (available < needed && new_in_layout) {
-      EMSG(_(e_noroom));
+      emsg(_(e_noroom));
       return FAIL;
     }
     if (new_size == 0) {
@@ -1098,7 +1098,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       needed += minheight;
     }
     if (available < needed && new_in_layout) {
-      EMSG(_(e_noroom));
+      emsg(_(e_noroom));
       return FAIL;
     }
     oldwin_height = oldwin->w_height;
@@ -1654,7 +1654,7 @@ static void win_exchange(long Prenum)
   int temp;
 
   if (curwin->w_floating) {
-    EMSG(e_floatexchange);
+    emsg(e_floatexchange);
     return;
   }
 
@@ -1741,7 +1741,7 @@ static void win_rotate(bool upwards, int count)
   int n;
 
   if (curwin->w_floating) {
-    EMSG(e_floatexchange);
+    emsg(e_floatexchange);
     return;
   }
 
@@ -1754,7 +1754,7 @@ static void win_rotate(bool upwards, int count)
   // Check if all frames in this row/col have one window.
   FOR_ALL_FRAMES(frp, curwin->w_frame->fr_parent->fr_child) {
     if (frp->fr_win == NULL) {
-      EMSG(_("E443: Cannot rotate when another window is split"));
+      emsg(_("E443: Cannot rotate when another window is split"));
       return;
     }
   }
@@ -2392,7 +2392,7 @@ int win_close(win_T *win, bool free_buf)
   const bool had_diffmode = win->w_p_diff;
 
   if (last_window() && !win->w_floating) {
-    EMSG(_("E444: Cannot close last window"));
+    emsg(_("E444: Cannot close last window"));
     return FAIL;
   }
 
@@ -2401,17 +2401,17 @@ int win_close(win_T *win, bool free_buf)
     return FAIL;     // window is already being closed
   }
   if (win == aucmd_win) {
-    EMSG(_(e_autocmd_close));
+    emsg(_(e_autocmd_close));
     return FAIL;
   }
   if ((firstwin == aucmd_win || lastwin == aucmd_win) && one_window()) {
-    EMSG(_("E814: Cannot close window, only autocmd window would remain"));
+    emsg(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
   if ((firstwin == win && lastwin_nofloating() == win)
       && lastwin->w_floating) {
     // TODO(bfredl): we might close the float also instead
-    EMSG(e_floatonly);
+    emsg(e_floatonly);
     return FAIL;
   }
 
@@ -3521,7 +3521,7 @@ void close_others(int message, int forceit)
 
   if (curwin->w_floating) {
     if (message && !autocmd_busy) {
-      EMSG(e_floatonly);
+      emsg(e_floatonly);
     }
     return;
   }
@@ -3563,7 +3563,7 @@ void close_others(int message, int forceit)
   }
 
   if (message && !ONE_WINDOW) {
-    EMSG(_("E445: Other window contains changes"));
+    emsg(_("E445: Other window contains changes"));
   }
 }
 
@@ -5515,7 +5515,7 @@ void win_setminheight(void)
     }
     p_wmh--;
     if (first) {
-      EMSG(_(e_noroom));
+      emsg(_(e_noroom));
       first = false;
     }
   }
@@ -5535,7 +5535,7 @@ void win_setminwidth(void)
     }
     p_wmw--;
     if (first) {
-      EMSG(_(e_noroom));
+      emsg(_(e_noroom));
       first = false;
     }
   }
@@ -6030,7 +6030,7 @@ void command_height(void)
     if (p_ch > old_p_ch) {                  // p_ch got bigger
       while (p_ch > old_p_ch) {
         if (frp == NULL) {
-          EMSG(_(e_noroom));
+          emsg(_(e_noroom));
           p_ch = old_p_ch;
           curtab->tp_ch_used = p_ch;
           cmdline_row = Rows - p_ch;
@@ -6152,7 +6152,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
   }
   if (*ptr == NUL) {            // nothing found
     if (options & FNAME_MESS) {
-      EMSG(_("E446: No file name under cursor"));
+      emsg(_("E446: No file name under cursor"));
     }
     return NULL;
   }
@@ -6265,7 +6265,7 @@ static void last_status_rec(frame_T *fr, bool statusline)
       fp = fr;
       while (fp->fr_height <= frame_minheight(fp, NULL)) {
         if (fp == topframe) {
-          EMSG(_(e_noroom));
+          emsg(_(e_noroom));
           return;
         }
         // In a column of frames: go to frame above.  If already at
@@ -6675,16 +6675,16 @@ int match_add(win_T *wp, const char *const grp, const char *const pat, int prio,
     return -1;
   }
   if (id < -1 || id == 0) {
-    EMSGN(_("E799: Invalid ID: %" PRId64
+    semsg(_("E799: Invalid ID: %" PRId64
             " (must be greater than or equal to 1)"),
-          id);
+          (int64_t)id);
     return -1;
   }
   if (id != -1) {
     cur = wp->w_match_head;
     while (cur != NULL) {
       if (cur->id == id) {
-        EMSGN(_("E801: ID already taken: %" PRId64), id);
+        semsg(_("E801: ID already taken: %" PRId64), (int64_t)id);
         return -1;
       }
       cur = cur->next;
@@ -6694,7 +6694,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat, int prio,
     return -1;
   }
   if (pat != NULL && (regprog = vim_regcomp((char_u *)pat, RE_MAGIC)) == NULL) {
-    EMSG2(_(e_invarg2), pat);
+    semsg(_(e_invarg2), pat);
     return -1;
   }
 
@@ -6740,7 +6740,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat, int prio,
         const list_T *const subl = TV_LIST_ITEM_TV(li)->vval.v_list;
         const listitem_T *subli = tv_list_first(subl);
         if (subli == NULL) {
-          emsgf(_("E5030: Empty list at position %d"),
+          semsg(_("E5030: Empty list at position %d"),
                 (int)tv_list_idx_of_item(pos_list, li));
           goto fail;
         }
@@ -6782,7 +6782,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat, int prio,
         m->pos.pos[i].col = 0;
         m->pos.pos[i].len = 0;
       } else {
-        emsgf(_("E5031: List or number required at position %d"),
+        semsg(_("E5031: List or number required at position %d"),
               (int)tv_list_idx_of_item(pos_list, li));
         goto fail;
       }
@@ -6854,9 +6854,9 @@ int match_delete(win_T *wp, int id, bool perr)
 
   if (id < 1) {
     if (perr) {
-      EMSGN(_("E802: Invalid ID: %" PRId64
+      semsg(_("E802: Invalid ID: %" PRId64
               " (must be greater than or equal to 1)"),
-            id);
+            (int64_t)id);
     }
     return -1;
   }
@@ -6866,7 +6866,7 @@ int match_delete(win_T *wp, int id, bool perr)
   }
   if (cur == NULL) {
     if (perr) {
-      EMSGN(_("E803: ID not found: %" PRId64), id);
+      semsg(_("E803: ID not found: %" PRId64), (int64_t)id);
     }
     return -1;
   }

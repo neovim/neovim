@@ -557,7 +557,7 @@ static varnumber_T tv_nr(typval_T *tvs, int *idxp)
   varnumber_T n = 0;
 
   if (tvs[idx].v_type == VAR_UNKNOWN) {
-    EMSG(_(e_printf));
+    emsg(_(e_printf));
   } else {
     (*idxp)++;
     bool err = false;
@@ -590,7 +590,7 @@ static const char *tv_str(typval_T *tvs, int *idxp, char **const tofree)
   const char *s = NULL;
 
   if (tvs[idx].v_type == VAR_UNKNOWN) {
-    EMSG(_(e_printf));
+    emsg(_(e_printf));
   } else {
     (*idxp)++;
     if (tvs[idx].v_type == VAR_STRING || tvs[idx].v_type == VAR_NUMBER) {
@@ -627,7 +627,7 @@ static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
 #undef OFF
   const int idx = *idxp - 1;
   if (tvs[idx].v_type == VAR_UNKNOWN) {
-    EMSG(_(e_printf));
+    emsg(_(e_printf));
     return NULL;
   } else {
     (*idxp)++;
@@ -652,7 +652,7 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
   float_T f = 0;
 
   if (tvs[idx].v_type == VAR_UNKNOWN) {
-    EMSG(_(e_printf));
+    emsg(_(e_printf));
   } else {
     (*idxp)++;
     if (tvs[idx].v_type == VAR_FLOAT) {
@@ -660,7 +660,7 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
     } else if (tvs[idx].v_type == VAR_NUMBER) {
       f = (float_T)tvs[idx].vval.v_number;
     } else {
-      EMSG(_("E807: Expected Float argument for printf()"));
+      emsg(_("E807: Expected Float argument for printf()"));
     }
   }
   return f;
@@ -706,7 +706,7 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
 /// Append a formatted value to the string
 ///
 /// @see vim_vsnprintf_typval().
-int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
+int vim_snprintf_add(char *str, size_t str_m, const char *fmt, ...)
   FUNC_ATTR_PRINTF(3, 4)
 {
   const size_t len = strlen(str);
@@ -1456,7 +1456,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
   }
 
   if (tvs && tvs[arg_idx - 1].v_type != VAR_UNKNOWN) {
-    EMSG(_("E767: Too many arguments to printf()"));
+    emsg(_("E767: Too many arguments to printf()"));
   }
 
   // return the number of characters formatted (excluding trailing nul

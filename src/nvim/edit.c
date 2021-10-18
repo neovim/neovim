@@ -1398,20 +1398,20 @@ bool edit(int cmdchar, bool startln, long count)
 
   // Don't allow inserting in the sandbox.
   if (sandbox != 0) {
-    EMSG(_(e_sandbox));
+    emsg(_(e_sandbox));
     return false;
   }
 
   // Don't allow changes in the buffer while editing the cmdline.  The
   // caller of getcmdline() may get confused.
   if (textlock != 0) {
-    EMSG(_(e_secure));
+    emsg(_(e_secure));
     return false;
   }
 
   // Don't allow recursive insert mode when busy with completion.
   if (compl_started || compl_busy || pum_visible()) {
-    EMSG(_(e_secure));
+    emsg(_(e_secure));
     return false;
   }
 
@@ -3974,13 +3974,13 @@ static void expand_by_function(int type, char_u *base)
   }
 
   if (curwin_save != curwin || curbuf_save != curbuf) {
-    EMSG(_(e_complwin));
+    emsg(_(e_complwin));
     goto theend;
   }
   curwin->w_cursor = pos;       // restore the cursor position
   validate_cursor();
   if (!equalpos(curwin->w_cursor, pos)) {
-    EMSG(_(e_compldel));
+    emsg(_(e_compldel));
     goto theend;
   }
 
@@ -5220,7 +5220,7 @@ static int ins_complete(int c, bool enable_pum)
       funcname = ctrl_x_mode == CTRL_X_FUNCTION
                  ? curbuf->b_p_cfu : curbuf->b_p_ofu;
       if (*funcname == NUL) {
-        EMSG2(_(e_notset), ctrl_x_mode == CTRL_X_FUNCTION
+        semsg(_(e_notset), ctrl_x_mode == CTRL_X_FUNCTION
             ? "completefunc" : "omnifunc");
         // restore did_ai, so that adding comment leader works
         did_ai = save_did_ai;
@@ -5241,13 +5241,13 @@ static int ins_complete(int c, bool enable_pum)
 
       State = save_State;
       if (curwin_save != curwin || curbuf_save != curbuf) {
-        EMSG(_(e_complwin));
+        emsg(_(e_complwin));
         return FAIL;
       }
       curwin->w_cursor = pos;           // restore the cursor position
       validate_cursor();
       if (!equalpos(curwin->w_cursor, pos)) {
-        EMSG(_(e_compldel));
+        emsg(_(e_compldel));
         return FAIL;
       }
 
@@ -7017,7 +7017,7 @@ int stuff_inserted(int c, long count, int no_esc)
 
   ptr = get_last_insert();
   if (ptr == NULL) {
-    EMSG(_(e_noinstext));
+    emsg(_(e_noinstext));
     return FAIL;
   }
 

@@ -144,9 +144,9 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
     }
     if (spats[i].pat == NULL) {         // pattern was never defined
       if (pat_use == RE_SUBST) {
-        EMSG(_(e_nopresub));
+        emsg(_(e_nopresub));
       } else {
-        EMSG(_(e_noprevre));
+        emsg(_(e_noprevre));
       }
       rc_did_emsg = true;
       return FAIL;
@@ -577,7 +577,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   if (search_regcomp(pat, RE_SEARCH, pat_use,
                      (options & (SEARCH_HIS + SEARCH_KEEP)), &regmatch) == FAIL) {
     if ((options & SEARCH_MSG) && !rc_did_emsg) {
-      EMSG2(_("E383: Invalid search string: %s"), mr_pattern);
+      semsg(_("E383: Invalid search string: %s"), mr_pattern);
     }
     return FAIL;
   }
@@ -953,15 +953,15 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
 
   if (!found) {             // did not find it
     if (got_int) {
-      EMSG(_(e_interr));
+      emsg(_(e_interr));
     } else if ((options & SEARCH_MSG) == SEARCH_MSG) {
       if (p_ws) {
-        EMSG2(_(e_patnotf2), mr_pattern);
+        semsg(_(e_patnotf2), mr_pattern);
       } else if (lnum == 0) {
-        EMSG2(_("E384: search hit TOP without match for: %s"),
+        semsg(_("E384: search hit TOP without match for: %s"),
               mr_pattern);
       } else {
-        EMSG2(_("E385: search hit BOTTOM without match for: %s"),
+        semsg(_("E385: search hit BOTTOM without match for: %s"),
               mr_pattern);
       }
     }
@@ -1115,7 +1115,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
       if (spats[RE_SEARCH].pat == NULL) {           // no previous pattern
         searchstr = spats[RE_SUBST].pat;
         if (searchstr == NULL) {
-          EMSG(_(e_noprevre));
+          emsg(_(e_noprevre));
           retval = 0;
           goto end_do_search;
         }
@@ -1426,7 +1426,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
     search_delim = dirc;
     if (dirc != '?' && dirc != '/') {
       retval = 0;
-      EMSG(_("E386: Expected '?' or '/'  after ';'"));
+      emsg(_("E386: Expected '?' or '/'  after ';'"));
       goto end_do_search;
     }
     ++pat;
@@ -4655,7 +4655,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     bool error = false;
 
     if (argvars[0].v_type != VAR_DICT || argvars[0].vval.v_dict == NULL) {
-      EMSG(_(e_dictreq));
+      emsg(_(e_dictreq));
       return;
     }
     dict = argvars[0].vval.v_dict;
@@ -4690,11 +4690,11 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     di = tv_dict_find(dict, (const char *)"pos", -1);
     if (di != NULL) {
       if (di->di_tv.v_type != VAR_LIST) {
-        EMSG2(_(e_invarg2), "pos");
+        semsg(_(e_invarg2), "pos");
         return;
       }
       if (tv_list_len(di->di_tv.vval.v_list) != 3) {
-        EMSG2(_(e_invarg2), "List format should be [lnum, col, off]");
+        semsg(_(e_invarg2), "List format should be [lnum, col, off]");
         return;
       }
       li = tv_list_find(di->di_tv.vval.v_list, 0L);
@@ -5214,7 +5214,7 @@ search_line:
         found = true;
         if (depth == -1 && lnum == curwin->w_cursor.lnum
             && l_g_do_tagpreview == 0) {
-          EMSG(_("E387: Match is on current line"));
+          emsg(_("E387: Match is on current line"));
         } else if (action == ACTION_SHOW) {
           show_pat_in_path(line, type, did_show, action,
                            (depth == -1) ? NULL : files[depth].fp,
@@ -5347,11 +5347,11 @@ exit_matched:
   } else if (!found
              && action != ACTION_EXPAND) {
     if (got_int || compl_interrupted) {
-      EMSG(_(e_interr));
+      emsg(_(e_interr));
     } else if (type == FIND_DEFINE) {
-      EMSG(_("E388: Couldn't find definition"));
+      emsg(_("E388: Couldn't find definition"));
     } else {
-      EMSG(_("E389: Couldn't find pattern"));
+      emsg(_("E389: Couldn't find pattern"));
     }
   }
   if (action == ACTION_SHOW || action == ACTION_SHOW_ALL) {

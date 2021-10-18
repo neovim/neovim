@@ -63,7 +63,7 @@ void list_write_log(const char *const fname)
   FileDescriptor fp;
   const int fo_ret = file_open(&fp, fname, kFileCreate|kFileAppend, 0600);
   if (fo_ret != 0) {
-    emsgf(_("E5142: Failed to open file %s: %s"), fname, os_strerror(fo_ret));
+    semsg(_("E5142: Failed to open file %s: %s"), fname, os_strerror(fo_ret));
     return;
   }
   for (ListLog *chunk = list_log_first; chunk != NULL;) {
@@ -85,7 +85,7 @@ void list_write_log(const char *const fname)
                   sizeof(chunk->entries[0]) * (chunk->size - i));
           chunk->size -= i;
         }
-        emsgf(_("E5143: Failed to write to file %s: %s"),
+        semsg(_("E5143: Failed to write to file %s: %s"),
               fname, os_strerror((int)fw_ret));
         return;
       }
@@ -96,7 +96,7 @@ void list_write_log(const char *const fname)
   }
   const int fc_ret = file_close(&fp, true);
   if (fc_ret != 0) {
-    emsgf(_("E5144: Failed to close file %s: %s"), fname, os_strerror(fc_ret));
+    semsg(_("E5144: Failed to close file %s: %s"), fname, os_strerror(fc_ret));
   }
 }
 
@@ -1041,7 +1041,7 @@ const char *tv_list_find_str(list_T *const l, const int n)
 {
   const listitem_T *const li = tv_list_find(l, n);
   if (li == NULL) {
-    EMSG2(_(e_listidx), (int64_t)n);
+    semsg(_(e_listidx), (int64_t)n);
     return NULL;
   }
   return tv_get_string(TV_LIST_ITEM_TV(li));
@@ -1399,7 +1399,7 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 {
   hashitem_T *const hi = hash_find(&dict->dv_hashtab, item->di_key);
   if (HASHITEM_EMPTY(hi)) {
-    emsgf(_(e_intern2), "tv_dict_item_remove()");
+    semsg(_(e_intern2), "tv_dict_item_remove()");
   } else {
     hash_remove(&dict->dv_hashtab, hi);
   }
@@ -1687,7 +1687,7 @@ bool tv_dict_get_callback(dict_T *const d, const char *const key, const ptrdiff_
   }
 
   if (!tv_is_func(di->di_tv) && di->di_tv.v_type != VAR_STRING) {
-    EMSG(_("E6000: Argument is not a function or function name"));
+    emsg(_("E6000: Argument is not a function or function name"));
     return false;
   }
 
@@ -1961,7 +1961,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
                                NULL);
       }
     } else if (*action == 'e') {
-      emsgf(_("E737: Key already exists: %s"), di2->di_key);
+      semsg(_("E737: Key already exists: %s"), di2->di_key);
       break;
     } else if (*action == 'f' && di2 != di1) {
       typval_T oldtv;
@@ -2599,7 +2599,7 @@ void tv_copy(const typval_T *const from, typval_T *const to)
     }
     break;
   case VAR_UNKNOWN:
-    emsgf(_(e_intern2), "tv_copy(UNKNOWN)");
+    semsg(_(e_intern2), "tv_copy(UNKNOWN)");
     break;
   }
 }
@@ -2620,7 +2620,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock, const boo
   static int recurse = 0;
 
   if (recurse >= DICT_MAXNEST) {
-    EMSG(_("E743: variable nested too deep for (un)lock"));
+    emsg(_("E743: variable nested too deep for (un)lock"));
     return;
   }
   if (deep == 0) {
@@ -2778,7 +2778,7 @@ bool var_check_lock(VarLockStatus lock, const char *name, size_t name_len)
     name_len = strlen(name);
   }
 
-  emsgf(_(error_message), (int)name_len, name);
+  semsg(_(error_message), (int)name_len, name);
 
   return true;
 }
@@ -2896,29 +2896,29 @@ bool tv_check_str_or_nr(const typval_T *const tv)
   case VAR_STRING:
     return true;
   case VAR_FLOAT:
-    EMSG(_("E805: Expected a Number or a String, Float found"));
+    emsg(_("E805: Expected a Number or a String, Float found"));
     return false;
   case VAR_PARTIAL:
   case VAR_FUNC:
-    EMSG(_("E703: Expected a Number or a String, Funcref found"));
+    emsg(_("E703: Expected a Number or a String, Funcref found"));
     return false;
   case VAR_LIST:
-    EMSG(_("E745: Expected a Number or a String, List found"));
+    emsg(_("E745: Expected a Number or a String, List found"));
     return false;
   case VAR_DICT:
-    EMSG(_("E728: Expected a Number or a String, Dictionary found"));
+    emsg(_("E728: Expected a Number or a String, Dictionary found"));
     return false;
   case VAR_BLOB:
-    EMSG(_("E974: Expected a Number or a String, Blob found"));
+    emsg(_("E974: Expected a Number or a String, Blob found"));
     return false;
   case VAR_BOOL:
-    EMSG(_("E5299: Expected a Number or a String, Boolean found"));
+    emsg(_("E5299: Expected a Number or a String, Boolean found"));
     return false;
   case VAR_SPECIAL:
-    EMSG(_("E5300: Expected a Number or a String"));
+    emsg(_("E5300: Expected a Number or a String"));
     return false;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
+    semsg(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
     return false;
   }
   abort();
@@ -2963,7 +2963,7 @@ bool tv_check_num(const typval_T *const tv)
   case VAR_FLOAT:
   case VAR_BLOB:
   case VAR_UNKNOWN:
-    EMSG(_(num_errors[tv->v_type]));
+    emsg(_(num_errors[tv->v_type]));
     return false;
   }
   abort();
@@ -3008,7 +3008,7 @@ bool tv_check_str(const typval_T *const tv)
   case VAR_FLOAT:
   case VAR_BLOB:
   case VAR_UNKNOWN:
-    EMSG(_(str_errors[tv->v_type]));
+    emsg(_(str_errors[tv->v_type]));
     return false;
   }
   abort();
@@ -3055,7 +3055,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   case VAR_DICT:
   case VAR_BLOB:
   case VAR_FLOAT:
-    EMSG(_(num_errors[tv->v_type]));
+    emsg(_(num_errors[tv->v_type]));
     break;
   case VAR_NUMBER:
     return tv->vval.v_number;
@@ -3072,7 +3072,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   case VAR_SPECIAL:
     return 0;
   case VAR_UNKNOWN:
-    emsgf(_(e_intern2), "tv_get_number(UNKNOWN)");
+    semsg(_(e_intern2), "tv_get_number(UNKNOWN)");
     break;
   }
   if (ret_error != NULL) {
@@ -3119,28 +3119,28 @@ float_T tv_get_float(const typval_T *const tv)
     return tv->vval.v_float;
   case VAR_PARTIAL:
   case VAR_FUNC:
-    EMSG(_("E891: Using a Funcref as a Float"));
+    emsg(_("E891: Using a Funcref as a Float"));
     break;
   case VAR_STRING:
-    EMSG(_("E892: Using a String as a Float"));
+    emsg(_("E892: Using a String as a Float"));
     break;
   case VAR_LIST:
-    EMSG(_("E893: Using a List as a Float"));
+    emsg(_("E893: Using a List as a Float"));
     break;
   case VAR_DICT:
-    EMSG(_("E894: Using a Dictionary as a Float"));
+    emsg(_("E894: Using a Dictionary as a Float"));
     break;
   case VAR_BOOL:
-    EMSG(_("E362: Using a boolean value as a Float"));
+    emsg(_("E362: Using a boolean value as a Float"));
     break;
   case VAR_SPECIAL:
-    EMSG(_("E907: Using a special value as a Float"));
+    emsg(_("E907: Using a special value as a Float"));
     break;
   case VAR_BLOB:
-    EMSG(_("E975: Using a Blob as a Float"));
+    emsg(_("E975: Using a Blob as a Float"));
     break;
   case VAR_UNKNOWN:
-    emsgf(_(e_intern2), "tv_get_float(UNKNOWN)");
+    semsg(_(e_intern2), "tv_get_float(UNKNOWN)");
     break;
   }
   return 0;
@@ -3151,7 +3151,7 @@ int tv_check_for_string(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (tv->v_type != VAR_STRING) {
-    EMSG(_(e_stringreq));
+    emsg(_(e_stringreq));
     return FAIL;
   }
   return OK;
@@ -3165,7 +3165,7 @@ int tv_check_for_nonempty_string(const typval_T *const tv)
     return FAIL;
   }
   if (tv->vval.v_string == NULL || *tv->vval.v_string == NUL) {
-    EMSG(_(e_non_empty_string_required));
+    emsg(_(e_non_empty_string_required));
     return FAIL;
   }
   return OK;
@@ -3207,7 +3207,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
   case VAR_FLOAT:
   case VAR_BLOB:
   case VAR_UNKNOWN:
-    EMSG(_(str_errors[tv->v_type]));
+    emsg(_(str_errors[tv->v_type]));
     return false;
   }
   return NULL;

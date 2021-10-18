@@ -64,7 +64,7 @@ int os_get_usernames(garray_T *users)
         char *user;
         int conversion_result = utf16_to_utf8(uinfo[i].usri0_name, -1, &user);
         if (conversion_result != 0) {
-          EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+          semsg("utf16_to_utf8 failed: %d", conversion_result);
           break;
         }
         add_user(users, user, false);

@@ -893,7 +893,7 @@ static inline bool tv_get_float_chk(const typval_T *const tv,
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 // FIXME circular dependency, cannot import message.h.
-bool emsgf(const char *const fmt, ...);
+bool semsg(const char *const fmt, ...);
 
 /// Get the float value
 ///
@@ -913,7 +913,7 @@ static inline bool tv_get_float_chk(const typval_T *const tv, float_T *const ret
     *ret_f = (float_T)tv->vval.v_number;
     return true;
   }
-  emsgf("%s", _("E808: Number or Float required"));
+  semsg("%s", _("E808: Number or Float required"));
   return false;
 }
 

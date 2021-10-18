@@ -1724,7 +1724,7 @@ static void write_msg(String message, bool to_err)
 #define PUSH_CHAR(i, pos, line_buf, msg) \
   if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
     line_buf[pos] = NUL; \
-    msg((char_u *)line_buf); \
+    msg(line_buf); \
     pos = 0; \
     continue; \
   } \

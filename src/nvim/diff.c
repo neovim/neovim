@@ -168,7 +168,7 @@ void diff_buf_add(buf_T *buf)
     }
   }
 
-  EMSGN(_("E96: Cannot diff more than %" PRId64 " buffers"), DB_COUNT);
+  semsg(_("E96: Cannot diff more than %" PRId64 " buffers"), (int64_t)DB_COUNT);
 }
 
 ///
@@ -1039,9 +1039,9 @@ static int check_external_diff(diffio_T *diffio)
 
   if (!ok) {
     if (io_error) {
-      EMSG(_("E810: Cannot read or write temp files"));
+      emsg(_("E810: Cannot read or write temp files"));
     }
-    EMSG(_("E97: Cannot create diffs"));
+    emsg(_("E97: Cannot create diffs"));
     diff_a_works = kNone;
     return FAIL;
   }
@@ -1082,7 +1082,7 @@ static int diff_file_internal(diffio_T *diffio)
   if (xdl_diff(&diffio->dio_orig.din_mmfile,
                &diffio->dio_new.din_mmfile,
                &param, &emit_cfg, &emit_cb) < 0) {
-    EMSG(_("E960: Problem creating the internal diff"));
+    emsg(_("E960: Problem creating the internal diff"));
     return FAIL;
   }
   return OK;
@@ -1225,7 +1225,7 @@ void ex_diffpatch(exarg_T *eap)
 #ifdef UNIX
   if (dirbuf[0] != NUL) {
     if (os_chdir((char *)dirbuf) != 0) {
-      EMSG(_(e_prev_dir));
+      emsg(_(e_prev_dir));
     }
     shorten_fnames(true);
   }
@@ -1244,7 +1244,7 @@ void ex_diffpatch(exarg_T *eap)
   bool info_ok = os_fileinfo((char *)tmp_new, &file_info);
   uint64_t filesize = os_fileinfo_size(&file_info);
   if (!info_ok || filesize == 0) {
-    EMSG(_("E816: Cannot read patch output"));
+    emsg(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
       newname = vim_strnsave(curbuf->b_fname, STRLEN(curbuf->b_fname) + 4);
@@ -1544,7 +1544,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
   } else {
     fd = os_fopen((char *)dout->dout_fname, "r");
     if (fd == NULL) {
-      EMSG(_("E98: Cannot read diff output"));
+      emsg(_("E98: Cannot read diff output"));
       return;
     }
   }
@@ -2497,7 +2497,7 @@ void ex_diffgetput(exarg_T *eap)
   // Find the current buffer in the list of diff buffers.
   int idx_cur = diff_buf_idx(curbuf);
   if (idx_cur == DB_COUNT) {
-    EMSG(_("E99: Current buffer is not in diff mode"));
+    emsg(_("E99: Current buffer is not in diff mode"));
     return;
   }
 
@@ -2516,9 +2516,9 @@ void ex_diffgetput(exarg_T *eap)
 
     if (idx_other == DB_COUNT) {
       if (found_not_ma) {
-        EMSG(_("E793: No other buffer in diff mode is modifiable"));
+        emsg(_("E793: No other buffer in diff mode is modifiable"));
       } else {
-        EMSG(_("E100: No other buffer in diff mode"));
+        emsg(_("E100: No other buffer in diff mode"));
       }
       return;
     }
@@ -2529,7 +2529,7 @@ void ex_diffgetput(exarg_T *eap)
           && (curtab->tp_diffbuf[i] != NULL)
           && ((eap->cmdidx != CMD_diffput)
               || MODIFIABLE(curtab->tp_diffbuf[i]))) {
-        EMSG(_("E101: More than two buffers in diff mode, don't know "
+        emsg(_("E101: More than two buffers in diff mode, don't know "
                "which one to use"));
         return;
       }
@@ -2558,7 +2558,7 @@ void ex_diffgetput(exarg_T *eap)
     buf = buflist_findnr(i);
 
     if (buf == NULL) {
-      EMSG2(_("E102: Can't find buffer \"%s\""), eap->arg);
+      semsg(_("E102: Can't find buffer \"%s\""), eap->arg);
       return;
     }
 
@@ -2569,7 +2569,7 @@ void ex_diffgetput(exarg_T *eap)
     idx_other = diff_buf_idx(buf);
 
     if (idx_other == DB_COUNT) {
-      EMSG2(_("E103: Buffer \"%s\" is not in diff mode"), eap->arg);
+      semsg(_("E103: Buffer \"%s\" is not in diff mode"), eap->arg);
       return;
     }
   }
@@ -2610,7 +2610,7 @@ void ex_diffgetput(exarg_T *eap)
   if (!curbuf->b_changed) {
     change_warning(curbuf, 0);
     if (diff_buf_idx(curbuf) != idx_to) {
-      EMSG(_("E787: Buffer changed unexpectedly"));
+      emsg(_("E787: Buffer changed unexpectedly"));
       goto theend;
     }
   }

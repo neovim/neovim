@@ -168,7 +168,7 @@ void mf_close(memfile_T *mfp, bool del_file)
     return;
   }
   if (mfp->mf_fd >= 0 && close(mfp->mf_fd) < 0) {
-    EMSG(_(e_swapclose));
+    emsg(_(e_swapclose));
   }
   if (del_file && mfp->mf_fname != NULL) {
     os_remove((char *)mfp->mf_fname);
@@ -206,7 +206,7 @@ void mf_close_file(buf_T *buf, bool getlines)
   }
 
   if (close(mfp->mf_fd) < 0) {           // close the file
-    EMSG(_(e_swapclose));
+    emsg(_(e_swapclose));
   }
   mfp->mf_fd = -1;
 
@@ -325,7 +325,7 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
   unsigned flags = hp->bh_flags;
 
   if ((flags & BH_LOCKED) == 0) {
-    IEMSG(_("E293: block was not locked"));
+    iemsg(_("E293: block was not locked"));
   }
   flags &= ~BH_LOCKED;
   if (dirty) {
@@ -648,7 +648,7 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
       /// write or when hitting a key. We keep on trying, in case some
       /// space becomes available.
       if (!did_swapwrite_msg) {
-        EMSG(_("E297: Write error in swap file"));
+        emsg(_("E297: Write error in swap file"));
       }
       did_swapwrite_msg = true;
       return FAIL;
@@ -792,7 +792,7 @@ static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
   if ((flags & O_CREAT)
       && os_fileinfo_link((char *)mfp->mf_fname, &file_info)) {
     mfp->mf_fd = -1;
-    EMSG(_("E300: Swap file already exists (symlink attack?)"));
+    emsg(_("E300: Swap file already exists (symlink attack?)"));
   } else {
     // try to open the file
     mfp->mf_fd = mch_open_rw((char *)mfp->mf_fname, flags | O_NOFOLLOW);

@@ -3119,7 +3119,7 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "off", 3) == 0 && next - arg == 3) {
     curwin->w_s->b_syn_conceal = false;
   } else {
-    EMSG2(_(e_illegal_arg), arg);
+    semsg(_(e_illegal_arg), arg);
   }
 }
 
@@ -3148,7 +3148,7 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "ignore", 6) == 0 && next - arg == 6) {
     curwin->w_s->b_syn_ic = true;
   } else {
-    EMSG2(_(e_illegal_arg), arg);
+    semsg(_(e_illegal_arg), arg);
   }
 }
 
@@ -3181,13 +3181,13 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "minimum", 7) == 0 && arg_end - arg == 7) {
     curwin->w_s->b_syn_foldlevel = SYNFLD_MINIMUM;
   } else {
-    EMSG2(_(e_illegal_arg), arg);
+    semsg(_(e_illegal_arg), arg);
     return;
   }
 
   arg = skipwhite(arg_end);
   if (*arg != NUL) {
-    EMSG2(_(e_illegal_arg), arg);
+    semsg(_(e_illegal_arg), arg);
   }
 }
 
@@ -3220,7 +3220,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   } else if (STRNICMP(arg, "default", 7) == 0 && next - arg == 7) {
     curwin->w_s->b_syn_spell = SYNSPL_DEFAULT;
   } else {
-    EMSG2(_(e_illegal_arg), arg);
+    semsg(_(e_illegal_arg), arg);
     return;
   }
 
@@ -3444,7 +3444,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
       if (*arg == '@') {
         id = syn_scl_namen2id(arg + 1, (int)(arg_end - arg - 1));
         if (id == 0) {
-          EMSG2(_("E391: No such syntax cluster: %s"), arg);
+          semsg(_("E391: No such syntax cluster: %s"), arg);
           break;
         } else {
           // We can't physically delete a cluster without changing
@@ -3457,7 +3457,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
       } else {
         id = syn_name2id_len(arg, (int)(arg_end - arg));
         if (id == 0) {
-          EMSG2(_(e_nogroup), arg);
+          semsg(_(e_nogroup), arg);
           break;
         } else {
           syn_clear_one(id, syncing);
@@ -3621,14 +3621,14 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
       if (*arg == '@') {
         int id = syn_scl_namen2id(arg + 1, (int)(arg_end - arg - 1));
         if (id == 0) {
-          EMSG2(_("E392: No such syntax cluster: %s"), arg);
+          semsg(_("E392: No such syntax cluster: %s"), arg);
         } else {
           syn_list_cluster(id - SYNID_CLUSTER);
         }
       } else {
         int id = syn_name2id_len(arg, (int)(arg_end - arg));
         if (id == 0) {
-          EMSG2(_(e_nogroup), arg);
+          semsg(_(e_nogroup), arg);
         } else {
           syn_list_one(id, syncing, true);
         }
@@ -4229,7 +4229,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
 
     if (flagtab[fidx].argtype == 1) {
       if (!opt->has_cont_list) {
-        EMSG(_("E395: contains argument not accepted here"));
+        emsg(_("E395: contains argument not accepted here"));
         return NULL;
       }
       if (get_id_list(&arg, 8, &opt->cont_list, skip) == FAIL) {
@@ -4248,7 +4248,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
       *conceal_char = utf_ptr2char(arg + 6);
       arg += mb_ptr2len(arg + 6) - 1;
       if (!vim_isprintc_strict(*conceal_char)) {
-        EMSG(_("E844: invalid cchar value"));
+        emsg(_("E844: invalid cchar value"));
         return NULL;
       }
       arg = skipwhite(arg + 7);
@@ -4259,7 +4259,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
       if (flagtab[fidx].flags == HL_SYNC_HERE
           || flagtab[fidx].flags == HL_SYNC_THERE) {
         if (opt->sync_idx == NULL) {
-          EMSG(_("E393: group[t]here not accepted here"));
+          emsg(_("E393: group[t]here not accepted here"));
           return NULL;
         }
         gname_start = arg;
@@ -4281,7 +4281,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
             }
           }
           if (i < 0) {
-            EMSG2(_("E394: Didn't find region item for %s"), gname);
+            semsg(_("E394: Didn't find region item for %s"), gname);
             xfree(gname);
             return NULL;
           }
@@ -4332,7 +4332,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   int sgl_id = 1;
   char_u *group_name_end;
   char_u *rest;
-  char_u *errormsg = NULL;
+  char *errormsg = NULL;
   int prev_toplvl_grp;
   int prev_syn_inc_tag;
   bool source = false;
@@ -4346,7 +4346,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
     ++arg;
     rest = get_group_name(arg, &group_name_end);
     if (rest == NULL) {
-      EMSG((char_u *)_("E397: Filename required"));
+      emsg(_("E397: Filename required"));
       return;
     }
     sgl_id = syn_check_cluster(arg, (int)(group_name_end - arg));
@@ -4370,7 +4370,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
     source = true;
     if (expand_filename(eap, syn_cmdlinep, &errormsg) == FAIL) {
       if (errormsg != NULL) {
-        EMSG(errormsg);
+        emsg(errormsg);
       }
       return;
     }
@@ -4381,7 +4381,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
    * include" tag around the actual inclusion.
    */
   if (running_syn_inc_tag >= MAX_SYN_INC_TAG) {
-    EMSG((char_u *)_("E847: Too many syntax includes"));
+    emsg(_("E847: Too many syntax includes"));
     return;
   }
   prev_syn_inc_tag = current_syn_inc_tag;
@@ -4391,7 +4391,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   if (source
       ? do_source((char *)eap->arg, false, DOSO_NONE) == FAIL
       : source_runtime((char *)eap->arg, DIP_ALL) == FAIL) {
-    EMSG2(_(e_notopen), eap->arg);
+    semsg(_(e_notopen), eap->arg);
   }
   curwin->w_s->b_syn_topgrp = prev_toplvl_grp;
   current_syn_inc_tag = prev_syn_inc_tag;
@@ -4471,12 +4471,12 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
               break;
             }
             if (p[1] == NUL) {
-              emsgf(_("E789: Missing ']': %s"), kw);
+              semsg(_("E789: Missing ']': %s"), kw);
               goto error;
             }
             if (p[1] == ']') {
               if (p[2] != NUL) {
-                emsgf(_("E890: trailing char after ']': %s]%s"),
+                semsg(_("E890: trailing char after ']': %s]%s"),
                       kw, &p[2]);
                 goto error;
               }
@@ -4501,7 +4501,7 @@ error:
   if (rest != NULL) {
     eap->nextcmd = check_nextcmd(rest);
   } else {
-    EMSG2(_(e_invarg2), arg);
+    semsg(_(e_invarg2), arg);
   }
 
   redraw_curbuf_later(SOME_VALID);
@@ -4603,7 +4603,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
   xfree(syn_opt_arg.next_list);
 
   if (rest == NULL) {
-    EMSG2(_(e_invarg2), arg);
+    semsg(_(e_invarg2), arg);
   }
 }
 
@@ -4691,7 +4691,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
     rest = skipwhite(key_end);
     if (*rest != '=') {
       rest = NULL;
-      EMSG2(_("E398: Missing '=': %s"), arg);
+      semsg(_("E398: Missing '=': %s"), arg);
       break;
     }
     rest = skipwhite(rest + 1);
@@ -4830,9 +4830,9 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
     xfree(syn_opt_arg.cont_in_list);
     xfree(syn_opt_arg.next_list);
     if (not_enough) {
-      EMSG2(_("E399: Not enough arguments: syntax region %s"), arg);
+      semsg(_("E399: Not enough arguments: syntax region %s"), arg);
     } else if (illegal || rest == NULL) {
-      EMSG2(_(e_invarg2), arg);
+      semsg(_(e_invarg2), arg);
     }
   }
 }
@@ -5029,7 +5029,7 @@ static int syn_add_cluster(char_u *name)
 
   int len = curwin->w_s->b_syn_clusters.ga_len;
   if (len >= MAX_CLUSTER_ID) {
-    EMSG((char_u *)_("E848: Too many syntax clusters"));
+    emsg(_("E848: Too many syntax clusters"));
     xfree(name);
     return 0;
   }
@@ -5097,7 +5097,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
 
       int16_t *clstr_list = NULL;
       if (get_id_list(&rest, opt_len, &clstr_list, eap->skip) == FAIL) {
-        EMSG2(_(e_invarg2), rest);
+        semsg(_(e_invarg2), rest);
         break;
       }
       if (scl_id >= 0) {
@@ -5116,10 +5116,10 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
   }
 
   if (!got_clstr) {
-    EMSG(_("E400: No cluster specified"));
+    emsg(_("E400: No cluster specified"));
   }
   if (rest == NULL || !ends_excmd(*rest)) {
-    EMSG2(_(e_invarg2), arg);
+    semsg(_(e_invarg2), arg);
   }
 }
 
@@ -5151,7 +5151,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
 
   end = skip_regexp(arg + 1, *arg, TRUE, NULL);
   if (*end != *arg) {                       // end delimiter not found
-    EMSG2(_("E401: Pattern delimiter not found: %s"), arg);
+    semsg(_("E401: Pattern delimiter not found: %s"), arg);
     return NULL;
   }
   // store the pattern and compiled regexp program
@@ -5223,7 +5223,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
   } while (idx >= 0);
 
   if (!ends_excmd(*end) && !ascii_iswhite(*end)) {
-    EMSG2(_("E402: Garbage after pattern: %s"), arg);
+    semsg(_("E402: Garbage after pattern: %s"), arg);
     return NULL;
   }
   return skipwhite(end);
@@ -5302,7 +5302,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         break;
       }
       if (curwin->w_s->b_syn_linecont_pat != NULL) {
-        EMSG(_("E403: syntax sync: line continuations pattern specified twice"));
+        emsg(_("E403: syntax sync: line continuations pattern specified twice"));
         finished = TRUE;
         break;
       }
@@ -5351,7 +5351,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   }
   xfree(key);
   if (illegal) {
-    EMSG2(_("E404: Illegal arguments: %s"), arg_start);
+    semsg(_("E404: Illegal arguments: %s"), arg_start);
   } else if (!finished) {
     eap->nextcmd = check_nextcmd(arg_start);
     redraw_curbuf_later(SOME_VALID);
@@ -5387,12 +5387,12 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
     // skip "contains"
     p = skipwhite(*arg + keylen);
     if (*p != '=') {
-      EMSG2(_("E405: Missing equal sign: %s"), *arg);
+      semsg(_("E405: Missing equal sign: %s"), *arg);
       break;
     }
     p = skipwhite(p + 1);
     if (ends_excmd(*p)) {
-      EMSG2(_("E406: Empty argument: %s"), *arg);
+      semsg(_("E406: Empty argument: %s"), *arg);
       break;
     }
 
@@ -5408,13 +5408,13 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
           || STRCMP(name + 1, "TOP") == 0
           || STRCMP(name + 1, "CONTAINED") == 0) {
         if (TOUPPER_ASC(**arg) != 'C') {
-          EMSG2(_("E407: %s not allowed here"), name + 1);
+          semsg(_("E407: %s not allowed here"), name + 1);
           failed = true;
           xfree(name);
           break;
         }
         if (count != 0) {
-          EMSG2(_("E408: %s must be first in contains list"),
+          semsg(_("E408: %s must be first in contains list"),
                 name + 1);
           failed = true;
           xfree(name);
@@ -5479,7 +5479,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
       }
       xfree(name);
       if (id == 0) {
-        EMSG2(_("E409: Unknown group name: %s"), p);
+        semsg(_("E409: Unknown group name: %s"), p);
         failed = true;
         break;
       }
@@ -5697,7 +5697,7 @@ void ex_syntax(exarg_T *eap)
   }
   for (int i = 0;; i++) {
     if (subcommands[i].name == NULL) {
-      EMSG2(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
+      semsg(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
       break;
     }
     if (STRCMP(subcmd_name, (char_u *)subcommands[i].name) == 0) {
@@ -6002,7 +6002,7 @@ void ex_syntime(exarg_T *eap)
   } else if (STRCMP(eap->arg, "report") == 0) {
     syntime_report();
   } else {
-    EMSG2(_(e_invarg2), eap->arg);
+    semsg(_(e_invarg2), eap->arg);
   }
 }
 
@@ -6775,7 +6775,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
     id = syn_name2id_len((const char_u *)line, (int)(name_end - line));
     if (id == 0) {
-      emsgf(_("E411: highlight group not found: %s"), line);
+      semsg(_("E411: highlight group not found: %s"), line);
     } else {
       highlight_list_one(id);
     }
@@ -6798,13 +6798,13 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
     if (ends_excmd((uint8_t)(*from_start))
         || ends_excmd((uint8_t)(*to_start))) {
-      emsgf(_("E412: Not enough arguments: \":highlight link %s\""),
+      semsg(_("E412: Not enough arguments: \":highlight link %s\""),
             from_start);
       return;
     }
 
     if (!ends_excmd(*skipwhite((const char_u *)to_end))) {
-      emsgf(_("E413: Too many arguments: \":highlight link %s\""), from_start);
+      semsg(_("E413: Too many arguments: \":highlight link %s\""), from_start);
       return;
     }
 
@@ -6830,7 +6830,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (to_id > 0 && !forceit && !init
           && hl_has_settings(from_id - 1, dodefault)) {
         if (sourcing_name == NULL && !dodefault) {
-          EMSG(_("E414: group has settings, highlight link ignored"));
+          emsg(_("E414: group has settings, highlight link ignored"));
         }
       } else if (hlgroup->sg_link != to_id
                  || hlgroup->sg_script_ctx.sc_sid != current_sctx.sc_sid
@@ -6902,7 +6902,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     while (!ends_excmd((uint8_t)(*linep))) {
       key_start = linep;
       if (*linep == '=') {
-        emsgf(_("E415: unexpected equal sign: %s"), key_start);
+        semsg(_("E415: unexpected equal sign: %s"), key_start);
         error = true;
         break;
       }
@@ -6929,7 +6929,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
       // Check for the equal sign.
       if (*linep != '=') {
-        emsgf(_("E416: missing equal sign: %s"), key_start);
+        semsg(_("E416: missing equal sign: %s"), key_start);
         error = true;
         break;
       }
@@ -6941,7 +6941,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         arg_start = ++linep;
         linep = strchr(linep, '\'');
         if (linep == NULL) {
-          emsgf(_(e_invarg2), key_start);
+          semsg(_(e_invarg2), key_start);
           error = true;
           break;
         }
@@ -6950,7 +6950,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         linep = (const char *)skiptowhite((const char_u *)linep);
       }
       if (linep == arg_start) {
-        emsgf(_("E417: missing argument: %s"), key_start);
+        semsg(_("E417: missing argument: %s"), key_start);
         error = true;
         break;
       }
@@ -6977,7 +6977,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             }
           }
           if (i < 0) {
-            emsgf(_("E418: Illegal value: %s"), arg);
+            semsg(_("E418: Illegal value: %s"), arg);
             error = true;
             break;
           }
@@ -7025,7 +7025,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             if (cterm_normal_fg_color) {
               color = cterm_normal_fg_color - 1;
             } else {
-              EMSG(_("E419: FG color unknown"));
+              emsg(_("E419: FG color unknown"));
               error = true;
               break;
             }
@@ -7033,7 +7033,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             if (cterm_normal_bg_color > 0) {
               color = cterm_normal_bg_color - 1;
             } else {
-              EMSG(_("E420: BG color unknown"));
+              emsg(_("E420: BG color unknown"));
               error = true;
               break;
             }
@@ -7047,7 +7047,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               }
             }
             if (i < 0) {
-              emsgf(_("E421: Color name or number not recognized: %s"),
+              semsg(_("E421: Color name or number not recognized: %s"),
                     key_start);
               error = true;
               break;
@@ -7180,7 +7180,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           HL_TABLE()[idx].sg_blend = -1;
         }
       } else {
-        emsgf(_("E423: Illegal argument: %s"), key_start);
+        semsg(_("E423: Illegal argument: %s"), key_start);
         error = true;
         break;
       }
@@ -7698,7 +7698,7 @@ static int syn_add_group(char_u *name)
   // Check that the name is ASCII letters, digits and underscore.
   for (p = name; *p != NUL; ++p) {
     if (!vim_isprintc(*p)) {
-      EMSG(_("E669: Unprintable character in group name"));
+      emsg(_("E669: Unprintable character in group name"));
       xfree(name);
       return 0;
     } else if (!ASCII_ISALNUM(*p) && *p != '_') {
@@ -7719,7 +7719,7 @@ static int syn_add_group(char_u *name)
   }
 
   if (highlight_ga.ga_len >= MAX_HL_ID) {
-    EMSG(_("E849: Too many highlight and syntax groups"));
+    emsg(_("E849: Too many highlight and syntax groups"));
     xfree(name);
     return 0;
   }

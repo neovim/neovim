@@ -197,7 +197,7 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
     }
     }
   }
-  emsgf(msg, _(objname), (kv_size(*mpstack) == 0
+  semsg(msg, _(objname), (kv_size(*mpstack) == 0
                           ? _("itself")
                           : (char *)msg_ga.ga_data));
   ga_clear(&msg_ga);
@@ -448,7 +448,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
       /* Only give this message once for a recursive call to avoid */ \
       /* flooding the user with errors. */ \
       did_echo_string_emsg = true; \
-      EMSG(_("E724: unable to correctly dump variable " \
+      emsg(_("E724: unable to correctly dump variable " \
              "with self-referencing container")); \
     } \
     char ebuf[NUMBUFLEN + 7]; \
@@ -528,7 +528,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
       /* Only give this message once for a recursive call to avoid */ \
       /* flooding the user with errors. */ \
       did_echo_string_emsg = true; \
-      EMSG(_("E724: unable to correctly dump variable " \
+      emsg(_("E724: unable to correctly dump variable " \
              "with self-referencing container")); \
     } \
   } while (0)
@@ -558,11 +558,11 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     const float_T flt_ = (flt); \
     switch (xfpclassify(flt_)) { \
     case FP_NAN: { \
-      EMSG(_("E474: Unable to represent NaN value in JSON")); \
+      emsg(_("E474: Unable to represent NaN value in JSON")); \
       return FAIL; \
     } \
     case FP_INFINITE: { \
-      EMSG(_("E474: Unable to represent infinity in JSON")); \
+      emsg(_("E474: Unable to represent infinity in JSON")); \
       return FAIL; \
     } \
     default: { \
@@ -630,14 +630,14 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
         break;
       default:
         if (ch > 0x7F && shift == 1) {
-          emsgf(_("E474: String \"%.*s\" contains byte that does not start "
+          semsg(_("E474: String \"%.*s\" contains byte that does not start "
                   "any UTF-8 character"),
                 (int)(utf_len - (i - shift)), utf_buf + i - shift);
           xfree(tofree);
           return FAIL;
         } else if ((SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END)
                    || (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END)) {
-          emsgf(_("E474: UTF-8 string contains code point which belongs "
+          semsg(_("E474: UTF-8 string contains code point which belongs "
                   "to a surrogate pair: %.*s"),
                 (int)(utf_len - (i - shift)), utf_buf + i - shift);
           xfree(tofree);
@@ -719,7 +719,7 @@ static inline int convert_to_json_string(garray_T *const gap, const char *const 
 #define TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type) \
   do { \
     xfree(buf); \
-    EMSG(_("E474: Unable to convert EXT string to JSON")); \
+    emsg(_("E474: Unable to convert EXT string to JSON")); \
     return FAIL; \
   } while (0)
 
@@ -792,7 +792,7 @@ bool encode_check_json_key(const typval_T *const tv)
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, key) \
   do { \
     if (!encode_check_json_key(&key)) { \
-      EMSG(_("E474: Invalid key in special dictionary")); \
+      emsg(_("E474: Invalid key in special dictionary")); \
       goto label; \
     } \
   } while (0)

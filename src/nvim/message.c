@@ -453,11 +453,11 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
 }
 
 /*
- * Note: Caller of smgs() and smsg_attr() must check the resulting string is
+ * Note: Caller of smsg() and smsg_attr() must check the resulting string is
  * shorter than IOSIZE!!!
  */
 
-int smsg(char *s, ...)
+int smsg(const char *s, ...)
   FUNC_ATTR_PRINTF(1, 2)
 {
   va_list arglist;
@@ -468,7 +468,7 @@ int smsg(char *s, ...)
   return msg(IObuff);
 }
 
-int smsg_attr(int attr, char *s, ...)
+int smsg_attr(int attr, const char *s, ...)
   FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
@@ -479,7 +479,7 @@ int smsg_attr(int attr, char *s, ...)
   return msg_attr((const char *)IObuff, attr);
 }
 
-int smsg_attr_keep(int attr, char *s, ...)
+int smsg_attr_keep(int attr, const char *s, ...)
   FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
@@ -730,25 +730,25 @@ static bool emsg_multiline(const char *s, bool multiline)
 /// When terminal not initialized (yet) mch_errmsg(..) is used.
 ///
 /// @return true if wait_return not called
-bool emsg(const char_u *s)
+bool emsg(const char *s)
 {
   return emsg_multiline((const char *)s, false);
 }
 
 void emsg_invreg(int name)
 {
-  EMSG2(_("E354: Invalid register name: '%s'"), transchar(name));
+  semsg(_("E354: Invalid register name: '%s'"), transchar(name));
 }
 
 /// Print an error message with unknown number of arguments
-bool emsgf(const char *const fmt, ...)
+bool semsg(const char *const fmt, ...)
   FUNC_ATTR_PRINTF(1, 2)
 {
   bool ret;
 
   va_list ap;
   va_start(ap, fmt);
-  ret = emsgfv(fmt, ap);
+  ret = semsgv(fmt, ap);
   va_end(ap);
 
   return ret;
@@ -756,7 +756,7 @@ bool emsgf(const char *const fmt, ...)
 
 #define MULTILINE_BUFSIZE 8192
 
-bool emsgf_multiline(const char *const fmt, ...)
+bool semsg_multiline(const char *const fmt, ...)
 {
   bool ret;
   va_list ap;
@@ -777,7 +777,7 @@ bool emsgf_multiline(const char *const fmt, ...)
 }
 
 /// Print an error message with unknown number of arguments
-static bool emsgfv(const char *fmt, va_list ap)
+static bool semsgv(const char *fmt, va_list ap)
 {
   static char errbuf[IOSIZE];
   if (emsg_not_now()) {
@@ -786,7 +786,7 @@ static bool emsgfv(const char *fmt, va_list ap)
 
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
 
-  return emsg((const char_u *)errbuf);
+  return emsg(errbuf);
 }
 
 /// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
@@ -794,20 +794,20 @@ static bool emsgfv(const char *fmt, va_list ap)
 /// detected when fuzzing vim.
 void iemsg(const char *s)
 {
-  emsg((char_u *)s);
+  emsg(s);
 #ifdef ABORT_ON_INTERNAL_ERROR
   abort();
 #endif
 }
 
-/// Same as emsgf(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// Same as semsg(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
 /// defined. It is used for internal errors only, so that they can be
 /// detected when fuzzing vim.
-void iemsgf(const char *s, ...)
+void siemsg(const char *s, ...)
 {
   va_list ap;
   va_start(ap, s);
-  (void)emsgfv(s, ap);
+  (void)semsgv(s, ap);
   va_end(ap);
 #ifdef ABORT_ON_INTERNAL_ERROR
   abort();
@@ -817,17 +817,17 @@ void iemsgf(const char *s, ...)
 /// Give an "Internal error" message.
 void internal_error(char *where)
 {
-  IEMSG2(_(e_intern2), where);
+  siemsg(_(e_intern2), where);
 }
 
-static void msg_emsgf_event(void **argv)
+static void msg_semsg_event(void **argv)
 {
   char *s = argv[0];
-  (void)emsg((char_u *)s);
+  (void)emsg(s);
   xfree(s);
 }
 
-void msg_schedule_emsgf(const char *const fmt, ...)
+void msg_schedule_semsg(const char *const fmt, ...)
   FUNC_ATTR_PRINTF(1, 2)
 {
   va_list ap;
@@ -836,7 +836,7 @@ void msg_schedule_emsgf(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup((char *)IObuff);
-  multiqueue_put(main_loop.events, msg_emsgf_event, 1, s);
+  multiqueue_put(main_loop.events, msg_semsg_event, 1, s);
 }
 
 /*
@@ -1009,7 +1009,7 @@ void ex_messages(void *const eap_p)
   }
 
   if (*eap->arg != NUL) {
-    EMSG(_(e_invarg));
+    emsg(_(e_invarg));
     return;
   }
 
@@ -3308,7 +3308,7 @@ int verbose_open(void)
 
     verbose_fd = os_fopen((char *)p_vfile, "a");
     if (verbose_fd == NULL) {
-      EMSG2(_(e_notopen), p_vfile);
+      semsg(_(e_notopen), p_vfile);
       return FAIL;
     }
   }

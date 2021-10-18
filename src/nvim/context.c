@@ -316,7 +316,7 @@ static inline msgpack_sbuffer array_to_sbuf(Array array)
   object_to_vim(ARRAY_OBJ(array), &list_tv, &err);
 
   if (!encode_vim_list_to_buf(list_tv.vval.v_list, &sbuf.size, &sbuf.data)) {
-    EMSG(_("E474: Failed to convert list to msgpack string buffer"));
+    emsg(_("E474: Failed to convert list to msgpack string buffer"));
   }
   sbuf.alloc = sbuf.size;
 

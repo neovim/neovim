@@ -1628,18 +1628,18 @@ void putdigraph(char_u *str)
     char2 = *str++;
 
     if (char2 == 0) {
-      EMSG(_(e_invarg));
+      emsg(_(e_invarg));
       return;
     }
 
     if ((char1 == ESC) || (char2 == ESC)) {
-      EMSG(_("E104: Escape not allowed in digraph"));
+      emsg(_("E104: Escape not allowed in digraph"));
       return;
     }
     str = skipwhite(str);
 
     if (!ascii_isdigit(*str)) {
-      EMSG(_(e_number_exp));
+      emsg(_(e_number_exp));
       return;
     }
     int n = getdigits_int(&str, true, 0);
@@ -1821,7 +1821,7 @@ typedef struct {
 /// @return NULL if OK, an error message for failure.  This only needs to be
 ///         used when setting the option, not later when the value has already
 ///         been checked.
-char_u *keymap_init(void)
+char *keymap_init(void)
 {
   curbuf->b_kmap_state &= ~KEYMAP_INIT;
 
@@ -1850,7 +1850,7 @@ char_u *keymap_init(void)
 
       if (source_runtime(buf, 0) == FAIL) {
         xfree(buf);
-        return (char_u *)N_("E544: Keymap file not found");
+        return N_("E544: Keymap file not found");
       }
     }
     xfree(buf);
@@ -1873,7 +1873,7 @@ void ex_loadkeymap(exarg_T *eap)
   char_u *save_cpo = p_cpo;
 
   if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
-    EMSG(_("E105: Using :loadkeymap not in a sourced file"));
+    emsg(_("E105: Using :loadkeymap not in a sourced file"));
     return;
   }
 
@@ -1908,7 +1908,7 @@ void ex_loadkeymap(exarg_T *eap)
           || (*kp->from == NUL)
           || (*kp->to == NUL)) {
         if (*kp->to == NUL) {
-          EMSG(_("E791: Empty keymap entry"));
+          emsg(_("E791: Empty keymap entry"));
         }
         xfree(kp->from);
         xfree(kp->to);

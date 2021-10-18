@@ -633,7 +633,7 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   // Don't even try when 'modifiable' is off.
   if (!MODIFIABLE(curbuf)) {
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     return;
   }
 
@@ -1009,7 +1009,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
 
   if (regname == '@') {                 // repeat previous one
     if (execreg_lastc == NUL) {
-      EMSG(_("E748: No previously used register"));
+      emsg(_("E748: No previously used register"));
       return FAIL;
     }
     regname = execreg_lastc;
@@ -1027,7 +1027,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
 
   if (regname == ':') {                 // use last command line
     if (last_cmdline == NULL) {
-      EMSG(_(e_nolastcmd));
+      emsg(_(e_nolastcmd));
       return FAIL;
     }
     // don't keep the cmdline containing @:
@@ -1057,7 +1057,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
   } else if (regname == '.') {        // use last inserted text
     p = get_last_insert_save();
     if (p == NULL) {
-      EMSG(_(e_noinstext));
+      emsg(_(e_noinstext));
       return FAIL;
     }
     retval = put_in_typebuf(p, false, colon, silent);
@@ -1282,14 +1282,14 @@ bool get_spec_reg(int regname, char_u **argp, bool *allocated, bool errmsg)
 
   case ':':                     // last command line
     if (last_cmdline == NULL && errmsg) {
-      EMSG(_(e_nolastcmd));
+      emsg(_(e_nolastcmd));
     }
     *argp = last_cmdline;
     return true;
 
   case '/':                     // last search-pattern
     if (last_search_pat() == NULL && errmsg) {
-      EMSG(_(e_noprevre));
+      emsg(_(e_noprevre));
     }
     *argp = last_search_pat();
     return true;
@@ -1298,7 +1298,7 @@ bool get_spec_reg(int regname, char_u **argp, bool *allocated, bool errmsg)
     *argp = get_last_insert_save();
     *allocated = true;
     if (*argp == NULL && errmsg) {
-      EMSG(_(e_noinstext));
+      emsg(_(e_noinstext));
     }
     return true;
 
@@ -1415,7 +1415,7 @@ int op_delete(oparg_T *oap)
   }
 
   if (!MODIFIABLE(curbuf)) {
-    EMSG(_(e_modifiable));
+    emsg(_(e_modifiable));
     return FAIL;
   }
 
@@ -3075,7 +3075,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (y_size == 0 || y_array == NULL) {
-    EMSG2(_("E353: Nothing in register %s"),
+    semsg(_("E353: Nothing in register %s"),
           regname == 0 ? (char_u *)"\"" : transchar(regname));
     goto end;
   }
@@ -5383,7 +5383,7 @@ void write_reg_contents_lst(int name, char_u **strings, bool must_append, Motion
     if (strings[0] == NULL) {
       s = (char_u *)"";
     } else if (strings[1] != NULL) {
-      EMSG(_("E883: search pattern and expression register may not "
+      emsg(_("E883: search pattern and expression register may not "
              "contain two or more lines"));
       return;
     }
@@ -5445,7 +5445,7 @@ void write_reg_contents_ex(int name, const char_u *str, ssize_t len, bool must_a
 
       buf = buflist_findnr(num);
       if (buf == NULL) {
-        EMSGN(_(e_nobufnr), (long)num);
+        semsg(_(e_nobufnr), (int64_t)num);
       }
     } else {
       buf = buflist_findnr(buflist_findpat(str, str + STRLEN(str),
@@ -6185,7 +6185,7 @@ err:
   reg->additional_data = NULL;
   reg->timestamp = 0;
   if (errmsg) {
-    EMSG("clipboard: provider returned invalid data");
+    emsg("clipboard: provider returned invalid data");
   }
   *target = reg;
   return false;

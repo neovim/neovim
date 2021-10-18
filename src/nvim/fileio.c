@@ -465,7 +465,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
                 && (old_b_ffname != curbuf->b_ffname))
             || (using_b_fname
                 && (old_b_fname != curbuf->b_fname))) {
-          EMSG(_(e_auchangedbuf));
+          emsg(_(e_auchangedbuf));
           return FAIL;
         }
       }
@@ -533,7 +533,7 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
         && (curbuf != old_curbuf
             || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
             || (using_b_fname && (old_b_fname != curbuf->b_fname)))) {
-      EMSG(_(e_auchangedbuf));
+      emsg(_(e_auchangedbuf));
       if (!read_buffer) {
         close(fd);
       }
@@ -643,9 +643,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
       --no_wait_return;
       msg_scroll = msg_save;
       if (fd < 0) {
-        EMSG(_("E200: *ReadPre autocommands made the file unreadable"));
+        emsg(_("E200: *ReadPre autocommands made the file unreadable"));
       } else {
-        EMSG(_("E201: *ReadPre autocommands must not change current buffer"));
+        emsg(_("E201: *ReadPre autocommands must not change current buffer"));
       }
       curbuf->b_p_ro = TRUE;            // must use "w!" now
       return FAIL;
@@ -862,7 +862,7 @@ retry:
           advance_fenc = true;
           if (fd < 0) {
             // Re-opening the original file failed!
-            EMSG(_("E202: Conversion made file unreadable!"));
+            emsg(_("E202: Conversion made file unreadable!"));
             error = true;
             goto failed;
           }
@@ -2255,7 +2255,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
   if (buf->b_ml.ml_mfp == NULL) {
     /* This can happen during startup when there is a stray "w" in the
      * vimrc file. */
-    EMSG(_(e_emptybuf));
+    emsg(_(e_emptybuf));
     return FAIL;
   }
 
@@ -2269,7 +2269,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
 
   // Avoid a crash for a long name.
   if (STRLEN(fname) >= MAXPATHL) {
-    EMSG(_(e_longname));
+    emsg(_(e_longname));
     return FAIL;
   }
 
@@ -2431,7 +2431,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
       --no_wait_return;
       msg_scroll = msg_save;
       if (nofile_err) {
-        EMSG(_("E676: No matching autocommands for acwrite buffer"));
+        emsg(_("E676: No matching autocommands for acwrite buffer"));
       }
 
       if (nofile_err
@@ -2464,7 +2464,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
         return OK;
       }
       if (!aborting()) {
-        EMSG(_("E203: Autocommands deleted or unloaded buffer to be written"));
+        emsg(_("E203: Autocommands deleted or unloaded buffer to be written"));
       }
       return FAIL;
     }
@@ -2485,7 +2485,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
         if (end < start) {
           --no_wait_return;
           msg_scroll = msg_save;
-          EMSG(_("E204: Autocommand changed number of lines in unexpected way"));
+          emsg(_("E204: Autocommand changed number of lines in unexpected way"));
           return FAIL;
         }
       }
@@ -2770,7 +2770,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start, linenr_
           int ret;
           char *failed_dir;
           if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
-            EMSG3(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+            semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
                   failed_dir, os_strerror(ret));
             xfree(failed_dir);
           }
@@ -2934,7 +2934,7 @@ nobackup:
           int ret;
           char *failed_dir;
           if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
-            EMSG3(_("E303: Unable to create directory \"%s\" for backup file: %s"),
+            semsg(_("E303: Unable to create directory \"%s\" for backup file: %s"),
                   failed_dir, os_strerror(ret));
             xfree(failed_dir);
           }
@@ -3581,7 +3581,7 @@ restore_backup:
        * the current backup file becomes the original file
        */
       if (org == NULL) {
-        EMSG(_("E205: Patchmode: can't save original file"));
+        emsg(_("E205: Patchmode: can't save original file"));
       } else if (!os_path_exists((char_u *)org)) {
         vim_rename(backup, (char_u *)org);
         XFREE_CLEAR(backup);                   // don't delete the file
@@ -3603,7 +3603,7 @@ restore_backup:
           || (empty_fd = os_open(org,
                                  O_CREAT | O_EXCL | O_NOFOLLOW,
                                  perm < 0 ? 0666 : (perm & 0777))) < 0) {
-        EMSG(_("E206: patchmode: can't touch empty original file"));
+        emsg(_("E206: patchmode: can't touch empty original file"));
       } else {
         close(empty_fd);
       }
@@ -3620,7 +3620,7 @@ restore_backup:
   if (!p_bk && backup != NULL
       && !write_info.bw_conv_error
       && os_remove((char *)backup) != 0) {
-    EMSG(_("E207: Can't delete backup file"));
+    emsg(_("E207: Can't delete backup file"));
   }
 
   goto nofail;
@@ -3660,14 +3660,14 @@ nofail:
 #endif
     if (errnum != NULL) {
       if (errmsgarg != 0) {
-        emsgf("%s: %s%s: %s", errnum, IObuff, errmsg, os_strerror(errmsgarg));
+        semsg("%s: %s%s: %s", errnum, IObuff, errmsg, os_strerror(errmsgarg));
       } else {
-        emsgf("%s: %s%s", errnum, IObuff, errmsg);
+        semsg("%s: %s%s", errnum, IObuff, errmsg);
       }
     } else if (errmsgarg != 0) {
-      emsgf(errmsg, os_strerror(errmsgarg));
+      semsg(errmsg, os_strerror(errmsgarg));
     } else {
-      EMSG(errmsg);
+      emsg(errmsg);
     }
     if (errmsg_allocated) {
       xfree(errmsg);
@@ -3761,7 +3761,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
   }
   if (curbuf != buf) {
     // We are in another buffer now, don't do the renaming.
-    EMSG(_(e_auchangedbuf));
+    emsg(_(e_auchangedbuf));
     return FAIL;
   }
 
@@ -4775,7 +4775,7 @@ int vim_rename(const char_u *from, const char_u *to)
   mch_free_acl(acl);
 #endif
   if (errmsg != NULL) {
-    EMSG2(errmsg, to);
+    semsg(errmsg, to);
     return -1;
   }
   os_remove((char *)from);
@@ -4981,7 +4981,7 @@ int buf_check_timestamp(buf_T *buf)
       busy = false;
       if (n) {
         if (!bufref_valid(&bufref)) {
-          EMSG(_("E246: FileChangedShell autocommand deleted buffer"));
+          emsg(_("E246: FileChangedShell autocommand deleted buffer"));
         }
         s = get_vim_var_str(VV_FCS_CHOICE);
         if (STRCMP(s, "reload") == 0 && *reason != 'd') {
@@ -5057,7 +5057,7 @@ int buf_check_timestamp(buf_T *buf)
         xstrlcat(tbuf, "; ", tbuf_len - 1);
         xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
-      EMSG(tbuf);
+      emsg(tbuf);
       retval = 2;
     } else {
       if (!autocmd_busy) {
@@ -5162,7 +5162,7 @@ void buf_reload(buf_T *buf, int orig_mode)
     }
     if (savebuf == NULL || saved == FAIL || buf != curbuf
         || move_lines(buf, savebuf) == FAIL) {
-      EMSG2(_("E462: Could not prepare for reloading \"%s\""),
+      semsg(_("E462: Could not prepare for reloading \"%s\""),
             buf->b_fname);
       saved = FAIL;
     }
@@ -5174,7 +5174,7 @@ void buf_reload(buf_T *buf, int orig_mode)
     if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
                  (linenr_T)MAXLNUM, &ea, flags) != OK) {
       if (!aborting()) {
-        EMSG2(_("E321: Could not reload \"%s\""), buf->b_fname);
+        semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
       }
       if (savebuf != NULL && bufref_valid(&bufref) && buf == curbuf) {
         // Put the text back from the save buffer.  First
@@ -5709,9 +5709,9 @@ char_u *file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allo
   reg_pat[i] = NUL;
   if (nested != 0) {
     if (nested < 0) {
-      EMSG(_("E219: Missing {."));
+      emsg(_("E219: Missing {."));
     } else {
-      EMSG(_("E220: Missing }."));
+      emsg(_("E220: Missing }."));
     }
     XFREE_CLEAR(reg_pat);
   }
