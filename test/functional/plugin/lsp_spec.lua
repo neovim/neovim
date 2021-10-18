@@ -1164,10 +1164,11 @@ describe('LSP', function()
         eq({ 2, 6 }, funcs.nvim_win_get_cursor(0))
       end)
 
-      it('fix the cursor to the valid column if the content was removed', function()
+      it('fix the cursor to the valid col if the content was removed', function()
         funcs.nvim_win_set_cursor(0, { 2, 6 })
         local edits = {
-          make_edit(1, 0, 1, 19, '')
+          make_edit(1, 0, 1, 6, ''),
+          make_edit(1, 6, 1, 19, '')
         }
         exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
         eq({
@@ -1178,6 +1179,19 @@ describe('LSP', function()
           'å å ɧ 汉语 ↥ 🤦 🦄';
         }, buf_lines(1))
         eq({ 2, 0 }, funcs.nvim_win_get_cursor(0))
+      end)
+
+      it('fix the cursor to the valid row if the content was removed', function()
+        funcs.nvim_win_set_cursor(0, { 2, 6 })
+        local edits = {
+          make_edit(1, 0, 1, 6, ''),
+          make_edit(0, 18, 5, 0, '')
+        }
+        exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1)
+        eq({
+          'First line of text';
+        }, buf_lines(1))
+        eq({ 1, 6 }, funcs.nvim_win_get_cursor(0))
       end)
 
       it('fix the cursor row', function()
