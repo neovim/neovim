@@ -170,17 +170,19 @@ jobs:
           TAG_NAME=${{ github.ref }}
           echo "TAG_NAME=${TAG_NAME#refs/tags/}" >> $GITHUB_ENV
       - if: env.TAG_NAME == 'nightly'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           (echo 'SUBJECT=Nvim development (prerelease) build';
            echo 'PRERELEASE=--prerelease') >> $GITHUB_ENV
+          gh release delete nightly --yes
       - if: env.TAG_NAME != 'nightly'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           (echo 'SUBJECT=Nvim release build';
            echo 'PRERELEASE=') >> $GITHUB_ENV
-      - if: env.TAG_NAME == 'nightly'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release delete nightly --yes
+          gh release delete stable --yes
       # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
       # containing folder from the output.
       - name: Generate Linux64 SHA256 checksums
@@ -220,3 +222,6 @@ jobs:
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
           gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win32/* nvim-win64/*
+          if [ "$TAG_NAME" != "nightly" ]; then
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win32/* nvim-win64/*
+          fi
