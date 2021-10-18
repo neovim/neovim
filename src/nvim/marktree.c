@@ -467,7 +467,7 @@ static mtnode_t *merge_node(MarkTree *b, mtnode_t *p, int i)
     unrelative(x->key[x->n].pos, &x->key[x->n+1+k].pos);
   }
   if (x->level) {
-    memmove(&x->ptr[x->n+1], y->ptr, (size_t)(y->n + 1) * sizeof(mtnode_t *));
+    memmove(&x->ptr[x->n+1], y->ptr, ((size_t)y->n + 1) * sizeof(mtnode_t *));
     for (int k = 0; k < y->n+1; k++) {
       x->ptr[x->n+k+1]->parent = x;
     }
@@ -489,7 +489,7 @@ static void pivot_right(MarkTree *b, mtnode_t *p, int i)
   mtnode_t *x = p->ptr[i], *y = p->ptr[i+1];
   memmove(&y->key[1], y->key, (size_t)y->n * sizeof(mtkey_t));
   if (y->level) {
-    memmove(&y->ptr[1], y->ptr, (size_t)(y->n + 1) * sizeof(mtnode_t *));
+    memmove(&y->ptr[1], y->ptr, ((size_t)y->n + 1) * sizeof(mtnode_t *));
   }
   y->key[0] = p->key[i];
   refkey(b, y, 0);
