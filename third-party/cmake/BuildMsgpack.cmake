@@ -1,5 +1,3 @@
-include(CMakeParseArguments)
-
 # BuildMsgpack(CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build msgpack, wraps ExternalProject_Add.
 # Failing to pass a command argument will result in no command being run

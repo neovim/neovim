@@ -1,6 +1,3 @@
-# Download and install binary dependencies for windows
-include(CMakeParseArguments)
-
 # This is similar to the build recipes, but instead downloads a third party
 # binary and installs it under the DEPS_PREFIX.
 # The INSTALL_COMMAND is executed in the folder where downloaded files are
