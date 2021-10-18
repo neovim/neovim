@@ -211,9 +211,14 @@ function M.on_publish_diagnostics(_, result, ctx, config)
         end
       end
     end
+
+    -- Persist configuration to ensure buffer reloads use the same
+    -- configuration. To make lsp.with configuration work (See :help
+    -- lsp-handler-configuration)
+    vim.diagnostic.config(config, namespace)
   end
 
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), config)
+  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
 
   -- Keep old autocmd for back compat. This should eventually be removed.
   vim.api.nvim_command("doautocmd <nomodeline> User LspDiagnosticsChanged")
