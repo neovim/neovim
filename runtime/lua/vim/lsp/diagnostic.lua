@@ -102,7 +102,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       end_lnum = _end.line,
       end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
       severity = severity_lsp_to_vim(diagnostic.severity),
-      message = diagnostic.message,
+      text = diagnostic.message,
       source = diagnostic.source,
       user_data = {
         lsp = {
@@ -132,7 +132,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
         },
       },
       severity = severity_vim_to_lsp(diagnostic.severity),
-      message = diagnostic.message,
+      message = diagnostic.text,
       source = diagnostic.source,
     }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
   end, diagnostics)

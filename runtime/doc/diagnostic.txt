@@ -46,7 +46,7 @@ A diagnostic is a Lua table with the following keys:
 	col: The starting column of the diagnostic
 	end_col: The final column of the diagnostic
 	severity: The severity of the diagnostic |vim.diagnostic.severity|
-	message: The diagnostic text
+	text: The diagnostic text
 	source: The source of the diagnostic
 
 Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
@@ -59,7 +59,7 @@ The "severity" key in a diagnostic is one of the values defined in
 	vim.diagnostic.severity.ERROR
 	vim.diagnostic.severity.WARN
 	vim.diagnostic.severity.INFO
-	vim.diagnostic.severity.HINT
+	vim.diagnostic.severity.NOTE
 
 Functions that take a severity as an optional parameter (e.g.
 |vim.diagnostic.get()|) accept one of two forms:
@@ -105,8 +105,8 @@ DiagnosticInfo
   Used as the base highlight group.
   Other Diagnostic highlights link to this by default (except Underline)
 
-							*hl-DiagnosticHint*
-DiagnosticHint
+							*hl-DiagnosticNote*
+DiagnosticNote
   Used as the base highlight group.
   Other Diagnostic highlights link to this by default (except Underline)
 
@@ -122,9 +122,9 @@ DiagnosticVirtualTextWarn
 DiagnosticVirtualTextInfo
   Used for "Info" diagnostic virtual text.
 
-						*hl-DiagnosticVirtualTextHint*
-DiagnosticVirtualTextHint
-  Used for "Hint" diagnostic virtual text.
+						*hl-DiagnosticVirtualTextNote*
+DiagnosticVirtualTextNote
+  Used for "Note" diagnostic virtual text.
 
 						*hl-DiagnosticUnderlineError*
 DiagnosticUnderlineError
@@ -138,9 +138,9 @@ DiagnosticUnderlineWarn
 DiagnosticUnderlineInfo
   Used to underline "Info" diagnostics.
 
-						*hl-DiagnosticUnderlineHint*
-DiagnosticUnderlineHint
-  Used to underline "Hint" diagnostics.
+						*hl-DiagnosticUnderlineNote*
+DiagnosticUnderlineNote
+  Used to underline "Note" diagnostics.
 
 						*hl-DiagnosticFloatingError*
 DiagnosticFloatingError
@@ -155,9 +155,9 @@ DiagnosticFloatingWarn
 DiagnosticFloatingInfo
   Used to color "Info" diagnostic messages in diagnostics float.
 
-						*hl-DiagnosticFloatingHint*
-DiagnosticFloatingHint
-  Used to color "Hint" diagnostic messages in diagnostics float.
+						*hl-DiagnosticFloatingNote*
+DiagnosticFloatingNote
+  Used to color "Note" diagnostic messages in diagnostics float.
 
 						*hl-DiagnosticSignError*
 DiagnosticSignError
@@ -171,9 +171,9 @@ DiagnosticSignWarn
 DiagnosticSignInfo
   Used for "Info" signs in sign column.
 
-						*hl-DiagnosticSignHint*
-DiagnosticSignHint
-  Used for "Hint" signs in sign column.
+						*hl-DiagnosticSignNote*
+DiagnosticSignNote
+  Used for "Note" signs in sign column.
 
 ==============================================================================
 SIGNS							*diagnostic-signs*
@@ -185,7 +185,7 @@ can be customized using the following: >
 	sign define DiagnosticSignError text=E texthl=DiagnosticSignError linehl= numhl=
 	sign define DiagnosticSignWarn text=W texthl=DiagnosticSignWarn linehl= numhl=
 	sign define DiagnosticSignInfo text=I texthl=DiagnosticSignInfo linehl= numhl=
-	sign define DiagnosticSignHint text=H texthl=DiagnosticSignHint linehl= numhl=
+	sign define DiagnosticSignNote text=H texthl=DiagnosticSignNote linehl= numhl=
 
 When the "severity_sort" option is set (see |vim.diagnostic.config()|) the
 priority of each sign depends on the severity of the associated diagnostic.
@@ -306,9 +306,9 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
                                        function(diagnostic)
                                          if diagnostic.severity == vim.diagnostic.severity.ERROR then
-                                           return string.format("E: %s", diagnostic.message)
+                                           return string.format("E: %s", diagnostic.text)
                                          end
-                                         return diagnostic.message
+                                         return diagnostic.text
                                        end
 <
 
@@ -486,7 +486,7 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
 
                  local s = "WARNING filename:27:3: Variable 'foo' does not exist"
                  local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
-                 local groups = {"severity", "lnum", "col", "message"}
+                 local groups = {"severity", "lnum", "col", "text"}
                  vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
 <
 
@@ -612,7 +612,7 @@ show_position_diagnostics({opts}, {bufnr}, {position})
                                 • show_header: (boolean, default true) Show
                                   "Diagnostics:" header
                                 • source: (string) Include the diagnostic
-                                  source in the message. One of "always" or
+                                  source in the text. One of "always" or
                                   "if_many".
                                 • format: (function) A function that takes a
                                   diagnostic as input and returns a string.

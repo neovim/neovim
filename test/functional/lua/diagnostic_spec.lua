@@ -20,7 +20,7 @@ describe('vim.diagnostic', function()
           col = y1,
           end_lnum = x2,
           end_col = y2,
-          message = msg,
+          text = msg,
           severity = severity,
           source = source,
         }
@@ -38,8 +38,8 @@ describe('vim.diagnostic', function()
         return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.INFO, source)
       end
 
-      function make_hint(msg, x1, y1, x2, y2, source)
-        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.HINT, source)
+      function make_note(msg, x1, y1, x2, y2, source)
+        return make_diagnostic(msg, x1, y1, x2, y2, vim.diagnostic.severity.NOTE, source)
       end
 
       function count_diagnostics(bufnr, severity, namespace)
@@ -71,22 +71,22 @@ describe('vim.diagnostic', function()
     eq({
       'DiagnosticError',
       'DiagnosticFloatingError',
-      'DiagnosticFloatingHint',
       'DiagnosticFloatingInfo',
+      'DiagnosticFloatingNote',
       'DiagnosticFloatingWarn',
-      'DiagnosticHint',
       'DiagnosticInfo',
+      'DiagnosticNote',
       'DiagnosticSignError',
-      'DiagnosticSignHint',
       'DiagnosticSignInfo',
+      'DiagnosticSignNote',
       'DiagnosticSignWarn',
       'DiagnosticUnderlineError',
-      'DiagnosticUnderlineHint',
       'DiagnosticUnderlineInfo',
+      'DiagnosticUnderlineNote',
       'DiagnosticUnderlineWarn',
       'DiagnosticVirtualTextError',
-      'DiagnosticVirtualTextHint',
       'DiagnosticVirtualTextInfo',
+      'DiagnosticVirtualTextNote',
       'DiagnosticVirtualTextWarn',
       'DiagnosticWarn',
     }, exec_lua([[return vim.fn.getcompletion('Diagnostic', 'highlight')]]))
@@ -105,7 +105,7 @@ describe('vim.diagnostic', function()
     ]]
     eq(3, #result)
     eq(2, exec_lua([[return #vim.tbl_filter(function(d) return d.bufnr == 1 end, ...)]], result))
-    eq('Diagnostic #1', result[1].message)
+    eq('Diagnostic #1', result[1].text)
   end)
 
   it('saves and count a single error', function()
@@ -442,7 +442,7 @@ describe('vim.diagnostic', function()
           make_error("Error 1", 1, 1, 1, 5),
           make_warning("Warning on Server 1", 1, 1, 2, 5),
           make_info("Ignored information", 1, 1, 2, 5),
-          make_hint("Here's a hint", 1, 1, 2, 5),
+          make_note("Here's a note", 1, 1, 2, 5),
         })
 
         return {
@@ -593,7 +593,7 @@ describe('vim.diagnostic', function()
 
       -- But now we don't filter it
       eq(1, get_extmark_count_with_severity("WARN"))
-      eq(1, get_extmark_count_with_severity("HINT"))
+      eq(1, get_extmark_count_with_severity("NOTE"))
     end)
 
     it('allows sorting by severity', function()
@@ -712,9 +712,9 @@ describe('vim.diagnostic', function()
             prefix = '',
             format = function(diagnostic)
               if diagnostic.severity == vim.diagnostic.severity.ERROR then
-                return string.format("🔥 %s", diagnostic.message)
+                return string.format("🔥 %s", diagnostic.text)
               end
-              return string.format("👀 %s", diagnostic.message)
+              return string.format("👀 %s", diagnostic.text)
             end,
           }
         })
@@ -740,9 +740,9 @@ describe('vim.diagnostic', function()
             source = 'always',
             format = function(diagnostic)
               if diagnostic.severity == vim.diagnostic.severity.ERROR then
-                return string.format("🔥 %s", diagnostic.message)
+                return string.format("🔥 %s", diagnostic.text)
               end
-              return string.format("👀 %s", diagnostic.message)
+              return string.format("👀 %s", diagnostic.text)
             end,
           }
         })
@@ -1173,10 +1173,10 @@ describe('vim.diagnostic', function()
         col = 83,
         end_lnum = 18,
         end_col = 83,
-        message = "Two plus two equals five",
+        text = "Two plus two equals five",
       }
       eq(diagnostic, exec_lua([[
-        return vim.diagnostic.match(..., "^(%w+): [^:]+:(%d+):(%d+):(.+)$", {"severity", "lnum", "col", "message"})
+        return vim.diagnostic.match(..., "^(%w+): [^:]+:(%d+):(%d+):(.+)$", {"severity", "lnum", "col", "text"})
       ]], msg))
     end)
 
@@ -1195,10 +1195,10 @@ describe('vim.diagnostic', function()
         col = 0,
         end_lnum = 0,
         end_col = 0,
-        message = "Happy families are all alike",
+        text = "Happy families are all alike",
       }
       eq(diagnostic, exec_lua([[
-        return vim.diagnostic.match(..., "^[^:]+:(%d+):(.+)$", {"lnum", "message"}, nil, {severity = vim.diagnostic.severity.INFO})
+        return vim.diagnostic.match(..., "^[^:]+:(%d+):(.+)$", {"lnum", "text"}, nil, {severity = vim.diagnostic.severity.INFO})
       ]], msg))
     end)
 
@@ -1210,10 +1210,10 @@ describe('vim.diagnostic', function()
         col = 0,
         end_lnum = 45,
         end_col = 0,
-        message = "Et tu, Brute?",
+        text = "Et tu, Brute?",
       }
       eq(diagnostic, exec_lua([[
-        return vim.diagnostic.match(..., "^(%d+):(%w+):(.+)$", {"lnum", "severity", "message"}, {FATAL = vim.diagnostic.severity.ERROR})
+        return vim.diagnostic.match(..., "^(%d+):(%w+):(.+)$", {"lnum", "severity", "text"}, {FATAL = vim.diagnostic.severity.ERROR})
       ]], msg))
     end)
   end)

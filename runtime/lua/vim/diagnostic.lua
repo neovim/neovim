@@ -4,7 +4,7 @@ M.severity = {
   ERROR = 1,
   WARN = 2,
   INFO = 3,
-  HINT = 4,
+  NOTE = 4,
 }
 
 vim.tbl_add_reverse_lookup(M.severity)
@@ -13,7 +13,7 @@ vim.tbl_add_reverse_lookup(M.severity)
 M.severity.E = M.severity.ERROR
 M.severity.W = M.severity.WARN
 M.severity.I = M.severity.INFO
-M.severity.N = M.severity.HINT
+M.severity.N = M.severity.NOTE
 
 local global_diagnostic_options = {
   signs = true,
@@ -44,7 +44,7 @@ local function filter_by_severity(severity, diagnostics)
     return vim.tbl_filter(function(t) return t.severity == severity end, diagnostics)
   end
 
-  local min_severity = to_severity(severity.min) or M.severity.HINT
+  local min_severity = to_severity(severity.min) or M.severity.NOTE
   local max_severity = to_severity(severity.max) or M.severity.ERROR
 
   return vim.tbl_filter(function(t) return t.severity <= min_severity and t.severity >= max_severity end, diagnostics)
@@ -74,7 +74,7 @@ local function prefix_source(source, diagnostics)
     end
 
     local t = vim.deepcopy(d)
-    t.message = string.format("%s: %s", d.source, d.message)
+    t.text = string.format("%s: %s", d.source, d.text)
     return t
   end, diagnostics)
 end
@@ -88,7 +88,7 @@ local function reformat_diagnostics(format, diagnostics)
 
   local formatted = vim.deepcopy(diagnostics)
   for _, diagnostic in ipairs(formatted) do
-    diagnostic.message = format(diagnostic)
+    diagnostic.text = format(diagnostic)
   end
   return formatted
 end
@@ -168,7 +168,7 @@ local diagnostic_severities = {
   [M.severity.ERROR] = { ctermfg = 1, guifg = "Red" };
   [M.severity.WARN] = { ctermfg = 3, guifg = "Orange" };
   [M.severity.INFO] = { ctermfg = 4, guifg = "LightBlue" };
-  [M.severity.HINT] = { ctermfg = 7, guifg = "LightGrey" };
+  [M.severity.NOTE] = { ctermfg = 7, guifg = "LightGrey" };
 }
 
 -- Make a map from DiagnosticSeverity -> Highlight Name
@@ -427,7 +427,7 @@ local function show_diagnostics(opts, diagnostics)
     local hiname = floating_highlight_map[diagnostic.severity]
     assert(hiname, 'unknown severity: ' .. tostring(diagnostic.severity))
 
-    local message_lines = vim.split(diagnostic.message, '\n', true)
+    local message_lines = vim.split(diagnostic.text, '\n', true)
     table.insert(lines, prefix..message_lines[1])
     table.insert(highlights, {#prefix, hiname})
     for j = 2, #message_lines do
@@ -592,9 +592,9 @@ end
 ---                       <pre>
 ---                       function(diagnostic)
 ---                         if diagnostic.severity == vim.diagnostic.severity.ERROR then
----                           return string.format("E: %s", diagnostic.message)
+---                           return string.format("E: %s", diagnostic.text)
 ---                         end
----                         return diagnostic.message
+---                         return diagnostic.text
 ---                       end
 ---                       </pre>
 ---       - signs: (default true) Use signs for diagnostics. Options:
@@ -877,7 +877,7 @@ function M._set_signs(namespace, bufnr, diagnostics, opts)
       end
     else
       get_priority = function(severity)
-        return priority + (vim.diagnostic.severity.HINT - severity)
+        return priority + (vim.diagnostic.severity.NOTE - severity)
       end
     end
   else
@@ -1013,11 +1013,11 @@ function M._get_virt_text_chunks(line_diags, opts)
 
   -- TODO(tjdevries): Allow different servers to be shown first somehow?
   -- TODO(tjdevries): Display server name associated with these?
-  if last.message then
+  if last.text then
     table.insert(
       virt_texts,
       {
-        string.format("%s %s", prefix, last.message:gsub("\r", ""):gsub("\n", "  ")),
+        string.format("%s %s", prefix, last.text:gsub("\r", ""):gsub("\n", "  ")),
         virtual_text_highlight_map[last.severity]
       }
     )
@@ -1152,7 +1152,7 @@ end
 ---            - severity: See |diagnostic-severity|.
 ---            - show_header: (boolean, default true) Show "Diagnostics:" header
 ---            - source: (string) Include the diagnostic source in
----                      the message. One of "always" or "if_many".
+---                      the text. One of "always" or "if_many".
 ---            - format: (function) A function that takes a diagnostic as input and returns a
 ---                      string. The return value is the text used to display the diagnostic.
 ---@param bufnr number|nil Buffer number. Defaults to the current buffer.
@@ -1310,7 +1310,7 @@ end
 --- <pre>
 --- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
 --- local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
---- local groups = {"severity", "lnum", "col", "message"}
+--- local groups = {"severity", "lnum", "col", "text"}
 --- vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
 --- </pre>
 ---
@@ -1363,7 +1363,7 @@ local errlist_type_map = {
   [M.severity.ERROR] = 'E',
   [M.severity.WARN] = 'W',
   [M.severity.INFO] = 'I',
-  [M.severity.HINT] = 'N',
+  [M.severity.NOTE] = 'N',
 }
 
 --- Convert a list of diagnostics to a list of quickfix items that can be
@@ -1382,7 +1382,7 @@ function M.toqflist(diagnostics)
       col = v.col and (v.col + 1) or nil,
       end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
       end_col = v.end_col and (v.end_col + 1) or nil,
-      text = v.message,
+      text = v.text,
       type = errlist_type_map[v.severity] or 'E',
     }
     table.insert(list, item)
@@ -1420,7 +1420,7 @@ function M.fromqflist(list)
         end_lnum = end_lnum,
         end_col = end_col,
         severity = severity,
-        message = item.text,
+        text = item.text,
       })
     end
   end
