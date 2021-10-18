@@ -91,16 +91,16 @@ function M.run()
     local option = options[1]
     execute_lens(option.lens, bufnr, option.client)
   else
-    local options_strings = {"Code lenses:"}
-    for i, option in ipairs(options) do
-       table.insert(options_strings, string.format('%d. %s', i, option.lens.command.title))
-    end
-    local choice = vim.fn.inputlist(options_strings)
-    if choice < 1 or choice > #options then
-      return
-    end
-    local option = options[choice]
-    execute_lens(option.lens, bufnr, option.client)
+    vim.ui.select(options, {
+      prompt = 'Code lenses:',
+      format_item = function(option)
+        return option.lens.command.title
+      end,
+    }, function(option)
+      if option then
+        execute_lens(option.lens, bufnr, option.client)
+      end
+    end)
   end
 end
 
