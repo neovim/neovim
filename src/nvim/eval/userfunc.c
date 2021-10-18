@@ -402,15 +402,15 @@ void emsg_funcname(char *ermsg, const char_u *name)
   }
 }
 
-/*
- * Allocate a variable for the result of a function.
- * Return OK or FAIL.
- */
-int get_func_tv(const char_u *name,     // name of the function
-                int len,                // length of "name" or -1 to use strlen()
-                typval_T *rettv, char_u **arg,           // argument, pointing to the '('
-                funcexe_T *funcexe      // various values
-                )
+/// Allocate a variable for the result of a function.
+///
+/// @param name  name of the function
+/// @param len  length of "name" or -1 to use strlen()
+/// @param arg  argument, pointing to the '('
+/// @param funcexe  various values
+///
+/// @return  OK or FAIL.
+int get_func_tv(const char_u *name, int len, typval_T *rettv, char_u **arg, funcexe_T *funcexe)
 {
   char_u *argp;
   int ret = OK;
@@ -1436,17 +1436,18 @@ static void argv_add_base(typval_T *const basetv, typval_T **const argvars, int 
 
 /// Call a function with its resolved parameters
 ///
+/// @param funcname  name of the function
+/// @param len  length of "name" or -1 to use strlen()
+/// @param rettv  [out] value goes here
+/// @param argcount_in  number of "argvars"
+/// @param argvars_in  vars for arguments, must have "argcount" PLUS ONE elements!
+/// @param funcexe  more arguments
+///
 /// @return FAIL if function cannot be called, else OK (even if an error
 ///         occurred while executing the function! Set `msg_list` to capture
 ///         the error, see do_cmdline()).
-int call_func(const char_u *funcname,         // name of the function
-              int len,                        // length of "name" or -1 to use strlen()
-              typval_T *rettv,                // [out] value goes here
-              int argcount_in,                // number of "argvars"
-              typval_T *argvars_in,           // vars for arguments, must have "argcount"
-                                              // PLUS ONE elements!
-              funcexe_T *funcexe              // more arguments
-              )
+int call_func(const char_u *funcname, int len, typval_T *rettv, int argcount_in,
+              typval_T *argvars_in, funcexe_T *funcexe)
   FUNC_ATTR_NONNULL_ARG(1, 3, 5, 6)
 {
   int ret = FAIL;
@@ -1690,11 +1691,12 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
 /// TFN_NO_DEREF:    do not dereference a Funcref
 /// Advances "pp" to just after the function name (if no error).
 ///
+/// @param skip  only find the end, don't evaluate
+/// @param fdp  return: info about dictionary used
+/// @param partial  return: partial of a FuncRef
+///
 /// @return the function name in allocated memory, or NULL for failure.
-char_u *trans_function_name(char_u **pp, bool skip,                     // only find the end, don't evaluate
-                            int flags, funcdict_T *fdp,               // return: info about dictionary used
-                            partial_T **partial            // return: partial of a FuncRef
-                            )
+char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, partial_T **partial)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *name = NULL;
