@@ -19,12 +19,12 @@ jobs:
       pull-requests: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
-    - uses: actions/checkout@v2.3.1
-    - run: gh pr checkout ${{ github.event.pull_request.number }}
-
       # Extract type and try to add it as a label
-    - run: gh pr edit --add-label "$(echo "${{ github.event.pull_request.title }}" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
+    - run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
 
       # Extract scope and try to add it as a label
-    - run: gh pr edit --add-label "$(echo "${{ github.event.pull_request.title }}" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
+    - run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
