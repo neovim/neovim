@@ -1331,11 +1331,12 @@ window the current directory is changed to the last specified local current
 directory.  If none was specified, the global or tab-local directory is used.
 
 When changing tabs the same behaviour applies.  If the current tab has no
-local working directory the global working directory is used.  When a |:cd|
-command is used, the current window and tab will lose their local current
-directories and will use the global current directory from now on.  When
-a |:tcd| command is used, only the current window will lose its local working
-directory.
+local working directory the global working directory is used.
+
+When a |:cd| command is used, the current window and tab will lose their local
+current directories and will use the global current directory from now on.
+When a |:tcd| command is used, only the current window will lose its local
+working directory.
 
 After using |:cd| the full path name will be used for reading and writing
 files.  On some networked file systems this may cause problems.  The result of

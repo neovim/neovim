@@ -2461,8 +2461,8 @@ globpath({path}, {expr} [, {nosuf} [, {list} [, {alllinks}]]])
 has({feature})			Number	|TRUE| if feature {feature} supported
 has_key({dict}, {key})		Number	|TRUE| if {dict} has entry {key}
 haslocaldir([{winnr} [, {tabnr}]])
-				Number	|TRUE| if current window executed |:lcd|
-					or |:tcd|
+				Number	|TRUE| if the window executed |:lcd| or
+					the tab executed |:tcd|
 hasmapto({what} [, {mode} [, {abbr}]])
 				Number	|TRUE| if mapping to {what} exists
 histadd({history}, {item})	String	add an item to a history
@@ -5012,6 +5012,7 @@ getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 		{winnr} can be the window number or the |window-ID|.
 		If both {winnr} and {tabnr} are -1 the global working
 		directory is returned.
+		Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 
 		Can also be used as a |method|: >
 			GetWinnr()->getcwd()
@@ -5774,8 +5775,9 @@ has_key({dict}, {key})					*has_key()*
 			mydict->has_key(key)
 
 haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
-		The result is a Number, which is 1 when the tabpage or window
-		has set a local path via |:tcd| or |:lcd|, otherwise 0.
+		The result is a Number, which is 1 when the window has set a
+		local path via |:lcd| or when {winnr} is -1 and the tabpage
+		has set a local path via |:tcd|, otherwise 0.
 
 		Tabs and windows are identified by their respective numbers,
 		0 means current tab or window. Missing argument implies 0.
@@ -5787,6 +5789,7 @@ haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 		With {winnr} and {tabnr} use the window in that tabpage.
 		{winnr} can be the window number or the |window-ID|.
 		If {winnr} is -1 it is ignored, only the tab is resolved.
+		Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 
 		Can also be used as a |method|: >
 			GetWinnr()->haslocaldir()
