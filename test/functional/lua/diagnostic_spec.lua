@@ -1047,7 +1047,7 @@ describe('vim.diagnostic', function()
         return lines
       ]])
 
-      -- With column position past the end of the line (#16062)
+      -- With column position past the end of the line. #16062
       eq({'1. Syntax error'}, exec_lua [[
         local first_line_len = #vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, 1, true)[1]
         local diagnostics = {
