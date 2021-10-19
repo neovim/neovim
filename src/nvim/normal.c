@@ -2167,6 +2167,7 @@ static void op_function(const oparg_T *oap)
   FUNC_ATTR_NONNULL_ALL
 {
   const TriState save_virtual_op = virtual_op;
+  const bool save_finish_op = finish_op;
 
   if (*p_opfunc == NUL) {
     EMSG(_("E774: 'operatorfunc' is empty"));
@@ -2193,9 +2194,13 @@ static void op_function(const oparg_T *oap)
     // function.
     virtual_op = kNone;
 
+    // Reset finish_op so that mode() returns the right value.
+    finish_op = false;
+
     (void)call_func_retnr(p_opfunc, 1, argv);
 
     virtual_op = save_virtual_op;
+    finish_op = save_finish_op;
   }
 }
 
