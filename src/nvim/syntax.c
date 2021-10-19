@@ -7728,7 +7728,7 @@ static int syn_add_group(char_u *name)
   char *const name_up = (char *)vim_strsave_up(name);
 
   // Append another syntax_highlight entry.
-  struct hl_group * hlgp = GA_APPEND_VIA_PTR(struct hl_group, &highlight_ga);
+  struct hl_group *hlgp = GA_APPEND_VIA_PTR(struct hl_group, &highlight_ga);
   memset(hlgp, 0, sizeof(*hlgp));
   hlgp->sg_name = name;
   hlgp->sg_rgb_bg = -1;

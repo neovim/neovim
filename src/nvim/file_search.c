@@ -642,8 +642,8 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (stackp->ffs_filearray == NULL
           && ff_check_visited(&search_ctx->ffsc_dir_visited_list
                               ->ffvl_visited_list,
-                              stackp->ffs_fix_path
-                              , stackp->ffs_wc_path
+                              stackp->ffs_fix_path,
+                              stackp->ffs_wc_path
                               ) == FAIL) {
 #ifdef FF_VERBOSE
         if (p_verbose >= 5) {
@@ -840,15 +840,15 @@ char_u *vim_findfile(void *search_ctx_arg)
                                == os_isdir(file_path)))))
 #ifndef FF_VERBOSE
                   && (ff_check_visited(&search_ctx->ffsc_visited_list->ffvl_visited_list,
-                                       file_path
-                                       , (char_u *)""
+                                       file_path,
+                                       (char_u *)""
                                        ) == OK)
 #endif
                   ) {
 #ifdef FF_VERBOSE
                 if (ff_check_visited(&search_ctx->ffsc_visited_list->ffvl_visited_list,
-                                     file_path
-                                     , (char_u *)""
+                                     file_path,
+                                     (char_u *)""
                                      ) == FAIL) {
                   if (p_verbose >= 5) {
                     verbose_enter_scroll();

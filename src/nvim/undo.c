@@ -1078,7 +1078,7 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
   return true;
 }
 
-static u_entry_T *unserialize_uep(bufinfo_T * bi, bool *error, const char *file_name)
+static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_name)
 {
   u_entry_T *uep = xmalloc(sizeof(u_entry_T));
   memset(uep, 0, sizeof(u_entry_T));

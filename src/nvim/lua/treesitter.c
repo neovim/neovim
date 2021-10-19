@@ -934,7 +934,7 @@ push:
               ts_tree_cursor_current_node(ud),
               lua_upvalueindex(2));  // [node]
 
-    const char * field = ts_tree_cursor_current_field_name(ud);
+    const char *field = ts_tree_cursor_current_field_name(ud);
 
     if (field != NULL) {
       lua_pushstring(L, ts_tree_cursor_current_field_name(ud));

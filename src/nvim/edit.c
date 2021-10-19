@@ -6216,8 +6216,8 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
     open_line(FORWARD, OPENLINE_DELSPACES + OPENLINE_MARKFIX
               + (fo_white_par ? OPENLINE_KEEPTRAIL : 0)
               + (do_comments ? OPENLINE_DO_COM : 0)
-              + ((flags & INSCHAR_COM_LIST) ? OPENLINE_COM_LIST : 0)
-              , ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent));
+              + ((flags & INSCHAR_COM_LIST) ? OPENLINE_COM_LIST : 0),
+              ((flags & INSCHAR_COM_LIST) ? second_indent : old_indent));
     if (!(flags & INSCHAR_COM_LIST)) {
       old_indent = 0;
     }

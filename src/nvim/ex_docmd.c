@@ -5697,7 +5697,7 @@ void ex_comclear(exarg_T *eap)
   uc_clear(&curbuf->b_ucmds);
 }
 
-static void free_ucmd(ucmd_T * cmd) {
+static void free_ucmd(ucmd_T *cmd) {
   xfree(cmd->uc_name);
   xfree(cmd->uc_rep);
   xfree(cmd->uc_compl_arg);
@@ -7501,8 +7501,8 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
                 // After a split we can use an existing buffer.
                 + (old_curwin != NULL ? ECMD_OLDBUF : 0)
                 + (eap->cmdidx == CMD_badd ? ECMD_ADDBUF : 0)
-                + (eap->cmdidx == CMD_balt ? ECMD_ALTBUF : 0)
-                , old_curwin == NULL ? curwin : NULL) == FAIL) {
+                + (eap->cmdidx == CMD_balt ? ECMD_ALTBUF : 0),
+                old_curwin == NULL ? curwin : NULL) == FAIL) {
       // Editing the file failed.  If the window was split, close it.
       if (old_curwin != NULL) {
         need_hide = (curbufIsChanged() && curbuf->b_nwindows <= 1);

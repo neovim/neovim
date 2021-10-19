@@ -344,7 +344,7 @@ void update_topline(win_T *wp)
 /*
  * Update win->w_topline to move the cursor onto the screen.
  */
-void update_topline_win(win_T * win)
+void update_topline_win(win_T *win)
 {
   win_T *save_curwin;
   switch_win(&save_curwin, NULL, win, NULL, true);

@@ -376,7 +376,7 @@ static void shift_block(oparg_T *oap, int amount)
      */
     total += bd.pre_whitesp;    // all virtual WS up to & incl a split TAB
     colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
-    char_u * old_textstart = bd.textstart;
+    char_u *old_textstart = bd.textstart;
     if (bd.startspaces) {
       if (utfc_ptr2len(bd.textstart) == 1) {
         bd.textstart++;
@@ -4324,8 +4324,8 @@ void format_lines(linenr_T line_count, int avoid_fex)
   } else {
     is_not_par = true;
   }
-  next_is_not_par = fmt_check_par(curwin->w_cursor.lnum
-                                  , &next_leader_len, &next_leader_flags, do_comments
+  next_is_not_par = fmt_check_par(curwin->w_cursor.lnum,
+                                  &next_leader_len, &next_leader_flags, do_comments
                                   );
   is_end_par = (is_not_par || next_is_not_par);
   if (!is_end_par && do_trail_white) {
@@ -4353,8 +4353,8 @@ void format_lines(linenr_T line_count, int avoid_fex)
       next_leader_len = 0;
       next_leader_flags = NULL;
     } else {
-      next_is_not_par = fmt_check_par(curwin->w_cursor.lnum + 1
-                                      , &next_leader_len, &next_leader_flags, do_comments
+      next_is_not_par = fmt_check_par(curwin->w_cursor.lnum + 1,
+                                      &next_leader_len, &next_leader_flags, do_comments
                                       );
       if (do_number_indent) {
         next_is_start_par =

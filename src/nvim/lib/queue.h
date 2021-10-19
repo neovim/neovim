@@ -1,5 +1,3 @@
-// uncrustify:off
-
 // Queue implemented by circularly-linked list.
 //
 // Adapted from libuv. Simpler and more efficient than klist.h for implementing
@@ -43,7 +41,7 @@ typedef struct _queue {
   while((q) != (h)) { \
     QUEUE *next = q->next; \
     code \
-    (q) = next; \
+      (q) = next; \
   }
 
 

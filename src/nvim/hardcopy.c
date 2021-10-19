@@ -2438,7 +2438,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
 static int prt_add_resource(struct prt_ps_resource_S *resource)
 {
-  FILE *       fd_resource;
+  FILE *fd_resource;
   char_u resource_buffer[512];
   size_t bytes_read;
 
@@ -2696,8 +2696,8 @@ int mch_print_begin(prt_settings_T *psettings)
     prt_dsc_resources(NULL, "encoding", buffer);
   }
   prt_dsc_requirements(prt_duplex, prt_tumble, prt_collate,
-                       psettings->do_syntax
-                       , prt_num_copies);
+                       psettings->do_syntax,
+                       prt_num_copies);
   prt_dsc_noarg("EndComments");
 
   /*

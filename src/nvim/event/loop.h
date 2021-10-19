@@ -8,7 +8,7 @@
 #include "nvim/lib/klist.h"
 #include "nvim/os/time.h"
 
-typedef void * WatcherPtr;
+typedef void *WatcherPtr;
 
 #define _noop(x)
 KLIST_INIT(WatcherPtr, WatcherPtr, _noop)

@@ -3154,8 +3154,8 @@ nobackup:
                            O_WRONLY |
                            (append ?
                             (forceit ? (O_APPEND | O_CREAT) : O_APPEND)
-                                     : (O_CREAT | O_TRUNC))
-                           , perm < 0 ? 0666 : (perm & 0777))) < 0) {
+                                     : (O_CREAT | O_TRUNC)),
+                           perm < 0 ? 0666 : (perm & 0777))) < 0) {
         // A forced write will try to create a new file if the old one
         // is still readonly. This may also happen when the directory
         // is read-only. In that case the mch_remove() will fail.
@@ -4684,7 +4684,7 @@ int vim_rename(const char_u *from, const char_u *to)
     }
     STRCPY(tempname, from);
     for (n = 123; n < 99999; n++) {
-      char * tail = (char *)path_tail(tempname);
+      char *tail = (char *)path_tail(tempname);
       snprintf(tail, (MAXPATHL + 1) - (tail - (char *)tempname - 1), "%d", n);
 
       if (!os_path_exists(tempname)) {

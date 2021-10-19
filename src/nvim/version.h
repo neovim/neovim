@@ -5,8 +5,8 @@
 #include "nvim/macros.h"
 
 // defined in version.c
-extern char * Version;
-extern char * longVersion;
+extern char *Version;
+extern char *longVersion;
 
 //
 // Vim version number, name, etc. Patchlevel is defined in version.c.

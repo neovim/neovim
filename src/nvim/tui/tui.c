@@ -178,7 +178,7 @@ UI *tui_start(void)
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
-static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index, char * buf, size_t len)
+static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index, char *buf, size_t len)
 {
   const char *str = unibi_get_str(data->ut, unibi_index);
   if (!str) {
@@ -1541,7 +1541,7 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
 {
   size_t max = unibi_count_ext_str(ut);
   for (size_t i = 0; i < max; i++) {
-    const char * n = unibi_get_ext_str_name(ut, i);
+    const char *n = unibi_get_ext_str_name(ut, i);
     if (n && 0 == strcmp(n, name)) {
       return (int)i;
     }
@@ -1553,7 +1553,7 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 {
   size_t max = unibi_count_ext_bool(ut);
   for (size_t i = 0; i < max; i++) {
-    const char * n = unibi_get_ext_bool_name(ut, i);
+    const char *n = unibi_get_ext_bool_name(ut, i);
     if (n && 0 == strcmp(n, name)) {
       return (int)i;
     }
