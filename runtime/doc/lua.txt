@@ -1518,7 +1518,7 @@ tbl_flatten({t})                                           *vim.tbl_flatten()*
                     Flattened copy of the given list-like table.
 
                 See also: ~
-                    Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua
+                    From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_isempty({t})                                           *vim.tbl_isempty()*
                 Checks if a table is empty.
@@ -1554,7 +1554,7 @@ tbl_keys({t})                                                 *vim.tbl_keys()*
                     list of keys
 
                 See also: ~
-                    Fromhttps://github.com/premake/premake-core/blob/master/src/base/table.lua
+                    From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 tbl_map({func}, {t})                                           *vim.tbl_map()*
                 Apply a function to all values of a table.
