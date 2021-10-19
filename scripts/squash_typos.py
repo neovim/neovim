@@ -211,11 +211,9 @@ def main():
     rebase_onto_master()
     force_push(pr_branch)
 
-    message_body_before = "\n".join(
-        subprocess.check_output(
-            ["git", "log", "--format=%B", "-n1", pr_branch], text=True
-        ).splitlines()[2:]
-    )
+    message_body_before = subprocess.check_output(
+        ["git", "log", "--format=%B", "-n1", pr_branch], text=True
+    ).split("\n\n")[-1]
 
     rebase_onto_pr()
     force_push(pr_branch)
