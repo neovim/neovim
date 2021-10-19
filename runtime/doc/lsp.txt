@@ -670,7 +670,7 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
                     {base}       If findstart=0, text to match against
 
                 Return: ~
-                    (number) Decided by`findstart`:
+                    (number) Decided by {findstart}:
                     • findstart=0: column where the completion starts, or -2
                       or -3
                     • findstart=1: list of matches (actually just calls

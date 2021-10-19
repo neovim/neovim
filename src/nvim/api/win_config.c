@@ -61,36 +61,36 @@
 /// @param buffer Buffer to display, or 0 for current buffer
 /// @param enter  Enter the window (make it the current window)
 /// @param config Map defining the window configuration. Keys:
-///   - `relative`: Sets the window layout to "floating", placed at (row,col)
+///   - relative: Sets the window layout to "floating", placed at (row,col)
 ///                 coordinates relative to:
 ///      - "editor" The global editor grid
 ///      - "win"    Window given by the `win` field, or current window.
 ///      - "cursor" Cursor position in current window.
-///   - `win`: |window-ID| for relative="win".
-///   - `anchor`: Decides which corner of the float to place at (row,col):
+///   - win: |window-ID| for relative="win".
+///   - anchor: Decides which corner of the float to place at (row,col):
 ///      - "NW" northwest (default)
 ///      - "NE" northeast
 ///      - "SW" southwest
 ///      - "SE" southeast
-///   - `width`: Window width (in character cells). Minimum of 1.
-///   - `height`: Window height (in character cells). Minimum of 1.
-///   - `bufpos`: Places float relative to buffer text (only when
+///   - width: Window width (in character cells). Minimum of 1.
+///   - height: Window height (in character cells). Minimum of 1.
+///   - bufpos: Places float relative to buffer text (only when
 ///               relative="win"). Takes a tuple of zero-indexed [line, column].
 ///               `row` and `col` if given are applied relative to this
 ///               position, else they default to:
 ///               - `row=1` and `col=0` if `anchor` is "NW" or "NE"
 ///               - `row=0` and `col=0` if `anchor` is "SW" or "SE"
 ///               (thus like a tooltip near the buffer text).
-///   - `row`: Row position in units of "screen cell height", may be fractional.
-///   - `col`: Column position in units of "screen cell width", may be
+///   - row: Row position in units of "screen cell height", may be fractional.
+///   - col: Column position in units of "screen cell width", may be
 ///            fractional.
-///   - `focusable`: Enable focus by user actions (wincmds, mouse events).
+///   - focusable: Enable focus by user actions (wincmds, mouse events).
 ///       Defaults to true. Non-focusable windows can be entered by
 ///       |nvim_set_current_win()|.
-///   - `external`: GUI should display the window as an external
+///   - external: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
-///   - `zindex`: Stacking order. floats with higher `zindex` go on top on
+///   - zindex: Stacking order. floats with higher `zindex` go on top on
 ///               floats with lower indices. Must be larger than zero. The
 ///               following screen elements have hard-coded z-indices:
 ///       - 100: insert completion popupmenu
@@ -99,7 +99,7 @@
 ///     The default value for floats are 50.  In general, values below 100 are
 ///     recommended, unless there is a good reason to overshadow builtin
 ///     elements.
-///   - `style`: Configure the appearance of the window. Currently only takes
+///   - style: Configure the appearance of the window. Currently only takes
 ///       one non-empty value:
 ///       - "minimal"  Nvim will display the window with many UI options
 ///                    disabled. This is useful when displaying a temporary
@@ -110,7 +110,7 @@
 ///                    end-of-buffer region is hidden by setting `eob` flag of
 ///                    'fillchars' to a space char, and clearing the
 ///                    |EndOfBuffer| region in 'winhighlight'.
-///   - `border`: Style of (optional) window border. This can either be a string
+///   - border: Style of (optional) window border. This can either be a string
 ///      or an array. The string values are
 ///     - "none": No border (default).
 ///     - "single": A single line box.
@@ -134,7 +134,7 @@
 ///     By default, `FloatBorder` highlight is used, which links to `VertSplit`
 ///     when not defined.  It could also be specified by character:
 ///       [ {"+", "MyCorner"}, {"x", "MyBorder"} ].
-///   - `noautocmd`: If true then no buffer-related autocommand events such as
+///   - noautocmd: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
 ///

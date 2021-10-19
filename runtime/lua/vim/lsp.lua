@@ -1430,7 +1430,7 @@ end
 ---@param findstart 0 or 1, decides behavior
 ---@param base If findstart=0, text to match against
 ---
----@returns (number) Decided by `findstart`:
+---@returns (number) Decided by {findstart}:
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function lsp.omnifunc(findstart, base)

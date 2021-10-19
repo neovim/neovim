@@ -506,6 +506,11 @@ def render_node(n, text, prefix='', indent='', width=62):
             text += indent + prefix + result
     elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
+            if (is_inline(c)
+                    and '' != get_text(c).strip()
+                    and text
+                    and ' ' != text[-1]):
+                text += ' '
             text += render_node(c, text, indent=indent, width=width)
     elif n.nodeName == 'itemizedlist':
         for c in n.childNodes:
