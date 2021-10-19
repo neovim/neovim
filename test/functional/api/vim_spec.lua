@@ -94,14 +94,6 @@ describe('API', function()
 
     it(':verbose set {option}?', function()
       nvim('exec', 'set nowrap', false)
-      eq('nowrap\n\tLast set from anonymous :source',
-        nvim('exec', 'verbose set wrap?', true))
-
-      -- Using script var to force creation of a script item
-      nvim('exec', [[
-        let s:a = 1
-        set nowrap
-      ]], false)
       eq('nowrap\n\tLast set from anonymous :source (script id 1)',
         nvim('exec', 'verbose set wrap?', true))
     end)
@@ -146,6 +138,20 @@ describe('API', function()
       nvim('exec', 'let ab = #{\n\\a: 98,\n"\\ b: 2\n\\}', false)
       eq({a = 98}, request('nvim_eval', 'g:ab'))
 
+      -- <SID> works
+      eq('<SNR>10_', nvim('exec', 'echo expand("<SID>")', true))
+      eq('hey there', nvim('exec', [[
+          nnoremap <SID><F1> <Cmd>echo 'hey there'<CR>
+          noremap <script> <F2> <SID><F1>
+          execute "normal \<F2>"
+        ]], true))
+
+      -- Would give E81 instead without a script context
+      eq('Vim(eval):E700: Unknown function: <SID>bogus',
+        pcall_err(request, 'nvim_exec', 'eval function("<SID>bogus")', false))
+      eq('Vim(call):E5555: API call: Vim:E117: Unknown function: s:bogus',
+        pcall_err(request, 'nvim_exec', 'call nvim_call_function("s:bogus", [])', false))
+
       -- Script scope (s:)
       eq('ahoy! script-scoped varrrrr', nvim('exec', [[
           let s:pirate = 'script-scoped varrrrr'
@@ -169,18 +175,13 @@ describe('API', function()
           call nvim_exec('echo s:pirate', 1)
         ]], false))
 
-      -- Script items are created only on script var access
-      eq('1\n0', nvim('exec', [[
-          echo expand("<SID>")->empty()
-          let s:a = 123
-          echo expand("<SID>")->empty()
-        ]], true))
-
-      eq('1\n0', nvim('exec', [[
-          echo expand("<SID>")->empty()
-          function s:a() abort
+      eq('treasure!', nvim('exec', [[
+          function! Plunder() abort
+            let s:x = 'treasure!'
           endfunction
-          echo expand("<SID>")->empty()
+          call Plunder()
+          " should be accessible by this script
+          echo s:x
         ]], true))
     end)
 

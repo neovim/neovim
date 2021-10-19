@@ -87,18 +87,14 @@ static hashtab_T compat_hashtab;
 /// Used for checking if local variables or arguments used in a lambda.
 bool *eval_lavars_used = NULL;
 
-/*
- * Array to hold the hashtab with variables local to each sourced script.
- * Each item holds a variable (nameless) that points to the dict_T.
- */
+/// Hash map to hold the hashtab with variables local to each sourced script.
+/// Each item holds a variable (nameless) that points to the dict_T.
 typedef struct {
   ScopeDictDictItem sv_var;
   dict_T sv_dict;
 } scriptvar_T;
 
-static garray_T ga_scripts = { 0, 0, sizeof(scriptvar_T *), 4, NULL };
-#define SCRIPT_SV(id) (((scriptvar_T **)ga_scripts.ga_data)[(id) - 1])
-#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
+static PMap(scid_T) script_vars = MAP_INIT;
 
 static int echo_attr = 0;   // attributes used for ":echo"
 
@@ -478,19 +474,23 @@ void eval_clear(void)
   // autoloaded script names
   ga_clear_strings(&ga_loaded);
 
-  /* Script-local variables. First clear all the variables and in a second
-   * loop free the scriptvar_T, because a variable in one script might hold
-   * a reference to the whole scope of another script. */
-  for (int i = 1; i <= ga_scripts.ga_len; ++i) {
-    vars_clear(&SCRIPT_VARS(i));
+  // Script-local variables. First clear all the variables and in a second
+  // loop free the scriptvar_T, because a variable in one script might hold
+  // a reference to the whole scope of another script.
+  {
+    scriptvar_T *sv;
+    map_foreach_value(&script_vars, sv, {
+      vars_clear(&sv->sv_dict.dv_hashtab);
+    })
+    map_foreach_value(&script_vars, sv, {
+      xfree(sv);
+    })
   }
-  for (int i = 1; i <= ga_scripts.ga_len; ++i) {
-    xfree(SCRIPT_SV(i));
-  }
-  ga_clear(&ga_scripts);
+  pmap_clear(scid_T)(&script_vars);  // can't dealloc yet; garbage_collect accesses it
 
   // unreferenced lists and dicts
   (void)garbage_collect(false);
+  pmap_destroy(scid_T)(&script_vars);
 
   // functions not garbage collected
   free_all_functions();
@@ -1678,8 +1678,9 @@ static void list_vim_vars(int *first)
 /// List script-local variables, if there is a script.
 static void list_script_vars(int *first)
 {
-  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= ga_scripts.ga_len) {
-    list_hashtable_vars(&SCRIPT_VARS(current_sctx.sc_sid), "s:", false, first);
+  scriptvar_T *const sv = script_sv(current_sctx.sc_sid);
+  if (sv != NULL) {
+    list_hashtable_vars(&sv->sv_dict.dv_hashtab, "s:", false, first);
   }
 }
 
@@ -5248,8 +5249,11 @@ bool garbage_collect(bool testing)
   ABORTING(set_ref_in_previous_funccal)(copyID);
 
   // script-local variables
-  for (int i = 1; i <= ga_scripts.ga_len; ++i) {
-    ABORTING(set_ref_in_ht)(&SCRIPT_VARS(i), copyID, NULL);
+  {
+    scriptvar_T *sv;
+    map_foreach_value(&script_vars, sv, {
+      ABORTING(set_ref_in_ht)(&sv->sv_dict.dv_hashtab, copyID, NULL);
+    })
   }
 
   FOR_ALL_BUFFERS(buf) {
@@ -6173,8 +6177,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref, FunPtr
       // also be called from another script. Using trans_function_name()
       // would also work, but some plugins depend on the name being
       // printable text.
-      snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
-               (int64_t)current_sctx.sc_sid);
+      snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRIdSCID "_", current_sctx.sc_sid);
       name = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
       STRCPY(name, sid_buf);
       STRCAT(name, s + off);
@@ -8686,6 +8689,13 @@ dictitem_T *find_var(const char *const name, const size_t name_len, hashtab_T **
   return find_var_in_scoped_ht(name, name_len, no_autoload || htp != NULL);
 }
 
+/// Get pointer to script vars. @see script_item
+static inline scriptvar_T *script_sv(const scid_T id)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  return id > 0 ? (scriptvar_T *)pmap_get(scid_T)(&script_vars, id) : NULL;
+}
+
 /// Find variable in hashtab.
 /// When "varname" is empty returns curwin/curtab/etc vars dictionary.
 ///
@@ -8708,7 +8718,7 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
     // Must be something like "s:", otherwise "ht" would be NULL.
     switch (htname) {
     case 's':
-      return (dictitem_T *)&SCRIPT_SV(current_sctx.sc_sid)->sv_var;
+      return (dictitem_T *)&script_sv(current_sctx.sc_sid)->sv_var;
     case 'g':
       return (dictitem_T *)&globvars_var;
     case 'v':
@@ -8750,7 +8760,8 @@ dictitem_T *find_var_in_ht(hashtab_T *const ht, int htname, const char *const va
 
 /// Finds the dict (g:, l:, s:, …) and hashtable used for a variable.
 ///
-/// Assigns SID if s: scope is accessed from Lua or anonymous Vimscript. #15994
+/// In Lua or anonymous scripts, allocates script item if scope is "s:"
+/// @see script_ensure_anon_item
 ///
 /// @param[in]  name  Variable name, possibly with scope prefix.
 /// @param[in]  name_len  Variable name length.
@@ -8814,9 +8825,7 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
   } else if (*name == 'l' && funccal != NULL) {  // local variable
     *d = &funccal->l_vars;
   } else if (*name == 's'  // script variable
-             && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_STR
-                 || current_sctx.sc_sid == SID_LUA)
-             && current_sctx.sc_sid <= ga_scripts.ga_len) {
+             && (current_sctx.sc_sid > 0 || current_sctx.sc_sid == SID_LUA)) {
     // Create SID if s: scope is accessed from Lua or anon Vimscript. #15994
     if (current_sctx.sc_sid == SID_LUA) {
       // Try to resolve Lua file name & line no so it can be shown in LastSet messages.
@@ -8836,12 +8845,12 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, cons
         char *const sc_name = (char *)get_scriptname(last_set, &should_free);
         assert(should_free);
         current_sctx.sc_sid = script_new_sid(sc_name);
+      } else {
+        current_sctx.sc_sid = script_new_sid(NULL);
       }
     }
-    if (current_sctx.sc_sid == SID_STR || current_sctx.sc_sid == SID_LUA) {
-      current_sctx.sc_sid = script_new_sid(NULL);
-    }
-    *d = &SCRIPT_SV(current_sctx.sc_sid)->sv_dict;
+    script_ensure_anon_item();
+    *d = &script_sv(current_sctx.sc_sid)->sv_dict;
   }
 
 end:
@@ -8879,31 +8888,12 @@ char_u *get_var_value(const char *const name)
 
 /// Allocate a new hashtab for a sourced script.  It will be used while
 /// sourcing this script and when executing functions defined in the script.
-void new_script_vars(scid_T id)
+void new_script_vars(const scid_T id)
 {
-  hashtab_T *ht;
-  scriptvar_T *sv;
-
-  ga_grow(&ga_scripts, id - ga_scripts.ga_len);
-  {
-    /* Re-allocating ga_data means that an ht_array pointing to
-     * ht_smallarray becomes invalid.  We can recognize this: ht_mask is
-     * at its init value.  Also reset "v_dict", it's always the same. */
-    for (int i = 1; i <= ga_scripts.ga_len; ++i) {
-      ht = &SCRIPT_VARS(i);
-      if (ht->ht_mask == HT_INIT_SIZE - 1) {
-        ht->ht_array = ht->ht_smallarray;
-      }
-      sv = SCRIPT_SV(i);
-      sv->sv_var.di_tv.vval.v_dict = &sv->sv_dict;
-    }
-
-    while (ga_scripts.ga_len < id) {
-      sv = SCRIPT_SV(ga_scripts.ga_len + 1) = xcalloc(1, sizeof(scriptvar_T));
-      init_var_dict(&sv->sv_dict, &sv->sv_var, VAR_SCOPE);
-      ++ga_scripts.ga_len;
-    }
-  }
+  assert(id > 0 && !pmap_has(scid_T)(&script_vars, id));
+  scriptvar_T *const sv = xcalloc(1, sizeof(scriptvar_T));
+  init_var_dict(&sv->sv_dict, &sv->sv_var, VAR_SCOPE);
+  pmap_put(scid_T)(&script_vars, id, sv);
 }
 
 /// Initialize dictionary "dict" as a scope and set variable "dict_var" to

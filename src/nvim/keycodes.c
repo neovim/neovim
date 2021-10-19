@@ -920,8 +920,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
           result[dlen++] = K_SPECIAL;
           result[dlen++] = (int)KS_EXTRA;
           result[dlen++] = (int)KE_SNR;
-          snprintf((char *)result + dlen, buf_len - dlen, "%" PRId64,
-                   (int64_t)current_sctx.sc_sid);
+          snprintf((char *)result + dlen, buf_len - dlen, "%" PRIdSCID, current_sctx.sc_sid);
           dlen += STRLEN(result + dlen);
           result[dlen++] = '_';
           continue;

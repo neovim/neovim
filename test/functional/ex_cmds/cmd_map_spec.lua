@@ -6,14 +6,13 @@ local expect = helpers.expect
 local eval = helpers.eval
 local funcs = helpers.funcs
 local insert = helpers.insert
-local write_file = helpers.write_file
 local exc_exec = helpers.exc_exec
 local command = helpers.command
+local source = helpers.source
 local Screen = require('test.functional.ui.screen')
 
 describe('mappings with <Cmd>', function()
   local screen
-  local tmpfile = 'X_ex_cmds_cmd_map'
 
   local function cmdmap(lhs, rhs)
     command('noremap '..lhs..' <Cmd>'..rhs..'<cr>')
@@ -58,10 +57,6 @@ describe('mappings with <Cmd>', function()
     cmdmap('<F8>', 'startinsert')
     cmdmap('<F9>', 'stopinsert')
     command("abbr foo <Cmd>let g:y = 17<cr>bar")
-  end)
-
-  after_each(function()
-    os.remove(tmpfile)
   end)
 
   it('can be displayed', function()
@@ -865,13 +860,12 @@ describe('mappings with <Cmd>', function()
 
   it("works with <SID> mappings", function()
     command('new!')
-    write_file(tmpfile, [[
+    source([[
       map <f2> <Cmd>call <SID>do_it()<Cr>
       function! s:do_it()
         let g:x = 10
       endfunction
     ]])
-    command('source '..tmpfile)
     feed('<f2>')
     eq('', eval('v:errmsg'))
     eq(10, eval('g:x'))

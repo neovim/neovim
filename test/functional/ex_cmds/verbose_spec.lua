@@ -146,6 +146,9 @@ test_group  FileType
 
     -- Different anon execs in the same file should have unique SIDs as usual.
     neq(eval('g:sid1'), eval('g:sid2'))
+
+    -- Also shouldn't add duplicate names to :scriptnames output.
+    eq(string.format("  2: %s", script_location), exec_capture(':scriptnames'))
   end)
 end)
 

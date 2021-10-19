@@ -110,7 +110,7 @@ describe('memory usage', function()
   it('function capture vargs', function()
     local pid = eval('getpid()')
     local before = monitor_memory_usage(pid)
-    write_file(tmpfile, [[
+    source([[
       func s:f(...)
         let x = a:000
       endfunc
@@ -118,8 +118,6 @@ describe('memory usage', function()
         call s:f(0)
       endfor
     ]])
-    -- TODO: check_result fails if command() is used here. Why? #16064
-    feed_command('source '..tmpfile)
     poke_eventloop()
     local after = monitor_memory_usage(pid)
     -- Estimate the limit of max usage as 2x initial usage.
