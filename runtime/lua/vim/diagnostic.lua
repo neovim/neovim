@@ -155,7 +155,8 @@ end
 ---@private
 local function get_resolved_options(opts, namespace, bufnr)
   local ns = namespace and get_namespace(namespace) or {}
-  local resolved = vim.tbl_deep_extend('keep', opts or {}, ns.opts or {}, global_diagnostic_options)
+  -- Do not use tbl_deep_extend so that an empty table can be used to reset to default values
+  local resolved = vim.tbl_extend('keep', opts or {}, ns.opts or {}, global_diagnostic_options)
   for k in pairs(global_diagnostic_options) do
     if resolved[k] ~= nil then
       resolved[k] = resolve_optional_value(k, resolved[k], namespace, bufnr)
@@ -1163,8 +1164,16 @@ function M.open_float(bufnr, opts)
     end
   end
 
-  -- Resolve options with user settings from vim.diagnostic.config
-  opts = get_resolved_options({ float = opts }, nil, bufnr).float
+  do
+    -- Resolve options with user settings from vim.diagnostic.config
+    -- Unlike the other decoration functions (e.g. set_virtual_text, set_signs, etc.) `open_float`
+    -- does not have a dedicated table for configuration options; instead, the options are mixed in
+    -- with its `opts` table which also includes "keyword" parameters. So we create a dedicated
+    -- options table that inherits missing keys from the global configuration before resolving.
+    local t = global_diagnostic_options.float
+    local float_opts = vim.tbl_extend("keep", opts, type(t) == "table" and t or {})
+    opts = get_resolved_options({ float = float_opts }, nil, bufnr).float
+  end
 
   local lines = {}
   local highlights = {}
