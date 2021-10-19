@@ -628,6 +628,10 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
 flush({client})                                              *vim.lsp.flush()*
                 TODO: Documentation
 
+                                            *vim.lsp.for_each_buffer_client()*
+for_each_buffer_client({bufnr}, {fn})
+                TODO: Documentation
+
 get_active_clients()                            *vim.lsp.get_active_clients()*
                 Gets all active clients.
 

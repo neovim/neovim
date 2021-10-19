@@ -531,6 +531,20 @@ nvim__get_hl_defs({ns_id})                               *nvim__get_hl_defs()*
 nvim__get_lib_dir()                                      *nvim__get_lib_dir()*
                 TODO: Documentation
 
+nvim__get_runtime({pat}, {all}, {*opts})                 *nvim__get_runtime()*
+                Find files in runtime directories
+
+                Attributes: ~
+                    {fast}
+
+                Parameters: ~
+                    {pat}      pattern of files to search for
+                    {all}      whether to return all matches or only the first
+                    {options}  is_lua: only search lua subdirs
+
+                Return: ~
+                    list of absolute paths to the found files
+
 nvim__id({obj})                                                   *nvim__id()*
                 Returns object given as argument.
 
@@ -580,6 +594,9 @@ nvim__id_float({flt})                                       *nvim__id_float()*
                     its argument.
 
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
+                TODO: Documentation
+
+nvim__runtime_inspect()                              *nvim__runtime_inspect()*
                 TODO: Documentation
 
 nvim__screenshot({path})                                  *nvim__screenshot()*
@@ -801,6 +818,39 @@ nvim_eval({expr})                                                *nvim_eval()*
 
                 Return: ~
                     Evaluation result or expanded object
+
+nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
+                Evaluates statusline string.
+
+                Attributes: ~
+                    {fast}
+
+                Parameters: ~
+                    {str}   Statusline string (see 'statusline').
+                    {opts}  Optional parameters.
+                            • winid: (number) |window-ID| of the window to use
+                              as context for statusline.
+                            • maxwidth: (number) Maximum width of statusline.
+                            • fillchar: (string) Character to fill blank
+                              spaces in the statusline (see 'fillchars').
+                            • highlights: (boolean) Return highlight
+                              information.
+                            • use_tabline: (boolean) Evaluate tabline instead
+                              of statusline. When |TRUE|, {winid} is ignored.
+
+                Return: ~
+                    Dictionary containing statusline information, with these
+                    keys:
+                    • str: (string) Characters that will be displayed on the
+                      statusline.
+                    • width: (number) Display width of the statusline.
+                    • highlights: Array containing highlight information of
+                      the statusline. Only included when the "highlights" key
+                      in {opts} is |TRUE|. Each element of the array is a
+                      |Dictionary| with these keys:
+                      • start: (number) Byte index (0-based) of first
+                        character that uses the highlight.
+                      • group: (string) Name of highlight group.
 
 nvim_exec({src}, {output})                                       *nvim_exec()*
                 Executes Vimscript (multiline block of Ex-commands), like
