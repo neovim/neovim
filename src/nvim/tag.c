@@ -1404,7 +1404,7 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
     TS_LINEAR,                  // linear searching forward, till EOF
     TS_BINARY,                // binary searching
     TS_SKIP_BACK,               // skipping backwards
-    TS_STEP_FORWARD             // stepping forwards
+    TS_STEP_FORWARD,  // stepping forwards
   }   state;                    // Current search state
 
   int cmplen;
@@ -1433,7 +1433,7 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
   vimconv_T vimconv;
 
   int findall = (mincount == MAXCOL || mincount == TAG_MANY);
-  // find all matching tags
+// find all matching tags
   bool sort_error = false;                      // tags file not sorted
   int linear;                                   // do a linear search
   bool sortic = false;                          // tag file sorted in nocase
@@ -1448,8 +1448,8 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
   int use_tfu = ((flags & TAG_NO_TAGFUNC) == 0);
   int save_p_ic = p_ic;
 
-  // Change the value of 'ignorecase' according to 'tagcase' for the
-  // duration of this function.
+// Change the value of 'ignorecase' according to 'tagcase' for the
+// duration of this function.
   switch (curbuf->b_tc_flags ? curbuf->b_tc_flags : tc_flags) {
   case TC_FOLLOWIC:
     break;
@@ -1474,9 +1474,9 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
   orgpat.regmatch.regprog = NULL;
   vimconv.vc_type = CONV_NONE;
 
-  /*
-   * Allocate memory for the buffers that are used
-   */
+/*
+ * Allocate memory for the buffers that are used
+ */
   lbuf = xmalloc(lbuf_size);
   tag_fname = xmalloc(MAXPATHL + 1);
   for (mtt = 0; mtt < MT_COUNT; mtt++) {
@@ -1486,9 +1486,9 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
 
   STRCPY(tag_fname, "from cscope");             // for error messages
 
-  /*
-   * Initialize a few variables
-   */
+/*
+ * Initialize a few variables
+ */
   if (help_only) {                              // want tags from help file
     curbuf->b_help = true;                      // will be restored later
   } else if (use_cscope) {
@@ -1522,8 +1522,8 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
     goto findtag_end;
   }
 
-  // This is only to avoid a compiler warning for using search_info
-  // uninitialised.
+// This is only to avoid a compiler warning for using search_info
+// uninitialised.
   memset(&search_info, 0, 1);  // -V512
 
   if (*curbuf->b_p_tfu != NUL && use_tfu && !tfu_in_use) {
@@ -1536,17 +1536,17 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
     }
   }
 
-  /*
-   * When finding a specified number of matches, first try with matching
-   * case, so binary search can be used, and try ignore-case matches in a
-   * second loop.
-   * When finding all matches, 'tagbsearch' is off, or there is no fixed
-   * string to look for, ignore case right away to avoid going though the
-   * tags files twice.
-   * When the tag file is case-fold sorted, it is either one or the other.
-   * Only ignore case when TAG_NOIC not used or 'ignorecase' set.
-   */
-  // Set a flag if the file extension is .txt
+/*
+ * When finding a specified number of matches, first try with matching
+ * case, so binary search can be used, and try ignore-case matches in a
+ * second loop.
+ * When finding all matches, 'tagbsearch' is off, or there is no fixed
+ * string to look for, ignore case right away to avoid going though the
+ * tags files twice.
+ * When the tag file is case-fold sorted, it is either one or the other.
+ * Only ignore case when TAG_NOIC not used or 'ignorecase' set.
+ */
+// Set a flag if the file extension is .txt
   if ((flags & TAG_KEEP_LANG)
       && help_lang_find == NULL
       && curbuf->b_fname != NULL
@@ -2256,10 +2256,10 @@ findtag_end:
   vim_regfree(orgpat.regmatch.regprog);
   xfree(tag_fname);
 
-  /*
-   * Move the matches from the ga_match[] arrays into one list of
-   * matches.  When retval == FAIL, free the matches.
-   */
+/*
+ * Move the matches from the ga_match[] arrays into one list of
+ * matches.  When retval == FAIL, free the matches.
+ */
   if (retval == FAIL) {
     match_count = 0;
   }

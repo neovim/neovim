@@ -72,7 +72,7 @@ static enum {
   EXP_CSCOPE_SUBCMD,    // expand ":cscope" sub-commands
   EXP_SCSCOPE_SUBCMD,   // expand ":scscope" sub-commands
   EXP_CSCOPE_FIND,      // expand ":cscope find" arguments
-  EXP_CSCOPE_KILL       // expand ":cscope kill" arguments
+  EXP_CSCOPE_KILL,  // expand ":cscope kill" arguments
 } expand_what;
 
 /*

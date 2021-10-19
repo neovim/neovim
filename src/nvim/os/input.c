@@ -30,7 +30,7 @@
 typedef enum {
   kInputNone,
   kInputAvail,
-  kInputEof
+  kInputEof,
 } InbufPollResult;
 
 static Stream read_stream = { .closed = true };  // Input before UI starts.

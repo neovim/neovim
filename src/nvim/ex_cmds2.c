@@ -198,7 +198,7 @@ void ex_perldo(exarg_T *eap)
 // Command line expansion for :profile.
 static enum {
   PEXP_SUBCMD,          ///< expand :profile sub-commands
-  PEXP_FUNC             ///< expand :profile func {funcname}
+  PEXP_FUNC,  ///< expand :profile func {funcname}
 } pexpand_what;
 
 static char *pexpand_cmds[] = {

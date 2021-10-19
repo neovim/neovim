@@ -78,7 +78,7 @@ typedef enum {
   ADDR_QUICKFIX,        // quickfix list entry number
   ADDR_UNSIGNED,        // positive count or zero, defaults to 1
   ADDR_OTHER,           // something else, use line number for '$', '%', etc.
-  ADDR_NONE             // no range used
+  ADDR_NONE,  // no range used
 } cmd_addr_T;
 
 typedef struct exarg exarg_T;

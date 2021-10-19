@@ -5770,7 +5770,7 @@ static enum {
   EXP_SUBCMD,       // expand ":syn" sub-commands
   EXP_CASE,         // expand ":syn case" arguments
   EXP_SPELL,        // expand ":syn spell" arguments
-  EXP_SYNC          // expand ":syn sync" arguments
+  EXP_SYNC,  // expand ":syn sync" arguments
 } expand_what;
 
 /*

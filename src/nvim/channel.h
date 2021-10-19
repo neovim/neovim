@@ -17,7 +17,7 @@ typedef enum {
   kChannelStreamSocket,
   kChannelStreamStdio,
   kChannelStreamStderr,
-  kChannelStreamInternal
+  kChannelStreamInternal,
 } ChannelStreamType;
 
 typedef enum {
@@ -25,7 +25,7 @@ typedef enum {
   kChannelPartStdout,
   kChannelPartStderr,
   kChannelPartRpc,
-  kChannelPartAll
+  kChannelPartAll,
 } ChannelPart;
 
 typedef enum {
