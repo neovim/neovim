@@ -100,8 +100,8 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
      */
     found_one = FALSE;
     for (list = curbuf->b_p_com; *list; ) {
-      /* Get one option part into part_buf[].  Advance "list" to next
-       * one.  Put "string" at start of string.  */
+      // Get one option part into part_buf[].  Advance "list" to next
+      // one.  Put "string" at start of string.
       if (!got_com && flags != NULL) {
         *flags = list;              // remember where flags started
       }
@@ -113,16 +113,16 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
       }
       *string++ = NUL;              // isolate flags from string
 
-      /* If we found a middle match previously, use that match when this
-       * is not a middle or end. */
+      // If we found a middle match previously, use that match when this
+      // is not a middle or end.
       if (middle_match_len != 0
           && vim_strchr(part_buf, COM_MIDDLE) == NULL
           && vim_strchr(part_buf, COM_END) == NULL) {
         break;
       }
 
-      /* When we already found a nested comment, only accept further
-       * nested comments. */
+      // When we already found a nested comment, only accept further
+      // nested comments.
       if (got_com && vim_strchr(part_buf, COM_NEST) == NULL) {
         continue;
       }
@@ -132,10 +132,10 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
         continue;
       }
 
-      /* Line contents and string must match.
-       * When string starts with white space, must have some white space
-       * (but the amount does not need to match, there might be a mix of
-       * TABs and spaces). */
+      // Line contents and string must match.
+      // When string starts with white space, must have some white space
+      // (but the amount does not need to match, there might be a mix of
+      // TABs and spaces).
       if (ascii_iswhite(string[0])) {
         if (i == 0 || !ascii_iswhite(line[i - 1])) {
           continue;            // missing white space
@@ -150,18 +150,18 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
       if (string[j] != NUL) {
         continue;          // string doesn't match
       }
-      /* When 'b' flag used, there must be white space or an
-       * end-of-line after the string in the line. */
+      // When 'b' flag used, there must be white space or an
+      // end-of-line after the string in the line.
       if (vim_strchr(part_buf, COM_BLANK) != NULL
           && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
         continue;
       }
 
-      /* We have found a match, stop searching unless this is a middle
-       * comment. The middle comment can be a substring of the end
-       * comment in which case it's better to return the length of the
-       * end comment and its flags.  Thus we keep searching with middle
-       * and end matches and use an end match if it matches better. */
+      // We have found a match, stop searching unless this is a middle
+      // comment. The middle comment can be a substring of the end
+      // comment in which case it's better to return the length of the
+      // end comment and its flags.  Thus we keep searching with middle
+      // and end matches and use an end match if it matches better.
       if (vim_strchr(part_buf, COM_MIDDLE) != NULL) {
         if (middle_match_len == 0) {
           middle_match_len = j;
@@ -170,8 +170,8 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
         continue;
       }
       if (middle_match_len != 0 && j > middle_match_len) {
-        /* Use this match instead of the middle match, since it's a
-         * longer thus better match. */
+        // Use this match instead of the middle match, since it's a
+        // longer thus better match.
         middle_match_len = 0;
       }
 
@@ -183,8 +183,8 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
     }
 
     if (middle_match_len != 0) {
-      /* Use the previously found middle match after failing to find a
-       * match with an end. */
+      // Use the previously found middle match after failing to find a
+      // match with an end.
       if (!got_com && flags != NULL) {
         *flags = saved_flags;
       }
@@ -254,8 +254,8 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        */
       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       string = vim_strchr(part_buf, ':');
-      if (string == NULL) {     /* If everything is fine, this cannot actually
-                                 * happen. */
+      if (string == NULL) {  // If everything is fine, this cannot actually
+                             // happen.
         continue;
       }
       *string++ = NUL;          // Isolate flags from string.
@@ -331,11 +331,10 @@ int get_last_leader_offset(char_u *line, char_u **flags)
 
       lower_check_bound = i;
 
-      /* Let's verify whether the comment leader found is a substring
-       * of other comment leaders. If it is, let's adjust the
-       * lower_check_bound so that we make sure that we have determined
-       * the comment leader correctly.
-       */
+      // Let's verify whether the comment leader found is a substring
+      // of other comment leaders. If it is, let's adjust the
+      // lower_check_bound so that we make sure that we have determined
+      // the comment leader correctly.
 
       while (ascii_iswhite(*com_leader)) {
         ++com_leader;
@@ -359,8 +358,8 @@ int get_last_leader_offset(char_u *line, char_u **flags)
           continue;
         }
 
-        /* Now we have to verify whether string ends with a substring
-         * beginning the com_leader. */
+        // Now we have to verify whether string ends with a substring
+        // beginning the com_leader.
         for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2; ) {
           --off;
           if (!STRNCMP(string + off, com_leader, len2 - off)) {
@@ -497,9 +496,9 @@ int get_keystroke(MultiQueue *events)
   for (;; ) {
     // flush output before waiting
     ui_flush();
-    /* Leave some room for check_termcode() to insert a key code into (max
-     * 5 chars plus NUL).  And fix_input_buffer() can triple the number of
-     * bytes. */
+    // Leave some room for check_termcode() to insert a key code into (max
+    // 5 chars plus NUL).  And fix_input_buffer() can triple the number of
+    // bytes.
     maxlen = (buflen - 6 - len) / 3;
     if (buf == NULL) {
       buf = xmalloc((size_t)buflen);
@@ -511,8 +510,8 @@ int get_keystroke(MultiQueue *events)
       maxlen = (buflen - 6 - len) / 3;
     }
 
-    /* First time: blocking wait.  Second time: wait up to 100ms for a
-     * terminal code to complete. */
+    // First time: blocking wait.  Second time: wait up to 100ms for a
+    // terminal code to complete.
     n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0, events);
     if (n > 0) {
       // Replace zero and CSI by a special key code.
@@ -575,8 +574,8 @@ int get_number(int colon, int *mouse_used)
     *mouse_used = FALSE;
   }
 
-  /* When not printing messages, the user won't know what to type, return a
-   * zero (as if CR was hit). */
+  // When not printing messages, the user won't know what to type, return a
+  // zero (as if CR was hit).
   if (msg_silent != 0) {
     return 0;
   }
@@ -674,9 +673,9 @@ void msgmore(long n)
     return;
   }
 
-  /* We don't want to overwrite another important message, but do overwrite
-   * a previous "more lines" or "fewer lines" message, so that "5dd" and
-   * then "put" reports the last action. */
+  // We don't want to overwrite another important message, but do overwrite
+  // a previous "more lines" or "fewer lines" message, so that "5dd" and
+  // then "put" reports the last action.
   if (keep_msg != NULL && !keep_msg_more) {
     return;
   }
