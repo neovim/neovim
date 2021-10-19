@@ -197,13 +197,21 @@ function! s:extract_sect_and_name_ref(ref) abort
     if empty(name)
       throw 'manpage reference cannot contain only parentheses'
     endif
-    return ['', name]
+    return ['', s:spaces_to_underscores(name)]
   endif
   let left = split(ref, '(')
   " see ':Man 3X curses' on why tolower.
   " TODO(nhooyr) Not sure if this is portable across OSs
   " but I have not seen a single uppercase section.
-  return [tolower(split(left[1], ')')[0]), left[0]]
+  return [tolower(split(left[1], ')')[0]), s:spaces_to_underscores(left[0])]
+endfunction
+
+" replace spaces in a man page name with underscores
+" intended for PostgreSQL, which has man pages like 'CREATE_TABLE(7)';
+" while editing SQL source code, it's nice to visually select 'CREATE TABLE'
+" and hit 'K', which requires this transformation
+function! s:spaces_to_underscores(str)
+  return substitute(a:str, ' ', '_', 'g')
 endfunction
 
 function! s:get_path(sect, name) abort
