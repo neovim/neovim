@@ -773,7 +773,9 @@ end
 ---         - severity: See |diagnostic-severity|.
 ---         - float: (boolean or table, default true) If "true", call |vim.diagnostic.open_float()|
 ---                    after moving. If a table, pass the table as the {opts} parameter to
----                    |vim.diagnostic.open_float()|.
+---                    |vim.diagnostic.open_float()|. Unless overridden, the float will show
+---                    diagnostics at the new cursor position (as if "cursor" were passed to
+---                    the "scope" option).
 ---         - win_id: (number, default 0) Window ID
 function M.goto_next(opts)
   return diagnostic_move_pos(
