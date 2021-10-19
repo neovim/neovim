@@ -262,12 +262,12 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
                 For example, if a user enables virtual text globally with >
 
-                   vim.diagnostic.config({virt_textual = true})
+                   vim.diagnostic.config({virtual_text = true})
 <
 
                 and a diagnostic producer sets diagnostics with >
 
-                   vim.diagnostic.set(ns, 0, diagnostics, {virt_textual = false})
+                   vim.diagnostic.set(ns, 0, diagnostics, {virtual_text = false})
 <
 
                 then virtual text will not be enabled for those diagnostics.
@@ -455,7 +455,7 @@ goto_next({opts})                                 *vim.diagnostic.goto_next()*
                               around file or not. Similar to 'wrapscan'.
                             • severity: See |diagnostic-severity|.
                             • float: (boolean or table, default true) If
-                              |TRUE|, call |vim.diagnostic.open_float()| after
+                              "true", call |vim.diagnostic.open_float()| after
                               moving. If a table, pass the table as the {opts}
                               parameter to |vim.diagnostic.open_float()|.
                             • win_id: (number, default 0) Window ID
