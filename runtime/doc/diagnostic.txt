@@ -262,12 +262,12 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
                 For example, if a user enables virtual text globally with >
 
-                   vim.diagnostic.config({virt_text = true})
+                   vim.diagnostic.config({virtual_text = true})
 <
 
                 and a diagnostic producer sets diagnostics with >
 
-                   vim.diagnostic.set(ns, 0, diagnostics, {virt_text = false})
+                   vim.diagnostic.set(ns, 0, diagnostics, {virtual_text = false})
 <
 
                 then virtual text will not be enabled for those diagnostics.
@@ -302,7 +302,7 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                    • format: (function) A function that takes
                                      a diagnostic as input and returns a
                                      string. The return value is the text used
-                                     to display the diagnostic. Example:>
+                                     to display the diagnostic. Example: >
 
                                        function(diagnostic)
                                          if diagnostic.severity == vim.diagnostic.severity.ERROR then
@@ -323,6 +323,18 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                                      a sign is adjusted based on its severity.
                                      Otherwise, all signs use the same
                                      priority.
+
+                                 • float: Options for floating windows:
+                                   • severity: See |diagnostic-severity|.
+                                   • show_header: (boolean, default true) Show
+                                     "Diagnostics:" header
+                                   • source: (string) Include the diagnostic
+                                     source in the message. One of "always" or
+                                     "if_many".
+                                   • format: (function) A function that takes
+                                     a diagnostic as input and returns a
+                                     string. The return value is the text used
+                                     to display the diagnostic.
 
                                  • update_in_insert: (default false) Update
                                    diagnostics in Insert mode (if false,
@@ -442,12 +454,10 @@ goto_next({opts})                                 *vim.diagnostic.goto_next()*
                             • wrap: (boolean, default true) Whether to loop
                               around file or not. Similar to 'wrapscan'.
                             • severity: See |diagnostic-severity|.
-                            • enable_popup: (boolean, default true) Call
-                              |vim.diagnostic.show_line_diagnostics()| on
-                              jump.
-                            • popup_opts: (table) Table to pass as {opts}
-                              parameter to
-                              |vim.diagnostic.show_line_diagnostics()|
+                            • float: (boolean or table, default true) If
+                              "true", call |vim.diagnostic.open_float()| after
+                              moving. If a table, pass the table as the {opts}
+                              parameter to |vim.diagnostic.open_float()|.
                             • win_id: (number, default 0) Window ID
 
 goto_prev({opts})                                 *vim.diagnostic.goto_prev()*
@@ -507,6 +517,46 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
                 Return: ~
                     diagnostic |diagnostic-structure| or `nil` if {pat} fails
                     to match {str}.
+
+open_float({bufnr}, {opts})                      *vim.diagnostic.open_float()*
+                Show diagnostics in a floating window.
+
+                Parameters: ~
+                    {bufnr}  number|nil Buffer number. Defaults to the current
+                             buffer.
+                    {opts}   table|nil Configuration table with the same keys
+                             as |vim.lsp.util.open_floating_preview()| in
+                             addition to the following:
+                             • namespace: (number) Limit diagnostics to the
+                               given namespace
+                             • scope: (string, default "buffer") Show
+                               diagnostics from the whole buffer ("buffer"),
+                               the current cursor line ("line"), or the
+                               current cursor position ("cursor").
+                             • pos: (number or table) If {scope} is "line" or
+                               "cursor", use this position rather than the
+                               cursor position. If a number, interpreted as a
+                               line number; otherwise, a (row, col) tuple.
+                             • severity_sort: (default false) Sort diagnostics
+                               by severity. Overrides the setting from
+                               |vim.diagnostic.config()|.
+                             • severity: See |diagnostic-severity|. Overrides
+                               the setting from |vim.diagnostic.config()|.
+                             • show_header: (boolean, default true) Show
+                               "Diagnostics:" header. Overrides the setting
+                               from |vim.diagnostic.config()|.
+                             • source: (string) Include the diagnostic source
+                               in the message. One of "always" or "if_many".
+                               Overrides the setting from
+                               |vim.diagnostic.config()|.
+                             • format: (function) A function that takes a
+                               diagnostic as input and returns a string. The
+                               return value is the text used to display the
+                               diagnostic. Overrides the setting from
+                               |vim.diagnostic.config()|.
+
+                Return: ~
+                    tuple ({float_bufnr}, {win_id})
 
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
                 Remove all diagnostics from the given namespace.
@@ -580,51 +630,6 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
                                    subset of diagnostics.
                     {opts}         table|nil Display options. See
                                    |vim.diagnostic.config()|.
-
-                                      *vim.diagnostic.show_line_diagnostics()*
-show_line_diagnostics({opts}, {bufnr}, {lnum})
-                Open a floating window with the diagnostics from the given
-                line.
-
-                Parameters: ~
-                    {opts}   table Configuration table. See
-                             |vim.diagnostic.show_position_diagnostics()|.
-                    {bufnr}  number|nil Buffer number. Defaults to the current
-                             buffer.
-                    {lnum}   number|nil Line number. Defaults to line number
-                             of cursor.
-
-                Return: ~
-                    tuple ({popup_bufnr}, {win_id})
-
-                                  *vim.diagnostic.show_position_diagnostics()*
-show_position_diagnostics({opts}, {bufnr}, {position})
-                Open a floating window with the diagnostics at the given
-                position.
-
-                Parameters: ~
-                    {opts}      table|nil Configuration table with the same
-                                keys as |vim.lsp.util.open_floating_preview()|
-                                in addition to the following:
-                                • namespace: (number) Limit diagnostics to the
-                                  given namespace
-                                • severity: See |diagnostic-severity|.
-                                • show_header: (boolean, default true) Show
-                                  "Diagnostics:" header
-                                • source: (string) Include the diagnostic
-                                  source in the message. One of "always" or
-                                  "if_many".
-                                • format: (function) A function that takes a
-                                  diagnostic as input and returns a string.
-                                  The return value is the text used to display
-                                  the diagnostic.
-                    {bufnr}     number|nil Buffer number. Defaults to the
-                                current buffer.
-                    {position}  table|nil The (0,0)-indexed position. Defaults
-                                to the current cursor position.
-
-                Return: ~
-                    tuple ({popup_bufnr}, {win_id})
 
 toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
                 Convert a list of diagnostics to a list of quickfix items that
