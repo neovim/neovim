@@ -2933,9 +2933,9 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 {
   Dictionary result = ARRAY_DICT_INIT;
 
-  Window window = 0;
-  int maxwidth = 0;
+  int maxwidth;
   char fillchar = 0;
+  Window window = 0;
   bool use_tabline = false;
   bool highlights = false;
 
@@ -2946,15 +2946,6 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     }
 
     window = (Window)opts->winid.data.integer;
-  }
-
-  if (HAS_KEY(opts->maxwidth)) {
-    if (opts->maxwidth.type != kObjectTypeInteger) {
-      api_set_error(err, kErrorTypeValidation, "maxwidth must be an integer");
-      return result;
-    }
-
-    maxwidth = (int)opts->maxwidth.data.integer;
   }
 
   if (HAS_KEY(opts->fillchar)) {
@@ -2998,7 +2989,14 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     }
   }
 
-  if (maxwidth == 0) {
+  if (HAS_KEY(opts->maxwidth)) {
+    if (opts->maxwidth.type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeValidation, "maxwidth must be an integer");
+      return result;
+    }
+
+    maxwidth = (int)opts->maxwidth.data.integer;
+  } else {
     maxwidth = use_tabline ? Columns : wp->w_width;
   }
 
