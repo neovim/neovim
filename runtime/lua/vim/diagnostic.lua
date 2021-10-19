@@ -1146,8 +1146,12 @@ function M.open_float(bufnr, opts)
       return d.lnum == lnum
     end, diagnostics)
   elseif scope == "cursor" then
+    -- LSP servers can send diagnostics with `end_col` past the length of the line
+    local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
     diagnostics = vim.tbl_filter(function(d)
-        return d.lnum == lnum and d.col <= col and (d.end_col >= col or d.end_lnum > lnum)
+      return d.lnum == lnum
+        and math.min(d.col, line_length - 1) <= col
+        and (d.end_col >= col or d.end_lnum > lnum)
     end, diagnostics)
   end
 

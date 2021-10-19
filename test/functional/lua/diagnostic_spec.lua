@@ -1046,6 +1046,21 @@ describe('vim.diagnostic', function()
         vim.api.nvim_win_close(winnr, true)
         return lines
       ]])
+
+      -- With column position past the end of the line. #16062
+      eq({'1. Syntax error'}, exec_lua [[
+        local first_line_len = #vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, 1, true)[1]
+        local diagnostics = {
+          make_error("Syntax error", 0, first_line_len + 1, 1, 0),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        vim.api.nvim_win_set_cursor(0, {1, 1})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {show_header=false, scope="cursor", pos={0,first_line_len}})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]])
     end)
 
     it('creates floating window and returns float bufnr and winnr if current line contains diagnostics', function()
