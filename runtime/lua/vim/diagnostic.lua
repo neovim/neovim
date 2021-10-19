@@ -19,6 +19,7 @@ local global_diagnostic_options = {
   signs = true,
   underline = true,
   virtual_text = true,
+  float = true,
   update_in_insert = false,
   severity_sort = false,
 }
@@ -154,7 +155,7 @@ end
 ---@private
 local function get_resolved_options(opts, namespace, bufnr)
   local ns = namespace and get_namespace(namespace) or {}
-  local resolved = vim.tbl_extend('keep', opts or {}, ns.opts or {}, global_diagnostic_options)
+  local resolved = vim.tbl_deep_extend('keep', opts or {}, ns.opts or {}, global_diagnostic_options)
   for k in pairs(global_diagnostic_options) do
     if resolved[k] ~= nil then
       resolved[k] = resolve_optional_value(k, resolved[k], namespace, bufnr)
