@@ -180,7 +180,6 @@ Commands:
   |:match| can be invoked before highlight group is defined
 
 Events:
-  |DirChanged| can be triggered when switching to another window
   |Signal|
   |TabNewEntered|
   |TermClose|
@@ -197,10 +196,6 @@ Functions:
   |stdpath()|
   |system()|, |systemlist()| can run {cmd} directly (without 'shell')
   |matchadd()| can be called before highlight group is defined
-  |getcwd()| and |haslocaldir()| may throw errors. *E5000* *E5001* *E5002*
-  |haslocaldir()|'s only possible return values are 0 and 1, it never returns 2.
-  `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
-  working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
 Highlight groups:
   |highlight-blend| controls blend level for a highlight group
@@ -252,6 +247,8 @@ Variables:
 
 Nvim always builds with all features, in contrast to Vim which may have
 certain features removed/added at compile-time. |feature-compile|
+
+Some Vim features were changed in Nvim, and vice versa.
 
 If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
 are always available and may be used simultaneously. See |provider-python|.
@@ -427,6 +424,15 @@ Vimscript compatibility:
   `errmsg` does not alias to |v:errmsg|
   `shell_error` does not alias to |v:shell_error|
   `this_session` does not alias to |v:this_session|
+
+Working directory (Vim implemented some of these later than Nvim):
+- |DirChanged| can be triggered when switching to another window.
+- |getcwd()| and |haslocaldir()| may throw errors if the tab page or window
+  cannot be found.  *E5000* *E5001* *E5002*
+- |haslocaldir()| only checks for tab-local directory when -1 is passed as
+  window number, and its only possible returns values are 0 and 1.
+- `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
+  working directory. Use `getcwd(-1, -1)` to get the global working directory.
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
