@@ -381,7 +381,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf, const s
     } else { \
       ga_concat(gap, "function("); \
       TYPVAL_ENCODE_CONV_STRING(tv, fun_, strlen(fun_)); \
-    }\
+    } \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len) \

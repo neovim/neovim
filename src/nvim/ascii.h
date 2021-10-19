@@ -10,7 +10,7 @@
 // Definitions of various common control characters.
 
 #define CharOrd(x)      ((uint8_t)(x) < 'a' \
-                         ? (uint8_t)(x) - 'A'\
+                         ? (uint8_t)(x) - 'A' \
                          : (uint8_t)(x) - 'a')
 #define CharOrdLow(x)   ((uint8_t)(x) - 'a')
 #define CharOrdUp(x)    ((uint8_t)(x) - 'A')

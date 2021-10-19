@@ -417,12 +417,12 @@ typedef khint_t khiter_t;
     } \
   }
 
-#define KHASH_DECLARE(name, khkey_t, khval_t)                                                   \
-  __KHASH_TYPE(name, khkey_t, khval_t)                                                            \
+#define KHASH_DECLARE(name, khkey_t, khval_t) \
+  __KHASH_TYPE(name, khkey_t, khval_t) \
   __KHASH_PROTOTYPES(name, khkey_t, khval_t)
 
 #define KHASH_INIT2(name, SCOPE, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal) \
-  __KHASH_TYPE(name, khkey_t, khval_t)                                                            \
+  __KHASH_TYPE(name, khkey_t, khval_t) \
   __KHASH_IMPL(name, SCOPE, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal)
 
 #define KHASH_INIT(name, khkey_t, khval_t, kh_is_map, __hash_func, __hash_equal) \
@@ -627,12 +627,12 @@ static kh_inline khint_t __ac_Wang_hash(khint_t key)
    @param  vvar  Variable to which value will be assigned
    @param  code  Block of code to execute
  */
-#define kh_foreach(h, kvar, vvar, code) { khint_t __i;          \
-                                          for (__i = kh_begin(h); __i != kh_end(h); ++__i) {              \
-                                            if (!kh_exist(h, __i)) continue;                                         \
-                                            (kvar) = kh_key(h, __i);                                                         \
-                                            (vvar) = kh_val(h, __i);                                                         \
-                                            code;                                                                                           \
+#define kh_foreach(h, kvar, vvar, code) { khint_t __i; \
+                                          for (__i = kh_begin(h); __i != kh_end(h); ++__i) { \
+                                            if (!kh_exist(h, __i)) continue; \
+                                            (kvar) = kh_key(h, __i); \
+                                            (vvar) = kh_val(h, __i); \
+                                            code; \
                                           } }
 
 /*! @function
@@ -641,11 +641,11 @@ static kh_inline khint_t __ac_Wang_hash(khint_t key)
    @param  vvar  Variable to which value will be assigned
    @param  code  Block of code to execute
  */
-#define kh_foreach_value(h, vvar, code) { khint_t __i;          \
-                                          for (__i = kh_begin(h); __i != kh_end(h); ++__i) {              \
-                                            if (!kh_exist(h, __i)) continue;                                         \
-                                            (vvar) = kh_val(h, __i);                                                         \
-                                            code;                                                                                           \
+#define kh_foreach_value(h, vvar, code) { khint_t __i; \
+                                          for (__i = kh_begin(h); __i != kh_end(h); ++__i) { \
+                                            if (!kh_exist(h, __i)) continue; \
+                                            (vvar) = kh_val(h, __i); \
+                                            code; \
                                           } }
 
 /*! @function
@@ -672,7 +672,7 @@ static kh_inline khint_t __ac_Wang_hash(khint_t key)
    @abstract     Instantiate a hash set containing integer keys
    @param  name  Name of the hash table [symbol]
  */
-#define KHASH_SET_INIT_INT(name)                                                                                \
+#define KHASH_SET_INIT_INT(name) \
   KHASH_INIT(name, khint32_t, char, 0, kh_int_hash_func, kh_int_hash_equal)
 
 /*! @function
@@ -680,14 +680,14 @@ static kh_inline khint_t __ac_Wang_hash(khint_t key)
    @param  name  Name of the hash table [symbol]
    @param  khval_t  Type of values [type]
  */
-#define KHASH_MAP_INIT_INT(name, khval_t)                                                               \
+#define KHASH_MAP_INIT_INT(name, khval_t) \
   KHASH_INIT(name, khint32_t, khval_t, 1, kh_int_hash_func, kh_int_hash_equal)
 
 /*! @function
    @abstract     Instantiate a hash map containing 64-bit integer keys
    @param  name  Name of the hash table [symbol]
  */
-#define KHASH_SET_INIT_INT64(name)                                                                              \
+#define KHASH_SET_INIT_INT64(name) \
   KHASH_INIT(name, khint64_t, char, 0, kh_int64_hash_func, kh_int64_hash_equal)
 
 /*! @function
@@ -695,7 +695,7 @@ static kh_inline khint_t __ac_Wang_hash(khint_t key)
    @param  name  Name of the hash table [symbol]
    @param  khval_t  Type of values [type]
  */
-#define KHASH_MAP_INIT_INT64(name, khval_t)                                                             \
+#define KHASH_MAP_INIT_INT64(name, khval_t) \
   KHASH_INIT(name, khint64_t, khval_t, 1, kh_int64_hash_func, kh_int64_hash_equal)
 
 typedef const char *kh_cstr_t;
@@ -703,7 +703,7 @@ typedef const char *kh_cstr_t;
    @abstract     Instantiate a hash map containing const char* keys
    @param  name  Name of the hash table [symbol]
  */
-#define KHASH_SET_INIT_STR(name)                                                                                \
+#define KHASH_SET_INIT_STR(name) \
   KHASH_INIT(name, kh_cstr_t, char, 0, kh_str_hash_func, kh_str_hash_equal)
 
 /*! @function

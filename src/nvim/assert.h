@@ -70,11 +70,11 @@
 
 # if __GNUC__ >= 6
 #  define STATIC_ASSERT_PRAGMA_START \
-  _Pragma("GCC diagnostic push")\
+  _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 # else
 #  define STATIC_ASSERT_PRAGMA_START \
-  _Pragma("GCC diagnostic push")\
+  _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-pedantic\"")
 # endif
 
@@ -89,7 +89,7 @@
 
 # undef STATIC_ASSERT_PRAGMA_START
 # define STATIC_ASSERT_PRAGMA_START \
-  _Pragma("clang diagnostic push")\
+  _Pragma("clang diagnostic push") \
   _Pragma("clang diagnostic ignored \"-Wc11-extensions\"")
 
 # undef STATIC_ASSERT_PRAGMA_END
