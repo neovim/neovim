@@ -4722,7 +4722,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     break;
   case kCdScopeTabpage:
     assert(tp);
-    rettv->vval.v_number = tp->tp_localdir ? 1 : 0;
+    rettv->vval.v_number = tp->tp_localdir ? 2 : 0;
     break;
   case kCdScopeGlobal:
     // The global scope never has a local directory

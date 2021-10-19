@@ -5012,6 +5012,7 @@ getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 		{winnr} can be the window number or the |window-ID|.
 		If both {winnr} and {tabnr} are -1 the global working
 		directory is returned.
+		Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
 
 		Can also be used as a |method|: >
 			GetWinnr()->getcwd()
@@ -5774,20 +5775,39 @@ has_key({dict}, {key})					*has_key()*
 			mydict->has_key(key)
 
 haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
-		The result is a Number, which is 1 when the tabpage or window
-		has set a local path via |:tcd| or |:lcd|, otherwise 0.
+		The result is a Number:
+		    1   when the window has set a local directory via |:lcd|
+		    2   when the tab-page has set a local directory via |:tcd|
+		    0   otherwise.
 
-		Tabs and windows are identified by their respective numbers,
-		0 means current tab or window. Missing argument implies 0.
-		Thus the following are equivalent: >
-			haslocaldir()
-			haslocaldir(0)
-			haslocaldir(0, 0)
-<		With {winnr} use that window in the current tabpage.
-		With {winnr} and {tabnr} use the window in that tabpage.
+		Without arguments use the current window.
+		With {winnr} use this window in the current tab page.
+		With {winnr} and {tabnr} use the window in the specified tab
+		page.
 		{winnr} can be the window number or the |window-ID|.
-		If {winnr} is -1 it is ignored, only the tab is resolved.
+		If {winnr} is -1 it is ignored and only the tabpage is used.
+		Throw error if the arguments are invalid. |E5000| |E5001| |E5002|
+		Examples: >
+			if haslocaldir() == 1
+			  " window local directory case
+			elseif haslocaldir() == 2
+			  " tab-local directory case
+			else
+			  " global directory case
+			endif
 
+			" current window
+			:echo haslocaldir()
+			:echo haslocaldir(0)
+			:echo haslocaldir(0, 0)
+			" window n in current tab page
+			:echo haslocaldir(n)
+			:echo haslocaldir(n, 0)
+			" window n in tab page m
+			:echo haslocaldir(n, m)
+			" tab page m
+			:echo haslocaldir(-1, m)
+<
 		Can also be used as a |method|: >
 			GetWinnr()->haslocaldir()
 
