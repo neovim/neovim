@@ -1203,6 +1203,10 @@ function M.open_float(bufnr, opts)
     end
   end
 
+  -- Used by open_floating_preview to allow the float to be focused
+  if not opts.focus_id then
+    opts.focus_id = scope
+  end
   local float_bufnr, winnr = require('vim.lsp.util').open_floating_preview(lines, 'plaintext', opts)
   for i, hi in ipairs(highlights) do
     local prefixlen, hiname = unpack(hi)
