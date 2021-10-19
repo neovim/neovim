@@ -659,12 +659,14 @@ function M.set(namespace, bufnr, diagnostics, opts)
     M.show(namespace, bufnr, diagnostics, opts)
   end
 
-  vim.api.nvim_command("doautocmd <nomodeline> User DiagnosticsChanged")
+  vim.api.nvim_command(
+    string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.api.nvim_buf_get_name(bufnr))
+  )
 end
 
 --- Get namespace metadata.
 ---
----@param ns number Diagnostic namespace
+---@param namespace number Diagnostic namespace
 ---@return table Namespace metadata
 function M.get_namespace(namespace)
   vim.validate { namespace = { namespace, 'n' } }
@@ -1319,7 +1321,9 @@ function M.reset(namespace, bufnr)
     end
   end
 
-  vim.api.nvim_command("doautocmd <nomodeline> User DiagnosticsChanged")
+  vim.api.nvim_command(
+      string.format("doautocmd <nomodeline> DiagnosticChanged %s", vim.api.nvim_buf_get_name(bufnr))
+  )
 end
 
 --- Add all diagnostics to the quickfix list.
