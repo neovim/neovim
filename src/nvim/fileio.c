@@ -224,8 +224,8 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
   bool keep_dest_enc = false;           // don't retry when char doesn't fit
                                         // in destination encoding
   int bad_char_behavior = BAD_REPLACE;
-  /* BAD_KEEP, BAD_DROP or character to
-   * replace with */
+  // BAD_KEEP, BAD_DROP or character to
+  // replace with
   char_u *tmpname = NULL;          // name of 'charconvert' output file
   int fio_flags = 0;
   char_u *fenc;                    // fileencoding to use
@@ -280,8 +280,8 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
                    || (sfname == curbuf->b_ffname);
   using_b_fname = (fname == curbuf->b_fname) || (sfname == curbuf->b_fname);
 
-  /* After reading a file the cursor line changes but we don't want to
-   * display the line. */
+  // After reading a file the cursor line changes but we don't want to
+  // display the line.
   ex_no_reprint = true;
 
   // don't display the file info for another buffer now
@@ -454,9 +454,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
       // been created by someone else, a ":w" will complain.
       curbuf->b_flags |= BF_NEW;
 
-      /* Create a swap file now, so that other Vims are warned
-       * that we are editing this file.  Don't do this for a
-       * "nofile" or "nowrite" buffer type. */
+      // Create a swap file now, so that other Vims are warned
+      // that we are editing this file.  Don't do this for a
+      // "nofile" or "nowrite" buffer type.
       if (!bt_dontwrite(curbuf)) {
         check_need_swap(newfile);
         // SwapExists autocommand may mess things up
@@ -524,9 +524,9 @@ int readfile(char_u *fname, char_u *sfname, linenr_T from, linenr_T lines_to_ski
     curbuf->b_start_bomb = FALSE;
   }
 
-  /* Create a swap file now, so that other Vims are warned that we are
-   * editing this file.
-   * Don't do this for a "nofile" or "nowrite" buffer type. */
+  // Create a swap file now, so that other Vims are warned that we are
+  // editing this file.
+  // Don't do this for a "nofile" or "nowrite" buffer type.
   if (!bt_dontwrite(curbuf)) {
     check_need_swap(newfile);
     if (!read_stdin
@@ -854,8 +854,8 @@ retry:
 #ifdef HAVE_ICONV
       did_iconv = false;
 #endif
-      /* Skip conversion when it's already done (retry for wrong
-       * "fileformat"). */
+      // Skip conversion when it's already done (retry for wrong
+      // "fileformat").
       if (tmpname == NULL) {
         tmpname = readfile_charconvert(fname, fenc, &fd);
         if (tmpname == NULL) {
@@ -876,17 +876,17 @@ retry:
           && iconv_fd == (iconv_t)-1
 #endif
           ) {
-        /* Conversion wanted but we can't.
-         * Try the next conversion in 'fileencodings' */
+        // Conversion wanted but we can't.
+        // Try the next conversion in 'fileencodings'
         advance_fenc = true;
         goto retry;
       }
     }
   }
 
-  /* Set "can_retry" when it's possible to rewind the file and try with
-   * another "fenc" value.  It's FALSE when no other "fenc" to try, reading
-   * stdin or fixed at a specific encoding. */
+  // Set "can_retry" when it's possible to rewind the file and try with
+  // another "fenc" value.  It's FALSE when no other "fenc" to try, reading
+  // stdin or fixed at a specific encoding.
   can_retry = (*fenc != NUL && !read_stdin && !keep_dest_enc && !read_fifo);
 
   if (!skip_read) {
@@ -1014,9 +1014,9 @@ retry:
                 read_buf_col += n;
                 break;
               } else {
-                /* Append whole line and new-line.  Change NL
-                * to NUL to reverse the effect done below. */
-                for (ni = 0; ni < n; ++ni) {
+                // Append whole line and new-line.  Change NL
+                // to NUL to reverse the effect done below.
+                for (ni = 0; ni < n; ni++) {
                   if (p[ni] == NL) {
                     ptr[tlen++] = NUL;
                   } else {
@@ -1076,10 +1076,10 @@ retry:
               *(ptr - conv_restlen) = NUL;
               conv_restlen = 0;
             } else {
-              /* Replace the trailing bytes with the replacement
-               * character if we were converting; if we weren't,
-               * leave the UTF8 checking code to do it, as it
-               * works slightly differently. */
+              // Replace the trailing bytes with the replacement
+              // character if we were converting; if we weren't,
+              // leave the UTF8 checking code to do it, as it
+              // works slightly differently.
               if (bad_char_behavior != BAD_KEEP && (fio_flags != 0
 #ifdef HAVE_ICONV
                                                     || iconv_fd != (iconv_t)-1
@@ -1212,8 +1212,8 @@ retry:
         }
 
         if (from_size > 0) {
-          /* Some remaining characters, keep them for the next
-           * round. */
+          // Some remaining characters, keep them for the next
+          // round.
           memmove(conv_rest, (char_u *)fromp, from_size);
           conv_restlen = (int)from_size;
         }
@@ -1752,11 +1752,11 @@ failed:
     }
     if (newfile || read_buffer) {
       redraw_curbuf_later(NOT_VALID);
-      /* After reading the text into the buffer the diff info needs to
-       * be updated. */
+      // After reading the text into the buffer the diff info needs to
+      // be updated.
       diff_invalidate(curbuf);
-      /* All folds in the window are invalid now.  Mark them for update
-       * before triggering autocommands. */
+      // All folds in the window are invalid now.  Mark them for update
+      // before triggering autocommands.
       foldUpdateAll(curwin);
     } else if (linecnt) {               // appended at least one line
       appended_lines_mark(from, linecnt);
@@ -2129,8 +2129,8 @@ static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
   }
 
   if (errmsg != NULL) {
-    /* Don't use emsg(), it breaks mappings, the retry with
-     * another type of conversion might still work. */
+    // Don't use emsg(), it breaks mappings, the retry with
+    // another type of conversion might still work.
     MSG(errmsg);
     if (tmpname != NULL) {
       os_remove((char *)tmpname);  // delete converted file
@@ -3908,9 +3908,9 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
 static bool time_differs(long t1, long t2) FUNC_ATTR_CONST
 {
 #if defined(__linux__) || defined(MSWIN)
-  /* On a FAT filesystem, esp. under Linux, there are only 5 bits to store
-   * the seconds.  Since the roundoff is done when flushing the inode, the
-   * time may change unexpectedly by one second!!! */
+  // On a FAT filesystem, esp. under Linux, there are only 5 bits to store
+  // the seconds.  Since the roundoff is done when flushing the inode, the
+  // time may change unexpectedly by one second!!!
   return t1 - t2 > 1 || t2 - t1 > 1;
 #else
   return t1 != t2;
@@ -4192,8 +4192,8 @@ static bool need_conversion(const char_u *fenc)
     same_encoding = TRUE;
     fenc_flags = 0;
   } else {
-    /* Ignore difference between "ansi" and "latin1", "ucs-4" and
-     * "ucs-4be", etc. */
+    // Ignore difference between "ansi" and "latin1", "ucs-4" and
+    // "ucs-4be", etc.
     enc_flags = get_fio_flags(p_enc);
     fenc_flags = get_fio_flags(fenc);
     same_encoding = (enc_flags != 0 && fenc_flags == enc_flags);
@@ -4203,8 +4203,8 @@ static bool need_conversion(const char_u *fenc)
     return false;
   }
 
-  /* Encodings differ.  However, conversion is not needed when 'enc' is any
-   * Unicode encoding and the file is UTF-8. */
+  // Encodings differ.  However, conversion is not needed when 'enc' is any
+  // Unicode encoding and the file is UTF-8.
   return !(fenc_flags == FIO_UTF8);
 }
 
@@ -4697,8 +4697,8 @@ int vim_rename(const char_u *from, const char_u *to)
           (void)os_rename(tempname, from);
           return -1;
         }
-        /* If it fails for one temp name it will most likely fail
-         * for any temp name, give up. */
+        // If it fails for one temp name it will most likely fail
+        // for any temp name, give up.
         return -1;
       }
     }
@@ -4954,8 +4954,8 @@ int buf_check_timestamp(buf_T *buf)
       buf_store_file_info(buf, &file_info);
     }
 
-    /* Don't do anything for a directory.  Might contain the file
-     * explorer. */
+    // Don't do anything for a directory.  Might contain the file
+    // explorer.
     if (os_isdir(buf->b_fname)) {
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
                && !bufIsChanged(buf) && file_info_ok) {
@@ -5217,8 +5217,8 @@ void buf_reload(buf_T *buf, int orig_mode)
   // Invalidate diff info if necessary.
   diff_invalidate(curbuf);
 
-  /* Restore the topline and cursor position and check it (lines may
-   * have been removed). */
+  // Restore the topline and cursor position and check it (lines may
+  // have been removed).
   if (old_topline > curbuf->b_ml.ml_line_count) {
     curwin->w_topline = curbuf->b_ml.ml_line_count;
   } else {
@@ -5237,9 +5237,9 @@ void buf_reload(buf_T *buf, int orig_mode)
     }
   }
 
-  /* If the mode didn't change and 'readonly' was set, keep the old
-   * value; the user probably used the ":view" command.  But don't
-   * reset it, might have had a read error. */
+  // If the mode didn't change and 'readonly' was set, keep the old
+  // value; the user probably used the ":view" command.  But don't
+  // reset it, might have had a read error.
   if (orig_mode == curbuf->b_orig_mode) {
     curbuf->b_p_ro |= old_ro;
   }
@@ -5754,8 +5754,8 @@ long write_eintr(int fd, void *buf, size_t bufsize)
   long ret = 0;
   long wlen;
 
-  /* Repeat the write() so long it didn't fail, other than being interrupted
-   * by a signal. */
+  // Repeat the write() so long it didn't fail, other than being interrupted
+  // by a signal.
   while (ret < (long)bufsize) {
     wlen = write(fd, (char *)buf + ret, bufsize - ret);
     if (wlen < 0) {

@@ -1082,8 +1082,8 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 
   curwin->w_cursor.lnum = n;
   while (line1 <= line2) {
-    /* need to use vim_strsave() because the line will be unlocked within
-     * ml_append() */
+    // need to use vim_strsave() because the line will be unlocked within
+    // ml_append()
     p = vim_strsave(ml_get(line1));
     ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, false);
     xfree(p);
@@ -1206,9 +1206,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   prevcmd = newcmd;
 
   if (bangredo) {  // put cmd in redo buffer for ! command
-    /* If % or # appears in the command, it must have been escaped.
-     * Reescape them, so that redoing them does not substitute them by the
-     * buffername. */
+    // If % or # appears in the command, it must have been escaped.
+    // Reescape them, so that redoing them does not substitute them by the
+    // buffername.
     char_u *cmd = vim_strsave_escaped(prevcmd, (char_u *)"%#");
 
     AppendToRedobuffLit(cmd, -1);
@@ -1237,8 +1237,8 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
 
     do_shell(newcmd, 0);
   } else {                            // :range!
-    /* Careful: This may recursively call do_bang() again! (because of
-     * autocommands) */
+    // Careful: This may recursively call do_bang() again! (because of
+    // autocommands)
     do_filter(line1, line2, eap, newcmd, do_in, do_out);
     apply_autocmds(EVENT_SHELLFILTERPOST, NULL, NULL, false, curbuf);
   }
@@ -1368,9 +1368,9 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char_u *cmd,
   did_check_timestamps = FALSE;
   need_check_timestamps = TRUE;
 
-  /* When interrupting the shell command, it may still have produced some
-   * useful output.  Reset got_int here, so that readfile() won't cancel
-   * reading. */
+  // When interrupting the shell command, it may still have produced some
+  // useful output.  Reset got_int here, so that readfile() won't cancel
+  // reading.
   os_breakcheck();
   got_int = FALSE;
 
@@ -1837,8 +1837,8 @@ int do_write(exarg_T *eap)
       alt_buf = buflist_findname(ffname);
     }
     if (alt_buf != NULL && alt_buf->b_ml.ml_mfp != NULL) {
-      /* Overwriting a file that is loaded in another buffer is not a
-       * good idea. */
+      // Overwriting a file that is loaded in another buffer is not a
+      // good idea.
       EMSG(_(e_bufloaded));
       goto theend;
     }
@@ -2143,8 +2143,8 @@ int not_writing(void)
  */
 static int check_readonly(int *forceit, buf_T *buf)
 {
-  /* Handle a file being readonly when the 'readonly' option is set or when
-   * the file exists and permissions are read-only. */
+  // Handle a file being readonly when the 'readonly' option is set or when
+  // the file exists and permissions are read-only.
   if (!*forceit && (buf->b_p_ro
                     || (os_path_exists(buf->b_ffname)
                         && !os_file_is_writable((char *)buf->b_ffname)))) {
@@ -2612,8 +2612,8 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
     set_buflisted(TRUE);
   }
 
-  /* If autocommands change buffers under our fingers, forget about
-   * editing the file. */
+  // If autocommands change buffers under our fingers, forget about
+  // editing the file.
   if (buf != curbuf) {
     goto theend;
   }
@@ -2677,9 +2677,9 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
     }
     xfree(new_name);
 
-    /* If autocommands change buffers under our fingers, forget about
-     * re-editing the file.  Should do the buf_clear_file(), but perhaps
-     * the autocommands changed the buffer... */
+    // If autocommands change buffers under our fingers, forget about
+    // re-editing the file.  Should do the buf_clear_file(), but perhaps
+    // the autocommands changed the buffer...
     if (buf != curbuf) {
       goto theend;
     }
@@ -2711,8 +2711,8 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
      */
     curwin_init();
 
-    /* It's possible that all lines in the buffer changed.  Need to update
-     * automatic folding for all windows where it's used. */
+    // It's possible that all lines in the buffer changed.  Need to update
+    // automatic folding for all windows where it's used.
     FOR_ALL_TAB_WINDOWS(tp, win) {
       if (win->w_buffer == curbuf) {
         foldUpdateAll(win);
@@ -2744,9 +2744,9 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
       }
       handle_swap_exists(&old_curbuf);
     } else {
-      /* Read the modelines, but only to set window-local options.  Any
-       * buffer-local options have already been set and may have been
-       * changed by the user. */
+      // Read the modelines, but only to set window-local options.  Any
+      // buffer-local options have already been set and may have been
+      // changed by the user.
       do_modelines(OPT_WINONLY);
 
       apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf,
@@ -2778,16 +2778,16 @@ int do_ecmd(int fnum, char_u *ffname, char_u *sfname, exarg_T *eap, linenr_T new
     maketitle();
   }
 
-  /* Tell the diff stuff that this buffer is new and/or needs updating.
-   * Also needed when re-editing the same buffer, because unloading will
-   * have removed it as a diff buffer. */
+  // Tell the diff stuff that this buffer is new and/or needs updating.
+  // Also needed when re-editing the same buffer, because unloading will
+  // have removed it as a diff buffer.
   if (curwin->w_p_diff) {
     diff_buf_add(curbuf);
     diff_invalidate(curbuf);
   }
 
-  /* If the window options were changed may need to set the spell language.
-   * Can only do this after the buffer has been properly setup. */
+  // If the window options were changed may need to set the spell language.
+  // Can only do this after the buffer has been properly setup.
   if (did_get_winopts && curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     (void)did_set_spelllang(curwin);
   }
@@ -3022,10 +3022,10 @@ void ex_append(exarg_T *eap)
     curbuf->b_p_ai = !curbuf->b_p_ai;
   }
 
-  /* "start" is set to eap->line2+1 unless that position is invalid (when
-   * eap->line2 pointed to the end of the buffer and nothing was appended)
-   * "end" is set to lnum when something has been appended, otherwise
-   * it is the same than "start"  -- Acevedo */
+  // "start" is set to eap->line2+1 unless that position is invalid (when
+  // eap->line2 pointed to the end of the buffer and nothing was appended)
+  // "end" is set to lnum when something has been appended, otherwise
+  // it is the same than "start"  -- Acevedo
   curbuf->b_op_start.lnum = (eap->line2 < curbuf->b_ml.ml_line_count) ?
                             eap->line2 + 1 : curbuf->b_ml.ml_line_count;
   if (eap->cmdidx != CMD_append) {
@@ -3555,8 +3555,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     pat = NULL;                 // search_regcomp() will use previous pattern
     sub = (char_u *)old_sub.sub;
 
-    /* Vi compatibility quirk: repeating with ":s" keeps the cursor in the
-     * last column after using "$". */
+    // Vi compatibility quirk: repeating with ":s" keeps the cursor in the
+    // last column after using "$".
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
@@ -3807,8 +3807,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
         if (subflags.do_ask && !preview) {
           int typed = 0;
 
-          /* change State to CONFIRM, so that the mouse works
-           * properly */
+          // change State to CONFIRM, so that the mouse works
+          // properly
           int save_State = State;
           State = CONFIRM;
           setmouse();                   // disable mouse in xterm
@@ -3864,9 +3864,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
               const bool save_p_lz = p_lz;
               int save_p_fen = curwin->w_p_fen;
 
-              curwin->w_p_fen = FALSE;
-              /* Invert the matched string.
-               * Remove the inversion afterwards. */
+              curwin->w_p_fen = false;
+              // Invert the matched string.
+              // Remove the inversion afterwards.
               int temp = RedrawingDisabled;
               RedrawingDisabled = 0;
 
@@ -3874,11 +3874,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
               p_lz = false;
 
               if (new_start != NULL) {
-                /* There already was a substitution, we would
-                 * like to show this to the user.  We cannot
-                 * really update the line, it would change
-                 * what matches.  Temporarily replace the line
-                 * and change it back afterwards. */
+                // There already was a substitution, we would
+                // like to show this to the user.  We cannot
+                // really update the line, it would change
+                // what matches.  Temporarily replace the line
+                // and change it back afterwards.
                 orig_line = vim_strsave(ml_get(lnum));
                 char_u *new_line = concat_str(new_start, sub_firstline + copycol);
 
@@ -3908,8 +3908,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
               }
               msg_starthere();
               i = msg_scroll;
-              msg_scroll = 0;                           /* truncate msg when
-                                                           needed */
+              msg_scroll = 0;                           // truncate msg when
+                                                        // needed
               msg_no_more = true;
               msg_ext_set_kind("confirm_sub");
               smsg_attr(HL_ATTR(HLF_R),  // Same highlight as wait_return().
@@ -4878,8 +4878,8 @@ void ex_help(exarg_T *eap)
   if (!p_im) {
     restart_edit = 0;               // don't want insert mode in help file
   }
-  /* Restore KeyTyped, setting 'filetype=help' may reset it.
-   * It is needed for do_tag top open folds under the cursor. */
+  // Restore KeyTyped, setting 'filetype=help' may reset it.
+  // It is needed for do_tag top open folds under the cursor.
   KeyTyped = old_KeyTyped;
 
   do_tag(tag, DT_HELP, 1, FALSE, TRUE);
@@ -5073,11 +5073,10 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches, bool 
         STRCPY(d + 4, "\\$");
       }
     } else {
-      /* Replace:
-       * "[:...:]" with "\[:...:]"
-       * "[++...]" with "\[++...]"
-       * "\{" with "\\{"               -- matching "} \}"
-       */
+      // Replace:
+      // "[:...:]" with "\[:...:]"
+      // "[++...]" with "\[++...]"
+      // "\{" with "\\{"               -- matching "} \}"
       if ((arg[0] == '[' && (arg[1] == ':'
                              || (arg[1] == '+' && arg[2] == '+')))
           || (arg[0] == '\\' && arg[1] == '{')) {
@@ -5327,8 +5326,8 @@ void fix_help_buffer(void)
         continue;
       }
 
-      /* Go through all directories in 'runtimepath', skipping
-       * $VIMRUNTIME. */
+      // Go through all directories in 'runtimepath', skipping
+      // $VIMRUNTIME.
       char_u *p = p_rtp;
       while (*p != NUL) {
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
@@ -5413,10 +5412,9 @@ void fix_help_buffer(void)
                   if (*s == '\r' || *s == '\n') {
                     *s = NUL;
                   }
-                  /* The text is utf-8 when a byte
-                   * above 127 is found and no
-                   * illegal byte sequence is found.
-                   */
+                  // The text is utf-8 when a byte
+                  // above 127 is found and no
+                  // illegal byte sequence is found.
                   if (*s >= 0x80 && this_utf != kFalse) {
                     this_utf = kTrue;
                     const int l = utf_ptr2len(s);
@@ -5427,9 +5425,9 @@ void fix_help_buffer(void)
                   }
                   ++s;
                 }
-                /* The help file is latin1 or utf-8;
-                 * conversion to the current
-                 * 'encoding' may be required. */
+                // The help file is latin1 or utf-8;
+                // conversion to the current
+                // 'encoding' may be required.
                 vc.vc_type = CONV_NONE;
                 convert_setup(&vc,
                               (char_u *)(this_utf == kTrue ? "utf-8" : "latin1"),
@@ -5716,8 +5714,8 @@ static void do_helptags(char_u *dirname, bool add_help_tags, bool ignore_writeer
     return;
   }
 
-  /* Go over all files in the directory to find out what languages are
-   * present. */
+  // Go over all files in the directory to find out what languages are
+  // present.
   int j;
   ga_init(&ga, 1, 10);
   for (int i = 0; i < filecount; i++) {

@@ -2625,8 +2625,8 @@ static void realloc_cmdbuff(int len)
 
   char_u *p = ccline.cmdbuff;
   alloc_cmdbuff(len);                   // will get some more
-  /* There isn't always a NUL after the command, but it may need to be
-   * there, thus copy up to the NUL and add a NUL. */
+  // There isn't always a NUL after the command, but it may need to be
+  // there, thus copy up to the NUL and add a NUL.
   memmove(ccline.cmdbuff, p, (size_t)ccline.cmdlen);
   ccline.cmdbuff[ccline.cmdlen] = NUL;
   xfree(p);
@@ -3427,24 +3427,24 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
   bool allocated;
   struct cmdline_info save_ccline;
 
-  /* check for valid regname; also accept special characters for CTRL-R in
-   * the command line */
+  // check for valid regname; also accept special characters for CTRL-R in
+  // the command line
   if (regname != Ctrl_F && regname != Ctrl_P && regname != Ctrl_W
       && regname != Ctrl_A && regname != Ctrl_L
       && !valid_yank_reg(regname, false)) {
     return FAIL;
   }
 
-  /* A register containing CTRL-R can cause an endless loop.  Allow using
-   * CTRL-C to break the loop. */
+  // A register containing CTRL-R can cause an endless loop.  Allow using
+  // CTRL-C to break the loop.
   line_breakcheck();
   if (got_int) {
     return FAIL;
   }
 
 
-  /* Need to save and restore ccline.  And set "textlock" to avoid nasty
-   * things like going to another buffer when evaluating an expression. */
+  // Need to save and restore ccline.  And set "textlock" to avoid nasty
+  // things like going to another buffer when evaluating an expression.
   save_cmdline(&save_ccline);
   textlock++;
   const bool i = get_spec_reg(regname, &arg, &allocated, true);
@@ -6411,8 +6411,8 @@ static int open_cmdwin(void)
     }
   }
 
-  /* Replace the empty last line with the current command-line and put the
-   * cursor there. */
+  // Replace the empty last line with the current command-line and put the
+  // cursor there.
   ml_replace(curbuf->b_ml.ml_line_count, ccline.cmdbuff, true);
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   curwin->w_cursor.col = ccline.cmdpos;
