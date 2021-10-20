@@ -48,14 +48,14 @@ enum {
   NFA_MATCH,
   NFA_EMPTY,                        /* matches 0-length */
 
-  NFA_START_COLL,                   /* [abc] start */
-  NFA_END_COLL,                     /* [abc] end */
-  NFA_START_NEG_COLL,               /* [^abc] start */
-  NFA_END_NEG_COLL,                 /* [^abc] end (postfix only) */
-  NFA_RANGE,                        /* range of the two previous items
-                                     * (postfix only) */
-  NFA_RANGE_MIN,                    /* low end of a range  */
-  NFA_RANGE_MAX,                    /* high end of a range  */
+  NFA_START_COLL,                   // [abc] start
+  NFA_END_COLL,                     // [abc] end
+  NFA_START_NEG_COLL,               // [^abc] start
+  NFA_END_NEG_COLL,                 // [^abc] end (postfix only)
+  NFA_RANGE,                        // range of the two previous items
+                                    // (postfix only)
+  NFA_RANGE_MIN,                    // low end of a range
+  NFA_RANGE_MAX,                    // high end of a range
 
   NFA_CONCAT,                       // concatenate two previous items (postfix
                                     // only)
@@ -88,9 +88,9 @@ enum {
   NFA_END_INVISIBLE,
   NFA_END_INVISIBLE_NEG,
   NFA_END_PATTERN,
-  NFA_COMPOSING,                    /* Next nodes in NFA are part of the
-                                       composing multibyte char */
-  NFA_END_COMPOSING,                /* End of a composing char in the NFA */
+  NFA_COMPOSING,                    // Next nodes in NFA are part of the
+                                    // composing multibyte char
+  NFA_END_COMPOSING,                // End of a composing char in the NFA
   NFA_ANY_COMPOSING,                // \%C: Any composing characters.
   NFA_OPT_CHARS,                    /* \%[abc] */
 
@@ -256,9 +256,9 @@ static char_u e_ill_char_class[] = N_(
     "E877: (NFA regexp) Invalid character class: %" PRId64);
 static char_u e_value_too_large[] = N_("E951: \\% value too large");
 
-/* Since the out pointers in the list are always
- * uninitialized, we use the pointers themselves
- * as storage for the Ptrlists. */
+// Since the out pointers in the list are always
+// uninitialized, we use the pointers themselves
+// as storage for the Ptrlists.
 typedef union Ptrlist Ptrlist;
 union Ptrlist {
   Ptrlist     *next;
@@ -310,9 +310,9 @@ struct nfa_pim_S {
 typedef struct {
   nfa_state_T *state;
   int count;
-  nfa_pim_T pim;                /* if pim.result != NFA_PIM_UNUSED: postponed
-                                 * invisible match */
-  regsubs_T subs;               /* submatch info, only party used */
+  nfa_pim_T pim;                // if pim.result != NFA_PIM_UNUSED: postponed
+                                // invisible match
+  regsubs_T subs;               // submatch info, only party used
 } nfa_thread_T;
 
 // nfa_list_T contains the alternative NFA execution states.
@@ -1675,13 +1675,13 @@ collection:
           }
           /* Try collating class like [. .]  */
           if (collclass != 0) {
-            startc = collclass;                  /* allow [.a.]-x as a range */
-            /* Will emit the proper atom at the end of the
-             * while loop. */
+            startc = collclass;                  // allow [.a.]-x as a range
+            // Will emit the proper atom at the end of the
+            // while loop.
           }
         }
-        /* Try a range like 'a-x' or '\t-z'. Also allows '-' as a
-         * start character. */
+        // Try a range like 'a-x' or '\t-z'. Also allows '-' as a
+        // start character.
         if (*regparse == '-' && oldstartc != -1) {
           emit_range = true;
           startc = oldstartc;
@@ -1689,11 +1689,10 @@ collection:
           continue;                         // reading the end of the range
         }
 
-        /* Now handle simple and escaped characters.
-         * Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
-         * accepts "\t", "\e", etc., but only when the 'l' flag in
-         * 'cpoptions' is not included.
-         */
+        // Now handle simple and escaped characters.
+        // Only "\]", "\^", "\]" and "\\" are special in Vi.  Vim
+        // accepts "\t", "\e", etc., but only when the 'l' flag in
+        // 'cpoptions' is not included.
         if (*regparse == '\\'
             && regparse + 1 <= endp
             && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
@@ -1736,13 +1735,14 @@ collection:
           }
 
           if (endc > startc + 2) {
-            /* Emit a range instead of the sequence of
-             * individual characters. */
-            if (startc == 0)
-              /* \x00 is translated to \x0a, start at \x01. */
+            // Emit a range instead of the sequence of
+            // individual characters.
+            if (startc == 0) {
+              // \x00 is translated to \x0a, start at \x01.
               EMIT(1);
-            else
-              --post_ptr;                   /* remove NFA_CONCAT */
+            } else {
+              post_ptr--;                   // remove NFA_CONCAT
+            }
             EMIT(endc);
             EMIT(NFA_RANGE);
             EMIT(NFA_CONCAT);
@@ -1755,8 +1755,8 @@ collection:
               EMIT(NFA_CONCAT);
             }
           } else {
-            /* Emit the range. "startc" was already emitted, so
-             * skip it. */
+            // Emit the range. "startc" was already emitted, so
+            // skip it.
             for (c = startc + 1; c <= endc; c++) {
               EMIT(c);
               EMIT(NFA_CONCAT);
@@ -1765,19 +1765,20 @@ collection:
           emit_range = false;
           startc = -1;
         } else {
-          /* This char (startc) is not part of a range. Just
-           * emit it.
-           * Normally, simply emit startc. But if we get char
-           * code=0 from a collating char, then replace it with
-           * 0x0a.
-           * This is needed to completely mimic the behaviour of
-           * the backtracking engine. */
+          // This char (startc) is not part of a range. Just
+          // emit it.
+          // Normally, simply emit startc. But if we get char
+          // code=0 from a collating char, then replace it with
+          // 0x0a.
+          // This is needed to completely mimic the behaviour of
+          // the backtracking engine.
           if (startc == NFA_NEWL) {
-            /* Line break can't be matched as part of the
-             * collection, add an OR below. But not for negated
-             * range. */
-            if (!negated)
+            // Line break can't be matched as part of the
+            // collection, add an OR below. But not for negated
+            // range.
+            if (!negated) {
               extra = NFA_ADD_NL;
+            }
           } else {
             if (got_coll_char == true && startc == 0) {
               EMIT(0x0a);
@@ -1831,14 +1832,14 @@ nfa_do_multibyte:
         || utf_iscomposing(c)) {
       int i = 0;
 
-      /* A base character plus composing characters, or just one
-       * or more composing characters.
-       * This requires creating a separate atom as if enclosing
-       * the characters in (), where NFA_COMPOSING is the ( and
-       * NFA_END_COMPOSING is the ). Note that right now we are
-       * building the postfix form, not the NFA itself;
-       * a composing char could be: a, b, c, NFA_COMPOSING
-       * where 'b' and 'c' are chars with codes > 256. */
+      // A base character plus composing characters, or just one
+      // or more composing characters.
+      // This requires creating a separate atom as if enclosing
+      // the characters in (), where NFA_COMPOSING is the ( and
+      // NFA_END_COMPOSING is the ). Note that right now we are
+      // building the postfix form, not the NFA itself;
+      // a composing char could be: a, b, c, NFA_COMPOSING
+      // where 'b' and 'c' are chars with codes > 256. */
       for (;; ) {
         EMIT(c);
         if (i > 0)
@@ -3109,9 +3110,9 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
     case NFA_END_COLL:
     case NFA_END_NEG_COLL:
-      /* On the stack is the sequence starting with NFA_START_COLL or
-       * NFA_START_NEG_COLL and all possible characters. Patch it to
-       * add the output to the start. */
+      // On the stack is the sequence starting with NFA_START_COLL or
+      // NFA_START_NEG_COLL and all possible characters. Patch it to
+      // add the output to the start.
       if (nfa_calc_size == true) {
         nstate++;
         break;
@@ -3233,12 +3234,12 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
       if (before)
         n = *++p;         /* get the count */
 
-      /* The \@= operator: match the preceding atom with zero width.
-       * The \@! operator: no match for the preceding atom.
-       * The \@<= operator: match for the preceding atom.
-       * The \@<! operator: no match for the preceding atom.
-       * Surrounds the preceding atom with START_INVISIBLE and
-       * END_INVISIBLE, similarly to MOPEN. */
+      // The \@= operator: match the preceding atom with zero width.
+      // The \@! operator: no match for the preceding atom.
+      // The \@<= operator: match for the preceding atom.
+      // The \@<! operator: no match for the preceding atom.
+      // Surrounds the preceding atom with START_INVISIBLE and
+      // END_INVISIBLE, similarly to MOPEN.
 
       if (nfa_calc_size == true) {
         nstate += pattern ? 4 : 2;
@@ -3269,11 +3270,12 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
         patch(e.out, s1);
         PUSH(frag(s, list1(&s1->out)));
         if (before) {
-          if (n <= 0)
-            /* See if we can guess the maximum width, it avoids a
-             * lot of pointless tries. */
+          if (n <= 0) {
+            // See if we can guess the maximum width, it avoids a
+            // lot of pointless tries.
             n = nfa_max_width(e.start, 0);
-          s->val = n;           /* store the count */
+          }
+          s->val = n;           // store the count
         }
       }
       break;
@@ -3516,8 +3518,8 @@ static void nfa_postprocess(nfa_regprog_T *prog)
             directly = ch_follows * 10 < ch_invisible;
           }
         } else {
-          /* normal invisible, first do the one with the
-           * highest failure chance */
+          // normal invisible, first do the one with the
+          // highest failure chance
           directly = ch_follows < ch_invisible;
         }
       }
@@ -4012,8 +4014,8 @@ static regsubs_T *addstate(
   case NFA_ZEND:
   case NFA_SPLIT:
   case NFA_EMPTY:
-    /* These nodes are not added themselves but their "out" and/or
-     * "out1" may be added below.  */
+    // These nodes are not added themselves but their "out" and/or
+    // "out1" may be added below.
     break;
 
   case NFA_BOL:
@@ -4051,21 +4053,20 @@ static regsubs_T *addstate(
   case NFA_ZOPEN9:
   case NFA_NOPEN:
   case NFA_ZSTART:
-  /* These nodes need to be added so that we can bail out when it
-   * was added to this list before at the same position to avoid an
-   * endless loop for "\(\)*" */
+  // These nodes need to be added so that we can bail out when it
+  // was added to this list before at the same position to avoid an
+  // endless loop for "\(\)*"
 
   default:
     if (state->lastlist[nfa_ll_index] == l->id && state->c != NFA_SKIP) {
-      /* This state is already in the list, don't add it again,
-       * unless it is an MOPEN that is used for a backreference or
-       * when there is a PIM. For NFA_MATCH check the position,
-       * lower position is preferred. */
+      // This state is already in the list, don't add it again,
+      // unless it is an MOPEN that is used for a backreference or
+      // when there is a PIM. For NFA_MATCH check the position,
+      // lower position is preferred.
       if (!rex.nfa_has_backref && pim == NULL && !l->has_pim
           && state->c != NFA_MATCH) {
-
-        /* When called from addstate_here() do insert before
-         * existing states. */
+        // When called from addstate_here() do insert before
+        // existing states.
         if (add_here) {
           for (k = 0; k < l->n && k < listindex; ++k) {
             if (l->t[k].state->id == state->id) {
@@ -4088,10 +4089,11 @@ skip_add:
         }
       }
 
-      /* Do not add the state again when it exists with the same
-       * positions. */
-      if (has_state_with_pos(l, state, subs, pim))
+      // Do not add the state again when it exists with the same
+      // positions.
+      if (has_state_with_pos(l, state, subs, pim)) {
         goto skip_add;
+      }
     }
 
     // When there are backreferences or PIMs the number of states may
@@ -4362,9 +4364,9 @@ static regsubs_T *addstate_here(
   int count;
   int listidx = *ip;
 
-  /* First add the state(s) at the end, so that we know how many there are.
-   * Pass the listidx as offset (avoids adding another argument to
-   * addstate(). */
+  // First add the state(s) at the end, so that we know how many there are.
+  // Pass the listidx as offset (avoids adding another argument to
+  // addstate().
   regsubs_T *r = addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
   if (r == NULL) {
     return NULL;
@@ -4385,8 +4387,8 @@ static regsubs_T *addstate_here(
     l->t[listidx] = l->t[l->n - 1];
   } else if (count > 1) {
     if (l->n + count - 1 >= l->len) {
-      /* not enough space to move the new states, reallocate the list
-       * and move the states to the right position */
+      // not enough space to move the new states, reallocate the list
+      // and move the states to the right position
       const int newlen = l->len * 3 / 2 + 50;
       const size_t newsize = newlen * sizeof(nfa_thread_T);
 
@@ -4408,8 +4410,8 @@ static regsubs_T *addstate_here(
       xfree(l->t);
       l->t = newl;
     } else {
-      /* make space for new states, then move them from the
-       * end to the current position */
+      // make space for new states, then move them from the
+      // end to the current position
       memmove(&(l->t[listidx + count]),
           &(l->t[listidx + 1]),
           sizeof(nfa_thread_T) * (l->n - listidx - 1));
@@ -6582,10 +6584,11 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol,
   }
 
   if (prog->regstart != NUL) {
-    /* Skip ahead until a character we know the match must start with.
-     * When there is none there is no match. */
-    if (skip_to_start(prog->regstart, &col) == FAIL)
+    // Skip ahead until a character we know the match must start with.
+    // When there is none there is no match.
+    if (skip_to_start(prog->regstart, &col) == FAIL) {
       return 0L;
+    }
 
     // If match_text is set it contains the full text that must match.
     // Nothing else to try. Doesn't handle combining chars well.

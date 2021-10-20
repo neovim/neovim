@@ -461,8 +461,8 @@ static int toggle_Magic(int x)
  */
 #define UCHARAT(p)      ((int)*(char_u *)(p))
 
-/* Used for an error (down from) vim_regcomp(): give the error message, set
- * rc_did_emsg and return NULL */
+// Used for an error (down from) vim_regcomp(): give the error message, set
+// rc_did_emsg and return NULL
 #define EMSG_RET_NULL(m) return (EMSG(m), rc_did_emsg = true, (void *)NULL)
 #define IEMSG_RET_NULL(m) return (IEMSG(m), rc_did_emsg = true, (void *)NULL)
 #define EMSG_RET_FAIL(m) return (EMSG(m), rc_did_emsg = true, FAIL)
@@ -715,9 +715,9 @@ static int reg_magic;           /* magicness of the pattern: */
 #define MAGIC_ON        3       /* "\m" or 'magic' */
 #define MAGIC_ALL       4       /* "\v" very magic */
 
-static int reg_string;          /* matching with a string instead of a buffer
-                                   line */
-static int reg_strict;          /* "[abc" is illegal */
+static int reg_string;          // matching with a string instead of a buffer
+                                // line
+static int reg_strict;          // "[abc" is illegal
 
 /*
  * META contains all characters that may be magic, except '^' and '$'.
@@ -741,10 +741,10 @@ static char_u META_flags[] = {
   1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1
 };
 
-static int curchr;              /* currently parsed character */
-/* Previous character.  Note: prevchr is sometimes -1 when we are not at the
- * start, eg in /[ ^I]^ the pattern was never found even if it existed,
- * because ^ was taken to be magic -- webb */
+static int curchr;              // currently parsed character
+// Previous character.  Note: prevchr is sometimes -1 when we are not at the
+// start, eg in /[ ^I]^ the pattern was never found even if it existed,
+// because ^ was taken to be magic -- webb
 static int prevchr;
 static int prevprevchr;         /* previous-previous character */
 static int nextchr;             /* used for ungetchr() */
@@ -2835,21 +2835,22 @@ static int peekchr(void)
       curchr = Magic(curchr);
     break;
   case '*':
-    /* * is not magic as the very first character, eg "?*ptr", when
-     * after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
-     * "\(\*" is not magic, thus must be magic if "after_slash" */
+    // * is not magic as the very first character, eg "?*ptr", when
+    // after '^', eg "/^*ptr" and when after "\(", "\|", "\&".  But
+    // "\(\*" is not magic, thus must be magic if "after_slash"
     if (reg_magic >= MAGIC_ON
         && !at_start
         && !(prev_at_start && prevchr == Magic('^'))
         && (after_slash
             || (prevchr != Magic('(')
                 && prevchr != Magic('&')
-                && prevchr != Magic('|'))))
+                && prevchr != Magic('|')))) {
       curchr = Magic('*');
+    }
     break;
   case '^':
-    /* '^' is only magic as the very first character and if it's after
-     * "\(", "\|", "\&' or "\n" */
+    // '^' is only magic as the very first character and if it's after
+    // "\(", "\|", "\&' or "\n"
     if (reg_magic >= MAGIC_OFF
         && (at_start
             || reg_magic == MAGIC_ALL
@@ -2865,8 +2866,8 @@ static int peekchr(void)
     }
     break;
   case '$':
-    /* '$' is only magic as the very last char and if it's in front of
-     * either "\|", "\)", "\&", or "\n" */
+    // '$' is only magic as the very last char and if it's in front of
+    // either "\|", "\)", "\&", or "\n"
     if (reg_magic >= MAGIC_OFF) {
       char_u *p = regparse + 1;
       bool is_magic_all = (reg_magic == MAGIC_ALL);
@@ -5811,8 +5812,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
   if (bytelen != NULL)
     *bytelen = 0;
   for (;; ) {
-    /* Since getting one line may invalidate the other, need to make copy.
-     * Slow! */
+    // Since getting one line may invalidate the other, need to make copy.
+    // Slow!
     if (rex.line != reg_tofree) {
       len = (int)STRLEN(rex.line);
       if (reg_tofree == NULL || len >= (int)reg_tofreelen) {
@@ -6445,9 +6446,9 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
   return result;
 }
 
-/***************************************************************
-*		      regsub stuff			       *
-***************************************************************/
+////////////////////////////////////////////////////////////////
+//                    regsub stuff                            //
+////////////////////////////////////////////////////////////////
 
 /* This stuff below really confuses cc on an SGI -- webb */
 
@@ -6512,9 +6513,10 @@ char_u *regtilde(char_u *source, int magic)
         memmove(tmpsub, newsub, (size_t)len);
         /* interpret tilde */
         memmove(tmpsub + len, reg_prev_sub, (size_t)prevlen);
-        /* copy postfix */
-        if (!magic)
-          ++p;                                /* back off \ */
+        // copy postfix
+        if (!magic) {
+          p++;                                // back off backslash
+        }
         STRCPY(tmpsub + len + prevlen, p + 1);
 
         if (newsub != source)                 /* already allocated newsub */
